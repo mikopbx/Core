@@ -59,18 +59,29 @@ class LogsMenu extends AbstractMenu
         $index = 1;
         $logViewer = new LogViewer();
 
-        // Log options - all use vi -R
-        $logOptions = [
+        // Log options with translations
+        $logLabels = [
             'system' => $this->translation->_('cm_LogSystem'),
-            'asterisk' => $this->translation->_('cm_LogAsterisk'),
+            'asterisk_messages' => $this->translation->_('cm_LogAsteriskMessages'),
+            'asterisk_verbose' => $this->translation->_('cm_LogAsteriskVerbose'),
+            'asterisk_error' => $this->translation->_('cm_LogAsteriskError'),
+            'asterisk_security' => $this->translation->_('cm_LogAsteriskSecurity'),
             'php' => $this->translation->_('cm_LogPHP'),
             'nginx' => $this->translation->_('cm_LogNginx'),
             'fail2ban' => $this->translation->_('cm_LogFail2ban'),
         ];
 
-        foreach ($logOptions as $logType => $label) {
+        // Get log info with file sizes
+        $availableLogs = $logViewer->getAvailableLogTypes();
+
+        foreach ($logLabels as $logType => $label) {
+            $sizeInfo = '';
+            if (isset($availableLogs[$logType]) && $availableLogs[$logType]['exists']) {
+                $sizeInfo = " ({$availableLogs[$logType]['size']})";
+            }
+
             $builder->addItem(
-                "[$index] $label",
+                "[$index] $label$sizeInfo",
                 function (CliMenu $menu) use ($logViewer, $logType) {
                     $menu->close();
 

@@ -37,11 +37,20 @@ class LogViewer
      */
     private const array LOG_PATHS = [
         'system' => 'system/messages',
-        'asterisk' => 'asterisk/messages',
+        'asterisk_messages' => 'asterisk/messages',
+        'asterisk_verbose' => 'asterisk/verbose',
+        'asterisk_error' => 'asterisk/error',
+        'asterisk_security' => 'asterisk/security_log',
         'php' => 'php/error.log',
         'nginx' => 'nginx/error.log',
         'fail2ban' => 'fail2ban/fail2ban.log',
     ];
+
+    /**
+     * Log files with absolute paths (not in storage)
+     * Currently empty - all logs are in storage directory
+     */
+    private const array ABSOLUTE_LOG_PATHS = [];
 
     private string $logsDir;
 
@@ -63,10 +72,10 @@ class LogViewer
     }
 
     /**
-     * View log file in read-only mode using vi
+     * View log file using lnav
      *
-     * Uses vi -R for reliable terminal handling in BusyBox environment.
-     * Navigate with arrow keys or j/k, press :q to exit.
+     * lnav provides syntax highlighting, automatic format detection,
+     * and real-time file following. Press 'q' to exit.
      *
      * @param string $logType Log type (system, asterisk, php, nginx, fail2ban)
      * @return bool True if log was viewed successfully
@@ -78,17 +87,17 @@ class LogViewer
             return false;
         }
 
-        $viPath = Util::which('vi');
-        if (empty($viPath)) {
-            echo "vi command not found\n";
+        $lnavPath = Util::which('lnav');
+        if (empty($lnavPath)) {
+            echo "lnav command not found\n";
             return false;
         }
 
-        // Reset terminal to sane state before running vi (required after CliMenu closes)
+        // Reset terminal to sane state (required after CliMenu closes)
         passthru('stty sane 2>/dev/null');
 
-        // Run vi in read-only mode (press G to go to end of file)
-        passthru("$viPath -R " . escapeshellarg($logFile));
+        // Run lnav - it auto-follows file changes and positions at end
+        passthru("$lnavPath " . escapeshellarg($logFile));
 
         return true;
     }
@@ -127,11 +136,17 @@ class LogViewer
      */
     public function getLogFilePath(string $logType): ?string
     {
-        if (!isset(self::LOG_PATHS[$logType])) {
-            return null;
+        // Check absolute paths first
+        if (isset(self::ABSOLUTE_LOG_PATHS[$logType])) {
+            return self::ABSOLUTE_LOG_PATHS[$logType];
         }
 
-        return $this->logsDir . '/' . self::LOG_PATHS[$logType];
+        // Then check relative paths in logs directory
+        if (isset(self::LOG_PATHS[$logType])) {
+            return $this->logsDir . '/' . self::LOG_PATHS[$logType];
+        }
+
+        return null;
     }
 
     /**
@@ -142,26 +157,46 @@ class LogViewer
     public function getAvailableLogTypes(): array
     {
         $available = [];
+
+        // Process relative paths (in storage)
         foreach (self::LOG_PATHS as $type => $relativePath) {
             $fullPath = $this->logsDir . '/' . $relativePath;
-            if (file_exists($fullPath)) {
-                $size = filesize($fullPath);
-                $available[$type] = [
-                    'path' => $fullPath,
-                    'relative' => $relativePath,
-                    'size' => $this->formatFileSize($size),
-                    'exists' => true,
-                ];
-            } else {
-                $available[$type] = [
-                    'path' => $fullPath,
-                    'relative' => $relativePath,
-                    'size' => '0 KB',
-                    'exists' => false,
-                ];
-            }
+            $available[$type] = $this->getLogInfo($fullPath, $relativePath);
         }
+
+        // Process absolute paths
+        foreach (self::ABSOLUTE_LOG_PATHS as $type => $absolutePath) {
+            $available[$type] = $this->getLogInfo($absolutePath, $absolutePath);
+        }
+
         return $available;
+    }
+
+    /**
+     * Get log file information
+     *
+     * @param string $fullPath Full path to log file
+     * @param string $displayPath Path to display
+     * @return array Log info array
+     */
+    private function getLogInfo(string $fullPath, string $displayPath): array
+    {
+        if (file_exists($fullPath)) {
+            $size = filesize($fullPath);
+            return [
+                'path' => $fullPath,
+                'relative' => $displayPath,
+                'size' => $this->formatFileSize($size),
+                'exists' => true,
+            ];
+        }
+
+        return [
+            'path' => $fullPath,
+            'relative' => $displayPath,
+            'size' => '0 KB',
+            'exists' => false,
+        ];
     }
 
     /**

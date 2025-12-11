@@ -61,7 +61,7 @@ class NetworkWizard
         // Step 1: Select interface
         $interfaceName = $this->selectInterface($menu);
         if ($interfaceName === null) {
-            $this->showCancelled($menu);
+            $this->showCancelled();
             return;
         }
 
@@ -71,7 +71,7 @@ class NetworkWizard
         // Step 2: Configure IPv4
         $ipv4Config = $this->configureIPv4($menu, $interfaceName);
         if ($ipv4Config === null) {
-            $this->showCancelled($menu);
+            $this->showCancelled();
             return;
         }
         $config = array_merge($config, $ipv4Config);
@@ -79,15 +79,15 @@ class NetworkWizard
         // Step 3: Configure IPv6
         $ipv6Config = $this->configureIPv6($menu, $interfaceName);
         if ($ipv6Config === null) {
-            $this->showCancelled($menu);
+            $this->showCancelled();
             return;
         }
         $config = array_merge($config, $ipv6Config);
 
-        // Step 4: Configure DNS
-        $dnsConfig = $this->configureDNS($menu);
+        // Step 4: Configure DNS and internet flag
+        $dnsConfig = $this->configureDNS($menu, $interfaceName);
         if ($dnsConfig === null) {
-            $this->showCancelled($menu);
+            $this->showCancelled();
             return;
         }
         $config = array_merge($config, $dnsConfig);
@@ -95,7 +95,7 @@ class NetworkWizard
         // Step 5: Review and confirm
         $confirmed = $this->reviewAndConfirm($menu, $config);
         if ($confirmed === null) {
-            $this->showCancelled($menu);
+            $this->showCancelled();
             return;
         }
 
@@ -110,11 +110,7 @@ class NetworkWizard
         // Step 6: Apply configuration
         $this->applyConfiguration($config);
 
-        // Return to parent menu
-        if ($parent = $menu->getParent()) {
-            $menu->closeThis();
-            $parent->open();
-        }
+        // Wizard complete - simply return, the calling menu will continue
     }
 
     /**
@@ -345,28 +341,45 @@ class NetworkWizard
     }
 
     /**
-     * Step 4: Configure DNS servers
+     * Step 4: Configure DNS servers and internet interface flag
+     *
+     * If only one interface exists, automatically marks it as internet interface.
+     * For multiple interfaces, asks user which one provides internet access.
      *
      * @param CliMenu $menu Current menu
+     * @param string $interfaceName Current interface being configured
      * @return array|null DNS config or null if cancelled
      */
-    private function configureDNS(CliMenu $menu): ?array
+    private function configureDNS(CliMenu $menu, string $interfaceName): ?array
     {
-        echo "\n";
-        $isInternet = $this->helpers->askYesNo($menu, $this->translation->_('cm_IsInternetInterface'));
-        if ($isInternet === null) {
-            return null;
-        }
-
         $dnsConfig = [];
-        $dnsConfig['internet'] = $isInternet ? '1' : '0';
 
-        if (!$isInternet) {
-            return $dnsConfig;
+        // Check how many interfaces exist
+        $interfaces = LanInterfaces::find(['columns' => 'interface'])->toArray();
+        $interfaceCount = count($interfaces);
+
+        if ($interfaceCount <= 1) {
+            // Single interface - automatically mark as internet interface
+            $dnsConfig['internet'] = '1';
+            echo "\n" . $this->translation->_('cm_ConfigureDNS') . " ($interfaceName)\n\n";
+        } else {
+            // Multiple interfaces - ask user
+            echo "\n";
+            $prompt = $this->translation->_('cm_IsInternetInterface') . " [$interfaceName]";
+            $isInternet = $this->helpers->askYesNo($menu, $prompt);
+            if ($isInternet === null) {
+                return null;
+            }
+
+            $dnsConfig['internet'] = $isInternet ? '1' : '0';
+
+            if (!$isInternet) {
+                // Not internet interface - skip DNS configuration
+                return $dnsConfig;
+            }
+
+            echo "\n" . $this->translation->_('cm_ConfigureDNS') . "\n\n";
         }
-
-        // Configure DNS servers
-        echo "\n" . $this->translation->_('cm_ConfigureDNS') . "\n\n";
 
         // Primary DNS
         $primaryDns = $this->helpers->askIPAddress($menu, $this->translation->_('cm_EnterPrimaryDNS'), 'both', true);
@@ -491,18 +504,16 @@ class NetworkWizard
     }
 
     /**
-     * Show wizard cancelled message and return to parent menu
+     * Show wizard cancelled message
      *
-     * @param CliMenu $menu Current menu
+     * Simply displays the cancellation message and returns.
+     * The calling menu will continue its normal flow after wizard exits.
+     *
      * @return void
      */
-    private function showCancelled(CliMenu $menu): void
+    private function showCancelled(): void
     {
         echo $this->translation->_('cm_WizardCancelled') . "\n";
         sleep(1);
-        if ($parent = $menu->getParent()) {
-            $menu->closeThis();
-            $parent->open();
-        }
     }
 }

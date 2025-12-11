@@ -21,8 +21,12 @@
 namespace MikoPBX\Core\RootFS\etc\rc;
 
 use MikoPBX\Core\System\ConsoleMenu\Banners\WelcomeBanner;
+use MikoPBX\Core\System\Util;
 
 require_once 'Globals.php';
+
+// Set Cyrillic font for proper Russian text display on physical console
+Util::setCyrillicFont();
 
 $banner = new WelcomeBanner();
 $banner->runWithAutoRefresh();

@@ -62,9 +62,12 @@ class NetworkMenu extends AbstractMenu
 
         // [1] Configure network interfaces (not in Docker)
         if ($this->env->canConfigureNetwork()) {
-            $builder->addItem("[$index] " . $this->translation->_('cm_ConfigureInterfaces'), function (CliMenu $menu) {
+            $builder->addItem("[$index] " . $this->translation->_('cm_ConfigureInterfaces'), function (CliMenu $menu) use ($parentMenu) {
                 $wizard = new NetworkWizard();
                 $wizard->run($menu);
+                // Close and reopen menu to restore terminal state after wizard's submenus
+                $menu->close();
+                $this->show($parentMenu);
             });
             $index++;
         }

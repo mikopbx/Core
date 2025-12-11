@@ -85,7 +85,17 @@ class SystemMenu extends AbstractMenu
             $index++;
         }
 
-        // [6] Back
+        // Manage modules (not in LiveCD - modules are on storage disk)
+        if (!$this->env->isLiveCd()) {
+            $builder->addItem("[$index] " . $this->translation->_('cm_ManageModules'), function (CliMenu $menu) {
+                $menu->close();
+                $modulesMenu = new ModulesMenu();
+                $modulesMenu->show($menu);
+            });
+            $index++;
+        }
+
+        // [N] Back
         $this->addBackItem($builder, $index, $parentMenu);
 
         $menu = $builder->build();
