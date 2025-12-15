@@ -153,6 +153,7 @@ class MainMenu extends AbstractMenu
                 // Ctrl+C - exit to shell
                 echo "\e[?25h";
                 file_put_contents('/tmp/start_sh', '');
+                echo PHP_EOL . $this->translation->_('cm_RestartMenuHint') . ': /etc/rc/console_menu' . PHP_EOL . PHP_EOL;
                 exit(0);
             }
         });
@@ -163,6 +164,7 @@ class MainMenu extends AbstractMenu
             echo "\e[?25h"; // Enable cursor
             $menu->close();
             file_put_contents('/tmp/start_sh', '');
+            echo PHP_EOL . $this->translation->_('cm_RestartMenuHint') . ': /etc/rc/console_menu' . PHP_EOL . PHP_EOL;
             exit(0);
         });
 

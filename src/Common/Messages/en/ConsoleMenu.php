@@ -218,4 +218,7 @@ return [
     'cm_LastLogin' => 'Last login',
     'cm_From' => 'from',
     'cm_OnConsole' => 'on console',
+
+    // Exit hint
+    'cm_RestartMenuHint' => 'To restart menu run',
 ];

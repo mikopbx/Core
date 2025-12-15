@@ -218,4 +218,7 @@ return [
     'cm_LastLogin' => 'Последний вход',
     'cm_From' => 'с',
     'cm_OnConsole' => 'с консоли',
+
+    // Exit hint
+    'cm_RestartMenuHint' => 'Для запуска меню выполните',
 ];
