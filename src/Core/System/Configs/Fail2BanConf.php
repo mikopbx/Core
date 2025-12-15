@@ -132,6 +132,7 @@ class Fail2BanConf extends SystemConfigClass
         $fail2banPath = Util::which(self::FB_CLIENT_BIN);
 
         $this->generateMonitConf();
+        $this->monitReload();
         if ($this->fail2banEnable){
             $this->fail2banMakeDirs();
             $this->writeConfig();

@@ -76,6 +76,7 @@ return [
 
     // System status messages
     'cm_PbxLiveModeWarning' => 'PBX is running in Live or Recovery mode',
+    'cm_FirewallIsDisabled' => 'Firewall is disabled',
     'cm_SystemIntegrityBroken' => 'The integrity of the system is broken',
     'cm_ThisIs' => 'this is',
     'cm_WebInterfaceUrl' => 'Web Interface',

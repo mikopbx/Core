@@ -76,6 +76,7 @@ return [
 
     // System status messages
     'cm_PbxLiveModeWarning' => 'PBX работает в режиме Live или восстановления',
+    'cm_FirewallIsDisabled' => 'Брандмауэр отключён',
     'cm_SystemIntegrityBroken' => 'Целостность системы нарушена',
     'cm_ThisIs' => 'это',
     'cm_WebInterfaceUrl' => 'Веб-интерфейс',

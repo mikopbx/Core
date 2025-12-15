@@ -342,6 +342,16 @@ class BannerDataCollector
     }
 
     /**
+     * Check if firewall is disabled
+     *
+     * @return bool True if firewall is disabled
+     */
+    public function isFirewallDisabled(): bool
+    {
+        return PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) !== '1';
+    }
+
+    /**
      * Get storage disk usage information
      *
      * @return array{used: string, total: string, percent: int}|null Storage info or null if not mounted

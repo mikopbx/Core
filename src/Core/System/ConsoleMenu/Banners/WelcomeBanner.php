@@ -124,6 +124,12 @@ class WelcomeBanner implements BannerInterface
                 MenuStyleConfig::COLOR_RED
             );
         }
+        if ($this->dataCollector->isFirewallDisabled()) {
+            $lines[] = '    ' . MenuStyleConfig::colorize(
+                '⚠ ' . $translation->_('cm_FirewallIsDisabled'),
+                MenuStyleConfig::COLOR_RED
+            );
+        }
 
         // PBX Name (if customized)
         $pbxName = $this->dataCollector->getPbxName();
@@ -278,7 +284,9 @@ class WelcomeBanner implements BannerInterface
         }
 
         // Warnings section (if any)
-        $hasWarnings = $this->dataCollector->hasCorruptedFiles() || $this->dataCollector->isLiveCd();
+        $hasWarnings = $this->dataCollector->hasCorruptedFiles()
+            || $this->dataCollector->isLiveCd()
+            || $this->dataCollector->isFirewallDisabled();
         if ($hasWarnings) {
             $lines[] = $this->boxSeparator($innerWidth);
 
@@ -292,6 +300,14 @@ class WelcomeBanner implements BannerInterface
             }
             if ($this->dataCollector->isLiveCd()) {
                 $warning = '⚠ ' . $translation->_('cm_PbxLiveModeWarning');
+                $lines[] = $this->boxLine(
+                    '  ' . MenuStyleConfig::colorize($warning, MenuStyleConfig::COLOR_RED),
+                    $innerWidth,
+                    true
+                );
+            }
+            if ($this->dataCollector->isFirewallDisabled()) {
+                $warning = '⚠ ' . $translation->_('cm_FirewallIsDisabled');
                 $lines[] = $this->boxLine(
                     '  ' . MenuStyleConfig::colorize($warning, MenuStyleConfig::COLOR_RED),
                     $innerWidth,
@@ -632,6 +648,14 @@ class WelcomeBanner implements BannerInterface
         if ($this->dataCollector->isLiveCd()) {
             $lines[] = '    ' . MenuStyleConfig::colorize(
                 $translation->_('cm_PbxLiveModeWarning'),
+                MenuStyleConfig::COLOR_RED
+            );
+        }
+
+        // Firewall disabled warning
+        if ($this->dataCollector->isFirewallDisabled()) {
+            $lines[] = '    ' . MenuStyleConfig::colorize(
+                $translation->_('cm_FirewallIsDisabled'),
                 MenuStyleConfig::COLOR_RED
             );
         }

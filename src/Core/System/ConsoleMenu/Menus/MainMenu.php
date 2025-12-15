@@ -87,7 +87,15 @@ class MainMenu extends AbstractMenu
         // [2] Network and Connection (if available)
         if ($this->env->canConfigureNetwork() || $this->env->isDocker()) {
             $networkMenu = new NetworkMenu();
-            $builder->addItem("[$index] " . $networkMenu->getTitle(), function (CliMenu $menu) {
+            $networkLabel = "[$index] " . $networkMenu->getTitle();
+
+            // Add warning indicator if firewall is disabled
+            $dataCollector = new BannerDataCollector();
+            if ($dataCollector->isFirewallDisabled()) {
+                $networkLabel .= ' ' . MenuStyleConfig::colorize('(!)', MenuStyleConfig::COLOR_RED);
+            }
+
+            $builder->addItem($networkLabel, function (CliMenu $menu) {
                 $menu->close();
                 $networkMenu = new NetworkMenu();
                 $networkMenu->show($menu);
