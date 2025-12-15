@@ -21,7 +21,7 @@
 namespace MikoPBX\Service;
 
 /**
- * @method static array checkForCorruptedFiles() Checks for corrupted files.
+ * @method static array checkForCorruptedFiles(bool $silent = false) Checks for corrupted files. Silent mode suppresses syslog output.
  */
 class Main
 {

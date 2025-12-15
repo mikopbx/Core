@@ -556,6 +556,9 @@ class WelcomeBanner implements BannerInterface
      */
     public function runWithAutoRefresh(): ?string
     {
+        // Static flag to prevent multiple shutdown handler registrations
+        static $shutdownRegistered = false;
+
         // Determine display mode based on console type
         $useFullscreen = $this->envHelper->supportsFullscreenBanner()
             && $this->styleConfig->getTerminalWidth() >= self::FULLSCREEN_MIN_WIDTH;
@@ -563,11 +566,14 @@ class WelcomeBanner implements BannerInterface
         // Set terminal to non-blocking mode for key detection
         system('stty -icanon -echo');
 
-        // Ensure terminal is restored on exit
-        register_shutdown_function(function () {
-            system('stty sane');
-            MenuStyleConfig::resetTerminal();
-        });
+        // Ensure terminal is restored on exit (register only once)
+        if (!$shutdownRegistered) {
+            register_shutdown_function(static function () {
+                system('stty sane');
+                MenuStyleConfig::resetTerminal();
+            });
+            $shutdownRegistered = true;
+        }
 
         $lastRefresh = 0;
         $firstDraw = true;

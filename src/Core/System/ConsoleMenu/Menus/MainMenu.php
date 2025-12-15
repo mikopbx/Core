@@ -65,6 +65,9 @@ class MainMenu extends AbstractMenu
         $builder = $this->createMenuBuilder();
         $index = 1;
 
+        // Initialize data collector once for warning indicators
+        $dataCollector = new BannerDataCollector();
+
         // Add separator line
         $titleWidth = $this->styleConfig->getMenuWidth();
         $separator = '-';
@@ -90,7 +93,6 @@ class MainMenu extends AbstractMenu
             $networkLabel = "[$index] " . $networkMenu->getTitle();
 
             // Add warning indicator if firewall is disabled
-            $dataCollector = new BannerDataCollector();
             if ($dataCollector->isFirewallDisabled()) {
                 $networkLabel .= ' ' . MenuStyleConfig::colorize('(!)', MenuStyleConfig::COLOR_RED);
             }
@@ -118,7 +120,6 @@ class MainMenu extends AbstractMenu
         $systemMenu = new SystemMenu();
         $systemLabel = "[$index] " . $systemMenu->getTitle();
 
-        $dataCollector = new BannerDataCollector();
         if ($dataCollector->hasCorruptedFiles()) {
             $systemLabel .= ' ' . MenuStyleConfig::colorize('(!)', MenuStyleConfig::COLOR_RED);
         }
