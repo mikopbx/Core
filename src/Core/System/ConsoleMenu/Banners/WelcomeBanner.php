@@ -46,7 +46,6 @@ class WelcomeBanner implements BannerInterface
 {
     private const int MIN_WIDTH = 60;
     private const int FULLSCREEN_MIN_WIDTH = 80;
-    private const int AUTO_REFRESH_INTERVAL = 60; // seconds
     private const int STARTUP_GRACE_PERIOD = 120; // seconds - services shown as "starting" if uptime < this
 
     // ASCII art logo for MikoPBX (7 lines)
