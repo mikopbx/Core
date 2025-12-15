@@ -318,7 +318,7 @@ class BannerDataCollector
             return false;
         }
 
-        return count(Main::checkForCorruptedFiles()) > 0;
+        return count(Main::checkForCorruptedFiles(true)) > 0;
     }
 
     /**
@@ -398,5 +398,74 @@ class BannerDataCollector
         }
 
         return round($bytes, 1) . ' ' . $units[$index];
+    }
+
+    /**
+     * Get last login information (previous session, not current)
+     *
+     * Parses the output of `last` command to find the most recent completed login.
+     * Skips current sessions (still logged in) and system entries.
+     *
+     * @return array{datetime: string, source: string, terminal: string}|null
+     *         Login info or null if no previous login found
+     */
+    public function getLastLogin(): ?array
+    {
+        $output = shell_exec('last -n 20 2>/dev/null');
+        if (empty($output)) {
+            return null;
+        }
+
+        $lines = explode("\n", $output);
+        foreach ($lines as $line) {
+            $line = trim($line);
+
+            // Skip empty lines, current sessions, and system entries
+            if (empty($line)
+                || str_contains($line, 'still logged in')
+                || str_starts_with($line, 'wtmp begins')
+                || str_starts_with($line, 'reboot')
+                || str_starts_with($line, 'shutdown')
+            ) {
+                continue;
+            }
+
+            // Parse login entry
+            // Format: user terminal [host] date time - end_time (duration)
+            // SSH:    root pts/0   192.168.64.1  Mon Dec 15 12:39 - 12:40  (00:00)
+            // Console: root ttyS0                Mon Dec 15 12:14 - 12:16  (00:02)
+            $parts = preg_split('/\s+/', $line);
+            if (count($parts) < 6) {
+                continue;
+            }
+
+            $terminal = $parts[1] ?? '';
+            $source = '';
+            $dateStart = 2;
+
+            // Check if this is an SSH login (pts/X) with IP address
+            if (str_starts_with($terminal, 'pts/')) {
+                // Has IP address in position 2
+                $possibleIp = $parts[2] ?? '';
+                if (filter_var($possibleIp, FILTER_VALIDATE_IP)) {
+                    $source = $possibleIp;
+                    $dateStart = 3;
+                }
+            }
+
+            // Extract datetime (day month date time)
+            // Format: Mon Dec 15 12:39
+            if (count($parts) > $dateStart + 3) {
+                $datetime = implode(' ', array_slice($parts, $dateStart, 4));
+
+                return [
+                    'datetime' => $datetime,
+                    'source' => $source,
+                    'terminal' => $terminal,
+                ];
+            }
+        }
+
+        return null;
     }
 }

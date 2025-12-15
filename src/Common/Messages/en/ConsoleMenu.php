@@ -213,4 +213,9 @@ return [
     'cm_ModuleDisabledSuccess' => 'Module disabled successfully',
     'cm_ModuleEnableFailed' => 'Failed to enable module',
     'cm_ModuleDisableFailed' => 'Failed to disable module',
+
+    // Last login info
+    'cm_LastLogin' => 'Last login',
+    'cm_From' => 'from',
+    'cm_OnConsole' => 'on console',
 ];

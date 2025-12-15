@@ -155,6 +155,18 @@ class WelcomeBanner implements BannerInterface
             $lines[] = '    SSH: ' . $sshCmd;
         }
 
+        // Last login info
+        $lastLogin = $this->dataCollector->getLastLogin();
+        if ($lastLogin !== null) {
+            $loginStr = '    ' . $translation->_('cm_LastLogin') . ': ' . $lastLogin['datetime'];
+            if (!empty($lastLogin['source'])) {
+                $loginStr .= ' ' . $translation->_('cm_From') . ' ' . $lastLogin['source'];
+            } else {
+                $loginStr .= ' ' . $translation->_('cm_OnConsole');
+            }
+            $lines[] = $loginStr;
+        }
+
         $lines[] = '';
 
         // Get uptime for metrics and service status logic
@@ -385,6 +397,18 @@ class WelcomeBanner implements BannerInterface
                 $sshCmd .= " -p $sshPort";
             }
             $lines[] = $this->boxLine('  SSH Access:    ' . $sshCmd, $innerWidth);
+        }
+
+        // Last login info
+        $lastLogin = $this->dataCollector->getLastLogin();
+        if ($lastLogin !== null) {
+            $loginStr = '  ' . $translation->_('cm_LastLogin') . ':  ' . $lastLogin['datetime'];
+            if (!empty($lastLogin['source'])) {
+                $loginStr .= ' ' . $translation->_('cm_From') . ' ' . $lastLogin['source'];
+            } else {
+                $loginStr .= ' ' . $translation->_('cm_OnConsole');
+            }
+            $lines[] = $this->boxLine($loginStr, $innerWidth);
         }
 
         // Services section (two rows)

@@ -213,4 +213,9 @@ return [
     'cm_ModuleDisabledSuccess' => 'Модуль успешно отключен',
     'cm_ModuleEnableFailed' => 'Не удалось включить модуль',
     'cm_ModuleDisableFailed' => 'Не удалось отключить модуль',
+
+    // Last login info
+    'cm_LastLogin' => 'Последний вход',
+    'cm_From' => 'с',
+    'cm_OnConsole' => 'с консоли',
 ];

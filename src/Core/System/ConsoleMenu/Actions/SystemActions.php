@@ -381,8 +381,8 @@ class SystemActions
         );
         echo "\n\n";
 
-        // Use non-silent mode to also log to syslog
-        $files = Main::checkForCorruptedFiles(false);
+        // Use silent mode to avoid duplicate output (LOG_PERROR in syslog)
+        $files = Main::checkForCorruptedFiles(true);
 
         if (empty($files)) {
             echo MenuStyleConfig::colorize(
