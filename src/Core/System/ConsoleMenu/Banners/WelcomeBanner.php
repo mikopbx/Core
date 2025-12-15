@@ -47,6 +47,7 @@ class WelcomeBanner implements BannerInterface
     private const int MIN_WIDTH = 60;
     private const int FULLSCREEN_MIN_WIDTH = 80;
     private const int AUTO_REFRESH_INTERVAL = 60; // seconds
+    private const int STARTUP_GRACE_PERIOD = 120; // seconds - services shown as "starting" if uptime < this
 
     // ASCII art logo for MikoPBX (7 lines)
     private const array ASCII_LOGO = [
@@ -150,10 +151,14 @@ class WelcomeBanner implements BannerInterface
 
         $lines[] = '';
 
+        // Get uptime for metrics and service status logic
+        $uptimeSeconds = $this->dataCollector->getUptimeSeconds();
+        $uptime = $this->dataCollector->getUptime();
+        $isStarting = $uptimeSeconds > 0 && $uptimeSeconds < self::STARTUP_GRACE_PERIOD;
+
         // System metrics line: Uptime | Load | Storage
         $metrics = [];
 
-        $uptime = $this->dataCollector->getUptime();
         if (!empty($uptime)) {
             $metrics[] = $translation->_('cm_Uptime') . ': ' . $uptime;
         }
@@ -182,10 +187,11 @@ class WelcomeBanner implements BannerInterface
         $lines[] = '';
 
         // Service status - all 7 services in one line
+        // During startup (uptime < 2 min), show stopped services as yellow instead of red
         $services = $this->dataCollector->getServiceStatuses();
         $statusParts = [];
         foreach ($services as $name => $isRunning) {
-            $statusParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($isRunning);
+            $statusParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($isRunning, $isStarting);
         }
         $lines[] = '    ' . $translation->_('cm_Services') . ': ' . implode(' ', $statusParts);
 
@@ -301,7 +307,11 @@ class WelcomeBanner implements BannerInterface
         $virtualType = $this->dataCollector->getVirtualHardwareType();
         $arch = $this->dataCollector->getArchitecture();
         $buildTime = $this->dataCollector->getBuildTime();
+
+        // Get uptime for display and service status logic
+        $uptimeSeconds = $this->dataCollector->getUptimeSeconds();
         $uptime = $this->dataCollector->getUptime();
+        $isStarting = $uptimeSeconds > 0 && $uptimeSeconds < self::STARTUP_GRACE_PERIOD;
 
         $versionStr = "MikoPBX v.$version";
         if (!empty($virtualType)) {
@@ -362,6 +372,7 @@ class WelcomeBanner implements BannerInterface
         }
 
         // Services section (two rows)
+        // During startup (uptime < 2 min), show stopped services as yellow instead of red
         $lines[] = $this->boxSeparator($innerWidth);
 
         $services = $this->dataCollector->getServiceStatuses();
@@ -371,7 +382,7 @@ class WelcomeBanner implements BannerInterface
         $coreServices = array_slice($serviceNames, 0, 3);
         $coreParts = [];
         foreach ($coreServices as $name) {
-            $coreParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($services[$name]);
+            $coreParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($services[$name], $isStarting);
         }
         $lines[] = $this->boxLine(
             '  Core:    ' . implode('   ', $coreParts),
@@ -383,7 +394,7 @@ class WelcomeBanner implements BannerInterface
         $systemServices = array_slice($serviceNames, 3);
         $systemParts = [];
         foreach ($systemServices as $name) {
-            $systemParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($services[$name]);
+            $systemParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($services[$name], $isStarting);
         }
         $lines[] = $this->boxLine(
             '  System:  ' . implode('   ', $systemParts),
@@ -492,10 +503,12 @@ class WelcomeBanner implements BannerInterface
     /**
      * Run the banner with auto-refresh loop
      *
-     * Displays the banner and refreshes it every AUTO_REFRESH_INTERVAL seconds.
+     * Displays the banner and refreshes it every second to update uptime seconds.
      * Automatically selects display mode based on console type:
      * - Serial console (ttyS*, ttyAMA*): compact text banner
-     * - VM/SSH console: fullscreen banner with ASCII art and blue background
+     * - VM/SSH console: fullscreen banner with ASCII art and dark background
+     *
+     * Uses cursor repositioning instead of screen clear to reduce flicker.
      *
      * Exits on any key press, returning the key pressed.
      *
@@ -517,20 +530,30 @@ class WelcomeBanner implements BannerInterface
         });
 
         $lastRefresh = 0;
+        $firstDraw = true;
 
         while (true) {
             $now = time();
 
-            // Refresh banner if needed
-            if ($now - $lastRefresh >= self::AUTO_REFRESH_INTERVAL || $lastRefresh === 0) {
+            // Refresh banner every second to update uptime
+            if ($now !== $lastRefresh) {
+                if ($firstDraw) {
+                    // First draw - set up background
+                    if ($useFullscreen) {
+                        $this->styleConfig->fillScreenBackground(MenuStyleConfig::BG_DARK);
+                    } else {
+                        MenuStyleConfig::clearScreen();
+                    }
+                    $firstDraw = false;
+                } else {
+                    // Subsequent draws - just move cursor to top (no clear = less flicker)
+                    echo MenuStyleConfig::CURSOR_HOME;
+                }
+
                 if ($useFullscreen) {
-                    // Fullscreen mode with dark background (Claude Code style)
-                    $this->styleConfig->fillScreenBackground(MenuStyleConfig::BG_DARK);
                     echo MenuStyleConfig::COLOR_WHITE;
                     echo $this->renderFullscreen();
                 } else {
-                    // Compact mode with black background
-                    MenuStyleConfig::clearScreen();
                     echo $this->render();
                 }
                 echo PHP_EOL;

@@ -21,7 +21,9 @@
 namespace MikoPBX\Core\System\ConsoleMenu\Menus;
 
 use MikoPBX\Core\System\ConsoleMenu\Actions\SystemActions;
+use MikoPBX\Core\System\ConsoleMenu\Banners\BannerDataCollector;
 use MikoPBX\Core\System\ConsoleMenu\Banners\WelcomeBanner;
+use MikoPBX\Core\System\ConsoleMenu\Utilities\MenuStyleConfig;
 use MikoPBX\Core\System\PBXInstaller;
 use MikoPBX\Core\System\PBXRecovery;
 use PhpSchool\CliMenu\CliMenu;
@@ -104,9 +106,16 @@ class MainMenu extends AbstractMenu
             $index++;
         }
 
-        // [3] System
+        // [3] System (with integrity warning if corrupted)
         $systemMenu = new SystemMenu();
-        $builder->addItem("[$index] " . $systemMenu->getTitle(), function (CliMenu $menu) {
+        $systemLabel = "[$index] " . $systemMenu->getTitle();
+
+        $dataCollector = new BannerDataCollector();
+        if ($dataCollector->hasCorruptedFiles()) {
+            $systemLabel .= ' ' . MenuStyleConfig::colorize('(!)', MenuStyleConfig::COLOR_RED);
+        }
+
+        $builder->addItem($systemLabel, function (CliMenu $menu) {
             $menu->close();
             $systemMenu = new SystemMenu();
             $systemMenu->show($menu);

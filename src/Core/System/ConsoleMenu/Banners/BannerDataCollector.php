@@ -194,27 +194,44 @@ class BannerDataCollector
     }
 
     /**
-     * Get system uptime in compact format
+     * Get system uptime in seconds
      *
-     * @return string Uptime in format "Xd Yh Zm" (e.g., "2d 3h 45m")
+     * @return int Uptime in seconds, 0 if unavailable
      */
-    public function getUptime(): string
+    public function getUptimeSeconds(): int
     {
         $uptimeFile = '/proc/uptime';
         if (!file_exists($uptimeFile)) {
-            return '';
+            return 0;
         }
 
         $uptimeData = file_get_contents($uptimeFile);
         if ($uptimeData === false) {
+            return 0;
+        }
+
+        return (int)explode(' ', $uptimeData)[0];
+    }
+
+    /**
+     * Get system uptime in compact format with seconds
+     *
+     * Shows seconds to indicate banner is live and updating.
+     * Format: "Xd Yh Zm Ns" (e.g., "2d 3h 45m 12s")
+     *
+     * @return string Uptime string
+     */
+    public function getUptime(): string
+    {
+        $totalSeconds = $this->getUptimeSeconds();
+        if ($totalSeconds === 0) {
             return '';
         }
 
-        $seconds = (int)explode(' ', $uptimeData)[0];
-
-        $days = floor($seconds / 86400);
-        $hours = floor(($seconds % 86400) / 3600);
-        $minutes = floor(($seconds % 3600) / 60);
+        $days = floor($totalSeconds / 86400);
+        $hours = floor(($totalSeconds % 86400) / 3600);
+        $minutes = floor(($totalSeconds % 3600) / 60);
+        $seconds = $totalSeconds % 60;
 
         $parts = [];
         if ($days > 0) {
@@ -224,6 +241,7 @@ class BannerDataCollector
             $parts[] = "{$hours}h";
         }
         $parts[] = "{$minutes}m";
+        $parts[] = "{$seconds}s";
 
         return implode(' ', $parts);
     }

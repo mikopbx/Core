@@ -192,9 +192,10 @@ class MenuStyleConfig
      * Format service status indicator
      *
      * @param bool $isRunning Service running status
+     * @param bool $isStarting If true and service not running, show yellow (starting up) instead of red
      * @return string Colored status indicator
      */
-    public static function formatServiceStatus(bool $isRunning): string
+    public static function formatServiceStatus(bool $isRunning, bool $isStarting = false): string
     {
         $useAscii = self::shouldUseAsciiSymbols();
 
@@ -204,7 +205,9 @@ class MenuStyleConfig
         }
 
         $symbol = $useAscii ? 'x' : self::STATUS_FAIL;
-        return self::colorize($symbol, self::COLOR_RED);
+        // Yellow for starting services (uptime < 2 min), red for failed
+        $color = $isStarting ? self::COLOR_YELLOW : self::COLOR_RED;
+        return self::colorize($symbol, $color);
     }
 
     /**

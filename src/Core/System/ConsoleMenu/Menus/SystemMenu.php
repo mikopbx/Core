@@ -21,6 +21,8 @@
 namespace MikoPBX\Core\System\ConsoleMenu\Menus;
 
 use MikoPBX\Core\System\ConsoleMenu\Actions\SystemActions;
+use MikoPBX\Core\System\ConsoleMenu\Banners\BannerDataCollector;
+use MikoPBX\Core\System\ConsoleMenu\Utilities\MenuStyleConfig;
 use PhpSchool\CliMenu\CliMenu;
 
 /**
@@ -79,7 +81,14 @@ class SystemMenu extends AbstractMenu
 
         // Check system integrity (not in LiveCD)
         if (!$this->env->isLiveCd()) {
-            $builder->addItem("[$index] " . $this->translation->_('cm_CheckSystemIntegrity'), function (CliMenu $menu) use ($actions) {
+            $integrityLabel = "[$index] " . $this->translation->_('cm_CheckSystemIntegrity');
+
+            $dataCollector = new BannerDataCollector();
+            if ($dataCollector->hasCorruptedFiles()) {
+                $integrityLabel .= ' ' . MenuStyleConfig::colorize('(!)', MenuStyleConfig::COLOR_RED);
+            }
+
+            $builder->addItem($integrityLabel, function (CliMenu $menu) use ($actions) {
                 $actions->showCorruptedFiles($menu);
             });
             $index++;
