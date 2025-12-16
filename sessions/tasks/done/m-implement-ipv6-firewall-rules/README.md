@@ -1,9 +1,10 @@
 ---
 title: Implement IPv6 Firewall Rules Support
-status: in-progress
+status: completed
 priority: medium
 type: implementation
 created: 2025-11-21
+completed: 2025-12-16
 branch: ipv6-firewall-rules
 ---
 
@@ -379,15 +380,42 @@ Tests:
 
 - [x] Complete audit of IPv6 firewall rule generation
 - [x] Research report on IPv6 firewall best practices
-- [ ] LanInterfaces helper method added
-- [ ] NetworkFilters model validates IPv6 CIDR
-- [ ] Cidr class supports IPv6 prefix lengths
-- [ ] FirewallEditForm has separate IPv4/IPv6 fields
-- [ ] JavaScript validates dual-stack input
-- [ ] SaveRecordAction accepts IPv6 subnets
-- [ ] Translation keys added for all languages
-- [ ] Unit tests for IPv6 firewall rules
-- [ ] Documentation updated
+- [x] LanInterfaces helper method added (`isIpv6Enabled()`)
+- [x] NetworkFilters model validates IPv6 CIDR (`beforeValidation()` with `IpAddressHelper::normalizeCidr()`)
+- [x] Cidr class supports IPv6 prefix lengths (`getIPv6NetMasks()` /0-/128)
+- [x] FirewallEditForm has separate IPv4/IPv6 fields (conditional based on `isIpv6Enabled()`)
+- [x] JavaScript validates dual-stack input (RFC 4291 regex, auto-clear logic)
+- [x] SaveRecordAction accepts IPv6 subnets (`validateIpAndCidr()` with /0-/128)
+- [x] Translation keys added (ru/en/nl - core languages)
+- [x] Unit tests for IPv6 firewall rules (`NetworkFiltersTest.php`, `IptablesConfIpv6Test.php`)
+- [x] Documentation updated (CLAUDE.md files)
+
+## Implementation Summary (Completed 2025-12-16)
+
+### Files Modified
+
+| Component | File | Changes |
+|-----------|------|---------|
+| **Model** | `src/Common/Models/NetworkFilters.php` | Added `beforeValidation()` with IPv6 CIDR validation |
+| **Model** | `src/Common/Models/LanInterfaces.php` | Added `isIpv6Enabled()` static method |
+| **Library** | `src/AdminCabinet/Library/Cidr.php` | Added `getIPv6NetMasks()` for /0-/128 prefixes |
+| **Form** | `src/AdminCabinet/Forms/FirewallEditForm.php` | Separate IPv4/IPv6 fields, conditional on `isIpv6Enabled()` |
+| **View** | `src/AdminCabinet/Views/Firewall/modify.volt` | IPv6 network/subnet fields with conditional display |
+| **JavaScript** | `sites/admin-cabinet/assets/js/src/Firewall/firewall-modify.js` | RFC 4291 validation, auto-clear logic, either/or enforcement |
+| **REST API** | `src/PBXCoreREST/Lib/Firewall/SaveRecordAction.php` | `validateIpAndCidr()` with IPv6 /0-/128 support |
+| **REST API** | `src/PBXCoreREST/Lib/Firewall/GetListAction.php` | IPv6 support, ::/0 handling, dual-stack detection |
+| **Translations** | `src/Common/Messages/*/NetworkSecurity.php` | IPv6 keys (fw_ValidateIPv6Address, fw_IPv6Network, etc.) |
+| **Tests** | `tests/Common/Models/NetworkFiltersTest.php` | IPv6 CIDR validation tests |
+| **Tests** | `tests/Unit/Core/System/Configs/IptablesConfIpv6Test.php` | ip6tables rule generation tests |
+
+### Key Features Implemented
+
+1. **Dual-Stack UI** - Separate IPv4/IPv6 input fields with auto-clear logic
+2. **Either/Or Validation** - User must enter IPv4 OR IPv6, not both (NIST compliance)
+3. **Conditional IPv6 Fields** - Only visible when IPv6 enabled on any interface
+4. **RFC 4291 Validation** - Strict IPv6 format validation in JavaScript
+5. **Backend Validation** - IpAddressHelper::normalizeCidr() for both protocols
+6. **Unified Storage** - Single permit/deny fields (backward compatible)
 
 ## Notes
 
