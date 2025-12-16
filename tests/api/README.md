@@ -121,6 +121,23 @@ Comprehensive CRUD tests for each resource covering:
 pytest -v crud/
 ```
 
+### Security Tests
+
+**ACL Authorization Tests** (`test_02_acl.py`):
+- Tests ACL (Access Control List) authorization layer
+- Verifies role-based permissions after JWT authentication
+- Covers authentication failures (401 Unauthorized)
+- Covers authorization failures (403 Forbidden)
+- Tests request-to-ACL mapping for various URI patterns
+- Tests HTTP method to action mapping (GET→getList/getRecord, POST→create, etc.)
+- Tests public endpoint bypass
+- Tests localhost bypass
+
+**Run:**
+```bash
+pytest -v test_02_acl.py
+```
+
 ### Schemathesis Tests (Phase 3)
 
 Property-based testing using OpenAPI schema:
