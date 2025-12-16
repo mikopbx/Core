@@ -25,34 +25,45 @@ The middleware should be executed in the following order:
 ## Middleware Responsibilities
 
 ### 1. AuthenticationMiddleware
-**Purpose:** Basic authentication and user identification
+**Purpose:** Authentication and ACL authorization
 **Responsibilities:**
-- Validate Bearer tokens and set token context
+- Validate Bearer tokens (JWT or API Key) and set token context
 - Check localhost access (127.0.0.1, ::1)
 - Validate session authentication
-- Check public endpoints
+- Check public endpoints (via ResourceSecurity attributes)
 - Check module no-auth requests
+- **ACL Authorization:** Verify role permissions for controller/action pairs
 - Set authentication context in request object
 
 **What it sets in request:**
 - `tokenInfo` - Bearer token information and scopes
+- `jwtPayload` - JWT token payload with role claim
 - Session validation status
 - Authentication type used
 
+**ACL Authorization (after authentication):**
+- Extracts role from JWT payload (`role` claim)
+- Parses request URI into controller path and action
+- Checks Phalcon ACL: `$acl->isAllowed($role, $controller, $action)`
+- Returns 401 Unauthorized if not authenticated
+- Returns 403 Forbidden if authenticated but no ACL permission
+- Bypasses ACL for localhost requests (127.0.0.1, ::1)
+- Bypasses ACL for admins role (super privileges)
+
 ### 2. UnifiedSecurityMiddleware
-**Purpose:** Resource-based access control using PHP 8 attributes
+**Purpose:** API Key scope-based access control using PHP 8 attributes
+**Status:** Implemented but NOT yet integrated into middleware chain
 **Responsibilities:**
 - Read `ResourceSecurity` attributes from controllers
-- Check resource:action permissions (e.g., `call_queues:read`, `call_queues:write`)
+- Check API Key scopes (e.g., `call_queues:read`, `call_queues:write`)
 - Use authentication context set by AuthenticationMiddleware
-- Enforce fine-grained access control
+- Enforce fine-grained access control for API Keys
 - Log access attempts for auditing
 
 **What it checks:**
 - ResourceSecurity attributes on controllers/methods
 - Token scopes for API key access
-- User permissions for session access
-- Security type priority (PUBLIC → LOCALHOST → API_KEY → SESSION)
+- Security type priority (PUBLIC → LOCALHOST → API_KEY)
 
 ### 3. ApiValidationMiddleware
 **Purpose:** Request parameter validation using PHP 8 attributes
