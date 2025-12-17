@@ -101,17 +101,28 @@ class TestSysinfo:
         assert 'Hypervisor' in response['data'], "Data should contain 'Hypervisor' field"
 
         hypervisor = response['data']['Hypervisor']
+        environment_type = response['data'].get('environment_type', '')
 
         if response.get('result'):
-            # Hypervisor detected - verify it's valid
-            print(f"✓ Hypervisor detected: {hypervisor}")
-            assert hypervisor, "Hypervisor field should not be empty when result=true"
+            # Check for Docker environment (result=true but hypervisor may be empty)
+            if environment_type == 'docker':
+                print(f"✓ Running in Docker container")
+                print(f"  ✓ Environment type: {environment_type}")
+                if 'cpu_architecture' in response['data']:
+                    print(f"  ✓ CPU architecture: {response['data']['cpu_architecture']}")
+                # In Docker, hypervisor can be empty - this is expected
+            elif hypervisor:
+                # Hypervisor detected (VM environment)
+                print(f"✓ Hypervisor detected: {hypervisor}")
 
-            # Validate hypervisor is one of known types
-            known_hypervisors = ['KVM', 'VMware', 'VirtualBox', 'Hyper-V', 'Xen', 'QEMU', 'bhyve']
-            found_known = any(known in hypervisor for known in known_hypervisors)
-            assert found_known, f"Unknown hypervisor type: {hypervisor}. Expected one of: {', '.join(known_hypervisors)}"
-            print(f"  ✓ Recognized hypervisor type")
+                # Validate hypervisor is one of known types
+                known_hypervisors = ['KVM', 'VMware', 'VirtualBox', 'Hyper-V', 'Xen', 'QEMU', 'bhyve']
+                found_known = any(known in hypervisor for known in known_hypervisors)
+                assert found_known, f"Unknown hypervisor type: {hypervisor}. Expected one of: {', '.join(known_hypervisors)}"
+                print(f"  ✓ Recognized hypervisor type")
+            else:
+                # result=true but neither docker nor hypervisor - unexpected
+                pytest.fail(f"result=true but no hypervisor detected and not docker. Data: {response['data']}")
         else:
             # Bare metal system
             print(f"✓ Running on bare metal (no hypervisor detected)")

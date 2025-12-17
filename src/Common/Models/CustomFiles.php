@@ -37,6 +37,16 @@ class CustomFiles extends ModelsBase
     public const string MODE_CUSTOM = 'custom';  // User-created custom file
 
     /**
+     * Allowed directories for reading files via Files API
+     * Files in these directories can be read even if not registered in CustomFiles table
+     */
+    public const array ALLOWED_DIRECTORIES = [
+        '/etc/',
+        '/storage/usbdisk1/mikopbx/',
+        '/tmp/',
+    ];
+
+    /**
      * @Primary
      * @Identity
      * @Column(type="integer", nullable=false)
