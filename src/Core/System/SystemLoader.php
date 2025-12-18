@@ -156,6 +156,12 @@ class SystemLoader extends Injectable
         $envType = 'Bare Metal';
 
         if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            // Invalidate stale cache created during early boot (DMI may not have been ready)
+            $cacheFile = '/etc/.pbx_env_info';
+            if (file_exists($cacheFile)) {
+                unlink($cacheFile);
+            }
+
             $envOutput = [];
             Processes::mwExec("$pbxEnvDetect --type 2>/dev/null", $envOutput);
             $detectedType = strtolower(trim(implode('', $envOutput)));
