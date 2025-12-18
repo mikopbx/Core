@@ -48,6 +48,11 @@ class WelcomeBanner implements BannerInterface
     private const int FULLSCREEN_MIN_WIDTH = 80;
     private const int STARTUP_GRACE_PERIOD = 120; // seconds - services shown as "starting" if uptime < this
 
+    // Adaptive refresh settings
+    private const int FREQUENT_REFRESH_PERIOD = 300;  // 5 minutes - period of frequent refresh after activity
+    private const int FREQUENT_INTERVAL = 10;          // 10 seconds - refresh interval during active period
+    private const int INFREQUENT_INTERVAL = 300;       // 5 minutes - refresh interval when idle
+
     // ASCII art logo for MikoPBX (7 lines)
     private const array ASCII_LOGO = [
         '███╗   ███╗██╗██╗  ██╗ ██████╗ ██████╗ ██████╗ ██╗  ██╗',
@@ -542,7 +547,11 @@ class WelcomeBanner implements BannerInterface
     /**
      * Run the banner with auto-refresh loop
      *
-     * Displays the banner and refreshes it every second to update uptime seconds.
+     * Uses adaptive refresh intervals to reduce system load:
+     * - First 5 minutes after user activity: refresh every 10 seconds
+     * - After 5 minutes idle on banner: refresh every 5 minutes
+     * - When user returns from menu: resets to frequent refresh mode
+     *
      * Automatically selects display mode based on console type:
      * - Serial console (ttyS*, ttyAMA*): compact text banner
      * - VM/SSH console: fullscreen banner with ASCII art and dark background
@@ -576,12 +585,23 @@ class WelcomeBanner implements BannerInterface
 
         $lastRefresh = 0;
         $firstDraw = true;
+        $activityTime = time(); // Track when user became active (entering banner = activity)
 
         while (true) {
             $now = time();
+            $elapsedSinceActivity = $now - $activityTime;
 
-            // Refresh banner every second to update uptime
-            if ($now !== $lastRefresh) {
+            // Adaptive refresh interval:
+            // - First 5 minutes after activity: refresh every 10 seconds
+            // - After 5 minutes idle: refresh every 5 minutes
+            $refreshInterval = ($elapsedSinceActivity < self::FREQUENT_REFRESH_PERIOD)
+                ? self::FREQUENT_INTERVAL
+                : self::INFREQUENT_INTERVAL;
+
+            $timeSinceRefresh = $now - $lastRefresh;
+
+            // Refresh banner based on adaptive interval
+            if ($firstDraw || $timeSinceRefresh >= $refreshInterval) {
                 if ($firstDraw) {
                     // First draw - set up background
                     if ($useFullscreen) {

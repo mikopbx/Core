@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Workers;
 
+use MikoPBX\Common\Models\StorageSettings;
 use MikoPBX\Core\System\{Directories, SystemMessages};
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -110,6 +111,17 @@ class WorkerS3CacheCleaner extends WorkerBase
      */
     public function start(array $argv): void
     {
+        // Check if S3 storage is enabled before starting
+        $settings = StorageSettings::getSettings();
+        if ($settings->s3_enabled !== 1 || !$settings->isS3Configured()) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                'S3 storage not configured - worker exiting',
+                LOG_DEBUG
+            );
+            return;
+        }
+
         SystemMessages::sysLogMsg(__CLASS__, 'S3 Cache Cleaner started', LOG_INFO);
 
         while ($this->needRestart === false) {
