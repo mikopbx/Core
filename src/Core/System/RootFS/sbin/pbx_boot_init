@@ -36,6 +36,11 @@ else
   fi
 fi
 
+# Set console framebuffer resolution (for VMware and other hypervisors)
+if [ -w /sys/class/graphics/fb0/virtual_size ]; then
+  echo '1152x864' > /sys/class/graphics/fb0/virtual_size 2>/dev/null
+fi
+
 # Use new message handler if available
 if [ -x "/sbin/pbx-message" ]; then
   /sbin/pbx-message -t start "Start ${0}"
