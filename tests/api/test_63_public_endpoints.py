@@ -269,32 +269,6 @@ class TestPublicEndpointsMethodLevel:
         print(f"✓ Method-level PUBLIC: user-page-tracker:pageLeave is public")
 
 
-class TestPublicEndpointsModules:
-    """
-    Priority 2: Module Pattern 2 public endpoints
-
-    Tests endpoints from modules using noAuth: true in getPBXCoreRESTAdditionalRoutes().
-    These endpoints are detected via Request::thisIsModuleNoAuthRequest().
-    """
-
-    def test_01_priority2_module_endpoint_skip_if_no_modules(self):
-        """Test Priority 2 - Module Pattern 2 with noAuth: true"""
-        # Module examples are not available in current project
-        # This test documents the expected behavior
-
-        pytest.skip("Module examples not available in current project")
-
-        # Expected behavior when modules ARE present:
-        # 1. Module defines route with 6th parameter = true
-        # 2. Request::thisIsModuleNoAuthRequest() checks route config
-        # 3. AuthenticationMiddleware allows access without Bearer token
-
-        # Example endpoint (if module exists):
-        # GET /pbxcore/api/module-example-v2-public/status
-
-        print(f"✓ Priority 2: Module Pattern 2 documented (skip - no modules)")
-
-
 class TestPublicEndpointsNegative:
     """
     Negative tests - verify protected endpoints still require authentication

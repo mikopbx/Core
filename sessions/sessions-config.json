@@ -37,10 +37,6 @@
       "grep",
       "ssh",
       "vendor/bin/phpunit",
-      "docker exec mikopbx_ipv6-support",
-      "pytest tests/api/test_14_extensions_create_single.py::test_create_single_employee -vv -s",
-      "pytest tests/api/test_14_extensions_create_single.py -v",
-      "python3 -m pytest",
       "python3 -m pytest:*"
     ],
     "bash_write_patterns": [],

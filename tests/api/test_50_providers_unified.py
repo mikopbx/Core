@@ -33,6 +33,7 @@ class TestUnifiedProviders:
         else:
             print(f"⚠ Get statuses returned: {response.get('messages', {})}")
 
+    @pytest.mark.order(after="test_18_sip_providers.py::TestSipProviders::test_02_create_sip_provider")
     @pytest.mark.dependency(depends=["TestUnifiedProviders::test_01_get_all_providers"])
     def test_03_get_single_provider_status(self, api_client):
         """Test GET /providers/{id}:getStatus - Get single provider status"""
@@ -65,6 +66,7 @@ class TestUnifiedProviders:
             else:
                 raise
 
+    @pytest.mark.order(after="test_18_sip_providers.py::TestSipProviders::test_02_create_sip_provider")
     @pytest.mark.dependency(depends=["TestUnifiedProviders::test_01_get_all_providers"])
     def test_04_get_single_provider(self, api_client):
         """Test GET /providers/{id} - Get single provider details"""

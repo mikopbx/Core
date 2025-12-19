@@ -37,9 +37,9 @@ class TestWikiLinks:
                 if response.get('result') is True:
                     data = response.get('data', {})
 
-                    # Check if we got a valid link
-                    if data and (isinstance(data, str) or (isinstance(data, dict) and data.get('link'))):
-                        link = data if isinstance(data, str) else data.get('link', '')
+                    # Check if we got a valid link (API returns 'url' field)
+                    if data and (isinstance(data, str) or (isinstance(data, dict) and (data.get('url') or data.get('link')))):
+                        link = data if isinstance(data, str) else data.get('url', data.get('link', ''))
                         print(f"✓ Retrieved wiki link for {params['controller']}/{params['action']}")
                         print(f"  Link: {link[:80]}..." if len(link) > 80 else f"  Link: {link}")
                         found_link = True
@@ -176,9 +176,9 @@ class TestWikiLinks:
                     print(f"✓ Wiki link in custom format")
 
             elif isinstance(data, dict):
-                # Check for link field
-                if 'link' in data or 'url' in data:
-                    link = data.get('link', data.get('url', ''))
+                # Check for url field (API returns 'url', not 'link')
+                if 'url' in data or 'link' in data:
+                    link = data.get('url', data.get('link', ''))
                     if link:
                         print(f"✓ Wiki link structure valid")
                         print(f"  URL: {link[:80]}..." if len(link) > 80 else f"  URL: {link}")

@@ -418,5 +418,47 @@
     "duration": 2,
     "UNIQUEID": "mikopbx-1730294137.10355_F1E3zW",
     "linkedid": "mikopbx-1730294137.10355"
+  },
+  {
+    "id": 31,
+    "start": "2025-10-18 14:30:00.000",
+    "endtime": "2025-10-18 14:32:30.000",
+    "answer": "2025-10-18 14:30:05.000",
+    "src_num": "79001234567",
+    "dst_num": "201",
+    "disposition": "ANSWERED",
+    "recordingfile": "/storage/usbdisk1/mikopbx/astspool/monitor/2025/10/18/14/mikopbx-linked-call.100_leg1.mp3",
+    "billsec": 30,
+    "duration": 35,
+    "UNIQUEID": "mikopbx-linked-call.100",
+    "linkedid": "mikopbx-linked-call.100"
+  },
+  {
+    "id": 32,
+    "start": "2025-10-18 14:30:35.000",
+    "endtime": "2025-10-18 14:35:00.000",
+    "answer": "2025-10-18 14:30:40.000",
+    "src_num": "201",
+    "dst_num": "202",
+    "disposition": "ANSWERED",
+    "recordingfile": "/storage/usbdisk1/mikopbx/astspool/monitor/2025/10/18/14/mikopbx-linked-call.101_leg2.mp3",
+    "billsec": 260,
+    "duration": 265,
+    "UNIQUEID": "mikopbx-linked-call.101",
+    "linkedid": "mikopbx-linked-call.100"
+  },
+  {
+    "id": 33,
+    "start": "2025-10-18 14:35:05.000",
+    "endtime": "2025-10-18 14:40:00.000",
+    "answer": "2025-10-18 14:35:10.000",
+    "src_num": "202",
+    "dst_num": "203",
+    "disposition": "ANSWERED",
+    "recordingfile": "/storage/usbdisk1/mikopbx/astspool/monitor/2025/10/18/14/mikopbx-linked-call.102_leg3.mp3",
+    "billsec": 290,
+    "duration": 295,
+    "UNIQUEID": "mikopbx-linked-call.102",
+    "linkedid": "mikopbx-linked-call.100"
   }
 ]

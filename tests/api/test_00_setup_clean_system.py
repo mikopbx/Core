@@ -168,17 +168,16 @@ class TestSystemReset:
                 print(f"\n❌ Error executing reset: {error_msg[:200]}")
                 raise
 
-    @pytest.mark.skip(reason="Optional - System will restart automatically")
+    @pytest.mark.skipif(
+        os.getenv('ENABLE_SYSTEM_RESET') != '1',
+        reason="Optional - Set ENABLE_SYSTEM_RESET=1 to enable"
+    )
     def test_04_wait_for_system_restart(self, api_client):
         """
         Wait for system to restart and come back online
 
-        This test is SKIPPED by default because:
-        - System restart takes 2-5 minutes
-        - Manual verification is recommended
-        - Subsequent tests will fail if system is down
-
-        To enable, remove @pytest.mark.skip decorator
+        This test waits up to 5 minutes for system to restart.
+        Enable with ENABLE_SYSTEM_RESET=1 environment variable.
         """
         print("\n" + "=" * 70)
         print("STEP 3: Waiting for system to restart")
@@ -225,13 +224,15 @@ class TestSystemReset:
         print(f"   Please check system status manually")
         pytest.fail(f"System did not restart within {max_wait} seconds")
 
-    @pytest.mark.skip(reason="Optional - Enable if you want to verify empty state")
+    @pytest.mark.skipif(
+        os.getenv('ENABLE_SYSTEM_RESET') != '1',
+        reason="Optional - Set ENABLE_SYSTEM_RESET=1 to enable"
+    )
     def test_05_verify_system_is_empty(self, api_client):
         """
         Verify that system was successfully reset
 
-        This test is SKIPPED by default.
-        Enable it if you want to verify the system is empty after reset.
+        Enable with ENABLE_SYSTEM_RESET=1 environment variable.
         """
         print("\n" + "=" * 70)
         print("STEP 4: Verifying system is empty")

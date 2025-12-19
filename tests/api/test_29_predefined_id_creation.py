@@ -55,23 +55,6 @@ class TestPredefinedIDCreation:
             'verify_fields': ['name', 'extension', 'strategy']
         },
         {
-            'endpoint': 'sound-files',
-            'id_prefix': 'SOUND-TEST',
-            'create_data': {
-                'name': 'test_sound_with_id.wav',
-                'path': 'custom/test_sound_with_id.wav',
-                'description': 'Testing predefined ID'
-            },
-            'verify_fields': ['name'],
-            'skip': True,
-            'skip_reason': (
-                'Sound files require file upload via sound-files:uploadFile endpoint. '
-                'The API does not support creating sound files with predefined IDs '
-                'through the standard POST endpoint after file upload. '
-                'File IDs are auto-generated during upload process.'
-            )
-        },
-        {
             'endpoint': 'ivr-menu',
             'id_prefix': 'IVR-',
             'create_data': {

@@ -160,6 +160,7 @@ class TestAclResourceParsing:
 
         print(f"✓ GET /resource correctly maps to getList action")
 
+    @pytest.mark.order(after="test_15_extensions_employees.py::TestEmployees::test_02_get_list")
     def test_02_resource_get_record(self, api_client):
         """Test GET /resource/{id} → action=getRecord"""
         # Use employees endpoint which has getRecord implemented
@@ -191,6 +192,7 @@ class TestAclResourceParsing:
 
         print(f"✓ GET /resource:customMethod correctly maps to custom action")
 
+    @pytest.mark.order(after="test_15_extensions_employees.py::TestEmployees::test_02_get_list")
     def test_04_custom_resource_method(self, api_client):
         """Test GET /resource/{id}:customMethod → action=customMethod"""
         # This tests pattern like:
