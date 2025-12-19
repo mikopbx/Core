@@ -69,11 +69,11 @@ class MikoPBXClient:
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
         # Retry strategy for transient failures and connection errors
-        # Increased retries and backoff for server restarts
+        # Only retry on temporary/gateway errors, NOT on 500 (server logic errors)
         retry_strategy = Retry(
-            total=10,  # Increased from 3 to 10
-            backoff_factor=2,  # Increased from 1 to 2 (2, 4, 8, 16, 32 seconds...)
-            status_forcelist=[429, 500, 502, 503, 504],
+            total=5,
+            backoff_factor=1,  # 1, 2, 4, 8, 16 seconds
+            status_forcelist=[429, 502, 503, 504],  # No 500 - that's a logic error
             allowed_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
             raise_on_status=False  # Don't raise on status errors, let us handle them
         )
