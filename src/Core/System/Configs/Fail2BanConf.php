@@ -627,7 +627,7 @@ class Fail2BanConf extends SystemConfigClass
         Processes::mwExec("$rmPath -rf $filterPath/module_*.conf");
 
         // Add additional modules routes
-        $additionalModulesJails = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GENERATE_FAIL2BAN_JAILS);
+        $additionalModulesJails = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GENERATE_FAIL2BAN_FILTERS);
         foreach ($additionalModulesJails as $moduleUniqueId => $moduleJailText) {
             $fileName = Text::uncamelize($moduleUniqueId, '_') . '.conf';
             file_put_contents("$filterPath/$fileName", $moduleJailText);
@@ -677,7 +677,7 @@ class Fail2BanConf extends SystemConfigClass
             $fileName = Text::uncamelize($moduleUniqueId, '_');
 
             // If module provided jail configuration, use it; otherwise generate default configuration
-            if (!empty($moduleJailText)) {
+            if (!empty($moduleJailText) && $moduleJailText !== '#') {
                 $config = $moduleJailText;
             } else {
                 // Construct the default configuration string for the module
