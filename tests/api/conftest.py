@@ -166,9 +166,15 @@ class MikoPBXClient:
             print(f"✗ Token refresh failed: {e}")
             return False
 
-    def get_raw(self, path: str, params: Optional[Dict] = None, _auth_retried: bool = False) -> requests.Response:
+    def get_raw(self, path: str, params: Optional[Dict] = None,
+                 _auth_retried: bool = False, skip_auth_retry: bool = False) -> requests.Response:
         """
         GET request returning raw Response object (for testing status codes, headers, etc.)
+
+        Args:
+            path: API endpoint path
+            params: Optional query parameters
+            skip_auth_retry: If True, don't attempt token refresh on 401 (for ACL tests)
 
         Returns:
             requests.Response object with status_code, headers, text, json() methods
@@ -185,8 +191,8 @@ class MikoPBXClient:
                     headers=self._get_headers(),
                     timeout=30
                 )
-                # Handle 401 by refreshing token and retrying once
-                if response.status_code == 401 and not _auth_retried:
+                # Handle 401 by refreshing token and retrying once (unless skipped)
+                if response.status_code == 401 and not _auth_retried and not skip_auth_retry:
                     if self._handle_401_and_retry(response):
                         return self.get_raw(path, params, _auth_retried=True)
                 # Don't raise for status - let caller check status_code

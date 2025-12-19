@@ -36,8 +36,8 @@ class TestAclBasics:
         unauthenticated_client = MikoPBXClient(API_BASE_URL, API_LOGIN, API_PASSWORD)
         # Don't authenticate - no token
 
-        # Try to access protected resource
-        response = unauthenticated_client.get_raw('extensions')
+        # Try to access protected resource (skip auto-retry to test server response)
+        response = unauthenticated_client.get_raw('extensions', skip_auth_retry=True)
 
         # Should get 401 Unauthorized
         assert response.status_code == 401, \
@@ -51,8 +51,8 @@ class TestAclBasics:
         fake_client = MikoPBXClient(API_BASE_URL, API_LOGIN, API_PASSWORD)
         fake_client.access_token = "invalid.jwt.token"
 
-        # Try to access protected resource
-        response = fake_client.get_raw('extensions')
+        # Try to access protected resource (skip auto-retry to test server response)
+        response = fake_client.get_raw('extensions', skip_auth_retry=True)
 
         # Should get 401 Unauthorized (token validation failed)
         assert response.status_code == 401, \
@@ -90,8 +90,8 @@ class TestAclBasics:
         expired_client = MikoPBXClient(API_BASE_URL, API_LOGIN, API_PASSWORD)
         expired_client.access_token = expired_token
 
-        # Try to access protected resource
-        response = expired_client.get_raw('extensions')
+        # Try to access protected resource (skip auto-retry to test server response)
+        response = expired_client.get_raw('extensions', skip_auth_retry=True)
 
         # Should get 401 Unauthorized (token expired/invalid signature)
         assert response.status_code == 401, \
