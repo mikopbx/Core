@@ -21,9 +21,19 @@
 namespace MikoPBX\Core\RootFS\etc\rc;
 
 use MikoPBX\Core\System\ConsoleMenu\Banners\WelcomeBanner;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 require_once 'Globals.php';
+
+// Wait for system boot to complete before showing banner.
+// Banner requires Redis and DB migrations to be ready.
+$maxWait = 120; // seconds
+$waited = 0;
+while (System::isBooting() && $waited < $maxWait) {
+    sleep(1);
+    $waited++;
+}
 
 // Set Cyrillic font for proper Russian text display on physical console
 Util::setCyrillicFont();

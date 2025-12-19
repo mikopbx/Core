@@ -57,7 +57,7 @@ class RedisConf extends SystemConfigClass
         if(System::isBooting()){
             $this->configure();
             Processes::mwExecBg($this->startCommand);
-            return self::waitForRedisStart();
+            return $this->waitForRedisStart();
         }
         return $this->reStart();
     }
@@ -90,23 +90,22 @@ class RedisConf extends SystemConfigClass
             $this->monitRestart();
         }
 
-        return self::waitForRedisStart();
+        return $this->waitForRedisStart();
     }
 
     /**
-     * Wait for Redis to become ready with timeout.
+     * Wait for Redis to start with timeout
      *
      * @param int $timeout Maximum number of seconds to wait
-     * @return bool True if Redis is ready within timeout
+     * @return bool True if Redis started within timeout
      */
-    public static function waitForRedisStart(int $timeout = 60): bool
+    private function waitForRedisStart(int $timeout = 60): bool
     {
-        $config = ConfigProvider::getConfig()->redis;
         $redisCli = Util::which('redis-cli');
         $maxAttempts = $timeout * 2; // Check every 0.5 seconds
 
         for ($i = 0; $i < $maxAttempts; $i++) {
-            if (Processes::mwExec("$redisCli -p $config->port ping") === 0) {
+            if (Processes::mwExec("$redisCli -p $this->port ping") === 0) {
                 return true;
             }
             usleep(500000); // 0.5 second

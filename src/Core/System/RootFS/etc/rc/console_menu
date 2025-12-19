@@ -18,14 +18,17 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 namespace MikoPBX\Core\RootFS\etc\rc;
-use MikoPBX\Core\System\Configs\RedisConf;
 use MikoPBX\Core\System\ConsoleMenu;
+use MikoPBX\Core\System\System;
 require_once('Globals.php');
 
-// Wait for Redis to be available before starting console menu.
-// Console menu requires Redis for translations and settings cache.
-if (!RedisConf::waitForRedisStart(60)) {
-    echo "Warning: Redis not available, starting menu anyway...\n";
+// Wait for system boot to complete before starting console menu.
+// Console menu requires Redis and DB migrations to be ready.
+$maxWait = 120; // seconds
+$waited = 0;
+while (System::isBooting() && $waited < $maxWait) {
+    sleep(1);
+    $waited++;
 }
 
 $cMenu = new ConsoleMenu();
