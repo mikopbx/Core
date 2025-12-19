@@ -98,6 +98,9 @@ class IptablesConf extends Injectable
      * It stops Fail2Ban, drops all existing rules, and then re-creates them based on the current configuration.
      * If the firewall is enabled, it applies the main and additional firewall rules.
      * It also takes care of setting up Fail2Ban according to its enabled status.
+     *
+     * IMPORTANT: If no firewall rules exist in database, all traffic is allowed (no DROP rule applied).
+     * This prevents locking out SSH/WEB access when firewall is enabled without configured rules.
      */
     public function applyConfig(): void
     {
@@ -105,9 +108,13 @@ class IptablesConf extends Injectable
         if (System::isDocker()) {
             return;
         }
-        
+
         $this->dropAllRules();
         if ($this->firewall_enable) {
+            // Check if any firewall rules exist in database
+            // If no rules configured - allow all traffic (don't apply DROP at the end)
+            $hasRules = NetworkFilters::count() > 0;
+
             $arr_command   = [];
             $arr_command[] = $this->getIptablesInputRule('', '-m conntrack --ctstate ESTABLISHED,RELATED');
             if($this->maxReqSec > 0){
@@ -138,12 +145,23 @@ class IptablesConf extends Injectable
                 $arr_commands_custom
             );
 
-            $dropCommand = $this->getIptablesInputRule('', '', 'DROP');
             // T2SDE or Docker
             Processes::mwExecCommands($arr_command, $out, 'firewall');
             Processes::mwExecCommands($arr_commands_custom, $out, 'firewall_additional');
-            // Drop everything else
-            Processes::mwExec($dropCommand);
+
+            // Drop everything else - but ONLY if rules are configured
+            // If no rules exist, allow all traffic to prevent lockout
+            if ($hasRules) {
+                // IPv4 DROP
+                $dropCommand = $this->getIptablesInputRule('', '', 'DROP');
+                Processes::mwExec($dropCommand);
+
+                // IPv6 DROP
+                $ip6tablesPath = Util::which('ip6tables');
+                if (!empty($ip6tablesPath)) {
+                    Processes::mwExec("$ip6tablesPath -A INPUT -j DROP");
+                }
+            }
         }
     }
 
