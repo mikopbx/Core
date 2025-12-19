@@ -79,11 +79,19 @@ while : ; do
     if [ -f /tmp/start_sh ]; then
         clear;
         rm -rf /tmp/start_sh;
-        # Just launch bash - stdin/stdout already connected to proper TTY by init.
-        # Note: Do NOT redirect to /dev/console - with kernel params
-        # "console=tty1 console=ttyS0", /dev/console points to ttyS0 (serial),
-        # not tty1 (virtual terminal where user is working).
-        exec /bin/bash -login;
+        if [ -f /etc/debian_version ] ; then
+            # Docker container - no exec, just run bash
+            /bin/bash -login;
+        elif [ "${SSH_CLIENT}x" = "x" ] ; then
+            # Console (not SSH) - reconnect stdin/stdout to current tty
+            # This fixes terminal state after PhpSchool CliMenu exit
+            current_tty=$(tty)
+            exec < "$current_tty" > "$current_tty" 2>&1
+            exec /bin/bash -login;
+        else
+            # SSH session
+            exec /bin/bash -login;
+        fi
     fi
     # Ensure that the /offload partition is mounted.
     if [ ! -f "$freeOffloadFile" ]; then
