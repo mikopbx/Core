@@ -131,7 +131,7 @@ class RedisConf extends SystemConfigClass
         $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/redis.pid '.PHP_EOL.
             '    start program = "'.$this->startCommand.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
-            '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
+            '    stop program = "'.$busyboxPath.' sh -c \''.$busyboxPath.' killall '.self::PROC_NAME.'; rm -f /var/run/redis.pid\''.'"'.PHP_EOL.
             '        as uid root and gid root';
 
         $this->saveFileContent($confPath, $conf);
@@ -149,6 +149,7 @@ class RedisConf extends SystemConfigClass
         $this->port = $config->port;
         $conf   = "bind $config->host" . PHP_EOL;
         $conf  .= "port $config->port" . PHP_EOL;
+        $conf  .= "pidfile /var/run/redis.pid" . PHP_EOL;
         $conf  .= "dir /var/tmp" . PHP_EOL;
         $conf  .= "loglevel warning" . PHP_EOL;
         $conf  .= "syslog-enabled yes" . PHP_EOL;
