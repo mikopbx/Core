@@ -79,15 +79,11 @@ while : ; do
     if [ -f /tmp/start_sh ]; then
         clear;
         rm -rf /tmp/start_sh;
-        if [ -f /etc/debian_version ] ; then
-            /bin/bash -login;
-        elif [ "${SSH_CLIENT}x" = 'x' ] ; then
-             # Redirect input and output to the console.
-            exec < /dev/console > /dev/console  2>&1
-            exec /bin/bash -login;
-        else
-            exec /bin/bash -login;
-        fi
+        # Just launch bash - stdin/stdout already connected to proper TTY by init.
+        # Note: Do NOT redirect to /dev/console - with kernel params
+        # "console=tty1 console=ttyS0", /dev/console points to ttyS0 (serial),
+        # not tty1 (virtual terminal where user is working).
+        exec /bin/bash -login;
     fi
     # Ensure that the /offload partition is mounted.
     if [ ! -f "$freeOffloadFile" ]; then
