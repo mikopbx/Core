@@ -101,16 +101,29 @@ class RedisConf extends SystemConfigClass
      */
     private function waitForRedisStart(int $timeout = 60): bool
     {
+        return self::waitForReady($timeout);
+    }
+
+    /**
+     * Wait for Redis to become ready with timeout.
+     * Can be called statically to check Redis availability.
+     *
+     * @param int $timeout Maximum number of seconds to wait
+     * @return bool True if Redis is ready within timeout
+     */
+    public static function waitForReady(int $timeout = 60): bool
+    {
+        $config = ConfigProvider::getConfig()->redis;
         $redisCli = Util::which('redis-cli');
         $maxAttempts = $timeout * 2; // Check every 0.5 seconds
-        
+
         for ($i = 0; $i < $maxAttempts; $i++) {
-            if (Processes::mwExec("$redisCli -p $this->port ping") === 0) {
+            if (Processes::mwExec("$redisCli -p $config->port ping") === 0) {
                 return true;
             }
             usleep(500000); // 0.5 second
         }
-        
+
         return false;
     }
 
