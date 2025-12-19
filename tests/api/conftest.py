@@ -118,11 +118,18 @@ class MikoPBXClient:
         This should be called when access token is close to expiration (15 min)
         """
         response = self.session.post(f"{self.auth_base_url}/auth:refresh")
+
+        # If refresh fails (401, missing/expired cookie), re-authenticate
+        if response.status_code == 401:
+            print("⚠️  Refresh token expired, re-authenticating...")
+            self.authenticate()
+            return
+
         response.raise_for_status()
         data = response.json()
 
         if not data.get('result'):
-            # If refresh fails, re-authenticate
+            # If refresh returns success=false, re-authenticate
             self.authenticate()
             return
 
