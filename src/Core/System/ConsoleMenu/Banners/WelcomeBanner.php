@@ -178,32 +178,58 @@ class WelcomeBanner implements BannerInterface
         $uptime = $this->dataCollector->getUptime();
         $isStarting = $uptimeSeconds > 0 && $uptimeSeconds < self::STARTUP_GRACE_PERIOD;
 
-        // System metrics line: Uptime | Load | Storage
-        $metrics = [];
-
+        // Line 1: Uptime | Load (cores)
+        $line1 = [];
         if (!empty($uptime)) {
-            $metrics[] = $translation->_('cm_Uptime') . ': ' . $uptime;
+            $line1[] = $translation->_('cm_Uptime') . ': ' . $uptime;
         }
-
         $loadAvg = $this->dataCollector->getLoadAverage();
         if ($loadAvg !== null) {
+            $cpuCores = $this->dataCollector->getCpuCores();
             $loadStr = MenuStyleConfig::formatLoadValue($loadAvg['load1']) . ' '
                 . MenuStyleConfig::formatLoadValue($loadAvg['load5']) . ' '
-                . MenuStyleConfig::formatLoadValue($loadAvg['load15']);
-            $metrics[] = 'Load: ' . $loadStr;
+                . MenuStyleConfig::formatLoadValue($loadAvg['load15'])
+                . " ($cpuCores cores)";
+            $line1[] = 'Load: ' . $loadStr;
+        }
+        if (!empty($line1)) {
+            $lines[] = '    ' . implode(' | ', $line1);
         }
 
+        // Line 2: Mem | Swap (if used)
+        $memInfo = $this->dataCollector->getMemoryInfo();
+        if ($memInfo !== null) {
+            $line2 = [];
+            $memColor = $memInfo['mem_percent'] > 90
+                ? MenuStyleConfig::COLOR_RED
+                : ($memInfo['mem_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
+            $line2[] = 'Mem: ' . MenuStyleConfig::colorize(
+                "{$memInfo['mem_used']} / {$memInfo['mem_total']} ({$memInfo['mem_percent']}%)",
+                $memColor
+            );
+            if ($memInfo['swap_percent'] > 0) {
+                $swapColor = $memInfo['swap_percent'] > 90
+                    ? MenuStyleConfig::COLOR_RED
+                    : ($memInfo['swap_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
+                $line2[] = 'Swap: ' . MenuStyleConfig::colorize(
+                    "{$memInfo['swap_used']} / {$memInfo['swap_total']} ({$memInfo['swap_percent']}%)",
+                    $swapColor
+                );
+            }
+            $lines[] = '    ' . implode(' | ', $line2);
+        }
+
+        // Line 3: Storage
         $storageInfo = $this->dataCollector->getStorageInfo();
         if ($storageInfo !== null) {
             $storageColor = $storageInfo['percent'] > 90
                 ? MenuStyleConfig::COLOR_RED
                 : ($storageInfo['percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
-            $metrics[] = $translation->_('cm_Storage') . ': '
-                . MenuStyleConfig::colorize("{$storageInfo['percent']}%", $storageColor);
-        }
-
-        if (!empty($metrics)) {
-            $lines[] = '    ' . implode(' | ', $metrics);
+            $lines[] = '    ' . $translation->_('cm_Storage') . ': '
+                . MenuStyleConfig::colorize(
+                    "{$storageInfo['used']} / {$storageInfo['total']} ({$storageInfo['percent']}%)",
+                    $storageColor
+                );
         }
 
         $lines[] = '';
@@ -351,34 +377,68 @@ class WelcomeBanner implements BannerInterface
         }
         $versionStr .= " ($arch)";
 
-        // Two-column layout for system info
-        $leftCol = '  Version: ' . MenuStyleConfig::colorize($versionStr, MenuStyleConfig::COLOR_GREEN);
-        $rightCol = $translation->_('cm_Uptime') . ': ' . $uptime;
-        $lines[] = $this->boxLineTwoCol($leftCol, $rightCol, $innerWidth);
+        // Row 1: Version only (full width)
+        $lines[] = $this->boxLine(
+            '  Version: ' . MenuStyleConfig::colorize($versionStr, MenuStyleConfig::COLOR_GREEN),
+            $innerWidth,
+            true
+        );
 
+        // Row 2: Built (left) | Load with cores (right)
         $leftCol = "  Built: $buildTime";
         $loadAvg = $this->dataCollector->getLoadAverage();
         if ($loadAvg !== null) {
+            $cpuCores = $this->dataCollector->getCpuCores();
             $rightCol = 'Load: ' . MenuStyleConfig::formatLoadValue($loadAvg['load1']) . ' '
                 . MenuStyleConfig::formatLoadValue($loadAvg['load5']) . ' '
-                . MenuStyleConfig::formatLoadValue($loadAvg['load15']);
+                . MenuStyleConfig::formatLoadValue($loadAvg['load15'])
+                . " ($cpuCores cores)";
         } else {
             $rightCol = '';
         }
         $lines[] = $this->boxLineTwoCol($leftCol, $rightCol, $innerWidth);
 
-        // Storage info
+        // Row 3: Uptime (left) | Mem (right)
+        $leftCol = '  ' . $translation->_('cm_Uptime') . ': ' . $uptime;
+        $memInfo = $this->dataCollector->getMemoryInfo();
+        if ($memInfo !== null) {
+            $memColor = $memInfo['mem_percent'] > 90
+                ? MenuStyleConfig::COLOR_RED
+                : ($memInfo['mem_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
+            $rightCol = 'Mem: ' . MenuStyleConfig::colorize(
+                "{$memInfo['mem_used']} / {$memInfo['mem_total']} ({$memInfo['mem_percent']}%)",
+                $memColor
+            );
+        } else {
+            $rightCol = '';
+        }
+        $lines[] = $this->boxLineTwoCol($leftCol, $rightCol, $innerWidth);
+
+        // Row 4: Storage (left) | Swap (right)
         $storageInfo = $this->dataCollector->getStorageInfo();
+        $leftCol = '';
+        $rightCol = '';
         if ($storageInfo !== null) {
             $storageColor = $storageInfo['percent'] > 90
                 ? MenuStyleConfig::COLOR_RED
                 : ($storageInfo['percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
-            $rightCol = $translation->_('cm_Storage') . ': '
+            $leftCol = '  ' . $translation->_('cm_Storage') . ': '
                 . MenuStyleConfig::colorize(
                     "{$storageInfo['used']} / {$storageInfo['total']} ({$storageInfo['percent']}%)",
                     $storageColor
                 );
-            $lines[] = $this->boxLineTwoCol('', $rightCol, $innerWidth);
+        }
+        if ($memInfo !== null && $memInfo['swap_percent'] > 0) {
+            $swapColor = $memInfo['swap_percent'] > 90
+                ? MenuStyleConfig::COLOR_RED
+                : ($memInfo['swap_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
+            $rightCol = 'Swap: ' . MenuStyleConfig::colorize(
+                "{$memInfo['swap_used']} / {$memInfo['swap_total']} ({$memInfo['swap_percent']}%)",
+                $swapColor
+            );
+        }
+        if (!empty($leftCol) || !empty($rightCol)) {
+            $lines[] = $this->boxLineTwoCol($leftCol, $rightCol, $innerWidth);
         }
 
         // Network section
