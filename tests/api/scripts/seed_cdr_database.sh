@@ -50,6 +50,10 @@ ENABLE_CDR_CLEANUP="${ENABLE_CDR_CLEANUP:-1}"
 SQL_FILE="${FIXTURES_DIR}/cdr_seed_data.sql"
 JSON_FILE="${FIXTURES_DIR}/cdr_test_data.json"
 
+# Script directory for generator
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+GENERATOR_SCRIPT="${SCRIPT_DIR}/generate_cdr_fixtures.py"
+
 # Color output
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -91,6 +95,61 @@ check_fixtures() {
     return 0
 }
 
+# Generate dynamic CDR fixtures with current dates
+# This ensures test dates are always relative to the current date
+generate_dynamic_fixtures() {
+    # Check if Python3 is available
+    if ! command -v python3 &> /dev/null; then
+        log_warning "Python3 not available, using static SQL fixtures"
+        return 1
+    fi
+
+    # Check if generator script exists
+    if [ ! -f "$GENERATOR_SCRIPT" ]; then
+        # Try alternative paths for remote execution
+        local alt_paths=(
+            "/storage/usbdisk1/mikopbx/python-tests/scripts/generate_cdr_fixtures.py"
+            "/usr/www/tests/api/scripts/generate_cdr_fixtures.py"
+        )
+        for alt_path in "${alt_paths[@]}"; do
+            if [ -f "$alt_path" ]; then
+                GENERATOR_SCRIPT="$alt_path"
+                break
+            fi
+        done
+    fi
+
+    if [ ! -f "$GENERATOR_SCRIPT" ]; then
+        log_warning "Generator script not found, using static SQL fixtures"
+        return 1
+    fi
+
+    # Check if JSON template exists
+    if [ ! -f "$JSON_FILE" ]; then
+        log_warning "JSON template not found, using static SQL fixtures"
+        return 1
+    fi
+
+    log_info "Generating dynamic CDR fixtures with current dates..."
+
+    # Try to write to fixtures dir first, fallback to /tmp if read-only
+    local output_path="$SQL_FILE"
+    if ! touch "$SQL_FILE" 2>/dev/null; then
+        output_path="/tmp/cdr_seed_data.sql"
+        log_info "Fixtures dir is read-only, using $output_path"
+    fi
+
+    if python3 "$GENERATOR_SCRIPT" --fixtures-dir "$FIXTURES_DIR" --output "$output_path" 2>/dev/null; then
+        # Update SQL_FILE to point to the generated file
+        SQL_FILE="$output_path"
+        log_info "Dynamic fixtures generated successfully"
+        return 0
+    else
+        log_warning "Failed to generate dynamic fixtures, using static SQL"
+        return 1
+    fi
+}
+
 # Create minimal MP3 file (417 bytes - valid MP3 format)
 create_minimal_mp3() {
     local output_file="$1"
@@ -118,6 +177,11 @@ seed_database() {
 
     # Check prerequisites
     check_database || return 1
+
+    # Try to generate dynamic fixtures with current dates
+    # This ensures tests always have recent data regardless of when they run
+    generate_dynamic_fixtures || log_warning "Using existing SQL fixtures"
+
     check_fixtures || return 1
 
     # Execute SQL seed file

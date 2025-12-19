@@ -49,6 +49,7 @@ Environment Variables:
 
 import pytest
 import os
+from datetime import datetime
 
 
 def extract_cdr_data(response):
@@ -176,10 +177,15 @@ class TestCDRSeeding:
 
             print(f"✓ Found {len(TestCDRSeeding.seeded_cdr_ids)} CDR records in database")
 
-        # Try to get CDR list with recent date filter
+        # Try to get CDR list with current month date filter
+        # Dynamic dates ensure tests work regardless of when they run
+        now = datetime.now()
+        date_from = now.replace(day=1).strftime('%Y-%m-%d')
+        date_to = now.replace(day=28).strftime('%Y-%m-%d')  # Safe for all months
+
         response = api_client.get('cdr', params={
-            'dateFrom': '2025-10-01',
-            'dateTo': '2025-10-31',
+            'dateFrom': date_from,
+            'dateTo': date_to,
             'limit': 10
         })
 
