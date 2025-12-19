@@ -24,7 +24,7 @@ require_once('Globals.php');
 
 // Wait for Redis to be available before starting console menu.
 // Console menu requires Redis for translations and settings cache.
-if (!RedisConf::waitForReady(60)) {
+if (!RedisConf::waitForRedisStart(60)) {
     echo "Warning: Redis not available, starting menu anyway...\n";
 }
 
