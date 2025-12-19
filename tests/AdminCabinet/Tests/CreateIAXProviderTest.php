@@ -91,9 +91,6 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
     protected function fillAdvancedOptions(array $params): void
     {
         $this->openAccordionOnThePage();
-
-        }
-        
         $this->changeTextAreaValue('manualattributes', $params['manualattributes']);
     }
 
@@ -145,9 +142,6 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
     protected function verifyAdvancedOptions(array $params): void
     {
         $this->openAccordionOnThePage();
-
-        }
-        
         $this->assertTextAreaValueIsEqual('manualattributes', $params['manualattributes']);
     }
 }
