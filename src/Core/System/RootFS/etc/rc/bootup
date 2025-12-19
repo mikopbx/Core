@@ -23,6 +23,10 @@ use MikoPBX\Core\System\{Processes, Util, SystemLoader, System};
 
 require_once('Globals.php');
 
+// Mark system as booting IMMEDIATELY to prevent race condition with pbx_init/console_menu
+// pbx_init is started in parallel via inittab and checks isBooting() before Redis is ready
+System::setBooting(true);
+
 // Record system boot start time using monotonic clock (hrtime)
 // This avoids issues with NTP time synchronization during boot
 $bootStartTime = hrtime(true);
