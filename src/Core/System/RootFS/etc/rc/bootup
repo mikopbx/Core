@@ -41,10 +41,15 @@ if(file_exists('/tmp/ejectcd')){
 $mikoPBX = new SystemLoader();
 $result = $mikoPBX->startSystem();
 
-// Run /etc/rc/bootup_pbx in background if system start is successful
+// Run /etc/rc/bootup_pbx synchronously to show progress on console
+// Previously used mwExecBg but that lost output to /dev/null
 if((true === $result)
     && ! Util::isRecoveryMode()
     && ! System::isDocker()
 ) {
-    Processes::mwExecBg('/etc/rc/bootup_pbx');
+    Processes::mwExec('/etc/rc/bootup_pbx');
+} else {
+    // Clear booting flag for Recovery Mode and Docker
+    // (bootup_pbx won't run to clear it, causing welcome_banner to wait 120s)
+    System::setBooting(false);
 }
