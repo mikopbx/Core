@@ -20,7 +20,7 @@
 # Check whether the script has been run with the "create" argument; if not, exit with status code 6
 action="$1"
 if [ "$action" != "create" ] && [ "$action" != "update" ]; then
-    echo " - Invalid argument: $1. Please use 'create' or 'update'." | /bin/busybox tee -a "$logFile";
+    /sbin/pbx-message -t error "Invalid argument: $1. Please use 'create' or 'update'.";
     exit 6
 fi
 
@@ -41,7 +41,7 @@ fi;
 
 # Check if the device exists and is a block device
 if [ ! -b "${dev}" ];then
-  echo " - Device ${dev} doesn't exist or isn't a block device." | /bin/busybox tee -a "$logFile";
+  /sbin/pbx-message -t error "Device ${dev} doesn't exist or isn't a block device.";
 	exit 4; # If the device doesn't exist or isn't a block device, exit with status code 4
 fi;
 
@@ -49,7 +49,7 @@ fi;
 totalMb=$(($(busybox blockdev --getsize64 "${dev}") / 1024 / 1024));
 
 if [ "$totalMb" -le "600" ]; then
-  echo " - Device ${dev} size is less than or equal to 600 MB, there's no point in creating a 4th partition." | /bin/busybox tee -a "$logFile";
+  /sbin/pbx-message -t info "Device ${dev} size is less than or equal to 600 MB, there's no point in creating a 4th partition.";
   exit 0;
 fi
 
@@ -68,15 +68,15 @@ dd if="${dev}" of="$mbrBackupFile" bs=512 count=1 > /dev/null 2>&1;
 count=$(/sbin/sfdisk -l "${dev}" 2>/dev/null | /bin/busybox grep -c "^/dev");
 if [ -n "$partitionFour" ]; then
     # The fourth partition already exists, format it and resize
-    echo " - Formatting and resizing the existing fourth partition ${partitionFour}..."
+    /sbin/pbx-message -t info "Formatting and resizing the existing fourth partition ${partitionFour}..."
     /sbin/parted --script "${dev}" resizepart 4 100% 2>/dev/null;
     resultParted=$?;
 elif [ "$count" -eq 3 ] || [ "$count" -eq 4 ]; then
-    echo " - Fix the secondary GPT header;" | /bin/busybox tee -a "$logFile";
+    /sbin/pbx-message -t info "Fix the secondary GPT header;";
     echo -e "x\ne\nm\nw\nY\n" | /bin/gdisk "$dev" >> "$logFile" 2>&1;
     # There are only 3 partitions, add a new one
-    echo " - Adding a new partition №4..." | /bin/busybox tee -a "$logFile";
-    echo " - Fix the partition table and use all the space (1)" | /bin/busybox tee -a "$logFile";
+    /sbin/pbx-message -t info "Adding a new partition №4...";
+    /sbin/pbx-message -t info "Fix the partition table and use all the space (1)";
     echo "fix" | parted "$dev" print free ---pretend-input-tty >> $logFile 2>&1;
     # Use parted to create a new partition on the device.
     # The new partition is primary, has ext4 filesystem, starts from 600MiB, and occupies the rest of the disk.
@@ -87,18 +87,18 @@ elif [ "$count" -eq 3 ] || [ "$count" -eq 4 ]; then
       dd if="$FS_BACKUP_PART4" of="$partitionFour" bs=1M count=1 >/dev/null 2>&1;
       rm -rf "$FS_BACKUP_PART4";
     fi;
-    echo " - Correcting the gap between the main table and the first used sector" | /bin/busybox tee -a "$logFile";
+    /sbin/pbx-message -t info "Correcting the gap between the main table and the first used sector";
     echo -e "x\ne\nj\nm\nw\nY\n" | /bin/gdisk "$dev" >> "$logFile" 2>&1;
-    echo " - Fix the partition table and use all the space (2)" | /bin/busybox tee -a "$logFile";
+    /sbin/pbx-message -t info "Fix the partition table and use all the space (2)";
     echo "fix" | parted "$dev" print free ---pretend-input-tty >> $logFile 2>&1;
 else
     rm -rf "$mbrBackupFile";
     # Not the expected number of partitions; exit
-    echo " - Unexpected number of partitions. Exiting." | /bin/busybox tee -a "$logFile";
+    /sbin/pbx-message -t error "Unexpected number of partitions. Exiting.";
     exit 0
 fi
 
-echo " - parted return ${resultParted}..." | /bin/busybox tee -a "$logFile";
+/sbin/pbx-message -t info "parted return ${resultParted}...";
 # Restore MBR backup
 dd if="$mbrBackupFile" of="${dev}" bs=512 count=1 > /dev/null 2>&1;
 rm -rf "$mbrBackupFile";
@@ -116,7 +116,7 @@ while [ ! -b "${partitionFour}" ]; do
   fi
   tryCount=$((tryCount + 1));
   if [ $tryCount = "25" ]; then
-    echo " - partition 4 on ${dev} waiting fail...";
+    /sbin/pbx-message -t error "partition 4 on ${dev} waiting fail...";
     break;
   fi
   sleep 1;
@@ -126,13 +126,13 @@ done
 if [ "$resultParted" = "0" ];then
     fsType="$(/bin/lsblk -o FSTYPE -n "$partitionFour")";
     if [ "$action" = "create" ] || { [ "$fsType" != "ext2" ] && [ "$fsType" != "ext4" ]; }; then
-        echo " - start mkfs.ext4 $partitionFour...";
+        /sbin/pbx-message -t info "start mkfs.ext4 $partitionFour...";
         /sbin/mkfs.ext4 -qF "$partitionFour"
-        echo " - result $?...";
+        /sbin/pbx-message -t info "result $?...";
         sleep 5;
-        echo " - start resize2fs $partitionFour...";
+        /sbin/pbx-message -t info "start resize2fs $partitionFour...";
         resize2fs "$partitionFour" 2> /dev/null > /dev/null;
-        echo " - result $?...";
+        /sbin/pbx-message -t info "result $?...";
         sleep 5;
     fi
 
@@ -148,21 +148,21 @@ if [ "$resultParted" = "0" ];then
     mountResult=$?;
 
     if [ "$mountResult" != "0" ]; then
-        echo " - start check ${partitionFour}...";
+        /sbin/pbx-message -t info "start check ${partitionFour}...";
         /sbin/fsck.ext4 -p "$partitionFour" 2> /dev/null > /dev/null;
-        echo " - result $?...";
+        /sbin/pbx-message -t info "result $?...";
         mount -t "$type" "${partitionFour}" "$tmp_dir" 2> /dev/null > /dev/null;
         mountResult=$?;
     fi;
 
     if [ "$mountResult" != "0" ]; then
-        echo " - mount ${partitionFour} exit code $mountResult";
+        /sbin/pbx-message -t error "mount ${partitionFour} exit code $mountResult";
         type='ext4';
         # If the mount failed, try to create an ext4 filesystem on the new partition
         /bin/busybox yes |"mkfs.${type}" "${partitionFour}" 2> /dev/null > /dev/null;
         mkfsResult=$?;
         if [ "$mkfsResult" != "0" ]; then
-            echo " - ERROR: mkfs on '${partitionFour}' type '${type}' exit code '$mkfsResult'"
+            /sbin/pbx-message -t error "mkfs on '${partitionFour}' type '${type}' exit code '$mkfsResult'"
         fi;
 
         # Get the UUID of the new partition
@@ -172,7 +172,7 @@ if [ "$resultParted" = "0" ];then
 		    mount -t "${type}" -rw UUID="$uuid" "$tmp_dir"
 		    mountResult="$?";
         if [ "$mountResult" != "0" ]; then
-            echo " - ERROR: can not mount '${partitionFour}' type: '${type}' uuid: '${uuid}' exit code '$?'"
+            /sbin/pbx-message -t error "can not mount '${partitionFour}' type: '${type}' uuid: '${uuid}' exit code '$?'"
             sleep 30;
         else
             sleep 3;
@@ -193,20 +193,20 @@ if [ "$resultParted" = "0" ];then
     if [ "$mountResult" = "0" ]; then
         # Delete the temporary directory
         rm -rf /tmp/test_mnt;
-        echo " - check filesystem on ${partitionFour}";
+        /sbin/pbx-message -t info "check filesystem on ${partitionFour}";
 
         # Check the filesystem on the new partition
         "/sbin/fsck.${type}" -a "${partitionFour}" > /dev/null 2>&1;
         fsckResult="$?";
         if [ "$fsckResult" != "0" ]; then
-            echo " - ERROR: check fs on '${partitionFour}' type: '${type}' exit code '$fsckResult'"
+            /sbin/pbx-message -t error "check fs on '${partitionFour}' type: '${type}' exit code '$fsckResult'"
         else
-            echo " - check completed..."
+            /sbin/pbx-message -t info "check completed..."
         fi;
     else
-        echo " - ERROR: umount ${partitionFour} exit code $mountResult"
+        /sbin/pbx-message -t error "umount ${partitionFour} exit code $mountResult"
     fi;
 else
-    echo " - partition №4 on ${dev} not found...";
-    echo " - ${dev} - the disk size is probably less than 600Mb.";
+    /sbin/pbx-message -t info "partition №4 on ${dev} not found...";
+    /sbin/pbx-message -t info "${dev} - the disk size is probably less than 600Mb.";
 fi;

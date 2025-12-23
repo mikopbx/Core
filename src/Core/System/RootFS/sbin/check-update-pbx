@@ -16,7 +16,7 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-echo " - Start ${0}";
+/sbin/pbx-message -t info "Start ${0}";
 
 systemDir='/system';
 mkdir -p "$systemDir";
@@ -40,14 +40,14 @@ searchNewFirmware() {
   for disk in $list; do
     size="$(/bin/lsblk "$disk" -P -b -o SIZE | /bin/busybox cut -f 2 -d '"' | /bin/busybox cut -f 1 -d 'M')";
     if [ "$(printf "%.0f\n" "$((size / 1024 / 1024))")" -gt 200 ]; then
-       echo " - Skip disk $disk, larger than 200MB. ";
+       /sbin/pbx-message -t info "Skip disk $disk, larger than 200MB.";
        continue;
     fi
     # Mount the disk to the system directory if it less than 200 mb
     mount "$disk" "$systemDir";
     MOUNT_RESULT=$?;
     if [ ! "${MOUNT_RESULT}" = "0" ] ; then
-      echo " - Fail mount $disk to $systemDir...";
+      /sbin/pbx-message -t error "Fail mount $disk to $systemDir...";
       continue;
     fi
     checkAndUpgrade "$disk";
@@ -72,19 +72,19 @@ checkAndUpgrade() {
     cd /tmp/upgrade || exit 1;
 
     # Inform user and allow interrupting the upgrade process
-    echo " - Found a new MikoPBX firmware."
-    echo " - Press 'c' to cancel the upgrade or wait 10 seconds to continue."
+    /sbin/pbx-message -t info "Found a new MikoPBX firmware."
+    /sbin/pbx-message -t info "Press 'c' to cancel the upgrade or wait 10 seconds to continue."
     local counter=10
     while [ $counter -gt 0 ]; do
       read -r -t 1 -n 1 input
       if [ "$input" = "C" ] || [ "$input" = "c" ]; then
-        echo " - Upgrade cancelled by user."
+        /sbin/pbx-message -t info "Upgrade cancelled by user."
         return 1  # Exit the function early if 'c' is pressed
       fi
       echo -ne " - Continuing in $counter seconds...\033[0K\r"
       counter=$((counter - 1))
     done
-    echo " - Starting upgrade process..."
+    /sbin/pbx-message -t info "Starting upgrade process..."
     # Umount boot disk
     umount -f "$disk";
 
@@ -92,7 +92,7 @@ checkAndUpgrade() {
     /bin/sh firmware_upgrade.sh
 
     # Set a flag to indicate rebooting.
-    echo " - Rebooting the system..."
+    /sbin/pbx-message -t info "Rebooting the system..."
     touch /tmp/rebooting;
     exit 0;
   fi
@@ -102,4 +102,4 @@ checkAndUpgrade() {
 searchNewFirmware;
 
 # If no update script is found, print a message.
-echo " - No any updates found";
+/sbin/pbx-message -t info "No any updates found";

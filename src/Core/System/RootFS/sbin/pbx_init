@@ -17,7 +17,7 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-echo " - Start ${0}";
+/sbin/pbx-message -t info "Start ${0}";
 delta=1; i=0;
 freeOffloadFile='/tmp/freeoffload';
 

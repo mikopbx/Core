@@ -41,10 +41,10 @@ killprocesses '/offload' -TERM 3;
 killprocesses '/offload' -KILL 0;
 
 # Start of the unmounting process for /offload
-echo " |   - unmounting /offload ...";
+/sbin/pbx-message -t info -p " |   - " "unmounting /offload ...";
 f_umount /offload;
 
 # Start of the unmounting process for /cf
-echo " |   - unmounting /cf...";
+/sbin/pbx-message -t info -p " |   - " "unmounting /cf...";
 f_umount /cf;
 
