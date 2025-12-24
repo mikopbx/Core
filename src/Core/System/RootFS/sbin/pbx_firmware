@@ -17,27 +17,20 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-# Load shell functions for console/serial output
-# Fallback for updates from older systems without shell_functions.sh
-if [ -f /sbin/shell_functions.sh ]; then
-    source /sbin/shell_functions.sh
-else
-    # Minimal inline implementation for compatibility with older MikoPBX versions
-    # These functions will be used only when updating FROM versions that lack shell_functions.sh
-    echo_info() {
-        echo " - $1"
-        # Try to output to serial if available
-        if [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ]; then
-            echo " - $1" > /dev/ttyS0 2>/dev/null
-        fi
-    }
-    echo_error() {
-        echo "ERROR: $1"
-        if [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ]; then
-            echo "ERROR: $1" > /dev/ttyS0 2>/dev/null
-        fi
-    }
-fi
+# Inline output functions - no external dependencies for maximum compatibility
+# This script must work when updating FROM any old MikoPBX version
+echo_info() {
+    echo " - $1"
+    # Output to serial port if available (for headless systems)
+    [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ] && echo " - $1" > /dev/ttyS0 2>/dev/null
+    return 0
+}
+
+echo_error() {
+    echo "ERROR: $1"
+    [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ] && echo "ERROR: $1" > /dev/ttyS0 2>/dev/null
+    return 0
+}
 
 # Interactive pause before critical operations
 # Allows user to cancel upgrade or enter manual shell for debugging
@@ -226,28 +219,74 @@ if [ -r "${img_file}" ]; then
 
   # Pre-extract sgdisk from new image if not available locally (for old systems without sgdisk)
   EXTRACTED_SGDISK=""
+  echo_info "Checking for local sgdisk: $(which sgdisk 2>/dev/null || echo 'not found')"
   if [ ! -x /sbin/sgdisk ]; then
-    echo_info "Local sgdisk not found, extracting from new image..."
+    echo_info "Local sgdisk not found, attempting to extract from new image..."
     BOOT_OFFSET=1048576
     mkdir -p /tmp/newboot_extract
+
+    echo_info "Decompressing image to /tmp/img_raw_extract.tmp..."
     gunzip -c "$img_file" > /tmp/img_raw_extract.tmp 2>/dev/null
-    if losetup -o $BOOT_OFFSET /dev/loop9 /tmp/img_raw_extract.tmp 2>/dev/null; then
-      if mount -t vfat /dev/loop9 /tmp/newboot_extract -o ro 2>/dev/null; then
-        if [ -f /tmp/newboot_extract/boot/initramfs.igz ]; then
-          gunzip -c /tmp/newboot_extract/boot/initramfs.igz 2>/dev/null | cpio -i --to-stdout "sbin/sgdisk" 2>/dev/null > /tmp/sgdisk_extracted
-          if [ -s /tmp/sgdisk_extracted ]; then
-            chmod +x /tmp/sgdisk_extracted
-            EXTRACTED_SGDISK="/tmp/sgdisk_extracted"
-            echo_info "Successfully extracted sgdisk from new image"
+    gunzip_result=$?
+    img_size=$(ls -la /tmp/img_raw_extract.tmp 2>/dev/null | awk '{print $5}')
+    echo_info "gunzip result: $gunzip_result, decompressed size: ${img_size:-0} bytes"
+
+    if [ ! -s /tmp/img_raw_extract.tmp ]; then
+      echo_error "Failed to decompress image for sgdisk extraction"
+    else
+      echo_info "Setting up loop device /dev/loop9 with offset $BOOT_OFFSET..."
+      losetup_output=$(losetup -o $BOOT_OFFSET /dev/loop9 /tmp/img_raw_extract.tmp 2>&1)
+      losetup_result=$?
+      echo_info "losetup result: $losetup_result, output: $losetup_output"
+
+      if [ $losetup_result -eq 0 ]; then
+        echo_info "Mounting /dev/loop9 as vfat..."
+        mount_output=$(mount -t vfat /dev/loop9 /tmp/newboot_extract -o ro 2>&1)
+        mount_result=$?
+        echo_info "mount result: $mount_result, output: $mount_output"
+
+        if [ $mount_result -eq 0 ]; then
+          echo_info "Mount contents: $(ls -la /tmp/newboot_extract/ 2>&1)"
+          echo_info "Boot contents: $(ls -la /tmp/newboot_extract/boot/ 2>&1)"
+
+          if [ -f /tmp/newboot_extract/boot/initramfs.igz ]; then
+            initramfs_size=$(ls -la /tmp/newboot_extract/boot/initramfs.igz | awk '{print $5}')
+            echo_info "Found initramfs.igz ($initramfs_size bytes), extracting sgdisk..."
+
+            gunzip -c /tmp/newboot_extract/boot/initramfs.igz 2>/dev/null | cpio -i --to-stdout "sbin/sgdisk" 2>/dev/null > /tmp/sgdisk_extracted
+            cpio_result=$?
+            sgdisk_size=$(ls -la /tmp/sgdisk_extracted 2>/dev/null | awk '{print $5}')
+            echo_info "cpio result: $cpio_result, extracted sgdisk size: ${sgdisk_size:-0} bytes"
+
+            if [ -s /tmp/sgdisk_extracted ]; then
+              chmod +x /tmp/sgdisk_extracted
+              # Verify it's a valid executable
+              file_type=$(file /tmp/sgdisk_extracted 2>/dev/null || echo "unknown")
+              echo_info "Extracted file type: $file_type"
+              EXTRACTED_SGDISK="/tmp/sgdisk_extracted"
+              echo_info "Successfully extracted sgdisk from new image"
+            else
+              echo_error "sgdisk extraction produced empty file"
+            fi
+          else
+            echo_error "initramfs.igz not found in /tmp/newboot_extract/boot/"
           fi
+          umount /tmp/newboot_extract 2>/dev/null
+        else
+          echo_error "Failed to mount loop device as vfat"
         fi
-        umount /tmp/newboot_extract 2>/dev/null
+        losetup -d /dev/loop9 2>/dev/null
+      else
+        echo_error "Failed to setup loop device"
       fi
-      losetup -d /dev/loop9 2>/dev/null
     fi
     rm -f /tmp/img_raw_extract.tmp
     rmdir /tmp/newboot_extract 2>/dev/null
+  else
+    echo_info "Local sgdisk found at /sbin/sgdisk"
   fi
+
+  echo_info "EXTRACTED_SGDISK=$EXTRACTED_SGDISK"
 
   echo_info "Installing new image on $DISK"
   # Check for serial port using new method if available
