@@ -248,13 +248,22 @@ if [ -r "${img_file}" ]; then
   # Fix GPT backup table location after writing smaller image to larger disk
   # The backup GPT header must be at the end of the disk, not at original image size
   if [ -x /bin/sgdisk ]; then
-    echo_info "Relocating GPT backup header to end of disk..."
+    # Preferred: non-interactive sgdisk (available in MikoPBX 2025+)
+    echo_info "Relocating GPT backup header to end of disk (sgdisk)..."
     sgdiskOutput=$(/bin/sgdisk -e "$DISK" 2>&1)
     sgdiskResult=$?
     echo_info "sgdisk exit code: $sgdiskResult"
     [ -n "$sgdiskOutput" ] && echo "$sgdiskOutput" | while read line; do echo_info "sgdisk: $line"; done
+  elif [ -x /bin/gdisk ]; then
+    # Fallback: interactive gdisk (for older MikoPBX systems without sgdisk)
+    # First newline answers "Fix/Ignore?" prompt, then: x=expert, e=relocate, w=write, Y=confirm
+    echo_info "Relocating GPT backup header to end of disk (gdisk fallback)..."
+    gdiskOutput=$(echo -e "\nx\ne\nw\nY\n" | /bin/gdisk "$DISK" 2>&1)
+    gdiskResult=$?
+    echo_info "gdisk exit code: $gdiskResult"
+    [ -n "$gdiskOutput" ] && echo "$gdiskOutput" | while read line; do echo_info "gdisk: $line"; done
   else
-    echo_error "sgdisk not available to fix backup header!"
+    echo_error "No GPT utility available to fix backup header!"
   fi
 
   /sbin/blockdev --rereadpt "$DISK" > /dev/null 2>&1;
