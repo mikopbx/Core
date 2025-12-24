@@ -47,7 +47,7 @@
     "default_branch": "develop",
     "commit_style": "conventional",
     "auto_merge": false,
-    "auto_push": true,
+    "auto_push": false,
     "has_submodules": false
   },
   "environment": {
