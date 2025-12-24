@@ -17,14 +17,17 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
+# Load shell functions for console/serial output
+source /sbin/shell_functions.sh
+
 # Assign input arguments to variables
 img_file="$1";
 systemDevice="$2"
 
 # Inform the user of the firmware upgrade process
 echo;
-/sbin/pbx-message -t info "Firmware upgrade in progress...";
-/sbin/pbx-message -t info "Backing up configuration...";
+echo_info "Firmware upgrade in progress...";
+echo_info "Backing up configuration...";
 
 # Create a temporary directory to backup configuration
 mkdir -p /tmp/configbak;
@@ -33,22 +36,22 @@ mkdir -p /tmp/configbak;
 md5Hash="$(/bin/gunzip -N -l < "${img_file}" | /bin/busybox grep -v uncompressed_name | /bin/busybox awk  '{ print $4}')";
 if [ "$md5Hash" != "$(/bin/gunzip -c "${img_file}" |/bin/busybox md5sum | /bin/busybox cut -f 1 -d ' ')" ] ; then
     # Inform the user of the checksum mismatch and abort the update
-    /sbin/pbx-message -t error "The checksum of the system image does not match.";
-    /sbin/pbx-message -t error "Update was aborted...";
+    echo_error "The checksum of the system image does not match.";
+    echo_error "Update was aborted...";
     rm -rf "$img_file";
     # Set a flag to indicate rebooting.
     touch /tmp/rebooting;
     exit 0;
 else
     # Inform the user of successful checksum verification
-    /sbin/pbx-message -t info "Successful checksum verification! Start the system upgrade ...";
+    echo_info "Successful checksum verification! Start the system upgrade ...";
 fi
 
 # Check if the livecd file exists, and proceed with different operations depending on its existence
 if [ -f /offload/livecd ]; then
   # Copy the configuration to the backup directory and unmount /conf.recover
   /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak | /bin/busybox awk '{print "\t" $0}'
-  /sbin/pbx-message -t info "Unmounting /conf.recover partition...";
+  echo_info "Unmounting /conf.recover partition...";
   /bin/umount -f /conf.recover;
 else
 
@@ -58,7 +61,7 @@ else
     /sbin/dump-conf-db
   fi;
   # Copy the configuration to the tmp (RAM) directory
-  /sbin/pbx-message -t info "Backup the system settings to temporary directory...";
+  echo_info "Backup the system settings to temporary directory...";
   /bin/busybox cp -Rv /cf/conf/* /tmp/configbak | /bin/busybox awk '{print "\t" $0}'
 
   mounted_storage=$(mount | /bin/busybox grep storage | /bin/busybox awk '{ print $1}');
@@ -77,7 +80,7 @@ else
     rm -rf "$backupDir"; mkdir -p "$backupDir";
 
     # Copy the configuration to the storage and backup the system image
-    /sbin/pbx-message -t info "Backup system partition to storage ...";
+    echo_info "Backup system partition to storage ...";
     # Check for serial port using new method if available
     SERIAL_PORT=""
     if [ -x "/sbin/pbx-env-detect" ]; then
@@ -96,7 +99,7 @@ else
     fi
   else
     # Storage is on the main disk which needs to be unmounted, so move the image to RAM
-    /sbin/pbx-message -t info "Moving the update img to RAM before storage will be unmounted ..."
+    echo_info "Moving the update img to RAM before storage will be unmounted ..."
     tmp_img=$(/bin/busybox basename "$1");
     img_file="/tmp/${tmp_img}";
 
@@ -107,7 +110,7 @@ else
     fi
 
      # Free up the storage
-    /sbin/pbx-message -t info "Umount storage partition ...";
+    echo_info "Umount storage partition ...";
     /sbin/freestorage;
   fi
 
@@ -128,15 +131,15 @@ if [ -r "${img_file}" ]; then
     # then markup conversion is not required,
     # there is no risk of data loss.
     PARTITION_TYPE=$(/sbin/parted --script "$DISK" print 2>/dev/null | /bin/busybox grep "Partition Table" | /bin/busybox awk '{print $3}');
-    /sbin/pbx-message -t info "Performing an action for the $PARTITION_TYPE section";
+    echo_info "Performing an action for the $PARTITION_TYPE section";
     if [ "$PARTITION_TYPE" == "msdos" ]; then
-      /sbin/pbx-message -t info "At the end of the 4th partition ($partitionFour), 1 Mb of free space will be required...";
+      echo_info "At the end of the 4th partition ($partitionFour), 1 Mb of free space will be required...";
       REDUCE_BY=1
       LAST_ENTRY=$(parted -s "$DISK" unit MiB print free 2>/dev/null | tail -n 1)
       FREE_SPACE=$(echo "$LAST_ENTRY" | /bin/busybox awk '{print $3}' | /bin/busybox grep -o '[0-9]*')
       if [[ (-z "$FREE_SPACE" || "$FREE_SPACE" -lt "$REDUCE_BY") && -n "$partitionFour" ]]; then
       	e2fsck -f -y "$partitionFour";
-        /sbin/pbx-message -t info "Reducing the 4th section...";
+        echo_info "Reducing the 4th section...";
         SECTOR_SIZE=$(blockdev --getss "$DISK")
       	SECTORS_IN_MIB=$((1024 * 1024 / SECTOR_SIZE))
       	sfdisk -d "$DISK" 2> /dev/null > disk_layout.txt
@@ -148,13 +151,13 @@ if [ -r "${img_file}" ]; then
       	rm disk_layout.txt;
       	/sbin/resize2fs "$partitionFour" "$NEW_SIZE_MIB"M 2> /dev/null > /dev/null;
       fi
-      /sbin/pbx-message -t info "Converting markup to GPT."
+      echo_info "Converting markup to GPT."
       echo -e "w\nY\n" | /bin/gdisk "$DISK" > /dev/null;
       resultGDisk="$?";
       if [ "$resultGDisk" -eq 0 ]; then
-        /sbin/pbx-message -t info "The conversion to GPT has been completed successfully."
+        echo_info "The conversion to GPT has been completed successfully."
       else
-        /sbin/pbx-message -t error "Converting to GPT."
+        echo_error "Converting to GPT."
       fi
     fi
   fi
@@ -162,12 +165,12 @@ if [ -r "${img_file}" ]; then
   part4Action='create';
   if [ -n "$partitionFour" ]; then
     export FS_BACKUP_PART4=fs-backup-part4.img;
-    /sbin/pbx-message -t info "Start backup fs $FS_BACKUP_PART4 super block for part4 ($partitionFour)"
+    echo_info "Start backup fs $FS_BACKUP_PART4 super block for part4 ($partitionFour)"
     dd if="$partitionFour" of="$FS_BACKUP_PART4" bs=1M count=1 >/dev/null 2>&1;
     part4Action='update';
   fi
 
-  /sbin/pbx-message -t info "Installing new image on $DISK"
+  echo_info "Installing new image on $DISK"
   # Check for serial port using new method if available
   SERIAL_PORT=""
   if [ -x "/sbin/pbx-env-detect" ]; then
@@ -185,14 +188,42 @@ if [ -r "${img_file}" ]; then
     /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1;
   fi
   resultPv="$?";
-  /sbin/pbx-message -t info "result install code $resultPv";
+  echo_info "result install code $resultPv";
+  /sbin/blockdev --rereadpt "$DISK" > /dev/null 2>&1;
+
+  # Fix GPT backup table location after writing smaller image to larger disk
+  # The backup GPT header must be at the end of the disk, not at original image size
+  # Note: /offload is unmounted at this point, only initramfs utilities available
+
+  # DEBUG: Check available GPT utilities and partition count
+  echo_info "DEBUG: Checking GPT utilities..."
+  [ -x /bin/gdisk ] && echo_info "DEBUG: /bin/gdisk - available" || echo_info "DEBUG: /bin/gdisk - NOT available"
+  [ -x /sbin/sfdisk ] && echo_info "DEBUG: /sbin/sfdisk - available" || echo_info "DEBUG: /sbin/sfdisk - NOT available"
+  [ -x /sbin/parted ] && echo_info "DEBUG: /sbin/parted - available" || echo_info "DEBUG: /sbin/parted - NOT available"
+
+  partCountBefore=$(/bin/lsblk -l "$DISK" | /bin/busybox grep -c part)
+  echo_info "DEBUG: Partitions before GPT fix: $partCountBefore"
+
+  if [ -x /bin/gdisk ]; then
+    echo_info "DEBUG: Running gdisk to relocate GPT backup header..."
+    gdiskOutput=$(echo -e "x\ne\nw\nY\n" | /bin/gdisk "$DISK" 2>&1)
+    gdiskResult=$?
+    echo_info "DEBUG: gdisk exit code: $gdiskResult"
+    echo "$gdiskOutput" | while read line; do echo_info "DEBUG: gdisk: $line"; done
+  else
+    echo_error "DEBUG: No GPT utility available to fix backup header!"
+  fi
+
   /sbin/blockdev --rereadpt "$DISK" > /dev/null 2>&1;
   sleep 3;
+
+  partCountAfter=$(/bin/lsblk -l "$DISK" | /bin/busybox grep -c part)
+  echo_info "DEBUG: Partitions after GPT fix: $partCountAfter"
 
   # If the pv command fails or there aren't three primary partitions, restore the system image from the backup
   if [ ! "$resultPv" = '0' ] || [ ! "$(/bin/lsblk -l "$DISK" | /bin/busybox grep -c part)" = '4' ]; then
     if [ -f "$backupImg" ]; then
-      /sbin/pbx-message -t error "There are some errors, restoring system from backup to /dev/${systemDevice}"
+      echo_error "There are some errors, restoring system from backup to /dev/${systemDevice}"
       # Check for serial port using new method if available
       SERIAL_PORT=""
       if [ -x "/sbin/pbx-env-detect" ]; then
@@ -212,11 +243,11 @@ if [ -r "${img_file}" ]; then
     fi;
   fi;
   rm -rf "$backupImg";
-  /sbin/pbx-message -t info "The execution of the dd command was finished...";
+  echo_info "The execution of the dd command was finished...";
 
   # Update the partition table
   /sbin/initial_storage_part_four "$part4Action" "$DISK";
-  /sbin/pbx-message -t info "Check if it necessary to $part4Action 4-th storage partition. The result is ${?}...";
+  echo_info "Check if it necessary to $part4Action 4-th storage partition. The result is ${?}...";
 fi
 
 # Reread the partition table of the system device
@@ -228,39 +259,39 @@ partition3Name=$(/bin/lsblk -r -p | /bin/busybox grep "${systemDevice}" | /bin/b
 
 # If the livecd file exists, re-mount /conf.recover, restore configuration, and reboot the system
 if [ -f /offload/livecd ]; then
-  /sbin/pbx-message -t info "Re-mounting /conf.recover partition with read/write mode..."
+  echo_info "Re-mounting /conf.recover partition with read/write mode..."
   /bin/mount -w -o noatime "${partition3Name}" /conf.recover | /bin/busybox awk '{print "\t" $0}'
   rm -f /conf.recover/conf/*
-  /sbin/pbx-message -t info "Restoring the MikoPBX default configuration ..."
+  echo_info "Restoring the MikoPBX default configuration ..."
   /bin/busybox cp -pv /tmp/configbak/* /conf.recover/conf/ | /bin/busybox awk '{print "\t" $0}'
   touch /tmp/ejectcd
 else
   # Format the 3rd partition and mount it as /cf. Then, copy the configuration back and remove the image file
-  /sbin/pbx-message -t info "Formating the 3rd partition (${partition3Name}) and mount it as /cf folder ...";
+  echo_info "Formating the 3rd partition (${partition3Name}) and mount it as /cf folder ...";
   /sbin/mkfs.ext4 -qF "${partition3Name}" | /bin/busybox awk '{print "\t" $0}'
   sleep 3;
   /bin/mount -w -o noatime "${partition3Name}" /cf | /bin/busybox awk '{print "\t" $0}'
   mkdir -p /cf/conf
-  /sbin/pbx-message -t info "Restoring the MikoPBX configuration settings...";
+  echo_info "Restoring the MikoPBX configuration settings...";
   /bin/busybox cp -Rv /tmp/configbak/* /cf/conf/ | /bin/busybox awk '{print "\t" $0}'
 
-  /sbin/pbx-message -t info "Deleting firmware image...";
+  echo_info "Deleting firmware image...";
   rm -rf "${img_file}";
 fi
 
-/sbin/pbx-message -t info "Reboot pending. Cancel with 'touch /tmp/cancel_rebooting'"
+echo_info "Reboot pending. Cancel with 'touch /tmp/cancel_rebooting'"
 # Waiting timeout
 WAIT_TIME=10
 counter=0
 while [ $counter -lt $WAIT_TIME ]; do
     if [ -f /tmp/cancel_rebooting ]; then
         # Flag file was deleted
-        /sbin/pbx-message -t info "System reboot was cancelled"
+        echo_info "System reboot was cancelled"
         exit 0
     fi
     sleep 1
     counter=$((counter+1))
 done
 
-/sbin/pbx-message -t info "Rebooting the system..."
+echo_info "Rebooting the system..."
 /sbin/pbx_reboot;

@@ -20,9 +20,8 @@
 PATH=/sbin:/bin:/usr/bin:/usr/sbin
 export PATH
 
-if [ -f /sbin/shell_functions.sh ]; then
-. /sbin/shell_functions.sh;
-fi
+# Load shell functions for console/serial output
+source /sbin/shell_functions.sh
 
 storage='/storage/usbdisk1';
 

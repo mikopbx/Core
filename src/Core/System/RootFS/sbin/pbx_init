@@ -17,7 +17,10 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-/sbin/pbx-message -t info "Start ${0}";
+# Load shell functions for console/serial output
+source /sbin/shell_functions.sh
+
+echo_info "Start ${0}";
 delta=1; i=0;
 freeOffloadFile='/tmp/freeoffload';
 
