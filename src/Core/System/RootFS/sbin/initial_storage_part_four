@@ -76,7 +76,7 @@ if [ -n "$partitionFour" ]; then
     resultParted=$?;
 elif [ "$count" -eq 3 ] || [ "$count" -eq 4 ]; then
     echo_info "Fix the secondary GPT header;";
-    /bin/sgdisk -e "$dev" >> "$logFile" 2>&1;
+    /sbin/sgdisk -e "$dev" >> "$logFile" 2>&1;
     # There are only 3 partitions, add a new one
     echo_info "Adding a new partition №4...";
     echo_info "Fix the partition table and use all the space (1)";
@@ -91,7 +91,7 @@ elif [ "$count" -eq 3 ] || [ "$count" -eq 4 ]; then
       rm -rf "$FS_BACKUP_PART4";
     fi;
     echo_info "Correcting the gap between the main table and the first used sector";
-    echo -e "x\nj\nm\nw\nY\n" | /bin/gdisk "$dev" >> "$logFile" 2>&1;
+    echo -e "x\nj\nm\nw\nY\n" | /sbin/gdisk "$dev" >> "$logFile" 2>&1;
     echo_info "Fix the partition table and use all the space (2)";
     echo "fix" | parted "$dev" print free ---pretend-input-tty >> $logFile 2>&1;
 else
