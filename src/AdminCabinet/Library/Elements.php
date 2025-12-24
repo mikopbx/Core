@@ -141,7 +141,7 @@ class Elements extends Injectable
                         'style' => '',
                     ],
                     OffWorkTimesController::class => [
-                        'caption' => 'mm_OutOffWorkTime',
+                        'caption' => 'mm_OffWorkTimes',
                         'iconclass' => 'calendar times outline',
                         'action' => 'index',
                         'param' => '',
