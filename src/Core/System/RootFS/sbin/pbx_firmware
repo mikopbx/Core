@@ -247,34 +247,20 @@ if [ -r "${img_file}" ]; then
 
   # Fix GPT backup table location after writing smaller image to larger disk
   # The backup GPT header must be at the end of the disk, not at original image size
-  # Note: /offload is unmounted at this point, only initramfs utilities available
-
-  # DEBUG: Check available GPT utilities and partition count
-  echo_info "DEBUG: Checking GPT utilities..."
-  [ -x /bin/gdisk ] && echo_info "DEBUG: /bin/gdisk - available" || echo_info "DEBUG: /bin/gdisk - NOT available"
-  [ -x /sbin/sfdisk ] && echo_info "DEBUG: /sbin/sfdisk - available" || echo_info "DEBUG: /sbin/sfdisk - NOT available"
-  [ -x /sbin/parted ] && echo_info "DEBUG: /sbin/parted - available" || echo_info "DEBUG: /sbin/parted - NOT available"
-
-  partCountBefore=$(/bin/lsblk -l "$DISK" | /bin/busybox grep -c part)
-  echo_info "DEBUG: Partitions before GPT fix: $partCountBefore"
-
-  if [ -x /bin/gdisk ]; then
-    echo_info "DEBUG: Running gdisk to relocate GPT backup header..."
-    gdiskOutput=$(echo -e "x\ne\nw\nY\n" | /bin/gdisk "$DISK" 2>&1)
-    gdiskResult=$?
-    echo_info "DEBUG: gdisk exit code: $gdiskResult"
-    echo "$gdiskOutput" | while read line; do echo_info "DEBUG: gdisk: $line"; done
+  if [ -x /bin/sgdisk ]; then
+    echo_info "Relocating GPT backup header to end of disk..."
+    sgdiskOutput=$(/bin/sgdisk -e "$DISK" 2>&1)
+    sgdiskResult=$?
+    echo_info "sgdisk exit code: $sgdiskResult"
+    [ -n "$sgdiskOutput" ] && echo "$sgdiskOutput" | while read line; do echo_info "sgdisk: $line"; done
   else
-    echo_error "DEBUG: No GPT utility available to fix backup header!"
+    echo_error "sgdisk not available to fix backup header!"
   fi
 
   /sbin/blockdev --rereadpt "$DISK" > /dev/null 2>&1;
   sleep 3;
 
-  partCountAfter=$(/bin/lsblk -l "$DISK" | /bin/busybox grep -c part)
-  echo_info "DEBUG: Partitions after GPT fix: $partCountAfter"
-
-  # If the pv command fails or there aren't three primary partitions, restore the system image from the backup
+  # If the pv command fails or there aren't four partitions, restore the system image from the backup
   if [ ! "$resultPv" = '0' ] || [ ! "$(/bin/lsblk -l "$DISK" | /bin/busybox grep -c part)" = '4' ]; then
     if [ -f "$backupImg" ]; then
       echo_error "There are some errors, restoring system from backup to /dev/${systemDevice}"
