@@ -55,5 +55,6 @@
   "statusLine": {
     "type": "command",
     "command": "node $CLAUDE_PROJECT_DIR/sessions/statusline.js"
-  }
+  },
+  "includeCoAuthoredBy": false
 }
