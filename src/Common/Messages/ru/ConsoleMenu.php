@@ -41,6 +41,8 @@ return [
     'cm_RebootSystem' => 'Перезагрузка системы',
     'cm_Reboot' => 'Перезагрузка',
     'cm_PowerOff' => 'Выключение',
+    'cm_SystemRebooting' => 'Система перезагружается, пожалуйста подождите...',
+    'cm_SystemShuttingDown' => 'Система выключается, пожалуйста подождите...',
     'cm_PingHost' => 'Пинг хоста',
     'cm_Console' => 'Консоль',
     'cm_ChangeLanguage' => 'Изменить язык',

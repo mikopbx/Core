@@ -18,7 +18,57 @@
 #
 
 # Load shell functions for console/serial output
-source /sbin/shell_functions.sh
+# Fallback for updates from older systems without shell_functions.sh
+if [ -f /sbin/shell_functions.sh ]; then
+    source /sbin/shell_functions.sh
+else
+    # Minimal inline implementation for compatibility with older MikoPBX versions
+    # These functions will be used only when updating FROM versions that lack shell_functions.sh
+    echo_info() {
+        echo " - $1"
+        # Try to output to serial if available
+        if [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ]; then
+            echo " - $1" > /dev/ttyS0 2>/dev/null
+        fi
+    }
+    echo_error() {
+        echo "ERROR: $1"
+        if [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ]; then
+            echo "ERROR: $1" > /dev/ttyS0 2>/dev/null
+        fi
+    }
+fi
+
+# Interactive pause before critical operations
+# Allows user to cancel upgrade or enter manual shell for debugging
+wait_for_user_input() {
+    local message="${1:-Continuing with upgrade}"
+    echo_info "$message"
+    echo_info "Press 'c' to cancel, 'm' for manual shell, or wait 10 seconds..."
+    local counter=10
+    while [ $counter -gt 0 ]; do
+        read -r -t 1 -n 1 input 2>/dev/null
+        case "$input" in
+            c|C)
+                echo_info "Upgrade cancelled by user."
+                touch /tmp/rebooting
+                exit 1
+                ;;
+            m|M)
+                echo_info "Entering manual shell. Type 'exit' to continue upgrade."
+                echo_info "Available: gdisk, parted, sfdisk, lsblk, blkid, mount, dd, pv"
+                /bin/sh
+                echo_info "Continue upgrade? (y/n)"
+                read -r -n 1 cont
+                [ "$cont" != "y" ] && [ "$cont" != "Y" ] && exit 1
+                return 0
+                ;;
+        esac
+        echo -ne " - Continuing in $counter seconds...\033[0K\r"
+        counter=$((counter - 1))
+    done
+    echo ""
+}
 
 # Assign input arguments to variables
 img_file="$1";
@@ -126,6 +176,10 @@ if [ -r "${img_file}" ]; then
   else
     partitionFour=''
   fi
+
+  # Allow user to enter manual shell before critical partition operations
+  wait_for_user_input "About to start partition operations on $DISK"
+
   if command -v gdisk >/dev/null 2>&1 && [ -n "$partitionFour" ]; then
     # If the 4th section is missing,
     # then markup conversion is not required,

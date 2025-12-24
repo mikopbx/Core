@@ -41,6 +41,8 @@ return [
     'cm_RebootSystem' => 'Reboot system',
     'cm_Reboot' => 'Reboot',
     'cm_PowerOff' => 'Power off',
+    'cm_SystemRebooting' => 'System is rebooting, please wait...',
+    'cm_SystemShuttingDown' => 'System is shutting down, please wait...',
     'cm_PingHost' => 'Ping host',
     'cm_Console' => 'Console',
     'cm_ChangeLanguage' => 'Change language',
