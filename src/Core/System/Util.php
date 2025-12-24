@@ -554,7 +554,7 @@ class Util
      */
     public static function isDocker(): bool
     {
-        return file_exists('/.dockerenv');
+        return file_exists('/.dockerenv') || System::isLxc();
     }
 
     /**

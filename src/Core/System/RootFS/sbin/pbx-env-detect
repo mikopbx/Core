@@ -70,6 +70,12 @@ detect_environment() {
         return
     fi
 
+    # Check for LXC
+    if [ -n "$container" ] && [ "$container" = 'lxc' ]; then
+        echo "lxc"
+        return
+    fi
+
     # Check for virtualization using various methods
 
     # Method 1: Check DMI/SMBIOS information

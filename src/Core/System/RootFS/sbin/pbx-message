@@ -91,7 +91,7 @@ done
 
 # Function to check if we're in a Docker container
 is_docker() {
-    [ -f "/.dockerenv" ] || [ -n "$DOCKER_CONTAINER" ]
+    [ -f "/.dockerenv" ] || [ -n "$DOCKER_CONTAINER" ] || [ "$container" = 'lxc' ]
 }
 
 # Function to get available serial ports with caching

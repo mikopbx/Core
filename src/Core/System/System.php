@@ -297,7 +297,7 @@ class System extends Injectable
      */
     public static function isDocker(): bool
     {
-        return file_exists('/.dockerenv');
+        return file_exists('/.dockerenv') || self::isLxc();
     }
 
     /**
@@ -351,4 +351,25 @@ class System extends Injectable
 
         return in_array($arch, ['x86_64', 'amd64'], true);
     }
+
+   /**
+   * Check if the system is running in LXC container
+   *
+   * @return bool True if running in LXC, false otherwise
+   */
+   public static function isLxc(): bool
+   {
+      // Check container environment variable (set by LXC runtime)
+      if (getenv('container') === 'lxc') {
+          return true;
+      }
+
+      // Fallback: check init process environment
+      $environ = @file_get_contents('/proc/1/environ');
+      if ($environ !== false && strpos($environ, 'container=lxc') !== false) {
+          return true;
+      }
+
+      return false;
+   }
 }
