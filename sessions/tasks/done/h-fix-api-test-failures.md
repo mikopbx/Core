@@ -1,12 +1,9 @@
 ---
 name: h-fix-api-test-failures
 branch: fix/h-fix-api-test-failures
-status: in-progress
+status: completed
 created: 2025-12-06
 updated: 2025-12-16
-submodules:
-  - path: ../Core
-    branch: fix/networkstaticroutes-id-initialization
 ---
 
 # Fix REST API Test Failures - Full Suite Analysis (892 tests)
