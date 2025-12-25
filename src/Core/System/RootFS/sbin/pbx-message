@@ -89,8 +89,9 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-# Function to check if we're in a Docker container
-is_docker() {
+# Function to check if we're in a container (Docker or LXC)
+# Matches PHP System::isContainer() - true for any container environment
+is_container() {
     [ -f "/.dockerenv" ] || [ -n "$DOCKER_CONTAINER" ] || [ "$container" = 'lxc' ]
 }
 
@@ -105,8 +106,8 @@ get_serial_ports() {
         fi
     fi
     
-    # Skip serial port detection in Docker
-    if is_docker; then
+    # Skip serial port detection in containers (Docker/LXC)
+    if is_container; then
         echo "" > "$SERIAL_CACHE"
         return
     fi
