@@ -55,7 +55,7 @@ class CloudProvisioning
     {
         // Step 1: Docker ENV overrides are applied on EVERY start
         // This follows 12-factor app pattern where ENV config should be dynamic
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             DockerCloud::applyEnvironmentOverrides();
         }
 

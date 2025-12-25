@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\System;
 use Phalcon\Di\Injectable;
 
 /**
@@ -49,7 +49,7 @@ class CheckDockerPermissions extends Injectable
         $messages = [];
 
         // Only check permissions in Docker environment
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return $messages;
         }
 

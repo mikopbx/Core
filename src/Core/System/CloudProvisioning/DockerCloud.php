@@ -24,7 +24,7 @@ use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Promise\PromiseInterface;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\System;
 use ReflectionClass;
 
 /**
@@ -61,7 +61,7 @@ class DockerCloud extends CloudProvider
      */
     public function checkAvailability(): PromiseInterface
     {
-        return Create::promiseFor(Util::isDocker());
+        return Create::promiseFor(System::isDocker());
     }
 
     /**
@@ -112,7 +112,7 @@ class DockerCloud extends CloudProvider
     {
         // ENV already applied by applyEnvironmentOverrides()
         // Just confirm we're in Docker for the provisioning marker
-        return Util::isDocker();
+        return System::isDocker();
     }
 
     /**

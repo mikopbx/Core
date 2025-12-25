@@ -550,11 +550,15 @@ class Util
     /**
      * Checks whether the current process is running inside a Docker container.
      *
-     * @return bool True if the process is inside a container, false otherwise.
+     * @deprecated Use System::isDocker() for Docker-only check,
+     *             System::isContainer() for any container (Docker or LXC),
+     *             System::canManageNetwork() for capability-based checks.
+     *
+     * @return bool True if the process is inside a Docker container, false otherwise.
      */
     public static function isDocker(): bool
     {
-        return file_exists('/.dockerenv') || System::isLxc();
+        return System::isDocker();
     }
 
     /**
