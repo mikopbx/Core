@@ -70,7 +70,9 @@ class GetOAuth2UrlAction
             }
 
             // Generate authorization URL
-            $authUrl = MailOAuth2Service::generateAuthUrl($provider);
+            // Pass origin from HTTP context for callback URL generation
+            $origin = $data['origin'] ?? null;
+            $authUrl = MailOAuth2Service::generateAuthUrl($provider, $origin);
 
             if (empty($authUrl)) {
                 $res->messages['error'][] = 'Failed to generate OAuth2 authorization URL';

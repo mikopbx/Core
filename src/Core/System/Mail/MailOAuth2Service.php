@@ -66,12 +66,13 @@ class MailOAuth2Service
      * Generate OAuth2 authorization URL
      *
      * @param string $provider Provider name
+     * @param string|null $origin Origin URL from HTTP context (e.g., "https://pbx.example.com:8443")
      * @return string Authorization URL
      */
-    public static function generateAuthUrl(string $provider): string
+    public static function generateAuthUrl(string $provider, ?string $origin = null): string
     {
         try {
-            $providerInstance = self::getProvider($provider);
+            $providerInstance = self::getProvider($provider, $origin);
 
             if ($providerInstance === null) {
                 return '';
@@ -214,9 +215,10 @@ class MailOAuth2Service
      * Get OAuth2 provider instance
      *
      * @param string $provider Provider name
+     * @param string|null $origin Origin URL from HTTP context for redirect URI generation
      * @return AbstractProvider|null Provider instance
      */
-    private static function getProvider(string $provider): ?AbstractProvider
+    private static function getProvider(string $provider, ?string $origin = null): ?AbstractProvider
     {
         $clientId = PbxSettings::getValueByKey(PbxSettings::MAIL_OAUTH2_CLIENT_ID);
         $clientSecret = PbxSettings::getValueByKey(PbxSettings::MAIL_OAUTH2_CLIENT_SECRET);
@@ -226,7 +228,7 @@ class MailOAuth2Service
             return null;
         }
 
-        $redirectUri = self::getRedirectUri();
+        $redirectUri = self::getRedirectUri($origin);
         SystemMessages::sysLogMsg(__METHOD__, "OAuth2 config - Provider: {$provider}, ClientId: {$clientId}, RedirectUri: {$redirectUri}", LOG_INFO);
 
         switch ($provider) {
@@ -300,18 +302,26 @@ class MailOAuth2Service
     /**
      * Get redirect URI for OAuth2
      *
+     * @param string|null $origin Origin URL from HTTP context (e.g., "https://pbx.example.com:8443")
      * @return string Redirect URI
      */
-    private static function getRedirectUri(): string
+    private static function getRedirectUri(?string $origin = null): string
     {
-        // Get PBX external URL
+        // Try to use origin from HTTP context first (passed from controller via worker)
+        // This is the most reliable source since it comes from the actual HTTP request
+        if (!empty($origin)) {
+            // Origin is already in format "https://host:port", just append the callback path
+            return rtrim($origin, '/') . '/pbxcore/api/v3/mail-settings/oauth2-callback';
+        }
+
+        // Fallback to PBX settings
         $externalHost = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_HOST_NAME);
         if (empty($externalHost)) {
             $externalHost = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
         }
 
         if (empty($externalHost)) {
-            // Fallback to current request host if available
+            // Last resort fallback to current request host if available (unlikely in worker context)
             if (isset($_SERVER['HTTP_HOST'])) {
                 $externalHost = $_SERVER['HTTP_HOST'];
             } else {
