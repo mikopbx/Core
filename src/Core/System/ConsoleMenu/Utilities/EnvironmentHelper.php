@@ -25,17 +25,19 @@ use MikoPBX\Core\System\System;
 /**
  * Environment detection helper for console menu
  *
- * Provides centralized environment detection for Docker, LiveCD, and Normal modes.
+ * Provides centralized environment detection for Docker, LXC, LiveCD, and Normal modes.
  * Used to determine menu item availability and feature access.
  */
 class EnvironmentHelper
 {
     private bool $isDocker;
+    private bool $isLxc;
     private bool $isLiveCd;
 
     public function __construct()
     {
         $this->isDocker = System::isDocker();
+        $this->isLxc = System::isLxc();
         $this->isLiveCd = file_exists('/offload/livecd');
     }
 
@@ -47,6 +49,26 @@ class EnvironmentHelper
     public function isDocker(): bool
     {
         return $this->isDocker;
+    }
+
+    /**
+     * Check if running in LXC container
+     *
+     * @return bool True if running in LXC
+     */
+    public function isLxc(): bool
+    {
+        return $this->isLxc;
+    }
+
+    /**
+     * Check if running in any container (Docker or LXC)
+     *
+     * @return bool True if running in any container
+     */
+    public function isContainer(): bool
+    {
+        return $this->isDocker || $this->isLxc;
     }
 
     /**
@@ -62,23 +84,23 @@ class EnvironmentHelper
     /**
      * Check if running in normal installed mode
      *
-     * @return bool True if running in normal mode (not Docker, not LiveCD)
+     * @return bool True if running in normal mode (not container, not LiveCD)
      */
     public function isNormal(): bool
     {
-        return !$this->isDocker && !$this->isLiveCd;
+        return !$this->isContainer() && !$this->isLiveCd;
     }
 
     /**
      * Check if network configuration is available
      *
-     * Network configuration is disabled in Docker mode
+     * Network configuration is disabled in Docker mode but available in LXC
      *
      * @return bool True if network configuration is available
      */
     public function canConfigureNetwork(): bool
     {
-        return !$this->isDocker;
+        return System::canManageNetwork();
     }
 
     /**
@@ -96,13 +118,16 @@ class EnvironmentHelper
     /**
      * Check if firewall configuration is available
      *
-     * Firewall configuration is disabled in LiveCD mode
+     * Firewall configuration is disabled in LiveCD mode and depends on iptables capability
      *
      * @return bool True if firewall configuration is available
      */
     public function canConfigureFirewall(): bool
     {
-        return !$this->isLiveCd;
+        if ($this->isLiveCd) {
+            return false;
+        }
+        return System::canManageFirewall();
     }
 
     /**
@@ -166,12 +191,15 @@ class EnvironmentHelper
     /**
      * Get current environment name for display
      *
-     * @return string Environment name (Docker, LiveCD, or empty for normal)
+     * @return string Environment name (Docker, LXC, LiveCD, or empty for normal)
      */
     public function getEnvironmentName(): string
     {
         if ($this->isDocker) {
             return 'Docker';
+        }
+        if ($this->isLxc) {
+            return 'LXC';
         }
         if ($this->isLiveCd) {
             return 'LiveCD';

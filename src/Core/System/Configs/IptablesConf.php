@@ -104,8 +104,11 @@ class IptablesConf extends Injectable
      */
     public function applyConfig(): void
     {
-        // Skip iptables configuration in Docker containers - networking is handled by Docker
-        if (System::isDocker()) {
+        // Skip iptables configuration when system can't manage firewall
+        // Docker: skip (host manages iptables for port forwarding)
+        // LXC without CAP_NET_ADMIN: skip
+        // LXC with CAP_NET_ADMIN or bare-metal: apply rules
+        if (!System::canManageFirewall()) {
             return;
         }
 
@@ -172,8 +175,8 @@ class IptablesConf extends Injectable
      */
     private function dropAllRules(): void
     {
-        // Skip in Docker containers
-        if (System::isDocker()) {
+        // Skip when system can't manage firewall (Docker or LXC without capability)
+        if (!System::canManageFirewall()) {
             return;
         }
 

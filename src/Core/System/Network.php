@@ -903,8 +903,9 @@ class Network extends Injectable
         Processes::mwExecCommands($enableIpv6Commands, $out, 'ipv6_enable');
         SystemMessages::sysLogMsg(__METHOD__, 'IPv6 enabled at kernel level');
 
-        if (System::isDocker()) {
+        if (!System::canManageNetwork()) {
             // In Docker: Only configure IPv6 (IPv4 is managed by Docker runtime)
+            // LXC containers CAN manage their own network, so they continue below
             $this->configureIpv6InDocker();
             return 0;
         }

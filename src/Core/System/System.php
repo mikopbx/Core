@@ -297,7 +297,81 @@ class System extends Injectable
      */
     public static function isDocker(): bool
     {
-        return file_exists('/.dockerenv') || self::isLxc();
+        return file_exists('/.dockerenv');
+    }
+
+    /**
+     * Check if the system is running in any container (Docker or LXC)
+     *
+     * Use this for UI/informational purposes where we need to know
+     * if we're in any container environment.
+     *
+     * @return bool True if running in any container, false otherwise
+     */
+    public static function isContainer(): bool
+    {
+        return self::isDocker() || self::isLxc();
+    }
+
+    /**
+     * Check if the system can manage its own network configuration
+     *
+     * Docker: false - Docker runtime manages networking
+     * LXC: true - LXC containers manage their own network like VMs
+     * Bare-metal: true - Full network control
+     *
+     * @return bool True if system can configure network, false otherwise
+     */
+    public static function canManageNetwork(): bool
+    {
+        return !self::isDocker();
+    }
+
+    /**
+     * Check if the system can manage firewall (iptables)
+     *
+     * Docker: false - Host manages iptables for port forwarding
+     * LXC: depends on CAP_NET_ADMIN capability
+     * Bare-metal: true - Full firewall control
+     *
+     * @return bool True if system can manage iptables, false otherwise
+     */
+    public static function canManageFirewall(): bool
+    {
+        if (self::isDocker()) {
+            return false;
+        }
+
+        if (self::isLxc()) {
+            return self::hasIptablesCapability();
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if iptables is available and functional
+     *
+     * Tests if iptables commands can be executed successfully.
+     * Used to detect CAP_NET_ADMIN capability in LXC containers.
+     *
+     * @return bool True if iptables works, false otherwise
+     */
+    private static function hasIptablesCapability(): bool
+    {
+        static $hasCapability = null;
+
+        if ($hasCapability === null) {
+            $iptables = Util::which('iptables');
+            if (empty($iptables)) {
+                $hasCapability = false;
+            } else {
+                Processes::mwExec("$iptables -L -n 2>/dev/null", $output, $returnCode);
+                $hasCapability = ($returnCode === 0);
+            }
+        }
+
+        return $hasCapability;
     }
 
     /**
