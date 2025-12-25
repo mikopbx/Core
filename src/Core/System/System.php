@@ -42,6 +42,12 @@ class System extends Injectable
     const string BOOTING_FILE_PATH = '/var/run/mikopbx-booting';
 
     /**
+     * LXC container environment variable value
+     * Set by LXC runtime in the 'container' environment variable
+     */
+    private const string LXC_CONTAINER_ENV_VALUE = 'lxc';
+
+    /**
      * Returns the directory where logs are stored.
      * @deprecated use Directories::getDir(Directories::CORE_LOGS_DIR);
      *
@@ -369,6 +375,15 @@ class System extends Injectable
                 Processes::mwExec("$iptables -L -n 2>/dev/null", $output, $returnCode);
                 $hasCapability = ($returnCode === 0);
             }
+
+            // Log detection result for LXC debugging
+            if (self::isLxc()) {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    'LXC iptables capability: ' . ($hasCapability ? 'available' : 'unavailable (CAP_NET_ADMIN missing?)'),
+                    LOG_INFO
+                );
+            }
         }
 
         return $hasCapability;
@@ -426,24 +441,32 @@ class System extends Injectable
         return in_array($arch, ['x86_64', 'amd64'], true);
     }
 
-   /**
-   * Check if the system is running in LXC container
-   *
-   * @return bool True if running in LXC, false otherwise
-   */
-   public static function isLxc(): bool
-   {
-      // Check container environment variable (set by LXC runtime)
-      if (getenv('container') === 'lxc') {
-          return true;
-      }
+    /**
+     * Check if the system is running in LXC container
+     *
+     * LXC (Linux Containers) are system containers that behave like lightweight VMs.
+     * Unlike Docker, LXC containers can manage their own networking and firewall.
+     *
+     * Detection methods:
+     * 1. Primary: Check 'container' environment variable (set by LXC runtime)
+     * 2. Fallback: Read /proc/1/environ for container=lxc (when env not inherited)
+     *
+     * @return bool True if running in LXC, false otherwise
+     */
+    public static function isLxc(): bool
+    {
+        // Check container environment variable (set by LXC runtime)
+        if (getenv('container') === self::LXC_CONTAINER_ENV_VALUE) {
+            return true;
+        }
 
-      // Fallback: check init process environment
-      $environ = @file_get_contents('/proc/1/environ');
-      if ($environ !== false && strpos($environ, 'container=lxc') !== false) {
-          return true;
-      }
+        // Fallback: check init process environment
+        // Needed when PHP process doesn't inherit the container env var
+        $environ = @file_get_contents('/proc/1/environ');
+        if ($environ !== false && strpos($environ, 'container=' . self::LXC_CONTAINER_ENV_VALUE) !== false) {
+            return true;
+        }
 
-      return false;
-   }
+        return false;
+    }
 }
