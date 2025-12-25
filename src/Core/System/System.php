@@ -291,7 +291,7 @@ class System extends Injectable
     {
         if ($booting) {
             file_put_contents(self::BOOTING_FILE_PATH, 'true');
-        } else {
+        } elseif (file_exists(self::BOOTING_FILE_PATH)) {
             unlink(self::BOOTING_FILE_PATH);
         }
     }

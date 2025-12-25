@@ -45,11 +45,12 @@ $result = $mikoPBX->startSystem();
 // Previously used mwExecBg but that lost output to /dev/null
 if((true === $result)
     && ! Util::isRecoveryMode()
-    && ! System::isDocker()
+    && ! System::isContainer()
 ) {
+    // Bare-metal only: run bootup_pbx directly
     Processes::mwExec('/etc/rc/bootup_pbx');
-} else {
-    // Clear booting flag for Recovery Mode and Docker
-    // (bootup_pbx won't run to clear it, causing welcome_banner to wait 120s)
+} elseif (! System::isContainer()) {
+    // Clear booting flag only for Recovery Mode on bare-metal
+    // Containers (Docker/LXC) call bootup_pbx separately via DockerEntrypoint
     System::setBooting(false);
 }
