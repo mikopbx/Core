@@ -1996,4 +1996,11 @@ return [
     'rest_schema_s3_secret_key' => 'S3 secret access key (masked with asterisks in responses)',
     'rest_schema_s3_total_retention' => 'Total retention period for recordings in days (local + cloud storage)',
     'rest_schema_s3_local_retention' => 'Number of days to keep recordings locally before uploading to S3',
+
+    // ============================================================================
+    // System Upgrade
+    // ============================================================================
+    'rest_System_UpgradeFailedToDetectOffset' => 'Failed to determine boot partition offset.',
+    'rest_System_UpgradeLoopDeviceFailed' => 'Failed to set up the loop device.',
+    'rest_System_UpgradeMountFailed' => 'Failed to mount the first partition. Check filesystem and options.',
 ];
