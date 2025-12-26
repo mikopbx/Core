@@ -211,6 +211,14 @@ class SystemLoader extends Injectable
         // Mark the registry as booting
         System::setBooting(true);
 
+        // Configure loopback interface BEFORE Redis starts
+        // Redis binds to 127.0.0.1 and needs loopback to be UP
+        // Full network configuration happens later (after Redis) as it needs cache
+        $this->echoStartMsg(' - Configuring loopback interface...');
+        $network = new Network();
+        $network->loConfigure();
+        $this->echoResultMsg();
+
         $this->echoStartMsg(' - Starting redis daemon...');
         $redisConf = new RedisConf();
         $redisStatus = $redisConf->start();
