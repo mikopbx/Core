@@ -59,6 +59,9 @@ chmod 777 /tmp
 ln -s /offload/rootfs/usr /usr
 ln -s /sys/bus/usb /dev/bus/usb
 
+# Create getty symlink for LXC compatibility (Proxmox adds getty to inittab)
+[ ! -e /sbin/getty ] && ln -s /sbin/agetty /sbin/getty
+
 # Creating device nodes for null and initctl
 rm -rf /dev/null
 mknod /dev/null c 1 3
