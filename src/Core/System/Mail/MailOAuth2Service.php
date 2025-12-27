@@ -254,14 +254,14 @@ class MailOAuth2Service
                 ]);
 
             case 'yandex':
+                // Note: scopes are set in getAuthOptions(), not here, to avoid duplication issues
                 return new GenericProvider([
                     'clientId' => $clientId,
                     'clientSecret' => $clientSecret,
                     'redirectUri' => $redirectUri,
                     'urlAuthorize' => 'https://oauth.yandex.com/authorize',
                     'urlAccessToken' => 'https://oauth.yandex.com/token',
-                    'urlResourceOwnerDetails' => '',
-                    'scopes' => ['mail:smtp']
+                    'urlResourceOwnerDetails' => ''
                 ]);
 
             default:
