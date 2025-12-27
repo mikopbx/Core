@@ -243,25 +243,25 @@ class MailOAuth2Service
 
             case 'microsoft':
                 // Using GenericProvider for Microsoft as thenetworg/oauth2-azure requires additional setup
+                // Note: scopes are set in getAuthOptions(), not here, to avoid duplication issues
                 return new GenericProvider([
                     'clientId' => $clientId,
                     'clientSecret' => $clientSecret,
                     'redirectUri' => $redirectUri,
                     'urlAuthorize' => 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
                     'urlAccessToken' => 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-                    'urlResourceOwnerDetails' => '',
-                    'scopes' => ['https://outlook.office365.com/.default', 'offline_access']
+                    'urlResourceOwnerDetails' => ''
                 ]);
 
             case 'yandex':
+                // Note: scopes are set in getAuthOptions(), not here, to avoid duplication issues
                 return new GenericProvider([
                     'clientId' => $clientId,
                     'clientSecret' => $clientSecret,
                     'redirectUri' => $redirectUri,
                     'urlAuthorize' => 'https://oauth.yandex.com/authorize',
                     'urlAccessToken' => 'https://oauth.yandex.com/token',
-                    'urlResourceOwnerDetails' => '',
-                    'scopes' => ['mail:smtp']
+                    'urlResourceOwnerDetails' => ''
                 ]);
 
             default:
@@ -288,7 +288,9 @@ class MailOAuth2Service
                 break;
 
             case 'microsoft':
-                $options['scope'] = ['https://outlook.office365.com/.default', 'offline_access'];
+                // Use delegated SMTP.Send scope for authorization_code flow
+                // Note: outlook.office.com (not office365.com) for delegated permissions
+                $options['scope'] = ['https://outlook.office.com/SMTP.Send', 'offline_access'];
                 break;
 
             case 'yandex':
