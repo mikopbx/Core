@@ -49,11 +49,13 @@ class Network extends Injectable
     {
         $grep = Util::which('grep');
         $awk = Util::which('awk');
-        if (System::isDocker()) {
+        if (System::isContainer()) {
+            // In containers (Docker/LXC), network interfaces are virtual (veth pairs)
+            // Use ifconfig to list all active interfaces
             $ifconfig = Util::which('ifconfig');
             $command = "$ifconfig | $grep -o -E '^[a-zA-Z0-9]+' | $grep -v 'lo'";
         } else {
-            // Universal command to retrieve all PCI network interfaces.
+            // On bare metal: retrieve PCI network interfaces (exclude virtual)
             $ls = Util::which('ls');
             $command = "$ls -l /sys/class/net | $grep devices | $grep -v virtual | $awk '{ print $9 }'";
         }

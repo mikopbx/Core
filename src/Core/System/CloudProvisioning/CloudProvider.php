@@ -46,10 +46,11 @@ abstract class CloudProvider
      * Used to prevent SQL injection in direct SQLite queries.
      */
     private const array VALID_LAN_COLUMNS = [
-        'topology', 'extipaddr', 'exthostname', 'hostname',
+        'topology', 'extipaddr', 'exthostname', 'hostname', 'domain',
         'ipaddr', 'subnet', 'gateway', 'primarydns', 'secondarydns',
         'ipv6_mode', 'ipv6addr', 'ipv6_subnet', 'ipv6_gateway',
-        'primarydns6', 'secondarydns6', 'dhcp', 'internet', 'vlanid'
+        'primarydns6', 'secondarydns6', 'dhcp', 'internet', 'vlanid',
+        'disabled'
     ];
 
     abstract public function provision(): bool;
@@ -81,6 +82,20 @@ abstract class CloudProvider
      * @return PromiseInterface Promise that resolves to bool
      */
     abstract public function checkAvailability(): PromiseInterface;
+
+    /**
+     * Returns the hardware type name for VirtualHardwareType setting.
+     *
+     * Override in subclass to provide custom name (e.g., 'Lxc' instead of 'LxcCloud').
+     * Default implementation removes 'Cloud' suffix from class name.
+     *
+     * @return string Hardware type name
+     */
+    public function getHardwareTypeName(): string
+    {
+        // Default: use class name without namespace (e.g., DockerCloud, AWSCloud)
+        return basename(str_replace('\\', '/', static::class));
+    }
 
     /**
      * Updates the SSH keys.
@@ -526,6 +541,62 @@ abstract class CloudProvider
         Processes::mwExec($command, $out);
 
         return !empty($out[0]) ? $out[0] : null;
+    }
+
+    /**
+     * Resets LAN interfaces table and creates a single primary interface.
+     *
+     * This method clears all existing LAN interface records and creates one
+     * new record with the specified interface name. Used during container
+     * provisioning to ensure clean network configuration.
+     *
+     * @param string $interfaceName Network interface name (e.g., 'eth0')
+     * @return bool True on success
+     */
+    protected function resetLanInterface(string $interfaceName): bool
+    {
+        $sqlite3 = Util::which('sqlite3');
+        $dbPath = self::PATH_DB;
+        $out = [];
+
+        // Sanitize interface name (alphanumeric and common chars only)
+        $sanitizedInterface = preg_replace('/[^a-zA-Z0-9_\-.]/', '', $interfaceName);
+        if (empty($sanitizedInterface)) {
+            $sanitizedInterface = 'eth0';
+        }
+
+        $message = "      |- Reset LAN interfaces table...";
+        $this->publishMessage($message);
+        SystemMessages::echoToTeletype($message);
+
+        // Delete all existing records
+        $command = "$sqlite3 $dbPath \"DELETE FROM m_LanInterfaces\"";
+        $res = Processes::mwExec($command, $out);
+
+        if ($res !== 0) {
+            SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_FAILED);
+            SystemMessages::sysLogMsg(__METHOD__, "Failed to clear LAN interfaces: " . implode($out), LOG_ERR);
+            return false;
+        }
+
+        // Insert new primary interface with correct defaults
+        $insertSql = "INSERT INTO m_LanInterfaces " .
+            "(id, interface, internet, disabled, dhcp, ipaddr, subnet, gateway, hostname, domain, topology, extipaddr, " .
+            "primarydns, secondarydns, ipv6_mode, ipv6addr, ipv6_subnet, ipv6_gateway, primarydns6, secondarydns6) " .
+            "VALUES (1, '$sanitizedInterface', '1', '0', '1', '', '24', '', '', '', 'private', '', " .
+            "'', '', '0', '', '', '', '', '')";
+
+        $command = "$sqlite3 $dbPath \"$insertSql\"";
+        $res = Processes::mwExec($command, $out);
+
+        if ($res !== 0) {
+            SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_FAILED);
+            SystemMessages::sysLogMsg(__METHOD__, "Failed to create LAN interface: " . implode($out), LOG_ERR);
+            return false;
+        }
+
+        SystemMessages::teletypeEchoResult($message);
+        return true;
     }
 
     /**

@@ -102,7 +102,7 @@ touch /var/run/mikopbx-booting
 # Start the PHP bootstrap script in background
 # Redirect output to tty1 so boot messages are visible in Proxmox console
 # (Proxmox LXC console is attached to /dev/tty1, not /dev/console)
-php -f /offload/rootfs/usr/www/src/Core/System/DockerEntrypoint.php >/dev/tty1 2>&1 &
+php -f /offload/rootfs/usr/www/src/Core/System/ContainerEntrypoint.php >/dev/tty1 2>&1 &
 
 # Note: pbx_init is started via inittab on tty1, not here
 # This allows proper tty handling and respawn on exit

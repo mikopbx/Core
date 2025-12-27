@@ -51,6 +51,6 @@ if((true === $result)
     Processes::mwExec('/etc/rc/bootup_pbx');
 } elseif (! System::isContainer()) {
     // Clear booting flag only for Recovery Mode on bare-metal
-    // Containers (Docker/LXC) call bootup_pbx separately via DockerEntrypoint
+    // Containers (Docker/LXC) call bootup_pbx separately via ContainerEntrypoint
     System::setBooting(false);
 }

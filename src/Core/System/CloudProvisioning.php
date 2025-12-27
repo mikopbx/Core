@@ -28,6 +28,7 @@ use MikoPBX\Core\System\CloudProvisioning\CloudProvider;
 use MikoPBX\Core\System\CloudProvisioning\DigitalOceanCloud;
 use MikoPBX\Core\System\CloudProvisioning\DockerCloud;
 use MikoPBX\Core\System\CloudProvisioning\GoogleCloud;
+use MikoPBX\Core\System\CloudProvisioning\LxcCloud;
 use MikoPBX\Core\System\CloudProvisioning\NoCloud;
 use MikoPBX\Core\System\CloudProvisioning\VKCloud;
 use MikoPBX\Core\System\CloudProvisioning\YandexCloud;
@@ -66,9 +67,11 @@ class CloudProvisioning
         }
 
         // Lists of possible cloud providers.
-        // DockerCloud is first - if we're in Docker, skip cloud provider detection
+        // DockerCloud/LxcCloud are first - container-specific provisioning
+        // Cloud providers follow for VM deployments
         $providers = [
             DockerCloud::CloudID => new DockerCloud(),
+            LxcCloud::CloudID => new LxcCloud(),
             YandexCloud::CloudID => new YandexCloud(),
             VKCloud::CloudID => new VKCloud(),
             GoogleCloud::CloudID => new GoogleCloud(),
@@ -135,6 +138,6 @@ class CloudProvisioning
     public static function afterProvisioning(CloudProvider $provider, string $cloudName): void
     {
         // Use direct SQLite method to mark provisioning complete
-        $provider->markProvisioningCompleteDirect($cloudName);
+        $provider->markProvisioningCompleteDirect($provider->getHardwareTypeName());
     }
 }

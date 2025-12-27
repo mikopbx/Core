@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,11 +25,14 @@ use Phalcon\Di\Injectable;
 require_once 'Globals.php';
 
 /**
- * Defines the entry point for the MikoPBX system when deployed in a Docker environment.
+ * Entry point for MikoPBX when deployed in container environments (Docker, LXC).
+ *
  * This class is responsible for initializing the system, configuring environment settings,
  * preparing databases, and handling system startup and shutdown behaviors.
+ *
+ * Supports both Docker and LXC containers with unified cloud provisioning.
  */
-class DockerEntrypoint extends Injectable
+class ContainerEntrypoint extends Injectable
 {
     private const string PATH_DB = '/cf/conf/mikopbx.db';
     public float $workerStartTime;
@@ -37,7 +40,7 @@ class DockerEntrypoint extends Injectable
     private float $stageStartTime = 0.0;
 
     /**
-     * Constructor for the DockerEntrypoint class.
+     * Constructor for the ContainerEntrypoint class.
      * Registers the shutdown handler and enables asynchronous signal handling.
      */
     public function __construct()
@@ -86,7 +89,7 @@ class DockerEntrypoint extends Injectable
     }
 
     /**
-     * Handles the shutdown event for the Docker container.
+     * Handles the shutdown event for the container.
      * Logs the time taken since the worker start and any last-minute errors.
      */
     public function shutdownHandler(): void
@@ -124,16 +127,21 @@ class DockerEntrypoint extends Injectable
         $this->prepareDatabase();
 
         // Apply environment variables via unified cloud provisioning
-        // DockerCloud provider handles ENV → DB mapping
-        $this->echoStartMsg(' - Applying environment variables...');
-        $result = CloudProvisioning::start();
-        if ($result['success']) {
-            $this->echoResultMsg();
-            if (!empty($result['cloudId']) && $result['cloudId'] !== 'Previously configured') {
-                $this->echoMessage("   Provisioned via: {$result['cloudId']}");
+        // DockerCloud provider handles ENV → DB mapping for Docker
+        // LxcCloud provider handles /etc/network/interfaces for LXC containers
+        // This runs BEFORE UpdateDatabase to ensure values are set in current DB
+        // UpdateDatabase only adds new columns/tables, doesn't overwrite existing values
+        if (System::isContainer()) {
+            $this->echoStartMsg(' - Applying environment variables...');
+            $result = CloudProvisioning::start();
+            if ($result['success']) {
+                $this->echoResultMsg();
+                if (!empty($result['cloudId']) && $result['cloudId'] !== 'Previously configured') {
+                    $this->echoMessage("   Provisioned via: {$result['cloudId']}");
+                }
+            } else {
+                $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
             }
-        } else {
-            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
         // Start the MikoPBX system.
@@ -170,13 +178,13 @@ class DockerEntrypoint extends Injectable
         $chgrp = Util::which('chgrp');
         $currentUserId = trim((string)shell_exec("$grep '^$userID:' < /etc/shadow | $cut -d ':' -f 3"));
         $currentGroupId = trim((string)shell_exec("$grep '^$userID:' < /etc/group | $cut -d ':' -f 3"));
-        
+
         $needUserUpdate = ($currentUserId !== '' && !empty($newUserId) && $currentUserId !== $newUserId);
         $needGroupUpdate = ($currentGroupId !== '' && !empty($newGroupId) && $currentGroupId !== $newGroupId);
-        
+
         if ($needUserUpdate || $needGroupUpdate) {
             $this->echoStartMsg(' - Configuring user permissions...');
-            
+
             // Collect all updates first
             if ($needUserUpdate) {
                 $commands[] = "$sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/shadow*";
@@ -189,7 +197,7 @@ class DockerEntrypoint extends Injectable
                     file_put_contents($pidIdPath, $newUserId);
                 }
             }
-            
+
             if ($needGroupUpdate) {
                 $commands[] = "$sed -i 's/$userID:x:$currentGroupId:/$userID:x:$newGroupId:/g' /etc/group";
                 $commands[] = "$sed -i 's/:$currentGroupId:Web/:$newGroupId:Web/g' /etc/shadow";
@@ -202,12 +210,12 @@ class DockerEntrypoint extends Injectable
                     file_put_contents($pidGrPath, $newGroupId);
                 }
             }
-            
+
             // Execute collected commands
             passthru(implode('; ', $commands));
 
             $this->echoResultMsg();
-            
+
             // Show details after completion
             if ($needUserUpdate) {
                 $this->echoMessage("   Updated user ID: $currentUserId → $newUserId");
@@ -283,7 +291,7 @@ class DockerEntrypoint extends Injectable
         if ($hasIssues) {
             $this->echoResultMsg(SystemMessages::RESULT_WARNING);
             $this->echoMessage("\n┌─────────────────────────────────────────────────────────────────┐");
-            $this->echoMessage("│ ⚠️  DOCKER VOLUME PERMISSION ISSUES DETECTED                     │");
+            $this->echoMessage("│ ⚠️  VOLUME PERMISSION ISSUES DETECTED                            │");
             $this->echoMessage("└─────────────────────────────────────────────────────────────────┘\n");
 
             foreach ($issueDetails as $detail) {
@@ -355,6 +363,6 @@ $bootStartTime = hrtime(true);
 file_put_contents('/tmp/system_boot_start_time', $bootStartTime);
 
 // Output startup message
-echo PHP_EOL . " - Starting MikoPBX in Docker container..." . PHP_EOL;
-$main = new DockerEntrypoint();
+echo PHP_EOL . " - Starting MikoPBX in container..." . PHP_EOL;
+$main = new ContainerEntrypoint();
 $main->start();

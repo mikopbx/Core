@@ -301,11 +301,11 @@ mikopbx:
 - **XSS (ProvisioningConfig)**: Control character removal, length limits, hostname/IP validation
 - **Resource Exhaustion**: Max string length 1024, max SSH keys 65536, max hostname 253
 
-**DockerEntrypoint Refactoring**:
-- **Before**: 500 lines with custom ENV parsing and SQLite queries
-- **After**: 260 lines, delegates to `CloudProvisioning::start()`
-- **Removed Code**: `applyEnvironmentSettings()`, `updateDBSetting()`, `reconfigureNetwork()`
-- **Preserved Behavior**: All ENV variables work identically, service port JSON updates
+**ContainerEntrypoint** (formerly DockerEntrypoint):
+- Unified entry point for Docker and LXC containers
+- Delegates provisioning to `CloudProvisioning::start()`
+- DockerCloud handles ENV variables, LxcCloud handles Proxmox files
+- All ENV variables work identically across container types
 
 **Direct SQLite Methods** (avoid Redis dependency):
 - `loadPbxSettingsDirectly()` - Read all settings into cache

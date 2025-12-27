@@ -92,6 +92,10 @@ class DockerCloud extends CloudProvider
             return;
         }
 
+        // Reset LAN interfaces table with default interface name
+        // This ensures clean state with internet='1' and disabled='0'
+        $instance->resetLanInterface('eth0');
+
         // Apply the configuration using direct SQLite method (no Redis/ORM)
         // This only updates settings that have changed
         $instance->applyConfigDirect($config);
