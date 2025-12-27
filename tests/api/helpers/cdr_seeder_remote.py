@@ -42,8 +42,8 @@ class CDRSeederRemote:
 
     Environment Variables:
         MIKOPBX_API_URL       - MikoPBX API URL (used to detect remote execution via API)
-        MIKOPBX_LOGIN         - API login (default: admin)
-        MIKOPBX_PASSWORD      - API password (default: admin)
+        MIKOPBX_API_USERNAME  - API login (default: admin)
+        MIKOPBX_API_PASSWORD  - API password (default: admin)
         MIKOPBX_CONTAINER     - Docker container name (default: mikopbx-php83)
         MIKOPBX_SSH_HOST      - SSH hostname for remote execution (forces SSH mode)
         MIKOPBX_SSH_USER      - SSH username (default: root)
@@ -61,8 +61,8 @@ class CDRSeederRemote:
 
         # API configuration for REST API execution
         self.api_base_url = os.getenv('MIKOPBX_API_URL', '')
-        self.api_login = os.getenv('MIKOPBX_LOGIN', 'admin')
-        self.api_password = os.getenv('MIKOPBX_PASSWORD', 'admin')
+        self.api_login = os.getenv('MIKOPBX_API_USERNAME', 'admin')
+        self.api_password = os.getenv('MIKOPBX_API_PASSWORD', 'admin')
 
         # Script path on station
         # Path priorities:
