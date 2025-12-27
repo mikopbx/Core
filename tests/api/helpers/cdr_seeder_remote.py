@@ -109,7 +109,7 @@ class CDRSeederRemote:
 
         return 'local'
 
-    def _execute_command(self, command: str, timeout: int = 60) -> subprocess.CompletedProcess:
+    def _execute_command(self, command: str, timeout: int = 120) -> subprocess.CompletedProcess:
         """Execute command on MikoPBX station"""
         if self.execution_mode == 'docker':
             # Execute via docker exec (works with both Docker and OrbStack)
@@ -200,12 +200,14 @@ class CDRSeederRemote:
                 )
 
             # Execute bash command via REST API
+            # NOTE: 'timeout' must be passed BOTH in JSON body (for server-side limit)
+            # AND as requests timeout (for HTTP client-side limit)
             exec_url = f'{self.api_base_url}/system:executeBashCommand'
             exec_response = requests.post(
                 exec_url,
-                json={'command': command},
+                json={'command': command, 'timeout': timeout},
                 headers={'Authorization': f'Bearer {access_token}'},
-                timeout=timeout,
+                timeout=timeout + 5,  # HTTP timeout slightly longer than server timeout
                 verify=False
             )
 
@@ -292,7 +294,7 @@ export FIXTURES_DIR=/storage/usbdisk1/mikopbx/python-tests/fixtures
             return True
 
         except subprocess.TimeoutExpired:
-            print("✗ Seeding timed out after 60 seconds")
+            print("✗ Seeding timed out after 120 seconds")
             return False
         except Exception as e:
             print(f"✗ Seeding failed: {str(e)}")
