@@ -19,16 +19,31 @@
 
 # Inline output functions - no external dependencies for maximum compatibility
 # This script must work when updating FROM any old MikoPBX version
+
+# Serial port for headless output (cached to avoid repeated checks)
+SERIAL_TTY=""
+if [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ]; then
+    SERIAL_TTY="/dev/ttyS0"
+fi
+
 echo_info() {
-    echo " - $1"
-    # Output to serial port if available (for headless systems)
-    [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ] && echo " - $1" > /dev/ttyS0 2>/dev/null
+    local msg=" - $1"
+    echo "$msg"
+    if [ -n "$SERIAL_TTY" ]; then
+        # Use printf for atomic write, stty to drain buffer
+        printf "%s\n" "$msg" > "$SERIAL_TTY" 2>/dev/null
+        stty -F "$SERIAL_TTY" drain 2>/dev/null || sleep 0.05 2>/dev/null || true
+    fi
     return 0
 }
 
 echo_error() {
-    echo "ERROR: $1"
-    [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ] && echo "ERROR: $1" > /dev/ttyS0 2>/dev/null
+    local msg="ERROR: $1"
+    echo "$msg"
+    if [ -n "$SERIAL_TTY" ]; then
+        printf "%s\n" "$msg" > "$SERIAL_TTY" 2>/dev/null
+        stty -F "$SERIAL_TTY" drain 2>/dev/null || sleep 0.05 2>/dev/null || true
+    fi
     return 0
 }
 
@@ -136,10 +151,13 @@ else
     fi
     
     if [ -n "$SERIAL_PORT" ]; then
-        /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
+        LC_ALL=C /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
     else
-        /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M >/dev/null 2>&1
+        LC_ALL=C /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M >/dev/null 2>&1
     fi
+    # Reset terminal after progress bar
+    printf '\033[0m\n' 2>/dev/null
+    sync
   else
     # Storage is on the main disk which needs to be unmounted, so move the image to RAM
     echo_info "Moving the update img to RAM before storage will be unmounted ..."
@@ -301,13 +319,20 @@ if [ -r "${img_file}" ]; then
   fi
   
   if [ -n "$SERIAL_PORT" ]; then
-    /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
+    LC_ALL=C /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
   else
-    /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1;
+    LC_ALL=C /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1;
   fi
   resultPv="$?";
+
+  # Reset terminal after progress bar and flush all buffers
+  printf '\033[0m\n' 2>/dev/null
+  sync
+  sleep 2
   echo_info "result install code $resultPv";
   /sbin/blockdev --rereadpt "$DISK" > /dev/null 2>&1;
+  sync
+  sleep 1
 
   # Fix GPT backup table location after writing smaller image to larger disk
   # The backup GPT header must be at the end of the disk, not at original image size
@@ -356,10 +381,13 @@ if [ -r "${img_file}" ]; then
       fi
       
       if [ -n "$SERIAL_PORT" ]; then
-        /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
+        LC_ALL=C /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
       else
-        /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1;
+        LC_ALL=C /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1;
       fi
+      # Reset terminal after progress bar
+      printf '\033[0m\n' 2>/dev/null
+      sync
     fi;
   fi;
   rm -rf "$backupImg";
