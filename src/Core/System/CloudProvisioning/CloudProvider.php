@@ -567,7 +567,6 @@ abstract class CloudProvider
 
         $message = "      |- Reset LAN interfaces table...";
         $this->publishMessage($message);
-        SystemMessages::echoToTeletype($message);
 
         // Delete all existing records
         $command = "$sqlite3 $dbPath \"DELETE FROM m_LanInterfaces\"";
