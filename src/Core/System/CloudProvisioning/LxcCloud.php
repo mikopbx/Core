@@ -81,6 +81,9 @@ class LxcCloud extends CloudProvider
             return false;
         }
 
+        // DEBUG: Log Proxmox files content at the very first moment of boot
+        $this->debugLogProxmoxFiles();
+
         $message = PHP_EOL . "   |- Applying LXC/Proxmox configuration...";
         SystemMessages::echoToTeletype($message);
 
@@ -156,12 +159,30 @@ class LxcCloud extends CloudProvider
     }
 
     /**
-     * Reads SSH authorized keys from /root/.ssh/authorized_keys.
+     * Reads SSH authorized keys from multiple sources (in priority order):
+     * 1. SSH_AUTHORIZED_KEYS environment variable (set by Proxmox lxc.environment)
+     * 2. /root/.ssh/authorized_keys file (created by Proxmox)
      *
      * @return string|null SSH keys (newline-separated) or null if not available
      */
     private function readSshKeys(): ?string
     {
+        // Priority 1: Check ENV variable (set via lxc.environment in Proxmox config)
+        // This is the most reliable method as Proxmox sets it before container starts
+        $envKeys = getenv('SSH_AUTHORIZED_KEYS');
+        if ($envKeys !== false && !empty(trim($envKeys))) {
+            $keys = trim($envKeys);
+            // Handle semicolon-separated keys (from lxc-entrypoint conversion)
+            $keys = str_replace(';', "\n", $keys);
+            SystemMessages::sysLogMsg(
+                self::CloudID,
+                "SSH keys read from ENV variable SSH_AUTHORIZED_KEYS",
+                LOG_DEBUG
+            );
+            return $keys;
+        }
+
+        // Priority 2: Check file (may be overwritten later by MikoPBX SSHConf)
         if (!file_exists(self::PATH_SSH_KEYS)) {
             return null;
         }
@@ -170,6 +191,12 @@ class LxcCloud extends CloudProvider
         if (empty($keys)) {
             return null;
         }
+
+        SystemMessages::sysLogMsg(
+            self::CloudID,
+            "SSH keys read from file " . self::PATH_SSH_KEYS,
+            LOG_DEBUG
+        );
 
         return $keys;
     }
@@ -348,5 +375,85 @@ class LxcCloud extends CloudProvider
     public function getHardwareTypeName(): string
     {
         return 'Lxc';
+    }
+
+    /**
+     * DEBUG: Log Proxmox files content at boot for troubleshooting.
+     *
+     * This method logs the raw content of all Proxmox-provided configuration files
+     * at the very first moment of container boot, before any processing.
+     *
+     * @return void
+     */
+    private function debugLogProxmoxFiles(): void
+    {
+        SystemMessages::sysLogMsg(
+            self::CloudID,
+            "DEBUG: === LXC PROVISIONING START - RAW FILES DUMP ===",
+            LOG_DEBUG
+        );
+
+        // Log /etc/hostname
+        if (file_exists(self::PATH_HOSTNAME)) {
+            $content = file_get_contents(self::PATH_HOSTNAME);
+            SystemMessages::sysLogMsg(
+                self::CloudID,
+                "DEBUG: " . self::PATH_HOSTNAME . " content: [" . trim($content) . "]",
+                LOG_DEBUG
+            );
+        } else {
+            SystemMessages::sysLogMsg(
+                self::CloudID,
+                "DEBUG: " . self::PATH_HOSTNAME . " does NOT exist",
+                LOG_WARNING
+            );
+        }
+
+        // Log /root/.ssh/authorized_keys
+        if (file_exists(self::PATH_SSH_KEYS)) {
+            $content = file_get_contents(self::PATH_SSH_KEYS);
+            $size = strlen($content);
+            $lines = substr_count($content, "\n") + ($size > 0 ? 1 : 0);
+            // Log first 200 chars to avoid flooding logs with full keys
+            $preview = substr($content, 0, 200);
+            if (strlen($content) > 200) {
+                $preview .= '...';
+            }
+            SystemMessages::sysLogMsg(
+                self::CloudID,
+                "DEBUG: " . self::PATH_SSH_KEYS . " size={$size} bytes, lines={$lines}, content: [{$preview}]",
+                LOG_DEBUG
+            );
+        } else {
+            SystemMessages::sysLogMsg(
+                self::CloudID,
+                "DEBUG: " . self::PATH_SSH_KEYS . " does NOT exist",
+                LOG_WARNING
+            );
+        }
+
+        // Log /etc/network/interfaces
+        if (file_exists(self::PATH_NETWORK_INTERFACES)) {
+            $content = file_get_contents(self::PATH_NETWORK_INTERFACES);
+            // Replace newlines for single-line logging
+            $singleLine = str_replace(["\r\n", "\n", "\r"], " | ", trim($content));
+            SystemMessages::sysLogMsg(
+                self::CloudID,
+                "DEBUG: " . self::PATH_NETWORK_INTERFACES . " content: [{$singleLine}]",
+                LOG_DEBUG
+            );
+        } else {
+            SystemMessages::sysLogMsg(
+                self::CloudID,
+                "DEBUG: " . self::PATH_NETWORK_INTERFACES . " does NOT exist",
+                LOG_WARNING
+            );
+        }
+
+        SystemMessages::sysLogMsg(
+            self::CloudID,
+            "DEBUG: === END RAW FILES DUMP ===",
+            LOG_DEBUG
+        );
     }
 }

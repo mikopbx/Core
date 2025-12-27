@@ -64,10 +64,23 @@ class Udhcpc6 extends Network
         // LXC and bare-metal should run full network configuration
         $skipNetworkCommands = !$canManageNetwork;
 
-        if ($action === 'deconfig') {
+        if ($action === 'deconfig' && (Util::isT2SdeLinux() || System::isLxc())) {
+            /**
+             * Perform deconfiguration for T2SDE Linux and LXC containers.
+             */
             $this->deconfigAction($skipNetworkCommands);
         } elseif ($action === 'bound' || $action === 'renew') {
-            $this->renewBoundAction($skipNetworkCommands);
+            if (Util::isSystemctl()) {
+                /**
+                 * Perform configuration renewal and bound actions using systemctl (systemd-based systems).
+                 */
+                $this->renewBoundAction($skipNetworkCommands);
+            } elseif (Util::isT2SdeLinux() || System::isLxc()) {
+                /**
+                 * Perform configuration renewal and bound actions for T2SDE Linux and LXC containers.
+                 */
+                $this->renewBoundAction($skipNetworkCommands);
+            }
         }
     }
 
