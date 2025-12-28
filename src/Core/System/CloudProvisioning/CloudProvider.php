@@ -568,6 +568,9 @@ abstract class CloudProvider
         $message = "      |- Reset LAN interfaces table...";
         $this->publishMessage($message);
 
+        // DEBUG: Log interface name being used
+        SystemMessages::sysLogMsg(__METHOD__, "DEBUG: Creating LAN interface with name='$sanitizedInterface'");
+
         // Delete all existing records
         $command = "$sqlite3 $dbPath \"DELETE FROM m_LanInterfaces\"";
         $res = Processes::mwExec($command, $out);
@@ -579,11 +582,12 @@ abstract class CloudProvider
         }
 
         // Insert new primary interface with correct defaults
+        // IMPORTANT: vlanid='0' is required for Network::updateIfSettings() DHCP callback to find this record
         $insertSql = "INSERT INTO m_LanInterfaces " .
             "(id, interface, internet, disabled, dhcp, ipaddr, subnet, gateway, hostname, domain, topology, extipaddr, " .
-            "primarydns, secondarydns, ipv6_mode, ipv6addr, ipv6_subnet, ipv6_gateway, primarydns6, secondarydns6) " .
+            "primarydns, secondarydns, ipv6_mode, ipv6addr, ipv6_subnet, ipv6_gateway, primarydns6, secondarydns6, vlanid) " .
             "VALUES (1, '$sanitizedInterface', '1', '0', '1', '', '24', '', '', '', 'private', '', " .
-            "'', '', '0', '', '', '', '', '')";
+            "'', '', '0', '', '', '', '', '', '0')";
 
         $command = "$sqlite3 $dbPath \"$insertSql\"";
         $res = Processes::mwExec($command, $out);

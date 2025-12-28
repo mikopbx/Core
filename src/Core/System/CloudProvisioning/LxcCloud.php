@@ -66,46 +66,61 @@ class LxcCloud extends CloudProvider
     }
 
     /**
-     * Applies Proxmox configuration on container start.
+     * Applies Proxmox configuration overrides on EVERY container start.
      *
-     * Reads configuration from Proxmox-provided files and applies to MikoPBX database.
-     * This follows the same pattern as DockerCloud but reads files instead of ENV vars.
+     * This follows the 12-factor app pattern where configuration should be applied
+     * on each start, not just the first boot. Reads Proxmox-provided files:
+     * - /etc/hostname - container hostname
+     * - /root/.ssh/authorized_keys - SSH public keys
+     * - /etc/network/interfaces - network configuration (static IP, gateway, DNS)
      *
-     * Called from CloudProvisioning::start() during boot.
+     * Called from CloudProvisioning::start() BEFORE the one-time provisioning check.
+     * Similar to DockerCloud::applyEnvironmentOverrides().
      *
-     * @return bool True if running in LXC and provisioning succeeded
+     * @return void
      */
-    public function provision(): bool
+    public static function applyProxmoxOverrides(): void
     {
-        if (!System::isLxc()) {
-            return false;
-        }
-
-        // DEBUG: Log Proxmox files content at the very first moment of boot
-        $this->debugLogProxmoxFiles();
-
-        $message = PHP_EOL . "   |- Applying LXC/Proxmox configuration...";
+        $message = PHP_EOL . "   |- Applying Proxmox configuration overrides...";
         SystemMessages::echoToTeletype($message);
 
+        $instance = new self();
+
         // Build configuration from Proxmox files (also detects interface name)
-        $config = $this->buildConfigFromProxmoxFiles();
+        $config = $instance->buildConfigFromProxmoxFiles();
+
+        // ALWAYS reset LAN interface for LXC containers
+        // This ensures internet='1' and disabled='0' even with DHCP/empty config
+        // Required for welcome banner to display IP address
+        $instance->resetLanInterface($instance->detectedInterface);
 
         if ($config->isEmpty()) {
             SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_SKIPPED);
-            return true; // Still in LXC, just no config to apply
+            return;
         }
 
-        // Reset LAN interfaces table with detected interface name
-        // This ensures clean state with internet='1' and disabled='0'
-        $this->resetLanInterface($this->detectedInterface);
-
-        // Apply the configuration using direct SQLite (Redis not yet started in ContainerEntrypoint)
-        // After bootup completes, network will be configured with these values
-        $this->applyConfigDirect($config);
+        // Apply the configuration using direct SQLite (Redis not yet started)
+        $instance->applyConfigDirect($config);
 
         SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_DONE);
+    }
 
-        return true;
+    /**
+     * Performs one-time LXC provisioning (first container start only).
+     *
+     * Proxmox configuration is already applied by applyProxmoxOverrides() which runs
+     * on every start. This method only confirms we're in LXC for the one-time
+     * provisioning marker (VIRTUAL_HARDWARE_TYPE, etc.).
+     *
+     * Called from CloudProvisioning::start() during boot.
+     *
+     * @return bool True if running in LXC, false otherwise.
+     */
+    public function provision(): bool
+    {
+        // Configuration already applied by applyProxmoxOverrides()
+        // Just confirm we're in LXC for the provisioning marker
+        return System::isLxc();
     }
 
     /**
@@ -259,6 +274,17 @@ class LxcCloud extends CloudProvider
                 if ($currentFamily === 'inet') {
                     $settings['dhcp'] = ($method === 'dhcp') ? '1' : '0';
                 }
+
+                // Track IPv6 mode
+                // Proxmox uses 'manual' or 'dhcp' for DHCPv6, 'static' for manual config
+                // 'auto' is used for SLAAC-only
+                if ($currentFamily === 'inet6') {
+                    if (in_array($method, ['dhcp', 'manual', 'auto'], true)) {
+                        // DHCPv6 or SLAAC - set Auto mode (mode 1)
+                        $settings['ipv6_mode'] = '1';
+                    }
+                    // 'static' will be handled when address is parsed (sets mode 2)
+                }
                 continue;
             }
 
@@ -322,6 +348,12 @@ class LxcCloud extends CloudProvider
             }
         }
 
+        // ALWAYS ensure interface is enabled and marked as internet-facing
+        // This is critical for LXC containers to display IP in welcome banner
+        // Even with DHCP (empty IP), these flags must be set
+        $settings['internet'] = '1';
+        $settings['disabled'] = '0';
+
         return $settings;
     }
 
@@ -375,85 +407,5 @@ class LxcCloud extends CloudProvider
     public function getHardwareTypeName(): string
     {
         return 'Lxc';
-    }
-
-    /**
-     * DEBUG: Log Proxmox files content at boot for troubleshooting.
-     *
-     * This method logs the raw content of all Proxmox-provided configuration files
-     * at the very first moment of container boot, before any processing.
-     *
-     * @return void
-     */
-    private function debugLogProxmoxFiles(): void
-    {
-        SystemMessages::sysLogMsg(
-            self::CloudID,
-            "DEBUG: === LXC PROVISIONING START - RAW FILES DUMP ===",
-            LOG_DEBUG
-        );
-
-        // Log /etc/hostname
-        if (file_exists(self::PATH_HOSTNAME)) {
-            $content = file_get_contents(self::PATH_HOSTNAME);
-            SystemMessages::sysLogMsg(
-                self::CloudID,
-                "DEBUG: " . self::PATH_HOSTNAME . " content: [" . trim($content) . "]",
-                LOG_DEBUG
-            );
-        } else {
-            SystemMessages::sysLogMsg(
-                self::CloudID,
-                "DEBUG: " . self::PATH_HOSTNAME . " does NOT exist",
-                LOG_WARNING
-            );
-        }
-
-        // Log /root/.ssh/authorized_keys
-        if (file_exists(self::PATH_SSH_KEYS)) {
-            $content = file_get_contents(self::PATH_SSH_KEYS);
-            $size = strlen($content);
-            $lines = substr_count($content, "\n") + ($size > 0 ? 1 : 0);
-            // Log first 200 chars to avoid flooding logs with full keys
-            $preview = substr($content, 0, 200);
-            if (strlen($content) > 200) {
-                $preview .= '...';
-            }
-            SystemMessages::sysLogMsg(
-                self::CloudID,
-                "DEBUG: " . self::PATH_SSH_KEYS . " size={$size} bytes, lines={$lines}, content: [{$preview}]",
-                LOG_DEBUG
-            );
-        } else {
-            SystemMessages::sysLogMsg(
-                self::CloudID,
-                "DEBUG: " . self::PATH_SSH_KEYS . " does NOT exist",
-                LOG_WARNING
-            );
-        }
-
-        // Log /etc/network/interfaces
-        if (file_exists(self::PATH_NETWORK_INTERFACES)) {
-            $content = file_get_contents(self::PATH_NETWORK_INTERFACES);
-            // Replace newlines for single-line logging
-            $singleLine = str_replace(["\r\n", "\n", "\r"], " | ", trim($content));
-            SystemMessages::sysLogMsg(
-                self::CloudID,
-                "DEBUG: " . self::PATH_NETWORK_INTERFACES . " content: [{$singleLine}]",
-                LOG_DEBUG
-            );
-        } else {
-            SystemMessages::sysLogMsg(
-                self::CloudID,
-                "DEBUG: " . self::PATH_NETWORK_INTERFACES . " does NOT exist",
-                LOG_WARNING
-            );
-        }
-
-        SystemMessages::sysLogMsg(
-            self::CloudID,
-            "DEBUG: === END RAW FILES DUMP ===",
-            LOG_DEBUG
-        );
     }
 }

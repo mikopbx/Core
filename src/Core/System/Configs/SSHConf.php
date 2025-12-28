@@ -197,6 +197,10 @@ class SSHConf extends SystemConfigClass
         foreach ($keyCmd as [$keySetting, $path, $createCmd]){
             $keyValue = trim(PbxSettings::getValueByKey($keySetting));
             if(empty($keyValue)){
+                // Remove existing file to prevent ssh-keygen from waiting for interactive confirmation
+                if (file_exists($path)) {
+                    unlink($path);
+                }
                 shell_exec($createCmd);
                 $keyValue = base64_encode(file_get_contents($path));
                 PbxSettings::setValueByKey($keySetting, $keyValue);

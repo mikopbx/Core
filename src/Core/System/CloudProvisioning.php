@@ -54,10 +54,12 @@ class CloudProvisioning
      */
     public static function start(): array
     {
-        // Step 1: Docker ENV overrides are applied on EVERY start
-        // This follows 12-factor app pattern where ENV config should be dynamic
+        // Step 1: Container overrides are applied on EVERY start
+        // This follows 12-factor app pattern where config should be dynamic
         if (System::isDocker()) {
             DockerCloud::applyEnvironmentOverrides();
+        } elseif (System::isLxc()) {
+            LxcCloud::applyProxmoxOverrides();
         }
 
         // Step 2: Cloud provisioning runs only ONCE (cloud-init pattern)
