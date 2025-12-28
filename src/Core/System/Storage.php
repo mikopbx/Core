@@ -1357,16 +1357,17 @@ class Storage extends Injectable
     {
         $res_disks = [];
 
-        if (System::isDocker()) {
-            // Get disk information for /storage directory
+        if (System::isContainer()) {
+            // Get disk information for /storage directory (Docker and LXC)
             $out = [];
             $grepPath = Util::which('grep');
             $dfPath = Util::which('df');
             $awkPath = Util::which('awk');
 
             // Execute the command to get disk information for /storage directory
+            // Use -P for POSIX format (single line output even with long device names)
             Processes::mwExec(
-                "$dfPath -k /storage | $awkPath  '{ print \$1 \"|\" $3 \"|\" \$4} ' | $grepPath -v 'Available'",
+                "$dfPath -Pk /storage | $awkPath  '{ print \$1 \"|\" \$3 \"|\" \$4} ' | $grepPath -v 'Available'",
                 $out
             );
             $disk_data = explode('|', implode(" ", $out));
@@ -1376,13 +1377,16 @@ class Storage extends Injectable
                 $used_space = round($disk_data[1] / 1024, 1);
                 $free_space = round($disk_data[2] / 1024, 1);
                 $usage_percentage = ($m_size > 0) ? round(($used_space / $m_size) * 100, 1) : 0;
-                
-                // Add Docker disk information to the result
+
+                // Determine vendor based on container type
+                $vendor = System::isDocker() ? 'Docker' : 'LXC';
+
+                // Add container disk information to the result
                 $res_disks[] = [
                     'id' => $disk_data[0],
                     'size' => "" . $m_size,
                     'size_text' => "" . $m_size . " Mb",
-                    'vendor' => 'Debian',
+                    'vendor' => $vendor,
                     'mounted' => '/storage/usbdisk1',
                     'free_space' => $free_space,
                     'used_space' => $used_space,
