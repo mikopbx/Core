@@ -138,7 +138,18 @@ class TestCDRSeeding:
         success = seeder.seed()
 
         if not success:
-            pytest.fail("❌ CDR seeding failed - CDR tests will not have test data")
+            # On failure, collect and print diagnostic information
+            print("\n" + "=" * 60)
+            print("SEEDING FAILED - COLLECTING DIAGNOSTICS")
+            print("=" * 60)
+
+            try:
+                diagnostics = seeder.diagnose_failure()
+                print(diagnostics)
+            except Exception as diag_error:
+                print(f"Failed to collect diagnostics: {diag_error}")
+
+            pytest.fail("❌ CDR seeding failed - CDR tests will not have test data. See diagnostics above.")
 
         # Get list of seeded IDs
         seeded_ids = seeder.get_test_cdr_ids()

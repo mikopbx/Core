@@ -24,6 +24,105 @@ set -e  # Exit on error
 # Configuration
 CDR_DB_PATH="${CDR_DB_PATH:-/storage/usbdisk1/mikopbx/astlogs/asterisk/cdr.db}"
 
+# Server-side logging for debugging remote execution issues (TeamCity, etc.)
+LOG_DIR="/storage/usbdisk1/mikopbx/log"
+LOG_FILE="${LOG_DIR}/cdr_seeder.log"
+ENABLE_SERVER_LOG="${ENABLE_SERVER_LOG:-1}"
+
+# Initialize server-side logging
+init_server_log() {
+    if [ "$ENABLE_SERVER_LOG" != "1" ]; then
+        return
+    fi
+
+    # Create log directory if needed
+    mkdir -p "$LOG_DIR" 2>/dev/null || true
+
+    # Rotate log if too large (> 1MB)
+    if [ -f "$LOG_FILE" ] && [ $(stat -f%z "$LOG_FILE" 2>/dev/null || stat -c%s "$LOG_FILE" 2>/dev/null || echo 0) -gt 1048576 ]; then
+        mv "$LOG_FILE" "${LOG_FILE}.old" 2>/dev/null || true
+    fi
+
+    # Write header
+    {
+        echo ""
+        echo "========================================"
+        echo "CDR Seeder Script Execution"
+        echo "========================================"
+        echo "Timestamp: $(date '+%Y-%m-%d %H:%M:%S.%N' 2>/dev/null || date '+%Y-%m-%d %H:%M:%S')"
+        echo "Command: $0 $*"
+        echo "PID: $$"
+        echo "User: $(whoami)"
+        echo "PWD: $(pwd)"
+        echo "----------------------------------------"
+    } >> "$LOG_FILE" 2>/dev/null || true
+}
+
+# Log to both stdout and server log file
+log_server() {
+    local msg="$1"
+    local timestamp=$(date '+%H:%M:%S' 2>/dev/null || date '+%H:%M:%S')
+
+    # Always print to stdout
+    echo "$msg"
+
+    # Also log to file if enabled
+    if [ "$ENABLE_SERVER_LOG" = "1" ]; then
+        echo "[$timestamp] $msg" >> "$LOG_FILE" 2>/dev/null || true
+    fi
+}
+
+# Log diagnostic info about environment
+log_diagnostics() {
+    if [ "$ENABLE_SERVER_LOG" != "1" ]; then
+        return
+    fi
+
+    {
+        echo "--- Environment Diagnostics ---"
+        echo "CDR_DB_PATH: $CDR_DB_PATH"
+        echo "FIXTURES_DIR: $FIXTURES_DIR"
+        echo "SQL_FILE: $SQL_FILE"
+        echo "JSON_FILE: $JSON_FILE"
+        echo "MONITOR_BASE: $MONITOR_BASE"
+        echo "ENABLE_CDR_SEED: $ENABLE_CDR_SEED"
+        echo "--- File Checks ---"
+        echo "DB exists: $([ -f "$CDR_DB_PATH" ] && echo 'yes' || echo 'NO')"
+        echo "SQL exists: $([ -f "$SQL_FILE" ] && echo 'yes' || echo 'NO')"
+        echo "JSON exists: $([ -f "$JSON_FILE" ] && echo 'yes' || echo 'NO')"
+        echo "--- Disk Space ---"
+        df -h "$LOG_DIR" 2>/dev/null | head -2 || echo "df failed"
+        echo "--- SQLite version ---"
+        sqlite3 --version 2>/dev/null || echo "sqlite3 not found"
+        echo "--------------------------------"
+    } >> "$LOG_FILE" 2>/dev/null || true
+}
+
+# Log error with context
+log_error_server() {
+    local msg="$1"
+    local timestamp=$(date '+%H:%M:%S' 2>/dev/null || date '+%H:%M:%S')
+
+    echo -e "${RED}✗${NC} $msg" >&2
+
+    if [ "$ENABLE_SERVER_LOG" = "1" ]; then
+        echo "[$timestamp] ERROR: $msg" >> "$LOG_FILE" 2>/dev/null || true
+    fi
+}
+
+# Log script completion
+log_completion() {
+    local status="$1"
+    if [ "$ENABLE_SERVER_LOG" = "1" ]; then
+        {
+            echo "----------------------------------------"
+            echo "Completion: $status"
+            echo "End time: $(date '+%Y-%m-%d %H:%M:%S')"
+            echo "========================================"
+        } >> "$LOG_FILE" 2>/dev/null || true
+    fi
+}
+
 # Auto-detect fixtures directory
 # Priority:
 # 1. FIXTURES_DIR env variable (if set)
@@ -166,35 +265,59 @@ create_minimal_mp3() {
 
 # Seed database with test data
 seed_database() {
+    # Initialize server-side logging first
+    init_server_log "seed"
+
     if [ "$ENABLE_CDR_SEED" != "1" ]; then
-        log_warning "CDR seeding disabled (ENABLE_CDR_SEED=0)"
+        log_server "CDR seeding disabled (ENABLE_CDR_SEED=0)"
+        log_completion "SKIPPED - disabled"
         return 1
     fi
 
-    echo "============================================================"
-    echo "CDR Database Seeding Started"
-    echo "============================================================"
+    log_server "============================================================"
+    log_server "CDR Database Seeding Started"
+    log_server "============================================================"
+
+    # Log environment diagnostics
+    log_diagnostics
 
     # Check prerequisites
-    check_database || return 1
+    log_server "Step 1: Checking database..."
+    if ! check_database; then
+        log_error_server "Database check failed"
+        log_completion "FAILED - no database"
+        return 1
+    fi
+    log_server "Step 1: Database OK"
 
     # Try to generate dynamic fixtures with current dates
     # This ensures tests always have recent data regardless of when they run
-    generate_dynamic_fixtures || log_warning "Using existing SQL fixtures"
+    log_server "Step 2: Generating dynamic fixtures..."
+    generate_dynamic_fixtures || log_server "Using existing SQL fixtures"
 
-    check_fixtures || return 1
+    log_server "Step 3: Checking fixtures..."
+    if ! check_fixtures; then
+        log_error_server "Fixtures check failed"
+        log_completion "FAILED - no fixtures"
+        return 1
+    fi
+    log_server "Step 3: Fixtures OK"
 
     # Execute SQL seed file
-    log_info "Loading test CDR data from $SQL_FILE"
-    if sqlite3 "$CDR_DB_PATH" < "$SQL_FILE" 2>/dev/null; then
-        log_info "Database seeded successfully"
+    log_server "Step 4: Loading test CDR data from $SQL_FILE"
+    local sql_start=$(date +%s 2>/dev/null || echo 0)
+    if sqlite3 "$CDR_DB_PATH" < "$SQL_FILE" 2>&1; then
+        local sql_end=$(date +%s 2>/dev/null || echo 0)
+        local sql_duration=$((sql_end - sql_start))
+        log_server "Step 4: Database seeded successfully (${sql_duration}s)"
     else
-        log_error "Failed to seed database"
+        log_error_server "Failed to seed database"
+        log_completion "FAILED - sqlite3 error"
         return 1
     fi
 
     # Create MP3 recording files
-    log_info "Creating MP3 recording files..."
+    log_server "Step 5: Creating MP3 recording files..."
     local mp3_count=0
 
     # Parse JSON and create MP3 files for records with recordingfile
@@ -208,18 +331,21 @@ seed_database() {
         fi
     done < <(grep -o '"recordingfile": *"[^"]*"' "$JSON_FILE" | cut -d'"' -f4)
 
-    log_info "Created $mp3_count recording files"
+    log_server "Step 5: Created $mp3_count recording files"
 
     # Verify seeding
+    log_server "Step 6: Verifying seeding..."
     local count=$(sqlite3 "$CDR_DB_PATH" "SELECT COUNT(*) FROM cdr_general WHERE id BETWEEN 1 AND 1000;" 2>/dev/null)
     if [ "$count" -gt 0 ]; then
-        log_info "Verification: $count records in database"
-        echo "============================================================"
-        echo "CDR Seeding Completed Successfully"
-        echo "============================================================"
+        log_server "Step 6: Verification OK - $count records in database"
+        log_server "============================================================"
+        log_server "CDR Seeding Completed Successfully"
+        log_server "============================================================"
+        log_completion "SUCCESS - $count records"
         return 0
     else
-        log_error "Verification failed: no records found"
+        log_error_server "Verification failed: no records found"
+        log_completion "FAILED - verification"
         return 1
     fi
 }
