@@ -34,8 +34,8 @@ import requests
 from conftest import MikoPBXClient
 
 
-class TestSystemReset:
-    """Reset system to factory defaults before running tests"""
+class Test00SystemReset:
+    """Reset system to factory defaults before running tests (runs FIRST - 00 prefix)"""
 
     def test_01_check_environment_variable(self):
         """Check if system reset is explicitly enabled"""
@@ -266,8 +266,8 @@ class TestSystemReset:
             print(f"\n⚠️  Could not verify: {str(e)[:100]}")
 
 
-class TestSystemResetDocumentation:
-    """Documentation and usage instructions"""
+class Test00SystemResetDocumentation:
+    """Documentation and usage instructions (same 00 prefix as reset tests)"""
 
     def test_01_print_usage_instructions(self):
         """Print usage instructions for this test"""

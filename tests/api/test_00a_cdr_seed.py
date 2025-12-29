@@ -67,8 +67,8 @@ def extract_cdr_data(response):
     return [], {}
 
 
-class TestCDRSeeding:
-    """CDR database seeding - runs once before all CDR tests"""
+class Test01CDRSeeding:
+    """CDR database seeding - runs AFTER system reset (01 prefix ensures order)"""
 
     # Class variable to store seeded CDR IDs for other tests
     seeded_cdr_ids = []

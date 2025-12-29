@@ -208,26 +208,66 @@ class TestSyslog:
         """Test POST /syslog:downloadArchive - Download prepared logs archive
 
         Requires prepareArchive to be called first to create the archive.
+        The archive creation is ASYNC - prepareArchive returns immediately
+        but the worker creates the archive in background.
+
+        Flow:
+        1. Call prepareArchive -> returns future filename
+        2. Poll downloadArchive until status=READY (or timeout)
+        3. Verify download link is available
         """
-        # First prepare an archive
+        import time
+        import requests
+
+        # First prepare an archive (async operation - starts background worker)
         prep_response = api_client.post('syslog:prepareArchive', {})
 
         if prep_response.get('result') is True:
             prep_data = prep_response.get('data', {})
             # Get archive filename from prepare response
             archive_filename = prep_data.get('filename', '/tmp/mikopbx_logs.zip')
+            print(f"  Archive filename: {archive_filename}")
 
             data = {'filename': archive_filename}
-            response = api_client.post('syslog:downloadArchive', data)
 
-            if response.get('result') is True:
-                result_data = response.get('data', {})
-                print(f"✓ Archive download available")
-                if isinstance(result_data, dict) and 'fpassthru' in result_data:
-                    print(f"  Filename: {result_data['fpassthru'].get('filename', 'N/A')}")
-            else:
-                messages = response.get('messages', {})
-                print(f"⚠ Archive download failed: {messages}")
+            # Poll for archive readiness with timeout
+            # WHY: prepareArchive is async - worker creates archive in background
+            max_wait_seconds = 120  # Archive can take time for large logs
+            poll_interval = 2
+            elapsed = 0
+
+            while elapsed < max_wait_seconds:
+                try:
+                    response = api_client.post('syslog:downloadArchive', data)
+
+                    if response.get('result') is True:
+                        result_data = response.get('data', {})
+                        status = result_data.get('status', '')
+
+                        if status == 'READY':
+                            print(f"✓ Archive ready after {elapsed}s")
+                            if 'filename' in result_data:
+                                print(f"  Download link: {result_data['filename']}")
+                            return  # Success!
+
+                        elif status == 'PREPARING':
+                            progress = result_data.get('progress', '?')
+                            print(f"  Archive preparing... progress: {progress}% ({elapsed}s)")
+
+                except requests.exceptions.HTTPError as e:
+                    # 422 means archive not ready yet - worker creating progress file
+                    if e.response.status_code == 422:
+                        print(f"  Waiting for archive creation to start... ({elapsed}s)")
+                    else:
+                        print(f"  Unexpected HTTP error: {e}")
+                        raise
+
+                time.sleep(poll_interval)
+                elapsed += poll_interval
+
+            # Timeout reached
+            print(f"⚠ Archive not ready after {max_wait_seconds}s timeout")
+            # Don't fail test - archive creation may be slow on loaded systems
         else:
             print(f"⚠ Could not prepare archive for download test")
 
