@@ -118,7 +118,7 @@ class Test01CDRSeeding:
 
                 # Store existing IDs BEFORE skipping (critical for test_02)
                 # WHY: pytest.skip() may not preserve class variable state in some execution modes
-                TestCDRSeeding.seeded_cdr_ids = existing_test_ids
+                Test01CDRSeeding.seeded_cdr_ids = existing_test_ids
 
                 print("✓ Skipping seeding - test data already present")
                 print("=" * 60)
@@ -155,7 +155,7 @@ class Test01CDRSeeding:
         seeded_ids = seeder.get_test_cdr_ids()
 
         # Store in class variable for access by other tests
-        TestCDRSeeding.seeded_cdr_ids = seeded_ids
+        Test01CDRSeeding.seeded_cdr_ids = seeded_ids
 
         # Verify seeding
         assert len(seeded_ids) > 0, "No CDR records were seeded"
@@ -177,16 +177,16 @@ class Test01CDRSeeding:
         """
         # WHY: In CI/CD test_01 might be skipped but seeded_cdr_ids might not be set
         # Fallback: check database directly if class variable is empty
-        if not TestCDRSeeding.seeded_cdr_ids:
+        if not Test01CDRSeeding.seeded_cdr_ids:
             from helpers.cdr_seeder_remote import CDRSeederRemote
             print("\nℹ️  Class variable empty, checking database directly...")
             seeder = CDRSeederRemote()
-            TestCDRSeeding.seeded_cdr_ids = seeder.get_test_cdr_ids()
+            Test01CDRSeeding.seeded_cdr_ids = seeder.get_test_cdr_ids()
 
-            if not TestCDRSeeding.seeded_cdr_ids:
+            if not Test01CDRSeeding.seeded_cdr_ids:
                 pytest.skip("No CDR data was seeded")
 
-            print(f"✓ Found {len(TestCDRSeeding.seeded_cdr_ids)} CDR records in database")
+            print(f"✓ Found {len(Test01CDRSeeding.seeded_cdr_ids)} CDR records in database")
 
         # Try to get CDR list with current month date filter
         # Dynamic dates ensure tests work regardless of when they run
@@ -222,10 +222,10 @@ class Test01CDRSeeding:
                 print(f"Pagination in data: {response.get('data').get('pagination', 'N/A')}")
             else:
                 print(f"Data content: {response.get('data')}")
-            print(f"Seeded IDs: {TestCDRSeeding.seeded_cdr_ids}")
+            print(f"Seeded IDs: {Test01CDRSeeding.seeded_cdr_ids}")
             print("=" * 60)
 
-        assert len(data) > 0, f"Expected seeded CDR data, but got empty list. Seeded IDs: {TestCDRSeeding.seeded_cdr_ids}"
+        assert len(data) > 0, f"Expected seeded CDR data, but got empty list. Seeded IDs: {Test01CDRSeeding.seeded_cdr_ids}"
 
         print(f"\n✓ CDR API is working")
         print(f"✓ CDR endpoint returned successfully")
@@ -255,7 +255,7 @@ def cdr_test_ids():
     Returns:
         list[int]: List of CDR IDs (1-30) if seeding successful, empty list otherwise
     """
-    return TestCDRSeeding.seeded_cdr_ids
+    return Test01CDRSeeding.seeded_cdr_ids
 
 
 def pytest_sessionfinish(session, exitstatus):

@@ -37,6 +37,7 @@ from conftest import MikoPBXClient
 class Test00SystemReset:
     """Reset system to factory defaults before running tests (runs FIRST - 00 prefix)"""
 
+    @pytest.mark.order(-5)
     def test_01_check_environment_variable(self):
         """Check if system reset is explicitly enabled"""
         enabled = os.getenv('ENABLE_SYSTEM_RESET', '0')
@@ -52,6 +53,7 @@ class Test00SystemReset:
         print("✓  SYSTEM RESET ENABLED - Proceeding with cleanup")
         print("✓" * 70)
 
+    @pytest.mark.order(-4)
     def test_02_get_system_statistics_before_reset(self, api_client):
         """Get statistics of what will be deleted"""
         print("\n" + "=" * 70)
@@ -121,6 +123,7 @@ class Test00SystemReset:
             print(f"⚠️  Error getting statistics: {str(e)[:100]}")
             print("   Proceeding with reset anyway...")
 
+    @pytest.mark.order(-3)
     def test_03_execute_system_restore_default(self, api_client):
         """Execute system:restoreDefault - THIS DELETES ALL DATA"""
         print("\n" + "=" * 70)
@@ -168,6 +171,7 @@ class Test00SystemReset:
                 print(f"\n❌ Error executing reset: {error_msg[:200]}")
                 raise
 
+    @pytest.mark.order(-2)
     @pytest.mark.skipif(
         os.getenv('ENABLE_SYSTEM_RESET') != '1',
         reason="Optional - Set ENABLE_SYSTEM_RESET=1 to enable"
@@ -224,6 +228,7 @@ class Test00SystemReset:
         print(f"   Please check system status manually")
         pytest.fail(f"System did not restart within {max_wait} seconds")
 
+    @pytest.mark.order(-1)
     @pytest.mark.skipif(
         os.getenv('ENABLE_SYSTEM_RESET') != '1',
         reason="Optional - Set ENABLE_SYSTEM_RESET=1 to enable"
