@@ -126,23 +126,8 @@ class ContainerEntrypoint extends Injectable
         // Prepare database
         $this->prepareDatabase();
 
-        // Apply environment variables via unified cloud provisioning
-        // DockerCloud provider handles ENV → DB mapping for Docker
-        // LxcCloud provider handles /etc/network/interfaces for LXC containers
-        // This runs BEFORE UpdateDatabase to ensure values are set in current DB
-        // UpdateDatabase only adds new columns/tables, doesn't overwrite existing values
-        if (System::isContainer()) {
-            $this->echoStartMsg(' - Applying environment variables...');
-            $result = CloudProvisioning::start();
-            if ($result['success']) {
-                $this->echoResultMsg();
-                if (!empty($result['cloudId']) && $result['cloudId'] !== 'Previously configured') {
-                    $this->echoMessage("   Provisioned via: {$result['cloudId']}");
-                }
-            } else {
-                $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
-            }
-        }
+        // Cloud provisioning moved to SystemLoader::startSystem() after Redis is running
+        // This allows using ORM instead of direct SQLite queries
 
         // Start the MikoPBX system.
         $this->startTheMikoPBXSystem();

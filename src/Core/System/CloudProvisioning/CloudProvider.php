@@ -550,15 +550,13 @@ abstract class CloudProvider
      * new record with the specified interface name. Used during container
      * provisioning to ensure clean network configuration.
      *
+     * Uses ORM since Redis is already running at this point.
+     *
      * @param string $interfaceName Network interface name (e.g., 'eth0')
      * @return bool True on success
      */
     protected function resetLanInterface(string $interfaceName): bool
     {
-        $sqlite3 = Util::which('sqlite3');
-        $dbPath = self::PATH_DB;
-        $out = [];
-
         // Sanitize interface name (alphanumeric and common chars only)
         $sanitizedInterface = preg_replace('/[^a-zA-Z0-9_\-.]/', '', $interfaceName);
         if (empty($sanitizedInterface)) {
@@ -568,33 +566,46 @@ abstract class CloudProvider
         $message = "      |- Reset LAN interfaces table...";
         $this->publishMessage($message);
 
-        // DEBUG: Log interface name being used
-        SystemMessages::sysLogMsg(__METHOD__, "DEBUG: Creating LAN interface with name='$sanitizedInterface'");
+        SystemMessages::sysLogMsg(__METHOD__, "Creating LAN interface with name='$sanitizedInterface'");
 
-        // Delete all existing records
-        $command = "$sqlite3 $dbPath \"DELETE FROM m_LanInterfaces\"";
-        $res = Processes::mwExec($command, $out);
-
-        if ($res !== 0) {
-            SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_FAILED);
-            SystemMessages::sysLogMsg(__METHOD__, "Failed to clear LAN interfaces: " . implode($out), LOG_ERR);
-            return false;
+        // Delete all existing records using ORM
+        $existingInterfaces = LanInterfaces::find();
+        foreach ($existingInterfaces as $interface) {
+            if (!$interface->delete()) {
+                SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_FAILED);
+                SystemMessages::sysLogMsg(__METHOD__, "Failed to delete LAN interface: " . implode(', ', $interface->getMessages()), LOG_ERR);
+                return false;
+            }
         }
 
-        // Insert new primary interface with correct defaults
+        // Create new primary interface with correct defaults
         // IMPORTANT: vlanid='0' is required for Network::updateIfSettings() DHCP callback to find this record
-        $insertSql = "INSERT INTO m_LanInterfaces " .
-            "(id, interface, internet, disabled, dhcp, ipaddr, subnet, gateway, hostname, domain, topology, extipaddr, " .
-            "primarydns, secondarydns, ipv6_mode, ipv6addr, ipv6_subnet, ipv6_gateway, primarydns6, secondarydns6, vlanid) " .
-            "VALUES (1, '$sanitizedInterface', '1', '0', '1', '', '24', '', '', '', 'private', '', " .
-            "'', '', '0', '', '', '', '', '', '0')";
+        $lanInterface = new LanInterfaces();
+        $lanInterface->id = 1;
+        $lanInterface->interface = $sanitizedInterface;
+        $lanInterface->internet = '1';
+        $lanInterface->disabled = '0';
+        $lanInterface->dhcp = '1';
+        $lanInterface->ipaddr = '';
+        $lanInterface->subnet = '24';
+        $lanInterface->gateway = '';
+        $lanInterface->hostname = '';
+        $lanInterface->domain = '';
+        $lanInterface->topology = LanInterfaces::TOPOLOGY_PRIVATE;
+        $lanInterface->extipaddr = '';
+        $lanInterface->primarydns = '';
+        $lanInterface->secondarydns = '';
+        $lanInterface->ipv6_mode = '0';
+        $lanInterface->ipv6addr = '';
+        $lanInterface->ipv6_subnet = '';
+        $lanInterface->ipv6_gateway = '';
+        $lanInterface->primarydns6 = '';
+        $lanInterface->secondarydns6 = '';
+        $lanInterface->vlanid = '0';
 
-        $command = "$sqlite3 $dbPath \"$insertSql\"";
-        $res = Processes::mwExec($command, $out);
-
-        if ($res !== 0) {
+        if (!$lanInterface->save()) {
             SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_FAILED);
-            SystemMessages::sysLogMsg(__METHOD__, "Failed to create LAN interface: " . implode($out), LOG_ERR);
+            SystemMessages::sysLogMsg(__METHOD__, "Failed to create LAN interface: " . implode(', ', $lanInterface->getMessages()), LOG_ERR);
             return false;
         }
 

@@ -73,6 +73,7 @@ class DockerCloud extends CloudProvider
      *
      * Called from CloudProvisioning::start() before the one-time provisioning check.
      * Only updates settings that have actually changed (efficient for repeated calls).
+     * Redis is already running at this point, so ORM can be used.
      */
     public static function applyEnvironmentOverrides(): void
     {
@@ -96,9 +97,9 @@ class DockerCloud extends CloudProvider
         // This ensures clean state with internet='1' and disabled='0'
         $instance->resetLanInterface('eth0');
 
-        // Apply the configuration using direct SQLite method (no Redis/ORM)
+        // Apply the configuration using ORM (Redis is already running)
         // This only updates settings that have changed
-        $instance->applyConfigDirect($config);
+        $instance->applyConfig($config);
 
         SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_DONE);
     }

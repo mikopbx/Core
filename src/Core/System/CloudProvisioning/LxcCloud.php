@@ -76,6 +76,7 @@ class LxcCloud extends CloudProvider
      *
      * Called from CloudProvisioning::start() BEFORE the one-time provisioning check.
      * Similar to DockerCloud::applyEnvironmentOverrides().
+     * Redis is already running at this point, so ORM can be used.
      *
      * @return void
      */
@@ -99,8 +100,8 @@ class LxcCloud extends CloudProvider
             return;
         }
 
-        // Apply the configuration using direct SQLite (Redis not yet started)
-        $instance->applyConfigDirect($config);
+        // Apply the configuration using ORM (Redis is already running)
+        $instance->applyConfig($config);
 
         SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_DONE);
     }
