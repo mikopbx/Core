@@ -89,10 +89,20 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+# Function to check if running in Docker
+is_docker() {
+    [ -f "/.dockerenv" ] || [ -n "$DOCKER_CONTAINER" ]
+}
+
+# Function to check if running in LXC
+is_lxc() {
+    [ "$container" = 'lxc' ]
+}
+
 # Function to check if we're in a container (Docker or LXC)
 # Matches PHP System::isContainer() - true for any container environment
 is_container() {
-    [ -f "/.dockerenv" ] || [ -n "$DOCKER_CONTAINER" ] || [ "$container" = 'lxc' ]
+    is_docker || is_lxc
 }
 
 # Function to get available serial ports with caching
@@ -105,14 +115,26 @@ get_serial_ports() {
             return
         fi
     fi
-    
-    # Skip serial port detection in containers (Docker/LXC)
-    if is_container; then
+
+    # Skip serial port detection in Docker (runtime manages output)
+    if is_docker; then
         echo "" > "$SERIAL_CACHE"
         return
     fi
-    
-    # Find available serial ports without using setserial
+
+    # LXC: use /dev/tty1 for Proxmox console visibility
+    # LXC containers don't have serial ports, but tty1 is the console
+    if is_lxc; then
+        if [ -c "/dev/tty1" ] && [ -w "/dev/tty1" ]; then
+            echo "/dev/tty1" > "$SERIAL_CACHE"
+            echo "/dev/tty1"
+        else
+            echo "" > "$SERIAL_CACHE"
+        fi
+        return
+    fi
+
+    # Bare-metal: find available serial ports without using setserial
     SERIAL_PORTS=""
     for i in 0 1 2 3 4 5; do
         DEV="/dev/ttyS$i"
@@ -124,7 +146,7 @@ get_serial_ports() {
             fi
         fi
     done
-    
+
     # Cache the results
     echo "$SERIAL_PORTS" > "$SERIAL_CACHE"
     echo "$SERIAL_PORTS"

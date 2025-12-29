@@ -349,8 +349,14 @@ class ContainerEntrypoint extends Injectable
     {
         $rm = Util::which('rm');
         shell_exec("$rm -rf /tmp/*");
-        $commands = 'if test -c /dev/console && test -r /dev/console && test -w /dev/console; then ' .
-            'exec </dev/console >/dev/console 2>/dev/console; fi; ' .
+
+        // Determine console device based on environment
+        // LXC: Proxmox console is attached to /dev/tty1
+        // Docker/bare-metal: use /dev/console
+        $consoleDevice = System::isLxc() ? '/dev/tty1' : '/dev/console';
+
+        $commands = "if test -c $consoleDevice && test -r $consoleDevice && test -w $consoleDevice; then " .
+            "exec <$consoleDevice >$consoleDevice 2>$consoleDevice; fi; " .
             '/etc/rc/bootup 2>/dev/null && ' .
             '/etc/rc/bootup_pbx 2>/dev/null';
         passthru($commands);

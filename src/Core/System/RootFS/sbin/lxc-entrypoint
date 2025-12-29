@@ -55,6 +55,10 @@ if ! ip addr show lo 2>/dev/null | grep -q "127.0.0.1"; then
   /bin/busybox ifconfig lo 127.0.0.1
 fi
 
+# Clean /tmp from previous run (prevents pbx_init from seeing stale freeoffload file)
+# LXC containers persist /tmp across restarts unlike Docker
+rm -rf /tmp/*
+
 # Create getty symlink for Proxmox compatibility
 [ ! -e /sbin/getty ] && ln -s /sbin/agetty /sbin/getty
 
@@ -100,9 +104,9 @@ fi
 touch /var/run/mikopbx-booting
 
 # Start the PHP bootstrap script in background
-# Boot messages are written to /dev/tty1 by SystemMessages::echoToTeletype()
-# PHP stdout/stderr go to /dev/null to avoid duplication
-php -f /offload/rootfs/usr/www/src/Core/System/ContainerEntrypoint.php >/dev/null 2>&1 &
+# Redirect output to /dev/tty1 so boot messages are visible in Proxmox console
+# LXC console is attached to /dev/tty1, not /dev/console
+php -f /offload/rootfs/usr/www/src/Core/System/ContainerEntrypoint.php >/dev/tty1 2>&1 &
 
 # Note: pbx_init is started via inittab on tty1, not here
 # This allows proper tty handling and respawn on exit
