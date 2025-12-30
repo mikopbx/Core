@@ -394,6 +394,7 @@ MikoPBX includes specialized skills in `.claude/skills/` that activate automatic
 - **`log-analyzer`** - Analyze container logs for debugging / Анализ логов контейнера
 - **`asterisk-validator`** - Validate Asterisk configuration and logs / Валидация конфигурации Asterisk
 - **`asterisk-tester`** - Test Asterisk dialplan scenarios / Тестирование Asterisk dialplan
+- **`teamcity-monitor`** - Monitor CI/CD pipeline and analyze build failures / Мониторинг сборок TeamCity
 
 ### Code Quality & Style
 - **`php-style`** - PHP standards (PSR-1/4/12, PHP 8.3 features) / PHP стандарты
@@ -417,6 +418,7 @@ MikoPBX includes specialized skills in `.claude/skills/` that activate automatic
 - "Restart mikopbx-php83 container" / "перезапусти контейнер mikopbx-php83"
 - "Check REST API translations" / "проверь переводы REST API"
 - "Sync RestApi.php translations" / "синхронизируй переводы RestApi.php"
+- "Check TeamCity build status" / "проверь статус сборки в TeamCity"
 
 ### Security & Guidelines
 - **[XSS Protection](docs/xss-protection-guidelines.md)** - Cross-site scripting prevention
