@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 use GuzzleHttp\Promise\PromiseInterface;
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\PasswordService;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -191,13 +192,17 @@ abstract class CloudProvider
 
     /**
      * Updates the SSH password.
+     *
+     * Generates a random password and stores it as SHA-512 hash for security.
      */
     protected function updateSSHCredentials(string $sshLogin, string $hashSalt): void
     {
         $ifconfigOutput = shell_exec(Util::which('ifconfig'));
-        $data = md5(($ifconfigOutput ?? '') . $hashSalt . time());
+        $plainPassword = md5(($ifconfigOutput ?? '') . $hashSalt . time());
+        // Hash the password with SHA-512 before storage
+        $hashedPassword = PasswordService::generateSha512Hash($plainPassword);
         $this->updatePbxSettings(PbxSettings::SSH_LOGIN, $sshLogin);
-        $this->updatePbxSettings(PbxSettings::SSH_PASSWORD, $data);
+        $this->updatePbxSettings(PbxSettings::SSH_PASSWORD, $hashedPassword);
         $this->updatePbxSettings(PbxSettings::SSH_DISABLE_SSH_PASSWORD, '1');
     }
 
@@ -751,9 +756,11 @@ abstract class CloudProvider
         // Apply SSH credentials
         if ($config->sshLogin !== null && $config->instanceId !== null) {
             $ifconfigOutput = shell_exec(Util::which('ifconfig'));
-            $sshPassword = md5(($ifconfigOutput ?? '') . $config->instanceId . time());
+            $plainPassword = md5(($ifconfigOutput ?? '') . $config->instanceId . time());
+            // Hash the password with SHA-512 before storage
+            $hashedPassword = PasswordService::generateSha512Hash($plainPassword);
             $this->updatePbxSettingsDirect(PbxSettings::SSH_LOGIN, $config->sshLogin);
-            $this->updatePbxSettingsDirect(PbxSettings::SSH_PASSWORD, $sshPassword);
+            $this->updatePbxSettingsDirect(PbxSettings::SSH_PASSWORD, $hashedPassword);
             $this->updatePbxSettingsDirect(PbxSettings::SSH_DISABLE_SSH_PASSWORD, '1');
         }
 

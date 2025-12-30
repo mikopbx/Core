@@ -37,24 +37,24 @@ class CheckSSHConfig extends Injectable
     /**
      * Checks the password in case it was changed by an unauthorized means.
      *
-     * @return array<string, array<int, array<string, mixed>>> An array containing warning messages.
+     * Monitors /etc/shadow for unauthorized modifications.
+     * The SSH password is now stored as SHA-512 hash in SSH_PASSWORD,
+     * so we only check if /etc/shadow was modified outside of MikoPBX.
      *
+     * @return array<string, array<int, array<string, mixed>>> An array containing warning messages.
      */
     public function process(): array
     {
-        $messages   = [];
-        $password   = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD, false);
-        $hashString = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, false);
-        $hashFile   = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_FILE, false);
-        if($hashString !== md5($password)){
-            // The password has been changed in an unusual way.
-            $messages['error'][] =  ['messageTpl'=>'adv_SSHPasswordMismatchStringsHash'];
-        }
-        if($hashFile   !== md5_file('/etc/shadow')){
+        $messages = [];
+        $hashFile = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_FILE, false);
+
+        // Check if /etc/shadow was modified outside of MikoPBX
+        if ($hashFile !== md5_file('/etc/shadow')) {
             // The system password does not match what is set in the configuration file.
-            $messages['error'][] =  ['messageTpl'=>'adv_SSHPasswordMismatchFilesHash'];
+            $messages['error'][] = ['messageTpl' => 'adv_SSHPasswordMismatchFilesHash'];
         }
-        if(isset($messages['error'])){
+
+        if (isset($messages['error'])) {
             // Queue notification for async sending via WorkerNotifyByEmail
             $adminEmail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
 

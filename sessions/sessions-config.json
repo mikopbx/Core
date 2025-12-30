@@ -37,7 +37,9 @@
       "grep",
       "ssh",
       "vendor/bin/phpunit",
-      "python3 -m pytest:*"
+      "python3 -m pytest:*",
+      "curl:*",
+      "curl"
     ],
     "bash_write_patterns": [],
     "extrasafe": false

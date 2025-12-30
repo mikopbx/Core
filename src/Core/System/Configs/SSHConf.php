@@ -21,6 +21,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\PasswordService;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
@@ -106,7 +107,7 @@ class SSHConf extends SystemConfigClass
     /**
      * Configures SSH settings based on current system settings.
      *
-     * @return bool Returns true if configuration is successful, false otherwise.
+     * @return void
      */
     private function configure(): void
     {
@@ -266,35 +267,55 @@ class SSHConf extends SystemConfigClass
     /**
      * Updates the shell password for specified SSH login.
      *
+     * Uses SHA-512 crypt hashes with chpasswd -e for secure password storage.
+     * The SSH_PASSWORD field should contain a SHA-512 hash ($6$...) from database.
+     * If a plain text password is provided (legacy/migration), it will be hashed first.
+     *
      * @param string $sshLogin SSH login username.
      * @return void
      */
     private function updateShellPassword(string $sshLogin = 'root'): void
     {
-        $password           = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
-        $hashString         = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING);
+        $storedPassword     = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
         $disablePassLogin   = PbxSettings::getValueByKey(PbxSettings::SSH_DISABLE_SSH_PASSWORD);
 
         $echo     = Util::which('echo');
         $chpasswd = Util::which('chpasswd');
         $passwd   = Util::which('passwd');
+
+        // Always lock www user
         Processes::mwExec("$passwd -l www");
+
         if ($disablePassLogin === '1') {
+            // Lock both users when password login is disabled
             Processes::mwExec("$passwd -l $sshLogin");
             Processes::mwExec("$passwd -l root");
-        } elseif ($sshLogin === 'root') {
-            Processes::mwExec("$echo '$sshLogin:$password' | $chpasswd");
         } else {
-            Processes::mwExec("$passwd -l root");
-            Processes::mwExec("$echo '$sshLogin:$password' | $chpasswd");
+            // Ensure we have a SHA-512 hash for chpasswd -e
+            if (PasswordService::isSha512Hash($storedPassword)) {
+                $passwordHash = $storedPassword;
+            } else {
+                // Legacy plain text password - hash it and update database
+                $passwordHash = PasswordService::generateSha512Hash($storedPassword);
+                PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD, $passwordHash);
+            }
+
+            // Escape the hash for shell (contains $ characters)
+            $escapedHash = escapeshellarg($passwordHash);
+
+            if ($sshLogin === 'root') {
+                // Set password using pre-hashed value with chpasswd -e
+                Processes::mwExec("$echo $sshLogin:$escapedHash | $chpasswd -e");
+            } else {
+                // Lock root and set password for custom SSH user
+                Processes::mwExec("$passwd -l root");
+                Processes::mwExec("$echo $sshLogin:$escapedHash | $chpasswd -e");
+            }
         }
 
-        // Security hash check and notification
+        // Update shadow file hash for security monitoring
         $currentHash = md5_file('/etc/shadow');
         PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_FILE, $currentHash);
-        if ($hashString !== md5($password)) {
-            PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($password));
-        }
     }
 
     /**
