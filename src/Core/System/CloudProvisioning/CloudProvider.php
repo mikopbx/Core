@@ -544,11 +544,13 @@ abstract class CloudProvider
     }
 
     /**
-     * Resets LAN interfaces table and creates a single primary interface.
+     * Configures the LAN interface for container provisioning.
      *
-     * This method clears all existing LAN interface records and creates one
-     * new record with the specified interface name. Used during container
-     * provisioning to ensure clean network configuration.
+     * This method finds the existing LAN interface record and updates critical
+     * fields (interface name, internet, disabled, dhcp) while preserving
+     * IP addresses that may have been obtained from DHCP before provisioning.
+     *
+     * If no record exists, creates a new one with default values.
      *
      * Uses ORM since Redis is already running at this point.
      *
@@ -563,49 +565,48 @@ abstract class CloudProvider
             $sanitizedInterface = 'eth0';
         }
 
-        $message = "      |- Reset LAN interfaces table...";
+        $message = "      |- Configuring LAN interface...";
         $this->publishMessage($message);
 
-        SystemMessages::sysLogMsg(__METHOD__, "Creating LAN interface with name='$sanitizedInterface'");
+        // Find existing interface record (first one, as containers typically have single interface)
+        // This preserves IP addresses obtained from DHCP before provisioning ran
+        $lanInterface = LanInterfaces::findFirst();
 
-        // Delete all existing records using ORM
-        $existingInterfaces = LanInterfaces::find();
-        foreach ($existingInterfaces as $interface) {
-            if (!$interface->delete()) {
-                SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_FAILED);
-                SystemMessages::sysLogMsg(__METHOD__, "Failed to delete LAN interface: " . implode(', ', $interface->getMessages()), LOG_ERR);
-                return false;
-            }
+        if ($lanInterface === null) {
+            // No existing record - create new one
+            SystemMessages::sysLogMsg(__METHOD__, "Creating new LAN interface with name='$sanitizedInterface'");
+            $lanInterface = new LanInterfaces();
+            $lanInterface->id = 1;
+            $lanInterface->ipaddr = '';
+            $lanInterface->subnet = '24';
+            $lanInterface->gateway = '';
+            $lanInterface->hostname = '';
+            $lanInterface->domain = '';
+            $lanInterface->topology = LanInterfaces::TOPOLOGY_PRIVATE;
+            $lanInterface->extipaddr = '';
+            $lanInterface->primarydns = '';
+            $lanInterface->secondarydns = '';
+            $lanInterface->ipv6_mode = '0';
+            $lanInterface->ipv6addr = '';
+            $lanInterface->ipv6_subnet = '';
+            $lanInterface->ipv6_gateway = '';
+            $lanInterface->primarydns6 = '';
+            $lanInterface->secondarydns6 = '';
+        } else {
+            SystemMessages::sysLogMsg(__METHOD__, "Updating existing LAN interface: id={$lanInterface->id}, interface='{$lanInterface->interface}' -> '$sanitizedInterface'");
         }
 
-        // Create new primary interface with correct defaults
-        // IMPORTANT: vlanid='0' is required for Network::updateIfSettings() DHCP callback to find this record
-        $lanInterface = new LanInterfaces();
-        $lanInterface->id = 1;
+        // Update critical fields for container operation
+        // IMPORTANT: Do NOT reset ipaddr, gateway, dns - preserve values from DHCP callback
         $lanInterface->interface = $sanitizedInterface;
         $lanInterface->internet = '1';
         $lanInterface->disabled = '0';
         $lanInterface->dhcp = '1';
-        $lanInterface->ipaddr = '';
-        $lanInterface->subnet = '24';
-        $lanInterface->gateway = '';
-        $lanInterface->hostname = '';
-        $lanInterface->domain = '';
-        $lanInterface->topology = LanInterfaces::TOPOLOGY_PRIVATE;
-        $lanInterface->extipaddr = '';
-        $lanInterface->primarydns = '';
-        $lanInterface->secondarydns = '';
-        $lanInterface->ipv6_mode = '0';
-        $lanInterface->ipv6addr = '';
-        $lanInterface->ipv6_subnet = '';
-        $lanInterface->ipv6_gateway = '';
-        $lanInterface->primarydns6 = '';
-        $lanInterface->secondarydns6 = '';
         $lanInterface->vlanid = '0';
 
         if (!$lanInterface->save()) {
             SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_FAILED);
-            SystemMessages::sysLogMsg(__METHOD__, "Failed to create LAN interface: " . implode(', ', $lanInterface->getMessages()), LOG_ERR);
+            SystemMessages::sysLogMsg(__METHOD__, "Failed to save LAN interface: " . implode(', ', $lanInterface->getMessages()), LOG_ERR);
             return false;
         }
 

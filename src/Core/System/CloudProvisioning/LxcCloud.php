@@ -24,6 +24,7 @@ use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Promise\PromiseInterface;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\Network;
 
 /**
  * LXC cloud provider for Proxmox container deployments.
@@ -97,11 +98,21 @@ class LxcCloud extends CloudProvider
 
         if ($config->isEmpty()) {
             SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_SKIPPED);
+
+            // Apply network configuration even if provisioning config is empty
+            // This activates the interface with DHCP settings from resetLanInterface()
+            $network = new Network();
+            $network->lanConfigure();
             return;
         }
 
         // Apply the configuration using ORM (Redis is already running)
         $instance->applyConfig($config);
+
+        // Apply network configuration after database updates
+        // This ensures interface is activated with the new settings
+        $network = new Network();
+        $network->lanConfigure();
 
         SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_DONE);
     }
