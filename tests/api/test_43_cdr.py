@@ -221,7 +221,8 @@ class TestCDR:
     def test_08_filter_by_src_num(self, api_client):
         """Test GET /cdr - Filter by source number
 
-        WHY: Filter works on grouped data, checks src_num field of groups
+        WHY: Filter works on record level but returns groups. A group matches
+        if ANY record within it has the matching src_num (not group-level field).
         """
         try:
             # Use a common extension number
@@ -231,16 +232,23 @@ class TestCDR:
             data, pagination = extract_cdr_data(response)
             assert isinstance(data, list), "Response data should be a list"
 
-            print(f"✓ Source number filter works ({len(data)} call groups from 201)")
+            print(f"✓ Source number filter works ({len(data)} call groups)")
 
-            # Verify filtering worked on grouped data
+            # Verify filtering worked - at least one record in each group should match
             if len(data) > 0:
                 for group in data:
-                    if 'src_num' in group:
-                        # Should contain '201' in source number
-                        assert '201' in str(group['src_num']), \
-                            f"Expected group src_num to contain '201', got '{group['src_num']}'"
-                print(f"  All groups match src_num filter")
+                    # Check nested records if present
+                    records = group.get('records', [group])  # Fallback to group itself if no nested records
+                    has_matching_record = any(
+                        '201' in str(r.get('src_num', '')) for r in records
+                    )
+                    # Also check group-level src_num as fallback
+                    if not has_matching_record and 'src_num' in group:
+                        has_matching_record = '201' in str(group['src_num'])
+
+                    assert has_matching_record, \
+                        f"Expected at least one record with src_num containing '201' in group"
+                print(f"  All groups have records matching src_num filter")
         except Exception as e:
             if '422' in str(e):
                 print(f"⚠ Source number filtering may not be implemented")

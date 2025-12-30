@@ -247,7 +247,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 }
 
                 // If content is empty, force mode to none (except for MODE_CUSTOM files)
-                if (empty($record->getContent()) && $record->mode !== CustomFiles::MODE_CUSTOM) {
+                // WHY: Check raw base64 content, not decoded - prevents mode reset when
+                // valid base64 is sent but decodes to empty (e.g., base64_encode('') = '')
+                if (empty($record->content) && $record->mode !== CustomFiles::MODE_CUSTOM) {
                     $record->mode = CustomFiles::MODE_NONE;
                 }
 

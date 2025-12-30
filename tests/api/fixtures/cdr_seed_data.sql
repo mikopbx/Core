@@ -1,7 +1,7 @@
 -- CDR Test Data
--- Auto-generated from production database with anonymization
--- Generated: 2025-10-24T11:08:40.510176
--- Total records: 30
+-- Auto-generated with dynamic dates
+-- Generated: 2025-12-30T19:05:51.121398
+-- Total records: 36 (includes 3 linked call records)
 
 -- Clear existing test data
 DELETE FROM cdr_general WHERE id BETWEEN 1 AND 1000;
@@ -22,9 +22,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     1,
-    '2025-10-10 16:46:24.000',
-    '2025-10-10 17:46:00.000',
-    '2025-10-01 10:04:50.000',
+    '2025-12-01 09:00:00.000',
+    '2025-12-01 09:02:44.000',
+    '2025-12-01 09:00:03.000',
     '79300250234',
     '262',
     'ANSWERED',
@@ -43,9 +43,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     2,
-    '2025-10-06 12:59:34.000',
-    '2025-10-01 12:16:24.000',
-    '2025-10-03 15:01:50.000',
+    '2025-12-01 12:17:31.000',
+    '2025-12-01 12:21:38.000',
+    '2025-12-01 12:17:35.000',
     '79794956057',
     '270',
     'ANSWERED',
@@ -64,9 +64,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     3,
-    '2025-10-20 17:18:35.000',
-    '2025-10-14 10:33:48.000',
-    '2025-10-18 15:21:41.000',
+    '2025-12-02 15:34:02.000',
+    '2025-12-02 15:34:54.000',
+    '2025-12-02 15:34:07.000',
     '79068987331',
     '79215156610',
     'ANSWERED',
@@ -85,9 +85,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     4,
-    '2025-10-08 10:51:35.000',
-    '2025-10-01 17:38:17.000',
-    '2025-10-21 11:02:11.000',
+    '2025-12-03 09:51:33.000',
+    '2025-12-03 09:53:14.000',
+    '2025-12-03 09:51:39.000',
     '207',
     '79284770441',
     'ANSWERED',
@@ -106,9 +106,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     5,
-    '2025-10-19 10:36:34.000',
-    '2025-10-15 15:02:26.000',
-    '2025-10-16 14:57:55.000',
+    '2025-12-04 12:08:04.000',
+    '2025-12-04 12:10:05.000',
+    '2025-12-04 12:08:11.000',
     '226',
     '79872226831',
     'ANSWERED',
@@ -127,9 +127,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     6,
-    '2025-10-05 17:53:50.000',
-    '2025-10-11 15:50:11.000',
-    '2025-10-06 10:10:13.000',
+    '2025-12-05 15:25:35.000',
+    '2025-12-05 15:29:41.000',
+    '2025-12-05 15:25:43.000',
     '239',
     '79968076947',
     'ANSWERED',
@@ -148,9 +148,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     7,
-    '2025-10-10 09:39:39.000',
-    '2025-10-06 09:26:55.000',
-    '2025-10-09 11:44:25.000',
+    '2025-12-05 09:42:06.000',
+    '2025-12-05 09:47:36.000',
+    '2025-12-05 09:42:15.000',
     '79548691864',
     '236',
     'ANSWERED',
@@ -169,9 +169,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     8,
-    '2025-10-07 12:02:58.000',
-    '2025-10-04 11:24:08.000',
-    '2025-10-11 16:34:55.000',
+    '2025-12-06 12:59:37.000',
+    '2025-12-06 13:06:59.000',
+    '2025-12-06 12:59:47.000',
     '79794956057',
     '79610135584',
     'ANSWERED',
@@ -190,9 +190,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     9,
-    '2025-10-12 15:08:14.000',
-    '2025-10-16 16:02:53.000',
-    '2025-10-01 12:14:03.000',
+    '2025-12-07 15:16:08.000',
+    '2025-12-07 15:18:05.000',
+    '2025-12-07 15:16:11.000',
     '238',
     '79164981151',
     'ANSWERED',
@@ -211,9 +211,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     10,
-    '2025-10-20 09:05:26.000',
-    '2025-10-24 11:48:58.000',
-    '2025-10-05 16:36:04.000',
+    '2025-12-08 09:33:39.000',
+    '2025-12-08 09:34:10.000',
+    '2025-12-08 09:33:43.000',
     '79530337713',
     '209',
     'ANSWERED',
@@ -232,9 +232,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     11,
-    '2025-10-23 14:55:14.000',
-    '2025-10-16 09:28:13.000',
-    '2025-10-22 14:14:40.000',
+    '2025-12-09 12:50:10.000',
+    '2025-12-09 12:53:18.000',
+    '2025-12-09 12:50:15.000',
     '79162741185',
     '209',
     'ANSWERED',
@@ -253,9 +253,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     12,
-    '2025-10-14 14:45:56.000',
-    '2025-10-10 12:13:42.000',
-    '2025-10-08 13:07:57.000',
+    '2025-12-10 15:07:41.000',
+    '2025-12-10 15:08:41.000',
+    '2025-12-10 15:07:47.000',
     '79639903934',
     '261',
     'ANSWERED',
@@ -274,9 +274,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     13,
-    '2025-10-14 10:41:37.000',
-    '2025-10-04 15:24:59.000',
-    '2025-10-02 14:48:37.000',
+    '2025-12-10 09:24:12.000',
+    '2025-12-10 09:25:02.000',
+    '2025-12-10 09:24:19.000',
     '262',
     '79137571857',
     'ANSWERED',
@@ -295,9 +295,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     14,
-    '2025-10-21 10:48:50.000',
-    '2025-10-08 09:05:38.000',
-    '2025-10-13 11:31:34.000',
+    '2025-12-11 12:41:43.000',
+    '2025-12-11 12:42:40.000',
+    '2025-12-11 12:41:51.000',
     '239',
     '79660987446',
     'ANSWERED',
@@ -316,9 +316,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     15,
-    '2025-10-10 14:21:46.000',
-    '2025-10-24 11:11:04.000',
-    '2025-10-15 15:45:27.000',
+    '2025-12-12 15:58:14.000',
+    '2025-12-12 16:00:53.000',
+    '2025-12-12 15:58:23.000',
     '79988528433',
     '277',
     'ANSWERED',
@@ -337,8 +337,8 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     16,
-    '2025-10-08 15:40:06.000',
-    '2025-10-05 16:48:40.000',
+    '2025-12-13 09:15:45.000',
+    '2025-12-13 09:15:55.000',
     '',
     '79090163435',
     '3',
@@ -358,8 +358,8 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     17,
-    '2025-10-18 17:40:09.000',
-    '2025-10-24 16:30:35.000',
+    '2025-12-14 12:32:16.000',
+    '2025-12-14 12:32:26.000',
     '',
     '79392502565',
     '2200100',
@@ -379,8 +379,8 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     18,
-    '2025-10-23 14:32:19.000',
-    '2025-10-13 17:40:59.000',
+    '2025-12-14 15:49:47.000',
+    '2025-12-14 15:50:57.000',
     '',
     '79941533893',
     '215',
@@ -400,8 +400,8 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     19,
-    '2025-10-12 10:01:04.000',
-    '2025-10-03 17:08:26.000',
+    '2025-12-15 09:06:18.000',
+    '2025-12-15 09:06:38.000',
     '',
     '212',
     '213',
@@ -421,8 +421,8 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     20,
-    '2025-10-15 17:35:33.000',
-    '2025-10-17 09:06:43.000',
+    '2025-12-16 12:23:49.000',
+    '2025-12-16 12:24:00.000',
     '',
     '238',
     '79794956057',
@@ -442,8 +442,8 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     21,
-    '2025-10-12 16:48:51.000',
-    '2025-10-20 16:37:26.000',
+    '2025-12-17 15:40:20.000',
+    '2025-12-17 15:40:30.000',
     '',
     '79370204892',
     '2200100',
@@ -463,8 +463,8 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     22,
-    '2025-10-14 14:48:09.000',
-    '2025-10-07 09:09:53.000',
+    '2025-12-18 09:57:51.000',
+    '2025-12-18 09:58:02.000',
     '',
     '79678594637',
     '257',
@@ -484,8 +484,8 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     23,
-    '2025-10-18 17:47:47.000',
-    '2025-10-22 11:12:55.000',
+    '2025-12-19 12:14:22.000',
+    '2025-12-19 12:14:32.000',
     '',
     '79466574072',
     '2200100',
@@ -505,8 +505,8 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     24,
-    '2025-10-05 16:11:24.000',
-    '2025-10-24 10:04:41.000',
+    '2025-12-19 15:31:53.000',
+    '2025-12-19 15:32:29.000',
     '',
     '238',
     '226',
@@ -526,8 +526,8 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     25,
-    '2025-10-13 09:58:52.000',
-    '2025-10-03 17:43:01.000',
+    '2025-12-20 09:48:24.000',
+    '2025-12-20 09:49:19.000',
     '',
     '79320879471',
     '236',
@@ -547,8 +547,8 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     26,
-    '2025-10-08 17:32:24.000',
-    '2025-10-17 12:30:12.000',
+    '2025-12-21 12:05:55.000',
+    '2025-12-21 12:06:09.000',
     '',
     '79128704386',
     '236',
@@ -568,8 +568,8 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     27,
-    '2025-10-13 11:48:15.000',
-    '2025-10-24 13:20:24.000',
+    '2025-12-22 15:22:26.000',
+    '2025-12-22 15:22:38.000',
     '',
     '79930024680',
     '236',
@@ -589,9 +589,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     28,
-    '2025-10-04 15:51:15.000',
-    '2025-10-21 10:51:43.000',
-    '2025-10-19 17:46:01.000',
+    '2025-12-23 09:39:57.000',
+    '2025-12-23 09:40:14.000',
+    '2025-12-23 09:40:03.000',
     '207',
     '000063',
     'ANSWERED',
@@ -610,9 +610,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     29,
-    '2025-10-04 14:02:18.000',
-    '2025-10-11 11:26:35.000',
-    '2025-10-22 15:17:33.000',
+    '2025-12-23 12:56:28.000',
+    '2025-12-23 12:56:41.000',
+    '2025-12-23 12:56:35.000',
     '207',
     '000063',
     'ANSWERED',
@@ -631,9 +631,9 @@ INSERT INTO cdr_general (
     UNIQUEID, linkedid
 ) VALUES (
     30,
-    '2025-10-05 10:55:54.000',
-    '2025-10-15 16:31:54.000',
-    '2025-10-06 10:57:39.000',
+    '2025-12-24 15:13:59.000',
+    '2025-12-24 15:14:11.000',
+    '2025-12-24 15:14:07.000',
     '207',
     '000063',
     'ANSWERED',
@@ -644,11 +644,141 @@ INSERT INTO cdr_general (
     'mikopbx-1730294137.10355'
 );
 
+-- Record 31: ANSWERED | 79001234567 -> 201 | 30s
+INSERT INTO cdr_general (
+    id, start, endtime, answer,
+    src_num, dst_num, disposition,
+    recordingfile, billsec, duration,
+    UNIQUEID, linkedid
+) VALUES (
+    31,
+    '2025-12-25 09:30:30.000',
+    '2025-12-25 09:31:15.000',
+    '2025-12-25 09:30:39.000',
+    '79001234567',
+    '201',
+    'ANSWERED',
+    '/storage/usbdisk1/mikopbx/astspool/monitor/2025/10/18/14/mikopbx-linked-call.100_leg1.mp3',
+    30,
+    35,
+    'mikopbx-linked-call.100',
+    'mikopbx-linked-call.100'
+);
+
+-- Record 32: ANSWERED | 201 -> 202 | 260s
+INSERT INTO cdr_general (
+    id, start, endtime, answer,
+    src_num, dst_num, disposition,
+    recordingfile, billsec, duration,
+    UNIQUEID, linkedid
+) VALUES (
+    32,
+    '2025-12-26 12:47:01.000',
+    '2025-12-26 12:51:36.000',
+    '2025-12-26 12:47:11.000',
+    '201',
+    '202',
+    'ANSWERED',
+    '/storage/usbdisk1/mikopbx/astspool/monitor/2025/10/18/14/mikopbx-linked-call.101_leg2.mp3',
+    260,
+    265,
+    'mikopbx-linked-call.101',
+    'mikopbx-linked-call.100'
+);
+
+-- Record 33: ANSWERED | 202 -> 203 | 290s
+INSERT INTO cdr_general (
+    id, start, endtime, answer,
+    src_num, dst_num, disposition,
+    recordingfile, billsec, duration,
+    UNIQUEID, linkedid
+) VALUES (
+    33,
+    '2025-12-27 15:04:32.000',
+    '2025-12-27 15:09:37.000',
+    '2025-12-27 15:04:35.000',
+    '202',
+    '203',
+    'ANSWERED',
+    '/storage/usbdisk1/mikopbx/astspool/monitor/2025/10/18/14/mikopbx-linked-call.102_leg3.mp3',
+    290,
+    295,
+    'mikopbx-linked-call.102',
+    'mikopbx-linked-call.100'
+);
+
+
+-- Linked Calls (shared linkedid for testing linkedid-based deletion)
+-- These 3 records share linkedid 'mikopbx-linked-call.100'
+-- Record 34: ANSWERED | 79001234567 -> 201 | 45s
+INSERT INTO cdr_general (
+    id, start, endtime, answer,
+    src_num, dst_num, disposition,
+    recordingfile, billsec, duration,
+    UNIQUEID, linkedid
+) VALUES (
+    34,
+    '2025-12-25 09:21:03.000',
+    '2025-12-25 09:22:03.000',
+    '2025-12-25 09:21:07.000',
+    '79001234567',
+    '201',
+    'ANSWERED',
+    '/storage/usbdisk1/mikopbx/astspool/monitor/2025/01/01/10/mikopbx-linked-call.34_leg1.mp3',
+    45,
+    50,
+    'mikopbx-linked-call.34_leg1',
+    'mikopbx-linked-call.100'
+);
+
+-- Record 35: ANSWERED | 201 -> 202 | 120s
+INSERT INTO cdr_general (
+    id, start, endtime, answer,
+    src_num, dst_num, disposition,
+    recordingfile, billsec, duration,
+    UNIQUEID, linkedid
+) VALUES (
+    35,
+    '2025-12-26 12:38:34.000',
+    '2025-12-26 12:40:49.000',
+    '2025-12-26 12:38:39.000',
+    '201',
+    '202',
+    'ANSWERED',
+    '/storage/usbdisk1/mikopbx/astspool/monitor/2025/01/01/10/mikopbx-linked-call.35_leg2.mp3',
+    120,
+    125,
+    'mikopbx-linked-call.35_leg2',
+    'mikopbx-linked-call.100'
+);
+
+-- Record 36: ANSWERED | 202 -> 203 | 30s
+INSERT INTO cdr_general (
+    id, start, endtime, answer,
+    src_num, dst_num, disposition,
+    recordingfile, billsec, duration,
+    UNIQUEID, linkedid
+) VALUES (
+    36,
+    '2025-12-27 15:55:05.000',
+    '2025-12-27 15:55:50.000',
+    '2025-12-27 15:55:11.000',
+    '202',
+    '203',
+    'ANSWERED',
+    '',
+    30,
+    35,
+    'mikopbx-linked-call.36_leg3',
+    'mikopbx-linked-call.100'
+);
+
 COMMIT;
 
 -- Summary:
---   ANSWERED: 18
+--   ANSWERED: 24
 --   BUSY: 1
 --   CANCEL: 3
 --   NOANSWER: 8
---   With recordings: 15
+--   With recordings: 20
+--   Linked call records (shared linkedid): 6

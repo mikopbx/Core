@@ -58,11 +58,17 @@ class TestCDRDelete:
     sample_cdr_with_recording = None
     sample_linkedid = None  # For testing linkedid-based deletion
 
+    # Known linkedid from seed data (generate_cdr_fixtures.py creates 3 records with this linkedid)
+    SEED_LINKED_ID = 'mikopbx-linked-call.100'
+
     @pytest.fixture(autouse=True)
     def setup_test_data(self, api_client):
         """
         Setup: Find suitable CDR records for testing
         WHY: We need existing CDR records to test deletion modes
+
+        The CDR seed data (generate_cdr_fixtures.py) creates 3 records with
+        linkedid='mikopbx-linked-call.100' specifically for testing linkedid-based deletion.
         """
         # Get grouped CDR list (REST API v3 format)
         response = api_client.get('cdr', params={'limit': 100})
@@ -76,7 +82,11 @@ class TestCDRDelete:
                 records = group.get('records', [])
 
                 if linkedid and len(records) > 0:
-                    # Store linkedid for linkedid-based deletion test
+                    # Priority 1: Use seed data linkedid (guaranteed to have 3 records)
+                    if linkedid == self.SEED_LINKED_ID and len(records) > 1:
+                        TestCDRDelete.sample_linkedid = linkedid
+
+                    # Priority 2: Any linkedid with multiple records
                     if not TestCDRDelete.sample_linkedid and len(records) > 1:
                         TestCDRDelete.sample_linkedid = linkedid
 
@@ -229,9 +239,14 @@ class TestCDRDelete:
         assert not found, f"Deleted record {cdr_id} should not appear in CDR list"
 
     def test_05_delete_by_linkedid(self, api_client):
-        """Test DELETE /cdr/{linkedid} - Delete entire conversation by linkedid"""
-        if not TestCDRDelete.sample_linkedid:
-            pytest.skip("No CDR groups with multiple records available")
+        """Test DELETE /cdr/{linkedid} - Delete entire conversation by linkedid
+
+        This test requires CDR seed data with linked calls (3 records sharing linkedid).
+        The seed data is created by generate_cdr_fixtures.py with linkedid='mikopbx-linked-call.100'.
+        """
+        assert TestCDRDelete.sample_linkedid is not None, \
+            f"CDR seed data missing: no linkedid with multiple records found. " \
+            f"Expected '{self.SEED_LINKED_ID}' from seed data. Run CDR seeding first."
 
         linkedid = TestCDRDelete.sample_linkedid
         print(f"  Testing deletion by linkedid: {linkedid}")
@@ -247,7 +262,9 @@ class TestCDRDelete:
                     break
 
         print(f"  Records with linkedid before: {linked_count_before}")
-        assert linked_count_before > 1, "Need multiple records for this test"
+        assert linked_count_before > 1, \
+            f"CDR seed data issue: linkedid '{linkedid}' has only {linked_count_before} record(s). " \
+            f"Expected 3 records from seed data (mikopbx-linked-call.100)."
 
         # Delete by linkedid (mikopbx-* format)
         # WHY: linkedid automatically deletes ALL records with this linkedid
