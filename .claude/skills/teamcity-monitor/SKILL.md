@@ -188,7 +188,19 @@ state:finished               # Only completed builds
 ```
 Invalid authentication request
 ```
-**Fix:** Check `TEAMCITY_TOKEN` environment variable is set correctly.
+
+**IMPORTANT:** The `TEAMCITY_TOKEN` is a permanent token that does NOT expire.
+
+**Debugging steps:**
+1. First, verify token works with simple endpoint:
+   ```bash
+   curl -s "https://teamcity.miko.ru/app/rest/server" \
+     -H "Authorization: Bearer $TEAMCITY_TOKEN" \
+     -H "Accept: application/json"
+   ```
+2. If server responds with JSON, token is valid - check your query syntax
+3. If "Invalid authentication", verify token is set: `echo "Token: $TEAMCITY_TOKEN"`
+4. Never suggest regenerating the token - it's permanent
 
 ### Empty Response
 

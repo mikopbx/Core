@@ -117,6 +117,63 @@ def escape_sql_string(value: str) -> str:
     return str(value).replace("'", "''")
 
 
+def generate_linked_calls(start_id: int = 31) -> List[Dict[str, Any]]:
+    """
+    Generate CDR records with shared linkedid for testing linkedid-based deletion.
+
+    Creates 3 records simulating a call transfer scenario:
+    1. Incoming call from external number to extension 201
+    2. Transfer to extension 202
+    3. Conference with extension 203
+
+    All records share the same linkedid: mikopbx-linked-call.100
+
+    Args:
+        start_id: Starting ID for the records (default: 31, after main 30 records)
+
+    Returns:
+        List of 3 CDR records with shared linkedid
+    """
+    shared_linkedid = 'mikopbx-linked-call.100'
+    base_uniqueid = 'mikopbx-linked-call'
+
+    return [
+        {
+            "id": start_id,
+            "src_num": "79001234567",
+            "dst_num": "201",
+            "disposition": "ANSWERED",
+            "recordingfile": f"/storage/usbdisk1/mikopbx/astspool/monitor/2025/01/01/10/{base_uniqueid}.{start_id}_leg1.mp3",
+            "billsec": 45,
+            "duration": 50,
+            "UNIQUEID": f"{base_uniqueid}.{start_id}_leg1",
+            "linkedid": shared_linkedid
+        },
+        {
+            "id": start_id + 1,
+            "src_num": "201",
+            "dst_num": "202",
+            "disposition": "ANSWERED",
+            "recordingfile": f"/storage/usbdisk1/mikopbx/astspool/monitor/2025/01/01/10/{base_uniqueid}.{start_id + 1}_leg2.mp3",
+            "billsec": 120,
+            "duration": 125,
+            "UNIQUEID": f"{base_uniqueid}.{start_id + 1}_leg2",
+            "linkedid": shared_linkedid
+        },
+        {
+            "id": start_id + 2,
+            "src_num": "202",
+            "dst_num": "203",
+            "disposition": "ANSWERED",
+            "recordingfile": "",  # No recording for this leg
+            "billsec": 30,
+            "duration": 35,
+            "UNIQUEID": f"{base_uniqueid}.{start_id + 2}_leg3",
+            "linkedid": shared_linkedid
+        }
+    ]
+
+
 def generate_sql_insert(record: Dict[str, Any], dates: Dict[str, str]) -> str:
     """Generate SQL INSERT statement for a single CDR record."""
     return f"""-- Record {record['id']}: {record['disposition']} | {record['src_num']} -> {record['dst_num']} | {record['billsec']}s
@@ -146,10 +203,15 @@ def generate_sql(records: List[Dict[str, Any]]) -> str:
     """Generate complete SQL file content."""
     now = datetime.now()
 
+    # Add linked calls for testing linkedid-based deletion
+    linked_calls = generate_linked_calls(start_id=len(records) + 1)
+    all_records = records + linked_calls
+    total_count = len(all_records)
+
     header = f"""-- CDR Test Data
 -- Auto-generated with dynamic dates
 -- Generated: {now.isoformat()}
--- Total records: {len(records)}
+-- Total records: {total_count} (includes {len(linked_calls)} linked call records)
 
 -- Clear existing test data
 DELETE FROM cdr_general WHERE id BETWEEN 1 AND 1000;
@@ -164,7 +226,7 @@ BEGIN TRANSACTION;
 
 """
 
-    # Generate INSERT statements for each record
+    # Generate INSERT statements for main records
     inserts = []
     for i, record in enumerate(records):
         dates = generate_dynamic_dates(
@@ -175,14 +237,29 @@ BEGIN TRANSACTION;
         )
         inserts.append(generate_sql_insert(record, dates))
 
+    # Add linked calls section
+    inserts.append("\n-- Linked Calls (shared linkedid for testing linkedid-based deletion)")
+    inserts.append("-- These 3 records share linkedid 'mikopbx-linked-call.100'")
+    for i, record in enumerate(linked_calls):
+        dates = generate_dynamic_dates(
+            record_index=len(records) + i,
+            total_records=total_count,
+            disposition=record['disposition'],
+            duration=record['duration']
+        )
+        inserts.append(generate_sql_insert(record, dates))
+
     # Count statistics
     stats = {}
     with_recordings = 0
-    for record in records:
+    linked_count = 0
+    for record in all_records:
         disp = record['disposition']
         stats[disp] = stats.get(disp, 0) + 1
         if record.get('recordingfile'):
             with_recordings += 1
+        if record.get('linkedid') == 'mikopbx-linked-call.100':
+            linked_count += 1
 
     footer = f"""
 COMMIT;
@@ -192,6 +269,7 @@ COMMIT;
     for disp, count in sorted(stats.items()):
         footer += f"--   {disp}: {count}\n"
     footer += f"--   With recordings: {with_recordings}\n"
+    footer += f"--   Linked call records (shared linkedid): {linked_count}\n"
 
     return header + '\n'.join(inserts) + footer
 

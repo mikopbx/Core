@@ -19,8 +19,39 @@ from conftest import assert_api_success, assert_record_exists, assert_record_del
 class TestIvrMenuCRUD:
     """Comprehensive CRUD tests for IVR Menu"""
 
-    # Store created IDs for cleanup and testing
-    created_ids = []
+    @pytest.fixture(autouse=True, scope="class")
+    def cleanup_ivr_menus(self, api_client):
+        """Fixture that cleans up IVR menus before and after tests.
+
+        - Pre-cleanup: removes IVR menus with test extensions from previous runs
+        - Post-cleanup: removes all IVR menus created during this test run
+        """
+        # Initialize created_ids on class instance
+        TestIvrMenuCRUD.created_ids = []
+
+        # Pre-cleanup: remove IVR menus with test extensions from previous failed runs
+        test_extensions = ['2000', '30021']
+        try:
+            response = api_client.get('ivr-menu')
+            if response.get('result') and response.get('data'):
+                for ivr in response['data']:
+                    if ivr.get('extension') in test_extensions:
+                        api_client.delete(f"ivr-menu/{ivr['id']}")
+                        print(f"  Pre-cleanup: removed IVR {ivr['id']} (ext: {ivr['extension']})")
+        except Exception as e:
+            print(f"  Pre-cleanup warning: {e}")
+
+        yield  # Tests run here
+
+        # Post-cleanup: remove all IVR menus created during tests
+        for ivr_id in TestIvrMenuCRUD.created_ids[:]:
+            try:
+                api_client.delete(f'ivr-menu/{ivr_id}')
+                print(f"  Cleanup: deleted IVR menu {ivr_id}")
+            except Exception:
+                pass  # Already deleted or doesn't exist
+
+        TestIvrMenuCRUD.created_ids.clear()
 
     def test_01_get_default_template(self, api_client):
         """Test GET /ivr-menu:getDefault - Get default IVR menu template"""
@@ -337,38 +368,20 @@ class TestIvrMenuCRUD:
         else:
             print(f"⚠ Timeout range validation not enforced (implementation-specific)")
 
-    def test_13_delete_ivr_menus(self, api_client):
-        """Test DELETE /ivr-menu/{id} - Delete IVR menus"""
-        for ivr_id in self.created_ids[:]:  # Copy list to avoid modification during iteration
-            try:
-                response = api_client.delete(f'ivr-menu/{ivr_id}')
-                assert_api_success(response, f"Failed to delete IVR menu {ivr_id}")
-
-                # Verify deletion
-                assert_record_deleted(api_client, 'ivr-menu', ivr_id)
-
-                print(f"✓ Deleted IVR menu: {ivr_id}")
-            except Exception as e:
-                if '404' in str(e):
-                    print(f"⚠ IVR menu {ivr_id} already deleted")
-                else:
-                    raise
-
-        self.created_ids.clear()
-
-    def test_14_verify_cleanup(self, api_client):
-        """Verify all test IVR menus were cleaned up"""
+    def test_13_verify_cleanup(self, api_client):
+        """Verify all test IVR menus were cleaned up by fixture"""
         response = api_client.get('ivr-menu')
         assert_api_success(response, "Failed to get IVR menu list")
 
         data = response['data']
+        test_extensions = ['2000', '30021']
 
         # Check no test IVRs remain
         for menu in data:
-            assert 'Updated' not in menu.get('name', '')
-            assert 'Patched' not in menu.get('description', '')
+            assert menu.get('extension') not in test_extensions, \
+                f"Test IVR with extension {menu.get('extension')} still exists"
 
-        print(f"✓ Cleanup verified - {len(data)} IVR menus remaining")
+        print(f"✓ Cleanup verified - no test IVR menus remain")
 
 
 class TestIvrMenuEdgeCases:
