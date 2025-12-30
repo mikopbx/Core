@@ -122,15 +122,11 @@ get_serial_ports() {
         return
     fi
 
-    # LXC: use /dev/tty1 for Proxmox console visibility
-    # LXC containers don't have serial ports, but tty1 is the console
+    # LXC: stdout is already connected to /dev/tty1 (Proxmox console)
+    # Writing to /dev/tty1 separately would cause duplicate output
+    # So for LXC we return empty - stdout handles console output
     if is_lxc; then
-        if [ -c "/dev/tty1" ] && [ -w "/dev/tty1" ]; then
-            echo "/dev/tty1" > "$SERIAL_CACHE"
-            echo "/dev/tty1"
-        else
-            echo "" > "$SERIAL_CACHE"
-        fi
+        echo "" > "$SERIAL_CACHE"
         return
     fi
 

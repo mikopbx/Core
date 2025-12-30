@@ -122,15 +122,10 @@ class SystemMessages extends Injectable
             }
         }
 
-        // LXC containers don't have serial ports - use tty1 or console instead
-        // This ensures boot messages are visible in Proxmox console
-        if (empty(self::$availableSerialPorts) && System::isLxc()) {
-            if (file_exists('/dev/tty1') && is_writable('/dev/tty1')) {
-                self::$availableSerialPorts[] = '/dev/tty1';
-            } elseif (file_exists('/dev/console') && is_writable('/dev/console')) {
-                self::$availableSerialPorts[] = '/dev/console';
-            }
-        }
+        // LXC containers: stdout is already connected to /dev/tty1 (Proxmox console)
+        // Writing to /dev/tty1 separately would cause duplicate output
+        // So for LXC we return empty array - stdout handles console output
+        // (This is similar to Docker where runtime manages output)
 
         return self::$availableSerialPorts;
     }
