@@ -161,7 +161,17 @@ class MikoPBXClient:
 
         try:
             data = response.json()
-            error_messages = data.get('messages', {}).get('error', [])
+            messages = data.get('messages', {})
+
+            # Handle different message formats from API
+            if isinstance(messages, list):
+                # API returned messages as list of strings
+                error_messages = messages
+            elif isinstance(messages, dict):
+                error_messages = messages.get('error', [])
+            else:
+                error_messages = []
+
             if isinstance(error_messages, str):
                 error_messages = [error_messages]
 
