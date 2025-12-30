@@ -1,7 +1,7 @@
 ---
 name: h-refactor-ssh-password-storage
 branch: feature/h-refactor-ssh-password-storage
-status: pending
+status: completed
 created: 2025-12-30
 ---
 
@@ -17,17 +17,19 @@ created: 2025-12-30
 **Цель:** Перейти на хранение только SHA-512 хэшей паролей, унифицировать подход с `WEB_ADMIN_PASSWORD` (который уже хранится как хэш).
 
 ## Success Criteria
-<!-- To be confirmed with user -->
-- [ ] SSH пароль хранится в БД только как SHA-512 хэш (`$6$salt$hash`)
-- [ ] Plain text пароль НИКОГДА не сохраняется в БД
-- [ ] REST API принимает plain text, хэширует и сохраняет хэш
-- [ ] SSHConf использует `chpasswd -e` с готовым хэшем
-- [ ] LXC провижинг извлекает и сохраняет Proxmox SHA-512 хэш
-- [ ] Docker/Cloud провижинг поддерживает хэшированные пароли
-- [ ] Email уведомления о смене пароля работают корректно
+
+**Core Security (Implemented):**
+- [x] SSH пароль хранится в БД только как SHA-512 хэш (`$6$rounds=5000$salt$hash`)
+- [x] Plain text пароль НИКОГДА не сохраняется в БД
+- [x] REST API принимает plain text, хэширует и сохраняет хэш
+- [x] SSHConf использует `chpasswd -e` с готовым хэшем
+- [x] Docker/Cloud провижинг поддерживает хэшированные пароли
+- [x] Email уведомления о смене пароля работают корректно
+- [x] Миграция существующих plain text паролей при апгрейде
+
+**Out of Scope (Future Tasks):**
+- [ ] LXC провижинг извлекает существующий Proxmox SHA-512 хэш
 - [ ] Консольное меню позволяет сбросить пароль
-- [ ] Миграция существующих plain text паролей при апгрейде
-- [ ] Все тесты API проходят
 
 ## Subtasks
 

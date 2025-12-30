@@ -665,7 +665,7 @@ class PasswordService
     
     /**
      * Translate message key with optional parameters
-     * 
+     *
      * @param string $key Translation key
      * @param array $params Optional parameters for replacement
      * @return string Translated message
@@ -678,5 +678,61 @@ class PasswordService
             return $translation->_($key, $params);
         }
         return $key;
+    }
+
+    /**
+     * Generate SHA-512 crypt hash for system password storage
+     *
+     * Creates a hash compatible with /etc/shadow and chpasswd -e command.
+     * Format: $6$rounds=5000$salt$hash (SHA-512 crypt)
+     *
+     * @param string $password Plain text password to hash
+     * @param int $rounds Number of hashing rounds (default 5000, range 1000-999999999)
+     * @return string SHA-512 crypt format hash ($6$...)
+     */
+    public static function generateSha512Hash(string $password, int $rounds = 5000): string
+    {
+        // Validate rounds range per crypt(3) specification
+        $rounds = max(1000, min(999999999, $rounds));
+
+        // Generate cryptographically secure random salt (16 characters)
+        $salt = bin2hex(random_bytes(8));
+
+        // Create SHA-512 hash using crypt() with $6$ prefix
+        $hash = crypt($password, sprintf('$6$rounds=%d$%s$', $rounds, $salt));
+
+        return $hash;
+    }
+
+    /**
+     * Check if a value is already a SHA-512 crypt hash
+     *
+     * Detects hashes in format: $6$rounds=N$salt$hash or $6$salt$hash
+     *
+     * @param string $value Value to check
+     * @return bool True if value is a SHA-512 hash
+     */
+    public static function isSha512Hash(string $value): bool
+    {
+        // SHA-512 crypt hashes start with $6$ and have specific structure
+        // Format: $6$rounds=N$salt$hash or $6$salt$hash
+        return (bool)preg_match('/^\$6\$(?:rounds=\d+\$)?[a-zA-Z0-9.\/]+\$[a-zA-Z0-9.\/]{86}$/', $value);
+    }
+
+    /**
+     * Verify a plain text password against a SHA-512 crypt hash
+     *
+     * @param string $password Plain text password to verify
+     * @param string $hash SHA-512 crypt hash to verify against
+     * @return bool True if password matches hash
+     */
+    public static function verifySha512Hash(string $password, string $hash): bool
+    {
+        if (!self::isSha512Hash($hash)) {
+            return false;
+        }
+
+        // crypt() with the full hash as salt will reproduce the hash if password matches
+        return hash_equals($hash, crypt($password, $hash));
     }
 }

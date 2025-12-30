@@ -28,6 +28,8 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
+use Phalcon\Di\Di;
+use Redis;
 
 /**
  * Class SoundFilesConf
@@ -44,6 +46,23 @@ class SoundFilesConf extends SystemConfigClass
      * Source directory for system sound files (read-only)
      */
     private const string SOURCE_SOUNDS_DIR = '/offload/asterisk/sounds';
+
+    /**
+     * Redis key prefix for sound conversion cache
+     * Used by WorkerSoundFilesInit to track conversion status
+     */
+    public const string REDIS_SOUND_CONVERSION_PREFIX = 'sound_conversion:';
+
+    /**
+     * Redis key for system sounds conversion status
+     */
+    public const string REDIS_SYSTEM_SOUNDS_KEY = self::REDIS_SOUND_CONVERSION_PREFIX . 'system';
+
+    /**
+     * Redis key prefix for module sounds conversion status
+     * Full key format: sound_conversion:module:{moduleId}
+     */
+    public const string REDIS_MODULE_SOUNDS_PREFIX = self::REDIS_SOUND_CONVERSION_PREFIX . 'module:';
 
     /**
      * Start the service - initialize writable sounds directory with all available languages
@@ -397,6 +416,11 @@ class SoundFilesConf extends SystemConfigClass
             }
         }
 
+        // Invalidate conversion cache to trigger WorkerSoundFilesInit
+        if ($stats['copied_files'] > 0) {
+            self::invalidateModuleSoundCache($moduleUniqueID);
+        }
+
         // Log installation summary
         $summaryParts = [];
         $summaryParts[] = "{$stats['copied_files']} files copied";
@@ -415,6 +439,41 @@ class SoundFilesConf extends SystemConfigClass
         );
 
         return $success;
+    }
+
+    /**
+     * Invalidate sound conversion cache for a module
+     *
+     * Called after installing module sounds to trigger WorkerSoundFilesInit
+     * to convert new sound files to all required formats.
+     *
+     * @param string $moduleUniqueID Module unique identifier
+     */
+    public static function invalidateModuleSoundCache(string $moduleUniqueID): void
+    {
+        try {
+            $di = Di::getDefault();
+            if ($di === null) {
+                return;
+            }
+
+            /** @var Redis $redis */
+            $redis = $di->getShared('redis');
+            $cacheKey = self::REDIS_MODULE_SOUNDS_PREFIX . $moduleUniqueID;
+            $redis->del($cacheKey);
+
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "Invalidated sound cache for module $moduleUniqueID",
+                LOG_DEBUG
+            );
+        } catch (\Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "Failed to invalidate sound cache: " . $e->getMessage(),
+                LOG_WARNING
+            );
+        }
     }
 
     /**

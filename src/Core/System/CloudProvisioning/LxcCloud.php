@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 
 use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Promise\PromiseInterface;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Network;
@@ -51,6 +52,7 @@ class LxcCloud extends CloudProvider
     private const string PATH_SSH_KEYS = '/root/.ssh/authorized_keys';
     private const string PATH_NETWORK_INTERFACES = '/etc/network/interfaces';
     private const string PATH_RESOLV_CONF = '/etc/resolv.conf';
+    private const string PATH_SHADOW = '/etc/shadow';
 
     /**
      * Detected network interface name from /etc/network/interfaces.
@@ -96,6 +98,35 @@ class LxcCloud extends CloudProvider
         // This ensures internet='1' and disabled='0' even with DHCP/empty config
         // Required for welcome banner to display IP address
         $instance->resetLanInterface($instance->detectedInterface);
+
+        // Apply credentials from Proxmox (ONE-TIME only on first boot)
+        // This allows users to change passwords/keys via web interface after initial setup
+        $settings = $instance->loadPbxSettingsDirectly();
+        $alreadyProvisioned = ($settings[PbxSettings::CLOUD_PROVISIONING] ?? '') === '1';
+        if (!$alreadyProvisioned) {
+            // Apply root password hash from /etc/shadow for WEB and SSH
+            $rootHash = $instance->readRootPasswordHash();
+            if ($rootHash !== null) {
+                $instance->updatePbxSettingsDirect(PbxSettings::WEB_ADMIN_PASSWORD, $rootHash);
+                $instance->updatePbxSettingsDirect(PbxSettings::SSH_PASSWORD, $rootHash);
+                SystemMessages::sysLogMsg(
+                    self::CloudID,
+                    "Applied root password hash to WebAdminPassword and SSHPassword",
+                    LOG_INFO
+                );
+            }
+
+            // Apply SSH authorized keys
+            $sshKeys = $instance->readSshKeys();
+            if ($sshKeys !== null) {
+                $instance->updatePbxSettingsDirect(PbxSettings::SSH_AUTHORIZED_KEYS, $sshKeys);
+                SystemMessages::sysLogMsg(
+                    self::CloudID,
+                    "Applied SSH authorized keys",
+                    LOG_INFO
+                );
+            }
+        }
 
         if ($config->isEmpty()) {
             SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_SKIPPED);
@@ -151,11 +182,8 @@ class LxcCloud extends CloudProvider
             $config->hostname = $hostname;
         }
 
-        // Read SSH keys
-        $sshKeys = $this->readSshKeys();
-        if ($sshKeys !== null) {
-            $config->sshKeys = $sshKeys;
-        }
+        // NOTE: SSH keys and passwords are applied directly in applyProxmoxOverrides()
+        // with one-time provisioning check, not through this config
 
         // Parse network interfaces (also sets $this->detectedInterface)
         $networkConfig = $this->parseNetworkInterfaces();
@@ -480,6 +508,71 @@ class LxcCloud extends CloudProvider
         }
 
         return $settings;
+    }
+
+    /**
+     * Reads root password hash from /etc/shadow.
+     *
+     * Proxmox sets root password before container start by writing hash to /etc/shadow.
+     * Format: root:$6$salt$hash:...:...:...:...:...
+     *
+     * This hash can be used directly for WebAdminPassword and SSHPassword
+     * since MikoPBX already supports SHA-512 crypt format ($6$...).
+     *
+     * @return string|null SHA-512 crypt hash or null if not available/default
+     */
+    private function readRootPasswordHash(): ?string
+    {
+        if (!file_exists(self::PATH_SHADOW)) {
+            return null;
+        }
+
+        $content = file_get_contents(self::PATH_SHADOW);
+        if (empty($content)) {
+            return null;
+        }
+
+        // Parse shadow file to find root entry
+        $lines = explode("\n", $content);
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line) || str_starts_with($line, '#')) {
+                continue;
+            }
+
+            // Shadow format: username:hash:lastchange:min:max:warn:inactive:expire:reserved
+            $parts = explode(':', $line);
+            if (count($parts) < 2 || $parts[0] !== 'root') {
+                continue;
+            }
+
+            $hash = $parts[1];
+
+            // Skip empty, locked (*), or disabled (!) passwords
+            if (empty($hash) || $hash === '*' || $hash === '!' || str_starts_with($hash, '!')) {
+                return null;
+            }
+
+            // Validate it's a SHA-512 crypt hash ($6$...)
+            if (!str_starts_with($hash, '$6$')) {
+                SystemMessages::sysLogMsg(
+                    self::CloudID,
+                    "Root password hash is not SHA-512 format, skipping",
+                    LOG_WARNING
+                );
+                return null;
+            }
+
+            SystemMessages::sysLogMsg(
+                self::CloudID,
+                "Root password hash read from " . self::PATH_SHADOW,
+                LOG_DEBUG
+            );
+
+            return $hash;
+        }
+
+        return null;
     }
 
     /**

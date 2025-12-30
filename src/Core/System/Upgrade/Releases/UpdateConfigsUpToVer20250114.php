@@ -21,7 +21,7 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\{CustomFiles, NetworkStaticRoutes};
-use MikoPBX\Core\System\{SystemMessages, Upgrade\UpgradeSystemConfigInterface};
+use MikoPBX\Core\System\{PasswordService, SystemMessages, Upgrade\UpgradeSystemConfigInterface};
 use Phalcon\Di\Injectable;
 
 /**
@@ -47,6 +47,9 @@ class UpdateConfigsUpToVer20250114 extends Injectable implements UpgradeSystemCo
 
         // Step 2: Enable PBXSplitAudioThread by default
         $this->enableSplitAudioThreadByDefault();
+
+        // Step 3: Migrate SSH password to SHA-512 hash
+        $this->migrateSshPasswordToHash();
     }
 
     /**
@@ -311,5 +314,48 @@ class UpdateConfigsUpToVer20250114 extends Injectable implements UpgradeSystemCo
     private function enableSplitAudioThreadByDefault(): void
     {
         PbxSettings::setValueByKey(PbxSettings::PBX_SPLIT_AUDIO_THREAD, '1');
+    }
+
+    /**
+     * Migrate SSH password from plain text to SHA-512 hash.
+     *
+     * Security improvement: SSH passwords are now stored as SHA-512 crypt hashes
+     * instead of plain text. This method converts existing plain text passwords
+     * to hashes and updates the /etc/shadow hash file for integrity monitoring.
+     *
+     * @return void
+     */
+    private function migrateSshPasswordToHash(): void
+    {
+        $sshPassword = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
+
+        if (empty($sshPassword)) {
+            echo "No SSH password set, skipping migration\n";
+            return;
+        }
+
+        // Check if already migrated (already a SHA-512 hash)
+        if (PasswordService::isSha512Hash($sshPassword)) {
+            echo "SSH password already hashed, skipping migration\n";
+            return;
+        }
+
+        // Convert plain text password to SHA-512 hash
+        $hashedPassword = PasswordService::generateSha512Hash($sshPassword);
+        PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD, $hashedPassword);
+
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            'Migrated SSH password from plain text to SHA-512 hash',
+            LOG_INFO
+        );
+        echo "Migrated SSH password to SHA-512 hash\n";
+
+        // Update the shadow file hash for integrity monitoring
+        if (file_exists('/etc/shadow')) {
+            $shadowHash = md5_file('/etc/shadow');
+            PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_FILE, $shadowHash);
+            echo "Updated /etc/shadow hash file reference\n";
+        }
     }
 }

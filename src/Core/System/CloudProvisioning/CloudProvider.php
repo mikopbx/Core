@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 use GuzzleHttp\Promise\PromiseInterface;
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\PasswordService;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -191,27 +192,37 @@ abstract class CloudProvider
 
     /**
      * Updates the SSH password.
+     *
+     * Generates a random password and stores it as SHA-512 hash for security.
      */
     protected function updateSSHCredentials(string $sshLogin, string $hashSalt): void
     {
         $ifconfigOutput = shell_exec(Util::which('ifconfig'));
-        $data = md5(($ifconfigOutput ?? '') . $hashSalt . time());
+        $plainPassword = md5(($ifconfigOutput ?? '') . $hashSalt . time());
+        // Hash the password with SHA-512 before storage
+        $hashedPassword = PasswordService::generateSha512Hash($plainPassword);
         $this->updatePbxSettings(PbxSettings::SSH_LOGIN, $sshLogin);
-        $this->updatePbxSettings(PbxSettings::SSH_PASSWORD, $data);
+        $this->updatePbxSettings(PbxSettings::SSH_PASSWORD, $hashedPassword);
         $this->updatePbxSettings(PbxSettings::SSH_DISABLE_SSH_PASSWORD, '1');
     }
 
     /**
      * Updates the web password based on the instance name and ID.
      *
-     * @param string $webPassword The web password.
+     * Hashes the password with SHA-512 before storage for security.
+     * Stores plain text in CLOUD_INSTANCE_ID for default password detection.
+     *
+     * @param string $webPassword The web password (plain text).
      */
     protected function updateWebPassword(string $webPassword): void
     {
         if (empty($webPassword)) {
             return;
         }
-        $this->updatePbxSettings(PbxSettings::WEB_ADMIN_PASSWORD, $webPassword);
+        // Hash the password with SHA-512 before storage (same format as SSH)
+        $hashedPassword = PasswordService::generateSha512Hash($webPassword);
+        $this->updatePbxSettings(PbxSettings::WEB_ADMIN_PASSWORD, $hashedPassword);
+        // Store plain text instance ID for default password detection
         $this->updatePbxSettings(PbxSettings::CLOUD_INSTANCE_ID, $webPassword);
         $this->updatePbxSettings(PbxSettings::PBX_DESCRIPTION, PbxSettings::DEFAULT_CLOUD_PASSWORD_DESCRIPTION);
     }
@@ -444,7 +455,9 @@ abstract class CloudProvider
         if (array_key_exists($key, $settings)) {
             // Update existing setting if value is different
             if ($settings[$key] !== (string)$value) {
-                $command = "$sqlite3 $dbPath \"UPDATE m_PbxSettings SET value='$escapedValue' WHERE key='$escapedKey'\"";
+                // Use escapeshellarg to protect from shell expansion of $ and other metacharacters
+                $sql = "UPDATE m_PbxSettings SET value='$escapedValue' WHERE key='$escapedKey'";
+                $command = "$sqlite3 $dbPath " . escapeshellarg($sql);
                 $res = Processes::mwExec($command, $out);
                 if ($res === 0) {
                     $this->pbxSettingsCache[$key] = (string)$value;
@@ -464,7 +477,9 @@ abstract class CloudProvider
             return true; // Value unchanged, consider success
         } else {
             // Insert new setting (key already validated above)
-            $command = "$sqlite3 $dbPath \"INSERT INTO m_PbxSettings (key, value) VALUES ('$escapedKey', '$escapedValue')\"";
+            // Use escapeshellarg to protect from shell expansion of $ and other metacharacters
+            $sql = "INSERT INTO m_PbxSettings (key, value) VALUES ('$escapedKey', '$escapedValue')";
+            $command = "$sqlite3 $dbPath " . escapeshellarg($sql);
             $res = Processes::mwExec($command, $out);
             if ($res === 0) {
                 $this->pbxSettingsCache[$key] = (string)$value;
@@ -503,7 +518,9 @@ abstract class CloudProvider
             return false;
         }
 
-        $command = "$sqlite3 $dbPath \"UPDATE m_LanInterfaces SET $column='$escapedValue' WHERE internet='1'\"";
+        // Use escapeshellarg to protect from shell expansion of $ and other metacharacters
+        $sql = "UPDATE m_LanInterfaces SET $column='$escapedValue' WHERE internet='1'";
+        $command = "$sqlite3 $dbPath " . escapeshellarg($sql);
         $res = Processes::mwExec($command, $out);
 
         $message = "      |- Update LanInterfaces.$column ... ";
@@ -751,19 +768,23 @@ abstract class CloudProvider
         // Apply SSH credentials
         if ($config->sshLogin !== null && $config->instanceId !== null) {
             $ifconfigOutput = shell_exec(Util::which('ifconfig'));
-            $sshPassword = md5(($ifconfigOutput ?? '') . $config->instanceId . time());
+            $plainPassword = md5(($ifconfigOutput ?? '') . $config->instanceId . time());
+            // Hash the password with SHA-512 before storage
+            $hashedPassword = PasswordService::generateSha512Hash($plainPassword);
             $this->updatePbxSettingsDirect(PbxSettings::SSH_LOGIN, $config->sshLogin);
-            $this->updatePbxSettingsDirect(PbxSettings::SSH_PASSWORD, $sshPassword);
+            $this->updatePbxSettingsDirect(PbxSettings::SSH_PASSWORD, $hashedPassword);
             $this->updatePbxSettingsDirect(PbxSettings::SSH_DISABLE_SSH_PASSWORD, '1');
         }
 
-        // Apply web password
+        // Apply web password (hash with SHA-512 for security, same format as SSH)
         if ($config->webPassword !== null) {
-            $this->updatePbxSettingsDirect(PbxSettings::WEB_ADMIN_PASSWORD, $config->webPassword);
+            $hashedWebPassword = PasswordService::generateSha512Hash($config->webPassword);
+            $this->updatePbxSettingsDirect(PbxSettings::WEB_ADMIN_PASSWORD, $hashedWebPassword);
 
             // Only set CloudInstanceId for real cloud providers, not Docker/NoCloud
             // Docker uses 12-factor ENV vars applied on every restart
             // NoCloud is for on-premise where users control passwords
+            // Store plain text for default password detection
             if ($this->shouldSetCloudInstanceId()) {
                 $this->updatePbxSettingsDirect(PbxSettings::CLOUD_INSTANCE_ID, $config->webPassword);
             }
@@ -771,9 +792,11 @@ abstract class CloudProvider
             $this->updatePbxSettingsDirect(PbxSettings::PBX_DESCRIPTION, PbxSettings::DEFAULT_CLOUD_PASSWORD_DESCRIPTION);
         } elseif ($config->instanceId !== null) {
             // Use instance ID as web password (cloud provider behavior)
-            $this->updatePbxSettingsDirect(PbxSettings::WEB_ADMIN_PASSWORD, $config->instanceId);
+            $hashedWebPassword = PasswordService::generateSha512Hash($config->instanceId);
+            $this->updatePbxSettingsDirect(PbxSettings::WEB_ADMIN_PASSWORD, $hashedWebPassword);
 
             // Only set CloudInstanceId for real cloud providers
+            // Store plain text for default password detection
             if ($this->shouldSetCloudInstanceId()) {
                 $this->updatePbxSettingsDirect(PbxSettings::CLOUD_INSTANCE_ID, $config->instanceId);
             }
