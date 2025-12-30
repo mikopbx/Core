@@ -84,7 +84,7 @@ class TestIvrMenuCRUD:
 
         ivr_data = {
             'name': fixture['name'],
-            'extension': '2001',
+            'extension': fixture['extension'],  # Use fixture extension (30021) to avoid conflicts
             'description': fixture['description'],
             'timeout': 5,
             'timeout_extension': '201',

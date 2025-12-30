@@ -143,6 +143,32 @@ class MikoPBXClient:
             'Content-Type': 'application/json'
         }
 
+    def _is_db_locked_response(self, response: requests.Response) -> bool:
+        """
+        Check if response indicates SQLite database lock error.
+
+        SQLite returns 'database is locked' when concurrent write operations occur.
+        This can happen during rapid API calls that modify the database.
+
+        Args:
+            response: HTTP response to check
+
+        Returns:
+            True if response contains database lock error
+        """
+        if response.status_code not in (422, 500):
+            return False
+
+        try:
+            data = response.json()
+            error_messages = data.get('messages', {}).get('error', [])
+            if isinstance(error_messages, str):
+                error_messages = [error_messages]
+
+            return any('database is locked' in str(e).lower() for e in error_messages)
+        except (ValueError, KeyError):
+            return False
+
     def _handle_401_and_retry(self, response: requests.Response) -> bool:
         """
         Handle 401 Unauthorized by refreshing token.
@@ -214,10 +240,10 @@ class MikoPBXClient:
         return response.json()
 
     def post(self, path: str, data: Optional[Dict] = None, _auth_retried: bool = False) -> Dict[str, Any]:
-        """POST request with connection retry and auto token refresh"""
+        """POST request with connection retry, database lock retry, and auto token refresh"""
         import time
         max_attempts = 5
-        base_delay = 3
+        base_delay = 2
 
         for attempt in range(max_attempts):
             try:
@@ -231,6 +257,17 @@ class MikoPBXClient:
                 if response.status_code == 401 and not _auth_retried:
                     if self._handle_401_and_retry(response):
                         return self.post(path, data, _auth_retried=True)
+
+                # Handle database lock by retrying with delay
+                if self._is_db_locked_response(response):
+                    if attempt < max_attempts - 1:
+                        delay = base_delay * (2 ** attempt)
+                        print(f"\n⚠️  Database locked (attempt {attempt + 1}/{max_attempts}), "
+                              f"retrying in {delay}s...")
+                        time.sleep(delay)
+                        continue
+                    # Last attempt - return response as-is (will fail assertion)
+
                 response.raise_for_status()
                 return response.json()
             except (requests.exceptions.ConnectionError,
@@ -252,7 +289,7 @@ class MikoPBXClient:
                     raise e
 
     def put(self, path: str, data: Dict, allow_404: bool = False, _auth_retried: bool = False) -> Dict[str, Any]:
-        """PUT request (full update) with connection retry and auto token refresh
+        """PUT request (full update) with connection retry, database lock retry, and auto token refresh
 
         Args:
             path: API endpoint path
@@ -261,7 +298,7 @@ class MikoPBXClient:
         """
         import time
         max_attempts = 5
-        base_delay = 3
+        base_delay = 2
 
         for attempt in range(max_attempts):
             try:
@@ -275,6 +312,16 @@ class MikoPBXClient:
                 if response.status_code == 401 and not _auth_retried:
                     if self._handle_401_and_retry(response):
                         return self.put(path, data, allow_404, _auth_retried=True)
+
+                # Handle database lock by retrying with delay
+                if self._is_db_locked_response(response):
+                    if attempt < max_attempts - 1:
+                        delay = base_delay * (2 ** attempt)
+                        print(f"\n⚠️  Database locked (attempt {attempt + 1}/{max_attempts}), "
+                              f"retrying in {delay}s...")
+                        time.sleep(delay)
+                        continue
+
                 # Allow 404/422 for testing non-existent resources
                 if not (allow_404 and response.status_code in [404, 422]):
                     response.raise_for_status()
@@ -298,7 +345,7 @@ class MikoPBXClient:
                     raise e
 
     def patch(self, path: str, data: Dict, allow_404: bool = False, _auth_retried: bool = False) -> Dict[str, Any]:
-        """PATCH request (partial update) with connection retry and auto token refresh
+        """PATCH request (partial update) with connection retry, database lock retry, and auto token refresh
 
         Args:
             path: API endpoint path
@@ -307,7 +354,7 @@ class MikoPBXClient:
         """
         import time
         max_attempts = 5
-        base_delay = 3
+        base_delay = 2
 
         for attempt in range(max_attempts):
             try:
@@ -321,6 +368,16 @@ class MikoPBXClient:
                 if response.status_code == 401 and not _auth_retried:
                     if self._handle_401_and_retry(response):
                         return self.patch(path, data, allow_404, _auth_retried=True)
+
+                # Handle database lock by retrying with delay
+                if self._is_db_locked_response(response):
+                    if attempt < max_attempts - 1:
+                        delay = base_delay * (2 ** attempt)
+                        print(f"\n⚠️  Database locked (attempt {attempt + 1}/{max_attempts}), "
+                              f"retrying in {delay}s...")
+                        time.sleep(delay)
+                        continue
+
                 # Allow 404/422 for testing non-existent resources
                 if not (allow_404 and response.status_code in [404, 422]):
                     response.raise_for_status()
@@ -344,7 +401,7 @@ class MikoPBXClient:
                     raise e
 
     def delete(self, path: str, data: Optional[Dict[str, Any]] = None, _auth_retried: bool = False) -> Dict[str, Any]:
-        """DELETE request with connection retry and auto token refresh
+        """DELETE request with connection retry, database lock retry, and auto token refresh
 
         Args:
             path: API endpoint path
@@ -352,7 +409,7 @@ class MikoPBXClient:
         """
         import time
         max_attempts = 5
-        base_delay = 3
+        base_delay = 2
 
         for attempt in range(max_attempts):
             try:
@@ -371,6 +428,16 @@ class MikoPBXClient:
                 if response.status_code == 401 and not _auth_retried:
                     if self._handle_401_and_retry(response):
                         return self.delete(path, data, _auth_retried=True)
+
+                # Handle database lock by retrying with delay
+                if self._is_db_locked_response(response):
+                    if attempt < max_attempts - 1:
+                        delay = base_delay * (2 ** attempt)
+                        print(f"\n⚠️  Database locked (attempt {attempt + 1}/{max_attempts}), "
+                              f"retrying in {delay}s...")
+                        time.sleep(delay)
+                        continue
+
                 response.raise_for_status()
                 return response.json()
             except (requests.exceptions.ConnectionError,

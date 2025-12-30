@@ -254,14 +254,17 @@ def test_rapid_sequential_patches(api_client):
     # ========================================================================
     print("\n[STEP 1] Sending 3 PATCH requests rapidly...")
 
+    # Wait for initial file to be processed (worker may need time after creation)
+    time.sleep(3)
+
     for i, content in enumerate(contents, 1):
         patch_data = {
-            "id": file_id,
             "content": content,
             "mode": "append"
         }
 
-        result = api_client.patch("custom-files", patch_data)
+        # PATCH goes to resource URL: /custom-files/{id}
+        result = api_client.patch(f"custom-files/{file_id}", patch_data)
         assert result.get("result") is True, f"PATCH {i} failed: {result}"
         print(f"PATCH {i} response - changed: {result['data'].get('changed', 'N/A')}")
 
