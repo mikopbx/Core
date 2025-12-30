@@ -26,6 +26,7 @@ use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\System\PasswordService;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Encryption\Security;
 
@@ -61,11 +62,14 @@ class CredentialsValidator
      * Check admin credentials
      *
      * Validates login and password against system admin credentials.
-     * Supports both plain text (legacy) and bcrypt hashed passwords.
+     * Supports multiple password formats for backward compatibility:
+     * 1. Plain text (legacy installations)
+     * 2. SHA-512 crypt hash (new format, compatible with /etc/shadow)
+     * 3. bcrypt hash (Phalcon Security, existing installations)
      *
      * @param string $login Login name
      * @param string $password Password
-     * @param Security $security Security service for password hashing
+     * @param Security $security Security service for bcrypt verification
      * @return bool True if credentials are valid
      */
     public static function checkAdminCredentials(string $login, string $password, Security $security): bool
@@ -76,19 +80,25 @@ class CredentialsValidator
             return false;
         }
 
-        // Old password check method (plain text)
-        $passwordHash = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
-        if ($passwordHash === $password) {
+        $storedPassword = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
+
+        // 1. Plain text match (legacy)
+        if ($storedPassword === $password) {
             return true;
         }
 
-        // New password check method (bcrypt)
+        // 2. SHA-512 crypt hash (new format)
+        if (PasswordService::isSha512Hash($storedPassword)) {
+            return PasswordService::verifySha512Hash($password, $storedPassword);
+        }
+
+        // 3. bcrypt hash (existing installations via Phalcon Security)
         set_error_handler(function ($severity, $message, $file, $line) {
             throw new ErrorException($message, 0, $severity, $file, $line);
         });
 
         try {
-            $result = $security->checkHash($password, $passwordHash);
+            $result = $security->checkHash($password, $storedPassword);
         } catch (ErrorException $e) {
             $result = false;
         }

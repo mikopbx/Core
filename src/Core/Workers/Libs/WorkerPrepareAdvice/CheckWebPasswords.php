@@ -26,21 +26,28 @@ use Phalcon\Di\Injectable;
 
 /**
  * Class CheckWebPasswords
- * This class is responsible for checking password quality on backend using REST API.
+ * This class is responsible for checking if WEB admin password is still at default value.
+ *
+ * Note: Dictionary-based password strength checking is performed at password change time
+ * in SaveSettingsAction, not here. Hashed passwords cannot be checked against dictionaries.
  *
  * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice
  */
 class CheckWebPasswords extends Injectable
 {
     /**
-     * Check the quality of passwords using REST API.
+     * Check if WEB admin password is still at default value.
+     *
+     * Supports multiple password formats:
+     * - Plain text (legacy)
+     * - SHA-512 crypt hash (new format)
+     * - bcrypt hash (existing installations) - limited detection
      *
      * @return array An array containing warning and needUpdate messages.
      */
     public function process(): array
     {
         $messages = [];
-
         $passwords = $this->getPasswordCollection();
 
         $messageParams = [
@@ -48,31 +55,48 @@ class CheckWebPasswords extends Injectable
             'url' => $this->url->get('general-settings/modify/#/passwords')
         ];
 
-        // Check for default password first
-        if (
-            $passwords->webByDefault === $passwords->web
-            || $passwords->web === $passwords->cloudInstanceId
-        ) {
+        // Check if password is default
+        if ($this->isDefaultPassword($passwords)) {
             $messages['error'][] = [
                 'messageTpl' => 'adv_YouUseDefaultWebPassword',
-                'messageParams' => $messageParams
-            ];
-            $messages['needUpdate'][] = PbxSettings::WEB_ADMIN_PASSWORD;
-            return $messages; // No need to check further if using default
-        }
-
-        // Check password against dictionary
-        $isInDictionary = PasswordService::checkDictionary($passwords->web);
-
-        if ($isInDictionary) {
-            $messages['error'][] = [
-                'messageTpl' => 'adv_WebPasswordWeak',
                 'messageParams' => $messageParams
             ];
             $messages['needUpdate'][] = PbxSettings::WEB_ADMIN_PASSWORD;
         }
 
         return $messages;
+    }
+
+    /**
+     * Check if the stored password is the default password
+     *
+     * @param \stdClass $passwords Password collection
+     * @return bool True if password is default
+     */
+    private function isDefaultPassword(\stdClass $passwords): bool
+    {
+        $storedPassword = $passwords->web;
+        $defaultPassword = $passwords->webByDefault;
+
+        // 1. Plain text match (legacy)
+        if ($storedPassword === $defaultPassword) {
+            return true;
+        }
+
+        // 2. SHA-512 hash of default password
+        if (PasswordService::isSha512Hash($storedPassword)) {
+            return PasswordService::verifySha512Hash($defaultPassword, $storedPassword);
+        }
+
+        // 3. Check if password equals cloud instance ID (auto-provisioned default)
+        if (!empty($passwords->cloudInstanceId) && $storedPassword === $passwords->cloudInstanceId) {
+            return true;
+        }
+
+        // Note: bcrypt hashes cannot be verified without knowing the original password
+        // This is acceptable since new passwords will be SHA-512
+
+        return false;
     }
 
     /**

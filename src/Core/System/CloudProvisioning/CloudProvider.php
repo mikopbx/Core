@@ -209,14 +209,20 @@ abstract class CloudProvider
     /**
      * Updates the web password based on the instance name and ID.
      *
-     * @param string $webPassword The web password.
+     * Hashes the password with SHA-512 before storage for security.
+     * Stores plain text in CLOUD_INSTANCE_ID for default password detection.
+     *
+     * @param string $webPassword The web password (plain text).
      */
     protected function updateWebPassword(string $webPassword): void
     {
         if (empty($webPassword)) {
             return;
         }
-        $this->updatePbxSettings(PbxSettings::WEB_ADMIN_PASSWORD, $webPassword);
+        // Hash the password with SHA-512 before storage (same format as SSH)
+        $hashedPassword = PasswordService::generateSha512Hash($webPassword);
+        $this->updatePbxSettings(PbxSettings::WEB_ADMIN_PASSWORD, $hashedPassword);
+        // Store plain text instance ID for default password detection
         $this->updatePbxSettings(PbxSettings::CLOUD_INSTANCE_ID, $webPassword);
         $this->updatePbxSettings(PbxSettings::PBX_DESCRIPTION, PbxSettings::DEFAULT_CLOUD_PASSWORD_DESCRIPTION);
     }
@@ -764,13 +770,15 @@ abstract class CloudProvider
             $this->updatePbxSettingsDirect(PbxSettings::SSH_DISABLE_SSH_PASSWORD, '1');
         }
 
-        // Apply web password
+        // Apply web password (hash with SHA-512 for security, same format as SSH)
         if ($config->webPassword !== null) {
-            $this->updatePbxSettingsDirect(PbxSettings::WEB_ADMIN_PASSWORD, $config->webPassword);
+            $hashedWebPassword = PasswordService::generateSha512Hash($config->webPassword);
+            $this->updatePbxSettingsDirect(PbxSettings::WEB_ADMIN_PASSWORD, $hashedWebPassword);
 
             // Only set CloudInstanceId for real cloud providers, not Docker/NoCloud
             // Docker uses 12-factor ENV vars applied on every restart
             // NoCloud is for on-premise where users control passwords
+            // Store plain text for default password detection
             if ($this->shouldSetCloudInstanceId()) {
                 $this->updatePbxSettingsDirect(PbxSettings::CLOUD_INSTANCE_ID, $config->webPassword);
             }
@@ -778,9 +786,11 @@ abstract class CloudProvider
             $this->updatePbxSettingsDirect(PbxSettings::PBX_DESCRIPTION, PbxSettings::DEFAULT_CLOUD_PASSWORD_DESCRIPTION);
         } elseif ($config->instanceId !== null) {
             // Use instance ID as web password (cloud provider behavior)
-            $this->updatePbxSettingsDirect(PbxSettings::WEB_ADMIN_PASSWORD, $config->instanceId);
+            $hashedWebPassword = PasswordService::generateSha512Hash($config->instanceId);
+            $this->updatePbxSettingsDirect(PbxSettings::WEB_ADMIN_PASSWORD, $hashedWebPassword);
 
             // Only set CloudInstanceId for real cloud providers
+            // Store plain text for default password detection
             if ($this->shouldSetCloudInstanceId()) {
                 $this->updatePbxSettingsDirect(PbxSettings::CLOUD_INSTANCE_ID, $config->instanceId);
             }
