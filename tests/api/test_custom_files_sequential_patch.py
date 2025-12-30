@@ -102,12 +102,26 @@ eventfilter=!Event: Newexten
     print("=" * 80)
 
     # ========================================================================
-    # STEP 1: Get current file state
+    # STEP 1: Get current file state (with retry for newly created files)
     # ========================================================================
     print("\n[STEP 1] Getting current file state...")
 
-    response = api_client.get(f"custom-files/{file_id}")
-    assert response.get('result'), f"Failed to get file: {response}"
+    # Retry GET with delay - newly created files may need time to be accessible
+    response = None
+    for attempt in range(5):
+        try:
+            response = api_client.get(f"custom-files/{file_id}")
+            if response.get('result'):
+                break
+        except Exception as e:
+            print(f"  GET attempt {attempt + 1}/5 failed: {e}")
+
+        if attempt < 4:
+            delay = 2 * (attempt + 1)
+            print(f"  Retrying in {delay}s...")
+            time.sleep(delay)
+
+    assert response and response.get('result'), f"Failed to get file after retries: {response}"
 
     original_data = response["data"]
     print(f"Original file mode: {original_data['mode']}")

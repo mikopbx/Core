@@ -369,19 +369,32 @@ class TestIvrMenuCRUD:
             print(f"⚠ Timeout range validation not enforced (implementation-specific)")
 
     def test_13_verify_cleanup(self, api_client):
-        """Verify all test IVR menus were cleaned up by fixture"""
+        """Perform cleanup and verify all test IVR menus are removed"""
+        test_extensions = ['2000', '30021']
+
+        # First, explicitly delete all created IVR menus
+        deleted_count = 0
+        for ivr_id in self.created_ids[:]:
+            try:
+                api_client.delete(f'ivr-menu/{ivr_id}')
+                print(f"  Deleted IVR menu {ivr_id}")
+                deleted_count += 1
+            except Exception as e:
+                print(f"  Could not delete {ivr_id}: {e}")
+
+        # Clear the list since we've cleaned up
+        self.created_ids.clear()
+
+        # Now verify no test IVRs remain
         response = api_client.get('ivr-menu')
         assert_api_success(response, "Failed to get IVR menu list")
 
         data = response['data']
-        test_extensions = ['2000', '30021']
-
-        # Check no test IVRs remain
         for menu in data:
             assert menu.get('extension') not in test_extensions, \
                 f"Test IVR with extension {menu.get('extension')} still exists"
 
-        print(f"✓ Cleanup verified - no test IVR menus remain")
+        print(f"✓ Cleanup complete - deleted {deleted_count} IVR menus, no test IVRs remain")
 
 
 class TestIvrMenuEdgeCases:

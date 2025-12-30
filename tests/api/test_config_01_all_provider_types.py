@@ -273,13 +273,23 @@ class TestAllProviderTypes:
     ])
     def test_11_verify_all_providers_created(self, api_client):
         """Verify all providers were created successfully"""
+        # Small delay to ensure database is fully synchronized
+        time.sleep(1)
+
         # Check SIP providers
         sip_response = api_client.get('sip-providers')
         assert_api_success(sip_response, "Failed to get SIP providers list")
 
         sip_ids = [p['id'] for p in sip_response['data']]
+        missing_sip = []
         for provider_id in self.created_providers['sip']:
-            assert provider_id in sip_ids, f"SIP provider {provider_id} not found in list"
+            if provider_id not in sip_ids:
+                missing_sip.append(provider_id)
+
+        if missing_sip:
+            print(f"\n⚠️  Missing SIP providers: {missing_sip}")
+            print(f"   Available SIP IDs: {sip_ids}")
+        assert not missing_sip, f"SIP providers not found: {missing_sip}"
 
         print(f"\n✓ All {len(self.created_providers['sip'])} SIP providers verified")
 
@@ -288,8 +298,15 @@ class TestAllProviderTypes:
         assert_api_success(iax_response, "Failed to get IAX providers list")
 
         iax_ids = [p['id'] for p in iax_response['data']]
+        missing_iax = []
         for provider_id in self.created_providers['iax']:
-            assert provider_id in iax_ids, f"IAX provider {provider_id} not found in list"
+            if provider_id not in iax_ids:
+                missing_iax.append(provider_id)
+
+        if missing_iax:
+            print(f"\n⚠️  Missing IAX providers: {missing_iax}")
+            print(f"   Available IAX IDs: {iax_ids}")
+        assert not missing_iax, f"IAX providers not found: {missing_iax}"
 
         print(f"✓ All {len(self.created_providers['iax'])} IAX providers verified")
 
