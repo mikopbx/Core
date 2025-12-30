@@ -41,6 +41,8 @@ return [
     'cm_RebootSystem' => 'Reboot system',
     'cm_Reboot' => 'Reboot',
     'cm_PowerOff' => 'Power off',
+    'cm_SystemRebooting' => 'System is rebooting, please wait...',
+    'cm_SystemShuttingDown' => 'System is shutting down, please wait...',
     'cm_PingHost' => 'Ping host',
     'cm_Console' => 'Console',
     'cm_ChangeLanguage' => 'Change language',
@@ -76,6 +78,7 @@ return [
 
     // System status messages
     'cm_PbxLiveModeWarning' => 'PBX is running in Live or Recovery mode',
+    'cm_FirewallIsDisabled' => 'Firewall is disabled',
     'cm_SystemIntegrityBroken' => 'The integrity of the system is broken',
     'cm_ThisIs' => 'this is',
     'cm_WebInterfaceUrl' => 'Web Interface',
@@ -212,4 +215,12 @@ return [
     'cm_ModuleDisabledSuccess' => 'Module disabled successfully',
     'cm_ModuleEnableFailed' => 'Failed to enable module',
     'cm_ModuleDisableFailed' => 'Failed to disable module',
+
+    // Last login info
+    'cm_LastLogin' => 'Last login',
+    'cm_From' => 'from',
+    'cm_OnConsole' => 'on console',
+
+    // Exit hint
+    'cm_RestartMenuHint' => 'To restart menu run',
 ];

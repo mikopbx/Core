@@ -7,6 +7,7 @@ This file provides guidance for working with MikoPBX's unified cloud provisionin
 The Cloud Provisioning system automatically configures MikoPBX during initial boot based on the deployment environment. It supports:
 
 - **Docker containers** - Environment variables
+- **LXC containers** - Environment variables and NoCloud datasources
 - **Cloud platforms** - IMDS metadata services (AWS, Google Cloud, Azure, etc.)
 - **On-premise virtualization** - NoCloud datasources (VMware, Proxmox, KVM)
 
@@ -165,6 +166,31 @@ docker run -d \
   -e ENABLE_USE_NAT=1 \
   mikopbx/mikopbx:latest
 ```
+
+### LXC (Proxmox, Ubuntu)
+
+LXC containers support both environment variables and NoCloud datasources:
+
+**Option 1: Environment Variables** (passed via container config)
+```bash
+# In Proxmox UI or /etc/pve/lxc/100.conf
+lxc.environment: WEB_ADMIN_PASSWORD=SecurePassword123
+lxc.environment: PBX_NAME=MyPBX
+lxc.environment: SSH_AUTHORIZED_KEYS=ssh-rsa AAAAB3...
+```
+
+**Option 2: NoCloud ISO** (attach as storage)
+```bash
+# Create cloud-init ISO (same as VMware example below)
+# Attach to LXC container as additional storage device
+# MikoPBX will auto-detect and provision
+```
+
+**LXC Network Configuration:**
+- LXC containers can configure their own network (static IP, DHCP)
+- Full support for IPv4/IPv6 DHCP clients
+- Firewall support (requires `CAP_NET_ADMIN` capability)
+- Unlike Docker, LXC does NOT skip network configuration
 
 ### VMware/Proxmox (NoCloud ISO)
 

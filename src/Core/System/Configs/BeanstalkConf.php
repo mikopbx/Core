@@ -126,7 +126,7 @@ class BeanstalkConf extends SystemConfigClass
         $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid '.PHP_EOL.
             '    start program = "'.$this->startCommand.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
-            '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
+            '    stop program = "'.$busyboxPath.' sh -c \''.$busyboxPath.' killall '.self::PROC_NAME.'; rm -f /var/run/'.self::PROC_NAME.'.pid\''.'"'.PHP_EOL.
             '        as uid root and gid root';
 
         $this->saveFileContent($confPath, $conf);

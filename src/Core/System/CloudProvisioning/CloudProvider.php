@@ -46,10 +46,11 @@ abstract class CloudProvider
      * Used to prevent SQL injection in direct SQLite queries.
      */
     private const array VALID_LAN_COLUMNS = [
-        'topology', 'extipaddr', 'exthostname', 'hostname',
+        'topology', 'extipaddr', 'exthostname', 'hostname', 'domain',
         'ipaddr', 'subnet', 'gateway', 'primarydns', 'secondarydns',
         'ipv6_mode', 'ipv6addr', 'ipv6_subnet', 'ipv6_gateway',
-        'primarydns6', 'secondarydns6', 'dhcp', 'internet', 'vlanid'
+        'primarydns6', 'secondarydns6', 'dhcp', 'internet', 'vlanid',
+        'disabled'
     ];
 
     abstract public function provision(): bool;
@@ -81,6 +82,20 @@ abstract class CloudProvider
      * @return PromiseInterface Promise that resolves to bool
      */
     abstract public function checkAvailability(): PromiseInterface;
+
+    /**
+     * Returns the hardware type name for VirtualHardwareType setting.
+     *
+     * Override in subclass to provide custom name (e.g., 'Lxc' instead of 'LxcCloud').
+     * Default implementation removes 'Cloud' suffix from class name.
+     *
+     * @return string Hardware type name
+     */
+    public function getHardwareTypeName(): string
+    {
+        // Default: use class name without namespace (e.g., DockerCloud, AWSCloud)
+        return basename(str_replace('\\', '/', static::class));
+    }
 
     /**
      * Updates the SSH keys.
@@ -526,6 +541,77 @@ abstract class CloudProvider
         Processes::mwExec($command, $out);
 
         return !empty($out[0]) ? $out[0] : null;
+    }
+
+    /**
+     * Configures the LAN interface for container provisioning.
+     *
+     * This method finds the existing LAN interface record and updates critical
+     * fields (interface name, internet, disabled, dhcp) while preserving
+     * IP addresses that may have been obtained from DHCP before provisioning.
+     *
+     * If no record exists, creates a new one with default values.
+     *
+     * Uses ORM since Redis is already running at this point.
+     *
+     * @param string $interfaceName Network interface name (e.g., 'eth0')
+     * @return bool True on success
+     */
+    protected function resetLanInterface(string $interfaceName): bool
+    {
+        // Sanitize interface name (alphanumeric and common chars only)
+        $sanitizedInterface = preg_replace('/[^a-zA-Z0-9_\-.]/', '', $interfaceName);
+        if (empty($sanitizedInterface)) {
+            $sanitizedInterface = 'eth0';
+        }
+
+        $message = "      |- Configuring LAN interface...";
+        $this->publishMessage($message);
+
+        // Find existing interface record (first one, as containers typically have single interface)
+        // This preserves IP addresses obtained from DHCP before provisioning ran
+        $lanInterface = LanInterfaces::findFirst();
+
+        if ($lanInterface === null) {
+            // No existing record - create new one
+            SystemMessages::sysLogMsg(__METHOD__, "Creating new LAN interface with name='$sanitizedInterface'");
+            $lanInterface = new LanInterfaces();
+            $lanInterface->id = 1;
+            $lanInterface->ipaddr = '';
+            $lanInterface->subnet = '24';
+            $lanInterface->gateway = '';
+            $lanInterface->hostname = '';
+            $lanInterface->domain = '';
+            $lanInterface->topology = LanInterfaces::TOPOLOGY_PRIVATE;
+            $lanInterface->extipaddr = '';
+            $lanInterface->primarydns = '';
+            $lanInterface->secondarydns = '';
+            $lanInterface->ipv6_mode = '0';
+            $lanInterface->ipv6addr = '';
+            $lanInterface->ipv6_subnet = '';
+            $lanInterface->ipv6_gateway = '';
+            $lanInterface->primarydns6 = '';
+            $lanInterface->secondarydns6 = '';
+        } else {
+            SystemMessages::sysLogMsg(__METHOD__, "Updating existing LAN interface: id={$lanInterface->id}, interface='{$lanInterface->interface}' -> '$sanitizedInterface'");
+        }
+
+        // Update critical fields for container operation
+        // IMPORTANT: Do NOT reset ipaddr, gateway, dns - preserve values from DHCP callback
+        $lanInterface->interface = $sanitizedInterface;
+        $lanInterface->internet = '1';
+        $lanInterface->disabled = '0';
+        $lanInterface->dhcp = '1';
+        $lanInterface->vlanid = '0';
+
+        if (!$lanInterface->save()) {
+            SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_FAILED);
+            SystemMessages::sysLogMsg(__METHOD__, "Failed to save LAN interface: " . implode(', ', $lanInterface->getMessages()), LOG_ERR);
+            return false;
+        }
+
+        SystemMessages::teletypeEchoResult($message);
+        return true;
     }
 
     /**

@@ -38,9 +38,9 @@ class Udhcpc extends Network
      */
     public function configure(string $action): void
     {
-        $isDocker = System::isDocker();
+        $canManageNetwork = System::canManageNetwork();
 
-        if ($isDocker) {
+        if (!$canManageNetwork) {
             SystemMessages::sysLogMsg(
                 __METHOD__,
                 "Docker environment - skipping network commands, updating database only",
@@ -50,22 +50,26 @@ class Udhcpc extends Network
 
         SystemMessages::sysLogMsg(__METHOD__, "Processing DHCP event: $action", LOG_INFO);
 
-        if ($action === 'deconfig' && Util::isT2SdeLinux()) {
+        // Skip network commands only when we can't manage network (Docker)
+        // LXC and bare-metal should run full network configuration
+        $skipNetworkCommands = !$canManageNetwork;
+
+        if ($action === 'deconfig' && (Util::isT2SdeLinux() || System::isLxc())) {
             /**
-             * Perform deconfiguration for T2SDE Linux.
+             * Perform deconfiguration for T2SDE Linux and LXC containers.
              */
-            $this->deconfigAction($isDocker);
+            $this->deconfigAction($skipNetworkCommands);
         } elseif ('bound' === $action || 'renew' === $action) {
             if (Util::isSystemctl()) {
                 /**
                  * Perform configuration renewal and bound actions using systemctl (systemd-based systems).
                  */
-                $this->renewBoundSystemCtlAction($isDocker);
-            } elseif (Util::isT2SdeLinux()) {
+                $this->renewBoundSystemCtlAction($skipNetworkCommands);
+            } elseif (Util::isT2SdeLinux() || System::isLxc()) {
                 /**
-                 * Perform configuration renewal and bound actions for T2SDE Linux.
+                 * Perform configuration renewal and bound actions for T2SDE Linux and LXC containers.
                  */
-                $this->renewBoundAction($isDocker);
+                $this->renewBoundAction($skipNetworkCommands);
             }
         }
     }
@@ -73,14 +77,14 @@ class Udhcpc extends Network
     /**
      * Performs deconfiguration of the udhcpc configuration.
      *
-     * @param bool $isDocker Whether running in Docker environment
+     * @param bool $skipNetworkCommands Whether to skip network commands (true for Docker, false for LXC/bare-metal)
      */
-    private function deconfigAction(bool $isDocker = false): void
+    private function deconfigAction(bool $skipNetworkCommands = false): void
     {
         $interface = trim(getenv('interface'));
 
-        // Skip network commands in Docker
-        if (!$isDocker) {
+        // Skip network commands when skipNetworkCommands is true (Docker)
+        if (!$skipNetworkCommands) {
             // For MIKO LFS Edition.
             $ifconfig = Util::which('ifconfig');
             $safeInterface = escapeshellarg($interface);
@@ -117,10 +121,10 @@ class Udhcpc extends Network
      * Renews and configures the network settings after successful DHCP negotiation using systemd environment variables.
      * For OS systemctl (Debian).
      *  Configures LAN interface FROM dhcpc (renew_bound).
-     * @param bool $isDocker Whether running in Docker environment
+     * @param bool $skipNetworkCommands Whether to skip network commands (true for Docker, false for LXC/bare-metal)
      * @return void
      */
-    public function renewBoundSystemCtlAction(bool $isDocker = false): void
+    public function renewBoundSystemCtlAction(bool $skipNetworkCommands = false): void
     {
         $prefix = "new_";
 
@@ -175,11 +179,12 @@ class Udhcpc extends Network
         $data = [
             'primarydns' => $named_dns[0] ?? '',
             'secondarydns' => $named_dns[1] ?? '',
+            'domain' => $env_vars['domain'] ?? '',
         ];
         $this->updateDnsSettings($data, $env_vars['interface']);
 
-        // Set MTU (skip in Docker)
-        if (!$isDocker) {
+        // Set MTU (skip when skipNetworkCommands is true)
+        if (!$skipNetworkCommands) {
             Processes::mwExec("/etc/rc/networking_set_mtu '{$env_vars['interface']}'");
         }
     }
@@ -191,10 +196,10 @@ class Udhcpc extends Network
      * It sets up the interface IP, subnet mask, default gateway, and static routes.
      * It also handles interface configuration deinitialization, DNS settings update, and MTU settings.
      *
-     * @param bool $isDocker Whether running in Docker environment
+     * @param bool $skipNetworkCommands Whether to skip network commands (true for Docker, false for LXC/bare-metal)
      * @return void
      */
-    public function renewBoundAction(bool $isDocker = false): void
+    public function renewBoundAction(bool $skipNetworkCommands = false): void
     {
         // Initialize an array to store environment variables related to network configuration.
         $env_vars = [
@@ -232,8 +237,8 @@ class Udhcpc extends Network
         ]);
         $is_inet = ($if_data !== null) ? (int)$if_data->internet : 0;
 
-        // Skip network configuration in Docker (managed by container runtime)
-        if (!$isDocker) {
+        // Skip network configuration when skipNetworkCommands is true (Docker)
+        if (!$skipNetworkCommands) {
             // Escape shell arguments for security
             $safeInterface = escapeshellarg($env_vars['interface']);
             $safeIp = escapeshellarg($env_vars['ip']);
@@ -287,8 +292,8 @@ class Udhcpc extends Network
             $named_dns = explode(' ', $env_vars['dns']);
         }
 
-        // Restart DNS (skip in Docker as DNS is managed differently)
-        if (!$isDocker && $is_inet === 1) {
+        // Restart DNS (skip when skipNetworkCommands is true as DNS is managed differently)
+        if (!$skipNetworkCommands && $is_inet === 1) {
             $dnsConf = new DnsConf();
             $dnsConf->reStart();
         }
@@ -308,11 +313,12 @@ class Udhcpc extends Network
         $data = [
             'primarydns' => $named_dns[0] ?? '',
             'secondarydns' => $named_dns[1] ?? '',
+            'domain' => $env_vars['domain'] ?? '',
         ];
         $this->updateDnsSettings($data, $env_vars['interface']);
 
-        // Set MTU (skip in Docker)
-        if (!$isDocker) {
+        // Set MTU (skip when skipNetworkCommands is true)
+        if (!$skipNetworkCommands) {
             Processes::mwExec("/etc/rc/networking_set_mtu '{$env_vars['interface']}'");
         }
     }

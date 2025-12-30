@@ -214,7 +214,7 @@ class ProvisioningConfig
                 case PbxSettings::REDIS_PORT:
                 case PbxSettings::GNATS_PORT:
                 case PbxSettings::GNATS_HTTP_PORT:
-                    // These are handled separately by DockerEntrypoint
+                    // These are handled separately by ContainerEntrypoint
                     // as they go to /etc/inc/mikopbx-settings.json
                     break;
 

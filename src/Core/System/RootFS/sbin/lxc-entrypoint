@@ -1,0 +1,136 @@
+#!/bin/sh
+
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+#
+# LXC container entry point for MikoPBX
+# Unlike Docker, LXC containers manage their own network and have full tty access
+#
+
+# Define a cleanup function to be used upon receiving certain signals
+cleanup()
+{
+  echo "Receive signal to restart..."
+  /sbin/freestorage 'doNotUnMount'
+  /sbin/freeupoffload
+  sleep 4
+  exit 0
+}
+
+# Source shell functions
+. /sbin/shell_functions.sh
+
+# Redirect I/O to console if available
+if test -c /dev/console && test -r /dev/console && test -w /dev/console; then
+  exec </dev/console >/dev/console 2>/dev/console
+fi
+echo
+
+# Set up signal handlers
+trap 'cleanup' 2 15 1 3 EXIT
+
+# =============================================================================
+# LXC-specific initialization
+# =============================================================================
+
+# Configure loopback interface (Docker runtime does this, LXC doesn't)
+if ! ip addr show lo 2>/dev/null | grep -q "127.0.0.1"; then
+  echo " - Configuring loopback interface..."
+  /bin/busybox ifconfig lo 127.0.0.1
+fi
+
+# Clean /tmp from previous run (prevents pbx_init from seeing stale freeoffload file)
+# LXC containers persist /tmp across restarts unlike Docker
+rm -rf /tmp/*
+
+# Create getty symlink for Proxmox compatibility
+[ ! -e /sbin/getty ] && ln -s /sbin/agetty /sbin/getty
+
+# Clean inittab from Proxmox-added getty on tty1 (conflicts with pbx_init)
+if grep -q "tty1::respawn:/sbin/getty" /etc/inittab 2>/dev/null; then
+  sed -i '/tty1::respawn:\/sbin\/getty/d' /etc/inittab
+  # Kill existing getty on tty1 and signal init to re-read inittab
+  pkill -f "getty.*tty1" 2>/dev/null
+  kill -HUP 1 2>/dev/null
+fi
+
+# =============================================================================
+# Read Proxmox provisioning settings and export as ENV variables
+# This mimics Docker ENV behavior - DockerCloud provider will read these
+# =============================================================================
+
+# Hostname from Proxmox
+if [ -f /etc/hostname ] && [ -z "$SSH_HOSTNAME" ]; then
+  PROXMOX_HOSTNAME=$(cat /etc/hostname 2>/dev/null | tr -d '\n')
+  if [ -n "$PROXMOX_HOSTNAME" ] && [ "$PROXMOX_HOSTNAME" != "mikopbx" ]; then
+    export SSH_HOSTNAME="$PROXMOX_HOSTNAME"
+  fi
+fi
+
+# SSH authorized keys from Proxmox
+if [ -f /root/.ssh/authorized_keys ] && [ -z "$SSH_AUTHORIZED_KEYS" ]; then
+  PROXMOX_SSH_KEYS=$(cat /root/.ssh/authorized_keys 2>/dev/null | head -10 | tr '\n' ';')
+  if [ -n "$PROXMOX_SSH_KEYS" ]; then
+    export SSH_AUTHORIZED_KEYS="$PROXMOX_SSH_KEYS"
+  fi
+fi
+
+# Note: Root password from Proxmox is in /etc/shadow (hashed)
+# We cannot extract plaintext, but user can set WEB_ADMIN_PASSWORD via lxc.environment
+
+# =============================================================================
+# Start MikoPBX system
+# =============================================================================
+
+# Set booting flag IMMEDIATELY before starting PHP
+# This prevents pbx_init (running in parallel from inittab) from accessing Redis too early
+# The flag is checked by welcome_banner and console_menu via System::isBooting()
+touch /var/run/mikopbx-booting
+
+# Start the PHP bootstrap script in background
+# Redirect output to /dev/tty1 so boot messages are visible in Proxmox console
+# LXC console is attached to /dev/tty1, not /dev/console
+php -f /offload/rootfs/usr/www/src/Core/System/ContainerEntrypoint.php >/dev/tty1 2>&1 &
+
+# Note: pbx_init is started via inittab on tty1, not here
+# This allows proper tty handling and respawn on exit
+# pbx_init waits for /var/run/mikopbx-booting to be removed before showing menu
+
+# =============================================================================
+# Main loop - monitor for restart/shutdown requests
+# =============================================================================
+
+while true; do
+  if [ -f /tmp/rebooting ]; then
+    echo "Container restart requested..."
+    rm -f /tmp/rebooting
+    exit 0
+  fi
+
+  if [ -f /tmp/shutdown ]; then
+    echo "Container shutdown requested..."
+    rm -f /tmp/shutdown
+    exit 0
+  fi
+
+  # Kill getty on tty1 if Proxmox respawns it (conflicts with pbx_init)
+  pkill -f "getty.*tty1" 2>/dev/null
+
+  sleep 1
+done

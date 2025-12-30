@@ -46,7 +46,12 @@ class WelcomeBanner implements BannerInterface
 {
     private const int MIN_WIDTH = 60;
     private const int FULLSCREEN_MIN_WIDTH = 80;
-    private const int AUTO_REFRESH_INTERVAL = 60; // seconds
+    private const int STARTUP_GRACE_PERIOD = 120; // seconds - services shown as "starting" if uptime < this
+
+    // Adaptive refresh settings
+    private const int FREQUENT_REFRESH_PERIOD = 300;  // 5 minutes - period of frequent refresh after activity
+    private const int FREQUENT_INTERVAL = 10;          // 10 seconds - refresh interval during active period
+    private const int INFREQUENT_INTERVAL = 300;       // 5 minutes - refresh interval when idle
 
     // ASCII art logo for MikoPBX (7 lines)
     private const array ASCII_LOGO = [
@@ -123,6 +128,12 @@ class WelcomeBanner implements BannerInterface
                 MenuStyleConfig::COLOR_RED
             );
         }
+        if ($this->dataCollector->isFirewallDisabled()) {
+            $lines[] = '    ' . MenuStyleConfig::colorize(
+                '⚠ ' . $translation->_('cm_FirewallIsDisabled'),
+                MenuStyleConfig::COLOR_RED
+            );
+        }
 
         // PBX Name (if customized)
         $pbxName = $this->dataCollector->getPbxName();
@@ -148,44 +159,87 @@ class WelcomeBanner implements BannerInterface
             $lines[] = '    SSH: ' . $sshCmd;
         }
 
+        // Last login info
+        $lastLogin = $this->dataCollector->getLastLogin();
+        if ($lastLogin !== null) {
+            $loginStr = '    ' . $translation->_('cm_LastLogin') . ': ' . $lastLogin['datetime'];
+            if (!empty($lastLogin['source'])) {
+                $loginStr .= ' ' . $translation->_('cm_From') . ' ' . $lastLogin['source'];
+            } else {
+                $loginStr .= ' ' . $translation->_('cm_OnConsole');
+            }
+            $lines[] = $loginStr;
+        }
+
         $lines[] = '';
 
-        // System metrics line: Uptime | Load | Storage
-        $metrics = [];
-
+        // Get uptime for metrics and service status logic
+        $uptimeSeconds = $this->dataCollector->getUptimeSeconds();
         $uptime = $this->dataCollector->getUptime();
-        if (!empty($uptime)) {
-            $metrics[] = $translation->_('cm_Uptime') . ': ' . $uptime;
-        }
+        $isStarting = $uptimeSeconds > 0 && $uptimeSeconds < self::STARTUP_GRACE_PERIOD;
 
+        // Line 1: Uptime | Load (cores)
+        $line1 = [];
+        if (!empty($uptime)) {
+            $line1[] = $translation->_('cm_Uptime') . ': ' . $uptime;
+        }
         $loadAvg = $this->dataCollector->getLoadAverage();
         if ($loadAvg !== null) {
+            $cpuCores = $this->dataCollector->getCpuCores();
             $loadStr = MenuStyleConfig::formatLoadValue($loadAvg['load1']) . ' '
                 . MenuStyleConfig::formatLoadValue($loadAvg['load5']) . ' '
-                . MenuStyleConfig::formatLoadValue($loadAvg['load15']);
-            $metrics[] = 'Load: ' . $loadStr;
+                . MenuStyleConfig::formatLoadValue($loadAvg['load15'])
+                . " ($cpuCores cores)";
+            $line1[] = 'Load: ' . $loadStr;
+        }
+        if (!empty($line1)) {
+            $lines[] = '    ' . implode(' | ', $line1);
         }
 
+        // Line 2: Mem | Swap (if used)
+        $memInfo = $this->dataCollector->getMemoryInfo();
+        if ($memInfo !== null) {
+            $line2 = [];
+            $memColor = $memInfo['mem_percent'] > 90
+                ? MenuStyleConfig::COLOR_RED
+                : ($memInfo['mem_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
+            $line2[] = 'Mem: ' . MenuStyleConfig::colorize(
+                "{$memInfo['mem_used']} / {$memInfo['mem_total']} ({$memInfo['mem_percent']}%)",
+                $memColor
+            );
+            if ($memInfo['swap_percent'] > 0) {
+                $swapColor = $memInfo['swap_percent'] > 90
+                    ? MenuStyleConfig::COLOR_RED
+                    : ($memInfo['swap_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
+                $line2[] = 'Swap: ' . MenuStyleConfig::colorize(
+                    "{$memInfo['swap_used']} / {$memInfo['swap_total']} ({$memInfo['swap_percent']}%)",
+                    $swapColor
+                );
+            }
+            $lines[] = '    ' . implode(' | ', $line2);
+        }
+
+        // Line 3: Storage
         $storageInfo = $this->dataCollector->getStorageInfo();
         if ($storageInfo !== null) {
             $storageColor = $storageInfo['percent'] > 90
                 ? MenuStyleConfig::COLOR_RED
                 : ($storageInfo['percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
-            $metrics[] = $translation->_('cm_Storage') . ': '
-                . MenuStyleConfig::colorize("{$storageInfo['percent']}%", $storageColor);
-        }
-
-        if (!empty($metrics)) {
-            $lines[] = '    ' . implode(' | ', $metrics);
+            $lines[] = '    ' . $translation->_('cm_Storage') . ': '
+                . MenuStyleConfig::colorize(
+                    "{$storageInfo['used']} / {$storageInfo['total']} ({$storageInfo['percent']}%)",
+                    $storageColor
+                );
         }
 
         $lines[] = '';
 
         // Service status - all 7 services in one line
+        // During startup (uptime < 2 min), show stopped services as yellow instead of red
         $services = $this->dataCollector->getServiceStatuses();
         $statusParts = [];
         foreach ($services as $name => $isRunning) {
-            $statusParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($isRunning);
+            $statusParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($isRunning, $isStarting);
         }
         $lines[] = '    ' . $translation->_('cm_Services') . ': ' . implode(' ', $statusParts);
 
@@ -272,7 +326,9 @@ class WelcomeBanner implements BannerInterface
         }
 
         // Warnings section (if any)
-        $hasWarnings = $this->dataCollector->hasCorruptedFiles() || $this->dataCollector->isLiveCd();
+        $hasWarnings = $this->dataCollector->hasCorruptedFiles()
+            || $this->dataCollector->isLiveCd()
+            || $this->dataCollector->isFirewallDisabled();
         if ($hasWarnings) {
             $lines[] = $this->boxSeparator($innerWidth);
 
@@ -292,6 +348,14 @@ class WelcomeBanner implements BannerInterface
                     true
                 );
             }
+            if ($this->dataCollector->isFirewallDisabled()) {
+                $warning = '⚠ ' . $translation->_('cm_FirewallIsDisabled');
+                $lines[] = $this->boxLine(
+                    '  ' . MenuStyleConfig::colorize($warning, MenuStyleConfig::COLOR_RED),
+                    $innerWidth,
+                    true
+                );
+            }
         }
 
         // System info section
@@ -301,7 +365,11 @@ class WelcomeBanner implements BannerInterface
         $virtualType = $this->dataCollector->getVirtualHardwareType();
         $arch = $this->dataCollector->getArchitecture();
         $buildTime = $this->dataCollector->getBuildTime();
+
+        // Get uptime for display and service status logic
+        $uptimeSeconds = $this->dataCollector->getUptimeSeconds();
         $uptime = $this->dataCollector->getUptime();
+        $isStarting = $uptimeSeconds > 0 && $uptimeSeconds < self::STARTUP_GRACE_PERIOD;
 
         $versionStr = "MikoPBX v.$version";
         if (!empty($virtualType)) {
@@ -309,34 +377,68 @@ class WelcomeBanner implements BannerInterface
         }
         $versionStr .= " ($arch)";
 
-        // Two-column layout for system info
-        $leftCol = '  Version: ' . MenuStyleConfig::colorize($versionStr, MenuStyleConfig::COLOR_GREEN);
-        $rightCol = $translation->_('cm_Uptime') . ': ' . $uptime;
-        $lines[] = $this->boxLineTwoCol($leftCol, $rightCol, $innerWidth);
+        // Row 1: Version only (full width)
+        $lines[] = $this->boxLine(
+            '  Version: ' . MenuStyleConfig::colorize($versionStr, MenuStyleConfig::COLOR_GREEN),
+            $innerWidth,
+            true
+        );
 
+        // Row 2: Built (left) | Load with cores (right)
         $leftCol = "  Built: $buildTime";
         $loadAvg = $this->dataCollector->getLoadAverage();
         if ($loadAvg !== null) {
+            $cpuCores = $this->dataCollector->getCpuCores();
             $rightCol = 'Load: ' . MenuStyleConfig::formatLoadValue($loadAvg['load1']) . ' '
                 . MenuStyleConfig::formatLoadValue($loadAvg['load5']) . ' '
-                . MenuStyleConfig::formatLoadValue($loadAvg['load15']);
+                . MenuStyleConfig::formatLoadValue($loadAvg['load15'])
+                . " ($cpuCores cores)";
         } else {
             $rightCol = '';
         }
         $lines[] = $this->boxLineTwoCol($leftCol, $rightCol, $innerWidth);
 
-        // Storage info
+        // Row 3: Uptime (left) | Mem (right)
+        $leftCol = '  ' . $translation->_('cm_Uptime') . ': ' . $uptime;
+        $memInfo = $this->dataCollector->getMemoryInfo();
+        if ($memInfo !== null) {
+            $memColor = $memInfo['mem_percent'] > 90
+                ? MenuStyleConfig::COLOR_RED
+                : ($memInfo['mem_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
+            $rightCol = 'Mem: ' . MenuStyleConfig::colorize(
+                "{$memInfo['mem_used']} / {$memInfo['mem_total']} ({$memInfo['mem_percent']}%)",
+                $memColor
+            );
+        } else {
+            $rightCol = '';
+        }
+        $lines[] = $this->boxLineTwoCol($leftCol, $rightCol, $innerWidth);
+
+        // Row 4: Storage (left) | Swap (right)
         $storageInfo = $this->dataCollector->getStorageInfo();
+        $leftCol = '';
+        $rightCol = '';
         if ($storageInfo !== null) {
             $storageColor = $storageInfo['percent'] > 90
                 ? MenuStyleConfig::COLOR_RED
                 : ($storageInfo['percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
-            $rightCol = $translation->_('cm_Storage') . ': '
+            $leftCol = '  ' . $translation->_('cm_Storage') . ': '
                 . MenuStyleConfig::colorize(
                     "{$storageInfo['used']} / {$storageInfo['total']} ({$storageInfo['percent']}%)",
                     $storageColor
                 );
-            $lines[] = $this->boxLineTwoCol('', $rightCol, $innerWidth);
+        }
+        if ($memInfo !== null && $memInfo['swap_percent'] > 0) {
+            $swapColor = $memInfo['swap_percent'] > 90
+                ? MenuStyleConfig::COLOR_RED
+                : ($memInfo['swap_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
+            $rightCol = 'Swap: ' . MenuStyleConfig::colorize(
+                "{$memInfo['swap_used']} / {$memInfo['swap_total']} ({$memInfo['swap_percent']}%)",
+                $swapColor
+            );
+        }
+        if (!empty($leftCol) || !empty($rightCol)) {
+            $lines[] = $this->boxLineTwoCol($leftCol, $rightCol, $innerWidth);
         }
 
         // Network section
@@ -361,7 +463,20 @@ class WelcomeBanner implements BannerInterface
             $lines[] = $this->boxLine('  SSH Access:    ' . $sshCmd, $innerWidth);
         }
 
+        // Last login info
+        $lastLogin = $this->dataCollector->getLastLogin();
+        if ($lastLogin !== null) {
+            $loginStr = '  ' . $translation->_('cm_LastLogin') . ':  ' . $lastLogin['datetime'];
+            if (!empty($lastLogin['source'])) {
+                $loginStr .= ' ' . $translation->_('cm_From') . ' ' . $lastLogin['source'];
+            } else {
+                $loginStr .= ' ' . $translation->_('cm_OnConsole');
+            }
+            $lines[] = $this->boxLine($loginStr, $innerWidth);
+        }
+
         // Services section (two rows)
+        // During startup (uptime < 2 min), show stopped services as yellow instead of red
         $lines[] = $this->boxSeparator($innerWidth);
 
         $services = $this->dataCollector->getServiceStatuses();
@@ -371,7 +486,7 @@ class WelcomeBanner implements BannerInterface
         $coreServices = array_slice($serviceNames, 0, 3);
         $coreParts = [];
         foreach ($coreServices as $name) {
-            $coreParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($services[$name]);
+            $coreParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($services[$name], $isStarting);
         }
         $lines[] = $this->boxLine(
             '  Core:    ' . implode('   ', $coreParts),
@@ -383,7 +498,7 @@ class WelcomeBanner implements BannerInterface
         $systemServices = array_slice($serviceNames, 3);
         $systemParts = [];
         foreach ($systemServices as $name) {
-            $systemParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($services[$name]);
+            $systemParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($services[$name], $isStarting);
         }
         $lines[] = $this->boxLine(
             '  System:  ' . implode('   ', $systemParts),
@@ -492,10 +607,16 @@ class WelcomeBanner implements BannerInterface
     /**
      * Run the banner with auto-refresh loop
      *
-     * Displays the banner and refreshes it every AUTO_REFRESH_INTERVAL seconds.
+     * Uses adaptive refresh intervals to reduce system load:
+     * - First 5 minutes after user activity: refresh every 10 seconds
+     * - After 5 minutes idle on banner: refresh every 5 minutes
+     * - When user returns from menu: resets to frequent refresh mode
+     *
      * Automatically selects display mode based on console type:
      * - Serial console (ttyS*, ttyAMA*): compact text banner
-     * - VM/SSH console: fullscreen banner with ASCII art and blue background
+     * - VM/SSH console: fullscreen banner with ASCII art and dark background
+     *
+     * Uses cursor repositioning instead of screen clear to reduce flicker.
      *
      * Exits on any key press, returning the key pressed.
      *
@@ -503,6 +624,9 @@ class WelcomeBanner implements BannerInterface
      */
     public function runWithAutoRefresh(): ?string
     {
+        // Static flag to prevent multiple shutdown handler registrations
+        static $shutdownRegistered = false;
+
         // Determine display mode based on console type
         $useFullscreen = $this->envHelper->supportsFullscreenBanner()
             && $this->styleConfig->getTerminalWidth() >= self::FULLSCREEN_MIN_WIDTH;
@@ -510,27 +634,51 @@ class WelcomeBanner implements BannerInterface
         // Set terminal to non-blocking mode for key detection
         system('stty -icanon -echo');
 
-        // Ensure terminal is restored on exit
-        register_shutdown_function(function () {
-            system('stty sane');
-            MenuStyleConfig::resetTerminal();
-        });
+        // Ensure terminal is restored on exit (register only once)
+        if (!$shutdownRegistered) {
+            register_shutdown_function(static function () {
+                system('stty sane');
+                MenuStyleConfig::resetTerminal();
+            });
+            $shutdownRegistered = true;
+        }
 
         $lastRefresh = 0;
+        $firstDraw = true;
+        $activityTime = time(); // Track when user became active (entering banner = activity)
 
         while (true) {
             $now = time();
+            $elapsedSinceActivity = $now - $activityTime;
 
-            // Refresh banner if needed
-            if ($now - $lastRefresh >= self::AUTO_REFRESH_INTERVAL || $lastRefresh === 0) {
+            // Adaptive refresh interval:
+            // - First 5 minutes after activity: refresh every 10 seconds
+            // - After 5 minutes idle: refresh every 5 minutes
+            $refreshInterval = ($elapsedSinceActivity < self::FREQUENT_REFRESH_PERIOD)
+                ? self::FREQUENT_INTERVAL
+                : self::INFREQUENT_INTERVAL;
+
+            $timeSinceRefresh = $now - $lastRefresh;
+
+            // Refresh banner based on adaptive interval
+            if ($firstDraw || $timeSinceRefresh >= $refreshInterval) {
+                if ($firstDraw) {
+                    // First draw - set up background
+                    if ($useFullscreen) {
+                        $this->styleConfig->fillScreenBackground(MenuStyleConfig::BG_DARK);
+                    } else {
+                        MenuStyleConfig::clearScreen();
+                    }
+                    $firstDraw = false;
+                } else {
+                    // Subsequent draws - just move cursor to top (no clear = less flicker)
+                    echo MenuStyleConfig::CURSOR_HOME;
+                }
+
                 if ($useFullscreen) {
-                    // Fullscreen mode with dark background (Claude Code style)
-                    $this->styleConfig->fillScreenBackground(MenuStyleConfig::BG_DARK);
                     echo MenuStyleConfig::COLOR_WHITE;
                     echo $this->renderFullscreen();
                 } else {
-                    // Compact mode with black background
-                    MenuStyleConfig::clearScreen();
                     echo $this->render();
                 }
                 echo PHP_EOL;
@@ -609,6 +757,14 @@ class WelcomeBanner implements BannerInterface
         if ($this->dataCollector->isLiveCd()) {
             $lines[] = '    ' . MenuStyleConfig::colorize(
                 $translation->_('cm_PbxLiveModeWarning'),
+                MenuStyleConfig::COLOR_RED
+            );
+        }
+
+        // Firewall disabled warning
+        if ($this->dataCollector->isFirewallDisabled()) {
+            $lines[] = '    ' . MenuStyleConfig::colorize(
+                $translation->_('cm_FirewallIsDisabled'),
                 MenuStyleConfig::COLOR_RED
             );
         }

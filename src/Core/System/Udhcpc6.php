@@ -48,9 +48,9 @@ class Udhcpc6 extends Network
      */
     public function configure(string $action): void
     {
-        $isDocker = System::isDocker();
+        $canManageNetwork = System::canManageNetwork();
 
-        if ($isDocker) {
+        if (!$canManageNetwork) {
             SystemMessages::sysLogMsg(
                 __METHOD__,
                 "Docker environment - skipping IPv6 network commands, updating database only",
@@ -60,10 +60,27 @@ class Udhcpc6 extends Network
 
         SystemMessages::sysLogMsg(__METHOD__, "Processing DHCPv6 event: $action", LOG_INFO);
 
-        if ($action === 'deconfig') {
-            $this->deconfigAction($isDocker);
+        // Skip network commands only when we can't manage network (Docker)
+        // LXC and bare-metal should run full network configuration
+        $skipNetworkCommands = !$canManageNetwork;
+
+        if ($action === 'deconfig' && (Util::isT2SdeLinux() || System::isLxc())) {
+            /**
+             * Perform deconfiguration for T2SDE Linux and LXC containers.
+             */
+            $this->deconfigAction($skipNetworkCommands);
         } elseif ($action === 'bound' || $action === 'renew') {
-            $this->renewBoundAction($isDocker);
+            if (Util::isSystemctl()) {
+                /**
+                 * Perform configuration renewal and bound actions using systemctl (systemd-based systems).
+                 */
+                $this->renewBoundAction($skipNetworkCommands);
+            } elseif (Util::isT2SdeLinux() || System::isLxc()) {
+                /**
+                 * Perform configuration renewal and bound actions for T2SDE Linux and LXC containers.
+                 */
+                $this->renewBoundAction($skipNetworkCommands);
+            }
         }
     }
 
@@ -76,10 +93,10 @@ class Udhcpc6 extends Network
      * - SLAAC provides fallback connectivity
      * - IPv6 mode remains '1' (Auto) so SLAAC continues
      *
-     * @param bool $isDocker Whether running in Docker environment
+     * @param bool $skipNetworkCommands Whether to skip network commands (true for Docker, false for LXC/bare-metal)
      * @return void
      */
-    private function deconfigAction(bool $isDocker = false): void
+    private function deconfigAction(bool $skipNetworkCommands = false): void
     {
         $interface = trim((string)getenv('interface'));
 
@@ -121,10 +138,10 @@ class Udhcpc6 extends Network
      * - Both addresses coexist (DHCPv6 typically gets higher priority per RFC 6724)
      * - Prefix length usually 128 for DHCPv6 (single host address)
      *
-     * @param bool $isDocker Whether running in Docker environment
+     * @param bool $skipNetworkCommands Whether to skip network commands (true for Docker, false for LXC/bare-metal)
      * @return void
      */
-    private function renewBoundAction(bool $isDocker = false): void
+    private function renewBoundAction(bool $skipNetworkCommands = false): void
     {
         // Read environment variables from udhcpc6
         $env_vars = [
@@ -162,8 +179,8 @@ class Udhcpc6 extends Network
         ]);
         $is_inet = ($if_data !== null) ? (int)$if_data->internet : 0;
 
-        // Skip network commands in Docker (IPv6 managed by container runtime)
-        if (!$isDocker) {
+        // Skip network commands when skipNetworkCommands is true (Docker)
+        if (!$skipNetworkCommands) {
             // Add DHCPv6 address to interface alongside SLAAC address
             // Use ifconfig (same approach as IPv4 DHCP in Udhcpc.php)
             $ifconfig = Util::which('ifconfig');
@@ -211,8 +228,8 @@ class Udhcpc6 extends Network
         ];
         $this->updateDnsSettings($data, $env_vars['interface']);
 
-        // Restart DNS (skip in Docker)
-        if (!$isDocker && $is_inet === 1) {
+        // Restart DNS (skip when skipNetworkCommands is true)
+        if (!$skipNetworkCommands && $is_inet === 1) {
             $dnsConf = new DnsConf();
             $dnsConf->reStart();  // Regenerates /etc/resolv.conf with IPv6 DNS
         }

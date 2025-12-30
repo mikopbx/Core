@@ -63,6 +63,7 @@ class TestNetworkFilters:
             else:
                 raise
 
+    @pytest.mark.order(after="test_35_firewall.py::TestFirewall::test_02_create_firewall_rule")
     def test_03_get_filter_by_id(self, api_client):
         """Test GET /network-filters/{id} - Get specific filter"""
         # First get list to find an existing ID

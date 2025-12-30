@@ -17,25 +17,7 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-# Setup console output redirection
-if [ -x "/sbin/pbx-env-detect" ]; then
-  # Use new environment detection
-  SERIAL_PORTS=$(/sbin/pbx-env-detect --serial)
-  if [ -n "$SERIAL_PORTS" ]; then
-    # Get first available serial port
-    FIRST_SERIAL=$(echo $SERIAL_PORTS | cut -d' ' -f1)
-    exec </dev/console > >(/bin/busybox tee $FIRST_SERIAL) 2>&1
-  else
-    exec </dev/console >/dev/console 2>/dev/console
-  fi
-else
-  # Fallback to old method
-  if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
-    exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>&1
-  else
-    exec </dev/console >/dev/console 2>/dev/console;
-  fi
-fi
+# NOTE: Console/serial output handled by shell_functions.sh wrappers
 
 # Calculate the MD5 hash of the buildtime file and save it in a variable
 MD5_BUILD_INFO=$(/bin/busybox md5sum /etc/version.buildtime 2>/dev/null | /bin/busybox cut -d ' ' -f 1 2>/dev/null)
@@ -66,7 +48,7 @@ checkOffloadDisk() {
   # Check if the file exists
   if [ ! -f "${pathToFile}" ]; then
      # If it doesn't exist, set the result variable to 1 and print an error message
-    echo " - File ${pathToFile} not found"
+    echo_info "File ${pathToFile} not found"
     CHECK_RESULT=1
   else
     # If it exists, calculate its MD5 hash and compare it with the stored MD5 hash
@@ -75,7 +57,7 @@ checkOffloadDisk() {
     # If the hashes don't match, set the result variable to 2 and print an error message
     if [ ! "${md5OffloadBI}" = "${MD5_BUILD_INFO}" ]; then
       CHECK_RESULT=2
-      echo " - Hash file ${pathToFile} verification failed"
+      echo_info "Hash file ${pathToFile} verification failed"
     fi
   fi
 }
@@ -121,7 +103,7 @@ mountoffload() {
 
   # If the size of the disk is less than or equal to 600MB, it will perform a filesystem check
   if [ "$size_bytes" -le 629145600 ]; then
-    echo " - Start check: $disk"
+    echo_info "Start check: $disk"
     "/sbin/fsck.${type}" -f -p "$disk" >/dev/null 2>/dev/null
   fi
 
@@ -163,7 +145,7 @@ mountConfRecover() {
 
   # Disk variable which takes the first argument of the function
   offloaddisk="$1"
-  echo " - Attempting to mount existing configuration..."
+  echo_info "Attempting to mount existing configuration..."
 
    # Create a directory for mounting (old config)
   rec_dir='/conf.recover/'
@@ -176,13 +158,13 @@ mountConfRecover() {
 
      # Skip if the disk is already mounted
     if [ "${diskr}" = "${offloaddisk}" ]; then
-      echo " - Skip ${diskr}, already mounted..."
+      echo_info "Skip ${diskr}, already mounted..."
       continue
     fi
 
     # Skip if the disk does not have a third partition
     if [ ! -b "/dev/${disk3}" ]; then
-      echo " - Skip ${diskr}, part 3 not found..."
+      echo_info "Skip ${diskr}, part 3 not found..."
       continue
     fi
 
@@ -190,17 +172,17 @@ mountConfRecover() {
     type=$(/sbin/blkid -o full "/dev/${disk3}" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1)
     if [ -f "/sbin/fsck.${type}" ]; then
       "/sbin/fsck.${type}" -f -p "/dev/${disk3}" >/dev/null 2>/dev/null
-      echo " - Trying fsck /dev/${disk3} ... returned: $?"
+      echo_info "Trying fsck /dev/${disk3} ... returned: $?"
     fi
 
     # Get the UUID of the partition and attempt to mount it read-only to the created directory
     uuid=$(/sbin/blkid -o full "/dev/${disk3}" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1)
     mount -t "${type}" -r UUID="${uuid}" "${rec_dir}"
-    echo " - Trying mount ${diskr} fs ${type} ... returned: $?"
+    echo_info "Trying mount ${diskr} fs ${type} ... returned: $?"
 
      # If the directory has a "conf" subdirectory and no "livecd" file, exit
     if [ -d "${rec_dir}conf" ] && [ ! -f "${rec_dir}livecd" ]; then
-      echo " - Found existing configuration on ${disk3}!"
+      echo_info "Found existing configuration on ${disk3}!"
       exit 0
     else
       # If not, unmount the directory and remove it before moving on to the next disk
@@ -219,7 +201,7 @@ rm -rf /tmp/freeoffload
 ################################################################################
 
 # Start of the block for LIVE CD-ROM
-echo " - Waiting for device ready..."
+echo_info "Waiting for device ready..."
 busybox sleep 4
 
 # Attempt to identify CD-ROM drives
@@ -234,7 +216,7 @@ blkResult="$?"
 if [ "$blkResult" -eq 0 ]; then
   length=${#cddev}
 fi
-echo " - Searching for RootFS on LiveCD..."
+echo_info "Searching for RootFS on LiveCD..."
 
 # If the length of the identifier is more than 2, it means we have identified a CD-ROM drive,
 # and we should use this for subsequent operations. Otherwise, try to identify regular disks.
@@ -260,18 +242,18 @@ for disk in $disks; do
 
   # Attempt to mount the disk or partition as an offload disk
   echo
-  echo " - Mounting $diskPath..."
+  echo_info "Mounting $diskPath..."
   mountoffload "$diskPath"
-  echo " - Mount result: $MOUNT_RESULT"
+  echo_info "Mount result: $MOUNT_RESULT"
 
   # Check for the presence of a "livecd" flag file in the root of the offload disk.
   if [ -f /offload/livecd ]; then
-    echo " - Found LiveCD image!"
+    echo_info "Found LiveCD image!"
     echo
     echo "  Press any key within 30 seconds to boot from LiveCD..."
     read -t 30 -n 1 input
     if [ $? = 0 ]; then
-       echo " - User selected to boot from LiveCD."
+       echo_info "User selected to boot from LiveCD."
        # Call function to create boot configuration files and recover configuration from the offload disk
        createBootConfFiles
        mountConfRecover "$disk"
@@ -292,7 +274,7 @@ done
 ################################################################################
 
 echo
-echo " - Searching for RootFS on RAID devices..."
+echo_info "Searching for RootFS on RAID devices..."
 
 # Identify RAID drives
 disks=$(/bin/lsblk -b -r -o NAME,TYPE -n | /bin/busybox grep "raid" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox sort -u)
@@ -309,19 +291,19 @@ for disk in $disks; do
 
   # Attempt to mount the partition as an offload disk
   echo
-  echo " - Mounting $diskPath..."
+  echo_info "Mounting $diskPath..."
   mountoffload "$diskPath"
-  echo " - Mount result: $MOUNT_RESULT"
+  echo_info "Mount result: $MOUNT_RESULT"
 
    # Check for the presence of a "rootfs" directory in the root of the offload disk
   if [ -d /offload/rootfs ]; then
-    echo " - RootFS founded on $diskPath!"
+    echo_info "RootFS founded on $diskPath!"
     exit 0
   fi
 
    # If the "rootfs" directory was not found, unmount the offload disk and continue with the next one
   umount -f /offload >/dev/null
-  echo " - Failed to find RootFS on $diskPath!"
+  echo_info "Failed to find RootFS on $diskPath!"
 done
 
 ################################################################################
@@ -329,7 +311,7 @@ done
 ################################################################################
 
 echo
-echo " - Searching for RootFS on block devices..."
+echo_info "Searching for RootFS on block devices..."
 
 # Identify HDDs
 disks=$(/bin/lsblk -b -d -r -o NAME,TYPE -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox uniq)
@@ -350,19 +332,19 @@ for disk in $disks; do
 
    # Attempt to mount the partition as an offload disk
   echo
-  echo " - Mounting $diskPath..."
+  echo_info "Mounting $diskPath..."
   mountoffload "$diskPath"
-  echo " - Mount result: $MOUNT_RESULT"
+  echo_info "Mount result: $MOUNT_RESULT"
 
   # Check if a directory named "rootfs" exists in the root of the offload disk
   if [ -d /offload/rootfs ]; then
-    echo " - RootFS founded on $diskPath!"
+    echo_info "RootFS founded on $diskPath!"
     exit 0
   fi
 
    # If the "rootfs" directory was not found, unmount the offload disk and log failure to find "rootfs"
   umount -f /offload >/dev/null
-  echo " - Failed to find RootFS on $diskPath!"
+  echo_info "Failed to find RootFS on $diskPath!"
 done
 
 ################################################################################
@@ -370,12 +352,12 @@ done
 ################################################################################
 
 echo
-echo " - Waiting for disks USB ready and trying again..."
+echo_info "Waiting for disks USB ready and trying again..."
 
 # Sleep for 10 seconds to give disks time to settle
 /bin/busybox sleep 10
 
-echo " - Searching for RootFS on USB devices..."
+echo_info "Searching for RootFS on USB devices..."
 
 # Identify USB devices
 disks=$(/bin/lsblk -b -d -r -o NAME,TYPE -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox uniq)
@@ -396,13 +378,13 @@ for disk in $disks; do
 
   # Attempt to mount the partition as an offload disk
   echo
-  echo " - Mounting $diskPath..."
+  echo_info "Mounting $diskPath..."
   mountoffload "$diskPath"
-  echo " - Mount result: $MOUNT_RESULT"
+  echo_info "Mount result: $MOUNT_RESULT"
 
   # Check if a file named "livecd" exists in the root of the offload disk
   if [ -f /offload/livecd ]; then
-    echo " - Found LiveUSB image..."
+    echo_info "Found LiveUSB image..."
     mountConfRecover "$disk"
     exit 0
   fi
@@ -428,16 +410,16 @@ for disk in $disks; do
 
   # Attempt to mount the partition as an offload disk
   echo
-  echo " - Mounting $diskPath..."
+  echo_info "Mounting $diskPath..."
   mountoffload "$diskPath"
-  echo " - Mount result: $MOUNT_RESULT"
+  echo_info "Mount result: $MOUNT_RESULT"
 
   # Check if a directory named "rootfs" exists in the root of the offload disk
   if [ -d /offload/rootfs ]; then
-    echo " - RootFS founded on $diskPath!"
+    echo_info "RootFS founded on $diskPath!"
     exit 0
   fi
-  echo " - Failed to find RootFS on $diskPath!"
+  echo_info "Failed to find RootFS on $diskPath!"
 done
 
 # Default action - boot from LiveCD if it was found
@@ -449,11 +431,11 @@ if [ -n "$liveCDPartition" ]; then
 fi
 
 # Log message indicating failure to find the /offload partition
-echo "The system was unable to find the /offload partition!"
+echo_error "The system was unable to find the /offload partition!"
 echo
-echo "Please send the output of 'ls /dev' and 'fdisk -l' to the"
-echo "development team for assistance."
-echo "Apologies for the inconvenience, and thank you for your patience as we resolve this issue."
+echo_info "Please send the output of 'ls /dev' and 'fdisk -l' to the"
+echo_info "development team for assistance."
+echo_info "Apologies for the inconvenience, and thank you for your patience as we resolve this issue."
 echo
 
 exit 1

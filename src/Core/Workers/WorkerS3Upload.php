@@ -85,6 +85,17 @@ class WorkerS3Upload extends WorkerBase
      */
     public function start(array $argv): void
     {
+        // Check if S3 storage is enabled before starting
+        $settings = StorageSettings::getSettings();
+        if ($settings->s3_enabled !== 1 || !$settings->isS3Configured()) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                'S3 storage not configured - worker exiting',
+                LOG_DEBUG
+            );
+            return;
+        }
+
         SystemMessages::sysLogMsg(
             __CLASS__,
             sprintf('Worker started (PID:%d)', getmypid()),
@@ -95,17 +106,6 @@ class WorkerS3Upload extends WorkerBase
             pcntl_signal_dispatch();
 
             try {
-                // Check if S3 storage is enabled
-                $settings = StorageSettings::getSettings();
-                if ($settings->s3_enabled !== 1 || !$settings->isS3Configured()) {
-                    SystemMessages::sysLogMsg(
-                        __CLASS__,
-                        'S3 storage not configured - worker sleeping',
-                        LOG_DEBUG
-                    );
-                    sleep(self::SLEEP_INTERVAL);
-                    continue;
-                }
 
                 // Determine upload strategy
                 $needsEmergencyUpload = $this->checkLowDiskSpace();

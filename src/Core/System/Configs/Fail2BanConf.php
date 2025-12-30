@@ -132,6 +132,7 @@ class Fail2BanConf extends SystemConfigClass
         $fail2banPath = Util::which(self::FB_CLIENT_BIN);
 
         $this->generateMonitConf();
+        $this->monitReload();
         if ($this->fail2banEnable){
             $this->fail2banMakeDirs();
             $this->writeConfig();
@@ -329,8 +330,10 @@ class Fail2BanConf extends SystemConfigClass
         ];
 
         // Define jails and their corresponding actions
+        // Docker/LXC without iptables: use ACL-based blocking for HTTP
+        // LXC with iptables or bare-metal: use iptables-based blocking
         $jails = [];
-        if (System::isDocker()) {
+        if (!System::canManageFirewall()) {
             $jails = [
                 'dropbear'    => 'miko-iptables-multiport-all[name=SSH, port="' . implode(',', $sshPort) . '"]',
                 'mikopbx-www' => 'miko-nginx-docker[name=HTTP, port="' . implode(',', $httpPorts) . '"]',
@@ -468,8 +471,8 @@ class Fail2BanConf extends SystemConfigClass
         // Define the path to the configuration file
         $path = self::ACTION_PATH;
 
-        if (System::isDocker()) {
-            // For Docker, create an action that blocks IPs via Asterisk ACL
+        if (!System::canManageFirewall()) {
+            // For Docker/LXC without iptables, create an action that blocks IPs via Asterisk ACL
             $conf = "[Definition]" . PHP_EOL .
                 "actionstart = /bin/true" . PHP_EOL .
                 "actionstop = /bin/true" . PHP_EOL .
@@ -626,7 +629,7 @@ class Fail2BanConf extends SystemConfigClass
         Processes::mwExec("$rmPath -rf $filterPath/module_*.conf");
 
         // Add additional modules routes
-        $additionalModulesJails = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GENERATE_FAIL2BAN_JAILS);
+        $additionalModulesJails = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GENERATE_FAIL2BAN_FILTERS);
         foreach ($additionalModulesJails as $moduleUniqueId => $moduleJailText) {
             $fileName = Text::uncamelize($moduleUniqueId, '_') . '.conf';
             file_put_contents("$filterPath/$fileName", $moduleJailText);
@@ -676,7 +679,7 @@ class Fail2BanConf extends SystemConfigClass
             $fileName = Text::uncamelize($moduleUniqueId, '_');
 
             // If module provided jail configuration, use it; otherwise generate default configuration
-            if (!empty($moduleJailText)) {
+            if (!empty($moduleJailText) && $moduleJailText !== '#') {
                 $config = $moduleJailText;
             } else {
                 // Construct the default configuration string for the module
@@ -760,8 +763,9 @@ class Fail2BanConf extends SystemConfigClass
      */
     public static function fail2banAction(string $action, string $ip): void
     {
-        // Skip in non-Docker environments - they use regular iptables
-        if (!System::isDocker()) {
+        // Skip when system can manage firewall - they use regular iptables
+        // Only use ACL-based blocking when iptables is unavailable (Docker/LXC without CAP_NET_ADMIN)
+        if (System::canManageFirewall()) {
             return;
         }
 

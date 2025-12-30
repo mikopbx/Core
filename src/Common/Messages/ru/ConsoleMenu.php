@@ -41,6 +41,8 @@ return [
     'cm_RebootSystem' => 'Перезагрузка системы',
     'cm_Reboot' => 'Перезагрузка',
     'cm_PowerOff' => 'Выключение',
+    'cm_SystemRebooting' => 'Система перезагружается, пожалуйста подождите...',
+    'cm_SystemShuttingDown' => 'Система выключается, пожалуйста подождите...',
     'cm_PingHost' => 'Пинг хоста',
     'cm_Console' => 'Консоль',
     'cm_ChangeLanguage' => 'Изменить язык',
@@ -76,6 +78,7 @@ return [
 
     // System status messages
     'cm_PbxLiveModeWarning' => 'PBX работает в режиме Live или восстановления',
+    'cm_FirewallIsDisabled' => 'Брандмауэр отключён',
     'cm_SystemIntegrityBroken' => 'Целостность системы нарушена',
     'cm_ThisIs' => 'это',
     'cm_WebInterfaceUrl' => 'Веб-интерфейс',
@@ -212,4 +215,12 @@ return [
     'cm_ModuleDisabledSuccess' => 'Модуль успешно отключен',
     'cm_ModuleEnableFailed' => 'Не удалось включить модуль',
     'cm_ModuleDisableFailed' => 'Не удалось отключить модуль',
+
+    // Last login info
+    'cm_LastLogin' => 'Последний вход',
+    'cm_From' => 'с',
+    'cm_OnConsole' => 'с консоли',
+
+    // Exit hint
+    'cm_RestartMenuHint' => 'Для запуска меню выполните',
 ];

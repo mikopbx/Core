@@ -342,9 +342,15 @@ class TestCDRDataTablesFormat:
         assert_api_success(response, "Failed to get DataTables CDR list")
 
         # DataTables can return data directly or wrapped
+        # API may return 'data' key (DataTables) or 'records' key (REST API format)
         data_wrapper = response.get('data', [])
-        if isinstance(data_wrapper, dict) and 'data' in data_wrapper:
-            data = data_wrapper['data']
+        if isinstance(data_wrapper, dict):
+            if 'data' in data_wrapper:
+                data = data_wrapper['data']
+            elif 'records' in data_wrapper:
+                data = data_wrapper['records']
+            else:
+                data = []
         else:
             data = data_wrapper if isinstance(data_wrapper, list) else []
 

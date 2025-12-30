@@ -24,7 +24,7 @@ use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Promise\PromiseInterface;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\System;
 use ReflectionClass;
 
 /**
@@ -61,7 +61,7 @@ class DockerCloud extends CloudProvider
      */
     public function checkAvailability(): PromiseInterface
     {
-        return Create::promiseFor(Util::isDocker());
+        return Create::promiseFor(System::isDocker());
     }
 
     /**
@@ -73,6 +73,7 @@ class DockerCloud extends CloudProvider
      *
      * Called from CloudProvisioning::start() before the one-time provisioning check.
      * Only updates settings that have actually changed (efficient for repeated calls).
+     * Redis is already running at this point, so ORM can be used.
      */
     public static function applyEnvironmentOverrides(): void
     {
@@ -92,9 +93,13 @@ class DockerCloud extends CloudProvider
             return;
         }
 
-        // Apply the configuration using direct SQLite method (no Redis/ORM)
+        // Reset LAN interfaces table with default interface name
+        // This ensures clean state with internet='1' and disabled='0'
+        $instance->resetLanInterface('eth0');
+
+        // Apply the configuration using ORM (Redis is already running)
         // This only updates settings that have changed
-        $instance->applyConfigDirect($config);
+        $instance->applyConfig($config);
 
         SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_DONE);
     }
@@ -112,7 +117,7 @@ class DockerCloud extends CloudProvider
     {
         // ENV already applied by applyEnvironmentOverrides()
         // Just confirm we're in Docker for the provisioning marker
-        return Util::isDocker();
+        return System::isDocker();
     }
 
     /**

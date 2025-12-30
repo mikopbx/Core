@@ -42,6 +42,12 @@ class System extends Injectable
     const string BOOTING_FILE_PATH = '/var/run/mikopbx-booting';
 
     /**
+     * LXC container environment variable value
+     * Set by LXC runtime in the 'container' environment variable
+     */
+    private const string LXC_CONTAINER_ENV_VALUE = 'lxc';
+
+    /**
      * Returns the directory where logs are stored.
      * @deprecated use Directories::getDir(Directories::CORE_LOGS_DIR);
      *
@@ -285,7 +291,7 @@ class System extends Injectable
     {
         if ($booting) {
             file_put_contents(self::BOOTING_FILE_PATH, 'true');
-        } else {
+        } elseif (file_exists(self::BOOTING_FILE_PATH)) {
             unlink(self::BOOTING_FILE_PATH);
         }
     }
@@ -298,6 +304,89 @@ class System extends Injectable
     public static function isDocker(): bool
     {
         return file_exists('/.dockerenv');
+    }
+
+    /**
+     * Check if the system is running in any container (Docker or LXC)
+     *
+     * Use this for UI/informational purposes where we need to know
+     * if we're in any container environment.
+     *
+     * @return bool True if running in any container, false otherwise
+     */
+    public static function isContainer(): bool
+    {
+        return self::isDocker() || self::isLxc();
+    }
+
+    /**
+     * Check if the system can manage its own network configuration
+     *
+     * Docker: false - Docker runtime manages networking
+     * LXC: true - LXC containers manage their own network like VMs
+     * Bare-metal: true - Full network control
+     *
+     * @return bool True if system can configure network, false otherwise
+     */
+    public static function canManageNetwork(): bool
+    {
+        return !self::isDocker();
+    }
+
+    /**
+     * Check if the system can manage firewall (iptables)
+     *
+     * Docker: false - Host manages iptables for port forwarding
+     * LXC: depends on CAP_NET_ADMIN capability
+     * Bare-metal: true - Full firewall control
+     *
+     * @return bool True if system can manage iptables, false otherwise
+     */
+    public static function canManageFirewall(): bool
+    {
+        if (self::isDocker()) {
+            return false;
+        }
+
+        if (self::isLxc()) {
+            return self::hasIptablesCapability();
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if iptables is available and functional
+     *
+     * Tests if iptables commands can be executed successfully.
+     * Used to detect CAP_NET_ADMIN capability in LXC containers.
+     *
+     * @return bool True if iptables works, false otherwise
+     */
+    private static function hasIptablesCapability(): bool
+    {
+        static $hasCapability = null;
+
+        if ($hasCapability === null) {
+            $iptables = Util::which('iptables');
+            if (empty($iptables)) {
+                $hasCapability = false;
+            } else {
+                Processes::mwExec("$iptables -L -n 2>/dev/null", $output, $returnCode);
+                $hasCapability = ($returnCode === 0);
+            }
+
+            // Log detection result for LXC debugging
+            if (self::isLxc()) {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    'LXC iptables capability: ' . ($hasCapability ? 'available' : 'unavailable (CAP_NET_ADMIN missing?)'),
+                    LOG_INFO
+                );
+            }
+        }
+
+        return $hasCapability;
     }
 
     /**
@@ -350,5 +439,34 @@ class System extends Injectable
         $arch = trim(implode('', $unameOutput));
 
         return in_array($arch, ['x86_64', 'amd64'], true);
+    }
+
+    /**
+     * Check if the system is running in LXC container
+     *
+     * LXC (Linux Containers) are system containers that behave like lightweight VMs.
+     * Unlike Docker, LXC containers can manage their own networking and firewall.
+     *
+     * Detection methods:
+     * 1. Primary: Check 'container' environment variable (set by LXC runtime)
+     * 2. Fallback: Read /proc/1/environ for container=lxc (when env not inherited)
+     *
+     * @return bool True if running in LXC, false otherwise
+     */
+    public static function isLxc(): bool
+    {
+        // Check container environment variable (set by LXC runtime)
+        if (getenv('container') === self::LXC_CONTAINER_ENV_VALUE) {
+            return true;
+        }
+
+        // Fallback: check init process environment
+        // Needed when PHP process doesn't inherit the container env var
+        $environ = @file_get_contents('/proc/1/environ');
+        if ($environ !== false && strpos($environ, 'container=' . self::LXC_CONTAINER_ENV_VALUE) !== false) {
+            return true;
+        }
+
+        return false;
     }
 }

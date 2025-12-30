@@ -236,7 +236,8 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function generateAsteriskNetworkFiltersDenyAcl(): void
     {
-        if (!System::isDocker()) {
+        if (System::canManageFirewall()) {
+            // Skip ACL-based filtering when iptables is available (non-Docker, LXC with CAP_NET_ADMIN)
             return;
         }
         
@@ -371,7 +372,8 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function updateAllConfigurations(): void
     {
-        if (!System::isDocker()) {
+        if (System::canManageFirewall()) {
+            // Skip ACL-based filtering when iptables is available (non-Docker, LXC with CAP_NET_ADMIN)
             return;
         }
         
@@ -405,7 +407,8 @@ class DockerNetworkFilterService extends Injectable
      */
     private static function syncNetworkFiltersDenyToRedis(): void
     {
-        if (!System::isDocker()) {
+        if (System::canManageFirewall()) {
+            // Skip ACL-based filtering when iptables is available (non-Docker, LXC with CAP_NET_ADMIN)
             return;
         }
         
@@ -452,7 +455,8 @@ class DockerNetworkFilterService extends Injectable
      */
     private static function syncNetworkFiltersPermitToRedis(): void
     {
-        if (!System::isDocker()) {
+        if (System::canManageFirewall()) {
+            // Skip ACL-based filtering when iptables is available (non-Docker, LXC with CAP_NET_ADMIN)
             return;
         }
         
@@ -494,7 +498,8 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function addBlockedIp(string $ip, string $category, int $ttl = 86400): bool
     {
-        if (!System::isDocker()) {
+        if (System::canManageFirewall()) {
+            // Skip ACL-based filtering when iptables is available
             return false;
         }
         
@@ -531,7 +536,8 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function removeBlockedIp(string $ip, string $category): bool
     {
-        if (!System::isDocker()) {
+        if (System::canManageFirewall()) {
+            // Skip ACL-based filtering when iptables is available
             return false;
         }
         
@@ -561,7 +567,8 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function getBlockedIps(string $category): array
     {
-        if (!System::isDocker()) {
+        if (System::canManageFirewall()) {
+            // Skip ACL-based filtering when iptables is available
             return [];
         }
         
@@ -601,7 +608,8 @@ class DockerNetworkFilterService extends Injectable
      */
     private static function getWhitelistFromRedis(): array
     {
-        if (!System::isDocker()) {
+        if (System::canManageFirewall()) {
+            // Skip ACL-based filtering when iptables is available
             return [];
         }
         
@@ -626,7 +634,8 @@ class DockerNetworkFilterService extends Injectable
      */
     private static function syncWhitelistToRedis(): void
     {
-        if (!System::isDocker()) {
+        if (System::canManageFirewall()) {
+            // Skip ACL-based filtering when iptables is available (non-Docker, LXC with CAP_NET_ADMIN)
             return;
         }
         
@@ -677,20 +686,20 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function isIpWhitelisted(string $ip): bool
     {
-        if (!System::isDocker()) {
-            // Fallback to database check for non-Docker
+        if (System::canManageFirewall()) {
+            // For systems with iptables, check database whitelist
             $whitelist = self::getNetworkFiltersWhitelist();
-            
+
             foreach ($whitelist as $allowedNetwork) {
                 if (self::ipInNetwork($ip, $allowedNetwork)) {
                     return true;
                 }
             }
-            
+
             return false;
         }
-        
-        // Check Redis whitelist for Docker
+
+        // Check Redis whitelist for Docker/LXC without iptables
         $whitelist = self::getWhitelistFromRedis();
         
         foreach ($whitelist as $allowedNetwork) {
@@ -768,7 +777,8 @@ class DockerNetworkFilterService extends Injectable
      */
     private static function getDockerNetworkWhitelist(): array
     {
-        if (!System::isDocker()) {
+        if (System::canManageFirewall()) {
+            // Skip ACL-based filtering when iptables is available
             return [];
         }
         
@@ -832,7 +842,9 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function blockIPForRateLimit(string $ip, int $duration = 300): bool
     {
-        if (!System::isDocker() && PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) !== '1') {
+        // Skip rate limiting if system can manage firewall but firewall is disabled
+        // When iptables is available and firewall is off, we don't need Redis-based blocking
+        if (System::canManageFirewall() && PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) !== '1') {
             return false;
         }
         
@@ -868,7 +880,8 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function unblockIPFromRateLimit(string $ip): bool
     {
-        if (!System::isDocker() && PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) !== '1') {
+        // Skip if system can manage firewall but firewall is disabled
+        if (System::canManageFirewall() && PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) !== '1') {
             return false;
         }
         

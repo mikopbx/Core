@@ -77,7 +77,7 @@ class ACPIDConf extends SystemConfigClass
      */
     public function reStart(): bool
     {
-        if(System::isDocker()){
+        if(System::isContainer()){
             return true;
         }
         $this->generateMonitConf();
@@ -90,7 +90,7 @@ class ACPIDConf extends SystemConfigClass
      */
     public function generateMonitConf(): bool
     {
-        if(System::isDocker()){
+        if(System::isContainer()){
             return true;
         }
         $busyboxPath = Util::which('busybox');

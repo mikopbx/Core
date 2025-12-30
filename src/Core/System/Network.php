@@ -49,11 +49,13 @@ class Network extends Injectable
     {
         $grep = Util::which('grep');
         $awk = Util::which('awk');
-        if (System::isDocker()) {
+        if (System::isContainer()) {
+            // In containers (Docker/LXC), network interfaces are virtual (veth pairs)
+            // Use ifconfig -a to list ALL interfaces (including those not yet UP during boot)
             $ifconfig = Util::which('ifconfig');
-            $command = "$ifconfig | $grep -o -E '^[a-zA-Z0-9]+' | $grep -v 'lo'";
+            $command = "$ifconfig -a | $grep -o -E '^[a-zA-Z0-9]+' | $grep -v 'lo'";
         } else {
-            // Universal command to retrieve all PCI network interfaces.
+            // On bare metal: retrieve PCI network interfaces (exclude virtual)
             $ls = Util::which('ls');
             $command = "$ls -l /sys/class/net | $grep devices | $grep -v virtual | $awk '{ print $9 }'";
         }
@@ -134,6 +136,11 @@ class Network extends Injectable
         $res = LanInterfaces::find(['order' => 'interface,vlanid']);
         $networks = $res->toArray();
 
+        // DEBUG: Log system interfaces vs database interfaces
+        $dbInterfaces = array_column($networks, 'interface');
+        SystemMessages::sysLogMsg(__METHOD__, "DEBUG: System interfaces: " . implode(', ', $src_array_eth));
+        SystemMessages::sysLogMsg(__METHOD__, "DEBUG: Database interfaces: " . implode(', ', $dbInterfaces));
+
         if (count($networks) > 0) {
             // Additional data processing
             foreach ($networks as &$if_data) {
@@ -169,6 +176,8 @@ class Network extends Injectable
                     }
                 } else {
                     // Base interface does not exist
+                    // DEBUG: Log why interface is being disabled
+                    SystemMessages::sysLogMsg(__METHOD__, "DEBUG: Interface '{$if_data['interface_orign']}' from DB not found in system interfaces, will disable");
                     $this->disableLanInterface($if_data['interface_orign']);
                     // Disable the interface
                     $if_data['disabled'] = 1;
@@ -265,6 +274,8 @@ class Network extends Injectable
             'bind' => ['name' => $name]
         ]);
         if ($if_data !== null) {
+            // DEBUG: Log when interface is being disabled
+            SystemMessages::sysLogMsg(__METHOD__, "DEBUG: Disabling interface '$name' - setting internet=0, disabled=1 (was internet={$if_data->internet}, disabled={$if_data->disabled})");
             $if_data->internet = 0;
             $if_data->disabled = 1;
             $if_data->update();
@@ -903,8 +914,9 @@ class Network extends Injectable
         Processes::mwExecCommands($enableIpv6Commands, $out, 'ipv6_enable');
         SystemMessages::sysLogMsg(__METHOD__, 'IPv6 enabled at kernel level');
 
-        if (System::isDocker()) {
+        if (!System::canManageNetwork()) {
             // In Docker: Only configure IPv6 (IPv4 is managed by Docker runtime)
+            // LXC containers CAN manage their own network, so they continue below
             $this->configureIpv6InDocker();
             return 0;
         }

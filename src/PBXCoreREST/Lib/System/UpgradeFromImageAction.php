@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\System;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\System;
@@ -254,12 +255,26 @@ class UpgradeFromImageAction extends Injectable
         $parted  = Util::which('parted');
         $busybox = Util::which('busybox');
         $cmdOffset = "$parted '$decompressedImg' unit B print | $busybox awk 'NR>3 && /boot/ {gsub(/B/,\"\",$2); print $2+0; exit}' | $busybox head -n 1";
-        $offset = trim(shell_exec($cmdOffset)??'');
-        $loopDev = self::setupLoopDevice($decompressedImg, $offset);
+        $offset = trim(shell_exec($cmdOffset) ?? '');
+
+        // Validate offset before proceeding
+        if (empty($offset) || !is_numeric($offset)) {
+            $res->success = false;
+            $res->messages[] = TranslationProvider::translate('rest_System_UpgradeFailedToDetectOffset');
+            if (file_exists($decompressedImg)) {
+                unlink($decompressedImg);
+            }
+            return $res;
+        }
+
+        $loopDev = self::setupLoopDevice($decompressedImg, (int)$offset);
 
         if (empty($loopDev)) {
             $res->success = false;
-            $res->messages[] = "Failed to set up the loop device.";
+            $res->messages[] = TranslationProvider::translate('rest_System_UpgradeLoopDeviceFailed');
+            if (file_exists($decompressedImg)) {
+                unlink($decompressedImg);
+            }
             return $res;
         }
 
@@ -268,7 +283,11 @@ class UpgradeFromImageAction extends Injectable
         $result = Processes::mwExec("$mount -t vfat $loopDev $mountPoint -o ro,umask=0000");
         if ($result !== 0) {
             $res->success = false;
-            $res->messages[] = "Failed to mount the first partition. Check filesystem and options.";
+            $res->messages[] = TranslationProvider::translate('rest_System_UpgradeMountFailed');
+            self::destroyLoopDevice($loopDev);
+            if (file_exists($decompressedImg)) {
+                unlink($decompressedImg);
+            }
             return $res;
         }
 

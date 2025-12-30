@@ -153,6 +153,11 @@ class FilesManagementProcessor extends Injectable
         // Support both 'id' (v3 RESTful) and 'filename' (legacy)
         $filename = $data['id'] ?? $data['filename'] ?? '';
 
+        // Normalize the file path (add leading slash if missing)
+        if (!empty($filename) && !str_starts_with($filename, '/')) {
+            $filename = '/' . $filename;
+        }
+
         return RemoveAudioFileAction::main($filename);
     }
 
@@ -195,6 +200,13 @@ class FilesManagementProcessor extends Injectable
         // Support both 'id' (v3 RESTful) and 'filename' (legacy)
         $filename = $data['id'] ?? $data['filename'] ?? '';
         $content = $data['content'] ?? '';
+
+        // Normalize the file path (add leading slash if missing)
+        // WHY: URL path like 'tmp/file.txt' should become '/tmp/file.txt'
+        //      to match GetFileContentAction behavior and create files in correct location
+        if (!empty($filename) && !str_starts_with($filename, '/')) {
+            $filename = '/' . $filename;
+        }
 
         if (empty($filename)) {
             $res->messages['error'][] = 'Filename is required';

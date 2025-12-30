@@ -23,6 +23,10 @@ use MikoPBX\Core\System\{Processes, Util, SystemLoader, System};
 
 require_once('Globals.php');
 
+// Mark system as booting IMMEDIATELY to prevent race condition with pbx_init/console_menu
+// pbx_init is started in parallel via inittab and checks isBooting() before Redis is ready
+System::setBooting(true);
+
 // Record system boot start time using monotonic clock (hrtime)
 // This avoids issues with NTP time synchronization during boot
 $bootStartTime = hrtime(true);
@@ -37,10 +41,16 @@ if(file_exists('/tmp/ejectcd')){
 $mikoPBX = new SystemLoader();
 $result = $mikoPBX->startSystem();
 
-// Run /etc/rc/bootup_pbx in background if system start is successful
+// Run /etc/rc/bootup_pbx synchronously to show progress on console
+// Previously used mwExecBg but that lost output to /dev/null
 if((true === $result)
     && ! Util::isRecoveryMode()
-    && ! System::isDocker()
+    && ! System::isContainer()
 ) {
-    Processes::mwExecBg('/etc/rc/bootup_pbx');
+    // Bare-metal only: run bootup_pbx directly
+    Processes::mwExec('/etc/rc/bootup_pbx');
+} elseif (! System::isContainer()) {
+    // Clear booting flag only for Recovery Mode on bare-metal
+    // Containers (Docker/LXC) call bootup_pbx separately via ContainerEntrypoint
+    System::setBooting(false);
 }

@@ -19,7 +19,17 @@
  */
 namespace MikoPBX\Core\RootFS\etc\rc;
 use MikoPBX\Core\System\ConsoleMenu;
+use MikoPBX\Core\System\System;
 require_once('Globals.php');
+
+// Wait for system boot to complete before starting console menu.
+// Console menu requires Redis and DB migrations to be ready.
+$maxWait = 120; // seconds
+$waited = 0;
+while (System::isBooting() && $waited < $maxWait) {
+    sleep(1);
+    $waited++;
+}
 
 $cMenu = new ConsoleMenu();
 $cMenu->start();

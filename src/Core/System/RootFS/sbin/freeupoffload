@@ -21,10 +21,8 @@
 PATH=/sbin:/bin
 export PATH
 
-# Check if the shell_functions.sh file exists and source it to import functions defined in it
-if [ -f /sbin/shell_functions.sh ]; then
-. /sbin/shell_functions.sh;
-fi
+# Load shell functions for console/serial output
+source /sbin/shell_functions.sh
 
 /bin/touch /tmp/freeoffload;
 
@@ -41,10 +39,10 @@ killprocesses '/offload' -TERM 3;
 killprocesses '/offload' -KILL 0;
 
 # Start of the unmounting process for /offload
-echo " |   - unmounting /offload ...";
+echo_info " |   - unmounting /offload ...";
 f_umount /offload;
 
 # Start of the unmounting process for /cf
-echo " |   - unmounting /cf...";
+echo_info " |   - unmounting /cf...";
 f_umount /cf;
 

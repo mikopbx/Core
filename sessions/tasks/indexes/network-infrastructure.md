@@ -20,4 +20,5 @@ description: Tasks related to network configuration, system utilities, firewall 
 
 ## Completed Tasks
 <!-- Move tasks here when completed, maintaining the format -->
+- `h-implement-lxc-container-support.md` - Separate Docker and LXC container detection, enable network/firewall management in LXC
 - `h-implement-ipv6-application-support/` - Add comprehensive IPv6 support across network services, firewall, UI, and configuration scripts

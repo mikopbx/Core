@@ -156,6 +156,12 @@ class SystemLoader extends Injectable
         $envType = 'Bare Metal';
 
         if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            // Invalidate stale cache created during early boot (DMI may not have been ready)
+            $cacheFile = '/etc/.pbx_env_info';
+            if (file_exists($cacheFile)) {
+                unlink($cacheFile);
+            }
+
             $envOutput = [];
             Processes::mwExec("$pbxEnvDetect --type 2>/dev/null", $envOutput);
             $detectedType = strtolower(trim(implode('', $envOutput)));
@@ -204,6 +210,14 @@ class SystemLoader extends Injectable
 
         // Mark the registry as booting
         System::setBooting(true);
+
+        // Configure loopback interface BEFORE Redis starts
+        // Redis binds to 127.0.0.1 and needs loopback to be UP
+        // Full network configuration happens later (after Redis) as it needs cache
+        $this->echoStartMsg(' - Configuring loopback interface...');
+        $network = new Network();
+        $network->loConfigure();
+        $this->echoResultMsg();
 
         $this->echoStartMsg(' - Starting redis daemon...');
         $redisConf = new RedisConf();
@@ -352,22 +366,9 @@ class SystemLoader extends Injectable
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
-        $this->echoStartMsg(' - Configuring SSH console...');
-        $sshConf = new SSHConf();
-        $this->echoResultMsg($sshConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
-
-        // Detect and update environment type (Docker, VM, Cloud, Bare Metal)
+        // Start cloud provisioning BEFORE SSH so SSH keys are available
+        // Redis is already running at this point, so ORM can be used
         if (!$this->isRecoveryMode) {
-            $envType = $this->detectEnvironment();
-            $this->echoStartMsg(" - Detecting environment ($envType)...");
-            $this->echoResultMsg(SystemMessages::RESULT_DONE);
-        } else {
-            $this->echoStartMsg(' - Detecting environment...');
-            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
-        }
-
-        // Start cloud provisioning
-        if (!$this->isDocker && !$this->isRecoveryMode) {
             $cloudResult = CloudProvisioning::start();
 
             // Show result with informative message
@@ -386,6 +387,22 @@ class SystemLoader extends Injectable
             $this->echoStartMsg(' - Cloud provisioning...');
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
+
+        // Detect and update environment type (Docker, VM, Cloud, Bare Metal)
+        // Runs after cloud provisioning which may set VIRTUAL_HARDWARE_TYPE
+        if (!$this->isRecoveryMode) {
+            $envType = $this->detectEnvironment();
+            $this->echoStartMsg(" - Detecting environment ($envType)...");
+            $this->echoResultMsg(SystemMessages::RESULT_DONE);
+        } else {
+            $this->echoStartMsg(' - Detecting environment...');
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
+
+        // SSH starts AFTER cloud provisioning so authorized keys are already in database
+        $this->echoStartMsg(' - Configuring SSH console...');
+        $sshConf = new SSHConf();
+        $this->echoResultMsg($sshConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Connect storage in a cloud if needed
         $this->echoStartMsg(' - Connecting cloud storage...');

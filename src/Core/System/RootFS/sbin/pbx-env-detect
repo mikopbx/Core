@@ -70,6 +70,21 @@ detect_environment() {
         return
     fi
 
+    # Check for LXC via environment variable
+    if [ -n "$container" ] && [ "$container" = 'lxc' ]; then
+        echo "lxc"
+        return
+    fi
+
+    # Fallback: check init process environment for LXC
+    # Needed when shell doesn't inherit the container env var (e.g., via shell_exec from PHP)
+    if [ -r "/proc/1/environ" ]; then
+        if grep -qz "container=lxc" /proc/1/environ 2>/dev/null; then
+            echo "lxc"
+            return
+        fi
+    fi
+
     # Check for virtualization using various methods
 
     # Method 1: Check DMI/SMBIOS information

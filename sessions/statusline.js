@@ -423,6 +423,30 @@ function main() {
         }
     }
 
+    // Format current working directory (relative to PROJECT_ROOT or shortened)
+    let cwdDisplay = '';
+    const resolvedCwd = path.resolve(cwd);
+    if (resolvedCwd.startsWith(PROJECT_ROOT)) {
+        // Show relative path from project root
+        const relativePath = path.relative(PROJECT_ROOT, resolvedCwd);
+        // If at project root, show project name; otherwise show relative path
+        cwdDisplay = relativePath || path.basename(PROJECT_ROOT);
+    } else {
+        // Show last 2 components of the path
+        const parts = resolvedCwd.split(path.sep);
+        cwdDisplay = parts.slice(-2).join(path.sep);
+    }
+
+    let cwdIcon;
+    if (iconStyle === IconStyle.NERD_FONTS) {
+        cwdIcon = '󰉋 ';
+    } else if (iconStyle === IconStyle.EMOJI) {
+        cwdIcon = '📂 ';
+    } else {  // ASCII
+        cwdIcon = 'Dir: ';
+    }
+    const cwdPart = `${lGray}${cwdIcon}${cwdDisplay}${reset}`;
+
     // Final output
     // Line 1 - Progress bar | Task
     const contextPart = progressBar || `${gray}No context usage data${reset}`;
@@ -456,6 +480,7 @@ function main() {
     const uncommittedStr = uncommittedParts.join(' ');
 
     const line2Parts = [
+        cwdPart,
         `${purple}${modeIcon}${currMode}${reset}`,
         uncommittedStr,
         `${cyan}${tasksIcon}${openTaskCount + openTaskDirCount} open${reset}`

@@ -39,6 +39,8 @@ interface SystemConfigInterface
 
     public const string GENERATE_FAIL2BAN_JAILS = 'generateFail2BanJails';
 
+    public const string GENERATE_FAIL2BAN_FILTERS = 'generateFail2BanFilters';
+
     public const string ON_AFTER_MODULE_DISABLE = 'onAfterModuleDisable';
 
     public const string ON_AFTER_MODULE_ENABLE = 'onAfterModuleEnable';

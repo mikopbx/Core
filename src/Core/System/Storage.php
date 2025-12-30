@@ -1357,16 +1357,17 @@ class Storage extends Injectable
     {
         $res_disks = [];
 
-        if (System::isDocker()) {
-            // Get disk information for /storage directory
+        if (System::isContainer()) {
+            // Get disk information for /storage directory (Docker and LXC)
             $out = [];
             $grepPath = Util::which('grep');
             $dfPath = Util::which('df');
             $awkPath = Util::which('awk');
 
             // Execute the command to get disk information for /storage directory
+            // Use -P for POSIX format (single line output even with long device names)
             Processes::mwExec(
-                "$dfPath -k /storage | $awkPath  '{ print \$1 \"|\" $3 \"|\" \$4} ' | $grepPath -v 'Available'",
+                "$dfPath -Pk /storage | $awkPath  '{ print \$1 \"|\" \$3 \"|\" \$4} ' | $grepPath -v 'Available'",
                 $out
             );
             $disk_data = explode('|', implode(" ", $out));
@@ -1376,13 +1377,16 @@ class Storage extends Injectable
                 $used_space = round($disk_data[1] / 1024, 1);
                 $free_space = round($disk_data[2] / 1024, 1);
                 $usage_percentage = ($m_size > 0) ? round(($used_space / $m_size) * 100, 1) : 0;
-                
-                // Add Docker disk information to the result
+
+                // Determine vendor based on container type
+                $vendor = System::isDocker() ? 'Docker' : 'LXC';
+
+                // Add container disk information to the result
                 $res_disks[] = [
                     'id' => $disk_data[0],
                     'size' => "" . $m_size,
                     'size_text' => "" . $m_size . " Mb",
-                    'vendor' => 'Debian',
+                    'vendor' => $vendor,
                     'mounted' => '/storage/usbdisk1',
                     'free_space' => $free_space,
                     'used_space' => $used_space,
@@ -1438,18 +1442,17 @@ class Storage extends Injectable
 
                 $arr_disk_info = $this->determineFormatFs($diskInfo);
 
+                // Get used_space from partitions or directly from df
+                $used_space = 0;
                 if (count($arr_disk_info) > 0) {
-                    $used = 0;
                     foreach ($arr_disk_info as $disk_info) {
-                        $used += $disk_info['used_space'];
-                    }
-                    if ($used > 0) {
-                        $free_space = $mb_size - $used;
+                        $used_space += $disk_info['used_space'];
                     }
                 }
 
-                $used_space = $mb_size - $free_space;
-                $usage_percentage = ($mb_size > 0) ? round(($used_space / $mb_size) * 100, 1) : 0;
+                // Calculate usage percentage based on used + free (accounts for reserved blocks)
+                $total_usable = $used_space + $free_space;
+                $usage_percentage = ($total_usable > 0) ? round(($used_space / $total_usable) * 100, 1) : 0;
                 
                 // Add HDD device information to the result
                 $res_disks[] = [
@@ -1525,18 +1528,26 @@ class Storage extends Injectable
             
             foreach ($paths as $path) {
                 if ($category === 'cdr_database') {
-                    // For CDR database, calculate individual files
-                    if (is_file($path)) {
-                        $size = filesize($path) / (1024 * 1024); // Convert bytes to MB
+                    // For CDR database directory, calculate entire folder size
+                    if (is_dir($path)) {
+                        $size = $this->getDirectorySizeMb($path);
                         $categorySize += $size;
                         $existingPaths[] = $path;
                     }
                 } elseif ($category === 'system_logs') {
-                    // For system logs, exclude CDR database files from astlogs
+                    // For system logs, just calculate directory size
                     if (is_dir($path)) {
-                        if ($path === '/storage/usbdisk1/mikopbx/astlogs') {
-                            // Calculate astlogs size excluding asterisk/cdr.db* files
-                            $size = $this->getDirectorySizeExcludingFiles($path, ['asterisk/cdr.db', 'asterisk/cdr.db-shm', 'asterisk/cdr.db-wal']);
+                        $size = $this->getDirectorySizeMb($path);
+                        $categorySize += $size;
+                        $existingPaths[] = $path;
+                    }
+                } elseif ($category === 'system_caches') {
+                    // For system caches, exclude swapfile from temp directory
+                    if (is_dir($path)) {
+                        $tempDir = Directories::getDir(Directories::CORE_TEMP_DIR);
+                        if ($path === $tempDir) {
+                            // Calculate temp size excluding swapfile
+                            $size = $this->getDirectorySizeExcludingFiles($path, ['swapfile']);
                         } else {
                             $size = $this->getDirectorySizeMb($path);
                         }
@@ -1597,18 +1608,16 @@ class Storage extends Injectable
             $recordingPaths[] = $voicemailArchive;
         }
         
-        // CDR database files (история разговоров - журнал)
-        $astLogDir = Directories::getDir(Directories::AST_LOG_DIR);
-        $cdrFiles = [
-            $astLogDir . '/asterisk/cdr.db',
-            $astLogDir . '/asterisk/cdr.db-shm',
-            $astLogDir . '/asterisk/cdr.db-wal',
+        // CDR database directory (история разговоров - журнал)
+        // Contains cdr.db, cdr.db-shm, cdr.db-wal, old-cdr.db and other CDR-related files
+        $cdrPaths = [
+            Directories::getDir(Directories::AST_LOG_DIR),
         ];
         
         // System logs paths (системные логи)
+        // Note: AST_LOG_DIR is now in cdr_database category (contains only CDR files)
         $systemLogPaths = [
             Directories::getDir(Directories::CORE_LOGS_DIR),
-            $astLogDir, // Will exclude CDR files in calculation
             Directories::getDir(Directories::CORE_FAIL2AN_DB_DIR),
         ];
         
@@ -1651,7 +1660,7 @@ class Storage extends Injectable
 
         return [
             'call_recordings' => $recordingPaths,
-            'cdr_database' => $cdrFiles,
+            'cdr_database' => $cdrPaths,
             'system_logs' => $systemLogPaths,
             'modules' => $modulesPaths,
             'backups' => $backupPaths,
@@ -1850,6 +1859,39 @@ class Storage extends Injectable
     }
 
     /**
+     * Get used disk space from df command.
+     *
+     * Uses df output directly to get accurate used space, accounting for
+     * filesystem reserved blocks (e.g., ext4 reserves ~5% for root).
+     *
+     * @param string $hdd The name of the HDD (e.g., "/dev/sdb1").
+     * @return float|int The used space in megabytes.
+     */
+    public static function getUsedSpace(string $hdd): float|int
+    {
+        $out = [];
+        $hdd = escapeshellarg($hdd);
+        $grep = Util::which('grep');
+        $awk = Util::which('awk');
+        $df = Util::which('df');
+        $head = Util::which('head');
+
+        // Execute df command to get the used space for the HDD (column $3 = Used)
+        Processes::mwExec("$df -m | $grep $hdd | $grep -v custom_modules | $head -n 1 | $awk '{print \$3}'", $out);
+        $result = 0;
+
+        // Sum up the used space values
+        foreach ($out as $res) {
+            if (!is_numeric($res)) {
+                continue;
+            }
+            $result += (1 * $res);
+        }
+
+        return $result;
+    }
+
+    /**
      * Determine the format and file system information for a device.
      *
      * @param array $deviceInfo The device information.
@@ -1903,12 +1945,12 @@ class Storage extends Injectable
                 $awkPath = Util::which('awk');
                 $mountPath = Util::which('mount');
 
-                // Get the file system type and free space of the mounted device
+                // Get the file system type and used space of the mounted device
                 Processes::mwExec("$mountPath | $grepPath '/dev/$dev' | $awkPath '{print $5}'", $out);
                 $fs = trim(implode("", $out));
                 $fs = ($fs === 'fuseblk') ? 'ntfs' : $fs;
-                $free_space = self::getFreeSpace("/dev/$dev ");
-                $used_space = $mb_size - $free_space;
+                // Use getUsedSpace to get accurate used space from df (accounts for reserved blocks)
+                $used_space = self::getUsedSpace("/dev/$dev ");
             } else {
                 $format = $this->getFsType($device);
 

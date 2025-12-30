@@ -55,9 +55,18 @@ class RebootMenu extends AbstractMenu
             } catch (\Exception $e) {
                 // Ignore
             }
+
+            // Show reboot message to user
+            echo "\n\n";
+            echo "  " . $this->translation->_('cm_SystemRebooting') . "\n\n  ";
+
             System::reboot();
-            sleep(2);
-            exit(0);
+
+            // Wait indefinitely with progress indicator - system will reboot before loop completes
+            while (true) {
+                echo ".";
+                sleep(1);
+            }
         });
         $index++;
 
@@ -68,8 +77,18 @@ class RebootMenu extends AbstractMenu
             } catch (\Exception $e) {
                 // Ignore
             }
+
+            // Show shutdown message to user
+            echo "\n\n";
+            echo "  " . $this->translation->_('cm_SystemShuttingDown') . "\n\n  ";
+
             file_put_contents('/tmp/shutdown', '1');
-            exit(0);
+
+            // Wait indefinitely with progress indicator - system will shutdown before loop completes
+            while (true) {
+                echo ".";
+                sleep(1);
+            }
         });
         $index++;
 

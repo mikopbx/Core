@@ -21,7 +21,9 @@
 namespace MikoPBX\Core\System\ConsoleMenu\Menus;
 
 use MikoPBX\Core\System\ConsoleMenu\Actions\SystemActions;
+use MikoPBX\Core\System\ConsoleMenu\Banners\BannerDataCollector;
 use MikoPBX\Core\System\ConsoleMenu\Banners\WelcomeBanner;
+use MikoPBX\Core\System\ConsoleMenu\Utilities\MenuStyleConfig;
 use MikoPBX\Core\System\PBXInstaller;
 use MikoPBX\Core\System\PBXRecovery;
 use PhpSchool\CliMenu\CliMenu;
@@ -63,6 +65,9 @@ class MainMenu extends AbstractMenu
         $builder = $this->createMenuBuilder();
         $index = 1;
 
+        // Initialize data collector once for warning indicators
+        $dataCollector = new BannerDataCollector();
+
         // Add separator line
         $titleWidth = $this->styleConfig->getMenuWidth();
         $separator = '-';
@@ -85,7 +90,14 @@ class MainMenu extends AbstractMenu
         // [2] Network and Connection (if available)
         if ($this->env->canConfigureNetwork() || $this->env->isDocker()) {
             $networkMenu = new NetworkMenu();
-            $builder->addItem("[$index] " . $networkMenu->getTitle(), function (CliMenu $menu) {
+            $networkLabel = "[$index] " . $networkMenu->getTitle();
+
+            // Add warning indicator if firewall is disabled
+            if ($dataCollector->isFirewallDisabled()) {
+                $networkLabel .= ' ' . MenuStyleConfig::colorize('(!)', MenuStyleConfig::COLOR_RED);
+            }
+
+            $builder->addItem($networkLabel, function (CliMenu $menu) {
                 $menu->close();
                 $networkMenu = new NetworkMenu();
                 $networkMenu->show($menu);
@@ -104,9 +116,15 @@ class MainMenu extends AbstractMenu
             $index++;
         }
 
-        // [3] System
+        // [3] System (with integrity warning if corrupted)
         $systemMenu = new SystemMenu();
-        $builder->addItem("[$index] " . $systemMenu->getTitle(), function (CliMenu $menu) {
+        $systemLabel = "[$index] " . $systemMenu->getTitle();
+
+        if ($dataCollector->hasCorruptedFiles()) {
+            $systemLabel .= ' ' . MenuStyleConfig::colorize('(!)', MenuStyleConfig::COLOR_RED);
+        }
+
+        $builder->addItem($systemLabel, function (CliMenu $menu) {
             $menu->close();
             $systemMenu = new SystemMenu();
             $systemMenu->show($menu);
@@ -136,6 +154,7 @@ class MainMenu extends AbstractMenu
                 // Ctrl+C - exit to shell
                 echo "\e[?25h";
                 file_put_contents('/tmp/start_sh', '');
+                echo PHP_EOL . $this->translation->_('cm_RestartMenuHint') . ': /etc/rc/console_menu' . PHP_EOL . PHP_EOL;
                 exit(0);
             }
         });
@@ -146,6 +165,7 @@ class MainMenu extends AbstractMenu
             echo "\e[?25h"; // Enable cursor
             $menu->close();
             file_put_contents('/tmp/start_sh', '');
+            echo PHP_EOL . $this->translation->_('cm_RestartMenuHint') . ': /etc/rc/console_menu' . PHP_EOL . PHP_EOL;
             exit(0);
         });
 

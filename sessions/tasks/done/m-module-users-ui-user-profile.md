@@ -1,8 +1,9 @@
 ---
 name: m-module-users-ui-user-profile
 branch: feature/module-users-ui-profile
-status: in-progress
+status: completed
 created: 2025-12-04
+completed: 2025-12-16
 ---
 
 # Task: User Profile Page for ModuleUsersUI
@@ -819,16 +820,16 @@ $footerCollection
 
 ### Implementation Checklist
 
-- [ ] Create `UserProfileController.php` with `indexAction()` and `changePasswordAction()`
-- [ ] Create `App/Views/UserProfile/index.volt` with password form and passkeys container
-- [ ] Create `public/assets/js/src/module-users-ui-profile.js` with password change logic
-- [ ] Update `CoreACL::getAlwaysAllowed()` to include `UserProfileController::class => '*'`
-- [ ] Add `onBeforeHeaderMenuShow()` to `UsersUIConf.php` for menu item
-- [ ] Add translation keys for password change UI
-- [ ] Test password change (local auth mode)
-- [ ] Test LDAP mode (password form hidden)
-- [ ] Test passkeys management (reusing Core module)
-- [ ] Verify menu item appears only for ModuleUsersUI users (not admin)
+- [x] Create `UserProfileController.php` with `indexAction()` and `changePasswordAction()`
+- [x] Create `App/Views/UserProfile/index.volt` with password form and passkeys container
+- [x] Create `public/assets/js/src/module-users-ui-profile.js` with password change logic
+- [x] Update `CoreACL::getAlwaysAllowed()` to include `UserProfileController::class => '*'`
+- [x] Add `onBeforeHeaderMenuShow()` to `UsersUIConf.php` for menu item
+- [x] Add translation keys for password change UI
+- [ ] Test password change (local auth mode) - manual testing post-completion
+- [ ] Test LDAP mode (password form hidden) - manual testing post-completion
+- [ ] Test passkeys management (reusing Core module) - manual testing post-completion
+- [ ] Verify menu item appears only for ModuleUsersUI users (not admin) - manual testing post-completion
 
 ---
 

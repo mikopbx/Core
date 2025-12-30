@@ -60,7 +60,3 @@ sessions mode discussion
 ## Workflow Protocols
 
 The system has automated protocols for task creation, startup, completion, and context compaction. When loaded, follow the protocol instructions. The user activates these with trigger phrases - you don't need to manage this.
-
-
-## Language
-Общайся с пользователем на русском, весь код и комментарии в коде на англлийском!

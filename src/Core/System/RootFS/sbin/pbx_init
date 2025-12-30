@@ -17,9 +17,15 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-echo " - Start ${0}";
+# Load shell functions for console/serial output
+source /sbin/shell_functions.sh
+
+echo_info "Start ${0}";
 delta=1; i=0;
 freeOffloadFile='/tmp/freeoffload';
+
+# Trap SIGINT (Ctrl+C) to exit to shell instead of respawn
+trap 'touch /tmp/start_sh; exit 0' INT
 
 while : ; do
 
@@ -80,12 +86,16 @@ while : ; do
         clear;
         rm -rf /tmp/start_sh;
         if [ -f /etc/debian_version ] ; then
+            # Docker container - no exec, just run bash
             /bin/bash -login;
-        elif [ "${SSH_CLIENT}x" = 'x' ] ; then
-             # Redirect input and output to the console.
-            exec < /dev/console > /dev/console  2>&1
+        elif [ "${SSH_CLIENT}x" = "x" ] ; then
+            # Console (not SSH) - reconnect stdin/stdout to current tty
+            # This fixes terminal state after PhpSchool CliMenu exit
+            current_tty=$(tty)
+            exec < "$current_tty" > "$current_tty" 2>&1
             exec /bin/bash -login;
         else
+            # SSH session
             exec /bin/bash -login;
         fi
     fi

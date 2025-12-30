@@ -42,8 +42,8 @@ class CDRSeederRemote:
 
     Environment Variables:
         MIKOPBX_API_URL       - MikoPBX API URL (used to detect remote execution via API)
-        MIKOPBX_LOGIN         - API login (default: admin)
-        MIKOPBX_PASSWORD      - API password (default: admin)
+        MIKOPBX_API_USERNAME  - API login (default: admin)
+        MIKOPBX_API_PASSWORD  - API password (default: admin)
         MIKOPBX_CONTAINER     - Docker container name (default: mikopbx-php83)
         MIKOPBX_SSH_HOST      - SSH hostname for remote execution (forces SSH mode)
         MIKOPBX_SSH_USER      - SSH username (default: root)
@@ -61,8 +61,8 @@ class CDRSeederRemote:
 
         # API configuration for REST API execution
         self.api_base_url = os.getenv('MIKOPBX_API_URL', '')
-        self.api_login = os.getenv('MIKOPBX_LOGIN', 'admin')
-        self.api_password = os.getenv('MIKOPBX_PASSWORD', 'admin')
+        self.api_login = os.getenv('MIKOPBX_API_USERNAME', 'admin')
+        self.api_password = os.getenv('MIKOPBX_API_PASSWORD', 'admin')
 
         # Script path on station
         # Path priorities:
@@ -109,7 +109,7 @@ class CDRSeederRemote:
 
         return 'local'
 
-    def _execute_command(self, command: str, timeout: int = 60) -> subprocess.CompletedProcess:
+    def _execute_command(self, command: str, timeout: int = 120) -> subprocess.CompletedProcess:
         """Execute command on MikoPBX station"""
         if self.execution_mode == 'docker':
             # Execute via docker exec (works with both Docker and OrbStack)
@@ -155,12 +155,62 @@ class CDRSeederRemote:
         Returns subprocess.CompletedProcess-compatible object for consistency
         """
         import requests
+        import time
         from collections import namedtuple
 
         # Create a CompletedProcess-like result object
         CompletedProcessLike = namedtuple('CompletedProcessLike', ['returncode', 'stdout', 'stderr'])
 
+        # Enable verbose diagnostics for debugging TeamCity issues
+        verbose = os.getenv('CDR_SEEDER_VERBOSE', '1') == '1'
+
+        def log_diag(msg: str):
+            """Print diagnostic message if verbose mode enabled"""
+            if verbose:
+                print(f"[CDR-DIAG] {msg}")
+
         try:
+            log_diag("=" * 60)
+            log_diag("Starting API execution diagnostics")
+            log_diag("=" * 60)
+            log_diag(f"API Base URL: {self.api_base_url}")
+            log_diag(f"Command length: {len(command)} chars")
+            log_diag(f"Timeout: {timeout} seconds")
+
+            # Step 1: Network connectivity check
+            step1_start = time.time()
+            log_diag("")
+            log_diag("STEP 1: Network connectivity check")
+            try:
+                # Extract host from URL for connectivity check
+                import re
+                hostname_match = re.search(r'://([^:/]+)', self.api_base_url)
+                if hostname_match:
+                    host = hostname_match.group(1)
+                    log_diag(f"  Target host: {host}")
+
+                    # Quick TCP check to port 443
+                    import socket
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(5)
+                    try:
+                        result = sock.connect_ex((host, 443))
+                        if result == 0:
+                            log_diag(f"  ✓ Port 443 is reachable")
+                        else:
+                            log_diag(f"  ✗ Port 443 unreachable (error code: {result})")
+                    finally:
+                        sock.close()
+            except Exception as e:
+                log_diag(f"  ⚠ Connectivity check failed: {e}")
+            step1_time = time.time() - step1_start
+            log_diag(f"  Step 1 completed in {step1_time:.2f}s")
+
+            # Step 2: Authentication
+            step2_start = time.time()
+            log_diag("")
+            log_diag("STEP 2: Authentication")
+
             # Try to authenticate with configured password first, then try alternative passwords
             passwords_to_try = [self.api_password]
             # Add alternative passwords if not already in list
@@ -172,81 +222,166 @@ class CDRSeederRemote:
             access_token = None
             auth_url = f'{self.api_base_url}/auth:login'
             last_error = None
+            successful_password = None
 
-            for password in passwords_to_try:
-                auth_response = requests.post(
-                    auth_url,
-                    data={'login': self.api_login, 'password': password, 'rememberMe': 'true'},
-                    headers={'Content-Type': 'application/x-www-form-urlencoded'},
-                    timeout=10,
-                    verify=False
-                )
+            log_diag(f"  Auth URL: {auth_url}")
+            log_diag(f"  Login: {self.api_login}")
+            log_diag(f"  Passwords to try: {len(passwords_to_try)}")
 
-                if auth_response.status_code == 200:
-                    auth_data = auth_response.json()
-                    if auth_data.get('result'):
-                        access_token = auth_data['data']['accessToken']
-                        break
+            for idx, password in enumerate(passwords_to_try):
+                masked_pwd = password[:2] + '*' * (len(password) - 4) + password[-2:] if len(password) > 4 else '****'
+                log_diag(f"  Trying password {idx + 1}/{len(passwords_to_try)}: {masked_pwd}")
+
+                auth_start = time.time()
+                try:
+                    auth_response = requests.post(
+                        auth_url,
+                        data={'login': self.api_login, 'password': password, 'rememberMe': 'true'},
+                        headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                        timeout=10,
+                        verify=False
+                    )
+                    auth_time = time.time() - auth_start
+
+                    log_diag(f"    Response status: {auth_response.status_code}")
+                    log_diag(f"    Response time: {auth_time:.2f}s")
+                    log_diag(f"    Response size: {len(auth_response.text)} bytes")
+
+                    if auth_response.status_code == 200:
+                        auth_data = auth_response.json()
+                        if auth_data.get('result'):
+                            access_token = auth_data['data']['accessToken']
+                            successful_password = masked_pwd
+                            log_diag(f"    ✓ Authentication successful with password: {masked_pwd}")
+                            log_diag(f"    Token length: {len(access_token)} chars")
+                            break
+                        else:
+                            last_error = auth_data.get('messages', ['Unknown error'])
+                            log_diag(f"    ✗ Auth failed: {last_error}")
                     else:
-                        last_error = auth_data.get('messages', ['Unknown error'])
-                else:
-                    last_error = auth_response.text
+                        last_error = auth_response.text[:200]  # First 200 chars
+                        log_diag(f"    ✗ HTTP error: {last_error}")
+
+                except requests.exceptions.Timeout:
+                    log_diag(f"    ✗ Auth request timed out after 10s")
+                    last_error = "Authentication timeout"
+                except Exception as e:
+                    log_diag(f"    ✗ Auth request error: {e}")
+                    last_error = str(e)
+
+            step2_time = time.time() - step2_start
+            log_diag(f"  Step 2 completed in {step2_time:.2f}s")
 
             if not access_token:
+                log_diag("")
+                log_diag("✗ AUTHENTICATION FAILED - cannot proceed")
                 return CompletedProcessLike(
                     returncode=1,
                     stdout='',
                     stderr=f'Authentication failed with all passwords: {last_error}'
                 )
 
-            # Execute bash command via REST API
+            # Step 3: Execute bash command
+            step3_start = time.time()
+            log_diag("")
+            log_diag("STEP 3: Execute bash command via API")
+
             exec_url = f'{self.api_base_url}/system:executeBashCommand'
-            exec_response = requests.post(
-                exec_url,
-                json={'command': command},
-                headers={'Authorization': f'Bearer {access_token}'},
-                timeout=timeout,
-                verify=False
-            )
+            log_diag(f"  Exec URL: {exec_url}")
+            log_diag(f"  Command (first 200 chars): {command[:200]}...")
+            log_diag(f"  Server timeout: {timeout}s")
+            log_diag(f"  HTTP timeout: {timeout + 5}s")
 
-            if exec_response.status_code != 200:
+            try:
+                exec_response = requests.post(
+                    exec_url,
+                    json={'command': command, 'timeout': timeout},
+                    headers={'Authorization': f'Bearer {access_token}'},
+                    timeout=timeout + 5,  # HTTP timeout slightly longer than server timeout
+                    verify=False
+                )
+                step3_time = time.time() - step3_start
+
+                log_diag(f"  Response status: {exec_response.status_code}")
+                log_diag(f"  Response time: {step3_time:.2f}s")
+                log_diag(f"  Response size: {len(exec_response.text)} bytes")
+                log_diag(f"  Response headers: {dict(exec_response.headers)}")
+
+                if exec_response.status_code != 200:
+                    log_diag(f"  ✗ HTTP error response (first 500 chars):")
+                    log_diag(f"    {exec_response.text[:500]}")
+                    return CompletedProcessLike(
+                        returncode=1,
+                        stdout='',
+                        stderr=f'API request failed (HTTP {exec_response.status_code}): {exec_response.text[:500]}'
+                    )
+
+                result_data = exec_response.json()
+                log_diag(f"  Response result: {result_data.get('result')}")
+
+                # Extract output from API response
+                if result_data.get('result') and 'data' in result_data:
+                    data = result_data['data']
+                    output = data.get('output', '')
+                    exit_code = data.get('exitCode', 0)
+                    log_diag(f"  ✓ Command executed successfully")
+                    log_diag(f"  Exit code: {exit_code}")
+                    log_diag(f"  Output length: {len(output)} chars")
+                    log_diag(f"  Output (first 500 chars): {output[:500]}")
+                    return CompletedProcessLike(
+                        returncode=exit_code,
+                        stdout=output,
+                        stderr=''
+                    )
+                else:
+                    error_msgs = result_data.get('messages', ['Unknown error'])
+                    log_diag(f"  ✗ Command execution failed: {error_msgs}")
+                    log_diag(f"  Full response: {result_data}")
+                    return CompletedProcessLike(
+                        returncode=1,
+                        stdout='',
+                        stderr=f'Command execution failed: {error_msgs}'
+                    )
+
+            except requests.exceptions.Timeout as e:
+                step3_time = time.time() - step3_start
+                log_diag(f"  ✗ TIMEOUT after {step3_time:.2f}s")
+                log_diag(f"  Timeout exception: {e}")
+                log_diag("")
+                log_diag("TIMEOUT DIAGNOSTICS:")
+                log_diag(f"  - HTTP client timeout was {timeout + 5}s")
+                log_diag(f"  - Server-side timeout was {timeout}s")
+                log_diag(f"  - Actual wait time: {step3_time:.2f}s")
+                log_diag("  - This could be caused by:")
+                log_diag("    1. Slow network between test runner and MikoPBX")
+                log_diag("    2. Server overloaded or unresponsive")
+                log_diag("    3. Bash command taking too long to execute")
+                log_diag("    4. Network timeout/firewall issues")
                 return CompletedProcessLike(
                     returncode=1,
                     stdout='',
-                    stderr=f'API request failed: {exec_response.text}'
+                    stderr=f'Command execution timed out after {step3_time:.2f}s (limit: {timeout}s). '
+                           f'Auth was successful with {successful_password}. Check server logs for details.'
                 )
 
-            result_data = exec_response.json()
-
-            # Extract output from API response
-            # API response format: {"result": true, "data": {"output": "...", "exitCode": 0}}
-            # Note: API returns combined stdout/stderr in 'output' field
-            if result_data.get('result') and 'data' in result_data:
-                data = result_data['data']
-                output = data.get('output', '')
-                return CompletedProcessLike(
-                    returncode=data.get('exitCode', 0),
-                    stdout=output,  # API combines stdout/stderr into output
-                    stderr=''  # API doesn't separate stderr
-                )
-            else:
+            except requests.exceptions.ConnectionError as e:
+                step3_time = time.time() - step3_start
+                log_diag(f"  ✗ CONNECTION ERROR after {step3_time:.2f}s")
+                log_diag(f"  Error: {e}")
                 return CompletedProcessLike(
                     returncode=1,
                     stdout='',
-                    stderr=f'Command execution failed: {result_data.get("messages", ["Unknown error"])}'
+                    stderr=f'Connection error during command execution: {e}'
                 )
 
-        except requests.exceptions.Timeout:
-            return CompletedProcessLike(
-                returncode=1,
-                stdout='',
-                stderr=f'Command execution timed out after {timeout} seconds'
-            )
         except Exception as e:
+            import traceback
+            log_diag(f"✗ UNEXPECTED ERROR: {e}")
+            log_diag(f"Traceback: {traceback.format_exc()}")
             return CompletedProcessLike(
                 returncode=1,
                 stdout='',
-                stderr=f'API execution error: {str(e)}'
+                stderr=f'API execution error: {str(e)}\n{traceback.format_exc()}'
             )
 
     def seed(self) -> bool:
@@ -292,7 +427,7 @@ export FIXTURES_DIR=/storage/usbdisk1/mikopbx/python-tests/fixtures
             return True
 
         except subprocess.TimeoutExpired:
-            print("✗ Seeding timed out after 60 seconds")
+            print("✗ Seeding timed out after 120 seconds")
             return False
         except Exception as e:
             print(f"✗ Seeding failed: {str(e)}")
@@ -368,6 +503,91 @@ export FIXTURES_DIR=/storage/usbdisk1/mikopbx/python-tests/fixtures
             return []
         except Exception:
             return []
+
+    def get_server_log(self, lines: int = 100) -> str:
+        """
+        Get server-side CDR seeder log for debugging
+
+        This is useful when API execution times out - we can check
+        what happened on the server side.
+
+        Args:
+            lines: Number of log lines to retrieve (default: 100)
+
+        Returns:
+            Log content or error message
+        """
+        log_path = '/storage/usbdisk1/mikopbx/log/cdr_seeder.log'
+
+        try:
+            command = f'tail -n {lines} {log_path} 2>/dev/null || echo "Log file not found: {log_path}"'
+            result = self._execute_command(command, timeout=10)
+
+            if result.returncode == 0:
+                return result.stdout
+            return f"Failed to read log: {result.stderr}"
+        except Exception as e:
+            return f"Error reading log: {e}"
+
+    def diagnose_failure(self) -> str:
+        """
+        Comprehensive failure diagnosis
+
+        Call this after a failed seed() to get detailed diagnostics.
+        Collects server log, script existence check, permissions, etc.
+
+        Returns:
+            Diagnostic report as string
+        """
+        report = []
+        report.append("=" * 60)
+        report.append("CDR SEEDER FAILURE DIAGNOSIS")
+        report.append("=" * 60)
+        report.append(f"Execution mode: {self.execution_mode}")
+        report.append(f"Script path: {self.script_path}")
+        report.append(f"API URL: {self.api_base_url}")
+        report.append("")
+
+        # Check if script exists
+        report.append("--- Script Check ---")
+        try:
+            check_cmd = f'ls -la {self.script_path} 2>&1; file {self.script_path} 2>&1'
+            result = self._execute_command(check_cmd, timeout=10)
+            report.append(result.stdout if result.stdout else result.stderr)
+        except Exception as e:
+            report.append(f"Script check failed: {e}")
+
+        # Check fixtures directory
+        report.append("")
+        report.append("--- Fixtures Check ---")
+        try:
+            fixtures_dir = '/storage/usbdisk1/mikopbx/python-tests/fixtures'
+            check_cmd = f'ls -la {fixtures_dir}/ 2>&1 | head -10'
+            result = self._execute_command(check_cmd, timeout=10)
+            report.append(result.stdout if result.stdout else result.stderr)
+        except Exception as e:
+            report.append(f"Fixtures check failed: {e}")
+
+        # Check CDR database
+        report.append("")
+        report.append("--- CDR Database Check ---")
+        try:
+            db_path = '/storage/usbdisk1/mikopbx/astlogs/asterisk/cdr.db'
+            check_cmd = f'ls -la {db_path} 2>&1; sqlite3 {db_path} "SELECT COUNT(*) FROM cdr_general;" 2>&1'
+            result = self._execute_command(check_cmd, timeout=10)
+            report.append(result.stdout if result.stdout else result.stderr)
+        except Exception as e:
+            report.append(f"DB check failed: {e}")
+
+        # Get server log
+        report.append("")
+        report.append("--- Server Log (last 50 lines) ---")
+        report.append(self.get_server_log(50))
+
+        report.append("")
+        report.append("=" * 60)
+
+        return "\n".join(report)
 
 
 # For backward compatibility with existing code

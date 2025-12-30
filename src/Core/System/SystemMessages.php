@@ -91,6 +91,8 @@ class SystemMessages extends Injectable
     /**
      * Gets available serial ports and caches the result.
      *
+     * For LXC containers without serial ports, falls back to /dev/tty1 or /dev/console.
+     *
      * @return array List of available serial port devices
      */
     private static function getAvailableSerialPorts(): array
@@ -98,9 +100,9 @@ class SystemMessages extends Injectable
         if (self::$availableSerialPorts !== null) {
             return self::$availableSerialPorts;
         }
-        
+
         self::$availableSerialPorts = [];
-        
+
         // Use pbx-env-detect if available
         $pbxEnvDetect = '/sbin/pbx-env-detect';
         if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
@@ -109,17 +111,22 @@ class SystemMessages extends Injectable
                 self::$availableSerialPorts = explode(' ', $serialPorts);
             }
         } else {
-            // Fallback to old method
+            // Fallback to old method - check serial ports
             for ($i = 0; $i <= 5; $i++) {
                 $device = "/dev/ttyS$i";
-                
+
                 // Simply check if device exists and is writable
                 if (file_exists($device) && is_writable($device)) {
                     self::$availableSerialPorts[] = $device;
                 }
             }
         }
-        
+
+        // LXC containers: stdout is already connected to /dev/tty1 (Proxmox console)
+        // Writing to /dev/tty1 separately would cause duplicate output
+        // So for LXC we return empty array - stdout handles console output
+        // (This is similar to Docker where runtime manages output)
+
         return self::$availableSerialPorts;
     }
 

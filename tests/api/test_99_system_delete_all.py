@@ -15,6 +15,7 @@ This is a DESTRUCTIVE operation that:
 ⚠️ WARNING: This test should ONLY be run on test systems!
 """
 
+import os
 import pytest
 from conftest import assert_api_success
 
@@ -147,17 +148,17 @@ class TestSystemDeleteAllWARNING:
     To enable, set environment variable: ENABLE_DESTRUCTIVE_TESTS=1
     """
 
-    @pytest.mark.skip(reason="DESTRUCTIVE TEST - Deletes all system data")
+    @pytest.mark.skipif(
+        os.getenv('ENABLE_DESTRUCTIVE_TESTS') != '1',
+        reason="DESTRUCTIVE TEST - Set ENABLE_DESTRUCTIVE_TESTS=1 to enable"
+    )
     def test_DANGEROUS_delete_all_settings(self, api_client):
         """
         ⚠️ DANGER: This test WILL DELETE ALL SYSTEM DATA ⚠️
 
-        This test is SKIPPED by default for safety.
-        Only enable on test systems that you want to reset completely.
+        Enable with ENABLE_DESTRUCTIVE_TESTS=1 environment variable.
+        Only use on test systems that you want to reset completely.
         """
-        import os
-        if os.getenv('ENABLE_DESTRUCTIVE_TESTS') != '1':
-            pytest.skip("Destructive tests are disabled. Set ENABLE_DESTRUCTIVE_TESTS=1 to enable.")
 
         print("\n" + "=" * 60)
         print("⚠️  WARNING: EXECUTING DESTRUCTIVE OPERATION")

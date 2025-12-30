@@ -16,36 +16,22 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
 #
-# Setup console output redirection
-if [ -x "/sbin/pbx-env-detect" ]; then
-  # Use new environment detection
-  SERIAL_PORTS=$(/sbin/pbx-env-detect --serial)
-  if [ -n "$SERIAL_PORTS" ]; then
-    # Get first available serial port
-    FIRST_SERIAL=$(echo $SERIAL_PORTS | cut -d' ' -f1)
-    exec </dev/console > >(/bin/busybox tee $FIRST_SERIAL) 2>&1
-  else
-    exec </dev/console >/dev/console 2>/dev/console
-  fi
-else
-  # Fallback to old method
-  if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
-    exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>&1
-  else
-    exec </dev/console >/dev/console 2>/dev/console;
-  fi
+# Setup console I/O (serial output handled by pbx-message)
+exec </dev/console >/dev/console 2>/dev/console
+
+# Load shell functions for console/serial output
+source /sbin/shell_functions.sh
+
+# Set console framebuffer resolution (for VMware and other hypervisors)
+if [ -w /sys/class/graphics/fb0/virtual_size ]; then
+  echo '1024x768' > /sys/class/graphics/fb0/virtual_size 2>/dev/null
 fi
 
-# Use new message handler if available
-if [ -x "/sbin/pbx-message" ]; then
-  /sbin/pbx-message -t start "Start ${0}"
-else
-  echo " - Start ${0}";
-fi
+echo_info "Start ${0}"
 
 # Show current vesion from file/offload/version if it exists
 if [ -f /offload/version ]; then
-  echo " - Current version: $(cat /etc/version | xargs)"
+  echo_info "Current version: $(cat /etc/version | xargs)"
 fi
 
 # Starting the syslog daemon with specific options
@@ -56,7 +42,7 @@ HOME=/
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 export HOME PATH
-echo ' - Create system dirs'
+echo_info "Create system dirs"
 
 # Creating necessary directories and symbolic links for the system
 mkdir -p /dev/pts \
@@ -72,6 +58,9 @@ mkdir -p /dev/pts \
 chmod 777 /tmp
 ln -s /offload/rootfs/usr /usr
 ln -s /sys/bus/usb /dev/bus/usb
+
+# Create getty symlink for LXC compatibility (Proxmox adds getty to inittab)
+[ ! -e /sbin/getty ] && ln -s /sbin/agetty /sbin/getty
 
 # Creating device nodes for null and initctl
 rm -rf /dev/null
@@ -137,21 +126,21 @@ fi
 
 # Mounting offload and configuration directories
 echo
-echo " - Start /sbin/mountoffload script..."
+echo_info "Start /sbin/mountoffload script..."
 if /sbin/mountoffload; then
-    echo " - Continuing boot process."
-    echo " - Start /etc/rc/mountconfdir script..."
+    echo_info "Continuing boot process."
+    echo_info "Start /etc/rc/mountconfdir script..."
     if /etc/rc/mountconfdir; then
-      echo " - Continuing boot process."
+      echo_info "Continuing boot process."
       # Booting up the system
       /etc/rc/bootup 2>/dev/null
     else
-      echo " - Failed to mount conf, halting boot process."
+      echo_error "Failed to mount conf, halting boot process."
       sleep 15;
       exit 1
     fi
 else
-    echo " - Failed to mount offload, halting boot process."
+    echo_error "Failed to mount offload, halting boot process."
     sleep 15;
     exit 1
 fi

@@ -194,27 +194,44 @@ class BannerDataCollector
     }
 
     /**
-     * Get system uptime in compact format
+     * Get system uptime in seconds
      *
-     * @return string Uptime in format "Xd Yh Zm" (e.g., "2d 3h 45m")
+     * @return int Uptime in seconds, 0 if unavailable
      */
-    public function getUptime(): string
+    public function getUptimeSeconds(): int
     {
         $uptimeFile = '/proc/uptime';
         if (!file_exists($uptimeFile)) {
-            return '';
+            return 0;
         }
 
         $uptimeData = file_get_contents($uptimeFile);
         if ($uptimeData === false) {
+            return 0;
+        }
+
+        return (int)explode(' ', $uptimeData)[0];
+    }
+
+    /**
+     * Get system uptime in compact format with seconds
+     *
+     * Shows seconds to indicate banner is live and updating.
+     * Format: "Xd Yh Zm Ns" (e.g., "2d 3h 45m 12s")
+     *
+     * @return string Uptime string
+     */
+    public function getUptime(): string
+    {
+        $totalSeconds = $this->getUptimeSeconds();
+        if ($totalSeconds === 0) {
             return '';
         }
 
-        $seconds = (int)explode(' ', $uptimeData)[0];
-
-        $days = floor($seconds / 86400);
-        $hours = floor(($seconds % 86400) / 3600);
-        $minutes = floor(($seconds % 3600) / 60);
+        $days = floor($totalSeconds / 86400);
+        $hours = floor(($totalSeconds % 86400) / 3600);
+        $minutes = floor(($totalSeconds % 3600) / 60);
+        $seconds = $totalSeconds % 60;
 
         $parts = [];
         if ($days > 0) {
@@ -224,6 +241,7 @@ class BannerDataCollector
             $parts[] = "{$hours}h";
         }
         $parts[] = "{$minutes}m";
+        $parts[] = "{$seconds}s";
 
         return implode(' ', $parts);
     }
@@ -251,6 +269,28 @@ class BannerDataCollector
             'Fail2ban' => (new Fail2BanConf())->isRunning(),
             'Monit' => (new MonitConf())->isRunning(),
         ];
+    }
+
+    /**
+     * Get CPU core count
+     *
+     * @return int Number of CPU cores, 1 if unavailable
+     */
+    public function getCpuCores(): int
+    {
+        $cpuInfo = '/proc/cpuinfo';
+        if (!file_exists($cpuInfo)) {
+            return 1;
+        }
+
+        $content = file_get_contents($cpuInfo);
+        if ($content === false) {
+            return 1;
+        }
+
+        // Count "processor" lines
+        preg_match_all('/^processor\s*:/m', $content, $matches);
+        return max(1, count($matches[0]));
     }
 
     /**
@@ -300,7 +340,7 @@ class BannerDataCollector
             return false;
         }
 
-        return count(Main::checkForCorruptedFiles()) > 0;
+        return count(Main::checkForCorruptedFiles(true)) > 0;
     }
 
     /**
@@ -321,6 +361,16 @@ class BannerDataCollector
     public function isDocker(): bool
     {
         return System::isDocker();
+    }
+
+    /**
+     * Check if firewall is disabled
+     *
+     * @return bool True if firewall is disabled
+     */
+    public function isFirewallDisabled(): bool
+    {
+        return PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) !== '1';
     }
 
     /**
@@ -370,5 +420,133 @@ class BannerDataCollector
         }
 
         return round($bytes, 1) . ' ' . $units[$index];
+    }
+
+    /**
+     * Get memory usage information
+     *
+     * Reads from /proc/meminfo and returns memory and swap usage.
+     * Memory usage is calculated as: used = total - available
+     *
+     * @return array{
+     *     mem_used: string,
+     *     mem_total: string,
+     *     mem_percent: int,
+     *     swap_used: string,
+     *     swap_total: string,
+     *     swap_percent: int
+     * }|null Memory info or null if unavailable
+     */
+    public function getMemoryInfo(): ?array
+    {
+        $meminfoFile = '/proc/meminfo';
+        if (!file_exists($meminfoFile)) {
+            return null;
+        }
+
+        $content = file_get_contents($meminfoFile);
+        if ($content === false) {
+            return null;
+        }
+
+        $memInfo = [];
+        foreach (explode("\n", $content) as $line) {
+            if (preg_match('/^(\w+):\s+(\d+)\s+kB/', $line, $matches)) {
+                $memInfo[$matches[1]] = (int)$matches[2] * 1024; // Convert kB to bytes
+            }
+        }
+
+        $memTotal = $memInfo['MemTotal'] ?? 0;
+        $memAvailable = $memInfo['MemAvailable'] ?? 0;
+        $swapTotal = $memInfo['SwapTotal'] ?? 0;
+        $swapFree = $memInfo['SwapFree'] ?? 0;
+
+        if ($memTotal <= 0) {
+            return null;
+        }
+
+        $memUsed = $memTotal - $memAvailable;
+        $swapUsed = $swapTotal - $swapFree;
+
+        $memPercent = (int)round(($memUsed / $memTotal) * 100);
+        $swapPercent = $swapTotal > 0 ? (int)round(($swapUsed / $swapTotal) * 100) : 0;
+
+        return [
+            'mem_used' => $this->formatBytes($memUsed),
+            'mem_total' => $this->formatBytes($memTotal),
+            'mem_percent' => $memPercent,
+            'swap_used' => $this->formatBytes($swapUsed),
+            'swap_total' => $this->formatBytes($swapTotal),
+            'swap_percent' => $swapPercent,
+        ];
+    }
+
+    /**
+     * Get last login information (previous session, not current)
+     *
+     * Parses the output of `last` command to find the most recent completed login.
+     * Skips current sessions (still logged in) and system entries.
+     *
+     * @return array{datetime: string, source: string, terminal: string}|null
+     *         Login info or null if no previous login found
+     */
+    public function getLastLogin(): ?array
+    {
+        $output = shell_exec('last -n 20 2>/dev/null');
+        if (empty($output)) {
+            return null;
+        }
+
+        $lines = explode("\n", $output);
+        foreach ($lines as $line) {
+            $line = trim($line);
+
+            // Skip empty lines, current sessions, and system entries
+            if (empty($line)
+                || str_contains($line, 'still logged in')
+                || str_starts_with($line, 'wtmp begins')
+                || str_starts_with($line, 'reboot')
+                || str_starts_with($line, 'shutdown')
+            ) {
+                continue;
+            }
+
+            // Parse login entry
+            // Format: user terminal [host] date time - end_time (duration)
+            // SSH:    root pts/0   192.168.64.1  Mon Dec 15 12:39 - 12:40  (00:00)
+            // Console: root ttyS0                Mon Dec 15 12:14 - 12:16  (00:02)
+            $parts = preg_split('/\s+/', $line);
+            if (count($parts) < 6) {
+                continue;
+            }
+
+            $terminal = $parts[1] ?? '';
+            $source = '';
+            $dateStart = 2;
+
+            // Check if this is an SSH login (pts/X) with IP address
+            if (str_starts_with($terminal, 'pts/')) {
+                // Has IP address in position 2
+                $possibleIp = $parts[2] ?? '';
+                if (filter_var($possibleIp, FILTER_VALIDATE_IP)) {
+                    $source = $possibleIp;
+                    $dateStart = 3;
+                }
+            }
+
+            // Extract datetime (day month date time)
+            // Format: Mon Dec 15 12:39
+            if (count($parts) > $dateStart + 3) {
+                $datetime = implode(' ', array_slice($parts, $dateStart, 4));
+
+                return [
+                    'datetime' => $datetime,
+                    'source' => $source,
+                    'terminal' => $terminal,
+                ];
+            }
+        }
+
+        return null;
     }
 }

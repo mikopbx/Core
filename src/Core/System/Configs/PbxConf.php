@@ -76,8 +76,8 @@ class PbxConf extends SystemConfigClass
     {
         $binPath = Util::which(self::PROC_NAME);
         $confPath = $this->getMainMonitConfFile();
-        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/asterisk/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
-                '    start program = "'.$binPath.'"'.PHP_EOL.
+        $conf = 'check process '.self::PROC_NAME.' matching "'.self::PROC_NAME.' -F"'.PHP_EOL.
+                '    start program = "'.$binPath.' -F"'.PHP_EOL.
                 '    stop program = "'."$binPath -rx 'core stop now'".'"'.PHP_EOL;
         $this->saveFileContent($confPath, $conf);
         return true;
@@ -138,7 +138,7 @@ class PbxConf extends SystemConfigClass
     public function start(): bool
     {
         if (System::isBooting()) {
-            Processes::mwExec($this->startCommand);
+            Processes::mwExecBg($this->startCommand);
         }
         $result = $this->monitWaitStart();
         // Send notifications to modules

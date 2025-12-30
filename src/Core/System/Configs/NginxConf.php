@@ -80,6 +80,7 @@ class NginxConf extends SystemConfigClass
     {
         $this->generateConf();
         if(System::isBooting()){
+            NginxConf::setupLog();
             Processes::mwExec($this->startCommand, $out, $ret);
             $result = $this->monitWaitStart();
         }else{
@@ -94,12 +95,12 @@ class NginxConf extends SystemConfigClass
      **/
     public function reStart(): bool
     {
+        NginxConf::setupLog();
         $this->generateMonitConf();
         $monitResult = $this->monitRestart();
 
         // Get web port from settings
         $waitResult = $this->monitWaitStart();
-
         return $monitResult && $waitResult;
     }
 
@@ -521,6 +522,7 @@ class NginxConf extends SystemConfigClass
             $cat = Util::which('cat');
             Processes::mwExec("$cat $src_log_file 2> /dev/null >$options $dst_log_file");
             Util::createUpdateSymlink($dst_log_file, $src_log_file);
+            shell_exec(Util::which('chown')." -R www:www ". dirname($dst_log_file));
         }
     }
 

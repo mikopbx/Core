@@ -22,6 +22,50 @@
 # $1 - method name
 # $2 ... $4 - parameters
 
+# =============================================================================
+# Container Detection Functions
+# =============================================================================
+# These functions provide capability-based container detection matching the PHP API:
+# - is_docker()         -> System::isDocker()    - true ONLY for Docker
+# - is_lxc()            -> System::isLxc()       - true ONLY for LXC
+# - is_container()      -> System::isContainer() - true for Docker OR LXC
+# - can_manage_network() -> System::canManageNetwork() - false for Docker, true otherwise
+#
+# Key difference:
+# - Docker: Runtime manages networking, storage, time -> MikoPBX should NOT configure
+# - LXC: Container manages itself (like a VM) -> MikoPBX MUST configure
+# =============================================================================
+
+# is_docker: Returns true (0) if running in Docker container
+# Docker is detected by /.dockerenv file or DOCKER_CONTAINER env var
+is_docker()
+{
+    [ -f "/.dockerenv" ] || [ -n "$DOCKER_CONTAINER" ]
+}
+
+# is_lxc: Returns true (0) if running in LXC container
+# LXC sets container=lxc environment variable
+is_lxc()
+{
+    [ "$container" = 'lxc' ]
+}
+
+# is_container: Returns true (0) if running in any container (Docker or LXC)
+# Use for operations that should be skipped in ALL container environments
+is_container()
+{
+    is_docker || is_lxc
+}
+
+# can_manage_network: Returns true (0) if system can configure networking
+# Docker: NO - container runtime manages networking
+# LXC: YES - container manages its own network (like a VM)
+# Bare-metal: YES
+can_manage_network()
+{
+    ! is_docker
+}
+
 
 # echoToTeletype: Prints a message to the console and the serial port if available.
 # Args:
@@ -195,11 +239,12 @@ freeSwapByName(){
 # f_umount: Unmounts a device or a file.
 # Args:
 #   $1: Device or file to be unmounted.
+# Note: Skipped in containers - host manages storage mounts for both Docker and LXC
 f_umount()
 {
-    if [ -f '/.dockerenv' ]; then
-      return;
-    fi;
+    if is_container; then
+      return
+    fi
 
     if [ -b "$1" ]; then
       filter="^$1";

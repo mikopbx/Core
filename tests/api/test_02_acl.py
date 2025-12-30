@@ -36,8 +36,8 @@ class TestAclBasics:
         unauthenticated_client = MikoPBXClient(API_BASE_URL, API_LOGIN, API_PASSWORD)
         # Don't authenticate - no token
 
-        # Try to access protected resource
-        response = unauthenticated_client.get_raw('extensions')
+        # Try to access protected resource (skip auto-retry to test server response)
+        response = unauthenticated_client.get_raw('extensions', skip_auth_retry=True)
 
         # Should get 401 Unauthorized
         assert response.status_code == 401, \
@@ -51,8 +51,8 @@ class TestAclBasics:
         fake_client = MikoPBXClient(API_BASE_URL, API_LOGIN, API_PASSWORD)
         fake_client.access_token = "invalid.jwt.token"
 
-        # Try to access protected resource
-        response = fake_client.get_raw('extensions')
+        # Try to access protected resource (skip auto-retry to test server response)
+        response = fake_client.get_raw('extensions', skip_auth_retry=True)
 
         # Should get 401 Unauthorized (token validation failed)
         assert response.status_code == 401, \
@@ -90,8 +90,8 @@ class TestAclBasics:
         expired_client = MikoPBXClient(API_BASE_URL, API_LOGIN, API_PASSWORD)
         expired_client.access_token = expired_token
 
-        # Try to access protected resource
-        response = expired_client.get_raw('extensions')
+        # Try to access protected resource (skip auto-retry to test server response)
+        response = expired_client.get_raw('extensions', skip_auth_retry=True)
 
         # Should get 401 Unauthorized (token expired/invalid signature)
         assert response.status_code == 401, \
@@ -160,6 +160,7 @@ class TestAclResourceParsing:
 
         print(f"✓ GET /resource correctly maps to getList action")
 
+    @pytest.mark.order(after="test_15_extensions_employees.py::TestEmployees::test_02_get_list")
     def test_02_resource_get_record(self, api_client):
         """Test GET /resource/{id} → action=getRecord"""
         # Use employees endpoint which has getRecord implemented
@@ -191,6 +192,7 @@ class TestAclResourceParsing:
 
         print(f"✓ GET /resource:customMethod correctly maps to custom action")
 
+    @pytest.mark.order(after="test_15_extensions_employees.py::TestEmployees::test_02_get_list")
     def test_04_custom_resource_method(self, api_client):
         """Test GET /resource/{id}:customMethod → action=customMethod"""
         # This tests pattern like:

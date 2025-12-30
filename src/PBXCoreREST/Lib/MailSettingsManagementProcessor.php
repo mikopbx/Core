@@ -85,7 +85,13 @@ class MailSettingsManagementProcessor extends Injectable
         $res->processor = __METHOD__;
 
         $actionString = $request['action'];
-        $data = $request['data'];
+        $data = $request['data'] ?? [];
+
+        // Add origin from session context for OAuth2 callback URL generation
+        // Worker runs in CLI context without $_SERVER['HTTP_HOST'], so we pass it from HTTP context
+        if (!empty($request['sessionContext']['origin'])) {
+            $data['origin'] = $request['sessionContext']['origin'];
+        }
 
         // Type-safe action matching with enum
         $action = MailSettingsAction::tryFrom($actionString);

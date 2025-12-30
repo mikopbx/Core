@@ -60,12 +60,12 @@ class UpdateConfigsUpToVer20240194 extends Injectable implements UpgradeSystemCo
         $res = LanInterfaces::find('disabled=0')->toArray();
         foreach ($res as $item) {
             if ($item['topology'] === LanInterfaces::TOPOLOGY_PRIVATE && $item['internet'] === '1') {
-                $parts   = explode(':', trim($item['exthostname']));
+                $parts   = explode(':', trim($item['exthostname'] ?? ''));
                 $extPort = PbxSettings::getDefaultArrayValues()[PbxSettings::EXTERNAL_SIP_PORT];
                 if (!empty($parts[1])) {
                     $extPort = $parts[1];
                 } else {
-                    $parts   = explode(':', trim($item['extipaddr']));
+                    $parts   = explode(':', trim($item['extipaddr'] ?? ''));
                     if (!empty($parts[1])) {
                         $extPort = $parts[1];
                     }

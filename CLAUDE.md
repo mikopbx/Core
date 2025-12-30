@@ -55,14 +55,16 @@ sites/               # Web assets and entry points
 resources/           # Static resources (DB, sounds, rootfs)
 ```
 
-## Docker Environment
+## Container Environment
 
 ### Container Management
 Use the **`container-inspector`** skill to manage containers and get connection parameters:
 - Get container IP addresses and ports
-- Restart containers after code changes
+- Restart containers after code changes (Docker and LXC)
 - Restart specific workers
 - View container status and health checks
+
+**Note:** MikoPBX supports both Docker and LXC containers. The container-inspector skill works with both environments.
 
 ### Log Analysis
 Use the **`log-analyzer`** skill to diagnose issues:
@@ -170,11 +172,18 @@ Tests are automatically synchronized between host and container:
 - `ConfigInterface` - Interface for module configuration hooks
 - `AsteriskConfInterface` - Interface for Asterisk config generation
 - `PBXCoreREST` - Main REST API entry point
+- `System` - System utilities with container detection methods:
+  - `isDocker()` - Returns true ONLY for Docker containers
+  - `isLxc()` - Returns true ONLY for LXC containers
+  - `isContainer()` - Returns true for any container type
+  - `canManageNetwork()` - Capability check for network configuration
+  - `canManageFirewall()` - Capability check for iptables/firewall
 - `IpAddressHelper` - Dual-stack IPv4/IPv6 address utilities (validation, CIDR parsing, network checks)
-- `Network` - Network configuration manager (IPv4/IPv6 interface configuration, DHCP client management)
-- `Udhcpc` - IPv4 DHCP client event handler (database synchronization, interface configuration)
-- `Udhcpc6` - IPv6 DHCPv6 client event handler (stateful DHCPv6, SLAAC coexistence, DNS integration)
-- `DnsConf` - DNS configuration generator (dual-stack IPv4/IPv6 nameserver support)
+- `Network` - Network configuration manager (IPv4/IPv6 interface configuration, DHCP client management, LXC support)
+- `Udhcpc` - IPv4 DHCP client event handler (database synchronization, interface configuration, LXC network commands)
+- `Udhcpc6` - IPv6 DHCPv6 client event handler (stateful DHCPv6, SLAAC coexistence, DNS integration, LXC support)
+- `DnsConf` - DNS configuration generator (dual-stack IPv4/IPv6 nameserver support, Docker DNS preservation)
+- `IptablesConf` - Firewall configuration (supports LXC with capability check, skipped in Docker)
 - `CloudProvider` - Abstract base class for all cloud provisioning providers (direct SQLite access, user-data parsing)
 - `ProvisioningConfig` - DTO for unified configuration from ENV, YAML, JSON sources (validation, sanitization, merging)
 - `NoCloud` - On-premise provisioning provider (ISO, seed directory, HTTP endpoint, kernel cmdline)
@@ -221,10 +230,14 @@ Tests are automatically synchronized between host and container:
 - Parameterized SQL queries in DHCP callback handlers
 - Validation using `IpAddressHelper::isIpv6()` before database storage
 
-**Docker Environment Handling:**
+**Container Environment Handling:**
 - DHCP callbacks always update database (fixes stale IP display bug)
-- Network commands skipped in Docker (container runtime manages networking)
-- Critical for consistent UI/API responses across environments
+- Network commands behavior depends on container type:
+  - **Docker**: Network commands skipped (runtime manages networking)
+  - **LXC**: Network commands executed (container manages its own network)
+  - **Bare-metal**: Network commands executed
+- Critical for consistent UI/API responses across all deployment environments
+- LXC containers have full DHCP client support (IPv4 and IPv6)
 
 ### Cloud Provisioning Architecture
 
@@ -288,11 +301,11 @@ mikopbx:
 - **XSS (ProvisioningConfig)**: Control character removal, length limits, hostname/IP validation
 - **Resource Exhaustion**: Max string length 1024, max SSH keys 65536, max hostname 253
 
-**DockerEntrypoint Refactoring**:
-- **Before**: 500 lines with custom ENV parsing and SQLite queries
-- **After**: 260 lines, delegates to `CloudProvisioning::start()`
-- **Removed Code**: `applyEnvironmentSettings()`, `updateDBSetting()`, `reconfigureNetwork()`
-- **Preserved Behavior**: All ENV variables work identically, service port JSON updates
+**ContainerEntrypoint** (formerly DockerEntrypoint):
+- Unified entry point for Docker and LXC containers
+- Delegates provisioning to `CloudProvisioning::start()`
+- DockerCloud handles ENV variables, LxcCloud handles Proxmox files
+- All ENV variables work identically across container types
 
 **Direct SQLite Methods** (avoid Redis dependency):
 - `loadPbxSettingsDirectly()` - Read all settings into cache
@@ -433,8 +446,8 @@ MikoPBX includes specialized skills in `.claude/skills/` that activate automatic
 - 📖 **[PHP Documentation](https://github.com/php/doc-en)** - Official PHP documentation
 - 📖 **[Asterisk Documentation](https://github.com/asterisk/documentation)** - Official Asterisk docs
 
-- 
-### Container
+### Container Support
+
 MikoPBX runs in a single container which includes all services:
 - PHP 8.3 application
 - SQLite database
@@ -442,6 +455,62 @@ MikoPBX runs in a single container which includes all services:
 - Beanstalkd queue
 - Asterisk PBX
 - Nginx web server
+
+**Supported Container Types:**
+
+1. **Docker** - Application container
+   - Runtime manages networking, storage, time synchronization
+   - MikoPBX skips network/firewall configuration
+   - Uses Docker bridge for networking
+   - Port forwarding managed externally
+
+2. **LXC** - System container (lightweight VM)
+   - Container manages its own network configuration
+   - Full network/DHCP/firewall support (if granted capabilities)
+   - Behaves like a VM from MikoPBX perspective
+   - Ideal for on-premise virtualization (Proxmox, etc.)
+
+**Detection Methods:**
+
+MikoPBX uses capability-based detection instead of binary environment checks:
+
+- **`System::isDocker()`** - Returns true ONLY for Docker (checks `/.dockerenv`)
+- **`System::isLxc()`** - Returns true ONLY for LXC (checks `container=lxc` env var)
+- **`System::isContainer()`** - Returns true for both Docker and LXC
+- **`System::canManageNetwork()`** - Returns false for Docker, true for LXC/bare-metal
+- **`System::canManageFirewall()`** - Returns false for Docker, checks iptables capability for LXC
+
+**Shell Script Helpers:**
+
+Matching shell functions available in `/sbin/shell_functions.sh`:
+- `is_docker()` - Detects Docker environment
+- `is_lxc()` - Detects LXC environment
+- `is_container()` - Detects any container
+- `can_manage_network()` - Checks network configuration capability
+
+**LXC Container Features:**
+
+When running in LXC, MikoPBX has full capabilities:
+- Network interface configuration (static IP, DHCP)
+- IPv4 DHCP client (udhcpc)
+- IPv6 DHCPv6 client (udhcpc6) with SLAAC fallback
+- DNS configuration
+- Firewall rules (if `CAP_NET_ADMIN` granted)
+- Fail2ban intrusion prevention
+
+**Docker vs LXC Comparison:**
+
+| Feature | Docker | LXC | Bare-Metal |
+|---------|--------|-----|------------|
+| Network Config | Runtime | Container | Container |
+| DHCP Client | Skipped | Supported | Supported |
+| IPv6 Auto (DHCPv6) | Skipped | Supported | Supported |
+| Firewall (iptables) | Host | Container* | Container |
+| DNS Config | 127.0.0.11 | Container | Container |
+| NTP Sync | Host | Host | Container |
+| ACPI Events | N/A | N/A | Supported |
+
+*LXC firewall requires `CAP_NET_ADMIN` capability
 
 ## Philosophy
 
