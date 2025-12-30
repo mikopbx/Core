@@ -9,6 +9,7 @@ description: Tasks related to REST API routing, authentication, controllers, mid
 ## Active Tasks
 
 ### High Priority
+- `h-refactor-ssh-password-storage/` - Refactor SSH password storage to SHA-512 hashes (security improvement)
 
 ### Medium Priority
 
