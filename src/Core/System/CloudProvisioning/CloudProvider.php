@@ -455,7 +455,9 @@ abstract class CloudProvider
         if (array_key_exists($key, $settings)) {
             // Update existing setting if value is different
             if ($settings[$key] !== (string)$value) {
-                $command = "$sqlite3 $dbPath \"UPDATE m_PbxSettings SET value='$escapedValue' WHERE key='$escapedKey'\"";
+                // Use escapeshellarg to protect from shell expansion of $ and other metacharacters
+                $sql = "UPDATE m_PbxSettings SET value='$escapedValue' WHERE key='$escapedKey'";
+                $command = "$sqlite3 $dbPath " . escapeshellarg($sql);
                 $res = Processes::mwExec($command, $out);
                 if ($res === 0) {
                     $this->pbxSettingsCache[$key] = (string)$value;
@@ -475,7 +477,9 @@ abstract class CloudProvider
             return true; // Value unchanged, consider success
         } else {
             // Insert new setting (key already validated above)
-            $command = "$sqlite3 $dbPath \"INSERT INTO m_PbxSettings (key, value) VALUES ('$escapedKey', '$escapedValue')\"";
+            // Use escapeshellarg to protect from shell expansion of $ and other metacharacters
+            $sql = "INSERT INTO m_PbxSettings (key, value) VALUES ('$escapedKey', '$escapedValue')";
+            $command = "$sqlite3 $dbPath " . escapeshellarg($sql);
             $res = Processes::mwExec($command, $out);
             if ($res === 0) {
                 $this->pbxSettingsCache[$key] = (string)$value;
@@ -514,7 +518,9 @@ abstract class CloudProvider
             return false;
         }
 
-        $command = "$sqlite3 $dbPath \"UPDATE m_LanInterfaces SET $column='$escapedValue' WHERE internet='1'\"";
+        // Use escapeshellarg to protect from shell expansion of $ and other metacharacters
+        $sql = "UPDATE m_LanInterfaces SET $column='$escapedValue' WHERE internet='1'";
+        $command = "$sqlite3 $dbPath " . escapeshellarg($sql);
         $res = Processes::mwExec($command, $out);
 
         $message = "      |- Update LanInterfaces.$column ... ";
