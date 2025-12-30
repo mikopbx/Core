@@ -50,6 +50,7 @@ class LxcCloud extends CloudProvider
     private const string PATH_HOSTNAME = '/etc/hostname';
     private const string PATH_SSH_KEYS = '/root/.ssh/authorized_keys';
     private const string PATH_NETWORK_INTERFACES = '/etc/network/interfaces';
+    private const string PATH_RESOLV_CONF = '/etc/resolv.conf';
 
     /**
      * Detected network interface name from /etc/network/interfaces.
@@ -158,6 +159,14 @@ class LxcCloud extends CloudProvider
 
         // Parse network interfaces (also sets $this->detectedInterface)
         $networkConfig = $this->parseNetworkInterfaces();
+
+        // Parse resolv.conf for Proxmox-provided searchdomain
+        // Proxmox writes searchdomain to resolv.conf before MikoPBX starts
+        $resolvConfig = $this->parseResolvConf();
+
+        // Merge configurations (interfaces take priority, resolv.conf fills gaps)
+        $networkConfig = array_merge($resolvConfig, $networkConfig);
+
         if (!empty($networkConfig)) {
             // resetLanInterface() already sets internet='1' and disabled='0'
             $config->networkSettings = $networkConfig;
@@ -395,6 +404,82 @@ class LxcCloud extends CloudProvider
         }
 
         return (string)$cidr;
+    }
+
+    /**
+     * Parses /etc/resolv.conf for Proxmox-provided DNS settings.
+     *
+     * Proxmox writes DNS configuration to resolv.conf before container init:
+     * ```
+     * # --- BEGIN PVE ---
+     * search miko.ru
+     * nameserver 172.16.33.6
+     * # --- END PVE ---
+     * ```
+     *
+     * This method extracts searchdomain before MikoPBX overwrites resolv.conf.
+     *
+     * @return array<string, string> DNS settings (domain, primarydns, secondarydns)
+     */
+    private function parseResolvConf(): array
+    {
+        if (!file_exists(self::PATH_RESOLV_CONF)) {
+            return [];
+        }
+
+        $content = file_get_contents(self::PATH_RESOLV_CONF);
+        if (empty($content)) {
+            return [];
+        }
+
+        $settings = [];
+        $dnsServers = [];
+        $lines = explode("\n", $content);
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+
+            // Skip empty lines and comments (but parse PVE block markers)
+            if (empty($line) || str_starts_with($line, '#')) {
+                continue;
+            }
+
+            // Parse search domain: "search miko.ru example.com"
+            if (preg_match('/^search\s+(.+)$/i', $line, $matches)) {
+                $domains = preg_split('/\s+/', trim($matches[1]));
+                if (!empty($domains[0])) {
+                    $settings['domain'] = $domains[0];
+                }
+                continue;
+            }
+
+            // Parse domain directive (alternative to search): "domain miko.ru"
+            if (preg_match('/^domain\s+(\S+)$/i', $line, $matches)) {
+                if (empty($settings['domain'])) {
+                    $settings['domain'] = trim($matches[1]);
+                }
+                continue;
+            }
+
+            // Parse nameserver: "nameserver 172.16.33.6"
+            if (preg_match('/^nameserver\s+(\S+)$/i', $line, $matches)) {
+                $dnsServers[] = trim($matches[1]);
+            }
+        }
+
+        // Assign DNS servers (skip 127.0.0.1 which is local resolver)
+        $externalDns = array_filter($dnsServers, fn($ip) => !str_starts_with($ip, '127.'));
+        if (!empty($externalDns)) {
+            $externalDns = array_values($externalDns);
+            if (!empty($externalDns[0])) {
+                $settings['primarydns'] = $externalDns[0];
+            }
+            if (!empty($externalDns[1])) {
+                $settings['secondarydns'] = $externalDns[1];
+            }
+        }
+
+        return $settings;
     }
 
     /**

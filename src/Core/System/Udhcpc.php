@@ -179,6 +179,7 @@ class Udhcpc extends Network
         $data = [
             'primarydns' => $named_dns[0] ?? '',
             'secondarydns' => $named_dns[1] ?? '',
+            'domain' => $env_vars['domain'] ?? '',
         ];
         $this->updateDnsSettings($data, $env_vars['interface']);
 
@@ -312,6 +313,7 @@ class Udhcpc extends Network
         $data = [
             'primarydns' => $named_dns[0] ?? '',
             'secondarydns' => $named_dns[1] ?? '',
+            'domain' => $env_vars['domain'] ?? '',
         ];
         $this->updateDnsSettings($data, $env_vars['interface']);
 
