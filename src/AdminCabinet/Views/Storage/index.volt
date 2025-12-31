@@ -149,7 +149,7 @@
                 </div>
             </div>
 
-            {{ partial("partials/submitbutton", ['indexurl': '', 'submitMode': submitMode]) }}
+            {{ partial("partials/submitbutton", ['indexurl': '', 'submitMode': submitMode, 'formId': 'local']) }}
             <div class="ui clearing hidden divider"></div>
         {{ close('form') }}
     </div>
@@ -227,7 +227,7 @@
                 </div>
             </div>
 
-            {{ partial("partials/submitbutton", ['indexurl': '', 'submitMode': submitMode]) }}
+            {{ partial("partials/submitbutton", ['indexurl': '', 'submitMode': submitMode, 'formId': 's3']) }}
             <div class="ui clearing hidden divider"></div>
         {{ close('form') }}
     </div>

@@ -30,6 +30,24 @@ const storageIndex = {
     $formObj: $('#local-storage-form'),
 
     /**
+     * jQuery object for the submit button (unique to this form).
+     * @type {jQuery}
+     */
+    $submitButton: $('#submitbutton-local'),
+
+    /**
+     * jQuery object for the dropdown submit (unique to this form).
+     * @type {jQuery}
+     */
+    $dropdownSubmit: $('#dropdownSubmit-local'),
+
+    /**
+     * jQuery object for the dirty field (unique to this form).
+     * @type {jQuery}
+     */
+    $dirrtyField: $('#dirrty-local'),
+
+    /**
      * jQuery object for the records retention period slider.
      * @type {jQuery}
      */
@@ -62,6 +80,14 @@ const storageIndex = {
                 // Load storage data when storage info tab is activated
                 if (tabPath === 'storage-info') {
                     storageIndex.loadStorageData();
+                }
+                // Re-initialize local storage form when tab becomes visible
+                if (tabPath === 'storage-local') {
+                    storageIndex.initializeForm();
+                }
+                // Re-initialize S3 form when cloud tab becomes visible
+                if (tabPath === 'storage-cloud' && typeof s3StorageIndex !== 'undefined') {
+                    s3StorageIndex.initializeForm();
                 }
             },
         });
@@ -460,6 +486,9 @@ const storageIndex = {
      */
     initializeForm() {
         Form.$formObj = storageIndex.$formObj;
+        Form.$submitButton = storageIndex.$submitButton;
+        Form.$dropdownSubmit = storageIndex.$dropdownSubmit;
+        Form.$dirrtyField = storageIndex.$dirrtyField;
         Form.validateRules = storageIndex.validateRules;
         Form.cbBeforeSendForm = storageIndex.cbBeforeSendForm;
         Form.cbAfterSendForm = storageIndex.cbAfterSendForm;

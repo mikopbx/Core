@@ -31,6 +31,24 @@ const s3StorageIndex = {
     $formObj: $('#s3-storage-form'),
 
     /**
+     * jQuery object for the submit button (unique to this form).
+     * @type {jQuery}
+     */
+    $submitButton: $('#submitbutton-s3'),
+
+    /**
+     * jQuery object for the dropdown submit (unique to this form).
+     * @type {jQuery}
+     */
+    $dropdownSubmit: $('#dropdownSubmit-s3'),
+
+    /**
+     * jQuery object for the dirty field (unique to this form).
+     * @type {jQuery}
+     */
+    $dirrtyField: $('#dirrty-s3'),
+
+    /**
      * jQuery object for the S3 local retention period slider.
      * @type {jQuery}
      */
@@ -309,6 +327,9 @@ const s3StorageIndex = {
      */
     initializeForm() {
         Form.$formObj = s3StorageIndex.$formObj;
+        Form.$submitButton = s3StorageIndex.$submitButton;
+        Form.$dropdownSubmit = s3StorageIndex.$dropdownSubmit;
+        Form.$dirrtyField = s3StorageIndex.$dirrtyField;
         Form.validateRules = s3StorageIndex.validateRules;
         Form.cbBeforeSendForm = s3StorageIndex.cbBeforeSendForm;
         Form.cbAfterSendForm = s3StorageIndex.cbAfterSendForm;
