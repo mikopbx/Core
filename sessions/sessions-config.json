@@ -39,7 +39,8 @@
       "vendor/bin/phpunit",
       "python3 -m pytest:*",
       "curl:*",
-      "curl"
+      "curl",
+      "curl -s:*"
     ],
     "bash_write_patterns": [],
     "extrasafe": false
