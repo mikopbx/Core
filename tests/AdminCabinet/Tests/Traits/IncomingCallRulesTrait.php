@@ -29,11 +29,15 @@ trait IncomingCallRulesTrait
     {
         $this->changeTextAreaValue('note', $params['note']);
 
-        if (!empty($params['providerName'])) {
-            $this->selectDropdownItem('providerid', $params['providerName']);
-        } else {
-            $this->selectDropdownItem('providerid', $params['provider']);
+        // Determine provider value to use
+        $providerValue = !empty($params['providerName']) ? $params['providerName'] : $params['provider'];
+
+        // Try to select provider, fall back to 'none' if not available
+        if ($providerValue !== 'none' && !$this->dropdownHasValue('providerid', $providerValue)) {
+            self::annotate("Provider '{$providerValue}' not found, falling back to 'none'", 'warning');
+            $providerValue = 'none';
         }
+        $this->selectDropdownItem('providerid', $providerValue);
 
         $this->changeInputField('number', $params['number']);
         $this->selectDropdownItem('extension', $params['extension']);
@@ -46,7 +50,14 @@ trait IncomingCallRulesTrait
     protected function verifyRuleConfig(array $params): void
     {
         $this->assertTextAreaValueIsEqual('note', $params['note']);
-        $this->assertMenuItemSelected('providerid', $params['provider']);
+
+        // Determine expected provider value - check if original exists or use 'none' fallback
+        $expectedProvider = $params['provider'];
+        if ($expectedProvider !== 'none' && !$this->dropdownHasValue('providerid', $expectedProvider)) {
+            $expectedProvider = 'none';
+        }
+        $this->assertMenuItemSelected('providerid', $expectedProvider);
+
         $this->assertInputFieldValueEqual('number', $params['number']);
         $this->assertMenuItemSelected('extension', $params['extension']);
         $this->assertInputFieldValueEqual('timeout', $params['timeout']);

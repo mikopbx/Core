@@ -58,8 +58,8 @@ class StorageRetentionPeriodTest extends MikoPBXTestsBase
         // Wait for page to load
         $this->waitForElementPresent(WebDriverBy::id('storage-menu'));
         
-        // Click on Storage Settings tab
-        $settingsTab = self::$driver->findElement(WebDriverBy::xpath('//a[@data-tab="storage-settings"]'));
+        // Click on Local Storage Settings tab
+        $settingsTab = self::$driver->findElement(WebDriverBy::xpath('//a[@data-tab="storage-local"]'));
         $settingsTab->click();
         
         // Wait for tab content to be visible
@@ -101,7 +101,7 @@ class StorageRetentionPeriodTest extends MikoPBXTestsBase
         );
 
         // Submit form to save (no scroll after submit since form persists)
-        $this->submitFormWithoutReload('storage-form');
+        $this->submitFormWithoutReload('local-storage-form');
 
         // Navigate back to verify saved value
         $this->navigateToStoragePage();

@@ -129,13 +129,13 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
                 'interface_0_check' => 'eth0',
                 'dhcp_0' => false,
                 'ipaddr_0' => '172.16.39.12',
-                'subnet_0' => 24,
-                'vlanid_0' => 22,
+                'subnet_0' => '24',
+                'vlanid_0' => '22',
                 'usenat' => true,
                 'extipaddr' => '93.188.43.143',
                 'exthostname' => 'testMikoPBX.miko.ru',
-                'externalSIPPort' => 5062,
-                'externalTLSPort' => 5063,
+                'externalSIPPort' => '5062',
+                'externalTLSPort' => '5063',
                 'hostname_1'=>'testMikoPBX',
                 'domain_1'=>'local'
             ]

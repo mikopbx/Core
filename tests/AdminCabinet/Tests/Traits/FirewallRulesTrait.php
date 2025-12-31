@@ -52,8 +52,8 @@ trait FirewallRulesTrait
 
         return sprintf(
             "Network: %s/%d, Active Rules: %s",
-            $params['network'],
-            $params['subnet'],
+            $params['ipv4_network'],
+            $params['ipv4_subnet'],
             $rulesList
         );
     }

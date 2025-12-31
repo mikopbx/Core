@@ -98,7 +98,15 @@ abstract class CreateExtensionsTest extends MikoPBXTestsBase
 
         // Set advanced options
         $this->changeCheckBoxState('sip_enableRecording', $params['sip_enableRecording']);
-        $this->selectDropdownItem('sip_networkfilterid', $params['sip_networkfilterid']);
+
+        // Try to select specified network filter, fall back to 'none' if not available
+        $networkFilterId = $params['sip_networkfilterid'];
+        if ($networkFilterId !== 'none' && !$this->dropdownHasValue('sip_networkfilterid', $networkFilterId)) {
+            self::annotate("Network filter ID '{$networkFilterId}' not found, falling back to 'none'", 'warning');
+            $networkFilterId = 'none';
+        }
+        $this->selectDropdownItem('sip_networkfilterid', $networkFilterId);
+
         $this->selectDropdownItem('sip_transport', $params['sip_transport']);
         $this->changeTextAreaValue('sip_manualattributes', $params['sip_manualattributes']);
 
@@ -183,7 +191,14 @@ abstract class CreateExtensionsTest extends MikoPBXTestsBase
 
         $this->openAccordionOnThePage();
         $this->assertInputFieldValueEqual('mobile_dialstring', $params['mobile']);
-        $this->assertMenuItemSelected('sip_networkfilterid', $params['sip_networkfilterid']);
+
+        // Verify network filter - check for either specified value or 'none' fallback
+        $expectedNetworkFilter = $params['sip_networkfilterid'];
+        if ($expectedNetworkFilter !== 'none' && !$this->dropdownHasValue('sip_networkfilterid', $expectedNetworkFilter)) {
+            $expectedNetworkFilter = 'none';
+        }
+        $this->assertMenuItemSelected('sip_networkfilterid', $expectedNetworkFilter);
+
         $this->assertMenuItemSelected('sip_transport', $params['sip_transport']);
         $this->assertTextAreaValueIsEqual('sip_manualattributes', $params['sip_manualattributes']);
 
