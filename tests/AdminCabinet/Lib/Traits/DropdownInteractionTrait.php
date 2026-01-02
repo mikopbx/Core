@@ -199,21 +199,9 @@ JS;
                 $classAttribute = $dropdown->getAttribute('class') ?? '';
                 $isSearchable = strpos($classAttribute, 'search') !== false;
 
-                // Check if dropdown is already open (prevents toggle-close on click)
-                $isAlreadyOpen = false;
-                try {
-                    $dropdown->findElement(WebDriverBy::cssSelector('.menu.visible'));
-                    $isAlreadyOpen = true;
-                    $this->annotate("Dropdown '{$fieldName}' is already open, skipping click", 'debug');
-                } catch (NoSuchElementException $e) {
-                    // Dropdown is closed, will open it
-                }
-
-                // Open dropdown only if not already open
+                // Open dropdown
                 $this->scrollIntoView($dropdown);
-                if (!$isAlreadyOpen) {
-                    $dropdown->click();
-                }
+                $dropdown->click();
 
                 // Wait for menu to appear
                 self::$driver->wait(self::DROPDOWN_TIMEOUT)->until(
