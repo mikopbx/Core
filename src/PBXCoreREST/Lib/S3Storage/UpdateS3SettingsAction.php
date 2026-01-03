@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\S3Storage;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\StorageSettings;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
@@ -257,6 +258,7 @@ class UpdateS3SettingsAction
      *
      * WHY: Local retention MUST be less than total retention
      * WHY: Prevents invalid configuration (e.g., 30 days local, 7 days total)
+     * WHY: Empty total = infinity, no validation needed
      *
      * @param array<string, mixed> $data Request data
      * @return array<string> Validation errors (empty if valid)
@@ -265,26 +267,28 @@ class UpdateS3SettingsAction
     {
         $errors = [];
 
-        // Get current values
-        $currentTotal = (int)PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_SAVE_PERIOD);
-        $currentLocal = (int)PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_S3_LOCAL_DAYS);
+        // Get current values (empty string = infinity)
+        $currentTotalRaw = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_SAVE_PERIOD);
+        $currentLocalRaw = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_S3_LOCAL_DAYS);
 
         // Determine final values (current or new)
-        $finalTotal = isset($data[PbxSettings::PBX_RECORD_SAVE_PERIOD])
-            ? (int)$data[PbxSettings::PBX_RECORD_SAVE_PERIOD]
-            : $currentTotal;
+        $finalTotalRaw = $data[PbxSettings::PBX_RECORD_SAVE_PERIOD] ?? $currentTotalRaw;
+        $finalLocalRaw = $data[PbxSettings::PBX_RECORD_S3_LOCAL_DAYS] ?? $currentLocalRaw;
 
-        $finalLocal = isset($data[PbxSettings::PBX_RECORD_S3_LOCAL_DAYS])
-            ? (int)$data[PbxSettings::PBX_RECORD_S3_LOCAL_DAYS]
-            : $currentLocal;
+        // If total retention is infinity (empty or '0'), skip validation - any local period is valid
+        if ($finalTotalRaw === '' || $finalTotalRaw === '0' || $finalTotalRaw === 0) {
+            return $errors;
+        }
 
-        // Validate constraint
+        $finalTotal = (int)$finalTotalRaw;
+        $finalLocal = (int)$finalLocalRaw;
+
+        // Validate constraint: local must be less than total
         if ($finalLocal >= $finalTotal) {
-            $errors[] = sprintf(
-                'Local retention period (%d days) must be less than total retention period (%d days)',
-                $finalLocal,
-                $finalTotal
-            );
+            $errors[] = TranslationProvider::translate('rest_S3LocalRetentionMustBeLess', [
+                'local' => $finalLocal,
+                'total' => $finalTotal,
+            ]);
         }
 
         return $errors;
