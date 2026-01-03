@@ -377,7 +377,7 @@ return [
     'auth_DefaultCloudPasswordInstructions' => 'Пароль по-умолчанию равен уникальному идентификатору виртуальной машины в облаке',
     'auth_Login' => 'Логин',
     'auth_Password' => 'Пароль',
-    'auth_RefreshTokenError' => 'Ошибка обновления токена авторизации. Пожалуйста, войдите заново.',
+    'auth_RefreshTokenError' => 'Сбой авторизации. Используйте режим HTTPS или браузер Chrome.',
     'auth_RememberMe' => 'Запомнить меня',
     'auth_SubmitButton' => 'Авторизоваться',
     'auth_TooManyLoginAttempts' => 'Слишком много попыток авторизации. Ваш IP адрес заблокирован на %interval% секунд.',

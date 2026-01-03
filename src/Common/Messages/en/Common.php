@@ -340,6 +340,7 @@ return [
     'auth_DefaultCloudPasswordInstructions' => 'Default password equals the unique identifier of the virtual machine in the cloud',
     'auth_Login' => 'Login',
     'auth_Password' => 'Password',
+    'auth_RefreshTokenError' => 'Authorization failed. Use HTTPS mode or Chrome browser.',
     'auth_RememberMe' => 'Remember me',
     'auth_SubmitButton' => 'Authorize',
     'auth_TooManyLoginAttempts' => 'Too many authorization attempts. Your IP address is blocked for %interval% seconds.',
