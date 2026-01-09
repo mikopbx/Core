@@ -40,6 +40,7 @@
 
         <testsuite name="StorageRetentionPeriod">
             <file>Tests/StorageRetentionPeriodTest.php</file>
+            <file>Tests/StorageS3SettingsTest.php</file>
         </testsuite>
 
         <testsuite name="AudioFilesBeforeCreate">

@@ -163,9 +163,10 @@ const storageIndex = {
 
                 // Update total retention period slider
                 const recordSavePeriod = data.PBXRecordSavePeriod || '';
+                const sliderIndex = storageIndex.saveRecordsPeriod.indexOf(recordSavePeriod);
                 storageIndex.$recordsSavePeriodSlider.slider(
                     'set value',
-                    storageIndex.saveRecordsPeriod.indexOf(recordSavePeriod),
+                    sliderIndex,
                     false
                 );
 

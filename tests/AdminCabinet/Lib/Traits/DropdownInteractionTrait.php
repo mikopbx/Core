@@ -195,37 +195,29 @@ JS;
                     throw new RuntimeException("Dropdown '{$fieldName}' not found");
                 }
 
-                // Check if dropdown is searchable
+                // Check if dropdown is searchable and if already open
+                // (may be left open by dropdownHasValue check)
                 $classAttribute = $dropdown->getAttribute('class') ?? '';
                 $isSearchable = strpos($classAttribute, 'search') !== false;
+                $isAlreadyOpen = strpos($classAttribute, 'visible') !== false;
 
-                // Check if dropdown is already open (prevents toggle-close on click)
-                $isAlreadyOpen = false;
-                try {
-                    $dropdown->findElement(WebDriverBy::cssSelector('.menu.visible'));
-                    $isAlreadyOpen = true;
-                    $this->annotate("Dropdown '{$fieldName}' is already open, skipping click", 'debug');
-                } catch (NoSuchElementException $e) {
-                    // Dropdown is closed, will open it
-                }
-
-                // Open dropdown only if not already open
-                $this->scrollIntoView($dropdown);
                 if (!$isAlreadyOpen) {
+                    // Open dropdown
+                    $this->scrollIntoView($dropdown);
                     $dropdown->click();
+
+                    // Wait for menu to appear
+                    self::$driver->wait(self::DROPDOWN_TIMEOUT)->until(
+                        WebDriverExpectedCondition::presenceOfElementLocated(
+                            WebDriverBy::cssSelector("#{$fieldName}-dropdown .menu.visible")
+                        )
+                    );
+
+                    // Wait for AJAX to populate menu items (for API-based dropdowns)
+                    // This is crucial for dropdowns that load data dynamically
+                    $this->waitForAjax();
+                    usleep(300000); // Additional 300ms for DOM rendering after AJAX
                 }
-
-                // Wait for menu to appear
-                self::$driver->wait(self::DROPDOWN_TIMEOUT)->until(
-                    WebDriverExpectedCondition::presenceOfElementLocated(
-                        WebDriverBy::cssSelector("#{$fieldName}-dropdown .menu.visible")
-                    )
-                );
-
-                // Wait for AJAX to populate menu items (for API-based dropdowns)
-                // This is crucial for dropdowns that load data dynamically
-                $this->waitForAjax();
-                usleep(300000); // Additional 300ms for DOM rendering after AJAX
 
                 // Use search if available
                 if ($isSearchable) {

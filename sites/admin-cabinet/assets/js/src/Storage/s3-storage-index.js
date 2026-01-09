@@ -74,9 +74,9 @@ const s3StorageIndex = {
 
     /**
      * Possible period values for S3 local retention (in days).
-     * Values: 1, 3, 7, 14, 30, 60, 90 days
+     * Values: 7, 30, 90, 180, 365 days (1 week, 1/3/6 months, 1 year)
      */
-    s3LocalDaysPeriod: ['1', '3', '7', '14', '30', '60', '90'],
+    s3LocalDaysPeriod: ['7', '30', '90', '180', '365'],
 
     /**
      * Maximum allowed local retention period from main storage slider
@@ -113,31 +113,50 @@ const s3StorageIndex = {
     },
 
     /**
-     * Initialize S3 storage module
+     * Initialize or reinitialize the S3 local retention slider
+     * @param {number} maxIndex - Maximum slider index (0-6)
+     * @param {number} [initialValue] - Optional initial value to set
      */
-    initialize() {
-        // Initialize S3 local retention period slider
+    initializeSlider(maxIndex, initialValue) {
+        // Destroy existing slider if it exists
+        if (s3StorageIndex.$s3LocalDaysSlider.hasClass('slider')) {
+            s3StorageIndex.$s3LocalDaysSlider.slider('destroy');
+        }
+
+        // Create slider with specified max
         s3StorageIndex.$s3LocalDaysSlider
             .slider({
                 min: 0,
-                max: 6,
+                max: maxIndex,
                 step: 1,
-                smooth: true,
+                smooth: false,
                 autoAdjustLabels: false,
                 interpretLabel: function (value) {
                     const labels = {
-                        0: '1 ' + globalTranslate.st_Day,
-                        1: '3 ' + globalTranslate.st_Days,
-                        2: '7 ' + globalTranslate.st_Days,
-                        3: '14 ' + globalTranslate.st_Days,
-                        4: '30 ' + globalTranslate.st_Days,
-                        5: '60 ' + globalTranslate.st_Days,
-                        6: '90 ' + globalTranslate.st_Days,
+                        0: '7 ' + globalTranslate.st_Days,
+                        1: globalTranslate.st_1Month,
+                        2: globalTranslate.st_3Months,
+                        3: globalTranslate.st_6Months,
+                        4: globalTranslate.st_1Year,
                     };
                     return labels[value] || '';
                 },
                 onChange: s3StorageIndex.cbAfterSelectS3LocalDaysSlider,
             });
+
+        // Set initial value if provided
+        if (initialValue !== undefined && initialValue >= 0 && initialValue <= maxIndex) {
+            s3StorageIndex.$s3LocalDaysSlider.slider('set value', initialValue, false);
+        }
+    },
+
+    /**
+     * Initialize S3 storage module
+     */
+    initialize() {
+        // Initialize S3 local retention period slider with default max (all options available)
+        const defaultMaxIndex = s3StorageIndex.s3LocalDaysPeriod.length - 1;
+        s3StorageIndex.initializeSlider(defaultMaxIndex);
 
         // Initialize S3 enabled checkbox
         s3StorageIndex.$s3EnabledCheckbox.checkbox({
@@ -192,15 +211,17 @@ const s3StorageIndex = {
         // Calculate max index
         const maxIndex = s3StorageIndex.getMaxLocalRetentionIndex(totalPeriod);
 
-        // Get current value
+        // Get current value before reinitializing
         const currentIndex = s3StorageIndex.$s3LocalDaysSlider.slider('get value');
 
-        // Update slider max
-        s3StorageIndex.$s3LocalDaysSlider.slider('setting', 'max', maxIndex);
+        // Clamp value to new max if needed
+        const newValue = Math.min(currentIndex, maxIndex);
 
-        // If current value exceeds new max, reset to max
+        // Reinitialize slider with new max (fixes visual positioning issue)
+        s3StorageIndex.initializeSlider(maxIndex, newValue);
+
+        // Update form value if it changed
         if (currentIndex > maxIndex) {
-            s3StorageIndex.$s3LocalDaysSlider.slider('set value', maxIndex);
             s3StorageIndex.$formObj.form('set value', 'PBXRecordS3LocalDays', s3StorageIndex.s3LocalDaysPeriod[maxIndex]);
         }
     },
@@ -211,8 +232,8 @@ const s3StorageIndex = {
      * @returns {number} Maximum index for s3LocalDaysPeriod array
      */
     getMaxLocalRetentionIndex(totalPeriod) {
-        // If total period is infinity, allow all local options
-        if (totalPeriod === '' || totalPeriod === null || totalPeriod === undefined) {
+        // If total period is infinity (empty, null, undefined, 0, or '0'), allow all local options
+        if (!totalPeriod || totalPeriod === '' || totalPeriod === '0' || totalPeriod === 0) {
             return s3StorageIndex.s3LocalDaysPeriod.length - 1;
         }
 
@@ -285,12 +306,25 @@ const s3StorageIndex = {
                 s3StorageIndex.$formObj.form('set value', 's3_secret_key', data.s3_secret_key || '');
 
                 // Set S3 local retention slider
-                const localDays = data.PBXRecordS3LocalDays || '7';
-                const localIndex = s3StorageIndex.s3LocalDaysPeriod.indexOf(localDays);
-                if (localIndex >= 0) {
-                    s3StorageIndex.$s3LocalDaysSlider.slider('set value', localIndex);
+                const localDays = String(data.PBXRecordS3LocalDays);
+                let localIndex = s3StorageIndex.s3LocalDaysPeriod.indexOf(localDays);
+
+                // Fallback for legacy values not in new array - find closest valid value
+                if (localIndex < 0) {
+                    const localDaysNum = parseInt(localDays) || 7;
+                    // Find the smallest value >= localDaysNum, or use first if all are larger
+                    localIndex = 0;
+                    for (let i = 0; i < s3StorageIndex.s3LocalDaysPeriod.length; i++) {
+                        if (parseInt(s3StorageIndex.s3LocalDaysPeriod[i]) >= localDaysNum) {
+                            localIndex = i;
+                            break;
+                        }
+                        localIndex = i; // Use last if none found
+                    }
                 }
-                s3StorageIndex.$formObj.form('set value', 'PBXRecordS3LocalDays', localDays);
+
+                s3StorageIndex.$s3LocalDaysSlider.slider('set value', localIndex);
+                s3StorageIndex.$formObj.form('set value', 'PBXRecordS3LocalDays', s3StorageIndex.s3LocalDaysPeriod[localIndex]);
 
                 // Update visibility
                 s3StorageIndex.toggleS3SettingsVisibility();
