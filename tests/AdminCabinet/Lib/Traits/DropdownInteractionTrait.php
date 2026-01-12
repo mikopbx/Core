@@ -347,12 +347,30 @@ JS;
      *
      * For searchable dropdowns (with class 'search'), triggers search and waits for API results
      *
+     * IMPORTANT: This method opens the dropdown to check values and closes it before returning.
+     *
      * @param string $fieldName Field name
      * @param string $value Value to check (can be data-value, exact text, or partial text)
      * @return bool True if value exists
      */
     protected function dropdownHasValue(string $fieldName, string $value): bool
     {
+        // Helper to close dropdown using Semantic UI API
+        $closeDropdown = function() use ($fieldName) {
+            try {
+                $jsCode = "
+                    var dropdown = document.getElementById('{$fieldName}-dropdown');
+                    if (dropdown && window.$ && $.fn.dropdown) {
+                        $(dropdown).dropdown('hide');
+                    }
+                ";
+                self::$driver->executeScript($jsCode);
+                usleep(100000); // 100ms for dropdown to close
+            } catch (\Exception $e) {
+                // Ignore errors during close
+            }
+        };
+
         try {
             // Helper function to check if value exists in dropdown menu items
             $checkValueExists = function() use ($fieldName, $value) {
@@ -411,11 +429,13 @@ JS;
 
                 // First check: see if value exists in loaded items
                 if ($checkValueExists()) {
+                    $closeDropdown();
                     return true;
                 }
 
             } catch (\Exception $e) {
                 $this->annotate("Error clicking dropdown '{$fieldName}': " . $e->getMessage(), 'debug');
+                $closeDropdown();
                 return false;
             }
 
@@ -446,6 +466,7 @@ JS;
 
                     // Second check: after search results loaded
                     if ($checkValueExists()) {
+                        $closeDropdown();
                         return true;
                     }
 
@@ -454,6 +475,7 @@ JS;
                 }
             }
 
+            $closeDropdown();
             return false;
 
         } catch (\Exception $e) {
