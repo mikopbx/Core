@@ -9,6 +9,11 @@ namespace MikoPBX\Tests\AdminCabinet\Tests\Data;
 class StorageDataFactory
 {
     /**
+     * Cached S3 test data to ensure consistent values across calls
+     */
+    private static ?array $s3TestData = null;
+
+    /**
      * Get storage retention period test values
      *
      * @return array Array of test values with descriptions
@@ -104,14 +109,17 @@ class StorageDataFactory
      */
     public static function getS3StorageTestData(): array
     {
-        return [
-            'enabled' => true,
-            'endpoint' => 'https://s3.amazonaws.com',
-            'region' => 'us-east-1',
-            'bucket' => 'mikopbx-test-bucket',
-            'accessKey' => 'AKIAIOSFODNN7EXAMPLE',
-            'secretKey' => 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
-        ];
+        if (self::$s3TestData === null) {
+            self::$s3TestData = [
+                'enabled' => true,
+                'endpoint' => 'https://s3.amazonaws.com',
+                'region' => 'us-east-1',
+                'bucket' => 'mikopbx-test-bucket-' . time(),
+                'accessKey' => 'AKIAIOSFODNN7EXAMPLE',
+                'secretKey' => 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+            ];
+        }
+        return self::$s3TestData;
     }
 
     /**

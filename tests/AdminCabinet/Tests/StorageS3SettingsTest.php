@@ -236,7 +236,14 @@ class StorageS3SettingsTest extends MikoPBXTestsBase
 
         self::annotate("Testing S3 slider position {$position}: {$label} - {$description}");
 
-        // Use JavaScript to set the slider value directly
+        // First move slider to opposite position to ensure form becomes dirty
+        $oppositePosition = ($position < 2) ? 4 : 0;
+        self::$driver->executeScript(
+            "$('#PBXRecordS3LocalDaysSlider').slider('set value', {$oppositePosition});"
+        );
+        sleep(1);
+
+        // Now set the actual target position
         self::$driver->executeScript(
             "$('#PBXRecordS3LocalDaysSlider').slider('set value', {$position});"
         );
@@ -298,15 +305,25 @@ class StorageS3SettingsTest extends MikoPBXTestsBase
     {
         self::annotate("Submitting form {$formId} (no reload expected)");
 
-        $xpath = sprintf('//form[@id="%s"]//ancestor::div[@id="submitbutton"]', $formId);
+        // Button ID has suffix based on formId (e.g., submitbutton-s3 for s3-storage-form)
+        $buttonId = 'submitbutton-s3';
+        $xpath = sprintf('//form[@id="%s"]//div[@id="%s"]', $formId, $buttonId);
+        $button = self::$driver->findElement(WebDriverBy::xpath($xpath));
 
-        try {
-            $button = self::$driver->findElement(WebDriverBy::xpath($xpath));
-        } catch (\Exception $e) {
-            // Try alternative xpath for S3 form with suffix
-            $xpath = '//form[@id="s3-storage-form"]//div[contains(@id,"submitbutton")]';
-            $button = self::$driver->findElement(WebDriverBy::xpath($xpath));
+        // Wait for button to become enabled (not have 'disabled' class)
+        $maxWait = 10;
+        $waited = 0;
+        while ($waited < $maxWait) {
+            $classes = $button->getAttribute('class');
+            if (strpos($classes, 'disabled') === false) {
+                break;
+            }
+            sleep(1);
+            $waited++;
         }
+
+        // Scroll into view before clicking
+        $this->scrollIntoView($button);
 
         // Ensure button is visible and enabled before clicking
         $this->waitForCondition(

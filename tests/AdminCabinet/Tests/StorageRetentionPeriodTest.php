@@ -141,7 +141,9 @@ class StorageRetentionPeriodTest extends MikoPBXTestsBase
     {
         self::annotate("Submitting form {$formId} (no reload expected)");
 
-        $xpath = sprintf('//form[@id="%s"]//ancestor::div[@id="submitbutton"]', $formId);
+        // Button ID has suffix based on formId (e.g., submitbutton-local for local-storage-form)
+        $buttonId = 'submitbutton-local';
+        $xpath = sprintf('//form[@id="%s"]//div[@id="%s"]', $formId, $buttonId);
         $button = self::$driver->findElement(WebDriverBy::xpath($xpath));
 
         // Ensure button is visible and enabled before clicking
