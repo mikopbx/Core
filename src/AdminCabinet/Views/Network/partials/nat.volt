@@ -51,11 +51,11 @@
 
         <div class="field">
             <div class="inline field">
-                {{ form.render('externalSIPPort') }}
+                <span id="external-sip-port-standard-wrapper">{{ form.render('externalSIPPort') }}</span>
                 <label id="external-sip-port-label">{{ t._('nw_PublicSIPPort', ['SIP_PORT':'...']) }}</label>
             </div>
             <div class="inline field">
-                {{ form.render('externalTLSPort') }}
+                <span id="external-tls-port-standard-wrapper">{{ form.render('externalTLSPort') }}</span>
                 <label id="external-tls-port-label">{{ t._('nw_PublicTLSPort', ['TLS_PORT':'...']) }}</label>
             </div>
         </div>
@@ -129,13 +129,14 @@
         </div>
 
         <!-- Port forwarding fields (still needed for IPv4 NAT) -->
+        <!-- Note: Uses same port inputs which are moved here by JavaScript (like exthostname) -->
         <div class="field">
             <div class="inline field">
-                {{ form.render('externalSIPPort') }}
+                <span id="external-sip-port-dual-stack-wrapper"></span>
                 <label id="dual-stack-sip-port-label">{{ t._('nw_PublicSIPPort', ['SIP_PORT':'...']) }}</label>
             </div>
             <div class="inline field">
-                {{ form.render('externalTLSPort') }}
+                <span id="external-tls-port-dual-stack-wrapper"></span>
                 <label id="dual-stack-tls-port-label">{{ t._('nw_PublicTLSPort', ['TLS_PORT':'...']) }}</label>
             </div>
         </div>

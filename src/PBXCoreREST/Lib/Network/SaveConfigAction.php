@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\NetworkStaticRoutes;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
@@ -359,6 +360,11 @@ class SaveConfigAction
         foreach ($networkInterfaces as $eth) {
             // Check if this interface should be deleted
             if (in_array((int)$eth->id, $interfacesToDelete, true)) {
+                SystemMessages::sysLogMsg(
+                    'SaveConfigAction',
+                    "DELETE interface: id={$eth->id}, name={$eth->name}, interface={$eth->interface}, vlanid={$eth->vlanid}",
+                    LOG_WARNING
+                );
                 if ($eth->delete() === false) {
                     foreach ($eth->getMessages() as $message) {
                         $messages[] = $message->getMessage();
@@ -370,6 +376,12 @@ class SaveConfigAction
 
             // Update interface settings
             self::fillEthStructure($eth, $data, $isDocker);
+
+            SystemMessages::sysLogMsg(
+                'SaveConfigAction',
+                "UPDATE interface: id={$eth->id}, name={$eth->name}, interface={$eth->interface}, vlanid={$eth->vlanid}, dhcp={$eth->dhcp}",
+                LOG_INFO
+            );
 
             if ($eth->save() === false) {
                 foreach ($eth->getMessages() as $message) {
@@ -386,6 +398,13 @@ class SaveConfigAction
             self::fillEthStructure($eth, $data, $isDocker);
             $eth->id = null;
             $eth->disabled = '0';
+
+            SystemMessages::sysLogMsg(
+                'SaveConfigAction',
+                "CREATE interface: name={$eth->name}, interface={$eth->interface}, vlanid={$eth->vlanid}, dhcp={$eth->dhcp}, ipaddr={$eth->ipaddr}",
+                LOG_WARNING
+            );
+
             if ($eth->create() === false) {
                 foreach ($eth->getMessages() as $message) {
                     $messages[] = $message->getMessage();

@@ -163,15 +163,17 @@ class Network extends Injectable
                         // VLAN interface - check if VLAN interface itself exists
                         $vlan_key = array_search($if_data['interface'], $src_array_eth, true);
                         if ($vlan_key !== false) {
-                            // VLAN interface exists physically (e.g., Docker host mode)
+                            // VLAN interface exists physically (e.g., Docker host mode or already created)
                             unset($array_eth[$vlan_key]);
-                        } else {
-                            // VLAN interface does not exist (e.g., Docker bridge mode)
-                            // Delete VLAN from database as it cannot be used
+                        } elseif (!System::canManageNetwork()) {
+                            // Docker bridge mode: VLANs cannot be created, delete from database
                             $this->deleteLanInterfaceByVlanId($if_data['interface_orign'], $if_data['vlanid']);
-                            SystemMessages::sysLogMsg(__METHOD__, "VLAN interface {$if_data['interface']} deleted - not supported in current environment");
-                            // Mark as disabled in the returned array to skip further processing
+                            SystemMessages::sysLogMsg(__METHOD__, "VLAN interface {$if_data['interface']} deleted - not supported in Docker environment");
                             $if_data['disabled'] = 1;
+                        } else {
+                            // Bare-metal or LXC: VLAN doesn't exist YET but will be created by lanConfigure()
+                            // Don't delete - let vconfig add create it
+                            SystemMessages::sysLogMsg(__METHOD__, "VLAN interface {$if_data['interface']} not found - will be created by lanConfigure()");
                         }
                     }
                 } else {

@@ -526,6 +526,13 @@ abstract class CloudProvider
         $message = "      |- Update LanInterfaces.$column ... ";
         $this->publishMessage($message);
 
+        // Log the provisioning update for debugging interface changes
+        SystemMessages::sysLogMsg(
+            'CloudProvider',
+            "PROVISIONING updateLanSettingDirect: column=$column, value=$value, sql=$sql",
+            LOG_WARNING
+        );
+
         if ($res === 0) {
             SystemMessages::teletypeEchoResult($message);
             return true;

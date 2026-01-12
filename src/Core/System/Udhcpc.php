@@ -175,12 +175,22 @@ class Udhcpc extends Network
         if (Verify::isIpAddress($env_vars['ip'])) {
             $data['subnet'] = $this->netMaskToCidr($env_vars['subnet']);
         }
+        SystemMessages::sysLogMsg(
+            'Udhcpc',
+            "renewBoundSystemCtlAction: interface={$env_vars['interface']}, ip={$env_vars['ip']}, gateway={$env_vars['router']}, subnet={$data['subnet']}",
+            LOG_INFO
+        );
         $this->updateIfSettings($data, $env_vars['interface']);
         $data = [
             'primarydns' => $named_dns[0] ?? '',
             'secondarydns' => $named_dns[1] ?? '',
             'domain' => $env_vars['domain'] ?? '',
         ];
+        SystemMessages::sysLogMsg(
+            'Udhcpc',
+            "renewBoundSystemCtlAction DNS: interface={$env_vars['interface']}, dns1={$data['primarydns']}, dns2={$data['secondarydns']}, domain={$data['domain']}",
+            LOG_INFO
+        );
         $this->updateDnsSettings($data, $env_vars['interface']);
 
         // Set MTU (skip when skipNetworkCommands is true)
@@ -308,6 +318,11 @@ class Udhcpc extends Network
             $data['subnet'] = $this->netMaskToCidr($env_vars['subnet']);
         }
 
+        SystemMessages::sysLogMsg(
+            'Udhcpc',
+            "renewBoundAction: interface={$env_vars['interface']}, ip={$env_vars['ip']}, gateway={$env_vars['router']}, subnet={$data['subnet']}",
+            LOG_INFO
+        );
         $this->updateIfSettings($data, $env_vars['interface']);
 
         $data = [
@@ -315,6 +330,11 @@ class Udhcpc extends Network
             'secondarydns' => $named_dns[1] ?? '',
             'domain' => $env_vars['domain'] ?? '',
         ];
+        SystemMessages::sysLogMsg(
+            'Udhcpc',
+            "renewBoundAction DNS: interface={$env_vars['interface']}, dns1={$data['primarydns']}, dns2={$data['secondarydns']}, domain={$data['domain']}",
+            LOG_INFO
+        );
         $this->updateDnsSettings($data, $env_vars['interface']);
 
         // Set MTU (skip when skipNetworkCommands is true)

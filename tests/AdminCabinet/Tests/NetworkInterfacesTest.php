@@ -61,8 +61,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->changeInputField('exthostname', $params['exthostname']);
         $this->changeInputField('externalSIPPort', $params['externalSIPPort']);
         $this->changeInputField('externalTLSPort', $params['externalTLSPort']);
-        $this->changeInputField('hostname_1', $params['hostname_1']);
-        $this->changeInputField('domain_1', $params['domain_1']);
+        // Note: hostname_1 and domain_1 are readonly when DHCP is enabled (managed by DHCP server)
 
         // Change to the appropriate tab on the current page.
         $this->changeTabOnCurrentPage('0');
@@ -92,9 +91,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->assertInputFieldValueEqual('exthostname', $params['exthostname']);
         $this->assertInputFieldValueEqual('externalSIPPort', $params['externalSIPPort']);
         $this->assertInputFieldValueEqual('externalTLSPort', $params['externalTLSPort']);
-        $this->assertInputFieldValueEqual('hostname_1', $params['hostname_1']);
-        $this->assertInputFieldValueEqual('domain_1', $params['domain_1']);
-        
+        // Note: hostname_1 and domain_1 assertions removed - values managed by DHCP server
 
         // Click on the newly created VLAN tab.
         $xpath = "//div[@id='eth-interfaces-menu']/a[contains(text(),'{$params['name_0']}')]";
@@ -135,18 +132,99 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
                 'extipaddr' => '93.188.43.143',
                 'exthostname' => 'testMikoPBX.miko.ru',
                 'externalSIPPort' => '5062',
-                'externalTLSPort' => '5063',
-                'hostname_1'=>'testMikoPBX',
-                'domain_1'=>'local'
+                'externalTLSPort' => '5063'
             ]
         ];
         return $params;
     }
 
     /**
-     * Test IPv6 Manual configuration through web UI
+     * Test adding a static route configuration.
+     * Must run after VLAN test because static routes section is only visible when multiple interfaces exist.
      *
      * @depends testAddNewVLAN
+     */
+    public function testStaticRoutes(): void
+    {
+        $this->setSessionName("Test: Static Routes Configuration");
+
+        // Navigate to network configuration page
+        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
+        $this->waitForAjax();
+
+        // Click "Add route" button
+        $addRouteButton = self::$driver->findElement(WebDriverBy::id('add-first-route-button'));
+        if (!$addRouteButton->isDisplayed()) {
+            // If table already has routes, use the other button
+            $addRouteButton = self::$driver->findElement(WebDriverBy::id('add-new-route'));
+        }
+        $addRouteButton->click();
+
+        // Wait for new row to appear
+        sleep(1);
+
+        // Fill route data - using safe non-routable network
+        $routeRow = self::$driver->findElement(WebDriverBy::cssSelector('#static-routes-table tbody tr:not(.route-row-template)'));
+
+        // Network address
+        $networkInput = $routeRow->findElement(WebDriverBy::cssSelector('.network-input'));
+        $networkInput->clear();
+        $networkInput->sendKeys('10.255.255.0');
+
+        // Subnet - select /24 from dropdown
+        $subnetDropdown = $routeRow->findElement(WebDriverBy::cssSelector('.subnet-dropdown-container .ui.dropdown'));
+        $subnetDropdown->click();
+        sleep(1);
+        $option24 = $subnetDropdown->findElement(WebDriverBy::cssSelector('.item[data-value="24"]'));
+        $option24->click();
+
+        // Gateway - use the server's gateway
+        $gatewayInput = $routeRow->findElement(WebDriverBy::cssSelector('.gateway-input'));
+        $gatewayInput->clear();
+        $gatewayInput->sendKeys('172.16.32.15');
+
+        // Interface dropdown - select eth0
+        $interfaceDropdown = $routeRow->findElement(WebDriverBy::cssSelector('.interface-dropdown-container .ui.dropdown'));
+        $interfaceDropdown->click();
+        sleep(1);
+        $eth0Option = $interfaceDropdown->findElement(WebDriverBy::cssSelector('.item[data-value="eth0"]'));
+        $eth0Option->click();
+
+        // Description
+        $descriptionInput = $routeRow->findElement(WebDriverBy::cssSelector('.description-input'));
+        $descriptionInput->clear();
+        $descriptionInput->sendKeys('Test route for automation');
+
+        // Submit the form
+        $this->submitForm('network-form');
+
+        // Verify route was saved - reload page
+        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
+        $this->waitForAjax();
+
+        // Check that route exists in table
+        $savedRouteRow = self::$driver->findElement(WebDriverBy::cssSelector('#static-routes-table tbody tr:not(.route-row-template)'));
+
+        $savedNetwork = $savedRouteRow->findElement(WebDriverBy::cssSelector('.network-input'))->getAttribute('value');
+        $savedGateway = $savedRouteRow->findElement(WebDriverBy::cssSelector('.gateway-input'))->getAttribute('value');
+        $savedDescription = $savedRouteRow->findElement(WebDriverBy::cssSelector('.description-input'))->getAttribute('value');
+
+        $this->assertEquals('10.255.255.0', $savedNetwork, 'Network address should be saved');
+        $this->assertEquals('172.16.32.15', $savedGateway, 'Gateway should be saved');
+        $this->assertEquals('Test route for automation', $savedDescription, 'Description should be saved');
+
+        // Clean up - delete the route
+        $deleteButton = $savedRouteRow->findElement(WebDriverBy::cssSelector('.delete-route-button'));
+        $deleteButton->click();
+
+        // Submit to save the deletion
+        $this->submitForm('network-form');
+    }
+
+    /**
+     * Test IPv6 Manual configuration through web UI
+     *
+     * @depends testStaticRoutes
      */
     public function testIPv6ManualConfiguration(): void
     {

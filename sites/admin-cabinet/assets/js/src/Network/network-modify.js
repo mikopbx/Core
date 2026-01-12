@@ -408,6 +408,14 @@ const networks = {
         const $standardHostnameWrapper = $standardNatSection.find('.max-width-500').has('#exthostname').first();
         const $dualStackHostnameWrapper = $('#exthostname-dual-stack-input-wrapper');
 
+        // Get the port input elements and their wrappers
+        const $externalSipPortInput = $('input[name="externalSIPPort"]');
+        const $externalTlsPortInput = $('input[name="externalTLSPort"]');
+        const $standardSipPortWrapper = $('#external-sip-port-standard-wrapper');
+        const $standardTlsPortWrapper = $('#external-tls-port-standard-wrapper');
+        const $dualStackSipPortWrapper = $('#external-sip-port-dual-stack-wrapper');
+        const $dualStackTlsPortWrapper = $('#external-tls-port-dual-stack-wrapper');
+
         if (anyDualStack) {
             // Dual-stack detected: Hide standard NAT section, show Dual-Stack section
             $standardNatSection.hide();
@@ -416,6 +424,14 @@ const networks = {
             // Move exthostname input to dual-stack section (avoid duplicate inputs)
             if ($exthostnameInput.length > 0 && $dualStackHostnameWrapper.length > 0) {
                 $exthostnameInput.appendTo($dualStackHostnameWrapper);
+            }
+
+            // Move port inputs to dual-stack section (avoid duplicate inputs)
+            if ($externalSipPortInput.length > 0 && $dualStackSipPortWrapper.length > 0) {
+                $externalSipPortInput.appendTo($dualStackSipPortWrapper);
+            }
+            if ($externalTlsPortInput.length > 0 && $dualStackTlsPortWrapper.length > 0) {
+                $externalTlsPortInput.appendTo($dualStackTlsPortWrapper);
             }
 
             // Clear extipaddr (external IP not needed in dual-stack, only hostname)
@@ -450,6 +466,14 @@ const networks = {
             // Move exthostname input back to standard section
             if ($exthostnameInput.length > 0 && $standardHostnameWrapper.length > 0) {
                 $exthostnameInput.appendTo($standardHostnameWrapper);
+            }
+
+            // Move port inputs back to standard section
+            if ($externalSipPortInput.length > 0 && $standardSipPortWrapper.length > 0) {
+                $externalSipPortInput.appendTo($standardSipPortWrapper);
+            }
+            if ($externalTlsPortInput.length > 0 && $standardTlsPortWrapper.length > 0) {
+                $externalTlsPortInput.appendTo($standardTlsPortWrapper);
             }
 
             // Restore original exthostname validation (optional with usenat dependency)
@@ -1244,15 +1268,15 @@ const networks = {
 
                     <div class="field">
                         <label>${globalTranslate.nw_Hostname || 'Hostname'}</label>
-                        <div class="field max-width-400">
-                            <input type="text" name="hostname_${id}" value="${iface.hostname || ''}" placeholder="mikopbx" />
+                        <div class="field max-width-400 ${gatewayDisabledClass}">
+                            <input type="text" name="hostname_${id}" value="${iface.hostname || ''}" placeholder="mikopbx" ${gatewayReadonly} />
                         </div>
                     </div>
 
                     <div class="field">
                         <label>${globalTranslate.nw_Domain || 'Domain'}</label>
-                        <div class="field max-width-400">
-                            <input type="text" name="domain_${id}" value="${iface.domain || ''}" placeholder="example.com" />
+                        <div class="field max-width-400 ${gatewayDisabledClass}">
+                            <input type="text" name="domain_${id}" value="${iface.domain || ''}" placeholder="example.com" ${gatewayReadonly} />
                         </div>
                     </div>
 
