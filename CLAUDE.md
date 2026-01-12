@@ -408,6 +408,7 @@ MikoPBX includes specialized skills in `.claude/skills/` that activate automatic
 - **`asterisk-validator`** - Validate Asterisk configuration and logs / Валидация конфигурации Asterisk
 - **`asterisk-tester`** - Test Asterisk dialplan scenarios / Тестирование Asterisk dialplan
 - **`teamcity-monitor`** - Monitor CI/CD pipeline and analyze build failures / Мониторинг сборок TeamCity
+- **`browserstack-tester`** - Run PHPUnit Selenium tests via BrowserStack / Запуск тестов веб-интерфейса через BrowserStack
 
 ### Code Quality & Style
 - **`php-style`** - PHP standards (PSR-1/4/12, PHP 8.3 features) / PHP стандарты
