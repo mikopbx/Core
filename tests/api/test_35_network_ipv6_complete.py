@@ -49,7 +49,7 @@ class TestIPv6EndToEndNativeDualStack:
             'internet_interface': iface_id,
             # IPv4 Static
             f'dhcp_{iface_id}': False,
-            f'ipaddr_{iface_id}': '172.16.32.72',
+            f'ipaddr_{iface_id}': '172.16.33.72',
             f'subnet_{iface_id}': '24',
             f'gateway_{iface_id}': '172.16.32.15',
             # IPv6 Manual
@@ -89,13 +89,13 @@ class TestIPv6EndToEndNativeDualStack:
             # WHY: In Docker mode, DHCP is force-enabled by SaveConfigAction:473
             # Docker runtime manages networking, not MikoPBX
             assert iface['dhcp'] == False, "DHCP should be disabled"
-            assert iface['ipaddr'] == '172.16.32.72', "IPv4 address should match"
+            assert iface['ipaddr'] == '172.16.33.72', "IPv4 address should match"
             assert iface['subnet'] == '24', "IPv4 subnet should match"
             assert iface['gateway'] == '172.16.32.15', "IPv4 gateway should match"
         else:
             print("  ℹ️  Skipping DHCP and IPv4 checks (Docker runtime manages networking)")
             # In Docker, GetConfigAction returns current interface IP (192.168.107.2)
-            # not the value saved to database (172.16.32.72)
+            # not the value saved to database (172.16.33.72)
 
         # Verify IPv6
         assert iface['ipv6_mode'] == '2', "IPv6 mode should be Manual (2)"

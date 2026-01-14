@@ -733,6 +733,14 @@ class Network extends Injectable
                 $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.autoconf=1";
                 $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.accept_ra=1";
 
+                // CRITICAL: Wait for link-local address to be generated and DAD to complete
+                // DHCPv6 client requires fully ready link-local address (not in "tentative" state)
+                // DAD (Duplicate Address Detection) typically takes 1-2 seconds
+                // Execute synchronously BEFORE launching udhcpc6 to prevent "can't get link-local IPv6 address"
+                $waitCmd = "for i in 1 2 3 4 5 6 7 8 9 10; do $ip -6 addr show dev $escapedIfName | grep -E 'inet6 fe80.*scope link' | grep -qv tentative && break; sleep 0.5; done";
+                Processes::mwExec($waitCmd);
+                SystemMessages::sysLogMsg(__METHOD__, "Link-local address ready on $ifName for DHCPv6");
+
                 // Launch DHCPv6 client (mimics IPv4 udhcpc pattern)
                 // ARCHITECTURAL DECISION: DHCPv6 client behavior based on Router Advertisement flags
                 // - M-flag set (Managed): Run stateful DHCPv6 to get IPv6 address
@@ -772,12 +780,9 @@ class Network extends Injectable
                 $escapedPidFile = escapeshellarg($pid_file);
                 $escapedWorkerPath = escapeshellarg($workerPath);
 
-                // Run udhcpc6 once in foreground to get immediate lease (quick attempt)
-                $options = '-t 2 -T 2 -q -n';  // 2 attempts, 2 sec timeout, quit after lease, exit if no lease
-                $arr_commands[] = "$udhcpc6 $options -i $ifName -s $escapedWorkerPath";
-
                 // Start persistent udhcpc6 in background (long-running daemon)
-                // Use mwExecBg to properly handle background execution instead of shell &
+                // REMOVED foreground quick attempt - it fails with short timeouts even after link-local wait
+                // Background daemon with longer timeouts (-t 6 -T 5) handles DHCPv6 acquisition reliably
                 $bgOptions = '-t 6 -T 5 -S -b';  // 6 attempts, 5 sec, syslog, background
                 $bgCommand = "$udhcpc6 $bgOptions -p $escapedPidFile -i $ifName -s $escapedWorkerPath";
                 Processes::mwExecBg($bgCommand);

@@ -165,35 +165,35 @@ class LanInterfaces extends ModelsBase
     /**
      * IPv6 address
      *
-     * @Column(type="string", nullable=true)
+     * @Column(type="string", length=39, nullable=true)
      */
     public ?string $ipv6addr = '';
 
     /**
      * IPv6 subnet prefix length (1-128)
      *
-     * @Column(type="string", nullable=true)
+     * @Column(type="string", length=3, nullable=true)
      */
     public ?string $ipv6_subnet = '';
 
     /**
      * IPv6 gateway
      *
-     * @Column(type="string", nullable=true)
+     * @Column(type="string", length=39, nullable=true)
      */
     public ?string $ipv6_gateway = '';
 
     /**
      * Primary IPv6 DNS server
      *
-     * @Column(type="string", nullable=true)
+     * @Column(type="string", length=39, nullable=true)
      */
     public ?string $primarydns6 = '';
 
     /**
      * Secondary IPv6 DNS server
      *
-     * @Column(type="string", nullable=true)
+     * @Column(type="string", length=39, nullable=true)
      */
     public ?string $secondarydns6 = '';
 

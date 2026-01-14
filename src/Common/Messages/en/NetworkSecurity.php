@@ -171,7 +171,7 @@ return [
     'nw_GatewayAddress' => 'Gateway address',
     'nw_Hostname' => 'Local hostname',
     'nw_IPAddress' => 'IP address',
-    'nw_InterfaceName' => 'Interface name',
+    'nw_InterfaceName' => 'Network Connection Name',
     'nw_InternetInterface' => 'Network interface with Internet access',
     'nw_InternetSettings' => 'Internet interface settings',
     'nw_LookUpExternalIp' => 'Find external IP',
@@ -295,6 +295,14 @@ return [
     'f2b_PBXFirewallMaxReqSecTooltip_warning' => 'Too low a value may block legitimate traffic during mass device re-registration after reboot. Consider the number of SIP devices in the network.',
     'f2b_PBXFirewallMaxReqSecTooltip_note' => 'Protection only works for SIP TCP and UDP ports (5060) and TLS (5061). Does not affect established connections.',
 
+    // IPv4 Configuration
+    'nw_IPv4Mode' => 'IPv4 Mode',
+    'nw_IPv4ModeManual' => 'Manual',
+    'nw_IPv4ModeDHCP' => 'DHCP',
+    'nw_IPv4Gateway' => 'IPv4 Gateway',
+    'nw_IPv4PrimaryDNS' => 'IPv4 DNS (primary)',
+    'nw_IPv4SecondaryDNS' => 'IPv4 DNS (secondary)',
+
     // IPv6 Configuration (Phase 3)
     'nw_IPv6Configuration' => 'IPv6 Configuration',
     'nw_IPv6Mode' => 'IPv6 Mode',
@@ -314,8 +322,8 @@ return [
     'nw_ValidateIPv6SubnetRequired' => 'IPv6 prefix length is required for Manual mode',
 
     // IPv6 DNS Fields (Phase 6)
-    'nw_IPv6PrimaryDNS' => 'Primary IPv6 DNS',
-    'nw_IPv6SecondaryDNS' => 'Secondary IPv6 DNS',
+    'nw_IPv6PrimaryDNS' => 'IPv6 DNS (primary)',
+    'nw_IPv6SecondaryDNS' => 'IPv6 DNS (secondary)',
 
     // Docker IPv6 Info (Phase 6)
     'nw_DockerIPv6Info' => 'IPv6 settings are applied inside the container. IPv4 configuration is managed by Docker.',

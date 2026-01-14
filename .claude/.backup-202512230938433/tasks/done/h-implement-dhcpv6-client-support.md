@@ -1277,7 +1277,7 @@ if (!empty($pid) && file_exists($pid_file)) {
 
 **Test Network:** MikroTik router with DHCPv6 server
 
-**Current Test Host:** `172.16.32.72`
+**Current Test Host:** `172.16.33.72`
 
 **Verification Commands:**
 

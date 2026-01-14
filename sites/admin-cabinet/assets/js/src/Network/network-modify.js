@@ -125,7 +125,7 @@ const networks = {
         networks.$getMyIpButton.removeClass('loading disabled');
 
         if (response === false || !response.result || !response.data || !response.data.ip) {
-            UserMessage.showError(globalTranslate.nw_ErrorGettingExternalIp || 'Failed to get external IP address');
+            UserMessage.showError(globalTranslate.nw_ErrorGettingExternalIp);
             return;
         }
 
@@ -242,30 +242,31 @@ const networks = {
     },
 
     /**
-     * Toggles the 'disabled' class for specific fields based on their checkbox state.
+     * Toggles visibility of IP address fields based on IPv4 mode dropdown state.
      */
     toggleDisabledFieldClass() {
         $('#eth-interfaces-menu a').each((index, obj) => {
             const eth = $(obj).attr('data-tab');
-            const $dhcpCheckbox = $(`#dhcp-${eth}-checkbox`);
-            const isDhcpEnabled = $dhcpCheckbox.checkbox('is checked');
+            const $ipv4ModeDropdown = $(`#ipv4_mode_${eth}-dropdown`);
+            const ipv4Mode = $ipv4ModeDropdown.dropdown('get value');
+            const isDhcpEnabled = ipv4Mode === '1';
 
-            // Find IP address and subnet fields
-            const $ipField = $(`input[name="ipaddr_${eth}"]`);
-            // DynamicDropdownBuilder creates dropdown with id pattern: fieldName-dropdown
-            const $subnetDropdown = $(`#subnet_${eth}-dropdown`);
+            // Find IP address and subnet fields group
+            const $ipAddressGroup = $(`#ip-address-group-${eth}`);
+            const $gatewayField = $(`.ipv4-gateway-field-${eth}`);
+            const $dhcpInfoMessage = $(`.dhcp-info-message-${eth}`);
 
             if (isDhcpEnabled) {
-                // DHCP enabled -> make IP/subnet read-only and add disabled class
-                $ipField.prop('readonly', true);
-                $ipField.closest('.field').addClass('disabled');
-                $subnetDropdown.addClass('disabled');
+                // DHCP enabled -> hide IP/subnet fields group and gateway field, show DHCP info
+                $ipAddressGroup.hide();
+                $gatewayField.hide();
+                $dhcpInfoMessage.show();
                 $(`#not-dhcp-${eth}`).val('');
             } else {
-                // DHCP disabled -> make IP/subnet editable
-                $ipField.prop('readonly', false);
-                $ipField.closest('.field').removeClass('disabled');
-                $subnetDropdown.removeClass('disabled');
+                // DHCP disabled -> show IP/subnet fields group and gateway field, hide DHCP info
+                $ipAddressGroup.show();
+                $gatewayField.show();
+                $dhcpInfoMessage.hide();
                 $(`#not-dhcp-${eth}`).val('1');
             }
 
@@ -291,31 +292,23 @@ const networks = {
         const ipv6Mode = $ipv6ModeDropdown.val();
         const $manualFieldsContainer = $(`.ipv6-manual-fields-${interfaceId}`);
         const $autoInfoMessage = $(`.ipv6-auto-info-message-${interfaceId}`);
-        const $ipv6GatewayField = $(`.ipv6-gateway-field-${interfaceId}`);
-        const $ipv6PrimaryDNSField = $(`.ipv6-primarydns-field-${interfaceId}`);
-        const $ipv6SecondaryDNSField = $(`.ipv6-secondarydns-field-${interfaceId}`);
+        const $ipv6InternetSettings = $(`.ipv6-internet-settings-${interfaceId}`);
 
         // Show manual fields only when mode is '2' (Manual)
         if (ipv6Mode === '2') {
             $manualFieldsContainer.show();
             $autoInfoMessage.hide();
-            $ipv6GatewayField.show();
-            $ipv6PrimaryDNSField.show();
-            $ipv6SecondaryDNSField.show();
+            $ipv6InternetSettings.show();
         } else if (ipv6Mode === '1') {
-            // Show Auto (SLAAC) info message when mode is '1' (Auto)
+            // Show Auto (SLAAC/DHCPv6) info message when mode is '1' (Auto)
             $manualFieldsContainer.hide();
             $autoInfoMessage.show();
-            $ipv6GatewayField.show();
-            $ipv6PrimaryDNSField.show();
-            $ipv6SecondaryDNSField.show();
+            $ipv6InternetSettings.show();
         } else {
             // Hide all IPv6 fields for mode '0' (Off)
             $manualFieldsContainer.hide();
             $autoInfoMessage.hide();
-            $ipv6GatewayField.hide();
-            $ipv6PrimaryDNSField.hide();
-            $ipv6SecondaryDNSField.hide();
+            $ipv6InternetSettings.hide();
         }
 
         // Update dual-stack NAT logic when IPv6 mode changes
@@ -451,11 +444,11 @@ const networks = {
             networks.validateRules.exthostname.rules = [
                 {
                     type: 'empty',
-                    prompt: globalTranslate.nw_ValidateExternalHostnameEmpty || 'External hostname is required in dual-stack mode',
+                    prompt: globalTranslate.nw_ValidateExternalHostnameEmpty,
                 },
                 {
                     type: 'validHostname',
-                    prompt: globalTranslate.nw_ValidateHostnameInvalid || 'Invalid hostname format',
+                    prompt: globalTranslate.nw_ValidateHostnameInvalid,
                 },
             ];
         } else {
@@ -595,11 +588,12 @@ const networks = {
         result.data.staticRoutes = StaticRoutesManager.collectRoutes();
 
         // Manually collect form values to avoid any DOM-related issues
-        // Collect all regular input fields
+        // Collect all regular input fields (skip readonly fields to prevent overwriting DHCP-provided values)
         networks.$formObj.find('input[type="text"], input[type="hidden"], input[type="number"], textarea').each(function() {
             const $input = $(this);
             const name = $input.attr('name');
-            if (name) {
+            // Skip readonly fields - they contain current DHCP/Auto values and should not be saved
+            if (name && !$input.prop('readonly')) {
                 const value = $input.val();
                 // Ensure we only get string values
                 result.data[name] = (value !== null && value !== undefined) ? String(value) : '';
@@ -629,22 +623,19 @@ const networks = {
             result.data.autoUpdateExternalIp = false;
         }
 
-        // Convert DHCP checkboxes to boolean for each interface
-        networks.$formObj.find('.dhcp-checkbox').each((index, obj) => {
-            const inputId = $(obj).attr('id');
-            const rowId = inputId.replace('dhcp-', '').replace('-checkbox', '');
+        // Convert IPv4 mode dropdown values to DHCP boolean for REST API compatibility
+        // WHY: UI uses dropdown with values 0=Manual, 1=DHCP but REST API expects dhcp_${id} boolean
+        Object.keys(result.data).forEach(key => {
+            const ipv4ModeMatch = key.match(/^ipv4_mode_(\d+)$/);
+            if (ipv4ModeMatch) {
+                const interfaceId = ipv4ModeMatch[1];
+                const mode = result.data[key];
 
-            // For disabled checkboxes, read actual input state instead of Fomantic UI API
-            const $checkbox = $(obj);
-            const $input = $checkbox.find('input[type="checkbox"]');
-            const isDisabled = $checkbox.hasClass('disabled') || $input.prop('disabled');
+                // Convert dropdown value to boolean: '1' = DHCP enabled, '0' = Manual (DHCP disabled)
+                result.data[`dhcp_${interfaceId}`] = mode === '1';
 
-            if (isDisabled) {
-                // For disabled checkboxes, read the actual input checked state
-                result.data[`dhcp_${rowId}`] = $input.prop('checked') === true;
-            } else {
-                // For enabled checkboxes, use Fomantic UI API
-                result.data[`dhcp_${rowId}`] = $checkbox.checkbox('is checked');
+                // Remove ipv4_mode_${id} key as it's not needed by REST API
+                delete result.data[key];
             }
         });
 
@@ -670,6 +661,14 @@ const networks = {
                     result.data[subnetKey] = '64';
                 }
             }
+        });
+
+        // Synchronize global hostname to all interfaces
+        // WHY: Single hostname field for all interfaces, but REST API expects hostname_${id} for each interface
+        const globalHostname = $('#global-hostname').val() || '';
+        $('#eth-interfaces-menu a').each((index, tab) => {
+            const interfaceId = $(tab).attr('data-tab');
+            result.data[`hostname_${interfaceId}`] = globalHostname;
         });
 
         return result;
@@ -823,6 +822,30 @@ const networks = {
                 placeholder: globalTranslate.nw_SelectInterface,
                 allowEmpty: true
             });
+
+            // Initialize IPv4 mode dropdown for template (ID=0)
+            const ipv4ModeOptions = [
+                {value: '0', text: globalTranslate.nw_IPv4ModeManual},
+                {value: '1', text: globalTranslate.nw_IPv4ModeDHCP}
+            ];
+
+            DynamicDropdownBuilder.buildDropdown('ipv4_mode_0', { ipv4_mode_0: '1' }, {
+                staticOptions: ipv4ModeOptions,
+                placeholder: globalTranslate.nw_SelectIPv4Mode,
+                allowEmpty: false,
+                onChange: () => {
+                    networks.toggleDisabledFieldClass();
+                    Form.dataChanged();
+                }
+            });
+
+            // Initialize subnet dropdown for template (ID=0)
+            DynamicDropdownBuilder.buildDropdown('subnet_0', { subnet_0: '24' }, {
+                staticOptions: networks.getSubnetOptionsArray(),
+                placeholder: globalTranslate.nw_SelectNetworkMask,
+                allowEmpty: false,
+                additionalClasses: ['search']
+            });
         }
 
         // Initialize subnet dropdowns using DynamicDropdownBuilder
@@ -839,18 +862,50 @@ const networks = {
                 additionalClasses: ['search']  // Add search class for searchable dropdown
             });
 
+            // Initialize IPv4 mode dropdown (Manual/DHCP) for non-Docker environments
+            if (!iface.isDocker) {
+                const ipv4ModeFieldName = `ipv4_mode_${iface.id}`;
+                const ipv4ModeFormData = {};
+                // WHY: iface.dhcp can be boolean (from REST API) or string (from form)
+                ipv4ModeFormData[ipv4ModeFieldName] = (iface.dhcp === '1' || iface.dhcp === true) ? '1' : '0';
+
+                const ipv4ModeOptions = [
+                    {value: '0', text: globalTranslate.nw_IPv4ModeManual},
+                    {value: '1', text: globalTranslate.nw_IPv4ModeDHCP}
+                ];
+
+                DynamicDropdownBuilder.buildDropdown(ipv4ModeFieldName, ipv4ModeFormData, {
+                    staticOptions: ipv4ModeOptions,
+                    placeholder: globalTranslate.nw_SelectIPv4Mode,
+                    allowEmpty: false,
+                    onChange: () => {
+                        networks.toggleDisabledFieldClass();
+                        Form.dataChanged();
+                    }
+                });
+            }
+
             // Initialize IPv6 mode dropdown (Off/Auto/Manual)
+            // For VLAN interfaces: only Off and Manual modes (no DHCPv6 Auto)
             const ipv6ModeFieldName = `ipv6_mode_${iface.id}`;
             const ipv6ModeFormData = {};
             ipv6ModeFormData[ipv6ModeFieldName] = String(iface.ipv6_mode || '0');
 
+            const isVlan = iface.vlanid && parseInt(iface.vlanid, 10) > 0;
+            const ipv6ModeOptions = isVlan
+                ? [
+                    {value: '0', text: globalTranslate.nw_IPv6ModeOff},
+                    {value: '2', text: globalTranslate.nw_IPv6ModeManual}
+                ]
+                : [
+                    {value: '0', text: globalTranslate.nw_IPv6ModeOff},
+                    {value: '1', text: globalTranslate.nw_IPv6ModeAuto},
+                    {value: '2', text: globalTranslate.nw_IPv6ModeManual}
+                ];
+
             DynamicDropdownBuilder.buildDropdown(ipv6ModeFieldName, ipv6ModeFormData, {
-                staticOptions: [
-                    {value: '0', text: globalTranslate.nw_IPv6ModeOff || 'Off'},
-                    {value: '1', text: globalTranslate.nw_IPv6ModeAuto || 'Auto (SLAAC/DHCPv6)'},
-                    {value: '2', text: globalTranslate.nw_IPv6ModeManual || 'Manual'}
-                ],
-                placeholder: globalTranslate.nw_SelectIPv6Mode || 'Select IPv6 Mode',
+                staticOptions: ipv6ModeOptions,
+                placeholder: globalTranslate.nw_SelectIPv6Mode,
                 allowEmpty: false,
                 onChange: () => {
                     networks.toggleIPv6Fields(iface.id);
@@ -865,7 +920,7 @@ const networks = {
 
             DynamicDropdownBuilder.buildDropdown(ipv6SubnetFieldName, ipv6SubnetFormData, {
                 staticOptions: networks.getIpv6SubnetOptionsArray(),
-                placeholder: globalTranslate.nw_SelectIPv6Subnet || 'Select IPv6 Prefix',
+                placeholder: globalTranslate.nw_SelectIPv6Subnet,
                 allowEmpty: false,
                 additionalClasses: ['search']
             });
@@ -921,12 +976,7 @@ const networks = {
             }
         });
 
-        // Re-bind DHCP checkbox handlers
-        $('.dhcp-checkbox').checkbox({
-            onChange() {
-                networks.toggleDisabledFieldClass();
-            },
-        });
+        // IPv4 mode dropdowns now initialized via DynamicDropdownBuilder in forEach loop (line ~840)
 
         // Re-bind IP address input masks
         $('.ipaddress').inputmask({alias: 'ip', 'placeholder': '_'});
@@ -990,30 +1040,28 @@ const networks = {
             }
         });
 
-        // Update DNS/Gateway readonly state when DHCP changes
-        $('.dhcp-checkbox').off('change.dnsgateway').on('change.dnsgateway', function() {
-            const $checkbox = $(this);
-            const interfaceId = $checkbox.attr('id').replace('dhcp-', '').replace('-checkbox', '');
-            const isDhcpEnabled = $checkbox.checkbox('is checked');
+        // Update DHCP info message visibility when IPv4 mode changes
+        $('.ipv4-mode-dropdown').off('change.dnsgateway').on('change.dnsgateway', function() {
+            const $dropdown = $(this);
+            const interfaceId = $dropdown.attr('id').replace('ipv4-mode-', '');
+            const ipv4Mode = $dropdown.dropdown('get value');
+            const isDhcpEnabled = ipv4Mode === '1';
 
-            // Find DNS/Gateway fields for this interface
-            const $dnsGatewayGroup = $(`.dns-gateway-group-${interfaceId}`);
-            const $dnsGatewayFields = $dnsGatewayGroup.find('input[name^="gateway_"], input[name^="primarydns_"], input[name^="secondarydns_"]');
+            // Find DHCP info message
             const $dhcpInfoMessage = $(`.dhcp-info-message-${interfaceId}`);
 
             if (isDhcpEnabled) {
-                // DHCP enabled -> make DNS/Gateway read-only
-                $dnsGatewayFields.prop('readonly', true);
-                $dnsGatewayFields.closest('.field').addClass('disabled');
+                // DHCP enabled -> show DHCP info message
                 $dhcpInfoMessage.show();
             } else {
-                // DHCP disabled -> make DNS/Gateway editable
-                $dnsGatewayFields.prop('readonly', false);
-                $dnsGatewayFields.closest('.field').removeClass('disabled');
+                // DHCP disabled -> hide DHCP info message
                 $dhcpInfoMessage.hide();
             }
 
-            // Update dual-stack NAT logic when DHCP changes
+            // Update IP address group visibility (hide when DHCP on, show when off)
+            networks.toggleDisabledFieldClass();
+
+            // Update dual-stack NAT logic when IPv4 mode changes
             networks.updateDualStackNatLogic();
         });
 
@@ -1114,35 +1162,27 @@ const networks = {
         const id = iface.id;
         const isInternetInterface = iface.internet || false;
 
-        // DNS/Gateway fields visibility and read-only state
+        // DNS/Gateway fields visibility
         const dnsGatewayVisible = isInternetInterface ? '' : 'style="display:none;"';
 
-        // In Docker: Gateway is always readonly, DNS fields are editable
-        // In regular mode: All fields readonly if DHCP enabled
-        const gatewayReadonly = isDocker || iface.dhcp ? 'readonly' : '';
-        const gatewayDisabledClass = isDocker || iface.dhcp ? 'disabled' : '';
-        const dnsReadonly = isDocker ? '' : (iface.dhcp ? 'readonly' : '');
-        const dnsDisabledClass = isDocker ? '' : (iface.dhcp ? 'disabled' : '');
-
-        // IPv6 Gateway: readonly when ipv6_mode='1' (Auto/SLAAC), editable when ipv6_mode='2' (Manual) or '0' (Off)
-        const ipv6GatewayReadonly = iface.ipv6_mode === '1' ? 'readonly' : '';
-        const ipv6GatewayDisabledClass = iface.ipv6_mode === '1' ? 'disabled' : '';
-
-        // IPv6 fields visibility: hide when ipv6_mode='0' (Off), show when '1' (Auto) or '2' (Manual)
-        const ipv6FieldsVisible = iface.ipv6_mode === '0' ? 'style="display:none;"' : '';
-
-        // In Docker: IP, subnet, VLAN are readonly
-        const dockerReadonly = isDocker ? 'readonly' : '';
-        const dockerDisabledClass = isDocker ? 'disabled' : '';
-
-        // In Docker: DHCP checkbox is disabled and always checked
+        // Readonly/Placeholder logic for DHCP-controlled fields
         const dhcpDisabled = isDocker || iface.vlanid > 0;
         const dhcpChecked = isDocker || (iface.vlanid > 0 ? false : iface.dhcp);
+
+        // IPv4 placeholders when DHCP enabled
+        const hostnamePlaceholder = dhcpChecked ? globalTranslate.nw_PlaceholderDhcpHostname : 'mikopbx';
+        const primaryDnsPlaceholder = dhcpChecked ? `${globalTranslate.nw_PlaceholderDhcpDns} ${iface.currentPrimarydns || iface.primarydns || '8.8.8.8'}` : '8.8.8.8';
+        const secondaryDnsPlaceholder = dhcpChecked ? `${globalTranslate.nw_PlaceholderDhcpDns} ${iface.currentSecondarydns || iface.secondarydns || '8.8.4.4'}` : '8.8.4.4';
+
+        // IPv6 DNS placeholders (always editable)
+        const ipv6PrimaryDnsPlaceholder = globalTranslate.nw_PlaceholderIPv6Dns;
+        const ipv6SecondaryDnsPlaceholder = globalTranslate.nw_PlaceholderIPv6Dns;
 
         return `
             <div class="ui bottom attached tab segment ${isActive ? 'active' : ''}" data-tab="${id}">
                 <input type="hidden" name="interface_${id}" value="${iface.interface}" />
 
+                <!-- Common Settings Section (outside columns) -->
                 ${isDocker ? `
                 <input type="hidden" name="name_${id}" value="${iface.name || ''}" />
                 <input type="hidden" name="internet_interface" value="${id}" />
@@ -1161,59 +1201,11 @@ const networks = {
                     <div class="ui segment">
                         <div class="ui toggle checkbox internet-radio" id="internet-${id}-radio">
                             <input type="radio" name="internet_interface" value="${id}" ${isInternetInterface ? 'checked' : ''} />
-                            <label><i class="globe icon"></i> ${globalTranslate.nw_InternetInterface || 'Internet Interface'}</label>
-                        </div>
-                    </div>
-                </div>
-                `}
-
-                ${isDocker ? '' : `
-                <div class="field">
-                    <div class="ui segment">
-                        <div class="ui toggle checkbox dhcp-checkbox${dhcpDisabled ? ' disabled' : ''}" id="dhcp-${id}-checkbox">
-                            <input type="checkbox" name="dhcp_${id}" ${dhcpChecked ? 'checked' : ''} ${dhcpDisabled ? 'disabled' : ''} />
-                            <label>${globalTranslate.nw_UseDHCP}</label>
-                        </div>
-                    </div>
-                </div>
-                `}
-
-                <div class="dhcp-info-message-${id}" style="display: ${dhcpChecked ? 'block' : 'none'};">
-                    <div class="ui compact info message">
-                        <div class="content">
-                            <div class="header">${globalTranslate.nw_DHCPInfoHeader || 'DHCP Configuration Obtained'}</div>
-                            <ul class="list" style="margin-top: 0.5em;">
-                                <li>${globalTranslate.nw_DHCPInfoIP || 'IP Address'}: <strong>${iface.currentIpaddr || iface.ipaddr || 'N/A'}</strong></li>
-                                <li>${globalTranslate.nw_DHCPInfoSubnet || 'Subnet'}: <strong>/${iface.currentSubnet || iface.subnet || 'N/A'}</strong></li>
-                                <li>${globalTranslate.nw_DHCPInfoGateway || 'Gateway'}: <strong>${iface.currentGateway || iface.gateway || 'N/A'}</strong></li>
-                                <li>${globalTranslate.nw_DHCPInfoDNS || 'DNS'}: <strong>${iface.primarydns || 'N/A'}${iface.secondarydns ? ', ' + iface.secondarydns : ''}</strong></li>
-                                ${iface.domain ? `<li>${globalTranslate.nw_DHCPInfoDomain || 'Domain'}: <strong>${iface.domain}</strong></li>` : ''}
-                                ${iface.hostname ? `<li>${globalTranslate.nw_DHCPInfoHostname || 'Hostname'}: <strong>${iface.hostname}</strong></li>` : ''}
-                            </ul>
+                            <label><i class="globe icon"></i> ${globalTranslate.nw_InternetInterface}</label>
                         </div>
                     </div>
                 </div>
 
-                <input type="hidden" name="notdhcp_${id}" id="not-dhcp-${id}"/>
-
-                ${isDocker ? '' : `
-                <div class="fields" id="ip-address-group-${id}">
-                    <div class="field">
-                        <label>${globalTranslate.nw_IPAddress}</label>
-                        <div class="field max-width-400">
-                            <input type="text" class="ipaddress" name="ipaddr_${id}" value="${iface.ipaddr || ''}" ${dockerReadonly} />
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>${globalTranslate.nw_NetworkMask}</label>
-                        <div class="field max-width-400">
-                            <input type="hidden" id="subnet_${id}" name="subnet_${id}" value="${iface.subnet || ''}" />
-                        </div>
-                    </div>
-                </div>
-                `}
-
-                ${isDocker ? '' : `
                 <div class="field">
                     <label>${globalTranslate.nw_VlanID}</label>
                     <div class="field max-width-100">
@@ -1222,103 +1214,166 @@ const networks = {
                 </div>
                 `}
 
-                <div class="field">
-                    <label>${globalTranslate.nw_IPv6Mode || 'IPv6 Mode'}</label>
-                    <div class="field max-width-400">
-                        <input type="hidden" id="ipv6_mode_${id}" name="ipv6_mode_${id}" value="${iface.ipv6_mode || '0'}" />
-                    </div>
-                </div>
+                <!-- Two Column Grid: IPv4 (left) and IPv6 (right) -->
+                <div class="ui two column stackable grid">
 
-                <!-- Hidden field to store current auto-configured IPv6 address for dual-stack detection -->
-                <input type="hidden" id="current-ipv6addr-${id}" value="${iface.currentIpv6addr || ''}" />
-
-                <div class="ipv6-auto-info-message-${id}" style="display: ${iface.ipv6_mode === '1' ? 'block' : 'none'};">
-                    <div class="ui compact info message">
-                        <div class="content">
-                            <div class="header">${globalTranslate.nw_IPv6AutoInfoHeader || 'IPv6 Autoconfiguration (SLAAC/DHCPv6)'}</div>
-                            <ul class="list" style="margin-top: 0.5em;">
-                                <li>${globalTranslate.nw_IPv6AutoInfoAddress || 'IPv6 Address'}: <strong>${iface.currentIpv6addr || iface.ipv6addr || 'Autoconfigured'}</strong></li>
-                                <li>${globalTranslate.nw_IPv6AutoInfoPrefix || 'Prefix Length'}: <strong>/${iface.currentIpv6_subnet || iface.ipv6_subnet || '64'}</strong></li>
-                                ${(iface.currentIpv6_gateway || iface.ipv6_gateway) ? `<li>${globalTranslate.nw_IPv6AutoInfoGateway || 'Gateway'}: <strong>${iface.currentIpv6_gateway || iface.ipv6_gateway}</strong></li>` : ''}
-                                ${(iface.currentPrimarydns6 || iface.primarydns6) ? `<li>${globalTranslate.nw_IPv6AutoInfoDNS || 'DNS'}: <strong>${iface.currentPrimarydns6 || iface.primarydns6}${(iface.currentSecondarydns6 || iface.secondarydns6) ? ', ' + (iface.currentSecondarydns6 || iface.secondarydns6) : ''}</strong></li>` : ''}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ipv6-manual-fields-${id}" style="display: none;">
-                    <div class="fields">
-                        <div class="five wide field">
-                            <label>${globalTranslate.nw_IPv6Address || 'IPv6 Address'}</label>
-                            <div class="field max-width-600">
-                                <input type="text" class="ipv6address" name="ipv6addr_${id}" value="${iface.ipv6addr || ''}" placeholder="fd00::1" />
+                    <!-- IPv4 Configuration Column -->
+                    <div class="column">
+                        <h4 class="ui dividing header">
+                            <i class="globe icon"></i>
+                            <div class="content">
+                                ${globalTranslate.nw_IPv4Configuration}
                             </div>
-                        </div>
+                        </h4>
+
+                        ${isDocker ? '' : `
                         <div class="field">
-                            <label>${globalTranslate.nw_IPv6Subnet || 'IPv6 Prefix Length'}</label>
+                            <label>${globalTranslate.nw_IPv4Mode}</label>
                             <div class="field max-width-400">
-                                <input type="hidden" id="ipv6_subnet_${id}" name="ipv6_subnet_${id}" value="${iface.ipv6_subnet || '64'}" />
+                                <input type="hidden" id="ipv4_mode_${id}" name="ipv4_mode_${id}" value="${dhcpChecked ? '1' : '0'}" />
+                            </div>
+                        </div>
+                        `}
+
+                        <input type="hidden" name="notdhcp_${id}" id="not-dhcp-${id}"/>
+
+                        ${isDocker ? '' : `
+                        <div class="fields" id="ip-address-group-${id}">
+                            <div class="field">
+                                <label>${globalTranslate.nw_IPAddress}</label>
+                                <div class="field max-width-400">
+                                    <input type="text" class="ipaddress" name="ipaddr_${id}" value="${iface.ipaddr || ''}" />
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label>${globalTranslate.nw_NetworkMask}</label>
+                                <div class="field max-width-400">
+                                    <input type="hidden" id="subnet_${id}" name="subnet_${id}" value="${iface.subnet || ''}" />
+                                </div>
+                            </div>
+                        </div>
+                        `}
+
+                        ${isDocker ? '' : `
+                        <div class="ipv4-gateway-field-${id}" ${dnsGatewayVisible} style="display: ${dhcpChecked ? 'none' : 'block'};">
+                            <div class="field">
+                                <label>${globalTranslate.nw_Gateway}</label>
+                                <div class="field max-width-400">
+                                    <input type="text" class="ipaddress" name="gateway_${id}" value="${iface.gateway || ''}" placeholder="192.168.1.1" />
+                                </div>
+                            </div>
+                        </div>
+                        `}
+
+                        <!-- IPv4 Internet Settings (only if Internet interface) -->
+                        <div class="ipv4-internet-settings-${id}" ${dnsGatewayVisible}>
+                            <div class="ui horizontal divider">${globalTranslate.nw_InternetIPv4}</div>
+
+                            <div class="field">
+                                <label>${globalTranslate.nw_PrimaryDNS}</label>
+                                <div class="field max-width-400">
+                                    <input type="text" class="ipaddress" name="primarydns_${id}" value="${iface.currentPrimarydns || iface.primarydns || ''}" placeholder="${primaryDnsPlaceholder}" />
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label>${globalTranslate.nw_SecondaryDNS}</label>
+                                <div class="field max-width-400">
+                                    <input type="text" class="ipaddress" name="secondarydns_${id}" value="${iface.currentSecondarydns || iface.secondarydns || ''}" placeholder="${secondaryDnsPlaceholder}" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ui hidden divider"></div>
+
+                        <div class="dhcp-info-message-${id}" style="display: ${dhcpChecked ? 'block' : 'none'};">
+                            <div class="ui compact info message">
+                                <div class="content">
+                                    <div class="header">${globalTranslate.nw_DHCPInfoHeader}</div>
+                                    <ul class="list" style="margin-top: 0.5em;">
+                                        <li>${globalTranslate.nw_DHCPInfoIP}: <strong>${iface.currentIpaddr || iface.ipaddr || 'N/A'}</strong></li>
+                                        <li>${globalTranslate.nw_DHCPInfoSubnet}: <strong>/${iface.currentSubnet || iface.subnet || 'N/A'}</strong></li>
+                                        <li>${globalTranslate.nw_DHCPInfoGateway}: <strong>${iface.currentGateway || iface.gateway || 'N/A'}</strong></li>
+                                        <li>${globalTranslate.nw_DHCPInfoDNS}: <strong>${iface.primarydns || 'N/A'}${iface.secondarydns ? ', ' + iface.secondarydns : ''}</strong></li>
+                                        ${iface.domain ? `<li>${globalTranslate.nw_DHCPInfoDomain}: <strong>${iface.domain}</strong></li>` : ''}
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="dns-gateway-group-${id}" ${dnsGatewayVisible}>
-                    <div class="ui horizontal divider">${globalTranslate.nw_InternetSettings || 'Internet Settings'}</div>
+                    <!-- IPv6 Configuration Column -->
+                    <div class="column">
+                        <h4 class="ui dividing header">
+                            <i class="world icon"></i>
+                            <div class="content">
+                                ${globalTranslate.nw_IPv6Configuration}
+                            </div>
+                        </h4>
 
-                    <div class="field">
-                        <label>${globalTranslate.nw_Hostname || 'Hostname'}</label>
-                        <div class="field max-width-400 ${gatewayDisabledClass}">
-                            <input type="text" name="hostname_${id}" value="${iface.hostname || ''}" placeholder="mikopbx" ${gatewayReadonly} />
+                        <div class="field">
+                            <label>${globalTranslate.nw_IPv6Mode}</label>
+                            <div class="field max-width-400">
+                                <input type="hidden" id="ipv6_mode_${id}" name="ipv6_mode_${id}" value="${iface.ipv6_mode || '0'}" />
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="field">
-                        <label>${globalTranslate.nw_Domain || 'Domain'}</label>
-                        <div class="field max-width-400 ${gatewayDisabledClass}">
-                            <input type="text" name="domain_${id}" value="${iface.domain || ''}" placeholder="example.com" ${gatewayReadonly} />
+                        <!-- Hidden field to store current auto-configured IPv6 address -->
+                        <input type="hidden" id="current-ipv6addr-${id}" value="${iface.currentIpv6addr || ''}" />
+
+                        <div class="ipv6-manual-fields-${id}" style="display: none;">
+                            <div class="field">
+                                <label>${globalTranslate.nw_IPv6Address}</label>
+                                <div class="field max-width-600">
+                                    <input type="text" class="ipv6address" name="ipv6addr_${id}" value="${iface.ipv6addr || ''}" placeholder="fd00::1" />
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label>${globalTranslate.nw_IPv6Subnet}</label>
+                                <div class="field max-width-400">
+                                    <input type="hidden" id="ipv6_subnet_${id}" name="ipv6_subnet_${id}" value="${iface.ipv6_subnet || '64'}" />
+                                </div>
+                            </div>
+                            <div class="field" ${dnsGatewayVisible}>
+                                <label>${globalTranslate.nw_IPv6Gateway}</label>
+                                <div class="field max-width-600">
+                                    <input type="text" class="ipv6address" name="ipv6_gateway_${id}" value="${iface.ipv6_gateway || ''}" placeholder="fe80::1" />
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="field">
-                        <label>${globalTranslate.nw_Gateway}</label>
-                        <div class="field max-width-400">
-                            <input type="text" class="ipaddress" name="gateway_${id}" value="${iface.gateway || ''}" ${gatewayReadonly} />
+                        <!-- IPv6 Internet Settings (only if Internet interface) -->
+                        <div class="ipv6-internet-settings-${id}" ${dnsGatewayVisible}>
+                            <div class="ui horizontal divider">${globalTranslate.nw_InternetIPv6}</div>
+
+                            <div class="field ipv6-primarydns-field-${id}">
+                                <label>${globalTranslate.nw_IPv6PrimaryDNS}</label>
+                                <div class="field max-width-400">
+                                    <input type="text" class="ipv6address" name="primarydns6_${id}" value="${iface.currentPrimarydns6 || iface.primarydns6 || ''}" placeholder="${ipv6PrimaryDnsPlaceholder}" />
+                                </div>
+                            </div>
+
+                            <div class="field ipv6-secondarydns-field-${id}">
+                                <label>${globalTranslate.nw_IPv6SecondaryDNS}</label>
+                                <div class="field max-width-400">
+                                    <input type="text" class="ipv6address" name="secondarydns6_${id}" value="${iface.currentSecondarydns6 || iface.secondarydns6 || ''}" placeholder="${ipv6SecondaryDnsPlaceholder}" />
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="field ipv6-gateway-field-${id}" ${ipv6FieldsVisible}>
-                        <label>${globalTranslate.nw_IPv6Gateway || 'IPv6 Gateway'}</label>
-                        <div class="field max-width-400 ${ipv6GatewayDisabledClass}">
-                            <input type="text" class="ipv6address" name="ipv6_gateway_${id}" value="${iface.currentIpv6_gateway || iface.ipv6_gateway || ''}" ${ipv6GatewayReadonly} placeholder="fe80::1" />
-                        </div>
-                    </div>
+                        <div class="ui hidden divider"></div>
 
-                    <div class="field">
-                        <label>${globalTranslate.nw_PrimaryDNS}</label>
-                        <div class="field max-width-400 ${dnsDisabledClass}">
-                            <input type="text" class="ipaddress" name="primarydns_${id}" value="${iface.primarydns || ''}" ${dnsReadonly} />
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label>${globalTranslate.nw_SecondaryDNS}</label>
-                        <div class="field max-width-400 ${dnsDisabledClass}">
-                            <input type="text" class="ipaddress" name="secondarydns_${id}" value="${iface.secondarydns || ''}" ${dnsReadonly} />
-                        </div>
-                    </div>
-
-                    <div class="field ipv6-primarydns-field-${id}" ${ipv6FieldsVisible}>
-                        <label>${globalTranslate.nw_IPv6PrimaryDNS || 'Primary IPv6 DNS'}</label>
-                        <div class="field max-width-400">
-                            <input type="text" class="ipv6address" name="primarydns6_${id}" value="${iface.currentPrimarydns6 || iface.primarydns6 || ''}" placeholder="2001:4860:4860::8888" />
-                        </div>
-                    </div>
-
-                    <div class="field ipv6-secondarydns-field-${id}" ${ipv6FieldsVisible}>
-                        <label>${globalTranslate.nw_IPv6SecondaryDNS || 'Secondary IPv6 DNS'}</label>
-                        <div class="field max-width-400">
-                            <input type="text" class="ipv6address" name="secondarydns6_${id}" value="${iface.currentSecondarydns6 || iface.secondarydns6 || ''}" placeholder="2001:4860:4860::8844" />
+                        <div class="ipv6-auto-info-message-${id}" style="display: ${iface.ipv6_mode === '1' ? 'block' : 'none'};">
+                            <div class="ui compact info message">
+                                <div class="content">
+                                    <div class="header">${globalTranslate.nw_IPv6AutoInfoHeader}</div>
+                                    <ul class="list" style="margin-top: 0.5em;">
+                                        <li>${globalTranslate.nw_IPv6AutoInfoAddress}: <strong>${iface.currentIpv6addr || iface.ipv6addr || 'Autoconfigured'}</strong></li>
+                                        <li>${globalTranslate.nw_IPv6AutoInfoPrefix}: <strong>/${iface.currentIpv6_subnet || iface.ipv6_subnet || '64'}</strong></li>
+                                        ${(iface.currentIpv6_gateway || iface.ipv6_gateway) ? `<li>${globalTranslate.nw_IPv6AutoInfoGateway}: <strong>${iface.currentIpv6_gateway || iface.ipv6_gateway}</strong></li>` : ''}
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1356,6 +1411,13 @@ const networks = {
                             <input type="checkbox" name="dhcp_${id}" checked />
                             <label>${globalTranslate.nw_UseDHCP}</label>
                         </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>${globalTranslate.nw_IPv4Mode}</label>
+                    <div class="field max-width-400">
+                        <input type="hidden" id="ipv4_mode_${id}" name="ipv4_mode_${id}" value="1" />
                     </div>
                 </div>
 
@@ -1460,6 +1522,13 @@ const networks = {
         // WHY: Both Docker and non-Docker now use interface tabs
         // Docker has restrictions: DHCP locked, IP/subnet/VLAN readonly, DNS editable
         networks.createInterfaceTabs(data, data.isDocker || false);
+
+        // Populate global hostname from first interface (single value for all interfaces)
+        if (data.interfaces && data.interfaces.length > 0) {
+            const firstInterface = data.interfaces[0];
+            const hostname = firstInterface.currentHostname || firstInterface.hostname || '';
+            $('#global-hostname').val(hostname);
+        }
 
         // Set NAT settings
         if (data.nat) {
@@ -1917,7 +1986,7 @@ const StaticRoutesManager = {
 
         // Build dropdown options: "Auto" + available interfaces
         const options = [
-            { value: '', text: globalTranslate.nw_Auto || 'Auto' },
+            { value: '', text: globalTranslate.nw_Auto },
             ...StaticRoutesManager.availableInterfaces.map(iface => ({
                 value: iface.value,
                 text: iface.label

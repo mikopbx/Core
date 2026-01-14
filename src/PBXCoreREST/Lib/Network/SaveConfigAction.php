@@ -550,20 +550,31 @@ class SaveConfigAction
                 case 'ipv6addr':
                 case 'ipv6_gateway':
                     // Save IPv6 address fields (optional for Auto mode)
+                    // WHY: Clear IPv6 fields when IPv6 is disabled to prevent stale data
                     $fieldKey = $name . '_' . $eth->id;
-                    if (array_key_exists($fieldKey, $data)) {
+                    $modeKey = 'ipv6_mode_' . $eth->id;
+                    $mode = $data[$modeKey] ?? '0';
+
+                    // Clear IPv6 fields when IPv6 is disabled (mode='0')
+                    if ($mode === '0') {
+                        $eth->$name = '';
+                    } elseif (array_key_exists($fieldKey, $data)) {
                         $eth->$name = $data[$fieldKey] ?? '';
                     }
                     break;
 
                 case 'ipv6_subnet':
                     // Save IPv6 subnet with default for Auto mode
+                    // WHY: Clear subnet when IPv6 is disabled to ensure complete IPv6 cleanup
                     $fieldKey = $name . '_' . $eth->id;
                     $modeKey = 'ipv6_mode_' . $eth->id;
+                    $mode = $data[$modeKey] ?? '0';
 
-                    if (array_key_exists($fieldKey, $data)) {
+                    // Clear IPv6 subnet when IPv6 is disabled (mode='0')
+                    if ($mode === '0') {
+                        $eth->$name = '';
+                    } elseif (array_key_exists($fieldKey, $data)) {
                         $value = $data[$fieldKey] ?? '';
-                        $mode = $data[$modeKey] ?? '0';
 
                         // For Auto mode (SLAAC/DHCPv6), set default subnet if empty
                         if ($mode === '1' && empty($value)) {
@@ -578,9 +589,18 @@ class SaveConfigAction
                 case 'primarydns6':
                 case 'secondarydns6':
                     // Save IPv6 DNS configuration for internet interface only
+                    // WHY: Clear IPv6 DNS when IPv6 is disabled to prevent stale data
+                    $modeKey = 'ipv6_mode_' . $eth->id;
+                    $mode = $data[$modeKey] ?? '0';
+
                     if ($itIsInternetInterface) {
-                        $fieldKey = $name . '_' . $eth->id;
-                        $eth->$name = array_key_exists($fieldKey, $data) ? $data[$fieldKey] : '';
+                        // Clear IPv6 DNS when IPv6 is disabled (mode='0')
+                        if ($mode === '0') {
+                            $eth->$name = '';
+                        } else {
+                            $fieldKey = $name . '_' . $eth->id;
+                            $eth->$name = array_key_exists($fieldKey, $data) ? $data[$fieldKey] : '';
+                        }
                     } else {
                         $eth->$name = '';
                     }

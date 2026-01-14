@@ -36,7 +36,7 @@ ps aux | grep BrowserStackLocal
 
 1. Verify PBX server is accessible:
 ```bash
-curl -k https://172.16.32.72
+curl -k https://172.16.33.72
 ```
 
 2. Check firewall allows connections from BrowserStack IPs

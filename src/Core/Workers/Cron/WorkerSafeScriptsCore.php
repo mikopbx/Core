@@ -31,6 +31,7 @@ use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Core\Workers\WorkerCdr;
+use MikoPBX\Core\Workers\WorkerDhcpv6Renewal;
 use MikoPBX\Core\Workers\WorkerLogRotate;
 use MikoPBX\Core\Workers\WorkerMarketplaceChecker;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
@@ -269,6 +270,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerSoundFilesInit::class,
                     WorkerMarketplaceChecker::class,
                     WorkerBeanstalkdTidyUp::class,
+                    WorkerDhcpv6Renewal::class,
                     WorkerLogRotate::class,
                     WorkerRemoveOldRecords::class,
                     WorkerS3Upload::class,

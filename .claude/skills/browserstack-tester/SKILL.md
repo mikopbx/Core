@@ -28,7 +28,7 @@ This creates a secure tunnel between BrowserStack cloud browsers and local PBX s
 # Run specific test file
 docker exec -t mikopbx_tests-refactoring /bin/sh -c "
   cd /offload/rootfs/usr/www &&
-  SERVER_PBX=https://172.16.32.72 \
+  SERVER_PBX=https://172.16.33.72 \
   BROWSERSTACK_DAEMON_STARTED=true \
   BROWSERSTACK_LOCAL_IDENTIFIER=local_test \
   php vendor/bin/phpunit \
@@ -41,7 +41,7 @@ docker exec -t mikopbx_tests-refactoring /bin/sh -c "
 ```bash
 docker exec -t mikopbx_tests-refactoring /bin/sh -c "
   cd /offload/rootfs/usr/www &&
-  SERVER_PBX=https://172.16.32.72 \
+  SERVER_PBX=https://172.16.33.72 \
   BROWSERSTACK_DAEMON_STARTED=true \
   BROWSERSTACK_LOCAL_IDENTIFIER=local_test \
   php vendor/bin/phpunit \
@@ -61,7 +61,7 @@ docker exec -t mikopbx_tests-refactoring /bin/sh -c "
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `SERVER_PBX` | PBX server URL | `https://172.16.32.72` |
+| `SERVER_PBX` | PBX server URL | `https://172.16.33.72` |
 | `BROWSERSTACK_DAEMON_STARTED` | Skip local tunnel start | `true` |
 | `BROWSERSTACK_LOCAL_IDENTIFIER` | Tunnel identifier | `local_test` |
 

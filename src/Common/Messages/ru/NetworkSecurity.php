@@ -153,7 +153,7 @@ return [
     'nw_GatewayAddress' => 'Адрес шлюза (Gateway)',
     'nw_Hostname' => 'Локальное имя хоста',
     'nw_IPAddress' => 'IP адрес',
-    'nw_InterfaceName' => 'Название',
+    'nw_InterfaceName' => 'Название сетевого подключения',
     'nw_InternetInterface' => 'Сетевой интерфейс с доступом в Интернет',
     'nw_InternetSettings' => 'Настройки интернет-интерфейса',
     'nw_LookUpExternalIp' => 'Узнать внешний IP',
@@ -279,6 +279,14 @@ return [
     'f2b_PBXFirewallMaxReqSecTooltip_warning' => 'Слишком низкое значение может блокировать легитимный трафик при массовой перерегистрации устройств после перезагрузки. Учитывайте количество SIP-устройств в сети.',
     'f2b_PBXFirewallMaxReqSecTooltip_note' => 'Защита работает только для TCP и UDP портов SIP (5060) и TLS (5061). Не влияет на установленные соединения.',
 
+    // IPv4 Configuration
+    'nw_IPv4Mode' => 'Режим IPv4',
+    'nw_IPv4ModeManual' => 'Ручной',
+    'nw_IPv4ModeDHCP' => 'DHCP',
+    'nw_IPv4Gateway' => 'Шлюз IPv4',
+    'nw_IPv4PrimaryDNS' => 'DNS IPv4 (первичный)',
+    'nw_IPv4SecondaryDNS' => 'DNS IPv4 (вторичный)',
+
     // IPv6 Configuration (Phase 3)
     'nw_IPv6Configuration' => 'Конфигурация IPv6',
     'nw_IPv6Mode' => 'Режим IPv6',
@@ -287,7 +295,7 @@ return [
     'nw_IPv6ModeManual' => 'Ручной',
     'nw_IPv6Address' => 'IPv6 адрес',
     'nw_IPv6Subnet' => 'IPv6 префикс длины',
-    'nw_IPv6Gateway' => 'IPv6 шлюз',
+    'nw_IPv6Gateway' => 'Шлюз IPv6',
     'nw_SelectIPv6Mode' => 'Выберите режим IPv6',
     'nw_SelectIPv6Subnet' => 'Выберите префикс IPv6',
     'nw_ValidateIPv6ModeInvalid' => 'Некорректный режим IPv6',
@@ -298,8 +306,8 @@ return [
     'nw_ValidateIPv6SubnetRequired' => 'Длина префикса IPv6 обязательна для ручного режима',
 
     // IPv6 DNS поля (Phase 6)
-    'nw_IPv6PrimaryDNS' => 'Первичный IPv6 DNS',
-    'nw_IPv6SecondaryDNS' => 'Вторичный IPv6 DNS',
+    'nw_IPv6PrimaryDNS' => 'DNS IPv6 (первичный)',
+    'nw_IPv6SecondaryDNS' => 'DNS IPv6 (вторичный)',
 
     // Docker IPv6 информация (Phase 6)
     'nw_DockerIPv6Info' => 'Настройки IPv6 применяются внутри контейнера. Конфигурация IPv4 управляется Docker.',

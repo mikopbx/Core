@@ -26,7 +26,7 @@ T2NativeInDocker → IncrementBuild → 172163272img → RestAPITests
 **Build Chain:**
 1. `Mikopbx_T2NativeInDocker` - Base system build (T2 Linux)
 2. `Mikopbx_IncrementBuild` - MikoPBX distribution build
-3. `Mikopbx_172163272img` - Deploy to test server 172.16.32.72
+3. `Mikopbx_172163272img` - Deploy to test server 172.16.33.72
 4. `Mikopbx_RestAPITestsOn172163272` - REST API tests (pytest)
 5. `MIKOPBX_TESTCASES` - UI tests (BrowserStack)
 

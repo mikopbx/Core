@@ -6,9 +6,9 @@
 |----|------|-------------|---------|
 | `Mikopbx_T2NativeInDocker` | Сборка T2 Native in Docker | Base Linux system build | Git push to t2-linux5 |
 | `Mikopbx_IncrementBuild` | MikoPBX Core (инкрементная) | Distribution build (IMG, ISO, OVA) | After T2Native success |
-| `Mikopbx_172163272img` | Update 172.16.32.72 with new IMG | Deploy to test server | After IncrementBuild success |
-| `Mikopbx_RestAPITestsOn172163272` | RestAPI tests on 172.16.32.72 | Python pytest API tests | After 172163272img success |
-| `MIKOPBX_TESTCASES` | Interface tests on 172.16.32.72 | BrowserStack UI tests | After 172163272img success |
+| `Mikopbx_172163272img` | Update 172.16.33.72 with new IMG | Deploy to test server | After IncrementBuild success |
+| `Mikopbx_RestAPITestsOn172163272` | RestAPI tests on 172.16.33.72 | Python pytest API tests | After 172163272img success |
+| `MIKOPBX_TESTCASES` | Interface tests on 172.16.33.72 | BrowserStack UI tests | After 172163272img success |
 
 ## Additional Build Types
 
@@ -34,10 +34,10 @@ ssh mikoadmin@172.16.33.61 "cat /opt/buildagent/work/directory.map"
 
 ## Test Server
 
-- **IP:** 172.16.32.72
-- **SSH:** root@172.16.32.72
-- **Web:** https://172.16.32.72
-- **API:** https://172.16.32.72/pbxcore/api/v3/
+- **IP:** 172.16.33.72
+- **SSH:** root@172.16.33.72
+- **Web:** https://172.16.33.72
+- **API:** https://172.16.33.72/pbxcore/api/v3/
 
 ## Build Agent
 
