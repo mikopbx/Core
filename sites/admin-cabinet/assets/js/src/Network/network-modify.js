@@ -256,6 +256,9 @@ const networks = {
             const $gatewayField = $(`.ipv4-gateway-field-${eth}`);
             const $dhcpInfoMessage = $(`.dhcp-info-message-${eth}`);
 
+            // Check if this is the internet interface
+            const isInternetInterface = $(`input[name="internet_interface"]:checked`).val() === eth;
+
             if (isDhcpEnabled) {
                 // DHCP enabled -> hide IP/subnet fields group and gateway field, show DHCP info
                 $ipAddressGroup.hide();
@@ -263,11 +266,17 @@ const networks = {
                 $dhcpInfoMessage.show();
                 $(`#not-dhcp-${eth}`).val('');
             } else {
-                // DHCP disabled -> show IP/subnet fields group and gateway field, hide DHCP info
+                // DHCP disabled -> show IP/subnet fields group, hide DHCP info
                 $ipAddressGroup.show();
-                $gatewayField.show();
                 $dhcpInfoMessage.hide();
                 $(`#not-dhcp-${eth}`).val('1');
+
+                // Show gateway field ONLY if this is the internet interface
+                if (isInternetInterface) {
+                    $gatewayField.show();
+                } else {
+                    $gatewayField.hide();
+                }
             }
 
             networks.addNewFormRules(eth);
@@ -1038,6 +1047,9 @@ const networks = {
             if (Form.enableDirrity) {
                 Form.checkValues();
             }
+
+            // Update Gateway field visibility for all interfaces
+            networks.toggleDisabledFieldClass();
         });
 
         // Update DHCP info message visibility when IPv4 mode changes
@@ -1255,7 +1267,7 @@ const networks = {
                         `}
 
                         ${isDocker ? '' : `
-                        <div class="ipv4-gateway-field-${id}" ${dnsGatewayVisible} style="display: ${dhcpChecked ? 'none' : 'block'};">
+                        <div class="ipv4-gateway-field-${id}" style="display: ${isInternetInterface && !dhcpChecked ? 'block' : 'none'};">
                             <div class="field">
                                 <label>${globalTranslate.nw_Gateway}</label>
                                 <div class="field max-width-400">
