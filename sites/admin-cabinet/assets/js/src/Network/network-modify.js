@@ -1286,7 +1286,7 @@ const networks = {
 
                         <div class="ui hidden divider"></div>
 
-                        <div class="dhcp-info-message-${id}" style="display: ${dhcpChecked ? 'block' : 'none'};">
+                        <div class="dhcp-info-message-${id}" style="display: ${dhcpChecked && !isDocker ? 'block' : 'none'};">
                             <div class="ui compact info message">
                                 <div class="content">
                                     <div class="header">${globalTranslate.nw_DHCPInfoHeader}</div>
@@ -1300,6 +1300,22 @@ const networks = {
                                 </div>
                             </div>
                         </div>
+
+                        ${isDocker ? `
+                        <div class="docker-info-message-${id}">
+                            <div class="ui compact info message">
+                                <div class="content">
+                                    <div class="header">${globalTranslate.nw_DockerIPv4Info || 'Current IPv4 Configuration'}</div>
+                                    <ul class="list" style="margin-top: 0.5em;">
+                                        <li>${globalTranslate.nw_DHCPInfoIP}: <strong>${iface.currentIpaddr || iface.ipaddr || 'N/A'}</strong></li>
+                                        <li>${globalTranslate.nw_DHCPInfoSubnet}: <strong>/${iface.currentSubnet || iface.subnet || 'N/A'}</strong></li>
+                                        <li>${globalTranslate.nw_DHCPInfoGateway}: <strong>${iface.currentGateway || iface.gateway || 'N/A'}</strong></li>
+                                    </ul>
+                                    <p style="margin-top: 0.5em;"><i class="info circle icon"></i>${globalTranslate.nw_DockerIPv4InfoNote || 'Network settings are managed by Docker runtime. Only DNS servers can be configured.'}</p>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
                     </div>
 
                     <!-- IPv6 Configuration Column -->

@@ -52,8 +52,9 @@ class Network extends Injectable
         if (System::isContainer()) {
             // In containers (Docker/LXC), network interfaces are virtual (veth pairs)
             // Use ifconfig -a to list ALL interfaces (including those not yet UP during boot)
+            // Filter out virtual tunnel interfaces (sit, tunl, ip6tnl) - only needed on bare metal for IPv6 tunneling
             $ifconfig = Util::which('ifconfig');
-            $command = "$ifconfig -a | $grep -o -E '^[a-zA-Z0-9]+' | $grep -v 'lo'";
+            $command = "$ifconfig -a | $grep -o -E '^[a-zA-Z0-9]+' | $grep -v 'lo' | $grep -v -E '^(sit|tunl|ip6tnl)'";
         } else {
             // On bare metal: retrieve PCI network interfaces (exclude virtual)
             $ls = Util::which('ls');

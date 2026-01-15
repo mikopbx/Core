@@ -361,4 +361,17 @@ return [
     'nw_IPv6AutoInfoPrefix' => 'Prefix Length',
     'nw_IPv6AutoInfoGateway' => 'Gateway',
     'nw_IPv6AutoInfoDNS' => 'DNS',
+
+    // Additional Network Form Labels
+    'nw_InternetIPv4' => 'Internet IPv4 Settings',
+    'nw_InternetIPv6' => 'Internet IPv6 Settings',
+    'nw_IPv4Configuration' => 'IPv4 Configuration',
+    'nw_PlaceholderDhcpDns' => 'Provided via DHCP:',
+    'nw_PlaceholderDhcpHostname' => 'Provided via DHCP',
+    'nw_PlaceholderIPv6Dns' => '2001:4860:4860::8888',
+    'nw_SelectIPv4Mode' => 'Select IPv4 mode',
+
+    // Docker Environment Messages
+    'nw_DockerIPv4Info' => 'Current IPv4 Configuration (Docker)',
+    'nw_DockerIPv4InfoNote' => 'Network settings are managed by Docker runtime. Only DNS servers can be configured.',
 ];

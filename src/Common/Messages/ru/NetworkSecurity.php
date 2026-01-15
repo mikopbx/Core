@@ -345,4 +345,17 @@ return [
     'nw_DualStackIpv6Info' => 'IPv6',
     'nw_DualStackIpv6InfoDescription' => 'NAT не требуется. Убедитесь, что файрвол разрешает входящие подключения на те же порты.',
     'nw_ValidateExternalHostnameEmpty' => 'Внешнее имя хоста обязательно в режиме Dual-Stack',
+
+    // Дополнительные метки сетевой формы
+    'nw_InternetIPv4' => 'Настройки интернет IPv4',
+    'nw_InternetIPv6' => 'Настройки интернет IPv6',
+    'nw_IPv4Configuration' => 'Конфигурация IPv4',
+    'nw_PlaceholderDhcpDns' => 'Получено через DHCP:',
+    'nw_PlaceholderDhcpHostname' => 'Получено через DHCP',
+    'nw_PlaceholderIPv6Dns' => '2001:4860:4860::8888',
+    'nw_SelectIPv4Mode' => 'Выберите режим IPv4',
+
+    // Сообщения для Docker окружения
+    'nw_DockerIPv4Info' => 'Текущая конфигурация IPv4 (Docker)',
+    'nw_DockerIPv4InfoNote' => 'Сетевые настройки управляются Docker runtime. Можно изменить только DNS серверы.',
 ];
