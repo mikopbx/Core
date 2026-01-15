@@ -124,26 +124,8 @@ class WorkerDhcpv6Renewal extends WorkerBase
     {
         $pidFile = "/var/run/udhcpc6_$ifName";
 
-        // Debug logging before check
-        SystemMessages::sysLogMsg(__METHOD__, "Checking PID file: $pidFile", LOG_DEBUG);
-
-        $fileExists = file_exists($pidFile);
-        SystemMessages::sysLogMsg(
-            __METHOD__,
-            "file_exists() returned: " . ($fileExists ? 'true' : 'false'),
-            LOG_DEBUG
-        );
-
         // Check if PID file exists
-        if (!$fileExists) {
-            // Log directory listing for debugging
-            $files = glob('/var/run/udhcpc6*');
-            SystemMessages::sysLogMsg(
-                __METHOD__,
-                "Files in /var/run matching udhcpc6*: " . implode(', ', $files ?: []),
-                LOG_DEBUG
-            );
-
+        if (!file_exists($pidFile)) {
             SystemMessages::sysLogMsg(
                 __METHOD__,
                 "DHCPv6 client not running for $ifName (no PID file), restarting",
@@ -231,9 +213,20 @@ class WorkerDhcpv6Renewal extends WorkerBase
         $escapedPidFile = escapeshellarg($pidFile);
         $escapedWorkerPath = escapeshellarg($workerPath);
 
-        // Kill existing process if any
-        $killCmd = "killall -9 udhcpc6 2>/dev/null";
-        Processes::mwExec($killCmd);
+        // Kill existing DHCPv6 client process for this specific interface (selective kill, not global)
+        // This matches the pattern used in Network::configureIpv6Interface()
+        $pid = Processes::getPidOfProcess($pidFile);
+        if (!empty($pid) && file_exists($pidFile)) {
+            $kill = Util::which('kill');
+            $cat = Util::which('cat');
+            // Use $() instead of backticks to avoid quoting issues
+            system("$kill \$($cat $pidFile) $pid");
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "Killed existing DHCPv6 client (PID: $pid) for interface $ifName",
+                LOG_INFO
+            );
+        }
 
         // Start DHCPv6 client in background
         // Options: -t 6 (attempts), -T 5 (timeout), -S (syslog), -b (background)

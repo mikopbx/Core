@@ -102,12 +102,14 @@ class Udhcpc6 extends Network
 
         SystemMessages::sysLogMsg(
             __METHOD__,
-            "DHCPv6 lease lost on $interface - SLAAC fallback active",
+            "DHCPv6 lease lost on $interface - clearing database, SLAAC fallback active",
             LOG_WARNING
         );
 
-        // Update database to clear DHCPv6-acquired values
-        // But keep IPv6 mode as '1' (Auto) so SLAAC continues
+        // Clear DHCPv6 configuration from database
+        // This is now safe because ReloadNetworkAction detects there's no mode change
+        // (ipv6_mode stays '1') and passes skipDhcpRestart=true to prevent killing DHCP client
+        // The SLAAC address remains active, providing fallback connectivity
         $data = [
             'ipv6addr' => '',        // Clear DHCPv6 address
             'ipv6_subnet' => '',
@@ -115,7 +117,6 @@ class Udhcpc6 extends Network
         ];
         $this->updateIfSettings($data, $interface);
 
-        // Clear DHCPv6-acquired DNS servers
         $data = [
             'primarydns6' => '',
             'secondarydns6' => '',
@@ -191,12 +192,7 @@ class Udhcpc6 extends Network
 
             // Add DHCPv6 address using ifconfig (matches IPv4 implementation)
             $cmd = "$ifconfig $safeInterface inet6 add $safeIpv6Addr/$safePrefixLen";
-            $result = Processes::mwExec($cmd, $output);
-            SystemMessages::sysLogMsg(
-                __METHOD__,
-                "Executing: $cmd (result: $result, output: " . implode(' ', $output) . ")",
-                LOG_DEBUG
-            );
+            Processes::mwExec($cmd);
         }
 
         // Parse DNS servers

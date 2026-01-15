@@ -137,11 +137,6 @@ class Network extends Injectable
         $res = LanInterfaces::find(['order' => 'interface,vlanid']);
         $networks = $res->toArray();
 
-        // DEBUG: Log system interfaces vs database interfaces
-        $dbInterfaces = array_column($networks, 'interface');
-        SystemMessages::sysLogMsg(__METHOD__, "DEBUG: System interfaces: " . implode(', ', $src_array_eth));
-        SystemMessages::sysLogMsg(__METHOD__, "DEBUG: Database interfaces: " . implode(', ', $dbInterfaces));
-
         if (count($networks) > 0) {
             // Additional data processing
             foreach ($networks as &$if_data) {
@@ -179,8 +174,6 @@ class Network extends Injectable
                     }
                 } else {
                     // Base interface does not exist
-                    // DEBUG: Log why interface is being disabled
-                    SystemMessages::sysLogMsg(__METHOD__, "DEBUG: Interface '{$if_data['interface_orign']}' from DB not found in system interfaces, will disable");
                     $this->disableLanInterface($if_data['interface_orign']);
                     // Disable the interface
                     $if_data['disabled'] = 1;
@@ -277,8 +270,6 @@ class Network extends Injectable
             'bind' => ['name' => $name]
         ]);
         if ($if_data !== null) {
-            // DEBUG: Log when interface is being disabled
-            SystemMessages::sysLogMsg(__METHOD__, "DEBUG: Disabling interface '$name' - setting internet=0, disabled=1 (was internet={$if_data->internet}, disabled={$if_data->disabled})");
             $if_data->internet = 0;
             $if_data->disabled = 1;
             $if_data->update();
@@ -727,12 +718,14 @@ class Network extends Injectable
             case '1': // Auto - DHCPv6 with SLAAC fallback
                 SystemMessages::sysLogMsg(__METHOD__, "Enabling IPv6 Auto (DHCPv6 + SLAAC fallback) on $ifName");
 
-                // Enable IPv6 on this interface
-                $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.disable_ipv6=0";
-
-                // Enable autoconf (SLAAC) - serves as fallback when DHCPv6 unavailable
-                $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.autoconf=1";
-                $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.accept_ra=1";
+                // CRITICAL: Execute sysctl commands IMMEDIATELY to enable IPv6 before DAD wait
+                // Must be done synchronously BEFORE udhcpc6 launch to prevent race condition
+                $ipv6EnableCommands = [
+                    "$sysctl -w net.ipv6.conf.$ifName.disable_ipv6=0",
+                    "$sysctl -w net.ipv6.conf.$ifName.autoconf=1",
+                    "$sysctl -w net.ipv6.conf.$ifName.accept_ra=1",
+                ];
+                Processes::mwExecCommands($ipv6EnableCommands, $output, 'ipv6_enable');
 
                 // CRITICAL: Wait for link-local address to be generated and DAD to complete
                 // DHCPv6 client requires fully ready link-local address (not in "tentative" state)
@@ -909,7 +902,14 @@ class Network extends Injectable
      *
      * @return int The result of the configuration process.
      */
-    public function lanConfigure(): int
+    /**
+     * Configures LAN interfaces
+     *
+     * @param bool $skipDhcpRestart If true, preserves running DHCP clients (DHCP renewal scenario)
+     *                              If false, kills all DHCP clients before reconfiguration (mode change scenario)
+     * @return int Status code
+     */
+    public function lanConfigure(bool $skipDhcpRestart = false): int
     {
         // ALWAYS enable IPv6 at kernel level for stability
         // This allows applications (Asterisk, Nginx, PHP-FPM) to bind on IPv6 sockets
@@ -939,7 +939,17 @@ class Network extends Injectable
 
 
         $arr_commands = [];
-        $arr_commands[] = "$killall udhcpc";
+        $ipv6Configs = []; // Collect IPv6 configs for deferred execution after IPv4 setup
+
+        // Conditionally kill DHCP clients based on what changed
+        // Skip killall during DHCP renewal (only IP/DNS changed) to prevent restart loop
+        // Always killall when DHCP mode changes (static↔DHCP, IPv6 mode changes)
+        if (!$skipDhcpRestart) {
+            $arr_commands[] = "$killall udhcpc";
+            SystemMessages::sysLogMsg(__METHOD__, 'Killing all DHCP clients (mode change detected)', LOG_INFO);
+        } else {
+            SystemMessages::sysLogMsg(__METHOD__, 'Preserving DHCP clients (IP/DNS update only, no mode change)', LOG_INFO);
+        }
         $eth_mtu = [];
         foreach ($networks as $if_data) {
             if ($if_data['disabled'] === '1') {
@@ -1045,28 +1055,37 @@ class Network extends Injectable
                 $eth_mtu[] = $if_name;
             }
 
-            // Configure IPv6 for this interface (regardless of DHCP or static IPv4)
-            // IPv6 can run independently alongside IPv4 (dual-stack)
-            $ipv6Mode = $if_data['ipv6_mode'] ?? '0';
-            $ipv6Addr = $if_data['ipv6addr'] ?? '';
-            $ipv6Subnet = $if_data['ipv6_subnet'] ?? '';
-            $ipv6Gateway = $if_data['ipv6_gateway'] ?? '';
-
-            // Get IPv6 configuration commands
-            // Pass unescaped interface name - configureIpv6Interface handles escaping internally
-            $ipv6Commands = $this->configureIpv6Interface(
-                $if_data['interface'],
-                $ipv6Mode,
-                $ipv6Addr,
-                $ipv6Subnet,
-                $ipv6Gateway
-            );
-
-            // Add IPv6 commands to the main command array
-            $arr_commands = array_merge($arr_commands, $ipv6Commands);
+            // Collect IPv6 configuration for deferred execution
+            // IPv6 will be configured AFTER all IPv4 setup is complete
+            // This prevents ifconfig down from destroying link-local addresses
+            $ipv6Configs[] = [
+                'interface' => $if_data['interface'],
+                'mode' => $if_data['ipv6_mode'] ?? '0',
+                'addr' => $if_data['ipv6addr'] ?? '',
+                'subnet' => $if_data['ipv6_subnet'] ?? '',
+                'gateway' => $if_data['ipv6_gateway'] ?? '',
+            ];
         }
         $out = null;
         Processes::mwExecCommands($arr_commands, $out, 'net');
+
+        // Configure IPv6 AFTER all IPv4 setup is complete
+        // This prevents ifconfig down from destroying link-local addresses during udhcpc6 startup
+        foreach ($ipv6Configs as $ipv6Config) {
+            $ipv6Commands = $this->configureIpv6Interface(
+                $ipv6Config['interface'],
+                $ipv6Config['mode'],
+                $ipv6Config['addr'],
+                $ipv6Config['subnet'],
+                $ipv6Config['gateway']
+            );
+
+            if (!empty($ipv6Commands)) {
+                $ipv6Out = [];
+                Processes::mwExecCommands($ipv6Commands, $ipv6Out, 'ipv6');
+            }
+        }
+
         $this->hostsGenerate();
 
         foreach ($eth_mtu as $eth) {
@@ -1381,7 +1400,14 @@ class Network extends Injectable
      *
      * @return void
      */
-    public static function networkReload(): void
+    /**
+     * Reloads network configuration
+     *
+     * @param bool $skipDhcpRestart If true, preserves running DHCP clients (useful for DHCP renewal scenarios)
+     *                              If false, kills and restarts all DHCP clients (default for mode changes)
+     * @return void
+     */
+    public static function networkReload(bool $skipDhcpRestart = false): void
     {
         // Create Network object and configure settings
         $network = new Network();
@@ -1392,7 +1418,7 @@ class Network extends Injectable
         $dnsConf->reStart();
 
         $network->loConfigure();
-        $network->lanConfigure();
+        $network->lanConfigure($skipDhcpRestart);
         $network->configureLanInDocker();
         $network->updateExternalIp();
     }

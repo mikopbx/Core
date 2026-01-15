@@ -29,6 +29,7 @@ use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
 use Phalcon\Di\Di;
@@ -199,13 +200,44 @@ class ModelsBase extends Model
 
         // For PbxSettings, include old and new values in changedFields structure
         if ($this instanceof PbxSettings && $action === 'afterSave' && in_array('value', $changedFields)) {
-            $snapshotData = $this->getSnapshotData();
+            $oldSnapshotData = $this->getOldSnapshotData();
             $changedFields = [
                 'value' => [
-                    'old' => $snapshotData['value'] ?? null,
+                    'old' => $oldSnapshotData['value'] ?? null,
                     'new' => $this->value
                 ]
             ];
+        }
+
+        // For LanInterfaces, include old and new values for DHCP-critical fields
+        // This allows ReloadNetworkAction to detect mode changes (DHCP↔static, IPv6 mode changes)
+        // and decide whether to restart DHCP clients or just update configuration
+        if ($this instanceof LanInterfaces && $action === 'afterSave') {
+            $oldSnapshotData = $this->getOldSnapshotData();
+
+            // Fields that affect DHCP client lifecycle
+            $dhcpCriticalFields = ['dhcp', 'ipv6_mode', 'interface', 'disabled'];
+            $enrichedChangedFields = [];
+
+            foreach ($changedFields as $field) {
+                if (in_array($field, $dhcpCriticalFields, true)) {
+                    $oldValue = $oldSnapshotData[$field] ?? null;
+                    $newValue = $this->$field;
+
+                    // Include old/new values for critical fields
+                    $enrichedChangedFields[$field] = [
+                        'old' => $oldValue,
+                        'new' => $newValue
+                    ];
+                } else {
+                    // Keep just field name for non-critical fields (IP, DNS, etc.)
+                    $enrichedChangedFields[$field] = $field;
+                }
+            }
+
+            if (!empty($enrichedChangedFields)) {
+                $changedFields = $enrichedChangedFields;
+            }
         }
 
         $this->sendChangesToBackend($action, $changedFields);

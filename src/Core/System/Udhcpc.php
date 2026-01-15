@@ -96,25 +96,22 @@ class Udhcpc extends Network
             Processes::mwExec("$ifconfig $safeInterface 192.168.2.1 netmask 255.255.255.0");
         }
 
-        // Database update removed to prevent DHCP renewal loops
-        // During deconfig, the interface temporarily loses its IP address,
-        // but it will be restored within 1-2 seconds during bound event.
-        // Clearing the database triggers Model->afterSave() → WorkerModelsEvents → Network reload
-        // which restarts udhcpc and creates an infinite loop.
-        // The database should retain the last working IP configuration.
+        // Clear DHCP configuration from database
+        // This is now safe because ReloadNetworkAction detects there's no mode change
+        // (dhcp stays '1') and passes skipDhcpRestart=true to prevent killing DHCP client
+        // Database accurately reflects that DHCP lease was lost
+        $data = [
+            'ipaddr' => '',
+            'subnet' => '',
+            'gateway' => '',
+        ];
+        $this->updateIfSettings($data, $interface);
 
-        // $data = [
-        //     'ipaddr' => '',
-        //     'subnet' => '',
-        //     'gateway' => '',
-        // ];
-        // $this->updateIfSettings($data, $interface);
-
-        // $data = [
-        //     'primarydns' => '',
-        //     'secondarydns' => '',
-        // ];
-        // $this->updateDnsSettings($data, $interface);
+        $data = [
+            'primarydns' => '',
+            'secondarydns' => '',
+        ];
+        $this->updateDnsSettings($data, $interface);
     }
 
     /**
