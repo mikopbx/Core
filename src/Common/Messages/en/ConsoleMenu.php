@@ -35,7 +35,7 @@ return [
     // Subnet mask help
     'cm_SubnetMaskHelp' => 'Subnet masks are to be entered as bit counts (as in CIDR notation).',
     'cm_SubnetMaskRangeHelp' => 'IPv4: 1-32 (e.g., 24 = 255.255.255.0), IPv6: 1-128 (e.g., 64)',
-    'cm_SubnetValidationFailed' => 'e.g. IPv4: 32 = 255.255.255.255, 24 = 255.255.255.0; IPv6: 64, 128',
+    'cm_SubnetValidationFailed' => 'Invalid prefix. IPv4: 1-32 (e.g. 24), IPv6: 1-128 (e.g. 64)',
 
     // System actions
     'cm_RebootSystem' => 'Reboot system',
@@ -85,7 +85,7 @@ return [
 
     // Common validation
     'cm_Warning' => 'WARNING',
-    'cm_WarningYesNo' => 'WARNING: y/n',
+    'cm_WarningYesNo' => 'Please enter Y (yes) or N (no)',
 
     // Wizard prompts
     'cm_SelectInterface' => 'Select network interface:',
@@ -101,7 +101,7 @@ return [
     'cm_IPv4Disabled' => 'Disabled',
     'cm_IPv4KeepCurrent' => 'Keep current IPv4 settings',
     'cm_EnterIPv4Address' => 'IPv4 address (e.g. 192.168.1.10): ',
-    'cm_EnterIPv4Subnet' => 'Subnet mask (e.g. 24 = 255.255.255.0): ',
+    'cm_EnterIPv4Subnet' => 'Subnet prefix length (e.g. 24 for /24 network): ',
     'cm_EnterIPv4Gateway' => 'Gateway (e.g. 192.168.1.1): ',
 
     // IPv6 configuration

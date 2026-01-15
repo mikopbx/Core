@@ -94,9 +94,14 @@ class NetworkInfo
         $interfaces = LanInterfaces::find()->toArray();
 
         foreach ($interfaces as $ifData) {
-            $ifName = $ifData['interface'] ?? 'unknown';
+            // Generate real interface name (vlan{id} for VLANs)
+            $baseInterface = $ifData['interface'] ?? 'unknown';
+            $vlanId = $ifData['vlanid'] ?? '0';
+            $ifName = ($vlanId > 0) ? "vlan{$vlanId}" : $baseInterface;
 
-            echo "Interface: \033[1;33m$ifName\033[0m\n";
+            // Add VLAN ID label for VLAN interfaces
+            $vlanLabel = ($vlanId > 0) ? " \033[0;36m(VLAN ID: $vlanId)\033[0m" : "";
+            echo "Interface: \033[1;33m$ifName\033[0m$vlanLabel\n";
             echo str_repeat('-', 50) . "\n";
 
             // IPv4 Configuration
@@ -197,6 +202,14 @@ class NetworkInfo
             echo "    Status: \033[0;33mWaiting for address\033[0m\n";
             return;
         }
+
+        // Sort addresses: global scope first, then link-local
+        usort($addresses, function($a, $b) {
+            $scopeOrder = ['global' => 0, 'link' => 1, 'host' => 2];
+            $orderA = $scopeOrder[$a['scope'] ?? 'link'] ?? 3;
+            $orderB = $scopeOrder[$b['scope'] ?? 'link'] ?? 3;
+            return $orderA <=> $orderB;
+        });
 
         foreach ($addresses as $addr) {
             $ip = $addr['ip'];
@@ -435,7 +448,11 @@ class NetworkInfo
         // Collect interface data
         $interfaces = LanInterfaces::find()->toArray();
         foreach ($interfaces as $ifData) {
-            $ifName = $ifData['interface'] ?? 'unknown';
+            // Generate real interface name (vlan{id} for VLANs)
+            $baseInterface = $ifData['interface'] ?? 'unknown';
+            $vlanId = $ifData['vlanid'] ?? '0';
+            $ifName = ($vlanId > 0) ? "vlan{$vlanId}" : $baseInterface;
+
             $info['interfaces'][$ifName] = [
                 'ipv4' => [
                     'dhcp' => ($ifData['dhcp'] ?? '0') === '1',

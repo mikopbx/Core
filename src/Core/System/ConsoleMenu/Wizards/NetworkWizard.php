@@ -421,8 +421,10 @@ class NetworkWizard
      */
     private function reviewAndConfirm(CliMenu $menu, array $config): ?bool
     {
-        echo "\n";
-        $this->helpers->showConfigSummary($config);
+        $this->helpers->showConfigSummaryBoxed($config);
+
+        echo "\n" . $this->translation->_('cm_PressEnterToContinue') . "\n";
+        fgets(STDIN);
 
         $options = [
             'apply' => $this->translation->_('cm_ApplyConfiguration'),

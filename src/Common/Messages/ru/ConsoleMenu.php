@@ -35,7 +35,7 @@ return [
     // Subnet mask help
     'cm_SubnetMaskHelp' => 'Маски подсети вводятся в виде количества бит (как в нотации CIDR).',
     'cm_SubnetMaskRangeHelp' => 'IPv4: 1-32 (например, 24 = 255.255.255.0), IPv6: 1-128 (например, 64)',
-    'cm_SubnetValidationFailed' => 'например IPv4: 32 = 255.255.255.255, 24 = 255.255.255.0; IPv6: 64, 128',
+    'cm_SubnetValidationFailed' => 'Неверный префикс. IPv4: 1-32 (например 24), IPv6: 1-128 (например 64)',
 
     // System actions
     'cm_RebootSystem' => 'Перезагрузка системы',
@@ -85,7 +85,7 @@ return [
 
     // Common validation
     'cm_Warning' => 'ВНИМАНИЕ',
-    'cm_WarningYesNo' => 'ВНИМАНИЕ: y/n',
+    'cm_WarningYesNo' => 'Пожалуйста, введите Y (да) или N (нет)',
 
     // Wizard prompts
     'cm_SelectInterface' => 'Выберите сетевой интерфейс:',
@@ -101,7 +101,7 @@ return [
     'cm_IPv4Disabled' => 'Отключен',
     'cm_IPv4KeepCurrent' => 'Оставить текущие настройки IPv4',
     'cm_EnterIPv4Address' => 'IPv4 адрес (например 192.168.1.10): ',
-    'cm_EnterIPv4Subnet' => 'Маска подсети (например 24 = 255.255.255.0): ',
+    'cm_EnterIPv4Subnet' => 'Длина префикса подсети (например 24 для сети /24): ',
     'cm_EnterIPv4Gateway' => 'Шлюз (например 192.168.1.1): ',
 
     // IPv6 configuration

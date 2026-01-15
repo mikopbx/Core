@@ -21,7 +21,7 @@ return [
     'cm_ConfigurationSaved' => 'De configuratie is opgeslagen. Netwerkwijzigingen worden automatisch toegepast.',
     // Storage
     'cm_Storage' => 'Opslag',
-    'cm_SubnetValidationFailed' => 'bijvoorbeeld IPv4: 32 = 255.255.255.255, 24 = 255.255.255.0; IPv6: 64, 128',
+    'cm_SubnetValidationFailed' => 'Ongeldig voorvoegsel. IPv4: 1-32 (bijv. 24), IPv6: 1-128 (bijv. 64)',
     'cm_SystemIntegrityBroken' => 'De integriteit van het systeem is in gevaar',
     // Wizard prompts
     'cm_SelectInterface' => 'Selecteer netwerkinterface',
@@ -100,7 +100,7 @@ return [
     'cm_EnterSecondaryDNS' => 'Voer een secundaire DNS-server in (optioneel, druk op Enter om dit over te slaan): ',
     // Network configuration messages
     'cm_LanWillBeConfiguredDhcp' => 'De LAN-interface wordt geconfigureerd via DHCP...',
-    'cm_WarningYesNo' => 'LET OP: j/n',
+    'cm_WarningYesNo' => 'Voer alstublieft J (ja) of N (nee) in',
     'cm_PowerOff' => 'Uitschakeling',
     'cm_ChooseShellLanguage' => 'Selecteer shelltaal',
     'cm_ThisIs' => 'Dit',

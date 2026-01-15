@@ -122,15 +122,16 @@ class WizardHelpers
         $input = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
             public function validate(string $input): bool
             {
-                return ($input === 'y' || $input === 'n');
+                $input = strtolower(trim($input));
+                return in_array($input, ['y', 'n', 'yes', 'no']);
             }
         };
 
         $dialog = $input->setPromptText($prompt)
             ->setValidationFailedText($this->translation->_('cm_WarningYesNo'))
             ->ask();
-        $result = $dialog->fetch();
-        return $result === 'y' ? true : ($result === 'n' ? false : null);
+        $result = strtolower(trim($dialog->fetch()));
+        return ($result === 'y' || $result === 'yes') ? true : (($result === 'n' || $result === 'no') ? false : null);
     }
 
     /**
@@ -285,5 +286,151 @@ class WizardHelpers
         }
 
         echo "\n" . str_repeat('=', 70) . "\n";
+    }
+
+    /**
+     * Show configuration summary in boxed format with ASCII art
+     *
+     * Displays configuration in a visually appealing box using box drawing characters.
+     * Similar to WelcomeBanner style for consistency.
+     *
+     * @param array $config Configuration to display
+     * @return void
+     */
+    public function showConfigSummaryBoxed(array $config): void
+    {
+        $width = 70;
+
+        $this->printBoxTop($width);
+        $this->printBoxLine($width, "CONFIGURATION SUMMARY", true);
+        $this->printBoxSeparator($width);
+        $this->printBoxLine($width, "");
+        $this->printBoxLine($width, "Interface: {$config['interface']}", true);
+        $this->printBoxLine($width, "");
+        $this->printBoxSeparator($width);
+
+        // IPv4 Configuration
+        $this->printBoxLine($width, "IPv4 Configuration:", true);
+        if (!empty($config['dhcp']) && $config['dhcp'] == '1') {
+            $this->printBoxLine($width, "  Mode: DHCP (automatic)");
+        } elseif (!empty($config['ipaddr'])) {
+            $this->printBoxLine($width, "  Mode: Static");
+            $this->printBoxLine($width, "  Address: {$config['ipaddr']}/{$config['subnet']}");
+            if (!empty($config['gateway'])) {
+                $this->printBoxLine($width, "  Gateway: {$config['gateway']}");
+            }
+        } else {
+            $this->printBoxLine($width, "  Mode: Disabled");
+        }
+
+        $this->printBoxSeparator($width);
+
+        // IPv6 Configuration
+        $this->printBoxLine($width, "IPv6 Configuration:", true);
+        $ipv6Mode = $config['ipv6_mode'] ?? '0';
+        switch ($ipv6Mode) {
+            case '1':
+                $this->printBoxLine($width, "  Mode: Auto (DHCPv6 + SLAAC)");
+                break;
+            case '2':
+                $this->printBoxLine($width, "  Mode: Manual");
+                if (!empty($config['ipv6addr'])) {
+                    $this->printBoxLine($width, "  Address: {$config['ipv6addr']}/{$config['ipv6_subnet']}");
+                }
+                if (!empty($config['ipv6_gateway'])) {
+                    $this->printBoxLine($width, "  Gateway: {$config['ipv6_gateway']}");
+                }
+                break;
+            default:
+                $this->printBoxLine($width, "  Mode: Disabled");
+                break;
+        }
+
+        // DNS Configuration
+        if (!empty($config['primarydns']) || !empty($config['primarydns6'])) {
+            $this->printBoxSeparator($width);
+            $this->printBoxLine($width, "DNS Configuration:", true);
+            if (!empty($config['primarydns'])) {
+                $this->printBoxLine($width, "  Primary DNS (IPv4): {$config['primarydns']}");
+            }
+            if (!empty($config['secondarydns'])) {
+                $this->printBoxLine($width, "  Secondary DNS (IPv4): {$config['secondarydns']}");
+            }
+            if (!empty($config['primarydns6'])) {
+                $this->printBoxLine($width, "  Primary DNS (IPv6): {$config['primarydns6']}");
+            }
+            if (!empty($config['secondarydns6'])) {
+                $this->printBoxLine($width, "  Secondary DNS (IPv6): {$config['secondarydns6']}");
+            }
+        }
+
+        // Internet interface flag
+        if (!empty($config['internet'])) {
+            $this->printBoxSeparator($width);
+            $this->printBoxLine($width, "Internet Interface: Yes", true);
+        }
+
+        $this->printBoxLine($width, "");
+        $this->printBoxBottom($width);
+    }
+
+    /**
+     * Print top border of the box
+     *
+     * @param int $width Box width
+     * @return void
+     */
+    private function printBoxTop(int $width): void
+    {
+        echo "╔" . str_repeat("═", $width - 2) . "╗\n";
+    }
+
+    /**
+     * Print bottom border of the box
+     *
+     * @param int $width Box width
+     * @return void
+     */
+    private function printBoxBottom(int $width): void
+    {
+        echo "╚" . str_repeat("═", $width - 2) . "╝\n";
+    }
+
+    /**
+     * Print separator line inside the box
+     *
+     * @param int $width Box width
+     * @return void
+     */
+    private function printBoxSeparator(int $width): void
+    {
+        echo "╠" . str_repeat("═", $width - 2) . "╣\n";
+    }
+
+    /**
+     * Print a line of text inside the box
+     *
+     * Automatically pads the text to fit the box width and adds vertical borders.
+     * Supports bold formatting for headers using ANSI escape codes.
+     *
+     * @param int $width Box width
+     * @param string $text Text to display
+     * @param bool $bold Use bold formatting
+     * @return void
+     */
+    private function printBoxLine(int $width, string $text, bool $bold = false): void
+    {
+        // Calculate padding needed
+        // Strip ANSI codes for length calculation
+        $cleanText = preg_replace('/\033\[[0-9;]+m/', '', $text);
+        $textLength = mb_strlen($cleanText);
+        $paddingNeeded = $width - $textLength - 4; // 4 = "║ " + " ║"
+        $padding = str_repeat(" ", max(0, $paddingNeeded));
+
+        if ($bold) {
+            echo "║ \033[1m{$text}\033[0m{$padding} ║\n";
+        } else {
+            echo "║ {$text}{$padding} ║\n";
+        }
     }
 }
