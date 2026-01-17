@@ -1016,6 +1016,18 @@ const networks = {
         // Trigger the handler for existing VLAN interfaces to apply initial state
         $('input[name^="vlanid_"]').trigger('change');
 
+        // Add IPv6 address change handlers to update dual-stack NAT logic
+        $('input[name^="ipv6addr_"]').off('input blur').on('input blur', function() {
+            // Update dual-stack NAT logic when IPv6 address changes
+            networks.updateDualStackNatLogic();
+        });
+
+        // Add IPv4 address change handlers to update dual-stack NAT logic
+        $('input[name^="ipaddr_"]').off('input blur').on('input blur', function() {
+            // Update dual-stack NAT logic when IPv4 address changes
+            networks.updateDualStackNatLogic();
+        });
+
         // Initialize internet radio buttons with Fomantic UI
         $('.internet-radio').checkbox();
 

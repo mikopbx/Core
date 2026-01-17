@@ -112,6 +112,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
             echo "DEBUG: Exception: " . $e->getMessage() . "\n";
         }
 
+        // Configure NAT settings (IPv6 already disabled by setUp())
         $this->changeCheckBoxState('usenat', $params['usenat']);
         $this->changeInputField('extipaddr', $params['extipaddr']);
         $this->changeInputField('exthostname', $params['exthostname']);
@@ -521,12 +522,8 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->waitForAjax();
         $this->changeTabOnCurrentPage('1');
 
-        // Configure IPv4 Manual mode (not DHCP)
-        $this->selectDropdownItem('ipv4_mode_1', '0');  // '0' = Manual
-        sleep(1);  // Wait for JavaScript to show/hide fields
-
-        $this->changeInputField('ipaddr_1', '192.168.1.100');
-        $this->selectDropdownItem('subnet_1', '24');
+        // DON'T change IPv4 mode - leave it as is (DHCP or Manual) to avoid network disruption
+        // Dual-stack detection works regardless of IPv4 mode (static or DHCP)
 
         // Configure IPv6 Manual
         $this->selectDropdownItem('ipv6_mode_1', '2');
@@ -557,9 +554,8 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
 
         $this->assertInputFieldValueEqual('exthostname', 'mikopbx-dualstack.example.com');
 
-        // Reset configuration
+        // Reset IPv6 configuration (IPv4 left unchanged)
         $this->selectDropdownItem('ipv6_mode_1', '0');
-        $this->selectDropdownItem('ipv4_mode_1', '1');  // '1' = DHCP
         $this->submitForm('network-form');
     }
 
@@ -576,6 +572,14 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->waitForAjax();
         $this->changeTabOnCurrentPage('1');
 
+        // Enable IPv6 Manual mode to make DNS fields visible
+        $this->selectDropdownItem('ipv6_mode_1', '2');
+        sleep(1);  // Wait for fields to become visible
+
+        // Configure IPv6 address (required for DNS to be saved)
+        $this->changeInputField('ipv6addr_1', '2001:db8::200');
+        $this->selectDropdownItem('ipv6_subnet_1', '64');
+
         // Fill IPv6 DNS servers (Google Public DNS IPv6)
         $this->changeInputField('primarydns6_1', '2001:4860:4860::8888');
         $this->changeInputField('secondarydns6_1', '2001:4860:4860::8844');
@@ -591,9 +595,10 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->assertInputFieldValueEqual('primarydns6_1', '2001:4860:4860::8888');
         $this->assertInputFieldValueEqual('secondarydns6_1', '2001:4860:4860::8844');
 
-        // Clear DNS fields
+        // Clear DNS fields and disable IPv6
         $this->changeInputField('primarydns6_1', '');
         $this->changeInputField('secondarydns6_1', '');
+        $this->selectDropdownItem('ipv6_mode_1', '0');  // Disable IPv6
         $this->submitForm('network-form');
     }
 

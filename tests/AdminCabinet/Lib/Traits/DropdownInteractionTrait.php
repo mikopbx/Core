@@ -583,10 +583,8 @@ JS;
     {
         $actualValue = $this->getDropdownValue($fieldName);
 
-        if ($actualValue !== $expectedValue) {
-            $message = $message ?: "Dropdown '{$fieldName}' value mismatch. Expected: '{$expectedValue}', Actual: '{$actualValue}'";
-            $this->fail($message);
-        }
+        $message = $message ?: "Dropdown '{$fieldName}' value mismatch.";
+        $this->assertEquals($expectedValue, $actualValue, $message);
     }
 
     /**
@@ -600,10 +598,8 @@ JS;
     {
         $actualText = $this->getDropdownText($fieldName);
 
-        if ($actualText !== $expectedText) {
-            $message = $message ?: "Dropdown '{$fieldName}' text mismatch. Expected: '{$expectedText}', Actual: '{$actualText}'";
-            $this->fail($message);
-        }
+        $message = $message ?: "Dropdown '{$fieldName}' text mismatch.";
+        $this->assertEquals($expectedText, $actualText, $message);
     }
 
     /**
@@ -622,10 +618,8 @@ JS;
             $this->fail($message ?: "Dropdown '{$fieldName}' not found");
         }
 
-        if (strpos($actualText, $expectedSubstring) === false) {
-            $message = $message ?: "Dropdown '{$fieldName}' text does not contain expected substring. Expected to contain: '{$expectedSubstring}', Actual: '{$actualText}'";
-            $this->fail($message);
-        }
+        $message = $message ?: "Dropdown '{$fieldName}' text does not contain expected substring.";
+        $this->assertStringContainsString($expectedSubstring, $actualText, $message);
     }
 
     /**
