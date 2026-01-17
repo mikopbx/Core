@@ -591,7 +591,8 @@ class SaveConfigAction
                     // Save IPv6 DNS configuration for internet interface only
                     // WHY: Clear IPv6 DNS when IPv6 is disabled to prevent stale data
                     $modeKey = 'ipv6_mode_' . $eth->id;
-                    $mode = $data[$modeKey] ?? '0';
+                    // WHY: Use current DB value if ipv6_mode not provided (PATCH support)
+                    $mode = $data[$modeKey] ?? $eth->ipv6_mode ?? '0';
 
                     if ($itIsInternetInterface) {
                         // Clear IPv6 DNS when IPv6 is disabled (mode='0')

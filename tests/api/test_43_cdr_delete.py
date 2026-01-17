@@ -61,6 +61,75 @@ class TestCDRDelete:
     # Known linkedid from seed data (generate_cdr_fixtures.py creates 3 records with this linkedid)
     SEED_LINKED_ID = 'mikopbx-linked-call.100'
 
+    @staticmethod
+    def create_linked_cdr_records(api_client, linkedid='mikopbx-linked-call.100'):
+        """
+        Create 3 CDR records with shared linkedid for testing deletion
+
+        This method creates test data directly in CDR database if seed data is missing.
+        Used as fallback when test_00a_cdr_seed.py didn't run or data was deleted.
+
+        Args:
+            api_client: Authenticated API client
+            linkedid: Shared linkedid for all 3 records (default: mikopbx-linked-call.100)
+
+        Returns:
+            str: The linkedid of created records, or None if creation failed
+        """
+        from datetime import datetime
+
+        # Generate unique IDs for records (use high numbers to avoid collision with seed data)
+        base_id = 900
+        now = datetime.now()
+        timestamp = now.strftime('%Y-%m-%d %H:%M:%S.000')
+
+        # SQL to insert 3 linked CDR records
+        sql_commands = f"""
+INSERT INTO cdr_general (
+    id, start, endtime, answer,
+    src_num, dst_num, disposition,
+    recordingfile, billsec, duration,
+    UNIQUEID, linkedid
+) VALUES
+({base_id}, '{timestamp}', '{timestamp}', '{timestamp}',
+ '79001234567', '201', 'ANSWERED',
+ '', 45, 50,
+ 'mikopbx-test.{base_id}', '{linkedid}'),
+({base_id + 1}, '{timestamp}', '{timestamp}', '{timestamp}',
+ '201', '202', 'ANSWERED',
+ '', 120, 125,
+ 'mikopbx-test.{base_id + 1}', '{linkedid}'),
+({base_id + 2}, '{timestamp}', '{timestamp}', '{timestamp}',
+ '202', '203', 'ANSWERED',
+ '', 30, 35,
+ 'mikopbx-test.{base_id + 2}', '{linkedid}');
+"""
+
+        try:
+            # Execute via REST API system:executeBashCommand
+            # Escape single quotes in SQL for bash -c execution
+            escaped_sql = sql_commands.replace("'", "'\"'\"'")
+            response = api_client.post('system:executeBashCommand', data={
+                'command': f"sqlite3 /storage/usbdisk1/mikopbx/astlogs/asterisk/cdr.db '{escaped_sql}'"
+            })
+
+            if response.get('result'):
+                result_data = response.get('data', {})
+                if result_data.get('exitCode') == 0:
+                    print(f"\n✓ Created 3 test CDR records with linkedid: {linkedid}")
+                    print(f"  IDs: {base_id}, {base_id + 1}, {base_id + 2}")
+                    return linkedid
+                else:
+                    print(f"\n✗ SQL execution failed: {result_data.get('output')}")
+                    return None
+            else:
+                print(f"\n✗ Failed to create test CDR records: {response.get('messages')}")
+                return None
+
+        except Exception as e:
+            print(f"\n✗ Exception creating test CDR records: {e}")
+            return None
+
     @pytest.fixture(autouse=True)
     def setup_test_data(self, api_client):
         """
@@ -77,6 +146,9 @@ class TestCDRDelete:
             groups, pagination = extract_cdr_data(response)  # Grouped records
 
             # Find a linkedid with multiple records
+            # WHY: Use two-pass approach to prioritize seed data linkedid
+            fallback_linkedid = None
+
             for group in groups:
                 linkedid = group.get('linkedid')
                 records = group.get('records', [])
@@ -86,9 +158,9 @@ class TestCDRDelete:
                     if linkedid == self.SEED_LINKED_ID and len(records) > 1:
                         TestCDRDelete.sample_linkedid = linkedid
 
-                    # Priority 2: Any linkedid with multiple records
-                    if not TestCDRDelete.sample_linkedid and len(records) > 1:
-                        TestCDRDelete.sample_linkedid = linkedid
+                    # Priority 2: Store ANY linkedid with multiple records as fallback
+                    if not fallback_linkedid and len(records) > 1:
+                        fallback_linkedid = linkedid
 
                     # Store first record ID for numeric ID test
                     if not TestCDRDelete.sample_cdr_id:
@@ -104,6 +176,11 @@ class TestCDRDelete:
                     TestCDRDelete.sample_cdr_id and
                     TestCDRDelete.sample_cdr_with_recording):
                     break
+
+            # Fallback: if seed linkedid not found, use any linkedid with multiple records
+            if not TestCDRDelete.sample_linkedid and fallback_linkedid:
+                TestCDRDelete.sample_linkedid = fallback_linkedid
+                print(f"\n⚠ Seed linkedid '{self.SEED_LINKED_ID}' not found, using fallback: {fallback_linkedid}")
 
             print(f"\n✓ Test data setup:")
             print(f"  Sample CDR ID (numeric): {TestCDRDelete.sample_cdr_id}")
@@ -242,13 +319,25 @@ class TestCDRDelete:
         """Test DELETE /cdr/{linkedid} - Delete entire conversation by linkedid
 
         This test requires CDR seed data with linked calls (3 records sharing linkedid).
-        The seed data is created by generate_cdr_fixtures.py with linkedid='mikopbx-linked-call.100'.
+        If seed data is missing, the test creates temporary records for testing.
         """
-        assert TestCDRDelete.sample_linkedid is not None, \
-            f"CDR seed data missing: no linkedid with multiple records found. " \
-            f"Expected '{self.SEED_LINKED_ID}' from seed data. Run CDR seeding first."
+        # Check if we have linkedid from seed data
+        if TestCDRDelete.sample_linkedid is None:
+            print(f"\n⚠ No linkedid found in setup - creating test records...")
+            # Create test records with known linkedid
+            linkedid = self.create_linked_cdr_records(api_client, self.SEED_LINKED_ID)
 
-        linkedid = TestCDRDelete.sample_linkedid
+            if linkedid is None:
+                pytest.fail(
+                    f"Cannot create test CDR records for linkedid deletion test. "
+                    f"Neither seed data nor dynamic creation succeeded."
+                )
+
+            # Update class variable for consistency
+            TestCDRDelete.sample_linkedid = linkedid
+        else:
+            linkedid = TestCDRDelete.sample_linkedid
+
         print(f"  Testing deletion by linkedid: {linkedid}")
 
         # Count records with this linkedid before deletion
