@@ -761,11 +761,13 @@ class TestNetworkIPv6Config:
         config = response['data']
         iface_id = TestNetworkIPv6Config.test_interface_id
 
-        # Find original IPv6 DNS settings
+        # Find original IPv6 mode and DNS settings
+        original_ipv6_mode = '0'
         original_primarydns6 = ''
         original_secondarydns6 = ''
         for iface in config['interfaces']:
             if iface['id'] == iface_id:
+                original_ipv6_mode = iface.get('ipv6_mode', '0')
                 original_primarydns6 = iface.get('primarydns6', '')
                 original_secondarydns6 = iface.get('secondarydns6', '')
                 break
@@ -774,6 +776,7 @@ class TestNetworkIPv6Config:
         save_data = {
             'staticRoutes': config.get('staticRoutes', []),
             'internet_interface': iface_id,
+            f'ipv6_mode_{iface_id}': '1',  # Enable IPv6 Auto mode to allow DNS configuration
             f'primarydns6_{iface_id}': '2001:4860:4860::8888',
             f'secondarydns6_{iface_id}': '2001:4860:4860::8844',
         }
@@ -800,6 +803,7 @@ class TestNetworkIPv6Config:
         restore_data = {
             'staticRoutes': verify['data'].get('staticRoutes', []),
             'internet_interface': iface_id,
+            f'ipv6_mode_{iface_id}': original_ipv6_mode,  # Restore original IPv6 mode
             f'primarydns6_{iface_id}': original_primarydns6,
             f'secondarydns6_{iface_id}': original_secondarydns6,
         }
