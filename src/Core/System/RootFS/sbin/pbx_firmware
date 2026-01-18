@@ -65,7 +65,7 @@ wait_for_user_input() {
             m|M)
                 echo_info "Entering manual shell. Type 'exit' to continue upgrade."
                 echo_info "Available: gdisk, parted, sfdisk, lsblk, blkid, mount, dd, pv"
-                /bin/sh
+                PS1='[manual]# ' /bin/sh -i
                 echo_info "Continue upgrade? (y/n)"
                 read -r -n 1 cont
                 [ "$cont" != "y" ] && [ "$cont" != "Y" ] && exit 1
@@ -235,77 +235,6 @@ if [ -r "${img_file}" ]; then
     part4Action='update';
   fi
 
-  # Pre-extract sgdisk from new image if not available locally (for old systems without sgdisk)
-  EXTRACTED_SGDISK=""
-  echo_info "Checking for local sgdisk: $(which sgdisk 2>/dev/null || echo 'not found')"
-  if [ ! -x /sbin/sgdisk ]; then
-    echo_info "Local sgdisk not found, attempting to extract from new image..."
-    BOOT_OFFSET=1048576
-    mkdir -p /tmp/newboot_extract
-
-    echo_info "Decompressing image to /tmp/img_raw_extract.tmp..."
-    gunzip -c "$img_file" > /tmp/img_raw_extract.tmp 2>/dev/null
-    gunzip_result=$?
-    img_size=$(ls -la /tmp/img_raw_extract.tmp 2>/dev/null | awk '{print $5}')
-    echo_info "gunzip result: $gunzip_result, decompressed size: ${img_size:-0} bytes"
-
-    if [ ! -s /tmp/img_raw_extract.tmp ]; then
-      echo_error "Failed to decompress image for sgdisk extraction"
-    else
-      echo_info "Setting up loop device /dev/loop9 with offset $BOOT_OFFSET..."
-      losetup_output=$(losetup -o $BOOT_OFFSET /dev/loop9 /tmp/img_raw_extract.tmp 2>&1)
-      losetup_result=$?
-      echo_info "losetup result: $losetup_result, output: $losetup_output"
-
-      if [ $losetup_result -eq 0 ]; then
-        echo_info "Mounting /dev/loop9 as vfat..."
-        mount_output=$(mount -t vfat /dev/loop9 /tmp/newboot_extract -o ro 2>&1)
-        mount_result=$?
-        echo_info "mount result: $mount_result, output: $mount_output"
-
-        if [ $mount_result -eq 0 ]; then
-          echo_info "Mount contents: $(ls -la /tmp/newboot_extract/ 2>&1)"
-          echo_info "Boot contents: $(ls -la /tmp/newboot_extract/boot/ 2>&1)"
-
-          if [ -f /tmp/newboot_extract/boot/initramfs.igz ]; then
-            initramfs_size=$(ls -la /tmp/newboot_extract/boot/initramfs.igz | awk '{print $5}')
-            echo_info "Found initramfs.igz ($initramfs_size bytes), extracting sgdisk..."
-
-            gunzip -c /tmp/newboot_extract/boot/initramfs.igz 2>/dev/null | cpio -i --to-stdout "sbin/sgdisk" 2>/dev/null > /tmp/sgdisk_extracted
-            cpio_result=$?
-            sgdisk_size=$(ls -la /tmp/sgdisk_extracted 2>/dev/null | awk '{print $5}')
-            echo_info "cpio result: $cpio_result, extracted sgdisk size: ${sgdisk_size:-0} bytes"
-
-            if [ -s /tmp/sgdisk_extracted ]; then
-              chmod +x /tmp/sgdisk_extracted
-              # Verify it's a valid executable
-              file_type=$(file /tmp/sgdisk_extracted 2>/dev/null || echo "unknown")
-              echo_info "Extracted file type: $file_type"
-              EXTRACTED_SGDISK="/tmp/sgdisk_extracted"
-              echo_info "Successfully extracted sgdisk from new image"
-            else
-              echo_error "sgdisk extraction produced empty file"
-            fi
-          else
-            echo_error "initramfs.igz not found in /tmp/newboot_extract/boot/"
-          fi
-          umount /tmp/newboot_extract 2>/dev/null
-        else
-          echo_error "Failed to mount loop device as vfat"
-        fi
-        losetup -d /dev/loop9 2>/dev/null
-      else
-        echo_error "Failed to setup loop device"
-      fi
-    fi
-    rm -f /tmp/img_raw_extract.tmp
-    rmdir /tmp/newboot_extract 2>/dev/null
-  else
-    echo_info "Local sgdisk found at /sbin/sgdisk"
-  fi
-
-  echo_info "EXTRACTED_SGDISK=$EXTRACTED_SGDISK"
-
   echo_info "Installing new image on $DISK"
   # Check for serial port using new method if available
   SERIAL_PORT=""
@@ -336,23 +265,16 @@ if [ -r "${img_file}" ]; then
 
   # Fix GPT backup table location after writing smaller image to larger disk
   # The backup GPT header must be at the end of the disk, not at original image size
-  if [ -x /sbin/sgdisk ]; then
-    # Preferred: local sgdisk (available in MikoPBX 2025+)
-    echo_info "Relocating GPT backup header to end of disk (local sgdisk)..."
-    sgdiskOutput=$(/sbin/sgdisk -e "$DISK" 2>&1)
-    sgdiskResult=$?
-    echo_info "sgdisk exit code: $sgdiskResult"
-    [ -n "$sgdiskOutput" ] && echo "$sgdiskOutput" | while read line; do echo_info "sgdisk: $line"; done
-  elif [ -x "$EXTRACTED_SGDISK" ]; then
-    # Fallback: sgdisk extracted from new image (for old systems without sgdisk)
-    echo_info "Relocating GPT backup header to end of disk (extracted sgdisk)..."
-    sgdiskOutput=$("$EXTRACTED_SGDISK" -e "$DISK" 2>&1)
-    sgdiskResult=$?
-    echo_info "extracted sgdisk exit code: $sgdiskResult"
-    [ -n "$sgdiskOutput" ] && echo "$sgdiskOutput" | while read line; do echo_info "sgdisk: $line"; done
-    rm -f "$EXTRACTED_SGDISK"
+  # Note: sgdisk requires controlling terminal (/dev/tty) which is unavailable in recovery mode
+  if command -v gdisk >/dev/null 2>&1; then
+    # Preferred: gdisk (works in recovery without controlling terminal)
+    echo_info "Relocating GPT backup header to end of disk (gdisk)..."
+    gdiskOutput=$(echo -e "x\ne\nw\nY\n" | /sbin/gdisk "$DISK" 2>&1)
+    gdiskResult=$?
+    echo_info "gdisk exit code: $gdiskResult"
+    [ -n "$gdiskOutput" ] && echo "$gdiskOutput" | while read line; do echo_info "gdisk: $line"; done
   elif [ -x /sbin/parted ]; then
-    # Last resort: parted (available on all systems)
+    # Fallback: parted (universal, available on all systems)
     echo_info "Relocating GPT backup header to end of disk (parted fallback)..."
     partedOutput=$(echo "Fix" | /sbin/parted "$DISK" print ---pretend-input-tty 2>&1)
     partedResult=$?
