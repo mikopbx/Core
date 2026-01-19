@@ -288,9 +288,17 @@ if [ -r "${img_file}" ]; then
   sleep 3;
 
   # If the pv command fails or there aren't four partitions, restore the system image from the backup
-  if [ ! "$resultPv" = '0' ] || [ ! "$(/bin/lsblk -l "$DISK" | /bin/busybox grep -c part)" = '4' ]; then
+  partitionCount=$(/bin/lsblk -l "$DISK" | /bin/busybox grep -c part)
+  if [ ! "$resultPv" = '0' ] || [ ! "$partitionCount" = '4' ]; then
+    echo_error "Image installation validation failed"
+    echo_info "Validation details: resultPv=$resultPv, partition count=$partitionCount (expected: 4)"
+    echo_info "Current disk state:"
+    /bin/lsblk "$DISK" 2>&1 | while read line; do echo_info "  $line"; done
+
+    wait_for_user_input "About to restore system from backup to $DISK"
+
     if [ -f "$backupImg" ]; then
-      echo_error "There are some errors, restoring system from backup to /dev/${systemDevice}"
+      echo_error "Restoring system from backup to /dev/${systemDevice}"
       # Check for serial port using new method if available
       SERIAL_PORT=""
       if [ -x "/sbin/pbx-env-detect" ]; then
