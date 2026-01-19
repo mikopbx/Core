@@ -20,19 +20,25 @@
 # Inline output functions - no external dependencies for maximum compatibility
 # This script must work when updating FROM any old MikoPBX version
 
-# Serial port for headless output (cached to avoid repeated checks)
-SERIAL_TTY=""
-if [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ]; then
-    SERIAL_TTY="/dev/ttyS0"
-fi
+# Serial port for headless output (scan ttyS0-ttyS5, take first available)
+# Cached once at script start to avoid repeated checks
+SERIAL_PORT=""
+for i in 0 1 2 3 4 5; do
+    DEV="/dev/ttyS$i"
+    # Check if device exists, is writable, and accepts test write
+    if [ -c "$DEV" ] && [ -w "$DEV" ] && echo -n "" > "$DEV" 2>/dev/null; then
+        SERIAL_PORT="$DEV"
+        break
+    fi
+done
 
 echo_info() {
     local msg=" - $1"
     echo "$msg"
-    if [ -n "$SERIAL_TTY" ]; then
+    if [ -n "$SERIAL_PORT" ]; then
         # Use printf for atomic write, stty to drain buffer
-        printf "%s\n" "$msg" > "$SERIAL_TTY" 2>/dev/null
-        stty -F "$SERIAL_TTY" drain 2>/dev/null || sleep 0.05 2>/dev/null || true
+        printf "%s\n" "$msg" > "$SERIAL_PORT" 2>/dev/null
+        stty -F "$SERIAL_PORT" drain >/dev/null 2>&1 || sleep 0.05 2>/dev/null || true
     fi
     return 0
 }
@@ -40,9 +46,9 @@ echo_info() {
 echo_error() {
     local msg="ERROR: $1"
     echo "$msg"
-    if [ -n "$SERIAL_TTY" ]; then
-        printf "%s\n" "$msg" > "$SERIAL_TTY" 2>/dev/null
-        stty -F "$SERIAL_TTY" drain 2>/dev/null || sleep 0.05 2>/dev/null || true
+    if [ -n "$SERIAL_PORT" ]; then
+        printf "%s\n" "$msg" > "$SERIAL_PORT" 2>/dev/null
+        stty -F "$SERIAL_PORT" drain >/dev/null 2>&1 || sleep 0.05 2>/dev/null || true
     fi
     return 0
 }
@@ -139,17 +145,7 @@ else
 
     # Copy the configuration to the storage and backup the system image
     echo_info "Backup system partition to storage ...";
-    # Check for serial port using new method if available
-    SERIAL_PORT=""
-    if [ -x "/sbin/pbx-env-detect" ]; then
-        SERIAL_PORTS=$(/sbin/pbx-env-detect --serial)
-        if [ -n "$SERIAL_PORTS" ]; then
-            SERIAL_PORT=$(echo $SERIAL_PORTS | cut -d' ' -f1)
-        fi
-    elif [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ] && echo -n "" > /dev/ttyS0 2>/dev/null; then
-        SERIAL_PORT="/dev/ttyS0"
-    fi
-    
+    # Use global SERIAL_PORT from script initialization
     if [ -n "$SERIAL_PORT" ]; then
         LC_ALL=C /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
     else
@@ -236,23 +232,15 @@ if [ -r "${img_file}" ]; then
   fi
 
   echo_info "Installing new image on $DISK"
-  # Check for serial port using new method if available
-  SERIAL_PORT=""
-  if [ -x "/sbin/pbx-env-detect" ]; then
-      SERIAL_PORTS=$(/sbin/pbx-env-detect --serial)
-      if [ -n "$SERIAL_PORTS" ]; then
-          SERIAL_PORT=$(echo $SERIAL_PORTS | cut -d' ' -f1)
-      fi
-  elif [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ] && echo -n "" > /dev/ttyS0 2>/dev/null; then
-      SERIAL_PORT="/dev/ttyS0"
-  fi
-  
+
+  # Use global SERIAL_PORT from script initialization
   if [ -n "$SERIAL_PORT" ]; then
     LC_ALL=C /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
+    resultPv="${PIPESTATUS[2]}"  # Exit code of dd (3rd command in pipeline)
   else
-    LC_ALL=C /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1;
+    LC_ALL=C /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1
+    resultPv="$?"
   fi
-  resultPv="$?";
 
   # Reset terminal after progress bar and flush all buffers
   printf '\033[0m\n' 2>/dev/null
@@ -299,21 +287,12 @@ if [ -r "${img_file}" ]; then
 
     if [ -f "$backupImg" ]; then
       echo_error "Restoring system from backup to /dev/${systemDevice}"
-      # Check for serial port using new method if available
-      SERIAL_PORT=""
-      if [ -x "/sbin/pbx-env-detect" ]; then
-          SERIAL_PORTS=$(/sbin/pbx-env-detect --serial)
-          if [ -n "$SERIAL_PORTS" ]; then
-              SERIAL_PORT=$(echo $SERIAL_PORTS | cut -d' ' -f1)
-          fi
-      elif [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ] && echo -n "" > /dev/ttyS0 2>/dev/null; then
-          SERIAL_PORT="/dev/ttyS0"
-      fi
-      
+
+      # Use global SERIAL_PORT from script initialization
       if [ -n "$SERIAL_PORT" ]; then
         LC_ALL=C /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
       else
-        LC_ALL=C /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1;
+        LC_ALL=C /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1
       fi
       # Reset terminal after progress bar
       printf '\033[0m\n' 2>/dev/null
