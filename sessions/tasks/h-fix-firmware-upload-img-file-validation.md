@@ -1,6 +1,6 @@
 ---
 name: h-fix-firmware-upload-img-file-validation
-branch: fix/h-fix-firmware-upload-img-file-validation
+branch: develop
 status: pending
 created: 2026-01-19
 ---

@@ -228,11 +228,23 @@ FilesAPI.setupResumableEvents = function(resumableInstance, callback, autoUpload
  * @param {File} file - File object to upload
  * @param {function} callback - Callback function
  * @param {string[]} allowedFileTypes - Optional array of allowed file extensions (e.g., ['wav', 'mp3'])
+ * @param {string} category - Optional category for file type validation (e.g., 'firmware', 'sound')
  */
-FilesAPI.uploadFile = function(file, callback, allowedFileTypes = ['*']) {
-    const r = new Resumable(this.configureResumable({
+FilesAPI.uploadFile = function(file, callback, allowedFileTypes = ['*'], category = null) {
+    const resumableConfig = this.configureResumable({
         fileType: allowedFileTypes
-    }));
+    });
+
+    // Add category to query parameters if provided
+    if (category) {
+        resumableConfig.query = function() {
+            return {
+                category: category
+            };
+        };
+    }
+
+    const r = new Resumable(resumableConfig);
 
     // Setup events BEFORE adding file to capture fileAdded event
     this.setupResumableEvents(r, callback, false);

@@ -139,7 +139,7 @@ const updatePBX = {
                                     updatePBX.$submitButton.addClass('loading');
                                     updatePBX.upgradeInProgress = true;
                                     const data = $('input:file')[0].files[0];
-                                    FilesAPI.uploadFile(data, updatePBX.cbResumableUploadFile);
+                                    FilesAPI.uploadFile(data, updatePBX.cbResumableUploadFile, ['img'], 'firmware');
                                     return true;
                                 },
                             })

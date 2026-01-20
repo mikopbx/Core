@@ -71,7 +71,10 @@ class UploadFileAction extends Injectable
             'application/x-gzip'
         ],
         'firmware' => [
-            'application/octet-stream'
+            '',  // Empty MIME type when browser can't detect type for .img files
+            'application/octet-stream',
+            'application/x-disk-image',
+            'application/x-raw-disk-image'
         ]
     ];
     
