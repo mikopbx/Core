@@ -361,7 +361,7 @@ class PbxExtensionUtils
             // WHY: We disable Whoops to prevent formatted error output that we can't parse
             $tempScript = sprintf(
                 'define("MIKOPBX_VALIDATION_MODE", true); ' .  // Signal to disable Whoops
-                'require_once "/offload/rootfs/usr/www/src/globals.php"; ' .
+                'require_once "Globals.php"; ' .
                 'class_exists(%s); exit(0);',
                 var_export($configClassName, true)
             );

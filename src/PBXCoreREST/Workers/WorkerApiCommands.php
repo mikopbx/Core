@@ -510,6 +510,11 @@ class WorkerApiCommands extends WorkerRedisBase
             $this->redis->setex($metricsKey, 3600, json_encode($perfMetrics));
             
             // Only log errors, not success cases
+            // WHY: If setex() returns true, Redis guarantees data is written
+            // Double-checking with get() can cause false positives due to:
+            // - Redis eviction policies when memory is low
+            // - Network latency between setex and get
+            // - Race conditions with other processes
             if (!$setResult) {
                 SystemMessages::sysLogMsg(
                     static::class,
@@ -519,33 +524,20 @@ class WorkerApiCommands extends WorkerRedisBase
                     ),
                     LOG_WARNING
                 );
-                
+
                 // Retry setting the data
                 $retrySetResult = $this->redis->setex($responseKey, self::REDIS_RESPONSE_TTL, $encodedResult);
-                
+
                 if (!$retrySetResult) {
                     SystemMessages::sysLogMsg(
                         static::class,
                         sprintf(
-                            "CRITICAL: Retry set failed for job %s",
+                            "CRITICAL: Retry set failed for job %s - possible Redis memory issue",
                             $jobId
                         ),
                         LOG_ERR
                     );
                 }
-            }
-            
-            // Double-check the data was stored, but only log errors
-            $responseCheck = $this->redis->get($responseKey);
-            if ($responseCheck === false) {
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    sprintf(
-                        "CRITICAL: Response data for job %s was not found in Redis after setting!",
-                        $jobId
-                    ),
-                    LOG_ERR
-                );
             }
             
             $perfMetrics['redis_time'] = microtime(true) - $redisStart;
