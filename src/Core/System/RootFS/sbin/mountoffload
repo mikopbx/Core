@@ -297,7 +297,7 @@ for disk in $disks; do
 
    # Check for the presence of a "rootfs" directory in the root of the offload disk
   if [ -d /offload/rootfs ]; then
-    echo_info "RootFS founded on $diskPath!"
+    echo_info "RootFS found on $diskPath!"
     exit 0
   fi
 
@@ -338,7 +338,7 @@ for disk in $disks; do
 
   # Check if a directory named "rootfs" exists in the root of the offload disk
   if [ -d /offload/rootfs ]; then
-    echo_info "RootFS founded on $diskPath!"
+    echo_info "RootFS found on $diskPath!"
     exit 0
   fi
 
@@ -416,7 +416,7 @@ for disk in $disks; do
 
   # Check if a directory named "rootfs" exists in the root of the offload disk
   if [ -d /offload/rootfs ]; then
-    echo_info "RootFS founded on $diskPath!"
+    echo_info "RootFS found on $diskPath!"
     exit 0
   fi
   echo_info "RootFS not found on $diskPath"
