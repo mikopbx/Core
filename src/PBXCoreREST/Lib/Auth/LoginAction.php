@@ -212,6 +212,13 @@ class LoginAction
 
         $res->success = true;
 
+        // Log successful authentication for audit trail
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            "Successful login: User={$userId} From={$clientIp} UserAgent={$userAgent}",
+            LOG_INFO
+        );
+
         // Send login notification email if enabled
         self::sendLoginNotification($userId, $clientIp, $userAgent);
 
