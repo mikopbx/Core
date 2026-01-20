@@ -250,10 +250,10 @@ const marketplace = {
                 // Update the cell in DataTable using the row API
                 const cellIndex = $rowNode.find('td').length - 1; // Last cell
                 table.cell(dtRow, cellIndex).data($lastCell.html()).draw(false);
-                
-                // Re-initialize popups
+
+                // Re-initialize all popups after DOM update
                 setTimeout(() => {
-                    $(`tr.module-row[data-id=${obj.uniqid}] .popuped`).popup();
+                    extensionModules.initializePopups();
                 }, 100);
             } else {
                 // If row not found in DataTable, use direct DOM manipulation
@@ -287,7 +287,9 @@ const marketplace = {
         
         const $actionButtons = $moduleRow.find('.action-buttons');
         $actionButtons.prepend(dynamicButton);
-        $moduleRow.find('.popuped').popup();
+
+        // Re-initialize all popups after DOM update
+        extensionModules.initializePopups();
     },
 
     /**

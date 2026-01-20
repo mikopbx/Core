@@ -77,12 +77,8 @@ const extensionModules = {
 
         extensionModules.initializeDataTable();
 
-        extensionModules.$popupOnClick.popup({
-            on    : 'click',
-            className: {
-                popup: 'ui popup wide'
-            }
-        });
+        // Initialize all popups on the page
+        extensionModules.initializePopups();
 
         extensionModules.$checkboxes.each((index, obj) => {
             const uniqId = $(obj).attr('data-value');
@@ -90,8 +86,6 @@ const extensionModules = {
             pageStatus.initialize(uniqId, false);
             extensionModules.checkBoxes.push(pageStatus);
         });
-
-        $('a[data-content]').popup();
     },
 
     /**
@@ -114,6 +108,24 @@ const extensionModules = {
 
         // Move the "Add New" button to the first eight-column div
         $('.add-new').appendTo($('div.eight.column:eq(0)'));
+    },
+
+    /**
+     * Initialize all popups on the page
+     * This method should be called after any DOM update to re-initialize popup handlers
+     */
+    initializePopups() {
+        // Initialize popups for error icons with HTML content
+        $('i.popup-on-click').popup({
+            on    : 'click',
+            html  : true,
+            className: {
+                popup: 'ui popup wide'
+            }
+        });
+
+        // Initialize standard tooltips
+        $('a[data-content]').popup();
     },
 
 };
