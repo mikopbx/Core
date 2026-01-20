@@ -165,10 +165,6 @@ output_serial() {
     local msg="$1"
     local newline="$2"
 
-    # If console is already redirected to serial via exec, skip direct serial output
-    # This prevents duplicate messages in serial console
-    [ -n "$CONSOLE_REDIRECTED" ] && return
-
     # Strip ANSI color codes for serial output
     local clean_msg=$(echo "$msg" | sed 's/\x1b\[[0-9;]*m//g')
 

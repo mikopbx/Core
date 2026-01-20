@@ -152,6 +152,16 @@ Tests are automatically synchronized between host and container:
    - SSRF and SQL injection protections
    - 9 providers: Docker, AWS, Google Cloud, Azure, Yandex, DigitalOcean, Vultr, VKCloud, Alibaba, NoCloud
 
+12. **Boot System**: Intelligent boot initialization with universal console handling
+   - `/sbin/pbx_boot_init` - Main boot orchestrator with smart console redirect
+   - `/sbin/mountoffload` - Partition 2 (rootfs) mount script with disk detection
+   - `/etc/rc/mountconfdir` - Partition 3 (config database) mount script
+   - `/sbin/pbx-message` - Unified message handler (console + serial output)
+   - Smart console detection: Tests accessibility before redirect
+   - Universal compatibility: Bare-metal, VMware, KVM, Docker, LXC
+   - Prevents boot failures on VMs without serial console configuration
+   - Version output as early diagnostic marker and console test
+
 ### Key Design Patterns
 
 - **MVC Pattern**: Clear separation in AdminCabinet
@@ -164,6 +174,11 @@ Tests are automatically synchronized between host and container:
   - IPv6: `Udhcpc6` class handles udhcpc6 events via `/etc/rc/udhcpc6_configure`
   - Database always synchronized regardless of Docker environment
   - Network commands conditional based on execution context
+- **Smart Console Pattern**: Intelligent output routing with fallback
+  - Test console accessibility before redirect (prevents VMware boot failures)
+  - Unified message handler separates console and serial output
+  - Container-aware (Docker/LXC detection for appropriate output handling)
+  - Early diagnostic output (version as console test)
 
 ### Important Classes and Interfaces
 
@@ -489,6 +504,29 @@ Matching shell functions available in `/sbin/shell_functions.sh`:
 - `is_container()` - Detects any container
 - `can_manage_network()` - Checks network configuration capability
 
+**Boot and Console Handling:**
+
+MikoPBX uses smart console detection to ensure reliable boot across all environments:
+
+- **Console Redirect Strategy**: `/sbin/pbx_boot_init` tests `/dev/console` accessibility before redirect
+  - Test write with version output (early diagnostic marker)
+  - Only redirects if console is writable and accepts output
+  - Prevents boot failures on VMware VMs without serial console
+
+- **Message Output System**: `/sbin/pbx-message` provides unified output handling
+  - Console output: Always via stdout
+  - Serial output: Container-aware detection and routing
+  - Docker: Serial output skipped (runtime manages console)
+  - LXC: Serial output skipped (stdout already to /dev/tty1)
+  - Bare-metal: Serial port auto-detection with caching
+
+- **Universal Compatibility**: Boot works without configuration changes
+  - VMware VMs with or without serial console
+  - Bare-metal servers with IPMI/serial
+  - KVM/QEMU virtual machines
+  - Docker containers (console managed by runtime)
+  - LXC containers (console to /dev/tty1)
+
 **LXC Container Features:**
 
 When running in LXC, MikoPBX has full capabilities:
@@ -503,6 +541,8 @@ When running in LXC, MikoPBX has full capabilities:
 
 | Feature | Docker | LXC | Bare-Metal |
 |---------|--------|-----|------------|
+| Boot Console | Runtime | /dev/tty1 | Smart detect |
+| Serial Output | Skipped | Skipped | Auto-detect |
 | Network Config | Runtime | Container | Container |
 | DHCP Client | Skipped | Supported | Supported |
 | IPv6 Auto (DHCPv6) | Skipped | Supported | Supported |

@@ -48,7 +48,7 @@ checkOffloadDisk() {
   # Check if the file exists
   if [ ! -f "${pathToFile}" ]; then
      # If it doesn't exist, set the result variable to 1 and print an error message
-    echo_info "File ${pathToFile} not found"
+    echo_info "  - File ${pathToFile} not found"
     CHECK_RESULT=1
   else
     # If it exists, calculate its MD5 hash and compare it with the stored MD5 hash
@@ -57,7 +57,7 @@ checkOffloadDisk() {
     # If the hashes don't match, set the result variable to 2 and print an error message
     if [ ! "${md5OffloadBI}" = "${MD5_BUILD_INFO}" ]; then
       CHECK_RESULT=2
-      echo_info "Hash file ${pathToFile} verification failed"
+      echo_info "  - Hash file ${pathToFile} verification failed"
     fi
   fi
 }
@@ -103,7 +103,7 @@ mountoffload() {
 
   # If the size of the disk is less than or equal to 600MB, it will perform a filesystem check
   if [ "$size_bytes" -le 629145600 ]; then
-    echo_info "Start check: $disk"
+    echo_info "  - Start check: $disk"
     "/sbin/fsck.${type}" -f -p "$disk" >/dev/null 2>/dev/null
   fi
 
@@ -158,13 +158,13 @@ mountConfRecover() {
 
      # Skip if the disk is already mounted
     if [ "${diskr}" = "${offloaddisk}" ]; then
-      echo_info "Skip ${diskr}, already mounted..."
+      echo_info "  - Skip ${diskr}, already mounted..."
       continue
     fi
 
     # Skip if the disk does not have a third partition
     if [ ! -b "/dev/${disk3}" ]; then
-      echo_info "Skip ${diskr}, part 3 not found..."
+      echo_info "  - Skip ${diskr}, part 3 not found..."
       continue
     fi
 
@@ -172,13 +172,13 @@ mountConfRecover() {
     type=$(/sbin/blkid -o full "/dev/${disk3}" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1)
     if [ -f "/sbin/fsck.${type}" ]; then
       "/sbin/fsck.${type}" -f -p "/dev/${disk3}" >/dev/null 2>/dev/null
-      echo_info "Trying fsck /dev/${disk3} ... returned: $?"
+      echo_info "  - Trying fsck /dev/${disk3} ... returned: $?"
     fi
 
     # Get the UUID of the partition and attempt to mount it read-only to the created directory
     uuid=$(/sbin/blkid -o full "/dev/${disk3}" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1)
     mount -t "${type}" -r UUID="${uuid}" "${rec_dir}"
-    echo_info "Trying mount ${diskr} fs ${type} ... returned: $?"
+    echo_info "  - Trying mount ${diskr} fs ${type} ... returned: $?"
 
      # If the directory has a "conf" subdirectory and no "livecd" file, exit
     if [ -d "${rec_dir}conf" ] && [ ! -f "${rec_dir}livecd" ]; then
@@ -244,7 +244,7 @@ for disk in $disks; do
   echo
   echo_info "Mounting $diskPath..."
   mountoffload "$diskPath"
-  echo_info "Mount result: $MOUNT_RESULT"
+  echo_info "  - Mount result: $MOUNT_RESULT"
 
   # Check for the presence of a "livecd" flag file in the root of the offload disk.
   if [ -f /offload/livecd ]; then
@@ -293,17 +293,17 @@ for disk in $disks; do
   echo
   echo_info "Mounting $diskPath..."
   mountoffload "$diskPath"
-  echo_info "Mount result: $MOUNT_RESULT"
+  echo_info "  - Mount result: $MOUNT_RESULT"
 
    # Check for the presence of a "rootfs" directory in the root of the offload disk
   if [ -d /offload/rootfs ]; then
-    echo_info "RootFS founded on $diskPath!"
+    echo_info "RootFS found on $diskPath!"
     exit 0
   fi
 
    # If the "rootfs" directory was not found, unmount the offload disk and continue with the next one
   umount -f /offload >/dev/null
-  echo_info "Failed to find RootFS on $diskPath!"
+  echo_info "RootFS not found on $diskPath"
 done
 
 ################################################################################
@@ -334,17 +334,17 @@ for disk in $disks; do
   echo
   echo_info "Mounting $diskPath..."
   mountoffload "$diskPath"
-  echo_info "Mount result: $MOUNT_RESULT"
+  echo_info "  - Mount result: $MOUNT_RESULT"
 
   # Check if a directory named "rootfs" exists in the root of the offload disk
   if [ -d /offload/rootfs ]; then
-    echo_info "RootFS founded on $diskPath!"
+    echo_info "RootFS found on $diskPath!"
     exit 0
   fi
 
    # If the "rootfs" directory was not found, unmount the offload disk and log failure to find "rootfs"
   umount -f /offload >/dev/null
-  echo_info "Failed to find RootFS on $diskPath!"
+  echo_info "RootFS not found on $diskPath"
 done
 
 ################################################################################
@@ -380,7 +380,7 @@ for disk in $disks; do
   echo
   echo_info "Mounting $diskPath..."
   mountoffload "$diskPath"
-  echo_info "Mount result: $MOUNT_RESULT"
+  echo_info "  - Mount result: $MOUNT_RESULT"
 
   # Check if a file named "livecd" exists in the root of the offload disk
   if [ -f /offload/livecd ]; then
@@ -412,14 +412,14 @@ for disk in $disks; do
   echo
   echo_info "Mounting $diskPath..."
   mountoffload "$diskPath"
-  echo_info "Mount result: $MOUNT_RESULT"
+  echo_info "  - Mount result: $MOUNT_RESULT"
 
   # Check if a directory named "rootfs" exists in the root of the offload disk
   if [ -d /offload/rootfs ]; then
-    echo_info "RootFS founded on $diskPath!"
+    echo_info "RootFS found on $diskPath!"
     exit 0
   fi
-  echo_info "Failed to find RootFS on $diskPath!"
+  echo_info "RootFS not found on $diskPath"
 done
 
 # Default action - boot from LiveCD if it was found
