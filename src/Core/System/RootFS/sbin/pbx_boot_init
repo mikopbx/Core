@@ -18,10 +18,9 @@
 #
 # Setup console I/O (serial output handled by pbx-message)
 # Only redirect to /dev/console if it's accessible (fixes VMware VMs without serial console)
-if [ -w /dev/console ] && echo -n "" > /dev/console 2>/dev/null; then
+# Output version as early diagnostic marker and console test
+if [ -w /dev/console ] && { [ -f /etc/version ] && echo "MikoPBX ver: $(cat /etc/version)" || echo "MikoPBX boot"; } > /dev/console 2>/dev/null; then
     exec </dev/console >/dev/console 2>/dev/console
-    # Signal to pbx-message that console redirect is active (prevents duplicate serial output)
-    export CONSOLE_REDIRECTED=1
 fi
 
 # Load shell functions for console/serial output
