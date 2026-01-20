@@ -511,6 +511,8 @@ return [
     'ms_EmailNotification_SMTPTest_Configured' => 'Configured',
     'ms_EmailNotification_SMTPTest_Working' => 'Working',
     'ms_EmailNotification_SMTPTest_Passed' => 'Passed',
+    'ms_EmailNotification_SMTPTest_SMTPConnection' => 'SMTP Connection',
+    'ms_EmailNotification_SMTPTest_EmailDelivery' => 'Email Delivery',
     'ms_EmailNotification_SMTPTest_HelpText' => 'If you received this email, your mail configuration is set up correctly and ready to send notifications.',
 
 ];

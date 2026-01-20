@@ -512,6 +512,8 @@ return [
     'ms_EmailNotification_SMTPTest_Configured' => 'Настроено',
     'ms_EmailNotification_SMTPTest_Working' => 'Работает',
     'ms_EmailNotification_SMTPTest_Passed' => 'Пройдено',
+    'ms_EmailNotification_SMTPTest_SMTPConnection' => 'Подключение к SMTP',
+    'ms_EmailNotification_SMTPTest_EmailDelivery' => 'Доставка email',
     'ms_EmailNotification_SMTPTest_HelpText' => 'Если вы получили это письмо, значит ваша почтовая конфигурация настроена правильно и готова к отправке уведомлений.',
 
 ];
