@@ -116,4 +116,15 @@ return [
     'ext_ValidateCaptionEmpty' => 'Menu item caption is empty',
     'ext_Version' => 'Version',
     'ext_WrongGetModuleLink' => 'Error getting module file from repository',
+
+    // Module package validation errors
+    'ext_FileNotFound' => 'Module file not found: %filePath%',
+    'ext_CorruptedZipFile' => 'Module ZIP file is corrupted or has invalid format: %filePath%. Error code: %errorCode%',
+    'ext_ModuleJsonNotFound' => 'File module.json not found in module archive %filePath%',
+    'ext_InvalidModuleJson' => 'File module.json in archive %filePath% contains invalid JSON: %error%',
+    'ext_MissingModuleUniqueID' => 'Required field moduleUniqueID is missing in module.json file of archive %filePath%',
+
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => 'Module %module% is incompatible with current MikoPBX version',
+    'ext_ModuleMethodSignatureIncompatibility' => 'Module %module% is incompatible with current MikoPBX version: method signature incompatibility detected',
 ];

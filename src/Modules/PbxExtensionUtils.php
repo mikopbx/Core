@@ -23,6 +23,7 @@ use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
@@ -379,18 +380,33 @@ class PbxExtensionUtils
             if ($returnCode === 255 || $returnCode !== 0) {
                 // Module has Fatal Error or compatibility issue
                 $errorOutput = implode("\n", $output);
-                $errorMessage = "Module {$module->uniqid} is incompatible with current MikoPBX version";
 
                 // Look for signature incompatibility in error output
                 if (strpos($errorOutput, 'must be compatible with') !== false) {
                     // Extract the specific incompatibility from error message
-                    $errorMessage .= ": Method signature incompatibility detected";
+                    $errorMessage = TranslationProvider::translate(
+                        'ext_ModuleMethodSignatureIncompatibility',
+                        ['module' => $module->uniqid]
+                    );
                 } elseif (!empty($errorOutput)) {
                     // Include first line of actual error
                     $firstLine = explode("\n", $errorOutput)[0];
                     if (strpos($firstLine, 'Fatal error') !== false || strpos($firstLine, 'Error') !== false) {
-                        $errorMessage .= ": " . substr($firstLine, 0, 150);
+                        $errorMessage = TranslationProvider::translate(
+                            'ext_ModuleIncompatibleWithVersion',
+                            ['module' => $module->uniqid]
+                        ) . ": " . substr($firstLine, 0, 150);
+                    } else {
+                        $errorMessage = TranslationProvider::translate(
+                            'ext_ModuleIncompatibleWithVersion',
+                            ['module' => $module->uniqid]
+                        );
                     }
+                } else {
+                    $errorMessage = TranslationProvider::translate(
+                        'ext_ModuleIncompatibleWithVersion',
+                        ['module' => $module->uniqid]
+                    );
                 }
 
                 SystemMessages::sysLogMsg(__CLASS__, $errorMessage, LOG_ERR);
