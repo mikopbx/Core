@@ -239,23 +239,28 @@ abstract class AbstractExtensionStatusAction extends Injectable
                                 $rtt = round((float)$peerInfo['RoundtripUsec'] / 1000, 2);
                             }
 
-                            // Parse IP and port from ViaAddress or URI (for WebRTC)
+                            // Parse IP and port from URI (real source IP) with ViaAddress fallback
                             $ipAddress = '';
                             $defaultPort = self::getDefaultSipPort();
                             $port = $defaultPort;
 
-                            // For WebRTC devices, ViaAddress may contain invalid hostnames like "ktqrt5rdog79.invalid"
-                            // In this case, we need to extract the real IP from the URI field
-                            $isWebRTC = ($peerInfo['IsWebRTC'] ?? false) === true;
-
-                            if ($isWebRTC && !empty($peerInfo['URI'])) {
-                                // Parse URI: sip:user@192.168.107.1:46602;transport=ws;x-ast-orig-host=...
-                                if (preg_match('/sip:[^@]+@([^:;]+)(?::(\d+))?/', $peerInfo['URI'], $matches)) {
+                            // IMPORTANT: Always prefer URI over ViaAddress for correct NAT handling
+                            // - URI contains the actual source IP address from which Asterisk received the packet
+                            //   (e.g., 159.65.251.173 - public IP of NAT router)
+                            // - ViaAddress contains the IP from SIP Contact header sent by the client
+                            //   (e.g., 10.65.5.1 - private IP inside client's local network)
+                            // For devices behind NAT, ViaAddress will show private IP which is incorrect for display
+                            if (!empty($peerInfo['URI'])) {
+                                // Parse URI: sip:user@192.168.107.1:46602 or sips:user@192.168.107.1:5061 (TLS)
+                                // Supports both SIP and SIPS (SIP Secure/TLS)
+                                if (preg_match('/sips?:[^@]+@([^:;]+)(?::(\d+))?/', $peerInfo['URI'], $matches)) {
                                     $ipAddress = $matches[1] ?? '';
                                     $port = isset($matches[2]) ? (int)$matches[2] : $defaultPort;
                                 }
-                            } elseif (isset($peerInfo['ViaAddress'])) {
-                                // For non-WebRTC devices, use ViaAddress
+                            }
+
+                            // Fallback to ViaAddress only if URI parsing failed
+                            if (empty($ipAddress) && isset($peerInfo['ViaAddress'])) {
                                 $parts = explode(':', $peerInfo['ViaAddress']);
                                 $ipAddress = $parts[0] ?? '';
                                 $port = isset($parts[1]) ? (int)$parts[1] : $defaultPort;
