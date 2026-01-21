@@ -290,8 +290,9 @@ class MailOAuth2Service
             case 'microsoft':
                 // Use delegated SMTP.Send scope for authorization_code flow
                 // Note: outlook.office.com (not office365.com) for delegated permissions
-                // Note: offline_access must be first in scope array per Microsoft documentation
-                $options['scope'] = ['offline_access', 'https://outlook.office.com/SMTP.Send'];
+                // Note: offline_access must be first in scope string per Microsoft documentation
+                // GenericProvider requires scope as space-separated string, not array
+                $options['scope'] = 'offline_access https://outlook.office.com/SMTP.Send';
                 break;
 
             case 'yandex':
