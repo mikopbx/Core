@@ -479,10 +479,15 @@ class SaveRecordAction extends AbstractSaveRecordAction
     private static function sanitizeCurrentRules(array $rulesData): array
     {
         $sanitizedRules = [];
-        $validCategories = ['SIP', 'WEB', 'SSH', 'AMI', 'CTI', 'ICMP', 'WEBHTTPs', 'AJAM', 'RTP'];
+
+        // Get valid categories dynamically from getDefaultRules()
+        // WHY: Modules can register custom firewall categories via SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES
+        // This ensures we accept both core categories (SIP, WEB, SSH, etc.) and module categories (MODULE*)
+        $defaultRules = FirewallRules::getDefaultRules();
+        $validCategories = array_keys($defaultRules);
 
         foreach ($rulesData as $category => $action) {
-            // Validate category name
+            // Validate category name against dynamic list
             if (!in_array($category, $validCategories, true)) {
                 continue;
             }
