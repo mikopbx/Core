@@ -35,6 +35,13 @@ use Throwable;
  * 3. Implements retry logic with attempt counter (max 3 attempts)
  * 4. Deletes task file on success, renames to .failed.json after max attempts
  *
+ * Optimized for ASR (Automatic Speech Recognition):
+ * - Stereo output preserves speaker separation (left=external, right=internal)
+ * - High bitrate (96k-128k) maintains acoustic details for ASR models
+ * - No dynamic range compression (loudnorm removed) preserves phonetic features
+ * - Application 'audio' instead of 'voip' for better frequency response
+ * - Compatible with Whisper, Google Speech-to-Text, Vosk, AssemblyAI
+ *
  * Benefits:
  * - System restart resilience (unprocessed tasks remain in queue)
  * - Retry logic for failed conversions
@@ -58,13 +65,15 @@ class WorkerWav2Webm extends WorkerBase
 
     /**
      * Opus bitrate for 8kHz audio (G.711 codec)
+     * Optimized for ASR (Automatic Speech Recognition)
      */
-    private const string OPUS_BITRATE_8K = '48k';
+    private const string OPUS_BITRATE_8K = '96k';
 
     /**
      * Opus bitrate for 16kHz+ audio (G.722+ codecs)
+     * Optimized for ASR (Automatic Speech Recognition)
      */
-    private const string OPUS_BITRATE_16K = '64k';
+    private const string OPUS_BITRATE_16K = '128k';
 
     /**
      * FFmpeg main conversion timeout in seconds (5 minutes for long recordings)
@@ -380,41 +389,18 @@ class WorkerWav2Webm extends WorkerBase
         $dstFile = $inputPath . '.webm';
         $tempMerged = '/tmp/merged_' . getmypid() . '.wav';
 
-        // Step 1: Check if we need to merge stereo files
-        $needsMerge = false;
-        if (file_exists($srcIn) && file_exists($srcOut) && file_exists($srcFile)) {
-            // Check if stereo files are actually different from main file
-            $mainSize = filesize($srcFile);
-            $inSize = filesize($srcIn);
-            $outSize = filesize($srcOut);
+        // Step 1: Check if stereo channel files exist (_in.wav and _out.wav)
+        // When Asterisk MixMonitor records with separate channels:
+        // - _in.wav contains one party (e.g., client/external)
+        // - _out.wav contains other party (e.g., employee/internal)
+        // - main .wav contains mono mix of both
+        $hasStereoFiles = file_exists($srcIn) && file_exists($srcOut);
 
+        // Merge stereo files if both channel files exist
+        if ($hasStereoFiles) {
             SystemMessages::sysLogMsg(
                 __CLASS__,
-                sprintf('Stereo check: main=%d, in=%d, out=%d bytes for %s',
-                    $mainSize, $inSize, $outSize, basename($inputPath)),
-                LOG_DEBUG
-            );
-
-            // If all files have same size, they're likely identical mono recordings
-            // Use main file instead of merging
-            if ($mainSize === $inSize && $mainSize === $outSize) {
-                SystemMessages::sysLogMsg(
-                    __CLASS__,
-                    sprintf('Stereo files identical to main file (mono recording), using main: %s',
-                        basename($inputPath)),
-                    LOG_INFO
-                );
-                $needsMerge = false;
-            } else {
-                $needsMerge = true;
-            }
-        }
-
-        // Merge stereo files if needed
-        if ($needsMerge) {
-            SystemMessages::sysLogMsg(
-                __CLASS__,
-                sprintf('Merging stereo files for: %s', basename($inputPath)),
+                sprintf('Merging stereo channels (_in + _out) for: %s', basename($inputPath)),
                 LOG_INFO
             );
 
@@ -464,8 +450,8 @@ class WorkerWav2Webm extends WorkerBase
             return 3; // Failed to detect sample rate
         }
 
-        // Step 3: Select Opus bitrate based on sample rate
-        $opusBitrate = ($sampleRate <= 8000) ? self::OPUS_BITRATE_8K : self::OPUS_BITRATE_16K;
+        // Step 3: Select Opus bitrate based on sample rate (optimized for ASR)
+        $opusBitrate = $this->selectOptimalBitrate($sampleRate);
 
         SystemMessages::sysLogMsg(
             __CLASS__,
@@ -597,20 +583,47 @@ class WorkerWav2Webm extends WorkerBase
     }
 
     /**
+     * Select optimal Opus bitrate for ASR (Automatic Speech Recognition) based on sample rate
+     *
+     * Higher bitrates preserve acoustic details needed for speech recognition models:
+     * - Wideband (16kHz+): 128k for high-quality ASR with opus/G.722 sources
+     * - Narrowband (8kHz): 96k for acceptable ASR with G.711 alaw/ulaw sources
+     *
+     * @param int $sampleRate Audio sample rate in Hz
+     * @return string Opus bitrate (96k or 128k)
+     */
+    private function selectOptimalBitrate(int $sampleRate): string
+    {
+        // 16kHz+ = wideband call (G.722, opus wideband)
+        // Use high bitrate to preserve acoustic details for ASR
+        if ($sampleRate >= 16000) {
+            return self::OPUS_BITRATE_16K; // 128k
+        }
+
+        // 8kHz = narrowband call (G.711 alaw/ulaw, opus narrowband)
+        // Use good bitrate for acceptable ASR quality
+        return self::OPUS_BITRATE_8K; // 96k
+    }
+
+    /**
      * Build ffmpeg command for WAV to WebM/Opus conversion with metadata
      *
      * @param string $ffmpeg Path to ffmpeg binary
      * @param string $srcFile Source WAV file
      * @param string $dstFile Destination WebM file
-     * @param string $opusBitrate Opus bitrate (48k or 64k)
+     * @param string $opusBitrate Opus bitrate (96k or 128k for ASR)
      * @param array<string, mixed> $taskData Task metadata
      * @return string Complete ffmpeg command
      */
     private function buildFfmpegCommand(string $ffmpeg, string $srcFile, string $dstFile, string $opusBitrate, array $taskData): string
     {
-        // Base command with timeout protection (BusyBox syntax) and loudnorm (EBU R128 normalization)
+        // Base command optimized for ASR (Automatic Speech Recognition):
+        // - No loudnorm: Preserves natural speech dynamics and phonetic features
+        // - Stereo output (-ac 2): Enables speaker diarization (left=external, right=internal)
+        // - Application audio: Better frequency response than voip mode for ASR models
+        // - High bitrate (96k-128k): Maintains acoustic details for speech recognition
         $command = sprintf(
-            'timeout -k %d -s TERM %d %s -i %s -vn -af "loudnorm=I=-16:TP=-1.5:LRA=11" -c:a libopus -b:a %s -vbr on -compression_level 10 -application voip',
+            'timeout -k %d -s TERM %d %s -i %s -vn -c:a libopus -b:a %s -ac 2 -vbr on -compression_level 10 -application audio',
             self::FFMPEG_KILL_GRACE,
             self::FFMPEG_TIMEOUT,
             $ffmpeg,
