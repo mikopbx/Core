@@ -493,7 +493,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/resumable.js', true)
                 ->addJs('js/vendor/showdown/showdown.min.js', true)
                 ->addJs('js/pbx/Update/update-status-worker.js', true)
-                ->addJs('js/pbx/Update/update-merging-worker.js', true)
+                // update-merging-worker.js removed - now using WebSocket events via FileUploadEventHandler
                 ->addJs('js/pbx/Update/update-index.js', true);
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/semantic/progress.min.css', true)

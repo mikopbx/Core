@@ -17,7 +17,7 @@
  */
 
 /* global PbxApi, globalPBXVersion, globalTranslate,
-globalWebAdminLanguage, showdown, UserMessage, upgradeStatusLoopWorker, SystemAPI, FilesAPI */
+globalWebAdminLanguage, showdown, UserMessage, upgradeStatusLoopWorker, SystemAPI, FilesAPI, FileUploadEventHandler */
 
 /**
  * Object for managing PBX firmware updates.
@@ -242,10 +242,40 @@ const updatePBX = {
             UserMessage.showMultiString(`${globalTranslate.upd_UploadError}`);
             return;
         }
-        const fileID = json.data.upload_id;
+        const uploadId = json.data.upload_id;
         const filePath = json.data.filename;
-        // Wait until system glued all parts of file
-        mergingCheckWorker.initialize(fileID, filePath);
+
+        // Subscribe to WebSocket events instead of using polling worker
+        FileUploadEventHandler.subscribe(uploadId, {
+            onMergeStarted: (data) => {
+                updatePBX.$progressBarLabel.text(globalTranslate.upd_UploadInProgress);
+                console.log('Firmware merge started:', data);
+            },
+
+            onMergeProgress: (data) => {
+                // Update progress bar during merge
+                if (data.progress !== undefined) {
+                    updatePBX.$progressBar.progress({
+                        percent: parseInt(data.progress, 10),
+                    });
+                }
+                console.log(`Firmware merge progress: ${data.progress}%`);
+            },
+
+            onMergeComplete: (data) => {
+                // Merge complete - start upgrade process
+                updatePBX.$progressBarLabel.text(globalTranslate.upd_UpgradeInProgress);
+                // Backend expects 'temp_filename' parameter, not 'filename'
+                SystemAPI.upgrade({temp_filename: filePath}, updatePBX.cbAfterStartUpdate);
+            },
+
+            onError: (data) => {
+                updatePBX.$submitButton.removeClass('loading');
+                updatePBX.$progressBarLabel.text(globalTranslate.upd_UploadError);
+                UserMessage.showMultiString(data.error || globalTranslate.upd_UploadError);
+                updatePBX.upgradeInProgress = false;
+            }
+        });
     },
 
     /**

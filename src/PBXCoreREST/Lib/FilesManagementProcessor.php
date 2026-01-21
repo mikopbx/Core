@@ -169,7 +169,8 @@ class FilesManagementProcessor extends Injectable
      */
     private static function getUploadStatus(array $data): PBXApiResult
     {
-        $uploadId = $data['id'] ?? '';
+        // Support both 'resumableIdentifier' (v3 API) and 'id' (legacy) for backward compatibility
+        $uploadId = $data['resumableIdentifier'] ?? $data['id'] ?? '';
 
         return StatusUploadFileAction::main($uploadId);
     }

@@ -103,11 +103,13 @@ Object.assign(FilesAPI, {
      * @returns {Object} API call result
      */
     getUploadStatus(uploadId, callback) {
-      
 
-            const params = { id: uploadId };
+            // Use 'resumableIdentifier' instead of 'id' to avoid conflict with resource ID routing
+            // This ensures the URL becomes /files:uploadStatus?resumableIdentifier=xxx
+            // instead of /files/{id}:uploadStatus
+            const params = { resumableIdentifier: uploadId };
             return this.callCustomMethod('uploadStatus', params, callback, 'GET');
-       
+
     },
 
     /**

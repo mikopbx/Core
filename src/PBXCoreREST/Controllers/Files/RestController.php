@@ -210,6 +210,8 @@ class RestController extends BaseRestController
      * Retrieves the current status of a chunked file upload.
      * Used by Resumable.js to determine which chunks have been uploaded.
      *
+     * Note: Accepts both 'resumableIdentifier' (preferred) and 'id' (legacy) for backward compatibility.
+     *
      * @route GET /pbxcore/api/v3/files:uploadStatus
      */
     #[ApiDataSchema(
