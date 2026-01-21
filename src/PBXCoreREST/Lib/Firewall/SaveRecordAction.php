@@ -290,7 +290,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
                     }
                 } else {
                     // UPDATE/PATCH: Update existing rules
-                    if (!self::updateFirewallRules($networkFilter->id, $sanitizedData['currentRules'], $isNewRecord)) {
+                    // WHY: PATCH = partial update (only provided fields), PUT = full update (all fields)
+                    $isPatch = ($httpMethod === 'PATCH');
+                    if (!self::updateFirewallRules($networkFilter->id, $sanitizedData['currentRules'], $isPatch)) {
                         $res->messages['error'][] = 'Failed to update firewall rules';
                         $db->rollback();
                         $res->success = false;
