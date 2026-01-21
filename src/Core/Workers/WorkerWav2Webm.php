@@ -199,6 +199,8 @@ class WorkerWav2Webm extends WorkerBase
     /**
      * Find all JSON task files recursively
      *
+     * Excludes .failed.json files to prevent infinite retry loops
+     *
      * @param string $directory Directory to scan
      * @return array<int, string> Array of task file paths
      */
@@ -213,7 +215,12 @@ class WorkerWav2Webm extends WorkerBase
             );
 
             foreach ($iterator as $file) {
-                if ($file->isFile() && strtolower($file->getExtension()) === 'json') {
+                $filename = $file->getFilename();
+
+                // Only process .json files, exclude .failed.json files
+                if ($file->isFile() &&
+                    strtolower($file->getExtension()) === 'json' &&
+                    !str_ends_with($filename, '.failed.json')) {
                     $taskFiles[] = $file->getPathname();
                 }
             }
@@ -740,19 +747,46 @@ class WorkerWav2Webm extends WorkerBase
             flock($fp, LOCK_UN);
             fclose($fp);
 
-            $failedFile = str_replace('.json', '.failed.json', $taskFile);
-            rename($taskFile, $failedFile);
+            // Safely build failed filename - replace only the final .json extension
+            // This prevents creating .failed.failed.json if file is already .failed.json
+            $failedFile = preg_replace('/\.json$/', '.failed.json', $taskFile);
 
-            SystemMessages::sysLogMsg(
-                __CLASS__,
-                sprintf(
-                    'Task failed after %d attempts (exit code %d): %s',
-                    self::MAX_ATTEMPTS,
-                    $exitCode,
-                    basename($taskFile)
-                ),
-                LOG_ERR
-            );
+            // Check if filename would be too long (most filesystems limit to 255 bytes)
+            $basename = basename($failedFile);
+            if (strlen($basename) > 255) {
+                // Filename too long - use truncated linkedid-based name instead
+                $linkedid = $taskData['linkedid'] ?? uniqid('task-');
+                $dirName = dirname($taskFile);
+                $failedFile = $dirName . '/' . substr($linkedid, 0, 200) . '.failed.json';
+
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf('Filename too long, using truncated name: %s', basename($failedFile)),
+                    LOG_WARNING
+                );
+            }
+
+            // Perform rename with error handling
+            if (!@rename($taskFile, $failedFile)) {
+                // If rename fails, try to delete the corrupted task file
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf('Failed to rename task file, deleting: %s', basename($taskFile)),
+                    LOG_ERR
+                );
+                @unlink($taskFile);
+            } else {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf(
+                        'Task failed after %d attempts (exit code %d): %s',
+                        self::MAX_ATTEMPTS,
+                        $exitCode,
+                        basename($taskFile)
+                    ),
+                    LOG_ERR
+                );
+            }
         } else {
             // Update task file for retry
             rewind($fp);
