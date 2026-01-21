@@ -56,10 +56,6 @@ class GetBannedIpsAction extends Injectable
     public static function getBanIpWithTime():array
     {
         $groupedResults = [];
-        
-        
-        return $groupedResults;
-        
         $sep = '"|"';
         $sepSpace = '" "';
         $fail2banPath = Util::which(Fail2BanConf::FB_CLIENT_BIN);
