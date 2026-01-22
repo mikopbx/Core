@@ -91,6 +91,12 @@ class WorkerWav2Webm extends WorkerBase
     private const int FFMPEG_KILL_GRACE = 10;
 
     /**
+     * Minimum WAV file size in bytes to be considered valid for conversion
+     * WAV header is 44 bytes, so files smaller than this contain no audio data
+     */
+    private const int MIN_WAV_SIZE_BYTES = 100;
+
+    /**
      * Check interval for supervisor monitoring (seconds)
      *
      * @return int Interval for WorkerSafeScriptsCore to check this worker
@@ -395,6 +401,41 @@ class WorkerWav2Webm extends WorkerBase
         // - _out.wav contains other party (e.g., employee/internal)
         // - main .wav contains mono mix of both
         $hasStereoFiles = file_exists($srcIn) && file_exists($srcOut);
+
+        // Step 1a: Check minimum file size - files with only WAV header (44 bytes) have no audio
+        if ($hasStereoFiles) {
+            $sizeIn = filesize($srcIn);
+            $sizeOut = filesize($srcOut);
+            if ($sizeIn < self::MIN_WAV_SIZE_BYTES && $sizeOut < self::MIN_WAV_SIZE_BYTES) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf(
+                        'Source files too small (no audio data): %s (_in=%d, _out=%d bytes)',
+                        basename($inputPath),
+                        $sizeIn,
+                        $sizeOut
+                    ),
+                    LOG_WARNING
+                );
+                // Clean up empty source files
+                @unlink($srcIn);
+                @unlink($srcOut);
+                @unlink($srcFile);
+                return 0; // Return success to delete task - no point retrying empty files
+            }
+        } elseif (file_exists($srcFile) && filesize($srcFile) < self::MIN_WAV_SIZE_BYTES) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                sprintf(
+                    'Source file too small (no audio data): %s (%d bytes)',
+                    basename($inputPath),
+                    filesize($srcFile)
+                ),
+                LOG_WARNING
+            );
+            @unlink($srcFile);
+            return 0; // Return success to delete task
+        }
 
         // Merge stereo files if both channel files exist
         if ($hasStereoFiles) {
