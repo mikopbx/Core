@@ -339,32 +339,45 @@ class GetSettingsAction extends AbstractGetRecordAction
     }
     
     /**
+     * Codecs that are hidden from UI but always enabled with lowest priority.
+     * WHY: GSM is required for playing system sound files (.gsm format).
+     * Without GSM codec, Asterisk cannot transcode .gsm files to other formats.
+     */
+    private const HIDDEN_CODECS = ['gsm'];
+
+    /**
      * Get codecs information for the settings
-     * 
+     *
      * @return array<int, array<string, mixed>> Array of codec configurations
      */
     private static function getCodecs(): array
     {
         $result = [];
-        
+
         // Get all codecs ordered by type and priority
         $codecs = Codecs::find([
             'order' => 'type, priority'
         ]);
-        
+
         // Track sequential priority per codec type
         $audioPriority = 0;
         $videoPriority = 0;
-        
+
         /** @var Codecs[] $codecs */
         foreach ($codecs as $codec) {
+            // Skip hidden codecs - they are managed automatically
+            // WHY: GSM must always be enabled for system sound files playback
+            if (in_array($codec->name, self::HIDDEN_CODECS, true)) {
+                continue;
+            }
+
             // Assign sequential priority based on order in result set
             if ($codec->type === 'audio') {
                 $priority = $audioPriority++;
             } else {
                 $priority = $videoPriority++;
             }
-            
+
             $result[] = [
                 'name' => $codec->name,
                 'type' => $codec->type,
@@ -373,7 +386,7 @@ class GetSettingsAction extends AbstractGetRecordAction
                 'description' => $codec->description
             ];
         }
-        
+
         return $result;
     }
 }

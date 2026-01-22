@@ -36,6 +36,12 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 class UpdateCodecsAction extends AbstractSaveRecordAction
 {
     /**
+     * Codecs that are hidden from UI but always enabled with lowest priority.
+     * WHY: GSM is required for playing system sound files (.gsm format).
+     * Without GSM codec, Asterisk cannot transcode .gsm files to other formats.
+     */
+    private const HIDDEN_CODECS = ['gsm'];
+    /**
      * Update codec priorities and enabled/disabled status
      *
      * @param array<string, mixed> $data Request data containing 'codecs' array
@@ -83,6 +89,7 @@ class UpdateCodecsAction extends AbstractSaveRecordAction
     private static function updateCodecs(array $codecsData): bool
     {
         $updateCount = 0;
+        $maxAudioPriority = 0;
 
         foreach ($codecsData as $codecData) {
             $codecName = $codecData['name'] ?? '';
@@ -107,6 +114,11 @@ class UpdateCodecsAction extends AbstractSaveRecordAction
                 ($codecData['disabled'] === true || $codecData['disabled'] === 'true' ? '1' : '0') :
                 $codecRecord->disabled;
 
+            // Track max audio priority for hidden codecs
+            if ($codecRecord->type === 'audio') {
+                $maxAudioPriority = max($maxAudioPriority, (int)$newPriority);
+            }
+
             // Only update if values changed
             if ($codecRecord->priority !== $newPriority || $codecRecord->disabled !== $newDisabled) {
                 $codecRecord->priority = $newPriority;
@@ -122,6 +134,35 @@ class UpdateCodecsAction extends AbstractSaveRecordAction
             }
         }
 
-        return $updateCount > 0;
+        // Ensure hidden codecs are always enabled with lowest priority
+        self::ensureHiddenCodecsEnabled($maxAudioPriority);
+
+        return true;
+    }
+
+    /**
+     * Ensure hidden codecs are always enabled with lowest priority
+     *
+     * WHY: GSM codec is required for playing system sound files (.gsm format).
+     * Without GSM codec enabled, Asterisk cannot transcode .gsm files to other
+     * formats (like opus, alaw, ulaw), causing call disconnection during playback.
+     *
+     * @param int $maxAudioPriority Maximum priority among user-visible audio codecs
+     */
+    private static function ensureHiddenCodecsEnabled(int $maxAudioPriority): void
+    {
+        foreach (self::HIDDEN_CODECS as $codecName) {
+            $codec = Codecs::findFirst([
+                'conditions' => 'name = :name:',
+                'bind' => ['name' => $codecName]
+            ]);
+
+            if ($codec !== null) {
+                // Always enable with priority after all user-visible codecs
+                $codec->disabled = '0';
+                $codec->priority = (string)($maxAudioPriority + 1);
+                $codec->save();
+            }
+        }
     }
 }
