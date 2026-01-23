@@ -19,8 +19,9 @@
 
 namespace MikoPBX\Core\Workers;
 
-use MikoPBX\Common\Models\StorageSettings;
+use MikoPBX\Common\Models\{PbxSettings, RecordingStorage, StorageSettings};
 use MikoPBX\Core\System\{Directories, SystemMessages};
+use MikoPBX\Core\System\Storage\S3Client;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Throwable;
@@ -28,20 +29,21 @@ use Throwable;
 require_once 'Globals.php';
 
 /**
- * WorkerS3CacheCleaner - Cache cleanup worker for S3-downloaded recordings
+ * WorkerS3CacheCleaner - S3 recordings lifecycle manager
  *
- * Implements LRU (Least Recently Used) cache eviction strategy to maintain
- * cache directory within configured size limits. Runs periodically to remove
- * oldest accessed files when cache exceeds threshold.
+ * Two responsibilities:
+ * 1. LRU cache eviction for locally cached S3 downloads (max 500MB)
+ * 2. Permanent deletion of expired recordings from S3 bucket (PBXRecordSavePeriod)
  *
- * Design Pattern: LRU Cache Eviction
+ * Cache Strategy (LRU):
  * - Sorts files by last access time (atime)
  * - Removes least recently used files first
  * - Maintains cache at 80% of max size for headroom
  *
- * Purpose:
- * When recordings are moved to S3, they are downloaded to cache on demand.
- * This worker prevents cache from growing indefinitely by removing old files.
+ * S3 Purge Strategy:
+ * - Extracts recording date from file path (YYYY/MM/DD)
+ * - Deletes from S3 when age exceeds PBXRecordSavePeriod
+ * - Removes RecordingStorage mapping after S3 deletion
  *
  * Execution:
  * - Runs every hour (3600 seconds)
@@ -68,6 +70,12 @@ class WorkerS3CacheCleaner extends WorkerBase
      * Cleanup interval in seconds (1 hour)
      */
     private const CLEANUP_INTERVAL_SECONDS = 3600;
+
+    /**
+     * Batch size for S3 purge operations
+     * Prevents excessive memory usage when processing many expired records
+     */
+    private const PURGE_BATCH_SIZE = 100;
 
     /**
      * Cache directory path
@@ -131,6 +139,16 @@ class WorkerS3CacheCleaner extends WorkerBase
                 SystemMessages::sysLogMsg(
                     __CLASS__,
                     'Cache cleanup error: ' . $e->getMessage(),
+                    LOG_ERR
+                );
+            }
+
+            try {
+                $this->purgeExpiredS3Recordings();
+            } catch (Throwable $e) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    'S3 purge error: ' . $e->getMessage(),
                     LOG_ERR
                 );
             }
@@ -341,6 +359,105 @@ class WorkerS3CacheCleaner extends WorkerBase
                 LOG_WARNING
             );
         }
+    }
+
+    /**
+     * Purge expired recordings from S3 bucket
+     *
+     * Deletes recordings from S3 when their age exceeds PBXRecordSavePeriod.
+     * Recording date is extracted from the file path structure (YYYY/MM/DD).
+     * Also removes the corresponding RecordingStorage mapping record.
+     *
+     * @return void
+     */
+    private function purgeExpiredS3Recordings(): void
+    {
+        $savePeriod = (int)PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_SAVE_PERIOD);
+        if ($savePeriod <= 0) {
+            return; // No expiration configured
+        }
+
+        $expirationTime = time() - ($savePeriod * 86400);
+
+        // Find S3 recordings in batches, oldest paths first
+        $records = RecordingStorage::find([
+            'conditions' => 'storage_location = :location:',
+            'bind' => ['location' => 's3'],
+            'order' => 'recordingfile ASC',
+            'limit' => self::PURGE_BATCH_SIZE,
+        ]);
+
+        if ($records->count() === 0) {
+            return;
+        }
+
+        $s3Client = new S3Client();
+        $deletedCount = 0;
+
+        foreach ($records as $record) {
+            pcntl_signal_dispatch();
+            if ($this->needRestart) {
+                break;
+            }
+
+            // Extract recording date from file path
+            $recordingDate = $this->extractDateFromPath($record->recordingfile);
+            if ($recordingDate === null) {
+                continue;
+            }
+
+            // Skip if not yet expired
+            if ($recordingDate >= $expirationTime) {
+                continue;
+            }
+
+            // Delete from S3 bucket
+            if (!$s3Client->delete($record->s3_key)) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf('Failed to delete from S3: %s', $record->s3_key),
+                    LOG_ERR
+                );
+                continue;
+            }
+
+            // Remove mapping record
+            if (!$record->delete()) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf('Failed to delete RecordingStorage record for: %s', $record->recordingfile),
+                    LOG_ERR
+                );
+            }
+
+            $deletedCount++;
+        }
+
+        if ($deletedCount > 0) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                sprintf('Purged %d expired recordings from S3 (retention: %d days)', $deletedCount, $savePeriod),
+                LOG_INFO
+            );
+        }
+    }
+
+    /**
+     * Extract recording date from file path
+     *
+     * Parses the YYYY/MM/DD structure from monitor recording paths.
+     * Path format: .../monitor/YYYY/MM/DD/HH/filename.ext
+     *
+     * @param string $path Recording file path
+     * @return int|null Unix timestamp of recording date, or null if unparseable
+     */
+    private function extractDateFromPath(string $path): ?int
+    {
+        if (preg_match('#/(\d{4})/(\d{2})/(\d{2})/#', $path, $matches)) {
+            $timestamp = mktime(0, 0, 0, (int)$matches[2], (int)$matches[3], (int)$matches[1]);
+            return $timestamp ?: null;
+        }
+        return null;
     }
 
     /**
