@@ -1521,51 +1521,32 @@ class Storage extends Injectable
         // Define paths for each category using Directories class
         $categoryPaths = $this->getStorageCategoryPaths();
         
-        // Calculate size for each category
+        // Collect all existing paths and compute sizes in parallel
+        $pathToCategory = [];
+        $existingPathsByCategory = [];
+        $tempDir = Directories::getDir(Directories::CORE_TEMP_DIR);
+
         foreach ($categoryPaths as $category => $paths) {
-            $categorySize = 0;
-            $existingPaths = [];
-            
+            $existingPathsByCategory[$category] = [];
             foreach ($paths as $path) {
-                if ($category === 'cdr_database') {
-                    // For CDR database directory, calculate entire folder size
-                    if (is_dir($path)) {
-                        $size = $this->getDirectorySizeMb($path);
-                        $categorySize += $size;
-                        $existingPaths[] = $path;
-                    }
-                } elseif ($category === 'system_logs') {
-                    // For system logs, just calculate directory size
-                    if (is_dir($path)) {
-                        $size = $this->getDirectorySizeMb($path);
-                        $categorySize += $size;
-                        $existingPaths[] = $path;
-                    }
-                } elseif ($category === 'system_caches') {
-                    // For system caches, exclude swapfile from temp directory
-                    if (is_dir($path)) {
-                        $tempDir = Directories::getDir(Directories::CORE_TEMP_DIR);
-                        if ($path === $tempDir) {
-                            // Calculate temp size excluding swapfile
-                            $size = $this->getDirectorySizeExcludingFiles($path, ['swapfile']);
-                        } else {
-                            $size = $this->getDirectorySizeMb($path);
-                        }
-                        $categorySize += $size;
-                        $existingPaths[] = $path;
-                    }
-                } else {
-                    // For other categories, use standard directory calculation
-                    if (is_dir($path)) {
-                        $size = $this->getDirectorySizeMb($path);
-                        $categorySize += $size;
-                        $existingPaths[] = $path;
-                    }
+                if (is_dir($path)) {
+                    $pathToCategory[$path] = $category;
+                    $existingPathsByCategory[$category][] = $path;
                 }
             }
-            
+        }
+
+        // Run all du commands in parallel via a single shell invocation
+        $pathSizes = $this->getDirectorySizesBatchMb($pathToCategory, $tempDir);
+
+        // Aggregate sizes by category
+        foreach ($categoryPaths as $category => $paths) {
+            $categorySize = 0;
+            foreach ($existingPathsByCategory[$category] as $path) {
+                $categorySize += $pathSizes[$path] ?? 0.0;
+            }
             $result['categories'][$category]['size'] = round($categorySize, 1);
-            $result['categories'][$category]['paths'] = $existingPaths;
+            $result['categories'][$category]['paths'] = $existingPathsByCategory[$category];
         }
         
         // Calculate "other" category (everything else)
@@ -1718,6 +1699,58 @@ class Storage extends Injectable
         }
         
         return 0.0;
+    }
+
+    /**
+     * Get sizes for multiple directories in parallel using background du processes.
+     *
+     * @param array<string, string> $pathToCategory Map of path => category name
+     * @param string $tempDir Path to temp directory (swapfile excluded here)
+     * @return array<string, float> Map of path => size in MB
+     */
+    private function getDirectorySizesBatchMb(array $pathToCategory, string $tempDir): array
+    {
+        if (empty($pathToCategory)) {
+            return [];
+        }
+
+        $duCmd = Util::which('du');
+        $results = [];
+
+        // Build a shell script that runs all du commands in parallel
+        // Each writes to a temp file, then we collect results
+        $tmpPrefix = '/tmp/du_batch_' . getmypid() . '_';
+        $commands = [];
+        $index = 0;
+
+        foreach ($pathToCategory as $path => $category) {
+            $escapedPath = escapeshellarg($path);
+            $tmpFile = $tmpPrefix . $index;
+            if ($path === $tempDir) {
+                $commands[] = "($duCmd -sk --exclude=swapfile $escapedPath 2>/dev/null | awk '{print \$1}' > $tmpFile) &";
+            } else {
+                $commands[] = "($duCmd -sk $escapedPath 2>/dev/null | awk '{print \$1}' > $tmpFile) &";
+            }
+            $index++;
+        }
+
+        $commands[] = 'wait';
+
+        // Execute all du commands in parallel
+        $shellScript = implode("\n", $commands);
+        Processes::mwExec($shellScript);
+
+        // Collect results
+        $index = 0;
+        foreach ($pathToCategory as $path => $category) {
+            $tmpFile = $tmpPrefix . $index;
+            $sizeKb = trim(@file_get_contents($tmpFile) ?: '0');
+            @unlink($tmpFile);
+            $results[$path] = is_numeric($sizeKb) ? floatval($sizeKb) / 1024 : 0.0;
+            $index++;
+        }
+
+        return $results;
     }
 
     /**

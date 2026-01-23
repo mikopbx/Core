@@ -19,20 +19,27 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Storage;
 
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Di;
 
 /**
  * Get Storage Usage Action
  *
- * Retrieves detailed storage usage statistics by category
+ * Retrieves detailed storage usage statistics by category.
+ * Results are cached in Redis to avoid repeated expensive du commands.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Storage
  */
 class GetUsageAction
 {
+    private const string CACHE_KEY = 'STORAGE:USAGE';
+
+    private const int CACHE_TTL = 300;
+
     /**
-     * Get storage usage statistics
+     * Get storage usage statistics with Redis caching
      *
      * @return PBXApiResult
      */
@@ -42,10 +49,23 @@ class GetUsageAction
         $res->processor = __METHOD__;
 
         try {
-            $storage = new Storage();
-            $res->data = $storage->getStorageUsageByCategory();
-            $res->success = true;
+            $di = Di::getDefault();
+            $cache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
 
+            $cached = $cache->get(self::CACHE_KEY);
+            if (!empty($cached)) {
+                $res->data = $cached;
+                $res->success = true;
+                return $res;
+            }
+
+            $storage = new Storage();
+            $data = $storage->getStorageUsageByCategory();
+
+            $cache->set(self::CACHE_KEY, $data, self::CACHE_TTL);
+
+            $res->data = $data;
+            $res->success = true;
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
             $res->success = false;
