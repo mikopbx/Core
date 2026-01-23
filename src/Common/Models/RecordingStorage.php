@@ -54,7 +54,7 @@ class RecordingStorage extends ModelsBase
      * @Identity
      * @Column(type="integer", nullable=false)
      */
-    public int $id;
+    public $id;
 
     /**
      * Original recording file path (UNIQUE INDEX)
