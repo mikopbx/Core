@@ -536,12 +536,12 @@ const outOfWorkTimeRecord = {
         });
         
         // Time range calendars
-        // Use class variables for time calendars
-        
+        // Note: Unlike date calendars, time calendars are NOT linked with startCalendar/endCalendar
+        // This allows selecting time ranges that cross midnight (e.g., 18:00 - 08:00 for off-work hours)
+
         outOfWorkTimeRecord.$rangeTimeStart.calendar({
             firstDayOfWeek: SemanticLocalization.calendarFirstDayOfWeek,
             text: SemanticLocalization.calendarText,
-            endCalendar: outOfWorkTimeRecord.$rangeTimeEnd,
             type: 'time',
             inline: false,
             disableMinute: false,
@@ -550,11 +550,10 @@ const outOfWorkTimeRecord = {
             regExp: SemanticLocalization.regExp,
             onChange: () => Form.dataChanged()
         });
-        
+
         outOfWorkTimeRecord.$rangeTimeEnd.calendar({
             firstDayOfWeek: SemanticLocalization.calendarFirstDayOfWeek,
             text: SemanticLocalization.calendarText,
-            startCalendar: outOfWorkTimeRecord.$rangeTimeStart,
             type: 'time',
             inline: false,
             monthFirst: false,
