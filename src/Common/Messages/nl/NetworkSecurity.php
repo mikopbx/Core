@@ -117,7 +117,7 @@ return [
     'nw_GatewayAddress' => 'Gateway-adres',
     'nw_Hostname' => 'lokale hostnaam',
     'nw_IPAddress' => 'IP adres',
-    'nw_InterfaceName' => 'Naam',
+    'nw_InterfaceName' => 'Naam van de netwerkverbinding',
     'nw_InternetInterface' => 'Netwerkinterface met internettoegang',
     'nw_LookUpExternalIp' => 'Ontdek extern IP',
     'nw_NATInfo1' => 'Als uw netwerk is geconfigureerd om 1:1 NAT te ondersteunen (meestal de standaard in clouds), hoeft u geen aanvullende instellingen op uw router te maken.',
@@ -301,8 +301,8 @@ return [
     'nw_ValidateIPv6GatewayInvalid' => 'Onjuiste IPv6-gateway-indeling',
     'nw_ValidateIPv6AddressRequired' => 'Voor de handmatige modus is een IPv6-adres vereist',
     // IPv6 DNS поля (Phase 6)
-    'nw_IPv6PrimaryDNS' => 'Primaire IPv6 DNS',
-    'nw_IPv6SecondaryDNS' => 'Secundaire IPv6 DNS',
+    'nw_IPv6PrimaryDNS' => 'DNS IPv6 (primair)',
+    'nw_IPv6SecondaryDNS' => 'DNS IPv6 (secundair)',
     // Docker IPv6 информация (Phase 6)
     'nw_DockerIPv6Info' => 'IPv6-instellingen worden binnen de container toegepast. IPv4-configuratie wordt beheerd door Docker.',
     'nw_DHCPInfoDomain' => 'Domein',
@@ -321,4 +321,22 @@ return [
     'fw_LocalhostOnly' => 'Alleen lokale verbindingen',
     'nw_Domain' => 'Domeinnaam',
     'nw_NATConfigurationInfo' => 'Informatie over NAT-configuratie',
+    'nw_IPv4SecondaryDNS' => 'DNS IPv4 (secundair)',
+    'nw_DockerIPv4InfoNote' => 'De netwerkinstellingen worden beheerd door de Docker-runtime. Alleen de DNS-servers kunnen worden gewijzigd.',
+    // IPv4 Configuration
+    'nw_IPv4Mode' => 'IPv6-modus',
+    'nw_IPv4ModeManual' => 'Handmatig',
+    'nw_IPv4ModeDHCP' => 'DHCP',
+    'nw_IPv4Gateway' => 'IPv4-gateway',
+    'nw_IPv4PrimaryDNS' => 'DNS IPv4 (primair)',
+    // Дополнительные метки сетевой формы
+    'nw_InternetIPv4' => 'IPv4-internetinstellingen',
+    'nw_InternetIPv6' => 'IPv6-internetinstellingen',
+    'nw_IPv4Configuration' => 'IPv6-configuratie',
+    'nw_PlaceholderDhcpDns' => 'Ontvangen via DHCP:',
+    'nw_PlaceholderDhcpHostname' => 'Verkregen via DHCP',
+    'nw_PlaceholderIPv6Dns' => '2001:4860:4860::8888',
+    'nw_SelectIPv4Mode' => 'Selecteer IPv6-modus',
+    // Сообщения для Docker окружения
+    'nw_DockerIPv4Info' => 'Huidige IPv4-configuratie (Docker)',
 ];

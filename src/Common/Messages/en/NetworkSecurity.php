@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,12 +17,9 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-/**
+    /**
  * Network and security translations
  */
-
-return [
     'f2b_BanTime' => 'To block for (seconds)',
     'f2b_BanedTime' => 'Date',
     'f2b_BannedIpTabHeader' => 'Blocked addresses',
@@ -51,7 +49,6 @@ return [
     'f2b_ValidateFindTimeRange' => 'Incorrect analysis period for authorization attempts',
     'f2b_ValidateMaxRetryRange' => 'Incorrect number of attempts parameter',
     'f2b_WhiteList' => 'List of addresses and subnets that are never blocked (space separated)',
-
     // FW
     'fw_ErrorLoadingData' => 'Error loading data',
     'fw_ErrorLoadingRecord' => 'Error loading record',
@@ -133,7 +130,6 @@ return [
     'fw_sshDescriptionHint' => 'SSH (Secure Shell) - secure access to Linux command line<br>Used for remote system administration<br>Connection with root login and password or SSH key',
     'fw_webDescription' => 'WEB - access to this web interface',
     'fw_webDescriptionHint' => 'HTTP/HTTPS - protocols for accessing MikoPBX web interface<br>Access via browser with administrator login and password<br>HTTPS is recommended for security',
-
     // IPv6 Firewall Support
     'fw_ValidateIPv4Address' => 'Invalid IPv4 address format',
     'fw_ValidateIPv6Address' => 'Invalid IPv6 address format',
@@ -145,7 +141,6 @@ return [
     'fw_IPv6Subnet' => 'IPv6 prefix',
     'fw_IPv6OrIPv4Required' => 'Specify IPv4 or IPv6 network (not necessarily both protocols). Each rule uses only one IP address type.',
     'fw_Or' => 'OR',
-
     // Backend Validation Messages
     'fw_ValidationInvalidIPFormat' => 'Invalid IP address format: %network%',
     'fw_ValidationIPv4SubnetRange' => 'IPv4 subnet prefix must be between 0 and 32, got: %subnet%',
@@ -155,12 +150,10 @@ return [
     'fw_ValidationIPv6ZoneIdNotAllowed' => 'IPv6 zone IDs (e.g., %%eth0) are not allowed in firewall rules: %network%',
     'fw_ValidationIPv6InvalidFormat' => 'Invalid IPv6 address format: %network%',
     'fw_ValidationInvalidCIDRFormat' => 'Invalid CIDR notation format: %cidr%',
-
     // Default firewall rule names
     'fw_AllIPv4NetworkRule' => 'All IPv4 network',
     'fw_AllIPv6NetworkRule' => 'All IPv6 network',
     'fw_LocalNetworkRuleDescription' => 'Local network',
-
     // NW
     'nw_AllowNatPortForwarding' => 'This PBX is located behind a NAT router',
     'nw_CurrentIPFromDHCP' => 'Current IP address obtained via DHCP',
@@ -220,7 +213,6 @@ return [
     'nw_RouteDescription' => 'Description',
     'nw_RouteDescriptionPlaceholder' => 'Describe the purpose of the route',
     'rest_schema_net_route_description' => 'Route description for internal documentation',
-
     // Fail2Ban Tooltips
     // Max Retry tooltip
     'f2b_MaxRetryTooltip_header' => 'Protection trigger threshold',
@@ -234,7 +226,6 @@ return [
     'f2b_MaxRetryTooltip_warning_header' => '⚠️ Important',
     'f2b_MaxRetryTooltip_warning' => 'Too low a value may block legitimate users on accidental password entry errors. Consider the specifics of your network.',
     'f2b_MaxRetryTooltip_note' => 'Works in conjunction with the findtime parameter. For example: 10 attempts within 30 minutes.',
-
     // Whitelist tooltip
     'f2b_WhitelistTooltip_header' => 'Trusted addresses',
     'f2b_WhitelistTooltip_desc' => 'IP addresses or subnets that will never be blocked. The system automatically adds addresses from network filters with the "Never block" option here.',
@@ -253,7 +244,6 @@ return [
     'f2b_WhitelistTooltip_warning_header' => '⚠️ Security',
     'f2b_WhitelistTooltip_warning' => 'Only add IP addresses of trusted offices, static addresses of employees or internal networks. Do not add dynamic or public addresses.',
     'f2b_WhitelistTooltip_note' => 'Localhost (127.0.0.1) is added automatically and is always protected.',
-
     // Ban Time tooltip
     'f2b_BanTimeTooltip_header' => 'Block duration',
     'f2b_BanTimeTooltip_desc' => 'Time in seconds for which an IP address is blocked after exceeding the limit of failed attempts. After this time, the IP is automatically unblocked.',
@@ -264,7 +254,6 @@ return [
     'f2b_BanTimeTooltip_note' => '86400 (24 hours) - enhanced protection for public services',
     'f2b_BanTimeTooltip_warning_header' => '💡 Recommendation',
     'f2b_BanTimeTooltip_warning' => 'Block time should be sufficient to prevent repeated attacks, but not too long for legitimate users with errors.',
-
     // Find Time tooltip
     'f2b_FindTimeTooltip_header' => 'Observation window',
     'f2b_FindTimeTooltip_desc' => 'Time interval in seconds for counting failed attempts. If the number of attempts exceeds maxretry during this time, the IP will be blocked.',
@@ -275,7 +264,6 @@ return [
     'f2b_FindTimeTooltip_note' => '⚠️ Too short a window will not protect against distributed attacks, too long - may block users for errors at different times of day.',
     'f2b_FindTimeTooltip_warning_header' => 'How it works',
     'f2b_FindTimeTooltip_warning' => 'For example: with maxretry=10 and findtime=1800, if there are 10 failed attempts from one IP within 30 minutes - the IP will be blocked.',
-
     // PBXFirewallMaxReqSec tooltip
     'f2b_PBXFirewallMaxReqSecTooltip_header' => 'SIP request rate limiting',
     'f2b_PBXFirewallMaxReqSecTooltip_desc' => 'Maximum number of new SIP connections per second from a single IP address. Protects against DDoS attacks and SIP server flood attacks.',
@@ -294,7 +282,6 @@ return [
     'f2b_PBXFirewallMaxReqSecTooltip_warning_header' => '⚠️ Important',
     'f2b_PBXFirewallMaxReqSecTooltip_warning' => 'Too low a value may block legitimate traffic during mass device re-registration after reboot. Consider the number of SIP devices in the network.',
     'f2b_PBXFirewallMaxReqSecTooltip_note' => 'Protection only works for SIP TCP and UDP ports (5060) and TLS (5061). Does not affect established connections.',
-
     // IPv4 Configuration
     'nw_IPv4Mode' => 'IPv4 Mode',
     'nw_IPv4ModeManual' => 'Manual',
@@ -302,7 +289,6 @@ return [
     'nw_IPv4Gateway' => 'IPv4 Gateway',
     'nw_IPv4PrimaryDNS' => 'IPv4 DNS (primary)',
     'nw_IPv4SecondaryDNS' => 'IPv4 DNS (secondary)',
-
     // IPv6 Configuration (Phase 3)
     'nw_IPv6Configuration' => 'IPv6 Configuration',
     'nw_IPv6Mode' => 'IPv6 Mode',
@@ -311,7 +297,7 @@ return [
     'nw_IPv6ModeManual' => 'Manual',
     'nw_IPv6Address' => 'IPv6 Address',
     'nw_IPv6Subnet' => 'IPv6 Prefix Length',
-    'nw_IPv6Gateway' => 'IPv6 Gateway',
+    'nw_IPv6Gateway' => 'IPv6 gateway',
     'nw_SelectIPv6Mode' => 'Select IPv6 Mode',
     'nw_SelectIPv6Subnet' => 'Select IPv6 Prefix',
     'nw_ValidateIPv6ModeInvalid' => 'Invalid IPv6 mode selected',
@@ -320,21 +306,17 @@ return [
     'nw_ValidateIPv6GatewayInvalid' => 'Invalid IPv6 gateway format',
     'nw_ValidateIPv6AddressRequired' => 'IPv6 address is required for Manual mode',
     'nw_ValidateIPv6SubnetRequired' => 'IPv6 prefix length is required for Manual mode',
-
     // IPv6 DNS Fields (Phase 6)
     'nw_IPv6PrimaryDNS' => 'IPv6 DNS (primary)',
     'nw_IPv6SecondaryDNS' => 'IPv6 DNS (secondary)',
-
     // Docker IPv6 Info (Phase 6)
     'nw_DockerIPv6Info' => 'IPv6 settings are applied inside the container. IPv4 configuration is managed by Docker.',
-
     // DHCP Info Messages (Phase 6)
     'nw_DHCPInfoHeader' => 'DHCP Configuration Obtained',
     'nw_DHCPInfoIP' => 'IP Address',
     'nw_DHCPInfoSubnet' => 'Subnet',
     'nw_DHCPInfoGateway' => 'Gateway',
     'nw_DHCPInfoDNS' => 'DNS',
-
     // Dual-Stack Configuration (Phase 6)
     'nw_DualStackConfiguration' => 'Dual-Stack Configuration',
     'nw_DualStackHostnameRequired' => 'External hostname (required)',
@@ -354,14 +336,12 @@ return [
     'nw_ValidateExternalHostnameEmpty' => 'External hostname is required in Dual-Stack mode',
     'nw_DHCPInfoDomain' => 'Domain',
     'nw_DHCPInfoHostname' => 'Hostname',
-
     // IPv6 Auto (SLAAC) Info Messages (Phase 6)
     'nw_IPv6AutoInfoHeader' => 'IPv6 Autoconfiguration (SLAAC/DHCPv6)',
     'nw_IPv6AutoInfoAddress' => 'IPv6 Address',
     'nw_IPv6AutoInfoPrefix' => 'Prefix Length',
     'nw_IPv6AutoInfoGateway' => 'Gateway',
     'nw_IPv6AutoInfoDNS' => 'DNS',
-
     // Additional Network Form Labels
     'nw_InternetIPv4' => 'Internet IPv4 Settings',
     'nw_InternetIPv6' => 'Internet IPv6 Settings',
@@ -370,8 +350,9 @@ return [
     'nw_PlaceholderDhcpHostname' => 'Provided via DHCP',
     'nw_PlaceholderIPv6Dns' => '2001:4860:4860::8888',
     'nw_SelectIPv4Mode' => 'Select IPv4 mode',
-
     // Docker Environment Messages
     'nw_DockerIPv4Info' => 'Current IPv4 Configuration (Docker)',
     'nw_DockerIPv4InfoNote' => 'Network settings are managed by Docker runtime. Only DNS servers can be configured.',
+    'nw_PortForwarding' => 'Port forwarding',
+    'nw_NATConfigurationInfo' => 'Information about NAT configuration',
 ];
