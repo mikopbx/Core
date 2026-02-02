@@ -21,6 +21,7 @@
 
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\S3Storage\GetS3SettingsAction;
+use MikoPBX\PBXCoreREST\Lib\S3Storage\GetS3StatsAction;
 use MikoPBX\PBXCoreREST\Lib\S3Storage\UpdateS3SettingsAction;
 use MikoPBX\PBXCoreREST\Lib\S3Storage\TestS3ConnectionAction;
 use Phalcon\Di\Injectable;
@@ -69,6 +70,12 @@ enum S3Action: string
      * Custom action, doesn't modify settings
      */
     case TEST_CONNECTION = 'testConnection';
+
+    /**
+     * GET - Get S3 synchronization statistics
+     * Returns file counts, sizes, and sync status
+     */
+    case STATS = 'stats';
 }
 
 /**
@@ -162,6 +169,9 @@ class S3ManagementProcessor extends Injectable
 
             // TEST operation (verify connection)
             S3Action::TEST_CONNECTION => TestS3ConnectionAction::main($data),
+
+            // STATS operation (get synchronization statistics)
+            S3Action::STATS => GetS3StatsAction::main(),
         };
 
         // ============ STEP 5: SET FUNCTION NAME ============

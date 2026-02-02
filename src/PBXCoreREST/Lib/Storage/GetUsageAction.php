@@ -20,26 +20,26 @@
 namespace MikoPBX\PBXCoreREST\Lib\Storage;
 
 use MikoPBX\Common\Providers\ManagedCacheProvider;
-use MikoPBX\Core\System\Storage;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckStorageUsage;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 
 /**
  * Get Storage Usage Action
  *
- * Retrieves detailed storage usage statistics by category.
- * Results are cached in Redis to avoid repeated expensive du commands.
+ * Retrieves detailed storage usage statistics by category from cache.
+ * The data is calculated in the background by WorkerPrepareAdvice::CheckStorageUsage
+ * to prevent blocking the REST API with expensive `du` commands.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Storage
  */
 class GetUsageAction
 {
-    private const string CACHE_KEY = 'STORAGE:USAGE';
-
-    private const int CACHE_TTL = 300;
-
     /**
-     * Get storage usage statistics with Redis caching
+     * Get storage usage statistics from cache
+     *
+     * Returns cached data calculated by background worker.
+     * If cache is empty (first run), returns empty structure with pending flag.
      *
      * @return PBXApiResult
      */
@@ -52,20 +52,34 @@ class GetUsageAction
             $di = Di::getDefault();
             $cache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
 
-            $cached = $cache->get(self::CACHE_KEY);
+            $cached = $cache->get(CheckStorageUsage::CACHE_KEY);
             if (!empty($cached)) {
                 $res->data = $cached;
                 $res->success = true;
                 return $res;
             }
 
-            $storage = new Storage();
-            $data = $storage->getStorageUsageByCategory();
-
-            $cache->set(self::CACHE_KEY, $data, self::CACHE_TTL);
-
-            $res->data = $data;
+            // Cache is empty - background worker hasn't calculated yet
+            // Return empty structure with pending flag
+            $res->data = [
+                'pending' => true,
+                'total_size' => 0,
+                'used_space' => 0,
+                'free_space' => 0,
+                'usage_percentage' => 0,
+                'categories' => [
+                    'call_recordings' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                    'cdr_database' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                    'system_logs' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                    'modules' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                    'backups' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                    'system_caches' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                    's3_cache' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                    'other' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                ]
+            ];
             $res->success = true;
+
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
             $res->success = false;

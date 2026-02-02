@@ -50,14 +50,14 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('storage_s3', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getRecord', 'testConnection'],
+        'GET' => ['getRecord', 'testConnection', 'stats'],
         'PUT' => ['update'],
         'PATCH' => ['patch'],
         'POST' => ['testConnection']
     ],
     resourceLevelMethods: [],
-    collectionLevelMethods: ['getRecord', 'update', 'patch', 'testConnection'],
-    customMethods: ['testConnection'],
+    collectionLevelMethods: ['getRecord', 'update', 'patch', 'testConnection', 'stats'],
+    customMethods: ['testConnection', 'stats'],
     idPattern: null
 )]
 class RestController extends BaseRestController
@@ -176,6 +176,31 @@ class RestController extends BaseRestController
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function testConnection(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get S3 synchronization statistics
+     *
+     * Returns detailed statistics about S3 storage synchronization including:
+     * - Number of files in S3 and locally
+     * - Total size in S3 and pending upload
+     * - Sync percentage and status (synced/syncing/pending/disabled)
+     * - Last upload timestamp and oldest pending file date
+     * - S3 connection status
+     *
+     * @route GET /pbxcore/api/v3/s3-storage:stats
+     */
+    #[ApiOperation(
+        summary: 'rest_s3_Stats',
+        description: 'rest_s3_StatsDesc',
+        operationId: 'getS3Stats'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function stats(): void
     {
         // Implementation handled by BaseRestController
     }

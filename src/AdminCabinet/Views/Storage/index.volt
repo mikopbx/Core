@@ -226,6 +226,18 @@
                     </div>
                 </div>
                 <div class="ui hidden divider"></div>
+
+                <!-- S3 Sync Status Message -->
+                <div id="s3-stats-container" style="display: none;">
+                    <div class="ui icon info message" id="s3-stats-message">
+                        <i class="cloud icon"></i>
+                        <div class="content">
+                            <div class="header" id="s3-stats-header"></div>
+                            <p id="s3-stats-details"></p>
+                        </div>
+                    </div>
+                    <div class="ui hidden divider"></div>
+                </div>
             </div>
 
             {{ partial("partials/submitbutton", ['indexurl': '', 'submitMode': submitMode, 'formId': 's3']) }}

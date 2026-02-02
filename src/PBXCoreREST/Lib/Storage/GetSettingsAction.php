@@ -20,13 +20,18 @@
 namespace MikoPBX\PBXCoreREST\Lib\Storage;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Storage;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckStorageUsage;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Di;
 
 /**
  * Get Storage Settings Action
  *
- * Retrieves current storage settings and usage information
+ * Retrieves current storage settings, usage information and device list.
+ * Usage data is read from cache (calculated by background worker) to prevent
+ * blocking the REST API with expensive `du` commands.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Storage
  */
@@ -46,9 +51,33 @@ class GetSettingsAction
             // Get record save period setting
             $recordSavePeriod = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_SAVE_PERIOD);
 
-            // Get storage usage statistics
+            // Get storage usage from cache (calculated by background worker)
+            $cache = Di::getDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
+            $usageData = $cache->get(CheckStorageUsage::CACHE_KEY);
+
+            // If cache is empty, return empty structure with pending flag
+            if (empty($usageData)) {
+                $usageData = [
+                    'pending' => true,
+                    'total_size' => 0,
+                    'used_space' => 0,
+                    'free_space' => 0,
+                    'usage_percentage' => 0,
+                    'categories' => [
+                        'call_recordings' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                        'cdr_database' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                        'system_logs' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                        'modules' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                        'backups' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                        'system_caches' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                        's3_cache' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                        'other' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                    ]
+                ];
+            }
+
+            // Get device list (fast operation, no caching needed)
             $storage = new Storage();
-            $usageData = $storage->getStorageUsageByCategory();
             $devicesList = $storage->getAllHdd();
 
             // Prepare response data

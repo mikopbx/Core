@@ -38,6 +38,7 @@ use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckS3Connection;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHConfig;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckStorage;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckStorageUsage;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckUpdates;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckWebPasswords;
 use MikoPBX\PBXCoreREST\Lib\Advice\GetAdviceListAction;
@@ -73,7 +74,8 @@ class WorkerPrepareAdvice extends WorkerRedisBase
         ['type' => CheckAmiPasswords::class, 'cacheTime' => 864000, 'priority' => 9],
         ['type' => CheckAriPasswords::class, 'cacheTime' => 864000, 'priority' => 9],
         ['type' => CheckStorage::class, 'cacheTime' => 3600, 'priority' => 2],
-        ['type' => CheckS3Connection::class, 'cacheTime' => 300, 'priority' => 3],
+        ['type' => CheckStorageUsage::class, 'cacheTime' => 1800, 'priority' => 3],
+        ['type' => CheckS3Connection::class, 'cacheTime' => 300, 'priority' => 4],
         ['type' => CheckSecurityLog::class, 'cacheTime' => 600, 'priority' => 1],
         ['type' => CheckUpdates::class, 'cacheTime' => 86400, 'priority' => 5],
         ['type' => CheckSSHConfig::class, 'cacheTime' => 3600, 'priority' => 1],

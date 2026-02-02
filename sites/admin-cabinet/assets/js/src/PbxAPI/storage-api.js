@@ -179,7 +179,8 @@ const S3StorageAPI = new PbxApiClient({
     endpoint: '/pbxcore/api/v3/s3-storage',
     singleton: true,
     customMethods: {
-        testConnection: ':testConnection'
+        testConnection: ':testConnection',
+        stats: ':stats'
     }
 });
 
@@ -220,6 +221,29 @@ S3StorageAPI.patch = function(data, callback) {
  */
 S3StorageAPI.testConnection = function(data, callback) {
     return this.callCustomMethod('testConnection', data, callback);
+};
+
+/**
+ * Get S3 synchronization statistics (Custom method)
+ *
+ * Returns detailed statistics about S3 storage synchronization including:
+ * - Number of files in S3 and locally
+ * - Total size in S3 and pending upload
+ * - Sync percentage and status (synced/syncing/pending/disabled)
+ * - Last upload timestamp and oldest pending file date
+ * - S3 connection status
+ *
+ * @param {function} callback - Callback function to handle the response
+ * @example
+ * S3StorageAPI.getStats((response) => {
+ *     if (response.result) {
+ *         console.log('S3 Stats:', response.data);
+ *         console.log('Sync %:', response.data.sync_percentage);
+ *     }
+ * });
+ */
+S3StorageAPI.getStats = function(callback) {
+    return this.callCustomMethod('stats', {}, callback);
 };
 
 // Backward compatibility - keep old method name

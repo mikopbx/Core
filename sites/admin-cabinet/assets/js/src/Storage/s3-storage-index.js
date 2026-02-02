@@ -73,6 +73,30 @@ const s3StorageIndex = {
     $testS3Button: $('#test-s3-connection'),
 
     /**
+     * jQuery object for S3 stats container.
+     * @type {jQuery}
+     */
+    $s3StatsContainer: $('#s3-stats-container'),
+
+    /**
+     * jQuery object for S3 stats message element.
+     * @type {jQuery}
+     */
+    $s3StatsMessage: $('#s3-stats-message'),
+
+    /**
+     * jQuery object for S3 stats header.
+     * @type {jQuery}
+     */
+    $s3StatsHeader: $('#s3-stats-header'),
+
+    /**
+     * jQuery object for S3 stats details.
+     * @type {jQuery}
+     */
+    $s3StatsDetails: $('#s3-stats-details'),
+
+    /**
      * Possible period values for S3 local retention (in days).
      * Values: 7, 30, 90, 180, 365 days (1 week, 1/3/6 months, 1 year)
      */
@@ -179,9 +203,124 @@ const s3StorageIndex = {
     toggleS3SettingsVisibility() {
         if (s3StorageIndex.$s3EnabledCheckbox.checkbox('is checked')) {
             s3StorageIndex.$s3SettingsGroup.show();
+            // Load S3 stats when settings are shown
+            s3StorageIndex.loadS3Stats();
         } else {
             s3StorageIndex.$s3SettingsGroup.hide();
+            s3StorageIndex.$s3StatsContainer.hide();
         }
+    },
+
+    /**
+     * Load S3 synchronization statistics
+     */
+    loadS3Stats() {
+        S3StorageAPI.getStats((response) => {
+            if (response.result === true && response.data) {
+                s3StorageIndex.displayS3Stats(response.data);
+            } else {
+                s3StorageIndex.$s3StatsContainer.hide();
+            }
+        });
+    },
+
+    /**
+     * Display S3 synchronization statistics
+     * @param {Object} stats - Statistics data from API
+     */
+    displayS3Stats(stats) {
+        // Don't show if S3 is disabled
+        if (!stats.s3_enabled) {
+            s3StorageIndex.$s3StatsContainer.hide();
+            return;
+        }
+
+        // Build header based on sync status
+        let headerText = '';
+        let messageClass = 'info';
+
+        switch (stats.sync_status) {
+            case 'synced':
+                headerText = globalTranslate.st_S3StatusSynced;
+                messageClass = 'positive';
+                break;
+            case 'uploading':
+                headerText = globalTranslate.st_S3StatusUploading;
+                messageClass = 'info';
+                break;
+            case 'syncing':
+                headerText = globalTranslate.st_S3StatusSyncing
+                    .replace('%percent%', stats.sync_percentage);
+                messageClass = 'info';
+                break;
+            case 'pending':
+                headerText = globalTranslate.st_S3StatusPending;
+                messageClass = 'warning';
+                break;
+            case 'empty':
+                headerText = globalTranslate.st_S3StatusEmpty;
+                messageClass = 'info';
+                break;
+            default:
+                headerText = globalTranslate.st_S3StatusDisabled;
+                messageClass = 'info';
+        }
+
+        // Build details text
+        const details = [];
+
+        // Files in S3
+        if (stats.files_in_s3 > 0) {
+            details.push(globalTranslate.st_S3FilesInCloud
+                .replace('%count%', stats.files_in_s3.toLocaleString())
+                .replace('%size%', s3StorageIndex.formatSize(stats.total_size_s3_bytes)));
+        }
+
+        // Files pending upload
+        if (stats.files_local > 0) {
+            details.push(globalTranslate.st_S3FilesPending
+                .replace('%count%', stats.files_local.toLocaleString())
+                .replace('%size%', s3StorageIndex.formatSize(stats.total_size_local_bytes)));
+        }
+
+        // Connection status
+        if (stats.s3_connected) {
+            details.push(globalTranslate.st_S3Connected);
+        } else if (stats.s3_enabled) {
+            details.push(globalTranslate.st_S3NotConnected);
+            messageClass = 'warning';
+        }
+
+        // Last upload
+        if (stats.last_upload_at) {
+            details.push(globalTranslate.st_S3LastUpload
+                .replace('%date%', stats.last_upload_at));
+        }
+
+        // Update message styling
+        s3StorageIndex.$s3StatsMessage
+            .removeClass('info positive warning negative')
+            .addClass(messageClass);
+
+        // Update content
+        s3StorageIndex.$s3StatsHeader.text(headerText);
+        s3StorageIndex.$s3StatsDetails.html(details.join('<br>'));
+
+        // Show container
+        s3StorageIndex.$s3StatsContainer.show();
+    },
+
+    /**
+     * Format bytes to human-readable size
+     * @param {number} bytes - Size in bytes
+     * @returns {string} Formatted size string
+     */
+    formatSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     },
 
     /**
@@ -328,6 +467,11 @@ const s3StorageIndex = {
 
                 // Update visibility
                 s3StorageIndex.toggleS3SettingsVisibility();
+
+                // Load S3 stats if enabled
+                if (data.s3_enabled === '1' || data.s3_enabled === 1 || data.s3_enabled === true) {
+                    s3StorageIndex.loadS3Stats();
+                }
             }
         });
     },

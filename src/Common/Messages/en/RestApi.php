@@ -777,6 +777,8 @@ return [
     'rest_s3_PatchDesc' => 'Update only specified S3 configuration parameters. Useful for toggling enabled status, rotating credentials, or adjusting retention periods without changing other settings.',
     'rest_s3_TestConnection' => 'Test S3 connection',
     'rest_s3_TestConnectionDesc' => 'Verify S3 connectivity and credentials by testing bucket access. Does not modify configuration - uses current settings from database to perform connection test.',
+    'rest_s3_Stats' => 'Get S3 synchronization statistics',
+    'rest_s3_StatsDesc' => 'Returns detailed S3 cloud storage synchronization statistics: file counts in S3 and locally, total sizes, sync percentage, status (synced/syncing/pending/disabled), last upload timestamp and oldest pending file date.',
     'rest_param_limit' => 'Maximum number of records to return',
     'rest_param_offset' => 'Number of records to skip (used for pagination)',
     'rest_param_search' => 'Search query for filtering results',
