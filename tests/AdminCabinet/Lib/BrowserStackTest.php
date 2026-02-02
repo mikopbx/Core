@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 use BrowserStack\Local as BrowserStackLocal;
 use RuntimeException;
 
-require_once 'Globals.php';
+require_once 'globals.php';
 
 
 /**
