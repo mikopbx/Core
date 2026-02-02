@@ -38,6 +38,7 @@ use MikoPBX\Common\Providers\{AclProvider,
     PBXConfModulesProvider,
     PBXCoreRESTClientProvider,
     EventBusProvider,
+    RecordingStorageDatabaseProvider,
     RedisClientProvider,
     RegistryProvider,
     SentryErrorHandlerProvider,
@@ -78,6 +79,7 @@ class RegisterDIServices
             ModelsMetadataProvider::class,
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,
+            RecordingStorageDatabaseProvider::class,
 
             // Inject caches and message queues
             RedisClientProvider::class,

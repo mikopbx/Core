@@ -29,6 +29,7 @@ use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
+use MikoPBX\PBXCoreREST\Lib\Common\AvatarHelper;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\Core\System\PasswordService;
 use Phalcon\Di\Di;
@@ -143,7 +144,7 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
     
     /**
      * Save all related entities
-     * 
+     *
      * @param array $sanitizedData Sanitized data to save
      * @param PBXApiResult $res Result object to update
      * @return \MikoPBX\Common\Models\Users|null Saved user entity or null on failure
@@ -153,17 +154,32 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
         $di = Di::getDefault();
         $db = $di->get(MainDatabaseProvider::SERVICE_NAME);
         $db->begin();
-        
+
         try {
-            // Save user entity
-            list($userEntity, $res->success) = self::saveUser($sanitizedData);
+            // Save user entity (returns pending avatar data for processing after getting ID)
+            list($userEntity, $res->success, $pendingAvatarData) = self::saveUser($sanitizedData);
             if (!$res->success) {
                 // Handle errors and rollback
-                $res->messages['error'][] = $userEntity->getMessages();
+                $res->messages['error'] = array_merge($res->messages['error'] ?? [], $userEntity->getMessages());
                 $db->rollback();
                 return null;
             } else {
                 $sanitizedData['id'] = $userEntity->id;
+            }
+
+            // Save avatar file now that we have user ID
+            if (!empty($pendingAvatarData)) {
+                $avatarPath = AvatarHelper::saveAvatarToFile($pendingAvatarData, (string)$userEntity->id);
+                if ($avatarPath !== null) {
+                    // Delete old avatar file if it exists and is different
+                    if (!empty($userEntity->avatar) && $userEntity->avatar !== $avatarPath) {
+                        AvatarHelper::deleteAvatarFile($userEntity->avatar);
+                    }
+                    $userEntity->avatar = $avatarPath;
+                    if (!$userEntity->save()) {
+                        throw new \Exception('Failed to save user avatar: ' . implode(', ', $userEntity->getMessages()));
+                    }
+                }
             }
 
             // Save extension entity
@@ -235,7 +251,7 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
      * Save parameters to the Users table
      *
      * @param array $sanitizedData The data array containing the input data.
-     * @return array An array containing the saved Users entity and the save result.
+     * @return array An array containing the saved Users entity, save result, and pending avatar data.
      */
     private static function saveUser(array $sanitizedData): array
     {
@@ -243,6 +259,9 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
         if ($userEntity === null) {
             $userEntity = new Users();
         }
+
+        // Track pending avatar data (needs user ID for filename)
+        $pendingAvatarData = null;
 
         // Fill in user parameters
         $metaData = Di::getDefault()->get(ModelsMetadataProvider::SERVICE_NAME);
@@ -257,18 +276,21 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
                 case 'avatar':
                     // Special handling for avatar field:
                     // - If empty string: clear avatar (user clicked clear button)
-                    // - If starts with 'data:image': new base64 image to save
+                    // - If starts with 'data:image': new base64 image - defer saving until we have user ID
                     // - If starts with '/' (URL path): unchanged, skip update
                     $propertyKey = 'user_avatar';
                     if (array_key_exists($propertyKey, $sanitizedData)) {
                         $avatarValue = $sanitizedData[$propertyKey];
-                        
+
                         if ($avatarValue === '' || $avatarValue === null) {
-                            // Empty value means clear the avatar
+                            // Empty value means clear the avatar - delete old file if exists
+                            if (!empty($userEntity->avatar)) {
+                                AvatarHelper::deleteAvatarFile($userEntity->avatar);
+                            }
                             $userEntity->avatar = '';
                         } elseif (str_starts_with($avatarValue, 'data:image')) {
-                            // New base64 image - save it
-                            $userEntity->avatar = $avatarValue;
+                            // New base64 image - store for later processing after we have user ID
+                            $pendingAvatarData = $avatarValue;
                         }
                         // If it's a URL (starts with '/'), don't update - keep existing avatar
                     }
@@ -282,7 +304,7 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
         }
 
         $result = $userEntity->save();
-        return [$userEntity, $result];
+        return [$userEntity, $result, $pendingAvatarData];
     }
 
     /**

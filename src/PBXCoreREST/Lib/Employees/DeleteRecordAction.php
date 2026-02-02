@@ -24,6 +24,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Employees;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
+use MikoPBX\PBXCoreREST\Lib\Common\AvatarHelper;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 
@@ -47,10 +48,8 @@ class DeleteRecordAction
 {
     /**
      * Delete employee record with proper logging
-     * 
-     * Handles both direct ID parameter and ID from data array for compatibility
      *
-     * @param string|array $idOrData User ID to delete or data array with 'id' field
+     * @param string $id User ID to delete
      * @return PBXApiResult
      */
     public static function main(string $id): PBXApiResult
@@ -74,13 +73,16 @@ class DeleteRecordAction
                 return $res;
             }
 
+            // Save avatar path for cleanup after successful commit
+            $avatarToDelete = $user->avatar;
+
             // Begin transaction
             $db->begin();
 
             // Follow original ExtensionsController delete pattern:
             // 1. First delete forwarding settings to avoid circular references
             // 2. Then delete user (which will cascade to extensions, sip, external phones)
-            
+
             $errors = null;
             $extensions = $user->Extensions;
             
@@ -108,6 +110,11 @@ class DeleteRecordAction
 
             // Commit transaction
             $db->commit();
+
+            // Delete avatar file after successful commit (outside transaction)
+            if (!empty($avatarToDelete)) {
+                AvatarHelper::deleteAvatarFile($avatarToDelete);
+            }
 
             // Return deleted ID
             $res->data = ['deleted_id' => $id];

@@ -40,6 +40,12 @@
     "dbfile": "/mountpoint/mikopbx/astlogs/asterisk/cdr.db",
     "debugLogFile": "/mountpoint/mikopbx/log/debug-cdr-queries.log"
   },
+  "recordingStorageDatabase": {
+    "debugMode": false,
+    "adapter": "Sqlite",
+    "dbfile": "/mountpoint/mikopbx/astlogs/asterisk/recording_storage.db",
+    "debugLogFile": "/mountpoint/mikopbx/log/debug-recording-storage-queries.log"
+  },
   "astDatabase": {
     "adapter": "Sqlite",
     "dbfile": "/mountpoint/mikopbx/persistence/astdb.sqlite3"

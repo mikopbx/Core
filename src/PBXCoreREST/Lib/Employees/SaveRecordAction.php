@@ -27,6 +27,7 @@ use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
+use MikoPBX\PBXCoreREST\Lib\Common\AvatarHelper;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\Core\System\PasswordService;
 use Phalcon\Di\Di;
@@ -200,12 +201,27 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         try {
             $savedUser = self::executeInTransaction(function() use (&$sanitizedData, $isCreateOperation) {
-                // Save Users entity
-                list($userEntity, $success) = self::saveUser($sanitizedData);
+                // Save Users entity (without avatar for new users - need ID first)
+                list($userEntity, $success, $pendingAvatarData) = self::saveUser($sanitizedData);
                 if (!$success) {
                     throw new \Exception('Failed to save user: ' . implode(', ', $userEntity->getMessages()));
                 }
                 $sanitizedData['id'] = $userEntity->id;
+
+                // Handle pending avatar data (needs user ID for filename)
+                if (!empty($pendingAvatarData)) {
+                    $avatarPath = AvatarHelper::saveAvatarToFile($pendingAvatarData, (string)$userEntity->id);
+                    if ($avatarPath !== null) {
+                        // Delete old avatar file if different
+                        if (!empty($userEntity->avatar) && $userEntity->avatar !== $avatarPath) {
+                            AvatarHelper::deleteAvatarFile($userEntity->avatar);
+                        }
+                        $userEntity->avatar = $avatarPath;
+                        if (!$userEntity->save()) {
+                            throw new \Exception('Failed to save user avatar: ' . implode(', ', $userEntity->getMessages()));
+                        }
+                    }
+                }
 
                 // Save SIP Extension entity
                 list($extension, $success) = self::saveExtension($sanitizedData, false);
@@ -277,7 +293,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
      * Save parameters to the Users table
      *
      * @param array $sanitizedData The data array containing the input data.
-     * @return array An array containing the saved Users entity and the save result.
+     * @return array An array containing: [Users entity, save result, pending avatar data or null]
      */
     private static function saveUser(array $sanitizedData): array
     {
@@ -291,19 +307,26 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         // Handle avatar field with special logic:
         // - If empty string: clear avatar (user clicked clear button)
-        // - If starts with 'data:image': new base64 image to save
+        // - If starts with 'data:image': new base64 image - save to file after getting user ID
         // - If starts with '/' (URL path): unchanged, skip update
+        $pendingAvatarData = null;
+
         if (array_key_exists('user_avatar', $sanitizedData)) {
             $avatarValue = $sanitizedData['user_avatar'];
 
             if ($avatarValue === '' || $avatarValue === null) {
                 // Empty value means clear the avatar
+                // Delete old avatar file if exists
+                if (!empty($userEntity->avatar)) {
+                    AvatarHelper::deleteAvatarFile($userEntity->avatar);
+                }
                 $userEntity->avatar = '';
             } elseif (str_starts_with($avatarValue, 'data:image')) {
-                // New base64 image - save it
-                $userEntity->avatar = $avatarValue;
+                // New base64 image - save to file after getting user ID
+                // For new users, we need ID first for filename generation
+                $pendingAvatarData = $avatarValue;
             }
-            // If it's a URL (starts with '/'), don't update - keep existing avatar
+            // If it's a URL path (starts with '/'), don't update - keep existing avatar
         }
 
         // Set username
@@ -317,7 +340,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         $result = $userEntity->save();
-        return [$userEntity, $result];
+        return [$userEntity, $result, $pendingAvatarData];
     }
 
     /**

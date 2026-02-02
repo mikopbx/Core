@@ -177,6 +177,7 @@ abstract class DatabaseProviderBase
             // Always recreate it before change DB providers
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,
+            RecordingStorageDatabaseProvider::class,
 
             ModelsMetadataProvider::class,
             ModelsAnnotationsProvider::class,

@@ -31,6 +31,7 @@ use MikoPBX\AdminCabinet\Providers\VoltProvider;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Common\Providers\RecordingStorageDatabaseProvider;
 use MikoPBX\Common\Providers\CryptProvider;
 use MikoPBX\Common\Providers\EventBusProvider;
 use MikoPBX\Common\Providers\JwtProvider;
@@ -79,6 +80,7 @@ class RegisterDIServices
             MainDatabaseProvider::class,
             ModulesDBConnectionsProvider::class,
             CDRDatabaseProvider::class,
+            RecordingStorageDatabaseProvider::class,
 
             // Inject web
             DispatcherProvider::class,

@@ -19,8 +19,6 @@
 
 namespace MikoPBX\Common\Models;
 
-use Phalcon\Mvc\Model\Relation;
-
 /**
  * RecordingStorage - Recording file storage location mapping
  *
@@ -108,19 +106,8 @@ class RecordingStorage extends ModelsBase
     {
         $this->setSource('m_RecordingStorage');
         parent::initialize();
-
-        // Optional: Add cascade delete when CDR is deleted
-        $this->hasOne(
-            'recordingfile',
-            CallDetailRecords::class,
-            'recordingfile',
-            [
-                'alias' => 'CallDetailRecord',
-                'foreignKey' => [
-                    'action' => Relation::ACTION_CASCADE,
-                ],
-            ]
-        );
+        $this->useDynamicUpdate(true);
+        $this->setConnectionService('dbRecordingStorage');
     }
 
     /**

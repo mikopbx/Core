@@ -83,9 +83,9 @@ class GetS3StatsAction
                 return $res;
             }
 
-            // Get database connection for raw queries
+            // Get database connection for raw queries to RecordingStorage database
             $di = Di::getDefault();
-            $db = $di->get('db');
+            $db = $di->get('dbRecordingStorage');
 
             // Count files in S3
             $s3Stats = $db->fetchOne(
