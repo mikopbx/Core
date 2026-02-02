@@ -1,5 +1,4 @@
 <?php
-
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -18,7 +17,6 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
     'gs_SystemWillRestart' => 'სისტემა გადატვირთავს',
     'gs_CallRecordTab' => 'ზარების ჩანაწერი',
     'gs_RTPStunServer' => 'STUN სერვერის მისამართი (მაგალითად: stun.test.net:10000)',
@@ -164,7 +162,7 @@ return [
     'gs_DeleteAllStageResettingSettings' => 'PBX პარამეტრების აღდგენა',
     'gs_DeleteAllStageFinalizing' => 'აღდგენის პროცესის დასრულება',
     'gs_DeleteAllStageCompleted' => 'სისტემის აღდგენა დასრულდა',
-    'gs_DeleteAllStageRestarting' => 'სისტემის გადატვირთვის ინიციალიზაცია',
+    'gs_DeleteAllStageRestarting' => 'სისტემა გადაიტვირთება',
     'gs_StatUsers' => 'მომხმარებლები/შიდა ნომრები',
     'gs_StatProviders' => 'SIP პროვაიდერები',
     'gs_StatCallQueues' => 'ზარების რიგები',
@@ -182,8 +180,7 @@ return [
     'gs_StatCustomFiles' => 'მომხმარებლის ფაილები',
     'gs_PBXRecordAnnouncementIn' => 'შეარჩიეთ ჩანაწერის შესახებ გაფრთხილება შემომავალი ზარებისთვის',
     'gs_PBXRecordAnnouncementOut' => 'შეარჩიეთ ჩანაწერის შესახებ გაფრთხილება გამავალი ზარებისთვის',
-
-    // General Settings Tooltips    
+    // General Settings Tooltips
     // RestartEveryNight tooltip
     'gs_RestartEveryNightTooltip_header' => 'PBX–ის ყოველღამე გადატვირთვა',
     'gs_RestartEveryNightTooltip_desc' => 'Asterisk სისტემის ავტომატური გადატვირთვა ყოველ ღამე სტაბილურობისა და წარმადობის შესანარჩუნებლად',
@@ -196,7 +193,6 @@ return [
     'gs_RestartEveryNightTooltip_drawback_calls' => 'აქტიური ზარების შეწყვეტა გადატვირთვისას',
     'gs_RestartEveryNightTooltip_drawback_registration' => 'სისტემის ხანმოკლე მიუწვდომლობა (10–30 წამი)',
     'gs_RestartEveryNightTooltip_recommendation' => 'რეკომენდებულია სისტემებისთვის დაბალი ღამის აქტივობით. 24-საათიანი call-ცენტრებისთვის უმჯობესია გამორთვა და ხელით გადატვირთვა მინიმალური ტვირთის პერიოდებში.',
-    
     // PBXLanguage tooltip
     'gs_PBXLanguageTooltip_header' => 'სისტემური შეტყობინებების ენა',
     'gs_PBXLanguageTooltip_desc' => 'განსაზღვრავს Asterisk სისტემის ხმოვანი შეტყობინებების ენას მზარეულებისა და IVR მენიუსთვის',
@@ -208,7 +204,6 @@ return [
     'gs_PBXLanguageTooltip_restart' => 'გადატვირთვა აუცილებელია',
     'gs_PBXLanguageTooltip_restart_desc' => 'ენის ცვლილებისას მოხდება Asterisk სერვისის გადატვირთვა 10–30 წამით კავშირის გაწყვეტით.',
     'gs_PBXLanguageTooltip_note' => 'ვებ-ინტერფეისის ენა იკონფიგურება ცალკე ყველა მომხმარებლისთვის',
-    
     // PBXInternalExtensionLength tooltip
     'gs_PBXInternalExtensionLengthTooltip_header' => 'შიდა ნომრების სიგრძე',
     'gs_PBXInternalExtensionLengthTooltip_desc' => 'განსაზღვრავს თანამშრომელთა შიდა ნომრების მაქსიმალურ სიგრძეს სისტემაში',
@@ -222,7 +217,6 @@ return [
     'gs_PBXInternalExtensionLengthTooltip_example_5' => 'სიგრძე 5: ნომრები 10000-დან 99999-მდე',
     'gs_PBXInternalExtensionLengthTooltip_warning' => 'ამ პარამეტრის ცვლილება არ ახდენს გავლენას არსებულ ნომრებზე. თუ გაქვთ ნომრები, რომლებიც ახალ პარამეტრზე გრძელია, ისინი განაგრძობენ მუშაობას',
     'gs_PBXInternalExtensionLengthTooltip_note' => 'რეკომენდებულია სიგრძის არჩევა თანამშრომელთა რაოდენობიდან გამომდინარე: 3 ციფრი კომპანიებისთვის 900 თანამშრომლამდე, 4 ციფრი დიდი ორგანიზაციებისთვის',
-    
     // PBXAllowGuestCalls tooltip
     'gs_AllowGuestCallsTooltip_header' => 'სტუმარი ზარები ავტორიზაციის გარეშე',
     'gs_AllowGuestCallsTooltip_desc' => 'უშვებს SIP ზარების მიღებას არაავტორიზებული მოწყობილობებისა და სერვერებისგან რეგისტრაციის გარეშე',
@@ -240,7 +234,6 @@ return [
     'gs_AllowGuestCallsTooltip_security' => 'უსაფრთხოების რეკომენდაციები:',
     'gs_AllowGuestCallsTooltip_security_desc' => 'გამოიყენეთ Fail2ban, შეზღუდეთ წვდომა IP-ით, კონფიგურაცია შემომავალი მარშრუტიზაციის წესები',
     'gs_AllowGuestCallsTooltip_recommendation' => 'რეკომენდებულია ამ ოფციის გამორთვა, თუ არ იყენებთ მოწყობილობებს რეგისტრაციის გარეშე',
-    
     // PBXCallParkingExt tooltip
     'gs_PBXCallParkingExtTooltip_header' => 'ზარების პარკინგი',
     'gs_PBXCallParkingExtTooltip_desc' => 'ნომერი ზარის დროებით განთავსებისთვის შემდგომი აღდგენის შესაძლებლობით ნებისმიერი ტელეფონიდან',
@@ -255,7 +248,6 @@ return [
     'gs_PBXCallParkingExtTooltip_example' => 'გამოყენების მაგალითი:',
     'gs_PBXCallParkingExtTooltip_example_desc' => 'მდივანი იღებს ზარს, პარკავს მას 800-ზე, სისტემა ამცნობს "ზარი პარკირებულია 801-ზე". მენეჯერი აკრიფს 801-ს და განაგრძობს საუბარს',
     'gs_PBXCallParkingExtTooltip_note' => 'თუ ზარი არ არის აღებული მოლოდინის დროში, ის დაბრუნდება თავდაპირველ ტელეფონთან',
-    
     // PBXFeatureAttendedTransfer tooltip
     'gs_PBXFeatureAttendedTransferTooltip_header' => 'კონსულტაციური გადაცემა',
     'gs_PBXFeatureAttendedTransferTooltip_desc' => 'კლავიშების კომბინაცია ზარის გადასაცემად წინასწარი კონსულტაციით',
@@ -267,7 +259,6 @@ return [
     'gs_PBXFeatureAttendedTransferTooltip_benefits' => 'უპირატესობები:',
     'gs_PBXFeatureAttendedTransferTooltip_benefits_desc' => 'იძლევა კოლეგის გაფრთხილების საშუალებას გადაცემისა და საუბრის კონტექსტის გადაცემის შესახებ',
     'gs_PBXFeatureAttendedTransferTooltip_note' => 'თუ აბონენტი არ პასუხობს ან დაკავებულია, ზარი თქვენთან დაბრუნდება',
-    
     // PBXFeatureBlindTransfer tooltip
     'gs_PBXFeatureBlindTransferTooltip_header' => 'პირდაპირი გადაცემა',
     'gs_PBXFeatureBlindTransferTooltip_desc' => 'კლავიშების კომბინაცია ზარის მყისი გადასაცემად კონსულტაციის გარეშე',
@@ -277,7 +268,6 @@ return [
     'gs_PBXFeatureBlindTransferTooltip_how_hangup' => 'ზარი მყისიერად გადაიცემა',
     'gs_PBXFeatureBlindTransferTooltip_warning' => 'აბონენტი შეიძლება იყოს მიუწვდომელი ან დაკავებული. ფრთხილად გამოიყენეთ',
     'gs_PBXFeatureBlindTransferTooltip_note' => 'მნიშვნელოვანი ზარებისთვის რეკომენდებულია კონსულტაციური გადაცემის გამოყენება',
-    
     // PBXFeaturePickupExten tooltip
     'gs_PBXFeaturePickupExtenTooltip_header' => 'ზარის გადახვაცვა',
     'gs_PBXFeaturePickupExtenTooltip_desc' => 'ნომერი სხვა ტელეფონებზე შემომავალი ზარების გადასახვაცად',
@@ -288,7 +278,6 @@ return [
     'gs_PBXFeaturePickupExtenTooltip_type_directed_desc' => 'გადახვაცვა კონკრეტულ შიდა ნომერზე ზარისა',
     'gs_PBXFeaturePickupExtenTooltip_usage' => 'გამოყენება:',
     'gs_PBXFeaturePickupExtenTooltip_usage_desc' => 'როდესაც უცხო ტელეფონი ირეკავს, აკრიფეთ *8 გადასახვაცად ან *8201 201 ნომერზე ზარის გადასახვაცად',
-    
     // PBXFeatureAtxferNoAnswerTimeout tooltip
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_header' => 'კონსულტაციური გადაცემის შემდეგ დაბრუნების ტაიმაუტი',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_desc' => 'განსაზღვრავს კონსულტაციური გადაცემისას პასუხის მოლოდინის დროს, რის შემდეგაც ზარი დაბრუნდება ოპერატორთან.',
@@ -302,7 +291,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_standard' => '30–45 წმ — სტანდარტული კონფიგურაცია ოფისებისთვის',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_quick' => '15–20 წმ — სწრაფი დაბრუნება (მაღალი ტვირთი)',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_extended' => '60–90 წმ — მნიშვნელოვანი გადაცემებისთვის ან დისტანციური ოფისებისთვის',
-    
     // PBXFeatureDigitTimeout tooltip
     'gs_PBXFeatureDigitTimeoutTooltip_header' => 'ციფრებს შორის ტაიმაუტი აკრეფისას',
     'gs_PBXFeatureDigitTimeoutTooltip_desc' => 'ნომრის აკრეფისას ან ფუნქციების გამოყენებისას ციფრთა შეწყვილებას შორის მაქსიმალური მოლოდინის დრო (მილისწამებში).',
@@ -316,7 +304,6 @@ return [
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease' => 'შემცირება (3000–5000 მს):',
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease_desc' => 'გამოცდილი მომხმარებლებისთვის და ბრძანებების დამუშავების დაჩქარებისთვის',
     'gs_PBXFeatureDigitTimeoutTooltip_footer' => 'ყურადღება: ძალიან მცირე მნიშვნელობამ შეიძლება გამოიწვიოს გრძელი ნომრების აკრეფის გადაწყვეტა',
-    
     // RTPPortRange tooltip (for both RTPPortFrom and RTPPortTo)
     'gs_RTPPortRangeTooltip_header' => 'RTP პორტების დიაპაზონი',
     'gs_RTPPortRangeTooltip_desc' => 'განსაზღვრავს UDP პორტების დიაპაზონს მედია-ნაკადების (აუდიო/ვიდეო) რეალურ დროში გადასაცემად აბონენტებს შორის.',
@@ -336,7 +323,6 @@ return [
     'gs_RTPPortRangeTooltip_change_nat' => 'NAT/Firewall კონფიგურაცია:',
     'gs_RTPPortRangeTooltip_change_nat_desc' => 'დარწმუნდით, რომ მითითებული პორტების დიაპაზონი ღიაა firewall-ში და კონფიგურირებულია პორტების გადამისამართება',
     'gs_RTPPortRangeTooltip_footer' => 'მნიშვნელოვანი: ცვლილება მოითხოვს Asterisk-ის გადატვირთვას და ქსელოვანი აღჭურვილობის შესაბამის კონფიგურაციას',
-    
     // RTPStunServer tooltip
     'gs_RTPStunServerTooltip_header' => 'STUN სერვერი',
     'gs_RTPStunServerTooltip_desc' => 'STUN (Session Traversal Utilities for NAT) — სერვერი გარე IP-მისამართისა და პორტის განსასაზღვრად NAT-ით მუშაობისას.',
@@ -357,7 +343,6 @@ return [
     'gs_RTPStunServerTooltip_example_2' => 'stun1.l.google.com:19302 (Google რეზერვი)',
     'gs_RTPStunServerTooltip_example_3' => 'stun.ekiga.net:3478 (Ekiga)',
     'gs_RTPStunServerTooltip_footer' => 'რეკომენდაცია: დატოვეთ ველი ცარიელი, თუ PBX-ს აქვს პირდაპირი საჯარო IP ან ყველა აბონენტი ლოკალურ ქსელში იმყოფება',
-    
     // SIPAuthPrefix tooltip
     'gs_SIPAuthPrefixTooltip_header' => 'SIP ავტორიზაციის პრეფიქსი',
     'gs_SIPAuthPrefixTooltip_desc' => 'დამატებითი სუფიქსი, რომელიც ემატება მომხმარებლის სახელს SIP-ავტორიზაციისას უსაფრთხოების გაზრდისთვის.',
@@ -376,7 +361,6 @@ return [
     'gs_SIPAuthPrefixTooltip_use_4' => 'კორპორაციული უსაფრთხოების პოლიტიკის შესაბამისობა',
     'gs_SIPAuthPrefixTooltip_warning_header' => 'მნიშვნელოვანი:',
     'gs_SIPAuthPrefixTooltip_warning' => 'პრეფიქსის შეცვლის შემდეგ აუცილებელია ყველა SIP-მოწყობილობისა და სოფტფონის პარამეტრების განახლება',
-    
     // SIPDefaultExpiry tooltip
     'gs_SIPDefaultExpiryTooltip_header' => 'SIP რეგისტრაციის ინტერვალი ნაგულისხმევად',
     'gs_SIPDefaultExpiryTooltip_desc' => 'განსაზღვრავს რამდენად ხშირად უნდა განაახლონ SIP-მოწყობილობებმა თავიანთი რეგისტრაცია სერვერზე. გავლენას ახდენს მოწყობილობის მიუწვდომლობის აღმოჩენის სისწრაფესა და ქსელის ტვირთზე.',
@@ -393,7 +377,6 @@ return [
     'gs_SIPDefaultExpiryTooltip_change_stable' => 'გაზრდა 300–600 წმ-მდე: სტაბილური ოფისური ტელეფონებისთვის ლოკალურ ქსელში',
     'gs_SIPDefaultExpiryTooltip_change_battery' => 'გაზრდა 600–1800 წმ-მდე: მობილური მოწყობილობების ბატარეის ეკონომიისთვის',
     'gs_SIPDefaultExpiryTooltip_note' => 'რჩევა: მცირე მნიშვნელობები სწრაფად განსაზღვრავს მიუწვდომლობას, მაგრამ ზრდის ქსელის ტვირთს',
-    
     // SIPExpiryRange tooltip (კომბინირებული Min და Max-ისთვის)
     'gs_SIPExpiryRangeTooltip_header' => 'SIP რეგისტრაციის ინტერვალების დიაპაზონი',
     'gs_SIPExpiryRangeTooltip_desc' => 'განსაზღვრავს მინიმალურად და მაქსიმალურად დასაშვები ინტერვალებს SIP-მოწყობილობების რეგისტრაციებს შორის სერვერზე.',
@@ -417,7 +400,6 @@ return [
     'gs_SIPExpiryRangeTooltip_warning_header' => 'მნიშვნელოვანი:',
     'gs_SIPExpiryRangeTooltip_warning' => 'მინიმალური მნიშვნელობა უნდა იყოს ნაკლები ნაგულისხმევ მნიშვნელობაზე (SIPDefaultExpiry), ხოლო მაქსიმალური — მეტი',
     'gs_SIPExpiryRangeTooltip_note' => 'მინიშნება: მნიშვნელობები გავლენას ახდენს ქსელის ტვირთისა და მოწყობილობების მიუწვდომლობის აღმოჩენის სისწრაფის ბალანსზე',
-    
     // AMIEnabled tooltip
     'gs_AMIEnabledTooltip_header' => 'AMI (Asterisk Manager Interface)',
     'gs_AMIEnabledTooltip_desc' => 'პროგრამული ინტერფეისი Asterisk-ის მართვისა და მონიტორინგისთვის TCP/IP კავშირით.',
@@ -443,7 +425,6 @@ return [
     'gs_AMIEnabledTooltip_warning_header' => 'ყურადღება:',
     'gs_AMIEnabledTooltip_warning' => 'AMI-ს გამორთვამ შეიძლება დაარღვიოს მოდულებისა და ინტეგრაციების მუშაობა',
     'gs_AMIEnabledTooltip_footer' => 'AMI პორტი: 5038. კონფიგურაცია წვდომა AMI მენეჯერების მეშვეობით უსაფრთხოებისთვის',
-    
     // AJAMEnabled tooltip
     'gs_AJAMEnabledTooltip_header' => 'AJAM (Asynchronous Javascript Asterisk Manager)',
     'gs_AJAMEnabledTooltip_desc' => 'Web-ინტერფეისი AMI-სთან წვდომისთვის HTTP/HTTPS პროტოკოლით.',
@@ -465,7 +446,6 @@ return [
     'gs_AJAMEnabledTooltip_warning_header' => 'მნიშვნელოვანი:',
     'gs_AJAMEnabledTooltip_warning' => 'MikoPBX-ის ზოგიერთი მოდული შეიძლება იყენებდეს AJAM-ს თავისი მუშაობისთვის',
     'gs_AJAMEnabledTooltip_note' => 'AJAM იყენებს იგივე მომხმარებლის მონაცემებს, რაც AMI მენეჯერები',
-    
     // SSHAuthorizedKeys tooltip
     'gs_SSHAuthorizedKeysTooltip_header' => 'ავტორიზებული SSH გასაღებები',
     'gs_SSHAuthorizedKeysTooltip_desc' => 'საჯარო SSH გასაღებების სია სისტემაში პაროლის გარეშე წვდომისთვის. იძლევა SSH-ით შესვლის საშუალებას პრივატული გასაღებით პაროლის ნაცვლად.',
@@ -490,7 +470,6 @@ return [
     'gs_SSHAuthorizedKeysTooltip_warning_header' => 'მნიშვნელოვანი!',
     'gs_SSHAuthorizedKeysTooltip_warning' => 'გასაღებების დამატების შემდეგ რეკომენდებულია პაროლით ავთენტიფიკაციის გამორთვა უსაფრთხოების გაზრდისთვის',
     'gs_SSHAuthorizedKeysTooltip_note' => 'რჩევა: Windows-ში გასაღებების გენერაციისთვის გამოიყენეთ PuTTYgen ან OpenSSH',
-    
     // SSH_ID_RSA_PUB tooltip
     'gs_SSH_ID_RSA_PUBTooltip_header' => 'PBX-ის საჯარო გასაღები',
     'gs_SSH_ID_RSA_PUBTooltip_desc' => 'ამ PBX-ის RSA საჯარო გასაღები სხვა სისტემებთან პაროლის გარეშე დაკავშირებისთვის.',
@@ -512,7 +491,6 @@ return [
     'gs_SSH_ID_RSA_PUBTooltip_warning_header' => 'უსაფრთხოება:',
     'gs_SSH_ID_RSA_PUBTooltip_warning' => 'ეს გასაღები საჯაროა და შეიძლება უსაფრთხოდ გადაეცეს მესამე პირებს. პრივატული გასაღები ინახება სისტემაში და არასოდეს უნდა დატოვოს PBX',
     'gs_SSH_ID_RSA_PUBTooltip_note' => 'შენიშვნა: გასაღების ცვლილება ან რეგენერაცია მოითხოვს განახლებას ყველა სერვერზე, სადაც ის გამოიყენება',
-    
     // WEBHTTPSPublicKey tooltip
     'gs_WEBHTTPSPublicKeyTooltip_header' => 'SSL/TLS სერტიფიკატი (საჯარო გასაღები)',
     'gs_WEBHTTPSPublicKeyTooltip_desc' => 'SSL/TLS სერტიფიკატის საჯარო ნაწილი HTTPS კავშირების შიფრაციისა და გადაცემული მონაცემების დაცვისთვის.',
@@ -533,8 +511,7 @@ return [
     'gs_WEBHTTPSPublicKeyTooltip_chain_desc' => 'თუ გაქვთ შუალედური სერტიფიკატები (intermediate), დაამატეთ ისინი მთავარი სერტიფიკატის შემდეგ იმავე ველში',
     'gs_WEBHTTPSPublicKeyTooltip_note' => 'რეკომენდაცია: გამოიყენეთ Let\'s Encrypt მოდული სერტიფიკატების ავტომატური მართვისთვის',
     'gs_WEBHTTPSPublicKeyTooltip_footer' => 'მნიშვნელოვანი: სერტიფიკატის ცვლილების შემდეგ მოხდება ვებ-სერვერის გადატვირთვა',
-    
-    // WEBHTTPSPrivateKey tooltip  
+    // WEBHTTPSPrivateKey tooltip
     'gs_WEBHTTPSPrivateKeyTooltip_header' => 'SSL/TLS პრივატული გასაღები',
     'gs_WEBHTTPSPrivateKeyTooltip_desc' => 'საიდუმლო გასაღები SSL/TLS კავშირების გაშიფრაციისთვის. უნდა შეესაბამებოდეს საჯარო სერტიფიკატს.',
     'gs_WEBHTTPSPrivateKeyTooltip_what_is' => 'რა არის პრივატული გასაღები:',
@@ -556,7 +533,6 @@ return [
     'gs_WEBHTTPSPrivateKeyTooltip_compatibility_desc' => 'გასაღები უნდა ზუსტად შეესაბამებოდეს საჯარო სერტიფიკატს. შეუსაბამობის შემთხვევაში HTTPS არ იმუშავებს',
     'gs_WEBHTTPSPrivateKeyTooltip_note' => 'მინიშნება: Let\'s Encrypt მოდული ავტომატურად მართავს გასაღებთა წყვილს',
     'gs_WEBHTTPSPrivateKeyTooltip_footer' => 'ნაგულისხმევად: სისტემა გენერირებს თვით-ხელმოწერილ სერტიფიკატს პირველი ინსტალაციისას',
-    
     // SendMetrics tooltips
     'gs_SendMetricsTooltip_header' => 'მეტრიკებისა და შეცდომის ანგარიშების გაგზავნა',
     'gs_SendMetricsTooltip_desc' => 'შეცდომების შესახებ ინფორმაციის ავტომატური გაგზავნა Sentry სისტემაში პროდუქტის ხარისხის გასაუმჯობესებლად',
@@ -576,5 +552,77 @@ return [
     'gs_SendMetricsTooltip_privacy_desc' => 'არ გადაიცემა: პაროლები, საუბრების ჩანაწერები, პერსონალური მონაცემები, მონაცემთა ბაზების შიგთავსი',
     'gs_SendMetricsTooltip_warning' => 'ამ ფუნქციის გამორთვამ შეიძლება შეანელოს შეცდომების გამოსწორების პროცესი და შეამციროს მხარდაჭერის ხარისხი',
     'gs_SendMetricsTooltip_note' => 'რეკომენდებულია: დატოვეთ ჩართული production სისტემებისთვის. მონაცემები გადაიცემა მხოლოდ ინტერნეტ-კავშირის არსებობისას',
-    
+    'gs_AMISettings' => 'AMI-ს პარამეტრები',
+    'gs_AJAMRequiresAMI' => 'AJAM-ისთვის AMI-ის ჩართვაა საჭირო',
+    'gs_AJAMSettings' => 'AJAM-ის პარამეტრები',
+    'gs_ARIEnabledTooltip_usage' => 'რისთვის გამოიყენება:',
+    'gs_ARIEnabledTooltip_example_analytics' => 'მეტყველების ანალიტიკის სისტემები',
+    'gs_ARIEnabledTooltip_default' => 'ნაგულისხმევი მნიშვნელობა:',
+    'gs_ARIAllowedOriginsTooltip_desc' => 'იმ დომენების სია, საიდანაც ARI-ზე დომენებს შორის მოთხოვნებია დაშვებული.',
+    'gs_ARIAllowedOriginsTooltip_security_1' => 'არასოდეს გამოიყენოთ * წარმოებაში',
+    'gs_ARIAllowedOriginsTooltip_security_2' => 'მიუთითეთ მხოლოდ სანდო დომენები',
+    'gs_ARIEnabledTooltip_enable_3' => 'ინტეგრაცია თანამედროვე ვებ ჩარჩოებთან',
+    'gs_ARIEnabledTooltip_warning_header' => 'ყურადღება:',
+    'gs_ARIEnabled' => 'AMI ინტერფეისის გამოყენება',
+    'gs_ARIAllowedOrigins' => 'დაშვებული CORS წარმოშობა',
+    'gs_HTTPSettings' => 'HTTP სერვერის პარამეტრები',
+    'gs_HTTPPort' => 'HTTP პორტი (AJAM და ARI)',
+    'gs_HTTPPortTLS' => 'HTTPS პორტი (AJAM და ARI)',
+    'gs_SystemManagedPrivateKey' => 'სისტემის კერძო გასაღები (გენერირებული ავტომატურად სერტიფიკატთან ერთად)',
+    'gs_StatOutWorkTimesRouts' => 'არასამუშაო საათების წესებსა და მარშრუტებს შორის ურთიერთკავშირი',
+    'gs_StatApiKeys' => 'REST API გასაღებები',
+    'gs_StatAsteriskRestUsers' => 'AMI მომხმარებლები',
+    'gs_StatUserPasskeys' => 'WebAuthn-ის გასაღებები (პაროლის გარეშე შესვლა)',
+    // ARIEnabled tooltip
+    'gs_ARIEnabledTooltip_header' => 'ARI (Asterisk REST ინტერფეისი)',
+    'gs_ARIEnabledTooltip_desc' => 'RESTful API Asterisk-ის გამოყენებით თანამედროვე რეალურ დროში აპლიკაციების შესაქმნელად.',
+    'gs_ARIEnabledTooltip_what_is_desc' => 'REST/WebSocket ინტერფეისი არხებისა და ხიდების სრული კონტროლისთვის',
+    'gs_ARIEnabledTooltip_usage_webrtc' => 'WebRTC აპლიკაციებისა და სოფტფონების შექმნა',
+    'gs_ARIEnabledTooltip_usage_ivr' => 'ინტერაქტიული ხმოვანი მენიუს (IVR) შემუშავება',
+    'gs_ARIAllowedOriginsTooltip_security' => 'უსაფრთხოების რეკომენდაციები:',
+    'gs_ARIEnabledTooltip_usage_conference' => 'კონფერენციული ზარების მართვა',
+    'gs_ARIEnabledTooltip_usage_custom' => 'საკუთარი ტელეფონის ლოგიკის შექმნა',
+    'gs_ARIEnabledTooltip_example_webphone' => 'ვებ ტელეფონები და მობილური აპლიკაციები',
+    'gs_ARIEnabledTooltip_example_bot' => 'ხმოვანი ბოტები და ვირტუალური ასისტენტები',
+    'gs_ARIEnabledTooltip_example_queue' => 'გაფართოებული რიგის მართვის სისტემები',
+    'gs_ARIEnabledTooltip_default_desc' => 'გამორთულია (ჩართეთ საჭიროების შემთხვევაში)',
+    'gs_ARIEnabledTooltip_when_enable' => 'როდის უნდა გამოირთოს:',
+    'gs_ARIEnabledTooltip_enable_1' => 'ვებ ტელეფონების ან მობილური აპლიკაციების შემუშავება',
+    'gs_ARIEnabledTooltip_enable_2' => 'ინდივიდუალური IVR და ხმოვანი აპლიკაციების შექმნა',
+    'gs_ARIEnabledTooltip_warning' => 'ARI აპლიკაციების შესაქმნელად პროგრამირების ცოდნას მოითხოვს.',
+    'gs_ARIEnabledTooltip_footer' => 'იყენებს იგივე პორტებს, რასაც AJAM. WebSocket ხელმისაწვდომია /ari/events-ზე.',
+    // ARIAllowedOrigins tooltip
+    'gs_ARIAllowedOriginsTooltip_header' => 'დაშვებული CORS წარმოშობა',
+    'gs_ARIAllowedOriginsTooltip_what_is' => 'რა არის CORS:',
+    'gs_ARIAllowedOriginsTooltip_what_is_desc' => 'ბრაუზერის უსაფრთხოების მექანიზმი სხვა დომენებიდან API წვდომის გასაკონტროლებლად',
+    'gs_ARIAllowedOriginsTooltip_format' => 'შეყვანის ფორმატი:',
+    'gs_ARIAllowedOriginsTooltip_format_desc' => 'URL-ების მძიმით გამოყოფილი სია (მაგ. http://example.com, https://app.example.com)',
+    'gs_ARIAllowedOriginsTooltip_examples' => 'მნიშვნელობების მაგალითები:',
+    'gs_ARIAllowedOriginsTooltip_example_1' => '* - ყველა წყაროს დაშვება (უსაფრთხო)',
+    'gs_ARIAllowedOriginsTooltip_example_2' => 'http://localhost:3000 - ადგილობრივი განვითარებისთვის',
+    'gs_ARIAllowedOriginsTooltip_security_3' => 'HTTPS-ის გამოყენება საწარმოო დომენებისთვის',
+    'gs_ARIAllowedOriginsTooltip_default' => 'ნაგულისხმევი მნიშვნელობა:',
+    'gs_ARIAllowedOriginsTooltip_default_desc' => 'ცარიელია (CORS გამორთულია, წვდომა მხოლოდ ერთი და იგივე დომენიდან)',
+    'gs_ARIAllowedOriginsTooltip_footer' => 'პარამეტრების შენახვის შემდეგ ცვლილებები გამოიყენება.',
+    'gs_ARIEnabledTooltip_usage_recording' => 'რეალურ დროში ზარის ჩაწერა და დამუშავება',
+    'gs_ARIEnabledTooltip_examples' => 'ARI-ს გამოყენების მაგალითები:',
+    'cert_FailedToLoadCertificateForPairValidation' => 'წყვილის დასადასტურებლად სერტიფიკატის ჩატვირთვა ვერ მოხერხდა',
+    'cert_FailedToLoadPrivateKeyForPairValidation' => 'წყვილის დადასტურებისთვის პირადი გასაღების ჩატვირთვა ვერ მოხერხდა',
+    'cert_FailedToExtractPublicKeyFromCertificate' => 'სერტიფიკატიდან საჯარო გასაღების ამოღება ვერ მოხერხდა',
+    'cert_CertificateAndPrivateKeyDoNotMatch' => 'სერტიფიკატი და პირადი გასაღები არ ემთხვევა.',
+    'gs_ARISettings' => 'URI პარამეტრები',
+    'gs_StatOutWorkTimes' => 'არასამუშაო საათების წესები',
+    'gs_NoDataToDelete' => 'წასაშლელი მონაცემები არ არის.',
+    'gs_ARIAllowedOriginsTooltip_example_3' => 'https://app.mycompany.com - საწარმოო აპლიკაციებისთვის',
+    'gs_ARIEnabledTooltip_what_is' => 'რა არის AMI:',
+    // Certificate validation messages
+    'cert_CertificateIsEmpty' => 'სერტიფიკატი ცარიელია',
+    'cert_InvalidCertificateFormat' => 'არასწორი სერტიფიკატის ფორმატი: %error%',
+    'cert_FailedToParseCertificate' => 'სერტიფიკატის გაანალიზება ვერ მოხერხდა',
+    'cert_CertificateExpired' => 'სერტიფიკატის ვადა ამოიწურა %date%-ში',
+    'cert_CertificateExpiresSoon' => 'სერტიფიკატის ვადა იწურება %days% დღეში',
+    'cert_CertificateNotYetValid' => 'სერტიფიკატი ჯერ არ არის ძალაში %date%-მდე',
+    'cert_PrivateKeyIsEmpty' => 'პირადი გასაღები ცარიელია',
+    'cert_InvalidPrivateKeyFormat' => 'არასწორი პირადი გასაღების ფორმატი: %error%',
+    'cert_FailedToGetPrivateKeyDetails' => 'პირადი გასაღების დეტალების მიღება ვერ მოხერხდა',
 ];

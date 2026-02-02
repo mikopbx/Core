@@ -1,5 +1,4 @@
 <?php
-
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -18,7 +17,6 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
     'gs_SystemWillRestart' => 'Systém bude restartován',
     'gs_CallRecordTab' => 'Nahrávání hovorů',
     'gs_RTPStunServer' => 'Adresa STUN serveru (příklad: stun.test.net:10000)',
@@ -166,7 +164,7 @@ return [
     'gs_DeleteAllStageResettingSettings' => 'Obnovení nastavení PBX',
     'gs_DeleteAllStageFinalizing' => 'Dokončování procesu obnovení',
     'gs_DeleteAllStageCompleted' => 'Obnovení systému dokončeno',
-    'gs_DeleteAllStageRestarting' => 'Inicializace restartu systému',
+    'gs_DeleteAllStageRestarting' => 'Systém se restartuje',
     'gs_StatUsers' => 'Uživatelé/Interní čísla',
     'gs_StatProviders' => 'SIP poskytovatelé',
     'gs_StatCallQueues' => 'Fronty hovorů',
@@ -184,8 +182,7 @@ return [
     'gs_StatCustomFiles' => 'Uživatelské soubory',
     'gs_PBXRecordAnnouncementIn' => 'Vyberte upozornění na nahrávání hovorů pro příchozí hovory',
     'gs_PBXRecordAnnouncementOut' => 'Vyberte upozornění na nahrávání hovorů pro odchozí hovory',
-
-    // General Settings Tooltips    
+    // General Settings Tooltips
     // RestartEveryNight tooltip
     'gs_RestartEveryNightTooltip_header' => 'Noční restart PBX',
     'gs_RestartEveryNightTooltip_desc' => 'Automatický restart systému Asterisk každou noc pro udržení stability a výkonu',
@@ -198,7 +195,6 @@ return [
     'gs_RestartEveryNightTooltip_drawback_calls' => 'Přerušení aktivních hovorů během restartu',
     'gs_RestartEveryNightTooltip_drawback_registration' => 'Krátkodobá nedostupnost systému (10-30 sekund)',
     'gs_RestartEveryNightTooltip_recommendation' => 'Doporučeno pro systémy s nízkou noční aktivitou. Pro nonstop call centra je lepší vypnout a provádět restart ručně v obdobích minimálního zatížení.',
-    
     // PBXLanguage tooltip
     'gs_PBXLanguageTooltip_header' => 'Jazyk systémových zpráv',
     'gs_PBXLanguageTooltip_desc' => 'Určuje jazyk hlasových zpráv systému Asterisk pro volající a IVR menu',
@@ -210,7 +206,6 @@ return [
     'gs_PBXLanguageTooltip_restart' => 'Vyžaduje restart',
     'gs_PBXLanguageTooltip_restart_desc' => 'Při změně jazyka dojde k restartu služby Asterisk na 10-30 sekund s přerušením spojení.',
     'gs_PBXLanguageTooltip_note' => 'Jazyk webového rozhraní se konfiguruje odděleně pro každého uživatele',
-    
     // PBXInternalExtensionLength tooltip
     'gs_PBXInternalExtensionLengthTooltip_header' => 'Délka interních čísel',
     'gs_PBXInternalExtensionLengthTooltip_desc' => 'Určuje maximální délku interních čísel zaměstnanců v systému',
@@ -224,7 +219,6 @@ return [
     'gs_PBXInternalExtensionLengthTooltip_example_5' => 'Délka 5: čísla od 10000 do 99999',
     'gs_PBXInternalExtensionLengthTooltip_warning' => 'Změna tohoto parametru neovlivní existující čísla. Pokud máte čísla delší než nové nastavení, budou pokračovat v práci',
     'gs_PBXInternalExtensionLengthTooltip_note' => 'Doporučuje se vybírat délku podle počtu zaměstnanců: 3 číslice pro firmy do 900 zaměstnanců, 4 číslice pro větší organizace',
-    
     // PBXAllowGuestCalls tooltip
     'gs_AllowGuestCallsTooltip_header' => 'Hostovské hovory bez autorizace',
     'gs_AllowGuestCallsTooltip_desc' => 'Umožňuje přijímání SIP hovorů od neautorizovaných zařízení a serverů bez registrace',
@@ -242,7 +236,6 @@ return [
     'gs_AllowGuestCallsTooltip_security' => 'Bezpečnostní doporučení:',
     'gs_AllowGuestCallsTooltip_security_desc' => 'Používejte Fail2ban, omezte přístup podle IP, nakonfigurujte pravidla příchozích tras',
     'gs_AllowGuestCallsTooltip_recommendation' => 'Doporučuje se vypnout tuto možnost, pokud nepoužíváte zařízení bez registrace',
-    
     // PBXCallParkingExt tooltip
     'gs_PBXCallParkingExtTooltip_header' => 'Parkování hovorů',
     'gs_PBXCallParkingExtTooltip_desc' => 'Číslo pro dočasné umístění hovoru s možností jeho následného obnovení z jakéhokoliv telefonu',
@@ -257,7 +250,6 @@ return [
     'gs_PBXCallParkingExtTooltip_example' => 'Příklad použití:',
     'gs_PBXCallParkingExtTooltip_example_desc' => 'Sekretářka přijme hovor, zaparkuje jej na 800, systém oznámí "Hovor zaparkován na 801". Manažer vytočí 801 a pokračuje v rozhovoru',
     'gs_PBXCallParkingExtTooltip_note' => 'Pokud hovor není převzat v rámci časového limitu, vrátí se na původní telefon',
-    
     // PBXFeatureAttendedTransfer tooltip
     'gs_PBXFeatureAttendedTransferTooltip_header' => 'Konzultační přenos',
     'gs_PBXFeatureAttendedTransferTooltip_desc' => 'Kombinace kláves pro přenos hovoru s předběžnou konzultací',
@@ -269,7 +261,6 @@ return [
     'gs_PBXFeatureAttendedTransferTooltip_benefits' => 'Výhody:',
     'gs_PBXFeatureAttendedTransferTooltip_benefits_desc' => 'Umožňuje upozornit kolegu na přenos a předat kontext rozhovoru',
     'gs_PBXFeatureAttendedTransferTooltip_note' => 'Pokud účastník neodpovídá nebo je obsazen, hovor se k vám vrátí',
-    
     // PBXFeatureBlindTransfer tooltip
     'gs_PBXFeatureBlindTransferTooltip_header' => 'Slepý přenos',
     'gs_PBXFeatureBlindTransferTooltip_desc' => 'Kombinace kláves pro okamžitý přenos hovoru bez konzultace',
@@ -279,7 +270,6 @@ return [
     'gs_PBXFeatureBlindTransferTooltip_how_hangup' => 'Hovor bude okamžitě přenesen',
     'gs_PBXFeatureBlindTransferTooltip_warning' => 'Účastník může být nedostupný nebo obsazen. Používejte opatrně',
     'gs_PBXFeatureBlindTransferTooltip_note' => 'Pro důležité hovory se doporučuje použít konzultační přenos',
-    
     // PBXFeaturePickupExten tooltip
     'gs_PBXFeaturePickupExtenTooltip_header' => 'Zachycení hovoru',
     'gs_PBXFeaturePickupExtenTooltip_desc' => 'Číslo pro zachycení příchozích hovorů na jiné telefony',
@@ -290,7 +280,6 @@ return [
     'gs_PBXFeaturePickupExtenTooltip_type_directed_desc' => 'Zachytí hovor na konkrétní interní číslo',
     'gs_PBXFeaturePickupExtenTooltip_usage' => 'Použití:',
     'gs_PBXFeaturePickupExtenTooltip_usage_desc' => 'Když zvoní cizí telefon, vytočte *8 pro zachycení nebo *8201 pro zachycení hovoru na číslo 201',
-    
     // PBXFeatureAtxferNoAnswerTimeout tooltip
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_header' => 'Timeout návratu po konzultačním přenosu',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_desc' => 'Určuje dobu čekání na odpověď při konzultačním přenosu hovoru, po které se hovor vrátí k operátorovi.',
@@ -304,7 +293,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_standard' => '30-45 sek - standardní nastavení pro kanceláře',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_quick' => '15-20 sek - pro rychlý návrat (vysoké zatížení)',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_extended' => '60-90 sek - pro důležité přenosy nebo vzdálené kanceláře',
-    
     // PBXFeatureDigitTimeout tooltip
     'gs_PBXFeatureDigitTimeoutTooltip_header' => 'Timeout mezi číslicemi při vytáčení',
     'gs_PBXFeatureDigitTimeoutTooltip_desc' => 'Maximální doba čekání mezi stisky číslic při vytáčení čísla nebo používání funkcí (v milisekundách).',
@@ -318,7 +306,6 @@ return [
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease' => 'Snížit (3000-5000 ms):',
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease_desc' => 'Pro zkušené uživatele a zrychlení zpracování příkazů',
     'gs_PBXFeatureDigitTimeoutTooltip_footer' => 'Pozor: příliš malá hodnota může způsobit přerušení vytáčení dlouhých čísel',
-    
     // RTPPortRange tooltip
     'gs_RTPPortRangeTooltip_header' => 'Rozsah RTP portů',
     'gs_RTPPortRangeTooltip_desc' => 'Určuje rozsah UDP portů pro přenos mediálních toků (audio/video) v reálném čase mezi účastníky.',
@@ -338,7 +325,6 @@ return [
     'gs_RTPPortRangeTooltip_change_nat' => 'Konfigurace NAT/Firewall:',
     'gs_RTPPortRangeTooltip_change_nat_desc' => 'Ujistěte se, že zadaný rozsah portů je otevřen ve firewallu a nakonfigurován port forwarding',
     'gs_RTPPortRangeTooltip_footer' => 'Důležité: změna vyžaduje restart Asterisk a odpovídající konfiguraci síťového zařízení',
-    
     // RTPStunServer tooltip
     'gs_RTPStunServerTooltip_header' => 'STUN server',
     'gs_RTPStunServerTooltip_desc' => 'STUN (Session Traversal Utilities for NAT) - server pro určení vnější IP adresy a portu při práci přes NAT.',
@@ -359,7 +345,6 @@ return [
     'gs_RTPStunServerTooltip_example_2' => 'stun1.l.google.com:19302 (Google záložní)',
     'gs_RTPStunServerTooltip_example_3' => 'stun.ekiga.net:3478 (Ekiga)',
     'gs_RTPStunServerTooltip_footer' => 'Doporučení: nechte pole prázdné, pokud PBX má přímou veřejnou IP nebo všichni účastníci jsou v místní síti',
-    
     // SIPAuthPrefix tooltip
     'gs_SIPAuthPrefixTooltip_header' => 'SIP autorizační předpona',
     'gs_SIPAuthPrefixTooltip_desc' => 'Dodatečná přípona přidávaná k uživatelskému jménu při SIP autorizaci pro zvýšení bezpečnosti.',
@@ -378,7 +363,6 @@ return [
     'gs_SIPAuthPrefixTooltip_use_4' => 'Soulad s firemními bezpečnostními politikami',
     'gs_SIPAuthPrefixTooltip_warning_header' => 'Důležité:',
     'gs_SIPAuthPrefixTooltip_warning' => 'Po změně předpony je nutné aktualizovat nastavení na všech SIP zařízeních a softphones',
-    
     // SIPDefaultExpiry tooltip
     'gs_SIPDefaultExpiryTooltip_header' => 'Výchozí interval SIP registrace',
     'gs_SIPDefaultExpiryTooltip_desc' => 'Určuje, jak často by SIP zařízení měla aktualizovat svoji registraci na serveru. Ovlivňuje rychlost detekce nedostupnosti zařízení a zatížení sítě.',
@@ -395,7 +379,6 @@ return [
     'gs_SIPDefaultExpiryTooltip_change_stable' => 'Zvýšit na 300-600 sek: pro stabilní kancelářské telefony v místní síti',
     'gs_SIPDefaultExpiryTooltip_change_battery' => 'Zvýšit na 600-1800 sek: pro úsporu baterie mobilních zařízení',
     'gs_SIPDefaultExpiryTooltip_note' => 'Tip: menší hodnoty rychleji detekují nedostupnost, ale zvyšují zatížení sítě',
-    
     // SIPExpiryRange tooltip
     'gs_SIPExpiryRangeTooltip_header' => 'Rozsah intervalů SIP registrace',
     'gs_SIPExpiryRangeTooltip_desc' => 'Určuje minimálně a maximálně povolené intervaly mezi registracemi SIP zařízení na serveru.',
@@ -419,7 +402,6 @@ return [
     'gs_SIPExpiryRangeTooltip_warning_header' => 'Důležité:',
     'gs_SIPExpiryRangeTooltip_warning' => 'Minimální hodnota musí být menší než výchozí hodnota (SIPDefaultExpiry) a maximální větší',
     'gs_SIPExpiryRangeTooltip_note' => 'Tip: hodnoty ovlivňují rovnováhu mezi zatížením sítě a rychlostí detekce nedostupnosti zařízení',
-    
     // AMIEnabled tooltip
     'gs_AMIEnabledTooltip_header' => 'AMI (Asterisk Manager Interface)',
     'gs_AMIEnabledTooltip_desc' => 'Programovací rozhraní pro správu a monitoring Asterisk přes TCP/IP spojení.',
@@ -445,7 +427,6 @@ return [
     'gs_AMIEnabledTooltip_warning_header' => 'Pozor:',
     'gs_AMIEnabledTooltip_warning' => 'Vypnutí AMI může narušit práci modulů a integrací',
     'gs_AMIEnabledTooltip_footer' => 'AMI port: 5038. Nakonfigurujte přístup přes AMI manažery pro bezpečnost',
-    
     // AJAMEnabled tooltip
     'gs_AJAMEnabledTooltip_header' => 'AJAM (Asynchronous Javascript Asterisk Manager)',
     'gs_AJAMEnabledTooltip_desc' => 'Webové rozhraní pro přístup k AMI přes HTTP/HTTPS protokol.',
@@ -467,7 +448,6 @@ return [
     'gs_AJAMEnabledTooltip_warning_header' => 'Důležité:',
     'gs_AJAMEnabledTooltip_warning' => 'Některé moduly MikoPBX mohou používat AJAM pro svoji práci',
     'gs_AJAMEnabledTooltip_note' => 'AJAM používá stejné přihlašovací údaje jako AMI manažeři',
-    
     // SSHAuthorizedKeys tooltip
     'gs_SSHAuthorizedKeysTooltip_header' => 'Autorizované SSH klíče',
     'gs_SSHAuthorizedKeysTooltip_desc' => 'Seznam veřejných SSH klíčů pro přístup k systému bez hesla. Umožňuje přihlašování přes SSH pomocí privátního klíče místo hesla.',
@@ -492,7 +472,6 @@ return [
     'gs_SSHAuthorizedKeysTooltip_warning_header' => 'Důležité!',
     'gs_SSHAuthorizedKeysTooltip_warning' => 'Po přidání klíčů se doporučuje vypnout autentifikaci heslem pro zvýšení bezpečnosti',
     'gs_SSHAuthorizedKeysTooltip_note' => 'Tip: pro generování klíčů ve Windows používejte PuTTYgen nebo OpenSSH',
-    
     // SSH_ID_RSA_PUB tooltip
     'gs_SSH_ID_RSA_PUBTooltip_header' => 'Veřejný klíč PBX',
     'gs_SSH_ID_RSA_PUBTooltip_desc' => 'RSA veřejný klíč tohoto PBX pro připojení k jiným systémům bez hesla.',
@@ -514,7 +493,6 @@ return [
     'gs_SSH_ID_RSA_PUBTooltip_warning_header' => 'Bezpečnost:',
     'gs_SSH_ID_RSA_PUBTooltip_warning' => 'Tento klíč je veřejný a může být bezpečně předán třetím stranám. Privátní klíč je uložen v systému a nikdy nesmí opustit PBX',
     'gs_SSH_ID_RSA_PUBTooltip_note' => 'Poznámka: změna nebo regenerace klíče bude vyžadovat aktualizaci na všech serverech, kde se používá',
-    
     // WEBHTTPSPublicKey tooltip
     'gs_WEBHTTPSPublicKeyTooltip_header' => 'SSL/TLS certifikát (veřejný klíč)',
     'gs_WEBHTTPSPublicKeyTooltip_desc' => 'Veřejná část SSL/TLS certifikátu pro šifrování HTTPS spojení a ochranu přenášených dat.',
@@ -535,7 +513,6 @@ return [
     'gs_WEBHTTPSPublicKeyTooltip_chain_desc' => 'Pokud máte mezilehlé certifikáty (intermediate), přidejte je za hlavní certifikát do stejného pole',
     'gs_WEBHTTPSPublicKeyTooltip_note' => 'Doporučení: používejte modul Let\'s Encrypt pro automatickou správu certifikátů',
     'gs_WEBHTTPSPublicKeyTooltip_footer' => 'Důležité: po změně certifikátu dojde k restartu webového serveru',
-    
     // WEBHTTPSPrivateKey tooltip
     'gs_WEBHTTPSPrivateKeyTooltip_header' => 'SSL/TLS privátní klíč',
     'gs_WEBHTTPSPrivateKeyTooltip_desc' => 'Tajný klíč pro dešifrování SSL/TLS spojení. Musí odpovídat veřejnému certifikátu.',
@@ -558,7 +535,6 @@ return [
     'gs_WEBHTTPSPrivateKeyTooltip_compatibility_desc' => 'Klíč musí přesně odpovídat veřejnému certifikátu. Při neshodě HTTPS nebude fungovat',
     'gs_WEBHTTPSPrivateKeyTooltip_note' => 'Tip: modul Let\'s Encrypt automaticky spravuje pár klíčů',
     'gs_WEBHTTPSPrivateKeyTooltip_footer' => 'Výchozí: systém generuje samo-podepsaný certifikát při první instalaci',
-    
     // SendMetrics tooltips
     'gs_SendMetricsTooltip_header' => 'Odesílání metrik a zpráv o chybách',
     'gs_SendMetricsTooltip_desc' => 'Automatické odesílání informací o chybách do systému Sentry pro zlepšení kvality produktu',
@@ -578,5 +554,77 @@ return [
     'gs_SendMetricsTooltip_privacy_desc' => 'NEPŘENÁŠEJÍ SE: hesla, nahrávky hovorů, osobní údaje, obsah databází',
     'gs_SendMetricsTooltip_warning' => 'Vypnutí této funkce může zpomalit proces opravy chyb a snížit kvalitu podpory',
     'gs_SendMetricsTooltip_note' => 'Doporučeno: ponechat povoleno pro produkční systémy. Data se přenášejí pouze při připojení k internetu',
-    
+    'gs_AMISettings' => 'Nastavení AMI',
+    'gs_AJAMSettings' => 'Nastavení AJAMu',
+    'gs_ARISettings' => 'Nastavení URI',
+    'gs_HTTPSettings' => 'Nastavení HTTP serveru',
+    'gs_HTTPPortTLS' => 'HTTPS port (AJAM a ARI)',
+    'gs_ARIEnabledTooltip_default' => 'Výchozí hodnota:',
+    'gs_ARIEnabledTooltip_default_desc' => 'Zakázáno (v případě potřeby povolte)',
+    // ARIAllowedOrigins tooltip
+    'gs_ARIAllowedOriginsTooltip_header' => 'Povolené zdroje CORS',
+    'gs_ARIAllowedOriginsTooltip_examples' => 'Příklady hodnot:',
+    'gs_ARIAllowedOriginsTooltip_security_1' => 'Nikdy nepoužívejte * v produkčním prostředí',
+    'gs_ARIEnabledTooltip_warning' => 'ARI vyžaduje znalosti programování pro vytváření aplikací',
+    'gs_ARIEnabledTooltip_footer' => 'Používá stejné porty jako AJAM. WebSocket je k dispozici na /ari/events.',
+    'gs_ARIAllowedOriginsTooltip_desc' => 'Seznam domén, ze kterých jsou povoleny požadavky napříč doménami do ARI.',
+    'gs_ARIAllowedOriginsTooltip_what_is' => 'Co je CORS:',
+    'gs_ARIAllowedOriginsTooltip_format_desc' => 'Seznam adres URL oddělených čárkami (např. http://example.com, https://app.example.com)',
+    'gs_ARIAllowedOriginsTooltip_example_1' => '* - povolit všechny zdroje (nebezpečné)',
+    'gs_ARIAllowedOriginsTooltip_example_2' => 'http://localhost:3000 - pro lokální vývoj',
+    'gs_ARIAllowedOriginsTooltip_example_3' => 'https://app.mycompany.com - pro produkční aplikace',
+    'gs_NoDataToDelete' => 'Nejsou k dispozici žádná data k odstranění.',
+    'gs_ARIEnabledTooltip_desc' => 'RESTful API pro tvorbu moderních aplikací v reálném čase s Asteriskem.',
+    'gs_ARIEnabledTooltip_what_is' => 'Co je AMI:',
+    'gs_ARIEnabledTooltip_what_is_desc' => 'Rozhraní REST/WebSocket pro plnou kontrolu nad kanály a mosty',
+    'gs_ARIEnabledTooltip_usage' => 'K čemu se používá:',
+    'gs_ARIEnabledTooltip_usage_webrtc' => 'Vytváření WebRTC aplikací a softwarových telefonů',
+    'gs_ARIEnabledTooltip_usage_ivr' => 'Vývoj interaktivních hlasových menu (IVR)',
+    'gs_ARIEnabledTooltip_usage_conference' => 'Správa konferenčních hovorů',
+    'gs_ARIEnabledTooltip_usage_recording' => 'Nahrávání a zpracování hovorů v reálném čase',
+    'gs_ARIEnabledTooltip_usage_custom' => 'Vytváření vlastní telefonní logiky',
+    'gs_ARIEnabledTooltip_examples' => 'Příklady použití ARI:',
+    'gs_ARIEnabledTooltip_example_webphone' => 'Webové telefony a mobilní aplikace',
+    'gs_ARIEnabledTooltip_example_bot' => 'Hlasoví boti a virtuální asistenti',
+    'gs_ARIEnabledTooltip_example_queue' => 'Pokročilé systémy pro správu front',
+    'gs_ARIEnabledTooltip_example_analytics' => 'Systémy pro analýzu řeči',
+    'gs_ARIEnabledTooltip_when_enable' => 'Kdy vypnout:',
+    'gs_ARIEnabledTooltip_enable_1' => 'Vývoj webových telefonů nebo mobilních aplikací',
+    'gs_ARIAllowedOriginsTooltip_security_2' => 'Zadejte pouze důvěryhodné domény',
+    'gs_ARIAllowedOriginsTooltip_security_3' => 'Používejte HTTPS pro produkční domény',
+    'gs_ARIAllowedOriginsTooltip_default_desc' => 'Prázdné (CORS zakázáno, přístup pouze ze stejné domény)',
+    'gs_ARIAllowedOriginsTooltip_footer' => 'Změny se projeví po uložení nastavení.',
+    'gs_StatOutWorkTimesRouts' => 'Vztahy mezi pravidly pro mimopracovní dobu a trasami',
+    'gs_StatApiKeys' => 'Klíče REST API',
+    'gs_SystemManagedPrivateKey' => 'Systémový soukromý klíč (generovaný automaticky spolu s certifikátem)',
+    // Certificate validation messages
+    'cert_CertificateIsEmpty' => 'Certifikát je prázdný',
+    'cert_InvalidCertificateFormat' => 'Neplatný formát certifikátu: %error%',
+    'cert_FailedToParseCertificate' => 'Nepodařilo se analyzovat certifikát',
+    'cert_FailedToGetPrivateKeyDetails' => 'Nepodařilo se získat podrobnosti o soukromém klíči',
+    'cert_FailedToLoadCertificateForPairValidation' => 'Nepodařilo se načíst certifikát pro ověření páru',
+    'cert_FailedToLoadPrivateKeyForPairValidation' => 'Nepodařilo se načíst soukromý klíč pro ověření páru',
+    'cert_FailedToExtractPublicKeyFromCertificate' => 'Nepodařilo se extrahovat veřejný klíč z certifikátu',
+    'cert_CertificateAndPrivateKeyDoNotMatch' => 'Certifikát a soukromý klíč se neshodují.',
+    'gs_AJAMRequiresAMI' => 'AJAM vyžaduje povolení AMI',
+    'gs_ARIEnabled' => 'Použít AMI rozhraní',
+    'gs_ARIAllowedOrigins' => 'Povolené zdroje CORS',
+    'gs_HTTPPort' => 'HTTP port (AJAM a ARI)',
+    'gs_StatAsteriskRestUsers' => 'AMI uživatelé',
+    'gs_StatUserPasskeys' => 'Klíče WebAuthn (přihlášení bez hesla)',
+    'gs_ARIEnabledTooltip_enable_2' => 'Vytváření vlastních IVR a hlasových aplikací',
+    'gs_ARIEnabledTooltip_enable_3' => 'Integrace s moderními webovými frameworky',
+    'gs_ARIEnabledTooltip_warning_header' => 'Pozor:',
+    'gs_ARIAllowedOriginsTooltip_what_is_desc' => 'Mechanismus zabezpečení prohlížeče pro řízení přístupu k API z jiných domén',
+    'gs_ARIAllowedOriginsTooltip_format' => 'Vstupní formát:',
+    'gs_ARIAllowedOriginsTooltip_default' => 'Výchozí hodnota:',
+    // ARIEnabled tooltip
+    'gs_ARIEnabledTooltip_header' => 'ARI (rozhraní Asterisk REST)',
+    'gs_ARIAllowedOriginsTooltip_security' => 'Bezpečnostní doporučení:',
+    'gs_StatOutWorkTimes' => 'Pravidla pro mimopracovní dobu',
+    'cert_CertificateExpired' => 'Platnost certifikátu vypršela dne %date%',
+    'cert_CertificateExpiresSoon' => 'Platnost certifikátu vyprší za %days% dní',
+    'cert_CertificateNotYetValid' => 'Certifikát je platný až do %date%',
+    'cert_PrivateKeyIsEmpty' => 'Soukromý klíč je prázdný',
+    'cert_InvalidPrivateKeyFormat' => 'Neplatný formát soukromého klíče: %error%',
 ];

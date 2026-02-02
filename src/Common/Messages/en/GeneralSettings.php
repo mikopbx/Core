@@ -1,5 +1,4 @@
 <?php
-
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -18,7 +17,6 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
     'gs_SystemWillRestart' => 'The system will be restarted',
     'gs_AMISettings' => 'AMI Settings',
     'gs_AJAMSettings' => 'AJAM Settings',
@@ -175,7 +173,7 @@ return [
     'gs_DeleteAllStageResettingSettings' => 'Resetting PBX settings',
     'gs_DeleteAllStageFinalizing' => 'Finalizing reset process',
     'gs_DeleteAllStageCompleted' => 'System reset completed',
-    'gs_DeleteAllStageRestarting' => 'Initializing system restart',
+    'gs_DeleteAllStageRestarting' => 'The system will reboot',
     'gs_StatUsers' => 'Users/Internal extensions',
     'gs_StatProviders' => 'SIP providers',
     'gs_StatCallQueues' => 'Call queues',
@@ -193,7 +191,6 @@ return [
     'gs_StatCustomFiles' => 'Custom files',
     'gs_PBXRecordAnnouncementIn' => 'Select call recording warning for incoming calls',
     'gs_PBXRecordAnnouncementOut' => 'Select call recording warning for outgoing calls',
-
     // General Settings Tooltips
     // RestartEveryNight tooltip
     'gs_RestartEveryNightTooltip_header' => 'Daily PBX restart',
@@ -207,7 +204,6 @@ return [
     'gs_RestartEveryNightTooltip_drawback_calls' => 'Interruption of active calls during restart',
     'gs_RestartEveryNightTooltip_drawback_registration' => 'Short-term system unavailability (10-30 seconds)',
     'gs_RestartEveryNightTooltip_recommendation' => 'Recommended for systems with low night activity. For 24/7 call centers, better to disable and restart manually during periods of minimal load.',
-
     // PBXLanguage tooltip
     'gs_PBXLanguageTooltip_header' => 'System messages language',
     'gs_PBXLanguageTooltip_desc' => 'Determines the language of Asterisk voice messages for callers and IVR menus',
@@ -219,7 +215,6 @@ return [
     'gs_PBXLanguageTooltip_restart' => 'Restart required',
     'gs_PBXLanguageTooltip_restart_desc' => 'Language change will restart Asterisk service for 10-30 seconds with connection loss.',
     'gs_PBXLanguageTooltip_note' => 'Web interface language is configured separately for each user',
-
     // PBXInternalExtensionLength tooltip
     'gs_PBXInternalExtensionLengthTooltip_header' => 'Internal extension length',
     'gs_PBXInternalExtensionLengthTooltip_desc' => 'Determines the maximum length of internal employee extensions in the system',
@@ -233,7 +228,6 @@ return [
     'gs_PBXInternalExtensionLengthTooltip_example_5' => 'Length 5: extensions from 10000 to 99999',
     'gs_PBXInternalExtensionLengthTooltip_warning' => 'Changing this parameter does not affect existing extensions. If you have extensions longer than the new setting, they will continue to work',
     'gs_PBXInternalExtensionLengthTooltip_note' => 'Recommended to choose length based on number of employees: 3 digits for companies up to 900 employees, 4 digits for larger organizations',
-
     // PBXAllowGuestCalls tooltip
     'gs_AllowGuestCallsTooltip_header' => 'Guest calls without authorization',
     'gs_AllowGuestCallsTooltip_desc' => 'Allows accepting SIP calls from unauthorized devices and servers without registration',
@@ -251,7 +245,6 @@ return [
     'gs_AllowGuestCallsTooltip_security' => 'Security recommendations:',
     'gs_AllowGuestCallsTooltip_security_desc' => 'Use Fail2ban, limit IP access, configure inbound routing rules',
     'gs_AllowGuestCallsTooltip_recommendation' => 'Recommended to disable this option if you don\'t use devices without registration',
-
     // PBXCallParkingExt tooltip
     'gs_PBXCallParkingExtTooltip_header' => 'Call parking',
     'gs_PBXCallParkingExtTooltip_desc' => 'Extension for temporarily placing a call with ability to retrieve it from any phone',
@@ -266,7 +259,6 @@ return [
     'gs_PBXCallParkingExtTooltip_example' => 'Usage example:',
     'gs_PBXCallParkingExtTooltip_example_desc' => 'Secretary takes call, parks it on 800, system announces "Call parked on 801". Manager dials 801 and continues conversation',
     'gs_PBXCallParkingExtTooltip_note' => 'If call is not retrieved within timeout period, it will return to original phone',
-
     // PBXFeatureAttendedTransfer tooltip
     'gs_PBXFeatureAttendedTransferTooltip_header' => 'Attended transfer',
     'gs_PBXFeatureAttendedTransferTooltip_desc' => 'Key combination for transferring call with preliminary consultation',
@@ -278,7 +270,6 @@ return [
     'gs_PBXFeatureAttendedTransferTooltip_benefits' => 'Benefits:',
     'gs_PBXFeatureAttendedTransferTooltip_benefits_desc' => 'Allows warning colleague about transfer and providing conversation context',
     'gs_PBXFeatureAttendedTransferTooltip_note' => 'If party doesn\'t answer or is busy, call will return to you',
-
     // PBXFeatureBlindTransfer tooltip
     'gs_PBXFeatureBlindTransferTooltip_header' => 'Blind transfer',
     'gs_PBXFeatureBlindTransferTooltip_desc' => 'Key combination for instant call transfer without consultation',
@@ -288,7 +279,6 @@ return [
     'gs_PBXFeatureBlindTransferTooltip_how_hangup' => 'Call will be transferred immediately',
     'gs_PBXFeatureBlindTransferTooltip_warning' => 'Party may be unavailable or busy. Use with caution',
     'gs_PBXFeatureBlindTransferTooltip_note' => 'For important calls, recommended to use attended transfer',
-
     // PBXFeaturePickupExten tooltip
     'gs_PBXFeaturePickupExtenTooltip_header' => 'Call pickup',
     'gs_PBXFeaturePickupExtenTooltip_desc' => 'Extension for intercepting incoming calls to other phones',
@@ -299,7 +289,6 @@ return [
     'gs_PBXFeaturePickupExtenTooltip_type_directed_desc' => 'Intercepts call to specific internal extension',
     'gs_PBXFeaturePickupExtenTooltip_usage' => 'Usage:',
     'gs_PBXFeaturePickupExtenTooltip_usage_desc' => 'When someone else\'s phone rings, dial *8 to intercept or *8201 to intercept call to extension 201',
-
     // PBXFeatureAtxferNoAnswerTimeout tooltip
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_header' => 'Attended transfer return timeout',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_desc' => 'Determines response wait time during attended call transfer, after which call will return to operator.',
@@ -313,7 +302,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_standard' => '30-45 sec - standard office setting',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_quick' => '15-20 sec - for quick return (high load)',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_extended' => '60-90 sec - for important transfers or remote offices',
-
     // PBXFeatureDigitTimeout tooltip
     'gs_PBXFeatureDigitTimeoutTooltip_header' => 'Digit timeout when dialing',
     'gs_PBXFeatureDigitTimeoutTooltip_desc' => 'Maximum wait time between digit presses when dialing number or using features (in milliseconds).',
@@ -327,7 +315,6 @@ return [
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease' => 'Decrease (3000-5000 ms):',
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease_desc' => 'For experienced users and to speed up command processing',
     'gs_PBXFeatureDigitTimeoutTooltip_footer' => 'Warning: too small value may cause interruption of long number dialing',
-
     // RTPPortRange tooltip (for both RTPPortFrom and RTPPortTo)
     'gs_RTPPortRangeTooltip_header' => 'RTP port range',
     'gs_RTPPortRangeTooltip_desc' => 'Defines UDP port range for transmitting real-time media streams (audio/video) between parties.',
@@ -347,7 +334,6 @@ return [
     'gs_RTPPortRangeTooltip_change_nat' => 'NAT/Firewall configuration:',
     'gs_RTPPortRangeTooltip_change_nat_desc' => 'Ensure specified port range is open in firewall and port forwarding is configured',
     'gs_RTPPortRangeTooltip_footer' => 'Important: change requires Asterisk restart and proper network equipment configuration',
-
     // RTPStunServer tooltip
     'gs_RTPStunServerTooltip_header' => 'STUN server',
     'gs_RTPStunServerTooltip_desc' => 'STUN (Session Traversal Utilities for NAT) - server for determining external IP address and port when working through NAT.',
@@ -368,7 +354,6 @@ return [
     'gs_RTPStunServerTooltip_example_2' => 'stun1.l.google.com:19302 (Google backup)',
     'gs_RTPStunServerTooltip_example_3' => 'stun.ekiga.net:3478 (Ekiga)',
     'gs_RTPStunServerTooltip_footer' => 'Recommendation: leave field empty if PBX has direct public IP or all parties are in local network',
-
     // SIPAuthPrefix tooltip
     'gs_SIPAuthPrefixTooltip_header' => 'SIP authorization prefix',
     'gs_SIPAuthPrefixTooltip_desc' => 'Additional suffix added to username during SIP authorization for enhanced security.',
@@ -387,7 +372,6 @@ return [
     'gs_SIPAuthPrefixTooltip_use_4' => 'Compliance with corporate security policies',
     'gs_SIPAuthPrefixTooltip_warning_header' => 'Important:',
     'gs_SIPAuthPrefixTooltip_warning' => 'After changing prefix, need to update settings on all SIP devices and softphones',
-
     // SIPDefaultExpiry tooltip
     'gs_SIPDefaultExpiryTooltip_header' => 'Default SIP registration interval',
     'gs_SIPDefaultExpiryTooltip_desc' => 'Determines how often SIP devices should update their registration on server. Affects device unavailability detection speed and network load.',
@@ -404,7 +388,6 @@ return [
     'gs_SIPDefaultExpiryTooltip_change_stable' => 'Increase to 300-600 sec: for stable office phones on local network',
     'gs_SIPDefaultExpiryTooltip_change_battery' => 'Increase to 600-1800 sec: to save mobile device battery',
     'gs_SIPDefaultExpiryTooltip_note' => 'Tip: lower values detect unavailability faster but increase network load',
-
     // SIPExpiryRange tooltip (combined for Min and Max)
     'gs_SIPExpiryRangeTooltip_header' => 'SIP registration interval range',
     'gs_SIPExpiryRangeTooltip_desc' => 'Defines minimum and maximum allowable intervals between SIP device registrations on server.',
@@ -428,7 +411,6 @@ return [
     'gs_SIPExpiryRangeTooltip_warning_header' => 'Important:',
     'gs_SIPExpiryRangeTooltip_warning' => 'Minimum value must be less than default value (SIPDefaultExpiry), and maximum must be greater',
     'gs_SIPExpiryRangeTooltip_note' => 'Tip: values affect balance between network load and device unavailability detection speed',
-
     // AMIEnabled tooltip
     'gs_AMIEnabledTooltip_header' => 'AMI (Asterisk Manager Interface)',
     'gs_AMIEnabledTooltip_desc' => 'Software interface for managing and monitoring Asterisk via TCP/IP connection.',
@@ -454,7 +436,6 @@ return [
     'gs_AMIEnabledTooltip_warning_header' => 'Warning:',
     'gs_AMIEnabledTooltip_warning' => 'Disabling AMI may break module and integration functionality',
     'gs_AMIEnabledTooltip_footer' => 'AMI port: 5038. Configure access through AMI managers for security',
-
     // ARIEnabled tooltip
     'gs_ARIEnabledTooltip_header' => 'ARI (Asterisk REST Interface)',
     'gs_ARIEnabledTooltip_desc' => 'RESTful API for building modern real-time applications with Asterisk.',
@@ -480,7 +461,6 @@ return [
     'gs_ARIEnabledTooltip_warning_header' => 'Warning:',
     'gs_ARIEnabledTooltip_warning' => 'ARI requires programming knowledge to build applications',
     'gs_ARIEnabledTooltip_footer' => 'Uses same ports as AJAM. WebSocket available at /ari/events',
-
     // ARIAllowedOrigins tooltip
     'gs_ARIAllowedOriginsTooltip_header' => 'CORS Allowed Origins',
     'gs_ARIAllowedOriginsTooltip_desc' => 'List of domains allowed to make cross-origin requests to ARI.',
@@ -499,7 +479,6 @@ return [
     'gs_ARIAllowedOriginsTooltip_default' => 'Default value:',
     'gs_ARIAllowedOriginsTooltip_default_desc' => 'Empty (CORS disabled, access only from same domain)',
     'gs_ARIAllowedOriginsTooltip_footer' => 'Changes apply after saving settings',
-
     // AJAMEnabled tooltip
     'gs_AJAMEnabledTooltip_header' => 'AJAM (Asynchronous Javascript Asterisk Manager)',
     'gs_AJAMEnabledTooltip_desc' => 'Web interface for accessing AMI via HTTP/HTTPS protocol.',
@@ -521,7 +500,6 @@ return [
     'gs_AJAMEnabledTooltip_warning_header' => 'Important:',
     'gs_AJAMEnabledTooltip_warning' => 'Some MikoPBX modules may use AJAM for operation',
     'gs_AJAMEnabledTooltip_note' => 'AJAM uses same credentials as AMI managers',
-
     // SSHAuthorizedKeys tooltip
     'gs_SSHAuthorizedKeysTooltip_header' => 'Authorized SSH keys',
     'gs_SSHAuthorizedKeysTooltip_desc' => 'List of public SSH keys for passwordless system access. Allows SSH login using private key instead of password.',
@@ -546,7 +524,6 @@ return [
     'gs_SSHAuthorizedKeysTooltip_warning_header' => 'Important!',
     'gs_SSHAuthorizedKeysTooltip_warning' => 'After adding keys, recommended to disable password authentication for enhanced security',
     'gs_SSHAuthorizedKeysTooltip_note' => 'Tip: for Windows key generation use PuTTYgen or OpenSSH',
-
     // SSH_ID_RSA_PUB tooltip
     'gs_SSH_ID_RSA_PUBTooltip_header' => 'PBX public key',
     'gs_SSH_ID_RSA_PUBTooltip_desc' => 'RSA public key of this PBX for connecting to other systems without password.',
@@ -568,7 +545,6 @@ return [
     'gs_SSH_ID_RSA_PUBTooltip_warning_header' => 'Security:',
     'gs_SSH_ID_RSA_PUBTooltip_warning' => 'This key is public and can be safely shared with third parties. Private key is stored in system and should never leave the PBX',
     'gs_SSH_ID_RSA_PUBTooltip_note' => 'Note: changing or regenerating key will require update on all servers where it\'s used',
-
     // WEBHTTPSPublicKey tooltip
     'gs_WEBHTTPSPublicKeyTooltip_header' => 'SSL/TLS certificate (public key)',
     'gs_WEBHTTPSPublicKeyTooltip_desc' => 'Public part of SSL/TLS certificate for encrypting HTTPS connections and protecting transmitted data.',
@@ -589,7 +565,6 @@ return [
     'gs_WEBHTTPSPublicKeyTooltip_chain_desc' => 'If you have intermediate certificates, add them after main certificate in same field',
     'gs_WEBHTTPSPublicKeyTooltip_note' => 'Recommendation: use Let\'s Encrypt module for automatic certificate management',
     'gs_WEBHTTPSPublicKeyTooltip_footer' => 'Important: after certificate change, web server will restart',
-
     // WEBHTTPSPrivateKey tooltip
     'gs_WEBHTTPSPrivateKeyTooltip_header' => 'SSL/TLS private key',
     'gs_WEBHTTPSPrivateKeyTooltip_desc' => 'Secret key for decrypting SSL/TLS connections. Must match public certificate.',
@@ -612,7 +587,6 @@ return [
     'gs_WEBHTTPSPrivateKeyTooltip_compatibility_desc' => 'Key must exactly match public certificate. If mismatch, HTTPS won\'t work',
     'gs_WEBHTTPSPrivateKeyTooltip_note' => 'Tip: Let\'s Encrypt module automatically manages key pair',
     'gs_WEBHTTPSPrivateKeyTooltip_footer' => 'Default: system generates self-signed certificate on first installation',
-
     // SendMetrics tooltips
     'gs_SendMetricsTooltip_header' => 'Sending metrics and error reports',
     'gs_SendMetricsTooltip_desc' => 'Automatic sending of error information to Sentry system to improve product quality',
@@ -632,7 +606,6 @@ return [
     'gs_SendMetricsTooltip_privacy_desc' => 'NOT transmitted: passwords, call recordings, personal data, database content',
     'gs_SendMetricsTooltip_warning' => 'Disabling this function may slow bug fixing process and reduce support quality',
     'gs_SendMetricsTooltip_note' => 'Recommended: leave enabled for production systems. Data transmitted only when internet connection available',
-
     // Certificate validation messages
     'cert_CertificateIsEmpty' => 'Certificate is empty',
     'cert_InvalidCertificateFormat' => 'Invalid certificate format: %error%',
@@ -647,5 +620,11 @@ return [
     'cert_FailedToLoadPrivateKeyForPairValidation' => 'Failed to load private key for pair validation',
     'cert_FailedToExtractPublicKeyFromCertificate' => 'Failed to extract public key from certificate',
     'cert_CertificateAndPrivateKeyDoNotMatch' => 'Certificate and private key do not match',
-
+    'gs_NoDataToDelete' => 'There is no data to delete.',
+    'gs_StatOutWorkTimes' => 'Non-working hours rules',
+    'gs_StatOutWorkTimesRouts' => 'Relationships between non-working hours rules and routes',
+    'gs_StatApiKeys' => 'REST API keys',
+    'gs_StatAsteriskRestUsers' => 'ARI users',
+    'gs_StatUserPasskeys' => 'WebAuthn keys (passwordless login)',
+    'gs_SystemManagedPrivateKey' => 'System private key (generated automatically along with the certificate)',
 ];

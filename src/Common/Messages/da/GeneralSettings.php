@@ -1,5 +1,4 @@
 <?php
-
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -18,7 +17,6 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
     'gs_SystemWillRestart' => 'Systemet vil blive genstartet',
     'gs_CallRecordTab' => 'Optagelse af samtaler',
     'gs_RTPStunServer' => 'STUN server adresse (eksempel: stun.test.net:10000)',
@@ -166,7 +164,7 @@ return [
     'gs_DeleteAllStageResettingSettings' => 'Nulstiller PBX indstillinger',
     'gs_DeleteAllStageFinalizing' => 'Afslutter reset proces',
     'gs_DeleteAllStageCompleted' => 'System reset fuldført',
-    'gs_DeleteAllStageRestarting' => 'Initialiserer system genstart',
+    'gs_DeleteAllStageRestarting' => 'Systemet genstarter',
     'gs_StatUsers' => 'Brugere/Interne numre',
     'gs_StatProviders' => 'SIP udbydere',
     'gs_StatCallQueues' => 'Opkaldskøer',
@@ -184,8 +182,7 @@ return [
     'gs_StatCustomFiles' => 'Brugerdefinerede filer',
     'gs_PBXRecordAnnouncementIn' => 'Vælg meddelelse om samtaleoptag for indgående opkald',
     'gs_PBXRecordAnnouncementOut' => 'Vælg meddelelse om samtaleoptag for udgående opkald',
-
-    // General Settings Tooltips    
+    // General Settings Tooltips
     // RestartEveryNight tooltip
     'gs_RestartEveryNightTooltip_header' => 'Daglig PBX genstart',
     'gs_RestartEveryNightTooltip_desc' => 'Automatisk genstart af Asterisk systemet hver nat for at opretholde stabilitet og ydeevne',
@@ -198,7 +195,6 @@ return [
     'gs_RestartEveryNightTooltip_drawback_calls' => 'Afbryder aktive opkald under genstart',
     'gs_RestartEveryNightTooltip_drawback_registration' => 'Kort systemnedtid (10-30 sekunder)',
     'gs_RestartEveryNightTooltip_recommendation' => 'Anbefales for systemer med lav nataktivitet. For 24/7 call centre er det bedre at deaktivere og udføre genstart manuelt i perioder med minimal belastning.',
-    
     // PBXLanguage tooltip
     'gs_PBXLanguageTooltip_header' => 'System besked sprog',
     'gs_PBXLanguageTooltip_desc' => 'Bestemmer sproget for Asterisk systemets stemmemeddelelser til opkaldere og IVR menuer',
@@ -210,7 +206,6 @@ return [
     'gs_PBXLanguageTooltip_restart' => 'Kræver genstart',
     'gs_PBXLanguageTooltip_restart_desc' => 'Ved ændring af sprog vil Asterisk tjenesten blive genstartet i 10-30 sekunder med afbrudt forbindelse.',
     'gs_PBXLanguageTooltip_note' => 'Web interface sproget konfigureres separat for hver bruger',
-    
     // PBXInternalExtensionLength tooltip
     'gs_PBXInternalExtensionLengthTooltip_header' => 'Længde af interne numre',
     'gs_PBXInternalExtensionLengthTooltip_desc' => 'Bestemmer den maksimale længde af medarbejdernes interne numre i systemet',
@@ -224,7 +219,6 @@ return [
     'gs_PBXInternalExtensionLengthTooltip_example_5' => 'Længde 5: numre fra 10000 til 99999',
     'gs_PBXInternalExtensionLengthTooltip_warning' => 'Ændring af denne parameter påvirker ikke eksisterende numre. Hvis du har numre længere end den nye indstilling, vil de fortsat fungere',
     'gs_PBXInternalExtensionLengthTooltip_note' => 'Det anbefales at vælge længde baseret på antallet af medarbejdere: 3 cifre for virksomheder op til 900 medarbejdere, 4 cifre for større organisationer',
-    
     // PBXAllowGuestCalls tooltip
     'gs_AllowGuestCallsTooltip_header' => 'Gæsteopkald uden autorisation',
     'gs_AllowGuestCallsTooltip_desc' => 'Tillader modtagelse af SIP opkald fra ikke-autoriserede enheder og servere uden registrering',
@@ -242,7 +236,6 @@ return [
     'gs_AllowGuestCallsTooltip_security' => 'Sikkerhedsanbefalinger:',
     'gs_AllowGuestCallsTooltip_security_desc' => 'Brug Fail2ban, begræns adgang efter IP, konfigurer indgående routing regler',
     'gs_AllowGuestCallsTooltip_recommendation' => 'Det anbefales at deaktivere denne mulighed, hvis du ikke bruger enheder uden registrering',
-    
     // PBXCallParkingExt tooltip
     'gs_PBXCallParkingExtTooltip_header' => 'Opkaldsparkering',
     'gs_PBXCallParkingExtTooltip_desc' => 'Nummer til midlertidig placering af opkald med mulighed for senere genoptagelse fra enhver telefon',
@@ -257,7 +250,6 @@ return [
     'gs_PBXCallParkingExtTooltip_example' => 'Eksempel på brug:',
     'gs_PBXCallParkingExtTooltip_example_desc' => 'Sekretær tager opkald, parkerer det på 800, systemet meddeler "Opkald parkeret på 801". Manager taster 801 og fortsætter samtalen',
     'gs_PBXCallParkingExtTooltip_note' => 'Hvis opkaldet ikke hentes indenfor timeout, returnerer det til den oprindelige telefon',
-    
     // PBXFeatureAttendedTransfer tooltip
     'gs_PBXFeatureAttendedTransferTooltip_header' => 'Konsultativ viderestilling',
     'gs_PBXFeatureAttendedTransferTooltip_desc' => 'Tastekombination for viderestilling af opkald med forudgående konsultation',
@@ -269,7 +261,6 @@ return [
     'gs_PBXFeatureAttendedTransferTooltip_benefits' => 'Fordele:',
     'gs_PBXFeatureAttendedTransferTooltip_benefits_desc' => 'Tillader at advare kollega om viderestilling og overføre samtalekontekst',
     'gs_PBXFeatureAttendedTransferTooltip_note' => 'Hvis abonnenten ikke svarer eller er optaget, returnerer opkaldet til dig',
-    
     // PBXFeatureBlindTransfer tooltip
     'gs_PBXFeatureBlindTransferTooltip_header' => 'Blind viderestilling',
     'gs_PBXFeatureBlindTransferTooltip_desc' => 'Tastekombination for øjeblikkelig viderestilling af opkald uden konsultation',
@@ -279,7 +270,6 @@ return [
     'gs_PBXFeatureBlindTransferTooltip_how_hangup' => 'Opkaldet vil blive viderestillet øjeblikkeligt',
     'gs_PBXFeatureBlindTransferTooltip_warning' => 'Abonnenten kan være utilgængelig eller optaget. Brug med forsigtighed',
     'gs_PBXFeatureBlindTransferTooltip_note' => 'For vigtige opkald anbefales konsultativ viderestilling',
-    
     // PBXFeaturePickupExten tooltip
     'gs_PBXFeaturePickupExtenTooltip_header' => 'Opkaldsafhentning',
     'gs_PBXFeaturePickupExtenTooltip_desc' => 'Nummer til afhentning af indgående opkald til andre telefoner',
@@ -290,7 +280,6 @@ return [
     'gs_PBXFeaturePickupExtenTooltip_type_directed_desc' => 'Afhenter opkald til specifikt internt nummer',
     'gs_PBXFeaturePickupExtenTooltip_usage' => 'Brug:',
     'gs_PBXFeaturePickupExtenTooltip_usage_desc' => 'Når en anden telefon ringer, tast *8 for afhentning eller *8201 for afhentning af opkald til nummer 201',
-    
     // PBXFeatureAtxferNoAnswerTimeout tooltip
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_header' => 'Timeout for retur efter konsultativ viderestilling',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_desc' => 'Bestemmer ventetiden for svar ved konsultativ viderestilling af opkald, hvorefter opkaldet returnerer til operatøren.',
@@ -304,7 +293,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_standard' => '30-45 sek - standard indstilling for kontorer',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_quick' => '15-20 sek - for hurtig retur (høj belastning)',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_extended' => '60-90 sek - for vigtige viderestillinger eller fjernkontorer',
-    
     // PBXFeatureDigitTimeout tooltip
     'gs_PBXFeatureDigitTimeoutTooltip_header' => 'Timeout mellem cifre ved nummeropkald',
     'gs_PBXFeatureDigitTimeoutTooltip_desc' => 'Maksimal ventetid mellem tryk på cifre ved nummeropkald eller brug af funktioner (i millisekunder).',
@@ -318,7 +306,6 @@ return [
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease' => 'Reducér til 3000-5000 ms:',
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease_desc' => 'For erfarne brugere og hurtigere kommandobehandling',
     'gs_PBXFeatureDigitTimeoutTooltip_footer' => 'Advarsel: for små værdier kan føre til afbrydelse af nummeropkald af lange numre',
-    
     // RTPPortRange tooltip (for both RTPPortFrom and RTPPortTo)
     'gs_RTPPortRangeTooltip_header' => 'RTP port interval',
     'gs_RTPPortRangeTooltip_desc' => 'Definerer intervallet af UDP porte til transmission af mediestrømme (audio/video) i realtid mellem abonnenter.',
@@ -338,7 +325,6 @@ return [
     'gs_RTPPortRangeTooltip_change_nat' => 'NAT/Firewall konfiguration:',
     'gs_RTPPortRangeTooltip_change_nat_desc' => 'Sørg for at det angivne porteinterval er åbent i firewall og konfigurer port forwarding',
     'gs_RTPPortRangeTooltip_footer' => 'Vigtigt: ændring kræver Asterisk genstart og tilsvarende konfiguration af netværksudstyr',
-    
     // RTPStunServer tooltip
     'gs_RTPStunServerTooltip_header' => 'STUN server',
     'gs_RTPStunServerTooltip_desc' => 'STUN (Session Traversal Utilities for NAT) - server til at bestemme ekstern IP-adresse og port ved arbejde gennem NAT.',
@@ -359,7 +345,6 @@ return [
     'gs_RTPStunServerTooltip_example_2' => 'stun1.l.google.com:19302 (Google backup)',
     'gs_RTPStunServerTooltip_example_3' => 'stun.ekiga.net:3478 (Ekiga)',
     'gs_RTPStunServerTooltip_footer' => 'Anbefaling: lad feltet være tomt hvis PBX har direkte offentlig IP eller alle abonnenter er på lokalt netværk',
-    
     // SIPAuthPrefix tooltip
     'gs_SIPAuthPrefixTooltip_header' => 'Præfiks for SIP autorisation',
     'gs_SIPAuthPrefixTooltip_desc' => 'Yderligere suffiks, tilføjet til brugernavnet ved SIP-autorisation for øget sikkerhed.',
@@ -378,7 +363,6 @@ return [
     'gs_SIPAuthPrefixTooltip_use_4' => 'Overholdelse af virksomhedens sikkerhedspolitikker',
     'gs_SIPAuthPrefixTooltip_warning_header' => 'Vigtigt:',
     'gs_SIPAuthPrefixTooltip_warning' => 'Efter ændring af præfiks er det nødvendigt at opdatere indstillinger på alle SIP-enheder og softphones',
-    
     // SIPDefaultExpiry tooltip
     'gs_SIPDefaultExpiryTooltip_header' => 'Standard SIP registreringsinterval',
     'gs_SIPDefaultExpiryTooltip_desc' => 'Bestemmer hvor ofte SIP-enheder skal opdatere deres registrering på serveren. Påvirker hastigheden af enhedstilgængelighedsdetektion og netværksbelastning.',
@@ -395,7 +379,6 @@ return [
     'gs_SIPDefaultExpiryTooltip_change_stable' => 'Øg til 300-600 sek: for stabile kontortelefoner på lokalt netværk',
     'gs_SIPDefaultExpiryTooltip_change_battery' => 'Øg til 600-1800 sek: for batterisparender på mobile enheder',
     'gs_SIPDefaultExpiryTooltip_note' => 'Tip: mindre værdier detekterer utilgængelighed hurtigere, men øger netværksbelastningen',
-    
     // SIPExpiryRange tooltip (combined for Min and Max)
     'gs_SIPExpiryRangeTooltip_header' => 'SIP registreringsintervaller',
     'gs_SIPExpiryRangeTooltip_desc' => 'Definerer minimum og maksimum tilladte intervaller mellem SIP-enhed registreringer på serveren.',
@@ -419,7 +402,6 @@ return [
     'gs_SIPExpiryRangeTooltip_warning_header' => 'Vigtigt:',
     'gs_SIPExpiryRangeTooltip_warning' => 'Minimumværdi skal være mindre end standardværdien (SIPDefaultExpiry), og maksimumværdien - større',
     'gs_SIPExpiryRangeTooltip_note' => 'Tip: værdier påvirker balancen mellem netværksbelastning og hastighed af enhedstilgængeligheds-detektion',
-    
     // AMIEnabled tooltip
     'gs_AMIEnabledTooltip_header' => 'AMI (Asterisk Manager Interface)',
     'gs_AMIEnabledTooltip_desc' => 'Programmeringsgrænseflade til styring og overvågning af Asterisk via TCP/IP forbindelse.',
@@ -445,7 +427,6 @@ return [
     'gs_AMIEnabledTooltip_warning_header' => 'Advarsel:',
     'gs_AMIEnabledTooltip_warning' => 'Deaktivering af AMI kan forstyrre modulernes og integrationernes funktion',
     'gs_AMIEnabledTooltip_footer' => 'AMI port: 5038. Konfigurer adgang via AMI managere for sikkerhed',
-    
     // AJAMEnabled tooltip
     'gs_AJAMEnabledTooltip_header' => 'AJAM (Asynchronous Javascript Asterisk Manager)',
     'gs_AJAMEnabledTooltip_desc' => 'Web-interface for adgang til AMI via HTTP/HTTPS protokol.',
@@ -467,7 +448,6 @@ return [
     'gs_AJAMEnabledTooltip_warning_header' => 'Vigtigt:',
     'gs_AJAMEnabledTooltip_warning' => 'Nogle MikoPBX moduler kan bruge AJAM til deres arbejde',
     'gs_AJAMEnabledTooltip_note' => 'AJAM bruger de samme legitimationsoplysninger som AMI managere',
-    
     // SSHAuthorizedKeys tooltip
     'gs_SSHAuthorizedKeysTooltip_header' => 'Autoriserede SSH nøgler',
     'gs_SSHAuthorizedKeysTooltip_desc' => 'Liste over offentlige SSH nøgler til adgangskodeoløs adgang til systemet. Tillader login via SSH ved brug af privat nøgle i stedet for adgangskode.',
@@ -492,7 +472,6 @@ return [
     'gs_SSHAuthorizedKeysTooltip_warning_header' => 'Vigtigt!',
     'gs_SSHAuthorizedKeysTooltip_warning' => 'Efter tilføjelse af nøgler anbefales det at deaktivere adgangskode autentificering for øget sikkerhed',
     'gs_SSHAuthorizedKeysTooltip_note' => 'Tip: brug PuTTYgen eller OpenSSH til nøglegenerering i Windows',
-    
     // SSH_ID_RSA_PUB tooltip
     'gs_SSH_ID_RSA_PUBTooltip_header' => 'PBX offentlig nøgle',
     'gs_SSH_ID_RSA_PUBTooltip_desc' => 'RSA offentlig nøgle for denne PBX til forbindelse til andre systemer uden adgangskode.',
@@ -514,7 +493,6 @@ return [
     'gs_SSH_ID_RSA_PUBTooltip_warning_header' => 'Sikkerhed:',
     'gs_SSH_ID_RSA_PUBTooltip_warning' => 'Denne nøgle er offentlig og kan sikkert transmitteres til tredjeparter. Privat nøgle lagres i systemet og bør aldrig forlade PBX',
     'gs_SSH_ID_RSA_PUBTooltip_note' => 'Bemærk: ændring eller regenerering af nøgle kræver opdatering på alle servere, hvor den bruges',
-    
     // WEBHTTPSPublicKey tooltip
     'gs_WEBHTTPSPublicKeyTooltip_header' => 'SSL/TLS certifikat (offentlig nøgle)',
     'gs_WEBHTTPSPublicKeyTooltip_desc' => 'Offentlig del af SSL/TLS certifikat til kryptering af HTTPS forbindelser og beskyttelse af transmitterede data.',
@@ -535,8 +513,7 @@ return [
     'gs_WEBHTTPSPublicKeyTooltip_chain_desc' => 'Hvis du har mellemliggende certifikater (intermediate), tilføj dem efter hovedcertifikat i samme felt',
     'gs_WEBHTTPSPublicKeyTooltip_note' => 'Anbefaling: brug Let\'s Encrypt modul til automatisk certifikatadministration',
     'gs_WEBHTTPSPublicKeyTooltip_footer' => 'Vigtigt: efter certifikatændring vil webserveren blive genstartet',
-    
-    // WEBHTTPSPrivateKey tooltip  
+    // WEBHTTPSPrivateKey tooltip
     'gs_WEBHTTPSPrivateKeyTooltip_header' => 'SSL/TLS privat nøgle',
     'gs_WEBHTTPSPrivateKeyTooltip_desc' => 'Hemmelig nøgle til dekryptering af SSL/TLS forbindelser. Skal svare til offentligt certifikat.',
     'gs_WEBHTTPSPrivateKeyTooltip_what_is' => 'Hvad er privat nøgle:',
@@ -558,7 +535,6 @@ return [
     'gs_WEBHTTPSPrivateKeyTooltip_compatibility_desc' => 'Nøgle skal nøjagtigt svare til offentligt certifikat. Ved uoverensstemmelse vil HTTPS ikke virke',
     'gs_WEBHTTPSPrivateKeyTooltip_note' => 'Tip: Let\'s Encrypt modul administrerer nøglepar automatisk',
     'gs_WEBHTTPSPrivateKeyTooltip_footer' => 'Som standard: systemet genererer selvsigneret certifikat ved første installation',
-    
     // SendMetrics tooltips
     'gs_SendMetricsTooltip_header' => 'Afsendelse af metrikker og fejlrapporter',
     'gs_SendMetricsTooltip_desc' => 'Automatisk afsendelse af fejlinformation til Sentry system for forbedring af produktkvalitet',
@@ -578,5 +554,77 @@ return [
     'gs_SendMetricsTooltip_privacy_desc' => 'TRANSMITTERES IKKE: adgangskoder, samtaleoptag, personlige data, database indhold',
     'gs_SendMetricsTooltip_warning' => 'Deaktivering af denne funktion kan forsinke fejlrettelsesprocessen og reducere supportkvalitet',
     'gs_SendMetricsTooltip_note' => 'Anbefaling: lad det være aktiveret for production systemer. Data transmitteres kun ved internetforbindelse',
-    
+    'gs_AMISettings' => 'AMI-indstillinger',
+    'gs_AJAMSettings' => 'AJAM-indstillinger',
+    'gs_AJAMRequiresAMI' => 'AJAM kræver, at AMI er aktiveret',
+    'gs_ARIAllowedOriginsTooltip_example_3' => 'https://app.mycompany.com - til produktionsapplikationer',
+    'gs_ARIEnabled' => 'Brug AMI interface',
+    'gs_ARIAllowedOrigins' => 'Tilladte CORS-oprindelser',
+    'gs_HTTPSettings' => 'HTTP-serverindstillinger',
+    'gs_HTTPPort' => 'HTTP-port (AJAM og ARI)',
+    'gs_HTTPPortTLS' => 'HTTPS-port (AJAM og ARI)',
+    'gs_StatOutWorkTimesRouts' => 'Forholdet mellem regler for ikke-arbejdstid og ruter',
+    'gs_StatApiKeys' => 'REST API-nøgler',
+    'gs_StatAsteriskRestUsers' => 'AMI-brugere',
+    'gs_StatUserPasskeys' => 'WebAuthn-nøgler (adgangskodefri login)',
+    'gs_ARIEnabledTooltip_default_desc' => 'Deaktiveret (aktiver om nødvendigt)',
+    'gs_ARIEnabledTooltip_enable_1' => 'Udvikling af webtelefoner eller mobilapplikationer',
+    'gs_ARIEnabledTooltip_enable_2' => 'Oprettelse af brugerdefinerede IVR- og stemmeapplikationer',
+    'gs_ARIEnabledTooltip_enable_3' => 'Integration med moderne webframeworks',
+    'gs_ARIEnabledTooltip_warning' => 'ARI kræver programmeringskendskab for at oprette applikationer',
+    'gs_ARIEnabledTooltip_footer' => 'Bruger de samme porte som AJAM. WebSocket er tilgængelig på /ari/events',
+    // ARIAllowedOrigins tooltip
+    'gs_ARIAllowedOriginsTooltip_header' => 'Tilladte CORS-oprindelser',
+    'gs_ARIAllowedOriginsTooltip_desc' => 'Liste over domæner, hvorfra anmodninger på tværs af domæner til ARI er tilladt.',
+    'gs_ARIAllowedOriginsTooltip_what_is' => 'Hvad er CORS:',
+    'gs_ARIAllowedOriginsTooltip_what_is_desc' => 'En browsersikkerhedsmekanisme til at kontrollere API-adgang fra andre domæner',
+    'gs_ARIAllowedOriginsTooltip_format' => 'Inputformat:',
+    'gs_ARIAllowedOriginsTooltip_format_desc' => 'En kommasepareret liste over URL\'er (f.eks. http://example.com, https://app.example.com)',
+    'gs_ARIAllowedOriginsTooltip_examples' => 'Eksempler på værdier:',
+    'gs_ARIAllowedOriginsTooltip_example_1' => '* - tillad alle kilder (usikkert)',
+    'gs_ARIAllowedOriginsTooltip_example_2' => 'http://localhost:3000 - til lokal udvikling',
+    'gs_NoDataToDelete' => 'Der er ingen data at slette.',
+    'gs_ARIAllowedOriginsTooltip_security_2' => 'Angiv kun betroede domæner',
+    'cert_FailedToLoadCertificateForPairValidation' => 'Kunne ikke indlæse certifikat for at bekræfte parret',
+    'cert_FailedToLoadPrivateKeyForPairValidation' => 'Kunne ikke indlæse privat nøgle til parbekræftelse',
+    'cert_FailedToExtractPublicKeyFromCertificate' => 'Kunne ikke udtrække den offentlige nøgle fra certifikatet',
+    'cert_CertificateAndPrivateKeyDoNotMatch' => 'Certifikatet og den private nøgle stemmer ikke overens.',
+    'gs_ARISettings' => 'URI-indstillinger',
+    'gs_StatOutWorkTimes' => 'Regler for ikke-arbejdstid',
+    'gs_ARIEnabledTooltip_usage_recording' => 'Optagelse og behandling af opkald i realtid',
+    'gs_ARIEnabledTooltip_usage_custom' => 'Oprettelse af brugerdefineret telefonlogik',
+    'gs_ARIEnabledTooltip_example_webphone' => 'Webtelefoner og mobilapplikationer',
+    'gs_ARIEnabledTooltip_example_bot' => 'Stemmebots og virtuelle assistenter',
+    'gs_ARIEnabledTooltip_example_queue' => 'Avancerede køstyringssystemer',
+    'gs_ARIEnabledTooltip_example_analytics' => 'Taleanalysesystemer',
+    'gs_ARIEnabledTooltip_default' => 'Standard værdi:',
+    'gs_ARIEnabledTooltip_when_enable' => 'Hvornår skal deaktiveres:',
+    'gs_ARIAllowedOriginsTooltip_security' => 'Sikkerhedsanbefalinger:',
+    'gs_ARIAllowedOriginsTooltip_security_1' => 'Brug aldrig * i produktion',
+    'gs_ARIAllowedOriginsTooltip_security_3' => 'Brug HTTPS til produktionsdomæner',
+    'gs_ARIAllowedOriginsTooltip_default' => 'Standard værdi:',
+    'gs_ARIAllowedOriginsTooltip_default_desc' => 'Tom (CORS deaktiveret, kun adgang fra samme domæne)',
+    'gs_ARIAllowedOriginsTooltip_footer' => 'Ændringerne anvendes efter lagring af indstillingerne.',
+    'gs_ARIEnabledTooltip_warning_header' => 'Advarsel:',
+    'gs_SystemManagedPrivateKey' => 'Systemets private nøgle (genereres automatisk sammen med certifikatet)',
+    // ARIEnabled tooltip
+    'gs_ARIEnabledTooltip_header' => 'ARI (Asterisk REST-grænseflade)',
+    'gs_ARIEnabledTooltip_desc' => 'RESTful API til at bygge moderne realtidsapplikationer med Asterisk.',
+    'gs_ARIEnabledTooltip_what_is' => 'Hvad er AMI:',
+    'gs_ARIEnabledTooltip_what_is_desc' => 'REST/WebSocket-grænseflade for fuld kontrol over kanaler og broer',
+    'gs_ARIEnabledTooltip_usage' => 'Hvad bruges det til:',
+    'gs_ARIEnabledTooltip_usage_webrtc' => 'Oprettelse af WebRTC-applikationer og softphones',
+    'gs_ARIEnabledTooltip_usage_ivr' => 'Udvikling af interaktive stemmemenuer (IVR)',
+    'gs_ARIEnabledTooltip_usage_conference' => 'Håndtering af telefonmøder',
+    'gs_ARIEnabledTooltip_examples' => 'Eksempler på brug af ARI:',
+    // Certificate validation messages
+    'cert_CertificateIsEmpty' => 'Certifikatet er tomt',
+    'cert_InvalidCertificateFormat' => 'Ugyldigt certifikatformat: %error%',
+    'cert_FailedToParseCertificate' => 'Kunne ikke parse certifikatet',
+    'cert_CertificateExpired' => 'Certifikatet udløb den %date%',
+    'cert_CertificateExpiresSoon' => 'Certifikatet udløber om %days% dage',
+    'cert_CertificateNotYetValid' => 'Certifikatet er endnu ikke gyldigt før %date%',
+    'cert_PrivateKeyIsEmpty' => 'Den private nøgle er tom',
+    'cert_InvalidPrivateKeyFormat' => 'Ugyldigt format for privat nøgle: %error%',
+    'cert_FailedToGetPrivateKeyDetails' => 'Kunne ikke hente oplysninger om privat nøgle',
 ];

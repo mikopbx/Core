@@ -1,5 +1,4 @@
 <?php
-
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -18,7 +17,6 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
     'gs_SystemWillRestart' => 'Järjestelmä käynnistyy uudelleen',
     'gs_CallRecordTab' => 'Puheluiden tallennus',
     'gs_RTPStunServer' => 'STUN-palvelimen osoite (esimerkki: stun.test.net:10000)',
@@ -166,7 +164,7 @@ return [
     'gs_DeleteAllStageResettingSettings' => 'Nollataan PBX-asetukset',
     'gs_DeleteAllStageFinalizing' => 'Viimeistellään nollausprosessi',
     'gs_DeleteAllStageCompleted' => 'Järjestelmän nollaus valmis',
-    'gs_DeleteAllStageRestarting' => 'Käynnistetään järjestelmän uudelleenkäynnistys',
+    'gs_DeleteAllStageRestarting' => 'Järjestelmä käynnistyy uudelleen',
     'gs_StatUsers' => 'Käyttäjät/Sisäiset numerot',
     'gs_StatProviders' => 'SIP-palveluntarjoajat',
     'gs_StatCallQueues' => 'Puhelujonot',
@@ -184,8 +182,7 @@ return [
     'gs_StatCustomFiles' => 'Mukautetut tiedostot',
     'gs_PBXRecordAnnouncementIn' => 'Valitse puhelun tallennusilmoitus saapuville puheluille',
     'gs_PBXRecordAnnouncementOut' => 'Valitse puhelun tallennusilmoitus lähteville puheluille',
-
-    // General Settings Tooltips    
+    // General Settings Tooltips
     // RestartEveryNight tooltip
     'gs_RestartEveryNightTooltip_header' => 'Päivittäinen PBX-uudelleenkäynnistys',
     'gs_RestartEveryNightTooltip_desc' => 'Automaattinen Asterisk-järjestelmän uudelleenkäynnistys joka yö vakauden ja suorituskyvyn ylläpitämiseksi',
@@ -198,7 +195,6 @@ return [
     'gs_RestartEveryNightTooltip_drawback_calls' => 'Aktiivisten puhelujen katkeaminen uudelleenkäynnistyksen aikana',
     'gs_RestartEveryNightTooltip_drawback_registration' => 'Lyhytaikainen järjestelmän käyttämättömyys (10-30 sekuntia)',
     'gs_RestartEveryNightTooltip_recommendation' => 'Suositellaan järjestelmille, joissa on vähän yötoimintaa. 24/7-puhelinpalvelukeskuksissa on parempi poistaa käytöstä ja suorittaa uudelleenkäynnistys manuaalisesti vähimmäiskuormituksen aikoina.',
-    
     // PBXLanguage tooltip
     'gs_PBXLanguageTooltip_header' => 'Järjestelmäviestien kieli',
     'gs_PBXLanguageTooltip_desc' => 'Määrittää Asterisk-järjestelmän ääniviestejen kielen soittajille ja IVR-valikoille',
@@ -210,7 +206,6 @@ return [
     'gs_PBXLanguageTooltip_restart' => 'Vaatii uudelleenkäynnistyksen',
     'gs_PBXLanguageTooltip_restart_desc' => 'Kielen vaihdossa Asterisk-palvelu käynnistyy uudelleen 10-30 sekunnin ajaksi yhteyskatkoksen kanssa.',
     'gs_PBXLanguageTooltip_note' => 'Web-käyttöliittymän kieli määritetään erikseen jokaiselle käyttäjälle',
-    
     // PBXInternalExtensionLength tooltip
     'gs_PBXInternalExtensionLengthTooltip_header' => 'Sisäisten numeroiden pituus',
     'gs_PBXInternalExtensionLengthTooltip_desc' => 'Määrittää työntekijöiden sisäisten numeroiden maksimipituuden järjestelmässä',
@@ -224,7 +219,6 @@ return [
     'gs_PBXInternalExtensionLengthTooltip_example_5' => 'Pituus 5: numerot 10000-99999',
     'gs_PBXInternalExtensionLengthTooltip_warning' => 'Tämän parametrin muuttaminen ei vaikuta olemassa oleviin numeroihin. Jos sinulla on uutta asetusta pidempiä numeroita, ne jatkavat toimintaansa',
     'gs_PBXInternalExtensionLengthTooltip_note' => 'Suositellaan valitsemaan pituus työntekijämäärän perusteella: 3 numeroa yrityksille, joissa on alle 900 työntekijää, 4 numeroa suuremmille organisaatioille',
-    
     // PBXAllowGuestCalls tooltip
     'gs_AllowGuestCallsTooltip_header' => 'Vieraspuhelut ilman valtuutusta',
     'gs_AllowGuestCallsTooltip_desc' => 'Sallii SIP-puhelujen vastaanoton valtuuttamattomilta laitteilta ja palvelimilta ilman rekisteröintiä',
@@ -242,7 +236,6 @@ return [
     'gs_AllowGuestCallsTooltip_security' => 'Turvallisuussuositukset:',
     'gs_AllowGuestCallsTooltip_security_desc' => 'Käytä Fail2ban:ia, rajoita IP-pääsyä, määritä saapuvien puhelujen reitityssäännöt',
     'gs_AllowGuestCallsTooltip_recommendation' => 'Suositellaan tämän vaihtoehdon poistamista käytöstä, jos et käytä laitteita ilman rekisteröintiä',
-    
     // PBXCallParkingExt tooltip
     'gs_PBXCallParkingExtTooltip_header' => 'Puhelujen pysäköinti',
     'gs_PBXCallParkingExtTooltip_desc' => 'Numero puhelun väliaikaiseen sijoittamiseen mahdollisuudella palauttaa se myöhemmin mistä tahansa puhelimesta',
@@ -257,7 +250,6 @@ return [
     'gs_PBXCallParkingExtTooltip_example' => 'Käyttöesimerkki:',
     'gs_PBXCallParkingExtTooltip_example_desc' => 'Sihteeri ottaa puhelun vastaan, pysäköi sen numeroon 800, järjestelmä ilmoittaa "Puhelu pysäköity paikkaan 801". Johtaja valitsee 801:n ja jatkaa keskustelua',
     'gs_PBXCallParkingExtTooltip_note' => 'Jos puhelua ei noudeta aikarajan sisällä, se palaa alkuperäiseen puhelimeen',
-    
     // PBXFeatureAttendedTransfer tooltip
     'gs_PBXFeatureAttendedTransferTooltip_header' => 'Konsultatiivinen siirto',
     'gs_PBXFeatureAttendedTransferTooltip_desc' => 'Näppäinyhdistelmä puhelun siirtämiseen ennakkokonsultaatiolla',
@@ -269,7 +261,6 @@ return [
     'gs_PBXFeatureAttendedTransferTooltip_benefits' => 'Edut:',
     'gs_PBXFeatureAttendedTransferTooltip_benefits_desc' => 'Mahdollistaa kollegan varoittamisen siirrosta ja keskustelun kontekstin välittämisen',
     'gs_PBXFeatureAttendedTransferTooltip_note' => 'Jos tilaaja ei vastaa tai on kiireinen, puhelu palaa takaisin sinulle',
-    
     // PBXFeatureBlindTransfer tooltip
     'gs_PBXFeatureBlindTransferTooltip_header' => 'Sokea siirto',
     'gs_PBXFeatureBlindTransferTooltip_desc' => 'Näppäinyhdistelmä puhelun välittömään siirtoon ilman konsultaatiota',
@@ -279,7 +270,6 @@ return [
     'gs_PBXFeatureBlindTransferTooltip_how_hangup' => 'Puhelu siirretään välittömästi',
     'gs_PBXFeatureBlindTransferTooltip_warning' => 'Tilaaja saattaa olla tavoittamattomissa tai kiireinen. Käytä varoen',
     'gs_PBXFeatureBlindTransferTooltip_note' => 'Tärkeille puheluille suositellaan konsultatiivista siirtoa',
-    
     // PBXFeaturePickupExten tooltip
     'gs_PBXFeaturePickupExtenTooltip_header' => 'Puhelun nouto',
     'gs_PBXFeaturePickupExtenTooltip_desc' => 'Numero saapuvien puhelujen noutamiseen muihin puhelimiin',
@@ -290,7 +280,6 @@ return [
     'gs_PBXFeaturePickupExtenTooltip_type_directed_desc' => 'Noutaa puhelun tiettyyn sisäiseen numeroon',
     'gs_PBXFeaturePickupExtenTooltip_usage' => 'Käyttö:',
     'gs_PBXFeaturePickupExtenTooltip_usage_desc' => 'Kun toinen puhelin soi, valitse *8 noutoa varten tai *8201 puhelun noutamiseksi numeroon 201',
-    
     // PBXFeatureAtxferNoAnswerTimeout tooltip
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_header' => 'Palautus-timeout konsultatiivisen siirron jälkeen',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_desc' => 'Määrittää vastauksen odotusajan konsultatiivisen puhelunsiirron aikana, jonka jälkeen puhelu palaa operaattorille.',
@@ -304,7 +293,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_standard' => '30-45 sek - vakioasetus toimistoille',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_quick' => '15-20 sek - nopeaa palautusta varten (korkea kuormitus)',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_extended' => '60-90 sek - tärkeille siirroille tai etätoimistoille',
-    
     // PBXFeatureDigitTimeout tooltip
     'gs_PBXFeatureDigitTimeoutTooltip_header' => 'Timeout numeroiden välillä soitossa',
     'gs_PBXFeatureDigitTimeoutTooltip_desc' => 'Maksimaalinen odotusaika numeropainikkeiden välillä puhelua soitettaessa tai toimintoja käytettäessä (millisekunneissa).',
@@ -318,7 +306,6 @@ return [
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease' => 'Vähennä 3000-5000 ms:iin:',
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease_desc' => 'Kokeneille käyttäjille ja komentojen käsittelyn nopeuttamiseksi',
     'gs_PBXFeatureDigitTimeoutTooltip_footer' => 'Varoitus: liian pienet arvot voivat johtaa pitkien numeroiden soiton katkeamiseen',
-    
     // RTPPortRange tooltip (for both RTPPortFrom and RTPPortTo)
     'gs_RTPPortRangeTooltip_header' => 'RTP-porttialue',
     'gs_RTPPortRangeTooltip_desc' => 'Määrittää UDP-porttialueen mediavirtojen (ääni/video) välittämiseen reaaliajassa tilaajien välillä.',
@@ -338,7 +325,6 @@ return [
     'gs_RTPPortRangeTooltip_change_nat' => 'NAT/Firewall-määritys:',
     'gs_RTPPortRangeTooltip_change_nat_desc' => 'Varmista, että määritetty porttialue on auki palomuurissa ja määritä port forwarding',
     'gs_RTPPortRangeTooltip_footer' => 'Tärkeää: muutos vaatii Asterisk-uudelleenkäynnistyksen ja vastaavan verkkolaitteistojen määrityksen',
-    
     // RTPStunServer tooltip
     'gs_RTPStunServerTooltip_header' => 'STUN-palvelin',
     'gs_RTPStunServerTooltip_desc' => 'STUN (Session Traversal Utilities for NAT) - palvelin ulkoisen IP-osoitteen ja portin määrittämiseen NAT:n kautta työskenneltäessä.',
@@ -359,7 +345,6 @@ return [
     'gs_RTPStunServerTooltip_example_2' => 'stun1.l.google.com:19302 (Google varmuuskopio)',
     'gs_RTPStunServerTooltip_example_3' => 'stun.ekiga.net:3478 (Ekiga)',
     'gs_RTPStunServerTooltip_footer' => 'Suositus: jätä kenttä tyhjäksi, jos PBX:llä on suora julkinen IP tai kaikki tilaajat ovat paikallisverkossa',
-    
     // SIPAuthPrefix tooltip
     'gs_SIPAuthPrefixTooltip_header' => 'SIP-valtuutuksen etuliite',
     'gs_SIPAuthPrefixTooltip_desc' => 'Lisäloppuliite, joka lisätään käyttäjänimeen SIP-valtuutuksessa turvallisuuden parantamiseksi.',
@@ -378,7 +363,6 @@ return [
     'gs_SIPAuthPrefixTooltip_use_4' => 'Yrityksen turvallisuuskäytäntöjen noudattaminen',
     'gs_SIPAuthPrefixTooltip_warning_header' => 'Tärkeää:',
     'gs_SIPAuthPrefixTooltip_warning' => 'Etuliitteen muuttamisen jälkeen on tarpeen päivittää asetukset kaikissa SIP-laitteissa ja softphone-puhelimissa',
-    
     // SIPDefaultExpiry tooltip
     'gs_SIPDefaultExpiryTooltip_header' => 'SIP-rekisteröinnin oletusväli',
     'gs_SIPDefaultExpiryTooltip_desc' => 'Määrittää kuinka usein SIP-laitteiden tulee päivittää rekisteröintinsä palvelimella. Vaikuttaa laitteen saavutettavuuden tunnistamisen nopeuteen ja verkkoliikenteeseen.',
@@ -395,7 +379,6 @@ return [
     'gs_SIPDefaultExpiryTooltip_change_stable' => 'Kasvata 300-600 sek:iin: vakaille toimistopuhelimille paikallisverkossa',
     'gs_SIPDefaultExpiryTooltip_change_battery' => 'Kasvata 600-1800 sek:iin: mobiililaitteiden akkun säästämiseksi',
     'gs_SIPDefaultExpiryTooltip_note' => 'Vinkki: pienemmät arvot tunnistavat saavuttamattomuuden nopeammin, mutta lisäävät verkon kuormitusta',
-    
     // SIPExpiryRange tooltip (combined for Min and Max)
     'gs_SIPExpiryRangeTooltip_header' => 'SIP-rekisteröintivälit',
     'gs_SIPExpiryRangeTooltip_desc' => 'Määrittää minimi- ja maksimisallitut välit SIP-laiterekisteröintien välillä palvelimella.',
@@ -419,7 +402,6 @@ return [
     'gs_SIPExpiryRangeTooltip_warning_header' => 'Tärkeää:',
     'gs_SIPExpiryRangeTooltip_warning' => 'Minimiarvon tulee olla pienempi kuin oletusarvo (SIPDefaultExpiry), ja maksimiarvon - suurempi',
     'gs_SIPExpiryRangeTooltip_note' => 'Vinkki: arvot vaikuttavat tasapainoon verkkoliikenteen ja laitteiden saavutettavuuden tunnistamisen nopeuden välillä',
-    
     // AMIEnabled tooltip
     'gs_AMIEnabledTooltip_header' => 'AMI (Asterisk Manager Interface)',
     'gs_AMIEnabledTooltip_desc' => 'Ohjelmointirajapinta Asteriskin hallintaan ja seurantaan TCP/IP-yhteyden kautta.',
@@ -445,7 +427,6 @@ return [
     'gs_AMIEnabledTooltip_warning_header' => 'Varoitus:',
     'gs_AMIEnabledTooltip_warning' => 'AMI:n käytöstä poistaminen voi häiritä moduulien ja integrointien toimintaa',
     'gs_AMIEnabledTooltip_footer' => 'AMI-portti: 5038. Määritä pääsy AMI-managerien kautta turvallisuuden vuoksi',
-    
     // AJAMEnabled tooltip
     'gs_AJAMEnabledTooltip_header' => 'AJAM (Asynchronous Javascript Asterisk Manager)',
     'gs_AJAMEnabledTooltip_desc' => 'Web-käyttöliittymä AMI:hin pääsyyn HTTP/HTTPS-protokollan kautta.',
@@ -467,7 +448,6 @@ return [
     'gs_AJAMEnabledTooltip_warning_header' => 'Tärkeää:',
     'gs_AJAMEnabledTooltip_warning' => 'Jotkut MikoPBX-moduulit voivat käyttää AJAM:ia toiminnassaan',
     'gs_AJAMEnabledTooltip_note' => 'AJAM käyttää samoja tunnistetietoja kuin AMI-managerit',
-    
     // SSHAuthorizedKeys tooltip
     'gs_SSHAuthorizedKeysTooltip_header' => 'Valtuutetut SSH-avaimet',
     'gs_SSHAuthorizedKeysTooltip_desc' => 'Lista julkisista SSH-avaimista salasanattomaan järjestelmäpääsyyn. Sallii SSH-sisäänkirjautumisen yksityisellä avaimella salasanan sijaan.',
@@ -492,7 +472,6 @@ return [
     'gs_SSHAuthorizedKeysTooltip_warning_header' => 'Tärkeää!',
     'gs_SSHAuthorizedKeysTooltip_warning' => 'Avainten lisäämisen jälkeen suositellaan salasanatodennuksen poistamista käytöstä turvallisuuden parantamiseksi',
     'gs_SSHAuthorizedKeysTooltip_note' => 'Vinkki: käytä PuTTYgen:iä tai OpenSSH:ta avainten luomiseen Windowsissa',
-    
     // SSH_ID_RSA_PUB tooltip
     'gs_SSH_ID_RSA_PUBTooltip_header' => 'PBX:n julkinen avain',
     'gs_SSH_ID_RSA_PUBTooltip_desc' => 'Tämän PBX:n RSA-julkinen avain muihin järjestelmiin yhdistämiseen ilman salasanaa.',
@@ -514,7 +493,6 @@ return [
     'gs_SSH_ID_RSA_PUBTooltip_warning_header' => 'Turvallisuus:',
     'gs_SSH_ID_RSA_PUBTooltip_warning' => 'Tämä avain on julkinen ja voidaan turvallisesti siirtää kolmansille osapuolille. Yksityinen avain tallennetaan järjestelmään eikä saa koskaan poistua PBX:stä',
     'gs_SSH_ID_RSA_PUBTooltip_note' => 'Huomautus: avaimen muuttaminen tai uudelleenluominen vaatii päivitystä kaikilla palvelimilla, joissa sitä käytetään',
-    
     // WEBHTTPSPublicKey tooltip
     'gs_WEBHTTPSPublicKeyTooltip_header' => 'SSL/TLS-sertifikaatti (julkinen avain)',
     'gs_WEBHTTPSPublicKeyTooltip_desc' => 'SSL/TLS-sertifikaatin julkinen osa HTTPS-yhteyksien salaamiseen ja siirrettävien tietojen suojaamiseen.',
@@ -535,8 +513,7 @@ return [
     'gs_WEBHTTPSPublicKeyTooltip_chain_desc' => 'Jos sinulla on väliaikaisia sertifikaatteja (intermediate), lisää ne pääsertifikaatin jälkeen samaan kenttään',
     'gs_WEBHTTPSPublicKeyTooltip_note' => 'Suositus: käytä Let\'s Encrypt -moduulia automaattiseen sertifikaattien hallintaan',
     'gs_WEBHTTPSPublicKeyTooltip_footer' => 'Tärkeää: sertifikaatin vaihdon jälkeen web-palvelin käynnistyy uudelleen',
-    
-    // WEBHTTPSPrivateKey tooltip  
+    // WEBHTTPSPrivateKey tooltip
     'gs_WEBHTTPSPrivateKeyTooltip_header' => 'SSL/TLS yksityinen avain',
     'gs_WEBHTTPSPrivateKeyTooltip_desc' => 'Salainen avain SSL/TLS-yhteyksien purkamiseen. Tulee vastata julkista sertifikaattia.',
     'gs_WEBHTTPSPrivateKeyTooltip_what_is' => 'Mikä yksityinen avain on:',
@@ -558,7 +535,6 @@ return [
     'gs_WEBHTTPSPrivateKeyTooltip_compatibility_desc' => 'Avaimen tulee vastata tarkasti julkista sertifikaattia. Epäsuhdan tapauksessa HTTPS ei toimi',
     'gs_WEBHTTPSPrivateKeyTooltip_note' => 'Vinkki: Let\'s Encrypt -moduuli hallitsee avainparia automaattisesti',
     'gs_WEBHTTPSPrivateKeyTooltip_footer' => 'Oletuksena: järjestelmä luo itse allekirjoitetun sertifikaatin ensimmäisen asennuksen yhteydessä',
-    
     // SendMetrics tooltips
     'gs_SendMetricsTooltip_header' => 'Mittareiden ja virheraport tien lähettäminen',
     'gs_SendMetricsTooltip_desc' => 'Automaattinen virhetietojen lähettäminen Sentry-järjestelmään tuotteen laadun parantamiseksi',
@@ -578,5 +554,77 @@ return [
     'gs_SendMetricsTooltip_privacy_desc' => 'EI siirretä: salasanoja, puhelutallenteitta, henkilötietoja, tietokantojen sisältöä',
     'gs_SendMetricsTooltip_warning' => 'Tämän toiminnon poistaminen käytöstä voi hidastaa virheiden korjausprosessia ja heikentää tuen laatua',
     'gs_SendMetricsTooltip_note' => 'Suositus: jätä käyttöön tuotantojärjestelmille. Tietoja siirretään vain internet-yhteyden ollessa saatavilla',
-    
+    'gs_AMISettings' => 'AMI-asetukset',
+    'gs_ARIAllowedOriginsTooltip_format' => 'Syöttömuoto:',
+    'gs_AJAMSettings' => 'AJAM-asetukset',
+    'gs_ARIEnabledTooltip_what_is_desc' => 'REST/WebSocket-rajapinta kanavien ja siltojen täydelliseen hallintaan',
+    'gs_ARIEnabledTooltip_usage_conference' => 'Konferenssipuheluiden hallinta',
+    'gs_ARIAllowedOriginsTooltip_security_2' => 'Määritä vain luotetut verkkotunnukset',
+    'gs_HTTPSettings' => 'HTTP-palvelimen asetukset',
+    'gs_HTTPPort' => 'HTTP-portti (AJAM ja ARI)',
+    'gs_HTTPPortTLS' => 'HTTPS-portti (AJAM ja ARI)',
+    'gs_ARIEnabledTooltip_usage_ivr' => 'Interaktiivisten äänivalikoiden (IVR) kehittäminen',
+    'gs_ARIEnabledTooltip_usage_recording' => 'Reaaliaikainen puheluiden tallennus ja käsittely',
+    'gs_ARIEnabledTooltip_usage_custom' => 'Mukautetun puhelinlogiikan luominen',
+    'gs_ARIEnabledTooltip_examples' => 'Esimerkkejä ARI:n käytöstä:',
+    'gs_ARIEnabledTooltip_example_webphone' => 'Verkkopuhelimet ja mobiilisovellukset',
+    'gs_ARIEnabledTooltip_warning_header' => 'Varoitus:',
+    'gs_ARIEnabledTooltip_warning' => 'ARI vaatii ohjelmointiosaamista sovellusten luomiseen',
+    'gs_ARIEnabledTooltip_footer' => 'Käyttää samoja portteja kuin AJAM. WebSocket on saatavilla osoitteessa /ari/events.',
+    // ARIAllowedOrigins tooltip
+    'gs_ARIAllowedOriginsTooltip_header' => 'Sallitut CORS-alkuperät',
+    'gs_ARIAllowedOriginsTooltip_desc' => 'Luettelo verkkotunnuksista, joista verkkotunnusten väliset ARI-pyynnöt ovat sallittuja.',
+    'gs_ARIAllowedOriginsTooltip_what_is' => 'Mikä on CORS:',
+    'gs_ARIAllowedOriginsTooltip_what_is_desc' => 'Selaimen suojausmekanismi API-käytön hallitsemiseksi muilta verkkotunnuksilta',
+    'gs_ARIAllowedOriginsTooltip_format_desc' => 'Pilkuilla erotettu URL-osoitteiden luettelo (esim. http://example.com, https://app.example.com)',
+    'gs_ARIAllowedOriginsTooltip_examples' => 'Esimerkkejä arvoista:',
+    'gs_ARIAllowedOriginsTooltip_example_1' => '* - salli kaikki lähteet (vaaralliset)',
+    'gs_ARIAllowedOriginsTooltip_example_2' => 'http://localhost:3000 - paikalliseen kehitykseen',
+    'gs_ARIAllowedOriginsTooltip_security_1' => 'Älä koskaan käytä * tuotannossa',
+    'gs_ARIAllowedOriginsTooltip_security_3' => 'Käytä HTTPS:ää tuotantoalueilla',
+    'gs_ARIAllowedOriginsTooltip_default' => 'Oletusarvo:',
+    'gs_ARIAllowedOriginsTooltip_default_desc' => 'Tyhjä (CORS poistettu käytöstä, pääsy vain samasta verkkotunnuksesta)',
+    'gs_ARIAllowedOriginsTooltip_footer' => 'Muutokset otetaan käyttöön asetusten tallentamisen jälkeen.',
+    'gs_NoDataToDelete' => 'Poistettavia tietoja ei ole.',
+    'gs_StatOutWorkTimes' => 'Työajan ulkopuoliset säännöt',
+    'gs_StatOutWorkTimesRouts' => 'Työajan ulkopuolisten sääntöjen ja reittien väliset suhteet',
+    'gs_StatApiKeys' => 'REST API -avaimet',
+    'gs_StatAsteriskRestUsers' => 'AMI-käyttäjät',
+    'gs_StatUserPasskeys' => 'WebAuthn-avaimet (salasanattomat kirjautumiset)',
+    'gs_SystemManagedPrivateKey' => 'Järjestelmän yksityinen avain (luodaan automaattisesti varmenteen mukana)',
+    'cert_InvalidPrivateKeyFormat' => 'Virheellinen yksityisen avaimen muoto: %error%',
+    'cert_FailedToGetPrivateKeyDetails' => 'Yksityisen avaimen tietojen hakeminen epäonnistui',
+    'cert_FailedToLoadCertificateForPairValidation' => 'Parin vahvistamista varten tarvittavan varmenteen lataaminen epäonnistui',
+    'cert_FailedToLoadPrivateKeyForPairValidation' => 'Yksityisen avaimen lataaminen parin vahvistusta varten epäonnistui.',
+    'cert_FailedToExtractPublicKeyFromCertificate' => 'Julkisen avaimen poimiminen varmenteesta epäonnistui',
+    'cert_CertificateAndPrivateKeyDoNotMatch' => 'Varmenne ja yksityinen avain eivät täsmää.',
+    'gs_AJAMRequiresAMI' => 'AJAM vaatii AMI:n käyttöönoton',
+    'gs_ARISettings' => 'URI-asetukset',
+    'gs_ARIEnabled' => 'Käytä AMI-rajapintaa',
+    'gs_ARIAllowedOrigins' => 'Sallitut CORS-alkuperät',
+    // ARIEnabled tooltip
+    'gs_ARIEnabledTooltip_header' => 'ARI (Asterisk REST -rajapinta)',
+    'gs_ARIEnabledTooltip_desc' => 'RESTful-rajapinta nykyaikaisten reaaliaikaisten sovellusten rakentamiseen Asteriskin avulla.',
+    'gs_ARIEnabledTooltip_usage' => 'Mihin käytetään:',
+    'gs_ARIEnabledTooltip_usage_webrtc' => 'WebRTC-sovellusten ja softphone-puhelinten luominen',
+    'gs_ARIEnabledTooltip_example_bot' => 'Äänibotit ja virtuaaliassistentit',
+    'gs_ARIEnabledTooltip_example_queue' => 'Edistyneet jononhallintajärjestelmät',
+    'gs_ARIEnabledTooltip_example_analytics' => 'Puheanalytiikkajärjestelmät',
+    'gs_ARIEnabledTooltip_default' => 'Oletusarvo:',
+    'gs_ARIEnabledTooltip_default_desc' => 'Poissa käytöstä (ota käyttöön tarvittaessa)',
+    'gs_ARIEnabledTooltip_when_enable' => 'Milloin poistaa käytöstä:',
+    'gs_ARIEnabledTooltip_enable_1' => 'Verkkopuhelinten tai mobiilisovellusten kehittäminen',
+    'gs_ARIEnabledTooltip_enable_2' => 'Mukautettujen IVR- ja äänisovellusten luominen',
+    'gs_ARIEnabledTooltip_enable_3' => 'Integrointi nykyaikaisiin web-kehyksiin',
+    'gs_ARIAllowedOriginsTooltip_example_3' => 'https://app.mycompany.com - tuotantosovelluksille',
+    'gs_ARIAllowedOriginsTooltip_security' => 'Turvallisuussuositukset:',
+    'gs_ARIEnabledTooltip_what_is' => 'Mikä AMI on:',
+    // Certificate validation messages
+    'cert_CertificateIsEmpty' => 'Todistus on tyhjä',
+    'cert_InvalidCertificateFormat' => 'Virheellinen varmenteen muoto: %error%',
+    'cert_FailedToParseCertificate' => 'Varmenteen jäsentäminen epäonnistui',
+    'cert_CertificateExpired' => 'Varmenne vanheni %date%',
+    'cert_CertificateExpiresSoon' => 'Varmenne vanhenee %days% päivän kuluttua',
+    'cert_CertificateNotYetValid' => 'Varmenne ei ole voimassa ennen %date%',
+    'cert_PrivateKeyIsEmpty' => 'Yksityinen avain on tyhjä',
 ];

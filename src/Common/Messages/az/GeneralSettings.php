@@ -1,5 +1,4 @@
 <?php
-
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -18,7 +17,6 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
     'gs_SystemWillRestart' => 'Sistem yenidən başladılacaq',
     'gs_CallRecordTab' => 'Zəng yazısı',
     'gs_RTPStunServer' => 'STUN server ünvanı (nümunə: stun.test.net:10000)',
@@ -166,7 +164,7 @@ return [
     'gs_DeleteAllStageResettingSettings' => 'PBX parametrləri sıfırlanır',
     'gs_DeleteAllStageFinalizing' => 'Sıfırlama prosesi tamamlanır',
     'gs_DeleteAllStageCompleted' => 'Sistem sıfırlaması tamamlandı',
-    'gs_DeleteAllStageRestarting' => 'Sistem yenidən başlatma başladılır',
+    'gs_DeleteAllStageRestarting' => 'Sistem yenidən başlayacaq',
     'gs_StatUsers' => 'İstifadəçilər/Daxili nömrələr',
     'gs_StatProviders' => 'SIP provayderləri',
     'gs_StatCallQueues' => 'Zəng növbələri',
@@ -184,8 +182,7 @@ return [
     'gs_StatCustomFiles' => 'İstifadəçi faylları',
     'gs_PBXRecordAnnouncementIn' => 'Daxil olan zənglər üçün zəng yazısı xəbərdarlığı seçin',
     'gs_PBXRecordAnnouncementOut' => 'Çıxan zənglər üçün zəng yazısı xəbərdarlığı seçin',
-
-    // General Settings Tooltips    
+    // General Settings Tooltips
     // RestartEveryNight tooltip
     'gs_RestartEveryNightTooltip_header' => 'PBX-in gecəlik yenidən başladılması',
     'gs_RestartEveryNightTooltip_desc' => 'Sabitlik və performansı saxlamaq üçün hər gecə Asterisk sisteminin avtomatik yenidən başladılması',
@@ -198,7 +195,6 @@ return [
     'gs_RestartEveryNightTooltip_drawback_calls' => 'Yenidən başlama zamanı aktiv zənglərin kəsilməsi',
     'gs_RestartEveryNightTooltip_drawback_registration' => 'Sistemin qısamüddətli əlçatmamazlığı (10-30 saniyə)',
     'gs_RestartEveryNightTooltip_recommendation' => 'Gecə aktivliyi az olan sistemlər üçün tövsiyə olunur. 24/7 zəng mərkəzləri üçün daha yaxşısı deaktiv etmək və minimum yük dövrlərində əl ilə yenidən başlatmaqdır.',
-    
     // PBXLanguage tooltip
     'gs_PBXLanguageTooltip_header' => 'Sistem mesajlarının dili',
     'gs_PBXLanguageTooltip_desc' => 'Zəng edənlər və IVR menyuları üçün Asterisk səs mesajlarının dilini müəyyənləşdirir',
@@ -210,7 +206,6 @@ return [
     'gs_PBXLanguageTooltip_restart' => 'Yenidən başlatma tələb olunur',
     'gs_PBXLanguageTooltip_restart_desc' => 'Dil dəyişdirildikdə Asterisk xidməti 10-30 saniyə müddətində yenidən başladılacaq və əlaqə kəsiləcək.',
     'gs_PBXLanguageTooltip_note' => 'Web interfeys dili hər istifadəçi üçün ayrıca konfiqurasiya edilir',
-    
     // PBXInternalExtensionLength tooltip
     'gs_PBXInternalExtensionLengthTooltip_header' => 'Daxili nömrələrin uzunluğu',
     'gs_PBXInternalExtensionLengthTooltip_desc' => 'Sistemdə işçilərin daxili nömrələrinin maksimum uzunluğunu müəyyən edir',
@@ -224,7 +219,6 @@ return [
     'gs_PBXInternalExtensionLengthTooltip_example_5' => 'Uzunluq 5: 10000-dən 99999-a nömrələr',
     'gs_PBXInternalExtensionLengthTooltip_warning' => 'Bu parametrin dəyişdirilməsi mövcud nömrələrə təsir etmir. Yeni parametrdən uzun nömrələriniz varsa, onlar işləməyə davam edəcək',
     'gs_PBXInternalExtensionLengthTooltip_note' => 'İşçi sayına əsasən uzunluğu seçmək tövsiyə olunur: 900-ə qədər işçi üçün 3 rəqəm, böyük təşkilatlar üçün 4 rəqəm',
-    
     // PBXAllowGuestCalls tooltip
     'gs_AllowGuestCallsTooltip_header' => 'Avtorizasiyasız qonaq zəngləri',
     'gs_AllowGuestCallsTooltip_desc' => 'Qeydiyyatsız avtorizasiya edilməmiş cihaz və serverlərdən SIP zənglərinin qəbul edilməsinə icazə verir',
@@ -242,7 +236,6 @@ return [
     'gs_AllowGuestCallsTooltip_security' => 'Təhlükəsizlik tövsiyələri:',
     'gs_AllowGuestCallsTooltip_security_desc' => 'Fail2ban istifadə edin, IP-yə görə girişi məhdudlaşdırın, daxilolma marşrutlaşdırma qaydalarını konfiqurasiya edin',
     'gs_AllowGuestCallsTooltip_recommendation' => 'Qeydiyyatsız cihazlar istifadə etmirsinizsə bu seçimi deaktiv etmək tövsiyə olunur',
-    
     // PBXCallParkingExt tooltip
     'gs_PBXCallParkingExtTooltip_header' => 'Zəng parkı',
     'gs_PBXCallParkingExtTooltip_desc' => 'İstənilən telefondan sonrakı bərpa imkanı ilə zəngi müvəqqəti yerləşdirmək üçün nömrə',
@@ -257,7 +250,6 @@ return [
     'gs_PBXCallParkingExtTooltip_example' => 'İstifadə nümunəsi:',
     'gs_PBXCallParkingExtTooltip_example_desc' => 'Katib zəng qəbul edir, onu 800-də parkedir, sistem "Zəng 801-də parkedildi" deyir. Menecer 801-i yığır və danışığı davam etdirir',
     'gs_PBXCallParkingExtTooltip_note' => 'Zəng gözləmə müddəti ərzində götürülməzsə, ilkin telefona qayıdacaq',
-    
     // PBXFeatureAttendedTransfer tooltip
     'gs_PBXFeatureAttendedTransferTooltip_header' => 'Məsləhətli transfer',
     'gs_PBXFeatureAttendedTransferTooltip_desc' => 'Əvvəlcədən məsləhət ilə zəng transferi üçün klaviş kombinasiyası',
@@ -269,7 +261,6 @@ return [
     'gs_PBXFeatureAttendedTransferTooltip_benefits' => 'Üstünlüklər:',
     'gs_PBXFeatureAttendedTransferTooltip_benefits_desc' => 'Həmkarı transfer haqqında xəbərdar etməyə və danışıq kontekstini ötürməyə imkan verir',
     'gs_PBXFeatureAttendedTransferTooltip_note' => 'Abonent cavab vermirsə və ya məşğuldursa, zəng sizə qayıdacaq',
-    
     // PBXFeatureBlindTransfer tooltip
     'gs_PBXFeatureBlindTransferTooltip_header' => 'Şərtsiz transfer',
     'gs_PBXFeatureBlindTransferTooltip_desc' => 'Məsləhət olmadan ani zəng transferi üçün klaviş kombinasiyası',
@@ -279,7 +270,6 @@ return [
     'gs_PBXFeatureBlindTransferTooltip_how_hangup' => 'Zəng dərhal transfer ediləcək',
     'gs_PBXFeatureBlindTransferTooltip_warning' => 'Abonent əlçatmaz və ya məşğul ola bilər. Ehtiyatla istifadə edin',
     'gs_PBXFeatureBlindTransferTooltip_note' => 'Vacib zənglər üçün məsləhətli transfer istifadə etmək tövsiyə olunur',
-    
     // PBXFeaturePickupExten tooltip
     'gs_PBXFeaturePickupExtenTooltip_header' => 'Zəng ələ keçirmə',
     'gs_PBXFeaturePickupExtenTooltip_desc' => 'Digər telefonlara daxil olan zəngləri ələ keçirmək üçün nömrə',
@@ -290,7 +280,6 @@ return [
     'gs_PBXFeaturePickupExtenTooltip_type_directed_desc' => 'Müəyyən daxili nömrəyə zəngi ələ keçirir',
     'gs_PBXFeaturePickupExtenTooltip_usage' => 'İstifadə:',
     'gs_PBXFeaturePickupExtenTooltip_usage_desc' => 'Başqasının telefonu çaldığında, ələ keçirmək üçün *8 və ya 201 nömrəsinə zəngi ələ keçirmək üçün *8201 yığın',
-    
     // PBXFeatureAtxferNoAnswerTimeout tooltip
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_header' => 'Məsləhətli transferdən sonra geri qayıtma vaxtı',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_desc' => 'Məsləhətli zəng transferində cavab gözləmə vaxtını müəyyən edir, bundan sonra zəng operatora qayıdır.',
@@ -304,7 +293,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_standard' => '30-45 san - ofisilər üçün standart konfiqurasiya',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_quick' => '15-20 san - sürətli qayıdış üçün (yüksək yük)',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_extended' => '60-90 san - vacib transferlər və ya uzaq ofisilər üçün',
-    
     // PBXFeatureDigitTimeout tooltip
     'gs_PBXFeatureDigitTimeoutTooltip_header' => 'Yığım zamanı rəqəmlər arası vaxt',
     'gs_PBXFeatureDigitTimeoutTooltip_desc' => 'Nömrə yığırkən və ya funksiyalar istifadə edərkən rəqəm basmaları arasında maksimum gözləmə müddəti (millisaniyələrdə).',
@@ -318,7 +306,6 @@ return [
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease' => 'Azaltmaq (3000-5000 ms):',
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease_desc' => 'Təcrübəli istifadəçilər üçün və əmrlərin işlənməsini sürətləndirmək üçün',
     'gs_PBXFeatureDigitTimeoutTooltip_footer' => 'Diqqət: çox kiçik dəyər uzun nömrələrin yığımının kəsilməsinə səbəb ola bilər',
-    
     // RTPPortRange tooltip
     'gs_RTPPortRangeTooltip_header' => 'RTP portları diapazonu',
     'gs_RTPPortRangeTooltip_desc' => 'Abonentlər arasında real vaxtda media axınları (audio/video) ötürmək üçün UDP portları diapazonu müəyyən edir.',
@@ -338,7 +325,6 @@ return [
     'gs_RTPPortRangeTooltip_change_nat' => 'NAT/Firewall konfiqurasiyası:',
     'gs_RTPPortRangeTooltip_change_nat_desc' => 'Göstərilən port diapazunun firewall-da açıq olduğuna və port yönləndirməsinin konfiqurasiya edildiyinə əmin olun',
     'gs_RTPPortRangeTooltip_footer' => 'Vacib: dəyişiklik Asterisk-in yenidən başladılmasını və şəbəkə avadanlığının uyğun konfiqurasiyasını tələb edir',
-    
     // RTPStunServer tooltip
     'gs_RTPStunServerTooltip_header' => 'STUN server',
     'gs_RTPStunServerTooltip_desc' => 'STUN (Session Traversal Utilities for NAT) - NAT vasitəsilə işləyərkən xarici IP ünvan və portu müəyyən etmək üçün server.',
@@ -359,7 +345,6 @@ return [
     'gs_RTPStunServerTooltip_example_2' => 'stun1.l.google.com:19302 (Google ehtiyat)',
     'gs_RTPStunServerTooltip_example_3' => 'stun.ekiga.net:3478 (Ekiga)',
     'gs_RTPStunServerTooltip_footer' => 'Tövsiyə: PBX-in birbaşa ictimai IP-si varsa və ya bütün abonentlər lokal şəbəkədədirsə, sahəni boş buraxın',
-    
     // SIPAuthPrefix tooltip
     'gs_SIPAuthPrefixTooltip_header' => 'SIP avtorizasiya prefiksi',
     'gs_SIPAuthPrefixTooltip_desc' => 'Təhlükəsizliyi artırmaq üçün SIP avtorizasiyasında istifadəçi adına əlavə edilən əlavə sufiks.',
@@ -378,7 +363,6 @@ return [
     'gs_SIPAuthPrefixTooltip_use_4' => 'Korporativ təhlükəsizlik siyasətlərinə uyğunluq',
     'gs_SIPAuthPrefixTooltip_warning_header' => 'Vacib:',
     'gs_SIPAuthPrefixTooltip_warning' => 'Prefiksi dəyişdirdikdən sonra bütün SIP cihazlar və softfonlarda parametrləri yeniləmək lazımdır',
-    
     // SIPDefaultExpiry tooltip
     'gs_SIPDefaultExpiryTooltip_header' => 'Defolt SIP qeydiyyat intervalı',
     'gs_SIPDefaultExpiryTooltip_desc' => 'SIP cihazların serverdə qeydiyyatını nə qədər tez-tez yeniləmələrini müəyyən edir. Cihazın əlçatmamazlığının aşkar edilməsi sürətinə və şəbəkə yükünə təsir edir.',
@@ -395,7 +379,6 @@ return [
     'gs_SIPDefaultExpiryTooltip_change_stable' => '300-600 san-yə artırmaq: lokal şəbəkədə sabit ofis telefonları üçün',
     'gs_SIPDefaultExpiryTooltip_change_battery' => '600-1800 san-yə artırmaq: mobil cihazların batareyasını qorumaq üçün',
     'gs_SIPDefaultExpiryTooltip_note' => 'Məsləhət: kiçik dəyərlər əlçatmamazlığı daha tez müəyyən edir, lakin şəbəkə yükünü artırır',
-    
     // SIPExpiryRange tooltip
     'gs_SIPExpiryRangeTooltip_header' => 'SIP qeydiyyat intervalları diapazonu',
     'gs_SIPExpiryRangeTooltip_desc' => 'Serverdə SIP cihazların qeydiyyatları arasında minimum və maksimum icazə verilən intervalları müəyyən edir.',
@@ -419,7 +402,6 @@ return [
     'gs_SIPExpiryRangeTooltip_warning_header' => 'Vacib:',
     'gs_SIPExpiryRangeTooltip_warning' => 'Minimum dəyər defolt dəyərdən (SIPDefaultExpiry) kiçik, maksimum isə böyük olmalıdır',
     'gs_SIPExpiryRangeTooltip_note' => 'İpucu: dəyərlər şəbəkə yükü və cihazların əlçatmamazlığının aşkar edilməsi sürəti arasında balansa təsir edir',
-    
     // AMIEnabled tooltip
     'gs_AMIEnabledTooltip_header' => 'AMI (Asterisk Manager Interface)',
     'gs_AMIEnabledTooltip_desc' => 'TCP/IP qoşulması vasitəsilə Asterisk-in idarəsi və monitorinqi üçün proqramlaşdırma interfeysi.',
@@ -445,7 +427,6 @@ return [
     'gs_AMIEnabledTooltip_warning_header' => 'Diqqət:',
     'gs_AMIEnabledTooltip_warning' => 'AMI-ni deaktiv etmək modulların və inteqrasiyaların işini poza bilər',
     'gs_AMIEnabledTooltip_footer' => 'AMI portu: 5038. Təhlükəsizlik üçün AMI menecerləri vasitəsilə girişi konfiqurasiya edin',
-    
     // AJAMEnabled tooltip
     'gs_AJAMEnabledTooltip_header' => 'AJAM (Asynchronous Javascript Asterisk Manager)',
     'gs_AJAMEnabledTooltip_desc' => 'HTTP/HTTPS protokolu vasitəsilə AMI-yə giriş üçün web interfeysi.',
@@ -467,7 +448,6 @@ return [
     'gs_AJAMEnabledTooltip_warning_header' => 'Vacib:',
     'gs_AJAMEnabledTooltip_warning' => 'Bəzi MikoPBX modulları öz işi üçün AJAM istifadə edə bilər',
     'gs_AJAMEnabledTooltip_note' => 'AJAM AMI menecerlərilə eyni giriş məlumatlarını istifadə edir',
-    
     // SSHAuthorizedKeys tooltip
     'gs_SSHAuthorizedKeysTooltip_header' => 'Avtorizə edilmiş SSH açarlar',
     'gs_SSHAuthorizedKeysTooltip_desc' => 'Parolsuz sistem girişi üçün ictimai SSH açarların siyahısı. Parol əvəzinə şəxsi açar istifadə edərək SSH vasitəsilə giriş etməyə imkan verir.',
@@ -492,7 +472,6 @@ return [
     'gs_SSHAuthorizedKeysTooltip_warning_header' => 'Vacib!',
     'gs_SSHAuthorizedKeysTooltip_warning' => 'Açarlar əlavə edildikdən sonra təhlükəsizliyi artırmaq üçün parol authentifikasiyasını deaktiv etmək tövsiyə olunur',
     'gs_SSHAuthorizedKeysTooltip_note' => 'Məsləhət: Windows-da açar yaratmaq üçün PuTTYgen və ya OpenSSH istifadə edin',
-    
     // SSH_ID_RSA_PUB tooltip
     'gs_SSH_ID_RSA_PUBTooltip_header' => 'PBX-in ictimai açarı',
     'gs_SSH_ID_RSA_PUBTooltip_desc' => 'Bu PBX-in parolsuz digər sistemlərə qoşulması üçün RSA ictimai açarı.',
@@ -514,7 +493,6 @@ return [
     'gs_SSH_ID_RSA_PUBTooltip_warning_header' => 'Təhlükəsizlik:',
     'gs_SSH_ID_RSA_PUBTooltip_warning' => 'Bu açar ictimai olub üçüncü şəxslərə təhlükəsiz ötürülə bilər. Şəxsi açar sistemdə saxlanır və heç vaxt PBX-dən çıxmamalıdır',
     'gs_SSH_ID_RSA_PUBTooltip_note' => 'Qeyd: açarın dəyişdirilməsi və ya yenidən yaradılması istifadə edildiyi bütün serverlərdə yeniləmə tələb edir',
-    
     // WEBHTTPSPublicKey tooltip
     'gs_WEBHTTPSPublicKeyTooltip_header' => 'SSL/TLS sertifikat (ictimai açar)',
     'gs_WEBHTTPSPublicKeyTooltip_desc' => 'HTTPS qoşulmalarının şifrələnməsi və ötürülən məlumatların qorunması üçün SSL/TLS sertifikatının ictimai hissəsi.',
@@ -535,7 +513,6 @@ return [
     'gs_WEBHTTPSPublicKeyTooltip_chain_desc' => 'Aralıq sertifikatlarınız (intermediate) varsa, onları əsas sertifikatdan sonra eyni sahədə əlavə edin',
     'gs_WEBHTTPSPublicKeyTooltip_note' => 'Tövsiyə: sertifikatların avtomatik idarəsi üçün Let\'s Encrypt modulundan istifadə edin',
     'gs_WEBHTTPSPublicKeyTooltip_footer' => 'Vacib: sertifikatı dəyişdirdikdən sonra web server yenidən başladılacaq',
-    
     // WEBHTTPSPrivateKey tooltip
     'gs_WEBHTTPSPrivateKeyTooltip_header' => 'SSL/TLS şəxsi açar',
     'gs_WEBHTTPSPrivateKeyTooltip_desc' => 'SSL/TLS qoşulmalarının deşifrə edilməsi üçün gizli açar. İctimai sertifikata uyğun olmalıdır.',
@@ -558,7 +535,6 @@ return [
     'gs_WEBHTTPSPrivateKeyTooltip_compatibility_desc' => 'Açar ictimai sertifikata dəqiq uyğun olmalıdır. Uyğunsuzluq zamanı HTTPS işləməyəcək',
     'gs_WEBHTTPSPrivateKeyTooltip_note' => 'İpucu: Let\'s Encrypt modulu açar cütünü avtomatik idarə edir',
     'gs_WEBHTTPSPrivateKeyTooltip_footer' => 'Defolt: sistem ilk quraşdırıldığında öz-imzalı sertifikat yaradır',
-    
     // SendMetrics tooltips
     'gs_SendMetricsTooltip_header' => 'Metrika və xəta hesabatlarının göndərilməsi',
     'gs_SendMetricsTooltip_desc' => 'Məhsulun keyfiyyətini yaxşılaşdırmaq üçün Sentry sisteminə xətalar haqqında məlumatın avtomatik göndərilməsi',
@@ -578,5 +554,77 @@ return [
     'gs_SendMetricsTooltip_privacy_desc' => 'GÖNDƏRİLMİR: parollar, zəng yazıları, şəxsi məlumatlar, verilənlər bazası məzmunu',
     'gs_SendMetricsTooltip_warning' => 'Bu funksiyanı deaktiv etmək xəta düzəldilməsi prosesini ləngidə və dəstək keyfiyyətini azalda bilər',
     'gs_SendMetricsTooltip_note' => 'Tövsiyə: production sistemlər üçün aktiv saxlamaq. Məlumatlar yalnız internet əlaqəsi zamanı ötürülür',
-    
+    'gs_AMISettings' => 'AMI parametrləri',
+    'gs_HTTPSettings' => 'HTTP server parametrləri',
+    'gs_AJAMSettings' => 'AJAM parametrləri',
+    'gs_AJAMRequiresAMI' => 'AJAM AMI-nin aktivləşdirilməsini tələb edir',
+    'gs_HTTPPort' => 'HTTP portu (AJAM və ARI)',
+    'gs_ARIEnabledTooltip_default' => 'Defolt dəyər:',
+    'gs_ARIAllowedOrigins' => 'İcazə verilən CORS mənşələri',
+    'gs_HTTPPortTLS' => 'HTTPS portu (AJAM və ARI)',
+    'gs_ARIEnabledTooltip_what_is' => 'AMI nədir:',
+    'gs_ARIEnabledTooltip_what_is_desc' => 'Kanallar və körpülər üzərində tam nəzarət üçün REST/WebSocket interfeysi',
+    'gs_ARIEnabledTooltip_usage' => 'Nə üçün istifadə olunur:',
+    'gs_ARIEnabledTooltip_usage_recording' => 'Real vaxt rejimində zənglərin qeyd edilməsi və işlənməsi',
+    'gs_ARIEnabledTooltip_usage_custom' => 'Xüsusi telefon məntiqinin yaradılması',
+    'gs_ARIEnabledTooltip_examples' => 'ARI istifadəsinə nümunələr:',
+    'gs_ARIEnabledTooltip_example_webphone' => 'Veb telefonlar və mobil tətbiqlər',
+    'gs_ARIEnabledTooltip_example_bot' => 'Səsli botlar və virtual köməkçilər',
+    'gs_ARIEnabledTooltip_example_queue' => 'Qabaqcıl növbə idarəetmə sistemləri',
+    'gs_ARIEnabledTooltip_example_analytics' => 'Nitq analitik sistemləri',
+    'gs_ARIEnabledTooltip_default_desc' => 'Deaktivdir (lazım olduqda aktivləşdirin)',
+    'gs_ARIEnabledTooltip_when_enable' => 'Nə vaxt deaktiv etmək:',
+    'gs_ARIEnabledTooltip_enable_1' => 'Veb telefonların və ya mobil tətbiqlərin hazırlanması',
+    'gs_ARIEnabledTooltip_enable_2' => 'Xüsusi IVR və səs tətbiqlərinin yaradılması',
+    'gs_ARIEnabledTooltip_enable_3' => 'Müasir veb çərçivələri ilə inteqrasiya',
+    'gs_ARIEnabledTooltip_warning_header' => 'Diqqət:',
+    'gs_ARIEnabledTooltip_warning' => 'ARI tətbiqlər yaratmaq üçün proqramlaşdırma biliklərinə ehtiyac duyur',
+    'gs_ARIEnabledTooltip_footer' => 'AJAM ilə eyni portlardan istifadə edir. WebSocket /ari/events ünvanında mövcuddur',
+    'gs_ARIAllowedOriginsTooltip_desc' => 'ARI-yə domenlərarası sorğuların qəbul edilməsinə icazə verilən domenlərin siyahısı.',
+    'gs_ARIAllowedOriginsTooltip_what_is_desc' => 'Digər domenlərdən API girişini idarə etmək üçün brauzer təhlükəsizlik mexanizmi',
+    'gs_ARIAllowedOriginsTooltip_format' => 'Giriş formatı:',
+    'gs_ARIAllowedOriginsTooltip_format_desc' => 'URL-lərin vergüllə ayrılmış siyahısı (məsələn, http://example.com, https://app.example.com)',
+    'gs_ARIAllowedOriginsTooltip_examples' => 'Dəyərlərə nümunələr:',
+    'gs_ARIAllowedOriginsTooltip_example_1' => '* - bütün mənbələrə icazə verin (təhlükəli deyil)',
+    'gs_ARIAllowedOriginsTooltip_example_2' => 'http://localhost:3000 - yerli inkişaf üçün',
+    'gs_ARIAllowedOriginsTooltip_example_3' => 'https://app.mycompany.com - istehsal tətbiqləri üçün',
+    'gs_ARIAllowedOriginsTooltip_security' => 'Təhlükəsizlik tövsiyələri:',
+    'gs_ARIAllowedOriginsTooltip_security_1' => 'İstehsalda * istifadə etməyin',
+    'gs_ARIAllowedOriginsTooltip_security_2' => 'Yalnız etibarlı domenləri göstərin',
+    'gs_ARIAllowedOriginsTooltip_security_3' => 'İstehsal domenləri üçün HTTPS istifadə edin',
+    'gs_ARIAllowedOriginsTooltip_default' => 'Defolt dəyər:',
+    'gs_ARIAllowedOriginsTooltip_default_desc' => 'Boş (CORS deaktivdir, yalnız eyni domendən giriş mümkündür)',
+    'gs_ARIAllowedOriginsTooltip_footer' => 'Parametrləri saxladıqdan sonra dəyişikliklər tətbiq olunur.',
+    // ARIAllowedOrigins tooltip
+    'gs_ARIAllowedOriginsTooltip_header' => 'İcazə verilən CORS mənşələri',
+    'gs_StatOutWorkTimes' => 'Qeyri-iş saatları qaydaları',
+    'gs_StatOutWorkTimesRouts' => 'İş saatları qaydaları və marşrutları arasındakı əlaqələr',
+    'gs_StatApiKeys' => 'REST API açarları',
+    'gs_StatAsteriskRestUsers' => 'AMI istifadəçiləri',
+    'gs_SystemManagedPrivateKey' => 'Sistemin gizli açarı (sertifikatla birlikdə avtomatik olaraq yaradılır)',
+    'cert_FailedToParseCertificate' => 'Sertifikatı təhlil etmək alınmadı',
+    'cert_CertificateExpired' => 'Sertifikatın müddəti %date% tarixində bitib',
+    'cert_CertificateExpiresSoon' => 'Sertifikatın müddəti %gün%gün ərzində bitir',
+    'cert_CertificateNotYetValid' => 'Sertifikat hələ %date% tarixinə qədər etibarlı deyil',
+    'cert_InvalidPrivateKeyFormat' => 'Yanlış gizli açar formatı: %error%',
+    'cert_FailedToGetPrivateKeyDetails' => 'Şəxsi açar məlumatlarını əldə etmək alınmadı',
+    'cert_FailedToLoadCertificateForPairValidation' => 'Cütlüyü təsdiqləmək üçün sertifikat yüklənmədi',
+    'cert_FailedToLoadPrivateKeyForPairValidation' => 'Cütlük doğrulaması üçün şəxsi açar yüklənmədi',
+    'cert_FailedToExtractPublicKeyFromCertificate' => 'Sertifikatdan açıq açarı çıxarmaq alınmadı',
+    'cert_CertificateAndPrivateKeyDoNotMatch' => 'Sertifikat və şəxsi açar uyğun gəlmir.',
+    'gs_ARISettings' => 'URI Parametrləri',
+    'gs_ARIEnabled' => 'AMI interfeysi istifadə et',
+    'gs_NoDataToDelete' => 'Silinəcək heç bir məlumat yoxdur.',
+    'gs_StatUserPasskeys' => 'WebAuthn açarları (parolsuz giriş)',
+    // ARIEnabled tooltip
+    'gs_ARIEnabledTooltip_header' => 'ARI (Ulduz REST İnterfeysi)',
+    'gs_ARIEnabledTooltip_desc' => 'Asterisk ilə müasir real vaxt tətbiqləri qurmaq üçün RESTful API.',
+    'gs_ARIEnabledTooltip_usage_webrtc' => 'WebRTC tətbiqləri və softfonlarının yaradılması',
+    'gs_ARIEnabledTooltip_usage_ivr' => 'İnteraktiv səs menyularının (IVR) hazırlanması',
+    'gs_ARIEnabledTooltip_usage_conference' => 'Konfrans zənglərinin idarə edilməsi',
+    'gs_ARIAllowedOriginsTooltip_what_is' => 'CORS nədir:',
+    // Certificate validation messages
+    'cert_CertificateIsEmpty' => 'Sertifikat boşdur',
+    'cert_InvalidCertificateFormat' => 'Yanlış sertifikat formatı: %error%',
+    'cert_PrivateKeyIsEmpty' => 'Şəxsi açar boşdur',
 ];

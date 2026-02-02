@@ -1,5 +1,4 @@
 <?php
-
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -18,7 +17,6 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
     'gs_SystemWillRestart' => 'システムが再起動されます',
     'gs_CallRecordTab' => '通話録音',
     'gs_RTPStunServer' => 'STUNサーバーアドレス (例: stun.test.net:10000)',
@@ -185,8 +183,7 @@ return [
     'gs_StatCustomFiles' => 'カスタムファイル',
     'gs_PBXRecordAnnouncementIn' => '着信通話の録音警告を選択してください',
     'gs_PBXRecordAnnouncementOut' => '発信通話の録音警告を選択してください',
-
-    // General Settings Tooltips    
+    // General Settings Tooltips
     // RestartEveryNight tooltip
     'gs_RestartEveryNightTooltip_header' => 'PBX毎日再起動',
     'gs_RestartEveryNightTooltip_desc' => '安定性とパフォーマンスを維持するため、毎晩Asteriskシステムを自動再起動',
@@ -199,7 +196,6 @@ return [
     'gs_RestartEveryNightTooltip_drawback_calls' => '再起動中のアクティブ通話の中断',
     'gs_RestartEveryNightTooltip_drawback_registration' => 'システムの短時間利用不可 (10-30秒)',
     'gs_RestartEveryNightTooltip_recommendation' => '夜間の活動が少ないシステムに推奨。24時間コールセンターの場合は無効にし、最小負荷時に手動再起動を実行することをお勧めします。',
-
     // PBXLanguage tooltip
     'gs_PBXLanguageTooltip_header' => 'システムメッセージ言語',
     'gs_PBXLanguageTooltip_desc' => '発信者とIVRメニュー向けAsteriskシステムの音声メッセージ言語を決定',
@@ -211,7 +207,6 @@ return [
     'gs_PBXLanguageTooltip_restart' => '再起動が必要',
     'gs_PBXLanguageTooltip_restart_desc' => '言語変更時、Asteriskサービスが10-30秒間接続断で再起動されます。',
     'gs_PBXLanguageTooltip_note' => 'ウェブインターフェース言語は各ユーザーごとに個別設定されます',
-
     // PBXInternalExtensionLength tooltip
     'gs_PBXInternalExtensionLengthTooltip_header' => '内線番号長',
     'gs_PBXInternalExtensionLengthTooltip_desc' => 'システム内の従業員内線番号の最大長を決定',
@@ -225,7 +220,6 @@ return [
     'gs_PBXInternalExtensionLengthTooltip_example_5' => '長さ5：番号10000～99999',
     'gs_PBXInternalExtensionLengthTooltip_warning' => 'このパラメータの変更は既存番号に影響しません。新設定より長い番号がある場合、それらは引き続き機能します',
     'gs_PBXInternalExtensionLengthTooltip_note' => '従業員数に基づいて長さを選択することを推奨：900名以下の会社は3桁、大規模組織は4桁',
-
     // PBXAllowGuestCalls tooltip
     'gs_AllowGuestCallsTooltip_header' => '認証なしゲスト通話',
     'gs_AllowGuestCallsTooltip_desc' => '登録なしで未承認デバイスやサーバーからのSIP通話受信を許可',
@@ -243,7 +237,6 @@ return [
     'gs_AllowGuestCallsTooltip_security' => 'セキュリティ推奨事項：',
     'gs_AllowGuestCallsTooltip_security_desc' => 'Fail2banを使用し、IPアクセス制限を設定し、着信ルーティングルールを設定してください',
     'gs_AllowGuestCallsTooltip_recommendation' => '登録なしデバイスを使用しない場合、このオプションを無効にすることを推奨します',
-
     // PBXCallParkingExt tooltip
     'gs_PBXCallParkingExtTooltip_header' => 'コールパーク',
     'gs_PBXCallParkingExtTooltip_desc' => '通話の一時保留と任意の電話からの後日復旧が可能な番号',
@@ -258,7 +251,6 @@ return [
     'gs_PBXCallParkingExtTooltip_example' => '使用例：',
     'gs_PBXCallParkingExtTooltip_example_desc' => '秘書が通話を受け800でパーク、システムが「801にパークされました」と通知。マネージャーが801をダイヤルして通話継続',
     'gs_PBXCallParkingExtTooltip_note' => '待機時間内に通話が取られない場合、元の電話に戻ります',
-
     // PBXFeatureAttendedTransfer tooltip
     'gs_PBXFeatureAttendedTransferTooltip_header' => 'アテンデッド転送',
     'gs_PBXFeatureAttendedTransferTooltip_desc' => '事前相談による通話転送のキー組み合わせ',
@@ -270,7 +262,6 @@ return [
     'gs_PBXFeatureAttendedTransferTooltip_benefits' => 'メリット：',
     'gs_PBXFeatureAttendedTransferTooltip_benefits_desc' => '同僚に転送を知らせ、通話コンテキストを伝達可能',
     'gs_PBXFeatureAttendedTransferTooltip_note' => '相手が応答しないか話し中の場合、通話はあなたに戻ります',
-
     // PBXFeatureBlindTransfer tooltip
     'gs_PBXFeatureBlindTransferTooltip_header' => 'ブラインド転送',
     'gs_PBXFeatureBlindTransferTooltip_desc' => '相談なしの即座通話転送のキー組み合わせ',
@@ -280,7 +271,6 @@ return [
     'gs_PBXFeatureBlindTransferTooltip_how_hangup' => '通話は即座に転送されます',
     'gs_PBXFeatureBlindTransferTooltip_warning' => '相手が利用不可か話し中の可能性があります。注意して使用してください',
     'gs_PBXFeatureBlindTransferTooltip_note' => '重要な通話にはアテンデッド転送の使用を推奨',
-
     // PBXFeaturePickupExten tooltip
     'gs_PBXFeaturePickupExtenTooltip_header' => '通話割り込み',
     'gs_PBXFeaturePickupExtenTooltip_desc' => '他の電話への着信通話割り込み用番号',
@@ -291,7 +281,6 @@ return [
     'gs_PBXFeaturePickupExtenTooltip_type_directed_desc' => '特定の内線番号への通話を割り込み',
     'gs_PBXFeaturePickupExtenTooltip_usage' => '使用方法：',
     'gs_PBXFeaturePickupExtenTooltip_usage_desc' => '他人の電話が鳴っている時、*8で割り込みまたは*8201で番号201への通話割り込み',
-
     // PBXFeatureAtxferNoAnswerTimeout tooltip
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_header' => 'アテンデッド転送後復帰タイムアウト',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_desc' => 'アテンデッド通話転送での応答待機時間を決定し、その後通話がオペレータに戻ります。',
@@ -305,7 +294,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_standard' => '30-45秒 - オフィス標準設定',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_quick' => '15-20秒 - 高速復帰用 (高負荷)',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_extended' => '60-90秒 - 重要転送またはリモートオフィス用',
-
     // PBXFeatureDigitTimeout tooltip
     'gs_PBXFeatureDigitTimeoutTooltip_header' => 'ダイヤル時の数字間タイムアウト',
     'gs_PBXFeatureDigitTimeoutTooltip_desc' => '番号ダイヤルまたは機能使用時の数字押下間最大待機時間 (ミリ秒)。',
@@ -319,7 +307,6 @@ return [
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease' => '3000-5000ミリ秒に減少：',
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease_desc' => '経験豊富なユーザー向けおよびコマンド処理の高速化',
     'gs_PBXFeatureDigitTimeoutTooltip_footer' => '注意：値が小さすぎると長い番号のダイヤル中断を引き起こす可能性があります',
-
     // RTPPortRange tooltip (for both RTPPortFrom and RTPPortTo)
     'gs_RTPPortRangeTooltip_header' => 'RTPポート範囲',
     'gs_RTPPortRangeTooltip_desc' => '通話者間でのメディアストリーム (オーディオ/ビデオ) リアルタイム送信用UDPポート範囲を決定します。',
@@ -339,7 +326,6 @@ return [
     'gs_RTPPortRangeTooltip_change_nat' => 'NAT/Firewall設定：',
     'gs_RTPPortRangeTooltip_change_nat_desc' => '指定ポート範囲がファイアウォールで開放され、ポート転送が設定されていることを確認してください',
     'gs_RTPPortRangeTooltip_footer' => '重要：変更にはAsterisk再起動と適切なネットワーク機器設定が必要',
-
     // RTPStunServer tooltip
     'gs_RTPStunServerTooltip_header' => 'STUNサーバー',
     'gs_RTPStunServerTooltip_desc' => 'STUN (Session Traversal Utilities for NAT) - NAT経由作業時の外部IPアドレスとポート決定用サーバー。',
@@ -360,7 +346,6 @@ return [
     'gs_RTPStunServerTooltip_example_2' => 'stun1.l.google.com:19302 (Googleバックアップ)',
     'gs_RTPStunServerTooltip_example_3' => 'stun.ekiga.net:3478 (Ekiga)',
     'gs_RTPStunServerTooltip_footer' => '推奨：PBXが直接パブリックIPを持つ場合またはすべての通話者がローカルネットワーク内の場合はフィールドを空にしてください',
-
     // SIPAuthPrefix tooltip
     'gs_SIPAuthPrefixTooltip_header' => 'SIP認証プレフィックス',
     'gs_SIPAuthPrefixTooltip_desc' => 'セキュリティ向上のためSIP認証時のユーザー名に追加される追加サフィックス。',
@@ -379,7 +364,6 @@ return [
     'gs_SIPAuthPrefixTooltip_use_4' => '企業セキュリティポリシーへの準拠',
     'gs_SIPAuthPrefixTooltip_warning_header' => '重要：',
     'gs_SIPAuthPrefixTooltip_warning' => 'プレフィックス変更後、すべてのSIPデバイスとソフトフォンで設定更新が必要',
-
     // SIPDefaultExpiry tooltip
     'gs_SIPDefaultExpiryTooltip_header' => 'デフォルトSIP登録間隔',
     'gs_SIPDefaultExpiryTooltip_desc' => 'SIPデバイスがサーバー上で登録を更新する頻度を決定します。デバイス利用不可検出速度とネットワーク負荷に影響します。',
@@ -396,7 +380,6 @@ return [
     'gs_SIPDefaultExpiryTooltip_change_stable' => '300-600秒に増加：ローカルネットワーク内安定オフィス電話用',
     'gs_SIPDefaultExpiryTooltip_change_battery' => '600-1800秒に増加：モバイルデバイスのバッテリー節約用',
     'gs_SIPDefaultExpiryTooltip_note' => 'ヒント：小さい値は利用不可をより早く検出するがネットワーク負荷を増加',
-
     // SIPExpiryRange tooltip (combined for Min and Max)
     'gs_SIPExpiryRangeTooltip_header' => 'SIP登録間隔範囲',
     'gs_SIPExpiryRangeTooltip_desc' => 'サーバー上のSIPデバイス登録間の最小・最大受入可能間隔を決定します。',
@@ -420,7 +403,6 @@ return [
     'gs_SIPExpiryRangeTooltip_warning_header' => '重要：',
     'gs_SIPExpiryRangeTooltip_warning' => '最小値はデフォルト値 (SIPDefaultExpiry) より小さく、最大値はより大きくする必要があります',
     'gs_SIPExpiryRangeTooltip_note' => 'ヒント：値はネットワーク負荷とデバイス利用不可検出速度のバランスに影響',
-
     // AMIEnabled tooltip
     'gs_AMIEnabledTooltip_header' => 'AMI (Asterisk Manager Interface)',
     'gs_AMIEnabledTooltip_desc' => 'TCP/IP接続経由でのAsterisk管理・監視用プログラミングインターフェース。',
@@ -446,7 +428,6 @@ return [
     'gs_AMIEnabledTooltip_warning_header' => '注意：',
     'gs_AMIEnabledTooltip_warning' => 'AMI無効化はモジュールと統合の動作を妨げる可能性があります',
     'gs_AMIEnabledTooltip_footer' => 'AMIポート：5038。セキュリティのためAMIマネージャー経由でアクセス設定',
-
     // AJAMEnabled tooltip
     'gs_AJAMEnabledTooltip_header' => 'AJAM (Asynchronous Javascript Asterisk Manager)',
     'gs_AJAMEnabledTooltip_desc' => 'HTTP/HTTPSプロトコル経由でのAMIアクセス用ウェブインターフェース。',
@@ -468,7 +449,6 @@ return [
     'gs_AJAMEnabledTooltip_warning_header' => '重要：',
     'gs_AJAMEnabledTooltip_warning' => '一部のMikoPBXモジュールは動作にAJAMを使用する可能性があります',
     'gs_AJAMEnabledTooltip_note' => 'AJAMはAMIマネージャーと同じ資格情報を使用',
-
     // SSHAuthorizedKeys tooltip
     'gs_SSHAuthorizedKeysTooltip_header' => '承認SSHキー',
     'gs_SSHAuthorizedKeysTooltip_desc' => 'システムへのパスワードなしアクセス用公開SSHキーリスト。パスワード代わりに秘密キーでSSHログインを可能にします。',
@@ -493,7 +473,6 @@ return [
     'gs_SSHAuthorizedKeysTooltip_warning_header' => '重要！',
     'gs_SSHAuthorizedKeysTooltip_warning' => 'キー追加後、セキュリティ向上のためパスワード認証無効化を推奨',
     'gs_SSHAuthorizedKeysTooltip_note' => 'ヒント：Windowsでのキー生成にはPuTTYgenまたはOpenSSH使用',
-
     // SSH_ID_RSA_PUB tooltip
     'gs_SSH_ID_RSA_PUBTooltip_header' => 'PBX公開キー',
     'gs_SSH_ID_RSA_PUBTooltip_desc' => 'パスワードなしでの他システム接続用このPBXのRSA公開キー。',
@@ -515,7 +494,6 @@ return [
     'gs_SSH_ID_RSA_PUBTooltip_warning_header' => 'セキュリティ：',
     'gs_SSH_ID_RSA_PUBTooltip_warning' => 'このキーは公開であり第三者に安全に送信可能。秘密キーはシステム保存されPBXを離れてはいけません',
     'gs_SSH_ID_RSA_PUBTooltip_note' => '注記：キー変更または再生成は使用されるすべてのサーバーで更新が必要',
-
     // WEBHTTPSPublicKey tooltip
     'gs_WEBHTTPSPublicKeyTooltip_header' => 'SSL/TLS証明書 (公開キー)',
     'gs_WEBHTTPSPublicKeyTooltip_desc' => 'HTTPS接続暗号化と送信データ保護用SSL/TLS証明書の公開部分。',
@@ -536,8 +514,7 @@ return [
     'gs_WEBHTTPSPublicKeyTooltip_chain_desc' => '中間証明書がある場合、同フィールドのメイン証明書後に追加',
     'gs_WEBHTTPSPublicKeyTooltip_note' => '推奨：証明書自動管理にはLet\'s Encryptモジュール使用',
     'gs_WEBHTTPSPublicKeyTooltip_footer' => '重要：証明書変更後ウェブサーバー再起動発生',
-
-    // WEBHTTPSPrivateKey tooltip  
+    // WEBHTTPSPrivateKey tooltip
     'gs_WEBHTTPSPrivateKeyTooltip_header' => 'SSL/TLS秘密キー',
     'gs_WEBHTTPSPrivateKeyTooltip_desc' => 'SSL/TLS接続復号化用秘密キー。公開証明書と対応必須。',
     'gs_WEBHTTPSPrivateKeyTooltip_what_is' => '秘密キーとは：',
@@ -559,7 +536,6 @@ return [
     'gs_WEBHTTPSPrivateKeyTooltip_compatibility_desc' => 'キーは公開証明書と正確に対応必須。不一致時HTTPS動作せず',
     'gs_WEBHTTPSPrivateKeyTooltip_note' => 'ヒント：Let\'s Encryptモジュールはキーペアを自動管理',
     'gs_WEBHTTPSPrivateKeyTooltip_footer' => 'デフォルト：初回インストール時システムが自己署名証明書生成',
-
     // SendMetrics tooltips
     'gs_SendMetricsTooltip_header' => 'メトリクス・エラーレポート送信',
     'gs_SendMetricsTooltip_desc' => '製品品質向上のためSentryシステムへのエラー情報自動送信',
@@ -579,7 +555,6 @@ return [
     'gs_SendMetricsTooltip_privacy_desc' => '送信されないデータ：パスワード、通話録音、個人情報、データベース内容',
     'gs_SendMetricsTooltip_warning' => 'この機能の無効化はエラー修正プロセスを遅延させ、サポート品質を低下させる可能性があります',
     'gs_SendMetricsTooltip_note' => '推奨：productionシステムでは有効のまま。データはインターネット接続時のみ送信',
-
     // PBXSplitAudioThread tooltips
     'gs_SplitAudioThreadTooltip_header' => '通話録音モード',
     'gs_SplitAudioThreadTooltip_desc' => '録音最終MP3ファイル内での通話参加者オーディオストリーム配置方法を決定',
@@ -592,4 +567,78 @@ return [
     'gs_SplitAudioThreadTooltip_benefit_quality' => 'トランスクリプション・音声認識品質向上',
     'gs_SplitAudioThreadTooltip_benefit_processing' => '音声分析システム、サービス品質評価、オペレーター訓練での利便性',
     'gs_SplitAudioThreadTooltip_note' => '注記：システムは容量節約のためWAV録音を自動的にMP3形式変換。ステレオモードでは最終MP3ファイルが2チャンネル含有',
+    'gs_AMISettings' => 'AMI設定',
+    'gs_AJAMSettings' => 'AJAM設定',
+    'gs_AJAMRequiresAMI' => 'AJAM を使用するには AMI を有効にする必要があります',
+    'gs_ARISettings' => 'URI設定',
+    'gs_ARIEnabled' => 'AMIインターフェースを使用',
+    'gs_ARIAllowedOrigins' => '許可された CORS オリジン',
+    'gs_HTTPSettings' => 'HTTPサーバー設定',
+    'gs_HTTPPort' => 'HTTP ポート (AJAM および ARI)',
+    'gs_HTTPPortTLS' => 'HTTPS ポート (AJAM および ARI)',
+    'gs_SystemManagedPrivateKey' => 'システム秘密鍵（証明書とともに自動的に生成されます）',
+    'gs_NoDataToDelete' => '削除するデータはありません。',
+    'gs_StatOutWorkTimes' => '勤務時間外のルール',
+    'gs_StatOutWorkTimesRouts' => '非勤務時間ルールとルートの関係',
+    'gs_StatApiKeys' => 'REST APIキー',
+    'gs_StatAsteriskRestUsers' => 'AMIユーザー',
+    'gs_StatUserPasskeys' => 'WebAuthnキー（パスワードレスログイン）',
+    // ARIEnabled tooltip
+    'gs_ARIEnabledTooltip_header' => 'ARI (アスタリスク REST インターフェース)',
+    'gs_ARIEnabledTooltip_desc' => 'Asterisk を使用して最新のリアルタイム アプリケーションを構築するための RESTful API。',
+    'gs_ARIEnabledTooltip_what_is_desc' => 'チャネルとブリッジを完全に制御するためのREST / WebSocketインターフェース',
+    'gs_ARIEnabledTooltip_usage' => '用途：',
+    'gs_ARIEnabledTooltip_usage_webrtc' => 'WebRTCアプリケーションとソフトフォンの作成',
+    'gs_ARIEnabledTooltip_usage_ivr' => '対話型音声メニュー（IVR）の開発',
+    'gs_ARIEnabledTooltip_usage_conference' => '電話会議管理',
+    'gs_ARIEnabledTooltip_usage_recording' => 'リアルタイムの通話録音と処理',
+    'gs_ARIEnabledTooltip_usage_custom' => 'カスタム電話ロジックの作成',
+    'gs_ARIEnabledTooltip_examples' => 'ARI の使用例:',
+    'gs_ARIEnabledTooltip_example_webphone' => 'ウェブフォンとモバイルアプリケーション',
+    'gs_ARIEnabledTooltip_example_bot' => '音声ボットと仮想アシスタント',
+    'gs_ARIEnabledTooltip_example_queue' => '高度なキュー管理システム',
+    'gs_ARIEnabledTooltip_example_analytics' => '音声分析システム',
+    'gs_ARIEnabledTooltip_default' => 'デフォルト値：',
+    'gs_ARIEnabledTooltip_default_desc' => '無効（必要な場合は有効）',
+    'gs_ARIEnabledTooltip_when_enable' => '無効にするタイミング：',
+    'gs_ARIEnabledTooltip_enable_1' => 'ウェブフォンまたはモバイルアプリケーションの開発',
+    'gs_ARIEnabledTooltip_enable_2' => 'カスタムIVRおよび音声アプリケーションの作成',
+    'gs_ARIEnabledTooltip_enable_3' => '最新のWebフレームワークとの統合',
+    'gs_ARIEnabledTooltip_warning_header' => '注意：',
+    'gs_ARIEnabledTooltip_warning' => 'ARIではアプリケーションを作成するためにプログラミングの知識が必要です',
+    'gs_ARIEnabledTooltip_footer' => 'AJAMと同じポートを使用します。WebSocketは/ari/eventsで利用可能です。',
+    // ARIAllowedOrigins tooltip
+    'gs_ARIAllowedOriginsTooltip_header' => '許可された CORS オリジン',
+    'gs_ARIAllowedOriginsTooltip_desc' => 'ARI へのクロスドメイン リクエストが許可されるドメインのリスト。',
+    'gs_ARIAllowedOriginsTooltip_what_is' => 'CORSとは:',
+    'gs_ARIAllowedOriginsTooltip_what_is_desc' => '他のドメインからのAPIアクセスを制御するブラウザセキュリティメカニズム',
+    'gs_ARIAllowedOriginsTooltip_format' => '入力形式:',
+    'gs_ARIAllowedOriginsTooltip_format_desc' => 'カンマで区切られた URL のリスト (例: http://example.com、https://app.example.com)',
+    'gs_ARIAllowedOriginsTooltip_examples' => '値の例:',
+    'gs_ARIAllowedOriginsTooltip_example_1' => '* - すべてのソースを許可する（安全ではない）',
+    'gs_ARIAllowedOriginsTooltip_example_2' => 'http://localhost:3000 - ローカル開発用',
+    'gs_ARIAllowedOriginsTooltip_example_3' => 'https://app.mycompany.com - 本番環境アプリケーション用',
+    'gs_ARIAllowedOriginsTooltip_security' => 'セキュリティ推奨事項：',
+    'gs_ARIAllowedOriginsTooltip_security_1' => '本番環境では*を使用しないでください',
+    'gs_ARIAllowedOriginsTooltip_security_2' => '信頼できるドメインのみを指定する',
+    'gs_ARIAllowedOriginsTooltip_security_3' => '本番環境ドメインではHTTPSを使用する',
+    'gs_ARIAllowedOriginsTooltip_default' => 'デフォルト値：',
+    'gs_ARIAllowedOriginsTooltip_default_desc' => '空（CORS が無効、同じドメインからのみアクセス可能）',
+    'gs_ARIAllowedOriginsTooltip_footer' => '設定を保存すると変更が適用されます。',
+    'gs_SendMetricsTooltip_benefit_stability' => '新しいリリースでの迅速なバグ修正',
+    // Certificate validation messages
+    'cert_CertificateIsEmpty' => '証明書が空です',
+    'cert_InvalidCertificateFormat' => '無効な証明書形式: %error%',
+    'cert_FailedToParseCertificate' => '証明書の解析に失敗しました',
+    'cert_CertificateExpired' => '証明書は%date%に期限切れになりました',
+    'cert_CertificateNotYetValid' => '証明書は%date%まで有効ではありません',
+    'cert_PrivateKeyIsEmpty' => '秘密鍵が空です',
+    'cert_InvalidPrivateKeyFormat' => '無効な秘密鍵の形式: %error%',
+    'cert_FailedToGetPrivateKeyDetails' => '秘密鍵の詳細を取得できませんでした',
+    'cert_FailedToLoadCertificateForPairValidation' => 'ペアを検証するための証明書の読み込みに失敗しました',
+    'cert_FailedToLoadPrivateKeyForPairValidation' => 'ペア検証用の秘密鍵の読み込みに失敗しました',
+    'cert_FailedToExtractPublicKeyFromCertificate' => '証明書から公開鍵を抽出できませんでした',
+    'cert_CertificateAndPrivateKeyDoNotMatch' => '証明書と秘密鍵が一致しません。',
+    'gs_ARIEnabledTooltip_what_is' => 'AMIとは：',
+    'cert_CertificateExpiresSoon' => '証明書は%days%日後に期限切れになります',
 ];

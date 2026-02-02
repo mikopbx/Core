@@ -1,5 +1,4 @@
 <?php
-
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -18,7 +17,6 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
     'gs_SystemWillRestart' => 'Το σύστημα θα επανεκκινήσει',
     'gs_CallRecordTab' => 'Εγγραφή συνομιλιών',
     'gs_RTPStunServer' => 'Διεύθυνση STUN διακομιστή (παράδειγμα: stun.test.net:10000)',
@@ -166,7 +164,7 @@ return [
     'gs_DeleteAllStageResettingSettings' => 'Επαναφορά ρυθμίσεων PBX',
     'gs_DeleteAllStageFinalizing' => 'Ολοκλήρωση διαδικασίας επαναφοράς',
     'gs_DeleteAllStageCompleted' => 'Η επαναφορά του συστήματος ολοκληρώθηκε',
-    'gs_DeleteAllStageRestarting' => 'Εκκίνηση επανεκκίνησης συστήματος',
+    'gs_DeleteAllStageRestarting' => 'Το σύστημα θα επανεκκινηθεί',
     'gs_StatUsers' => 'Χρήστες/Εσωτερικοί αριθμοί',
     'gs_StatProviders' => 'Πάροχοι SIP',
     'gs_StatCallQueues' => 'Ουρές κλήσεων',
@@ -184,8 +182,7 @@ return [
     'gs_StatCustomFiles' => 'Προσαρμοσμένα αρχεία',
     'gs_PBXRecordAnnouncementIn' => 'Επιλέξτε ανακοίνωση εγγραφής συνομιλιών για εισερχόμενες κλήσεις',
     'gs_PBXRecordAnnouncementOut' => 'Επιλέξτε ανακοίνωση εγγραφής συνομιλιών για εξερχόμενες κλήσεις',
-
-    // General Settings Tooltips    
+    // General Settings Tooltips
     // RestartEveryNight tooltip
     'gs_RestartEveryNightTooltip_header' => 'Καθημερινή επανεκκίνηση PBX',
     'gs_RestartEveryNightTooltip_desc' => 'Αυτόματη επανεκκίνηση του συστήματος Asterisk κάθε νύχτα για διατήρηση σταθερότητας και απόδοσης',
@@ -198,7 +195,6 @@ return [
     'gs_RestartEveryNightTooltip_drawback_calls' => 'Διακοπή ενεργών κλήσεων κατά την επανεκκίνηση',
     'gs_RestartEveryNightTooltip_drawback_registration' => 'Βραχυπρόθεσμη μη διαθεσιμότητα συστήματος (10-30 δευτερόλεπτα)',
     'gs_RestartEveryNightTooltip_recommendation' => 'Συνιστάται για συστήματα με χαμηλή νυχτερινή δραστηριότητα. Για κέντρα κλήσεων 24ώρης λειτουργίας καλύτερα να απενεργοποιηθεί και να γίνεται επανεκκίνηση χειροκίνητα σε περιόδους ελάχιστου φόρτου.',
-    
     // PBXLanguage tooltip
     'gs_PBXLanguageTooltip_header' => 'Γλώσσα συστημικών μηνυμάτων',
     'gs_PBXLanguageTooltip_desc' => 'Καθορίζει τη γλώσσα των φωνητικών μηνυμάτων του συστήματος Asterisk για τους καλούντες και τα μενού IVR',
@@ -210,7 +206,6 @@ return [
     'gs_PBXLanguageTooltip_restart' => 'Απαιτεί επανεκκίνηση',
     'gs_PBXLanguageTooltip_restart_desc' => 'Κατά την αλλαγή γλώσσας θα γίνει επανεκκίνηση της υπηρεσίας Asterisk για 10-30 δευτερόλεπτα με διακοπή σύνδεσης.',
     'gs_PBXLanguageTooltip_note' => 'Η γλώσσα της διεπαφής web ρυθμίζεται ξεχωριστά για κάθε χρήστη',
-    
     // PBXInternalExtensionLength tooltip
     'gs_PBXInternalExtensionLengthTooltip_header' => 'Μήκος εσωτερικών αριθμών',
     'gs_PBXInternalExtensionLengthTooltip_desc' => 'Καθορίζει το μέγιστο μήκος των εσωτερικών αριθμών των υπαλλήλων στο σύστημα',
@@ -224,7 +219,6 @@ return [
     'gs_PBXInternalExtensionLengthTooltip_example_5' => 'Μήκος 5: αριθμοί από 10000 έως 99999',
     'gs_PBXInternalExtensionLengthTooltip_warning' => 'Η αλλαγή αυτής της παραμέτρου δεν επηρεάζει τους υπάρχοντες αριθμούς. Εάν έχετε αριθμούς μεγαλύτερους από τη νέα ρύθμιση, θα συνεχίσουν να λειτουργούν',
     'gs_PBXInternalExtensionLengthTooltip_note' => 'Συνιστάται η επιλογή μήκους βάσει του αριθμού των υπαλλήλων: 3 ψηφία για εταιρείες έως 900 υπαλλήλους, 4 ψηφία για μεγαλύτερους οργανισμούς',
-    
     // PBXAllowGuestCalls tooltip
     'gs_AllowGuestCallsTooltip_header' => 'Κλήσεις επισκεπτών χωρίς εξουσιοδότηση',
     'gs_AllowGuestCallsTooltip_desc' => 'Επιτρέπει τη λήψη κλήσεων SIP από μη εξουσιοδοτημένες συσκευές και διακομιστές χωρίς καταχώριση',
@@ -242,7 +236,6 @@ return [
     'gs_AllowGuestCallsTooltip_security' => 'Συστάσεις ασφαλείας:',
     'gs_AllowGuestCallsTooltip_security_desc' => 'Χρησιμοποιήστε Fail2ban, περιορίστε πρόσβαση κατά IP, ρυθμίστε κανόνες εισερχόμενης δρομολόγησης',
     'gs_AllowGuestCallsTooltip_recommendation' => 'Συνιστάται η απενεργοποίηση αυτής της επιλογής εάν δεν χρησιμοποιείτε συσκευές χωρίς καταχώριση',
-    
     // PBXCallParkingExt tooltip
     'gs_PBXCallParkingExtTooltip_header' => 'Παρκάρισμα κλήσεων',
     'gs_PBXCallParkingExtTooltip_desc' => 'Αριθμός για προσωρινή τοποθέτηση κλήσης με δυνατότητα μεταγενέστερης ανάκτησης από οποιοδήποτε τηλέφωνο',
@@ -257,7 +250,6 @@ return [
     'gs_PBXCallParkingExtTooltip_example' => 'Παράδειγμα χρήσης:',
     'gs_PBXCallParkingExtTooltip_example_desc' => 'Η γραμματέας λαμβάνει κλήση, την παρκάρει στο 800, το σύστημα ανακοινώνει "Κλήση παρκαρισμένη στο 801". Ο διευθυντής καλεί το 801 και συνεχίζει τη συνομιλία',
     'gs_PBXCallParkingExtTooltip_note' => 'Εάν η κλήση δεν ανακτηθεί εντός του χρονικού ορίου, θα επιστρέψει στο αρχικό τηλέφωνο',
-    
     // PBXFeatureAttendedTransfer tooltip
     'gs_PBXFeatureAttendedTransferTooltip_header' => 'Συμβουλευτική μεταφορά',
     'gs_PBXFeatureAttendedTransferTooltip_desc' => 'Συνδυασμός πλήκτρων για μεταφορά κλήσης με προηγούμενη συμβουλή',
@@ -269,7 +261,6 @@ return [
     'gs_PBXFeatureAttendedTransferTooltip_benefits' => 'Πλεονεκτήματα:',
     'gs_PBXFeatureAttendedTransferTooltip_benefits_desc' => 'Επιτρέπει την προειδοποίηση συνάδελφου για τη μεταφορά και τη μεταβίβαση συνομιλιακού περιεχομένου',
     'gs_PBXFeatureAttendedTransferTooltip_note' => 'Εάν ο συνδρομητής δεν απαντήσει ή είναι απασχολημένος, η κλήση θα επιστρέψει σε εσάς',
-    
     // PBXFeatureBlindTransfer tooltip
     'gs_PBXFeatureBlindTransferTooltip_header' => 'Άμεση μεταφορά',
     'gs_PBXFeatureBlindTransferTooltip_desc' => 'Συνδυασμός πλήκτρων για άμεση μεταφορά κλήσης χωρίς συμβουλή',
@@ -279,7 +270,6 @@ return [
     'gs_PBXFeatureBlindTransferTooltip_how_hangup' => 'Η κλήση θα μεταφερθεί αμέσως',
     'gs_PBXFeatureBlindTransferTooltip_warning' => 'Ο συνδρομητής μπορεί να μην είναι διαθέσιμος ή απασχολημένος. Χρησιμοποιήστε με προσοχή',
     'gs_PBXFeatureBlindTransferTooltip_note' => 'Για σημαντικές κλήσεις συνιστάται η συμβουλευτική μεταφορά',
-    
     // PBXFeaturePickupExten tooltip
     'gs_PBXFeaturePickupExtenTooltip_header' => 'Παραλαβή κλήσης',
     'gs_PBXFeaturePickupExtenTooltip_desc' => 'Αριθμός για παραλαβή εισερχόμενων κλήσεων σε άλλα τηλέφωνα',
@@ -290,7 +280,6 @@ return [
     'gs_PBXFeaturePickupExtenTooltip_type_directed_desc' => 'Παραλαμβάνει κλήση σε συγκεκριμένο εσωτερικό αριθμό',
     'gs_PBXFeaturePickupExtenTooltip_usage' => 'Χρήση:',
     'gs_PBXFeaturePickupExtenTooltip_usage_desc' => 'Όταν χτυπάει άλλο τηλέφωνο, καλέστε *8 για παραλαβή ή *8201 για παραλαβή κλήσης στον αριθμό 201',
-    
     // PBXFeatureAtxferNoAnswerTimeout tooltip
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_header' => 'Timeout επιστροφής μετά από συμβουλευτική μεταφορά',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_desc' => 'Καθορίζει τον χρόνο αναμονής απάντησης κατά τη συμβουλευτική μεταφορά κλήσης, μετά τον οποίο η κλήση επιστρέφει στον χειριστή.',
@@ -304,7 +293,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_standard' => '30-45 δευτ - τυπική ρύθμιση για γραφεία',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_quick' => '15-20 δευτ - για γρήγορη επιστροφή (υψηλός φόρτος)',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_extended' => '60-90 δευτ - για σημαντικές μεταφορές ή απομακρυσμένα γραφεία',
-    
     // PBXFeatureDigitTimeout tooltip
     'gs_PBXFeatureDigitTimeoutTooltip_header' => 'Timeout μεταξύ ψηφίων κατά την κλήση',
     'gs_PBXFeatureDigitTimeoutTooltip_desc' => 'Μέγιστος χρόνος αναμονής μεταξύ των πατημάτων ψηφίων κατά την κλήση ή χρήση λειτουργιών (σε χιλιοστά του δευτερολέπτου).',
@@ -318,7 +306,6 @@ return [
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease' => 'Μείωση σε 3000-5000 ms:',
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease_desc' => 'Για έμπειρους χρήστες και επιτάχυνση επεξεργασίας εντολών',
     'gs_PBXFeatureDigitTimeoutTooltip_footer' => 'Προσοχή: πολύ μικρές τιμές μπορεί να οδηγήσουν σε διακοπή κλήσης μεγάλων αριθμών',
-    
     // RTPPortRange tooltip (for both RTPPortFrom and RTPPortTo)
     'gs_RTPPortRangeTooltip_header' => 'Εύρος πορτών RTP',
     'gs_RTPPortRangeTooltip_desc' => 'Καθορίζει το εύρος πορτών UDP για μετάδοση ροών μέσων (ήχος/βίντεο) σε πραγματικό χρόνο μεταξύ συνδρομητών.',
@@ -338,7 +325,6 @@ return [
     'gs_RTPPortRangeTooltip_change_nat' => 'Ρύθμιση NAT/Firewall:',
     'gs_RTPPortRangeTooltip_change_nat_desc' => 'Βεβαιωθείτε ότι το καθορισμένο εύρος πορτών είναι ανοιχτό στο firewall και ρυθμίστε port forwarding',
     'gs_RTPPortRangeTooltip_footer' => 'Σημαντικό: η αλλαγή απαιτεί επανεκκίνηση Asterisk και αντίστοιχη ρύθμιση δικτυακού εξοπλισμού',
-    
     // RTPStunServer tooltip
     'gs_RTPStunServerTooltip_header' => 'Διακομιστής STUN',
     'gs_RTPStunServerTooltip_desc' => 'STUN (Session Traversal Utilities for NAT) - διακομιστής για προσδιορισμό εξωτερικής διεύθυνσης IP και πόρτας κατά την εργασία μέσω NAT.',
@@ -359,7 +345,6 @@ return [
     'gs_RTPStunServerTooltip_example_2' => 'stun1.l.google.com:19302 (Google εφεδρικός)',
     'gs_RTPStunServerTooltip_example_3' => 'stun.ekiga.net:3478 (Ekiga)',
     'gs_RTPStunServerTooltip_footer' => 'Σύσταση: αφήστε το πεδίο κενό εάν το PBX έχει άμεσο δημόσιο IP ή όλοι οι συνδρομητές βρίσκονται στο τοπικό δίκτυο',
-    
     // SIPAuthPrefix tooltip
     'gs_SIPAuthPrefixTooltip_header' => 'Πρόθεμα για εξουσιοδότηση SIP',
     'gs_SIPAuthPrefixTooltip_desc' => 'Πρόσθετο επίθημα που προστίθεται στο όνομα χρήστη κατά την εξουσιοδότηση SIP για αυξημένη ασφάλεια.',
@@ -378,7 +363,6 @@ return [
     'gs_SIPAuthPrefixTooltip_use_4' => 'Συμμόρφωση με εταιρικές πολιτικές ασφαλείας',
     'gs_SIPAuthPrefixTooltip_warning_header' => 'Σημαντικό:',
     'gs_SIPAuthPrefixTooltip_warning' => 'Μετά την αλλαγή του προθέματος είναι απαραίτητο να ενημερωθούν οι ρυθμίσεις σε όλες τις συσκευές SIP και softphones',
-    
     // SIPDefaultExpiry tooltip
     'gs_SIPDefaultExpiryTooltip_header' => 'Προεπιλεγμένο διάστημα καταχώρισης SIP',
     'gs_SIPDefaultExpiryTooltip_desc' => 'Καθορίζει πόσο συχνά οι συσκευές SIP πρέπει να ενημερώνουν την καταχώρισή τους στον διακομιστή. Επηρεάζει την ταχύτητα ανίχνευσης μη διαθεσιμότητας συσκευής και το φόρτο δικτύου.',
@@ -395,7 +379,6 @@ return [
     'gs_SIPDefaultExpiryTooltip_change_stable' => 'Αύξηση σε 300-600 δευτ: για σταθερά τηλέφωνα γραφείου σε τοπικό δίκτυο',
     'gs_SIPDefaultExpiryTooltip_change_battery' => 'Αύξηση σε 600-1800 δευτ: για εξοικονόμηση μπαταρίας κινητών συσκευών',
     'gs_SIPDefaultExpiryTooltip_note' => 'Συμβουλή: μικρότερες τιμές ανιχνεύουν μη διαθεσιμότητα ταχύτερα, αλλά αυξάνουν το φόρτο δικτύου',
-    
     // SIPExpiryRange tooltip (combined for Min and Max)
     'gs_SIPExpiryRangeTooltip_header' => 'Εύρος διαστημάτων καταχώρισης SIP',
     'gs_SIPExpiryRangeTooltip_desc' => 'Καθορίζει τα ελάχιστα και μέγιστα επιτρεπτά διαστήματα μεταξύ καταχωρίσεων συσκευών SIP στον διακομιστή.',
@@ -419,7 +402,6 @@ return [
     'gs_SIPExpiryRangeTooltip_warning_header' => 'Σημαντικό:',
     'gs_SIPExpiryRangeTooltip_warning' => 'Η ελάχιστη τιμή πρέπει να είναι μικρότερη από την προεπιλεγμένη τιμή (SIPDefaultExpiry), και η μέγιστη - μεγαλύτερη',
     'gs_SIPExpiryRangeTooltip_note' => 'Συμβουλή: οι τιμές επηρεάζουν την ισορροπία μεταξύ φόρτου δικτύου και ταχύτητας ανίχνευσης διαθεσιμότητας συσκευών',
-    
     // AMIEnabled tooltip
     'gs_AMIEnabledTooltip_header' => 'AMI (Asterisk Manager Interface)',
     'gs_AMIEnabledTooltip_desc' => 'Διεπαφή προγραμματισμού για έλεγχο και παρακολούθηση του Asterisk μέσω σύνδεσης TCP/IP.',
@@ -445,7 +427,6 @@ return [
     'gs_AMIEnabledTooltip_warning_header' => 'Προσοχή:',
     'gs_AMIEnabledTooltip_warning' => 'Η απενεργοποίηση του AMI μπορεί να διαταράξει τη λειτουργία των μονάδων και ενσωματώσεων',
     'gs_AMIEnabledTooltip_footer' => 'Πόρτα AMI: 5038. Ρυθμίστε πρόσβαση μέσω διαχειριστών AMI για ασφάλεια',
-    
     // AJAMEnabled tooltip
     'gs_AJAMEnabledTooltip_header' => 'AJAM (Asynchronous Javascript Asterisk Manager)',
     'gs_AJAMEnabledTooltip_desc' => 'Διεπαφή web για πρόσβαση στο AMI μέσω πρωτοκόλλου HTTP/HTTPS.',
@@ -467,7 +448,6 @@ return [
     'gs_AJAMEnabledTooltip_warning_header' => 'Σημαντικό:',
     'gs_AJAMEnabledTooltip_warning' => 'Ορισμένες μονάδες MikoPBX μπορεί να χρησιμοποιούν AJAM για τη λειτουργία τους',
     'gs_AJAMEnabledTooltip_note' => 'Το AJAM χρησιμοποιεί τα ίδια διαπιστευτήρια με τους διαχειριστές AMI',
-    
     // SSHAuthorizedKeys tooltip
     'gs_SSHAuthorizedKeysTooltip_header' => 'Εξουσιοδοτημένα κλειδιά SSH',
     'gs_SSHAuthorizedKeysTooltip_desc' => 'Λίστα δημόσιων κλειδιών SSH για πρόσβαση στο σύστημα χωρίς κωδικό. Επιτρέπει είσοδο μέσω SSH χρησιμοποιώντας ιδιωτικό κλειδί αντί κωδικού.',
@@ -492,7 +472,6 @@ return [
     'gs_SSHAuthorizedKeysTooltip_warning_header' => 'Σημαντικό!',
     'gs_SSHAuthorizedKeysTooltip_warning' => 'Μετά την προσθήκη κλειδιών συνιστάται η απενεργοποίηση της πιστοποίησης με κωδικό για αυξημένη ασφάλεια',
     'gs_SSHAuthorizedKeysTooltip_note' => 'Συμβουλή: χρησιμοποιήστε PuTTYgen ή OpenSSH για δημιουργία κλειδιών στα Windows',
-    
     // SSH_ID_RSA_PUB tooltip
     'gs_SSH_ID_RSA_PUBTooltip_header' => 'Δημόσιο κλειδί PBX',
     'gs_SSH_ID_RSA_PUBTooltip_desc' => 'RSA δημόσιο κλειδί αυτού του PBX για σύνδεση σε άλλα συστήματα χωρίς κωδικό.',
@@ -514,7 +493,6 @@ return [
     'gs_SSH_ID_RSA_PUBTooltip_warning_header' => 'Ασφάλεια:',
     'gs_SSH_ID_RSA_PUBTooltip_warning' => 'Αυτό το κλειδί είναι δημόσιο και μπορεί να μεταδοθεί ασφαλώς σε τρίτα μέρη. Το ιδιωτικό κλειδί αποθηκεύεται στο σύστημα και δεν πρέπει ποτέ να εγκαταλείψει το PBX',
     'gs_SSH_ID_RSA_PUBTooltip_note' => 'Σημείωση: η αλλαγή ή αναδημιουργία του κλειδιού θα απαιτήσει ενημέρωση σε όλους τους διακομιστές όπου χρησιμοποιείται',
-    
     // WEBHTTPSPublicKey tooltip
     'gs_WEBHTTPSPublicKeyTooltip_header' => 'Πιστοποιητικό SSL/TLS (δημόσιο κλειδί)',
     'gs_WEBHTTPSPublicKeyTooltip_desc' => 'Δημόσιο μέρος του πιστοποιητικού SSL/TLS για κρυπτογράφηση συνδέσεων HTTPS και προστασία μεταδιδόμενων δεδομένων.',
@@ -535,8 +513,7 @@ return [
     'gs_WEBHTTPSPublicKeyTooltip_chain_desc' => 'Εάν έχετε ενδιάμεσα πιστοποιητικά (intermediate), προσθέστε τα μετά το κύριο πιστοποιητικό στο ίδιο πεδίο',
     'gs_WEBHTTPSPublicKeyTooltip_note' => 'Σύσταση: χρησιμοποιήστε τη μονάδα Let\'s Encrypt για αυτόματη διαχείριση πιστοποιητικών',
     'gs_WEBHTTPSPublicKeyTooltip_footer' => 'Σημαντικό: μετά την αλλαγή πιστοποιητικού θα γίνει επανεκκίνηση του διακομιστή web',
-    
-    // WEBHTTPSPrivateKey tooltip  
+    // WEBHTTPSPrivateKey tooltip
     'gs_WEBHTTPSPrivateKeyTooltip_header' => 'Ιδιωτικό κλειδί SSL/TLS',
     'gs_WEBHTTPSPrivateKeyTooltip_desc' => 'Μυστικό κλειδί για αποκρυπτογράφηση συνδέσεων SSL/TLS. Πρέπει να αντιστοιχεί στο δημόσιο πιστοποιητικό.',
     'gs_WEBHTTPSPrivateKeyTooltip_what_is' => 'Τι είναι το ιδιωτικό κλειδί:',
@@ -558,7 +535,6 @@ return [
     'gs_WEBHTTPSPrivateKeyTooltip_compatibility_desc' => 'Το κλειδί πρέπει να αντιστοιχεί ακριβώς στο δημόσιο πιστοποιητικό. Σε περίπτωση αναντιστοιχίας το HTTPS δεν θα λειτουργεί',
     'gs_WEBHTTPSPrivateKeyTooltip_note' => 'Συμβουλή: η μονάδα Let\'s Encrypt διαχειρίζεται αυτόματα το ζεύγος κλειδιών',
     'gs_WEBHTTPSPrivateKeyTooltip_footer' => 'Προεπιλογή: το σύστημα δημιουργεί αυτοϋπογεγραμμένο πιστοποιητικό κατά την πρώτη εγκατάσταση',
-    
     // SendMetrics tooltips
     'gs_SendMetricsTooltip_header' => 'Αποστολή μετρικών και αναφορών σφαλμάτων',
     'gs_SendMetricsTooltip_desc' => 'Αυτόματη αποστολή πληροφοριών σφαλμάτων στο σύστημα Sentry για βελτίωση της ποιότητας προϊόντος',
@@ -578,5 +554,77 @@ return [
     'gs_SendMetricsTooltip_privacy_desc' => 'ΔΕΝ μεταδίδονται: κωδικοί, εγγραφές συνομιλιών, προσωπικά δεδομένα, περιεχόμενο βάσεων δεδομένων',
     'gs_SendMetricsTooltip_warning' => 'Η απενεργοποίηση αυτής της λειτουργίας μπορεί να καθυστερήσει τη διαδικασία διόρθωσης σφαλμάτων και να μειώσει την ποιότητα υποστήριξης',
     'gs_SendMetricsTooltip_note' => 'Σύσταση: αφήστε το ενεργοποιημένο για συστήματα production. Τα δεδομένα μεταδίδονται μόνο με σύνδεση στο διαδίκτυο',
-    
+    'gs_AMISettings' => 'Ρυθμίσεις AMI',
+    'gs_AJAMSettings' => 'Ρυθμίσεις AJAM',
+    'gs_ARIEnabledTooltip_examples' => 'Παραδείγματα χρήσης ARI:',
+    'gs_AJAMRequiresAMI' => 'Το AJAM απαιτεί την ενεργοποίηση του AMI.',
+    'gs_ARIEnabled' => 'Χρήση διεπαφής AMI',
+    'gs_ARIAllowedOrigins' => 'Επιτρεπόμενες προελεύσεις CORS',
+    'gs_HTTPSettings' => 'Ρυθμίσεις διακομιστή HTTP',
+    'gs_HTTPPort' => 'Θύρα HTTP (AJAM και ARI)',
+    'gs_HTTPPortTLS' => 'Θύρα HTTPS (AJAM και ARI)',
+    'gs_StatOutWorkTimesRouts' => 'Σχέσεις μεταξύ κανόνων μη εργάσιμων ωρών και διαδρομών',
+    'gs_StatApiKeys' => 'Κλειδιά REST API',
+    'gs_StatAsteriskRestUsers' => 'χρήστες AMI',
+    'gs_StatUserPasskeys' => 'Κλειδιά WebAuthn (σύνδεση χωρίς κωδικό πρόσβασης)',
+    'gs_ARIEnabledTooltip_desc' => 'RESTful API για τη δημιουργία σύγχρονων εφαρμογών πραγματικού χρόνου με το Asterisk.',
+    'gs_ARIEnabledTooltip_usage_webrtc' => 'Δημιουργία εφαρμογών WebRTC και softphones',
+    'gs_ARIEnabledTooltip_usage_ivr' => 'Ανάπτυξη διαδραστικών φωνητικών μενού (IVR)',
+    'gs_ARIEnabledTooltip_usage_recording' => 'Καταγραφή και επεξεργασία κλήσεων σε πραγματικό χρόνο',
+    'gs_ARIEnabledTooltip_usage_custom' => 'Δημιουργία προσαρμοσμένης λογικής τηλεφώνου',
+    'gs_ARIEnabledTooltip_example_webphone' => 'Ιστοσελίδες και εφαρμογές για κινητά',
+    'gs_ARIEnabledTooltip_example_queue' => 'Προηγμένα συστήματα διαχείρισης ουρών αναμονής',
+    'gs_ARIEnabledTooltip_default_desc' => 'Απενεργοποιημένο (ενεργοποιήστε εάν χρειάζεται)',
+    'gs_ARIEnabledTooltip_when_enable' => 'Πότε να απενεργοποιηθεί:',
+    'gs_ARIEnabledTooltip_enable_1' => 'Ανάπτυξη διαδικτυακών τηλεφώνων ή εφαρμογών για κινητά',
+    'gs_ARIEnabledTooltip_enable_2' => 'Δημιουργία προσαρμοσμένων εφαρμογών IVR και φωνής',
+    'gs_ARIEnabledTooltip_enable_3' => 'Ενσωμάτωση με σύγχρονα διαδικτυακά πλαίσια',
+    'gs_ARIEnabledTooltip_warning_header' => 'Προσοχή:',
+    'gs_ARIEnabledTooltip_warning' => 'Το ARI απαιτεί γνώσεις προγραμματισμού για τη δημιουργία εφαρμογών.',
+    'gs_ARIEnabledTooltip_footer' => 'Χρησιμοποιεί τις ίδιες θύρες με το AJAM. Το WebSocket είναι διαθέσιμο στο /ari/events.',
+    // ARIAllowedOrigins tooltip
+    'gs_ARIAllowedOriginsTooltip_header' => 'Επιτρεπόμενες προελεύσεις CORS',
+    'gs_ARIAllowedOriginsTooltip_desc' => 'Λίστα τομέων από τους οποίους επιτρέπονται αιτήματα μεταξύ τομέων προς ARI.',
+    'gs_ARIAllowedOriginsTooltip_what_is' => 'Τι είναι το CORS:',
+    'gs_ARIAllowedOriginsTooltip_what_is_desc' => 'Ένας μηχανισμός ασφαλείας προγράμματος περιήγησης για τον έλεγχο της πρόσβασης API από άλλους τομείς',
+    'gs_ARIAllowedOriginsTooltip_format' => 'Μορφή εισόδου:',
+    'gs_ARIAllowedOriginsTooltip_format_desc' => 'Μια λίστα URL διαχωρισμένων με κόμμα (π.χ. http://example.com, https://app.example.com)',
+    'gs_ARIAllowedOriginsTooltip_examples' => 'Παραδείγματα τιμών:',
+    'gs_ARIAllowedOriginsTooltip_example_1' => '* - επιτρέπονται όλες οι πηγές (μη ασφαλές)',
+    'gs_ARIAllowedOriginsTooltip_example_3' => 'https://app.mycompany.com - για εφαρμογές παραγωγής',
+    'gs_ARIAllowedOriginsTooltip_security' => 'Συστάσεις ασφαλείας:',
+    'gs_ARIAllowedOriginsTooltip_security_1' => 'Ποτέ μην χρησιμοποιείτε * στην παραγωγή',
+    'gs_ARIAllowedOriginsTooltip_security_2' => 'Καθορίστε μόνο αξιόπιστους τομείς',
+    'gs_ARIAllowedOriginsTooltip_security_3' => 'Χρήση HTTPS για τομείς παραγωγής',
+    'gs_ARIAllowedOriginsTooltip_default' => 'Προεπιλεγμένη τιμή:',
+    'gs_ARIAllowedOriginsTooltip_default_desc' => 'Κενό (CORS απενεργοποιημένο, πρόσβαση μόνο από τον ίδιο τομέα)',
+    'gs_ARIAllowedOriginsTooltip_footer' => 'Οι αλλαγές εφαρμόζονται μετά την αποθήκευση των ρυθμίσεων.',
+    'cert_InvalidPrivateKeyFormat' => 'Μη έγκυρη μορφή ιδιωτικού κλειδιού: %error%',
+    'cert_FailedToGetPrivateKeyDetails' => 'Αποτυχία λήψης λεπτομερειών ιδιωτικού κλειδιού',
+    'cert_FailedToLoadCertificateForPairValidation' => 'Αποτυχία φόρτωσης πιστοποιητικού για επαλήθευση ζεύγους',
+    'cert_FailedToLoadPrivateKeyForPairValidation' => 'Αποτυχία φόρτωσης ιδιωτικού κλειδιού για επαλήθευση ζεύγους',
+    'cert_FailedToExtractPublicKeyFromCertificate' => 'Αποτυχία εξαγωγής δημόσιου κλειδιού από πιστοποιητικό',
+    'cert_CertificateAndPrivateKeyDoNotMatch' => 'Το πιστοποιητικό και το ιδιωτικό κλειδί δεν ταιριάζουν.',
+    'gs_ARISettings' => 'Ρυθμίσεις URI',
+    'gs_ARIEnabledTooltip_usage_conference' => 'Διαχείριση τηλεδιάσκεψης',
+    'gs_ARIEnabledTooltip_example_analytics' => 'Συστήματα ανάλυσης ομιλίας',
+    'gs_ARIEnabledTooltip_default' => 'Προεπιλεγμένη τιμή:',
+    'gs_ARIAllowedOriginsTooltip_example_2' => 'http://localhost:3000 - για τοπική ανάπτυξη',
+    'gs_NoDataToDelete' => 'Δεν υπάρχουν δεδομένα προς διαγραφή.',
+    'gs_ARIEnabledTooltip_example_bot' => 'Φωνητικά bots και εικονικοί βοηθοί',
+    'gs_StatOutWorkTimes' => 'Κανόνες για τις μη εργάσιμες ώρες',
+    'gs_SystemManagedPrivateKey' => 'Ιδιωτικό κλειδί συστήματος (δημιουργείται αυτόματα μαζί με το πιστοποιητικό)',
+    // ARIEnabled tooltip
+    'gs_ARIEnabledTooltip_header' => 'ARI (Διεπαφή Asterisk REST)',
+    'gs_ARIEnabledTooltip_what_is' => 'Τι είναι το AMI:',
+    'gs_ARIEnabledTooltip_what_is_desc' => 'Διεπαφή REST/WebSocket για πλήρη έλεγχο καναλιών και γεφυρών',
+    'gs_ARIEnabledTooltip_usage' => 'Για τι χρησιμοποιείται:',
+    // Certificate validation messages
+    'cert_CertificateIsEmpty' => 'Το πιστοποιητικό είναι κενό',
+    'cert_InvalidCertificateFormat' => 'Μη έγκυρη μορφή πιστοποιητικού: %error%',
+    'cert_FailedToParseCertificate' => 'Η ανάλυση του πιστοποιητικού απέτυχε',
+    'cert_CertificateExpired' => 'Το πιστοποιητικό έληξε στις %date%',
+    'cert_CertificateExpiresSoon' => 'Το πιστοποιητικό λήγει σε %days% ημέρες',
+    'cert_CertificateNotYetValid' => 'Το πιστοποιητικό δεν είναι ακόμη έγκυρο μέχρι %date%',
+    'cert_PrivateKeyIsEmpty' => 'Το ιδιωτικό κλειδί είναι κενό',
 ];

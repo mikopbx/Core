@@ -1,5 +1,4 @@
 <?php
-
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -18,7 +17,6 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
     'gs_SystemWillRestart' => 'Il sistema verrà riavviato',
     'gs_CallRecordTab' => 'Registrazione chiamate',
     'gs_RTPStunServer' => 'Indirizzo server STUN (esempio: stun.test.net:10000)',
@@ -166,7 +164,7 @@ return [
     'gs_DeleteAllStageResettingSettings' => 'Reset impostazioni PBX',
     'gs_DeleteAllStageFinalizing' => 'Completamento processo reset',
     'gs_DeleteAllStageCompleted' => 'Reset sistema completato',
-    'gs_DeleteAllStageRestarting' => 'Inizializzazione riavvio sistema',
+    'gs_DeleteAllStageRestarting' => 'Il sistema si riavvierà',
     'gs_StatUsers' => 'Utenti/Numeri interni',
     'gs_StatProviders' => 'Provider SIP',
     'gs_StatCallQueues' => 'Code chiamate',
@@ -184,8 +182,7 @@ return [
     'gs_StatCustomFiles' => 'File personalizzati',
     'gs_PBXRecordAnnouncementIn' => 'Scegli avviso registrazione chiamate per chiamate in entrata',
     'gs_PBXRecordAnnouncementOut' => 'Scegli avviso registrazione chiamate per chiamate in uscita',
-
-    // General Settings Tooltips    
+    // General Settings Tooltips
     // RestartEveryNight tooltip
     'gs_RestartEveryNightTooltip_header' => 'Riavvio giornaliero PBX',
     'gs_RestartEveryNightTooltip_desc' => 'Riavvio automatico del sistema Asterisk ogni notte per mantenere stabilità e performance',
@@ -198,7 +195,6 @@ return [
     'gs_RestartEveryNightTooltip_drawback_calls' => 'Interruzione chiamate attive durante il riavvio',
     'gs_RestartEveryNightTooltip_drawback_registration' => 'Breve indisponibilità del sistema (10-30 secondi)',
     'gs_RestartEveryNightTooltip_recommendation' => 'Raccomandato per sistemi con bassa attività notturna. Per call center 24/7 è meglio disabilitare ed eseguire riavvio manuale nei periodi di carico minimo.',
-
     // PBXLanguage tooltip
     'gs_PBXLanguageTooltip_header' => 'Lingua messaggi sistema',
     'gs_PBXLanguageTooltip_desc' => 'Determina la lingua dei messaggi vocali del sistema Asterisk per chiamanti e menu IVR',
@@ -210,7 +206,6 @@ return [
     'gs_PBXLanguageTooltip_restart' => 'Richiede riavvio',
     'gs_PBXLanguageTooltip_restart_desc' => 'Cambiando la lingua avverrà un riavvio del servizio Asterisk per 10-30 secondi con disconnessione.',
     'gs_PBXLanguageTooltip_note' => 'La lingua dell\'interfaccia web si configura separatamente per ogni utente',
-
     // PBXInternalExtensionLength tooltip
     'gs_PBXInternalExtensionLengthTooltip_header' => 'Lunghezza numeri interni',
     'gs_PBXInternalExtensionLengthTooltip_desc' => 'Determina la lunghezza massima dei numeri interni dipendenti nel sistema',
@@ -224,7 +219,6 @@ return [
     'gs_PBXInternalExtensionLengthTooltip_example_5' => 'Lunghezza 5: numeri da 10000 a 99999',
     'gs_PBXInternalExtensionLengthTooltip_warning' => 'Cambiare questo parametro non influisce sui numeri esistenti. Se hai numeri più lunghi della nuova impostazione, continueranno a funzionare',
     'gs_PBXInternalExtensionLengthTooltip_note' => 'Si raccomanda di scegliere la lunghezza in base al numero di dipendenti: 3 cifre per aziende fino a 900 dipendenti, 4 cifre per organizzazioni grandi',
-
     // PBXAllowGuestCalls tooltip
     'gs_AllowGuestCallsTooltip_header' => 'Chiamate ospite senza autenticazione',
     'gs_AllowGuestCallsTooltip_desc' => 'Permette di ricevere chiamate SIP da dispositivi e server non autorizzati senza registrazione',
@@ -242,7 +236,6 @@ return [
     'gs_AllowGuestCallsTooltip_security' => 'Raccomandazioni sicurezza:',
     'gs_AllowGuestCallsTooltip_security_desc' => 'Usa Fail2ban, limita accesso per IP, configura regole routing in entrata',
     'gs_AllowGuestCallsTooltip_recommendation' => 'Si raccomanda di disabilitare questa opzione se non usi dispositivi senza registrazione',
-
     // PBXCallParkingExt tooltip
     'gs_PBXCallParkingExtTooltip_header' => 'Parcheggio chiamate',
     'gs_PBXCallParkingExtTooltip_desc' => 'Numero per parcheggio temporaneo di chiamata con possibilità di recupero successivo da qualsiasi telefono',
@@ -257,7 +250,6 @@ return [
     'gs_PBXCallParkingExtTooltip_example' => 'Esempio d\'uso:',
     'gs_PBXCallParkingExtTooltip_example_desc' => 'La segretaria riceve una chiamata, la parcheggia su 800, il sistema annuncia "Chiamata parcheggiata su 801". Il manager compone 801 e continua la conversazione',
     'gs_PBXCallParkingExtTooltip_note' => 'Se la chiamata non viene presa entro il tempo di attesa, tornerà al telefono originale',
-
     // PBXFeatureAttendedTransfer tooltip
     'gs_PBXFeatureAttendedTransferTooltip_header' => 'Trasferimento consultivo',
     'gs_PBXFeatureAttendedTransferTooltip_desc' => 'Combinazione tasti per trasferimento chiamata con consultazione preventiva',
@@ -269,7 +261,6 @@ return [
     'gs_PBXFeatureAttendedTransferTooltip_benefits' => 'Vantaggi:',
     'gs_PBXFeatureAttendedTransferTooltip_benefits_desc' => 'Permette di avvertire il collega sul trasferimento e passare il contesto della conversazione',
     'gs_PBXFeatureAttendedTransferTooltip_note' => 'Se l\'interlocutore non risponde o è occupato, la chiamata tornerà a te',
-
     // PBXFeatureBlindTransfer tooltip
     'gs_PBXFeatureBlindTransferTooltip_header' => 'Trasferimento cieco',
     'gs_PBXFeatureBlindTransferTooltip_desc' => 'Combinazione tasti per trasferimento immediato chiamata senza consultazione',
@@ -279,7 +270,6 @@ return [
     'gs_PBXFeatureBlindTransferTooltip_how_hangup' => 'La chiamata verrà trasferita immediatamente',
     'gs_PBXFeatureBlindTransferTooltip_warning' => 'L\'interlocutore potrebbe non essere disponibile o occupato. Usa con cautela',
     'gs_PBXFeatureBlindTransferTooltip_note' => 'Per chiamate importanti si raccomanda di usare il trasferimento consultivo',
-
     // PBXFeaturePickupExten tooltip
     'gs_PBXFeaturePickupExtenTooltip_header' => 'Intercettazione chiamata',
     'gs_PBXFeaturePickupExtenTooltip_desc' => 'Numero per intercettazione chiamate in entrata su altri telefoni',
@@ -290,7 +280,6 @@ return [
     'gs_PBXFeaturePickupExtenTooltip_type_directed_desc' => 'Intercetta chiamata su numero interno specifico',
     'gs_PBXFeaturePickupExtenTooltip_usage' => 'Utilizzo:',
     'gs_PBXFeaturePickupExtenTooltip_usage_desc' => 'Quando squilla il telefono di qualcun altro, componi *8 per intercettare o *8201 per intercettare chiamata sul numero 201',
-
     // PBXFeatureAtxferNoAnswerTimeout tooltip
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_header' => 'Timeout ritorno dopo trasferimento consultivo',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_desc' => 'Determina il tempo di attesa risposta nel trasferimento consultivo di chiamata, dopo il quale la chiamata tornerà all\'operatore.',
@@ -304,7 +293,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_standard' => '30-45 sec - impostazione standard per uffici',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_quick' => '15-20 sec - per ritorno rapido (carico elevato)',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_extended' => '60-90 sec - per trasferimenti importanti o uffici remoti',
-
     // PBXFeatureDigitTimeout tooltip
     'gs_PBXFeatureDigitTimeoutTooltip_header' => 'Timeout tra cifre durante composizione',
     'gs_PBXFeatureDigitTimeoutTooltip_desc' => 'Tempo massimo di attesa tra pressioni di cifre durante composizione numero o uso di funzionalità (in millisecondi).',
@@ -318,7 +306,6 @@ return [
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease' => 'Diminuire a 3000-5000 ms:',
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease_desc' => 'Per utenti esperti e accelerazione elaborazione comandi',
     'gs_PBXFeatureDigitTimeoutTooltip_footer' => 'Attenzione: valore troppo piccolo può causare interruzione composizione numeri lunghi',
-
     // RTPPortRange tooltip (for both RTPPortFrom and RTPPortTo)
     'gs_RTPPortRangeTooltip_header' => 'Range porte RTP',
     'gs_RTPPortRangeTooltip_desc' => 'Determina il range di porte UDP per trasmissione flussi media (audio/video) in tempo reale tra interlocutori.',
@@ -338,7 +325,6 @@ return [
     'gs_RTPPortRangeTooltip_change_nat' => 'Configurazione NAT/Firewall:',
     'gs_RTPPortRangeTooltip_change_nat_desc' => 'Assicurati che il range porte specificato sia aperto nel firewall e configurato il port forwarding',
     'gs_RTPPortRangeTooltip_footer' => 'Importante: la modifica richiede riavvio Asterisk e configurazione appropriata apparecchiature di rete',
-
     // RTPStunServer tooltip
     'gs_RTPStunServerTooltip_header' => 'Server STUN',
     'gs_RTPStunServerTooltip_desc' => 'STUN (Session Traversal Utilities for NAT) - server per determinare indirizzo IP esterno e porta quando si lavora tramite NAT.',
@@ -359,7 +345,6 @@ return [
     'gs_RTPStunServerTooltip_example_2' => 'stun1.l.google.com:19302 (Google backup)',
     'gs_RTPStunServerTooltip_example_3' => 'stun.ekiga.net:3478 (Ekiga)',
     'gs_RTPStunServerTooltip_footer' => 'Raccomandazione: lascia campo vuoto se PBX ha IP pubblico diretto o tutti gli interlocutori sono in rete locale',
-
     // SIPAuthPrefix tooltip
     'gs_SIPAuthPrefixTooltip_header' => 'Prefisso per autenticazione SIP',
     'gs_SIPAuthPrefixTooltip_desc' => 'Suffisso aggiuntivo aggiunto al nome utente nell\'autenticazione SIP per aumentare la sicurezza.',
@@ -378,7 +363,6 @@ return [
     'gs_SIPAuthPrefixTooltip_use_4' => 'Conformità alle politiche sicurezza aziendale',
     'gs_SIPAuthPrefixTooltip_warning_header' => 'Importante:',
     'gs_SIPAuthPrefixTooltip_warning' => 'Dopo aver cambiato il prefisso è necessario aggiornare le impostazioni su tutti i dispositivi e softphone SIP',
-
     // SIPDefaultExpiry tooltip
     'gs_SIPDefaultExpiryTooltip_header' => 'Intervallo registrazione SIP predefinito',
     'gs_SIPDefaultExpiryTooltip_desc' => 'Determina quanto spesso i dispositivi SIP devono aggiornare la loro registrazione sul server. Influisce sulla velocità di rilevamento indisponibilità dispositivo e carico di rete.',
@@ -395,7 +379,6 @@ return [
     'gs_SIPDefaultExpiryTooltip_change_stable' => 'Aumentare a 300-600 sec: per telefoni ufficio stabili in rete locale',
     'gs_SIPDefaultExpiryTooltip_change_battery' => 'Aumentare a 600-1800 sec: per risparmiare batteria dispositivi mobili',
     'gs_SIPDefaultExpiryTooltip_note' => 'Consiglio: valori minori rilevano indisponibilità più rapidamente ma aumentano carico di rete',
-
     // SIPExpiryRange tooltip (combined for Min and Max)
     'gs_SIPExpiryRangeTooltip_header' => 'Range intervalli registrazione SIP',
     'gs_SIPExpiryRangeTooltip_desc' => 'Determina intervalli minimi e massimi accettabili tra registrazioni dispositivi SIP sul server.',
@@ -419,7 +402,6 @@ return [
     'gs_SIPExpiryRangeTooltip_warning_header' => 'Importante:',
     'gs_SIPExpiryRangeTooltip_warning' => 'Il valore minimo deve essere inferiore al valore predefinito (SIPDefaultExpiry) e il massimo maggiore',
     'gs_SIPExpiryRangeTooltip_note' => 'Suggerimento: i valori influiscono sull\'equilibrio tra carico di rete e velocità rilevamento indisponibilità dispositivi',
-
     // AMIEnabled tooltip
     'gs_AMIEnabledTooltip_header' => 'AMI (Asterisk Manager Interface)',
     'gs_AMIEnabledTooltip_desc' => 'Interfaccia programmazione per gestione e monitoraggio Asterisk tramite connessione TCP/IP.',
@@ -445,7 +427,6 @@ return [
     'gs_AMIEnabledTooltip_warning_header' => 'Attenzione:',
     'gs_AMIEnabledTooltip_warning' => 'Disabilitare AMI può compromettere funzionamento moduli e integrazioni',
     'gs_AMIEnabledTooltip_footer' => 'Porta AMI: 5038. Configura accesso tramite manager AMI per sicurezza',
-
     // AJAMEnabled tooltip
     'gs_AJAMEnabledTooltip_header' => 'AJAM (Asynchronous Javascript Asterisk Manager)',
     'gs_AJAMEnabledTooltip_desc' => 'Interfaccia web per accesso ad AMI tramite protocollo HTTP/HTTPS.',
@@ -467,7 +448,6 @@ return [
     'gs_AJAMEnabledTooltip_warning_header' => 'Importante:',
     'gs_AJAMEnabledTooltip_warning' => 'Alcuni moduli MikoPBX possono usare AJAM per il loro funzionamento',
     'gs_AJAMEnabledTooltip_note' => 'AJAM usa stesse credenziali dei manager AMI',
-
     // SSHAuthorizedKeys tooltip
     'gs_SSHAuthorizedKeysTooltip_header' => 'Chiavi SSH autorizzate',
     'gs_SSHAuthorizedKeysTooltip_desc' => 'Lista chiavi pubbliche SSH per accesso senza password al sistema. Permette login SSH usando chiave privata invece di password.',
@@ -492,7 +472,6 @@ return [
     'gs_SSHAuthorizedKeysTooltip_warning_header' => 'Importante!',
     'gs_SSHAuthorizedKeysTooltip_warning' => 'Dopo aver aggiunto chiavi si raccomanda disabilitare autenticazione password per aumentare sicurezza',
     'gs_SSHAuthorizedKeysTooltip_note' => 'Consiglio: per generare chiavi in Windows usa PuTTYgen o OpenSSH',
-
     // SSH_ID_RSA_PUB tooltip
     'gs_SSH_ID_RSA_PUBTooltip_header' => 'Chiave pubblica PBX',
     'gs_SSH_ID_RSA_PUBTooltip_desc' => 'Chiave pubblica RSA di questo PBX per connessione ad altri sistemi senza password.',
@@ -514,7 +493,6 @@ return [
     'gs_SSH_ID_RSA_PUBTooltip_warning_header' => 'Sicurezza:',
     'gs_SSH_ID_RSA_PUBTooltip_warning' => 'Questa chiave è pubblica e può essere trasmessa in sicurezza a terzi. La chiave privata è memorizzata nel sistema e non deve mai lasciare il PBX',
     'gs_SSH_ID_RSA_PUBTooltip_note' => 'Nota: cambiare o rigenerare la chiave richiederà aggiornamento su tutti i server dove viene utilizzata',
-
     // WEBHTTPSPublicKey tooltip
     'gs_WEBHTTPSPublicKeyTooltip_header' => 'Certificato SSL/TLS (chiave pubblica)',
     'gs_WEBHTTPSPublicKeyTooltip_desc' => 'Parte pubblica del certificato SSL/TLS per crittografia connessioni HTTPS e protezione dati trasmessi.',
@@ -535,8 +513,7 @@ return [
     'gs_WEBHTTPSPublicKeyTooltip_chain_desc' => 'Se hai certificati intermedi, aggiungili dopo il certificato principale nello stesso campo',
     'gs_WEBHTTPSPublicKeyTooltip_note' => 'Raccomandazione: usa modulo Let\'s Encrypt per gestione automatica certificati',
     'gs_WEBHTTPSPublicKeyTooltip_footer' => 'Importante: dopo cambio certificato avverrà riavvio web server',
-
-    // WEBHTTPSPrivateKey tooltip  
+    // WEBHTTPSPrivateKey tooltip
     'gs_WEBHTTPSPrivateKeyTooltip_header' => 'Chiave privata SSL/TLS',
     'gs_WEBHTTPSPrivateKeyTooltip_desc' => 'Chiave segreta per decrittazione connessioni SSL/TLS. Deve corrispondere al certificato pubblico.',
     'gs_WEBHTTPSPrivateKeyTooltip_what_is' => 'Cos\'è la chiave privata:',
@@ -558,7 +535,6 @@ return [
     'gs_WEBHTTPSPrivateKeyTooltip_compatibility_desc' => 'La chiave deve corrispondere esattamente al certificato pubblico. In caso non corrispondenza HTTPS non funzionerà',
     'gs_WEBHTTPSPrivateKeyTooltip_note' => 'Suggerimento: modulo Let\'s Encrypt gestisce automaticamente coppia chiavi',
     'gs_WEBHTTPSPrivateKeyTooltip_footer' => 'Predefinito: sistema genera certificato autofirmato alla prima installazione',
-
     // SendMetrics tooltips
     'gs_SendMetricsTooltip_header' => 'Invio metriche e report errori',
     'gs_SendMetricsTooltip_desc' => 'Invio automatico informazioni errori al sistema Sentry per miglioramento qualità prodotto',
@@ -578,5 +554,77 @@ return [
     'gs_SendMetricsTooltip_privacy_desc' => 'NON vengono trasmesse: password, registrazioni chiamate, dati personali, contenuti database',
     'gs_SendMetricsTooltip_warning' => 'Disabilitare questa funzione può rallentare processo correzione errori e ridurre qualità supporto',
     'gs_SendMetricsTooltip_note' => 'Raccomandato: lasciare abilitato per sistemi production. Dati trasmessi solo in presenza connessione internet',
-
+    'gs_ARIAllowedOriginsTooltip_security_1' => 'Non usare mai * in produzione',
+    'gs_ARIEnabledTooltip_enable_3' => 'Integrazione con i moderni framework web',
+    'gs_ARIEnabledTooltip_warning' => 'ARI richiede conoscenze di programmazione per creare applicazioni',
+    'gs_ARIAllowedOriginsTooltip_examples' => 'Esempi di valori:',
+    'gs_ARIAllowedOriginsTooltip_security' => 'Raccomandazioni sicurezza:',
+    'gs_ARIAllowedOriginsTooltip_security_2' => 'Specificare solo domini attendibili',
+    'gs_AMISettings' => 'Impostazioni AMI',
+    'gs_AJAMSettings' => 'Impostazioni AJAM',
+    'gs_AJAMRequiresAMI' => 'AJAM richiede che AMI sia abilitato',
+    'gs_ARISettings' => 'Impostazioni dell\'URI',
+    'gs_ARIAllowedOrigins' => 'Origini CORS consentite',
+    'gs_HTTPSettings' => 'Impostazioni del server HTTP',
+    'gs_ARIEnabledTooltip_usage_webrtc' => 'Creazione di applicazioni WebRTC e softphone',
+    'gs_ARIEnabledTooltip_enable_1' => 'Sviluppo di web phone o applicazioni mobili',
+    'gs_ARIAllowedOriginsTooltip_footer' => 'Le modifiche vengono applicate dopo aver salvato le impostazioni.',
+    'gs_StatOutWorkTimes' => 'Regole sugli orari non lavorativi',
+    'gs_StatOutWorkTimesRouts' => 'Relazioni tra regole sugli orari non lavorativi e percorsi',
+    'gs_StatApiKeys' => 'Chiavi API REST',
+    'gs_StatAsteriskRestUsers' => 'Utenti AMI',
+    'gs_StatUserPasskeys' => 'Chiavi WebAuthn (accesso senza password)',
+    'gs_ARIEnabledTooltip_examples' => 'Esempi di utilizzo dell\'ARI:',
+    'gs_ARIEnabledTooltip_example_queue' => 'Sistemi avanzati di gestione delle code',
+    'gs_ARIEnabledTooltip_example_analytics' => 'Sistemi di analisi vocale',
+    'gs_ARIEnabledTooltip_default_desc' => 'Disabilitato (abilita se necessario)',
+    'gs_ARIEnabledTooltip_when_enable' => 'Quando conviene disabilitare:',
+    'gs_ARIEnabledTooltip_warning_header' => 'Attenzione:',
+    'gs_ARIEnabledTooltip_footer' => 'Utilizza le stesse porte di AJAM. WebSocket è disponibile su /ari/events',
+    // ARIAllowedOrigins tooltip
+    'gs_ARIAllowedOriginsTooltip_header' => 'Origini CORS consentite',
+    'gs_ARIAllowedOriginsTooltip_desc' => 'Elenco dei domini da cui sono consentite richieste cross-domain ad ARI.',
+    'gs_ARIAllowedOriginsTooltip_format_desc' => 'Un elenco di URL separati da virgole (ad esempio http://example.com, https://app.example.com)',
+    'gs_ARIAllowedOriginsTooltip_example_1' => '* - consenti tutte le fonti (non sicuro)',
+    'gs_ARIAllowedOriginsTooltip_example_3' => 'https://app.mycompany.com - per applicazioni di produzione',
+    'gs_ARIEnabledTooltip_usage_ivr' => 'Sviluppo di menu vocali interattivi (IVR)',
+    'gs_ARIEnabledTooltip_usage_recording' => 'Registrazione ed elaborazione delle chiamate in tempo reale',
+    'gs_SystemManagedPrivateKey' => 'Chiave privata del sistema (generata automaticamente insieme al certificato)',
+    // Certificate validation messages
+    'cert_CertificateIsEmpty' => 'Il certificato è vuoto',
+    'cert_FailedToParseCertificate' => 'Impossibile analizzare il certificato',
+    'cert_CertificateExpired' => 'Il certificato è scaduto il %date%',
+    'cert_CertificateExpiresSoon' => 'Il certificato scade tra %days% giorni',
+    'cert_CertificateNotYetValid' => 'Il certificato non è ancora valido fino al %date%',
+    'cert_PrivateKeyIsEmpty' => 'La chiave privata è vuota',
+    'cert_InvalidPrivateKeyFormat' => 'Formato chiave privata non valido: %error%',
+    'cert_FailedToGetPrivateKeyDetails' => 'Impossibile ottenere i dettagli della chiave privata',
+    'cert_FailedToLoadCertificateForPairValidation' => 'Impossibile caricare il certificato per verificare la coppia',
+    'cert_FailedToLoadPrivateKeyForPairValidation' => 'Impossibile caricare la chiave privata per la verifica della coppia',
+    'cert_FailedToExtractPublicKeyFromCertificate' => 'Impossibile estrarre la chiave pubblica dal certificato',
+    'cert_CertificateAndPrivateKeyDoNotMatch' => 'Il certificato e la chiave privata non corrispondono.',
+    'gs_ARIEnabled' => 'Usa interfaccia AMI',
+    'gs_HTTPPort' => 'Porta HTTP (AJAM e ARI)',
+    'gs_HTTPPortTLS' => 'Porta HTTPS (AJAM e ARI)',
+    'gs_ARIEnabledTooltip_usage_custom' => 'Creazione di una logica telefonica personalizzata',
+    'gs_ARIAllowedOriginsTooltip_security_3' => 'Utilizzare HTTPS per i domini di produzione',
+    'gs_ARIAllowedOriginsTooltip_default' => 'Valore predefinito:',
+    'gs_ARIAllowedOriginsTooltip_default_desc' => 'Vuoto (CORS disabilitato, accesso solo dallo stesso dominio)',
+    // ARIEnabled tooltip
+    'gs_ARIEnabledTooltip_header' => 'ARI (interfaccia Asterisk REST)',
+    'gs_ARIEnabledTooltip_desc' => 'API RESTful per la creazione di applicazioni moderne in tempo reale con Asterisk.',
+    'gs_ARIEnabledTooltip_what_is' => 'Cos\'è AMI:',
+    'gs_ARIEnabledTooltip_what_is_desc' => 'Interfaccia REST/WebSocket per il controllo completo su canali e bridge',
+    'gs_ARIEnabledTooltip_usage' => 'A cosa serve:',
+    'gs_ARIEnabledTooltip_usage_conference' => 'Gestione delle conference call',
+    'gs_ARIEnabledTooltip_example_webphone' => 'Webphone e applicazioni mobili',
+    'gs_ARIEnabledTooltip_example_bot' => 'Bot vocali e assistenti virtuali',
+    'gs_ARIEnabledTooltip_default' => 'Valore predefinito:',
+    'gs_ARIEnabledTooltip_enable_2' => 'Creazione di applicazioni vocali e IVR personalizzate',
+    'gs_ARIAllowedOriginsTooltip_what_is' => 'Che cosa è CORS:',
+    'gs_ARIAllowedOriginsTooltip_what_is_desc' => 'Un meccanismo di sicurezza del browser per controllare l\'accesso alle API da altri domini.',
+    'gs_ARIAllowedOriginsTooltip_format' => 'Formato di input:',
+    'gs_ARIAllowedOriginsTooltip_example_2' => 'http://localhost:3000 - per lo sviluppo locale',
+    'gs_NoDataToDelete' => 'Non ci sono dati da eliminare.',
+    'cert_InvalidCertificateFormat' => 'Formato del certificato non valido: %error%',
 ];
