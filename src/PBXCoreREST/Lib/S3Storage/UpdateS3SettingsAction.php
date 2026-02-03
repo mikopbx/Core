@@ -136,9 +136,11 @@ class UpdateS3SettingsAction
                 $settings->s3_access_key = $data['s3_access_key'];
             }
             if (isset($data['s3_secret_key'])) {
-                // WHY: Stored in plain text following MikoPBX patterns (like Sip::secret)
-                // AWS SDK uses HTTPS for transport-level encryption
-                $settings->s3_secret_key = $data['s3_secret_key'];
+                // WHY: Skip masked values — API returns masked secret (e.g., 'YCP9E***-49wj'),
+                // and frontend may send it back unchanged on save. Never overwrite real secret with mask.
+                if (!str_contains($data['s3_secret_key'], '*')) {
+                    $settings->s3_secret_key = $data['s3_secret_key'];
+                }
             }
 
             // Save StorageSettings

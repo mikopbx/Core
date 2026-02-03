@@ -388,9 +388,12 @@ class WorkerS3Upload extends WorkerBase
     /**
      * Find oldest recordings in monitor directory
      *
+     * Uses directory structure (YYYY/MM/DD) to scan chronologically from oldest.
+     * Returns first N files from oldest directories without scanning the entire tree.
+     *
      * @param string $monitorDir Monitor directory path
      * @param int $limit Maximum number of files to return
-     * @return array Array of file paths sorted by modification time (oldest first)
+     * @return array Array of file paths from oldest directories first
      */
     private function findOldestRecordings(string $monitorDir, int $limit): array
     {
@@ -401,24 +404,27 @@ class WorkerS3Upload extends WorkerBase
         $files = [];
 
         try {
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($monitorDir, RecursiveDirectoryIterator::SKIP_DOTS),
-                RecursiveIteratorIterator::LEAVES_ONLY
-            );
+            $years = $this->getSortedSubdirs($monitorDir);
 
-            foreach ($iterator as $file) {
-                if ($file->isFile() && (
-                    str_ends_with($file->getFilename(), '.wav') ||
-                    str_ends_with($file->getFilename(), '.mp3') ||
-                    str_ends_with($file->getFilename(), '.webm')
-                )) {
-                    $files[] = [
-                        'path' => $file->getPathname(),
-                        'mtime' => $file->getMTime(),
-                    ];
+            foreach ($years as $yearDir) {
+                if (!ctype_digit(basename($yearDir))) {
+                    continue;
+                }
+
+                $months = $this->getSortedSubdirs($yearDir);
+
+                foreach ($months as $monthDir) {
+                    $days = $this->getSortedSubdirs($monthDir);
+
+                    foreach ($days as $dayDir) {
+                        $this->collectAudioFiles($dayDir, $files);
+
+                        if (count($files) >= $limit) {
+                            return array_slice($files, 0, $limit);
+                        }
+                    }
                 }
             }
-
         } catch (\Throwable $e) {
             SystemMessages::sysLogMsg(
                 __CLASS__,
@@ -428,20 +434,20 @@ class WorkerS3Upload extends WorkerBase
             return [];
         }
 
-        // Sort by modification time (oldest first)
-        usort($files, fn($a, $b) => $a['mtime'] <=> $b['mtime']);
-
-        // Extract paths and limit
-        return array_slice(array_column($files, 'path'), 0, $limit);
+        return array_slice($files, 0, $limit);
     }
 
     /**
      * Find recordings older than specified timestamp
      *
+     * Uses directory structure (YYYY/MM/DD) to scan chronologically from oldest to newest.
+     * Stops scanning once it reaches directories newer than expiration time,
+     * avoiding full filesystem traversal of tens of thousands of files.
+     *
      * @param string $monitorDir Monitor directory path
      * @param int $expirationTime Unix timestamp
      * @param int $limit Maximum number of files to return
-     * @return array Array of file paths
+     * @return array Array of file paths sorted by directory date (oldest first)
      */
     private function findRecordingsOlderThan(string $monitorDir, int $expirationTime, int $limit): array
     {
@@ -450,36 +456,59 @@ class WorkerS3Upload extends WorkerBase
         }
 
         $files = [];
+        $expirationDate = date('Y/m/d', $expirationTime);
 
         try {
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($monitorDir, RecursiveDirectoryIterator::SKIP_DOTS),
-                RecursiveIteratorIterator::LEAVES_ONLY
-            );
+            // Get year directories sorted ascending
+            $years = $this->getSortedSubdirs($monitorDir);
 
-            foreach ($iterator as $file) {
-                if ($file->isFile() && (
-                    str_ends_with($file->getFilename(), '.wav') ||
-                    str_ends_with($file->getFilename(), '.mp3') ||
-                    str_ends_with($file->getFilename(), '.webm')
-                )) {
-                    $mtime = $file->getMTime();
+            foreach ($years as $yearDir) {
+                $yearName = basename($yearDir);
 
-                    // Only include files older than expiration time
-                    if ($mtime < $expirationTime) {
-                        $files[] = [
-                            'path' => $file->getPathname(),
-                            'mtime' => $mtime,
-                        ];
-                    }
+                // Skip non-year directories (e.g., conversion-tasks)
+                if (!ctype_digit($yearName)) {
+                    continue;
                 }
 
-                // Early exit if we have enough files
-                if (count($files) >= $limit * 2) {
+                // If entire year is newer than expiration, stop
+                if ($yearName > substr($expirationDate, 0, 4)) {
                     break;
                 }
-            }
 
+                // Get month directories sorted ascending
+                $months = $this->getSortedSubdirs($yearDir);
+
+                foreach ($months as $monthDir) {
+                    $monthName = basename($monthDir);
+                    $yearMonth = $yearName . '/' . $monthName;
+
+                    // If this month is newer than expiration, skip remaining months
+                    if ($yearMonth > substr($expirationDate, 0, 7)) {
+                        break;
+                    }
+
+                    // Get day directories sorted ascending
+                    $days = $this->getSortedSubdirs($monthDir);
+
+                    foreach ($days as $dayDir) {
+                        $dayName = basename($dayDir);
+                        $fullDate = $yearMonth . '/' . $dayName;
+
+                        // If this day is newer than expiration, skip remaining days
+                        if ($fullDate > $expirationDate) {
+                            break;
+                        }
+
+                        // Scan hour subdirectories and files within this day
+                        $this->collectAudioFiles($dayDir, $files);
+
+                        // Return early once we have enough
+                        if (count($files) >= $limit) {
+                            return array_slice($files, 0, $limit);
+                        }
+                    }
+                }
+            }
         } catch (\Throwable $e) {
             SystemMessages::sysLogMsg(
                 __CLASS__,
@@ -489,11 +518,58 @@ class WorkerS3Upload extends WorkerBase
             return [];
         }
 
-        // Sort by modification time (oldest first)
-        usort($files, fn($a, $b) => $a['mtime'] <=> $b['mtime']);
+        return array_slice($files, 0, $limit);
+    }
 
-        // Extract paths and limit
-        return array_slice(array_column($files, 'path'), 0, $limit);
+    /**
+     * Get sorted subdirectories of a given path
+     *
+     * @param string $dir Parent directory
+     * @return array Sorted array of subdirectory full paths
+     */
+    private function getSortedSubdirs(string $dir): array
+    {
+        $subdirs = [];
+        $entries = @scandir($dir, SCANDIR_SORT_ASCENDING);
+        if ($entries === false) {
+            return [];
+        }
+
+        foreach ($entries as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            $fullPath = $dir . '/' . $entry;
+            if (is_dir($fullPath)) {
+                $subdirs[] = $fullPath;
+            }
+        }
+
+        return $subdirs;
+    }
+
+    /**
+     * Collect audio files from a directory and its immediate subdirectories (hour dirs)
+     *
+     * @param string $dir Directory to scan (day-level, may contain hour subdirs)
+     * @param array $files Collected files array (passed by reference)
+     */
+    private function collectAudioFiles(string $dir, array &$files): void
+    {
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::LEAVES_ONLY
+        );
+
+        foreach ($iterator as $file) {
+            if ($file->isFile() && (
+                str_ends_with($file->getFilename(), '.wav') ||
+                str_ends_with($file->getFilename(), '.mp3') ||
+                str_ends_with($file->getFilename(), '.webm')
+            )) {
+                $files[] = $file->getPathname();
+            }
+        }
     }
 }
 
