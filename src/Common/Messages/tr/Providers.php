@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Sağlayıcının ince ayarı için ek Asterisk IAX yapılandırma parametreleri eklemenizi sağlar.',
     'iax_ManualAttributesTooltip_examples_header' => 'Örnekler',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Giden kayıt',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'PBX\'iniz sağlayıcı sunucusunda kayıt olur. Sağlayıcı üzerinden giden çağrılar için kullanılır.',
     'iax_registration_type' => 'Hesap türü',
-
     // PR
     'pr_AddIAXProvider' => 'IAX\'u bağlayın',
     'pr_AddSIPProvider' => 'SIP bağlayın',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Sağlayıcı portunu belirtin',
     'pr_ValidationProviderPortRange' => 'Sağlayıcı portu {ruleValue} aralığında olmalıdır',
     'pr_WithoutRegistration' => 'Kayıt devre dışı',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'IAX2 sağlayıcıları',
     'prov_dropdownCategory_SIP' => 'SIP sağlayıcıları',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Gelen kayıt',
     'sip_REG_TYPE_NONE' => 'Kayıt yok (IP kimlik doğrulaması)',
     'sip_REG_TYPE_OUTBOUND' => 'Giden kayıt',
     'sip_registration_type' => 'Hesap türü',
+    'pr_ProviderRegistered' => 'Sağlayıcı kayıtlıdır.',
+    'pr_Disabled' => 'kapatıldı',
+    'pr_RegisteredTo' => 'Kayıtlı olduğu tarih',
+    'mo_SipUsernameInvalidCharacters' => 'Gelen kayıt için SIP kullanıcı adı yalnızca Latin harfleri, rakamlar ve semboller içerebilir: _ - .',
+    'pr_StateChangedFromTo' => 'Durum %previousState%\'den %newState%\'e değişti.',
+    'pr_CheckingStatus' => 'Durum kontrol ediliyor...',
+    'pr_ValidationProviderLogin' => 'Sağlayıcınıza giriş yapmak için kullanıcı adınızı girin.',
+    'pr_RegisteredFrom' => 'Kayıtlı olduğu yer',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'Gelen kayıtlar için IAX kullanıcı adı yalnızca Latin harfleri, rakamlar ve semboller içerebilir: _ - .',
+    'pr_WaitingForRegistration' => 'Kayıt işlemini bekliyorum.',
 ];

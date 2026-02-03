@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * External modules translations
  */
-
-return [
     // EXT
     'ext_AddNewExtension' => 'ახალი მოდულის ჩატვირთვა',
     'ext_Available' => 'შეიძლება განახლდეს',
@@ -98,4 +97,13 @@ return [
     'ext_ValidateCaptionEmpty' => 'მენიუს ელემენტის სახელი არ არის შევსებული',
     'ext_Version' => 'ვერსია',
     'ext_WrongGetModuleLink' => 'შეცდომა მოდულის ფაილის საცავიდან მიღებისას',
+    'ext_MissingModuleUniqueID' => '%filePath% არქივში არსებულ module.json ფაილს აკლია აუცილებელი moduleUniqueID ველი.',
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => 'მოდული %module% არ არის თავსებადი MikoPBX-ის მიმდინარე ვერსიასთან',
+    'ext_InvalidModuleJson' => '%filePath% არქივში არსებული module.json ფაილი შეიცავს არასწორ JSON-ს: %error%',
+    'ext_ModuleJsonNotFound' => 'module.json ფაილი ვერ მოიძებნა მოდულის არქივში %filePath%',
+    'ext_CorruptedZipFile' => 'მოდულის ZIP ფაილი დაზიანებულია ან არასწორი ფორმატი აქვს: %filePath%. შეცდომის კოდი: %errorCode%',
+    // Module package validation errors
+    'ext_FileNotFound' => 'მოდულის ფაილი ვერ მოიძებნა: %filePath%',
+    'ext_ModuleMethodSignatureIncompatibility' => 'მოდული %module% შეუთავსებელია MikoPBX-ის მიმდინარე ვერსიასთან: აღმოჩენილია მეთოდის ხელმოწერის შეუთავსებლობა.',
 ];

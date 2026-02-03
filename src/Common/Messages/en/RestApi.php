@@ -1,11 +1,9 @@
 <?php
-/**
+return [
+    /**
  * Translation file - RestApi
  * Generated/updated by Translation Batch Manager
  */
-
-return [
-
     'rest_MikoPBXRestAPIHeader' => 'MikoPBX REST API',
     'rest_MikoPBXRestAPIDescription' => 'Full-featured REST API for managing and configuring MikoPBX',
     'rest_MikoPBXSupportName' => 'MikoPBX Support',
@@ -1567,13 +1565,11 @@ return [
     'rest_security_bearer' => 'Bearer authentication token (JWT) required',
     'rest_security_public' => 'Public endpoint without authentication requirement',
     'rest_security_bearerAuth_description' => 'Authentication using Bearer token (JWT). API keys can be created in the web interface under Settings → API Keys.',
-
     // ============================================================================
     // Users Methods
     // ============================================================================
     'rest_users_Available' => 'Check email availability',
     'rest_users_AvailableDesc' => 'Checks if the specified email address is available for use',
-
     // ============================================================================
     // Users Parameters
     // ============================================================================
@@ -1765,7 +1761,7 @@ return [
     'rest_tag_Documentation' => 'Wiki documentation links',
     'rest_tag_WikiLinks' => 'Documentation links',
     'rest_tag_PBXStatus' => 'PBX status',
-    'rest_tag_Search'=>'Search',
+    'rest_tag_Search' => 'Search',
     'rest_description_WikiLinks' => 'Dynamic documentation link generation based on controller, method, module identifier, and language',
     'rest_operation_wl_getLink_summary' => 'Get documentation link',
     'rest_operation_wl_getLink_description' => 'Dynamically generates documentation URL based on controller name, action method, module identifier, and user language for contextual help integration',
@@ -1978,7 +1974,6 @@ return [
     'rest_openapi_GetDetailedPerms' => 'Get detailed permissions list',
     'rest_openapi_GetDetailedPermsDesc' => 'Retrieve comprehensive list of controllers and actions for building ACL tree. Includes AdminCabinet controllers, REST API controllers and module controllers',
     'rest_password' => 'Password',
-
     // ============================================================================
     // S3 Storage Parameters and Schema
     // ============================================================================
@@ -1990,7 +1985,6 @@ return [
     'rest_param_s3_secret_key' => 'S3 secret access key for authentication (will be encrypted)',
     'rest_param_s3_total_retention' => 'Total recording retention period in days (both local + S3)',
     'rest_param_s3_local_retention' => 'Local storage period before uploading to S3 (in days)',
-
     'rest_schema_s3_enabled' => 'S3 storage enabled status (0=disabled, 1=enabled)',
     'rest_schema_s3_endpoint' => 'S3-compatible endpoint URL (AWS S3, MinIO, Wasabi, etc.)',
     'rest_schema_s3_region' => 'AWS region or S3 service equivalent region identifier',
@@ -1999,11 +1993,33 @@ return [
     'rest_schema_s3_secret_key' => 'S3 secret access key (masked with asterisks in responses)',
     'rest_schema_s3_total_retention' => 'Total retention period for recordings in days (local + cloud storage)',
     'rest_schema_s3_local_retention' => 'Number of days to keep recordings locally before uploading to S3',
-
     // ============================================================================
     // System Upgrade
     // ============================================================================
     'rest_System_UpgradeFailedToDetectOffset' => 'Failed to determine boot partition offset.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Failed to set up the loop device.',
     'rest_System_UpgradeMountFailed' => 'Failed to mount the first partition. Check filesystem and options.',
+    'rest_system_ExecuteSqlRequestDesc' => 'Executes a custom SQL query against the main database, CDR database, or user database at the specified path. Returns the resulting rows and metadata.',
+    'rest_param_system_command' => 'Bash command to execute',
+    'rest_param_system_timeout' => 'Command execution timeout in seconds (1-300, default 30)',
+    'rest_response_200_query_executed' => 'The SQL query was completed successfully.',
+    // System error messages
+    'rest_err_system_command_required' => 'The "command" parameter is required for execution.',
+    'rest_schema_system_command' => 'The executed bash command',
+    'rest_system_ExecuteBashCommand' => 'Run a bash command',
+    'rest_system_ExecuteBashCommandDesc' => 'Executes an arbitrary bash command with a configurable timeout. Returns the command output and exit code. Use with caution, as this provides direct access to the command shell.',
+    'rest_system_ExecuteSqlRequest' => 'Execute SQL query',
+    'rest_param_system_query' => 'SQL query to execute',
+    'rest_param_system_database' => 'Database type or file path (main, cdr or full path)',
+    'rest_schema_system_timeout' => 'Command execution timeout in seconds',
+    'rest_schema_system_database' => 'The database to which the query was executed',
+    'rest_response_200_command_executed' => 'The command was executed successfully.',
+    'rest_err_system_timeout_range' => 'The timeout must be between 1 and 300 seconds.',
+    'rest_err_system_command_failed' => 'Failed to execute command',
+    'rest_err_system_query_required' => 'The "query" parameter is required for execution.',
+    'rest_err_system_invalid_database' => 'Invalid database type or path',
+    'rest_err_system_query_failed' => 'The SQL query failed with an error.',
+    'rest_err_system_query_exception' => 'Failed to execute SQL query',
+    'rest_tag_S3Storage' => 'S3 Cloud Storage',
+    'rest_schema_system_query' => 'Executed SQL query',
 ];

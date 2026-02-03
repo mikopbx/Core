@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Provayderin incə tənzimlənməsi üçün əlavə Asterisk IAX konfiqurasiya parametrləri əlavə etməyə imkan verir.',
     'iax_ManualAttributesTooltip_examples_header' => 'Nümunələr',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Gedən qeydiyyat',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Sizin PBX provayder serverində qeydiyyatdan keçir. Provayder vasitəsilə gedən zənglər üçün istifadə olunur.',
     'iax_registration_type' => 'Hesab növü',
-
     // PR
     'pr_AddIAXProvider' => 'IAX-ı birləşdirin',
     'pr_AddSIPProvider' => 'SIP-ə qoşulun',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Provayder portunu göstərin',
     'pr_ValidationProviderPortRange' => 'Provayder portu {ruleValue} həddində olmalıdır',
     'pr_WithoutRegistration' => 'Qeydiyyat söndürülüb',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'IAX2 provayderləri',
     'prov_dropdownCategory_SIP' => 'SIP provayderləri',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Gələn qeydiyyat',
     'sip_REG_TYPE_NONE' => 'Qeydiyyat olmadan (IP autentifikasiya)',
     'sip_REG_TYPE_OUTBOUND' => 'Gedən qeydiyyat',
     'sip_registration_type' => 'Hesab növü',
+    'pr_ProviderRegistered' => 'Provayder qeydiyyatdan keçib',
+    'pr_Disabled' => 'söndürülmüş',
+    'pr_RegisteredTo' => 'Qeydiyyatdan keçib',
+    'mo_SipUsernameInvalidCharacters' => 'Daxil olan qeydiyyat üçün SIP istifadəçi adı yalnız Latın hərflərindən, rəqəmlərindən və simvollarından ibarət ola bilər: _ - .',
+    'pr_StateChangedFromTo' => 'Status %əvvəlkiState%-dən %newState%-ə dəyişib',
+    'pr_CheckingStatus' => 'Status yoxlanılır...',
+    'pr_ValidationProviderLogin' => 'Provayderinizə daxil olmaq üçün giriş məlumatlarınızı daxil edin.',
+    'pr_RegisteredFrom' => 'Qeydiyyatdan keçmiş',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'Daxil olan qeydiyyat üçün IAX istifadəçi adı yalnız Latın hərflərindən, rəqəmlərindən və simvollarından ibarət ola bilər: _ - .',
+    'pr_WaitingForRegistration' => 'Qeydiyyat gözlənilir',
 ];

@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * External modules translations
  */
-
-return [
     // EXT
     'ext_AddNewExtension' => '新しいモジュールをダウンロード',
     'ext_Available' => 'にアップグレードできます',
@@ -98,4 +97,13 @@ return [
     'ext_ValidateCaptionEmpty' => 'メニュー項目名が入力されていません',
     'ext_Version' => 'バージョン',
     'ext_WrongGetModuleLink' => 'リポジトリからモジュールファイルを取得中にエラーが発生しました',
+    'ext_MissingModuleUniqueID' => '%filePath% アーカイブ内の module.json ファイルに必要な moduleUniqueID フィールドがありません。',
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => 'モジュール %module% は、MikoPBX の現在のバージョンと互換性がありません',
+    'ext_InvalidModuleJson' => 'アーカイブ %filePath% 内の module.json ファイルに無効な JSON が含まれています: %error%',
+    'ext_ModuleJsonNotFound' => 'module.json ファイルがモジュール アーカイブ %filePath% に見つかりませんでした',
+    'ext_CorruptedZipFile' => 'モジュールのZIPファイルが破損しているか、形式が正しくありません: %filePath%。エラーコード: %errorCode%',
+    // Module package validation errors
+    'ext_FileNotFound' => 'モジュールファイルが見つかりません: %filePath%',
+    'ext_ModuleMethodSignatureIncompatibility' => 'モジュール %module% は、MikoPBX の現在のバージョンと互換性がありません: メソッド シグネチャの非互換性が検出されました',
 ];

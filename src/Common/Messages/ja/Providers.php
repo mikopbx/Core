@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'プロバイダーの詳細設定のために追加のAsterisk IAX設定パラメーターを追加できます。',
     'iax_ManualAttributesTooltip_examples_header' => '例',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => '発信登録',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'あなたのPBXがプロバイダーサーバーに登録します。プロバイダー経由での発信に使用されます。',
     'iax_registration_type' => 'アカウントタイプ',
-
     // PR
     'pr_AddIAXProvider' => 'IAX接続',
     'pr_AddSIPProvider' => 'SIP接続',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'プロバイダーポートを指定してください',
     'pr_ValidationProviderPortRange' => 'プロバイダーポートは{ruleValue}内である必要があります',
     'pr_WithoutRegistration' => '登録無効',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'IAX2プロバイダー',
     'prov_dropdownCategory_SIP' => 'SIPプロバイダー',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => '着信登録',
     'sip_REG_TYPE_NONE' => '登録なし（IP認証）',
     'sip_REG_TYPE_OUTBOUND' => '発信登録',
     'sip_registration_type' => 'アカウントタイプ',
+    'pr_ProviderRegistered' => 'プロバイダーは登録されています',
+    'pr_Disabled' => 'オフにした',
+    'pr_RegisteredTo' => '登録日',
+    'mo_SipUsernameInvalidCharacters' => '着信登録の SIP ユーザー名には、ラテン文字、数字、記号 (_ - . ) のみを含めることができます。',
+    'pr_StateChangedFromTo' => 'ステータスが%previousState%から%newState%に変更されました',
+    'pr_CheckingStatus' => 'ステータスを確認しています...',
+    'pr_ValidationProviderLogin' => 'プロバイダーにログインするには、ログイン情報を入力してください。',
+    'pr_RegisteredFrom' => '登録済み',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => '受信登録用の IAX ユーザー名には、ラテン文字、数字、記号 (_ - . ) のみを含めることができます。',
+    'pr_WaitingForRegistration' => '登録待ち',
 ];

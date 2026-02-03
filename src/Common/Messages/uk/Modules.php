@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * External modules translations
  */
-
-return [
     // EXT
     'ext_AddNewExtension' => 'Завантажити новий модуль',
     'ext_Available' => 'можна оновити до',
@@ -98,4 +97,13 @@ return [
     'ext_ValidateCaptionEmpty' => 'Не заповнена назва пункту меню',
     'ext_Version' => 'Версія',
     'ext_WrongGetModuleLink' => 'Помилка отримання файлу модуля з репозиторію',
+    'ext_MissingModuleUniqueID' => 'У файлі module.json архіву %filePath% немає обов\'язкового поля moduleUniqueID',
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => 'Модуль %module% несумісний із поточною версією MikoPBX',
+    'ext_InvalidModuleJson' => 'Файл module.json в архіві %filePath% містить невалідний JSON: %error%',
+    'ext_ModuleJsonNotFound' => 'В архіві %filePath% не знайдено файл module.json',
+    'ext_CorruptedZipFile' => 'ZIP-файл модуля пошкоджено або має неправильний формат: %filePath%. Код помилки: %errorCode%',
+    // Module package validation errors
+    'ext_FileNotFound' => 'Файл модуля не знайдено: %filePath%',
+    'ext_ModuleMethodSignatureIncompatibility' => 'Модуль %module% несумісний із поточною версією MikoPBX: виявлено несумісність сигнатури методу',
 ];

@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Omogućuje dodavanje dodatnih parametara konfiguracije Asterisk IAX za fino podešavanje davatelja usluga.',
     'iax_ManualAttributesTooltip_examples_header' => 'Primjeri',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Odlazna registracija',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Vaša telefonska centrala se registrira na poslužitelju davatelja usluga. Koristi se za odlazne pozive preko davatelja usluga.',
     'iax_registration_type' => 'Vrsta računa',
-
     // PR
     'pr_AddIAXProvider' => 'Povežite IAX',
     'pr_AddSIPProvider' => 'Spojite SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Navedite port davatelja usluga',
     'pr_ValidationProviderPortRange' => 'Port davatelja usluga mora biti unutar {ruleValue}',
     'pr_WithoutRegistration' => 'Registracija onemogućena',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'IAX2 davatelji usluga',
     'prov_dropdownCategory_SIP' => 'SIP davatelji usluga',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Dolazna registracija',
     'sip_REG_TYPE_NONE' => 'Bez registracije (IP autentifikacija)',
     'sip_REG_TYPE_OUTBOUND' => 'Odlazna registracija',
     'sip_registration_type' => 'Vrsta računa',
+    'pr_ProviderRegistered' => 'Pružatelj usluga je registriran',
+    'pr_Disabled' => 'isključeno',
+    'pr_RegisteredTo' => 'Registrirano',
+    'mo_SipUsernameInvalidCharacters' => 'SIP korisničko ime za dolaznu registraciju može sadržavati samo latinična slova, brojeve i simbole: _ - .',
+    'pr_StateChangedFromTo' => 'Status se promijenio iz %previousState% u %newState%',
+    'pr_CheckingStatus' => 'Provjera statusa...',
+    'pr_ValidationProviderLogin' => 'Unesite svoje prijavne podatke za prijavu kod svog pružatelja usluga.',
+    'pr_RegisteredFrom' => 'Registriran kod',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'IAX korisničko ime za dolaznu registraciju može sadržavati samo latinična slova, brojeve i simbole: _ - .',
+    'pr_WaitingForRegistration' => 'Čekanje na registraciju',
 ];

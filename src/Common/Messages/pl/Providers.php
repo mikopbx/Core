@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Pozwala dodać dodatkowe parametry konfiguracyjne Asterisk IAX do dokładnego dostrojenia dostawcy.',
     'iax_ManualAttributesTooltip_examples_header' => 'Przykłady',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Rejestracja wychodząca',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Twoja centrala rejestruje się na serwerze dostawcy. Używane dla połączeń wychodzących przez dostawcę.',
     'iax_registration_type' => 'Typ konta',
-
     // PR
     'pr_AddIAXProvider' => 'Podłącz IAX',
     'pr_AddSIPProvider' => 'Podłącz SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Podaj port dostawcy',
     'pr_ValidationProviderPortRange' => 'Port dostawcy musi znajdować się w obrębie {ruleValue}',
     'pr_WithoutRegistration' => 'Rejestracja jest wyłączona',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'Dostawcy IAX2',
     'prov_dropdownCategory_SIP' => 'Dostawcy SIP',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Rejestracja przychodząca',
     'sip_REG_TYPE_NONE' => 'Bez rejestracji (uwierzytelnianie IP)',
     'sip_REG_TYPE_OUTBOUND' => 'Rejestracja wychodząca',
     'sip_registration_type' => 'Typ konta',
+    'pr_ProviderRegistered' => 'Dostawca jest zarejestrowany',
+    'pr_Disabled' => 'wyłączony',
+    'pr_RegisteredTo' => 'Zarejestrowano dnia',
+    'mo_SipUsernameInvalidCharacters' => 'Nazwa użytkownika SIP dla rejestracji przychodzącej może zawierać wyłącznie litery łacińskie, cyfry i symbole: _ - .',
+    'pr_StateChangedFromTo' => 'Status zmienił się z %previousState% na %newState%',
+    'pr_CheckingStatus' => 'Sprawdzanie statusu...',
+    'pr_ValidationProviderLogin' => 'Wprowadź swój login, aby zalogować się do swojego dostawcy.',
+    'pr_RegisteredFrom' => 'Zarejestrowany w',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'Nazwa użytkownika IAX dla rejestracji przychodzącej może zawierać wyłącznie litery łacińskie, cyfry i symbole: _ - .',
+    'pr_WaitingForRegistration' => 'Czekam na rejestrację',
 ];

@@ -103,4 +103,7 @@ return [
     'ext_MissingModuleUniqueID' => 'In het bestand module.json in het archief %filePath% ontbreekt het vereiste veld moduleUniqueID.',
     // Module package validation errors
     'ext_FileNotFound' => 'Modulebestand niet gevonden: %filePath%',
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => 'Module %module% is niet compatibel met de huidige versie van MikoPBX.',
+    'ext_ModuleMethodSignatureIncompatibility' => 'Module %module% is incompatibel met de huidige versie van MikoPBX: incompatibiliteit van methodesignatuur gedetecteerd',
 ];

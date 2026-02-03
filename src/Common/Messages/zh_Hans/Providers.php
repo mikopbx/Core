@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => '允许添加额外的Asterisk IAX配置参数来微调提供商。',
     'iax_ManualAttributesTooltip_examples_header' => '示例',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => '出站注册',
     'iax_RegistrationTypeTooltip_outbound_desc' => '您的PBX在提供商服务器上注册。用于通过提供商的出站呼叫。',
     'iax_registration_type' => '账户类型',
-
     // PR
     'pr_AddIAXProvider' => '连接IAX',
     'pr_AddSIPProvider' => '连接SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => '指定提供商端口',
     'pr_ValidationProviderPortRange' => '提供商端口必须在{ruleValue}范围内',
     'pr_WithoutRegistration' => '注册已禁用',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'IAX2提供商',
     'prov_dropdownCategory_SIP' => 'SIP提供商',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => '入站注册',
     'sip_REG_TYPE_NONE' => '无注册（IP认证）',
     'sip_REG_TYPE_OUTBOUND' => '出站注册',
     'sip_registration_type' => '账户类型',
+    'pr_ProviderRegistered' => '该服务提供商已注册',
+    'pr_Disabled' => '已关闭',
+    'pr_RegisteredTo' => '注册日期',
+    'mo_SipUsernameInvalidCharacters' => '用于入站注册的 SIP 用户名只能包含拉丁字母、数字和符号：_ - 。',
+    'pr_StateChangedFromTo' => '状态已从 %previousState% 更改为 %newState%。',
+    'pr_CheckingStatus' => '正在检查状态……',
+    'pr_ValidationProviderLogin' => '请输入您的登录名以登录您的服务提供商。',
+    'pr_RegisteredFrom' => '已注册',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => '用于入站注册的 IAX 用户名只能包含拉丁字母、数字和符号：_ - 。',
+    'pr_WaitingForRegistration' => '等待注册',
 ];

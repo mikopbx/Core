@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Mahdollistaa Asterisk IAX -konfiguraatioparametrien lisäämisen palveluntarjoajan hienosäätöä varten.',
     'iax_ManualAttributesTooltip_examples_header' => 'Esimerkit',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Lähtevä rekisteröinti',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Puhelinkeskuksesi rekisteröityy palveluntarjoajan palvelimelle. Käytetään lähteviä puheluita varten palveluntarjoajan kautta.',
     'iax_registration_type' => 'Tilin tyyppi',
-
     // PR
     'pr_AddIAXProvider' => 'Yhdistä IAX',
     'pr_AddSIPProvider' => 'Yhdistä SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Määritä palveluntarjoajan portti',
     'pr_ValidationProviderPortRange' => 'Palveluntarjoajan portin on oltava alueella {ruleValue}',
     'pr_WithoutRegistration' => 'Rekisteröinti poistettu käytöstä',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'IAX2-palveluntarjoajat',
     'prov_dropdownCategory_SIP' => 'SIP-palveluntarjoajat',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Saapuva rekisteröinti',
     'sip_REG_TYPE_NONE' => 'Ilman rekisteröintiä (IP-todennus)',
     'sip_REG_TYPE_OUTBOUND' => 'Lähtevä rekisteröinti',
     'sip_registration_type' => 'Tilin tyyppi',
+    'pr_CheckingStatus' => 'Tarkistetaan tilaa...',
+    'pr_RegisteredFrom' => 'Rekisteröity',
+    'pr_RegisteredTo' => 'Rekisteröity',
+    'pr_ProviderRegistered' => 'Palveluntarjoaja on rekisteröitynyt',
+    'pr_WaitingForRegistration' => 'Odotetaan rekisteröintiä',
+    'pr_StateChangedFromTo' => 'Tila on muuttunut arvosta %previousState% arvoon %newState%',
+    'pr_Disabled' => 'pois päältä',
+    'pr_ValidationProviderLogin' => 'Syötä kirjautumistunnuksesi kirjautuaksesi palveluntarjoajaasi.',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'Saapuvan rekisteröitymisen IAX-käyttäjätunnus voi sisältää vain latinalaisia kirjaimia, numeroita ja symboleja: _ - .',
+    'mo_SipUsernameInvalidCharacters' => 'Saapuvan rekisteröitymisen SIP-käyttäjätunnus voi sisältää vain latinalaisia kirjaimia, numeroita ja symboleja: _ - .',
 ];

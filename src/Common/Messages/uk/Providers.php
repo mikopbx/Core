@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Дозволяє додавати додаткові параметри конфігурації Asterisk IAX для тонкого налаштування провайдера.',
     'iax_ManualAttributesTooltip_examples_header' => 'Приклади',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Вихідна реєстрація',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Ваша АТС реєструється на сервері провайдера. Використовується для вихідних дзвінків через провайдера.',
     'iax_registration_type' => 'Тип облікового запису',
-
     // PR
     'pr_AddIAXProvider' => 'Підключити IAX',
     'pr_AddSIPProvider' => 'Підключити SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Вкажіть порт провайдера',
     'pr_ValidationProviderPortRange' => 'Порт провайдера повинен бути в межах {ruleValue}',
     'pr_WithoutRegistration' => 'Реєстрація відключена',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'Провайдери IAX2',
     'prov_dropdownCategory_SIP' => 'Провайдери SIP',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Вхідна реєстрація',
     'sip_REG_TYPE_NONE' => 'Без реєстрації (IP аутентифікація)',
     'sip_REG_TYPE_OUTBOUND' => 'Вихідна реєстрація',
     'sip_registration_type' => 'Тип облікового запису',
+    'pr_ValidationProviderLogin' => 'Введіть логін для авторизації у провайдера',
+    'pr_CheckingStatus' => 'Перевірка статусу...',
+    'pr_Disabled' => 'вимкнено',
+    'pr_ProviderRegistered' => 'Провайдер зареєстровано',
+    'pr_WaitingForRegistration' => 'Очікування реєстрації',
+    'pr_StateChangedFromTo' => 'Статус змінився з %previousState% на %newState%',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'Ім\'я користувача IAX для вхідної реєстрації може містити лише латинські літери, цифри та символи: _ - .',
+    'mo_SipUsernameInvalidCharacters' => 'Ім\'я користувача SIP для вхідної реєстрації може містити лише латинські літери, цифри та символи: _ - .',
+    'pr_RegisteredFrom' => 'Зареєстрований з',
+    'pr_RegisteredTo' => 'Зареєстрований на',
 ];

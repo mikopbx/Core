@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'საშუალებას გაძლევთ დაამატოთ დამატებითი Asterisk IAX კონფიგურაციის პარამეტრები პროვაიდერის ზუსტი კონფიგურაციისთვის.',
     'iax_ManualAttributesTooltip_examples_header' => 'მაგალითები',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'გამავალი რეგისტრაცია',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'თქვენი PBX რეგისტრირდება პროვაიდერის სერვერზე. გამოიყენება პროვაიდერის მეშვეობით გამავალი ზარებისთვის.',
     'iax_registration_type' => 'ანგარიშის ტიპი',
-
     // PR
     'pr_AddIAXProvider' => 'IAX დაკავშირება',
     'pr_AddSIPProvider' => 'SIP დაკავშირება',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'მიუთითეთ პროვაიდერის პორტი',
     'pr_ValidationProviderPortRange' => 'პროვაიდერის პორტი უნდა იყოს {ruleValue} ფარგლებში',
     'pr_WithoutRegistration' => 'რეგისტრაცია გამორთული',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'IAX2 პროვაიდერები',
     'prov_dropdownCategory_SIP' => 'SIP პროვაიდერები',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'შემომავალი რეგისტრაცია',
     'sip_REG_TYPE_NONE' => 'რეგისტრაციის გარეშე (IP ავთენტიფიკაცია)',
     'sip_REG_TYPE_OUTBOUND' => 'გამავალი რეგისტრაცია',
     'sip_registration_type' => 'ანგარიშის ტიპი',
+    'pr_ProviderRegistered' => 'მომწოდებელი რეგისტრირებულია',
+    'pr_Disabled' => 'გამორთულია',
+    'pr_RegisteredTo' => 'დარეგისტრირებულია',
+    'mo_SipUsernameInvalidCharacters' => 'შემომავალი რეგისტრაციის SIP მომხმარებლის სახელი შეიძლება შეიცავდეს მხოლოდ ლათინურ ასოებს, ციფრებს და სიმბოლოებს: _ - .',
+    'pr_StateChangedFromTo' => 'სტატუსი შეიცვალა %previousState%-დან %newState%-მდე',
+    'pr_CheckingStatus' => 'სტატუსის შემოწმება...',
+    'pr_ValidationProviderLogin' => 'შეიყვანეთ თქვენი შესვლა თქვენს პროვაიდერში შესასვლელად.',
+    'pr_RegisteredFrom' => 'რეგისტრირებულია',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'შემომავალი რეგისტრაციისთვის IAX მომხმარებლის სახელი შეიძლება შეიცავდეს მხოლოდ ლათინურ ასოებს, ციფრებს და სიმბოლოებს: _ - .',
+    'pr_WaitingForRegistration' => 'რეგისტრაციის მოლოდინში',
 ];

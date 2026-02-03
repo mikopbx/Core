@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Tillåter att lägga till ytterligare Asterisk IAX-konfigurationsparametrar för finjustering av leverantören.',
     'iax_ManualAttributesTooltip_examples_header' => 'Exempel',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Utgående registrering',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Din PBX registrerar sig på leverantörens server. Används för utgående samtal via leverantör.',
     'iax_registration_type' => 'Kontotyp',
-
     // PR
     'pr_AddIAXProvider' => 'Anslut IAX',
     'pr_AddSIPProvider' => 'Anslut SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Ange leverantörens port',
     'pr_ValidationProviderPortRange' => 'Leverantörsporten måste vara inom {ruleValue}',
     'pr_WithoutRegistration' => 'Registreringen är inaktiverad',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'IAX2-leverantörer',
     'prov_dropdownCategory_SIP' => 'SIP-leverantörer',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Inkommande registrering',
     'sip_REG_TYPE_NONE' => 'Ingen registrering (IP-autentisering)',
     'sip_REG_TYPE_OUTBOUND' => 'Utgående registrering',
     'sip_registration_type' => 'Kontotyp',
+    'pr_ProviderRegistered' => 'Leverantören är registrerad',
+    'pr_Disabled' => 'avstängd',
+    'pr_RegisteredTo' => 'Registrerad den',
+    'mo_SipUsernameInvalidCharacters' => 'SIP-användarnamnet för inkommande registrering får endast innehålla latinska bokstäver, siffror och symboler: _ - .',
+    'pr_StateChangedFromTo' => 'Statusen har ändrats från %previousState% till %newState%',
+    'pr_CheckingStatus' => 'Kontrollerar status...',
+    'pr_ValidationProviderLogin' => 'Ange dina inloggningsuppgifter för att logga in hos din leverantör.',
+    'pr_RegisteredFrom' => 'Registrerad hos',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'IAX-användarnamnet för inkommande registrering får endast innehålla latinska bokstäver, siffror och symboler: _ - .',
+    'pr_WaitingForRegistration' => 'Väntar på registrering',
 ];

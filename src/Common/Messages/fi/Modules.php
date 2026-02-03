@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * External modules translations
  */
-
-return [
     // EXT
     'ext_AddNewExtension' => 'Lataa uusi moduuli',
     'ext_Available' => 'voidaan päivittää',
@@ -98,4 +97,13 @@ return [
     'ext_ValidateCaptionEmpty' => 'Valikkokohdan nimi on tyhjä',
     'ext_Version' => 'Versio',
     'ext_WrongGetModuleLink' => 'Virhe noudettaessa moduulitiedostoa arkistosta',
+    'ext_MissingModuleUniqueID' => 'Arkiston %filePath%-tiedostossa olevasta module.json-tiedostosta puuttuu pakollinen moduleUniqueID-kenttä.',
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => 'Moduuli %module% ei ole yhteensopiva MikoPBX:n nykyisen version kanssa.',
+    'ext_InvalidModuleJson' => 'Arkiston %filePath% moduuli.json-tiedosto sisältää virheellisen JSON-tiedoston: %error%',
+    'ext_ModuleJsonNotFound' => 'Moduuli.json-tiedostoa ei löytynyt moduuliarkistosta %filePath%',
+    'ext_CorruptedZipFile' => 'Moduulin ZIP-tiedosto on vioittunut tai sen muoto on virheellinen: %filePath%. Virhekoodi: %errorCode%',
+    // Module package validation errors
+    'ext_FileNotFound' => 'Moduulitiedostoa ei löydy: %filePath%',
+    'ext_ModuleMethodSignatureIncompatibility' => 'Moduuli %module% ei ole yhteensopiva MikoPBX:n nykyisen version kanssa: metodin allekirjoituksen yhteensopimattomuus havaittu',
 ];

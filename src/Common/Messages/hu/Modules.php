@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * External modules translations
  */
-
-return [
     // EXT
     'ext_AddNewExtension' => 'Új modul betöltése',
     'ext_Available' => '-re frissíthető',
@@ -98,4 +97,13 @@ return [
     'ext_ValidateCaptionEmpty' => 'A menüelem neve üres',
     'ext_Version' => 'Változat',
     'ext_WrongGetModuleLink' => 'Hiba történt a modulfájl lekérésekor a tárházból',
+    'ext_MissingModuleUniqueID' => 'A %filePath% archívumban található module.json fájlból hiányzik a kötelező moduleUniqueID mező.',
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => 'A(z) %module% modul nem kompatibilis a MikoPBX jelenlegi verziójával.',
+    'ext_InvalidModuleJson' => 'A(z) %filePath% archívumban található module.json fájl érvénytelen JSON-t tartalmaz: %error%',
+    'ext_ModuleJsonNotFound' => 'A module.json fájl nem található a(z) %filePath% modularchívumban.',
+    'ext_CorruptedZipFile' => 'A modul ZIP fájlja sérült vagy érvénytelen formátumú: %filePath%. Hibakód: %errorCode%',
+    // Module package validation errors
+    'ext_FileNotFound' => 'Modulfájl nem található: %filePath%',
+    'ext_ModuleMethodSignatureIncompatibility' => 'A(z) %module% modul nem kompatibilis a MikoPBX jelenlegi verziójával: metódus-aláírás-inkompatibilitás észlelve.',
 ];

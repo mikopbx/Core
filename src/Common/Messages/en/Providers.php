@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,12 +17,9 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-/**
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Allows you to add additional Asterisk IAX configuration parameters for fine-tuning the provider.',
     'iax_ManualAttributesTooltip_examples_header' => 'Examples',
@@ -68,7 +66,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Outgoing registration',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Your PBX registers on provider server. Used for outgoing calls through provider.',
     'iax_registration_type' => 'Account type',
-
     // PR
     'pr_AddIAXProvider' => 'Connect IAX',
     'pr_AddSIPProvider' => 'Connect SIP',
@@ -459,7 +456,6 @@ return [
     'pr_ValidationProviderLoginInvalidCharacters' => 'Login can only contain Latin letters, numbers and symbols: _ - .',
     'pr_ValidationProviderLoginIsEmpty' => 'Enter the username for authorization at the provider',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Login must be longer than one character',
-
     // MO - Models validation
     'mo_IaxUsernameInvalidCharacters' => 'IAX username for inbound registration can only contain Latin letters, numbers and symbols: _ - .',
     'mo_SipUsernameInvalidCharacters' => 'SIP username for inbound registration can only contain Latin letters, numbers and symbols: _ - .',
@@ -470,14 +466,20 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Specify provider port',
     'pr_ValidationProviderPortRange' => 'Provider port must be within {ruleValue}',
     'pr_WithoutRegistration' => 'Registration disabled',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'IAX2 providers',
     'prov_dropdownCategory_SIP' => 'SIP providers',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Incoming registration',
     'sip_REG_TYPE_NONE' => 'No registration (IP authentication)',
     'sip_REG_TYPE_OUTBOUND' => 'Outgoing registration',
     'sip_registration_type' => 'Account type',
+    'pr_ProviderRegistered' => 'The provider is registered',
+    'pr_Disabled' => 'turned off',
+    'pr_RegisteredTo' => 'Registered on',
+    'pr_StateChangedFromTo' => 'The status has changed from %previousState% to %newState%',
+    'pr_CheckingStatus' => 'Checking status...',
+    'pr_ValidationProviderLogin' => 'Enter your login to log in to your provider.',
+    'pr_RegisteredFrom' => 'Registered with',
+    'pr_WaitingForRegistration' => 'Waiting for registration',
 ];

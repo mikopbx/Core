@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Cho phép thêm các tham số cấu hình Asterisk IAX bổ sung để tinh chỉnh nhà cung cấp.',
     'iax_ManualAttributesTooltip_examples_header' => 'Ví dụ',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Đăng ký đi',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'PBX của bạn đăng ký trên máy chủ nhà cung cấp. Được sử dụng cho cuộc gọi đi qua nhà cung cấp.',
     'iax_registration_type' => 'Loại tài khoản',
-
     // PR
     'pr_AddIAXProvider' => 'Kết nối IAX',
     'pr_AddSIPProvider' => 'Kết nối SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Chỉ định cổng nhà cung cấp',
     'pr_ValidationProviderPortRange' => 'Cổng nhà cung cấp phải nằm trong phạm vi {ruleValue}',
     'pr_WithoutRegistration' => 'Đăng ký bị vô hiệu hóa',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'Nhà cung cấp IAX2',
     'prov_dropdownCategory_SIP' => 'Nhà cung cấp SIP',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Đăng ký đến',
     'sip_REG_TYPE_NONE' => 'Không đăng ký (xác thực IP)',
     'sip_REG_TYPE_OUTBOUND' => 'Đăng ký đi',
     'sip_registration_type' => 'Loại tài khoản',
+    'pr_ProviderRegistered' => 'Nhà cung cấp đã được đăng ký',
+    'pr_Disabled' => 'đã tắt',
+    'pr_RegisteredTo' => 'Đã đăng ký vào',
+    'mo_SipUsernameInvalidCharacters' => 'Tên người dùng SIP cho đăng ký đến chỉ được chứa các chữ cái Latinh, số và ký hiệu: _ - .',
+    'pr_StateChangedFromTo' => 'Trạng thái đã thay đổi từ %previousState% sang %newState%',
+    'pr_CheckingStatus' => 'Đang kiểm tra trạng thái...',
+    'pr_ValidationProviderLogin' => 'Nhập thông tin đăng nhập của bạn để đăng nhập vào tài khoản của nhà cung cấp.',
+    'pr_RegisteredFrom' => 'Đã đăng ký với',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'Tên người dùng IAX dùng cho đăng ký đến chỉ được chứa các chữ cái Latinh, số và ký hiệu: _ - .',
+    'pr_WaitingForRegistration' => 'Đang chờ đăng ký',
 ];

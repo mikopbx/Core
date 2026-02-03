@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Permet d\'ajouter des paramètres de configuration Asterisk IAX supplémentaires pour un réglage fin du fournisseur.',
     'iax_ManualAttributesTooltip_examples_header' => 'Exemples',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Enregistrement sortant',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Votre PBX s\'enregistre sur le serveur du fournisseur. Utilisé pour les appels sortants via le fournisseur.',
     'iax_registration_type' => 'Type de compte',
-
     // PR
     'pr_AddIAXProvider' => 'Connecter IAX',
     'pr_AddSIPProvider' => 'Connecter SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Spécifiez le port du fournisseur',
     'pr_ValidationProviderPortRange' => 'Le port du fournisseur doit être dans la plage {ruleValue}',
     'pr_WithoutRegistration' => 'L\'inscription est désactivée',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'Fournisseurs IAX2',
     'prov_dropdownCategory_SIP' => 'Fournisseurs SIP',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Enregistrement entrant',
     'sip_REG_TYPE_NONE' => 'Sans enregistrement (authentification IP)',
     'sip_REG_TYPE_OUTBOUND' => 'Enregistrement sortant',
     'sip_registration_type' => 'Type de compte',
+    'pr_ProviderRegistered' => 'Le fournisseur est enregistré',
+    'pr_Disabled' => 'éteint',
+    'pr_RegisteredTo' => 'Enregistré le',
+    'mo_SipUsernameInvalidCharacters' => 'Le nom d\'utilisateur SIP pour l\'enregistrement entrant ne peut contenir que des lettres latines, des chiffres et des symboles : _ - .',
+    'pr_StateChangedFromTo' => 'Le statut est passé de %previousState% à %newState%',
+    'pr_CheckingStatus' => 'Vérification de l\'état...',
+    'pr_ValidationProviderLogin' => 'Saisissez vos identifiants pour vous connecter à votre fournisseur.',
+    'pr_RegisteredFrom' => 'Enregistré auprès de',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'Le nom d\'utilisateur IAX pour l\'enregistrement entrant ne peut contenir que des lettres latines, des chiffres et des symboles : _ - .',
+    'pr_WaitingForRegistration' => 'En attente d\'inscription',
 ];
