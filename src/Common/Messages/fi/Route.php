@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'Luo uusi jono',
     'cq_AddQueueMembers' => 'Ei valittuja operaattoreita',
@@ -56,7 +55,6 @@ return [
     'cq_ringall' => 'Puhelu saapuu samanaikaisesti kaikille jonossa oleville osallistujille, mukaan lukien varatut (oletusarvoisesti)',
     'cq_ringing' => 'Soittoäänet',
     'cq_rrmemory' => 'Puhelu saapuu kenelle tahansa jonossa olevalle vapaalle osallistujalle paitsi osallistujalle, joka käsitteli viimeisen puhelun',
-
     // CR
     'cr_AddNewConferenceRoom' => 'Lisää konferenssi',
     'cr_ColumnExtension' => 'Määrä',
@@ -72,7 +70,6 @@ return [
     'cr_ValidateNameEmpty' => 'Konferenssin nimeä ei ole määritelty',
     'cr_ValidatePinNumber' => 'PIN-koodi saa sisältää vain numeroita',
     'cr_pinCode' => 'Konferenssin PIN-koodi',
-
     // DA
     'da_AddNewDialplanApp' => 'Lisää uusi',
     'da_Applicationlogic' => 'Ohjelmakoodi',
@@ -93,7 +90,6 @@ return [
     'da_ValidateExtensionIsEmpty' => 'Hakemuksen numeroa ei ole täytetty',
     'da_ValidateExtensionNumber' => 'Alanumerossa saa olla vain numeroita',
     'da_ValidateNameIsEmpty' => 'Hakemuksen nimeä ei ole täytetty',
-
     // IR
     'ir_ActionSelect' => 'Jos mikään säännöistä ei vastaa',
     'ir_AddNewRule' => 'Lisää uusi sääntö',
@@ -129,7 +125,6 @@ return [
     'ir_extension' => 'Siirrä puhelu',
     'ir_hangup' => 'Katkaise puhelu',
     'ir_playback' => 'Toista mediatiedosto',
-
     // IV
     'iv_Actions' => 'Toimenpiteet lisärekrytoimiseksi',
     'iv_AddNewIvrMenu' => 'Luo uusi IVR-valikko',
@@ -168,7 +163,6 @@ return [
     'iv_AudioMessageIdTooltip_rec2' => 'Selkeä ääntäminen ja normaali puhenopeus',
     'iv_AudioMessageIdTooltip_rec3' => 'Ammattimainen sävy, joka sopii yrityksen imagoon',
     'iv_AudioMessageIdTooltip_note' => 'Laadukas tervehdys luo positiivisen ensivaikutelman yrityksestä.',
-
     // OR
     'or_AddNewRule' => 'Lisää uusi sääntö',
     'or_BeforeConnectingTheCallTrim' => 'Ennen kuin aloitamme puhelun, lopetimme',
@@ -197,7 +191,6 @@ return [
     'or_ValidationPleaseEnterRuleName' => 'Anna säännön nimi',
     'or_ValidationPleaseSelectProvider' => 'Valitse palveluntarjoaja, jota tämä sääntö koskee.',
     'or_digitsFromTheFrontAndThenPrependTheDigits' => 'numerot luvun alussa ja lisää sitten alkuun',
-
     // TF
     'tf_ActionPlayMessage' => 'Toista tiedosto <b>%message%</b>',
     'tf_ActionTransferToExtension' => 'Siirrä puhelu numeroon <b>%extension%</b>',
@@ -232,7 +225,6 @@ return [
     'tf_calType' => 'Tyyppi',
     'tf_calUrl' => 'Kalenterin URL-osoite',
     'tf_calUser' => 'Käyttäjätunnus',
-
     // Lisätyt puuttuvat käännökset
     'cq_ColumnQueue' => 'Jonon nimi',
     'cq_CallerIDPrefixTooltip_desc' => 'Jonon lyhyt nimi, joka näkyy operaattorin puhelimessa soittajan nimen edessä.',
@@ -280,7 +272,6 @@ return [
     'cq_strategy_ringall_short' => 'Soita kaikille samanaikaisesti',
     'cq_strategy_rrmemory_short' => 'Vuorotellen muistilla',
     'cq_strategy_wrandom_short' => 'Painotettu satunnainen',
-
     // CR - Lisätyt puuttuvat käännökset
     'cr_ColumnPinCode' => 'PIN-koodi',
     'cr_ConferenceRoomDeleted' => 'Neuvotteluhuone poistettu onnistuneesti',
@@ -290,13 +281,11 @@ return [
     'cr_ValidateExtensionFormat' => 'Numeron tulee sisältää 2-8 numeroa',
     'cr_ValidateExtensionIsEmpty' => 'Neuvottelunumero on pakollinen',
     'cr_ValidateNameIsEmpty' => 'Neuvottelun nimi on pakollinen',
-
     // DA - Lisätyt puuttuvat käännökset
     'da_CreateFirstDialplanApp' => 'Luo ensimmäinen valintasuunnitelmasovellus',
     'da_NoDialplanApplicationsFound' => 'Valintasuunnitelmasovelluksia ei löytynyt',
     'da_SelectType' => 'Valitse sovelluksen tyyppi',
     'da_ValidateNameTooLong' => 'Nimi on liian pitkä (enintään 50 merkkiä)',
-
     // IR - Lisätyt puuttuvat käännökset
     'ir_EmptyTableDescription' => 'Saapuvat reitit määrittävät minne ohjata puhelut palveluntarjoajilta',
     'ir_EmptyTableTitle' => 'Määritä saapuva reititys',
@@ -359,7 +348,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 sekuntia:</strong> vakioaika toimistoille',
     'ir_timeout_tooltip_value3' => '<strong>45-60 sekuntia:</strong> jos työntekijät voivat olla tilapäisesti kiireisiä',
     'ir_timeout_tooltip_values_header' => 'Suositellut arvot',
-
     // IV - Lisätyt puuttuvat käännökset
     'iv_DigitsPlaceholder' => 'Numerot',
     'iv_EmptyTableDescription' => 'IVR mahdollistaa tilaajien valita tarvittavan suunnan äänivalinnalla',
@@ -396,7 +384,6 @@ return [
     'iv_ValidateExtensionFormat' => 'Numeron tulee sisältää 2-8 numeroa',
     'iv_ValidateRepeatCount' => 'Uudelleenyritysten määrän tulee olla 1-99',
     'iv_ValidateTimeout' => 'Aikakatkaisun tulee olla 1-99 sekuntia',
-
     // OR - Lisätyt puuttuvat käännökset
     'or_EmptyTableDescription' => 'Lähtevät reitit määrittävät minkä palveluntarjoajan kautta ulkoiset puhelut soitetaan',
     'or_EmptyTableTitle' => 'Luo lähtevien puhelujen säännöt',
@@ -500,7 +487,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'Poista operaattorin etuliite tai yrityskoodi',
     'or_trimfrombegin_tooltip_why3' => 'Vie numero palveluntarjoajan muotoon',
     'or_trimfrombegin_tooltip_why_header' => 'Miksi sitä tarvitaan:',
-
     // TF - Lisätyt puuttuvat käännökset
     'tf_EmptyTableDescription' => 'Määritä juhlapyhät ja työajan ulkopuoliset tunnit automaattiseen puhelujen uudelleenohjaukseen',
     'tf_EmptyTableTitle' => 'Määritä työaikataulu',
@@ -523,4 +509,13 @@ return [
     'tf_CalUrlTooltip_note' => 'Kalenteri päivittyy joka minuutti. Sääntö aktivoituu automaattisesti kun kalenterissa on tapahtuma nykyhetkellä.',
     'tf_TooltipGeneralRule' => 'Tämä sääntö koskee kaikkia palveluntarjoajan puheluita. Liitetyt säännöt synkronoidaan.',
     'tf_TooltipSpecificRule' => 'Tämä sääntö koskee puheluita tiettyyn numeroon. Liitetyt säännöt synkronoidaan.',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Numerot <b>%restnumbers%</b> numerosta → katkaise <b>%trim%</b>, lisää <b>%prepend%</b> → %provider% kautta',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Numerot joukosta <b>%restnumbers%</b> numeroa → lisää <b>%prepend%</b> → kohdasta %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Numerot joukosta <b>%restnumbers%</b> numeroa → trim <b>%trim%</b> → palvelun %provider% kautta',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Luvut, joissa on <b>%numberbeginswith%</b> → leikkaa <b>%trim%</b>, lisää <b>%prepend%</b> → %provider% kautta',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Luvut, joissa on <b>%numberbeginswith%</b> → lisää <b>%prepend%</b> → %provider% kautta',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Luvut, joissa on <b>%numberbeginswith%</b> → trim <b>%trim%</b> → palveluntarjoajan %provider% kautta',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Vain <b>%numberbeginswith%</b> → leikkaa <b>%trim%</b>, lisää <b>%prepend%</b> → %provider% kautta',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Vain <b>%numberbeginswith%</b> → lisää <b>%prepend%</b> → %provider% kautta',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Vain <b>%numberbeginswith%</b> → trim <b>%trim%</b> → %provider% kautta',
 ];

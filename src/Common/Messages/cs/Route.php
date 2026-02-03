@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'Vytvořit novou frontu',
     'cq_AddQueueMembers' => 'Nebyli vybráni žádní operátoři',
@@ -102,7 +101,6 @@ return [
     'cq_strategy_ringall_short' => 'Volat všechny současně',
     'cq_strategy_rrmemory_short' => 'Střídavě s pamětí',
     'cq_strategy_wrandom_short' => 'Vážený náhodný',
-
     // CR
     'cr_AddNewConferenceRoom' => 'Přidat konferenci',
     'cr_ColumnExtension' => 'Číslo',
@@ -126,7 +124,6 @@ return [
     'cr_ValidateNameIsEmpty' => 'Název konference je povinný',
     'cr_ValidatePinNumber' => 'PIN musí obsahovat pouze číslice',
     'cr_pinCode' => 'PIN kód konference',
-
     // DA
     'da_AddNewDialplanApp' => 'Přidat nové',
     'da_Applicationlogic' => 'Programový kód',
@@ -151,7 +148,6 @@ return [
     'da_ValidateExtensionNumber' => 'Interní číslo musí obsahovat pouze číslice',
     'da_ValidateNameIsEmpty' => 'Není vyplněn název aplikace',
     'da_ValidateNameTooLong' => 'Název je příliš dlouhý (maximum 50 znaků)',
-
     // IR
     'ir_ActionSelect' => 'Pokud nevyhovuje žádné z pravidel',
     'ir_AddNewRule' => 'Přidat nové pravidlo',
@@ -248,7 +244,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 sekund:</strong> standardní doba pro kanceláře',
     'ir_timeout_tooltip_value3' => '<strong>45-60 sekund:</strong> pokud mohou být zaměstnanci dočasně zaneprázdněni',
     'ir_timeout_tooltip_values_header' => 'Doporučené hodnoty',
-
     // IV
     'iv_Actions' => 'Akce při dotáčení',
     'iv_AddNewIvrMenu' => 'Vytvořit nové IVR menu',
@@ -322,7 +317,6 @@ return [
     'iv_AudioMessageIdTooltip_rec2' => 'Jasná výslovnost a normální tempo řeči',
     'iv_AudioMessageIdTooltip_rec3' => 'Profesionální tón odpovídající image společnosti',
     'iv_AudioMessageIdTooltip_note' => 'Kvalitní uvítání vytváří pozitivní první dojem o společnosti.',
-
     // OR
     'or_AddNewRule' => 'Přidat nové pravidlo',
     'or_BeforeConnectingTheCallTrim' => 'Před zahájením hovoru odebereme',
@@ -391,7 +385,7 @@ return [
     'or_numberbeginswith_tooltip_pattern4' => '* - servisní kódy na hvězdičku',
     'or_numberbeginswith_tooltip_pattern5' => '# - servisní kódy na mřížku',
     'or_numberbeginswith_tooltip_pattern6' => 'Prázdné pole - jakákoli čísla',
-    'or_numberbeginswith_tooltip_pattern7' => '',
+    'or_numberbeginswith_tooltip_pattern7' => 'Prázdné pole - libovolná čísla',
     'or_numberbeginswith_tooltip_patterns_header' => 'Jednoduché prefixy:',
     'or_numberbeginswith_tooltip_warning' => 'Pozor: Nesprávné použití regex může vést k nepředvídatelnému směrování hovorů!',
     'or_prepend_tooltip_desc' => 'Číslice nebo symboly, které budou přidány na začátek čísla po odebrání. Povolené symboly: 0-9, *, #, +. Maximum 20 znaků.',
@@ -453,7 +447,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'Odstranit prefix operátora nebo firemní kód',
     'or_trimfrombegin_tooltip_why3' => 'Převést číslo na formát providera',
     'or_trimfrombegin_tooltip_why_header' => 'Proč je to potřeba:',
-
     // TF
     'tf_ActionPlayMessage' => 'Přehrát soubor <b>%message%</b>',
     'tf_ActionTransferToExtension' => 'Přesměrovat hovor na <b>%extension%</b>',
@@ -509,4 +502,13 @@ return [
     'tf_calType' => 'Typ',
     'tf_calUrl' => 'URL kalendáře',
     'tf_calUser' => 'Uživatelské jméno',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Čísla z <b>%restnumbers%</b> číslic → oříznout <b>%trim%</b>, přidat <b>%prepend%</b> → přes %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Čísla z <b>%restnumbers%</b> číslic → přidat <b>%prepend%</b> → přes %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Čísla z <b>%restnumbers%</b> číslic → trim <b>%trim%</b> → přes %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Čísla s <b>%numberbeginswith%</b> → trim <b>%trim%</b>, přidat <b>%prepend%</b> → přes %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Čísla s <b>%numberbeginswith%</b> → přidat <b>%prepend%</b> → přes %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Čísla s <b>%numberbeginswith%</b> → trim <b>%trim%</b> → přes %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Pouze <b>%numberbeginswith%</b> → trim <b>%trim%</b>, přidat <b>%prepend%</b> → přes %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Pouze <b>%numberbeginswith%</b> → přidat <b>%prepend%</b> → přes %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Pouze <b>%numberbeginswith%</b> → trim <b>%trim%</b> → přes %provider%',
 ];

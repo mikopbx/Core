@@ -2278,4 +2278,13 @@ return [
     'rest_sipp_UpdateStatus' => 'Providerstatus bijwerken',
     'rest_schema_stg_label' => 'Volumelabel',
     'rest_param_ext_search' => 'Zoekbalk',
+    'rest_S3LocalRetentionMustBeLess' => 'De lokale bewaartermijn (%local% dagen) moet korter zijn dan de totale bewaartermijn (%total% dagen).',
+    'rest_s3_StatsDesc' => 'Geeft gedetailleerde synchronisatiestatistieken van S3-cloudopslag weer: aantal bestanden in S3 en lokaal, totale grootte, synchronisatiepercentage, status (gesynchroniseerd/synchroniserend/in behandeling/uitgeschakeld), tijdstip van laatste upload en datum van het oudste bestand in behandeling.',
+    'rest_s3_Stats' => 'S3-synchronisatiestatistieken ophalen',
+    // ============================================================================
+    // System Upgrade
+    // ============================================================================
+    'rest_System_UpgradeFailedToDetectOffset' => 'De offset van de opstartpartitie kan niet worden vastgesteld.',
+    'rest_System_UpgradeLoopDeviceFailed' => 'Het is niet gelukt om een lusapparaat aan te maken.',
+    'rest_System_UpgradeMountFailed' => 'Partitie kon niet worden gekoppeld. Controleer het bestandssysteem.',
 ];

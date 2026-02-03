@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => '创建一个新队列',
     'cq_AddQueueMembers' => '未选择运营商',
@@ -102,7 +101,6 @@ return [
     'cq_strategy_ringall_short' => '同时呼叫所有人',
     'cq_strategy_rrmemory_short' => '轮转有记忆',
     'cq_strategy_wrandom_short' => '加权随机',
-
     // CR
     'cr_AddNewConferenceRoom' => '添加会议',
     'cr_ColumnExtension' => '编号',
@@ -126,7 +124,6 @@ return [
     'cr_ValidateNameIsEmpty' => '会议名称为必填项',
     'cr_ValidatePinNumber' => 'PIN 只能是数字',
     'cr_pinCode' => '会议密码',
-
     // DA
     'da_AddNewDialplanApp' => '新增',
     'da_Applicationlogic' => '程式码',
@@ -151,7 +148,6 @@ return [
     'da_ValidateExtensionNumber' => '分机号码只能包含号码',
     'da_ValidateNameIsEmpty' => '应用程序名称未填写',
     'da_ValidateNameTooLong' => '名称过长（最多50个字符）',
-
     // IR
     'ir_ActionSelect' => '如果没有合适的规则',
     'ir_AddNewRule' => '添加新规则',
@@ -248,7 +244,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30秒：</strong>办公室标准时间',
     'ir_timeout_tooltip_value3' => '<strong>45-60秒：</strong>如果员工可能暂时忙碌',
     'ir_timeout_tooltip_values_header' => '推荐值',
-
     // IV
     'iv_Actions' => '拨号动作',
     'iv_AddNewIvrMenu' => '创建一个新的IVR菜单',
@@ -322,7 +317,6 @@ return [
     'iv_ValidateTimeout' => '超时应为1到99秒',
     'iv_ValidateTimeoutExtensionIsEmpty' => '未指定超时重定向号码',
     'iv_ValidateTimeoutOutOfRange' => '指定了无效的扩展超时',
-
     // OR
     'or_AddNewRule' => '添加新规则',
     'or_BeforeConnectingTheCallTrim' => '在开始通话之前，我们先切断',
@@ -453,7 +447,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => '删除运营商前缀或企业代码',
     'or_trimfrombegin_tooltip_why3' => '将号码转换为提供商格式',
     'or_trimfrombegin_tooltip_why_header' => '为什么需要这样做：',
-
     // TF
     'tf_ActionPlayMessage' => '播放文件 <b>%message%</b>',
     'tf_ActionTransferToExtension' => '将呼叫转移到<b>%extension%</b>',
@@ -509,4 +502,13 @@ return [
     'tf_calType' => '类型',
     'tf_calUrl' => '日历网址',
     'tf_calUser' => '用户名',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => '从 <b>%restnumbers%</b> 位数字中截断 <b>%trim%</b> 位，加上 <b>%prepend%</b> 位 → 通过 %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => '来自 <b>%restnumbers%</b> 的数字 → 添加 <b>%prepend%</b> → 通过 %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => '来自 <b>%restnumbers%</b> 的数字 → 修剪 <b>%trim%</b> → 通过 %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => '以 <b>%numberbeginswith%</b> 开头的数字 → 去除 <b>%trim%</b>，添加 <b>%prepend%</b> → 通过 %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => '以 <b>%numberbeginswith%</b> 开头的号码 → 添加 <b>%prepend%</b> → 通过 %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => '以 <b>%numberbeginswith%</b> 开头的数字 → 修剪 <b>%trim%</b> → 通过 %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => '仅 <b>%numberbeginswith%</b> → 修剪 <b>%trim%</b>，添加 <b>%prepend%</b> → 通过 %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => '仅限 <b>%numberbeginswith%</b> → 添加 <b>%prepend%</b> → 通过 %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => '仅 <b>%numberbeginswith%</b> → 修剪 <b>%trim%</b> → 通过 %provider%',
 ];

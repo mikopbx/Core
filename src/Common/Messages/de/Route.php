@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'Neue Warteschlange erstellen',
     'cq_AddQueueMembers' => 'Kein Agent ausgewählt',
@@ -102,7 +101,6 @@ return [
     'cq_strategy_ringall_short' => 'Alle gleichzeitig anrufen',
     'cq_strategy_rrmemory_short' => 'Reihum mit Gedächtnis',
     'cq_strategy_wrandom_short' => 'Gewichteter Zufall',
-
     // CR
     'cr_AddNewConferenceRoom' => 'Konferenz hinzufügen',
     'cr_ColumnExtension' => 'Nummer',
@@ -126,7 +124,6 @@ return [
     'cr_ValidateNameIsEmpty' => 'Konferenzname ist erforderlich',
     'cr_ValidatePinNumber' => 'PIN darf nur aus Zahlen bestehen',
     'cr_pinCode' => 'Konferenz-PIN-Code',
-
     // DA
     'da_AddNewDialplanApp' => 'Neue hinzufügen',
     'da_Applicationlogic' => 'Programmcode',
@@ -151,7 +148,6 @@ return [
     'da_ValidateExtensionNumber' => 'Durchwahl darf nur aus Zahlen bestehen',
     'da_ValidateNameIsEmpty' => 'Anwendungsname nicht ausgefüllt',
     'da_ValidateNameTooLong' => 'Name zu lang (maximal 50 Zeichen)',
-
     // IR
     'ir_ActionSelect' => 'Wenn keine der Regeln zutrifft',
     'ir_AddNewRule' => 'Neue Regel hinzufügen',
@@ -248,7 +244,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 Sekunden:</strong> Standardzeit für Büros',
     'ir_timeout_tooltip_value3' => '<strong>45-60 Sekunden:</strong> wenn Mitarbeiter vorübergehend beschäftigt sein könnten',
     'ir_timeout_tooltip_values_header' => 'Empfohlene Werte',
-
     // IV
     'iv_Actions' => 'Aktionen bei Durchwahl-Eingabe',
     'iv_AddNewIvrMenu' => 'Neues IVR-Menü erstellen',
@@ -322,7 +317,6 @@ return [
     'iv_ValidateTimeout' => 'Timeout muss 1 bis 99 Sekunden sein',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Timeout-Weiterleitungsnummer nicht angegeben',
     'iv_ValidateTimeoutOutOfRange' => 'Durchwahl-Eingabe-Timeout falsch angegeben',
-
     // OR
     'or_AddNewRule' => 'Neue Regel hinzufügen',
     'or_BeforeConnectingTheCallTrim' => 'Vor Anrufbeginn kürzen',
@@ -453,7 +447,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'Anbieter-Präfix oder Firmencode entfernen',
     'or_trimfrombegin_tooltip_why3' => 'Nummer für Anbieter formatieren',
     'or_trimfrombegin_tooltip_why_header' => 'Wozu benötigt:',
-
     // TF
     'tf_ActionPlayMessage' => 'Datei <b>%message%</b> abspielen',
     'tf_ActionTransferToExtension' => 'Anruf weiterleiten an <b>%extension%</b>',
@@ -509,4 +502,13 @@ return [
     'tf_calType' => 'Typ',
     'tf_calUrl' => 'Kalender-URL',
     'tf_calUser' => 'Benutzername',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Zahlen aus <b>%restnumbers%</b> Ziffern → abschneiden <b>%trim%</b>, hinzufügen <b>%prepend%</b> → über %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Zahlen aus <b>%restnumbers%</b> Ziffern → addieren <b>%prepend%</b> → über %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Zahlen aus <b>%restnumbers%</b> Ziffern → trim <b>%trim%</b> → über %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Zahlen mit <b>%numberbeginswith%</b> → trim <b>%trim%</b>, add <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Zahlen mit <b>%numberbeginswith%</b> → add <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Zahlen mit <b>%numberbeginswith%</b> → trim <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Nur <b>%numberbeginswith%</b> → trim <b>%trim%</b>, add <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Nur <b>%numberbeginswith%</b> → add <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Nur <b>%numberbeginswith%</b> → trim <b>%trim%</b> → via %provider%',
 ];

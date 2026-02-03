@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'Δημιουργήστε μια νέα ουρά',
     'cq_AddQueueMembers' => 'Δεν έχει επιλεγεί χειριστής',
@@ -56,7 +55,6 @@ return [
     'cq_ringall' => 'Η κλήση φτάνει ταυτόχρονα σε όλα τα μέλη της ουράς, συμπεριλαμβανομένων εκείνων που είναι απασχολημένοι (προεπιλογή)',
     'cq_ringing' => 'Ήχοι κλήσης',
     'cq_rrmemory' => 'Η κλήση φτάνει σε οποιοδήποτε ελεύθερο μέλος της ουράς εκτός από το μέλος που χειρίστηκε την τελευταία κλήση',
-
     // CR
     'cr_AddNewConferenceRoom' => 'Προσθέστε μια διάσκεψη',
     'cr_ColumnExtension' => 'Αριθμός',
@@ -72,7 +70,6 @@ return [
     'cr_ValidateNameEmpty' => 'Το όνομα της διάσκεψης δεν προσδιορίζεται',
     'cr_ValidatePinNumber' => 'Το PIN πρέπει να περιέχει μόνο αριθμούς',
     'cr_pinCode' => 'PIN συνδιάσκεψης',
-
     // DA
     'da_AddNewDialplanApp' => 'Προσθεσε νεο',
     'da_Applicationlogic' => 'Κωδικός προγράμματος',
@@ -93,7 +90,6 @@ return [
     'da_ValidateExtensionIsEmpty' => 'Ο αριθμός για να καλέσετε την αίτηση δεν έχει συμπληρωθεί',
     'da_ValidateExtensionNumber' => 'Ο αριθμός επέκτασης πρέπει να περιέχει μόνο αριθμούς',
     'da_ValidateNameIsEmpty' => 'Το όνομα της εφαρμογής δεν έχει συμπληρωθεί',
-
     // IR
     'ir_ActionSelect' => 'Εάν κανένας από τους κανόνες δεν ταιριάζει',
     'ir_AddNewRule' => 'Προσθήκη νέου κανόνα',
@@ -129,7 +125,6 @@ return [
     'ir_extension' => 'Μεταφορά κλήσης',
     'ir_hangup' => 'Άσε το τηλέφωνο κάτω',
     'ir_playback' => 'Αναπαραγωγή αρχείου πολυμέσων',
-
     // IV
     'iv_Actions' => 'Ενέργειες κατά την πρόσληψη',
     'iv_AddNewIvrMenu' => 'Δημιουργήστε ένα νέο μενού IVR',
@@ -168,7 +163,6 @@ return [
     'iv_AudioMessageIdTooltip_rec2' => 'Σαφή προφορά και κανονικός ρυθμός ομιλίας',
     'iv_AudioMessageIdTooltip_rec3' => 'Επαγγελματικός τόνος που ταιριάζει στην εικόνα της εταιρείας',
     'iv_AudioMessageIdTooltip_note' => 'Ποιοτικός χαιρετισμός δημιουργεί θετική πρώτη εντύπωση για την εταιρεία.',
-
     // OR
     'or_AddNewRule' => 'Προσθήκη νέου κανόνα',
     'or_BeforeConnectingTheCallTrim' => 'Κόψτε πριν ξεκινήσετε την κλήση',
@@ -197,7 +191,6 @@ return [
     'or_ValidationPleaseEnterRuleName' => 'Εισαγάγετε το όνομα του κανόνα',
     'or_ValidationPleaseSelectProvider' => 'Επιλέξτε τον πάροχο για τον οποίο θα ισχύει αυτός ο κανόνας.',
     'or_digitsFromTheFrontAndThenPrependTheDigits' => 'ψηφία στην αρχή του αριθμού και μετά προσθέστε στην αρχή',
-
     // TF
     'tf_ActionPlayMessage' => 'Αναπαραγωγή αρχείου <b>%message%</b>',
     'tf_ActionTransferToExtension' => 'Μεταφορά κλήσης στο <b>%extension%</b>',
@@ -232,7 +225,6 @@ return [
     'tf_calType' => 'Τύπος',
     'tf_calUrl' => 'URL ημερολογίου',
     'tf_calUser' => 'Όνομα χρήστη',
-    
     // Προστέθηκαν λείπουσες μεταφράσεις
     'cq_ColumnQueue' => 'Όνομα ουράς',
     'cq_CallerIDPrefixTooltip_desc' => 'Το σύντομο όνομα της ουράς που θα εμφανίζεται πριν από το όνομα του καλούντος στο τηλέφωνο του χειριστή.',
@@ -280,7 +272,6 @@ return [
     'cq_strategy_ringall_short' => 'Κλήση σε όλους ταυτόχρονα',
     'cq_strategy_rrmemory_short' => 'Σειρά με μνήμη',
     'cq_strategy_wrandom_short' => 'Σταθμισμένη τυχαία',
-
     // CR - Προστέθηκαν λείπουσες μεταφράσεις
     'cr_ColumnPinCode' => 'PIN-κωδικός',
     'cr_ConferenceRoomDeleted' => 'Η αίθουσα συνεδριάσεων διαγράφηκε με επιτυχία',
@@ -290,13 +281,11 @@ return [
     'cr_ValidateExtensionFormat' => 'Ο αριθμός πρέπει να περιέχει από 2 έως 8 ψηφία',
     'cr_ValidateExtensionIsEmpty' => 'Ο αριθμός διάσκεψης είναι υποχρεωτικός',
     'cr_ValidateNameIsEmpty' => 'Το όνομα της διάσκεψης είναι υποχρεωτικό',
-
     // DA - Προστέθηκαν λείπουσες μεταφράσεις
     'da_CreateFirstDialplanApp' => 'Δημιουργήστε την πρώτη εφαρμογή σχεδίου κλήσης',
     'da_NoDialplanApplicationsFound' => 'Δεν βρέθηκαν εφαρμογές σχεδίου κλήσης',
     'da_SelectType' => 'Επιλέξτε τον τύπο εφαρμογής',
     'da_ValidateNameTooLong' => 'Το όνομα είναι πολύ μεγάλο (μέγιστο 50 χαρακτήρες)',
-
     // IR - Προστέθηκαν λείπουσες μεταφράσεις
     'ir_EmptyTableDescription' => 'Οι εισερχόμενες διαδρομές καθορίζουν πού να κατευθύνονται οι κλήσεις από παρόχους',
     'ir_EmptyTableTitle' => 'Ρυθμίστε την εισερχόμενη δρομολόγηση',
@@ -359,7 +348,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 δευτερόλεπτα:</strong> τυπικός χρόνος για γραφεία',
     'ir_timeout_tooltip_value3' => '<strong>45-60 δευτερόλεπτα:</strong> εάν οι υπάλληλοι μπορεί να είναι προσωρινά απασχολημένοι',
     'ir_timeout_tooltip_values_header' => 'Προτεινόμενες τιμές',
-
     // IV - Προστέθηκαν λείπουσες μεταφράσεις
     'iv_DigitsPlaceholder' => 'Ψηφία',
     'iv_EmptyTableDescription' => 'Το IVR επιτρέπει στους συνδρομητές να επιλέξουν την απαιτούμενη κατεύθυνση χρησιμοποιώντας τον τονικό αριθμό',
@@ -396,7 +384,6 @@ return [
     'iv_ValidateExtensionFormat' => 'Ο αριθμός πρέπει να περιέχει από 2 έως 8 ψηφία',
     'iv_ValidateRepeatCount' => 'Ο αριθμός επαναλήψεων πρέπει να είναι από 1 έως 99',
     'iv_ValidateTimeout' => 'Το χρονικό όριο πρέπει να είναι από 1 έως 99 δευτερόλεπτα',
-
     // OR - Προστέθηκαν λείπουσες μεταφράσεις
     'or_EmptyTableDescription' => 'Οι εξερχόμενες διαδρομές καθορίζουν μέσω ποιου παρόχου να γίνονται οι εξωτερικές κλήσεις',
     'or_EmptyTableTitle' => 'Δημιουργήστε κανόνες εξερχόμενων κλήσεων',
@@ -500,7 +487,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'Αφαίρεση προθέματος χειριστή ή εταιρικού κωδικού',
     'or_trimfrombegin_tooltip_why3' => 'Φέρτε τον αριθμό στη μορφή παρόχου',
     'or_trimfrombegin_tooltip_why_header' => 'Γιατί χρειάζεται:',
-
     // TF - Προστέθηκαν λείπουσες μεταφράσεις
     'tf_EmptyTableDescription' => 'Καθορίστε αργίες και μη εργάσιμες ώρες για αυτόματη ανακατεύθυνση κλήσεων',
     'tf_EmptyTableTitle' => 'Ρυθμίστε το πρόγραμμα εργασίας',
@@ -523,4 +509,13 @@ return [
     'tf_CalUrlTooltip_note' => 'Το ημερολόγιο ενημερώνεται κάθε λεπτό. Ο κανόνας ενεργοποιείται αυτόματα όταν υπάρχει γεγονός στο ημερολόγιο τη δεδομένη στιγμή.',
     'tf_TooltipGeneralRule' => 'Αυτός ο κανόνας εφαρμόζεται σε όλες τις κλήσεις από τον πάροχο. Οι συνδεδεμένοι κανόνες θα συγχρονιστούν.',
     'tf_TooltipSpecificRule' => 'Αυτός ο κανόνας εφαρμόζεται σε κλήσεις σε συγκεκριμένο αριθμό. Οι συνδεδεμένοι κανόνες θα συγχρονιστούν.',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Αριθμοί από <b>%restnumbers%</b> ψηφία → αποκοπή <b>%trim%</b>, πρόσθεση <b>%prepend%</b> → μέσω %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Αριθμοί από <b>%restnumbers%</b> ψηφία → πρόσθεση <b>%prepend%</b> → μέσω %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Αριθμοί από <b>%restnumbers%</b> ψηφία → trim <b>%trim%</b> → μέσω %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Αριθμοί με <b>%numberbeginswith%</b> → trim <b>%trim%</b>, πρόσθεση <b>%prepend%</b> → μέσω %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Αριθμοί με <b>%numberbeginswith%</b> → πρόσθεση <b>%prepend%</b> → μέσω %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Αριθμοί με <b>%numberbeginswith%</b> → trim <b>%trim%</b> → μέσω %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Μόνο <b>%numberbeginswith%</b> → trim <b>%trim%</b>, προσθήκη <b>%prepend%</b> → μέσω %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Μόνο <b>%numberbeginswith%</b> → προσθήκη <b>%prepend%</b> → μέσω %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Μόνο <b>%numberbeginswith%</b> → trim <b>%trim%</b> → μέσω %provider%',
 ];

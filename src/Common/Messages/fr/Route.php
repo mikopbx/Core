@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'Créer une nouvelle file d\'attente',
     'cq_AddQueueMembers' => 'Aucun opérateur sélectionné',
@@ -102,7 +101,6 @@ return [
     'cq_strategy_ringall_short' => 'Sonner tous simultanément',
     'cq_strategy_rrmemory_short' => 'À tour de rôle avec mémoire',
     'cq_strategy_wrandom_short' => 'Aléatoire pondéré',
-
     // CR
     'cr_AddNewConferenceRoom' => 'Ajouter une conférence',
     'cr_ColumnExtension' => 'Numéro',
@@ -126,7 +124,6 @@ return [
     'cr_ValidateNameIsEmpty' => 'Le nom de la conférence est obligatoire',
     'cr_ValidatePinNumber' => 'Le code PIN ne doit être composé que de chiffres',
     'cr_pinCode' => 'NIP de la conférence',
-
     // DA
     'da_AddNewDialplanApp' => 'Ajouter un nouveau',
     'da_Applicationlogic' => 'Code de programme',
@@ -151,7 +148,6 @@ return [
     'da_ValidateExtensionNumber' => 'Le numéro de poste ne doit contenir que des chiffres',
     'da_ValidateNameIsEmpty' => 'Le nom de la candidature n\'est pas renseigné',
     'da_ValidateNameTooLong' => 'Nom trop long (maximum 50 caractères)',
-
     // IR
     'ir_ActionSelect' => 'Si aucune des règles ne correspond',
     'ir_AddNewRule' => 'Ajouter une nouvelle règle',
@@ -248,7 +244,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 secondes :</strong> temps standard pour les bureaux',
     'ir_timeout_tooltip_value3' => '<strong>45-60 secondes :</strong> si les employés peuvent être temporairement occupés',
     'ir_timeout_tooltip_values_header' => 'Valeurs recommandées',
-
     // IV
     'iv_Actions' => 'Actions de numérotation',
     'iv_AddNewIvrMenu' => 'Créer un nouveau menu IVR',
@@ -322,7 +317,6 @@ return [
     'iv_ValidateRepeatCount' => 'Le nombre de répétitions doit être entre 1 et 99',
     'iv_ValidateTimeout' => 'Le délai d\'attente doit être entre 1 et 99 secondes',
     'iv_ValidateTimeoutOutOfRange' => 'Délai d\'attente de saisie d\'extension incorrectement spécifié',
-
     // OR
     'or_AddNewRule' => 'Ajouter une nouvelle règle',
     'or_BeforeConnectingTheCallTrim' => 'Avant de commencer un appel, nous coupons',
@@ -453,7 +447,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'Supprimer le préfixe opérateur ou code d\'entreprise',
     'or_trimfrombegin_tooltip_why3' => 'Adapter le numéro au format du fournisseur',
     'or_trimfrombegin_tooltip_why_header' => 'Pourquoi c\'est nécessaire :',
-
     // TF
     'tf_ActionPlayMessage' => 'Lire le fichier <b> %message% </b>',
     'tf_ActionTransferToExtension' => 'Transférer l\'appel vers <b> %extension% </b>',
@@ -509,4 +502,13 @@ return [
     'tf_calType' => 'Taper',
     'tf_calUrl' => 'URL du calendrier',
     'tf_calUser' => 'Nom d\'utilisateur',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Nombres de <b>%restnumbers%</b> chiffres → suppression des <b>%trim%</b>, ajout des <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Nombres de <b>%restnumbers%</b> chiffres → ajouter <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Nombres de <b>%restnumbers%</b> chiffres → suppression des espaces <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Nombres commençant par <b>%numberbeginswith%</b> → suppression des espaces <b>%trim%</b>, ajout de préfixe <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Les nombres commençant par <b>%numberbeginswith%</b> → ajouter <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Nombres commençant par <b>%numberbeginswith%</b> → suppression des espaces <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Seuls les nombres commençant par <b>%numberbeginswith%</b> → supprimer <b>%trimer%</b>, ajouter <b>%préfixer%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Seuls <b>%numberbeginswith%</b> → ajouter <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Seuls <b>%numberbeginswith%</b> → supprimer <b>%trimer%</b> → via %provider%',
 ];

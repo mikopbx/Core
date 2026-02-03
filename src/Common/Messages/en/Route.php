@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,12 +17,9 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-/**
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'Create new queue',
     'cq_AddQueueMembers' => 'No agent selected',
@@ -120,7 +118,6 @@ return [
     'cq_strategy_ringall_short' => 'Ring all simultaneously',
     'cq_strategy_rrmemory_short' => 'Round robin with memory',
     'cq_strategy_wrandom_short' => 'Weighted random',
-
     // CR
     'cr_AddNewConferenceRoom' => 'Add conference',
     'cr_ColumnExtension' => 'Number',
@@ -144,7 +141,6 @@ return [
     'cr_ValidateNameIsEmpty' => 'Conference name is required',
     'cr_ValidatePinNumber' => 'PIN must consist of numbers only',
     'cr_pinCode' => 'Conference PIN code',
-
     // DA
     'da_AddNewDialplanApp' => 'Add new',
     'da_Applicationlogic' => 'Program code',
@@ -169,7 +165,6 @@ return [
     'da_ValidateExtensionNumber' => 'Extension number must consist of numbers only',
     'da_ValidateNameIsEmpty' => 'Application name not filled',
     'da_ValidateNameTooLong' => 'Name too long (maximum 50 characters)',
-
     // IR
     'ir_ActionSelect' => 'If none of the rules match',
     'ir_AddNewRule' => 'Add new rule',
@@ -266,7 +261,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 seconds:</strong> standard time for offices',
     'ir_timeout_tooltip_value3' => '<strong>45-60 seconds:</strong> if employees might be temporarily busy',
     'ir_timeout_tooltip_values_header' => 'Recommended values',
-
     // IV
     'iv_Actions' => 'Actions on extension dialing',
     'iv_AddNewIvrMenu' => 'Create new IVR menu',
@@ -340,7 +334,6 @@ return [
     'iv_ValidateTimeout' => 'Timeout must be 1 to 99 seconds',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Timeout forwarding number not specified',
     'iv_ValidateTimeoutOutOfRange' => 'Extension input timeout incorrectly specified',
-
     // OR
     'or_AddNewRule' => 'Add new rule',
     'or_BeforeConnectingTheCallTrim' => 'Before starting call, trim',
@@ -471,7 +464,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'Remove carrier prefix or corporate code',
     'or_trimfrombegin_tooltip_why3' => 'Format number for provider',
     'or_trimfrombegin_tooltip_why_header' => 'Why needed:',
-
     // TF
     'tf_ActionPlayMessage' => 'Play file <b>%message%</b>',
     'tf_ActionTransferToExtension' => 'Transfer call to <b>%extension%</b>',
@@ -527,4 +519,13 @@ return [
     'tf_calType' => 'Type',
     'tf_calUrl' => 'Calendar URL',
     'tf_calUser' => 'Username',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Numbers from <b>%restnumbers%</b> digits → cut off <b>%trim%</b>, add <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Numbers from <b>%restnumbers%</b> digits → add <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Numbers from <b>%restnumbers%</b> digits → trim <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Numbers with <b>%numberbeginswith%</b> → trim <b>%trim%</b>, add <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Numbers with <b>%numberbeginswith%</b> → add <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Numbers with <b>%numberbeginswith%</b> → trim <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Only <b>%numberbeginswith%</b> → trim <b>%trim%</b>, add <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Only <b>%numberbeginswith%</b> → add <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Only <b>%numberbeginswith%</b> → trim <b>%trim%</b> → via %provider%',
 ];

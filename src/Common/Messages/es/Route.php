@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'Crear nueva cola',
     'cq_AddQueueMembers' => 'Ningún agente seleccionado',
@@ -102,7 +101,6 @@ return [
     'cq_strategy_ringall_short' => 'Llamar a todos simultáneamente',
     'cq_strategy_rrmemory_short' => 'Round robin con memoria',
     'cq_strategy_wrandom_short' => 'Aleatorio ponderado',
-
     // CR
     'cr_AddNewConferenceRoom' => 'Agregar conferencia',
     'cr_ColumnExtension' => 'Número',
@@ -126,7 +124,6 @@ return [
     'cr_ValidateNameIsEmpty' => 'El nombre de conferencia es obligatorio',
     'cr_ValidatePinNumber' => 'El PIN debe consistir solo de números',
     'cr_pinCode' => 'Código PIN de conferencia',
-
     // DA
     'da_AddNewDialplanApp' => 'Agregar nuevo',
     'da_Applicationlogic' => 'Código de programa',
@@ -151,7 +148,6 @@ return [
     'da_ValidateExtensionNumber' => 'El número de extensión debe consistir solo de números',
     'da_ValidateNameIsEmpty' => 'Nombre de aplicación no completado',
     'da_ValidateNameTooLong' => 'Nombre demasiado largo (máximo 50 caracteres)',
-
     // IR
     'ir_ActionSelect' => 'Si ninguna de las reglas coincide',
     'ir_AddNewRule' => 'Agregar nueva regla',
@@ -248,7 +244,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 segundos:</strong> tiempo estándar para oficinas',
     'ir_timeout_tooltip_value3' => '<strong>45-60 segundos:</strong> si empleados pueden estar temporalmente ocupados',
     'ir_timeout_tooltip_values_header' => 'Valores recomendados',
-
     // IV
     'iv_Actions' => 'Acciones al marcar extensión',
     'iv_AddNewIvrMenu' => 'Crear nuevo menú IVR',
@@ -322,7 +317,6 @@ return [
     'iv_ValidateTimeout' => 'El timeout debe ser de 1 a 99 segundos',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Número de reenvío de timeout no especificado',
     'iv_ValidateTimeoutOutOfRange' => 'Timeout de entrada de extensión especificado incorrectamente',
-
     // OR
     'or_AddNewRule' => 'Agregar nueva regla',
     'or_BeforeConnectingTheCallTrim' => 'Antes de iniciar llamada, recortar',
@@ -453,7 +447,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'Eliminar prefijo de operador o código corporativo',
     'or_trimfrombegin_tooltip_why3' => 'Formatear número para proveedor',
     'or_trimfrombegin_tooltip_why_header' => 'Por qué se necesita:',
-
     // TF
     'tf_ActionPlayMessage' => 'Reproducir archivo <b>%message%</b>',
     'tf_ActionTransferToExtension' => 'Transferir llamada a <b>%extension%</b>',
@@ -509,4 +502,13 @@ return [
     'tf_calType' => 'Tipo',
     'tf_calUrl' => 'URL de calendario',
     'tf_calUser' => 'Nombre de usuario',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Números de <b>%restnumbers%</b> dígitos → cortar <b>%trim%</b>, agregar <b>%prepend%</b> → mediante %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Números de <b>%restnumbers%</b> dígitos → sumar <b>%prepend%</b> → mediante %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Números de <b>%restnumbers%</b> dígitos → recortar <b>%trim%</b> → mediante %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Números con <b>%numberbeginswith%</b> → recortar <b>%trim%</b>, agregar <b>%prepend%</b> → mediante %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Números con <b>%numberbeginswith%</b> → agregar <b>%prepend%</b> → mediante %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Números con <b>%numberbeginswith%</b> → recortar <b>%trim%</b> → mediante %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Solo <b>%numberbeginswith%</b> → recortar <b>%trim%</b>, agregar <b>%prepend%</b> → a través de %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Solo <b>%numberbeginswith%</b> → agregar <b>%prepend%</b> → a través de %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Solo <b>%numberbeginswith%</b> → recortar <b>%trim%</b> → a través de %provider%',
 ];
