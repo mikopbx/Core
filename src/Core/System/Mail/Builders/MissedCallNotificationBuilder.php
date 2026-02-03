@@ -115,8 +115,11 @@ class MissedCallNotificationBuilder extends AbstractNotificationBuilder
     protected function buildVariables(): array
     {
         // Build subject and message
+        // Treat callerName as empty if it matches callerId (no real name found)
+        $hasCallerName = !empty($this->callerName) && $this->callerName !== $this->callerId;
+
         $callerDisplay = $this->callerId;
-        if (!empty($this->callerName)) {
+        if ($hasCallerName) {
             $callerDisplay .= ' (' . $this->callerName . ')';
         }
 
@@ -131,7 +134,7 @@ class MissedCallNotificationBuilder extends AbstractNotificationBuilder
         $callerInfo = '<a href="tel:' . EmailTemplateRenderer::escapeHtml($this->callerId) . '" style="color: #007bff; text-decoration: none; font-weight: bold;">'
                     . EmailTemplateRenderer::escapeHtml($this->callerId) . '</a>';
 
-        if (!empty($this->callerName)) {
+        if ($hasCallerName) {
             $callerInfo .= '<br><span style="color: #6c757d; font-size: 13px;">'
                         . EmailTemplateRenderer::escapeHtml($this->callerName) . '</span>';
         }
