@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * External modules translations
  */
-
-return [
     // EXT
     'ext_AddNewExtension' => '下载新模块',
     'ext_Available' => '可以升级到',
@@ -98,4 +97,13 @@ return [
     'ext_ValidateCaptionEmpty' => '菜单项名称未填写',
     'ext_Version' => '版本号',
     'ext_WrongGetModuleLink' => '从存储库获取模块文件时出错',
+    'ext_MissingModuleUniqueID' => '%filePath% 归档文件中的 module.json 文件缺少必需的 moduleUniqueID 字段。',
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => '模块 %module% 与当前版本的 MikoPBX 不兼容。',
+    'ext_InvalidModuleJson' => '归档文件 %filePath% 中的 module.json 文件包含无效的 JSON：%error%',
+    'ext_ModuleJsonNotFound' => '在模块归档文件 %filePath% 中未找到 module.json 文件。',
+    'ext_CorruptedZipFile' => '模块 ZIP 文件已损坏或格式无效：%filePath%。错误代码：%errorCode%。',
+    // Module package validation errors
+    'ext_FileNotFound' => '未找到模块文件：%filePath%',
+    'ext_ModuleMethodSignatureIncompatibility' => '模块 %module% 与当前版本的 MikoPBX 不兼容：检测到方法签名不兼容。',
 ];

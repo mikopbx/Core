@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'Opret en ny kø',
     'cq_AddQueueMembers' => 'Ingen operatører valgt',
@@ -56,7 +55,6 @@ return [
     'cq_ringall' => 'Opkaldet ankommer på samme tid for alle deltagere i køen, inklusive dem, der er optaget (som standard)',
     'cq_ringing' => 'Ringetoner',
     'cq_rrmemory' => 'Opkaldet ankommer til enhver gratis deltager i køen undtagen den deltager, der behandlede det sidste opkald',
-
     // CR
     'cr_AddNewConferenceRoom' => 'Tilføj konference',
     'cr_ColumnExtension' => 'nummer',
@@ -72,7 +70,6 @@ return [
     'cr_ValidateNameEmpty' => 'Konferencenavn ikke angivet',
     'cr_ValidatePinNumber' => 'PIN-koden må kun være tal',
     'cr_pinCode' => 'Konference PIN',
-
     // DA
     'da_AddNewDialplanApp' => 'Tilføj nyt',
     'da_Applicationlogic' => 'Programkode',
@@ -93,7 +90,6 @@ return [
     'da_ValidateExtensionIsEmpty' => 'Applikationsopkaldsnummeret er ikke udfyldt',
     'da_ValidateExtensionNumber' => 'Udvidelsesnummer må kun indeholde tal',
     'da_ValidateNameIsEmpty' => 'Applikationsnavnet udfyldes ikke',
-
     // IR
     'ir_ActionSelect' => 'Hvis ingen af reglerne passer',
     'ir_AddNewRule' => 'Tilføj ny regel',
@@ -129,7 +125,6 @@ return [
     'ir_extension' => 'Overfør opkald',
     'ir_hangup' => 'Hæng op',
     'ir_playback' => 'Afspil mediefil',
-
     // IV
     'iv_Actions' => 'Opkaldshandlinger',
     'iv_AddNewIvrMenu' => 'Opret en ny IVR-menu',
@@ -168,7 +163,6 @@ return [
     'iv_AudioMessageIdTooltip_rec2' => 'Klar udtale og normalt tale-tempo',
     'iv_AudioMessageIdTooltip_rec3' => 'Professionel tone der passer til virksomhedens image',
     'iv_AudioMessageIdTooltip_note' => 'Kvalitetshilsen skaber et positivt førsteindtryk af virksomheden.',
-
     // OR
     'or_AddNewRule' => 'Tilføj ny regel',
     'or_BeforeConnectingTheCallTrim' => 'Før vi starter et opkald, afbrød vi',
@@ -197,7 +191,6 @@ return [
     'or_ValidationPleaseEnterRuleName' => 'Indtast et regelnavn',
     'or_ValidationPleaseSelectProvider' => 'Vælg den udbyder, som denne regel gælder for.',
     'or_digitsFromTheFrontAndThenPrependTheDigits' => 'cifre i begyndelsen af nummeret, og tilføj derefter til begyndelsen',
-
     // TF
     'tf_ActionPlayMessage' => 'Afspil fil <b>%message%</b>',
     'tf_ActionTransferToExtension' => 'Overfør opkaldet til <b> %extension% </b>',
@@ -232,7 +225,6 @@ return [
     'tf_calType' => 'Type',
     'tf_calUrl' => 'Kalender URL',
     'tf_calUser' => 'Brugernavn',
-    
     // Tilføjede manglende oversættelser
     'cq_ColumnQueue' => 'Kønavn',
     'cq_CallerIDPrefixTooltip_desc' => 'Køens korte navn, der vises foran opkalderens navn på operatørens telefon.',
@@ -280,7 +272,6 @@ return [
     'cq_strategy_ringall_short' => 'Ring til alle samtidig',
     'cq_strategy_rrmemory_short' => 'Runde robin med hukommelse',
     'cq_strategy_wrandom_short' => 'Vægtet tilfældig',
-    
     // CR
     'cr_ColumnPinCode' => 'PIN-kode',
     'cr_ConferenceRoomDeleted' => 'Konference blev slettet med succes',
@@ -290,13 +281,11 @@ return [
     'cr_ValidateExtensionFormat' => 'Nummeret skal indeholde 2 til 8 cifre',
     'cr_ValidateExtensionIsEmpty' => 'Konferencenummer er obligatorisk at udfylde',
     'cr_ValidateNameIsEmpty' => 'Konferencenavn er obligatorisk at udfylde',
-    
     // DA
     'da_CreateFirstDialplanApp' => 'Opret den første dialplan-applikation',
     'da_NoDialplanApplicationsFound' => 'Ingen dialplan-applikationer fundet',
     'da_SelectType' => 'Vælg applikationstype',
     'da_ValidateNameTooLong' => 'Navn for langt (maksimum 50 tegn)',
-    
     // IR (fortsatte oversættelser)
     'ir_EmptyTableDescription' => 'Indgående ruter bestemmer, hvordan opkald fra udbydere dirigeres',
     'ir_EmptyTableTitle' => 'Konfigurer indgående routing',
@@ -359,7 +348,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 sekunder:</strong> standard tid for kontorer',
     'ir_timeout_tooltip_value3' => '<strong>45-60 sekunder:</strong> hvis medarbejdere kan være midlertidigt optaget',
     'ir_timeout_tooltip_values_header' => 'Anbefalede værdier',
-    
     // IV (fortsatte oversættelser)
     'iv_EmptyTableDescription' => 'IVR giver abonnenter mulighed for at vælge ønsket retning ved hjælp af tonevalg',
     'iv_EmptyTableTitle' => 'Opret interaktiv stemmemenu',
@@ -396,7 +384,6 @@ return [
     'iv_ValidateExtensionFormat' => 'Nummer skal indeholde 2 til 8 cifre',
     'iv_ValidateRepeatCount' => 'Antal gentagelser skal være fra 1 til 99',
     'iv_ValidateTimeout' => 'Timeout skal være fra 1 til 99 sekunder',
-    
     // OR (fortsatte oversættelser)
     'or_EmptyTableDescription' => 'Udgående ruter bestemmer, hvilken udbyder der skal foretage eksterne opkald gennem',
     'or_EmptyTableTitle' => 'Opret udgående opkaldsregler',
@@ -500,7 +487,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'Fjern operator prefiks eller virksomhedskode',
     'or_trimfrombegin_tooltip_why3' => 'Bring nummer til udbyder format',
     'or_trimfrombegin_tooltip_why_header' => 'Hvorfor er dette nødvendigt:',
-    
     // TF (fortsatte oversættelser)
     'tf_CAL_TYPE_TIMEFRAME' => 'Tidsrammer',
     'tf_CalUrlTooltip_caldav_google' => 'Google Calendar: Indstillinger → Kalenderintegration → Privat adresse i CalDAV format',
@@ -523,4 +509,13 @@ return [
     'tf_PasswordMasked' => 'Adgangskode gemt (indtast ny for at ændre)',
     'tf_TooltipGeneralRule' => 'Denne regel gælder for alle opkald fra udbyder. Relaterede regler synkroniseres.',
     'tf_TooltipSpecificRule' => 'Denne regel gælder for opkald til specifikt nummer. Relaterede regler synkroniseres.',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Tal fra <b>%restnumbers%</b> cifre → afskær <b>%trim%</b>, tilføj <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Tal fra <b>%restnumbers%</b> cifre → læg <b>%prepend%</b> til → via %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Tal fra <b>%restnumbers%</b> cifre → trim <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Tal med <b>%numberbeginswith%</b> → trim <b>%trim%</b>, tilføj <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Tal med <b>%numberbeginswith%</b> → læg <b>%prepend%</b> til → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Tal med <b>%numberbeginswith%</b> → trim <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Kun <b>%numberbegynder med%</b> → trim <b>%trim%</b>, tilføj <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Kun <b>%numberbegynder med%</b> → tilføj <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Kun <b>%numberbegynder med%</b> → trim <b>%trim%</b> → via %provider%',
 ];

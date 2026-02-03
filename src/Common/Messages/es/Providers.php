@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Permite agregar parámetros adicionales de configuración de Asterisk IAX para ajuste fino del proveedor.',
     'iax_ManualAttributesTooltip_examples_header' => 'Ejemplos',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Registro saliente',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Su PBX se registra en el servidor del proveedor. Se usa para llamadas salientes a través del proveedor.',
     'iax_registration_type' => 'Tipo de cuenta',
-
     // PR
     'pr_AddIAXProvider' => 'Conectar IAX',
     'pr_AddSIPProvider' => 'Conectar SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Especifique el puerto del proveedor',
     'pr_ValidationProviderPortRange' => 'El puerto del proveedor debe estar dentro de {ruleValue}',
     'pr_WithoutRegistration' => 'El registro está deshabilitado',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'Proveedores IAX2',
     'prov_dropdownCategory_SIP' => 'Proveedores SIP',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Registro entrante',
     'sip_REG_TYPE_NONE' => 'Autenticación por dirección IP, sin contraseña',
     'sip_REG_TYPE_OUTBOUND' => 'Registro saliente',
     'sip_registration_type' => 'Tipo de cuenta',
+    'pr_RegisteredFrom' => 'Registrado en',
+    'pr_RegisteredTo' => 'Registrado en',
+    'pr_ProviderRegistered' => 'El proveedor está registrado',
+    'pr_WaitingForRegistration' => 'Esperando el registro',
+    'pr_StateChangedFromTo' => 'El estado ha cambiado de %previousState% a %newState%',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'El nombre de usuario IAX para el registro entrante solo puede contener letras, números y símbolos latinos: _ - .',
+    'mo_SipUsernameInvalidCharacters' => 'El nombre de usuario SIP para el registro entrante solo puede contener letras, números y símbolos latinos: _ - .',
+    'pr_ValidationProviderLogin' => 'Introduce tus datos de acceso para iniciar sesión en tu proveedor.',
+    'pr_Disabled' => 'apagado',
+    'pr_CheckingStatus' => 'Comprobando estado...',
 ];

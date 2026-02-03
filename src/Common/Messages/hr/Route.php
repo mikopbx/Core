@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'Stvorite novi red čekanja',
     'cq_AddQueueMembers' => 'Nema odabranih operatera',
@@ -56,7 +55,6 @@ return [
     'cq_ringall' => 'Poziv stiže istovremeno svim sudionicima u redu čekanja, uključujući one koji su zauzeti (prema zadanim postavkama)',
     'cq_ringing' => 'Tonovi poziva',
     'cq_rrmemory' => 'Poziv stiže svakom slobodnom sudioniku u redu čekanja osim sudioniku koji je obradio zadnji poziv',
-
     // CR
     'cr_AddNewConferenceRoom' => 'Dodajte konferenciju',
     'cr_ColumnExtension' => 'Broj',
@@ -72,7 +70,6 @@ return [
     'cr_ValidateNameEmpty' => 'Naziv konferencije nije naveden',
     'cr_ValidatePinNumber' => 'PIN se mora sastojati samo od brojeva',
     'cr_pinCode' => 'PIN kod konferencije',
-
     // DA
     'da_AddNewDialplanApp' => 'Dodaj novi',
     'da_Applicationlogic' => 'Programski kod',
@@ -93,7 +90,6 @@ return [
     'da_ValidateExtensionIsEmpty' => 'Broj za poziv u prijavi nije popunjen',
     'da_ValidateExtensionNumber' => 'Interni broj mora se sastojati samo od brojeva',
     'da_ValidateNameIsEmpty' => 'Naziv prijave nije popunjen',
-
     // IR
     'ir_ActionSelect' => 'Ako nijedno pravilo ne odgovara',
     'ir_AddNewRule' => 'Dodajte novo pravilo',
@@ -129,7 +125,6 @@ return [
     'ir_extension' => 'Prijenos poziva',
     'ir_hangup' => 'Objesiti',
     'ir_playback' => 'Reproduciraj medijsku datoteku',
-
     // IV
     'iv_Actions' => 'Akcije za dodatno zapošljavanje',
     'iv_AddNewIvrMenu' => 'Stvorite novi IVR izbornik',
@@ -168,7 +163,6 @@ return [
     'iv_AudioMessageIdTooltip_rec2' => 'Jasan izgovor i normalan tempo govora',
     'iv_AudioMessageIdTooltip_rec3' => 'Profesionalan ton koji odgovara imidžu tvrtke',
     'iv_AudioMessageIdTooltip_note' => 'Kvalitetan pozdrav stvara pozitivan prvi dojam o tvrtki.',
-
     // OR
     'or_AddNewRule' => 'Dodajte novo pravilo',
     'or_BeforeConnectingTheCallTrim' => 'Prije nego započnemo poziv, prekinuli smo',
@@ -197,7 +191,6 @@ return [
     'or_ValidationPleaseEnterRuleName' => 'Unesite naziv pravila',
     'or_ValidationPleaseSelectProvider' => 'Odaberite davatelja za kojeg će se ovo pravilo primjenjivati.',
     'or_digitsFromTheFrontAndThenPrependTheDigits' => 'brojeve na početku broja, zatim dodajte na početak',
-
     // TF
     'tf_ActionPlayMessage' => 'Reproduciraj datoteku <b>%message%</b>',
     'tf_ActionTransferToExtension' => 'Prijenos poziva na <b>%extension%</b>',
@@ -232,7 +225,6 @@ return [
     'tf_calType' => 'Tip',
     'tf_calUrl' => 'URL kalendara',
     'tf_calUser' => 'Korisničko ime',
-
     // Dodani nedostajući prijevodi
     'cq_ColumnQueue' => 'Naziv reda',
     'cq_CallerIDPrefixTooltip_desc' => 'Kratki naziv reda koji će se prikazivati prije imena pozivatelja na operaterskom telefonu.',
@@ -280,7 +272,6 @@ return [
     'cq_strategy_ringall_short' => 'Zovi sve istovremeno',
     'cq_strategy_rrmemory_short' => 'Redom s memorijom',
     'cq_strategy_wrandom_short' => 'Ponderirani slučajni',
-
     // CR - Dodani nedostajući prijevodi
     'cr_ColumnPinCode' => 'PIN kod',
     'cr_ConferenceRoomDeleted' => 'Konferencijska soba uspješno obrisana',
@@ -290,13 +281,11 @@ return [
     'cr_ValidateExtensionFormat' => 'Broj mora sadržavati 2-8 znamenki',
     'cr_ValidateExtensionIsEmpty' => 'Broj konferencije je obavezan',
     'cr_ValidateNameIsEmpty' => 'Naziv konferencije je obavezan',
-
     // DA - Dodani nedostajući prijevodi
     'da_CreateFirstDialplanApp' => 'Stvorite prvu aplikaciju plana biranja',
     'da_NoDialplanApplicationsFound' => 'Aplikacije plana biranja nisu pronađene',
     'da_SelectType' => 'Odaberite vrstu aplikacije',
     'da_ValidateNameTooLong' => 'Naziv je predugačak (maksimalno 50 znakova)',
-
     // IR - Dodani nedostajući prijevodi
     'ir_EmptyTableDescription' => 'Dolazne rute određuju kamo usmjeriti pozive od davatelja usluga',
     'ir_EmptyTableTitle' => 'Postavite dolazno usmjeravanje',
@@ -359,7 +348,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 sekundi:</strong> standardno vrijeme za urede',
     'ir_timeout_tooltip_value3' => '<strong>45-60 sekundi:</strong> ako zaposlenici mogu biti privremeno zauzeti',
     'ir_timeout_tooltip_values_header' => 'Preporučene vrijednosti',
-
     // IV - Dodani nedostajući prijevodi
     'iv_DigitsPlaceholder' => 'Znamenke',
     'iv_EmptyTableDescription' => 'IVR omogućava pretplatnicima da odaberu potreban smjer pomoću tonskog biranja',
@@ -396,7 +384,6 @@ return [
     'iv_ValidateExtensionFormat' => 'Broj mora sadržavati 2-8 znamenki',
     'iv_ValidateRepeatCount' => 'Broj ponavljanja mora biti 1-99',
     'iv_ValidateTimeout' => 'Timeout mora biti 1-99 sekundi',
-
     // OR - Dodani nedostajući prijevodi
     'or_EmptyTableDescription' => 'Odlazne rute određuju preko kojeg davatelja usluga obavljati vanjske pozive',
     'or_EmptyTableTitle' => 'Stvorite pravila odlaznih poziva',
@@ -500,7 +487,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'Ukloni prefiks operatera ili korporacijski kod',
     'or_trimfrombegin_tooltip_why3' => 'Dovedi broj u oblik davatelja',
     'or_trimfrombegin_tooltip_why_header' => 'Zašto je to potrebno:',
-
     // TF - Dodani nedostajući prijevodi
     'tf_EmptyTableDescription' => 'Definirajte blagdane i neradne sate za automatsko preusmjeravanje poziva',
     'tf_EmptyTableTitle' => 'Postavite raspored rada',
@@ -523,4 +509,13 @@ return [
     'tf_CalUrlTooltip_note' => 'Kalendar se ažurira svake minute. Pravilo se automatski aktivira kad postoji događaj u kalendaru u trenutnom vremenu.',
     'tf_TooltipGeneralRule' => 'Ovo pravilo se primjenjuje na sve pozive od davatelja. Povezana pravila će se sinkronizirati.',
     'tf_TooltipSpecificRule' => 'Ovo pravilo se primjenjuje na pozive na određeni broj. Povezana pravila će se sinkronizirati.',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Brojevi od <b>%restnumbers%</b> znamenki → odrezati <b>%trim%</b>, dodati <b>%prepend%</b> → putem %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Brojevi od <b>%restnumbers%</b> znamenki → dodajte <b>%prepend%</b> → putem %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Brojevi od <b>%restnumbers%</b> znamenki → trim <b>%trim%</b> → putem %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Brojevi s <b>%numberbeginswith%</b> → trim <b>%trim%</b>, dodajte <b>%prepend%</b> → putem %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Brojevi s <b>%numberbeginswith%</b> → dodajte <b>%prepend%</b> → putem %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Brojevi s <b>%numberbeginswith%</b> → trim <b>%trim%</b> → putem %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Samo <b>%numberbeginswith%</b> → trim <b>%trim%</b>, dodajte <b>%prepend%</b> → putem %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Samo <b>%numberbeginswith%</b> → dodajte <b>%prepend%</b> → putem %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Samo <b>%numberbeginswith%</b> → trim <b>%trim%</b> → putem %provider%',
 ];

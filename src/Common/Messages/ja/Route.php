@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => '新しいキューを作成',
     'cq_AddQueueMembers' => 'オペレーターが選択されていません',
@@ -102,7 +101,6 @@ return [
     'cq_strategy_ringall_short' => '全員に同時に鳴らす',
     'cq_strategy_rrmemory_short' => 'メモリ付きターン制',
     'cq_strategy_wrandom_short' => '加重ランダム',
-
     // CR
     'cr_AddNewConferenceRoom' => '会議室を追加',
     'cr_ColumnExtension' => '番号',
@@ -126,7 +124,6 @@ return [
     'cr_ValidateNameIsEmpty' => '会議名は必須入力です',
     'cr_ValidatePinNumber' => 'PINは数字のみである必要があります',
     'cr_pinCode' => '会議PINコード',
-
     // DA
     'da_AddNewDialplanApp' => '新規追加',
     'da_Applicationlogic' => 'プログラムコード',
@@ -151,7 +148,6 @@ return [
     'da_ValidateExtensionNumber' => '内部番号は数字のみで構成される必要があります',
     'da_ValidateNameIsEmpty' => 'アプリケーション名が入力されていません',
     'da_ValidateNameTooLong' => '名前が長すぎます（最大50文字）',
-
     // IR
     'ir_ActionSelect' => 'どのルールも適用されない場合',
     'ir_AddNewRule' => '新しいルールを追加',
@@ -248,7 +244,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30秒：</strong> オフィスの標準時間',
     'ir_timeout_tooltip_value3' => '<strong>45-60秒：</strong> 従業員が一時的に忙しい場合',
     'ir_timeout_tooltip_values_header' => '推奨値',
-
     // IV
     'iv_Actions' => '追加ダイヤリングアクション',
     'iv_AddNewIvrMenu' => '新しいIVRメニューを作成',
@@ -322,7 +317,6 @@ return [
     'iv_ValidateTimeout' => 'タイムアウトは1から99秒である必要があります',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'タイムアウトリダイレクト番号が指定されていません',
     'iv_ValidateTimeoutOutOfRange' => '内線番号入力待機タイムアウトが正しく指定されていません',
-
     // OR
     'or_AddNewRule' => '新しいルールを追加',
     'or_BeforeConnectingTheCallTrim' => '通話開始前にトリム',
@@ -453,7 +447,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'オペレータープレフィックスまたは企業コードを削除',
     'or_trimfrombegin_tooltip_why3' => '番号をプロバイダー形式に適合',
     'or_trimfrombegin_tooltip_why_header' => 'なぜ必要か：',
-
     // TF
     'tf_ActionPlayMessage' => 'ファイル<b>%message%</b>を再生',
     'tf_ActionTransferToExtension' => '通話を<b>%extension%</b>に転送',
@@ -509,4 +502,13 @@ return [
     'tf_calType' => 'タイプ',
     'tf_calUrl' => 'カレンダーURL',
     'tf_calUser' => 'ユーザー名',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => '<b>%restnumbers%</b>桁の数字 → <b>%trim%</b>を切り捨て、<b>%prepend%</b>を追加 → %provider%経由',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => '<b>%restnumbers%</b>桁の数字 → <b>%prepend%</b>を追加 → %provider%経由',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => '<b>%restnumbers%</b>桁の数字 → <b>%trim%</b>をトリム → %provider%経由',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => '<b>%numberbeginswith%</b> の数字 → <b>%trim%</b> をトリムし、<b>%prepend%</b> を追加 → %provider% 経由',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => '<b>%numberbeginswith%</b> で始まる番号 → <b>%trim%</b> をトリム → %provider% 経由',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => '<b>%numberbeginswith%</b>のみ → <b>%trim%</b>をトリムし、<b>%prepend%</b>を追加 → %provider%経由',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => '<b>%numberbeginswith%</b>のみ → <b>%prepend%</b>を追加 → %provider%経由',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => '<b>%numberbeginswith%</b>のみ → <b>%trim%</b>をトリム → %provider%経由',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => '<b>%numberbeginswith%</b> の数字 → <b>%prepend%</b> を追加 → %provider% 経由',
 ];

@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * External modules translations
  */
-
-return [
     // EXT
     'ext_AddNewExtension' => 'Λήψη νέας ενότητας',
     'ext_Available' => 'μπορεί να αναβαθμιστεί σε',
@@ -98,4 +97,13 @@ return [
     'ext_ValidateCaptionEmpty' => 'Κενό όνομα στοιχείου μενού',
     'ext_Version' => 'Εκδοχή',
     'ext_WrongGetModuleLink' => 'Σφάλμα κατά τη λήψη του αρχείου μονάδας από το χώρο αποθήκευσης',
+    'ext_MissingModuleUniqueID' => 'Λείπει το απαιτούμενο πεδίο moduleUniqueID από το αρχείο module.json στο αρχείο %filePath%.',
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => 'Η ενότητα %module% δεν είναι συμβατή με την τρέχουσα έκδοση του MikoPBX',
+    'ext_InvalidModuleJson' => 'Το αρχείο module.json στο αρχείο %filePath% περιέχει μη έγκυρο JSON: %error%',
+    'ext_ModuleJsonNotFound' => 'Το αρχείο module.json δεν βρέθηκε στο αρχείο module %filePath%',
+    'ext_CorruptedZipFile' => 'Το αρχείο ZIP της ενότητας είναι κατεστραμμένο ή έχει μη έγκυρη μορφή: %filePath%. Κωδικός σφάλματος: %errorCode%',
+    // Module package validation errors
+    'ext_FileNotFound' => 'Το αρχείο της ενότητας δεν βρέθηκε: %filePath%',
+    'ext_ModuleMethodSignatureIncompatibility' => 'Η ενότητα %module% δεν είναι συμβατή με την τρέχουσα έκδοση του MikoPBX: εντοπίστηκε ασυμβατότητα υπογραφής μεθόδου',
 ];

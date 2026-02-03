@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     'cq_AddNewQueue' => 'Creați o nouă coadă',
     'cq_AddQueueMembers' => 'Niciun operator selectat',
     'cq_AnnonceHoldTime' => 'Anunțați-mă despre timpul estimat de așteptare',
@@ -496,4 +495,13 @@ return [
     'tf_PasswordMasked' => 'Пароль сохранен (введите новый для изменения)',
     'tf_TooltipGeneralRule' => 'Это правило применяется ко всем звонкам от провайдера. Связанные правила будут синхронизированы.',
     'tf_TooltipSpecificRule' => 'Это правило применяется к звонкам на конкретный номер. Связанные правила будут синхронизированы.',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Numere din <b>%restnumbers%</b> cifre → tăiere <b>%trim%</b>, adăugare <b>%prepend%</b> → prin %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Numere din <b>%restnumbers%</b> cifre → adăugați <b>%prepend%</b> → prin %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Numere din <b>%restnumbers%</b> cifre → trim <b>%trim%</b> → prin %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Numere cu <b>%numberbeginswith%</b> → trim <b>%trim%</b>, adaug <b>%prepend%</b> → prin %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Numere cu <b>%numberbeginswith%</b> → adăugați <b>%prepend%</b> → prin %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Numere cu <b>%numberbeginswith%</b> → trim <b>%trim%</b> → prin %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Numai <b>%numberbeginswith%</b> → decupează <b>%trim%</b>, adaugă <b>%prepend%</b> → prin %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Doar <b>%numberbeginswith%</b> → adaugă <b>%prepend%</b> → prin %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Doar <b>%numberbeginswith%</b> → trim <b>%trim%</b> → prin %provider%',
 ];

@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Lehetővé teszi további Asterisk IAX konfigurációs paraméterek hozzáadását a szolgáltató finomhangolásához.',
     'iax_ManualAttributesTooltip_examples_header' => 'Példák',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Kimenő regisztráció',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Az Ön PBX-e regisztrál a szolgáltató szerverére. Kimenő hívásokhoz használatos szolgáltatón keresztül.',
     'iax_registration_type' => 'Fiók típusa',
-
     // PR
     'pr_AddIAXProvider' => 'Csatlakoztassa az IAX-et',
     'pr_AddSIPProvider' => 'Csatlakoztassa a SIP-t',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Adja meg a szolgáltató portját',
     'pr_ValidationProviderPortRange' => 'A szolgáltató portjának a következőn belül kell lennie: {ruleValue}',
     'pr_WithoutRegistration' => 'A regisztráció letiltva',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'IAX2 szolgáltatók',
     'prov_dropdownCategory_SIP' => 'SIP szolgáltatók',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Bejövő regisztráció',
     'sip_REG_TYPE_NONE' => 'Hitelesítés IP címmel, jelszó nélkül',
     'sip_REG_TYPE_OUTBOUND' => 'Kimenő regisztráció',
     'sip_registration_type' => 'Fiók Típus',
+    'pr_ProviderRegistered' => 'A szolgáltató regisztrálva van',
+    'pr_Disabled' => 'kikapcsolva',
+    'pr_RegisteredTo' => 'Regisztrálva:',
+    'mo_SipUsernameInvalidCharacters' => 'A bejövő regisztrációhoz használt SIP felhasználónév csak latin betűket, számokat és szimbólumokat tartalmazhat: _ - .',
+    'pr_StateChangedFromTo' => 'A státusz %previousState% állapotról %newState% állapotra változott.',
+    'pr_CheckingStatus' => 'Állapot ellenőrzése...',
+    'pr_ValidationProviderLogin' => 'Add meg a bejelentkezési adataidat a szolgáltatódhoz való bejelentkezéshez.',
+    'pr_RegisteredFrom' => 'Regisztrálva itt:',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'A bejövő regisztrációhoz használt IAX felhasználónév csak latin betűket, számokat és szimbólumokat tartalmazhat: _ - .',
+    'pr_WaitingForRegistration' => 'Regisztrációra várok',
 ];

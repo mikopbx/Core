@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'შექმენით ახალი რიგი',
     'cq_AddQueueMembers' => 'ოპერატორი არ არის არჩეული',
@@ -56,7 +55,6 @@ return [
     'cq_ringall' => 'რიგის ყველა მონაწილეს ეწოდება ერთდროულად, მათ შორის, ვინც დაკავებულია (სტანდარტულად)',
     'cq_ringing' => 'ზარის სიგნალები',
     'cq_rrmemory' => 'ზარი მიდის რიგის ნებისმიერ უფასო წევრთან, გარდა იმ ადამიანისა, ვინც ბოლო ზარი მიიღო',
-
     // CR
     'cr_AddNewConferenceRoom' => 'კონფერენციის დამატება',
     'cr_ColumnExtension' => 'ოთახი',
@@ -72,7 +70,6 @@ return [
     'cr_ValidateNameEmpty' => 'კონფერენციის სახელი მითითებული არ არის',
     'cr_ValidatePinNumber' => 'PIN უნდა იყოს მხოლოდ ნომრები',
     'cr_pinCode' => 'კონფერენციის PIN',
-
     // DA
     'da_AddNewDialplanApp' => 'Ახლის დამატება',
     'da_Applicationlogic' => 'პროგრამის კოდი',
@@ -93,7 +90,6 @@ return [
     'da_ValidateExtensionIsEmpty' => 'განაცხადში დარეკვის ნომერი არ არის შევსებული',
     'da_ValidateExtensionNumber' => 'გაფართოების ნომერი უნდა შედგებოდეს მხოლოდ ციფრებისგან',
     'da_ValidateNameIsEmpty' => 'განაცხადის სახელი არ არის შევსებული',
-
     // IR
     'ir_ActionSelect' => 'თუ არცერთი წესი არ შეესაბამება',
     'ir_AddNewRule' => 'ახალი წესის დამატება',
@@ -129,7 +125,6 @@ return [
     'ir_extension' => 'გადარიცხვის ზარი',
     'ir_hangup' => 'განათავსე ტელეფონი',
     'ir_playback' => 'მედია ფაილის დაკვრა',
-
     // IV
     'iv_Actions' => 'მოქმედებები დამატებითი დაქირავებისთვის',
     'iv_AddNewIvrMenu' => 'შექმენით ახალი IVR მენიუ',
@@ -168,7 +163,6 @@ return [
     'iv_AudioMessageIdTooltip_rec2' => 'მკაფიო გამოთქმა და ნორმალური საუბრის ტემპი',
     'iv_AudioMessageIdTooltip_rec3' => 'კომპანიის იმიჯის შესაბამისი პროფესიონალური ტონი',
     'iv_AudioMessageIdTooltip_note' => 'ხარისხიანი მისალმება ქმნის კომპანიაზე დადებით პირველ შთაბეჭდილებას.',
-
     // OR
     'or_AddNewRule' => 'ახალი წესის დამატება',
     'or_BeforeConnectingTheCallTrim' => 'შეწყვიტე ზარის დაწყებამდე',
@@ -197,7 +191,6 @@ return [
     'or_ValidationPleaseEnterRuleName' => 'შეიყვანეთ სახელი წესისთვის',
     'or_ValidationPleaseSelectProvider' => 'აირჩიეთ პროვაიდერი, რომლისთვისაც ეს წესი გავრცელდება.',
     'or_digitsFromTheFrontAndThenPrependTheDigits' => 'ციფრები რიცხვის დასაწყისში, შემდეგ დაამატეთ დასაწყისში',
-
     // TF
     'tf_ActionPlayMessage' => 'ფაილის დაკვრა <b> %message% </b>',
     'tf_ActionTransferToExtension' => 'გადარიცხეთ ზარი <b> %extension% </b>',
@@ -232,7 +225,6 @@ return [
     'tf_calType' => 'ტიპი',
     'tf_calUrl' => 'კალენდრის URL',
     'tf_calUser' => 'მომხმარებლის სახელი',
-
     // Additional CQ translations
     'cq_CallerIDPrefixTooltip_desc' => 'რიგის მოკლე სახელი, რომელიც გამოჩნდება მომწოდებელი აბონენტის სახელის წინ ოპერატორის ტელეფონზე.',
     'cq_CallerIDPrefixTooltip_example' => 'თუ "გიორგი მაისაშვილი" აბონენტი დარეკავს რიგში "Sales" პრეფიქსით, ოპერატორი დაინახავს: "Sales: გიორგი მაისაშვილი"',
@@ -280,7 +272,6 @@ return [
     'cq_strategy_ringall_short' => 'ყველასთვის ერთდროულად დარეკვა',
     'cq_strategy_rrmemory_short' => 'რიგით მეხსიერებით',
     'cq_strategy_wrandom_short' => 'შერეული შემთხვევითი',
-
     // Additional CR translations
     'cr_ColumnPinCode' => 'PIN-კოდი',
     'cr_ConferenceRoomDeleted' => 'კონფერენცია წარმატებით წაიშალა',
@@ -290,13 +281,11 @@ return [
     'cr_ValidateExtensionFormat' => 'ნომერი უნდა შეიცავდეს 2-8 ციფრს',
     'cr_ValidateExtensionIsEmpty' => 'კონფერენციის ნომერი სავალდებულოა',
     'cr_ValidateNameIsEmpty' => 'კონფერენციის სახელი სავალდებულოა',
-
     // Additional DA translations
     'da_CreateFirstDialplanApp' => 'შექმენით პირველი dialplan აპლიკაცია',
     'da_NoDialplanApplicationsFound' => 'Dialplan აპლიკაციები ვერ მოიძებნა',
     'da_SelectType' => 'აირჩიეთ აპლიკაციის ტიპი',
     'da_ValidateNameTooLong' => 'სახელი ძალიან გრძელია (მაქსიმუმ 50 სიმბოლო)',
-
     // Additional IR translations
     'ir_EmptyTableDescription' => 'შემომავალი მარშრუტები განსაზღვრავს სად მიმართოს პროვაიდერებისგან მომავალი ზარები',
     'ir_EmptyTableTitle' => 'დააყენეთ შემომავალი მარშრუტიზაცია',
@@ -359,7 +348,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 წამი:</strong> ოფისებისთვის სტანდარტული დრო',
     'ir_timeout_tooltip_value3' => '<strong>45-60 წამი:</strong> თუ თანამშრომლები შეიძლება დროებით დაკავებულები იყვნენ',
     'ir_timeout_tooltip_values_header' => 'რეკომენდებული მნიშვნელობები',
-
     // Additional IV translations
     'iv_EmptyTableDescription' => 'IVR საშუალებას აძლევს აბონენტებს რომ ტონალური დარეკვით აირჩიონ საჭირო მიმართულება',
     'iv_EmptyTableTitle' => 'შექმენით ინტერაქტიული ხმოვანი მენიუ',
@@ -396,7 +384,6 @@ return [
     'iv_ValidateTimeout' => 'Timeout უნდა იყოს 1-დან 99 წამამდე',
     'iv_DigitsPlaceholder' => 'ციფრები',
     'iv_ValidateExtensionFormat' => 'ნომერი უნდა შეიცავდეს 2-8 ციფრს',
-
     // Additional OR translations
     'or_EmptyTableDescription' => 'გამავალი მარშრუტები განსაზღვრავს რომელი პროვაიდერით უნდა დაიწყოს გარე ზარები',
     'or_EmptyTableTitle' => 'შექმენით გამავალი ზარების წესები',
@@ -500,7 +487,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'პროვაიდერის პრეფიქსის ან კორპორაციული კოდის ამოცლა',
     'or_trimfrombegin_tooltip_why3' => 'ნომრის პროვაიდერის ფორმატთან შესაბამისობაში მოყვანა',
     'or_trimfrombegin_tooltip_why_header' => 'რისთვის არის საჭირო:',
-
     // Additional TF translations
     'tf_CAL_TYPE_TIMEFRAME' => 'დროითი ჩარჩო',
     'tf_CalUrlTooltip_caldav_google' => 'Google კალენდარი: პარამეტრები → კალენდრის ინტეგრაცია → პირადი CalDAV მისამართი',
@@ -523,4 +509,13 @@ return [
     'tf_PasswordMasked' => 'პაროლი შენახულია (შეიყვანეთ ახალი ცვლილებისთვის)',
     'tf_TooltipGeneralRule' => 'ეს წესი ვრცელდება პროვაიდერისგან მომავალ ყველა ზარზე. დაკავშირებული წესები სინქრონიზდება.',
     'tf_TooltipSpecificRule' => 'ეს წესი ვრცელდება კონკრეტულ ნომერზე მომავალ ზარებზე. დაკავშირებული წესები სინქრონიზდება.',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'რიცხვები <b>%restnumbers%</b> ციფრებიდან → <b>%trim%</b>-ის ამოჭრა, <b>%prepend%</b>-ის დამატება → %provider%-ის მეშვეობით',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'რიცხვები <b>%restnumbers%</b> ციფრებიდან → შეკრიბეთ <b>%prepend%</b> → %provider%-ის მეშვეობით',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'რიცხვები <b>%restnumbers%</b> ციფრებიდან → trim <b>%trim%</b> → %provider%-ის მეშვეობით',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'რიცხვები <b>%numberbeginswith%</b> → მორთვა <b>%trim%</b>, დამატება <b>%prepend%</b> → %provider%-ის მეშვეობით',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'რიცხვები <b>%numberbeginswith%</b> → დამატება <b>%prepend%</b> → %provider%-ის მეშვეობით',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'რიცხვები <b>%numberbeginswith%</b> → trim <b>%trim%</b> → %provider%-ის მეშვეობით',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'მხოლოდ <b>%numberbeginswith%</b> → trim <b>%trim%</b>, დამატება <b>%prepend%</b> → %provider%-ის მეშვეობით',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'მხოლოდ <b>%numberbeginswith%</b> → დამატება <b>%prepend%</b> → %provider%-ის მეშვეობით',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'მხოლოდ <b>%numberbeginswith%</b> → trim <b>%trim%</b> → %provider%-ის მეშვეობით',
 ];

@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     'cq_AddNewQueue' => 'Skapa en ny kö',
     'cq_AddQueueMembers' => 'Inga operatörer valda',
     'cq_AnnonceHoldTime' => 'Meddela uppskattad väntetid',
@@ -496,4 +495,13 @@ return [
     'tf_PasswordMasked' => 'Пароль сохранен (введите новый для изменения)',
     'tf_TooltipGeneralRule' => 'Это правило применяется ко всем звонкам от провайдера. Связанные правила будут синхронизированы.',
     'tf_TooltipSpecificRule' => 'Это правило применяется к звонкам на конкретный номер. Связанные правила будут синхронизированы.',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Tal från <b>%restnumbers%</b> siffror → avgränsa <b>%trim%</b>, lägg till <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Tal från <b>%restnumbers%</b> siffror → lägg till <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Siffror från <b>%restnumbers%</b> siffror → trimma <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Tal med <b>%numberbeginswith%</b> → trimma <b>%trim%</b>, lägg till <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Tal med <b>%numberbeginswith%</b> → lägg till <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Nummer med <b>%numberbeginswith%</b> → trimma <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Endast <b>%numberbörjar med%</b> → trimma <b>%trim%</b>, lägg till <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Endast <b>%numberbörjar med%</b> → lägg till <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Endast <b>%numberbörjar med%</b> → trimma <b>%trimma%</b> → via %provider%',
 ];

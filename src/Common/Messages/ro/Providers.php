@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Permite adăugarea de parametri suplimentari de configurare Asterisk IAX pentru reglarea fină a furnizorului.',
     'iax_ManualAttributesTooltip_examples_header' => 'Exemple',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Înregistrare de ieșire',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'PBX-ul dumneavoastră se înregistrează pe serverul furnizorului. Se folosește pentru apeluri de ieșire prin furnizor.',
     'iax_registration_type' => 'Tipul contului',
-
     // PR
     'pr_AddIAXProvider' => 'Conectați IAX',
     'pr_AddSIPProvider' => 'Conectați SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Specificați portul furnizorului',
     'pr_ValidationProviderPortRange' => 'Portul furnizorului trebuie să fie în limitele {ruleValue}',
     'pr_WithoutRegistration' => 'Înregistrarea este dezactivată',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'Furnizori IAX2',
     'prov_dropdownCategory_SIP' => 'Furnizori SIP',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Înregistrare de intrare',
     'sip_REG_TYPE_NONE' => 'Fără înregistrare (autentificare IP)',
     'sip_REG_TYPE_OUTBOUND' => 'Înregistrare de ieșire',
     'sip_registration_type' => 'Tipul contului',
+    'pr_ProviderRegistered' => 'Furnizorul este înregistrat',
+    'pr_Disabled' => 'oprit',
+    'pr_RegisteredTo' => 'Înregistrat pe',
+    'mo_SipUsernameInvalidCharacters' => 'Numele de utilizator SIP pentru înregistrarea primită poate conține doar litere, cifre și simboluri latine: _ - .',
+    'pr_StateChangedFromTo' => 'Starea s-a schimbat de la %previousState% la %newState%',
+    'pr_CheckingStatus' => 'Se verifică starea...',
+    'pr_ValidationProviderLogin' => 'Introduceți datele de autentificare pentru a vă conecta la furnizorul dvs.',
+    'pr_RegisteredFrom' => 'Înregistrat la',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'Numele de utilizator IAX pentru înregistrarea primită poate conține doar litere, cifre și simboluri latine: _ - .',
+    'pr_WaitingForRegistration' => 'În așteptarea înregistrării',
 ];

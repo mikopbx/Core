@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     'cq_AddNewQueue' => 'Yeni bir kuyruk oluştur',
     'cq_AddQueueMembers' => 'Hiçbir operatör seçilmedi',
     'cq_AnnonceHoldTime' => 'Tahmini Bekleme Süresini Bildir',
@@ -496,4 +495,13 @@ return [
     'tf_PasswordMasked' => 'Пароль сохранен (введите новый для изменения)',
     'tf_TooltipGeneralRule' => 'Это правило применяется ко всем звонкам от провайдера. Связанные правила будут синхронизированы.',
     'tf_TooltipSpecificRule' => 'Это правило применяется к звонкам на конкретный номер. Связанные правила будут синхронизированы.',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => '<b>%geri kalan sayılar%</b> basamaktan sayılar → <b>%kırpma%</b> kes, <b>%öne ekleme%</b> ekle → %sağlayıcı% aracılığıyla',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => '<b>%geri kalan sayılar%</b> basamaktan sayılar → <b>%ön ekle%</b> ekle → %sağlayıcı% aracılığıyla',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => '<b>%geri kalan sayılar%</b> basamaktan sayılar → <b>%kırpma%</b> kırp → %sağlayıcı% aracılığıyla',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => '<b>%numberbeginswith%</b> ile başlayan sayılar → <b>%trim%</b>\'i kırp, <b>%prepend%</b>\'i ekle → %provider% aracılığıyla',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => '<b>%numberbeginswith%</b> ile başlayan sayılar → <b>%prepend%</b> ekleyin → %provider% aracılığıyla',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => '<b>%numberbeginswith%</b> ile başlayan sayılar → <b>%trim%</b>\'i kırp → %provider% aracılığıyla',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Yalnızca <b>%numberbeginswith%</b> → <b>%trim%</b>\'i kırp, <b>%prepend%</b>\'i ekle → %provider% aracılığıyla',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Yalnızca <b>%numberbeginswith%</b> → <b>%prepend%</b> ekle → %provider% aracılığıyla',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Yalnızca <b>%numberbeginswith%</b> → <b>%trim%</b>\'i kırp → %provider% aracılığıyla',
 ];

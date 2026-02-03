@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Umožňuje přidat další parametry konfigurace Asterisk IAX pro jemné nastavení poskytovatele.',
     'iax_ManualAttributesTooltip_examples_header' => 'Příklady',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Odchozí registrace',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Vaše ústředna se registruje na serveru poskytovatele. Používá se pro odchozí hovory přes poskytovatele.',
     'iax_registration_type' => 'Typ účtu',
-
     // PR
     'pr_AddIAXProvider' => 'Připojte IAX',
     'pr_AddSIPProvider' => 'Připojte SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Zadejte port poskytovatele',
     'pr_ValidationProviderPortRange' => 'Port poskytovatele musí být v rozmezí {ruleValue}',
     'pr_WithoutRegistration' => 'Registrace vypnuta',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'IAX2 poskytovatelé',
     'prov_dropdownCategory_SIP' => 'SIP poskytovatelé',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Příchozí registrace',
     'sip_REG_TYPE_NONE' => 'Bez registrace (IP autentifikace)',
     'sip_REG_TYPE_OUTBOUND' => 'Odchozí registrace',
     'sip_registration_type' => 'Typ účtu',
+    'pr_ProviderRegistered' => 'Poskytovatel je registrovaný',
+    'pr_Disabled' => 'vypnuto',
+    'pr_RegisteredTo' => 'Registrováno dne',
+    'mo_SipUsernameInvalidCharacters' => 'Uživatelské jméno SIP pro příchozí registraci může obsahovat pouze latinská písmena, číslice a symboly: _ - .',
+    'pr_StateChangedFromTo' => 'Stav se změnil z %previousState% na %newState%',
+    'pr_CheckingStatus' => 'Kontrola stavu...',
+    'pr_ValidationProviderLogin' => 'Zadejte své přihlašovací údaje pro přihlášení k vašemu poskytovateli.',
+    'pr_RegisteredFrom' => 'Registrováno u',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'Uživatelské jméno IAX pro příchozí registraci může obsahovat pouze latinská písmena, číslice a symboly: _ - .',
+    'pr_WaitingForRegistration' => 'Čekání na registraci',
 ];

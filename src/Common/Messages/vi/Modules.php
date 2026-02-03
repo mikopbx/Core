@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * External modules translations
  */
-
-return [
     // EXT
     'ext_AddNewExtension' => 'Tải về mô-đun mới',
     'ext_Available' => 'có thể nâng cấp lên',
@@ -98,4 +97,13 @@ return [
     'ext_ValidateCaptionEmpty' => 'Tên mục menu không được điền',
     'ext_Version' => 'Phiên bản',
     'ext_WrongGetModuleLink' => 'Lỗi khi lấy tệp mô-đun từ kho lưu trữ',
+    'ext_MissingModuleUniqueID' => 'Tệp module.json trong kho lưu trữ %filePath% thiếu trường moduleUniqueID bắt buộc.',
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => 'Mô-đun %module% không tương thích với phiên bản MikoPBX hiện tại.',
+    'ext_InvalidModuleJson' => 'Tệp module.json trong kho lưu trữ %filePath% chứa JSON không hợp lệ: %error%',
+    'ext_ModuleJsonNotFound' => 'Không tìm thấy tệp module.json trong kho lưu trữ mô-đun %filePath%',
+    'ext_CorruptedZipFile' => 'Tệp ZIP của mô-đun bị hỏng hoặc có định dạng không hợp lệ: %filePath%. Mã lỗi: %errorCode%',
+    // Module package validation errors
+    'ext_FileNotFound' => 'Không tìm thấy tệp mô-đun: %filePath%',
+    'ext_ModuleMethodSignatureIncompatibility' => 'Mô-đun %module% không tương thích với phiên bản MikoPBX hiện tại: phát hiện không tương thích chữ ký phương thức.',
 ];

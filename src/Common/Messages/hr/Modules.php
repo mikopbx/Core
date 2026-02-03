@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * External modules translations
  */
-
-return [
     // EXT
     'ext_AddNewExtension' => 'Učitaj novi modul',
     'ext_Available' => 'može se ažurirati na',
@@ -98,4 +97,13 @@ return [
     'ext_ValidateCaptionEmpty' => 'Naziv stavke izbornika je prazan',
     'ext_Version' => 'Verzija',
     'ext_WrongGetModuleLink' => 'Pogreška pri preuzimanju datoteke modula iz repozitorija',
+    'ext_MissingModuleUniqueID' => 'Datoteci module.json u arhivi %filePath% nedostaje obavezno polje moduleUniqueID.',
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => 'Modul %module% nije kompatibilan s trenutnom verzijom MikoPBX-a',
+    'ext_InvalidModuleJson' => 'Datoteka module.json u arhivi %filePath% sadrži nevažeći JSON: %error%',
+    'ext_ModuleJsonNotFound' => 'Datoteka module.json nije pronađena u arhivi modula %filePath%',
+    'ext_CorruptedZipFile' => 'ZIP datoteka modula je oštećena ili ima nevažeći format: %filePath%. Kod pogreške: %errorCode%',
+    // Module package validation errors
+    'ext_FileNotFound' => 'Datoteka modula nije pronađena: %filePath%',
+    'ext_ModuleMethodSignatureIncompatibility' => 'Modul %module% nije kompatibilan s trenutnom verzijom MikoPBX-a: otkrivena je nekompatibilnost potpisa metode',
 ];

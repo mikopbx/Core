@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     'cq_AddNewQueue' => 'Tạo một hàng đợi mới',
     'cq_AddQueueMembers' => 'Không có toán tử nào được chọn',
     'cq_AnnonceHoldTime' => 'Thông báo thời gian chờ ước tính',
@@ -496,4 +495,13 @@ return [
     'tf_PasswordMasked' => 'Пароль сохранен (введите новый для изменения)',
     'tf_TooltipGeneralRule' => 'Это правило применяется ко всем звонкам от провайдера. Связанные правила будут синхронизированы.',
     'tf_TooltipSpecificRule' => 'Это правило применяется к звонкам на конкретный номер. Связанные правила будут синхронизированы.',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Các số từ <b>%restnumbers%</b> chữ số → cắt bỏ <b>%trim%</b>, thêm <b>%prepend%</b> → thông qua %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Các số từ <b>%số còn lại%</b> chữ số → thêm <b>%đầu vào%</b> → thông qua %nhà cung cấp%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Số từ <b>%số còn lại%</b> chữ số → cắt bớt <b>%cắt bớt%</b> → thông qua %nhà cung cấp%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Số bắt đầu bằng <b>%numberbeginswith%</b> → cắt bớt <b>%trim%</b>, thêm <b>%prepend%</b> → thông qua %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Số có <b>%số bắt đầu bằng%</b> → thêm <b>%đầu vào%</b> → thông qua %nhà cung cấp%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Số bắt đầu bằng <b>%numberbeginswith%</b> → cắt bớt <b>%trim%</b> → thông qua %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Chỉ <b>%số bắt đầu bằng%</b> → cắt bớt <b>%cắt bớt%</b>, thêm <b>%thêm vào trước%</b> → thông qua %nhà cung cấp%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Chỉ <b>%số bắt đầu bằng%</b> → thêm <b>%đưa vào trước%</b> → thông qua %nhà cung cấp%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Chỉ <b>%số bắt đầu bằng%</b> → cắt bớt <b>%cắt bớt%</b> → thông qua %nhà cung cấp%',
 ];

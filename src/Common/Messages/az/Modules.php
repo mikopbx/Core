@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * External modules translations
  */
-
-return [
     // EXT
     'ext_AddNewExtension' => 'Yeni modulu yükləyin',
     'ext_Available' => 'səviyyəsinə yüksəldilə bilər',
@@ -98,4 +97,13 @@ return [
     'ext_ValidateCaptionEmpty' => 'Menyu elementinin adı boşdur',
     'ext_Version' => 'Versiya',
     'ext_WrongGetModuleLink' => 'Modul faylını depodan əldə etmək xətası',
+    'ext_MissingModuleUniqueID' => '%filePath% arxivindəki module.json faylında tələb olunan moduleUniqueID sahəsi yoxdur.',
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => '%module% modulu MikoPBX-in cari versiyası ilə uyğun deyil',
+    'ext_InvalidModuleJson' => '%filePath% arxivindəki module.json faylında yanlış JSON var: %error%',
+    'ext_ModuleJsonNotFound' => 'module.json faylı %filePath% modul arxivində tapılmadı',
+    'ext_CorruptedZipFile' => 'Modul ZIP faylı zədələnib və ya yanlış formata malikdir: %filePath%. Xəta kodu: %errorCode%',
+    // Module package validation errors
+    'ext_FileNotFound' => 'Modul faylı tapılmadı: %filePath%',
+    'ext_ModuleMethodSignatureIncompatibility' => '%module% modulu MikoPBX-in cari versiyası ilə uyğun deyil: metod imza uyğunsuzluğu aşkarlandı',
 ];

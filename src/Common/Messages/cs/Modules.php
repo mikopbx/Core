@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * External modules translations
  */
-
-return [
     // EXT
     'ext_AddNewExtension' => 'Stáhněte si nový modul',
     'ext_Available' => 'můžete upgradovat na',
@@ -98,4 +97,13 @@ return [
     'ext_ValidateCaptionEmpty' => 'Název položky nabídky není vyplněn',
     'ext_Version' => 'Verze',
     'ext_WrongGetModuleLink' => 'Chyba při načítání souboru modulu z repozitáře',
+    'ext_MissingModuleUniqueID' => 'V souboru module.json v archivu %filePath% chybí povinné pole moduleUniqueID.',
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => 'Modul %module% není kompatibilní s aktuální verzí MikoPBX.',
+    'ext_InvalidModuleJson' => 'Soubor module.json v archivu %filePath% obsahuje neplatný JSON: %error%',
+    'ext_ModuleJsonNotFound' => 'Soubor module.json nebyl nalezen v archivu modulů %filePath%',
+    'ext_CorruptedZipFile' => 'ZIP soubor modulu je poškozen nebo má neplatný formát: %filePath%. Kód chyby: %errorCode%',
+    // Module package validation errors
+    'ext_FileNotFound' => 'Soubor modulu nenalezen: %filePath%',
+    'ext_ModuleMethodSignatureIncompatibility' => 'Modul %module% není kompatibilní s aktuální verzí MikoPBX: detekována nekompatibilita signatury metody',
 ];

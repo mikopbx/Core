@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'Yeni növbə yaradın',
     'cq_AddQueueMembers' => 'Heç bir operator seçilmədi',
@@ -102,7 +101,6 @@ return [
     'cq_strategy_ringall_short' => 'Hamısına eyni vaxtda zəng et',
     'cq_strategy_rrmemory_short' => 'Yaddaşla növbə ilə',
     'cq_strategy_wrandom_short' => 'Çəkili təsadüfi',
-
     // CR
     'cr_AddNewConferenceRoom' => 'Konfrans əlavə edin',
     'cr_ColumnExtension' => 'Nömrə',
@@ -126,7 +124,6 @@ return [
     'cr_ValidateNameIsEmpty' => 'Konfrans adı doldurulmalıdır',
     'cr_ValidatePinNumber' => 'PIN yalnız nömrələrdən ibarət olmalıdır',
     'cr_pinCode' => 'Konfransın PIN kodu',
-
     // DA
     'da_AddNewDialplanApp' => 'Yeni əlavə et',
     'da_Applicationlogic' => 'Proqram kodu',
@@ -151,7 +148,6 @@ return [
     'da_ValidateExtensionNumber' => 'Artırma nömrəsi yalnız nömrələrdən ibarət olmalıdır',
     'da_ValidateNameIsEmpty' => 'Tətbiq adı doldurulmayıb',
     'da_ValidateNameTooLong' => 'Ad çox uzundur (maksimum 50 simvol)',
-
     // IR
     'ir_ActionSelect' => 'Qaydalardan heç biri uyğun gəlmirsə',
     'ir_AddNewRule' => 'Yeni qayda əlavə edin',
@@ -248,7 +244,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 saniyə:</strong> ofislər üçün standart vaxt',
     'ir_timeout_tooltip_value3' => '<strong>45-60 saniyə:</strong> işçilər müvəqqəti məşğul ola bilərsə',
     'ir_timeout_tooltip_values_header' => 'Tövsiyə olunan dəyərlər',
-
     // IV
     'iv_Actions' => 'İşə qəbul zamanı hərəkətlər',
     'iv_AddNewIvrMenu' => 'Yeni IVR menyusu yaradın',
@@ -322,7 +317,6 @@ return [
     'iv_AudioMessageIdTooltip_rec2' => 'Aydın tələffüz və normal danışıq tempi',
     'iv_AudioMessageIdTooltip_rec3' => 'Şirkətin imicinə uyğun peşəkar ton',
     'iv_AudioMessageIdTooltip_note' => 'Keyfiyyətli salamlama şirkət haqqında müsbət ilk təəssürat yaradır.',
-
     // OR
     'or_AddNewRule' => 'Yeni qayda əlavə edin',
     'or_BeforeConnectingTheCallTrim' => 'Zəngə başlamazdan əvvəl əlaqəni kəsin',
@@ -453,7 +447,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'Operator prefiksini və ya korporativ kodu sil',
     'or_trimfrombegin_tooltip_why3' => 'Nömrəni provayder formatına çevir',
     'or_trimfrombegin_tooltip_why_header' => 'Nəyə lazımdır:',
-
     // TF
     'tf_ActionPlayMessage' => 'Faylı çalın <b>%message%</b>',
     'tf_ActionTransferToExtension' => 'Zəngi <b>%extension%</b> nömrəsinə köçürün',
@@ -509,4 +502,13 @@ return [
     'tf_calType' => 'Növ',
     'tf_calUrl' => 'Təqvim URL-i',
     'tf_calUser' => 'İstifadəçi adı',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => '<b>%restnumbers%</b> rəqəmlərindən ədədlər → kəs <b>%trim%</b>, əlavə <b>%prepend%</b> → vasitəsilə %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => '<b>%restnumbers%</b> rəqəmlərindən ədədlər → əlavə et <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => '<b>%restnumbers%</b> rəqəmlərindən rəqəmlər → trim <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => '<b>%numberbeginswith%</b> → trim <b>%trim%</b> olan rəqəmlər, <b>%prepend%</b> əlavə edin → %provider% vasitəsilə',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => '<b>%nömrə%</b> ilə başlayan rəqəmlər → əlavə et <b>%əvvəlcədən%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => '<b>%numberbeginswith%</b> → trim <b>%trim%</b> → via %provider% olan rəqəmlər',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Yalnız <b>%nömrə%</b> ilə başlayır → <b>%trim%</b> kəsin, <b>%əvvəlcədən%</b> əlavə edin → %provayder% vasitəsilə',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Yalnız <b>%nömrə%</b> ilə başlayır → <b>%əvvəlcədən%</b> əlavə et → %provayder% vasitəsilə',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Yalnız <b>%nömrə%</b> ilə başlayır → kəsmək <b>%kəsmək%</b> → %provayder% vasitəsilə',
 ];

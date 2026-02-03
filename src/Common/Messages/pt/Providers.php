@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Permite adicionar parâmetros de configuração adicionais do Asterisk IAX para ajuste fino do provedor.',
     'iax_ManualAttributesTooltip_examples_header' => 'Exemplos',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Registro de saída',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Seu PBX registra-se no servidor do provedor. Usado para chamadas de saída através do provedor.',
     'iax_registration_type' => 'Tipo de conta',
-
     // PR
     'pr_AddIAXProvider' => 'Conectar IAX',
     'pr_AddSIPProvider' => 'Conectar SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Especifique a porta do provedor',
     'pr_ValidationProviderPortRange' => 'A porta do provedor deve estar dentro de {ruleValue}',
     'pr_WithoutRegistration' => 'O registro está desativado',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'Provedores IAX2',
     'prov_dropdownCategory_SIP' => 'Provedores SIP',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Registro de entrada',
     'sip_REG_TYPE_NONE' => 'Sem registro (autenticação IP)',
     'sip_REG_TYPE_OUTBOUND' => 'Registro de saída',
     'sip_registration_type' => 'tipo de conta',
+    'pr_ValidationProviderLogin' => 'Insira seu login para acessar a conta do seu provedor.',
+    'pr_RegisteredFrom' => 'Registrado em',
+    'pr_RegisteredTo' => 'Registrado em',
+    'pr_ProviderRegistered' => 'O provedor está registrado.',
+    'pr_WaitingForRegistration' => 'Aguardando inscrição',
+    'pr_StateChangedFromTo' => 'O status mudou de %previousState% para %newState%',
+    'pr_CheckingStatus' => 'Verificando o status...',
+    'mo_SipUsernameInvalidCharacters' => 'O nome de usuário SIP para registro de entrada só pode conter letras latinas, números e símbolos: _ - .',
+    'pr_Disabled' => 'desligado',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'O nome de usuário IAX para registro de entrada só pode conter letras latinas, números e símbolos: _ - .',
 ];

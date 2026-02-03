@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * External modules translations
  */
-
-return [
     // EXT
     'ext_AddNewExtension' => 'Descărcați modul nou',
     'ext_Available' => 'poate fi actualizat la',
@@ -98,4 +97,13 @@ return [
     'ext_ValidateCaptionEmpty' => 'Numele elementului de meniu este gol',
     'ext_Version' => 'Versiune',
     'ext_WrongGetModuleLink' => 'Eroare la preluarea fișierului modulului din repozitoriu',
+    'ext_MissingModuleUniqueID' => 'Fișierului module.json din arhiva %filePath% îi lipsește câmpul obligatoriu moduleUniqueID.',
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => 'Modulul %module% nu este compatibil cu versiunea curentă a MikoPBX',
+    'ext_InvalidModuleJson' => 'Fișierul module.json din arhiva %filePath% conține un JSON invalid: %error%',
+    'ext_ModuleJsonNotFound' => 'Fișierul module.json nu a fost găsit în arhiva modulului %filePath%',
+    'ext_CorruptedZipFile' => 'Fișierul ZIP al modulului este corupt sau are un format nevalid: %filePath%. Cod de eroare: %errorCode%',
+    // Module package validation errors
+    'ext_FileNotFound' => 'Fișierul modulului nu a fost găsit: %filePath%',
+    'ext_ModuleMethodSignatureIncompatibility' => 'Modulul %module% este incompatibil cu versiunea curentă a MikoPBX: s-a detectat o incompatibilitate a semnăturii metodei.',
 ];

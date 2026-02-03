@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'Hozzon létre egy új sort',
     'cq_AddQueueMembers' => 'Nincsenek kiválasztva operátorok',
@@ -56,7 +55,6 @@ return [
     'cq_ringall' => 'A hívás egyszerre érkezik a sorban lévő összes résztvevőhöz, beleértve azokat is, akik foglaltak (alapértelmezés szerint)',
     'cq_ringing' => 'Híváshangok',
     'cq_rrmemory' => 'A hívás a sorban lévő bármely ingyenes résztvevőhöz érkezik, kivéve azt a résztvevőt, aki az utolsó hívást feldolgozta',
-
     // CR
     'cr_AddNewConferenceRoom' => 'Konferencia hozzáadása',
     'cr_ColumnExtension' => 'Szám',
@@ -72,7 +70,6 @@ return [
     'cr_ValidateNameEmpty' => 'A konferencia neve nincs megadva',
     'cr_ValidatePinNumber' => 'A PIN-kód csak számokból állhat',
     'cr_pinCode' => 'Konferencia PIN kódja',
-
     // DA
     'da_AddNewDialplanApp' => 'Új hozzáadása',
     'da_Applicationlogic' => 'Program kód',
@@ -93,7 +90,6 @@ return [
     'da_ValidateExtensionIsEmpty' => 'A jelentkezési szám nincs kitöltve',
     'da_ValidateExtensionNumber' => 'A mellékszám csak számokból állhat',
     'da_ValidateNameIsEmpty' => 'A pályázat neve nincs kitöltve',
-
     // IR
     'ir_ActionSelect' => 'Ha egyik szabály sem egyezik',
     'ir_AddNewRule' => 'Új szabály hozzáadása',
@@ -129,7 +125,6 @@ return [
     'ir_extension' => 'Hívás átadása',
     'ir_hangup' => 'Tedd le a telefont',
     'ir_playback' => 'Médiafájl lejátszása',
-
     // IV
     'iv_Actions' => 'További toborzási intézkedések',
     'iv_AddNewIvrMenu' => 'Hozzon létre egy új IVR menüt',
@@ -168,7 +163,6 @@ return [
     'iv_AudioMessageIdTooltip_rec2' => 'Tiszta kiejtés és normál beszédtempó',
     'iv_AudioMessageIdTooltip_rec3' => 'A vállalat imázsának megfelelő professzionális hangnem',
     'iv_AudioMessageIdTooltip_note' => 'A minőségi üdvözlés pozitív első benyomást kelt a vállalatról.',
-
     // OR
     'or_AddNewRule' => 'Új szabály hozzáadása',
     'or_BeforeConnectingTheCallTrim' => 'Mielőtt elkezdenénk a hívást, megszakítjuk',
@@ -197,7 +191,6 @@ return [
     'or_ValidationPleaseEnterRuleName' => 'Adja meg a szabály nevét',
     'or_ValidationPleaseSelectProvider' => 'Válassza ki azt a szolgáltatót, amelyre ez a szabály vonatkozik.',
     'or_digitsFromTheFrontAndThenPrependTheDigits' => 'számokat a szám elejére, majd adja hozzá az elejéhez',
-
     // TF
     'tf_ActionPlayMessage' => 'Fájl lejátszása <b>%message%</b>',
     'tf_ActionTransferToExtension' => 'Hívás átirányítása ide: <b>%extension%</b>',
@@ -232,7 +225,6 @@ return [
     'tf_calType' => 'típus',
     'tf_calUrl' => 'A naptár URL-je',
     'tf_calUser' => 'Felhasználónév',
-
     // Additional CQ translations
     'cq_CallerIDPrefixTooltip_desc' => 'A sor rövid neve, amely a hívó előfizető neve előtt jelenik meg az üzemeltető telefonján.',
     'cq_CallerIDPrefixTooltip_example' => 'Ha az "Kovács János" előfizető az "Sales" előtagú sorba hív, az üzemeltető a következőt látja: "Sales: Kovács János"',
@@ -280,7 +272,6 @@ return [
     'cq_strategy_ringall_short' => 'Mindenkinek egyszerre hív',
     'cq_strategy_rrmemory_short' => 'Sorban memóriával',
     'cq_strategy_wrandom_short' => 'Súlyozott véletlenszerű',
-
     // Additional CR translations
     'cr_ColumnPinCode' => 'PIN-kód',
     'cr_ConferenceRoomDeleted' => 'A konferencia sikeresen törölve',
@@ -290,13 +281,11 @@ return [
     'cr_ValidateExtensionFormat' => 'A számnak 2-8 számjegyet kell tartalmaznia',
     'cr_ValidateExtensionIsEmpty' => 'A konferencia száma kötelező',
     'cr_ValidateNameIsEmpty' => 'A konferencia neve kötelező',
-
     // Additional DA translations
     'da_CreateFirstDialplanApp' => 'Hozza létre az első dialplan alkalmazást',
     'da_NoDialplanApplicationsFound' => 'Nem található dialplan alkalmazás',
     'da_SelectType' => 'Válassza ki az alkalmazás típusát',
     'da_ValidateNameTooLong' => 'A név túl hosszú (maximum 50 karakter)',
-
     // Additional IR translations
     'ir_EmptyTableDescription' => 'A bejövő útvonalak meghatározzák, hogy hova irányítsák a szolgáltatóktól érkező hívásokat',
     'ir_EmptyTableTitle' => 'Állítsa be a bejövő útválasztást',
@@ -359,7 +348,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 másodperc:</strong> irodák számára standard idő',
     'ir_timeout_tooltip_value3' => '<strong>45-60 másodperc:</strong> ha az alkalmazottak ideiglenesen elfoglaltak lehetnek',
     'ir_timeout_tooltip_values_header' => 'Javasolt értékek',
-
     // Additional IV translations
     'iv_EmptyTableDescription' => 'Az IVR lehetővé teszi az előfizetők számára, hogy tónusos tárcsázással válasszák ki a szükséges irányt',
     'iv_EmptyTableTitle' => 'Hozzon létre interaktív hangmenüt',
@@ -396,7 +384,6 @@ return [
     'iv_ValidateTimeout' => 'A timeout-nak 1 és 99 másodperc között kell lennie',
     'iv_DigitsPlaceholder' => 'Számjegyek',
     'iv_ValidateExtensionFormat' => 'A számnak 2-8 számjegyet kell tartalmaznia',
-
     // Additional OR translations
     'or_EmptyTableDescription' => 'A kimenő útvonalak meghatározzák, hogy mely szolgáltatón keresztül kell külső hívásokat kezdeményezni',
     'or_EmptyTableTitle' => 'Hozzon létre kimenő hívási szabályokat',
@@ -500,7 +487,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'Szolgáltató előtag vagy vállalati kód eltávolítása',
     'or_trimfrombegin_tooltip_why3' => 'Szám szolgáltató formátumhoz igazítása',
     'or_trimfrombegin_tooltip_why_header' => 'Miért van rá szükség:',
-
     // Additional TF translations
     'tf_CAL_TYPE_TIMEFRAME' => 'Időkeret',
     'tf_CalUrlTooltip_caldav_google' => 'Google Naptár: Beállítások → Naptár integráció → Privát CalDAV címe',
@@ -523,4 +509,13 @@ return [
     'tf_PasswordMasked' => 'Jelszó mentve (új jelszót adjon meg a módosításhoz)',
     'tf_TooltipGeneralRule' => 'Ez a szabály a szolgáltatótól érkező összes hívásra vonatkozik. A kapcsolódó szabályok szinkronizálva lesznek.',
     'tf_TooltipSpecificRule' => 'Ez a szabály egy adott számra érkező hívásokra vonatkozik. A kapcsolódó szabályok szinkronizálva lesznek.',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Számok a(z) <b>%restnumbers%</b> számjegyből → levágjuk a(z) <b>%trim%</b> számjegyeket, hozzáadjuk a(z) <b>%prepend%</b> számjegyeket → a(z) %provider% parancson keresztül',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Számok a következő helyről: <b>%restnumbers%</b> számjegy → add hozzá: <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Számok a következő helyről: <b>%restnumbers%</b> számjegy → trim <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Számok, amelyeknél a <b>%numberbeginswith%</b> → levágás <b>%trim%</b>, hozzáadás <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Számok, amelyeknél a <b>%numberbeginswith%</b> → add hozzá a <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Számok, amelyeknél <b>%numberbeginswith%</b> → trim <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Csak <b>%numberbeginswith%</b> → vágja le <b>%trim%</b>, adja hozzá <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Csak <b>%numberbeginswith%</b> → add hozzá <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Csak <b>%numberbeginswith%</b> → trim <b>%trim%</b> → via %provider%',
 ];

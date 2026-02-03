@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Tillader tilføjelse af yderligere Asterisk IAX-konfigurationsparametre til finindstilling af udbyderen.',
     'iax_ManualAttributesTooltip_examples_header' => 'Eksempler',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Udgående registrering',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Din PBX registrerer på udbyderens server. Bruges til udgående opkald gennem udbyder.',
     'iax_registration_type' => 'Kontotype',
-
     // PR
     'pr_AddIAXProvider' => 'Tilslut IAX',
     'pr_AddSIPProvider' => 'Tilslut SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Angiv udbyderens port',
     'pr_ValidationProviderPortRange' => 'Udbyderens port skal være inden for {ruleValue}',
     'pr_WithoutRegistration' => 'Registrering deaktiveret',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'IAX2-udbydere',
     'prov_dropdownCategory_SIP' => 'SIP-udbydere',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Indgående registrering',
     'sip_REG_TYPE_NONE' => 'Uden registrering (IP-autentificering)',
     'sip_REG_TYPE_OUTBOUND' => 'Udgående registrering',
     'sip_registration_type' => 'Kontotype',
+    'pr_ProviderRegistered' => 'Udbyderen er registreret',
+    'pr_Disabled' => 'slukket',
+    'pr_RegisteredTo' => 'Registreret den',
+    'mo_SipUsernameInvalidCharacters' => 'SIP-brugernavnet til indgående registrering må kun indeholde latinske bogstaver, tal og symboler: _ - .',
+    'pr_StateChangedFromTo' => 'Statussen er ændret fra %previousState% til %newState%',
+    'pr_CheckingStatus' => 'Tjekker status...',
+    'pr_ValidationProviderLogin' => 'Indtast dit login for at logge ind hos din udbyder.',
+    'pr_RegisteredFrom' => 'Registreret hos',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'IAX-brugernavnet til indgående registrering må kun indeholde latinske bogstaver, tal og symboler: _ - .',
+    'pr_WaitingForRegistration' => 'Venter på registrering',
 ];

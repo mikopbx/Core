@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'สร้างคิวใหม่',
     'cq_AddQueueMembers' => 'ไม่ได้เลือกโอเปอเรเตอร์',
@@ -102,7 +101,6 @@ return [
     'cq_strategy_ringall_short' => 'ดังทุกคนพร้อมกัน',
     'cq_strategy_rrmemory_short' => 'ตามลำดับพร้อมหน่วยความจำ',
     'cq_strategy_wrandom_short' => 'สุ่มแบบถ่วงน้ำหนัก',
-
     // CR
     'cr_AddNewConferenceRoom' => 'เพิ่มห้องประชุม',
     'cr_ColumnExtension' => 'หมายเลข',
@@ -126,7 +124,6 @@ return [
     'cr_ValidateNameIsEmpty' => 'ชื่อห้องประชุมต้องกรอก',
     'cr_ValidatePinNumber' => 'PIN ต้องประกอบด้วยตัวเลขเท่านั้น',
     'cr_pinCode' => 'รหัส PIN ห้องประชุม',
-
     // DA
     'da_AddNewDialplanApp' => 'เพิ่มใหม่',
     'da_Applicationlogic' => 'รหัสโปรแกรม',
@@ -151,7 +148,6 @@ return [
     'da_ValidateExtensionNumber' => 'หมายเลขภายในต้องประกอบด้วยตัวเลขเท่านั้น',
     'da_ValidateNameIsEmpty' => 'ไม่ได้กรอกชื่อแอปพลิเคชัน',
     'da_ValidateNameTooLong' => 'ชื่อยาวเกินไป (สูงสุด 50 ตัวอักษร)',
-
     // IR
     'ir_ActionSelect' => 'หากไม่มีกฎใดที่เข้าข่าย',
     'ir_AddNewRule' => 'เพิ่มกฎใหม่',
@@ -248,7 +244,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 วินาที:</strong> เวลาปกติสำหรับสำนักงาน',
     'ir_timeout_tooltip_value3' => '<strong>45-60 วินาที:</strong> หากพนักงานอาจกำลังยุ่งชั่วคราว',
     'ir_timeout_tooltip_values_header' => 'ค่าที่แนะนำ',
-
     // IV
     'iv_Actions' => 'การดำเนินการสำหรับการกดเพิ่มเติม',
     'iv_AddNewIvrMenu' => 'สร้างเมนู IVR ใหม่',
@@ -322,7 +317,6 @@ return [
     'iv_ValidateTimeout' => 'Timeout ต้องเป็น 1 ถึง 99 วินาที',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'ไม่ได้ระบุหมายเลขเปลี่ยนเส้นทางสำหรับ timeout',
     'iv_ValidateTimeoutOutOfRange' => 'ระบุ timeout การรอป้อนหมายเลขส่วนขยายไม่ถูกต้อง',
-
     // OR
     'or_AddNewRule' => 'เพิ่มกฎใหม่',
     'or_BeforeConnectingTheCallTrim' => 'ก่อนเริ่มสาย ให้ตัด',
@@ -453,7 +447,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'ลบ prefix ผู้ให้บริการหรือรหัสบริษัท',
     'or_trimfrombegin_tooltip_why3' => 'ปรับหมายเลขให้เข้ากับรูปแบบผู้ให้บริการ',
     'or_trimfrombegin_tooltip_why_header' => 'ทำไมต้องการ:',
-
     // TF
     'tf_ActionPlayMessage' => 'เล่นไฟล์ <b>%message%</b>',
     'tf_ActionTransferToExtension' => 'โอนสายไป <b>%extension%</b>',
@@ -509,4 +502,13 @@ return [
     'tf_calType' => 'ประเภท',
     'tf_calUrl' => 'URL ปฏิทิน',
     'tf_calUser' => 'ชื่อผู้ใช้',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'ตัวเลขจาก <b>%restnumbers%</b> หลัก → ตัดออก <b>%trim%</b> เพิ่ม <b>%prepend%</b> → ผ่าน %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'ตัวเลขจาก <b>%restnumbers%</b> หลัก → เพิ่ม <b>%prepend%</b> → ผ่าน %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'ตัวเลขจาก <b>%restnumbers%</b> หลัก → ตัด <b>%trim%</b> → ผ่าน %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'ตัวเลขที่มี <b>%numberbeginswith%</b> → ตัด <b>%trim%</b> เพิ่ม <b>%prepend%</b> → ผ่าน %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'ตัวเลขที่มี <b>%numberbeginswith%</b> → เพิ่ม <b>%prepend%</b> → ผ่าน %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'ตัวเลขที่มี <b>%numberbeginswith%</b> → ตัด <b>%trim%</b> → ผ่าน %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'เฉพาะ <b>%numberbeginswith%</b> → ตัด <b>%trim%</b> เพิ่ม <b>%prepend%</b> → ผ่าน %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'เฉพาะ <b>%numberbeginswith%</b> → เพิ่ม <b>%prepend%</b> → ผ่าน %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'เฉพาะ <b>%numberbeginswith%</b> → ตัด <b>%trim%</b> → ผ่าน %provider%',
 ];

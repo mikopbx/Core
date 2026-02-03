@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     'cq_AddNewQueue' => 'Utwórz nową kolejkę',
     'cq_AddQueueMembers' => 'Nie wybrano operatorów',
     'cq_AnnonceHoldTime' => 'Powiadom szacowany czas oczekiwania',
@@ -496,4 +495,13 @@ return [
     'tf_PasswordMasked' => 'Пароль сохранен (введите новый для изменения)',
     'tf_TooltipGeneralRule' => 'Это правило применяется ко всем звонкам от провайдера. Связанные правила будут синхронизированы.',
     'tf_TooltipSpecificRule' => 'Это правило применяется к звонкам на конкретный номер. Связанные правила будут синхронизированы.',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Liczby z <b>%restnumbers%</b> cyfr → odetnij <b>%trim%</b>, dodaj <b>%prepend%</b> → za pomocą %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Liczby z <b>%restnumbers%</b> cyfr → dodaj <b>%prepend%</b> → za pomocą %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Liczby z <b>%restnumbers%</b> cyfr → przytnij <b>%trim%</b> → za pomocą %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Liczby z <b>%numberbeginswith%</b> → przytnij <b>%trim%</b>, dodaj <b>%prepend%</b> → za pomocą %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Liczby z <b>%numberbeginswith%</b> → dodaj <b>%prepend%</b> → za pomocą %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Liczby z <b>%numberbeginswith%</b> → przytnij <b>%trim%</b> → za pomocą %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Tylko <b>%numberbeginswith%</b> → przytnij <b>%trim%</b>, dodaj <b>%prepend%</b> → przez %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Tylko <b>%numberbeginswith%</b> → dodaj <b>%prepend%</b> → za pośrednictwem %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Tylko <b>%numberbeginswith%</b> → przytnij <b>%trim%</b> → przez %provider%',
 ];

@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Επιτρέπει την προσθήκη πρόσθετων παραμέτρων διαμόρφωσης Asterisk IAX για λεπτομερή ρύθμιση του παρόχου.',
     'iax_ManualAttributesTooltip_examples_header' => 'Παραδείγματα',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Εξερχόμενη εγγραφή',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Το PBX σας εγγράφεται στον διακομιστή του παρόχου. Χρησιμοποιείται για εξερχόμενες κλήσεις μέσω παρόχου.',
     'iax_registration_type' => 'Τύπος λογαριασμού',
-
     // PR
     'pr_AddIAXProvider' => 'Συνδέστε το IAX',
     'pr_AddSIPProvider' => 'Συνδέστε το SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Καθορίστε θύρα παρόχου',
     'pr_ValidationProviderPortRange' => 'Η θύρα παρόχου πρέπει να βρίσκεται εντός του {ruleValue}',
     'pr_WithoutRegistration' => 'Η εγγραφή απενεργοποιήθηκε',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'Πάροχοι IAX2',
     'prov_dropdownCategory_SIP' => 'Πάροχοι SIP',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Εισερχόμενη Εγγραφή',
     'sip_REG_TYPE_NONE' => 'Έλεγχος ταυτότητας με διεύθυνση IP, χωρίς κωδικό πρόσβασης',
     'sip_REG_TYPE_OUTBOUND' => 'Εξερχόμενη εγγραφή',
     'sip_registration_type' => 'Τύπος Λογαριασμού',
+    'pr_ProviderRegistered' => 'Ο πάροχος είναι εγγεγραμμένος',
+    'pr_Disabled' => 'απενεργοποιημένο',
+    'pr_RegisteredTo' => 'Εγγεγραμμένος/η στις',
+    'mo_SipUsernameInvalidCharacters' => 'Το όνομα χρήστη SIP για την εισερχόμενη εγγραφή μπορεί να περιέχει μόνο λατινικά γράμματα, αριθμούς και σύμβολα: _ - .',
+    'pr_StateChangedFromTo' => 'Η κατάσταση άλλαξε από %previousState% σε %newState%',
+    'pr_CheckingStatus' => 'Έλεγχος κατάστασης...',
+    'pr_ValidationProviderLogin' => 'Εισαγάγετε τα στοιχεία σύνδεσής σας για να συνδεθείτε στον πάροχό σας.',
+    'pr_RegisteredFrom' => 'Εγγεγραμμένος/η με',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'Το όνομα χρήστη IAX για εισερχόμενη εγγραφή μπορεί να περιέχει μόνο λατινικά γράμματα, αριθμούς και σύμβολα: _ - .',
+    'pr_WaitingForRegistration' => 'Αναμονή για εγγραφή',
 ];

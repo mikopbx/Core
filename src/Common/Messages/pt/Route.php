@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'Criar nova fila',
     'cq_AddQueueMembers' => 'Nenhum operador selecionado',
@@ -102,7 +101,6 @@ return [
     'cq_strategy_ringall_short' => 'Chamar todos simultaneamente',
     'cq_strategy_rrmemory_short' => 'Alternadamente com memória',
     'cq_strategy_wrandom_short' => 'Aleatório ponderado',
-
     // CR
     'cr_AddNewConferenceRoom' => 'Adicionar conferência',
     'cr_ColumnExtension' => 'Número',
@@ -126,7 +124,6 @@ return [
     'cr_ValidateNameIsEmpty' => 'Nome da conferência é obrigatório',
     'cr_ValidatePinNumber' => 'PIN deve conter apenas números',
     'cr_pinCode' => 'PIN da conferência',
-
     // DA
     'da_AddNewDialplanApp' => 'Adicionar novo',
     'da_Applicationlogic' => 'Código do programa',
@@ -151,7 +148,6 @@ return [
     'da_ValidateExtensionNumber' => 'Número interno deve conter apenas números',
     'da_ValidateNameIsEmpty' => 'Nome da aplicação não preenchido',
     'da_ValidateNameTooLong' => 'Nome muito longo (máximo 50 caracteres)',
-
     // IR
     'ir_ActionSelect' => 'Se nenhuma das regras se adequar',
     'ir_AddNewRule' => 'Adicionar nova regra',
@@ -248,7 +244,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 segundos:</strong> tempo padrão para escritórios',
     'ir_timeout_tooltip_value3' => '<strong>45-60 segundos:</strong> se funcionários podem estar temporariamente ocupados',
     'ir_timeout_tooltip_values_header' => 'Valores recomendados',
-
     // IV
     'iv_Actions' => 'Ações de discagem',
     'iv_AddNewIvrMenu' => 'Criar novo menu IVR',
@@ -322,7 +317,6 @@ return [
     'iv_ValidateTimeout' => 'Timeout deve ser de 1 a 99 segundos',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Número de redirecionamento de timeout não especificado',
     'iv_ValidateTimeoutOutOfRange' => 'Timeout incorreto de espera de inserção de ramal especificado',
-
     // OR
     'or_AddNewRule' => 'Adicionar nova regra',
     'or_BeforeConnectingTheCallTrim' => 'Antes de iniciar chamada cortamos',
@@ -453,7 +447,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'Remover prefixo do operador ou código corporativo',
     'or_trimfrombegin_tooltip_why3' => 'Levar número ao formato do provedor',
     'or_trimfrombegin_tooltip_why_header' => 'Para que serve:',
-
     // TF
     'tf_ActionPlayMessage' => 'Reproduzir arquivo <b>%message%</b>',
     'tf_ActionTransferToExtension' => 'Transferir chamada para <b>%extension%</b>',
@@ -509,4 +502,13 @@ return [
     'tf_calType' => 'Tipo',
     'tf_calUrl' => 'URL da agenda',
     'tf_calUser' => 'Nome de usuário',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Números de <b>%restnumbers%</b> dígitos → cortar <b>%trim%</b>, adicionar <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Números de <b>%restnumbers%</b> dígitos → adicionar <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Números de <b>%restnumbers%</b> dígitos → remover <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Números com <b>%numberbeginswith%</b> → remover <b>%trim%</b>, adicionar <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Números com <b>%numberbeginswith%</b> → adicionar <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Números com <b>%numberbeginswith%</b> → remover <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Somente <b>%númerocomeçacom%</b> → remover <b>%remover%</b>, adicionar <b>%prepend%</b> → via %provedor%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Somente <b>%númerocomeçacom%</b> → adicione <b>%prepend%</b> → via %provedor%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Somente <b>%númerocomeçacom%</b> → aparar <b>%aparar%</b> → via %provedor%',
 ];

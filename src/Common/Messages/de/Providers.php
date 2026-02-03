@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Ermöglicht das Hinzufügen zusätzlicher Asterisk IAX-Konfigurationsparameter zur Feinabstimmung des Providers.',
     'iax_ManualAttributesTooltip_examples_header' => 'Beispiele',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Ausgehende Registrierung',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Ihre PBX registriert sich beim Provider-Server. Wird für ausgehende Anrufe über den Provider verwendet.',
     'iax_registration_type' => 'Kontotyp',
-
     // PR
     'pr_AddIAXProvider' => 'IAX verbinden',
     'pr_AddSIPProvider' => 'SIP verbinden',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Geben Sie Provider-Port an',
     'pr_ValidationProviderPortRange' => 'Provider-Port muss innerhalb {ruleValue} liegen',
     'pr_WithoutRegistration' => 'Registrierung deaktiviert',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'IAX2-Provider',
     'prov_dropdownCategory_SIP' => 'SIP-Provider',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Eingehende Registrierung',
     'sip_REG_TYPE_NONE' => 'Ohne Registrierung (IP-Authentifizierung)',
     'sip_REG_TYPE_OUTBOUND' => 'Ausgehende Registrierung',
     'sip_registration_type' => 'Kontotyp',
+    'pr_ProviderRegistered' => 'Der Anbieter ist registriert',
+    'pr_Disabled' => 'ausgeschaltet',
+    'pr_RegisteredTo' => 'Registriert am',
+    'mo_SipUsernameInvalidCharacters' => 'Der SIP-Benutzername für die eingehende Registrierung darf nur lateinische Buchstaben, Zahlen und Symbole enthalten: _ - .',
+    'pr_StateChangedFromTo' => 'Der Status hat sich von %previousState% zu %newState% geändert.',
+    'pr_CheckingStatus' => 'Statusprüfung...',
+    'pr_ValidationProviderLogin' => 'Geben Sie Ihre Zugangsdaten ein, um sich bei Ihrem Anbieter anzumelden.',
+    'pr_RegisteredFrom' => 'Registriert bei',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'Der IAX-Benutzername für die eingehende Registrierung darf nur lateinische Buchstaben, Zahlen und Symbole enthalten: _ - .',
+    'pr_WaitingForRegistration' => 'Warten auf die Registrierung',
 ];

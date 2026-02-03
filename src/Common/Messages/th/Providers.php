@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'อนุญาตให้เพิ่มพารามิเตอร์การกำหนดค่า Asterisk IAX เพิ่มเติมสำหรับการปรับแต่งอย่างละเอียดของผู้ให้บริการ',
     'iax_ManualAttributesTooltip_examples_header' => 'ตัวอย่าง',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'การลงทะเบียนขาออก',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'PBX ของคุณลงทะเบียนบนเซิร์ฟเวอร์ผู้ให้บริการ ใช้สำหรับการโทรออกผ่านผู้ให้บริการ',
     'iax_registration_type' => 'ประเภทบัญชี',
-
     // PR
     'pr_AddIAXProvider' => 'เชื่อมต่อ IAX',
     'pr_AddSIPProvider' => 'เชื่อมต่อ SIP',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'ระบุพอร์ตผู้ให้บริการ',
     'pr_ValidationProviderPortRange' => 'พอร์ตผู้ให้บริการต้องอยู่ภายใน {ruleValue}',
     'pr_WithoutRegistration' => 'การลงทะเบียนถูกปิดใช้งาน',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'ผู้ให้บริการ IAX2',
     'prov_dropdownCategory_SIP' => 'ผู้ให้บริการ SIP',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'การลงทะเบียนขาเข้า',
     'sip_REG_TYPE_NONE' => 'ไม่มีการลงทะเบียน (การรับรองตัวตน IP)',
     'sip_REG_TYPE_OUTBOUND' => 'การลงทะเบียนขาออก',
     'sip_registration_type' => 'ประเภทบัญชี',
+    'pr_ProviderRegistered' => 'ผู้ให้บริการได้รับการจดทะเบียนแล้ว',
+    'pr_Disabled' => 'ปิดเครื่อง',
+    'pr_RegisteredTo' => 'ลงทะเบียนเมื่อ',
+    'mo_SipUsernameInvalidCharacters' => 'ชื่อผู้ใช้ SIP สำหรับการลงทะเบียนขาเข้าสามารถประกอบด้วยตัวอักษรละติน ตัวเลข และสัญลักษณ์เท่านั้น: _ - .',
+    'pr_StateChangedFromTo' => 'สถานะได้เปลี่ยนจาก %previousState% เป็น %newState%',
+    'pr_CheckingStatus' => 'กำลังตรวจสอบสถานะ...',
+    'pr_ValidationProviderLogin' => 'ป้อนชื่อผู้ใช้ของคุณเพื่อเข้าสู่ระบบผู้ให้บริการของคุณ',
+    'pr_RegisteredFrom' => 'ลงทะเบียนกับ',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'ชื่อผู้ใช้ IAX สำหรับการลงทะเบียนขาเข้าสามารถประกอบด้วยตัวอักษรละติน ตัวเลข และสัญลักษณ์เท่านั้น: _ - .',
+    'pr_WaitingForRegistration' => 'กำลังรอการลงทะเบียน',
 ];

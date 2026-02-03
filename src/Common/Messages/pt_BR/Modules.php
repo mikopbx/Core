@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * External modules translations
  */
-
-return [
     // EXT
     'ext_AddNewExtension' => 'Carregar novo módulo',
     'ext_Available' => 'pode ser atualizado para',
@@ -98,4 +97,13 @@ return [
     'ext_ValidateCaptionEmpty' => 'O nome do item do menu não está preenchido',
     'ext_Version' => 'Versão',
     'ext_WrongGetModuleLink' => 'Erro ao obter arquivo de módulo do repositório',
+    'ext_MissingModuleUniqueID' => 'O arquivo module.json no arquivo %filePath% está sem o campo moduleUniqueID obrigatório.',
+    // Module compatibility validation
+    'ext_ModuleIncompatibleWithVersion' => 'O módulo %module% não é compatível com a versão atual do MikoPBX.',
+    'ext_InvalidModuleJson' => 'O arquivo module.json no arquivo %filePath% contém JSON inválido: %error%',
+    'ext_ModuleJsonNotFound' => 'O arquivo module.json não foi encontrado no arquivo de módulos %filePath%.',
+    'ext_CorruptedZipFile' => 'O arquivo ZIP do módulo está corrompido ou possui um formato inválido: %filePath%. Código de erro: %errorCode%',
+    // Module package validation errors
+    'ext_FileNotFound' => 'Arquivo do módulo não encontrado: %filePath%',
+    'ext_ModuleMethodSignatureIncompatibility' => 'O módulo %module% é incompatível com a versão atual do MikoPBX: foi detectada incompatibilidade na assinatura do método.',
 ];
