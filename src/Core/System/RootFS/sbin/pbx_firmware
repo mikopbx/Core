@@ -269,7 +269,7 @@ if [ -r "${img_file}" ]; then
     sgdiskResult=$?
     echo_info "sgdisk exit code: $sgdiskResult"
     [ -n "$sgdiskOutput" ] && echo "$sgdiskOutput" | while read line; do echo_info "sgdisk: $line"; done
-  elif command -v gdisk >/dev/null 2>&1; then
+  elif /sbin/gdisk --version >/dev/null 2>&1; then
     # Fallback 1: gdisk (works without controlling terminal via stdin commands)
     echo_info "Relocating GPT backup header to end of disk (gdisk)..."
     gdiskOutput=$(echo -e "x\ne\nw\nY\n" | /sbin/gdisk "$DISK" 2>&1)
