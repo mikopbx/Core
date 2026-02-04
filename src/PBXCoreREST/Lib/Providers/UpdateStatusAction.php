@@ -70,7 +70,7 @@ class UpdateStatusAction
             // Sanitize inputs
             $providerId = trim($data['id']);
             $providerType = strtoupper(trim($data['type']));
-            $disabled = isset($data['disabled']) ? (bool)$data['disabled'] : false;
+            $disabled = filter_var($data['disabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
             
             // Execute status update in transaction
             $result = BaseActionHelper::executeInTransaction(function() use ($providerId, $providerType, $disabled) {
