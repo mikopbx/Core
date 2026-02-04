@@ -171,14 +171,6 @@ else
     /sbin/freestorage;
   fi
 
-  # Copy shared libraries needed by /sbin tools (sgdisk, gdisk) into initramfs /lib64/
-  # before unmounting /offload, since /usr -> /offload/rootfs/usr will become unavailable
-  if [ -d /usr/lib64 ]; then
-    for lib in libpopt.so libstdc++.so libgcc_s.so; do
-      cp -n /usr/lib64/${lib}* /lib64/ 2>/dev/null
-    done
-  fi
-
   # Unmount the main disk
   /sbin/freeupoffload;
 fi
