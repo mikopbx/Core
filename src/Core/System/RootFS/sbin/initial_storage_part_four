@@ -76,7 +76,11 @@ if [ -n "$partitionFour" ]; then
     resultParted=$?;
 elif [ "$count" -eq 3 ] || [ "$count" -eq 4 ]; then
     echo_info "Fix the secondary GPT header;";
-    /sbin/sgdisk -e "$dev" >> "$logFile" 2>&1;
+    if /sbin/sgdisk --version >/dev/null 2>&1; then
+      /sbin/sgdisk -e "$dev" >> "$logFile" 2>&1;
+    else
+      echo "fix" | parted "$dev" print free ---pretend-input-tty >> "$logFile" 2>&1;
+    fi
     # There are only 3 partitions, add a new one
     echo_info "Adding a new partition №4...";
     echo_info "Fix the partition table and use all the space (1)";

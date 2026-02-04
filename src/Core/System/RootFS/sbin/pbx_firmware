@@ -147,7 +147,7 @@ else
     echo_info "Backup system partition to storage ...";
     # Use global SERIAL_PORT from script initialization
     if [ -n "$SERIAL_PORT" ]; then
-        LC_ALL=C /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
+        LC_ALL=C /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | /bin/busybox tee "$SERIAL_PORT" >/dev/null 2>&1
     else
         LC_ALL=C /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M >/dev/null 2>&1
     fi
@@ -169,6 +169,14 @@ else
      # Free up the storage
     echo_info "Umount storage partition ...";
     /sbin/freestorage;
+  fi
+
+  # Copy shared libraries needed by /sbin tools (sgdisk, gdisk) into initramfs /lib64/
+  # before unmounting /offload, since /usr -> /offload/rootfs/usr will become unavailable
+  if [ -d /usr/lib64 ]; then
+    for lib in libpopt.so libstdc++.so libgcc_s.so; do
+      cp -n /usr/lib64/${lib}* /lib64/ 2>/dev/null
+    done
   fi
 
   # Unmount the main disk
@@ -235,7 +243,7 @@ if [ -r "${img_file}" ]; then
 
   # Use global SERIAL_PORT from script initialization
   if [ -n "$SERIAL_PORT" ]; then
-    LC_ALL=C /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
+    LC_ALL=C /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee "$SERIAL_PORT" >/dev/null 2>&1
     resultPv="${PIPESTATUS[2]}"  # Exit code of dd (3rd command in pipeline)
   else
     LC_ALL=C /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1
@@ -254,8 +262,8 @@ if [ -r "${img_file}" ]; then
   # Fix GPT backup table location after writing smaller image to larger disk
   # The backup GPT header must be at the end of the disk, not at original image size
   # Note: /dev/tty availability fixed in pbx_boot_init (conditional console redirect)
-  if [ -x /sbin/sgdisk ]; then
-    # Preferred: sgdisk (modern, simple, reliable - requires /dev/console fix in pbx_boot_init)
+  if /sbin/sgdisk --version >/dev/null 2>&1; then
+    # Preferred: sgdisk (modern, simple, reliable)
     echo_info "Relocating GPT backup header to end of disk (sgdisk)..."
     sgdiskOutput=$(/sbin/sgdisk -e "$DISK" 2>&1)
     sgdiskResult=$?
@@ -297,7 +305,7 @@ if [ -r "${img_file}" ]; then
 
       # Use global SERIAL_PORT from script initialization
       if [ -n "$SERIAL_PORT" ]; then
-        LC_ALL=C /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
+        LC_ALL=C /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee "$SERIAL_PORT" >/dev/null 2>&1
       else
         LC_ALL=C /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1
       fi
