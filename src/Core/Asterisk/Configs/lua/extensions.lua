@@ -88,6 +88,45 @@ function getNowDate()
 end
 
 --[[
+    Determines the optimal recording file extension based on audio codec.
+
+    This function detects the audio codec from the channel's read format and selects
+    the appropriate WAV file extension to preserve the native sample rate:
+
+    - OPUS codec (48kHz fullband) → .wav48 extension
+    - G.722/Speex16 codec (16kHz wideband) → .wav16 extension
+    - Other codecs (8kHz narrowband) → .wav extension (default)
+
+    This ensures MixMonitor records with the correct sample rate, preserving audio
+    quality for subsequent conversion to WebM/Opus by WorkerWav2Webm.
+
+    Note: Requires Asterisk patched with wav48 format support for 48kHz recording.
+
+    Returns:
+    - The file extension string: "wav48", "wav16", or "wav" (without leading dot)
+
+    Example Usage:
+    local fileExt = getRecordingFileExtension()
+    local filename = "/path/to/file." .. fileExt
+]]
+function getRecordingFileExtension()
+    local audioCodec = get_variable("CHANNEL(audioreadformat)") or "";
+
+    -- OPUS fullband (48kHz) - highest quality
+    if audioCodec:find("opus") then
+        return "wav48";
+
+    -- G.722 wideband (16kHz) or Speex16
+    elseif audioCodec:find("g722") or audioCodec:find("speex16") or audioCodec:find("slin16") then
+        return "wav16";
+
+    -- Default: narrowband 8kHz (G.711 alaw/ulaw, GSM, etc.)
+    else
+        return "wav";
+    end
+end
+
+--[[
     Extracts and returns the account name from a channel string.
 
     Parameters:
@@ -845,14 +884,18 @@ function event_dial_answer()
             app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
             local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
             local stereoMode = get_variable("MONITOR_STEREO");
+
+            -- Determine optimal file extension based on audio codec
+            local fileExt = getRecordingFileExtension();
+
             local mixOptions = '';
             if('1' == stereoMode )then
-                mixOptions = "ar("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+                mixOptions = "ar("..mixFileName.."_in."..fileExt..")t("..mixFileName.."_out."..fileExt..")";
             else
                 mixOptions = 'a';
             end
-            app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
-            app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
+            app["MixMonitor"](mixFileName .. "." .. fileExt .. ","..mixOptions);
+            app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL") .. ' with format ' .. fileExt);
             data['recordingfile']  	= mixFileName .. ".webm";
             app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
         end
@@ -1144,14 +1187,18 @@ function event_transfer_dial_answer()
             app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
             local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
             local stereoMode = get_variable("MONITOR_STEREO");
+
+            -- Determine optimal file extension based on audio codec
+            local fileExt = getRecordingFileExtension();
+
             local mixOptions = '';
             if('1' == stereoMode )then
-                mixOptions = "abr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+                mixOptions = "abr("..mixFileName.."_in."..fileExt..")t("..mixFileName.."_out."..fileExt..")";
             else
                 mixOptions = 'ab';
             end
-            app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
-            app["NoOp"]('Start MixMonitor on channel '.. data['agi_channel']);
+            app["MixMonitor"](mixFileName .. "." .. fileExt .. ","..mixOptions);
+            app["NoOp"]('Start MixMonitor on channel '.. data['agi_channel'] .. ' with format ' .. fileExt);
             data['recordingfile']  	= mixFileName .. ".webm";
             app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
         end
@@ -1501,14 +1548,18 @@ function event_dial_app()
         app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
         local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
         local stereoMode = get_variable("MONITOR_STEREO");
+
+        -- Determine optimal file extension based on audio codec
+        local fileExt = getRecordingFileExtension();
+
         local mixOptions = '';
         if('1' == stereoMode )then
-            mixOptions = "ar("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+            mixOptions = "ar("..mixFileName.."_in."..fileExt..")t("..mixFileName.."_out."..fileExt..")";
         else
             mixOptions = 'a';
         end
-        app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
-        app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
+        app["MixMonitor"](mixFileName .. "." .. fileExt .. ","..mixOptions);
+        app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL") .. ' with format ' .. fileExt);
         data['recordingfile']  	= mixFileName .. ".webm";
         app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..CHANNEL);
     end

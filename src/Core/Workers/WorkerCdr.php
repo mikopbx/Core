@@ -306,8 +306,8 @@ class WorkerCdr extends WorkerBase
             $taskFile = $tasksDir . '/' . $row['linkedid'] . '_' . uniqid() . '.json';
             file_put_contents($taskFile, json_encode($taskData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
-            // Update recordingfile path to point to WebM file
-            $row['recordingfile'] = str_replace(['.wav', '.WAV'], '.webm', $row['recordingfile']);
+            // Update recordingfile path to point to WebM file (supports .wav, .wav16, .wav48)
+            $row['recordingfile'] = preg_replace('/\.(wav|wav16|wav48)$/i', '.webm', $row['recordingfile']);
         }else{
             $row['recordingfile'] = '';
         }
