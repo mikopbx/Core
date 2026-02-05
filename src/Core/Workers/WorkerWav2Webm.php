@@ -27,7 +27,7 @@ use RecursiveIteratorIterator;
 use Throwable;
 
 /**
- * WorkerWav2Webm - Background worker for converting WAV recordings to WebM/Opus format
+ * WorkerWav2Webm - Background worker for converting WAV recordings to OggOpus format
  *
  * This worker implements a task-based conversion system with native PHP implementation:
  * 1. Scans for JSON task files created by WorkerCDR in conversion-tasks directory
@@ -35,12 +35,17 @@ use Throwable;
  * 3. Implements retry logic with attempt counter (max 3 attempts)
  * 4. Deletes task file on success, renames to .failed.json after max attempts
  *
- * Optimized for ASR (Automatic Speech Recognition):
+ * Optimized for ASR with adaptive bitrate selection:
  * - Stereo output preserves speaker separation (left=external, right=internal)
- * - High bitrate (96k-128k) maintains acoustic details for ASR models
- * - No dynamic range compression (loudnorm removed) preserves phonetic features
- * - Application 'audio' instead of 'voip' for better frequency response
- * - Compatible with Whisper, Google Speech-to-Text, Vosk, AssemblyAI
+ * - Adaptive bitrate based on source sample rate (32k-64k)
+ * - VoIP application mode optimized for speech recognition
+ * - No dynamic range compression preserves phonetic features
+ * - Compatible with Whisper, Yandex SpeechKit, Google STT, AssemblyAI
+ *
+ * Adaptive Bitrate Strategy:
+ * - 8kHz source (G.711): 32k Opus - prevents unnecessary upsampling
+ * - 16kHz source (G.722): 48k Opus - optimal for wideband speech
+ * - 48kHz source (Opus): 64k Opus - preserves fullband quality
  *
  * Benefits:
  * - System restart resilience (unprocessed tasks remain in queue)
@@ -48,6 +53,7 @@ use Throwable;
  * - Independent scaling (runs on different interval than CDR processing)
  * - Better error tracking (failed task files can be analyzed)
  * - Lowest CPU priority to avoid impacting call processing
+ * - 2-3x smaller files compared to previous implementation
  *
  * @package MikoPBX\Core\Workers
  */
@@ -64,16 +70,24 @@ class WorkerWav2Webm extends WorkerBase
     private const int RETRY_DELAY_SECONDS = 300;
 
     /**
-     * Opus bitrate for 8kHz audio (G.711 codec)
-     * Optimized for ASR (Automatic Speech Recognition)
+     * Opus bitrate for 8kHz narrowband audio (G.711 alaw/ulaw, GSM)
+     * Lower bitrate prevents unnecessary upsampling of already compressed audio
+     * Optimal for ASR with stereo speaker diarization (16k per channel)
      */
-    private const string OPUS_BITRATE_8K = '96k';
+    private const string OPUS_BITRATE_8K = '32k';
 
     /**
-     * Opus bitrate for 16kHz+ audio (G.722+ codecs)
-     * Optimized for ASR (Automatic Speech Recognition)
+     * Opus bitrate for 16kHz wideband audio (G.722, Opus wideband)
+     * Optimal for ASR with stereo speaker diarization (24k per channel)
+     * Recommended for Whisper and Yandex SpeechKit
      */
-    private const string OPUS_BITRATE_16K = '128k';
+    private const string OPUS_BITRATE_16K = '48k';
+
+    /**
+     * Opus bitrate for 48kHz fullband audio (Opus fullband)
+     * High quality for premium ASR with stereo speaker diarization (32k per channel)
+     */
+    private const string OPUS_BITRATE_48K = '64k';
 
     /**
      * FFmpeg main conversion timeout in seconds (5 minutes for long recordings)
@@ -388,11 +402,23 @@ class WorkerWav2Webm extends WorkerBase
             return 2;
         }
 
-        // Build file paths
-        $srcFile = $inputPath . '.wav';
-        $srcIn = $inputPath . '_in.wav';
-        $srcOut = $inputPath . '_out.wav';
+        // Detect actual file extension (supports .wav, .wav16, .wav48)
+        $fileExt = $this->detectSourceFileExtension($inputPath);
+        if ($fileExt === null) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                sprintf('No source file found with supported extensions (.wav, .wav16, .wav48): %s', basename($inputPath)),
+                LOG_ERR
+            );
+            return 2;
+        }
+
+        // Build file paths with detected extension
+        $srcFile = $inputPath . '.' . $fileExt;
+        $srcIn = $inputPath . '_in.' . $fileExt;
+        $srcOut = $inputPath . '_out.' . $fileExt;
         $dstFile = $inputPath . '.webm';
+        // Always use .wav extension for temporary merged file (FFmpeg doesn't recognize .wav48 as output format)
         $tempMerged = '/tmp/merged_' . getmypid() . '.wav';
 
         // Step 1: Check if stereo channel files exist (_in.wav and _out.wav)
@@ -491,12 +517,16 @@ class WorkerWav2Webm extends WorkerBase
             return 3; // Failed to detect sample rate
         }
 
-        // Step 3: Select Opus bitrate based on sample rate (optimized for ASR)
+        // Step 3: Select Opus bitrate adaptively based on source sample rate
+        // Sample rate indicates original call quality:
+        // - 8kHz = narrowband (G.711 alaw/ulaw) - low quality source
+        // - 16kHz = wideband (G.722) - good quality source
+        // - 48kHz = fullband (Opus) - excellent quality source
         $opusBitrate = $this->selectOptimalBitrate($sampleRate);
 
         SystemMessages::sysLogMsg(
             __CLASS__,
-            sprintf('Converting %s: sample_rate=%dHz, bitrate=%s',
+            sprintf('Converting %s: sample_rate=%dHz, adaptive_bitrate=%s',
                 basename($inputPath), $sampleRate, $opusBitrate),
             LOG_INFO
         );
@@ -546,20 +576,21 @@ class WorkerWav2Webm extends WorkerBase
 
         SystemMessages::sysLogMsg(
             __CLASS__,
-            sprintf('Conversion completed successfully: %s -> %s',
-                basename($inputPath) . '.wav', basename($dstFile)),
+            sprintf('Conversion completed successfully: %s.wav -> %s (bitrate=%s)',
+                basename($inputPath), basename($dstFile), $opusBitrate),
             LOG_INFO
         );
 
         // Step 6: Cleanup source files if requested
         $deleteSource = ($taskData['delete_source'] ?? '0') === '1';
         if ($deleteSource) {
-            @unlink($inputPath . '.wav');
-            @unlink($inputPath . '_in.wav');
-            @unlink($inputPath . '_out.wav');
+            // Delete all possible source file formats
+            @unlink($inputPath . '.' . $fileExt);
+            @unlink($inputPath . '_in.' . $fileExt);
+            @unlink($inputPath . '_out.' . $fileExt);
             SystemMessages::sysLogMsg(
                 __CLASS__,
-                sprintf('Source files deleted: %s', basename($inputPath)),
+                sprintf('Source files deleted: %s.%s', basename($inputPath), $fileExt),
                 LOG_DEBUG
             );
         }
@@ -578,8 +609,9 @@ class WorkerWav2Webm extends WorkerBase
      */
     private function mergeStereoFiles(string $ffmpeg, string $srcOut, string $srcIn, string $output): int
     {
+        // BusyBox timeout syntax: timeout -s SIGNAL -k KILL_SECS DURATION COMMAND
         $command = sprintf(
-            'timeout -k %d -s TERM %d %s -i %s -i %s -filter_complex "[0:a][1:a]amerge=inputs=2[a]" -map "[a]" -y %s 2>&1',
+            'timeout -s TERM -k %d %d %s -i %s -i %s -filter_complex "[0:a][1:a]amerge=inputs=2[a]" -map "[a]" -y %s 2>&1',
             self::FFMPEG_KILL_GRACE,
             self::FFMPEG_MERGE_TIMEOUT,
             $ffmpeg,
@@ -591,6 +623,19 @@ class WorkerWav2Webm extends WorkerBase
         $result = [];
         $exitCode = 0;
         Processes::mwExec($command, $result, $exitCode);
+
+        // Log detailed error output on failure
+        if ($exitCode !== 0) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                sprintf(
+                    'FFmpeg merge failed (exit %d): %s',
+                    $exitCode,
+                    implode(' | ', array_filter($result))
+                ),
+                LOG_ERR
+            );
+        }
 
         return $exitCode;
     }
@@ -624,26 +669,46 @@ class WorkerWav2Webm extends WorkerBase
     }
 
     /**
-     * Select optimal Opus bitrate for ASR (Automatic Speech Recognition) based on sample rate
+     * Select optimal Opus bitrate adaptively based on source sample rate
      *
-     * Higher bitrates preserve acoustic details needed for speech recognition models:
-     * - Wideband (16kHz+): 128k for high-quality ASR with opus/G.722 sources
-     * - Narrowband (8kHz): 96k for acceptable ASR with G.711 alaw/ulaw sources
+     * Sample rate indicates original call codec quality (Asterisk decodes to PCM but preserves sample rate):
+     * - 8kHz = narrowband source (G.711 alaw/ulaw, GSM) - already low quality
+     * - 16kHz = wideband source (G.722, Opus wideband) - good quality
+     * - 48kHz = fullband source (Opus fullband) - excellent quality
      *
-     * @param int $sampleRate Audio sample rate in Hz
-     * @return string Opus bitrate (96k or 128k)
+     * Adaptive strategy prevents unnecessary upsampling:
+     * - Low quality source (8kHz) → lower Opus bitrate (32k) saves space
+     * - Good quality source (16kHz) → medium Opus bitrate (48k) optimal for ASR
+     * - High quality source (48kHz) → higher Opus bitrate (64k) preserves details
+     *
+     * Compatible with:
+     * - Whisper (OpenAI): Resamples to 16kHz internally, works well with 32-64k
+     * - Yandex SpeechKit: OggOpus support, recommends 48k for speech
+     * - Google STT, AssemblyAI: Standard Opus bitrates
+     *
+     * @param int $sampleRate Audio sample rate in Hz (detected from source WAV)
+     * @return string Opus bitrate (32k, 48k, or 64k for stereo)
      */
     private function selectOptimalBitrate(int $sampleRate): string
     {
-        // 16kHz+ = wideband call (G.722, opus wideband)
-        // Use high bitrate to preserve acoustic details for ASR
-        if ($sampleRate >= 16000) {
-            return self::OPUS_BITRATE_16K; // 128k
+        // 8kHz = narrowband source (G.711 alaw/ulaw, GSM)
+        // Low quality source - no benefit from high Opus bitrate
+        // 32k stereo = 16k per channel (sufficient for narrowband speech)
+        if ($sampleRate <= 8000) {
+            return self::OPUS_BITRATE_8K; // 32k
         }
 
-        // 8kHz = narrowband call (G.711 alaw/ulaw, opus narrowband)
-        // Use good bitrate for acceptable ASR quality
-        return self::OPUS_BITRATE_8K; // 96k
+        // 16kHz = wideband source (G.722, Opus wideband)
+        // Good quality source - optimal bitrate for ASR
+        // 48k stereo = 24k per channel (recommended by Whisper/Yandex)
+        if ($sampleRate <= 16000) {
+            return self::OPUS_BITRATE_16K; // 48k
+        }
+
+        // 48kHz = fullband source (Opus fullband)
+        // Excellent quality source - preserve acoustic details
+        // 64k stereo = 32k per channel (high quality for premium ASR)
+        return self::OPUS_BITRATE_48K; // 64k
     }
 
     /**
@@ -652,7 +717,7 @@ class WorkerWav2Webm extends WorkerBase
      * @param string $ffmpeg Path to ffmpeg binary
      * @param string $srcFile Source WAV file
      * @param string $dstFile Destination WebM file
-     * @param string $opusBitrate Opus bitrate (96k or 128k for ASR)
+     * @param string $opusBitrate Opus bitrate (32k, 48k, or 64k for stereo)
      * @param array<string, mixed> $taskData Task metadata
      * @return string Complete ffmpeg command
      */
@@ -661,10 +726,14 @@ class WorkerWav2Webm extends WorkerBase
         // Base command optimized for ASR (Automatic Speech Recognition):
         // - No loudnorm: Preserves natural speech dynamics and phonetic features
         // - Stereo output (-ac 2): Enables speaker diarization (left=external, right=internal)
-        // - Application audio: Better frequency response than voip mode for ASR models
-        // - High bitrate (96k-128k): Maintains acoustic details for speech recognition
+        // - Application voip: Optimized for speech (High Pass Filter, formant emphasis)
+        // - Frame duration 20ms: Standard for VoIP, optimal latency/quality balance
+        // - Adaptive bitrate (32k-64k): Based on source sample rate
+        // - VBR enabled: Variable bitrate for better quality at same average bitrate
+        // - Compression level 10: Maximum compression (CPU-intensive but offline processing)
+        // BusyBox timeout syntax: timeout -s SIGNAL -k KILL_SECS DURATION COMMAND
         $command = sprintf(
-            'timeout -k %d -s TERM %d %s -i %s -vn -c:a libopus -b:a %s -ac 2 -vbr on -compression_level 10 -application audio',
+            'timeout -s TERM -k %d %d %s -i %s -vn -c:a libopus -b:a %s -ac 2 -vbr on -compression_level 10 -application voip -frame_duration 20',
             self::FFMPEG_KILL_GRACE,
             self::FFMPEG_TIMEOUT,
             $ffmpeg,
@@ -730,8 +799,9 @@ class WorkerWav2Webm extends WorkerBase
 
         // Technical metadata
         $command .= ' -metadata AUDIO_FORMAT=webm';
-        $command .= ' -metadata AUDIO_CODEC=opus';
+        $command .= ' -metadata AUDIO_CODEC=libopus';
         $command .= sprintf(' -metadata AUDIO_BITRATE=%s', escapeshellarg($opusBitrate));
+        $command .= ' -metadata AUDIO_APPLICATION=voip';
 
         // Output file
         $command .= sprintf(' -y %s 2>&1', escapeshellarg($dstFile));
@@ -865,6 +935,35 @@ class WorkerWav2Webm extends WorkerBase
                 LOG_WARNING
             );
         }
+    }
+
+    /**
+     * Detect source file extension by checking which format exists
+     *
+     * Checks for recording files in priority order:
+     * 1. .wav48 - OPUS fullband (48kHz)
+     * 2. .wav16 - G.722 wideband (16kHz)
+     * 3. .wav - Default narrowband (8kHz)
+     *
+     * This supports adaptive recording format selection based on codec.
+     *
+     * @param string $basePath Base path without extension
+     * @return string|null Extension without dot (e.g., "wav48") or null if no file found
+     */
+    private function detectSourceFileExtension(string $basePath): ?string
+    {
+        // Priority order: check high quality formats first
+        $extensions = ['wav48', 'wav16', 'wav'];
+
+        foreach ($extensions as $ext) {
+            // Check for main file OR stereo split files
+            if (file_exists($basePath . '.' . $ext) ||
+                (file_exists($basePath . '_in.' . $ext) && file_exists($basePath . '_out.' . $ext))) {
+                return $ext;
+            }
+        }
+
+        return null;
     }
 }
 
