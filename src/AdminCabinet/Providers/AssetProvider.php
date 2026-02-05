@@ -403,6 +403,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/vendor/semantic/slider.min.js', true)
                 ->addJs('js/pbx/PbxAPI/syslog-api.js', true)
+                ->addJs('js/pbx/PbxAPI/sysinfo-api.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-svg-timeline.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-time-slider.js', true)

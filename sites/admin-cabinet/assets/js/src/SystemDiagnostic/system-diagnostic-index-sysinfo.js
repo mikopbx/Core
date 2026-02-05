@@ -78,11 +78,15 @@ const systemDiagnosticSysyinfo = {
 
     /**
      * Callback for updating the system information view.
-     * @param data - The system information data.
+     * @param response - The API response object.
      */
-    cbUpdateSysinfoText(data) {
+    cbUpdateSysinfoText(response) {
         systemDiagnosticSysyinfo.$dimmer.removeClass('active');
-        systemDiagnosticSysyinfo.viewer.getSession().setValue(data.content);
+
+        // Extract content from response.data.content
+        const content = response?.data?.content || '';
+        systemDiagnosticSysyinfo.viewer.getSession().setValue(content);
+
         systemDiagnosticSysyinfo.receivedInfo = true;
         systemDiagnosticSysyinfo.$contentFiled.show();
     },
