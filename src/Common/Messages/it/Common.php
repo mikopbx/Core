@@ -641,6 +641,7 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     // SF
     'sf_AddNewAudioFile' => 'Aggiungi nuovo file audio',
     'sf_AddNewSoundFile' => 'Aggiungi nuovo file audio',
+    'sf_AudioFileLoadError' => 'Errore durante il caricamento del file audio',
     'sf_ColumnFile' => 'Nome',
     'sf_ColumnPlayer' => 'giocatore',
     'sf_CustomSounds' => 'File audio',
@@ -873,7 +874,7 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'SubHeaderEmployees' => 'Gestione dei dipendenti e delle loro estensioni',
     'adv_AriPasswordWeak' => 'Password semplice utente AMI <a href=\'%url%\'>%record%</a>',
     'mm_OffWorkTimes' => 'Tempo non lavorativo',
-    'adv_S3ConnectionFailed' => 'Connessione all'archiviazione S3 non riuscita. Verificare le impostazioni di connessione nella pagina "Archiviazione → S3".',
+    'adv_S3ConnectionFailed' => 'Connessione all\'archiviazione S3 non riuscita. Verificare le impostazioni di connessione nella pagina "Archiviazione → S3".',
     'adv_S3ClientInitializationFailed' => 'Inizializzazione client S3 non riuscita. Verificare le impostazioni nella pagina \"Archiviazione → S3\".',
     'adv_S3CheckUnexpectedError' => 'Errore imprevisto durante il controllo S3: %error%',
     'am_EventFilterDescription' => 'Specificare i modelli di filtro degli eventi AMI (ciascuno su una nuova riga). Utilizzare il prefisso ! per escludere gli eventi. Esempi: "!Event: Newexten" (escludi), "Event: QueueMemberStatus" (consenti).',

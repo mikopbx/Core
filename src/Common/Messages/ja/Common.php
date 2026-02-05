@@ -640,6 +640,7 @@ return [
     'sd_offset' => 'オフセット',
     // SF
     'sf_AddNewSoundFile' => '新しいサウンドファイルを追加',
+    'sf_AudioFileLoadError' => 'オーディオファイルの読み込みエラー',
     'sf_ColumnFile' => '名',
     'sf_ColumnPlayer' => 'プレイヤー',
     'sf_CustomSounds' => '音声ファイル',

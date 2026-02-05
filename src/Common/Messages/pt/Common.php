@@ -641,6 +641,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     // SF
     'sf_AddNewAudioFile' => 'Adicionar novo arquivo de áudio',
     'sf_AddNewSoundFile' => 'Adicionar novo arquivo de som',
+    'sf_AudioFileLoadError' => 'Erro ao carregar arquivo de áudio',
     'sf_ColumnFile' => 'Primeiro nome',
     'sf_ColumnPlayer' => 'Jogador',
     'sf_CustomSounds' => 'Arquivos de áudio',

@@ -641,6 +641,7 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     // SF
     'sf_AddNewAudioFile' => 'Nieuw audiobestand toevoegen',
     'sf_AddNewSoundFile' => 'Voeg een nieuw geluidsbestand toe',
+    'sf_AudioFileLoadError' => 'Fout bij het laden van audiobestand',
     'sf_ColumnFile' => 'Naam',
     'sf_ColumnPlayer' => 'Speler',
     'sf_CustomSounds' => 'Geluidsbestanden',

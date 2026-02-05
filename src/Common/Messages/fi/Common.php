@@ -641,6 +641,7 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     // SF
     'sf_AddNewAudioFile' => 'Lisää uusi äänitiedosto',
     'sf_AddNewSoundFile' => 'Lisää uusi äänitiedosto',
+    'sf_AudioFileLoadError' => 'Virhe ladattaessa äänitiedostoa',
     'sf_ColumnFile' => 'Nimi',
     'sf_ColumnPlayer' => 'Soitin',
     'sf_CustomSounds' => 'Äänitiedostot',

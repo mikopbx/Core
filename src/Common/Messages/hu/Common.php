@@ -641,6 +641,7 @@ A regisztrációs űrlap kitöltésével automatikusan új kulcsot kaphat.<br>',
     // SF
     'sf_AddNewAudioFile' => 'Új hangfájl hozzáadása',
     'sf_AddNewSoundFile' => 'Új hangfájl hozzáadása',
+    'sf_AudioFileLoadError' => 'Hiba az audiofájl betöltése során',
     'sf_ColumnFile' => 'Név',
     'sf_ColumnPlayer' => 'Játékos',
     'sf_CustomSounds' => 'Audio fájlok',

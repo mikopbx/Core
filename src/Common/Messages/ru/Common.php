@@ -786,6 +786,7 @@ return [
     // SF
     'sf_AddNewAudioFile' => 'Добавить новый аудиофайл',
     'sf_AddNewSoundFile' => 'Добавить новый звуковой файл',
+    'sf_AudioFileLoadError' => 'Ошибка при загрузке аудио файла',
     'sf_ColumnFile' => 'Имя',
     'sf_ColumnPlayer' => 'Плеер',
     'sf_CustomSounds' => 'Аудиофайлы',

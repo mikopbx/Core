@@ -641,6 +641,7 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     // SF
     'sf_AddNewAudioFile' => 'Thêm tệp âm thanh mới',
     'sf_AddNewSoundFile' => 'Thêm tập tin âm thanh mới',
+    'sf_AudioFileLoadError' => 'Lỗi khi tải tệp âm thanh',
     'sf_ColumnFile' => 'Tên',
     'sf_ColumnPlayer' => 'Máy nghe nhạc',
     'sf_CustomSounds' => 'Tập tin âm thanh',

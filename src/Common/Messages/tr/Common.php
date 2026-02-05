@@ -641,6 +641,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     // SF
     'sf_AddNewAudioFile' => 'Yeni ses dosyası ekle',
     'sf_AddNewSoundFile' => 'Yeni ses dosyası ekle',
+    'sf_AudioFileLoadError' => 'Ses dosyası yüklenirken hata oluştu',
     'sf_ColumnFile' => 'İlk isim',
     'sf_ColumnPlayer' => 'oyuncu',
     'sf_CustomSounds' => 'Ses dosyaları',

@@ -641,6 +641,7 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     // SF
     'sf_AddNewAudioFile' => 'Dodaj novu audio datoteku',
     'sf_AddNewSoundFile' => 'Dodajte novu zvučnu datoteku',
+    'sf_AudioFileLoadError' => 'Greška pri učitavanju audio datoteke',
     'sf_ColumnFile' => 'Ime',
     'sf_ColumnPlayer' => 'Igrač',
     'sf_CustomSounds' => 'Audio datoteke',

@@ -608,6 +608,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'sd_offset' => 'Offset',
     'sf_AddNewAudioFile' => 'Lägg till ny ljudfil',
     'sf_AddNewSoundFile' => 'Lägg till ny ljudfil',
+    'sf_AudioFileLoadError' => 'Fel vid laddning av ljudfil',
     'sf_ColumnFile' => 'Förnamn',
     'sf_ColumnPlayer' => 'spelare',
     'sf_CustomSounds' => 'Ljudfiler',

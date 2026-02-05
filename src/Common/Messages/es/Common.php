@@ -569,6 +569,7 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'sd_offset' => 'Compensar',
     // SF
     'sf_AddNewSoundFile' => 'Agregar nuevo archivo de sonido',
+    'sf_AudioFileLoadError' => 'Error al cargar el archivo de audio',
     'sf_ColumnFile' => 'Nombre',
     'sf_ColumnPlayer' => 'Jugador',
     'sf_CustomSounds' => 'Archivos de sonido',

@@ -641,6 +641,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     // SF
     'sf_AddNewAudioFile' => 'Ajouter un nouveau fichier audio',
     'sf_AddNewSoundFile' => 'Ajouter un nouveau fichier son',
+    'sf_AudioFileLoadError' => 'Erreur lors du chargement du fichier audio',
     'sf_ColumnFile' => 'Prénom',
     'sf_ColumnPlayer' => 'Joueur',
     'sf_CustomSounds' => 'Fichiers audio',
@@ -882,7 +883,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'sd_Info' => 'Information',
     'adv_DockerVolumePermissionIssues' => 'Des problèmes d\'autorisation de volume Docker ont été détectés. Le conteneur ne peut pas écrire dans les répertoires montés. Redémarrez le conteneur avec les variables d\'environnement suivantes : `-e ID_WWW_USER="$(id -u)" -e ID_WWW_GROUP="$(id -g)"`.',
     'adv_S3ConnectionFailed' => 'Échec de la connexion au stockage S3. Vérifiez les paramètres de connexion sur la page \"Stockage → S3\".',
-    'adv_S3ClientInitializationFailed' => 'Échec de l'initialisation du client S3. Vérifiez les paramètres sur la page "Stockage → S3".',
+    'adv_S3ClientInitializationFailed' => 'Échec de l\'initialisation du client S3. Vérifiez les paramètres sur la page "Stockage → S3".',
     'adv_S3CheckUnexpectedError' => 'Erreur inattendue lors de la vérification S3 : %error%',
     'am_EventFilterDescription' => 'Spécifiez les modèles de filtrage des événements AMI (un par ligne). Utilisez le préfixe « ! » pour exclure des événements. Exemples : « !Event: Newexten » (exclure), « Event: QueueMemberStatus » (autoriser).',
     'am_EventFilterTooltip_desc' => 'Le filtre d\'événements vous permet de contrôler quels événements de l\'interface Asterisk Manager sont envoyés à l\'application. Cela contribue à réduire la charge réseau et à simplifier le traitement des événements.',

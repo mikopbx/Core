@@ -667,6 +667,7 @@ You can get a new key automatically by filling out the registration form.<br>',
     // SF
     'sf_AddNewAudioFile' => 'Add new audio file',
     'sf_AddNewSoundFile' => 'Add new sound file',
+    'sf_AudioFileLoadError' => 'Error loading audio file',
     'sf_ColumnFile' => 'Name',
     'sf_ColumnPlayer' => 'Player',
     'sf_CustomSounds' => 'Audio files',
