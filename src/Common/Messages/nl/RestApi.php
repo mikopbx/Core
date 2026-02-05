@@ -2279,6 +2279,8 @@ return [
     'rest_schema_stg_label' => 'Volumelabel',
     'rest_param_ext_search' => 'Zoekbalk',
     'rest_S3LocalRetentionMustBeLess' => 'De lokale bewaartermijn (%local% dagen) moet korter zijn dan de totale bewaartermijn (%total% dagen).',
+    'rest_err_s3_connection_failed' => 'S3-verbinding mislukt. Controleer referenties en instellingen in diagnostische details.',
+
     'rest_s3_StatsDesc' => 'Geeft gedetailleerde synchronisatiestatistieken van S3-cloudopslag weer: aantal bestanden in S3 en lokaal, totale grootte, synchronisatiepercentage, status (gesynchroniseerd/synchroniserend/in behandeling/uitgeschakeld), tijdstip van laatste upload en datum van het oudste bestand in behandeling.',
     'rest_s3_Stats' => 'S3-synchronisatiestatistieken ophalen',
     // ============================================================================

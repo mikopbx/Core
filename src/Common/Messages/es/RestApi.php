@@ -1541,6 +1541,8 @@ return [
     // ============================================================================
     'rest_password' => 'Contraseña',
     'rest_S3LocalRetentionMustBeLess' => 'El período de retención local (%local% días) debe ser menor que el período de retención total (%total% días)',
+    'rest_err_s3_connection_failed' => 'Fallo en la conexión S3. Verifique las credenciales y la configuración en los detalles de diagnóstico.',
+
     'rest_Sysinfo_ApiDescription' => 'Un recurso de información y diagnóstico del sistema único. Proporciona información detallada sobre hardware, configuración de red, plataforma de virtualización y datos DMI. Una interfaz de solo lectura para la monitorización y resolución de problemas del sistema.',
     'rest_Syslog_ApiDescription' => 'Herramientas de gestión y diagnóstico de registros del sistema. Proporciona acceso a registros del sistema, filtrado de registros, captura de paquetes de red y generación de archivos. Esencial para la resolución de problemas y la monitorización del sistema.',
     'rest_System_ApiDescription' => 'Un recurso de gestión único para todo el sistema. Ofrece administración de energía (reinicio, apagado), monitoreo del estado (ping, checkAuth), operaciones de fecha y hora, configuración de idioma, conversión de audio, actualizaciones del sistema y restablecimiento de fábrica.',

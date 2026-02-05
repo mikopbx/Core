@@ -2249,6 +2249,8 @@ return [
     'rest_ivr_Update' => '更新 IVR 菜单',
     'rest_param_emp_email' => '员工电子邮件地址',
     'rest_S3LocalRetentionMustBeLess' => '本地保留期限（%local% 天）必须小于总保留期限（%total% 天）',
+    'rest_err_s3_connection_failed' => 'S3 连接失败。请在诊断详细信息中检查凭据和设置。',
+
     'rest_System_ApiDescription' => '一个单例系统级管理资源。提供电源管理（重启、关机）、健康监控（ping、checkAuth）、日期/时间操作、语言设置、音频转换、系统更新和恢复出厂设置等功能。',
     'rest_UserPageTracker_ApiDescription' => '跟踪用户在管理界面页面上的活动。记录页面浏览和退出情况，以追踪当前哪些管理员正在查看哪些页面。这用于会话管理、活动监控以及防止同时编辑时发生冲突。',
     'rest_Users_ApiDescription' => '用户账户管理，用于访问管理界面。支持完整的 CRUD 操作，以及用于检查电子邮件可用性的自定义方法。用户可以在管理界面进行身份验证，并进行个性化设置，例如语言和头像。',

@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\S3Storage;
 
 use MikoPBX\Common\Models\StorageSettings;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Storage\S3Client;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
@@ -126,12 +127,13 @@ class TestS3ConnectionAction
                 $res->httpCode = 200; // Not a server error, but connection test failure
                 $res->data = [
                     'status' => 'failed',
-                    'message' => $testResult['message'],
+                    'message' => $testResult['message'], // Technical details for diagnostics
                     'endpoint' => $settings->s3_endpoint,
                     'bucket' => $settings->s3_bucket,
                     'region' => $settings->s3_region ?? 'us-east-1'
                 ];
-                $res->messages['error'][] = $testResult['message'];
+                // Short user-friendly message for UI
+                $res->messages['error'][] = TranslationProvider::translate('rest_err_s3_connection_failed');
             }
 
         } catch (\Exception $e) {

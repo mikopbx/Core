@@ -2246,6 +2246,8 @@ return [
     // ============================================================================
     'Call Queues' => 'Sorban',
     'rest_S3LocalRetentionMustBeLess' => 'A helyi megőrzési időszaknak (%local% nap) rövidebbnek kell lennie, mint a teljes megőrzési időszaknak (%total% nap).',
+    'rest_err_s3_connection_failed' => 'S3 kapcsolat sikertelen. Ellenőrizze a hitelesítő adatokat és a beállításokat a diagnosztikai részletekben.',
+
     'IVR Menu' => 'IVR menü',
     'Network' => 'Hálózati interfész',
     'rest_ir_ChangePriority' => 'Útvonal prioritásának módosítása',

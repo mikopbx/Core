@@ -2251,6 +2251,8 @@ return [
     'rest_schema_s3_endpoint' => 'URL til et S3-kompatibelt slutpunkt (AWS S3, MinIO, Wasabi osv.)',
     'rest_schema_s3_region' => 'AWS-region eller tilsvarende S3-serviceregions-ID',
     'rest_S3LocalRetentionMustBeLess' => 'Den lokale opbevaringsperiode (%local% dage) skal være kortere end den samlede opbevaringsperiode (%total% dage)',
+    'rest_err_s3_connection_failed' => 'S3-forbindelse mislykkedes. Kontroller legitimationsoplysninger og indstillinger i diagnostiske detaljer.',
+
     'rest_s3_GetRecord' => 'Hent S3-lagerkonfiguration',
     'rest_s3_GetRecordDesc' => 'Hent den aktuelle S3-lagerkonfiguration, inklusive aktiveringsstatus, slutpunkts-URL, bucketnavn, region og indstillinger for opbevaring af poster til cloud-arkivering.',
     'rest_s3_Update' => 'Opdater S3-lagerkonfiguration',

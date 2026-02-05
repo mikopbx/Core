@@ -1160,6 +1160,8 @@ return [
     'rest_schema_ts_ntp_server' => 'Zaman senkronizasyonu için NTP sunucu adresi',
     'rest_file_Delete' => 'Dosyayı sil',
     'rest_S3LocalRetentionMustBeLess' => 'Yerel saklama süresi (%yerel% gün), toplam saklama süresinden (%toplam% gün) daha kısa olmalıdır.',
+    'rest_err_s3_connection_failed' => 'S3 bağlantısı başarısız oldu. Kimlik bilgilerini ve ayarları tanı ayrıntılarında kontrol edin.',
+
     'rest_Sysinfo_ApiDescription' => 'Tekil bir sistem bilgi ve teşhis kaynağı. Donanım, ağ yapılandırması, sanallaştırma platformu ve DMI verileri hakkında ayrıntılı bilgi sağlar. Sistem izleme ve sorun giderme için salt okunur bir arayüzdür.',
     'rest_Syslog_ApiDescription' => 'Sistem günlük yönetimi ve teşhis araçları. Sistem günlüklerine erişim, günlük filtreleme, ağ paketi yakalama ve arşiv oluşturma imkanı sağlar. Sorun giderme ve sistem izleme için vazgeçilmezdir.',
     'rest_System_ApiDescription' => 'Tekil bir sistem genelinde yönetim kaynağı. Güç yönetimi (yeniden başlatma, kapatma), sağlık izleme (ping, checkAuth), tarih/saat işlemleri, dil ayarları, ses dönüştürme, sistem güncellemeleri ve fabrika ayarlarına sıfırlama sağlar.',

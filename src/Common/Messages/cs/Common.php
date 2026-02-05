@@ -926,8 +926,8 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'sf_ConvertErrorDetails' => 'Nepodařilo se převést soubor. Soubor může být poškozený nebo v nepodporovaném formátu.',
     'st_Days' => 'dny',
     'adv_S3EnabledButNotConfigured' => 'Úložiště S3 je povoleno, ale není nakonfigurováno. Zkontrolujte nastavení S3.',
-    'adv_S3ConnectionFailed' => 'Chyba připojení úložiště S3: %error%. Koncový bod: %endpoint%, Kontejner: %bucket%',
-    'adv_S3ClientInitializationFailed' => 'Nepodařilo se inicializovat klienta S3: %error%. Koncový bod: %endpoint%',
+    'adv_S3ConnectionFailed' => 'Připojení k úložišti S3 se nezdařilo. Zkontrolujte nastavení připojení na stránce \"Úložiště → S3\".',
+    'adv_S3ClientInitializationFailed' => 'Inicializace klienta S3 se nezdařila. Zkontrolujte nastavení na stránce \"Úložiště → S3\".',
     'adv_S3CheckUnexpectedError' => 'Neočekávaná kontrola chyb S3: %error%',
     // CDR UI Translations (for search and pagination)
     'cdr_EnterSearchPhrase' => 'Zadejte podrobnosti vyhledávání',

@@ -2130,6 +2130,8 @@ return [
     'rest_schema_s3_endpoint' => 'S3 ilə uyğun son nöqtənin URL-i (AWS S3, MinIO, Wasabi və s.)',
     'rest_param_s3_secret_key' => 'Doğrulama üçün S3 gizli giriş açarı (şifrələnəcək)',
     'rest_S3LocalRetentionMustBeLess' => 'Yerli saxlama müddəti (%yerli% günlər) ümumi saxlama müddətindən (%cəmi% günlər) az olmalıdır.',
+    'rest_err_s3_connection_failed' => 'S3 bağlantısı uğursuz oldu. Diaqnostika təfərrüatlarında etimadnamələri və parametrləri yoxlayın.',
+
     'Extensions' => 'İşçi',
     'Files' => 'Fayl',
     'CDR' => 'CDR qeydi',

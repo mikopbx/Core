@@ -1476,6 +1476,8 @@ return [
     // ============================================================================
     'rest_users_Available' => 'Verificar disponibilidade de e-mail',
     'rest_S3LocalRetentionMustBeLess' => 'O período de retenção local (%local% dias) deve ser menor que o período de retenção total (%total% dias).',
+    'rest_err_s3_connection_failed' => 'Falha na conexão S3. Verifique as credenciais e configurações nos detalhes de diagnóstico.',
+
     'rest_Sysinfo_ApiDescription' => 'Um recurso de sistema único para informações e diagnósticos. Fornece informações detalhadas sobre hardware, configuração de rede, plataforma de virtualização e dados DMI. Uma interface somente leitura para monitoramento e solução de problemas do sistema.',
     'rest_Syslog_ApiDescription' => 'Ferramentas de gerenciamento e diagnóstico de logs do sistema. Fornece acesso a logs do sistema, filtragem de logs, captura de pacotes de rede e geração de arquivos. Essencial para solução de problemas e monitoramento do sistema.',
     'rest_System_ApiDescription' => 'Um recurso de gerenciamento de sistema único. Fornece gerenciamento de energia (reinicialização, desligamento), monitoramento de integridade (ping, verificação de autenticação), operações de data/hora, configurações de idioma, conversão de áudio, atualizações do sistema e restauração de fábrica.',

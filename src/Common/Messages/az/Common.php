@@ -935,8 +935,8 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'st_Day' => 'gün',
     'st_Days' => 'günlər',
     'adv_S3EnabledButNotConfigured' => 'S3 yaddaşı aktivdir, lakin konfiqurasiya edilməyib. S3 parametrlərinizi yoxlayın.',
-    'adv_S3ConnectionFailed' => 'S3 Yaddaş Bağlantısı Xətası: %error%. Son Nöqtə: %endpoint%, Vedrə: %bucket%',
-    'adv_S3ClientInitializationFailed' => 'S3 klientini işə salmaq alınmadı: %error%. Son nöqtə: %endpoint%',
+    'adv_S3ConnectionFailed' => 'S3 saxlama bağlantısı uğursuz oldu. \"Saxlama → S3\" səhifəsində bağlantı parametrlərini yoxlayın.',
+    'adv_S3ClientInitializationFailed' => 'S3 müştərisini işə salmaq mümkün olmadı. \"Saxlama → S3\" səhifəsindəki parametrləri yoxlayın.',
     'adv_S3CheckUnexpectedError' => 'S3 yoxlamasında gözlənilməz xəta: %error%',
     'cdr_DeleteRecord' => 'Söhbət qeydini silin',
     // CDR UI Translations (for search and pagination)

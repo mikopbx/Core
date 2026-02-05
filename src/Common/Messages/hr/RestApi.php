@@ -720,6 +720,8 @@ return [
     'rest_owt_CopyDesc' => 'Izradi kopiju postojećeg privremenog stanja',
     'rest_advice_RefreshDesc' => 'Prisilno osvježavanje predmemorije obavijesti sustava i ponovna analiza',
     'rest_S3LocalRetentionMustBeLess' => 'Lokalno razdoblje zadržavanja (%local% dana) mora biti kraće od ukupnog razdoblja zadržavanja (%total% dana)',
+    'rest_err_s3_connection_failed' => 'S3 veza nije uspjela. Provjerite vjerodajnice i postavke u dijagnostičkim detaljima.',
+
     'rest_Syslog_ApiDescription' => 'Alati za upravljanje sistemskim zapisnicima i dijagnostiku. Omogućuje pristup sistemskim zapisnicima, filtriranje zapisnika, snimanje mrežnih paketa i generiranje arhive. Neophodno za rješavanje problema i nadzor sustava.',
     'rest_System_ApiDescription' => 'Resursi za upravljanje cijelim sustavom s jednim tonom. Pruža upravljanje napajanjem (ponovno pokretanje, isključivanje), praćenje ispravnosti (ping, checkAuth), operacije s datumom/vremenom, postavke jezika, pretvorbu zvuka, ažuriranja sustava i vraćanje na tvorničke postavke.',
     'rest_Users_ApiDescription' => 'Upravljanje korisničkim računima za pristup administratorskom sučelju. Podržava potpune CRUD operacije plus prilagođene metode za provjeru dostupnosti e-pošte. Korisnici se mogu autentificirati u administratorskom sučelju i imati personalizirane postavke, kao što su jezik i avatar.',

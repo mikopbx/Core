@@ -2179,6 +2179,8 @@ return [
     'rest_schema_provider_cid_parser_start' => 'Startzeichen für die Anrufer-ID-Extraktion',
     'rest_schema_provider_port' => 'Verbindungsport zum Anbieter',
     'rest_S3LocalRetentionMustBeLess' => 'Die lokale Aufbewahrungsfrist (%lokal% Tage) muss kürzer sein als die gesamte Aufbewahrungsfrist (%gesamt% Tage).',
+    'rest_err_s3_connection_failed' => 'S3-Verbindung fehlgeschlagen. Überprüfen Sie Anmeldedaten und Einstellungen in den Diagnosedetails.',
+
     'rest_Sysinfo_ApiDescription' => 'Eine zentrale Systeminformations- und Diagnoseressource. Sie liefert detaillierte Informationen zu Hardware, Netzwerkkonfiguration, Virtualisierungsplattform und DMI-Daten. Eine schreibgeschützte Schnittstelle dient der Systemüberwachung und Fehlerbehebung.',
     'rest_pvd_GetStatuses' => 'Den Status aller Anbieter abrufen',
     'rest_obr_PatchDesc' => 'Aktualisieren Sie nur die angegebenen ausgehenden Routenparameter.',

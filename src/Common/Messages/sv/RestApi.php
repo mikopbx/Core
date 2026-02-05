@@ -1383,6 +1383,8 @@ return [
     // ============================================================================
     'rest_users_Available' => 'Kontrollera tillgängligheten för e-postmeddelanden',
     'rest_S3LocalRetentionMustBeLess' => 'Den lokala lagringsperioden (%local% dagar) måste vara kortare än den totala lagringsperioden (%total% dagar)',
+    'rest_err_s3_connection_failed' => 'S3-anslutning misslyckades. Kontrollera inloggningsuppgifter och inställningar i diagnostikdetaljer.',
+
     'rest_Sysinfo_ApiDescription' => 'En resurs för systeminformation och diagnostik för enskilda enheter. Ger detaljerad information om hårdvara, nätverkskonfiguration, virtualiseringsplattform och DMI-data. Ett skrivskyddat gränssnitt för systemövervakning och felsökning.',
     'rest_Syslog_ApiDescription' => 'Verktyg för systemlogghantering och diagnostik. Ger åtkomst till systemloggar, loggfiltrering, nätverkspaketinsamling och arkivgenerering. Viktigt för felsökning och systemövervakning.',
     'rest_System_ApiDescription' => 'En systemomfattande hanteringsresurs för hela systemet. Tillhandahåller energisparfunktioner (omstart, avstängning), hälsoövervakning (ping, checkAuth), datum-/tidsåtgärder, språkinställningar, ljudkonvertering, systemuppdateringar och fabriksåterställning.',

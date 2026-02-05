@@ -2170,6 +2170,8 @@ return [
     'rest_schema_s3_enabled' => 'Stav povolení úložiště S3 (0=zakázáno, 1=povoleno)',
     'rest_schema_s3_endpoint' => 'URL adresa koncového bodu kompatibilního s S3 (AWS S3, MinIO, Wasabi atd.)',
     'rest_S3LocalRetentionMustBeLess' => 'Lokální doba uchování (%local% dní) musí být kratší než celková doba uchování (%total% dní)',
+    'rest_err_s3_connection_failed' => 'Připojení S3 se nezdařilo. Zkontrolujte přihlašovací údaje a nastavení v diagnostických podrobnostech.',
+
     'Fail2Ban' => 'Nastavení Fail2Ban',
     'Custom Files' => 'Úprava systémových souborů',
     'Mail Settings' => 'Nastavení pošty',

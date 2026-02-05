@@ -85,11 +85,7 @@ class CheckS3Connection extends Injectable
                     // S3 connection failed - critical issue
                     $messages['error'][] = [
                         'messageTpl' => 'adv_S3ConnectionFailed',
-                        'messageParams' => [
-                            'error' => $testResult['message'],
-                            'endpoint' => $settings->s3_endpoint ?? 'N/A',
-                            'bucket' => $settings->s3_bucket ?? 'N/A'
-                        ]
+                        'messageParams' => []
                     ];
                 }
 
@@ -97,10 +93,7 @@ class CheckS3Connection extends Injectable
                 // S3 client initialization failed
                 $messages['error'][] = [
                     'messageTpl' => 'adv_S3ClientInitializationFailed',
-                    'messageParams' => [
-                        'error' => $e->getMessage(),
-                        'endpoint' => $settings->s3_endpoint ?? 'N/A'
-                    ]
+                    'messageParams' => []
                 ];
             }
 

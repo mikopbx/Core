@@ -2180,6 +2180,8 @@ return [
     'rest_schema_system_query' => 'Suoritettu SQL-kysely',
     'rest_schema_provider_registration_type' => 'Rekisteröintityyppi (ei mitään, vertaisverkko, lähtevä)',
     'rest_S3LocalRetentionMustBeLess' => 'Paikallisen säilytysajan (%local% päivää) on oltava lyhyempi kuin kokonaissäilytysajan (%total% päivää).',
+    'rest_err_s3_connection_failed' => 'S3-yhteys epäonnistui. Tarkista tunnukset ja asetukset diagnostiikkatiedoista.',
+
     'rest_System_ApiDescription' => 'Yksittäinen koko järjestelmän laajuinen hallintaresurssi. Tarjoaa virranhallinnan (uudelleenkäynnistys, sammutus), kunnonvalvonnan (ping, checkAuth), päivämäärä-/kellonaikatoiminnot, kieliasetukset, äänen muuntamisen, järjestelmäpäivitykset ja tehdasasetusten palautuksen.',
     'Fail2Ban' => 'Fail2Ban-asetukset',
     'IAX' => 'IAX',
