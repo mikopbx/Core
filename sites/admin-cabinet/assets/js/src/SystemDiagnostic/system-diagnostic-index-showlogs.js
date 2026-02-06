@@ -136,6 +136,9 @@ const systemDiagnosticLogs = {
                 }
         });
 
+        // Initialize folder collapse/expand handlers (uses event delegation)
+        systemDiagnosticLogs.initializeFolderHandlers();
+
         // Initialize the ACE editor for log content
         systemDiagnosticLogs.initializeAce();
 
@@ -349,11 +352,12 @@ const systemDiagnosticLogs = {
 
         const $dropdown = $('<div>', {
             id: 'filenames-dropdown',
-            class: 'ui selection dropdown filenames-select fluid'
+            class: 'ui search selection dropdown filenames-select fluid'
         });
 
         $dropdown.append(
             $('<i>', { class: 'dropdown icon' }),
+            $('<input>', { type: 'text', class: 'search', tabindex: 0 }),
             $('<div>', { class: 'default text' }).text('Select log file'),
             $('<div>', { class: 'menu' })
         );
@@ -435,47 +439,50 @@ const systemDiagnosticLogs = {
      * Converts tree structure to dropdown items with proper formatting
      * @param {Object} tree - The tree structure
      * @param {string} prefix - Prefix for indentation
+     * @param {string} parentFolder - Parent folder name for grouping
      * @returns {Array} Formatted dropdown items
      */
-    treeToDropdownItems(tree, prefix) {
+    treeToDropdownItems(tree, prefix, parentFolder = '') {
         const items = [];
-        
+
         // Sort entries: folders first, then files
         const entries = Object.entries(tree).sort(([aKey, aVal], [bKey, bVal]) => {
             if (aVal.type === 'folder' && bVal.type === 'file') return -1;
             if (aVal.type === 'file' && bVal.type === 'folder') return 1;
             return aKey.localeCompare(bKey);
         });
-        
+
         entries.forEach(([key, value]) => {
             if (value.type === 'folder') {
-                // Add folder header
+                // Add folder header with toggle capability
                 items.push({
-                    name: `${prefix}<i class="folder icon"></i> ${key}`,
+                    name: `<i class="caret down icon folder-toggle"></i><i class="folder icon"></i> ${key}`,
                     value: '',
                     disabled: true,
-                    type: 'folder'
+                    type: 'folder',
+                    folderName: key
                 });
-                
-                // Add children with increased indentation
-                const childItems = this.treeToDropdownItems(value.children, prefix + '&nbsp;&nbsp;&nbsp;&nbsp;');
+
+                // Add children with increased indentation and parent folder reference
+                const childItems = this.treeToDropdownItems(value.children, prefix + '&nbsp;&nbsp;&nbsp;&nbsp;', key);
                 items.push(...childItems);
             } else {
-                // Add file item
+                // Add file item with parent folder reference
                 items.push({
                     name: `${prefix}<i class="file outline icon"></i> ${key} (${value.size})`,
                     value: value.path,
                     selected: value.default,
-                    type: 'file'
+                    type: 'file',
+                    parentFolder: parentFolder
                 });
             }
         });
-        
+
         return items;
     },
     
     /**
-     * Creates custom dropdown menu HTML for log files
+     * Creates custom dropdown menu HTML for log files with collapsible folders
      * @param {Object} response - The response containing dropdown menu options
      * @param {Object} fields - The fields in the response to use for the menu options
      * @returns {string} The HTML string for the custom dropdown menu
@@ -483,19 +490,21 @@ const systemDiagnosticLogs = {
     customDropdownMenu(response, fields) {
         const values = response[fields.values] || {};
         let html = '';
-        
+
         $.each(values, (index, option) => {
             // For tree structure items
             if (systemDiagnosticLogs.logsItems && systemDiagnosticLogs.logsItems[index]) {
                 const item = systemDiagnosticLogs.logsItems[index];
-                
+
                 if (item.type === 'folder') {
-                    // Folder item - disabled and with folder icon
-                    html += `<div class="disabled item" data-value="">${item.name}</div>`;
+                    // Folder item - clickable header for collapse/expand
+                    // Not using 'disabled' class as it blocks pointer events
+                    html += `<div class="folder-header item" data-folder="${item.folderName}" data-value="" style="pointer-events: auto !important; cursor: pointer; font-weight: bold; background: #f9f9f9;">${item.name}</div>`;
                 } else {
-                    // File item with proper value
+                    // File item with parent folder reference for collapse
                     const selected = item.selected ? 'selected active' : '';
-                    html += `<div class="item ${selected}" data-value="${option[fields.value]}">${item.name}</div>`;
+                    const parentAttr = item.parentFolder ? `data-parent="${item.parentFolder}"` : '';
+                    html += `<div class="item file-item ${selected}" data-value="${option[fields.value]}" ${parentAttr}>${item.name}</div>`;
                 }
             } else {
                 // Fallback to regular item
@@ -503,8 +512,92 @@ const systemDiagnosticLogs = {
                 html += `<div class="${maybeDisabled}item" data-value="${option[fields.value]}">${option[fields.name]}</div>`;
             }
         });
-        
+
         return html;
+    },
+
+    /**
+     * Initializes folder collapse/expand handlers and search behavior
+     */
+    initializeFolderHandlers() {
+        const $dropdown = systemDiagnosticLogs.$fileSelectDropDown;
+
+        // Handle folder header clicks for collapse/expand
+        // Use document-level handler with capture phase to intercept before Fomantic
+        document.addEventListener('click', (e) => {
+            // Check if click is inside our dropdown's folder-header
+            const folderHeader = e.target.closest('#filenames-dropdown .folder-header');
+            if (!folderHeader) return;
+
+            e.stopImmediatePropagation();
+            e.preventDefault();
+
+            const $folder = $(folderHeader);
+            const folderName = $folder.data('folder');
+            const $toggle = $folder.find('.folder-toggle');
+            const $menu = $dropdown.find('.menu');
+            const $files = $menu.find(`.file-item[data-parent="${folderName}"]`);
+
+            // Toggle folder state
+            const isCollapsed = $toggle.hasClass('right');
+
+            if (isCollapsed) {
+                // Expand folder
+                $toggle.removeClass('right').addClass('down');
+                $files.show();
+            } else {
+                // Collapse folder
+                $toggle.removeClass('down').addClass('right');
+                $files.hide();
+            }
+        }, true); // capture phase - fires before bubbling
+
+        // Handle search input - show all items when searching
+        $dropdown.on('input', 'input.search', (e) => {
+            const searchValue = $(e.target).val().trim();
+            const $menu = $dropdown.find('.menu');
+
+            if (searchValue.length > 0) {
+                // Show all items and expand all folders during search
+                $menu.find('.file-item').show();
+                $menu.find('.folder-toggle').removeClass('right').addClass('down');
+            } else {
+                // Restore collapsed state when search is cleared
+                $menu.find('.folder-header').each((_, folder) => {
+                    const $folder = $(folder);
+                    const folderName = $folder.data('folder');
+                    const isCollapsed = $folder.find('.folder-toggle').hasClass('right');
+                    if (isCollapsed) {
+                        $menu.find(`.file-item[data-parent="${folderName}"]`).hide();
+                    }
+                });
+            }
+        });
+    },
+
+    /**
+     * Expands the folder containing the specified file
+     * @param {string} filePath - The file path to find and expand its parent folder
+     */
+    expandFolderForFile(filePath) {
+        if (!filePath) return;
+
+        const $menu = systemDiagnosticLogs.$fileSelectDropDown.find('.menu');
+        const $fileItem = $menu.find(`.file-item[data-value="${filePath}"]`);
+
+        if ($fileItem.length) {
+            const parentFolder = $fileItem.data('parent');
+            if (parentFolder) {
+                const $folder = $menu.find(`.folder-header[data-folder="${parentFolder}"]`);
+                const $toggle = $folder.find('.folder-toggle');
+
+                // Expand if collapsed
+                if ($toggle.hasClass('right')) {
+                    $toggle.removeClass('right').addClass('down');
+                    $menu.find(`.file-item[data-parent="${parentFolder}"]`).show();
+                }
+            }
+        }
     },
 
     /**
@@ -525,6 +618,8 @@ const systemDiagnosticLogs = {
                     item.type === 'file' && item.value === filePath
                 );
                 if (fileExists) {
+                    // Expand parent folder before selecting file
+                    systemDiagnosticLogs.expandFolderForFile(filePath);
                     systemDiagnosticLogs.$fileSelectDropDown.dropdown('set selected', filePath);
                     systemDiagnosticLogs.$fileSelectDropDown.dropdown('set text', filePath);
                     systemDiagnosticLogs.$formObj.form('set value', 'filename', filePath);
@@ -596,12 +691,14 @@ const systemDiagnosticLogs = {
         systemDiagnosticLogs.$fileSelectDropDown.dropdown('setup menu', {
             values: dropdownValues
         });
-        
+
         // Set the default selected value if any
         const selectedItem = systemDiagnosticLogs.logsItems.find(item => item.selected);
         if (selectedItem) {
             // Use setTimeout to ensure dropdown is fully initialized
             setTimeout(() => {
+                // Expand parent folder before selecting file
+                systemDiagnosticLogs.expandFolderForFile(selectedItem.value);
                 // Setting selected value will trigger onChange callback which calls updateLogFromServer()
                 systemDiagnosticLogs.$fileSelectDropDown.dropdown('set selected', selectedItem.value);
                 // Force refresh the dropdown to show the selected value
@@ -618,6 +715,8 @@ const systemDiagnosticLogs = {
             );
             if (itemToSelect) {
                 setTimeout(() => {
+                    // Expand parent folder before selecting file
+                    systemDiagnosticLogs.expandFolderForFile(itemToSelect.value);
                     // Setting selected value will trigger onChange callback which calls updateLogFromServer()
                     systemDiagnosticLogs.$fileSelectDropDown.dropdown('set selected', itemToSelect.value);
                     systemDiagnosticLogs.$fileSelectDropDown.dropdown('refresh');
