@@ -27,6 +27,7 @@ use Exception;
  *
  * Supports multiple timestamp formats:
  * - Asterisk logs: [2025-10-09 08:21:05]
+ * - PHP error logs: [26-Jan-2025 15:59:15 Europe/Moscow]
  * - Fail2ban logs: 2025-10-09 08:25:07,139
  * - System logs: 2025-10-09 08:38:36
  * - Nginx access logs: [2025-10-09T08:38:22+03:00]
@@ -44,6 +45,11 @@ class LogTimestampParser
         'asterisk' => [
             'regex' => '/^\[(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\]/',
             'format' => 'Y-m-d H:i:s',
+        ],
+        // PHP error log format: [26-Jan-2025 15:59:15 Europe/Moscow]
+        'php_error' => [
+            'regex' => '/^\[(\d{1,2}-[A-Za-z]{3}-\d{4}\s+\d{2}:\d{2}:\d{2})\s+[^\]]+\]/',
+            'format' => 'd-M-Y H:i:s',
         ],
         // Fail2ban format: 2025-10-09 08:25:07,139
         'fail2ban' => [
