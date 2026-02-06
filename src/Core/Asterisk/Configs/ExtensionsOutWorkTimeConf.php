@@ -57,7 +57,9 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         /** @var OutWorkTimes $rule */
         $rules = OutWorkTimes::find();
         foreach ($rules as $rule) {
-            if (empty($rule->calType)) {
+            // Only CalDAV calendars should be in calendar.conf
+            // Other calType values (empty, 'timeframe', 'ical') are not used with res_calendar
+            if ($rule->calType !== OutWorkTimes::CAL_TYPE_CALDAV) {
                 continue;
             }
             $config .= "[calendar-$rule->id]" . PHP_EOL .
