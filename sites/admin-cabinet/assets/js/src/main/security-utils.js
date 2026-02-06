@@ -222,39 +222,60 @@ window.SecurityUtils = {
         if (!text) return '';
         
         // Comprehensive whitelist for all MikoPBX object types
+        // Synchronized with RecordRepresentationTrait.php icon classes
         const allowedIconClasses = [
             // Extension icons
             'phone volume icon',
-            'php icon', 
+            'php icon',
             'sitemap icon',
             'users icon',
             'cogs icon',
             'user outline icon',
             'icons', // Container for multiple icons
             'top right corner alternate mobile icon',
-            
+
+            // Module icons
+            'puzzle piece icon',
+
+            // API & Manager icons
+            'key icon',
+            'asterisk icon',
+
+            // File icons
+            'file icon',
+
+            // Routing icons
+            'map signs icon',
+            'random icon',
+
+            // Schedule/time icons
+            'time icon',
+            'icon outline calendar alternate',
+            'icon outline calendar minus',
+            'icon clock outline',
+
             // Network filter icons
             'globe icon',
             'home icon',
-            'shield alternate icon', 
+            'shield alternate icon',
             'ban icon',
-            
+
             // Sound file icons
             'music icon',
             'file audio icon',
             'file audio outline icon',
             'sound icon',
-            
+
             // Call queue icons
             'call icon',
             'phone icon',
             'headphones icon',
-            
+
             // Provider icons
             'server icon',
             'cloud icon',
             'plug icon',
-            
+
             // System icons
             'settings icon',
             'wrench icon',
