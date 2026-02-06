@@ -164,11 +164,13 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
             if ($ruleData['allowRestriction'] === '1') {
                 $additionalContexts .= 'same => n,ExecIf($["${DIALPLAN_EXISTS(' . $contextId . '-${contextID},${EXTEN},1)}" == "0"]?return)' . PHP_EOL . "\t";
             }
-            if (empty($ruleData['calType'])) {
-                $this->generateOutWorkRule($ruleData, $conf_out_set_var, $additionalContexts);
-            } else {
+            // CALENDAR_BUSY only works with CalDAV calendars (defined in calendar.conf)
+            // All other calType values use time-based rules via GotoIfTime
+            if ($ruleData['calType'] === OutWorkTimes::CAL_TYPE_CALDAV) {
                 $appdata = $this->initRuleAppData($ruleData, $conf_out_set_var);
                 $additionalContexts .= 'same => n,GotoIf(${CALENDAR_BUSY(calendar-' . $ruleData['id'] . ')}?' . $appdata . ')' . PHP_EOL . "\t";
+            } else {
+                $this->generateOutWorkRule($ruleData, $conf_out_set_var, $additionalContexts);
             }
             $additionalContexts .= 'same => n,return' . PHP_EOL;
             $additionalContexts .= 'exten => _[hit],1,Hangup()' . PHP_EOL;
