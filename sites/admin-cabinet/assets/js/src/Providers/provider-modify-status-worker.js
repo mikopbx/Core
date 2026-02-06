@@ -473,11 +473,14 @@ const providerModifyStatusWorker = {
     loadTimelineData() {
         // Use the appropriate API client based on provider type
         const apiClient = this.providerType === 'sip' ? SipProvidersAPI : IaxProvidersAPI;
-        
+
         // Call getHistory using v3 API
         apiClient.getHistory(this.providerId, (response) => {
-            if (response.result && response.data && response.data.events) {
-                this.renderTimeline(response.data.events);
+            if (response.result && response.data) {
+                // Pass both events and current provider status to timeline
+                const events = response.data.events || [];
+                const currentStatus = response.data.provider || this.statusData;
+                this.renderTimeline(events, currentStatus);
             }
             $('#timeline-loader').removeClass('active');
         });
@@ -486,50 +489,75 @@ const providerModifyStatusWorker = {
     /**
      * Render timeline visualization
      */
-    renderTimeline(events) {
+    renderTimeline(events, currentStatus = null) {
         const $timeline = $('#provider-timeline');
         const $container = $('#provider-timeline-container');
-        
-        if (!$timeline.length || !events || events.length === 0) {
+
+        if (!$timeline.length) {
             return;
         }
-        
+
         // Clear existing timeline
         $timeline.empty();
-        
+
         // Get time range (last 24 hours)
         const now = Math.floor(Date.now() / 1000);
         const dayAgo = now - (24 * 60 * 60);
         const timeRange = 24 * 60 * 60; // 24 hours in seconds
-        
+
         // Group events by time segments (15 minute segments)
         const segmentDuration = 15 * 60; // 15 minutes in seconds
         const segments = Math.ceil(timeRange / segmentDuration);
         const segmentData = new Array(segments).fill(null);
         const segmentEvents = new Array(segments).fill(null).map(() => []);
-        
-        // Process events and store them in segments
-        events.forEach(event => {
-            if (event.timestamp && event.timestamp >= dayAgo) {
-                const segmentIndex = Math.floor((event.timestamp - dayAgo) / segmentDuration);
-                if (segmentIndex >= 0 && segmentIndex < segments) {
-                    // Store event in segment
-                    segmentEvents[segmentIndex].push(event);
-                    
-                    // Prioritize worse states
-                    const currentState = segmentData[segmentIndex];
-                    const newState = this.getStateColor(event.state || event.new_state);
-                    
-                    if (!currentState || this.getStatePriority(newState) > this.getStatePriority(currentState)) {
-                        segmentData[segmentIndex] = newState;
+
+        // Process events and store them in segments if we have any
+        if (events && events.length > 0) {
+            events.forEach(event => {
+                if (event.timestamp && event.timestamp >= dayAgo) {
+                    const segmentIndex = Math.floor((event.timestamp - dayAgo) / segmentDuration);
+                    if (segmentIndex >= 0 && segmentIndex < segments) {
+                        // Store event in segment
+                        segmentEvents[segmentIndex].push(event);
+
+                        // Prioritize worse states
+                        const currentState = segmentData[segmentIndex];
+                        const newState = this.getStateColor(event.state || event.new_state);
+
+                        if (!currentState || this.getStatePriority(newState) > this.getStatePriority(currentState)) {
+                            segmentData[segmentIndex] = newState;
+                        }
                     }
                 }
-            }
-        });
-        
-        // Fill in gaps with last known state
+            });
+        }
+
+        // Determine initial state based on current provider status or default to grey
         let lastKnownState = 'grey';
+        if (currentStatus) {
+            // Use current provider state if available
+            if (currentStatus.stateColor) {
+                lastKnownState = currentStatus.stateColor;
+            } else if (currentStatus.state) {
+                lastKnownState = this.getStateColor(currentStatus.state);
+            } else if (currentStatus.disabled === false) {
+                // Provider is enabled but state unknown - assume registered
+                lastKnownState = 'green';
+            }
+        }
+
+        // Create synthetic current state event for tooltips when no events exist
         let lastKnownEvent = null;
+        if (currentStatus && (!events || events.length === 0)) {
+            lastKnownEvent = {
+                timestamp: now,
+                state: currentStatus.state || 'registered',
+                inherited: true,
+                synthetic: true
+            };
+        }
+
+        // Fill in gaps with last known state
         for (let i = 0; i < segments; i++) {
             if (segmentData[i]) {
                 lastKnownState = segmentData[i];
