@@ -119,14 +119,14 @@ class GetListAction
         $idFrom = isset($data['idFrom']) ? intval($data['idFrom']) : null;
 
         // Filtering parameters
-        $dateFrom = $data['dateFrom'] ?? null;
-        $dateTo = $data['dateTo'] ?? null;
-        $srcNum = $data['src_num'] ?? null;
-        $dstNum = $data['dst_num'] ?? null;
-        $disposition = $data['disposition'] ?? null;
-        $did = $data['did'] ?? null;
-        $linkedid = $data['linkedid'] ?? null;  // Exact linkedid search
-        $search = $data['search'] ?? null;       // Smart search with prefix support
+        $dateFrom = isset($data['dateFrom']) && is_string($data['dateFrom']) ? $data['dateFrom'] : null;
+        $dateTo = isset($data['dateTo']) && is_string($data['dateTo']) ? $data['dateTo'] : null;
+        $srcNum = isset($data['src_num']) && is_string($data['src_num']) ? $data['src_num'] : null;
+        $dstNum = isset($data['dst_num']) && is_string($data['dst_num']) ? $data['dst_num'] : null;
+        $disposition = isset($data['disposition']) && is_string($data['disposition']) ? $data['disposition'] : null;
+        $did = isset($data['did']) && is_string($data['did']) ? $data['did'] : null;
+        $linkedid = isset($data['linkedid']) && is_string($data['linkedid']) ? $data['linkedid'] : null;
+        $search = isset($data['search']) && is_string($data['search']) ? $data['search'] : null;
 
         // Normalize date filters to include time
         // WHY: Database field 'start' contains timestamp, but users provide date-only values
