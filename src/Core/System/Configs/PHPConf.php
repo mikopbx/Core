@@ -25,8 +25,6 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di\Di;
-use Phalcon\Di\Injectable;
 
 /**
  * Class PHPConf
@@ -49,24 +47,6 @@ class PHPConf extends SystemConfigClass
     }
 
     /**
-     * Relocates PHP error log to the storage mount.
-     *
-     * @return void
-     */
-    public static function setupLog(): void
-    {
-        $src_log_file = '/var/log/php_error.log';
-        $dst_log_file = self::getLogFile();
-        if (! file_exists($src_log_file)) {
-            file_put_contents($src_log_file, '');
-        }
-        $options = file_exists($dst_log_file) ? '>' : '';
-        $cat = Util::which('cat');
-        Processes::mwExec("$cat $src_log_file 2> /dev/null >$options $dst_log_file");
-        Util::createUpdateSymlink($dst_log_file, $src_log_file);
-    }
-
-    /**
      * Returns the PHP error log file path.
      *
      * @return string The log file path.
@@ -75,49 +55,40 @@ class PHPConf extends SystemConfigClass
     {
         $logdir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/php';
         Util::mwMkdir($logdir);
-        return "$logdir/error.log";
+        return "$logdir/php-error.log";
     }
 
     /**
-     * Rotates the PHP error log.
+     * Generates the rsyslog configuration for PHP logging.
+     * Creates /etc/rsyslog.d/php.conf to redirect PHP logs to a separate file.
      *
      * @return void
      */
-    public static function logRotate(): void
+    public static function generateSyslogConf(): void
     {
-        $logrotate = Util::which('logrotate');
+        Util::mwMkdir('/etc/rsyslog.d');
+        $logFile = self::getLogFile();
+        $pathScript = SyslogConf::createRotateScript('php-error.log', $logFile);
+        $confSyslogD = '$outchannel log_php,' . $logFile . ',10485760,' . $pathScript . PHP_EOL .
+            'if $programname == "php" then :omfile:$log_php' . PHP_EOL .
+            'if $programname == "php" then stop' . PHP_EOL;
+        file_put_contents('/etc/rsyslog.d/php.conf', $confSyslogD);
+    }
 
-        $max_size    = 10;
-        $f_name      = self::getLogFile();
-        $text_config = $f_name . " {
-    nocreate
-    nocopytruncate
-    compress
-    delaycompress
-    start 0
-    rotate 9
-    size {$max_size}M
-    missingok
-    noolddir
-    postrotate
-    endscript
-}";
-        // TODO::Add restart PHP-FPM after rotation
-        $di     = Di::getDefault();
-        if ($di !== null) {
-            $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
-        } else {
-            $varEtcDir = '/var/etc';
+    /**
+     * Removes legacy PHP log symlink.
+     * Called during syslog restart to clean up old configuration.
+     *
+     * @return void
+     */
+    public static function removeLegacyLogSymlink(): void
+    {
+        $legacySymlink = '/var/log/php_error.log';
+        if (is_link($legacySymlink)) {
+            unlink($legacySymlink);
+        } elseif (file_exists($legacySymlink)) {
+            unlink($legacySymlink);
         }
-        $path_conf   = $varEtcDir . '/php_logrotate_' . basename($f_name) . '.conf';
-        file_put_contents($path_conf, $text_config);
-        $mb10 = $max_size * 1024 * 1024;
-
-        $options = '';
-        if (Util::mFileSize($f_name) > $mb10) {
-            $options = '-f';
-        }
-        Processes::mwExecBg("$logrotate $options '$path_conf' > /dev/null 2> /dev/null");
     }
 
     /**

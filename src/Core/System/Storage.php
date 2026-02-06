@@ -32,7 +32,6 @@ use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\System\Configs\NginxConf;
-use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Configs\PbxConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
@@ -653,7 +652,6 @@ class Storage extends Injectable
             file_put_contents($storage_dev_file, "/storage/usbdisk1");
             $this->updateConfigWithNewMountPoint("/storage/usbdisk1");
             $this->createWorkDirs();
-            PHPConf::setupLog();
             NginxConf::setupLog();
             return;
         }
@@ -721,9 +719,6 @@ class Storage extends Injectable
 
         // Create necessary working directories
         $this->createWorkDirs();
-
-        // Set up the PHP log configuration
-        PHPConf::setupLog();
     }
 
     /**

@@ -82,6 +82,8 @@ class SyslogConf extends SystemConfigClass
         RedisConf::generateSyslogConf();
         CronConf::generateSyslogConf();
         MonitConf::generateSyslogConf();
+        PHPConf::generateSyslogConf();
+        PHPConf::removeLegacyLogSymlink();
 
         $this->generateMonitConf();
         $pidSyslogD = Processes::getPidOfProcess(self::PROC_NAME);
@@ -185,15 +187,16 @@ class SyslogConf extends SystemConfigClass
     /**
      * Creates the log rotation script.
      * @param string $serviceName
+     * @param string|null $logFilePath Optional custom log file path. If not provided, uses getSyslogFile().
      * @return string
      */
-    public static function createRotateScript(string $serviceName): string
+    public static function createRotateScript(string $serviceName, ?string $logFilePath = null): string
     {
         $mvPath     = Util::which('mv');
         $chmodPath   = Util::which('chmod');
         $gzipPath    = Util::which('gzip');
         $di          = Di::getDefault();
-        $logFile     = self::getSyslogFile($serviceName);
+        $logFile     = $logFilePath ?? self::getSyslogFile($serviceName);
         $textScript  =  '#!/bin/sh' . PHP_EOL .
                         "logName='$logFile';" . PHP_EOL .
                         'if [ ! -f "$logName" ]; then exit; fi' . PHP_EOL .

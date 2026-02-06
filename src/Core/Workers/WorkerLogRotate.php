@@ -26,7 +26,6 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConf;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
-use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
@@ -54,7 +53,6 @@ class WorkerLogRotate extends WorkerBase
         $lastLogRotate = $managedCache->get($cacheKey);
         if ($lastLogRotate === null) {
             // Perform log rotation for system logs
-            PHPConf::logRotate();
             PBX::logRotate();
             Fail2BanConf::logRotate();
             AsteriskConf::logRotate();
