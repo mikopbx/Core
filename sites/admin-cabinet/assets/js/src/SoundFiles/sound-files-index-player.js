@@ -233,7 +233,15 @@ class IndexSoundPlayer {
         // Check if it's an API URL that requires authentication
         if (downloadUrl.includes('/pbxcore/api/')) {
             // Build full URL
-            const fullUrl = downloadUrl.startsWith('http') ? downloadUrl : `${globalRootUrl}${downloadUrl.replace(/^\//, '')}`;
+            let fullUrl;
+            if (downloadUrl.startsWith('http')) {
+                fullUrl = downloadUrl;
+            } else if (downloadUrl.startsWith('/pbxcore/')) {
+                const baseUrl = window.location.origin;
+                fullUrl = `${baseUrl}${downloadUrl}`;
+            } else {
+                fullUrl = `${globalRootUrl}${downloadUrl.replace(/^\//, '')}`;
+            }
 
             // Prepare headers with Bearer token
             const headers = {
