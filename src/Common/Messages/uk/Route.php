@@ -370,7 +370,7 @@ return [
     'iv_AudioMessageIdTooltip_note' => 'Якісне привітання створює позитивне перше враження про компанію.',
     'iv_ValidateDigitsIsEmpty' => 'Не указаны цифры для действия',
     'iv_ValidateExtensionFormat' => 'Номер повинен містити 2-8 цифр',
-    'iv_ValidateRepeatCount' => 'Количество повторов должно быть от 1 до 99',
+    'iv_ValidateRepeatCount' => 'Количество повторов должно быть от 0 до 10',
     'iv_ValidateTimeout' => 'Таймаут должен быть от 1 до 99 секунд',
     'or_EmptyTableDescription' => 'Исходящие маршруты определяют, через какого провайдера совершать внешние вызовы',
     'or_EmptyTableTitle' => 'Создайте правила исходящих звонков',

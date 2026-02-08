@@ -329,7 +329,7 @@ return [
     'iv_ValidateExtensionIsNotCorrect' => 'Subscriber number not selected',
     'iv_ValidateNameIsEmpty' => 'IVR menu name not specified',
     'iv_ValidateNoIVRExtensions' => 'No extension dialing actions set for IVR menu',
-    'iv_ValidateRepeatCount' => 'Repeat count must be 1 to 99',
+    'iv_ValidateRepeatCount' => 'Repeat count must be 0 to 10',
     'iv_ValidateRepeatNumberOutOfRange' => 'Menu repeat count incorrectly specified',
     'iv_ValidateTimeout' => 'Timeout must be 1 to 99 seconds',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Timeout forwarding number not specified',

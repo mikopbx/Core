@@ -312,7 +312,7 @@ return [
     'iv_ValidateExtensionIsNotCorrect' => 'Teilnehmernummer nicht ausgewählt',
     'iv_ValidateNameIsEmpty' => 'IVR-Menü-Name nicht angegeben',
     'iv_ValidateNoIVRExtensions' => 'Keine Durchwahl-Eingabe-Aktionen für IVR-Menü festgelegt',
-    'iv_ValidateRepeatCount' => 'Wiederholungsanzahl muss 1 bis 99 sein',
+    'iv_ValidateRepeatCount' => 'Wiederholungsanzahl muss 0 bis 10 sein',
     'iv_ValidateRepeatNumberOutOfRange' => 'Menü-Wiederholungsanzahl falsch angegeben',
     'iv_ValidateTimeout' => 'Timeout muss 1 bis 99 Sekunden sein',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Timeout-Weiterleitungsnummer nicht angegeben',

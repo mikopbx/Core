@@ -312,7 +312,7 @@ return [
     'iv_ValidateExtensionIsNotCorrect' => 'ไม่ได้เลือกหมายเลขผู้โทร',
     'iv_ValidateNameIsEmpty' => 'ไม่ได้ระบุชื่อเมนู IVR',
     'iv_ValidateNoIVRExtensions' => 'ไม่ได้กำหนดการดำเนินการสำหรับการกดเพิ่มเติมสำหรับเมนู IVR',
-    'iv_ValidateRepeatCount' => 'จำนวนการทำซ้ำต้องเป็น 1 ถึง 99',
+    'iv_ValidateRepeatCount' => 'จำนวนการทำซ้ำต้องเป็น 0 ถึง 10',
     'iv_ValidateRepeatNumberOutOfRange' => 'จำนวนการทำซ้ำเมนูที่ระบุไม่ถูกต้อง',
     'iv_ValidateTimeout' => 'Timeout ต้องเป็น 1 ถึง 99 วินาที',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'ไม่ได้ระบุหมายเลขเปลี่ยนเส้นทางสำหรับ timeout',

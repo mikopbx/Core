@@ -382,7 +382,7 @@ return [
     'iv_TimeoutTooltip_note' => 'Preporučena vrijednost: 5-7 sekundi za ugodan izbor stavke izbornika.',
     'iv_ValidateDigitsIsEmpty' => 'Nisu navedene znamenke za radnju',
     'iv_ValidateExtensionFormat' => 'Broj mora sadržavati 2-8 znamenki',
-    'iv_ValidateRepeatCount' => 'Broj ponavljanja mora biti 1-99',
+    'iv_ValidateRepeatCount' => 'Broj ponavljanja mora biti 0-10',
     'iv_ValidateTimeout' => 'Timeout mora biti 1-99 sekundi',
     // OR - Dodani nedostajući prijevodi
     'or_EmptyTableDescription' => 'Odlazne rute određuju preko kojeg davatelja usluga obavljati vanjske pozive',

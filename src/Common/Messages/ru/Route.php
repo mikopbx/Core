@@ -317,7 +317,7 @@ return [
     'iv_ValidateExtensionIsNotCorrect' => 'Не выбран номер абонента',
     'iv_ValidateNameIsEmpty' => 'Не указано название IVR меню',
     'iv_ValidateNoIVRExtensions' => 'Не заданы действия при донаборе для IVR меню',
-    'iv_ValidateRepeatCount' => 'Количество повторов должно быть от 1 до 99',
+    'iv_ValidateRepeatCount' => 'Количество повторов должно быть от 0 до 10',
     'iv_ValidateRepeatNumberOutOfRange' => 'Не верно указано число повторов меню',
     'iv_ValidateTimeout' => 'Таймаут должен быть от 1 до 99 секунд',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Не указан номер переадресации по таймауту',

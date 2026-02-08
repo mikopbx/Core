@@ -312,7 +312,7 @@ return [
     'iv_ValidateExtensionIsNotCorrect' => '未选择用户号码',
     'iv_ValidateNameIsEmpty' => '缺少IVR菜单名称',
     'iv_ValidateNoIVRExtensions' => 'IVR菜单无拨号操作',
-    'iv_ValidateRepeatCount' => '重复次数应为1到99',
+    'iv_ValidateRepeatCount' => '重复次数应为0到10',
     'iv_ValidateRepeatNumberOutOfRange' => '菜单重复次数不正确',
     'iv_ValidateTimeout' => '超时应为1到99秒',
     'iv_ValidateTimeoutExtensionIsEmpty' => '未指定超时重定向号码',

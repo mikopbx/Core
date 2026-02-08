@@ -380,7 +380,7 @@ return [
     'iv_TimeoutTooltip_list3' => 'გამეორებების რაოდენობის გადაჭარბების შემდეგ ზარი ნაგულისხმევ ნომერზე გადავა',
     'iv_TimeoutTooltip_note' => 'რეკომენდებული მნიშვნელობა: 5-7 წამი კომფორტული მენიუს პუნქტის არჩევისთვის.',
     'iv_ValidateDigitsIsEmpty' => 'მოქმედებისთვის ციფრები არ არის მითითებული',
-    'iv_ValidateRepeatCount' => 'გამეორებების რაოდენობა უნდა იყოს 1-დან 99-მდე',
+    'iv_ValidateRepeatCount' => 'გამეორებების რაოდენობა უნდა იყოს 0-დან 10-მდე',
     'iv_ValidateTimeout' => 'Timeout უნდა იყოს 1-დან 99 წამამდე',
     'iv_DigitsPlaceholder' => 'ციფრები',
     'iv_ValidateExtensionFormat' => 'ნომერი უნდა შეიცავდეს 2-8 ციფრს',

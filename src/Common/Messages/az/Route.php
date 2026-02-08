@@ -301,7 +301,7 @@ return [
     'iv_ValidateExtensionIsNotCorrect' => 'Abunəçi nömrəsi seçilməyib',
     'iv_ValidateNameIsEmpty' => 'IVR menyu adı göstərilməyib',
     'iv_ValidateNoIVRExtensions' => 'IVR menyusu üçün yığım əməliyyatları təyin edilməyib',
-    'iv_ValidateRepeatCount' => 'Təkrar sayı 1-dən 99-a qədər olmalıdır',
+    'iv_ValidateRepeatCount' => 'Təkrar sayı 0-dan 10-a qədər olmalıdır',
     'iv_ValidateRepeatNumberOutOfRange' => 'Menyu təkrarlarının səhv sayı',
     'iv_ValidateTimeout' => 'Timeout 1-dən 99 saniyəyə qədər olmalıdır',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Zaman aşımı yönləndirmə nömrəsi göstərilməyib',

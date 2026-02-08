@@ -312,7 +312,7 @@ return [
     'iv_ValidateExtensionIsNotCorrect' => 'Geen abonneenummer geselecteerd',
     'iv_ValidateNameIsEmpty' => 'IVR-menunaam niet opgegeven',
     'iv_ValidateNoIVRExtensions' => 'Geen doorbelacties ingesteld voor IVR-menu',
-    'iv_ValidateRepeatCount' => 'Aantal herhalingen moet tussen 1 en 99 liggen',
+    'iv_ValidateRepeatCount' => 'Aantal herhalingen moet tussen 0 en 10 liggen',
     'iv_ValidateRepeatNumberOutOfRange' => 'Aantal menu-herhalingen onjuist opgegeven',
     'iv_ValidateTimeout' => 'Timeout moet tussen 1 en 99 seconden liggen',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Timeout doorschakelnummer niet opgegeven',

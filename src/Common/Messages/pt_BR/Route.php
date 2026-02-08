@@ -312,7 +312,7 @@ return [
     'iv_ValidateExtensionIsNotCorrect' => 'Número do chamador não selecionado',
     'iv_ValidateNameIsEmpty' => 'Nome do menu IVR não especificado',
     'iv_ValidateNoIVRExtensions' => 'Ações para discagem adicional para o menu IVR não definidas',
-    'iv_ValidateRepeatCount' => 'O número de repetições deve ser de 1 a 99',
+    'iv_ValidateRepeatCount' => 'O número de repetições deve ser de 0 a 10',
     'iv_ValidateRepeatNumberOutOfRange' => 'Número de repetições do menu especificado incorretamente',
     'iv_ValidateTimeout' => 'Timeout deve ser de 1 a 99 segundos',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Número de redirecionamento por timeout não especificado',

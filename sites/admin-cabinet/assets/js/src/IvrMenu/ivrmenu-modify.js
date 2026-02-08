@@ -75,7 +75,7 @@ const ivrMenuModify = {
           identifier: 'number_of_repeat',
           rules: [
               {
-                  type: 'integer[1..99]',
+                  type: 'integer[0..10]',
                   prompt: globalTranslate.iv_ValidateRepeatCount
               }
           ]

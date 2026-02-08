@@ -301,7 +301,7 @@ return [
     'iv_ValidateExtensionIsNotCorrect' => 'Není vybrané číslo abonenta',
     'iv_ValidateNameIsEmpty' => 'Není zadán název IVR menu',
     'iv_ValidateNoIVRExtensions' => 'Nejsou zadány akce při dotáčení pro IVR menu',
-    'iv_ValidateRepeatCount' => 'Počet opakování musí být od 1 do 99',
+    'iv_ValidateRepeatCount' => 'Počet opakování musí být od 0 do 10',
     'iv_ValidateRepeatNumberOutOfRange' => 'Nesprávně zadaný počet opakování menu',
     'iv_ValidateTimeout' => 'Timeout musí být od 1 do 99 sekund',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Není zadáno číslo přesměrování podle timeoutu',

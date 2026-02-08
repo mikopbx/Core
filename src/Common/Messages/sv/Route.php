@@ -370,7 +370,7 @@ return [
     'iv_TimeoutTooltip_note' => 'Рекомендуемое значение: 5-7 секунд для комфортного выбора пункта меню.',
     'iv_ValidateDigitsIsEmpty' => 'Не указаны цифры для действия',
     'iv_ValidateExtensionFormat' => 'Numret ska innehålla 2-8 siffror',
-    'iv_ValidateRepeatCount' => 'Количество повторов должно быть от 1 до 99',
+    'iv_ValidateRepeatCount' => 'Количество повторов должно быть от 0 до 10',
     'iv_ValidateTimeout' => 'Таймаут должен быть от 1 до 99 секунд',
     'or_EmptyTableDescription' => 'Исходящие маршруты определяют, через какого провайдера совершать внешние вызовы',
     'or_EmptyTableTitle' => 'Создайте правила исходящих звонков',

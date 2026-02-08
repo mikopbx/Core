@@ -312,7 +312,7 @@ return [
     'iv_ValidateExtensionIsNotCorrect' => '発信者番号が選択されていません',
     'iv_ValidateNameIsEmpty' => 'IVRメニュー名が指定されていません',
     'iv_ValidateNoIVRExtensions' => 'IVRメニューの追加ダイヤリングアクションが定義されていません',
-    'iv_ValidateRepeatCount' => '繰り返し回数は1から99である必要があります',
+    'iv_ValidateRepeatCount' => '繰り返し回数は0から10である必要があります',
     'iv_ValidateRepeatNumberOutOfRange' => 'メニュー繰り返し回数が正しく指定されていません',
     'iv_ValidateTimeout' => 'タイムアウトは1から99秒である必要があります',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'タイムアウトリダイレクト番号が指定されていません',

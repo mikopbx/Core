@@ -314,7 +314,7 @@ return [
     'iv_ValidateNoIVRExtensions' => 'Aucune action de numérotation pour le menu IVR',
     'iv_ValidateRepeatNumberOutOfRange' => 'Le nombre de répétitions du menu est incorrect',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Numéro de redirection de délai d\'attente non spécifié',
-    'iv_ValidateRepeatCount' => 'Le nombre de répétitions doit être entre 1 et 99',
+    'iv_ValidateRepeatCount' => 'Le nombre de répétitions doit être entre 0 et 10',
     'iv_ValidateTimeout' => 'Le délai d\'attente doit être entre 1 et 99 secondes',
     'iv_ValidateTimeoutOutOfRange' => 'Délai d\'attente de saisie d\'extension incorrectement spécifié',
     // OR

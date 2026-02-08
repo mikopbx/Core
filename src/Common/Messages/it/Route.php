@@ -312,7 +312,7 @@ return [
     'iv_ValidateExtensionIsNotCorrect' => 'Nessun numero di abbonato selezionato',
     'iv_ValidateNameIsEmpty' => 'Nome menu IVR mancante',
     'iv_ValidateNoIVRExtensions' => 'Nessuna azione di selezione per il menu IVR',
-    'iv_ValidateRepeatCount' => 'Il numero di ripetizioni deve essere da 1 a 99',
+    'iv_ValidateRepeatCount' => 'Il numero di ripetizioni deve essere da 0 a 10',
     'iv_ValidateRepeatNumberOutOfRange' => 'Il numero di ripetizioni del menu non è corretto',
     'iv_ValidateTimeout' => 'Il timeout deve essere da 1 a 99 secondi',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Numero di reindirizzamento del timeout non specificato',

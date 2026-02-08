@@ -382,7 +382,7 @@ return [
     'iv_TimeoutTooltip_note' => 'Suositeltu arvo: 5-7 sekuntia mukavalle valikkokohdan valinnalle.',
     'iv_ValidateDigitsIsEmpty' => 'Toiminnolle ei ole määritetty numeroita',
     'iv_ValidateExtensionFormat' => 'Numeron tulee sisältää 2-8 numeroa',
-    'iv_ValidateRepeatCount' => 'Uudelleenyritysten määrän tulee olla 1-99',
+    'iv_ValidateRepeatCount' => 'Uudelleenyritysten määrän tulee olla 0-10',
     'iv_ValidateTimeout' => 'Aikakatkaisun tulee olla 1-99 sekuntia',
     // OR - Lisätyt puuttuvat käännökset
     'or_EmptyTableDescription' => 'Lähtevät reitit määrittävät minkä palveluntarjoajan kautta ulkoiset puhelut soitetaan',

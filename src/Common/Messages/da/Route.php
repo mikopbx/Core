@@ -382,7 +382,7 @@ return [
     'iv_TimeoutTooltip_note' => 'Anbefalet værdi: 5-7 sekunder for komfortabelt valg af menupunkt.',
     'iv_ValidateDigitsIsEmpty' => 'Cifre for handling ikke angivet',
     'iv_ValidateExtensionFormat' => 'Nummer skal indeholde 2 til 8 cifre',
-    'iv_ValidateRepeatCount' => 'Antal gentagelser skal være fra 1 til 99',
+    'iv_ValidateRepeatCount' => 'Antal gentagelser skal være fra 0 til 10',
     'iv_ValidateTimeout' => 'Timeout skal være fra 1 til 99 sekunder',
     // OR (fortsatte oversættelser)
     'or_EmptyTableDescription' => 'Udgående ruter bestemmer, hvilken udbyder der skal foretage eksterne opkald gennem',

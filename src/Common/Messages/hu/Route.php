@@ -380,7 +380,7 @@ return [
     'iv_TimeoutTooltip_list3' => 'Az ismétlések számának túllépése után a hívás az alapértelmezett számra kerül',
     'iv_TimeoutTooltip_note' => 'Ajánlott érték: 5-7 másodperc a kényelmes menüpont kiválasztáshoz.',
     'iv_ValidateDigitsIsEmpty' => 'A műveletnél nem adtak meg számjegyeket',
-    'iv_ValidateRepeatCount' => 'Az ismétlések számának 1 és 99 között kell lennie',
+    'iv_ValidateRepeatCount' => 'Az ismétlések számának 0 és 10 között kell lennie',
     'iv_ValidateTimeout' => 'A timeout-nak 1 és 99 másodperc között kell lennie',
     'iv_DigitsPlaceholder' => 'Számjegyek',
     'iv_ValidateExtensionFormat' => 'A számnak 2-8 számjegyet kell tartalmaznia',
