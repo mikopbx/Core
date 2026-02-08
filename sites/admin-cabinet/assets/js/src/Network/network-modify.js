@@ -1893,16 +1893,12 @@ const StaticRoutesManager = {
     },
 
     /**
-     * Update visibility based on number of interfaces
+     * Update visibility of static routes section.
+     * Section is hidden by default in Volt template; show it once JS is ready.
+     * Docker hiding is handled separately via the parent .do-not-show-if-docker wrapper.
      */
     updateVisibility() {
-        // Show/hide section based on number of interfaces
-        const interfaceCount = $('#eth-interfaces-menu a.item').not('[data-tab="0"]').length;
-        if (interfaceCount > 1) {
-            StaticRoutesManager.$section.show();
-        } else {
-            StaticRoutesManager.$section.hide();
-        }
+        StaticRoutesManager.$section.show();
     },
 
     /**
