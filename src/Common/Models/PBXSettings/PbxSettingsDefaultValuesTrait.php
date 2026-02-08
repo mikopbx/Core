@@ -98,7 +98,7 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::PBX_RECORD_DELETE_SOURCE_AFTER_CONVERT => '1',  // Delete WAV after WebM conversion
             PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN => '',
             PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT => '',
-            PbxSettings::PBX_RECORD_SAVE_PERIOD => '90',      // 90 days total retention
+            PbxSettings::PBX_RECORD_SAVE_PERIOD => '360',     // 360 days total retention
             PbxSettings::PBX_RECORD_S3_LOCAL_DAYS => '7',     // 7 days local when S3 enabled
             PbxSettings::PBX_CALL_PARKING_EXT => '800',
             PbxSettings::PBX_CALL_PARKING_FEATURE => '*2',
