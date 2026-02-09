@@ -101,7 +101,7 @@ class IncomingRoutingTable extends ModelsBase
      *
      * @Column(type="integer", nullable=true)
      */
-    public ?string $timeout = '30';
+    public ?string $timeout = '300';
 
     /**
      * Action to be taken for the routing rule
