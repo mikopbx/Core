@@ -419,21 +419,23 @@ const Form = {
         // Check if submission was successful
         if (Form.checkSuccess(response)) {
             // Success
+
+            // Capture submit mode BEFORE cbAfterSendForm, which may reset it
+            // via populateForm → populateFormSilently → restoreSubmitMode
+            const submitMode = Form.$submitModeInput.val();
+            const reloadPath = Form.getReloadPath(response);
+
             // Dispatch 'ConfigDataChanged' event
             const event = new CustomEvent('ConfigDataChanged', {
                 bubbles: false,
                 cancelable: true
             });
             window.dispatchEvent(event);
-            
+
             // Call cbAfterSendForm
             if (Form.cbAfterSendForm) {
                 Form.cbAfterSendForm(response);
             }
-            
-            // Handle submit mode
-            const submitMode = Form.$submitModeInput.val();
-            const reloadPath = Form.getReloadPath(response);
             
             switch (submitMode) {
                 case 'SaveSettings':
