@@ -78,8 +78,40 @@ class CheckStorage extends Injectable
             }
         }
 
+        // Fallback: on single-disk systems, diskIsMounted() returns the first partition
+        // mount point (e.g. /offload) instead of /storage/usbdisk1, causing a false alarm.
+        // Use the dedicated isStorageDiskMounted() as a reliable check.
         if ($storageDiskMounted === false) {
-            $messages['error'][] = ['messageTpl'=>'adv_StorageDiskUnMounted'];
+            $mountDir = '';
+            if (Storage::isStorageDiskMounted('', $mountDir)) {
+                $storageDiskMounted = true;
+
+                $freeSpace = Storage::getFreeSpace(trim($mountDir));
+                if ($freeSpace < WorkerRemoveOldRecords::MIN_SPACE_MB_ALERT) {
+                    $messages['error'][] = [
+                        'messageTpl' => 'adv_StorageDiskRunningOutOfFreeSpace',
+                        'messageParams' => [
+                            'free' => $freeSpace,
+                        ],
+                    ];
+
+                    $usedSpace = Storage::getUsedSpace(trim($mountDir));
+                    $totalUsable = $usedSpace + $freeSpace;
+                    $usagePercentage = ($totalUsable > 0) ? (int)(($usedSpace / $totalUsable) * 100) : 0;
+
+                    $criticalDisks[] = [
+                        'name' => trim($mountDir),
+                        'usage' => $usagePercentage,
+                    ];
+
+                    $maxUsagePercentage = max($maxUsagePercentage, $usagePercentage);
+                    $minFreeSpace = $freeSpace;
+                }
+            }
+        }
+
+        if ($storageDiskMounted === false) {
+            $messages['error'][] = ['messageTpl' => 'adv_StorageDiskUnMounted'];
         }
 
         // Queue disk space notification for async sending if we have critical disks
