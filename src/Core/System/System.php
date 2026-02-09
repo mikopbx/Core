@@ -171,9 +171,9 @@ class System extends Injectable
             // Give some time for logs to be written
             sleep(1);
         } else {
-            // For VM/Hardware: Use standard shutdown
+            // For VM/Hardware: Use standard shutdown in background
             $shutdown = Util::which('shutdown');
-            Processes::mwExec("$shutdown > /dev/null 2>&1");
+            Processes::mwExecBg($shutdown, '/dev/null', 1);
         }
     }
 
