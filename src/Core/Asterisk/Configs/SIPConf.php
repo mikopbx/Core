@@ -1676,6 +1676,9 @@ class SIPConf extends AsteriskConfigClass
     private function generateProviderIdentify(array $provider, array $manual_attributes): string
     {
         $providerHosts = $this->dataSipHosts[$provider['uniqid']] ?? [];
+        if (!empty($provider['host'])) {
+            $providerHosts[] = $provider['host'];
+        }
         if (!empty($provider['outbound_proxy'])) {
             $providerHosts[] = explode(':', $provider['outbound_proxy'])[0];
         }
