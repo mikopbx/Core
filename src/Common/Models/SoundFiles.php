@@ -143,13 +143,19 @@ class SoundFiles extends ModelsBase
         $pathinfo = pathinfo($this->path);
         $baseFilename = $pathinfo['dirname'] . '/' . $pathinfo['filename'];
 
-        // Delete all related converted files (.wav, .mp3, .g722, .gsm, .ulaw)
-        $extensions = ['wav', 'mp3', 'g722', 'gsm', 'ulaw'];
+        // Delete all related converted files
+        $extensions = ['wav', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln'];
         foreach ($extensions as $ext) {
             $convertedFile = "$baseFilename.$ext";
             if ($convertedFile !== $this->path && file_exists($convertedFile)) {
                 unlink($convertedFile);
             }
+        }
+
+        // Delete sound conversion metadata cache file
+        $metadataFile = $pathinfo['dirname'] . '/.' . $pathinfo['filename'] . '.sound-meta';
+        if (file_exists($metadataFile)) {
+            unlink($metadataFile);
         }
     }
 }
