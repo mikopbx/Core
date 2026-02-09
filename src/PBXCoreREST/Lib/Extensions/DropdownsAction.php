@@ -242,24 +242,24 @@ class DropdownsAction extends Injectable
             return true;
         }
 
-        $query = strtolower(trim($query));
-        
+        $query = trim($query);
+
         // Search in extension number
-        if (stripos($extensionData['value'], $query) !== false) {
+        if (mb_stripos($extensionData['value'], $query) !== false) {
             return true;
         }
-        
+
         // Search in name/represent text (with HTML tags)
-        if (stripos($extensionData['name'], $query) !== false) {
+        if (mb_stripos($extensionData['name'], $query) !== false) {
             return true;
         }
-        
+
         // Search in cleaned name (without HTML tags) - this helps find content inside <> brackets
         $cleanedName = strip_tags($extensionData['name']);
-        if (stripos($cleanedName, $query) !== false) {
+        if (mb_stripos($cleanedName, $query) !== false) {
             return true;
         }
-        
+
         return false;
     }
 
