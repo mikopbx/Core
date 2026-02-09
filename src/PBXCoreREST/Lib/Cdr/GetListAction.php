@@ -553,6 +553,15 @@ class GetListAction
             $grouped[$linkedId]['records'][] = DataStructure::createFromModel($record);
         }
 
+        // Sort records within each group by start time ascending
+        // WHY: Display call flow in chronological order (IVR → Queue → Employee)
+        foreach ($grouped as &$group) {
+            usort($group['records'], static function (array $a, array $b): int {
+                return $a['start'] <=> $b['start'];
+            });
+        }
+        unset($group);
+
         return $grouped;
     }
 }
