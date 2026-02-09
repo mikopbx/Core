@@ -244,6 +244,7 @@ class ModulesConf extends AsteriskConfigClass
         $criticalModules = [
             'codec_resample.so',  // CRITICAL: Frequency resampling (MixMonitor, Voicemail, Conference, Queue recording)
             'codec_a_mu.so',      // A-law ↔ μ-law direct translator (efficient conversion)
+            'codec_gsm.so',       // CRITICAL: All system sound files are in GSM format, required for playback
         ];
 
         // Mapping: codec name in database → codec module filename
