@@ -184,6 +184,7 @@ return [
     'rest_param_syslog_offset' => 'Počet řádků, které se mají přeskočit od konce (používá se ve spojení s řádky pro stránkování)',
     'rest_param_syslog_archive_filename' => 'Cesta k souboru archivu protokolu',
     'rest_param_syslog_archive' => 'Používejte archivní protokoly',
+    'rest_param_syslog_latest' => 'Pokud true, vrátí nejnovější záznamy protokolu. Když data překročí limit řádků, oříznutí nastane na začátku (nejstarší záznamy jsou odstraněny)',
     'rest_schema_syslog_date_from' => 'Začátek časového rozsahu pro filtrování',
     'rest_param_f2b_bantime' => 'Doba blokování IP adresy v sekundách',
     'rest_param_f2b_findtime' => 'Časové období pro počítání neúspěšných pokusů v sekundách',
@@ -1871,6 +1872,7 @@ return [
     'rest_schema_syslog_offset' => 'Offset pro stránkování řádků protokolu',
     'rest_schema_syslog_date_to' => 'Konec časového rozsahu pro filtrování',
     'rest_schema_syslog_archive' => 'Používejte archivní protokoly',
+    'rest_schema_syslog_latest' => 'Vrátit nejnovější záznamy při překročení limitu',
     'rest_param_sf_view_path' => 'Cesta k souboru pro zobrazení/stažení',
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'Maximální počet neúspěšných pokusů před zablokováním',

@@ -71,6 +71,7 @@ return [
     'rest_param_file_total_chunks' => 'Numero totale di blocchi',
     'rest_param_file_firmware_url' => 'URL per scaricare il firmware',
     'rest_schema_syslog_archive' => 'Utilizzare i registri di archivio',
+    'rest_schema_syslog_latest' => 'Restituire le voci più recenti quando si supera il limite',
     'rest_schema_cf_mode' => 'Modalità di applicazione file',
     'rest_schema_cf_description' => 'Descrizione dello scopo del file',
     // SIP specific parameters
@@ -419,6 +420,7 @@ return [
     'rest_param_syslog_filter' => 'Testo per filtrare le righe di registro (ricerca grep)',
     'rest_param_syslog_lines' => 'Numero di ultime righe di registro da emettere',
     'rest_param_syslog_archive' => 'Utilizzare i registri di archivio',
+    'rest_param_syslog_latest' => 'Se true, restituisce le voci di registro più recenti. Quando i dati superano il limite di righe, il troncamento avviene all\'inizio (le voci più vecchie vengono eliminate)',
     // SysLogs schema field descriptions
     'rest_schema_syslog_filename' => 'Percorso del file di registro relativo alla directory di registro',
     'rest_schema_syslog_filter' => 'Testo per filtrare le righe di registro',

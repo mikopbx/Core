@@ -926,6 +926,8 @@ Nowy klucz możesz otrzymać automatycznie wypełniając formularz rejestracyjny
     'sd_LoadingNext' => 'Ładowanie następnych wpisów...',
     'sd_LoadPrevious' => 'Załaduj poprzednie',
     'sd_LoadNext' => 'Pobierz dalej',
+    'sd_NoDataForPeriod' => 'Brak danych dla tego okresu',
+    'sd_DataTruncatedClickToLoad' => 'Dane obcięte (limit 5000 linii). Kliknij, aby załadować.',
     'sf_DescriptionPlaceholder' => 'Wprowadź opis pliku audio (opcjonalnie)',
     // CDR UI Translations (for search and pagination)
     'cdr_EnterSearchPhrase' => 'Wprowadź szczegóły wyszukiwania',

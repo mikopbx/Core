@@ -67,6 +67,7 @@ class GetLogFromFileAction extends Injectable
         $offset = (int)($sanitizedData['offset'] ?? 0);
         $dateFrom = (string)($sanitizedData['dateFrom'] ?? '');
         $dateTo = (string)($sanitizedData['dateTo'] ?? '');
+        $latest = (bool)($sanitizedData['latest'] ?? false);
 
         // Validate filename is not empty before constructing path
         // WHY: Prevent directory path instead of file path (security + correct behavior)
@@ -157,13 +158,6 @@ class GetLogFromFileAction extends Injectable
                 $fileToProcess = $filename;
             }
 
-            // Track all commands for debug
-            $commandChain = [];
-            if ($isArchive && isset($decompressedFile)) {
-                $commandChain[] = "Decompressed: $filename -> $decompressedFile";
-            }
-            $commandChain[] = "Source file: $fileToProcess";
-
             // Step 1: Apply text filter (grep) if provided
             $textFilteredFile = $fileToProcess;
             $needsTextFilter = !empty($filter) && is_string($filter);
@@ -181,14 +175,17 @@ class GetLogFromFileAction extends Injectable
 
                 if (!empty($grepArgs)) {
                     $textFilteredFile = $cacheDir . '/' . uniqid('text_filtered_', true) . '.log';
-                    $grepCmd = "$grep --text -h " . implode(' ', $grepArgs) . " -F $fileToProcess > $textFilteredFile";
+                    $grepCmd = "$grep --text -h " . implode(' ', $grepArgs)
+                        . ' -F ' . escapeshellarg($fileToProcess)
+                        . ' > ' . escapeshellarg($textFilteredFile);
                     Processes::mwExec($grepCmd);
-                    $commandChain[] = "Text filter: $grepCmd";
                 }
             }
 
             // Step 1.5: Apply log level filter if provided
-            $levelFilteredFile = $textFilteredFile;
+            // Track original text-filtered file separately for cleanup
+            $originalTextFilteredFile = $textFilteredFile;
+            $levelFilteredFile = null;
             $validLogLevels = ['ERROR', 'WARNING', 'NOTICE', 'INFO', 'DEBUG'];
             $needsLevelFilter = !empty($logLevel) && in_array($logLevel, $validLogLevels, true);
 
@@ -198,10 +195,11 @@ class GetLogFromFileAction extends Injectable
                 // Build comprehensive pattern for different log formats
                 $levelPattern = self::buildLogLevelPattern($logLevel);
 
-                $grepCmd = "$grep --text -E " . escapeshellarg($levelPattern) . " $textFilteredFile > $levelFilteredFile";
+                $grepCmd = "$grep --text -E " . escapeshellarg($levelPattern)
+                    . ' ' . escapeshellarg($textFilteredFile)
+                    . ' > ' . escapeshellarg($levelFilteredFile);
                 Processes::mwExec($grepCmd);
                 $textFilteredFile = $levelFilteredFile;
-                $commandChain[] = "Level filter ($logLevel): $grepCmd";
             }
 
             // Step 2: Apply time-based filtering if dateFrom/dateTo provided
@@ -235,18 +233,25 @@ class GetLogFromFileAction extends Injectable
                 $timeFilteredFile = $cacheDir . '/' . uniqid('time_filtered_', true) . '.log';
                 self::filterLogByTime($textFilteredFile, $timeFilteredFile, $timestampFrom, $timestampTo);
                 $finalFilteredFile = $timeFilteredFile;
-                $commandChain[] = "Time filter: PHP filterLogByTime($textFilteredFile -> $timeFilteredFile, from=$timestampFrom, to=$timestampTo)";
             }
 
             // Step 3: Apply offset/lines pagination
-            // For time-based filtering, use head to get first N lines (chronological order)
-            // For offset-based filtering, use tail to get last N lines
+            // For time-based filtering:
+            //   - latest=false (default): head to get oldest N lines (chronological order)
+            //   - latest=true: tail to get newest N lines (chronological order)
+            // For offset-based filtering: tail to get last N lines
+            $escapedFinalFile = escapeshellarg($finalFilteredFile);
             if ($needsTimeFilter) {
-                // Time-based: get first N lines in chronological order
-                $cmd = "$head -n $lines $finalFilteredFile";
+                if ($latest) {
+                    // Newest entries: get last N lines (tail preserves chronological order)
+                    $cmd = "$tail -n $lines $escapedFinalFile";
+                } else {
+                    // Oldest first (default): get first N lines in chronological order
+                    $cmd = "$head -n $lines $escapedFinalFile";
+                }
             } else {
                 // Offset-based: traditional tail behavior
-                $cmd = "$tail -n $linesPlusOffset $finalFilteredFile";
+                $cmd = "$tail -n $linesPlusOffset $escapedFinalFile";
                 if ($offset > 0) {
                     $cmd .= " | $head -n $lines";
                 }
@@ -254,12 +259,9 @@ class GetLogFromFileAction extends Injectable
 
             $sed = Util::which('sed');
             $cmd .= ' | ' . $sed . ' -E \'s/\\\\([tnrfvb]|040)/ /g\'';
-            $cmd .= " > $filenameTmp";
-
-            $commandChain[] = "Final output: $cmd";
+            $cmd .= ' > ' . escapeshellarg($filenameTmp);
 
             Processes::mwExec($cmd);
-            $res->data['command_chain'] = $commandChain;
             $res->data['filename'] = $filenameTmp;
             
             // Check if temporary file was created successfully
@@ -286,21 +288,39 @@ class GetLogFromFileAction extends Injectable
             if (!empty($res->data['content'])) {
                 $contentLines = explode("\n", $res->data['content']);
                 $contentLines = array_filter($contentLines); // Remove empty lines
+                $contentLines = array_values($contentLines); // Re-index after filter
 
-                if (count($contentLines) > 0) {
-                    // Get first and last line timestamps
-                    $firstLine = reset($contentLines);
-                    $lastLine = end($contentLines);
+                $lineCount = count($contentLines);
+                if ($lineCount > 0) {
+                    // Scan forward to find first timestamp (fail2ban logs may have
+                    // hundreds of non-timestamped action output lines like iptables commands)
+                    $firstTimestamp = null;
+                    for ($i = 0; $i < $lineCount; $i++) {
+                        $firstTimestamp = LogTimestampParser::parseTimestamp($contentLines[$i]);
+                        if ($firstTimestamp !== null) {
+                            break;
+                        }
+                    }
 
-                    $firstTimestamp = LogTimestampParser::parseTimestamp($firstLine);
-                    $lastTimestamp = LogTimestampParser::parseTimestamp($lastLine);
+                    // Scan backward to find last timestamp (handles trailing stack traces
+                    // or action output lines at the end without timestamps)
+                    $lastTimestamp = null;
+                    for ($i = $lineCount - 1; $i >= 0; $i--) {
+                        $lastTimestamp = LogTimestampParser::parseTimestamp($contentLines[$i]);
+                        if ($lastTimestamp !== null) {
+                            break;
+                        }
+                    }
 
                     if ($firstTimestamp && $lastTimestamp) {
+                        $isTruncated = $lineCount >= $lines;
                         $res->data['actual_range'] = [
                             'start' => $firstTimestamp,
                             'end' => $lastTimestamp,
-                            'lines_count' => count($contentLines),
-                            'truncated' => count($contentLines) >= $lines
+                            'lines_count' => $lineCount,
+                            'truncated' => $isTruncated,
+                            // Truncation direction: left (beginning cut) when latest=true, right (end cut) otherwise
+                            'truncated_direction' => $isTruncated ? ($latest ? 'left' : 'right') : null
                         ];
                     }
                 }
@@ -311,11 +331,21 @@ class GetLogFromFileAction extends Injectable
                 @unlink($decompressedFile);
             }
 
-            if ($needsTextFilter && $textFilteredFile !== $fileToProcess && file_exists($textFilteredFile)) {
-                @unlink($textFilteredFile);
+            // Clean up original text-filtered file (may differ from current $textFilteredFile
+            // when level filter overwrote the variable)
+            if ($needsTextFilter && $originalTextFilteredFile !== $fileToProcess
+                && file_exists($originalTextFilteredFile)) {
+                @unlink($originalTextFilteredFile);
             }
 
-            if ($needsTimeFilter && $finalFilteredFile !== $textFilteredFile && file_exists($finalFilteredFile)) {
+            // Clean up level-filtered file
+            if ($levelFilteredFile !== null && $levelFilteredFile !== $fileToProcess
+                && file_exists($levelFilteredFile)) {
+                @unlink($levelFilteredFile);
+            }
+
+            if ($needsTimeFilter && $finalFilteredFile !== $textFilteredFile
+                && file_exists($finalFilteredFile)) {
                 @unlink($finalFilteredFile);
             }
         }

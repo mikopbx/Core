@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -237,7 +237,7 @@ const systemDiagnosticLogs = {
 
         // Event listener for Enter keypress only on filter input field
         $(document).on('keyup', '#filter', (event) => {
-            if (event.keyCode === 13) {
+            if (event.key === 'Enter') {
                 systemDiagnosticLogs.updateLogFromServer();
             }
         });
@@ -764,8 +764,47 @@ const systemDiagnosticLogs = {
             systemDiagnosticLogs.resetFilters();
         }
 
+        // Hide auto-refresh button for rotated log files (they don't change)
+        systemDiagnosticLogs.updateAutoRefreshVisibility(value);
+
         // Check if time range is available for this file
         systemDiagnosticLogs.checkTimeRangeAvailability(value);
+    },
+
+    /**
+     * Check if file is a rotated log file (archived, no longer being written to)
+     * Rotated files have suffixes like: .0, .1, .2, .gz, .1.gz, .2.gz, etc.
+     * @param {string} filename - Log file path
+     * @returns {boolean} True if file is rotated/archived
+     */
+    isRotatedLogFile(filename) {
+        if (!filename) {
+            return false;
+        }
+        // Match patterns: .0, .1, .2, ..., .gz, .0.gz, .1.gz, etc.
+        return /\.\d+($|\.gz$)|\.gz$/.test(filename);
+    },
+
+    /**
+     * Update auto-refresh button visibility based on file type
+     * Hide for rotated files, show for active log files
+     * @param {string} filename - Log file path
+     */
+    updateAutoRefreshVisibility(filename) {
+        const $autoBtn = $('#show-last-log-auto');
+        const isRotated = systemDiagnosticLogs.isRotatedLogFile(filename);
+
+        if (isRotated) {
+            // Stop auto-refresh if it was active
+            if (systemDiagnosticLogs.isAutoUpdateActive) {
+                $autoBtn.find('.icons i.refresh').removeClass('loading');
+                systemDiagnosticLogs.isAutoUpdateActive = false;
+                updateLogViewWorker.stop();
+            }
+            $autoBtn.hide();
+        } else {
+            $autoBtn.show();
+        }
     },
 
     /**
@@ -784,10 +823,60 @@ const systemDiagnosticLogs = {
     },
 
     /**
+     * Update period buttons visibility based on log file duration
+     * Shows only buttons for periods that are <= log file duration
+     * Hides entire container if no buttons are visible
+     * @param {number} logDuration - Log file duration in seconds
+     */
+    updatePeriodButtonsVisibility(logDuration) {
+        const $periodButtons = $('.period-btn');
+        const $periodContainer = $('#period-buttons');
+        let largestVisiblePeriod = 0;
+        let $largestVisibleButton = null;
+        let visibleCount = 0;
+
+        $periodButtons.each((index, button) => {
+            const $button = $(button);
+            const period = parseInt($button.data('period'), 10);
+
+            // Show button if period is less than or equal to log duration
+            // Add 10% tolerance for rounding/edge cases
+            if (period <= logDuration * 1.1) {
+                $button.show();
+                visibleCount++;
+                // Track the largest visible period for default selection
+                if (period > largestVisiblePeriod) {
+                    largestVisiblePeriod = period;
+                    $largestVisibleButton = $button;
+                }
+            } else {
+                $button.hide();
+            }
+        });
+
+        // Hide entire container if no buttons are visible
+        // Also toggle class on parent to remove gap for proper alignment
+        const $timeControlsInline = $('.time-controls-inline');
+        if (visibleCount === 0) {
+            $periodContainer.hide();
+            $timeControlsInline.addClass('no-period-buttons');
+        } else {
+            $periodContainer.show();
+            $timeControlsInline.removeClass('no-period-buttons');
+        }
+
+        // Set largest visible button as active (if no button is currently active)
+        if ($largestVisibleButton && !$periodButtons.filter('.active').is(':visible')) {
+            $periodButtons.removeClass('active');
+            $largestVisibleButton.addClass('active');
+        }
+    },
+
+    /**
      * Check if time range is available for the selected log file
      * @param {string} filename - Log file path
      */
-    async checkTimeRangeAvailability(filename) {
+    checkTimeRangeAvailability(filename) {
         // Show dimmer only if not in auto-update mode
         if (!systemDiagnosticLogs.isAutoUpdateActive) {
             systemDiagnosticLogs.$dimmer.addClass('active');
@@ -816,10 +905,24 @@ const systemDiagnosticLogs = {
      * @param {object} timeRangeData - Time range data from API (optional)
      */
     initializeNavigation(timeRangeData) {
-        if (timeRangeData && timeRangeData.time_range) {
+        // Check if we have valid time range with actual timestamps (not null)
+        const hasValidTimeRange = timeRangeData &&
+            timeRangeData.time_range &&
+            typeof timeRangeData.time_range.start === 'number' &&
+            typeof timeRangeData.time_range.end === 'number';
+
+        // Check if time range is meaningful (more than 1 second of data)
+        const hasMultipleTimestamps = hasValidTimeRange &&
+            (timeRangeData.time_range.end - timeRangeData.time_range.start) > 1;
+
+        if (hasValidTimeRange && hasMultipleTimestamps) {
             // Time-based mode
             this.timeSliderEnabled = true;
             this.currentTimeRange = timeRangeData.time_range;
+
+            // Calculate log file duration and update period buttons visibility
+            const logDuration = this.currentTimeRange.end - this.currentTimeRange.start;
+            this.updatePeriodButtonsVisibility(logDuration);
 
             // Show period buttons for time-based navigation
             $('#period-buttons').show();
@@ -833,14 +936,28 @@ const systemDiagnosticLogs = {
             SVGTimeline.initialize('#time-slider-container', this.currentTimeRange);
 
             // Set callback for time window changes
-            SVGTimeline.onRangeChange = (start, end) => {
-                systemDiagnosticLogs.loadLogByTimeRange(start, end);
+            // Always use latest=true so the most recent log entries are displayed
+            // Truncation (if any) happens on the left side, which is less disruptive
+            SVGTimeline.onRangeChange = (start, end, draggedHandle) => {
+                systemDiagnosticLogs.loadLogByTimeRange(start, end, true);
             };
 
-            // Load initial chunk (last hour by default)
-            const oneHour = 3600;
-            const initialStart = Math.max(this.currentTimeRange.end - oneHour, this.currentTimeRange.start);
-            this.loadLogByTimeRange(initialStart, this.currentTimeRange.end);
+            // Set callback for truncated zone clicks
+            // Left zones (timeline-truncated-left): data was cut from beginning, load with latest=true
+            // Right zones (timeline-truncated-right): data was cut from end, load with latest=false
+            SVGTimeline.onTruncatedZoneClick = (start, end, isLeftZone) => {
+                systemDiagnosticLogs.loadLogByTimeRange(start, end, isLeftZone);
+            };
+
+            // Load initial chunk with latest=true to show newest entries
+            // Pass isInitialLoad=true to suppress truncated zone display on first load
+            // Use the largest visible period button or 1 hour as fallback
+            const $activeButton = $('.period-btn.active:visible');
+            const initialPeriod = $activeButton.length > 0
+                ? parseInt($activeButton.data('period'), 10)
+                : Math.min(3600, logDuration);
+            const initialStart = Math.max(this.currentTimeRange.end - initialPeriod, this.currentTimeRange.start);
+            this.loadLogByTimeRange(initialStart, this.currentTimeRange.end, true, true);
         } else {
             // Line number fallback mode
             this.timeSliderEnabled = false;
@@ -904,8 +1021,11 @@ const systemDiagnosticLogs = {
      * Load log by time range
      * @param {number} startTimestamp - Start timestamp
      * @param {number} endTimestamp - End timestamp
+     * @param {boolean} latest - If true, return newest lines first (for initial load)
+     * @param {boolean} isInitialLoad - If true, suppress truncated zone display
+     * @param {boolean} isAutoUpdate - If true, skip timeline recalculation (only update content)
      */
-    async loadLogByTimeRange(startTimestamp, endTimestamp) {
+    loadLogByTimeRange(startTimestamp, endTimestamp, latest = false, isInitialLoad = false, isAutoUpdate = false) {
         // Show dimmer only if not in auto-update mode
         if (!systemDiagnosticLogs.isAutoUpdateActive) {
             systemDiagnosticLogs.$dimmer.addClass('active');
@@ -917,46 +1037,58 @@ const systemDiagnosticLogs = {
             logLevel: this.$formObj.form('get value', 'logLevel') || '',
             dateFrom: startTimestamp,
             dateTo: endTimestamp,
-            lines: 5000 // Maximum lines to load
+            lines: 5000, // Maximum lines to load
+            latest: latest // If true, return newest lines (tail | tac)
         };
 
         try {
             SyslogAPI.getLogFromFile(params, (response) => {
                 if (response && response.result && response.data && 'content' in response.data) {
-                    // Set content in editor (even if empty)
-                    this.viewer.setValue(response.data.content || '', -1);
+                    const newContent = response.data.content || '';
 
-                    // Go to the end of the log
-                    const row = this.viewer.session.getLength() - 1;
-                    const column = this.viewer.session.getLine(row).length;
-                    this.viewer.gotoLine(row + 1, column);
+                    if (isAutoUpdate && newContent.length > 0) {
+                        // Auto-update mode: append only new lines
+                        const currentContent = this.viewer.getValue();
+                        const newLines = this.findNewLines(currentContent, newContent);
+
+                        if (newLines.length > 0) {
+                            // Append new lines at the end
+                            const session = this.viewer.session;
+                            const lastRow = session.getLength();
+                            session.insert({ row: lastRow, column: 0 }, '\n' + newLines.join('\n'));
+
+                            // Go to the last line to follow new entries
+                            const finalRow = session.getLength() - 1;
+                            const finalColumn = session.getLine(finalRow).length;
+                            this.viewer.gotoLine(finalRow + 1, finalColumn);
+                        }
+                    } else {
+                        // Normal mode: set content and go to end
+                        this.viewer.setValue(newContent, -1);
+
+                        // Go to the end of the log
+                        const row = this.viewer.session.getLength() - 1;
+                        const column = this.viewer.session.getLine(row).length;
+                        this.viewer.gotoLine(row + 1, column);
+                    }
 
                     // Adjust slider to actual loaded time range (silently)
                     if (response.data.actual_range) {
                         const actual = response.data.actual_range;
 
-                        // Only sync selectedRange if backend returned meaningful data
-                        // Don't sync if backend returned very short range (< 10% of requested)
-                        // because it means there's just little data in the log, not a 5000-line truncation
-                        const requestedDuration = endTimestamp - startTimestamp;
-                        const actualDuration = actual.end - actual.start;
-                        const durationRatio = actualDuration / requestedDuration;
+                        // Always update fullRange boundary based on actual data from server
+                        // This ensures no-data zones display correctly after refresh
+                        if (actual.end) {
+                            SVGTimeline.updateDataBoundary(actual.end);
+                        }
 
-                        if (durationRatio >= 0.1 || actual.truncated) {
-                            // Backend returned substantial data OR explicitly truncated
-                            // Update SVGTimeline selected range to match actual loaded data
-                            SVGTimeline.updateSelectedRange(actual.start, actual.end);
-
-                            // Log for debugging only
-                            if (actual.truncated) {
-                                console.log(
-                                    `Log data limited to ${actual.lines_count} lines. ` +
-                                    `Showing time range: [${actual.start} - ${actual.end}]`
-                                );
-                            }
-                        } else {
-                            // Backend returned very short range - keep user's selection
-                            console.debug('⚠️ Backend returned short range (' + actualDuration + 's / ' + requestedDuration + 's = ' + (durationRatio * 100).toFixed(1) + '%), keeping user selection');
+                        // Always update timeline with server response (except during auto-update)
+                        // updateFromServerResponse() handles:
+                        // - Updating selectedRange to actual data boundaries
+                        // - Preserving visibleRange.end if it was extended to current time (for no-data zones)
+                        // - Managing truncation zones display
+                        if (!isAutoUpdate) {
+                            SVGTimeline.updateFromServerResponse(actual, startTimestamp, endTimestamp, isInitialLoad);
                         }
                     }
                 }
@@ -1030,13 +1162,37 @@ const systemDiagnosticLogs = {
         if (this.timeSliderEnabled) {
             // In time slider mode, reload current window
             if (this.currentTimeRange) {
-                // In time slider mode, reload last hour
                 const oneHour = 3600;
-                const startTimestamp = Math.max(this.currentTimeRange.end - oneHour, this.currentTimeRange.start);
-                this.loadLogByTimeRange(
-                    startTimestamp,
-                    this.currentTimeRange.end
-                );
+
+                // Get current filename to check if it's a rotated log file
+                const filename = this.$formObj.form('get value', 'filename');
+                const isRotated = this.isRotatedLogFile(filename);
+
+                let endTimestamp;
+                let startTimestamp;
+
+                if (isRotated) {
+                    // For rotated files: use the file's actual time range
+                    // Rotated files don't receive new data, so currentTimeRange is fixed
+                    endTimestamp = this.currentTimeRange.end;
+                    startTimestamp = Math.max(this.currentTimeRange.end - oneHour, this.currentTimeRange.start);
+                } else {
+                    // For active log files: use current time to capture new entries
+                    endTimestamp = Math.floor(Date.now() / 1000);
+                    startTimestamp = endTimestamp - oneHour;
+
+                    // Update currentTimeRange.end to reflect new data availability
+                    this.currentTimeRange.end = endTimestamp;
+
+                    // FORCE update the SVG timeline visible range to current time
+                    // force=true ensures visibleRange.end is set even if it was already >= endTimestamp
+                    // This handles timezone differences where server time might appear "in the future"
+                    SVGTimeline.extendRange(endTimestamp, true);
+                }
+
+                // Use latest=true to show newest entries (for show-last-log / auto-update buttons)
+                // Pass isAutoUpdate=true when auto-refresh is active to prevent timeline flickering
+                this.loadLogByTimeRange(startTimestamp, endTimestamp, true, false, this.isAutoUpdateActive);
             }
         } else {
             // Line number mode
@@ -1044,6 +1200,55 @@ const systemDiagnosticLogs = {
             params.lines = 5000; // Max lines
             SyslogAPI.getLogFromFile(params, systemDiagnosticLogs.cbUpdateLogText);
         }
+    },
+
+    /**
+     * Find new lines that are not in current content
+     * Compares last lines of current content with new content to find overlap
+     * @param {string} currentContent - Current editor content
+     * @param {string} newContent - New content from server
+     * @returns {Array} Array of new lines to append
+     */
+    findNewLines(currentContent, newContent) {
+        if (!currentContent || currentContent.trim().length === 0) {
+            // If editor is empty, all lines are new
+            return newContent.split('\n').filter(line => line.trim().length > 0);
+        }
+
+        const currentLines = currentContent.split('\n');
+        const newLines = newContent.split('\n');
+
+        // Get last non-empty line from current content as anchor
+        let anchorLine = '';
+        for (let i = currentLines.length - 1; i >= 0; i--) {
+            if (currentLines[i].trim().length > 0) {
+                anchorLine = currentLines[i];
+                break;
+            }
+        }
+
+        if (!anchorLine) {
+            return newLines.filter(line => line.trim().length > 0);
+        }
+
+        // Find anchor line in new content
+        let anchorIndex = -1;
+        for (let i = newLines.length - 1; i >= 0; i--) {
+            if (newLines[i] === anchorLine) {
+                anchorIndex = i;
+                break;
+            }
+        }
+
+        if (anchorIndex === -1) {
+            // Anchor not found - content changed significantly, return empty
+            // This prevents duplicates when log rotates or filter changes
+            return [];
+        }
+
+        // Return lines after anchor
+        const result = newLines.slice(anchorIndex + 1).filter(line => line.trim().length > 0);
+        return result;
     },
 
     /**

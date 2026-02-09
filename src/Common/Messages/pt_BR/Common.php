@@ -936,6 +936,8 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'sd_LoadingPrevious' => 'Carregando entradas anteriores...',
     'sd_LoadingNext' => 'Carregando as próximas entradas...',
     'sd_LoadNext' => 'Baixe a seguir',
+    'sd_NoDataForPeriod' => 'Sem dados para este período',
+    'sd_DataTruncatedClickToLoad' => 'Dados truncados (limite de 5000 linhas). Clique para carregar.',
     'sf_DescriptionPlaceholder' => 'Insira uma descrição do arquivo de áudio (opcional)',
     'sf_FilenamePlaceholder' => 'Por exemplo: saudação, música de espera, menu de voz',
     'sf_ConvertError' => 'Erro ao converter o arquivo de áudio',

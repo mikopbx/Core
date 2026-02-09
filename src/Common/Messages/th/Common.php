@@ -909,6 +909,8 @@ return [
     'sd_LoadingNext' => 'กำลังโหลดรายการถัดไป...',
     'sd_LoadPrevious' => 'โหลดก่อนหน้า',
     'sd_LoadNext' => 'ดาวน์โหลดถัดไป',
+    'sd_NoDataForPeriod' => 'ไม่มีข้อมูลสำหรับช่วงเวลานี้',
+    'sd_DataTruncatedClickToLoad' => 'ข้อมูลถูกตัดทอน (จำกัด 5000 บรรทัด) คลิกเพื่อโหลด',
     'sf_DescriptionPlaceholder' => 'ป้อนคำอธิบายของไฟล์เสียง (ไม่บังคับ)',
     'sf_FilenamePlaceholder' => 'ตัวอย่างเช่น: ข้อความทักทาย, เพลงรอสาย, เมนูเสียง',
     'sf_ConvertError' => 'เกิดข้อผิดพลาดในการแปลงไฟล์เสียง',

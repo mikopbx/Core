@@ -1782,6 +1782,7 @@ return [
     'rest_schema_syslog_date_from' => 'Suodatettavan aikavälin alku',
     'rest_schema_syslog_date_to' => 'Suodatuksen aikaväli päättyy',
     'rest_schema_syslog_archive' => 'Käytä arkistolokeja',
+    'rest_schema_syslog_latest' => 'Palauta uusimmat merkinnät kun raja ylitetään',
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'Epäonnistuneiden yritysten enimmäismäärä ennen estoa',
     'rest_param_f2b_bantime' => 'IP-osoitteen estoaika sekunteina',
@@ -2150,6 +2151,7 @@ return [
     'rest_param_syslog_filter' => 'Lokirivien suodatusteksti (grep-haku)',
     'rest_param_syslog_date_to' => 'Suodatettavan aikavälin loppu (muoto: VVVV-KK-PP HH:MM:SS tai Unix-aikaleima)',
     'rest_param_syslog_archive' => 'Käytä arkistolokeja',
+    'rest_param_syslog_latest' => 'Jos tosi, palauta uusimmat lokimerkinnät. Kun tiedot ylittävät rivirajaan, katkaiseminen tapahtuu alussa (vanhimmat merkinnät poistetaan)',
     // IAX schema fields
     'rest_schema_iax_id' => 'Yksilöllinen IAX-palveluntarjoajan tunniste',
     'rest_response_401_unauthorized' => 'Todennus vaaditaan',

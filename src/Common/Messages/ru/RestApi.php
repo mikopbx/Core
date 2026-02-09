@@ -1682,6 +1682,7 @@ return [
     'rest_param_syslog_date_to' => 'Конец временного диапазона для фильтрации (формат: YYYY-MM-DD HH:MM:SS или unix timestamp)',
     'rest_param_syslog_archive_filename' => 'Путь к файлу архива логов',
     'rest_param_syslog_archive' => 'Использовать архивные логи',
+    'rest_param_syslog_latest' => 'Если true, возвращать последние (новейшие) записи лога. При превышении лимита строк обрезка происходит с начала (старые записи отбрасываются)',
 
     // SysLogs schema field descriptions
     'rest_schema_syslog_filename' => 'Путь к лог файлу относительно директории логов',
@@ -1692,6 +1693,7 @@ return [
     'rest_schema_syslog_date_from' => 'Начало временного диапазона для фильтрации',
     'rest_schema_syslog_date_to' => 'Конец временного диапазона для фильтрации',
     'rest_schema_syslog_archive' => 'Использовать архивные логи',
+    'rest_schema_syslog_latest' => 'Возвращать последние (новейшие) записи при превышении лимита',
 
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'Максимальное количество неудачных попыток до блокировки',

@@ -841,6 +841,7 @@ return [
     'rest_param_syslog_date_to' => 'A szűrendő időtartomány vége (formátum: ÉÉÉÉ-HH-NN ÓÓ:PP:MM vagy Unix időbélyeg)',
     'rest_param_syslog_archive_filename' => 'A naplóarchív fájl elérési útja',
     'rest_param_syslog_archive' => 'Archív naplók használata',
+    'rest_param_syslog_latest' => 'Ha igaz, a legújabb naplóbejegyzéseket adja vissza. Amikor az adatok meghaladják a sorszámkorlátot, a csonkítás az elején történik (a legrégebbi bejegyzések törlődnek)',
     // SysLogs schema field descriptions
     'rest_schema_syslog_filename' => 'A naplófájl elérési útja a naplókönyvtárhoz képest',
     'rest_schema_syslog_filter' => 'Szöveg a naplósorok szűréséhez',
@@ -850,6 +851,7 @@ return [
     'rest_schema_syslog_date_from' => 'A szűrendő időtartomány kezdete',
     'rest_schema_syslog_date_to' => 'A szűrés időtartományának vége',
     'rest_schema_syslog_archive' => 'Archív naplók használata',
+    'rest_schema_syslog_latest' => 'Legújabb bejegyzések visszaadása korlát túllépésekor',
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'A blokkolás előtti sikertelen próbálkozások maximális száma',
     'rest_param_f2b_bantime' => 'IP-cím blokkolási ideje másodpercben',

@@ -721,6 +721,7 @@ return [
     'rest_param_syslog_date_to' => 'Ende des zu filternden Zeitbereichs (Format: JJJJ-MM-TT HH:MM:SS oder Unix-Zeitstempel)',
     'rest_param_syslog_archive_filename' => 'Pfad zur Protokollarchivdatei',
     'rest_param_syslog_archive' => 'Archivprotokolle verwenden',
+    'rest_param_syslog_latest' => 'Wenn true, werden die neuesten Log-Einträge zurückgegeben. Bei Überschreitung des Zeilenlimits erfolgt die Kürzung am Anfang (älteste Einträge werden entfernt)',
     // SysLogs schema field descriptions
     'rest_schema_syslog_filename' => 'Pfad zur Protokolldatei relativ zum Protokollverzeichnis',
     'rest_schema_syslog_filter' => 'Text zum Filtern von Protokollzeilen',
@@ -730,6 +731,7 @@ return [
     'rest_schema_syslog_date_from' => 'Beginn des zu filternden Zeitraums',
     'rest_schema_syslog_date_to' => 'Ende des Filterzeitraums',
     'rest_schema_syslog_archive' => 'Archivprotokolle verwenden',
+    'rest_schema_syslog_latest' => 'Neueste Einträge zurückgeben, wenn Limit überschritten wird',
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'Maximale Anzahl erfolgloser Versuche vor der Sperrung',
     'rest_param_f2b_bantime' => 'IP-Adressenblockierungszeit in Sekunden',

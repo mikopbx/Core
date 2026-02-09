@@ -812,6 +812,8 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'sd_LoadingPrevious' => 'Eerdere berichten laden...',
     'sd_LoadingNext' => 'Volgende items worden geladen...',
     'sd_LoadNext' => 'Volgende downloaden',
+    'sd_NoDataForPeriod' => 'Geen gegevens voor deze periode',
+    'sd_DataTruncatedClickToLoad' => 'Gegevens afgekapt (limiet van 5000 regels). Klik om te laden.',
     'sf_DescriptionPlaceholder' => 'Voer een beschrijving van het audiobestand in (optioneel)',
     'sf_FilenamePlaceholder' => 'Bijvoorbeeld: begroeting, wachtmuziek, spraakmenu',
     'sf_ConvertError' => 'Fout bij het converteren van audiobestand',

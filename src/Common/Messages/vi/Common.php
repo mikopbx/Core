@@ -925,6 +925,8 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'sd_LoadingNext' => 'Đang tải các mục tiếp theo...',
     'sd_LoadPrevious' => 'Tải trang trước',
     'sd_LoadNext' => 'Tải xuống tiếp theo',
+    'sd_NoDataForPeriod' => 'Không có dữ liệu cho giai đoạn này',
+    'sd_DataTruncatedClickToLoad' => 'Dữ liệu bị cắt ngắn (giới hạn 5000 dòng). Nhấp để tải.',
     'sf_DescriptionPlaceholder' => 'Nhập mô tả về tệp âm thanh (tùy chọn)',
     'sf_FilenamePlaceholder' => 'Ví dụ: lời chào, nhạc chờ, menu thoại',
     'sf_ConvertError' => 'Lỗi khi chuyển đổi tệp âm thanh',

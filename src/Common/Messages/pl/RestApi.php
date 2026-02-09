@@ -893,9 +893,11 @@ return [
     'rest_param_syslog_lines' => 'Liczba ostatnich wierszy dziennika do wydrukowania',
     'rest_param_syslog_offset' => 'Liczba wierszy do pominięcia od końca (używana w połączeniu z wierszami do paginacji)',
     'rest_param_syslog_archive' => 'Użyj dzienników archiwalnych',
+    'rest_param_syslog_latest' => 'Jeśli prawda, zwróć najnowsze wpisy dziennika. Gdy dane przekraczają limit wierszy, obcięcie następuje na początku (najstarsze wpisy są usuwane)',
     'rest_schema_syslog_log_level' => 'Poziom rejestrowania do filtrowania',
     'rest_schema_syslog_date_from' => 'Początek zakresu czasu do filtrowania',
     'rest_schema_syslog_archive' => 'Użyj dzienników archiwalnych',
+    'rest_schema_syslog_latest' => 'Zwracaj najnowsze wpisy po przekroczeniu limitu',
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'Maksymalna liczba nieudanych prób przed zablokowaniem',
     'rest_param_f2b_bantime' => 'Czas blokowania adresu IP w sekundach',

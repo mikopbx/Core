@@ -828,6 +828,8 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'sd_Debug' => 'Débogage',
     'sd_LoadingNext' => 'Chargement des entrées suivantes...',
     'sd_LoadPrevious' => 'Charger la page précédente',
+    'sd_NoDataForPeriod' => 'Aucune donnée pour cette période',
+    'sd_DataTruncatedClickToLoad' => 'Données tronquées (limite de 5000 lignes). Cliquez pour charger.',
     'st_Day' => 'jour',
     'st_S3StatusSyncing' => 'Synchronisation avec S3 : %percent% % terminée',
     'st_S3StatusUploading' => 'Des fichiers sont activement téléchargés sur S3',

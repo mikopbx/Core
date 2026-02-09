@@ -921,6 +921,8 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'sd_LoadingNext' => 'Učitavanje sljedećih unosa...',
     'sd_LoadPrevious' => 'Učitaj prethodno',
     'sd_LoadNext' => 'Preuzmi sljedeće',
+    'sd_NoDataForPeriod' => 'Nema podataka za ovo razdoblje',
+    'sd_DataTruncatedClickToLoad' => 'Podaci skraćeni (limit 5000 redaka). Kliknite za učitavanje.',
     'sf_DescriptionPlaceholder' => 'Unesite opis audio datoteke (nije obavezno)',
     'sf_FilenamePlaceholder' => 'Na primjer: pozdrav, glazba za čekanje, glasovni izbornik',
     'sf_ConvertErrorDetails' => 'Pretvaranje datoteke nije uspjelo. Datoteka je možda oštećena ili u nepodržanom formatu.',

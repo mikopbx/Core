@@ -782,6 +782,8 @@ return [
     'sd_LoadingNext' => 'Загрузка следующих записей...',
     'sd_LoadPrevious' => 'Загрузить предыдущие',
     'sd_LoadNext' => 'Загрузить следующие',
+    'sd_NoDataForPeriod' => 'Нет данных за этот период',
+    'sd_DataTruncatedClickToLoad' => 'Данные обрезаны (лимит 5000 строк). Нажмите для загрузки.',
 
     // SF
     'sf_AddNewAudioFile' => 'Добавить новый аудиофайл',

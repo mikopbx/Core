@@ -364,6 +364,7 @@ Use the **`translations`** skill to manage multilingual translations:
 - **[Worker Development](src/Core/Workers/CLAUDE.md)** - Build background workers
 - **[REST API Development](src/PBXCoreREST/CLAUDE.md)** - Add new API endpoints
 - **[Admin UI Development](src/AdminCabinet/CLAUDE.md)** - Extend web interface
+- **[System Diagnostic](sites/admin-cabinet/assets/js/src/SystemDiagnostic/CLAUDE.md)** - Log viewer with SVG timeline
 - **[Asterisk Integration](src/Core/Asterisk/CLAUDE.md)** - Work with Asterisk
 - **[Models Documentation](src/Common/Models/CLAUDE.md)** - Database models guide
 - **[Providers Documentation](src/Common/Providers/CLAUDE.md)** - DI providers guide

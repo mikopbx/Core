@@ -1740,6 +1740,7 @@ return [
     'rest_param_syslog_date_to' => 'Kraj vremenskog raspona za filtriranje (format: GGGG-MM-DD HH:MM:SS ili unix vremenska oznaka)',
     'rest_param_syslog_archive_filename' => 'Put do datoteke arhive dnevnika',
     'rest_param_syslog_archive' => 'Koristi arhivske zapisnike',
+    'rest_param_syslog_latest' => 'Ako je true, vrati najnovije zapise dnevnika. Kada podaci prelaze ograničenje redaka, rezanje se događa na početku (najstariji zapisi se uklanjaju)',
     // SysLogs schema field descriptions
     'rest_schema_syslog_filename' => 'Put do datoteke dnevnika u odnosu na direktorij dnevnika',
     'rest_schema_syslog_filter' => 'Tekst za filtriranje redaka zapisnika',
@@ -1748,6 +1749,7 @@ return [
     'rest_schema_syslog_date_from' => 'Početak vremenskog raspona za filtriranje',
     'rest_schema_syslog_date_to' => 'Kraj vremenskog raspona za filtriranje',
     'rest_schema_syslog_archive' => 'Koristi arhivske zapisnike',
+    'rest_schema_syslog_latest' => 'Vrati najnovije zapise kada se prekorači ograničenje',
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'Maksimalan broj neuspješnih pokušaja prije blokiranja',
     'rest_param_f2b_bantime' => 'Vrijeme blokiranja IP adrese u sekundama',

@@ -807,6 +807,7 @@ return [
     'rest_param_syslog_date_to' => 'Fin del rango de tiempo a filtrar (formato: AAAA-MM-DD HH:MM:SS o marca de tiempo Unix)',
     'rest_param_syslog_archive_filename' => 'Ruta al archivo de registro',
     'rest_param_syslog_archive' => 'Utilizar registros de archivo',
+    'rest_param_syslog_latest' => 'Si es verdadero, devolver las entradas de registro más recientes (más nuevas). Cuando los datos exceden el límite de líneas, el truncamiento ocurre al principio (las entradas más antiguas se eliminan)',
     // SysLogs schema field descriptions
     'rest_schema_syslog_filename' => 'Ruta al archivo de registro en relación con el directorio de registro',
     'rest_schema_syslog_log_level' => 'Nivel de registro para filtrado',
@@ -815,6 +816,7 @@ return [
     'rest_schema_syslog_date_from' => 'Inicio del rango de tiempo a filtrar',
     'rest_schema_syslog_date_to' => 'Fin del rango de tiempo para el filtrado',
     'rest_schema_syslog_archive' => 'Utilizar registros de archivo',
+    'rest_schema_syslog_latest' => 'Devolver las entradas más recientes cuando se excede el límite',
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'Número máximo de intentos fallidos antes del bloqueo',
     'rest_param_f2b_bantime' => 'Tiempo de bloqueo de dirección IP en segundos',

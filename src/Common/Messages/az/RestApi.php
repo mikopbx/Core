@@ -1040,6 +1040,7 @@ return [
     'rest_schema_ms_send_missed_call_notifications' => 'Buraxılmış zəng bildirişlərini göndərin',
     'rest_param_syslog_archive_filename' => 'Günlük arxiv faylına gedən yol',
     'rest_param_syslog_archive' => 'Arxiv qeydlərindən istifadə edin',
+    'rest_param_syslog_latest' => 'Əgər doğrudursa, ən son (ən yeni) log qeydlərini qaytarın. Məlumat sətr limitini keçdikdə, kəsilmə başlanğıcda baş verir (köhnə qeydlər silinir)',
     'rest_response_200_uploaded' => 'Fayl uğurla yükləndi.',
     'rest_response_422_validation' => 'Məlumatların doğrulanması xətası',
     'rest_response_500_error' => 'Daxili Server Xətası',
@@ -1687,6 +1688,7 @@ return [
     'rest_schema_syslog_date_from' => 'Filtrləmə üçün vaxt aralığının başlanğıcı',
     'rest_schema_syslog_date_to' => 'Filtrləmə üçün son vaxt aralığı',
     'rest_schema_syslog_archive' => 'Arxiv qeydlərindən istifadə edin',
+    'rest_schema_syslog_latest' => 'Limit keçərsə ən son (ən yeni) qeydləri qaytarın',
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'Bloklamadan əvvəl uğursuz cəhdlərin maksimum sayı',
     'rest_param_f2b_bantime' => 'IP ünvanının bloklanma müddəti saniyələrlə',

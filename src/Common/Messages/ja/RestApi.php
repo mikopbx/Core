@@ -617,6 +617,7 @@ return [
     'rest_param_syslog_date_from' => 'フィルタリングする時間範囲の開始 (形式: YYYY-MM-DD HH:MM:SS または Unix タイムスタンプ)',
     'rest_param_syslog_date_to' => 'フィルタリングする時間範囲の終了 (形式: YYYY-MM-DD HH:MM:SS または Unix タイムスタンプ)',
     'rest_param_syslog_archive' => 'アーカイブログを使用する',
+    'rest_param_syslog_latest' => 'trueの場合、最新のログエントリを返します。データが行制限を超えると、切り捨ては最初に発生します（最も古いエントリが削除されます）',
     // SysLogs schema field descriptions
     'rest_schema_syslog_filename' => 'ログディレクトリを基準としたログファイルへのパス',
     'rest_schema_syslog_filter' => 'ログ行をフィルタリングするためのテキスト',
@@ -625,6 +626,7 @@ return [
     'rest_schema_syslog_offset' => 'ログ行のページ区切りのオフセット',
     'rest_schema_syslog_date_to' => 'フィルタリングの期間の終了',
     'rest_schema_syslog_archive' => 'アーカイブログを使用する',
+    'rest_schema_syslog_latest' => '制限を超えた場合に最新のエントリを返す',
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'ブロックするまでの最大失敗回数',
     'rest_param_f2b_findtime' => '失敗した試行をカウントする時間（秒）',

@@ -907,6 +907,8 @@ return [
     'sd_LoadingPrevious' => 'Φόρτωση προηγούμενων καταχωρίσεων...',
     'sd_LoadingNext' => 'Φόρτωση επόμενων καταχωρίσεων...',
     'sd_LoadNext' => 'Λήψη επόμενου',
+    'sd_NoDataForPeriod' => 'Δεν υπάρχουν δεδομένα για αυτήν την περίοδο',
+    'sd_DataTruncatedClickToLoad' => 'Δεδομένα περικομμένα (όριο 5000 γραμμών). Κάντε κλικ για φόρτωση.',
     // SF
     'sf_AddNewAudioFile' => 'Προσθήκη νέου αρχείου ήχου',
     'sf_Description' => 'Περιγραφή',

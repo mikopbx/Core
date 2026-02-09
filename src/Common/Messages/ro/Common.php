@@ -932,6 +932,8 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'sd_LoadingNext' => 'Se încarcă următoarele intrări...',
     'sd_LoadPrevious' => 'Încărcați anterioară',
     'sd_LoadNext' => 'Descărcați următorul',
+    'sd_NoDataForPeriod' => 'Fără date pentru această perioadă',
+    'sd_DataTruncatedClickToLoad' => 'Date trunchiată (limită de 5000 linii). Faceți clic pentru a încărca.',
     'sf_FilenamePlaceholder' => 'De exemplu: salut, muzică de așteptare, meniu vocal',
     'sf_ConvertError' => 'Eroare la conversia fișierului audio',
     'sf_ConvertErrorDetails' => 'Conversia fișierului a eșuat. Fișierul poate fi corupt sau într-un format neacceptat.',

@@ -908,6 +908,8 @@ return [
     'sd_LoadingNext' => '次のエントリを読み込んでいます...',
     'sd_LoadPrevious' => '前の項目を読み込む',
     'sd_LoadNext' => '次にダウンロード',
+    'sd_NoDataForPeriod' => 'この期間のデータはありません',
+    'sd_DataTruncatedClickToLoad' => 'データが切り捨てられました（5000行の制限）。クリックして読み込む。',
     'sf_DescriptionPlaceholder' => 'オーディオファイルの説明を入力してください（オプション）',
     'sf_FilenamePlaceholder' => '例: 挨拶、待機中の音楽、音声メニュー',
     'sf_ConvertErrorDetails' => 'ファイルの変換に失敗しました。ファイルが破損しているか、サポートされていない形式である可能性があります。',

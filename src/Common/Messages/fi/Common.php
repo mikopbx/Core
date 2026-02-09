@@ -931,6 +931,8 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'sd_Last3Hours' => 'Viimeiset 3 tuntia',
     'sd_Last12Hours' => 'Viimeiset 12 tuntia',
     'sd_LoadPrevious' => 'Lataa edellinen',
+    'sd_NoDataForPeriod' => 'Ei tietoja tälle ajanjaksolle',
+    'sd_DataTruncatedClickToLoad' => 'Tiedot katkaistu (5000 rivin raja). Napsauta ladataksesi.',
     'sf_FilenamePlaceholder' => 'Esimerkiksi: tervehdys, odotusmusiikki, äänivalikko',
     'sf_ConvertError' => 'Virhe äänitiedoston muuntamisessa',
     'sf_ConvertErrorDetails' => 'Tiedoston muuntaminen epäonnistui. Tiedosto voi olla vioittunut tai sen muotoa ei tueta.',

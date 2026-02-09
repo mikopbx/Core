@@ -690,6 +690,7 @@ return [
     'rest_param_syslog_date_to' => 'Τέλος χρονικού εύρους για φιλτράρισμα (μορφή: ΕΕΕΕ-ΜΜ-ΗΗ ΩΩ:ΛΛ:ΔΔ ή χρονική σήμανση unix)',
     'rest_param_syslog_archive_filename' => 'Διαδρομή προς το αρχείο αρχειοθέτησης καταγραφής',
     'rest_param_syslog_archive' => 'Χρήση αρχείων καταγραφής αρχειοθέτησης',
+    'rest_param_syslog_latest' => 'Εάν true, επιστρέψτε τις πιο πρόσφατες (νεότερες) καταχωρίσεις καταγραφής. Όταν τα δεδομένα υπερβαίνουν το όριο γραμμών, η αποκοπή γίνεται στην αρχή (παλαιότερες καταχωρίσεις αφαιρούνται)',
     // Network REST API - Response Schemas (Field Descriptions)
     'rest_schema_net_id' => 'Μοναδικό αναγνωριστικό διεπαφής',
     'rest_schema_net_interface' => 'Όνομα φυσικής διεπαφής',
@@ -702,6 +703,7 @@ return [
     'rest_schema_syslog_offset' => 'Μετατόπιση για σελιδοποίηση γραμμών καταγραφής',
     'rest_schema_syslog_date_from' => 'Έναρξη χρονικού εύρους για φιλτράρισμα',
     'rest_schema_syslog_archive' => 'Χρήση αρχείων καταγραφής αρχειοθέτησης',
+    'rest_schema_syslog_latest' => 'Επιστροφή πιο πρόσφατων καταχωρίσεων όταν υπερβαίνεται το όριο',
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'Μέγιστος αριθμός ανεπιτυχών προσπαθειών πριν από τον αποκλεισμό',
     'rest_param_f2b_bantime' => 'Χρόνος αποκλεισμού διεύθυνσης IP σε δευτερόλεπτα',

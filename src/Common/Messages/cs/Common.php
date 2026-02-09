@@ -920,6 +920,8 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'sd_LoadingNext' => 'Načítání dalších záznamů...',
     'sd_LoadPrevious' => 'Načíst předchozí',
     'sd_LoadNext' => 'Stáhnout další',
+    'sd_NoDataForPeriod' => 'Žádná data pro toto období',
+    'sd_DataTruncatedClickToLoad' => 'Data zkrácena (limit 5000 řádků). Klikněte pro načtení.',
     'sf_DescriptionPlaceholder' => 'Zadejte popis zvukového souboru (volitelné)',
     'sf_FilenamePlaceholder' => 'Například: uvítání, hudba pro přivítání, hlasové menu',
     'sf_ConvertError' => 'Chyba při převodu zvukového souboru',

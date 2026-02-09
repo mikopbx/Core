@@ -38,6 +38,7 @@ return [
     'rest_param_syslog_log_level' => 'Logningsniveau for filtrering (FEJL, ADVARSEL, MEDDELELSE, INFO, DEBUG)',
     'rest_param_sf_total_chunks' => 'Samlet antal chunks i en chunked upload (Resumable.js)',
     'rest_schema_syslog_archive' => 'Brug arkivlogfiler',
+    'rest_schema_syslog_latest' => 'Returnér seneste (nyeste) indgange når data overstiger grænsen',
     'rest_response_200_uploaded' => 'Filen blev uploadet.',
     'rest_response_206_partial_content' => 'Delvist indhold (HTTP-område)',
     'rest_resource_customfile' => 'Brugerdefinerede filer',
@@ -1495,6 +1496,7 @@ return [
     'rest_sf_UpdateDesc' => 'Erstat lydfilens metadata fuldstændigt (alle felter skal angives).',
     'rest_schema_sip_registry_state' => 'SIP-registreringsstatus (Registreret, Anmodning sendt, Afvist)',
     'rest_param_syslog_archive' => 'Brug arkivlogfiler',
+    'rest_param_syslog_latest' => 'Hvis sand, returnér seneste (nyeste) logindgange. Når data overstiger linjebegrænsningen, sker afskæring i begyndelsen (ældste indgange skæres fra)',
     'rest_schema_ms_username' => 'SMTP-brugernavn eller e-mailadresse',
     'rest_response_200_exported' => 'Eksporten er gennemført',
     // ============================================================================

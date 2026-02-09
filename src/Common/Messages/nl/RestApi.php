@@ -774,6 +774,7 @@ return [
     'rest_param_syslog_date_to' => 'Einde van het te filteren tijdsbereik (formaat: JJJJ-MM-DD UU:MM:SS of Unix-tijdstempel)',
     'rest_param_syslog_archive_filename' => 'Pad naar het logarchiefbestand',
     'rest_param_syslog_archive' => 'Archieflogboeken gebruiken',
+    'rest_param_syslog_latest' => 'Indien waar, retourneer de nieuwste logitems. Wanneer gegevens de regellimiet overschrijden, vindt afkapping aan het begin plaats (oudste items worden verwijderd)',
     'rest_schema_syslog_filter' => 'Tekst voor het filteren van logregels',
     'rest_schema_syslog_log_level' => 'Loggingniveau voor filtering',
     'rest_schema_syslog_lines' => 'Aantal laatste logregels dat moet worden uitgevoerd',
@@ -781,6 +782,7 @@ return [
     'rest_schema_syslog_date_from' => 'Begin van het te filteren tijdsbereik',
     'rest_schema_syslog_date_to' => 'Einde van het tijdsbereik voor filtering',
     'rest_schema_syslog_archive' => 'Archieflogboeken gebruiken',
+    'rest_schema_syslog_latest' => 'Nieuwste items retourneren wanneer limiet wordt overschreden',
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'Maximaal aantal mislukte pogingen voordat blokkering optreedt',
     'rest_param_f2b_bantime' => 'Blokkeringstijd IP-adres in seconden',

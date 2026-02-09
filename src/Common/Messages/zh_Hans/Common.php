@@ -893,6 +893,8 @@ return [
     'sd_LoadingPrevious' => '正在加载上一条记录……',
     'sd_LoadingNext' => '正在加载下一条记录……',
     'sd_LoadPrevious' => '加载上一个',
+    'sd_NoDataForPeriod' => '此期间无数据',
+    'sd_DataTruncatedClickToLoad' => '数据已截断（5000行限制）。点击加载。',
     'sf_UploadSecurityViolation' => '检测到有人试图下载可能存在危险的文件。',
     'adv_SecurityLogCriticalGrowth' => 'Asterisk 安全日志已严重增长：%interval% 分钟内增长了 %growth% MB。系统正遭受攻击！<a href=\'%logFile%\'>检查日志</a>',
     'st_1Month' => '1个月',

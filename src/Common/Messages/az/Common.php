@@ -929,6 +929,8 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'sd_LoadingNext' => 'Növbəti qeydlər yüklənir...',
     'sd_LoadPrevious' => 'Əvvəlkini yükləyin',
     'sd_LoadNext' => 'Növbətini yükləyin',
+    'sd_NoDataForPeriod' => 'Bu dövr üçün məlumat yoxdur',
+    'sd_DataTruncatedClickToLoad' => 'Məlumatlar kəsilib (5000 sətir limiti). Yükləmək üçün klikləyin.',
     'sf_DescriptionPlaceholder' => 'Audio faylının təsvirini daxil edin (isteğe bağlı)',
     'sf_ConvertError' => 'Audio faylını çevirərkən xəta baş verdi',
     'sf_ConvertErrorDetails' => 'Faylı çevirmək alınmadı. Fayl zədələnmiş və ya dəstəklənməyən formatda ola bilər.',

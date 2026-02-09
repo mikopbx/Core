@@ -799,6 +799,8 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'sd_Today' => 'oggi',
     'sd_LoadingNext' => 'Caricamento delle voci successive...',
     'sd_LoadPrevious' => 'Carica precedente',
+    'sd_NoDataForPeriod' => 'Nessun dato per questo periodo',
+    'sd_DataTruncatedClickToLoad' => 'Dati troncati (limite 5000 righe). Clicca per caricare.',
     'st_S3EndpointInvalid' => 'URL del punto di accesso S3 non valido',
     'st_S3FilesInCloud' => 'Nel cloud: %count% file (%size%)',
     'st_S3FilesPending' => 'In attesa di download: file %count% (%size%)',

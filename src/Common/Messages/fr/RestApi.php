@@ -78,6 +78,7 @@ return [
     'rest_param_syslog_date_from' => 'Début de la plage horaire à filtrer (format : AAAA-MM-JJ HH:MM:SS ou horodatage Unix)',
     'rest_schema_syslog_offset' => 'Décalage pour la pagination des lignes de journal',
     'rest_schema_syslog_archive' => 'Utiliser les journaux d\'archivage',
+    'rest_schema_syslog_latest' => 'Renvoyer les entrées les plus récentes lorsque la limite est dépassée',
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'Nombre maximal de tentatives infructueuses avant blocage',
     'rest_param_cf_content' => 'Contenu du fichier encodé en base64',
@@ -274,6 +275,7 @@ return [
     'rest_param_file_resumable_name' => 'Nom du fichier téléchargé',
     'rest_param_syslog_archive_filename' => 'Chemin d\'accès au fichier d\'archive journal',
     'rest_param_syslog_archive' => 'Utiliser les journaux d\'archivage',
+    'rest_param_syslog_latest' => 'Si vrai, renvoie les dernières entrées de journal (les plus récentes). Lorsque les données dépassent la limite de lignes, la troncature se produit au début (les entrées les plus anciennes sont supprimées)',
     'rest_schema_syslog_filter' => 'Texte pour filtrer les lignes de journal',
     'rest_schema_syslog_log_level' => 'Niveau de journalisation pour le filtrage',
     'rest_schema_syslog_lines' => 'Nombre de dernières lignes de journal à afficher',

@@ -687,6 +687,8 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'mo_NewElementApiKeys' => 'Nueva clave API',
     'sd_LastHour' => 'La última hora',
     'sd_LoadPrevious' => 'Cargar anterior',
+    'sd_NoDataForPeriod' => 'No hay datos para este período',
+    'sd_DataTruncatedClickToLoad' => 'Datos truncados (límite de 5000 líneas). Haga clic para cargar.',
     'sf_DescriptionPlaceholder' => 'Introduzca una descripción del archivo de audio (opcional)',
     'st_CategorySystemLogs' => 'Registros del sistema',
     'st_Of' => 'de',

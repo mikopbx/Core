@@ -2143,6 +2143,7 @@ return [
     'rest_param_syslog_date_to' => 'ფილტრაციის დროის დიაპაზონის დასასრული (ფორმატი: YYYY-MM-DD HH:MM:SS ან Unix-ის დროის ნიშნული)',
     'rest_param_syslog_archive_filename' => 'ლოგის არქივის ფაილისკენ მიმავალი გზა',
     'rest_param_syslog_archive' => 'გამოიყენეთ არქივის ჟურნალები',
+    'rest_param_syslog_latest' => 'თუ true, დააბრუნეთ უახლესი ჟურნალის ჩანაწერები. როდესაც მონაცემები აჭარბებს ხაზების ლიმიტს, მოჭრა ხდება დასაწყისში (უძველესი ჩანაწერები იშლება)',
     // SysLogs schema field descriptions
     'rest_schema_syslog_filename' => 'ლოგის ფაილის გზა ლოგის დირექტორიასთან მიმართებაში',
     'rest_schema_syslog_filter' => 'ტექსტი ჟურნალის ხაზების ფილტრაციისთვის',
@@ -2150,6 +2151,7 @@ return [
     'rest_schema_syslog_date_from' => 'ფილტრაციის დროის დიაპაზონის დასაწყისი',
     'rest_schema_syslog_date_to' => 'ფილტრაციის დროის დიაპაზონის დასასრული',
     'rest_schema_syslog_archive' => 'გამოიყენეთ არქივის ჟურნალები',
+    'rest_schema_syslog_latest' => 'უახლესი ჩანაწერების დაბრუნება ლიმიტის გადაჭარბებისას',
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'დაბლოკვამდე წარუმატებელი მცდელობების მაქსიმალური რაოდენობა',
     'rest_param_f2b_bantime' => 'IP მისამართის დაბლოკვის დრო წამებში',

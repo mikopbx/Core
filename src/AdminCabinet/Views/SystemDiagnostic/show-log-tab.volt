@@ -12,20 +12,20 @@
                 </div>
             </div>
 
-            <div class="two wide field">
+            <div class="three wide field">
                 <label for="logLevel">{{ t._('sd_LogLevel') }}</label>
                 {{ form.render('logLevel') }}
             </div>
 
-            <div class="six wide field">
+            <div class="field filter-field">
                 <label>{{ t._('sd_filter') }}</label>
-                <div class="ui icon input">
+                <div class="ui icon input fluid">
                     {{ form.render('filter') }}
                     <i class="link grey times icon clear-filter-btn" id="clear-filter-btn" data-content="{{ t._('sd_ClearFilter') }}"></i>
                 </div>
             </div>
 
-            <div class="three wide field">
+            <div class="field buttons-field">
                 <label>&nbsp;</label>
                 <div class="ui buttons">
                     <div class="ui icon button" id="download-file" data-content="{{ t._('sd_ToolTipDownload') }}"><i class="download icon"></i></div>

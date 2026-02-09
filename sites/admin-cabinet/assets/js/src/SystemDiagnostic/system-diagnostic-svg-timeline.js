@@ -36,6 +36,32 @@ const SVGTimeline = {
     svg: null,
 
     /**
+     * SVG groups for layering
+     * @type {object}
+     */
+    layers: {
+        ticks: null,      // Background layer for ticks and labels
+        dynamic: null     // Foreground layer for selection, handles, boundaries
+    },
+
+    /**
+     * Persistent dynamic SVG elements (for CSS transitions)
+     * @type {object}
+     */
+    elements: {
+        selectionRect: null,
+        leftHandle: null,
+        rightHandle: null,
+        nowLine: null,
+        startBoundary: null,
+        endBoundary: null,
+        noDataLeftRect: null,
+        noDataRightRect: null,
+        truncatedLeftRect: null,
+        truncatedRightRect: null
+    },
+
+    /**
      * Full available range (entire log file)
      * @type {object}
      */
@@ -60,6 +86,27 @@ const SVGTimeline = {
     selectedRange: {
         start: null,
         end: null
+    },
+
+    /**
+     * Requested range (what was sent to server before truncation)
+     * @type {object}
+     */
+    requestedRange: {
+        start: null,
+        end: null
+    },
+
+    /**
+     * Truncation info from server response
+     * @type {object}
+     */
+    truncation: {
+        wasTruncated: false,
+        linesCount: 0,
+        direction: null,  // 'left' or 'right'
+        leftZone: null,   // { start, end } if data was truncated from left (latest=true)
+        rightZone: null   // { start, end } if data was truncated from right (latest=false)
     },
 
     /**
@@ -105,23 +152,33 @@ const SVGTimeline = {
             return;
         }
 
-        // Store full range (entire log file)
+        // Validate time range - must have valid numeric timestamps
+        if (typeof timeRange.start !== 'number' || typeof timeRange.end !== 'number' ||
+            isNaN(timeRange.start) || isNaN(timeRange.end)) {
+            console.error('SVGTimeline: Invalid time range - start and end must be valid numbers');
+            return;
+        }
+
+        // Store full range (entire log file) - ORIGINAL values, never expanded
+        // fullRange represents actual data boundaries for no-data zone calculation
         this.fullRange.start = timeRange.start;
         this.fullRange.end = timeRange.end;
 
-        // Ensure minimum duration to prevent division by zero
+        // For display purposes, expand range if too short (prevents division by zero)
+        // But keep fullRange as original for no-data zone detection
         const MIN_DURATION = 60; // 1 minute minimum
-        if (this.fullRange.end - this.fullRange.start < MIN_DURATION) {
-            // Expand range symmetrically around the single timestamp
-            const center = this.fullRange.start;
-            this.fullRange.start = center - (MIN_DURATION / 2);
-            this.fullRange.end = center + (MIN_DURATION / 2);
+        let displayStart = timeRange.start;
+        let displayEnd = timeRange.end;
+        if (displayEnd - displayStart < MIN_DURATION) {
+            const center = displayStart;
+            displayStart = center - (MIN_DURATION / 2);
+            displayEnd = center + (MIN_DURATION / 2);
         }
 
         this.dimensions.width = this.container.offsetWidth;
 
-        // Determine initial visible range based on total duration (use adjusted fullRange)
-        const totalDuration = this.fullRange.end - this.fullRange.start;
+        // Determine initial visible range based on display duration (expanded for short logs)
+        const totalDuration = displayEnd - displayStart;
         let initialVisibleDuration;
 
         if (totalDuration > 86400 * 7) {
@@ -138,9 +195,9 @@ const SVGTimeline = {
             initialVisibleDuration = totalDuration;
         }
 
-        // Set visible range (what user sees on timeline) - use adjusted fullRange
-        this.visibleRange.end = this.fullRange.end;
-        this.visibleRange.start = Math.max(this.fullRange.end - initialVisibleDuration, this.fullRange.start);
+        // Set visible range (what user sees on timeline) - use expanded display range
+        this.visibleRange.end = displayEnd;
+        this.visibleRange.start = Math.max(displayEnd - initialVisibleDuration, displayStart);
 
         // Calculate selected range as 1/4 of visible range, centered
         this.calculateCenteredSelection();
@@ -150,8 +207,9 @@ const SVGTimeline = {
         this.render();
         this.attachEvents();
 
-        // Handle window resize
-        window.addEventListener('resize', () => this.handleResize());
+        // Handle window resize (stored for cleanup in destroy())
+        this._boundResize = () => this.handleResize();
+        window.addEventListener('resize', this._boundResize);
     },
 
     /**
@@ -261,7 +319,7 @@ const SVGTimeline = {
     },
 
     /**
-     * Create SVG element
+     * Create SVG element with persistent dynamic elements
      */
     createSVG() {
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -269,35 +327,294 @@ const SVGTimeline = {
         svg.setAttribute('width', '100%');
         svg.setAttribute('height', this.dimensions.height);
 
+        // Create defs for patterns
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+
+        // Diagonal stripes pattern for "no data" zones
+        const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+        pattern.setAttribute('id', 'timeline-no-data-pattern');
+        pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+        pattern.setAttribute('width', '8');
+        pattern.setAttribute('height', '8');
+        pattern.setAttribute('patternTransform', 'rotate(45)');
+
+        const patternRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        patternRect.setAttribute('width', '4');
+        patternRect.setAttribute('height', '8');
+        patternRect.setAttribute('fill', 'rgba(0, 0, 0, 0.08)');
+
+        pattern.appendChild(patternRect);
+        defs.appendChild(pattern);
+        svg.appendChild(defs);
+
+        // Create layer groups for proper z-ordering
+        this.layers.ticks = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        this.layers.ticks.setAttribute('class', 'timeline-ticks-layer');
+
+        this.layers.dynamic = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        this.layers.dynamic.setAttribute('class', 'timeline-dynamic-layer');
+
+        svg.appendChild(this.layers.ticks);
+        svg.appendChild(this.layers.dynamic);
+
+        // Create persistent dynamic elements (for CSS transitions)
+        this.createDynamicElements();
+
         this.container.innerHTML = '';
         this.container.appendChild(svg);
         this.svg = svg;
     },
 
     /**
-     * Render timeline
+     * Create persistent dynamic SVG elements once
+     * These elements are updated via setAttribute for smooth CSS transitions
+     */
+    createDynamicElements() {
+        const { height } = this.dimensions;
+
+        // No data zone - left (beyond fullRange.start)
+        this.elements.noDataLeftRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        this.elements.noDataLeftRect.setAttribute('y', 0);
+        this.elements.noDataLeftRect.setAttribute('height', height);
+        this.elements.noDataLeftRect.setAttribute('class', 'timeline-no-data');
+        this.elements.noDataLeftRect.style.display = 'none';
+        this.layers.dynamic.appendChild(this.elements.noDataLeftRect);
+
+        // No data zone - right (beyond fullRange.end)
+        this.elements.noDataRightRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        this.elements.noDataRightRect.setAttribute('y', 0);
+        this.elements.noDataRightRect.setAttribute('height', height);
+        this.elements.noDataRightRect.setAttribute('class', 'timeline-no-data');
+        this.elements.noDataRightRect.style.display = 'none';
+        this.layers.dynamic.appendChild(this.elements.noDataRightRect);
+
+        // Truncated zone - left (data cut by 5000 line limit when latest=true)
+        this.elements.truncatedLeftRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        this.elements.truncatedLeftRect.setAttribute('y', 0);
+        this.elements.truncatedLeftRect.setAttribute('height', height);
+        this.elements.truncatedLeftRect.setAttribute('class', 'timeline-truncated');
+        this.elements.truncatedLeftRect.setAttribute('data-zone', 'truncated-left');
+        this.elements.truncatedLeftRect.style.display = 'none';
+        this.layers.dynamic.appendChild(this.elements.truncatedLeftRect);
+
+        // Truncated zone - right (data cut by 5000 line limit when latest=false)
+        this.elements.truncatedRightRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        this.elements.truncatedRightRect.setAttribute('y', 0);
+        this.elements.truncatedRightRect.setAttribute('height', height);
+        this.elements.truncatedRightRect.setAttribute('class', 'timeline-truncated');
+        this.elements.truncatedRightRect.setAttribute('data-zone', 'truncated-right');
+        this.elements.truncatedRightRect.style.display = 'none';
+        this.layers.dynamic.appendChild(this.elements.truncatedRightRect);
+
+        // "Now" line
+        this.elements.nowLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        this.elements.nowLine.setAttribute('y1', 0);
+        this.elements.nowLine.setAttribute('y2', height);
+        this.elements.nowLine.setAttribute('class', 'timeline-now');
+        this.layers.dynamic.appendChild(this.elements.nowLine);
+
+        // Start boundary (left red line)
+        this.elements.startBoundary = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        this.elements.startBoundary.setAttribute('y1', 0);
+        this.elements.startBoundary.setAttribute('y2', height);
+        this.elements.startBoundary.setAttribute('class', 'timeline-boundary');
+        this.layers.dynamic.appendChild(this.elements.startBoundary);
+
+        // End boundary (right red line)
+        this.elements.endBoundary = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        this.elements.endBoundary.setAttribute('y1', 0);
+        this.elements.endBoundary.setAttribute('y2', height);
+        this.elements.endBoundary.setAttribute('class', 'timeline-boundary');
+        this.layers.dynamic.appendChild(this.elements.endBoundary);
+
+        // Selection rectangle
+        this.elements.selectionRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        this.elements.selectionRect.setAttribute('y', 0);
+        this.elements.selectionRect.setAttribute('height', height);
+        this.elements.selectionRect.setAttribute('class', 'timeline-selection');
+        this.elements.selectionRect.setAttribute('data-handle', 'range');
+        this.layers.dynamic.appendChild(this.elements.selectionRect);
+
+        // Left handle
+        this.elements.leftHandle = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        this.elements.leftHandle.setAttribute('y', 0);
+        this.elements.leftHandle.setAttribute('width', 6);
+        this.elements.leftHandle.setAttribute('height', height);
+        this.elements.leftHandle.setAttribute('class', 'timeline-handle');
+        this.elements.leftHandle.setAttribute('data-handle', 'left');
+        this.layers.dynamic.appendChild(this.elements.leftHandle);
+
+        // Right handle
+        this.elements.rightHandle = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        this.elements.rightHandle.setAttribute('y', 0);
+        this.elements.rightHandle.setAttribute('width', 6);
+        this.elements.rightHandle.setAttribute('height', height);
+        this.elements.rightHandle.setAttribute('class', 'timeline-handle');
+        this.elements.rightHandle.setAttribute('data-handle', 'right');
+        this.layers.dynamic.appendChild(this.elements.rightHandle);
+    },
+
+    /**
+     * Full render - redraws ticks and updates dynamic elements
+     * Called when visibleRange changes (period buttons, resize, mouseUp)
      */
     render() {
         if (!this.svg) return;
 
-        // Clear SVG
-        this.svg.innerHTML = '';
-
         // Update width
         this.dimensions.width = this.container.offsetWidth;
 
-        // Draw ticks and labels first (background layer)
+        // Redraw ticks and labels (they depend on visibleRange)
+        this.renderTicks();
+
+        // Update dynamic elements positions (with CSS transitions)
+        this.updateDynamicElements();
+    },
+
+    /**
+     * Render only ticks and labels (background layer)
+     * Called when visibleRange changes
+     */
+    renderTicks() {
+        if (!this.layers.ticks) return;
+
+        // Clear only ticks layer
+        this.layers.ticks.innerHTML = '';
+
+        // Draw ticks and labels
         this.drawTicks();
+    },
 
-        // Draw "Now" line (middle layer)
-        this.drawNowLine();
+    /**
+     * Update dynamic elements positions via setAttribute
+     * Called during drag for smooth CSS transitions
+     */
+    updateDynamicElements() {
+        const visibleDuration = this.visibleRange.end - this.visibleRange.start;
+        const { width, height, padding } = this.dimensions;
+        const availableWidth = width - (padding * 2);
 
-        // Draw selection range (foreground layer)
-        this.drawSelection();
+        // Safety check
+        if (visibleDuration <= 0 || availableWidth <= 0) return;
 
-        // Draw data boundaries last (top layer) - red lines marking actual log data
-        // Must be drawn AFTER selection to avoid being covered by blue rect
-        this.drawDataBoundaries();
+        // Calculate positions independently for each edge
+        // This prevents visual artifacts when resizing from one side
+        const leftX = padding + ((this.selectedRange.start - this.visibleRange.start) / visibleDuration) * availableWidth;
+        const rightX = padding + ((this.selectedRange.end - this.visibleRange.start) / visibleDuration) * availableWidth;
+        const w = rightX - leftX;
+
+        // Update selection rectangle
+        this.elements.selectionRect.setAttribute('x', leftX);
+        this.elements.selectionRect.setAttribute('width', Math.max(0, w));
+
+        // Update handles - positioned independently
+        this.elements.leftHandle.setAttribute('x', leftX - 3);
+        this.elements.rightHandle.setAttribute('x', rightX - 3);
+
+        // Update "Now" line
+        // Add 60s buffer to prevent hiding when time slightly exceeds visibleRange.end
+        const now = Math.floor(Date.now() / 1000);
+        const nowBuffer = 60;
+        if (now >= this.visibleRange.start && now <= this.visibleRange.end + nowBuffer) {
+            // Clamp nowX to visible area (don't draw beyond right edge)
+            const clampedNow = Math.min(now, this.visibleRange.end);
+            const nowX = padding + ((clampedNow - this.visibleRange.start) / visibleDuration) * availableWidth;
+            this.elements.nowLine.setAttribute('x1', nowX);
+            this.elements.nowLine.setAttribute('x2', nowX);
+            this.elements.nowLine.style.display = '';
+        } else {
+            this.elements.nowLine.style.display = 'none';
+        }
+
+        // Update start boundary
+        if (this.fullRange.start <= this.visibleRange.end) {
+            let xStart;
+            if (this.fullRange.start < this.visibleRange.start) {
+                xStart = padding;
+            } else {
+                xStart = padding + ((this.fullRange.start - this.visibleRange.start) / visibleDuration) * availableWidth;
+            }
+            this.elements.startBoundary.setAttribute('x1', xStart);
+            this.elements.startBoundary.setAttribute('x2', xStart);
+            this.elements.startBoundary.style.display = '';
+        } else {
+            this.elements.startBoundary.style.display = 'none';
+        }
+
+        // Update end boundary
+        if (this.fullRange.end >= this.visibleRange.start) {
+            let xEnd;
+            if (this.fullRange.end > this.visibleRange.end) {
+                xEnd = padding + availableWidth;
+            } else {
+                xEnd = padding + ((this.fullRange.end - this.visibleRange.start) / visibleDuration) * availableWidth;
+            }
+            this.elements.endBoundary.setAttribute('x1', xEnd);
+            this.elements.endBoundary.setAttribute('x2', xEnd);
+            this.elements.endBoundary.style.display = '';
+        } else {
+            this.elements.endBoundary.style.display = 'none';
+        }
+
+        // Update no-data zone (left) - when visibleRange extends before fullRange
+        if (this.visibleRange.start < this.fullRange.start) {
+            const noDataLeftEnd = padding + ((this.fullRange.start - this.visibleRange.start) / visibleDuration) * availableWidth;
+            this.elements.noDataLeftRect.setAttribute('x', padding);
+            this.elements.noDataLeftRect.setAttribute('width', Math.max(0, noDataLeftEnd - padding));
+            this.elements.noDataLeftRect.style.display = '';
+        } else {
+            this.elements.noDataLeftRect.style.display = 'none';
+        }
+
+        // Update no-data zone (right) - when visibleRange extends after fullRange
+        if (this.visibleRange.end > this.fullRange.end) {
+            const noDataRightStart = padding + ((this.fullRange.end - this.visibleRange.start) / visibleDuration) * availableWidth;
+            this.elements.noDataRightRect.setAttribute('x', noDataRightStart);
+            this.elements.noDataRightRect.setAttribute('width', Math.max(0, padding + availableWidth - noDataRightStart));
+            this.elements.noDataRightRect.style.display = '';
+        } else {
+            this.elements.noDataRightRect.style.display = 'none';
+        }
+
+        // Update truncated zone (left) - when data was cut from beginning (latest=true)
+        if (this.truncation.wasTruncated && this.truncation.leftZone) {
+            const truncStart = padding + ((this.truncation.leftZone.start - this.visibleRange.start) / visibleDuration) * availableWidth;
+            const truncEnd = padding + ((this.truncation.leftZone.end - this.visibleRange.start) / visibleDuration) * availableWidth;
+            // Clamp to visible area
+            const clampedStart = Math.max(padding, Math.min(padding + availableWidth, truncStart));
+            const clampedEnd = Math.max(padding, Math.min(padding + availableWidth, truncEnd));
+            const truncWidth = clampedEnd - clampedStart;
+
+            if (truncWidth > 0) {
+                this.elements.truncatedLeftRect.setAttribute('x', clampedStart);
+                this.elements.truncatedLeftRect.setAttribute('width', truncWidth);
+                this.elements.truncatedLeftRect.style.display = '';
+            } else {
+                this.elements.truncatedLeftRect.style.display = 'none';
+            }
+        } else {
+            this.elements.truncatedLeftRect.style.display = 'none';
+        }
+
+        // Update truncated zone (right) - when data was cut from end (latest=false)
+        if (this.truncation.wasTruncated && this.truncation.rightZone) {
+            const truncStart = padding + ((this.truncation.rightZone.start - this.visibleRange.start) / visibleDuration) * availableWidth;
+            const truncEnd = padding + ((this.truncation.rightZone.end - this.visibleRange.start) / visibleDuration) * availableWidth;
+            // Clamp to visible area
+            const clampedStart = Math.max(padding, Math.min(padding + availableWidth, truncStart));
+            const clampedEnd = Math.max(padding, Math.min(padding + availableWidth, truncEnd));
+            const truncWidth = clampedEnd - clampedStart;
+
+            if (truncWidth > 0) {
+                this.elements.truncatedRightRect.setAttribute('x', clampedStart);
+                this.elements.truncatedRightRect.setAttribute('width', truncWidth);
+                this.elements.truncatedRightRect.style.display = '';
+            } else {
+                this.elements.truncatedRightRect.style.display = 'none';
+            }
+        } else {
+            this.elements.truncatedRightRect.style.display = 'none';
+        }
     },
 
     /**
@@ -376,7 +693,7 @@ const SVGTimeline = {
         line.setAttribute('y2', y + height);
         line.setAttribute('stroke', color);
         line.setAttribute('stroke-width', '1');
-        this.svg.appendChild(line);
+        this.layers.ticks.appendChild(line);
     },
 
     /**
@@ -396,7 +713,7 @@ const SVGTimeline = {
         bg.setAttribute('width', bbox.width + (padding * 2));
         bg.setAttribute('height', bbox.height);
         bg.setAttribute('fill', '#fafafa');
-        this.svg.appendChild(bg);
+        this.layers.ticks.appendChild(bg);
 
         // Create text label
         const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -405,7 +722,7 @@ const SVGTimeline = {
         label.setAttribute('text-anchor', 'middle');
         label.setAttribute('class', 'timeline-label');
         label.textContent = text;
-        this.svg.appendChild(label);
+        this.layers.ticks.appendChild(label);
     },
 
     /**
@@ -422,161 +739,6 @@ const SVGTimeline = {
             width: text.length * charWidth,
             height: fontSize + 2
         };
-    },
-
-    /**
-     * Draw selection range (relative to visible range)
-     */
-    drawSelection() {
-        const visibleDuration = this.visibleRange.end - this.visibleRange.start;
-        const { width, padding } = this.dimensions;
-        const availableWidth = width - (padding * 2);
-
-        // Safety check: prevent division by zero
-        if (visibleDuration <= 0) {
-            console.warn('SVGTimeline: visibleDuration is zero or negative, skipping selection drawing');
-            return;
-        }
-
-        // Calculate position relative to VISIBLE range
-        const leftPercent = ((this.selectedRange.start - this.visibleRange.start) / visibleDuration) * 100;
-        const rightPercent = ((this.selectedRange.end - this.visibleRange.start) / visibleDuration) * 100;
-        const widthPercent = rightPercent - leftPercent;
-
-        const x = padding + (leftPercent / 100) * availableWidth;
-        const w = (widthPercent / 100) * availableWidth;
-
-        // Selection background
-        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        rect.setAttribute('x', x);
-        rect.setAttribute('y', 0);
-        rect.setAttribute('width', w);
-        rect.setAttribute('height', this.dimensions.height);
-        rect.setAttribute('class', 'timeline-selection');
-        rect.setAttribute('data-handle', 'range');
-        this.svg.appendChild(rect);
-
-        // Left handle
-        this.drawHandle(x, 'left');
-
-        // Right handle
-        this.drawHandle(x + w, 'right');
-    },
-
-    /**
-     * Draw selection handle
-     * @param {number} x - X position
-     * @param {string} position - 'left' or 'right'
-     */
-    drawHandle(x, position) {
-        const handle = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        handle.setAttribute('x', x - 3);
-        handle.setAttribute('y', 0);
-        handle.setAttribute('width', 6);
-        handle.setAttribute('height', this.dimensions.height);
-        handle.setAttribute('class', 'timeline-handle');
-        handle.setAttribute('data-handle', position);
-        this.svg.appendChild(handle);
-    },
-
-    /**
-     * Draw "Now" line (relative to visible range)
-     */
-    drawNowLine() {
-        const now = Math.floor(Date.now() / 1000);
-
-        // Only draw if "now" is within visible range
-        if (now < this.visibleRange.start || now > this.visibleRange.end) return;
-
-        const visibleDuration = this.visibleRange.end - this.visibleRange.start;
-
-        // Safety check: prevent division by zero
-        if (visibleDuration <= 0) {
-            console.warn('SVGTimeline: visibleDuration is zero or negative, skipping now line drawing');
-            return;
-        }
-
-        const { width, padding } = this.dimensions;
-        const availableWidth = width - (padding * 2);
-
-        // Calculate position relative to VISIBLE range
-        const x = padding + ((now - this.visibleRange.start) / visibleDuration) * availableWidth;
-
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', x);
-        line.setAttribute('y1', 0);
-        line.setAttribute('x2', x);
-        line.setAttribute('y2', this.dimensions.height);
-        line.setAttribute('class', 'timeline-now');
-        this.svg.appendChild(line);
-    },
-
-    /**
-     * Draw data boundaries (red lines marking actual log data range)
-     * Shows where actual data starts and ends within the visible range
-     */
-    drawDataBoundaries() {
-        const visibleDuration = this.visibleRange.end - this.visibleRange.start;
-
-        // Safety check: prevent division by zero
-        if (visibleDuration <= 0) {
-            return;
-        }
-
-        const { width, height, padding } = this.dimensions;
-        const availableWidth = width - (padding * 2);
-
-        // Draw start boundary (left red line)
-        // If fullRange.start is before visibleRange.start, draw at left edge
-        // If fullRange.start is within visible range, draw at its position
-        // If fullRange.start is after visibleRange.end, don't draw
-        if (this.fullRange.start <= this.visibleRange.end) {
-            let xStart;
-            if (this.fullRange.start < this.visibleRange.start) {
-                // Data starts before visible range - draw at left edge
-                xStart = padding;
-            } else {
-                // Data starts within visible range - draw at its position
-                xStart = padding + ((this.fullRange.start - this.visibleRange.start) / visibleDuration) * availableWidth;
-            }
-
-            const lineStart = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            lineStart.setAttribute('x1', xStart);
-            lineStart.setAttribute('y1', 0);
-            lineStart.setAttribute('x2', xStart);
-            lineStart.setAttribute('y2', height);
-            lineStart.setAttribute('stroke', '#db2828');
-            lineStart.setAttribute('stroke-width', '3');
-            lineStart.setAttribute('stroke-dasharray', '5,3');
-            lineStart.setAttribute('opacity', '0.8');
-            this.svg.appendChild(lineStart);
-        }
-
-        // Draw end boundary (right red line)
-        // If fullRange.end is after visibleRange.end, draw at right edge
-        // If fullRange.end is within visible range, draw at its position
-        // If fullRange.end is before visibleRange.start, don't draw
-        if (this.fullRange.end >= this.visibleRange.start) {
-            let xEnd;
-            if (this.fullRange.end > this.visibleRange.end) {
-                // Data ends after visible range - draw at right edge
-                xEnd = padding + availableWidth;
-            } else {
-                // Data ends within visible range - draw at its position
-                xEnd = padding + ((this.fullRange.end - this.visibleRange.start) / visibleDuration) * availableWidth;
-            }
-
-            const lineEnd = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            lineEnd.setAttribute('x1', xEnd);
-            lineEnd.setAttribute('y1', 0);
-            lineEnd.setAttribute('x2', xEnd);
-            lineEnd.setAttribute('y2', height);
-            lineEnd.setAttribute('stroke', '#db2828');
-            lineEnd.setAttribute('stroke-width', '3');
-            lineEnd.setAttribute('stroke-dasharray', '5,3');
-            lineEnd.setAttribute('opacity', '0.8');
-            this.svg.appendChild(lineEnd);
-        }
     },
 
     /**
@@ -614,9 +776,49 @@ const SVGTimeline = {
      * Attach mouse events
      */
     attachEvents() {
-        this.svg.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-        document.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-        document.addEventListener('mouseup', () => this.handleMouseUp());
+        // Store bound handlers for cleanup in destroy()
+        this._boundMouseDown = (e) => this.handleMouseDown(e);
+        this._boundMouseMove = (e) => this.handleMouseMove(e);
+        this._boundMouseUp = () => this.handleMouseUp();
+        this._boundZoneClick = (e) => this.handleZoneClick(e);
+
+        this.svg.addEventListener('mousedown', this._boundMouseDown);
+        document.addEventListener('mousemove', this._boundMouseMove);
+        document.addEventListener('mouseup', this._boundMouseUp);
+
+        // Handle click on truncated zone
+        this.svg.addEventListener('click', this._boundZoneClick);
+    },
+
+    /**
+     * Handle click on zone elements (truncated zones)
+     * @param {MouseEvent} e - Mouse event
+     */
+    handleZoneClick(e) {
+        const target = e.target;
+        const zone = target.getAttribute('data-zone');
+
+        if (zone === 'truncated-left' && this.truncation.leftZone) {
+            if (this.onTruncatedZoneClick) {
+                // Left zone: data was cut from beginning (latest=true used)
+                // To load this zone, we need latest=true to get entries from end of interval
+                this.onTruncatedZoneClick(
+                    Math.round(this.truncation.leftZone.start),
+                    Math.round(this.truncation.leftZone.end),
+                    true // isLeftZone = true → use latest=true
+                );
+            }
+        } else if (zone === 'truncated-right' && this.truncation.rightZone) {
+            if (this.onTruncatedZoneClick) {
+                // Right zone: data was cut from end (latest=false used)
+                // To load this zone, we need latest=false to get entries from start of interval
+                this.onTruncatedZoneClick(
+                    Math.round(this.truncation.rightZone.start),
+                    Math.round(this.truncation.rightZone.end),
+                    false // isLeftZone = false → use latest=false
+                );
+            }
+        }
     },
 
     /**
@@ -685,7 +887,9 @@ const SVGTimeline = {
             this.selectedRange.end = newEnd;
         }
 
-        this.render();
+        // Only update dynamic elements during drag (no ticks redraw)
+        // This enables smooth CSS transitions
+        this.updateDynamicElements();
     },
 
     /**
@@ -696,12 +900,10 @@ const SVGTimeline = {
         if (this.dragging.active) {
             const wasResizing = this.dragging.handle === 'left' || this.dragging.handle === 'right';
             const wasDragging = this.dragging.handle === 'range';
+            const draggedHandle = this.dragging.handle; // Save before reset
 
             this.dragging.active = false;
             this.dragging.handle = null;
-
-            const handleType = wasResizing ? (this.dragging.handle === 'left' ? 'left' : 'right') : 'range';
-            console.debug('🖱️ SVGTimeline.handleMouseUp() - ' + (wasResizing ? 'resize' : 'drag') + ' handle: ' + handleType);
 
             if (wasResizing) {
                 // User resized selection → adjust visible range to be 4x selection
@@ -717,21 +919,6 @@ const SVGTimeline = {
 
                 this.visibleRange.start = newVisibleStart;
                 this.visibleRange.end = newVisibleEnd;
-
-                console.debug('↔️ User RESIZED selection: ' +
-                    this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
-                    this.formatTime(this.selectedRange.end, 'HH:MM:SS') +
-                    ' (' + Math.round(selectedDuration) + 's)');
-                console.debug('   Calculated visibleRange (4x): ' +
-                    this.formatTime(newVisibleStart, 'HH:MM:SS') + ' → ' +
-                    this.formatTime(newVisibleEnd, 'HH:MM:SS') +
-                    ' (' + Math.round(newVisibleDuration) + 's)');
-                console.debug('   Extends beyond fullRange? before=' +
-                    (newVisibleStart < this.fullRange.start) +
-                    ' after=' + (newVisibleEnd > this.fullRange.end));
-                console.debug('   fullRange bounds: ' +
-                    this.formatTime(this.fullRange.start, 'HH:MM:SS') + ' → ' +
-                    this.formatTime(this.fullRange.end, 'HH:MM:SS'));
 
                 // Do NOT call calculateCenteredSelection() here!
                 // The user's manual selection (e.g., 9:45-9:50) must be preserved
@@ -755,13 +942,6 @@ const SVGTimeline = {
                 this.visibleRange.start = newVisibleStart;
                 this.visibleRange.end = newVisibleEnd;
 
-                console.debug('↔️ User DRAGGED selection: ' +
-                    this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
-                    this.formatTime(this.selectedRange.end, 'HH:MM:SS'));
-                console.debug('   Shifted visibleRange: ' +
-                    this.formatTime(newVisibleStart, 'HH:MM:SS') + ' → ' +
-                    this.formatTime(newVisibleEnd, 'HH:MM:SS'));
-
                 // Do NOT call calculateCenteredSelection() here!
                 // The user's manual selection must be preserved
             }
@@ -769,36 +949,12 @@ const SVGTimeline = {
             // Render with new ranges
             this.render();
 
-            // DEBUG: Show final state after render
-            console.debug('📊 FINAL state after mouse interaction:');
-            console.debug('   fullRange: ' +
-                this.formatTime(this.fullRange.start, 'HH:MM:SS') + ' → ' +
-                this.formatTime(this.fullRange.end, 'HH:MM:SS') +
-                ' (' + Math.round(this.fullRange.end - this.fullRange.start) + 's)');
-            console.debug('   visibleRange: ' +
-                this.formatTime(this.visibleRange.start, 'HH:MM:SS') + ' → ' +
-                this.formatTime(this.visibleRange.end, 'HH:MM:SS') +
-                ' (' + Math.round(this.visibleRange.end - this.visibleRange.start) + 's)' +
-                ' extends: before=' + (this.visibleRange.start < this.fullRange.start) +
-                ' after=' + (this.visibleRange.end > this.fullRange.end));
-            console.debug('   selectedRange: ' +
-                this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
-                this.formatTime(this.selectedRange.end, 'HH:MM:SS') +
-                ' (' + Math.round(this.selectedRange.end - this.selectedRange.start) + 's)' +
-                ' ratio=' + ((this.selectedRange.end - this.selectedRange.start) / (this.visibleRange.end - this.visibleRange.start) * 100).toFixed(1) + '%');
-
-            // DEBUG: Show what we're sending to backend
-            console.debug('📤 SENDING to backend: ' +
-                this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
-                this.formatTime(this.selectedRange.end, 'HH:MM:SS') +
-                ' (' + Math.round(this.selectedRange.end - this.selectedRange.start) + 's)' +
-                ' [timestamps: ' + Math.round(this.selectedRange.start) + ' - ' + Math.round(this.selectedRange.end) + ']');
-
-            // Trigger callback to load data with user's ACTUAL selected range
+            // Trigger callback to load data with user's selected range
             if (this.onRangeChange) {
                 this.onRangeChange(
                     Math.round(this.selectedRange.start),
-                    Math.round(this.selectedRange.end)
+                    Math.round(this.selectedRange.end),
+                    draggedHandle
                 );
             }
         }
@@ -819,9 +975,6 @@ const SVGTimeline = {
     applyPeriod(periodSeconds) {
         const period = parseInt(periodSeconds);
 
-        const periodLabel = period >= 86400 ? (period / 86400) + 'd' : period >= 3600 ? (period / 3600) + 'h' : (period / 60) + 'm';
-        console.debug('⏱️ User clicked period button: ' + periodLabel + ' (' + period + 's)');
-
         // Set visible range to last N seconds
         this.visibleRange.end = this.fullRange.end;
         this.visibleRange.start = Math.max(this.fullRange.end - period, this.fullRange.start);
@@ -829,32 +982,8 @@ const SVGTimeline = {
         // Auto-center selection (1/4 of visible range)
         this.calculateCenteredSelection();
 
-        console.debug('📐 Period applied, visibleRange: ' +
-            this.formatTime(this.visibleRange.start, 'HH:MM:SS') + ' → ' +
-            this.formatTime(this.visibleRange.end, 'HH:MM:SS'));
-        console.debug('   Auto-centered selection (1/4): ' +
-            this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
-            this.formatTime(this.selectedRange.end, 'HH:MM:SS'));
-
         // Render
         this.render();
-
-        console.debug('📊 FINAL state after period button:');
-        console.debug('   fullRange: ' +
-            this.formatTime(this.fullRange.start, 'HH:MM:SS') + ' → ' +
-            this.formatTime(this.fullRange.end, 'HH:MM:SS'));
-        console.debug('   visibleRange: ' +
-            this.formatTime(this.visibleRange.start, 'HH:MM:SS') + ' → ' +
-            this.formatTime(this.visibleRange.end, 'HH:MM:SS'));
-        console.debug('   selectedRange: ' +
-            this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
-            this.formatTime(this.selectedRange.end, 'HH:MM:SS') +
-            ' ratio=' + ((this.selectedRange.end - this.selectedRange.start) / (this.visibleRange.end - this.visibleRange.start) * 100).toFixed(1) + '%');
-
-        console.debug('📤 SENDING to backend (period button): ' +
-            this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
-            this.formatTime(this.selectedRange.end, 'HH:MM:SS') +
-            ' [timestamps: ' + Math.round(this.selectedRange.start) + ' - ' + Math.round(this.selectedRange.end) + ']');
 
         // Trigger callback to load data
         if (this.onRangeChange) {
@@ -866,7 +995,7 @@ const SVGTimeline = {
     },
 
     /**
-     * Set selected range (deprecated - use applyPeriod instead)
+     * Set selected range explicitly (without auto-centering or triggering onRangeChange)
      * @param {number} start - Start timestamp
      * @param {number} end - End timestamp
      */
@@ -884,20 +1013,9 @@ const SVGTimeline = {
      * @param {number} end - Actual end timestamp
      */
     updateSelectedRange(start, end) {
-        console.debug('📥 RECEIVED from backend: ' +
-            this.formatTime(start, 'HH:MM:SS') + ' → ' +
-            this.formatTime(end, 'HH:MM:SS') +
-            ' (' + Math.round(end - start) + 's)' +
-            ' [timestamps: ' + start + ' - ' + end + ']');
-
         // Ensure minimum duration to prevent division by zero
         const MIN_DURATION = 60; // 1 minute minimum
         if (end - start < MIN_DURATION) {
-            console.debug('⚠️ Duration too short, expanding to MIN_DURATION', {
-                original: Math.round(end - start) + 's',
-                expanded: MIN_DURATION + 's'
-            });
-
             // Expand range symmetrically around the single timestamp
             const center = start;
             start = center - (MIN_DURATION / 2);
@@ -923,40 +1041,143 @@ const SVGTimeline = {
         this.visibleRange.start = newVisibleStart;
         this.visibleRange.end = newVisibleEnd;
 
-        console.debug('🔄 Backend data synced, selectedRange: ' +
-            this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
-            this.formatTime(this.selectedRange.end, 'HH:MM:SS') +
-            ' (' + Math.round(selectedDuration) + 's)');
-        console.debug('   Calculated visibleRange (4x): ' +
-            this.formatTime(newVisibleStart, 'HH:MM:SS') + ' → ' +
-            this.formatTime(newVisibleEnd, 'HH:MM:SS') +
-            ' (' + Math.round(newVisibleDuration) + 's)');
-        console.debug('   Extends beyond fullRange? before=' +
-            (newVisibleStart < this.fullRange.start) +
-            ' after=' + (newVisibleEnd > this.fullRange.end));
+        // Render with new ranges
+        this.render();
 
-        // Note: Do NOT recalculate selectedRange here!
-        // selectedRange is already set from backend's actual data (lines 493-494)
-        // and should remain fixed to match the real loaded data range
+        // Note: Does NOT trigger onRangeChange callback
+    },
+
+    /**
+     * Update timeline with server response (handles truncation visualization)
+     * This is the preferred method to call after receiving data from server
+     *
+     * @param {object} actualRange - Server response: { start, end, lines_count, truncated }
+     * @param {number} requestedStart - Original requested start timestamp
+     * @param {number} requestedEnd - Original requested end timestamp
+     * @param {boolean} isInitialLoad - If true, suppress truncated zone display (first page load)
+     */
+    updateFromServerResponse(actualRange, requestedStart, requestedEnd, isInitialLoad = false) {
+        // Store what was requested
+        this.requestedRange.start = requestedStart;
+        this.requestedRange.end = requestedEnd;
+
+        // Reset truncation info
+        this.truncation.wasTruncated = false;
+        this.truncation.linesCount = 0;
+        this.truncation.direction = null;
+        this.truncation.leftZone = null;
+        this.truncation.rightZone = null;
+
+        // Calculate truncation zone if data was truncated
+        // Skip truncation zones on initial load - user expects to see "tail" of log
+        if (actualRange.truncated && !isInitialLoad) {
+            this.truncation.wasTruncated = true;
+            this.truncation.linesCount = actualRange.lines_count;
+            this.truncation.direction = actualRange.truncated_direction || 'right';
+
+            if (this.truncation.direction === 'left') {
+                // Truncated from left (latest=true): beginning of requested range was cut
+                if (actualRange.start > requestedStart) {
+                    this.truncation.leftZone = {
+                        start: requestedStart,
+                        end: actualRange.start
+                    };
+                }
+            } else {
+                // Truncated from right (latest=false): end of requested range was cut
+                if (actualRange.end < requestedEnd) {
+                    this.truncation.rightZone = {
+                        start: actualRange.end,
+                        end: requestedEnd
+                    };
+                }
+            }
+        }
+
+        // Call existing updateSelectedRange logic for the rest
+        // Ensure minimum duration to prevent division by zero
+        let start = actualRange.start;
+        let end = actualRange.end;
+        const MIN_DURATION = 60; // 1 minute minimum
+
+        if (end - start < MIN_DURATION) {
+            const center = start;
+            start = center - (MIN_DURATION / 2);
+            end = center + (MIN_DURATION / 2);
+        }
+
+        // Set selected range to actual loaded data
+        this.selectedRange.start = start;
+        this.selectedRange.end = end;
+
+        // Calculate what new visible range would be based on actual data (4x of selected)
+        const selectedDuration = end - start;
+        const newVisibleDuration = selectedDuration * 4;
+        const selectedCenter = start + (selectedDuration / 2);
+        let newVisibleStart = selectedCenter - (newVisibleDuration / 2);
+        let newVisibleEnd = selectedCenter + (newVisibleDuration / 2);
+
+        // IMPORTANT: Preserve entire visibleRange if it was extended to current time
+        // This ensures no-data zone displays correctly after refresh
+        // When user clicks refresh, they want to see timeline up to current time
+        // Preserve both position AND duration to prevent shrinking the visible area
+        const currentVisibleDuration = this.visibleRange.end - this.visibleRange.start;
+        if (this.visibleRange.end > newVisibleEnd || this.visibleRange.end > end) {
+            // Keep the existing visibleRange entirely (both duration and end position)
+            // Only selectedRange was updated above to show where actual data is
+            // The gap between fullRange.end and visibleRange.end will show as no-data zone
+            newVisibleEnd = this.visibleRange.end;
+            newVisibleStart = this.visibleRange.start;
+        }
+
+        this.visibleRange.start = newVisibleStart;
+        this.visibleRange.end = newVisibleEnd;
 
         // Render with new ranges
         this.render();
 
-        console.debug('📊 FINAL state after backend sync:');
-        console.debug('   fullRange: ' +
-            this.formatTime(this.fullRange.start, 'HH:MM:SS') + ' → ' +
-            this.formatTime(this.fullRange.end, 'HH:MM:SS'));
-        console.debug('   visibleRange: ' +
-            this.formatTime(this.visibleRange.start, 'HH:MM:SS') + ' → ' +
-            this.formatTime(this.visibleRange.end, 'HH:MM:SS') +
-            ' extends: before=' + (this.visibleRange.start < this.fullRange.start) +
-            ' after=' + (this.visibleRange.end > this.fullRange.end));
-        console.debug('   selectedRange: ' +
-            this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
-            this.formatTime(this.selectedRange.end, 'HH:MM:SS') +
-            ' ratio=' + ((this.selectedRange.end - this.selectedRange.start) / (this.visibleRange.end - this.visibleRange.start) * 100).toFixed(1) + '%');
+        // Initialize popups after render (elements now exist in DOM)
+        this.initializeZonePopups();
+    },
 
-        // Note: Does NOT trigger onRangeChange callback
+    /**
+     * Initialize Semantic UI popups for zone elements
+     * Destroys existing popups before re-initialization to prevent leaks
+     */
+    initializeZonePopups() {
+        // Check if jQuery and popup are available
+        if (typeof $ === 'undefined' || typeof $.fn.popup === 'undefined') {
+            return;
+        }
+
+        const noDataContent = globalTranslate.sd_NoDataForPeriod || 'No data available for this period';
+        const truncatedContent = globalTranslate.sd_DataTruncatedClickToLoad || 'Data truncated (5000 lines limit). Click to load.';
+        const popupSettings = { position: 'top center', variation: 'mini' };
+
+        // Popup for no-data zones
+        [this.elements.noDataLeftRect, this.elements.noDataRightRect].forEach((el) => {
+            if (el) {
+                $(el).popup('destroy').popup({ ...popupSettings, content: noDataContent });
+            }
+        });
+
+        // Popup for truncated zones
+        [this.elements.truncatedLeftRect, this.elements.truncatedRightRect].forEach((el) => {
+            if (el) {
+                $(el).popup('destroy').popup({ ...popupSettings, content: truncatedContent });
+            }
+        });
+    },
+
+    /**
+     * Callback when truncated zone is clicked
+     * Override this to load the truncated range
+     * @param {number} start - Start timestamp of truncated zone
+     * @param {number} end - End timestamp of truncated zone
+     * @param {boolean} isLeftZone - True if left zone clicked (use latest=true), false for right zone
+     */
+    onTruncatedZoneClick(start, end, isLeftZone) {
+        // To be overridden
     },
 
     /**
@@ -969,11 +1190,65 @@ const SVGTimeline = {
     },
 
     /**
+     * Set the visible range end to specific timestamp (for refresh mode)
+     * This is called BEFORE server request to set where timeline should end
+     * Only updates visibleRange, NOT selectedRange or fullRange
+     * @param {number} newEnd - New end timestamp for visible range
+     * @param {boolean} force - If true, always set even if newEnd <= current end
+     */
+    extendRange(newEnd, force = false) {
+        if (!force && newEnd <= this.visibleRange.end) {
+            return; // No need to extend
+        }
+
+        // Only update visible range, NOT fullRange or selectedRange
+        // fullRange represents actual data in log file
+        // selectedRange represents the actual data period (not projected future)
+        const visibleDuration = this.visibleRange.end - this.visibleRange.start;
+        this.visibleRange.end = newEnd;
+        this.visibleRange.start = newEnd - visibleDuration;
+
+        // DO NOT shift selectedRange - it should remain bound to actual data
+        // The gap between selectedRange.end and visibleRange.end will show as no-data zone
+        // selectedRange will be updated by updateFromServerResponse() with real data
+
+        // Re-render to show updated timeline with no-data zone
+        this.render();
+    },
+
+    /**
+     * Update fullRange.end based on actual data from server
+     * Called when server returns actual_range with real data boundaries
+     * @param {number} actualEnd - Actual end timestamp from server response
+     */
+    updateDataBoundary(actualEnd) {
+        if (actualEnd > this.fullRange.end) {
+            this.fullRange.end = actualEnd;
+            this.render();
+        }
+    },
+
+    /**
      * Destroy timeline
      */
     destroy() {
+        // Remove document/window-level event listeners to prevent memory leaks
+        if (this._boundMouseMove) {
+            document.removeEventListener('mousemove', this._boundMouseMove);
+        }
+        if (this._boundMouseUp) {
+            document.removeEventListener('mouseup', this._boundMouseUp);
+        }
+        if (this._boundResize) {
+            window.removeEventListener('resize', this._boundResize);
+        }
+
         if (this.container) {
             this.container.innerHTML = '';
         }
+
+        this.svg = null;
+        this.layers.ticks = null;
+        this.layers.dynamic = null;
     }
 };

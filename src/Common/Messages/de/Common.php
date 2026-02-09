@@ -905,6 +905,8 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'sd_Last3Hours' => 'Letzte 3 Stunden',
     'sd_LoadingNext' => 'Nächste Einträge werden geladen...',
     'sd_LoadPrevious' => 'vorheriges laden',
+    'sd_NoDataForPeriod' => 'Keine Daten für diesen Zeitraum',
+    'sd_DataTruncatedClickToLoad' => 'Daten gekürzt (5000 Zeilen Limit). Klicken Sie zum Laden.',
     // SF
     'sf_AddNewAudioFile' => 'Füge eine neue Audiodatei hinzu.',
     'sf_Description' => 'Beschreibung',

@@ -915,6 +915,8 @@ return [
     'sd_LoadingNext' => 'Завантаження наступних записів...',
     'sd_LoadPrevious' => 'Завантажити попередні',
     'sd_LoadNext' => 'Завантажити наступні',
+    'sd_NoDataForPeriod' => 'Немає даних за цей період',
+    'sd_DataTruncatedClickToLoad' => 'Дані обрізані (ліміт 5000 рядків). Натисніть для завантаження.',
     'sf_DescriptionPlaceholder' => 'Введіть опис звукового файлу (необов\'язково)',
     'sf_FilenamePlaceholder' => 'Наприклад: привітання, музика_очікування, голосове_меню',
     'am_EventFilter' => 'Фільтр подій',

@@ -1000,6 +1000,7 @@ return [
     'rest_param_syslog_date_to' => 'Fim do intervalo de tempo a ser filtrado (formato: AAAA-MM-DD HH:MM:SS ou timestamp Unix)',
     'rest_param_syslog_archive_filename' => 'Caminho para o arquivo de log',
     'rest_param_syslog_archive' => 'Utilizar registros de arquivamento',
+    'rest_param_syslog_latest' => 'Se verdadeiro, retornar as entradas de log mais recentes. Quando os dados excedem o limite de linhas, o truncamento ocorre no início (as entradas mais antigas são removidas)',
     // SysLogs schema field descriptions
     'rest_schema_syslog_filename' => 'Caminho para o arquivo de log relativo ao diretório de logs',
     'rest_schema_syslog_filter' => 'Texto para filtrar linhas de log',
@@ -1010,6 +1011,7 @@ return [
     'rest_schema_syslog_date_from' => 'Início do intervalo de tempo para filtrar',
     'rest_schema_syslog_date_to' => 'Fim do intervalo de tempo para filtragem',
     'rest_schema_syslog_archive' => 'Utilizar registros de arquivamento',
+    'rest_schema_syslog_latest' => 'Retornar as entradas mais recentes quando o limite é excedido',
     'rest_schema_provider_host_id' => 'ID do host',
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'Número máximo de tentativas malsucedidas antes do bloqueio',

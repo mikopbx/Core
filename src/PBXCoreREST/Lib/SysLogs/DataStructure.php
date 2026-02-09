@@ -155,6 +155,14 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'sanitize' => 'bool',
                 'example' => false
             ],
+            'latest' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_syslog_latest',
+                'in' => 'query',
+                'default' => false,
+                'sanitize' => 'bool',
+                'example' => true
+            ],
         ];
     }
 

@@ -891,6 +891,8 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'sd_LoadingNext' => 'Laddar nästa inlägg...',
     'sd_LoadPrevious' => 'Ladda föregående',
     'sd_LoadNext' => 'Ladda ner härnäst',
+    'sd_NoDataForPeriod' => 'Inga data för denna period',
+    'sd_DataTruncatedClickToLoad' => 'Data trunkerade (5000 raders gräns). Klicka för att ladda.',
     'sf_DescriptionPlaceholder' => 'Ange en beskrivning av ljudfilen (valfritt)',
     'sf_FilenamePlaceholder' => 'Till exempel: hälsning, väntemusik, röstmeny',
     'sf_ConvertErrorDetails' => 'Misslyckades med att konvertera filen. Filen kan vara skadad eller i ett format som inte stöds.',
