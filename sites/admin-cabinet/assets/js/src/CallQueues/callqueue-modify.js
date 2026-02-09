@@ -187,7 +187,7 @@ const callQueueModifyRest = {
             ExtensionSelector.init('timeout_extension', {
                 type: 'routing',
                 excludeExtensions: excludeExtensions,
-                includeEmpty: false,
+                includeEmpty: true,
                 data: data
             });
         }
@@ -196,7 +196,7 @@ const callQueueModifyRest = {
         if (!$('#redirect_to_extension_if_empty-dropdown').length) {
             ExtensionSelector.init('redirect_to_extension_if_empty', {
                 type: 'routing',
-                includeEmpty: false,
+                includeEmpty: true,
                 data: data
             });
         }
@@ -436,7 +436,7 @@ const callQueueModifyRest = {
                     ExtensionSelector.init('timeout_extension', {
                         type: 'routing',
                         excludeExtensions: excludeExtensions,
-                        includeEmpty: false,
+                        includeEmpty: true,
                         data: currentData
                     });
                 }

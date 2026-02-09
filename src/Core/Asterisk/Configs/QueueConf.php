@@ -148,11 +148,19 @@ class QueueConf extends AsteriskConfigClass
             }
 
             $ringLength = trim($queue['timeout_to_redirect_to_extension'] ?? '');
+            $timeoutExtension = trim($queue['timeout_extension'] ?? '');
+
+            // Timeout=0 causes immediate queue exit without ringing any agent.
+            // Timeout without a redirect extension causes caller disconnection after wait.
+            // In both cases, omit the timeout parameter so the caller waits indefinitely.
+            if ($ringLength === '0' || $timeoutExtension === '') {
+                $ringLength = '';
+            }
+
             $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT$options,,,$ringLength,,,queue_agent_answer) \n\t";
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${EMPTY})' . "\n\t";
             // Notify about the end of the queue.
             $queue_ext_conf .= 'same => n,Gosub(queue_end,${EXTEN},1)' . "\n\t";
-            $timeoutExtension = trim($queue['timeout_extension'] ?? '');
             if ($timeoutExtension !== '') {
                 // If no answer within the timeout, perform redirection.
                 $queue_ext_conf .= 'same => n,ExecIf($["${QUEUESTATUS}" == "TIMEOUT"]?Goto(internal,' . $timeoutExtension . ',1))' . " \n\t";
@@ -219,8 +227,14 @@ class QueueConf extends AsteriskConfigClass
             $q_conf .= "ringinuse=$ringinuse \n";
             $q_conf .= $periodic_announce;
             $q_conf .= $periodic_announce_frequency;
-            $q_conf .= "joinempty=no \n";
-            $q_conf .= "leavewhenempty=no \n";
+            // When a redirect extension for empty queue is configured, use Asterisk's
+            // built-in empty detection so Queue() returns JOINEMPTY/LEAVEEMPTY statuses.
+            // "unavailable,invalid" means "empty" only when ALL agents' phones are offline
+            // or invalid — callers still wait when agents are busy/paused/ringing.
+            $hasEmptyRedirect = !empty(trim($queue_data['redirect_to_extension_if_empty'] ?? ''));
+            $emptyPolicy = $hasEmptyRedirect ? 'unavailable,invalid' : 'no';
+            $q_conf .= "joinempty=$emptyPolicy \n";
+            $q_conf .= "leavewhenempty=$emptyPolicy \n";
             $q_conf .= "announce-position=$announceposition \n";
             $q_conf .= "announce-holdtime=$announceholdtime \n";
             $q_conf .= "relative-periodic-announce=yes \n";
