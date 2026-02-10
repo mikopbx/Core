@@ -118,11 +118,16 @@ const DynamicDropdownBuilder = {
         
         const $menu = $('<div>').addClass('menu');
 
-        // Pre-populate menu with empty option so it is visible on first click
-        // (search dropdowns with minCharacters>0 won't trigger API until user types)
+        // Pre-populate menu with empty option ONLY for search dropdowns
+        // so it is visible before the user types (minCharacters>0 won't trigger API).
+        // For non-search dropdowns, skip pre-population so the menu starts empty
+        // and Fomantic UI calls queryRemote() on first open.
         if (config.emptyOption) {
-            const safeValue = this.escapeHtml(config.emptyOption.key || '');
-            $menu.html(`<div class="item" data-value="${safeValue}">${config.emptyOption.value || ''}</div>`);
+            const willBeSearch = [...baseClasses, ...additionalClasses].includes('search');
+            if (willBeSearch) {
+                const safeValue = this.escapeHtml(config.emptyOption.key || '');
+                $menu.html(`<div class="item" data-value="${safeValue}">${config.emptyOption.value || ''}</div>`);
+            }
         }
         
         // Assemble dropdown
