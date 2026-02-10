@@ -53,6 +53,51 @@ class UpdateConfigsUpToVer20250115 extends Injectable implements UpgradeSystemCo
     public function processUpdate(): void
     {
         $this->migrateUserAvatarsToFiles();
+        $this->normalizeOutWorkTimesDates();
+    }
+
+    /**
+     * Normalize date_from and date_to fields in m_OutWorkTimes to Unix timestamps
+     *
+     * Historical records may contain dates in YYYY-MM-DD format instead of Unix timestamps.
+     * This causes TypeError in PHP 8.3 when passed to date() which expects int.
+     *
+     * @return void
+     */
+    private function normalizeOutWorkTimesDates(): void
+    {
+        $db = $this->di->getShared('db');
+
+        $sql = "SELECT id, date_from, date_to FROM m_OutWorkTimes WHERE date_from != '' OR date_to != ''";
+        $result = $db->query($sql);
+        $records = $result->fetchAll(\PDO::FETCH_ASSOC);
+
+        $migratedCount = 0;
+        foreach ($records as $record) {
+            $updates = [];
+            $binds = ['id' => $record['id']];
+
+            foreach (['date_from', 'date_to'] as $field) {
+                $value = $record[$field];
+                if ($value !== '' && !is_numeric($value)) {
+                    $timestamp = strtotime($value);
+                    if ($timestamp !== false) {
+                        $updates[] = "$field = :$field";
+                        $binds[$field] = (string)$timestamp;
+                    }
+                }
+            }
+
+            if (!empty($updates)) {
+                $updateSql = "UPDATE m_OutWorkTimes SET " . implode(', ', $updates) . " WHERE id = :id";
+                $db->execute($updateSql, $binds);
+                $migratedCount++;
+            }
+        }
+
+        if ($migratedCount > 0) {
+            echo "Normalized {$migratedCount} OutWorkTimes date records to Unix timestamps\n";
+        }
     }
 
     /**

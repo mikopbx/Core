@@ -252,9 +252,11 @@ trait RecordRepresentationTrait
                     $represent = '';
                     if (!empty($this->date_from)) {
                         $represent .= "<i class='icon outline calendar alternate' ></i>";
-                        $date_from = date("d.m.Y", $this->date_from);
+                        $tsFrom = is_numeric($this->date_from) ? (int)$this->date_from : (int)strtotime($this->date_from);
+                        $date_from = date("d.m.Y", $tsFrom);
                         $represent .= "$date_from";
-                        $date_to = $this->date_to ? date("d.m.Y", $this->date_to) : $date_from;
+                        $tsTo = $this->date_to ? (is_numeric($this->date_to) ? (int)$this->date_to : (int)strtotime($this->date_to)) : $tsFrom;
+                        $date_to = date("d.m.Y", $tsTo);
                         if ($date_from !== $date_to) {
                             $represent .= " - $date_to";
                         }
