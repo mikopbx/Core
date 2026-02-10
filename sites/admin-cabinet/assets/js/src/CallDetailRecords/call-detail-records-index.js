@@ -716,11 +716,12 @@ const callDetailRecords = {
             const dtRowClass = hasRecordings ? 'detailed' : 'ui';
             const negativeClass = isAnswered ? '' : ' negative';
 
-            // Collect verbose call IDs
-            const ids = (group.records || [])
-                .map(r => r.verbose_call_id)
-                .filter(id => id && id.length > 0)
-                .join('&');
+            // Collect unique verbose call IDs
+            const ids = [...new Set(
+                (group.records || [])
+                    .map(r => r.verbose_call_id)
+                    .filter(id => id && id.length > 0)
+            )].join('&');
 
             // Return DataTable row format
             // DataTables needs both array indices AND special properties
