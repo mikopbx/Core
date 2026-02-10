@@ -130,7 +130,11 @@ class IncomingContexts extends AsteriskConfigClass
             ];
         } else {
             // Calls via provider.
-            $filter = ["provider = '$this->provider'", 'order' => 'provider,priority,extension',];
+            // Use uniqId for database query when available, because $this->provider
+            // may contain the username (for inbound registration providers) while
+            // IncomingRoutingTable stores the provider's uniqid.
+            $providerId = !empty($this->uniqId) ? $this->uniqId : $this->provider;
+            $filter = ["provider = '$providerId'", 'order' => 'provider,priority,extension',];
         }
 
         $m_data = IncomingRoutingTable::find($filter);
@@ -529,9 +533,14 @@ class IncomingContexts extends AsteriskConfigClass
      */
     private function createSummaryDialplan(): string
     {
-        // Find the default action in the incoming routing table
+        // Find the default action in the incoming routing table.
+        // Primary: look for priority=9999 (canonical marker for the default rule).
+        // Fallback: look for id=1 (used by GetDefaultRouteAction and resetDefaultRoute).
         /** @var IncomingRoutingTable $default_action */
         $default_action = IncomingRoutingTable::findFirst('priority = 9999');
+        if ($default_action === null) {
+            $default_action = IncomingRoutingTable::findFirstById(1);
+        }
 
         // Create an ID based on the provider or unique ID
         $id = is_string($this->provider) ? $this->provider : $this->uniqId;
@@ -573,9 +582,14 @@ class IncomingContexts extends AsteriskConfigClass
     {
         // Initialize the dialplan
         $conf = '';
-        // If the action is an 'extension', modify the dialplan accordingly
-        if ('extension' === $default_action->action) {
-            // Set the dialplan to go to a different extension
+
+        // Prioritize the extension field over the action field.
+        // The action field is no longer maintained by the REST API (deprecated actions
+        // like 'busy', 'hangup', 'voicemail' are now represented as system extension names
+        // in the extension field with action='extension'). Using extension directly
+        // ensures correct behavior even when the action field is stale.
+        if (!empty($default_action->extension)) {
+            // Route to the specified extension (system or regular)
             $conf = $this->createSummaryDialplanGoto($conf, $default_action, $uniqId);
 
             // Check if the 'after-dial-custom' exists in the dialplan
@@ -584,13 +598,13 @@ class IncomingContexts extends AsteriskConfigClass
             // Check if the dial status is 'busy'
             $conf .= " \t" . 'same => n,ExecIf($["${M_DIALSTATUS}" == "BUSY"]?Busy(2));' . PHP_EOL;
 
-        // If the action is 'playback', hangup call
+        // If the action is 'playback', play audio file
         } elseif (IncomingRoutingTable::ACTION_PLAYBACK === $default_action->action) {
             $mediaFile = $this->getSoundFilePath($default_action->toArray());
             if (!empty($mediaFile)) {
                 $conf .= " \n\t" . 'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?Playback(' . $mediaFile . '));' . PHP_EOL;
             }
-        // If the action is 'busy', set the dialplan to busy
+        // Legacy fallback: action='busy' with empty extension (old records not yet migrated)
         } elseif (IncomingRoutingTable::ACTION_BUSY === $default_action->action) {
             $conf .= "\t" . "same => n,Busy(2)" . PHP_EOL;
         }

@@ -221,6 +221,15 @@ class SaveRecordAction extends AbstractSaveRecordAction
                     $route->priority = $sanitizedData['priority'];
                 }
 
+                // WHY: Default route (id=1) must always have priority=9999.
+                // The dialplan generator uses priority=9999 to identify the default action
+                // and append it to every provider's incoming context. Without this,
+                // the form sends priority=0 (model default) and provider contexts
+                // lose the default fallback action.
+                if ((int)$route->id === 1) {
+                    $route->priority = 9999;
+                }
+
                 if (isset($sanitizedData['timeout'])) {
                     $route->timeout = $sanitizedData['timeout'];
                 }

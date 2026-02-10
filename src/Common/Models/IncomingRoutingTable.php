@@ -138,7 +138,8 @@ class IncomingRoutingTable extends ModelsBase
             $defaultRule = new self();
             $defaultRule->id = 1;
         }
-        $defaultRule->action = self::ACTION_BUSY;
+        $defaultRule->action = self::ACTION_EXTENSION;
+        $defaultRule->extension = 'busy';
         $defaultRule->priority = 9999;
         $defaultRule->rulename = 'default action';
         $defaultRule->save();
