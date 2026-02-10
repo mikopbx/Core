@@ -395,10 +395,8 @@ class ProviderSIP extends ProviderBase {
             }
         });
         
-        // Only add if there are hosts
-        if (additionalHosts.length > 0) {
-            result.data.additionalHosts = additionalHosts;
-        }
+        // Always send additionalHosts to allow deletion of all hosts
+        result.data.additionalHosts = additionalHosts;
         
         return result;
     }
