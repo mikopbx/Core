@@ -43,7 +43,7 @@ class DropdownsAction extends Injectable
      * @param string $exclude Optional comma-separated list of extensions to exclude.
      * @return PBXApiResult The result containing the select list of extensions.
      */
-    public static function getForSelect(string $type = 'all', string $query = '', string $exclude = ''): PBXApiResult
+    public static function getForSelect(string $type = 'all', string $query = '', string $exclude = '', bool $includeEmpty = false): PBXApiResult
     {
         // Initialize the result object
         $res = new PBXApiResult();
@@ -75,6 +75,17 @@ class DropdownsAction extends Injectable
             if (array_key_exists('sorter', $subArray)) {
                 unset($subArray['sorter']);
             }
+        }
+
+        // Prepend empty option for dropdowns that allow clearing the selection
+        if ($includeEmpty) {
+            array_unshift($res->data, [
+                'name' => '-',
+                'text' => '-',
+                'value' => '',
+                'type' => '',
+                'typeLocalized' => '',
+            ]);
         }
 
         return $res;

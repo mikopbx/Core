@@ -116,9 +116,14 @@ const DynamicDropdownBuilder = {
         
         const $dropdownIcon = $('<i>').addClass('dropdown icon');
         
-        const $menu = $('<div>')
-            .addClass('menu')
-            .html('<!-- Menu intentionally empty - will be populated by API on click -->');
+        const $menu = $('<div>').addClass('menu');
+
+        // Pre-populate menu with empty option so it is visible on first click
+        // (search dropdowns with minCharacters>0 won't trigger API until user types)
+        if (config.emptyOption) {
+            const safeValue = this.escapeHtml(config.emptyOption.key || '');
+            $menu.html(`<div class="item" data-value="${safeValue}">${config.emptyOption.value || ''}</div>`);
+        }
         
         // Assemble dropdown
         $dropdown.append($textDiv, $dropdownIcon, $menu);
@@ -199,7 +204,8 @@ const DynamicDropdownBuilder = {
             fullTextSearch: true,
             forceSelection: false,
             preserveHTML: true, // Allow HTML in dropdown text (for icons, flags, etc.)
-            
+            clearable: false,
+
             onChange: (value, text, $choice) => {
                 // Automatic synchronization with hidden input
                 $hiddenInput.val(value);
@@ -244,9 +250,22 @@ const DynamicDropdownBuilder = {
                 minCharacters: hasSearchInput ? 3 : 0, // Search dropdowns need 3 characters, simple dropdowns work on click
                 
                 onResponse: (response) => {
-                    return config.onResponse 
-                        ? config.onResponse(response) 
+                    const result = config.onResponse
+                        ? config.onResponse(response)
                         : this.defaultResponseHandler(response);
+
+                    // Prepend empty option if configured
+                    if (config.emptyOption && result && result.results) {
+                        result.results.unshift({
+                            value: config.emptyOption.key || '',
+                            text: config.emptyOption.value || '',
+                            name: config.emptyOption.value || '',
+                            type: '',
+                            typeLocalized: ''
+                        });
+                    }
+
+                    return result;
                 },
                 
                 onFailure: (response) => {

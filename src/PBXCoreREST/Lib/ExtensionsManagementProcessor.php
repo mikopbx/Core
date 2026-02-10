@@ -54,7 +54,8 @@ class ExtensionsManagementProcessor extends Injectable
                 $res = DropdownsAction::getForSelect(
                     $data['type'] ?? 'all',
                     $data['query'] ?? '',
-                    $data['exclude'] ?? ''
+                    $data['exclude'] ?? '',
+                    !empty($data['includeEmpty'])
                 );
                 break;
             case 'available':

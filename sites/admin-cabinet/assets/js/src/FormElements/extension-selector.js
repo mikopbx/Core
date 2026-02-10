@@ -100,31 +100,26 @@ const ExtensionSelector = {
         if (config.excludeExtensions && config.excludeExtensions.length > 0) {
             apiParams.exclude = config.excludeExtensions.join(',');
         }
-        
+
+        // Request empty option from API so it appears in search results
+        if (config.includeEmpty) {
+            apiParams.includeEmpty = 'true';
+        }
+
         // Create dropdown configuration for DynamicDropdownBuilder
         const dropdownConfig = {
             apiUrl: apiUrl,
             apiParams: apiParams,
             placeholder: config.placeholder || this.getPlaceholderByType(config.type),
-            
             // Custom response handler for extension-specific processing
             onResponse: (response) => {
                 return this.processExtensionResponse(response, config);
             },
-            
+
             onChange: (value, text, $choice) => {
                 this.handleSelectionChange(fieldId, value, text, $choice, config);
             }
         };
-        
-        
-        // Add empty option if needed
-        if (config.includeEmpty) {
-            dropdownConfig.emptyOption = {
-                key: '',
-                value: globalTranslate.ex_SelectExtension
-            };
-        }
         
         // Pass the original data object directly to DynamicDropdownBuilder
         // This ensures proper handling of existing values and their representations
