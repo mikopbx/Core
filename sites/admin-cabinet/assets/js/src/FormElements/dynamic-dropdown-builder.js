@@ -247,8 +247,7 @@ const DynamicDropdownBuilder = {
                 throttle: hasSearchInput ? 500 : 0,
                 throttleFirstRequest: false,
                 filterRemoteData: true,
-                minCharacters: hasSearchInput ? 3 : 0, // Search dropdowns need 3 characters, simple dropdowns work on click
-                
+
                 onResponse: (response) => {
                     const result = config.onResponse
                         ? config.onResponse(response)
@@ -307,6 +306,24 @@ const DynamicDropdownBuilder = {
                 };
             } else {
                 settings.templates = config.templates;
+            }
+
+            // Fix: Clicking the dropdown icon opens the menu without triggering API query.
+            // Fomantic UI only calls queryRemote() in show() when can.show() is false (no items).
+            // When setValue() adds a pre-selected item, can.show() returns true and API is skipped.
+            // This onShow callback detects an under-populated menu and triggers a search via
+            // the input event, which goes through module.search() -> filter() -> queryRemote().
+            if (hasSearchInput) {
+                settings.onShow = function () {
+                    const $drp = $(this);
+                    const $menu = $drp.find('.menu');
+                    if ($menu.find('.item').length <= 1) {
+                        const $searchInput = $drp.find('input.search');
+                        if ($searchInput.length) {
+                            $searchInput.trigger('input');
+                        }
+                    }
+                };
             }
         } else if (config.staticOptions) {
             // For static options, populate menu immediately
