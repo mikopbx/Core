@@ -152,6 +152,15 @@ class SoundFiles extends ModelsBase
             }
         }
 
+        // Delete temporary files that may remain after interrupted conversion
+        $tempSuffixes = ['.tmp.wav', '.normalized.wav'];
+        foreach ($tempSuffixes as $suffix) {
+            $tempFile = "$baseFilename$suffix";
+            if (file_exists($tempFile)) {
+                unlink($tempFile);
+            }
+        }
+
         // Delete sound conversion metadata cache file
         $metadataFile = $pathinfo['dirname'] . '/.' . $pathinfo['filename'] . '.sound-meta';
         if (file_exists($metadataFile)) {
