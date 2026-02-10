@@ -5,49 +5,74 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Configs\SoundFilesConf;
-use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
-use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Mail\Builders\VoicemailNotificationBuilder;
 use MikoPBX\Core\System\Mail\NotificationQueueHelper;
 
 require_once('Globals.php');
 
-/**
- * Replaces placeholders in a string with corresponding values from an array.
- *
- * @param string $src
- * @param array $params
- */
-function replaceParams(string &$src, array $params):void
-{
-    foreach ($params as $key => $value){
-        $src =   str_replace($key, $value, $src);
-    }
-}
-
-
-$linkedId = $argv[1]??'';
-if(empty($linkedId)){
+$linkedId = $argv[1] ?? '';
+if (empty($linkedId)) {
+    SystemMessages::sysLogMsg('Voicemail-Sender', 'Script called without linkedId, exiting', LOG_ERR);
     exit(1);
 }
-$endTime  = Util::getNowDate();
-$toMails  = VoiceMailConf::getToMail($linkedId);
+
+$endTime = Util::getNowDate();
+$toMails = VoiceMailConf::getToMail($linkedId);
 
 try {
-    $parser = new PhpMimeMailParser\Parser();
-    $parser->setStream(fopen("php://stdin", 'rb'));
+    // Read piped email from Asterisk with timeout to prevent hanging
+    $stdinStream = fopen("php://stdin", 'rb');
+    if ($stdinStream === false) {
+        throw new RuntimeException('Failed to open php://stdin');
+    }
+    stream_set_blocking($stdinStream, false);
 
-    $d      = DateTime::createFromFormat('D, d M Y H:i:s O', $parser->getHeader('date'));
-    $file   = implode('', $parser->saveAttachments('/tmp/'));
+    $rawEmail = '';
+    $deadline = microtime(true) + 5.0;
+    while (microtime(true) < $deadline) {
+        $read = [$stdinStream];
+        $write = $except = null;
+        $ready = stream_select($read, $write, $except, 0, 200000);
+
+        if ($ready === false) {
+            break;
+        }
+
+        if ($ready > 0) {
+            $chunk = fread($stdinStream, 65536);
+            if ($chunk === false || $chunk === '') {
+                break;
+            }
+            $rawEmail .= $chunk;
+        } elseif (feof($stdinStream)) {
+            break;
+        }
+    }
+    fclose($stdinStream);
+
+    if (empty($rawEmail)) {
+        throw new RuntimeException('No data received from stdin (timeout 5s)');
+    }
+
+    $parser = new PhpMimeMailParser\Parser();
+    $parser->setText($rawEmail);
+    unset($rawEmail);
+
+    $headerDate = $parser->getHeader('date');
+    $d = DateTime::createFromFormat('D, d M Y H:i:s O', $headerDate);
+    if ($d === false) {
+        throw new RuntimeException('Failed to parse email date header: ' . $headerDate);
+    }
+
+    $file = implode('', $parser->saveAttachments('/tmp/'));
     $recordingFile = VoiceMailConf::getCopyFilename($file, $linkedId, $d->getTimestamp(), true);
     $recordingFile = Util::trimExtensionForFile($recordingFile) . '.wav';
 
-    /** Convert tmp file to mp3 using SoundFilesConf::convertAudioFile */
+    // Convert attachment to mp3 for email notification
     $result = SoundFilesConf::convertAudioFile(
         $file,
         ['mp3'],
@@ -59,51 +84,51 @@ try {
         ]
     );
 
-    // Check if conversion succeeded
     if ($result['success'] && isset($result['formats']['mp3']['path'])) {
         $mp3File = $result['formats']['mp3']['path'];
         if (file_exists($mp3File)) {
             $recordingFile = $mp3File;
+        } else {
+            SystemMessages::sysLogMsg('Voicemail-Sender', "MP3 file not found after conversion: {$mp3File}", LOG_ERR);
         }
+    } else {
+        $errorMsg = $result['error'] ?? 'unknown';
+        SystemMessages::sysLogMsg('Voicemail-Sender', "MP3 conversion failed: {$errorMsg}", LOG_ERR);
     }
 
-    // Clean up original file
+    // Clean up original attachment
     if (file_exists($file)) {
         unlink($file);
     }
 
-    /** create mail message */
-    $addresses      = mailparse_rfc822_parse_addresses($parser->getHeader('to'));
-    $rawHeaderTo    = $addresses[0]['address']??'';
-    if(!empty($rawHeaderTo)){
+    // Build recipient list from voicemail config and email headers
+    $addresses   = mailparse_rfc822_parse_addresses($parser->getHeader('to'));
+    $rawHeaderTo = $addresses[0]['address'] ?? '';
+    if (!empty($rawHeaderTo)) {
         $toMails[] = $rawHeaderTo;
     }
-    $settings = PbxSettings::getAllPbxSettings();
-    $subject    = str_replace([PHP_EOL, "\t"], '',   $settings['MailTplVoicemailSubject']);
-    $body       = str_replace([PHP_EOL, "\t"], ['<br>', ''], $settings['MailTplVoicemailBody']);
-    $footer     = str_replace([PHP_EOL, "\t"], ['<br>', ''], $settings['MailTplVoicemailFooter']);
-    $emailBody  = str_replace(['"', '%|%'], ["'",'"'], $parser->getMessageBody());
 
-    $params     = json_decode($emailBody, true, 512, JSON_THROW_ON_ERROR);
-    foreach ($params as $key => $value){
-        if($key === 'VM_DATE'){
+    $emailBody = str_replace(['"', '%|%'], ["'", '"'], $parser->getMessageBody());
+    $params    = json_decode($emailBody, true, 512, JSON_THROW_ON_ERROR);
+    foreach ($params as $key => $value) {
+        if ($key === 'VM_DATE') {
             $params[$key] = $d->format("Y-m-d H:i:s");
-        }elseif($key === 'VM_CALLERID'){
+        } elseif ($key === 'VM_CALLERID') {
             $value = str_replace("'", '"', $value);
             $data = mailparse_rfc822_parse_addresses($value);
-            $params['VM_CALLER_NAME'] = $data[0]['display']??'';
-            $params['VM_CALLER_NUM']  = $data[0]['address']??'';
+            $params['VM_CALLER_NAME'] = $data[0]['display'] ?? '';
+            $params['VM_CALLER_NUM']  = $data[0]['address'] ?? '';
             unset($data);
         }
     }
-    $cidName = $params['VM_CALLER_NAME']??'';
-    if(empty($cidName)){
+
+    $cidName = $params['VM_CALLER_NAME'] ?? '';
+    if (empty($cidName)) {
         $params['VM_CALLER_NAME'] = Extensions::getCidByPhoneNumber($params['VM_CALLER_NUM']);
     }
-    // REFACTORED: Queue notification for async sending via WorkerNotifyByEmail
-    // This prevents blocking Asterisk on SMTP connection
-    $recipients = array_unique($toMails);
 
+    // Queue notifications for async sending via WorkerNotifyByEmail
+    $recipients = array_unique($toMails);
     foreach ($recipients as $recipient) {
         $builder = new VoicemailNotificationBuilder();
         $builder->setRecipient($recipient)
@@ -115,8 +140,6 @@ try {
                 ->setMessageDate($params['VM_DATE'] ?? '')
                 ->setRecordingFile($recordingFile);
 
-        // Queue with low priority (voicemail is not critical)
-        // Async queueing allows Asterisk to continue immediately
         NotificationQueueHelper::queueOrSend(
             $builder,
             async: true,
@@ -130,23 +153,21 @@ try {
         );
     }
 
-    // NOTE: MP3 file is NOT deleted here - it will be cleaned up by WorkerNotifyByEmail
-    // after sending email with attachment
-}catch (Throwable $e){
+    // MP3 file is NOT deleted here — WorkerNotifyByEmail cleans up after sending
+} catch (Throwable $e) {
     $recordingFile = '';
     SystemMessages::sysLogMsg('Voicemail-Sender', $e->getMessage(), LOG_ERR);
-    // Clean up on error - mp3File is cleaned automatically by convertAudioFile on error
 }
 
 $data = [
     'action'           => 'voicemail_end',
     'linkedid'         => $linkedId,
     'vm-recordingfile' => $recordingFile,
-    'endtime'          => $endTime
+    'endtime'          => $endTime,
 ];
 
 $client = new BeanstalkClient(WorkerCallEvents::class);
-$result_send = $client->publish(json_encode($data, JSON_THROW_ON_ERROR));
+$client->publish(json_encode($data, JSON_THROW_ON_ERROR));
 
 $manager = Util::getAstManager();
 unset($data['action']);
