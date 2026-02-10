@@ -373,9 +373,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'integer',
                 'description' => 'rest_schema_ir_timeout',
                 'minimum' => 0,
-                'maximum' => 300,
+                'maximum' => 7400,
                 'sanitize' => 'int',
-                'default' => 18,
+                'default' => 120,
                 'example' => 45
             ],
             'extension' => [

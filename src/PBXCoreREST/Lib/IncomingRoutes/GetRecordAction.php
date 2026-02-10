@@ -61,7 +61,7 @@ class GetRecordAction extends AbstractGetRecordAction
                 'number' => '',
                 'provider' => null,              // Database field name (will be mapped to providerid)
                 'priority' => '0',  // Will be set to max+1 when saving
-                'timeout' => '18',
+                'timeout' => '120',
                 'extension' => '',
                 'audio_message_id' => null,
                 'note' => ''

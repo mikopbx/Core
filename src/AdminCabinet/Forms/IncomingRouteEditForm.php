@@ -95,7 +95,7 @@ class IncomingRouteEditForm extends BaseForm
 
         // Add numeric field for Timeout with styling
         $this->add(new Numeric('timeout', [
-            'maxlength' => 3, 
+            'maxlength' => 4,
             'style' => 'width: 80px;', 
             'defaultValue' => 120
         ]));
