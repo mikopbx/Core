@@ -112,6 +112,9 @@ class WorkerModelsEvents extends WorkerBase
     private array $pbxSettingsDependencyTable = [];
     private array $customFilesDependencyTable = [];
 
+    // Models that were modified and need settings refresh before reload
+    private array $modifiedModels = [];
+
     private BeanstalkClient $beanstalkClient;
 
     /**
@@ -130,6 +133,7 @@ class WorkerModelsEvents extends WorkerBase
         try {
             $state = [
                 'plannedReloadActions' => $this->plannedReloadActions,
+                'modifiedModels' => $this->modifiedModels,
                 'last_change' => $this->last_change,
                 'timestamp' => time()
             ];
@@ -171,6 +175,7 @@ class WorkerModelsEvents extends WorkerBase
             
             if ($state) {
                 $this->plannedReloadActions = $state['plannedReloadActions'] ?? [];
+                $this->modifiedModels = $state['modifiedModels'] ?? [];
                 $this->last_change = $state['last_change'] ?? time() - $this->timeout;
                 // Delete old keys since we've loaded the state
                 foreach ($keys as $key) {
@@ -253,7 +258,8 @@ class WorkerModelsEvents extends WorkerBase
         $this->reloadActions = $this->getReloadActionsWithPriority();
 
         $this->plannedReloadActions = [];
-        
+        $this->modifiedModels = [];
+
         // Try to restore state from Redis
         $this->restoreStateFromRedis();
     }
@@ -454,6 +460,15 @@ class WorkerModelsEvents extends WorkerBase
                 }
             }
 
+            // Refresh settings for all modified models now — the timeout ensures transaction is committed
+            if (!empty($this->modifiedModels)) {
+                SystemMessages::sysLogMsg(__METHOD__, "Refreshing settings for deferred models: " . implode(', ', array_keys($this->modifiedModels)), LOG_DEBUG);
+            }
+            foreach ($this->modifiedModels as $modifiedModel => $_) {
+                $this->getNewSettingsForDependentModules($modifiedModel);
+            }
+            $this->modifiedModels = [];
+
             $executedActions = [];
             // Process changes for each method in priority order
             foreach ($this->reloadActions as $actionClassName) {
@@ -585,8 +600,9 @@ class WorkerModelsEvents extends WorkerBase
 
         SystemMessages::sysLogMsg(__METHOD__, "New changes received:" . PHP_EOL . json_encode($data, JSON_PRETTY_PRINT), LOG_DEBUG);
 
-        // Get new settings for dependent modules
-        $this->getNewSettingsForDependentModules($modifiedModel);
+        // Track modified model for deferred settings refresh in startReload()
+        // Reading DB here would be too early — the DELETE transaction may not be committed yet
+        $this->modifiedModels[$modifiedModel] = true;
 
         // Plan new reload actions
         $this->planReloadActionsForCustomFiles($modifiedModel, $data);
