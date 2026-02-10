@@ -69,12 +69,15 @@ class MusicOnHoldConf extends AsteriskConfigClass
 
     /**
      * Checks the MOH files in the specified path and adds them to the database if they exist.
-     *
+     * Removes orphaned DB records where the file no longer exists on disk.
      */
     protected function checkMohFiles(): void
     {
         $path  = Directories::getDir(Directories::AST_MOH_DIR);
         $mask  = '/*.mp3';
+
+        // Remove orphaned MOH records where the mp3 file no longer exists on disk
+        $this->cleanOrphanedMohRecords();
 
         // Get the list of MP3 files in the specified path
         $fList = glob("$path$mask");
@@ -99,6 +102,15 @@ class MusicOnHoldConf extends AsteriskConfigClass
 
             // Copy the file to the specified path
             Processes::mwExec("$cp $srcFile $resultMp3");
+
+            // Verify copy succeeded before proceeding
+            if (!file_exists($resultMp3)) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    "Failed to copy MOH file $srcFile to $resultMp3"
+                );
+                continue;
+            }
 
             // Convert the MP3 file to all Asterisk formats
             $result = SoundFilesConf::convertAudioFile(
@@ -132,12 +144,35 @@ class MusicOnHoldConf extends AsteriskConfigClass
     }
 
     /**
-     * Check and add file to the database.
+     * Removes MOH database records where the mp3 file no longer exists on disk.
+     */
+    protected function cleanOrphanedMohRecords(): void
+    {
+        $mohRecords = SoundFiles::find([
+            'conditions' => 'category = :category:',
+            'bind' => ['category' => SoundFiles::CATEGORY_MOH],
+        ]);
+        foreach ($mohRecords as $record) {
+            if (empty($record->path) || !file_exists($record->path)) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    "Removing orphaned MOH record: {$record->name} (path: {$record->path})"
+                );
+                $record->delete();
+            }
+        }
+    }
+
+    /**
+     * Check and add file to the database if the file exists on disk.
      *
      * @param string $resultMp3 The path of the mp3 file.
      */
     protected function checkAddFileToDB(string $resultMp3): void
     {
+        if (!file_exists($resultMp3)) {
+            return;
+        }
         /** @var SoundFiles|null $sf */
         $sf = SoundFiles::findFirst("path='$resultMp3'");
         if ($sf === null) {
