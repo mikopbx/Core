@@ -16,23 +16,19 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-use \MikoPBX\Tests\Calls\Scripts\TestCallsBase;
-use \MikoPBX\Core\Asterisk\Configs\ConferenceConf;
-require_once __DIR__ . '/../TestCallsBase.php';
+use MikoPBX\Tests\Calls\Scripts\TestCallsBase;
+use MikoPBX\Core\Asterisk\Configs\ConferenceConf;
+require_once __DIR__.'/../TestCallsBase.php';
 
-// Получим номер конференции.
 [$conf] = ConferenceConf::getConferenceExtensions();
 
 $sampleCDR = [];
 $sampleCDR[] = ['src_num'=>'aNum', 'dst_num'=> $conf, 'duration'=>'11', 'billsec'=>'11'];
 $sampleCDR[] = ['src_num'=>'bNum', 'dst_num'=> $conf, 'duration'=>'10', 'billsec'=>'10', 'fileDuration' => '11'];
 
-$testName = basename(__DIR__);
-$test = new TestCallsBase();
-
 $rules = [
-    [TestCallsBase::ACtION_ORIGINATE, 'aNum', $conf],
-    [TestCallsBase::ACtION_WAIT, 2],
-    [TestCallsBase::ACtION_ORIGINATE, 'bNum', $conf],
+    [TestCallsBase::ACTION_ORIGINATE, 'aNum', $conf],
+    [TestCallsBase::ACTION_WAIT, 2],
+    [TestCallsBase::ACTION_ORIGINATE, 'bNum', $conf],
 ];
-$test->runTest($testName, $sampleCDR, $rules, 1);
+TestCallsBase::executeTest($sampleCDR, $rules, 1);

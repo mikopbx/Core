@@ -16,15 +16,11 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-use \MikoPBX\Tests\Calls\Scripts\TestCallsBase;
+use MikoPBX\Tests\Calls\Scripts\TestCallsBase;
 require_once __DIR__.'/../TestCallsBase.php';
 
-$sampleCDR   = [];
+$sampleCDR = [];
 $sampleCDR[] = ['src_num'=>'aNum', 'dst_num'=>'bNum', 'duration'=>'8', 'billsec'=>'7',  'fileDuration' => '6'];
 $sampleCDR[] = ['src_num'=>'aNum', 'dst_num'=>'cNum', 'duration'=>'12','billsec'=>'10', 'fileDuration' => '9'];
 
-$testName = basename(__DIR__);
-$test = new TestCallsBase();
-$test->runTest($testName, $sampleCDR);
-
-
+TestCallsBase::executeTest($sampleCDR);

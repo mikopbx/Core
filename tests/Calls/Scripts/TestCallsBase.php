@@ -31,9 +31,9 @@ use MikoPBX\Core\System\Util;
 require_once 'Globals.php';
 
 class TestCallsBase {
-    public const ACtION_ORIGINATE = 'Originate';
-    public const ACtION_GENERAL_ORIGINATE = 'GeneralOriginate';
-    public const ACtION_WAIT = 'Wait';
+    public const ACTION_ORIGINATE = 'Originate';
+    public const ACTION_GENERAL_ORIGINATE = 'GeneralOriginate';
+    public const ACTION_WAIT = 'Wait';
 
     private string $aNum;
     private string $bNum;
@@ -209,12 +209,28 @@ class TestCallsBase {
     }
 
     /**
+     * Запуск теста из скрипта start.php с автоматическим exit code.
+     * @param array $sampleCDR
+     * @param array|null $rules
+     * @param int $countFiles
+     */
+    public static function executeTest(array $sampleCDR, ?array $rules = null, int $countFiles = 0): void
+    {
+        $testName = basename(dirname(debug_backtrace()[0]['file']));
+        $test = new self();
+        $success = $test->runTest($testName, $sampleCDR, $rules, $countFiles);
+        exit($success ? 0 : 1);
+    }
+
+    /**
      * Старт работы теста.
      * @param string $testName
      * @param array  $sampleCDR
      * @param ?array  $rules
+     * @param int $countFiles
+     * @return bool true если тест прошёл успешно
      */
-    public function runTest(string $testName, array $sampleCDR, ?array $rules=null, int $countFiles=0): void{
+    public function runTest(string $testName, array $sampleCDR, ?array $rules=null, int $countFiles=0): bool{
 
         self::printHeader('Start test '. $testName .' ...');
         self::printInfo("aNum: $this->aNum, bNum: $this->bNum, cNum: $this->cNum, offNum: $this->offNum");
@@ -231,11 +247,16 @@ class TestCallsBase {
         }else{
             $this->invokeRules($rules);
         }
-        $this->checkCdr();
+        $success = $this->checkCdr();
         $this->sampleCDR            = [];
         $this->nonStrictComparison  = [];
 
-        self::printInfo("End test\n");
+        if($success){
+            self::printInfo("End test - PASSED\n");
+        }else{
+            self::printError("End test - FAILED\n");
+        }
+        return $success;
     }
 
     /**
@@ -249,7 +270,7 @@ class TestCallsBase {
                 $this->$method($rule);
             }
         }
-        sleep(5);
+        self::printInfo('Wait end call...');
         while (count($this->am->GetChannels(false))>0){
             sleep(1);
         }
@@ -257,7 +278,7 @@ class TestCallsBase {
 
     private function invokeOriginate($rule):void{
         [$action, $src, $dst] = $rule;
-        if($action !== self::ACtION_ORIGINATE){
+        if($action !== self::ACTION_ORIGINATE){
             return;
         }
         if(property_exists(self::class, $src)){
@@ -283,7 +304,7 @@ class TestCallsBase {
      */
     private function invokeGeneralOriginate(array $rule):void{
         [$action, $src, $dst] = $rule;
-        if($action !== self::ACtION_GENERAL_ORIGINATE){
+        if($action !== self::ACTION_GENERAL_ORIGINATE){
             return;
         }
         if(property_exists(self::class, $src)){
@@ -297,7 +318,7 @@ class TestCallsBase {
 
     private function invokeWait($rule):void{
         [$action, $time] = $rule;
-        if($action !== self::ACtION_WAIT && !is_numeric($time)){
+        if($action !== self::ACTION_WAIT && !is_numeric($time)){
             return;
         }
         self::printInfo('Waiting : '.$time."s.");
@@ -320,19 +341,34 @@ class TestCallsBase {
 
     /**
      * Сравнение CDR с эталоном.
+     * @return bool true если CDR совпадает с эталоном
      */
-    protected function checkCdr(): void
+    protected function checkCdr(): bool
     {
-        sleep(15);
-        // Проверяем результат.
+        $expectedCount = count($this->sampleCDR);
         $filter = [
             'work_completed=1',
             'columns' => '*'
         ];
-        $rows = CDRDatabaseProvider::getCdr($filter);
-        if(count($rows) !== count($this->sampleCDR)){
-            self::printError('Call history compromised. Count:'.count($rows).", need: ".count($this->sampleCDR));
-            return;
+
+        // Ожидаем появления нужного количества CDR записей (polling вместо sleep(15))
+        $maxWait = 30;
+        $rows = [];
+        for ($waited = 0; $waited < $maxWait; $waited++) {
+            sleep(1);
+            $rows = CDRDatabaseProvider::getCdr($filter);
+            if (count($rows) >= $expectedCount) {
+                break;
+            }
+            if ($waited % 5 === 4) {
+                self::printInfo("Waiting for CDR... got " . count($rows) . " of $expectedCount ($waited" . "s)");
+            }
+        }
+
+        $success = true;
+        if(count($rows) !== $expectedCount){
+            self::printError('Call history compromised. Count:'.count($rows).", need: ".$expectedCount);
+            return false;
         }
         self::printInfo('Create CDR successfully');
 
@@ -343,6 +379,7 @@ class TestCallsBase {
             if(!file_exists($row['recordingfile']) && !file_exists($wavFile)){
                 if($row['billsec'] > 0 && $this->countFiles === 0){
                     self::printError("File not found '{$row['recordingfile']}'");
+                    $success = false;
                 }
             }else{
                 $rcFiles[$row['recordingfile']] = 1;
@@ -367,7 +404,6 @@ class TestCallsBase {
                         $valSample  = (int) $data;
                         $values = [$valSample, ($valSample-1), ($valSample+1)];
                         if($key === 'fileDuration' && $this->countFiles > 0){
-                            // Проверяем только общее количество файлов.
                             $ok = true;
                         }else{
                             $ok = min($ok, in_array($valRow, $values));
@@ -387,15 +423,16 @@ class TestCallsBase {
                 }
             }
             if(!$ok){
-                self::printError("Index row".json_encode($row));
-                break;
+                self::printError("CDR mismatch: ".json_encode($row));
+                return false;
             }
 
         }
         if($this->countFiles > 0 && count($rcFiles) !== $this->countFiles){
-            self::printError("Recording file not found");
+            self::printError("Recording file count mismatch: got ".count($rcFiles).", expected ".$this->countFiles);
+            return false;
         }
-
+        return $success;
     }
 
     protected function cpConfig(): void
@@ -410,7 +447,14 @@ class TestCallsBase {
         $cmdAsterisk = Util::which(PBX::PROC_NAME);
         self::printInfo("Reload dialplan... ");
         Processes::mwExec("{$cmdAsterisk} -C '{$astConf}' -rx 'dialplan reload'");
-        // Processes::mwExec("asterisk -C '{$astConf}' -rx 'module reload res_pjsip.so'");
-        sleep(5);
+
+        // Ожидаем загрузки dialplan (polling вместо sleep(5))
+        for ($i = 0; $i < 10; $i++) {
+            usleep(500000);
+            Processes::mwExec("{$cmdAsterisk} -C '{$astConf}' -rx 'dialplan show orgn-wait'", $out);
+            if (!empty($out)) {
+                break;
+            }
+        }
     }
 }

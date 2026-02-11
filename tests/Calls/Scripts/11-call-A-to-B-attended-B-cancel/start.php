@@ -16,14 +16,12 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-use \MikoPBX\Tests\Calls\Scripts\TestCallsBase;
+use MikoPBX\Tests\Calls\Scripts\TestCallsBase;
 require_once __DIR__.'/../TestCallsBase.php';
 
-$sampleCDR   = [];
-// TODO Разобраться с 'billsec' > 'fileDuration'
+$sampleCDR = [];
+// TODO: investigate why billsec > fileDuration in attended transfer cancel
 $sampleCDR[] = ['src_num'=>'aNum', 'dst_num'=>'bNum', 'duration'=>'12', 'billsec'=>'10', 'fileDuration' => '4'];
 $sampleCDR[] = ['src_num'=>'bNum', 'dst_num'=>'cNum', 'duration'=>'5',  'billsec'=>'4',  'fileDuration' => '4'];
 
-$testName = basename(__DIR__);
-$test = new TestCallsBase();
-$test->runTest($testName, $sampleCDR);
+TestCallsBase::executeTest($sampleCDR);
