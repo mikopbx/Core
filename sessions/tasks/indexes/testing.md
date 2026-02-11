@@ -12,6 +12,7 @@ description: Tasks related to test frameworks, test infrastructure, and testing 
 - `h-fix-api-test-failures/` - Fix 22 failed REST API tests to achieve 100% pass rate (CDR seeding, extensions, custom files, SIP providers)
 
 ### Medium Priority
+- `m-refactor-calls-tests.md` - Refactoring bash/PHP call flow integration tests (tests/Calls): deduplication, assertions, cleanup safety
 
 ### Low Priority
 
