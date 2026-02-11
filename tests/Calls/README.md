@@ -20,7 +20,7 @@ The framework runs a **second Asterisk process** (port 5062) alongside the produ
 ### Three Layers
 
 1. **`start.sh`** — Bash orchestrator: swaps production DB with test DB, starts test Asterisk, runs test scripts, restores DB on exit (protected by `trap`)
-2. **`TestCallsBase.php`** — PHP base class: origination via `.call` files, CDR clearing, CDR validation with recording file checks via `soxi`
+2. **`TestCallsBase.php`** — PHP base class: origination via `.call` files, CDR clearing, CDR validation with recording file checks via `ffprobe`
 3. **`Scripts/XX-test-name/`** — Individual tests: each defines expected CDR and optional call rules
 
 ## Running Tests
@@ -40,7 +40,7 @@ bash tests/Calls/start.sh "" 30
 
 - MikoPBX running with Asterisk on port 5060
 - At least 5 SIP peers and 2 providers configured
-- Tools: `sqlite3`, `soxi`, `redis-cli`, `php`
+- Tools: `sqlite3`, `ffprobe`, `redis-cli`, `php`
 
 ## Test Scenarios
 
@@ -108,9 +108,33 @@ TestCallsBase::executeTest($sampleCDR, $rules);
 | `*0` | Disconnect |
 | `*2` | Park call |
 
+## Framework Improvements
+
+**Reliability Enhancements:**
+- Exit code propagation: Tests return proper exit codes (0 for pass, 1 for failure)
+- Database protection: `trap cleanup EXIT INT TERM` ensures production DB is always restored
+- Firewall safety: Test DB disables firewall/fail2ban to prevent SSH lockout
+- Schema compatibility: Dynamic column intersection in `m_LanInterfaces` copy handles schema drift
+
+**Recording Validation:**
+- WebM format support: Uses `ffprobe` instead of `soxi` for duration measurement
+- Async conversion handling: Polls for converted files (up to 30s) before validation
+- Tolerant comparison: ±1 second tolerance for duration, billsec, fileDuration fields
+
+**Test Execution:**
+- Polling instead of fixed delays: CDR readiness check (30s timeout), dialplan reload verification
+- Static factory method: `TestCallsBase::executeTest()` eliminates boilerplate in test scripts
+- Rules-based tests: Support for complex scenarios with ACTION_ORIGINATE, ACTION_GENERAL_ORIGINATE, ACTION_WAIT
+
+**Database Handling:**
+- Dynamic schema sync: ATTACH DATABASE with PRAGMA table_info for column intersection
+- Network preservation: Copies `m_LanInterfaces` from production to maintain connectivity
+- Test isolation: Flushes Redis, disables firewall, clears iptables before tests
+
 ## Troubleshooting
 
 - **"Need 3 SIP account"** — Test endpoints failed to register. Check that test 00 completed and PJSIP endpoints have matching `USER_AGENT`
 - **CDR count mismatch** — Calls may not have completed. Check test Asterisk logs in `logs/`
-- **Recording file not found** — Verify recording is enabled for test extensions in the test database
+- **Recording file not found** — Verify recording is enabled for test extensions in the test database. Wait for WAV→WebM conversion to complete (automatic)
 - **Database not restored** — The `trap cleanup` in `start.sh` handles EXIT/INT/TERM signals. If the system was killed with SIGKILL, manually restore from `/storage/usbdisk1/mikopbx/tmp/mikopbx.db`
+- **Schema mismatch errors** — The dynamic column intersection in `start.sh` handles this automatically. If issues persist, check that test DB has been updated with `updateDb.php`

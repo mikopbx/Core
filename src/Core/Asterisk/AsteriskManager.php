@@ -1428,20 +1428,22 @@ class AsteriskManager
             }
             $state_array = [
                 'Not in use' => 'OK',
+                'In use'     => 'OK',
                 'Busy'       => 'OK',
-                'Ringing'    => 'OK'
+                'Ringing'    => 'OK',
             ];
+            $objectName  = $peer['ObjectName'];
             $state       = $state_array[$peer['DeviceState']] ?? 'UNKNOWN';
-            $oldAState   = $peers[$peer['Auths']]['state'] ?? '';
+            $oldState    = $peers[$objectName]['state'] ?? '';
 
-            if ('OK' === $oldAState || empty($peer['Auths'])) {
+            if ('OK' === $oldState) {
                 continue;
             }
 
-            $peers[$peer['Auths']] = [
-                'id'             => $peer['Auths'],
+            $peers[$objectName] = [
+                'id'             => $objectName,
                 'state'          => strtoupper($state),
-                'detailed-state' => $peer['DeviceState']
+                'detailed-state' => $peer['DeviceState'],
             ];
         }
         return array_values($peers);

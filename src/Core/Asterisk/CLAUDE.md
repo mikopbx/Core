@@ -134,6 +134,10 @@ $am->connect();
 // Execute command
 $result = $am->Command('sip show peers');
 
+// Get PJSIP peers with state information
+$peers = $am->getPjSipPeers();
+// Returns: [['id' => '201', 'state' => 'OK', 'detailed-state' => 'Not in use'], ...]
+
 // Originate call
 $am->Originate([
     'Channel' => 'PJSIP/201',
@@ -147,6 +151,8 @@ $am->add_event_handler('Dial', function($event) {
     // Handle dial event
 });
 ```
+
+**Important:** `getPjSipPeers()` returns peers indexed by `ObjectName` (extension number like `201`), not by `Auths` (which would be `201-AUTH`). The method includes state mapping for `Not in use`, `In use`, `Busy`, and `Ringing` device states.
 
 ### 5. AGI Scripts
 

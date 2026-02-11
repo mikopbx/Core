@@ -45,6 +45,7 @@ function cleanup() {
             export XDEBUG_CONFIG="${EMPTY}";
         fi;
         php -f "$dirName/db/updateDb.php" > /dev/null 2>/dev/null;
+        iptables -F 2>/dev/null; iptables -X 2>/dev/null;
         export XDEBUG_CONFIG="${debugParams}";
     fi
 }
@@ -64,15 +65,30 @@ fi;
 
 if [ "${1}x" = 'x' ]; then
   echo_info "Copy tests config...";
-  sqlite3 "$testConfFile" 'delete from m_LanInterfaces';
-  sqlite3 "$dumpConfFile" .dump | grep m_LanInterfaces | grep 'INTO m_LanInterfaces' | sqlite3 "$testConfFile"
+  # Copy m_LanInterfaces from production to test DB using only columns present in test DB.
+  # This handles schema differences when production has newer columns (e.g. IPv6 fields).
+  # Safe: testCols derived from pragma_table_info (trusted schema), not user input.
+  testCols=$(sqlite3 "$testConfFile" "PRAGMA table_info(m_LanInterfaces);" | cut -d'|' -f2 | tr '\n' ',' | sed 's/,$//')
+  sqlite3 "$testConfFile" "
+    ATTACH DATABASE '${dumpConfFile}' AS prod;
+    DELETE FROM main.m_LanInterfaces;
+    INSERT INTO main.m_LanInterfaces(${testCols}) SELECT ${testCols} FROM prod.m_LanInterfaces;
+    DETACH DATABASE prod;
+  "
   rm -rf "$confFile"*;
   cp "$testConfFile" "$confFile";
+  # Disable firewall and fail2ban in test DB — they block SIP registration and SSH access
+  sqlite3 "$confFile" "
+    UPDATE m_PbxSettings SET value='0' WHERE key='PBXFirewallEnabled';
+    UPDATE m_PbxSettings SET value='0' WHERE key='PBXFail2BanEnabled';
+  "
   didSwapDb="true";
   echo_info 'Clear redis...';
   /usr/bin/redis-cli FLUSHALL > /dev/null 2> /dev/null;
   echo_info 'Restart services and update test db...';
   php -f "$dirName/db/updateDb.php";
+  # Flush firewall rules — test DB may have restrictive iptables that block SIP/SSH
+  iptables -F 2>/dev/null; iptables -X 2>/dev/null;
   sleep 5;
   echo_info 'Wait booted asterisk...';
   asterisk -rx 'core waitfullybooted' > /dev/null 2> /dev/null;

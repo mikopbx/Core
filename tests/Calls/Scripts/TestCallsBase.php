@@ -372,6 +372,25 @@ class TestCallsBase {
         }
         self::printInfo('Create CDR successfully');
 
+        // Wait for WAV→WebM conversion (WorkerWav2Webm runs asynchronously)
+        $maxFileWait = 30;
+        for ($waited = 0; $waited < $maxFileWait; $waited++) {
+            $allFilesReady = true;
+            foreach ($rows as $row) {
+                if ($row['billsec'] > 0 && !empty($row['recordingfile']) && !file_exists($row['recordingfile'])) {
+                    $allFilesReady = false;
+                    break;
+                }
+            }
+            if ($allFilesReady) {
+                break;
+            }
+            if ($waited % 5 === 4) {
+                self::printInfo("Waiting for recording files... ($waited" . "s)");
+            }
+            sleep(1);
+        }
+
         $checkedIndexes = [];
         $rcFiles = [];
         foreach ($rows as $row){
@@ -383,14 +402,10 @@ class TestCallsBase {
                 }
             }else{
                 $rcFiles[$row['recordingfile']] = 1;
-                Processes::mwExec("soxi {$row['recordingfile']} | grep Duration | awk '{print $3}' | awk -F '.'  '{print $1}'", $out);
-                $timeData = explode(':', implode($out));
-                $d = (int)($timeData[0]??0);
-                $h = (int)($timeData[1]??0);
-                $s = (int)($timeData[2]??0);
-                $seconds = $s + 60*$h + $d*24*60;
+                Processes::mwExec("ffprobe -v error -show_entries format=duration -of csv=p=0 {$row['recordingfile']}", $out);
+                $seconds = (int)round((float)implode($out));
                 $row['fileDuration'] = (string)$seconds;
-                self::printInfo('Rec. file:'.basename($row['recordingfile']).", sox duration: ".implode($out).", duration: ".$row['fileDuration']);
+                self::printInfo('Rec. file:'.basename($row['recordingfile']).", ffprobe duration: ".implode($out)."s, rounded: ".$row['fileDuration']);
             }
             $ok = true;
             foreach ($this->sampleCDR as $index => $cdrS){

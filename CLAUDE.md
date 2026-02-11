@@ -47,6 +47,8 @@ tests/                # Comprehensive test suite
 ├── AdminCabinet/     # Browser automation tests (PHPUnit + Selenium)
 │   └── CLAUDE.md     # Browser test development guide
 ├── api/              # REST API tests (pytest)
+├── Calls/            # Call flow integration tests (bash + PHP)
+│   └── README.md     # Call flow integration testing guide
 ├── pycalltests/      # SIP call flow tests (pytest + PJSUA2)
 │   └── README.md     # Call flow testing guide
 └── PBXCoreREST/      # REST API unit tests
@@ -85,6 +87,12 @@ Use the **`log-analyzer`** skill to diagnose issues:
 Tests are automatically synchronized between host and container:
 - **Host**: `src/Core/tests`
 - **Container**: `/offload/rootfs/usr/www/tests`
+
+**Call Flow Integration Tests** (tests/Calls):
+- Bash/PHP integration tests using separate Asterisk instance on port 5062
+- Validates call scenarios (transfers, pickups, conferences) via CDR comparison
+- Uses `ffprobe` for recording duration validation (WebM format support)
+- See `tests/Calls/README.md` for complete documentation
 
 **SIP Call Flow Tests** (pycalltests):
 - Run inside Docker container using PJSUA2 Python SWIG bindings
@@ -371,6 +379,7 @@ Use the **`translations`** skill to manage multilingual translations:
 
 ### Testing
 - **[Browser Tests](tests/AdminCabinet/CLAUDE.md)** - Web UI automation with Selenium/PHPUnit
+- **[Call Flow Integration Tests](tests/Calls/README.md)** - Bash/PHP integration tests with separate Asterisk instance
 - **[Call Flow Tests](tests/pycalltests/README.md)** - SIP testing with PJSUA2 (conferences, IVR, voicemail, parking, recording, codecs)
 
 ## Specialized Agents
