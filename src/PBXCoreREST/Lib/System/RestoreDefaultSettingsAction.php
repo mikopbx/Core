@@ -43,6 +43,7 @@ use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Models\UserPasskeys;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Core\Asterisk\CdrDb;
+use MikoPBX\Core\Asterisk\Configs\MusicOnHoldConf;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
@@ -582,6 +583,9 @@ class RestoreDefaultSettingsAction extends Injectable
                 }
             }
         }
+
+        // Restore default MOH files (2 default melodies), same as web interface behavior
+        MusicOnHoldConf::restoreDefaultMoh();
     }
 
     /**

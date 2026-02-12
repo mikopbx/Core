@@ -187,6 +187,25 @@ class MusicOnHoldConf extends AsteriskConfigClass
     }
 
     /**
+     * Restores default MOH files from the system default location.
+     * Cleans the MOH directory first, then copies and converts default files.
+     * Creates database records for restored files.
+     */
+    public static function restoreDefaultMoh(): void
+    {
+        $mohPath = Directories::getDir(Directories::AST_MOH_DIR);
+        Util::mwMkdir($mohPath);
+
+        // Clean any remaining files in MOH directory (converted formats, leftovers)
+        $rm = Util::which('rm');
+        Processes::mwExec("$rm -rf " . escapeshellarg($mohPath) . "/*");
+
+        // Restore defaults from /offload/asterisk/sounds/moh/
+        $conf = new self();
+        $conf->checkMohFiles();
+    }
+
+    /**
      * Reloads the Asterisk music on hold module.
      */
     public static function reload(): void
