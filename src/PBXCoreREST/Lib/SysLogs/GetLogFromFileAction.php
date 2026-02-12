@@ -159,32 +159,49 @@ class GetLogFromFileAction extends Injectable
             }
 
             // Step 1: Apply text filter (grep) if provided
+            // Supports two formats:
+            //   - JSON array: [{"type":"contains","value":"X"},{"type":"notContains","value":"Y"}]
+            //   - Legacy plain string: "pattern1&pattern2" (OR logic with & separator)
             $textFilteredFile = $fileToProcess;
+            $includeFilteredFile = null;
+            $excludeFilteredFile = null;
             $needsTextFilter = !empty($filter) && is_string($filter);
 
             if ($needsTextFilter) {
-                // Split filter by & and escape each part separately
-                $filterParts = explode('&', $filter);
-                $grepArgs = [];
-                foreach ($filterParts as $part) {
-                    $part = trim($part);
-                    if (!empty($part)) {
-                        $grepArgs[] = '-e ' . escapeshellarg($part);
-                    }
-                }
+                $conditions = self::parseFilterConditions($filter);
+                $includePatterns = $conditions['contains'];
+                $excludePatterns = $conditions['notContains'];
 
-                if (!empty($grepArgs)) {
-                    $textFilteredFile = $cacheDir . '/' . uniqid('text_filtered_', true) . '.log';
+                // Apply include patterns: grep -F -e pat1 -e pat2
+                if (!empty($includePatterns)) {
+                    $grepArgs = [];
+                    foreach ($includePatterns as $pattern) {
+                        $grepArgs[] = '-e ' . escapeshellarg($pattern);
+                    }
+                    $includeFilteredFile = $cacheDir . '/' . uniqid('include_filtered_', true) . '.log';
                     $grepCmd = "$grep --text -h " . implode(' ', $grepArgs)
                         . ' -F ' . escapeshellarg($fileToProcess)
-                        . ' > ' . escapeshellarg($textFilteredFile);
+                        . ' > ' . escapeshellarg($includeFilteredFile);
                     Processes::mwExec($grepCmd);
+                    $textFilteredFile = $includeFilteredFile;
+                }
+
+                // Apply exclude patterns: grep -v -F -e excl1 -e excl2
+                if (!empty($excludePatterns)) {
+                    $grepArgs = [];
+                    foreach ($excludePatterns as $pattern) {
+                        $grepArgs[] = '-e ' . escapeshellarg($pattern);
+                    }
+                    $excludeFilteredFile = $cacheDir . '/' . uniqid('exclude_filtered_', true) . '.log';
+                    $grepCmd = "$grep --text -v -h " . implode(' ', $grepArgs)
+                        . ' -F ' . escapeshellarg($textFilteredFile)
+                        . ' > ' . escapeshellarg($excludeFilteredFile);
+                    Processes::mwExec($grepCmd);
+                    $textFilteredFile = $excludeFilteredFile;
                 }
             }
 
             // Step 1.5: Apply log level filter if provided
-            // Track original text-filtered file separately for cleanup
-            $originalTextFilteredFile = $textFilteredFile;
             $levelFilteredFile = null;
             $validLogLevels = ['ERROR', 'WARNING', 'NOTICE', 'INFO', 'DEBUG'];
             $needsLevelFilter = !empty($logLevel) && in_array($logLevel, $validLogLevels, true);
@@ -331,11 +348,16 @@ class GetLogFromFileAction extends Injectable
                 @unlink($decompressedFile);
             }
 
-            // Clean up original text-filtered file (may differ from current $textFilteredFile
-            // when level filter overwrote the variable)
-            if ($needsTextFilter && $originalTextFilteredFile !== $fileToProcess
-                && file_exists($originalTextFilteredFile)) {
-                @unlink($originalTextFilteredFile);
+            // Clean up include-filtered file
+            if ($includeFilteredFile !== null && $includeFilteredFile !== $fileToProcess
+                && file_exists($includeFilteredFile)) {
+                @unlink($includeFilteredFile);
+            }
+
+            // Clean up exclude-filtered file
+            if ($excludeFilteredFile !== null && $excludeFilteredFile !== $fileToProcess
+                && file_exists($excludeFilteredFile)) {
+                @unlink($excludeFilteredFile);
             }
 
             // Clean up level-filtered file
@@ -433,6 +455,61 @@ class GetLogFromFileAction extends Injectable
 
         // Join all patterns with OR operator
         return implode('|', $patterns);
+    }
+
+    /**
+     * Parse filter string into structured conditions.
+     *
+     * Supports two formats:
+     *   - JSON array: [{"type":"contains","value":"ERROR"},{"type":"notContains","value":"OPTIONS"}]
+     *   - Legacy plain string: "pattern1&pattern2" (OR logic, all treated as "contains")
+     *
+     * @param string $filter Raw filter string from request
+     * @return array{contains: string[], notContains: string[]} Grouped filter patterns
+     */
+    private static function parseFilterConditions(string $filter): array
+    {
+        $contains = [];
+        $notContains = [];
+
+        $trimmed = trim($filter);
+        if ($trimmed === '') {
+            return ['contains' => $contains, 'notContains' => $notContains];
+        }
+
+        // JSON format: starts with [
+        if (str_starts_with($trimmed, '[')) {
+            $decoded = json_decode($trimmed, true);
+            if (is_array($decoded)) {
+                foreach ($decoded as $condition) {
+                    if (!is_array($condition) || empty($condition['value']) || !is_string($condition['value'])) {
+                        continue;
+                    }
+                    $value = trim($condition['value']);
+                    if ($value === '') {
+                        continue;
+                    }
+                    $type = $condition['type'] ?? 'contains';
+                    if ($type === 'notContains') {
+                        $notContains[] = $value;
+                    } else {
+                        $contains[] = $value;
+                    }
+                }
+                return ['contains' => $contains, 'notContains' => $notContains];
+            }
+        }
+
+        // Legacy format: plain string with & as OR separator
+        $parts = explode('&', $trimmed);
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if ($part !== '') {
+                $contains[] = $part;
+            }
+        }
+
+        return ['contains' => $contains, 'notContains' => $notContains];
     }
 
     /**

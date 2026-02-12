@@ -728,6 +728,9 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'BreadcrumbAsteriskRestUsers' => 'Interfaz REST de Asterisk (ARI)',
     'am_ErrorLoadingManager' => 'Error al cargar los datos del usuario',
     'sd_ClearFilter' => 'Limpiar filtro',
+    'sd_FilterContains' => 'Contiene',
+    'sd_FilterNotContains' => 'NO contiene',
+    'sd_FilterPlaceholder' => 'Escriba el texto y pulse Enter...',
     'ts_SetDateTime' => 'Establecer una nueva hora',
     'mm_OffWorkTimes' => 'Tiempo no laboral',
     // ET

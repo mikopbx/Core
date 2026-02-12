@@ -21,6 +21,16 @@
     width: auto !important;
 }
 
+/* Match button group height to Fomantic UI dropdown (2.71428571em = 38px) */
+#system-diagnostic-form .buttons-field .ui.buttons .ui.button {
+    padding-top: 0;
+    padding-bottom: 0;
+    height: 2.71428571em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* Action buttons aligned to the right */
 #system-diagnostic-form .fields > .field:last-child {
     display: flex;
@@ -377,4 +387,138 @@
     background: #1890ff;
 }
 
+/* ===== Cascading Filter Conditions (tag-input) ===== */
 
+/* Container looks like a standard input field */
+.filter-conditions-container {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    min-height: 2.71428571em;
+    padding: 2px 4px;
+    border: 1px solid rgba(34, 36, 38, 0.15);
+    border-radius: 0.28571429rem;
+    background: #fff;
+    cursor: text;
+    gap: 6px;
+    transition: border-color 0.1s ease;
+}
+
+/* Ensure position: relative for popup positioning (ID specificity) */
+#filter-conditions-container {
+    position: relative;
+}
+
+.filter-conditions-container:focus-within {
+    border-color: #85b7d9;
+}
+
+/* Label chips for filter conditions */
+.filter-condition-label {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 0.28571429rem;
+    font-size: 0.85em;
+    line-height: 1.8;
+    white-space: nowrap;
+    gap: 4px;
+}
+
+.filter-condition-label.contains {
+    background-color: #e0f5f0;
+    color: #00796b;
+    border: 1px solid #b2dfdb;
+}
+
+.filter-condition-label.not-contains {
+    background-color: #fde8e8;
+    color: #c62828;
+    border: 1px solid #f5c6cb;
+}
+
+.filter-condition-label .delete.icon {
+    cursor: pointer;
+    opacity: 0.6;
+    margin: 0 0 0 2px;
+    font-size: 0.85em;
+    transition: opacity 0.15s ease;
+}
+
+.filter-condition-label .delete.icon:hover {
+    opacity: 1;
+}
+
+/* Borderless text input inside container */
+#filter-input {
+    flex: 1 1 120px;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    padding: 2px 4px !important;
+    min-width: 120px;
+    font-size: 0.95em;
+    line-height: 2em;
+    background: transparent;
+}
+
+#filter-input::placeholder {
+    color: rgba(0, 0, 0, 0.35);
+}
+
+/* Clear filter button inside container */
+.filter-conditions-container .clear-filter-btn {
+    cursor: pointer;
+    opacity: 0.4;
+    transition: opacity 0.15s ease;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.filter-conditions-container .clear-filter-btn:hover {
+    opacity: 0.8;
+}
+
+/* Filter type popup */
+#filter-type-popup {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    background: #fff;
+    border: 1px solid rgba(34, 36, 38, 0.15);
+    border-radius: 0.28571429rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 4px 0;
+    min-width: 180px;
+    margin-top: 2px;
+}
+
+.filter-type-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 14px;
+    cursor: pointer;
+    gap: 8px;
+    transition: background 0.1s ease;
+    font-size: 0.95em;
+}
+
+.filter-type-option:hover,
+.filter-type-option.focused {
+    background: #f5f5f5;
+}
+
+.filter-type-option i.icon {
+    margin: 0;
+    font-size: 1.1em;
+}
+
+.filter-type-option i.teal {
+    color: #00b5ad !important;
+}
+
+.filter-type-option i.red {
+    color: #db2828 !important;
+}
