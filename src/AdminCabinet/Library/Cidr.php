@@ -46,6 +46,9 @@ class Cidr extends Injectable
     // e.g. 10.0.2.56/21 = 10.0.0.0
     public function cidr2network(string $ip, int $cidr): false|string
     {
+        if ($cidr < 0 || $cidr > 32) {
+            return false;
+        }
         return long2ip((ip2long($ip)) & ((-1 << (32 - $cidr))));
     }
 
@@ -68,11 +71,10 @@ class Cidr extends Injectable
     //      is 192.168.50.2 in 192.168.30.0/23 == false
     public function cidr_match(string $ip, string $network, int $cidr): bool
     {
-        if ((ip2long($ip) & ~((1 << (32 - $cidr)) - 1)) == ip2long($network)) {
-            return true;
+        if ($cidr < 0 || $cidr > 32) {
+            return false;
         }
-
-        return false;
+        return (ip2long($ip) & ~((1 << (32 - $cidr)) - 1)) == ip2long($network);
     }
 
     /**

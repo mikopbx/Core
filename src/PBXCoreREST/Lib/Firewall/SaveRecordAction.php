@@ -572,7 +572,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $calculator = new Cidr();
             $networkAddress = $calculator->cidr2network($network, $subnetInt);
 
-            if ($networkAddress !== $network) {
+            if ($networkAddress !== false && $networkAddress !== $network) {
                 // This is a warning, not an error - we'll auto-correct it
                 // But we could make it an error for strict validation
                 // $errors[] = "IP address $network is not a valid network address for /$subnet (should be $networkAddress)";
