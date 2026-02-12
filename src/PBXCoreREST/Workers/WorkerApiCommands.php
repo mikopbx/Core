@@ -70,6 +70,12 @@ class WorkerApiCommands extends WorkerRedisBase
     private const int MAX_RESPONSE_SIZE = 1048576; // 1MB
     private const int PROCESS_CHECK_INTERVAL = 100000; // 100ms
 
+    /**
+     * Database locked retry configuration
+     */
+    private const int DB_LOCKED_MAX_RETRIES = 3;
+    private const int DB_LOCKED_BASE_DELAY_US = 100_000; // 100ms
+
 
     /**
      * Default to 3 concurrent worker processes instead of 1
@@ -730,10 +736,10 @@ class WorkerApiCommands extends WorkerRedisBase
         
         return $processor;
     }
-    
+
     /**
      * Execute the API request
-     * 
+     *
      * @param array $request Request data
      * @param PBXApiResult $res Result object
      * @param string $processor Processor class name
@@ -743,17 +749,55 @@ class WorkerApiCommands extends WorkerRedisBase
     private function executeRequest(array $request, PBXApiResult $res, string $processor, PerformanceMetrics $metrics): PBXApiResult
     {
         $metrics->startStage('execution');
-        
+
         if (($request['async'] ?? false) === true) {
             $this->handleAsyncRequest($request, $res, $processor);
         } else {
-            $res = $processor::callback($request);
+            $res = $this->executeWithRetry($request, $processor);
         }
-        
+
         $metrics->endStage('execution');
         $metrics->logExecutionComplete($processor);
-        
+
         return $res;
+    }
+
+    /**
+     * Execute processor callback with retry on SQLite "database is locked" errors
+     *
+     * When multiple worker instances perform concurrent writes, SQLite may return
+     * "database is locked" even with WAL mode and busy_timeout. This method retries
+     * with exponential backoff as a safety net for writes outside executeInTransaction().
+     *
+     * @param array $request Request data
+     * @param string $processor Processor class name
+     * @return PBXApiResult Request result
+     * @throws \PDOException If non-lock error or all retries exhausted
+     */
+    private function executeWithRetry(array $request, string $processor): PBXApiResult
+    {
+        $lastException = null;
+
+        for ($attempt = 1; $attempt <= self::DB_LOCKED_MAX_RETRIES; $attempt++) {
+            try {
+                return $processor::callback($request);
+            } catch (\PDOException $e) {
+                if (!str_contains($e->getMessage(), 'database is locked')) {
+                    throw $e;
+                }
+                $lastException = $e;
+                if ($attempt < self::DB_LOCKED_MAX_RETRIES) {
+                    SystemMessages::sysLogMsg(
+                        static::class,
+                        "Database locked on attempt {$attempt}, retrying...",
+                        LOG_WARNING
+                    );
+                    usleep(self::DB_LOCKED_BASE_DELAY_US * $attempt);
+                }
+            }
+        }
+
+        throw $lastException;
     }
     
     /**

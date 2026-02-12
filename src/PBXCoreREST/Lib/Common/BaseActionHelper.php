@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\Common;
 
 use MikoPBX\Common\Providers\MainDatabaseProvider;
+use MikoPBX\Common\Providers\MutexProvider;
 use Phalcon\Di\Di;
 use Phalcon\Filter\FilterFactory;
 
@@ -63,32 +64,36 @@ class BaseActionHelper
     public static function executeInTransaction(callable $callback)
     {
         $di = Di::getDefault();
-        $db = $di->get(MainDatabaseProvider::SERVICE_NAME);
+        $mutex = $di->get(MutexProvider::SERVICE_NAME);
 
-        // Check if we're already in a transaction
-        $alreadyInTransaction = $db->isUnderTransaction();
+        return $mutex->synchronized('db-write', function () use ($callback, $di) {
+            $db = $di->get(MainDatabaseProvider::SERVICE_NAME);
 
-        // Only begin if not already in transaction
-        if (!$alreadyInTransaction) {
-            $db->begin();
-        }
+            // Check if we're already in a transaction
+            $alreadyInTransaction = $db->isUnderTransaction();
 
-        try {
-            $result = $callback();
-
-            // Only commit if we started the transaction
+            // Only begin if not already in transaction
             if (!$alreadyInTransaction) {
-                $db->commit();
+                $db->begin();
             }
 
-            return $result;
-        } catch (\Exception $e) {
-            // Only rollback if we started the transaction
-            if (!$alreadyInTransaction) {
-                $db->rollback();
+            try {
+                $result = $callback();
+
+                // Only commit if we started the transaction
+                if (!$alreadyInTransaction) {
+                    $db->commit();
+                }
+
+                return $result;
+            } catch (\Exception $e) {
+                // Only rollback if we started the transaction
+                if (!$alreadyInTransaction) {
+                    $db->rollback();
+                }
+                throw $e;
             }
-            throw $e;
-        }
+        }, timeout: 15, ttl: 30);
     }
     
     /**
