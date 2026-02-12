@@ -734,6 +734,9 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'cdr_AudioFileDownloadError' => 'Fout bij het downloaden van het audiobestand',
     'mo_InvalidExternalIpAddress' => 'Onjuist extern IP-adres',
     'sd_ClearFilter' => 'Filter wissen',
+    'sd_FilterContains' => 'Bevat',
+    'sd_FilterNotContains' => 'Bevat NIET',
+    'sd_FilterPlaceholder' => 'Voer tekst in en druk op Enter...',
     'sf_SoundCategory' => 'Geluidsbestanden',
     'sf_ImageCategory' => 'Afbeeldingen',
     // Units of measurement

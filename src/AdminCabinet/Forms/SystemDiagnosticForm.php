@@ -23,7 +23,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
-use Phalcon\Forms\Element\Text;
 
 /**
  * Class SystemDiagnosticForm
@@ -45,7 +44,7 @@ class SystemDiagnosticForm extends BaseForm
         // Log level filter - V5.0 pattern: hidden input, dropdown created by DynamicDropdownBuilder
         $this->add(new Hidden('logLevel', ['value' => '']));
 
-        $this->add(new Text('filter', ['value' => $options['filter']]));
+        $this->add(new Hidden('filter', ['value' => $options['filter']]));
         $this->add(new Numeric('lines', ['value' => '5000']));
         $this->add(new Numeric('offset', ['value' => '0']));
     }

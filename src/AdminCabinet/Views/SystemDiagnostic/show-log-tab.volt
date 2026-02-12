@@ -5,23 +5,35 @@
     <form class="ui form" id="system-diagnostic-form">
         {{ form.render('filename') }}
         <div class="fields">
-            <div class="five wide field">
+            <div class="four wide field">
                 <label for="filenames">{{ t._('sd_Filename') }}</label>
                 <div class="fluid field">
                     {{ form.render('filenames') }}
                 </div>
             </div>
 
-            <div class="three wide field">
+            <div class="two wide field">
                 <label for="logLevel">{{ t._('sd_LogLevel') }}</label>
                 {{ form.render('logLevel') }}
             </div>
 
             <div class="field filter-field">
                 <label>{{ t._('sd_filter') }}</label>
-                <div class="ui icon input fluid">
-                    {{ form.render('filter') }}
+                {{ form.render('filter') }}
+                <div class="filter-conditions-container" id="filter-conditions-container">
+                    <div class="filter-labels" id="filter-labels"></div>
+                    <input type="text" id="filter-input" placeholder="{{ t._('sd_FilterPlaceholder') }}" autocomplete="off" />
                     <i class="link grey times icon clear-filter-btn" id="clear-filter-btn" data-content="{{ t._('sd_ClearFilter') }}"></i>
+                    <div class="filter-type-dropdown hidden" id="filter-type-popup">
+                        <div class="filter-type-option" data-type="contains">
+                            <i class="check circle icon teal"></i>
+                            <span>{{ t._('sd_FilterContains') }}</span>
+                        </div>
+                        <div class="filter-type-option" data-type="notContains">
+                            <i class="ban icon red"></i>
+                            <span>{{ t._('sd_FilterNotContains') }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 

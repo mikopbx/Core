@@ -979,8 +979,9 @@ const SVGTimeline = {
         this.visibleRange.end = this.fullRange.end;
         this.visibleRange.start = Math.max(this.fullRange.end - period, this.fullRange.start);
 
-        // Auto-center selection (1/4 of visible range)
-        this.calculateCenteredSelection();
+        // Selection covers entire visible range — user expects to see ALL data for the period
+        this.selectedRange.start = this.visibleRange.start;
+        this.selectedRange.end = this.visibleRange.end;
 
         // Render
         this.render();

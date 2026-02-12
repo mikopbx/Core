@@ -108,9 +108,33 @@ const systemDiagnosticLogs = {
     isAutoUpdateActive: false,
 
     /**
+     * Array of cascading filter conditions [{type: 'contains'|'notContains', value: string}]
+     * @type {Array}
+     */
+    filterConditions: [],
+
+    /**
+     * Pending filter text waiting for type selection in popup
+     * @type {string}
+     */
+    pendingFilterText: '',
+
+    /**
+     * Last known actual data end timestamp from API response.
+     * Used to anchor refresh time range to real data instead of wall clock time.
+     * WHY: If a log file hasn't been written to recently (e.g., idle module log),
+     * using "now - period" as startTimestamp produces an empty range with no data.
+     * @type {number|null}
+     */
+    lastKnownDataEnd: null,
+
+    /**
      * Initializes the system diagnostic logs.
      */
     initialize() {
+        // Ensure filter type popup starts hidden with clean styles
+        $('#filter-type-popup').addClass('hidden').hide().css({top: '', left: ''});
+
         const aceHeight = window.innerHeight - 250;
 
         // Set the minimum height of the log container
@@ -147,6 +171,9 @@ const systemDiagnosticLogs = {
 
         // Initialize log level dropdown - V5.0 pattern with DynamicDropdownBuilder
         systemDiagnosticLogs.initializeLogLevelDropdown();
+
+        // Initialize filter conditions from URL parameter (e.g. CDR links with ?filter=...)
+        systemDiagnosticLogs.initializeFilterFromUrl();
 
         // Event listener for quick period buttons
         $(document).on('click', '.period-btn', (e) => {
@@ -228,17 +255,95 @@ const systemDiagnosticLogs = {
             systemDiagnosticLogs.eraseCurrentFileContent();
         });
 
-        // Event listener for "Clear Filter" button click (delegated)
-        $(document).on('click', '#clear-filter-btn', (e) => {
-            e.preventDefault();
-            systemDiagnosticLogs.$formObj.form('set value', 'filter', '');
-            systemDiagnosticLogs.updateLogFromServer();
+        // Event listener for Enter keypress on filter input — show type popup
+        $(document).on('keydown', '#filter-input', (event) => {
+            const $popup = $('#filter-type-popup');
+            const isPopupVisible = $popup.is(':visible') && !$popup.hasClass('hidden');
+
+            // When popup is open, handle arrow keys and Enter for keyboard navigation
+            if (isPopupVisible) {
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    systemDiagnosticLogs.navigateFilterPopup(event.key === 'ArrowDown' ? 1 : -1);
+                    return;
+                }
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const $focused = $popup.find('.filter-type-option.focused');
+                    if ($focused.length) {
+                        $focused.trigger('click');
+                    }
+                    return;
+                }
+            }
+
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const text = $('#filter-input').val().trim();
+                if (text !== '') {
+                    systemDiagnosticLogs.pendingFilterText = text;
+                    systemDiagnosticLogs.showFilterTypePopup();
+                }
+            } else if (event.key === 'Escape') {
+                systemDiagnosticLogs.hideFilterTypePopup();
+            } else if (event.key === 'Backspace' && $('#filter-input').val() === '') {
+                // Remove last chip on Backspace in empty input
+                if (systemDiagnosticLogs.filterConditions.length > 0) {
+                    systemDiagnosticLogs.removeFilterCondition(
+                        systemDiagnosticLogs.filterConditions.length - 1
+                    );
+                }
+            }
         });
 
-        // Event listener for Enter keypress only on filter input field
-        $(document).on('keyup', '#filter', (event) => {
-            if (event.key === 'Enter') {
-                systemDiagnosticLogs.updateLogFromServer();
+        // On blur: auto-add text as "contains" filter if popup is not open
+        $(document).on('blur', '#filter-input', () => {
+            // Delay to allow click on popup option to fire first
+            setTimeout(() => {
+                const $popup = $('#filter-type-popup');
+                if ($popup.is(':visible')) {
+                    // Popup is open (user pressed Enter) — let popup handle it
+                    return;
+                }
+                const text = $('#filter-input').val().trim();
+                if (text !== '') {
+                    systemDiagnosticLogs.addFilterCondition('contains', text);
+                }
+            }, 150);
+        });
+
+        // Event listener for filter type option click
+        $(document).on('click', '.filter-type-option', (e) => {
+            const type = $(e.currentTarget).data('type');
+            systemDiagnosticLogs.addFilterCondition(type, systemDiagnosticLogs.pendingFilterText);
+            systemDiagnosticLogs.pendingFilterText = '';
+            systemDiagnosticLogs.hideFilterTypePopup();
+        });
+
+        // Event listener for removing individual filter chip
+        $(document).on('click', '#filter-labels .delete.icon', (e) => {
+            e.stopPropagation();
+            const index = $(e.currentTarget).closest('.filter-condition-label').data('index');
+            systemDiagnosticLogs.removeFilterCondition(index);
+        });
+
+        // Event listener for "Clear Filter" button click
+        $(document).on('click', '#clear-filter-btn', (e) => {
+            e.preventDefault();
+            systemDiagnosticLogs.clearAllFilterConditions();
+        });
+
+        // Click on container focuses input
+        $(document).on('click', '#filter-conditions-container', (e) => {
+            if ($(e.target).is('#filter-conditions-container') || $(e.target).is('#filter-labels')) {
+                $('#filter-input').focus();
+            }
+        });
+
+        // Hide popup when clicking outside
+        $(document).on('click', (e) => {
+            if (!$(e.target).closest('#filter-type-popup, #filter-input').length) {
+                systemDiagnosticLogs.hideFilterTypePopup();
             }
         });
 
@@ -334,7 +439,7 @@ const systemDiagnosticLogs = {
         $dropdown.dropdown({
             onChange: (value) => {
                 $hiddenInput.val(value).trigger('change');
-                systemDiagnosticLogs.updateLogFromServer();
+                systemDiagnosticLogs.updateLogFromServer(true);
             }
         });
     },
@@ -767,6 +872,9 @@ const systemDiagnosticLogs = {
         // Hide auto-refresh button for rotated log files (they don't change)
         systemDiagnosticLogs.updateAutoRefreshVisibility(value);
 
+        // Reset last known data end for new file
+        systemDiagnosticLogs.lastKnownDataEnd = null;
+
         // Check if time range is available for this file
         systemDiagnosticLogs.checkTimeRangeAvailability(value);
     },
@@ -808,6 +916,164 @@ const systemDiagnosticLogs = {
     },
 
     /**
+     * Show filter type popup below the filter input.
+     * Pre-selects the first option for immediate keyboard navigation.
+     */
+    showFilterTypePopup() {
+        const $popup = $('#filter-type-popup');
+        $popup.removeClass('hidden')
+            .css({top: '', left: '', display: ''})
+            .show();
+        // Pre-select first option for keyboard navigation
+        $popup.find('.filter-type-option').removeClass('focused');
+        $popup.find('.filter-type-option').first().addClass('focused');
+    },
+
+    /**
+     * Hide the filter type popup
+     */
+    hideFilterTypePopup() {
+        const $popup = $('#filter-type-popup');
+        $popup.find('.filter-type-option').removeClass('focused');
+        $popup.addClass('hidden').hide();
+    },
+
+    /**
+     * Navigate filter type popup options with arrow keys.
+     * Wraps around at boundaries.
+     * @param {number} direction - 1 for down, -1 for up
+     */
+    navigateFilterPopup(direction) {
+        const $popup = $('#filter-type-popup');
+        const $options = $popup.find('.filter-type-option');
+        const $focused = $options.filter('.focused');
+
+        let index = $options.index($focused);
+        index += direction;
+
+        // Wrap around
+        if (index < 0) {
+            index = $options.length - 1;
+        }
+        if (index >= $options.length) {
+            index = 0;
+        }
+
+        $options.removeClass('focused');
+        $options.eq(index).addClass('focused');
+    },
+
+    /**
+     * Add a filter condition, sync to form, render labels, and reload log
+     * @param {string} type - 'contains' or 'notContains'
+     * @param {string} value - the filter text
+     */
+    addFilterCondition(type, value) {
+        if (!value || value.trim() === '') {
+            return;
+        }
+        systemDiagnosticLogs.filterConditions.push({type, value: value.trim()});
+        systemDiagnosticLogs.syncFilterConditionsToForm();
+        systemDiagnosticLogs.renderFilterLabels();
+        $('#filter-input').val('');
+        systemDiagnosticLogs.updateLogFromServer(true);
+    },
+
+    /**
+     * Remove a filter condition by index
+     * @param {number} index - condition index to remove
+     */
+    removeFilterCondition(index) {
+        systemDiagnosticLogs.filterConditions.splice(index, 1);
+        systemDiagnosticLogs.syncFilterConditionsToForm();
+        systemDiagnosticLogs.renderFilterLabels();
+        systemDiagnosticLogs.updateLogFromServer(true);
+    },
+
+    /**
+     * Clear all filter conditions
+     */
+    clearAllFilterConditions() {
+        systemDiagnosticLogs.filterConditions = [];
+        systemDiagnosticLogs.syncFilterConditionsToForm();
+        systemDiagnosticLogs.renderFilterLabels();
+        $('#filter-input').val('');
+        systemDiagnosticLogs.updateLogFromServer(true);
+    },
+
+    /**
+     * Serialize filterConditions array as JSON into hidden #filter field
+     */
+    syncFilterConditionsToForm() {
+        const value = systemDiagnosticLogs.filterConditions.length > 0
+            ? JSON.stringify(systemDiagnosticLogs.filterConditions)
+            : '';
+        systemDiagnosticLogs.$formObj.form('set value', 'filter', value);
+    },
+
+    /**
+     * Render label chips inside #filter-labels from filterConditions
+     */
+    renderFilterLabels() {
+        const $container = $('#filter-labels');
+        $container.empty();
+
+        systemDiagnosticLogs.filterConditions.forEach((condition, index) => {
+            const cssClass = condition.type === 'notContains' ? 'not-contains' : 'contains';
+            const iconClass = condition.type === 'notContains' ? 'ban' : 'check circle';
+            const iconColor = condition.type === 'notContains' ? 'red' : 'teal';
+            const $label = $(`<span class="filter-condition-label ${cssClass}" data-index="${index}"></span>`);
+            $label.append(`<i class="${iconClass} icon ${iconColor}"></i>`);
+            $label.append(`<span>${$('<span>').text(condition.value).html()}</span>`);
+            $label.append('<i class="delete icon"></i>');
+            $container.append($label);
+        });
+    },
+
+    /**
+     * Initialize filter conditions from URL parameter or existing hidden field value.
+     * Handles legacy plain-string format (e.g. "[C-00004721]&[C-00004723]" from CDR links)
+     * by converting &-separated parts into individual "contains" conditions.
+     */
+    initializeFilterFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const filterParam = urlParams.get('filter');
+
+        if (filterParam && filterParam.trim() !== '') {
+            const trimmed = filterParam.trim();
+
+            // Check if it's JSON format
+            if (trimmed.startsWith('[')) {
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    if (Array.isArray(parsed)) {
+                        systemDiagnosticLogs.filterConditions = parsed.filter(
+                            (c) => c && c.value && c.type
+                        );
+                    }
+                } catch (e) {
+                    // Invalid JSON, treat as legacy
+                    systemDiagnosticLogs.filterConditions = trimmed
+                        .split('&')
+                        .map((p) => p.trim())
+                        .filter((p) => p !== '')
+                        .map((p) => ({type: 'contains', value: p}));
+                }
+            } else {
+                // Legacy plain string: split by & into contains conditions
+                systemDiagnosticLogs.filterConditions = trimmed
+                    .split('&')
+                    .map((p) => p.trim())
+                    .filter((p) => p !== '')
+                    .map((p) => ({type: 'contains', value: p}));
+            }
+
+            systemDiagnosticLogs.syncFilterConditionsToForm();
+            systemDiagnosticLogs.renderFilterLabels();
+        }
+    },
+
+    /**
      * Reset all filters when changing log files
      */
     resetFilters() {
@@ -818,8 +1084,9 @@ const systemDiagnosticLogs = {
         $('#logLevel-dropdown').dropdown('set selected', '');
         systemDiagnosticLogs.$formObj.form('set value', 'logLevel', '');
 
-        // Clear filter input field
-        systemDiagnosticLogs.$formObj.form('set value', 'filter', '');
+        // NOTE: Filter conditions are intentionally preserved when changing files.
+        // When user navigates from CDR with filter params (e.g. ?filter=[C-00004721]),
+        // the filters should persist across file changes (verbose → verbose.0).
     },
 
     /**
@@ -1080,6 +1347,8 @@ const systemDiagnosticLogs = {
                         // This ensures no-data zones display correctly after refresh
                         if (actual.end) {
                             SVGTimeline.updateDataBoundary(actual.end);
+                            // Track last known data end for refresh anchoring
+                            systemDiagnosticLogs.lastKnownDataEnd = actual.end;
                         }
 
                         // Always update timeline with server response (except during auto-update)
@@ -1157,11 +1426,26 @@ const systemDiagnosticLogs = {
 
     /**
      * Fetches the log file content from the server.
+     * @param {boolean} preserveRange - If true, use current SVG timeline selection instead of
+     *   recalculating to "last 1 hour". Used when filter/level changes to keep the same view.
      */
-    updateLogFromServer() {
+    updateLogFromServer(preserveRange = false) {
         if (this.timeSliderEnabled) {
             // In time slider mode, reload current window
             if (this.currentTimeRange) {
+
+                // When preserveRange is true (filter/level change), use current timeline selection
+                // WHY: Changing filters should not reset the time window — user expects to see
+                // the same period with different filtering applied
+                if (preserveRange && SVGTimeline.selectedRange) {
+                    this.loadLogByTimeRange(
+                        SVGTimeline.selectedRange.start,
+                        SVGTimeline.selectedRange.end,
+                        true, false, this.isAutoUpdateActive
+                    );
+                    return;
+                }
+
                 const oneHour = 3600;
 
                 // Get current filename to check if it's a rotated log file
@@ -1179,7 +1463,13 @@ const systemDiagnosticLogs = {
                 } else {
                     // For active log files: use current time to capture new entries
                     endTimestamp = Math.floor(Date.now() / 1000);
-                    startTimestamp = endTimestamp - oneHour;
+
+                    // WHY: Anchor startTimestamp to the last known data end, not wall clock time.
+                    // Using "now - period" produces an empty range when the file hasn't been
+                    // written to recently (e.g., idle module logs like ModuleAutoCRM/SalonSyncer.log).
+                    // lastKnownDataEnd holds the actual timestamp of the last line from the API response.
+                    const dataEnd = this.lastKnownDataEnd || this.currentTimeRange.end;
+                    startTimestamp = Math.max(dataEnd - oneHour, this.currentTimeRange.start);
 
                     // Update currentTimeRange.end to reflect new data availability
                     this.currentTimeRange.end = endTimestamp;

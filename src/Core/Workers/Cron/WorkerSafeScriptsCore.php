@@ -69,6 +69,13 @@ class WorkerSafeScriptsCore extends WorkerBase
     public const CHECK_BY_REDIS = 'checkWorkerRedis';
 
     /**
+     * Maximum allowed time for a single monitoring cycle in seconds.
+     * If executeParallel() blocks on I/O longer than this, the process exits
+     * and monit/cron restarts a fresh instance.
+     */
+    private const int WATCHDOG_TIMEOUT_SEC = 120;
+
+    /**
      * Singleton instance
      */
     private static ?self $instance = null;
@@ -92,6 +99,38 @@ class WorkerSafeScriptsCore extends WorkerBase
     private function initialize(): void
     {
         // Any initialization code can go here
+    }
+
+    /**
+     * Handle SIGUSR1 for the supervisor process.
+     * SafeScripts has no in-progress work to preserve — just exit immediately.
+     * Monit/cron will restart a fresh instance that picks up all workers.
+     */
+    protected function handleSignalUsr1(): void
+    {
+        SystemMessages::sysLogMsg(
+            static::class,
+            "SIGUSR1 received, exiting for restart by process manager",
+            LOG_NOTICE
+        );
+        exit(0);
+    }
+
+    /**
+     * Watchdog handler — fires when a monitoring cycle exceeds WATCHDOG_TIMEOUT_SEC.
+     * This catches Fiber I/O stalls (blocked Beanstalk pings, hung Redis, etc.).
+     */
+    private function watchdogHandler(): void
+    {
+        SystemMessages::sysLogMsg(
+            static::class,
+            sprintf(
+                "Watchdog timeout (%ds): monitoring cycle stalled on I/O, exiting for restart",
+                self::WATCHDOG_TIMEOUT_SEC
+            ),
+            LOG_WARNING
+        );
+        exit(1);
     }
 
     /**
@@ -304,13 +343,22 @@ class WorkerSafeScriptsCore extends WorkerBase
      */
     public function start(array $argv): void
     {
-        // Signal handlers are registered automatically in parent constructor
-        // When SIGUSR1 is received, $this->needRestart will be set to true
-        
+        // Signal handlers are registered automatically in parent constructor.
+        // SIGUSR1 calls handleSignalUsr1() which exits immediately.
+        // Monit/cron restarts a fresh instance.
+
+        // Register watchdog: if a monitoring cycle stalls on I/O (blocked Fiber),
+        // SIGALRM fires and exits the process for restart.
+        pcntl_signal(SIGALRM, [$this, 'watchdogHandler']);
+
         // Wait for the system to fully boot.
         PBX::waitFullyBooted();
 
-        while (!$this->needRestart) {
+        // Main monitoring loop. Runs indefinitely until SIGUSR1/SIGTERM exits the process.
+        while (true) {
+
+            // Reset watchdog at the start of each cycle
+            pcntl_alarm(self::WATCHDOG_TIMEOUT_SEC);
 
             // If the system is booting, do not start the workers.
             if (System::isBooting()) {
@@ -318,10 +366,9 @@ class WorkerSafeScriptsCore extends WorkerBase
                 continue;
             }
 
-
             // Prepare the list of workers to be started.
             $arrWorkers = $this->prepareWorkersList();
-            
+
             $tasks = [];
             foreach ($arrWorkers as $workerType => $workersWithCurrentType) {
                 foreach ($workersWithCurrentType as $worker) {
@@ -337,40 +384,15 @@ class WorkerSafeScriptsCore extends WorkerBase
                     }
                 }
             }
-            
+
             // Filter out null tasks and execute
             $tasks = array_filter($tasks);
             if (!empty($tasks)) {
                 $this->executeParallel($tasks);
             }
-            
+
             // Sleep for a short interval before next check
             sleep(5);
-        }
-        
-        // If needRestart is true, perform graceful restart
-        if ($this->needRestart) {
-            SystemMessages::sysLogMsg(
-                static::class,
-                "Received restart signal, performing graceful restart",
-                LOG_NOTICE
-            );
-            
-            // First, remove ourselves from the process list by changing process title
-            cli_set_process_title("WorkerSafeScriptsCore exiting");
-            
-            // Now start new instance using standard mechanism
-            // Since we changed our process title, getPidOfProcess won't find us
-            Processes::processPHPWorker(static::class, 'start', 'start');
-            
-            SystemMessages::sysLogMsg(
-                static::class,
-                "New instance started, exiting current instance",
-                LOG_NOTICE
-            );
-            
-            // Exit current instance
-            exit(0);
         }
     }
 

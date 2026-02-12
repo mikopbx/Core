@@ -66,6 +66,8 @@ tests/api/**/*.tmp
 .claude/translation_analysis_report.json
 .claude/*.tar.gz
 run-test-from-host.sh
+node_modules/
+seed.spec.ts
 # cc-sessions runtime files
 sessions/sessions-state.json
 sessions/package.json
