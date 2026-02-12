@@ -51,14 +51,36 @@ class QueueConf extends AsteriskConfigClass
     }
 
     /**
-     * Reloads the Asterisk queue module.
+     * Reloads the Asterisk queue module using a two-step process.
+     *
+     * Asterisk has two limitations that prevent simple 'queue reload all':
+     *
+     * 1. Strategy container type: LINEAR uses ao2_container_alloc_list (preserves insertion order),
+     *    other strategies use ao2_container_alloc_hash. Switching TO linear is explicitly rejected
+     *    during reload (app_queue.c ~line 3720: "requires asterisk to be restarted").
+     *
+     * 2. Member ordering: existing static members preserve their queuepos during reload
+     *    (app_queue.c ~line 10087: newm->queuepos = cur->queuepos), ignoring config file order.
+     *
+     * Fix: write empty config → reload (destroys queues) → write full config → reload (recreates fresh).
+     *
+     * @see https://community.asterisk.org/t/queue-order-on-queue-reload-all/93833
      */
     public static function reload(): void
     {
         $queue = new self();
-        $queue->generateConfig();
         $asterisk = Util::which(PbxConf::PROC_NAME);
-        Processes::mwExec("$asterisk -rx 'queue reload all'");
+
+        // Step 1: Write empty config and reload to fully destroy existing queues.
+        // This forces Asterisk to release the old ao2_container (hash or list)
+        // so the queue can be recreated with the correct container type for its strategy.
+        $queue->saveConfig('', $queue->description);
+        Processes::mwExec("{$asterisk} -rx 'queue reload all'");
+
+        // Step 2: Write full config and reload to create queues fresh
+        // with correct container type and member ordering.
+        $queue->generateConfig();
+        Processes::mwExec("{$asterisk} -rx 'queue reload all'");
     }
 
     /**
@@ -177,7 +199,7 @@ class QueueConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the configuration for queues.
+     * Generates the configuration for queues and writes it to queues.conf.
      */
     protected function generateConfigProtected(): void
     {
