@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Dirección IP o nombre de dominio incorrecto',
     'pr_ValidationProviderHostInvalidCharacters' => 'La dirección puede contener solo letras latinas, dígitos, puntos, guiones y guiones bajos',
     'pr_ValidationProviderHostIsEmpty' => 'Introduzca el nombre del servidor o la dirección IP del proveedor',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'El login puede contener solo letras latinas, dígitos y símbolos: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'El login puede contener solo letras latinas, dígitos y símbolos: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Ingrese inicio de sesión para autorización con el proveedor',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'El inicio de sesión debe tener más de un carácter',
     'pr_ValidationProviderNameIsEmpty' => 'Ingrese el nombre del proveedor',

@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => '错误的IP地址或域名',
     'pr_ValidationProviderHostInvalidCharacters' => '地址只能包含拉丁字母、数字、点、连字符和下划线',
     'pr_ValidationProviderHostIsEmpty' => '输入提供商的服务器名称或IP地址',
-    'pr_ValidationProviderLoginInvalidCharacters' => '登录只能包含拉丁字母、数字和符号：_ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => '登录只能包含拉丁字母、数字和符号：_ - . +',
     'pr_ValidationProviderLoginIsEmpty' => '输入登录以获得提供商授权',
     'pr_ValidationProviderLoginNotSingleSimbol' => '登录必须超过一个字符',
     'pr_ValidationProviderNameIsEmpty' => '输入提供商名称',

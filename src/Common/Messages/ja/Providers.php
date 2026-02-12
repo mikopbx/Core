@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => '不正なIPアドレスまたはドメイン名',
     'pr_ValidationProviderHostInvalidCharacters' => 'アドレスには英字、数字、ピリオド、ハイフン、アンダースコアのみ使用できます',
     'pr_ValidationProviderHostIsEmpty' => 'サーバー名またはプロバイダーのIPアドレスを入力してください',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'ログインには英字、数字、記号: _ - . のみ使用できます',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'ログインには英字、数字、記号: _ - . + のみ使用できます',
     'pr_ValidationProviderLoginIsEmpty' => 'プロバイダーでの認証用ログインを入力してください',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'ログインは1文字以上である必要があります',
     'pr_ValidationProviderNameIsEmpty' => 'プロバイダー名を入力してください',

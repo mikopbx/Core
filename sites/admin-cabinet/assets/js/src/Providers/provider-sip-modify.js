@@ -567,7 +567,7 @@ class ProviderSIP extends ProviderBase {
                     },
                     {
                         type: 'regExp',
-                        value: '^[a-zA-Z0-9_.-]+$',
+                        value: '^[a-zA-Z0-9_.+\\-]+$',
                         prompt: globalTranslate.pr_ValidationProviderLoginInvalidCharacters,
                     },
                 ],
@@ -627,7 +627,7 @@ class ProviderSIP extends ProviderBase {
                     },
                     {
                         type: 'regExp',
-                        value: '^[a-zA-Z0-9_.-]+$',
+                        value: '^[a-zA-Z0-9_.+\\-]+$',
                         prompt: globalTranslate.pr_ValidationProviderLoginInvalidCharacters,
                     },
                 ],

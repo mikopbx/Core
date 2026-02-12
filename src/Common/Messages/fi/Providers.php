@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Virheellinen IP-osoite tai verkko-osoite',
     'pr_ValidationProviderHostInvalidCharacters' => 'Osoite voi sisältää vain latinalaisia kirjaimia, numeroita, pisteitä, viivoja ja alaviivoja',
     'pr_ValidationProviderHostIsEmpty' => 'Anna palvelimen nimi tai palveluntarjoajan IP-osoite',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Käyttäjätunnus voi sisältää vain latinalaisia kirjaimia, numeroita ja merkkejä: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Käyttäjätunnus voi sisältää vain latinalaisia kirjaimia, numeroita ja merkkejä: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Anna käyttäjätunnus palveluntarjoajan valtuutukseen',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Käyttäjätunnuksen tulee olla pidempi kuin yksi merkki',
     'pr_ValidationProviderNameIsEmpty' => 'Anna palveluntarjoajan nimi',

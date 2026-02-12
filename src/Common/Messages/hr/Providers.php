@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Neispravna IP adresa ili domensko ime',
     'pr_ValidationProviderHostInvalidCharacters' => 'Adresa može sadržavati samo latinska slova, brojeve, točke, crtice i donje crtice',
     'pr_ValidationProviderHostIsEmpty' => 'Unesite naziv poslužitelja ili IP adresu pružatelja usluga',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Prijava može sadržavati samo latinska slova, brojeve i simbole: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Prijava može sadržavati samo latinska slova, brojeve i simbole: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Unesite prijavu za autorizaciju kod davatelja usluga',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Prijava mora biti duža od jednog znaka',
     'pr_ValidationProviderNameIsEmpty' => 'Unesite naziv pružatelja usluge',

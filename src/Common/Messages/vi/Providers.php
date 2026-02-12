@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Địa chỉ IP hoặc tên miền không đúng',
     'pr_ValidationProviderHostInvalidCharacters' => 'Địa chỉ chỉ có thể chứa chữ cái Latin, số, dấu chấm, dấu gạch ngang và gạch dưới',
     'pr_ValidationProviderHostIsEmpty' => 'Nhập tên máy chủ hoặc địa chỉ IP của nhà cung cấp',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Đăng nhập chỉ có thể chứa chữ cái Latin, số và ký hiệu: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Đăng nhập chỉ có thể chứa chữ cái Latin, số và ký hiệu: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Nhập đăng nhập để ủy quyền với nhà cung cấp',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Đăng nhập phải dài hơn một ký tự',
     'pr_ValidationProviderNameIsEmpty' => 'Nhập tên nhà cung cấp',

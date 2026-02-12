@@ -472,7 +472,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'username' => [
                 'type' => 'string',
                 'description' => 'rest_schema_provider_username',
-                'pattern' => '^[a-zA-Z0-9._-]+$',
+                'pattern' => '^[a-zA-Z0-9_.+\\-]+$',
                 'maxLength' => 100,
                 'sanitize' => 'string',
                 'example' => 'trunk001'

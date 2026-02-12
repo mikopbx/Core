@@ -453,7 +453,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Invalid IP address or domain name',
     'pr_ValidationProviderHostInvalidCharacters' => 'Address can only contain Latin letters, numbers, dots, hyphens and underscores',
     'pr_ValidationProviderHostIsEmpty' => 'Enter the server name or IP address of the provider',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Login can only contain Latin letters, numbers and symbols: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Login can only contain Latin letters, numbers and symbols: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Enter the username for authorization at the provider',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Login must be longer than one character',
     // MO - Models validation

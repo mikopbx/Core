@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Nesprávná IP adresa nebo doménové jméno',
     'pr_ValidationProviderHostInvalidCharacters' => 'Adresa může obsahovat pouze latinská písmena, čísla, tečky, pomlčky a podtržítka',
     'pr_ValidationProviderHostIsEmpty' => 'Zadejte název serveru nebo IP adresu poskytovatele',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Přihlášení může obsahovat pouze latinská písmena, čísla a symboly: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Přihlášení může obsahovat pouze latinská písmena, čísla a symboly: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Zadejte přihlašovací údaje pro autorizaci u poskytovatele',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Přihlášení musí být delší než jeden symbol',
     'pr_ValidationProviderNameIsEmpty' => 'Zadejte název poskytovatele',

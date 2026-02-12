@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Yanlış IP ünvanı və ya domen adı',
     'pr_ValidationProviderHostInvalidCharacters' => 'Ünvan yalnız latın hərfləri, rəqəmlər, nöqtələr, tirelər və alt xətlər ehtiva edə bilər',
     'pr_ValidationProviderHostIsEmpty' => 'Provayderin server adını və ya IP ünvanını daxil edin',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Login yalnız latın hərfləri, rəqəmlər və simvollar ehtiva edə bilər: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Login yalnız latın hərfləri, rəqəmlər və simvollar ehtiva edə bilər: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Provayderlə avtorizasiya üçün girişi daxil edin',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Giriş bir simvoldan uzun olmalıdır',
     'pr_ValidationProviderNameIsEmpty' => 'Provayderin adını daxil edin',

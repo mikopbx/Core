@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'არასწორი IP მისამართი ან დომენის სახელი',
     'pr_ValidationProviderHostInvalidCharacters' => 'მისამართი შეიძლება შეიცავდეს მხოლოდ ლათინური ასოები, ციფრები, წერტილები, ტირე და ქვედა ტირე',
     'pr_ValidationProviderHostIsEmpty' => 'შეიყვანეთ სერვერის სახელი ან პროვაიდერის IP მისამართი',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'ლოგინი შეიძლება შეიცავდეს მხოლოდ ლათინური ასოები, ციფრები და სიმბოლოები: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'ლოგინი შეიძლება შეიცავდეს მხოლოდ ლათინური ასოები, ციფრები და სიმბოლოები: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'შეიყვანეთ ლოგინი ავტორიზაციისთვის პროვაიდერთან',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'ლოგინი უნდა იყოს ერთი სიმბოლოზე მეტი',
     'pr_ValidationProviderNameIsEmpty' => 'შეიყვანეთ პროვაიდერის სახელი',

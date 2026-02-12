@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Yanlış IP adresi veya alan adı',
     'pr_ValidationProviderHostInvalidCharacters' => 'Adres yalnızca Latin harfleri, rakamları, noktaları, tireleri ve alt çizgileri içerebilir',
     'pr_ValidationProviderHostIsEmpty' => 'Sağlayıcının sunucu adını veya IP adresini girin',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Giriş yalnızca Latin harfleri, rakamları ve sembolleri içerebilir: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Giriş yalnızca Latin harfleri, rakamları ve sembolleri içerebilir: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Sağlayıcıda yetkilendirme için girişi girin',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Giriş bir karakterden uzun olmalıdır',
     'pr_ValidationProviderNameIsEmpty' => 'Sağlayıcı adını girin',

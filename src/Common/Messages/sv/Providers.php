@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Felaktig IP-adress eller domännamn',
     'pr_ValidationProviderHostInvalidCharacters' => 'Adressen kan endast innehålla latinska bokstäver, siffror, punkter, bindestreck och understreck',
     'pr_ValidationProviderHostIsEmpty' => 'Ange servernamnet eller IP-adressen för leverantören',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Inloggningen kan endast innehålla latinska bokstäver, siffror och symboler: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Inloggningen kan endast innehålla latinska bokstäver, siffror och symboler: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Ange inloggning för auktorisering hos leverantör',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Inloggningen måste vara längre än ett tecken',
     'pr_ValidationProviderNameIsEmpty' => 'Ange leverantörens namn',

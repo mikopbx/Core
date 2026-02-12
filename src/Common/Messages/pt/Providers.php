@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Endereço IP ou nome de domínio incorreto',
     'pr_ValidationProviderHostInvalidCharacters' => 'Endereço pode conter apenas letras latinas, números, pontos, hífens e underscores',
     'pr_ValidationProviderHostIsEmpty' => 'Digite o nome do servidor ou endereço IP do provedor',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Login pode conter apenas letras latinas, números e símbolos: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Login pode conter apenas letras latinas, números e símbolos: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Digite o login para autorização com o provedor',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'O login deve ter mais de um caractere',
     'pr_ValidationProviderNameIsEmpty' => 'Digite o nome do provedor',

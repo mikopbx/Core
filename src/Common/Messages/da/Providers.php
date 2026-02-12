@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Ugyldig IP-adresse eller domænenavn',
     'pr_ValidationProviderHostInvalidCharacters' => 'Adresse kan kun indeholde latinske bogstaver, cifre, punkter, bindestreger og understreger',
     'pr_ValidationProviderHostIsEmpty' => 'Indtast servernavn eller IP-adresse på udbyder',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Login kan kun indeholde latinske bogstaver, cifre og symboler: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Login kan kun indeholde latinske bogstaver, cifre og symboler: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Indtast login til autorisation hos udbyder',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Login skal være længere end ét tegn',
     'pr_ValidationProviderNameIsEmpty' => 'Indtast udbyderens navn',

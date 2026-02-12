@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Некоректна IP адреса або доменне ім\'я',
     'pr_ValidationProviderHostInvalidCharacters' => 'Адреса може містити тільки латинські літери, цифри, крапки, дефіси та підкреслення',
     'pr_ValidationProviderHostIsEmpty' => 'Введіть ім\'я сервера або IP адресу провайдера',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Логін може містити тільки латинські літери, цифри та символи: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Логін може містити тільки латинські літери, цифри та символи: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Введіть логін для авторизації у провайдера',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Логін повинен бути довшим за один символ',
     'pr_ValidationProviderNameIsEmpty' => 'Введіть назву провайдера',

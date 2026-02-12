@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Ongeldig IP-adres of domeinnaam',
     'pr_ValidationProviderHostInvalidCharacters' => 'Adres mag alleen Latijnse letters, cijfers, punten, koppeltekens en underscores bevatten',
     'pr_ValidationProviderHostIsEmpty' => 'Voer servernaam of provider IP-adres in',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Login mag alleen Latijnse letters, cijfers en symbolen bevatten: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Login mag alleen Latijnse letters, cijfers en symbolen bevatten: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Voer login in voor autorisatie bij provider',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Login moet langer zijn dan één symbool',
     'pr_ValidationProviderNameIsEmpty' => 'Voer providernaam in',

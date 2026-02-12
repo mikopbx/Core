@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'ที่อยู่ IP หรือชื่อโดเมนไม่ถูกต้อง',
     'pr_ValidationProviderHostInvalidCharacters' => 'ที่อยู่สามารถมีได้เฉพาะตัวอักษรละติน ตัวเลข จุด ขีดกลาง และขีดล่าง',
     'pr_ValidationProviderHostIsEmpty' => 'ป้อนชื่อเซิร์ฟเวอร์หรือที่อยู่ IP ของผู้ให้บริการ',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'การเข้าสู่ระบบสามารถมีได้เฉพาะตัวอักษรละติน ตัวเลข และสัญลักษณ์: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'การเข้าสู่ระบบสามารถมีได้เฉพาะตัวอักษรละติน ตัวเลข และสัญลักษณ์: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'ป้อนการเข้าสู่ระบบสำหรับการอนุญาตกับผู้ให้บริการ',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'การเข้าสู่ระบบต้องมีความยาวมากกว่าหนึ่งตัวอักษร',
     'pr_ValidationProviderNameIsEmpty' => 'ป้อนชื่อผู้ให้บริการ',

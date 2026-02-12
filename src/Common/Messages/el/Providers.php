@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Λανθασμένη διεύθυνση IP ή όνομα τομέα',
     'pr_ValidationProviderHostInvalidCharacters' => 'Η διεύθυνση μπορεί να περιέχει μόνο λατινικά γράμματα, ψηφία, τελείες, παύλες και κάτω παύλες',
     'pr_ValidationProviderHostIsEmpty' => 'Εισαγάγετε το όνομα διακομιστή ή τη διεύθυνση IP του παρόχου',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Το login μπορεί να περιέχει μόνο λατινικά γράμματα, ψηφία και σύμβολα: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Το login μπορεί να περιέχει μόνο λατινικά γράμματα, ψηφία και σύμβολα: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Εισαγάγετε τα στοιχεία σύνδεσης για εξουσιοδότηση με τον πάροχο',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Η σύνδεση πρέπει να είναι μεγαλύτερη από έναν χαρακτήρα',
     'pr_ValidationProviderNameIsEmpty' => 'Εισαγάγετε το όνομα του παρόχου',

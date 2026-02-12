@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Hibás IP cím vagy domain név',
     'pr_ValidationProviderHostInvalidCharacters' => 'A cím csak latin betűket, számokat, pontokat, kötőjeleket és aláhúzásokat tartalmazhat',
     'pr_ValidationProviderHostIsEmpty' => 'Adja meg a szerver nevét vagy a szolgáltató IP-címét',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'A bejelentkezés csak latin betűket, számokat és szimbólumokat tartalmazhat: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'A bejelentkezés csak latin betűket, számokat és szimbólumokat tartalmazhat: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Adja meg bejelentkezési adatait, hogy engedélyezze a szolgáltatóval',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'A bejelentkezésnek egy karakternél hosszabbnak kell lennie',
     'pr_ValidationProviderNameIsEmpty' => 'Írja be a szolgáltató nevét',

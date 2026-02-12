@@ -436,7 +436,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Adresă IP sau nume de domeniu incorect',
     'pr_ValidationProviderHostInvalidCharacters' => 'Adresa poate conține doar litere latine, cifre, puncte, liniuțe și underscore',
     'pr_ValidationProviderHostIsEmpty' => 'Introduceți numele serverului sau adresa IP a furnizorului',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Login-ul poate conține doar litere latine, cifre și simboluri: _ - .',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Login-ul poate conține doar litere latine, cifre și simboluri: _ - . +',
     'pr_ValidationProviderLoginIsEmpty' => 'Introduceți login-ul pentru autorizarea la furnizor',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Login-ul trebuie să aibă mai mult de un caracter',
     'pr_ValidationProviderNameIsEmpty' => 'Introduceți numele furnizorului',
