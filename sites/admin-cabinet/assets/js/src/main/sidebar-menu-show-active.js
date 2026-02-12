@@ -43,12 +43,13 @@ const sidebarMenuShowActive = {
      * Sets the active menu item in the sidebar based on the current URL.
      */
     makeMenuActiveElement() {
-        const current = window.location.href;
+        const current = window.location.href.split('#')[0];
         $.each($('.sidebar-menu a'), (index, value) => {
             const $this = $(value);
             $this.removeClass('active');
             // if the current path is like this link, make it active
             const needle = $this.attr('href')
+                .split('#')[0]
                 .replace('/index', '')
                 .replace('/modify', '');
 
