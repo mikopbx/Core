@@ -289,6 +289,16 @@ abstract class ConfigClass extends AsteriskConfigClass implements
     }
 
     /**
+     * Creates additional Nginx server blocks from modules.
+     *
+     * @return string The generated Nginx server block configuration.
+     */
+    public function createNginxServers(): string
+    {
+        return '';
+    }
+
+    /**
      * Generates additional fail2ban jail conf rules.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatefail2banjails
      *

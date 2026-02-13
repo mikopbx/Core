@@ -22,7 +22,6 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
-use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
 /**
@@ -42,8 +41,7 @@ class ActionVoicemailEnd
      */
     public static function execute(WorkerCallEvents $worker, array $data): void
     {
-        $recordingFile = VoiceMailConf::getCopyFilename($data['vm-recordingfile'], $data['linkedid'], time(), false);
-        $recordingFile = Util::trimExtensionForFile($recordingFile) . '.webm';
+        $recordingFile = $data['vm-recordingfile'] ?? '';
         $filter = [
             'linkedid=:linkedid: AND dst_num = "' . VoiceMailConf::VOICE_MAIL_EXT . '"',
             'bind' => [

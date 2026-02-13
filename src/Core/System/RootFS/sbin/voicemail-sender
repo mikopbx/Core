@@ -69,10 +69,12 @@ try {
     }
 
     $file = implode('', $parser->saveAttachments('/tmp/'));
-    $recordingFile = VoiceMailConf::getCopyFilename($file, $linkedId, $d->getTimestamp(), true);
-    $recordingFile = Util::trimExtensionForFile($recordingFile) . '.wav';
+    $inboxPath = VoiceMailConf::getCopyFilename($file, $linkedId, $d->getTimestamp(), true);
+    // CDR recording path — the final .webm file in INBOX (WorkerWav2Webm will convert it)
+    $recordingFile = Util::trimExtensionForFile($inboxPath) . '.webm';
 
     // Convert attachment to mp3 for email notification
+    $emailAttachment = '';
     $result = SoundFilesConf::convertAudioFile(
         $file,
         ['mp3'],
@@ -87,7 +89,7 @@ try {
     if ($result['success'] && isset($result['formats']['mp3']['path'])) {
         $mp3File = $result['formats']['mp3']['path'];
         if (file_exists($mp3File)) {
-            $recordingFile = $mp3File;
+            $emailAttachment = $mp3File;
         } else {
             SystemMessages::sysLogMsg('Voicemail-Sender', "MP3 file not found after conversion: {$mp3File}", LOG_ERR);
         }
@@ -138,7 +140,7 @@ try {
                 ->setMessageNumber($params['VM_MSGNUM'] ?? '')
                 ->setDuration($params['VM_DUR'] ?? '')
                 ->setMessageDate($params['VM_DATE'] ?? '')
-                ->setRecordingFile($recordingFile);
+                ->setRecordingFile($emailAttachment);
 
         NotificationQueueHelper::queueOrSend(
             $builder,
@@ -148,7 +150,7 @@ try {
 
         SystemMessages::sysLogMsg(
             'Voicemail-Sender',
-            sprintf('Queued voicemail notification for: %s (recording: %s)', $recipient, $recordingFile),
+            sprintf('Queued voicemail notification for: %s (attachment: %s)', $recipient, $emailAttachment),
             LOG_INFO
         );
     }

@@ -37,6 +37,8 @@ interface SystemConfigInterface
 
     public const string CREATE_NGINX_LOCATIONS = 'createNginxLocations';
 
+    public const string CREATE_NGINX_SERVERS = 'createNginxServers';
+
     public const string GENERATE_FAIL2BAN_JAILS = 'generateFail2BanJails';
 
     public const string GENERATE_FAIL2BAN_FILTERS = 'generateFail2BanFilters';
@@ -81,6 +83,17 @@ interface SystemConfigInterface
      * @return string The generated Nginx locations.
      */
     public function createNginxLocations(): string;
+
+    /**
+     * Creates additional Nginx server blocks from modules.
+     *
+     * Modules can return custom server blocks (listening on their own ports).
+     * Use NginxConf::buildServerBlock() helper to generate server blocks
+     * based on the standard HTTP/HTTPS templates.
+     *
+     * @return string The generated Nginx server block configuration.
+     */
+    public function createNginxServers(): string;
 
     /**
      * This method is called in the WorkerModelsEvents after each model change.

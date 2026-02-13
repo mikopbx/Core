@@ -156,11 +156,21 @@ class ReloadModuleStateAction implements ReloadActionInterface
             WorkerModelsEvents::invokeAction(ReloadFail2BanConfAction::class, [], 50);
         }
 
-        // Refresh Nginx conf if the module has any locations
+        // Refresh Nginx conf if the module has any locations or server blocks
+        $needsNginxReload = false;
         if (
             method_exists($configClassObj, SystemConfigInterface::CREATE_NGINX_LOCATIONS)
             && !empty(call_user_func([$configClassObj, SystemConfigInterface::CREATE_NGINX_LOCATIONS]))
         ) {
+            $needsNginxReload = true;
+        }
+        if (
+            method_exists($configClassObj, SystemConfigInterface::CREATE_NGINX_SERVERS)
+            && !empty(call_user_func([$configClassObj, SystemConfigInterface::CREATE_NGINX_SERVERS]))
+        ) {
+            $needsNginxReload = true;
+        }
+        if ($needsNginxReload) {
             WorkerModelsEvents::invokeAction(ReloadNginxConfAction::class, [], 50);
         }
 

@@ -48,7 +48,8 @@ use Phalcon\Di\Di;
 class NginxConf extends SystemConfigClass
 {
     public const string PROC_NAME = 'nginx';
-    public const string  MODULES_LOCATIONS_PATH = '/etc/nginx/mikopbx/modules_locations';
+    public const string MODULES_LOCATIONS_PATH = '/etc/nginx/mikopbx/modules_locations';
+    public const string MODULES_SERVERS_PATH = '/etc/nginx/mikopbx/modules_servers';
     private const string PID_FILE = '/var/run/' . self::PROC_NAME . '.pid';
     private const string CONF_PATH_DIR = '/etc/nginx/mikopbx/conf.d';
     private const string CONF_PATH = self::CONF_PATH_DIR . '/http-server.conf';
@@ -333,8 +334,9 @@ class NginxConf extends SystemConfigClass
                 unlink(self::CONF_PATH_SSL);
             }
         }
-        // Test configuration for module locations
+        // Test configuration for module locations and server blocks
         $this->generateModulesConfigs();
+        $this->generateModulesServerConfigs();
     }
 
     /**
@@ -444,6 +446,128 @@ class NginxConf extends SystemConfigClass
         
         SystemMessages::sysLogMsg(self::PROC_NAME, "Nginx config test failed: $res", LOG_ERR);
         return false;
+    }
+
+    /**
+     * Builds an Nginx server block for a module based on the standard HTTP or HTTPS template.
+     *
+     * The method takes the original server template, replaces the port placeholder,
+     * removes the standard location includes (modules provide their own locations in $content),
+     * and injects the module's content before the closing brace.
+     *
+     * @param int $port The port number for the server block to listen on.
+     * @param bool $ssl Whether to use the HTTPS template (true) or HTTP template (false).
+     * @param string $content The Nginx location/configuration directives to include in the server block.
+     * @return string The complete server block configuration, or empty string if SSL requested but certificates unavailable.
+     */
+    public static function buildServerBlock(int $port, bool $ssl, string $content): string
+    {
+        if ($ssl) {
+            $templatePath = self::CONF_PATH_SSL . '.original';
+            $portPlaceholder = '<WEBHTTPSPort>';
+        } else {
+            $templatePath = self::CONF_PATH . '.original';
+            $portPlaceholder = '<WEBPort>';
+        }
+
+        $config = file_get_contents($templatePath);
+        if ($config === false) {
+            return '';
+        }
+
+        // For SSL, check that certificates are available
+        if ($ssl) {
+            $certInfo = SslCertificateService::prepareNginxCertificates();
+            if (empty($certInfo['certPath']) || empty($certInfo['keyPath'])) {
+                return '';
+            }
+        }
+
+        // Remove standard location includes — module provides its own content
+        $config = preg_replace(
+            '/\s*#\s*locations files\s*\n\s*include\s+mikopbx\/locations\/\*\.conf;\s*\n/',
+            "\n",
+            $config
+        );
+        $config = preg_replace(
+            '/\s*#\s*module locations files\s*\n\s*include\s+mikopbx\/modules_locations\/\*\.conf;\s*\n/',
+            "\n",
+            $config
+        );
+
+        // Replace port placeholder
+        $config = str_replace($portPlaceholder, (string)$port, $config);
+
+        // Replace DNS placeholder
+        $dns_server = '127.0.0.1';
+        $net = new Network();
+        $dns = $net->getHostDNS();
+        foreach ($dns as $ns) {
+            if (Verify::isIpAddress($ns)) {
+                $dns_server = trim($ns);
+                break;
+            }
+        }
+        $config = str_replace('<DNS>', $dns_server, $config);
+
+        // Use an instance to access non-static helpers
+        $instance = new self();
+
+        // Add IPv6 listener if any interface has IPv6 enabled
+        if ($instance->hasIpv6Interfaces()) {
+            if ($ssl) {
+                $config = str_replace(
+                    "listen       $port ssl;",
+                    "listen       $port ssl;\n    listen       [::]:$port ssl;",
+                    $config
+                );
+            } else {
+                $config = str_replace(
+                    "listen      $port;",
+                    "listen      $port;\n    listen      [::]:$port;",
+                    $config
+                );
+            }
+        }
+
+        // Add Lua firewall if enabled
+        $firewallEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
+        if ($firewallEnabled === '1') {
+            $redisVars = $instance->generateRedisLuaConfig();
+            $config = str_replace("resolver $dns_server;\n", "resolver $dns_server;\n\n$redisVars", $config);
+        }
+
+        // Insert module content before the closing brace
+        $config = preg_replace('/}\s*$/', "\n$content\n}", $config);
+
+        return $config;
+    }
+
+    /**
+     * Generates the module server block conf files.
+     *
+     * @return void
+     */
+    public function generateModulesServerConfigs(): void
+    {
+        $serversPath = self::MODULES_SERVERS_PATH;
+        if (!is_dir($serversPath)) {
+            Util::mwMkdir($serversPath, true);
+        }
+        $rm = Util::which('rm');
+        Processes::mwExec("$rm -rf $serversPath/*.conf");
+
+        $additionalServers = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::CREATE_NGINX_SERVERS);
+        foreach ($additionalServers as $moduleUniqueId => $serverContent) {
+            $confFileName = "$serversPath/$moduleUniqueId.conf";
+            file_put_contents($confFileName, $serverContent);
+            if ($this->testCurrentNginxConfig()) {
+                continue;
+            }
+            // Config test failed — rollback
+            Processes::mwExec("$rm $confFileName");
+            SystemMessages::sysLogMsg(self::PROC_NAME, 'Failed test server config for module ' . $moduleUniqueId, LOG_ERR);
+        }
     }
 
     /**
