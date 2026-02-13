@@ -32,18 +32,11 @@ for i in 0 1 2 3 4 5; do
     fi
 done
 
-# Prevent duplicate output when console is connected to the serial port
+# Prevent duplicate output when stdout is directly connected to the serial port
 if [ -n "$SERIAL_PORT" ]; then
     stdout_target=$(/bin/readlink /proc/self/fd/1 2>/dev/null)
     if [ "$stdout_target" = "$SERIAL_PORT" ]; then
         SERIAL_PORT=""
-    elif [ "$stdout_target" = "/dev/console" ]; then
-        # /dev/console may be kernel-mapped to the serial port
-        active=$(/bin/busybox cat /sys/class/tty/console/active 2>/dev/null)
-        serial_name=$(/bin/busybox basename "$SERIAL_PORT")
-        case " $active " in
-            *" $serial_name "*) SERIAL_PORT="" ;;
-        esac
     fi
 fi
 
@@ -160,15 +153,13 @@ else
 
     # Copy the configuration to the storage and backup the system image
     echo_info "Backup system partition to storage ...";
-    # Use global SERIAL_PORT from script initialization
-    if [ -n "$SERIAL_PORT" ]; then
-        LC_ALL=C /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | /bin/busybox tee "$SERIAL_PORT" >/dev/null 2>&1
-    else
-        LC_ALL=C /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M >/dev/null 2>&1
-    fi
+    LC_ALL=C /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>/tmp/dd_backup_stats
     # Reset terminal after progress bar
     printf '\033[0m\n' 2>/dev/null
     sync
+    dd_line=$(/bin/busybox tail -1 /tmp/dd_backup_stats 2>/dev/null)
+    [ -n "$dd_line" ] && echo_info "Backup: $dd_line"
+    rm -f /tmp/dd_backup_stats
   else
     # Storage is on the main disk which needs to be unmounted, so move the image to RAM
     echo_info "Moving the update img to RAM before storage will be unmounted ..."
@@ -248,20 +239,17 @@ if [ -r "${img_file}" ]; then
 
   echo_info "Installing new image on $DISK"
 
-  # Use global SERIAL_PORT from script initialization
-  if [ -n "$SERIAL_PORT" ]; then
-    LC_ALL=C /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee "$SERIAL_PORT" >/dev/null 2>&1
-    resultPv="${PIPESTATUS[2]}"  # Exit code of dd (3rd command in pipeline)
-  else
-    LC_ALL=C /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1
-    resultPv="$?"
-  fi
+  LC_ALL=C /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M 2>/tmp/dd_install_stats
+  resultPv="${PIPESTATUS[2]}"  # Exit code of dd (3rd command in pipeline)
 
   # Reset terminal after progress bar and flush all buffers
   printf '\033[0m\033[?25h\n' 2>/dev/null
   stty sane 2>/dev/null || true
   sync
   sleep 2
+  dd_line=$(/bin/busybox tail -1 /tmp/dd_install_stats 2>/dev/null)
+  [ -n "$dd_line" ] && echo_info "Install: $dd_line"
+  rm -f /tmp/dd_install_stats
   echo_info "result install code $resultPv";
   /sbin/blockdev --rereadpt "$DISK" > /dev/null 2>&1;
   sync
@@ -321,12 +309,7 @@ if [ -r "${img_file}" ]; then
     if [ -f "$backupImg" ]; then
       echo_error "Restoring system from backup to /dev/${systemDevice}"
 
-      # Use global SERIAL_PORT from script initialization
-      if [ -n "$SERIAL_PORT" ]; then
-        LC_ALL=C /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee "$SERIAL_PORT" >/dev/null 2>&1
-      else
-        LC_ALL=C /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1
-      fi
+      LC_ALL=C /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M 2>/dev/null
       # Reset terminal after progress bar
       printf '\033[0m\n' 2>/dev/null
       sync
