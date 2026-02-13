@@ -172,11 +172,15 @@ class VoicemailNotificationBuilder extends AbstractNotificationBuilder
             ]);
         }
 
-        $this->dynamicContent = $this->buildDataTable($messageDetails);
+        $this->dynamicContent = '';
 
         $colorScheme = $this->type->getColorScheme();
 
         return [
+            // Message details table
+            'IF_DATA_TABLE' => true,
+            'DATA_TABLE_ROWS' => $this->buildDataTable($messageDetails),
+
             // Info box with attachment notice
             'IF_INFO_BOX' => !empty($this->recordingFile),
             'INFO_BOX_COLOR' => $colorScheme['start'],

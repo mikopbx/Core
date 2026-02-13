@@ -73,7 +73,7 @@ class EmailTemplateRenderer
 
             // Value column (monospace font for technical data)
             $html .= '<td style="font-family: \'SF Mono\', Monaco, \'Courier New\', monospace; font-size: 14px; color: #212529; ';
-            $html .= 'padding: 8px 0; padding-left: 20px; word-break: break-all; vertical-align: top;">';
+            $html .= 'padding: 8px 0; padding-left: 20px; overflow-wrap: break-word; word-break: normal; vertical-align: top;">';
             $html .= '<strong>' . $value . '</strong>';
             $html .= '</td>';
 
