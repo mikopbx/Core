@@ -284,9 +284,9 @@ class SIPConf extends AsteriskConfigClass
      */
     public function extensionGenContexts(): string
     {
-        if ($this->data_providers === null) {
-            $this->getSettings();
-        }
+        // Always re-read: singleton may hold stale data from a previous reload cycle.
+        $this->refreshProviders();
+
         // Generate internal number plan.
         $conf = '';
 
@@ -401,9 +401,8 @@ class SIPConf extends AsteriskConfigClass
      */
     public function getSettings(): void
     {
-        $this->contexts_data = [];
-        // Retrieve peers, providers, out routes, technology, and SIP hosts data.
-        $this->data_providers    = $this->getProviders();
+        // Retrieve providers, out routes, technology, and SIP hosts data.
+        $this->refreshProviders();
         $this->data_rout         = $this->getOutRoutes();
         $this->technology        = self::getTechnology();
         $this->dataSipHosts      = self::getSipHosts();
@@ -496,16 +495,28 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
+     * Reloads providers and their incoming contexts from DB.
+     *
+     * Resets contexts_data before reading because getProviders() appends to it.
+     */
+    private function refreshProviders(): void
+    {
+        $this->contexts_data = [];
+        $this->data_providers = $this->getProviders();
+    }
+
+    /**
      * Get providers.
      *
      * Retrieves and returns the providers data as an array.
+     * Side effect: appends to $this->contexts_data — call refreshProviders() instead of calling directly.
      *
      * @return array The providers data.
      */
     private function getProviders(): array
     {
-        // Get settings for all accounts.
         $data    = [];
+        $codecs  = $this->getCodecs();
         $db_data = Sip::find("type = 'friend' AND ( disabled <> '1')");
         foreach ($db_data as $sip_peer) {
             $arr_data                               = $sip_peer->toArray();
@@ -514,8 +525,7 @@ class SIPConf extends AsteriskConfigClass
             $arr_data['deny']                       = ($network_filter === null) ? '' : $network_filter->deny;
 
             $arr_data['transport'] = trim($arr_data['transport'] ?? '');
-            // Retrieve used codecs.
-            $arr_data['codecs'] = $this->getCodecs();
+            $arr_data['codecs'] = $codecs;
             $context_id = self::getIncomingContextId($sip_peer->host, $sip_peer->port);
             if (! isset($this->contexts_data[$context_id])) {
                 $this->contexts_data[$context_id] = [];
@@ -1307,9 +1317,6 @@ class SIPConf extends AsteriskConfigClass
     private function generateProvidersPj(): string
     {
         $conf = '';
-        if ($this->data_providers === null) {
-            $this->getSettings();
-        }
 
         // Iterate through each data provider
         foreach ($this->data_providers as $provider) {
