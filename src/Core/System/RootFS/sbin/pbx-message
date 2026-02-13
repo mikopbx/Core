@@ -169,15 +169,35 @@ output_serial() {
     local clean_msg=$(echo "$msg" | sed 's/\x1b\[[0-9;]*m//g')
 
     SERIAL_PORTS=$(get_serial_ports)
-    if [ -n "$SERIAL_PORTS" ]; then
-        for port in $SERIAL_PORTS; do
-            if [ "$newline" = "1" ]; then
-                echo "$clean_msg" >> "$port" 2>/dev/null
-            else
-                echo -n "$clean_msg" >> "$port" 2>/dev/null
-            fi
-        done
+    if [ -z "$SERIAL_PORTS" ]; then
+        return
     fi
+
+    # Detect if stdout already goes to a serial port (prevents duplicate output)
+    local skip_port=""
+    local stdout_target=$(/bin/busybox readlink /proc/self/fd/1 2>/dev/null)
+    case "$stdout_target" in
+        /dev/ttyS*)
+            skip_port="$stdout_target"
+            ;;
+        /dev/console)
+            # /dev/console may be kernel-mapped to a serial port
+            local active=$(/bin/busybox cat /sys/class/tty/console/active 2>/dev/null)
+            local last_console="${active##* }"
+            case "$last_console" in
+                ttyS*) skip_port="/dev/$last_console" ;;
+            esac
+            ;;
+    esac
+
+    for port in $SERIAL_PORTS; do
+        [ "$port" = "$skip_port" ] && continue
+        if [ "$newline" = "1" ]; then
+            echo "$clean_msg" >> "$port" 2>/dev/null
+        else
+            echo -n "$clean_msg" >> "$port" 2>/dev/null
+        fi
+    done
 }
 
 # Function to log to syslog

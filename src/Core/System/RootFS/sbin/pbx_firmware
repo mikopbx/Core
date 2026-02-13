@@ -32,6 +32,21 @@ for i in 0 1 2 3 4 5; do
     fi
 done
 
+# Prevent duplicate output when console is connected to the serial port
+if [ -n "$SERIAL_PORT" ]; then
+    stdout_target=$(/bin/readlink /proc/self/fd/1 2>/dev/null)
+    if [ "$stdout_target" = "$SERIAL_PORT" ]; then
+        SERIAL_PORT=""
+    elif [ "$stdout_target" = "/dev/console" ]; then
+        # /dev/console may be kernel-mapped to the serial port
+        active=$(/bin/busybox cat /sys/class/tty/console/active 2>/dev/null)
+        serial_name=$(/bin/busybox basename "$SERIAL_PORT")
+        case " $active " in
+            *" $serial_name "*) SERIAL_PORT="" ;;
+        esac
+    fi
+fi
+
 echo_info() {
     local msg=" - $1"
     echo "$msg"
@@ -243,38 +258,49 @@ if [ -r "${img_file}" ]; then
   fi
 
   # Reset terminal after progress bar and flush all buffers
-  printf '\033[0m\n' 2>/dev/null
+  printf '\033[0m\033[?25h\n' 2>/dev/null
+  stty sane 2>/dev/null || true
   sync
   sleep 2
   echo_info "result install code $resultPv";
   /sbin/blockdev --rereadpt "$DISK" > /dev/null 2>&1;
   sync
-  sleep 1
+  sleep 3
 
   # Fix GPT backup table location after writing smaller image to larger disk
   # The backup GPT header must be at the end of the disk, not at original image size
-  # Note: /dev/tty availability fixed in pbx_boot_init (conditional console redirect)
-  if /sbin/sgdisk --version >/dev/null 2>&1; then
+  # Wait for device node to stabilize after partition table reread
+  if [ ! -b "$DISK" ]; then
+    echo_info "Waiting for device $DISK to become available..."
+    for _i in 1 2 3 4 5 6 7 8 9 10; do
+      [ -b "$DISK" ] && break
+      sleep 1
+    done
+  fi
+
+  if [ ! -b "$DISK" ]; then
+    echo_error "Device $DISK not available, skipping GPT backup header relocation"
+  elif /sbin/sgdisk --version >/dev/null 2>&1; then
     # Preferred: sgdisk (modern, simple, reliable)
-    echo_info "Relocating GPT backup header to end of disk (sgdisk)..."
+    echo_info "Relocating GPT backup header to end of disk (sgdisk) on $DISK..."
     sgdiskOutput=$(/sbin/sgdisk -e "$DISK" 2>&1)
     sgdiskResult=$?
     echo_info "sgdisk exit code: $sgdiskResult"
-    [ -n "$sgdiskOutput" ] && echo "$sgdiskOutput" | while read line; do echo_info "sgdisk: $line"; done
+    if [ -n "$sgdiskOutput" ]; then echo "$sgdiskOutput" | while IFS= read -r line; do echo_info "sgdisk: $line"; done; fi
   elif /sbin/gdisk --version >/dev/null 2>&1; then
     # Fallback 1: gdisk (works without controlling terminal via stdin commands)
-    echo_info "Relocating GPT backup header to end of disk (gdisk)..."
+    echo_info "Relocating GPT backup header to end of disk (gdisk) on $DISK..."
     gdiskOutput=$(echo -e "x\ne\nw\nY\n" | /sbin/gdisk "$DISK" 2>&1)
     gdiskResult=$?
     echo_info "gdisk exit code: $gdiskResult"
-    [ -n "$gdiskOutput" ] && echo "$gdiskOutput" | while read line; do echo_info "gdisk: $line"; done
+    if [ -n "$gdiskOutput" ]; then echo "$gdiskOutput" | while IFS= read -r line; do echo_info "gdisk: $line"; done; fi
   elif [ -x /sbin/parted ]; then
     # Fallback 2: parted (universal, available on all systems)
-    echo_info "Relocating GPT backup header to end of disk (parted fallback)..."
+    echo_info "Relocating GPT backup header to end of disk (parted fallback) on $DISK..."
     partedOutput=$(echo "Fix" | /sbin/parted "$DISK" print ---pretend-input-tty 2>&1)
     partedResult=$?
     echo_info "parted exit code: $partedResult"
-    [ -n "$partedOutput" ] && echo "$partedOutput" | while read line; do echo_info "parted: $line"; done
+    if [ -n "$partedOutput" ]; then echo "$partedOutput" | while IFS= read -r line; do echo_info "parted: $line"; done; fi
   else
     echo_error "No GPT utility available to fix backup header!"
   fi
