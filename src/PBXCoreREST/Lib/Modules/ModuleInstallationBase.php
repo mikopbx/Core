@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -131,8 +132,9 @@ class ModuleInstallationBase extends Injectable
         }
 
         // Installation timeout
-        $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_V_INSTALL_MODULE, [self::ERR_INSTALLATION_TIMEOUT]);
-        return [[self::ERR_INSTALLATION_TIMEOUT], false];
+        $errorMessage = TranslationProvider::translate(self::ERR_INSTALLATION_TIMEOUT);
+        $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_V_INSTALL_MODULE, [$errorMessage]);
+        return [[$errorMessage], false];
     }
 
     /**
@@ -405,7 +407,7 @@ class ModuleInstallationBase extends Injectable
 
             // Create instance of ModuleInstallationBase to handle post-installation
             $installer = new self($installData['asyncChannelId'], $moduleId);
-            $installer->postInstallModule($moduleId, $installData, $redis);
+            $installer->postInstallModule($moduleId, $installData);
 
             SystemMessages::sysLogMsg(
                 self::class,

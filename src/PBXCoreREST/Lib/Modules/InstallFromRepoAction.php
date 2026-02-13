@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\MutexProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -138,7 +139,7 @@ class InstallFromRepoAction extends ModuleInstallationBase
 
         // Check if release information is available
         if (empty($moduleInfo->data['releases'])) {
-            return [[self::ERR_EMPTY_REPO_RESULT], false];
+            return [[TranslationProvider::translate(self::ERR_EMPTY_REPO_RESULT)], false];
         }
         $releaseInfo = [];
         $releaseInfo['releaseID'] = 0;
@@ -170,7 +171,7 @@ class InstallFromRepoAction extends ModuleInstallationBase
     {
         // Check if a feature license is required
         if ($releaseInfo['licFeatureId'] === 0) {
-            return [[self::MSG_NO_LICENSE_REQ], true]; // No license required
+            return [[TranslationProvider::translate(self::MSG_NO_LICENSE_REQ)], true]; // No license required
         }
 
         // Prepare license capture request
@@ -200,7 +201,7 @@ class InstallFromRepoAction extends ModuleInstallationBase
             if (count($modules) > 0) {
                 return [$modules[0], true];
             }
-            return [[self::ERR_EMPTY_GET_MODULE_LINK], false];
+            return [[TranslationProvider::translate(self::ERR_EMPTY_GET_MODULE_LINK)], false];
         }
         return [$res->messages, false];
     }
@@ -242,7 +243,8 @@ class InstallFromRepoAction extends ModuleInstallationBase
         }
 
         // Download timeout
-        $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_IV_DOWNLOAD_MODULE, [self::ERR_DOWNLOAD_TIMEOUT]);
-        return [[self::ERR_DOWNLOAD_TIMEOUT], false];
+        $errorMessage = TranslationProvider::translate(self::ERR_DOWNLOAD_TIMEOUT);
+        $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_IV_DOWNLOAD_MODULE, [$errorMessage]);
+        return [[$errorMessage], false];
     }
 }

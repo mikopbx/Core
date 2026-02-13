@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\MutexProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\Files\StatusUploadFileAction;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -138,7 +139,8 @@ class InstallFromPackageAction extends ModuleInstallationBase
         }
 
         // Upload or merging timeout
-        $this->unifiedModulesEvents->pushMessageToBrowser( self::STAGE_I_UPLOAD_MODULE, [self::ERR_UPLOAD_TIMEOUT]);
-        return [self::ERR_UPLOAD_TIMEOUT, false];
+        $errorMessage = TranslationProvider::translate(self::ERR_UPLOAD_TIMEOUT);
+        $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_I_UPLOAD_MODULE, [$errorMessage]);
+        return [[$errorMessage], false];
     }
 }
