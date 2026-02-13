@@ -270,11 +270,24 @@ if [ -r "${img_file}" ]; then
     echo_error "Device $DISK not available, skipping GPT backup header relocation"
   elif /sbin/sgdisk --version >/dev/null 2>&1; then
     # Preferred: sgdisk (modern, simple, reliable)
+    # Retry: device may not be fully stable immediately after dd + blockdev --rereadpt
     echo_info "Relocating GPT backup header to end of disk (sgdisk) on $DISK..."
-    sgdiskOutput=$(/sbin/sgdisk -e "$DISK" 2>&1)
-    sgdiskResult=$?
+    sgdiskResult=1
+    for _attempt in 1 2; do
+      sgdiskOutput=$(/sbin/sgdisk -e "$DISK" 2>&1)
+      sgdiskResult=$?
+      if [ "$sgdiskResult" -eq 0 ]; then
+        break
+      fi
+      if [ "$_attempt" -lt 2 ]; then
+        echo_info "sgdisk attempt $_attempt failed (exit code: $sgdiskResult), retrying in 3 seconds..."
+        sleep 3
+      fi
+    done
     echo_info "sgdisk exit code: $sgdiskResult"
-    if [ -n "$sgdiskOutput" ]; then echo "$sgdiskOutput" | while IFS= read -r line; do echo_info "sgdisk: $line"; done; fi
+    if [ "$sgdiskResult" -ne 0 ] && [ -n "$sgdiskOutput" ]; then
+      echo "$sgdiskOutput" | while IFS= read -r line; do echo_info "sgdisk: $line"; done
+    fi
   elif /sbin/gdisk --version >/dev/null 2>&1; then
     # Fallback 1: gdisk (works without controlling terminal via stdin commands)
     echo_info "Relocating GPT backup header to end of disk (gdisk) on $DISK..."
