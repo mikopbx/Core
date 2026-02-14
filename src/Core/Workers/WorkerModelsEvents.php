@@ -63,6 +63,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadQueuesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRTPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordSavePeriodAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordingSettingsAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadStaticRoutesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRestAPIWorkerAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadSSHAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadSentryAction;
@@ -323,6 +324,7 @@ class WorkerModelsEvents extends WorkerBase
             ReloadWorkerCallEventsAction::class,
             ReloadRecordingSettingsAction::class,
             ReloadRecordSavePeriodAction::class,
+            ReloadStaticRoutesAction::class,
             ReloadAdviceAction::class,
             ReloadCloudDescriptionAction::class,
             ReloadCloudParametersAction::class,

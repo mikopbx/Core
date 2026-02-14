@@ -37,6 +37,7 @@ use MikoPBX\Common\Models\IvrMenu;
 use MikoPBX\Common\Models\IvrMenuActions;
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\NetworkFilters;
+use MikoPBX\Common\Models\NetworkStaticRoutes;
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\OutWorkTimesRouts;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
@@ -56,6 +57,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAriAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModuleStateAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModulesConfAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNetworkAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadStaticRoutesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNginxAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadQueuesAction;
@@ -197,6 +199,15 @@ class ProcessOtherModels extends Injectable
                 ReloadPJSIPAction::class,
                 ReloadNginxAction::class,
                 ReloadFirewallAction::class,
+            ],
+        ];
+
+        $tables[] = [
+            'modelClasses' => [
+                NetworkStaticRoutes::class,
+            ],
+            'actions' => [
+                ReloadStaticRoutesAction::class,
             ],
         ];
 

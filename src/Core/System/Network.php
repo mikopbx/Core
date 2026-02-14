@@ -41,6 +41,11 @@ class Network extends Injectable
     public const string INTERNET_FLAG_FILE = '/var/etc/internet_flag';
 
     /**
+     * State file that stores previously applied route commands for cleanup on reload.
+     */
+    private const CUSTOM_ROUTES_STATE_FILE = '/tmp/mikopbx_custom_routes.state';
+
+    /**
      * Retrieves the names of all PCI network interfaces.
      *
      * @return array<string> An array containing the names of the network interfaces.
@@ -1092,7 +1097,8 @@ class Network extends Injectable
             Processes::mwExecBg("/etc/rc/networking_set_mtu '$eth'");
         }
 
-        // Additional "manual" routes
+        // Additional "manual" routes (remove old first, then add current)
+        $this->removeCustomStaticRoutes();
         $this->addCustomStaticRoutes();
         $this->openVpnConfigure();
         return 0;
@@ -1149,7 +1155,58 @@ class Network extends Injectable
     }
 
     /**
+     * Reload static routes: remove previously applied routes and apply current ones from database.
+     *
+     * Called by ReloadStaticRoutesAction when NetworkStaticRoutes model changes.
+     *
+     * @return void
+     */
+    public static function reloadStaticRoutes(): void
+    {
+        $network = new Network();
+        $network->removeCustomStaticRoutes();
+        $network->addCustomStaticRoutes();
+    }
+
+    /**
+     * Remove previously applied custom static routes from the kernel routing table.
+     *
+     * Reads saved route commands from state file and executes their delete counterparts.
+     *
+     * @return void
+     */
+    protected function removeCustomStaticRoutes(): void
+    {
+        if (!file_exists(self::CUSTOM_ROUTES_STATE_FILE)) {
+            return;
+        }
+
+        $commands = file(self::CUSTOM_ROUTES_STATE_FILE, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (empty($commands)) {
+            unlink(self::CUSTOM_ROUTES_STATE_FILE);
+            return;
+        }
+
+        $delCommands = [];
+        foreach ($commands as $addCommand) {
+            // Convert "route add -net ..." to "route del -net ..."
+            // Convert "ip -6 route add ..." to "ip -6 route del ..."
+            $delCommand = preg_replace('/ add /', ' del ', $addCommand, 1);
+            $delCommands[] = $delCommand;
+        }
+
+        if (count($delCommands) > 0) {
+            SystemMessages::sysLogMsg(__METHOD__, 'Removing ' . count($delCommands) . ' previously applied static routes');
+            Processes::mwExecCommands($delCommands, $out, 'static-routes-remove');
+        }
+
+        unlink(self::CUSTOM_ROUTES_STATE_FILE);
+    }
+
+    /**
      * Add custom static routes from database and legacy `/etc/static-routes` file.
+     *
+     * Saves applied route commands to a state file so they can be removed on next reload.
      *
      * @param string $interface The network interface to add routes to, e.g., eth0 (optional)
      * @return void
@@ -1236,6 +1293,13 @@ class Network extends Injectable
         // Execute all route commands
         if (count($arr_commands) > 0) {
             Processes::mwExecCommands($arr_commands, $out, 'static-routes');
+        }
+
+        // Save applied commands to state file for cleanup on next reload
+        if (count($arr_commands) > 0) {
+            file_put_contents(self::CUSTOM_ROUTES_STATE_FILE, implode("\n", $arr_commands) . "\n");
+        } elseif (file_exists(self::CUSTOM_ROUTES_STATE_FILE)) {
+            unlink(self::CUSTOM_ROUTES_STATE_FILE);
         }
     }
 
