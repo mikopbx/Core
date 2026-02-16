@@ -120,7 +120,7 @@ class WorkerSafeScriptsCore extends WorkerBase
      * Watchdog handler — fires when a monitoring cycle exceeds WATCHDOG_TIMEOUT_SEC.
      * This catches Fiber I/O stalls (blocked Beanstalk pings, hung Redis, etc.).
      */
-    private function watchdogHandler(): void
+    public function watchdogHandler(): void
     {
         SystemMessages::sysLogMsg(
             static::class,
