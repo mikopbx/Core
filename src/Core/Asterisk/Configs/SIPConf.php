@@ -134,7 +134,7 @@ class SIPConf extends AsteriskConfigClass
      *
      * @var string
      */
-    protected string $technology;
+    protected string $technology = self::TYPE_PJSIP;
 
     /**
      * Contexts data.
