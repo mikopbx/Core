@@ -17,8 +17,9 @@ class ReloadNetworkAction implements ReloadActionInterface
      * - IPv6 mode changed: Full restart with DHCP client restart
      * - Interface enabled/disabled: Full restart with DHCP client restart
      * - Interface name changed: Full restart with DHCP client restart
-     * - IP/subnet/gateway changed on static interface: Network reload preserving DHCP clients
-     * - Only IP/DNS changed on DHCP interface: DNS restart only (DHCP handles IP)
+     * - IPv4 IP/subnet/gateway changed on static interface: Network reload preserving DHCP clients
+     * - IPv6 addr/subnet/gateway changed on manual interface: Network reload preserving DHCP clients
+     * - Only IP/DNS changed on DHCP/Auto interface: DNS restart only (DHCP handles IP)
      *
      * NOTE: changedFields format is {"fieldName": "fieldName"} (field names only, no old/new values)
      *
@@ -33,8 +34,11 @@ class ReloadNetworkAction implements ReloadActionInterface
         // Fields that indicate a mode change requiring full DHCP client restart
         $modeChangeFields = ['dhcp', 'ipv6_mode', 'disabled', 'interface'];
 
-        // Fields that indicate IP settings change (may need reload for static interfaces)
+        // Fields that indicate IPv4 settings change (may need reload for static interfaces)
         $staticIpFields = ['ipaddr', 'subnet', 'gateway'];
+
+        // Fields that indicate IPv6 settings change (may need reload for manual IPv6 interfaces)
+        $staticIpv6Fields = ['ipv6addr', 'ipv6_subnet', 'ipv6_gateway'];
 
         // Analyze changed fields from all parameter hashes
         foreach ($parameters as $hash => $modelData) {
@@ -55,7 +59,7 @@ class ReloadNetworkAction implements ReloadActionInterface
                 }
             }
 
-            // Check if IP settings changed on a static (non-DHCP) interface
+            // Check if IPv4 settings changed on a static (non-DHCP) interface
             // WHY: When ipaddr/subnet/gateway changes on a static interface, lanConfigure() must run
             // to apply the new IP via ifconfig. For DHCP interfaces, udhcpc handles IP application,
             // so only DNS restart is needed.
@@ -69,6 +73,28 @@ class ReloadNetworkAction implements ReloadActionInterface
                             SystemMessages::sysLogMsg(
                                 __METHOD__,
                                 "Static interface IP settings changed (field: {$field}, interface ID: {$recordId}) - network reload required",
+                                LOG_WARNING
+                            );
+                            break 2;
+                        }
+                    }
+                }
+            }
+
+            // Check if IPv6 settings changed on a manual (ipv6_mode=2) interface
+            // WHY: When ipv6addr/ipv6_subnet/ipv6_gateway changes on a manual IPv6 interface,
+            // lanConfigure() must run to apply the new address via ip command.
+            // For Auto mode (ipv6_mode=1), DHCPv6/SLAAC handles address application.
+            foreach ($staticIpv6Fields as $field) {
+                if (array_key_exists($field, $changedFields)) {
+                    $recordId = $modelData['recordId'] ?? null;
+                    if ($recordId !== null) {
+                        $lanInterface = LanInterfaces::findFirstById($recordId);
+                        if ($lanInterface !== null && $lanInterface->ipv6_mode === '2') {
+                            $needNetworkReload = true;
+                            SystemMessages::sysLogMsg(
+                                __METHOD__,
+                                "Manual IPv6 interface settings changed (field: {$field}, interface ID: {$recordId}) - network reload required",
                                 LOG_WARNING
                             );
                             break 2;
