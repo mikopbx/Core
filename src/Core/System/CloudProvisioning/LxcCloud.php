@@ -109,9 +109,10 @@ class LxcCloud extends CloudProvider
             if ($rootHash !== null) {
                 $instance->updatePbxSettingsDirect(PbxSettings::WEB_ADMIN_PASSWORD, $rootHash);
                 $instance->updatePbxSettingsDirect(PbxSettings::SSH_PASSWORD, $rootHash);
+                $instance->updatePbxSettingsDirect(PbxSettings::SSH_DISABLE_SSH_PASSWORD, '0');
                 SystemMessages::sysLogMsg(
                     self::CloudID,
-                    "Applied root password hash to WebAdminPassword and SSHPassword",
+                    "Applied root password hash to WebAdminPassword and SSHPassword, enabled SSH password auth",
                     LOG_INFO
                 );
             }
