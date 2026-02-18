@@ -171,6 +171,6 @@ $data = [
 $client = new BeanstalkClient(WorkerCallEvents::class);
 $client->publish(json_encode($data, JSON_THROW_ON_ERROR));
 
-$manager = Util::getAstManager();
+$manager = Util::getAstManager('off');
 unset($data['action']);
 $manager->UserEvent('voicemail_end', $data);

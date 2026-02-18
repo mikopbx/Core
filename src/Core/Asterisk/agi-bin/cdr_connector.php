@@ -605,7 +605,7 @@ function Event_meetme_dial(AGI $agi, string $action): array
     $is_conf   = ($agi->get_variable('CALLERID(num)', true) === 'Conference_Room');
     $not_local = (stripos($agi->request['agi_channel'], 'local/') === false);
     if ($not_local && ! $is_conf) {
-        $am         = Util::getAstManager();
+        $am         = Util::getAstManager('off');
         $res        = $am->meetMeCollectInfo($exten, ['conf_1c']);
         $callid     = $agi->request['agi_callerid'];
         $users_nums = [[$callid]];

@@ -241,6 +241,8 @@ class ManagerConf extends AsteriskConfigClass
         $conf .= 'read=all' . "\n";
         $conf .= 'write=all' . "\n";
         $conf .= "eventfilter=!Event: Newexten\n";
+        $conf .= "eventfilter=!Event: RTCPSent\n";
+        $conf .= "eventfilter=!Event: RTCPReceived\n";
         $conf .= "\n";
 
         // Call the hook modules method for generating additional configuration

@@ -25,6 +25,8 @@ use Fiber;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\System;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, SystemMessages, Util};
 use MikoPBX\Core\Workers\Pool\WorkerPoolManager;
 use MikoPBX\Core\Workers\WorkerBase;
@@ -93,12 +95,37 @@ class WorkerSafeScriptsCore extends WorkerBase
     protected $redis;
 
     /**
+     * Dedicated AMI connection for worker ping/pong checks.
+     * Uses events='user' to receive only UserEvent, avoiding accumulation
+     * of high-volume call/system/RTCP events in the socket buffer.
+     */
+    private ?AsteriskManager $amiPing = null;
+
+    /**
      * Initialize the singleton instance
      * This is called after construction to set up the instance
      */
     private function initialize(): void
     {
         // Any initialization code can go here
+    }
+
+    /**
+     * Returns a dedicated AMI connection that only subscribes to 'user' events.
+     * This prevents accumulation of call/system/RTCP events that would consume RAM
+     * on busy PBX systems with many concurrent calls.
+     *
+     * @return AsteriskManager
+     */
+    private function getAmiForPing(): AsteriskManager
+    {
+        if ($this->amiPing !== null && is_resource($this->amiPing->socket)) {
+            return $this->amiPing;
+        }
+        $port = PbxSettings::getValueByKey(PbxSettings::AMI_PORT);
+        $this->amiPing = new AsteriskManager();
+        $this->amiPing->connect("127.0.0.1:{$port}", null, null, 'user');
+        return $this->amiPing;
     }
 
     /**
@@ -508,8 +535,10 @@ class WorkerSafeScriptsCore extends WorkerBase
             $res_ping = false;
             $WorkerPID = Processes::getPidOfProcess($workerClassName);
             if ($WorkerPID !== '') {
-                // We have the service PID, so we will ping it
-                $am = Util::getAstManager();
+                // We have the service PID, so we will ping it.
+                // Use dedicated AMI connection with events='user' to avoid
+                // accumulating high-volume call/RTCP events in the socket buffer.
+                $am = $this->getAmiForPing();
                 $res_ping = $am->pingAMIListener($this->makePingTubeName($workerClassName));
                 if (false === $res_ping) {
                     SystemMessages::sysLogMsg(__METHOD__, 'Restart...', LOG_ERR);
