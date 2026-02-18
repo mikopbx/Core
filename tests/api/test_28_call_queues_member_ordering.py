@@ -33,6 +33,32 @@ def strip_ansi(text: str) -> str:
     return re.sub(r'\x1b\[[0-9;]*m', '', text)
 
 
+def wait_for_queue_in_asterisk(api_client, queue_id: str, timeout: int = 15) -> str:
+    """
+    Poll Asterisk until the queue appears or timeout expires.
+
+    WorkerModelsEvents has a 5-second debounce before calling QueueConf::reload(),
+    plus ~2 seconds for two 'queue reload all' calls. Fixed sleeps of 2-3 seconds
+    are not sufficient. This function retries every second until the queue is visible.
+
+    Args:
+        api_client: Authenticated API client
+        queue_id: Asterisk queue ID to wait for
+        timeout: Maximum seconds to wait (default 15)
+
+    Returns:
+        Last Asterisk output (whether queue appeared or not)
+    """
+    deadline = time.time() + timeout
+    output = ''
+    while time.time() < deadline:
+        output = execute_asterisk_command(api_client, f'queue show {queue_id}')
+        if 'No such queue' not in output:
+            return output
+        time.sleep(1)
+    return output
+
+
 def parse_queue_members_from_asterisk(output: str) -> list[str]:
     """
     Parse member extensions from `queue show <ID>` output.
@@ -136,10 +162,7 @@ class TestCallQueueMemberOrdering:
         queue_id = getattr(self.__class__, '_queue_id', None)
         assert queue_id, "Queue ID not set (test_01 must run first)"
 
-        # Wait for Asterisk to process the reload
-        time.sleep(2)
-
-        output = execute_asterisk_command(api_client, f'queue show {queue_id}')
+        output = wait_for_queue_in_asterisk(api_client, queue_id)
         print(f"\n  Asterisk output:\n{output}")
 
         ast_members = parse_queue_members_from_asterisk(output)
@@ -208,10 +231,7 @@ class TestCallQueueMemberOrdering:
         queue_id = getattr(self.__class__, '_queue_id', None)
         assert queue_id, "Queue ID not set (test_01 must run first)"
 
-        # Wait for Asterisk to process the two-step reload
-        time.sleep(3)
-
-        output = execute_asterisk_command(api_client, f'queue show {queue_id}')
+        output = wait_for_queue_in_asterisk(api_client, queue_id)
         print(f"\n  Asterisk output:\n{output}")
 
         ast_members = parse_queue_members_from_asterisk(output)
@@ -275,10 +295,7 @@ class TestCallQueueMemberOrdering:
         queue_id = getattr(self.__class__, '_queue_id', None)
         assert queue_id, "Queue ID not set (test_01 must run first)"
 
-        # Wait for Asterisk to process the two-step reload
-        time.sleep(3)
-
-        output = execute_asterisk_command(api_client, f'queue show {queue_id}')
+        output = wait_for_queue_in_asterisk(api_client, queue_id)
         print(f"\n  Asterisk output:\n{output}")
 
         ast_members = parse_queue_members_from_asterisk(output)
@@ -312,9 +329,7 @@ class TestCallQueueMemberOrdering:
         assert_api_success(response, "Failed to switch back to ringall")
         print(f"\n  Switched to ringall with members [202, 201, 203]")
 
-        time.sleep(2)
-
-        # Switch to linear with specific order
+        # Switch to linear with specific order (no delay needed between patches)
         expected_linear = ['203', '202', '201']
         response = api_client.patch(f'call-queues/{queue_id}', {
             'strategy': 'linear',
@@ -323,10 +338,7 @@ class TestCallQueueMemberOrdering:
         assert_api_success(response, "Failed to switch to linear again")
         print(f"  Switched to linear with members {expected_linear}")
 
-        # Wait for two-step reload
-        time.sleep(3)
-
-        output = execute_asterisk_command(api_client, f'queue show {queue_id}')
+        output = wait_for_queue_in_asterisk(api_client, queue_id)
         ast_members = parse_queue_members_from_asterisk(output)
         print(f"\n  Asterisk output:\n{output}")
         print(f"\n  Asterisk members: {ast_members}")
