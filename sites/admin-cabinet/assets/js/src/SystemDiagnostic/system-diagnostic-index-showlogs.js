@@ -604,12 +604,13 @@ const systemDiagnosticLogs = {
                 if (item.type === 'folder') {
                     // Folder item - clickable header for collapse/expand
                     // Not using 'disabled' class as it blocks pointer events
-                    html += `<div class="folder-header item" data-folder="${item.folderName}" data-value="" style="pointer-events: auto !important; cursor: pointer; font-weight: bold; background: #f9f9f9;">${item.name}</div>`;
+                    html += `<div class="folder-header item" data-folder="${item.folderName}" data-value="" data-text="${item.folderName}" style="pointer-events: auto !important; cursor: pointer; font-weight: bold; background: #f9f9f9;">${item.name}</div>`;
                 } else {
                     // File item with parent folder reference for collapse
+                    // data-text contains full path so Fomantic search matches by folder name too
                     const selected = item.selected ? 'selected active' : '';
                     const parentAttr = item.parentFolder ? `data-parent="${item.parentFolder}"` : '';
-                    html += `<div class="item file-item ${selected}" data-value="${option[fields.value]}" ${parentAttr}>${item.name}</div>`;
+                    html += `<div class="item file-item ${selected}" data-value="${option[fields.value]}" data-text="${option[fields.value]}" ${parentAttr}>${item.name}</div>`;
                 }
             } else {
                 // Fallback to regular item
