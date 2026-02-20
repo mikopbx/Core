@@ -51,12 +51,6 @@ class SaveSettingsAction extends AbstractSaveRecordAction
      * @var int
      */
     private static int $actualUpdatesCount = 0;
-    
-    /**
-     * List of updated fields for debugging
-     * @var array
-     */
-    private static array $updatedFields = [];
     /**
      * Save general settings
      *
@@ -154,13 +148,6 @@ class SaveSettingsAction extends AbstractSaveRecordAction
                     $res->messages['success'][] = "1 setting was updated";
                 } else {
                     $res->messages['success'][] = "{$updatedCount} settings were updated";
-                }
-                // Add debug info about what was actually processed
-                $res->data['processed_fields'] = count($settingsData);
-                $res->data['updated_fields'] = $updatedCount;
-                // Include list of updated fields for debugging
-                if (!empty(self::$updatedFields)) {
-                    $res->data['updated_field_names'] = self::$updatedFields;
                 }
             }
             
@@ -422,7 +409,6 @@ class SaveSettingsAction extends AbstractSaveRecordAction
 
         // Reset update counter and field list
         self::$actualUpdatesCount = 0;
-        self::$updatedFields = [];
 
         // Get security service for password hashing
         $security = $di->getShared('security');
@@ -528,7 +514,6 @@ class SaveSettingsAction extends AbstractSaveRecordAction
                 if ($currentValue !== (string)$newValue) {
                     PbxSettings::setValueByKey($key, (string)$newValue, $messages['error']);
                     self::$actualUpdatesCount++;
-                    self::$updatedFields[] = $key;
                 }
             }
         }
@@ -579,7 +564,6 @@ class SaveSettingsAction extends AbstractSaveRecordAction
             if ($currentWEBPasswordValue !== $newWEBPassword) {
                 PbxSettings::setValueByKey(PbxSettings::WEB_ADMIN_PASSWORD, $newWEBPassword, $errorMessages);
                 self::$actualUpdatesCount++;
-                self::$updatedFields[] = PbxSettings::WEB_ADMIN_PASSWORD . '_synced_from_ssh';
             }
         }
 
@@ -597,7 +581,6 @@ class SaveSettingsAction extends AbstractSaveRecordAction
             if ($currentSSHPasswordValue !== $newSSHPasswordHash) {
                 PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD, $newSSHPasswordHash, $errorMessages);
                 self::$actualUpdatesCount++;
-                self::$updatedFields[] = PbxSettings::SSH_PASSWORD . '_synced_from_web';
             }
         }
     }
@@ -680,7 +663,6 @@ class SaveSettingsAction extends AbstractSaveRecordAction
                     $messages['error'][] = "Failed to update codec {$codecName}: " . implode(', ', $errors);
                 } else {
                     self::$actualUpdatesCount++;
-                    self::$updatedFields[] = "codec_{$codecName}";
                 }
             }
         }
