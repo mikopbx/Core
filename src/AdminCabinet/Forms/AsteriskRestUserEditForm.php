@@ -46,6 +46,9 @@ class AsteriskRestUserEditForm extends BaseForm
         // Username field
         $this->add(new Text('username', [
             'placeholder' => $this->translation->_('ari_UsernamePlaceholder'),
+            'autocomplete' => 'off',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
         ]));
         
         // Password field

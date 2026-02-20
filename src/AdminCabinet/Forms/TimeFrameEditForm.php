@@ -108,7 +108,11 @@ class TimeFrameEditForm extends BaseForm
         $this->add(new Text('calUser', ['autocomplete' => 'off']));
         
         // Password field for calendar secret
-        $this->add(new Password('calSecret', ['value' => $entity?->calSecret ?? '']));
+        $this->add(new Password('calSecret', [
+            'value' => $entity?->calSecret ?? '',
+            'autocomplete' => 'new-password',
+            'data-no-password-manager' => 'true',
+        ]));
     }
     
     /**

@@ -71,7 +71,11 @@ class AsteriskManagerEditForm extends BaseForm
      */
     private function addTextFields(): void
     {
-        $this->add(new Text('username'));
+        $this->add(new Text('username', [
+            'autocomplete' => 'off',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
+        ]));
     }
     
     /**

@@ -54,7 +54,11 @@ class IaxProviderEditForm extends BaseForm
         $this->add(new Text('description'));
 
         // Username
-        $this->add(new Text('username'));
+        $this->add(new Text('username', [
+            'autocomplete' => 'off',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
+        ]));
 
         // Secret
         $this->add(new Password('secret', [

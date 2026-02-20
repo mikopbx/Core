@@ -70,20 +70,36 @@ class GeneralSettingsEditForm extends BaseForm
                     $this->add(new Numeric($key, ['value' => $value, 'style' => 'width:130px;']));
                     break;
                 case PbxSettings::SSH_PASSWORD:
-                    $this->add(new Password($key, ['value' => self::HIDDEN_PASSWORD]));
+                    $this->add(new Password($key, [
+                        'value' => self::HIDDEN_PASSWORD,
+                        'autocomplete' => 'new-password',
+                        'data-no-password-manager' => 'true',
+                    ]));
                     $this->add(
                         new Password(
                             'SSHPasswordRepeat',
-                            ['value' => self::HIDDEN_PASSWORD]
+                            [
+                                'value' => self::HIDDEN_PASSWORD,
+                                'autocomplete' => 'new-password',
+                                'data-no-password-manager' => 'true',
+                            ]
                         )
                     );
                     break;
                 case PbxSettings::WEB_ADMIN_PASSWORD:
-                    $this->add(new Password($key, ['value' => self::HIDDEN_PASSWORD]));
+                    $this->add(new Password($key, [
+                        'value' => self::HIDDEN_PASSWORD,
+                        'autocomplete' => 'new-password',
+                        'data-no-password-manager' => 'true',
+                    ]));
                     $this->add(
                         new Password(
                             'WebAdminPasswordRepeat',
-                            ['value' => self::HIDDEN_PASSWORD]
+                            [
+                                'value' => self::HIDDEN_PASSWORD,
+                                'autocomplete' => 'new-password',
+                                'data-no-password-manager' => 'true',
+                            ]
                         )
                     );
                     break;
@@ -105,7 +121,12 @@ class GeneralSettingsEditForm extends BaseForm
                     $this->addTextArea($key, $value ?? '', 65);
                     break;
                 case PbxSettings::ARI_ALLOWED_ORIGINS:
-                    $this->add(new Text($key, ['value' => $value]));
+                    $this->add(new Text($key, [
+                        'value' => $value,
+                        'autocomplete' => 'off',
+                        'readonly' => 'readonly',
+                        'onfocus' => "this.removeAttribute('readonly')",
+                    ]));
                     break;
                 case PbxSettings::PBX_LANGUAGE:
                     // Use SemanticUIDropdown for V5.0 pattern compliance
@@ -163,7 +184,12 @@ class GeneralSettingsEditForm extends BaseForm
                     );
                     break;
                 default:
-                    $this->add(new Text($key, ['value' => $value]));
+                    $this->add(new Text($key, [
+                        'value' => $value,
+                        'autocomplete' => 'off',
+                        'readonly' => 'readonly',
+                        'onfocus' => "this.removeAttribute('readonly')",
+                    ]));
             }
         }
     }

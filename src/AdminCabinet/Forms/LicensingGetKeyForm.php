@@ -49,7 +49,10 @@ class LicensingGetKeyForm extends BaseForm
         $email->setAttributes([
             'placeholder' => $this->translation->_('lic_EmailExample'),
             'class' => 'form-control',
-            'type' => 'email'
+            'type' => 'email',
+            'autocomplete' => 'off',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
         ]);
         $this->add($email);
 
@@ -75,7 +78,10 @@ class LicensingGetKeyForm extends BaseForm
         $phone = new Text('telefone');
         $phone->setAttributes([
             'placeholder' => $this->translation->_('lic_PhoneExample'),
-            'class' => 'form-control'
+            'class' => 'form-control',
+            'autocomplete' => 'off',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
         ]);
         $this->add($phone);
     }

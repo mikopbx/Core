@@ -63,9 +63,16 @@ class StorageEditForm extends BaseForm
         ]));
 
         // S3 Access key
-        $this->add(new Text('s3_access_key'));
+        $this->add(new Text('s3_access_key', [
+            'autocomplete' => 'off',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
+        ]));
 
         // S3 Secret key (password field for security)
-        $this->add(new Password('s3_secret_key'));
+        $this->add(new Password('s3_secret_key', [
+            'autocomplete' => 'new-password',
+            'data-no-password-manager' => 'true',
+        ]));
     }
 }

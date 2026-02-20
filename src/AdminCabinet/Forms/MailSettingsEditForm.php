@@ -100,7 +100,10 @@ class MailSettingsEditForm extends BaseForm
                             $key,
                             [
                                 'value' => $value,
-                                'placeholder' => $this->translation->_('ms_OAuth2ClientIdPlaceholder')
+                                'placeholder' => $this->translation->_('ms_OAuth2ClientIdPlaceholder'),
+                                'autocomplete' => 'off',
+                                'readonly' => 'readonly',
+                                'onfocus' => "this.removeAttribute('readonly')",
                             ]
                         )
                     );
@@ -112,7 +115,9 @@ class MailSettingsEditForm extends BaseForm
                             $key,
                             [
                                 'value' => $value,
-                                'placeholder' => $this->translation->_('ms_OAuth2ClientSecretPlaceholder')
+                                'placeholder' => $this->translation->_('ms_OAuth2ClientSecretPlaceholder'),
+                                'autocomplete' => 'new-password',
+                                'data-no-password-manager' => 'true',
                             ]
                         )
                     );
@@ -124,6 +129,8 @@ class MailSettingsEditForm extends BaseForm
                             $key,
                             [
                                 'value' => $value,
+                                'autocomplete' => 'new-password',
+                                'data-no-password-manager' => 'true',
                             ]
                         )
                     );
@@ -135,6 +142,9 @@ class MailSettingsEditForm extends BaseForm
                             $key,
                             [
                                 'value' => $value,
+                                'autocomplete' => 'off',
+                                'readonly' => 'readonly',
+                                'onfocus' => "this.removeAttribute('readonly')",
                             ]
                         )
                     );
