@@ -94,6 +94,15 @@ class AsteriskManager
      */
     private bool $_loggedIn = false;
 
+    /** @var callable|null Callback invoked periodically when AMI connection is alive and idle */
+    private $onIdleCallback = null;
+
+    /** @var int Timestamp of last idle callback invocation */
+    private int $lastIdleCall = 0;
+
+    /** @var int Minimum interval between idle callback calls (seconds) */
+    private int $idleInterval = 30;
+
     /**
      * Constructor
      *
@@ -565,6 +574,33 @@ class AsteriskManager
     }
 
     /**
+     * Set socket read/write timeout dynamically.
+     *
+     * @param int $seconds      Timeout seconds
+     * @param int $microseconds Timeout microseconds
+     * @return bool True on success, false if socket is not connected
+     */
+    public function setSocketTimeout(int $seconds, int $microseconds = 0): bool
+    {
+        if (!is_resource($this->socket)) {
+            return false;
+        }
+        return stream_set_timeout($this->socket, $seconds, $microseconds);
+    }
+
+    /**
+     * Register a callback to be invoked periodically when AMI connection is idle.
+     *
+     * @param callable $callback Callback function to invoke
+     * @param int      $interval Minimum interval between calls in seconds
+     */
+    public function setOnIdleCallback(callable $callback, int $interval = 30): void
+    {
+        $this->onIdleCallback = $callback;
+        $this->idleInterval = $interval;
+    }
+
+    /**
      * Wait for a user events.
      *
      * @param $allow_timeout bool
@@ -600,6 +636,11 @@ class AsteriskManager
             }
             if ($type === '' && count($this->ping()) === 0) {
                 $timeout = $allow_timeout;
+            } elseif ($type === '' && $this->onIdleCallback !== null
+                && time() - $this->lastIdleCall >= $this->idleInterval
+            ) {
+                $this->lastIdleCall = time();
+                call_user_func($this->onIdleCallback);
             } elseif (stripos($type, 'event') !== false) {
                 $this->processEvent($parameters);
             }
