@@ -194,7 +194,7 @@ const outboundRoute = {
             providerid: data.providerid || '',
             priority: data.priority || '',
             numberbeginswith: data.numberbeginswith || '',
-            restnumbers: data.restnumbers === '-1' ? '' : (data.restnumbers || ''),
+            restnumbers: Number(data.restnumbers) === -1 ? '' : String(data.restnumbers ?? ''),
             trimfrombegin: data.trimfrombegin || '0',
             prepend: data.prepend || '',
             note: data.note || ''

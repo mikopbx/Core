@@ -169,8 +169,7 @@ class BaseActionHelper
                         $value = $filter->trim($value);
                         break;
                     case 'int':
-                        // Use absint for positive integers
-                        $value = $filter->absint($value);
+                        $value = (int)$value;
                         break;
                     case 'bool':
                         // Convert various representations to boolean
