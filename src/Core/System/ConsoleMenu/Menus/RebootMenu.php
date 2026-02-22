@@ -82,7 +82,7 @@ class RebootMenu extends AbstractMenu
             echo "\n\n";
             echo "  " . $this->translation->_('cm_SystemShuttingDown') . "\n\n  ";
 
-            file_put_contents('/tmp/shutdown', '1');
+            System::shutdown();
 
             // Wait indefinitely with progress indicator - system will shutdown before loop completes
             while (true) {
