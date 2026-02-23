@@ -103,7 +103,7 @@ class UpdateDatabase extends Injectable
      *
      * @return void
      */
-    private function updateModulesDbStructure(): void
+    public function updateModulesDbStructure(): void
     {
         $modulesDir = $this->config->path('core.modulesDir');
         $results = glob($modulesDir . '/*/module.json', GLOB_NOSORT);
