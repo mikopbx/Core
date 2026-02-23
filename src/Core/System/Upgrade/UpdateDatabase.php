@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\ModelsAnnotationsProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
+use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -62,6 +63,7 @@ class UpdateDatabase extends Injectable
         try {
             MainDatabaseProvider::recreateDBConnections(); // after storage remount
             $this->updateDbStructureByModelsAnnotations();
+            $this->updateModulesDbStructure();
             MainDatabaseProvider::recreateDBConnections(); // if we change anything in structure
         } catch (Throwable $e) {
             SystemMessages::echoWithSyslog('Errors within database upgrade process ' . $e->getMessage());
@@ -91,6 +93,61 @@ class UpdateDatabase extends Injectable
 
         // Update permissions for custom modules
         $this->updatePermitCustomModules();
+    }
+
+    /**
+     * Updates database structure for all installed modules.
+     * Iterates through module directories, reads model annotations,
+     * and applies schema changes (create/alter tables) the same way
+     * as core models are handled in updateDbStructureByModelsAnnotations().
+     *
+     * @return void
+     */
+    private function updateModulesDbStructure(): void
+    {
+        $modulesDir = $this->config->path('core.modulesDir');
+        $results = glob($modulesDir . '/*/module.json', GLOB_NOSORT);
+
+        if (empty($results)) {
+            return;
+        }
+
+        // Ensure module DB connections are registered before migration
+        ModulesDBConnectionsProvider::recreateModulesDBConnections();
+
+        foreach ($results as $moduleJson) {
+            $jsonString = file_get_contents($moduleJson);
+            if ($jsonString === false) {
+                continue;
+            }
+            $jsonModuleDescription = json_decode($jsonString, true);
+            if (
+                !is_array($jsonModuleDescription)
+                || !isset($jsonModuleDescription['moduleUniqueID'])
+            ) {
+                continue;
+            }
+
+            $moduleUniqueId = $jsonModuleDescription['moduleUniqueID'];
+            $moduleDir = dirname($moduleJson);
+            $modelsFiles = glob("$moduleDir/Models/*.php", GLOB_NOSORT);
+
+            foreach ($modelsFiles as $file) {
+                $className = pathinfo($file)['filename'];
+                $moduleModelClass = "Modules\\{$moduleUniqueId}\\Models\\{$className}";
+                try {
+                    $this->createUpdateDbTableByAnnotations($moduleModelClass);
+                } catch (Throwable $exception) {
+                    SystemMessages::echoWithSyslog(
+                        "Errors within update module table {$moduleUniqueId}/{$className}: "
+                        . $exception->getMessage()
+                    );
+                }
+            }
+        }
+
+        // Recreate connections after potential schema changes
+        ModulesDBConnectionsProvider::recreateModulesDBConnections();
     }
 
     /**
