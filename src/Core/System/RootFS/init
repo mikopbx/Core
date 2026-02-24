@@ -44,8 +44,23 @@ if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar
 	mv /mnt/etc/inittab_base "$resFileInitTab";
 
    # Scan for serial devices and configure them in inittab for automatic respawning of getty processes.
-  devises="$(/bin/ls /dev/ttyS* 2> /dev/null)";
+  # Scan both x86 (ttyS) and ARM (ttyAMA) serial ports
+  devises="$(/bin/ls /dev/ttyS* /dev/ttyAMA* 2> /dev/null)";
   for dev in $devises; do
+    # For ttyAMA (ARM) devices, setserial is not applicable — use character device check
+    case "$dev" in
+      /dev/ttyAMA*)
+        if [ -c "$dev" ] && [ -w "$dev" ] && echo -n "" > "$dev" 2>/dev/null; then
+          devName="$(/bin/busybox basename "$dev")";
+          echo " - Configuring $devName for conditional autologin.";
+          echo >> "$resFileInitTab";
+          echo "::respawn:/bin/sh -c 'i=1; while [ \$i -le 20 ]; do if [ -f /etc/ssh-tty-autologin ]; then break; fi; sleep 1; i=\$((i+1)); done; exec /sbin/agetty -a root -h -t 60 $devName 115200 vt102'" >> "$resFileInitTab"
+        fi
+        continue
+        ;;
+    esac
+
+    # For ttyS (x86) devices, use setserial to filter out unknown/absent ports
     serialInfo="$(/bin/busybox setserial -g "$dev" 2> /dev/null)";
     if [ "${serialInfo}x" = 'x' ]; then
       continue;

@@ -109,13 +109,14 @@ class SystemMessages extends Injectable
                 self::$availableSerialPorts = explode(' ', $serialPorts);
             }
         } else {
-            // Fallback to old method
-            for ($i = 0; $i <= 5; $i++) {
-                $device = "/dev/ttyS$i";
-                
-                // Simply check if device exists and is writable
-                if (file_exists($device) && is_writable($device)) {
-                    self::$availableSerialPorts[] = $device;
+            // Fallback to old method — scan x86 (ttyS) and ARM (ttyAMA) serial ports
+            foreach (['/dev/ttyS', '/dev/ttyAMA'] as $prefix) {
+                $maxIndex = ($prefix === '/dev/ttyS') ? 5 : 3;
+                for ($i = 0; $i <= $maxIndex; $i++) {
+                    $device = "$prefix$i";
+                    if (file_exists($device) && is_writable($device)) {
+                        self::$availableSerialPorts[] = $device;
+                    }
                 }
             }
         }

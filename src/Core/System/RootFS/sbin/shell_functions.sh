@@ -81,17 +81,14 @@ echoToTeletype()
   else
     # Fallback to old implementation if pbx-message is not available
     echo "$message";
-    local dev='/dev/ttyS0';
-    local serialInfo="$(/bin/busybox setserial -g "$dev" 2> /dev/null)";
-    if [ "${serialInfo}x" = 'x' ]; then
-      return;
-    fi;
-    echo "$serialInfo" | /bin/grep unknown > /dev/null 2> /dev/null;
-    resultSetSerial="$?";
-    if [ ! "$resultSetSerial" = '0' ]; then
-       # Device ttys found
-       echo "$1" >> "$dev"
-    fi;
+    local dev
+    for dev in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
+               /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
+      if [ -c "$dev" ] && [ -w "$dev" ] && echo -n "" > "$dev" 2>/dev/null; then
+        echo "$1" >> "$dev"
+        break
+      fi
+    done
   fi
 }
 

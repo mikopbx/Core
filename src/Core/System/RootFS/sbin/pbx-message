@@ -131,9 +131,10 @@ get_serial_ports() {
     fi
 
     # Bare-metal: find available serial ports without using setserial
+    # Scan both x86 (ttyS) and ARM (ttyAMA) serial ports
     SERIAL_PORTS=""
-    for i in 0 1 2 3 4 5; do
-        DEV="/dev/ttyS$i"
+    for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
+               /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
         # Simply check if device exists and is writable
         if [ -c "$DEV" ] && [ -w "$DEV" ]; then
             # Try to write a null byte to verify it's really available
@@ -177,7 +178,7 @@ output_serial() {
     local skip_port=""
     local stdout_target=$(/bin/busybox readlink /proc/self/fd/1 2>/dev/null)
     case "$stdout_target" in
-        /dev/ttyS*)
+        /dev/ttyS*|/dev/ttyAMA*)
             skip_port="$stdout_target"
             ;;
     esac

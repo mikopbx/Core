@@ -34,9 +34,10 @@ if [ -w /dev/console ] && echo -n "" > /dev/console 2>/dev/null; then
 fi
 
 # Detect serial port for this script's own messages (self-contained, no external deps)
+# Scan both x86 (ttyS) and ARM (ttyAMA) serial ports
 _SERIAL=""
-for _i in 0 1 2 3 4 5; do
-    _DEV="/dev/ttyS$_i"
+for _DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
+            /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
     if [ -c "$_DEV" ] && [ -w "$_DEV" ] && echo -n "" > "$_DEV" 2>/dev/null; then
         _SERIAL="$_DEV"
         break

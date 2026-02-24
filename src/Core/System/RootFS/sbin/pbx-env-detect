@@ -269,9 +269,9 @@ detect_serial_ports() {
         return
     fi
     
-    # Check for serial ports
-    for i in 0 1 2 3 4 5; do
-        DEV="/dev/ttyS$i"
+    # Check for serial ports (x86 ttyS and ARM ttyAMA)
+    for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
+               /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
         # Check if device exists and is character device
         if [ -c "$DEV" ] && [ -w "$DEV" ]; then
             # Try to write a null byte to verify it's really available
