@@ -105,12 +105,15 @@ echo_info "Backing up configuration...";
 mkdir -p /tmp/configbak;
 
 # Verify the MD5 hash of the compressed image file
+# The gzip header stores the MD5 hash as the original filename (via gzip -N)
 md5Hash="$(/bin/gunzip -N -l < "${img_file}" | /bin/busybox grep -v uncompressed_name | /bin/busybox awk  '{ print $4}')";
-if [ "$md5Hash" != "$(/bin/gunzip -c "${img_file}" |/bin/busybox md5sum | /bin/busybox cut -f 1 -d ' ')" ] ; then
+# Use busybox gunzip for decompression: GNU gzip 1.14 only removes one gzip layer
+# from double-compressed firmware images, producing wrong MD5
+if [ "$md5Hash" != "$(/bin/busybox gunzip -c "${img_file}" |/bin/busybox md5sum | /bin/busybox cut -f 1 -d ' ')" ] ; then
     # Inform the user of the checksum mismatch and abort the update
     echo_error "The checksum of the system image does not match.";
     echo_error "Update was aborted...";
-    rm -rf "$img_file";
+    rm -rf "$img_file" 2>/dev/null;
     # Set a flag to indicate rebooting.
     touch /tmp/rebooting;
     exit 0;
