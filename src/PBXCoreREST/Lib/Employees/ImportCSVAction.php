@@ -256,7 +256,7 @@ class ImportCSVAction
         }
         
         // Read headers
-        $headers = fgetcsv($handle);
+        $headers = fgetcsv($handle, 0, ',', '"', '');
         if (!$headers) {
             $result['errors'][] = TranslationProvider::translate('ex_ImportEmptyFile');
             fclose($handle);
@@ -283,7 +283,7 @@ class ImportCSVAction
         $records = [];
         $lineNumber = 2; // Starting from line 2 (after headers)
         
-        while (($row = fgetcsv($handle)) !== false) {
+        while (($row = fgetcsv($handle, 0, ',', '"', '')) !== false) {
             if (count($row) !== count($headers)) {
                 $result['errors'][] = TranslationProvider::translate('ex_ImportInvalidRow', [
                     'line' => $lineNumber
