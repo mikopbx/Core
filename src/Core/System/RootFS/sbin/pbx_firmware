@@ -20,11 +20,11 @@
 # Inline output functions - no external dependencies for maximum compatibility
 # This script must work when updating FROM any old MikoPBX version
 
-# Serial port for headless output (scan ttyS0-ttyS5, take first available)
+# Serial port for headless output (scan x86 ttyS0-5 and ARM ttyAMA0-3, take first available)
 # Cached once at script start to avoid repeated checks
 SERIAL_PORT=""
-for i in 0 1 2 3 4 5; do
-    DEV="/dev/ttyS$i"
+for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
+           /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
     # Check if device exists, is writable, and accepts test write
     if [ -c "$DEV" ] && [ -w "$DEV" ] && echo -n "" > "$DEV" 2>/dev/null; then
         SERIAL_PORT="$DEV"
@@ -239,7 +239,18 @@ if [ -r "${img_file}" ]; then
 
   echo_info "Installing new image on $DISK"
 
-  LC_ALL=C /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M 2>/tmp/dd_install_stats
+  # Wipe old GPT/MBR structures before dd to prevent stale backup header conflicts.
+  # Old backup GPT at end of disk survives dd of smaller image, causing CRC mismatch.
+  if /sbin/sgdisk --version >/dev/null 2>&1; then
+    echo_info "Clearing old partition table on $DISK..."
+    /sbin/sgdisk -Z "$DISK" > /dev/null 2>&1
+    sync
+  fi
+
+  # Use 'busybox gunzip' instead of standalone gunzip.
+  # GNU gzip 1.14 called as 'gunzip' only removes one gzip layer from double-compressed
+  # firmware images, writing still-compressed data to disk. BusyBox gunzip handles this correctly.
+  LC_ALL=C /bin/pv -p "${img_file}" | /bin/busybox gunzip | dd of="$DISK" bs=4M 2>/tmp/dd_install_stats
   resultPv="${PIPESTATUS[2]}"  # Exit code of dd (3rd command in pipeline)
 
   # Reset terminal after progress bar and flush all buffers
@@ -322,7 +333,7 @@ if [ -r "${img_file}" ]; then
     if [ -f "$backupImg" ]; then
       echo_error "Restoring system from backup to /dev/${systemDevice}"
 
-      LC_ALL=C /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M 2>/dev/null
+      LC_ALL=C /bin/pv -p "$backupImg" | /bin/busybox gunzip | dd of="$DISK" bs=4M 2>/dev/null
       # Reset terminal after progress bar
       printf '\033[0m\n' 2>/dev/null
       sync

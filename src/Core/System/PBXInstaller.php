@@ -244,10 +244,24 @@ class PBXInstaller extends Injectable
         echo Util::translate(" - Unpacking img...").PHP_EOL;
         $pv = Util::which('pv');
         $dd = Util::which('dd');
-        $gunzip = Util::which('gunzip');
+        $busybox = Util::which('busybox');
+        // Use 'busybox gunzip' instead of standalone gunzip.
+        // GNU gzip 1.14 called as 'gunzip' only removes one gzip layer from double-compressed
+        // firmware images, writing still-compressed data to disk. BusyBox gunzip handles this correctly.
+        $gunzip = "{$busybox} gunzip";
+
+        // Wipe old GPT/MBR structures before dd to prevent stale backup header conflicts.
+        // When a smaller image is written onto a larger disk with existing GPT, the old
+        // backup GPT header at the end of the disk survives and conflicts with the new
+        // main header, causing CRC mismatches and 0 partitions visible to the kernel.
+        $sgdisk = Util::which('sgdisk');
+        if (!empty($sgdisk)) {
+            echo " - Clearing old partition table on {$this->target_disk}..." . PHP_EOL;
+            Processes::mwExec("{$sgdisk} -Z /dev/{$this->target_disk}");
+        }
 
         $install_cmd = 'exec < /dev/console > /dev/console 2>/dev/console;' .
-            "$pv -p /offload/firmware.img.gz | $gunzip | $dd of=/dev/$this->target_disk bs=4M 2> /dev/null";
+            "$pv -p /offload/firmware.img.gz | $gunzip | $dd of=/dev/$this->target_disk bs=4M conv=fsync 2> /dev/null";
         passthru($install_cmd);
 
         $this->syncAndRereadPartitions();
@@ -263,89 +277,15 @@ class PBXInstaller extends Injectable
      *
      * Without these steps, lsblk won't see any partitions and subsequent mount operations fail.
      *
+     * Uses a native shell script instead of PHP exec calls because Processes::mwExec()
+     * redirects stderr via 2>&1, which is unreliable in the initramfs environment.
+     *
      * @see src/Core/System/RootFS/sbin/pbx_firmware lines 248-310 for the shell equivalent
      */
     private function syncAndRereadPartitions(): void
     {
         $dev = escapeshellarg("/dev/$this->target_disk");
-
-        $sync     = Util::which('sync');
-        $blockdev = Util::which('blockdev');
-        $sgdisk   = Util::which('sgdisk');
-        $lsblk    = Util::which('lsblk');
-
-        // Step 1: Flush all buffers to disk
-        shell_exec($sync);
-        sleep(2);
-
-        // Step 2: Re-read partition table so the kernel sees partitions
-        Processes::mwExec("$blockdev --rereadpt $dev");
-        shell_exec($sync);
-        sleep(3);
-
-        // Step 3: Relocate GPT backup header to end of disk.
-        // The firmware image is built for a small disk (~500 MB). When written to a larger disk,
-        // the backup GPT header remains at the original position instead of at the end of the disk.
-        // Tools like parted/sfdisk will report a corrupted GPT until this is fixed.
-        $this->relocateGptBackupHeader($dev, $sgdisk);
-
-        // Step 4: Final re-read after GPT fix
-        Processes::mwExec("$blockdev --rereadpt $dev");
-        sleep(3);
-
-        // Validate: check that the kernel now sees partitions
-        $partCount = trim(shell_exec("$lsblk -l $dev 2>/dev/null | grep -c part") ?? '0');
-        if ((int)$partCount < 3) {
-            echo "WARNING: Expected at least 3 partitions, found $partCount" . PHP_EOL;
-            echo "Disk state:" . PHP_EOL;
-            passthru("$lsblk $dev 2>&1");
-        }
-    }
-
-    /**
-     * Relocate GPT backup header to the end of the disk.
-     *
-     * Tries sgdisk (preferred), falls back to gdisk, then to parted.
-     *
-     * @param string $dev Escaped device path (e.g. '/dev/vda')
-     * @param string $sgdisk Path to sgdisk binary
-     */
-    private function relocateGptBackupHeader(string $dev, string $sgdisk): void
-    {
-        // Try sgdisk with retry (preferred method)
-        if (!empty($sgdisk)) {
-            echo " - Relocating GPT backup header (sgdisk)..." . PHP_EOL;
-            for ($attempt = 1; $attempt <= 2; $attempt++) {
-                $retCode = Processes::mwExec("$sgdisk -e $dev");
-                if ($retCode === 0) {
-                    return;
-                }
-                if ($attempt < 2) {
-                    echo "   sgdisk attempt $attempt failed, retrying..." . PHP_EOL;
-                    sleep(3);
-                }
-            }
-        }
-
-        // Fallback: gdisk
-        $gdisk = Util::which('gdisk');
-        if (!empty($gdisk)) {
-            echo " - Relocating GPT backup header (gdisk fallback)..." . PHP_EOL;
-            $echoPath = Util::which('echo');
-            Processes::mwExec("$echoPath -e 'x\ne\nw\nY\n' | $gdisk $dev");
-            return;
-        }
-
-        // Fallback: parted
-        $parted = Util::which('parted');
-        if (!empty($parted)) {
-            echo " - Relocating GPT backup header (parted fallback)..." . PHP_EOL;
-            $echoPath = Util::which('echo');
-            Processes::mwExec("$echoPath Fix | $parted $dev print ---pretend-input-tty");
-            return;
-        }
-
-        echo "WARNING: No GPT utility available to fix backup header!" . PHP_EOL;
+        passthru("/sbin/pbx_fix_partition_table $dev");
     }
 
     /**
