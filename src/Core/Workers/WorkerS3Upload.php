@@ -151,8 +151,14 @@ class WorkerS3Upload extends WorkerBase
         $hdd = $storage->getAllHdd(true);
 
         foreach ($hdd as $disk) {
-            if ($disk['sys_disk'] === true && !Storage::isStorageDiskMounted("{$disk['id']}4")) {
-                continue; // Skip unmounted system disk
+            if ($disk['sys_disk'] === true) {
+                $storagePartition = "{$disk['id']}4";
+                if (!Storage::isStorageDiskMounted($storagePartition)) {
+                    continue; // Skip unmounted system disk
+                }
+                // On single-disk systems, getAllHdd reports free_space from offload (partition 2),
+                // not from storage (partition 4). Use actual storage partition free space.
+                $disk['free_space'] = Storage::getFreeSpace($storagePartition);
             }
 
             if ($disk['free_space'] < self::MIN_SPACE_MB) {

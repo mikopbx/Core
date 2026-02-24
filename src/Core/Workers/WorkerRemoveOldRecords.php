@@ -47,9 +47,16 @@ class WorkerRemoveOldRecords extends WorkerBase
 
         // Check disk space for each disk
         foreach ($hdd as $disk) {
-            if ($disk['sys_disk'] === true && !Storage::isStorageDiskMounted("{$disk['id']}4")) {
-                // Skip the system disk (4th partition) if it's not mounted
-                continue;
+            if ($disk['sys_disk'] === true) {
+                $storagePartition = "{$disk['id']}4";
+                if (!Storage::isStorageDiskMounted($storagePartition)) {
+                    // Skip the system disk if the 4th partition is not mounted as storage
+                    continue;
+                }
+                // On single-disk systems, getAllHdd reports free_space from the first
+                // mounted partition (offload/vda2), not from storage (vda4).
+                // Use the actual storage partition free space for the alert check.
+                $disk['free_space'] = Storage::getFreeSpace($storagePartition);
             }
             [$need_alert, $need_clean, $test_alert] = $this->check($disk);
             if ($need_alert) {
