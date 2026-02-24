@@ -79,6 +79,7 @@ class WorkerAuthFailureMonitor extends WorkerRedisBase
         // Main processing loop
         while (!$this->needRestart && !$this->isShuttingDown) {
             pcntl_signal_dispatch(); // Handle system signals
+            $this->checkHeartbeat(); // Keep supervisor heartbeat alive
 
             try {
                 $this->executeMonitoringCycle();

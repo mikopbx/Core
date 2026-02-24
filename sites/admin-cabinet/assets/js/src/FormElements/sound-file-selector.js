@@ -93,7 +93,9 @@ const SoundFileSelector = {
         const config = { ...this.defaults, ...options };
         
         // Get current value and represent text from data object if provided
-        const currentValue = (options.data && options.data[fieldId]) || $hiddenInput.val() || config.defaultValue || '';
+        const rawValue = (options.data && options.data[fieldId]) || $hiddenInput.val() || config.defaultValue || '';
+        // Normalize empty option value: -1 from getForSelect API means "no selection"
+        const currentValue = (rawValue === '-1' || rawValue === -1) ? '' : rawValue;
         const currentText = this.detectInitialText(fieldId, options.data) || config.placeholder;
         
         // Create dropdown configuration for DynamicDropdownBuilder
@@ -179,14 +181,17 @@ const SoundFileSelector = {
         const instance = this.instances.get(fieldId);
         if (!instance) return;
         
+        // Normalize empty option value: -1 from getForSelect API means "no selection"
+        const normalizedValue = (value === '-1' || value === -1) ? '' : value;
+
         // Update instance state
-        instance.currentValue = value;
+        instance.currentValue = normalizedValue;
         instance.currentText = text;
-        
+
         // CRITICAL: Update hidden input field to maintain synchronization
         const $hiddenInput = $(`#${fieldId}`);
         if ($hiddenInput.length) {
-            $hiddenInput.val(value);
+            $hiddenInput.val(normalizedValue);
         }
         
         // Update play button state
