@@ -100,8 +100,7 @@ class DeleteRecordAction extends AbstractDeleteAction
             }
             
         } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            \MikoPBX\Common\Handlers\CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            return self::handleDeleteError($e, $res);
         }
         
         return $res;

@@ -124,8 +124,20 @@ class DeleteRecordAction
             if (isset($db)) {
                 $db->rollback();
             }
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
             $res->messages['error'][] = $e->getMessage();
+
+            // Constraint violations are expected business logic, not critical errors
+            $msg = $e->getMessage();
+            $isConstraintViolation = str_contains($msg, 'ui header')
+                || str_contains($msg, 'FOREIGN KEY')
+                || str_contains($msg, 'constraint')
+                || str_contains($msg, 'is in use');
+
+            if ($isConstraintViolation) {
+                $res->httpCode = 409;
+            } else {
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            }
         }
 
         return $res;

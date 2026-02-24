@@ -105,26 +105,17 @@ abstract class AbstractDeleteAction
 
         $extension = Extensions::findFirstByNumber($extensionNumber);
         if ($extension && !$extension->delete()) {
-            // Get the error messages
             $messages = $extension->getMessages();
-            $errorMessage = implode(', ', $messages);
-            
-            // If the error message contains HTML (constraint violation with links),
-            // don't add a prefix as it already has proper formatting
-            if (strpos($errorMessage, '<div class="ui header">') !== false) {
-                throw new \Exception($errorMessage);
-            } else {
-                // For simple error messages, add the prefix
-                throw new \Exception('Failed to delete extension: ' . $errorMessage);
-            }
+            throw new \Exception(implode(', ', $messages));
         }
     }
 
     /**
      * Execute delete operation within transaction
-     * 
+     *
      * Provides consistent transaction handling for delete operations.
-     * Automatically rolls back on exceptions and logs errors.
+     * Lets exceptions propagate to the caller for proper classification
+     * (constraint violations vs unexpected errors).
      *
      * @param callable $deleteCallback Function that performs the actual deletion
      * @return mixed Result from callback function
@@ -132,12 +123,7 @@ abstract class AbstractDeleteAction
      */
     protected static function executeDeleteInTransaction(callable $deleteCallback)
     {
-        try {
-            return BaseActionHelper::executeInTransaction($deleteCallback);
-        } catch (\Exception $e) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            throw $e;
-        }
+        return BaseActionHelper::executeInTransaction($deleteCallback);
     }
 
     /**
@@ -175,7 +161,27 @@ abstract class AbstractDeleteAction
     }
 
     /**
+     * Check if an exception message indicates a constraint violation
+     *
+     * Constraint violations are expected business logic (record is in use by other entities),
+     * not critical errors, and should not be reported to Sentry.
+     *
+     * @param string $message Exception message to check
+     * @return bool True if message indicates a constraint violation
+     */
+    protected static function isConstraintViolation(string $message): bool
+    {
+        return str_contains($message, 'ui header')
+            || str_contains($message, 'FOREIGN KEY')
+            || str_contains($message, 'constraint')
+            || str_contains($message, 'is in use');
+    }
+
+    /**
      * Handle delete operation errors consistently
+     *
+     * Constraint violations (record in use) are returned as 409 Conflict
+     * without reporting to Sentry. Unexpected errors are reported to Sentry.
      *
      * @param \Exception $exception Exception that occurred during delete
      * @param PBXApiResult $result Result object to populate with error
@@ -184,7 +190,13 @@ abstract class AbstractDeleteAction
     protected static function handleDeleteError(\Exception $exception, PBXApiResult $result): PBXApiResult
     {
         $result->messages['error'][] = $exception->getMessage();
-        CriticalErrorsHandler::handleExceptionWithSyslog($exception);
+
+        if (self::isConstraintViolation($exception->getMessage())) {
+            $result->httpCode = 409;
+        } else {
+            CriticalErrorsHandler::handleExceptionWithSyslog($exception);
+        }
+
         return $result;
     }
 
@@ -261,17 +273,8 @@ abstract class AbstractDeleteAction
 
                 // Delete main record
                 if (!$record->delete()) {
-                    // Get error messages and format them properly
                     $messages = $record->getMessages();
-                    $errorMessage = implode(', ', $messages);
-
-                    // Don't add prefix if message already contains formatted HTML
-                    // (e.g., constraint violation errors with HTML structure)
-                    if (strpos($errorMessage, '<') === false) {
-                        $errorMessage = 'Failed to delete record: ' . $errorMessage;
-                    }
-
-                    throw new \Exception($errorMessage);
+                    throw new \Exception(implode(', ', $messages));
                 }
 
                 return $stats;
@@ -300,13 +303,6 @@ abstract class AbstractDeleteAction
             SystemMessages::sysLogMsg($res->processor, $logMessage, LOG_INFO);
 
         } catch (\Exception $e) {
-            // Check if error is due to constraint violation (record in use)
-            $errorMessage = $e->getMessage();
-            if (strpos($errorMessage, 'FOREIGN KEY') !== false ||
-                strpos($errorMessage, 'constraint') !== false ||
-                strpos($errorMessage, 'is in use') !== false) {
-                $res->httpCode = 409; // Conflict - proper RESTful code
-            }
             return self::handleDeleteError($e, $res);
         }
 
