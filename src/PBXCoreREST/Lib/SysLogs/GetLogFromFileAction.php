@@ -117,7 +117,7 @@ class GetLogFromFileAction extends Injectable
                 // Decompress based on file extension
                 switch ($fileExtension) {
                     case 'gz':
-                        $cmd = Util::which('gunzip') . ' -c ' . $filename . ' > ' . $decompressedFile;
+                        $cmd = Util::which('busybox') . ' gunzip -c ' . $filename . ' > ' . $decompressedFile;
                         Processes::mwExec($cmd);
                         break;
                     case 'bz2':

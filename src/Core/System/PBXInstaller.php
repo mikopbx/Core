@@ -244,11 +244,48 @@ class PBXInstaller extends Injectable
         echo Util::translate(" - Unpacking img...").PHP_EOL;
         $pv = Util::which('pv');
         $dd = Util::which('dd');
-        $gunzip = Util::which('gunzip');
+        $busybox = Util::which('busybox');
+        // Use 'busybox gunzip' instead of standalone gunzip.
+        // GNU gzip 1.14 called as 'gunzip' only removes one gzip layer from double-compressed
+        // firmware images, writing still-compressed data to disk. BusyBox gunzip handles this correctly.
+        $gunzip = "{$busybox} gunzip";
+
+        // Wipe old GPT/MBR structures before dd to prevent stale backup header conflicts.
+        // When a smaller image is written onto a larger disk with existing GPT, the old
+        // backup GPT header at the end of the disk survives and conflicts with the new
+        // main header, causing CRC mismatches and 0 partitions visible to the kernel.
+        $sgdisk = Util::which('sgdisk');
+        if (!empty($sgdisk)) {
+            echo " - Clearing old partition table on {$this->target_disk}..." . PHP_EOL;
+            Processes::mwExec("{$sgdisk} -Z /dev/{$this->target_disk}");
+        }
 
         $install_cmd = 'exec < /dev/console > /dev/console 2>/dev/console;' .
-            "$pv -p /offload/firmware.img.gz | $gunzip | $dd of=/dev/$this->target_disk bs=4M 2> /dev/null";
+            "$pv -p /offload/firmware.img.gz | $gunzip | $dd of=/dev/$this->target_disk bs=4M conv=fsync 2> /dev/null";
         passthru($install_cmd);
+
+        $this->syncAndRereadPartitions();
+    }
+
+    /**
+     * Flush buffers, re-read partition table, and relocate GPT backup header.
+     *
+     * After dd writes a smaller firmware image to a larger disk, three steps are required:
+     * 1. sync — flush kernel buffers to ensure data is written to disk
+     * 2. blockdev --rereadpt — tell the kernel to re-read the partition table
+     * 3. sgdisk -e — move the GPT backup header to the end of the actual disk
+     *
+     * Without these steps, lsblk won't see any partitions and subsequent mount operations fail.
+     *
+     * Uses a native shell script instead of PHP exec calls because Processes::mwExec()
+     * redirects stderr via 2>&1, which is unreliable in the initramfs environment.
+     *
+     * @see src/Core/System/RootFS/sbin/pbx_firmware lines 248-310 for the shell equivalent
+     */
+    private function syncAndRereadPartitions(): void
+    {
+        $dev = escapeshellarg("/dev/$this->target_disk");
+        passthru("/sbin/pbx_fix_partition_table $dev");
     }
 
     /**

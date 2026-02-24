@@ -1,0 +1,183 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+# Sync buffers, re-read partition table, and relocate GPT backup header after dd.
+#
+# After dd writes a smaller firmware image to a larger disk, the kernel doesn't
+# see partitions and the GPT backup header is at the wrong offset. This script:
+#   1. sync + blockdev --rereadpt
+#   2. Partition count check with partprobe/partx fallbacks
+#   3. GPT backup header relocation: sgdisk -e → gdisk → parted
+#   4. Retry loop up to 15 seconds
+#
+# Usage: pbx_fix_partition_table /dev/sdX
+#
+# Exit codes:
+#   0 - success (>= 3 partitions visible)
+#   1 - failure (partitions not visible after retries)
+#   2 - invalid arguments
+
+# Load shell functions for console/serial output
+source /sbin/shell_functions.sh
+
+DISK="$1"
+
+if [ -z "$DISK" ]; then
+  echo_error "Usage: pbx_fix_partition_table /dev/sdX"
+  exit 2
+fi
+
+if [ ! -b "$DISK" ]; then
+  echo_error "Device $DISK is not a block device"
+  exit 2
+fi
+
+# Step 1: Flush buffers and re-read partition table
+echo_info "Syncing buffers..."
+sync
+sleep 2
+
+echo_info "Re-reading partition table on $DISK..."
+/sbin/blockdev --rereadpt "$DISK" > /dev/null 2>&1
+rereadResult=$?
+echo_info "blockdev --rereadpt exit code: $rereadResult"
+sync
+sleep 3
+
+# Step 2: Check partition count, apply fallbacks if needed
+partCount=$(/bin/lsblk -l "$DISK" 2>/dev/null | /bin/busybox grep -c part)
+echo_info "Partition count after reread: $partCount"
+
+if [ "$partCount" -lt 3 ]; then
+  echo_info "Too few partitions ($partCount), trying partprobe..."
+  if command -v partprobe >/dev/null 2>&1; then
+    partprobe "$DISK" 2>/dev/null
+    sleep 2
+    partCount=$(/bin/lsblk -l "$DISK" 2>/dev/null | /bin/busybox grep -c part)
+    echo_info "Partition count after partprobe: $partCount"
+  fi
+fi
+
+if [ "$partCount" -lt 3 ]; then
+  echo_info "Still too few partitions ($partCount), trying partx -a..."
+  if command -v partx >/dev/null 2>&1; then
+    partx -a "$DISK" 2>/dev/null
+    sleep 2
+    partCount=$(/bin/lsblk -l "$DISK" 2>/dev/null | /bin/busybox grep -c part)
+    echo_info "Partition count after partx: $partCount"
+  fi
+fi
+
+# Step 3: Wait for device node to stabilize
+if [ ! -b "$DISK" ]; then
+  echo_info "Waiting for device $DISK to become available..."
+  for _i in 1 2 3 4 5 6 7 8 9 10; do
+    [ -b "$DISK" ] && break
+    sleep 1
+  done
+fi
+
+# Step 4: Relocate GPT backup header to end of disk
+if [ ! -b "$DISK" ]; then
+  echo_error "Device $DISK not available, skipping GPT backup header relocation"
+elif /sbin/sgdisk --version >/dev/null 2>&1; then
+  echo_info "Relocating GPT backup header to end of disk (sgdisk) on $DISK..."
+  sgdiskResult=1
+  for _attempt in 1 2; do
+    sgdiskOutput=$(/sbin/sgdisk -e "$DISK" 2>&1)
+    sgdiskResult=$?
+    if [ "$sgdiskResult" -eq 0 ]; then
+      break
+    fi
+    if [ "$_attempt" -lt 2 ]; then
+      echo_info "sgdisk attempt $_attempt failed (exit code: $sgdiskResult), retrying in 3s..."
+      sleep 3
+    fi
+  done
+  echo_info "sgdisk exit code: $sgdiskResult"
+  if [ "$sgdiskResult" -ne 0 ] && [ -n "$sgdiskOutput" ]; then
+    echo "$sgdiskOutput" | while IFS= read -r line; do echo_info "sgdisk: $line"; done
+  fi
+
+  # Recovery: if sgdisk -e failed, the likely cause is a stale backup GPT header
+  # at the end of the disk from a previous installation conflicting with the new
+  # main header from the image. Wipe the backup GPT area and retry.
+  if [ "$sgdiskResult" -ne 0 ]; then
+    diskSectors=$(blockdev --getsz "$DISK" 2>/dev/null)
+    if [ -n "$diskSectors" ] && [ "$diskSectors" -gt 34 ]; then
+      echo_info "Recovery: wiping stale backup GPT at end of $DISK (sectors $((diskSectors - 34))-$diskSectors)..."
+      dd if=/dev/zero of="$DISK" bs=512 seek=$((diskSectors - 34)) count=34 conv=notrunc 2>/dev/null
+      sync
+      sleep 1
+      echo_info "Retrying sgdisk -e after backup GPT wipe..."
+      sgdiskOutput=$(/sbin/sgdisk -e "$DISK" 2>&1)
+      sgdiskResult=$?
+      echo_info "sgdisk recovery exit code: $sgdiskResult"
+      if [ "$sgdiskResult" -ne 0 ] && [ -n "$sgdiskOutput" ]; then
+        echo "$sgdiskOutput" | while IFS= read -r line; do echo_info "sgdisk: $line"; done
+      fi
+    fi
+  fi
+elif /sbin/gdisk --version >/dev/null 2>&1; then
+  echo_info "Relocating GPT backup header to end of disk (gdisk fallback) on $DISK..."
+  gdiskOutput=$(echo -e "x\ne\nw\nY\n" | /sbin/gdisk "$DISK" 2>&1)
+  gdiskResult=$?
+  echo_info "gdisk exit code: $gdiskResult"
+  if [ -n "$gdiskOutput" ]; then
+    echo "$gdiskOutput" | while IFS= read -r line; do echo_info "gdisk: $line"; done
+  fi
+elif [ -x /sbin/parted ]; then
+  echo_info "Relocating GPT backup header to end of disk (parted fallback) on $DISK..."
+  partedOutput=$(echo "Fix" | /sbin/parted "$DISK" print ---pretend-input-tty 2>&1)
+  partedResult=$?
+  echo_info "parted exit code: $partedResult"
+  if [ -n "$partedOutput" ]; then
+    echo "$partedOutput" | while IFS= read -r line; do echo_info "parted: $line"; done
+  fi
+else
+  echo_error "No GPT utility available to fix backup header!"
+fi
+
+# Step 5: Final re-read after GPT fix
+echo_info "Final partition table re-read on $DISK..."
+/sbin/blockdev --rereadpt "$DISK" > /dev/null 2>&1
+sync
+sleep 3
+
+# Step 6: Retry loop — wait up to 15s for partitions to appear
+elapsed=0
+while [ "$elapsed" -lt 15 ]; do
+  partCount=$(/bin/lsblk -l "$DISK" 2>/dev/null | /bin/busybox grep -c part)
+  if [ "$partCount" -ge 3 ]; then
+    echo_info "Found $partCount partitions on $DISK, OK"
+    exit 0
+  fi
+  echo_info "Waiting for partitions... ($partCount found, need >= 3, ${elapsed}s elapsed)"
+  /sbin/blockdev --rereadpt "$DISK" > /dev/null 2>&1
+  sleep 2
+  elapsed=$((elapsed + 2))
+done
+
+# Failure diagnostics
+echo_error "Expected at least 3 partitions on $DISK, found $partCount after ${elapsed}s"
+echo_info "Disk state:"
+/bin/lsblk "$DISK" 2>&1 | while IFS= read -r line; do echo_info "  $line"; done
+echo_info "Recent kernel messages:"
+dmesg | tail -20 | while IFS= read -r line; do echo_info "  $line"; done
+exit 1

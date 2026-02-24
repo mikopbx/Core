@@ -553,8 +553,7 @@ class Storage extends Injectable
     public static function isStorageDisk(string $device): bool
     {
         // Check if the device path exists
-        if (!file_exists($device)) {
-            echo("Disk $device not found") . PHP_EOL;
+        if (empty($device) || !file_exists($device)) {
             return false;
         }
         $result = false;

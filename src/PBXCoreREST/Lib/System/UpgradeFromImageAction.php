@@ -246,9 +246,11 @@ class UpgradeFromImageAction extends Injectable
         Util::mwMkdir($mountPoint);
         Util::mwMkdir($desiredLocation);
 
-        // Decompress the IMG file
-        $gunzip = Util::which('gunzip');
-        $decompressCmd = "$gunzip -c '$imageFileLocation' > '$decompressedImg'";
+        // Decompress the IMG file using 'busybox gunzip' instead of standalone gunzip.
+        // GNU gzip 1.14 called as 'gunzip' only removes one gzip layer from double-compressed
+        // firmware images. BusyBox gunzip handles this correctly.
+        $busybox = Util::which('busybox');
+        $decompressCmd = "$busybox gunzip -c '$imageFileLocation' > '$decompressedImg'";
         Processes::mwExec($decompressCmd);
 
         // Setup loop device with the correct offset
@@ -369,9 +371,9 @@ class UpgradeFromImageAction extends Injectable
      */
     private static function extractFileFromInitramfs(string $initramfsPath, string $filePath, string $outputPath): void
     {
-        $gunzip = Util::which('gunzip');
+        $busybox = Util::which('busybox');
         $cpio = Util::which('cpio');
-        $cmd = "$gunzip -c '$initramfsPath' | $cpio -i --to-stdout '$filePath' 2>/dev/null> '$outputPath'";
+        $cmd = "$busybox gunzip -c '$initramfsPath' | $cpio -i --to-stdout '$filePath' 2>/dev/null> '$outputPath'";
         exec($cmd);
     }
 
