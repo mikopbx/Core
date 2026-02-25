@@ -125,6 +125,7 @@ class CreateRowTransfer
         }
 
         $insert_data['recordingfile'] = $recordingfile;
+        $insert_data['rec_src_channel'] = $worker->getRecSrcChannel($insert_data['dst_chan'], $insert_data['src_chan'], $insert_data['dst_chan']);
         $insert_data['start'] = $data['end'];
         $insert_data['answer'] = $data['end'];
         $insert_data['linkedid'] = $data['linkedid'];
@@ -192,6 +193,9 @@ class CreateRowTransfer
             // Check if recording file is not empty and enable monitor for the call.
             if (!empty($not_ended_cdr->recordingfile) && $worker->enableMonitor($not_ended_cdr->src_num, $not_ended_cdr->dst_num)) {
                 $worker->MixMonitor($not_ended_cdr->dst_chan, '', '', $not_ended_cdr->recordingfile, 'fillFailRedirectCdrData');
+                $recSrcCh = $worker->getRecSrcChannel($not_ended_cdr->dst_chan, $not_ended_cdr->src_chan, $not_ended_cdr->dst_chan);
+                $not_ended_cdr->writeAttribute('rec_src_channel', $recSrcCh);
+                $not_ended_cdr->save();
             }
         }
     }

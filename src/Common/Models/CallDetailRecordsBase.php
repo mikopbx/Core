@@ -207,4 +207,12 @@ abstract class CallDetailRecordsBase extends ModelsBase
      * @Column(type="integer", nullable=true)
      */
     public ?string $a_transfer = '0';
+
+    /**
+     * Stereo channel index containing src_num audio.
+     * '0' = LEFT channel, '1' = RIGHT channel, '' = mono or no recording.
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $rec_src_channel = '';
 }

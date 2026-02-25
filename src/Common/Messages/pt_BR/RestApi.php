@@ -1557,6 +1557,7 @@ return [
     'rest_schema_cdr_token' => 'Token de acesso temporário para reprodução da gravação da chamada',
     'rest_schema_cdr_recording_url' => 'URL para reproduzir a gravação da chamada com um token de acesso temporário.',
     'rest_schema_cdr_download_url' => 'URL para baixar o arquivo de gravação da chamada (anexo) com um token de acesso temporário.',
+    'rest_schema_cdr_rec_src_channel' => 'Índice de canal estéreo do áudio src_num (0=esquerdo, 1=direito, vazio=mono)',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Identificador único da fila',
     'rest_schema_cq_recive_calls_while_on_a_call' => 'Permitir receber chamadas durante uma chamada',

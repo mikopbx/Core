@@ -709,6 +709,7 @@ return [
     'rest_schema_cdr_recording_url' => 'URL permettant de lire l\'enregistrement de l\'appel avec un jeton d\'accès temporaire',
     'rest_schema_cdr_playback_url' => 'URL pour la diffusion en continu de l\'enregistrement de l\'appel (intégré) avec un jeton d\'accès temporaire',
     'rest_schema_cdr_download_url' => 'URL pour télécharger le fichier d\'enregistrement de l\'appel (pièce jointe) avec un jeton d\'accès temporaire',
+    'rest_schema_cdr_rec_src_channel' => 'Indice de canal stéréo de l\'audio src_num (0=gauche, 1=droite, vide=mono)',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Identifiant unique de la file d\'attente',
     'rest_schema_cq_extension' => 'numéro de file d\'attente interne',

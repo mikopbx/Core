@@ -1601,6 +1601,7 @@ return [
     'rest_schema_cdr_dateFrom' => 'Datum početka razdoblja uzorkovanja CDR-a',
     'rest_schema_cdr_dst_num_filter' => 'Filtriraj po broju pozivatelja',
     'rest_schema_cdr_download_url' => 'URL za preuzimanje datoteke snimke poziva (privitak) s privremenim tokenom za pristup',
+    'rest_schema_cdr_rec_src_channel' => 'Indeks stereo kanala zvuka src_num (0=lijevo, 1=desno, prazno=mono)',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Jedinstveni identifikator reda čekanja',
     'rest_schema_cq_extension' => 'Interni broj reda čekanja za proširenje',

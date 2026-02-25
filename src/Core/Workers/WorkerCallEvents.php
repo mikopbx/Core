@@ -237,6 +237,34 @@ class WorkerCallEvents extends WorkerBase
         }
     }
 
+    /**
+     * Determines which stereo channel contains src_num audio.
+     *
+     * In stereo recording mode, MixMonitor splits audio into two files:
+     *   _out.wav (transmit) → LEFT channel (0)
+     *   _in.wav  (receive)  → RIGHT channel (1)
+     *
+     * When MixMonitor runs on dst_chan: src_num is on RIGHT (1).
+     * When MixMonitor runs on src_chan: src_num is on LEFT (0).
+     *
+     * @param string $recChannel Channel MixMonitor is running on
+     * @param string $srcChan CDR src_chan
+     * @param string $dstChan CDR dst_chan
+     * @return string '0'=LEFT, '1'=RIGHT, ''=mono/undetermined
+     */
+    public function getRecSrcChannel(string $recChannel, string $srcChan, string $dstChan): string
+    {
+        if (!$this->split_audio_thread || empty($recChannel)) {
+            return '';
+        }
+        if ($recChannel === $dstChan) {
+            return '1';
+        }
+        if ($recChannel === $srcChan) {
+            return '0';
+        }
+        return '';
+    }
 
     /**
      * Starts the process, sets up initial options and worker subscribers.

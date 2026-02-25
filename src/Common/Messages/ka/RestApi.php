@@ -1955,6 +1955,7 @@ return [
     'rest_schema_cdr_filename' => 'ჩამოსატვირთი ფაილის სახელი',
     'rest_schema_cdr_token' => 'ზარის ჩანაწერის დასაკრავად დროებითი წვდომის ნიშანი',
     'rest_schema_cdr_download_url' => 'URL ზარის ჩაწერის ფაილის (დანართი) ჩამოსატვირთად დროებითი წვდომის ტოკენით',
+    'rest_schema_cdr_rec_src_channel' => 'src_num აუდიოს სტერეო არხის ინდექსი (0=მარცხენა, 1=მარჯვენა, ცარიელი=მონო)',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'უნიკალური რიგის იდენტიფიკატორი',
     'rest_schema_cq_name' => 'რიგის სახელი',

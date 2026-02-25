@@ -417,6 +417,7 @@ return [
     'rest_schema_cdr_recording_url' => 'URL để phát bản ghi âm cuộc gọi với mã truy cập tạm thời',
     'rest_schema_cdr_playback_url' => 'URL để phát trực tuyến bản ghi âm cuộc gọi (nội tuyến) với mã thông báo truy cập tạm thời',
     'rest_schema_cdr_download_url' => 'URL để tải xuống tệp ghi âm cuộc gọi (tệp đính kèm) kèm mã truy cập tạm thời',
+    'rest_schema_cdr_rec_src_channel' => 'Chỉ số kênh stereo của âm thanh src_num (0=trái, 1=phải, trống=mono)',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Mã định danh hàng đợi duy nhất',
     'rest_schema_cq_extension' => 'Số hàng đợi mở rộng nội bộ',

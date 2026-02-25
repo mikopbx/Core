@@ -113,6 +113,7 @@ return [
     'rest_schema_cdr_recording_url' => 'URL för att spela upp samtalsinspelningen med en tillfällig åtkomsttoken',
     'rest_schema_cdr_playback_url' => 'URL för att strömma samtalsinspelningen (inbäddad) med en tillfällig åtkomsttoken',
     'rest_schema_cdr_download_url' => 'URL för att ladda ner samtalsinspelningsfilen (bilaga) med en tillfällig åtkomsttoken',
+    'rest_schema_cdr_rec_src_channel' => 'Stereokanal-index för src_num-ljud (0=vänster, 1=höger, tomt=mono)',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Unik köidentifierare',
     'rest_schema_cq_seconds_for_wrapup' => 'Bearbetningstid efter avslutat samtal i sekunder',

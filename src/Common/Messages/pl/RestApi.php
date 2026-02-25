@@ -147,6 +147,7 @@ return [
     'rest_schema_cdr_dateTo' => 'Data zakończenia okresu pobierania próbek CDR',
     'rest_schema_cdr_filename' => 'Nazwa pliku do pobrania',
     'rest_schema_cdr_download_url' => 'Adres URL umożliwiający pobranie pliku z nagraniem rozmowy (załącznik) z tymczasowym tokenem dostępu',
+    'rest_schema_cdr_rec_src_channel' => 'Indeks kanału stereo dźwięku src_num (0=lewy, 1=prawy, pusty=mono)',
     'rest_schema_cq_represent' => 'Reprezentacja HTML do wyświetlania na listach rozwijanych',
     'rest_schema_cq_announce_hold_time' => 'Podaj przewidywany czas oczekiwania',
     'rest_schema_cq_timeout_to_redirect_to_extension' => 'Przekroczenie limitu czasu przed przekierowaniem do rozszerzenia',

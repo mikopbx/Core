@@ -916,6 +916,7 @@ return [
     'rest_schema_system_last_check' => 'Dato og tidspunkt for sidste opdateringstjek',
     'rest_lic_CaptureFeature' => 'Registrer en funktion for et produkt',
     'rest_schema_cdr_download_url' => 'URL til download af opkaldsoptagelsesfilen (vedhæftet fil) med et midlertidigt adgangstoken',
+    'rest_schema_cdr_rec_src_channel' => 'Stereokanal-indeks for src_num-lyd (0=venstre, 1=højre, tom=mono)',
     'rest_schema_cq_number_unanswered_calls_to_redirect' => 'Antal ubesvarede opkald før viderestilling',
     'rest_param_cq_description' => 'Købeskrivelse',
     'rest_ms_GetOAuth2UrlDesc' => 'Generer en URL til OAuth2-godkendelse i din e-mailudbyder (Gmail, Outlook osv.)',

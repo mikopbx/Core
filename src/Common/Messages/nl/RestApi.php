@@ -473,6 +473,7 @@ return [
     'rest_schema_cdr_recording_url' => 'URL om de gespreksopname af te spelen met een tijdelijk toegangstoken',
     'rest_schema_cdr_playback_url' => 'URL voor het streamen van de gespreksopname (inline) met een tijdelijk toegangstoken',
     'rest_schema_cdr_download_url' => 'URL voor het downloaden van het gespreksopnamebestand (bijlage) met een tijdelijk toegangstoken',
+    'rest_schema_cdr_rec_src_channel' => 'Stereokanaalindex van src_num-audio (0=links, 1=rechts, leeg=mono)',
     'rest_schema_cq_extension' => 'Intern extensiewachtrijnummer',
     'rest_schema_cq_description' => 'Wachtrijbeschrijving',
     'rest_schema_cq_represent' => 'HTML-weergave voor weergave in vervolgkeuzelijsten',

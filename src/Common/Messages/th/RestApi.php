@@ -491,6 +491,7 @@ return [
     'rest_schema_cdr_recording_url' => 'URL สำหรับเล่นบันทึกการโทรโดยใช้โทเค็นการเข้าถึงชั่วคราว',
     'rest_schema_cdr_playback_url' => 'URL สำหรับสตรีมการบันทึกการโทร (แบบอินไลน์) พร้อมโทเค็นการเข้าถึงชั่วคราว',
     'rest_schema_cdr_download_url' => 'ลิงก์สำหรับดาวน์โหลดไฟล์บันทึกการสนทนา (ไฟล์แนบ) พร้อมโทเค็นการเข้าถึงชั่วคราว',
+    'rest_schema_cdr_rec_src_channel' => 'ดัชนีช่องสัญญาณสเตอริโอของเสียง src_num (0=ซ้าย, 1=ขวา, ว่าง=โมโน)',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'ตัวระบุคิวที่ไม่ซ้ำกัน',
     'rest_schema_cq_extension' => 'หมายเลขคิวส่วนขยายภายใน',

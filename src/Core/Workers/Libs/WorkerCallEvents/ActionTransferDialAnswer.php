@@ -58,6 +58,8 @@ class ActionTransferDialAnswer
             if (!empty($recFile)) {
                 $worker->mixMonitorChannels[$data['agi_channel']] = $recFile;
                 $row->writeAttribute('recordingfile', $recFile);
+                $recSrcCh = $worker->getRecSrcChannel($data['agi_channel'], $row->src_chan, $row->dst_chan);
+                $row->writeAttribute('rec_src_channel', $recSrcCh);
             }
             $res = $row->save();
             if (!$res) {

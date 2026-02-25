@@ -109,6 +109,9 @@ class ActionTransferDialHangup
                 && $worker->enableMonitor($res->src_num, $res->dst_num)
             ) {
                 $worker->MixMonitor($res->dst_chan, $info['filename'], $subDir, '', 'fillLocalChannelCdr');
+                $recSrcCh = $worker->getRecSrcChannel($res->dst_chan, $res->src_chan, $res->dst_chan);
+                $res->writeAttribute('rec_src_channel', $recSrcCh);
+                $res->save();
             }
         }
     }
@@ -163,6 +166,8 @@ class ActionTransferDialHangup
             // Resume recording if monitoring is enabled.
             if ($worker->enableMonitor($row->src_num, $row->dst_num)) {
                 $worker->MixMonitor($row->dst_chan, $info['filename'], $subDir, '', 'fillNotAnsweredCdr');
+                $recSrcCh = $worker->getRecSrcChannel($row->dst_chan, $row->src_chan, $row->dst_chan);
+                $row->writeAttribute('rec_src_channel', $recSrcCh);
             }
 
             // Remove the transfer flag from the rows.

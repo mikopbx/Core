@@ -105,6 +105,7 @@ class ActionCelAttendedTransfer
             if(isset($n_data['dst_chan'], $n_data['src_chan'])){
                 if ($worker->enableMonitor($n_data['src_num'] ?? '', $n_data['dst_num'] ?? '')) {
                     $n_data['recordingfile'] = $worker->MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID'], '', '', 'hangupChanCheckSipAttTrtansfer');
+                    $n_data['rec_src_channel'] = $worker->getRecSrcChannel($n_data['dst_chan'], $n_data['src_chan'] ?? '', $n_data['dst_chan']);
                 }
                 InsertDataToDB::execute($n_data);
                 // Sending UserEvent
