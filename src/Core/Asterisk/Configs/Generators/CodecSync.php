@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Asterisk\Configs\Generators;
 
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 
@@ -456,6 +457,15 @@ class CodecSync
             'codec_codec2.so',
             'codec_g723.so',
         ];
+
+        // Skip modules unavailable on ARM64 to avoid Asterisk loader errors
+        if (System::isARM64()) {
+            $arm64Unavailable = ['codec_silk.so', 'codec_g719.so', 'codec_codec2.so', 'codec_g723.so'];
+            $codecModulesToTry = array_filter(
+                $codecModulesToTry,
+                static fn(string $m): bool => !in_array($m, $arm64Unavailable, true)
+            );
+        }
 
         $loadedModules = [];
         foreach ($codecModulesToTry as $module) {

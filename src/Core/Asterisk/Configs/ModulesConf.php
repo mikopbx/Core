@@ -22,6 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -37,6 +38,19 @@ class ModulesConf extends AsteriskConfigClass
     public int $priority = 1000;
 
     protected string $description = 'modules.conf';
+
+    /**
+     * Asterisk modules that are not available on ARM64 (aarch64).
+     * These are x86_64-only proprietary or platform-specific codec/format modules.
+     */
+    private const array ARM64_UNAVAILABLE_MODULES = [
+        'codec_silk.so',
+        'codec_g719.so',
+        'codec_codec2.so',
+        'codec_g723.so',
+        'format_g723.so',
+        'format_g719.so',
+    ];
 
     /**
      * Generates the configuration for modules.conf
@@ -208,6 +222,14 @@ class ModulesConf extends AsteriskConfigClass
             $modules[] = 'codec_dahdi.so';
         }
 
+        // Filter out modules unavailable on ARM64 architecture
+        if (System::isARM64()) {
+            $modules = array_filter(
+                $modules,
+                static fn(string $module): bool => !in_array($module, self::ARM64_UNAVAILABLE_MODULES, true)
+            );
+        }
+
         foreach ($modules as $value) {
             $conf .= "load => $value\n";
         }
@@ -306,7 +328,17 @@ class ModulesConf extends AsteriskConfigClass
         $allModules = array_merge($criticalModules, $modulesToLoad);
 
         // Remove duplicates while preserving order
-        return array_values(array_unique($allModules));
+        $allModules = array_values(array_unique($allModules));
+
+        // Filter out modules unavailable on ARM64 architecture
+        if (System::isARM64()) {
+            $allModules = array_values(array_filter(
+                $allModules,
+                static fn(string $module): bool => !in_array($module, self::ARM64_UNAVAILABLE_MODULES, true)
+            ));
+        }
+
+        return $allModules;
     }
 
     /**
