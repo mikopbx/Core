@@ -174,7 +174,7 @@ FilesAPI.configureResumable = function(resumableConfig = {}) {
         chunkSize: 3 * 1024 * 1024, // 3MB chunks
         simultaneousUploads: 1,
         maxFiles: 1,
-        fileType: ['*'],
+        fileType: [],
         headers: headersFunction
     }, resumableConfig);
 };
@@ -232,9 +232,12 @@ FilesAPI.setupResumableEvents = function(resumableInstance, callback, autoUpload
  * @param {string[]} allowedFileTypes - Optional array of allowed file extensions (e.g., ['wav', 'mp3'])
  * @param {string} category - Optional category for file type validation (e.g., 'firmware', 'sound')
  */
-FilesAPI.uploadFile = function(file, callback, allowedFileTypes = ['*'], category = null) {
+FilesAPI.uploadFile = function(file, callback, allowedFileTypes = [], category = null) {
+    // Resumable.js treats ['*'] as literal extension match, not wildcard.
+    // Empty array [] skips file type validation entirely (allows all files).
+    const fileTypes = allowedFileTypes.includes('*') ? [] : allowedFileTypes;
     const resumableConfig = this.configureResumable({
-        fileType: allowedFileTypes
+        fileType: fileTypes
     });
 
     // Add category to query parameters if provided
@@ -279,7 +282,7 @@ FilesAPI.uploadFile = function(file, callback, allowedFileTypes = ['*'], categor
  * @returns {Object} jQuery API call object
  */
 FilesAPI.getStatusUploadFile = function(fileId, callback) {
-    return this.callCustomMethod('uploadStatus', { id: fileId }, (response) => {
+    return this.callCustomMethod('uploadStatus', { resumableIdentifier: fileId }, (response) => {
         if (response && response.result === true && response.data) {
             callback(response.data);
         } else {

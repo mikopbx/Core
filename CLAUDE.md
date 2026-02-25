@@ -434,6 +434,7 @@ MikoPBX includes specialized skills in `.claude/skills/` that activate automatic
 - **`asterisk-tester`** - Test Asterisk dialplan scenarios / Тестирование Asterisk dialplan
 - **`teamcity-monitor`** - Monitor CI/CD pipeline and analyze build failures / Мониторинг сборок TeamCity
 - **`browserstack-tester`** - Run PHPUnit Selenium tests via BrowserStack / Запуск тестов веб-интерфейса через BrowserStack
+- **`sentry-analyzer`** - Analyze errors from Sentry (top errors, stacktraces, breadcrumbs) / Анализ ошибок из Sentry
 
 ### Code Quality & Style
 - **`php-style`** - PHP standards (PSR-1/4/12, PHP 8.3 features) / PHP стандарты
@@ -458,6 +459,8 @@ MikoPBX includes specialized skills in `.claude/skills/` that activate automatic
 - "Check REST API translations" / "проверь переводы REST API"
 - "Sync RestApi.php translations" / "синхронизируй переводы RestApi.php"
 - "Check TeamCity build status" / "проверь статус сборки в TeamCity"
+- "Show top Sentry errors" / "покажи топ ошибок из Sentry"
+- "Get stacktrace for Sentry issue 12345" / "покажи stacktrace ошибки 12345 из Sentry"
 
 ### Security & Guidelines
 - **[XSS Protection](docs/xss-protection-guidelines.md)** - Cross-site scripting prevention

@@ -97,7 +97,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     resourceLevelMethods: ['getRecord', 'update', 'delete'],
     collectionLevelMethods: [],
     customMethods: ['upload', 'uploadStatus', 'downloadFirmware', 'firmwareStatus'],
-    idPattern: '.+'  // Allow any file path as ID
+    idPattern: '[^:]+'  // Allow any file path as ID, exclude colons for proper :{method} parsing
 )]
 class RestController extends BaseRestController
 {
@@ -285,10 +285,11 @@ class RestController extends BaseRestController
     }
 
     /**
-     * Override handleCustomRequest to route custom methods to controller methods
+     * Override handleCustomRequest to handle chunked upload specially
      *
-     * For Files controller, custom methods like 'upload' should call controller methods
-     * (which prepare file data) before sending to worker, not send directly to worker.
+     * Only the 'upload' method needs pre-processing (file data extraction from multipart request)
+     * before sending to the backend worker. All other custom methods (uploadStatus, downloadFirmware,
+     * firmwareStatus) go through the standard worker pipeline via parent::handleCustomRequest().
      *
      * @param string|null $idOrMethod
      * @param string|null $customMethod
@@ -296,16 +297,15 @@ class RestController extends BaseRestController
      */
     public function handleCustomRequest(?string $idOrMethod = null, ?string $customMethod = null): void
     {
-        // Determine the actual method name
         $actualMethod = $customMethod ?? $idOrMethod;
 
-        // If a corresponding public method exists in this controller, call it
-        if ($actualMethod && method_exists($this, $actualMethod) && (new \ReflectionMethod($this, $actualMethod))->isPublic()) {
-            $this->$actualMethod();
+        // Only 'upload' needs special handling (file processing before sending to worker)
+        if ($actualMethod === 'upload') {
+            $this->upload();
             return;
         }
 
-        // Otherwise, use default behavior (send directly to worker)
+        // All other custom methods go through the standard worker pipeline
         parent::handleCustomRequest($idOrMethod, $customMethod);
     }
 
