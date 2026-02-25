@@ -33,29 +33,60 @@ def strip_ansi(text: str) -> str:
     return re.sub(r'\x1b\[[0-9;]*m', '', text)
 
 
-def wait_for_queue_in_asterisk(api_client, queue_id: str, timeout: int = 15) -> str:
+def wait_for_queue_in_asterisk(
+    api_client,
+    queue_id: str,
+    timeout: int = 15,
+    expect_strategy: str | None = None,
+    expect_members: list[str] | None = None,
+) -> str:
     """
-    Poll Asterisk until the queue appears or timeout expires.
+    Poll Asterisk until the queue appears with expected configuration or timeout expires.
 
-    WorkerModelsEvents has a 5-second debounce before calling QueueConf::reload(),
-    plus ~2 seconds for two 'queue reload all' calls. Fixed sleeps of 2-3 seconds
-    are not sufficient. This function retries every second until the queue is visible.
+    WorkerModelsEvents has a debounce before calling QueueConf::reload(),
+    plus ~2 seconds for two 'queue reload all' calls. This function retries
+    every second until the queue is visible with the expected state.
+
+    The two-step reload temporarily destroys the queue (empty config → reload →
+    full config → reload), so after an update the queue may briefly disappear
+    or show stale config. We must poll until the NEW configuration appears.
 
     Args:
         api_client: Authenticated API client
         queue_id: Asterisk queue ID to wait for
         timeout: Maximum seconds to wait (default 15)
+        expect_strategy: If set, keep polling until this strategy appears
+            in Asterisk output (e.g. 'linear', 'ringall')
+        expect_members: If set, keep polling until Asterisk shows exactly
+            these members in this exact order
 
     Returns:
-        Last Asterisk output (whether queue appeared or not)
+        Last Asterisk output (whether conditions were met or not)
     """
     deadline = time.time() + timeout
     output = ''
     while time.time() < deadline:
         output = execute_asterisk_command(api_client, f'queue show {queue_id}')
-        if 'No such queue' not in output:
-            return output
-        time.sleep(1)
+
+        # Queue must exist first
+        if 'No such queue' in output:
+            time.sleep(1)
+            continue
+
+        # Check optional strategy condition
+        if expect_strategy and f"'{expect_strategy}'" not in output.lower():
+            time.sleep(1)
+            continue
+
+        # Check optional members condition (exact order match)
+        if expect_members is not None:
+            members = parse_queue_members_from_asterisk(output)
+            if members != expect_members:
+                time.sleep(1)
+                continue
+
+        return output
+
     return output
 
 
@@ -231,11 +262,15 @@ class TestCallQueueMemberOrdering:
         queue_id = getattr(self.__class__, '_queue_id', None)
         assert queue_id, "Queue ID not set (test_01 must run first)"
 
-        output = wait_for_queue_in_asterisk(api_client, queue_id)
+        expected = ['201', '202', '203', '204']
+        output = wait_for_queue_in_asterisk(
+            api_client, queue_id,
+            expect_strategy='linear',
+            expect_members=expected,
+        )
         print(f"\n  Asterisk output:\n{output}")
 
         ast_members = parse_queue_members_from_asterisk(output)
-        expected = ['201', '202', '203', '204']
         print(f"\n  Asterisk members (linear order): {ast_members}")
         print(f"  Expected order:                   {expected}")
 
@@ -295,7 +330,11 @@ class TestCallQueueMemberOrdering:
         queue_id = getattr(self.__class__, '_queue_id', None)
         assert queue_id, "Queue ID not set (test_01 must run first)"
 
-        output = wait_for_queue_in_asterisk(api_client, queue_id)
+        output = wait_for_queue_in_asterisk(
+            api_client, queue_id,
+            expect_strategy='linear',
+            expect_members=self.MEMBERS_REORDERED,
+        )
         print(f"\n  Asterisk output:\n{output}")
 
         ast_members = parse_queue_members_from_asterisk(output)
@@ -338,7 +377,11 @@ class TestCallQueueMemberOrdering:
         assert_api_success(response, "Failed to switch to linear again")
         print(f"  Switched to linear with members {expected_linear}")
 
-        output = wait_for_queue_in_asterisk(api_client, queue_id)
+        output = wait_for_queue_in_asterisk(
+            api_client, queue_id,
+            expect_strategy='linear',
+            expect_members=expected_linear,
+        )
         ast_members = parse_queue_members_from_asterisk(output)
         print(f"\n  Asterisk output:\n{output}")
         print(f"\n  Asterisk members: {ast_members}")
