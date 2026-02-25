@@ -26,7 +26,7 @@ Migration Note (2025-12):
 
 import pytest
 import requests
-from conftest import MikoPBXClient, API_BASE_URL, assert_api_success
+from conftest import MikoPBXClient, API_URL, assert_api_success
 
 # HTTP Status Code Constants for readability
 HTTP_OK = 200
@@ -49,7 +49,7 @@ class TestPublicEndpointsRegistry:
     def test_01_priority1_ping_without_auth(self):
         """Test Priority 1 - system:ping works without authentication"""
         # Create client WITHOUT authentication
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
 
         # system:ping has method-level SecurityType::PUBLIC attribute
         response = client.get_raw('system:ping')
@@ -79,7 +79,7 @@ class TestPublicEndpointsRegistry:
         # This test verifies that the endpoint was registered during route generation
         # We can't directly access the registry, but we can verify behavior
 
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
         response = client.get_raw('system:ping')
 
         # If it works without auth, it's in the registry
@@ -101,10 +101,10 @@ class TestPublicEndpointsMethodLevel:
         """Test method-level PUBLIC - auth:login"""
         # auth:login has method-level SecurityType::PUBLIC attribute
 
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
 
         response = client.session.post(
-            f"{API_BASE_URL}/auth:login",
+            f"{API_URL}/auth:login",
             data={
                 'login': 'invalid_user',
                 'password': 'invalid_password'
@@ -124,10 +124,10 @@ class TestPublicEndpointsMethodLevel:
         """Test method-level PUBLIC - auth:refresh"""
         # auth:refresh has method-level SecurityType::PUBLIC attribute
 
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
 
         response = client.session.post(
-            f"{API_BASE_URL}/auth:refresh",
+            f"{API_URL}/auth:refresh",
             json={},
             verify=False
         )
@@ -142,7 +142,7 @@ class TestPublicEndpointsMethodLevel:
         """Test method-level PUBLIC - system:getAvailableLanguages"""
         # getAvailableLanguages has method-level SecurityType::PUBLIC attribute
 
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
         response = client.get_raw('system:getAvailableLanguages')
 
         assert response.status_code == HTTP_OK, \
@@ -165,10 +165,10 @@ class TestPublicEndpointsMethodLevel:
         """Test method-level PUBLIC - system:changeLanguage"""
         # changeLanguage has method-level SecurityType::PUBLIC attribute
 
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
 
         response_post = client.session.post(
-            f"{API_BASE_URL}/system:changeLanguage",
+            f"{API_URL}/system:changeLanguage",
             json={'language': 'en'},
             verify=False
         )
@@ -182,10 +182,10 @@ class TestPublicEndpointsMethodLevel:
         """Test method-level PUBLIC - passkeys:checkAvailability"""
         # checkAvailability has method-level SecurityType::PUBLIC attribute
 
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
 
         response = client.session.get(
-            f"{API_BASE_URL}/passkeys:checkAvailability",
+            f"{API_URL}/passkeys:checkAvailability",
             params={'login': 'admin'},
             verify=False
         )
@@ -200,10 +200,10 @@ class TestPublicEndpointsMethodLevel:
         """Test method-level PUBLIC - passkeys:authenticationStart"""
         # authenticationStart has method-level SecurityType::PUBLIC attribute
 
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
 
         response = client.session.get(
-            f"{API_BASE_URL}/passkeys:authenticationStart",
+            f"{API_URL}/passkeys:authenticationStart",
             params={'login': 'admin'},
             verify=False
         )
@@ -218,10 +218,10 @@ class TestPublicEndpointsMethodLevel:
         """Test method-level PUBLIC - passkeys:authenticationFinish"""
         # authenticationFinish has method-level SecurityType::PUBLIC attribute
 
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
 
         response = client.session.post(
-            f"{API_BASE_URL}/passkeys:authenticationFinish",
+            f"{API_URL}/passkeys:authenticationFinish",
             json={'credential': {}},
             verify=False
         )
@@ -236,10 +236,10 @@ class TestPublicEndpointsMethodLevel:
         """Test method-level PUBLIC - user-page-tracker:pageView"""
         # pageView has method-level SecurityType::PUBLIC attribute
 
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
 
         response = client.session.post(
-            f"{API_BASE_URL}/user-page-tracker:pageView",
+            f"{API_URL}/user-page-tracker:pageView",
             json={'pageName': '/test', 'expire': 300},
             verify=False
         )
@@ -254,10 +254,10 @@ class TestPublicEndpointsMethodLevel:
         """Test method-level PUBLIC - user-page-tracker:pageLeave"""
         # pageLeave has method-level SecurityType::PUBLIC attribute
 
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
 
         response = client.session.post(
-            f"{API_BASE_URL}/user-page-tracker:pageLeave",
+            f"{API_URL}/user-page-tracker:pageLeave",
             json={'pageName': '/test'},
             verify=False
         )
@@ -276,7 +276,7 @@ class TestPublicEndpointsNegative:
 
     def test_01_protected_endpoint_requires_auth(self):
         """Test that protected endpoints (non-public) require authentication"""
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
 
         # extensions endpoint should be protected
         response = client.get_raw('extensions')
@@ -303,7 +303,7 @@ class TestPublicEndpointsNegative:
     def test_03_optional_auth_provides_context(self, api_client):
         """Test that public endpoints can use optional auth for enhanced features"""
         # Public endpoint WITHOUT auth - anonymous
-        client_anon = MikoPBXClient(API_BASE_URL)
+        client_anon = MikoPBXClient(API_URL)
         response_anon = client_anon.get_raw('system:ping')
         data_anon = response_anon.json()
 
@@ -328,7 +328,7 @@ class TestPublicEndpointsPriority:
         """Test that Priority 1 (registry) is checked first"""
         # system:ping uses method-level SecurityType::PUBLIC attribute (Priority 1)
 
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
         response = client.get_raw('system:ping')
 
         assert response.status_code == HTTP_OK
@@ -341,7 +341,7 @@ class TestPublicEndpointsPriority:
         """Test that method-level PUBLIC attributes work correctly"""
         # All custom methods with SecurityType::PUBLIC should be registered
 
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
 
         # Test various method-level public endpoints
         endpoints = [
@@ -354,7 +354,7 @@ class TestPublicEndpointsPriority:
             if method == 'GET':
                 response = client.get_raw(endpoint)
             else:
-                response = client.session.post(f"{API_BASE_URL}/{endpoint}", json={}, verify=False)
+                response = client.session.post(f"{API_URL}/{endpoint}", json={}, verify=False)
 
             assert response.status_code not in [HTTP_UNAUTHORIZED, HTTP_FORBIDDEN], \
                 f"{endpoint} should be public via method-level attribute, got {response.status_code}"
@@ -369,7 +369,7 @@ class TestPublicEndpointsEdgeCases:
 
     def test_01_method_specific_public_access(self):
         """Test that only allowed methods work on public endpoints"""
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
 
         # system:ping is public for GET (registered via method-level attribute)
         response_get = client.get_raw('system:ping')
@@ -379,7 +379,7 @@ class TestPublicEndpointsEdgeCases:
         # Note: PublicEndpointsRegistry only registers the URI, HTTP method filtering
         # happens at router level. If URI is public, request passes auth but may fail routing.
         response_post = client.session.post(
-            f"{API_BASE_URL}/system:ping",
+            f"{API_URL}/system:ping",
             json={},
             verify=False
         )
@@ -394,11 +394,11 @@ class TestPublicEndpointsEdgeCases:
 
     def test_02_public_endpoint_with_invalid_token(self):
         """Test public endpoint with invalid Bearer token (should still work)"""
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
 
         # Add invalid Bearer token
         response = client.session.get(
-            f"{API_BASE_URL}/system:ping",
+            f"{API_URL}/system:ping",
             headers={'Authorization': 'Bearer invalid_token_12345'},
             verify=False
         )
@@ -417,7 +417,7 @@ class TestPublicEndpointsEdgeCases:
         """Test CDR playback endpoint - public but uses token-based security"""
         # cdr:playback is in PUBLIC_ENDPOINTS but uses special token-based auth
 
-        client = MikoPBXClient(API_BASE_URL)
+        client = MikoPBXClient(API_URL)
 
         # Try without record_id parameter (should fail validation, not auth)
         response = client.get_raw('cdr:playback')

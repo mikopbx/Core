@@ -454,6 +454,43 @@ class PJSUAEndpoint:
             logger.error(f"DTMF failed: {e}")
             return False
 
+    async def wait_for_disconnect(self, timeout: int = 15) -> bool:
+        """Wait for the call to be disconnected by the remote side.
+
+        Polls call state until DISCONNECTED or timeout.
+        Returns True if call disconnected, False if still active after timeout.
+        Useful for attended transfer scenarios where Asterisk disconnects the
+        transferor's leg after transfer completion.
+        """
+        if not self.call:
+            return True
+
+        import time
+        start_time = time.monotonic()
+        poll_interval = 0.1
+
+        while True:
+            elapsed = time.monotonic() - start_time
+            if elapsed >= timeout:
+                logger.info(f"wait_for_disconnect: call still active after {timeout}s")
+                return False
+
+            try:
+                call_info = self.call.getInfo()
+                state = call_info.state
+                if state == pj.PJSIP_INV_STATE_DISCONNECTED:
+                    logger.info(f"wait_for_disconnect: call disconnected after {elapsed:.1f}s")
+                    self.call_active = False
+                    self.call = None
+                    return True
+            except Exception:
+                # Call object invalid — already disconnected
+                self.call_active = False
+                self.call = None
+                return True
+
+            await asyncio.sleep(poll_interval)
+
     async def unregister(self) -> bool:
         if not self.is_registered:
             return True

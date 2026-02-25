@@ -11,13 +11,13 @@ Backward compatibility is maintained through CDR API.
 """
 
 import pytest
-from conftest import MikoPBXClient, API_BASE_URL, API_LOGIN, API_PASSWORD
+from conftest import MikoPBXClient, API_URL, API_USERNAME, API_PASSWORD
 
 
 @pytest.fixture(scope='module')
 def client():
     """Create authenticated API client for this test module"""
-    client = MikoPBXClient(API_BASE_URL, API_LOGIN, API_PASSWORD)
+    client = MikoPBXClient(API_URL, API_USERNAME, API_PASSWORD)
     client.authenticate()
     return client
 

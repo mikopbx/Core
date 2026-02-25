@@ -22,7 +22,7 @@ NOTE: This test suite does NOT test the validateToken endpoint directly (localho
 
 import pytest
 import time
-from conftest import assert_api_success, API_LOGIN, API_PASSWORD
+from conftest import assert_api_success, API_USERNAME, API_PASSWORD
 
 
 class TestAuth:
@@ -35,7 +35,7 @@ class TestAuth:
         """Test POST /auth:login - Login with username and password"""
         # Note: Using credentials from conftest.py
         login_data = {
-            'login': API_LOGIN,
+            'login': API_USERNAME,
             'password': API_PASSWORD,
             'rememberMe': False
         }
@@ -74,7 +74,7 @@ class TestAuth:
     def test_02_login_remember_me(self, api_client):
         """Test POST /auth:login - Login with rememberMe=true"""
         login_data = {
-            'login': API_LOGIN,
+            'login': API_USERNAME,
             'password': API_PASSWORD,
             'rememberMe': True
         }
@@ -184,7 +184,7 @@ class TestAuth:
     def test_08_login_again(self, api_client):
         """Test POST /auth:login - Login again after logout"""
         login_data = {
-            'login': API_LOGIN,
+            'login': API_USERNAME,
             'password': API_PASSWORD,
             'rememberMe': False
         }
@@ -288,7 +288,7 @@ class TestAuthEdgeCases:
         # Create a new client without any cookies
         from conftest import MikoPBXClient
 
-        clean_client = MikoPBXClient(api_client.base_url, API_LOGIN, API_PASSWORD)
+        clean_client = MikoPBXClient(api_client.base_url, API_USERNAME, API_PASSWORD)
         # Don't authenticate - no refresh token
 
         try:
@@ -309,7 +309,7 @@ class TestAuthEdgeCases:
         # Create a new client without authentication
         from conftest import MikoPBXClient
 
-        clean_client = MikoPBXClient(api_client.base_url, API_LOGIN, API_PASSWORD)
+        clean_client = MikoPBXClient(api_client.base_url, API_USERNAME, API_PASSWORD)
 
         try:
             response = clean_client.post('auth:logout', {})
@@ -367,7 +367,7 @@ class TestAuthEdgeCases:
     def test_09_multiple_concurrent_logins(self, api_client):
         """Test POST /auth:login - Multiple concurrent logins for same user"""
         login_data = {
-            'login': API_LOGIN,
+            'login': API_USERNAME,
             'password': API_PASSWORD,
             'rememberMe': False
         }

@@ -24,7 +24,7 @@ These tests focus on the middleware ACL check mechanism itself.
 """
 
 import pytest
-from conftest import assert_api_success, MikoPBXClient, API_BASE_URL, API_LOGIN, API_PASSWORD
+from conftest import assert_api_success, MikoPBXClient, API_URL, API_USERNAME, API_PASSWORD
 
 
 class TestAclBasics:
@@ -33,7 +33,7 @@ class TestAclBasics:
     def test_01_request_without_token_returns_401(self, api_client):
         """Test that request without Bearer token returns 401 Unauthorized"""
         # Create client without authentication
-        unauthenticated_client = MikoPBXClient(API_BASE_URL, API_LOGIN, API_PASSWORD)
+        unauthenticated_client = MikoPBXClient(API_URL, API_USERNAME, API_PASSWORD)
         # Don't authenticate - no token
 
         # Try to access protected resource (skip auto-retry to test server response)
@@ -48,7 +48,7 @@ class TestAclBasics:
     def test_02_request_with_invalid_token_returns_401(self, api_client):
         """Test that request with invalid Bearer token returns 401 Unauthorized"""
         # Create client with fake token
-        fake_client = MikoPBXClient(API_BASE_URL, API_LOGIN, API_PASSWORD)
+        fake_client = MikoPBXClient(API_URL, API_USERNAME, API_PASSWORD)
         fake_client.access_token = "invalid.jwt.token"
 
         # Try to access protected resource (skip auto-retry to test server response)
@@ -87,7 +87,7 @@ class TestAclBasics:
         expired_token = f"{header}.{payload}.{signature}"
 
         # Create client with expired token
-        expired_client = MikoPBXClient(API_BASE_URL, API_LOGIN, API_PASSWORD)
+        expired_client = MikoPBXClient(API_URL, API_USERNAME, API_PASSWORD)
         expired_client.access_token = expired_token
 
         # Try to access protected resource (skip auto-retry to test server response)
@@ -112,7 +112,7 @@ class TestAclBasics:
     def test_05_public_endpoint_without_token(self, api_client):
         """Test that public endpoints work without authentication"""
         # Create client without authentication
-        unauthenticated_client = MikoPBXClient(API_BASE_URL, API_LOGIN, API_PASSWORD)
+        unauthenticated_client = MikoPBXClient(API_URL, API_USERNAME, API_PASSWORD)
         # Don't authenticate
 
         # system:ping is a public endpoint
@@ -127,14 +127,14 @@ class TestAclBasics:
     def test_06_auth_endpoints_are_public(self, api_client):
         """Test that auth endpoints are accessible without token"""
         # Create client without authentication
-        unauthenticated_client = MikoPBXClient(API_BASE_URL, API_LOGIN, API_PASSWORD)
+        unauthenticated_client = MikoPBXClient(API_URL, API_USERNAME, API_PASSWORD)
 
         # auth:login should be public (otherwise how would you get a token?)
         # Note: We're testing with invalid credentials, expecting 401 from login logic, not from auth middleware
         import requests
 
         response = requests.post(
-            f"{API_BASE_URL}/auth:login",
+            f"{API_URL}/auth:login",
             data={'login': 'test', 'password': 'test'},
             verify=False
         )

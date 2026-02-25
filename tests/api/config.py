@@ -118,15 +118,14 @@ class TestConfig:
         """Validate that required environment variables are set"""
         missing_vars = []
 
-        # Check new format (MIKOPBX_*) or legacy format (API_*)
-        if not (os.getenv('MIKOPBX_API_URL') or os.getenv('API_BASE_URL')):
-            missing_vars.append('MIKOPBX_API_URL or API_BASE_URL')
+        if not os.getenv('MIKOPBX_API_URL'):
+            missing_vars.append('MIKOPBX_API_URL')
 
-        if not (os.getenv('MIKOPBX_API_USERNAME') or os.getenv('API_LOGIN')):
-            missing_vars.append('MIKOPBX_API_USERNAME or API_LOGIN')
+        if not os.getenv('MIKOPBX_API_USERNAME'):
+            missing_vars.append('MIKOPBX_API_USERNAME')
 
-        if not (os.getenv('MIKOPBX_API_PASSWORD') or os.getenv('API_PASSWORD')):
-            missing_vars.append('MIKOPBX_API_PASSWORD or API_PASSWORD')
+        if not os.getenv('MIKOPBX_API_PASSWORD'):
+            missing_vars.append('MIKOPBX_API_PASSWORD')
 
         if missing_vars:
             raise ValueError(
@@ -141,60 +140,18 @@ class TestConfig:
 
     @property
     def api_url(self) -> str:
-        """
-        MikoPBX REST API base URL
-
-        Priority: MIKOPBX_API_URL → API_BASE_URL (legacy)
-        """
-        url = os.getenv('MIKOPBX_API_URL') or os.getenv('API_BASE_URL', '')
-
-        # Warn if using legacy format
-        if not os.getenv('MIKOPBX_API_URL') and os.getenv('API_BASE_URL'):
-            warnings.warn(
-                "Using legacy API_BASE_URL variable. Please migrate to MIKOPBX_API_URL",
-                DeprecationWarning,
-                stacklevel=2
-            )
-
-        return url.rstrip('/')
+        """MikoPBX REST API base URL"""
+        return os.getenv('MIKOPBX_API_URL', '').rstrip('/')
 
     @property
     def api_username(self) -> str:
-        """
-        API username
-
-        Priority: MIKOPBX_API_USERNAME → API_LOGIN (legacy)
-        """
-        username = os.getenv('MIKOPBX_API_USERNAME') or os.getenv('API_LOGIN', 'admin')
-
-        # Warn if using legacy format
-        if not os.getenv('MIKOPBX_API_USERNAME') and os.getenv('API_LOGIN'):
-            warnings.warn(
-                "Using legacy API_LOGIN variable. Please migrate to MIKOPBX_API_USERNAME",
-                DeprecationWarning,
-                stacklevel=2
-            )
-
-        return username
+        """API username"""
+        return os.getenv('MIKOPBX_API_USERNAME', 'admin')
 
     @property
     def api_password(self) -> str:
-        """
-        API password
-
-        Priority: MIKOPBX_API_PASSWORD → API_PASSWORD (legacy)
-        """
-        password = os.getenv('MIKOPBX_API_PASSWORD') or os.getenv('API_PASSWORD', '')
-
-        # Warn if using legacy format
-        if not os.getenv('MIKOPBX_API_PASSWORD') and os.getenv('API_PASSWORD'):
-            warnings.warn(
-                "Using legacy API_PASSWORD variable. Please migrate to MIKOPBX_API_PASSWORD",
-                DeprecationWarning,
-                stacklevel=2
-            )
-
-        return password
+        """API password"""
+        return os.getenv('MIKOPBX_API_PASSWORD', '')
 
     # ========================================================================
     # Execution Mode Configuration
@@ -410,7 +367,7 @@ def get_config() -> TestConfig:
     return _config_instance
 
 
-# Convenience exports for backward compatibility
+# Convenience exports
 def get_api_url() -> str:
     """Get API URL"""
     return get_config().api_url

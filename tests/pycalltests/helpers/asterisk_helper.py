@@ -1,5 +1,6 @@
-"""Asterisk CLI Helper - Execute Asterisk commands via Docker"""
+"""Asterisk CLI Helper - Execute Asterisk commands locally or via Docker"""
 
+import shutil
 import subprocess
 import logging
 import sys
@@ -12,6 +13,9 @@ from config import get_config
 
 logger = logging.getLogger(__name__)
 
+# Detect if running inside the container (asterisk available locally)
+_LOCAL_ASTERISK = shutil.which('asterisk') is not None
+
 
 def exec_asterisk_cli(
     command: str,
@@ -19,7 +23,10 @@ def exec_asterisk_cli(
     timeout: int = 10
 ) -> str:
     """
-    Execute Asterisk CLI command inside Docker container.
+    Execute Asterisk CLI command locally or via Docker.
+
+    When running inside the MikoPBX container, calls asterisk directly.
+    When running on the host, uses docker exec.
 
     Args:
         command: Asterisk CLI command (without 'asterisk -rx')
@@ -35,13 +42,12 @@ def exec_asterisk_cli(
         Channel              Location             State   Application(Data)
         ...
     """
-    if container_name is None:
-        container_name = get_config().container_name
-
-    cmd = [
-        'docker', 'exec', container_name,
-        'asterisk', '-rx', command
-    ]
+    if _LOCAL_ASTERISK:
+        cmd = ['asterisk', '-rx', command]
+    else:
+        if container_name is None:
+            container_name = get_config().container_name
+        cmd = ['docker', 'exec', container_name, 'asterisk', '-rx', command]
 
     try:
         proc = subprocess.run(

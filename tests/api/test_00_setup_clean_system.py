@@ -207,8 +207,8 @@ class Test00SystemReset:
 
             try:
                 # Try to create new client and authenticate
-                from conftest import API_BASE_URL, API_LOGIN, API_PASSWORD
-                test_client = MikoPBXClient(API_BASE_URL, API_LOGIN, API_PASSWORD)
+                from conftest import API_URL, API_USERNAME, API_PASSWORD
+                test_client = MikoPBXClient(API_URL, API_USERNAME, API_PASSWORD)
                 test_client.authenticate()
 
                 # If we got here, system is back!

@@ -92,6 +92,11 @@ API_DIR="/offload/rootfs/usr/www/tests/api"
 
 cd "$TESTS_DIR"
 
+# Map legacy Docker env vars to current names
+export MIKOPBX_API_URL="${MIKOPBX_API_URL:-${API_BASE_URL:+${API_BASE_URL}/pbxcore/api/v3}}"
+export MIKOPBX_API_USERNAME="${MIKOPBX_API_USERNAME:-$API_LOGIN}"
+export MIKOPBX_API_PASSWORD="${MIKOPBX_API_PASSWORD:-$API_PASSWORD}"
+
 export LD_LIBRARY_PATH="$TESTS_DIR/bin/pjsua2/linux-arm64:$LD_LIBRARY_PATH"
 export PYTHONPATH="$PACKAGES_DIR:$TESTS_DIR/bin/pjsua2/linux-arm64:$TESTS_DIR/helpers:$API_DIR:$PYTHONPATH"
 

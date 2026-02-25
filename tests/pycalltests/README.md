@@ -14,6 +14,7 @@ This test suite uses PJSUA2 (PJSIP User Agent) to simulate real SIP softphones a
 - **Music on hold** - MOH validation via dialplan, queues, audio quality checks
 - **Codec negotiation** - alaw, ulaw, opus, g722 support and priority selection
 - **Call queues** - Agent login, call distribution, queue timeouts
+- **Attended transfer** - DTMF ## transfer, cancel, no-answer scenarios
 
 ## Quick Start
 
@@ -43,7 +44,7 @@ docker exec mikopbx_tests-refactoring /storage/usbdisk1/python_packages/setup_py
 
 #### Running Tests
 
-Run all call flow tests (22 tests, ~9 minutes):
+Run all call flow tests (25 tests, ~10 minutes):
 ```bash
 docker exec mikopbx_tests-refactoring /storage/usbdisk1/python_packages/run_pytest.sh \
   test_64_conferences.py \
@@ -52,7 +53,8 @@ docker exec mikopbx_tests-refactoring /storage/usbdisk1/python_packages/run_pyte
   test_68_call_parking.py \
   test_69_music_on_hold.py \
   test_70_call_recording.py \
-  test_71_codec_negotiation.py -v
+  test_71_codec_negotiation.py \
+  test_72_attended_transfer.py -v
 ```
 
 Run individual test suite:
@@ -67,7 +69,7 @@ docker exec mikopbx_tests-refactoring /storage/usbdisk1/python_packages/run_pyte
 
 ## Test Suite Coverage
 
-### Test Files (22 tests total)
+### Test Files (25 tests total)
 
 | Test File | Tests | Description | Key Features |
 |-----------|-------|-------------|--------------|
@@ -79,8 +81,9 @@ docker exec mikopbx_tests-refactoring /storage/usbdisk1/python_packages/run_pyte
 | **test_69_music_on_hold.py** | 3 | Music on hold | MOH via dialplan, queues, RMS validation |
 | **test_70_call_recording.py** | 3 | Call recording | Auto-recording, file checks, transfer recording |
 | **test_71_codec_negotiation.py** | 4 | Codec support | alaw, ulaw, opus, priority selection |
+| **test_72_attended_transfer.py** | 3 | Attended transfer | DTMF ## transfer, cancel, no-answer |
 
-**Total runtime:** ~9 minutes (sequential execution)
+**Total runtime:** ~10 minutes (sequential execution)
 
 ## Architecture
 
@@ -159,18 +162,24 @@ Libraries located in `bin/pjsua2/{platform}/` with automatic platform detection.
 
 ### Environment Variables
 
-Tests use configuration from `tests/api/.env`:
+Tests use environment variables (set via Docker ENV or `tests/api/.env`):
 
 ```bash
-# API endpoint (container-local when running inside container)
-MIKOPBX_API_URL=http://127.0.0.1/pbxcore/api/v3
+# API endpoint (required)
+MIKOPBX_API_URL=https://127.0.0.1:8445/pbxcore/api/v3
+
+# API credentials (required)
+MIKOPBX_API_USERNAME=admin
+MIKOPBX_API_PASSWORD=your_password
 
 # Docker container name
-MIKOPBX_CONTAINER=mikopbx_tests-refactoring
+MIKOPBX_CONTAINER=mikopbx-php83
 
 # SIP server (resolved automatically via Docker container IP)
 MIKOPBX_SIP_HOSTNAME=<auto-detected>
 ```
+
+**Note:** The `run_pytest.sh` wrapper automatically maps legacy Docker env vars (`API_BASE_URL`, `API_LOGIN`, `API_PASSWORD`) to current names.
 
 ### Test Credentials
 

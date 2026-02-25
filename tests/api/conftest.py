@@ -25,9 +25,8 @@ from config import get_config
 # Load configuration (validates .env existence and required vars)
 config = get_config()
 
-# Backward compatibility: expose as module-level variables
-API_BASE_URL = config.api_url
-API_LOGIN = config.api_username
+API_URL = config.api_url
+API_USERNAME = config.api_username
 API_PASSWORD = config.api_password
 
 FIXTURES_DIR = Path(__file__).parent / 'fixtures'
@@ -592,7 +591,7 @@ def api_client() -> MikoPBXClient:
     Note: If ENABLE_SYSTEM_RESET=1, this client will be re-authenticated
     after test_00_setup_clean_system.py runs (via pytest hook).
     """
-    client = MikoPBXClient(API_BASE_URL, API_LOGIN, API_PASSWORD)
+    client = MikoPBXClient(API_URL, API_USERNAME, API_PASSWORD)
     client.authenticate()
 
     yield client
