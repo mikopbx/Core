@@ -251,7 +251,7 @@ class ExportCSVAction
         fprintf($output, "\xEF\xBB\xBF");
         
         // Write field names as headers (English identifiers)
-        fputcsv($output, $fields, ',', '"', '\\');
+        fputcsv($output, $fields, ',', '"', '');
 
         // Write data
         foreach ($employees as $employee) {
@@ -282,7 +282,7 @@ class ExportCSVAction
 
                 $row[] = $value;
             }
-            fputcsv($output, $row, ',', '"', '\\');
+            fputcsv($output, $row, ',', '"', '');
         }
         
         // Get content
@@ -360,7 +360,7 @@ class ExportCSVAction
         fprintf($output, "\xEF\xBB\xBF");
 
         // Write field names as headers (English identifiers)
-        fputcsv($output, $fields, ',', '"', '\\');
+        fputcsv($output, $fields, ',', '"', '');
 
         // Write sample data
         foreach ($sampleData as $sample) {
@@ -368,7 +368,7 @@ class ExportCSVAction
             foreach ($fields as $field) {
                 $row[] = $sample[$field] ?? '';
             }
-            fputcsv($output, $row, ',', '"', '\\');
+            fputcsv($output, $row, ',', '"', '');
         }
         
         // Get content

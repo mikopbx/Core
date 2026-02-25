@@ -226,7 +226,7 @@ class ImportCSVAction
     
     /**
      * Parse CSV file
-     * 
+     *
      * @param string $filepath Path to CSV file
      * @return array Parse result with records and headers
      */
@@ -236,39 +236,49 @@ class ImportCSVAction
             'success' => false,
             'records' => [],
             'headers' => [],
-            'errors' => []
+            'errors' => [],
+            'warnings' => []
         ];
-        
+
         // Detect encoding and convert to UTF-8 if needed
         $content = file_get_contents($filepath);
         $encoding = mb_detect_encoding($content, ['UTF-8', 'Windows-1251', 'CP1251', 'KOI8-R'], true);
-        
+
         if ($encoding !== 'UTF-8') {
             $content = mb_convert_encoding($content, 'UTF-8', $encoding);
-            file_put_contents($filepath, $content);
         }
-        
+
+        // Remove BOM if present (before any parsing)
+        if (str_starts_with($content, "\xEF\xBB\xBF")) {
+            $content = substr($content, 3);
+        }
+
+        // Write cleaned content back for fgetcsv
+        file_put_contents($filepath, $content);
+
+        // Auto-detect delimiter (comma, semicolon, or tab)
+        $delimiter = self::detectDelimiter($content);
+
         // Open CSV file
         $handle = fopen($filepath, 'r');
         if (!$handle) {
             $result['errors'][] = TranslationProvider::translate('ex_ImportCannotReadFile');
             return $result;
         }
-        
-        // Read headers
-        $headers = fgetcsv($handle, 0, ',', '"', '');
+
+        // Read headers with RFC 4180 compliant parsing (empty escape = "" doubling for literal quotes)
+        $headers = fgetcsv($handle, 0, $delimiter, '"', '');
         if (!$headers) {
             $result['errors'][] = TranslationProvider::translate('ex_ImportEmptyFile');
             fclose($handle);
             return $result;
         }
-        
-        // Clean headers (remove BOM if present) and lowercase them
+
+        // Clean headers and lowercase them
         $headers = array_map(function($header) {
-            $cleaned = trim(str_replace("\xEF\xBB\xBF", '', $header));
-            return strtolower($cleaned);
+            return strtolower(trim($header));
         }, $headers);
-        
+
         // Check required columns
         $missingRequired = array_diff(self::REQUIRED_COLUMNS, $headers);
         if (!empty($missingRequired)) {
@@ -278,47 +288,90 @@ class ImportCSVAction
             fclose($handle);
             return $result;
         }
-        
+
         // Read records
         $records = [];
+        $headerCount = count($headers);
         $lineNumber = 2; // Starting from line 2 (after headers)
-        
-        while (($row = fgetcsv($handle, 0, ',', '"', '')) !== false) {
-            if (count($row) !== count($headers)) {
-                $result['errors'][] = TranslationProvider::translate('ex_ImportInvalidRow', [
-                    'line' => $lineNumber
-                ]);
+
+        while (($row = fgetcsv($handle, 0, $delimiter, '"', '')) !== false) {
+            // Skip completely empty rows
+            if (count($row) === 1 && trim($row[0]) === '') {
                 $lineNumber++;
                 continue;
             }
-            
+
+            $rowCount = count($row);
+
+            // Handle field count mismatch leniently
+            if ($rowCount < $headerCount) {
+                // Pad short rows with empty strings for missing fields
+                $row = array_pad($row, $headerCount, '');
+            } elseif ($rowCount > $headerCount) {
+                // Trim extra fields
+                $row = array_slice($row, 0, $headerCount);
+            }
+
             // Create associative array
             $record = array_combine($headers, $row);
-            
+
             // Clean values
             foreach ($record as $key => $value) {
                 $record[$key] = trim($value);
             }
-            
+
             // Add line number for error reporting
             $record['_line'] = $lineNumber;
-            
+
             $records[] = $record;
             $lineNumber++;
         }
-        
+
         fclose($handle);
-        
+
         if (empty($records)) {
             $result['errors'][] = TranslationProvider::translate('ex_ImportNoRecords');
             return $result;
         }
-        
+
         $result['success'] = true;
         $result['records'] = $records;
         $result['headers'] = $headers;
-        
+
         return $result;
+    }
+
+    /**
+     * Auto-detect CSV delimiter by analyzing the header line
+     *
+     * Supports comma (,), semicolon (;), and tab (\t) delimiters.
+     * Excel may use semicolon as delimiter depending on system locale.
+     *
+     * @param string $content File content
+     * @return string Detected delimiter character
+     */
+    private static function detectDelimiter(string $content): string
+    {
+        $firstLine = strtok($content, "\n");
+        if ($firstLine === false) {
+            return ',';
+        }
+
+        // Remove possible \r from Windows line endings
+        $firstLine = rtrim($firstLine, "\r");
+
+        $commaCount = substr_count($firstLine, ',');
+        $semicolonCount = substr_count($firstLine, ';');
+        $tabCount = substr_count($firstLine, "\t");
+
+        if ($semicolonCount > $commaCount && $semicolonCount > $tabCount) {
+            return ';';
+        }
+        if ($tabCount > $commaCount && $tabCount > $semicolonCount) {
+            return "\t";
+        }
+
+        return ',';
     }
     
     /**
