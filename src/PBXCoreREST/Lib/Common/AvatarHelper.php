@@ -209,6 +209,51 @@ class AvatarHelper
     }
 
     /**
+     * Minimum valid image size in bytes.
+     *
+     * The smallest valid JPEG is ~107 bytes (1x1 pixel).
+     * The smallest valid PNG is ~67 bytes (1x1 pixel).
+     * Anything below 1 KB is certainly not a usable avatar.
+     */
+    private const MIN_IMAGE_SIZE = 1024;
+
+    /**
+     * Known image format signatures (magic bytes)
+     */
+    private const IMAGE_SIGNATURES = [
+        "\xFF\xD8\xFF"       => 'JPEG',
+        "\x89PNG\r\n\x1A\n"  => 'PNG',
+        "GIF87a"             => 'GIF',
+        "GIF89a"             => 'GIF',
+        "RIFF"               => 'WEBP', // WEBP starts with RIFF....WEBP
+    ];
+
+    /**
+     * Validate that binary data is a real image
+     *
+     * Checks magic bytes and minimum size to prevent saving corrupt or
+     * garbage data (e.g. from LDAP sync with broken jpegPhoto attributes).
+     *
+     * @param string $imageData Raw binary image data
+     * @return bool True if data looks like a valid image
+     */
+    private static function isValidImageData(string $imageData): bool
+    {
+        $size = strlen($imageData);
+        if ($size < self::MIN_IMAGE_SIZE) {
+            return false;
+        }
+
+        foreach (self::IMAGE_SIGNATURES as $signature => $format) {
+            if (str_starts_with($imageData, $signature)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Save base64 encoded image to a file with proper permissions
      *
      * @param string $base64String Base64 image data (data:image/...;base64,...)
@@ -227,6 +272,11 @@ class AvatarHelper
 
             $imageData = base64_decode($parts[1], true);
             if ($imageData === false) {
+                return false;
+            }
+
+            // Validate decoded data is a real image before writing
+            if (!self::isValidImageData($imageData)) {
                 return false;
             }
 

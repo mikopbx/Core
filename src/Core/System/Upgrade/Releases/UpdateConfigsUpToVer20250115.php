@@ -197,6 +197,11 @@ class UpdateConfigsUpToVer20250115 extends Injectable implements UpgradeSystemCo
                 return false;
             }
 
+            // Validate decoded data is a real image (check magic bytes and min size)
+            if (strlen($imageData) < 1024 || !$this->hasValidImageSignature($imageData)) {
+                return false;
+            }
+
             // Write to file
             $bytesWritten = file_put_contents($outputFile, $imageData);
             if ($bytesWritten === false) {
@@ -216,5 +221,30 @@ class UpdateConfigsUpToVer20250115 extends Injectable implements UpgradeSystemCo
             );
             return false;
         }
+    }
+
+    /**
+     * Check if binary data starts with a known image format signature
+     *
+     * @param string $data Raw binary data
+     * @return bool True if recognized image format
+     */
+    private function hasValidImageSignature(string $data): bool
+    {
+        $signatures = [
+            "\xFF\xD8\xFF",        // JPEG
+            "\x89PNG\r\n\x1A\n",  // PNG
+            "GIF87a",              // GIF
+            "GIF89a",              // GIF
+            "RIFF",                // WEBP
+        ];
+
+        foreach ($signatures as $signature) {
+            if (str_starts_with($data, $signature)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
