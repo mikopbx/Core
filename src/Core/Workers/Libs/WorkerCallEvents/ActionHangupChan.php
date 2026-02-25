@@ -161,6 +161,26 @@ class ActionHangupChan
             }
         }
 
+        // Fallback: when a SIP transfer to a queue occurred, the sip_transfer CDR record
+        // was created with the original call's linkedid, but the endpoint's linkedid was NOT
+        // updated by Asterisk (Local channel intermediaries prevent propagation).
+        // Search by channel name to find and close these orphaned CDR records.
+        if ($countRows === 0) {
+            $filter = [
+                '(src_chan=:chan: OR dst_chan=:chan:) AND endtime = ""',
+                'bind' => ['chan' => $data['agi_channel']],
+            ];
+            $fallbackData = CallDetailRecordsTmp::find($filter);
+            foreach ($fallbackData as $row) {
+                $row->writeAttribute('endtime', $data['end']);
+                $row->writeAttribute('transfer', 0);
+                $res = $row->update();
+                if (!$res) {
+                    SystemMessages::sysLogMsg('Action_hangup_chan', implode(' ', $row->getMessages()), LOG_DEBUG);
+                }
+            }
+        }
+
         // The SRC channel has been completed and DST channel has not been created
         $filter = [
             'verbose_call_id=:verbose_call_id: AND endtime = "" AND dst_chan = "" AND src_chan = :src_chan:',
@@ -253,8 +273,19 @@ class ActionHangupChan
             }
 
             $linkedid = $am->GetVar($data_chan['chan'], 'CHANNEL(linkedid)', null, false);
-            if (empty($linkedid) || $linkedid === $data['linkedid']) {
+            if (empty($linkedid)) {
                 continue;
+            }
+            if ($linkedid === $data['linkedid']) {
+                // Direct linkedid check shows no change. Try following the Local channel chain.
+                // When a transfer targets a queue, the endpoint (e.g. PJSIP/201) stays in its
+                // original bridge with Local/xxx;2. The linkedid only propagates in the bridge
+                // where the actual channel swap occurred (Local/xxx;1's bridge).
+                // Traverse: endpoint → BRIDGEPEER(Local;2) → otherHalf(Local;1) → check linkedid.
+                $linkedid = self::resolveLinkedIdThroughLocalChain($am, $data_chan['chan'], $data['linkedid'], $active_chans);
+                if ($linkedid === null) {
+                    continue;
+                }
             }
 
             $CALLERID = $am->GetVar($BRIDGEPEER, 'CALLERID(num)', null, false);
@@ -288,5 +319,84 @@ class ActionHangupChan
             $AgiData = base64_encode(json_encode($n_data));
             $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
         }
+    }
+
+    /**
+     * Follows the Local channel chain to find a channel with a different linkedid.
+     *
+     * When a SIP transfer targets a queue, the endpoint (e.g. PJSIP/201) remains in its
+     * original bridge with Local/xxx;2 and its linkedid is NOT updated by Asterisk.
+     * However, the other half (Local/xxx;1) IS in the bridge where the transfer channel swap
+     * occurred, so its linkedid WAS updated to the original call's linkedid.
+     *
+     * This method traverses: channel → BRIDGEPEER (Local;2) → otherHalf (Local;1) → linkedid.
+     * Supports multiple levels of Local channel nesting (max depth 3).
+     *
+     * @param \MikoPBX\Core\Asterisk\AsteriskManager $am AMI connection.
+     * @param string $channel Starting channel to trace from.
+     * @param string $originalLinkedid The linkedid to compare against (hangup channel's linkedid).
+     * @param array $activeChans List of currently active channels.
+     * @return string|null The different linkedid found, or null if chain traversal finds nothing.
+     */
+    private static function resolveLinkedIdThroughLocalChain(
+        $am,
+        string $channel,
+        string $originalLinkedid,
+        array $activeChans
+    ): ?string {
+        $maxDepth = 3;
+        $currentChannel = $channel;
+        $visited = [$channel];
+
+        for ($i = 0; $i < $maxDepth; $i++) {
+            $bridgePeer = $am->GetVar($currentChannel, 'BRIDGEPEER', null, false);
+            if (!is_string($bridgePeer) || !in_array($bridgePeer, $activeChans, true)) {
+                break;
+            }
+
+            // BRIDGEPEER must be a Local channel to continue traversal
+            if (stripos($bridgePeer, 'local/') === false) {
+                break;
+            }
+
+            // Get the other half of the Local channel pair (;2 → ;1 or ;1 → ;2)
+            $otherHalf = self::getLocalChannelOtherHalf($bridgePeer);
+            if ($otherHalf === null || !in_array($otherHalf, $activeChans, true)) {
+                break;
+            }
+
+            if (in_array($otherHalf, $visited, true)) {
+                break;
+            }
+            $visited[] = $otherHalf;
+
+            // Check linkedid on the other half — it may have been updated by the bridge merge
+            $linkedid = $am->GetVar($otherHalf, 'CHANNEL(linkedid)', null, false);
+            if (!empty($linkedid) && $linkedid !== $originalLinkedid) {
+                return $linkedid;
+            }
+
+            // Continue traversal from the other half
+            $currentChannel = $otherHalf;
+        }
+
+        return null;
+    }
+
+    /**
+     * Converts a Local channel name from one half to the other.
+     *
+     * @param string $localChannel e.g. "Local/201@internal-00000008;2"
+     * @return string|null The other half, e.g. "Local/201@internal-00000008;1", or null if not a Local channel.
+     */
+    private static function getLocalChannelOtherHalf(string $localChannel): ?string
+    {
+        if (str_ends_with($localChannel, ';1')) {
+            return substr($localChannel, 0, -1) . '2';
+        }
+        if (str_ends_with($localChannel, ';2')) {
+            return substr($localChannel, 0, -1) . '1';
+        }
+        return null;
     }
 }
