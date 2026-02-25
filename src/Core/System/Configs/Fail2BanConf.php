@@ -550,7 +550,6 @@ class Fail2BanConf extends SystemConfigClass
             'failregex = ^[Ll]ogin attempt for nonexistent user (\'.*\' )?from <HOST>:\d+$' . PHP_EOL .
             '            ^[Bb]ad (PAM )?password attempt for .+ from <HOST>(:\d+)?$' . PHP_EOL .
             '            ^[Ee]xit before auth \(user \'.+\', \d+ fails\): Max auth tries reached - user \'.+\' from <HOST>:\d+\s*$' . PHP_EOL .
-            '            ^[Ee]xit before auth from \<<HOST>:\d+\>:\s*Exited normally$' . PHP_EOL .
             "ignoreregex =" . PHP_EOL;
 
         // Write the configuration to the Dropbear SSH server file
