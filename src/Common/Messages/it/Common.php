@@ -243,7 +243,7 @@ return [
     'Пропущенный вызов' => 'Hai una chiamata persa',
     // ADV
     'adv_AmiPasswordWeak' => 'Password semplice utente AMI <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'È disponibile una nuova versione del modulo %module% - %ver%. Versione corrente: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'È disponibile una nuova versione del modulo <a href="%url%" class="advices-module-update">%module%</a> - %ver%. Versione corrente: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Nuova versione PBX disponibile - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Il sistema ha un firewall disabilitato o le impostazioni delle subnet consentite non sono configurate - <a href=\'%url%\'>modifica</a>',
     'adv_MessagesHeader' => 'Presta attenzione',

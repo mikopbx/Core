@@ -243,7 +243,7 @@ return [
     'Пропущенный вызов' => 'Vous avez un appel manqué',
     // ADV
     'adv_AmiPasswordWeak' => 'Mot de passe utilisateur AMI simple <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'Une nouvelle version des modules %module% à %ver% est disponible. Version actuelle : %currentVer%.',
+    'adv_AvailableNewVersionModule' => 'Une nouvelle version des modules <a href="%url%" class="advices-module-update">%module%</a> à %ver% est disponible. Version actuelle : %currentVer%.',
     'adv_AvailableNewVersionPBX' => 'Nouvelle version PBX disponible - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Le système a un pare-feu désactivé ou les paramètres des sous-réseaux autorisés ne sont pas configurés - <a href=\'%url%\'>modifier</a>',
     'adv_MessagesHeader' => 'Faites attention',

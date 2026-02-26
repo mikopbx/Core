@@ -243,7 +243,7 @@ return [
     'repIncomingRoutingTableDefaultRuleName' => 'შემომავალი დამუშავების ნაგულისხმევი წესი',
     // ADV
     'adv_AmiPasswordWeak' => 'AMI მომხმარებლის მარტივი პაროლი <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'ხელმისაწვდომია მოდულის ახალი ვერსია %module% - %ver%. მიმდინარე ვერსია: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'ხელმისაწვდომია მოდულის ახალი ვერსია <a href="%url%" class="advices-module-update">%module%</a> - %ver%. მიმდინარე ვერსია: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'ხელმისაწვდომია PBX-ის ახალი ვერსია - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Firewall სისტემაში გამორთულია - <a href=\'%url%\'> შეცვლა </a>',
     'adv_MessagesHeader' => 'შენიშვნა',

@@ -243,7 +243,7 @@ return [
     'Пропущенный вызов' => 'Cevapsız aramanız var',
     // ADV
     'adv_AmiPasswordWeak' => 'AMI kullanıcı basit parolası <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => '%module% - %ver% modülünün yeni sürümü mevcuttur. Mevcut sürüm: %currentVer%',
+    'adv_AvailableNewVersionModule' => '<a href="%url%" class="advices-module-update">%module%</a> - %ver% modülünün yeni sürümü mevcuttur. Mevcut sürüm: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Yeni PBX sürümü mevcut - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Sistemin güvenlik duvarı devre dışı bırakılmış veya izin verilen alt ağ ayarları yapılandırılmamış - <a href=\'%url%\'>değiştir</a>',
     'adv_MessagesHeader' => 'Dikkat et',

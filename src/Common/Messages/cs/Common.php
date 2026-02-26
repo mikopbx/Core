@@ -243,7 +243,7 @@ return [
     'Пропущенный вызов' => 'Máte zmeškaný hovor',
     // ADV
     'adv_AmiPasswordWeak' => 'Jednoduché heslo uživatele AMI <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'Nová verze modulu %module% - %ver% je k dispozici. Aktuální verze: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Nová verze modulu <a href="%url%" class="advices-module-update">%module%</a> - %ver% je k dispozici. Aktuální verze: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'K dispozici nová verze PBX - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Systém má vypnutý firewall nebo nejsou nakonfigurována nastavení povolených podsítí - <a href=\'%url%\'>změnit</a>',
     'adv_MessagesHeader' => 'Věnujte pozornost',

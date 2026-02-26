@@ -243,7 +243,7 @@ return [
     'Пропущенный вызов' => 'Buraxılmış zənginiz var',
     // ADV
     'adv_AmiPasswordWeak' => 'AMI istifadəçisi üçün sadə parol <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => '%module% - %ver% modulunun yeni versiyası mövcuddur. Cari versiya: %currentVer%',
+    'adv_AvailableNewVersionModule' => '<a href="%url%" class="advices-module-update">%module%</a> - %ver% modulunun yeni versiyası mövcuddur. Cari versiya: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Yeni PBX versiyası mövcuddur - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Sistemdə söndürülmüş təhlükəsizlik divarı var və ya icazə verilən alt şəbəkə parametrləri konfiqurasiya edilməyib - <a href=\'%url%\'>dəyişiklik</a>',
     'adv_MessagesHeader' => 'Qeyd',

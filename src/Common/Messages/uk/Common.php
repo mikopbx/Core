@@ -243,7 +243,7 @@ return [
     'Пропущенный вызов' => 'У вас є пропущений виклик',
     // ADV
     'adv_AmiPasswordWeak' => 'Простий пароль у AMI користувача <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'Доступна нова версія модуля %module% - %ver%. Поточна версія: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Доступна нова версія модуля <a href="%url%" class="advices-module-update">%module%</a> - %ver%. Поточна версія: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Доступна нова версія PBX - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'У системі вимкнено мережевий екран або не настроєно параметри дозволених підмереж - <a href=\'%url%\'>змінити</a>',
     'adv_MessagesHeader' => 'Зверніть увагу',

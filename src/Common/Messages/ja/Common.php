@@ -243,7 +243,7 @@ return [
     'repIncomingRoutingTableDefaultRuleName' => 'デフォルトの着信処理ルール',
     // ADV
     'adv_AmiPasswordWeak' => 'AMI ユーザーの簡易パスワード <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'モジュール%module% - %ver%の新バージョンが利用可能になりました。現在のバージョン: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'モジュール<a href="%url%" class="advices-module-update">%module%</a> - %ver%の新バージョンが利用可能になりました。現在のバージョン: %currentVer%',
     'adv_AvailableNewVersionPBX' => '新しい PBX バージョンが利用可能 - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'システムのファイアウォールが無効になっているか、許可されたサブネット設定が構成されていません - <a href=\'%url%\'>変更</a>',
     'adv_MessagesHeader' => '注意してください',

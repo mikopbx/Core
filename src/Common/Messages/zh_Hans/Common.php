@@ -243,7 +243,7 @@ return [
     'Пропущенный вызов' => '你有一个未接来电',
     // ADV
     'adv_AmiPasswordWeak' => 'AMI用户简单密码<a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => '模块 %module% - %ver% 的新版本现已发布。当前版本：%currentVer%',
+    'adv_AvailableNewVersionModule' => '模块 <a href="%url%" class="advices-module-update">%module%</a> - %ver% 的新版本现已发布。当前版本：%currentVer%',
     'adv_AvailableNewVersionPBX' => '新的 PBX 版本可用 - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => '系统已禁用防火墙或未配置允许的子网设置 - <a href=\'%url%\'>更改</a>',
     'adv_MessagesHeader' => '注意一下',

@@ -169,6 +169,28 @@ const marketplace = {
         } else {
             marketplace.$noNewModulesSegment.show();
         }
+
+        // Check if URL has a module query parameter to auto-open its detail modal
+        marketplace.openModuleFromQueryParam();
+    },
+
+    /**
+     * Checks the URL query parameter for a module uniqid and opens its detail modal.
+     * URL format: ?module=ModuleUniqid#/marketplace
+     */
+    openModuleFromQueryParam() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const uniqid = urlParams.get('module');
+        if (!uniqid) {
+            return;
+        }
+        const $moduleRow = $(`tr.new-module-row[data-id=${uniqid}]`);
+        if ($moduleRow.length > 0) {
+            $moduleRow.find('td.show-details-on-click').first().trigger('click');
+        }
+        // Clean up the URL parameter after opening the modal
+        const cleanUrl = window.location.pathname + window.location.hash;
+        window.history.replaceState(null, '', cleanUrl);
     },
 
     /**

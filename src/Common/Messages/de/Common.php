@@ -700,7 +700,7 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'sd_Today' => 'heute',
     'rs_Cancel' => 'Abbruch',
     'rs_ContinueAnyway' => 'Weitermachen',
-    'adv_AvailableNewVersionModule' => 'Eine neue Version des Moduls %module% – %ver% ist verfügbar. Aktuelle Version: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Eine neue Version des Moduls <a href="%url%" class="advices-module-update">%module%</a> – %ver% ist verfügbar. Aktuelle Version: %currentVer%',
     'cdr_TryChangingDate' => 'Versuchen Sie, den Datumsbereich zu ändern.',
     'st_CategoryBackups' => 'Backups',
     'st_1Month' => '1 Monat',

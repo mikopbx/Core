@@ -203,7 +203,7 @@ return [
     'Warning! Selected disk will be formatted!' => 'ความสนใจ! ดิสก์ที่เลือกจะถูกฟอร์แมตและข้อมูลทั้งหมดจะถูกทำลาย!',
     'Wed' => 'วันพุธ',
     'adv_AmiPasswordWeak' => 'รหัสผ่านง่ายๆ สำหรับผู้ใช้ AMI <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'โมดูล %module% - %ver% เวอร์ชันใหม่พร้อมให้ใช้งานแล้ว เวอร์ชันปัจจุบัน: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'โมดูล <a href="%url%" class="advices-module-update">%module%</a> - %ver% เวอร์ชันใหม่พร้อมให้ใช้งานแล้ว เวอร์ชันปัจจุบัน: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'มี PBX เวอร์ชันใหม่แล้ว - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'ระบบมีไฟร์วอลล์ที่ปิดใช้งานหรือไม่ได้กำหนดค่าการตั้งค่าซับเน็ตที่อนุญาต - <a href=\'%url%\'>การเปลี่ยนแปลง</a>',
     'adv_MessagesHeader' => 'บันทึก',

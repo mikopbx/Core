@@ -256,7 +256,7 @@ return [
     // ADV
     'adv_AmiPasswordWeak' => 'Простой пароль у AMI пользователя <a href=\'%url%\'>%record%</a>',
     'adv_AriPasswordWeak' => 'Простой пароль у ARI пользователя <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'Доступна новая версия модуля %module% - %ver%. Текущая версия: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Доступна новая версия модуля <a href="%url%" class="advices-module-update">%module%</a> - %ver%. Текущая версия: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Доступна новая версия PBX - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'В системе отключен сетевой экран или не настроены параметры разрешенных подсетей - <a href=\'%url%\'>изменить</a>',
     'adv_MessagesHeader' => 'Обратите внимание',

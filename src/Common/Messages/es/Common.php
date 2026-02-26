@@ -239,7 +239,7 @@ return [
     'Пропущенный вызов' => 'Tienes una llamada perdida',
     // ADV
     'adv_AmiPasswordWeak' => 'Contraseña simple de usuario de AMI <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'Nueva versión del módulo %module% - %ver% disponible. Versión actual: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Nueva versión del módulo <a href="%url%" class="advices-module-update">%module%</a> - %ver% disponible. Versión actual: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Nueva versión de PBX disponible - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'El sistema tiene un firewall deshabilitado o las configuraciones de subredes permitidas no están configuradas - <a href=\'%url%\'>cambiar</a>',
     'adv_MessagesHeader' => 'Presta atencion',

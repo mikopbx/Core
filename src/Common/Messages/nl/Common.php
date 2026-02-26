@@ -243,7 +243,7 @@ return [
     'repIncomingRoutingTableDefaultRuleName' => 'Standaardregel voor inkomende verwerkingsregel',
     // ADV
     'adv_AmiPasswordWeak' => 'Eenvoudig gebruikerswachtwoord AMI <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'Nieuwe versie van module %module% - %ver% is beschikbaar. Huidige versie: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Nieuwe versie van module <a href="%url%" class="advices-module-update">%module%</a> - %ver% is beschikbaar. Huidige versie: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Nieuwe PBX-versie beschikbaar - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Het systeem heeft een uitgeschakelde firewall of de instellingen voor toegestane subnetten zijn niet geconfigureerd - <a href=\'%url%\'>wijzigen</a>',
     'adv_MessagesHeader' => 'opmerking',

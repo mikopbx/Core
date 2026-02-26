@@ -57,7 +57,7 @@ class CheckModulesUpdates extends Injectable
                     $messages['info'][] = [
                         'messageTpl' => 'adv_AvailableNewVersionModule',
                         'messageParams' => [
-                            'url' => $this->url->get('pbx-extension-modules/index/#/marketplace'),
+                            'url' => $this->url->get('pbx-extension-modules/index/') . '?module=' . urlencode($module['uniqid']) . '#/marketplace',
                             'ver' => $module['version'],
                             'module' => $module['name'],
                             'currentVer' => $moduleFromLocal['version'],

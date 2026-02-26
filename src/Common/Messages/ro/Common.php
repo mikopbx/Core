@@ -243,7 +243,7 @@ return [
     'Пропущенный вызов' => 'Ai un apel ratat',
     // ADV
     'adv_AmiPasswordWeak' => 'Parolă simplă pentru utilizatorul AMI <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'Noua versiune a modulului %module% - %ver% este disponibilă. Versiunea curentă: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Noua versiune a modulului <a href="%url%" class="advices-module-update">%module%</a> - %ver% este disponibilă. Versiunea curentă: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Nouă versiune PBX disponibilă - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Sistemul are firewall dezactivat sau setările pentru subrețelele permise nu sunt configurate - <a href=\'%url%\'>schimbare</a>',
     'adv_MessagesHeader' => 'Te rog să fii atent',

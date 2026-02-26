@@ -203,7 +203,7 @@ return [
     'Warning! Selected disk will be formatted!' => 'Uppmärksamhet! Den valda disken kommer att formateras och all data kommer att förstöras!',
     'Wed' => 'onsdag',
     'adv_AmiPasswordWeak' => 'AMI användarenkelt lösenord <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'Ny version av modulen %module% - %ver% är tillgänglig. Nuvarande version: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Ny version av modulen <a href="%url%" class="advices-module-update">%module%</a> - %ver% är tillgänglig. Nuvarande version: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Ny PBX-version tillgänglig - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Systemet har en inaktiverad brandvägg eller så är de tillåtna subnätinställningarna inte konfigurerade - <a href=\'%url%\'>ändra</a>',
     'adv_MessagesHeader' => 'Var uppmärksam',

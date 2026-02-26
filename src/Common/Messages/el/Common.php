@@ -806,7 +806,7 @@ return [
     'mo_S3AccessKeyRequired' => 'Απαιτείται κλειδί πρόσβασης S3 όταν είναι ενεργοποιημένη η αποθήκευση S3.',
     'adv_SecurityLogSuspiciousGrowth' => 'Το αρχείο καταγραφής ασφαλείας του Asterisk έχει αυξηθεί ύποπτα: %growth% MB σε %interval% λεπτά. Συνιστάται να ελέγξετε τις ρυθμίσεις ασφαλείας σας.',
     'am_tooltip_log_read' => 'Προβολή αρχείων καταγραφής συστήματος και εφαρμογών',
-    'adv_AvailableNewVersionModule' => 'Μια νέα έκδοση της ενότητας %module% - %ver% είναι διαθέσιμη. Τρέχουσα έκδοση: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Μια νέα έκδοση της ενότητας <a href="%url%" class="advices-module-update">%module%</a> - %ver% είναι διαθέσιμη. Τρέχουσα έκδοση: %currentVer%',
     'SubHeaderEmployees' => 'Διαχείριση υπαλλήλων και των επεκτάσεών τους',
     'am_EmptyTableDescription' => 'Το AMI (Asterisk Manager Interface) επιτρέπει σε εξωτερικές εφαρμογές να ελέγχουν το τηλεφωνικό κέντρο και να λαμβάνουν συμβάντα κλήσεων.',
     'st_S3ConfigurationHelp' => 'Ρυθμίστε τα διαπιστευτήρια για χώρο αποθήκευσης συμβατό με S3 για αυτόματη μεταφόρτωση εγγραφών στο cloud.',

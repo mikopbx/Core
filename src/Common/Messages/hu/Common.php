@@ -243,7 +243,7 @@ return [
     'Пропущенный вызов' => 'Nem fogadott hívása van',
     // ADV
     'adv_AmiPasswordWeak' => 'Egyszerű jelszó az AMI-felhasználók számára <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'Az %module% - %ver% modul új verziója elérhető. Jelenlegi verzió: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Az <a href="%url%" class="advices-module-update">%module%</a> - %ver% modul új verziója elérhető. Jelenlegi verzió: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Elérhető az alközpont új verziója – <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'A rendszerben letiltott tűzfal van, vagy az engedélyezett alhálózatok beállításai nincsenek konfigurálva - <a href=\'%url%\'>módosítás</a>',
     'adv_MessagesHeader' => 'jegyzet',

@@ -243,7 +243,7 @@ return [
     'Пропущенный вызов' => 'Bạn có một cuộc gọi nhỡ',
     // ADV
     'adv_AmiPasswordWeak' => 'Mật khẩu đơn giản của người dùng AMI <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'Phiên bản mới của module %module% - %ver% đã có sẵn. Phiên bản hiện tại: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Phiên bản mới của module <a href="%url%" class="advices-module-update">%module%</a> - %ver% đã có sẵn. Phiên bản hiện tại: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Đã có phiên bản PBX mới - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Hệ thống có tường lửa bị vô hiệu hóa hoặc các thiết lập mạng con được phép không được cấu hình - <a href=\'%url%\'>thay đổi</a>',
     'adv_MessagesHeader' => 'Chú ý',

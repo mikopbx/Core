@@ -248,7 +248,7 @@ return [
     // ADV
     'adv_AmiPasswordWeak' => 'Weak password for AMI user <a href=\'%url%\'>%record%</a>',
     'adv_AriPasswordWeak' => 'Weak password for ARI user <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'New module version %module% - %ver% available. Current version: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'New module version <a href="%url%" class="advices-module-update">%module%</a> - %ver% available. Current version: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'New PBX version available - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Network firewall is disabled in the system or allowed subnet parameters are not configured - <a href=\'%url%\'>change</a>',
     'adv_MessagesHeader' => 'Pay attention',

@@ -243,7 +243,7 @@ return [
     'Пропущенный вызов' => 'Imate propušteni poziv',
     // ADV
     'adv_AmiPasswordWeak' => 'Jednostavna lozinka za AMI korisnika <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'Dostupna je nova verzija modula %module% - %ver%. Trenutna verzija: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Dostupna je nova verzija modula <a href="%url%" class="advices-module-update">%module%</a> - %ver%. Trenutna verzija: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Dostupna nova verzija PBX-a - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Sustav ima onemogućen vatrozid ili postavke dopuštenih podmreža nisu konfigurirane - <a href=\'%url%\'>promijeni</a>',
     'adv_MessagesHeader' => 'Imajte na umu',

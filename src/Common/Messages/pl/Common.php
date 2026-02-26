@@ -243,7 +243,7 @@ return [
     'repIncomingRoutingTableDefaultRuleName' => 'Reguła domyślna dla przetwarzania przychodzącego',
     // ADV
     'adv_AmiPasswordWeak' => 'Proste hasło użytkownika AMI <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'Dostępna jest nowa wersja modułu %module% - %ver%. Aktualna wersja: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Dostępna jest nowa wersja modułu <a href="%url%" class="advices-module-update">%module%</a> - %ver%. Aktualna wersja: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Dostępna nowa wersja PBX - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'W systemie wyłączona jest zapora sieciowa lub ustawienia dozwolonych podsieci nie są skonfigurowane - <a href=\'%url%\'>zmiana</a>',
     'adv_MessagesHeader' => 'Zwróć uwagę',

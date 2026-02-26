@@ -243,7 +243,7 @@ return [
     'Пропущенный вызов' => 'Sinulla on vastaamaton puhelu',
     // ADV
     'adv_AmiPasswordWeak' => 'Yksinkertainen salasana AMI-käyttäjälle <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'Uusi versio moduulista %module% - %ver% saatavilla. Nykyinen versio: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Uusi versio moduulista <a href="%url%" class="advices-module-update">%module%</a> - %ver% saatavilla. Nykyinen versio: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Uusi versio PBX:stä saatavilla - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Järjestelmässä on poistettu käytöstä palomuuri tai sallittujen aliverkkojen asetuksia ei ole määritetty - <a href=\'%url%\'>muutos</a>',
     'adv_MessagesHeader' => 'Huomaa',

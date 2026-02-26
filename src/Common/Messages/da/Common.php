@@ -243,7 +243,7 @@ return [
     'Пропущенный вызов' => 'Du har et ubesvaret opkald',
     // ADV
     'adv_AmiPasswordWeak' => 'AMI brugerenkel adgangskode <a href=\'%url%\'>%record%</a>',
-    'adv_AvailableNewVersionModule' => 'Ny version af modulet %module% - %ver% er tilgængelig. Nuværende version: %currentVer%',
+    'adv_AvailableNewVersionModule' => 'Ny version af modulet <a href="%url%" class="advices-module-update">%module%</a> - %ver% er tilgængelig. Nuværende version: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Ny PBX-version tilgængelig - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Systemet har en deaktiveret firewall, eller de tilladte undernetindstillinger er ikke konfigureret - <a href=\'%url%\'>ændre</a>',
     'adv_MessagesHeader' => 'Vær opmærksom',
