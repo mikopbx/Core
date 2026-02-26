@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{BeanstalkClient, Directories, SystemMessages, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Directories, RecordingDeletionLogger, SystemMessages, Util};
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
@@ -608,6 +608,11 @@ class WorkerCallEvents extends WorkerBase
             return;
         }
         $limitData  = (new DateTime())->modify("-$savePeriod days")->format('Y-m-d');
+        RecordingDeletionLogger::log(
+            RecordingDeletionLogger::CDR_RETENTION,
+            'cdr_general',
+            "savePeriod={$savePeriod}days, limitDate={$limitData}"
+        );
         $connection = $this->di->get(CDRDatabaseProvider::SERVICE_NAME);
         $connection->execute("DELETE FROM cdr_general WHERE start < '$limitData'");
     }

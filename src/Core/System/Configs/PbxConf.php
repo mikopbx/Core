@@ -42,6 +42,7 @@ use MikoPBX\Core\Asterisk\Configs\{
     VoiceMailConf};
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\RecordingDeletionLogger;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -155,6 +156,7 @@ class PbxConf extends SystemConfigClass
         self::rotatePbxLog('security_log');
         self::rotatePbxLog('error');
         self::rotatePbxLog('verbose');
+        self::rotateRecordingDeletionsLog();
     }
 
     /**
@@ -195,6 +197,41 @@ class PbxConf extends SystemConfigClass
         }
         $logrotate = Util::which('logrotate');
         Processes::mwExecBg("$logrotate $options '$path_conf' > /dev/null 2> /dev/null");
+    }
+
+    /**
+     * Rotates the recording deletions audit log file.
+     */
+    private static function rotateRecordingDeletionsLog(): void
+    {
+        $logFile = RecordingDeletionLogger::getLogFilePath();
+        if (empty($logFile) || !file_exists($logFile)) {
+            return;
+        }
+
+        $maxSize = 10;
+        $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
+        $textConfig = "$logFile {
+    nocreate
+    nocopytruncate
+    compress
+    delaycompress
+    start 0
+    rotate 9
+    size {$maxSize}M
+    missingok
+    noolddir
+}";
+        $pathConf = $varEtcDir . '/logrotate_recording_deletions.conf';
+        file_put_contents($pathConf, $textConfig);
+        $mb10 = $maxSize * 1024 * 1024;
+
+        $options = '';
+        if (Util::mFileSize($logFile) > $mb10) {
+            $options = '-f';
+        }
+        $logrotate = Util::which('logrotate');
+        Processes::mwExecBg("$logrotate $options '$pathConf' > /dev/null 2> /dev/null");
     }
 
     /**

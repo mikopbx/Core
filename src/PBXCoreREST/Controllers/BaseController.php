@@ -334,7 +334,8 @@ class BaseController extends Controller
             $sessionContext = [
                 'auth_type' => 'bearer_token',
                 'token_id' => $this->request->getTokenInfo()['id'] ?? null,
-                'origin' => $origin // For WebAuthn RP ID validation
+                'origin' => $origin, // For WebAuthn RP ID validation
+                'remote_addr' => $this->request->getClientAddress(true) ?? '',
             ];
 
             // If JWT token, add user info from payload
@@ -513,6 +514,12 @@ class BaseController extends Controller
         $needDelete = $fileData['need_delete'] ?? false;
         $additionalHeaders = $fileData['additional_headers'] ?? [];
 
+        // Disable nginx response buffering for streaming
+        // WHY: Without this, nginx buffers the ENTIRE file to disk before sending
+        // to client. Large files (10MB+) cause 15-40 second delays before playback.
+        // X-Accel-Buffering: no tells nginx to stream chunks immediately.
+        $this->response->setHeader('X-Accel-Buffering', 'no');
+
         // Add additional headers (e.g., X-Audio-Duration)
         foreach ($additionalHeaders as $headerName => $headerValue) {
             $this->response->setHeader($headerName, $headerValue);
@@ -653,12 +660,25 @@ class BaseController extends Controller
             $this->response->setHeader('Content-Disposition', 'inline');
         }
 
-        // Send headers and stream file
+        // Send headers and stream file in chunks
+        // WHY: fpassthru() buffers entire file before sending. Chunked streaming
+        // ensures first bytes reach nginx immediately, matching handleRangeRequest() behavior.
         $this->response->sendHeaders();
 
         $fp = fopen($filename, 'rb');
         if ($fp !== false) {
-            fpassthru($fp);
+            $bufferSize = 8192;
+            while (!feof($fp)) {
+                $buffer = fread($fp, $bufferSize);
+                if ($buffer === false) {
+                    break;
+                }
+                echo $buffer;
+                if (ob_get_level()) {
+                    ob_flush();
+                }
+                flush();
+            }
             fclose($fp);
         }
     }

@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\{PbxSettings, RecordingStorage, StorageSettings};
-use MikoPBX\Core\System\{Directories, Storage, SystemMessages};
+use MikoPBX\Core\System\{Directories, RecordingDeletionLogger, Storage, SystemMessages};
 use MikoPBX\Core\System\Storage\S3Client;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -299,6 +299,11 @@ class WorkerS3Upload extends WorkerBase
             );
             // Delete local file if it's already in S3
             if (file_exists($localPath)) {
+                RecordingDeletionLogger::log(
+                    RecordingDeletionLogger::S3_UPLOADED,
+                    $localPath,
+                    'duplicate, already in S3'
+                );
                 unlink($localPath);
             }
             return true;
@@ -345,6 +350,11 @@ class WorkerS3Upload extends WorkerBase
             }
 
             // Delete local file after successful upload
+            RecordingDeletionLogger::log(
+                RecordingDeletionLogger::S3_UPLOADED,
+                $localPath,
+                "s3_key={$s3Key}, size=" . round($fileSize / 1048576, 2) . 'MB'
+            );
             if (file_exists($localPath) && !unlink($localPath)) {
                 SystemMessages::sysLogMsg(
                     __CLASS__,

@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Workers;
 
 use MikoPBX\Common\Models\{PbxSettings, RecordingStorage, StorageSettings};
-use MikoPBX\Core\System\{Directories, SystemMessages};
+use MikoPBX\Core\System\{Directories, RecordingDeletionLogger, SystemMessages};
 use MikoPBX\Core\System\Storage\S3Client;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -237,6 +237,11 @@ class WorkerS3CacheCleaner extends WorkerBase
             }
 
             if (unlink($file['path'])) {
+                RecordingDeletionLogger::log(
+                    RecordingDeletionLogger::S3_CACHE_EVICT,
+                    $file['path'],
+                    'cache_size=' . round($totalSizeMB, 2) . 'MB, atime=' . date('Y-m-d H:i:s', $file['atime'])
+                );
                 $currentSize -= $file['size'];
                 $deletedSize += $file['size'];
                 $deletedCount++;
@@ -420,6 +425,12 @@ class WorkerS3CacheCleaner extends WorkerBase
                 );
                 continue;
             }
+
+            RecordingDeletionLogger::log(
+                RecordingDeletionLogger::S3_PURGED,
+                $record->recordingfile,
+                "s3_key={$record->s3_key}, retention={$savePeriod}days"
+            );
 
             // Remove mapping record
             if (!$record->delete()) {

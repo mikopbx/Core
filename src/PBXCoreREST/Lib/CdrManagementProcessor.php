@@ -102,7 +102,7 @@ class CdrManagementProcessor extends Injectable
             // WHY: Pass sessionContext for ACL filtering (role from JWT token)
             CdrAction::GET_LIST => GetListAction::main($data, $sessionContext),
             CdrAction::GET_RECORD => GetRecordAction::main($data['id'] ?? null),
-            CdrAction::DELETE => DeleteRecordAction::main($data['id'] ?? null, $data),
+            CdrAction::DELETE => DeleteRecordAction::main($data['id'] ?? null, $data, $sessionContext),
 
             // CDR specific operations
             CdrAction::GET_METADATA => GetMetadataAction::main($data),

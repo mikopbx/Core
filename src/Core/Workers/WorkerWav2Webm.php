@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{Directories, Processes, SystemMessages, Util};
+use MikoPBX\Core\System\{Directories, Processes, RecordingDeletionLogger, SystemMessages, Util};
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Throwable;
@@ -444,6 +444,11 @@ class WorkerWav2Webm extends WorkerBase
                     LOG_WARNING
                 );
                 // Clean up empty source files
+                RecordingDeletionLogger::log(
+                    RecordingDeletionLogger::CONVERSION_EMPTY,
+                    $inputPath,
+                    "in={$sizeIn}bytes, out={$sizeOut}bytes"
+                );
                 @unlink($srcIn);
                 @unlink($srcOut);
                 @unlink($srcFile);
@@ -458,6 +463,11 @@ class WorkerWav2Webm extends WorkerBase
                     filesize($srcFile)
                 ),
                 LOG_WARNING
+            );
+            RecordingDeletionLogger::log(
+                RecordingDeletionLogger::CONVERSION_EMPTY,
+                $srcFile,
+                'size=' . filesize($srcFile) . 'bytes'
             );
             @unlink($srcFile);
             return 0; // Return success to delete task
@@ -585,9 +595,16 @@ class WorkerWav2Webm extends WorkerBase
         $deleteSource = ($taskData['delete_source'] ?? '0') === '1';
         if ($deleteSource) {
             // Delete all possible source file formats
-            @unlink($inputPath . '.' . $fileExt);
-            @unlink($inputPath . '_in.' . $fileExt);
-            @unlink($inputPath . '_out.' . $fileExt);
+            foreach ([$inputPath . '.' . $fileExt, $inputPath . '_in.' . $fileExt, $inputPath . '_out.' . $fileExt] as $srcPath) {
+                if (file_exists($srcPath)) {
+                    RecordingDeletionLogger::log(
+                        RecordingDeletionLogger::CONVERSION_CLEANUP,
+                        $srcPath,
+                        "output={$dstFile}"
+                    );
+                    @unlink($srcPath);
+                }
+            }
             SystemMessages::sysLogMsg(
                 __CLASS__,
                 sprintf('Source files deleted: %s.%s', basename($inputPath), $fileExt),

@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\Cdr;
 
 use MikoPBX\Common\Models\CallDetailRecords;
+use MikoPBX\Core\System\RecordingDeletionLogger;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 
@@ -52,7 +53,7 @@ class DeleteRecordAction
      *
      * @return PBXApiResult Result object containing deletion information
      */
-    public static function main(?string $id, array $data = []): PBXApiResult
+    public static function main(?string $id, array $data = [], array $sessionContext = []): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -115,18 +116,24 @@ class DeleteRecordAction
         // WHY: Two deletion scenarios:
         // 1. Delete by linkedid (mikopbx-*) → delete ALL records with this linkedid
         // 2. Delete by numeric ID → delete only this single record
+        // Build API context string from sessionContext (populated by BaseController)
+        $username = $sessionContext['user_name'] ?? 'api';
+        $remoteAddr = $sessionContext['remote_addr'] ?? 'unknown';
+        $apiContext = "user={$username}, ip={$remoteAddr}, linkedid={$linkedId}";
+
         if ($isLinkedId && !empty($linkedId)) {
             $linkedRecordsDeleted = self::deleteLinkedRecords(
                 $linkedId,
                 (int)$record->id,
-                $deleteRecording
+                $deleteRecording,
+                $apiContext
             );
         }
 
         // ============ PHASE 5: DELETE RECORDING FILES ============
         // WHY: Delete files before DB record (cleanup even if DB delete fails)
         if ($deleteRecording && !empty($recordingFile)) {
-            $recordingDeleted = self::deleteRecordingFiles($recordingFile);
+            $recordingDeleted = self::deleteRecordingFiles($recordingFile, $apiContext);
         }
 
         // ============ PHASE 6: DELETE DATABASE RECORD ============
@@ -140,7 +147,7 @@ class DeleteRecordAction
 
         // ============ PHASE 7: LOGGING ============
         // WHY: Security audit trail for deletions
-        self::logDeletion($id, $linkedId, $recordingDeleted, $recordingFile, $linkedRecordsDeleted);
+        self::logDeletion($id, $linkedId, $recordingDeleted, $recordingFile, $linkedRecordsDeleted, $username, $remoteAddr);
 
         // ============ PHASE 8: RESPONSE ============
         // WHY: Provide detailed feedback about deletion
@@ -165,7 +172,7 @@ class DeleteRecordAction
      *
      * @return int Number of linked records deleted
      */
-    private static function deleteLinkedRecords(string $linkedId, int $excludeId, bool $deleteRecording): int
+    private static function deleteLinkedRecords(string $linkedId, int $excludeId, bool $deleteRecording, string $apiContext): int
     {
         $deleted = 0;
 
@@ -183,7 +190,7 @@ class DeleteRecordAction
         foreach ($linkedRecords as $linkedRecord) {
             // Delete recording files if requested
             if ($deleteRecording && !empty($linkedRecord->recordingfile)) {
-                self::deleteRecordingFiles($linkedRecord->recordingfile);
+                self::deleteRecordingFiles($linkedRecord->recordingfile, $apiContext);
             }
 
             // Delete the record
@@ -202,12 +209,13 @@ class DeleteRecordAction
      *
      * @return bool True if at least one file was deleted
      */
-    private static function deleteRecordingFiles(string $recordingFile): bool
+    private static function deleteRecordingFiles(string $recordingFile, string $apiContext = ''): bool
     {
         $deleted = false;
 
         // Delete the main file if exists
         if (file_exists($recordingFile)) {
+            RecordingDeletionLogger::log(RecordingDeletionLogger::API_DELETE, $recordingFile, $apiContext);
             if (@unlink($recordingFile)) {
                 $deleted = true;
             }
@@ -227,6 +235,7 @@ class DeleteRecordAction
 
             // Delete if exists
             if (file_exists($file)) {
+                RecordingDeletionLogger::log(RecordingDeletionLogger::API_DELETE, $file, $apiContext);
                 if (@unlink($file)) {
                     $deleted = true;
                 }
@@ -252,7 +261,9 @@ class DeleteRecordAction
         string $linkedId,
         bool $recordingDeleted,
         ?string $recordingFile,
-        int $linkedRecordsDeleted
+        int $linkedRecordsDeleted,
+        string $username = 'api',
+        string $remoteAddr = 'unknown'
     ): void {
         $di = Di::getDefault();
 
@@ -262,10 +273,6 @@ class DeleteRecordAction
         }
 
         $logger = $di->get('logger');
-
-        // Get user context from session or request
-        $username = $_SESSION['auth']['username'] ?? 'api';
-        $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
         // Build log message
         $message = sprintf(

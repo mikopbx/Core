@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{Directories, Processes, Storage, SystemMessages, Util};
+use MikoPBX\Core\System\{Directories, Processes, RecordingDeletionLogger, Storage, SystemMessages, Util};
 
 /**
  * WorkerRemoveOldRecords is a worker class responsible for cleaning monitor records.
@@ -136,6 +136,20 @@ class WorkerRemoveOldRecords extends WorkerBase
             if ($free_space > self::MIN_SPACE_MB) {
                 // Disk cleanup is not required
                 break;
+            }
+            // Log each recording file before removing the directory
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($dir_info, \RecursiveDirectoryIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::LEAVES_ONLY
+            );
+            foreach ($iterator as $file) {
+                if ($file->isFile()) {
+                    RecordingDeletionLogger::log(
+                        RecordingDeletionLogger::DISK_CLEANUP,
+                        $file->getPathname(),
+                        "free_space={$free_space}MB"
+                    );
+                }
             }
             Processes::mwExec("$rm -rf $dir_info");
         }
