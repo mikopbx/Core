@@ -69,7 +69,7 @@ docker exec mikopbx_tests-refactoring /storage/usbdisk1/python_packages/run_pyte
 
 ## Test Suite Coverage
 
-### Test Files (25 tests total)
+### Test Files (28 tests total)
 
 | Test File | Tests | Description | Key Features |
 |-----------|-------|-------------|--------------|
@@ -81,7 +81,7 @@ docker exec mikopbx_tests-refactoring /storage/usbdisk1/python_packages/run_pyte
 | **test_69_music_on_hold.py** | 3 | Music on hold | MOH via dialplan, queues, RMS validation |
 | **test_70_call_recording.py** | 3 | Call recording | Auto-recording, file checks, transfer recording |
 | **test_71_codec_negotiation.py** | 4 | Codec support | alaw, ulaw, opus, priority selection |
-| **test_72_attended_transfer.py** | 3 | Attended transfer | DTMF ## transfer, cancel, no-answer |
+| **test_72_attended_transfer.py** | 6 | Attended transfer | DTMF ## transfer, cancel, no-answer, trunk transfer, CTI race condition |
 
 **Total runtime:** ~10 minutes (sequential execution)
 
@@ -132,6 +132,11 @@ Individual SIP softphone instance:
 - Channel monitoring (`core show channels`)
 - Codec verification (`core show translation`)
 - Call parking status (`parkedcalls show`)
+
+**`helpers/ami_helper.py`** - AMI event watcher for transfer testing
+- Async AMI client simulating external CTI module behavior
+- Watches for AttendedTransfer events and fires Hangup to reproduce race conditions
+- Used by test_05 and test_06 in test_72_attended_transfer.py
 
 ### Resource Management
 

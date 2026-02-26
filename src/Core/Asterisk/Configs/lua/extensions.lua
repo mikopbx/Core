@@ -284,7 +284,13 @@ function userevent_return(data)
 end
 
 --[[
-    Sends a user event with encoded data and hangs up the channel.
+    Sends a user event with encoded data and logs a hangup NoOp message.
+    Does NOT call app["Hangup"]() — the channel teardown is managed by Asterisk
+    (either the 'h' extension handler or normal hangup processing).
+
+    Previously this function called app["Hangup"]() which caused cascade
+    destruction of Local channel pairs during attended transfer, collapsing
+    active bridges (fix for commit 6121edb4d).
 
     Parameters:
     - data: A table containing the data to be encoded and sent as a user event.
@@ -292,14 +298,6 @@ end
     Note:
     - The function encodes the data using base64 encoding and sends it as a user event.
     - If the 'is_test' variable is defined, the function returns without performing any action.
-    - After sending the user event, the function logs a NoOp message indicating the hangup and hangs up the channel.
-
-    Example Usage:
-    local eventData = {
-        key1 = "value1",
-        key2 = "value2",
-    }
-    userevent_hangup(eventData)
 ]]
 function userevent_hangup(data)
     if(is_test ~= nil) then
@@ -309,7 +307,6 @@ function userevent_hangup(data)
     app["CELGenUserEvent"](""..data);
     app["UserEvent"]("CdrConnector,AgiData:"..data);
     app["NoOp"]('Hangup channel ');
-    app["Hangup"]();
 end
 
 

@@ -127,6 +127,7 @@ class ActionHangupChan
                 }
             }
             $row->writeAttribute('endtime', $data['end']);
+            $wasTransfer = ($row->transfer === '1');
             $row->writeAttribute('transfer', 0);
             if ($transferCdrAnswered === false && count($transfer_calls) === 2) {
                 // Call termination for consultative transfer. Initiator hung up before the destination answered.
@@ -151,7 +152,9 @@ class ActionHangupChan
                     'out' => true,
                 ];
             } else {
-                $worker->StopMixMonitor($row->dst_chan, 'hangupChanEndCalls');
+                if (!$wasTransfer) {
+                    $worker->StopMixMonitor($row->dst_chan, 'hangupChanEndCalls');
+                }
                 $channels[] = [
                     'chan' => $row->dst_chan,
                     'did' => $row->did,
