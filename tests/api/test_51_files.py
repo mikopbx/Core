@@ -93,30 +93,79 @@ class TestFilesAPI:
             else:
                 raise
 
-    def test_03_upload_status_check(self, api_client):
-        """Test GET /files:uploadStatus?id={id} - Check upload status"""
-        # Test with fake upload ID (should return not found or empty)
-        test_upload_id = 'test_upload_12345'
+    def test_03_chunked_upload_and_status(self, api_client, tmp_path):
+        """Test full Resumable.js upload flow: POST /files:upload → GET /files:uploadStatus
 
-        try:
-            response = api_client.get('files:uploadStatus', params={'id': test_upload_id})
+        WHY: Verifies the real upload pipeline works end-to-end:
+        1. File chunk is received and stored via Resumable.js protocol
+        2. Merge process starts for single-chunk files
+        3. Status endpoint correctly reports progress and completion
+        4. Response contains expected fields (d_status, d_status_progress, channelId)
+        """
+        # 1. Create a small test file
+        test_file = tmp_path / "test_upload.txt"
+        test_file.write_text("Line 1: test content\nLine 2: more content\nLine 3: end\n")
 
-            # May return success with empty/not found data, or 404
-            if response.get('result') is True:
-                data = response.get('data', {})
-                print(f"✓ Upload status endpoint works")
-                if isinstance(data, dict):
-                    print(f"  Status data: {data}")
-            else:
-                print(f"⚠ Upload ID not found (expected for fake ID)")
+        # 2. Upload via Resumable.js protocol (single chunk)
+        response = api_client.upload_file('files:upload', str(test_file))
 
-        except Exception as e:
-            if '404' in str(e):
-                print(f"✓ Upload status correctly returns 404 for unknown ID")
-            elif '501' in str(e):
-                print(f"⚠ Upload status not implemented")
-            else:
-                raise
+        assert response.get('result') is True, f"Upload failed: {response}"
+        assert 'data' in response, f"No data in upload response: {response}"
+
+        upload_data = response['data']
+        upload_id = upload_data.get('upload_id', '')
+        assert upload_id, f"No upload_id in response: {upload_data}"
+
+        d_status = upload_data.get('d_status', '')
+        assert d_status in ('MERGING', 'WAITING_FOR_NEXT_PART'), \
+            f"Unexpected upload d_status: {d_status}, full response: {upload_data}"
+
+        print(f"✓ File uploaded: upload_id={upload_id}, d_status={d_status}")
+
+        # 3. Poll upload status until complete (max 10s)
+        final_status = None
+        final_progress = None
+        status_data = {}
+
+        for attempt in range(20):
+            time.sleep(0.5)
+
+            status_resp = api_client.get(
+                'files:uploadStatus',
+                params={'resumableIdentifier': upload_id}
+            )
+
+            assert status_resp.get('result') is True, \
+                f"Status check returned result=false: {status_resp}"
+
+            status_data = status_resp.get('data', {})
+            assert 'd_status' in status_data, \
+                f"Missing d_status in status response: {status_data}"
+            assert 'd_status_progress' in status_data, \
+                f"Missing d_status_progress in status response: {status_data}"
+
+            final_status = status_data['d_status']
+            final_progress = status_data['d_status_progress']
+
+            print(f"  Poll {attempt + 1}: d_status={final_status}, progress={final_progress}")
+
+            if final_status == 'UPLOAD_COMPLETE' and final_progress == '100':
+                break
+
+        assert final_progress == '100', \
+            f"Upload did not complete. d_status={final_status}, progress={final_progress}"
+        assert final_status == 'UPLOAD_COMPLETE', \
+            f"Expected UPLOAD_COMPLETE, got: {final_status}"
+
+        # 4. Verify EventBus channel info in status response
+        assert 'channelId' in status_data, \
+            f"Missing channelId in status response: {status_data}"
+        expected_channel = f"file-upload-{upload_id}"
+        assert status_data['channelId'] == expected_channel, \
+            f"Expected channelId={expected_channel}, got {status_data['channelId']}"
+
+        print(f"✓ Upload complete: d_status={final_status}, progress={final_progress}, "
+              f"channelId={status_data['channelId']}")
 
     def test_04_firmware_download_initiate(self, api_client):
         """Test POST /files:downloadFirmware - Initiate firmware download
@@ -150,28 +199,37 @@ class TestFilesAPI:
             else:
                 print(f"⚠ Firmware download error: {str(e)[:100]}")
 
-    def test_05_firmware_status_check(self, api_client):
-        """Test GET /files:firmwareStatus?filename={name} - Check firmware download status"""
-        test_firmware = 'test_firmware.img'
+    def test_05_firmware_status_not_found(self, api_client):
+        """Test GET /files:firmwareStatus for non-existent firmware
 
-        try:
-            response = api_client.get('files:firmwareStatus', params={'filename': test_firmware})
+        WHY: Verifies the endpoint returns proper error structure (not just any error).
+        The backend returns success=false with STATUS_NOT_FOUND → HTTP 422.
+        We assert specific HTTP status code and response body fields.
+        """
+        test_firmware = 'nonexistent_firmware_12345.img'
 
-            if response.get('result') is True:
-                data = response.get('data', {})
-                print(f"✓ Firmware status endpoint works")
-                if isinstance(data, dict):
-                    print(f"  Status: {data}")
-            else:
-                print(f"⚠ Firmware not found (expected for fake filename)")
+        response = api_client.get_raw(
+            'files:firmwareStatus',
+            params={'filename': test_firmware}
+        )
 
-        except Exception as e:
-            if '404' in str(e):
-                print(f"✓ Firmware status correctly returns 404 for unknown file")
-            elif '501' in str(e):
-                print(f"⚠ Firmware status not implemented")
-            else:
-                raise
+        # Non-existent firmware → success=false → HTTP 422
+        assert response.status_code == 422, \
+            f"Expected HTTP 422 for non-existent firmware, got {response.status_code}"
+
+        body = response.json()
+        assert body.get('result') is False, \
+            f"Expected result=false for non-existent firmware: {body}"
+
+        # Verify response has expected data structure
+        data = body.get('data', {})
+        assert 'd_status_progress' in data, \
+            f"Missing d_status_progress in error response: {data}"
+        assert data['d_status_progress'] == '0', \
+            f"Expected progress=0 for not found, got: {data['d_status_progress']}"
+
+        print(f"✓ Firmware status returns 422 with proper error structure for non-existent file")
+        print(f"  Response: result={body['result']}, data={data}")
 
 class TestFilesEdgeCases:
     """Edge cases for Files API"""
