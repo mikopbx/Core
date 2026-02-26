@@ -1864,17 +1864,20 @@ class Storage extends Injectable
     public static function getFreeSpace(string $hdd): float|int
     {
         $out = [];
-        $hdd = escapeshellarg($hdd);
-        $grep = Util::which('grep');
-        $awk = Util::which('awk');
         $df = Util::which('df');
-        $head = Util::which('head');
+        $awk = Util::which('awk');
 
-        // Execute df command to get the free space for the HDD
-        Processes::mwExec("$df -m | $grep $hdd | $grep -v custom_modules | $head -n 1 | $awk '{print $4}'", $out);
+        if (str_starts_with($hdd, '/')) {
+            $escaped = escapeshellarg($hdd);
+            Processes::mwExec("$df -Pm $escaped 2>/dev/null | $awk 'NR==2 {print \$4}'", $out);
+        } else {
+            $escaped = escapeshellarg($hdd);
+            $grep = Util::which('grep');
+            $head = Util::which('head');
+            Processes::mwExec("$df -m | $grep $escaped | $grep -v custom_modules | $head -n 1 | $awk '{print \$4}'", $out);
+        }
+
         $result = 0;
-
-        // Sum up the free space values
         foreach ($out as $res) {
             if (!is_numeric($res)) {
                 continue;
@@ -1897,17 +1900,20 @@ class Storage extends Injectable
     public static function getUsedSpace(string $hdd): float|int
     {
         $out = [];
-        $hdd = escapeshellarg($hdd);
-        $grep = Util::which('grep');
-        $awk = Util::which('awk');
         $df = Util::which('df');
-        $head = Util::which('head');
+        $awk = Util::which('awk');
 
-        // Execute df command to get the used space for the HDD (column $3 = Used)
-        Processes::mwExec("$df -m | $grep $hdd | $grep -v custom_modules | $head -n 1 | $awk '{print \$3}'", $out);
+        if (str_starts_with($hdd, '/')) {
+            $escaped = escapeshellarg($hdd);
+            Processes::mwExec("$df -Pm $escaped 2>/dev/null | $awk 'NR==2 {print \$3}'", $out);
+        } else {
+            $escaped = escapeshellarg($hdd);
+            $grep = Util::which('grep');
+            $head = Util::which('head');
+            Processes::mwExec("$df -m | $grep $escaped | $grep -v custom_modules | $head -n 1 | $awk '{print \$3}'", $out);
+        }
+
         $result = 0;
-
-        // Sum up the used space values
         foreach ($out as $res) {
             if (!is_numeric($res)) {
                 continue;
