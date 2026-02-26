@@ -61,10 +61,13 @@ class RemoveAudioFileAction extends Injectable
 
         $out = [];
 
+        $basePath = Util::trimExtensionForFile($filePath);
         $arrDeletedFiles = [
-            escapeshellarg(Util::trimExtensionForFile($filePath) . ".wav"),
-            escapeshellarg(Util::trimExtensionForFile($filePath) . ".mp3"),
-            escapeshellarg(Util::trimExtensionForFile($filePath) . ".alaw"),
+            escapeshellarg($basePath . ".wav"),
+            escapeshellarg($basePath . ".wav16"),
+            escapeshellarg($basePath . ".wav48"),
+            escapeshellarg($basePath . ".mp3"),
+            escapeshellarg($basePath . ".alaw"),
         ];
 
         $rm = Util::which('rm');

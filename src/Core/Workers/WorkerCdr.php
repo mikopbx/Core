@@ -236,10 +236,15 @@ class WorkerCdr extends WorkerBase
             $disposition = ($dialstatus === 'ANSWERED') ? $disposition : $dialstatus;
         }
 
-        // If the disposition is not 'ANSWERED' and there's a recording file, delete it
+        // If recordingfile is set but neither the converted .webm nor any source format exists,
+        // try to retrieve the recording path from another CDR row for this call leg
+        $basePath = Util::trimExtensionForFile($row['recordingfile']);
+        $sourceExists = file_exists($basePath . '.wav48')
+            || file_exists($basePath . '.wav16')
+            || file_exists($basePath . '.wav');
         if (!empty($row['recordingfile']) &&
             !file_exists($row['recordingfile']) &&
-            !file_exists(Util::trimExtensionForFile($row['recordingfile']) . '.wav')) {
+            !$sourceExists) {
 
             // If the disposition is 'ANSWERED' and the recording file doesn't exist, retrieve it from the database
             $filter = [

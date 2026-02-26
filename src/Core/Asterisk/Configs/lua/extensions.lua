@@ -111,16 +111,17 @@ end
 ]]
 function getRecordingFileExtension()
     local audioCodec = get_variable("CHANNEL(audioreadformat)") or "";
+    local callerCodec = get_variable("CALLER_AUDIOFORMAT") or "";
 
-    -- OPUS fullband (48kHz) - highest quality
-    if audioCodec:find("opus") then
+    -- Check both legs: current channel and caller (A-leg) codec
+    -- Choose the highest quality format from either side
+    if audioCodec:find("opus") or callerCodec:find("opus") then
         return "wav48";
 
-    -- G.722 wideband (16kHz) or Speex16
-    elseif audioCodec:find("g722") or audioCodec:find("speex16") or audioCodec:find("slin16") then
+    elseif audioCodec:find("g722") or audioCodec:find("speex16") or audioCodec:find("slin16")
+        or callerCodec:find("g722") or callerCodec:find("speex16") or callerCodec:find("slin16") then
         return "wav16";
 
-    -- Default: narrowband 8kHz (G.711 alaw/ulaw, GSM, etc.)
     else
         return "wav";
     end

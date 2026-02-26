@@ -63,10 +63,12 @@ class ActionHangupChanMeetme
                 if ($row->UNIQUEID === $data['UNIQUEID'] && $is_local && !$is_stored_local) {
                     $data['src_chan'] = $row->src_chan;
                 }
+                $recBase = Util::trimExtensionForFile($row->recordingfile);
                 if (
-                    file_exists($row->recordingfile) || file_exists(
-                        Util::trimExtensionForFile($row->recordingfile) . '.wav'
-                    )
+                    file_exists($row->recordingfile)
+                    || file_exists($recBase . '.wav48')
+                    || file_exists($recBase . '.wav16')
+                    || file_exists($recBase . '.wav')
                 ) {
                     // Override the recording file path. The conference has only one recording file.
                     $recordingfile = $row->recordingfile;

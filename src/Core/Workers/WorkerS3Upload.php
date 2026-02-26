@@ -570,6 +570,8 @@ class WorkerS3Upload extends WorkerBase
         foreach ($iterator as $file) {
             if ($file->isFile() && (
                 str_ends_with($file->getFilename(), '.wav') ||
+                str_ends_with($file->getFilename(), '.wav16') ||
+                str_ends_with($file->getFilename(), '.wav48') ||
                 str_ends_with($file->getFilename(), '.mp3') ||
                 str_ends_with($file->getFilename(), '.webm')
             )) {

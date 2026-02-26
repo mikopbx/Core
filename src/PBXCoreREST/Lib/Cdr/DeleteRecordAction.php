@@ -217,7 +217,7 @@ class DeleteRecordAction
         $pathInfo = pathinfo($recordingFile);
         $basePath = $pathInfo['dirname'] . '/' . $pathInfo['filename'];
 
-        foreach (['.wav', '.mp3', '.ogg'] as $ext) {
+        foreach (['.wav', '.wav16', '.wav48', '.mp3', '.ogg'] as $ext) {
             $file = $basePath . $ext;
 
             // Skip if it's the same as main file

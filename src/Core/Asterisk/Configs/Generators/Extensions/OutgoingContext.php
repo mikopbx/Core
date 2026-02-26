@@ -282,6 +282,7 @@ class OutgoingContext extends AsteriskConfigClass
         $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
 
         $conf .= 'same => n,ExecIf($["${OFF_ANSWER_SUB}" != "1"]?Set(DIAL_OUT_ANSWER_OPTIONS=U(${ISTRANSFER}dial_answer)))' . "\n\t";
+        $conf .= 'same => n,Set(__CALLER_AUDIOFORMAT=${CHANNEL(audioreadformat)})' . "\n\t";
         $conf .= 'same => n,Dial(${DIAL_COMMAND},${DIAL_TIMOUT},${DOPTIONS}TK${DIAL_OUT_ANSWER_OPTIONS}b(dial_create_chan,s,1))' . "\n\t";
         // Generate outgoing dialplan for additional modules
         $confModules = $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_OUT_ROUT_AFTER_DIAL_CONTEXT, [$rout]);

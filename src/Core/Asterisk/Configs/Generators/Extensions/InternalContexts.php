@@ -397,6 +397,7 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . " \n\t";
         $conf .= 'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${TRANSFER_OPTIONS}x" == "x" || "${ISTRANSFER}x" != "x"]?Set(TRANSFER_OPTIONS=Tt))' . " \n\t";
+        $conf .= 'same => n,Set(__CALLER_AUDIOFORMAT=${CHANNEL(audioreadformat)})' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},${TRANSFER_OPTIONS}${DIAL_QUEUE_OPTIONS}ekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" == "x"]?Gosub(dial_end,${EXTEN},1))' . " \n\t";
         $conf .= 'same => n(fw_start),NoOp()' . " \n\t";

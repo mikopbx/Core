@@ -157,12 +157,13 @@ class WorkerCallEvents extends WorkerBase
         $resFile = '';
         $file_name = str_replace('/', '_', $file_name);
         if ($this->record_calls) {
-            [$f, $options] = $this->setMonitorFilenameOptions($full_name, $sub_dir, $file_name);
+            $fileExt = $this->getRecordingFileExtension($channel);
+            [$f, $options] = $this->setMonitorFilenameOptions($full_name, $sub_dir, $file_name, $fileExt);
             $arr = $this->am->GetChannels(false);
             if (!in_array($channel, $arr, true)) {
                 return '';
             }
-            $srcFile = "$f.wav";
+            $srcFile = "$f.$fileExt";
             $resFile = "$f.webm";
             $this->am->MixMonitor($channel, $srcFile, $options, '', $actionID);
 
@@ -186,14 +187,15 @@ class WorkerCallEvents extends WorkerBase
      * @param string $full_name The full name of the file. If it exists, it will be used as is.
      * @param string $sub_dir The subdirectory where the file will be stored.
      * @param string $file_name The name of the file.
+     * @param string $fileExt The recording file extension (wav48, wav16, or wav).
      *
      * @return array An array containing the full file path and the options for the recording.
      *               If $this->split_audio_thread is true, options will be set to split audio in two separate files (in/out).
      *               Otherwise, 'ab' will be returned as options.
      */
-    public function setMonitorFilenameOptions(string $full_name, string $sub_dir, string $file_name): array
+    public function setMonitorFilenameOptions(string $full_name, string $sub_dir, string $file_name, string $fileExt = 'wav'): array
     {
-        $full_name = Util::trimExtensionForFile($full_name) . '.wav';
+        $full_name = Util::trimExtensionForFile($full_name) . ".$fileExt";
         if (!file_exists($full_name)) {
             $monitor_dir = Directories::getDir(Directories::AST_MONITOR_DIR);
             if (empty($sub_dir)) {
@@ -204,11 +206,50 @@ class WorkerCallEvents extends WorkerBase
             $f = Util::trimExtensionForFile($full_name);
         }
         if ($this->split_audio_thread) {
-            $options = "abr({$f}_in.wav)t({$f}_out.wav)";
+            $options = "abr({$f}_in.$fileExt)t({$f}_out.$fileExt)";
         } else {
             $options = 'ab';
         }
         return array($f, $options);
+    }
+
+    /**
+     * Determines the optimal recording file extension based on the channel's audio codec.
+     *
+     * Mirrors the Lua getRecordingFileExtension() in extensions.lua.
+     * Queries CHANNEL(audioreadformat) via AMI for both legs to preserve
+     * the highest native sample rate across the bridge:
+     *   - OPUS (48kHz fullband) → wav48
+     *   - G.722/Speex16 (16kHz wideband) → wav16
+     *   - Other codecs (8kHz narrowband) → wav
+     *
+     * @param string $channel The Asterisk channel to query.
+     * @return string File extension without dot: "wav48", "wav16", or "wav".
+     */
+    private function getRecordingFileExtension(string $channel): string
+    {
+        $audioCodec = strtolower(
+            (string)$this->am->GetVar($channel, 'CHANNEL(audioreadformat)', null, false)
+        );
+
+        // Also check the other leg's codec via BRIDGEPEER
+        $bridgePeer = (string)$this->am->GetVar($channel, 'BRIDGEPEER', null, false);
+        if (!empty($bridgePeer)) {
+            $peerCodec = strtolower(
+                (string)$this->am->GetVar($bridgePeer, 'CHANNEL(audioreadformat)', null, false)
+            );
+            $audioCodec .= ' ' . $peerCodec;
+        }
+
+        if (str_contains($audioCodec, 'opus')) {
+            return 'wav48';
+        }
+
+        if (str_contains($audioCodec, 'g722') || str_contains($audioCodec, 'speex16') || str_contains($audioCodec, 'slin16')) {
+            return 'wav16';
+        }
+
+        return 'wav';
     }
 
     /**
@@ -222,13 +263,10 @@ class WorkerCallEvents extends WorkerBase
      */
     public function StopMixMonitor(string $channel, string $actionID = ''): void
     {
-        $channelInfo = null;
-        if (isset($this->mixMonitorChannels[$channel])) {
-            $channelInfo = $this->mixMonitorChannels[$channel];
-            unset($this->mixMonitorChannels[$channel]);
-        } else {
+        if (!isset($this->mixMonitorChannels[$channel])) {
             return;
         }
+        unset($this->mixMonitorChannels[$channel]);
 
         if ($this->record_calls) {
             $this->am->StopMixMonitor($channel, $actionID);
