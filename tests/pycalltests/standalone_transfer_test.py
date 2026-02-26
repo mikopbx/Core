@@ -407,6 +407,25 @@ class AMIClient:
         })
         return await self._get_response(timeout=10)
 
+    async def play_dtmf(self, channel: str, digit: str, duration: int = 250,
+                        receive: bool = True):
+        """Send DTMF digit on channel. receive=True emulates receiving DTMF."""
+        await self._send({
+            'Action': 'PlayDTMF',
+            'Channel': channel,
+            'Digit': digit,
+            'Duration': str(duration),
+            'Receive': '1' if receive else '0',
+        })
+        return await self._get_response(timeout=5)
+
+    async def send_dtmf_string(self, channel: str, digits: str,
+                               inter_digit_delay: float = 0.3):
+        """Send a string of DTMF digits with delay between each."""
+        for digit in digits:
+            await self.play_dtmf(channel, digit)
+            await asyncio.sleep(inter_digit_delay)
+
     async def hangup(self, channel: str):
         """Hangup a channel."""
         await self._send({
@@ -548,10 +567,10 @@ async def run_test(server_ip: str):
         print(f"  Transferor channel: {transferor_channel}")
 
         # ============================================================
-        # STEP 4: Attended Transfer to 206 via AMI Atxfer
+        # STEP 4: Attended Transfer to 206 via DTMF ##
         # ============================================================
         print(f"\n{'—'*70}")
-        print(f"STEP 4: Attended Transfer to 206 (AMI Atxfer)")
+        print(f"STEP 4: Attended Transfer to 206 (DTMF ##)")
         print(f"{'—'*70}")
 
         # Start CTI watcher — monitors for AttendedTransfer, fires Hangup
@@ -564,7 +583,7 @@ async def run_test(server_ip: str):
             """Simulate cti_amid_client: on AttendedTransfer, send Hangup."""
             nonlocal cti_hangup_sent, cti_hangup_channel, cti_hangup_delay_ms, transfer_event_time
             while True:
-                evt = await cti_ami.get_event(timeout=30)
+                evt = await cti_ami.get_event(timeout=60)
                 if not evt:
                     break
                 if evt.get('Event') == 'AttendedTransfer' and evt.get('Result') == 'Success':
@@ -580,38 +599,52 @@ async def run_test(server_ip: str):
 
         watcher_task = asyncio.create_task(cti_watcher())
 
-        # Initiate attended transfer
+        # Send ## DTMF to trigger attended transfer feature on 204
         await ami.drain_events()
-        resp = await ami.atxfer(transferor_channel, '206', 'internal-transfer')
-        print(f"  Atxfer response: {resp.get('Response', 'no response')}")
+        print(f"  Sending DTMF ## on {transferor_channel} to start transfer...")
+        await ami.send_dtmf_string(transferor_channel, '##', inter_digit_delay=0.15)
+
+        # Wait for transfer prompt to play and Asterisk to collect digits
+        await asyncio.sleep(2)
+
+        # Send target extension digits: 206
+        print(f"  Sending DTMF 206 to dial transfer target...")
+        await ami.send_dtmf_string(transferor_channel, '206', inter_digit_delay=0.3)
 
         # Wait for 206 to answer (consultation call)
         print(f"  Waiting for 206 to answer consultation call...")
-        await asyncio.sleep(5)
+        for attempt in range(10):
+            await asyncio.sleep(1)
+            channels = await ami.get_channels()
+            ch_206 = [c for c in channels if '/206-' in c['channel'] and c['state'] == 'Up']
+            if ch_206:
+                break
 
-        # Check consultation call established
         channels = await ami.get_channels()
         ch_206 = [c for c in channels if '/206-' in c['channel']]
         print(f"  206 channels: {[c['channel'] for c in ch_206]}")
 
         if not ch_206:
-            print(f"  WARNING: 206 did not answer — transfer may not work")
+            print(f"  FATAL: 206 did not answer consultation call — cannot complete transfer")
             print(f"  All channels: {[(c['channel'], c['state']) for c in channels]}")
+            return False
+
+        print(f"  Consultation call established with 206!")
 
         # ============================================================
-        # STEP 5: Complete transfer — Hangup 204
+        # STEP 5: Complete transfer — Send ## to 204
         # ============================================================
         print(f"\n{'—'*70}")
-        print(f"STEP 5: Complete Transfer — Hangup 204")
+        print(f"STEP 5: Complete Transfer — DTMF ## on 204")
         print(f"{'—'*70}")
-        print(f"  Hanging up {transferor_channel} to complete transfer...")
+        print(f"  Sending ## on {transferor_channel} to complete transfer...")
         print(f"  CTI watcher armed — will send racing Hangup on AttendedTransfer")
 
-        await ami.hangup(transferor_channel)
-        print(f"  Hangup sent on {transferor_channel}")
+        await ami.send_dtmf_string(transferor_channel, '##', inter_digit_delay=0.15)
+        print(f"  ## sent — transfer completing...")
 
         # Wait for transfer completion and CTI watcher to fire
-        await asyncio.sleep(3)
+        await asyncio.sleep(5)
 
         # Cancel watcher if not fired
         if not watcher_task.done():
