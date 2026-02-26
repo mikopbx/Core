@@ -140,8 +140,40 @@ class TestCallQueueMemberOrdering:
 
     QUEUE_EXTENSION = '20099'
     QUEUE_NAME = 'Member Ordering Test Queue'
-    MEMBERS_INITIAL = ['201', '202', '203']
-    MEMBERS_REORDERED = ['203', '201', '202', '204']
+    # Members are resolved dynamically in test_00 from existing SIP extensions
+    MEMBERS_INITIAL: list[str] = []
+    MEMBERS_REORDERED: list[str] = []
+
+    def test_00_resolve_test_extensions(self, api_client):
+        """
+        Step 0: Discover existing SIP extensions on the test machine.
+
+        The test needs at least 4 internal SIP extensions to use as queue members.
+        Using hardcoded extension numbers (201, 202, ...) fails on machines where
+        those extensions don't exist, causing QueueConf::getQueueData() to crash
+        on null Extensions relationship.
+        """
+        response = api_client.get('extensions')
+        assert response.get('data'), "No extensions found on this machine"
+
+        # Collect internal SIP extensions
+        sip_extensions = []
+        for ext in response['data']:
+            if ext.get('type') == 'SIP' and ext.get('number', '').isdigit():
+                sip_extensions.append(ext['number'])
+
+        assert len(sip_extensions) >= 4, (
+            f"Need at least 4 SIP extensions for queue tests, found {len(sip_extensions)}: {sip_extensions}"
+        )
+
+        # Pick first 4 extensions
+        picked = sorted(sip_extensions)[:4]
+        self.__class__.MEMBERS_INITIAL = picked[:3]
+        self.__class__.MEMBERS_REORDERED = [picked[2], picked[0], picked[1], picked[3]]
+
+        print(f"\n  Available SIP extensions: {len(sip_extensions)}")
+        print(f"  MEMBERS_INITIAL:   {self.MEMBERS_INITIAL}")
+        print(f"  MEMBERS_REORDERED: {self.MEMBERS_REORDERED}")
 
     def test_01_create_queue_with_ringall_strategy(self, api_client):
         """
@@ -227,7 +259,7 @@ class TestCallQueueMemberOrdering:
         queue_id = getattr(self.__class__, '_queue_id', None)
         assert queue_id, "Queue ID not set (test_01 must run first)"
 
-        expected_members = ['201', '202', '203', '204']
+        expected_members = self.MEMBERS_INITIAL + [self.MEMBERS_REORDERED[-1]]
 
         update_data = {
             'strategy': 'linear',
@@ -262,7 +294,7 @@ class TestCallQueueMemberOrdering:
         queue_id = getattr(self.__class__, '_queue_id', None)
         assert queue_id, "Queue ID not set (test_01 must run first)"
 
-        expected = ['201', '202', '203', '204']
+        expected = self.MEMBERS_INITIAL + [self.MEMBERS_REORDERED[-1]]
         output = wait_for_queue_in_asterisk(
             api_client, queue_id,
             expect_strategy='linear',
@@ -363,13 +395,13 @@ class TestCallQueueMemberOrdering:
         # Switch back to ringall
         response = api_client.patch(f'call-queues/{queue_id}', {
             'strategy': 'ringall',
-            'members': [{'extension': ext} for ext in ['202', '201', '203']],
+            'members': [{'extension': ext} for ext in [self.MEMBERS_INITIAL[1], self.MEMBERS_INITIAL[0], self.MEMBERS_INITIAL[2]]],
         })
         assert_api_success(response, "Failed to switch back to ringall")
-        print(f"\n  Switched to ringall with members [202, 201, 203]")
+        print(f"\n  Switched to ringall with members {[self.MEMBERS_INITIAL[1], self.MEMBERS_INITIAL[0], self.MEMBERS_INITIAL[2]]}")
 
         # Switch to linear with specific order (no delay needed between patches)
-        expected_linear = ['203', '202', '201']
+        expected_linear = [self.MEMBERS_INITIAL[2], self.MEMBERS_INITIAL[1], self.MEMBERS_INITIAL[0]]
         response = api_client.patch(f'call-queues/{queue_id}', {
             'strategy': 'linear',
             'members': [{'extension': ext} for ext in expected_linear],

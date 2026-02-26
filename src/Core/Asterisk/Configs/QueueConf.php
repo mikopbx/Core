@@ -302,7 +302,7 @@ class QueueConf extends AsteriskConfigClass
                     [
                         'agent'      => $agent->extension,
                         'priority'   => $agent->priority,
-                        'isExternal' => ($agent->Extensions->type === Extensions::TYPE_EXTERNAL),
+                        'isExternal' => ($agent->Extensions?->type === Extensions::TYPE_EXTERNAL),
                     ];
             }
             $arrResult[$queueUniqId]['agents'] = $arrAgents;
