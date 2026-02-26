@@ -1425,6 +1425,10 @@ function event_queue_start()
         data['transfer']  	= '0';
     end
 
+    -- Read IVR DTMF digits so ActionAppEnd can write them to the IVR CDR record
+    data['ivr_dtmf'] = get_variable("IVR_DTMF");
+    set_variable("__IVR_DTMF", "");
+
     -- Send the data as a user event
     userevent_return(data)
     return data;
@@ -1549,11 +1553,20 @@ function event_dial_app()
     local ivr_dtmf = get_variable("IVR_DTMF");
     set_variable("__IVR_DTMF", "");
 
+    -- Clear pt1c_UNIQUEID before calling event_dial(true) to prevent early exit.
+    -- event_dial() calls app["return"]() when pt1c_UNIQUEID is set, which terminates
+    -- the entire Gosub and skips the rest of event_dial_app().
+    set_variable("__pt1c_UNIQUEID", "");
+
     -- Call the event_dial() function to handle the common dial logic
     data = event_dial(true);
 
     -- Restore IVR DTMF into event data (overrides event_dial's empty read after clearing)
     data['ivr_dtmf'] = ivr_dtmf;
+
+    -- Use "dial_app" action so ActionDialApp handles it (AppEnd before Insert)
+    -- instead of ActionDial which does Insert then AppEnd (immediately closing the new record)
+    data['action'] = "dial_app";
 
     local monDir = get_variable("MONITOR_DIR");
     if(monDir ~= '' and get_variable('NEED_MONITOR')=='1' and  monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"))) then

@@ -44,6 +44,12 @@ class ActionQueueStart
             // If it's a transfer, perform a search for related data.
             ActionTransferCheck::execute($worker, $data);
         }
+
+        // End previous app (e.g. IVR) BEFORE inserting the queue CDR.
+        // This ensures dtmf_digits are written only to the IVR record,
+        // not to the queue record that hasn't been created yet.
+        ActionAppEnd::execute($worker, $data);
+
         if (isset($data['start'])) {
             // It's a new row.
             InsertDataToDB::execute($data);
@@ -51,6 +57,5 @@ class ActionQueueStart
             // Only data update is required.
             UpdateDataInDB::execute($data);
         }
-        ActionAppEnd::execute($worker, $data);
     }
 }
