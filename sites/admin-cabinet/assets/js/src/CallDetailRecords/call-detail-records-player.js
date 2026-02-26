@@ -385,6 +385,13 @@ class CDRPlayer {
                 return;
             }
 
+            // Detect format from Content-Type header (moved from loadAuthenticatedSource)
+            const contentType = response.headers.get('Content-Type');
+            this.currentFormat = this.detectAudioFormat(contentType);
+            if (this.currentFormat && this.currentFormat !== 'unknown') {
+                this.updateFormatBadge(this.currentFormat);
+            }
+
             // Extract duration from header
             const durationSeconds = response.headers.get('X-Audio-Duration');
             if (durationSeconds) {
@@ -427,9 +434,6 @@ class CDRPlayer {
             this.html5Audio.pause();
             this.$pButton.removeClass('pause').addClass('play');
         }
-
-        // Clean up audio nodes to prevent memory leaks
-        this.cleanupAudioNodes();
     }
 
     /**
@@ -468,9 +472,10 @@ class CDRPlayer {
      * Plays or pauses the audio file.
      */
     play() {
-        // Check if audio already has a blob source loaded
-        if (this.html5Audio.src && this.html5Audio.src.startsWith('blob:')) {
-            // Blob already loaded, just toggle play/pause
+        // Check if audio already has a source loaded (direct URL or blob)
+        const currentSrc = this.html5Audio.getAttribute('src');
+        if (currentSrc) {
+            // Source already loaded, just toggle play/pause
             if (this.html5Audio.paused) {
                 // Stop all other players before playing this one
                 CDRPlayer.stopOthers(this);
@@ -483,8 +488,6 @@ class CDRPlayer {
                 if (CDRPlayer.currentlyPlaying === this) {
                     CDRPlayer.currentlyPlaying = null;
                 }
-                // Clean up audio nodes when pausing
-                this.cleanupAudioNodes();
             }
             return;
         }
@@ -612,95 +615,45 @@ class CDRPlayer {
     }
 
     /**
-     * Load audio from authenticated API endpoint using fetch + Bearer token
-     * @param {string} apiUrl - The API URL requiring authentication
+     * Load audio from API endpoint using direct src assignment for streaming playback
+     * @param {string} apiUrl - The API URL (token-based, no auth header needed)
      */
     loadAuthenticatedSource(apiUrl) {
-        // Build full URL (REST API paths always start with /pbxcore/)
         const fullUrl = apiUrl.startsWith('http')
             ? apiUrl
             : `${window.location.origin}${apiUrl}`;
 
-        // Prepare headers with Bearer token
-        const headers = {
-            'X-Requested-With': 'XMLHttpRequest'
-        };
-
-        if (typeof TokenManager !== 'undefined' && TokenManager.accessToken) {
-            headers['Authorization'] = `Bearer ${TokenManager.accessToken}`;
+        // Revoke previous blob URL if exists (cleanup from older code path)
+        if (this.html5Audio.src && this.html5Audio.src.startsWith('blob:')) {
+            URL.revokeObjectURL(this.html5Audio.src);
         }
 
-        // Fetch audio file with authentication
-        fetch(fullUrl, { headers })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
+        // Set source directly — browser handles streaming + Range requests natively
+        // WHY: Previous fetch().blob() downloaded ENTIRE file before playback (15-40s for large files)
+        this.html5Audio.src = fullUrl;
+        this.html5Audio.load();
 
-                // Detect format from Content-Type header
-                const contentType = response.headers.get('Content-Type');
-                this.currentFormat = this.detectAudioFormat(contentType);
+        // Setup mono mixer on first playback only
+        // WHY: Web Audio API requires user interaction before creating AudioContext
+        // MediaElementSource can only be created once per audio element
+        if (!this.sourceNode) {
+            this.setupMonoMixer();
+        }
 
-                // Update format badge
-                if (this.currentFormat && this.currentFormat !== 'unknown') {
-                    this.updateFormatBadge(this.currentFormat);
-                }
+        // Auto-play after enough data is buffered
+        this.html5Audio.oncanplaythrough = () => {
+            this.html5Audio.play();
+            this.$pButton.removeClass('play').addClass('pause');
+            this.html5Audio.oncanplaythrough = null;
+        };
 
-                // Extract duration from header if available
-                const durationSeconds = response.headers.get('X-Audio-Duration');
-                if (durationSeconds) {
-                    const duration = parseFloat(durationSeconds);
-                    if (duration > 0) {
-                        const date = new Date(null);
-                        date.setSeconds(parseInt(duration, 10));
-                        const dateStr = date.toISOString();
-                        const hours = parseInt(dateStr.substr(11, 2), 10);
-                        let formatted;
-                        if (hours === 0) {
-                            formatted = dateStr.substr(14, 5);
-                        } else if (hours < 10) {
-                            formatted = dateStr.substr(12, 7);
-                        } else {
-                            formatted = dateStr.substr(11, 8);
-                        }
-                        this.$spanDuration.text(`00:00/${formatted}`);
-                    }
-                }
-
-                return response.blob();
-            })
-            .then(blob => {
-                // Create blob URL from response
-                const blobUrl = URL.createObjectURL(blob);
-
-                // Revoke previous blob URL if exists
-                if (this.html5Audio.src && this.html5Audio.src.startsWith('blob:')) {
-                    URL.revokeObjectURL(this.html5Audio.src);
-                }
-
-                // Set blob URL directly to audio element
-                this.html5Audio.src = blobUrl;
-                this.html5Audio.load();
-
-                // Setup mono mixer on first playback only
-                // WHY: Web Audio API requires user interaction before creating AudioContext
-                // MediaElementSource can only be created once per audio element
-                // After first setup, same source node works for all subsequent files
-                if (!this.sourceNode) {
-                    this.setupMonoMixer();
-                }
-
-                // Auto-play after loading
-                this.html5Audio.oncanplaythrough = () => {
-                    this.html5Audio.play();
-                    this.$pButton.removeClass('play').addClass('pause');
-                    this.html5Audio.oncanplaythrough = null;
-
-                };
-            })
-            .catch(error => {
-                UserMessage.showMultiString(error.message, globalTranslate.cdr_AudioFileLoadError);
-            });
+        // Handle loading errors
+        this.html5Audio.onerror = () => {
+            const error = this.html5Audio.error;
+            const message = error ? `Audio error: ${error.message || error.code}` : 'Audio load failed';
+            UserMessage.showMultiString(message, globalTranslate.cdr_AudioFileLoadError);
+            this.html5Audio.onerror = null;
+        };
     }
 
     /**
