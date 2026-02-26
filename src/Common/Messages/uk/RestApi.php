@@ -352,6 +352,7 @@ return [
     'rest_schema_cdr_playback_url' => 'URL для потокового відтворення запису розмови (inline) з тимчасовим токеном доступу',
     'rest_schema_cdr_download_url' => 'URL для завантаження файлу запису розмови (attachment) з тимчасовим токеном доступу',
     'rest_schema_cdr_rec_src_channel' => 'Індекс стерео-каналу аудіо src_num (0=лівий, 1=правий, порожньо=моно)',
+    'rest_schema_cdr_dtmf_digits' => 'DTMF цифри, натиснуті під час взаємодії з IVR меню. Послідовність через кому: цифри, \'t\' для таймауту, \'i\' для неправильного введення.',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Унікальний ідентифікатор черги',
     'rest_schema_cq_extension' => 'Номер внутрішньої додаткової черги',

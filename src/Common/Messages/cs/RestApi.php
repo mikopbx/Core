@@ -2137,6 +2137,7 @@ return [
     'rest_schema_cdr_appname' => 'Název aplikace',
     'rest_schema_cdr_download_url' => 'URL pro stažení souboru se záznamem hovoru (příloha) s dočasným přístupovým tokenem',
     'rest_schema_cdr_rec_src_channel' => 'Index stereofonního kanálu zvuku src_num (0=levý, 1=pravý, prázdný=mono)',
+    'rest_schema_cdr_dtmf_digits' => 'DTMF číslice stisknuté během interakce s IVR menu. Sekvence oddělená čárkami: číslice, \'t\' pro timeout, \'i\' pro neplatný vstup.',
     'rest_schema_cq_timeout_extension_represent' => 'HTML reprezentace doplňku timeout',
     'rest_schema_cq_moh_sound_id' => 'ID zvukového souboru pro čekající hudbu',
     'rest_schema_cq_moh_sound_id_represent' => 'HTML reprezentace čekajícího hudebního souboru',

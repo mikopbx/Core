@@ -324,6 +324,7 @@ return [
     'rest_schema_cdr_playback_url' => 'Çağrı kaydını (satır içi) geçici erişim belirteciyle yayınlamak için URL',
     'rest_schema_cdr_download_url' => 'Çağrı kaydı dosyasını (ekli dosya) geçici erişim belirteciyle indirmek için URL',
     'rest_schema_cdr_rec_src_channel' => 'src_num sesinin stereo kanal dizini (0=sol, 1=sağ, boş=mono)',
+    'rest_schema_cdr_dtmf_digits' => 'IVR menüsü etkileşimi sırasında basılan DTMF rakamları. Virgülle ayrılmış sıra: rakamlar, zaman aşımı için \'t\', geçersiz giriş için \'i\'.',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Benzersiz kuyruk tanımlayıcısı',
     'rest_schema_cq_extension' => 'Dahili uzantı kuyruk numarası',

@@ -359,6 +359,7 @@ return [
     'rest_schema_cdr_playback_url' => 'URL zum Streamen der Anrufaufzeichnung (inline) mit einem temporären Zugriffstoken',
     'rest_schema_cdr_download_url' => 'URL zum Herunterladen der Anrufaufzeichnungsdatei (Anhang) mit einem temporären Zugriffstoken',
     'rest_schema_cdr_rec_src_channel' => 'Stereokanal-Index der src_num-Audio (0=links, 1=rechts, leer=mono)',
+    'rest_schema_cdr_dtmf_digits' => 'DTMF-Ziffern, die während der IVR-Menü-Interaktion gedrückt wurden. Kommagetrennte Sequenz: Ziffern, \'t\' für Timeout, \'i\' für ungültige Eingabe.',
     'rest_schema_cq_extension' => 'Interne Nebenstellen-Warteschlangennummer',
     'rest_schema_cq_name' => 'Warteschlangenname',
     'rest_schema_cq_description' => 'Warteschlangenbeschreibung',

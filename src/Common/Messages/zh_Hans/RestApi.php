@@ -1292,6 +1292,7 @@ return [
     'rest_schema_cdr_playback_url' => '用于流式传输通话录音（内嵌）的 URL 以及临时访问令牌',
     'rest_schema_cdr_download_url' => '用于下载通话录音文件（附件）的 URL，以及临时访问令牌',
     'rest_schema_cdr_rec_src_channel' => 'src_num 音频的立体声声道索引（0=左，1=右，空=单声道）',
+    'rest_schema_cdr_dtmf_digits' => 'IVR菜单交互过程中按下的DTMF数字。逗号分隔的序列：数字，\'t\'表示超时，\'i\'表示无效输入。',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => '唯一队列标识符',
     'rest_schema_cq_extension' => '内部扩展队列号',

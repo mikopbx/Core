@@ -422,6 +422,9 @@ function event_dial(without_event)
     data['from_account'] = from_account;
     data['IS_ORGNT']     = (IS_ORGNT ~= '');
 
+    -- Read IVR DTMF digits accumulated during IVR menu interaction
+    data['ivr_dtmf'] = get_variable("IVR_DTMF");
+
     set_variable("__pt1c_UNIQUEID", id);
     local chanExists = get_variable('CHANNEL_EXISTS('..data['src_chan']..')');
     if(chanExists ~= '1')then
@@ -430,6 +433,8 @@ function event_dial(without_event)
         return {};
     end
     if(without_event == false)then
+        -- Clear IVR DTMF after reading so next IVR starts fresh
+        set_variable("__IVR_DTMF", "");
         userevent_return(data)
     end
 
@@ -1322,6 +1327,9 @@ function event_hangup_chan()
 
     data['VMSTATUS']  	= get_variable("VMSTATUS");
 
+    -- Read IVR DTMF digits for hangup event (used when caller hangs up during IVR)
+    data['ivr_dtmf'] = get_variable("IVR_DTMF");
+
     -- Retrieve the verbose call ID and append the original call ID if available
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
     local origCallId = get_variable("ORIG_CALLID");
@@ -1537,8 +1545,15 @@ function event_dial_app()
         extension = get_variable("EXTEN");
     end
 
+    -- Read and clear IVR DTMF before event_dial(true), because event_dial also reads IVR_DTMF
+    local ivr_dtmf = get_variable("IVR_DTMF");
+    set_variable("__IVR_DTMF", "");
+
     -- Call the event_dial() function to handle the common dial logic
     data = event_dial(true);
+
+    -- Restore IVR DTMF into event data (overrides event_dial's empty read after clearing)
+    data['ivr_dtmf'] = ivr_dtmf;
 
     local monDir = get_variable("MONITOR_DIR");
     if(monDir ~= '' and get_variable('NEED_MONITOR')=='1' and  monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"))) then

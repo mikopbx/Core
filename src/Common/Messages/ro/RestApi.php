@@ -84,6 +84,7 @@ return [
     'rest_schema_cdr_src_num' => 'ID apelant',
     'rest_schema_cdr_download_url' => 'URL pentru descărcarea fișierului de înregistrare a apelului (atașament) cu un token de acces temporar',
     'rest_schema_cdr_rec_src_channel' => 'Indexul canalului stereo al sunetului src_num (0=stânga, 1=dreapta, gol=mono)',
+    'rest_schema_cdr_dtmf_digits' => 'Cifre DTMF apăsate în timpul interacțiunii cu meniul IVR. Secvență separată prin virgulă: cifre, \'t\' pentru timeout, \'i\' pentru intrare invalidă.',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Identificator unic de coadă',
     'rest_schema_cq_extension' => 'Numărul cozii de așteptare pentru extensii interne',

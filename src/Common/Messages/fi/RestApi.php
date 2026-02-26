@@ -1648,6 +1648,7 @@ return [
     'rest_schema_cdr_playback_url' => 'Puhelun tallenteen suoratoiston URL-osoite (sisäinen) tilapäisellä käyttöoikeustunnuksella',
     'rest_schema_cdr_download_url' => 'URL-osoite puhelun tallennustiedoston (liite) lataamiseen väliaikaisella käyttöoikeustunnuksella',
     'rest_schema_cdr_rec_src_channel' => 'Stereokanava-indeksi src_num-äänelle (0=vasen, 1=oikea, tyhjä=mono)',
+    'rest_schema_cdr_dtmf_digits' => 'IVR-valikkovuorovaikutuksen aikana painetut DTMF-numerot. Pilkuin eroteltu sarja: numerot, \'t\' aikakatkaisulle, \'i\' virheelliselle syötteelle.',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Yksilöllinen jonotunniste',
     'rest_schema_cq_extension' => 'Sisäinen laajennusjonon numero',

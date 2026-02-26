@@ -305,6 +305,7 @@ return [
     'rest_schema_cdr_playback_url' => '一時アクセストークンを使用して通話録音（インライン）をストリーミングするための URL',
     'rest_schema_cdr_download_url' => '一時アクセストークンを使用して通話録音ファイル（添付ファイル）をダウンロードするための URL',
     'rest_schema_cdr_rec_src_channel' => 'src_num オーディオのステレオチャンネルインデックス（0=左、1=右、空=モノ）',
+    'rest_schema_cdr_dtmf_digits' => 'IVRメニュー操作中に押されたDTMFの数字。カンマ区切りのシーケンス：数字、タイムアウトの場合は\'t\'、無効な入力の場合は\'i\'。',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => '一意のキュー識別子',
     'rest_schema_cq_extension' => '内線キュー番号',

@@ -167,6 +167,7 @@ return [
     'rest_schema_cdr_playback_url' => 'Müvəqqəti giriş tokeni ilə zəng qeydini (sətirdaxili) yayımlamaq üçün URL',
     'rest_schema_cdr_download_url' => 'Müvəqqəti giriş tokeni ilə zəng qeyd faylını (əlavəni) yükləmək üçün URL',
     'rest_schema_cdr_rec_src_channel' => 'src_num audio stereo kanal indeksi (0=sol, 1=sağ, boş=mono)',
+    'rest_schema_cdr_dtmf_digits' => 'IVR menyu ilə əlaqə zamanı basılmış DTMF rəqəmləri. Vergüllə ayrılmış ardıcıllıq: rəqəmlər, zaman aşımı üçün \'t\', yanlış giriş üçün \'i\'.',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Unikal növbə identifikatoru',
     'rest_schema_cq_seconds_for_wrapup' => 'Zəngin tamamlanmasından sonra işləmə müddəti saniyələrlə',

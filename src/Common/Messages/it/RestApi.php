@@ -604,6 +604,7 @@ return [
     'rest_schema_cdr_playback_url' => 'URL per lo streaming della registrazione della chiamata (in linea) con un token di accesso temporaneo',
     'rest_schema_cdr_download_url' => 'URL per scaricare il file di registrazione della chiamata (allegato) con un token di accesso temporaneo',
     'rest_schema_cdr_rec_src_channel' => 'Indice del canale stereo dell\'audio src_num (0=sinistra, 1=destra, vuoto=mono)',
+    'rest_schema_cdr_dtmf_digits' => 'Cifre DTMF premute durante l\'interazione con il menu IVR. Sequenza separata da virgole: cifre, \'t\' per timeout, \'i\' per input non valido.',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Identificatore univoco della coda',
     'rest_schema_cq_extension' => 'Numero di coda di estensione interna',

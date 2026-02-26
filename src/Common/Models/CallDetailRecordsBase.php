@@ -215,4 +215,13 @@ abstract class CallDetailRecordsBase extends ModelsBase
      * @Column(type="string", nullable=true)
      */
     public ?string $rec_src_channel = '';
+
+    /**
+     * DTMF digits pressed during IVR menu interaction.
+     * Comma-separated sequence: digits, 't' for timeout, 'i' for invalid input.
+     * Example: "t,t,3" means two timeouts then pressed 3.
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $dtmf_digits = '';
 }

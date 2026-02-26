@@ -505,6 +505,7 @@ return [
     'rest_schema_cdr_playback_url' => 'URL para transmitir la grabación de la llamada (en línea) con un token de acceso temporal',
     'rest_schema_cdr_download_url' => 'URL para descargar el archivo de grabación de llamadas (adjunto) con un token de acceso temporal',
     'rest_schema_cdr_rec_src_channel' => 'Índice de canal estéreo del audio src_num (0=izquierdo, 1=derecho, vacío=mono)',
+    'rest_schema_cdr_dtmf_digits' => 'Dígitos DTMF presionados durante la interacción con el menú IVR. Secuencia separada por comas: dígitos, \'t\' para timeout, \'i\' para entrada no válida.',
     'rest_schema_cq_extension' => 'Número de cola de extensión interna',
     'rest_schema_cq_description' => 'Descripción de la cola',
     'rest_schema_cq_represent' => 'Representación HTML para visualización en listas desplegables',

@@ -1602,6 +1602,7 @@ return [
     'rest_schema_cdr_dst_num_filter' => 'Filtriraj po broju pozivatelja',
     'rest_schema_cdr_download_url' => 'URL za preuzimanje datoteke snimke poziva (privitak) s privremenim tokenom za pristup',
     'rest_schema_cdr_rec_src_channel' => 'Indeks stereo kanala zvuka src_num (0=lijevo, 1=desno, prazno=mono)',
+    'rest_schema_cdr_dtmf_digits' => 'DTMF znamenke pritisnute tijekom interakcije s IVR izbornikom. Sekvencija odvojena zarezima: znamenke, \'t\' za istek vremena, \'i\' za nevažeći unos.',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Jedinstveni identifikator reda čekanja',
     'rest_schema_cq_extension' => 'Interni broj reda čekanja za proširenje',

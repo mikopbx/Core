@@ -418,6 +418,7 @@ return [
     'rest_schema_cdr_playback_url' => 'URL để phát trực tuyến bản ghi âm cuộc gọi (nội tuyến) với mã thông báo truy cập tạm thời',
     'rest_schema_cdr_download_url' => 'URL để tải xuống tệp ghi âm cuộc gọi (tệp đính kèm) kèm mã truy cập tạm thời',
     'rest_schema_cdr_rec_src_channel' => 'Chỉ số kênh stereo của âm thanh src_num (0=trái, 1=phải, trống=mono)',
+    'rest_schema_cdr_dtmf_digits' => 'Các chữ số DTMF được nhấn trong quá trình tương tác với menu IVR. Chuỗi phân tách bằng dấu phẩy: chữ số, \'t\' cho hết thời gian chờ, \'i\' cho đầu vào không hợp lệ.',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Mã định danh hàng đợi duy nhất',
     'rest_schema_cq_extension' => 'Số hàng đợi mở rộng nội bộ',

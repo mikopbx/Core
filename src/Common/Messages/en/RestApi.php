@@ -1010,6 +1010,7 @@ return [
     'rest_schema_cdr_playback_url' => 'URL for streaming call recording playback (inline) with temporary access token',
     'rest_schema_cdr_download_url' => 'URL for call recording file download (attachment) with temporary access token',
     'rest_schema_cdr_rec_src_channel' => 'Stereo channel index of src_num audio (0=left, 1=right, empty=mono)',
+    'rest_schema_cdr_dtmf_digits' => 'DTMF digits pressed during IVR menu interaction. Comma-separated sequence: digits, \'t\' for timeout, \'i\' for invalid input.',
     'rest_schema_cq_id' => 'Unique queue identifier',
     'rest_schema_cq_extension' => 'Queue internal extension number',
     'rest_schema_cq_name' => 'Queue name',

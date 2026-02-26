@@ -99,6 +99,9 @@ function Event_dial(AGI $agi, string $action): array
     $data['from_account'] = $from_account;
     $data['IS_ORGNT']     = ! empty($IS_ORGNT);
 
+    // Read IVR DTMF digits accumulated during IVR menu interaction
+    $data['ivr_dtmf'] = $agi->get_variable("IVR_DTMF", true);
+
     $agi->set_variable("__pt1c_UNIQUEID", "$id");
 
     return $data;
@@ -375,6 +378,9 @@ function Event_hangup_chan(AGI $agi, string $action): array
 
     $data['OLD_LINKEDID'] = $agi->get_variable("OLD_LINKEDID", true);
     $data['UNIQUEID']     = $agi->get_variable("pt1c_UNIQUEID", true);
+
+    // Read IVR DTMF digits for hangup event (used when caller hangs up during IVR)
+    $data['ivr_dtmf'] = $agi->get_variable("IVR_DTMF", true);
 
     return $data;
 }
@@ -715,7 +721,15 @@ function Event_dial_app(AGI $agi, string $action): array
         $extension = $agi->request['agi_extension'];
     }
 
+    // Read and clear IVR DTMF before Event_dial(), because it also reads IVR_DTMF
+    $ivrDtmf = $agi->get_variable("IVR_DTMF", true);
+    $agi->set_variable("__IVR_DTMF", "");
+
     $data             = Event_dial($agi, $action);
+
+    // Restore IVR DTMF into event data (overrides Event_dial's empty read after clearing)
+    $data['ivr_dtmf'] = $ivrDtmf;
+
     $data['dst_chan'] = 'App:' . $extension;
     $data['dst_num']  = $extension;
     $data['is_app']   = 1;

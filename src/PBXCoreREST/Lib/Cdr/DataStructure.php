@@ -75,6 +75,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'dst_call_id' => $model->dst_call_id ?? '',
             'verbose_call_id' => $model->verbose_call_id ?? '',
             'rec_src_channel' => $model->rec_src_channel ?? '',
+            'dtmf_digits' => $model->dtmf_digits ?? '',
         ];
 
         // Add recording URLs if file exists (local or S3)
@@ -550,6 +551,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'enum' => ['', '0', '1'],
                 'readOnly' => true,
                 'example' => '1'
+            ],
+            'dtmf_digits' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_dtmf_digits',
+                'readOnly' => true,
+                'example' => 't,t,3'
             ],
             'playback_url' => [
                 'type' => 'string',

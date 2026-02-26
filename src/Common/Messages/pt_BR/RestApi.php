@@ -1558,6 +1558,7 @@ return [
     'rest_schema_cdr_recording_url' => 'URL para reproduzir a gravação da chamada com um token de acesso temporário.',
     'rest_schema_cdr_download_url' => 'URL para baixar o arquivo de gravação da chamada (anexo) com um token de acesso temporário.',
     'rest_schema_cdr_rec_src_channel' => 'Índice de canal estéreo do áudio src_num (0=esquerdo, 1=direito, vazio=mono)',
+    'rest_schema_cdr_dtmf_digits' => 'Dígitos DTMF pressionados durante a interação com o menu IVR. Sequência separada por vírgulas: dígitos, \'t\' para timeout, \'i\' para entrada inválida.',
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Identificador único da fila',
     'rest_schema_cq_recive_calls_while_on_a_call' => 'Permitir receber chamadas durante uma chamada',

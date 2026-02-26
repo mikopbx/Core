@@ -129,6 +129,13 @@ class ActionHangupChan
             $row->writeAttribute('endtime', $data['end']);
             $wasTransfer = ($row->transfer === '1');
             $row->writeAttribute('transfer', 0);
+
+            // Write IVR DTMF digits for app (IVR) records on hangup
+            $ivrDtmf = $data['ivr_dtmf'] ?? '';
+            if ($ivrDtmf !== '' && $row->is_app === '1') {
+                $row->writeAttribute('dtmf_digits', ltrim($ivrDtmf, ','));
+            }
+
             if ($transferCdrAnswered === false && count($transfer_calls) === 2) {
                 // Call termination for consultative transfer. Initiator hung up before the destination answered.
                 $row->writeAttribute('a_transfer', 1);

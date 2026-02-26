@@ -781,6 +781,7 @@ return [
     'rest_param_sf_file_path' => 'A konvertálandó hangfájl teljes elérési útja',
     'rest_schema_cdr_download_url' => 'URL a hívásrögzítő fájl (melléklet) letöltéséhez ideiglenes hozzáférési tokennel',
     'rest_schema_cdr_rec_src_channel' => 'A src_num hang sztereócsatorna-indexe (0=bal, 1=jobb, üres=mono)',
+    'rest_schema_cdr_dtmf_digits' => 'IVR menü interakció során megnyomott DTMF számjegyek. Vesszővel elválasztott sorozat: számjegyek, \'t\' időtúllépéshez, \'i\' érvénytelen bevitelhez.',
     'rest_schema_cq_extension' => 'Belső mellék sorszáma',
     'rest_schema_cq_description' => 'Várólista leírása',
     'rest_schema_cq_strategy' => 'Híváselosztási stratégia',
