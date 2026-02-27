@@ -60,6 +60,13 @@ class Network extends Injectable
             // Filter out virtual tunnel interfaces (sit, tunl, ip6tnl) - only needed on bare metal for IPv6 tunneling
             $ifconfig = Util::which('ifconfig');
             $command = "$ifconfig -a | $grep -o -E '^[a-zA-Z0-9]+' | $grep -v 'lo' | $grep -v -E '^(sit|tunl|ip6tnl)'";
+
+            if (System::isDocker()) {
+                // In Docker with --network=host, the container sees all host interfaces.
+                // Filter out Docker internal bridges (docker0, br-*), veth pairs (vethXXX),
+                // and wireless interfaces (wlan*) which are not manageable from inside Docker.
+                $command .= " | $grep -v -E '^(docker|veth|br-|wlan)'";
+            }
         } else {
             // On bare metal: retrieve PCI network interfaces (exclude virtual)
             $ls = Util::which('ls');

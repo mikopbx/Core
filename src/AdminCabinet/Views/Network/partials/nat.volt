@@ -80,14 +80,14 @@
 
             <div class="ui relaxed list">
                 <div class="item" id="nat-help-sip-ports">
-                    <i class="phone icon"></i>
+                    <i class="phone icon" style="min-width:1.4em; text-align:center;"></i>
                     <div class="content">
                         <div class="header">SIP</div>
                         <span class="port-values">{{ t._('nw_NATInfo3', ['SIP_PORT':'...','TLS_PORT':'...']) }}</span>
                     </div>
                 </div>
                 <div class="item" id="nat-help-rtp-ports">
-                    <i class="microphone icon"></i>
+                    <i class="microphone icon" style="min-width:1.4em; text-align:center;"></i>
                     <div class="content">
                         <div class="header">RTP</div>
                         <span class="port-values">{{ t._('nw_NATInfo4',['RTP_PORT_FROM':'...','RTP_PORT_TO':'...']) }}</span>
@@ -181,14 +181,14 @@
                 <p>{{ t._('nw_DualStackIpv4NatDescription') }}</p>
                 <div class="ui relaxed list">
                     <div class="item" id="dual-stack-sip-ports">
-                        <i class="phone icon"></i>
+                        <i class="phone icon" style="min-width:1.4em; text-align:center;"></i>
                         <div class="content">
                             <div class="header">SIP</div>
                             <span class="port-values">{{ t._('nw_NATInfo3', ['SIP_PORT':'...','TLS_PORT':'...']) }}</span>
                         </div>
                     </div>
                     <div class="item" id="dual-stack-rtp-ports">
-                        <i class="microphone icon"></i>
+                        <i class="microphone icon" style="min-width:1.4em; text-align:center;"></i>
                         <div class="content">
                             <div class="header">RTP</div>
                             <span class="port-values">{{ t._('nw_NATInfo4',['RTP_PORT_FROM':'...','RTP_PORT_TO':'...']) }}</span>

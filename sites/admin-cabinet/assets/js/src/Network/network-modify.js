@@ -248,7 +248,10 @@ const networks = {
         $('#eth-interfaces-menu a').each((index, obj) => {
             const eth = $(obj).attr('data-tab');
             const $ipv4ModeDropdown = $(`#ipv4_mode_${eth}-dropdown`);
-            const ipv4Mode = $ipv4ModeDropdown.dropdown('get value');
+
+            // In Docker mode, the IPv4 mode dropdown is not rendered.
+            // Default to DHCP enabled so IP validation is skipped (Docker manages networking).
+            const ipv4Mode = $ipv4ModeDropdown.length > 0 ? $ipv4ModeDropdown.dropdown('get value') : '1';
             const isDhcpEnabled = ipv4Mode === '1';
 
             // Find IP address and subnet fields group
@@ -259,11 +262,16 @@ const networks = {
             // Check if this is the internet interface
             const isInternetInterface = $(`input[name="internet_interface"]:checked`).val() === eth;
 
+            // In Docker mode, the dedicated Docker info message is shown instead of DHCP info
+            const isDockerInterface = $ipv4ModeDropdown.length === 0;
+
             if (isDhcpEnabled) {
                 // DHCP enabled -> hide IP/subnet fields group and gateway field, show DHCP info
                 $ipAddressGroup.hide();
                 $gatewayField.hide();
-                $dhcpInfoMessage.show();
+                if (!isDockerInterface) {
+                    $dhcpInfoMessage.show();
+                }
                 $(`#not-dhcp-${eth}`).val('');
             } else {
                 // DHCP disabled -> show IP/subnet fields group, hide DHCP info
