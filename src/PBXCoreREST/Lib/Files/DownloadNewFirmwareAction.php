@@ -54,7 +54,8 @@ class DownloadNewFirmwareAction extends Injectable
         } else {
             $uploadDir = '/tmp';
         }
-        $firmwareDirTmp = "$uploadDir/{$data['version']}";
+        $version = $data['version'] ?? $data['md5'] ?? (string)time();
+        $firmwareDirTmp = "$uploadDir/{$version}";
 
         if (file_exists($firmwareDirTmp)) {
             $rm = Util::which('rm');

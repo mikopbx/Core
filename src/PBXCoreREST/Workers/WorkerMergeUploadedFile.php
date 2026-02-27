@@ -133,6 +133,16 @@ class WorkerMergeUploadedFile extends WorkerBase
         if (($fp = fopen($result_file, 'wb')) !== false) {
             for ($i = 1; $i <= $total_files; $i++) {
                 $tmp_file = $tempDir . '/' . $fileName . '.part' . $i;
+                if (!file_exists($tmp_file)) {
+                    fclose($fp);
+                    $errorMessage = "Chunk file missing: $tmp_file (part $i of $total_files)";
+                    SystemMessages::sysLogMsg('UploadFile', $errorMessage, LOG_ERR);
+                    $this->publishEvent('upload-error', [
+                        'error' => $errorMessage,
+                        'status' => 'ERROR'
+                    ]);
+                    return;
+                }
                 fwrite($fp, file_get_contents($tmp_file));
                 unlink($tmp_file);
                 $currentProgress = round($i / $total_files * 100);
