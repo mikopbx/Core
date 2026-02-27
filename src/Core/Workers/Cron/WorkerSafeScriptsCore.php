@@ -78,6 +78,12 @@ class WorkerSafeScriptsCore extends WorkerBase
     private const int WATCHDOG_TIMEOUT_SEC = 120;
 
     /**
+     * Maximum consecutive ping failures before stopping restart attempts.
+     * With 5-second monitoring cycles, 12 attempts = ~60 seconds for a worker to start.
+     */
+    private const int MAX_PING_FAILURES = 12;
+
+    /**
      * Singleton instance
      */
     private static ?self $instance = null;
@@ -87,6 +93,13 @@ class WorkerSafeScriptsCore extends WorkerBase
      * @var array<string, int>
      */
     private array $lastCheckTimes = [];
+
+    /**
+     * Consecutive ping failure counts per worker.
+     * Reset to 0 on successful ping. Incremented on each failed ping.
+     * @var array<string, int>
+     */
+    private array $pingFailureCounts = [];
 
     /**
      * Redis connection instance
@@ -515,22 +528,23 @@ class WorkerSafeScriptsCore extends WorkerBase
     /**
      * Pings a worker to check if it is dead. If it is, it is killed and started again.
      * Uses AMI UserEvent to send ping and check workers.
+     * Non-blocking: uses failure counter instead of recursive retries with sleep.
+     * Retries happen naturally across monitoring cycles (every 5 seconds).
      *
      * @param string $workerClassName The class name of the worker.
-     * @param int $level The recursion level.
      */
-    public function checkWorkerAMI(string $workerClassName, int $level = 0): void
+    public function checkWorkerAMI(string $workerClassName): void
     {
         try {
             // Get the number of instances to maintain
             $maxProc = $this->getWorkerInstanceCount($workerClassName);
-            
+
             // Check if we need to manage a pool of workers
             if ($maxProc > 1) {
                 $this->checkWorkerPool($workerClassName, $maxProc);
                 return;
             }
-            
+
             $start = microtime(true);
             $res_ping = false;
             $WorkerPID = Processes::getPidOfProcess($workerClassName);
@@ -540,20 +554,32 @@ class WorkerSafeScriptsCore extends WorkerBase
                 // accumulating high-volume call/RTCP events in the socket buffer.
                 $am = $this->getAmiForPing();
                 $res_ping = $am->pingAMIListener($this->makePingTubeName($workerClassName));
-                if (false === $res_ping) {
-                    SystemMessages::sysLogMsg(__METHOD__, 'Restart...', LOG_ERR);
+            }
+
+            if ($res_ping) {
+                // Worker is alive, reset failure counter
+                $this->pingFailureCounts[$workerClassName] = 0;
+            } else {
+                // Worker is dead or not responding
+                $failures = ($this->pingFailureCounts[$workerClassName] ?? 0) + 1;
+                $this->pingFailureCounts[$workerClassName] = $failures;
+
+                if ($failures <= self::MAX_PING_FAILURES) {
+                    Processes::processPHPWorker($workerClassName);
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "Service {$workerClassName} started (attempt {$failures}/" . self::MAX_PING_FAILURES . ").",
+                        LOG_NOTICE
+                    );
+                } else {
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "Service {$workerClassName} failed to respond after " . self::MAX_PING_FAILURES . " attempts.",
+                        LOG_ERR
+                    );
                 }
             }
 
-            if ($res_ping === false && $level < 10) {
-                Processes::processPHPWorker($workerClassName);
-                SystemMessages::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
-                // Wait 1 second while service will be ready to listen requests
-                sleep(1);
-
-                // Check service again
-                $this->checkWorkerAMI($workerClassName, $level + 1);
-            }
             $timeElapsedSecs = round(microtime(true) - $start, 2);
             if ($timeElapsedSecs > 10) {
                 SystemMessages::sysLogMsg(
