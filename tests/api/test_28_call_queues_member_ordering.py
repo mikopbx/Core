@@ -24,7 +24,6 @@ import pytest
 from conftest import (
     assert_api_success,
     execute_asterisk_command,
-    convert_call_queue_fixture_to_api_format,
 )
 
 
@@ -136,44 +135,18 @@ class TestCallQueueMemberOrdering:
 
     These tests verify the two-step reload fix in QueueConf::reload()
     that ensures correct member ordering when switching to linear strategy.
+
+    Uses extensions 201-204 from employee.json fixtures, which are created
+    by test_14/test_15 before this test runs.
     """
 
     QUEUE_EXTENSION = '20099'
     QUEUE_NAME = 'Member Ordering Test Queue'
-    # Members are resolved dynamically in test_00 from existing SIP extensions
-    MEMBERS_INITIAL: list[str] = []
-    MEMBERS_REORDERED: list[str] = []
+    ASTERISK_TIMEOUT = 30
 
-    def test_00_resolve_test_extensions(self, api_client):
-        """
-        Step 0: Discover existing SIP extensions on the test machine.
-
-        The test needs at least 4 internal SIP extensions to use as queue members.
-        Using hardcoded extension numbers (201, 202, ...) fails on machines where
-        those extensions don't exist, causing QueueConf::getQueueData() to crash
-        on null Extensions relationship.
-        """
-        response = api_client.get('extensions')
-        assert response.get('data'), "No extensions found on this machine"
-
-        # Collect internal SIP extensions
-        sip_extensions = []
-        for ext in response['data']:
-            if ext.get('type') == 'SIP' and ext.get('number', '').isdigit():
-                sip_extensions.append(ext['number'])
-
-        assert len(sip_extensions) >= 4, (
-            f"Need at least 4 SIP extensions for queue tests, found {len(sip_extensions)}: {sip_extensions}"
-        )
-
-        # Pick first 4 extensions
-        picked = sorted(sip_extensions)[:4]
-        self.__class__.MEMBERS_INITIAL = picked[:3]
-        self.__class__.MEMBERS_REORDERED = [picked[2], picked[0], picked[1], picked[3]]
-
-        print(f"\n  Available SIP extensions: {len(sip_extensions)}")
-        print(f"  MEMBERS_INITIAL:   {self.MEMBERS_INITIAL}")
-        print(f"  MEMBERS_REORDERED: {self.MEMBERS_REORDERED}")
+    # Fixed extensions from employee.json fixtures (created by test_14/test_15)
+    MEMBERS_INITIAL = ['201', '202', '203']
+    MEMBERS_REORDERED = ['203', '201', '202', '204']
 
     def test_01_create_queue_with_ringall_strategy(self, api_client):
         """
@@ -225,7 +198,7 @@ class TestCallQueueMemberOrdering:
         queue_id = getattr(self.__class__, '_queue_id', None)
         assert queue_id, "Queue ID not set (test_01 must run first)"
 
-        output = wait_for_queue_in_asterisk(api_client, queue_id)
+        output = wait_for_queue_in_asterisk(api_client, queue_id, timeout=self.ASTERISK_TIMEOUT)
         print(f"\n  Asterisk output:\n{output}")
 
         ast_members = parse_queue_members_from_asterisk(output)
@@ -297,6 +270,7 @@ class TestCallQueueMemberOrdering:
         expected = self.MEMBERS_INITIAL + [self.MEMBERS_REORDERED[-1]]
         output = wait_for_queue_in_asterisk(
             api_client, queue_id,
+            timeout=self.ASTERISK_TIMEOUT,
             expect_strategy='linear',
             expect_members=expected,
         )
@@ -364,6 +338,7 @@ class TestCallQueueMemberOrdering:
 
         output = wait_for_queue_in_asterisk(
             api_client, queue_id,
+            timeout=self.ASTERISK_TIMEOUT,
             expect_strategy='linear',
             expect_members=self.MEMBERS_REORDERED,
         )
@@ -411,6 +386,7 @@ class TestCallQueueMemberOrdering:
 
         output = wait_for_queue_in_asterisk(
             api_client, queue_id,
+            timeout=self.ASTERISK_TIMEOUT,
             expect_strategy='linear',
             expect_members=expected_linear,
         )
