@@ -71,7 +71,7 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
             $filter['order'] = 'answer';
         }
         if (!isset($filter['columns'])) {
-            $filter['columns'] = 'id,start,answer,src_num,dst_num,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID';
+            $filter['columns'] = 'id,start,answer,src_num,src_name,dst_num,dst_name,dst_chan,endtime,linkedid,recordingfile,dialstatus,UNIQUEID';
         }
 
         $client = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);

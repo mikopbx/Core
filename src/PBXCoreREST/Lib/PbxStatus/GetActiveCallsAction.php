@@ -43,7 +43,7 @@ class GetActiveCallsAction extends Injectable
         $res->success = true;
         $filter = [
             'order'       => 'id',
-            'columns'     => 'start,answer,endtime,src_num,dst_num,did,linkedid',
+            'columns'     => 'start,answer,endtime,src_num,src_name,dst_num,dst_name,did,linkedid',
             'miko_tmp_db' => true,
         ];
         $client = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);

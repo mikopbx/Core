@@ -69,6 +69,13 @@ abstract class CallDetailRecordsBase extends ModelsBase
     public ?string $src_num = '';
 
     /**
+     * Display name of the caller as set by CALLERID(name).
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $src_name = '';
+
+    /**
      * Destination channel of the call.
      *
      * @Column(type="string", nullable=true)
@@ -81,6 +88,13 @@ abstract class CallDetailRecordsBase extends ModelsBase
      * @Column(type="string", nullable=true)
      */
     public ?string $dst_num = '';
+
+    /**
+     * Display name of the callee as set by CALLERID(name).
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $dst_name = '';
 
     /**
      * Unique ID of the call.

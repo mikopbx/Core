@@ -55,8 +55,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'answer' => $model->answer ?? '',
             'src_chan' => $model->src_chan ?? '',
             'src_num' => $model->src_num ?? '',
+            'src_name' => $model->src_name ?? '',
             'dst_chan' => $model->dst_chan ?? '',
             'dst_num' => $model->dst_num ?? '',
+            'dst_name' => $model->dst_name ?? '',
             'UNIQUEID' => $model->UNIQUEID ?? '',
             'linkedid' => $model->linkedid ?? '',
             'did' => $model->did ?? '',
@@ -428,6 +430,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'readOnly' => true,
                 'example' => '101'
             ],
+            'src_name' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_src_name',
+                'readOnly' => true,
+                'example' => 'John Smith'
+            ],
             'dst_chan' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cdr_dst_chan',
@@ -439,6 +447,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'description' => 'rest_schema_cdr_dst_num',
                 'readOnly' => true,
                 'example' => '102'
+            ],
+            'dst_name' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_dst_name',
+                'readOnly' => true,
+                'example' => 'Support Queue'
             ],
             'UNIQUEID' => [
                 'type' => 'string',

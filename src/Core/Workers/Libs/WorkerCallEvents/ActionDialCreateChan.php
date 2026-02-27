@@ -114,6 +114,9 @@ class ActionDialCreateChan
             if (!empty($data['dst_call_id'])) {
                 $row->writeAttribute('dst_call_id', $data['dst_call_id']);
             }
+            if (!empty($data['dst_name'])) {
+                $row->writeAttribute('dst_name', $data['dst_name']);
+            }
 
             // Save the updated record. If saving fails, log the error message.
             $res = $row->save();

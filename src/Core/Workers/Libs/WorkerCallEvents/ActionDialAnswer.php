@@ -298,6 +298,28 @@ class ActionDialAnswer
             $recSrcCh = $worker->getRecSrcChannel($data['agi_channel'], $row->src_chan, $row->dst_chan);
             $row->writeAttribute('rec_src_channel', $recSrcCh);
         }
+
+        // Capture display names via AMI from the A-leg (src_chan) channel.
+        // CONNECTEDLINE(name) on A-leg = destination's display name after answer.
+        $srcChan = $row->src_chan;
+        if (!empty($srcChan)) {
+            try {
+                $am = Util::getAstManager('off');
+                $connectedName = $am->GetVar($srcChan, 'CONNECTEDLINE(name)', null, false);
+                if (is_string($connectedName) && $connectedName !== '' && $connectedName !== $row->dst_num) {
+                    $row->writeAttribute('dst_name', $connectedName);
+                }
+                if (empty($row->src_name)) {
+                    $callerName = $am->GetVar($srcChan, 'CALLERID(name)', null, false);
+                    if (is_string($callerName) && $callerName !== '' && $callerName !== $row->src_num) {
+                        $row->writeAttribute('src_name', $callerName);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Non-critical, name capture failure should not affect CDR
+            }
+        }
+
         $res = $row->save();
         if (!$res) {
             SystemMessages::sysLogMsg('Action_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);

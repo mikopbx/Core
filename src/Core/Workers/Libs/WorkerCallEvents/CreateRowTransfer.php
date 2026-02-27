@@ -98,17 +98,25 @@ class CreateRowTransfer
             if ($row_data['src_chan'] === $data['agi_channel']) {
                 $fname_chan = isset($insert_data['dst_chan']) ? 'src_chan' : 'dst_chan';
                 $fname_num = isset($insert_data['dst_num']) ? 'src_num' : 'dst_num';
+                $fname_name = isset($insert_data['dst_name']) ? 'src_name' : 'dst_name';
 
                 $insert_data[$fname_chan] = $row_data['dst_chan'];
                 $insert_data[$fname_num] = $row_data['dst_num'];
+                $insert_data[$fname_name] = $row_data['dst_name'] ?? '';
             } else {
                 $fname_chan = !isset($insert_data['src_chan']) ? 'src_chan' : 'dst_chan';
                 $fname_num = !isset($insert_data['src_num']) ? 'src_num' : 'dst_num';
+                $fname_name = !isset($insert_data['src_name']) ? 'src_name' : 'dst_name';
 
                 $insert_data[$fname_chan] = $row_data['src_chan'];
                 $insert_data[$fname_num] = $row_data['src_num'];
+                $insert_data[$fname_name] = $row_data['src_name'] ?? '';
             }
         }
+
+        // Fill missing names from other CDR records in the same linkedid.
+        self::fillMissingNames($insert_data, $data['linkedid']);
+
         // Запись разговора.
         $worker->StopMixMonitor($insert_data['src_chan'], 'fillRedirectCdrData');
         $worker->StopMixMonitor($insert_data['dst_chan'], 'fillRedirectCdrData');
@@ -141,6 +149,47 @@ class CreateRowTransfer
         $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
 
         InsertDataToDB::execute($insert_data);
+    }
+
+    /**
+     * Fills missing src_name/dst_name from other CDR records in the same linkedid.
+     *
+     * @param array $insert_data The transfer CDR data being built.
+     * @param string $linkedid The linked ID of the call.
+     */
+    private static function fillMissingNames(array &$insert_data, string $linkedid): void
+    {
+        $needSrcName = empty($insert_data['src_name']);
+        $needDstName = empty($insert_data['dst_name']);
+        if (!$needSrcName && !$needDstName) {
+            return;
+        }
+        $filter = [
+            'linkedid=:linkedid:',
+            'bind' => ['linkedid' => $linkedid],
+        ];
+        $allCdr = CallDetailRecordsTmp::find($filter);
+        foreach ($allCdr as $cdr) {
+            if ($needSrcName && !empty($cdr->src_name) && $cdr->src_num === $insert_data['src_num']) {
+                $insert_data['src_name'] = $cdr->src_name;
+                $needSrcName = false;
+            }
+            if ($needSrcName && !empty($cdr->dst_name) && $cdr->dst_num === $insert_data['src_num']) {
+                $insert_data['src_name'] = $cdr->dst_name;
+                $needSrcName = false;
+            }
+            if ($needDstName && !empty($cdr->dst_name) && $cdr->dst_num === $insert_data['dst_num']) {
+                $insert_data['dst_name'] = $cdr->dst_name;
+                $needDstName = false;
+            }
+            if ($needDstName && !empty($cdr->src_name) && $cdr->src_num === $insert_data['dst_num']) {
+                $insert_data['dst_name'] = $cdr->src_name;
+                $needDstName = false;
+            }
+            if (!$needSrcName && !$needDstName) {
+                break;
+            }
+        }
     }
 
     /**

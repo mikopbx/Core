@@ -156,6 +156,7 @@ class ActionHangupChan
                     'chan' => $row->src_chan,
                     'did' => $row->did,
                     'num' => $row->src_num,
+                    'name' => $row->src_name,
                     'out' => true,
                 ];
             } else {
@@ -166,6 +167,7 @@ class ActionHangupChan
                     'chan' => $row->dst_chan,
                     'did' => $row->did,
                     'num' => $row->dst_num,
+                    'name' => $row->dst_name,
                     'out' => false,
                 ];
             }
@@ -299,11 +301,17 @@ class ActionHangupChan
             }
 
             $CALLERID = $am->GetVar($BRIDGEPEER, 'CALLERID(num)', null, false);
+            $CALLERID_NAME = $am->GetVar($BRIDGEPEER, 'CALLERID(name)', null, false);
+            if (!is_string($CALLERID_NAME) || $CALLERID_NAME === $CALLERID) {
+                $CALLERID_NAME = '';
+            }
             $n_data['action'] = 'sip_transfer';
             $n_data['src_chan'] = $data_chan['out'] ? $data_chan['chan'] : $BRIDGEPEER;
             $n_data['src_num'] = $data_chan['out'] ? $data_chan['num'] : $CALLERID;
+            $n_data['src_name'] = $data_chan['out'] ? ($data_chan['name'] ?? '') : $CALLERID_NAME;
             $n_data['dst_chan'] = $data_chan['out'] ? $BRIDGEPEER : $data_chan['chan'];
             $n_data['dst_num'] = $data_chan['out'] ? $CALLERID : $data_chan['num'];
+            $n_data['dst_name'] = $data_chan['out'] ? $CALLERID_NAME : ($data_chan['name'] ?? '');
             $n_data['start'] = date('Y-m-d H:i:s');
             $n_data['answer'] = date('Y-m-d H:i:s');
             $n_data['linkedid'] = $linkedid;

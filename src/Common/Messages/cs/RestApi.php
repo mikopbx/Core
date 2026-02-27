@@ -1033,6 +1033,7 @@ return [
     'rest_schema_cdr_src_chan' => 'Původní volací kanál',
     'rest_schema_cdr_dst_chan' => 'Cílový kanál',
     'rest_schema_cdr_dst_num' => 'Volané číslo',
+    'rest_schema_cdr_dst_name' => 'Zobrazované jméno volaného',
     'rest_schema_cdr_uniqueid' => 'Jedinečný identifikátor volání',
     'rest_schema_cdr_linkedid' => 'Přidružené ID hovoru',
     'rest_schema_cdr_did' => 'DID číslo (přímá volba)',
@@ -2133,6 +2134,7 @@ return [
     // Passkeys schema field descriptions
     'rest_schema_pk_id' => 'Jedinečný identifikátor přístupového klíče',
     'rest_schema_cdr_src_num' => 'ID volajícího',
+    'rest_schema_cdr_src_name' => 'Zobrazované jméno volajícího',
     'rest_schema_cdr_dialstatus' => 'Stav vytáčení',
     'rest_schema_cdr_appname' => 'Název aplikace',
     'rest_schema_cdr_download_url' => 'URL pro stažení souboru se záznamem hovoru (příloha) s dočasným přístupovým tokenem',

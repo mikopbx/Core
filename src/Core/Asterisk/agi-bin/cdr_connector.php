@@ -28,6 +28,23 @@ use MikoPBX\Core\System\{MikoPBXConfig, Util};
 require_once 'Globals.php';
 
 /**
+ * Retrieves CALLERID(name) from the AGI channel.
+ * Returns empty string if name equals the number (no useful display name).
+ *
+ * @param AGI $agi The AGI object.
+ * @param string $number The caller/callee number to compare against.
+ * @return string The display name, or empty string if it matches the number.
+ */
+function getCallerIdName(AGI $agi, string $number): string
+{
+    $name = trim($agi->get_variable('CALLERID(name)', true));
+    if ($name === '' || $name === $number) {
+        return '';
+    }
+    return $name;
+}
+
+/**
  * Creates an event for dialing with necessary data.
  *
  * @param AGI $agi The AGI object.
@@ -89,6 +106,7 @@ function Event_dial(AGI $agi, string $action): array
 
     $data['src_chan']     = $channel;
     $data['src_num']      = $src_num;
+    $data['src_name']     = getCallerIdName($agi, $src_num);
     $data['dst_num']      = $dst_num;
     $data['start']        = $now;
     $data['linkedid']     = $agi->get_variable("CHANNEL(linkedid)", true);
@@ -128,6 +146,16 @@ function Event_dial_create_chan(AGI $agi, string $action): array
 
     if (stripos($data['dst_chan'], 'local/') === false) {
         $data['to_account'] = $agi->get_variable('CUT(CUT(CHANNEL(name),,1),/,2)', true);
+        // Get destination's display name from PJSIP endpoint callerid configuration
+        if (!empty($data['to_account'])) {
+            $endpointCid = $agi->get_variable("PJSIP_ENDPOINT({$data['to_account']},callerid)", true);
+            if (!empty($endpointCid) && preg_match('/"([^"]+)"/', $endpointCid, $matches)) {
+                $name = $matches[1];
+                if ($name !== $data['to_account']) {
+                    $data['dst_name'] = $name;
+                }
+            }
+        }
     }
 
     $IS_ORGNT = $agi->get_variable("IS_ORGNT", true);
@@ -271,6 +299,7 @@ function Event_transfer_dial(AGI $agi, string $action): array
     $data['UNIQUEID']    = $id;
     $data['transfer']    = ($TRANSFERERNAME == '') ? '0' : '1';
     $data['src_num']     = $agi->request['agi_callerid'];
+    $data['src_name']    = getCallerIdName($agi, $agi->request['agi_callerid']);
     $data['dst_num']     = $agi->request['agi_extension'];
 
     $agi->set_variable("__transfer_UNIQUEID", $id);
@@ -419,21 +448,25 @@ function Event_unpark_call(AGI $agi, string $action): array
     $data['did']          = $agi->get_variable("FROM_DID", true);
     $data['answer']       = $data['start'];
 
+    $callerIdName = getCallerIdName($agi, $agi->request['agi_callerid']);
     if (null === $park_row) {
         $data['src_chan'] = $channel;
         $data['src_num']  = $agi->request['agi_callerid'];
+        $data['src_name'] = $callerIdName;
         $data['dst_num']  = $agi->request['agi_extension'];
         $data['dst_chan'] = 'Park:' . $agi->request['agi_extension'];
     } elseif (true === $park_row['pt1c_is_dst']) {
         $data['src_chan'] = $channel;
         $data['dst_chan'] = $park_row['ParkeeChannel'];
         $data['src_num']  = $agi->request['agi_callerid'];
+        $data['src_name'] = $callerIdName;
         $data['dst_num']  = $park_row['ParkeeCallerIDNum'];
     } else {
         $data['src_chan'] = $park_row['ParkeeChannel'];
         $data['dst_chan'] = $channel;
         $data['src_num']  = $park_row['ParkeeCallerIDNum'];
         $data['dst_num']  = $agi->request['agi_callerid'];
+        $data['dst_name'] = $callerIdName;
     }
 
     if (trim($park_row['ParkingDuration']) !== '') {
@@ -479,6 +512,7 @@ function Event_unpark_call_timeout(AGI $agi, string $action): array
         'action'   => "$action",
         'src_chan' => $agi->request['agi_channel'], // $agi->get_variable("PARKER", true), // ???
         'src_num'  => $agi->request['agi_callerid'],
+        'src_name' => getCallerIdName($agi, $agi->request['agi_callerid']),
         'dst_num'  => $PARKING_SPACE,
         'dst_chan' => 'Park:' . $PARKING_SPACE,
         'start'    => $time_start,
@@ -534,6 +568,7 @@ function Event_queue_start(AGI $agi, string $action): array
     if (! empty($time_start)) {
         $data['src_chan'] = $agi->get_variable("QUEUE_SRC_CHAN", true);
         $data['src_num']  = $agi->request['agi_callerid'];
+        $data['src_name'] = getCallerIdName($agi, $agi->request['agi_callerid']);
         $data['start']    = $time_start;
         $data['linkedid'] = $agi->get_variable("CHANNEL(linkedid)", true);
         $agi->set_variable("__pt1c_q_UNIQUEID", "$id");
@@ -656,6 +691,7 @@ function Event_meetme_dial(AGI $agi, string $action): array
         'action'        => $action,
         'src_chan'      => $agi->request['agi_channel'],
         'src_num'       => $src_num,
+        'src_name'      => getCallerIdName($agi, $src_num),
         'dst_num'       => $dst_num,
         'dst_chan'      => 'MeetMe:' . $mikoidconf,
         'start'         => $time_start,

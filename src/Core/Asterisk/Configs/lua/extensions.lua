@@ -88,6 +88,24 @@ function getNowDate()
 end
 
 --[[
+    Retrieves CALLERID(name) from the channel.
+    Returns empty string if name equals the number (no useful display name).
+
+    Parameters:
+    - number (string): The caller/callee number to compare against.
+
+    Returns:
+    - The display name, or empty string if it matches the number.
+]]
+function getCallerIdName(number)
+    local name = get_variable("CALLERID(name)");
+    if (name == '' or name == number) then
+        return '';
+    end
+    return name;
+end
+
+--[[
     Determines the optimal recording file extension based on audio codec.
 
     This function detects the audio codec from the channel's read format and selects
@@ -404,6 +422,7 @@ function event_dial(without_event)
 
     data['src_chan'] 	 = channel;
     data['src_num']  	 = src_num;
+    data['src_name']     = getCallerIdName(src_num);
     data['dst_num']  	 = dst_num;
     data['linkedid']  	 = get_variable("CHANNEL(linkedid)");
     data['UNIQUEID']  	 = id;
@@ -487,12 +506,14 @@ function event_interception_start()
         data['from_account'] = from_account;
         data['src_chan']  	 = data['int_channel'];
         data['src_num']  	 = get_variable("pt1c_cid");
+        data['src_name']     = getCallerIdName(data['src_num']);
         data['dst_num']  	 = get_variable("number");
         data['dialstatus']   = 'ORIGINATE_TRY_INTERCEPTION';
         data['appname']  	 = 'interception';
     else
         data['appname']  	 = 'originate';
         data['src_num']  	 = get_variable("number");
+        data['src_name']     = getCallerIdName(data['src_num']);
         data['dst_num']  	 = get_variable("pt1c_cid");
         data['dialstatus']  = 'ORIGINATE_TRY_DIAL';
     end
@@ -600,6 +621,7 @@ function event_voicemail_start()
     data['action']          = "voicemail_start";
     data['src_chan'] 	    = get_variable("CHANNEL");
     data['src_num']  	    = get_variable("CALLERID(num)");
+    data['src_name']        = getCallerIdName(data['src_num']);
     data['dst_num']  	    = get_variable("EXTEN");
     data['dst_chan']        = 'VOICEMAIL';
 
@@ -695,6 +717,7 @@ function event_dial_interception()
     data['linkedid']  	 = OLD_LINKEDID;
     data['src_chan'] 	 = interceptionChannel;
     data['src_num']  	 = src_num;
+    data['src_name']     = getCallerIdName(src_num);
     data['dst_num']  	 = dst_num;
     data['UNIQUEID']  	 = id;
     data['transfer']  	 = '0';
@@ -778,6 +801,16 @@ function event_dial_create_chan()
     if(is_local ~= true)then
         data['to_account'] = getAccountName(data['dst_chan']);
         app["NoOp"]('to_account set to '..data['to_account']);
+        -- Get destination's display name from PJSIP endpoint callerid configuration
+        if(data['to_account'] ~= '')then
+            local endpoint_cid = get_variable("PJSIP_ENDPOINT(" .. data['to_account'] .. ",callerid)");
+            if(endpoint_cid ~= '')then
+                local name = endpoint_cid:match('"([^"]+)"');
+                if(name and name ~= '' and name ~= data['to_account'])then
+                    data['dst_name'] = name;
+                end
+            end
+        end
     end
 
     -- Check if IS_ORGNT variable exists and retrieve the peer mobile number, then set org_id if it is not already present
@@ -1083,8 +1116,9 @@ function event_transfer_dial()
         data['transfer'] = '1'
     end
 
-    -- Set the source number and destination number
+    -- Set the source number, source name, and destination number
     data['src_num']  	= get_variable("CALLERID(num)");
+    data['src_name']    = getCallerIdName(data['src_num']);
     data['dst_num']  	= get_variable("EXTEN");
 
     set_variable("__transfer_UNIQUEID", id);
@@ -1413,6 +1447,7 @@ function event_queue_start()
     if(time_start ~= nil)then
         data['src_chan'] = get_variable("QUEUE_SRC_CHAN");
         data['src_num']  = get_variable("CALLERID(num)");
+        data['src_name'] = getCallerIdName(data['src_num']);
         data['start']    = time_start;
         data['transfer'] = '0';
         set_variable("__pt1c_q_UNIQUEID", id);
