@@ -54,12 +54,12 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('syslog', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getLogsList'],
+        'GET' => ['getLogsList', 'getCaptureStatus'],
         'POST' => ['getLogFromFile', 'getLogTimeRange', 'startCapture', 'stopCapture', 'prepareArchive', 'downloadLogFile', 'downloadArchive', 'eraseFile']
     ],
     resourceLevelMethods: [],
     collectionLevelMethods: [],
-    customMethods: ['getLogsList', 'getLogFromFile', 'getLogTimeRange', 'startCapture', 'stopCapture', 'prepareArchive', 'downloadLogFile', 'downloadArchive', 'eraseFile'],
+    customMethods: ['getLogsList', 'getLogFromFile', 'getLogTimeRange', 'startCapture', 'stopCapture', 'prepareArchive', 'downloadLogFile', 'downloadArchive', 'eraseFile', 'getCaptureStatus'],
     idPattern: ''
 )]
 class RestController extends BaseRestController
@@ -255,6 +255,24 @@ class RestController extends BaseRestController
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
     public function eraseFile(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get current packet capture status
+     *
+     * @route GET /pbxcore/api/v3/syslog:getCaptureStatus
+     */
+    #[ApiOperation(
+        summary: 'rest_syslog_GetCaptureStatus',
+        description: 'rest_syslog_GetCaptureStatusDesc',
+        operationId: 'getCaptureStatus'
+    )]
+    #[ApiResponse(200, 'rest_response_200_status')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getCaptureStatus(): void
     {
         // Implementation handled by BaseRestController
     }

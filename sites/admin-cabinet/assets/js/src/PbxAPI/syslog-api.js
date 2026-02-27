@@ -33,7 +33,8 @@ const SyslogAPI = new PbxApiClient({
         prepareArchive: ':prepareArchive',
         downloadLogFile: ':downloadLogFile',
         downloadArchive: ':downloadArchive',
-        eraseFile: ':eraseFile'
+        eraseFile: ':eraseFile',
+        getCaptureStatus: ':getCaptureStatus'
     }
 });
 
@@ -118,6 +119,14 @@ SyslogAPI.downloadLogFile = function(filename, archive, callback) {
  */
 SyslogAPI.downloadArchive = function(filename, callback) {
     return this.callCustomMethod('downloadArchive', { filename: filename }, callback, 'POST');
+};
+
+/**
+ * Get current packet capture status (whether tcpdump is running)
+ * @param {function} callback - Callback function
+ */
+SyslogAPI.getCaptureStatus = function(callback) {
+    return this.callCustomMethod('getCaptureStatus', {}, callback);
 };
 
 /**

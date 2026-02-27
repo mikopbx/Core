@@ -787,6 +787,8 @@ return [
     'rest_syslog_DownloadArchiveDesc' => 'Скачать подготовленный архив системных логов',
     'rest_syslog_EraseFile' => 'Очистить лог файл',
     'rest_syslog_EraseFileDesc' => 'Очистить содержимое указанного лог файла (файл останется, но будет пустым)',
+    'rest_syslog_GetCaptureStatus' => 'Получить статус захвата пакетов',
+    'rest_syslog_GetCaptureStatusDesc' => 'Проверить, выполняется ли в данный момент захват сетевых пакетов (tcpdump)',
 
     // ============================================================================
     // SIP Providers REST API

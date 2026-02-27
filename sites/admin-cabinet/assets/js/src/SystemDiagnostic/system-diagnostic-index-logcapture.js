@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,10 +16,11 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global sessionStorage, PbxApi, SyslogAPI, UserMessage, archivePackingCheckWorker */
+/* global SyslogAPI, UserMessage, archivePackingCheckWorker */
 
 /**
  * Represents the system diagnostic capture object.
+ * Uses server-side state via getCaptureStatus API instead of sessionStorage.
  */
 const systemDiagnosticCapture = {
     /**
@@ -57,16 +58,13 @@ const systemDiagnosticCapture = {
      */
     initialize() {
         const segmentHeight = window.innerHeight - 300;
-        $(window).load(function () {
+        $(window).load(() => {
             systemDiagnosticCapture.$dimmer.closest('div').css('min-height', `${segmentHeight}px`);
         });
-        if (sessionStorage.getItem('PCAPCaptureStatus') === 'started') {
-            systemDiagnosticCapture.$startBtn.addClass('disabled loading');
-            systemDiagnosticCapture.$stopBtn.removeClass('disabled');
-        } else {
-            systemDiagnosticCapture.$startBtn.removeClass('disabled loading');
-            systemDiagnosticCapture.$stopBtn.addClass('disabled');
-        }
+
+        // Query server for actual capture state instead of relying on sessionStorage
+        SyslogAPI.getCaptureStatus(systemDiagnosticCapture.cbAfterGetCaptureStatus);
+
         systemDiagnosticCapture.$startBtn.on('click', (e) => {
             e.preventDefault();
             systemDiagnosticCapture.$startBtn.addClass('disabled loading');
@@ -79,7 +77,6 @@ const systemDiagnosticCapture = {
             systemDiagnosticCapture.$stopBtn.addClass('loading');
             systemDiagnosticCapture.$dimmer.addClass('active');
             SyslogAPI.stopCapture(systemDiagnosticCapture.cbAfterStopCapture);
-
         });
         systemDiagnosticCapture.$downloadBtn.on('click', (e) => {
             e.preventDefault();
@@ -90,48 +87,82 @@ const systemDiagnosticCapture = {
     },
 
     /**
-     * Callback after pushing the start logs collect button.
+     * Callback after querying capture status from server.
+     * Sets button states based on whether tcpdump is actually running.
+     * @param {object} response - The response object.
+     */
+    cbAfterGetCaptureStatus(response) {
+        if (response && response.result && response.data && response.data.capturing) {
+            systemDiagnosticCapture.$startBtn.addClass('disabled loading');
+            systemDiagnosticCapture.$stopBtn.removeClass('disabled');
+        } else {
+            systemDiagnosticCapture.$startBtn.removeClass('disabled loading');
+            systemDiagnosticCapture.$stopBtn.addClass('disabled');
+        }
+    },
+
+    /**
+     * Callback after pushing the start capture button.
      * @param {object} response - The response object.
      */
     cbAfterStartCapture(response) {
-        // Handle v3 API response structure
         if (response && response.result) {
-            sessionStorage.setItem('PCAPCaptureStatus', 'started');
-            setTimeout(() => {
-                sessionStorage.setItem('PCAPCaptureStatus', 'stopped');
-            }, 300000);
-        } else if (response && response.messages) {
-            UserMessage.showMultiString(response.messages);
+            // Server confirmed capture started — buttons already set by click handler
+        } else {
+            // Start failed — revert button states
+            systemDiagnosticCapture.$startBtn.removeClass('disabled loading');
+            systemDiagnosticCapture.$stopBtn.addClass('disabled');
+            if (response && response.messages) {
+                UserMessage.showMultiString(response.messages);
+            }
         }
     },
 
-
     /**
-     * Callback after pushing the start logs collect button.
+     * Callback after pushing the download logs button.
      * @param {object} response - The response object.
      */
     cbAfterDownloadCapture(response) {
-        // Handle v3 API response structure
         if (response && response.result && response.data) {
             const filename = response.data.filename || response.data;
             archivePackingCheckWorker.initialize(filename);
-        } else if (response && response.messages) {
-            UserMessage.showMultiString(response.messages);
+        } else {
+            systemDiagnosticCapture.$downloadBtn.removeClass('disabled loading');
+            systemDiagnosticCapture.$dimmer.removeClass('active');
+            if (response && response.messages) {
+                UserMessage.showMultiString(response.messages);
+            }
         }
     },
 
     /**
-     * Callback after pushing the stop logs collect button.
+     * Callback after pushing the stop capture button.
      * @param {object} response - The response object.
      */
     cbAfterStopCapture(response) {
-        // Handle v3 API response structure
         if (response && response.result && response.data) {
             const filename = response.data.filename || response.data;
             archivePackingCheckWorker.initialize(filename);
-        } else if (response && response.messages) {
-            UserMessage.showMultiString(response.messages);
+        } else {
+            systemDiagnosticCapture.$stopBtn.removeClass('loading');
+            systemDiagnosticCapture.$dimmer.removeClass('active');
+            if (response && response.messages) {
+                UserMessage.showMultiString(response.messages);
+            }
         }
+    },
+
+    /**
+     * Resets capture UI to idle state.
+     * Called by archivePackingCheckWorker when download is complete or after error threshold.
+     */
+    resetCaptureState() {
+        systemDiagnosticCapture.$startBtn.removeClass('disabled loading');
+        systemDiagnosticCapture.$stopBtn
+            .removeClass('loading')
+            .addClass('disabled');
+        systemDiagnosticCapture.$downloadBtn.removeClass('disabled loading');
+        systemDiagnosticCapture.$dimmer.removeClass('active');
     }
 };
 
@@ -139,4 +170,3 @@ const systemDiagnosticCapture = {
 $(document).ready(() => {
     systemDiagnosticCapture.initialize();
 });
-

@@ -346,8 +346,8 @@ class Processes
         }
 
         $nohup = Util::which('nohup');
-        $timeout = Util::which('timeout');
-        exec("$nohup $timeout $timeout $command > $logName 2>&1 &");
+        $timeoutBin = Util::which('timeout');
+        exec("$nohup $timeoutBin $timeout $command > $logName 2>&1 &");
     }
 
     /**

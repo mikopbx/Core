@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,22 +20,19 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
-use MikoPBX\Core\System\Directories;
-use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
 
 /**
- * Starts the collection of logs and captures TCP packets.
+ * Returns the current state of packet capture (whether tcpdump is running).
  *
  * @package MikoPBX\PBXCoreREST\Lib\SysLogs
  */
-class StartLogAction extends Injectable
+class GetCaptureStatusAction extends Injectable
 {
     /**
-     * Starts the collection of logs and captures TCP packets.
+     * Checks if tcpdump is currently running and returns capture status.
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -43,25 +40,9 @@ class StartLogAction extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $logDir = Directories::getDir(Directories::CORE_LOGS_DIR);
 
-        // Kill any existing tcpdump processes to prevent duplicates
-        Processes::killByName('tcpdump');
-
-        // TCP dump
-        $tcpDumpDir = "$logDir/tcpDump";
-        Util::mwMkdir($tcpDumpDir);
-        $network = new Network();
-        $arr_eth = $network->getInterfacesNames();
-        $tcpdump = Util::which('tcpdump');
-        $timeout = 300;
-        foreach ($arr_eth as $eth) {
-            Processes::mwExecBgWithTimeout(
-                "$tcpdump -i $eth -n -s 0 -vvv -w $tcpDumpDir/$eth.pcap",
-                $timeout,
-                "$tcpDumpDir/{$eth}_out.log"
-            );
-        }
+        $pid = Processes::getPidOfProcess('tcpdump');
+        $res->data['capturing'] = !empty($pid);
         $res->success = true;
 
         return $res;

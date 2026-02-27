@@ -25,6 +25,7 @@ use MikoPBX\PBXCoreREST\Lib\SysLogs\EraseFileAction;
 use MikoPBX\PBXCoreREST\Lib\SysLogs\GetLogFromFileAction;
 use MikoPBX\PBXCoreREST\Lib\SysLogs\GetLogTimeRangeAction;
 use MikoPBX\PBXCoreREST\Lib\SysLogs\GetLogsListAction;
+use MikoPBX\PBXCoreREST\Lib\SysLogs\GetCaptureStatusAction;
 use MikoPBX\PBXCoreREST\Lib\SysLogs\PrepareLogAction;
 use MikoPBX\PBXCoreREST\Lib\SysLogs\StartLogAction;
 use Phalcon\Di\Injectable;
@@ -44,6 +45,7 @@ enum SyslogAction: string
     case DOWNLOAD_LOG_FILE = 'downloadLogFile';
     case DOWNLOAD_ARCHIVE = 'downloadArchive';
     case ERASE_FILE = 'eraseFile';
+    case GET_CAPTURE_STATUS = 'getCaptureStatus';
 }
 
 /**
@@ -61,6 +63,7 @@ enum SyslogAction: string
  * - POST /syslog:downloadLogFile  -> Download specific log file
  * - POST /syslog:downloadArchive  -> Download prepared logs archive
  * - POST /syslog:eraseFile        -> Erase log file content
+ * - GET  /syslog:getCaptureStatus -> Get current packet capture status
  *
  * @package MikoPBX\PBXCoreREST\Lib
  */
@@ -106,6 +109,7 @@ class SysLogsManagementProcessor extends Injectable
             SyslogAction::DOWNLOAD_LOG_FILE => DownloadLogFileAction::main($data),
             SyslogAction::DOWNLOAD_ARCHIVE => DownloadLogsArchiveAction::main($data),
             SyslogAction::ERASE_FILE => EraseFileAction::main($data),
+            SyslogAction::GET_CAPTURE_STATUS => GetCaptureStatusAction::main(),
         };
 
         $res->function = $actionString;

@@ -622,6 +622,8 @@ return [
     'rest_syslog_DownloadArchiveDesc' => 'Download prepared system logs archive',
     'rest_syslog_EraseFile' => 'Clear log file',
     'rest_syslog_EraseFileDesc' => 'Clear content of specified log file (file will remain but will be empty)',
+    'rest_syslog_GetCaptureStatus' => 'Get packet capture status',
+    'rest_syslog_GetCaptureStatusDesc' => 'Check whether network packet capture (tcpdump) is currently running',
     'rest_sipp_GetList' => 'Get SIP providers list',
     'rest_sipp_GetListDesc' => 'Get paginated list of all SIP providers with filtering and sorting',
     'rest_sipp_GetRecord' => 'Get SIP provider by ID',
