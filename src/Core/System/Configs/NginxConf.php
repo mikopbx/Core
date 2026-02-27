@@ -639,14 +639,23 @@ class NginxConf extends SystemConfigClass
         $logFiles = self::getLogFiles();
 
         foreach ($logFiles as $src_log_file => $dst_log_file) {
-            if (! file_exists($src_log_file)) {
+            // If symlink already points to the correct destination, just ensure target exists
+            if (is_link($src_log_file) && readlink($src_log_file) === $dst_log_file) {
+                if (!file_exists($dst_log_file)) {
+                    file_put_contents($dst_log_file, '');
+                }
+                shell_exec(Util::which('chown') . " -R www:www " . dirname($dst_log_file));
+                continue;
+            }
+
+            if (!file_exists($src_log_file)) {
                 file_put_contents($src_log_file, '');
             }
             $options = file_exists($dst_log_file) ? '>' : '';
             $cat = Util::which('cat');
             Processes::mwExec("$cat $src_log_file 2> /dev/null >$options $dst_log_file");
             Util::createUpdateSymlink($dst_log_file, $src_log_file);
-            shell_exec(Util::which('chown')." -R www:www ". dirname($dst_log_file));
+            shell_exec(Util::which('chown') . " -R www:www " . dirname($dst_log_file));
         }
     }
 
