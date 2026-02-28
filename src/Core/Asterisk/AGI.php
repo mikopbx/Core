@@ -416,6 +416,22 @@ class AGI extends AGIBase
     }
 
 
+    /**
+     * Retrieves CALLERID(name) from the channel.
+     * Returns empty string if name equals the number (no useful display name).
+     *
+     * @param string $number The caller/callee number to compare against.
+     * @return string The display name, or empty string if it matches the number.
+     */
+    public function getCallerIdName(string $number): string
+    {
+        $name = trim($this->get_variable('CALLERID(name)', true));
+        if ($name === '' || $name === $number) {
+            return '';
+        }
+        return $name;
+    }
+
     // *********************************************************************************************************
     // **                             APPLICATIONS                                                                                        **
     // *********************************************************************************************************

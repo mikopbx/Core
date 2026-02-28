@@ -179,7 +179,7 @@ class ResParkingConf extends AsteriskConfigClass
         // Generate the internal number plan for parked calls.
         $conf  = "[parked-calls]\n";
         $conf .= "exten => _X!,2,NoOp()\n\t";
-        $conf .= 'same => n,AGI(cdr_connector.php,unpark_call)' . "\n\t";
+        $conf .= 'same => n,AGI(unpark_call.php)' . "\n\t";
         $conf .= 'same => n,ExecIf($["${pt1c_PARK_CHAN}x" != "x"]?Bridge(${pt1c_PARK_CHAN},kKTt))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${pt1c_PARK_CHAN}x" == "x"]?ParkedCall(default,${EXTEN}))' . "\n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";
@@ -187,7 +187,7 @@ class ResParkingConf extends AsteriskConfigClass
         $conf .= "[parked-calls-timeout]\n";
         $conf .= "exten => s,1,NoOp(This is all that happens to parked calls if they time out.)\n\t";
         $conf .= 'same => n,Set(FROM_PEER=${EMPTYVAR})' . "\n\t";
-        $conf .= 'same => n,AGI(cdr_connector.php,unpark_call_timeout)' . "\n\t";
+        $conf .= 'same => n,Gosub(unpark_call_timeout,${EXTEN},1)' . "\n\t";
         $conf .= 'same => n,Goto(internal,${CUT(PARKER,/,2)},1)' . "\n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";
 

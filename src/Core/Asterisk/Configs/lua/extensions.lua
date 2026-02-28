@@ -1697,12 +1697,118 @@ function set_from_peer()
     app["return"]();
 end
 
--- TODO
--- Event_unpark_call
--- Event_unpark_call_timeout
+--[[
+    event_hangup_chan_meetme()
 
--- Event_meetme_dial
--- Event_hangup_chan_meetme
+    Handles the hangup event for a MeetMe/ConfBridge conference channel.
+    Collects conference-related data (conference ID, recording file, unique IDs)
+    and sends a user event for CDR processing.
+
+    This function is called as a hangup handler via:
+        Set(CHANNEL(hangup_handler_wipe)=hangup_chan_meetme,${EXTEN},1)
+
+    Returns:
+        data (table): A table containing the conference hangup information:
+            - action (string): "hangup_chan_meetme"
+            - linkedid (string): The linked ID of the call.
+            - src_chan (string): The source channel.
+            - agi_channel (string): The AGI channel (same as src_chan).
+            - end (string): The end timestamp.
+            - meetme_id (string): The conference unique ID (MEETMEUNIQUEID or CONFBRIDGEUNIQUEID).
+            - conference (string): The conference identifier (mikoidconf).
+            - UNIQUEID (string): The call unique ID (pt1c_q_UNIQUEID).
+            - recordingfile (string): The recording file path with .webm extension.
+]]
+function event_hangup_chan_meetme()
+    local data = {}
+
+    data['action']      = "hangup_chan_meetme"
+    data['linkedid']    = get_variable("CHANNEL(linkedid)")
+    data['src_chan']     = get_variable("CHANNEL")
+    data['agi_channel'] = get_variable("CHANNEL")
+    data['end']         = getNowDate()
+
+    local confId = get_variable("MEETMEUNIQUEID")
+    if confId == '' then
+        confId = get_variable("CONFBRIDGEUNIQUEID")
+    end
+    data['meetme_id']   = confId
+
+    data['conference']  = get_variable("mikoidconf")
+    data['UNIQUEID']    = get_variable("pt1c_q_UNIQUEID")
+
+    local recordingfile = get_variable("MEETME_RECORDINGFILE")
+    data['recordingfile'] = recordingfile .. ".webm"
+
+    userevent_hangup(data)
+    return data
+end
+
+--[[
+    event_unpark_call_timeout()
+
+    Handles the timeout event when a parked call is not picked up within the parking duration.
+    Creates a CDR record for the parking period and sets a new unique ID for subsequent call routing.
+
+    This function is called via Gosub when parking times out:
+        Gosub(unpark_call_timeout,${EXTEN},1)
+
+    Returns:
+        data (table): A table containing the parking timeout information:
+            - action (string): "unpark_call_timeout"
+            - src_chan (string): The parked channel.
+            - src_num (string): The caller ID number.
+            - src_name (string): The caller ID display name.
+            - dst_num (string): The parking space number.
+            - dst_chan (string): "Park:" followed by the parking space.
+            - start (string): The calculated start time (now minus parking duration).
+            - answer (string): Same as start time.
+            - endtime (string): The current time.
+            - did (string): The DID of the call.
+            - UNIQUEID (string): A generated unique ID for this parking record.
+            - transfer (string): "0" (not a transfer).
+            - linkedid (string): The linked ID of the call.
+            - PARKER (string): The channel that parked the call.
+]]
+function event_unpark_call_timeout()
+    local now = getNowDate()
+
+    local PARKING_DURATION = get_variable("PARKING_DURATION")
+    if PARKING_DURATION == '' then
+        PARKING_DURATION = 45
+    else
+        PARKING_DURATION = tonumber(PARKING_DURATION) or 45
+    end
+
+    local time_start    = os.date("%Y-%m-%d %H:%M:%S", os.time() - PARKING_DURATION)
+    local PARKING_SPACE = get_variable("PARKING_SPACE")
+    local src_num       = get_variable("CALLERID(num)")
+
+    local id = get_variable("UNIQUEID") .. '_' .. generateRandomString(6)
+
+    local data = {
+        ['action']   = "unpark_call_timeout",
+        ['src_chan']  = get_variable("CHANNEL"),
+        ['src_num']  = src_num,
+        ['src_name'] = getCallerIdName(src_num),
+        ['dst_num']  = PARKING_SPACE,
+        ['dst_chan']  = "Park:" .. PARKING_SPACE,
+        ['start']    = time_start,
+        ['answer']   = time_start,
+        ['endtime']  = now,
+        ['did']      = get_variable("FROM_DID"),
+        ['UNIQUEID'] = id,
+        ['transfer'] = '0',
+        ['linkedid'] = get_variable("CHANNEL(linkedid)"),
+        ['PARKER']   = get_variable("PARKER"),
+    }
+
+    local id2 = get_variable("UNIQUEID") .. '_' .. generateRandomString(6)
+    set_variable("__pt1c_UNIQUEID", id2)
+
+    userevent_return(data)
+    return data
+end
 
 extensions = {
     dial = {},
@@ -1724,7 +1830,9 @@ extensions = {
     voicemail_end={},
     interception_start={},
     interception_bridge_result={},
-    dial_end={}
+    dial_end={},
+    hangup_chan_meetme={},
+    unpark_call_timeout={}
 }
 
 -- event_interception_start event_interception_bridge_result
@@ -1748,6 +1856,8 @@ extensions.voicemail_start["_.!"]           = function() event_voicemail_start()
 extensions.interception_start["_.!"]           = function() event_interception_start() end
 extensions.interception_bridge_result["_.!"]   = function() event_interception_bridge_result() end
 extensions.dial_end["_.!"]                     = function() event_dial_end() end
+extensions.hangup_chan_meetme["_.!"]            = function() event_hangup_chan_meetme() end
+extensions.unpark_call_timeout["_.!"]          = function() event_unpark_call_timeout() end
 --
 ------
 ---- Safe connection of additional dialplans described in /etc/asterisk/extensions-lua.

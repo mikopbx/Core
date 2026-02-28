@@ -211,6 +211,12 @@ QueueRemove(string $queue, string $interface): array
 QueueStatus(): array
 ```
 
+Common AGI scripts:
+- **meetme_dial.php** - Conference room CDR event (uses AMI)
+- **unpark_call.php** - Unpark call CDR event (uses AMI)
+- **check_redirect.php** - Call forwarding
+- **get_park_info.php** - Parking information
+
 ### Recording
 ```php
 MixMonitor(string $channel, string $file, string $options): array

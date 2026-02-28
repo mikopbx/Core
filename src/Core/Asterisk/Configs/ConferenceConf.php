@@ -91,7 +91,7 @@ class ConferenceConf extends AsteriskConfigClass
 
         // Generate hangup handler
         $conf  = "[hangup_handler_meetme]\n\n";
-        $conf .= "exten => s,1,AGI(cdr_connector.php,hangup_chan_meetme)\n\t";
+        $conf .= "exten => s,1,Gosub(hangup_chan_meetme,\${EXTEN},1)\n\t";
         $conf .= "same => n,return\n\n";
 
         // Generate conference room context
@@ -117,7 +117,7 @@ class ConferenceConf extends AsteriskConfigClass
             $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Hangup())' . "\n\t";
 
             // Send PJSIP channels to the conference room
-            $conf .= 'same => n,AGI(cdr_connector.php,meetme_dial)' . "\n\t";
+            $conf .= 'same => n,AGI(meetme_dial.php)' . "\n\t";
             $conf .= 'same => n,Answer()' . "\n\t";
             $conf .= 'same => n,Gosub(set-answer-state,${EXTEN},1)' . PHP_EOL."\t";
             $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler_meetme,s,1)' . "\n\t";
