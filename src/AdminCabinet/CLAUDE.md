@@ -1,209 +1,220 @@
-# CLAUDE.md - MikoPBX AdminCabinet Development
+# CLAUDE.md - MikoPBX AdminCabinet
 
-This file provides guidance to Claude Code (claude.ai/code) for AdminCabinet web interface development in MikoPBX.
+Web administration interface built on Phalcon MVC, Volt templates, Fomantic UI, and jQuery + ES6.
 
-## AdminCabinet Architecture Overview
-
-The AdminCabinet is MikoPBX's web administration interface built on:
-- **Phalcon MVC Framework** - High-performance PHP framework
-- **Volt Template Engine** - Fast template system with caching
-- **Fomantic UI** (formerly Semantic UI) - Modern CSS framework
-- **jQuery + ES6 Modules** - Frontend JavaScript architecture
-- **Babel Transpilation** - Modern JS features with compatibility
-
-### Directory Structure
+## File Inventory
 
 ```
-src/AdminCabinet/
-├── Config/                 # Configuration and DI setup
-├── Controllers/           # MVC Controllers (one per section)
-├── Forms/                 # Form definitions with validation
-├── Library/               # Helper classes and utilities
-├── Plugins/               # Application plugins (security, assets)
-├── Providers/            # Service providers for DI container
-└── Views/                # Volt templates organized by controller
-
-sites/admin-cabinet/
-├── assets/
-│   ├── css/              # Custom CSS and vendor styles
-│   ├── img/              # Images and icons
-│   └── js/
-│       ├── src/          # Source JavaScript (ES6, Airbnb style)
-│       └── pbx/          # Transpiled JavaScript (Babel output)
-└── index.php             # Entry point
+AdminCabinet/
+├── Module.php                         # Phalcon ModuleDefinitionInterface
+├── Config/
+│   └── RegisterDIServices.php         # DI container (28 providers)
+│
+├── Controllers/                       # 33 controllers
+│   ├── BaseController.php             # Base class (extends Phalcon\Mvc\Controller)
+│   ├── AclController.php              # Access Control Lists
+│   ├── ApiKeysController.php          # REST API keys
+│   ├── AsteriskManagersController.php # AMI users
+│   ├── AsteriskRestUsersController.php # ARI users
+│   ├── CallDetailRecordsController.php # CDR viewing/filtering
+│   ├── CallQueuesController.php       # Call queues
+│   ├── ConferenceRoomsController.php  # Conference rooms
+│   ├── ConsoleController.php          # Web terminal
+│   ├── CustomFilesController.php      # Custom config files
+│   ├── DialplanApplicationsController.php # Dialplan apps
+│   ├── ErrorsController.php           # Error pages (401, 404, 500)
+│   ├── ExtensionsController.php       # Extensions/phones
+│   ├── Fail2BanController.php         # Fail2Ban settings
+│   ├── FirewallController.php         # Firewall rules
+│   ├── GeneralSettingsController.php  # Core PBX settings (multi-tab)
+│   ├── IncomingRoutesController.php   # Incoming routing
+│   ├── IvrMenuController.php          # IVR menus
+│   ├── LicensingController.php        # License/marketplace
+│   ├── LocalizationController.php     # Language settings
+│   ├── MailSettingsController.php     # SMTP/OAuth2
+│   ├── NetworkController.php          # Network interfaces
+│   ├── OffWorkTimesController.php     # After-hours time frames
+│   ├── OutboundRoutesController.php   # Outgoing routing
+│   ├── PbxExtensionModulesController.php # Module management
+│   ├── ProvidersController.php        # SIP/IAX providers
+│   ├── RestartController.php          # System restart
+│   ├── SessionController.php          # Authentication
+│   ├── SoundFilesController.php       # Sound files
+│   ├── StorageController.php          # Storage (local, S3)
+│   ├── SystemDiagnosticController.php # Diagnostics/logs
+│   ├── TimeSettingsController.php     # Time/timezone
+│   └── UpdateController.php           # System updates
+│
+├── Forms/                             # 35 forms + 1 element
+│   ├── BaseForm.php                   # Base class with validation helpers
+│   ├── Elements/
+│   │   └── SemanticUIDropdown.php     # Custom Fomantic UI dropdown
+│   ├── ApiKeyEditForm.php
+│   ├── AsteriskManagerEditForm.php
+│   ├── AsteriskRestUserEditForm.php
+│   ├── CallDetailRecordsFilterForm.php
+│   ├── CallQueueEditForm.php
+│   ├── ConferenceRoomEditForm.php
+│   ├── CustomFilesEditForm.php
+│   ├── DefaultIncomingRouteForm.php
+│   ├── DialplanApplicationEditForm.php
+│   ├── ExtensionEditForm.php
+│   ├── Fail2BanEditForm.php
+│   ├── FirewallEditForm.php
+│   ├── GeneralSettingsEditForm.php
+│   ├── IaxProviderEditForm.php
+│   ├── IncomingRouteEditForm.php
+│   ├── IvrMenuEditForm.php
+│   ├── LicensingActivateCouponForm.php
+│   ├── LicensingChangeLicenseKeyForm.php
+│   ├── LicensingGetKeyForm.php
+│   ├── LocalStorageEditForm.php
+│   ├── LoginForm.php
+│   ├── MailSettingsEditForm.php
+│   ├── NetworkEditForm.php
+│   ├── OutgoingRouteEditForm.php
+│   ├── PbxExtensionModuleSettingsForm.php
+│   ├── S3StorageEditForm.php
+│   ├── SipProviderEditForm.php
+│   ├── SoundFilesEditForm.php
+│   ├── StorageEditForm.php
+│   ├── SystemDiagnosticForm.php
+│   ├── TimeFrameEditForm.php
+│   └── TimeSettingsEditForm.php
+│
+├── Library/                           # 3 helper classes
+│   ├── Cidr.php                       # CIDR notation parsing (Injectable)
+│   ├── Elements.php                   # Menu structure and UI elements (Injectable)
+│   └── SecurityHelper.php             # Security helper functions
+│
+├── Plugins/                           # 4 plugins
+│   ├── AssetManager.php               # JS/CSS asset registration (extends Manager)
+│   ├── NormalizeControllerNamePlugin.php # Controller name routing (Injectable)
+│   ├── NotFoundPlugin.php             # 404 handler (Injectable)
+│   └── SecurityPlugin.php             # Auth, ACL, CSRF (Injectable)
+│
+├── Providers/                         # 7 AdminCabinet-specific providers
+│   ├── AssetProvider.php              # CSS/JS assets per page
+│   ├── DispatcherProvider.php         # MVC dispatcher config
+│   ├── ElementsProvider.php           # Menu/UI elements
+│   ├── FlashProvider.php              # Session-based flash messages
+│   ├── SecurityPluginProvider.php     # Security plugin registration
+│   ├── ViewProvider.php               # Volt view engine config
+│   └── VoltProvider.php               # Volt template compilation
+│
+└── Views/                             # 35 view directories
+    ├── layouts/
+    │   └── main.volt                  # Main layout template
+    ├── partials/                       # 12 reusable partials
+    │   ├── acl-init.volt              # ACL initialization
+    │   ├── emptyTablePlaceholder.volt
+    │   ├── leftsidebar.volt           # Left navigation
+    │   ├── mainDimmer.volt            # Loading overlay
+    │   ├── mainHeader.volt
+    │   ├── modulesHeader.volt
+    │   ├── modulesStatusToggle.volt
+    │   ├── natqualify.volt
+    │   ├── playAddNewSoundWithIcons.volt
+    │   ├── submitbutton.volt          # Standard submit group
+    │   ├── tablesbuttons.volt         # Table action buttons
+    │   └── topMenu.volt               # Top navigation
+    ├── ApiKeys/                       # + openapi.volt
+    ├── Errors/                        # show401, show404, show500
+    ├── Fail2Ban/                      # + IndexTabs/ (tabBanned, tabSettings)
+    ├── GeneralSettings/               # 10 tab views (general, api, codecs, ssh, sip, recording, web, passwords, features, deleteall)
+    ├── MailSettings/                  # + oauth2-callback.volt
+    ├── Network/                       # + partials (interfaces, nat, static-routes)
+    ├── SystemDiagnostic/              # show-log-tab, capture-log-tab, show-sysinfo-tab
+    └── [30 other directories]         # index.volt + modify.volt each
 ```
 
-## Core Components
-
-### 1. BaseController
-
-All controllers extend `BaseController` which provides:
+## BaseController
 
 ```php
-class ExtensionsController extends BaseController
+class BaseController extends Controller
 {
-    public function indexAction(): void
-    {
-        // List view - usually minimal logic
-    }
-    
-    public function modifyAction($id = null): void
-    {
-        // Load entity
-        $extension = Extensions::findFirstById($id);
-        
-        // Create form
-        $form = new ExtensionEditForm($extension);
-        
-        // Pass to view
-        $this->view->form = $form;
-        $this->view->represent = $extension->getRepresent();
-    }
-    
-    public function saveAction(): void
-    {
-        if (!$this->request->isPost()) {
-            return $this->forward('extensions/index');
-        }
-        
-        // Process form data
-        $data = $this->request->getPost();
-        // ... save logic
-        
-        // Use saveEntity helper
-        $this->saveEntity($extension, 'extensions/modify/{id}');
-    }
+    protected string $actionName;
+    protected string $controllerName;         // CamelCase
+    protected string $controllerClass;        // Full class name
+    protected string $controllerNameUnCamelized; // kebab-case
+    protected bool $isExternalModuleController;
+
+    public function initialize(): void       // Extract dispatcher info, prepareView()
+    protected function prepareView(): void   // Timezone, license, support URL, page title
 }
 ```
 
 Key features:
 - Automatic view selection based on controller/action
-- Built-in AJAX response handling
-- Form validation and flash messages
-- Module integration support
-- Sanitization helpers
+- Built-in AJAX response handling (JSON for AJAX, flash messages otherwise)
+- Form validation and `saveEntity()` helper
+- Module integration via `isExternalModuleController`
 
-### 2. Forms
+## DI Services (28 providers)
 
-Forms use Phalcon's form builder with custom helpers:
-
-```php
-class ExtensionEditForm extends BaseForm
-{
-    public function initialize($entity = null, $options = null): void
-    {
-        parent::initialize($entity, $options);
-        
-        // Hidden fields
-        $this->add(new Hidden('id'));
-        
-        // Text input with input mask
-        $this->add(new Text('number', [
-            "data-inputmask" => "'mask': '9{2,4}'"
-        ]));
-        
-        // Checkbox helper
-        $this->addCheckBox('show_in_phonebook', 
-            intval($entity->show_in_phonebook) === 1);
-        
-        // Select dropdown
-        $this->add(new Select('codec', Codecs::find(), [
-            'using' => ['name', 'description'],
-            'useEmpty' => true,
-            'emptyText' => $this->translation->_('ex_SelectCodec'),
-        ]));
-        
-        // Text area with auto-sizing
-        $this->addTextArea('description', $entity->description, 80);
-    }
-}
 ```
-
-### 3. Views (Volt Templates)
-
-Views use Volt templating with Fomantic UI components:
-
-```volt
-{% extends "layouts/main.volt" %}
-
-{% block content %}
-<form class="ui form" id="extension-form">
-    {{ form.render('id') }}
-    
-    <div class="field">
-        <label>{{ t._('ex_Number') }}</label>
-        {{ form.render('number') }}
-    </div>
-    
-    <div class="field">
-        <div class="ui checkbox">
-            {{ form.render('show_in_phonebook') }}
-            <label>{{ t._('ex_ShowInPhonebook') }}</label>
-        </div>
-    </div>
-    
-    {{ partial("partials/submitbutton", ['indexurl':'extensions/index']) }}
-</form>
-{% endblock %}
-```
-
-### 4. Service Providers
-
-Services are registered via providers:
-
-```php
-class RegisterDIServices
-{
-    public static function init(DiInterface $di): void
-    {
-        $providers = [
-            LoggerProvider::class,
-            ViewProvider::class,
-            VoltProvider::class,
-            SessionProvider::class,
-            // ... more providers
-        ];
-        
-        foreach ($providers as $provider) {
-            (new $provider())->register($di);
-        }
-    }
-}
+Logging:        LoggerAuthProvider, LoggerProvider
+Caching:        ManagedCacheProvider, RedisClientProvider
+Database:       ModelsAnnotationsProvider, ModelsMetadataProvider,
+                MainDatabaseProvider, ModulesDBConnectionsProvider,
+                CDRDatabaseProvider, RecordingStorageDatabaseProvider
+Web:            DispatcherProvider, RouterProvider, UrlProvider,
+                ViewProvider, VoltProvider, FlashProvider,
+                ElementsProvider, AssetProvider, SecurityPluginProvider
+Session:        SessionProvider
+Security:       AclProvider, JwtProvider
+Queue:          BeanstalkConnectionModelsProvider
+Translation:    MessagesProvider, TranslationProvider, LanguageProvider
+License:        MarketPlaceProvider
+Modules:        PBXConfModulesProvider
+System:         RegistryProvider, CryptProvider, PBXCoreRESTClientProvider, EventBusProvider
 ```
 
 ## Frontend Architecture
 
-### JavaScript Module Pattern
+### JavaScript Source (`sites/admin-cabinet/assets/js/src/`)
 
-Each page/section has its own JavaScript module:
+Each section has its own JS module with `initialize()` pattern:
+
+```
+src/
+├── Advice/               # System advice/tips
+├── ApiKeys/              # API key management
+├── AsteriskManagers/     # AMI user UI
+├── AsteriskRestUsers/    # ARI user UI
+├── CallDetailRecords/    # CDR viewer
+├── CallQueues/           # Queue management
+├── ConferenceRooms/      # Conference rooms
+├── CustomFiles/          # Custom files
+├── DialplanApplications/ # Dialplan apps
+├── Extensions/           # Phone extensions
+├── Fail2Ban/             # Fail2Ban settings
+├── Firewall/             # Firewall rules
+├── FormElements/         # Form helper components
+├── GeneralSettings/      # General settings tabs
+├── IncomingRoutes/       # Incoming routing
+├── IvrMenu/              # IVR menus
+├── Language/             # i18n
+├── MailSettings/         # Email/OAuth2
+├── Network/              # Network config
+├── PbxAPI/               # Centralized API communication
+├── SoundFiles/           # Sound file management
+├── SystemDiagnostic/     # Log viewer with SVG timeline
+└── [more sections]
+```
+
+### Module Pattern
 
 ```javascript
-// src/Extensions/extensions-index.js
-/* global globalRootUrl, SemanticLocalization, PbxApi */
-
 const extensionsIndex = {
     $extensionsList: $('#extensions-table'),
     dataTable: {},
-    
+
     initialize() {
-        // Initialize DataTable
         extensionsIndex.initializeDataTable();
-        
-        // Set up event handlers
-        $('.extension-row td').on('dblclick', (e) => {
-            const id = $(e.target).closest('tr').attr('id');
-            window.location = `${globalRootUrl}extensions/modify/${id}`;
-        });
-        
-        // Delete button handler
-        $('body').on('click', 'a.delete', (e) => {
-            e.preventDefault();
-            $(e.target).addClass('loading');
-            const id = $(e.target).closest('a').attr('data-value');
-            PbxApi.ExtensionsDeleteRecord(id, extensionsIndex.deleteCallback);
-        });
+        // Event handlers...
     },
-    
+
     deleteCallback(response) {
         if (response.result === true) {
             extensionsIndex.dataTable.ajax.reload();
@@ -213,7 +224,6 @@ const extensionsIndex = {
     }
 };
 
-// Initialize when DOM is ready
 $(document).ready(() => {
     extensionsIndex.initialize();
 });
@@ -221,24 +231,12 @@ $(document).ready(() => {
 
 ### Form Handling
 
-Forms use a centralized Form object:
+Forms use centralized `Form` object with Fomantic UI validation:
 
 ```javascript
-// src/Extensions/extension-modify.js
 const extensionModify = {
     $formObj: $('#extension-form'),
-    
-    initialize() {
-        // Avatar handling
-        extensionModify.initializeAvatar();
-        
-        // Form validation rules
-        extensionModify.initializeForm();
-        
-        // Additional features
-        extensionModify.initializeDualList();
-    },
-    
+
     initializeForm() {
         Form.$formObj = extensionModify.$formObj;
         Form.url = `${globalRootUrl}extensions/save`;
@@ -247,512 +245,55 @@ const extensionModify = {
         Form.cbAfterSendForm = extensionModify.cbAfterSendForm;
         Form.initialize();
     },
-    
+
     validateRules: {
         number: {
             identifier: 'number',
             rules: [
-                {
-                    type: 'empty',
-                    prompt: globalTranslate.ex_ValidateNumberIsEmpty,
-                },
-                {
-                    type: 'existRule[number-error]',
-                    prompt: globalTranslate.ex_ValidateNumberIsDouble,
-                },
+                { type: 'empty', prompt: globalTranslate.ex_ValidateNumberIsEmpty },
+                { type: 'existRule[number-error]', prompt: globalTranslate.ex_ValidateNumberIsDouble },
             ],
         },
-        // ... more rules
     },
-    
-    cbBeforeSendForm(settings) {
-        const result = settings;
-        result.data = extensionModify.$formObj.form('get values');
-        return result;
-    },
-    
-    cbAfterSendForm() {
-        // Handle post-save actions
-    }
 };
 ```
 
 ### API Communication
 
-All API calls go through the centralized PbxApi object:
+All API calls go through centralized `PbxApi`:
 
 ```javascript
-// PbxAPI/extensionsAPI.js
-const ExtensionsAPI = {
-    /**
-     * Get all extensions list
-     */
-    GetPhonesRepresent(callback) {
-        $.api({
-            url: PbxApi.extensionsGetPhonesRepresent,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-        });
-    },
-    
-    /**
-     * Delete extension record
-     */
-    DeleteRecord(id, callback) {
-        $.api({
-            url: PbxApi.extensionsDeleteRecord,
-            on: 'now',
-            method: 'POST',
-            data: {id: id},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response);
-            },
-        });
-    }
-};
+PbxApi.ExtensionsDeleteRecord(id, extensionsIndex.deleteCallback);
 ```
 
-## Development Patterns
+## ACL System
 
-### 1. Creating a New Section
-
-1. **Create Controller** (`src/AdminCabinet/Controllers/MyFeatureController.php`):
-```php
-class MyFeatureController extends BaseController
-{
-    public function indexAction(): void 
-    {
-        // Index usually requires minimal logic
-    }
-    
-    public function modifyAction($id = null): void
-    {
-        $record = MyModel::findFirstById($id);
-        if (!$record) {
-            $record = new MyModel();
-        }
-        
-        $form = new MyFeatureEditForm($record);
-        $this->view->form = $form;
-        $this->view->represent = $record->getRepresent();
-    }
-}
-```
-
-2. **Create Form** (`src/AdminCabinet/Forms/MyFeatureEditForm.php`):
-```php
-class MyFeatureEditForm extends BaseForm
-{
-    public function initialize($entity = null, $options = null): void
-    {
-        parent::initialize($entity, $options);
-        
-        $this->add(new Hidden('id'));
-        $this->add(new Text('name'));
-        $this->addCheckBox('enabled', $entity->enabled === '1');
-    }
-}
-```
-
-3. **Create Views** (`src/AdminCabinet/Views/MyFeature/`):
-   - `index.volt` - List view with DataTable
-   - `modify.volt` - Edit form view
-
-4. **Create JavaScript** (`sites/admin-cabinet/assets/js/src/MyFeature/`):
-   - `my-feature-index.js` - List page functionality
-   - `my-feature-modify.js` - Form handling
-
-### 2. DataTables Integration
-
-For paginated lists with server-side processing:
-
-```javascript
-initializeDataTable() {
-    myFeature.$table.DataTable({
-        ajax: {
-            url: `${globalRootUrl}my-feature/getNewRecords`,
-            dataSrc: 'data',
-        },
-        columns: [
-            { data: 'name' },
-            { data: 'description' },
-            { data: null, defaultContent: '', orderable: false }
-        ],
-        columnDefs: [{
-            targets: -1,
-            render(data) {
-                return `<a href="${globalRootUrl}my-feature/modify/${data.id}" 
-                          class="ui icon button">
-                          <i class="edit icon"></i>
-                        </a>`;
-            }
-        }],
-        order: [[0, 'asc']],
-    });
-}
-```
-
-### 3. Form Validation
-
-Use Fomantic UI validation with custom rules:
-
-```javascript
-validateRules: {
-    name: {
-        identifier: 'name',
-        rules: [
-            {
-                type: 'empty',
-                prompt: globalTranslate.mf_ValidateNameEmpty,
-            },
-            {
-                type: 'maxLength[50]',
-                prompt: globalTranslate.mf_ValidateNameMaxLength,
-            }
-        ],
-    },
-    email: {
-        identifier: 'email',
-        rules: [
-            {
-                type: 'email',
-                prompt: globalTranslate.mf_ValidateInvalidEmail,
-            }
-        ],
-    }
-}
-```
-
-### 4. AJAX Responses
-
-Controllers automatically handle AJAX responses:
-
-```php
-public function saveAction(): void
-{
-    if (!$this->request->isPost()) {
-        return;
-    }
-    
-    $data = $this->request->getPost();
-    $record = MyModel::findFirstById($data['id']) ?: new MyModel();
-    
-    // Process data...
-    
-    if ($this->request->isAjax()) {
-        // Automatically returns JSON
-        $this->view->success = $result;
-        $this->view->message = $result ? 'Saved' : 'Error';
-        $this->view->data = ['id' => $record->id];
-    } else {
-        // Regular request - use flash messages
-        if ($result) {
-            $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-        }
-        $this->forward('my-feature/index');
-    }
-}
-```
-
-## Module Integration
-
-Modules can extend the AdminCabinet interface:
-
-### 1. Module Views
-
-Place views in: `Modules/{ModuleName}/App/Views/`
-
-### 2. Hook into Volt Blocks
-
-```php
-// In module's WebUIConfigInterface implementation
-public function onVoltBlockCompile(string $controller, string $blockName, $view): string
-{
-    if ($blockName === 'FooterJS') {
-        return 'Modules/' . $this->moduleUniqueId . '/footerjs';
-    }
-    return '';
-}
-```
-
-### 3. Add Menu Items
-
-```php
-public function onAfterExecuteRoute($dispatcher): void
-{
-    $view = $dispatcher->getDI()->get('view');
-    $view->MenuItems = array_merge($view->MenuItems ?? [], [
-        'mymodule' => [
-            'caption' => 'My Module',
-            'iconClass' => 'puzzle piece',
-            'href' => '/admin-cabinet/my-module/index/',
-        ]
-    ]);
-}
-```
-
-## Access Control (ACL) in JavaScript
-
-MikoPBX provides a client-side ACL Helper for checking user permissions in JavaScript code. This is essential for forms that load data via REST API where PHP doesn't render the page.
-
-### How It Works
-
-1. **PHP generates ACL data** - `partials/acl-init.volt` checks permissions using `isAllowed()` and generates JavaScript object
-2. **JavaScript reads ACL data** - `ACLHelper` module provides convenient API for permission checks
-3. **UI adapts dynamically** - Buttons and form elements are shown/hidden based on permissions
-
-### ACL Helper API
-
-The `ACLHelper` global object provides these methods:
-
-```javascript
-// Basic permission check
-if (ACLHelper.isAllowed('save')) {
-    $('#save-button').show();
-}
-
-// Shorthand methods
-if (ACLHelper.canSave()) { }
-if (ACLHelper.canDelete()) { }
-if (ACLHelper.canModify()) { }
-
-// Show/hide elements by permission
-ACLHelper.toggleByPermission('#save-button', 'save');
-ACLHelper.toggleByPermission('#delete-button', 'delete');
-
-// Enable/disable elements
-ACLHelper.toggleEnableByPermission('#submit-form', 'save');
-
-// Batch apply permissions
-ACLHelper.applyPermissions({
-    save: {
-        show: '#save-button',
-        enable: '#form-submit'
-    },
-    delete: {
-        show: '#delete-button'
-    }
-});
-
-// Get all permissions
-const permissions = ACLHelper.getPermissions();
-
-// Conditional execution
-ACLHelper.ifAllowed('save', () => {
-    console.log('User can save');
-}, () => {
-    console.log('User cannot save');
-});
-
-// Debug ACL state
-ACLHelper.debug();
-```
-
-### Using ACL Helper in Forms
-
-Add ACL checks in your form's `initialize()` method:
-
-```javascript
-const myForm = {
-    initialize() {
-        // ... other initialization ...
-
-        // Apply ACL permissions
-        myForm.applyACLPermissions();
-    },
-
-    applyACLPermissions() {
-        // Check if ACL Helper is available
-        if (typeof ACLHelper === 'undefined') {
-            console.warn('ACLHelper not available');
-            return;
-        }
-
-        // Apply permissions
-        ACLHelper.applyPermissions({
-            save: {
-                show: '#submitbutton, #dropdownSubmit',
-                enable: '#my-form'
-            },
-            delete: {
-                show: '.delete-button'
-            }
-        });
-
-        // Additional logic if user cannot save
-        if (!ACLHelper.canSave()) {
-            // Disable all inputs
-            $('#my-form input, #my-form select, #my-form textarea')
-                .prop('readonly', true)
-                .addClass('disabled');
-
-            // Show info message
-            UserMessage.showInformation(globalTranslate.my_NoPermissionToModify);
-        }
-    }
-};
-```
-
-### Available Permissions
-
-The ACL system checks these standard actions:
-- `index` - View list pages
-- `modify` - Edit existing records
-- `save` - Save changes
-- `delete` - Delete records
-- `copy` - Copy records
-- `download` - Download files
-- `restore` - Restore backups
-- `edit` - Edit (alias for modify)
-- `modifyiax` - Modify IAX providers
-- `modifysip` - Modify SIP providers
-
-### ACL Data Structure
-
-The ACL data is available in `window.CurrentPageACL`:
-
-```javascript
-{
-    controller: 'MikoPBX\\AdminCabinet\\Controllers\\ExtensionsController',
-    controllerName: 'extensions',
-    actionName: 'modify',
-    permissions: {
-        'index': true,
-        'modify': true,
-        'save': true,
-        'delete': false,
-        // ... other permissions
-    },
-    initialized: true
-}
-```
-
-### Volt Templates (Server-side ACL)
-
-For server-rendered content, use `isAllowed()` in Volt templates:
+### Server-side (Volt)
 
 ```volt
 {% if isAllowed('save') %}
     <button id="save-button">Save</button>
 {% endif %}
-
-{% if isAllowed('delete') %}
-    <button id="delete-button">Delete</button>
-{% endif %}
 ```
 
-### Integration with ModuleUsersUI (Future)
+### Client-side (JavaScript)
 
-When ModuleUsersUI is implemented:
-- `SecurityPlugin::isAllowedAction()` will extract role from JWT token
-- ACL Helper will continue to work without changes
-- Permissions will be based on user's role from JWT claims
-- No JavaScript code changes required
-
-### Example: Extension Form
+`ACLHelper` global object reads `window.CurrentPageACL`:
 
 ```javascript
-/* global ACLHelper */
-
-const extension = {
-    initialize() {
-        // ... setup code ...
-
-        // Apply ACL permissions
-        extension.applyACLPermissions();
-
-        // Load data
-        extension.loadExtensionData();
-    },
-
-    applyACLPermissions() {
-        if (typeof ACLHelper === 'undefined') return;
-
-        ACLHelper.applyPermissions({
-            save: {
-                show: '#submitbutton, #dropdownSubmit',
-                enable: '#extensions-form'
-            },
-            delete: {
-                show: '.delete-button'
-            }
-        });
-
-        if (!ACLHelper.canSave()) {
-            $('#extensions-form input, #extensions-form select, #extensions-form textarea')
-                .prop('readonly', true);
-            UserMessage.showInformation(globalTranslate.ex_NoPermissionToModify);
-        }
-    }
-};
-```
-
-## Security Considerations
-
-1. **CSRF Protection** - Automatically handled by SecurityPlugin
-2. **Input Sanitization** - Use `BaseController::sanitizeData()`
-3. **Authentication** - Handled by SessionController and SecurityPlugin
-4. **XSS Prevention** - Volt auto-escapes output by default
-5. **SQL Injection** - Use Phalcon's ORM and query builder
-6. **ACL Enforcement** - Use ACLHelper for client-side permission checks
-
-## Performance Optimization
-
-1. **Volt Caching** - Templates are compiled and cached
-2. **Asset Management** - CSS/JS minification via AssetManager
-3. **Lazy Loading** - DataTables load data on demand
-4. **AJAX Updates** - Partial page updates instead of full reload
-5. **Service Caching** - DI services are shared by default
-
-## Common Patterns
-
-### 1. Status Checking
-
-Many pages use workers to check status:
-
-```javascript
-const statusWorker = new Worker(`${globalRootUrl}js/pbx/Extensions/extension-status-worker.js`);
-statusWorker.postMessage({
-    actionName: 'initialize',
-    data: extensionsList,
+ACLHelper.canSave()      // Check permission
+ACLHelper.canDelete()
+ACLHelper.applyPermissions({
+    save: { show: '#submitbutton', enable: '#form' },
+    delete: { show: '.delete-button' }
 });
 ```
 
-### 2. File Uploads
+Standard actions: `index`, `modify`, `save`, `delete`, `copy`, `download`, `restore`, `edit`, `modifyiax`, `modifysip`.
 
-Use Resumable.js for chunked uploads:
+## Filter Persistence Pattern
 
-```javascript
-const resumable = new Resumable({
-    target: PbxApi.filesUploadFile,
-    testChunks: false,
-    chunkSize: 1 * 1024 * 1024,
-});
-```
-
-### 3. Sound File Selection
-
-Use the centralized sound file selector:
-
-```javascript
-SoundFilesSelector.initialize(
-    '#sound-file-select',
-    '#sound-file-id',
-    SoundFilesSelector.audioPlayer
-);
-```
-
-### 4. Filter Persistence with sessionStorage
-
-For pages with filters that should persist during browser session but clear on logout:
-
-**Pattern**: sessionStorage-based state management with hash-triggered reset
-
-**Example**: Call Detail Records page (`sites/admin-cabinet/assets/js/src/CallDetailRecords/call-detail-records-index.js`)
+sessionStorage-based state with `#reset-cache` hash trigger:
 
 ```javascript
 const myModule = {
@@ -760,386 +301,42 @@ const myModule = {
     isInitialized: false,  // Prevents saving during initial load
 
     initialize() {
-        // Check for reset hash FIRST, before any initialization
         myModule.checkResetHash();
-
-        // Listen for hash changes (when user clicks menu link while on page)
-        window.addEventListener('hashchange', () => {
-            myModule.checkResetHash();
-        });
-
-        // Continue with normal initialization
+        window.addEventListener('hashchange', () => myModule.checkResetHash());
         myModule.initializeDataTable();
     },
 
     checkResetHash() {
         if (window.location.hash === '#reset-cache') {
             myModule.clearFiltersState();
-            // Also clear any localStorage preferences if needed
-            localStorage.removeItem('myTablePageLength');
-            // Remove hash from URL without page reload
             history.replaceState(null, null, window.location.pathname);
-            // Reload page to apply reset
             window.location.reload();
         }
     },
 
-    saveFiltersState() {
-        try {
-            if (typeof sessionStorage === 'undefined') {
-                return;
-            }
-
-            const state = {
-                searchText: myModule.$searchInput.val() || '',
-                currentPage: myModule.dataTable.page.info().page,
-                // ... other filter values
-            };
-
-            sessionStorage.setItem(myModule.STORAGE_KEY, JSON.stringify(state));
-        } catch (error) {
-            console.error('Failed to save filters:', error);
-        }
-    },
-
-    loadFiltersState() {
-        try {
-            if (typeof sessionStorage === 'undefined') {
-                return null;
-            }
-
-            const rawData = sessionStorage.getItem(myModule.STORAGE_KEY);
-            if (!rawData) {
-                return null;
-            }
-
-            const state = JSON.parse(rawData);
-            if (!state || typeof state !== 'object') {
-                myModule.clearFiltersState();
-                return null;
-            }
-
-            return state;
-        } catch (error) {
-            console.error('Failed to load filters:', error);
-            myModule.clearFiltersState();
-            return null;
-        }
-    },
-
-    clearFiltersState() {
-        try {
-            if (typeof sessionStorage !== 'undefined') {
-                sessionStorage.removeItem(myModule.STORAGE_KEY);
-            }
-        } catch (error) {
-            console.error('Failed to clear filters:', error);
-        }
-    },
-
-    initializeDataTable() {
-        myModule.$table.DataTable({
-            // ... DataTable config
-            initComplete() {
-                // Set flag FIRST to allow state saving during restoration
-                myModule.isInitialized = true;
-                // Restore filters AFTER DataTable has loaded initial data
-                myModule.restoreFiltersFromState();
-            }
-        });
-
-        // Save state on every draw event
-        myModule.dataTable.on('draw', () => {
-            // Skip saving during initial load
-            if (!myModule.isInitialized) {
-                return;
-            }
-            myModule.saveFiltersState();
-        });
-    },
-
-    restoreFiltersFromState() {
-        const savedState = myModule.loadFiltersState();
-        if (!savedState) {
-            return;
-        }
-
-        // Restore search text
-        if (savedState.searchText) {
-            myModule.$searchInput.val(savedState.searchText);
-            myModule.dataTable.search(savedState.searchText);
-        }
-
-        // Restore page number with setTimeout workaround
-        // WHY: DataTable needs time to complete initialization
-        if (savedState.currentPage) {
-            setTimeout(() => {
-                myModule.dataTable.page(savedState.currentPage).draw(false);
-            }, 100);
-        }
-    }
+    // Save/load/clear via sessionStorage with try-catch
+    // Restore in DataTable initComplete callback
+    // Save on draw event (skip while !isInitialized)
 };
 ```
 
-**Menu Configuration**: Add `#reset-cache` param in `src/AdminCabinet/Library/Elements.php`:
+Menu config in `Elements.php` adds `'param' => '#reset-cache'`.
 
-```php
-MyFeatureController::class => [
-    'caption' => 'mm_MyFeature',
-    'iconclass' => 'icon-name',
-    'action' => 'index',
-    'param' => '#reset-cache',  // Clears filters when clicking menu
-    'style' => '',
-],
-```
+## Development Patterns
 
-**Key Principles**:
-- Use **sessionStorage** (not localStorage) - clears on logout/tab close
-- Check hash **before** any initialization
-- Add **hashchange** event listener for runtime hash changes
-- Use **isInitialized** flag to prevent race conditions
-- **initComplete** callback is the right place to restore state
-- Save state on **draw** event (fires on pagination, search, filter changes)
-- Include feature detection for sessionStorage
-- Use try-catch for all storage operations
-- Clear corrupted data automatically
+### Creating a New Section
 
-**Why sessionStorage over localStorage**:
-- Security: Different users shouldn't see each other's filters
-- Privacy: Each session starts with clean state
-- Automatic cleanup: Browser clears sessionStorage on logout
+1. **Controller** — extend `BaseController`, implement `indexAction()`, `modifyAction()`, `saveAction()`
+2. **Form** — extend `BaseForm`, define fields in `initialize()`
+3. **Views** — `Views/{Section}/index.volt`, `modify.volt` extending `layouts/main.volt`
+4. **JavaScript** — `js/src/{Section}/section-index.js`, `section-modify.js`
+5. **Babel** — transpile ES6+ to ES5 in `js/pbx/`
 
-**Critical DataTable Timing Issue**:
-- DataTables fires **`draw` event BEFORE `initComplete`** callback
-- Without `isInitialized` flag, first draw will overwrite saved state with defaults
-- Solution: Skip saving in draw handler until `isInitialized = true` in `initComplete`
-- Page restoration requires `setTimeout(100ms)` workaround due to DataTable timing
+### Security
 
-**Reference Implementation**: See `/Users/nb/PhpstormProjects/mikopbx/Core/sites/admin-cabinet/assets/js/src/CallDetailRecords/call-detail-records-index.js` (lines 74-203, 397-402, 455-465, 526-553) for complete working example with all edge cases handled.
-
-### 5. Hash-based Page Actions
-
-Use URL hash for triggering page-specific actions without full reload:
-
-**Pattern**: `hashchange` event handling for single-page interactions
-
-```javascript
-// Check hash on page load
-if (window.location.hash === '#my-action') {
-    myModule.handleAction();
-    // Remove hash to prevent repeat triggers
-    history.replaceState(null, null, window.location.pathname);
-}
-
-// Listen for hash changes during session
-window.addEventListener('hashchange', () => {
-    if (window.location.hash === '#my-action') {
-        myModule.handleAction();
-        history.replaceState(null, null, window.location.pathname);
-    }
-});
-```
-
-**Common Use Cases**:
-- `#reset-cache` - Clear filters and reload page
-- `#reset-filters` - Reset form filters only
-- `#file=asterisk%2Fverbose` - Navigate to specific log file
-- `#tab=advanced` - Switch to specific tab
-
-**Why Use Hash**:
-- No server request - instant action
-- Works with menu links while staying on page
-- Browser back/forward compatible
-- Can be bookmarked
-
-## Debugging
-
-1. **Enable Debug Mode** - Set in `config.php`
-2. **Volt Cache** - Cleared automatically in debug mode
-3. **JavaScript Console** - Check for errors and API responses
-4. **Network Tab** - Monitor AJAX requests
-5. **Sentry Integration** - Automatic error reporting
-
-## Best Practices
-
-1. **Follow MVC Pattern** - Keep logic in controllers, not views
-2. **Use Form Classes** - Define forms programmatically
-3. **Leverage Base Classes** - Extend BaseController and BaseForm
-4. **Consistent Naming** - Controller names match URL structure
-5. **Translation Keys** - Use consistent prefixes per module
-6. **JavaScript Modules** - One module per page/feature
-7. **API Consistency** - All API calls through PbxApi object
-8. **Error Handling** - Show user-friendly messages via UserMessage
-9. **Loading States** - Show loading indicators during operations
-10. **Responsive Design** - Test on various screen sizes
-
-## IPv4 and IPv6 Support in Forms
-
-### Network Interface Configuration
-
-The Network configuration form (`sites/admin-cabinet/assets/js/src/Network/network-modify.js`) supports dual-stack IPv4 and IPv6:
-
-#### IPv6 Form Fields
-
-```javascript
-// IPv6 mode selector
-$('#ipv6-mode-select').dropdown({
-    values: [
-        { value: '0', name: 'Off' },
-        { value: '1', name: 'Auto (SLAAC/DHCPv6)' },
-        { value: '2', name: 'Manual (Static)' }
-    ]
-});
-
-// IPv6 address input validation
-const ipv6Validation = {
-    identifier: 'ipv6addr',
-    rules: [
-        {
-            type: 'regExp',
-            value: /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/,
-            prompt: globalTranslate.nw_ValidateIpv6Invalid
-        }
-    ]
-};
-```
-
-#### Dynamic Field Visibility
-
-IPv6 fields visibility depends on `ipv6_mode` value:
-
-```javascript
-// Show/hide IPv6 manual fields based on mode
-$('#ipv6-mode-select').dropdown({
-    onChange(value) {
-        if (value === '2') {
-            // Manual mode - show all IPv6 fields
-            $('.ipv6-manual-fields').show();
-        } else if (value === '1') {
-            // Auto mode - show read-only current values
-            $('.ipv6-auto-fields').show();
-            $('.ipv6-manual-fields').hide();
-        } else {
-            // Off - hide all IPv6 fields
-            $('.ipv6-fields').hide();
-        }
-    }
-});
-```
-
-#### Dual-Stack Validation
-
-Validate both IPv4 and IPv6 addresses:
-
-```javascript
-validateRules: {
-    ipaddr: {
-        identifier: 'ipaddr',
-        rules: [
-            {
-                type: 'regExp',
-                value: /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/,
-                prompt: globalTranslate.nw_ValidateIpv4Invalid
-            }
-        ]
-    },
-    ipv6addr: {
-        identifier: 'ipv6addr',
-        optional: true,
-        rules: [
-            {
-                type: 'regExp',
-                value: /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/,
-                prompt: globalTranslate.nw_ValidateIpv6Invalid
-            }
-        ]
-    },
-    ipv6_subnet: {
-        identifier: 'ipv6_subnet',
-        optional: true,
-        rules: [
-            {
-                type: 'integer[1..128]',
-                prompt: globalTranslate.nw_ValidateIpv6PrefixInvalid
-            }
-        ]
-    }
-}
-```
-
-#### IPv6 Address Examples
-
-Use appropriate placeholder text for IPv6 fields:
-
-```volt
-<div class="field">
-    <label>{{ t._('nw_Ipv6Address') }}</label>
-    <input type="text" name="ipv6addr"
-           placeholder="2001:db8::1"
-           value="{{ form.render('ipv6addr') }}">
-</div>
-
-<div class="field">
-    <label>{{ t._('nw_Ipv6Subnet') }}</label>
-    <input type="text" name="ipv6_subnet"
-           placeholder="64"
-           value="{{ form.render('ipv6_subnet') }}">
-</div>
-```
-
-### IP Address Display in Lists
-
-When displaying IP addresses in tables, handle both IPv4 and IPv6:
-
-```javascript
-// Format IP address with proper display
-formatIpAddress(ipv4, ipv6) {
-    const parts = [];
-    if (ipv4) parts.push(ipv4);
-    if (ipv6) parts.push(ipv6);
-    return parts.join(' / ');
-}
-
-// In DataTable column render
-{
-    data: null,
-    render(data) {
-        return networkIndex.formatIpAddress(data.ipaddr, data.ipv6addr);
-    }
-}
-```
-
-### Handling IPv6 in AJAX Responses
-
-REST API may return both configured and current (auto-configured) IPv6 values:
-
-```javascript
-cbAfterLoadData(response) {
-    if (response.ipv6_mode === '1') {
-        // Auto mode - show current autoconfigured values
-        $('#current-ipv6addr').text(response.currentIpv6addr || 'Not assigned');
-        $('#current-ipv6-gateway').text(response.currentIpv6_gateway || 'Not assigned');
-    } else if (response.ipv6_mode === '2') {
-        // Manual mode - populate form fields
-        Form.$formObj.form('set value', 'ipv6addr', response.ipv6addr);
-        Form.$formObj.form('set value', 'ipv6_subnet', response.ipv6_subnet);
-        Form.$formObj.form('set value', 'ipv6_gateway', response.ipv6_gateway);
-    }
-}
-```
-
-## JavaScript Code Style
-
-For detailed JavaScript coding standards and real-world examples from the project, use:
-📖 **mikopbx-js-style** skill - Comprehensive JavaScript style guide with ES6+, Fomantic-UI patterns, and validation
-
-Key principles:
-- Modular object-oriented structure with `initialize()` pattern
-- jQuery objects prefixed with `$`
-- Consistent API communication through PbxApi
-- Centralized form handling with validation
-- Proper error handling and user feedback
-- SessionStorage for filter persistence (see Common Patterns #4)
-- Event delegation for dynamic elements
-- Loading states for all async operations
-- Dual-stack IPv4/IPv6 validation and display
+- CSRF — handled by `SecurityPlugin`
+- Input sanitization — `BaseController::sanitizeData()`
+- Authentication — `SessionController` + `SecurityPlugin`
+- XSS — Volt auto-escaping
+- SQL injection — Phalcon ORM
+- ACL — `SecurityPlugin` server-side + `ACLHelper` client-side

@@ -1,554 +1,280 @@
 # CLAUDE.md - MikoPBX Asterisk Integration
 
-This file provides guidance to Claude Code (claude.ai/code) for Asterisk integration development in MikoPBX.
+Dynamic configuration generation, AMI control, AGI scripts, and CDR management for Asterisk PBX.
 
-## Asterisk Integration Architecture
-
-MikoPBX integrates deeply with Asterisk to provide PBX functionality. The integration includes:
-- **Dynamic Configuration Generation** - Database-driven config files
-- **AMI Integration** - Real-time control and monitoring
-- **AGI Scripts** - Call flow processing
-- **CDR Management** - Call detail recording
-- **Module Hook System** - Extensible configuration
-
-## Directory Structure
+## File Inventory
 
 ```
-src/Core/Asterisk/
-├── Configs/                    # Configuration generators
-│   ├── Generators/            # Specialized dialplan generators
-│   │   └── Extensions/        # Extension context generators
-│   ├── lua/                   # Lua scripts for dialplan
-│   ├── Samples/              # Sample configuration files
-│   ├── AsteriskConfigClass.php     # Base class for all configs
-│   ├── AsteriskConfigInterface.php # Interface with hook constants
-│   └── [Various]Conf.php     # Individual config generators
-├── agi-bin/                   # AGI scripts for call processing
-├── AGI.php                   # AGI interface implementation
-├── AGIBase.php              # Base AGI functionality
-├── AstDB.php                # Asterisk database interface
-├── AsteriskManager.php      # AMI client implementation
-└── CdrDb.php               # CDR database management
+Asterisk/
+├── AsteriskManager.php            # AMI client (65KB) - commands, events, channels, PJSIP
+├── AGI.php                        # AGI interface - answer, verbose, database, exec
+├── AGIBase.php                    # AGI base - request parsing, response evaluation
+├── AstDB.php                      # Asterisk database (astdb) - get/set/del keys
+├── CdrDb.php                      # CDR database - path, integrity check, recording paths
+│
+├── Configs/
+│   ├── AsteriskConfigClass.php    # Base class for all generators (hookModulesMethod, saveConfig)
+│   ├── AsteriskConfigInterface.php # 25+ hook constants for module extension
+│   │
+│   │   # Main Config Generators (46 classes)
+│   ├── AclConf.php                # ACL rules
+│   ├── AriConf.php                # Asterisk REST Interface
+│   ├── AsteriskConf.php           # Main asterisk.conf
+│   ├── CcssConf.php               # Call Completion Supplementary Service
+│   ├── CdrConf.php                # CDR configuration
+│   ├── CdrManagerConf.php         # CDR manager backend
+│   ├── CdrSqlite3CustomConf.php   # CDR SQLite3 custom fields
+│   ├── CelBeanstalkdConf.php      # CEL Beanstalkd backend
+│   ├── CelConf.php                # Channel Event Logging
+│   ├── CelSqlite3CustomConf.php   # CEL SQLite3 custom fields
+│   ├── ChanDahdiConf.php          # DAHDI channels
+│   ├── ChanDongle.php             # 3G/4G modem channels
+│   ├── CodecsConf.php             # Codec configuration
+│   ├── ConferenceConf.php         # Conference/meetme
+│   ├── DialplanApplicationConf.php # Custom dialplan apps
+│   ├── ExtensionsAnnounceRecording.php # Recording announcement paths
+│   ├── ExtensionsConf.php         # Main dialplan (extensions.conf)
+│   ├── ExtensionsInterception.php # Call interception/monitoring
+│   ├── ExtensionsOutWorkTimeConf.php # After-hours extensions
+│   ├── ExternalPhonesConf.php     # External endpoints
+│   ├── FeaturesConf.php           # Call features (transfer, parking)
+│   ├── H323Conf.php               # H.323 protocol
+│   ├── HepConf.php                # Homer Encapsulation Protocol
+│   ├── HttpConf.php               # HTTP server
+│   ├── IAXConf.php                # IAX protocol
+│   ├── IAXProvConf.php            # IAX providers
+│   ├── IndicationConf.php         # Indication tones
+│   ├── IVRConf.php                # IVR menus
+│   ├── LoggerConf.php             # Asterisk logger/syslog
+│   ├── ManagerConf.php            # AMI configuration
+│   ├── ModulesConf.php            # Module loading
+│   ├── MusicOnHoldConf.php        # Music on hold
+│   ├── PjprojectConf.php          # PJPROJECT library
+│   ├── PjSipNotifyConf.php        # PJSIP NOTIFY messages
+│   ├── QueueConf.php              # Call queues
+│   ├── QueueRulesConf.php         # Queue routing rules
+│   ├── ResParkingConf.php         # Call parking
+│   ├── RtpConf.php                # RTP configuration
+│   ├── SayConf.php                # Text-to-speech
+│   ├── SIPConf.php                # PJSIP configuration (generates pjsip.conf)
+│   ├── SorceryConf.php            # Sorcery object mapping
+│   ├── UdptlConf.php              # UDPTL (T.38 FAX)
+│   └── VoiceMailConf.php          # Voicemail
+│
+│   ├── Generators/
+│   │   ├── CodecSync.php          # Sync codec DB with Asterisk available codecs
+│   │   └── Extensions/
+│   │       ├── CallerIdDidProcessor.php  # CallerID/DID extraction from SIP headers
+│   │       ├── IncomingContexts.php      # Inbound call routing contexts
+│   │       ├── InternalContexts.php      # Internal extension contexts
+│   │       └── OutgoingContext.php        # Outbound call routing contexts
+│   │
+│   ├── lua/
+│   │   ├── extensions.lua         # Lua dialplan implementation
+│   │   └── JSON.lua               # JSON parser utility
+│   │
+│   └── Samples/
+│       └── indications.conf.sample # Sample indication tones
+│
+└── agi-bin/
+    ├── cdr_connector.php          # CDR event processing
+    ├── check_redirect.php         # Call forwarding verification
+    ├── get_park_info.php          # Parking information
+    └── phpagi.php                 # AGI base framework
 ```
 
-## Core Components
-
-### 1. Configuration Generator System
-
-All configuration generators extend `AsteriskConfigClass`:
+## AsteriskConfigInterface — Hook Constants (25+)
 
 ```php
-class MyConf extends AsteriskConfigClass
+// Extension generation
+EXTENSION_GEN_HINTS = 'extensionGenHints'
+EXTENSION_GEN_INTERNAL = 'extensionGenInternal'
+EXTENSION_GEN_INTERNAL_USERS_PRE_DIAL = 'extensionGenInternalUsersPreDial'
+EXTENSION_GEN_ALL_PEERS_CONTEXT = 'extensionGenAllPeersContext'
+EXTENSION_GEN_INTERNAL_TRANSFER = 'extensionGenInternalTransfer'
+EXTENSION_GEN_CREATE_CHANNEL_DIALPLAN = 'extensionGenCreateChannelDialplan'
+EXTENSION_GEN_CONTEXTS = 'extensionGenContexts'
+EXTENSION_GLOBALS = 'extensionGlobals'
+
+// Include hooks
+GET_INCLUDE_INTERNAL = 'getIncludeInternal'
+GET_INCLUDE_INTERNAL_TRANSFER = 'getIncludeInternalTransfer'
+
+// Context generation
+GENERATE_PUBLIC_CONTEXT = 'generatePublicContext'
+GENERATE_INCOMING_ROUT_BEFORE_DIAL_PRE_SYSTEM = 'generateIncomingRoutBeforeDialPreSystem'
+GENERATE_INCOMING_ROUT_BEFORE_DIAL = 'generateIncomingRoutBeforeDial'
+GENERATE_INCOMING_ROUT_BEFORE_DIAL_SYSTEM = 'generateIncomingRoutBeforeDialSystem'
+GENERATE_INCOMING_ROUT_AFTER_DIAL_CONTEXT = 'generateIncomingRoutAfterDialContext'
+
+// Outgoing routes
+GENERATE_OUT_ROUT_CONTEXT = 'generateOutRoutContext'
+GENERATE_OUT_ROUT_AFTER_DIAL_CONTEXT = 'generateOutRoutAfterDialContext'
+
+// PJSIP
+GENERATE_PEERS_PJ = 'generatePeersPj'
+GENERATE_PEER_PJ_ADDITIONAL_OPTIONS = 'generatePeerPjAdditionalOptions'
+OVERRIDE_PJSIP_OPTIONS = 'overridePJSIPOptions'
+OVERRIDE_PROVIDER_PJSIP_OPTIONS = 'overrideProviderPJSIPOptions'
+
+// Configuration
+GENERATE_MODULES_CONF = 'generateModulesConf'
+GENERATE_MANAGER_CONF = 'generateManagerConf'
+GENERATE_ARI_CONF = 'generateAriConf'
+GET_FEATURE_MAP = 'getFeatureMap'
+GET_DEPENDENCE_MODELS = 'getDependenceModels'
+GET_SETTINGS = 'getSettings'
+GENERATE_CONFIG = 'generateConfig'
+```
+
+## AsteriskConfigClass (Base)
+
+```php
+class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 {
-    protected string $description = 'my.conf';
     protected int $priority = 1000;
-    
-    protected function generateConfigProtected(): void
-    {
-        $conf = "[section]\n";
-        $conf .= "option=value\n";
-        
-        // Hook for modules to add content
-        $conf .= $this->hookModulesMethod('myMethodName');
-        
-        $this->saveConfig($conf, $this->description);
-    }
+    protected string $description;     // Config filename
+
+    public function generateConfig(): void     // Main entry point
+    protected function generateConfigProtected(): void  // Override in subclasses
+    protected function saveConfig(string $config, string $filename): void
+    public function hookModulesMethod(string $methodName, array $arguments = []): string
+    public function getMethodPriority(string $methodName = ''): int
 }
 ```
 
-#### Key Configuration Files:
+## SIPConf — Generates pjsip.conf
 
-- **ExtensionsConf.php** - Main dialplan (extensions.conf)
-- **SIPConf.php** - Legacy SIP configuration
-- **PjSipConf.php** - Modern PJSIP configuration
-- **QueueConf.php** - Call queue configuration
-- **ManagerConf.php** - AMI configuration
-- **FeaturesConf.php** - Call features (transfer, parking)
-
-### 2. Hook System
-
-The interface `AsteriskConfigInterface` defines hook points:
+Generates modern PJSIP configuration (not legacy chan_sip):
+- Transport sections: UDP, TCP, TLS
+- Endpoint definitions for peers and providers
+- Dual-stack IPv6 support with bracket notation `[2001:db8::1]:5060`
+- Codec configuration per peer/provider
+- NAT traversal (OPTIONS keepalive)
 
 ```php
-// Context generation hooks
-const EXTENSION_GEN_INTERNAL = 'extensionGenInternal';
-const EXTENSION_GEN_HINTS = 'extensionGenHints';
-const GET_INCLUDE_INTERNAL = 'getIncludeInternal';
+const int QUALIFY_FREQUENCY = 60;
+const int MAX_CONTACTS_PEER = 5;
+const int MAX_CONTACTS_PROVIDER = 1;
+const int RTP_TIMEOUT = 120;
+const int RTP_TIMEOUT_HOLD = 600;
 
-// Route processing hooks
-const GENERATE_INCOMING_ROUT_BEFORE_DIAL = 'generateIncomingRoutBeforeDial';
-const GENERATE_OUT_ROUT_CONTEXT = 'generateOutRoutContext';
-
-// Configuration hooks
-const GENERATE_PEERS_PJ = 'generatePeersPj';
-const OVERRIDE_PJSIP_OPTIONS = 'overridePJSIPOptions';
+private function isDualStackInterface(array $if_data): bool
+public function needAsteriskRestart(): bool  // Topology hash comparison
 ```
 
-Modules can implement these methods with priorities:
+## CallerIdDidProcessor
 
+Generates dialplan context for CallerID/DID extraction from SIP headers.
+
+Supported sources: `Sip::CALLERID_SOURCE_FROM`, `_RPID` (Remote-Party-ID), `_PAI` (P-Asserted-Identity), `_CUSTOM`, `_DEFAULT`. Debug mode via `cid_did_debug` setting.
+
+## CodecSync
+
+Syncs codec database with Asterisk available codecs. Default priorities: alaw(1), ulaw(2), opus(3), g722(4), g729(5). Video: h264(1), h263(2), vp8(4), vp9(5).
+
+## AsteriskManager — AMI Client
+
+### Connection
 ```php
-public function getMethodPriority(string $methodName): int
-{
-    return match ($methodName) {
-        AsteriskConfigInterface::EXTENSION_GEN_INTERNAL => 100,
-        default => 1000,
-    };
-}
+connect(?string $server, ?string $username, ?string $secret, string $events): bool
+disconnect(): void
+loggedIn(): bool
 ```
 
-### 3. Dialplan Generation
-
-#### Context Structure:
-
+### Commands
 ```php
-// Internal calls context
-[internal]
-include => internal-users
-include => internal-hints
-include => modules-internal
-
-// User extensions
-[internal-users]
-exten => _XXX,1,NoOp(Calling ${EXTEN})
-same => n,Gosub(dial-user,${EXTEN},1)
-
-// Incoming calls
-[public-direct-dial]
-include => incoming-routes
+Command(string $command): array
+sendRequest(string $action, array $parameters): array
+sendRequestTimeout(string $action, array $parameters): array
 ```
 
-#### Specialized Generators:
-
-- **InternalContexts.php** - Internal call routing
-- **IncomingContexts.php** - Inbound call handling  
-- **OutgoingContext.php** - Outbound call routing
-
-### 4. AMI Integration
-
+### PJSIP
 ```php
-use MikoPBX\Core\Asterisk\AsteriskManager;
-
-$am = new AsteriskManager();
-$am->connect();
-
-// Execute command
-$result = $am->Command('sip show peers');
-
-// Get PJSIP peers with state information
-$peers = $am->getPjSipPeers();
-// Returns: [['id' => '201', 'state' => 'OK', 'detailed-state' => 'Not in use'], ...]
-
-// Originate call
-$am->Originate([
-    'Channel' => 'PJSIP/201',
-    'Context' => 'internal',
-    'Exten' => '202',
-    'Priority' => 1,
-]);
-
-// Listen for events
-$am->add_event_handler('Dial', function($event) {
-    // Handle dial event
-});
+getPjSipPeers(): array    // Returns [['id'=>'201','state'=>'OK','detailed-state'=>'Not in use']]
+getPjSipRegistry(): array // Outbound registration status
 ```
 
-**Important:** `getPjSipPeers()` returns peers indexed by `ObjectName` (extension number like `201`), not by `Auths` (which would be `201-AUTH`). The method includes state mapping for `Not in use`, `In use`, `Busy`, and `Ringing` device states.
-
-### 5. AGI Scripts
-
-AGI scripts handle real-time call processing:
-
+### Channels & Calls
 ```php
-class MyAGI extends AGI
-{
-    public function main(): void
-    {
-        // Answer the call
-        $this->answer();
-        
-        // Get channel variables
-        $exten = $this->get_variable('EXTEN');
-        
-        // Play sound file
-        $this->stream_file('hello-world');
-        
-        // Set CDR field
-        $this->exec('Set', 'CDR(userfield)=processed');
-    }
-}
+GetChannels(bool $group): array           // Channels grouped by Linkedid
+Originate(...): array                      // Initiate outbound call
+Hangup(string $channel): array
+Redirect(string $channel, ...): array
+ExtensionState(string $exten, string $context): array
 ```
 
-Common AGI scripts:
-- **cdr_connector.php** - CDR processing
-- **check_redirect.php** - Call forwarding
-- **get_park_info.php** - Parking information
+### Queues
+```php
+QueueAdd(string $queue, string $interface, int $penalty): array
+QueueRemove(string $queue, string $interface): array
+QueueStatus(): array
+```
 
-### 6. CDR Management
+### Recording
+```php
+MixMonitor(string $channel, string $file, string $options): array
+StopMixMonitor(string $channel): array
+Monitor(string $channel, ?string $file): array
+```
+
+### Events
+```php
+add_event_handler(string $event, callable $handler): void
+waitResponse(bool $allow_timeout): array
+Events(string $eventMask): array
+```
+
+## CdrDb
 
 ```php
-use MikoPBX\Core\Asterisk\CdrDb;
-
-$cdr = new CdrDb();
-
-// Get recent calls
-$calls = $cdr->getCalls([
-    'start' => time() - 3600,
-    'end' => time(),
-]);
-
-// Update CDR record
-$cdr->updateCdr($uniqueid, [
-    'userfield' => 'updated',
-    'accountcode' => '12345'
-]);
+static getPathToDB(): string                        // CDR database path
+static checkDb(): void                              // Fix "broken" CDR records
+static MeetMeSetRecFilename(string $file_name): string // Recording file path
 ```
 
 ## Development Patterns
 
-### 1. Creating a Configuration Generator
-
+### Creating a Config Generator
 ```php
-namespace MikoPBX\Core\Asterisk\Configs;
-
-class MyFeatureConf extends AsteriskConfigClass
+class MyConf extends AsteriskConfigClass
 {
     protected string $description = 'myfeature.conf';
     protected int $priority = 500;
-    
+
     protected function generateConfigProtected(): void
     {
-        $conf = $this->generateHeader();
-        $conf .= $this->generateSections();
+        $conf = "[section]\noption=value\n";
         $conf .= $this->hookModulesMethod('generateMyFeatureConf');
-        
         $this->saveConfig($conf, $this->description);
-    }
-    
-    private function generateHeader(): string
-    {
-        return ";==================\n" .
-               "; MyFeature Config\n" .
-               ";==================\n\n";
     }
 }
 ```
 
-### 2. Adding Dialplan Extensions
-
+### Adding Dialplan Extensions (Module Hook)
 ```php
 public function extensionGenInternal(): string
 {
     return "exten => *99,1,NoOp(My Feature)\n" .
            "\tsame => n,Answer()\n" .
-           "\tsame => n,Playback(feature-activated)\n" .
            "\tsame => n,Hangup()\n\n";
 }
 ```
 
-### 3. Hooking into Incoming Routes
-
-```php
-public function generateIncomingRoutBeforeDial(string $rout_number): string
-{
-    return "\tsame => n,ExecIf(\$[\"\${FROM_DID}\" == \"$rout_number\"]?" .
-           "Set(FEATURE_ENABLED=1))\n";
-}
-```
-
-### 4. Overriding PJSIP Options
-
+### Overriding PJSIP Options (Module Hook)
 ```php
 public function overridePJSIPOptions(string $extension, array $options): array
 {
-    // Add custom headers
-    $options['endpoint']['set_var'] = 'PJSIP_HEADER(add,X-Custom)=Value';
-    
-    // Modify codecs
     $options['endpoint']['allow'] = 'opus,g722,alaw,ulaw';
-    
     return $options;
-}
-```
-
-### 5. Working with Asterisk Database
-
-```php
-use MikoPBX\Core\Asterisk\AstDB;
-
-// Set value
-AstDB::setKey('family', 'key', 'value');
-
-// Get value
-$value = AstDB::getKey('family', 'key');
-
-// Delete key
-AstDB::delKey('family', 'key');
-
-// Get all keys in family
-$keys = AstDB::getKeys('family');
-```
-
-## Module Integration
-
-Modules can extend Asterisk functionality by:
-
-### 1. Implementing Config Hooks
-
-```php
-class MyModule extends PbxExtensionBase implements AsteriskConfigInterface
-{
-    public function extensionGenInternal(): string
-    {
-        return "exten => 777,1,NoOp(Module Feature)\n" .
-               "\tsame => n,Goto(my-module-context,s,1)\n\n";
-    }
-    
-    public function extensionGenContexts(): string
-    {
-        return "[my-module-context]\n" .
-               "exten => s,1,Answer()\n" .
-               "\tsame => n,Playback(my-module-sound)\n" .
-               "\tsame => n,Hangup()\n\n";
-    }
-}
-```
-
-### 2. Adding Manager Users
-
-```php
-public function generateManagerConf(): string
-{
-    return "[mymodule]\n" .
-           "secret = " . md5(time()) . "\n" .
-           "deny=0.0.0.0/0.0.0.0\n" .
-           "permit=127.0.0.1/255.255.255.0\n" .
-           "read = system,call,agent\n" .
-           "write = system,call,agent\n\n";
-}
-```
-
-### 3. Custom AGI Scripts
-
-Place AGI scripts in module directory:
-```
-Modules/MyModule/agi-bin/my-script.php
-```
-
-Reference in dialplan:
-```php
-"same => n,AGI(/usr/www/mikopbx/MyModule/agi-bin/my-script.php)\n"
-```
-
-## IPv6 Support in Asterisk Configuration
-
-### Dual-Stack Network Detection
-
-The SIP configuration generator detects dual-stack mode (IPv4 + IPv6 simultaneously):
-
-```php
-/**
- * Check if interface is configured in dual-stack mode
- *
- * Dual-stack is active when:
- * - IPv4 is configured (ipaddr is not empty)
- * - IPv6 is configured with an address:
- *   - Manual mode (ipv6_mode='2') with static address configured, OR
- *   - Auto mode (ipv6_mode='1') with DHCPv6-obtained address
- *
- * @param array $if_data Interface data from database
- * @return bool True if dual-stack mode is active
- */
-private function isDualStackInterface(array $if_data): bool
-{
-    $hasIPv4 = !empty($if_data['ipaddr']);
-    $ipv6Mode = $if_data['ipv6_mode'] ?? '0';
-
-    // IPv6 is configured if:
-    // - Manual mode ('2') with static address, OR
-    // - Auto mode ('1') with DHCPv6-obtained address (stored in ipv6addr)
-    $hasIPv6 = (($ipv6Mode === '2') || ($ipv6Mode === '1')) && !empty($if_data['ipv6addr']);
-
-    return $hasIPv4 && $hasIPv6;
-}
-```
-
-### SIP Transport Configuration
-
-SIP transports automatically include IPv6 when configured:
-
-```php
-// In SIPConf.php
-if ($this->isDualStackInterface($lan_config)) {
-    // Configure both IPv4 and IPv6 transports
-    $conf .= "transport=udp,tcp\n";
-    $conf .= "bind={$lan_config['ipaddr']}:5060\n";
-    $conf .= "bind=[{$lan_config['ipv6addr']}]:5060\n";
-}
-```
-
-Note the bracket notation `[::1]` for IPv6 addresses in configuration files.
-
-### Nginx IPv6 Listeners
-
-Nginx configuration automatically adds IPv6 listeners when IPv6 is enabled:
-
-```php
-/**
- * Checks if any network interface has IPv6 enabled
- *
- * @return bool True if at least one interface has IPv6 mode '1' (Auto) or '2' (Manual)
- */
-private function hasIpv6Interfaces(): bool
-{
-    $interfaces = LanInterfaces::find();
-    foreach ($interfaces as $interface) {
-        // IPv6 mode: '0' = Off, '1' = Auto (SLAAC/DHCPv6), '2' = Manual
-        if ($interface->ipv6_mode === '1' || $interface->ipv6_mode === '2') {
-            return true;
-        }
-    }
-    return false;
-}
-
-// In configuration generation
-if ($this->hasIpv6Interfaces()) {
-    $conf .= "    listen [::]:443 ssl http2;\n";
-    $conf .= "    listen [::]:80;\n";
-}
-```
-
-### Best Practices for IPv6 in Asterisk
-
-1. **Bracket Notation**: Always wrap IPv6 addresses in brackets when used with port numbers:
-   - Correct: `[2001:db8::1]:5060`
-   - Wrong: `2001:db8::1:5060` (ambiguous with port)
-
-2. **Dual-Stack Detection**: Check both IPv4 and IPv6 configuration before enabling features
-
-3. **Transport Selection**: Use appropriate transports for IPv6 (UDP, TCP, TLS all work)
-
-4. **Firewall Rules**: Generate both iptables (IPv4) and ip6tables (IPv6) rules
-
-5. **Localhost Detection**: Handle both `127.0.0.1` and `::1` for localhost
-
-## Best Practices
-
-### 1. Configuration Generation
-
-- Use stage-based generation (pre/generate/post)
-- Always use `hookModulesMethod()` for extensibility
-- Save configs with `saveConfig()` method
-- Add descriptive comments in generated files
-- Check for IPv6 when generating network-related configs
-
-### 2. Dialplan Development
-
-- Use meaningful context names
-- Follow naming conventions (_XXX for patterns)
-- Always include error handling (i, t, h extensions)
-- Use Gosub instead of Goto for reusable logic
-
-### 3. Performance
-
-- Cache database queries in config generation
-- Use Asterisk database for runtime data
-- Minimize AGI script execution time
-- Use async AMI for non-blocking operations
-
-### 4. Security
-
-- Validate all user input in dialplan
-- Use secure contexts for external calls
-- Implement proper authentication
-- Log security events
-- Configure firewall for both IPv4 and IPv6
-
-### 5. Error Handling
-
-```php
-try {
-    $result = $this->generateComplexConfig();
-} catch (\Throwable $e) {
-    $this->messages[] = ['type' => 'error', 'message' => $e->getMessage()];
-    SystemMessages::sysLogMsg(__CLASS__, $e->getMessage());
-}
-```
-
-## Common Tasks
-
-### 1. Add New Extension Feature
-
-```php
-// In your config class
-public function extensionGenInternal(): string
-{
-    $users = Extensions::find(['conditions' => 'type = :type:', 
-                              'bind' => ['type' => 'SIP']]);
-    
-    $conf = '';
-    foreach ($users as $user) {
-        $conf .= "exten => *98{$user->number},1,VoiceMailMain({$user->number}@default)\n";
-    }
-    
-    return $conf;
-}
-```
-
-### 2. Process CDR in Real-time
-
-```php
-// AGI script
-$linkedid = $this->get_variable('CDR(linkedid)');
-$duration = $this->get_variable('CDR(billsec)');
-
-// Update external system
-$api->updateCallDuration($linkedid, $duration);
-```
-
-### 3. Dynamic Route Selection
-
-```php
-public function generateOutRoutContext(array $rout): string
-{
-    return "\tsame => n,ExecIf(\$[\"\${DB(ROUTE/{$rout['id']}/active)}\" != \"1\"]?" .
-           "Hangup(21))\n";
 }
 ```
 
 ## Debugging
 
-### 1. Enable Verbose Logging
-
-```php
-$this->verbose("Debug: Processing extension $extension", 3);
-```
-
-### 2. Asterisk Console
-
 ```bash
 asterisk -rvvv
 CLI> dialplan show internal
 CLI> pjsip show endpoints
+CLI> dialplan show 200@internal
 ```
-
-### 3. Test Dialplan
-
-```bash
-asterisk -rx "dialplan show 200@internal"
-asterisk -rx "channel originate Local/200@internal application Echo"
-```
-
-### 4. AGI Debugging
-
-```php
-// In AGI script
-$this->verbose("Variable: " . print_r($this->request, true));
-$this->exec('NoOp', 'Debug checkpoint reached');
-```
-
-## Resources
-
-- [Asterisk Wiki](https://wiki.asterisk.org/)
-- [AMI Documentation](https://wiki.asterisk.org/wiki/display/AST/AMI)
-- [AGI Documentation](https://wiki.asterisk.org/wiki/display/AST/AGI)
-- [Dialplan Documentation](https://wiki.asterisk.org/wiki/display/AST/Dialplan)

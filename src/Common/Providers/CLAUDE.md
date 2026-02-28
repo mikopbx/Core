@@ -1,457 +1,214 @@
-# Common Providers Guide
+# CLAUDE.md - Common Providers
 
-This directory contains service providers that register various services in the Phalcon DI container. These providers are essential components of the MikoPBX dependency injection system.
+Service providers that register services in the Phalcon DI container. All providers implement `ServiceProviderInterface` and define a `SERVICE_NAME` constant.
 
-## Overview
+## File Inventory (33 providers)
 
-All providers in this directory extend from `Phalcon\Di\ServiceProviderInterface` and implement the `register()` method to register services in the DI container. Services are typically registered using:
-- `setShared()` - For singleton services (one instance per request)
-- `set()` - For new instances on each request
-
-Each provider defines a `SERVICE_NAME` constant that should be used when accessing the service:
-```php
-use MikoPBX\Common\Providers\LoggerProvider;
-
-// Correct way to access services
-$logger = $di->getShared(LoggerProvider::SERVICE_NAME);
+```
+Providers/
+├── AclProvider.php                        # Access control lists (ACL)
+├── AmiConnectionCommand.php               # AMI command sender
+├── AmiConnectionListener.php              # AMI event listener
+├── BeanstalkConnectionModelsProvider.php   # Beanstalk queue connection
+├── CDRDatabaseProvider.php                # CDR SQLite database
+├── ConfigProvider.php                     # Application configuration loader
+├── CryptProvider.php                      # Cookie/session encryption
+├── DatabaseProviderBase.php               # Abstract base for DB providers
+├── EventBusProvider.php                   # Nginx nchan pub/sub events
+├── JwtProvider.php                        # JWT token validation
+├── LanguageProvider.php                   # Context-aware language detection
+├── LoggerAuthProvider.php                 # Authentication audit logger
+├── LoggerProvider.php                     # Main system logger (syslog)
+├── MainDatabaseProvider.php               # Main SQLite database
+├── ManagedCacheProvider.php               # Redis cache (DB4)
+├── MarketPlaceProvider.php                # License/marketplace
+├── MessagesProvider.php                   # Translation message arrays
+├── ModelsAnnotationsProvider.php          # Phalcon annotations reader
+├── ModelsMetadataProvider.php             # Model metadata (Redis DB2)
+├── ModulesDBConnectionsProvider.php       # Dynamic per-module DB connections
+├── MutexProvider.php                      # Redis distributed locking
+├── NatsConnectionProvider.php             # NATS message broker
+├── PBXConfModulesProvider.php             # Module hooks and configuration
+├── PBXCoreRESTClientProvider.php          # Internal HTTP client (Guzzle)
+├── RecordingStorageDatabaseProvider.php   # Recording metadata SQLite DB
+├── RedisClientProvider.php                # Redis client (DB1)
+├── RegistryProvider.php                   # Global state registry
+├── RouterProvider.php                     # URL routing
+├── SentryErrorHandlerProvider.php         # Sentry error tracking
+├── SessionProvider.php                    # Sessions (DEPRECATED → JWT)
+├── TranslationProvider.php                # i18n translation factory
+├── UrlProvider.php                        # URL generation
+└── WhoopsErrorHandlerProvider.php         # Pretty error pages + JSON
 ```
 
-## Provider List
+## Provider Reference
 
-### AclProvider
-- **Service Name**: `acl`
-- **Description**: Manages Access Control Lists (ACL) for security permissions
-- **Key Dependencies**: None specified
-- **Usage**: Controls access permissions for various system resources
+| Provider | Service Name | Shared | Backend | Notes |
+|----------|-------------|--------|---------|-------|
+| AclProvider | `ACL` | Yes | Memory+Cache | 24h TTL, module hooks |
+| AmiConnectionCommand | `amiCommander` | Yes | TCP/5038 | Non-blocking AMI |
+| AmiConnectionListener | `amiListener` | Yes | TCP/5038 | Event listener AMI |
+| BeanstalkConnectionModelsProvider | `beanstalkConnectionModels` | Yes | Beanstalk | Queue connection |
+| CDRDatabaseProvider | `dbCDR` | Yes | SQLite | cdr.db, separate for perf |
+| ConfigProvider | `config` | Yes | JSON files | mikopbx-settings.json |
+| CryptProvider | `crypt` | Yes | DB key | Cookie encryption |
+| EventBusProvider | `eventBus` | Yes | Nginx nchan | WebSocket pub/sub |
+| JwtProvider | `jwt` | Yes | Memory | HMAC-SHA256, 10min leeway |
+| LanguageProvider | `language` | Yes | DB/DI | Context-aware (CLI vs Web) |
+| LoggerAuthProvider | `loggerAuth` | Yes | Syslog AUTH | Auth audit trail |
+| LoggerProvider | `logger` | Yes | Syslog | UDP 127.0.0.1:514 |
+| MainDatabaseProvider | `db` | Yes | SQLite | mikopbx.db |
+| ManagedCacheProvider | `managedCache` | No | Redis DB4 | 1h TTL |
+| MarketPlaceProvider | `license` | Yes | License class | Module marketplace |
+| MessagesProvider | `messages` | Yes | Files/Cache | 29 languages |
+| ModelsAnnotationsProvider | `annotations` | Yes | Memory | Model annotations |
+| ModelsMetadataProvider | `modelsMetadata` | Yes | Redis DB2 | 10min TTL, annotations strategy |
+| ModulesDBConnectionsProvider | (dynamic) | (dynamic) | SQLite per module | `{moduleId}_module_db` |
+| MutexProvider | `mutex` | No | Redis | Distributed locking |
+| NatsConnectionProvider | `natsConnection` | Yes | NATS | Async messaging |
+| PBXConfModulesProvider | `pbxConfModules` | Yes | DB | Module hooks + priority |
+| PBXCoreRESTClientProvider | `restAPIClient` | No | HTTP | GuzzleHttp, 30s timeout |
+| RecordingStorageDatabaseProvider | `dbRecordingStorage` | Yes | SQLite | recording_storage.db |
+| RedisClientProvider | `redis` | No | Redis DB1 | Worker IPC |
+| RegistryProvider | `registry` | Yes | Memory | Global state |
+| RouterProvider | `router` | No | Config | Module route integration |
+| SentryErrorHandlerProvider | `sentryErrorHandler` | No | Sentry API | Production error tracking |
+| SessionProvider | `session` | Yes | Redis DB5 | DEPRECATED (use JWT) |
+| TranslationProvider | `translation` | Yes | Messages | Phalcon factory |
+| UrlProvider | `url` | Yes | Config | Base URI |
+| WhoopsErrorHandlerProvider | `whoopsErrorHandler` | No | Output | Pretty errors + JSON |
 
-### AmiConnectionCommand
-- **Service Name**: `amiCommander`
-- **Description**: Provides AMI (Asterisk Manager Interface) connection for sending commands
-- **Key Dependencies**: `config` service
-- **Configuration**: Uses `ami.port` from config, defaults to port 5038
-- **Note**: Returns singleton instance for command operations
+## Key Provider Details
 
-### AmiConnectionListener
-- **Service Name**: `amiListener`
-- **Description**: Provides AMI connection for listening to Asterisk events
-- **Key Dependencies**: `config` service
-- **Configuration**: Uses `ami.port` from config, defaults to port 5038
-- **Note**: Separate from command connection to avoid blocking
+### CryptProvider (NEW)
+Cookie and session encryption using `Phalcon\Encryption\Crypt`. Key from `PbxSettings.WWW_ENCRYPTION_KEY`, auto-generated with `Random::base64Safe(16)` if missing.
 
-### BeanstalkConnectionModelsProvider
-- **Service Name**: `modelsCache`
-- **Description**: Provides Beanstalk queue connection for models caching
-- **Key Dependencies**: `config` service
-- **Configuration**: Uses `beanstalk.host` and `beanstalk.port` from config
-- **Note**: Returns PheanstalkInterface for queue operations
+### JwtProvider (NEW)
+JWT token validation with HMAC-SHA256. 600-second leeway for clock skew.
 
-### CDRDatabaseProvider
-- **Service Name**: `dbCDR`
-- **Description**: Provides SQLite connection for Call Detail Records (CDR) database
-- **Key Dependencies**: `config` service
-- **Database**: `/storage/usbdisk1/mikopbx/astlogs/asterisk/cdr.db`
-- **Note**: Separate database for CDR performance optimization
+```php
+// Methods
+validate(string $token): ?array
+extractRoleFromHeader(?string $header): ?string
+extractRoleFromRefreshToken(string $token): ?string
+extractUserIdFromRefreshToken(string $token): ?string
+extractHomePageFromRefreshToken(string $token): ?string
+```
 
-### ConfigProvider
-- **Service Name**: `config`
-- **Description**: Loads and manages application configuration
-- **Key Dependencies**: None (loads from config files)
-- **Configuration**: Merges configs from multiple sources
-- **Files**: 
-  - `/etc/inc/mikopbx-settings.json`
-  - `/etc/inc/mikopbx-AMI-info.json`
-  - App config from application directory
+Secret key: `PbxSettings.SSH_RSA_KEY` (primary), `PbxSettings.WEB_ADMIN_PASSWORD` (fallback). Refresh tokens stored in Redis via `RedisTokenStorage`.
 
-### DatabaseProviderBase
-- **Type**: Abstract base class
-- **Description**: Base class for database providers with common functionality
-- **Features**:
-  - Connection retry logic (up to 5 attempts)
-  - Error logging
-  - Transaction management
-- **Note**: Extended by MainDatabaseProvider and CDRDatabaseProvider
+### RecordingStorageDatabaseProvider (NEW)
+Separate SQLite database at `/storage/usbdisk1/mikopbx/astlogs/asterisk/recording_storage.db` for tracking recording file locations (local vs S3). Reduces main DB size.
 
-### EventBusProvider
-- **Service Name**: `eventBus`
-- **Description**: Real-time event publishing system using nginx nchan module
-- **Key Dependencies**: 
-  - `restAPIClient` service (PBXCoreRESTClientProvider)
-- **Channel**: `event-bus`
-- **Features**: 
-  - Publishes events through REST API to nginx nchan pub/sub channels
-  - Supports WebSocket connections for real-time client updates
-  - Used for model change notifications and system advice/alerts
-- **Usage**:
-  ```php
-  use MikoPBX\Common\Providers\EventBusProvider;
-  
-  $eventBus = $di->getShared(EventBusProvider::SERVICE_NAME);
-  $eventBus->publish('models-changed', [
-      'model' => 'Extensions',
-      'recordId' => '123',
-      'action' => 'update'
-  ]);
-  ```
-- **Client Connection**: Clients connect via WebSocket to `/pbxcore/api/nchan/sub/event-bus`
+### MutexProvider (Redis-based locking)
+Full distributed mutex implementation (not a placeholder):
 
-### LanguageProvider
-- **Service Name**: `language`
-- **Description**: Manages system language settings
-- **Key Dependencies**: `registry` service
-- **Default**: Returns system language code (e.g., 'en')
+```php
+// Execute callback with mutex protection
+$mutex->synchronized('config-gen', function() {
+    // critical section
+}, timeout: 10, ttl: 30);
 
-### LoggerAuthProvider
-- **Service Name**: `loggerAuth`
-- **Description**: Logger specifically for authentication events
-- **Key Dependencies**: None
-- **Log File**: `/var/log/mikopbx_auth.log`
-- **Note**: Separate logger for security audit trail
+// Non-blocking lock attempt
+$mutex->tryLock('name', ttl: 30): bool
+$mutex->isLocked('name'): bool
+$mutex->getTTL('name'): int
+```
+
+Uses Redis `SET NX EX` with atomic Lua script release. Key prefix: `mutex:`. Lock token: 16-byte random hex.
+
+### SessionProvider (DEPRECATED)
+Redis backend (DB5), 3600s lifetime. Replaced by JWT-based authentication via `JwtProvider` and `AuthenticationMiddleware`.
+
+### LanguageProvider (Context-aware)
+Returns language code based on execution context:
+
+- **CLI (EventBus workers)**: `PbxSettings.WEB_ADMIN_LANGUAGE`
+- **CLI (other)**: `PbxSettings.SSH_LANGUAGE`
+- **Web (authenticated)**: JWT token `language` claim
+- **Web (fallback)**: `PbxSettings.WEB_ADMIN_LANGUAGE`
+
+Defines `AVAILABLE_LANGUAGES` constant with 29 languages including name, flag class, and translation key.
 
 ### LoggerProvider
-- **Service Name**: `logger`
-- **Description**: Main system logger using Monolog
-- **Key Dependencies**: None
-- **Features**:
-  - Syslog handler (UDP to 127.0.0.1:514)
-  - CLI output handler for console
-  - Configurable log levels
-
-### MainDatabaseProvider
-- **Service Name**: `db`
-- **Description**: Main SQLite database connection
-- **Key Dependencies**: `config` service
-- **Database**: `/storage/usbdisk1/mikopbx/db/mikopbx.db`
-- **Note**: Central database for system configuration
-
-### ManagedCacheProvider
-- **Service Name**: `managedCache`
-- **Description**: Advanced caching with automatic dependency tracking
-- **Key Dependencies**: 
-  - `config` service
-  - `registry` service
-- **Features**:
-  - Redis backend
-  - Automatic cache invalidation on model changes
-  - Smart dependency management
-
-### MarketPlaceProvider
-- **Service Name**: `license`
-- **Description**: License management and marketplace integration
-- **Key Dependencies**: `config` service
-- **Features**: Handles license validation and marketplace API calls
-
-### MessagesProvider
-- **Service Name**: `messages`
-- **Description**: System message queue provider
-- **Key Dependencies**: `beanstalk` service
-- **Note**: Legacy provider for backward compatibility
-
-### ModelsAnnotationsProvider
-- **Service Name**: `annotations`
-- **Description**: Phalcon annotations reader for models
-- **Key Dependencies**: None
-- **Features**: Memory adapter for annotation caching
+Uses **Phalcon\Logger** with **Syslog adapter** (not Monolog). Ident: `php.backend`/`php.frontend`. Facility: `LOG_DAEMON`. Environment-aware: suppresses console output during boot.
 
 ### ModelsMetadataProvider
-- **Service Name**: `modelsMetadata`
-- **Description**: Model metadata caching
-- **Key Dependencies**: None
-- **Features**: 
-  - Memory adapter for development
-  - Files adapter for production
-  - 86400 second TTL
+Backend: **Redis** (DB2), not Memory/Files. Adapter: `Phalcon\Mvc\Model\MetaData\Redis`. Strategy: `Annotations`. TTL: 600s.
 
-### ModulesDBConnectionsProvider
-- **Service Name**: `modulesDBConnectionsService`
-- **Description**: Manages database connections for modules
-- **Key Dependencies**: 
-  - `config` service
-  - `registry` service
-- **Features**: Dynamic database connections for installed modules
+### MessagesProvider
+Loads translation arrays from multiple sources:
+1. English from `/src/Common/Messages/en/*.php`
+2. Language-specific from `/src/Common/Messages/{lang}/*.php`
+3. Module translations: `{moduleDir}/Messages/{lang}/*.php` or `{moduleDir}/Messages/{lang}.php`
+4. Language metadata from `LanguageProvider::AVAILABLE_LANGUAGES`
 
-### MutexProvider
-- **Service Name**: `mutex`
-- **Description**: Distributed mutex/locking service
-- **Key Dependencies**: None
-- **Note**: Currently returns null (placeholder for future implementation)
+Cached via ManagedCache with key `LocalisationArray:{version_hash}:{language}`.
 
-### NatsConnectionProvider
-- **Service Name**: `nats`
-- **Description**: NATS message broker connection
-- **Key Dependencies**: `logger` service
-- **Configuration**: Connects to localhost:4222
-- **Features**: Message broker for inter-process communication
-- **Note**: Used for general messaging, not for EventBus (which uses nginx nchan)
+### DatabaseProviderBase
+Abstract base for all database providers. SQLite PRAGMA settings:
+- `busy_timeout = 5000` (5s wait on lock)
+- `journal_mode = WAL` (Write-Ahead Logging)
+- `synchronous = NORMAL`
+- `cache_size = -10000` (10MB)
+- `temp_store = MEMORY`
 
-### PBXConfModulesProvider
-- **Service Name**: `pbxConfModules`
-- **Description**: Module configuration manager
-- **Key Dependencies**: 
-  - `config` service
-  - `registry` service
-- **Features**: 
-  - Loads and caches enabled modules
-  - Hooks into system processes
-  - Module priority management
+### EventBusProvider
+Publishes events via HTTP POST to `/pbxcore/api/nchan/pub/event-bus`. Uses `PBXCoreRESTClientProvider` internally. HTTP 201 on success.
+
+```php
+$eventBus->publish('models-changed', ['model' => 'Extensions', 'recordId' => '123']);
+```
 
 ### PBXCoreRESTClientProvider
-- **Service Name**: `restAPIClient`
-- **Description**: Internal REST API client with full RESTful support
-- **Key Dependencies**: None (uses PbxSettings directly)
-- **Configuration**: Uses `WEB_PORT` from PbxSettings
-- **Supported HTTP Methods**:
-  - `GET` - Retrieve resources
-  - `POST` - Create new resources
-  - `PUT` - Fully update resources
-  - `PATCH` - Partially update resources
-  - `DELETE` - Remove resources
-- **Features**:
-  - Full RESTful API v3 support
-  - Legacy API compatibility
-  - Event publishing via nchan
-  - JSON and form-data support
-  - Automatic error handling
-- **Usage Examples**:
-  ```php
-  // GET request
-  $result = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-      '/pbxcore/api/v3/extensions/101',
-      PBXCoreRESTClientProvider::HTTP_METHOD_GET
-  ]);
+GuzzleHttp client for internal REST API. Base URI: `http://localhost:{WEB_PORT}`. Supports GET, POST, PUT, PATCH, DELETE. Returns `PBXApiResult`.
 
-  // POST request with JSON
-  $result = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-      '/pbxcore/api/v3/extensions',
-      PBXCoreRESTClientProvider::HTTP_METHOD_POST,
-      ['number' => '102', 'username' => 'John'],
-      ['Content-Type' => 'application/json']
-  ]);
+### PBXConfModulesProvider
+Module hook system. Loads enabled modules, instantiates config classes, sorts by priority.
 
-  // PUT request
-  $result = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-      '/pbxcore/api/v3/extensions/102',
-      PBXCoreRESTClientProvider::HTTP_METHOD_PUT,
-      ['number' => '102', 'username' => 'John Doe'],
-      ['Content-Type' => 'application/json']
-  ]);
+```php
+PBXConfModulesProvider::hookModulesMethod('extensionGenInternal');
+PBXConfModulesProvider::getVersionsHash();  // MD5 of PBX + module versions
+```
 
-  // PATCH request
-  $result = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-      '/pbxcore/api/v3/extensions/102',
-      PBXCoreRESTClientProvider::HTTP_METHOD_PATCH,
-      ['email' => 'new@example.com'],
-      ['Content-Type' => 'application/json']
-  ]);
-
-  // DELETE request
-  $result = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-      '/pbxcore/api/v3/extensions/102',
-      PBXCoreRESTClientProvider::HTTP_METHOD_DELETE
-  ]);
-
-  // Custom method on singleton resource
-  $result = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-      '/pbxcore/api/v3/system:datetime',
-      PBXCoreRESTClientProvider::HTTP_METHOD_GET
-  ]);
-  ```
-
-### RedisClientProvider
-- **Service Name**: `redis`
-- **Description**: Redis client for caching and IPC
-- **Key Dependencies**: None
-- **Configuration**: Connects to localhost:6379
-
-### RegistryProvider
-- **Service Name**: `registry`
-- **Description**: Global registry for shared data
-- **Key Dependencies**: None
-- **Features**: Stores global state and shared variables
-
-### RouterProvider
-- **Service Name**: `router`
-- **Description**: URL routing configuration
-- **Key Dependencies**: None
-- **Features**: 
-  - RESTful routes
-  - Module routes support
-  - Case-insensitive controller/action names
-
-### SentryErrorHandlerProvider
-- **Service Name**: `sentryErrorHandler`
-- **Description**: Sentry error tracking integration
-- **Key Dependencies**: 
-  - `config` service
-  - Environment variables
-- **Configuration**: Uses SENTRY_DSN environment variable
-- **Features**: Production error tracking
-
-### SessionProvider
-- **Service Name**: `session`
-- **Description**: Session management
-- **Key Dependencies**: 
-  - `cookies` service
-  - `crypt` service
-- **Backend**: Redis session adapter
-- **Configuration**: 
-  - 3 day lifetime
-  - Secure cookies
-  - HTTP only
-
-### TranslationProvider
-- **Service Name**: `translation`
-- **Description**: Internationalization support
-- **Key Dependencies**: 
-  - `language` service
-  - `messages` service
-- **Features**: 
-  - Multi-language support
-  - Dynamic message loading
-  - Language fallback
-
-### UrlProvider
-- **Service Name**: `url`
-- **Description**: URL generation helper
-- **Key Dependencies**: `config` service
-- **Configuration**: Uses `adminApplication.baseUri`
-
-### WhoopsErrorHandlerProvider
-- **Service Name**: `whoopsErrorHandler`
-- **Description**: Development error handler with pretty errors
-- **Key Dependencies**: None
-- **Features**: 
-  - Pretty error pages
-  - Stack traces
-  - Code context
-
-## Usage Example
+## Usage
 
 ```php
 use MikoPBX\Common\Providers\LoggerProvider;
-use Phalcon\Di\FactoryDefault;
 
-// In your service registration or bootstrap:
-$di = new FactoryDefault();
-
-// Register a provider
-$di->register(new LoggerProvider());
-
-// Access the service using the service constant
+// Always use SERVICE_NAME constant
 $logger = $di->getShared(LoggerProvider::SERVICE_NAME);
-$logger->info('Service initialized');
 
-// In a class that extends Injectable:
-class MyService extends \Phalcon\Di\Injectable
-{
-    public function doSomething(): void
-    {
-        $logger = $this->di->getShared(LoggerProvider::SERVICE_NAME);
-        $logger->info('Doing something');
-    }
-}
+// Non-shared services return new instances
+$mutex = $di->get(MutexProvider::SERVICE_NAME);
 ```
 
-## Provider Dependencies Graph
+## Redis Database Allocation
 
-```
-config
-├── amiCommander
-├── amiListener  
-├── modelsCache (beanstalk)
-├── dbCDR
-├── db
-├── managedCache
-├── license
-├── modulesDBConnectionsService
-├── pbxConfModules
-├── restAPIClient
-└── url
-
-registry
-├── language
-├── managedCache
-├── modulesDBConnectionsService
-└── pbxConfModules
-
-logger
-├── nats
-└── restAPIClient
-
-eventBus (depends on restAPIClient)
-
-session (depends on cookies, crypt)
-translation (depends on language, messages)
-```
-
-## Event System Architecture
-
-The MikoPBX event system uses nginx nchan module for real-time pub/sub messaging:
-
-### Server-Side (Publishing)
-1. **EventBusProvider** publishes events via REST API to localhost
-2. Events are sent to `/pbxcore/api/nchan/pub/{channel}`
-3. Nginx nchan module handles message distribution
-4. Configuration: 50 message buffer, 10s message timeout
-
-### Client-Side (Subscribing)
-1. Clients connect via WebSocket to `/pbxcore/api/nchan/sub/{channel}`
-2. Authentication is handled by Lua script (`access-nchan.lua`)
-3. JavaScript EventBus (`event-bus.js`) manages WebSocket connections
-
-### Common Events
-- `models-changed` - Fired when database models are created/updated/deleted
-- `advice` - System notifications and warnings
-- `connection-status` - WebSocket connection state changes
-- Dynamic channels - Used by modules for async operation progress (e.g., installation, updates)
-
-### Configuration Files
-- `/etc/nginx/mikopbx/locations/longpool.conf` - Nchan endpoints
-- `/etc/nginx/mikopbx/lua/access-nchan.lua` - Authentication logic
-- `/sites/admin-cabinet/assets/js/src/main/event-bus.js` - Client implementation
-
-## Best Practices
-
-1. **Use `setShared()`** for services that should be singletons
-2. **Always define SERVICE_NAME constant** in provider classes
-3. **Use service constants instead of string names** when accessing services:
-   ```php
-   // Good
-   $logger = $di->getShared(LoggerProvider::SERVICE_NAME);
-   
-   // Avoid
-   $logger = $di->get('logger');
-   ```
-4. **Implement proper error handling** in provider registration
-5. **Document service dependencies** clearly
-6. **Use configuration values** from the config service
-7. **Lazy load services** when possible to improve performance
+| DB | Service | Purpose |
+|----|---------|---------|
+| 1 | redis | Worker IPC, general |
+| 2 | modelsMetadata | Model schema cache |
+| 4 | managedCache | Application cache |
+| 5 | session | Sessions (deprecated) |
 
 ## Adding New Providers
 
-To add a new provider:
-
-1. Create a class implementing `Phalcon\Di\ServiceProviderInterface`
-2. Implement the `register(DiInterface $di)` method
-3. Register your service using `$di->setShared()` or `$di->set()`
-4. Add the provider to the bootstrap process
-5. Document the service in this file
-
-Example:
 ```php
 namespace MikoPBX\Common\Providers;
 
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
-class MyServiceProvider implements ServiceProviderInterface
+class MyProvider implements ServiceProviderInterface
 {
     public const string SERVICE_NAME = 'myService';
-    
+
     public function register(DiInterface $di): void
     {
         $di->setShared(
             self::SERVICE_NAME,
-            function() use ($di) {
+            function () use ($di) {
                 $config = $di->getShared(ConfigProvider::SERVICE_NAME);
                 return new MyService($config->myService->toArray());
             }

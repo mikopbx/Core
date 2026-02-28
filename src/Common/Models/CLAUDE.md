@@ -1,16 +1,69 @@
-# MikoPBX Models Guide
+# CLAUDE.md - MikoPBX Models
 
-Database models for MikoPBX using Phalcon ORM. Located in `/src/Common/Models/`.
+Database models for MikoPBX using Phalcon ORM with SQLite backend.
+
+## File Inventory (43 models)
+
+```
+Models/
+├── ModelsBase.php                     # Base class for all models (extends Phalcon\Mvc\Model)
+├── PBXSettings/
+│   ├── PbxSettingsConstantsTrait.php  # 300+ settings key constants
+│   └── PbxSettingsDefaultValuesTrait.php # Default values for all keys
+├── Traits/
+│   └── RecordRepresentationTrait.php  # Human-readable model display
+│
+├── Extensions.php                     # Central hub - connects all phone number types
+├── Users.php                          # User accounts
+├── Sip.php                            # SIP endpoint configuration
+├── Iax.php                            # IAX endpoint configuration
+├── Providers.php                      # SIP/IAX trunk providers
+├── SipHosts.php                       # Provider SIP host addresses
+│
+├── IncomingRoutingTable.php           # Inbound call routing rules
+├── OutgoingRoutingTable.php           # Outbound call routing rules
+│
+├── CallQueues.php                     # Call queue configuration
+├── CallQueueMembers.php               # Queue member assignments
+├── ConferenceRooms.php                # Conference rooms
+├── IvrMenu.php                        # IVR menu definitions
+├── IvrMenuActions.php                 # IVR digit-press actions
+├── OutWorkTimes.php                   # After-hours schedules
+├── OutWorkTimesRouts.php              # After-hours routing
+├── ExtensionForwardingRights.php      # Call forwarding settings
+│
+├── LanInterfaces.php                  # Network interfaces (IPv4/IPv6)
+├── NetworkFilters.php                 # IP allow/deny filters
+├── NetworkStaticRoutes.php            # Static routes (IPv4/IPv6)
+├── FirewallRules.php                  # Firewall port rules
+├── Fail2BanRules.php                  # Intrusion prevention
+│
+├── ApiKeys.php                        # REST API Bearer tokens
+├── UserPasskeys.php                   # WebAuthn/FIDO2 passkeys
+├── AsteriskManagerUsers.php           # AMI user accounts
+├── AsteriskRestUsers.php              # ARI user accounts
+│
+├── RecordingStorage.php               # S3 recording location mapping
+├── StorageSettings.php                # S3 storage configuration
+├── Storage.php                        # Local storage devices
+│
+├── PbxSettings.php                    # Key-value system settings
+├── PbxSettingsConstants.php           # Constants class (uses trait)
+├── SoundFiles.php                     # Audio files
+├── Codecs.php                         # Audio/video codecs
+├── CustomFiles.php                    # Custom config file overrides
+├── DialplanApplications.php           # Custom dialplan apps
+├── ExternalPhones.php                 # External phone endpoints
+│
+├── CallDetailRecords.php              # CDR permanent (cdr_general)
+├── CallDetailRecordsBase.php          # CDR base class
+├── CallDetailRecordsTmp.php           # CDR temporary (cdr)
+│
+├── PbxExtensionModules.php            # Installed modules registry
+└── LongPollSubscribe.php              # Event subscriptions
+```
 
 ## Architecture
-
-1. **Central Hub**: `Extensions` model connects all phone number types
-2. **Polymorphic Relations**: Extensions link to different entities by type
-3. **Auto Caching**: Redis caching for performance
-4. **Change Tracking**: All models inherit from `ModelsBase`
-5. **Cascade Operations**: Automatic related record management
-
-## Model Relationships
 
 ```
 Users ──hasMany──> Extensions <──hasOne── Sip
@@ -23,314 +76,173 @@ Providers ──hasMany──> IncomingRoutingTable <──belongsTo── Exten
     └──hasMany──> OutgoingRoutingTable
 ```
 
-## Core Models
+- **Central Hub**: `Extensions` model connects all phone number types
+- **Polymorphic Relations**: Extensions link to different entities by type
+- **Auto Caching**: Redis caching via `ManagedCacheProvider`
+- **Change Tracking**: All models inherit from `ModelsBase` (snapshot tracking)
+- **Cascade Operations**: Automatic related record management via `beforeDelete`
 
-### Extensions (Central Hub)
-**Table**: `m_Extensions`
+## Key Constants
 
+### Extensions Types
 ```php
-// Types
-const TYPE_SIP = 'SIP';
-const TYPE_EXTERNAL = 'EXTERNAL';
-const TYPE_QUEUE = 'QUEUE';
-const TYPE_CONFERENCE = 'CONFERENCE';
-const TYPE_DIALPLAN_APPLICATION = 'DIALPLAN APPLICATION';
-const TYPE_IVR_MENU = 'IVR MENU';
+public const string TYPE_SIP = 'SIP';
+public const string TYPE_EXTERNAL = 'EXTERNAL';
+public const string TYPE_QUEUE = 'QUEUE';
+public const string TYPE_CONFERENCE = 'CONFERENCE';
+public const string TYPE_DIALPLAN_APPLICATION = 'DIALPLAN APPLICATION';
+public const string TYPE_IVR_MENU = 'IVR MENU';
+public const string TYPE_MODULES = 'MODULES';
+public const string TYPE_SYSTEM = 'SYSTEM';
+public const string TYPE_PARKING = 'PARKING';
 
-// Key fields
-number              // Extension number (2-8 digits)
-type                // Extension type (see constants)
-callerid            // Display name
-userid              // Associated user
-show_in_phonebook   // "1" to show
-is_general_user_number // "1" for primary extension
-
-// Usage
-$ext = Extensions::findFirstByNumber('100');
-if ($ext->type === Extensions::TYPE_SIP) {
-    $sip = $ext->Sip; // Get SIP account
-}
+// Prefix constants for unique ID generation
+public const string PREFIX_SIP = 'SIP-PHONE';
+public const string PREFIX_EXTERNAL = 'EXTERNAL';
+public const string PREFIX_EXTENSION = 'EXT';
+public const string PREFIX_DIALPLAN = 'DIALPLAN';
+public const string PREFIX_IVR = 'IVR';
+public const string PREFIX_QUEUE = 'QUEUE';
+public const string PREFIX_CONFERENCE = 'CONFERENCE';
+public const string PREFIX_TRUNK_SIP = 'SIP-TRUNK';
+public const string PREFIX_TRUNK_IAX = 'IAX-TRUNK';
+public const string PREFIX_OUT_WORK_TIME = 'OUT-WORK-TIME';
 ```
 
-### Users
-**Table**: `m_Users`
-
+### IncomingRoutingTable Actions
 ```php
-// Fields
-email, username, language, avatar
+public const string ACTION_EXTENSION = 'extension';      // Route to extension
+public const string ACTION_PLAYBACK = 'playback';        // Play audio file
 
-// Relations
-hasMany → Extensions
-
-// Get user extensions
-$user = Users::findFirstById($userId);
-$extensions = $user->Extensions;
+// DEPRECATED (since 2024.12.12) - Use ACTION_EXTENSION with special extensions:
+public const string ACTION_HANGUP = 'hangup';            // Use extension='hangup'
+public const string ACTION_BUSY = 'busy';                // Use extension='busy'
+public const string ACTION_DID = 'did2user';             // Use extension='did2user'
+public const string ACTION_VOICEMAIL = 'voicemail';      // Use extension='voicemail'
 ```
 
-### Sip
-**Table**: `m_Sip`
-
+### Sip CallerID/DID Sources
 ```php
-// Key fields
-extension           // Extension number
-secret              // Password
-transport           // udp/tcp/tls
-networkfilterid     // IP restrictions
-manualattributes    // Custom SIP headers
+public const string CALLERID_SOURCE_DEFAULT = 'default';
+public const string CALLERID_SOURCE_FROM = 'from';
+public const string CALLERID_SOURCE_RPID = 'rpid';       // Remote-Party-ID
+public const string CALLERID_SOURCE_PAI = 'pai';          // P-Asserted-Identity
+public const string CALLERID_SOURCE_CUSTOM = 'custom';
 
-// Generate password
-$sip->secret = Sip::generateRandomPassword();
+public const string DID_SOURCE_DEFAULT = 'default';
+public const string DID_SOURCE_TO = 'to';
+public const string DID_SOURCE_RDNIS = 'rdnis';
+public const string DID_SOURCE_INVITE = 'invite';
+public const string DID_SOURCE_CUSTOM = 'custom';
 ```
 
-### Providers
-**Table**: `m_Providers`
+## New Models
 
+### ApiKeys (`m_ApiKeys`)
+REST API Bearer token storage for authentication:
 ```php
-// Types
-type: 'SIP' or 'IAX'
+id, description, key_hash (bcrypt), key_suffix (last 4 chars),
+key_display (masked), networkfilterid, allowed_paths (JSON),
+full_permissions, created_at, last_used_at
 
-// Relations
-hasOne → Sip/Iax
-hasMany → IncomingRoutingTable, OutgoingRoutingTable
+static generateApiKey(): string  // Generate 64-char hex token
 ```
 
-## Routing Models
-
-### IncomingRoutingTable
-**Table**: `m_IncomingRoutingTable`
-
+### UserPasskeys (`m_UserPasskeys`)
+WebAuthn/FIDO2 passkey storage for passwordless authentication:
 ```php
-// Actions
-const ACTION_EXTENSION = 'extension';
-const ACTION_HANGUP = 'hangup';
-const ACTION_BUSY = 'busy';
-const ACTION_VOICEMAIL = 'voicemail';
-
-// Key fields
-number              // DID pattern
-extension           // Destination
-provider            // Provider ID
-priority            // Rule priority (0-9999)
-timeout             // Ring timeout
+id, login, credential_id (base64url, UNIQUE),
+public_key (base64 COSE), counter (replay prevention),
+aaguid (authenticator GUID), name ("iPhone 15", "YubiKey 5"),
+created_at, last_used_at
 ```
 
-### OutgoingRoutingTable
-**Table**: `m_OutgoingRoutingTable`
-
+### RecordingStorage (`m_RecordingStorage`)
+Maps CDR recording paths to storage locations (local vs S3):
 ```php
-// Key fields
-providerid          // Provider to use
-numberbeginswith    // Pattern match
-restnumbers         // Remaining digits (-1 = all)
-trimfrombegin       // Strip prefix
-prepend             // Add prefix
-priority            // Rule order
+id, recordingfile (UNIQUE INDEX), storage_location ("local"|"s3"),
+s3_key, uploaded_at, file_size
+
+// Uses separate dbRecordingStorage connection
+static findByPath(string): ?self
+isInS3(): bool
+shouldDeleteLocal(int $days): bool
+shouldPermanentlyDelete(int $days): bool
 ```
 
-## Call Features
-
-### CallQueues
-**Table**: `m_CallQueues`
-
+### StorageSettings (`m_StorageSettings`)
+S3-compatible storage configuration (singleton, id=1):
 ```php
-// Strategies
-const STRATEGY_RINGALL = 'ringall';
-const STRATEGY_LEASTRECENT = 'leastrecent';
-const STRATEGY_RANDOM = 'random';
-const STRATEGY_RRMEMORY = 'rrmemory';
+id, s3_enabled (0|1), s3_endpoint, s3_region,
+s3_bucket, s3_access_key, s3_secret_key
 
-// Fields
-name, extension, strategy
-seconds_to_ring_each_member
-timeout_extension    // Overflow destination
-
-// Get members
-$queue = CallQueues::findFirstByUniqid($id);
-$members = $queue->CallQueueMembers;
+static getSettings(): self
+isS3Configured(): bool
 ```
 
-### ConferenceRooms
-**Table**: `m_ConferenceRooms`
+## Model Tables
 
-```php
-extension, name, pinCode
-```
+| Model | Table | Database |
+|-------|-------|----------|
+| Extensions | `m_Extensions` | main |
+| Users | `m_Users` | main |
+| Sip | `m_Sip` | main |
+| Iax | `m_Iax` | main |
+| Providers | `m_Providers` | main |
+| SipHosts | `m_SipHosts` | main |
+| AsteriskManagerUsers | `m_AsteriskManagerUsers` | main |
+| AsteriskRestUsers | `m_AsteriskRestUsers` | main |
+| IncomingRoutingTable | `m_IncomingRoutingTable` | main |
+| OutgoingRoutingTable | `m_OutgoingRoutingTable` | main |
+| CallQueues | `m_CallQueues` | main |
+| CallQueueMembers | `m_CallQueueMembers` | main |
+| ConferenceRooms | `m_ConferenceRooms` | main |
+| IvrMenu | `m_IvrMenu` | main |
+| IvrMenuActions | `m_IvrMenuActions` | main |
+| OutWorkTimes | `m_OutWorkTimes` | main |
+| OutWorkTimesRouts | `m_OutWorkTimesRouts` | main |
+| ExtensionForwardingRights | `m_ExtensionForwardingRights` | main |
+| LanInterfaces | `m_LanInterfaces` | main |
+| NetworkFilters | `m_NetworkFilters` | main |
+| NetworkStaticRoutes | `m_NetworkStaticRoutes` | main |
+| FirewallRules | `m_FirewallRules` | main |
+| Fail2BanRules | `m_Fail2BanRules` | main |
+| ApiKeys | `m_ApiKeys` | main |
+| UserPasskeys | `m_UserPasskeys` | main |
+| RecordingStorage | `m_RecordingStorage` | recording_storage |
+| StorageSettings | `m_StorageSettings` | main |
+| Storage | `m_Storage` | main |
+| PbxSettings | `m_PbxSettings` | main |
+| SoundFiles | `m_SoundFiles` | main |
+| Codecs | `m_Codecs` | main |
+| CustomFiles | `m_CustomFiles` | main |
+| DialplanApplications | `m_DialplanApplications` | main |
+| ExternalPhones | `m_ExternalPhones` | main |
+| CallDetailRecords | `cdr_general` | CDR |
+| CallDetailRecordsTmp | `cdr` | CDR |
+| PbxExtensionModules | `m_PbxExtensionModules` | main |
+| LongPollSubscribe | `m_LongPollSubscribe` | main |
 
-### IvrMenu & IvrMenuActions
-**Tables**: `m_IvrMenu`, `m_IvrMenuActions`
+## Base Classes
 
-```php
-// IvrMenu
-name, extension, audio_message_id
-timeout_extension, number_of_repeat
+### ModelsBase
+All models extend this. Features:
+- `RecordRepresentationTrait` for human-readable display
+- `makeCacheKey(string $modelClass, string $keyName): string`
+- Snapshot tracking (`keepSnapshots(true)`)
+- Event management
 
-// IvrMenuActions (digit press actions)
-digits              // Key pressed (0-9, *, #)
-extension           // Destination
-```
+### CallDetailRecordsBase
+Parent for CDR models. Shared fields: UNIQUEID, start, src_chan, dst_chan, src_num, dst_num, linkedid.
 
-## Security Models
-
-### NetworkFilters
-**Table**: `m_NetworkFilters`
-- `permit/deny` - Allowed/blocked IPs
-- `local_network` - "1" for local nets
-
-### FirewallRules
-**Table**: `m_FirewallRules`
-
-```php
-const CATEGORY_SIP = 'SIP';     // 5060/5061
-const CATEGORY_WEB = 'WEB';     // 80/443
-const CATEGORY_SSH = 'SSH';     // 22
-const CATEGORY_AMI = 'AMI';     // 5038
-```
-
-### Fail2BanRules
-**Table**: `m_Fail2BanRules`
-- `maxretry` (5), `bantime` (86400s), `findtime` (1800s), `whitelist`
-
-## Network Models
-
-### LanInterfaces
-**Table**: `m_LanInterfaces` - Network interface configuration with dual-stack IPv4/IPv6 support
-
-```php
-// Topology constants
-const TOPOLOGY_PUBLIC = 'public';
-const TOPOLOGY_PRIVATE = 'private';
-
-// IPv4 fields
-interface          // System interface name (eth0, eth1, etc.)
-vlanid            // VLAN ID (0 = no VLAN)
-ipaddr            // IPv4 address
-subnet            // IPv4 subnet mask
-gateway           // IPv4 gateway
-dhcp              // "1" = DHCP enabled, "0" = static
-internet          // "1" = internet connection present
-
-// IPv6 fields (NEW in IPv6 support)
-ipv6_mode         // "0" = Off, "1" = Auto (SLAAC/DHCPv6), "2" = Manual (static)
-ipv6addr          // IPv6 address (e.g., "2001:db8::1")
-ipv6_subnet       // IPv6 prefix length (1-128, typically 64)
-ipv6_gateway      // IPv6 gateway address
-primarydns6       // Primary IPv6 DNS server
-secondarydns6     // Secondary IPv6 DNS server
-
-// DNS (dual-stack)
-primarydns        // Primary IPv4 DNS server
-secondarydns      // Secondary IPv4 DNS server
-
-// Topology
-topology          // 'public' or 'private'
-extipaddr         // External IP address
-exthostname       // External hostname
-
-// Usage - IPv4 configuration
-$lan = LanInterfaces::findFirst();
-$lan->ipaddr = '192.168.1.1';
-$lan->subnet = '255.255.255.0';
-$lan->gateway = '192.168.1.254';
-$lan->dhcp = '0'; // Static IP
-
-// Usage - IPv6 configuration (Manual)
-$lan->ipv6_mode = '2'; // Manual/Static
-$lan->ipv6addr = '2001:db8::1';
-$lan->ipv6_subnet = '64';
-$lan->ipv6_gateway = '2001:db8::254';
-$lan->save();
-
-// Usage - IPv6 configuration (Auto)
-$lan->ipv6_mode = '1'; // SLAAC/DHCPv6
-$lan->save(); // Address auto-configured by network
-
-// Validation uses IpAddressHelper for dual-stack validation
-```
-
-### NetworkStaticRoutes
-**Table**: `m_NetworkStaticRoutes` - Static routing table with IPv4 and IPv6 support
-
-```php
-// Fields
-network           // Network address (IPv4 or IPv6)
-subnet            // Subnet mask for IPv4 (e.g., "24") or prefix for IPv6 (1-128)
-gateway           // Gateway address (must match network IP version)
-
-// IPv4 example
-$route = new NetworkStaticRoutes();
-$route->network = '10.0.0.0';
-$route->subnet = '24';
-$route->gateway = '192.168.1.1';
-
-// IPv6 example (NEW in IPv6 support)
-$route = new NetworkStaticRoutes();
-$route->network = '2001:db8:1::/64';
-$route->subnet = '64';
-$route->gateway = '2001:db8::1';
-```
-
-## Settings & Data
-
-### PbxSettings
-**Table**: `m_PbxSettings` - Key-value store with Redis caching
-
-```php
-$value = PbxSettings::getValueByKey('PBXVersion');
-PbxSettings::setValueByKey('PBXVersion', '2024.1.0');
-```
-
-### SoundFiles
-**Table**: `m_SoundFiles`
-
-```php
-const CATEGORY_MOH = 'moh';        // Music on hold
-const CATEGORY_CUSTOM = 'custom';  // Custom sounds
-// Fields: name, path, category
-```
-
-### CustomFiles
-**Table**: `m_CustomFiles`
-
-```php
-const MODE_APPEND = 'append';      // Add to original
-const MODE_OVERRIDE = 'override';  // Replace file
-const MODE_SCRIPT = 'script';      // Execute as script
-// Fields: filepath, content, mode, changed
-```
-
-## CDR Models
-
-### CallDetailRecords
-**Tables**: `cdr_general` (permanent), `cdr` (temporary)
-
-```php
-// Key fields: start, src_num, dst_num, duration, billsec
-// disposition: ANSWERED/NO ANSWER/BUSY/FAILED
-// recordingfile: Path to recording
-
-$calls = CallDetailRecords::find([
-    'conditions' => 'src_num = :num: OR dst_num = :num:',
-    'bind' => ['num' => '100']
-]);
-```
+### PbxSettings Traits
+- `PbxSettingsConstantsTrait` - 300+ key constants (General, Language, Cloud, Security, SIP/RTP/IAX, AMI, Email, Voicemail, etc.)
+- `PbxSettingsDefaultValuesTrait` - `getDefaultArrayValues(): array`
 
 ## Usage Patterns
 
-### Creating with Transaction
 ```php
-$transaction = DI::getDefault()->getShared('db')->begin();
-$extension = new Extensions();
-$extension->setTransaction($transaction);
-$extension->number = '100';
-$extension->type = Extensions::TYPE_SIP;
-$extension->save();
-// Create related Sip...
-$transaction->commit();
-```
-
-### Finding Records
-```php
-// By primary key
+// Find by primary key
 $ext = Extensions::findFirstByNumber('100');
 
 // With conditions
@@ -338,69 +250,24 @@ $providers = Providers::find([
     'conditions' => 'type = :type:',
     'bind' => ['type' => 'SIP']
 ]);
-```
 
-### Working with IP Addresses (IPv4 and IPv6)
-```php
-use MikoPBX\Core\Utilities\IpAddressHelper;
-
-// Detect IP version
-$version = IpAddressHelper::getIpVersion('192.168.1.1');        // 4
-$version = IpAddressHelper::getIpVersion('2001:db8::1');        // 6
-$version = IpAddressHelper::getIpVersion('invalid');            // false
-
-// Check IP type
-if (IpAddressHelper::isIpv6($address)) {
-    // Handle IPv6
+// Use constants
+if ($ext->type === Extensions::TYPE_SIP) {
+    $sip = $ext->Sip;
 }
 
-// Parse CIDR notation
-$cidr = IpAddressHelper::normalizeCidr('2001:db8::/64');
-// Returns: ['ip' => '2001:db8::', 'prefix' => 64, 'version' => 6]
-
-// Check if IP is in network
-$inNetwork = IpAddressHelper::isIpInCidr('2001:db8::100', '2001:db8::/64'); // true
-
-// Validate before saving
-$lan = new LanInterfaces();
-if (IpAddressHelper::isIpv6($ipAddress)) {
-    $lan->ipv6addr = $ipAddress;
-    $lan->ipv6_subnet = '64';
-    $lan->ipv6_mode = '2'; // Manual
-} else {
-    $lan->ipaddr = $ipAddress;
-    $lan->subnet = '255.255.255.0';
+// Validate saves
+if (!$model->save()) {
+    $errors = $model->getMessages();
 }
-$lan->save();
-```
 
-### Model Events
-```php
-// Hooks: beforeValidation, afterSave, beforeDelete, etc.
-public function afterSave() {
-    $this->clearCache('Extensions');
-}
+// Model events: beforeValidation, afterSave, beforeDelete, etc.
 ```
 
 ## Best Practices
 
-1. **Validate saves**: `if (!$model->save()) { $errors = $model->getMessages(); }`
-2. **Use transactions** for related operations
-3. **Check existence** before accessing relations
-4. **Use constants**: `Extensions::TYPE_SIP` not `'SIP'`
-5. **Handle cascades** - deleting Extension removes related records
-
-## Quick Reference
-
-```php
-// All SIP extensions
-Extensions::find(['conditions' => 'type = :type:', 'bind' => ['type' => Extensions::TYPE_SIP]]);
-
-// Active calls
-CallDetailRecordsTmp::find(['conditions' => 'endtime IS NULL OR endtime = ""']);
-
-// Routes for provider
-OutgoingRoutingTable::find(['conditions' => 'providerid = :pid:', 'bind' => ['pid' => $id]]);
-```
-
-For detailed field descriptions and advanced usage, see inline documentation in model classes.
+1. Always use constants: `Extensions::TYPE_SIP` not `'SIP'`
+2. Validate saves and check `getMessages()`
+3. Use transactions for related operations
+4. Check existence before accessing relations
+5. Handle cascades - deleting Extension removes related records
