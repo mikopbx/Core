@@ -106,6 +106,42 @@ function getCallerIdName(number)
 end
 
 --[[
+    Retrieves the SIP Call-ID for the source channel.
+
+    Priority:
+    1. Current channel is PJSIP — read call-id directly and cache it.
+    2. Inherited variable pt1c_SRC_CALL_ID — set by a parent PJSIP channel.
+    3. MASTER_CHANNEL fallback — read call-id from the parent channel
+       (e.g., PJSIP trunk that created this Local channel via Dial()).
+
+    The value is cached as __pt1c_SRC_CALL_ID (double underscore = inherited)
+    so that child channels (Queue Local channels, etc.) receive it automatically.
+
+    Returns:
+    - The SIP Call-ID string, or empty string if not available.
+]]
+function getSrcCallId()
+    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
+    if(is_pjsip) then
+        local call_id = get_variable("CHANNEL(pjsip,call-id)");
+        set_variable("__pt1c_SRC_CALL_ID", call_id);
+        return call_id;
+    end
+    local cached = get_variable("pt1c_SRC_CALL_ID");
+    if(cached ~= '') then
+        return cached;
+    end
+    -- Local channel created by Dial(Local/...) from a PJSIP trunk:
+    -- read call-id from the master (parent) channel and cache for children.
+    local master_call_id = get_variable("MASTER_CHANNEL(CHANNEL(pjsip,call-id))");
+    if(master_call_id ~= '') then
+        set_variable("__pt1c_SRC_CALL_ID", master_call_id);
+        return master_call_id;
+    end
+    return '';
+end
+
+--[[
     Determines the optimal recording file extension based on audio codec.
 
     This function detects the audio codec from the channel's read format and selects
@@ -434,9 +470,9 @@ function event_dial(without_event)
     if(origCallId ~= '')then
         data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
     end
-    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
-    if(is_pjsip) then
-        data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
+    local src_call_id = getSrcCallId();
+    if(src_call_id ~= '') then
+        data['src_call_id'] = src_call_id;
     end
 
     data['from_account'] = from_account;
@@ -516,6 +552,12 @@ function event_interception_start()
         data['src_name']     = getCallerIdName(data['src_num']);
         data['dst_num']  	 = get_variable("pt1c_cid");
         data['dialstatus']  = 'ORIGINATE_TRY_DIAL';
+    end
+
+    -- Retrieve the source call ID (from PJSIP or cached)
+    local src_call_id = getSrcCallId();
+    if(src_call_id ~= '') then
+        data['src_call_id'] = src_call_id;
     end
 
     userevent_return(data)
@@ -637,10 +679,10 @@ function event_voicemail_start()
         data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
     end
 
-    -- Check if the channel is using PJSIP and retrieve the source call ID
-    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
-    if(is_pjsip) then
-        data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
+    -- Retrieve the source call ID (from PJSIP or cached)
+    local src_call_id = getSrcCallId();
+    if(src_call_id ~= '') then
+        data['src_call_id'] = src_call_id;
     end
 
     -- Set the caller's account information and mark the event as not originating
@@ -729,10 +771,10 @@ function event_dial_interception()
         data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
     end
 
-    -- Check if the channel is using PJSIP and retrieve the source call ID
-    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
-    if(is_pjsip) then
-        data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
+    -- Retrieve the source call ID (from PJSIP or cached)
+    local src_call_id = getSrcCallId();
+    if(src_call_id ~= '') then
+        data['src_call_id'] = src_call_id;
     end
 
     -- Set the caller's account information
@@ -1103,10 +1145,10 @@ function event_transfer_dial()
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
     data['UNIQUEID']  	= id;
 
-    -- Check if the channel is using PJSIP and set the src_call_id if applicable
-    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
-    if(is_pjsip) then
-        data['src_call_id'] = get_variable("CHANNEL(pjsip,call-id)");
+    -- Retrieve the source call ID (from PJSIP or cached)
+    local src_call_id = getSrcCallId();
+    if(src_call_id ~= '') then
+        data['src_call_id'] = src_call_id;
     end
 
     -- Determine if it's a transfer or a regular dial
@@ -1451,6 +1493,12 @@ function event_queue_start()
         data['start']    = time_start;
         data['transfer'] = '0';
         set_variable("__pt1c_q_UNIQUEID", id);
+
+        -- Capture src_call_id and cache for child channels (Queue Local channels)
+        local src_call_id = getSrcCallId();
+        if(src_call_id ~= '') then
+            data['src_call_id'] = src_call_id;
+        end
     end
 
     -- Set the transfer flag if it is a transfer call
@@ -1802,6 +1850,12 @@ function event_unpark_call_timeout()
         ['linkedid'] = get_variable("CHANNEL(linkedid)"),
         ['PARKER']   = get_variable("PARKER"),
     }
+
+    -- Retrieve the source call ID (from PJSIP or cached)
+    local src_call_id = getSrcCallId();
+    if(src_call_id ~= '') then
+        data['src_call_id'] = src_call_id;
+    end
 
     local id2 = get_variable("UNIQUEID") .. '_' .. generateRandomString(6)
     set_variable("__pt1c_UNIQUEID", id2)

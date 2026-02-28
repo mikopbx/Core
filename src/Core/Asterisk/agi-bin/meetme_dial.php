@@ -101,6 +101,12 @@ function Event_meetme_dial(AGI $agi): array
         'UNIQUEID'      => $id,
         'linkedid'      => $agi->get_variable('CHANNEL(linkedid)', true),
     ];
+
+    // Capture src_call_id if the channel is PJSIP
+    if (stripos($agi->request['agi_channel'], 'PJSIP/') !== false) {
+        $data['src_call_id'] = $agi->get_variable('CHANNEL(pjsip,call-id)', true);
+    }
+
     $agi->set_variable('MEETME_RECORDINGFILE', $recordingfile);
     $agi->set_variable('__pt1c_q_UNIQUEID', $id);
 

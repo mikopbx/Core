@@ -82,6 +82,16 @@ function Event_unpark_call(AGI $agi): array
         $data['dst_name'] = $callerIdName;
     }
 
+    // Capture call-id if the current channel is PJSIP
+    if (stripos($channel, 'PJSIP/') !== false) {
+        $callId = $agi->get_variable('CHANNEL(pjsip,call-id)', true);
+        if ($data['src_chan'] === $channel) {
+            $data['src_call_id'] = $callId;
+        } elseif ($data['dst_chan'] === $channel) {
+            $data['dst_call_id'] = $callId;
+        }
+    }
+
     if (trim($park_row['ParkingDuration']) !== '') {
         $time_start           = date("Y-m-d H:i:s", time() - 1 * ($park_row['ParkingDuration']));
         $data_parking         = [

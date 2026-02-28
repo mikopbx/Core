@@ -323,6 +323,29 @@ class ActionHangupChan
             }
             $n_data['did'] = $data_chan['did'];
 
+            // Look up call IDs from existing CDR records in same linkedid
+            $cdrFilter = [
+                'linkedid=:lid:',
+                'bind' => ['lid' => $data['linkedid']],
+            ];
+            foreach (CallDetailRecordsTmp::find($cdrFilter) as $cdr) {
+                if (empty($n_data['src_call_id'])) {
+                    if ($cdr->src_chan === $n_data['src_chan'] && !empty($cdr->src_call_id)) {
+                        $n_data['src_call_id'] = $cdr->src_call_id;
+                    } elseif ($cdr->src_num === $n_data['src_num'] && !empty($cdr->src_call_id)) {
+                        $n_data['src_call_id'] = $cdr->src_call_id;
+                    }
+                }
+                if (empty($n_data['dst_call_id'])) {
+                    if ($cdr->dst_chan === $n_data['dst_chan'] && !empty($cdr->dst_call_id)) {
+                        $n_data['dst_call_id'] = $cdr->dst_call_id;
+                    }
+                }
+                if (!empty($n_data['src_call_id']) && !empty($n_data['dst_call_id'])) {
+                    break;
+                }
+            }
+
             InsertDataToDB::execute($n_data);
             $filter = [
                 'linkedid=:linkedid:',

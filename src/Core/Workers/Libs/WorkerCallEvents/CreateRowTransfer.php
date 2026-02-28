@@ -96,21 +96,27 @@ class CreateRowTransfer
         $insert_data = [];
         foreach ($calls_data as $row_data) {
             if ($row_data['src_chan'] === $data['agi_channel']) {
+                // src_chan is the transferer — take the other party (dst side)
                 $fname_chan = isset($insert_data['dst_chan']) ? 'src_chan' : 'dst_chan';
                 $fname_num = isset($insert_data['dst_num']) ? 'src_num' : 'dst_num';
                 $fname_name = isset($insert_data['dst_name']) ? 'src_name' : 'dst_name';
+                $fname_callid = ($fname_chan === 'dst_chan') ? 'dst_call_id' : 'src_call_id';
 
                 $insert_data[$fname_chan] = $row_data['dst_chan'];
                 $insert_data[$fname_num] = $row_data['dst_num'];
                 $insert_data[$fname_name] = $row_data['dst_name'] ?? '';
+                $insert_data[$fname_callid] = $row_data['dst_call_id'] ?? '';
             } else {
+                // dst_chan is the transferer — take the other party (src side)
                 $fname_chan = !isset($insert_data['src_chan']) ? 'src_chan' : 'dst_chan';
                 $fname_num = !isset($insert_data['src_num']) ? 'src_num' : 'dst_num';
                 $fname_name = !isset($insert_data['src_name']) ? 'src_name' : 'dst_name';
+                $fname_callid = ($fname_chan === 'src_chan') ? 'src_call_id' : 'dst_call_id';
 
                 $insert_data[$fname_chan] = $row_data['src_chan'];
                 $insert_data[$fname_num] = $row_data['src_num'];
                 $insert_data[$fname_name] = $row_data['src_name'] ?? '';
+                $insert_data[$fname_callid] = $row_data['src_call_id'] ?? '';
             }
         }
 

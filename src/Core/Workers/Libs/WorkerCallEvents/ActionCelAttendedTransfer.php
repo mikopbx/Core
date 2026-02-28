@@ -72,11 +72,13 @@ class ActionCelAttendedTransfer
                     if(in_array($row->src_chan, [$extra['channel2_name'], $data['Channel']], true)) {
                         $n_data['dst_chan'] = $row->dst_chan;
                         $n_data['dst_num']  = $row->dst_num;
+                        $n_data['dst_call_id'] = $row->dst_call_id;
                         $n_data['did'] = $row->did;
                         $worker->StopMixMonitor($n_data['dst_chan']);
                     }elseif(in_array($row->dst_chan, [$extra['channel2_name'], $data['Channel']], true)){
                         $n_data['src_chan'] = $row->src_chan;
                         $n_data['src_num']  = $row->src_num;
+                        $n_data['src_call_id'] = $row->src_call_id;
                         $n_data['did'] = $row->did;
                         $worker->StopMixMonitor($n_data['src_chan']);
                     }
