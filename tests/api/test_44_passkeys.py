@@ -19,7 +19,7 @@ Full E2E testing requires browser automation with WebAuthn support.
 """
 
 import pytest
-from urllib.parse import urlparse, quote
+from urllib.parse import urlparse
 from conftest import assert_api_success
 from config import get_config
 
@@ -167,10 +167,12 @@ class TestPasskeys:
 
         This initiates WebAuthn authentication (login with passkey).
         """
+        import urllib.parse
+
         # Use proper origin parameter derived from config
         parsed = urlparse(config.api_url)
         base_origin = f"{parsed.scheme}://{parsed.netloc}"
-        origin = quote(base_origin, safe='')
+        origin = urllib.parse.quote(base_origin, safe='')
 
         try:
             response = api_client.get(f'passkeys:authenticationStart?origin={origin}')
