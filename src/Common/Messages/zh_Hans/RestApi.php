@@ -166,6 +166,8 @@ return [
     'rest_cdr_GetRecord' => '通过ID获取CDR记录',
     'rest_cdr_PlaybackDesc' => '支持通过 HTTP Range 流式播放功能播放或下载通话录音',
     'rest_cdr_GetMetadataDesc' => '获取 CDR 记录的元数据（最新记录的日期范围），无需加载完整数据。用于使用有意义的日期范围初始化 UI。',
+    'rest_cdr_GetStatsByProvider' => '按供应商统计通话数据',
+    'rest_cdr_GetStatsByProviderDesc' => '获取按供应商/中继分组的汇总通话统计。返回来电和去电的通话次数、总时长和计费秒数。',
     // ============================================================================
     // PBX Status REST API (Real-time Monitoring)
     // ============================================================================
@@ -1158,6 +1160,7 @@ return [
     'rest_param_cdr_did' => '筛选条件：传入的DID号码',
     'rest_param_cdr_disposition' => '筛选条件：通话结束状态',
     'rest_param_cdr_linkedid' => '筛选条件：按 linkedid 精确搜索（检索单个通话的所有记录）',
+    'rest_param_cdr_provider' => '用于筛选的供应商标识符（例如 SIP-TRUNK-xxx）',
     'rest_sipp_UpdateStatusDesc' => '启用或禁用 SIP 提供商',
     'rest_param_cdr_deleteRecording' => '删除通话录音文件及其数据库条目。删除所有文件格式（.mp3、.wav、.ogg）。默认值：否',
     // Authentication specific parameters

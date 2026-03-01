@@ -65,6 +65,7 @@ return [
     'rest_param_cdr_did' => 'Filtru: număr DID primit',
     'rest_param_cdr_disposition' => 'Filtru: Stare de încheiere a apelului',
     'rest_param_cdr_linkedid' => 'Filtru: Căutare exactă după linkedid (pentru a recupera toate înregistrările unui singur apel)',
+    'rest_param_cdr_provider' => 'Identificator furnizor pentru filtrare (de ex. SIP-TRUNK-xxx)',
     'rest_param_cdr_deleteRecording' => 'Șterge fișierul de înregistrare a apelului împreună cu intrarea din baza de date. Șterge toate formatele de fișiere (.mp3, .wav, .ogg). Implicit: fals',
     // Authentication specific parameters
     'rest_param_auth_login' => 'Autentificare utilizator pentru autentificare',
@@ -1585,6 +1586,8 @@ return [
     'rest_cdr_DeleteDesc' => 'Ștergeți o înregistrare cu detaliile unui apel. Acceptă două moduri: ștergerea unei singure înregistrări după ID-ul numeric (de exemplu, 718517) sau ștergerea tuturor înregistrărilor legate după linkedID (de exemplu, mikopbx-1760784793.4627). Parametrul deleteRecording=true șterge, de asemenea, fișierele de înregistrare a apelurilor în toate formatele (.mp3, .wav, .ogg).',
     'rest_cdr_GetMetadata' => 'Obțineți metadate CDR',
     'rest_cdr_GetMetadataDesc' => 'Obține metadate despre înregistrările CDR (interval de date de la cele mai recente înregistrări) fără a încărca toate datele. Folosit pentru a inițializa interfața cu utilizatorul cu un interval de date semnificativ.',
+    'rest_cdr_GetStatsByProvider' => 'Statistici apeluri pe furnizor',
+    'rest_cdr_GetStatsByProviderDesc' => 'Obțineți statistici agregate ale apelurilor grupate pe furnizor/trunk. Returnează numărul de apeluri, durata totală și secundele facturabile pentru apeluri de intrare și de ieșire.',
     'rest_cdr_Download' => 'Descărcați înregistrarea conversației',
     'rest_cdr_DownloadDesc' => 'Descărcați înregistrarea apelului ca fișier cu numele specificat (Content-Disposition: attachment)',
     // CDR schema fields

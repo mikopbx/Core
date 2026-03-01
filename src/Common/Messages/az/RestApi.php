@@ -1036,6 +1036,7 @@ return [
     'rest_s3_TestConnection' => 'S3 bağlantısını sınayın',
     'rest_s3_TestConnectionDesc' => 'Vedrəyə girişi yoxlamaqla S3 bağlantısını və etimadnaməsini yoxlayır. Konfiqurasiyanı dəyişdirmir — bağlantı testini aparmaq üçün verilənlər bazasındakı cari parametrlərdən istifadə edir.',
     'rest_param_cdr_linkedid' => 'Filtr: linkedid üzrə dəqiq axtarış (tək zəngin bütün qeydlərini əldə etmək üçün)',
+    'rest_param_cdr_provider' => 'Filtr üçün provayder identifikatoru (məsələn, SIP-TRUNK-xxx)',
     'rest_schema_cq_redirect_to_extension_if_empty_represent' => 'Boş növbə üçün əlavənin HTML təsviri',
     'rest_schema_da_name' => 'Dialplan tətbiqinin adı',
     'rest_param_ak_allowed_paths_permissions' => 'API son nöqtələrinə giriş hüquqlarına malik obyekt. Açar API yollarıdır (məsələn, "/api/v3/extensions"), dəyərlər giriş səviyyələridir ("oxu" və ya "yaz")',
@@ -2166,6 +2167,8 @@ return [
     'rest_cdr_GetRecord' => 'ID ilə CDR qeydini əldə edin',
     'rest_cdr_Playback' => 'Zəng qeydini oxudun',
     'rest_cdr_GetMetadataDesc' => 'Tam məlumatları yükləmədən CDR qeydləri (ən son qeydlərdən tarix diapazonu) haqqında metaməlumat əldə edin. UI-ni mənalı bir tarix diapazonu ilə başlatmaq üçün istifadə olunur.',
+    'rest_cdr_GetStatsByProvider' => 'Provayderlər üzrə zəng statistikası',
+    'rest_cdr_GetStatsByProviderDesc' => 'Provayder/trunk üzrə qruplaşdırılmış ümumi zəng statistikasını əldə edin. Gələn və gedən zənglər üçün zəng sayını, ümumi müddəti və ödənilən saniyələri qaytarır.',
     // CDR schema fields
     'rest_schema_cdr_deleteRecording' => 'Zəng qeyd faylını verilənlər bazası qeydi ilə birlikdə silin (standart olaraq yalan)',
     'rest_schema_cdr_deleteLinked' => 'Eyni linkid ilə bütün qeydləri silin (tərcümələri olan bütün çağırış, standart olaraq yalan)',

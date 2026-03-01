@@ -1457,6 +1457,8 @@ return [
     'rest_cdr_DeleteDesc' => '通話詳細録音を削除します。2つのモードをサポートしています。数値ID（例：718517）で単一の録音を削除するか、リンクID（例：mikopbx-1760784793.4627）でリンクされたすべての録音を削除します。deleteRecording=true パラメータを指定すると、すべての形式（.mp3、.wav、.ogg）の通話録音ファイルも削除されます。',
     'rest_cdr_GetMetadata' => 'CDRメタデータを取得する',
     'rest_cdr_GetMetadataDesc' => 'CDRレコードのメタデータ（最新レコードからの日付範囲）を、全データをロードせずに取得します。UIを意味のある日付範囲で初期化するために使用されます。',
+    'rest_cdr_GetStatsByProvider' => 'プロバイダー別通話統計',
+    'rest_cdr_GetStatsByProviderDesc' => 'プロバイダー/トランク別にグループ化された集計通話統計を取得します。着信および発信通話の通話数、合計時間、課金秒数を返します。',
     'rest_cdr_Download' => '会話の録音をダウンロードする',
     'rest_cdr_DownloadDesc' => '通話録音を指定された名前のファイルとしてダウンロードします（Content-Disposition: attachment）',
     // CDR schema fields
@@ -2057,6 +2059,7 @@ return [
     'rest_s3_TestConnection' => 'S3接続をテストする',
     'rest_param_cdr_did' => 'フィルター: 着信DID番号',
     'rest_param_cdr_linkedid' => 'フィルター: linkedid による正確な検索 (1 回の通話のすべての記録を取得する)',
+    'rest_param_cdr_provider' => 'フィルタリング用プロバイダー識別子（例：SIP-TRUNK-xxx）',
     'rest_param_cdr_view' => '通話録音ファイルへのパス（非推奨、トークンを使用）',
     'rest_schema_fw_permit' => '許可された IP アドレスとサブネット (CIDR 表記)',
     'rest_schema_am_perm_user_write' => 'ユーザーイベント（UserEvent）を送信する権限',

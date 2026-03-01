@@ -53,13 +53,13 @@ use MikoPBX\PBXCoreREST\Attributes\{
 )]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getList', 'getRecord', 'getMetadata', 'playback', 'download'],
+        'GET' => ['getList', 'getRecord', 'getMetadata', 'getStatsByProvider', 'playback', 'download'],
         'DELETE' => ['delete'],
         'HEAD' => ['playback']
     ],
     resourceLevelMethods: ['getRecord', 'delete'],
-    collectionLevelMethods: ['getList', 'getMetadata', 'playback', 'download'],
-    customMethods: ['getMetadata', 'playback', 'download'],
+    collectionLevelMethods: ['getList', 'getMetadata', 'getStatsByProvider', 'playback', 'download'],
+    customMethods: ['getMetadata', 'getStatsByProvider', 'playback', 'download'],
     // WHY: idPattern accepts both numeric ID and linkedid for routing flexibility
     // Array of prefixes: each prefix + [^/:]+
     // '' generates [^/:]+  (matches numeric ID like "718517")
@@ -158,6 +158,32 @@ class RestController extends BaseRestController
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function getMetadata(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get aggregated CDR statistics grouped by provider/trunk
+     *
+     * Returns call counts and duration totals per trunk, split by direction
+     * (incoming/outgoing). Useful for monitoring, dashboards, and reporting.
+     *
+     * @route GET /pbxcore/api/v3/cdr:getStatsByProvider
+     */
+    #[ResourceSecurity('cdr', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+    #[ApiOperation(
+        summary: 'rest_cdr_GetStatsByProvider',
+        description: 'rest_cdr_GetStatsByProviderDesc',
+        operationId: 'getCdrStatsByProvider'
+    )]
+    #[ApiParameterRef('dateFrom', required: true)]
+    #[ApiParameterRef('dateTo', required: true)]
+    #[ApiParameterRef('provider')]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(422, 'rest_response_422_validation_error', 'PBXApiResult')]
+    public function getStatsByProvider(): void
     {
         // Implementation handled by BaseRestController
     }

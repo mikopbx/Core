@@ -1556,6 +1556,7 @@ return [
     'rest_param_cdr_dst_num' => 'Suodatin: kohdenumero',
     'rest_param_cdr_did' => 'Suodatin: saapuva DID-numero',
     'rest_param_cdr_linkedid' => 'Suodatin: Tarkka haku linkedid:n perusteella (kaikkien yksittäisen puhelun tietojen hakemiseksi)',
+    'rest_param_cdr_provider' => 'Palveluntarjoajan tunniste suodatukseen (esim. SIP-TRUNK-xxx)',
     'rest_param_cdr_token' => 'Väliaikainen käyttöoikeustunnus puhelutallenteen toistamiseen (mieluiten katselua varten)',
     // System Advice schema field descriptions
     'rest_schema_advice_advice' => 'Järjestelmäilmoitusten sanakirja luokittain ryhmiteltynä',
@@ -2205,6 +2206,8 @@ return [
     'rest_net_SaveConfig' => 'Tallenna verkkoasetukset',
     'rest_cdr_GetMetadata' => 'Hae CDR-metatiedot',
     'rest_cdr_GetMetadataDesc' => 'Hae CDR-tietueiden metatietoja (päivämääräväli viimeisimmistä tietueista) lataamatta koko dataa. Käytetään käyttöliittymän alustamiseen merkityksellisellä päivämäärävälillä.',
+    'rest_cdr_GetStatsByProvider' => 'Puhelutilastot palveluntarjoajan mukaan',
+    'rest_cdr_GetStatsByProviderDesc' => 'Hae kootut puhelutilastot palveluntarjoajan/trunkin mukaan ryhmiteltynä. Palauttaa puhelumäärät, kokonaiskeston ja laskutettavat sekunnit saapuville ja lähteville puheluille.',
     'rest_cdr_Download' => 'Lataa keskustelun tallenne',
     'rest_cdr_DownloadDesc' => 'Lataa puhelutallenne tiedostona määritetyllä nimellä (Content-Disposition: attachment)',
     // CDR schema fields

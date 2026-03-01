@@ -611,6 +611,7 @@ return [
     'rest_param_cdr_search' => 'Recherche intelligente par CDR et extensions. Prise en charge des préfixes pour une recherche précise : src:numéro (source), dst:numéro (destination), did:numéro (numéro DID entrant). Sans préfixe, la recherche s’effectue sur tous les champs, y compris les noms des employés et les numéros de téléphone mobile.',
     'rest_param_cdr_disposition' => 'Filtre : État de fin d’appel',
     'rest_param_cdr_linkedid' => 'Filtre : Recherche exacte par linkedid (pour récupérer tous les enregistrements d’un seul appel)',
+    'rest_param_cdr_provider' => 'Identifiant du fournisseur pour le filtrage (ex. SIP-TRUNK-xxx)',
     'rest_param_cdr_download' => 'Téléchargez le fichier au lieu de le regarder en streaming.',
     'rest_param_cdr_deleteRecording' => 'Supprime le fichier d\'enregistrement de l\'appel ainsi que l\'entrée correspondante dans la base de données. Supprime tous les formats de fichiers (.mp3, .wav, .ogg). Valeur par défaut : false',
     // Authentication specific parameters
@@ -1813,6 +1814,8 @@ return [
     'rest_cdr_DeleteDesc' => 'Supprimer l\'enregistrement d\'un appel. Deux modes sont disponibles : suppression d\'un enregistrement unique par son identifiant numérique (ex. : 718517) ou suppression de tous les enregistrements liés par leur identifiant (ex. : mikopbx-1760784793.4627). Le paramètre deleteRecording=true supprime également les fichiers d\'enregistrement d\'appels de tous les formats (.mp3, .wav, .ogg).',
     'rest_cdr_GetMetadata' => 'Récupérer les métadonnées CDR',
     'rest_cdr_GetMetadataDesc' => 'Récupérez les métadonnées des enregistrements CDR (plage de dates à partir des enregistrements les plus récents) sans charger l\'intégralité des données. Permet d\'initialiser l\'interface utilisateur avec une plage de dates pertinente.',
+    'rest_cdr_GetStatsByProvider' => 'Statistiques d\'appels par fournisseur',
+    'rest_cdr_GetStatsByProviderDesc' => 'Obtenir des statistiques d\'appels agrégées regroupées par fournisseur/trunk. Retourne le nombre d\'appels, la durée totale et les secondes facturables pour les appels entrants et sortants.',
     'rest_cdr_Download' => 'Téléchargez l\'enregistrement de la conversation',
     'rest_cdr_DownloadDesc' => 'Télécharger l\'enregistrement de l\'appel sous forme de fichier avec le nom spécifié (Content-Disposition : pièce jointe)',
     // CDR schema fields

@@ -30,6 +30,7 @@ return [
     'rest_param_cdr_dst_num' => 'Filter: broj odredišta',
     'rest_param_cdr_disposition' => 'Filter: Status završetka poziva',
     'rest_param_cdr_linkedid' => 'Filter: Točno pretraživanje po linkedid-u (za dohvaćanje svih zapisa jednog poziva)',
+    'rest_param_cdr_provider' => 'Identifikator pružatelja za filtriranje (npr. SIP-TRUNK-xxx)',
     'rest_param_cdr_token' => 'Privremeni pristupni token za reprodukciju snimke poziva (poželjno za pregled)',
     'rest_param_cdr_view' => 'Put do datoteke snimke poziva (zastarjelo, koristite token)',
     'rest_param_cdr_download' => 'Preuzmite datoteku umjesto streaminga',
@@ -1004,6 +1005,8 @@ return [
     'rest_cdr_DeleteDesc' => 'Brisanje snimke detalja poziva. Podržava dva načina: brisanje jedne snimke prema numeričkom ID-u (npr. 718517) ili brisanje svih povezanih snimaka prema linkedID-u (npr. mikopbx-1760784793.4627). Parametar deleteRecording=true također briše datoteke snimki poziva svih formata (.mp3, .wav, .ogg).',
     'rest_cdr_GetMetadata' => 'Dohvati metapodatke CDR-a',
     'rest_cdr_GetMetadataDesc' => 'Dohvatite metapodatke o CDR zapisima (raspon datuma od najnovijih zapisa) bez učitavanja svih podataka. Koristi se za inicijalizaciju korisničkog sučelja sa značajnim rasponom datuma.',
+    'rest_cdr_GetStatsByProvider' => 'Statistike poziva po pružatelju',
+    'rest_cdr_GetStatsByProviderDesc' => 'Dohvatite agregirane statistike poziva grupirane po pružatelju/trunku. Vraća broj poziva, ukupno trajanje i naplative sekunde za dolazne i odlazne pozive.',
     'rest_cdr_Download' => 'Preuzmite snimku razgovora',
     'rest_cdr_DownloadDesc' => 'Preuzmite snimku poziva kao datoteku s navedenim nazivom (Sadržaj-Raspored: privitak)',
     // CDR schema fields

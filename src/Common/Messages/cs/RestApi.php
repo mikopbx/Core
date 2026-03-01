@@ -639,6 +639,8 @@ return [
     'rest_cdr_Delete' => 'Smazat záznam(y) CDR',
     'rest_cdr_DeleteDesc' => 'Smazání záznamu s podrobnostmi o hovoru. Podporuje dva režimy: smazání jednoho záznamu podle číselného ID (např. 718517) nebo smazání všech propojených záznamů podle linkedID (např. mikopbx-1760784793.4627). Parametr deleteRecording=true také smaže soubory záznamů hovorů všech formátů (.mp3, .wav, .ogg).',
     'rest_cdr_GetMetadataDesc' => 'Získává metadata o záznamech CDR (rozsah dat z nejnovějších záznamů) bez načítání všech dat. Používá se k inicializaci uživatelského rozhraní se smysluplným rozsahem dat.',
+    'rest_cdr_GetStatsByProvider' => 'Statistiky hovorů podle poskytovatele',
+    'rest_cdr_GetStatsByProviderDesc' => 'Získat agregované statistiky hovorů seskupené podle poskytovatele/trunku. Vrací počty hovorů, celkovou dobu trvání a účtovatelné sekundy pro příchozí a odchozí hovory.',
     'rest_cdr_Download' => 'Stáhněte si nahrávku rozhovoru',
     'rest_cdr_DownloadDesc' => 'Stáhnout záznam hovoru jako soubor se zadaným názvem (Obsah-Dispozice: příloha)',
     // CDR schema fields
@@ -1452,6 +1454,7 @@ return [
     'rest_param_emp_username' => 'Uživatelské jméno (celé jméno zaměstnance)',
     'rest_param_emp_email' => 'E-mailová adresa zaměstnance',
     'rest_param_cdr_linkedid' => 'Filtr: Přesné vyhledávání podle linkedid (pro načtení všech záznamů o jednom hovoru)',
+    'rest_param_cdr_provider' => 'Identifikátor poskytovatele pro filtrování (např. SIP-TRUNK-xxx)',
     'rest_param_emp_mobile' => 'Mobilní telefonní číslo zaměstnance',
     'rest_param_emp_export_number_from' => 'Číslo počátečního rozsahu pro export',
     'rest_param_emp_upload_id' => 'ID staženého souboru z dočasného souborového systému',

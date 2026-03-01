@@ -572,6 +572,7 @@ return [
     'rest_param_cdr_dst_num' => 'Filtr: numer docelowy',
     'rest_param_cdr_disposition' => 'Filtr: Status zakończenia połączenia',
     'rest_param_cdr_linkedid' => 'Filtr: Dokładne wyszukiwanie według linkedid (w celu pobrania wszystkich rekordów pojedynczego połączenia)',
+    'rest_param_cdr_provider' => 'Identyfikator dostawcy do filtrowania (np. SIP-TRUNK-xxx)',
     'rest_param_auth_rememberMe' => 'Zapamiętaj urządzenie (przedłużona ważność tokena odświeżania)',
     'rest_param_auth_refreshToken' => 'Odśwież token, aby uzyskać nowy token dostępu',
     'rest_param_auth_token' => 'Token JWT do walidacji',
@@ -1647,6 +1648,8 @@ return [
     'rest_cdr_DeleteDesc' => 'Usuń nagranie ze szczegółami rozmowy. Obsługuje dwa tryby: usuwanie pojedynczego nagrania według identyfikatora numerycznego (np. 718517) lub usuwanie wszystkich powiązanych nagrań według identyfikatora (np. mikopbx-1760784793.4627). Parametr deleteRecording=true usuwa również pliki nagrań rozmów we wszystkich formatach (.mp3, .wav, .ogg).',
     'rest_cdr_GetMetadata' => 'Pobierz metadane CDR',
     'rest_cdr_GetMetadataDesc' => 'Pobierz metadane dotyczące rekordów CDR (zakres dat od najnowszych rekordów) bez ładowania pełnych danych. Służy do inicjalizacji interfejsu użytkownika z sensownym zakresem dat.',
+    'rest_cdr_GetStatsByProvider' => 'Statystyki połączeń według dostawcy',
+    'rest_cdr_GetStatsByProviderDesc' => 'Pobierz zagregowane statystyki połączeń pogrupowane według dostawcy/trunka. Zwraca liczbę połączeń, łączny czas trwania i sekundy rozliczeniowe dla połączeń przychodzących i wychodzących.',
     'rest_cdr_Download' => 'Pobierz nagranie rozmowy',
     'rest_cdr_DownloadDesc' => 'Pobierz nagranie rozmowy jako plik o określonej nazwie (Content-Disposition: załącznik)',
     // CDR schema fields

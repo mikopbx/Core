@@ -318,6 +318,14 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'in' => 'query',
                 'example' => '1705315845.1'
             ],
+            'provider' => [
+                'type' => 'string',
+                'description' => 'rest_param_cdr_provider',
+                'sanitize' => 'string',
+                'maxLength' => 64,
+                'in' => 'query',
+                'example' => 'SIP-TRUNK-66453e4b8831f'
+            ],
 
             // ========== PLAYBACK PARAMETERS ==========
             'token' => [

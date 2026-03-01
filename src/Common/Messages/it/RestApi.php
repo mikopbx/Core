@@ -532,6 +532,7 @@ return [
     'rest_param_cdr_did' => 'Filtro: numero DID in entrata',
     'rest_param_cdr_disposition' => 'Filtro: Stato di fine chiamata',
     'rest_param_cdr_linkedid' => 'Filtro: Ricerca esatta per linkedid (per recuperare tutti i record di una singola chiamata)',
+    'rest_param_cdr_provider' => 'Identificatore del provider per il filtraggio (es. SIP-TRUNK-xxx)',
     'rest_param_cdr_token' => 'Un token di accesso temporaneo per riprodurre la registrazione della chiamata (preferibilmente per visualizzarla)',
     'rest_param_cdr_deleteRecording' => 'Elimina il file di registrazione della chiamata insieme alla voce del database. Elimina tutti i formati di file (.mp3, .wav, .ogg). Predefinito: falso',
     'rest_param_auth_userAgent' => 'User-Agent del browser client',
@@ -1786,6 +1787,8 @@ return [
     'rest_cdr_DeleteDesc' => 'Elimina una registrazione dei dettagli di una chiamata. Supporta due modalità: eliminazione di una singola registrazione tramite ID numerico (ad esempio, 718517) o eliminazione di tutte le registrazioni collegate tramite ID collegato (ad esempio, mikopbx-1760784793.4627). Il parametro deleteRecording=true elimina anche i file di registrazione delle chiamate di tutti i formati (.mp3, .wav, .ogg).',
     'rest_cdr_GetMetadata' => 'Ottieni metadati CDR',
     'rest_cdr_GetMetadataDesc' => 'Ottieni metadati sui record CDR (intervallo di date a partire dai record più recenti) senza caricare i dati completi. Utilizzato per inizializzare l\'interfaccia utente con un intervallo di date significativo.',
+    'rest_cdr_GetStatsByProvider' => 'Statistiche chiamate per provider',
+    'rest_cdr_GetStatsByProviderDesc' => 'Ottieni statistiche aggregate delle chiamate raggruppate per provider/trunk. Restituisce il conteggio delle chiamate, la durata totale e i secondi fatturabili per le chiamate in entrata e in uscita.',
     'rest_cdr_Download' => 'Scarica la registrazione della conversazione',
     'rest_cdr_DownloadDesc' => 'Scarica la registrazione della chiamata come file con il nome specificato (Content-Disposition: attachment)',
     // CDR schema fields

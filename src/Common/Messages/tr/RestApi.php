@@ -176,6 +176,7 @@ return [
     'rest_param_cdr_did' => 'Filtre: gelen DID numarası',
     'rest_param_cdr_disposition' => 'Filtre: Çağrı Sonlandırma Durumu',
     'rest_param_cdr_linkedid' => 'Filtre: linkedid\'ye göre tam arama (tek bir aramaya ait tüm kayıtları almak için)',
+    'rest_param_cdr_provider' => 'Filtreleme için sağlayıcı tanımlayıcısı (örn. SIP-TRUNK-xxx)',
     'rest_param_cdr_token' => 'Çağrı kaydını oynatmak için geçici erişim belirteci (tercihen görüntülemek için)',
     'rest_param_cdr_view' => 'Çağrı kayıt dosyasının yolu (kullanımdan kaldırıldı, belirteç kullanın)',
     'rest_param_cdr_download' => 'Dosyayı indirmek yerine çevrimiçi olarak izlemek yerine indirin.',
@@ -1485,6 +1486,8 @@ return [
     'rest_cdr_DeleteDesc' => 'Çağrı detay kaydını silme. İki modu destekler: sayısal kimliğe göre tek bir kaydı silme (örneğin, 718517) veya bağlantılı kimliğe göre tüm bağlantılı kayıtları silme (örneğin, mikopbx-1760784793.4627). deleteRecording=true parametresi ayrıca tüm formatlardaki (.mp3, .wav, .ogg) çağrı kayıt dosyalarını da siler.',
     'rest_cdr_GetMetadata' => 'CDR meta verilerini alın',
     'rest_cdr_GetMetadataDesc' => 'CDR kayıtları hakkında meta verileri (en son kayıtlardan itibaren tarih aralığı) tüm verileri yüklemeden alın. Kullanıcı arayüzünü anlamlı bir tarih aralığıyla başlatmak için kullanılır.',
+    'rest_cdr_GetStatsByProvider' => 'Sağlayıcıya göre arama istatistikleri',
+    'rest_cdr_GetStatsByProviderDesc' => 'Sağlayıcı/trunk\'a göre gruplandırılmış toplu arama istatistiklerini alın. Gelen ve giden aramalar için arama sayılarını, toplam süreyi ve faturalandırılabilir saniyeleri döndürür.',
     'rest_cdr_Download' => 'Konuşmanın kaydını indirin.',
     'rest_cdr_DownloadDesc' => 'Çağrı kaydını belirtilen adla bir dosya olarak indirin (Content-Disposition: attachment)',
     // CDR schema fields

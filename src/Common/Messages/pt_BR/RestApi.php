@@ -419,6 +419,8 @@ return [
     'rest_cdr_DeleteDesc' => 'Excluir uma gravação de detalhes de chamada. Suporta dois modos: excluir uma única gravação por ID numérico (por exemplo, 718517) ou excluir todas as gravações vinculadas por ID vinculado (por exemplo, mikopbx-1760784793.4627). O parâmetro deleteRecording=true também exclui arquivos de gravação de chamadas de todos os formatos (.mp3, .wav, .ogg).',
     'rest_cdr_GetMetadata' => 'Obter metadados de CDR',
     'rest_cdr_GetMetadataDesc' => 'Obtenha metadados sobre registros CDR (intervalo de datas a partir dos registros mais recentes) sem carregar todos os dados. Usado para inicializar a interface do usuário com um intervalo de datas significativo.',
+    'rest_cdr_GetStatsByProvider' => 'Estatísticas de chamadas por provedor',
+    'rest_cdr_GetStatsByProviderDesc' => 'Obter estatísticas agregadas de chamadas agrupadas por provedor/trunk. Retorna contagem de chamadas, duração total e segundos faturáveis para chamadas de entrada e saída.',
     'rest_cdr_Download' => 'Baixe a gravação da conversa.',
     'rest_cdr_DownloadDesc' => 'Faça o download da gravação da chamada como um arquivo com o nome especificado (Content-Disposition: attachment).',
     // CDR schema fields
@@ -2280,6 +2282,7 @@ return [
     'rest_param_cdr_did' => 'Filtro: número DID de entrada',
     'rest_param_cdr_disposition' => 'Filtro: Status de término da chamada',
     'rest_param_cdr_linkedid' => 'Filtro: Busca exata por linkedid (para recuperar todos os registros de uma única chamada)',
+    'rest_param_cdr_provider' => 'Identificador do provedor para filtragem (ex. SIP-TRUNK-xxx)',
     'rest_param_cdr_token' => 'Um token de acesso temporário para reproduzir a gravação da chamada (preferencialmente para visualização).',
     'rest_schema_s3_region' => 'ID da região da AWS ou região de serviço S3 equivalente',
     'IAX Providers' => 'provedor IAX',

@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use MikoPBX\PBXCoreREST\Lib\Cdr\GetListAction;
 use MikoPBX\PBXCoreREST\Lib\Cdr\GetRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Cdr\GetMetadataAction;
+use MikoPBX\PBXCoreREST\Lib\Cdr\GetStatsByProviderAction;
 use MikoPBX\PBXCoreREST\Lib\Cdr\PlaybackAction;
 use MikoPBX\PBXCoreREST\Lib\Cdr\DownloadRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Cdr\DeleteRecordAction;
@@ -39,6 +40,7 @@ enum CdrAction: string
 
     // CDR specific operations
     case GET_METADATA = 'getMetadata';
+    case GET_STATS_BY_PROVIDER = 'getStatsByProvider';
     case PLAYBACK = 'playback';
     case DOWNLOAD = 'download';
 }
@@ -53,6 +55,7 @@ enum CdrAction: string
  * - GET /cdr/{id}                -> getRecord
  * - DELETE /cdr/{id}             -> delete
  * - GET /cdr:getMetadata         -> getMetadata
+ * - GET /cdr:getStatsByProvider  -> getStatsByProvider
  * - GET /cdr/{id}:playback       -> playback
  * - GET /cdr/{id}:download       -> download
  *
@@ -106,6 +109,7 @@ class CdrManagementProcessor extends Injectable
 
             // CDR specific operations
             CdrAction::GET_METADATA => GetMetadataAction::main($data),
+            CdrAction::GET_STATS_BY_PROVIDER => GetStatsByProviderAction::main($data),
             CdrAction::PLAYBACK => PlaybackAction::main($data),
             CdrAction::DOWNLOAD => DownloadRecordAction::main($data),
         };

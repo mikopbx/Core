@@ -374,6 +374,7 @@ return [
     'rest_param_cdr_did' => 'Filtro: número DID entrante',
     'rest_param_cdr_disposition' => 'Filtro: Estado de finalización de llamada',
     'rest_param_cdr_linkedid' => 'Filtro: Búsqueda exacta por linkedid (para recuperar todos los registros de una sola llamada)',
+    'rest_param_cdr_provider' => 'Identificador del proveedor para filtrar (ej. SIP-TRUNK-xxx)',
     'rest_param_cdr_token' => 'Un token de acceso temporal para reproducir la grabación de la llamada (preferiblemente para ver)',
     'rest_param_cdr_view' => 'Ruta al archivo de grabación de llamadas (obsoleto, use token)',
     'rest_param_cdr_download' => 'Descargue el archivo en lugar de transmitirlo',
@@ -1736,6 +1737,8 @@ return [
     'rest_cdr_GetList' => 'Obtenga una lista de registros CDR',
     'rest_cdr_GetRecord' => 'Obtener registro CDR por ID',
     'rest_cdr_GetMetadataDesc' => 'Obtiene metadatos de los registros CDR (rango de fechas desde los registros más recientes) sin cargar todos los datos. Se utiliza para inicializar la interfaz de usuario con un rango de fechas significativo.',
+    'rest_cdr_GetStatsByProvider' => 'Estadísticas de llamadas por proveedor',
+    'rest_cdr_GetStatsByProviderDesc' => 'Obtener estadísticas agregadas de llamadas agrupadas por proveedor/trunk. Devuelve recuento de llamadas, duración total y segundos facturables para llamadas entrantes y salientes.',
     'rest_cdr_Download' => 'Descargar la grabación de la conversación',
     'rest_cdr_DownloadDesc' => 'Descargue la grabación de la llamada como un archivo con el nombre especificado (Content-Disposition: attachment)',
     // CDR schema fields

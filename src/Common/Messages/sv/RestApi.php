@@ -285,6 +285,7 @@ return [
     'rest_param_cdr_dateTo' => 'Slutdatum för CDR-urvalsperioden',
     'rest_param_cdr_disposition' => 'Filter: Samtalsavslutsstatus',
     'rest_param_cdr_linkedid' => 'Filter: Exakt sökning med LinkedIn (för att hämta alla poster från ett enda samtal)',
+    'rest_param_cdr_provider' => 'Leverantörsidentifierare för filtrering (t.ex. SIP-TRUNK-xxx)',
     'rest_param_cdr_token' => 'En tillfällig åtkomsttoken för att spela upp samtalsinspelningen (helst för att visa)',
     'rest_param_cdr_view' => 'Sökväg till samtalsinspelningsfilen (föråldrad, använd token)',
     'rest_param_cdr_download' => 'Ladda ner filen istället för att streama',
@@ -1705,6 +1706,8 @@ return [
     'rest_cdr_DeleteDesc' => 'Radera en samtalsdetaljinspelning. Stöder två lägen: radera en enskild inspelning med numeriskt ID (t.ex. 718517) eller radera alla länkade inspelningar med länkat ID (t.ex. mikopbx-1760784793.4627). Parametern deleteRecording=true raderar även samtalsinspelningsfiler i alla format (.mp3, .wav, .ogg).',
     'rest_cdr_GetMetadata' => 'Hämta CDR-metadata',
     'rest_cdr_GetMetadataDesc' => 'Hämta metadata om CDR-poster (datumintervall från de senaste posterna) utan att läsa in all data. Används för att initiera användargränssnittet med ett meningsfullt datumintervall.',
+    'rest_cdr_GetStatsByProvider' => 'Samtalsstatistik per leverantör',
+    'rest_cdr_GetStatsByProviderDesc' => 'Hämta aggregerad samtalsstatistik grupperad per leverantör/trunk. Returnerar samtalsantal, total varaktighet och fakturerbara sekunder för inkommande och utgående samtal.',
     'rest_cdr_Download' => 'Ladda ner inspelningen av samtalet',
     'rest_cdr_DownloadDesc' => 'Ladda ner samtalsinspelningen som en fil med det angivna namnet (Content-Disposition: attachment)',
     // CDR schema fields

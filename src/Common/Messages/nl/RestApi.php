@@ -357,6 +357,7 @@ return [
     'rest_param_cdr_dateTo' => 'Einddatum van de CDR-bemonsteringsperiode',
     'rest_param_cdr_search' => 'Slim zoeken op CDR en extensies. Ondersteunt prefixen voor nauwkeurig zoeken: src:number (bron), dst:number (bestemming), did:number (inkomende DID). Zonder prefix kunt u zoeken op alle velden, inclusief namen van medewerkers en mobiele nummers.',
     'rest_param_cdr_linkedid' => 'Filter: Exacte zoekopdracht op linkedid (om alle records van één gesprek op te halen)',
+    'rest_param_cdr_provider' => 'Provider-identificatie voor filtering (bijv. SIP-TRUNK-xxx)',
     'rest_param_cdr_token' => 'Een tijdelijk toegangstoken voor het afspelen van de gespreksopname (bij voorkeur om te bekijken)',
     'rest_param_cdr_deleteRecording' => 'Verwijdert het gespreksopnamebestand samen met de database-invoer. Verwijdert alle bestandsformaten (.mp3, .wav, .ogg). Standaard: false',
     // Authentication schema field descriptions
@@ -1753,6 +1754,8 @@ return [
     'rest_cdr_Delete' => 'CDR-record(s) verwijderen',
     'rest_cdr_DeleteDesc' => 'Een gespreksdetailopname verwijderen. Ondersteunt twee modi: het verwijderen van een enkele opname op basis van een numerieke ID (bijv. 718517) of het verwijderen van alle gekoppelde opnames op basis van een gekoppelde ID (bijv. mikopbx-1760784793.4627). De parameter deleteRecording=true verwijdert ook gespreksopnamebestanden van alle formaten (.mp3, .wav, .ogg).',
     'rest_cdr_GetMetadataDesc' => 'Haal metadata op over CDR-records (datumbereik vanaf de laatste records) zonder de volledige gegevens te laden. Wordt gebruikt om de gebruikersinterface te initialiseren met een relevant datumbereik.',
+    'rest_cdr_GetStatsByProvider' => 'Belstatistieken per provider',
+    'rest_cdr_GetStatsByProviderDesc' => 'Verkrijg geaggregeerde belstatistieken gegroepeerd per provider/trunk. Retourneert aantal gesprekken, totale duur en factureerbare seconden voor inkomende en uitgaande gesprekken.',
     'rest_cdr_Download' => 'Download de opname van het gesprek',
     'rest_cdr_DownloadDesc' => 'Download de gespreksopname als bestand met de opgegeven naam (Content-Disposition: bijlage)',
     // CDR schema fields

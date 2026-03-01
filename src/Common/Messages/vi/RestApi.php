@@ -271,6 +271,7 @@ return [
     'rest_param_cdr_did' => 'Bộ lọc: Số DID đến',
     'rest_param_cdr_disposition' => 'Bộ lọc: Trạng thái kết thúc cuộc gọi',
     'rest_param_cdr_linkedid' => 'Bộ lọc: Tìm kiếm chính xác theo linkedid (để truy xuất tất cả các bản ghi của một cuộc gọi duy nhất)',
+    'rest_param_cdr_provider' => 'Mã định danh nhà cung cấp để lọc (ví dụ: SIP-TRUNK-xxx)',
     'rest_param_cdr_token' => 'Mã truy cập tạm thời để phát lại bản ghi âm cuộc gọi (ưu tiên xem).',
     'rest_param_cdr_view' => 'Đường dẫn đến tệp ghi âm cuộc gọi (đã lỗi thời, hãy sử dụng token)',
     'rest_param_cdr_download' => 'Tải xuống tệp thay vì xem trực tuyến',
@@ -1694,6 +1695,8 @@ return [
     'rest_cdr_DeleteDesc' => 'Xóa bản ghi chi tiết cuộc gọi. Hỗ trợ hai chế độ: xóa một bản ghi duy nhất theo ID số (ví dụ: 718517) hoặc xóa tất cả các bản ghi được liên kết theo ID liên kết (ví dụ: mikopbx-1760784793.4627). Tham số deleteRecording=true cũng xóa các tệp ghi âm cuộc gọi ở tất cả các định dạng (.mp3, .wav, .ogg).',
     'rest_cdr_GetMetadata' => 'Lấy siêu dữ liệu CDR',
     'rest_cdr_GetMetadataDesc' => 'Lấy siêu dữ liệu về các bản ghi CDR (khoảng thời gian từ các bản ghi mới nhất) mà không cần tải toàn bộ dữ liệu. Được sử dụng để khởi tạo giao diện người dùng với khoảng thời gian có ý nghĩa.',
+    'rest_cdr_GetStatsByProvider' => 'Thống kê cuộc gọi theo nhà cung cấp',
+    'rest_cdr_GetStatsByProviderDesc' => 'Lấy thống kê cuộc gọi tổng hợp được nhóm theo nhà cung cấp/trunk. Trả về số lượng cuộc gọi, tổng thời lượng và số giây tính phí cho cuộc gọi đến và đi.',
     'rest_cdr_Download' => 'Tải xuống bản ghi âm cuộc trò chuyện',
     'rest_cdr_DownloadDesc' => 'Tải xuống bản ghi âm cuộc gọi dưới dạng tệp có tên được chỉ định (Content-Disposition: attachment)',
     // CDR schema fields

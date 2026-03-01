@@ -662,6 +662,8 @@ return [
     'rest_tag_Users' => 'Brugere',
     'rest_param_am_secret' => 'AMI-godkendelsesadgangskode',
     'rest_cdr_GetMetadataDesc' => 'Hent metadata om CDR-poster (datointerval fra de seneste poster) uden at indlæse alle data. Bruges til at initialisere brugergrænsefladen med et meningsfuldt datointerval.',
+    'rest_cdr_GetStatsByProvider' => 'Opkaldsstatistik efter udbyder',
+    'rest_cdr_GetStatsByProviderDesc' => 'Hent aggregerede opkaldsstatistikker grupperet efter udbyder/trunk. Returnerer opkaldsantal, samlet varighed og fakturerbare sekunder for indgående og udgående opkald.',
     'rest_param_stg_filesystem' => 'Filsystemtype, der skal formateres (ext4 eller ext3)',
     'rest_schema_am_perm_verbose_write' => 'Tilladelse til kontrol på detaljeret niveau (ikke almindeligt anvendt)',
     'rest_pk_AuthenticationStart' => 'Start godkendelse via adgangsnøgle',
@@ -1198,6 +1200,7 @@ return [
     'rest_schema_users_language' => 'Foretrukket grænsefladesprog',
     'rest_schema_obr_note' => 'Bemærkning om routingreglen',
     'rest_param_cdr_linkedid' => 'Filter: Præcis søgning efter LinkedIn (for at hente alle poster fra et enkelt opkald)',
+    'rest_param_cdr_provider' => 'Udbyderidentifikator til filtrering (f.eks. SIP-TRUNK-xxx)',
     // Search REST API - Request Parameters
     'rest_param_search_query' => 'Søgeforespørgsel for at filtrere resultater (søg efter navn, nummer eller postnummer)',
     'rest_emp_GetRecordDesc' => 'Få detaljerede oplysninger om en medarbejder, herunder deres nummer, navn, e-mail og andre parametre.',

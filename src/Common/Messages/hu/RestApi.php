@@ -493,6 +493,7 @@ return [
     'rest_param_cdr_search' => 'Intelligens keresés CDR és mellékek alapján. Támogatja az előtagokat a pontos kereséshez: src:number (forrás), dst:number (célállomás), did:number (bejövő DID). Előtag nélkül minden mező alapján keres, beleértve az alkalmazottak nevét és a mobilszámot is.',
     'rest_param_cdr_src_num' => 'Szűrő: hívószám (forrásszám)',
     'rest_param_cdr_linkedid' => 'Szűrés: Pontos keresés linkedid alapján (egyetlen hívás összes rekordjának lekéréséhez)',
+    'rest_param_cdr_provider' => 'Szolgáltató azonosító szűréshez (pl. SIP-TRUNK-xxx)',
     'rest_param_cdr_view' => 'A hívásrögzítő fájl elérési útja (elavult, token használata)',
     'rest_param_auth_rememberMe' => 'Eszköz megjegyzése (kiterjesztett frissítési token érvényesség)',
     'rest_param_auth_token' => 'JWT token az érvényesítéshez',
@@ -1801,6 +1802,8 @@ return [
     'rest_cdr_DeleteDesc' => 'Hívásrészlet-felvétel törlése. Két módot támogat: egyetlen felvétel törlése numerikus azonosító alapján (pl. 718517) vagy az összes csatolt felvétel törlése csatolt azonosító alapján (pl. mikopbx-1760784793.4627). A deleteRecording=true paraméter minden formátumú (.mp3, .wav, .ogg) hívásfelvétel-fájlt is törli.',
     'rest_cdr_GetMetadata' => 'CDR metaadatok beszerzése',
     'rest_cdr_GetMetadataDesc' => 'CDR-rekordok metaadatainak lekérése (dátumtartomány a legutóbbi rekordokból) a teljes adatok betöltése nélkül. A felhasználói felület értelmes dátumtartománnyal való inicializálására szolgál.',
+    'rest_cdr_GetStatsByProvider' => 'Hívásstatisztikák szolgáltató szerint',
+    'rest_cdr_GetStatsByProviderDesc' => 'Összesített hívásstatisztikák lekérése szolgáltató/trunk szerint csoportosítva. Visszaadja a hívások számát, teljes időtartamát és számlázható másodperceit bejövő és kimenő hívásokhoz.',
     'rest_cdr_Download' => 'Töltsd le a beszélgetés felvételét',
     'rest_cdr_DownloadDesc' => 'Hívásfelvétel letöltése fájlként a megadott névvel (Tartalom-elhelyezés: melléklet)',
     // CDR schema fields

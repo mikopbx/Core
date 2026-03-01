@@ -237,6 +237,7 @@ return [
     'rest_param_cdr_did' => 'Filter: eingehende Rufnummer',
     'rest_param_cdr_disposition' => 'Filter: Anrufende-Status',
     'rest_param_cdr_linkedid' => 'Filter: Exakte Suche nach LinkedID (um alle Datensätze eines einzelnen Anrufs abzurufen)',
+    'rest_param_cdr_provider' => 'Anbieter-Kennung zum Filtern (z.B. SIP-TRUNK-xxx)',
     'rest_param_cdr_token' => 'Ein temporäres Zugriffstoken zum Abspielen der Anrufaufzeichnung (vorzugsweise zum Ansehen)',
     'rest_am_UpdateDesc' => 'Alle Parameter eines bestehenden Benutzer-AMI vollständig ersetzen',
     'rest_param_cdr_view' => 'Pfad zur Anrufaufzeichnungsdatei (veraltet, verwenden Sie ein Token)',
@@ -1560,6 +1561,8 @@ return [
     'rest_cdr_DeleteDesc' => 'Löscht eine Anrufdetailaufzeichnung. Unterstützt zwei Modi: Löschen einer einzelnen Aufzeichnung anhand der numerischen ID (z. B. 718517) oder Löschen aller verknüpften Aufzeichnungen anhand der verknüpften ID (z. B. mikopbx-1760784793.4627). Der Parameter `deleteRecording=true` löscht außerdem Anrufaufzeichnungsdateien aller Formate (.mp3, .wav, .ogg).',
     'rest_cdr_GetMetadata' => 'CDR-Metadaten abrufen',
     'rest_cdr_GetMetadataDesc' => 'Ruft Metadaten zu CDR-Einträgen (Datumsbereich ab den neuesten Einträgen) ab, ohne die vollständigen Daten zu laden. Dient zur Initialisierung der Benutzeroberfläche mit einem aussagekräftigen Datumsbereich.',
+    'rest_cdr_GetStatsByProvider' => 'Anrufstatistiken nach Anbieter',
+    'rest_cdr_GetStatsByProviderDesc' => 'Aggregierte Anrufstatistiken gruppiert nach Anbieter/Trunk abrufen. Gibt Anrufanzahl, Gesamtdauer und abrechenbare Sekunden für ein- und ausgehende Anrufe zurück.',
     'rest_cdr_Download' => 'Laden Sie die Aufzeichnung des Gesprächs herunter.',
     'rest_cdr_DownloadDesc' => 'Laden Sie die Anrufaufzeichnung als Datei mit dem angegebenen Namen herunter (Content-Disposition: attachment).',
     // ============================================================================
