@@ -32,6 +32,9 @@ import time
 import pytest
 import requests
 from conftest import MikoPBXClient
+from config import get_config
+
+config = get_config()
 
 
 class Test00SystemReset:
@@ -207,8 +210,7 @@ class Test00SystemReset:
 
             try:
                 # Try to create new client and authenticate
-                from conftest import API_URL, API_USERNAME, API_PASSWORD
-                test_client = MikoPBXClient(API_URL, API_USERNAME, API_PASSWORD)
+                test_client = MikoPBXClient(config.api_url, config.api_username, config.api_password)
                 test_client.authenticate()
 
                 # If we got here, system is back!

@@ -26,7 +26,11 @@ Migration Note (2025-12):
 
 import pytest
 import requests
-from conftest import MikoPBXClient, API_URL, assert_api_success
+from conftest import MikoPBXClient, assert_api_success
+from config import get_config
+
+config = get_config()
+API_URL = config.api_url
 
 # HTTP Status Code Constants for readability
 HTTP_OK = 200

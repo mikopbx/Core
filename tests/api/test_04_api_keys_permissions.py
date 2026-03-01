@@ -22,7 +22,7 @@ When full_permissions=true, all endpoints are accessible (allowed_paths ignored)
 
 import pytest
 import time
-from conftest import assert_api_success
+from conftest import assert_api_success, MikoPBXClient
 
 
 class TestApiKeyPermissions:
@@ -245,7 +245,7 @@ class TestApiKeyPermissions:
             pytest.skip("Read-only key not created")
 
         # Create temporary API client with read-only key
-        from conftest import MikoPBXClient
+
         readonly_client = MikoPBXClient(
             base_url=api_client.base_url,
             auth_token=self.readonly_key,
@@ -268,7 +268,7 @@ class TestApiKeyPermissions:
             pytest.skip("Read-only key not created")
 
         # Create temporary API client with read-only key
-        from conftest import MikoPBXClient
+
         readonly_client = MikoPBXClient(
             base_url=api_client.base_url,
             auth_token=self.readonly_key,
@@ -310,7 +310,7 @@ class TestApiKeyPermissions:
             pytest.skip("Read-only key not created")
 
         # Create temporary API client with read-only key
-        from conftest import MikoPBXClient
+
         readonly_client = MikoPBXClient(
             base_url=api_client.base_url,
             auth_token=self.readonly_key,
@@ -339,7 +339,7 @@ class TestApiKeyPermissions:
         if not hasattr(self.__class__, 'write_key'):
             pytest.skip("Write key not created")
 
-        from conftest import MikoPBXClient
+
         write_client = MikoPBXClient(
             base_url=api_client.base_url,
             auth_token=self.write_key,
@@ -360,7 +360,7 @@ class TestApiKeyPermissions:
         if not hasattr(self.__class__, 'write_key'):
             pytest.skip("Write key not created")
 
-        from conftest import MikoPBXClient
+
         write_client = MikoPBXClient(
             base_url=api_client.base_url,
             auth_token=self.write_key,
@@ -393,7 +393,7 @@ class TestApiKeyPermissions:
         if not hasattr(self.__class__, 'write_key'):
             pytest.skip("Write key not created")
 
-        from conftest import MikoPBXClient
+
         write_client = MikoPBXClient(
             base_url=api_client.base_url,
             auth_token=self.write_key,
@@ -425,7 +425,7 @@ class TestApiKeyPermissions:
         if not hasattr(self.__class__, 'forbidden_key'):
             pytest.skip("Forbidden key not created")
 
-        from conftest import MikoPBXClient
+
         forbidden_client = MikoPBXClient(
             base_url=api_client.base_url,
             auth_token=self.forbidden_key,
@@ -456,7 +456,7 @@ class TestApiKeyPermissions:
         if not hasattr(self.__class__, 'forbidden_key'):
             pytest.skip("Forbidden key not created")
 
-        from conftest import MikoPBXClient
+
         forbidden_client = MikoPBXClient(
             base_url=api_client.base_url,
             auth_token=self.forbidden_key,
@@ -478,7 +478,7 @@ class TestApiKeyPermissions:
         if not hasattr(self.__class__, 'full_key'):
             pytest.skip("Full permissions key not created")
 
-        from conftest import MikoPBXClient
+
         full_client = MikoPBXClient(
             base_url=api_client.base_url,
             auth_token=self.full_key,
@@ -515,7 +515,7 @@ class TestApiKeyPermissions:
            not hasattr(self.__class__, 'full_key'):
             pytest.skip("Keys not created")
 
-        from conftest import MikoPBXClient
+
 
         readonly_client = MikoPBXClient(
             base_url=api_client.base_url,
@@ -640,7 +640,7 @@ class TestJwtVsApiKeyPermissions:
         key_id = create_response['data']['id']
 
         # Step 2: Create client with restricted API key
-        from conftest import MikoPBXClient
+
         restricted_client = MikoPBXClient(
             base_url=api_client.base_url,
             auth_token=generated_key

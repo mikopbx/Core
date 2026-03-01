@@ -19,7 +19,11 @@ Full E2E testing requires browser automation with WebAuthn support.
 """
 
 import pytest
+from urllib.parse import urlparse
 from conftest import assert_api_success
+from config import get_config
+
+config = get_config()
 
 
 class TestPasskeys:
@@ -165,8 +169,10 @@ class TestPasskeys:
         """
         import urllib.parse
 
-        # Use proper origin parameter
-        origin = urllib.parse.quote('https://mikopbx-php83.localhost:8081', safe='')
+        # Use proper origin parameter derived from config
+        parsed = urlparse(config.api_url)
+        base_origin = f"{parsed.scheme}://{parsed.netloc}"
+        origin = urllib.parse.quote(base_origin, safe='')
 
         try:
             response = api_client.get(f'passkeys:authenticationStart?origin={origin}')

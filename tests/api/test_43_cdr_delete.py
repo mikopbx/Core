@@ -33,6 +33,9 @@ HOW TO RUN:
 
 import pytest
 from conftest import assert_api_success
+from config import get_config
+
+config = get_config()
 
 
 def extract_cdr_data(response):
@@ -110,7 +113,7 @@ INSERT INTO cdr_general (
             # Escape single quotes in SQL for bash -c execution
             escaped_sql = sql_commands.replace("'", "'\"'\"'")
             response = api_client.post('system:executeBashCommand', data={
-                'command': f"sqlite3 /storage/usbdisk1/mikopbx/astlogs/asterisk/cdr.db '{escaped_sql}'"
+                'command': f"sqlite3 {config.cdr_database_path} '{escaped_sql}'"
             })
 
             if response.get('result'):

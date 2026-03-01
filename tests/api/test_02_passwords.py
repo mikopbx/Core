@@ -11,6 +11,9 @@ Tests the /pbxcore/api/v3/passwords endpoint for:
 
 import pytest
 from conftest import assert_api_success
+from config import get_config
+
+config = get_config()
 
 
 class TestPasswords:
@@ -181,7 +184,7 @@ class TestPasswords:
         """
         reset_data = {
             'email': 'admin@example.com',
-            'username': 'admin'
+            'username': config.api_username
         }
 
         try:
@@ -306,7 +309,7 @@ class TestPasswordsEdgeCases:
         """Test POST /passwords:reset with invalid email format"""
         reset_data = {
             'email': 'not-an-email',
-            'username': 'admin'
+            'username': config.api_username
         }
 
         try:

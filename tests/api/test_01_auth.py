@@ -22,7 +22,10 @@ NOTE: This test suite does NOT test the validateToken endpoint directly (localho
 
 import pytest
 import time
-from conftest import assert_api_success, API_USERNAME, API_PASSWORD
+from conftest import assert_api_success
+from config import get_config
+
+config = get_config()
 
 
 class TestAuth:
@@ -35,8 +38,8 @@ class TestAuth:
         """Test POST /auth:login - Login with username and password"""
         # Note: Using credentials from conftest.py
         login_data = {
-            'login': API_USERNAME,
-            'password': API_PASSWORD,
+            'login': config.api_username,
+            'password': config.api_password,
             'rememberMe': False
         }
 
@@ -74,8 +77,8 @@ class TestAuth:
     def test_02_login_remember_me(self, api_client):
         """Test POST /auth:login - Login with rememberMe=true"""
         login_data = {
-            'login': API_USERNAME,
-            'password': API_PASSWORD,
+            'login': config.api_username,
+            'password': config.api_password,
             'rememberMe': True
         }
 
@@ -184,8 +187,8 @@ class TestAuth:
     def test_08_login_again(self, api_client):
         """Test POST /auth:login - Login again after logout"""
         login_data = {
-            'login': API_USERNAME,
-            'password': API_PASSWORD,
+            'login': config.api_username,
+            'password': config.api_password,
             'rememberMe': False
         }
 
@@ -226,7 +229,7 @@ class TestAuthEdgeCases:
     def test_02_login_missing_password(self, api_client):
         """Test POST /auth:login - Missing password field"""
         incomplete_data = {
-            'login': 'admin'
+            'login': config.api_username
             # Missing password
         }
 
@@ -288,7 +291,7 @@ class TestAuthEdgeCases:
         # Create a new client without any cookies
         from conftest import MikoPBXClient
 
-        clean_client = MikoPBXClient(api_client.base_url, API_USERNAME, API_PASSWORD)
+        clean_client = MikoPBXClient(api_client.base_url, config.api_username, config.api_password)
         # Don't authenticate - no refresh token
 
         try:
@@ -309,7 +312,7 @@ class TestAuthEdgeCases:
         # Create a new client without authentication
         from conftest import MikoPBXClient
 
-        clean_client = MikoPBXClient(api_client.base_url, API_USERNAME, API_PASSWORD)
+        clean_client = MikoPBXClient(api_client.base_url, config.api_username, config.api_password)
 
         try:
             response = clean_client.post('auth:logout', {})
@@ -327,7 +330,7 @@ class TestAuthEdgeCases:
     def test_07_login_with_very_long_password(self, api_client):
         """Test POST /auth:login - Very long password (>255 chars)"""
         long_password_data = {
-            'login': 'admin',
+            'login': config.api_username,
             'password': 'A' * 300  # Exceeds max length
         }
 
@@ -367,8 +370,8 @@ class TestAuthEdgeCases:
     def test_09_multiple_concurrent_logins(self, api_client):
         """Test POST /auth:login - Multiple concurrent logins for same user"""
         login_data = {
-            'login': API_USERNAME,
-            'password': API_PASSWORD,
+            'login': config.api_username,
+            'password': config.api_password,
             'rememberMe': False
         }
 
