@@ -12,7 +12,6 @@ description: Tasks related to test frameworks, test infrastructure, and testing 
 - `h-fix-api-test-failures/` - Fix 22 failed REST API tests to achieve 100% pass rate (CDR seeding, extensions, custom files, SIP providers)
 
 ### Medium Priority
-- `m-refactor-api-tests-hardcoded-params.md` - Eliminate hardcoded paths, URLs, passwords in 9 Python API test files; use centralized config.py and api_client fixture
 
 ### Low Priority
 
