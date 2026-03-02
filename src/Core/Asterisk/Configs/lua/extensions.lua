@@ -133,10 +133,14 @@ function getSrcCallId()
     end
     -- Local channel created by Dial(Local/...) from a PJSIP trunk:
     -- read call-id from the master (parent) channel and cache for children.
-    local master_call_id = get_variable("MASTER_CHANNEL(CHANNEL(pjsip,call-id))");
-    if(master_call_id ~= '') then
-        set_variable("__pt1c_SRC_CALL_ID", master_call_id);
-        return master_call_id;
+    local master_chan = get_variable("MASTER_CHANNEL(CHANNEL)");
+    local master_is_pjsip = string.lower(master_chan):find("pjsip/") ~= nil
+    if(master_is_pjsip) then
+        local master_call_id = get_variable("MASTER_CHANNEL(CHANNEL(pjsip,call-id))");
+        if(master_call_id ~= '') then
+            set_variable("__pt1c_SRC_CALL_ID", master_call_id);
+            return master_call_id;
+        end
     end
     return '';
 end
