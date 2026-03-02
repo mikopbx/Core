@@ -11,6 +11,7 @@ This module provides:
 
 import json
 import os
+import time
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -1591,6 +1592,45 @@ def get_extension_secret(extension_number: str, api_client: 'MikoPBXClient' = No
     except Exception as e:
         print(f"⚠️ Failed to retrieve secret for extension {extension_number}: {e}")
         return None
+
+
+# ============================================================================
+# Worker Stabilization
+# ============================================================================
+
+
+def wait_for_worker_idle(api_client, timeout=45, min_wait=7):
+    """Wait until WorkerModelsEvents has processed all pending events.
+
+    WorkerModelsEvents debounces 5 seconds after the last model change
+    before executing reload actions (config regeneration, dialplan reload).
+    Checks Beanstalk tube stats to confirm no pending jobs remain.
+
+    Args:
+        api_client: Authenticated MikoPBXClient
+        timeout: Max seconds to poll after min_wait (default 45)
+        min_wait: Minimum wait covering 5s debounce + 2s buffer (default 7)
+
+    Returns:
+        True if worker became idle, False on timeout
+    """
+    time.sleep(min_wait)
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        response = api_client.post('system:executeBashCommand', {
+            'command': (
+                'echo -e "stats-tube MikoPBX-Core-Workers-WorkerModelsEvents\\r\\n"'
+                ' | nc -w1 127.0.0.1 11300 2>/dev/null'
+            )
+        })
+        output = response.get('data', {}).get('output', '')
+        # NOT_FOUND = tube doesn't exist = no pending jobs
+        if 'NOT_FOUND' in output:
+            return True
+        if 'current-jobs-ready: 0' in output:
+            return True
+        time.sleep(2)
+    return False
 
 
 # ============================================================================

@@ -781,5 +781,26 @@ def test_update_nonexistent_call_queue_returns_404(api_client):
         raise
 
 
+def test_wait_for_worker_stabilization(api_client):
+    """Wait for WorkerModelsEvents to finish processing all events from batch operations.
+
+    Batch creation/deletion of queues generates many events that WorkerModelsEvents
+    processes asynchronously. Without waiting, the next test module may start
+    while Asterisk is still reloading, causing flaky failures.
+    """
+    from conftest import wait_for_worker_idle
+
+    print(f"\n{'='*70}")
+    print(f"Waiting for WorkerModelsEvents stabilization...")
+    print(f"{'='*70}")
+
+    result = wait_for_worker_idle(api_client, timeout=45, min_wait=7)
+    assert result, (
+        "WorkerModelsEvents did not stabilize within timeout. "
+        "Beanstalk tube still has pending jobs."
+    )
+    print(f"✅ WorkerModelsEvents is idle, safe to proceed")
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s'])
