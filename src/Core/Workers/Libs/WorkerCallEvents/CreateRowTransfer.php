@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
@@ -150,9 +151,8 @@ class CreateRowTransfer
         // Send UserEvent
         $insert_data['action'] = 'transfer_dial_create_cdr';
 
-        $AgiData = base64_encode(json_encode($insert_data));
         $am = Util::getAstManager('off');
-        $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
+        $am->UserEvent('CdrConnector', ['AgiData' => AsteriskManager::encodeCdrData($insert_data)]);
 
         InsertDataToDB::execute($insert_data);
     }

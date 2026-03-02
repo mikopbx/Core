@@ -1713,4 +1713,70 @@ class AsteriskManager
 
         return true;
     }
+
+    /**
+     * Maximum safe length for AMI AgiData header value.
+     * Asterisk manager.c MAX_LEN is ~1024 bytes per line including "AgiData: " prefix.
+     * We target 900 bytes to leave headroom for the header name and line termination.
+     */
+    private const int CDR_DATA_MAX_PLAIN_LENGTH = 900;
+
+    /**
+     * Maximum display name length for src_name/dst_name fields.
+     * Safety net to prevent oversized payloads from long CallerID display names.
+     */
+    private const int CDR_NAME_MAX_LENGTH = 80;
+
+    /**
+     * Encodes CDR data array for transmission via AMI UserEvent AgiData header.
+     *
+     * Applies multi-layer optimization:
+     * 1. Strips keys with empty/null values to reduce payload size
+     * 2. Truncates src_name/dst_name to CDR_NAME_MAX_LENGTH characters
+     * 3. Encodes with compact JSON flags
+     * 4. Falls back to gzip compression (GZ: prefix) if base64 exceeds CDR_DATA_MAX_PLAIN_LENGTH
+     *
+     * @param array $data CDR data array
+     * @return string Base64-encoded string, optionally with "GZ:" prefix for gzip-compressed payloads
+     */
+    public static function encodeCdrData(array $data): string
+    {
+        // Strip empty string and null values
+        $data = array_filter($data, static fn($v) => $v !== '' && $v !== null);
+
+        // Truncate display names
+        foreach (['src_name', 'dst_name'] as $nameField) {
+            if (isset($data[$nameField]) && mb_strlen($data[$nameField]) > self::CDR_NAME_MAX_LENGTH) {
+                $data[$nameField] = mb_substr($data[$nameField], 0, self::CDR_NAME_MAX_LENGTH);
+            }
+        }
+
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $encoded = base64_encode($json);
+
+        if (strlen($encoded) > self::CDR_DATA_MAX_PLAIN_LENGTH) {
+            $compressed = gzencode($json, 9);
+            $encoded = 'GZ:' . base64_encode($compressed);
+        }
+
+        return $encoded;
+    }
+
+    /**
+     * Decodes CDR data string from AMI UserEvent AgiData header.
+     *
+     * Handles both formats:
+     * - Plain base64 (legacy and compact payloads)
+     * - "GZ:" prefixed gzip-compressed base64 (large payloads)
+     *
+     * @param string $encoded The encoded AgiData string
+     * @return string Decoded JSON string
+     */
+    public static function decodeCdrData(string $encoded): string
+    {
+        if (str_starts_with($encoded, 'GZ:')) {
+            return gzdecode(base64_decode(substr($encoded, 3)));
+        }
+        return base64_decode($encoded);
+    }
 }

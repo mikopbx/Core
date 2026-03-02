@@ -22,6 +22,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -141,9 +142,8 @@ class ActionDialAnswer
 
             // Create Asterisk Manager and send UserEvent.
             $new_data['action'] = 'answer_pickup_create_cdr';
-            $AgiData = base64_encode(json_encode($new_data));
             $am = Util::getAstManager('off');
-            $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
+            $am->UserEvent('CdrConnector', ['AgiData' => AsteriskManager::encodeCdrData($new_data)]);
         }
     }
 

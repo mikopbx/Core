@@ -33,6 +33,7 @@ use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAnswer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAttendedTransfer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
+use MikoPBX\Core\Asterisk\AsteriskManager;
 use Phalcon\Di\Di;
 use MikoPBX\Common\Library\Text;
 use Throwable;
@@ -488,10 +489,11 @@ class WorkerCallEvents extends WorkerBase
             return;
         }
 
-        // Try to decode the 'AppData' field from base64 and handle any errors
+        // Try to decode the 'AppData' field and handle any errors.
+        // Supports both plain base64 and GZ:-prefixed gzip-compressed payloads.
         try {
             $data = json_decode(
-                base64_decode($data['AppData'] ?? ''),
+                AsteriskManager::decodeCdrData($data['AppData'] ?? ''),
                 true,
                 512,
                 JSON_THROW_ON_ERROR

@@ -20,6 +20,7 @@
  */
 
 use MikoPBX\Core\Asterisk\AGI;
+use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\Asterisk\Configs\ResParkingConf;
 use MikoPBX\Core\System\Util;
 
@@ -115,6 +116,6 @@ function Event_unpark_call(AGI $agi): array
 
 $agi    = new AGI();
 $result = Event_unpark_call($agi);
-$data   = base64_encode(json_encode($result));
+$data   = AsteriskManager::encodeCdrData($result);
 $agi->exec("CELGenUserEvent", $data);
 $agi->exec("UserEvent", "CdrConnector,AgiData:$data");

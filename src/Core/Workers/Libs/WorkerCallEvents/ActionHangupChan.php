@@ -21,6 +21,7 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -358,8 +359,7 @@ class ActionHangupChan
             }
 
             // Sending UserEvent
-            $AgiData = base64_encode(json_encode($n_data));
-            $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
+            $am->UserEvent('CdrConnector', ['AgiData' => AsteriskManager::encodeCdrData($n_data)]);
         }
     }
 

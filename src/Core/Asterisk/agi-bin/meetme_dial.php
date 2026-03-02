@@ -20,6 +20,7 @@
  */
 
 use MikoPBX\Core\Asterisk\AGI;
+use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\Util;
 
@@ -115,6 +116,6 @@ function Event_meetme_dial(AGI $agi): array
 
 $agi    = new AGI();
 $result = Event_meetme_dial($agi);
-$data   = base64_encode(json_encode($result));
+$data   = AsteriskManager::encodeCdrData($result);
 $agi->exec("CELGenUserEvent", $data);
 $agi->exec("UserEvent", "CdrConnector,AgiData:$data");
