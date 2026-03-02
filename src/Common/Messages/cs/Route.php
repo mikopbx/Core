@@ -157,6 +157,7 @@ return [
     'ir_DefaultRoute' => 'Příchozí trasa výchozí',
     'ir_DidNumber' => 'Další číslo (DID)',
     'ir_DidNumberDescription' => 'Provider může poslat další číslo, toto je volitelné pole, ale v některých případech lze přesněji směrovat hovory.',
+    'ir_DidNumberPlaceholder' => 'Zadejte DID nebo vyberte z historie',
     'ir_EmptyTableDescription' => 'Příchozí trasy určují, kam směrovat hovory od providerů',
     'ir_EmptyTableTitle' => 'Nastavte příchozí směrování',
     'ir_Extension' => 'číslo',

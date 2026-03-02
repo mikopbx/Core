@@ -153,8 +153,10 @@ const incomingRouteModify = {
                         },
                         onChange: function(value, text) {
                             Form.dataChanged();
+                            incomingRouteModify.reloadDIDSuggestions(value);
                         }
                     });
+                    incomingRouteModify.initializeDIDDropdown(emptyData);
                     incomingRouteModify.initializeExtensionDropdown();
                     
                     // Show error if API failed
@@ -220,9 +222,13 @@ const incomingRouteModify = {
                     },
                     onChange: function(value, text) {
                         Form.dataChanged();
+                        incomingRouteModify.reloadDIDSuggestions(value);
                     }
                 });
-                
+
+                // Initialize DID number dropdown with CDR suggestions
+                incomingRouteModify.initializeDIDDropdown(formData);
+
                 // Initialize extension dropdown with current value and representation
                 const extensionValue = formData.extension || null;
                 const extensionText = formData.extension_represent || null;
@@ -266,6 +272,63 @@ const incomingRouteModify = {
         setTimeout(() => {
             FormElements.optimizeTextareaSize('textarea[name="note"]');
         }, 100);
+    },
+
+    /**
+     * Initialize DID number dropdown with CDR suggestions
+     * @param {object} data - Form data including current number value and providerid
+     */
+    initializeDIDDropdown(data = {}) {
+        const currentProviderId = data.providerid || 'none';
+        const numberData = {
+            number: data.number || '',
+            number_represent: data.number || '',
+        };
+
+        DynamicDropdownBuilder.buildDropdown('number', numberData, {
+            apiUrl: '/pbxcore/api/v3/incoming-routes:getUniqueDIDs',
+            apiParams: { providerid: currentProviderId },
+            allowAdditions: true,
+            emptyOption: {
+                key: '',
+                value: '&nbsp;'
+            },
+            additionalClasses: ['search'],
+            placeholder: globalTranslate.ir_DidNumberPlaceholder || '',
+            cache: false,
+            onChange: function(value, text) {
+                Form.dataChanged();
+            }
+        });
+    },
+
+    /**
+     * Reload DID suggestions when provider changes
+     * @param {string} providerId - New provider ID
+     */
+    reloadDIDSuggestions(providerId) {
+        const newProviderId = (!providerId || providerId === 'none') ? 'none' : providerId;
+        const currentNumber = $('#number').val() || '';
+        const numberData = {
+            number: currentNumber,
+            number_represent: currentNumber,
+        };
+
+        DynamicDropdownBuilder.buildDropdown('number', numberData, {
+            apiUrl: '/pbxcore/api/v3/incoming-routes:getUniqueDIDs',
+            apiParams: { providerid: newProviderId },
+            allowAdditions: true,
+            emptyOption: {
+                key: '',
+                value: '&nbsp;'
+            },
+            additionalClasses: ['search'],
+            placeholder: globalTranslate.ir_DidNumberPlaceholder || '',
+            cache: false,
+            onChange: function(value, text) {
+                Form.dataChanged();
+            }
+        });
     },
 
     /**

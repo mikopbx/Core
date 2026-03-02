@@ -99,6 +99,7 @@ return [
     'ir_DefaultRoute' => 'Indgående standardrute',
     'ir_DidNumber' => 'Yderligere nummer (DID)',
     'ir_DidNumberDescription' => 'Udbyderen kan sende et ekstra nummer, dette er et valgfrit felt, men i nogle tilfælde er det muligt at dirigere opkald mere præcist.',
+    'ir_DidNumberPlaceholder' => 'Indtast DID eller vælg fra historik',
     'ir_Extension' => 'nummer',
     'ir_ExtensionSelect' => 'At nummerere',
     'ir_Note' => 'En note',

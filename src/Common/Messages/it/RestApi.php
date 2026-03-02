@@ -1757,6 +1757,8 @@ return [
     'rest_ir_CopyDesc' => 'Crea una copia di un percorso in entrata esistente con una nuova priorità',
     'rest_ir_ChangePriority' => 'Cambia priorità del percorso',
     'rest_ir_ChangePriorityDesc' => 'Aggiorna l\'ordine di priorità per più percorsi in entrata contemporaneamente',
+    'rest_ir_GetUniqueDIDs' => 'Ottieni DID univoci',
+    'rest_ir_GetUniqueDIDsDesc' => 'Restituisce fino a 20 numeri DID univoci dalla cronologia delle chiamate per il provider specificato',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Identificatore univoco del percorso in arrivo',
     'rest_schema_ir_rulename' => 'Nome della regola del percorso in entrata',

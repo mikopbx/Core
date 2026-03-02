@@ -157,6 +157,7 @@ return [
     'ir_DefaultRoute' => 'Standaard inkomende route',
     'ir_DidNumber' => 'Extra nummer (DID)',
     'ir_DidNumberDescription' => 'Provider kan extra nummer doorsturen, dit is optioneel veld, maar in sommige gevallen kan het gesprekken nauwkeuriger routeren.',
+    'ir_DidNumberPlaceholder' => 'DID invoeren of selecteren uit geschiedenis',
     'ir_EmptyTableDescription' => 'Inkomende routes bepalen waar gesprekken van providers naartoe gaan',
     'ir_EmptyTableTitle' => 'Configureer inkomende routing',
     'ir_Extension' => 'Nummer',

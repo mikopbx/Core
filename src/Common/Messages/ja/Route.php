@@ -157,6 +157,7 @@ return [
     'ir_DefaultRoute' => 'デフォルト着信ルート',
     'ir_DidNumber' => '追加番号（DID）',
     'ir_DidNumberDescription' => 'プロバイダーは追加番号を送信する場合があります。これはオプションフィールドですが、場合によっては通話をより正確にルーティングできます。',
+    'ir_DidNumberPlaceholder' => 'DIDを入力するか履歴から選択してください',
     'ir_EmptyTableDescription' => '着信ルートは、プロバイダーからの通話をどこに向けるかを決定します',
     'ir_EmptyTableTitle' => '着信ルーティングを設定',
     'ir_Extension' => '番号',

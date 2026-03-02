@@ -157,6 +157,7 @@ return [
     'ir_DefaultRoute' => 'Gələn Defolt Marşrut',
     'ir_DidNumber' => 'Əlavə nömrə (DID)',
     'ir_DidNumberDescription' => 'Provayder əlavə nömrə göndərə bilər, bu isteğe bağlı sahədir, lakin bəzi hallarda zəngləri daha dəqiq istiqamətləndirmək mümkündür.',
+    'ir_DidNumberPlaceholder' => 'DID daxil edin və ya tarixçədən seçin',
     'ir_EmptyTableDescription' => 'Gələn marşrutlar provayderlərdən zənglərin necə yönləndirilməsini müəyyən edir',
     'ir_EmptyTableTitle' => 'Gələn marşrutları quraşdırın',
     'ir_Extension' => 'nömrə',

@@ -361,6 +361,8 @@ return [
     'rest_ir_CopyDesc' => 'Создать копию существующего входящего маршрута с новым приоритетом',
     'rest_ir_ChangePriority' => 'Изменить приоритет маршрутов',
     'rest_ir_ChangePriorityDesc' => 'Обновить порядок приоритетов для нескольких входящих маршрутов одновременно',
+    'rest_ir_GetUniqueDIDs' => 'Получить уникальные DID',
+    'rest_ir_GetUniqueDIDsDesc' => 'Возвращает до 20 уникальных DID номеров из истории звонков для указанного провайдера',
 
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Уникальный идентификатор входящего маршрута',

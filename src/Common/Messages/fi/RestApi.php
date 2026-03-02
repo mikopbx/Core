@@ -1058,6 +1058,8 @@ return [
     'rest_ir_CopyDesc' => 'Luo kopio olemassa olevasta saapuvan liikenteen reitistä uudella prioriteetilla',
     'rest_ir_ChangePriority' => 'Muuta reitin prioriteettia',
     'rest_ir_ChangePriorityDesc' => 'Päivitä useiden saapuvien reittien prioriteettijärjestys kerralla',
+    'rest_ir_GetUniqueDIDs' => 'Hae uniikit DID-numerot',
+    'rest_ir_GetUniqueDIDsDesc' => 'Palauttaa enintään 20 uniikkia DID-numeroa puheluhistoriasta määritetylle palveluntarjoajalle',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Saapuvan reitin yksilöllinen tunniste',
     'rest_schema_ir_rulename' => 'Saapuvan reitin säännön nimi',

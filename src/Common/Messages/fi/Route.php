@@ -99,6 +99,7 @@ return [
     'ir_DefaultRoute' => 'Oletustuloreitti',
     'ir_DidNumber' => 'Lisänumero (DID)',
     'ir_DidNumberDescription' => 'Palveluntarjoaja voi välittää lisänumeron, tämä on valinnainen kenttä, mutta joissakin tapauksissa se voi reitittää puhelut tarkemmin.',
+    'ir_DidNumberPlaceholder' => 'Syötä DID tai valitse historiasta',
     'ir_Extension' => 'määrä',
     'ir_ExtensionSelect' => 'Numeroon',
     'ir_Note' => 'Huom',

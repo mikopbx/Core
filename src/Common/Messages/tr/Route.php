@@ -95,6 +95,7 @@ return [
     'ir_DefaultRoute' => 'Gelen varsayılan rota',
     'ir_DidNumber' => 'Ek numara (DID)',
     'ir_DidNumberDescription' => 'Sağlayıcı ek bir numara gönderebilir, bu isteğe bağlı bir alandır, ancak bazı durumlarda aramaları daha doğru bir şekilde yönlendirmek mümkündür.',
+    'ir_DidNumberPlaceholder' => 'DID girin veya geçmişten seçin',
     'ir_Extension' => 'sayı',
     'ir_ExtensionSelect' => 'Numaraya',
     'ir_Note' => 'Bir not',

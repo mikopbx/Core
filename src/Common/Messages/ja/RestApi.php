@@ -1427,6 +1427,8 @@ return [
     'rest_ir_CopyDesc' => '既存の着信ルートのコピーを新しい優先度で作成する',
     'rest_ir_ChangePriority' => 'ルートの優先順位を変更する',
     'rest_ir_ChangePriorityDesc' => '複数の着信ルートの優先順位を一度に更新する',
+    'rest_ir_GetUniqueDIDs' => 'ユニークなDIDを取得',
+    'rest_ir_GetUniqueDIDsDesc' => '指定されたプロバイダーの通話履歴から最大20件のユニークなDID番号を返します',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => '着信ルートの一意の識別子',
     'rest_schema_ir_rulename' => '受信ルートルール名',

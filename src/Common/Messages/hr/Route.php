@@ -99,6 +99,7 @@ return [
     'ir_DefaultRoute' => 'Zadana dolazna ruta',
     'ir_DidNumber' => 'Dodatni broj (DID)',
     'ir_DidNumberDescription' => 'Davatelj može proslijediti dodatni broj; to je izborno polje, ali u nekim slučajevima može točnije usmjeriti pozive.',
+    'ir_DidNumberPlaceholder' => 'Unesite DID ili odaberite iz povijesti',
     'ir_Extension' => 'broj',
     'ir_ExtensionSelect' => 'Na broj',
     'ir_Note' => 'Bilješka',

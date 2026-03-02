@@ -32,7 +32,8 @@ const IncomingRoutesAPI = new PbxApiClient({
         getDefault: ':getDefault',
         getDefaultRoute: ':getDefaultRoute',
         changePriority: ':changePriority',
-        copy: ':copy'
+        copy: ':copy',
+        getUniqueDIDs: ':getUniqueDIDs'
     }
 });
 
@@ -53,4 +54,14 @@ IncomingRoutesAPI.getDefaultRoute = function(callback) {
  */
 IncomingRoutesAPI.changePriority = function(priorities, callback) {
     return this.callCustomMethod('changePriority', { priorities: priorities }, callback, 'POST');
+};
+
+/**
+ * Get unique DID numbers from CDR history for a provider
+ *
+ * @param {string} providerId - Provider uniqid or 'none' for any provider
+ * @param {function} callback - Callback function
+ */
+IncomingRoutesAPI.getUniqueDIDs = function(providerId, callback) {
+    return this.callCustomMethod('getUniqueDIDs', { providerid: providerId }, callback);
 };

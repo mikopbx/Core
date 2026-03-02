@@ -1703,6 +1703,8 @@ return [
     'rest_ir_CopyDesc' => 'สร้างสำเนาของเส้นทางขาเข้าที่มีอยู่แล้ว โดยกำหนดลำดับความสำคัญใหม่',
     'rest_ir_ChangePriority' => 'เปลี่ยนลำดับความสำคัญของเส้นทาง',
     'rest_ir_ChangePriorityDesc' => 'อัปเดตลำดับความสำคัญสำหรับเส้นทางขาเข้าหลายเส้นทางพร้อมกัน',
+    'rest_ir_GetUniqueDIDs' => 'รับ DID ที่ไม่ซ้ำกัน',
+    'rest_ir_GetUniqueDIDsDesc' => 'ส่งคืน DID สูงสุด 20 หมายเลขที่ไม่ซ้ำกันจากประวัติการโทรสำหรับผู้ให้บริการที่ระบุ',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'ตัวระบุเฉพาะของเส้นทางขาเข้า',
     'rest_schema_ir_rulename' => 'ชื่อกฎเส้นทางขาเข้า',

@@ -157,6 +157,7 @@ return [
     'ir_DefaultRoute' => 'Route par défaut entrante',
     'ir_DidNumber' => 'Numéro supplémentaire (DID)',
     'ir_DidNumberDescription' => 'Le fournisseur peut envoyer un numéro supplémentaire, c\'est un champ facultatif, mais dans certains cas, il est possible d\'acheminer les appels avec plus de précision.',
+    'ir_DidNumberPlaceholder' => 'Saisir le DID ou sélectionner dans l\'historique',
     'ir_EmptyTableDescription' => 'Les routes entrantes déterminent où diriger les appels des fournisseurs',
     'ir_EmptyTableTitle' => 'Configurez le routage entrant',
     'ir_Extension' => 'nombre',

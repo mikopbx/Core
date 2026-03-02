@@ -157,6 +157,7 @@ return [
     'ir_DefaultRoute' => 'Standard-Eingangsroute',
     'ir_DidNumber' => 'Zusätzliche Nummer (DID)',
     'ir_DidNumberDescription' => 'Anbieter kann zusätzliche Nummer übertragen, dies ist optionales Feld, aber in manchen Fällen ermöglicht es präzisere Anrufweiterleitung.',
+    'ir_DidNumberPlaceholder' => 'DID eingeben oder aus Verlauf auswählen',
     'ir_EmptyTableDescription' => 'Eingangsrouten bestimmen, wohin Anrufe von Anbietern geleitet werden',
     'ir_EmptyTableTitle' => 'Eingangsweiterleitung einrichten',
     'ir_Extension' => 'Nummer',

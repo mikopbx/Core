@@ -95,6 +95,7 @@ return [
     'ir_DefaultRoute' => 'Domyślna trasa przychodząca',
     'ir_DidNumber' => 'Dodatkowy numer (DID)',
     'ir_DidNumberDescription' => 'Operator może wysłać dodatkowy numer, jest to pole opcjonalne, ale w niektórych przypadkach istnieje możliwość dokładniejszego kierowania połączeń.',
+    'ir_DidNumberPlaceholder' => 'Wprowadź DID lub wybierz z historii',
     'ir_Extension' => 'numer',
     'ir_ExtensionSelect' => 'Na numer',
     'ir_Note' => 'Uwaga',

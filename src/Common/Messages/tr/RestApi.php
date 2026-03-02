@@ -1456,6 +1456,8 @@ return [
     'rest_ir_CopyDesc' => 'Mevcut bir gelen rotanın kopyasını yeni bir öncelik ile oluşturun.',
     'rest_ir_ChangePriority' => 'Rota önceliğini değiştir',
     'rest_ir_ChangePriorityDesc' => 'Birden fazla gelen rota için öncelik sırasını aynı anda güncelleyin.',
+    'rest_ir_GetUniqueDIDs' => 'Benzersiz DID numaralarını al',
+    'rest_ir_GetUniqueDIDsDesc' => 'Belirtilen sağlayıcı için arama geçmişinden en fazla 20 benzersiz DID numarası döndürür',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Gelen rotanın benzersiz tanımlayıcısı',
     'rest_schema_ir_rulename' => 'Gelen rota kuralı adı',

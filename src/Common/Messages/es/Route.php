@@ -157,6 +157,7 @@ return [
     'ir_DefaultRoute' => 'Ruta entrante por defecto',
     'ir_DidNumber' => 'Número adicional (DID)',
     'ir_DidNumberDescription' => 'El proveedor puede pasar número adicional, este es un campo opcional, pero en algunos casos permite enrutamiento de llamadas más preciso.',
+    'ir_DidNumberPlaceholder' => 'Ingrese DID o seleccione del historial',
     'ir_EmptyTableDescription' => 'Las rutas entrantes determinan dónde dirigir las llamadas de proveedores',
     'ir_EmptyTableTitle' => 'Configurar enrutamiento entrante',
     'ir_Extension' => 'número',

@@ -54,7 +54,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('incoming_routes', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getList', 'getRecord', 'getDefault', 'getDefaultRoute'],
+        'GET' => ['getList', 'getRecord', 'getDefault', 'getDefaultRoute', 'getUniqueDIDs'],
         'POST' => ['create', 'changePriority', 'copy'],
         'PUT' => ['update'],
         'PATCH' => ['patch'],
@@ -62,7 +62,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     ],
     resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete', 'copy'],
     collectionLevelMethods: ['getList', 'create'],
-    customMethods: ['getDefault', 'getDefaultRoute', 'changePriority', 'copy'],
+    customMethods: ['getDefault', 'getDefaultRoute', 'changePriority', 'copy', 'getUniqueDIDs'],
     idPattern: '[0-9]+'
 )]
 class RestController extends BaseRestController
@@ -328,6 +328,28 @@ class RestController extends BaseRestController
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function changePriority(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get unique DID numbers from CDR history for a provider
+     *
+     * Returns up to 20 unique DID numbers observed in call history,
+     * filtered by provider. Used for DID suggestions in routing rules.
+     *
+     * @route GET /pbxcore/api/v3/incoming-routes:getUniqueDIDs
+     */
+    #[ApiOperation(
+        summary: 'rest_ir_GetUniqueDIDs',
+        description: 'rest_ir_GetUniqueDIDsDesc',
+        operationId: 'getIncomingRouteUniqueDIDs'
+    )]
+    #[ApiParameterRef('providerid')]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getUniqueDIDs(): void
     {
         // Implementation handled by BaseRestController
     }

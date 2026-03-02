@@ -1726,6 +1726,8 @@ return [
     'rest_ir_CopyDesc' => 'Een kopie maken van een bestaande inkomende route met een nieuwe prioriteit',
     'rest_ir_ChangePriority' => 'Wijzig routeprioriteit',
     'rest_ir_ChangePriorityDesc' => 'De prioriteitsvolgorde voor meerdere inkomende routes tegelijk bijwerken',
+    'rest_ir_GetUniqueDIDs' => 'Unieke DID\'s ophalen',
+    'rest_ir_GetUniqueDIDsDesc' => 'Geeft tot 20 unieke DID-nummers terug uit de gespreksgeschiedenis voor de opgegeven provider',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Unieke identificatie van de inkomende route',
     'rest_schema_ir_rulename' => 'Naam van de inkomende routeregel',

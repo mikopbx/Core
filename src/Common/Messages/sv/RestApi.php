@@ -1676,6 +1676,8 @@ return [
     'rest_ir_CopyDesc' => 'Skapa en kopia av en befintlig inkommande rutt med en ny prioritet',
     'rest_ir_ChangePriority' => 'Ändra ruttprioritet',
     'rest_ir_ChangePriorityDesc' => 'Uppdatera prioritetsordningen för flera inkommande rutter samtidigt',
+    'rest_ir_GetUniqueDIDs' => 'Hämta unika DID',
+    'rest_ir_GetUniqueDIDsDesc' => 'Returnerar upp till 20 unika DID-nummer från samtalshistoriken för angiven leverantör',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Unik identifierare för den inkommande rutten',
     'rest_schema_ir_rulename' => 'Namn på inkommande ruttregel',

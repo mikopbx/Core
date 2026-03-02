@@ -23,7 +23,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
-use Phalcon\Forms\Element\Text;
 
 /**
  * Class IncomingRouteEditForm
@@ -45,7 +44,6 @@ class IncomingRouteEditForm extends BaseForm
         parent::initialize($entity, $options);
 
         $this->addHiddenFields();
-        $this->addTextFields();
         $this->addSpecialFields($entity);
         
         // Map database field 'provider' to form field 'providerid' for consistency
@@ -65,6 +63,7 @@ class IncomingRouteEditForm extends BaseForm
             'action' => ['value' => 'extension'],
             'extension' => ['id' => 'extension'],
             'audio_message_id' => ['id' => 'audio_message_id'],
+            'number' => [],
         ];
         
         foreach ($hiddenFields as $name => $attributes) {
@@ -73,14 +72,6 @@ class IncomingRouteEditForm extends BaseForm
         
         // Provider dropdown - using DynamicDropdownBuilder (built by JavaScript)
         $this->add(new Hidden('providerid'));
-    }
-    
-    /**
-     * Add text input fields
-     */
-    private function addTextFields(): void
-    {
-        $this->add(new Text('number'));
     }
     
     /**

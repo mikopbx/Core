@@ -1462,6 +1462,8 @@ return [
     'rest_ir_CopyDesc' => 'Tạo bản sao của một tuyến đường đến hiện có với mức độ ưu tiên mới.',
     'rest_ir_ChangePriority' => 'Thay đổi thứ tự ưu tiên tuyến đường',
     'rest_ir_ChangePriorityDesc' => 'Cập nhật thứ tự ưu tiên cho nhiều tuyến đường đến cùng một lúc.',
+    'rest_ir_GetUniqueDIDs' => 'Lấy DID duy nhất',
+    'rest_ir_GetUniqueDIDsDesc' => 'Trả về tối đa 20 số DID duy nhất từ lịch sử cuộc gọi cho nhà cung cấp được chỉ định',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Mã định danh duy nhất của tuyến đường đến',
     'rest_schema_ir_rulename' => 'Tên quy tắc định tuyến đến',

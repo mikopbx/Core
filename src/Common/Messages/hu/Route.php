@@ -99,6 +99,7 @@ return [
     'ir_DefaultRoute' => 'Alapértelmezett bejövő útvonal',
     'ir_DidNumber' => 'Kiegészítő szám (DID)',
     'ir_DidNumberDescription' => 'A szolgáltató továbbadhat egy további számot, ez egy opcionális mező, de bizonyos esetekben pontosabban irányíthatja a hívásokat.',
+    'ir_DidNumberPlaceholder' => 'Írjon be DID-et vagy válasszon az előzményekből',
     'ir_Extension' => 'szám',
     'ir_ExtensionSelect' => 'Számhoz',
     'ir_Note' => 'A jegyzet',

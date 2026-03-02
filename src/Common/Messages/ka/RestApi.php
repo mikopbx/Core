@@ -1140,6 +1140,8 @@ return [
     'rest_ir_CopyDesc' => 'შექმენით არსებული შემომავალი მარშრუტის ასლი ახალი პრიორიტეტით',
     'rest_ir_ChangePriority' => 'მარშრუტის პრიორიტეტის შეცვლა',
     'rest_ir_ChangePriorityDesc' => 'ერთდროულად განაახლეთ პრიორიტეტული თანმიმდევრობა მრავალი შემომავალი მარშრუტისთვის',
+    'rest_ir_GetUniqueDIDs' => 'უნიკალური DID-ების მიღება',
+    'rest_ir_GetUniqueDIDsDesc' => 'აბრუნებს 20-მდე უნიკალურ DID ნომერს ზარების ისტორიიდან მითითებული პროვაიდერისთვის',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'შემომავალი მარშრუტის უნიკალური იდენტიფიკატორი',
     'rest_schema_ir_rulename' => 'შემომავალი მარშრუტის წესის სახელი',

@@ -205,11 +205,12 @@ const DynamicDropdownBuilder = {
         
         
         const settings = {
-            allowAdditions: false,
+            allowAdditions: config.allowAdditions || false,
             fullTextSearch: true,
             forceSelection: false,
             preserveHTML: true, // Allow HTML in dropdown text (for icons, flags, etc.)
-            clearable: false,
+            clearable: config.clearable || false,
+            filterRemoteData: true,
 
             onChange: (value, text, $choice) => {
                 // Automatic synchronization with hidden input
@@ -251,7 +252,6 @@ const DynamicDropdownBuilder = {
                 cache: config.cache !== undefined ? config.cache : true,
                 throttle: hasSearchInput ? 500 : 0,
                 throttleFirstRequest: false,
-                filterRemoteData: true,
 
                 onResponse: (response) => {
                     const result = config.onResponse

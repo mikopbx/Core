@@ -157,6 +157,7 @@ return [
     'ir_DefaultRoute' => 'Percorso predefinito in entrata',
     'ir_DidNumber' => 'Numero aggiuntivo (DID)',
     'ir_DidNumberDescription' => 'Il provider può inviare un numero aggiuntivo, questo è un campo facoltativo, ma in alcuni casi è possibile instradare le chiamate in modo più accurato.',
+    'ir_DidNumberPlaceholder' => 'Inserisci DID o seleziona dalla cronologia',
     'ir_EmptyTableDescription' => 'Le rotte in entrata determinano dove dirigere le chiamate dai provider',
     'ir_EmptyTableTitle' => 'Configurate il routing in entrata',
     'ir_Extension' => 'numero',

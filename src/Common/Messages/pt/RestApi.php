@@ -1764,6 +1764,8 @@ return [
     'rest_security_public' => 'Ponto de acesso público sem necessidade de autenticação',
     'rest_security_bearerAuth_description' => 'Autenticação usando um token Bearer (JWT). As chaves de API podem ser criadas na interface web em Configurações → Chaves de API.',
     'rest_ir_ChangePriorityDesc' => 'Atualize a ordem de prioridade para várias rotas de entrada simultaneamente.',
+    'rest_ir_GetUniqueDIDs' => 'Obter DIDs exclusivos',
+    'rest_ir_GetUniqueDIDsDesc' => 'Devolve até 20 números DID exclusivos do histórico de chamadas para o fornecedor especificado',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Identificador único da rota de entrada',
     'rest_schema_ir_rulename' => 'Nome da regra de rota de entrada',

@@ -19,14 +19,12 @@
     {{ form.render('providerid') }}
 </div>
 
-<div class="field">
+<div class="field max-width-500">
     <label for="number">{{ t._('ir_DidNumber') }}
-        <i class="small info circle icon field-info-icon" 
+        <i class="small info circle icon field-info-icon"
            data-field="number"></i>
     </label>
-    <div class="field max-width-200">
-        {{ form.render('number') }}
-    </div>
+    {{ form.render('number') }}
 </div>
 {{ partial("partials/playAddNewSoundWithIcons", ['label': t._('iv_PlaySound'), 'id':'audio_message_id', 'fieldClass':'field max-width-800', 'fieldId':'']) }}
 <h3 class="ui dividing header ">{{ t._("ir_CallTransferTo") }}</h3>

@@ -26,7 +26,8 @@ use MikoPBX\PBXCoreREST\Lib\IncomingRoutes\{
     DeleteRecordAction,
     ChangePriorityAction,
     CopyRecordAction,
-    GetDefaultRouteAction
+    GetDefaultRouteAction,
+    GetUniqueDIDsAction
 };
 use Phalcon\Di\Injectable;
 
@@ -81,6 +82,7 @@ class IncomingRoutesManagementProcessor extends Injectable
             'getDefaultRoute' => GetDefaultRouteAction::main(),
             'changePriority' => ChangePriorityAction::main($data),
             'copy' => CopyRecordAction::main($data['id'] ?? ''),
+            'getUniqueDIDs' => GetUniqueDIDsAction::main($data),
 
             // Unknown action
             default => self::unknownAction($action)

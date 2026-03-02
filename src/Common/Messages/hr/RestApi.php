@@ -976,6 +976,8 @@ return [
     'rest_ir_CopyDesc' => 'Izradi kopiju postojeće dolazne rute s novim prioritetom',
     'rest_ir_ChangePriority' => 'Promjena prioriteta rute',
     'rest_ir_ChangePriorityDesc' => 'Ažuriranje redoslijeda prioriteta za više dolaznih ruta odjednom',
+    'rest_ir_GetUniqueDIDs' => 'Dohvati jedinstvene DID-ove',
+    'rest_ir_GetUniqueDIDsDesc' => 'Vraća do 20 jedinstvenih DID brojeva iz povijesti poziva za navedenog pružatelja usluge',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Jedinstveni identifikator dolazne rute',
     'rest_schema_ir_rulename' => 'Naziv pravila dolazne rute',

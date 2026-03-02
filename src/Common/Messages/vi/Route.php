@@ -95,6 +95,7 @@ return [
     'ir_DefaultRoute' => 'Tuyến đường mặc định trong nước',
     'ir_DidNumber' => 'Số bổ sung (DID)',
     'ir_DidNumberDescription' => 'Nhà cung cấp có thể gửi một số bổ sung, đây là trường tùy chọn nhưng trong một số trường hợp có thể định tuyến cuộc gọi chính xác hơn.',
+    'ir_DidNumberPlaceholder' => 'Nhập DID hoặc chọn từ lịch sử',
     'ir_Extension' => 'con số',
     'ir_ExtensionSelect' => 'Đến số',
     'ir_Note' => 'Một lưu ý',

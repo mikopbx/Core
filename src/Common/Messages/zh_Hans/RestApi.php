@@ -746,6 +746,8 @@ return [
     'rest_ir_CopyDesc' => '创建现有入站路由的副本，并赋予其新的优先级。',
     'rest_ir_ChangePriority' => '更改路线优先级',
     'rest_ir_ChangePriorityDesc' => '一次性更新多条传入路由的优先级顺序',
+    'rest_ir_GetUniqueDIDs' => '获取唯一DID',
+    'rest_ir_GetUniqueDIDsDesc' => '返回指定提供商的呼叫历史记录中最多20个唯一DID号码',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => '传入路由的唯一标识符',
     'rest_schema_ir_rulename' => '入站路由规则名称',

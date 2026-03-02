@@ -1772,6 +1772,8 @@ return [
     'rest_ir_Copy' => 'Bejövő útvonal másolása',
     'rest_ir_CopyDesc' => 'Létező bejövő útvonal másolatának létrehozása új prioritással',
     'rest_ir_ChangePriorityDesc' => 'Több bejövő útvonal prioritási sorrendjének egyidejű frissítése',
+    'rest_ir_GetUniqueDIDs' => 'Egyedi DID-ek lekérése',
+    'rest_ir_GetUniqueDIDsDesc' => 'Legfeljebb 20 egyedi DID-számot ad vissza a híváselőzményekből a megadott szolgáltató számára',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'A bejövő útvonal egyedi azonosítója',
     'rest_schema_ir_rulename' => 'Bejövő útvonalszabály neve',

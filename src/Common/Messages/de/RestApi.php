@@ -1535,6 +1535,8 @@ return [
     'rest_ir_CopyDesc' => 'Erstellen Sie eine Kopie einer bestehenden eingehenden Route mit einer neuen Priorität',
     'rest_ir_ChangePriority' => 'Routenpriorität ändern',
     'rest_ir_ChangePriorityDesc' => 'Aktualisieren Sie die Prioritätsreihenfolge für mehrere eingehende Routen gleichzeitig',
+    'rest_ir_GetUniqueDIDs' => 'Eindeutige DIDs abrufen',
+    'rest_ir_GetUniqueDIDsDesc' => 'Gibt bis zu 20 eindeutige DID-Nummern aus dem Anrufverlauf für den angegebenen Anbieter zurück',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Eindeutige Kennung der eingehenden Route',
     'rest_schema_ir_rulename' => 'Name der eingehenden Routing-Regel',

@@ -1396,6 +1396,8 @@ return [
     'rest_ir_Copy' => 'Copiar rota de entrada',
     'rest_ir_CopyDesc' => 'Criar uma cópia de uma rota de entrada existente com uma nova prioridade.',
     'rest_ir_ChangePriorityDesc' => 'Atualize a ordem de prioridade para várias rotas de entrada simultaneamente.',
+    'rest_ir_GetUniqueDIDs' => 'Obter DIDs únicos',
+    'rest_ir_GetUniqueDIDsDesc' => 'Retorna até 20 números DID únicos do histórico de chamadas para o provedor especificado',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Identificador único da rota de entrada',
     'rest_schema_ir_rulename' => 'Nome da regra de rota de entrada',

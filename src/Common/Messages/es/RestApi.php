@@ -1722,6 +1722,8 @@ return [
     'rest_ir_GetDefault' => 'Obtener valores predeterminados',
     'rest_ir_GetDefaultDesc' => 'Obtener valores predeterminados para crear una nueva ruta entrante',
     'rest_ir_ChangePriorityDesc' => 'Actualizar el orden de prioridad para múltiples rutas entrantes a la vez',
+    'rest_ir_GetUniqueDIDs' => 'Obtener DIDs únicos',
+    'rest_ir_GetUniqueDIDsDesc' => 'Devuelve hasta 20 números DID únicos del historial de llamadas para el proveedor especificado',
     'rest_schema_ir_rulename' => 'Nombre de la regla de ruta entrante',
     'rest_schema_ir_priority' => 'La prioridad de aplicación de la regla (cuanto menor sea el valor, mayor será la prioridad)',
     'rest_schema_ir_timeout' => 'Tiempo de espera de respuesta en segundos',

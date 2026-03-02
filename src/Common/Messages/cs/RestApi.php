@@ -623,6 +623,8 @@ return [
     'rest_ir_GetDefaultRoute' => 'Získejte výchozí trasu',
     'rest_ir_GetDefaultRouteDesc' => 'Získání nebo vytvoření výchozí trasy (univerzální trasy s ID=1)',
     'rest_ir_ChangePriorityDesc' => 'Aktualizace pořadí priorit pro více příchozích tras najednou',
+    'rest_ir_GetUniqueDIDs' => 'Získat unikátní DID',
+    'rest_ir_GetUniqueDIDsDesc' => 'Vrátí až 20 unikátních DID čísel z historie hovorů pro zadaného poskytovatele',
     'rest_schema_ir_rulename' => 'Název pravidla příchozí trasy',
     'rest_schema_ir_number' => 'DID číslo pro příchozí hovor',
     'rest_schema_ir_providerid' => 'ID poskytovatele pro filtrování hovorů',

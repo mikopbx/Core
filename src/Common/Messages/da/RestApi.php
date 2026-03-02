@@ -136,6 +136,8 @@ return [
     'rest_param_f2b_whitelist' => 'Hvidliste over IP-adresser og undernet (kommasepareret)',
     'rest_ivr_Patch' => 'Opdater IVR-menuen delvist',
     'rest_ir_ChangePriorityDesc' => 'Opdater prioritetsrækkefølgen for flere indgående ruter på én gang',
+    'rest_ir_GetUniqueDIDs' => 'Hent unikke DID\'er',
+    'rest_ir_GetUniqueDIDsDesc' => 'Returnerer op til 20 unikke DID-numre fra opkaldshistorikken for den angivne udbyder',
     'rest_schema_ir_providerid_represent' => 'HTML-repræsentation af udbyderen med et ikon',
     'rest_schema_lic_ping_success' => 'Licensserverens ping er succesfuld',
     'rest_schema_pk_aaguid' => 'Autentificerings-GUID (enhedsidentifikator)',

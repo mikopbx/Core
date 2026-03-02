@@ -157,6 +157,7 @@ return [
     'ir_DefaultRoute' => 'Rota de entrada padrão',
     'ir_DidNumber' => 'Número adicional (DID)',
     'ir_DidNumberDescription' => 'O provedor pode transmitir um número adicional, este é um campo opcional, mas em alguns casos é possível rotear chamadas com mais precisão.',
+    'ir_DidNumberPlaceholder' => 'Inserir DID ou selecionar do histórico',
     'ir_EmptyTableDescription' => 'As rotas de entrada determinam para onde direcionar chamadas de provedores',
     'ir_EmptyTableTitle' => 'Configure o roteamento de entrada',
     'ir_Extension' => 'número',

@@ -1618,6 +1618,8 @@ return [
     'rest_ir_Copy' => 'Kopiuj trasę przychodzącą',
     'rest_ir_CopyDesc' => 'Utwórz kopię istniejącej trasy przychodzącej z nowym priorytetem',
     'rest_ir_ChangePriorityDesc' => 'Zaktualizuj kolejność priorytetów dla wielu tras przychodzących jednocześnie',
+    'rest_ir_GetUniqueDIDs' => 'Pobierz unikalne numery DID',
+    'rest_ir_GetUniqueDIDsDesc' => 'Zwraca do 20 unikalnych numerów DID z historii połączeń dla wskazanego dostawcy',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Unikalny identyfikator trasy przychodzącej',
     'rest_schema_ir_rulename' => 'Nazwa reguły trasy przychodzącej',

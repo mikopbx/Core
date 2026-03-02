@@ -174,6 +174,7 @@ return [
     'ir_DefaultRoute' => 'Default incoming route',
     'ir_DidNumber' => 'Additional number (DID)',
     'ir_DidNumberDescription' => 'Provider can pass additional number, this is optional field, but in some cases allows more precise call routing.',
+    'ir_DidNumberPlaceholder' => 'Enter DID or select from history',
     'ir_EmptyTableDescription' => 'Incoming routes determine where to direct calls from providers',
     'ir_EmptyTableTitle' => 'Set up incoming routing',
     'ir_Extension' => 'number',

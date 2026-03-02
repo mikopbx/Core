@@ -296,6 +296,8 @@ return [
     'rest_ir_CopyDesc' => 'Create copy of existing incoming route with new priority',
     'rest_ir_ChangePriority' => 'Change route priorities',
     'rest_ir_ChangePriorityDesc' => 'Update priority order for multiple incoming routes at once',
+    'rest_ir_GetUniqueDIDs' => 'Get unique DIDs',
+    'rest_ir_GetUniqueDIDsDesc' => 'Returns up to 20 unique DID numbers from call history for the specified provider',
     'rest_schema_ir_id' => 'Unique incoming route identifier',
     'rest_schema_ir_rulename' => 'Incoming route rule name',
     'rest_schema_ir_number' => 'DID number for incoming call',

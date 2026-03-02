@@ -157,6 +157,7 @@ return [
     'ir_DefaultRoute' => '入站默认路由',
     'ir_DidNumber' => '附加号码（DID）',
     'ir_DidNumberDescription' => '提供商可以发送额外的号码，这是一个可选字段，但在某些情况下可以更准确地路由呼叫。',
+    'ir_DidNumberPlaceholder' => '输入DID或从历史记录中选择',
     'ir_EmptyTableDescription' => '入站路由确定如何从提供商路由呼叫',
     'ir_EmptyTableTitle' => '设置入站路由',
     'ir_Extension' => '数字',

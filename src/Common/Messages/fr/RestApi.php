@@ -367,6 +367,8 @@ return [
     'rest_ir_CopyDesc' => 'Créer une copie d\'une route entrante existante avec une nouvelle priorité',
     'rest_ir_ChangePriority' => 'Priorité de changement d\'itinéraire',
     'rest_ir_ChangePriorityDesc' => 'Mettre à jour simultanément l\'ordre de priorité de plusieurs itinéraires entrants.',
+    'rest_ir_GetUniqueDIDs' => 'Obtenir les DID uniques',
+    'rest_ir_GetUniqueDIDsDesc' => 'Retourne jusqu\'à 20 numéros DID uniques de l\'historique des appels pour le fournisseur spécifié',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Identifiant unique de la route entrante',
     'rest_schema_ir_rulename' => 'Nom de la règle de routage entrant',

@@ -95,6 +95,7 @@ return [
     'ir_DefaultRoute' => 'Inkommande standardrutt',
     'ir_DidNumber' => 'Ytterligare nummer (DID)',
     'ir_DidNumberDescription' => 'Leverantören kan skicka ett extra nummer, detta är ett valfritt fält, men i vissa fall är det möjligt att dirigera samtal mer exakt.',
+    'ir_DidNumberPlaceholder' => 'Ange DID eller välj från historik',
     'ir_Extension' => 'siffra',
     'ir_ExtensionSelect' => 'Att numera',
     'ir_Note' => 'En anteckning',

@@ -95,6 +95,7 @@ return [
     'ir_DefaultRoute' => 'Rută implicită de intrare',
     'ir_DidNumber' => 'Număr suplimentar (DID)',
     'ir_DidNumberDescription' => 'Furnizorul poate trimite un număr suplimentar, acesta este un câmp opțional, dar în unele cazuri este posibil să direcționați apelurile mai precis.',
+    'ir_DidNumberPlaceholder' => 'Introduceți DID sau selectați din istoric',
     'ir_Extension' => 'număr',
     'ir_ExtensionSelect' => 'Pe număr',
     'ir_Note' => 'Nota',

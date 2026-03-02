@@ -680,6 +680,8 @@ return [
     'rest_ir_CopyDesc' => 'Yeni prioritetli mövcud daxil olan marşrutun surətini yaradın',
     'rest_ir_ChangePriority' => 'Marşrut prioritetini dəyişdirin',
     'rest_ir_ChangePriorityDesc' => 'Birdən çox daxil olan marşrut üçün prioritet sırasını eyni anda yeniləyin',
+    'rest_ir_GetUniqueDIDs' => 'Unikal DID-ləri al',
+    'rest_ir_GetUniqueDIDsDesc' => 'Göstərilən provayder üçün zəng tarixçəsindən 20-yə qədər unikal DID nömrəsi qaytarır',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Daxil olan marşrutun unikal identifikatoru',
     'rest_schema_ir_rulename' => 'Daxil olan marşrut qaydasının adı',

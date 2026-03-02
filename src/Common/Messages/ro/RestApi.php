@@ -1557,6 +1557,8 @@ return [
     'rest_ir_Copy' => 'Copiați ruta de intrare',
     'rest_ir_CopyDesc' => 'Creați o copie a unei rute de intrare existente cu o nouă prioritate',
     'rest_ir_ChangePriorityDesc' => 'Actualizați ordinea de prioritate pentru mai multe rute de intrare simultan',
+    'rest_ir_GetUniqueDIDs' => 'Obțineți DID-uri unice',
+    'rest_ir_GetUniqueDIDsDesc' => 'Returnează până la 20 de numere DID unice din istoricul apelurilor pentru furnizorul specificat',
     // Schema field descriptions for Incoming Routes
     'rest_schema_ir_id' => 'Identificatorul unic al rutei de intrare',
     'rest_schema_ir_rulename' => 'Numele regulii de rută de intrare',
