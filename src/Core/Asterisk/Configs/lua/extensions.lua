@@ -316,34 +316,16 @@ function set_variable(p_name, p_value)
 end
 
 --[[
-    Removes keys with empty string or nil values from a table.
-    Reduces JSON payload size for AMI/CEL events.
-
-    Parameters:
-    - t: A table to filter.
-
-    Returns:
-    - A new table with only non-empty values.
-]]
-function strip_empty_values(t)
-    local result = {}
-    for k, v in pairs(t) do
-        if v ~= nil and v ~= "" then
-            result[k] = v
-        end
-    end
-    return result
-end
-
---[[
     Sends a user event with encoded data.
 
     Parameters:
     - data: A table containing the data to be encoded and sent as a user event.
 
     Note:
-    - The function strips empty values, encodes the data using base64 encoding and sends it as a user event.
+    - The function encodes the data using base64 encoding and sends it as a user event.
     - If the 'is_test' variable is defined, the function returns without performing any action.
+    - Empty values are NOT stripped here — PHP consumers expect all keys to be present.
+      Payload compaction is handled by AsteriskManager::encodeCdrData() on the PHP side.
 
     Example Usage:
     local eventData = {
@@ -356,7 +338,7 @@ function userevent_return(data)
     if(is_test ~= nil) then
         return
     end
-    data = base64_encode(JSON:encode(strip_empty_values(data)));
+    data = base64_encode( JSON:encode(data) );
     app["CELGenUserEvent"](""..data);
     app["UserEvent"]("CdrConnector,AgiData:"..data);
     app["return"]();
@@ -382,7 +364,7 @@ function userevent_hangup(data)
     if(is_test ~= nil) then
         return
     end
-    data = base64_encode(JSON:encode(strip_empty_values(data)));
+    data = base64_encode(JSON:encode(data));
     app["CELGenUserEvent"](""..data);
     app["UserEvent"]("CdrConnector,AgiData:"..data);
     app["NoOp"]('Hangup channel ');
