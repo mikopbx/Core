@@ -830,18 +830,29 @@ const callDetailRecords = {
 
     /**
      * Calculates the number of rows that can fit on a page based on the current window height.
+     * Dynamically measures the actual overhead from DOM elements instead of using a hardcoded estimate.
      * @returns {number}
      */
     calculatePageLength() {
-        // Calculate row height
-        let rowHeight = callDetailRecords.$cdrTable.find('tbody > tr').first().outerHeight();
+        // Measure actual row height from rendered row, fallback to compact table default (~36px)
+        let rowHeight = callDetailRecords.$cdrTable.find('tbody > tr').first().outerHeight() || 36;
 
-        // Calculate window height and available space for table
+        // Calculate overhead dynamically from the table's position in the page
         const windowHeight = window.innerHeight;
-        const headerFooterHeight = 400; // Estimate height for header, footer, and other elements
+        let overhead = 400; // safe fallback
+        const tableEl = callDetailRecords.$cdrTable.get(0);
+        if (tableEl) {
+            const thead = callDetailRecords.$cdrTable.find('thead');
+            const theadHeight = thead.length ? thead.outerHeight() : 38;
+            const tableTop = tableEl.getBoundingClientRect().top;
 
-        // Calculate new page length
-        return Math.max(Math.floor((windowHeight - headerFooterHeight) / rowHeight), 5);
+            // Space below: pagination(50) + info bar(30) + segment padding(14) + version footer(35) + margins(10)
+            const bottomReserve = 139;
+
+            overhead = tableTop + theadHeight + bottomReserve;
+        }
+
+        return Math.max(Math.floor((windowHeight - overhead) / rowHeight), 5);
     },
     /**
      * Initializes the date range selector.

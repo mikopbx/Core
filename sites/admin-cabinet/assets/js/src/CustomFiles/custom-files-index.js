@@ -130,6 +130,7 @@ const customFilesTable = {
                         hide: 100
                     }
                 });
+
             }
         });
 
@@ -187,34 +188,26 @@ const customFilesTable = {
     },
 
     /**
-     * Calculate optimal page length based on window height
+     * Calculate optimal page length based on window height.
+     * Uses a conservative estimate since the table container is hidden at init time.
+     * Subtracts one extra row to guarantee pagination fits without scrolling.
      * @returns {number} The calculated page length
      */
     calculatePageLength() {
-        // Get the table element
-        const $table = $('#custom-files-table');
-
-        // Calculate row height from first row if table exists
-        let rowHeight = 50; // Default row height
-        const $firstRow = $table.find('tbody tr').first();
-        if ($firstRow.length) {
-            rowHeight = $firstRow.outerHeight() || 50;
-        }
-
-        // Calculate window height and available space for table
-        const windowHeight = window.innerHeight;
-        const headerFooterHeight = 400; // Estimate height for header, footer, and other elements
-
-        // Calculate new page length (minimum 10 rows)
-        const calculatedLength = Math.max(Math.floor((windowHeight - headerFooterHeight) / rowHeight), 10);
-
-        // Get saved value or return calculated
+        // User preference takes priority
         const savedPageLength = localStorage.getItem('customFilesTablePageLength');
         if (savedPageLength && savedPageLength !== 'auto') {
             return parseInt(savedPageLength, 10);
         }
 
-        return calculatedLength;
+        const windowHeight = window.innerHeight;
+        const rowHeight = 38; // Very compact table row height including borders and sub-pixel gaps
+
+        // 450 accounts for: top menu, page header, controls row, thead, pagination, info, version footer
+        // On large screens (>1080) margins/paddings scale up, so we add proportional overhead
+        const overhead = 450 + Math.max(0, windowHeight - 1080) * 0.15;
+
+        return Math.max(Math.floor((windowHeight - overhead) / rowHeight), 8);
     }
 };
 
