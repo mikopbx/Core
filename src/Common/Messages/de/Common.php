@@ -928,6 +928,9 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'st_CategoryCallRecordings' => 'Anrufaufzeichnung',
     'st_CategorySystemCaches' => 'Systemcaches',
     'st_CategorySystemLogs' => 'System-Log Einträge',
+    'st_CategoryS3Cache' => 'S3-Aufnahmecache',
+    'st_S3RemoteStorageTitle' => 'Cloud-Speicher (S3)',
+    'st_S3RemoteStorageInfo' => '%files% Aufnahmen (%size%) in %bucket%',
     'st_Day' => 'Tag',
     'st_Days' => 'Tage',
     // CDR UI Translations (for search and pagination)

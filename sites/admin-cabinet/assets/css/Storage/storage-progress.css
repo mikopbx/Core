@@ -51,8 +51,32 @@
     background-color: #EF4444; /* Red - Системные кеши */
 }
 
+.s3-cache-segment, .s3-cache-color {
+    background-color: #EC4899; /* Pink - Кеш записей из S3 */
+}
+
 .other-segment, .other-color {
     background-color: #6B7280; /* Gray - Прочее */
+}
+
+/* Remote Storage Info */
+.remote-storage-info {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #3B82F6;
+}
+
+.remote-storage-info .header {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+}
+
+.remote-storage-info .details {
+    color: #666;
+    font-size: 0.95em;
 }
 
 /* Legend */

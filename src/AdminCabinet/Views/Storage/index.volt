@@ -36,6 +36,7 @@
                     <div class="progress-segment modules-segment" data-category="modules"></div>
                     <div class="progress-segment backups-segment" data-category="backups"></div>
                     <div class="progress-segment system-caches-segment" data-category="system_caches"></div>
+                    <div class="progress-segment s3-cache-segment" data-category="s3_cache"></div>
                     <div class="progress-segment other-segment" data-category="other"></div>
                 </div>
                 
@@ -64,6 +65,10 @@
                     <div class="legend-item">
                         <span class="legend-color system-caches-color"></span>
                         <span class="legend-text">{{ t._("st_CategorySystemCaches") }}</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color s3-cache-color"></span>
+                        <span class="legend-text">{{ t._("st_CategoryS3Cache") }}</span>
                     </div>
                     <div class="legend-item">
                         <span class="legend-color other-color"></span>
@@ -123,12 +128,32 @@
                         <div class="category-size" id="system_caches-size">0 MB</div>
                     </div>
                     
+                    <div class="category-item" data-category="s3_cache">
+                        <i class="cloud download icon"></i>
+                        <div class="category-info">
+                            <div class="category-name">{{ t._("st_CategoryS3Cache") }}</div>
+                        </div>
+                        <div class="category-size" id="s3_cache-size">0 MB</div>
+                    </div>
+
                     <div class="category-item" data-category="other">
                         <i class="folder icon"></i>
                         <div class="category-info">
                             <div class="category-name">{{ t._("st_CategoryOther") }}</div>
                         </div>
                         <div class="category-size" id="other-size">0 MB</div>
+                    </div>
+                </div>
+
+                <!-- Remote Storage (S3) -->
+                <div id="remote-storage-section" style="display: none;">
+                    <div class="ui divider"></div>
+                    <div class="remote-storage-info">
+                        <div class="header">
+                            <i class="cloud icon"></i>
+                            <span id="remote-storage-title"></span>
+                        </div>
+                        <div class="details" id="remote-storage-details"></div>
                     </div>
                 </div>
             </div>

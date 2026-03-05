@@ -221,7 +221,7 @@ const storageIndex = {
         let accumulatedWidth = 0;
         
         // Process each category
-        ['call_recordings', 'cdr_database', 'system_logs', 'modules', 'backups', 'system_caches', 'other'].forEach(category => {
+        ['call_recordings', 'cdr_database', 'system_logs', 'modules', 'backups', 'system_caches', 's3_cache', 'other'].forEach(category => {
             const catData = data.categories[category];
             const $segment = $(`.progress-segment[data-category="${category}"]`);
             
@@ -265,6 +265,19 @@ const storageIndex = {
         }).on('mouseleave', function() {
             $('.progress-segment').css('opacity', '1');
         });
+
+        // Render remote storage info (S3)
+        if (data.remote_storage && data.remote_storage.s3 && data.remote_storage.s3.enabled && data.remote_storage.s3.size > 0) {
+            const s3 = data.remote_storage.s3;
+            $('#remote-storage-title').text(globalTranslate.st_S3RemoteStorageTitle);
+            $('#remote-storage-details').text(
+                globalTranslate.st_S3RemoteStorageInfo
+                    .replace('%files%', s3.files_count.toLocaleString())
+                    .replace('%size%', formatSize(s3.size))
+                    .replace('%bucket%', s3.bucket)
+            );
+            $('#remote-storage-section').show();
+        }
     },
     
     /**

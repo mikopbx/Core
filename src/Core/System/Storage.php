@@ -38,6 +38,7 @@ use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\PBXCoreREST\Lib\SoundFiles\ConvertAudioFileAction;
 
+use MikoPBX\Common\Models\StorageSettings;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di\Injectable;
 use function MikoPBX\Common\Config\appPath;
@@ -1487,15 +1488,16 @@ class Storage extends Injectable
                 'system_caches' => ['size' => 0, 'percentage' => 0, 'paths' => []],
                 's3_cache' => ['size' => 0, 'percentage' => 0, 'paths' => []],
                 'other' => ['size' => 0, 'percentage' => 0, 'paths' => []],
-            ]
+            ],
+            'remote_storage' => $this->getRemoteStorageInfo(),
         ];
-        
+
         // Get storage disk info using media mount point from Directories
         $storageDir = Directories::getDir(Directories::CORE_MEDIA_MOUNT_POINT_DIR);
         if (!is_dir($storageDir)) {
             return $result;
         }
-        
+
         // Get total disk info
         $disks = $this->getAllHdd(true);
         foreach ($disks as $disk) {
@@ -1506,6 +1508,12 @@ class Storage extends Injectable
                 $result['usage_percentage'] = floatval($disk['usage_percentage']);
                 break;
             }
+        }
+
+        // Fallback: calculate used_space from total and free when partition analysis fails
+        if ($result['used_space'] == 0 && $result['total_size'] > 0 && $result['free_space'] > 0) {
+            $result['used_space'] = round($result['total_size'] - $result['free_space'], 1);
+            $result['usage_percentage'] = round(($result['used_space'] / $result['total_size']) * 100, 1);
         }
         
         if ($result['total_size'] == 0) {
@@ -1643,7 +1651,59 @@ class Storage extends Injectable
             's3_cache' => $s3CachePaths,
         ];
     }
-    
+
+    /**
+     * Get remote storage (S3) information from database.
+     *
+     * Returns S3 storage stats: enabled status, total size, file count,
+     * bucket and endpoint. Data comes from DB queries, not filesystem.
+     *
+     * @return array Remote storage info with 's3' key
+     */
+    private function getRemoteStorageInfo(): array
+    {
+        $s3Info = [
+            's3' => [
+                'enabled' => false,
+                'size' => 0,
+                'files_count' => 0,
+                'bucket' => '',
+                'endpoint' => '',
+            ],
+        ];
+
+        try {
+            $s3Settings = StorageSettings::getSettings();
+            if ($s3Settings->s3_enabled !== 1) {
+                return $s3Info;
+            }
+
+            $s3Info['s3']['enabled'] = true;
+            $s3Info['s3']['bucket'] = $s3Settings->s3_bucket ?? '';
+            $s3Info['s3']['endpoint'] = $s3Settings->s3_endpoint ?? '';
+
+            $di = $this->getDI();
+            if ($di->has('dbRecordingStorage')) {
+                $db = $di->get('dbRecordingStorage');
+                $stats = $db->fetchOne(
+                    "SELECT COUNT(*) as count, COALESCE(SUM(file_size), 0) as total_size
+                     FROM m_RecordingStorage
+                     WHERE storage_location = 's3'"
+                );
+                $s3Info['s3']['files_count'] = (int)($stats['count'] ?? 0);
+                $s3Info['s3']['size'] = round((int)($stats['total_size'] ?? 0) / (1024 * 1024), 1);
+            }
+        } catch (\Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Failed to get S3 storage info: " . $e->getMessage(),
+                LOG_WARNING
+            );
+        }
+
+        return $s3Info;
+    }
+
     /**
      * Get directory size in MB.
      *

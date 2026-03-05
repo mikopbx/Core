@@ -76,7 +76,16 @@ class GetUsageAction
                     'system_caches' => ['size' => 0, 'percentage' => 0, 'paths' => []],
                     's3_cache' => ['size' => 0, 'percentage' => 0, 'paths' => []],
                     'other' => ['size' => 0, 'percentage' => 0, 'paths' => []],
-                ]
+                ],
+                'remote_storage' => [
+                    's3' => [
+                        'enabled' => false,
+                        'size' => 0,
+                        'files_count' => 0,
+                        'bucket' => '',
+                        'endpoint' => '',
+                    ],
+                ],
             ];
             $res->success = true;
 
