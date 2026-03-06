@@ -1604,7 +1604,8 @@ def wait_for_worker_idle(api_client, timeout=45, min_wait=7):
 
     WorkerModelsEvents debounces 5 seconds after the last model change
     before executing reload actions (config regeneration, dialplan reload).
-    Checks Beanstalk tube stats to confirm no pending jobs remain.
+    Reads Beanstalk port from /etc/inc/mikopbx-settings.json and checks
+    tube stats via busybox telnet (nc is not available on MikoPBX).
 
     Args:
         api_client: Authenticated MikoPBXClient
@@ -1619,8 +1620,11 @@ def wait_for_worker_idle(api_client, timeout=45, min_wait=7):
     while time.time() < deadline:
         response = api_client.post('system:executeBashCommand', {
             'command': (
-                'echo -e "stats-tube MikoPBX-Core-Workers-WorkerModelsEvents\\r\\n"'
-                ' | nc -w1 127.0.0.1 11300 2>/dev/null'
+                'PORT=$(php -r \'echo json_decode('
+                'file_get_contents("/etc/inc/mikopbx-settings.json"),true)'
+                '["beanstalk"]["port"];\') && '
+                '(echo "stats-tube MikoPBX-Core-Workers-WorkerModelsEvents";'
+                ' sleep 0.3) | busybox telnet 127.0.0.1 $PORT 2>/dev/null'
             )
         })
         output = response.get('data', {}).get('output', '')
