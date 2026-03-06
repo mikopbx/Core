@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 ##
 ## CDR Database Seeder Script for MikoPBX Test Environment
 ##
@@ -198,7 +198,7 @@ check_fixtures() {
 # This ensures test dates are always relative to the current date
 generate_dynamic_fixtures() {
     # Check if Python3 is available
-    if ! command -v python3 &> /dev/null; then
+    if ! command -v python3 > /dev/null 2>&1; then
         log_warning "Python3 not available, using static SQL fixtures"
         return 1
     fi
@@ -206,11 +206,9 @@ generate_dynamic_fixtures() {
     # Check if generator script exists
     if [ ! -f "$GENERATOR_SCRIPT" ]; then
         # Try alternative paths for remote execution
-        local alt_paths=(
-            "/storage/usbdisk1/mikopbx/python-tests/scripts/generate_cdr_fixtures.py"
-            "/usr/www/tests/api/scripts/generate_cdr_fixtures.py"
-        )
-        for alt_path in "${alt_paths[@]}"; do
+        for alt_path in \
+            "/storage/usbdisk1/mikopbx/python-tests/scripts/generate_cdr_fixtures.py" \
+            "/usr/www/tests/api/scripts/generate_cdr_fixtures.py"; do
             if [ -f "$alt_path" ]; then
                 GENERATOR_SCRIPT="$alt_path"
                 break
@@ -322,14 +320,15 @@ seed_database() {
 
     # Parse JSON and create MP3 files for records with recordingfile
     # Using grep to extract recordingfile values (simple approach without jq dependency)
-    while IFS= read -r recording_path; do
+    # Note: pipe runs in subshell in POSIX sh, so mp3_count is tracked separately
+    grep -o '"recordingfile": *"[^"]*"' "$JSON_FILE" | cut -d'"' -f4 | while IFS= read -r recording_path; do
         if [ -n "$recording_path" ] && [ "$recording_path" != '""' ] && [ "$recording_path" != "null" ]; then
             # Remove quotes
             recording_path=$(echo "$recording_path" | tr -d '"')
             create_minimal_mp3 "$recording_path"
-            mp3_count=$((mp3_count + 1))
         fi
-    done < <(grep -o '"recordingfile": *"[^"]*"' "$JSON_FILE" | cut -d'"' -f4)
+    done
+    mp3_count=$(grep -c '"recordingfile"' "$JSON_FILE" 2>/dev/null || echo 0)
 
     log_server "Step 5: Created $mp3_count recording files"
 
