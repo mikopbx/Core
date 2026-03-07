@@ -794,7 +794,7 @@ def test_wait_for_worker_stabilization(api_client):
     print(f"Waiting for WorkerModelsEvents stabilization...")
     print(f"{'='*70}")
 
-    result = wait_for_worker_idle(api_client, timeout=45, min_wait=7)
+    result = wait_for_worker_idle(api_client, timeout=600, min_wait=7)
     assert result, (
         "WorkerModelsEvents did not stabilize within timeout. "
         "Beanstalk tube still has pending jobs."

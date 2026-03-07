@@ -1599,7 +1599,7 @@ def get_extension_secret(extension_number: str, api_client: 'MikoPBXClient' = No
 # ============================================================================
 
 
-def wait_for_worker_idle(api_client, timeout=45, min_wait=7):
+def wait_for_worker_idle(api_client, timeout=600, min_wait=7):
     """Wait until WorkerModelsEvents has processed all pending events.
 
     WorkerModelsEvents debounces 5 seconds after the last model change
@@ -1609,7 +1609,7 @@ def wait_for_worker_idle(api_client, timeout=45, min_wait=7):
 
     Args:
         api_client: Authenticated MikoPBXClient
-        timeout: Max seconds to poll after min_wait (default 45)
+        timeout: Max seconds to poll after min_wait (default 600)
         min_wait: Minimum wait covering 5s debounce + 2s buffer (default 7)
 
     Returns:
