@@ -20,6 +20,8 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
+use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverExpectedCondition;
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
@@ -53,6 +55,17 @@ class CreateDefaultIncomingCallRuleTest extends MikoPBXTestsBase
         // Navigate to the incoming routes page
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
 
+        // Wait for async data loading to complete.
+        // The extension dropdown is created by ExtensionSelector.init() inside the loadData() callback.
+        // Without this wait, a race condition can occur: the test interacts with dropdowns (enabling
+        // the submit button), then loadData() callback fires and re-disables it via initializeDirrity(),
+        // causing submitForm() to fail because Fomantic UI applies pointer-events:none to disabled buttons.
+        self::$driver->wait(self::WAIT_TIMEOUT)->until(
+            WebDriverExpectedCondition::presenceOfElementLocated(
+                WebDriverBy::id('extension-dropdown')
+            )
+        );
+
         // Select the specified action from the dropdown
         $this->selectDropdownItem('action', $params['action']);
 
@@ -66,6 +79,13 @@ class CreateDefaultIncomingCallRuleTest extends MikoPBXTestsBase
 
         // Navigate back to the incoming routes page
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
+
+        // Wait for async data loading before assertions
+        self::$driver->wait(self::WAIT_TIMEOUT)->until(
+            WebDriverExpectedCondition::presenceOfElementLocated(
+                WebDriverBy::id('extension-dropdown')
+            )
+        );
 
         // Assert that the selected action matches the expected action
         $this->assertMenuItemSelected('action', $params['action']);
