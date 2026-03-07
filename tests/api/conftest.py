@@ -1617,23 +1617,44 @@ def wait_for_worker_idle(api_client, timeout=45, min_wait=7):
     """
     time.sleep(min_wait)
     deadline = time.time() + timeout
+    poll_count = 0
     while time.time() < deadline:
-        response = api_client.post('system:executeBashCommand', {
-            'command': (
-                'PORT=$(php -r \'echo json_decode('
-                'file_get_contents("/etc/inc/mikopbx-settings.json"),true)'
-                '["beanstalk"]["port"];\') && '
-                '(echo "stats-tube MikoPBX-Core-Workers-WorkerModelsEvents";'
-                ' sleep 0.3) | busybox telnet 127.0.0.1 $PORT 2>/dev/null'
-            )
-        })
-        output = response.get('data', {}).get('output', '')
+        poll_count += 1
+        try:
+            response = api_client.post('system:executeBashCommand', {
+                'command': (
+                    'PORT=$(php -r \'echo json_decode('
+                    'file_get_contents("/etc/inc/mikopbx-settings.json"),true)'
+                    '["beanstalk"]["port"];\') && '
+                    '(echo "stats-tube MikoPBX-Core-Workers-WorkerModelsEvents";'
+                    ' sleep 0.3) | busybox telnet 127.0.0.1 $PORT 2>/dev/null'
+                )
+            })
+            output = response.get('data', {}).get('output', '')
+            exit_code = response.get('data', {}).get('exitCode', -1)
+        except Exception as e:
+            print(f"  [poll {poll_count}] API error: {e}")
+            time.sleep(2)
+            continue
+
+        if poll_count <= 3 or poll_count % 5 == 0:
+            # Log first few polls and every 5th for diagnostics
+            jobs_ready = 'unknown'
+            for line in output.split('\n'):
+                if 'current-jobs-ready' in line:
+                    jobs_ready = line.strip()
+                    break
+            print(f"  [poll {poll_count}] exitCode={exit_code}, {jobs_ready}")
+
         # NOT_FOUND = tube doesn't exist = no pending jobs
         if 'NOT_FOUND' in output:
+            print(f"  [poll {poll_count}] Tube not found - worker idle")
             return True
         if 'current-jobs-ready: 0' in output:
+            print(f"  [poll {poll_count}] Jobs ready = 0 - worker idle")
             return True
         time.sleep(2)
+    print(f"  [timeout] After {poll_count} polls, last output: {output[:200]}")
     return False
 
 
