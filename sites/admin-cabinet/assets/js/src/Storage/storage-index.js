@@ -367,88 +367,91 @@ const storageIndex = {
         // Tooltip configurations for each field
         const tooltipConfigs = {
             record_retention_period: storageIndex.buildTooltipContent({
-                header: globalTranslate.st_tooltip_record_retention_header || 'Total Retention Period',
-                description: globalTranslate.st_tooltip_record_retention_desc || 'How long call recordings are kept in the system',
+                header: globalTranslate.st_tooltip_record_retention_header,
+                description: globalTranslate.st_tooltip_record_retention_desc,
                 list: [
-                    globalTranslate.st_tooltip_record_retention_item1 || '30 days - minimum storage period',
-                    globalTranslate.st_tooltip_record_retention_item2 || '90 days - recommended for small businesses',
-                    globalTranslate.st_tooltip_record_retention_item3 || '1 year - compliance requirements',
-                    globalTranslate.st_tooltip_record_retention_item4 || 'Unlimited - keep all recordings'
+                    globalTranslate.st_tooltip_record_retention_item1,
+                    globalTranslate.st_tooltip_record_retention_item2,
+                    globalTranslate.st_tooltip_record_retention_item3,
+                    globalTranslate.st_tooltip_record_retention_item4
                 ],
                 warning: {
-                    header: globalTranslate.st_tooltip_record_retention_warning_header || 'Storage Warning',
-                    text: globalTranslate.st_tooltip_record_retention_warning || 'Longer retention periods require more disk space'
+                    header: globalTranslate.st_tooltip_record_retention_warning_header,
+                    text: globalTranslate.st_tooltip_record_retention_warning
                 }
             }),
 
             s3_enabled: storageIndex.buildTooltipContent({
-                header: globalTranslate.st_tooltip_s3_enabled_header || 'Cloud Storage',
-                description: globalTranslate.st_tooltip_s3_enabled_desc || 'Upload recordings to S3-compatible cloud storage for backup and archival',
+                header: globalTranslate.st_tooltip_s3_enabled_header,
+                description: globalTranslate.st_tooltip_s3_enabled_desc,
                 list: [
-                    globalTranslate.st_tooltip_s3_enabled_item1 || 'Automatic upload after recording completion',
-                    globalTranslate.st_tooltip_s3_enabled_item2 || 'Frees up local disk space',
-                    globalTranslate.st_tooltip_s3_enabled_item3 || 'Compatible with AWS S3, MinIO, Wasabi'
+                    globalTranslate.st_tooltip_s3_enabled_item1,
+                    globalTranslate.st_tooltip_s3_enabled_item2,
+                    globalTranslate.st_tooltip_s3_enabled_item3
                 ]
             }),
 
             s3_endpoint: storageIndex.buildTooltipContent({
-                header: globalTranslate.st_tooltip_s3_endpoint_header || 'S3 Endpoint URL',
-                description: globalTranslate.st_tooltip_s3_endpoint_desc || 'API endpoint for your S3-compatible storage service',
+                header: globalTranslate.st_tooltip_s3_endpoint_header,
+                description: globalTranslate.st_tooltip_s3_endpoint_desc,
                 examples: [
-                    'AWS S3: https://s3.amazonaws.com',
+                    'AWS S3: https://s3.ap-southeast-1.amazonaws.com',
+                    'Yandex Cloud: https://storage.yandexcloud.net',
+                    'VK Cloud: https://hb.kz-ast.vkcloud-storage.ru',
+                    'Cloudflare R2: https://<ACCOUNT_ID>.r2.cloudflarestorage.com',
+                    'DigitalOcean: https://sgp1.digitaloceanspaces.com',
                     'MinIO: http://minio.example.com:9000',
-                    'Wasabi: https://s3.wasabisys.com'
                 ],
-                examplesHeader: globalTranslate.st_tooltip_examples || 'Examples'
+                examplesHeader: globalTranslate.st_tooltip_examples
             }),
 
             s3_region: storageIndex.buildTooltipContent({
-                header: globalTranslate.st_tooltip_s3_region_header || 'S3 Region',
-                description: globalTranslate.st_tooltip_s3_region_desc || 'Geographic region where your bucket is located',
+                header: globalTranslate.st_tooltip_s3_region_header,
+                description: globalTranslate.st_tooltip_s3_region_desc,
                 examples: [
                     'us-east-1 (default)',
                     'eu-west-1',
                     'ap-southeast-1'
                 ],
-                note: globalTranslate.st_tooltip_s3_region_note || 'Must match your bucket region for AWS S3'
+                note: globalTranslate.st_tooltip_s3_region_note
             }),
 
             s3_bucket: storageIndex.buildTooltipContent({
-                header: globalTranslate.st_tooltip_s3_bucket_header || 'Bucket Name',
-                description: globalTranslate.st_tooltip_s3_bucket_desc || 'Name of the S3 bucket for storing recordings',
+                header: globalTranslate.st_tooltip_s3_bucket_header,
+                description: globalTranslate.st_tooltip_s3_bucket_desc,
                 list: [
-                    globalTranslate.st_tooltip_s3_bucket_item1 || 'Must be unique across all S3 users (for AWS)',
-                    globalTranslate.st_tooltip_s3_bucket_item2 || 'Only lowercase letters, numbers, hyphens',
-                    globalTranslate.st_tooltip_s3_bucket_item3 || 'Must already exist - will not be created'
+                    globalTranslate.st_tooltip_s3_bucket_item1,
+                    globalTranslate.st_tooltip_s3_bucket_item2,
+                    globalTranslate.st_tooltip_s3_bucket_item3
                 ]
             }),
 
             s3_access_key: storageIndex.buildTooltipContent({
-                header: globalTranslate.st_tooltip_s3_access_key_header || 'Access Key ID',
-                description: globalTranslate.st_tooltip_s3_access_key_desc || 'Public identifier for API authentication',
-                note: globalTranslate.st_tooltip_s3_access_key_note || 'Similar to username - safe to display'
+                header: globalTranslate.st_tooltip_s3_access_key_header,
+                description: globalTranslate.st_tooltip_s3_access_key_desc,
+                note: globalTranslate.st_tooltip_s3_access_key_note
             }),
 
             s3_secret_key: storageIndex.buildTooltipContent({
-                header: globalTranslate.st_tooltip_s3_secret_key_header || 'Secret Access Key',
-                description: globalTranslate.st_tooltip_s3_secret_key_desc || 'Private key for API authentication',
+                header: globalTranslate.st_tooltip_s3_secret_key_header,
+                description: globalTranslate.st_tooltip_s3_secret_key_desc,
                 warning: {
-                    header: globalTranslate.st_tooltip_warning || 'Security Warning',
-                    text: globalTranslate.st_tooltip_s3_secret_key_warning || 'Keep this secret safe - treat it like a password'
+                    header: globalTranslate.st_tooltip_warning,
+                    text: globalTranslate.st_tooltip_s3_secret_key_warning
                 }
             }),
 
             local_retention_period: storageIndex.buildTooltipContent({
-                header: globalTranslate.st_tooltip_local_retention_header || 'Local Retention Period',
-                description: globalTranslate.st_tooltip_local_retention_desc || 'How long to keep recordings locally before deleting',
+                header: globalTranslate.st_tooltip_local_retention_header,
+                description: globalTranslate.st_tooltip_local_retention_desc,
                 list: [
-                    globalTranslate.st_tooltip_local_retention_item1 || 'After this period, recordings are deleted from local storage',
-                    globalTranslate.st_tooltip_local_retention_item2 || 'Files remain in S3 cloud storage',
-                    globalTranslate.st_tooltip_local_retention_item3 || 'Cannot exceed total retention period'
+                    globalTranslate.st_tooltip_local_retention_item1,
+                    globalTranslate.st_tooltip_local_retention_item2,
+                    globalTranslate.st_tooltip_local_retention_item3
                 ],
                 warning: {
-                    header: globalTranslate.st_tooltip_note || 'Note',
-                    text: globalTranslate.st_tooltip_local_retention_warning || 'Shorter local retention frees disk space faster'
+                    header: globalTranslate.st_tooltip_note,
+                    text: globalTranslate.st_tooltip_local_retention_warning
                 }
             })
         };

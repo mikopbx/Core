@@ -862,7 +862,7 @@ return [
     'st_S3BucketInvalid' => 'Некорректное имя бакета S3. Должно быть от 3 до 63 символов, только строчные буквы, цифры и дефисы.',
     'st_S3ConfigurationHelp' => 'Настройте учетные данные для S3-совместимого хранилища для автоматической загрузки записей в облако.',
     'st_S3Endpoint' => 'URL точки доступа S3',
-    'st_S3EndpointHelp' => 'Примеры: https://s3.amazonaws.com (AWS), http://minio:9000 (MinIO)',
+    'st_S3EndpointHelp' => 'Примеры: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',
     'st_S3EndpointInvalid' => 'Некорректный URL точки доступа S3',
     'st_S3Region' => 'Регион S3',
     'st_S3SecretKey' => 'Секретный ключ',
@@ -900,7 +900,7 @@ return [
 
     // Tooltip translations
     'st_tooltip_record_retention_header' => 'Общий срок хранения записей',
-    'st_tooltip_record_retention_desc' => 'Определяет, как долго записи разговоров будут храниться в системе',
+    'st_tooltip_record_retention_desc' => 'Определяет общий срок хранения записей, включая облачное хранилище S3. По истечении этого срока записи удаляются окончательно',
     'st_tooltip_record_retention_item1' => '30 дней - минимальный период хранения',
     'st_tooltip_record_retention_item2' => '90 дней - рекомендуется для малого бизнеса',
     'st_tooltip_record_retention_item3' => '1 год - для соблюдения требований законодательства',
@@ -938,8 +938,8 @@ return [
     'st_tooltip_s3_secret_key_warning' => 'Храните этот ключ в безопасности - обращайтесь с ним как с паролем',
 
     'st_tooltip_local_retention_header' => 'Локальное хранение записей',
-    'st_tooltip_local_retention_desc' => 'Как долго хранить записи локально перед удалением',
-    'st_tooltip_local_retention_item1' => 'После этого периода записи удаляются из локального хранилища',
+    'st_tooltip_local_retention_desc' => 'Как долго хранить записи локально перед перемещением в облачное хранилище S3',
+    'st_tooltip_local_retention_item1' => 'После этого периода записи перемещаются в S3 и удаляются из локального хранилища',
     'st_tooltip_local_retention_item2' => 'Файлы остаются в облачном хранилище S3',
     'st_tooltip_local_retention_item3' => 'Не может превышать общий срок хранения',
     'st_tooltip_note' => 'Примечание',

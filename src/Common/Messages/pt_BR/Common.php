@@ -806,7 +806,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'st_ValidationError' => 'Erro de validação',
     // Tooltip translations
     'st_tooltip_record_retention_header' => 'Período geral de retenção de registros',
-    'st_tooltip_record_retention_desc' => 'Determina por quanto tempo as gravações de chamadas serão armazenadas no sistema.',
+    'st_tooltip_record_retention_desc' => 'Período total de retenção para gravações, incluindo armazenamento em nuvem S3. Após o vencimento, as gravações são excluídas permanentemente',
     'st_tooltip_record_retention_item1' => '30 dias é o período mínimo de armazenamento.',
     'st_tooltip_record_retention_warning' => 'Períodos de armazenamento mais longos exigem mais espaço em disco.',
     'st_tooltip_s3_enabled_desc' => 'Faça o upload automático das gravações para um armazenamento em nuvem compatível com S3 para backup e arquivamento.',
@@ -821,8 +821,8 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'st_tooltip_s3_bucket_item3' => 'O bucket já deve existir - ele não será criado automaticamente.',
     'st_tooltip_s3_access_key_header' => 'ID da chave de acesso',
     'st_tooltip_local_retention_header' => 'Armazenamento local de registros',
-    'st_tooltip_local_retention_desc' => 'Por quanto tempo devo manter os registros localmente antes de excluí-los?',
-    'st_tooltip_local_retention_item1' => 'Após esse período, os registros são excluídos do armazenamento local.',
+    'st_tooltip_local_retention_desc' => 'Por quanto tempo manter as gravações localmente antes de movê-las para o armazenamento em nuvem S3',
+    'st_tooltip_local_retention_item1' => 'Após esse período, as gravações são movidas para o S3 e excluídas do armazenamento local',
     'st_tooltip_local_retention_warning' => 'Um armazenamento local mais curto libera espaço em disco mais rapidamente.',
     // SF - Sound Files and File uploads
     'sf_UploadForbiddenExtension' => 'Extensão de arquivo não permitida: {extension}',
@@ -848,7 +848,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'st_S3Bucket' => 'Nome do bucket S3',
     'st_S3BucketInvalid' => 'Nome de bucket S3 inválido. Deve ter entre 3 e 63 caracteres, contendo apenas letras minúsculas, números e hífenes.',
     'st_S3ConfigurationHelp' => 'Configure as credenciais para armazenamento compatível com S3 para fazer o upload automático de registros para a nuvem.',
-    'st_S3EndpointHelp' => 'Exemplos: https://s3.amazonaws.com (AWS), http://minio:9000 (MinIO)',
+    'st_S3EndpointHelp' => 'Exemplos: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',
     'st_S3EndpointInvalid' => 'URL de ponto de acesso S3 inválida',
     'st_S3SecretKey' => 'Chave secreta',
     'st_S3SecretKeyHelp' => 'A chave secreta será criptografada antes de ser armazenada.',

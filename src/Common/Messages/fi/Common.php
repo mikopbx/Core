@@ -736,8 +736,8 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'st_tooltip_s3_enabled_item2' => 'Vapauttaa paikallista levytilaa',
     'st_tooltip_s3_enabled_item3' => 'Yhteensopiva AWS S3:n, MinIO:n, Wasabin ja muiden kanssa',
     'st_tooltip_s3_bucket_item3' => 'Kauhan on oltava jo olemassa – sitä ei luoda automaattisesti.',
-    'st_tooltip_local_retention_desc' => 'Kuinka kauan tietueita säilytetään paikallisesti ennen niiden poistamista',
-    'st_tooltip_local_retention_item1' => 'Tämän ajanjakson jälkeen tiedot poistetaan paikallisesta tallennustilasta.',
+    'st_tooltip_local_retention_desc' => 'Kuinka kauan tallenteet säilytetään paikallisesti ennen siirtämistä S3-pilvitallennustilaan',
+    'st_tooltip_local_retention_item1' => 'Tämän ajanjakson jälkeen tallenteet siirretään S3:een ja poistetaan paikallisesta tallennustilasta',
     'st_tooltip_local_retention_header' => 'Tietueiden paikallinen tallennus',
     'st_tooltip_local_retention_item2' => 'Tiedostot pysyvät S3-pilvitallennustilassa',
     'sf_UploadInvalidMimeType' => 'Tiedostotyyppiä {mimetype} ei tueta luokassa {category}',
@@ -840,7 +840,7 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'st_S3BucketInvalid' => 'Virheellinen S3-säiliön nimi. Sen on oltava 3–63 merkkiä pitkä ja saa sisältää vain pieniä kirjaimia, numeroita ja yhdysmerkkejä.',
     'st_S3ConfigurationHelp' => 'Määritä S3-yhteensopivan tallennustilan tunnistetiedot, jotta tietueet ladataan automaattisesti pilveen.',
     'st_S3Endpoint' => 'S3-tukiaseman URL-osoite',
-    'st_S3EndpointHelp' => 'Esimerkkejä: https://s3.amazonaws.com (AWS), http://minio:9000 (MinIO)',
+    'st_S3EndpointHelp' => 'Esimerkkejä: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',
     'st_S3EndpointInvalid' => 'Virheellinen S3-tukiaseman URL-osoite',
     'st_S3Region' => 'Alue S3',
     'st_S3SecretKey' => 'Salainen avain',
@@ -848,7 +848,7 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'st_S3StorageSettings' => 'S3-pilvitallennustila',
     // Tooltip translations
     'st_tooltip_record_retention_header' => 'Asiakirjojen yleinen säilytysaika',
-    'st_tooltip_record_retention_desc' => 'Määrittää, kuinka kauan puhelutallenteita säilytetään järjestelmässä.',
+    'st_tooltip_record_retention_desc' => 'Tallenteiden kokonaissäilytysaika, mukaan lukien S3-pilvitallennustila. Määräajan umpeuduttua tallenteet poistetaan pysyvästi',
     'st_tooltip_record_retention_item2' => '90 päivää - suositellaan pienille yrityksille',
     'st_tooltip_s3_enabled_header' => 'Pilvitallennustila',
     // Units of measurement
