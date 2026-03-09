@@ -210,13 +210,13 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
                 // Handle pending avatar data (needs user ID for filename)
                 if (!empty($pendingAvatarData)) {
+                    // Delete old avatar file BEFORE saving new one (same path: user_{id}.jpg)
+                    if (!empty($userEntity->avatar)) {
+                        AvatarHelper::deleteAvatarFile($userEntity->avatar);
+                    }
                     $avatarData = AvatarHelper::saveAvatarToFile($pendingAvatarData, (string)$userEntity->id);
                     if ($avatarData === null) {
                         throw new \Exception('Invalid avatar image: must be at least 1KB and a valid image format (JPEG, PNG, GIF, WEBP)');
-                    }
-                    // Delete old avatar file if exists
-                    if (!empty($userEntity->avatar)) {
-                        AvatarHelper::deleteAvatarFile($userEntity->avatar);
                     }
                     $userEntity->avatar = $avatarData;
                     if (!$userEntity->save()) {
