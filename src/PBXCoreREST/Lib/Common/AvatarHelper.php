@@ -235,6 +235,9 @@ class AvatarHelper
         // Compute md5 hash of file contents for cache invalidation
         $relativePath = self::AVATARS_SUBDIR . '/' . $filename;
         $fileHash = md5_file($filepath);
+        if ($fileHash === false) {
+            return null;
+        }
 
         // Return JSON string with path and hash
         return self::createAvatarData($relativePath, $fileHash);
