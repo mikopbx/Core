@@ -169,16 +169,17 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
 
             // Save avatar file now that we have user ID
             if (!empty($pendingAvatarData)) {
-                $avatarPath = AvatarHelper::saveAvatarToFile($pendingAvatarData, (string)$userEntity->id);
-                if ($avatarPath !== null) {
-                    // Delete old avatar file if it exists and is different
-                    if (!empty($userEntity->avatar) && $userEntity->avatar !== $avatarPath) {
-                        AvatarHelper::deleteAvatarFile($userEntity->avatar);
-                    }
-                    $userEntity->avatar = $avatarPath;
-                    if (!$userEntity->save()) {
-                        throw new \Exception('Failed to save user avatar: ' . implode(', ', $userEntity->getMessages()));
-                    }
+                $avatarData = AvatarHelper::saveAvatarToFile($pendingAvatarData, (string)$userEntity->id);
+                if ($avatarData === null) {
+                    throw new \Exception('Invalid avatar image: must be at least 1KB and a valid image format (JPEG, PNG, GIF, WEBP)');
+                }
+                // Delete old avatar file if exists
+                if (!empty($userEntity->avatar)) {
+                    AvatarHelper::deleteAvatarFile($userEntity->avatar);
+                }
+                $userEntity->avatar = $avatarData;
+                if (!$userEntity->save()) {
+                    throw new \Exception('Failed to save user avatar: ' . implode(', ', $userEntity->getMessages()));
                 }
             }
 

@@ -34,8 +34,14 @@ use function MikoPBX\Common\Config\appPath;
  *
  * Storage Architecture:
  * - Permanent storage: /storage/.../media/avatars/user_{id}.jpg
- * - Database stores: /avatars/user_{id}.jpg (relative path)
- * - Display cache: /sites/admin-cabinet/assets/img/cache/{hash}.jpg (temporary)
+ * - Database stores JSON: {"path":"/avatars/user_{id}.jpg","hash":"md5_of_file_contents"}
+ * - Display cache: /sites/admin-cabinet/assets/img/cache/{hash}.jpg (temporary, legacy base64)
+ *
+ * Avatar data formats (backward compatible):
+ * - JSON string: {"path":"/avatars/user_1.jpg","hash":"a1b2c3..."} (new format)
+ * - Path string: /avatars/user_1.jpg (old format, hash = md5 of path)
+ * - Base64 blob: data:image/...;base64,... (legacy format from older MikoPBX)
+ * - Empty string: no avatar set
  *
  * @package MikoPBX\PBXCoreREST\Lib\Common
  */
@@ -55,15 +61,62 @@ class AvatarHelper
      * Avatars storage subdirectory under media dir
      */
     private const AVATARS_SUBDIR = '/avatars';
-    
+
+    /**
+     * Parse avatar data from any supported format
+     *
+     * Returns an associative array with 'path' and 'hash' keys.
+     * Handles all backward-compatible formats:
+     * - JSON: {"path":"...","hash":"..."} → extracted directly
+     * - Path: /avatars/user_1.jpg → hash = md5 of path string
+     * - Base64: data:image/...;base64,... → hash = md5 of base64 string, path = ''
+     * - Empty: '' → path = '', hash = ''
+     *
+     * @param string $avatarData Raw avatar field from database
+     * @return array{path: string, hash: string}
+     */
+    public static function parseAvatarData(string $avatarData): array
+    {
+        if (empty($avatarData)) {
+            return ['path' => '', 'hash' => ''];
+        }
+
+        // New JSON format
+        if (str_starts_with($avatarData, '{')) {
+            $decoded = json_decode($avatarData, true);
+            if (is_array($decoded) && isset($decoded['path'], $decoded['hash'])) {
+                return ['path' => $decoded['path'], 'hash' => $decoded['hash']];
+            }
+        }
+
+        // Legacy base64 blob
+        if (str_starts_with($avatarData, 'data:image')) {
+            return ['path' => '', 'hash' => md5($avatarData)];
+        }
+
+        // Old path-only format
+        return ['path' => $avatarData, 'hash' => md5($avatarData)];
+    }
+
+    /**
+     * Create JSON avatar data string for database storage
+     *
+     * @param string $path Relative path to avatar file (e.g. /avatars/user_1.jpg)
+     * @param string $hash MD5 hash of the file contents
+     * @return string JSON string {"path":"...","hash":"..."}
+     */
+    public static function createAvatarData(string $path, string $hash): string
+    {
+        return json_encode(['path' => $path, 'hash' => $hash], JSON_UNESCAPED_SLASHES);
+    }
+
     /**
      * Get avatar URL with caching support
-     * 
-     * Converts base64 avatar data to a cached file and returns the URL.
+     *
+     * Converts avatar data (JSON, path, or base64) to a displayable URL.
      * If the avatar data is empty or invalid, returns the default avatar.
-     * If the avatar is already a URL path, returns it as is.
-     * 
-     * @param string $avatarData Base64 avatar data, URL path, or empty string
+     *
+     * @param string $avatarData Avatar data from database (JSON, path, base64, or empty)
      * @return string Avatar URL path
      */
     public static function getAvatarUrl(string $avatarData): string
@@ -72,38 +125,42 @@ class AvatarHelper
         if (empty($avatarData)) {
             return self::DEFAULT_AVATAR;
         }
-        
+
+        // Parse JSON format to extract path
+        if (str_starts_with($avatarData, '{')) {
+            $parsed = self::parseAvatarData($avatarData);
+            return empty($parsed['path']) ? self::DEFAULT_AVATAR : $parsed['path'];
+        }
+
         // Check if it's already a URL path (not base64)
         if (!str_starts_with($avatarData, 'data:image')) {
             // Already a URL path, return as is
             return $avatarData;
         }
-        
-        // Generate filename based on content hash
+
+        // Legacy base64 blob — convert to cached file
         $filename = md5($avatarData);
         $imgCacheDir = appPath(self::CACHE_DIR);
         $imgFile = "{$imgCacheDir}/{$filename}.jpg";
-        
+
         // Ensure cache directory exists
         if (!is_dir($imgCacheDir)) {
             if (!mkdir($imgCacheDir, 0755, true)) {
-                // Failed to create directory, return default avatar
                 return self::DEFAULT_AVATAR;
             }
         }
-        
+
         // Process avatar file if it doesn't exist yet
         if (!file_exists($imgFile)) {
             if (!self::base64ToJpegFile($avatarData, $imgFile)) {
-                // Failed to create file, return default avatar
                 return self::DEFAULT_AVATAR;
             }
         }
-        
+
         // Return the cache URL
         return "/admin-cabinet/assets/img/cache/{$filename}.jpg";
     }
-    
+
     /**
      * Convert base64 string to JPEG file
      *
@@ -114,29 +171,22 @@ class AvatarHelper
     private static function base64ToJpegFile(string $base64String, string $outputFile): bool
     {
         try {
-            // Open the output file for writing
             $ifp = fopen($outputFile, 'wb');
             if ($ifp === false) {
                 return false;
             }
 
-            // Split the string on commas
-            // $data[0] == "data:image/png;base64"
-            // $data[1] == <actual base64 string>
             $data = explode(',', $base64String);
             if (count($data) > 1) {
-                // Write the base64 decoded data to the file
                 $result = fwrite($ifp, base64_decode($data[1]));
                 fclose($ifp);
                 return $result !== false;
             }
 
-            // Close the file resource
             fclose($ifp);
             return false;
 
         } catch (\Exception $e) {
-            // Handle any exceptions during file operations
             return false;
         }
     }
@@ -145,11 +195,11 @@ class AvatarHelper
      * Save avatar from base64 data to permanent storage
      *
      * Saves the avatar image to /storage/.../media/avatars/user_{userId}.jpg
-     * and returns the relative path to store in database.
+     * and returns JSON string with path and content hash for database storage.
      *
      * @param string $base64Data Base64 encoded image data (data:image/...;base64,...)
      * @param string $userId User ID for filename generation
-     * @return string|null Relative path (/avatars/user_{id}.jpg) on success, null on failure
+     * @return string|null JSON string {"path":"...","hash":"..."} on success, null on failure
      */
     public static function saveAvatarToFile(string $base64Data, string $userId): ?string
     {
@@ -182,20 +232,37 @@ class AvatarHelper
             return null;
         }
 
-        // Return relative path for database storage
-        return self::AVATARS_SUBDIR . '/' . $filename;
+        // Compute md5 hash of file contents for cache invalidation
+        $relativePath = self::AVATARS_SUBDIR . '/' . $filename;
+        $fileHash = md5_file($filepath);
+        if ($fileHash === false) {
+            return null;
+        }
+
+        // Return JSON string with path and hash
+        return self::createAvatarData($relativePath, $fileHash);
     }
 
     /**
      * Delete avatar file from permanent storage
      *
-     * @param string $avatarPath Relative avatar path (/avatars/user_{id}.jpg)
+     * Accepts any avatar data format (JSON, path, base64).
+     *
+     * @param string $avatarData Avatar data from database (JSON, path, or legacy format)
      * @return bool True if deleted or didn't exist, false on error
      */
-    public static function deleteAvatarFile(string $avatarPath): bool
+    public static function deleteAvatarFile(string $avatarData): bool
     {
+        if (empty($avatarData)) {
+            return true;
+        }
+
+        // Parse the avatar data to get the path
+        $parsed = self::parseAvatarData($avatarData);
+        $avatarPath = $parsed['path'];
+
         if (empty($avatarPath) || !str_starts_with($avatarPath, self::AVATARS_SUBDIR)) {
-            return true; // Nothing to delete
+            return true; // Nothing to delete (base64 blob or invalid path)
         }
 
         $mediaDir = Directories::getDir(Directories::AST_MEDIA_DIR);
@@ -264,7 +331,6 @@ class AvatarHelper
     {
         try {
             // Split the string on comma to get actual base64 data
-            // Format: data:image/png;base64,<actual-data>
             $parts = explode(',', $base64String, 2);
             if (count($parts) !== 2) {
                 return false;

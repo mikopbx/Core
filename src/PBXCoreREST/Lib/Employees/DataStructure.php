@@ -84,7 +84,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             if ($sipRecord!==null) {
                 $data['sip_secret'] = $sipRecord->secret;
                 $data['sip_dtmfmode'] = $sipRecord->dtmfmode;
-                $data['sip_transport'] = $sipRecord->transport;
+                $data['sip_transport'] = $sipRecord->transport ?: Sip::TRANSPORT_AUTO;
                 $data['sip_manualattributes'] = $sipRecord->getManualAttributes();
                 $data['sip_enableRecording'] = $sipRecord->enableRecording === '1';
                 

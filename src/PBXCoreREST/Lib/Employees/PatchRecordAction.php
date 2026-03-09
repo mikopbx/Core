@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Employees;
 
+use MikoPBX\Common\Models\Sip;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
@@ -178,7 +179,12 @@ class PatchRecordAction
         
         // Ensure ID is always set from patch data
         $mergedData['id'] = $patchData['id'];
-        
+
+        // Fix legacy records with empty sip_transport that fail enum validation
+        if (empty($mergedData['sip_transport'])) {
+            $mergedData['sip_transport'] = Sip::TRANSPORT_AUTO;
+        }
+
         return $mergedData;
     }
 }

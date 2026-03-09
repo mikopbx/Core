@@ -210,16 +210,17 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
                 // Handle pending avatar data (needs user ID for filename)
                 if (!empty($pendingAvatarData)) {
-                    $avatarPath = AvatarHelper::saveAvatarToFile($pendingAvatarData, (string)$userEntity->id);
-                    if ($avatarPath !== null) {
-                        // Delete old avatar file if different
-                        if (!empty($userEntity->avatar) && $userEntity->avatar !== $avatarPath) {
-                            AvatarHelper::deleteAvatarFile($userEntity->avatar);
-                        }
-                        $userEntity->avatar = $avatarPath;
-                        if (!$userEntity->save()) {
-                            throw new \Exception('Failed to save user avatar: ' . implode(', ', $userEntity->getMessages()));
-                        }
+                    $avatarData = AvatarHelper::saveAvatarToFile($pendingAvatarData, (string)$userEntity->id);
+                    if ($avatarData === null) {
+                        throw new \Exception('Invalid avatar image: must be at least 1KB and a valid image format (JPEG, PNG, GIF, WEBP)');
+                    }
+                    // Delete old avatar file if exists
+                    if (!empty($userEntity->avatar)) {
+                        AvatarHelper::deleteAvatarFile($userEntity->avatar);
+                    }
+                    $userEntity->avatar = $avatarData;
+                    if (!$userEntity->save()) {
+                        throw new \Exception('Failed to save user avatar: ' . implode(', ', $userEntity->getMessages()));
                     }
                 }
 
@@ -308,7 +309,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // Handle avatar field with special logic:
         // - If empty string: clear avatar (user clicked clear button)
         // - If starts with 'data:image': new base64 image - save to file after getting user ID
-        // - If starts with '/' (URL path): unchanged, skip update
+        // - If starts with '/' or '{' (URL path or JSON): unchanged, skip update
         $pendingAvatarData = null;
 
         if (array_key_exists('user_avatar', $sanitizedData)) {
@@ -316,7 +317,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
             if ($avatarValue === '' || $avatarValue === null) {
                 // Empty value means clear the avatar
-                // Delete old avatar file if exists
+                // Delete old avatar file if exists (handles JSON, path, and legacy formats)
                 if (!empty($userEntity->avatar)) {
                     AvatarHelper::deleteAvatarFile($userEntity->avatar);
                 }
@@ -326,7 +327,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 // For new users, we need ID first for filename generation
                 $pendingAvatarData = $avatarValue;
             }
-            // If it's a URL path (starts with '/'), don't update - keep existing avatar
+            // If it's a URL path (starts with '/') or JSON (starts with '{'), don't update
         }
 
         // Set username
