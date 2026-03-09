@@ -55,13 +55,14 @@ jobs:
 
       - name: PHPStan
         if: steps.changed.outputs.count != '0'
-        run: >-
-          vendor/bin/phpstan analyse
-          --configuration=phpstan.neon
-          --paths-file=/tmp/changed-php-files.txt
-          --error-format=github
-          --memory-limit=512M
-          --no-progress
+        run: |
+          mkdir -p build/phpstan
+          cat /tmp/changed-php-files.txt | xargs \
+            vendor/bin/phpstan analyse \
+            --configuration=phpstan.neon \
+            --error-format=github \
+            --memory-limit=512M \
+            --no-progress
 
       - name: phpcs
         if: steps.changed.outputs.count != '0'
