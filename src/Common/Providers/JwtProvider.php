@@ -227,16 +227,18 @@ class JwtProvider implements ServiceProviderInterface
                     /**
                      * Get JWT secret key from system settings
                      *
+                     * Uses a dedicated random secret stored in PbxSettings.
+                     * Auto-generates on first use to ensure high entropy regardless of boot order.
+                     *
                      * @return string Secret key
                      */
                     private function getSecret(): string
                     {
-                        // Use SSH RSA key as secret (unique per installation)
-                        $secret = PbxSettings::getValueByKey(PbxSettings::SSH_RSA_KEY);
+                        $secret = PbxSettings::getValueByKey(PbxSettings::JWT_SECRET);
 
                         if (empty($secret)) {
-                            // Fallback to web admin password hash
-                            $secret = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
+                            $secret = bin2hex(random_bytes(32));
+                            PbxSettings::setValueByKey(PbxSettings::JWT_SECRET, $secret);
                         }
 
                         return $secret;

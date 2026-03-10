@@ -131,6 +131,7 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::SEND_VOICEMAIL_NOTIFICATIONS => '1',
             PbxSettings::SEND_SYSTEM_NOTIFICATIONS => '1',
             PbxSettings::CLOUD_INSTANCE_ID => '',
+            PbxSettings::JWT_SECRET => '',
             PbxSettings::DISABLE_ALL_MODULES => '0',
             PbxSettings::PBX_LICENSE => '',
             PbxSettings::ENABLE_USE_NAT => '0',

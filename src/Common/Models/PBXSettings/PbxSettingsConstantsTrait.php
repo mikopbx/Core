@@ -288,6 +288,8 @@ trait PbxSettingsConstantsTrait
     /** @FieldType('string') */
     public const string NTP_SERVER = 'NTPServer';
     /** @FieldType('string') */
+    public const string JWT_SECRET = 'JWTSecret';
+    /** @FieldType('string') */
     public const string WWW_ENCRYPTION_KEY = 'WWWEncryptionKey';
 
     // Service PORTS settings from /etc/inc/mikopbx-settings.json (For Docker containers)
