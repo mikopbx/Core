@@ -71,9 +71,12 @@ class DockerCloud extends CloudProvider
      * should be dynamic and applied on each restart. This is different from
      * cloud-init which runs only once per instance.
      *
-     * Called from CloudProvisioning::start() before the one-time provisioning check.
+     * Called from CloudProvisioning::start() after Redis is running, so ORM can be used.
      * Only updates settings that have actually changed (efficient for repeated calls).
-     * Redis is already running at this point, so ORM can be used.
+     *
+     * Note: Port settings (REDIS_PORT, BEANSTALK_PORT, GNATS_PORT, GNATS_HTTP_PORT)
+     * are applied earlier by applyPortOverrides() via CloudProvisioning::applyEarlyOverrides()
+     * before Redis starts, since Redis needs the correct port from JSON config at startup.
      */
     public static function applyEnvironmentOverrides(): void
     {
@@ -82,8 +85,9 @@ class DockerCloud extends CloudProvider
 
         $instance = new self();
 
-        // Handle port settings first (they go to JSON config, not DB)
-        $instance->applyPortSettings();
+        // NOTE: Port settings (REDIS_PORT, BEANSTALK_PORT, etc.) are already applied
+        // by CloudProvisioning::applyEarlyOverrides() BEFORE Redis starts.
+        // No need to call applyPortSettings() here again.
 
         // Build configuration from environment variables
         $config = ProvisioningConfig::fromEnvironment();
@@ -122,6 +126,20 @@ class DockerCloud extends CloudProvider
 
     /**
      * Applies port-related settings to the JSON configuration file.
+     *
+     * These settings cannot be stored in the database and must be written
+     * directly to /etc/inc/mikopbx-settings.json before system services start.
+     *
+     * This method has no ORM/Redis dependency — it only reads ENV variables
+     * and writes to the JSON file. Safe to call before Redis starts.
+     */
+    public static function applyPortOverrides(): void
+    {
+        (new self())->applyPortSettings();
+    }
+
+    /**
+     * Applies port-related settings to the JSON configuration file (internal).
      *
      * These settings cannot be stored in the database and must be written
      * directly to /etc/inc/mikopbx-settings.json before system services start.

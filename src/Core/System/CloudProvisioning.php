@@ -44,6 +44,22 @@ use MikoPBX\Core\System\CloudProvisioning\VultrCloud;
 class CloudProvisioning
 {
     /**
+     * Applies early overrides that MUST run before Redis/Beanstalkd start.
+     *
+     * Currently handles port settings (REDIS_PORT, BEANSTALK_PORT, GNATS_PORT, GNATS_HTTP_PORT)
+     * from Docker ENV variables. These are written to /etc/inc/mikopbx-settings.json
+     * which Redis and Beanstalkd read on startup.
+     *
+     * No ORM/Redis dependency — safe to call before any services start.
+     */
+    public static function applyEarlyOverrides(): void
+    {
+        if (System::isDocker()) {
+            DockerCloud::applyPortOverrides();
+        }
+    }
+
+    /**
      * Starts the cloud provisioning process.
      * Uses direct SQLite queries to avoid Redis/ORM dependency during early boot.
      *

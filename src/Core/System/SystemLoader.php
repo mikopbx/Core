@@ -219,6 +219,13 @@ class SystemLoader extends Injectable
         $network->loConfigure();
         $this->echoResultMsg();
 
+        // Apply port overrides BEFORE Redis/Beanstalkd start.
+        // Docker ENV variables like REDIS_PORT, BEANSTALK_PORT update the JSON config
+        // that these services read on startup. No ORM/Redis dependency.
+        if (!$this->isRecoveryMode) {
+            CloudProvisioning::applyEarlyOverrides();
+        }
+
         $this->echoStartMsg(' - Starting redis daemon...');
         $redisConf = new RedisConf();
         $redisStatus = $redisConf->start();
