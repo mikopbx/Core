@@ -71,6 +71,11 @@ class StatusUploadFileAction extends Injectable
             $res->success = true;
             $res->data[FilesConstants::D_STATUS_PROGRESS] = '100';
             $res->data[FilesConstants::D_STATUS] = FilesConstants::UPLOAD_COMPLETE;
+        } elseif (str_starts_with(file_get_contents($progress_file), 'VALIDATION_FAILED')) {
+            $res->success = false;
+            $res->data[FilesConstants::D_STATUS_PROGRESS] = '0';
+            $res->data[FilesConstants::D_STATUS] = FilesConstants::UPLOAD_FAILED;
+            $res->messages['error'][] = 'File content validation failed: file type does not match declared category';
         } else {
             $res->success = true;
             $res->data[FilesConstants::D_STATUS_PROGRESS] = file_get_contents($progress_file);

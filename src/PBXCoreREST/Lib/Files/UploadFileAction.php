@@ -86,6 +86,18 @@ class UploadFileAction extends Injectable
         'dll', 'so', 'dylib', 'msi', 'deb', 'rpm'
     ];
 
+    // Expected MIME type prefixes from finfo_file() for each category.
+    // Used to validate actual file content (magic bytes) after merge.
+    // Categories not listed here skip magic bytes validation (too generic).
+    private const MAGIC_BYTES_MIME_PREFIXES = [
+        'sound' => ['audio/', 'application/ogg', 'application/octet-stream'],
+        'image' => ['image/'],
+        'archive' => [
+            'application/zip', 'application/x-zip', 'application/gzip',
+            'application/x-gzip', 'application/x-tar', 'application/x-bzip2',
+        ],
+    ];
+
     /**
      * Process upload files by chunks.
      *
@@ -262,6 +274,7 @@ class UploadFileAction extends Injectable
                 'resumableFilename'    => $parameters['resumableFilename'],
                 'resumableTotalSize'   => $parameters['resumableTotalSize'],
                 'resumableTotalChunks' => $parameters['resumableTotalChunks'],
+                'category'             => $parameters['category'] ?? 'unknown',
             ];
             $settings_file  = "{$parameters['tempDir']}/merge_settings";
             file_put_contents(
@@ -339,6 +352,103 @@ class UploadFileAction extends Injectable
             ];
         }
         
+        return ['valid' => true];
+    }
+
+    /**
+     * Validate file content using magic bytes (finfo).
+     *
+     * Called after merge to verify that file content matches the declared category.
+     * This prevents type spoofing where a malicious file is uploaded with a fake MIME header.
+     *
+     * @param string $filePath Absolute path to merged file
+     * @param string $category File category (sound, image, csv, archive, firmware)
+     *
+     * @return array{valid: bool, error?: string} Validation result
+     */
+    public static function validateMagicBytes(string $filePath, string $category): array
+    {
+        // Skip validation for categories where finfo is unreliable
+        if (!isset(self::MAGIC_BYTES_MIME_PREFIXES[$category])) {
+            return ['valid' => true];
+        }
+
+        if (!file_exists($filePath) || filesize($filePath) === 0) {
+            return ['valid' => false, 'error' => 'File not found or empty'];
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $detectedMime = $finfo->file($filePath);
+
+        if ($detectedMime === false) {
+            return ['valid' => false, 'error' => 'Unable to detect file type'];
+        }
+
+        // Check if detected MIME matches any allowed prefix for this category
+        $allowedPrefixes = self::MAGIC_BYTES_MIME_PREFIXES[$category];
+        $matched = false;
+        foreach ($allowedPrefixes as $prefix) {
+            if (str_starts_with($detectedMime, $prefix)) {
+                $matched = true;
+                break;
+            }
+        }
+
+        if (!$matched) {
+            return [
+                'valid' => false,
+                'error' => "File content does not match category '$category': detected '$detectedMime'",
+            ];
+        }
+
+        // SVG-specific check: reject files containing script tags (XSS vector)
+        if ($detectedMime === 'image/svg+xml') {
+            $svgResult = self::validateSvgContent($filePath);
+            if (!$svgResult['valid']) {
+                return $svgResult;
+            }
+        }
+
+        return ['valid' => true];
+    }
+
+    /**
+     * Check SVG file for dangerous content (embedded scripts, event handlers).
+     *
+     * @param string $filePath Path to SVG file
+     *
+     * @return array{valid: bool, error?: string}
+     */
+    private static function validateSvgContent(string $filePath): array
+    {
+        $content = file_get_contents($filePath, false, null, 0, 1024 * 100); // Read first 100KB
+        if ($content === false) {
+            return ['valid' => false, 'error' => 'Unable to read SVG file'];
+        }
+
+        $contentLower = strtolower($content);
+
+        // Check for script tags and event handlers
+        $dangerousPatterns = [
+            '<script',
+            'javascript:',
+            'onload=',
+            'onerror=',
+            'onclick=',
+            'onmouseover=',
+            'onfocus=',
+            'onanimationend=',
+        ];
+
+        foreach ($dangerousPatterns as $pattern) {
+            if (str_contains($contentLower, $pattern)) {
+                return [
+                    'valid' => false,
+                    'error' => 'SVG contains potentially dangerous content',
+                ];
+            }
+        }
+
         return ['valid' => true];
     }
 }

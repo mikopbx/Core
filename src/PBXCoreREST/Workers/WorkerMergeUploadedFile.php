@@ -27,6 +27,7 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
+use MikoPBX\PBXCoreREST\Lib\Files\UploadFileAction;
 use Phalcon\Di\Di;
 
 
@@ -82,17 +83,7 @@ class WorkerMergeUploadedFile extends WorkerBase
 
         // Check if the merged file size is equal to the uploaded size
         $resultFileSize = filesize($settings['fullUploadedFileName']);
-        if ((int)$settings['resumableTotalSize'] === $resultFileSize) {
-            file_put_contents($progress_file, '100');
-
-            // Send completion event
-            $this->publishEvent('merge-complete', [
-                'progress' => 100,
-                'status' => FilesConstants::UPLOAD_COMPLETE,
-                'filePath' => $settings['fullUploadedFileName'],
-                'fileSize' => $resultFileSize
-            ]);
-        } else {
+        if ((int)$settings['resumableTotalSize'] !== $resultFileSize) {
             $errorMessage = "File {$settings['fullUploadedFileName']} size $resultFileSize does not equal {$settings['resumableTotalSize']}";
             SystemMessages::sysLogMsg('UploadFile', $errorMessage, LOG_ERR);
 
@@ -101,7 +92,51 @@ class WorkerMergeUploadedFile extends WorkerBase
                 'error' => $errorMessage,
                 'status' => 'ERROR'
             ]);
+
+            // Delete uploaded file after 10 minutes
+            Processes::mwExecBg(
+                '/sbin/shell_functions.sh killprocesses ' . $settings['tempDir'] . ' -TERM 0;rm -rf ' . $settings['tempDir'],
+                '/dev/null',
+                600
+            );
+            return;
         }
+
+        // Validate file content matches declared category using magic bytes
+        $category = $settings['category'] ?? 'unknown';
+        $magicResult = UploadFileAction::validateMagicBytes($settings['fullUploadedFileName'], $category);
+        if (!$magicResult['valid']) {
+            $errorMessage = "Magic bytes validation failed for {$settings['fullUploadedFileName']}: {$magicResult['error']}";
+            SystemMessages::sysLogMsg('UploadFile', $errorMessage, LOG_ERR);
+
+            // Delete the suspicious file immediately
+            unlink($settings['fullUploadedFileName']);
+
+            file_put_contents($progress_file, 'VALIDATION_FAILED');
+
+            $this->publishEvent('upload-error', [
+                'error' => $magicResult['error'],
+                'status' => FilesConstants::UPLOAD_FAILED
+            ]);
+
+            // Delete temp dir after 10 minutes
+            Processes::mwExecBg(
+                '/sbin/shell_functions.sh killprocesses ' . $settings['tempDir'] . ' -TERM 0;rm -rf ' . $settings['tempDir'],
+                '/dev/null',
+                600
+            );
+            return;
+        }
+
+        file_put_contents($progress_file, '100');
+
+        // Send completion event
+        $this->publishEvent('merge-complete', [
+            'progress' => 100,
+            'status' => FilesConstants::UPLOAD_COMPLETE,
+            'filePath' => $settings['fullUploadedFileName'],
+            'fileSize' => $resultFileSize
+        ]);
 
         // Delete uploaded file after 10 minutes
         Processes::mwExecBg(
