@@ -84,7 +84,8 @@ class WorkerMergeUploadedFile extends WorkerBase
         // Check if the merged file size is equal to the uploaded size
         $resultFileSize = filesize($settings['fullUploadedFileName']);
         if ((int)$settings['resumableTotalSize'] !== $resultFileSize) {
-            $errorMessage = "File {$settings['fullUploadedFileName']} size $resultFileSize does not equal {$settings['resumableTotalSize']}";
+            $errorMessage = "File {$settings['fullUploadedFileName']} "
+                . "size $resultFileSize does not equal {$settings['resumableTotalSize']}";
             SystemMessages::sysLogMsg('UploadFile', $errorMessage, LOG_ERR);
 
             // Send error event
@@ -94,19 +95,21 @@ class WorkerMergeUploadedFile extends WorkerBase
             ]);
 
             // Delete uploaded file after 10 minutes
-            Processes::mwExecBg(
-                '/sbin/shell_functions.sh killprocesses ' . $settings['tempDir'] . ' -TERM 0;rm -rf ' . $settings['tempDir'],
-                '/dev/null',
-                600
-            );
+            $cleanupCmd = '/sbin/shell_functions.sh killprocesses '
+                . $settings['tempDir'] . ' -TERM 0;rm -rf ' . $settings['tempDir'];
+            Processes::mwExecBg($cleanupCmd, '/dev/null', 600);
             return;
         }
 
         // Validate file content matches declared category using magic bytes
         $category = $settings['category'] ?? 'unknown';
-        $magicResult = UploadFileAction::validateMagicBytes($settings['fullUploadedFileName'], $category);
+        $magicResult = UploadFileAction::validateMagicBytes(
+            $settings['fullUploadedFileName'],
+            $category
+        );
         if (!$magicResult['valid']) {
-            $errorMessage = "Magic bytes validation failed for {$settings['fullUploadedFileName']}: {$magicResult['error']}";
+            $errorMessage = 'Magic bytes validation failed for '
+                . "{$settings['fullUploadedFileName']}: {$magicResult['error']}";
             SystemMessages::sysLogMsg('UploadFile', $errorMessage, LOG_ERR);
 
             // Delete the suspicious file immediately
@@ -120,11 +123,9 @@ class WorkerMergeUploadedFile extends WorkerBase
             ]);
 
             // Delete temp dir after 10 minutes
-            Processes::mwExecBg(
-                '/sbin/shell_functions.sh killprocesses ' . $settings['tempDir'] . ' -TERM 0;rm -rf ' . $settings['tempDir'],
-                '/dev/null',
-                600
-            );
+            $cleanupCmd = '/sbin/shell_functions.sh killprocesses '
+                . $settings['tempDir'] . ' -TERM 0;rm -rf ' . $settings['tempDir'];
+            Processes::mwExecBg($cleanupCmd, '/dev/null', 600);
             return;
         }
 
@@ -139,11 +140,9 @@ class WorkerMergeUploadedFile extends WorkerBase
         ]);
 
         // Delete uploaded file after 10 minutes
-        Processes::mwExecBg(
-            '/sbin/shell_functions.sh killprocesses ' . $settings['tempDir'] . ' -TERM 0;rm -rf ' . $settings['tempDir'],
-            '/dev/null',
-            600
-        );
+        $cleanupCmd = '/sbin/shell_functions.sh killprocesses '
+            . $settings['tempDir'] . ' -TERM 0;rm -rf ' . $settings['tempDir'];
+        Processes::mwExecBg($cleanupCmd, '/dev/null', 600);
     }
 
     /**
