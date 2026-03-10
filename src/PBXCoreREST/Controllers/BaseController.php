@@ -335,7 +335,7 @@ class BaseController extends Controller
                 'auth_type' => 'bearer_token',
                 'token_id' => $this->request->getTokenInfo()['id'] ?? null,
                 'origin' => $origin, // For WebAuthn RP ID validation
-                'remote_addr' => $this->request->getClientAddress(true) ?? '',
+                'remote_addr' => $this->request->getClientAddress() ?? '',
             ];
 
             // If JWT token, add user info from payload

@@ -134,7 +134,7 @@ class UnifiedSecurityMiddleware
      */
     private function checkLocalhostAccess(Request $request): SecurityTypeResult
     {
-        $clientIp = $request->getClientAddress(true);
+        $clientIp = $request->getClientAddress();
         $isLocalhost = in_array($clientIp, ['127.0.0.1', '::1', 'localhost'], true);
 
         return new SecurityTypeResult(

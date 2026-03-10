@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\Auth;
 
 use MikoPBX\Common\Library\Auth\RedisTokenStorage;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -48,6 +49,16 @@ class RefreshAction
      * Enable refresh token rotation for enhanced security
      */
     private const bool ENABLE_TOKEN_ROTATION = true;
+
+    /**
+     * Maximum refresh attempts per interval
+     */
+    private const int MAX_REFRESH_ATTEMPTS = 20;
+
+    /**
+     * Interval to reset refresh attempts (seconds)
+     */
+    private const int REFRESH_ATTEMPTS_INTERVAL = 300;
 
     /**
      * Process refresh request
@@ -81,6 +92,18 @@ class RefreshAction
         if ($di === null) {
             $res->messages['error'][] = 'Dependency injection container not available';
             $res->httpCode = 500;
+            return $res;
+        }
+
+        // Rate limit refresh attempts
+        $cache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
+        $remaining = self::checkRefreshRateLimit($clientIp, $cache);
+        if ($remaining <= 0) {
+            $res->messages['error'][] = TranslationProvider::translate(
+                'auth_TooManyLoginAttempts',
+                ['interval' => self::REFRESH_ATTEMPTS_INTERVAL]
+            );
+            $res->httpCode = 429;
             return $res;
         }
 
@@ -186,5 +209,27 @@ class RefreshAction
         $res->success = true;
 
         return $res;
+    }
+
+    /**
+     * Check rate limiting for refresh attempts
+     *
+     * @param string $clientIp Client IP address
+     * @param \Phalcon\Cache\Adapter\AdapterInterface $cache Cache service
+     * @return int Remaining attempts
+     */
+    private static function checkRefreshRateLimit(string $clientIp, $cache): int
+    {
+        $intervalStart = floor(time() / self::REFRESH_ATTEMPTS_INTERVAL)
+            * self::REFRESH_ATTEMPTS_INTERVAL;
+        $key = "auth:refresh-attempts:{$intervalStart}:{$clientIp}";
+
+        $adapter = $cache->getAdapter();
+        $adapter->zIncrBy($key, 1, $clientIp);
+        $adapter->expire($key, self::REFRESH_ATTEMPTS_INTERVAL);
+
+        $count = (int)$adapter->zScore($key, $clientIp);
+
+        return max(self::MAX_REFRESH_ATTEMPTS - $count, 0);
     }
 }

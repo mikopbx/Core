@@ -21,8 +21,8 @@ local security_mode = ngx.var.security_mode or "balanced"
 local rate_limit_enabled = ngx.var.rate_limit_enabled == "1"
 local session_check_required = ngx.var.session_check_required == "1"
 
--- Get client IP address
-local client_ip = ngx.var.http_x_real_ip or ngx.var.remote_addr
+-- Get client IP address (use only remote_addr to prevent header spoofing)
+local client_ip = ngx.var.remote_addr
 if not client_ip then
     return
 end

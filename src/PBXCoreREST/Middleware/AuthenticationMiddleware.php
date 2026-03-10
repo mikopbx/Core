@@ -186,7 +186,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
         // Both JWT and API Key validation failed
         $this->logAuthFailure(
             $application,
-            "From: {$request->getClientAddress(true)} Token: ***{$validationResult->getTokenSuffix()} Error: {$validationResult->getError()}"
+            "From: {$request->getClientAddress()} Error: {$validationResult->getError()}"
         );
 
         return $this->denyAccess($application, $request, 'Invalid or expired Bearer token');
@@ -249,7 +249,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
 
         $this->logAuthFailure(
             $application,
-            "From: {$request->getClientAddress(true)} UserAgent: {$request->getUserAgent()} Cause: {$reason}"
+            "From: {$request->getClientAddress()} UserAgent: {$request->getUserAgent()} Cause: {$reason}"
         );
 
         $this->halt($application, $response::UNAUTHORIZED, 'The user isn\'t authenticated.');
@@ -536,7 +536,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
 
         $this->logAuthFailure(
             $application,
-            "FORBIDDEN From: {$request->getClientAddress(true)} UserAgent: {$request->getUserAgent()} Cause: {$reason}"
+            "FORBIDDEN From: {$request->getClientAddress()} UserAgent: {$request->getUserAgent()} Cause: {$reason}"
         );
 
         $this->halt($application, $response::FORBIDDEN, 'Access denied. You do not have permission to access this resource.');

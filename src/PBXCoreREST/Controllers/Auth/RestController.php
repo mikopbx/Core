@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
@@ -64,7 +65,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/auth',    
+    path: '/pbxcore/api/v3/auth',
     tags: ['Authentication'],
     description: 'rest_Auth_ApiDescription',
     processor: AuthManagementProcessor::class
@@ -242,7 +243,7 @@ class RestController extends BaseRestController
             }
 
             // Add client info for security tracking
-            $requestData['clientIp'] = $this->request->getClientAddress(true);
+            $requestData['clientIp'] = $this->request->getClientAddress();
             $requestData['userAgent'] = $this->request->getUserAgent();
 
             // Send directly to backend worker (bypass parent's handleCustomRequest)
@@ -297,7 +298,7 @@ class RestController extends BaseRestController
         $data = self::sanitizeData($this->request->getPost(), $this->filter);
 
         // Add client information to request data
-        $data['clientIp'] = $this->request->getClientAddress(true);
+        $data['clientIp'] = $this->request->getClientAddress();
         $data['userAgent'] = $this->request->getUserAgent();
 
         // Send to backend worker
@@ -439,5 +440,4 @@ class RestController extends BaseRestController
             ]
         ]);
     }
-
 }

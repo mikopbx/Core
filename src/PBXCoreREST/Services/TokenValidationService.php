@@ -77,13 +77,12 @@ class TokenValidationService
 
         // Check if this is a cached invalid token (DoS protection)
         if ($cachedData === self::INVALID_TOKEN_MARKER) {
-            $tokenSuffix = substr($providedToken, -4);
-            return new TokenValidationResult(false, $tokenSuffix, 'Invalid Bearer token');
+            return new TokenValidationResult(false, null, 'Invalid Bearer token');
         }
 
         // Check if valid token is cached
         if ($cachedData !== null) {
-            return $this->validatePermissions($cachedData, $request, $providedToken);
+            return $this->validatePermissions($cachedData, $request);
         }
 
         // Not in cache, check database
@@ -93,15 +92,14 @@ class TokenValidationService
             // Cache the invalid token to prevent DoS attacks
             $this->cache->set($cacheKey, self::INVALID_TOKEN_MARKER, self::INVALID_TOKEN_CACHE_TTL);
 
-            $tokenSuffix = substr($providedToken, -4);
-            return new TokenValidationResult(false, $tokenSuffix, 'Invalid Bearer token');
+            return new TokenValidationResult(false, null, 'Invalid Bearer token');
         }
 
         // Cache the valid token
         $keyData = $apiKey->toArray();
         $this->cache->set($cacheKey, $keyData, self::CACHE_TTL);
 
-        return $this->validatePermissions($keyData, $request, $providedToken);
+        return $this->validatePermissions($keyData, $request);
     }
     
     /**
@@ -109,32 +107,43 @@ class TokenValidationService
      *
      * @param array<string, mixed> $keyData
      * @param \MikoPBX\PBXCoreREST\Http\Request $request
-     * @param string $providedToken Full token string for suffix extraction
      * @return TokenValidationResult
      */
-    private function validatePermissions(array $keyData, $request, string $providedToken): TokenValidationResult
+    private function validatePermissions(array $keyData, $request): TokenValidationResult
     {
-        $requestPath = $request->getURI();
-
-        // Extract token suffix for logging (computed once here)
-        $tokenSuffix = substr($providedToken, -4);
-
         // Update last used time in buffer
         $this->updateLastUsedBuffer($keyData['id']);
 
         // Check network filter first (more critical)
         if (!$this->checkNetworkFilter($keyData, $request)) {
-            SystemMessages::sysLogMsg(__CLASS__, "Bearer token network filter check failed", LOG_WARNING);
-            return new TokenValidationResult(false, $tokenSuffix, 'Access denied: IP address not allowed');
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Bearer token network filter check failed",
+                LOG_WARNING
+            );
+            return new TokenValidationResult(
+                false,
+                null,
+                'Access denied: IP address not allowed'
+            );
         }
 
         // Check path permissions
         if (!$this->checkPathPermissions($keyData, $request)) {
-            SystemMessages::sysLogMsg(__CLASS__, "Bearer token path permissions check failed. Allowed paths: " . ($keyData['allowed_paths'] ?? 'null'), LOG_WARNING);
-            return new TokenValidationResult(false, $tokenSuffix, 'Access denied: insufficient permissions for this endpoint');
+            $paths = $keyData['allowed_paths'] ?? 'null';
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Bearer token path permissions check failed. Allowed paths: $paths",
+                LOG_WARNING
+            );
+            return new TokenValidationResult(
+                false,
+                null,
+                'Access denied: insufficient permissions for this endpoint'
+            );
         }
 
-        return new TokenValidationResult(true, $tokenSuffix, null, $keyData);
+        return new TokenValidationResult(true, null, null, $keyData);
     }
     
     /**
