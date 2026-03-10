@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Http;
 
-use MikoPBX\Common\Models\PbxSettings;
 use Phalcon\Http\Response as PhResponse;
 use Phalcon\Http\ResponseInterface;
 use Phalcon\Messages\Messages;
@@ -100,12 +99,10 @@ class Response extends PhResponse
             $decodedContent = [];
         }
 
-        $stationName = PbxSettings::getValueByKey(PbxSettings::PBX_NAME);
         $meta    = [
             'meta' => [
                 'timestamp' => $timestamp,
                 'hash'      => $hash,
-                'station'   => $stationName ?? '',
             ],
         ];
 
