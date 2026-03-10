@@ -432,8 +432,8 @@ local function check_basic_security()
         end
     end
 
-    -- Check for path traversal
-    if string.match(uri, "%.%.") or string.match(uri, "//") then
+    -- Check for path traversal in URL path and query string
+    if string.match(uri, "%.%.") or (args and string.match(args, "%.%.")) or string.match(uri, "//") then
         ngx.log(ngx.WARN, "Path traversal attempt from: ", client_ip)
         return false
     end

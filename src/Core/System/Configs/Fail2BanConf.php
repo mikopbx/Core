@@ -112,6 +112,14 @@ class Fail2BanConf extends SystemConfigClass
                 Util::mwMkdir($syslogDir);
                 touch($syslog_file);
             }
+
+            // Ensure nginx access.log exists for path traversal detection
+            $nginxLogDir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nginx/';
+            Util::mwMkdir($nginxLogDir);
+            $nginxAccessLog = $nginxLogDir . 'access.log';
+            if (!file_exists($nginxAccessLog)) {
+                touch($nginxAccessLog);
+            }
             
             // Start fail2ban in background
             Processes::mwExecBg($this->startCommand);
@@ -362,6 +370,20 @@ class Fail2BanConf extends SystemConfigClass
                 "logpath = $syslog_file\n" .
                 "action = $action\n\n";
         }
+
+        // Separate jail for path traversal detection from nginx access.log
+        $nginxAccessLog = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nginx/access.log';
+        $pathTraversalAction = !System::canManageFirewall()
+            ? 'miko-nginx-docker[name=PATH_TRAVERSAL, port="' . implode(',', $httpPorts) . '"]'
+            : 'miko-iptables-multiport-all[name=PATH_TRAVERSAL, port="' . implode(',', $httpPorts) . '"]';
+        $config .= "[mikopbx-path-traversal]\n" .
+            "enabled = true\n" .
+            "maxretry = 3\n" .
+            "findtime = $find_time\n" .
+            "bantime = $ban_time\n" .
+            "logencoding = utf-8\n" .
+            "logpath = $nginxAccessLog\n" .
+            "action = $pathTraversalAction\n\n";
         $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/';
         $jails = [
             'asterisk_security_log' => ['security_log', '', $asteriskPorts],
@@ -542,6 +564,17 @@ class Fail2BanConf extends SystemConfigClass
 
         // Write the configuration to the MikoPBX web interface file
         file_put_contents("$filterPath/mikopbx-www.conf", $conf);
+
+        // Construct the path traversal detection filter (nginx access.log)
+        // prefregex filters only lines containing ".." — skips 99%+ of access.log entries
+        // Catches ../ in both URL path and query string, any HTTP status code
+        $conf = $commonConf .
+            'prefregex = ^<F-CONTENT>\S+\s+-\s+\S+\s+\[.*?\]\s+"[^"]*\.\.[^"]*"\s+\d+\s+.*</F-CONTENT>$' . "\n" .
+            'failregex = ^<HOST>\s+-\s+\S+\s+\[.*?\]\s+"[^"]*\.\.[^"]*"\s+\d+\s+' . "\n" .
+            "ignoreregex =\n";
+
+        // Write the configuration to the path traversal filter file
+        file_put_contents("$filterPath/mikopbx-path-traversal.conf", $conf);
 
         // Construct the Dropbear SSH server configuration string
         $conf = $commonConf .
