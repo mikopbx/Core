@@ -4,6 +4,7 @@ server {
     resolver <DNS>;
 
     add_header 'Access-Control-Allow-Origin' '*' always;
+    include mikopbx/security-headers.conf;
 
     # locations files
     include mikopbx/locations/*.conf;

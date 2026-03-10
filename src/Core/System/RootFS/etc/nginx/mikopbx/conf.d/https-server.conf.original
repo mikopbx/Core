@@ -15,6 +15,7 @@ server {
 
     add_header Strict-Transport-Security 'max-age=604800';
     add_header 'Access-Control-Allow-Origin' '*' always;
+    include mikopbx/security-headers.conf;
 
     # locations files
     include mikopbx/locations/*.conf;
