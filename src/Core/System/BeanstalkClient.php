@@ -344,7 +344,7 @@ class BeanstalkClient extends Injectable
         if (json_decode($job->getData(), true) !== null) {
             $mData = $job->getData();
         } else {
-            $mData = unserialize($job->getData(), [false]);
+            $mData = unserialize($job->getData(), ['allowed_classes' => false]);
         }
         $this->message = $mData;
 
@@ -486,7 +486,7 @@ class BeanstalkClient extends Injectable
             if (json_decode($job->getData(), true) !== null) {
                 $mData = $job->getData();
             } else {
-                $mData = unserialize($job->getData(), [false]);
+                $mData = unserialize($job->getData(), ['allowed_classes' => false]);
             }
             $arrayOfMessages[] = $mData;
             $this->queue->delete($job);

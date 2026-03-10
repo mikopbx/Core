@@ -357,6 +357,23 @@ class BaseController extends Controller
     }
 
     /**
+     * Sanitize a filename for use in Content-Disposition header.
+     *
+     * Removes path components, control characters, CRLF sequences, quotes,
+     * semicolons and backslashes to prevent HTTP header injection and
+     * filename* override attacks (RFC 6266).
+     *
+     * @param string $name Raw filename
+     * @return string Sanitized filename safe for Content-Disposition header
+     */
+    public static function sanitizeContentDispositionName(string $name): string
+    {
+        $name = basename($name);
+        $name = preg_replace('/[\x00-\x1f\x7f";\\\\\r\n]/', '_', $name);
+        return substr($name, 0, 200) ?: 'download';
+    }
+
+    /**
      * Recursively sanitizes input data based on the provided filter.
      *
      * @param array $data The data to be sanitized.
@@ -600,7 +617,8 @@ class BaseController extends Controller
 
         // Set download headers if needed
         if ($downloadName !== null) {
-            $this->response->setHeader('Content-Disposition', 'attachment; filename="' . $downloadName . '"');
+            $safeName = self::sanitizeContentDispositionName($downloadName);
+            $this->response->setHeader('Content-Disposition', 'attachment; filename="' . $safeName . '"');
         } else {
             $this->response->setHeader('Content-Disposition', 'inline');
         }
@@ -655,7 +673,8 @@ class BaseController extends Controller
 
         // Set download headers if needed
         if ($downloadName !== null) {
-            $this->response->setHeader('Content-Disposition', 'attachment; filename="' . $downloadName . '"');
+            $safeName = self::sanitizeContentDispositionName($downloadName);
+            $this->response->setHeader('Content-Disposition', 'attachment; filename="' . $safeName . '"');
         } else {
             $this->response->setHeader('Content-Disposition', 'inline');
         }

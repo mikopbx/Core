@@ -213,7 +213,8 @@ class ModulesControllerBase extends BaseController
 
             // WHY: Set standard download headers
             $this->response->setHeader('Content-Description', "config file");
-            $this->response->setHeader('Content-Disposition', "attachment; filename=$name");
+            $safeName = self::sanitizeContentDispositionName($name);
+            $this->response->setHeader('Content-Disposition', "attachment; filename=\"$safeName\"");
             $this->response->setHeader('Content-Type', $contentType);
             $this->response->setHeader('Content-Transfer-Encoding', "binary");
             $this->response->setContentLength($size);

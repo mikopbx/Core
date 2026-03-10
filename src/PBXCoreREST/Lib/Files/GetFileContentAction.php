@@ -50,11 +50,28 @@ class GetFileContentAction extends Injectable
             $filename = '/' . $filename;
         }
 
+        // Resolve real path to prevent path traversal via ".." or symlinks
+        $realPath = realpath($filename);
+        if ($realPath === false) {
+            $res->success    = false;
+            $res->messages[] = 'File not found: ' . $filename;
+            return $res;
+        }
+        $filename = $realPath;
+
         // Check if file exists in CustomFiles table
-        $customFile = CustomFiles::findFirst("filepath = '$filename'");
+        $customFile = CustomFiles::findFirst([
+            'conditions' => 'filepath = :path:',
+            'bind' => ['path' => $filename],
+        ]);
 
         if ($customFile !== null) {
-            // File is registered in CustomFiles - handle as custom file
+            // File is registered in CustomFiles - verify it's in allowed directory
+            if (!self::isFileInAllowedDirectory($filename)) {
+                $res->success    = false;
+                $res->messages[] = 'No access to the file ' . $filename;
+                return $res;
+            }
             $filename_orgn = "{$filename}.orgn";
             if ($needOriginal && file_exists($filename_orgn)) {
                 $filename = $filename_orgn;
@@ -63,8 +80,7 @@ class GetFileContentAction extends Injectable
             $res->data['content'] = mb_convert_encoding('' . file_get_contents($filename), 'UTF-8', 'UTF-8');
         } else {
             // File is not in CustomFiles - check if it's allowed to be read
-            if (self::isFileInAllowedDirectory($filename) && file_exists($filename)) {
-                // File is in allowed directory and exists - allow reading
+            if (self::isFileInAllowedDirectory($filename)) {
                 $res->success = true;
                 $res->data['content'] = mb_convert_encoding('' . file_get_contents($filename), 'UTF-8', 'UTF-8');
             } else {

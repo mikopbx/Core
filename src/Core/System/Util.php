@@ -261,7 +261,10 @@ class Util
     public static function fileWriteContent(string $filename, string $data): void
     {
         /** @var CustomFiles $res */
-        $res = CustomFiles::findFirst("filepath = '$filename'");
+        $res = CustomFiles::findFirst([
+            'conditions' => 'filepath = :path:',
+            'bind' => ['path' => $filename],
+        ]);
         if ($res === null) {
             // File is not yet registered in the database, create a new CustomFiles entry
             $res = new CustomFiles();
