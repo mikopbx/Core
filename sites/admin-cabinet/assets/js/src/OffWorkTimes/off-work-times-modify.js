@@ -775,7 +775,7 @@ const outOfWorkTimeRecord = {
                 <td class="collapsing">
                     <div class="ui fitted toggle checkbox" 
                          data-did="${safeDid}" 
-                         data-provider="{${safeProviderId}}">
+                         data-provider="${safeProviderId}">
                         <input type="checkbox" ${isChecked ? 'checked' : ''} 
                                name="route-${route.id}" data-value="${route.id}">
                         <label></label>
