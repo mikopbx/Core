@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Forum
+    url: https://forum.mikopbx.com
+    about: Ask questions and discuss ideas on our forum
+  - name: Telegram Chat
+    url: https://t.me/mikopbx_dev
+    about: Chat with developers and the community
+  - name: Documentation
+    url: https://docs.mikopbx.com
+    about: Read the documentation before reporting an issue
+  - name: Security Vulnerability
+    url: https://github.com/mikopbx/Core/blob/develop/SECURITY.md
+    about: Report security vulnerabilities privately (do NOT open an issue)

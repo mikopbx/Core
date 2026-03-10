@@ -1,9 +1,11 @@
-[![Translation status](https://weblate.mikopbx.com/widgets/mikopbx/-/admin-web-interface/svg-badge.svg)](https://weblate.mikopbx.com/engage/mikopbx/?utm_source=widget)
+[![Translation status](https://weblate.mikopbx.com/widgets/mikopbx/-/admin-web-interface/svg-badge.svg)](https://weblate.mikopbx.com/engage/mikopbx/)
 [![GitHub All Releases](https://img.shields.io/github/downloads/mikopbx/core/total)](https://github.com/mikopbx/Core/releases)
+[![Latest Release](https://img.shields.io/github/v/release/mikopbx/core?color=blue)](https://github.com/mikopbx/Core/releases/latest)
 [![GitHub last commit (branch)](https://img.shields.io/github/last-commit/mikopbx/core/develop?label=last%20commit%20on%20develop)](https://github.com/mikopbx/Core/tree/develop)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/mikopbx/Core/badges/quality-score.png?b=develop)](https://scrutinizer-ci.com/g/mikopbx/Core/?branch=develop)
+[![Code Quality](https://img.shields.io/github/actions/workflow/status/mikopbx/core/code-quality.yml?branch=develop&label=code%20quality)](https://github.com/mikopbx/Core/actions/workflows/code-quality.yml)
 ![GitHub](https://img.shields.io/github/license/mikopbx/core)
-# MikoPBX - free phone system for small business
+
+# MikoPBX — Free Phone System for Small Business
 
 ```
 
@@ -19,11 +21,13 @@
 
 ```
 
+> [🇷🇺 Русская версия](README.ru.md)
+
 ## What's MikoPBX?
 
-MikoPBX is an open-source GUI (graphical user interface) that controls and manages Asterisk (PBX). MikoPBX is licensed under GPL. MikoPBX is an entirely modular GUI for Asterisk written in PHP and Javascript. Meaning you can simply write any module you can think of and distribute it free of cost to your clients so that they can take advantage of beneficial features in [Asterisk](http://www.asterisk.org/ "Asterisk Home Page") 
-The released firmware consists Linux operation system and all needing services like Asterisk, Nginx, PHP-FPM, iptables etc.
+MikoPBX is an open-source PBX system with a modern web interface for managing [Asterisk](https://www.asterisk.org/). It ships as a compact Linux distribution with all necessary services pre-configured — Asterisk, Nginx, PHP-FPM, Redis, Fail2Ban, and more. You can write any module you can think of and distribute it to your users through the built-in marketplace.
 
+Install MikoPBX on premise, in a virtual machine, in a Docker or LXC container, or on any major cloud provider (AWS, Google Cloud, Azure, etc.)
 
 <p align="center">
     <a href="https://www.mikopbx.com">
@@ -31,83 +35,159 @@ The released firmware consists Linux operation system and all needing services l
     </a>
 </p>
 
-MikoPBX is a full-featured phone solution with top performance level, high stability and rich functionality. You can install MikoPBX on premise (hardware installation) or in any type of cloud-services (Google cloud, Amazon Cloud Solution, Microsoft Azure etc.)
+The system has an easy and convenient web interface with call recording, conference calls, voicemail, call transfers and pickup, call queues, IVR menus, inbound and outbound call rules, holidays and night-time call switcher, custom call-flow programming, and a marketplace with paid and free extensions. All core business functionality is free forever!
 
-The system has an easy and convenient web interface, call recording, conference calls, voice mail, call transfers and pickup, call queues, interactive voice response(IVR) menu, inbound and outbound call rules. Also, you can find holidays and night-time calls switcher there. Apart from MikoPBX has custom call-flow programming module and marketplace with paid and free extensions. All general business functionality is absolutely free forever!
-
-* The russian [website](https://www.mikopbx.ru)
-* The english [website](https://www.mikopbx.com)
+* English [website](https://www.mikopbx.com)
+* Russian [website](https://www.mikopbx.ru)
 
 ## Getting Started
-1. Download [latest released](https://github.com/mikopbx/Core/releases/latest) ISO file in assets section
-2. Create a new virtual machine (e.g. VMware Player)
-3. Select **Other Linux 6.6.1 kernel 64-bit** on the virtual machine settings
-4. Boot from ISO firmware and install MikoPBX on storage according to internal instructions.
-5. Continue set up your PBX system over a web interface with default credentials. Username: *admin*  password: *admin*
 
-Or follow our wiki for [additional instructions](https://wiki.mikopbx.com/en:setup#live_cd).
+### Installation Methods
+
+MikoPBX can be deployed in multiple ways depending on your environment:
+
+#### Standalone / Bare Metal
+- [Live USB installation](https://docs.mikopbx.com/mikopbx/english/setup/bare-metal/live-usb)
+- [Bootable USB installation](https://docs.mikopbx.com/mikopbx/english/setup/bare-metal/bootable-usb)
+
+#### Virtual Machine
+
+Download the [latest ISO](https://github.com/mikopbx/Core/releases/latest) and boot from it in your hypervisor:
+
+| Hypervisor | Guide |
+|------------|-------|
+| VMware ESXi | [Installation guide](https://docs.mikopbx.com/mikopbx/english/setup/hypervisor/vmware-esxi) |
+| VMware Workstation Pro | [Installation guide](https://docs.mikopbx.com/mikopbx/english/setup/hypervisor/vmware-workstation-pro) |
+| VMware Fusion (Mac) | [Installation guide](https://docs.mikopbx.com/mikopbx/english/setup/hypervisor/vmware-fusion) |
+| VirtualBox | [Installation guide](https://docs.mikopbx.com/mikopbx/english/setup/hypervisor/virtualbox) |
+| Hyper-V | [Installation guide](https://docs.mikopbx.com/mikopbx/english/setup/hypervisor/hyper-v) |
+| Proxmox (VM) | [Installation guide](https://docs.mikopbx.com/mikopbx/english/setup/hypervisor/proxmox) |
+| Proxmox (LXC container) | [Installation guide](https://docs.mikopbx.com/mikopbx/english/setup/hypervisor/proxmox/lxc) |
+| UTM (Apple Silicon) | [Installation guide](https://docs.mikopbx.com/mikopbx/english/setup/hypervisor/utm) |
+
+#### Docker Container
+
+- [Docker installation prerequisites](https://docs.mikopbx.com/mikopbx/english/setup/docker/docker-installation)
+- [Running MikoPBX in a container](https://docs.mikopbx.com/mikopbx/english/setup/docker/running-mikopbx-in-container)
+- [Running MikoPBX with Docker Compose](https://docs.mikopbx.com/mikopbx/english/setup/docker/running-mikopbx-using-docker-compose)
+
+#### Cloud Providers
+
+| Provider | Guide |
+|----------|-------|
+| AWS EC2 | [Deployment guide](https://docs.mikopbx.com/mikopbx/english/setup/cloud/aws/aws-deployment-guide) &bull; [AWS Marketplace](https://docs.mikopbx.com/mikopbx/english/setup/cloud/aws/aws-marketplace) |
+| Google Cloud | [Deployment guide](https://docs.mikopbx.com/mikopbx/english/setup/cloud/google-cloud/google-cloud) &bull; [GCP Marketplace](https://docs.mikopbx.com/mikopbx/english/setup/cloud/google-cloud/google-cloud-marketplace) |
+| Microsoft Azure | [Deployment guide](https://docs.mikopbx.com/mikopbx/english/setup/cloud/microsoft-azure) |
+| DigitalOcean | [Deployment guide](https://docs.mikopbx.com/mikopbx/english/setup/cloud/digitalocean) |
+| Vultr | [Deployment guide](https://docs.mikopbx.com/mikopbx/english/setup/cloud/vultr) |
+| Alibaba Cloud | [Deployment guide](https://docs.mikopbx.com/mikopbx/english/setup/cloud/alibaba-cloud) |
+| Hetzner Cloud | [Deployment guide](https://docs.mikopbx.com/mikopbx/english/setup/cloud/hetzner-cloud) |
+
+### First Steps After Installation
+
+Open the web interface and log in with default credentials — username: `admin`, password: `admin`.
+Then follow the [Quick Start guide](https://docs.mikopbx.com/mikopbx/english/readme/quick-start) to configure your system.
 
 ## Features
-* A very little Linux distributive.
-* Easy to install and easy to setup.
-* Multilingual interface with community-supported translation service.
-* Wiki documentation with context helpers on the web interface.
-* Latest PJSIP stack and Asterisk LTS 20 release installed.
-* Fail2Ban and iptables already included.
-* Modular architecture.
-* Plugins marketplace.
-* The PHP7.4 and [phalcon framework](https://phalcon.io)
-* The modern codebase was written according to PSR standards and Airbnb JS code style.
-* Friendly community :)
+
+* Compact Linux distribution — boots in seconds.
+* Easy to install, easy to set up.
+* Multilingual interface (26 languages) with community translation via [Weblate](https://weblate.mikopbx.com).
+* x86_64 and ARM64 architectures.
+* Latest PJSIP stack and Asterisk 22 LTS.
+* Dual-stack IPv4/IPv6 networking.
+* Fail2Ban, iptables firewall, WebAuthn/Passkey authentication.
+* Modular architecture with a plugins marketplace.
+* PHP 8.4, [Phalcon Framework](https://phalcon.io), Nginx, Redis.
+* REST API with 259+ endpoints and JWT authentication.
+* Cloud auto-provisioning (AWS, GCP, Azure, DigitalOcean, Vultr, Yandex Cloud, VK Cloud, Alibaba Cloud).
+* Modern codebase written according to PSR standards and Airbnb JS style.
 
 ## Requirements
-Concurrent calls | Minimum recommended
------------- | -------------
-5 to 10 | 1 GHz x86-64, 512 MB RAM
-Up to 25 | 3 GHz x86-64, 1 GB RAM
-More than 25 | Dual CPUs 3 GHz x86-64, 2 GB RAM or more
 
-## How to modify your system
-For some easy customisations, you can use a dialplan application point on a menu. The *dialplan applications* supports PHP-AGI or Asterisk Dialplan language.
- <p align="center">
-     <img src="https://github.com/mikopbx/assets/raw/master/img/screenshots/ApplicationEditor.png"/>
- </p>
+| Concurrent Calls | CPU | RAM | Storage |
+|-------------------|-----|-----|---------|
+| 5–10 | 1 GHz x86-64 or ARM64, 1–2 cores | 2 GB | 1 GB system + 50 GB recordings |
+| Up to 25 | 3 GHz x86-64 or ARM64 | 2 GB | 1 GB system + 50 GB recordings |
+| 25+ | Dual CPU 3 GHz x86-64 | 4 GB+ | 1 GB system + 50 GB recordings |
 
-Or direct system file customisation on the web interface.
+See the full [system requirements](https://docs.mikopbx.com/mikopbx/english/readme/system-requirements).
+
+## How to Modify Your System
+
+For easy customisations, use the dialplan application editor. It supports PHP-AGI or Asterisk Dialplan language.
+
 <p align="center">
-<img src="https://github.com/mikopbx/assets/raw/master/img/screenshots/SystemFileCustomization.png"/>
+    <img src="https://github.com/mikopbx/assets/raw/master/img/screenshots/ApplicationEditor.png"/>
 </p>
 
-MikoPBX usually loads from read-only *offload* partition. If you want to change something in the core module, you should remount the partition to *write mode* with a console (SSH) command **remount-offload**
+Or use direct system file customisation on the web interface.
 
-If you want to add some new functionality, we strongly advise you look at [ModuleTemplate](https://github.com/mikopbx/ModuleTemplate) repository.
-
-## How to report bugs and issues?
-Be free to report about it [here](https://github.com/mikopbx/Core/issues)
-
-For some ideas or question, you are welcome to  [our discussion club](https://github.com/mikopbx/Core/discussions)
-
-The chat with developers you can find on [telegram](https://t.me/mikopbx_dev)
-
-## Interface and documentation translation
-We have already translated the web interface on several languages by Google translation service for the next list of languages:
 <p align="center">
-<img src="https://github.com/mikopbx/assets/raw/master/img/screenshots/LanguageSettings2.png" height="500"/>
+    <img src="https://github.com/mikopbx/assets/raw/master/img/screenshots/SystemFileCustomization.png"/>
 </p>
 
-If you find some mistakes, you are welcome to fix it on [Weblate](https://weblate.mikopbx.com) translation service.
+MikoPBX usually loads from a read-only *offload* partition. If you want to change something in the core, remount the partition to write mode with the SSH command: `remount-offload`
 
-## Support
-We offer [paid support](https://www.mikopbx.com/support/) from MIKO LLC., the company behind  MikoPBX.
+If you want to add new functionality, we strongly advise you look at the [ModuleTemplate](https://github.com/mikopbx/ModuleTemplate) repository.
 
-Or you can ask for community help [here](https://github.com/mikopbx/Core/discussions) or [here](https://qa.askozia.ru)
+## Architecture
+
+MikoPBX is a self-contained Linux distribution built on [T2 SDE](https://t2sde.org/). Key components:
+
+| Component | Version | Purpose |
+|-----------|---------|---------|
+| **Asterisk** | 22 | PBX engine with PJSIP stack |
+| **PHP** | 8.4 | Application runtime |
+| **Phalcon** | 5 | High-performance PHP framework |
+| **Nginx** | 1.29 | Web server with WebSocket support (nchan) |
+| **Redis** | 7 | Cache, sessions, and API queue |
+| **Beanstalkd** | 1.12 | Background job processing |
+| **Fail2Ban** | 1 | Intrusion prevention |
+| **SQLite** | — | Main database and CDR storage |
+
+### Source Structure
+
+```
+src/
+├── AdminCabinet/     # Web UI (MVC + Volt templates + Semantic UI)
+├── Common/           # Models, translations, DI providers
+├── Core/             # Asterisk configs, system utilities, workers
+├── Modules/          # Module framework
+├── PBXCoreREST/      # REST API (49 controllers, 259+ endpoints)
+└── Service/          # Service layer
+```
+
+## Interface and Documentation Translation
+
+The web interface has been translated into 26 languages with the help of our community:
+
+<p align="center">
+    <img src="https://github.com/mikopbx/assets/raw/master/img/screenshots/LanguageSettings2.png" height="500"/>
+</p>
+
+If you find any mistakes, you are welcome to fix them on the [Weblate](https://weblate.mikopbx.com) translation service.
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Community & Support
+
+- **Forum**: [forum.mikopbx.com](https://forum.mikopbx.com) — questions, discussions, community help
+- **Telegram**: [Developer Chat](https://t.me/mikopbx_dev) — real-time community chat
+- **Bug Reports**: [GitHub Issues](https://github.com/mikopbx/Core/issues)
+- **Documentation**: [docs.mikopbx.com](https://docs.mikopbx.com)
+- **Paid Support**: [Professional support](https://www.mikopbx.com/support/) from MIKO LLC
 
 ## Sponsors
-Become a sponsor and get your logo on our README on Github with a link to your site. [Become a sponsor](https://patreon.com/mikopbx)
+
+Become a sponsor and get your logo on our README on GitHub with a link to your site. [Become a sponsor](https://patreon.com/mikopbx)
 
 ## License
-MikoPBX© - free phone system for small business
-Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+
+MikoPBX© — free phone system for small business
+Copyright © 2017–2026 Alexey Portnov and Nikolay Beketov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -116,9 +196,8 @@ the Free Software Foundation; either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with this program.
 If not, see <https://www.gnu.org/licenses/>.
-The software licensed under the GPL-3.0 License.

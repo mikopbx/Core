@@ -1,0 +1,67 @@
+# Auto detect text files and normalise line endings
+* text=auto eol=lf
+
+# PHP
+*.php text diff=php
+
+# JavaScript
+*.js text
+*.jsx text
+*.ts text
+*.tsx text
+
+# Web
+*.html text diff=html
+*.css text
+*.scss text
+*.volt text
+
+# Configuration
+*.json text
+*.yml text
+*.yaml text
+*.xml text
+*.ini text
+*.conf text
+
+# Documentation
+*.md text diff=markdown
+
+# Shell scripts
+*.sh text eol=lf
+*.bash text eol=lf
+
+# SQL
+*.sql text
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.mp3 binary
+*.wav binary
+*.gsm binary
+
+# Archives
+*.zip binary
+*.gz binary
+*.tar binary
+
+# SQLite databases
+*.db binary
+
+# Exclude from release archives
+/.claude export-ignore
+/.editorconfig export-ignore
+/.github export-ignore
+/sessions export-ignore
+/tests export-ignore
+/phpstan.neon export-ignore
+/phpcs.xml export-ignore
