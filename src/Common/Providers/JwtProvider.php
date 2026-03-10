@@ -97,12 +97,13 @@ class JwtProvider implements ServiceProviderInterface
                         $now = time();
 
                         // Check expiration with leeway
-                        if (isset($payload['exp']) && is_int($payload['exp']) && ($payload['exp'] + JwtProvider::LEEWAY) < $now) {
+                        $leeway = JwtProvider::LEEWAY;
+                        if (isset($payload['exp']) && is_int($payload['exp']) && ($payload['exp'] + $leeway) < $now) {
                             return null; // Token expired
                         }
 
                         // Check not before with leeway
-                        if (isset($payload['nbf']) && is_int($payload['nbf']) && ($payload['nbf'] - JwtProvider::LEEWAY) > $now) {
+                        if (isset($payload['nbf']) && is_int($payload['nbf']) && ($payload['nbf'] - $leeway) > $now) {
                             return null; // Token not yet valid
                         }
 

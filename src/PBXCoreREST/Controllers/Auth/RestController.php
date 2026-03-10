@@ -151,10 +151,10 @@ class RestController extends BaseRestController
                 $tokenExpiry,                                // expire
                 '/',                                         // path
                 $isSecure,                                   // secure (true for HTTPS, false for HTTP)
-                '',                                          // domain (current domain, empty string for PHP 8.3 compatibility)
-                true,                                        // httpOnly (no JS access)
-                ['samesite' => 'Strict']                     // options (CSRF protection, cookie only sent in same-site context)
-            );  // Cookie will be encrypted by CryptProvider (token is already hashed)
+                '',                              // domain (empty for PHP 8.3)
+                true,                            // httpOnly (no JS access)
+                ['samesite' => 'Strict']         // options (CSRF protection)
+            );
         }
 
         // Clear refresh token cookie
@@ -165,7 +165,7 @@ class RestController extends BaseRestController
                 time() - 3600,                               // expire (in the past)
                 '/',                                         // path
                 $isSecure,                                   // secure (match protocol)
-                '',                                          // domain (current domain, empty string for PHP 8.4 compatibility)
+                '',                              // domain (empty for PHP 8.4)
                 true,                                        // httpOnly
                 ['samesite' => 'Strict']                     // options
             );  // Clear cookie
@@ -389,7 +389,8 @@ class RestController extends BaseRestController
     #[ApiResponse(403, 'Token is invalid or endpoint accessed from non-localhost')]
     public function validateToken(): void
     {
-        SystemMessages::sysLogMsg(__METHOD__, "validateToken called - REMOTE_ADDR: " . $this->request->getClientAddress(), LOG_DEBUG);
+        $remoteAddr = $this->request->getClientAddress();
+        SystemMessages::sysLogMsg(__METHOD__, "validateToken called - REMOTE_ADDR: $remoteAddr", LOG_DEBUG);
 
         // SECURITY: Only allow localhost requests
         // nginx location sets REMOTE_ADDR=127.0.0.1 for internal calls
@@ -427,7 +428,8 @@ class RestController extends BaseRestController
         }
 
         // Token is valid - return 200 OK with minimal response
-        SystemMessages::sysLogMsg(__METHOD__, "validateToken success - userId: " . ($payload['userId'] ?? 'unknown'), LOG_DEBUG);
+        $userId = $payload['userId'] ?? 'unknown';
+        SystemMessages::sysLogMsg(__METHOD__, "validateToken success - userId: $userId", LOG_DEBUG);
         $this->response->setStatusCode(200, 'OK');
         $this->response->setJsonContent([
             'jsonapi' => ['version' => '1.0'],

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
@@ -213,6 +214,4 @@ class JWTHelper
 
         return is_array($payload) ? $payload : null;
     }
-
-    
 }
