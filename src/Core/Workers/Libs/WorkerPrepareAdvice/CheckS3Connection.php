@@ -68,7 +68,9 @@ class CheckS3Connection extends Injectable
             if (!$settings->isS3Configured()) {
                 $messages['warning'][] = [
                     'messageTpl' => 'adv_S3EnabledButNotConfigured',
-                    'messageParams' => []
+                    'messageParams' => [
+                        'url' => $this->url->get('storage/index/#/storage-cloud'),
+                    ]
                 ];
                 return $messages;
             }
@@ -85,7 +87,9 @@ class CheckS3Connection extends Injectable
                     // S3 connection failed - critical issue
                     $messages['error'][] = [
                         'messageTpl' => 'adv_S3ConnectionFailed',
-                        'messageParams' => []
+                        'messageParams' => [
+                            'url' => $this->url->get('storage/index/#/storage-cloud'),
+                        ]
                     ];
                 }
 
@@ -93,7 +97,9 @@ class CheckS3Connection extends Injectable
                 // S3 client initialization failed
                 $messages['error'][] = [
                     'messageTpl' => 'adv_S3ClientInitializationFailed',
-                    'messageParams' => []
+                    'messageParams' => [
+                        'url' => $this->url->get('storage/index/#/storage-cloud'),
+                    ]
                 ];
             }
 

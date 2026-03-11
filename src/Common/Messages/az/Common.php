@@ -942,9 +942,9 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'sf_ConvertErrorDetails' => 'Faylı çevirmək alınmadı. Fayl zədələnmiş və ya dəstəklənməyən formatda ola bilər.',
     'st_Day' => 'gün',
     'st_Days' => 'günlər',
-    'adv_S3EnabledButNotConfigured' => 'S3 yaddaşı aktivdir, lakin konfiqurasiya edilməyib. S3 parametrlərinizi yoxlayın.',
-    'adv_S3ConnectionFailed' => 'S3 saxlama bağlantısı uğursuz oldu. \"Saxlama → S3\" səhifəsində bağlantı parametrlərini yoxlayın.',
-    'adv_S3ClientInitializationFailed' => 'S3 müştərisini işə salmaq mümkün olmadı. \"Saxlama → S3\" səhifəsindəki parametrləri yoxlayın.',
+    'adv_S3EnabledButNotConfigured' => 'S3 yaddaşı aktivdir, lakin konfiqurasiya edilməyib. <a href=\'%url%\'>S3 parametrlərinizi yoxlayın</a>.',
+    'adv_S3ConnectionFailed' => 'S3 saxlama bağlantısı uğursuz oldu. <a href=\'%url%\'>\"Saxlama → S3\"</a> səhifəsində bağlantı parametrlərini yoxlayın.',
+    'adv_S3ClientInitializationFailed' => 'S3 müştərisini işə salmaq mümkün olmadı. <a href=\'%url%\'>\"Saxlama → S3\"</a> səhifəsindəki parametrləri yoxlayın.',
     'adv_S3CheckUnexpectedError' => 'S3 yoxlamasında gözlənilməz xəta: %error%',
     'cdr_DeleteRecord' => 'Söhbət qeydini silin',
     // CDR UI Translations (for search and pagination)

@@ -933,9 +933,9 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'sf_ConvertError' => 'Chyba při převodu zvukového souboru',
     'sf_ConvertErrorDetails' => 'Nepodařilo se převést soubor. Soubor může být poškozený nebo v nepodporovaném formátu.',
     'st_Days' => 'dny',
-    'adv_S3EnabledButNotConfigured' => 'Úložiště S3 je povoleno, ale není nakonfigurováno. Zkontrolujte nastavení S3.',
-    'adv_S3ConnectionFailed' => 'Připojení k úložišti S3 se nezdařilo. Zkontrolujte nastavení připojení na stránce \"Úložiště → S3\".',
-    'adv_S3ClientInitializationFailed' => 'Inicializace klienta S3 se nezdařila. Zkontrolujte nastavení na stránce \"Úložiště → S3\".',
+    'adv_S3EnabledButNotConfigured' => 'Úložiště S3 je povoleno, ale není nakonfigurováno. <a href=\'%url%\'>Zkontrolujte nastavení S3</a>.',
+    'adv_S3ConnectionFailed' => 'Připojení k úložišti S3 se nezdařilo. Zkontrolujte nastavení připojení na stránce <a href=\'%url%\'>\"Úložiště → S3\"</a>.',
+    'adv_S3ClientInitializationFailed' => 'Inicializace klienta S3 se nezdařila. Zkontrolujte nastavení na stránce <a href=\'%url%\'>\"Úložiště → S3\"</a>.',
     'adv_S3CheckUnexpectedError' => 'Neočekávaná kontrola chyb S3: %error%',
     // CDR UI Translations (for search and pagination)
     'cdr_EnterSearchPhrase' => 'Zadejte podrobnosti vyhledávání',
