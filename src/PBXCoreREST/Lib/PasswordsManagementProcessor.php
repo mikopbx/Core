@@ -28,6 +28,7 @@ use MikoPBX\PBXCoreREST\Lib\Passwords\{
     BatchValidateAction,
     BatchCheckDictionaryAction
 };
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Di\Injectable;
 use Phalcon\Di\Di;
@@ -62,6 +63,26 @@ enum PasswordAction: string
 class PasswordsManagementProcessor extends Injectable
 {
     /**
+     * Maximum password validation requests per interval per IP
+     */
+    private const int MAX_PASSWORD_ATTEMPTS = 30;
+
+    /**
+     * Interval to reset password attempt counter (seconds)
+     */
+    private const int PASSWORD_ATTEMPTS_INTERVAL = 60;
+
+    /**
+     * Actions that require rate limiting (mutation/validation operations)
+     */
+    private const array RATE_LIMITED_ACTIONS = [
+        PasswordAction::VALIDATE,
+        PasswordAction::CHECK_DICTIONARY,
+        PasswordAction::BATCH_VALIDATE,
+        PasswordAction::BATCH_CHECK_DICTIONARY,
+    ];
+
+    /**
      * Process password-related requests
      *
      * Routes requests to appropriate action handlers based on the action parameter.
@@ -80,13 +101,30 @@ class PasswordsManagementProcessor extends Injectable
 
         // Try to match action with enum
         $action = PasswordAction::tryFrom($actionString);
-        
+
         if ($action === null) {
             $di = Di::getDefault();
             $translation = $di->get(TranslationProvider::SERVICE_NAME);
             $res->messages['error'][] = $translation->_('api_UnknownAction') . ": {$actionString}";
             $res->function = $actionString;
             return $res;
+        }
+
+        // Rate limit password validation/check actions
+        if (in_array($action, self::RATE_LIMITED_ACTIONS, true)) {
+            $clientIp = $request['sessionContext']['remote_addr'] ?? '';
+            if (!empty($clientIp)) {
+                $remaining = self::checkPasswordRateLimit($clientIp);
+                if ($remaining <= 0) {
+                    $res->messages['error'][] = TranslationProvider::translate(
+                        'auth_TooManyLoginAttempts',
+                        ['interval' => self::PASSWORD_ATTEMPTS_INTERVAL]
+                    );
+                    $res->httpCode = 429;
+                    $res->function = $actionString;
+                    return $res;
+                }
+            }
         }
 
         try {
@@ -103,5 +141,32 @@ class PasswordsManagementProcessor extends Injectable
 
         $res->function = $actionString;
         return $res;
+    }
+
+    /**
+     * Check rate limiting for password validation requests
+     *
+     * @param string $clientIp Client IP address
+     * @return int Remaining attempts
+     */
+    private static function checkPasswordRateLimit(string $clientIp): int
+    {
+        $di = Di::getDefault();
+        if ($di === null) {
+            return self::MAX_PASSWORD_ATTEMPTS;
+        }
+
+        $cache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
+        $intervalStart = (int)(floor(time() / self::PASSWORD_ATTEMPTS_INTERVAL)
+            * self::PASSWORD_ATTEMPTS_INTERVAL);
+        $key = "ratelimit:password:{$intervalStart}:{$clientIp}";
+
+        $adapter = $cache->getAdapter();
+        $adapter->zIncrBy($key, 1, $clientIp);
+        $adapter->expire($key, self::PASSWORD_ATTEMPTS_INTERVAL);
+
+        $count = (int)$adapter->zScore($key, $clientIp);
+
+        return max(self::MAX_PASSWORD_ATTEMPTS - $count, 0);
     }
 }

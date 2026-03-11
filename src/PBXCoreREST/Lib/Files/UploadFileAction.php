@@ -23,6 +23,8 @@ namespace MikoPBX\PBXCoreREST\Lib\Files;
 use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Psr7\UploadedFile;
 use MikoPBX\Common\Providers\EventBusProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -38,6 +40,16 @@ use Phalcon\Di\Injectable;
  */
 class UploadFileAction extends Injectable
 {
+    /**
+     * Maximum new upload initiations per interval per IP
+     */
+    private const int MAX_UPLOAD_ATTEMPTS = 15;
+
+    /**
+     * Interval to reset upload attempt counter (seconds)
+     */
+    private const int UPLOAD_ATTEMPTS_INTERVAL = 300;
+
     // MIME types allowed for different categories
     private const ALLOWED_MIME_TYPES = [
         'sound' => [
@@ -115,6 +127,22 @@ class UploadFileAction extends Injectable
             $res->messages[] = 'Dependency injector does not initialized';
 
             return $res;
+        }
+
+        // Rate limit new upload initiations (first chunk only)
+        $clientIp = isset($parameters['clientIp']) && is_string($parameters['clientIp'])
+            ? $parameters['clientIp'] : '';
+        if (!empty($clientIp) && (int)($parameters['resumableChunkNumber'] ?? 0) === 1) {
+            $cache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
+            $remaining = self::checkUploadRateLimit($clientIp, $cache);
+            if ($remaining <= 0) {
+                $res->messages['error'][] = TranslationProvider::translate(
+                    'auth_TooManyLoginAttempts',
+                    ['interval' => self::UPLOAD_ATTEMPTS_INTERVAL]
+                );
+                $res->httpCode = 429;
+                return $res;
+            }
         }
 
         // Validate file type and security
@@ -294,6 +322,28 @@ class UploadFileAction extends Injectable
         }
 
         return false;
+    }
+
+    /**
+     * Check rate limiting for upload initiations
+     *
+     * @param string $clientIp Client IP address
+     * @param \Phalcon\Cache\Adapter\AdapterInterface $cache Cache service
+     * @return int Remaining attempts
+     */
+    private static function checkUploadRateLimit(string $clientIp, $cache): int
+    {
+        $intervalStart = (int)(floor(time() / self::UPLOAD_ATTEMPTS_INTERVAL)
+            * self::UPLOAD_ATTEMPTS_INTERVAL);
+        $key = "ratelimit:upload:{$intervalStart}:{$clientIp}";
+
+        $adapter = $cache->getAdapter();
+        $adapter->zIncrBy($key, 1, $clientIp);
+        $adapter->expire($key, self::UPLOAD_ATTEMPTS_INTERVAL);
+
+        $count = (int)$adapter->zScore($key, $clientIp);
+
+        return max(self::MAX_UPLOAD_ATTEMPTS - $count, 0);
     }
 
     /**

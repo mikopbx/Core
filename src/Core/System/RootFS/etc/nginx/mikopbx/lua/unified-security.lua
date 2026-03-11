@@ -449,6 +449,16 @@ end
 
 -- ===== RATE LIMITING =====
 
+-- Log warning when rate limiting is disabled (once per hour)
+if not rate_limit_enabled then
+    local warned = rate_limit_cache:get("rate_limit_disabled_warned")
+    if not warned then
+        ngx.log(ngx.WARN, "Rate limiting is DISABLED via MIKOPBX_RATE_LIMIT_ENABLED=0. ",
+                "All HTTP endpoints are unprotected from abuse.")
+        rate_limit_cache:set("rate_limit_disabled_warned", "1", 3600)
+    end
+end
+
 -- Check if request is for static resource
 local function is_static_resource()
     local uri = ngx.var.uri

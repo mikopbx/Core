@@ -232,15 +232,12 @@ class NginxConf extends SystemConfigClass
             SystemMessages::sysLogMsg(self::PROC_NAME, 'HTTP configured with IPv6 support', LOG_INFO);
         }
 
-        // Add dynamic security filtering via Lua when firewall is enabled
-        $firewallEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
-        if ($firewallEnabled === '1') {
-            // Get Redis/Lua configuration
-            $redisVars = $this->generateRedisLuaConfig();
+        // Add dynamic security filtering via Lua (rate limiting, attack protection)
+        // Always enabled regardless of firewall setting - Lua script handles both scenarios
+        $redisVars = $this->generateRedisLuaConfig();
 
-            // Insert after resolver line
-            $config = str_replace("resolver <DNS>;\n", "resolver <DNS>;\n\n$redisVars", $config);
-        }
+        // Insert after resolver line
+        $config = str_replace("resolver <DNS>;\n", "resolver <DNS>;\n\n$redisVars", $config);
 
         // Define the placeholders that will be replaced in the configuration string.
         $placeholders = ['<DNS>', '<WEBPort>'];
@@ -301,14 +298,11 @@ class NginxConf extends SystemConfigClass
                 SystemMessages::sysLogMsg(self::PROC_NAME, 'HTTPS configured with IPv6 support', LOG_INFO);
             }
 
-            // Add dynamic security filtering via Lua when firewall is enabled (SSL)
-            if ($firewallEnabled === '1') {
-                // Redis configuration is already synced above, just add Lua directives
-                $redisVars = $this->generateRedisLuaConfig();
+            // Add dynamic security filtering via Lua (rate limiting, attack protection)
+            $redisVars = $this->generateRedisLuaConfig();
 
-                // Insert after resolver line
-                $config = str_replace("resolver <DNS>;\n", "resolver <DNS>;\n\n$redisVars", $config);
-            }
+            // Insert after resolver line
+            $config = str_replace("resolver <DNS>;\n", "resolver <DNS>;\n\n$redisVars", $config);
 
             // Define the placeholders that will be replaced in the configuration string.
             $placeholders = ['<DNS>', '<WEBHTTPSPort>'];
@@ -401,8 +395,15 @@ class NginxConf extends SystemConfigClass
         $redisVars .= "    set \$session_check_required '0';\n";
 
         // Rate limiting can be disabled via environment variable for testing
-        $rateLimitEnabled = getenv('MIKOPBX_RATE_LIMIT_ENABLED')??'1';
+        $rateLimitEnabled = getenv('MIKOPBX_RATE_LIMIT_ENABLED') ?? '1';
         $rateLimitEnabled = ($rateLimitEnabled === '0') ? '0' : '1';
+        if ($rateLimitEnabled === '0') {
+            SystemMessages::sysLogMsg(
+                self::PROC_NAME,
+                'WARNING: HTTP rate limiting is disabled via MIKOPBX_RATE_LIMIT_ENABLED=0',
+                LOG_WARNING
+            );
+        }
         $redisVars .= "    set \$rate_limit_enabled '$rateLimitEnabled';\n";
         $redisVars .= "    \n";
         $redisVars .= "    # Security filtering via Lua\n";
@@ -530,12 +531,9 @@ class NginxConf extends SystemConfigClass
             }
         }
 
-        // Add Lua firewall if enabled
-        $firewallEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
-        if ($firewallEnabled === '1') {
-            $redisVars = $instance->generateRedisLuaConfig();
-            $config = str_replace("resolver $dns_server;\n", "resolver $dns_server;\n\n$redisVars", $config);
-        }
+        // Add Lua security filtering (rate limiting, attack protection)
+        $redisVars = $instance->generateRedisLuaConfig();
+        $config = str_replace("resolver $dns_server;\n", "resolver $dns_server;\n\n$redisVars", $config);
 
         // Insert module content before the closing brace
         $config = preg_replace('/}\s*$/', "\n$content\n}", $config);

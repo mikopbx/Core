@@ -87,6 +87,9 @@ class FilesManagementProcessor extends Injectable
         $actionString = $request['action'];
         $data = $request['data'];
 
+        // Pass client IP from session context for rate limiting
+        $data['clientIp'] = $request['sessionContext']['remote_addr'] ?? '';
+
         // Type-safe action matching with enum
         $action = FileAction::tryFrom($actionString);
 
