@@ -411,6 +411,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'V MikoPBX byly zjištěny problémy.',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Vyžaduje pozornost administrátora',
+    'ms_EmailNotification_SystemProblems_Message' => 'Systém zjistil %count% problém(ů), které vyžadují vaši pozornost.',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Zjištěné problémy',
     'ms_EmailNotification_SystemProblems_ActionRequired' => 'Vyžadovaná akce',
     'ms_EmailNotification_SystemProblems_GoToAdminPanel' => 'Přejděte na ovládací panel',

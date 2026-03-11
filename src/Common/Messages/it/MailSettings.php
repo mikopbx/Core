@@ -437,6 +437,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'Sono stati rilevati problemi in MikoPBX.',
     'ms_EmailNotification_SystemProblems_Preheader' => 'È richiesta l\'attenzione dell\'amministratore',
+    'ms_EmailNotification_SystemProblems_Message' => 'Il sistema ha rilevato %count% problema/i che richiedono la vostra attenzione.',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Problemi scoperti',
     'ms_EmailNotification_SystemProblems_PleaseResolve' => 'Si prega di risolvere i problemi individuati il prima possibile per garantire il funzionamento stabile della stazione telefonica.',
     'ms_EmailNotification_SystemProblems_HelpText' => 'Se hai bisogno di aiuto per la risoluzione dei problemi, contatta l\'assistenza tecnica o visita la nostra knowledge base.',

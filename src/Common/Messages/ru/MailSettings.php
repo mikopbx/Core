@@ -492,6 +492,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'Обнаружены проблемы в работе MikoPBX',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Требуется внимание администратора',
+    'ms_EmailNotification_SystemProblems_Message' => 'В системе обнаружено проблем: %count%. Требуется ваше внимание.',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Обнаруженные проблемы',
     'ms_EmailNotification_SystemProblems_ActionRequired' => 'Требуются действия',
     'ms_EmailNotification_SystemProblems_PleaseResolve' => 'Пожалуйста, устраните выявленные проблемы как можно скорее для обеспечения стабильной работы телефонной станции.',

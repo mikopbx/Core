@@ -421,6 +421,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'Wykryto problemy w MikoPBX.',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Wymagana uwaga administratora',
+    'ms_EmailNotification_SystemProblems_Message' => 'System wykrył %count% problem(ów) wymagających Twojej uwagi.',
     'ms_EmailNotification_SystemProblems_GoToAdminPanel' => 'Przejdź do panelu sterowania',
     'ms_EmailNotification_SystemProblems_HelpText' => 'Jeśli potrzebujesz pomocy w rozwiązywaniu problemów, skontaktuj się z pomocą techniczną lub odwiedź naszą bazę wiedzy.',
     'ms_EmailNotification_SMTPTest_Preheader' => 'Sprawdzanie konfiguracji serwera pocztowego',

@@ -442,6 +442,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'MikoPBX\'te sorunlar tespit edildi.',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Yöneticinin ilgisi gereklidir',
+    'ms_EmailNotification_SystemProblems_Message' => 'Sistem dikkatinizi gerektiren %count% sorun tespit etti.',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Tespit edilen sorunlar',
     'ms_EmailNotification_SystemProblems_ActionRequired' => 'Gerekli işlem',
     'ms_EmailNotification_SystemProblems_PleaseResolve' => 'Telefon istasyonunun istikrarlı çalışmasını sağlamak için lütfen tespit edilen sorunları en kısa sürede çözün.',

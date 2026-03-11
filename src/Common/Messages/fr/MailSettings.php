@@ -483,6 +483,7 @@ return [
     'ms_EmailNotification_SSHPassword_ReviewSecuritySettings' => 'Vérifier les paramètres de sécurité',
     'ms_EmailNotification_SSHPassword_Footer' => 'Ceci est une alerte de sécurité critique. Ignorer ce message pourrait compromettre votre système.',
     'ms_EmailNotification_SystemProblems_Preheader' => 'L\'attention de l\'administrateur est requise',
+    'ms_EmailNotification_SystemProblems_Message' => 'Le système a détecté %count% problème(s) nécessitant votre attention.',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Problèmes découverts',
     'ms_EmailNotification_SystemProblems_ActionRequired' => 'Action requise',
     // SMTP Test Notifications

@@ -415,6 +415,7 @@ return [
     'ms_EmailNotification_SecurityLog_During' => 'üçün',
     'ms_EmailNotification_SecurityLog_HelpText' => 'Asterisk təhlükəsizlik jurnalını, firewall parametrlərini və Fail2Ban-ı dərhal yoxlamağı tövsiyə edirik. Lazım gələrsə, iş stansiyasına girişi yalnız etibarlı IP ünvanlarından məhdudlaşdırın.',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Administratorun diqqəti tələb olunur',
+    'ms_EmailNotification_SystemProblems_Message' => 'Sistem diqqətinizi tələb edən %count% problem aşkar etdi.',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Aşkarlanmış problemlər',
     'ms_EmailNotification_SystemProblems_ActionRequired' => 'Tədbir tələb olunur',
     'ms_EmailNotification_SystemProblems_PleaseResolve' => 'Telefon stansiyasının sabit işləməsini təmin etmək üçün müəyyən edilmiş problemləri mümkün qədər tez həll edin.',

@@ -502,6 +502,7 @@ return [
     'ms_EmailNotification_Login_SecurityNotice' => 'Wenn du es nicht warst',
     'ms_EmailNotification_Login_GoToAdminPanel' => 'Gehen Sie zur Systemsteuerung',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Aufmerksamkeit des Administrators erforderlich',
+    'ms_EmailNotification_SystemProblems_Message' => 'Das System hat %count% Problem(e) erkannt, die Ihre Aufmerksamkeit erfordern.',
     'ms_EmailNotification_SMTPTest_Configured' => 'Konfiguriert',
     'ms_EmailNotification_SMTPTest_Working' => 'Funktioniert',
     'ms_EmailNotification_SMTPTest_Passed' => 'Vollendet',

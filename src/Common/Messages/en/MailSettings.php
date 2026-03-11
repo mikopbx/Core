@@ -491,6 +491,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'MikoPBX System Problems Detected',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Administrator attention required',
+    'ms_EmailNotification_SystemProblems_Message' => 'The system has detected %count% problem(s) that require your attention.',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Detected Problems',
     'ms_EmailNotification_SystemProblems_ActionRequired' => 'Action Required',
     'ms_EmailNotification_SystemProblems_PleaseResolve' => 'Please resolve the identified issues as soon as possible to ensure stable phone system operation.',

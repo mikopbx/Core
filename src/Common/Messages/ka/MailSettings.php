@@ -441,6 +441,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'MikoPBX-ში პრობლემები აღმოჩენილია.',
     'ms_EmailNotification_SystemProblems_Preheader' => 'ადმინისტრატორის ყურადღებაა საჭირო',
+    'ms_EmailNotification_SystemProblems_Message' => 'სისტემამ აღმოაჩინა %count% პრობლემა, რომელიც მოითხოვს თქვენს ყურადღებას.',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'აღმოჩენილი პრობლემები',
     'ms_EmailNotification_SystemProblems_ActionRequired' => 'საჭირო ქმედება',
     'ms_EmailNotification_SystemProblems_PleaseResolve' => 'გთხოვთ, რაც შეიძლება მალე მოაგვაროთ გამოვლენილი პრობლემები, რათა უზრუნველყოთ ტელეფონის სადგურის სტაბილური მუშაობა.',

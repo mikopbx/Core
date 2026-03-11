@@ -498,6 +498,7 @@ return [
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Problemas descobertos',
     'ms_EmailNotification_Voicemail_Date' => 'Data e hora',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Atenção do administrador necessária',
+    'ms_EmailNotification_SystemProblems_Message' => 'O sistema detetou %count% problema(s) que requerem a sua atenção.',
     'ms_EmailNotification_SSHPassword_Time' => 'Tempo de mudança',
     'ms_EmailNotification_DiskSpace_HelpText' => 'Recomenda-se liberar espaço ou aumentar o tamanho do disco para evitar problemas com a gravação de chamadas e o funcionamento do sistema.',
     // SMTP Test Notifications

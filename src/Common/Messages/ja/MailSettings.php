@@ -483,6 +483,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'MikoPBX で問題が検出されました。',
     'ms_EmailNotification_SystemProblems_Preheader' => '管理者の注意が必要',
+    'ms_EmailNotification_SystemProblems_Message' => 'システムは対応が必要な %count% 件の問題を検出しました。',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => '発見された問題',
     'ms_EmailNotification_SystemProblems_ActionRequired' => '必要なアクション',
     'ms_EmailNotification_SystemProblems_PleaseResolve' => '電話局の安定した運用を確保するために、特定された問題をできるだけ早く解決してください。',

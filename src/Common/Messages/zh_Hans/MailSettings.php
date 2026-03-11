@@ -436,6 +436,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'MikoPBX 检测到问题。',
     'ms_EmailNotification_SystemProblems_Preheader' => '需要管理员关注',
+    'ms_EmailNotification_SystemProblems_Message' => '系统检测到 %count% 个需要您关注的问题。',
     'ms_EmailNotification_SystemProblems_ActionRequired' => '需要采取行动',
     'ms_EmailNotification_SystemProblems_PleaseResolve' => '请尽快解决已发现的问题，以确保电话站稳定运行。',
     'ms_EmailNotification_SystemProblems_GoToAdminPanel' => '前往控制面板',

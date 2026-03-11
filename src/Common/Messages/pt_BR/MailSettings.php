@@ -427,6 +427,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'Foram detectados problemas no MikoPBX.',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Atenção do administrador necessária',
+    'ms_EmailNotification_SystemProblems_Message' => 'O sistema detectou %count% problema(s) que requerem sua atenção.',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Problemas descobertos',
     'ms_EmailNotification_SystemProblems_GoToAdminPanel' => 'Acesse o painel de controle.',
     'ms_EmailNotification_SystemProblems_HelpText' => 'Se precisar de ajuda para solucionar problemas, entre em contato com o suporte técnico ou visite nossa base de conhecimento.',

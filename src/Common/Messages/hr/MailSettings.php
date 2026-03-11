@@ -451,6 +451,7 @@ return [
     'ms_EmailNotification_SecurityLog_Critical' => 'KRITIČNA RAZINA',
     'ms_EmailNotification_SecurityLog_GrowthRate' => 'Stopa rasta',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Potrebna je pažnja administratora',
+    'ms_EmailNotification_SystemProblems_Message' => 'Sustav je otkrio %count% problem(a) koji zahtijevaju vašu pažnju.',
     'ms_EmailNotification_SMTPTest_Configured' => 'Konfigurirano',
     'ms_EmailNotification_SMTPTest_Working' => 'Radi',
     'ms_EmailNotification_SMTPTest_Passed' => 'Završeno',

@@ -501,6 +501,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'Έχουν εντοπιστεί προβλήματα στο MikoPBX.',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Απαιτείται η προσοχή του διαχειριστή',
+    'ms_EmailNotification_SystemProblems_Message' => 'Το σύστημα εντόπισε %count% πρόβλημα(τα) που απαιτούν την προσοχή σας.',
     'ms_EmailNotification_SSHPassword_IPAddress' => 'διεύθυνση IP',
     'ms_EmailNotification_SSHPassword_Time' => 'Ώρα αλλαγής',
     'ms_EmailNotification_SSHPassword_SecurityNotice' => 'Προειδοποίηση ασφάλειας',

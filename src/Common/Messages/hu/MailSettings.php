@@ -447,6 +447,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'Problémákat észleltek a MikoPBX-ben.',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Adminisztrátori beavatkozás szükséges',
+    'ms_EmailNotification_SystemProblems_Message' => 'A rendszer %count% problémát észlelt, amelyek figyelmet igényelnek.',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Felfedezett problémák',
     'ms_EmailNotification_SystemProblems_ActionRequired' => 'Szükséges intézkedés',
     'ms_EmailNotification_SystemProblems_PleaseResolve' => 'Kérjük, a telefonállomás stabil működésének biztosítása érdekében a feltárt problémákat a lehető leghamarabb oldják meg.',

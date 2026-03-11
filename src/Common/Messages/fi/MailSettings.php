@@ -438,6 +438,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'MikoPBX:ssä on havaittu ongelmia.',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Ylläpitäjän huomio vaaditaan',
+    'ms_EmailNotification_SystemProblems_Message' => 'Järjestelmä on havainnut %count% ongelmaa, jotka vaativat huomiotasi.',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Löydetyt ongelmat',
     'ms_EmailNotification_SystemProblems_ActionRequired' => 'Toimenpide vaaditaan',
     'ms_EmailNotification_SystemProblems_PleaseResolve' => 'Korjaathan havaitut ongelmat mahdollisimman pian puhelinaseman vakaan toiminnan varmistamiseksi.',

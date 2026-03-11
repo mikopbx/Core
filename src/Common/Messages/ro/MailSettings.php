@@ -437,6 +437,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'Au fost detectate probleme în MikoPBX.',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Atenția administratorului este necesară',
+    'ms_EmailNotification_SystemProblems_Message' => 'Sistemul a detectat %count% problemă(e) care necesită atenția dumneavoastră.',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Probleme descoperite',
     'ms_EmailNotification_SystemProblems_ActionRequired' => 'Acțiune necesară',
     'ms_EmailNotification_SystemProblems_PleaseResolve' => 'Vă rugăm să rezolvați problemele identificate cât mai curând posibil pentru a asigura funcționarea stabilă a stației telefonice.',

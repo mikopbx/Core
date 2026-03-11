@@ -438,6 +438,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'Đã phát hiện sự cố trong hệ thống MikoPBX.',
     'ms_EmailNotification_SystemProblems_Preheader' => 'Cần sự chú ý của người quản lý',
+    'ms_EmailNotification_SystemProblems_Message' => 'Hệ thống đã phát hiện %count% sự cố cần sự chú ý của bạn.',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Các vấn đề được phát hiện',
     'ms_EmailNotification_SystemProblems_ActionRequired' => 'Cần hành động',
     'ms_EmailNotification_SystemProblems_PleaseResolve' => 'Vui lòng khắc phục các sự cố đã xác định càng sớm càng tốt để đảm bảo hoạt động ổn định của trạm điện thoại.',

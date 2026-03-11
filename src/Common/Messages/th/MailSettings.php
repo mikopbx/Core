@@ -438,6 +438,7 @@ return [
     // System Problems Notifications
     'ms_EmailNotification_SystemProblems_Subject' => 'ตรวจพบปัญหาในระบบ MikoPBX',
     'ms_EmailNotification_SystemProblems_Preheader' => 'ผู้ดูแลระบบต้องให้ความสนใจ',
+    'ms_EmailNotification_SystemProblems_Message' => 'ระบบตรวจพบ %count% ปัญหาที่ต้องการความสนใจของคุณ',
     'ms_EmailNotification_SystemProblems_DetectedProblems' => 'ปัญหาที่พบ',
     'ms_EmailNotification_SystemProblems_ActionRequired' => 'จำเป็นต้องดำเนินการ',
     'ms_EmailNotification_SystemProblems_PleaseResolve' => 'โปรดแก้ไขปัญหาที่พบโดยเร็วที่สุด เพื่อให้สถานีโทรศัพท์สามารถทำงานได้อย่างเสถียร',
