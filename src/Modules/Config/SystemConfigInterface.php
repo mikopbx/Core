@@ -57,6 +57,7 @@ interface SystemConfigInterface
 
     public const string ON_BEFORE_MODULE_ENABLE = 'onBeforeModuleEnable';
 
+    public const string ON_AFTER_IPTABLES_RELOAD = 'onAfterIptablesReload';
 
     /**
      * The callback function will execute after PBX started.
@@ -162,6 +163,17 @@ interface SystemConfigInterface
      * @return void
      */
     public function onAfterModuleDisable(): void;
+
+    /**
+     * The callback function will execute after iptables rules are applied but before the final DROP rule.
+     * Modules can use this hook to inject custom iptables rules (e.g., ipset-based filtering).
+     *
+     * Rules added here are positioned after explicit subnet ACCEPT rules and SIP provider rules,
+     * but before the final DROP, ensuring that trusted networks have higher priority.
+     *
+     * @return void
+     */
+    public function onAfterIptablesReload(): void;
 
     /**
      * Generates additional fail2ban jail conf rules.

@@ -20,12 +20,14 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\{FirewallRules, NetworkFilters, PbxSettings, Sip};
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Utilities\IpAddressHelper;
+use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Injectable;
 
 /**
@@ -151,6 +153,10 @@ class IptablesConf extends Injectable
             // T2SDE or Docker
             Processes::mwExecCommands($arr_command, $out, 'firewall');
             Processes::mwExecCommands($arr_commands_custom, $out, 'firewall_additional');
+
+            // Allow modules to inject custom iptables rules (e.g., ipset-based GeoIP filtering)
+            // Positioned after explicit subnet ACCEPT and SIP provider rules, before final DROP
+            PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::ON_AFTER_IPTABLES_RELOAD);
 
             // Drop everything else - but ONLY if rules are configured
             // If no rules exist, allow all traffic to prevent lockout

@@ -236,6 +236,16 @@ abstract class ConfigClass extends AsteriskConfigClass implements
     }
 
     /**
+     * Called after iptables rules are applied but before the final DROP rule.
+     * Override this to inject custom iptables rules (e.g., ipset-based filtering).
+     *
+     * @return void
+     */
+    public function onAfterIptablesReload(): void
+    {
+    }
+
+    /**
      * Processes actions before enabling the module in the web interface.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforemoduleenable
      *
