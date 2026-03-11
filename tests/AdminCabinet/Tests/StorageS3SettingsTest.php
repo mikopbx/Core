@@ -174,6 +174,12 @@ class StorageS3SettingsTest extends MikoPBXTestsBase
     protected function fillInputField(string $fieldName, string $value): void
     {
         $field = self::$driver->findElement(WebDriverBy::name($fieldName));
+
+        // Click first to trigger focus - removes readonly attribute on fields
+        // that use readonly + onfocus trick to prevent password manager auto-fill
+        $field->click();
+        usleep(200000);
+
         $field->clear();
         $field->sendKeys($value);
     }

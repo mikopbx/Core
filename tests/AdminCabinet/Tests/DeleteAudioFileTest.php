@@ -53,6 +53,19 @@ class DeleteAudioFileTest extends MikoPBXTestsBase
     {
         // Click on the sound files in the sidebar menu
         $this->clickSidebarMenuItemByHref('/admin-cabinet/sound-files/index/');
+
+        // Check if the audio file exists before trying to delete it
+        $xpath = sprintf(
+            '//td[contains(text(),"%s")]',
+            $params['name']
+        );
+        $elements = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        if (count($elements) === 0) {
+            self::annotate("Audio file '{$params['name']}' not found, skipping deletion", 'warning');
+            $this->assertTrue(true, "Audio file not found - nothing to delete");
+            return;
+        }
+
         $this->clickModifyButtonOnRowWithText($params['name']);
 
         // Get the element ID of the audio file

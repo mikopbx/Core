@@ -51,7 +51,13 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
     {
         // Navigate to time settings page
         $this->navigateToTimeSettings();
-        
+
+        // Wait for loadSettings() AJAX to complete and populate the form.
+        // Without this, a race condition occurs: the test sets textarea values,
+        // then populateFormSilently() overwrites them when AJAX response arrives.
+        $this->waitForAjax();
+        sleep(2);
+
         // Set timezone and other settings
         $this->selectDropdownItem(PbxSettings::PBX_TIMEZONE, $params[PbxSettings::PBX_TIMEZONE]);
         $this->changeCheckBoxState(PbxSettings::PBX_MANUAL_TIME_SETTINGS, $params[PbxSettings::PBX_MANUAL_TIME_SETTINGS]);
@@ -138,7 +144,11 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
             try {
                 // Try to navigate to time settings page
                 $this->navigateToTimeSettings();
-                
+
+                // Wait for loadSettings() AJAX to populate form before assertions
+                $this->waitForAjax();
+                sleep(2);
+
                 // Verify timezone
                 $this->assertMenuItemSelected(PbxSettings::PBX_TIMEZONE, $params['PBXTimezone']);
                 

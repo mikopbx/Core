@@ -24,8 +24,8 @@ use Facebook\WebDriver\WebDriverBy;
 
 trait AudioFilesTrait
 {
-    protected const UPLOAD_WAIT_TIME = 1;  // Reduced from 2 to 1 second
-    protected const FORM_READY_TIMEOUT = 15;  // Reduced from 30 to 15 seconds - files usually process faster
+    protected const UPLOAD_WAIT_TIME = 1;
+    protected const FORM_READY_TIMEOUT = 60;  // Large MP3 files (e.g. first_noel.mp3) can take 30+ seconds to convert
 
     /**
      * Upload and process audio file
