@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'Onemogući OAuth2',
     'ms_OAuth2AuthorizationFailed' => 'Pogreška autorizacije OAuth2',
     'ms_OAuth2InvalidCallback' => 'Nevažeći parametri povratnog poziva OAuth2',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'Pogreška pri obradi povratnog poziva OAuth2',
     'ms_OAuth2ConnectedTo' => 'Povezano s {provider}',
     'ms_OAuth2TokenValid' => '(token je važeći)',

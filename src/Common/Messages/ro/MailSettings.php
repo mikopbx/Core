@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'Dezactivați OAuth2',
     'ms_OAuth2AuthorizationFailed' => 'Eroare de autorizare OAuth2',
     'ms_OAuth2InvalidCallback' => 'Parametri de apel invers OAuth2 nevalidi',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'Eroare la procesarea apelului invers OAuth2',
     'ms_OAuth2ConnectedTo' => 'Conectat la {furnizor}',
     'ms_OAuth2TokenValid' => '(tokenul este valid)',

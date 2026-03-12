@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => '編集',
     // Page titles and descriptions
     'ari_Title' => 'ARI ユーザーの管理',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => 'Asterisk RESTインターフェースにアクセスするためのユーザー設定',
     'ari_NewUser' => '新しいARIユーザー',
     'ari_EditUser' => 'ARI ユーザーの編集',

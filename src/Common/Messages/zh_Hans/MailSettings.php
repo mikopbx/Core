@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => '禁用 OAuth2',
     'ms_OAuth2AuthorizationFailed' => 'OAuth2 授权错误',
     'ms_OAuth2InvalidCallback' => '无效的 OAuth2 回调参数',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => '处理 OAuth2 回调时出错',
     'ms_OAuth2ConnectedTo' => '已连接到 {provider}',
     'ms_OAuth2TokenValid' => '（令牌有效）',

@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'Vô hiệu hóa OAuth2',
     'ms_OAuth2AuthorizationFailed' => 'Lỗi xác thực OAuth2',
     'ms_OAuth2InvalidCallback' => 'Tham số gọi lại OAuth2 không hợp lệ',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'Lỗi khi xử lý cuộc gọi lại OAuth2',
     'ms_OAuth2ConnectedTo' => 'Đã kết nối với {nhà cung cấp}',
     'ms_OAuth2TokenValid' => '(Mã thông báo hợp lệ)',

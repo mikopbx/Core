@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'Zakázat OAuth2',
     'ms_OAuth2AuthorizationFailed' => 'Chyba autorizace OAuth2',
     'ms_OAuth2InvalidCallback' => 'Neplatné parametry zpětného volání OAuth2',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'Chyba při zpracování zpětného volání OAuth2',
     'ms_OAuth2ConnectedTo' => 'Připojeno k {provider}',
     'ms_OAuth2TokenValid' => '(token je platný)',

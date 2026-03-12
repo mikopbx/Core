@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'Désactiver OAuth2',
     'ms_OAuth2AuthorizationFailed' => 'Erreur d\'autorisation OAuth2',
     'ms_OAuth2InvalidCallback' => 'Paramètres de rappel OAuth2 invalides',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'Erreur lors du traitement du rappel OAuth2',
     'ms_OAuth2ConnectedTo' => 'Connecté à {fournisseur}',
     'ms_OAuth2TokenValid' => '(le jeton est valide)',

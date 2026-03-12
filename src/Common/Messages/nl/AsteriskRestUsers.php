@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => 'Bewerken',
     // Page titles and descriptions
     'ari_Title' => 'ARI-gebruikers beheren',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => 'Gebruikersinstellingen voor toegang tot de Asterisk REST-interface',
     'ari_NewUser' => 'Nieuwe ARI-gebruiker',
     'ari_EditUser' => 'Een ARI-gebruiker bewerken',

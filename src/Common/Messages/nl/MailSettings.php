@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'OAuth2 uitschakelen',
     'ms_OAuth2AuthorizationFailed' => 'OAuth2-autorisatiefout',
     'ms_OAuth2InvalidCallback' => 'Ongeldige OAuth2-callbackparameters',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'Fout bij het verwerken van OAuth2-callback',
     'ms_OAuth2ConnectedTo' => 'Verbonden met {provider}',
     'ms_OAuth2TokenValid' => '(token is geldig)',

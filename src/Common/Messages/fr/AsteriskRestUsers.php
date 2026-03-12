@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => 'Modifier',
     // Page titles and descriptions
     'ari_Title' => 'Gestion des utilisateurs ARI',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => 'Paramètres utilisateur pour l\'accès à l\'interface REST d\'Asterisk',
     'ari_NewUser' => 'Nouvel utilisateur ARI',
     'ari_EditUser' => 'Modification d\'un utilisateur ARI',

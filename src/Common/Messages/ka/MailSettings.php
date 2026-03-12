@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'OAuth2-ის გამორთვა',
     'ms_OAuth2AuthorizationFailed' => 'OAuth2 ავტორიზაციის შეცდომა',
     'ms_OAuth2InvalidCallback' => 'არასწორი OAuth2 უკუკავშირის პარამეტრები',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'შეცდომა OAuth2 უკუკავშირის დამუშავებისას',
     'ms_OAuth2ConnectedTo' => 'დაკავშირებულია {პროვაიდერთან}',
     'ms_OAuth2TokenValid' => '(ჟეტონი ძალაშია)',

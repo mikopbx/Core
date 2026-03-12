@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => 'Chỉnh sửa',
     // Page titles and descriptions
     'ari_Title' => 'Quản lý người dùng ARI',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => 'Cài đặt người dùng để truy cập giao diện REST của Asterisk.',
     'ari_NewUser' => 'Người dùng ARI mới',
     'ari_EditUser' => 'Chỉnh sửa người dùng ARI',

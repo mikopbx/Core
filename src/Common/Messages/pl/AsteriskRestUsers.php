@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => 'Edytuj',
     // Page titles and descriptions
     'ari_Title' => 'Zarządzanie użytkownikami ARI',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => 'Ustawienia użytkownika umożliwiające dostęp do interfejsu REST Asterisk',
     'ari_NewUser' => 'Nowy użytkownik ARI',
     'ari_EditUser' => 'Edytowanie użytkownika ARI',

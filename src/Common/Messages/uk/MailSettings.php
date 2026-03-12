@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'Вимкнути OAuth2',
     'ms_OAuth2AuthorizationFailed' => 'Помилка авторизації OAuth2',
     'ms_OAuth2InvalidCallback' => 'Неправильні параметри OAuth2 callback',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'Помилка обробки OAuth2 callback',
     'ms_OAuth2ConnectedTo' => 'Підключено до {provider}',
     'ms_OAuth2TokenValid' => '(Токен дійсний)',

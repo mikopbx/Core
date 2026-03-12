@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'ปิดใช้งาน OAuth2',
     'ms_OAuth2AuthorizationFailed' => 'ข้อผิดพลาดในการอนุญาต OAuth2',
     'ms_OAuth2InvalidCallback' => 'พารามิเตอร์การเรียกกลับ OAuth2 ไม่ถูกต้อง',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'เกิดข้อผิดพลาดในการประมวลผลการเรียกกลับ OAuth2',
     'ms_OAuth2ConnectedTo' => 'เชื่อมต่อกับ {ผู้ให้บริการ}',
     'ms_OAuth2TokenValid' => '(โทเค็นใช้งานได้)',

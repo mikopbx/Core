@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'OAuth2\'yi devre dışı bırakın',
     'ms_OAuth2AuthorizationFailed' => 'OAuth2 yetkilendirme hatası',
     'ms_OAuth2InvalidCallback' => 'Geçersiz OAuth2 geri çağırma parametreleri',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'OAuth2 geri çağırma işleminde hata oluştu.',
     'ms_OAuth2ConnectedTo' => '{provider} ile bağlantılı.',
     'ms_OAuth2TokenValid' => '(token geçerli)',

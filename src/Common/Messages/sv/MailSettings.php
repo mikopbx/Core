@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'Inaktivera OAuth2',
     'ms_OAuth2AuthorizationFailed' => 'OAuth2-auktoriseringsfel',
     'ms_OAuth2InvalidCallback' => 'Ogiltiga OAuth2-återanropsparametrar',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'Fel vid bearbetning av OAuth2-återanrop',
     'ms_OAuth2ConnectedTo' => 'Ansluten till {provider}',
     'ms_OAuth2TokenValid' => '(token är giltig)',

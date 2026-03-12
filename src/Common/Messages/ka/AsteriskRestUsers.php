@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => 'რედაქტირება',
     // Page titles and descriptions
     'ari_Title' => 'ARI მომხმარებლების მართვა',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => 'Asterisk REST ინტერფეისზე წვდომის მომხმარებლის პარამეტრები',
     'ari_NewUser' => 'ARI-ს ახალი მომხმარებელი',
     'ari_EditUser' => 'ARI მომხმარებლის რედაქტირება',

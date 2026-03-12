@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => 'Rediger',
     // Page titles and descriptions
     'ari_Title' => 'Administration af ARI-brugere',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => 'Brugerindstillinger for adgang til Asterisk REST-grænsefladen',
     'ari_NewUser' => 'Ny ARI-bruger',
     'ari_EditUser' => 'Redigering af en ARI-bruger',

@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'OAuth2-ni deaktiv edin',
     'ms_OAuth2AuthorizationFailed' => 'OAuth2 avtorizasiya xətası',
     'ms_OAuth2InvalidCallback' => 'Yanlış OAuth2 geri çağırış parametrləri',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'OAuth2 geri çağırışı emal edilərkən xəta baş verdi',
     'ms_OAuth2ConnectedTo' => '{provayder} ilə əlaqə saxlanılıb',
     'ms_OAuth2TokenValid' => '(token etibarlıdır)',

@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => 'Redaktə et',
     // Page titles and descriptions
     'ari_Title' => 'ARI İstifadəçilərinin İdarə Edilməsi',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => 'Asterisk REST İnterfeysinə daxil olmaq üçün istifadəçi parametrləri',
     'ari_NewUser' => 'Yeni ARI istifadəçisi',
     'ari_EditUser' => 'ARI istifadəçisini redaktə etmək',

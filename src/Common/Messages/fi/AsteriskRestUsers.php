@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => 'Muokkaa',
     // Page titles and descriptions
     'ari_Title' => 'ARI-käyttäjien hallinta',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => 'Asterisk REST -käyttöliittymän käyttäjäasetukset',
     'ari_NewUser' => 'Uusi ARI-käyttäjä',
     'ari_EditUser' => 'ARI-käyttäjän muokkaaminen',

@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'OAuth2を無効にする',
     'ms_OAuth2AuthorizationFailed' => 'OAuth2認証エラー',
     'ms_OAuth2InvalidCallback' => '無効なOAuth2コールバックパラメータ',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'OAuth2 コールバックの処理中にエラーが発生しました',
     'ms_OAuth2ConnectedTo' => '{provider}に接続しました',
     'ms_OAuth2TokenValid' => '（トークンは有効です）',

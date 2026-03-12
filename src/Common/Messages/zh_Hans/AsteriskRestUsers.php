@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => '编辑',
     // Page titles and descriptions
     'ari_Title' => '管理 ARI 用户',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => '访问 Asterisk REST 接口的用户设置',
     'ari_NewUser' => '新ARI用户',
     'ari_EditUser' => '编辑 ARI 用户',

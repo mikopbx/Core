@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'Deaktiver OAuth2',
     'ms_OAuth2AuthorizationFailed' => 'OAuth2-godkendelsesfejl',
     'ms_OAuth2InvalidCallback' => 'Ugyldige OAuth2-tilbagekaldsparametre',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'Fejl under behandling af OAuth2-tilbagekald',
     'ms_OAuth2ConnectedTo' => 'Forbundet til {udbyder}',
     'ms_OAuth2TokenValid' => '(tokenet er gyldigt)',

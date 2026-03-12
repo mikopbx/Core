@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'Απενεργοποίηση OAuth2',
     'ms_OAuth2AuthorizationFailed' => 'Σφάλμα εξουσιοδότησης OAuth2',
     'ms_OAuth2InvalidCallback' => 'Μη έγκυρες παράμετροι επανάκλησης OAuth2',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'Σφάλμα κατά την επεξεργασία της επιστροφής κλήσης OAuth2',
     'ms_OAuth2ConnectedTo' => 'Συνδεδεμένος με {πάροχο}',
     'ms_OAuth2TokenValid' => '(το διακριτικό είναι έγκυρο)',

@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'Poista OAuth2 käytöstä',
     'ms_OAuth2AuthorizationFailed' => 'OAuth2-valtuutusvirhe',
     'ms_OAuth2InvalidCallback' => 'Virheelliset OAuth2-kutsupyyntöparametrit',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'Virhe OAuth2-kutsupyynnön käsittelyssä',
     'ms_OAuth2ConnectedTo' => 'Yhdistetty palveluntarjoajaan {provider}',
     'ms_OAuth2TokenValid' => '(token on voimassa)',

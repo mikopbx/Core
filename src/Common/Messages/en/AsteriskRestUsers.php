@@ -26,7 +26,6 @@ return [
     // Table columns
     'ari_Username' => 'Username',
     'ari_Password' => 'Password',
-    'ari_Description' => 'Description',
     'ari_Applications' => 'Applications',
     'ari_Status' => 'Status',
     'ari_Enabled' => 'Enabled',

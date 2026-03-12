@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => 'Düzenle',
     // Page titles and descriptions
     'ari_Title' => 'ARI Kullanıcılarını Yönetme',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => 'Asterisk REST Arayüzüne erişim için kullanıcı ayarları',
     'ari_NewUser' => 'Yeni ARI kullanıcısı',
     'ari_EditUser' => 'Bir ARI kullanıcısını düzenleme',

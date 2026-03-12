@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'OAuth2 letiltása',
     'ms_OAuth2AuthorizationFailed' => 'OAuth2 engedélyezési hiba',
     'ms_OAuth2InvalidCallback' => 'Érvénytelen OAuth2 visszahívási paraméterek',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'Hiba az OAuth2 visszahívás feldolgozása közben',
     'ms_OAuth2ConnectedTo' => 'Csatlakoztatva a(z) {provider} szolgáltatóhoz',
     'ms_OAuth2TokenValid' => '(a token érvényes)',

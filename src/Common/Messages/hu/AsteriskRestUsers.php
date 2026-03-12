@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => 'Szerkesztés',
     // Page titles and descriptions
     'ari_Title' => 'ARI-felhasználók kezelése',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => 'Felhasználói beállítások az Asterisk REST felület eléréséhez',
     'ari_NewUser' => 'Új ARI-felhasználó',
     'ari_EditUser' => 'ARI felhasználó szerkesztése',

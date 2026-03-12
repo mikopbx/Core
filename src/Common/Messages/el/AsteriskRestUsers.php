@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => 'Επεξεργασία',
     // Page titles and descriptions
     'ari_Title' => 'Διαχείριση χρηστών ARI',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => 'Ρυθμίσεις χρήστη για πρόσβαση στη διεπαφή Asterisk REST',
     'ari_NewUser' => 'Νέος χρήστης ARI',
     'ari_EditUser' => 'Επεξεργασία χρήστη ARI',

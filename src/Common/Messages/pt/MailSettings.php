@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'Desativar OAuth2',
     'ms_OAuth2AuthorizationFailed' => 'Erro de autorização OAuth2',
     'ms_OAuth2InvalidCallback' => 'Parâmetros de retorno de chamada OAuth2 inválidos',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'Erro ao processar o retorno de chamada OAuth2',
     'ms_OAuth2ConnectedTo' => 'Conectado a {provedor}',
     'ms_OAuth2TokenValid' => '(token é válido)',

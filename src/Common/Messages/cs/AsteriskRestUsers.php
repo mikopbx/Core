@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => 'Upravit',
     // Page titles and descriptions
     'ari_Title' => 'Správa uživatelů ARI',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => 'Uživatelská nastavení pro přístup k REST rozhraní Asterisk',
     'ari_NewUser' => 'Nový uživatel ARI',
     'ari_EditUser' => 'Úprava uživatele ARI',

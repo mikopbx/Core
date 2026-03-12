@@ -10,7 +10,6 @@ return [
     'ari_BreadcrumbModify' => '',
     // Page titles and descriptions
     'ari_Title' => '',
-    'ari_Description' => '',
     'ari_UserSettingsDescription' => '',
     'ari_NewUser' => '',
     'ari_EditUser' => '',

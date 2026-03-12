@@ -32,7 +32,6 @@ return [
     'ms_DisconnectOAuth2' => 'Wyłącz OAuth2',
     'ms_OAuth2AuthorizationFailed' => 'Błąd autoryzacji OAuth2',
     'ms_OAuth2InvalidCallback' => 'Nieprawidłowe parametry wywołania zwrotnego OAuth2',
-    'ms_OAuth2AuthorizationSuccess' => '',
     'ms_OAuth2CallbackFailed' => 'Błąd podczas przetwarzania wywołania zwrotnego OAuth2',
     'ms_OAuth2ConnectedTo' => 'Połączono z {dostawcą}',
     'ms_OAuth2TokenValid' => '(token jest ważny)',
