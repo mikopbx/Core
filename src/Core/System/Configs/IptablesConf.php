@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
@@ -89,7 +90,7 @@ class IptablesConf extends Injectable
 
         $firewall = new self();
         $firewall->applyConfig();
-        if(file_exists($pid_file)){
+        if (file_exists($pid_file)) {
             unlink($pid_file);
         }
     }
@@ -122,15 +123,18 @@ class IptablesConf extends Injectable
 
             $arr_command   = [];
             $arr_command[] = $this->getIptablesInputRule('', '-m conntrack --ctstate ESTABLISHED,RELATED');
-            if($this->maxReqSec > 0){
+            if ($this->maxReqSec > 0) {
                 $advancedSipRules = [
                     [$this->sipPort, 'udp'],
                     [$this->sipPort, 'tcp'],
                     [$this->tlsPort, 'tcp']
                 ];
                 foreach ($advancedSipRules as [$port, $protocol]) {
-                    $arr_command[] = $this->getIptablesInputRule($port, "-p $protocol -m state --state NEW -m recent --set --name SipAttacks", '');
-                    $arr_command[] = $this->getIptablesInputRule($port, "-p $protocol -m state --state NEW -m recent --update --seconds 1 --hitcount $this->maxReqSec --name SipAttacks", 'DROP');
+                    $setRule = "-p $protocol -m state --state NEW -m recent --set --name SipAttacks";
+                    $arr_command[] = $this->getIptablesInputRule($port, $setRule, '');
+                    $updateRule = "-p $protocol -m state --state NEW -m recent"
+                        . " --update --seconds 1 --hitcount $this->maxReqSec --name SipAttacks";
+                    $arr_command[] = $this->getIptablesInputRule($port, $updateRule, 'DROP');
                 }
             }
             // Add allowed services
@@ -145,10 +149,10 @@ class IptablesConf extends Injectable
             $cat     = Util::which('cat');
             $grep    = Util::which('grep');
             $awk     = Util::which('awk');
-            Processes::mwExec(
-                "$cat /etc/firewall_additional | $grep -v '|' | $grep -v '&'| $grep '^iptables' | $awk -F ';' '{print $1}'",
-                $arr_commands_custom
-            );
+            $cmd = "$cat /etc/firewall_additional"
+                . " | $grep -v '|' | $grep -v '&'"
+                . " | $grep '^iptables' | $awk -F ';' '{print $1}'";
+            Processes::mwExec($cmd, $arr_commands_custom);
 
             // T2SDE or Docker
             Processes::mwExecCommands($arr_command, $out, 'firewall');
@@ -208,7 +212,11 @@ class IptablesConf extends Injectable
      *
      * @return string The iptables rule as a string.
      */
-    private function getIptablesInputRule(string $dport = '', string $other_data = '', string $action = 'ACCEPT'): string
+    private function getIptablesInputRule(
+        string $dport = '',
+        string $other_data = '',
+        string $action = 'ACCEPT'
+    ): string
     {
         $data_port = '';
         if (trim($dport) !== '') {
@@ -233,7 +241,12 @@ class IptablesConf extends Injectable
      *
      * @return string The firewall rule command (iptables or ip6tables).
      */
-    private function getFirewallRule(string $subnet, string $protocol, string $other_data = '', string $action = 'ACCEPT'): string
+    private function getFirewallRule(
+        string $subnet,
+        string $protocol,
+        string $other_data = '',
+        string $action = 'ACCEPT'
+    ): string
     {
         $other_data = trim($other_data);
         if (trim($action) !== '') {
@@ -303,7 +316,7 @@ class IptablesConf extends Injectable
      * @param array<string> $arr_command Reference to the command array.
      * @return void
      */
-    public function addMainFirewallRules(array &$arr_command):void
+    public function addMainFirewallRules(array &$arr_command): void
     {
         $options = [];
         $result = FirewallRules::find('action="allow"');
@@ -341,11 +354,11 @@ class IptablesConf extends Injectable
      */
     private function makeCmdMultiport(array $options, array &$arr_command): void
     {
-        foreach ($options as $protocol => $data){
-            foreach ($data as $subnet => $ports){
-                if($protocol === 'icmp'){
+        foreach ($options as $protocol => $data) {
+            foreach ($data as $subnet => $ports) {
+                if ($protocol === 'icmp') {
                     $other_data = '--icmp-type echo-reques';
-                }else{
+                } else {
                     $portsString = implode(',', array_unique($ports));
                     $other_data = "-m multiport --dport $portsString";
                 }
@@ -370,11 +383,11 @@ class IptablesConf extends Injectable
                 'ids' => $portNames,
             ],
         ];
-        $rules      = FirewallRules::find($conditions);
+        $rules = FirewallRules::find($conditions);
         foreach ($rules as $rule) {
-            $from   = $portSet[$rule->portFromKey]??'0';
-            $to     = $portSet[$rule->portToKey]??'0';
-            if($from === $rule->portfrom && $to === $rule->portto){
+            $from = $portSet[$rule->portFromKey] ?? '0';
+            $to = $portSet[$rule->portToKey] ?? '0';
+            if ($from === $rule->portfrom && $to === $rule->portto) {
                 continue;
             }
             $rule->portfrom = $from;
