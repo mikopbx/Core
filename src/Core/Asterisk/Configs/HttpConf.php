@@ -68,7 +68,8 @@ class HttpConf extends AsteriskConfigClass
                 $conf .= "tlsenable=$enabled" . PHP_EOL.
                     "tlsbindaddr=0.0.0.0:{$tlsPort}".PHP_EOL.
                     "tlscertfile={$certs['certPath']}".PHP_EOL.
-                    "tlsprivatekey={$certs['keyPath']}".PHP_EOL;
+                    "tlsprivatekey={$certs['keyPath']}".PHP_EOL.
+                    "tlsminversion=tlsv1_2".PHP_EOL;
             }
         }
         $this->saveConfig($conf, $this->description);
