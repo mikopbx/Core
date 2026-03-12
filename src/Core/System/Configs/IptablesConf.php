@@ -130,10 +130,13 @@ class IptablesConf extends Injectable
                     [$this->tlsPort, 'tcp']
                 ];
                 foreach ($advancedSipRules as [$port, $protocol]) {
-                    $setRule = "-p $protocol -m state --state NEW -m recent --set --name SipAttacks";
+                    $setRule = "-p $protocol -m state --state NEW"
+                        . " -m recent --set --name SipAttacks";
                     $arr_command[] = $this->getIptablesInputRule($port, $setRule, '');
-                    $updateRule = "-p $protocol -m state --state NEW -m recent"
-                        . " --update --seconds 1 --hitcount $this->maxReqSec --name SipAttacks";
+
+                    $updateRule = "-p $protocol -m state --state NEW"
+                        . " -m recent --update --seconds 1"
+                        . " --hitcount $this->maxReqSec --name SipAttacks";
                     $arr_command[] = $this->getIptablesInputRule($port, $updateRule, 'DROP');
                 }
             }
@@ -216,8 +219,7 @@ class IptablesConf extends Injectable
         string $dport = '',
         string $other_data = '',
         string $action = 'ACCEPT'
-    ): string
-    {
+    ): string {
         $data_port = '';
         if (trim($dport) !== '') {
             $data_port = '--dport ' . $dport;
@@ -246,8 +248,7 @@ class IptablesConf extends Injectable
         string $protocol,
         string $other_data = '',
         string $action = 'ACCEPT'
-    ): string
-    {
+    ): string {
         $other_data = trim($other_data);
         if (trim($action) !== '') {
             $action = '-j ' . $action;
@@ -298,8 +299,10 @@ class IptablesConf extends Injectable
                 $hashArray[] = $host;
 
                 // Use dual-stack firewall rule generation
-                $arr_command[] = $this->getFirewallRule($host, 'tcp', "-m multiport --dport $this->sipPort,$this->tlsPort");
-                $arr_command[] = $this->getFirewallRule($host, 'udp', "-m multiport --dport $this->sipPort,$this->rtpPorts");
+                $tcpPorts = "-m multiport --dport $this->sipPort,$this->tlsPort";
+                $arr_command[] = $this->getFirewallRule($host, 'tcp', $tcpPorts);
+                $udpPorts = "-m multiport --dport $this->sipPort,$this->rtpPorts";
+                $arr_command[] = $this->getFirewallRule($host, 'udp', $udpPorts);
             }
         }
 
@@ -330,7 +333,8 @@ class IptablesConf extends Injectable
             /** @var NetworkFilters $network_filter */
             $network_filter = NetworkFilters::findFirst($rule->networkfilterid);
             if ($network_filter === null) {
-                SystemMessages::sysLogMsg('Firewall', "network_filter_id not found $rule->networkfilterid", LOG_WARNING);
+                $msg = "network_filter_id not found $rule->networkfilterid";
+                SystemMessages::sysLogMsg('Firewall', $msg, LOG_WARNING);
                 continue;
             }
             if ('0.0.0.0/0' === $network_filter->permit && $rule->action !== 'allow') {
@@ -395,5 +399,4 @@ class IptablesConf extends Injectable
             $rule->update();
         }
     }
-
 }
