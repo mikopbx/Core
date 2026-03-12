@@ -1379,6 +1379,11 @@ return [
     'rest_Storage_ApiDescription' => 'Kompleksowe zarządzanie pamięcią masową i dyskami dla MikoPBX. Ten pojedynczy zasób zapewnia dostęp do konfiguracji pamięci masowej, w tym do wyboru dysku, punktów montowania, statystyk wykorzystania i operacji w systemie plików. Zarządza okresami przechowywania nagrań rozmów, monitoruje wykorzystanie miejsca na dysku oraz udostępnia narzędzia do formatowania i montowania urządzeń pamięci masowej. Niezbędny dla administratorów systemów zarządzających pojemnością pamięci masowej i zasadami przechowywania danych.',
     'rest_S3LocalRetentionMustBeLess' => 'Okres przechowywania lokalnego (%local% dni) musi być krótszy niż całkowity okres przechowywania (%total% dni)',
     'rest_err_s3_connection_failed' => 'Połączenie S3 nie powiodło się. Sprawdź dane uwierzytelniające i ustawienia w szczegółach diagnostycznych.',
+    'rest_err_s3_required_fields' => 'Gdy S3 jest włączone, następujące pola są wymagane: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'Nazwa bucketu S3 nie może zawierać kolejnych kropek (..)',
+    'rest_err_s3_bucket_ip_format' => 'Nazwa bucketu S3 nie może mieć formatu adresu IP',
+    'rest_err_s3_bucket_xn_prefix' => 'Nazwa bucketu S3 nie może zaczynać się od "xn--"',
+    'rest_err_s3_bucket_reserved_suffix' => 'Nazwa bucketu S3 nie może kończyć się na "-s3alias" ani "--ol-s3"',
 
     'rest_TimeSettings_ApiDescription' => 'Kompleksowe zarządzanie czasem i strefą czasową w MikoPBX. Ten pojedynczy zasób zapewnia dostęp do konfiguracji czasu systemowego, w tym do wyboru strefy czasowej, ustawień serwera NTP i ręcznej korekty czasu. Jest niezbędny do zapewnienia dokładnych znaczników czasu połączeń, zaplanowanego wykonywania zadań i korelacji logów systemowych. Obsługuje automatyczną synchronizację czasu przez NTP lub ręczne ustawianie czasu w sieciach odizolowanych.',
     'rest_UserPageTracker_ApiDescription' => 'Śledzi aktywność użytkowników na stronach interfejsu administracyjnego. Rejestruje wyświetlenia i wyjścia ze stron, aby śledzić, którzy administratorzy aktualnie przeglądają poszczególne strony. Służy do zarządzania sesjami, monitorowania aktywności i zapobiegania konfliktom podczas jednoczesnej edycji.',

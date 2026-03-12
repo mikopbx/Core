@@ -2251,6 +2251,11 @@ return [
     'rest_param_s3_endpoint' => 'URL điểm cuối tương thích với S3 (ví dụ: https://s3.amazonaws.com cho AWS S3)',
     'rest_S3LocalRetentionMustBeLess' => 'Thời gian lưu trữ cục bộ (%local% ngày) phải nhỏ hơn tổng thời gian lưu trữ (%total% ngày).',
     'rest_err_s3_connection_failed' => 'Kết nối S3 thất bại. Kiểm tra thông tin xác thực và cài đặt trong chi tiết chẩn đoán.',
+    'rest_err_s3_required_fields' => 'Khi S3 được bật, các trường sau là bắt buộc: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'Tên bucket S3 không được chứa các dấu chấm liên tiếp (..)',
+    'rest_err_s3_bucket_ip_format' => 'Tên bucket S3 không được có định dạng địa chỉ IP',
+    'rest_err_s3_bucket_xn_prefix' => 'Tên bucket S3 không được bắt đầu bằng "xn--"',
+    'rest_err_s3_bucket_reserved_suffix' => 'Tên bucket S3 không được kết thúc bằng "-s3alias" hoặc "--ol-s3"',
 
     'rest_Sysinfo_ApiDescription' => 'Một nguồn tài nguyên thông tin và chẩn đoán hệ thống duy nhất. Cung cấp thông tin chi tiết về phần cứng, cấu hình mạng, nền tảng ảo hóa và dữ liệu DMI. Giao diện chỉ đọc để giám sát và khắc phục sự cố hệ thống.',
     'rest_Syslog_ApiDescription' => 'Công cụ quản lý nhật ký hệ thống và chẩn đoán. Cung cấp quyền truy cập vào nhật ký hệ thống, lọc nhật ký, thu thập gói mạng và tạo bản lưu trữ. Cần thiết cho việc khắc phục sự cố và giám sát hệ thống.',

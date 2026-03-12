@@ -722,6 +722,11 @@ return [
     'rest_advice_RefreshDesc' => 'Prisilno osvježavanje predmemorije obavijesti sustava i ponovna analiza',
     'rest_S3LocalRetentionMustBeLess' => 'Lokalno razdoblje zadržavanja (%local% dana) mora biti kraće od ukupnog razdoblja zadržavanja (%total% dana)',
     'rest_err_s3_connection_failed' => 'S3 veza nije uspjela. Provjerite vjerodajnice i postavke u dijagnostičkim detaljima.',
+    'rest_err_s3_required_fields' => 'Kada je S3 omogućen, sljedeća polja su obavezna: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'Naziv S3 bucketa ne smije sadržavati uzastopne točke (..)',
+    'rest_err_s3_bucket_ip_format' => 'Naziv S3 bucketa ne smije biti u formatu IP adrese',
+    'rest_err_s3_bucket_xn_prefix' => 'Naziv S3 bucketa ne smije počinjati s "xn--"',
+    'rest_err_s3_bucket_reserved_suffix' => 'Naziv S3 bucketa ne smije završavati s "-s3alias" ili "--ol-s3"',
 
     'rest_Syslog_ApiDescription' => 'Alati za upravljanje sistemskim zapisnicima i dijagnostiku. Omogućuje pristup sistemskim zapisnicima, filtriranje zapisnika, snimanje mrežnih paketa i generiranje arhive. Neophodno za rješavanje problema i nadzor sustava.',
     'rest_System_ApiDescription' => 'Resursi za upravljanje cijelim sustavom s jednim tonom. Pruža upravljanje napajanjem (ponovno pokretanje, isključivanje), praćenje ispravnosti (ping, checkAuth), operacije s datumom/vremenom, postavke jezika, pretvorbu zvuka, ažuriranja sustava i vraćanje na tvorničke postavke.',

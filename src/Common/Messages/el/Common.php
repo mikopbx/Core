@@ -694,7 +694,7 @@ return [
     'st_RecordingRetentionPeriod' => 'Περίοδος διατήρησης αρχείων (γενικά)',
     'st_S3AccessKey' => 'Κλειδί πρόσβασης',
     'st_S3Bucket' => 'Όνομα κάδου S3',
-    'st_S3BucketInvalid' => 'Μη έγκυρο όνομα κάδου S3. Πρέπει να έχει μήκος μεταξύ 3 και 63 χαρακτήρων, να περιέχει μόνο πεζά γράμματα, αριθμούς και παύλες.',
+    'st_S3BucketInvalid' => 'Μη έγκυρο όνομα κάδου S3. Πρέπει να έχει μήκος μεταξύ 3 και 63 χαρακτήρων, να περιέχει μόνο πεζά γράμματα, αριθμούς, παύλες και τελείες.',
     'st_S3EndpointHelp' => 'Παραδείγματα: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',
     'st_S3EndpointInvalid' => 'Μη έγκυρη διεύθυνση URL σημείου πρόσβασης S3',
     'st_S3SecretKey' => 'Μυστικό κλειδί',

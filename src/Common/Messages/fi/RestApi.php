@@ -2190,6 +2190,11 @@ return [
     'rest_schema_provider_registration_type' => 'Rekisteröintityyppi (ei mitään, vertaisverkko, lähtevä)',
     'rest_S3LocalRetentionMustBeLess' => 'Paikallisen säilytysajan (%local% päivää) on oltava lyhyempi kuin kokonaissäilytysajan (%total% päivää).',
     'rest_err_s3_connection_failed' => 'S3-yhteys epäonnistui. Tarkista tunnukset ja asetukset diagnostiikkatiedoista.',
+    'rest_err_s3_required_fields' => 'Kun S3 on käytössä, seuraavat kentät ovat pakollisia: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'S3-bucket-nimi ei saa sisältää peräkkäisiä pisteitä (..)',
+    'rest_err_s3_bucket_ip_format' => 'S3-bucket-nimi ei saa olla IP-osoitteen muodossa',
+    'rest_err_s3_bucket_xn_prefix' => 'S3-bucket-nimi ei saa alkaa merkillä "xn--"',
+    'rest_err_s3_bucket_reserved_suffix' => 'S3-bucket-nimi ei saa päättyä merkkijonoon "-s3alias" tai "--ol-s3"',
 
     'rest_System_ApiDescription' => 'Yksittäinen koko järjestelmän laajuinen hallintaresurssi. Tarjoaa virranhallinnan (uudelleenkäynnistys, sammutus), kunnonvalvonnan (ping, checkAuth), päivämäärä-/kellonaikatoiminnot, kieliasetukset, äänen muuntamisen, järjestelmäpäivitykset ja tehdasasetusten palautuksen.',
     'Fail2Ban' => 'Fail2Ban-asetukset',

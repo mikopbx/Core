@@ -129,7 +129,7 @@ const s3StorageIndex = {
             rules: [
                 {
                     type: 'regExp',
-                    value: /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/,
+                    value: /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/,
                     prompt: globalTranslate.st_S3BucketInvalid
                 }
             ],

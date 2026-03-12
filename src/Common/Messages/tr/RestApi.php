@@ -1166,6 +1166,11 @@ return [
     'rest_file_Delete' => 'Dosyayı sil',
     'rest_S3LocalRetentionMustBeLess' => 'Yerel saklama süresi (%yerel% gün), toplam saklama süresinden (%toplam% gün) daha kısa olmalıdır.',
     'rest_err_s3_connection_failed' => 'S3 bağlantısı başarısız oldu. Kimlik bilgilerini ve ayarları tanı ayrıntılarında kontrol edin.',
+    'rest_err_s3_required_fields' => 'S3 etkinleştirildiğinde şu alanlar zorunludur: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'S3 bucket adı ardışık nokta (..) içermemelidir',
+    'rest_err_s3_bucket_ip_format' => 'S3 bucket adı IP adresi biçiminde olmamalıdır',
+    'rest_err_s3_bucket_xn_prefix' => 'S3 bucket adı "xn--" ile başlamamalıdır',
+    'rest_err_s3_bucket_reserved_suffix' => 'S3 bucket adı "-s3alias" veya "--ol-s3" ile bitmemelidir',
 
     'rest_Sysinfo_ApiDescription' => 'Tekil bir sistem bilgi ve teşhis kaynağı. Donanım, ağ yapılandırması, sanallaştırma platformu ve DMI verileri hakkında ayrıntılı bilgi sağlar. Sistem izleme ve sorun giderme için salt okunur bir arayüzdür.',
     'rest_Syslog_ApiDescription' => 'Sistem günlük yönetimi ve teşhis araçları. Sistem günlüklerine erişim, günlük filtreleme, ağ paketi yakalama ve arşiv oluşturma imkanı sağlar. Sorun giderme ve sistem izleme için vazgeçilmezdir.',

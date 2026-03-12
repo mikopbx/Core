@@ -851,7 +851,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'cf_AddNewFile' => 'Yeni fayl əlavə edin',
     'st_S3AccessKey' => 'Giriş açarı',
     'st_S3Bucket' => 'S3 vedrə adı',
-    'st_S3BucketInvalid' => 'Yanlış S3 çömçə adı. Yalnız kiçik hərflər, rəqəmlər və defislərdən ibarət 3 ilə 63 simvol arasında olmalıdır.',
+    'st_S3BucketInvalid' => 'Yanlış S3 çömçə adı. Yalnız kiçik hərflər, rəqəmlər, defislər və nöqtələrdən ibarət 3 ilə 63 simvol arasında olmalıdır.',
     'st_S3ConfigurationHelp' => 'Qeydləri buluda avtomatik yükləmək üçün S3 ilə uyğun yaddaş üçün etimadnamələri təyin edin.',
     'st_S3Endpoint' => 'S3 giriş nöqtəsi URL-i',
     'st_S3EndpointHelp' => 'Nümunələr: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',

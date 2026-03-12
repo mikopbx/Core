@@ -2191,6 +2191,11 @@ return [
     'rest_schema_provider_port' => 'Verbindungsport zum Anbieter',
     'rest_S3LocalRetentionMustBeLess' => 'Die lokale Aufbewahrungsfrist (%lokal% Tage) muss kürzer sein als die gesamte Aufbewahrungsfrist (%gesamt% Tage).',
     'rest_err_s3_connection_failed' => 'S3-Verbindung fehlgeschlagen. Überprüfen Sie Anmeldedaten und Einstellungen in den Diagnosedetails.',
+    'rest_err_s3_required_fields' => 'Bei aktiviertem S3 sind folgende Felder erforderlich: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'Der S3-Bucket-Name darf keine aufeinanderfolgenden Punkte (..) enthalten',
+    'rest_err_s3_bucket_ip_format' => 'Der S3-Bucket-Name darf nicht im Format einer IP-Adresse sein',
+    'rest_err_s3_bucket_xn_prefix' => 'Der S3-Bucket-Name darf nicht mit "xn--" beginnen',
+    'rest_err_s3_bucket_reserved_suffix' => 'Der S3-Bucket-Name darf nicht mit "-s3alias" oder "--ol-s3" enden',
 
     'rest_Sysinfo_ApiDescription' => 'Eine zentrale Systeminformations- und Diagnoseressource. Sie liefert detaillierte Informationen zu Hardware, Netzwerkkonfiguration, Virtualisierungsplattform und DMI-Daten. Eine schreibgeschützte Schnittstelle dient der Systemüberwachung und Fehlerbehebung.',
     'rest_pvd_GetStatuses' => 'Den Status aller Anbieter abrufen',

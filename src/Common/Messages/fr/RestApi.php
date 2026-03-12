@@ -1532,6 +1532,11 @@ return [
     'rest_schema_provider_registration_type' => 'Type d\'inscription (aucune, pair à pair, sortante)',
     'rest_S3LocalRetentionMustBeLess' => 'La durée de conservation locale (%local% jours) doit être inférieure à la durée de conservation totale (%total% jours).',
     'rest_err_s3_connection_failed' => 'Échec de la connexion S3. Vérifiez les identifiants et les paramètres dans les détails de diagnostic.',
+    'rest_err_s3_required_fields' => 'Lorsque S3 est activé, les champs suivants sont obligatoires : %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'Le nom du bucket S3 ne doit pas contenir de points consécutifs (..)',
+    'rest_err_s3_bucket_ip_format' => 'Le nom du bucket S3 ne doit pas être au format d\'une adresse IP',
+    'rest_err_s3_bucket_xn_prefix' => 'Le nom du bucket S3 ne doit pas commencer par "xn--"',
+    'rest_err_s3_bucket_reserved_suffix' => 'Le nom du bucket S3 ne doit pas se terminer par "-s3alias" ou "--ol-s3"',
 
     'rest_UserPageTracker_ApiDescription' => 'Ce système enregistre l\'activité des utilisateurs sur les pages de l\'interface d\'administration. Il consigne les pages consultées et les sorties afin de savoir quels administrateurs consultent actuellement quelles pages. Ces données servent à la gestion des sessions, au suivi de l\'activité et à la prévention des conflits lors de modifications simultanées.',
     'rest_Users_ApiDescription' => 'Gestion des comptes utilisateurs pour l\'accès à l\'interface d\'administration. Prend en charge toutes les opérations CRUD ainsi que des méthodes personnalisées pour vérifier la disponibilité des adresses e-mail. Les utilisateurs peuvent s\'authentifier dans l\'interface d\'administration et bénéficier de paramètres personnalisés, tels que la langue et l\'avatar.',

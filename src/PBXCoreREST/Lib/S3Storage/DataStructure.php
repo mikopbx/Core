@@ -137,7 +137,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'description' => 'rest_schema_s3_bucket',
                 'minLength' => 3,
                 'maxLength' => 63,
-                'pattern' => '^[a-z0-9][a-z0-9-]*[a-z0-9]$',
+                'pattern' => '^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$',
                 'sanitize' => 'text',
                 'example' => 'mikopbx-recordings'
             ],

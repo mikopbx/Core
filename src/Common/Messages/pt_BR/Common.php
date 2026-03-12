@@ -846,7 +846,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'st_LocalRetentionPeriod' => 'Armazenamento local (modo S3)',
     'st_S3AccessKey' => 'Chave de acesso',
     'st_S3Bucket' => 'Nome do bucket S3',
-    'st_S3BucketInvalid' => 'Nome de bucket S3 inválido. Deve ter entre 3 e 63 caracteres, contendo apenas letras minúsculas, números e hífenes.',
+    'st_S3BucketInvalid' => 'Nome de bucket S3 inválido. Deve ter entre 3 e 63 caracteres, contendo apenas letras minúsculas, números, hífenes e pontos.',
     'st_S3ConfigurationHelp' => 'Configure as credenciais para armazenamento compatível com S3 para fazer o upload automático de registros para a nuvem.',
     'st_S3EndpointHelp' => 'Exemplos: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',
     'st_S3EndpointInvalid' => 'URL de ponto de acesso S3 inválida',

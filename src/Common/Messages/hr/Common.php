@@ -769,7 +769,7 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'st_3Months' => '3 mjeseca',
     'st_6Months' => '6 mjeseci',
     'st_1Year' => '1 godina',
-    'st_S3BucketInvalid' => 'Nevažeći naziv S3 spremnika. Mora biti dugačak između 3 i 63 znaka, a smije sadržavati samo mala slova, brojeve i crtice.',
+    'st_S3BucketInvalid' => 'Nevažeći naziv S3 spremnika. Mora biti dugačak između 3 i 63 znaka, a smije sadržavati samo mala slova, brojeve, crtice i točke.',
     'st_S3SecretKeyHelp' => 'Tajni ključ će biti šifriran prije pohrane.',
     'st_S3StorageSettings' => 'S3 pohrana u oblaku',
     'st_S3StorageSubtitle' => 'Automatski prijenos snimaka u pohranu u oblaku',

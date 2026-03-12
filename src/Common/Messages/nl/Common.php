@@ -830,7 +830,7 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'st_LocalRetentionPeriod' => 'Lokale opslag (S3-modus)',
     'st_RecordingRetentionPeriod' => 'Bewaartermijn van gegevens (algemeen)',
     'st_S3AccessKey' => 'Toegangssleutel',
-    'st_S3BucketInvalid' => 'Ongeldige S3-bucketnaam. Moet tussen de 3 en 63 tekens lang zijn en mag alleen kleine letters, cijfers en koppeltekens bevatten.',
+    'st_S3BucketInvalid' => 'Ongeldige S3-bucketnaam. Moet tussen de 3 en 63 tekens lang zijn en mag alleen kleine letters, cijfers, koppeltekens en punten bevatten.',
     'st_S3ConfigurationHelp' => 'Stel referenties in voor S3-compatibele opslag om records automatisch naar de cloud te uploaden.',
     'st_S3Endpoint' => 'S3-toegangspunt-URL',
     'st_S3EndpointHelp' => 'Voorbeelden: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',

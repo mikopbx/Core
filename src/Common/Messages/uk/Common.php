@@ -825,7 +825,7 @@ return [
     'st_LocalRetentionMustBeLess' => 'Локальний термін зберігання повинен бути меншим від загального',
     'st_RecordingRetentionPeriod' => 'Термін зберігання записів (загальний)',
     'st_S3Bucket' => 'Ім\'я бакета S3',
-    'st_S3BucketInvalid' => 'Неправильне ім\'я бакета S3. Повинно бути від 3 до 63 символів, лише малі літери, цифри та дефіси.',
+    'st_S3BucketInvalid' => 'Неправильне ім\'я бакета S3. Повинно бути від 3 до 63 символів, лише малі літери, цифри, дефіси та крапки.',
     'st_S3ConfigurationHelp' => 'Налаштуйте облікові дані для S3-сумісного сховища для автоматичного завантаження записів у хмару.',
     'st_S3Endpoint' => 'URL точки доступу S3',
     'st_S3EndpointHelp' => 'Приклади: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',

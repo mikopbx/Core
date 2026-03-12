@@ -861,7 +861,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'st_LocalRetentionPeriod' => 'stockage local (mode S3)',
     'st_RecordingRetentionPeriod' => 'Durée de conservation des documents (générale)',
     'st_S3Bucket' => 'Nom du compartiment S3',
-    'st_S3BucketInvalid' => 'Nom de compartiment S3 invalide. Doit comporter entre 3 et 63 caractères et ne contenir que des lettres minuscules, des chiffres et des tirets.',
+    'st_S3BucketInvalid' => 'Nom de compartiment S3 invalide. Doit comporter entre 3 et 63 caractères et ne contenir que des lettres minuscules, des chiffres, des tirets et des points.',
     'st_S3ConfigurationHelp' => 'Configurez les identifiants pour le stockage compatible S3 afin de télécharger automatiquement les enregistrements sur le cloud.',
     'st_S3Endpoint' => 'URL du point d\'accès S3',
     'st_S3EndpointHelp' => 'Exemples : https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',

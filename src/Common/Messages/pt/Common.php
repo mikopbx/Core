@@ -780,7 +780,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'st_1Year' => '1 ano',
     'st_S3AccessKey' => 'Chave de acesso',
     'st_S3Bucket' => 'Nome do bucket S3',
-    'st_S3BucketInvalid' => 'Nome de bucket S3 inválido. Deve ter entre 3 e 63 caracteres, contendo apenas letras minúsculas, números e hífenes.',
+    'st_S3BucketInvalid' => 'Nome de bucket S3 inválido. Deve ter entre 3 e 63 caracteres, contendo apenas letras minúsculas, números, hífenes e pontos.',
     'st_S3EndpointInvalid' => 'URL de ponto de acesso S3 inválida',
     'st_S3Region' => 'Região S3',
     'st_S3SecretKey' => 'Chave secreta',

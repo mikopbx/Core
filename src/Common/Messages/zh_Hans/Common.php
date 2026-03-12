@@ -911,7 +911,7 @@ return [
     'st_RecordingRetentionPeriod' => '记录保存期限（一般）',
     'st_S3AccessKey' => '访问密钥',
     'st_S3Bucket' => 'S3 存储桶名称',
-    'st_S3BucketInvalid' => '无效的 S3 存储桶名称。名称长度必须介于 3 到 63 个字符之间，且只能包含小写字母、数字和连字符。',
+    'st_S3BucketInvalid' => '无效的 S3 存储桶名称。名称长度必须介于 3 到 63 个字符之间，且只能包含小写字母、数字、连字符和点号。',
     'st_S3ConfigurationHelp' => '设置与 S3 兼容的存储凭证，以便自动将记录上传到云端。',
     'st_S3Endpoint' => 'S3 接入点 URL',
     'st_S3EndpointInvalid' => '无效的 S3 接入点 URL',

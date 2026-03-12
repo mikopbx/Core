@@ -2182,6 +2182,11 @@ return [
     'rest_schema_s3_endpoint' => 'URL adresa koncového bodu kompatibilního s S3 (AWS S3, MinIO, Wasabi atd.)',
     'rest_S3LocalRetentionMustBeLess' => 'Lokální doba uchování (%local% dní) musí být kratší než celková doba uchování (%total% dní)',
     'rest_err_s3_connection_failed' => 'Připojení S3 se nezdařilo. Zkontrolujte přihlašovací údaje a nastavení v diagnostických podrobnostech.',
+    'rest_err_s3_required_fields' => 'Při povoleném S3 jsou povinná následující pole: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'Název bucketu S3 nesmí obsahovat po sobě jdoucí tečky (..)',
+    'rest_err_s3_bucket_ip_format' => 'Název bucketu S3 nesmí být ve formátu IP adresy',
+    'rest_err_s3_bucket_xn_prefix' => 'Název bucketu S3 nesmí začínat na "xn--"',
+    'rest_err_s3_bucket_reserved_suffix' => 'Název bucketu S3 nesmí končit na "-s3alias" nebo "--ol-s3"',
 
     'Fail2Ban' => 'Nastavení Fail2Ban',
     'Custom Files' => 'Úprava systémových souborů',

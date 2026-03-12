@@ -1476,6 +1476,11 @@ return [
     'rest_da_GetRecord' => 'Ottieni l\'app dialplan tramite ID',
     'rest_S3LocalRetentionMustBeLess' => 'Il periodo di conservazione locale (%local% giorni) deve essere inferiore al periodo di conservazione totale (%total% giorni)',
     'rest_err_s3_connection_failed' => 'Connessione S3 non riuscita. Verificare le credenziali e le impostazioni nei dettagli diagnostici.',
+    'rest_err_s3_required_fields' => 'Quando S3 è abilitato, i seguenti campi sono obbligatori: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'Il nome del bucket S3 non deve contenere punti consecutivi (..)',
+    'rest_err_s3_bucket_ip_format' => 'Il nome del bucket S3 non deve essere in formato indirizzo IP',
+    'rest_err_s3_bucket_xn_prefix' => 'Il nome del bucket S3 non deve iniziare con "xn--"',
+    'rest_err_s3_bucket_reserved_suffix' => 'Il nome del bucket S3 non deve terminare con "-s3alias" o "--ol-s3"',
 
     'rest_TimeSettings_ApiDescription' => 'Gestione completa dell\'ora e del fuso orario per MikoPBX. Questa risorsa singleton fornisce accesso alla configurazione dell\'ora di sistema, inclusa la selezione del fuso orario, le impostazioni del server NTP e le regolazioni manuali dell\'ora. È essenziale per garantire timestamp accurati delle chiamate, esecuzione delle attività pianificate e correlazione dei log di sistema. Supporta la sincronizzazione automatica dell\'ora tramite NTP o l\'impostazione manuale dell\'ora per reti isolate.',
     'rest_UserPageTracker_ApiDescription' => 'Tiene traccia dell\'attività degli utenti sulle pagine dell\'interfaccia amministrativa. Registra le visualizzazioni e le uscite delle pagine per tenere traccia di quali amministratori stanno visualizzando quali pagine. Viene utilizzato per la gestione delle sessioni, il monitoraggio delle attività e la prevenzione di conflitti durante la modifica simultanea.',

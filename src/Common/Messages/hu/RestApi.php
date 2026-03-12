@@ -2258,6 +2258,11 @@ return [
     'Call Queues' => 'Sorban',
     'rest_S3LocalRetentionMustBeLess' => 'A helyi megőrzési időszaknak (%local% nap) rövidebbnek kell lennie, mint a teljes megőrzési időszaknak (%total% nap).',
     'rest_err_s3_connection_failed' => 'S3 kapcsolat sikertelen. Ellenőrizze a hitelesítő adatokat és a beállításokat a diagnosztikai részletekben.',
+    'rest_err_s3_required_fields' => 'Ha az S3 engedélyezve van, a következő mezők kötelezőek: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'Az S3 bucket neve nem tartalmazhat egymást követő pontokat (..)',
+    'rest_err_s3_bucket_ip_format' => 'Az S3 bucket neve nem lehet IP-cím formátumban',
+    'rest_err_s3_bucket_xn_prefix' => 'Az S3 bucket neve nem kezdődhet "xn--" előtaggal',
+    'rest_err_s3_bucket_reserved_suffix' => 'Az S3 bucket neve nem végződhet "-s3alias" vagy "--ol-s3" utótaggal',
 
     'IVR Menu' => 'IVR menü',
     'Network' => 'Hálózati interfész',

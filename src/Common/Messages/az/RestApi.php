@@ -2140,6 +2140,11 @@ return [
     'rest_param_s3_secret_key' => 'Doğrulama üçün S3 gizli giriş açarı (şifrələnəcək)',
     'rest_S3LocalRetentionMustBeLess' => 'Yerli saxlama müddəti (%yerli% günlər) ümumi saxlama müddətindən (%cəmi% günlər) az olmalıdır.',
     'rest_err_s3_connection_failed' => 'S3 bağlantısı uğursuz oldu. Diaqnostika təfərrüatlarında etimadnamələri və parametrləri yoxlayın.',
+    'rest_err_s3_required_fields' => 'S3 aktivləşdirildikdə aşağıdakı sahələr məcburidir: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'S3 bucket adı ardıcıl nöqtələr (..) ehtiva etməməlidir',
+    'rest_err_s3_bucket_ip_format' => 'S3 bucket adı IP ünvanı formatında olmamalıdır',
+    'rest_err_s3_bucket_xn_prefix' => 'S3 bucket adı "xn--" ilə başlamamalıdır',
+    'rest_err_s3_bucket_reserved_suffix' => 'S3 bucket adı "-s3alias" və ya "--ol-s3" ilə bitməməlidir',
 
     'Extensions' => 'İşçi',
     'Files' => 'Fayl',

@@ -2259,6 +2259,11 @@ return [
     'rest_param_emp_email' => '员工电子邮件地址',
     'rest_S3LocalRetentionMustBeLess' => '本地保留期限（%local% 天）必须小于总保留期限（%total% 天）',
     'rest_err_s3_connection_failed' => 'S3 连接失败。请在诊断详细信息中检查凭据和设置。',
+    'rest_err_s3_required_fields' => '启用 S3 时，以下字段为必填项：%fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'S3 存储桶名称不得包含连续的点（..）',
+    'rest_err_s3_bucket_ip_format' => 'S3 存储桶名称不得使用 IP 地址格式',
+    'rest_err_s3_bucket_xn_prefix' => 'S3 存储桶名称不得以 "xn--" 开头',
+    'rest_err_s3_bucket_reserved_suffix' => 'S3 存储桶名称不得以 "-s3alias" 或 "--ol-s3" 结尾',
 
     'rest_System_ApiDescription' => '一个单例系统级管理资源。提供电源管理（重启、关机）、健康监控（ping、checkAuth）、日期/时间操作、语言设置、音频转换、系统更新和恢复出厂设置等功能。',
     'rest_UserPageTracker_ApiDescription' => '跟踪用户在管理界面页面上的活动。记录页面浏览和退出情况，以追踪当前哪些管理员正在查看哪些页面。这用于会话管理、活动监控以及防止同时编辑时发生冲突。',

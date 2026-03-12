@@ -762,7 +762,7 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'st_S3AccessKey' => 'Zugangsschlüssel',
     'st_S3Endpoint' => 'S3-Zugriffspunkt-URL',
     'st_S3Bucket' => 'S3-Bucket-Name',
-    'st_S3BucketInvalid' => 'Ungültiger S3-Bucket-Name. Er muss zwischen 3 und 63 Zeichen lang sein und darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten.',
+    'st_S3BucketInvalid' => 'Ungültiger S3-Bucket-Name. Er muss zwischen 3 und 63 Zeichen lang sein und darf nur Kleinbuchstaben, Zahlen, Bindestriche und Punkte enthalten.',
     'st_S3ConfigurationHelp' => 'Richten Sie Zugangsdaten für S3-kompatiblen Speicher ein, um Datensätze automatisch in die Cloud hochzuladen.',
     'st_S3EndpointHelp' => 'Beispiele: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',
     'st_S3SecretKey' => 'Geheimer Schlüssel',

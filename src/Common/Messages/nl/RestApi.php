@@ -2291,6 +2291,11 @@ return [
     'rest_param_ext_search' => 'Zoekbalk',
     'rest_S3LocalRetentionMustBeLess' => 'De lokale bewaartermijn (%local% dagen) moet korter zijn dan de totale bewaartermijn (%total% dagen).',
     'rest_err_s3_connection_failed' => 'S3-verbinding mislukt. Controleer referenties en instellingen in diagnostische details.',
+    'rest_err_s3_required_fields' => 'Als S3 is ingeschakeld, zijn de volgende velden verplicht: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'De naam van de S3-bucket mag geen opeenvolgende punten (..) bevatten',
+    'rest_err_s3_bucket_ip_format' => 'De naam van de S3-bucket mag niet de indeling van een IP-adres hebben',
+    'rest_err_s3_bucket_xn_prefix' => 'De naam van de S3-bucket mag niet beginnen met "xn--"',
+    'rest_err_s3_bucket_reserved_suffix' => 'De naam van de S3-bucket mag niet eindigen op "-s3alias" of "--ol-s3"',
 
     'rest_s3_StatsDesc' => 'Geeft gedetailleerde synchronisatiestatistieken van S3-cloudopslag weer: aantal bestanden in S3 en lokaal, totale grootte, synchronisatiepercentage, status (gesynchroniseerd/synchroniserend/in behandeling/uitgeschakeld), tijdstip van laatste upload en datum van het oudste bestand in behandeling.',
     'rest_s3_Stats' => 'S3-synchronisatiestatistieken ophalen',

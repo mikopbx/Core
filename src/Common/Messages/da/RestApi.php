@@ -2124,7 +2124,7 @@ return [
     'rest_response_409_active_calls' => 'Kan ikke slette en kø med aktive opkald',
     // ============================================================================
     // Users Methods
-    // ============================================================================    'rest_cq_GetRecord' => 'Hent kø efter ID',
+    // ============================================================================
     'rest_net_GetConfig' => 'Få en komplet netværkskonfiguration',
     'rest_schema_cf_filepath' => 'Sti til filen i systemet',
     'rest_schema_sip_registry_id' => 'SIP-registrerings-ID',
@@ -2263,6 +2263,11 @@ return [
     'rest_schema_s3_region' => 'AWS-region eller tilsvarende S3-serviceregions-ID',
     'rest_S3LocalRetentionMustBeLess' => 'Den lokale opbevaringsperiode (%local% dage) skal være kortere end den samlede opbevaringsperiode (%total% dage)',
     'rest_err_s3_connection_failed' => 'S3-forbindelse mislykkedes. Kontroller legitimationsoplysninger og indstillinger i diagnostiske detaljer.',
+    'rest_err_s3_required_fields' => 'Når S3 er aktiveret, er følgende felter påkrævede: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'S3 bucket-navn må ikke indeholde på hinanden følgende punktummer (..)',
+    'rest_err_s3_bucket_ip_format' => 'S3 bucket-navn må ikke være formateret som en IP-adresse',
+    'rest_err_s3_bucket_xn_prefix' => 'S3 bucket-navn må ikke begynde med "xn--"',
+    'rest_err_s3_bucket_reserved_suffix' => 'S3 bucket-navn må ikke slutte med "-s3alias" eller "--ol-s3"',
 
     'rest_s3_GetRecord' => 'Hent S3-lagerkonfiguration',
     'rest_s3_GetRecordDesc' => 'Hent den aktuelle S3-lagerkonfiguration, inklusive aktiveringsstatus, slutpunkts-URL, bucketnavn, region og indstillinger for opbevaring af poster til cloud-arkivering.',

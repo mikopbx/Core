@@ -1549,6 +1549,11 @@ return [
     'rest_password' => 'Contraseña',
     'rest_S3LocalRetentionMustBeLess' => 'El período de retención local (%local% días) debe ser menor que el período de retención total (%total% días)',
     'rest_err_s3_connection_failed' => 'Fallo en la conexión S3. Verifique las credenciales y la configuración en los detalles de diagnóstico.',
+    'rest_err_s3_required_fields' => 'Cuando S3 está habilitado, los siguientes campos son obligatorios: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'El nombre del bucket S3 no debe contener puntos consecutivos (..)',
+    'rest_err_s3_bucket_ip_format' => 'El nombre del bucket S3 no debe tener formato de dirección IP',
+    'rest_err_s3_bucket_xn_prefix' => 'El nombre del bucket S3 no debe comenzar con "xn--"',
+    'rest_err_s3_bucket_reserved_suffix' => 'El nombre del bucket S3 no debe terminar con "-s3alias" o "--ol-s3"',
 
     'rest_Sysinfo_ApiDescription' => 'Un recurso de información y diagnóstico del sistema único. Proporciona información detallada sobre hardware, configuración de red, plataforma de virtualización y datos DMI. Una interfaz de solo lectura para la monitorización y resolución de problemas del sistema.',
     'rest_Syslog_ApiDescription' => 'Herramientas de gestión y diagnóstico de registros del sistema. Proporciona acceso a registros del sistema, filtrado de registros, captura de paquetes de red y generación de archivos. Esencial para la resolución de problemas y la monitorización del sistema.',

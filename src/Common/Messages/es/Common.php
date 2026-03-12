@@ -795,7 +795,7 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'st_RecordingRetentionPeriod' => 'Período de conservación de registros (general)',
     'st_S3AccessKey' => 'Tecla de acceso',
     'st_S3Bucket' => 'Nombre del depósito S3',
-    'st_S3BucketInvalid' => 'Nombre de bucket S3 no válido. Debe tener entre 3 y 63 caracteres, incluyendo solo letras minúsculas, números y guiones.',
+    'st_S3BucketInvalid' => 'Nombre de bucket S3 no válido. Debe tener entre 3 y 63 caracteres, incluyendo solo letras minúsculas, números, guiones y puntos.',
     'st_S3ConfigurationHelp' => 'Configure credenciales para el almacenamiento compatible con S3 para cargar registros automáticamente a la nube.',
     'st_S3EndpointHelp' => 'Ejemplos: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',
     'st_S3Region' => 'Región S3',

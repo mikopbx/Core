@@ -748,7 +748,7 @@ return [
     'st_3Months' => '3か月',
     'st_S3AccessKey' => 'アクセスキー',
     'st_S3Bucket' => 'S3バケット名',
-    'st_S3BucketInvalid' => 'S3 バケット名が無効です。3～63 文字で、小文字、数字、ハイフンのみで構成する必要があります。',
+    'st_S3BucketInvalid' => 'S3 バケット名が無効です。3～63 文字で、小文字、数字、ハイフン、ドットのみで構成する必要があります。',
     'st_S3ConfigurationHelp' => 'S3 互換ストレージの資格情報を設定し、レコードをクラウドに自動的にアップロードします。',
     'st_S3EndpointHelp' => '例: https://s3.ap-southeast-1.amazonaws.com (AWS)、https://storage.yandexcloud.net (Yandex Cloud)、http://minio:9000 (MinIO)',
     'st_S3EndpointInvalid' => '無効な S3 アクセス ポイント URL',

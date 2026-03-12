@@ -1121,6 +1121,11 @@ return [
     'rest_schema_sip_peer_detail' => 'Informações detalhadas sobre os pares SIP',
     'rest_S3LocalRetentionMustBeLess' => 'O período de retenção local (%local% dias) deve ser menor que o período de retenção total (%total% dias).',
     'rest_err_s3_connection_failed' => 'Falha na conexão S3. Verifique as credenciais e configurações nos detalhes de diagnóstico.',
+    'rest_err_s3_required_fields' => 'Quando o S3 está habilitado, os seguintes campos são obrigatórios: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'O nome do bucket S3 não deve conter pontos consecutivos (..)',
+    'rest_err_s3_bucket_ip_format' => 'O nome do bucket S3 não deve estar no formato de endereço IP',
+    'rest_err_s3_bucket_xn_prefix' => 'O nome do bucket S3 não deve começar com "xn--"',
+    'rest_err_s3_bucket_reserved_suffix' => 'O nome do bucket S3 não deve terminar com "-s3alias" ou "--ol-s3"',
 
     'rest_Sysinfo_ApiDescription' => 'Um recurso de sistema único para informações e diagnósticos. Fornece informações detalhadas sobre hardware, configuração de rede, plataforma de virtualização e dados DMI. Uma interface somente leitura para monitoramento e solução de problemas do sistema.',
     'rest_Syslog_ApiDescription' => 'Ferramentas de gerenciamento e diagnóstico de logs do sistema. Fornece acesso a logs do sistema, filtragem de logs, captura de pacotes de rede e geração de arquivos. Essencial para solução de problemas e monitoramento do sistema.',

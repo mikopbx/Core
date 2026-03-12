@@ -763,7 +763,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'st_RecordingRetentionPeriod' => 'Lagringsperiod för register (allmänt)',
     'st_S3AccessKey' => 'Åtkomstnyckel',
     'st_S3Bucket' => 'S3-bucketnamn',
-    'st_S3BucketInvalid' => 'Ogiltigt S3-bucketnamn. Måste vara mellan 3 och 63 tecken långt och endast innehålla gemener, siffror och bindestreck.',
+    'st_S3BucketInvalid' => 'Ogiltigt S3-bucketnamn. Måste vara mellan 3 och 63 tecken långt och endast innehålla gemener, siffror, bindestreck och punkter.',
     'st_S3ConfigurationHelp' => 'Konfigurera inloggningsuppgifter för S3-kompatibel lagring för att automatiskt ladda upp poster till molnet.',
     'st_S3EndpointInvalid' => 'Ogiltig URL för S3-åtkomstpunkt',
     'st_S3Region' => 'Region S3',

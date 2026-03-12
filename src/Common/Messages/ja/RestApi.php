@@ -1216,6 +1216,11 @@ return [
     'rest_System_UpgradeFailedToDetectOffset' => 'ブート パーティションのオフセットを判別できません。',
     'rest_S3LocalRetentionMustBeLess' => 'ローカル保存期間 (%local% 日) は、合計保存期間 (%total% 日) より短くする必要があります',
     'rest_err_s3_connection_failed' => 'S3接続に失敗しました。診断の詳細で認証情報と設定を確認してください。',
+    'rest_err_s3_required_fields' => 'S3が有効な場合、次のフィールドは必須です: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'S3バケット名に連続するドット(..)を含めることはできません',
+    'rest_err_s3_bucket_ip_format' => 'S3バケット名をIPアドレス形式にすることはできません',
+    'rest_err_s3_bucket_xn_prefix' => 'S3バケット名を"xn--"で始めることはできません',
+    'rest_err_s3_bucket_reserved_suffix' => 'S3バケット名を"-s3alias"または"--ol-s3"で終わらせることはできません',
 
     'rest_Sysinfo_ApiDescription' => 'シングルトンのシステム情報および診断リソース。ハードウェア、ネットワーク構成、仮想化プラットフォーム、DMIデータに関する詳細情報を提供します。システムの監視とトラブルシューティングのための読み取り専用インターフェースです。',
     'rest_Syslog_ApiDescription' => 'システムログ管理および診断ツール。システムログへのアクセス、ログフィルタリング、ネットワークパケットキャプチャ、アーカイブ生成を提供します。トラブルシューティングとシステム監視に不可欠です。',

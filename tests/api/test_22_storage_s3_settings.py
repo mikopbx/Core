@@ -338,9 +338,55 @@ class TestStorageS3SettingsValidation:
         assert_api_success(response, "Valid bucket name with full config should be accepted")
         print(f"\n✓ Valid bucket name accepted: {payload['s3_bucket']}")
 
-        # Note: Invalid bucket names (uppercase, special chars) validation
-        # depends on backend implementation
-        # AWS requirements: lowercase, numbers, hyphens, 3-63 chars
+        # Bucket name with dots (required for Yandex Cloud custom domains)
+        payload_dots = {
+            's3_enabled': 1,
+            's3_bucket': 'calls.domain.ru',
+            **{k: v for k, v in MINIO_CONFIG.items() if k != 's3_bucket'}
+        }
+        response = api_client.put('s3-storage', payload_dots)
+        assert_api_success(response, "Bucket name with dots should be accepted")
+        print(f"✓ Bucket name with dots accepted: {payload_dots['s3_bucket']}")
+
+        # Bucket name with consecutive dots should be rejected
+        payload_double_dots = {
+            's3_enabled': 1,
+            's3_bucket': 'calls..domain.ru',
+            **{k: v for k, v in MINIO_CONFIG.items() if k != 's3_bucket'}
+        }
+        response = api_client.put('s3-storage', payload_double_dots)
+        assert response['result'] is False, "Bucket name with consecutive dots (..) should be rejected"
+        print(f"✓ Bucket name with consecutive dots correctly rejected")
+
+        # Bucket name that looks like an IP address should be rejected
+        payload_ip = {
+            's3_enabled': 1,
+            's3_bucket': '192.168.1.1',
+            **{k: v for k, v in MINIO_CONFIG.items() if k != 's3_bucket'}
+        }
+        response = api_client.put('s3-storage', payload_ip)
+        assert response['result'] is False, "Bucket name formatted as IP address should be rejected"
+        print(f"✓ IP-address bucket name correctly rejected")
+
+        # Bucket name starting with xn-- should be rejected
+        payload_xn = {
+            's3_enabled': 1,
+            's3_bucket': 'xn--mikopbx-bucket',
+            **{k: v for k, v in MINIO_CONFIG.items() if k != 's3_bucket'}
+        }
+        response = api_client.put('s3-storage', payload_xn)
+        assert response['result'] is False, "Bucket name starting with xn-- should be rejected"
+        print(f"✓ xn-- prefix bucket name correctly rejected")
+
+        # Bucket name ending with -s3alias should be rejected
+        payload_alias = {
+            's3_enabled': 1,
+            's3_bucket': 'mikopbx-recordings-s3alias',
+            **{k: v for k, v in MINIO_CONFIG.items() if k != 's3_bucket'}
+        }
+        response = api_client.put('s3-storage', payload_alias)
+        assert response['result'] is False, "Bucket name ending with -s3alias should be rejected"
+        print(f"✓ -s3alias suffix bucket name correctly rejected")
 
     def test_04_validate_required_fields_when_enabled(self, api_client):
         """Test validation: Required fields when s3_enabled = 1"""

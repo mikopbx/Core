@@ -835,7 +835,7 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'st_RecordingRetentionPeriod' => 'Thời hạn lưu giữ hồ sơ (chung)',
     'st_S3AccessKey' => 'Khóa truy cập',
     'st_S3Bucket' => 'Tên bucket S3',
-    'st_S3BucketInvalid' => 'Tên bucket S3 không hợp lệ. Tên phải có độ dài từ 3 đến 63 ký tự, chỉ chứa chữ cái viết thường, số và dấu gạch ngang.',
+    'st_S3BucketInvalid' => 'Tên bucket S3 không hợp lệ. Tên phải có độ dài từ 3 đến 63 ký tự, chỉ chứa chữ cái viết thường, số, dấu gạch ngang và dấu chấm.',
     'st_S3Endpoint' => 'URL điểm truy cập S3',
     'st_S3EndpointHelp' => 'Ví dụ: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',
     'st_S3EndpointInvalid' => 'URL điểm truy cập S3 không hợp lệ',

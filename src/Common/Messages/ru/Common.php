@@ -859,7 +859,7 @@ return [
     'st_RecordingRetentionPeriod' => 'Срок хранения записей (общий)',
     'st_S3AccessKey' => 'Ключ доступа',
     'st_S3Bucket' => 'Имя бакета S3',
-    'st_S3BucketInvalid' => 'Некорректное имя бакета S3. Должно быть от 3 до 63 символов, только строчные буквы, цифры и дефисы.',
+    'st_S3BucketInvalid' => 'Некорректное имя бакета S3. Должно быть от 3 до 63 символов, только строчные буквы, цифры, дефисы и точки.',
     'st_S3ConfigurationHelp' => 'Настройте учетные данные для S3-совместимого хранилища для автоматической загрузки записей в облако.',
     'st_S3Endpoint' => 'URL точки доступа S3',
     'st_S3EndpointHelp' => 'Примеры: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',

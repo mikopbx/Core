@@ -1304,6 +1304,11 @@ return [
     'rest_schema_processor' => 'Clasa de gestionare care a efectuat cererea',
     'rest_S3LocalRetentionMustBeLess' => 'Perioada de retenție locală (%local% zile) trebuie să fie mai mică decât perioada totală de retenție (%total% zile)',
     'rest_err_s3_connection_failed' => 'Conexiunea S3 a eșuat. Verificați acreditările și setările în detaliile de diagnosticare.',
+    'rest_err_s3_required_fields' => 'Când S3 este activat, următoarele câmpuri sunt obligatorii: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'Numele bucket-ului S3 nu trebuie să conțină puncte consecutive (..)',
+    'rest_err_s3_bucket_ip_format' => 'Numele bucket-ului S3 nu trebuie să fie în format de adresă IP',
+    'rest_err_s3_bucket_xn_prefix' => 'Numele bucket-ului S3 nu trebuie să înceapă cu "xn--"',
+    'rest_err_s3_bucket_reserved_suffix' => 'Numele bucket-ului S3 nu trebuie să se termine cu "-s3alias" sau "--ol-s3"',
 
     'rest_TimeSettings_ApiDescription' => 'Gestionare completă a orei și fusului orar pentru MikoPBX. Această resursă singleton oferă acces la configurarea orei sistemului, inclusiv selectarea fusului orar, setările serverului NTP și ajustările manuale ale orei. Este esențială pentru asigurarea unor marcaje temporale precise ale apelurilor, execuția programată a sarcinilor și corelarea jurnalelor de sistem. Acceptă sincronizarea automată a orei prin NTP sau setarea manuală a orei pentru rețele izolate.',
     'rest_UserPageTracker_ApiDescription' => 'Urmărește activitatea utilizatorilor pe paginile interfeței administrative. Înregistrează vizualizările și ieșirile de pagină pentru a urmări care administratori vizualizează ce pagini în prezent. Această funcție este utilizată pentru gestionarea sesiunilor, monitorizarea activității și prevenirea conflictelor în timpul editării simultane.',

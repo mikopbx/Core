@@ -837,7 +837,7 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'st_RecordingRetentionPeriod' => 'Asiakirjojen säilytysaika (yleinen)',
     'st_S3AccessKey' => 'Käyttöavain',
     'st_S3Bucket' => 'S3-säiliön nimi',
-    'st_S3BucketInvalid' => 'Virheellinen S3-säiliön nimi. Sen on oltava 3–63 merkkiä pitkä ja saa sisältää vain pieniä kirjaimia, numeroita ja yhdysmerkkejä.',
+    'st_S3BucketInvalid' => 'Virheellinen S3-säiliön nimi. Sen on oltava 3–63 merkkiä pitkä ja saa sisältää vain pieniä kirjaimia, numeroita, yhdysmerkkejä ja pisteitä.',
     'st_S3ConfigurationHelp' => 'Määritä S3-yhteensopivan tallennustilan tunnistetiedot, jotta tietueet ladataan automaattisesti pilveen.',
     'st_S3Endpoint' => 'S3-tukiaseman URL-osoite',
     'st_S3EndpointHelp' => 'Esimerkkejä: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',

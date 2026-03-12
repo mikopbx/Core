@@ -838,7 +838,7 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'st_RecordingRetentionPeriod' => 'Perioada de păstrare a înregistrărilor (generală)',
     'st_S3AccessKey' => 'Cheie de acces',
     'st_S3Bucket' => 'Numele bucket-ului S3',
-    'st_S3BucketInvalid' => 'Numele bucket-ului S3 este nevalid. Trebuie să aibă între 3 și 63 de caractere, conținând doar litere mici, cifre și cratime.',
+    'st_S3BucketInvalid' => 'Numele bucket-ului S3 este nevalid. Trebuie să aibă între 3 și 63 de caractere, conținând doar litere mici, cifre, cratime și puncte.',
     'st_S3ConfigurationHelp' => 'Configurați acreditările pentru stocarea compatibilă cu S3 pentru a încărca automat înregistrările în cloud.',
     'st_S3Endpoint' => 'URL-ul punctului de acces S3',
     'st_S3EndpointHelp' => 'Exemple: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',

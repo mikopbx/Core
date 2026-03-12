@@ -1389,6 +1389,11 @@ return [
     'rest_users_Available' => 'Kontrollera tillgängligheten för e-postmeddelanden',
     'rest_S3LocalRetentionMustBeLess' => 'Den lokala lagringsperioden (%local% dagar) måste vara kortare än den totala lagringsperioden (%total% dagar)',
     'rest_err_s3_connection_failed' => 'S3-anslutning misslyckades. Kontrollera inloggningsuppgifter och inställningar i diagnostikdetaljer.',
+    'rest_err_s3_required_fields' => 'När S3 är aktiverat är följande fält obligatoriska: %fields%',
+    'rest_err_s3_bucket_consecutive_dots' => 'S3-bucketnamnet får inte innehålla på varandra följande punkter (..)',
+    'rest_err_s3_bucket_ip_format' => 'S3-bucketnamnet får inte ha formatet för en IP-adress',
+    'rest_err_s3_bucket_xn_prefix' => 'S3-bucketnamnet får inte börja med "xn--"',
+    'rest_err_s3_bucket_reserved_suffix' => 'S3-bucketnamnet får inte sluta med "-s3alias" eller "--ol-s3"',
 
     'rest_Sysinfo_ApiDescription' => 'En resurs för systeminformation och diagnostik för enskilda enheter. Ger detaljerad information om hårdvara, nätverkskonfiguration, virtualiseringsplattform och DMI-data. Ett skrivskyddat gränssnitt för systemövervakning och felsökning.',
     'rest_Syslog_ApiDescription' => 'Verktyg för systemlogghantering och diagnostik. Ger åtkomst till systemloggar, loggfiltrering, nätverkspaketinsamling och arkivgenerering. Viktigt för felsökning och systemövervakning.',

@@ -833,7 +833,7 @@ Nowy klucz możesz otrzymać automatycznie wypełniając formularz rejestracyjny
     'st_RecordingRetentionPeriod' => 'Okres przechowywania danych (ogólny)',
     'st_S3AccessKey' => 'Klucz dostępu',
     'st_S3Bucket' => 'Nazwa kontenera S3',
-    'st_S3BucketInvalid' => 'Nieprawidłowa nazwa kontenera S3. Musi mieć od 3 do 63 znaków i zawierać wyłącznie małe litery, cyfry i łączniki.',
+    'st_S3BucketInvalid' => 'Nieprawidłowa nazwa kontenera S3. Musi mieć od 3 do 63 znaków i zawierać wyłącznie małe litery, cyfry, łączniki i kropki.',
     'st_S3ConfigurationHelp' => 'Skonfiguruj dane uwierzytelniające dla pamięci masowej zgodnej z usługą S3, aby automatycznie przesyłać rekordy do chmury.',
     'st_S3Endpoint' => 'Adres URL punktu dostępu S3',
     'st_S3EndpointHelp' => 'Przykłady: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',

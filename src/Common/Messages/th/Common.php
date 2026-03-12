@@ -877,7 +877,7 @@ return [
     'sd_FilterNotContains' => 'ไม่มี',
     'sd_FilterPlaceholder' => 'พิมพ์ข้อความแล้วกด Enter...',
     'st_LocalRetentionPeriod' => 'พื้นที่จัดเก็บข้อมูลภายในเครื่อง (โหมด S3)',
-    'st_S3BucketInvalid' => 'ชื่อบัคเก็ต S3 ไม่ถูกต้อง ต้องมีความยาวระหว่าง 3 ถึง 63 ตัวอักษร และประกอบด้วยตัวอักษรพิมพ์เล็ก ตัวเลข และเครื่องหมายขีดกลางเท่านั้น',
+    'st_S3BucketInvalid' => 'ชื่อบัคเก็ต S3 ไม่ถูกต้อง ต้องมีความยาวระหว่าง 3 ถึง 63 ตัวอักษร และประกอบด้วยตัวอักษรพิมพ์เล็ก ตัวเลข เครื่องหมายขีดกลาง และจุดเท่านั้น',
     'st_S3ConfigurationHelp' => 'ตั้งค่าข้อมูลรับรองสำหรับพื้นที่จัดเก็บข้อมูลที่เข้ากันได้กับ S3 เพื่ออัปโหลดบันทึกไปยังคลาวด์โดยอัตโนมัติ',
     'st_S3Endpoint' => 'URL จุดเชื่อมต่อ S3',
     'st_S3EndpointHelp' => 'ตัวอย่าง: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',

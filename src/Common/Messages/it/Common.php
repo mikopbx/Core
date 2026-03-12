@@ -844,7 +844,7 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'st_RecordingRetentionPeriod' => 'Periodo di conservazione dei documenti (generale)',
     'st_S3AccessKey' => 'Chiave di accesso',
     'st_S3Bucket' => 'Nome del bucket S3',
-    'st_S3BucketInvalid' => 'Nome bucket S3 non valido. Deve essere lungo tra 3 e 63 caratteri e contenere solo lettere minuscole, numeri e trattini.',
+    'st_S3BucketInvalid' => 'Nome bucket S3 non valido. Deve essere lungo tra 3 e 63 caratteri e contenere solo lettere minuscole, numeri, trattini e punti.',
     'st_S3ConfigurationHelp' => 'Imposta le credenziali per l\'archiviazione compatibile con S3 per caricare automaticamente i record sul cloud.',
     'st_S3Endpoint' => 'URL del punto di accesso S3',
     'st_S3EndpointHelp' => 'Esempi: https://s3.ap-southeast-1.amazonaws.com (AWS), https://storage.yandexcloud.net (Yandex Cloud), http://minio:9000 (MinIO)',

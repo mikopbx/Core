@@ -82,11 +82,39 @@ class UpdateS3SettingsAction
             }
 
             if (!empty($missingFields)) {
-                $res->messages['error'][] = 'When S3 is enabled, the following fields are required: '
-                                          . implode(', ', $missingFields);
+                $res->messages['error'][] = TranslationProvider::translate(
+                    'rest_err_s3_required_fields',
+                    ['fields' => implode(', ', $missingFields)]
+                );
                 $res->success = false;
                 $res->httpCode = 422;
                 return $res;
+            }
+
+            // Validate bucket name format per S3 spec
+            if (!empty($data['s3_bucket'])) {
+                $bucket = $data['s3_bucket'];
+                $bucketErrors = [];
+
+                if (str_contains($bucket, '..')) {
+                    $bucketErrors[] = TranslationProvider::translate('rest_err_s3_bucket_consecutive_dots');
+                }
+                if (filter_var($bucket, FILTER_VALIDATE_IP)) {
+                    $bucketErrors[] = TranslationProvider::translate('rest_err_s3_bucket_ip_format');
+                }
+                if (str_starts_with($bucket, 'xn--')) {
+                    $bucketErrors[] = TranslationProvider::translate('rest_err_s3_bucket_xn_prefix');
+                }
+                if (str_ends_with($bucket, '-s3alias') || str_ends_with($bucket, '--ol-s3')) {
+                    $bucketErrors[] = TranslationProvider::translate('rest_err_s3_bucket_reserved_suffix');
+                }
+
+                if (!empty($bucketErrors)) {
+                    $res->messages['error'] = array_merge($res->messages['error'] ?? [], $bucketErrors);
+                    $res->success = false;
+                    $res->httpCode = 422;
+                    return $res;
+                }
             }
         }
 
