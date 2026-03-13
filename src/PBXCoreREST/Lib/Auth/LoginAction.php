@@ -90,9 +90,11 @@ class LoginAction
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        // Extract client info from data (passed by controller)
-        $clientIp = isset($data['clientIp']) && is_string($data['clientIp']) ? $data['clientIp'] : '';
-        $userAgent = isset($data['userAgent']) && is_string($data['userAgent']) ? $data['userAgent'] : '';
+        // Extract and sanitize client info from data (passed by controller)
+        $rawIp = isset($data['clientIp']) && is_string($data['clientIp']) ? $data['clientIp'] : '';
+        $clientIp = filter_var($rawIp, FILTER_VALIDATE_IP) !== false ? $rawIp : 'unknown';
+        $rawAgent = isset($data['userAgent']) && is_string($data['userAgent']) ? $data['userAgent'] : '';
+        $userAgent = substr(preg_replace('/[\x00-\x1f\x7f]/', '', $rawAgent), 0, 200);
 
         // Get services via DI (worker context)
         $di = Di::getDefault();

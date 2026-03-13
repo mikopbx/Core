@@ -618,6 +618,8 @@ def disable_rate_limiting(api_client):
         )
         if response.get('result'):
             print("\n✓ Rate limiting disabled for test session")
+            # Wait for nginx to reload with new config
+            time.sleep(3)
         else:
             print(f"\n⚠️  Could not disable rate limiting: {response.get('messages', {})}")
     except Exception as e:
@@ -1229,6 +1231,7 @@ def pytest_runtest_makereport(item, call):
                                         {'settings': {'PBXRateLimitEnabled': '0'}}
                                     )
                                     print("✓ Rate limiting re-disabled after system reset")
+                                    import time as _time; _time.sleep(3)
                                 except Exception as rl_err:
                                     print(f"⚠️  Could not re-disable rate limiting: {rl_err}")
                             except Exception as e:
