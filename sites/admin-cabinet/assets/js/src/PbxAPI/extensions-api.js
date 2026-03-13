@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, sessionStorage, PbxApi, globalTranslate, SecurityUtils, PbxApiClient, Config */
+/* global globalRootUrl, sessionStorage, PbxApi, globalTranslate, SecurityUtils, PbxApiClient, Config, ExtensionsAPI */
 
 /**
  * ExtensionsAPI - REST API v3 client for extensions management
@@ -43,6 +43,31 @@ const ExtensionsAPI = new PbxApiClient({
 Object.assign(ExtensionsAPI, {
     // Debounce timeout storage for different CSS classes
     debounceTimeouts: {},
+
+    /**
+     * Check if CDR caller name is a meaningful name (not just digits)
+     * @param {string} cdrName - The caller name from CDR
+     * @param {string} number - The phone number being displayed
+     * @returns {boolean} True if the name is meaningful and should be displayed
+     */
+    isUsableCdrName(cdrName, number) {
+        return cdrName
+            && cdrName.length > 0
+            && cdrName !== number
+            && !/^\d+$/.test(cdrName);
+    },
+
+    /**
+     * Build HTML representation with CDR caller name and muted number
+     * @param {string} cdrName - The caller name from CDR (will be HTML-escaped)
+     * @param {string} number - The phone number
+     * @returns {string} Safe HTML string
+     */
+    buildCdrNameHtml(cdrName, number) {
+        const safeName = SecurityUtils.escapeHtml(cdrName);
+        const safeNumber = SecurityUtils.escapeHtml(number);
+        return `<span class="cdr-caller-name">${safeName}</span> <span class="cdr-number">${safeNumber}</span>`;
+    },
 
     /**
      * Get extensions for select dropdown (alias for getForSelect custom method)
@@ -410,7 +435,16 @@ Object.assign(ExtensionsAPI, {
             const number = $(el).text();
             const represent = sessionStorage.getItem(number);
             if (represent) {
-                $(el).html(represent);
+                const cdrName = $(el).attr('data-cdr-name');
+                if (ExtensionsAPI.isUsableCdrName(cdrName, number)
+                    && represent.indexOf('cdr-caller-name') === -1) {
+                    // CDR name available but cache doesn't have styled format — (re)build it
+                    const enriched = ExtensionsAPI.buildCdrNameHtml(cdrName, number);
+                    $(el).html(enriched);
+                    sessionStorage.setItem(number, enriched);
+                } else {
+                    $(el).html(represent);
+                }
                 $(el).removeClass(htmlClass);
             } else if (numbers.indexOf(number) === -1) {
                 numbers.push(number);
@@ -441,9 +475,30 @@ Object.assign(ExtensionsAPI, {
         if (response !== undefined && response.result === true) {
             $preprocessedObjects.each((index, el) => {
                 const number = $(el).text();
-                if (response.data[number] !== undefined) {
-                    $(el).html(response.data[number].represent);
-                    sessionStorage.setItem(number, response.data[number].represent);
+                const apiResult = response.data[number];
+                if (apiResult !== undefined) {
+                    // Normalize represent: API may return array or string
+                    let represent = Array.isArray(apiResult.represent)
+                        ? apiResult.represent[0] || number
+                        : apiResult.represent;
+                    // If API returned just the plain number (external/unknown),
+                    // try CDR caller name as enrichment
+                    if (represent === number) {
+                        const cdrName = $(el).attr('data-cdr-name');
+                        if (ExtensionsAPI.isUsableCdrName(cdrName, number)) {
+                            represent = ExtensionsAPI.buildCdrNameHtml(cdrName, number);
+                        }
+                    }
+                    $(el).html(represent);
+                    sessionStorage.setItem(number, represent);
+                } else {
+                    // Number not in API response at all — try CDR name
+                    const cdrName = $(el).attr('data-cdr-name');
+                    if (ExtensionsAPI.isUsableCdrName(cdrName, number)) {
+                        const enriched = ExtensionsAPI.buildCdrNameHtml(cdrName, number);
+                        $(el).html(enriched);
+                        sessionStorage.setItem(number, enriched);
+                    }
                 }
                 $(el).removeClass(htmlClass);
             });

@@ -113,7 +113,12 @@ class WorkerNotifyByEmail extends WorkerBase
                 $phonesCid[$call['to_number']] = $call['to_name'];
             }
 
-            if (isset($phonesCid[$call['from_number']])) {
+            // Use caller name from CDR (CallerID name from provider/phonebook) if available,
+            // otherwise fall back to Extensions lookup (internal users)
+            $cdrCallerName = $call['from_name'] ?? '';
+            if (!empty($cdrCallerName) && $cdrCallerName !== $call['from_number']) {
+                $call['from_name'] = $cdrCallerName;
+            } elseif (isset($phonesCid[$call['from_number']])) {
                 $call['from_name'] = $phonesCid[$call['from_number']];
             } else {
                 $call['from_name'] = Extensions::getCidByPhoneNumber($call['from_number']);

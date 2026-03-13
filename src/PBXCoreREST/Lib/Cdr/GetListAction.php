@@ -505,7 +505,9 @@ class GetListAction
                     'linkedid' => $linkedId,
                     'start' => $record->start,
                     'src_num' => $record->src_num,
+                    'src_name' => $record->src_name ?? '',
                     'dst_num' => $record->dst_num,  // Initial value
+                    'dst_name' => $record->dst_name ?? '',
                     'did' => $record->did,          // Initial DID value
                     'disposition' => $record->disposition,
                     'totalDuration' => 0,
@@ -522,10 +524,11 @@ class GetListAction
             // WHY: String comparison works correctly for ISO datetime format
             if ($record->start < $currentStart) {
                 $grouped[$linkedId]['start'] = $record->start;
-                // When we find earlier start, also update src_num from that record
+                // When we find earlier start, also update src_num and src_name from that record
                 // WHY: The earliest record shows the original caller
                 if (empty($grouped[$linkedId]['src_num']) || $record->start < $currentStart) {
                     $grouped[$linkedId]['src_num'] = $record->src_num;
+                    $grouped[$linkedId]['src_name'] = $record->src_name ?? '';
                 }
             }
 

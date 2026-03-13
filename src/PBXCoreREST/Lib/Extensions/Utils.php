@@ -48,7 +48,7 @@ class Utils extends Injectable
         foreach ($numbers as $number) {
             $result[$number] = [
                 'number' => $number,
-                'represent' => self::getPhoneRepresent($number)->data,
+                'represent' => self::getPhoneRepresent($number)->data[0] ?? $number,
             ];
         }
         $res->data = $result;

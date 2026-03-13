@@ -355,6 +355,7 @@ class WorkerCdr extends WorkerBase
         // Record the details of the call for later processing
         $this->no_answered_calls[$row['linkedid']][] = [
             'from_number' => $row['src_num'],
+            'from_name' => $row['src_name'] ?? '',
             'to_number' => $row['dst_num'],
             'start' => $row['start'],
             'answer' => $row['answer'],

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, SemanticLocalization, ExtensionsAPI, moment, globalTranslate, CDRPlayer, CdrAPI, UserMessage, ACLHelper */
+/* global globalRootUrl, SemanticLocalization, ExtensionsAPI, moment, globalTranslate, CDRPlayer, CdrAPI, UserMessage, ACLHelper, SecurityUtils */
 
 /**
  * callDetailRecords module.
@@ -362,10 +362,12 @@ const callDetailRecords = {
                 $('td', row).eq(1).html(data[0]);
                 $('td', row).eq(2)
                     .html(data[1])
-                    .addClass('need-update');
+                    .addClass('need-update')
+                    .attr('data-cdr-name', data[6] || '');
                 $('td', row).eq(3)
                     .html(data[2])
-                    .addClass('need-update');
+                    .addClass('need-update')
+                    .attr('data-cdr-name', data[7] || '');
 
                 // Duration column (no icons)
                 $('td', row).eq(4).html(data[3]).addClass('right aligned');
@@ -704,7 +706,9 @@ const callDetailRecords = {
                 .map(r => ({
                     id: r.id,
                     src_num: r.src_num,
+                    src_name: r.src_name || '',
                     dst_num: r.dst_num,
+                    dst_name: r.dst_name || '',
                     recordingfile: r.recordingfile,
                     playback_url: r.playback_url,   // Token-based URL for playback
                     download_url: r.download_url    // Token-based URL for download
@@ -731,7 +735,9 @@ const callDetailRecords = {
                 group.dst_num || group.did, // 2: destination number or DID
                 timing,                     // 3: duration
                 recordings,                 // 4: recording records array
-                group.disposition           // 5: disposition
+                group.disposition,          // 5: disposition
+                group.src_name || '',       // 6: source caller name from CDR
+                group.dst_name || ''        // 7: destination caller name from CDR
             ];
 
             // Add DataTables special properties
@@ -774,9 +780,9 @@ const callDetailRecords = {
     <td class="one wide">
     	<i class="ui icon download" data-value=""></i>
     </td>
-    <td class="right aligned"><span class="need-update">${record.src_num}</span></td>
+    <td class="right aligned"><span class="need-update" data-cdr-name="${SecurityUtils.escapeHtml(record.src_name || '')}">${SecurityUtils.escapeHtml(record.src_num)}</span></td>
     <td class="one wide center aligned"><i class="icon exchange"></i></td>
-   	<td class="left aligned"><span class="need-update">${record.dst_num}</span></td>
+   	<td class="left aligned"><span class="need-update" data-cdr-name="${SecurityUtils.escapeHtml(record.dst_name || '')}">${SecurityUtils.escapeHtml(record.dst_num)}</span></td>
 </tr>`;
             } else {
                 // Use token-based URLs instead of direct file paths
@@ -808,9 +814,9 @@ const callDetailRecords = {
     		</div>
     	</div>
     </td>
-    <td class="right aligned"><span class="need-update">${record.src_num}</span></td>
+    <td class="right aligned"><span class="need-update" data-cdr-name="${SecurityUtils.escapeHtml(record.src_name || '')}">${SecurityUtils.escapeHtml(record.src_num)}</span></td>
     <td class="one wide center aligned"><i class="icon exchange"></i></td>
-   	<td class="left aligned"><span class="need-update">${record.dst_num}</span></td>
+   	<td class="left aligned"><span class="need-update" data-cdr-name="${SecurityUtils.escapeHtml(record.dst_name || '')}">${SecurityUtils.escapeHtml(record.dst_num)}</span></td>
 </tr>`;
             }
         });

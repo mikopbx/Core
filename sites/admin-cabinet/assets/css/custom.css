@@ -326,6 +326,16 @@ div#pbx-version {
     font-size: 12px;
 }
 
+/* CDR caller name from provider/phonebook */
+.cdr-caller-name {
+    font-style: italic;
+}
+
+/* Mute the number when caller name is displayed next to it */
+.cdr-number {
+    color: rgba(0, 0, 0, 0.4);
+}
+
 /* CDR player */
 .cdr-player .ui.range {
     height: 15px;
