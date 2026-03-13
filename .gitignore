@@ -52,6 +52,8 @@ tests/api/**/*.tmp
 .hypothesis/*
 
 # Translation batch processing temporary files
+.claude/.review-pass
+.claude/.translations-pass
 .claude/temp/
 .claude/*_translated.php
 .claude/batch_*.json
