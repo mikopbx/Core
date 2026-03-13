@@ -601,6 +601,41 @@ def api_client() -> MikoPBXClient:
     client.logout()
 
 
+@pytest.fixture(scope='session', autouse=True)
+def disable_rate_limiting(api_client):
+    """
+    Disable HTTP rate limiting for the test session.
+
+    API tests generate hundreds of requests per minute, which triggers
+    the Nginx Lua rate limiter (429 Too Many Requests). This fixture
+    disables rate limiting via PBXRateLimitEnabled setting and restores
+    it after the test session completes.
+    """
+    try:
+        response = api_client.patch(
+            'general-settings',
+            {'settings': {'PBXRateLimitEnabled': '0'}}
+        )
+        if response.get('result'):
+            print("\n✓ Rate limiting disabled for test session")
+        else:
+            print(f"\n⚠️  Could not disable rate limiting: {response.get('messages', {})}")
+    except Exception as e:
+        print(f"\n⚠️  Failed to disable rate limiting: {e}")
+
+    yield
+
+    # Restore rate limiting after all tests
+    try:
+        api_client.patch(
+            'general-settings',
+            {'settings': {'PBXRateLimitEnabled': '1'}}
+        )
+        print("\n✓ Rate limiting re-enabled after test session")
+    except Exception:
+        pass  # Best effort — system may already be shutting down
+
+
 @pytest.fixture(scope='session')
 def is_docker(api_client) -> bool:
     """
@@ -1187,6 +1222,15 @@ def pytest_runtest_makereport(item, call):
                             try:
                                 client.authenticate()
                                 print("✓ api_client re-authenticated successfully")
+                                # Re-disable rate limiting after system reset
+                                try:
+                                    client.patch(
+                                        'general-settings',
+                                        {'settings': {'PBXRateLimitEnabled': '0'}}
+                                    )
+                                    print("✓ Rate limiting re-disabled after system reset")
+                                except Exception as rl_err:
+                                    print(f"⚠️  Could not re-disable rate limiting: {rl_err}")
                             except Exception as e:
                                 print(f"✗ Failed to re-authenticate: {e}")
                         break
