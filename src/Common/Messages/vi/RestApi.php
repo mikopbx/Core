@@ -1178,7 +1178,7 @@ return [
     'rest_schema_gs_record_calls' => 'Ghi âm các cuộc gọi bên ngoài',
     'rest_schema_gs_record_calls_inner' => 'Ghi âm các cuộc gọi nội bộ',
     'rest_schema_gs_redirect_to_https' => 'Tự động chuyển hướng HTTP sang HTTPS',
-    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
+    'rest_schema_gs_rate_limit_enabled' => 'Bật giới hạn tốc độ HTTP',
     'rest_schema_gs_restart_every_night' => 'Khởi động lại hệ thống mỗi đêm.',
     'rest_schema_gs_rtp_port_from' => 'Cổng bắt đầu phạm vi RTP',
     'rest_schema_gs_rtp_port_to' => 'Cổng cuối phạm vi RTP',

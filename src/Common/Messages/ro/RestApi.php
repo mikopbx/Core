@@ -1077,7 +1077,7 @@ return [
     'rest_schema_gs_record_calls' => 'Înregistrați apelurile externe',
     'rest_schema_gs_record_calls_inner' => 'Înregistrați apelurile interne',
     'rest_schema_gs_redirect_to_https' => 'Redirecționează automat HTTP către HTTPS',
-    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
+    'rest_schema_gs_rate_limit_enabled' => 'Activați limitarea ratei HTTP',
     'rest_schema_gs_restart_every_night' => 'Reporniți sistemul în fiecare noapte',
     'rest_schema_gs_rtp_port_from' => 'Port de început al intervalului RTP',
     'rest_schema_gs_rtp_port_to' => 'Portul final al intervalului RTP',

@@ -1298,7 +1298,7 @@ return [
     'rest_schema_gs_record_calls' => 'Külső hívások rögzítése',
     'rest_schema_gs_record_calls_inner' => 'Belső hívások rögzítése',
     'rest_schema_gs_redirect_to_https' => 'HTTP automatikus átirányítása HTTPS-re',
-    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
+    'rest_schema_gs_rate_limit_enabled' => 'HTTP-kérések sebességkorlátozásának engedélyezése',
     'rest_schema_gs_restart_every_night' => 'Indítsa újra a rendszert minden este',
     'rest_schema_gs_rtp_port_from' => 'RTP tartomány kezdő portja',
     'rest_schema_gs_rtp_stun_server' => 'STUN szerver RTP-hez (pl. stun.l.google.com:19302)',

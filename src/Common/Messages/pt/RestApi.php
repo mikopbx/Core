@@ -439,7 +439,7 @@ return [
     'rest_schema_gs_record_announcement_out' => 'Reproduzir notificação ao gravar chamadas efetuadas',
     'rest_schema_gs_record_calls_inner' => 'Gravar chamadas internas',
     'rest_schema_gs_redirect_to_https' => 'Redirecionar automaticamente HTTP para HTTPS',
-    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
+    'rest_schema_gs_rate_limit_enabled' => 'Ativar limitação de taxa HTTP',
     'rest_schema_gs_restart_every_night' => 'Reinicie o sistema todas as noites.',
     'rest_schema_gs_rtp_port_from' => 'porta inicial do intervalo RTP',
     'rest_schema_gs_rtp_port_to' => 'porta final do intervalo RTP',

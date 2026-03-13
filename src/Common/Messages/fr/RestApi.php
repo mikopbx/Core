@@ -1290,7 +1290,7 @@ return [
     'rest_schema_gs_record_calls' => 'Enregistrer les appels externes',
     'rest_schema_gs_record_calls_inner' => 'Enregistrement des appels internes',
     'rest_schema_gs_redirect_to_https' => 'Redirection automatique des requêtes HTTP vers HTTPS',
-    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
+    'rest_schema_gs_rate_limit_enabled' => 'Activer la limitation du débit HTTP',
     'rest_schema_gs_restart_every_night' => 'Redémarrez le système chaque nuit',
     'rest_schema_gs_rtp_port_from' => 'Port de départ de la plage RTP',
     'rest_schema_gs_rtp_port_to' => 'Port d\'extrémité de la plage RTP',

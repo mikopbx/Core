@@ -1170,7 +1170,7 @@ return [
     'rest_schema_gs_record_calls' => 'Externe Anrufe aufzeichnen',
     'rest_schema_gs_record_calls_inner' => 'Interne Anrufe aufzeichnen',
     'rest_schema_gs_redirect_to_https' => 'Automatische Weiterleitung von HTTP zu HTTPS',
-    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
+    'rest_schema_gs_rate_limit_enabled' => 'HTTP-Ratenbegrenzung aktivieren',
     'rest_schema_gs_restart_every_night' => 'Starten Sie das System jede Nacht neu.',
     'rest_schema_gs_rtp_port_from' => 'RTP-Bereich Startport',
     'rest_schema_gs_rtp_port_to' => 'RTP-Bereichsendport',

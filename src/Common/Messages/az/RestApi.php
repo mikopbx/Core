@@ -1952,7 +1952,7 @@ return [
     'rest_schema_gs_record_announcement_out' => 'Gedən zəngləri qeydə alarkən bildirişi oxudun',
     'rest_schema_gs_record_calls' => 'Xarici zəngləri qeyd edin',
     'rest_schema_gs_redirect_to_https' => 'HTTP-ni avtomatik olaraq HTTPS-ə yönləndirin',
-    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
+    'rest_schema_gs_rate_limit_enabled' => 'HTTP sorğu tezliyinə məhdudiyyət qoy',
     'rest_schema_gs_restart_every_night' => 'Sistemi hər gecə yenidən başladın',
     'rest_schema_gs_rtp_port_from' => 'RTP diapazonunun başlanğıc portu',
     'rest_schema_gs_rtp_port_to' => 'RTP diapazonunun son portu',

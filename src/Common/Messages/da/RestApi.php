@@ -450,7 +450,7 @@ return [
     'rest_emp_ExportTemplateDesc' => 'Eksportskabelon til import af medarbejdere',
     'rest_response_401_unauthorized' => 'Godkendelse kræves',
     'rest_schema_am_perm_originate_write' => 'Tilladelse til at starte opkald (Oprindelse)',
-    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
+    'rest_schema_gs_rate_limit_enabled' => 'Aktiver HTTP-hastighedsbegrænsning',
     'rest_schema_gs_restart_every_night' => 'Genstart systemet hver nat',
     'rest_schema_banned_ip_version' => 'API-versionsmarkør',
     'rest_param_cf_mode' => 'Filapplikationstilstand: override (erstat), append (tilføj), script (eksekverbart script), none (anvend ikke)',

@@ -1973,7 +1973,7 @@ return [
     'rest_schema_gs_pbx_language' => 'PBX-käyttöliittymän kieli',
     'rest_schema_gs_pbx_name' => 'PBX-puhelinjärjestelmän nimi',
     'rest_schema_gs_record_announcement_out' => 'Toista ilmoitus lähtevien puheluiden tallennuksen aikana',
-    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
+    'rest_schema_gs_rate_limit_enabled' => 'Ota käyttöön HTTP-pyyntöjen nopeusrajoitus',
     'rest_schema_gs_restart_every_night' => 'Käynnistä järjestelmä uudelleen joka yö',
     'rest_schema_gs_record_calls' => 'Ulkoisten puheluiden tallentaminen',
     'rest_schema_gs_rtp_port_from' => 'RTP-alueen aloitusportti',

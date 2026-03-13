@@ -1122,7 +1122,7 @@ return [
     'rest_schema_gs_record_calls' => 'Εγγραφή εξωτερικών κλήσεων',
     'rest_schema_gs_record_calls_inner' => 'Ηχογράφηση εσωτερικών κλήσεων',
     'rest_schema_gs_redirect_to_https' => 'Αυτόματη ανακατεύθυνση HTTP σε HTTPS',
-    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
+    'rest_schema_gs_rate_limit_enabled' => 'Ενεργοποίηση περιορισμού ρυθμού HTTP',
     'rest_schema_gs_restart_every_night' => 'Επανεκκινήστε το σύστημα κάθε βράδυ',
     'rest_schema_gs_rtp_port_to' => 'Θύρα τερματισμού εύρους RTP',
     'rest_schema_gs_rtp_stun_server' => 'Διακομιστής STUN για RTP (π.χ. stun.l.google.com:19302)',

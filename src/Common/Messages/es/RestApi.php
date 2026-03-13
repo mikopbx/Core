@@ -1228,7 +1228,7 @@ return [
     'rest_schema_gs_pbx_name' => 'Nombre de la centralita',
     'rest_schema_gs_pickup_exten' => 'Código de interceptación de llamadas',
     'rest_schema_gs_redirect_to_https' => 'Redirigir automáticamente HTTP a HTTPS',
-    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
+    'rest_schema_gs_rate_limit_enabled' => 'Activar la limitación de velocidad HTTP',
     'rest_schema_gs_restart_every_night' => 'Reinicie el sistema todas las noches',
     'rest_schema_gs_rtp_port_from' => 'Puerto de inicio del rango RTP',
     'rest_schema_gs_rtp_port_to' => 'Puerto final de rango RTP',
