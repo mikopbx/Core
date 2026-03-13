@@ -116,6 +116,7 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::PBX_FIREWALL_ENABLED => '0',
             PbxSettings::PBX_FAIL2BAN_ENABLED => '0',
             PbxSettings::PBX_FIREWALL_MAX_REQ => '0',
+            PbxSettings::PBX_RATE_LIMIT_ENABLED => '1',
             PbxSettings::PBX_TIMEZONE => 'Europe/Moscow',
             PbxSettings::PBX_MANUAL_TIME_SETTINGS => '0',
             PbxSettings::PBX_VERSION => '2020.1.1',

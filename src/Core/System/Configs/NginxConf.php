@@ -394,13 +394,17 @@ class NginxConf extends SystemConfigClass
         $redisVars .= "    set \$security_mode 'balanced';\n";
         $redisVars .= "    set \$session_check_required '0';\n";
 
-        // Rate limiting can be disabled via environment variable for testing
-        $rateLimitEnabled = getenv('MIKOPBX_RATE_LIMIT_ENABLED') ?? '1';
-        $rateLimitEnabled = ($rateLimitEnabled === '0') ? '0' : '1';
+        // Rate limiting: ENV override takes priority, then PbxSettings, default enabled
+        $rateLimitEnv = getenv('MIKOPBX_RATE_LIMIT_ENABLED');
+        if ($rateLimitEnv !== false) {
+            $rateLimitEnabled = ($rateLimitEnv === '0') ? '0' : '1';
+        } else {
+            $rateLimitEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_RATE_LIMIT_ENABLED) === '0' ? '0' : '1';
+        }
         if ($rateLimitEnabled === '0') {
             SystemMessages::sysLogMsg(
                 self::PROC_NAME,
-                'WARNING: HTTP rate limiting is disabled via MIKOPBX_RATE_LIMIT_ENABLED=0',
+                'WARNING: HTTP rate limiting is disabled',
                 LOG_WARNING
             );
         }

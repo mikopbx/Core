@@ -263,6 +263,8 @@ trait PbxSettingsConstantsTrait
     /** @FieldType('string') */
     public const string PBX_FIREWALL_MAX_REQ = 'PBXFirewallMaxReqSec';
     /** @FieldType('boolean') */
+    public const string PBX_RATE_LIMIT_ENABLED = 'PBXRateLimitEnabled';
+    /** @FieldType('boolean') */
     public const string PBX_ALLOW_GUEST_CALLS = 'PBXAllowGuestCalls';
 
     // Miscellaneous settings
