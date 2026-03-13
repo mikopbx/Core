@@ -91,6 +91,7 @@ class MonitConf extends SystemConfigClass
         shell_exec("$rmPath -rf ".self::CONF_DIR_PATH."/*.conf");
 
         $conf = 'set daemon 5'.PHP_EOL.
+                'set pidfile /var/run/monit.pid'.PHP_EOL.
                 //'set logfile /var/log/monit.log'.PHP_EOL.
                 'set logfile syslog'.PHP_EOL.
                 'include '.self::CONF_DIR_PATH.'/*.cfg'.PHP_EOL.
