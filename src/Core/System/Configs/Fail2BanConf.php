@@ -371,19 +371,35 @@ class Fail2BanConf extends SystemConfigClass
                 "action = $action\n\n";
         }
 
-        // Separate jail for path traversal detection from nginx access.log
+        // Jail for exploit scanner detection from nginx access.log
+        // Catches path traversal, .env/.git probing, php-cgi, goform, SDK attacks
         $nginxAccessLog = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nginx/access.log';
-        $pathTraversalAction = !System::canManageFirewall()
-            ? 'miko-nginx-docker[name=PATH_TRAVERSAL, port="' . implode(',', $httpPorts) . '"]'
-            : 'miko-iptables-multiport-all[name=PATH_TRAVERSAL, port="' . implode(',', $httpPorts) . '"]';
-        $config .= "[mikopbx-path-traversal]\n" .
+        $exploitScannerAction = !System::canManageFirewall()
+            ? 'miko-nginx-docker[name=EXPLOIT_SCANNER, port="' . implode(',', $httpPorts) . '"]'
+            : 'miko-iptables-multiport-all[name=EXPLOIT_SCANNER, port="' . implode(',', $httpPorts) . '"]';
+        $config .= "[mikopbx-exploit-scanner]\n" .
             "enabled = true\n" .
-            "maxretry = 3\n" .
+            "maxretry = 2\n" .
             "findtime = $find_time\n" .
             "bantime = $ban_time\n" .
             "logencoding = utf-8\n" .
             "logpath = $nginxAccessLog\n" .
-            "action = $pathTraversalAction\n\n";
+            "action = $exploitScannerAction\n\n";
+
+        // Jail for nginx error.log monitoring
+        // Catches all requests generating nginx errors (non-existent paths, scanner probes)
+        $nginxErrorLog = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nginx/error.log';
+        $nginxErrorsAction = !System::canManageFirewall()
+            ? 'miko-nginx-docker[name=NGINX_ERRORS, port="' . implode(',', $httpPorts) . '"]'
+            : 'miko-iptables-multiport-all[name=NGINX_ERRORS, port="' . implode(',', $httpPorts) . '"]';
+        $config .= "[mikopbx-nginx-errors]\n" .
+            "enabled = true\n" .
+            "maxretry = 5\n" .
+            "findtime = $find_time\n" .
+            "bantime = $ban_time\n" .
+            "logencoding = utf-8\n" .
+            "logpath = $nginxErrorLog\n" .
+            "action = $nginxErrorsAction\n\n";
         $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/';
         $jails = [
             'asterisk_security_log' => ['security_log', '', $asteriskPorts],
@@ -565,16 +581,26 @@ class Fail2BanConf extends SystemConfigClass
         // Write the configuration to the MikoPBX web interface file
         file_put_contents("$filterPath/mikopbx-www.conf", $conf);
 
-        // Construct the path traversal detection filter (nginx access.log)
-        // prefregex filters only lines containing ".." — skips 99%+ of access.log entries
-        // Catches ../ in both URL path and query string, any HTTP status code
+        // Construct the exploit scanner detection filter (nginx access.log)
+        // Catches path traversal (..), .env/.git probing, php-cgi, setup.cgi,
+        // SDK/webLanguage, goform, Docker API, Spring actuator, HNAP1 attacks
+        $exploitPatterns = '(?:\.\.|\.env|\.git|/etc/passwd|php-cgi|setup\.cgi|/SDK/|/goform/|/containers/json|/actuator/|HNAP1)';
         $conf = $commonConf .
-            'prefregex = ^<F-CONTENT>\S+\s+-\s+\S+\s+\[.*?\]\s+"[^"]*\.\.[^"]*"\s+\d+\s+.*</F-CONTENT>$' . "\n" .
-            'failregex = ^<HOST>\s+-\s+\S+\s+\[.*?\]\s+"[^"]*\.\.[^"]*"\s+\d+\s+' . "\n" .
+            'prefregex = ^<F-CONTENT>\S+\s+-\s+\S+\s+\[.*?\]\s+"[^"]*' . $exploitPatterns . '[^"]*"\s+\d+\s+.*</F-CONTENT>$' . "\n" .
+            'failregex = ^<HOST>\s+-\s+\S+\s+\[.*?\]\s+"[^"]*' . $exploitPatterns . '[^"]*"\s+\d+\s+' . "\n" .
             "ignoreregex =\n";
 
-        // Write the configuration to the path traversal filter file
-        file_put_contents("$filterPath/mikopbx-path-traversal.conf", $conf);
+        // Write the configuration to the exploit scanner filter file
+        file_put_contents("$filterPath/mikopbx-exploit-scanner.conf", $conf);
+
+        // Construct the nginx error.log filter
+        // Catches all client requests that generate nginx errors (file not found, permission denied, etc.)
+        $conf = "[Definition]\n" .
+            'failregex = ^\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} \[error\] \d+#\d+: \*\d+ .*client: <HOST>,.*' . "\n" .
+            'ignoreregex = favicon\.ico' . "\n";
+
+        // Write the configuration to the nginx errors filter file
+        file_put_contents("$filterPath/mikopbx-nginx-errors.conf", $conf);
 
         // Construct the Dropbear SSH server configuration string
         $conf = $commonConf .

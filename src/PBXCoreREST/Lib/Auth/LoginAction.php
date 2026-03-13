@@ -141,6 +141,13 @@ class LoginAction
 
         // Authentication failed
         if ($sessionParams === null) {
+            // Log for fail2ban (mikopbx-www jail watches syslog for this pattern)
+            SystemMessages::sysLogMsg(
+                'web_auth',
+                "From: {$clientIp} UserAgent: {$userAgent} Wrong password",
+                LOG_WARNING
+            );
+
             // Increment failed attempt counter
             $remainingAttempts = self::checkRateLimit($clientIp, true, $cache)??10;
 
