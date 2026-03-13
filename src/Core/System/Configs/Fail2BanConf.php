@@ -594,9 +594,10 @@ class Fail2BanConf extends SystemConfigClass
         file_put_contents("$filterPath/mikopbx-exploit-scanner.conf", $conf);
 
         // Construct the nginx error.log filter
+        // Note: fail2ban strips the timestamp before applying failregex, so regex starts after date
         // Catches all client requests that generate nginx errors (file not found, permission denied, etc.)
         $conf = "[Definition]\n" .
-            'failregex = ^\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} \[error\] \d+#\d+: \*\d+ .*client: <HOST>,.*' . "\n" .
+            'failregex = ^\s*\[error\] \d+#\d+: \*\d+ .*client: <HOST>,.*' . "\n" .
             'ignoreregex = favicon\.ico' . "\n";
 
         // Write the configuration to the nginx errors filter file
