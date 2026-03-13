@@ -1782,6 +1782,7 @@ return [
     'rest_system_GetDeleteStatistics' => 'მიიღეთ წაშლის სტატისტიკა',
     'rest_tag_CallQueues' => 'ზარის რიგები',
     'rest_tag_AsteriskManagers' => 'AMI-ის მომხმარებლები',
+    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
     'rest_schema_gs_restart_every_night' => 'გადატვირთეთ სისტემა ყოველ ღამე',
     'rest_schema_gs_rtp_port_from' => 'RTP დიაპაზონის საწყისი პორტი',
     'rest_schema_gs_rtp_port_to' => 'RTP დიაპაზონის ბოლო პორტი',

@@ -412,6 +412,7 @@ return [
     'rest_schema_gs_record_calls' => 'Nahrávání externích hovorů',
     'rest_schema_gs_record_calls_inner' => 'Nahrávání interních hovorů',
     'rest_schema_gs_redirect_to_https' => 'Automatické přesměrování HTTP na HTTPS',
+    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
     'rest_schema_gs_restart_every_night' => 'Restartujte systém každou noc',
     'rest_schema_gs_rtp_port_from' => 'Počáteční port rozsahu RTP',
     'rest_schema_gs_rtp_stun_server' => 'STUN server pro RTP (např. stun.l.google.com:19302)',

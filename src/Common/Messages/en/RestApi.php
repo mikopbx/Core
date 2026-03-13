@@ -1825,6 +1825,7 @@ return [
     'rest_schema_gs_record_calls' => 'Record external calls',
     'rest_schema_gs_record_calls_inner' => 'Record internal calls',
     'rest_schema_gs_redirect_to_https' => 'Automatically redirect HTTP to HTTPS',
+    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
     'rest_schema_gs_restart_every_night' => 'Restart system every night',
     'rest_schema_gs_rtp_port_from' => 'RTP port range start',
     'rest_schema_gs_rtp_port_to' => 'RTP port range end',

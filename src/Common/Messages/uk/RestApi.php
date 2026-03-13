@@ -1307,6 +1307,7 @@ return [
     'rest_schema_gs_record_calls' => 'Записувати зовнішні дзвінки',
     'rest_schema_gs_record_calls_inner' => 'Записувати внутрішні дзвінки',
     'rest_schema_gs_redirect_to_https' => 'Автоматично перенаправляти HTTP на HTTPS',
+    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
     'rest_schema_gs_restart_every_night' => 'Перезапускати систему щоночі',
     'rest_schema_gs_rtp_port_from' => 'Початковий порт діапазону RTP',
     'rest_schema_gs_rtp_port_to' => 'Кінцевий порт діапазону RTP',

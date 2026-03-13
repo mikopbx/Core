@@ -1067,6 +1067,7 @@ return [
     'rest_schema_gs_atxfer_no_answer_timeout' => '未应答传输超时时间（秒）',
     'rest_schema_gs_iax_port' => 'IAX2协议端口',
     'rest_schema_gs_internal_extension_length' => '内部数字的长度',
+    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
     'rest_schema_gs_restart_every_night' => '每晚重启系统',
     'rest_schema_gs_sip_min_expiry' => '最短 SIP 注册时间（秒）',
     'rest_schema_gs_ssh_rsa_key' => 'SSH 服务器的 RSA 私钥',

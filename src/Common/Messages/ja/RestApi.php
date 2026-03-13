@@ -1036,6 +1036,7 @@ return [
     'rest_schema_gs_pickup_exten' => '通話傍受コード',
     'rest_schema_gs_record_announcement_in' => '着信通話を録音するときに通知を再生する',
     'rest_schema_gs_redirect_to_https' => 'HTTPをHTTPSに自動的にリダイレクトする',
+    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
     'rest_schema_gs_restart_every_night' => '毎晩システムを再起動する',
     'rest_schema_gs_rtp_port_from' => 'RTP範囲開始ポート',
     'rest_schema_gs_rtp_port_to' => 'RTP範囲終了ポート',

@@ -2255,6 +2255,7 @@ return [
     'rest_schema_gs_record_calls' => 'Записывать внешние вызовы',
     'rest_schema_gs_record_calls_inner' => 'Записывать внутренние вызовы',
     'rest_schema_gs_redirect_to_https' => 'Автоматически перенаправлять HTTP на HTTPS',
+    'rest_schema_gs_rate_limit_enabled' => 'Включить ограничение частоты HTTP-запросов',
     'rest_schema_gs_restart_every_night' => 'Перезапускать систему каждую ночь',
     'rest_schema_gs_rtp_port_from' => 'Начальный порт диапазона RTP',
     'rest_schema_gs_rtp_port_to' => 'Конечный порт диапазона RTP',

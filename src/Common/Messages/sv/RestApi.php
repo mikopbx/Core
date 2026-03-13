@@ -1190,6 +1190,7 @@ return [
     'rest_schema_gs_record_announcement_out' => 'Spela upp avisering vid inspelning av utgående samtal',
     'rest_schema_gs_record_calls' => 'Spela in externa samtal',
     'rest_schema_gs_redirect_to_https' => 'Omdirigera HTTP till HTTPS automatiskt',
+    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
     'rest_schema_gs_restart_every_night' => 'Starta om systemet varje natt',
     'rest_schema_gs_rtp_port_from' => 'RTP-intervallets startport',
     'rest_schema_gs_send_metrics' => 'Skicka anonym användningsstatistik',

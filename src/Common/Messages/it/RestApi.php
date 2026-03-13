@@ -1230,6 +1230,7 @@ return [
     'rest_schema_gs_record_calls' => 'Registrare le chiamate esterne',
     'rest_schema_gs_record_calls_inner' => 'Registrare le chiamate interne',
     'rest_schema_gs_redirect_to_https' => 'Reindirizza automaticamente HTTP a HTTPS',
+    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
     'rest_schema_gs_restart_every_night' => 'Riavviare il sistema ogni notte',
     'rest_schema_gs_rtp_port_to' => 'Porta di fine intervallo RTP',
     'rest_schema_gs_rtp_stun_server' => 'Server STUN per RTP (ad esempio stun.l.google.com:19302)',

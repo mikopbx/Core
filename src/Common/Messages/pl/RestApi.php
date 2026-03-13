@@ -1213,6 +1213,7 @@ return [
     'rest_schema_gs_is_default_ssh_password' => 'Używane jest standardowe hasło SSH.',
     'rest_schema_gs_record_announcement_in' => 'Odtwórz powiadomienie podczas nagrywania połączeń przychodzących',
     'rest_schema_gs_redirect_to_https' => 'Automatyczne przekierowanie HTTP na HTTPS',
+    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
     'rest_schema_gs_restart_every_night' => 'Uruchamiaj ponownie system każdej nocy',
     'rest_schema_gs_rtp_port_from' => 'Port początkowy zakresu RTP',
     'rest_schema_gs_rtp_port_to' => 'Port końcowy zakresu RTP',

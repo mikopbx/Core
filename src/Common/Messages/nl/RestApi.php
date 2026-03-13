@@ -209,6 +209,7 @@ return [
     'rest_tag_S3Storage' => 'S3 Cloudopslag',
     'rest_schema_gs_call_parking_start_slot' => 'Parkeerplaats voor eerste oproep',
     'rest_schema_gs_record_announcement_in' => 'Melding afspelen bij het opnemen van inkomende gesprekken',
+    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
     'rest_schema_gs_restart_every_night' => 'Start het systeem elke nacht opnieuw op',
     'rest_schema_gs_rtp_port_from' => 'RTP-bereik startpoort',
     'rest_schema_gs_sip_auth_prefix' => 'Voorvoegsel voor SIP-authenticatie',

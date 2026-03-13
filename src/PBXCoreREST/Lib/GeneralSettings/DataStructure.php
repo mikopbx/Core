@@ -277,6 +277,13 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'default' => (bool)self::getDefaultValue(PbxSettings::PBX_ALLOW_GUEST_CALLS),
                 'example' => (bool)self::getDefaultValue(PbxSettings::PBX_ALLOW_GUEST_CALLS)
             ],
+            PbxSettings::PBX_RATE_LIMIT_ENABLED => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_gs_rate_limit_enabled',
+                'sanitize' => 'bool',
+                'default' => (bool)self::getDefaultValue(PbxSettings::PBX_RATE_LIMIT_ENABLED),
+                'example' => (bool)self::getDefaultValue(PbxSettings::PBX_RATE_LIMIT_ENABLED)
+            ],
             PbxSettings::RESTART_EVERY_NIGHT => [
                 'type' => 'boolean',
                 'description' => 'rest_schema_gs_restart_every_night',

@@ -2093,6 +2093,7 @@ return [
     'rest_schema_codec_disabled' => 'Kodek devre dışı bırakıldı.',
     'rest_schema_gs_record_calls_inner' => 'Dahili görüşmeleri kaydedin',
     'rest_schema_gs_redirect_to_https' => 'HTTP\'yi otomatik olarak HTTPS\'ye yönlendir.',
+    'rest_schema_gs_rate_limit_enabled' => 'Enable HTTP rate limiting',
     'rest_schema_gs_restart_every_night' => 'Sistemi her gece yeniden başlatın.',
     'rest_schema_gs_sip_default_expiry' => 'Varsayılan SIP kayıt süresi (saniye)',
     'rest_schema_gs_sip_port' => 'SIP protokolü için port',
