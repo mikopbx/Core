@@ -15,6 +15,8 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'SIP yetkilendirme hataları (security_log)',
     'f2b_Jail_asterisk_v2' => 'SIP yetkilendirme hataları',
     'f2b_Jail_dropbear' => 'SSH Oturum Yetkilendirme Hataları',
+    'f2b_Jail_mikopbx-exploit-scanner_v2' => 'Güvenlik açığı taraması (şüpheli istekler)',
+    'f2b_Jail_mikopbx-nginx-errors_v2' => 'Nginx hataları (mevcut olmayan yollara istekler)',
     'f2b_Jail_mikopbx-www' => 'PBX Yönetim Arayüzündeki Yetkilendirme Hataları',
     'f2b_MaxReqSec10' => '10 istek/s',
     'f2b_MaxReqSec100' => '100 istek/s',

@@ -15,6 +15,8 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'Chyby autorizace SIP (security_log)',
     'f2b_Jail_asterisk_v2' => 'Chyby autorizace SIP',
     'f2b_Jail_dropbear' => 'Chyby autorizace SSH relací',
+    'f2b_Jail_mikopbx-exploit-scanner_v2' => 'Skenování zranitelností (podezřelé požadavky)',
+    'f2b_Jail_mikopbx-nginx-errors_v2' => 'Chyby nginx (přístupy k neexistujícím cestám)',
     'f2b_Jail_mikopbx-www' => 'Chyby autorizace v administrativním rozhraní PBX',
     'f2b_MaxReqSec10' => '10 req/s',
     'f2b_MaxReqSec100' => '100 req/s',

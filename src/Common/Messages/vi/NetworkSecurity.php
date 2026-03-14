@@ -15,6 +15,8 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'Lỗi ủy quyền SIP (security_log)',
     'f2b_Jail_asterisk_v2' => 'Lỗi ủy quyền SIP',
     'f2b_Jail_dropbear' => 'Lỗi ủy quyền phiên SSH',
+    'f2b_Jail_mikopbx-exploit-scanner_v2' => 'Quét lỗ hổng bảo mật (yêu cầu đáng ngờ)',
+    'f2b_Jail_mikopbx-nginx-errors_v2' => 'Lỗi nginx (yêu cầu đến các đường dẫn không tồn tại)',
     'f2b_Jail_mikopbx-www' => 'Lỗi ủy quyền trong giao diện quản trị tổng đài',
     'f2b_MaxReqSec10' => '10 yêu cầu/giây',
     'f2b_MaxReqSec100' => '100 yêu cầu/giây',

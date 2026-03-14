@@ -15,6 +15,8 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'SIP 授权错误（security_log）',
     'f2b_Jail_asterisk_v2' => 'SIP授权错误',
     'f2b_Jail_dropbear' => 'SSH会话授权错误',
+    'f2b_Jail_mikopbx-exploit-scanner_v2' => '漏洞扫描（可疑请求）',
+    'f2b_Jail_mikopbx-nginx-errors_v2' => 'Nginx错误（请求不存在的路径）',
     'f2b_Jail_mikopbx-www' => 'PBX管理界面中的授权错误',
     'f2b_MaxReqSec10' => '10 个请求/秒',
     'f2b_MaxReqSec100' => '100 个请求/秒',

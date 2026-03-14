@@ -82,18 +82,18 @@ class Fail2BanConf extends SystemConfigClass
      */
     public function start(): bool
     {
-        if(System::isBooting()){
-            if (!$this->fail2banEnable){
+        if (System::isBooting()) {
+            if (!$this->fail2banEnable) {
                 return true; // If disabled, return success
             }
-            
+
             $this->fail2banMakeDirs();
             $this->writeConfig();
             $this->generateModulesFilters();
-            
+
             // Ensure /var/run/fail2ban directory exists
             Util::mwMkdir('/var/run/fail2ban');
-            
+
             // Ensure log files exist before starting fail2ban
             $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/';
             Util::mwMkdir($log_dir);
@@ -104,7 +104,7 @@ class Fail2BanConf extends SystemConfigClass
                     touch($logPath);
                 }
             }
-            
+
             // Also ensure syslog file exists
             $syslog_file = SyslogConf::getSyslogFile();
             if (!file_exists($syslog_file)) {
@@ -120,13 +120,13 @@ class Fail2BanConf extends SystemConfigClass
             if (!file_exists($nginxAccessLog)) {
                 touch($nginxAccessLog);
             }
-            
+
             // Start fail2ban in background
             Processes::mwExecBg($this->startCommand);
-            
+
             // During boot, monit is not yet started, so we wait for fail2ban directly
             return $this->waitForFail2BanStart(10);
-        }else{
+        } else {
             return $this->reStart();
         }
     }
@@ -141,11 +141,11 @@ class Fail2BanConf extends SystemConfigClass
 
         $this->generateMonitConf();
         $this->monitReload();
-        if ($this->fail2banEnable){
+        if ($this->fail2banEnable) {
             $this->fail2banMakeDirs();
             $this->writeConfig();
             $result = $this->monitRestart();
-        }else{
+        } else {
             Processes::mwExec("$fail2banPath -x stop");
         }
 
@@ -170,7 +170,7 @@ class Fail2BanConf extends SystemConfigClass
      */
     public function generateMonitConf(): bool
     {
-        if(!$this->fail2banEnable){
+        if (!$this->fail2banEnable) {
             $this->deleteMonitConf();
             return false;
         }
@@ -246,7 +246,7 @@ class Fail2BanConf extends SystemConfigClass
     postrotate
         $fail2banPath set logtarget {$log_dir}fail2ban.log > /dev/null 2> /dev/null
     endscript
-    create 640 www www 
+    create 640 www www
 }";
         $varEtcDir  = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
         $path_conf   = $varEtcDir . '/fail2ban_logrotate.conf';
@@ -288,12 +288,12 @@ class Fail2BanConf extends SystemConfigClass
         if (empty($fail2banPath)) {
             return false;
         }
-        
+
         $maxAttempts = $timeout * 2; // Check every 0.5 seconds
-        
+
         // Give fail2ban a moment to create socket file
         usleep(500000); // 0.5 second initial delay
-        
+
         for ($i = 0; $i < $maxAttempts; $i++) {
             // Check if fail2ban responds to ping
             $pingResult = Processes::mwExec("$fail2banPath ping 2>&1", $out);
@@ -302,7 +302,7 @@ class Fail2BanConf extends SystemConfigClass
             }
             usleep(500000); // 0.5 second
         }
-        
+
         return false;
     }
 
@@ -411,7 +411,7 @@ class Fail2BanConf extends SystemConfigClass
         foreach ($jails as $jail => [$logPrefix, $actionNamePrefix, $ports]) {
             // Use specific filter for IAX jail
             $filter = ($jail === 'asterisk_iax') ? 'asterisk-iax' : 'asterisk-main';
-            
+
             $config  .= "[$jail]" . PHP_EOL .
                 $commonParams .
                 "filter = $filter" . PHP_EOL .
@@ -584,10 +584,16 @@ class Fail2BanConf extends SystemConfigClass
         // Construct the exploit scanner detection filter (nginx access.log)
         // Catches path traversal (..), .env/.git probing, php-cgi, setup.cgi,
         // SDK/webLanguage, goform, Docker API, Spring actuator, HNAP1 attacks
-        $exploitPatterns = '(?:\.\.|\.env|\.git|/etc/passwd|php-cgi|setup\.cgi|/SDK/|/goform/|/containers/json|/actuator/|HNAP1)';
+        $exploitPatterns = '(?:\.\.|\.env|\.git|/etc/passwd'
+            . '|php-cgi|setup\.cgi|/SDK/|/goform/'
+            . '|/containers/json|/actuator/|HNAP1)';
+        $logLine = '\s+-\s+\S+\s+\[.*?\]\s+"[^"]*';
+        $logEnd = '[^"]*"\s+\d+\s+';
         $conf = $commonConf .
-            'prefregex = ^<F-CONTENT>\S+\s+-\s+\S+\s+\[.*?\]\s+"[^"]*' . $exploitPatterns . '[^"]*"\s+\d+\s+.*</F-CONTENT>$' . "\n" .
-            'failregex = ^<HOST>\s+-\s+\S+\s+\[.*?\]\s+"[^"]*' . $exploitPatterns . '[^"]*"\s+\d+\s+' . "\n" .
+            'prefregex = ^<F-CONTENT>\S+' . $logLine
+            . $exploitPatterns . $logEnd . '.*</F-CONTENT>$' . "\n" .
+            'failregex = ^<HOST>' . $logLine
+            . $exploitPatterns . $logEnd . "\n" .
             "ignoreregex =\n";
 
         // Write the configuration to the exploit scanner filter file
@@ -894,7 +900,7 @@ class Fail2BanConf extends SystemConfigClass
 
         // Reload manager
         WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
-        
+
         // Reload IAX
         WorkerModelsEvents::invokeAction(ReloadIAXAction::class);
     }
@@ -924,7 +930,7 @@ class Fail2BanConf extends SystemConfigClass
 
         // Reload manager
         WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
-        
+
         // Reload IAX
         WorkerModelsEvents::invokeAction(ReloadIAXAction::class);
     }
@@ -949,7 +955,7 @@ class Fail2BanConf extends SystemConfigClass
         $sipAclFile = $asteriskEtcDir . '/fail2ban_sip_acl.conf';
         $managerDenyFile = $asteriskEtcDir . '/fail2ban_manager_deny.conf';
         $iaxDenyFile = $asteriskEtcDir . '/fail2ban_iax_deny.conf';
-        
+
         // Old files to be removed
         $oldFiles = [
             $asteriskEtcDir . '/fail2ban_dynamic_acl.conf',
@@ -981,18 +987,18 @@ class Fail2BanConf extends SystemConfigClass
         $sipBlockedIps = DockerNetworkFilterService::getBlockedIps('sip');
         $amiBlockedIps = DockerNetworkFilterService::getBlockedIps('ami');
         $iaxBlockedIps = DockerNetworkFilterService::getBlockedIps('iax');
-        
+
         // Generate SIP ACL file with named ACL section
         $sipContent = "; Fail2ban ACL configuration for PJSIP - DO NOT EDIT MANUALLY\n";
         $sipContent .= "; This file is automatically generated by fail2ban\n";
         $sipContent .= "; Last updated: " . date('Y-m-d H:i:s') . "\n\n";
-        
+
         $sipContent .= "; Named ACL for PJSIP endpoints\n";
         $sipContent .= "[acl_fail2ban]\n";
         $sipContent .= "; Always allow localhost access\n";
         $sipContent .= "permit=127.0.0.1/255.255.255.255\n";
         $sipContent .= "permit=::1\n";
-        
+
         if (!empty($sipBlockedIps)) {
             $sipContent .= "\n; Blocked IPs by fail2ban (SIP)\n";
             foreach ($sipBlockedIps as $ip) {
@@ -1038,17 +1044,17 @@ class Fail2BanConf extends SystemConfigClass
         }
 
         file_put_contents($managerDenyFile, $managerContent);
-        
+
         // Generate IAX deny rules file (since IAX doesn't support named ACLs)
         $iaxContent = "; Fail2ban deny rules for iax.conf - DO NOT EDIT MANUALLY\n";
         $iaxContent .= "; This file is automatically generated by fail2ban\n";
         $iaxContent .= "; Last updated: " . date('Y-m-d H:i:s') . "\n\n";
-        
+
         // Always permit localhost first
         $iaxContent .= "; Always allow localhost access\n";
         $iaxContent .= "permit=127.0.0.1/255.255.255.255\n";
         $iaxContent .= "permit=::1\n";
-        
+
         if (!empty($iaxBlockedIps)) {
             $iaxContent .= "\n; Blocked IPs by fail2ban (IAX)\n";
             foreach ($iaxBlockedIps as $ip) {
@@ -1066,9 +1072,9 @@ class Fail2BanConf extends SystemConfigClass
                 }
             }
         }
-        
+
         file_put_contents($iaxDenyFile, $iaxContent);
-        
+
         // Clean up old files
         foreach ($oldFiles as $file) {
             if (file_exists($file)) {

@@ -15,6 +15,8 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'SIP 認証エラー (security_log)',
     'f2b_Jail_asterisk_v2' => 'SIP認証エラー',
     'f2b_Jail_dropbear' => 'SSHセッション認証エラー',
+    'f2b_Jail_mikopbx-exploit-scanner_v2' => '脆弱性スキャン（不審なリクエスト）',
+    'f2b_Jail_mikopbx-nginx-errors_v2' => 'nginxエラー（存在しないパスへのリクエスト）',
     'f2b_Jail_mikopbx-www' => 'PBX管理インターフェイスの承認エラー',
     'f2b_MaxReqSec10' => '10 リクエスト/秒',
     'f2b_MaxReqSec100' => '100リクエスト/秒',

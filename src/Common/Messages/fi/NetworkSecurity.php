@@ -15,6 +15,8 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'SIP-valtuutusvirheet (security_log)',
     'f2b_Jail_asterisk_v2' => 'SIP-valtuutusvirheet',
     'f2b_Jail_dropbear' => 'SSH-istunnon valtuutusvirheet',
+    'f2b_Jail_mikopbx-exploit-scanner_v2' => 'Haavoittuvuuksien skannaus (epäilyttävät pyynnöt)',
+    'f2b_Jail_mikopbx-nginx-errors_v2' => 'Nginx-virheet (pyynnöt olemattomiin polkuihin)',
     'f2b_Jail_mikopbx-www' => 'Valtuutusvirheet PBX-hallintaliittymässä',
     'f2b_MaxReqSec10' => '10 pyyntöä/s',
     'f2b_MaxReqSec100' => '100 pyyntöä/s',

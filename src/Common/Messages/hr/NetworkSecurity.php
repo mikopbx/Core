@@ -16,6 +16,8 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'SIP autorizacijske pogreške (security_log)',
     'f2b_Jail_asterisk_v2' => 'SIP autorizacijske pogreške',
     'f2b_Jail_dropbear' => 'Pogreške autorizacije SSH sesije',
+    'f2b_Jail_mikopbx-exploit-scanner_v2' => 'Skeniranje ranjivosti (sumnjivi zahtjevi)',
+    'f2b_Jail_mikopbx-nginx-errors_v2' => 'Nginx greške (zahtjevi na nepostojeće putanje)',
     'f2b_Jail_mikopbx-www' => 'Pogreške autorizacije u administrativnom sučelju PBX-a',
     'f2b_MaxReqSec10' => '10 zahtjeva/s',
     'f2b_MaxReqSec100' => '100 zahtjeva/s',

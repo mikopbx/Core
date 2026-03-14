@@ -15,6 +15,8 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'ข้อผิดพลาดในการอนุญาต SIP (security_log)',
     'f2b_Jail_asterisk_v2' => 'ข้อผิดพลาดในการอนุญาต SIP',
     'f2b_Jail_dropbear' => 'ข้อผิดพลาดในการอนุญาตเซสชัน SSH',
+    'f2b_Jail_mikopbx-exploit-scanner_v2' => 'การสแกนช่องโหว่ (คำขอที่น่าสงสัย)',
+    'f2b_Jail_mikopbx-nginx-errors_v2' => 'ข้อผิดพลาด nginx (คำขอไปยังพาธที่ไม่มีอยู่)',
     'f2b_Jail_mikopbx-www' => 'ข้อผิดพลาดในการอนุญาตในอินเทอร์เฟซการดูแลระบบ PBX',
     'f2b_MaxReqSec10' => '10 req/s',
     'f2b_MaxReqSec100' => '100 คำขอ/วินาที',

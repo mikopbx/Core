@@ -20,6 +20,8 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'SIP ავტორიზაციის შეცდომები (security_log)',
     'f2b_Jail_asterisk_v2' => 'SIP ავტორიზაციის შეცდომები',
     'f2b_Jail_dropbear' => 'SSH სესიის ავტორიზაციის შეცდომები',
+    'f2b_Jail_mikopbx-exploit-scanner_v2' => 'დაუცველობის სკანირება (საეჭვო მოთხოვნები)',
+    'f2b_Jail_mikopbx-nginx-errors_v2' => 'Nginx შეცდომები (არარსებულ მისამართებზე წვდომა)',
     'f2b_Jail_mikopbx-www' => 'ავტორიზაციის შეცდომები PBX ადმინისტრაციულ ინტერფეისში',
     'f2b_MaxRetry' => 'მცდელობების რაოდენობა დაბლოკვამდე',
     'f2b_PBXFirewallMaxReqSec' => 'SIP შემომავალი პაკეტების მაქსიმალური რაოდენობა',

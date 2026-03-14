@@ -15,6 +15,8 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'Errores de autorización SIP (security_log)',
     'f2b_Jail_asterisk_v2' => 'Errores de autorización SIP',
     'f2b_Jail_dropbear' => 'Errores de autorización de sesión SSH',
+    'f2b_Jail_mikopbx-exploit-scanner_v2' => 'Escaneo de vulnerabilidades (solicitudes sospechosas)',
+    'f2b_Jail_mikopbx-nginx-errors_v2' => 'Errores de nginx (solicitudes a rutas inexistentes)',
     'f2b_Jail_mikopbx-www' => 'Errores de autorización en la interfaz administrativa de PBX',
     'f2b_MaxReqSec10' => '10 solicitudes/s',
     'f2b_MaxReqSec100' => '100 solicitudes/s',

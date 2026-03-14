@@ -15,6 +15,8 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'Σφάλματα εξουσιοδότησης SIP (security_log)',
     'f2b_Jail_asterisk_v2' => 'Σφάλματα εξουσιοδότησης SIP',
     'f2b_Jail_dropbear' => 'Σφάλματα εξουσιοδότησης περιόδου λειτουργίας SSH',
+    'f2b_Jail_mikopbx-exploit-scanner_v2' => 'Σάρωση ευπαθειών (ύποπτα αιτήματα)',
+    'f2b_Jail_mikopbx-nginx-errors_v2' => 'Σφάλματα nginx (αιτήματα σε μη υπάρχουσες διαδρομές)',
     'f2b_Jail_mikopbx-www' => 'Σφάλματα εξουσιοδότησης στη διαχειριστική διεπαφή PBX',
     'f2b_MaxReqSec10' => '10 req/s',
     'f2b_MaxReqSec100' => '100 req/s',

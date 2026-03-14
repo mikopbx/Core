@@ -15,6 +15,8 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'SIP avtorizasiya xətaları (security_log)',
     'f2b_Jail_asterisk_v2' => 'SIP avtorizasiya xətaları',
     'f2b_Jail_dropbear' => 'SSH sessiyasının avtorizasiya xətaları',
+    'f2b_Jail_mikopbx-exploit-scanner_v2' => 'Zəifliklərin skan edilməsi (şübhəli sorğular)',
+    'f2b_Jail_mikopbx-nginx-errors_v2' => 'Nginx xətaları (mövcud olmayan yollara müraciət)',
     'f2b_Jail_mikopbx-www' => 'PBX inzibati interfeysində avtorizasiya xətaları',
     'f2b_MaxReqSec10' => '10 req/s',
     'f2b_MaxReqSec100' => '100 req/s',

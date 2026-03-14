@@ -15,6 +15,8 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'SIP engedélyezési hibák (security_log)',
     'f2b_Jail_asterisk_v2' => 'SIP hitelesítési hibák',
     'f2b_Jail_dropbear' => 'SSH munkamenet engedélyezési hibák',
+    'f2b_Jail_mikopbx-exploit-scanner_v2' => 'Sebezhetőségi vizsgálat (gyanús kérések)',
+    'f2b_Jail_mikopbx-nginx-errors_v2' => 'Nginx hibák (nem létező útvonalakra irányuló kérések)',
     'f2b_Jail_mikopbx-www' => 'Engedélyezési hibák az alközpont adminisztrációs felületén',
     'f2b_MaxReqSec10' => '10 kérés/másodperc',
     'f2b_MaxReqSec100' => '100 kérés/másodperc',
