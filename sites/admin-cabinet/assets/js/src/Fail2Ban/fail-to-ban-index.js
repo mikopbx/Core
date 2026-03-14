@@ -55,6 +55,12 @@ const fail2BanIndex = {
     $banTimeSlider: $('#BanTimeSlider'),
 
     /**
+     * jQuery object for the find time slider.
+     * @type {jQuery}
+     */
+    $findTimeSlider: $('#FindTimeSlider'),
+
+    /**
      * Possible period values for the records retention.
      */
     maxReqValue: ['10', '30', '100', '300', '0'],
@@ -62,7 +68,12 @@ const fail2BanIndex = {
     /**
      * Possible ban time values in seconds.
      */
-    banTimeValues: ['10800', '43200', '86400', '259200'],
+    banTimeValues: ['10800', '43200', '86400', '259200', '604800'],
+
+    /**
+     * Possible find time values in seconds.
+     */
+    findTimeValues: ['300', '900', '1800', '3600'],
 
     /**
      * The list of banned IPs
@@ -94,15 +105,6 @@ const fail2BanIndex = {
                 {
                     type: 'integer[2..99]',
                     prompt: globalTranslate.f2b_ValidateMaxRetryRange,
-                },
-            ],
-        },
-        findtime: {
-            identifier: 'findtime',
-            rules: [
-                {
-                    type: 'integer[300..86400]',
-                    prompt: globalTranslate.f2b_ValidateFindTimeRange,
                 },
             ],
         },
@@ -162,7 +164,7 @@ const fail2BanIndex = {
             fail2BanIndex.$banTimeSlider
                 .slider({
                     min: 0,
-                    max: 3,
+                    max: 4,
                     step: 1,
                     smooth: true,
                     interpretLabel: function (value) {
@@ -171,6 +173,7 @@ const fail2BanIndex = {
                             globalTranslate.f2b_BanTime12Hours,
                             globalTranslate.f2b_BanTime24Hours,
                             globalTranslate.f2b_BanTime3Days,
+                            globalTranslate.f2b_BanTime7Days,
                         ];
                         return labels[value];
                     },
@@ -180,6 +183,31 @@ const fail2BanIndex = {
             const idx = fail2BanIndex.banTimeValues.indexOf(String(banTime));
             fail2BanIndex.$banTimeSlider
                 .slider('set value', idx >= 0 ? idx : 2, false);
+        }
+
+        // Initialize find time slider
+        if (fail2BanIndex.$findTimeSlider.length > 0) {
+            fail2BanIndex.$findTimeSlider
+                .slider({
+                    min: 0,
+                    max: 3,
+                    step: 1,
+                    smooth: true,
+                    interpretLabel: function (value) {
+                        let labels = [
+                            globalTranslate.f2b_FindTime5Min,
+                            globalTranslate.f2b_FindTime15Min,
+                            globalTranslate.f2b_FindTime30Min,
+                            globalTranslate.f2b_FindTime60Min,
+                        ];
+                        return labels[value];
+                    },
+                    onChange: fail2BanIndex.cbAfterSelectFindTimeSlider,
+                });
+            const findTime = fail2BanIndex.$formObj.form('get value', 'findtime');
+            const findIdx = fail2BanIndex.findTimeValues.indexOf(String(findTime));
+            fail2BanIndex.$findTimeSlider
+                .slider('set value', findIdx >= 0 ? findIdx : 2, false);
         }
     },
 
@@ -200,6 +228,16 @@ const fail2BanIndex = {
     cbAfterSelectBanTimeSlider(value) {
         const banTime = fail2BanIndex.banTimeValues[value];
         fail2BanIndex.$formObj.form('set value', 'bantime', banTime);
+        Form.dataChanged();
+    },
+
+    /**
+     * Handle event after the find time slider is changed.
+     * @param {number} value - The selected slider position.
+     */
+    cbAfterSelectFindTimeSlider(value) {
+        const findTime = fail2BanIndex.findTimeValues[value];
+        fail2BanIndex.$formObj.form('set value', 'findtime', findTime);
         Form.dataChanged();
     },
 
@@ -368,6 +406,11 @@ const fail2BanIndex = {
                     const banTime = String(data.bantime || '86400');
                     const idx = fail2BanIndex.banTimeValues.indexOf(banTime);
                     fail2BanIndex.$banTimeSlider.slider('set value', idx >= 0 ? idx : 2, false);
+                }
+                if (fail2BanIndex.$findTimeSlider.length > 0) {
+                    const findTime = String(data.findtime || '1800');
+                    const findIdx = fail2BanIndex.findTimeValues.indexOf(findTime);
+                    fail2BanIndex.$findTimeSlider.slider('set value', findIdx >= 0 ? findIdx : 2, false);
                 }
             }
         });

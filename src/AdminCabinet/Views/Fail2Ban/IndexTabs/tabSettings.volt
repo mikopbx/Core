@@ -1,15 +1,16 @@
 {{ form(['action' : '#', 'method': 'post', 'role': 'form', 'class': 'ui form', 'id':'fail2ban-settings-form']) }}
-<div class="two fields disability">
-    <div class="field ">
-        <label>{{ t._('f2b_MaxRetry') }}
-            <i class="circle info icon field-info-icon" data-field="maxretry"></i>
-        </label>
-        {{ form.render('maxretry') }}
-    </div>
-    <div class="field">
-        <label>{{ t._('f2b_FindTime') }}
-            <i class="circle info icon field-info-icon" data-field="findtime"></i>
-        </label>
+<div class="field disability">
+    <label>{{ t._('f2b_MaxRetry') }}
+        <i class="circle info icon field-info-icon" data-field="maxretry"></i>
+    </label>
+    {{ form.render('maxretry') }}
+</div>
+<div class="field disability">
+    <label>{{ t._('f2b_FindTime') }}
+        <i class="circle info icon field-info-icon" data-field="findtime"></i>
+    </label>
+    <div class="ui segment slider" style="padding-left: 35px;padding-right: 35px;margin-top: 5px;">
+        <div class="ui bottom aligned ticked labeled slider" id="FindTimeSlider"></div>
         {{ form.render('findtime') }}
     </div>
 </div>
