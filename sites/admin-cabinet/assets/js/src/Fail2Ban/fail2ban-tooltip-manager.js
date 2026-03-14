@@ -86,18 +86,9 @@ class Fail2BanTooltipManager {
                         term: globalTranslate.f2b_MaxRetryTooltip_examples_header,
                         definition: null
                     },
-                    {
-                        term: '3',
-                        definition: globalTranslate.f2b_MaxRetryTooltip_example_3
-                    },
-                    {
-                        term: '5',
-                        definition: globalTranslate.f2b_MaxRetryTooltip_example_5
-                    },
-                    {
-                        term: '10',
-                        definition: globalTranslate.f2b_MaxRetryTooltip_example_10
-                    }
+                    globalTranslate.f2b_MaxRetryTooltip_example_3,
+                    globalTranslate.f2b_MaxRetryTooltip_example_5,
+                    globalTranslate.f2b_MaxRetryTooltip_example_10
                 ],
                 warning: {
                     header: globalTranslate.f2b_MaxRetryTooltip_warning_header,
@@ -173,18 +164,9 @@ class Fail2BanTooltipManager {
                         term: globalTranslate.f2b_BanTimeTooltip_duration_header,
                         definition: null
                     },
-                    {
-                        term: '3600',
-                        definition: globalTranslate.f2b_BanTimeTooltip_1hour
-                    },
-                    {
-                        term: '86400',
-                        definition: globalTranslate.f2b_BanTimeTooltip_24hours
-                    },
-                    {
-                        term: '604800',
-                        definition: globalTranslate.f2b_BanTimeTooltip_7days
-                    }
+                    globalTranslate.f2b_BanTimeTooltip_1hour,
+                    globalTranslate.f2b_BanTimeTooltip_24hours,
+                    globalTranslate.f2b_BanTimeTooltip_7days
                 ],
                 note: globalTranslate.f2b_BanTimeTooltip_note
             },
@@ -198,18 +180,10 @@ class Fail2BanTooltipManager {
                         term: globalTranslate.f2b_FindTimeTooltip_window_header,
                         definition: null
                     },
-                    {
-                        term: '600',
-                        definition: globalTranslate.f2b_FindTimeTooltip_10min
-                    },
-                    {
-                        term: '1800',
-                        definition: globalTranslate.f2b_FindTimeTooltip_30min
-                    },
-                    {
-                        term: '3600',
-                        definition: globalTranslate.f2b_FindTimeTooltip_1hour
-                    }
+                    globalTranslate.f2b_FindTimeTooltip_10min,
+                    globalTranslate.f2b_FindTimeTooltip_30min,
+                    globalTranslate.f2b_FindTimeTooltip_1hour,
+                    globalTranslate.f2b_FindTimeTooltip_3hours
                 ],
                 note: globalTranslate.f2b_FindTimeTooltip_note
             },
