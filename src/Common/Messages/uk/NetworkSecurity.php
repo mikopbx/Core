@@ -4,7 +4,11 @@
  */
 
 return [
-    'f2b_BanTime' => 'Блокувати на (секунд)',
+    'f2b_BanTime' => 'Тривалість блокування',
+    'f2b_BanTime3Hours' => '3 години',
+    'f2b_BanTime12Hours' => '12 годин',
+    'f2b_BanTime24Hours' => '24 години',
+    'f2b_BanTime3Days' => '3 доби',
     'f2b_BanedTime' => 'Дата',
     'f2b_BannedIpTabHeader' => 'Заблоковані адреси',
     'f2b_Fail2BanSwitch' => 'Використовувати систему активного блокування Fail2Ban',

@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => 'დაბლოკვა (წამით)',
+    'f2b_BanTime' => 'დაბლოკვის ხანგრძლივობა',
+    'f2b_BanTime3Hours' => '3 საათი',
+    'f2b_BanTime12Hours' => '12 საათი',
+    'f2b_BanTime24Hours' => '24 საათი',
+    'f2b_BanTime3Days' => '3 დღე',
     'f2b_BanedTime' => 'თარიღი',
     'f2b_BannedIpTabHeader' => 'დაბლოკილი მისამართები',
     'f2b_Fail2BanSwitch' => 'გამოიყენეთ Fail2Ban აქტიური დაბლოკვის სისტემა',

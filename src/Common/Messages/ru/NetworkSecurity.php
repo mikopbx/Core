@@ -4,7 +4,11 @@
  */
 
 return [
-    'f2b_BanTime' => 'Блокировать на (секунд)',
+    'f2b_BanTime' => 'Блокировать на',
+    'f2b_BanTime3Hours' => '3 часа',
+    'f2b_BanTime12Hours' => '12 часов',
+    'f2b_BanTime24Hours' => '24 часа',
+    'f2b_BanTime3Days' => '3 суток',
     'f2b_BanedTime' => 'Дата',
     'f2b_BannedIpTabHeader' => 'Заблокированные адреса',
     'f2b_Fail2BanSwitch' => 'Использовать систему активной блокировки Fail2Ban',

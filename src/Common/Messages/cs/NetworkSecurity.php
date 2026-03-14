@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => 'Blokovat na (sekundy)',
+    'f2b_BanTime' => 'Doba blokování',
+    'f2b_BanTime3Hours' => '3 hodiny',
+    'f2b_BanTime12Hours' => '12 hodin',
+    'f2b_BanTime24Hours' => '24 hodin',
+    'f2b_BanTime3Days' => '3 dny',
     'f2b_BanedTime' => 'Datum',
     'f2b_BannedIpTabHeader' => 'Blokované adresy',
     'f2b_Fail2BanSwitch' => 'Používat systém aktivního blokování Fail2Ban',

@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => '(saniyələr) üçün bloklayın',
+    'f2b_BanTime' => 'Bloklama müddəti',
+    'f2b_BanTime3Hours' => '3 saat',
+    'f2b_BanTime12Hours' => '12 saat',
+    'f2b_BanTime24Hours' => '24 saat',
+    'f2b_BanTime3Days' => '3 gün',
     'f2b_BanedTime' => 'Tarix',
     'f2b_BannedIpTabHeader' => 'Bloklanmış ünvanlar',
     'f2b_Fail2BanSwitch' => 'Fail2Ban aktiv bloklama sistemindən istifadə edin',

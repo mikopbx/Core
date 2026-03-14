@@ -20,7 +20,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => 'To block for (seconds)',
+    'f2b_BanTime' => 'Ban duration',
+    'f2b_BanTime3Hours' => '3 hours',
+    'f2b_BanTime12Hours' => '12 hours',
+    'f2b_BanTime24Hours' => '24 hours',
+    'f2b_BanTime3Days' => '3 days',
     'f2b_BanedTime' => 'Date',
     'f2b_BannedIpTabHeader' => 'Blocked addresses',
     'f2b_Fail2BanSwitch' => 'Use Fail2Ban active blocking system',

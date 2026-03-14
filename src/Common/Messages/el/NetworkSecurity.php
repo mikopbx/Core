@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => 'Αποκλεισμός για (δευτερόλεπτα)',
+    'f2b_BanTime' => 'Διάρκεια αποκλεισμού',
+    'f2b_BanTime3Hours' => '3 ώρες',
+    'f2b_BanTime12Hours' => '12 ώρες',
+    'f2b_BanTime24Hours' => '24 ώρες',
+    'f2b_BanTime3Days' => '3 ημέρες',
     'f2b_BanedTime' => 'η ημερομηνία',
     'f2b_BannedIpTabHeader' => 'Αποκλεισμένες διευθύνσεις',
     'f2b_Fail2BanSwitch' => 'Χρησιμοποιήστε το ενεργό σύστημα αποκλεισμού Fail2Ban',

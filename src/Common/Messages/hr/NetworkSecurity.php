@@ -4,7 +4,11 @@
  */
 
 return [
-    'f2b_BanTime' => 'Blokiraj na (sekundi)',
+    'f2b_BanTime' => 'Trajanje blokade',
+    'f2b_BanTime3Hours' => '3 sata',
+    'f2b_BanTime12Hours' => '12 sati',
+    'f2b_BanTime24Hours' => '24 sata',
+    'f2b_BanTime3Days' => '3 dana',
     'f2b_BanedTime' => 'Datum',
     'f2b_BannedIpTabHeader' => 'Blokirane adrese',
     'f2b_Fail2BanSwitch' => 'Koristite aktivni sustav blokiranja Fail2Ban',

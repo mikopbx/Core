@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => 'Estä (sekuntia)',
+    'f2b_BanTime' => 'Eston kesto',
+    'f2b_BanTime3Hours' => '3 tuntia',
+    'f2b_BanTime12Hours' => '12 tuntia',
+    'f2b_BanTime24Hours' => '24 tuntia',
+    'f2b_BanTime3Days' => '3 päivää',
     'f2b_BanedTime' => 'Päivämäärä',
     'f2b_BannedIpTabHeader' => 'Estetyt osoitteet',
     'f2b_Fail2BanSwitch' => 'Käytä Fail2Ban aktiivista estojärjestelmää',

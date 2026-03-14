@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => 'Kilitleme (saniye)',
+    'f2b_BanTime' => 'Engelleme süresi',
+    'f2b_BanTime3Hours' => '3 saat',
+    'f2b_BanTime12Hours' => '12 saat',
+    'f2b_BanTime24Hours' => '24 saat',
+    'f2b_BanTime3Days' => '3 gün',
     'f2b_BanedTime' => 'tarih',
     'f2b_BannedIpTabHeader' => 'Engellenen adresler',
     'f2b_Fail2BanSwitch' => 'Fail2Ban Aktif Kilit Sistemini Kullan',

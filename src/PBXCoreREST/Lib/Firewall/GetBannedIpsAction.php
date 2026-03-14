@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,21 +19,25 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Firewall;
 
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\GeoIP2Conf;
-use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
+use SQLite3;
 
 /**
- *  Class GetBannedIp
+ *  Class GetBannedIpsAction
  *  Retrieve a list of banned IP addresses or get data for a specific IP address.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Firewall
  */
 class GetBannedIpsAction extends Injectable
 {
+    public const string CACHE_KEY = 'firewall:bannedIps';
+    private const int CACHE_TTL = 30;
+
     /**
      * Retrieve a list of banned IP addresses or get data for a specific IP address.
      *
@@ -44,80 +48,80 @@ class GetBannedIpsAction extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         $res->success = true;
+
+        $di = Di::getDefault();
+        $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
+
+        $cached = $managedCache->get(self::CACHE_KEY);
+        if ($cached !== null) {
+            $res->data = $cached;
+            return $res;
+        }
+
         $res->data = self::getBanIpWithTime();
+        $managedCache->set(self::CACHE_KEY, $res->data, self::CACHE_TTL);
+
         return $res;
     }
 
     /**
-     * Retrieve a list of banned IP addresses with their corresponding ban and unban timestamps.
+     * Retrieve a list of currently banned IP addresses with their ban/unban timestamps.
+     * Reads directly from fail2ban SQLite database for instant response (~3ms vs ~8s via fail2ban-client).
      *
-     * @return array An array containing the banned IP addresses and their timestamps.
+     * @return array An array of banned IPs grouped by IP address with country info and ban details.
      */
-    public static function getBanIpWithTime():array
+    public static function getBanIpWithTime(): array
     {
         $groupedResults = [];
-        $sep = '"|"';
-        $sepSpace = '" "';
-        $fail2banPath = Util::which(Fail2BanConf::FB_CLIENT_BIN);
-        $awkPath      = Util::which('awk');
+        $dbPath = Fail2BanConf::FAIL2BAN_DB_PATH;
 
-        try {
-            $shellData = str_replace("'", '"', shell_exec("$fail2banPath banned"));
-            $data = json_decode($shellData, true, 512, JSON_THROW_ON_ERROR);
-            $data = array_merge(... $data);
-        }catch (\Throwable $e){
-            $data = [];
+        if (!file_exists($dbPath)) {
+            return $groupedResults;
         }
 
+        $db = new SQLite3($dbPath, SQLITE3_OPEN_READONLY);
+        $db->busyTimeout(3000);
 
-        $jails = array_keys($data);
-        foreach ($jails as $jail){
-            $data = [];
-            Processes::mwExec("$fail2banPath get $jail banip --with-time | $awkPath '{print $1 $sep $2 $sepSpace $3 $sep $7 $sepSpace $8 }'", $data);
-            foreach ($data as $ipData){
-                $ipData = explode('|', $ipData);
-                $ip = $ipData[0]??'';
-                if(empty($ip)){
-                    continue;
-                }
+        if (false === Fail2BanConf::tableBanExists($db)) {
+            $db->close();
+            return $groupedResults;
+        }
 
-                // Check if this IP is already in the result array.
-                if (!isset($groupedResults[$ip])) {
-                    // If not, initialize it and add country info
-                    $countryInfo = GeoIP2Conf::getCountryByIp($ip);
-                    $groupedResults[$ip] = [
-                        'country' => $countryInfo['isoCode'],
-                        'countryName' => $countryInfo['name'],
-                        'bans' => [],
-                    ];
-                }
+        $now = time();
+        $stmt = $db->prepare(
+            'SELECT jail, ip, timeofban, timeofban + bantime AS timeunban '
+            . 'FROM bans WHERE timeofban + bantime > :now'
+        );
+        $stmt->bindValue(':now', $now, SQLITE3_INTEGER);
+        $result = $stmt->execute();
 
-                // Append the ban details to the existing array for this IP.
-                $groupedResults[$ip]['bans'][] = [
-                    'jail' => "{$jail}_v2",
-                    'timeofban' => self::time2stamp($ipData[1]),
-                    'timeunban' => self::time2stamp($ipData[2]),
-                    'v' => '2',
+        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            $ip = $row['ip'] ?? '';
+            if (empty($ip)) {
+                continue;
+            }
+
+            if (!isset($groupedResults[$ip])) {
+                $countryInfo = GeoIP2Conf::getCountryByIp($ip);
+                $groupedResults[$ip] = [
+                    'country' => $countryInfo['isoCode'],
+                    'countryName' => $countryInfo['name'],
+                    'bans' => [],
                 ];
             }
+
+            $jail = $row['jail'] ?? '';
+            $groupedResults[$ip]['bans'][] = [
+                'jail' => "{$jail}_v2",
+                'timeofban' => (int)$row['timeofban'],
+                'timeunban' => (int)$row['timeunban'],
+                'v' => '2',
+            ];
         }
+
+        $stmt->close();
+        $db->close();
+
         return $groupedResults;
     }
-
-    /**
-     * Convert a string representation of a time to a UNIX timestamp.
-     *
-     * @param string $strTime The string representation of the time.
-     * @return int The UNIX timestamp.
-     */
-    public static function time2stamp(string $strTime):int
-    {
-        $result = 0;
-        $d = \DateTime::createFromFormat('Y-m-d H:i:s', $strTime);
-        if ($d !== false) {
-            $result = $d->getTimestamp();
-        }
-        return $result;
-    }
-
 }

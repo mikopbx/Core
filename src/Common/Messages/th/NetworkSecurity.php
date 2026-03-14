@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => 'บล็อกเป็นเวลา (วินาที)',
+    'f2b_BanTime' => 'ระยะเวลาการบล็อก',
+    'f2b_BanTime3Hours' => '3 ชั่วโมง',
+    'f2b_BanTime12Hours' => '12 ชั่วโมง',
+    'f2b_BanTime24Hours' => '24 ชั่วโมง',
+    'f2b_BanTime3Days' => '3 วัน',
     'f2b_BanedTime' => 'วันที่',
     'f2b_BannedIpTabHeader' => 'ที่อยู่ที่ถูกบล็อก',
     'f2b_Fail2BanSwitch' => 'ใช้ระบบบล็อกที่ใช้งาน Fail2Ban',

@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => 'Khóa trên (giây)',
+    'f2b_BanTime' => 'Thời gian chặn',
+    'f2b_BanTime3Hours' => '3 giờ',
+    'f2b_BanTime12Hours' => '12 giờ',
+    'f2b_BanTime24Hours' => '24 giờ',
+    'f2b_BanTime3Days' => '3 ngày',
     'f2b_BanedTime' => 'Ngày',
     'f2b_BannedIpTabHeader' => 'Địa chỉ bị chặn',
     'f2b_Fail2BanSwitch' => 'Sử dụng hệ thống khóa hoạt động Fail2Ban',

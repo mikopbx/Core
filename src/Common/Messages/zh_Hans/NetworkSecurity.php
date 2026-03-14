@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => '锁定（秒）',
+    'f2b_BanTime' => '封禁时长',
+    'f2b_BanTime3Hours' => '3小时',
+    'f2b_BanTime12Hours' => '12小时',
+    'f2b_BanTime24Hours' => '24小时',
+    'f2b_BanTime3Days' => '3天',
     'f2b_BanedTime' => '日期',
     'f2b_BannedIpTabHeader' => '被阻止的地址',
     'f2b_Fail2BanSwitch' => '使用Fail2Ban主动锁系统',

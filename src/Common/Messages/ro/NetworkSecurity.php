@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => 'Blocați pentru (secunde)',
+    'f2b_BanTime' => 'Durata blocării',
+    'f2b_BanTime3Hours' => '3 ore',
+    'f2b_BanTime12Hours' => '12 ore',
+    'f2b_BanTime24Hours' => '24 ore',
+    'f2b_BanTime3Days' => '3 zile',
     'f2b_BanedTime' => 'Data',
     'f2b_BannedIpTabHeader' => 'Adrese blocate',
     'f2b_Fail2BanSwitch' => 'Utilizați sistemul de blocare activ Fail2Ban',

@@ -46,7 +46,7 @@ class Fail2BanEditForm extends BaseForm
 
         // Numeric fields for Fail2Ban settings
         $this->add(new Numeric('maxretry'));
-        $this->add(new Numeric('bantime'));
+        $this->add(new Hidden('bantime'));
         $this->add(new Numeric('findtime'));
 
         // Textarea for whitelist

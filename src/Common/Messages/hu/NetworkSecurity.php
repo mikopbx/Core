@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => 'Letiltás (másodperc)',
+    'f2b_BanTime' => 'Tiltás időtartama',
+    'f2b_BanTime3Hours' => '3 óra',
+    'f2b_BanTime12Hours' => '12 óra',
+    'f2b_BanTime24Hours' => '24 óra',
+    'f2b_BanTime3Days' => '3 nap',
     'f2b_BanedTime' => 'dátum',
     'f2b_BannedIpTabHeader' => 'Letiltott címek',
     'f2b_Fail2BanSwitch' => 'Használja a Fail2Ban aktív blokkoló rendszert',

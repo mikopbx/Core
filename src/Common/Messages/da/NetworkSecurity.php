@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => 'Blokere i (sekunder)',
+    'f2b_BanTime' => 'Blokeringsvarighed',
+    'f2b_BanTime3Hours' => '3 timer',
+    'f2b_BanTime12Hours' => '12 timer',
+    'f2b_BanTime24Hours' => '24 timer',
+    'f2b_BanTime3Days' => '3 dage',
     'f2b_BanedTime' => 'Dato',
     'f2b_BannedIpTabHeader' => 'Blokerede adresser',
     'f2b_Fail2BanSwitch' => 'Brug Fail2Ban aktivt blokerings system',

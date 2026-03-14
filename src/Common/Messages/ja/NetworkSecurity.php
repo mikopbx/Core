@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => 'ロックオン（秒）',
+    'f2b_BanTime' => 'ブロック期間',
+    'f2b_BanTime3Hours' => '3時間',
+    'f2b_BanTime12Hours' => '12時間',
+    'f2b_BanTime24Hours' => '24時間',
+    'f2b_BanTime3Days' => '3日間',
     'f2b_BanedTime' => '日付',
     'f2b_BannedIpTabHeader' => 'ブロックされたアドレス',
     'f2b_Fail2BanSwitch' => 'Fail2Banアクティブロックシステムを使用する',

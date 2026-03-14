@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => 'Bloquear (segundos)',
+    'f2b_BanTime' => 'Duração do bloqueio',
+    'f2b_BanTime3Hours' => '3 horas',
+    'f2b_BanTime12Hours' => '12 horas',
+    'f2b_BanTime24Hours' => '24 horas',
+    'f2b_BanTime3Days' => '3 dias',
     'f2b_BanedTime' => 'Data',
     'f2b_BannedIpTabHeader' => 'Endereços bloqueados',
     'f2b_Fail2BanSwitch' => 'Use o sistema de bloqueio ativo Fail2Ban',

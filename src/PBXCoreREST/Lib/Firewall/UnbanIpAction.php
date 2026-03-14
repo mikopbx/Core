@@ -19,13 +19,15 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Firewall;
 
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use SQLite3;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
+use SQLite3;
 
 /**
  *  Class Fail2banUnban
@@ -58,6 +60,11 @@ class UnbanIpAction extends Injectable
         } else {
             $res = self::fail2banUnbanDb($ip);
         }
+
+        // Invalidate banned IPs cache so the UI reflects the change immediately
+        $di = Di::getDefault();
+        $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
+        $managedCache->delete(GetBannedIpsAction::CACHE_KEY);
 
         return $res;
     }

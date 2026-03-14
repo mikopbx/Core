@@ -3,7 +3,11 @@ return [
     /**
  * Network and security translations
  */
-    'f2b_BanTime' => 'Sperren für (Sekunden)',
+    'f2b_BanTime' => 'Sperrdauer',
+    'f2b_BanTime3Hours' => '3 Stunden',
+    'f2b_BanTime12Hours' => '12 Stunden',
+    'f2b_BanTime24Hours' => '24 Stunden',
+    'f2b_BanTime3Days' => '3 Tage',
     'f2b_BanedTime' => 'Datum',
     'f2b_BannedIpTabHeader' => 'Gesperrte Adressen',
     'f2b_Fail2BanSwitch' => 'Fail2Ban aktives Sperrsystem verwenden',

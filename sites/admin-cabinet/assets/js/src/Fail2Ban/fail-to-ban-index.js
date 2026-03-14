@@ -37,15 +37,32 @@ const fail2BanIndex = {
     $bannedIpListTable: $('#banned-ip-list-table'),
 
     /**
+     * The parent segment containing the banned IPs tab (for dimmer overlay)
+     * @type {jQuery}
+     */
+    $bannedIpTabSegment: $('#banned-ip-list-table').closest('.segment'),
+
+    /**
      * jQuery object Maximum number of requests.
      * @type {jQuery}
      */
     $maxReqSlider: $('#PBXFirewallMaxReqSec'),
 
     /**
+     * jQuery object for the ban time slider.
+     * @type {jQuery}
+     */
+    $banTimeSlider: $('#BanTimeSlider'),
+
+    /**
      * Possible period values for the records retention.
      */
     maxReqValue: ['10', '30', '100', '300', '0'],
+
+    /**
+     * Possible ban time values in seconds.
+     */
+    banTimeValues: ['10800', '43200', '86400', '259200'],
 
     /**
      * The list of banned IPs
@@ -75,7 +92,7 @@ const fail2BanIndex = {
             identifier: 'maxretry',
             rules: [
                 {
-                    type: 'integer[3..99]',
+                    type: 'integer[2..99]',
                     prompt: globalTranslate.f2b_ValidateMaxRetryRange,
                 },
             ],
@@ -86,15 +103,6 @@ const fail2BanIndex = {
                 {
                     type: 'integer[300..86400]',
                     prompt: globalTranslate.f2b_ValidateFindTimeRange,
-                },
-            ],
-        },
-        bantime: {
-            identifier: 'bantime',
-            rules: [
-                {
-                    type: 'integer[300..259200]',
-                    prompt: globalTranslate.f2b_ValidateBanTimeRange,
                 },
             ],
         },
@@ -112,13 +120,14 @@ const fail2BanIndex = {
             Fail2BanTooltipManager.initialize();
         }
 
+        fail2BanIndex.showBannedListLoader();
         FirewallAPI.getBannedIps(fail2BanIndex.cbGetBannedIpList);
 
         fail2BanIndex.$bannedIpListTable.on('click', '.unban-button', (e) => {
             e.preventDefault();
             e.stopPropagation();
             const unbannedIp = $(e.currentTarget).attr('data-value');
-            fail2BanIndex.$bannedIpListTable.addClass('loading');
+            fail2BanIndex.showBannedListLoader();
             FirewallAPI.unbanIp(unbannedIp, fail2BanIndex.cbAfterUnBanIp);
         });
 
@@ -147,6 +156,31 @@ const fail2BanIndex = {
             fail2BanIndex.$maxReqSlider
                 .slider('set value', fail2BanIndex.maxReqValue.indexOf(maxReq), false);
         }
+
+        // Initialize ban time slider
+        if (fail2BanIndex.$banTimeSlider.length > 0) {
+            fail2BanIndex.$banTimeSlider
+                .slider({
+                    min: 0,
+                    max: 3,
+                    step: 1,
+                    smooth: true,
+                    interpretLabel: function (value) {
+                        let labels = [
+                            globalTranslate.f2b_BanTime3Hours,
+                            globalTranslate.f2b_BanTime12Hours,
+                            globalTranslate.f2b_BanTime24Hours,
+                            globalTranslate.f2b_BanTime3Days,
+                        ];
+                        return labels[value];
+                    },
+                    onChange: fail2BanIndex.cbAfterSelectBanTimeSlider,
+                });
+            const banTime = fail2BanIndex.$formObj.form('get value', 'bantime');
+            const idx = fail2BanIndex.banTimeValues.indexOf(String(banTime));
+            fail2BanIndex.$banTimeSlider
+                .slider('set value', idx >= 0 ? idx : 2, false);
+        }
     },
 
     /**
@@ -154,11 +188,18 @@ const fail2BanIndex = {
      * @param {number} value - The selected value from the slider.
      */
     cbAfterSelectMaxReqSlider(value) {
-        // Get the save period corresponding to the slider value.
         const maxReq = fail2BanIndex.maxReqValue[value];
-        // Set the form value for 'PBXRecordSavePeriod' to the selected save period.
         fail2BanIndex.$formObj.form('set value', 'PBXFirewallMaxReqSec', maxReq);
-        // Trigger change event to acknowledge the modification
+        Form.dataChanged();
+    },
+
+    /**
+     * Handle event after the ban time slider is changed.
+     * @param {number} value - The selected slider position.
+     */
+    cbAfterSelectBanTimeSlider(value) {
+        const banTime = fail2BanIndex.banTimeValues[value];
+        fail2BanIndex.$formObj.form('set value', 'bantime', banTime);
         Form.dataChanged();
     },
 
@@ -217,7 +258,7 @@ const fail2BanIndex = {
 
     // This callback method is used to display the list of banned IPs.
     cbGetBannedIpList(response) {
-        fail2BanIndex.$bannedIpListTable.removeClass('loading');
+        fail2BanIndex.hideBannedListLoader();
         if (response === false || !response.result) {
             return;
         }
@@ -278,6 +319,7 @@ const fail2BanIndex = {
 
     // This callback method is used after an IP has been unbanned.
     cbAfterUnBanIp() {
+        fail2BanIndex.showBannedListLoader();
         FirewallAPI.getBannedIps(fail2BanIndex.cbGetBannedIpList);
     },
 
@@ -317,10 +359,15 @@ const fail2BanIndex = {
                     PBXFirewallMaxReqSec: data.PBXFirewallMaxReqSec
                 });
 
-                // Update slider if it exists
+                // Update sliders if they exist
                 if (fail2BanIndex.$maxReqSlider.length > 0) {
                     const maxReq = data.PBXFirewallMaxReqSec || '10';
                     fail2BanIndex.$maxReqSlider.slider('set value', fail2BanIndex.maxReqValue.indexOf(maxReq), false);
+                }
+                if (fail2BanIndex.$banTimeSlider.length > 0) {
+                    const banTime = String(data.bantime || '86400');
+                    const idx = fail2BanIndex.banTimeValues.indexOf(banTime);
+                    fail2BanIndex.$banTimeSlider.slider('set value', idx >= 0 ? idx : 2, false);
                 }
             }
         });
@@ -340,6 +387,27 @@ const fail2BanIndex = {
 
         // Calculate new page length
         return Math.max(Math.floor((windowHeight - headerFooterHeight) / rowHeight), 10);
+    },
+
+    /**
+     * Show dimmer with loader on the banned IPs tab segment
+     */
+    showBannedListLoader() {
+        if (!fail2BanIndex.$bannedIpTabSegment.find('> .ui.dimmer').length) {
+            fail2BanIndex.$bannedIpTabSegment.append(
+                `<div class="ui inverted dimmer">
+                    <div class="ui text loader">${globalTranslate.ex_LoadingData}</div>
+                </div>`
+            );
+        }
+        fail2BanIndex.$bannedIpTabSegment.find('> .ui.dimmer').addClass('active');
+    },
+
+    /**
+     * Hide dimmer on the banned IPs tab segment
+     */
+    hideBannedListLoader() {
+        fail2BanIndex.$bannedIpTabSegment.find('> .ui.dimmer').removeClass('active');
     },
 
     /**
