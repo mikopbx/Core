@@ -111,22 +111,10 @@ class Fail2BanTooltipManager {
                         term: globalTranslate.f2b_WhitelistTooltip_examples_header,
                         definition: null
                     },
-                    {
-                        term: '192.168.1.100',
-                        definition: globalTranslate.f2b_WhitelistTooltip_example_single_ip
-                    },
-                    {
-                        term: '10.0.0.0/8',
-                        definition: globalTranslate.f2b_WhitelistTooltip_example_subnet
-                    },
-                    {
-                        term: '192.168.1.0/24',
-                        definition: globalTranslate.f2b_WhitelistTooltip_example_local_network
-                    },
-                    {
-                        term: '172.16.0.0/12',
-                        definition: globalTranslate.f2b_WhitelistTooltip_example_private_network
-                    }
+                    globalTranslate.f2b_WhitelistTooltip_example_single_ip,
+                    globalTranslate.f2b_WhitelistTooltip_example_subnet,
+                    globalTranslate.f2b_WhitelistTooltip_example_local_network,
+                    globalTranslate.f2b_WhitelistTooltip_example_private_network
                 ],
                 list2: [
                     {
