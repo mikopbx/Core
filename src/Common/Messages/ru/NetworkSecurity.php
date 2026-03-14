@@ -4,6 +4,8 @@
  */
 
 return [
+    'f2b_BlockingRulesHeader' => 'Правила блокировки',
+    'f2b_AdditionalSettingsHeader' => 'Дополнительные настройки',
     'f2b_BanTime' => 'Блокировать на',
     'f2b_BanTime3Hours' => '3 часа',
     'f2b_BanTime12Hours' => '12 часов',

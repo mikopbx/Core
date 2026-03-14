@@ -1,4 +1,12 @@
 {{ form(['action' : '#', 'method': 'post', 'role': 'form', 'class': 'ui form', 'id':'fail2ban-settings-form']) }}
+<style>
+    #fail2ban-settings-form .ui.labeled.slider > .labels .label {
+        font-size: 0.85em;
+        color: #888;
+    }
+</style>
+
+<h4 class="ui dividing header">{{ t._('f2b_BlockingRulesHeader') }}</h4>
 <div class="field disability">
     <label>{{ t._('f2b_MaxRetry') }}
         <i class="circle info icon field-info-icon" data-field="maxretry"></i>
@@ -9,7 +17,7 @@
     <label>{{ t._('f2b_FindTime') }}
         <i class="circle info icon field-info-icon" data-field="findtime"></i>
     </label>
-    <div class="ui segment slider" style="padding-left: 35px;padding-right: 35px;margin-top: 5px;">
+    <div style="padding: 10px 25px 0;">
         <div class="ui bottom aligned ticked labeled slider" id="FindTimeSlider"></div>
         {{ form.render('findtime') }}
     </div>
@@ -18,11 +26,13 @@
     <label>{{ t._('f2b_BanTime') }}
         <i class="circle info icon field-info-icon" data-field="bantime"></i>
     </label>
-    <div class="ui segment slider" style="padding-left: 35px;padding-right: 35px;margin-top: 5px;">
+    <div style="padding: 10px 25px 0;">
         <div class="ui bottom aligned ticked labeled slider" id="BanTimeSlider"></div>
         {{ form.render('bantime') }}
     </div>
 </div>
+
+<h4 class="ui dividing header">{{ t._('f2b_AdditionalSettingsHeader') }}</h4>
 <div class="field disability">
     <label>{{ t._('f2b_WhiteList') }}
         <i class="circle info icon field-info-icon" data-field="whitelist"></i>
@@ -35,11 +45,9 @@
     <label>{{ t._('f2b_PBXFirewallMaxReqSec') }}
         <i class="circle info icon field-info-icon" data-field="PBXFirewallMaxReqSec"></i>
     </label>
-    <div class="ui">
-        <div class="ui segment slider" id="pbx-firewall-max-req-slider" style="padding-left: 35px;padding-right: 35px;margin-top: 5px;">
-            <div class="ui bottom aligned ticked labeled slider" id="PBXFirewallMaxReqSec"></div>
-            {{ form.render('PBXFirewallMaxReqSec') }}
-        </div>
+    <div style="padding: 10px 25px 0;">
+        <div class="ui bottom aligned ticked labeled slider" id="PBXFirewallMaxReqSec"></div>
+        {{ form.render('PBXFirewallMaxReqSec') }}
     </div>
 </div>
 {% endif %}

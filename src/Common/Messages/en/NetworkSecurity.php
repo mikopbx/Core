@@ -20,6 +20,8 @@ return [
     /**
  * Network and security translations
  */
+    'f2b_BlockingRulesHeader' => 'Blocking rules',
+    'f2b_AdditionalSettingsHeader' => 'Additional settings',
     'f2b_BanTime' => 'Ban duration',
     'f2b_BanTime3Hours' => '3 hours',
     'f2b_BanTime12Hours' => '12 hours',
