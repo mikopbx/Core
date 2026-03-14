@@ -13,7 +13,10 @@ return [
     'f2b_BanedTime' => 'Дата',
     'f2b_BannedIpTabHeader' => 'Заблоковані адреси',
     'f2b_Fail2BanSwitch' => 'Використовувати систему активного блокування Fail2Ban',
-    'f2b_FindTime' => 'Вікно спостереження',
+    'f2b_FindTime' => 'Період спостереження',
+    'f2b_FindTime10Min' => '10 хвилин',
+    'f2b_FindTime1Hour' => '1 година',
+    'f2b_FindTime3Hours' => '3 години',
     'f2b_FindTime5Min' => '5 хвилин',
     'f2b_FindTime15Min' => '15 хвилин',
     'f2b_FindTime30Min' => '30 хвилин',
@@ -44,6 +47,7 @@ return [
     'f2b_ValidateFindTimeRange' => 'Неправильно заданий період аналізу спроб авторизації',
     'f2b_ValidateMaxRetryRange' => 'Неправильно задано параметр кількості спроб',
     'f2b_WhiteList' => 'Список адрес та підмереж, які ніколи не блокуються (через пробіл)',
+    'f2b_FindTimeTooltip_3hours' => '3 hours — for cautious scanners during the workday',
 
     // FW
     'fw_AccessAllowedForSubnet' => 'Доступ буде дозволено для підмережі',

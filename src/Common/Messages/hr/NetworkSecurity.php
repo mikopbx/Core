@@ -13,7 +13,10 @@ return [
     'f2b_BanedTime' => 'Datum',
     'f2b_BannedIpTabHeader' => 'Blokirane adrese',
     'f2b_Fail2BanSwitch' => 'Koristite aktivni sustav blokiranja Fail2Ban',
-    'f2b_FindTime' => 'Prozor promatranja',
+    'f2b_FindTime' => 'Razdoblje promatranja',
+    'f2b_FindTime10Min' => '10 minuta',
+    'f2b_FindTime1Hour' => '1 sat',
+    'f2b_FindTime3Hours' => '3 sata',
     'f2b_FindTime5Min' => '5 minuta',
     'f2b_FindTime15Min' => '15 minuta',
     'f2b_FindTime30Min' => '30 minuta',
@@ -44,6 +47,7 @@ return [
     'f2b_ValidateFindTimeRange' => 'Razdoblje analize za pokušaje autorizacije nije ispravno postavljeno',
     'f2b_ValidateMaxRetryRange' => 'Parametar za broj pokušaja nije ispravno postavljen',
     'f2b_WhiteList' => 'Popis adresa i podmreža koje se nikad ne blokiraju (odvojene razmakom)',
+    'f2b_FindTimeTooltip_3hours' => '3 hours — for cautious scanners during the workday',
 
     // FW
     'fw_AccessAllowedForSubnet' => 'Pristup će biti dopušten za podmrežu',

@@ -73,7 +73,7 @@ const fail2BanIndex = {
     /**
      * Possible find time values in seconds.
      */
-    findTimeValues: ['300', '900', '1800', '3600'],
+    findTimeValues: ['600', '1800', '3600', '10800'],
 
     /**
      * The list of banned IPs
@@ -195,10 +195,10 @@ const fail2BanIndex = {
                     smooth: true,
                     interpretLabel: function (value) {
                         let labels = [
-                            globalTranslate.f2b_FindTime5Min,
-                            globalTranslate.f2b_FindTime15Min,
+                            globalTranslate.f2b_FindTime10Min,
                             globalTranslate.f2b_FindTime30Min,
-                            globalTranslate.f2b_FindTime60Min,
+                            globalTranslate.f2b_FindTime1Hour,
+                            globalTranslate.f2b_FindTime3Hours,
                         ];
                         return labels[value];
                     },
