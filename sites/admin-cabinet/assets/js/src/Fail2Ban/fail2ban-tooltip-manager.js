@@ -202,26 +202,11 @@ class Fail2BanTooltipManager {
                         term: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_values_header,
                         definition: null
                     },
-                    {
-                        term: '10 req/s',
-                        definition: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_10
-                    },
-                    {
-                        term: '30 req/s',
-                        definition: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_30
-                    },
-                    {
-                        term: '100 req/s',
-                        definition: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_100
-                    },
-                    {
-                        term: '300 req/s',
-                        definition: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_300
-                    },
-                    {
-                        term: '∞',
-                        definition: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_unlimited
-                    }
+                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_10,
+                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_30,
+                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_100,
+                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_300,
+                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_unlimited
                 ],
                 list2: [
                     {
