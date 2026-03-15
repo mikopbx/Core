@@ -669,6 +669,7 @@ class NginxConf extends SystemConfigClass
     public static function logRotate(): void
     {
         $logrotate = Util::which('logrotate');
+        $nginxPath = Util::which('nginx');
 
         $max_size    = 10;
         foreach (self::getLogFiles() as $f_name) {
@@ -683,6 +684,7 @@ class NginxConf extends SystemConfigClass
         missingok
         noolddir
         postrotate
+            $nginxPath -s reopen > /dev/null 2>&1 || true
         endscript
     }";
             $path_conf   = '/var/etc/nginx_logrotate_' . basename($f_name) . '.conf';
