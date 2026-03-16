@@ -103,14 +103,14 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[HttpMapping(
     mapping: [
         'GET' => ['getList', 'getRecord', 'getDefault', 'getBannedIps'],
-        'POST' => ['create', 'unbanIp', 'enable', 'disable'],
+        'POST' => ['create', 'unbanIp', 'enable', 'disable', 'changePriority'],
         'PUT' => ['update'],
         'PATCH' => ['patch'],
         'DELETE' => ['delete']
     ],
     resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete'],
-    collectionLevelMethods: ['getList', 'create', 'getDefault', 'getBannedIps', 'unbanIp', 'enable', 'disable'],
-    customMethods: ['getDefault', 'getBannedIps', 'unbanIp', 'enable', 'disable'],
+    collectionLevelMethods: ['getList', 'create', 'getDefault', 'getBannedIps', 'unbanIp', 'enable', 'disable', 'changePriority'],
+    customMethods: ['getDefault', 'getBannedIps', 'unbanIp', 'enable', 'disable', 'changePriority'],
     idPattern: '[0-9]+'
 )]
 class RestController extends BaseRestController
@@ -468,6 +468,25 @@ class RestController extends BaseRestController
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     public function disable(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Change priority order of firewall network filter rules
+     *
+     * @route POST /pbxcore/api/v3/firewall:changePriority
+     */
+    #[ApiOperation(
+        summary: 'rest_fw_ChangePriority',
+        description: 'rest_fw_ChangePriorityDesc',
+        operationId: 'changeFirewallRulePriority'
+    )]
+    #[ApiResponse(200, 'rest_response_200_priority_changed')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function changePriority(): void
     {
         // Implementation handled by BaseRestController
     }

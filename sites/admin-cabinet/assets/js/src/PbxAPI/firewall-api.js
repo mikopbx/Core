@@ -32,7 +32,8 @@ const FirewallAPI = new PbxApiClient({
         getBannedIps: ':getBannedIps',
         unbanIp: ':unbanIp',
         enable: ':enable',
-        disable: ':disable'
+        disable: ':disable',
+        changePriority: ':changePriority'
     }
 });
 
@@ -97,4 +98,20 @@ FirewallAPI.enable = function(callback) {
  */
 FirewallAPI.disable = function(callback) {
     return this.callCustomMethod('disable', {}, callback, 'POST');
+};
+
+/**
+ * Change priority of firewall network filter rules
+ *
+ * @param {object} priorityData - Object with filter IDs as keys and new priorities as values
+ * @param {function} callback - Callback function to handle the response
+ * @example
+ * FirewallAPI.changePriority({'1': 1, '2': 2, '3': 3}, (response) => {
+ *     if (response.result) {
+ *         console.log('Priorities updated');
+ *     }
+ * });
+ */
+FirewallAPI.changePriority = function(priorityData, callback) {
+    return this.callCustomMethod('changePriority', { priorities: priorityData }, callback, 'POST');
 };

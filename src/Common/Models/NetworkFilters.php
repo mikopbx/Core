@@ -77,6 +77,14 @@ class NetworkFilters extends ModelsBase
     public ?string $description = '';
 
     /**
+     * Priority for rule ordering (lower number = higher priority).
+     * Used for drag-drop reordering in the firewall UI.
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $priority = '0';
+
+    /**
      * Returns allowed networks for provided list of traffic categories
      *
      * @param array<string> $arrTrafficCategory

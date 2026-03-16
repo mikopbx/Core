@@ -79,8 +79,8 @@ class GetListAction
             $defaultRules = FirewallRules::getDefaultRules();
             $networksTable = [];
             
-            // Get all network filters from database
-            $networkFilters = NetworkFilters::find();
+            // Get all network filters from database, sorted by priority
+            $networkFilters = NetworkFilters::find(['order' => 'CAST(priority AS INTEGER) ASC, id ASC']);
             $networkFiltersStoredInDB = ($networkFilters->count() > 0);
             
             foreach ($networkFilters as $filter) {
@@ -93,6 +93,7 @@ class GetListAction
                     'newer_block_ip' => $filter->newer_block_ip === '1',
                     'local_network' => $filter->local_network === '1',
                     'permanent' => false,
+                    'priority' => (int)$filter->priority,
                     'rules' => []
                 ];
                 
@@ -201,8 +202,9 @@ class GetListAction
                 }
             }
             
-            // Sort networks
-            usort($networksTable, [__CLASS__, 'sortArrayByNetwork']);
+            // Sort by priority: records from DB are already sorted by priority,
+            // unsaved default records (no id) go to the end
+            usort($networksTable, [__CLASS__, 'sortArrayByPriority']);
             
             // Apply pagination if requested
             $offset = isset($data['offset']) ? (int)$data['offset'] : 0;
@@ -234,31 +236,38 @@ class GetListAction
     }
     
     /**
-     * Compare two network entries for sorting
+     * Compare two network entries for sorting by priority
+     *
+     * Saved records (with id) are sorted by priority field.
+     * Unsaved default records (no id) go to the end.
      *
      * @param array<string, mixed> $a First network entry
      * @param array<string, mixed> $b Second network entry
      * @return int Sort order
      */
-    private static function sortArrayByNetwork(array $a, array $b): int
+    private static function sortArrayByPriority(array $a, array $b): int
     {
-        // Check if entries are "all networks" addresses (compare with subnet mask)
-        $aNetworkWithMask = $a['network'] . '/' . $a['subnet'];
-        $bNetworkWithMask = $b['network'] . '/' . $b['subnet'];
-        $aIsAllNetworks = ($aNetworkWithMask === '0.0.0.0/0' || $aNetworkWithMask === '::/0');
-        $bIsAllNetworks = ($bNetworkWithMask === '0.0.0.0/0' || $bNetworkWithMask === '::/0');
+        $aHasId = !empty($a['id']);
+        $bHasId = !empty($b['id']);
 
-        // If second entry is permanent and first is not "all networks"
-        if ($b['permanent'] && !$aIsAllNetworks) {
+        // Saved records come before unsaved defaults
+        if ($aHasId && !$bHasId) {
+            return -1;
+        }
+        if (!$aHasId && $bHasId) {
             return 1;
         }
 
-        // If second entry is "all networks"
-        if ($bIsAllNetworks) {
-            return 1;
+        // Both unsaved — keep original order
+        if (!$aHasId && !$bHasId) {
+            return 0;
         }
 
-        return -1;
+        // Both saved — sort by priority (lower number = higher priority)
+        $aPriority = (int)($a['priority'] ?? 0);
+        $bPriority = (int)($b['priority'] ?? 0);
+
+        return $aPriority <=> $bPriority;
     }
     
     /**

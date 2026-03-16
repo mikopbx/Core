@@ -28,6 +28,7 @@ use MikoPBX\PBXCoreREST\Lib\Firewall\EnableFirewallAction;
 use MikoPBX\PBXCoreREST\Lib\Firewall\DisableFirewallAction;
 use MikoPBX\PBXCoreREST\Lib\Firewall\GetBannedIpsAction;
 use MikoPBX\PBXCoreREST\Lib\Firewall\UnbanIpAction;
+use MikoPBX\PBXCoreREST\Lib\Firewall\ChangePriorityAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -49,6 +50,7 @@ enum FirewallAction: string
     case DISABLE_FIREWALL = 'disable';
     case GET_BANNED_IPS = 'getBannedIps';
     case UNBAN_IP = 'unbanIp';
+    case CHANGE_PRIORITY = 'changePriority';
 }
 
 /**
@@ -71,6 +73,7 @@ enum FirewallAction: string
  * - POST /firewall:disable       -> disable (disable firewall)
  * - GET /firewall:getBannedIps   -> getBannedIps (get Fail2Ban blocked IPs)
  * - POST /firewall:unbanIp       -> unbanIp (unban IP from Fail2Ban)
+ * - POST /firewall:changePriority -> changePriority (reorder network filter priority)
  * 
  * @package MikoPBX\PBXCoreREST\Lib
  */
@@ -122,6 +125,7 @@ class FirewallManagementProcessor extends Injectable
             FirewallAction::DISABLE_FIREWALL => DisableFirewallAction::main(),
             FirewallAction::GET_BANNED_IPS => GetBannedIpsAction::main(),
             FirewallAction::UNBAN_IP => UnbanIpAction::main($data['ip'] ?? ''),
+            FirewallAction::CHANGE_PRIORITY => ChangePriorityAction::main($data),
         };
 
         $res->function = $actionString;
