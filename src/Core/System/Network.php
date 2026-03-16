@@ -107,7 +107,9 @@ class Network extends Injectable
             $if_name_escaped = escapeshellarg($if_name);
 
             $commands = [
-                'subnet' => $ifconfig . ' '.$if_name_escaped.' | '.$awk.' \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
+                // BusyBox: "Mask:255.255.255.0", GNU: "netmask 255.255.255.0"
+                'subnet' => $ifconfig . ' '.$if_name_escaped.' | '.$awk.' \'/[Mm]ask/{for(i=1;i<=NF;i++){if($i=="netmask"){print $(i+1);exit}if($i~/^Mask:/){sub("Mask:","",$i);print $i;exit}}}\'',
+                // BusyBox: "inet addr:172.16.32.49", GNU: "inet 172.16.32.49"
                 'ipaddr' => $ifconfig . ' '.$if_name_escaped.' | '.$awk.' \'/inet / {sub("addr:", "", $2); print $2}\'',
                 'gateway' => $route . ' -n | '.$awk.' \'/^0.0.0.0/ {print $2}\'',
                 'hostname' => $hostname,
@@ -1363,40 +1365,66 @@ class Network extends Injectable
         $outputStr = implode(" ", $output ?? []);
 
         // Parse MAC address.
-        preg_match("/HWaddr (\S+)/", $outputStr, $matches);
-        $interface['mac'] = $matches[1] ?? '';
+        // BusyBox: "HWaddr 00:50:56:ac:ec:2c"
+        // GNU:     "ether 00:50:56:ac:ec:2c"
+        if (preg_match("/HWaddr\s+(\S+)/", $outputStr, $matches)
+            || preg_match("/ether\s+(\S+)/", $outputStr, $matches)) {
+            $interface['mac'] = $matches[1];
+        } else {
+            $interface['mac'] = '';
+        }
 
         // Parse IPv4 address.
-        preg_match("/inet addr:(\S+)/", $outputStr, $matches);
-        $interface['ipaddr'] = $matches[1] ?? '';
+        // BusyBox: "inet addr:172.16.32.49"
+        // GNU:     "inet 172.16.32.49"
+        if (preg_match("/inet addr:(\S+)/", $outputStr, $matches)
+            || preg_match("/inet\s+(\d+\.\d+\.\d+\.\d+)/", $outputStr, $matches)) {
+            $interface['ipaddr'] = $matches[1];
+        } else {
+            $interface['ipaddr'] = '';
+        }
 
         // Parse IPv4 subnet mask.
-        preg_match("/Mask:(\S+)/", $outputStr, $matches);
-        $subnet = isset($matches[1]) ? $this->netMaskToCidr($matches[1]) : '';
+        // BusyBox: "Mask:255.255.255.0"
+        // GNU:     "netmask 255.255.255.0"
+        if (preg_match("/Mask:(\S+)/", $outputStr, $matches)
+            || preg_match("/netmask\s+(\S+)/", $outputStr, $matches)) {
+            $subnet = $this->netMaskToCidr($matches[1]);
+        } else {
+            $subnet = '';
+        }
         $interface['subnet'] = $subnet;
 
         // Check if the interface is up.
-        preg_match("/\s+(UP)\s+/", $outputStr, $matches);
-        $status = $matches[1] ?? '';
-        if ($status === "UP") {
-            $interface['up'] = true;
-        } else {
-            $interface['up'] = false;
-        }
+        // BusyBox: " UP "
+        // GNU:     "flags=4163<UP,BROADCAST,RUNNING,MULTICAST>"
+        $interface['up'] = (bool)preg_match("/\bUP\b/", $outputStr);
 
         // Parse IPv6 addresses (Global and Link-Local)
-        // Example ifconfig output:
-        //   inet6 addr: fd07:b51a:cc66:d000::2/64 Scope:Global
-        //   inet6 addr: fe80::2c47:3ff:fe79:31d0/64 Scope:Link
+        // BusyBox: "inet6 addr: fd07:b51a:cc66:d000::2/64 Scope:Global"
+        // GNU:     "inet6 fd07:b51a:cc66:d000::2  prefixlen 64  scopeid 0x0<global>"
         $ipv6Addresses = [];
         foreach ($output as $line) {
+            // BusyBox format
             if (preg_match("/inet6 addr:\s*([^\s\/]+)\/(\d+)\s+Scope:(\S+)/", $line, $matches)) {
                 $ipv6Address = $matches[1];
                 $ipv6Prefix = $matches[2];
                 $scope = $matches[3];
 
-                // Store Global addresses (skip Link-Local fe80::/10)
                 if ($scope === 'Global' && !str_starts_with($ipv6Address, 'fe80:')) {
+                    $ipv6Addresses[] = [
+                        'address' => $ipv6Address,
+                        'prefix' => $ipv6Prefix,
+                        'scope' => $scope
+                    ];
+                }
+            // GNU format
+            } elseif (preg_match("/inet6\s+([^\s]+)\s+prefixlen\s+(\d+)\s+scopeid\s+\S+<(\w+)>/", $line, $matches)) {
+                $ipv6Address = $matches[1];
+                $ipv6Prefix = $matches[2];
+                $scope = $matches[3];
+
+                if ($scope === 'global' && !str_starts_with($ipv6Address, 'fe80:')) {
                     $ipv6Addresses[] = [
                         'address' => $ipv6Address,
                         'prefix' => $ipv6Prefix,
