@@ -243,9 +243,22 @@ const fail2BanIndex = {
 
 
     /**
-     * Initialize data table on the page
-     *
+     * Mapping of jail names to short tag labels and colors.
+     * Used to render compact colored labels instead of verbose ban reason text.
      */
+    jailTagMap: {
+        'asterisk_ami_v2': { tag: 'AMI', color: 'orange' },
+        'asterisk_error_v2': { tag: 'SIP', color: 'blue' },
+        'asterisk_public_v2': { tag: 'SIP', color: 'blue' },
+        'asterisk_security_log_v2': { tag: 'SIP', color: 'blue' },
+        'asterisk_v2': { tag: 'SIP', color: 'blue' },
+        'asterisk_iax_v2': { tag: 'IAX', color: 'teal' },
+        'dropbear_v2': { tag: 'SSH', color: 'grey' },
+        'mikopbx-exploit-scanner_v2': { tag: 'SCAN', color: 'red' },
+        'mikopbx-nginx-errors_v2': { tag: 'NGINX', color: 'purple' },
+        'mikopbx-www_v2': { tag: 'WEB', color: 'olive' },
+    },
+
     initializeDataTable(){
         $('#fail2ban-tab-menu .item').tab({
             onVisible(){
@@ -257,7 +270,6 @@ const fail2BanIndex = {
         });
 
         fail2BanIndex.dataTable = fail2BanIndex.$bannedIpListTable.DataTable({
-            // destroy: true,
             lengthChange: false,
             paging: true,
             pageLength: fail2BanIndex.calculatePageLength(),
@@ -266,32 +278,89 @@ const fail2BanIndex = {
             columns: [
                 // IP
                 {
-                    orderable: true,  // This column is orderable
-                    searchable: true  // This column is searchable
+                    orderable: true,
+                    searchable: true,
                 },
-                // Reason
+                // Reason tags
                 {
-                    orderable: false,  // This column is not orderable
-                    searchable: false  // This column is not searchable
+                    orderable: false,
+                    searchable: false,
+                },
+                // Ban date
+                {
+                    orderable: true,
+                    searchable: false,
+                },
+                // Expires
+                {
+                    orderable: true,
+                    searchable: false,
                 },
                 // Buttons
                 {
-                    orderable: false,  // This column is orderable
-                    searchable: false  // This column is searchable
+                    orderable: false,
+                    searchable: false,
                 },
             ],
             order: [0, 'asc'],
             language: SemanticLocalization.dataTableLocalisation,
-            /**
-             * Constructs the Extensions row.
-             * @param {HTMLElement} row - The row element.
-             * @param {Array} data - The row data.
-             */
-            createdRow(row, data) {
+            createdRow(row) {
                 $('td', row).eq(0).addClass('collapsing');
                 $('td', row).eq(2).addClass('collapsing');
+                $('td', row).eq(3).addClass('collapsing');
+                $('td', row).eq(4).addClass('collapsing');
+            },
+            drawCallback() {
+                // Initialize popups after each DataTable draw (handles pagination)
+                fail2BanIndex.$bannedIpListTable.find('.country-flag').popup({
+                    hoverable: true,
+                    position: 'top center',
+                    delay: { show: 300, hide: 100 },
+                });
+                fail2BanIndex.$bannedIpListTable.find('.ban-reason-tag').popup({
+                    hoverable: true,
+                    position: 'top center',
+                    delay: { show: 300, hide: 100 },
+                });
             },
         });
+    },
+
+    /**
+     * Build HTML for reason tags from ban entries.
+     * Groups bans by tag label, deduplicates, and renders colored labels with popup tooltips.
+     *
+     * @param {Array} bans - Array of ban objects with jail, timeofban, timeunban properties.
+     * @returns {string} HTML string with tag labels.
+     */
+    buildReasonTags(bans) {
+        // Group by tag label to deduplicate (e.g. multiple SIP jails → one SIP tag)
+        const tagGroups = {};
+        bans.forEach(ban => {
+            const jail = ban.jail || '';
+            const mapping = fail2BanIndex.jailTagMap[jail] || { tag: jail, color: 'grey' };
+            const translateKey = `f2b_Jail_${jail}`;
+            const fullReason = globalTranslate[translateKey] || jail;
+
+            if (!tagGroups[mapping.tag]) {
+                tagGroups[mapping.tag] = {
+                    color: mapping.color,
+                    reasons: [],
+                };
+            }
+            // Avoid duplicate reasons within the same tag group
+            if (tagGroups[mapping.tag].reasons.indexOf(fullReason) === -1) {
+                tagGroups[mapping.tag].reasons.push(fullReason);
+            }
+        });
+
+        let html = '';
+        Object.keys(tagGroups).forEach(tag => {
+            const group = tagGroups[tag];
+            const tooltipContent = group.reasons.join(', ');
+            html += `<span class="ui mini ${group.color} label ban-reason-tag" data-content="${tooltipContent}" data-position="top center">${tag}</span> `;
+        });
+        return html;
     },
 
     // This callback method is used to display the list of banned IPs.
@@ -301,58 +370,56 @@ const fail2BanIndex = {
             return;
         }
 
-        // Extract data from response
         const bannedIps = response.data || {};
 
-        // Clear the DataTable
         fail2BanIndex.dataTable.clear();
 
-        // Prepare the new data to be added
-        let newData = [];
+        const newData = [];
         Object.keys(bannedIps).forEach(ip => {
             const ipData = bannedIps[ip];
             const bans = ipData.bans || [];
             const country = ipData.country || '';
             const countryName = ipData.countryName || '';
-            
-            // Combine all reasons and dates for this IP into one string
-            let reasonsDatesCombined = bans.map(ban => {
-                const blockDate = new Date(ban.timeofban * 1000).toLocaleString();
-                let reason = `f2b_Jail_${ban.jail}`;
-                if (reason in globalTranslate) {
-                    reason = globalTranslate[reason];
-                }
-                return `${reason} - ${blockDate}`;
-            }).join('<br>'); // Use line breaks to separate each reason-date pair
 
-            // Build IP display with country flag if available
+            // Build IP display with country flag
             let ipDisplay = ip;
             if (country) {
-                // Add country flag with popup tooltip
                 ipDisplay = `<span class="country-flag" data-content="${countryName}" data-position="top center"><i class="flag ${country.toLowerCase()}"></i></span>${ip}`;
             }
 
-            // Construct a row: IP with Country, Combined Reasons and Dates, Unban Button
+            // Build reason tags
+            const reasonTags = fail2BanIndex.buildReasonTags(bans);
+
+            // Calculate earliest ban date and latest expiry across all bans
+            let earliestBan = Infinity;
+            let latestExpiry = 0;
+            bans.forEach(ban => {
+                if (ban.timeofban < earliestBan) {
+                    earliestBan = ban.timeofban;
+                }
+                if (ban.timeunban > latestExpiry) {
+                    latestExpiry = ban.timeunban;
+                }
+            });
+
+            const banDateStr = earliestBan < Infinity
+                ? `<span data-order="${earliestBan}">${fail2BanIndex.formatDateTime(earliestBan)}</span>`
+                : '';
+            const expiresStr = latestExpiry > 0
+                ? `<span data-order="${latestExpiry}">${fail2BanIndex.formatDateTime(latestExpiry)}</span>`
+                : '';
+
             const row = [
                 ipDisplay,
-                reasonsDatesCombined,
-                `<button class="ui icon basic mini button right floated unban-button" data-value="${ip}"><i class="icon trash red"></i> ${globalTranslate.f2b_Unban}</button>`
+                reasonTags,
+                banDateStr,
+                expiresStr,
+                `<button class="ui icon basic mini button right floated unban-button" data-value="${ip}"><i class="icon trash red"></i> ${globalTranslate.f2b_Unban}</button>`,
             ];
             newData.push(row);
         });
 
-        // Add the new data and redraw the table
         fail2BanIndex.dataTable.rows.add(newData).draw();
-        
-        // Initialize popups for country flags
-        fail2BanIndex.$bannedIpListTable.find('.country-flag').popup({
-            hoverable: true,
-            position: 'top center',
-            delay: {
-                show: 300,
-                hide: 100
-            }
-        });
     },
 
     // This callback method is used after an IP has been unbanned.
@@ -414,6 +481,22 @@ const fail2BanIndex = {
                 }
             }
         });
+    },
+
+    /**
+     * Format unix timestamp as DD.MM.YYYY HH:MM
+     *
+     * @param {number} timestamp - Unix timestamp in seconds.
+     * @returns {string} Formatted date string.
+     */
+    formatDateTime(timestamp) {
+        const d = new Date(timestamp * 1000);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        return `${day}.${month}.${year} ${hours}:${minutes}`;
     },
 
     /**

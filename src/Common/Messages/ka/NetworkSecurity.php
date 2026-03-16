@@ -9,6 +9,8 @@ return [
     'f2b_BanTime3Days' => '3 დღე',
     'f2b_BanTime7Days' => '7 დღე',
     'f2b_BanedTime' => 'თარიღი',
+    'f2b_BanDate' => 'დაბლოკვის თარიღი',
+    'f2b_Expires' => 'მოქმედებს',
     'f2b_BannedIpTabHeader' => 'დაბლოკილი მისამართები',
     'f2b_Fail2BanSwitch' => 'გამოიყენეთ Fail2Ban აქტიური დაბლოკვის სისტემა',
     'f2b_FindTime' => 'დაკვირვების პერიოდი',

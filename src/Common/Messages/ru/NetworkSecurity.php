@@ -40,6 +40,8 @@ return [
     'f2b_MaxReqSecUnlimited' => '∞',
     'f2b_MaxRetry' => 'Количество попыток до блокировки',
     'f2b_PBXFirewallMaxReqSec' => 'Максимальное количество входящих пакетов SIP',
+    'f2b_BanDate' => 'Дата бана',
+    'f2b_Expires' => 'Действует до',
     'f2b_Reason' => 'Причина',
     'f2b_SettingsTabHeader' => 'Настройка защиты',
     'f2b_TableBannedEmpty' => 'Данных нет',

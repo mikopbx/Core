@@ -9,6 +9,8 @@ return [
     'f2b_BanTime3Days' => '3 วัน',
     'f2b_BanTime7Days' => '7 วัน',
     'f2b_BanedTime' => 'วันที่',
+    'f2b_BanDate' => 'วันที่แบน',
+    'f2b_Expires' => 'หมดอายุ',
     'f2b_BannedIpTabHeader' => 'ที่อยู่ที่ถูกบล็อก',
     'f2b_Fail2BanSwitch' => 'ใช้ระบบบล็อกที่ใช้งาน Fail2Ban',
     'f2b_FindTime' => 'ระยะเวลาสังเกตการณ์',

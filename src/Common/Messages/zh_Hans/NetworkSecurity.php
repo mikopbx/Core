@@ -9,6 +9,8 @@ return [
     'f2b_BanTime3Days' => '3天',
     'f2b_BanTime7Days' => '7天',
     'f2b_BanedTime' => '日期',
+    'f2b_BanDate' => '封禁日期',
+    'f2b_Expires' => '到期时间',
     'f2b_BannedIpTabHeader' => '被阻止的地址',
     'f2b_Fail2BanSwitch' => '使用Fail2Ban主动锁系统',
     'f2b_FindTime' => '观察期',

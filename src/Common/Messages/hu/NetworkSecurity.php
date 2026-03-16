@@ -9,6 +9,8 @@ return [
     'f2b_BanTime3Days' => '3 nap',
     'f2b_BanTime7Days' => '7 nap',
     'f2b_BanedTime' => 'dátum',
+    'f2b_BanDate' => 'Tiltás dátuma',
+    'f2b_Expires' => 'Lejár',
     'f2b_BannedIpTabHeader' => 'Letiltott címek',
     'f2b_Fail2BanSwitch' => 'Használja a Fail2Ban aktív blokkoló rendszert',
     'f2b_FindTime' => 'Megfigyelési időszak',

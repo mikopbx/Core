@@ -9,6 +9,8 @@ return [
     'f2b_BanTime3Days' => '3 ngày',
     'f2b_BanTime7Days' => '7 ngày',
     'f2b_BanedTime' => 'Ngày',
+    'f2b_BanDate' => 'Ngày bị cấm',
+    'f2b_Expires' => 'Hết hạn',
     'f2b_BannedIpTabHeader' => 'Địa chỉ bị chặn',
     'f2b_Fail2BanSwitch' => 'Sử dụng hệ thống khóa hoạt động Fail2Ban',
     'f2b_FindTime' => 'Khoảng thời gian quan sát',

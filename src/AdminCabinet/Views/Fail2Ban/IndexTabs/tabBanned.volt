@@ -3,6 +3,8 @@
     <tr>
         <th>{{ t._('f2b_IpAddres')}}</th>
         <th>{{ t._('f2b_Reason')}}</th>
+        <th>{{ t._('f2b_BanDate')}}</th>
+        <th>{{ t._('f2b_Expires')}}</th>
         <th></th>
     </tr>
     </thead>
