@@ -88,19 +88,52 @@ class IptablesConf extends Injectable
         }
         file_put_contents($pid_file, getmypid());
 
+        // Stop fail2ban before flushing iptables to prevent "Invariant check failed" errors.
+        // Flushing INPUT destroys fail2ban's f2b-* jump rules; if fail2ban is running during
+        // the flush, its periodic check detects broken chains and logs errors.
+        $fail2ban = new Fail2BanConf();
+        if (System::canManageFirewall()) {
+            $fail2ban->monitStop();
+            self::waitForFail2banStop();
+        }
+
         $firewall = new self();
         $firewall->applyConfig();
+
+        // Restart fail2ban to recreate its iptables chains with current port config
+        $fail2ban->reStart();
+
         if (file_exists($pid_file)) {
             unlink($pid_file);
         }
     }
 
     /**
+     * Waits for the fail2ban process to fully exit after monit stop.
+     *
+     * monit stop is asynchronous — it sends SIGTERM and returns immediately.
+     * We must wait for the process to exit before flushing iptables,
+     * otherwise fail2ban may still detect the broken chains.
+     */
+    private static function waitForFail2banStop(): void
+    {
+        $maxWait = 20; // 20 × 500ms = 10 seconds max
+        while ($maxWait-- > 0) {
+            $pid = Processes::getPidOfProcess(Fail2BanConf::PROC_NAME);
+            if (empty($pid)) {
+                return;
+            }
+            usleep(500000);
+        }
+        SystemMessages::sysLogMsg(__METHOD__, 'fail2ban did not exit within 10s after monit stop', LOG_WARNING);
+    }
+
+    /**
      * Applies iptables settings.
      *
-     * It stops Fail2Ban, drops all existing rules, and then re-creates them based on the current configuration.
+     * Drops all existing rules and re-creates them based on the current configuration.
      * If the firewall is enabled, it applies the main and additional firewall rules.
-     * It also takes care of setting up Fail2Ban according to its enabled status.
+     * Caller is responsible for managing fail2ban lifecycle (stop before, restart after).
      *
      * IMPORTANT: If no firewall rules exist in database, all traffic is allowed (no DROP rule applied).
      * This prevents locking out SSH/WEB access when firewall is enabled without configured rules.
@@ -203,13 +236,11 @@ class IptablesConf extends Injectable
         // Flush IPv4 rules
         $iptablesPath = Util::which('iptables');
         Processes::mwExec("$iptablesPath -F INPUT");
-        Processes::mwExec("$iptablesPath -X INPUT");
 
         // Flush IPv6 rules
         $ip6tablesPath = Util::which('ip6tables');
         if (!empty($ip6tablesPath)) {
             Processes::mwExec("$ip6tablesPath -F INPUT");
-            Processes::mwExec("$ip6tablesPath -X INPUT");
         }
     }
 
