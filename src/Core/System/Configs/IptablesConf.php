@@ -140,8 +140,9 @@ class IptablesConf extends Injectable
                     $arr_command[] = $this->getIptablesInputRule($port, $updateRule, 'DROP');
                 }
             }
-            // Add allowed services
-            $this->addMainFirewallRules($arr_command);
+            // Add allowed services (regular subnets only, catch-all separated)
+            $catchAllCommands = [];
+            $this->addMainFirewallRules($arr_command, $catchAllCommands);
             $this->addAdditionalFirewallRules($arr_command);
 
             // Add firewall rules customisation
@@ -157,13 +158,19 @@ class IptablesConf extends Injectable
                 . " | $grep '^iptables' | $awk -F ';' '{print $1}'";
             Processes::mwExec($cmd, $arr_commands_custom);
 
-            // T2SDE or Docker
+            // Execute regular subnet rules and SIP provider rules
             Processes::mwExecCommands($arr_command, $out, 'firewall');
             Processes::mwExecCommands($arr_commands_custom, $out, 'firewall_additional');
 
             // Allow modules to inject custom iptables rules (e.g., ipset-based GeoIP filtering)
-            // Positioned after explicit subnet ACCEPT and SIP provider rules, before final DROP
+            // Positioned after explicit subnet ACCEPT and SIP provider rules, before catch-all ACCEPT
             PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::ON_AFTER_IPTABLES_RELOAD);
+
+            // Apply catch-all rules (0.0.0.0/0, ::/0) AFTER module hooks
+            // This ensures GeoIP DROP rules take effect before the catch-all ACCEPT
+            if (!empty($catchAllCommands)) {
+                Processes::mwExecCommands($catchAllCommands, $out, 'firewall_catchall');
+            }
 
             // Drop everything else - but ONLY if rules are configured
             // If no rules exist, allow all traffic to prevent lockout
@@ -314,14 +321,29 @@ class IptablesConf extends Injectable
     }
 
     /**
-     * Adds the main firewall rules.
+     * Adds the main firewall rules, sorted by NetworkFilter priority.
      *
-     * @param array<string> $arr_command Reference to the command array.
+     * Catch-all rules (0.0.0.0/0, ::/0) are separated into $catchAllCommands
+     * so they can be applied AFTER module hooks (e.g., GeoIP ipset DROP).
+     *
+     * @param array<string> $arr_command Reference to the command array for regular subnet rules.
+     * @param array<string> $catchAllCommands Reference to the command array for catch-all rules.
      * @return void
      */
-    public function addMainFirewallRules(array &$arr_command): void
+    public function addMainFirewallRules(array &$arr_command, array &$catchAllCommands = []): void
     {
-        $options = [];
+        // Build a map of network filter ID -> filter object, sorted by priority
+        $networkFilters = NetworkFilters::find(['order' => 'CAST(priority AS INTEGER) ASC, id ASC']);
+        $filterMap = [];
+        foreach ($networkFilters as $filter) {
+            $filterMap[$filter->id] = $filter;
+        }
+
+        // Group firewall rules by subnet then protocol, preserving priority order
+        // Structure: $options[$subnet][$protocol][] = $port
+        $regularOptions = [];
+        $catchAllOptions = [];
+
         $result = FirewallRules::find('action="allow"');
         /** @var FirewallRules $rule */
         foreach ($result as $rule) {
@@ -330,36 +352,56 @@ class IptablesConf extends Injectable
             } else {
                 $port = $rule->portfrom;
             }
-            /** @var NetworkFilters $network_filter */
-            $network_filter = NetworkFilters::findFirst($rule->networkfilterid);
+
+            $network_filter = $filterMap[$rule->networkfilterid] ?? null;
             if ($network_filter === null) {
                 $msg = "network_filter_id not found $rule->networkfilterid";
                 SystemMessages::sysLogMsg('Firewall', $msg, LOG_WARNING);
                 continue;
             }
-            if ('0.0.0.0/0' === $network_filter->permit && $rule->action !== 'allow') {
-                continue;
+
+            $permit = $network_filter->permit;
+            if ($permit === '0.0.0.0/0' || $permit === '::/0') {
+                if ($rule->action !== 'allow') {
+                    continue;
+                }
+                $catchAllOptions[$permit][$rule->protocol][] = $port;
+            } else {
+                $regularOptions[$permit][$rule->protocol][] = $port;
             }
-            $options[$rule->protocol][$network_filter->permit][] = $port;
         }
 
-        $this->makeCmdMultiport($options, $arr_command);
+        // Sort subnets by NetworkFilter priority (filterMap is already sorted)
+        $orderedRegular = [];
+        foreach ($filterMap as $filter) {
+            $permit = $filter->permit;
+            if (isset($regularOptions[$permit])) {
+                $orderedRegular[$permit] = $regularOptions[$permit];
+            }
+        }
+
+        // Regular subnet rules — added before module hooks
+        $this->makeCmdMultiportBySubnet($orderedRegular, $arr_command);
+
+        // Catch-all rules — to be applied after module hooks
+        $this->makeCmdMultiportBySubnet($catchAllOptions, $catchAllCommands);
     }
 
     /**
-     * Constructs the multiport command and adds it to the command array.
+     * Constructs multiport commands grouped by subnet first, then protocol.
      *
-     * Automatically detects IP version (IPv4 or IPv6) and generates appropriate firewall rules.
+     * This ensures iptables rules are ordered by NetworkFilter priority:
+     * all rules for subnet A appear before all rules for subnet B.
      *
-     * @param array<string, mixed> $options      Options for constructing the command.
-     * @param array<string> $arr_command  Reference to the command array.
+     * @param array<string, array<string, array<string>>> $options Subnet -> Protocol -> Ports
+     * @param array<string> $arr_command Reference to the command array.
      *
      * @return void
      */
-    private function makeCmdMultiport(array $options, array &$arr_command): void
+    private function makeCmdMultiportBySubnet(array $options, array &$arr_command): void
     {
-        foreach ($options as $protocol => $data) {
-            foreach ($data as $subnet => $ports) {
+        foreach ($options as $subnet => $protocols) {
+            foreach ($protocols as $protocol => $ports) {
                 if ($protocol === 'icmp') {
                     $other_data = '--icmp-type echo-reques';
                 } else {
@@ -367,7 +409,6 @@ class IptablesConf extends Injectable
                     $other_data = "-m multiport --dport $portsString";
                 }
 
-                // Use dual-stack firewall rule generation based on IP version detection
                 $arr_command[] = $this->getFirewallRule($subnet, $protocol, $other_data);
             }
         }

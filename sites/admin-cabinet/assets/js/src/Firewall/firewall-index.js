@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, firewallTooltips, FirewallAPI, UserMessage, SemanticLocalization */
+/* global globalRootUrl, globalTranslate, firewallTooltips, FirewallAPI, UserMessage, SemanticLocalization, $ */
 
 /**
  * The `firewallTable` object contains methods and variables for managing the Firewall system.
@@ -173,9 +173,9 @@ const firewallTable = {
         }
         
         let html = '<table class="ui selectable very basic compact unstackable table" id="firewall-table">';
-        
+
         // Build header
-        html += '<thead><tr><th></th>';
+        html += '<thead><tr><th class="collapsing"></th><th></th>';
         
         // Get categories from first rule
         const categories = Object.keys(rules[0].rules || {});
@@ -211,8 +211,19 @@ const firewallTable = {
      * @returns {string} HTML string
      */
     buildRuleRow(rule, categories, data) {
-        let html = `<tr class="rule-row" id="${rule.id || ''}">`;
-        
+        const priority = rule.priority !== undefined ? rule.priority : 0;
+        const permit = `${rule.network}/${rule.subnet}`;
+        const isCatchAll = (permit === '0.0.0.0/0' || permit === '::/0');
+        const noDragClass = isCatchAll ? ' nodrag nodrop' : '';
+        let html = `<tr class="rule-row${noDragClass}" id="${rule.id || ''}" data-value="${priority}">`;
+
+        // Drag handle cell — empty for catch-all rules (not draggable)
+        if (isCatchAll) {
+            html += '<td class="collapsing"></td>';
+        } else {
+            html += '<td class="collapsing dragHandle"><i class="sort grey icon"></i></td>';
+        }
+
         // Network and description cell
         html += '<td>';
         html += `${rule.network} - ${rule.description}`;
@@ -330,6 +341,13 @@ const firewallTable = {
      */
     initializeUIElements(data) {
 
+        // Initialize drag-and-drop reordering for priority
+        $('#firewall-table tbody').tableDnD({
+            onDrop: firewallTable.cbOnDrop,
+            onDragClass: 'hoveringRow',
+            dragHandle: '.dragHandle'
+        });
+
         // Re-bind double-click handler for dynamically created rows
         // Exclude last cell with action buttons to prevent accidental navigation on delete button clicks
         $('.rule-row td:not(:last-child)').off('dblclick').on('dblclick', (e) => {
@@ -428,6 +446,44 @@ const firewallTable = {
                 });
             }
         });
+    },
+
+    /**
+     * Callback function triggered when a firewall rule row is dropped after drag
+     * Sends updated priorities to the API
+     */
+    cbOnDrop() {
+        let priorityWasChanged = false;
+        const priorityData = {};
+
+        $('#firewall-table tbody tr').each((index, obj) => {
+            const ruleId = $(obj).attr('id');
+            if (!ruleId) {
+                return; // Skip rows without ID (unsaved rules)
+            }
+            const oldPriority = parseInt($(obj).attr('data-value'), 10);
+            const newPriority = index + 1;
+
+            if (oldPriority !== newPriority) {
+                priorityWasChanged = true;
+                priorityData[ruleId] = newPriority;
+            }
+        });
+
+        if (priorityWasChanged) {
+            // Update data-value attributes immediately to reflect new positions
+            $('#firewall-table tbody tr').each((index, obj) => {
+                $(obj).attr('data-value', index + 1);
+            });
+
+            FirewallAPI.changePriority(priorityData, (response) => {
+                if (!response.result) {
+                    UserMessage.showMultiString(response.messages);
+                    // Revert on failure
+                    firewallTable.loadFirewallData();
+                }
+            });
+        }
     },
 
     // Enable the firewall by making an HTTP request to the server.

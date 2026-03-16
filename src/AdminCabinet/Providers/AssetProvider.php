@@ -854,6 +854,7 @@ class AssetProvider implements ServiceProviderInterface
             }
             
             $this->footerCollectionJS
+                ->addJs('js/vendor/jquery.tablednd.js', true)
                 ->addJs('js/pbx/PbxAPI/firewall-api.js', true)
                 ->addJs('js/pbx/Firewall/firewall-tooltips.js', true)
                 ->addJs('js/pbx/Firewall/firewall-index.js', true);

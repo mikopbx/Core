@@ -172,6 +172,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 // Use writeAttribute to bypass auto-increment
                 $networkFilter->writeAttribute('id', (int)$recordId);
             }
+
+            // Auto-assign priority: insert before catch-all rules (0.0.0.0/0, ::/0)
+            $networkFilter->priority = (string)self::getNextRegularPriority();
         }
 
         // ============================================================
@@ -329,6 +332,45 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         return $res;
+    }
+
+    /**
+     * Calculate next priority for a regular (non-catch-all) network filter.
+     *
+     * Finds the maximum priority among non-catch-all filters and returns max+1.
+     * Also bumps catch-all filters (0.0.0.0/0, ::/0) to stay after the new rule.
+     *
+     * @return int Next priority value
+     */
+    private static function getNextRegularPriority(): int
+    {
+        $filters = NetworkFilters::find(['order' => 'CAST(priority AS INTEGER) ASC']);
+        $maxRegularPriority = 0;
+        $catchAllFilters = [];
+
+        foreach ($filters as $filter) {
+            $permit = trim($filter->permit);
+            if ($permit === '0.0.0.0/0' || $permit === '::/0') {
+                $catchAllFilters[] = $filter;
+            } else {
+                $priority = (int)$filter->priority;
+                if ($priority > $maxRegularPriority) {
+                    $maxRegularPriority = $priority;
+                }
+            }
+        }
+
+        $newPriority = $maxRegularPriority + 1;
+
+        // Bump catch-all filters to stay after the new rule
+        $catchAllPriority = $newPriority + 1;
+        foreach ($catchAllFilters as $filter) {
+            $filter->priority = (string)$catchAllPriority;
+            $filter->save();
+            $catchAllPriority++;
+        }
+
+        return $newPriority;
     }
 
     /**
