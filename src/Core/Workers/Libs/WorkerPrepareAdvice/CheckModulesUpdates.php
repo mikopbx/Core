@@ -53,14 +53,16 @@ class CheckModulesUpdates extends Injectable
         foreach ($modulesFromServer as $module) {
             if (isset($modulesFromLocal[$module['uniqid']])) {
                 $moduleFromLocal = $modulesFromLocal[$module['uniqid']];
-                if (version_compare($moduleFromLocal['version'], $module['version'], '<')) {
+                $localVersion = $moduleFromLocal['version'] ?? '0.0.0';
+                $remoteVersion = $module['version'] ?? '0.0.0';
+                if (version_compare($localVersion, $remoteVersion, '<')) {
                     $messages['info'][] = [
                         'messageTpl' => 'adv_AvailableNewVersionModule',
                         'messageParams' => [
                             'url' => $this->url->get('pbx-extension-modules/index/') . '?module=' . urlencode($module['uniqid']) . '#/marketplace',
-                            'ver' => $module['version'],
+                            'ver' => $remoteVersion,
                             'module' => $module['name'],
-                            'currentVer' => $moduleFromLocal['version'],
+                            'currentVer' => $localVersion,
                         ]
                     ];
                 }
