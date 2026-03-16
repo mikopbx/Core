@@ -9,6 +9,8 @@ return [
     'f2b_BanTime3Days' => '3 päivää',
     'f2b_BanTime7Days' => '7 päivää',
     'f2b_BanedTime' => 'Päivämäärä',
+    'f2b_BanDate' => 'Estopäivä',
+    'f2b_Expires' => 'Vanhenee',
     'f2b_BannedIpTabHeader' => 'Estetyt osoitteet',
     'f2b_Fail2BanSwitch' => 'Käytä Fail2Ban aktiivista estojärjestelmää',
     'f2b_FindTime' => 'Tarkkailujakso',

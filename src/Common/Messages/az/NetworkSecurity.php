@@ -9,6 +9,8 @@ return [
     'f2b_BanTime3Days' => '3 gün',
     'f2b_BanTime7Days' => '7 gün',
     'f2b_BanedTime' => 'Tarix',
+    'f2b_BanDate' => 'Banlama tarixi',
+    'f2b_Expires' => 'Bitmə tarixi',
     'f2b_BannedIpTabHeader' => 'Bloklanmış ünvanlar',
     'f2b_Fail2BanSwitch' => 'Fail2Ban aktiv bloklama sistemindən istifadə edin',
     'f2b_FindTime' => 'Müşahidə dövrü',

@@ -9,6 +9,8 @@ return [
     'f2b_BanTime3Days' => '3 giorni',
     'f2b_BanTime7Days' => '7 giorni',
     'f2b_BanedTime' => 'data',
+    'f2b_BanDate' => 'Data del blocco',
+    'f2b_Expires' => 'Scade',
     'f2b_BannedIpTabHeader' => 'Indirizzi bloccati',
     'f2b_Fail2BanSwitch' => 'Utilizzare il sistema di blocco attivo Fail2Ban',
     'f2b_FindTime' => 'Periodo di osservazione',

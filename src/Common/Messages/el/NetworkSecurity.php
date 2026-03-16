@@ -9,6 +9,8 @@ return [
     'f2b_BanTime3Days' => '3 ημέρες',
     'f2b_BanTime7Days' => '7 ημέρες',
     'f2b_BanedTime' => 'η ημερομηνία',
+    'f2b_BanDate' => 'Ημερομηνία αποκλεισμού',
+    'f2b_Expires' => 'Λήγει',
     'f2b_BannedIpTabHeader' => 'Αποκλεισμένες διευθύνσεις',
     'f2b_Fail2BanSwitch' => 'Χρησιμοποιήστε το ενεργό σύστημα αποκλεισμού Fail2Ban',
     'f2b_FindTime' => 'Περίοδος παρακολούθησης',

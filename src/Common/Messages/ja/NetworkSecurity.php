@@ -9,6 +9,8 @@ return [
     'f2b_BanTime3Days' => '3日間',
     'f2b_BanTime7Days' => '7日間',
     'f2b_BanedTime' => '日付',
+    'f2b_BanDate' => 'BANした日',
+    'f2b_Expires' => '有効期限',
     'f2b_BannedIpTabHeader' => 'ブロックされたアドレス',
     'f2b_Fail2BanSwitch' => 'Fail2Banアクティブロックシステムを使用する',
     'f2b_FindTime' => '監視期間',

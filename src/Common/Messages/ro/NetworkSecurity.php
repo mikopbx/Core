@@ -9,6 +9,8 @@ return [
     'f2b_BanTime3Days' => '3 zile',
     'f2b_BanTime7Days' => '7 zile',
     'f2b_BanedTime' => 'Data',
+    'f2b_BanDate' => 'Data blocare',
+    'f2b_Expires' => 'Expiră',
     'f2b_BannedIpTabHeader' => 'Adrese blocate',
     'f2b_Fail2BanSwitch' => 'Utilizați sistemul de blocare activ Fail2Ban',
     'f2b_FindTime' => 'Perioada de observare',

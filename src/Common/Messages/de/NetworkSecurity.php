@@ -9,6 +9,8 @@ return [
     'f2b_BanTime3Days' => '3 Tage',
     'f2b_BanTime7Days' => '7 Tage',
     'f2b_BanedTime' => 'Datum',
+    'f2b_BanDate' => 'Sperrdatum',
+    'f2b_Expires' => 'Läuft ab',
     'f2b_BannedIpTabHeader' => 'Gesperrte Adressen',
     'f2b_Fail2BanSwitch' => 'Fail2Ban aktives Sperrsystem verwenden',
     'f2b_FindTime' => 'Beobachtungszeitraum',

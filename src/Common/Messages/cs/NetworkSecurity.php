@@ -9,6 +9,8 @@ return [
     'f2b_BanTime3Days' => '3 dny',
     'f2b_BanTime7Days' => '7 dní',
     'f2b_BanedTime' => 'Datum',
+    'f2b_BanDate' => 'Datum zákazu',
+    'f2b_Expires' => 'Platí do',
     'f2b_BannedIpTabHeader' => 'Blokované adresy',
     'f2b_Fail2BanSwitch' => 'Používat systém aktivního blokování Fail2Ban',
     'f2b_FindTime' => 'Období sledování',

@@ -56,6 +56,8 @@ return [
     'f2b_MaxReqSecUnlimited' => '∞',
     'f2b_MaxRetry' => 'Number of attempts before blocking',
     'f2b_PBXFirewallMaxReqSec' => 'Maximum number of incoming SIP packets',
+    'f2b_BanDate' => 'Banned',
+    'f2b_Expires' => 'Expires',
     'f2b_Reason' => 'Reason',
     'f2b_SettingsTabHeader' => 'Security settings',
     'f2b_TableBannedEmpty' => 'No data',
