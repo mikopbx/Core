@@ -41,6 +41,27 @@ class PbxSettings extends ModelsBase
     use PbxSettingsDefaultValuesTrait;
 
     private const string CACHE_KEY = 'PbxSettings';
+
+    /**
+     * Returns Redis adapter with guaranteed correct database selection.
+     *
+     * In worker processes, the raw \Redis connection may have been switched
+     * to a different database (e.g., DB 1 by RedisClientProvider). This method
+     * ensures we always operate on ManagedCacheProvider::DATABASE_INDEX (DB 4).
+     *
+     * @return \Redis
+     */
+    private static function getRedisAdapter(): \Redis
+    {
+        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
+        try {
+            $redis->select(ManagedCacheProvider::DATABASE_INDEX);
+        } catch (\Throwable) {
+            // Redis may not be ready during early boot
+        }
+        return $redis;
+    }
+
     /**
      * Key by which the value is stored
      *
@@ -67,7 +88,7 @@ class PbxSettings extends ModelsBase
     public static function getAllPbxSettings(bool $useCache = true): array
     {
         $getDefaultArrayValues = self::getDefaultArrayValues();
-        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
+        $redis = self::getRedisAdapter();
         $currentSettings = [];
 
         if ($useCache) {
@@ -115,7 +136,7 @@ class PbxSettings extends ModelsBase
         
         try {
             if ($useCache) {
-                $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
+                $redis = self::getRedisAdapter();
                 $keyExistsInRedis = $redis->hexists(self::CACHE_KEY, $key);
                 
                 if ($keyExistsInRedis) {
@@ -170,7 +191,7 @@ class PbxSettings extends ModelsBase
                 $messages[] = $message->getMessage();
             }
         } else {
-            $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
+            $redis = self::getRedisAdapter();
             $redis->hset(self::CACHE_KEY, $key, $value);
         }
         return $result;
@@ -191,7 +212,7 @@ class PbxSettings extends ModelsBase
         }
         $data->value = PbxSettings::getDefaultArrayValues()[$key]??'';
 
-        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
+        $redis = self::getRedisAdapter();
         
         $result =  $data->update();
         if ($result) {

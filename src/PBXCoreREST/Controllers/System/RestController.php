@@ -272,12 +272,12 @@ class RestController extends BaseRestController
     }
 
     /**
-     * Change system interface language (PUBLIC - used on login page)
+     * Change system interface language (requires authentication)
      *
      * @route POST /pbxcore/api/v3/system:changeLanguage
      * @route PATCH /pbxcore/api/v3/system:changeLanguage
      */
-    #[ResourceSecurity('system_change_language', requirements: [SecurityType::PUBLIC])]
+    #[ResourceSecurity('system_change_language', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
     #[ApiOperation(
         summary: 'rest_system_ChangeLanguage',
         description: 'rest_system_ChangeLanguageDesc',

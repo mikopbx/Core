@@ -66,7 +66,7 @@ const LanguageSelect = {
             return;
         }
 
-        // Use REST API endpoint for language change
+        // Use REST API endpoint for language change (requires authentication)
         $.ajax({
             url: '/pbxcore/api/v3/system:changeLanguage',
             data: JSON.stringify({language: value}),
@@ -96,6 +96,13 @@ const LanguageSelect = {
                 }
             },
             error(xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    // Not authenticated (login page) — save preference locally
+                    // and reload with language parameter for server-side rendering
+                    localStorage.setItem('mikopbx-preferred-language', value);
+                    window.location.href = `${window.location.pathname}?lang=${encodeURIComponent(value)}`;
+                    return;
+                }
                 console.error('Language change failed:', xhr);
                 // Revert dropdown to previous language
                 if (LanguageSelect.$dropdown && LanguageSelect.$dropdown.length) {

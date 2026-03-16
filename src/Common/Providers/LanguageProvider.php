@@ -187,6 +187,12 @@ class LanguageProvider implements ServiceProviderInterface
                     return $jwtPayload['language'];
                 }
             }
+
+            // Check ?lang= query parameter (login page language selector)
+            $langParam = $request->getQuery('lang', 'string', '');
+            if ($langParam !== '' && array_key_exists($langParam, self::AVAILABLE_LANGUAGES)) {
+                return $langParam;
+            }
         }
 
         // Fall back to system settings

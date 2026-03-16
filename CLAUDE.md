@@ -83,6 +83,16 @@ Use the **`log-analyzer`** skill to diagnose issues:
 - **Asterisk logs**: `/storage/usbdisk1/mikopbx/log/asterisk/`
 - **Fail2ban logs**: `/storage/usbdisk1/mikopbx/log/fail2ban/fail2ban.log`
 
+### Filesystem Remount for Hot-Patching
+The `/offload` partition (rootfs) is mounted read-only. To deploy files:
+```bash
+busybox mount -o remount,rw /offload
+# copy files to /offload/rootfs/usr/www/...
+busybox mount -o remount,ro /offload
+```
+**Important:** Use `busybox mount`, not bare `mount` — the system `mount` may fail on T2/Linux.
+Mount point is `/offload` (not `/offload/rootfs`).
+
 ### Test Directory Mapping
 Tests are automatically synchronized between host and container:
 - **Host**: `src/Core/tests`
