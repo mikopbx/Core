@@ -178,17 +178,28 @@ class Udhcpc extends Network
             LOG_INFO
         );
         $this->updateIfSettings($data, $env_vars['interface']);
-        $data = [
-            'primarydns' => $named_dns[0] ?? '',
-            'secondarydns' => $named_dns[1] ?? '',
-            'domain' => $env_vars['domain'] ?? '',
-        ];
+
+        // Only update DNS fields that DHCP actually provided.
+        // If DHCP returns only one DNS server, don't clear the user-configured secondary DNS.
+        $data = [];
+        if (isset($named_dns[0])) {
+            $data['primarydns'] = $named_dns[0];
+        }
+        if (isset($named_dns[1])) {
+            $data['secondarydns'] = $named_dns[1];
+        }
+        if (!empty($env_vars['domain'])) {
+            $data['domain'] = $env_vars['domain'];
+        }
         SystemMessages::sysLogMsg(
             'Udhcpc',
-            "renewBoundSystemCtlAction DNS: interface={$env_vars['interface']}, dns1={$data['primarydns']}, dns2={$data['secondarydns']}, domain={$data['domain']}",
+            "renewBoundSystemCtlAction DNS: interface={$env_vars['interface']}, dns1=" . ($data['primarydns'] ?? 'unchanged')
+            . ", dns2=" . ($data['secondarydns'] ?? 'unchanged') . ", domain=" . ($data['domain'] ?? 'unchanged'),
             LOG_INFO
         );
-        $this->updateDnsSettings($data, $env_vars['interface']);
+        if (!empty($data)) {
+            $this->updateDnsSettings($data, $env_vars['interface']);
+        }
 
         // Set MTU (skip when skipNetworkCommands is true)
         if (!$skipNetworkCommands) {
@@ -322,17 +333,27 @@ class Udhcpc extends Network
         );
         $this->updateIfSettings($data, $env_vars['interface']);
 
-        $data = [
-            'primarydns' => $named_dns[0] ?? '',
-            'secondarydns' => $named_dns[1] ?? '',
-            'domain' => $env_vars['domain'] ?? '',
-        ];
+        // Only update DNS fields that DHCP actually provided.
+        // If DHCP returns only one DNS server, don't clear the user-configured secondary DNS.
+        $data = [];
+        if (isset($named_dns[0])) {
+            $data['primarydns'] = $named_dns[0];
+        }
+        if (isset($named_dns[1])) {
+            $data['secondarydns'] = $named_dns[1];
+        }
+        if (!empty($env_vars['domain'])) {
+            $data['domain'] = $env_vars['domain'];
+        }
         SystemMessages::sysLogMsg(
             'Udhcpc',
-            "renewBoundAction DNS: interface={$env_vars['interface']}, dns1={$data['primarydns']}, dns2={$data['secondarydns']}, domain={$data['domain']}",
+            "renewBoundAction DNS: interface={$env_vars['interface']}, dns1=" . ($data['primarydns'] ?? 'unchanged')
+            . ", dns2=" . ($data['secondarydns'] ?? 'unchanged') . ", domain=" . ($data['domain'] ?? 'unchanged'),
             LOG_INFO
         );
-        $this->updateDnsSettings($data, $env_vars['interface']);
+        if (!empty($data)) {
+            $this->updateDnsSettings($data, $env_vars['interface']);
+        }
 
         // Set MTU (skip when skipNetworkCommands is true)
         if (!$skipNetworkCommands) {

@@ -217,12 +217,18 @@ class Udhcpc6 extends Network
         ];
         $this->updateIfSettings($data, $env_vars['interface']);
 
-        // Save DNS servers
-        $data = [
-            'primarydns6' => $named_dns[0] ?? '',
-            'secondarydns6' => $named_dns[1] ?? '',
-        ];
-        $this->updateDnsSettings($data, $env_vars['interface']);
+        // Only update IPv6 DNS fields that DHCPv6 actually provided.
+        // If DHCPv6 returns only one DNS server, don't clear the user-configured secondary DNS.
+        $data = [];
+        if (isset($named_dns[0])) {
+            $data['primarydns6'] = $named_dns[0];
+        }
+        if (isset($named_dns[1])) {
+            $data['secondarydns6'] = $named_dns[1];
+        }
+        if (!empty($data)) {
+            $this->updateDnsSettings($data, $env_vars['interface']);
+        }
 
         // Restart DNS (skip when skipNetworkCommands is true)
         if (!$skipNetworkCommands && $is_inet === 1) {
