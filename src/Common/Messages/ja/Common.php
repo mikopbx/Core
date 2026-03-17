@@ -865,6 +865,8 @@ return [
     'adv_AriPasswordWeak' => 'AMI ユーザーの簡易パスワード <a href=\'%url%\'>%record%</a>',
     'adv_SecurityLogCriticalGrowth' => 'Asteriskのセキュリティログが%interval%分で%growth%MBという危険なサイズに達しました。システムが攻撃を受けています！<a href=\'%logFile%\'>ログを確認</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'Asteriskのセキュリティログが不審なほど増加しています: %interval%分で%growth%MB。セキュリティ設定を確認することをお勧めします。',
+    'adv_AsteriskLogCriticalGrowth' => 'Asteriskログの重大な増加 (%logFile%): %interval%分で%growth%MB。合計サイズ: %totalSize% MB。設定ミスまたは攻撃の可能性があります。',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Asteriskログの不審な増加 (%logFile%): %interval%分で%growth%MB。合計サイズ: %totalSize% MB。',
     'cdr_SearchByCustomPhrase' => '全文検索',
     'cdr_DeleteRecordingFile' => '録音ファイルも削除',
     'cdr_Delete' => '削除する',

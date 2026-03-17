@@ -753,6 +753,8 @@ Nowy klucz możesz otrzymać automatycznie wypełniając formularz rejestracyjny
     'sf_CsvCategory' => 'Pliki CSV',
     'bt_ToolTipCopyRoute' => 'Kopiuj trasę',
     'adv_SecurityLogSuspiciousGrowth' => 'Dziennik bezpieczeństwa Asteriska podejrzanie się rozrósł: %growth% MB w %interval% minut. Zalecamy sprawdzenie ustawień bezpieczeństwa.',
+    'adv_AsteriskLogCriticalGrowth' => 'Krytyczny wzrost dziennika Asterisk (%logFile%): %growth% MB w %interval% minut. Całkowity rozmiar: %totalSize% MB. Możliwy problem z konfiguracją lub atak.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Podejrzany wzrost dziennika Asterisk (%logFile%): %growth% MB w %interval% minut. Całkowity rozmiar: %totalSize% MB.',
     'cdr_AudioFileLoadError' => 'Błąd ładowania pliku audio',
     'cdr_AudioFileDownloadError' => 'Błąd podczas pobierania pliku audio',
     'cf_AddNewFile' => 'Dodaj nowy plik',

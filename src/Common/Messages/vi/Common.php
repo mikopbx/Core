@@ -830,6 +830,8 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'mo_S3BucketRequired' => 'Tên bucket S3 là bắt buộc nếu bạn đã bật tính năng lưu trữ S3.',
     'mo_S3AccessKeyRequired' => 'Cần có khóa truy cập S3 khi bật tính năng lưu trữ S3.',
     'adv_SecurityLogSuspiciousGrowth' => 'Tệp nhật ký bảo mật Asterisk đã tăng lên một cách đáng ngờ: %growth% MB trong %interval% phút. Bạn nên xem lại cài đặt bảo mật của mình.',
+    'adv_AsteriskLogCriticalGrowth' => 'Tệp nhật ký Asterisk tăng trưởng nghiêm trọng (%logFile%): %growth% MB trong %interval% phút. Tổng kích thước: %totalSize% MB. Có thể do lỗi cấu hình hoặc tấn công.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Tệp nhật ký Asterisk tăng trưởng đáng ngờ (%logFile%): %growth% MB trong %interval% phút. Tổng kích thước: %totalSize% MB.',
     'st_LocalRetentionHelp' => 'Các bản ghi được lưu trữ cục bộ trong khoảng thời gian đã chỉ định, sau đó được chuyển đến S3. Khoảng thời gian này phải ngắn hơn tổng thời gian lưu giữ.',
     'st_LocalRetentionPeriod' => 'Lưu trữ cục bộ (chế độ S3)',
     'st_RecordingRetentionPeriod' => 'Thời hạn lưu giữ hồ sơ (chung)',

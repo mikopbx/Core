@@ -750,6 +750,8 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'sd_Last3Hours' => 'Posljednja 3 sata',
     'adv_SecurityLogCriticalGrowth' => 'Asterisk sigurnosni zapisnik je kritično narastao: %growth% MB u %interval% minuta. Sustav je napadnut! <a href=\'%logFile%\'>Provjeri zapisnik</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'Sigurnosni zapisnik Asteriska sumnjivo je narastao: %growth% MB u %interval% minuta. Preporučuje se pregled sigurnosnih postavki.',
+    'adv_AsteriskLogCriticalGrowth' => 'Kritičan rast zapisnika Asteriska (%logFile%): %growth% MB u %interval% minuta. Ukupna veličina: %totalSize% MB. Moguć problem s konfiguracijom ili napad.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Sumnjiv rast zapisnika Asteriska (%logFile%): %growth% MB u %interval% minuta. Ukupna veličina: %totalSize% MB.',
     'am_EventFilterTooltip_desc' => 'Filter događaja omogućuje vam kontrolu nad događajima Asterisk Manager sučelja koji se šalju aplikaciji. To pomaže u smanjenju opterećenja mreže i pojednostavljenju obrade događaja.',
     'am_EventFilterTooltip_list_queue_desc' => 'status sudionika u redu čekanja',
     'am_EventFilterTooltip_list_newchannel_desc' => 'stvaranje novog kanala',

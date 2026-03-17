@@ -831,6 +831,8 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'mo_S3BucketRequired' => 'Il nome del bucket S3 è obbligatorio se è abilitato l\'archiviazione S3.',
     'mo_S3SecretKeyRequired' => 'La chiave segreta S3 è richiesta quando è abilitato l\'archiviazione S3.',
     'adv_SecurityLogSuspiciousGrowth' => 'Il registro di sicurezza di Asterisk è cresciuto in modo sospetto: %growth% MB in %interval% minuti. Si consiglia di rivedere le impostazioni di sicurezza.',
+    'adv_AsteriskLogCriticalGrowth' => 'Crescita critica del registro Asterisk (%logFile%): %growth% MB in %interval% minuti. Dimensione totale: %totalSize% MB. Possibile errore di configurazione o attacco.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Crescita sospetta del registro Asterisk (%logFile%): %growth% MB in %interval% minuti. Dimensione totale: %totalSize% MB.',
     'sd_LogLevel' => 'Livello',
     'sd_AllLevels' => 'Tutto',
     'sd_Error' => 'Errore',

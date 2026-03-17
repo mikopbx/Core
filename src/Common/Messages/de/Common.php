@@ -679,6 +679,8 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'bt_ToolTipCopyRoute' => 'Route kopieren',
     'adv_SecurityLogCriticalGrowth' => 'Das Asterisk-Sicherheitsprotokoll ist innerhalb von 60 Minuten auf eine kritische Größe von 45 MB angewachsen. Das System wird angegriffen! Überprüfen Sie das Protokoll.',
     'adv_SecurityLogSuspiciousGrowth' => 'Das Asterisk-Sicherheitsprotokoll ist verdächtig stark angewachsen: %growth% MB in %interval% Minuten. Es wird empfohlen, Ihre Sicherheitseinstellungen zu überprüfen.',
+    'adv_AsteriskLogCriticalGrowth' => 'Kritisches Wachstum des Asterisk-Protokolls (%logFile%): %growth% MB in %interval% Minuten. Gesamtgröße: %totalSize% MB. Mögliche Fehlkonfiguration oder Angriff.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Verdächtiges Wachstum des Asterisk-Protokolls (%logFile%): %growth% MB in %interval% Minuten. Gesamtgröße: %totalSize% MB.',
     'am_EventFilterTooltip_examples_header' => 'Beispiele',
     'am_EventFilterTooltip_list_newchannel' => 'Veranstaltung: Newchannel',
     'am_EventFilterTooltip_list_hangup_desc' => 'Anruf beenden',
@@ -953,4 +955,8 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'cdr_LinkedRecordsDeleted' => 'Ebenfalls entfernt wurden die zugehörigen Einträge: %count%',
     'cdr_DeleteFailed' => 'Eintrag konnte nicht gelöscht werden',
     'lic_PhoneExample' => '+7 (999) 123-45-67',
+    'cdr_FilteredEmptyTitle' => 'Keine Ergebnisse gefunden',
+    'cdr_FilteredEmptyDescription' => 'Versuchen Sie, die Filterkriterien zu ändern',
+    'cdr_EmptyDatabaseTitle' => 'Keine Anrufdaten',
+    'cdr_EmptyDatabaseDescription' => 'Es wurden noch keine Anrufe getätigt',
 ];

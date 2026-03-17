@@ -848,6 +848,8 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'mo_S3EndpointRequired' => 'S3 yaddaşı aktiv olduqda S3 giriş nöqtəsi URL-i tələb olunur.',
     'adv_SecurityLogCriticalGrowth' => 'Ulduz işarəsi ilə işarələnmiş təhlükəsizlik jurnalı kritik dərəcədə böyüdü: %interval% dəqiqə ərzində %growth% MB. Sistem hücum altındadır! <a href=\'%logFile%\'> Yoxlama jurnalı</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'Asterisk təhlükəsizlik jurnalı şübhəli şəkildə böyüdü: %growth% MB %interval% dəqiqə ərzində. Təhlükəsizlik parametrlərinizi nəzərdən keçirməyiniz tövsiyə olunur.',
+    'adv_AsteriskLogCriticalGrowth' => 'Asterisk jurnalının kritik artımı (%logFile%): %interval% dəqiqə ərzində %growth% MB. Ümumi ölçü: %totalSize% MB. Konfiqurasiya problemi və ya hücum ola bilər.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Asterisk jurnalının şübhəli artımı (%logFile%): %interval% dəqiqə ərzində %growth% MB. Ümumi ölçü: %totalSize% MB.',
     'cf_AddNewFile' => 'Yeni fayl əlavə edin',
     'st_S3AccessKey' => 'Giriş açarı',
     'st_S3Bucket' => 'S3 vedrə adı',
@@ -954,4 +956,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'cdr_SearchByLinkedID' => 'linked_id sahəsinə görə axtarış',
     'cf_EnterSearchPhrase' => 'Axtarış məlumatlarınızı daxil edin',
     'st_tooltip_note' => 'Qeyd',
+    'sf_AudioFileLoadError' => 'Audio faylı yüklənərkən xəta baş verdi',
 ];

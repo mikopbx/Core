@@ -830,6 +830,8 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'ms_Minutes' => 'minuuttia',
     'adv_SecurityLogCriticalGrowth' => 'Asterisk-tietoturvaloki on kasvanut kriittiseen %growth% Mt:n kokoon %interval% minuutissa. Järjestelmä on hyökkäyksen kohteena! <a href=\'%logFile%\'> Tarkista loki</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'Asteriskin tietoturvaloki on kasvanut epäilyttävästi: %growth% MB %interval% minuutissa. On suositeltavaa tarkistaa tietoturva-asetuksesi.',
+    'adv_AsteriskLogCriticalGrowth' => 'Asterisk-lokin kriittinen kasvu (%logFile%): %growth% MB %interval% minuutissa. Kokonaiskoko: %totalSize% MB. Mahdollinen konfiguraatiovirhe tai hyökkäys.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Asterisk-lokin epäilyttävä kasvu (%logFile%): %growth% MB %interval% minuutissa. Kokonaiskoko: %totalSize% MB.',
     'Set internet interface' => 'Määritä lähiverkon liitäntä internetiin',
     'st_LocalRetentionHelp' => 'Tietueet tallennetaan paikallisesti määritetyn ajanjakson ajan ja siirretään sitten S3-järjestelmään. Tämän ajanjakson on oltava lyhyempi kuin kokonaissäilytysaika.',
     'st_LocalRetentionMustBeLess' => 'Paikallisen säilyvyysajan on oltava lyhyempi kuin yleinen säilyvyysaika.',

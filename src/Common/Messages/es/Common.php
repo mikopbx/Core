@@ -786,6 +786,8 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     // Units of measurement
     'ms_MB' => 'MEGABYTE',
     'adv_SecurityLogSuspiciousGrowth' => 'El registro de seguridad de Asterisk ha aumentado sospechosamente: %growth% MB en %interval% minutos. Se recomienda revisar la configuración de seguridad.',
+    'adv_AsteriskLogCriticalGrowth' => 'Crecimiento crítico del registro de Asterisk (%logFile%): %growth% MB en %interval% minutos. Tamaño total: %totalSize% MB. Posible error de configuración o ataque.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Crecimiento sospechoso del registro de Asterisk (%logFile%): %growth% MB en %interval% minutos. Tamaño total: %totalSize% MB.',
     'sf_ConvertErrorDetails' => 'No se pudo convertir el archivo. Es posible que esté dañado o en un formato no compatible.',
     'am_tooltip_cdr_read' => 'Acceso a los registros de detalles de llamadas',
     'st_6Months' => '6 meses',
@@ -952,4 +954,10 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'cdr_SearchByDestNumber' => 'Búsqueda por el campo "quién fue llamado"',
     'cdr_Cancel' => 'Cancelar',
     'st_tooltip_note' => 'Nota',
+    'cdr_FilteredEmptyTitle' => 'No se encontraron resultados',
+    'cdr_FilteredEmptyDescription' => 'Intente cambiar los criterios del filtro',
+    'cdr_EmptyDatabaseTitle' => 'Sin datos de llamadas',
+    'cdr_EmptyDatabaseDescription' => 'Aún no se han realizado llamadas',
+    'dt_First' => 'Primera',
+    'dt_Last' => 'Última',
 ];

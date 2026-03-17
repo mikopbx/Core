@@ -794,6 +794,8 @@ return [
     'sf_UploadImgOnlyForFirmware' => 'IMG文件仅允许用于固件上传。',
     'ms_Minutes' => '分钟',
     'adv_SecurityLogSuspiciousGrowth' => 'Asterisk 安全日志异常增长：%growth% MB，用时 %interval% 分钟。建议您检查安全设置。',
+    'adv_AsteriskLogCriticalGrowth' => 'Asterisk 日志异常增长（%logFile%）：%interval% 分钟内增长 %growth% MB。总大小：%totalSize% MB。可能存在配置问题或遭受攻击。',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Asterisk 日志可疑增长（%logFile%）：%interval% 分钟内增长 %growth% MB。总大小：%totalSize% MB。',
     'st_S3StorageSettings' => 'S3 云存储',
     'st_S3StorageSubtitle' => '自动将录音上传到云存储',
     'st_S3TestConnectionHeader' => '测试与 S3 存储桶的连接',

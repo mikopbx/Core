@@ -769,6 +769,8 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'bt_ToolTipCopyRoute' => 'Copiar rota',
     'adv_SecurityLogCriticalGrowth' => 'O log de segurança do Asterisk cresceu criticamente: %growth% MB em %interval% minutos. O sistema está sob ataque! <a href=\'%logFile%\'>Verificar log</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'O registro de segurança do Asterisk cresceu de forma suspeita: %growth% MB em %interval% minutos. Recomenda-se revisar suas configurações de segurança.',
+    'adv_AsteriskLogCriticalGrowth' => 'Crescimento crítico do log do Asterisk (%logFile%): %growth% MB em %interval% minutos. Tamanho total: %totalSize% MB. Possível erro de configuração ou ataque.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Crescimento suspeito do log do Asterisk (%logFile%): %growth% MB em %interval% minutos. Tamanho total: %totalSize% MB.',
     'am_EventFilterTooltip_list_newchannel_desc' => 'Criando um novo canal',
     'am_EventFilterTooltip_list_hangup' => 'Evento: Desligamento',
     'am_EventFilterTooltip_list_hangup_desc' => 'encerrar uma chamada',

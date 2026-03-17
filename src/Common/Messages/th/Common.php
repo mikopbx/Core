@@ -730,6 +730,8 @@ return [
     'bt_ToolTipCopyRoute' => 'คัดลอกเส้นทาง',
     'adv_SecurityLogCriticalGrowth' => 'ไฟล์บันทึกความปลอดภัยของ Asterisk มีขนาดใหญ่ขึ้นอย่างมาก: %growth% MB ใน %interval% นาที ระบบกำลังถูกโจมตี! <a href=\'%logFile%\'>ตรวจสอบบันทึก</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'ไฟล์บันทึกความปลอดภัยของ Asterisk มีขนาดใหญ่ขึ้นอย่างน่าสงสัย: %growth% MB ใน %interval% นาที ขอแนะนำให้ตรวจสอบการตั้งค่าความปลอดภัยของคุณ',
+    'adv_AsteriskLogCriticalGrowth' => 'การเติบโตวิกฤตของบันทึก Asterisk (%logFile%): %growth% MB ใน %interval% นาที ขนาดรวม: %totalSize% MB อาจเกิดจากการกำหนดค่าผิดพลาดหรือการโจมตี',
+    'adv_AsteriskLogSuspiciousGrowth' => 'การเติบโตที่น่าสงสัยของบันทึก Asterisk (%logFile%): %growth% MB ใน %interval% นาที ขนาดรวม: %totalSize% MB',
     'am_EventFilterTooltip_list_newchannel' => 'กิจกรรม: นิวแชนแนล',
     'am_EventFilterTooltip_list_newchannel_desc' => 'การสร้างช่องทางใหม่',
     'am_EventFilterTooltip_list_hangup' => 'กิจกรรม: วางสาย',

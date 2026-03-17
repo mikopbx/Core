@@ -782,6 +782,8 @@ return [
     'sf_UploadSecurityViolation' => 'Виявлено спробу завантаження потенційно небезпечного файлу',
     'adv_SecurityLogCriticalGrowth' => 'Критичне зростання лога безпеки Asterisk: %growth% МБ за %interval% хвилин. Можлива атака на систему! <a href=\'%logFile%\'>Перевірити лог</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'Підозрювальне зростання лога безпеки Asterisk: %growth% МБ за %interval% хвилин. Рекомендується перевірити налаштування безпеки.',
+    'adv_AsteriskLogCriticalGrowth' => 'Критичне зростання логу Asterisk (%logFile%): %growth% МБ за %interval% хвилин. Загальний розмір: %totalSize% МБ. Можлива проблема з конфігурацією або атака.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Підозріле зростання логу Asterisk (%logFile%): %growth% МБ за %interval% хвилин. Загальний розмір: %totalSize% МБ.',
     'am_ErrorLoadingManager' => 'Помилка завантаження даних AMI користувача',
     'sd_Warning' => 'Попередження',
     'st_1Month' => '1 місяць',

@@ -846,6 +846,8 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'sf_UploadInvalidExtensionForCategory' => 'Neplatné rozšíření {extension} pro kategorii {category}',
     'sf_CsvCategory' => 'Soubory CSV',
     'adv_SecurityLogSuspiciousGrowth' => 'Bezpečnostní protokol Asterisku se podezřele zvětšil: %growth% MB za %interval% minut. Doporučuje se zkontrolovat nastavení zabezpečení.',
+    'adv_AsteriskLogCriticalGrowth' => 'Kritický růst protokolu Asterisk (%logFile%): %growth% MB za %interval% minut. Celková velikost: %totalSize% MB. Možný problém s konfigurací nebo útok.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Podezřelý růst protokolu Asterisk (%logFile%): %growth% MB za %interval% minut. Celková velikost: %totalSize% MB.',
     'st_S3StorageSettings' => 'Cloudové úložiště S3',
     'st_S3StorageSubtitle' => 'Automatické nahrávání nahrávek do cloudového úložiště',
     'st_S3TestConnectionHeader' => 'Testování připojení k bucketu S3',
@@ -954,4 +956,5 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'cdr_LinkedRecordsDeleted' => 'Také odstraněny související položky: %count%',
     'cdr_DeleteFailed' => 'Nepodařilo se smazat položku',
     'cdr_NoPermissionToDelete' => 'Nemáte oprávnění k mazání příspěvků.',
+    'sf_AudioFileLoadError' => 'Chyba při načítání audio souboru',
 ];

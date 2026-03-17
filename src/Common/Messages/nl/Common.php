@@ -759,6 +759,8 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'st_tooltip_note' => 'Opmerking',
     'ms_Minutes' => 'notulen',
     'adv_SecurityLogSuspiciousGrowth' => 'Het Asterisk-beveiligingslogboek is verdacht groot geworden: %growth% MB in %interval% minuten. Het is raadzaam uw beveiligingsinstellingen te controleren.',
+    'adv_AsteriskLogCriticalGrowth' => 'Kritieke groei van Asterisk-logboek (%logFile%): %growth% MB in %interval% minuten. Totale grootte: %totalSize% MB. Mogelijke misconfiguratie of aanval.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Verdachte groei van Asterisk-logboek (%logFile%): %growth% MB in %interval% minuten. Totale grootte: %totalSize% MB.',
     'am_EventFilterTooltip_list_hangup' => 'Gebeurtenis: Ophangen',
     'sf_ConvertErrorDetails' => 'Het converteren van het bestand is mislukt. Het bestand is mogelijk beschadigd of heeft een niet-ondersteund formaat.',
     'am_DescriptionPlaceholder' => 'Bijvoorbeeld: AMI-gebruiker voor integratie met CRM',

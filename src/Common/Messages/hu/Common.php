@@ -820,6 +820,8 @@ A regisztrációs űrlap kitöltésével automatikusan új kulcsot kaphat.<br>',
     // S3 Storage validation messages
     'mo_S3EndpointRequired' => 'Az S3 hozzáférési pont URL-címe kötelező, ha az S3 tárhely engedélyezve van.',
     'adv_SecurityLogSuspiciousGrowth' => 'Az Asterisk biztonsági naplója gyanúsan megnőtt: %growth% MB %interval% perc alatt. Javasoljuk, hogy tekintse át a biztonsági beállításait.',
+    'adv_AsteriskLogCriticalGrowth' => 'Az Asterisk napló kritikus növekedése (%logFile%): %growth% MB %interval% perc alatt. Teljes méret: %totalSize% MB. Lehetséges konfigurációs hiba vagy támadás.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Az Asterisk napló gyanús növekedése (%logFile%): %growth% MB %interval% perc alatt. Teljes méret: %totalSize% MB.',
     'am_EventFilterTooltip_list_queue_desc' => 'a sorban résztvevők állapota',
     'am_EventFilterTooltip_list_newchannel_desc' => 'új csatorna létrehozása',
     'am_EventFilterTooltip_list_hangup' => 'Esemény: Hangleállás',

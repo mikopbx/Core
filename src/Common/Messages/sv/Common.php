@@ -744,6 +744,8 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'st_tooltip_local_retention_desc' => 'Hur länge inspelningar ska lagras lokalt innan de flyttas till S3-molnlagring',
     'st_tooltip_local_retention_item1' => 'Efter denna period flyttas inspelningar till S3 och raderas från den lokala lagringen',
     'adv_SecurityLogSuspiciousGrowth' => 'Asterisk-säkerhetsloggen har ökat misstänkt: %growth% MB på %interval% minuter. Det rekommenderas att du granskar dina säkerhetsinställningar.',
+    'adv_AsteriskLogCriticalGrowth' => 'Kritisk tillväxt av Asterisk-logg (%logFile%): %growth% MB på %interval% minuter. Total storlek: %totalSize% MB. Möjlig felkonfiguration eller attack.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Misstänkt tillväxt av Asterisk-logg (%logFile%): %growth% MB på %interval% minuter. Total storlek: %totalSize% MB.',
     'am_EventFilterTooltip_format' => 'Inspelningsformat',
     'am_EventFilterTooltip_format_desc' => 'Varje mönster anges på en ny rad.',
     'am_EventFilterTooltip_list_deny_desc' => 'exkludera händelse (svartlista)',

@@ -762,6 +762,8 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'st_tooltip_local_retention_item1' => 'După această perioadă, înregistrările sunt mutate în S3 și șterse din stocarea locală',
     'bt_ToolTipCopyRoute' => 'Copiați ruta',
     'adv_SecurityLogSuspiciousGrowth' => 'Jurnalul de securitate Asterisk a crescut suspect: %growth% MB în %interval% minute. Se recomandă verificarea setărilor de securitate.',
+    'adv_AsteriskLogCriticalGrowth' => 'Creștere critică a jurnalului Asterisk (%logFile%): %growth% MB în %interval% minute. Dimensiune totală: %totalSize% MB. Posibilă problemă de configurare sau atac.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Creștere suspectă a jurnalului Asterisk (%logFile%): %growth% MB în %interval% minute. Dimensiune totală: %totalSize% MB.',
     'am_EventFilterTooltip_list_newchannel_desc' => 'crearea unui canal nou',
     'am_EventFilterTooltip_list_hangup' => 'Eveniment: Închidere',
     'am_EventFilterTooltip_list_hangup_desc' => 'încheierea unui apel',

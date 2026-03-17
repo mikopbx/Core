@@ -752,6 +752,8 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'st_tooltip_warning' => 'Avertissement de sécurité',
     'adv_SecurityLogCriticalGrowth' => 'Le journal de sécurité d\'Asterisk a atteint une taille critique : %growth% Mo en %interval% minutes. Le système est attaqué ! <a href=\'%logFile%\'>Consultez le journal</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'Le journal de sécurité d\'Asterisk a augmenté de manière suspecte : %growth% Mo en %interval% minutes. Il est recommandé de vérifier vos paramètres de sécurité.',
+    'adv_AsteriskLogCriticalGrowth' => 'Croissance critique du journal Asterisk (%logFile%) : %growth% Mo en %interval% minutes. Taille totale : %totalSize% Mo. Possible erreur de configuration ou attaque.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Croissance suspecte du journal Asterisk (%logFile%) : %growth% Mo en %interval% minutes. Taille totale : %totalSize% Mo.',
     'sd_Warning' => 'Avertissement',
     'sf_FirmwareCategory' => 'Micrologiciel',
     'am_DescriptionPlaceholder' => 'Par exemple : utilisateur AMI pour l’intégration avec CRM',

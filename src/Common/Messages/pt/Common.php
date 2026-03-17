@@ -848,6 +848,8 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'mo_S3AccessKeyRequired' => 'É necessária uma chave de acesso ao S3 quando o armazenamento S3 está ativado.',
     'mo_S3SecretKeyRequired' => 'A chave secreta do S3 é necessária quando o armazenamento S3 está ativado.',
     'adv_SecurityLogSuspiciousGrowth' => 'O registro de segurança do Asterisk cresceu de forma suspeita: %growth% MB em %interval% minutos. Recomenda-se revisar suas configurações de segurança.',
+    'adv_AsteriskLogCriticalGrowth' => 'Crescimento crítico do log do Asterisk (%logFile%): %growth% MB em %interval% minutos. Tamanho total: %totalSize% MB. Possível erro de configuração ou ataque.',
+    'adv_AsteriskLogSuspiciousGrowth' => 'Crescimento suspeito do log do Asterisk (%logFile%): %growth% MB em %interval% minutos. Tamanho total: %totalSize% MB.',
     'am_EventFilterTooltip_list_deny_desc' => 'excluir evento (lista negra)',
     'st_EnableS3Storage' => 'Ativar armazenamento S3',
     'st_LocalRetentionHelp' => 'Os registros são armazenados localmente pelo período especificado e, em seguida, movidos para o S3. Esse período deve ser menor que o período total de retenção.',
