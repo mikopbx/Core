@@ -163,14 +163,12 @@ class IptablesConf extends Injectable
                     [$this->tlsPort, 'tcp']
                 ];
                 foreach ($advancedSipRules as [$port, $protocol]) {
-                    $setRule = "-p $protocol -m state --state NEW"
-                        . " -m recent --set --name SipAttacks";
-                    $arr_command[] = $this->getIptablesInputRule($port, $setRule, '');
-
-                    $updateRule = "-p $protocol -m state --state NEW"
-                        . " -m recent --update --seconds 1"
-                        . " --hitcount $this->maxReqSec --name SipAttacks";
-                    $arr_command[] = $this->getIptablesInputRule($port, $updateRule, 'DROP');
+                    $hashlimitRule = "-p $protocol -m state --state NEW"
+                        . " -m hashlimit --hashlimit-above {$this->maxReqSec}/sec"
+                        . " --hashlimit-burst {$this->maxReqSec}"
+                        . " --hashlimit-mode srcip"
+                        . " --hashlimit-name SipAttacks";
+                    $arr_command[] = $this->getIptablesInputRule($port, $hashlimitRule, 'DROP');
                 }
             }
             // Add allowed services (regular subnets only, catch-all separated)
