@@ -90,14 +90,22 @@ class WorkerWav2Webm extends WorkerBase
     private const string OPUS_BITRATE_48K = '64k';
 
     /**
-     * FFmpeg main conversion timeout in seconds (5 minutes for long recordings)
+     * Minimum FFmpeg main conversion timeout in seconds
      */
-    private const int FFMPEG_TIMEOUT = 300;
+    private const int FFMPEG_TIMEOUT_MIN = 300;
 
     /**
-     * FFmpeg stereo merge timeout in seconds (2 minutes should be enough)
+     * Minimum FFmpeg stereo merge timeout in seconds
      */
-    private const int FFMPEG_MERGE_TIMEOUT = 120;
+    private const int FFMPEG_MERGE_TIMEOUT_MIN = 120;
+
+    /**
+     * Minimum assumed ffmpeg processing speed relative to audio duration.
+     * Used to calculate adaptive timeouts for long recordings.
+     * Value of 10 means ffmpeg processes at least 10x realtime even under load.
+     * Actual speed is typically 100-300x realtime.
+     */
+    private const int MIN_PROCESSING_SPEED_FACTOR = 10;
 
     /**
      * Grace period before sending SIGKILL after SIGTERM (seconds)
@@ -418,8 +426,9 @@ class WorkerWav2Webm extends WorkerBase
         $srcIn = $inputPath . '_in.' . $fileExt;
         $srcOut = $inputPath . '_out.' . $fileExt;
         $dstFile = $inputPath . '.webm';
-        // Always use .wav extension for temporary merged file (FFmpeg doesn't recognize .wav48 as output format)
-        $tempMerged = '/tmp/merged_' . getmypid() . '.wav';
+        // Write merged file next to source files (not /tmp which is tmpfs with limited RAM)
+        // FFmpeg doesn't recognize .wav48 as output format, so always use .wav extension
+        $tempMerged = $inputPath . '_merged_' . getmypid() . '.wav';
 
         // Step 1: Check if stereo channel files exist (_in.wav and _out.wav)
         // When Asterisk MixMonitor records with separate channels:
@@ -475,13 +484,19 @@ class WorkerWav2Webm extends WorkerBase
 
         // Merge stereo files if both channel files exist
         if ($hasStereoFiles) {
+            $mergeTimeout = $this->calculateAdaptiveTimeout(
+                (int)($taskData['billsec'] ?? 0),
+                (int)(filesize($srcIn) + filesize($srcOut)),
+                self::FFMPEG_MERGE_TIMEOUT_MIN
+            );
+
             SystemMessages::sysLogMsg(
                 __CLASS__,
-                sprintf('Merging stereo channels (_in + _out) for: %s', basename($inputPath)),
+                sprintf('Merging stereo channels (_in + _out) for: %s (timeout=%ds)', basename($inputPath), $mergeTimeout),
                 LOG_INFO
             );
 
-            $mergeResult = $this->mergeStereoFiles($ffmpeg, $srcOut, $srcIn, $tempMerged);
+            $mergeResult = $this->mergeStereoFiles($ffmpeg, $srcOut, $srcIn, $tempMerged, $mergeTimeout);
             if ($mergeResult === 0) {
                 $srcFile = $tempMerged;
                 SystemMessages::sysLogMsg(
@@ -499,7 +514,7 @@ class WorkerWav2Webm extends WorkerBase
                     SystemMessages::sysLogMsg(
                         __CLASS__,
                         sprintf('Stereo merge TIMEOUT (exit code %d, timeout=%ds): %s',
-                            $mergeResult, self::FFMPEG_MERGE_TIMEOUT, basename($inputPath)),
+                            $mergeResult, $mergeTimeout, basename($inputPath)),
                         LOG_ERR
                     );
                 } else {
@@ -534,15 +549,22 @@ class WorkerWav2Webm extends WorkerBase
         // - 48kHz = fullband (Opus) - excellent quality source
         $opusBitrate = $this->selectOptimalBitrate($sampleRate);
 
+        // Step 4: Calculate adaptive conversion timeout
+        $conversionTimeout = $this->calculateAdaptiveTimeout(
+            (int)($taskData['billsec'] ?? 0),
+            (int)filesize($srcFile),
+            self::FFMPEG_TIMEOUT_MIN
+        );
+
         SystemMessages::sysLogMsg(
             __CLASS__,
-            sprintf('Converting %s: sample_rate=%dHz, adaptive_bitrate=%s',
-                basename($inputPath), $sampleRate, $opusBitrate),
+            sprintf('Converting %s: sample_rate=%dHz, adaptive_bitrate=%s, timeout=%ds',
+                basename($inputPath), $sampleRate, $opusBitrate, $conversionTimeout),
             LOG_INFO
         );
 
-        // Step 4: Build and execute ffmpeg command
-        $command = $this->buildFfmpegCommand($ffmpeg, $srcFile, $dstFile, $opusBitrate, $taskData);
+        // Step 5: Build and execute ffmpeg command
+        $command = $this->buildFfmpegCommand($ffmpeg, $srcFile, $dstFile, $opusBitrate, $taskData, $conversionTimeout);
 
         $output = [];
         $exitCode = 0;
@@ -561,7 +583,7 @@ class WorkerWav2Webm extends WorkerBase
                 SystemMessages::sysLogMsg(
                     __CLASS__,
                     sprintf('Conversion TIMEOUT (exit code %d, timeout=%ds): %s',
-                        $exitCode, self::FFMPEG_TIMEOUT, basename($inputPath)),
+                        $exitCode, $conversionTimeout, basename($inputPath)),
                     LOG_ERR
                 );
             } else {
@@ -574,7 +596,7 @@ class WorkerWav2Webm extends WorkerBase
             return 3; // Conversion failed
         }
 
-        // Step 5: Validate output
+        // Step 6: Validate output
         if (!$this->validateOutput($ffprobe, $dstFile)) {
             SystemMessages::sysLogMsg(
                 __CLASS__,
@@ -591,7 +613,7 @@ class WorkerWav2Webm extends WorkerBase
             LOG_INFO
         );
 
-        // Step 6: Cleanup source files if requested
+        // Step 7: Cleanup source files if requested
         $deleteSource = ($taskData['delete_source'] ?? '0') === '1';
         if ($deleteSource) {
             // Delete all possible source file formats
@@ -622,15 +644,16 @@ class WorkerWav2Webm extends WorkerBase
      * @param string $srcOut External channel file
      * @param string $srcIn Internal channel file
      * @param string $output Output merged file
+     * @param int $timeout Timeout in seconds for ffmpeg process
      * @return int Exit code (0=success, non-zero=failure)
      */
-    private function mergeStereoFiles(string $ffmpeg, string $srcOut, string $srcIn, string $output): int
+    private function mergeStereoFiles(string $ffmpeg, string $srcOut, string $srcIn, string $output, int $timeout): int
     {
         // BusyBox timeout syntax: timeout -s SIGNAL -k KILL_SECS DURATION COMMAND
         $command = sprintf(
             'timeout -s TERM -k %d %d %s -i %s -i %s -filter_complex "[0:a][1:a]amerge=inputs=2[a]" -map "[a]" -y %s 2>&1',
             self::FFMPEG_KILL_GRACE,
-            self::FFMPEG_MERGE_TIMEOUT,
+            $timeout,
             $ffmpeg,
             escapeshellarg($srcOut),
             escapeshellarg($srcIn),
@@ -729,6 +752,40 @@ class WorkerWav2Webm extends WorkerBase
     }
 
     /**
+     * Calculate adaptive ffmpeg timeout based on call duration or file size
+     *
+     * For short recordings the minimum timeout applies.
+     * For long recordings (multi-hour calls) the timeout scales proportionally.
+     *
+     * Uses billsec when available, falls back to file size estimation.
+     * Assumes worst-case ffmpeg speed of MIN_PROCESSING_SPEED_FACTOR x realtime.
+     *
+     * @param int $billsec Call duration in seconds (0 if unknown)
+     * @param int $fileSizeBytes Total input file size in bytes
+     * @param int $minimumTimeout Minimum timeout in seconds
+     * @return int Calculated timeout in seconds
+     */
+    private function calculateAdaptiveTimeout(int $billsec, int $fileSizeBytes, int $minimumTimeout): int
+    {
+        $estimatedDuration = $billsec;
+
+        // Fall back to file size estimation if billsec is not available
+        // Assume worst case: 48kHz stereo 16-bit PCM = 192000 bytes/sec
+        if ($estimatedDuration <= 0 && $fileSizeBytes > 0) {
+            $estimatedDuration = (int)ceil($fileSizeBytes / 192000);
+        }
+
+        if ($estimatedDuration <= 0) {
+            return $minimumTimeout;
+        }
+
+        // Timeout = audio duration / minimum processing speed factor
+        $adaptiveTimeout = (int)ceil($estimatedDuration / self::MIN_PROCESSING_SPEED_FACTOR);
+
+        return max($minimumTimeout, $adaptiveTimeout);
+    }
+
+    /**
      * Build ffmpeg command for WAV to WebM/Opus conversion with metadata
      *
      * @param string $ffmpeg Path to ffmpeg binary
@@ -736,9 +793,10 @@ class WorkerWav2Webm extends WorkerBase
      * @param string $dstFile Destination WebM file
      * @param string $opusBitrate Opus bitrate (32k, 48k, or 64k for stereo)
      * @param array<string, mixed> $taskData Task metadata
+     * @param int $timeout Timeout in seconds for ffmpeg process
      * @return string Complete ffmpeg command
      */
-    private function buildFfmpegCommand(string $ffmpeg, string $srcFile, string $dstFile, string $opusBitrate, array $taskData): string
+    private function buildFfmpegCommand(string $ffmpeg, string $srcFile, string $dstFile, string $opusBitrate, array $taskData, int $timeout): string
     {
         // Base command optimized for ASR (Automatic Speech Recognition):
         // - No loudnorm: Preserves natural speech dynamics and phonetic features
@@ -752,7 +810,7 @@ class WorkerWav2Webm extends WorkerBase
         $command = sprintf(
             'timeout -s TERM -k %d %d %s -i %s -vn -c:a libopus -b:a %s -ac 2 -vbr on -compression_level 10 -application voip -frame_duration 20',
             self::FFMPEG_KILL_GRACE,
-            self::FFMPEG_TIMEOUT,
+            $timeout,
             $ffmpeg,
             escapeshellarg($srcFile),
             $opusBitrate
