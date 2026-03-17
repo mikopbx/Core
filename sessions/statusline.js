@@ -196,13 +196,11 @@ function main() {
 
     // Determine model and context limit
     let currModel = Model.UNKNOWN;
-    let contextLimit = 160000;
+    let contextLimit = 1000000;
 
-    if (modelName.toLowerCase().includes('[1m]')) {
-        contextLimit = 800000;
-    }
     if (modelName.toLowerCase().includes('sonnet')) {
         currModel = Model.SONNET;
+        contextLimit = 800000;
     } else if (modelName.toLowerCase().includes('opus')) {
         currModel = Model.OPUS;
     }
@@ -285,7 +283,7 @@ function main() {
 
     // Format token counts in 'k'
     const formattedTokens = contextLength ? `${Math.floor(contextLength / 1000)}k` : '17k';
-    const formattedLimit = contextLimit ? `${Math.floor(contextLimit / 1000)}k` : '160k';
+    const formattedLimit = contextLimit >= 1000000 ? `${Math.round(contextLimit / 1000000)}M` : `${Math.floor(contextLimit / 1000)}k`;
 
     // Progress bar blocks (0-10)
     const filledBlocks = Math.min(Math.floor(progressPctInt / 10), 10);

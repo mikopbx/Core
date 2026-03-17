@@ -200,8 +200,8 @@ if (transcriptPath && fs.existsSync(transcriptPath)) {
     const contextLength = getContextLengthFromTranscript(transcriptPath);
 
     if (contextLength > 0) {
-        // Calculate percentage of usable context (opus 160k/sonnet 800k practical limit before auto-compact)
-        let usableTokens = 160000;
+        // Calculate percentage of usable context (opus 1M/sonnet 800k practical limit before auto-compact)
+        let usableTokens = 1000000;
         if (STATE.model === "sonnet") {
             usableTokens = 800000;
         }

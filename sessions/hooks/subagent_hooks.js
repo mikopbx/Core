@@ -260,7 +260,7 @@ for (const file of existingFiles) {
 
 //!> Chunk and save transcript batches
 const MAX_BYTES = 24000;
-let usableContext = 160000;
+let usableContext = 1000000;
 if (STATE.model === "sonnet") {
     usableContext = 800000;
 }
