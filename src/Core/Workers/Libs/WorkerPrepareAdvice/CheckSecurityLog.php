@@ -29,77 +29,143 @@ use Phalcon\Di\Injectable;
 
 /**
  * Class CheckSecurityLog
- * This class monitors the growth rate of Asterisk security log file.
- * Rapid growth indicates potential security issues (brute force attacks, scanning, etc.).
+ * Monitors the growth rate of Asterisk log files (security_log, messages, error, verbose).
+ * Rapid growth indicates potential security issues (brute force attacks, scanning, etc.)
+ * or system problems (misconfiguration causing log spam).
+ *
+ * Tracks the total size of all rotated copies for each log file to avoid missing attacks
+ * that cause frequent log rotation (where the active file stays small but
+ * rotated copies accumulate rapidly).
  *
  * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice
  */
 class CheckSecurityLog extends Injectable
 {
     private const string CACHE_KEY_PREFIX = 'CheckSecurityLog:';
-    private const string CACHE_KEY_SIZE = self::CACHE_KEY_PREFIX . 'lastSize';
-    private const string CACHE_KEY_TIMESTAMP = self::CACHE_KEY_PREFIX . 'lastCheckTimestamp';
+
+    // Cache TTL: 1 hour — survives worker restarts and busy periods
+    private const int CACHE_TTL_SECONDS = 3600;
 
     // Threshold: 1MB growth per 10 minutes is considered suspicious
-    private const int SUSPICIOUS_GROWTH_BYTES = 1048576; // 1MB in bytes
+    private const int SUSPICIOUS_GROWTH_BYTES = 1048576; // 1MB
     private const int CHECK_INTERVAL_SECONDS = 600; // 10 minutes
 
     // Threshold: 5MB growth per 10 minutes is critical
-    private const int CRITICAL_GROWTH_BYTES = 5242880; // 5MB in bytes
+    private const int CRITICAL_GROWTH_BYTES = 5242880; // 5MB
 
     /**
-     * Check security log growth rate.
+     * Asterisk log files to monitor.
+     * Each entry maps a log base name to its alert translation keys.
+     */
+    private const array MONITORED_LOGS = [
+        'security_log' => [
+            'suspicious' => 'adv_SecurityLogSuspiciousGrowth',
+            'critical' => 'adv_SecurityLogCriticalGrowth',
+        ],
+        'messages' => [
+            'suspicious' => 'adv_AsteriskLogSuspiciousGrowth',
+            'critical' => 'adv_AsteriskLogCriticalGrowth',
+        ],
+        'error' => [
+            'suspicious' => 'adv_AsteriskLogSuspiciousGrowth',
+            'critical' => 'adv_AsteriskLogCriticalGrowth',
+        ],
+        'verbose' => [
+            'suspicious' => 'adv_AsteriskLogSuspiciousGrowth',
+            'critical' => 'adv_AsteriskLogCriticalGrowth',
+        ],
+    ];
+
+    /**
+     * Check growth rate across all monitored Asterisk log files.
      *
      * @return array<string, array<int, array<string, mixed>>> An array containing warning or error messages.
      */
     public function process(): array
     {
         $messages = [];
-        $logFile = Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/security_log';
-
-        // Check if log file exists
-        if (!file_exists($logFile)) {
-            // No security log yet - this is normal for new installations
-            return $messages;
-        }
-
-        $currentSize = filesize($logFile);
-        $currentTimestamp = time();
+        $logDir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/';
 
         $di = Di::getDefault();
         if ($di === null) {
-            // Cannot proceed without DI container
             return $messages;
         }
         $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
+        $currentTimestamp = time();
+
+        foreach (self::MONITORED_LOGS as $logBaseName => $messageKeys) {
+            $logFile = $logDir . $logBaseName;
+            if (!file_exists($logFile)) {
+                continue;
+            }
+
+            $result = $this->checkLogGrowth(
+                $logDir,
+                $logBaseName,
+                $messageKeys,
+                $managedCache,
+                $currentTimestamp
+            );
+
+            foreach ($result as $type => $items) {
+                foreach ($items as $item) {
+                    $messages[$type][] = $item;
+                }
+            }
+        }
+
+        return $messages;
+    }
+
+    /**
+     * Check growth rate for a single log file (including all its rotated copies).
+     *
+     * @param string $logDir Path to the asterisk log directory.
+     * @param string $logBaseName Base name of the log file (e.g. 'security_log').
+     * @param array $messageKeys Translation keys for suspicious/critical alerts.
+     * @param mixed $managedCache Cache service instance.
+     * @param int $currentTimestamp Current unix timestamp.
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    private function checkLogGrowth(
+        string $logDir,
+        string $logBaseName,
+        array $messageKeys,
+        mixed $managedCache,
+        int $currentTimestamp
+    ): array {
+        $messages = [];
+        $cacheKeySize = self::CACHE_KEY_PREFIX . $logBaseName . ':totalSize';
+        $cacheKeyTime = self::CACHE_KEY_PREFIX . $logBaseName . ':timestamp';
+
+        $totalSize = $this->calculateTotalLogSize($logDir, $logBaseName);
 
         // Get previous check data
-        $lastSize = $managedCache->get(self::CACHE_KEY_SIZE);
-        $lastTimestamp = $managedCache->get(self::CACHE_KEY_TIMESTAMP);
+        $lastTotalSize = $managedCache->get($cacheKeySize);
+        $lastTimestamp = $managedCache->get($cacheKeyTime);
 
-        // If this is the first check, just store current values
-        if ($lastSize === null || $lastTimestamp === null) {
-            $managedCache->set(self::CACHE_KEY_SIZE, $currentSize, self::CHECK_INTERVAL_SECONDS * 2);
-            $managedCache->set(self::CACHE_KEY_TIMESTAMP, $currentTimestamp, self::CHECK_INTERVAL_SECONDS * 2);
+        // First check — store baseline and return
+        if ($lastTotalSize === null || $lastTimestamp === null) {
+            $managedCache->set($cacheKeySize, $totalSize, self::CACHE_TTL_SECONDS);
+            $managedCache->set($cacheKeyTime, $currentTimestamp, self::CACHE_TTL_SECONDS);
             return $messages;
         }
 
-        // Calculate growth
-        $sizeGrowth = $currentSize - (int)$lastSize;
+        $sizeGrowth = $totalSize - (int)$lastTotalSize;
         $timeElapsed = $currentTimestamp - (int)$lastTimestamp;
 
-        // If log was rotated (current size < last size), reset tracking
+        // Total size decreased — old rotated files were cleaned up.
+        // Use the new total as baseline without alerting.
         if ($sizeGrowth < 0) {
-            $managedCache->set(self::CACHE_KEY_SIZE, $currentSize, self::CHECK_INTERVAL_SECONDS * 2);
-            $managedCache->set(self::CACHE_KEY_TIMESTAMP, $currentTimestamp, self::CHECK_INTERVAL_SECONDS * 2);
+            $managedCache->set($cacheKeySize, $totalSize, self::CACHE_TTL_SECONDS);
+            $managedCache->set($cacheKeyTime, $currentTimestamp, self::CACHE_TTL_SECONDS);
             return $messages;
         }
 
-        // Calculate growth rate normalized to CHECK_INTERVAL_SECONDS
+        // Normalize growth rate to CHECK_INTERVAL_SECONDS window
         if ($timeElapsed > 0) {
             $normalizedGrowth = (int)(($sizeGrowth / $timeElapsed) * self::CHECK_INTERVAL_SECONDS);
         } else {
-            // Avoid division by zero
             $normalizedGrowth = $sizeGrowth;
         }
 
@@ -109,43 +175,88 @@ class CheckSecurityLog extends Injectable
 
         if ($isCritical || $isSuspicious) {
             $growthMB = round($normalizedGrowth / 1048576, 2);
+            $totalMB = round($totalSize / 1048576, 2);
             $intervalMinutes = (int)(self::CHECK_INTERVAL_SECONDS / 60);
+            $logFile = $logDir . $logBaseName;
 
             $messageType = $isCritical ? 'error' : 'warning';
             $messageKey = $isCritical
-                ? 'adv_SecurityLogCriticalGrowth'
-                : 'adv_SecurityLogSuspiciousGrowth';
+                ? $messageKeys['critical']
+                : $messageKeys['suspicious'];
 
             $messages[$messageType][] = [
                 'messageTpl' => $messageKey,
                 'messageParams' => [
                     'growth' => $growthMB,
                     'interval' => $intervalMinutes,
-                    'logFile' => $logFile
+                    'logFile' => $logFile,
+                    'totalSize' => $totalMB,
                 ]
             ];
 
-            // Send email notification for security concerns
-            $this->sendSecurityNotification($growthMB, $intervalMinutes, $isCritical);
+            // Send email only for security_log — it always signals an attack
+            if ($logBaseName === 'security_log') {
+                $this->sendSecurityNotification($growthMB, $totalMB, $intervalMinutes, $isCritical);
+            }
         }
 
         // Update cache with current values
-        $managedCache->set(self::CACHE_KEY_SIZE, $currentSize, self::CHECK_INTERVAL_SECONDS * 2);
-        $managedCache->set(self::CACHE_KEY_TIMESTAMP, $currentTimestamp, self::CHECK_INTERVAL_SECONDS * 2);
+        $managedCache->set($cacheKeySize, $totalSize, self::CACHE_TTL_SECONDS);
+        $managedCache->set($cacheKeyTime, $currentTimestamp, self::CACHE_TTL_SECONDS);
 
         return $messages;
     }
 
     /**
-     * Send security notification email about rapid log growth
+     * Calculate total size of all log files matching the base name (active + rotated uncompressed).
+     * Compressed (.gz) files are excluded since they represent already-processed old data
+     * and their size doesn't reflect the real volume of incoming traffic.
      *
-     * @param float $growthMB Size growth in megabytes
-     * @param int $intervalMinutes Time interval in minutes
-     * @param bool $isCritical Whether this is a critical alert
+     * @param string $logDir Path to the asterisk log directory.
+     * @param string $logBaseName Base name of the log file (e.g. 'security_log').
+     * @return int Total size in bytes.
+     */
+    private function calculateTotalLogSize(string $logDir, string $logBaseName): int
+    {
+        $totalSize = 0;
+
+        // Match: security_log, security_log.0, security_log.1, ... security_log.10
+        // But NOT: security_log.0.gz
+        $pattern = $logDir . $logBaseName . '*';
+        $files = glob($pattern);
+        if ($files === false) {
+            return 0;
+        }
+
+        foreach ($files as $file) {
+            // Skip compressed archives
+            if (str_ends_with($file, '.gz')) {
+                continue;
+            }
+            $size = filesize($file);
+            if ($size !== false) {
+                $totalSize += $size;
+            }
+        }
+
+        return $totalSize;
+    }
+
+    /**
+     * Send security notification email about rapid log growth.
+     *
+     * @param float $growthMB Size growth in megabytes per interval.
+     * @param float $totalMB Total uncompressed log size in megabytes.
+     * @param int $intervalMinutes Time interval in minutes.
+     * @param bool $isCritical Whether this is a critical alert.
      * @return void
      */
-    private function sendSecurityNotification(float $growthMB, int $intervalMinutes, bool $isCritical): void
-    {
+    private function sendSecurityNotification(
+        float $growthMB,
+        float $totalMB,
+        int $intervalMinutes,
+        bool $isCritical
+    ): void {
         $adminEmail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
 
         if (empty($adminEmail)) {
@@ -159,7 +270,6 @@ class CheckSecurityLog extends Injectable
                 ->setSeverity($isCritical ? 'critical' : 'warning')
                 ->setAdminUrl($this->buildAdminUrl('/admin-cabinet/firewall/index/'));
 
-        // Security issues have highest priority
         NotificationQueueHelper::queueOrSend(
             $builder,
             async: true,
@@ -168,23 +278,20 @@ class CheckSecurityLog extends Injectable
     }
 
     /**
-     * Build admin panel URL using network settings
+     * Build admin panel URL using network settings.
      *
-     * @param string $path Path to append to base URL
-     * @return string Full URL to admin panel
+     * @param string $path Path to append to base URL.
+     * @return string Full URL to admin panel.
      */
     private function buildAdminUrl(string $path = ''): string
     {
-        // Get HTTPS port from settings
         $httpsPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT) ?: '443';
 
-        // Try to get external IP first, then local IP
         $host = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
         if (empty($host)) {
             $host = gethostname() ?: 'localhost';
         }
 
-        // Build URL
         $portSuffix = ($httpsPort === '443') ? '' : ':' . $httpsPort;
         return 'https://' . $host . $portSuffix . $path;
     }
