@@ -586,7 +586,8 @@ class Fail2BanConf extends SystemConfigClass
         // SDK/webLanguage, goform, Docker API, Spring actuator, HNAP1 attacks
         $exploitPatterns = '(?:\.\.|\.env|\.git|/etc/passwd'
             . '|php-cgi|setup\.cgi|/SDK/|/goform/'
-            . '|/containers/json|/actuator/|HNAP1)';
+            . '|/containers/json|/actuator/|HNAP1'
+            . '|playback\?view=.*\.(?:db|sqlite|conf|gz|zip|tar|key|pem|crt))';
         $logLine = '\s+-\s+\S+\s+\[.*?\]\s+"[^"]*';
         $logEnd = '[^"]*"\s+\d+\s+';
         $conf = $commonConf .
