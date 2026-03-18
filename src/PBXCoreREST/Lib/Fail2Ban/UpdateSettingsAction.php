@@ -61,6 +61,10 @@ class UpdateSettingsAction extends Injectable
             $fields = ['maxretry', 'bantime', 'findtime', 'whitelist'];
             foreach ($fields as $field) {
                 if (isset($data[$field])) {
+                    if ($field === 'whitelist') {
+                        // Normalize whitelist: extract valid IPs/CIDRs from any delimiter format
+                        $data[$field] = self::normalizeWhitelist($data[$field]);
+                    }
                     $record->$field = $data[$field];
                 }
             }
@@ -97,5 +101,35 @@ class UpdateSettingsAction extends Injectable
         }
 
         return $res;
+    }
+
+    /**
+     * Normalize whitelist string: split by any common delimiter (comma, newline, semicolon, tab),
+     * validate each entry as IPv4/IPv6 address or CIDR notation, and rejoin with spaces.
+     *
+     * @param string $whitelist Raw whitelist input from user.
+     * @return string Normalized whitelist with space-separated valid entries.
+     */
+    private static function normalizeWhitelist(string $whitelist): string
+    {
+        // Split by any combination of commas, semicolons, newlines, tabs, spaces
+        $entries = preg_split('/[\s,;]+/', trim($whitelist), -1, PREG_SPLIT_NO_EMPTY);
+
+        $valid = [];
+        foreach ($entries as $entry) {
+            $entry = trim($entry);
+            if ($entry === '') {
+                continue;
+            }
+            // Accept valid IPv4, IPv6, or CIDR notation
+            if (filter_var($entry, FILTER_VALIDATE_IP) !== false
+                || preg_match('#^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$#', $entry)
+                || preg_match('#^[0-9a-fA-F:]+/\d{1,3}$#', $entry)
+            ) {
+                $valid[] = $entry;
+            }
+        }
+
+        return implode(' ', $valid);
     }
 }

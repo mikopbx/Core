@@ -23,7 +23,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
-use Phalcon\Forms\Element\Numeric;
 
 /**
  * Class Fail2BanEditForm
@@ -44,8 +43,8 @@ class Fail2BanEditForm extends BaseForm
     {
         parent::initialize($entity, $options);
 
-        // Numeric fields for Fail2Ban settings
-        $this->add(new Numeric('maxretry'));
+        // Hidden fields for Fail2Ban settings (values set by security preset slider)
+        $this->add(new Hidden('maxretry'));
         $this->add(new Hidden('bantime'));
         $this->add(new Hidden('findtime'));
 

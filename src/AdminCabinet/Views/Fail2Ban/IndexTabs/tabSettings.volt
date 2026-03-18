@@ -6,38 +6,24 @@
     }
 </style>
 
-<h4 class="ui dividing header">{{ t._('f2b_BlockingRulesHeader') }}</h4>
 <div class="field disability">
-    <label>{{ t._('f2b_MaxRetry') }}
-        <i class="circle info icon field-info-icon" data-field="maxretry"></i>
-    </label>
-    {{ form.render('maxretry') }}
-</div>
-<div class="field disability">
-    <label>{{ t._('f2b_FindTime') }}
-        <i class="circle info icon field-info-icon" data-field="findtime"></i>
+    <label>{{ t._('f2b_SecurityPresetLabel') }}
+        <i class="circle info icon field-info-icon" data-field="securityPreset"></i>
     </label>
     <div style="padding: 10px 25px 0;">
-        <div class="ui bottom aligned ticked labeled slider" id="FindTimeSlider"></div>
-        {{ form.render('findtime') }}
-    </div>
-</div>
-<div class="field disability">
-    <label>{{ t._('f2b_BanTime') }}
-        <i class="circle info icon field-info-icon" data-field="bantime"></i>
-    </label>
-    <div style="padding: 10px 25px 0;">
-        <div class="ui bottom aligned ticked labeled slider" id="BanTimeSlider"></div>
-        {{ form.render('bantime') }}
+        <div class="ui bottom aligned ticked labeled slider" id="SecurityPresetSlider"></div>
     </div>
 </div>
 
-<h4 class="ui dividing header">{{ t._('f2b_AdditionalSettingsHeader') }}</h4>
+{{ form.render('maxretry') }}
+{{ form.render('bantime') }}
+{{ form.render('findtime') }}
+
 <div class="field disability">
     <label>{{ t._('f2b_WhiteList') }}
         <i class="circle info icon field-info-icon" data-field="whitelist"></i>
     </label>
-    <textarea name="whitelist" rows="4" cols="95"></textarea>
+    <textarea name="whitelist" rows="2" cols="95"></textarea>
 </div>
 
 {% if not isDocker %}

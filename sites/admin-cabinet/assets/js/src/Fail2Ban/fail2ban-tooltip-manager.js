@@ -72,29 +72,21 @@ class Fail2BanTooltipManager {
      */
     static getTooltipConfigurations() {
         return {
-            // Max retry field tooltip
-            maxretry: {
-                header: globalTranslate.f2b_MaxRetryTooltip_header,
-                description: globalTranslate.f2b_MaxRetryTooltip_desc,
+            // Security preset slider tooltip
+            securityPreset: {
+                header: globalTranslate.f2b_SecurityPresetTooltip_header,
+                description: globalTranslate.f2b_SecurityPresetTooltip_desc,
                 list: [
                     {
-                        term: globalTranslate.f2b_MaxRetryTooltip_how_it_works,
+                        term: globalTranslate.f2b_SecurityPresetTooltip_levels_header,
                         definition: null
                     },
-                    globalTranslate.f2b_MaxRetryTooltip_how_it_works_desc,
-                    {
-                        term: globalTranslate.f2b_MaxRetryTooltip_examples_header,
-                        definition: null
-                    },
-                    globalTranslate.f2b_MaxRetryTooltip_example_3,
-                    globalTranslate.f2b_MaxRetryTooltip_example_5,
-                    globalTranslate.f2b_MaxRetryTooltip_example_10
+                    globalTranslate.f2b_SecurityPresetTooltip_level_weak,
+                    globalTranslate.f2b_SecurityPresetTooltip_level_normal,
+                    globalTranslate.f2b_SecurityPresetTooltip_level_enhanced,
+                    globalTranslate.f2b_SecurityPresetTooltip_level_paranoid,
                 ],
-                warning: {
-                    header: globalTranslate.f2b_MaxRetryTooltip_warning_header,
-                    text: globalTranslate.f2b_MaxRetryTooltip_warning
-                },
-                note: globalTranslate.f2b_MaxRetryTooltip_note
+                note: globalTranslate.f2b_SecurityPresetTooltip_note
             },
 
             // Whitelist field tooltip
@@ -141,39 +133,6 @@ class Fail2BanTooltipManager {
                     text: globalTranslate.f2b_WhitelistTooltip_warning
                 },
                 note: globalTranslate.f2b_WhitelistTooltip_note
-            },
-
-            // Ban time field tooltip
-            bantime: {
-                header: globalTranslate.f2b_BanTimeTooltip_header,
-                description: globalTranslate.f2b_BanTimeTooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.f2b_BanTimeTooltip_duration_header,
-                        definition: null
-                    },
-                    globalTranslate.f2b_BanTimeTooltip_1hour,
-                    globalTranslate.f2b_BanTimeTooltip_24hours,
-                    globalTranslate.f2b_BanTimeTooltip_7days
-                ],
-                note: globalTranslate.f2b_BanTimeTooltip_note
-            },
-
-            // Find time field tooltip
-            findtime: {
-                header: globalTranslate.f2b_FindTimeTooltip_header,
-                description: globalTranslate.f2b_FindTimeTooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.f2b_FindTimeTooltip_window_header,
-                        definition: null
-                    },
-                    globalTranslate.f2b_FindTimeTooltip_10min,
-                    globalTranslate.f2b_FindTimeTooltip_30min,
-                    globalTranslate.f2b_FindTimeTooltip_1hour,
-                    globalTranslate.f2b_FindTimeTooltip_3hours
-                ],
-                note: globalTranslate.f2b_FindTimeTooltip_note
             },
 
             // PBXFirewallMaxReqSec field tooltip
