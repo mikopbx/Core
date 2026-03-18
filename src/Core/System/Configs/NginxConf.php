@@ -650,12 +650,22 @@ class NginxConf extends SystemConfigClass
                 continue;
             }
 
-            if (!file_exists($src_log_file)) {
-                file_put_contents($src_log_file, '');
+            // If src is already a symlink (pointing elsewhere), remove it first
+            // to avoid "cat: input file is output file" when the symlink
+            // resolves to the same destination we're writing to
+            if (is_link($src_log_file)) {
+                unlink($src_log_file);
             }
-            $options = file_exists($dst_log_file) ? '>' : '';
-            $cat = Util::which('cat');
-            Processes::mwExec("$cat $src_log_file 2> /dev/null >$options $dst_log_file");
+
+            // Copy existing log content to destination before creating symlink
+            if (file_exists($src_log_file) && !is_link($src_log_file)) {
+                $cat = Util::which('cat');
+                $options = file_exists($dst_log_file) ? '>' : '';
+                Processes::mwExec("$cat $src_log_file 2> /dev/null >$options $dst_log_file");
+            } elseif (!file_exists($dst_log_file)) {
+                file_put_contents($dst_log_file, '');
+            }
+
             Util::createUpdateSymlink($dst_log_file, $src_log_file);
             shell_exec(Util::which('chown') . " -R www:www " . dirname($dst_log_file));
         }
