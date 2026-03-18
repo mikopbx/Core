@@ -13,6 +13,7 @@ server {
     ssl_certificate        /etc/ssl/certs/nginx.crt;
     ssl_certificate_key    /etc/ssl/private/nginx.key;
 
+    more_clear_headers Server;
     add_header Strict-Transport-Security 'max-age=15768000; includeSubDomains';
     add_header 'Access-Control-Allow-Origin' '*' always;
     include mikopbx/security-headers.conf;

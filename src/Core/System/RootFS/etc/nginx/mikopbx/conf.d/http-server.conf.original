@@ -3,6 +3,7 @@ server {
     server_name   default;
     resolver <DNS>;
 
+    more_clear_headers Server;
     add_header 'Access-Control-Allow-Origin' '*' always;
     include mikopbx/security-headers.conf;
 
