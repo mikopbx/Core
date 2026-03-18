@@ -49,16 +49,10 @@ const fail2BanIndex = {
     $maxReqSlider: $('#PBXFirewallMaxReqSec'),
 
     /**
-     * jQuery object for the ban time slider.
+     * jQuery object for the security preset slider.
      * @type {jQuery}
      */
-    $banTimeSlider: $('#BanTimeSlider'),
-
-    /**
-     * jQuery object for the find time slider.
-     * @type {jQuery}
-     */
-    $findTimeSlider: $('#FindTimeSlider'),
+    $securityPresetSlider: $('#SecurityPresetSlider'),
 
     /**
      * Possible period values for the records retention.
@@ -66,14 +60,31 @@ const fail2BanIndex = {
     maxReqValue: ['10', '30', '100', '300', '0'],
 
     /**
-     * Possible ban time values in seconds.
+     * Security preset definitions.
+     * Each preset defines maxretry, findtime (seconds), and bantime (seconds).
      */
-    banTimeValues: ['10800', '43200', '86400', '259200', '604800'],
-
-    /**
-     * Possible find time values in seconds.
-     */
-    findTimeValues: ['600', '1800', '3600', '10800'],
+    securityPresets: [
+        { // 0: Weak
+            maxretry: 10,
+            findtime: 1800,    // 30 min
+            bantime: 3600,     // 1 hour
+        },
+        { // 1: Normal
+            maxretry: 5,
+            findtime: 10800,   // 3 hours
+            bantime: 604800,   // 7 days
+        },
+        { // 2: Enhanced
+            maxretry: 3,
+            findtime: 21600,   // 6 hours
+            bantime: 2592000,  // 30 days
+        },
+        { // 3: Paranoid
+            maxretry: 1,
+            findtime: 43200,   // 12 hours
+            bantime: 5184000,  // 60 days
+        },
+    ],
 
     /**
      * The list of banned IPs
@@ -98,17 +109,7 @@ const fail2BanIndex = {
      *
      * @type {object}
      */
-    validateRules: {
-        maxretry: {
-            identifier: 'maxretry',
-            rules: [
-                {
-                    type: 'integer[2..99]',
-                    prompt: globalTranslate.f2b_ValidateMaxRetryRange,
-                },
-            ],
-        },
-    },
+    validateRules: {},
 
     // This method initializes the Fail2Ban management interface.
     initialize() {
@@ -159,55 +160,25 @@ const fail2BanIndex = {
                 .slider('set value', fail2BanIndex.maxReqValue.indexOf(maxReq), false);
         }
 
-        // Initialize ban time slider
-        if (fail2BanIndex.$banTimeSlider.length > 0) {
-            fail2BanIndex.$banTimeSlider
-                .slider({
-                    min: 0,
-                    max: 4,
-                    step: 1,
-                    smooth: true,
-                    interpretLabel: function (value) {
-                        let labels = [
-                            globalTranslate.f2b_BanTime3Hours,
-                            globalTranslate.f2b_BanTime12Hours,
-                            globalTranslate.f2b_BanTime24Hours,
-                            globalTranslate.f2b_BanTime3Days,
-                            globalTranslate.f2b_BanTime7Days,
-                        ];
-                        return labels[value];
-                    },
-                    onChange: fail2BanIndex.cbAfterSelectBanTimeSlider,
-                });
-            const banTime = fail2BanIndex.$formObj.form('get value', 'bantime');
-            const idx = fail2BanIndex.banTimeValues.indexOf(String(banTime));
-            fail2BanIndex.$banTimeSlider
-                .slider('set value', idx >= 0 ? idx : 2, false);
-        }
-
-        // Initialize find time slider
-        if (fail2BanIndex.$findTimeSlider.length > 0) {
-            fail2BanIndex.$findTimeSlider
+        // Initialize security preset slider
+        if (fail2BanIndex.$securityPresetSlider.length > 0) {
+            fail2BanIndex.$securityPresetSlider
                 .slider({
                     min: 0,
                     max: 3,
                     step: 1,
                     smooth: true,
                     interpretLabel: function (value) {
-                        let labels = [
-                            globalTranslate.f2b_FindTime10Min,
-                            globalTranslate.f2b_FindTime30Min,
-                            globalTranslate.f2b_FindTime1Hour,
-                            globalTranslate.f2b_FindTime3Hours,
+                        const labels = [
+                            globalTranslate.f2b_SecurityPresetWeak,
+                            globalTranslate.f2b_SecurityPresetNormal,
+                            globalTranslate.f2b_SecurityPresetEnhanced,
+                            globalTranslate.f2b_SecurityPresetParanoid,
                         ];
                         return labels[value];
                     },
-                    onChange: fail2BanIndex.cbAfterSelectFindTimeSlider,
+                    onChange: fail2BanIndex.cbAfterSelectSecurityPreset,
                 });
-            const findTime = fail2BanIndex.$formObj.form('get value', 'findtime');
-            const findIdx = fail2BanIndex.findTimeValues.indexOf(String(findTime));
-            fail2BanIndex.$findTimeSlider
-                .slider('set value', findIdx >= 0 ? findIdx : 2, false);
         }
     },
 
@@ -222,23 +193,80 @@ const fail2BanIndex = {
     },
 
     /**
-     * Handle event after the ban time slider is changed.
-     * @param {number} value - The selected slider position.
+     * Handle event after the security preset slider is changed.
+     * Updates maxretry, findtime, bantime values and the info panel.
+     * @param {number} value - The selected preset index (0-3).
      */
-    cbAfterSelectBanTimeSlider(value) {
-        const banTime = fail2BanIndex.banTimeValues[value];
-        fail2BanIndex.$formObj.form('set value', 'bantime', banTime);
+    cbAfterSelectSecurityPreset(value) {
+        const preset = fail2BanIndex.securityPresets[value];
+        if (!preset) return;
+
+        // Update hidden form fields
+        fail2BanIndex.$formObj.form('set value', 'maxretry', preset.maxretry);
+        fail2BanIndex.$formObj.form('set value', 'findtime', preset.findtime);
+        fail2BanIndex.$formObj.form('set value', 'bantime', preset.bantime);
+
+        // Update info panel
+        fail2BanIndex.updatePresetInfoPanel(preset);
+
         Form.dataChanged();
     },
 
     /**
-     * Handle event after the find time slider is changed.
-     * @param {number} value - The selected slider position.
+     * Update the info panel with preset values.
+     * @param {Object} preset - The preset object with maxretry, findtime, bantime.
      */
-    cbAfterSelectFindTimeSlider(value) {
-        const findTime = fail2BanIndex.findTimeValues[value];
-        fail2BanIndex.$formObj.form('set value', 'findtime', findTime);
-        Form.dataChanged();
+    updatePresetInfoPanel(preset) {
+        $('#preset-maxretry-value').text(preset.maxretry);
+        $('#preset-findtime-value').text(fail2BanIndex.formatDuration(preset.findtime));
+        $('#preset-bantime-value').text(fail2BanIndex.formatDuration(preset.bantime));
+    },
+
+    /**
+     * Format seconds into a human-readable duration string.
+     * @param {number} seconds - Duration in seconds.
+     * @returns {string} Formatted duration.
+     */
+    formatDuration(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (days > 0) {
+            return `${days}${globalTranslate.f2b_DurationDays}`;
+        }
+        if (hours > 0) {
+            return `${hours}${globalTranslate.f2b_DurationHours}`;
+        }
+        return `${minutes}${globalTranslate.f2b_DurationMinutes}`;
+    },
+
+    /**
+     * Detect which security preset matches current values.
+     * Returns preset index (0-3) or defaults to 1 (Normal) if no exact match.
+     * @param {number} maxretry
+     * @param {number} findtime - in seconds
+     * @param {number} bantime - in seconds
+     * @returns {number} Preset index.
+     */
+    detectPresetLevel(maxretry, findtime, bantime) {
+        for (let i = 0; i < fail2BanIndex.securityPresets.length; i++) {
+            const p = fail2BanIndex.securityPresets[i];
+            if (p.maxretry === maxretry && p.findtime === findtime && p.bantime === bantime) {
+                return i;
+            }
+        }
+        // No exact match — find closest by comparing bantime
+        let closest = 1;
+        let minDiff = Infinity;
+        for (let i = 0; i < fail2BanIndex.securityPresets.length; i++) {
+            const diff = Math.abs(fail2BanIndex.securityPresets[i].bantime - bantime);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closest = i;
+            }
+        }
+        return closest;
     },
 
 
@@ -436,6 +464,19 @@ const fail2BanIndex = {
     cbBeforeSendForm(settings) {
         const result = settings;
         result.data = fail2BanIndex.$formObj.form('get values');
+
+        // Normalize whitelist: split by any delimiter, keep only valid IPs/CIDRs
+        if (result.data.whitelist) {
+            const entries = result.data.whitelist.split(/[\s,;]+/).filter(entry => {
+                entry = entry.trim();
+                if (!entry) return false;
+                // Basic IPv4, IPv6, CIDR validation
+                return /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/.test(entry)
+                    || /^[0-9a-fA-F:]+(\/\d{1,3})?$/.test(entry);
+            });
+            result.data.whitelist = entries.join(' ');
+        }
+
         return result;
     },
 
@@ -464,20 +505,21 @@ const fail2BanIndex = {
                     PBXFirewallMaxReqSec: data.PBXFirewallMaxReqSec
                 });
 
-                // Update sliders if they exist
+                // Update MaxReqSec slider if it exists
                 if (fail2BanIndex.$maxReqSlider.length > 0) {
                     const maxReq = data.PBXFirewallMaxReqSec || '10';
                     fail2BanIndex.$maxReqSlider.slider('set value', fail2BanIndex.maxReqValue.indexOf(maxReq), false);
                 }
-                if (fail2BanIndex.$banTimeSlider.length > 0) {
-                    const banTime = String(data.bantime || '86400');
-                    const idx = fail2BanIndex.banTimeValues.indexOf(banTime);
-                    fail2BanIndex.$banTimeSlider.slider('set value', idx >= 0 ? idx : 2, false);
-                }
-                if (fail2BanIndex.$findTimeSlider.length > 0) {
-                    const findTime = String(data.findtime || '1800');
-                    const findIdx = fail2BanIndex.findTimeValues.indexOf(findTime);
-                    fail2BanIndex.$findTimeSlider.slider('set value', findIdx >= 0 ? findIdx : 2, false);
+
+                // Detect and set security preset level
+                if (fail2BanIndex.$securityPresetSlider.length > 0) {
+                    const presetIdx = fail2BanIndex.detectPresetLevel(
+                        parseInt(data.maxretry, 10),
+                        parseInt(data.findtime, 10),
+                        parseInt(data.bantime, 10)
+                    );
+                    fail2BanIndex.$securityPresetSlider.slider('set value', presetIdx, false);
+                    fail2BanIndex.updatePresetInfoPanel(fail2BanIndex.securityPresets[presetIdx]);
                 }
             }
         });
@@ -560,4 +602,3 @@ const fail2BanIndex = {
 $(document).ready(() => {
     fail2BanIndex.initialize();
 });
-
