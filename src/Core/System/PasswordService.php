@@ -698,8 +698,17 @@ class PasswordService
         // Generate cryptographically secure random salt (16 characters)
         $salt = bin2hex(random_bytes(8));
 
-        // Create SHA-512 hash using crypt() with $6$ prefix
-        $hash = crypt($password, sprintf('$6$rounds=%d$%s$', $rounds, $salt));
+        // Create SHA-512 hash using crypt() with $6$ prefix.
+        // When rounds=5000 (the default per crypt(3) spec), omit the rounds=
+        // parameter to produce the compact format ($6$salt$hash).
+        // Dropbear SSH reads /etc/shadow and calls crypt() to verify passwords,
+        // but some builds fail to parse the explicit rounds= prefix, causing
+        // password authentication to be rejected despite a correct password.
+        if ($rounds === 5000) {
+            $hash = crypt($password, sprintf('$6$%s$', $salt));
+        } else {
+            $hash = crypt($password, sprintf('$6$rounds=%d$%s$', $rounds, $salt));
+        }
 
         return $hash;
     }
