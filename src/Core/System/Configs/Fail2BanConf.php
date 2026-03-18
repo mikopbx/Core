@@ -439,7 +439,7 @@ class Fail2BanConf extends SystemConfigClass
             'socket = /var/run/fail2ban/fail2ban.sock' . PHP_EOL .
             'pidfile = /var/run/fail2ban/fail2ban.pid' . PHP_EOL .
             'dbfile = /var/lib/fail2ban/fail2ban.sqlite3' . PHP_EOL .
-            'dbpurgeage = 1d' . PHP_EOL;
+            'dbpurgeage = 90d' . PHP_EOL;
         Util::fileWriteContent(self::FB_CONF_PATH, $conf);
         if (!file_exists($lofFileName)) {
             file_put_contents($lofFileName, '');
