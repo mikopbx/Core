@@ -197,12 +197,17 @@ const firewall = {
         };
 
         // For new records, override network/subnet/description with URL parameters if provided
-        let network = data.network || '0.0.0.0';
-        let subnet = data.subnet || '0';
+        let network = data.network || '';
+        let subnet = data.subnet;
+
+        // Default to /32 for new records (data.subnet is '0' from API defaults)
+        if (!data.id && (!subnet || subnet === '0')) {
+            subnet = '32';
+        }
 
         if (!data.id && firewall.urlParameters.network) {
             network = firewall.urlParameters.network;
-            subnet = firewall.urlParameters.subnet || '0';
+            subnet = firewall.urlParameters.subnet || '32';
 
             // Override description with ruleName from URL if provided
             if (firewall.urlParameters.ruleName) {

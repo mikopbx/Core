@@ -62,7 +62,7 @@ class FirewallEditForm extends BaseForm
         $this->addSemanticUIDropdown(
             'ipv4_subnet',
             Cidr::getIPv4NetMasks(),
-            null, // Value will be set by JavaScript after API data loads
+            32, // Default to /32 (single host) for new records
             [
                 'class' => 'ui selection dropdown ipaddress',
                 'placeholder' => '',
@@ -80,7 +80,7 @@ class FirewallEditForm extends BaseForm
             $this->addSemanticUIDropdown(
                 'ipv6_subnet',
                 Cidr::getIPv6NetMasks(),
-                null, // Value will be set by JavaScript after API data loads
+                128, // Default to /128 (single host) for new records
                 [
                     'class' => 'ui selection dropdown ipaddress',
                     'placeholder' => '',
