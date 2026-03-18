@@ -61,8 +61,12 @@ class ExtensionEditForm extends BaseForm
         $this->add(new Text('number'));
 
         
-        // USER Username
-        $this->add(new Text('user_username', ['autocomplete' => 'off']));
+        // USER Username (readonly + onfocus hack prevents browser autofill)
+        $this->add(new Text('user_username', [
+            'autocomplete' => 'off',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
+        ]));
 
         // USER Email
         $this->add(
