@@ -196,7 +196,7 @@ class CheckSecurityLog extends Injectable
 
             // Send email only for security_log — it always signals an attack
             if ($logBaseName === 'security_log') {
-                $this->sendSecurityNotification($growthMB, $totalMB, $intervalMinutes, $isCritical);
+                $this->sendSecurityNotification($growthMB, $intervalMinutes, $isCritical);
             }
         }
 
@@ -220,17 +220,31 @@ class CheckSecurityLog extends Injectable
     {
         $totalSize = 0;
 
-        // Match: security_log, security_log.0, security_log.1, ... security_log.10
-        // But NOT: security_log.0.gz
-        $pattern = $logDir . $logBaseName . '*';
-        $files = glob($pattern);
-        if ($files === false) {
-            return 0;
+        // Add the active log file itself
+        $activeFile = $logDir . $logBaseName;
+        if (file_exists($activeFile)) {
+            $size = filesize($activeFile);
+            if ($size !== false) {
+                $totalSize += $size;
+            }
         }
 
-        foreach ($files as $file) {
-            // Skip compressed archives
+        // Add rotated uncompressed copies: security_log.0, security_log.1, ... security_log.10
+        // Uses single-character glob to match .0-.9 then checks for multi-digit (.10, .11, etc.)
+        $rotatedFiles = glob($logDir . $logBaseName . '.[0-9]*');
+        if ($rotatedFiles === false) {
+            return $totalSize;
+        }
+
+        $baseLen = strlen($logDir . $logBaseName . '.');
+        foreach ($rotatedFiles as $file) {
+            // Skip compressed archives (.gz)
             if (str_ends_with($file, '.gz')) {
+                continue;
+            }
+            // Ensure suffix after the dot is purely numeric (e.g. ".0", ".10")
+            $suffix = substr($file, $baseLen);
+            if (!ctype_digit($suffix)) {
                 continue;
             }
             $size = filesize($file);
@@ -246,14 +260,12 @@ class CheckSecurityLog extends Injectable
      * Send security notification email about rapid log growth.
      *
      * @param float $growthMB Size growth in megabytes per interval.
-     * @param float $totalMB Total uncompressed log size in megabytes.
      * @param int $intervalMinutes Time interval in minutes.
      * @param bool $isCritical Whether this is a critical alert.
      * @return void
      */
     private function sendSecurityNotification(
         float $growthMB,
-        float $totalMB,
         int $intervalMinutes,
         bool $isCritical
     ): void {
