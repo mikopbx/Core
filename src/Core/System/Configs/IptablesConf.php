@@ -43,6 +43,9 @@ class IptablesConf extends Injectable
     // Path to the MikoPBX iptables configuration file.
     public const string IP_TABLE_MIKO_CONF = '/etc/iptables/iptables.mikopbx';
 
+    // Path to the SIP scanner User-Agent blacklist file.
+    private const string SIP_SCANNER_AGENTS_CONF = '/etc/asterisk/sip_scanner_useragents.conf';
+
     // Indicates if the firewall is enabled.
     private bool $firewall_enable;
 
@@ -156,6 +159,10 @@ class IptablesConf extends Injectable
 
             $arr_command   = [];
             $arr_command[] = $this->getIptablesInputRule('', '-m conntrack --ctstate ESTABLISHED,RELATED');
+
+            // Drop packets from known SIP scanners by User-Agent string match
+            $this->addSipScannerRules($arr_command);
+
             if ($this->maxReqSec > 0) {
                 $advancedSipRules = [
                     [$this->sipPort, 'udp'],
@@ -467,6 +474,79 @@ class IptablesConf extends Injectable
             $rule->portfrom = $from;
             $rule->portto = $to;
             $rule->update();
+        }
+    }
+
+    /**
+     * Generate default SIP scanner User-Agent blacklist config file.
+     * Written via Util::fileWriteContent so users can customize it
+     * through "Custom system files" in the web interface.
+     */
+    private function generateScannerAgentsConfig(): void
+    {
+        $defaultAgents = <<<'CONF'
+# Known SIP scanner User-Agents (one per line)
+# Edit this file via System Files Customization in web interface
+# Lines starting with # are comments
+friendly-scanner
+sipvicious
+sipcli
+sip-scan
+sipsak
+sundayddr
+iWar
+VaxSIPUserAgent
+pplsip
+scanSIP
+siparmyknife
+Gulp
+Nmap
+CensysInspect
+sip-redirector
+CONF;
+        Util::fileWriteContent(self::SIP_SCANNER_AGENTS_CONF, $defaultAgents);
+    }
+
+    /**
+     * Add iptables DROP rules for known SIP scanner User-Agent strings.
+     * Uses iptables string match (Boyer-Moore algorithm) to inspect
+     * SIP packet payload on SIP/TLS ports (UDP+TCP).
+     *
+     * @param array &$commands Reference to the iptables commands array.
+     */
+    private function addSipScannerRules(array &$commands): void
+    {
+        $this->generateScannerAgentsConfig();
+
+        if (!file_exists(self::SIP_SCANNER_AGENTS_CONF)) {
+            return;
+        }
+
+        $lines = file(self::SIP_SCANNER_AGENTS_CONF, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($lines === false) {
+            return;
+        }
+
+        $sipPorts = [
+            [$this->sipPort, 'udp'],
+            [$this->sipPort, 'tcp'],
+            [$this->tlsPort, 'tcp'],
+        ];
+
+        foreach ($lines as $line) {
+            $agent = trim($line);
+            if ($agent === '' || str_starts_with($agent, '#')) {
+                continue;
+            }
+            // Sanitize: only allow alphanumeric, dash, underscore, dot
+            if (!preg_match('/^[a-zA-Z0-9._-]+$/', $agent)) {
+                continue;
+            }
+            foreach ($sipPorts as [$port, $protocol]) {
+                $rule = "-p $protocol --dport $port"
+                    . " -m string --string " . escapeshellarg($agent) . " --algo bm --to 65535";
+                $commands[] = $this->getIptablesInputRule('', $rule, 'DROP');
+            }
         }
     }
 }
