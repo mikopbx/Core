@@ -985,7 +985,7 @@ class SIPConf extends AsteriskConfigClass
             "send_pai = yes\n" .
             "named_call_group = 1\n" .
             "named_pickup_group = 1\n" .
-            "sdp_session = mikopbx\n" .
+            "sdp_session = PBX\n" .
             "language = {$templateParams['language']}\n" .
             "device_state_busy_at = 1\n" .
             "timers = no\n" .
@@ -1076,7 +1076,7 @@ class SIPConf extends AsteriskConfigClass
             "rewrite_contact = yes\n" .
             "ice_support = no\n" .
             "direct_media = no\n" .
-            "sdp_session = mikopbx\n" .
+            "sdp_session = PBX\n" .
             "language = " . self::convertToAsteriskLanguageFormat($langCode) . "\n" .
             "timers = no\n" .
             "rtp_keepalive = 0\n" .
@@ -1770,7 +1770,7 @@ class SIPConf extends AsteriskConfigClass
             'rewrite_contact' => 'yes',
             'ice_support'     => 'no',
             'direct_media'    => 'no',
-            'sdp_session'     => 'mikopbx',
+            'sdp_session'     => 'PBX',
             'language'        => $language,
             'timers'          => 'no',
             'rtp_keepalive'   => '0',
@@ -2185,7 +2185,7 @@ class SIPConf extends AsteriskConfigClass
             'send_pai'             => 'yes',
             'named_call_group'     => '1',
             'named_pickup_group'   => '1',
-            'sdp_session'          => 'mikopbx',
+            'sdp_session'          => 'PBX',
             'language'             => $asteriskLang,
             'device_state_busy_at' => "1",
             'timers'               => 'no',
