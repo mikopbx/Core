@@ -8,57 +8,57 @@ created: 2026-03-19
 # Hide Asterisk server identity from external interfaces
 
 ## Problem/Goal
-Атакующие используют fingerprinting для определения что SIP-сервер — Asterisk, и подбирают специфические эксплойты. Нужно скрыть все маркеры идентификации Asterisk во внешних интерфейсах.
+Атакующие используют fingerprinting для определения что SIP-сервер — Asterisk, и подбирают специфические эксплойты. Нужно скрыть все маркеры идентификации во внешних интерфейсах.
 
 ## Fingerprinting Points
 
-### 1. SIP User-Agent / Server header
-- Asterisk отправляет `User-Agent: Asterisk PBX 21.x.x` в SIP-ответах
-- Настраивается через `pjsip.conf` → `[global]` → `user_agent=`
-- Файл: `src/Core/Asterisk/Configs/SIPConf.php`
-
-### 2. SDP origin line
-- `o=- ... IN IP4` — формат может быть Asterisk-специфичным
-- Настраивается через `sdp_owner` в PJSIP global
-
-### 3. AMI banner
-- При подключении к порту 5038: `Asterisk Call Manager/x.x`
-- Настраивается через `manager.conf` → `channelvars=` (нет прямой опции скрытия)
-- Файл: `src/Core/Asterisk/Configs/ManagerConf.php`
-
-### 4. AJAM (HTTP AMI)
-- HTTP-интерфейс AMI — заголовки могут содержать Asterisk identification
-- Файл: `src/Core/Asterisk/Configs/HttpConf.php`
-
-### 5. SIP 100 Trying / Allow header
-- Набор поддерживаемых SIP-методов характерен для Asterisk
-- Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, SUBSCRIBE, NOTIFY, INFO, PUBLISH, MESSAGE
-
-### 6. SIP OPTIONS response
-- Ответ на OPTIONS probe содержит User-Agent и Server headers
-- Основной способ fingerprinting сканерами (sipvicious, etc.)
+| # | Интерфейс | Что отдаёт | Где hardcoded |
+|---|-----------|-----------|---------------|
+| 1 | SIP User-Agent/Server | `Asterisk PBX 22.7.0` | pjsip.conf → конфиг |
+| 2 | SDP origin | Asterisk-специфичный формат | pjsip.conf → конфиг |
+| 3 | AMI banner (порт 5038) | `Asterisk Call Manager/11.0.0` | `main/manager.c` |
+| 4 | AJAM HTTP (порт 8088) | `Server: Asterisk/22.7.0` + HTML branding | `main/http.c` |
+| 5 | SIP OPTIONS response | User-Agent + Allow header | pjsip.conf → конфиг |
+| 6 | SIP Allow header | Набор методов характерный для Asterisk | Исследовать |
 
 ## Proposed Changes
 
-### User-Agent replacement
-Заменить на нейтральное: `MikoPBX` (без версии)
+### 1. SIP User-Agent (конфиг MikoPBX — без патча Asterisk)
+Файл: `src/Core/Asterisk/Configs/SIPConf.php`
 ```
 [global]
-user_agent = MikoPBX
+user_agent = PBX
 ```
 
-### AMI banner
-Исследовать возможность замены через `manager.conf` или compile-time option.
-Если невозможно — ограничить доступ к AMI только localhost.
+### 2. Патч исходников Asterisk при сборке (T2 SDE)
+Создать patch-файл для сборочной системы:
 
-### AJAM
-Проверить нужен ли внешний доступ. Если нет — привязать к 127.0.0.1.
+**main/manager.c** — AMI banner:
+```diff
+- "Asterisk Call Manager/%s\r\n"
++ "PBX Call Manager/%s\r\n"
+```
+
+**main/http.c** — HTTP Server header + httpstatus page:
+```diff
+- "Asterisk/%s"
++ "PBX"
+```
+Убрать версию из Server header. Заменить HTML branding в httpstatus.
+
+### 3. Опционально: SDP origin, Allow header
+Исследовать при реализации — может потребовать дополнительных патчей.
+
+## Notes
+- AMI/AJAM слушают на `0.0.0.0` — нужен для внешних интеграций (CRM, модули)
+- Баннеры hardcoded в C-коде Asterisk — нет конфигурационных опций
+- Нужен patch-файл для T2 SDE сборочной системы
 
 ## Success Criteria
 - [ ] SIP User-Agent header не содержит "Asterisk"
 - [ ] SIP Server header не содержит "Asterisk"
-- [ ] AMI banner не содержит "Asterisk" или доступ ограничен localhost
-- [ ] AJAM не доступен извне или не идентифицирует Asterisk
+- [ ] AMI banner не содержит "Asterisk"
+- [ ] AJAM HTTP не содержит "Asterisk" и не отдаёт версию
 - [ ] SIP OPTIONS response не позволяет определить Asterisk
 - [ ] Существующие SIP-провайдеры и телефоны продолжают работать
 
