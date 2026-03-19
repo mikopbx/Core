@@ -1,0 +1,118 @@
+---
+name: m-implement-hide-asterisk-identity
+branch: feature/hide-asterisk-identity
+status: completed
+created: 2026-03-19
+---
+
+# Hide Asterisk server identity from external interfaces
+
+## Problem/Goal
+Атакующие используют fingerprinting для определения что SIP-сервер — Asterisk, и подбирают специфические эксплойты. Нужно скрыть все маркеры идентификации во внешних интерфейсах.
+
+## Fingerprinting Points
+
+| # | Интерфейс | Что отдаёт | Где hardcoded |
+|---|-----------|-----------|---------------|
+| 1 | SIP User-Agent/Server | `Asterisk PBX 22.7.0` | pjsip.conf → конфиг |
+| 2 | SDP origin | Asterisk-специфичный формат | pjsip.conf → конфиг |
+| 3 | AMI banner (порт 5038) | `Asterisk Call Manager/11.0.0` | `main/manager.c` |
+| 4 | AJAM HTTP (порт 8088) | `Server: Asterisk/22.7.0` + HTML branding | `main/http.c` |
+| 5 | SIP OPTIONS response | User-Agent + Allow header | pjsip.conf → конфиг |
+| 6 | SIP Allow header | Набор методов характерный для Asterisk | Исследовать |
+
+## Proposed Changes
+
+### 1. SIP User-Agent (конфиг MikoPBX — без патча Asterisk)
+Файл: `src/Core/Asterisk/Configs/SIPConf.php`
+```
+[global]
+user_agent = PBX
+```
+
+### 2. Патч исходников Asterisk при сборке (T2 SDE)
+Создать patch-файл для сборочной системы:
+
+**main/manager.c** — AMI banner:
+```diff
+- "Asterisk Call Manager/%s\r\n"
++ "PBX Call Manager/%s\r\n"
+```
+
+**main/http.c** — HTTP Server header + httpstatus page:
+```diff
+- "Asterisk/%s"
++ "PBX"
+```
+Убрать версию из Server header. Заменить HTML branding в httpstatus.
+
+### 3. Опционально: SDP origin, Allow header
+Исследовать при реализации — может потребовать дополнительных патчей.
+
+## Notes
+- AMI/AJAM слушают на `0.0.0.0` — нужен для внешних интеграций (CRM, модули)
+- Баннеры hardcoded в C-коде Asterisk — нет конфигурационных опций
+
+## Инструкция для T2 SDE патча (для разработчика сборки)
+
+Директория патчей: `/Volumes/DevDisk/apor/Developement/MikoPBX/t2-trunk/package/miko/asterisk/`
+T2 SDE автоматически применяет все `.patch` файлы из этой директории при сборке.
+
+### Нужно создать файл: `hide-asterisk-identity.patch`
+
+#### Патч 1: `main/manager.c` — AMI banner
+Найти строку вида:
+```c
+"Asterisk Call Manager/%s\r\n", AMI_VERSION
+```
+Заменить на:
+```c
+"PBX Call Manager/%s\r\n", AMI_VERSION
+```
+
+#### Патч 2: `main/http.c` — HTTP Server header
+Найти строку вида:
+```c
+"Asterisk/%s", ast_get_version()
+```
+Заменить на:
+```c
+"PBX"
+```
+(убрать версию полностью)
+
+#### Патч 3: `main/http.c` — httpstatus HTML page
+Найти HTML-шаблон httpstatus (строки с `"Asterisk HTTP Status"`, `"Asterisk&trade;"`, `"Asterisk and Digium are registered trademarks"`).
+Заменить:
+- `"Asterisk HTTP Status"` → `"PBX HTTP Status"`
+- `"Asterisk&trade;"` → `"PBX"`
+- Убрать строку про trademarks Digium
+
+#### Проверка после сборки
+```bash
+# AMI banner
+busybox telnet 127.0.0.1 5038
+# Ожидание: "PBX Call Manager/11.0.0"
+
+# AJAM HTTP
+curl http://127.0.0.1:8088/asterisk/httpstatus
+# Ожидание: Server: PBX, HTML без "Asterisk"
+
+# SIP OPTIONS
+sipsak -vv -s sip:test@127.0.0.1:5060
+# Ожидание: User-Agent: PBX
+```
+
+## Success Criteria
+- [x] SIP User-Agent header не содержит "Asterisk" — `user_agent = PBX`
+- [x] SIP Server header не содержит "Asterisk" — следует за user_agent
+- [ ] AMI banner не содержит "Asterisk" — ожидает T2 SDE патч (инструкция в таске)
+- [ ] AJAM HTTP не содержит "Asterisk" — ожидает T2 SDE патч (инструкция в таске)
+- [x] SIP OPTIONS response — user_agent=PBX, sdp_session=PBX
+- [x] Существующие SIP-провайдеры и телефоны продолжают работать
+
+## Context Manifest
+<!-- Added by context-gathering agent -->
+
+## Work Log
+- [2026-03-19] Task created
