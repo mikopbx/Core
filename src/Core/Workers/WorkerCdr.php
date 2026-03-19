@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\{Extensions, ModelsBase, PbxSettings, Users};
-use MikoPBX\Core\System\{BeanstalkClient, Directories, Processes, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Directories, SystemMessages, Util};
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use Phalcon\Di\Di;
@@ -274,22 +274,32 @@ class WorkerCdr extends WorkerBase
      */
     private function checkBillsecMakeRecFile(int $billsec, array $row): array
     {
-
-        // If billsec is less than or equal to zero, the call wasn't answered
         if (!empty(trim($row['recordingfile']))) {
-            // If the call channel with ID doesn't exist anymore, it's safe to remove temporary files
             $p_info = pathinfo($row['recordingfile']);
+
+            // Validate filename — empty basename means a bug in MixMonitor call
+            if (empty($p_info['filename'])) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf(
+                        'Empty recording filename for linkedid=%s, skipping conversion task (path: %s)',
+                        $row['linkedid'] ?? 'unknown',
+                        $row['recordingfile']
+                    ),
+                    LOG_WARNING
+                );
+                $row['recordingfile'] = '';
+                return [$row, $billsec];
+            }
 
             // Create JSON task file for WorkerWav2Webm to process
             $monitorDir = Directories::getDir(Directories::AST_MONITOR_DIR);
             $tasksDir = $monitorDir . '/conversion-tasks';
 
-            // Ensure tasks directory exists
             if (!is_dir($tasksDir)) {
                 Util::mwMkdir($tasksDir, true);
             }
 
-            // Build task data with metadata
             $deleteSourceFiles = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_DELETE_SOURCE_AFTER_CONVERT);
 
             $taskData = [
@@ -301,22 +311,51 @@ class WorkerCdr extends WorkerBase
                 'billsec' => $billsec,
                 'disposition' => $row['disposition'] ?? '',
                 'uniqueid' => $row['UNIQUEID'] ?? '',
-                'input_path' => $p_info['dirname'] . '/' . $p_info['filename'],  // Without extension
+                'input_path' => $p_info['dirname'] . '/' . $p_info['filename'],
                 'delete_source' => $deleteSourceFiles,
                 'created_at' => time(),
                 'attempts' => 0
             ];
 
-            // Create unique task filename
-            $taskFile = $tasksDir . '/' . $row['linkedid'] . '_' . uniqid() . '.json';
-            file_put_contents($taskFile, json_encode($taskData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            $jsonData = json_encode($taskData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            if ($jsonData === false) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf(
+                        'Failed to encode conversion task JSON for linkedid=%s: %s',
+                        $row['linkedid'] ?? 'unknown',
+                        json_last_error_msg()
+                    ),
+                    LOG_ERR
+                );
+                $row['recordingfile'] = preg_replace('/\.(wav|wav16|wav48)$/i', '.webm', $row['recordingfile']);
+                return [$row, $billsec];
+            }
+
+            $taskFile = $tasksDir . '/' . ($row['linkedid'] ?? 'unknown') . '_' . uniqid() . '.json';
+            $written = file_put_contents($taskFile, $jsonData);
+
+            if ($written === false) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf(
+                        'Failed to write conversion task file %s for linkedid=%s',
+                        basename($taskFile),
+                        $row['linkedid'] ?? 'unknown'
+                    ),
+                    LOG_ERR
+                );
+                // Don't update recordingfile to .webm — the conversion task was not created,
+                // so the .webm file will never exist. Keep the original source path in CDR.
+                return [$row, $billsec];
+            }
 
             // Update recordingfile path to point to WebM file (supports .wav, .wav16, .wav48)
             $row['recordingfile'] = preg_replace('/\.(wav|wav16|wav48)$/i', '.webm', $row['recordingfile']);
-        }else{
+        } else {
             $row['recordingfile'] = '';
         }
-        return array($row, $billsec);
+        return [$row, $billsec];
     }
 
     /**
