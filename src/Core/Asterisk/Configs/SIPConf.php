@@ -815,7 +815,7 @@ class SIPConf extends AsteriskConfigClass
             "type = global\n" .
             "disable_multi_domain=yes\n" .
             "endpoint_identifier_order=username,ip,anonymous\n" .
-            "user_agent = mikopbx-$pbxVersion\n\n";
+            "user_agent = PBX\n\n";
     }
 
     /**

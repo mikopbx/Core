@@ -52,7 +52,56 @@ user_agent = PBX
 ## Notes
 - AMI/AJAM слушают на `0.0.0.0` — нужен для внешних интеграций (CRM, модули)
 - Баннеры hardcoded в C-коде Asterisk — нет конфигурационных опций
-- Нужен patch-файл для T2 SDE сборочной системы
+
+## Инструкция для T2 SDE патча (для разработчика сборки)
+
+Директория патчей: `/Volumes/DevDisk/apor/Developement/MikoPBX/t2-trunk/package/miko/asterisk/`
+T2 SDE автоматически применяет все `.patch` файлы из этой директории при сборке.
+
+### Нужно создать файл: `hide-asterisk-identity.patch`
+
+#### Патч 1: `main/manager.c` — AMI banner
+Найти строку вида:
+```c
+"Asterisk Call Manager/%s\r\n", AMI_VERSION
+```
+Заменить на:
+```c
+"PBX Call Manager/%s\r\n", AMI_VERSION
+```
+
+#### Патч 2: `main/http.c` — HTTP Server header
+Найти строку вида:
+```c
+"Asterisk/%s", ast_get_version()
+```
+Заменить на:
+```c
+"PBX"
+```
+(убрать версию полностью)
+
+#### Патч 3: `main/http.c` — httpstatus HTML page
+Найти HTML-шаблон httpstatus (строки с `"Asterisk HTTP Status"`, `"Asterisk&trade;"`, `"Asterisk and Digium are registered trademarks"`).
+Заменить:
+- `"Asterisk HTTP Status"` → `"PBX HTTP Status"`
+- `"Asterisk&trade;"` → `"PBX"`
+- Убрать строку про trademarks Digium
+
+#### Проверка после сборки
+```bash
+# AMI banner
+busybox telnet 127.0.0.1 5038
+# Ожидание: "PBX Call Manager/11.0.0"
+
+# AJAM HTTP
+curl http://127.0.0.1:8088/asterisk/httpstatus
+# Ожидание: Server: PBX, HTML без "Asterisk"
+
+# SIP OPTIONS
+sipsak -vv -s sip:test@127.0.0.1:5060
+# Ожидание: User-Agent: PBX
+```
 
 ## Success Criteria
 - [ ] SIP User-Agent header не содержит "Asterisk"
