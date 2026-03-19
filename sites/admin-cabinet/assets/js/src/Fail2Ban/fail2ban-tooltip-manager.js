@@ -133,42 +133,6 @@ class Fail2BanTooltipManager {
                     text: globalTranslate.f2b_WhitelistTooltip_warning
                 },
                 note: globalTranslate.f2b_WhitelistTooltip_note
-            },
-
-            // PBXFirewallMaxReqSec field tooltip
-            PBXFirewallMaxReqSec: {
-                header: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_header,
-                description: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_how_it_works,
-                        definition: null
-                    },
-                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_how_it_works_desc,
-                    {
-                        term: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_values_header,
-                        definition: null
-                    },
-                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_10,
-                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_30,
-                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_100,
-                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_300,
-                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_unlimited
-                ],
-                list2: [
-                    {
-                        term: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_scenarios_header,
-                        definition: null
-                    },
-                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_scenario_1,
-                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_scenario_2,
-                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_scenario_3
-                ],
-                warning: {
-                    header: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_warning_header,
-                    text: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_warning
-                },
-                note: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_note
             }
         };
     }

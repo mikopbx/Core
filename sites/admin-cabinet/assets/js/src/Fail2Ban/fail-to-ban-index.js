@@ -43,21 +43,10 @@ const fail2BanIndex = {
     $bannedIpTabSegment: $('#banned-ip-list-table').closest('.segment'),
 
     /**
-     * jQuery object Maximum number of requests.
-     * @type {jQuery}
-     */
-    $maxReqSlider: $('#PBXFirewallMaxReqSec'),
-
-    /**
      * jQuery object for the security preset slider.
      * @type {jQuery}
      */
     $securityPresetSlider: $('#SecurityPresetSlider'),
-
-    /**
-     * Possible period values for the records retention.
-     */
-    maxReqValue: ['10', '30', '100', '300', '0'],
 
     /**
      * Security preset definitions.
@@ -68,23 +57,34 @@ const fail2BanIndex = {
             maxretry: 10,
             findtime: 1800,    // 30 min
             bantime: 3600,     // 1 hour
+            maxReqSec: 500,    // SIP rate limit (disabled if >200 extensions)
         },
         { // 1: Normal
             maxretry: 5,
             findtime: 10800,   // 3 hours
             bantime: 604800,   // 7 days
+            maxReqSec: 300,
         },
         { // 2: Enhanced
             maxretry: 3,
             findtime: 21600,   // 6 hours
             bantime: 2592000,  // 30 days
+            maxReqSec: 150,
         },
         { // 3: Paranoid
             maxretry: 1,
             findtime: 43200,   // 12 hours
             bantime: 5184000,  // 60 days
+            maxReqSec: 100,
         },
     ],
+
+    /**
+     * Number of extensions — loaded from API to determine MaxReqSec behavior.
+     * If >200, MaxReqSec is disabled (NAT scenario).
+     * @type {number}
+     */
+    extensionsCount: 0,
 
     /**
      * The list of banned IPs
@@ -134,32 +134,6 @@ const fail2BanIndex = {
             FirewallAPI.unbanIp(unbannedIp, fail2BanIndex.cbAfterUnBanIp);
         });
 
-        // Initialize records save period slider only if it exists (not in Docker)
-        if (fail2BanIndex.$maxReqSlider.length > 0) {
-            fail2BanIndex.$maxReqSlider
-                .slider({
-                    min: 0,
-                    max: 4,
-                    step: 1,
-                    smooth: true,
-                    interpretLabel: function (value) {
-                        let labels = [
-                            globalTranslate.f2b_MaxReqSec10,
-                            globalTranslate.f2b_MaxReqSec30,
-                            globalTranslate.f2b_MaxReqSec100,
-                            globalTranslate.f2b_MaxReqSec300,
-                            globalTranslate.f2b_MaxReqSecUnlimited,
-                        ];
-                        return labels[value];
-                    },
-                    onChange: fail2BanIndex.cbAfterSelectMaxReqSlider,
-                })
-            ;
-            const maxReq = fail2BanIndex.$formObj.form('get value', 'PBXFirewallMaxReqSec');
-            fail2BanIndex.$maxReqSlider
-                .slider('set value', fail2BanIndex.maxReqValue.indexOf(maxReq), false);
-        }
-
         // Initialize security preset slider
         if (fail2BanIndex.$securityPresetSlider.length > 0) {
             fail2BanIndex.$securityPresetSlider
@@ -183,16 +157,6 @@ const fail2BanIndex = {
     },
 
     /**
-     * Handle event after the select save period slider is changed.
-     * @param {number} value - The selected value from the slider.
-     */
-    cbAfterSelectMaxReqSlider(value) {
-        const maxReq = fail2BanIndex.maxReqValue[value];
-        fail2BanIndex.$formObj.form('set value', 'PBXFirewallMaxReqSec', maxReq);
-        Form.dataChanged();
-    },
-
-    /**
      * Handle event after the security preset slider is changed.
      * Updates maxretry, findtime, bantime values and the info panel.
      * @param {number} value - The selected preset index (0-3).
@@ -205,6 +169,10 @@ const fail2BanIndex = {
         fail2BanIndex.$formObj.form('set value', 'maxretry', preset.maxretry);
         fail2BanIndex.$formObj.form('set value', 'findtime', preset.findtime);
         fail2BanIndex.$formObj.form('set value', 'bantime', preset.bantime);
+
+        // Set MaxReqSec: disabled (0) if >200 extensions (NAT scenario)
+        const maxReqSec = fail2BanIndex.extensionsCount > 200 ? 0 : preset.maxReqSec;
+        fail2BanIndex.$formObj.form('set value', 'PBXFirewallMaxReqSec', String(maxReqSec));
 
         // Update info panel
         fail2BanIndex.updatePresetInfoPanel(preset);
@@ -505,11 +473,8 @@ const fail2BanIndex = {
                     PBXFirewallMaxReqSec: data.PBXFirewallMaxReqSec
                 });
 
-                // Update MaxReqSec slider if it exists
-                if (fail2BanIndex.$maxReqSlider.length > 0) {
-                    const maxReq = data.PBXFirewallMaxReqSec || '10';
-                    fail2BanIndex.$maxReqSlider.slider('set value', fail2BanIndex.maxReqValue.indexOf(maxReq), false);
-                }
+                // Store extensions count for MaxReqSec calculation
+                fail2BanIndex.extensionsCount = parseInt(data.extensionsCount, 10) || 0;
 
                 // Detect and set security preset level
                 if (fail2BanIndex.$securityPresetSlider.length > 0) {

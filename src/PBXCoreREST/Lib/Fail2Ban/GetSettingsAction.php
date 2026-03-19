@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Fail2Ban;
 
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -64,6 +65,7 @@ class GetSettingsAction extends Injectable
                 'findtime' => $rules->findtime,
                 'whitelist' => $rules->whitelist,
                 PbxSettings::PBX_FIREWALL_MAX_REQ => $maxReqPerSec,
+                'extensionsCount' => (int)Extensions::count(),
             ];
 
             $res->success = true;

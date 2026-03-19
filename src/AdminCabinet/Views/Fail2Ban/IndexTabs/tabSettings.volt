@@ -26,17 +26,7 @@
     <textarea name="whitelist" rows="2" cols="95"></textarea>
 </div>
 
-{% if not isDocker %}
-<div class="field">
-    <label>{{ t._('f2b_PBXFirewallMaxReqSec') }}
-        <i class="circle info icon field-info-icon" data-field="PBXFirewallMaxReqSec"></i>
-    </label>
-    <div style="padding: 10px 25px 0;">
-        <div class="ui bottom aligned ticked labeled slider" id="PBXFirewallMaxReqSec"></div>
-        {{ form.render('PBXFirewallMaxReqSec') }}
-    </div>
-</div>
-{% endif %}
+{{ form.render('PBXFirewallMaxReqSec') }}
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
     {{ partial("partials/submitbutton") }}
