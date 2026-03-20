@@ -14,11 +14,13 @@ These tests catch build/packaging regressions that API-level tests miss:
 Total: 9 tests
 """
 
+import base64
 import json
 import time
 from pathlib import Path
 
 import pytest
+import requests
 from conftest import assert_api_success
 
 
@@ -153,7 +155,14 @@ class TestS3LibraryIntegrity:
         baseline_lines = int(baseline['output'].strip())
 
         # Call testConnection (expected to fail with config error, NOT with Fatal)
-        response = api_client.post('s3-storage:testConnection', {})
+        # API may return 400 "S3 storage is not enabled" which is a valid structured
+        # error, not a PHP Fatal. We catch HTTPError and parse the JSON response.
+        try:
+            response = api_client.post('s3-storage:testConnection', {})
+        except requests.exceptions.HTTPError as e:
+            # 400/422 with structured JSON is expected — not a Fatal
+            response = e.response.json()
+
         # We don't assert success — connection is expected to fail.
         # We only care that it returned a proper response, not a crash.
         assert 'result' in response, "S3 testConnection should return structured response"
@@ -207,20 +216,28 @@ class TestAudioConversionPipeline:
         )
         assert_api_success(upload_response, "Failed to upload wav48 fixture")
 
-        upload_id = upload_response.get('data', {}).get('upload_id', '')
+        upload_data = upload_response.get('data', {})
+        upload_id = upload_data.get('upload_id', '')
 
-        # Wait for merge
-        merged_path = None
-        for i in range(15):
-            time.sleep(1)
-            status = api_client.get('files:uploadStatus', params={'id': upload_id})
-            if status.get('result'):
-                status_data = status.get('data', {})
-                if status_data.get('d_status') == 'UPLOAD_COMPLETE':
-                    merged_path = status_data.get('upload_file_path', '')
-                    break
+        # The file path is returned in the upload response (not in uploadStatus)
+        merged_path = upload_data.get('filename', '')
+        print(f"  Upload response: id={upload_id}, filename={merged_path}, "
+              f"status={upload_data.get('d_status', 'N/A')}")
 
-        assert merged_path, "Failed to upload wav48 fixture file"
+        # Wait for merge to complete if status is MERGING
+        if upload_data.get('d_status') != 'UPLOAD_COMPLETE':
+            for i in range(15):
+                time.sleep(1)
+                status = api_client.get('files:uploadStatus', params={'id': upload_id})
+                if status.get('result'):
+                    status_data = status.get('data', {})
+                    if status_data.get('d_status') == 'UPLOAD_COMPLETE':
+                        print(f"  Upload complete after {i + 1}s")
+                        break
+            else:
+                print(f"  Warning: upload status polling timed out")
+
+        assert merged_path, "Failed to get uploaded file path from upload response"
 
         # Move to monitor directory with proper name
         exec_bash(api_client, f'cp "{merged_path}" "{target_path}"')
@@ -255,8 +272,9 @@ class TestAudioConversionPipeline:
         task_json = json.dumps(task, indent=4)
         task_filename = f'{CONVERSION_TASKS_DIR}/{self.test_uniqueid}.json'
 
-        # Write task file via bash (escape JSON for shell)
-        write_cmd = f"cat > '{task_filename}' << 'TASK_EOF'\n{task_json}\nTASK_EOF"
+        # Write task file via base64 to avoid heredoc issues with Processes::mwExec
+        b64_content = base64.b64encode(task_json.encode()).decode()
+        write_cmd = f"echo '{b64_content}' | base64 -d > '{task_filename}'"
         exec_bash(api_client, write_cmd)
 
         # Verify task file was created

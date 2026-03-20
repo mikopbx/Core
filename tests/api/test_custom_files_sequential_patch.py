@@ -146,10 +146,21 @@ eventfilter=!Event: Newexten
     # ========================================================================
     # STEP 3: Wait for first change to be applied to disk
     # ========================================================================
-    print("\n[STEP 3] Waiting for first change to be applied to disk (15 seconds)...")
+    print("\n[STEP 3] Waiting for first change to be applied to disk (polling changed flag)...")
 
-    # Wait for WorkerModelsEvents to process the change
-    time.sleep(15)
+    # Poll the changed flag — WorkerModelsEvents resets it to '0' after applying to disk
+    max_wait = 45
+    poll_interval = 3
+    for waited in range(0, max_wait, poll_interval):
+        time.sleep(poll_interval)
+        check = api_client.get(f"custom-files/{file_id}")
+        changed = check.get("data", {}).get("changed", "1")
+        print(f"  [{waited + poll_interval}s] changed={changed}")
+        if changed == "0":
+            print(f"  File applied to disk after {waited + poll_interval}s")
+            break
+    else:
+        print(f"  Warning: changed flag not reset within {max_wait}s, checking disk anyway...")
 
     # ========================================================================
     # STEP 4: Verify first content is applied to disk
@@ -190,9 +201,18 @@ eventfilter=!Event: Newexten
     # ========================================================================
     # STEP 6: Wait for second change to be applied to disk
     # ========================================================================
-    print("\n[STEP 6] Waiting for second change to be applied to disk (15 seconds)...")
+    print("\n[STEP 6] Waiting for second change to be applied to disk (polling changed flag)...")
 
-    time.sleep(15)
+    for waited in range(0, max_wait, poll_interval):
+        time.sleep(poll_interval)
+        check = api_client.get(f"custom-files/{file_id}")
+        changed = check.get("data", {}).get("changed", "1")
+        print(f"  [{waited + poll_interval}s] changed={changed}")
+        if changed == "0":
+            print(f"  File applied to disk after {waited + poll_interval}s")
+            break
+    else:
+        print(f"  Warning: changed flag not reset within {max_wait}s, checking disk anyway...")
 
     # ========================================================================
     # STEP 7: Verify second content is applied to disk

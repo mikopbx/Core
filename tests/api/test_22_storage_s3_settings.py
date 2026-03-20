@@ -348,43 +348,43 @@ class TestStorageS3SettingsValidation:
         assert_api_success(response, "Bucket name with dots should be accepted")
         print(f"✓ Bucket name with dots accepted: {payload_dots['s3_bucket']}")
 
-        # Bucket name with consecutive dots should be rejected
+        # Bucket name with consecutive dots should be rejected (API returns 422)
         payload_double_dots = {
             's3_enabled': 1,
             's3_bucket': 'calls..domain.ru',
             **{k: v for k, v in MINIO_CONFIG.items() if k != 's3_bucket'}
         }
-        response = api_client.put('s3-storage', payload_double_dots)
+        response = api_client.put('s3-storage', payload_double_dots, allow_404=True)
         assert response['result'] is False, "Bucket name with consecutive dots (..) should be rejected"
         print(f"✓ Bucket name with consecutive dots correctly rejected")
 
-        # Bucket name that looks like an IP address should be rejected
+        # Bucket name that looks like an IP address should be rejected (API returns 422)
         payload_ip = {
             's3_enabled': 1,
             's3_bucket': '192.168.1.1',
             **{k: v for k, v in MINIO_CONFIG.items() if k != 's3_bucket'}
         }
-        response = api_client.put('s3-storage', payload_ip)
+        response = api_client.put('s3-storage', payload_ip, allow_404=True)
         assert response['result'] is False, "Bucket name formatted as IP address should be rejected"
         print(f"✓ IP-address bucket name correctly rejected")
 
-        # Bucket name starting with xn-- should be rejected
+        # Bucket name starting with xn-- should be rejected (API returns 422)
         payload_xn = {
             's3_enabled': 1,
             's3_bucket': 'xn--mikopbx-bucket',
             **{k: v for k, v in MINIO_CONFIG.items() if k != 's3_bucket'}
         }
-        response = api_client.put('s3-storage', payload_xn)
+        response = api_client.put('s3-storage', payload_xn, allow_404=True)
         assert response['result'] is False, "Bucket name starting with xn-- should be rejected"
         print(f"✓ xn-- prefix bucket name correctly rejected")
 
-        # Bucket name ending with -s3alias should be rejected
+        # Bucket name ending with -s3alias should be rejected (API returns 422)
         payload_alias = {
             's3_enabled': 1,
             's3_bucket': 'mikopbx-recordings-s3alias',
             **{k: v for k, v in MINIO_CONFIG.items() if k != 's3_bucket'}
         }
-        response = api_client.put('s3-storage', payload_alias)
+        response = api_client.put('s3-storage', payload_alias, allow_404=True)
         assert response['result'] is False, "Bucket name ending with -s3alias should be rejected"
         print(f"✓ -s3alias suffix bucket name correctly rejected")
 

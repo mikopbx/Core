@@ -165,10 +165,12 @@ class TestPublicEndpointsMethodLevel:
         else:
             print(f"  Languages: {languages[:5] if isinstance(languages, list) else 'N/A'}...")
 
-    def test_04_change_language_without_auth(self):
-        """Test method-level PUBLIC - system:changeLanguage"""
-        # changeLanguage has method-level SecurityType::PUBLIC attribute
+    def test_04_change_language_requires_auth(self):
+        """Test that system:changeLanguage requires authentication.
 
+        changeLanguage has SecurityType::LOCALHOST and SecurityType::BEARER_TOKEN,
+        NOT SecurityType::PUBLIC. Unauthenticated remote requests should get 401.
+        """
         client = MikoPBXClient(API_URL)
 
         response_post = client.session.post(
@@ -177,10 +179,45 @@ class TestPublicEndpointsMethodLevel:
             verify=False
         )
 
-        assert response_post.status_code not in [HTTP_UNAUTHORIZED, HTTP_FORBIDDEN], \
-            f"changeLanguage (POST) should be public, got {response_post.status_code}"
+        assert response_post.status_code in [HTTP_UNAUTHORIZED, HTTP_FORBIDDEN], \
+            f"changeLanguage (POST) should require auth, got {response_post.status_code}"
 
-        print(f"✓ Method-level PUBLIC: system:changeLanguage (POST) is public")
+        print(f"✓ system:changeLanguage correctly requires authentication (got {response_post.status_code})")
+
+    def test_04b_login_page_lang_parameter_without_auth(self):
+        """Test that ?lang= query parameter works on login page without authentication.
+
+        After changeLanguage was secured (commit ded09835e, security fix for
+        unauthenticated language change by attacker 158.140.91.107), the login
+        page uses ?lang= query parameter for server-side language selection.
+        LanguageProvider reads the parameter and renders the page accordingly.
+        """
+        # Derive base URL from API URL (strip /pbxcore/api/v3)
+        base_url = API_URL.rsplit('/pbxcore/', 1)[0]
+        login_url = f"{base_url}/admin-cabinet/session/index"
+
+        client = MikoPBXClient(API_URL)
+
+        # Test English
+        response_en = client.session.get(f"{login_url}?lang=en", verify=False)
+        assert response_en.status_code == HTTP_OK, \
+            f"Login page with ?lang=en should return 200, got {response_en.status_code}"
+        assert 'lang="en"' in response_en.text, \
+            "Login page with ?lang=en should render with lang='en'"
+        print(f"✓ Login page ?lang=en renders in English")
+
+        # Test Russian
+        response_ru = client.session.get(f"{login_url}?lang=ru", verify=False)
+        assert response_ru.status_code == HTTP_OK
+        assert 'lang="ru"' in response_ru.text, \
+            "Login page with ?lang=ru should render with lang='ru'"
+        print(f"✓ Login page ?lang=ru renders in Russian")
+
+        # Test invalid language falls back gracefully (no crash)
+        response_invalid = client.session.get(f"{login_url}?lang=xx", verify=False)
+        assert response_invalid.status_code == HTTP_OK, \
+            f"Login page with invalid ?lang= should not crash, got {response_invalid.status_code}"
+        print(f"✓ Login page ?lang=xx does not crash (fallback to default)")
 
     def test_05_passkeys_check_availability_without_auth(self):
         """Test method-level PUBLIC - passkeys:checkAvailability"""
