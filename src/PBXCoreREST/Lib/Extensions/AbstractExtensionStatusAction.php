@@ -156,30 +156,25 @@ abstract class AbstractExtensionStatusAction extends Injectable
         try {
             $am = Util::getAstManager('off');
             $endpoints = [];
-            
-            // Execute 'pjsip show endpoints' command
-            $result = $am->sendRequestTimeout('Command', [
-                'Command' => 'pjsip show endpoints'
-            ]);
-            
-            if (isset($result['data'])) {
-                $lines = explode("\n", $result['data']);
-                foreach ($lines as $line) {
-                    // Parse endpoint lines
-                    // Format: "100                                                   100      In use    1 of 1"
-                    if (preg_match('/^(\d+)\s+(\w+)\s+(.*?)(?:\s+(\d+)\s+of\s+(\d+))?$/', trim($line), $matches)) {
-                        $endpoint = $matches[1];
-                        $endpoints[$endpoint] = [
-                            'endpoint' => $endpoint,
-                            'aor' => $matches[2] ?? '',
-                            'status' => trim($matches[3] ?? ''),
-                            'in_use' => isset($matches[4]) ? (int)$matches[4] : 0,
-                            'max' => isset($matches[5]) ? (int)$matches[5] : 0
-                        ];
-                    }
+
+            // Use structured AMI Action instead of CLI text parsing
+            $result = $am->sendRequestTimeout('PJSIPShowEndpoints');
+            $endpointList = $result['data']['EndpointList'] ?? [];
+
+            foreach ($endpointList as $peer) {
+                $objectName = $peer['ObjectName'] ?? '';
+                if ($objectName === '' || $objectName === 'anonymous') {
+                    continue;
                 }
+                $endpoints[$objectName] = [
+                    'endpoint' => $objectName,
+                    'aor' => $peer['Aor'] ?? $objectName,
+                    'status' => $peer['DeviceState'] ?? 'Unavailable',
+                    'in_use' => is_numeric($peer['ActiveChannels'] ?? '') ? (int)$peer['ActiveChannels'] : 0,
+                    'max' => 0,
+                ];
             }
-            
+
             return $endpoints;
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(

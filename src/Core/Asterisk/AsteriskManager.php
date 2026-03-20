@@ -417,7 +417,8 @@ class AsteriskManager
             'Meetme conferences will follow'    => ['MeetmeListRoomsComplete'],
             'Following are Events for each object associated with the Endpoint' => ['EndpointDetailComplete'],
             'Following are Events for each Outbound registration'               => ['OutboundRegistrationDetailComplete'],
-            'A listing of Endpoints follows, presented as EndpointList events'  => ['EndpointListComplete']
+            'A listing of Endpoints follows, presented as EndpointList events'  => ['EndpointListComplete'],
+            'A listing of Contacts follows, presented as ContactList events'    => ['ContactListComplete']
         ];
         if (isset($settings[$event_text])) {
             $this->waitResponseGetSubData($parameters, $settings[$event_text]);

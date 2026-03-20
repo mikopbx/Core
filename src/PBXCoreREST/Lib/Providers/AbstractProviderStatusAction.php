@@ -90,54 +90,34 @@ abstract class AbstractProviderStatusAction extends Injectable
                 $peerMap[$peer['id']] = $peer;
             }
             
-            // Get PJSIP contacts for RTT information
-            // Since AMI PJSIPShowContacts seems broken, use CLI command as fallback
+            // Get PJSIP contacts for RTT information (single bulk AMI request)
             $contactsMap = [];
             try {
-                // First try the proper AMI command
-                $contactsResponse = $am->sendRequestTimeout('PJSIPShowContacts', []);
-                
-                // Check for ContactList events
-                if (isset($contactsResponse['data']['ContactList'])) {
-                    foreach ($contactsResponse['data']['ContactList'] as $contact) {
-                        if (isset($contact['ObjectName'])) {
-                            // Extract provider ID from ObjectName (format: SIP-TRUNK-XXXXX/sip:...)
-                            $aorParts = explode('/', $contact['ObjectName']);
-                            $providerId = $aorParts[0];
-
-                            // Store contact info - RTT may be 'nan' for NonQual status
-                            $rtt = null;
-                            if (isset($contact['RoundtripUsec']) && is_numeric($contact['RoundtripUsec'])) {
-                                $rtt = (int)round($contact['RoundtripUsec'] / 1000); // Convert microseconds to milliseconds
-                            }
-
-                            // Extract contact URI (e.g., sip:testProvider@192.168.107.0:50213)
-                            $contactUri = isset($aorParts[1]) ? $aorParts[1] : null;
-
-                            $contactsMap[$providerId] = [
-                                'rtt' => $rtt,
-                                'status' => $contact['Status'] ?? 'Unknown',
-                                'uri' => $contactUri
-                            ];
-                        }
+                $contactsResponse = $am->sendRequestTimeout('PJSIPShowContacts');
+                $contactList = $contactsResponse['data']['ContactList'] ?? [];
+                foreach ($contactList as $contact) {
+                    // Extract endpoint name from Endpoint field or ObjectName
+                    $providerId = $contact['Endpoint'] ?? '';
+                    if (empty($providerId) && isset($contact['ObjectName'])) {
+                        $aorParts = explode(';', $contact['ObjectName']);
+                        $providerId = $aorParts[0];
                     }
-                }
-                
-                // If no contacts found via AMI, try direct AMI connection as last resort
-                if (empty($contactsMap)) {
-                    // Direct AMI connection to get CLI output
-                    try {
-                        $contactsMap = self::getContactsViaDirectAMI();
-                    } catch (Throwable $e) {
-                        SystemMessages::sysLogMsg(
-                            __CLASS__,
-                            "Could not get contacts via direct AMI: " . $e->getMessage(),
-                            LOG_DEBUG
-                        );
+                    if (empty($providerId)) {
+                        continue;
                     }
+
+                    $rtt = null;
+                    if (isset($contact['RoundtripUsec']) && is_numeric($contact['RoundtripUsec'])) {
+                        $rtt = (int)round((int)$contact['RoundtripUsec'] / 1000);
+                    }
+
+                    $contactsMap[$providerId] = [
+                        'rtt' => $rtt,
+                        'status' => $contact['Status'] ?? 'Unknown',
+                        'uri' => $contact['Uri'] ?? null
+                    ];
                 }
             } catch (Throwable $e) {
-                // Contacts might not be available if no providers are registered
                 SystemMessages::sysLogMsg(
                     __CLASS__,
                     "Could not get PJSIP contacts: " . $e->getMessage(),
@@ -258,97 +238,6 @@ abstract class AbstractProviderStatusAction extends Injectable
         }
     }
     
-    /**
-     * Get contacts via direct AMI connection when standard methods fail
-     * This is a fallback method for Asterisk 20 where PJSIPShowContacts seems broken
-     */
-    private static function getContactsViaDirectAMI(): array
-    {
-        $contactsMap = [];
-        
-        // Connect directly to AMI
-        $socket = @fsockopen('127.0.0.1', 5038, $errno, $errstr, 2);
-        if (!$socket) {
-            throw new \Exception("Failed to connect to AMI: $errstr");
-        }
-        
-        // Read welcome
-        fgets($socket);
-        
-        // Login with phpagi credentials
-        fwrite($socket, "Action: Login\r\nUsername: phpagi\r\nSecret: phpagi\r\n\r\n");
-        
-        // Read login response
-        $timeout = time() + 2;
-        $loggedIn = false;
-        while (time() < $timeout && $line = fgets($socket)) {
-            if (strpos($line, 'Response: Success') !== false) {
-                $loggedIn = true;
-            }
-            if (trim($line) === '') break;
-        }
-        
-        if (!$loggedIn) {
-            fclose($socket);
-            throw new \Exception("Failed to login to AMI");
-        }
-        
-        // Send CLI command
-        fwrite($socket, "Action: Command\r\nCommand: pjsip show contacts\r\n\r\n");
-        
-        // Read response
-        $output = '';
-        $timeout = time() + 2;
-        $inOutput = false;
-        while (time() < $timeout && $line = fgets($socket)) {
-            if (strpos($line, 'Output:') === 0) {
-                $inOutput = true;
-                $output .= substr($line, 7); // Remove "Output: " prefix
-            } elseif ($inOutput && trim($line) === '') {
-                break; // End of output
-            } elseif ($inOutput) {
-                $output .= $line;
-            }
-        }
-        
-        // Parse output
-        $lines = explode("\n", $output);
-        foreach ($lines as $line) {
-            // Look for any SIP provider contacts
-            // Format: Contact:  SIP-TRUNK-A0441C96/sip:202@192.168.117.5:5060  28334ac1c0 Avail        12.978
-            //         Contact:  SIP-1683372722/sip:...  264d4e5870 Unavail         nan
-            //         Contact:  testProvider/sip:testProvider@192.168.107.0:50213  ce510c580e Avail         1.654
-            if (strpos($line, 'Contact:') !== false && preg_match('/Contact:\s+(\S+)\/(sip:[^\s]+)/', $line, $aorMatch)) {
-                // Extract AOR name (before the slash) - can be SIP-TRUNK-xxx, SIP-xxx, or username
-                $providerId = $aorMatch[1];
-                $contactUri = $aorMatch[2]; // Extract full sip: URI
-
-                // Extract status and RTT
-                if (preg_match('/([a-f0-9]{10})\s+(\w+)\s+([\d\.]+|nan)\s*$/', $line, $matches)) {
-                    $status = $matches[2];
-                    $rttValue = $matches[3];
-
-                    // Store contact even if RTT is 'nan' (NonQual) - contact existence matters for inbound registration
-                    $rtt = null;
-                    if ($rttValue !== 'nan' && is_numeric($rttValue)) {
-                        $rtt = (int)round((float)$rttValue); // Already in milliseconds
-                    }
-
-                    $contactsMap[$providerId] = [
-                        'rtt' => $rtt,
-                        'status' => $status,
-                        'uri' => $contactUri
-                    ];
-                }
-            }
-        }
-        
-        // Logout
-        fwrite($socket, "Action: Logoff\r\n\r\n");
-        fclose($socket);
-        
-        return $contactsMap;
-    }
     
     /**
      * Get IAX provider statuses with RTT from Asterisk
