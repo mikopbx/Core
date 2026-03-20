@@ -330,12 +330,20 @@ class UpgradeFromImageAction extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         $res->success = true;
-        $upgradeScript = '/sbin/firmware_upgrade.sh';
         $cp = Util::which('cp');
+
+        $upgradeScript = '/sbin/firmware_upgrade.sh';
         Processes::mwExec("$cp -f $upgradeScript $desiredLocation");
 
         $pbx_firmware = '/sbin/pbx_firmware';
         Processes::mwExec("$cp -f $pbx_firmware $desiredLocation");
+
+        // Copy version file so firmware_upgrade.sh can display the version
+        $versionFile = '/etc/version';
+        if (file_exists($versionFile)) {
+            Processes::mwExec("$cp -f $versionFile $desiredLocation/version");
+        }
+
         return $res;
     }
 
