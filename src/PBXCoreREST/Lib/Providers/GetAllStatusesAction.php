@@ -373,9 +373,10 @@ class GetAllStatusesAction extends AbstractProviderStatusAction
      */
     private static function getEventType(array $change): string
     {
-        if (in_array($change['new_state'], ['registered', 'OK'])) {
+        $state = strtolower($change['new_state'] ?? '');
+        if (in_array($state, ['registered', 'ok', 'reachable'])) {
             return 'info';
-        } elseif (in_array($change['new_state'], ['unreachable', 'lagged'])) {
+        } elseif (in_array($state, ['unreachable', 'lagged', 'unregistered'])) {
             return 'warning';
         } else {
             return 'error';
@@ -393,11 +394,12 @@ class GetAllStatusesAction extends AbstractProviderStatusAction
             'unreachable' => 'pr_ProviderStatusUnreachable',
             'lagged' => 'pr_ProviderStatusLagged',
             'rejected' => 'pr_ProviderStatusRejected',
-            'OFF' => 'pr_ProviderStatusDisabled',
-            'OK' => 'pr_ProviderStatusOK'
+            'off' => 'pr_ProviderStatusDisabled',
+            'ok' => 'pr_ProviderStatusOK'
         ];
-        
-        return $descriptions[$change['new_state']] ?? 'pr_ProviderStatusChanged';
+
+        $state = strtolower($change['new_state'] ?? '');
+        return $descriptions[$state] ?? 'pr_ProviderStatusChanged';
     }
     
     /**

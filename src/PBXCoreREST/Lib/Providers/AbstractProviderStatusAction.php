@@ -117,6 +117,28 @@ abstract class AbstractProviderStatusAction extends Injectable
                         'uri' => $contact['Uri'] ?? null
                     ];
                 }
+                // Fallback for permanent contacts (outbound trunks without registration)
+                // PJSIPShowContacts only returns dynamic contacts, not permanent ones from pjsip.conf
+                foreach ($sipProvidersResult as $provider) {
+                    $pid = $provider->uniqid;
+                    if (!empty($pid) && !isset($contactsMap[$pid])) {
+                        try {
+                            $epResponse = $am->sendRequestTimeout('PJSIPShowEndpoint', ['Endpoint' => $pid]);
+                            foreach ($epResponse['data']['ContactStatusDetail'] ?? [] as $detail) {
+                                $rtt = null;
+                                if (isset($detail['RoundtripUsec']) && is_numeric($detail['RoundtripUsec'])) {
+                                    $rtt = (int)round((int)$detail['RoundtripUsec'] / 1000);
+                                }
+                                $contactsMap[$pid] = [
+                                    'rtt' => $rtt,
+                                    'status' => $detail['Status'] ?? 'Unknown',
+                                    'uri' => $detail['URI'] ?? null
+                                ];
+                            }
+                        } catch (Throwable $ignored) {
+                        }
+                    }
+                }
             } catch (Throwable $e) {
                 SystemMessages::sysLogMsg(
                     __CLASS__,

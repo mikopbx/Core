@@ -212,29 +212,25 @@ class GetHistoryAction extends Injectable
         ];
         
         foreach ($history as $event) {
-            // Count state changes
-            if (isset($event['type']) && $event['type'] === 'state_change') {
-                $stats['stateChanges']++;
-                
-                // Track state distribution
-                if (isset($event['state'])) {
-                    $state = $event['state'];
-                    if (!isset($stats['states'][$state])) {
-                        $stats['states'][$state] = 0;
-                    }
-                    $stats['states'][$state]++;
-                }
-                
-                // Count errors and recoveries
-                if (isset($event['state'])) {
-                    if (in_array($event['state'], ['rejected', 'unreachable', 'unregistered', 'UNKNOWN'])) {
-                        $stats['errors']++;
-                    } elseif (in_array($event['state'], ['registered', 'OK', 'reachable'])) {
-                        if (isset($event['previousState']) && 
-                            in_array($event['previousState'], ['rejected', 'unreachable', 'unregistered'])) {
-                            $stats['recoveries']++;
-                        }
-                    }
+            if (!isset($event['state'])) {
+                continue;
+            }
+            $stats['stateChanges']++;
+            $state = strtolower($event['state']);
+
+            // Track state distribution
+            if (!isset($stats['states'][$state])) {
+                $stats['states'][$state] = 0;
+            }
+            $stats['states'][$state]++;
+
+            // Count errors and recoveries
+            if (in_array($state, ['rejected', 'unreachable', 'off', 'unknown'])) {
+                $stats['errors']++;
+            } elseif (in_array($state, ['registered', 'ok', 'reachable'])) {
+                $previousState = strtolower($event['previousState'] ?? '');
+                if (in_array($previousState, ['rejected', 'unreachable', 'unregistered', 'off', 'unknown'])) {
+                    $stats['recoveries']++;
                 }
             }
         }

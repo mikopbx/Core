@@ -55,9 +55,9 @@ class SipProviderEditForm extends BaseForm
         // Description
         $this->add(new Text('description'));
 
-        // Username
+        // Username (autocomplete="new-password" works better than "off" for browsers)
         $this->add(new Text('username', [
-            'autocomplete' => 'off',
+            'autocomplete' => 'new-password',
             'readonly' => 'readonly',
             'onfocus' => "this.removeAttribute('readonly')",
         ]));

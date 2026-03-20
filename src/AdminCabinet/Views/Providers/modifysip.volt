@@ -14,6 +14,9 @@
 <!-- Settings tab -->
 <div class="ui bottom attached tab segment active" data-tab="settings">
 {{ form(['action' : 'providers/save/sip', 'method': 'post', 'role': 'form', 'class': 'ui form', 'id':'save-provider-form']) }}
+{# Honeypot fields to absorb browser autofill #}
+<input type="text" name="fakeusername" style="display:none" tabindex="-1" autocomplete="username">
+<input type="password" name="fakepassword" style="display:none" tabindex="-1" autocomplete="current-password">
 
 {{ form.render('id') }}
 {{ form.render('type') }}

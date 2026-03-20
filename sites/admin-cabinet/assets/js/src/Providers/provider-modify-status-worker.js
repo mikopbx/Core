@@ -557,19 +557,25 @@ const providerModifyStatusWorker = {
             };
         }
 
-        // Fill in gaps with last known state
+        // Fill in gaps: segments after last real event inherit its state,
+        // segments before any real event stay grey (no confirmed data)
+        let hasRealEvent = false;
         for (let i = 0; i < segments; i++) {
             if (segmentData[i]) {
+                hasRealEvent = true;
                 lastKnownState = segmentData[i];
                 if (segmentEvents[i].length > 0) {
                     lastKnownEvent = segmentEvents[i][segmentEvents[i].length - 1];
                 }
-            } else {
+            } else if (hasRealEvent) {
+                // After a real event — inherit last known state
                 segmentData[i] = lastKnownState;
-                // Copy last known event for tooltip
                 if (lastKnownEvent && segmentEvents[i].length === 0) {
                     segmentEvents[i] = [{...lastKnownEvent, inherited: true}];
                 }
+            } else {
+                // Before any real event — no data, grey
+                segmentData[i] = 'grey';
             }
         }
         
