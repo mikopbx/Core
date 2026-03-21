@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
+use MikoPBX\Core\System\System;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -80,6 +81,11 @@ class SendMetricsAction extends Injectable
 
             // Virtual Hardware Type
             $dataMetrics['VirtualHardwareType'] = PbxSettings::getValueByKey(PbxSettings::VIRTUAL_HARDWARE_TYPE);
+
+            // Platform identification
+            $dataMetrics['Architecture'] = System::getArchitecture();
+            $dataMetrics['BoardType'] = System::getBoardType();
+            $dataMetrics['EnvironmentType'] = System::getEnvironmentType();
 
             // Hypervisor
             $restAnswer = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [

@@ -469,4 +469,76 @@ class System extends Injectable
 
         return false;
     }
+
+    /**
+     * Get the board type from /etc/miko-board file
+     *
+     * Returns the hardware board identifier (e.g., 'opi', 'rpi', 'generic').
+     * The file is created during system build and contains a single line with the board type.
+     *
+     * @return string Board type string, or 'unknown' if the file does not exist
+     */
+    public static function getBoardType(): string
+    {
+        $boardFile = '/etc/miko-board';
+        if (file_exists($boardFile)) {
+            $board = trim(file_get_contents($boardFile));
+            $board = substr($board, 0, 64);
+            if ($board !== '' && preg_match('/^[a-zA-Z0-9._-]+$/', $board)) {
+                return $board;
+            }
+        }
+
+        return 'unknown';
+    }
+
+    /**
+     * Get the CPU architecture identifier
+     *
+     * @return string 'arm64' or 'amd64'
+     */
+    public static function getArchitecture(): string
+    {
+        return self::isARM64() ? 'arm64' : 'amd64';
+    }
+
+    /**
+     * Get the environment type identifier
+     *
+     * @return string 'docker', 'lxc', or 'bare'
+     */
+    public static function getEnvironmentType(): string
+    {
+        if (self::isDocker()) {
+            return 'docker';
+        }
+        if (self::isLxc()) {
+            return 'lxc';
+        }
+
+        return 'bare';
+    }
+
+    /**
+     * Get platform identification parameters for release server requests
+     *
+     * Returns an array with ARCH, TYPE, and BOARD keys suitable for
+     * merging into HTTP request payloads to releases.mikopbx.com.
+     *
+     * @return array{ARCH: string, TYPE: string, BOARD: string}
+     */
+    private static ?array $platformInfoCache = null;
+
+    public static function getPlatformInfo(): array
+    {
+        if (self::$platformInfoCache === null) {
+            self::$platformInfoCache = [
+                'ARCH' => self::getArchitecture(),
+                'TYPE' => self::getEnvironmentType(),
+                'BOARD' => self::getBoardType(),
+            ];
+        }
+
+        return self::$platformInfoCache;
+    }
 }

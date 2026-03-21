@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Modules;
 use GuzzleHttp;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -80,11 +81,14 @@ class GetModuleInfoAction  extends Injectable
                             'headers' => [
                                 'Content-Type' => 'application/json; charset=utf-8',
                             ],
-                            'json' => [
-                                'PBXVER' => $PBXVersion,
-                                'LANGUAGE'=> $WebUiLanguage,
-                                'GUID'=> $moduleUniqueID,
-                            ],
+                            'json' => array_merge(
+                                [
+                                    'PBXVER' => $PBXVersion,
+                                    'LANGUAGE'=> $WebUiLanguage,
+                                    'GUID'=> $moduleUniqueID,
+                                ],
+                                System::getPlatformInfo()
+                            ),
                             'timeout' => 15,
                         ]
                     );

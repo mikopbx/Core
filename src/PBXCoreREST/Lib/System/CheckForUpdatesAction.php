@@ -25,6 +25,7 @@ namespace MikoPBX\PBXCoreREST\Lib\System;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -66,11 +67,14 @@ class CheckForUpdatesAction
             $pbxVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
             $language = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
 
-            // Prepare request data
-            $requestData = [
-                'PBXVER' => $pbxVersion,
-                'LANGUAGE' => $language ?: 'en',
-            ];
+            // Prepare request data with platform identification
+            $requestData = array_merge(
+                [
+                    'PBXVER' => $pbxVersion,
+                    'LANGUAGE' => $language ?: 'en',
+                ],
+                System::getPlatformInfo()
+            );
 
             // Make API call to releases server
             $client = new Client();

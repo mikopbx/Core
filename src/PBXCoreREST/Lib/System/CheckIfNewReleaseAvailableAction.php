@@ -25,6 +25,7 @@ namespace MikoPBX\PBXCoreREST\Lib\System;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -60,10 +61,13 @@ class CheckIfNewReleaseAvailableAction
             // Get current PBX version
             $pbxVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
 
-            // Prepare request data
-            $requestData = [
-                'PBXVER' => $pbxVersion,
-            ];
+            // Prepare request data with platform identification
+            $requestData = array_merge(
+                [
+                    'PBXVER' => $pbxVersion,
+                ],
+                System::getPlatformInfo()
+            );
 
             // Make API call to releases server
             $client = new Client();

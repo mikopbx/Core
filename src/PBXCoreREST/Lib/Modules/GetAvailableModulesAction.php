@@ -23,6 +23,7 @@ use GuzzleHttp;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\MutexProvider;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -99,10 +100,13 @@ class GetAvailableModulesAction  extends Injectable
                         'headers' => [
                             'Content-Type' => 'application/json; charset=utf-8',
                         ],
-                        'json' => [
-                            'PBXVER' => $PBXVersion,
-                            'LANGUAGE' => $WebUiLanguage,
-                        ],
+                        'json' => array_merge(
+                            [
+                                'PBXVER' => $PBXVersion,
+                                'LANGUAGE' => $WebUiLanguage,
+                            ],
+                            System::getPlatformInfo()
+                        ),
                         'timeout' => 15,
                     ]
                 );

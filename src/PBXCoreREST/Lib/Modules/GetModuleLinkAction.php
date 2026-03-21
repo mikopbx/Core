@@ -21,6 +21,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -65,10 +66,13 @@ class GetModuleLinkAction extends Injectable
                         'headers' => [
                             'Content-Type' => 'application/json; charset=utf-8',
                         ],
-                        'json' => [
-                            'LICENSE' => $licenseKey,
-                            'RELEASEID' => $moduleReleaseId,
-                        ],
+                        'json' => array_merge(
+                            [
+                                'LICENSE' => $licenseKey,
+                                'RELEASEID' => $moduleReleaseId,
+                            ],
+                            System::getPlatformInfo()
+                        ),
                         'timeout' => 15,
                     ]
                 );
