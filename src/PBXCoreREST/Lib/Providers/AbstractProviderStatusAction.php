@@ -96,11 +96,14 @@ abstract class AbstractProviderStatusAction extends Injectable
                 $contactsResponse = $am->sendRequestTimeout('PJSIPShowContacts');
                 $contactList = $contactsResponse['data']['ContactList'] ?? [];
                 foreach ($contactList as $contact) {
-                    // Extract endpoint name from Endpoint field or ObjectName
+                    // Extract endpoint name: Endpoint field (dynamic), AOR (permanent), or ObjectName
                     $providerId = $contact['Endpoint'] ?? '';
+                    if (empty($providerId)) {
+                        $providerId = $contact['AOR'] ?? '';
+                    }
                     if (empty($providerId) && isset($contact['ObjectName'])) {
                         $aorParts = explode(';', $contact['ObjectName']);
-                        $providerId = $aorParts[0];
+                        $providerId = explode('@', $aorParts[0])[0];
                     }
                     if (empty($providerId)) {
                         continue;
