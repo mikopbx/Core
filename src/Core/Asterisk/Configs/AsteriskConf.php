@@ -21,6 +21,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Configs\PbxConf;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -168,7 +169,6 @@ class AsteriskConf extends AsteriskConfigClass
         $indicationConf = new IndicationConf();
         $indicationConf->generateConfig();
 
-        $asterisk = Util::which('asterisk');
-        Processes::mwExec("$asterisk -rx 'core restart now'");
+        PbxConf::safeRestart();
     }
 }

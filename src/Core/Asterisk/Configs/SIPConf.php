@@ -37,6 +37,7 @@ use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\CallerIdDidProcessor;
 use MikoPBX\Core\System\{ Network, Processes, SslCertificateService, SystemMessages, Util};
+use MikoPBX\Core\System\Configs\PbxConf;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\Core\System\Directories;
 use Throwable;
@@ -2357,10 +2358,7 @@ class SIPConf extends AsteriskConfigClass
             Processes::mwExec("$asterisk -rx 'core reload'");
         } else {
             SystemMessages::sysLogMsg('SIP RELOAD', 'Need reload asterisk', LOG_INFO);
-            // Terminate channels.
-            Processes::mwExec("$asterisk -rx 'channel request hangup all'");
-            usleep(500000);
-            Processes::mwExec("$asterisk -rx 'core restart now'");
+            PbxConf::safeRestart(hangupChannels: true);
         }
     }
 }

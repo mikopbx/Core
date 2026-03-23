@@ -133,16 +133,16 @@ class CronConf extends SystemConfigClass
 
         $restart_night =  PbxSettings::getValueByKey(PbxSettings::RESTART_EVERY_NIGHT);
         $auto_update_external_ip =  PbxSettings::getValueByKey(PbxSettings::AUTO_UPDATE_EXTERNAL_IP);
-        $asterisk  = Util::which(PbxConf::PROC_NAME);
         $ntpd      = Util::which('ntpd');
         $dump      = Util::which('dump-conf-db');
         $checkIpPath   = Util::which('check-out-ip');
         $recordsCleaner = Util::which('records-cleaner');
         $cleanerLinks  = Util::which('cleanup-stale');
 
-        // Restart every night if enabled
+        // Restart every night if enabled (via monit to prevent duplicate instances)
         if ($restart_night === '1') {
-            $mast_have[] = '0 1 * * * ' . $asterisk . ' -rx"core restart now" > /dev/null 2> /dev/null' . PHP_EOL;
+            $monit = Util::which('monit');
+            $mast_have[] = '0 1 * * * ' . $monit . ' restart ' . PbxConf::PROC_NAME . ' > /dev/null 2> /dev/null' . PHP_EOL;
         }
 
         if (!System::isDocker()){
