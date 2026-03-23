@@ -49,6 +49,7 @@ class AriConf extends AsteriskConfigClass
         return [
             // Stasis modules (base functionality)
             'res_stasis.so',
+            'app_stasis.so',
             'res_stasis_answer.so',
             'res_stasis_device_state.so',
             'res_stasis_playback.so',
