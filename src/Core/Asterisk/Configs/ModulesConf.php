@@ -225,6 +225,10 @@ class ModulesConf extends AsteriskConfigClass
         if ($ariEnabled) {
             $conf .= "\n; ARI (Asterisk REST Interface) modules\n";
             $ariModules = AriConf::getAriModules();
+            $ariModules = array_filter(
+                $ariModules,
+                static fn(string $module): bool => file_exists("$astModDir/$module")
+            );
             foreach ($ariModules as $module) {
                 $conf .= "load => $module\n";
             }

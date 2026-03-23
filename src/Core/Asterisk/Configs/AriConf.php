@@ -55,6 +55,8 @@ class AriConf extends AsteriskConfigClass
             'res_stasis_playback.so',
             'res_stasis_recording.so',
             'res_stasis_snoop.so',
+            // ARI dependencies (res_websocket_client required since Asterisk 22)
+            'res_websocket_client.so',
             // ARI modules
             'res_ari.so',
             'res_ari_model.so',
