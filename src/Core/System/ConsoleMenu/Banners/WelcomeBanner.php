@@ -152,7 +152,7 @@ class WelcomeBanner implements BannerInterface
         // SSH access
         $sshPort = $this->dataCollector->getSshPort();
         if (!empty($webInfo['ip'])) {
-            $sshCmd = 'ssh root@' . $webInfo['ip'];
+            $sshCmd = 'ssh ' . $this->dataCollector->getSshLogin() . '@' . $webInfo['ip'];
             if ($sshPort !== '22') {
                 $sshCmd .= " -p $sshPort";
             }
@@ -456,7 +456,7 @@ class WelcomeBanner implements BannerInterface
 
         $sshPort = $this->dataCollector->getSshPort();
         if (!empty($webInfo['ip'])) {
-            $sshCmd = 'ssh root@' . $webInfo['ip'];
+            $sshCmd = 'ssh ' . $this->dataCollector->getSshLogin() . '@' . $webInfo['ip'];
             if ($sshPort !== '22') {
                 $sshCmd .= " -p $sshPort";
             }

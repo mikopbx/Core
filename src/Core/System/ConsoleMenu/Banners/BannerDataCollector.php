@@ -21,6 +21,7 @@
 namespace MikoPBX\Core\System\ConsoleMenu\Banners;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\MonitConf;
 use MikoPBX\Core\System\Configs\NatsConf;
@@ -123,11 +124,28 @@ class BannerDataCollector
     /**
      * Get PBX description from settings
      *
+     * Translates known translation keys (e.g., cloud password instructions)
+     * the same way the web interface does in SessionController.
+     *
      * @return string PBX description (empty if not set)
      */
     public function getDescription(): string
     {
-        return PbxSettings::getValueByKey(PbxSettings::PBX_DESCRIPTION) ?: '';
+        $description = PbxSettings::getValueByKey(PbxSettings::PBX_DESCRIPTION) ?: '';
+        if ($description === PbxSettings::DEFAULT_CLOUD_PASSWORD_DESCRIPTION) {
+            $description = TranslationProvider::translate($description);
+        }
+        return $description;
+    }
+
+    /**
+     * Get SSH login username from settings
+     *
+     * @return string SSH login username (defaults to 'root')
+     */
+    public function getSshLogin(): string
+    {
+        return PbxSettings::getValueByKey(PbxSettings::SSH_LOGIN) ?: 'root';
     }
 
     /**
