@@ -162,6 +162,11 @@ class RedisConf extends SystemConfigClass
 
         # Performance tuning
         $conf  .= "tcp-backlog 511" . PHP_EOL;
+
+        # Disable RDB persistence — Redis is used as cache only.
+        # Prevents write-blocking when /var/tmp (tmpfs) overflows (issue #651).
+        $conf  .= "save \"\"" . PHP_EOL;
+        $conf  .= "stop-writes-on-bgsave-error no" . PHP_EOL;
         file_put_contents(self::CONF_FILE, $conf);
     }
 
