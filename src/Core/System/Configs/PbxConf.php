@@ -79,11 +79,23 @@ class PbxConf extends SystemConfigClass
         $confPath = $this->getMainMonitConfFile();
         $pidFile = $this->runDirPath . '/' . self::PROC_NAME . '.pid';
         $safeStartScript = Util::which('safe_asterisk_start');
+        $healthCheck = Util::which('asterisk_health_check');
+        $monit = Util::which('monit');
 
+        // Process check: pidfile-based monitoring with safe start guard
         $conf = 'check process ' . self::PROC_NAME
             . ' with pidfile "' . $pidFile . '"' . PHP_EOL
             . '    start program = "' . $safeStartScript . '"' . PHP_EOL
             . '    stop program = "' . $binPath . " -rx 'core stop now'" . '"' . PHP_EOL;
+
+        // Health check: detect internal deadlocks (stuck reload, PJSIP lock)
+        // Runs every 2 monit cycles (~10s), restarts after 3 consecutive failures (~30s)
+        $conf .= PHP_EOL
+            . 'check program ' . self::PROC_NAME . '_health'
+            . ' with path "' . $healthCheck . '" with timeout 10 seconds' . PHP_EOL
+            . '    every 2 cycles' . PHP_EOL
+            . '    if status != 0 for 3 cycles then exec "' . $monit . ' restart ' . self::PROC_NAME . '"' . PHP_EOL
+            . '    depends on ' . self::PROC_NAME . PHP_EOL;
 
         $this->saveFileContent($confPath, $conf);
         return true;

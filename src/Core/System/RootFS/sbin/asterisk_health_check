@@ -1,0 +1,32 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2026 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# Asterisk health check for monit.
+# Detects internal deadlocks where the process is alive but
+# unresponsive (e.g. stuck reload blocking PJSIP stack).
+#
+# Returns 0 if Asterisk is responsive, non-zero otherwise.
+# Used by monit 'check program' to trigger restart on deadlock.
+#
+
+PIDFILE="/var/asterisk/run/asterisk.pid"
+
+# If Asterisk is not running, skip health check (monit process check handles this)
+if [ ! -f "$PIDFILE" ]; then
+    exit 0
+fi
+PID=$(cat "$PIDFILE" 2>/dev/null)
+if [ -z "$PID" ] || ! kill -0 "$PID" 2>/dev/null; then
+    exit 0
+fi
+
+# Check if Asterisk CLI responds within 5 seconds
+timeout 5 /usr/sbin/asterisk -rx 'core waitfullybooted' > /dev/null 2>&1
+exit $?
