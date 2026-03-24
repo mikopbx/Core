@@ -1,0 +1,45 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2026 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+# Guard against duplicate Asterisk instances.
+# Monit calls this as its start program for Asterisk.
+#
+# When 'core restart now' is executed from Asterisk CLI, Asterisk
+# re-execs itself with a new PID. Monit detects the old PID as dead
+# and tries to start another instance — causing two Asterisk processes
+# fighting over ports, leaking PJSIP threads, and eventually OOM.
+#
+# This script checks if Asterisk is already running before starting,
+# preventing the duplicate instance.
+#
+# Deployed as part of rootfs. Referenced by monit config
+# generated in PbxConf::generateMonitConf().
+#
+
+PIDFILE="/var/asterisk/run/asterisk.pid"
+
+if [ -f "$PIDFILE" ]; then
+    PID=$(cat "$PIDFILE" 2>/dev/null)
+    if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
+        logger -t safe_asterisk_start "Asterisk already running (PID $PID), skip"
+        exit 0
+    fi
+fi
+
+rm -f "$PIDFILE"
+exec /usr/sbin/asterisk -F
