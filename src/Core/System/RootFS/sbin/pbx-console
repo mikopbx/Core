@@ -157,24 +157,24 @@ services)
 
        if [ -n "$safeScriptsPID" ]; then
          echo "Sending restart signal to WorkerSafeScriptsCore (PID: $safeScriptsPID)";
-         # Send SIGUSR1 for soft restart
+         # Send SIGUSR1 — WorkerSafeScriptsCore exits, cron/monit restarts it
          kill -USR1 $safeScriptsPID 2>/dev/null || true
 
-         # Give it time to restart workers
+         # Wait for process to exit
          sleep 3
 
          # Check if WorkerSafeScriptsCore is still running
          if ! kill -0 $safeScriptsPID 2>/dev/null; then
            echo "WorkerSafeScriptsCore stopped, starting it again...";
-           /usr/bin/php -f "$safeScript" start
+           /usr/bin/php -f "$safeScript" start > /dev/null 2>&1 &
          fi
        else
          echo "WorkerSafeScriptsCore not running, starting all services...";
-         /usr/bin/php -f "$safeScript" start
+         /usr/bin/php -f "$safeScript" start > /dev/null 2>&1 &
        fi
 
-       # Show status after restart
-       sleep 2
+       # Wait for workers to come up
+       sleep 3
        "${0}" services status
      else
         echo "Safe script not found at: ${safeScript}";
