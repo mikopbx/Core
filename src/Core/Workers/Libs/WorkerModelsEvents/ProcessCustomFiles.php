@@ -147,13 +147,6 @@ class ProcessCustomFiles extends Injectable
         ];
 
         $tables[] = [
-            'filePath' => '/etc/openvpn.ovpn',
-            'actions' => [
-                ReloadNetworkAction::class
-            ],
-        ];
-
-        $tables[] = [
             'filePath' => '/etc/firewall_additional',
             'actions' => [
                 ReloadFirewallAction::class

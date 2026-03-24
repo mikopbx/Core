@@ -22,8 +22,10 @@ namespace MikoPBX\Core\System;
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\NetworkStaticRoutes;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Configs\DnsConf;
 use MikoPBX\Core\Utilities\IpAddressHelper;
+use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetExternalIpInfoAction;
 use Phalcon\Di\Injectable;
@@ -1135,7 +1137,9 @@ class Network extends Injectable
         // Additional "manual" routes (remove old first, then add current)
         $this->removeCustomStaticRoutes();
         $this->addCustomStaticRoutes();
-        $this->openVpnConfigure();
+        // Notify modules that network is configured (VPN, overlay networks, etc.)
+        PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::ON_AFTER_NETWORK_CONFIGURED);
+
         return 0;
     }
 
@@ -1335,28 +1339,6 @@ class Network extends Injectable
             file_put_contents(self::CUSTOM_ROUTES_STATE_FILE, implode("\n", $arr_commands) . "\n");
         } elseif (file_exists(self::CUSTOM_ROUTES_STATE_FILE)) {
             unlink(self::CUSTOM_ROUTES_STATE_FILE);
-        }
-    }
-
-    /**
-     * Configuring OpenVPN. If a custom configuration file is specified in the system file customization, the network will be brought up.
-     */
-    public function openVpnConfigure(): void
-    {
-        $confFile = '/etc/openvpn.ovpn';
-        Util::fileWriteContent($confFile, '');
-        $data = file_get_contents($confFile);
-
-        $pidFile = '/var/run/openvpn.pid';
-        $pid = Processes::getPidOfProcess('openvpn');
-        if (!empty($pid)) {
-            // Terminate the process.
-            $kill = Util::which('kill');
-            Processes::mwExec("$kill '$pid'");
-        }
-        if (!empty($data)) {
-            $openvpn = Util::which('openvpn');
-            Processes::mwExecBg("$openvpn --config /etc/openvpn.ovpn --writepid $pidFile", '/dev/null', 5);
         }
     }
 

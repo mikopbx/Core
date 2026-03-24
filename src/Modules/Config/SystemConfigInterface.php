@@ -59,6 +59,8 @@ interface SystemConfigInterface
 
     public const string ON_AFTER_IPTABLES_RELOAD = 'onAfterIptablesReload';
 
+    public const string ON_AFTER_NETWORK_CONFIGURED = 'onAfterNetworkConfigured';
+
     /**
      * The callback function will execute after PBX started.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterpbxstarted
@@ -174,6 +176,17 @@ interface SystemConfigInterface
      * @return void
      */
     public function onAfterIptablesReload(): void;
+
+    /**
+     * The callback function will execute after network interfaces are configured.
+     * Modules can use this hook to start VPN tunnels, configure overlay networks,
+     * or perform other actions that depend on network availability.
+     *
+     * Called from Network::lanConfigure() after all interfaces, routes, and DNS are set up.
+     *
+     * @return void
+     */
+    public function onAfterNetworkConfigured(): void;
 
     /**
      * Generates additional fail2ban jail conf rules.

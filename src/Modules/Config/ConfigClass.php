@@ -246,6 +246,17 @@ abstract class ConfigClass extends AsteriskConfigClass implements
     }
 
     /**
+     * Called after network interfaces are configured.
+     * Override this to start VPN tunnels, configure overlay networks,
+     * or perform other actions that depend on network availability.
+     *
+     * @return void
+     */
+    public function onAfterNetworkConfigured(): void
+    {
+    }
+
+    /**
      * Processes actions before enabling the module in the web interface.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforemoduleenable
      *
