@@ -562,6 +562,13 @@ class Network extends Injectable
                 $this->loConfigure();
             }
             /**
+             * Configure TCP keepalive for faster dead connection detection.
+             * Prevents orphaned processes (sngrep, AMI clients) from consuming
+             * memory when SSH/TCP connection drops silently. (#792)
+             */
+            $this->configureTcpKeepalive();
+
+            /**
              * Configure the LAN interfaces.
              */
             $this->lanConfigure();
@@ -678,6 +685,25 @@ class Network extends Injectable
         }
 
         return array_unique($dns);
+    }
+
+    /**
+     * Configures TCP keepalive parameters for faster dead connection detection.
+     *
+     * Default Linux values (7200/75/9) mean a broken TCP connection takes ~2.5 hours
+     * to detect. For a PBX this causes orphaned processes (sngrep, AMI clients, WebSocket)
+     * to consume memory indefinitely after network disruption.
+     *
+     * With 60/10/6: dead connections detected in ~120 seconds.
+     *
+     * @return void
+     */
+    private function configureTcpKeepalive(): void
+    {
+        $sysctl = Util::which('sysctl');
+        Processes::mwExec("$sysctl -w net.ipv4.tcp_keepalive_time=60");
+        Processes::mwExec("$sysctl -w net.ipv4.tcp_keepalive_intvl=10");
+        Processes::mwExec("$sysctl -w net.ipv4.tcp_keepalive_probes=6");
     }
 
     /**
