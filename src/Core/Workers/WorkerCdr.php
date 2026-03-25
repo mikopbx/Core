@@ -378,8 +378,11 @@ class WorkerCdr extends WorkerBase
             $isInternal = true;
         }
 
+        // Resolve destination internal data once (may be empty for external/queue/voicemail destinations)
+        $destInternal = $this->internal_numbers[$row['dst_num']] ?? [];
+
         // Attempt to find the email address associated with the destination number
-        $email = ($this->internal_numbers[$row['dst_num']] ?? [])['email'] ?? '';
+        $email = $destInternal['email'] ?? '';
 
         // If no email was found and this is not an internal call, use the default email for missed calls
         if (empty($email) && !$isInternal) {
@@ -391,6 +394,9 @@ class WorkerCdr extends WorkerBase
             return;
         }
 
+        // Determine language: destination user → system default
+        $language = $destInternal['language'] ?? PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
+
         // Record the details of the call for later processing
         $this->no_answered_calls[$row['linkedid']][] = [
             'from_number' => $row['src_num'],
@@ -400,7 +406,7 @@ class WorkerCdr extends WorkerBase
             'answer' => $row['answer'],
             'endtime' => $row['endtime'],
             'email' => $email,
-            'language' => $this->internal_numbers[$row['dst_num']]['language'],
+            'language' => $language,
             'is_internal' => $isInternal,
             'duration' => $row['duration'],
             'NOANSWER' => true
