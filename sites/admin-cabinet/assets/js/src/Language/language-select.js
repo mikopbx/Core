@@ -67,7 +67,7 @@ const LanguageSelect = {
         }
 
         // On login page (no auth token) — skip API call, use ?lang= parameter directly
-        if (!window.TokenManager || typeof window.TokenManager.getAccessToken !== 'function' || !window.TokenManager.getAccessToken()) {
+        if (!window.TokenManager || !window.TokenManager.accessToken) {
             localStorage.setItem('mikopbx-preferred-language', value);
             window.location.href = `${window.location.pathname}?lang=${encodeURIComponent(value)}`;
             return;
