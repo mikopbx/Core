@@ -91,16 +91,14 @@ class UpdateDatabase extends Injectable
             $className        = pathinfo($file)['filename'];
             $moduleModelClass = "MikoPBX\\Common\\Models\\$className";
             $currentModel++;
-            echo "   |- [{$currentModel}/{$totalModels}] Checking: {$className}...\r";
+            SystemMessages::echoWithSyslog("   |- [{$currentModel}/{$totalModels}] {$className}" . PHP_EOL);
             try {
                 $this->createUpdateDbTableByAnnotations($moduleModelClass);
             } catch (Throwable $exception) {
                 // Log errors encountered during table update
-                SystemMessages::echoWithSyslog('Errors within update table ' . $className . ' ' . $exception->getMessage());
+                SystemMessages::echoWithSyslog('      ERROR: ' . $exception->getMessage() . PHP_EOL);
             }
         }
-        // Clear the progress line
-        echo str_repeat(' ', 80) . "\r";
 
         // Update permissions for custom modules
         $msg = PHP_EOL . '   |- Updating module permissions...';
