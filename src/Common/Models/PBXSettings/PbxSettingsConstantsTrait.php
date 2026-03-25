@@ -117,6 +117,8 @@ trait PbxSettingsConstantsTrait
     public const string SIP_MAX_EXPIRY = 'SIPMaxExpiry';
     /** @FieldType('string') */
     public const string SIP_AUTH_PREFIX = 'SIPAuthPrefix';
+    /** @FieldType('string') */
+    public const string SIP_REALM = 'SIPRealm';
     /** @FieldType('integer') */
     public const string RTP_PORT_FROM = 'RTPPortFrom';
     /** @FieldType('integer') */

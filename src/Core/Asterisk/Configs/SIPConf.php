@@ -1950,6 +1950,62 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
+     * Returns the SIP authentication realm.
+     *
+     * Uses a stored value from PbxSettings, or generates one from the primary
+     * network interface MAC address. This hides the PBX identity from SIP scanners
+     * that look for realm="asterisk" in Digest challenges.
+     *
+     * @return string The realm string (12-char hex hash)
+     */
+    public static function getSipRealm(): string
+    {
+        $realm = PbxSettings::getValueByKey(PbxSettings::SIP_REALM);
+        if (!empty($realm)) {
+            return $realm;
+        }
+
+        // Generate realm from primary interface MAC address
+        $interfaces = LanInterfaces::find(['conditions' => 'internet = 1', 'limit' => 1]);
+        $ifName = '';
+        foreach ($interfaces as $iface) {
+            $ifName = $iface->interface;
+            break;
+        }
+
+        $mac = '';
+        $macFile = "/sys/class/net/$ifName/address";
+        if (!empty($ifName) && file_exists($macFile)) {
+            $mac = trim(file_get_contents($macFile));
+        }
+
+        if (empty($mac)) {
+            // Fallback: use any non-loopback interface
+            $netFiles = glob('/sys/class/net/*/address');
+            foreach ($netFiles as $file) {
+                $content = trim(file_get_contents($file));
+                if ($content !== '00:00:00:00:00:00') {
+                    $mac = $content;
+                    break;
+                }
+            }
+        }
+
+        $realm = substr(md5($mac ?: 'mikopbx'), 0, 12);
+
+        // Persist for stability across restarts
+        $setting = PbxSettings::findFirst("key = '" . PbxSettings::SIP_REALM . "'");
+        if ($setting === null) {
+            $setting = new PbxSettings();
+            $setting->key = PbxSettings::SIP_REALM;
+        }
+        $setting->value = $realm;
+        $setting->save();
+
+        return $realm;
+    }
+
+    /**
      * Generate the configuration for SIP peers in PJSIP format.
      *
      * This method generates the configuration for SIP peers in PJSIP format based on the data_peers property.
@@ -2006,6 +2062,7 @@ class SIPConf extends AsteriskConfigClass
             'type'     => 'auth',
             'username' => $peer['extension'].PbxSettings::getValueByKey(PbxSettings::SIP_AUTH_PREFIX),
             'password' => $peer['secret'],
+            'realm'    => self::getSipRealm(),
         ];
 
         // Override PJSIP options from modules
