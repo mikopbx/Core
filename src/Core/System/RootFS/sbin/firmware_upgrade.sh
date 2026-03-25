@@ -29,7 +29,8 @@
 
 # Setup console output - redirect to /dev/console only if accessible
 # Serial output is handled independently by pbx_firmware and pbx-message
-if [ -w /dev/console ] && echo -n "" > /dev/console 2>/dev/null; then
+# Write actual content to test console (empty writes may succeed on broken devices)
+if [ -w /dev/console ] && echo "MikoPBX firmware upgrade" > /dev/console 2>/dev/null; then
     exec </dev/console >/dev/console 2>/dev/console
 fi
 

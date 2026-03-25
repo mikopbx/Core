@@ -64,7 +64,12 @@ class UpdateDatabase extends Injectable
             MainDatabaseProvider::recreateDBConnections(); // after storage remount
             $this->updateDbStructureByModelsAnnotations();
             $this->updateModulesDbStructure();
+
+            $msg = '   |- Recreating DB connections...';
+            SystemMessages::echoStartMsg($msg);
+            $startTime = microtime(true);
             MainDatabaseProvider::recreateDBConnections(); // if we change anything in structure
+            SystemMessages::echoResultMsgWithTime($msg, SystemMessages::RESULT_DONE, round(microtime(true) - $startTime, 2));
         } catch (Throwable $e) {
             SystemMessages::echoWithSyslog('Errors within database upgrade process ' . $e->getMessage());
         }
@@ -92,7 +97,11 @@ class UpdateDatabase extends Injectable
         }
 
         // Update permissions for custom modules
+        $msg = PHP_EOL . '   |- Updating module permissions...';
+        SystemMessages::echoStartMsg($msg);
+        $startTime = microtime(true);
         $this->updatePermitCustomModules();
+        SystemMessages::echoResultMsgWithTime($msg, SystemMessages::RESULT_DONE, round(microtime(true) - $startTime, 2));
     }
 
     /**
@@ -113,7 +122,11 @@ class UpdateDatabase extends Injectable
         }
 
         // Ensure module DB connections are registered before migration
+        $msg = PHP_EOL . '   |- Registering module DB connections...';
+        SystemMessages::echoStartMsg($msg);
+        $startTime = microtime(true);
         ModulesDBConnectionsProvider::recreateModulesDBConnections();
+        SystemMessages::echoResultMsgWithTime($msg, SystemMessages::RESULT_DONE, round(microtime(true) - $startTime, 2));
 
         foreach ($results as $moduleJson) {
             $jsonString = file_get_contents($moduleJson);
@@ -132,6 +145,15 @@ class UpdateDatabase extends Injectable
             $moduleDir = dirname($moduleJson);
             $modelsFiles = glob("$moduleDir/Models/*.php", GLOB_NOSORT);
 
+            if (empty($modelsFiles)) {
+                continue;
+            }
+
+            $modelsCount = count($modelsFiles);
+            SystemMessages::echoWithSyslog(
+                "   |- Processing module: {$moduleUniqueId} ({$modelsCount} models)..." . PHP_EOL
+            );
+
             foreach ($modelsFiles as $file) {
                 $className = pathinfo($file)['filename'];
                 $moduleModelClass = "Modules\\{$moduleUniqueId}\\Models\\{$className}";
@@ -147,7 +169,11 @@ class UpdateDatabase extends Injectable
         }
 
         // Recreate connections after potential schema changes
+        $msg = '   |- Refreshing module DB connections...';
+        SystemMessages::echoStartMsg($msg);
+        $startTime = microtime(true);
         ModulesDBConnectionsProvider::recreateModulesDBConnections();
+        SystemMessages::echoResultMsgWithTime($msg, SystemMessages::RESULT_DONE, round(microtime(true) - $startTime, 2));
     }
 
     /**

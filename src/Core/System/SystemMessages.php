@@ -115,7 +115,10 @@ class SystemMessages extends Injectable
                 for ($i = 0; $i <= $maxIndex; $i++) {
                     $device = "$prefix$i";
                     if (file_exists($device) && is_writable($device)) {
-                        self::$availableSerialPorts[] = $device;
+                        // Verify with actual write (is_writable only checks permissions, not hardware)
+                        if (@file_put_contents($device, "\0", FILE_APPEND) !== false) {
+                            self::$availableSerialPorts[] = $device;
+                        }
                     }
                 }
             }

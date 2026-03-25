@@ -137,8 +137,8 @@ get_serial_ports() {
                /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
         # Simply check if device exists and is writable
         if [ -c "$DEV" ] && [ -w "$DEV" ]; then
-            # Try to write a null byte to verify it's really available
-            if echo -n "" > "$DEV" 2>/dev/null; then
+            # Write actual data to verify the port is functional (empty writes always succeed)
+            if printf '\0' > "$DEV" 2>/dev/null; then
                 SERIAL_PORTS="$SERIAL_PORTS $DEV"
             fi
         fi
