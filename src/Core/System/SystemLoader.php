@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Core\Asterisk\Configs\Generators\CodecSync;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
@@ -224,6 +225,9 @@ class SystemLoader extends Injectable
         // that these services read on startup. No ORM/Redis dependency.
         if (!$this->isRecoveryMode) {
             CloudProvisioning::applyEarlyOverrides();
+            // Recreate config provider so services read the updated JSON,
+            // not the stale DI cache from SystemConfiguration constructor (#982)
+            ConfigProvider::recreateConfigProvider();
         }
 
         $this->echoStartMsg(' - Starting redis daemon...');
