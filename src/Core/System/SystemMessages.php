@@ -193,14 +193,15 @@ class SystemMessages extends Injectable
             // Failed to retrieve the screen width.
             return;
         }
+        $formattedResult = self::getFormattedResult($result);
         $len = $cols - strlen($message) - 8;
         if ($len < 2) {
-            // Incorrect screen width.
+            // Message too long for dots — output result on new line
+            echo $formattedResult;
             return;
         }
 
         $spaces = str_repeat('.', $len);
-        $formattedResult = self::getFormattedResult($result);
         echo $spaces . $formattedResult;
     }
 
@@ -368,16 +369,16 @@ class SystemMessages extends Injectable
             return;
         }
         $timeStr = sprintf(" (%.2fs)", $elapsedTime);
+        $formattedResult = self::getFormattedResult($result);
+        $formattedResultWithTime = str_replace(" \n", "$timeStr \n", $formattedResult);
         $len = $cols - strlen($message) - 8 - strlen($timeStr);
         if ($len < 2) {
-            // Incorrect screen width.
+            // Message too long for dots — output result on new line
+            echo $formattedResultWithTime;
             return;
         }
 
         $spaces = str_repeat('.', $len);
-        $formattedResult = self::getFormattedResult($result);
-        // Insert timing before the newline in formatted result
-        $formattedResultWithTime = str_replace(" \n", "$timeStr \n", $formattedResult);
         echo $spaces . $formattedResultWithTime;
     }
 
