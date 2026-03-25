@@ -338,11 +338,9 @@ class UpgradeFromImageAction extends Injectable
         $pbx_firmware = '/sbin/pbx_firmware';
         Processes::mwExec("$cp -f $pbx_firmware $desiredLocation");
 
-        // Copy version file so firmware_upgrade.sh can display the version
-        $versionFile = '/etc/version';
-        if (file_exists($versionFile)) {
-            Processes::mwExec("$cp -f $versionFile $desiredLocation/version");
-        }
+        // Note: version file is NOT copied from current system here.
+        // firmware_upgrade.sh extracts version from the .img filename instead,
+        // which is the actual target version (not the running system version).
 
         return $res;
     }
