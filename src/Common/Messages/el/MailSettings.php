@@ -452,12 +452,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'Ένα νέο φωνητικό μήνυμα έφτασε στο γραμματοκιβώτιό σας.',
     'ms_EmailNotification_Voicemail_From' => 'Από',
     'ms_EmailNotification_Voicemail_Number' => 'Αριθμός',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Γραμματοκιβώτιο',
     'ms_EmailNotification_Voicemail_Duration' => 'Διάρκεια',
     'ms_EmailNotification_Voicemail_Date' => 'Ημερομηνία και ώρα',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Αριθμός μηνύματος',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'Μια ηχογράφηση του μηνύματος επισυνάπτεται σε αυτό το μήνυμα ηλεκτρονικού ταχυδρομείου.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Μπορείτε να ακούσετε την ηχογράφηση ανοίγοντας το συνημμένο αρχείο ή καλώντας τον αριθμό του γραμματοκιβωτίου σας.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Μπορείτε να ακούσετε την εγγραφή ανοίγοντας το συνημμένο αρχείο ήχου.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Συνδεθείτε στον πίνακα διαχείρισης του MikoPBX',
     'ms_EmailNotification_Login_Preheader' => 'Εντοπίστηκε νέα σύνδεση',

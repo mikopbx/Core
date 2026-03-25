@@ -25,7 +25,6 @@ use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Mail\EmailTemplateEngine;
 use MikoPBX\Core\System\Mail\EmailTemplateRenderer;
 use MikoPBX\Core\System\Mail\NotificationType;
-use MikoPBX\Core\System\Util;
 use Phalcon\Di\Di;
 
 /**
@@ -87,8 +86,8 @@ abstract class AbstractNotificationBuilder
         // Auto-populate server name from settings
         $this->serverName = PbxSettings::getValueByKey(PbxSettings::PBX_NAME) ?: 'MikoPBX';
 
-        // Set default footer
-        $this->footerMessage = TranslationProvider::translate('ms_EmailNotification_Footer_AutomatedNotification');
+        // Footer will be translated at render time in buildCommonVariables()
+        // to ensure correct language when builder is serialized across process boundaries
     }
 
     /**
@@ -227,8 +226,8 @@ abstract class AbstractNotificationBuilder
             'MAIN_MESSAGE' => $this->mainMessage,
             'DYNAMIC_CONTENT' => $this->dynamicContent,
 
-            // Footer
-            'FOOTER_MESSAGE' => $this->footerMessage,
+            // Footer — translate at render time if not explicitly set
+            'FOOTER_MESSAGE' => $this->footerMessage ?: TranslationProvider::translate('ms_EmailNotification_Footer_AutomatedNotification'),
             'IF_POWERED_BY' => true,
             'POWERED_BY_TEXT' => TranslationProvider::translate('ms_EmailNotification_Footer_PoweredBy') . ' <a href="https://www.mikopbx.com" style="color: #007bff; text-decoration: none;">MikoPBX</a>',
 

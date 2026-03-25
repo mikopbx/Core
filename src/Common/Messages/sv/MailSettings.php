@@ -470,12 +470,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'Ett nytt röstmeddelande har kommit in i din brevlåda.',
     'ms_EmailNotification_Voicemail_From' => 'Från',
     'ms_EmailNotification_Voicemail_Number' => 'siffra',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Brevlåda',
     'ms_EmailNotification_Voicemail_Duration' => 'varaktighet',
     'ms_EmailNotification_Voicemail_Date' => 'Datum och tid',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Meddelandenummer',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'En ljudinspelning av meddelandet bifogas detta e-postmeddelande.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Du kan lyssna på inspelningen genom att öppna den bifogade filen eller genom att ringa din brevlåda.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Du kan lyssna på inspelningen genom att öppna den bifogade ljudfilen.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Logga in på MikoPBX administratörspanel',
     'ms_EmailNotification_Login_Preheader' => 'Ny inloggning upptäckt',

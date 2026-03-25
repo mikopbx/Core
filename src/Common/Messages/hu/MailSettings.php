@@ -470,12 +470,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'Új hangüzenet érkezett a postaládájába.',
     'ms_EmailNotification_Voicemail_From' => 'Tól',
     'ms_EmailNotification_Voicemail_Number' => 'Szám',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Postafiók',
     'ms_EmailNotification_Voicemail_Duration' => 'Időtartam',
     'ms_EmailNotification_Voicemail_Date' => 'Dátum és idő',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Üzenet száma',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'Az üzenet hangfelvétele csatolva van ehhez az e-mailhez.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'A felvételt meghallgathatja a csatolt fájl megnyitásával vagy a postafiókja telefonszámának felhívásával.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'A felvételt a csatolt hangfájl megnyitásával hallgathatja meg.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Bejelentkezés a MikoPBX adminisztrációs felületére',
     'ms_EmailNotification_Login_Preheader' => 'Új bejelentkezés észlelve',

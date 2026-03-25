@@ -471,12 +471,9 @@ return [
     'ms_EmailNotification_Voicemail_Preheader' => 'คุณได้รับข้อความเสียงใหม่แล้ว',
     'ms_EmailNotification_Voicemail_Message' => 'มีข้อความเสียงใหม่เข้ามาในกล่องจดหมายของคุณแล้ว',
     'ms_EmailNotification_Voicemail_Number' => 'ตัวเลข',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'กล่องจดหมาย',
     'ms_EmailNotification_Voicemail_Duration' => 'ระยะเวลา',
     'ms_EmailNotification_Voicemail_Date' => 'วันและเวลา',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'หมายเลขข้อความ',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'ไฟล์เสียงบันทึกข้อความดังกล่าวแนบมากับอีเมลนี้แล้ว',
-    'ms_EmailNotification_Voicemail_HelpText' => 'คุณสามารถฟังบันทึกเสียงได้โดยเปิดไฟล์ที่แนบมา หรือโทรไปยังหมายเลขกล่องข้อความของคุณ',
+    'ms_EmailNotification_Voicemail_HelpText' => 'คุณสามารถฟังบันทึกเสียงได้โดยเปิดไฟล์เสียงที่แนบมา',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'ล็อกอินเข้าสู่แผงควบคุมผู้ดูแลระบบ MikoPBX',
     'ms_EmailNotification_Login_Preheader' => 'ตรวจพบการเข้าสู่ระบบใหม่',

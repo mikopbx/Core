@@ -466,12 +466,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'Posta kutunuza yeni bir sesli mesaj geldi.',
     'ms_EmailNotification_Voicemail_From' => 'İtibaren',
     'ms_EmailNotification_Voicemail_Number' => 'sayı',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Posta kutusu',
     'ms_EmailNotification_Voicemail_Duration' => 'süre',
     'ms_EmailNotification_Voicemail_Date' => 'Tarih ve saat',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Mesaj numarası',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'Bu e-postaya mesajın ses kaydı eklenmiştir.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Ekli dosyayı açarak veya posta kutusu numaranızı arayarak kaydı dinleyebilirsiniz.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Ekteki ses dosyasını açarak kaydı dinleyebilirsiniz.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'MikoPBX yönetim paneline giriş yapın.',
     'ms_EmailNotification_Login_Preheader' => 'Yeni giriş tespit edildi.',

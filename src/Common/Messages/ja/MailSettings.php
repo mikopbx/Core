@@ -423,12 +423,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => '新しい音声メッセージがメールボックスに届きました。',
     'ms_EmailNotification_Voicemail_From' => 'から',
     'ms_EmailNotification_Voicemail_Number' => '番号',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'メールボックス',
     'ms_EmailNotification_Voicemail_Duration' => '期間',
     'ms_EmailNotification_Voicemail_Date' => '日時',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'メッセージ番号',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'メッセージの音声録音がこの電子メールに添付されています。',
-    'ms_EmailNotification_Voicemail_HelpText' => '添付ファイルを開くか、メールボックス番号に電話をかけることで録音を聞くことができます。',
+    'ms_EmailNotification_Voicemail_HelpText' => '添付の音声ファイルを開いて録音を聴くことができます。',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'MikoPBX管理パネルにログイン',
     'ms_EmailNotification_Login_Preheader' => '新しいログインが検出されました',

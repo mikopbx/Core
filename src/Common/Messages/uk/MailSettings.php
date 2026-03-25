@@ -471,12 +471,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'На вашу поштову скриньку надійшло нове голосове повідомлення.',
     'ms_EmailNotification_Voicemail_From' => 'Від',
     'ms_EmailNotification_Voicemail_Number' => 'Номер',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Поштова скринька',
     'ms_EmailNotification_Voicemail_Duration' => 'Тривалість',
     'ms_EmailNotification_Voicemail_Date' => 'Дата і час',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Номер повідомлення',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'Аудіозапис повідомлення прикріплений до цього листа.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Ви можете прослухати запис, відкривши прикріплений файл або зателефонувавши на номер вашої поштової скриньки.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Ви можете прослухати запис, відкривши прикріплений до листа аудіофайл.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Вхід до панелі адміністратора MikoPBX',
     'ms_EmailNotification_Login_Preheader' => 'Виявлено новий вхід до системи',

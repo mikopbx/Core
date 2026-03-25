@@ -470,12 +470,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'თქვენს საფოსტო ყუთში ახალი ხმოვანი შეტყობინება მოვიდა.',
     'ms_EmailNotification_Voicemail_From' => '-დან',
     'ms_EmailNotification_Voicemail_Number' => 'ოთახი',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'საფოსტო ყუთი',
     'ms_EmailNotification_Voicemail_Duration' => 'ხანგრძლივობა',
     'ms_EmailNotification_Voicemail_Date' => 'თარიღი და დრო',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'შეტყობინების ნომერი',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'ამ ელფოსტას თან ერთვის შეტყობინების აუდიოჩანაწერი.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'ჩანაწერის მოსმენა შეგიძლიათ თანდართული ფაილის გახსნით ან თქვენი საფოსტო ყუთის ნომერზე დარეკვით.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'ჩანაწერის მოსმენა შეგიძლიათ თანდართული აუდიო ფაილის გახსნით.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'შედით MikoPBX-ის ადმინისტრაციულ პანელში',
     'ms_EmailNotification_Login_Preheader' => 'ახალი შესვლა აღმოჩენილია',

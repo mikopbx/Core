@@ -471,12 +471,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'Bạn vừa nhận được một tin nhắn thoại mới trong hộp thư của mình.',
     'ms_EmailNotification_Voicemail_From' => 'Từ',
     'ms_EmailNotification_Voicemail_Number' => 'Con số',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Hộp thư',
     'ms_EmailNotification_Voicemail_Duration' => 'Thời lượng',
     'ms_EmailNotification_Voicemail_Date' => 'Ngày giờ',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Số tin nhắn',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'Bản ghi âm cuộc gọi được đính kèm trong email này.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Bạn có thể nghe bản ghi âm bằng cách mở tệp đính kèm hoặc gọi đến số hộp thư của bạn.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Bạn có thể nghe bản ghi âm bằng cách mở tệp âm thanh đính kèm.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Đăng nhập vào bảng điều khiển quản trị MikoPBX.',
     'ms_EmailNotification_Login_Preheader' => 'Phát hiện đăng nhập mới',

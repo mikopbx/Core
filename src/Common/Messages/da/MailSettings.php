@@ -471,12 +471,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'En ny talebesked er ankommet til din postkasse.',
     'ms_EmailNotification_Voicemail_From' => 'Fra',
     'ms_EmailNotification_Voicemail_Number' => 'Nummer',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Postkasse',
     'ms_EmailNotification_Voicemail_Duration' => 'Varighed',
     'ms_EmailNotification_Voicemail_Date' => 'Dato og klokkeslæt',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Beskednummer',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'En lydoptagelse af beskeden er vedhæftet denne e-mail.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Du kan lytte til optagelsen ved at åbne den vedhæftede fil eller ved at ringe til din postkasse.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Du kan lytte til beskeden ved at åbne den vedhæftede lydfil.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Log ind på MikoPBX-administrationspanelet',
     'ms_EmailNotification_Login_Preheader' => 'Ny login registreret',

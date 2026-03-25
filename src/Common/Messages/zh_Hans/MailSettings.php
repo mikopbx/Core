@@ -469,12 +469,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => '您的邮箱收到了一条新的语音留言。',
     'ms_EmailNotification_Voicemail_From' => '从',
     'ms_EmailNotification_Voicemail_Number' => '内部号码',
-    'ms_EmailNotification_Voicemail_Mailbox' => '邮箱',
     'ms_EmailNotification_Voicemail_Duration' => '持续时间',
     'ms_EmailNotification_Voicemail_Date' => '日期和时间',
-    'ms_EmailNotification_Voicemail_MessageNumber' => '消息编号',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => '本邮件附件包含该信息的录音。',
-    'ms_EmailNotification_Voicemail_HelpText' => '您可以打开附件收听录音，也可以拨打您的邮箱号码收听。',
+    'ms_EmailNotification_Voicemail_HelpText' => '您可以打开附件中的音频文件来收听录音。',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => '登录到 MikoPBX 管理面板',
     'ms_EmailNotification_Login_Preheader' => '检测到新登录',

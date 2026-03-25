@@ -424,12 +424,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'На ваш почтовый ящик поступило новое голосовое сообщение.',
     'ms_EmailNotification_Voicemail_From' => 'От',
     'ms_EmailNotification_Voicemail_Number' => 'Номер',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Почтовый ящик',
     'ms_EmailNotification_Voicemail_Duration' => 'Длительность',
     'ms_EmailNotification_Voicemail_Date' => 'Дата и время',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Номер сообщения',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'Аудиозапись сообщения прикреплена к этому письму.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Вы можете прослушать запись, открыв прикрепленный файл или позвонив на номер вашего почтового ящика.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Вы можете прослушать запись, открыв прикреплённый к письму аудиофайл.',
 
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Вход в панель администратора MikoPBX',

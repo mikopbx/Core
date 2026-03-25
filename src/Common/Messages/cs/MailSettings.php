@@ -475,12 +475,9 @@ return [
     // Voicemail Notifications
     'ms_EmailNotification_Voicemail_Subject' => 'Nová hlasová zpráva',
     'ms_EmailNotification_Voicemail_Preheader' => 'Dostali jste novou hlasovou zprávu.',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Poštovní schránka',
     'ms_EmailNotification_Voicemail_Duration' => 'Trvání',
     'ms_EmailNotification_Voicemail_Date' => 'Datum a čas',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Číslo zprávy',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'K tomuto e-mailu je přiložen zvukový záznam zprávy.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Nahrávku si můžete poslechnout otevřením přiloženého souboru nebo zavoláním na číslo vaší poštovní schránky.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Nahrávku si můžete poslechnout otevřením přiloženého audio souboru.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Přihlaste se do administračního panelu MikoPBX',
     'ms_EmailNotification_Login_Preheader' => 'Zjištěno nové přihlášení',

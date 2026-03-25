@@ -457,12 +457,9 @@ return [
     // Voicemail Notifications
     'ms_EmailNotification_Voicemail_Subject' => 'Nouveau message vocal',
     'ms_EmailNotification_Voicemail_Number' => 'Nombre',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Boîte aux lettres',
     'ms_EmailNotification_Voicemail_Duration' => 'Durée',
     'ms_EmailNotification_Voicemail_Date' => 'Date et heure',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Numéro du message',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'Un enregistrement audio du message est joint à ce courriel.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Vous pouvez écouter l\'enregistrement en ouvrant le fichier joint ou en appelant votre numéro de messagerie vocale.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Vous pouvez écouter l\'enregistrement en ouvrant le fichier audio joint.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Connectez-vous au panneau d\'administration MikoPBX',
     'ms_EmailNotification_Login_Preheader' => 'Nouvelle connexion détectée',

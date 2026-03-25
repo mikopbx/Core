@@ -211,30 +211,21 @@ class EmailTemplateExamples
             // Voicemail details
             'IF_DATA_TABLE' => true,
             'DATA_TABLE_ROWS' => $this->buildVoicemailDetailsTable($data),
-            
-            // Info box with duration
-            'IF_INFO_BOX' => true,
-            'INFO_BOX_COLOR' => '#00d2d3',
-            'INFO_BOX_CONTENT' => "<strong>Duration:</strong> {$data['duration']} seconds<br>" .
-                                  "<strong>Extension:</strong> {$data['extension']}<br>" .
-                                  ($data['transcription'] ? "<strong>Transcription preview:</strong> {$data['transcription']}" : ''),
-            
-            // Listen button
-            'IF_CTA_BUTTON' => true,
-            'CTA_URL' => $data['voicemail_url'] ?? '#',
-            'CTA_COLOR' => '#00d2d3',
-            'CTA_TEXT' => 'Listen to Voicemail',
-            
-            // Help text
+
+            // No info box — help text already mentions the attachment
+            'IF_INFO_BOX' => false,
+
+            // No CTA button
+            'IF_CTA_BUTTON' => false,
+
+            // Help text about attachment
             'IF_HELP_TEXT' => true,
-            'HELP_TEXT' => 'You can also dial *98 from your phone to access your voicemail box.',
-            
+            'HELP_TEXT' => 'You can listen to the recording by opening the attached audio file.',
+
             // Footer
-            'FOOTER_MESSAGE' => 'This message and any attachments are confidential.',
-            'IF_UNSUBSCRIBE' => true,
-            'UNSUBSCRIBE_URL' => $data['preferences_url'] ?? '#',
-            'UNSUBSCRIBE_TEXT' => 'Manage voicemail settings',
-            'IF_POWERED_BY' => false,
+            'FOOTER_MESSAGE' => 'This is an automated notification. Please do not reply to this email.',
+            'IF_UNSUBSCRIBE' => false,
+            'IF_POWERED_BY' => true,
         ];
     }
     
@@ -465,12 +456,17 @@ class EmailTemplateExamples
     private function buildVoicemailDetailsTable(array $data): string
     {
         $rows = [
-            ['label' => 'From', 'value' => $data['caller_id'] . ($data['caller_name'] ? ' (' . $data['caller_name'] . ')' : '')],
-            ['label' => 'Received', 'value' => $data['received_time']],
-            ['label' => 'Duration', 'value' => $data['duration'] . ' seconds'],
-            ['label' => 'Message ID', 'value' => $data['message_id'] ?? 'N/A'],
+            ['label' => 'From', 'value' => $data['caller_name'] ?: $data['caller_id']],
         ];
-        
+
+        // Show number separately only when caller name is known
+        if (!empty($data['caller_name']) && $data['caller_name'] !== $data['caller_id']) {
+            $rows[] = ['label' => 'Number', 'value' => $data['caller_id']];
+        }
+
+        $rows[] = ['label' => 'Duration', 'value' => $data['duration'] . ' seconds'];
+        $rows[] = ['label' => 'Received', 'value' => $data['received_time']];
+
         return $this->buildTableRows($rows);
     }
     

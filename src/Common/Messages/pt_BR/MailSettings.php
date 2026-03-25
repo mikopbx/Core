@@ -465,12 +465,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'Uma nova mensagem de voz chegou à sua caixa postal.',
     'ms_EmailNotification_Voicemail_From' => 'De',
     'ms_EmailNotification_Voicemail_Number' => 'Número',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Caixa de correio',
     'ms_EmailNotification_Voicemail_Duration' => 'Duração',
     'ms_EmailNotification_Voicemail_Date' => 'Data e Hora',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Número da mensagem',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'Segue anexada a este e-mail uma gravação de áudio da mensagem.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Você pode ouvir a gravação abrindo o arquivo anexo ou ligando para o número da sua caixa postal.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Você pode ouvir a gravação abrindo o arquivo de áudio anexado.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Faça login no painel de administração do MikoPBX.',
     'ms_EmailNotification_Login_Preheader' => 'Novo login detectado',

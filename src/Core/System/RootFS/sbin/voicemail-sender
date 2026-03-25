@@ -1,6 +1,7 @@
 #!/usr/bin/php
 <?php
 
+use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\BeanstalkClient;
@@ -124,9 +125,22 @@ try {
         }
     }
 
-    $cidName = $params['VM_CALLER_NAME'] ?? '';
-    if (empty($cidName)) {
-        $params['VM_CALLER_NAME'] = Extensions::getCidByPhoneNumber($params['VM_CALLER_NUM']);
+    $callerNum = $params['VM_CALLER_NUM'] ?? '';
+    $callerName = $params['VM_CALLER_NAME'] ?? '';
+
+    // Try to resolve caller name: internal extensions → CDR history
+    if (empty($callerName) && !empty($callerNum)) {
+        $callerName = Extensions::getCidByPhoneNumber($callerNum);
+    }
+    if ((empty($callerName) || $callerName === $callerNum) && !empty($callerNum)) {
+        $cdrRecord = CallDetailRecords::findFirst([
+            'conditions' => 'src_num = :num: AND src_name != :empty:',
+            'bind' => ['num' => $callerNum, 'empty' => ''],
+            'order' => 'start DESC',
+        ]);
+        if ($cdrRecord !== null && !empty($cdrRecord->src_name)) {
+            $callerName = $cdrRecord->src_name;
+        }
     }
 
     // Queue notifications for async sending via WorkerNotifyByEmail
@@ -134,10 +148,8 @@ try {
     foreach ($recipients as $recipient) {
         $builder = new VoicemailNotificationBuilder();
         $builder->setRecipient($recipient)
-                ->setCallerId($params['VM_CALLER_NUM'] ?? '')
-                ->setCallerName($params['VM_CALLER_NAME'] ?? '')
-                ->setMailbox($params['VM_MAILBOX'] ?? '')
-                ->setMessageNumber($params['VM_MSGNUM'] ?? '')
+                ->setCallerId($callerNum)
+                ->setCallerName($callerName)
                 ->setDuration($params['VM_DUR'] ?? '')
                 ->setMessageDate($params['VM_DATE'] ?? '')
                 ->setRecordingFile($emailAttachment);

@@ -471,12 +471,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'Do Twojej skrzynki pocztowej dotarła nowa wiadomość głosowa.',
     'ms_EmailNotification_Voicemail_From' => 'Z',
     'ms_EmailNotification_Voicemail_Number' => 'Numer',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Skrzynka pocztowa',
     'ms_EmailNotification_Voicemail_Duration' => 'Czas trwania',
     'ms_EmailNotification_Voicemail_Date' => 'Data i godzina',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Numer wiadomości',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'Do niniejszej wiadomości e-mail dołączono nagranie dźwiękowe wiadomości.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Możesz odsłuchać nagrania, otwierając załączony plik lub dzwoniąc na numer swojej skrzynki pocztowej.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Możesz odsłuchać nagranie, otwierając załączony plik audio.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Zaloguj się do panelu administracyjnego MikoPBX',
     'ms_EmailNotification_Login_Preheader' => 'Wykryto nowe logowanie',

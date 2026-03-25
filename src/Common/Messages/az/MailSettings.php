@@ -471,12 +471,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'Poçt qutunuza yeni səsli mesaj gəldi.',
     'ms_EmailNotification_Voicemail_From' => 'Kimdən',
     'ms_EmailNotification_Voicemail_Number' => 'Daxili nömrə',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Poçt qutusu',
     'ms_EmailNotification_Voicemail_Duration' => 'Müddət',
     'ms_EmailNotification_Voicemail_Date' => 'Tarix və saat',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Mesaj nömrəsi',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'Mesajın səs yazısı bu e-poçta əlavə edilib.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Əlavə edilmiş faylı açaraq və ya poçt qutunuzun nömrəsinə zəng edərək səs yazısını dinləyə bilərsiniz.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Qeydə alınmış səs mesajını məktuba əlavə edilmiş audio faylı açaraq dinləyə bilərsiniz.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'MikoPBX admin panelinə daxil olun',
     'ms_EmailNotification_Login_Preheader' => 'Yeni giriş aşkarlandı',

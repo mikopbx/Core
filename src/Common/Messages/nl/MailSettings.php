@@ -466,12 +466,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'Er is een nieuw voicemailbericht in uw mailbox aangekomen.',
     'ms_EmailNotification_Voicemail_From' => 'Van',
     'ms_EmailNotification_Voicemail_Number' => 'Nummer',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Postbus',
     'ms_EmailNotification_Voicemail_Duration' => 'Duur',
     'ms_EmailNotification_Voicemail_Date' => 'Datum en tijd',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Berichtnummer',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'Een audio-opname van het bericht is als bijlage bij deze e-mail gevoegd.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'U kunt de opname beluisteren door het bijgevoegde bestand te openen of door uw mailboxnummer te bellen.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'U kunt de opname beluisteren door het bijgevoegde audiobestand te openen.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Meld u aan bij het MikoPBX-beheerderspaneel',
     'ms_EmailNotification_Login_Preheader' => 'Nieuwe login gedetecteerd',

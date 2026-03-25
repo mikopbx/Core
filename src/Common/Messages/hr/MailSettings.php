@@ -414,11 +414,8 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'Nova glasovna poruka stigla je u vaš poštanski sandučić.',
     'ms_EmailNotification_Voicemail_From' => 'Iz',
     'ms_EmailNotification_Voicemail_Number' => 'Broj',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Poštanski sandučić',
     'ms_EmailNotification_Voicemail_Date' => 'Datum i vrijeme',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Broj poruke',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'Zvučni zapis poruke priložen je ovom e-mailu.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Snimku možete poslušati otvaranjem priložene datoteke ili pozivom na broj vašeg poštanskog sandučića.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Snimku možete preslušati otvaranjem priložene audio datoteke.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Prijava na administratorsku ploču MikoPBX-a',
     'ms_EmailNotification_Login_Preheader' => 'Otkrivena nova prijava',

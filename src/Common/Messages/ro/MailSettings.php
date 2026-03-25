@@ -468,12 +468,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'Un nou mesaj vocal a sosit în căsuța ta poștală.',
     'ms_EmailNotification_Voicemail_From' => 'Din',
     'ms_EmailNotification_Voicemail_Number' => 'Număr',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Cutie poștală',
     'ms_EmailNotification_Voicemail_Duration' => 'Durata',
     'ms_EmailNotification_Voicemail_Date' => 'Data și ora',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Numărul mesajului',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'O înregistrare audio a mesajului este atașată acestui e-mail.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Puteți asculta înregistrarea deschizând fișierul atașat sau sunând la numărul căsuței poștale.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Puteți asculta înregistrarea deschizând fișierul audio atașat.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Conectați-vă la panoul de administrare MikoPBX',
     'ms_EmailNotification_Login_Preheader' => 'A fost detectată o nouă autentificare',

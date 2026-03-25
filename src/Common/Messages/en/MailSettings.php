@@ -423,12 +423,9 @@ return [
     'ms_EmailNotification_Voicemail_Message' => 'A new voicemail message has been left in your mailbox.',
     'ms_EmailNotification_Voicemail_From' => 'From',
     'ms_EmailNotification_Voicemail_Number' => 'Number',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Mailbox',
     'ms_EmailNotification_Voicemail_Duration' => 'Duration',
     'ms_EmailNotification_Voicemail_Date' => 'Date and Time',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Message Number',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'The audio recording is attached to this email.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'You can listen to the recording by opening the attached file or by calling your voicemail box.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'You can listen to the recording by opening the attached audio file.',
 
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Login to MikoPBX Admin Panel',

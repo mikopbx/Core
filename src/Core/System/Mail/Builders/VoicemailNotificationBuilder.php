@@ -36,8 +36,6 @@ class VoicemailNotificationBuilder extends AbstractNotificationBuilder
 {
     private string $callerId = '';
     private string $callerName = '';
-    private string $mailbox = '';
-    private string $messageNumber = '';
     private string $duration = '';
     private string $messageDate = '';
     private string $recordingFile = '';
@@ -49,8 +47,9 @@ class VoicemailNotificationBuilder extends AbstractNotificationBuilder
     {
         parent::__construct(NotificationType::VOICEMAIL);
 
-        $this->subject = TranslationProvider::translate('ms_EmailNotification_Voicemail_Subject');
-        $this->preheaderText = TranslationProvider::translate('ms_EmailNotification_Voicemail_Preheader');
+        // Subject and preheader are translated at render time in buildVariables()
+        // to ensure correct language when builder is serialized across process boundaries
+        // (voicemail-sender CLI → Beanstalk queue → WorkerNotifyByEmail)
     }
 
     /**
@@ -74,30 +73,6 @@ class VoicemailNotificationBuilder extends AbstractNotificationBuilder
     public function setCallerName(string $callerName): static
     {
         $this->callerName = $callerName;
-        return $this;
-    }
-
-    /**
-     * Set voicemail mailbox
-     *
-     * @param string $mailbox Mailbox identifier
-     * @return $this
-     */
-    public function setMailbox(string $mailbox): static
-    {
-        $this->mailbox = $mailbox;
-        return $this;
-    }
-
-    /**
-     * Set message number
-     *
-     * @param string $messageNumber Message sequence number
-     * @return $this
-     */
-    public function setMessageNumber(string $messageNumber): static
-    {
-        $this->messageNumber = $messageNumber;
         return $this;
     }
 
@@ -150,44 +125,44 @@ class VoicemailNotificationBuilder extends AbstractNotificationBuilder
     /**
      * Build template variables
      *
+     * Translates all strings at render time (inside WorkerNotifyByEmail)
+     * to ensure correct language regardless of queue serialization context.
+     *
      * @return array<string, mixed> Template variables
      */
     protected function buildVariables(): array
     {
+        // Translate subject/preheader at render time for correct language
+        $this->subject = TranslationProvider::translate('ms_EmailNotification_Voicemail_Subject');
+        $this->preheaderText = TranslationProvider::translate('ms_EmailNotification_Voicemail_Preheader');
+
         $this->mainMessage = TranslationProvider::translate('ms_EmailNotification_Voicemail_Message');
 
         // Build message details table
         $messageDetails = [
             ['label' => TranslationProvider::translate('ms_EmailNotification_Voicemail_From'), 'value' => EmailTemplateRenderer::escapeHtml($this->callerName ?: $this->callerId)],
-            ['label' => TranslationProvider::translate('ms_EmailNotification_Voicemail_Number'), 'value' => EmailTemplateRenderer::escapeHtml($this->callerId)],
-            ['label' => TranslationProvider::translate('ms_EmailNotification_Voicemail_Mailbox'), 'value' => EmailTemplateRenderer::escapeHtml($this->mailbox)],
-            ['label' => TranslationProvider::translate('ms_EmailNotification_Voicemail_Duration'), 'value' => EmailTemplateRenderer::escapeHtml($this->duration)],
-            ['label' => TranslationProvider::translate('ms_EmailNotification_Voicemail_Date'), 'value' => EmailTemplateRenderer::escapeHtml($this->messageDate)],
         ];
 
-        if (!empty($this->messageNumber)) {
-            array_unshift($messageDetails, [
-                'label' => TranslationProvider::translate('ms_EmailNotification_Voicemail_MessageNumber'),
-                'value' => EmailTemplateRenderer::escapeHtml($this->messageNumber)
-            ]);
+        // Show number separately only when caller name is known (otherwise From already shows the number)
+        if (!empty($this->callerName) && $this->callerName !== $this->callerId) {
+            $messageDetails[] = ['label' => TranslationProvider::translate('ms_EmailNotification_Voicemail_Number'), 'value' => EmailTemplateRenderer::escapeHtml($this->callerId)];
         }
 
-        $this->dynamicContent = '';
+        $messageDetails[] = ['label' => TranslationProvider::translate('ms_EmailNotification_Voicemail_Duration'), 'value' => EmailTemplateRenderer::escapeHtml($this->duration)];
+        $messageDetails[] = ['label' => TranslationProvider::translate('ms_EmailNotification_Voicemail_Date'), 'value' => EmailTemplateRenderer::escapeHtml($this->messageDate)];
 
-        $colorScheme = $this->type->getColorScheme();
+        $this->dynamicContent = '';
 
         return [
             // Message details table
             'IF_DATA_TABLE' => true,
             'DATA_TABLE_ROWS' => $this->buildDataTable($messageDetails),
 
-            // Info box with attachment notice
-            'IF_INFO_BOX' => !empty($this->recordingFile),
-            'INFO_BOX_COLOR' => $colorScheme['start'],
-            'INFO_BOX_CONTENT' => TranslationProvider::translate('ms_EmailNotification_Voicemail_AttachmentInfo'),
+            // No info box — help text below already mentions the attachment
+            'IF_INFO_BOX' => false,
 
-            // Help text
-            'IF_HELP_TEXT' => true,
+            // Help text about attachment
+            'IF_HELP_TEXT' => !empty($this->recordingFile),
             'HELP_TEXT' => TranslationProvider::translate('ms_EmailNotification_Voicemail_HelpText'),
         ];
     }
@@ -202,8 +177,6 @@ class VoicemailNotificationBuilder extends AbstractNotificationBuilder
         return array_merge(parent::toArray(), [
             'callerId' => $this->callerId,
             'callerName' => $this->callerName,
-            'mailbox' => $this->mailbox,
-            'messageNumber' => $this->messageNumber,
             'duration' => $this->duration,
             'messageDate' => $this->messageDate,
             'recordingFile' => $this->recordingFile,
@@ -225,12 +198,6 @@ class VoicemailNotificationBuilder extends AbstractNotificationBuilder
         }
         if (isset($data['callerName'])) {
             $this->callerName = $data['callerName'];
-        }
-        if (isset($data['mailbox'])) {
-            $this->mailbox = $data['mailbox'];
-        }
-        if (isset($data['messageNumber'])) {
-            $this->messageNumber = $data['messageNumber'];
         }
         if (isset($data['duration'])) {
             $this->duration = $data['duration'];

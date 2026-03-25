@@ -452,12 +452,9 @@ return [
     'ms_EmailNotification_Voicemail_Preheader' => 'Sie haben eine neue Sprachnachricht erhalten.',
     'ms_EmailNotification_Voicemail_Message' => 'Eine neue Sprachnachricht ist in Ihrem Posteingang eingegangen.',
     'ms_EmailNotification_Voicemail_Number' => 'Nummer',
-    'ms_EmailNotification_Voicemail_Mailbox' => 'Briefkasten',
     'ms_EmailNotification_Voicemail_Duration' => 'Dauer',
     'ms_EmailNotification_Voicemail_Date' => 'Uhrzeit/Datum',
-    'ms_EmailNotification_Voicemail_MessageNumber' => 'Nachrichtennummer',
-    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'Dieser E-Mail ist eine Audioaufnahme der Nachricht beigefügt.',
-    'ms_EmailNotification_Voicemail_HelpText' => 'Sie können die Aufnahme anhören, indem Sie die beigefügte Datei öffnen oder Ihre Mailboxnummer anrufen.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Sie können die Aufnahme anhören, indem Sie die angehängte Audiodatei öffnen.',
     // Login Notifications
     'ms_EmailNotification_Login_Subject' => 'Melden Sie sich im MikoPBX-Adminbereich an.',
     'ms_EmailNotification_Login_Preheader' => 'Neue Anmeldung erkannt',
