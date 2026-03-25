@@ -91,7 +91,8 @@ class UpdateDatabase extends Injectable
             $className        = pathinfo($file)['filename'];
             $moduleModelClass = "MikoPBX\\Common\\Models\\$className";
             $currentModel++;
-            SystemMessages::echoWithSyslog("   |- [{$currentModel}/{$totalModels}] {$className}" . PHP_EOL);
+            $prefix = ($currentModel === 1) ? PHP_EOL : '';
+            SystemMessages::echoWithSyslog("{$prefix}   |- [{$currentModel}/{$totalModels}] {$className}" . PHP_EOL);
             try {
                 $this->createUpdateDbTableByAnnotations($moduleModelClass);
             } catch (Throwable $exception) {
