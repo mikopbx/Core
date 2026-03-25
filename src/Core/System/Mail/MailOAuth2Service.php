@@ -23,6 +23,7 @@ use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\GenericProvider;
 use League\OAuth2\Client\Provider\Google;
 use League\OAuth2\Client\Token\AccessTokenInterface;
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\SystemMessages;
 use PHPMailer\PHPMailer\OAuth;
@@ -318,10 +319,10 @@ class MailOAuth2Service
             return rtrim($origin, '/') . '/pbxcore/api/v3/mail-settings/oauth2-callback';
         }
 
-        // Fallback to PBX settings
-        $externalHost = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_HOST_NAME);
+        // Fallback to LAN interface settings
+        $externalHost = LanInterfaces::getExternalHostname();
         if (empty($externalHost)) {
-            $externalHost = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
+            $externalHost = LanInterfaces::getExternalAddress();
         }
 
         if (empty($externalHost)) {

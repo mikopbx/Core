@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Directories;
@@ -280,7 +281,7 @@ class CheckSecurityLog extends Injectable
                 ->setGrowthRate($growthMB)
                 ->setTimeInterval($intervalMinutes)
                 ->setSeverity($isCritical ? 'critical' : 'warning')
-                ->setAdminUrl($this->buildAdminUrl('/admin-cabinet/firewall/index/'));
+                ->setAdminUrl(LanInterfaces::buildAdminUrl('/admin-cabinet/firewall/index/'));
 
         NotificationQueueHelper::queueOrSend(
             $builder,
@@ -289,22 +290,4 @@ class CheckSecurityLog extends Injectable
         );
     }
 
-    /**
-     * Build admin panel URL using network settings.
-     *
-     * @param string $path Path to append to base URL.
-     * @return string Full URL to admin panel.
-     */
-    private function buildAdminUrl(string $path = ''): string
-    {
-        $httpsPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT) ?: '443';
-
-        $host = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
-        if (empty($host)) {
-            $host = gethostname() ?: 'localhost';
-        }
-
-        $portSuffix = ($httpsPort === '443') ? '' : ':' . $httpsPort;
-        return 'https://' . $host . $portSuffix . $path;
-    }
 }

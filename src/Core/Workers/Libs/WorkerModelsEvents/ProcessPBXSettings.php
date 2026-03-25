@@ -242,7 +242,6 @@ class ProcessPBXSettings extends Injectable
                 PbxSettings::WEB_HTTPS_PUBLIC_KEY,
                 PbxSettings::WEB_HTTPS_PRIVATE_KEY,
                 PbxSettings::REDIRECT_TO_HTTPS,
-                PbxSettings::EXTERNAL_SIP_HOST_NAME,  // Regenerate SSL certificates when hostname changes
                 PbxSettings::PBX_RATE_LIMIT_ENABLED,
             ],
             'actions' => [
@@ -418,7 +417,6 @@ class ProcessPBXSettings extends Injectable
             'keys' => [
                 PbxSettings::WEB_HTTPS_PUBLIC_KEY,
                 PbxSettings::WEB_HTTPS_PRIVATE_KEY,
-                PbxSettings::EXTERNAL_SIP_HOST_NAME, 
             ],
             'actions' => [
                 ReloadPBXCoreAction::class,

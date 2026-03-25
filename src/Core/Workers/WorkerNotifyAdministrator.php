@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
@@ -67,7 +68,7 @@ class WorkerNotifyAdministrator extends WorkerBase
                         $builder = new SystemProblemsNotificationBuilder();
                         $builder->setRecipient($adminEmail)
                                 ->setProblems($errorMessages)
-                                ->setAdminUrl(self::buildAdminUrl('/admin-cabinet/'));
+                                ->setAdminUrl(LanInterfaces::buildAdminUrl('/admin-cabinet/'));
 
                         // Queue with critical priority (system problems are critical)
                         NotificationQueueHelper::queueOrSend(
@@ -87,28 +88,6 @@ class WorkerNotifyAdministrator extends WorkerBase
             }
         }
 
-    }
-
-    /**
-     * Build admin panel URL using network settings
-     *
-     * @param string $path Path to append to base URL
-     * @return string Full URL to admin panel
-     */
-    private static function buildAdminUrl(string $path = ''): string
-    {
-        // Get HTTPS port from settings
-        $httpsPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT) ?: '443';
-
-        // Try to get external IP first, then local IP
-        $host = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
-        if (empty($host)) {
-            $host = gethostname() ?: 'localhost';
-        }
-
-        // Build URL
-        $portSuffix = ($httpsPort === '443') ? '' : ':' . $httpsPort;
-        return 'https://' . $host . $portSuffix . $path;
     }
 
 }

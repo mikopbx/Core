@@ -29,6 +29,7 @@ use MikoPBX\Core\System\Mail\Builders\VoicemailNotificationBuilder;
 use MikoPBX\Core\System\Mail\EmailNotificationService;
 use MikoPBX\Core\System\Mail\NotificationQueueHelper;
 use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 
 /**
@@ -278,16 +279,16 @@ class WorkerNotifyByEmail extends WorkerBase
             // Get admin panel URL
             $webPort = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
             $webHttpsPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT);
-            $externalIp = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
+            $host = LanInterfaces::getExternalAddress();
 
             if (!empty($webHttpsPort) && $webHttpsPort !== '443') {
-                $adminUrl = "https://{$externalIp}:{$webHttpsPort}/admin-cabinet/";
+                $adminUrl = "https://{$host}:{$webHttpsPort}/admin-cabinet/";
             } elseif (!empty($webHttpsPort)) {
-                $adminUrl = "https://{$externalIp}/admin-cabinet/";
+                $adminUrl = "https://{$host}/admin-cabinet/";
             } elseif (!empty($webPort) && $webPort !== '80') {
-                $adminUrl = "http://{$externalIp}:{$webPort}/admin-cabinet/";
+                $adminUrl = "http://{$host}:{$webPort}/admin-cabinet/";
             } else {
-                $adminUrl = "http://{$externalIp}/admin-cabinet/";
+                $adminUrl = "http://{$host}/admin-cabinet/";
             }
 
             // Build notification

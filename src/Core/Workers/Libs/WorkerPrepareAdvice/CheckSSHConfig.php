@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\Mail\Builders\SshPasswordChangedNotificationBuilder;
@@ -63,7 +64,7 @@ class CheckSSHConfig extends Injectable
                 $builder->setRecipient($adminEmail)
                         ->setChangedBy('external')
                         ->setChangeTime(date('Y-m-d H:i:s'))
-                        ->setSecurityUrl(self::buildAdminUrl('/admin-cabinet/general-settings/modify/#ssh'));
+                        ->setSecurityUrl(LanInterfaces::buildAdminUrl('/admin-cabinet/general-settings/modify/#ssh'));
 
                 // Queue with critical priority (security alert is critical)
                 NotificationQueueHelper::queueOrSend(
@@ -77,28 +78,6 @@ class CheckSSHConfig extends Injectable
             }
         }
         return $messages;
-    }
-
-    /**
-     * Build admin panel URL using network settings
-     *
-     * @param string $path Path to append to base URL
-     * @return string Full URL to admin panel
-     */
-    private static function buildAdminUrl(string $path = ''): string
-    {
-        // Get HTTPS port from settings
-        $httpsPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT) ?: '443';
-
-        // Try to get external IP first, then local IP
-        $host = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
-        if (empty($host)) {
-            $host = gethostname() ?: 'localhost';
-        }
-
-        // Build URL
-        $portSuffix = ($httpsPort === '443') ? '' : ':' . $httpsPort;
-        return 'https://' . $host . $portSuffix . $path;
     }
 
 }

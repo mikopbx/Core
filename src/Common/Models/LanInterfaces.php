@@ -592,4 +592,78 @@ class LanInterfaces extends ModelsBase
         return $count > 0;
     }
 
+    /**
+     * Returns the effective external IP address for the internet-facing interface.
+     *
+     * When NAT is enabled (topology=private) and extipaddr is set, returns extipaddr (without port).
+     * When NAT is disabled, returns ipaddr (always current from DHCP).
+     * Falls back to gethostname() or 'localhost'.
+     *
+     * @return string IP address or hostname
+     */
+    public static function getExternalAddress(): string
+    {
+        /** @var LanInterfaces|null $interface */
+        $interface = self::findFirst("internet = '1'");
+        if ($interface === null) {
+            return gethostname() ?: 'localhost';
+        }
+
+        // When NAT is enabled, use the configured external IP
+        if ($interface->topology === self::TOPOLOGY_PRIVATE && !empty($interface->extipaddr)) {
+            $parsed = IpAddressHelper::parseIpWithOptionalPort($interface->extipaddr);
+            if ($parsed !== false) {
+                return $parsed[0];
+            }
+            return $interface->extipaddr;
+        }
+
+        // When NAT is off, use the current interface IP (always fresh from DHCP)
+        if (!empty($interface->ipaddr)) {
+            return $interface->ipaddr;
+        }
+
+        return gethostname() ?: 'localhost';
+    }
+
+    /**
+     * Builds admin panel URL using current external address and HTTPS port.
+     *
+     * @param string $path Path to append to base URL (e.g. '/admin-cabinet/')
+     * @return string Full URL to admin panel
+     */
+    public static function buildAdminUrl(string $path = ''): string
+    {
+        $httpsPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT) ?: '443';
+        $host = self::getExternalAddress();
+
+        $portSuffix = ($httpsPort === '443') ? '' : ':' . $httpsPort;
+        return 'https://' . $host . $portSuffix . $path;
+    }
+
+    /**
+     * Returns the explicitly configured external hostname for the internet-facing interface.
+     *
+     * When NAT is enabled and exthostname is set, returns exthostname.
+     * Returns empty string when no external hostname is explicitly configured,
+     * allowing callers to decide on their own fallback.
+     *
+     * @return string External hostname or empty string
+     */
+    public static function getExternalHostname(): string
+    {
+        /** @var LanInterfaces|null $interface */
+        $interface = self::findFirst("internet = '1'");
+        if ($interface === null) {
+            return '';
+        }
+
+        // When NAT is enabled, return the configured external hostname
+        if ($interface->topology === self::TOPOLOGY_PRIVATE && !empty($interface->exthostname)) {
+            return $interface->exthostname;
+        }
+
+        return '';
+    }
+
 }

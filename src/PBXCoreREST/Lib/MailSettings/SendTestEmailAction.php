@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\MailSettings;
 
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\Mail\Builders\SmtpTestNotificationBuilder;
@@ -229,7 +230,7 @@ class SendTestEmailAction
         }
 
         // Get network information
-        $extIpAddress = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
+        $extIpAddress = LanInterfaces::getExternalAddress();
         $hostname = gethostname() ?: 'Unknown';
 
         // Get current time

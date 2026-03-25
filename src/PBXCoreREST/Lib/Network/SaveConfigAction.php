@@ -453,11 +453,6 @@ class SaveConfigAction
                         } else {
                             $eth->$name = $data['ipaddr_' . $eth->id] ?? '';
                         }
-
-                        // Synchronize external IP to EXTERNAL_SIP_IP_ADDR
-                        // This ensures SSL certificates and notifications use current external IP
-                        $messages = [];
-                        PbxSettings::setValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR, trim($eth->$name), $messages);
                     } else {
                         $eth->$name = '';
                     }
@@ -472,11 +467,6 @@ class SaveConfigAction
                         } else {
                             $eth->$name = $data['hostname'] ?? '';
                         }
-
-                        // Synchronize external hostname to EXTERNAL_SIP_HOST_NAME
-                        // This ensures SSL certificates are regenerated with the new hostname
-                        $messages = [];
-                        PbxSettings::setValueByKey(PbxSettings::EXTERNAL_SIP_HOST_NAME, trim($eth->$name), $messages);
                     } else {
                         $eth->$name = '';
                     }

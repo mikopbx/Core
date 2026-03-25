@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -113,9 +114,9 @@ class SslCertificateService
                 $organizationName = 'MikoPBX User';
             }
 
-            // Get external SIP parameters for certificate
-            $externalHost = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_HOST_NAME);
-            $externalIp = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
+            // Get external network parameters for certificate
+            $externalHost = LanInterfaces::getExternalHostname();
+            $externalIp = LanInterfaces::getExternalAddress();
 
             // Validate hostname - only ASCII alphanumeric, dots, hyphens
             if (!empty($externalHost) && !preg_match('/^[a-zA-Z0-9.-]+$/', $externalHost)) {
@@ -188,7 +189,7 @@ class SslCertificateService
 
         // Create a temporary config file with SAN extension
         // Modern browsers (especially Safari) require Subject Alternative Name (SAN)
-        // Use EXTERNAL_SIP_HOST_NAME and EXTERNAL_SIP_IP_ADDR for SAN entries
+        // Use external hostname and IP from LanInterfaces for SAN entries
         $commonName = $options['commonName'] ?? 'localhost';
 
         $tempConfigFile = tempnam(sys_get_temp_dir(), 'ssl_config_');
@@ -527,7 +528,7 @@ EOD;
                     $certDetails = openssl_x509_parse($publicKey);
                     if ($certDetails !== false) {
                         $currentCommonName = $certDetails['subject']['CN'] ?? '';
-                        $externalHost = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_HOST_NAME);
+                        $externalHost = LanInterfaces::getExternalHostname();
 
                         if (!empty($externalHost) && $currentCommonName !== $externalHost) {
                             // Hostname changed - regenerate certificate with new hostname
