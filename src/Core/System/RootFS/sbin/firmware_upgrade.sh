@@ -101,9 +101,17 @@ executeFirmwareUpdate() {
 
 # Starts the upgrade process
 startUpgrade() {
-    local updateVersion="version"
-    if [ -f "$updateVersion" ]; then
-      local versionNumber=$(cat "$updateVersion")
+    # Extract version from firmware image filename (e.g. mikopbx-2026.1.159-dev-x86_64.img)
+    local versionNumber=""
+    if [ -n "$UPDATE_IMG_FILE" ]; then
+      versionNumber=$(echo "$UPDATE_IMG_FILE" | sed -n 's/.*mikopbx-\([0-9][0-9.]*[a-z-]*\)-.*/\1/p')
+    fi
+    # Fallback to version file (upgrade script version)
+    if [ -z "$versionNumber" ] && [ -f "version" ]; then
+      versionNumber=$(cat "version")
+    fi
+
+    if [ -n "$versionNumber" ]; then
       _echo " - Starting upgrade to the version: $versionNumber..."
     else
       _echo " - Starting upgrade..."
