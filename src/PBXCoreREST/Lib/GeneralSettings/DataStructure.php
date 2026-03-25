@@ -195,9 +195,11 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 return 'password';
             }
 
-            // Fallback: check field name for password-like fields
-            if (str_contains(strtolower($fieldName), 'password') ||
-                str_contains(strtolower($fieldName), 'private_key')) {
+            // Name-based password heuristic only for string fields
+            // (prevents false positives like SSHDisablePasswordLogins which is boolean)
+            if ($type === 'string'
+                && (str_contains(strtolower($fieldName), 'password')
+                    || str_contains(strtolower($fieldName), 'private_key'))) {
                 return 'password';
             }
 
