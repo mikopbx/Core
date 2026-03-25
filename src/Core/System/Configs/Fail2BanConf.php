@@ -113,12 +113,15 @@ class Fail2BanConf extends SystemConfigClass
                 touch($syslog_file);
             }
 
-            // Ensure nginx access.log exists for path traversal detection
+            // Ensure nginx log files exist before starting fail2ban
+            // (nginx may not be started yet during boot)
             $nginxLogDir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nginx/';
             Util::mwMkdir($nginxLogDir);
-            $nginxAccessLog = $nginxLogDir . 'access.log';
-            if (!file_exists($nginxAccessLog)) {
-                touch($nginxAccessLog);
+            foreach (['access.log', 'error.log'] as $nginxLog) {
+                $nginxLogPath = $nginxLogDir . $nginxLog;
+                if (!file_exists($nginxLogPath)) {
+                    touch($nginxLogPath);
+                }
             }
 
             // Start fail2ban synchronously to capture startup errors
