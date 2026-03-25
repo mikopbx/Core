@@ -124,17 +124,15 @@ class Fail2BanConf extends SystemConfigClass
                 }
             }
 
-            // Start fail2ban synchronously to capture startup errors
-            $out = [];
-            $ret = Processes::mwExec("{$this->startCommand} 2>&1", $out);
-            if ($ret !== 0) {
-                $output = implode(PHP_EOL, $out);
-                SystemMessages::sysLogMsg(__METHOD__, "Fail2ban failed to start (exit code {$ret}): {$output}", LOG_ERR);
-                return false;
-            }
+            // Start fail2ban in background
+            Processes::mwExecBg($this->startCommand);
 
-            // Verify fail2ban responds to ping after successful start command
-            return $this->waitForFail2BanStart(15);
+            // Wait for fail2ban to respond, log error if it fails
+            $started = $this->waitForFail2BanStart(15);
+            if (!$started) {
+                SystemMessages::sysLogMsg(__METHOD__, 'Fail2ban failed to start within 15 seconds', LOG_ERR);
+            }
+            return $started;
         } else {
             return $this->reStart();
         }
