@@ -116,6 +116,7 @@ const s3StorageIndex = {
         s3_endpoint: {
             identifier: 's3_endpoint',
             optional: true,
+            depends: 's3_enabled',
             rules: [
                 {
                     type: 'url',
@@ -126,6 +127,7 @@ const s3StorageIndex = {
         s3_bucket: {
             identifier: 's3_bucket',
             optional: true,
+            depends: 's3_enabled',
             rules: [
                 {
                     type: 'regExp',
