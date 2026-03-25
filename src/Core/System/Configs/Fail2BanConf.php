@@ -121,11 +121,17 @@ class Fail2BanConf extends SystemConfigClass
                 touch($nginxAccessLog);
             }
 
-            // Start fail2ban in background
-            Processes::mwExecBg($this->startCommand);
+            // Start fail2ban synchronously to capture startup errors
+            $out = [];
+            $ret = Processes::mwExec("{$this->startCommand} 2>&1", $out);
+            if ($ret !== 0) {
+                $output = implode(PHP_EOL, $out);
+                SystemMessages::sysLogMsg(__METHOD__, "Fail2ban failed to start (exit code {$ret}): {$output}", LOG_ERR);
+                return false;
+            }
 
-            // During boot, monit is not yet started, so we wait for fail2ban directly
-            return $this->waitForFail2BanStart(10);
+            // Verify fail2ban responds to ping after successful start command
+            return $this->waitForFail2BanStart(15);
         } else {
             return $this->reStart();
         }
