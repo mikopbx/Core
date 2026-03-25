@@ -67,11 +67,26 @@ class UpdateSystemConfig extends Injectable
             
             foreach ($upgradeClasses as $releaseNumber => $upgradeClass) {
                 if (version_compare($previous_version, $releaseNumber, '<')) {
-                    $processor = new $upgradeClass();
-                    $processor->processUpdate();
                     $message = '   |- UpdateConfigs: Upgrade system up to ' . $releaseNumber;
                     $message = $this->publishMessage($message);
+
+                    // Capture processUpdate() output to format it with indentation
+                    ob_start();
+                    $processor = new $upgradeClass();
+                    $processor->processUpdate();
+                    $output = ob_get_clean();
+
                     $this->publishResult($message);
+
+                    // Display indented sub-messages from the update
+                    if (!empty(trim($output))) {
+                        foreach (explode("\n", trim($output)) as $line) {
+                            $line = trim($line);
+                            if (!empty($line)) {
+                                SystemMessages::echoWithSyslog("        - {$line}" . PHP_EOL);
+                            }
+                        }
+                    }
                 }
             }
 

@@ -405,8 +405,7 @@ class UpdateDatabase extends Injectable
                 // Fast path: if only new columns were added, use ALTER TABLE ADD COLUMN (instant, no data copy)
                 $addableColumns = $this->getAddableColumns($currentColumnsArr, $columns);
                 if ($addableColumns !== null) {
-                    $colNames = implode(', ', array_map(fn(Column $c) => $c->getName(), $addableColumns));
-                    $msg = '   |- Add columns to: ' . $tableName . ' (' . $colNames . ')';
+                    $msg = '   |- Add columns to: ' . $tableName;
                     $msg = $this->publishMessage($msg);
                     foreach ($addableColumns as $newColumn) {
                         $result = $result && $connectionService->addColumn($tableName, '', $newColumn);
