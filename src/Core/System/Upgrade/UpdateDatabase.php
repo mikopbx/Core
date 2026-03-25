@@ -400,39 +400,51 @@ class UpdateDatabase extends Injectable
             $currentColumnsArr = $connectionService->describeColumns($tableName, '');
 
             if ($this->isTableStructureNotEqual($currentColumnsArr, $columns)) {
-               
-                $msg = '   |- Upgrade table: ' . $tableName;
-                $msg = $this->publishMessage($msg);
-                // Create new table and copy all data
-                $currentStateColumnList = [];
-                $oldColNames            = []; // Old columns names
-                $countColumnsTemp       = count($currentColumnsArr);
-                for ($k = 0; $k < $countColumnsTemp; $k++) {
-                    $currentStateColumnList[$k] = $currentColumnsArr[$k]->getName();
-                    $oldColNames[]              = $currentColumnsArr[$k]->getName();
-                }
 
-                // Create temporary clone on current table with all columns and date
-                // Delete original table
-                $gluedColumns = implode(',', $currentStateColumnList);
-                $query        = "CREATE TEMPORARY TABLE {$tableName}_backup($gluedColumns);
+                // Fast path: if only new columns were added, use ALTER TABLE ADD COLUMN (instant, no data copy)
+                $addableColumns = $this->getAddableColumns($currentColumnsArr, $columns);
+                if ($addableColumns !== null) {
+                    $colNames = implode(', ', array_map(fn(Column $c) => $c->getName(), $addableColumns));
+                    $msg = '   |- Add columns to: ' . $tableName . ' (' . $colNames . ')';
+                    $msg = $this->publishMessage($msg);
+                    foreach ($addableColumns as $newColumn) {
+                        $result = $result && $connectionService->addColumn($tableName, '', $newColumn);
+                    }
+                    $this->publishResult($msg);
+                } else {
+                    // Slow path: full table copy required (column removed, type changed, etc.)
+                    $msg = '   |- Upgrade table: ' . $tableName;
+                    $msg = $this->publishMessage($msg);
+                    $currentStateColumnList = [];
+                    $oldColNames            = [];
+                    $countColumnsTemp       = count($currentColumnsArr);
+                    for ($k = 0; $k < $countColumnsTemp; $k++) {
+                        $currentStateColumnList[$k] = $currentColumnsArr[$k]->getName();
+                        $oldColNames[]              = $currentColumnsArr[$k]->getName();
+                    }
+
+                    // Create temporary clone on current table with all columns and data
+                    // Delete original table
+                    $gluedColumns = implode(',', $currentStateColumnList);
+                    $query        = "CREATE TEMPORARY TABLE {$tableName}_backup($gluedColumns);
 INSERT INTO {$tableName}_backup SELECT $gluedColumns FROM $tableName;
 DROP TABLE  $tableName";
-                $result       = $result && $connectionService->execute($query);
+                    $result       = $result && $connectionService->execute($query);
 
-                // Create new table with new columns structure
-                $result = $result && $connectionService->createTable($tableName, '', $columnsNew);
+                    // Create new table with new columns structure
+                    $result = $result && $connectionService->createTable($tableName, '', $columnsNew);
 
-                // Copy data from temporary table to newly created
-                $newColumnNames  = array_intersect($newColNames, $oldColNames);
-                $gluedNewColumns = implode(',', $newColumnNames);
-                $result          = $result && $connectionService->execute(
-                    "INSERT INTO $tableName ( $gluedNewColumns) SELECT $gluedNewColumns  FROM {$tableName}_backup;"
-                );
+                    // Copy data from temporary table to newly created
+                    $newColumnNames  = array_intersect($newColNames, $oldColNames);
+                    $gluedNewColumns = implode(',', $newColumnNames);
+                    $result          = $result && $connectionService->execute(
+                        "INSERT INTO $tableName ( $gluedNewColumns) SELECT $gluedNewColumns  FROM {$tableName}_backup;"
+                    );
 
-                // Drop temporary table
-                $result = $result && $connectionService->execute("DROP TABLE {$tableName}_backup;");
-                $this->publishResult($msg);
+                    // Drop temporary table
+                    $result = $result && $connectionService->execute("DROP TABLE {$tableName}_backup;");
+                    $this->publishResult($msg);
+                }
             }
         }
 
@@ -469,6 +481,27 @@ DROP TABLE  $tableName";
             return true;
         }
 
+        // 2. Check fields types
+        foreach ($newTableStructure as $index => $newField) {
+            if (!$this->areColumnsEqual($currentTableStructure[$index], $newField)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Compares two Column objects for equality across all relevant properties.
+     *
+     * @param Column $oldColumn The existing column from the database.
+     * @param Column $newColumn The expected column from model annotations.
+     * @param bool $ignorePosition Skip isFirst/getAfterPosition comparison (for name-based matching).
+     *
+     * @return bool True if columns are equal, false otherwise.
+     */
+    private function areColumnsEqual(Column $oldColumn, Column $newColumn, bool $ignorePosition = false): bool
+    {
         $comparedSettings = [
             'getName',
             'getType',
@@ -481,40 +514,99 @@ DROP TABLE  $tableName";
             'isPrimary',
             'isAutoIncrement',
             'isNumeric',
-            'isFirst',
-            'getAfterPosition',
-            //'getBindType',
             'getDefault',
             'hasDefault',
         ];
 
-        // 2. Check fields types
-        foreach ($newTableStructure as $index => $newField) {
-            $oldField = $currentTableStructure[$index];
-            foreach ($comparedSettings as $compared_setting) {
-                if ($oldField->$compared_setting() !== $newField->$compared_setting()) {
-                    // Sqlite transform "1" to ""1"" in default settings, but it is normal
-                    if (
-                        $compared_setting === 'getDefault'
-                        && $oldField->$compared_setting() === '"' . $newField->$compared_setting() . '"'
-                    ) {
-                        continue;
-                    }
+        // Position attributes only matter for positional (index-based) comparison
+        if (!$ignorePosition) {
+            $comparedSettings[] = 'isFirst';
+            $comparedSettings[] = 'getAfterPosition';
+        }
 
-                    // Description for "length" is integer, but table structure store it as string
-                    if (
-                        $compared_setting === 'getSize'
-                        && (string)$oldField->$compared_setting() === (string)$newField->$compared_setting()
-                    ) {
-                        continue;
-                    }
-
-                    return true; // find different columns
+        foreach ($comparedSettings as $compared_setting) {
+            if ($oldColumn->$compared_setting() !== $newColumn->$compared_setting()) {
+                // Sqlite transform "1" to ""1"" in default settings, but it is normal
+                if (
+                    $compared_setting === 'getDefault'
+                    && $oldColumn->$compared_setting() === '"' . $newColumn->$compared_setting() . '"'
+                ) {
+                    continue;
                 }
+
+                // Description for "length" is integer, but table structure store it as string
+                if (
+                    $compared_setting === 'getSize'
+                    && (string)$oldColumn->$compared_setting() === (string)$newColumn->$compared_setting()
+                ) {
+                    continue;
+                }
+
+                return false;
             }
         }
 
-        return false;
+        return true;
+    }
+
+    /**
+     * Determines if schema change can be handled by ALTER TABLE ADD COLUMN.
+     *
+     * Compares columns by NAME (not position) since SQLite ADD COLUMN always
+     * appends to the end. Returns new Column objects to add, or null if a full
+     * table copy is required (existing column properties differ, columns removed,
+     * or SQLite ADD COLUMN restrictions not met).
+     *
+     * @param array $currentColumnsArr Current columns from describeColumns()
+     * @param array $newColumns Expected columns from model annotations
+     *
+     * @return Column[]|null New columns to add, or null if full copy needed
+     */
+    private function getAddableColumns(array $currentColumnsArr, array $newColumns): ?array
+    {
+        $newCount = count($newColumns);
+        $currentCount = count($currentColumnsArr);
+
+        // No new columns or columns were removed — need full copy
+        if ($newCount <= $currentCount) {
+            return null;
+        }
+
+        // Build map of current columns by name for fast lookup
+        $currentByName = [];
+        foreach ($currentColumnsArr as $column) {
+            $currentByName[$column->getName()] = $column;
+        }
+
+        // Check that all current columns still exist in new schema with same properties,
+        // and collect truly new columns
+        $addableColumns = [];
+        foreach ($newColumns as $newColumn) {
+            $name = $newColumn->getName();
+            if (isset($currentByName[$name])) {
+                // Existing column — verify properties match (ignore position, SQLite doesn't guarantee order)
+                if (!$this->areColumnsEqual($currentByName[$name], $newColumn, true)) {
+                    return null;
+                }
+                unset($currentByName[$name]);
+            } else {
+                // New column — validate SQLite ADD COLUMN restrictions
+                if ($newColumn->isPrimary()) {
+                    return null;
+                }
+                if ($newColumn->isNotNull() && !$newColumn->hasDefault()) {
+                    return null;
+                }
+                $addableColumns[] = $newColumn;
+            }
+        }
+
+        // If any current columns were not found in new schema — columns were removed
+        if (!empty($currentByName)) {
+            return null;
+        }
+
+        return $addableColumns;
     }
 
 
