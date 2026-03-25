@@ -702,16 +702,9 @@ const mailSettings = {
         $('#test-connection-button').on('click', (e) => {
             e.preventDefault();
 
-            // Check if button is disabled
+            // Check if button is disabled (has unsaved changes)
             if ($(e.currentTarget).hasClass('disabled')) {
-                return false;
-            }
-
-            // Double-check for unsaved changes
-            if (typeof Form !== 'undefined' && Form.hasChanges && Form.hasChanges()) {
-                UserMessage.showWarning(
-                    globalTranslate.ms_SaveChangesBeforeTesting
-                );
+                UserMessage.showWarning(globalTranslate.ms_SaveChangesBeforeTesting);
                 return false;
             }
 
@@ -722,16 +715,9 @@ const mailSettings = {
         $('#send-test-email-button').on('click', (e) => {
             e.preventDefault();
 
-            // Check if button is disabled
+            // Check if button is disabled (has unsaved changes)
             if ($(e.currentTarget).hasClass('disabled')) {
-                return false;
-            }
-
-            // Double-check for unsaved changes
-            if (typeof Form !== 'undefined' && Form.hasChanges && Form.hasChanges()) {
-                UserMessage.showWarning(
-                    globalTranslate.ms_SaveChangesBeforeTesting
-                );
+                UserMessage.showWarning(globalTranslate.ms_SaveChangesBeforeTesting);
                 return false;
             }
 
@@ -1562,43 +1548,31 @@ const mailSettings = {
         // Initially buttons should be enabled (no changes yet)
         mailSettings.updateTestButtonStates();
 
-        // Subscribe to form change events - check real form state
-        mailSettings.$formObj.on('change.testbuttons', 'input, select, textarea', () => {
-            // Use Form's built-in change detection
-            mailSettings.updateTestButtonStates();
-        });
-
-        // Also monitor Form's dataChanged events
-        mailSettings.$formObj.on('form.dataChanged', () => {
-            mailSettings.updateTestButtonStates();
-        });
-
-        // Reset state after successful save
-        const originalAfterSendForm = mailSettings.cbAfterSendForm;
-        mailSettings.cbAfterSendForm = (response) => {
-            originalAfterSendForm(response);
-            if (response && response.success) {
-                // After successful save, buttons should be enabled
-                setTimeout(() => {
-                    mailSettings.updateTestButtonStates();
-                }, 100);
-            }
-        };
+        // Watch the submit button's class changes via MutationObserver.
+        // Form.checkValues() toggles 'disabled' on #submitbutton — observer reacts to that.
+        const submitButton = document.getElementById('submitbutton');
+        if (submitButton) {
+            const observer = new MutationObserver(() => {
+                mailSettings.updateTestButtonStates();
+            });
+            observer.observe(submitButton, {attributes: true, attributeFilter: ['class']});
+        }
     },
 
     /**
-     * Update test button states based on form changes
+     * Update test button states based on form changes.
+     * Test buttons are active only when save button is disabled (no unsaved changes).
      */
     updateTestButtonStates() {
         const $testConnectionBtn = $('#test-connection-button');
         const $sendTestEmailBtn = $('#send-test-email-button');
         const $submitBtn = $('#submitbutton');
 
-        // Check if form has unsaved changes using Form's built-in method
-        const hasChanges = typeof Form !== 'undefined' && Form.hasChanges && Form.hasChanges();
+        // Save button disabled = no unsaved changes = test buttons should be enabled
+        const hasUnsavedChanges = !$submitBtn.hasClass('disabled');
 
-        if (hasChanges) {
-            // Form has changes - disable test buttons with visual feedback
+        if (hasUnsavedChanges) {
+            // Form has unsaved changes - disable test buttons
             $testConnectionBtn
                 .addClass('disabled')
                 .attr('data-tooltip', globalTranslate.ms_SaveChangesBeforeTesting)
@@ -1610,9 +1584,6 @@ const mailSettings = {
                 .attr('data-tooltip', globalTranslate.ms_SaveChangesBeforeTesting)
                 .attr('data-position', 'top center')
                 .attr('data-inverted', '');
-
-            // Make sure save button is visible/enabled when there are changes
-            $submitBtn.removeClass('disabled').show();
         } else {
             // No changes - enable test buttons
             $testConnectionBtn
