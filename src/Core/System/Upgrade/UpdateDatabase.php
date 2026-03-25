@@ -85,9 +85,13 @@ class UpdateDatabase extends Injectable
     {
         $modelsDir = appPath('src/Common/Models');
         $results   = glob("$modelsDir/*.php", GLOB_NOSORT);
+        $totalModels = count($results);
+        $currentModel = 0;
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];
             $moduleModelClass = "MikoPBX\\Common\\Models\\$className";
+            $currentModel++;
+            echo "   |- [{$currentModel}/{$totalModels}] Checking: {$className}...\r";
             try {
                 $this->createUpdateDbTableByAnnotations($moduleModelClass);
             } catch (Throwable $exception) {
@@ -95,6 +99,8 @@ class UpdateDatabase extends Injectable
                 SystemMessages::echoWithSyslog('Errors within update table ' . $className . ' ' . $exception->getMessage());
             }
         }
+        // Clear the progress line
+        echo str_repeat(' ', 80) . "\r";
 
         // Update permissions for custom modules
         $msg = PHP_EOL . '   |- Updating module permissions...';
