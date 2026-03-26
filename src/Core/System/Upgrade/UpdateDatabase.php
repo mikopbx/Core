@@ -163,7 +163,7 @@ class UpdateDatabase extends Injectable
                 $className = pathinfo($file)['filename'];
                 $moduleModelClass = "Modules\\{$moduleUniqueId}\\Models\\{$className}";
                 try {
-                    $this->createUpdateDbTableByAnnotations($moduleModelClass);
+                    $this->createUpdateDbTableByAnnotations($moduleModelClass, true);
                 } catch (Throwable $exception) {
                     SystemMessages::echoWithSyslog(
                         "Errors within update module table {$moduleUniqueId}/{$className}: "
@@ -204,12 +204,15 @@ class UpdateDatabase extends Injectable
     /**
      * Create, update DB structure by code description
      *
-     * @param $modelClassName string class name with namespace
-     *                        i.e. MikoPBX\Common\Models\Extensions or Modules\ModuleSmartIVR\Models\Settings
+     * @param string $modelClassName Class name with namespace
+     *                               i.e. MikoPBX\Common\Models\Extensions or Modules\ModuleSmartIVR\Models\Settings
+     * @param bool $preserveExtraColumns When true, DB columns not in the model (e.g. added by modules)
+     *                                    are preserved through ALTER TABLE and full copy migrations.
+     *                                    Use true for module migrations to avoid losing module-added columns.
      *
      * @return bool
      */
-    public function createUpdateDbTableByAnnotations(string $modelClassName): bool
+    public function createUpdateDbTableByAnnotations(string $modelClassName, bool $preserveExtraColumns = false): bool
     {
         $result = true;
 
@@ -403,35 +406,47 @@ class UpdateDatabase extends Injectable
             if ($this->isTableStructureNotEqual($currentColumnsArr, $columns)) {
 
                 // Fast path: if only new columns were added, use ALTER TABLE ADD COLUMN (instant, no data copy)
-                $addableColumns = $this->getAddableColumns($currentColumnsArr, $columns);
+                $addableColumns = $this->getAddableColumns($currentColumnsArr, $columns, $preserveExtraColumns);
                 if ($addableColumns !== null) {
-                    $msg = '   |- Add columns to: ' . $tableName;
-                    $msg = $this->publishMessage($msg);
-                    foreach ($addableColumns as $newColumn) {
-                        $result = $result && $connectionService->addColumn($tableName, '', $newColumn);
+                    if (!empty($addableColumns)) {
+                        $msg = '   |- Add columns to: ' . $tableName;
+                        $msg = $this->publishMessage($msg);
+                        foreach ($addableColumns as $newColumn) {
+                            $result = $result && $connectionService->addColumn($tableName, '', $newColumn);
+                        }
+                        $this->publishResult($msg);
                     }
-                    $this->publishResult($msg);
+                    // Empty array = all model columns exist, extra DB columns preserved → skip
                 } else {
-                    // Slow path: full table copy required (column removed, type changed, etc.)
+                    // Slow path: full table copy required (column properties changed)
                     $msg = '   |- Upgrade table: ' . $tableName;
                     $msg = $this->publishMessage($msg);
-                    $currentStateColumnList = [];
-                    $oldColNames            = [];
-                    $countColumnsTemp       = count($currentColumnsArr);
-                    for ($k = 0; $k < $countColumnsTemp; $k++) {
-                        $currentStateColumnList[$k] = $currentColumnsArr[$k]->getName();
-                        $oldColNames[]              = $currentColumnsArr[$k]->getName();
+                    $oldColNames = [];
+                    foreach ($currentColumnsArr as $col) {
+                        $oldColNames[] = $col->getName();
                     }
 
-                    // Create temporary clone on current table with all columns and data
-                    // Delete original table
-                    $gluedColumns = implode(',', $currentStateColumnList);
+                    // When preserving extra columns (module migrations), include DB columns
+                    // not in the model so module-added columns survive the full copy
+                    if ($preserveExtraColumns) {
+                        $modelColNames = array_map(fn($c) => $c->getName(), $columns);
+                        foreach ($currentColumnsArr as $oldCol) {
+                            if (!in_array($oldCol->getName(), $modelColNames, true)) {
+                                $columns[] = $oldCol;
+                                $newColNames[] = $oldCol->getName();
+                            }
+                        }
+                        $columnsNew['columns'] = $columns;
+                    }
+
+                    // Create temporary clone with all current columns and data
+                    $gluedColumns = implode(',', $oldColNames);
                     $query        = "CREATE TEMPORARY TABLE {$tableName}_backup($gluedColumns);
 INSERT INTO {$tableName}_backup SELECT $gluedColumns FROM $tableName;
 DROP TABLE  $tableName";
                     $result       = $result && $connectionService->execute($query);
 
-                    // Create new table with new columns structure
+                    // Create new table with updated columns structure
                     $result = $result && $connectionService->createTable($tableName, '', $columnsNew);
 
                     // Copy data from temporary table to newly created
@@ -562,31 +577,22 @@ DROP TABLE  $tableName";
      *
      * @return Column[]|null New columns to add, or null if full copy needed
      */
-    private function getAddableColumns(array $currentColumnsArr, array $newColumns): ?array
+    private function getAddableColumns(array $currentColumnsArr, array $newColumns, bool $preserveExtraColumns = false): ?array
     {
-        $newCount = count($newColumns);
-        $currentCount = count($currentColumnsArr);
-
-        // No new columns or columns were removed — need full copy
-        if ($newCount <= $currentCount) {
-            return null;
-        }
-
         // Build map of current columns by name for fast lookup
         $currentByName = [];
         foreach ($currentColumnsArr as $column) {
             $currentByName[$column->getName()] = $column;
         }
 
-        // Check that all current columns still exist in new schema with same properties,
-        // and collect truly new columns
+        // Check model columns against DB and collect new ones
         $addableColumns = [];
         foreach ($newColumns as $newColumn) {
             $name = $newColumn->getName();
             if (isset($currentByName[$name])) {
                 // Existing column — verify properties match (ignore position, SQLite doesn't guarantee order)
                 if (!$this->areColumnsEqual($currentByName[$name], $newColumn, true)) {
-                    return null;
+                    return null; // Column properties changed — full copy needed
                 }
                 unset($currentByName[$name]);
             } else {
@@ -601,8 +607,13 @@ DROP TABLE  $tableName";
             }
         }
 
-        // If any current columns were not found in new schema — columns were removed
+        // Extra columns in DB not in model (e.g. added by modules)
         if (!empty($currentByName)) {
+            if ($preserveExtraColumns) {
+                // Module migration: extra DB columns are module-added, preserve them
+                return $addableColumns;
+            }
+            // Core migration: extra columns mean schema mismatch — full copy
             return null;
         }
 
