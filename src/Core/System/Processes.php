@@ -75,7 +75,7 @@ class Processes
     /**
      * Graceful shutdown timeout in seconds
      */
-    private const GRACEFUL_SHUTDOWN_TIMEOUT = 180; // 3 minutes
+    private const GRACEFUL_SHUTDOWN_TIMEOUT = 30; // Must be well under watchdog (120s)
 
     /**
      * Cleans up stale PID files in the workers directory
@@ -221,6 +221,32 @@ class Processes
         }
         // Check by process name
         return self::getPidOfProcess($processIdOrName) !== '';
+    }
+
+    /**
+     * Waits for a set of processes to exit.
+     *
+     * @param array $pids Process IDs to wait for
+     * @param int $timeout Maximum seconds to wait
+     * @return bool True if all exited, false on timeout
+     */
+    private static function waitForProcessesExit(array $pids, int $timeout): bool
+    {
+        $start = time();
+        while (time() - $start < $timeout) {
+            $stillRunning = false;
+            foreach ($pids as $pid) {
+                if (!empty($pid) && posix_kill((int)$pid, 0)) {
+                    $stillRunning = true;
+                    break;
+                }
+            }
+            if (!$stillRunning) {
+                return true;
+            }
+            sleep(1);
+        }
+        return false;
     }
 
     /**
@@ -573,41 +599,31 @@ class Processes
             );
             
             self::mwExec("$kill -SIGUSR1 $activeProcesses > /dev/null 2>&1");
-            
-            // For regular restart, wait and then follow up with SIGTERM if needed
+
+            // For regular restart, escalate: SIGUSR1 → SIGTERM → SIGKILL
             if (!$softRestart) {
-                // Wait for graceful shutdown, with increased timeout
-                $gracefulShutdownStart = time();
-                $allShutdown = false;
-                
-                while (time() - $gracefulShutdownStart < self::GRACEFUL_SHUTDOWN_TIMEOUT) {
-                    // Check if processes are still running
-                    $stillRunning = false;
-                    foreach (explode(' ', $activeProcesses) as $pid) {
-                        if (!empty($pid) && posix_kill((int)$pid, 0)) {
-                            $stillRunning = true;
-                            break;
-                        }
-                    }
-                    
-                    if (!$stillRunning) {
-                        $allShutdown = true;
-                        break;
-                    }
-                    
-                    // Sleep briefly before checking again
-                    sleep(2);
-                }
-                
-                // If processes are still running after timeout, send SIGTERM
-                if (!$allShutdown) {
+                $pids = array_filter(explode(' ', $activeProcesses));
+
+                // Wait for graceful shutdown after SIGUSR1
+                if (!self::waitForProcessesExit($pids, self::GRACEFUL_SHUTDOWN_TIMEOUT)) {
+                    // Escalate to SIGTERM
                     SystemMessages::sysLogMsg(
                         __METHOD__,
-                        sprintf("SEND signal: %s", "SIGTERM $activeProcesses"),
+                        "SIGUSR1 timeout ({$activeProcesses}), escalating to SIGTERM",
                         LOG_WARNING
                     );
-                    
-                    self::mwExecBg("$kill -SIGTERM $activeProcesses");
+                    self::mwExec("$kill -SIGTERM $activeProcesses > /dev/null 2>&1");
+
+                    // Wait 10 more seconds for SIGTERM
+                    if (!self::waitForProcessesExit($pids, 10)) {
+                        // Final escalation: SIGKILL (cannot be caught or ignored)
+                        SystemMessages::sysLogMsg(
+                            __METHOD__,
+                            "SIGTERM timeout ({$activeProcesses}), sending SIGKILL",
+                            LOG_ERR
+                        );
+                        self::mwExec("$kill -9 $activeProcesses > /dev/null 2>&1");
+                    }
                 }
             }
         }
