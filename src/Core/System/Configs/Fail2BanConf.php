@@ -595,9 +595,10 @@ class Fail2BanConf extends SystemConfigClass
             . '|php-cgi|setup\.cgi|/SDK/|/goform/'
             . '|/containers/json|/actuator/|HNAP1'
             . '|playback\?view=.*\.(?:db|sqlite|conf|gz|zip|tar|key|pem|crt))';
-        $logLine = '\s+-\s+\S+\s+\[.*?\]\s+"[^"]*';
+        $logLine = '\s+-\s+\S+\s+(?:\[.*?\]\s+)?"[^"]*';
         $logEnd = '[^"]*"\s+\d+\s+';
         $conf = $commonConf .
+            "datepattern = \\[%%Y-%%m-%%dT%%H:%%M:%%S%%z\\]\n" .
             'prefregex = ^<F-CONTENT>\S+' . $logLine
             . $exploitPatterns . $logEnd . '.*</F-CONTENT>$' . "\n" .
             'failregex = ^<HOST>' . $logLine
@@ -611,6 +612,7 @@ class Fail2BanConf extends SystemConfigClass
         // Note: fail2ban strips the timestamp before applying failregex, so regex starts after date
         // Catches all client requests that generate nginx errors (file not found, permission denied, etc.)
         $conf = "[Definition]\n" .
+            "datepattern = {^LN-BEG}\n" .
             'failregex = ^\s*\[error\] \d+#\d+: \*\d+ .*client: <HOST>,.*' . "\n" .
             'ignoreregex = favicon\.ico' . "\n";
 
