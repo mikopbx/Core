@@ -556,9 +556,16 @@ class SystemMessages extends Injectable
         $info = self::formatLine("Web credentials:", $lineWidth);
         $info .= PHP_EOL . self::formatLine("   Login: $adminUser", $lineWidth);
         
-        // Show actual password only if it's default or equals cloudInstanceId
-        if ($cloudInstanceId === $webAdminPassword || $webAdminPassword === $defaultPassword) {
-            $info .= PHP_EOL . self::formatLine("   Password: $webAdminPassword", $lineWidth);
+        // Show actual password only if it matches cloudInstanceId or is default
+        // CLOUD_INSTANCE_ID stores plain text, WEB_ADMIN_PASSWORD stores SHA-512 hash
+        // Also handle legacy plain-text passwords for backward compatibility
+        if (!empty($cloudInstanceId)
+            && ($cloudInstanceId === $webAdminPassword
+                || PasswordService::verifySha512Hash($cloudInstanceId, $webAdminPassword))) {
+            $info .= PHP_EOL . self::formatLine("   Password: $cloudInstanceId", $lineWidth);
+        } elseif ($defaultPassword === $webAdminPassword
+            || PasswordService::verifySha512Hash($defaultPassword, $webAdminPassword)) {
+            $info .= PHP_EOL . self::formatLine("   Password: $defaultPassword", $lineWidth);
         } else {
             $info .= PHP_EOL . self::formatLine("   Password: ***********", $lineWidth);
         }
