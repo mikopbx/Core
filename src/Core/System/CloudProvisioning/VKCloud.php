@@ -49,11 +49,14 @@ class VKCloud extends CloudProvider
     /**
      * Performs an asynchronous check to determine if this cloud provider is available.
      *
+     * Uses VK Cloud-specific identifiers only. Generic OpenStack fields like project_id
+     * are NOT used because they match any OpenStack provider (Selectel, OVH, etc.).
+     *
      * @return PromiseInterface Promise that resolves to bool
      */
     public function checkAvailability(): PromiseInterface
     {
-        // Try OpenStack metadata endpoint first (VK Cloud specific)
+        // Try OpenStack metadata endpoint for VK Cloud-specific fields
         $promise = $this->client->requestAsync('GET', 'http://169.254.169.254/openstack/latest/meta_data.json', [
             'timeout' => self::HTTP_TIMEOUT,
             'http_errors' => false
@@ -64,9 +67,8 @@ class VKCloud extends CloudProvider
                 if ($response->getStatusCode() === 200) {
                     $metadata = json_decode($response->getBody()->getContents(), true) ?? [];
 
-                    // Check for VK Cloud specific fields in OpenStack metadata
-                    if (isset($metadata['project_id']) ||
-                        (isset($metadata['meta']) && isset($metadata['meta']['vkcloud_project_id']))) {
+                    // Only match on VK Cloud-specific field, NOT generic project_id
+                    if (isset($metadata['meta']['vkcloud_project_id'])) {
                         return true;
                     }
                 }
@@ -182,18 +184,18 @@ class VKCloud extends CloudProvider
                 }
             }
 
-            // Check 3: Try to get VK metadata in a different format
+            // Check 3: OpenStack metadata for VK Cloud-specific field only
             $response = $this->client->request('GET', 'http://169.254.169.254/openstack/latest/meta_data.json', [
                 'timeout' => self::HTTP_TIMEOUT,
                 'http_errors' => false
             ]);
 
             if ($response->getStatusCode() === 200) {
-                $metadata = json_decode($response->getBody()->getContents(), true)??[];
+                $metadata = json_decode($response->getBody()->getContents(), true) ?? [];
 
-                // Check for VK Cloud specific fields in OpenStack metadata
-                if (isset($metadata['project_id']) ||
-                    (isset($metadata['meta']) && isset($metadata['meta']['vkcloud_project_id']))) {
+                // Only match on VK Cloud-specific field, NOT generic project_id
+                // project_id is a standard OpenStack field present on Selectel, OVH, etc.
+                if (isset($metadata['meta']['vkcloud_project_id'])) {
                     return true;
                 }
             }
@@ -201,23 +203,7 @@ class VKCloud extends CloudProvider
             // Failed to get metadata, continue with other checks
         }
 
-        // Check 4: Network checks for VK Cloud
-        try {
-            // Check the network connectivity to VK Cloud services
-            $response = $this->client->request('GET', 'http://mcs.mail.ru', [
-                'timeout' => 2,
-                'http_errors' => false
-            ]);
-
-            if ($response->getStatusCode() < 400) {
-                // Could connect to VK Cloud faster than normal - might be in their network
-                return true;
-            }
-        } catch (GuzzleException $e) {
-            // Failed network check
-        }
-
-        // Check 5: Examine network interfaces for VK Cloud specific patterns
+        // Check 4: Examine network interfaces for VK Cloud specific patterns
         try {
             // Get MAC addresses of network interfaces
             $macs = $this->getMetaDataVCS('network/interfaces/macs/');
@@ -237,7 +223,7 @@ class VKCloud extends CloudProvider
             // Failed network interface check
         }
 
-        // Check 6: Check for Vultr-specific metadata to rule out Vultr
+        // Check 5: Check for Vultr-specific metadata to rule out Vultr
         try {
             $response = $this->client->request('GET', 'http://169.254.169.254/v1.json', [
                 'timeout' => self::HTTP_TIMEOUT,

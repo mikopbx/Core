@@ -2,7 +2,7 @@
 
 Unified system for automatic MikoPBX configuration during initial boot across all deployment environments.
 
-## File Inventory (13 files)
+## File Inventory (14 files)
 
 ```
 CloudProvisioning/
@@ -16,7 +16,8 @@ CloudProvisioning/
 ├── YandexCloud.php            # Yandex Cloud - Google-compatible API (no gserviceaccount)
 ├── DigitalOceanCloud.php      # DigitalOcean - vendor-data pattern detection
 ├── VultrCloud.php             # Vultr - instance-v2-id UUID detection
-├── VKCloud.php                # VK Cloud - OpenStack multi-check detection
+├── SelectelCloud.php          # Selectel - DMI sys_vendor + OpenStack x_sel_ metadata keys
+├── VKCloud.php                # VK Cloud - OpenStack vkcloud_project_id detection
 ├── AlibabaCloud.php           # Alibaba Cloud - IMDS at 100.100.100.200
 └── NoCloud.php                # On-premise (545 lines) - ISO/seed/HTTP/cmdline datasources
 ```
@@ -51,19 +52,20 @@ CloudProvisioning::start()
   → Mark complete: CLOUD_PROVISIONING=1, enable firewall/fail2ban
 ```
 
-## Provider Priority Order (11 providers)
+## Provider Priority Order (12 providers)
 
 1. **DockerCloud** - `/.dockerenv` exists
 2. **LxcCloud** - `container=lxc` ENV
-3. **AWSCloud** - IMDS partition=aws
-4. **GoogleCloud** - GCE metadata with gserviceaccount
-5. **AzureCloud** - Azure IMDS azEnvironment=AzurePublicCloud
-6. **YandexCloud** - Google-compatible API without gserviceaccount
-7. **DigitalOceanCloud** - vendor-data patterns (DigitalOcean resolver, DNS=67.207.67.)
-8. **VultrCloud** - instance-v2-id UUID present
-9. **VKCloud** - OpenStack metadata with project_id/vkcloud
+3. **YandexCloud** - Google-compatible API without gserviceaccount
+4. **SelectelCloud** - DMI sys_vendor=Selectel or OpenStack x_sel_ metadata keys
+5. **VKCloud** - OpenStack metadata with vkcloud_project_id (VK-specific only)
+6. **GoogleCloud** - GCE metadata with gserviceaccount
+7. **AzureCloud** - Azure IMDS azEnvironment=AzurePublicCloud
+8. **AWSCloud** - IMDS partition=aws
+9. **DigitalOceanCloud** - vendor-data patterns (DigitalOcean resolver, DNS=67.207.67.)
 10. **AlibabaCloud** - IMDS at 100.100.100.200
-11. **NoCloud** - Fallback (ISO/seed/HTTP/cmdline)
+11. **VultrCloud** - instance-v2-id UUID present
+12. **NoCloud** - Fallback (ISO/seed/HTTP/cmdline)
 
 ## CloudProvider Base Class
 

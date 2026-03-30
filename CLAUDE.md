@@ -294,17 +294,18 @@ Tests are automatically synchronized between host and container:
 - Configuration application: `applyConfigDirect(ProvisioningConfig)` unified method
 - Security: SQL injection prevention (key validation, value escaping), SSRF protection
 
-**Cloud Providers** (9 implementations):
+**Cloud Providers** (10 implementations):
 1. **DockerCloud** - Environment variables from container runtime
 2. **AWSCloud** - EC2 IMDS at 169.254.169.254 (partition detection)
 3. **GoogleCloud** - GCE metadata with `Metadata-Flavor: Google` header
 4. **AzureCloud** - Azure IMDS with `Metadata: true` header
 5. **YandexCloud** - Yandex Cloud metadata (Google-compatible API)
-6. **DigitalOceanCloud** - Droplet metadata with vendor-data detection
-7. **VultrCloud** - Single JSON endpoint with instance-v2-id
-8. **VKCloud** - VK Cloud (OpenStack-based) with multi-check detection
-9. **AlibabaCloud** - Alibaba Cloud IMDS at 100.100.100.200
-10. **NoCloud** - On-premise VMware/Proxmox/KVM (ISO, seed, HTTP, cmdline)
+6. **SelectelCloud** - DMI sys_vendor detection + OpenStack `x_sel_` metadata keys
+7. **VKCloud** - OpenStack metadata with `vkcloud_project_id` (VK-specific only)
+8. **DigitalOceanCloud** - Droplet metadata with vendor-data detection
+9. **VultrCloud** - Single JSON endpoint with instance-v2-id
+10. **AlibabaCloud** - Alibaba Cloud IMDS at 100.100.100.200
+11. **NoCloud** - On-premise VMware/Proxmox/KVM (ISO, seed, HTTP, cmdline)
 
 **User-Data Format** (Cloud-init compatible YAML/JSON):
 ```yaml
