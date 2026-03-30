@@ -261,9 +261,10 @@ class PBXInstaller extends Injectable
         }
 
         $install_cmd = 'exec < /dev/console > /dev/console 2>/dev/console;' .
-            "$pv -p /offload/firmware.img.gz | $gunzip | $dd of=/dev/$this->target_disk bs=4M conv=fsync 2> /dev/null";
+            "$pv -p /offload/firmware.img.gz | $gunzip | $dd of=/dev/$this->target_disk bs=4M 2> /dev/null";
         passthru($install_cmd);
 
+        echo ' - Syncing data to disk...' . PHP_EOL;
         $this->syncAndRereadPartitions();
     }
 
