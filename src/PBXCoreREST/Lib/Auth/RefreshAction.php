@@ -48,12 +48,12 @@ class RefreshAction
     /**
      * Enable refresh token rotation for enhanced security
      */
-    private const bool ENABLE_TOKEN_ROTATION = true;
+    private const bool ENABLE_TOKEN_ROTATION = false;
 
     /**
      * Maximum refresh attempts per interval
      */
-    private const int MAX_REFRESH_ATTEMPTS = 20;
+    private const int MAX_REFRESH_ATTEMPTS = 100;
 
     /**
      * Interval to reset refresh attempts (seconds)
