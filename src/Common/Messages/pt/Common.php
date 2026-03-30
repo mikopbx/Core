@@ -749,7 +749,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     // Units of measurement
     'ms_MB' => 'MB',
     'st_tooltip_s3_secret_key_desc' => 'Chave privada para autenticação de API',
-    'adv_SecurityLogCriticalGrowth' => 'O log de segurança do Asterisk cresceu criticamente: %growth% MB em %interval% minutos. O sistema está sob ataque! <a href=\'%logFile%\'>Verificar log</a>',
+    'adv_SecurityLogCriticalGrowth' => 'O log de segurança do Asterisk cresceu criticamente: %growth% MB em %interval% minutos. O sistema está sob ataque! <a href=\'%url%\'>Verificar log</a>',
     'am_EventFilterTooltip_examples_header' => 'Exemplos',
     'am_EventFilterTooltip_common_params' => 'Eventos frequentemente utilizados',
     'am_EventFilterTooltip_list_allow' => 'Evento: NomeDoEvento',

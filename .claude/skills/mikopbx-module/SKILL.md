@@ -196,9 +196,9 @@ Analyze module code against best practices:
 ### PHP 8.3 Features to Use
 
 ```php
-// Typed properties
+// Typed properties (for non-model classes: Conf, Main, Worker, etc.)
 public string $name = '';
-public readonly int $id;
+public readonly string $moduleUniqueId;
 
 // Constructor promotion
 public function __construct(
@@ -221,6 +221,26 @@ enum CallDirection: string {
     case Outgoing = 'outgoing';
 }
 ```
+
+### Phalcon ORM Model Properties (IMPORTANT)
+
+Model column properties follow Phalcon/SQLite conventions — do NOT apply PHP 8.3 typed properties rules here:
+
+```php
+// Primary key — ALWAYS untyped
+public $id;
+
+// String columns — nullable with string default
+public ?string $name = '';
+
+// Integer columns stored as string in SQLite
+public ?string $enabled = '0';
+
+// Integer foreign keys — nullable int
+public ?int $userid = null;
+```
+
+This pattern matches core models in `src/Common/Models/`. See `Extensions.php`, `Sip.php`, `CallQueues.php` for reference.
 
 ### Import Rules
 

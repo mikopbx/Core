@@ -728,7 +728,7 @@ return [
     'mm_OffWorkTimes' => 'นอกเวลาทำการ',
     'mo_InvalidExternalIpAddress' => 'ที่อยู่ IP ภายนอกไม่ถูกต้อง',
     'bt_ToolTipCopyRoute' => 'คัดลอกเส้นทาง',
-    'adv_SecurityLogCriticalGrowth' => 'ไฟล์บันทึกความปลอดภัยของ Asterisk มีขนาดใหญ่ขึ้นอย่างมาก: %growth% MB ใน %interval% นาที ระบบกำลังถูกโจมตี! <a href=\'%logFile%\'>ตรวจสอบบันทึก</a>',
+    'adv_SecurityLogCriticalGrowth' => 'ไฟล์บันทึกความปลอดภัยของ Asterisk มีขนาดใหญ่ขึ้นอย่างมาก: %growth% MB ใน %interval% นาที ระบบกำลังถูกโจมตี! <a href=\'%url%\'>ตรวจสอบบันทึก</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'ไฟล์บันทึกความปลอดภัยของ Asterisk มีขนาดใหญ่ขึ้นอย่างน่าสงสัย: %growth% MB ใน %interval% นาที ขอแนะนำให้ตรวจสอบการตั้งค่าความปลอดภัยของคุณ',
     'adv_AsteriskLogCriticalGrowth' => 'การเติบโตวิกฤตของบันทึก Asterisk (%logFile%): %growth% MB ใน %interval% นาที ขนาดรวม: %totalSize% MB อาจเกิดจากการกำหนดค่าผิดพลาดหรือการโจมตี',
     'adv_AsteriskLogSuspiciousGrowth' => 'การเติบโตที่น่าสงสัยของบันทึก Asterisk (%logFile%): %growth% MB ใน %interval% นาที ขนาดรวม: %totalSize% MB',

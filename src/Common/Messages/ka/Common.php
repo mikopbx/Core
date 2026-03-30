@@ -852,7 +852,7 @@ return [
     'sf_UploadImgOnlyForFirmware' => 'IMG ფაილები დაშვებულია მხოლოდ firmware-ის ატვირთვისთვის.',
     'sf_UploadInvalidExtensionForCategory' => 'კატეგორიისთვის {category} გაფართოება {extension} არასწორია',
     'sf_SoundCategory' => 'ხმოვანი ფაილები',
-    'adv_SecurityLogCriticalGrowth' => 'Asterisk-ის უსაფრთხოების ჟურნალი კრიტიკულად გაიზარდა: %growth% მბ %interval% წუთში. სისტემა თავდასხმის ქვეშაა! <a href=\'%logFile%\'>შეამოწმეთ ჟურნალი </a>',
+    'adv_SecurityLogCriticalGrowth' => 'Asterisk-ის უსაფრთხოების ჟურნალი კრიტიკულად გაიზარდა: %growth% მბ %interval% წუთში. სისტემა თავდასხმის ქვეშაა! <a href=\'%url%\'>შეამოწმეთ ჟურნალი</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'Asterisk-ის უსაფრთხოების ჟურნალი საეჭვოდ გაიზარდა: %growth% მბ %interval% წუთში. რეკომენდებულია თქვენი უსაფრთხოების პარამეტრების გადახედვა.',
     'adv_AsteriskLogCriticalGrowth' => 'Asterisk-ის ჟურნალის კრიტიკული ზრდა (%logFile%): %growth% მბ %interval% წუთში. საერთო ზომა: %totalSize% მბ. შესაძლო კონფიგურაციის პრობლემა ან შეტევა.',
     'adv_AsteriskLogSuspiciousGrowth' => 'Asterisk-ის ჟურნალის საეჭვო ზრდა (%logFile%): %growth% მბ %interval% წუთში. საერთო ზომა: %totalSize% მბ.',

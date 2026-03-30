@@ -224,16 +224,21 @@ grep -n "Processes::killByName\|killByProcessTitle" Lib/*Conf.php
 
 ---
 
-## 15. [MEDIUM] Missing type declarations
+## 15. [MEDIUM] Missing type declarations on methods
 
 **Detection:**
 ```bash
 grep -n "function [a-z].*)" Lib/*.php | grep -v ": "
 ```
 
-**Problem:** No return type or parameter type hints.
+**Problem:** No return type or parameter type hints on methods.
 
-**Fix:** Add PHP 8.3 type declarations on all methods and properties.
+**Fix:** Add PHP 8.3 type declarations on all method parameters and return types.
+
+**Exception — Phalcon ORM model properties:** Model column properties follow Phalcon conventions and MUST NOT be flagged:
+- Primary key is always untyped: `public $id;`
+- Other column properties use nullable types: `public ?string $name = '';`
+- This is NOT an anti-pattern — it is the standard MikoPBX/Phalcon model pattern. See core models in `src/Common/Models/`.
 
 ---
 

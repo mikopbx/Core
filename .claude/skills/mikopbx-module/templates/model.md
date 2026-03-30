@@ -31,7 +31,7 @@ class {Entity} extends ModulesModelsBase
      * @Identity
      * @Column(type="integer", nullable=false)
      */
-    public ?string $id = null;
+    public $id;
 
     /**
      * @Column(type="string", nullable=true)
@@ -56,14 +56,16 @@ class {Entity} extends ModulesModelsBase
 
 ## Column Type Annotations
 
-| PHP Type | Annotation | Default | Notes |
-|----------|-----------|---------|-------|
-| String | `@Column(type="string")` | `''` | General text |
-| Integer | `@Column(type="integer")` | `'0'` | Numbers stored as string |
-| Boolean | `@Column(type="integer")` | `'0'` | 0/1 flag |
-| Text | `@Column(type="text")` | `''` | Long text, JSON |
+| PHP Property | Annotation | Default | Notes |
+|-------------|-----------|---------|-------|
+| `public $id` | `@Column(type="integer", nullable=false)` | — | Primary key, always untyped |
+| `public ?string $name = ''` | `@Column(type="string")` | `''` | General text |
+| `public ?string $count = '0'` | `@Column(type="integer")` | `'0'` | Numbers stored as string in SQLite |
+| `public ?string $enabled = '0'` | `@Column(type="integer")` | `'0'` | 0/1 flag |
+| `public ?string $data = ''` | `@Column(type="text")` | `''` | Long text, JSON |
+| `public ?int $userid = null` | `@Column(type="integer")` | `null` | Integer foreign keys |
 
-**Note:** All column values are stored as strings in SQLite. Use `?string` type with string defaults.
+**Important:** Primary key `$id` is always untyped (`public $id;`). Other column properties use `?string` or `?int` with defaults. This follows the Phalcon ORM / MikoPBX core model convention.
 
 ## Relations
 

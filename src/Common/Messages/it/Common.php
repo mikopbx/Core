@@ -736,7 +736,7 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'ms_Minutes' => 'minuti',
     // S3 Storage validation messages
     'mo_S3EndpointRequired' => 'L\'URL del punto di accesso S3 è obbligatorio quando è abilitato l\'archiviazione S3.',
-    'adv_SecurityLogCriticalGrowth' => 'Il registro di sicurezza di Asterisk è cresciuto in modo critico: %growth% MB in %interval% minuti. Il sistema è sotto attacco! <a href=\'%logFile%\'>Controlla il registro</a>',
+    'adv_SecurityLogCriticalGrowth' => 'Il registro di sicurezza di Asterisk è cresciuto in modo critico: %growth% MB in %interval% minuti. Il sistema è sotto attacco! <a href=\'%url%\'>Controlla il registro</a>',
     'am_EventFilterTooltip_common_params' => 'Eventi utilizzati frequentemente',
     'am_EventFilterTooltip_list_deny_desc' => 'escludi evento (lista nera)',
     'am_EventFilterTooltip_list_queue' => 'Evento: QueueMemberStatus',

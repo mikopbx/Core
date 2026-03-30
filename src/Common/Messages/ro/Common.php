@@ -831,7 +831,7 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'mo_S3BucketRequired' => 'Numele bucket-ului S3 este obligatoriu dacă stocarea S3 este activată.',
     'mo_S3SecretKeyRequired' => 'Cheia secretă S3 este necesară atunci când este activat stocarea S3.',
     'st_tooltip_note' => 'Nota',
-    'adv_SecurityLogCriticalGrowth' => 'Jurnalul de securitate Asterisk a crescut la o dimensiune critică de %growth% MB în %interval% minute. Sistemul este atacat! <a href=\'%logFile%\'>Verificați jurnalul</a>',
+    'adv_SecurityLogCriticalGrowth' => 'Jurnalul de securitate Asterisk a crescut la o dimensiune critică de %growth% MB în %interval% minute. Sistemul este atacat! <a href=\'%url%\'>Verificați jurnalul</a>',
     'am_EventFilterTooltip_warning' => 'Configurarea incorectă a unui filtru poate duce la omiterea unor evenimente importante din aplicație.',
     'st_1Year' => '1 an',
     'st_LocalRetentionHelp' => 'Înregistrările sunt stocate local pentru perioada specificată, apoi mutate în S3. Această perioadă trebuie să fie mai scurtă decât perioada totală de păstrare.',

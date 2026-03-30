@@ -873,7 +873,7 @@ Du kan få en ny nøgle automatisk ved at udfylde registreringsformularen.<br>',
     // S3 Storage validation messages
     'mo_S3EndpointRequired' => 'S3-adgangspunkts-URL er påkrævet, når S3-lagring er aktiveret.',
     'mo_S3BucketRequired' => 'S3-bucketnavnet er påkrævet, hvis S3-lagring er aktiveret.',
-    'adv_SecurityLogCriticalGrowth' => 'Asterisk-sikkerhedsloggen er vokset til en kritisk størrelse på %growth% MB på %interval% minutter. Systemet er under angreb! <a href=\'%logFile%\'> Tjek loggen </a>',
+    'adv_SecurityLogCriticalGrowth' => 'Asterisk-sikkerhedsloggen er vokset til en kritisk størrelse på %growth% MB på %interval% minutter. Systemet er under angreb! <a href=\'%url%\'> Tjek loggen</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'Asterisk-sikkerhedsloggen er vokset mistænkeligt: %growth% MB på %interval% minutter. Det anbefales at gennemgå dine sikkerhedsindstillinger.',
     'adv_AsteriskLogCriticalGrowth' => 'Kritisk vækst af Asterisk-log (%logFile%): %growth% MB på %interval% minutter. Samlet størrelse: %totalSize% MB. Mulig fejlkonfiguration eller angreb.',
     'adv_AsteriskLogSuspiciousGrowth' => 'Mistænkelig vækst af Asterisk-log (%logFile%): %growth% MB på %interval% minutter. Samlet størrelse: %totalSize% MB.',

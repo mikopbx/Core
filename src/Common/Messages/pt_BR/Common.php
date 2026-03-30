@@ -767,7 +767,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'mo_S3BucketRequired' => 'O nome do bucket S3 é obrigatório se o armazenamento S3 estiver ativado.',
     'mo_S3AccessKeyRequired' => 'É necessária uma chave de acesso ao S3 quando o armazenamento S3 está ativado.',
     'bt_ToolTipCopyRoute' => 'Copiar rota',
-    'adv_SecurityLogCriticalGrowth' => 'O log de segurança do Asterisk cresceu criticamente: %growth% MB em %interval% minutos. O sistema está sob ataque! <a href=\'%logFile%\'>Verificar log</a>',
+    'adv_SecurityLogCriticalGrowth' => 'O log de segurança do Asterisk cresceu criticamente: %growth% MB em %interval% minutos. O sistema está sob ataque! <a href=\'%url%\'>Verificar log</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'O registro de segurança do Asterisk cresceu de forma suspeita: %growth% MB em %interval% minutos. Recomenda-se revisar suas configurações de segurança.',
     'adv_AsteriskLogCriticalGrowth' => 'Crescimento crítico do log do Asterisk (%logFile%): %growth% MB em %interval% minutos. Tamanho total: %totalSize% MB. Possível erro de configuração ou ataque.',
     'adv_AsteriskLogSuspiciousGrowth' => 'Crescimento suspeito do log do Asterisk (%logFile%): %growth% MB em %interval% minutos. Tamanho total: %totalSize% MB.',

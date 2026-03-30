@@ -735,7 +735,7 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'sf_UploadSecurityViolation' => 'Byl zjištěn pokus o stažení potenciálně nebezpečného souboru.',
     'adv_AriPasswordWeak' => 'Jednoduché heslo uživatele AMI <a href=\'%url%\'>%record%</a>',
     'bt_ToolTipCopyRoute' => 'Kopírovat trasu',
-    'adv_SecurityLogCriticalGrowth' => 'Bezpečnostní protokol Asterisku kriticky narostl: %growth% MB za %interval% minut. Systém je pod útokem! <a href=\'%logFile%\'>Zkontrolujte protokol</a>',
+    'adv_SecurityLogCriticalGrowth' => 'Bezpečnostní protokol Asterisku kriticky narostl: %growth% MB za %interval% minut. Systém je pod útokem! <a href=\'%url%\'>Zkontrolujte protokol</a>',
     'am_EventFilter' => 'Filtr událostí',
     'am_EventFilterTooltip_header' => 'Konfigurace filtru událostí AMI',
     'am_EventFilterTooltip_format' => 'Formát zápisu:',

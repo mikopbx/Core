@@ -639,7 +639,7 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'bt_ToolTipDeleteCert' => 'Eliminar certificado',
     'mo_InvalidHostname' => 'Nombre de host no válido',
     'st_tooltip_s3_secret_key_header' => 'Clave de acceso secreta',
-    'adv_SecurityLogCriticalGrowth' => 'El registro de seguridad de Asterisk ha crecido de forma crítica: %growth% MB en %interval% minutos. ¡El sistema está bajo ataque! <a href=\'%logFile%\'> Consultar registro </a>',
+    'adv_SecurityLogCriticalGrowth' => 'El registro de seguridad de Asterisk ha crecido de forma crítica: %growth% MB en %interval% minutos. ¡El sistema está bajo ataque! <a href=\'%url%\'> Consultar registro</a>',
     'am_tooltip_command_read' => 'Visualización de los resultados de los comandos CLI',
     'am_tooltip_command_write' => 'Ejecución de comandos CLI de Asterisk',
     'bt_ToolTipShowPassword' => 'Mostrar/ocultar contraseña',

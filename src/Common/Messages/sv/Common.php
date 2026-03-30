@@ -818,7 +818,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'mo_S3BucketRequired' => 'S3-bucketnamnet krävs om S3-lagring är aktiverat.',
     'mo_S3AccessKeyRequired' => 'S3-åtkomstnyckel krävs när S3-lagring är aktiverad.',
     'mo_S3SecretKeyRequired' => 'S3-hemlig nyckel krävs när S3-lagring är aktiverad.',
-    'adv_SecurityLogCriticalGrowth' => 'Säkerhetsloggen med Asterisk har ökat kritiskt: %growth% MB på %interval% minuter. Systemet är under attack! <a href=\'%logFile%\'> Kontrollera loggen </a>',
+    'adv_SecurityLogCriticalGrowth' => 'Säkerhetsloggen med Asterisk har ökat kritiskt: %growth% MB på %interval% minuter. Systemet är under attack! <a href=\'%url%\'> Kontrollera loggen</a>',
     'am_EventFilterTooltip_list_queue' => 'Händelse: Kömedlemsstatus',
     'am_EventFilterTooltip_list_queue_desc' => 'status för ködeltagare',
     'am_EventFilterTooltip_list_hangup' => 'Händelse: Lägga på',

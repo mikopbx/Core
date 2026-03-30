@@ -677,7 +677,7 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'st_S3Connected' => 'Mit S3 verbunden',
     'st_S3StatusEmpty' => 'Es sind keine Datensätze zum Synchronisieren vorhanden.',
     'bt_ToolTipCopyRoute' => 'Route kopieren',
-    'adv_SecurityLogCriticalGrowth' => 'Das Asterisk-Sicherheitsprotokoll ist innerhalb von 60 Minuten auf eine kritische Größe von 45 MB angewachsen. Das System wird angegriffen! Überprüfen Sie das Protokoll.',
+    'adv_SecurityLogCriticalGrowth' => 'Kritisches Wachstum des Asterisk-Sicherheitsprotokolls: %growth% MB in %interval% Minuten. Gesamtgröße: %totalSize% MB. Möglicher Angriff auf das System! <a href=\'%url%\'>Protokoll prüfen</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'Das Asterisk-Sicherheitsprotokoll ist verdächtig stark angewachsen: %growth% MB in %interval% Minuten. Es wird empfohlen, Ihre Sicherheitseinstellungen zu überprüfen.',
     'adv_AsteriskLogCriticalGrowth' => 'Kritisches Wachstum des Asterisk-Protokolls (%logFile%): %growth% MB in %interval% Minuten. Gesamtgröße: %totalSize% MB. Mögliche Fehlkonfiguration oder Angriff.',
     'adv_AsteriskLogSuspiciousGrowth' => 'Verdächtiges Wachstum des Asterisk-Protokolls (%logFile%): %growth% MB in %interval% Minuten. Gesamtgröße: %totalSize% MB.',

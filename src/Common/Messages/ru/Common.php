@@ -271,7 +271,7 @@ return [
     'adv_SSHPasswordWasChangedSubject' => 'Внимание! Пароль SSH был изменен!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Внимание! Пароль SSH был изменен без входа в интерфейс MikoPBX!',
     'adv_SipPasswordWeak' => 'Простой пароль SIP у <a href=\'%url%\'>%record%</a>',
-    'adv_SecurityLogCriticalGrowth' => 'Критический рост лога безопасности Asterisk: %growth% МБ за %interval% минут. Общий размер: %totalSize% МБ. Возможна атака на систему! <a href=\'%logFile%\'>Проверить лог</a>',
+    'adv_SecurityLogCriticalGrowth' => 'Критический рост лога безопасности Asterisk: %growth% МБ за %interval% минут. Общий размер: %totalSize% МБ. Возможна атака на систему! <a href=\'%url%\'>Проверить лог</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'Подозрительный рост лога безопасности Asterisk: %growth% МБ за %interval% минут. Общий размер: %totalSize% МБ. Рекомендуется проверить настройки безопасности.',
     'adv_AsteriskLogCriticalGrowth' => 'Критический рост лога Asterisk (%logFile%): %growth% МБ за %interval% минут. Общий размер: %totalSize% МБ. Возможна проблема с конфигурацией или атака на систему.',
     'adv_AsteriskLogSuspiciousGrowth' => 'Подозрительный рост лога Asterisk (%logFile%): %growth% МБ за %interval% минут. Общий размер: %totalSize% МБ.',

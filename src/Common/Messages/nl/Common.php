@@ -732,7 +732,7 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'st_S3TestConnectionHeader' => 'Testen van verbinding met S3-bucket',
     'st_tooltip_local_retention_header' => 'Lokale opslag van gegevens',
     'ts_SetDateTime' => 'Stel een nieuwe tijd in',
-    'adv_SecurityLogCriticalGrowth' => 'Het Asterisk-beveiligingslogboek is ernstig gegroeid: %growth% MB in %interval% minuten. Het systeem wordt aangevallen! <a href=\'%logFile%\'> Controleer het logbestand </a>',
+    'adv_SecurityLogCriticalGrowth' => 'Het Asterisk-beveiligingslogboek is ernstig gegroeid: %growth% MB in %interval% minuten. Het systeem wordt aangevallen! <a href=\'%url%\'> Controleer het logbestand</a>',
     'am_EventFilterTooltip_list_queue' => 'Gebeurtenis: QueueMemberStatus',
     'cdr_AudioFileDownloadError' => 'Fout bij het downloaden van het audiobestand',
     'mo_InvalidExternalIpAddress' => 'Onjuist extern IP-adres',

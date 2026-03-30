@@ -626,7 +626,7 @@ return [
     'mo_S3EndpointRequired' => 'Απαιτείται η διεύθυνση URL σημείου πρόσβασης S3 όταν είναι ενεργοποιημένος ο χώρος αποθήκευσης S3.',
     'mo_S3SecretKeyRequired' => 'Απαιτείται μυστικό κλειδί S3 όταν είναι ενεργοποιημένη η αποθήκευση S3.',
     'bt_ToolTipCopyRoute' => 'Αντιγραφή διαδρομής',
-    'adv_SecurityLogCriticalGrowth' => 'Το αρχείο καταγραφής ασφαλείας Asterisk έχει αυξηθεί σε κρίσιμο μέγεθος %growth% MB σε %interval% λεπτά. Το σύστημα δέχεται επίθεση! <a href=\'%logFile%\'>Έλεγχος αρχείου καταγραφής </a>',
+    'adv_SecurityLogCriticalGrowth' => 'Το αρχείο καταγραφής ασφαλείας Asterisk έχει αυξηθεί σε κρίσιμο μέγεθος %growth% MB σε %interval% λεπτά. Το σύστημα δέχεται επίθεση! <a href=\'%url%\'>Έλεγχος αρχείου καταγραφής</a>',
     'am_EventFilterTooltip_format' => 'Μορφή εγγραφής:',
     'am_EventFilterTooltip_format_desc' => 'Κάθε μοτίβο υποδεικνύεται σε μια νέα γραμμή.',
     'am_EventFilterTooltip_examples_header' => 'Παραδείγματα',

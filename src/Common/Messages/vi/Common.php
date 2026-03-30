@@ -780,7 +780,7 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'mo_InvalidGatewayAddress' => 'Địa chỉ cổng không chính xác',
     'sf_ConvertErrorDetails' => 'Không thể chuyển đổi tập tin. Tập tin có thể bị hỏng hoặc ở định dạng không được hỗ trợ.',
     'st_TabStorageLocal' => 'Lưu trữ cục bộ',
-    'adv_SecurityLogCriticalGrowth' => 'Nhật ký bảo mật Asterisk đã tăng lên mức nguy hiểm là %growth% MB trong %interval% phút. Hệ thống đang bị tấn công! <a href=\'%logFile%\'>Kiểm tra nhật ký</a>',
+    'adv_SecurityLogCriticalGrowth' => 'Nhật ký bảo mật Asterisk đã tăng lên mức nguy hiểm là %growth% MB trong %interval% phút. Hệ thống đang bị tấn công! <a href=\'%url%\'>Kiểm tra nhật ký</a>',
     'am_EventFilterTooltip_warning_header' => 'Chú ý',
     'cdr_AudioFileLoadError' => 'Lỗi khi tải tệp âm thanh',
     'st_1Month' => '1 tháng',

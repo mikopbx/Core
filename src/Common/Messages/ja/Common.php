@@ -863,7 +863,7 @@ return [
     'BreadcrumbExtensionsbulkupload' => '一括アップロード',
     'SubHeaderEmployees' => '従業員とその内線番号の管理',
     'adv_AriPasswordWeak' => 'AMI ユーザーの簡易パスワード <a href=\'%url%\'>%record%</a>',
-    'adv_SecurityLogCriticalGrowth' => 'Asteriskのセキュリティログが%interval%分で%growth%MBという危険なサイズに達しました。システムが攻撃を受けています！<a href=\'%logFile%\'>ログを確認</a>',
+    'adv_SecurityLogCriticalGrowth' => 'Asteriskのセキュリティログが%interval%分で%growth%MBという危険なサイズに達しました。システムが攻撃を受けています！<a href=\'%url%\'>ログを確認</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'Asteriskのセキュリティログが不審なほど増加しています: %interval%分で%growth%MB。セキュリティ設定を確認することをお勧めします。',
     'adv_AsteriskLogCriticalGrowth' => 'Asteriskログの重大な増加 (%logFile%): %interval%分で%growth%MB。合計サイズ: %totalSize% MB。設定ミスまたは攻撃の可能性があります。',
     'adv_AsteriskLogSuspiciousGrowth' => 'Asteriskログの不審な増加 (%logFile%): %interval%分で%growth%MB。合計サイズ: %totalSize% MB。',

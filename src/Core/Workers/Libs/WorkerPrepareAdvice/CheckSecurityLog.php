@@ -85,7 +85,8 @@ class CheckSecurityLog extends Injectable
     public function process(): array
     {
         $messages = [];
-        $logDir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/';
+        $baseLogDir = Directories::getDir(Directories::CORE_LOGS_DIR);
+        $logDir = $baseLogDir . '/asterisk/';
 
         $di = Di::getDefault();
         if ($di === null) {
@@ -100,9 +101,13 @@ class CheckSecurityLog extends Injectable
                 continue;
             }
 
+            // Relative path from base log dir, matching GetLogsListAction format
+            $relativePath = str_replace($baseLogDir . '/', '', $logFile);
+
             $result = $this->checkLogGrowth(
                 $logDir,
                 $logBaseName,
+                $relativePath,
                 $messageKeys,
                 $managedCache,
                 $currentTimestamp
@@ -123,6 +128,7 @@ class CheckSecurityLog extends Injectable
      *
      * @param string $logDir Path to the asterisk log directory.
      * @param string $logBaseName Base name of the log file (e.g. 'security_log').
+     * @param string $relativePath Relative path from base log dir (e.g. 'asterisk/security_log').
      * @param array $messageKeys Translation keys for suspicious/critical alerts.
      * @param mixed $managedCache Cache service instance.
      * @param int $currentTimestamp Current unix timestamp.
@@ -131,6 +137,7 @@ class CheckSecurityLog extends Injectable
     private function checkLogGrowth(
         string $logDir,
         string $logBaseName,
+        string $relativePath,
         array $messageKeys,
         mixed $managedCache,
         int $currentTimestamp
@@ -178,7 +185,6 @@ class CheckSecurityLog extends Injectable
             $growthMB = round($normalizedGrowth / 1048576, 2);
             $totalMB = round($totalSize / 1048576, 2);
             $intervalMinutes = (int)(self::CHECK_INTERVAL_SECONDS / 60);
-            $logFile = $logDir . $logBaseName;
 
             $messageType = $isCritical ? 'error' : 'warning';
             $messageKey = $isCritical
@@ -190,8 +196,10 @@ class CheckSecurityLog extends Injectable
                 'messageParams' => [
                     'growth' => $growthMB,
                     'interval' => $intervalMinutes,
-                    'logFile' => $logFile,
+                    'logFile' => $relativePath,
                     'totalSize' => $totalMB,
+                    'url' => $this->url->get('system-diagnostic/index/')
+                        . '#file=' . rawurlencode($relativePath),
                 ]
             ];
 

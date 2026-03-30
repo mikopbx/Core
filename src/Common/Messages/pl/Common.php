@@ -825,7 +825,7 @@ Nowy klucz możesz otrzymać automatycznie wypełniając formularz rejestracyjny
     'st_tooltip_local_retention_header' => 'Lokalne przechowywanie rekordów',
     'st_tooltip_local_retention_item1' => 'Po upływie tego okresu nagrania są przenoszone do S3 i usuwane z pamięci lokalnej',
     'sf_UploadSecurityViolation' => 'Wykryto próbę pobrania potencjalnie niebezpiecznego pliku.',
-    'adv_SecurityLogCriticalGrowth' => 'Dziennik bezpieczeństwa Asteriska osiągnął krytyczny rozmiar %growth% MB w %interval% minut. System jest atakowany! <a href=\'%logFile%\'>Sprawdź dziennik</a>',
+    'adv_SecurityLogCriticalGrowth' => 'Dziennik bezpieczeństwa Asteriska osiągnął krytyczny rozmiar %growth% MB w %interval% minut. System jest atakowany! <a href=\'%url%\'>Sprawdź dziennik</a>',
     'st_6Months' => '6 miesięcy',
     'st_1Year' => '1 rok',
     'st_EnableS3Storage' => 'Włącz pamięć masową S3',

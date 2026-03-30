@@ -828,7 +828,7 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'st_tooltip_note' => 'Huomautus',
     'ts_SetDateTime' => 'Aseta uusi aika',
     'ms_Minutes' => 'minuuttia',
-    'adv_SecurityLogCriticalGrowth' => 'Asterisk-tietoturvaloki on kasvanut kriittiseen %growth% Mt:n kokoon %interval% minuutissa. Järjestelmä on hyökkäyksen kohteena! <a href=\'%logFile%\'> Tarkista loki</a>',
+    'adv_SecurityLogCriticalGrowth' => 'Asterisk-tietoturvaloki on kasvanut kriittiseen %growth% Mt:n kokoon %interval% minuutissa. Järjestelmä on hyökkäyksen kohteena! <a href=\'%url%\'> Tarkista loki</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'Asteriskin tietoturvaloki on kasvanut epäilyttävästi: %growth% MB %interval% minuutissa. On suositeltavaa tarkistaa tietoturva-asetuksesi.',
     'adv_AsteriskLogCriticalGrowth' => 'Asterisk-lokin kriittinen kasvu (%logFile%): %growth% MB %interval% minuutissa. Kokonaiskoko: %totalSize% MB. Mahdollinen konfiguraatiovirhe tai hyökkäys.',
     'adv_AsteriskLogSuspiciousGrowth' => 'Asterisk-lokin epäilyttävä kasvu (%logFile%): %growth% MB %interval% minuutissa. Kokonaiskoko: %totalSize% MB.',

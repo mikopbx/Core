@@ -748,7 +748,7 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'bt_ToolTipCopyRoute' => 'Kopiraj rutu',
     'mo_InvalidIpAddress' => 'Netočna IP adresa sučelja',
     'sd_Last3Hours' => 'Posljednja 3 sata',
-    'adv_SecurityLogCriticalGrowth' => 'Asterisk sigurnosni zapisnik je kritično narastao: %growth% MB u %interval% minuta. Sustav je napadnut! <a href=\'%logFile%\'>Provjeri zapisnik</a>',
+    'adv_SecurityLogCriticalGrowth' => 'Asterisk sigurnosni zapisnik je kritično narastao: %growth% MB u %interval% minuta. Sustav je napadnut! <a href=\'%url%\'>Provjeri zapisnik</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'Sigurnosni zapisnik Asteriska sumnjivo je narastao: %growth% MB u %interval% minuta. Preporučuje se pregled sigurnosnih postavki.',
     'adv_AsteriskLogCriticalGrowth' => 'Kritičan rast zapisnika Asteriska (%logFile%): %growth% MB u %interval% minuta. Ukupna veličina: %totalSize% MB. Moguć problem s konfiguracijom ili napad.',
     'adv_AsteriskLogSuspiciousGrowth' => 'Sumnjiv rast zapisnika Asteriska (%logFile%): %growth% MB u %interval% minuta. Ukupna veličina: %totalSize% MB.',
