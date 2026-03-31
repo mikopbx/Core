@@ -129,13 +129,15 @@ class AvatarHelper
         // Parse JSON format to extract path
         if (str_starts_with($avatarData, '{')) {
             $parsed = self::parseAvatarData($avatarData);
-            return empty($parsed['path']) ? self::DEFAULT_AVATAR : $parsed['path'];
+            if (empty($parsed['path'])) {
+                return self::DEFAULT_AVATAR;
+            }
+            return self::avatarFileExists($parsed['path']) ? $parsed['path'] : self::DEFAULT_AVATAR;
         }
 
         // Check if it's already a URL path (not base64)
         if (!str_starts_with($avatarData, 'data:image')) {
-            // Already a URL path, return as is
-            return $avatarData;
+            return self::avatarFileExists($avatarData) ? $avatarData : self::DEFAULT_AVATAR;
         }
 
         // Legacy base64 blob — convert to cached file
@@ -159,6 +161,25 @@ class AvatarHelper
 
         // Return the cache URL
         return "/admin-cabinet/assets/img/cache/{$filename}.jpg";
+    }
+
+    /**
+     * Check if avatar file exists on disk
+     *
+     * Resolves a relative avatar path (e.g. /avatars/user_1.jpg) to the
+     * full filesystem path and checks for existence.
+     *
+     * @param string $relativePath Relative avatar path starting with /avatars/
+     * @return bool True if file exists on disk
+     */
+    private static function avatarFileExists(string $relativePath): bool
+    {
+        if (empty($relativePath) || !str_starts_with($relativePath, self::AVATARS_SUBDIR)) {
+            return false;
+        }
+
+        $mediaDir = Directories::getDir(Directories::AST_MEDIA_DIR);
+        return file_exists($mediaDir . $relativePath);
     }
 
     /**

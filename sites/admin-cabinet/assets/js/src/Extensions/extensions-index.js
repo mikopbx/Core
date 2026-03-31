@@ -321,6 +321,10 @@ const extensionsIndex = {
                 const $templateRow  =  $('.extension-row-tpl').clone(true);
                 const $avatar = $templateRow.find('.avatar');
                 $avatar.attr('src', data.avatar);
+                $avatar.on('error', function() {
+                    $(this).off('error');
+                    $(this).attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
+                });
                 $avatar.after(data.user_username);
                 $templateRow.find('.number').text(data.number);
                 $templateRow.find('.mobile input').attr('value', data.mobile);
