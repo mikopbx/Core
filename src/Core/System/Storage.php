@@ -445,15 +445,21 @@ class Storage extends Injectable
             passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four update $dev_disk");
         }
         $partitionName = self::getDevPartName($target_disk_storage, $part);
+
         // Use retry to ensure UUID is available after formatting
         // (kernel may need time to update partition metadata)
+        echo PHP_EOL . ' - Waiting for partition UUID...' . PHP_EOL;
         $uuid = self::getUuidWithRetry($partitionName);
         if (empty($uuid)) {
-            $message = " - Failed to obtain UUID for $partitionName. Storage disk cannot be configured.";
-            SystemMessages::echoWithSyslog($message);
-            sleep(3);
+            echo PHP_EOL . " - ERROR: Failed to obtain UUID for $partitionName." . PHP_EOL;
+            echo " - Storage disk cannot be configured." . PHP_EOL;
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to obtain UUID for $partitionName", LOG_ERR);
+            sleep(5);
             return false;
         }
+
+        echo " - UUID obtained: $uuid" . PHP_EOL;
+
         // Create an array of disk data
         $data = [
             'device' => $dev_disk,
@@ -461,32 +467,37 @@ class Storage extends Injectable
             'filesystemtype' => 'ext4',
             'name' => 'Storage №1'
         ];
-        echo PHP_EOL . "Disk part: $dev_disk, uid: $uuid" . PHP_EOL;
+
         // Save the disk settings
+        echo ' - Saving disk settings...' . PHP_EOL;
         $storage->saveDiskSettings($data);
+
         if (file_exists('/offload/livecd')) {
             // Do not need to start the PBX, it's the station installation in LiveCD mode.
+            echo ' - LiveCD mode: disk settings saved, skipping PBX configuration.' . PHP_EOL;
             return true;
         }
         MainDatabaseProvider::recreateDBConnections();
 
         // Configure the storage
+        echo ' - Mounting storage disk...' . PHP_EOL;
         $storage->configure();
         MainDatabaseProvider::recreateDBConnections();
         $success = self::isStorageDiskMounted();
+
         if ($success === true && $automatic) {
             SystemMessages::echoStartMsg(' - Storage disk mounted successfully, rebooting...');
-            sleep(2);
+            sleep(3);
             System::reboot();
             return true;
         }
 
-        if ($automatic) {
+        if ($automatic && !$success) {
             SystemMessages::echoStartMsg(' - Storage disk was not mounted automatically...');
         }
 
         fclose(STDERR);
-        SystemMessages::echoStartMsg(' - Updating database...');
+        echo ' - Updating database...' . PHP_EOL;
 
         // Update the database
         $dbUpdater = new UpdateDatabase();
@@ -496,6 +507,7 @@ class Storage extends Injectable
         CdrDb::checkDb();
 
         // Restart syslog
+        echo ' - Restarting services...' . PHP_EOL;
         $sysLog = new SyslogConf();
         $sysLog->reStart();
 
@@ -508,12 +520,13 @@ class Storage extends Injectable
 
         // Check if the disk was mounted successfully
         if ($success === true) {
-            SystemMessages::echoWithSyslog("\n - " . Util::translate('Storage disk was mounted successfully...') . "\n");
+            echo PHP_EOL . ' - ' . Util::translate('Storage disk was mounted successfully...') . PHP_EOL;
+            SystemMessages::sysLogMsg(__CLASS__, 'Storage disk mounted successfully', LOG_INFO);
         } else {
-            SystemMessages::echoWithSyslog("\n - " . Util::translate('Failed to mount the disc...') . "\n");
+            echo PHP_EOL . ' - ' . Util::translate('Failed to mount the disc...') . PHP_EOL;
+            SystemMessages::sysLogMsg(__CLASS__, 'Failed to mount storage disk', LOG_ERR);
         }
 
-        sleep(3);
         if ($STDERR !== false) {
             fclose($STDERR);
         }

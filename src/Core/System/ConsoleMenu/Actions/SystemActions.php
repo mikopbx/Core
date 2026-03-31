@@ -260,8 +260,13 @@ class SystemActions
     public function connectStorage(CliMenu $menu): void
     {
         $menu->close();
-        Storage::selectAndConfigureStorageDisk();
-        sleep(1);
+        $result = Storage::selectAndConfigureStorageDisk();
+        if ($result) {
+            sleep(2);
+        } else {
+            echo PHP_EOL . ' Storage disk was NOT configured.' . PHP_EOL;
+            sleep(5);
+        }
         exit(0);
     }
 
