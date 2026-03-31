@@ -258,6 +258,9 @@ class Storage extends Injectable
         // Log the result of the create partition command
         SystemMessages::sysLogMsg(__CLASS__, "$createPartCommand returned $retVal", LOG_INFO);
 
+        // Force kernel to re-read partition table after parted changes
+        self::syncAndRereadPartitions($device);
+
         // Get the newly created partition name, assuming it's always the first partition after a fresh format
         $partition = self::getDevPartName($device, '1');
 
@@ -280,6 +283,10 @@ class Storage extends Injectable
             $retVal = Processes::mwExec("$cmd 2>&1");
             SystemMessages::sysLogMsg(__CLASS__, "$cmd returned $retVal");
             $result = ($retVal === 0);
+            if ($result) {
+                // Flush filesystem metadata to disk so UUID is immediately visible to lsblk
+                Processes::mwExec('sync');
+            }
         } else {
             usleep(200000);
             // Execute the mkfs command in the background
@@ -438,7 +445,15 @@ class Storage extends Injectable
             passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four update $dev_disk");
         }
         $partitionName = self::getDevPartName($target_disk_storage, $part);
-        $uuid = self::getUuid($partitionName);
+        // Use retry to ensure UUID is available after formatting
+        // (kernel may need time to update partition metadata)
+        $uuid = self::getUuidWithRetry($partitionName);
+        if (empty($uuid)) {
+            $message = " - Failed to obtain UUID for $partitionName. Storage disk cannot be configured.";
+            SystemMessages::echoWithSyslog($message);
+            sleep(3);
+            return false;
+        }
         // Create an array of disk data
         $data = [
             'device' => $dev_disk,
@@ -2185,6 +2200,65 @@ class Storage extends Injectable
 
         // Check if the disk is now mounted
         return self::isStorageDiskMounted("/dev/$dev ");
+    }
+
+    /**
+     * Force kernel to re-read partition table on a device.
+     *
+     * After parted creates or modifies partitions, the kernel may still cache the old
+     * partition table. Without this, subsequent lsblk/blkid calls may not see
+     * the new partitions or their UUIDs.
+     *
+     * @param string $device The device path (e.g., "/dev/sdb")
+     */
+    private static function syncAndRereadPartitions(string $device): void
+    {
+        Processes::mwExec('sync');
+
+        $blockdev = Util::which('blockdev');
+        if (!empty($blockdev)) {
+            Processes::mwExec("$blockdev --rereadpt $device 2>/dev/null");
+        }
+
+        $partprobe = Util::which('partprobe');
+        if (!empty($partprobe)) {
+            Processes::mwExec("$partprobe $device 2>/dev/null");
+        }
+
+        // Give the kernel time to update device nodes
+        sleep(1);
+    }
+
+    /**
+     * Get the UUID of a device, retrying if the kernel hasn't updated yet.
+     *
+     * After formatting a partition, the UUID may not be immediately visible to lsblk.
+     * This method retries up to 5 times with 1-second intervals.
+     *
+     * @param string $device The device path (e.g., "/dev/sdb1")
+     * @param int $maxRetries Maximum number of retry attempts
+     * @return string The UUID, or empty string if not found after all retries
+     */
+    public static function getUuidWithRetry(string $device, int $maxRetries = 5): string
+    {
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            $uuid = self::getUuid($device);
+            if (!empty($uuid)) {
+                return $uuid;
+            }
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "UUID not yet available for $device, retry $attempt/$maxRetries...",
+                LOG_WARNING
+            );
+            sleep(1);
+        }
+        SystemMessages::sysLogMsg(
+            __CLASS__,
+            "Failed to get UUID for $device after $maxRetries retries",
+            LOG_ERR
+        );
+        return '';
     }
 
     /**
