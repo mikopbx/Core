@@ -298,8 +298,9 @@ abstract class BrowserStackTest extends TestCase
     protected function takeScreenshot(string $name): string
     {
         $screenshotDir = self::DEFAULT_SCREENSHOT_DIR;
-        if (!is_dir($screenshotDir) && !mkdir($screenshotDir, 0777, true)) {
-            throw new RuntimeException("Failed to create screenshot directory");
+        if (!is_dir($screenshotDir) && !@mkdir($screenshotDir, 0777, true) && !is_dir($screenshotDir)) {
+            self::annotate("Warning: Cannot create screenshot directory: $screenshotDir");
+            return '';
         }
 
         $path = sprintf('%s/%s_%s.png', $screenshotDir, date('Y-m-d_H-i-s'), $name);

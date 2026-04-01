@@ -14,19 +14,24 @@ trait ScreenshotTrait
      * Take screenshot of current page state
      *
      * @param string $name Screenshot name
-     * @return string Path to saved screenshot
-     * @throws RuntimeException
+     * @return string Path to saved screenshot, or empty string if directory creation fails
      */
     protected function takeScreenshot(string $name): string
     {
+        $tempDir = sys_get_temp_dir();
+        if (!is_dir($tempDir)) {
+            $tempDir = '/tmp';
+        }
+
         $screenshotDir = sprintf(
             '%s/%s',
-            sys_get_temp_dir(),
+            $tempDir,
             self::CONFIG['test']['screenshot_dir']
         );
 
-        if (!is_dir($screenshotDir) && !mkdir($screenshotDir, 0777, true)) {
-            throw new RuntimeException("Failed to create screenshot directory: $screenshotDir");
+        if (!is_dir($screenshotDir) && !@mkdir($screenshotDir, 0777, true) && !is_dir($screenshotDir)) {
+            self::annotate("Warning: Cannot create screenshot directory: $screenshotDir");
+            return '';
         }
 
         $filename = sprintf(
