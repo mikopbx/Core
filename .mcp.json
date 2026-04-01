@@ -6,6 +6,13 @@
         "playwright",
         "run-test-mcp-server"
       ]
+    },
+    "code-review-graph": {
+      "command": "uvx",
+      "args": [
+        "code-review-graph",
+        "serve"
+      ]
     }
   }
 }
