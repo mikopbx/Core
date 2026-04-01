@@ -597,16 +597,13 @@ class Processes
                 sprintf("SEND signal: %s", "SIGUSR1 $activeProcesses"),
                 LOG_NOTICE
             );
-            
+
             self::mwExec("$kill -SIGUSR1 $activeProcesses > /dev/null 2>&1");
+            $pids = array_filter(explode(' ', $activeProcesses));
 
-            // For regular restart, escalate: SIGUSR1 → SIGTERM → SIGKILL
             if (!$softRestart) {
-                $pids = array_filter(explode(' ', $activeProcesses));
-
-                // Wait for graceful shutdown after SIGUSR1
+                // Full restart: escalate SIGUSR1 → SIGTERM → SIGKILL
                 if (!self::waitForProcessesExit($pids, self::GRACEFUL_SHUTDOWN_TIMEOUT)) {
-                    // Escalate to SIGTERM
                     SystemMessages::sysLogMsg(
                         __METHOD__,
                         "SIGUSR1 timeout ({$activeProcesses}), escalating to SIGTERM",
@@ -614,45 +611,68 @@ class Processes
                     );
                     self::mwExec("$kill -SIGTERM $activeProcesses > /dev/null 2>&1");
 
-                    // Wait 10 more seconds for SIGTERM
                     if (!self::waitForProcessesExit($pids, 10)) {
-                        // Final escalation: SIGKILL (cannot be caught or ignored)
                         SystemMessages::sysLogMsg(
                             __METHOD__,
                             "SIGTERM timeout ({$activeProcesses}), sending SIGKILL",
                             LOG_ERR
                         );
                         self::mwExec("$kill -9 $activeProcesses > /dev/null 2>&1");
+                        sleep(2); // Kernel needs time to reap killed processes
+
+                        // If processes survived SIGKILL (D-state), don't spawn duplicates
+                        $surviving = array_filter($pids, fn($pid) => !empty($pid) && posix_kill((int)$pid, 0));
+                        if (!empty($surviving)) {
+                            SystemMessages::sysLogMsg(
+                                __METHOD__,
+                                "CRITICAL: PIDs " . implode(',', $surviving) . " survived SIGKILL, skipping restart",
+                                LOG_CRIT
+                            );
+                            return;
+                        }
                     }
                 }
+            } else {
+                // Soft restart: short wait for graceful shutdown (hot swap for API workers)
+                self::waitForProcessesExit($pids, 5);
             }
         }
 
-        // Start workers with pool support
+        // Re-check how many processes are actually running before starting new ones
+        // Prevents duplicates when old processes haven't fully exited yet
+        $remainingPids = self::getPidOfProcess($workerClass);
+        $remainingCount = empty($remainingPids) ? 0 : count(array_filter(explode(' ', $remainingPids)));
+        $toStart = max(0, $neededProcCount - $remainingCount);
+
+        if ($toStart === 0) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "All {$neededProcCount} instances of {$workerClass} already running, skipping start",
+                LOG_DEBUG
+            );
+            return;
+        }
+
+        // Start only the deficit number of workers
         if ($neededProcCount > 1) {
             SystemMessages::sysLogMsg(
                 __METHOD__,
-                sprintf("Starting worker pool with %d instances for %s", $neededProcCount, $workerClass),
+                sprintf("Starting %d/%d worker instances for %s (%d already running)",
+                    $toStart, $neededProcCount, $workerClass, $remainingCount),
                 LOG_NOTICE
             );
-            
-            // Start the required number of instances
-            for ($i = 1; $i <= $neededProcCount; $i++) {
+
+            // Start from remainingCount+1 to avoid duplicate instance-IDs
+            for ($i = $remainingCount + 1; $i <= $neededProcCount; $i++) {
+                if ($toStart <= 0) {
+                    break;
+                }
                 $instanceParam = " --instance-id={$i}";
-                
-                SystemMessages::sysLogMsg(
-                    __METHOD__,
-                    sprintf("Starting worker instance %d/%d: %s", $i, $neededProcCount, $command . " " . $paramForPHPWorker . $instanceParam),
-                    LOG_DEBUG
-                );
-                
                 self::mwExecBg("{$command} {$paramForPHPWorker}{$instanceParam}");
-                
-                // Small delay between instance launches to prevent conflicts
-                usleep(250000); // 250ms
+                $toStart--;
+                usleep(250000); // 250ms between launches
             }
         } else {
-            // Start new instance (for non-pool workers)
             self::mwExecBg("$command $paramForPHPWorker");
         }
     }
@@ -706,28 +726,29 @@ class Processes
         );
 
         if ($neededProcCount > $currentProcCount) {
-            // Start new instances with instance ID
-            for ($i = 0; $i < $neededProcCount; $i++) {
+            // Start only the deficit number of instances
+            $deficit = $neededProcCount - $currentProcCount;
+            for ($i = 0; $i < $deficit; $i++) {
                 $instanceParam = '';
-                // If we're starting more than one instance, add instanceId parameter
                 if ($neededProcCount > 1) {
-                    $instanceId = $i + 1; // Number starting from 1
+                    $instanceId = $currentProcCount + $i + 1;
                     $instanceParam = " --instance-id={$instanceId}";
                 }
-                
-                // Debug logging
+
                 SystemMessages::sysLogMsg(
                     __METHOD__,
                     sprintf(
-                        "Launching instance #%d with command: %s %s%s",
-                        ($i+1),
-                        $command, 
+                        "Launching instance #%d (deficit %d/%d) with command: %s %s%s",
+                        $currentProcCount + $i + 1,
+                        $i + 1,
+                        $deficit,
+                        $command,
                         $paramForPHPWorker,
                         $instanceParam
                     ),
                     LOG_DEBUG
                 );
-                
+
                 self::mwExecBg("{$command} {$paramForPHPWorker}{$instanceParam}");
             }
         } elseif ($currentProcCount > $neededProcCount) {
