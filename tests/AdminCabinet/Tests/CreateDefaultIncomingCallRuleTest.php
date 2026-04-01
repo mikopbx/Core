@@ -67,8 +67,10 @@ class CreateDefaultIncomingCallRuleTest extends MikoPBXTestsBase
         );
 
         // First set a different value to ensure the form becomes dirty,
-        // in case the current values already match the target
-        $this->selectDropdownItem('action', 'hangup');
+        // in case the current values already match the target.
+        // The 'action' dropdown only has 'extension' and 'playback' values.
+        $dirtyValue = ($params['action'] === 'playback') ? 'extension' : 'playback';
+        $this->selectDropdownItem('action', $dirtyValue);
         usleep(500000);
 
         // Now select the specified action from the dropdown
