@@ -547,7 +547,7 @@ const systemDiagnosticLogs = {
      * @param {string} parentFolder - Parent folder name for grouping
      * @returns {Array} Formatted dropdown items
      */
-    treeToDropdownItems(tree, prefix, parentFolder = '') {
+    treeToDropdownItems(tree, prefix, parentFolderPath = '') {
         const items = [];
 
         // Sort entries: folders first, then files
@@ -559,17 +559,21 @@ const systemDiagnosticLogs = {
 
         entries.forEach(([key, value]) => {
             if (value.type === 'folder') {
-                // Add folder header with toggle capability
+                // Build unique folder path for hierarchical collapse
+                const folderPath = parentFolderPath ? `${parentFolderPath}/${key}` : key;
+
+                // Add folder header with toggle capability and indentation for nested folders
                 items.push({
-                    name: `<i class="caret down icon folder-toggle"></i><i class="folder icon"></i> ${key}`,
+                    name: `${prefix}<i class="caret down icon folder-toggle"></i><i class="folder icon"></i> ${key}`,
                     value: '',
                     disabled: true,
                     type: 'folder',
-                    folderName: key
+                    folderName: folderPath,
+                    parentFolder: parentFolderPath
                 });
 
-                // Add children with increased indentation and parent folder reference
-                const childItems = this.treeToDropdownItems(value.children, prefix + '&nbsp;&nbsp;&nbsp;&nbsp;', key);
+                // Add children with increased indentation and parent folder path
+                const childItems = this.treeToDropdownItems(value.children, prefix + '&nbsp;&nbsp;&nbsp;&nbsp;', folderPath);
                 items.push(...childItems);
             } else {
                 // Add file item with parent folder reference
@@ -578,7 +582,7 @@ const systemDiagnosticLogs = {
                     value: value.path,
                     selected: value.default,
                     type: 'file',
-                    parentFolder: parentFolder
+                    parentFolder: parentFolderPath
                 });
             }
         });
@@ -604,7 +608,8 @@ const systemDiagnosticLogs = {
                 if (item.type === 'folder') {
                     // Folder item - clickable header for collapse/expand
                     // Not using 'disabled' class as it blocks pointer events
-                    html += `<div class="folder-header item" data-folder="${item.folderName}" data-value="" data-text="${item.folderName}" style="pointer-events: auto !important; cursor: pointer; font-weight: bold; background: #f9f9f9;">${item.name}</div>`;
+                    const folderParentAttr = item.parentFolder ? `data-parent="${item.parentFolder}"` : '';
+                    html += `<div class="folder-header item" data-folder="${item.folderName}" ${folderParentAttr} data-value="" data-text="${item.folderName}" style="pointer-events: auto !important; cursor: pointer; font-weight: bold; background: #f9f9f9;">${item.name}</div>`;
                 } else {
                     // File item with parent folder reference for collapse
                     // data-text contains full path so Fomantic search matches by folder name too
@@ -639,22 +644,23 @@ const systemDiagnosticLogs = {
             e.preventDefault();
 
             const $folder = $(folderHeader);
-            const folderName = $folder.data('folder');
+            const folderPath = $folder.data('folder');
             const $toggle = $folder.find('.folder-toggle');
             const $menu = $dropdown.find('.menu');
-            const $files = $menu.find(`.file-item[data-parent="${folderName}"]`);
 
             // Toggle folder state
             const isCollapsed = $toggle.hasClass('right');
 
             if (isCollapsed) {
-                // Expand folder
+                // Expand folder - show only direct children
                 $toggle.removeClass('right').addClass('down');
-                $files.show();
+                // Show direct child files and child folder headers
+                $menu.find(`.file-item[data-parent="${folderPath}"]`).show();
+                $menu.find(`.folder-header[data-parent="${folderPath}"]`).show();
             } else {
-                // Collapse folder
+                // Collapse folder - hide all descendants recursively
                 $toggle.removeClass('down').addClass('right');
-                $files.hide();
+                systemDiagnosticLogs.collapseDescendants($menu, folderPath);
             }
         }, true); // capture phase - fires before bubbling
 
@@ -666,18 +672,45 @@ const systemDiagnosticLogs = {
             if (searchValue.length > 0) {
                 // Show all items and expand all folders during search
                 $menu.find('.file-item').show();
+                $menu.find('.folder-header').show();
                 $menu.find('.folder-toggle').removeClass('right').addClass('down');
             } else {
                 // Restore collapsed state when search is cleared
                 $menu.find('.folder-header').each((_, folder) => {
                     const $folder = $(folder);
-                    const folderName = $folder.data('folder');
+                    const folderPath = $folder.data('folder');
                     const isCollapsed = $folder.find('.folder-toggle').hasClass('right');
                     if (isCollapsed) {
-                        $menu.find(`.file-item[data-parent="${folderName}"]`).hide();
+                        systemDiagnosticLogs.collapseDescendants($menu, folderPath);
                     }
                 });
             }
+        });
+    },
+
+    /**
+     * Recursively hides all descendants (files and subfolders) of a given folder
+     * and marks child folders as collapsed
+     * @param {jQuery} $menu - The dropdown menu element
+     * @param {string} folderPath - The folder path whose descendants to hide
+     */
+    collapseDescendants($menu, folderPath) {
+        // Hide direct child files
+        $menu.find(`.file-item[data-parent="${folderPath}"]`).hide();
+
+        // Find direct child folders, collapse them recursively, then hide
+        $menu.find(`.folder-header[data-parent="${folderPath}"]`).each((_, childFolder) => {
+            const $childFolder = $(childFolder);
+            const childPath = $childFolder.data('folder');
+
+            // Mark child folder as collapsed
+            $childFolder.find('.folder-toggle').removeClass('down').addClass('right');
+
+            // Recursively collapse its descendants
+            systemDiagnosticLogs.collapseDescendants($menu, childPath);
+
+            // Hide the child folder header itself
+            $childFolder.hide();
         });
     },
 
@@ -692,16 +725,26 @@ const systemDiagnosticLogs = {
         const $fileItem = $menu.find(`.file-item[data-value="${filePath}"]`);
 
         if ($fileItem.length) {
-            const parentFolder = $fileItem.data('parent');
-            if (parentFolder) {
-                const $folder = $menu.find(`.folder-header[data-folder="${parentFolder}"]`);
+            // Walk up the ancestor chain expanding each folder
+            let parentPath = $fileItem.data('parent');
+            while (parentPath) {
+                const $folder = $menu.find(`.folder-header[data-folder="${parentPath}"]`);
+                if (!$folder.length) break;
+
                 const $toggle = $folder.find('.folder-toggle');
+
+                // Show the folder header itself (may be hidden if parent was collapsed)
+                $folder.show();
 
                 // Expand if collapsed
                 if ($toggle.hasClass('right')) {
                     $toggle.removeClass('right').addClass('down');
-                    $menu.find(`.file-item[data-parent="${parentFolder}"]`).show();
+                    $menu.find(`.file-item[data-parent="${parentPath}"]`).show();
+                    $menu.find(`.folder-header[data-parent="${parentPath}"]`).show();
                 }
+
+                // Move to grandparent
+                parentPath = $folder.data('parent');
             }
         }
     },

@@ -46,6 +46,17 @@
 #system-diagnostic-form .filenames-select.ui.dropdown .menu {
     max-height: 400px;
     overflow-y: auto;
+    min-width: 450px;
+    width: max-content;
+    max-width: 600px;
+}
+
+/* Smaller font for dropdown items to fit long filenames */
+#system-diagnostic-form .filenames-select.ui.dropdown .menu > .item {
+    font-size: 0.9em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Folder items styling */
