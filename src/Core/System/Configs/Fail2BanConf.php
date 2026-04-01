@@ -385,11 +385,7 @@ class Fail2BanConf extends SystemConfigClass
             ? 'miko-nginx-docker[name=EXPLOIT_SCANNER, port="' . implode(',', $httpPorts) . '"]'
             : 'miko-iptables-multiport-all[name=EXPLOIT_SCANNER, port="' . implode(',', $httpPorts) . '"]';
         $config .= "[mikopbx-exploit-scanner]\n" .
-            "enabled = true\n" .
-            "maxretry = 2\n" .
-            "findtime = $find_time\n" .
-            "bantime = $ban_time\n" .
-            "logencoding = utf-8\n" .
+            $commonParams .
             "logpath = $nginxAccessLog\n" .
             "action = $exploitScannerAction\n\n";
 
@@ -400,11 +396,7 @@ class Fail2BanConf extends SystemConfigClass
             ? 'miko-nginx-docker[name=NGINX_ERRORS, port="' . implode(',', $httpPorts) . '"]'
             : 'miko-iptables-multiport-all[name=NGINX_ERRORS, port="' . implode(',', $httpPorts) . '"]';
         $config .= "[mikopbx-nginx-errors]\n" .
-            "enabled = true\n" .
-            "maxretry = 5\n" .
-            "findtime = $find_time\n" .
-            "bantime = $ban_time\n" .
-            "logencoding = utf-8\n" .
+            $commonParams .
             "logpath = $nginxErrorLog\n" .
             "action = $nginxErrorsAction\n\n";
         $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/';
@@ -820,9 +812,9 @@ class Fail2BanConf extends SystemConfigClass
             $user_whitelist = trim($user_whitelist);
         } else {
             // If rule doesn't exist, use default values.
-            $max_retry = 10;
-            $find_time = 1800;
-            $ban_time = 43200;
+            $max_retry = 20;
+            $find_time = 600;
+            $ban_time = 600;
         }
 
         // Return an array of the properties.
@@ -1103,8 +1095,8 @@ class Fail2BanConf extends SystemConfigClass
         // Get fail2ban rules from database
         $res = Fail2BanRules::findFirst();
 
-        // Return ban time or default value (12 hours)
-        return $res !== null ? (int)$res->bantime : 43200;
+        // Return ban time or default value (10 minutes)
+        return $res !== null ? (int)$res->bantime : 600;
     }
 
     /**

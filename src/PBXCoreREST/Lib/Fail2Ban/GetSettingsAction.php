@@ -49,9 +49,9 @@ class GetSettingsAction extends Injectable
             if ($rules === null) {
                 $rules = new Fail2BanRules();
                 // Set default values if creating new
-                $rules->maxretry = 5;
-                $rules->bantime = 86400;
-                $rules->findtime = 1800;
+                $rules->maxretry = 20;
+                $rules->bantime = 600;
+                $rules->findtime = 600;
                 $rules->whitelist = '';
             }
 

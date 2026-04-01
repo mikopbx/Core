@@ -74,9 +74,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     public static function createDefault(): array
     {
         $data = [
-            'maxretry' => 5,
-            'bantime' => 86400,
-            'findtime' => 1800,
+            'maxretry' => 20,
+            'bantime' => 600,
+            'findtime' => 600,
             'whitelist' => '',
             'PBXFirewallMaxReqSec' => '100',
         ];
@@ -146,28 +146,28 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'description' => 'rest_schema_f2b_maxretry',
                 'minimum' => 1,
                 'maximum' => 100,
-                'default' => 5,
+                'default' => 20,
                 'sanitize' => 'int',
                 'required' => true,
-                'example' => 5
+                'example' => 20
             ],
             'bantime' => [
                 'type' => 'integer',
                 'description' => 'rest_schema_f2b_bantime',
                 'minimum' => 60,
-                'default' => 86400,
+                'default' => 600,
                 'sanitize' => 'int',
                 'required' => true,
-                'example' => 86400
+                'example' => 600
             ],
             'findtime' => [
                 'type' => 'integer',
                 'description' => 'rest_schema_f2b_findtime',
                 'minimum' => 60,
-                'default' => 1800,
+                'default' => 600,
                 'sanitize' => 'int',
                 'required' => true,
-                'example' => 1800
+                'example' => 600
             ],
             'whitelist' => [
                 'type' => 'string',

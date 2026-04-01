@@ -54,27 +54,27 @@ const fail2BanIndex = {
      */
     securityPresets: [
         { // 0: Weak
-            maxretry: 10,
-            findtime: 1800,    // 30 min
-            bantime: 3600,     // 1 hour
+            maxretry: 20,
+            findtime: 600,     // 10 min
+            bantime: 600,      // 10 min
             maxReqSec: 500,    // SIP rate limit (disabled if >200 extensions)
         },
         { // 1: Normal
-            maxretry: 5,
-            findtime: 10800,   // 3 hours
-            bantime: 604800,   // 7 days
+            maxretry: 10,
+            findtime: 3600,    // 1 hour
+            bantime: 86400,    // 1 day
             maxReqSec: 300,
         },
         { // 2: Enhanced
-            maxretry: 3,
+            maxretry: 5,
             findtime: 21600,   // 6 hours
-            bantime: 2592000,  // 30 days
+            bantime: 604800,   // 7 days
             maxReqSec: 150,
         },
         { // 3: Paranoid
-            maxretry: 1,
-            findtime: 43200,   // 12 hours
-            bantime: 5184000,  // 60 days
+            maxretry: 3,
+            findtime: 86400,   // 24 hours
+            bantime: 2592000,  // 30 days
             maxReqSec: 100,
         },
     ],
