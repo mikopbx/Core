@@ -138,6 +138,7 @@ const incomingRouteDefault = {
         ExtensionSelector.init('extension', {
             type: 'routing',
             includeEmpty: false,
+            additionalClasses: ['forwarding-select'],
             data: data,
             onChange: (value, text, $selectedItem) => {
                 // Update hidden input
