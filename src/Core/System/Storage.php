@@ -261,8 +261,24 @@ class Storage extends Injectable
         // Force kernel to re-read partition table after parted changes
         self::syncAndRereadPartitions($device);
 
-        // Get the newly created partition name, assuming it's always the first partition after a fresh format
-        $partition = self::getDevPartName($device, '1');
+        // Get the newly created partition name with retry (kernel may need time to create device node)
+        $retryDelays = [1, 2, 5, 5, 7];
+        $partition = '';
+        foreach ($retryDelays as $attempt => $delay) {
+            $partition = self::getDevPartName($device, '1', true);
+            if (!empty($partition)) {
+                break;
+            }
+            $attemptNum = $attempt + 1;
+            SystemMessages::sysLogMsg(__CLASS__, "Partition not found after parted, retry {$attemptNum}/" . count($retryDelays) . " (wait {$delay}s)", LOG_WARNING);
+            sleep($delay);
+            self::syncAndRereadPartitions($device);
+        }
+
+        if (empty($partition)) {
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to find partition on $device after formatting", LOG_ERR);
+            return false;
+        }
 
         return $this->formatPartition($partition, $bg);
     }
@@ -436,7 +452,12 @@ class Storage extends Injectable
         $partitionName = self::getDevPartName($target_disk_storage, $part);
         if ($part === '1' && (!self::isStorageDisk($partitionName) || $forceFormatStorage)) {
             echo PHP_EOL . Util::translate('Partitioning and formatting storage disk') . ': ' . $dev_disk . '...' . PHP_EOL;
-            $storage->formatEntireDisk($dev_disk);
+            if (!$storage->formatEntireDisk($dev_disk)) {
+                echo PHP_EOL . " - ERROR: Failed to format disk $dev_disk." . PHP_EOL;
+                SystemMessages::sysLogMsg(__CLASS__, "formatEntireDisk failed for $dev_disk", LOG_ERR);
+                sleep(5);
+                return false;
+            }
         } elseif ($part === '4' && $forceFormatStorage) {
             echo PHP_EOL . Util::translate('Formatting storage partition 4 on disk') . ': ' . $dev_disk . '...' . PHP_EOL;
             passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four create $dev_disk");
@@ -444,7 +465,20 @@ class Storage extends Injectable
             echo PHP_EOL . Util::translate('Update storage partition 4 on disk') . ': ' . $dev_disk . '...' . PHP_EOL;
             passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four update $dev_disk");
         }
-        $partitionName = self::getDevPartName($target_disk_storage, $part);
+
+        // Retry partition detection — kernel may need time to update device nodes after formatting
+        $retryDelays = [1, 2, 5, 5, 7];
+        $partitionName = '';
+        foreach ($retryDelays as $attempt => $delay) {
+            $partitionName = self::getDevPartName($target_disk_storage, $part, true);
+            if (!empty($partitionName)) {
+                break;
+            }
+            $attemptNum = $attempt + 1;
+            echo " - Partition not found, retry {$attemptNum}/" . count($retryDelays) . " (wait {$delay}s)..." . PHP_EOL;
+            sleep($delay);
+            self::syncAndRereadPartitions($dev_disk);
+        }
 
         // Use retry to ensure UUID is available after formatting
         // (kernel may need time to update partition metadata)
