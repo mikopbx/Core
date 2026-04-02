@@ -392,6 +392,8 @@ class InternalContexts extends AsteriskConfigClass
         // Determine call length and handle custom dialplan execution
         $conf .= 'same => n,Set(ringlength=${DB(FW_TIME/${EXTEN})})' . " \n\t";
         $conf .= 'same => n,ExecIf($["${ringlength}x" == "x"]?Set(ringlength=600))' . " \n\t";
+        // If no forwarding destination is configured, don't apply ring timeout — let the phone ring indefinitely
+        $conf .= 'same => n,ExecIf($["${DB(FW/${EXTEN})}x" == "x"]?Set(ringlength=600))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${QUEUE_SRC_CHAN}x" != "x" && "${ISTRANSFER}x" == "x"]?Set(ringlength=600))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${QUEUE_SRC_CHAN}x" != "x"]?Set(DIAL_QUEUE_OPTIONS=i))' . " \n\t";
 
