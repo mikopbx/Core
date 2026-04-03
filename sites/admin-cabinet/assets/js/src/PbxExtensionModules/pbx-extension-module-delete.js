@@ -53,10 +53,13 @@ const deleteModule = {
 
         /**
          * Event handler for the delete link click event.
+         * Uses delegated binding so the handler survives DOM updates
+         * when marketplace adds update buttons via DataTable cell().data().
          * @param {Event} e - The click event object.
          */
-        $('a.delete').on('click', (e) => {
+        $('#installed-modules-table').on('click', 'a.delete', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             $('a.button').addClass('disabled');
             $(e.target).closest('a').removeClass('disabled');
             const params = {};
