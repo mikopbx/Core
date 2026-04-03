@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'Při instalaci modulu systém zkontroluje licenci. U placených modulů bude pokud možno poskytnuta zkušební verze. Volné moduly se instalují bez podmínek. Pokud byl modul dříve smazán při ukládání nastavení, budou obnovena. Při instalaci modulu je lepší neprovádět v systému žádné další akce.',
     'ext_ModuleInstallations' => 'Nainstalováno',
     'ext_ModuleLastRelease' => 'Aktuální vydání',
+    'ext_ModuleCrashLoopProblem' => 'Modul byl automaticky deaktivován kvůli opakovaným pádům workeru:',
     'ext_ModuleLicenseProblem' => 'Problém s licencí rozšiřujícího modulu',
     'ext_ModulePublisher' => 'Vývojář',
     'ext_ModuleStatusChanging' => 'Změníme stav modulu…',

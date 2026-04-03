@@ -113,6 +113,7 @@ Manages enable/disable with license checking and firewall.
 public const string DISABLED_BY_EXCEPTION = 'DisabledByException';
 public const string DISABLED_BY_USER = 'DisabledByUser';
 public const string DISABLED_BY_LICENSE = 'DisabledByLicense';
+public const string DISABLED_BY_CRASH_LOOP = 'DisabledByCrashLoop';  // Runtime crash threshold exceeded
 
 public function enableModule(): bool    // License check, firewall, hooks, sounds
 public function disableModule(string $reason, string $reasonText): bool
@@ -123,6 +124,7 @@ public function disableModule(string $reason, string $reasonText): bool
 Static utilities for module management:
 
 ```php
+static forceDisableModule(string $moduleUniqueId, string $reason, string $reasonText): void
 static isEnabled(string $moduleUniqueID): bool           // Redis-cached
 static createAssetsSymlinks(string $moduleUniqueID): void // JS/CSS/IMG symlinks
 static createAgiBinSymlinks(string $moduleUniqueID): void // AGI script symlinks

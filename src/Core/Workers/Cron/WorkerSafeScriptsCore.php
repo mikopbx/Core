@@ -24,6 +24,7 @@ require_once 'Globals.php';
 use Fiber;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\System;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Asterisk\AsteriskManager;
@@ -50,6 +51,8 @@ use MikoPBX\Core\Workers\WorkerS3CacheCleaner;
 use MikoPBX\Core\Workers\WorkerSoundFilesInit;
 use MikoPBX\Core\Workers\WorkerWav2Webm;
 use MikoPBX\Modules\Config\SystemConfigInterface;
+use MikoPBX\Modules\PbxExtensionState;
+use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use RuntimeException;
 use Throwable;
@@ -82,6 +85,13 @@ class WorkerSafeScriptsCore extends WorkerBase
      * With 5-second monitoring cycles, 12 attempts = ~60 seconds for a worker to start.
      */
     private const int MAX_PING_FAILURES = 12;
+
+    /**
+     * Crash count threshold for auto-disabling a module.
+     * If a module worker crashes this many times within 30 minutes, the module is disabled.
+     * The 30-minute window is enforced by Redis EXPIRE in WorkerBase::recordModuleCrash().
+     */
+    private const int CRASH_LOOP_THRESHOLD = 100;
 
     /**
      * Singleton instance
@@ -463,7 +473,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                 // Check service with higher priority
                 [$result] = $queue->sendRequest('ping', 5, 1);
             }
-            if (false === $result) {
+            if (false === $result && !$this->isModuleInCrashLoop($workerClassName)) {
                 // Kill the entire process group before restarting
                 Processes::processPHPWorker($workerClassName);
                 SystemMessages::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
@@ -502,7 +512,7 @@ class WorkerSafeScriptsCore extends WorkerBase
         $start = microtime(true);
         $WorkerPID = Processes::getPidOfProcess($workerClassName);
         $result = ($WorkerPID !== '');
-        if (false === $result) {
+        if (false === $result && !$this->isModuleInCrashLoop($workerClassName)) {
             // Kill the entire process group before restarting
             if ($WorkerPID !== '') {
                 // Send SIGTERM to process group
@@ -511,7 +521,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                 // Force kill any remaining processes
                 posix_kill(-intval($WorkerPID), SIGKILL);
             }
-            
+
             Processes::processPHPWorker($workerClassName);
         }
         $timeElapsedSecs = round(microtime(true) - $start, 2);
@@ -564,7 +574,9 @@ class WorkerSafeScriptsCore extends WorkerBase
                 $failures = ($this->pingFailureCounts[$workerClassName] ?? 0) + 1;
                 $this->pingFailureCounts[$workerClassName] = $failures;
 
-                if ($failures <= self::MAX_PING_FAILURES) {
+                if ($this->isModuleInCrashLoop($workerClassName)) {
+                    // Module disabled by crash-loop watchdog — logged inside isModuleInCrashLoop()
+                } elseif ($failures <= self::MAX_PING_FAILURES) {
                     Processes::processPHPWorker($workerClassName);
                     SystemMessages::sysLogMsg(
                         __METHOD__,
@@ -643,6 +655,10 @@ class WorkerSafeScriptsCore extends WorkerBase
                 LOG_WARNING
             );
 
+            if ($this->isModuleInCrashLoop($workerClassName)) {
+                return;
+            }
+
             // Restart the worker
             Processes::processPHPWorker($workerClassName);
 
@@ -692,8 +708,57 @@ class WorkerSafeScriptsCore extends WorkerBase
     }
     
     /**
+     * Checks if a module worker is in a crash loop and disables the module if threshold exceeded.
+     * Returns true if the module was disabled (caller should NOT restart the worker).
+     * Returns false for core workers or if crash count is below threshold.
+     *
+     * @param string $workerClassName Fully qualified worker class name
+     * @return bool True if module was disabled due to crash loop
+     */
+    private function isModuleInCrashLoop(string $workerClassName): bool
+    {
+        $moduleId = WorkerBase::getModuleIdFromClassName($workerClassName);
+        if ($moduleId === null) {
+            return false;
+        }
+
+        try {
+            if (!isset($this->redis) || !$this->redis) {
+                $this->redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
+            }
+
+            $key = WorkerBase::REDIS_CRASH_KEY_PREFIX . $moduleId;
+            $crashCount = (int)$this->redis->get($key);
+
+            if ($crashCount >= self::CRASH_LOOP_THRESHOLD) {
+                // Retrieve last error message for the disable reason
+                $lastError = $this->redis->get($key . ':last_error') ?: 'Unknown error';
+                $reasonText = "Worker {$workerClassName} crashed {$crashCount} times in 30 minutes. Last error: {$lastError}";
+
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Module {$moduleId} disabled: {$reasonText}",
+                    LOG_ERR
+                );
+                PbxExtensionUtils::forceDisableModule(
+                    $moduleId,
+                    PbxExtensionState::DISABLED_BY_CRASH_LOOP,
+                    $reasonText
+                );
+
+                // Clean up crash data after disabling
+                $this->redis->del([$key, $key . ':last_error']);
+                return true;
+            }
+        } catch (Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+        }
+        return false;
+    }
+
+    /**
      * Check and maintain a pool of worker instances
-     * 
+     *
      * @param string $workerClassName The worker class name
      * @param int $targetCount Number of instances to maintain
      */
@@ -762,18 +827,25 @@ class WorkerSafeScriptsCore extends WorkerBase
             $activeWorkers = $poolManager->getActiveWorkers($workerClassName);
             $runningInstanceIds = array_column($activeWorkers, 'instance_id');
             
-            // Start missing instances
+            // Start missing instances (skip if module is in crash loop)
+            $missingInstances = [];
             for ($i = 1; $i <= $targetCount; $i++) {
                 if (!in_array($i, $runningInstanceIds)) {
+                    $missingInstances[] = $i;
+                }
+            }
+
+            if (!empty($missingInstances) && !$this->isModuleInCrashLoop($workerClassName)) {
+                foreach ($missingInstances as $instanceId) {
                     SystemMessages::sysLogMsg(
                         static::class,
-                        "Starting worker instance $i for $workerClassName",
+                        "Starting worker instance $instanceId for $workerClassName",
                         LOG_NOTICE
                     );
-                    
+
                     $workerPath = Util::getFilePathByClassName($workerClassName);
                     $php = Util::which('php');
-                    $command = "$php -f $workerPath start --instance-id=$i > /dev/null 2>&1 &";
+                    $command = "$php -f $workerPath start --instance-id=$instanceId > /dev/null 2>&1 &";
                     shell_exec($command);
                 }
             }

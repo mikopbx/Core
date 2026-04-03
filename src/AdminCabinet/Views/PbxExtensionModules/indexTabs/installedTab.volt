@@ -34,6 +34,11 @@
                     <i class="big red dont icon"></i>
                     <i class="key icon"></i>
                 </i>
+            {% elseif module['disableReason']=='DisabledByCrashLoop' %}
+                <i class="redo red icon wide popup-on-click vertically-aligned"
+                   data-html="<div class='header'>{{ t._('ext_DisableReasonHeader') }}</div><div class='content'>{{ t._('ext_ModuleCrashLoopProblem') }}<br>{{ module['disableReasonText'] }}</div></div>"
+                >
+                </i>
             {% endif %}
         </td>
         <td class="{{ module['status'] }} disability show-details-on-click">{{ t._('Breadcrumb'~module['uniqid']) }} <i

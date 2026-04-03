@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'Prilikom instalacije modula, sustav će provjeriti licencu. Za plaćene module, ako je moguće, bit će osigurana probna verzija. Besplatni moduli se instaliraju bez uvjeta. Ako je modul prethodno izbrisan tijekom spremanja postavki, one će se vratiti. Dok instalirate modul, bolje je ne izvoditi druge radnje na sustavu.',
     'ext_ModuleInstallations' => 'Instalirano',
     'ext_ModuleLastRelease' => 'Trenutno izdanje',
+    'ext_ModuleCrashLoopProblem' => 'Modul je automatski onemogućen zbog ponovljenih padova workera:',
     'ext_ModuleLicenseProblem' => 'Problem s licencom za modul proširenja',
     'ext_ModulePublisher' => 'Developer',
     'ext_ModuleStatusChanging' => 'Promjena stanja modula…',

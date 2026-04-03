@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'Når modulet installeres, vil systemet kontrollere licensen. For betalte moduler vil der om muligt blive leveret en prøveversion. Gratis moduler installeres uden betingelser. Hvis modulet tidligere blev slettet, mens indstillingerne blev gemt, vil de blive gendannet. Mens du installerer modulet, er det bedre ikke at udføre andre handlinger på systemet.',
     'ext_ModuleInstallations' => 'Installeret',
     'ext_ModuleLastRelease' => 'Nuværende udgivelse',
+    'ext_ModuleCrashLoopProblem' => 'Modulet blev automatisk deaktiveret på grund af gentagne worker-nedbrud:',
     'ext_ModuleLicenseProblem' => 'Udvidelsesmodullicensproblem',
     'ext_ModulePublisher' => 'Udvikler',
     'ext_ModuleStatusChanging' => 'Ændring af modulets tilstande …',

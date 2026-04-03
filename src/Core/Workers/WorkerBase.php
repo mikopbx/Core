@@ -21,10 +21,12 @@ namespace MikoPBX\Core\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Library\Text;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 use RuntimeException;
 use Throwable;
@@ -86,6 +88,12 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
 
 
     protected const string LOG_NAMESPACE_SEPARATOR = '\\';
+
+    /**
+     * Redis key prefix for module crash tracking counters.
+     * Full key: module:crashes:{ModuleUniqueID} (INCR counter with 30-min EXPIRE)
+     */
+    public const string REDIS_CRASH_KEY_PREFIX = 'module:crashes:';
 
     /**
      * Maximum number of processes that can be created
@@ -300,6 +308,7 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
                 $worker->logNormalExit();
             } catch (Throwable $e) {
                 CriticalErrorsHandler::handleExceptionWithSyslog($e);
+                self::recordModuleCrash($workerClassname, $e->getMessage());
                 sleep(1);
             }
         }
@@ -568,6 +577,58 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
         return Text::camelize("ping_$workerClassName", '\\');
     }
 
+
+    /**
+     * Extracts the module unique ID from a worker class name.
+     * Module workers follow the namespace pattern: Modules\{ModuleUniqueID}\bin\{WorkerName}
+     * Core workers start with MikoPBX\ and are excluded.
+     *
+     * @param string $workerClassName Fully qualified worker class name
+     * @return string|null Module unique ID, or null if this is a core worker
+     */
+    public static function getModuleIdFromClassName(string $workerClassName): ?string
+    {
+        $parts = explode('\\', $workerClassName);
+        if ($parts[0] === 'Modules' && isset($parts[1])) {
+            return $parts[1];
+        }
+        return null;
+    }
+
+    /**
+     * Records a module worker crash in Redis for crash-loop detection.
+     * Only records crashes for module workers (not core workers).
+     * Uses INCR with EXPIRE for a simple crash counter with 30-minute TTL.
+     *
+     * @param string $workerClassName Fully qualified worker class name
+     * @param string $errorMessage The exception/error message (stored for diagnostics)
+     */
+    public static function recordModuleCrash(string $workerClassName, string $errorMessage): void
+    {
+        $moduleId = self::getModuleIdFromClassName($workerClassName);
+        if ($moduleId === null) {
+            return;
+        }
+
+        try {
+            $di = Di::getDefault();
+            if ($di === null) {
+                return;
+            }
+            $redis = $di->getShared(RedisClientProvider::SERVICE_NAME);
+            $key = self::REDIS_CRASH_KEY_PREFIX . $moduleId;
+
+            // Increment crash counter; EXPIRE resets the 30-minute window on each crash
+            $redis->incr($key);
+            $redis->expire($key, 1800);
+
+            // Store last error message for diagnostics (separate key, same TTL)
+            $msgKey = $key . ':last_error';
+            $redis->set($msgKey, mb_substr($errorMessage, 0, 500), ['ex' => 1800]);
+        } catch (Throwable) {
+            // Silently ignore Redis errors — crash recording is best-effort
+        }
+    }
 
     /**
      * Destructor - cleanup on object destruction

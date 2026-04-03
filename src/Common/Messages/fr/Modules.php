@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'Lors de l\'installation du module, le système vérifiera la licence. Pour les modules payants, si possible, une version d\'essai sera fournie. Les modules gratuits sont installés sans conditions. Si le module a été précédemment supprimé lors de l\'enregistrement des paramètres, ils seront restaurés. Lors de l\'installation du module, il est préférable de ne pas effectuer d\'autres actions sur le système.',
     'ext_ModuleInstallations' => 'Installé',
     'ext_ModuleLastRelease' => 'Version actuelle',
+    'ext_ModuleCrashLoopProblem' => 'Le module a été désactivé automatiquement en raison de plantages répétés du worker :',
     'ext_ModuleLicenseProblem' => 'Problème de licence du module d\'extension',
     'ext_ModulePublisher' => 'Développeur',
     'ext_ModuleStatusChanging' => 'Modification des états du module …',

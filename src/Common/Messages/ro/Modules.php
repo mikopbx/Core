@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'La instalarea modulului, sistemul va verifica licența. Pentru modulele plătite, dacă este posibil, va fi furnizată o versiune de probă. Modulele gratuite sunt instalate fără condiții. Dacă modulul a fost șters anterior în timpul salvării setărilor, acestea vor fi restaurate. În timpul instalării modulului, este mai bine să nu efectuați alte acțiuni pe sistem.',
     'ext_ModuleInstallations' => 'Instalat',
     'ext_ModuleLastRelease' => 'Lansarea curentă',
+    'ext_ModuleCrashLoopProblem' => 'Modulul a fost dezactivat automat din cauza erorilor repetate ale workerului:',
     'ext_ModuleLicenseProblem' => 'Problemă de licență pentru modulul de extindere',
     'ext_ModulePublisher' => 'Dezvoltator',
     'ext_ModuleStatusChanging' => 'Se schimbă stările modulului…',

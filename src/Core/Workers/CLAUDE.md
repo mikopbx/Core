@@ -146,6 +146,18 @@ protected const int STATE_RESTARTING = 4;
 - **SIGUSR1**: Graceful restart — sets `needRestart = true`, calls `handleSignalUsr1()`
 - **SIGTERM/SIGINT**: Immediate termination — cleans up Redis, exits
 
+### Module Crash Recording
+
+WorkerBase records crashes for module workers (not core workers) in Redis for crash-loop detection.
+
+- **`REDIS_CRASH_KEY_PREFIX`** = `module:crashes:` — Redis key prefix for crash counters
+- **`recordModuleCrash(string $workerClassName, string $errorMessage): void`** — Increments crash counter in Redis with 30-minute TTL. Called automatically from `startWorker()` catch block. Also stores last error message in `module:crashes:{ModuleUniqueID}:last_error`.
+- **`getModuleIdFromClassName(string $workerClassName): ?string`** — Extracts module ID from namespace (`Modules\{ModuleUniqueID}\...` returns `ModuleUniqueID`, core workers return `null`).
+
+Redis keys:
+- `module:crashes:{ModuleUniqueID}` — integer counter, EXPIRE 1800s (30 min)
+- `module:crashes:{ModuleUniqueID}:last_error` — last error text (max 500 chars), EXPIRE 1800s
+
 ### Key Methods
 ```php
 abstract public function start(array $argv): void;
@@ -153,6 +165,8 @@ public function getPidFile(): string;
 public static function startWorker(array $argv, bool $setProcName = true): void;
 public static function getCheckInterval(): int;  // Default 60s
 public function pingCallBack(BeanstalkClient $message): void;
+public static function getModuleIdFromClassName(string $workerClassName): ?string;
+public static function recordModuleCrash(string $workerClassName, string $errorMessage): void;
 ```
 
 ## WorkerRedisBase
@@ -199,6 +213,15 @@ Singleton pattern. Monitors all workers using PHP Fibers for parallel checks.
 
 ### Watchdog Timer
 120-second timeout on `executeParallel()`. If blocked, process exits for monit to restart.
+
+### Module Crash-Loop Detection
+
+Before restarting a module worker, `WorkerSafeScriptsCore` checks if the module is in a crash loop via `isModuleInCrashLoop()` (line 716).
+
+- **`CRASH_LOOP_THRESHOLD`** = 100 — max crashes allowed in a 30-minute window
+- Reads crash counter from Redis key `module:crashes:{ModuleUniqueID}` (written by `WorkerBase::recordModuleCrash()`)
+- When threshold exceeded: disables module via `PbxExtensionUtils::forceDisableModule()` with reason `DISABLED_BY_CRASH_LOOP`, logs the last error message, and cleans up Redis crash data
+- Core workers (non-module) are never affected — `getModuleIdFromClassName()` returns null for them
 
 ## WorkerModelsEvents
 

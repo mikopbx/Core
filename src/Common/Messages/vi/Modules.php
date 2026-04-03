@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'Khi cài đặt module, hệ thống sẽ kiểm tra giấy phép. Đối với các mô-đun trả phí, nếu có thể, sẽ cung cấp phiên bản dùng thử. Các mô-đun miễn phí được cài đặt không có điều kiện. Nếu mô-đun trước đó đã bị xóa trong khi lưu cài đặt, chúng sẽ được khôi phục. Trong khi cài đặt mô-đun, tốt hơn hết là không thực hiện các hành động khác trên hệ thống.',
     'ext_ModuleInstallations' => 'Đã cài đặt',
     'ext_ModuleLastRelease' => 'Phát hành hiện tại',
+    'ext_ModuleCrashLoopProblem' => 'Mô-đun đã bị vô hiệu hóa tự động do worker bị lỗi nhiều lần:',
     'ext_ModuleLicenseProblem' => 'Vấn đề về giấy phép mô-đun mở rộng',
     'ext_ModulePublisher' => 'Nhà phát triển',
     'ext_ModuleStatusChanging' => 'Chúng tôi thay đổi trạng thái của mô-đun …',

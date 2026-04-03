@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'Podczas instalacji modułu system sprawdzi licencję. W przypadku modułów płatnych, jeśli to możliwe, zostanie udostępniona wersja próbna. Darmowe moduły są instalowane bez warunków. Jeżeli moduł został wcześniej usunięty podczas zapisywania ustawień, zostaną one przywrócone. Podczas instalacji modułu lepiej nie wykonywać innych czynności w systemie.',
     'ext_ModuleInstallations' => 'Zainstalowano',
     'ext_ModuleLastRelease' => 'Aktualne wydanie',
+    'ext_ModuleCrashLoopProblem' => 'Moduł został automatycznie wyłączony z powodu wielokrotnych awarii workera:',
     'ext_ModuleLicenseProblem' => 'Problem z licencją modułu rozszerzeń',
     'ext_ModulePublisher' => 'Deweloper',
     'ext_ModuleStatusChanging' => 'Zmiana stanów modułu …',

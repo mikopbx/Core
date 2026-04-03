@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'Bij het installeren van de module controleert het systeem de licentie. Voor betaalde modules wordt, indien mogelijk, een proefversie aangeboden. Gratis modules worden zonder voorwaarden geïnstalleerd. Als de module eerder werd verwijderd tijdens het opslaan van de instellingen, worden deze hersteld. Tijdens het installeren van de module kunt u beter geen andere handelingen op het systeem uitvoeren.',
     'ext_ModuleInstallations' => 'Geïnstalleerd',
     'ext_ModuleLastRelease' => 'Huidige uitgave',
+    'ext_ModuleCrashLoopProblem' => 'De module werd automatisch uitgeschakeld vanwege herhaalde worker-crashes:',
     'ext_ModuleLicenseProblem' => 'Licentieprobleem voor uitbreidingsmodule',
     'ext_ModulePublisher' => 'Ontwikkelaar',
     'ext_ModuleStatusChanging' => 'Modulestatus wijzigen…',

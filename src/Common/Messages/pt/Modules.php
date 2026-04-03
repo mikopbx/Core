@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'Ao instalar o módulo, o sistema verificará a licença. Para módulos pagos, se possível, será fornecida uma versão de teste. Módulos gratuitos são instalados sem condições. Se o módulo foi excluído anteriormente ao salvar as configurações, elas serão restauradas. Ao instalar o módulo, é melhor não realizar outras ações no sistema.',
     'ext_ModuleInstallations' => 'Instalado',
     'ext_ModuleLastRelease' => 'Lançamento atual',
+    'ext_ModuleCrashLoopProblem' => 'O módulo foi desativado automaticamente devido a falhas repetidas do worker:',
     'ext_ModuleLicenseProblem' => 'Problema de licença do módulo de expansão',
     'ext_ModulePublisher' => 'Desenvolvedor',
     'ext_ModuleStatusChanging' => 'Mudamos o estado do módulo …',

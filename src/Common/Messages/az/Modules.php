@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'Modulu quraşdırarkən sistem lisenziyanı yoxlayacaq. Ödənişli modullar üçün, mümkünsə, sınaq versiyası təqdim ediləcək. Pulsuz modullar şərtlər olmadan quraşdırılır. Parametrləri saxlayarkən modul əvvəllər silinibsə, onlar bərpa olunacaq. Modulu quraşdırarkən sistemdə başqa hərəkətlər etməmək daha yaxşıdır.',
     'ext_ModuleInstallations' => 'Quraşdırılıb',
     'ext_ModuleLastRelease' => 'Cari buraxılış',
+    'ext_ModuleCrashLoopProblem' => 'Modul işçinin dəfələrlə çökməsi səbəbindən avtomatik olaraq söndürüldü:',
     'ext_ModuleLicenseProblem' => 'Genişləndirmə modulu lisenziya problemi',
     'ext_ModulePublisher' => 'İnkişaf etdirici',
     'ext_ModuleStatusChanging' => 'Modul vəziyyətləri dəyişdirilir…',

@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'När modulen installeras kommer systemet att kontrollera licensen. För betalmoduler, om möjligt, kommer en testversion att tillhandahållas. Gratis moduler installeras utan villkor. Om modulen tidigare raderades när inställningarna sparades kommer de att återställas. När du installerar modulen är det bättre att inte utföra andra åtgärder på systemet.',
     'ext_ModuleInstallations' => 'Installerad',
     'ext_ModuleLastRelease' => 'Nuvarande release',
+    'ext_ModuleCrashLoopProblem' => 'Modulen inaktiverades automatiskt på grund av upprepade worker-krascher:',
     'ext_ModuleLicenseProblem' => 'Licensproblem för expansionsmodul',
     'ext_ModulePublisher' => 'Utvecklare',
     'ext_ModuleStatusChanging' => 'Vi ändrar modulens tillstånd …',

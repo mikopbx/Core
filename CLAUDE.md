@@ -121,10 +121,12 @@ Tests are automatically synchronized between host and container:
    - Queue-based workers: Beanstalkd (CDR, Events) and Redis (API) with priorities
    - File-based workers: JSON task files for async operations (WAV to WebM conversion)
    - Supervisor: `WorkerSafeScriptsCore` monitors and restarts all workers
+   - Crash watchdog: Module workers that crash 100+ times in 30 minutes are auto-disabled (`DISABLED_BY_CRASH_LOOP`)
 
 3. **Module System**: Extensible plugin architecture
    - Base class: `src/Modules/PbxExtensionBase.php`
    - Located in `/var/www/mikopbx/` on deployed systems
+   - Disable reasons: `DISABLED_BY_USER`, `DISABLED_BY_EXCEPTION`, `DISABLED_BY_LICENSE`, `DISABLED_BY_CRASH_LOOP`
 
 4. **Asterisk Configuration**: Dynamic config generation system
    - Generators in `src/Core/Asterisk/Configs/`
