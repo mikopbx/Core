@@ -140,6 +140,8 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::ENABLE_USE_NAT => '0',
             PbxSettings::AUTO_UPDATE_EXTERNAL_IP => '0',
             PbxSettings::PBX_SETTINGS_WAS_RESET => '0',
+            PbxSettings::API_QUEUE_MAX_LENGTH => '50',
+            PbxSettings::API_REQUEST_TTL => '35',
         ];
     }
 }

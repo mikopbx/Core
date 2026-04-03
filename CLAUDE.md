@@ -142,6 +142,7 @@ Tests are automatically synchronized between host and container:
 7. **REST API**: Queue-based REST API architecture
    - Controllers handle HTTP requests
    - Requests are queued to Redis for async processing
+   - Queue backpressure protection: fast-fail (HTTP 503) and stale request dropping
    - Dual-stack IPv4/IPv6 network configuration endpoints
 
 8. **Admin Cabinet**: Web administration interface

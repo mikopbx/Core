@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\{Processes, SystemMessages};
 use MikoPBX\Core\Workers\WorkerRedisBase;
@@ -66,7 +67,7 @@ class WorkerApiCommands extends WorkerRedisBase
     /**
      * System configuration
      */
-    private const int REDIS_RESPONSE_TTL = 3600; // 1 hour
+    private const int REDIS_RESPONSE_TTL = 120; // 2 minutes (sync requests timeout in 30s, this is cleanup safety net)
     private const int MAX_RESPONSE_SIZE = 1048576; // 1MB
     private const int PROCESS_CHECK_INTERVAL = 100000; // 100ms
 
@@ -513,7 +514,7 @@ class WorkerApiCommands extends WorkerRedisBase
             
             // Store metrics for performance analysis (but not visible in logs)
             $metricsKey = "api:metrics:{$request['request_id']}";
-            $this->redis->setex($metricsKey, 3600, json_encode($perfMetrics));
+            $this->redis->setex($metricsKey, self::REDIS_RESPONSE_TTL, json_encode($perfMetrics));
             
             // Only log errors, not success cases
             // WHY: If setex() returns true, Redis guarantees data is written
@@ -670,9 +671,14 @@ class WorkerApiCommands extends WorkerRedisBase
     {
         $request = json_decode($requestData, true);
         $res = new PBXApiResult();
-        
+
+        // Drop stale requests — client already got a timeout after 30s
+        if ($this->isStaleRequest($request)) {
+            return;
+        }
+
         $this->logJobStart($jobId, $request);
-        
+
         // Initialize performance metrics
         $metrics = new PerformanceMetrics($jobId, $request);
 
@@ -691,8 +697,52 @@ class WorkerApiCommands extends WorkerRedisBase
     }
     
     /**
+     * Check if request is stale (older than API_REQUEST_TTL).
+     * Debug requests and legacy requests without created_at are never stale.
+     *
+     * @param array $request Decoded request data
+     * @return bool True if request should be dropped
+     */
+    private function isStaleRequest(array $request): bool
+    {
+        // Legacy requests without created_at — process normally (backward compatible)
+        if (!isset($request['created_at'])) {
+            return false;
+        }
+
+        // Debug and async requests bypass TTL check.
+        // Async requests already got 200 OK — client waits on nchan, not polling.
+        if (!empty($request['debug']) || !empty($request['async'])) {
+            return false;
+        }
+
+        $requestTtl = (int)PbxSettings::getValueByKey(PbxSettings::API_REQUEST_TTL);
+        $age = microtime(true) - (float)$request['created_at'];
+
+        if ($age > $requestTtl) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                sprintf(
+                    "Dropping stale request: ID=%s, Action=%s, Age=%.1fs (TTL=%ds)",
+                    $request['request_id'] ?? 'unknown',
+                    $request['action'] ?? 'unknown',
+                    $age,
+                    $requestTtl
+                ),
+                LOG_NOTICE
+            );
+
+            // No sendResponse() — the client already timed out after 30s
+            // and BaseController already cleaned up the response key.
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Log job start information
-     * 
+     *
      * @param string $jobId Job identifier
      * @param array $request Request data
      */

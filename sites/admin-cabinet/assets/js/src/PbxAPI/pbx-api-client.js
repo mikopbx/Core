@@ -94,6 +94,52 @@ class PbxApiClient {
     }
 
     /**
+     * Maximum number of retries for 503 Service Unavailable responses
+     * @type {number}
+     * @static
+     */
+    static MAX_503_RETRIES = 3;
+
+    /**
+     * Call $.api() with automatic retry on 503 Service Unavailable.
+     * Retries up to MAX_503_RETRIES times with exponential backoff (1s, 2s, 4s).
+     *
+     * @param {object} settings - Settings object for $.api()
+     * @param {number} [attempt=0] - Current retry attempt (internal)
+     * @static
+     */
+    static callApi(settings, attempt = 0) {
+        const originalOnError = settings.onError;
+
+        const wrappedSettings = {
+            ...settings,
+            onError(errorMessage, element, xhr) {
+                const status = xhr ? xhr.status : 0;
+
+                // Retry on 503 with exponential backoff
+                if (status === 503 && attempt < PbxApiClient.MAX_503_RETRIES) {
+                    const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+                    console.warn(`API 503: retry ${attempt + 1}/${PbxApiClient.MAX_503_RETRIES} in ${delay}ms`);
+                    setTimeout(() => {
+                        PbxApiClient.callApi(
+                            {...settings, onError: originalOnError},
+                            attempt + 1
+                        );
+                    }, delay);
+                    return;
+                }
+
+                // Exhausted retries or non-503 error — delegate to original handler
+                if (originalOnError) {
+                    originalOnError(errorMessage, element, xhr);
+                }
+            }
+        };
+
+        $.api(wrappedSettings);
+    }
+
+    /**
      * Custom success test for RESTful API with proper HTTP codes
      * Treats business errors (4xx) as failures, not network errors
      *
@@ -222,7 +268,7 @@ class PbxApiClient {
             callback
         );
 
-        $.api({
+        PbxApiClient.callApi({
             url: url,
             method: 'GET',
             ...apiSettings
@@ -269,7 +315,7 @@ class PbxApiClient {
             }
         );
 
-        $.api({
+        PbxApiClient.callApi({
             url: this.apiUrl,
             method: 'GET',
             data: params,
@@ -303,7 +349,7 @@ class PbxApiClient {
         const method = isNew ? 'POST' : 'PUT';
         const url = isNew ? this.apiUrl : `${this.apiUrl}/${recordId}`;
 
-        $.api({
+        PbxApiClient.callApi({
             url: url,
             method: method,
             data: cleanData,
@@ -342,7 +388,7 @@ class PbxApiClient {
             callback
         );
 
-        $.api({
+        PbxApiClient.callApi({
             url: `${this.apiUrl}/${recordId}`,
             method: 'DELETE',
             ...apiSettings
@@ -441,7 +487,7 @@ class PbxApiClient {
             }
         }
 
-        $.api(ajaxSettings);
+        PbxApiClient.callApi(ajaxSettings);
     }
     
     /**
@@ -505,7 +551,7 @@ class PbxApiClient {
             callback
         );
 
-        $.api({
+        PbxApiClient.callApi({
             url: url,
             method: 'GET',
             data: params || {},
@@ -544,7 +590,7 @@ class PbxApiClient {
             ajaxSettings.data = data;
         }
 
-        $.api(ajaxSettings);
+        PbxApiClient.callApi(ajaxSettings);
     }
 
     /**
@@ -578,7 +624,7 @@ class PbxApiClient {
             ajaxSettings.data = data;
         }
 
-        $.api(ajaxSettings);
+        PbxApiClient.callApi(ajaxSettings);
     }
 
     /**
@@ -592,7 +638,7 @@ class PbxApiClient {
             callback
         );
 
-        $.api({
+        PbxApiClient.callApi({
             url: `${this.apiUrl}/${id}`,
             method: 'DELETE',
             ...apiSettings
@@ -624,7 +670,7 @@ class PbxApiClient {
             ajaxSettings.data = data;
         }
 
-        $.api(ajaxSettings);
+        PbxApiClient.callApi(ajaxSettings);
     }
 }
 
