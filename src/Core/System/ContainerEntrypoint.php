@@ -178,7 +178,7 @@ class ContainerEntrypoint extends Injectable
                     $id = file_get_contents($pidIdPath);
                 }
                 if ($id !== $newUserId) {
-                    $commands[] = "$find / -not -path '/proc/*' -user $currentUserId -exec $chown -h $userID {} \;";
+                    $commands[] = "$find / -not -path '/proc/*' -not -path '/sys/*' -user $currentUserId -exec $chown -h $userID {} +";
                     file_put_contents($pidIdPath, $newUserId);
                 }
             }
@@ -191,7 +191,7 @@ class ContainerEntrypoint extends Injectable
                     $id = file_get_contents($pidGrPath);
                 }
                 if ($id !== $newGroupId) {
-                    $commands[] = "$find / -not -path '/proc/*' -group $currentGroupId -exec $chgrp -h $newGroupId {} \;";
+                    $commands[] = "$find / -not -path '/proc/*' -not -path '/sys/*' -group $currentGroupId -exec $chgrp -h $newGroupId {} +";
                     file_put_contents($pidGrPath, $newGroupId);
                 }
             }

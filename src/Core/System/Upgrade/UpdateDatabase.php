@@ -195,10 +195,10 @@ class UpdateDatabase extends Injectable
         $chmodPath = Util::which('chmod');
 
         // Set execute permissions for files in the modules' binary directories
-        Processes::mwExec("$findPath $modulesDir/*/*bin/ -type f -exec $chmodPath +x {} \;");
+        Processes::mwExec("$findPath $modulesDir/*/*bin/ -type f -exec $chmodPath +x {} \\;");
 
-        // Set ownership of the modules directory to www:www
-        Processes::mwExec("$chownPath -R www:www $modulesDir/*");
+        // Set ownership only for files/dirs not already owned by www (avoid redundant chown on 9000+ files)
+        Processes::mwExec("$findPath $modulesDir -not -user www -exec $chownPath www:www {} +");
     }
 
     /**

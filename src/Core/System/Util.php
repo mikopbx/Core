@@ -656,13 +656,10 @@ class Util
             $chmod = self::which('chmod');
             $xargs = self::which('xargs');
             
-            // Optimized version using xargs for parallel execution
-            // This reduces execution time from ~5s to ~0.5s
-            // Use find with print0 and xargs for null-terminated strings (handles spaces in filenames)
-            // -P 4 runs 4 parallel processes, -n 50 processes 50 items per chmod call
-            Processes::mwExec("$find $folder -type d -print0 2>/dev/null | $xargs -0 -P 4 -n 50 $chmod 755");
-            Processes::mwExec("$find $folder -type f -print0 2>/dev/null | $xargs -0 -P 4 -n 50 $chmod 644");
-            Processes::mwExec("$chown -R www:www $folder");
+            // Optimized: only chmod/chown files that need it (avoids redundant syscalls on thousands of files)
+            Processes::mwExec("$find $folder -type d -not -perm 755 -print0 2>/dev/null | $xargs -0 -r -P 4 -n 50 $chmod 755");
+            Processes::mwExec("$find $folder -type f -not -perm 644 -print0 2>/dev/null | $xargs -0 -r -P 4 -n 50 $chmod 644");
+            Processes::mwExec("$find $folder -not -user www -exec $chown www:www {} +");
         }
     }
 
