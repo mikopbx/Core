@@ -156,7 +156,7 @@ class RedisConf extends SystemConfigClass
         $conf  .= "syslog-ident redis" . PHP_EOL;
         $conf  .= "daemonize yes" . PHP_EOL;
         # Connection settings
-        $conf  .= "timeout 0" . PHP_EOL;
+        $conf  .= "timeout 300" . PHP_EOL;
         $conf  .= "tcp-keepalive 60" . PHP_EOL;
         $conf  .= "client-output-buffer-limit pubsub 32mb 8mb 60" . PHP_EOL;
 
