@@ -9,7 +9,6 @@ description: Tasks related to implementing, modifying, or refactoring background
 ## Active Tasks
 
 ### High Priority
-- `h-implement-api-queue-backpressure.md` - Fast-fail 503 + TTL on stale requests to prevent API queue deadlock
 - `h-implement-module-crash-watchdog.md` - Auto-disable modules whose workers crash in a loop (100 errors threshold)
 
 ### Medium Priority
@@ -20,4 +19,4 @@ description: Tasks related to implementing, modifying, or refactoring background
 ### Investigate
 
 ## Completed Tasks
-<!-- Move tasks here when completed, maintaining the format -->
+- `h-implement-api-queue-backpressure.md` - Fast-fail 503 + TTL on stale requests to prevent API queue deadlock

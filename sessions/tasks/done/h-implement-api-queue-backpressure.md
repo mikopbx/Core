@@ -1,7 +1,7 @@
 ---
 name: h-implement-api-queue-backpressure
 branch: feature/api-queue-backpressure
-status: pending
+status: completed
 created: 2026-04-03
 ---
 
@@ -23,13 +23,13 @@ REST API MikoPBX использует Redis-очередь с 3 воркерам
 
 ## Success Criteria
 
-- [ ] **Механизм A**: BaseController проверяет длину очереди перед rpush. При >50 возвращает HTTP 503 без ожидания
-- [ ] **Механизм B**: Все запросы содержат `created_at` timestamp. WorkerApiCommands дропает запросы старше 35 секунд
-- [ ] **Frontend**: AJAX обработчики ловят 503 и делают retry с exponential backoff (3 попытки: 1s/2s/4s)
-- [ ] **Response TTL**: Снижен с 3600 до 120 секунд (orphaned response keys не висят час)
-- [ ] **Конфигурируемость**: Пороги через PbxSettings (API_QUEUE_MAX_LENGTH, API_REQUEST_TTL)
-- [ ] **Backward compatible**: Запросы без created_at обрабатываются нормально (legacy)
-- [ ] **Логирование**: Dropped/rejected запросы логируются в syslog (LOG_NOTICE)
+- [x] **Механизм A**: BaseController проверяет длину очереди перед rpush. При >50 возвращает HTTP 503 без ожидания
+- [x] **Механизм B**: Все запросы содержат `created_at` timestamp. WorkerApiCommands дропает запросы старше 35 секунд
+- [x] **Frontend**: AJAX обработчики ловят 503 и делают retry с exponential backoff (3 попытки: 1s/2s/4s)
+- [x] **Response TTL**: Снижен с 3600 до 120 секунд (orphaned response keys не висят час)
+- [x] **Конфигурируемость**: Пороги через PbxSettings (API_QUEUE_MAX_LENGTH, API_REQUEST_TTL)
+- [x] **Backward compatible**: Запросы без created_at обрабатываются нормально (legacy)
+- [x] **Логирование**: Dropped/rejected запросы логируются в syslog (LOG_NOTICE)
 
 ## Context Manifest
 
@@ -111,4 +111,20 @@ WorkerApiCommands:
 
 ## Work Log
 
-- [2026-04-03] Task created based on production incident analysis and codebase research
+### 2026-04-03
+
+#### Completed
+- Task created based on production incident analysis
+- Added PbxSettings constants: API_QUEUE_MAX_LENGTH (default 50), API_REQUEST_TTL (default 35s)
+- Implemented fast-fail (Mechanism A) in BaseController: queue length check before rpush, HTTP 503 if overloaded, created_at timestamp on every request
+- Implemented stale request drop (Mechanism B) in WorkerApiCommands: isStaleRequest() checks request age, drops expired requests
+- Reduced REDIS_RESPONSE_TTL from 3600 to 120 seconds, aligned metrics TTL
+- Added 503 retry with exponential backoff (1s/2s/4s, 3 attempts) in PbxApiClient frontend via static callApi() wrapper
+- All changes pass phpstan analysis
+
+#### Decisions
+- Async requests bypass TTL check (they don't have waiting clients)
+- Debug requests (X-Debug-The-Request) bypass TTL check
+- Legacy requests without created_at are processed normally (backward compatible)
+- Stale requests are dropped silently without sendResponse (no one is listening)
+- PbxSettings cached with 10s static TTL to avoid Redis round-trips on every request

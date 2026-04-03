@@ -317,6 +317,12 @@ trait PbxSettingsConstantsTrait
     public const string AUTO_UPDATE_EXTERNAL_IP = 'autoUpdateExternalIp';
 
 
+    // API queue backpressure settings
+    /** @FieldType('integer') */
+    public const string API_QUEUE_MAX_LENGTH = 'APIQueueMaxLength';
+    /** @FieldType('integer') */
+    public const string API_REQUEST_TTL = 'APIRequestTTL';
+
     // Constants for worker actions
     /** @FieldType('boolean') */
     public const string PBX_SETTINGS_WAS_RESET = 'PBXSettingsWasReset';

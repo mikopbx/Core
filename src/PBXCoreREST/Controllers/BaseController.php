@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Controllers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
@@ -71,8 +72,32 @@ class BaseController extends Controller
             // Initialize Redis connection
             $redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
 
-            // Generate unique request ID
+            // Generate unique request ID and timestamp for staleness check
             $requestMessage['request_id'] = uniqid("req_{$actionName}_", true);
+            $requestMessage['created_at'] = microtime(true);
+
+            // Fast-fail: reject request immediately if queue is overloaded
+            // Cached to avoid Redis round-trip on every HTTP request
+            static $cachedMaxQueueLength = null;
+            static $cacheTime = 0;
+            $now = time();
+            if ($cachedMaxQueueLength === null || $now - $cacheTime > 10) {
+                $cachedMaxQueueLength = (int)PbxSettings::getValueByKey(PbxSettings::API_QUEUE_MAX_LENGTH);
+                $cacheTime = $now;
+            }
+            $maxQueueLength = $cachedMaxQueueLength;
+            $queueLength = $redis->lLen(WorkerApiCommands::REDIS_API_QUEUE);
+            if ($queueLength > $maxQueueLength) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    "API queue overloaded: {$queueLength}/{$maxQueueLength} requests, rejecting {$actionName}",
+                    LOG_NOTICE
+                );
+                $this->response
+                    ->setPayloadError('Service temporarily unavailable, please retry later')
+                    ->setStatusCode(503);
+                return;
+            }
 
             // Push request to queue
             $pushResult = $redis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage));
@@ -82,8 +107,7 @@ class BaseController extends Controller
             }
 
             // Monitor queue backlog only for critical situations
-            $queueLength = $redis->lLen(WorkerApiCommands::REDIS_API_QUEUE);
-            if ($queueLength > 20) { // Only log if significant backlog
+            if ($queueLength > 20) {
                 SystemMessages::sysLogMsg(
                     static::class,
                     "Queue backlog detected: {$queueLength} requests pending",

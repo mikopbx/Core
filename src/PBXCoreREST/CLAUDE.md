@@ -153,15 +153,28 @@ HTTP Request → RouterProvider (auto-discovery from attributes)
   → AuthenticationMiddleware (public check → localhost → JWT/API Key → ACL)
     → BaseRestController (CRUD or custom method routing)
       → BaseController.sendRequestToBackendWorker()
-        → Redis queue (api:requests)
+        → Queue length check (lLen > API_QUEUE_MAX_LENGTH → HTTP 503)
+        → Redis queue (api:requests) with created_at timestamp
           → WorkerApiCommands (3 parallel processes)
+            → Stale request check (age > API_REQUEST_TTL → drop)
             → ManagementProcessor (enum-based routing)
               → Action class (7-phase SaveRecord pattern)
                 → PBXApiResult
-              → Redis response (api:response:{request_id})
+              → Redis response (api:response:{request_id}, TTL=120s)
             → Smart polling: 10ms → 50ms → 100ms → 250ms
           → ResponseMiddleware → HTTP Response
 ```
+
+## Queue Backpressure Protection
+
+Prevents system deadlock when API queue grows uncontrollably (e.g., thundering herd from modules/polling).
+
+- **Fast-fail (Mechanism A)**: BaseController checks queue length before `rpush`. If > `API_QUEUE_MAX_LENGTH` (default 50), returns HTTP 503 immediately — php-fpm worker freed instantly instead of blocking 30s
+- **Stale request drop (Mechanism B)**: WorkerApiCommands checks `created_at` age before processing. Requests older than `API_REQUEST_TTL` (default 35s) are dropped — client already timed out
+- **Frontend retry**: `PbxApiClient.callApi()` retries 503 with exponential backoff (3 attempts: 1s/2s/4s)
+- **Response TTL**: Reduced to 120s (orphaned response keys cleaned up faster)
+- **Configuration**: Thresholds via PbxSettings (`API_QUEUE_MAX_LENGTH`, `API_REQUEST_TTL`)
+- **Bypasses**: Debug requests and async requests skip TTL check. Legacy requests without `created_at` processed normally
 
 ## DataStructure Pattern (Single Source of Truth)
 
