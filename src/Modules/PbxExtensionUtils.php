@@ -228,12 +228,15 @@ class PbxExtensionUtils
      * Disables a module by its unique ID.
      *
      * @param string $moduleUniqueId The unique ID of the module to be disabled.
-     * @param string $exceptionMessage The exception message.
+     * @param string $reason The disable reason constant (default: DISABLED_BY_EXCEPTION).
+     * @param string $reasonText The human-readable exception/error message.
      */
-    private static function forceDisableModule(string $moduleUniqueId, string $exceptionMessage = ''): void
+    public static function forceDisableModule(
+        string $moduleUniqueId,
+        string $reason = PbxExtensionState::DISABLED_BY_EXCEPTION,
+        string $reasonText = ''
+    ): void
     {
-        $reason = PbxExtensionState::DISABLED_BY_EXCEPTION;
-        $reasonText = $exceptionMessage;
         try {
             // Disable the module using the PbxExtensionState class
             $moduleStateProcessor = new PbxExtensionState($moduleUniqueId);
@@ -244,7 +247,7 @@ class PbxExtensionUtils
         } finally {
             // Update module status to disabled if it was not already disabled
             $currentModule = PbxExtensionModules::findFirstByUniqid($moduleUniqueId);
-            if ($currentModule->disabled === '0') {
+            if ($currentModule !== null && $currentModule->disabled === '0') {
                 SystemMessages::sysLogMsg(__CLASS__, "Force disable module $moduleUniqueId on the PbxExtensionModules table", LOG_ERR);
                 $currentModule->disabled = '1';
                 $currentModule->disableReason = $reason;
@@ -328,7 +331,7 @@ class PbxExtensionUtils
             $moduleUniqueId = $moduleNameParts[0];
             if (!empty($moduleUniqueId)) {
                 // Disable the module using its unique ID
-                self::forceDisableModule($moduleUniqueId, $exceptionMessage);
+                self::forceDisableModule($moduleUniqueId, PbxExtensionState::DISABLED_BY_EXCEPTION, $exceptionMessage);
                 SystemMessages::sysLogMsg(__CLASS__, "The module $moduleUniqueId was disabled because an exception occurred in it", LOG_ERR);
             }
         }

@@ -85,6 +85,7 @@ return [
     'ext_ModuleInstallDescription' => 'When installing the module, the system will check the license. For paid modules, if possible, a trial version will be provided. Free modules are installed without conditions. If the module was previously deleted while saving the settings, they will be restored. While installing the module, it is better not to perform other actions on the system.',
     'ext_ModuleInstallations' => 'Installed',
     'ext_ModuleLastRelease' => 'Current release',
+    'ext_ModuleCrashLoopProblem' => 'The module was automatically disabled due to repeated worker crashes:',
     'ext_ModuleLicenseProblem' => 'Module license problem',
     'ext_ModulePublisher' => 'Developer',
     'ext_ModuleStatusChanging' => 'Change the module state …',

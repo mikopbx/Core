@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'Durante l\'installazione del modulo, il sistema controllerà la licenza. Per i moduli a pagamento, se possibile, verrà fornita una versione di prova. I moduli gratuiti vengono installati senza condizioni. Se il modulo è stato precedentemente eliminato durante il salvataggio delle impostazioni, queste verranno ripristinate. Durante l\'installazione del modulo è meglio non eseguire altre azioni sul sistema.',
     'ext_ModuleInstallations' => 'Installato',
     'ext_ModuleLastRelease' => 'Versione attuale',
+    'ext_ModuleCrashLoopProblem' => 'Il modulo è stato disabilitato automaticamente a causa di ripetuti crash del worker:',
     'ext_ModuleLicenseProblem' => 'Problema di licenza del modulo di espansione',
     'ext_ModulePublisher' => 'Sviluppatore',
     'ext_ModuleStatusChanging' => 'Modifica degli stati del modulo …',

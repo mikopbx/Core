@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => '安装模块时，系统会检查许可证。对于付费模块，如果可能，将提供试用版。免费模块无条件安装。如果之前在保存设置时删除了模块，它们将被恢复。安装模块时，最好不要对系统执行其他操作。',
     'ext_ModuleInstallations' => '已安装',
     'ext_ModuleLastRelease' => '当前版本',
+    'ext_ModuleCrashLoopProblem' => '由于工作进程反复崩溃，模块已自动禁用:',
     'ext_ModuleLicenseProblem' => '扩展模块许可证问题',
     'ext_ModulePublisher' => '开发商',
     'ext_ModuleStatusChanging' => '更改模块的状态…',

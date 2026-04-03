@@ -49,6 +49,7 @@ class PbxExtensionState extends Injectable
     public const string DISABLED_BY_EXCEPTION = 'DisabledByException';
     public const string DISABLED_BY_USER = 'DisabledByUser';
     public const string DISABLED_BY_LICENSE = 'DisabledByLicense';
+    public const string DISABLED_BY_CRASH_LOOP = 'DisabledByCrashLoop';
 
     private array $messages;
     private $lic_feature_id;

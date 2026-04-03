@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'A modul telepítésekor a rendszer ellenőrzi a licencet. A fizetős modulokhoz lehetőség szerint próbaverziót biztosítunk. Az ingyenes modulokat feltételek nélkül telepítik. Ha a modult korábban törölték a beállítások mentése közben, akkor azok visszaállnak. A modul telepítése közben jobb, ha nem hajt végre más műveleteket a rendszeren.',
     'ext_ModuleInstallations' => 'Telepítve',
     'ext_ModuleLastRelease' => 'Jelenlegi kiadás',
+    'ext_ModuleCrashLoopProblem' => 'A modul automatikusan letiltásra került az ismétlődő worker-összeomlások miatt:',
     'ext_ModuleLicenseProblem' => 'Probléma a bővítőmodul licencével',
     'ext_ModulePublisher' => 'Fejlesztő',
     'ext_ModuleStatusChanging' => 'Modulállapotok módosítása…',

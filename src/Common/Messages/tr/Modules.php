@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'Modülü kurarken sistem lisansı kontrol edecektir. Ücretli modüller için mümkünse deneme sürümü sağlanacaktır. Ücretsiz modüller koşulsuz olarak kurulur. Modül daha önce ayarlar kaydedilirken silinmişse geri yüklenecektir. Modülü kurarken sistem üzerinde başka işlemler yapmamak daha iyidir.',
     'ext_ModuleInstallations' => 'Kurulu',
     'ext_ModuleLastRelease' => 'Güncel sürüm',
+    'ext_ModuleCrashLoopProblem' => 'Modül, tekrarlanan worker çökmeleri nedeniyle otomatik olarak devre dışı bırakıldı:',
     'ext_ModuleLicenseProblem' => 'Genişletme modülü lisans sorunu',
     'ext_ModulePublisher' => 'Geliştirici',
     'ext_ModuleStatusChanging' => 'Modülün durumunu değiştiriyoruz …',

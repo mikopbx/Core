@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'Bei der Installation des Moduls prüft das System die Lizenz. Für kostenpflichtige Module wird nach Möglichkeit eine Testversion bereitgestellt. Kostenlose Module werden ohne Bedingungen installiert. Wenn das Modul zuvor beim Speichern der Einstellungen gelöscht wurde, werden diese wiederhergestellt. Während der Installation des Moduls ist es besser, keine anderen Aktionen am System durchzuführen.',
     'ext_ModuleInstallations' => 'Installiert',
     'ext_ModuleLastRelease' => 'Aktuelle Version',
+    'ext_ModuleCrashLoopProblem' => 'Das Modul wurde aufgrund wiederholter Worker-Abstürze automatisch deaktiviert:',
     'ext_ModuleLicenseProblem' => 'Problem mit der Lizenz des Erweiterungsmoduls',
     'ext_ModulePublisher' => 'Entwickler',
     'ext_ModuleStatusChanging' => 'Modulstatus ändern …',

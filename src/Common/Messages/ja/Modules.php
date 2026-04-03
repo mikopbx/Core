@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'モジュールをインストールするときに、システムはライセンスをチェックします。有料モジュールについては、可能であれば試用版が提供されます。無料のモジュールは無条件でインストールされます。設定の保存中にモジュールが以前に削除されていた場合、それらは復元されます。モジュールのインストール中は、システム上で他の操作を実行しないことをお勧めします。',
     'ext_ModuleInstallations' => 'インストール済み',
     'ext_ModuleLastRelease' => '現在のリリース',
+    'ext_ModuleCrashLoopProblem' => 'ワーカーの繰り返しクラッシュにより、モジュールは自動的に無効化されました:',
     'ext_ModuleLicenseProblem' => '拡張モジュールのライセンスの問題',
     'ext_ModulePublisher' => '開発者',
     'ext_ModuleStatusChanging' => 'モジュールの状態を変更して…',

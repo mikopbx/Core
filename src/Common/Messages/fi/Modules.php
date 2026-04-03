@@ -66,6 +66,7 @@ return [
     'ext_ModuleInstallDescription' => 'Moduulia asennettaessa järjestelmä tarkistaa lisenssin. Maksullisille moduuleille tarjotaan mahdollisuuksien mukaan kokeiluversio. Ilmaiset moduulit asennetaan ilman ehtoja. Jos moduuli on aiemmin poistettu asetusten tallennuksen aikana, ne palautetaan. Moduulia asennettaessa on parempi olla suorittamatta muita toimintoja järjestelmässä.',
     'ext_ModuleInstallations' => 'Asennettu',
     'ext_ModuleLastRelease' => 'Nykyinen julkaisu',
+    'ext_ModuleCrashLoopProblem' => 'Moduuli poistettiin automaattisesti käytöstä toistuvien worker-kaatumisten vuoksi:',
     'ext_ModuleLicenseProblem' => 'Laajennusmoduulin lisenssiongelma',
     'ext_ModulePublisher' => 'Kehittäjä',
     'ext_ModuleStatusChanging' => 'Muutetaan moduulin tiloja…',
