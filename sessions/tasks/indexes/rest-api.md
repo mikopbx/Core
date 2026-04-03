@@ -9,9 +9,11 @@ description: Tasks related to REST API routing, authentication, controllers, mid
 ## Active Tasks
 
 ### High Priority
+- `h-implement-api-queue-backpressure.md` - Fast-fail 503 + TTL on stale requests to prevent API queue deadlock
 - `h-refactor-ssh-password-storage/` - Refactor SSH password storage to SHA-512 hashes (security improvement)
 
 ### Medium Priority
+- `m-fix-zabbix-module-api-flooding.md` - ModuleZabbixAgent5 caching to stop REST API flooding
 
 ### Low Priority
 
