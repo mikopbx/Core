@@ -96,10 +96,24 @@ const marketplace = {
                         if (column.index() === 0) {
                             let title = column.header().textContent;
 
-                            // Create input element
+                            // Create compact search input in Fomantic UI style
+                            let wrapper = document.createElement('div');
+                            wrapper.className = 'ui mini icon input';
                             let input = document.createElement('input');
                             input.placeholder = title;
-                            column.header().replaceChildren(input);
+                            input.type = 'text';
+                            input.style.width = '200px';
+                            let icon = document.createElement('i');
+                            icon.className = 'search icon';
+                            wrapper.appendChild(input);
+                            wrapper.appendChild(icon);
+
+                            // Keep the header text for sorting, add input next to it
+                            column.header().textContent = '';
+                            column.header().appendChild(wrapper);
+
+                            // Prevent input clicks from triggering column sort
+                            wrapper.addEventListener('click', (e) => e.stopPropagation());
 
                             // Event listener for user input
                             input.addEventListener('keyup', () => {
