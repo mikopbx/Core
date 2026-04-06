@@ -24,6 +24,8 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
+use MikoPBX\Core\System\Configs\SoundFilesConf;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
@@ -44,9 +46,10 @@ use Throwable;
 class PbxExtensionState extends Injectable
 {
 
-    const DISABLED_BY_EXCEPTION = 'DisabledByException';
-    const DISABLED_BY_USER = 'DisabledByUser';
-    const DISABLED_BY_LICENSE = 'DisabledByLicense';
+    public const string DISABLED_BY_EXCEPTION = 'DisabledByException';
+    public const string DISABLED_BY_USER = 'DisabledByUser';
+    public const string DISABLED_BY_LICENSE = 'DisabledByLicense';
+    public const string DISABLED_BY_CRASH_LOOP = 'DisabledByCrashLoop';
 
     private array $messages;
     private $lic_feature_id;
@@ -68,7 +71,7 @@ class PbxExtensionState extends Injectable
         $this->modulesRoot    = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('core.modulesDir');
 
         // Check if module.json file exists
-        $moduleJson           = "{$this->modulesRoot}/{$this->moduleUniqueID}/module.json";
+        $moduleJson           = "$this->modulesRoot/$this->moduleUniqueID/module.json";
         if ( ! file_exists($moduleJson)) {
             $this->messages[] = 'module.json not found for module ' . $this->moduleUniqueID;
             return;
@@ -103,7 +106,7 @@ class PbxExtensionState extends Injectable
     private function reloadConfigClass(): void
     {
         $class_name      = str_replace('Module', '', $this->moduleUniqueID);
-        $configClassName = "Modules\\{$this->moduleUniqueID}\\Lib\\{$class_name}Conf";
+        $configClassName = "Modules\\$this->moduleUniqueID\\Lib\\{$class_name}Conf";
         if (class_exists($configClassName)) {
             $this->configClass = new $configClassName();
         } else {
@@ -137,6 +140,9 @@ class PbxExtensionState extends Injectable
                 return false;
             }
         }
+        // Recreate database connections
+        ModulesDBConnectionsProvider::recreateModulesDBConnections();
+
         $success = $this->makeBeforeEnableTest();
         if ( ! $success) {
             return false;
@@ -157,6 +163,16 @@ class PbxExtensionState extends Injectable
             $module->disabled = '0';
             $module->save();
         }
+
+        // Install module sound files
+        SoundFilesConf::installModuleSounds($this->moduleUniqueID);
+
+        // Call the onAfterModuleEnable method if available in the configClass
+        if ($this->configClass !== null
+            && method_exists($this->configClass, SystemConfigInterface::ON_AFTER_MODULE_ENABLE)) {
+            call_user_func([$this->configClass, SystemConfigInterface::ON_AFTER_MODULE_ENABLE]);
+        }
+
         if ($this->configClass !== null
             && method_exists($this->configClass, 'getMessages')) {
             $this->messages = array_merge($this->messages, $this->configClass->getMessages());
@@ -272,6 +288,15 @@ class PbxExtensionState extends Injectable
             $module->save();
         }
 
+        // Remove module sound files
+        SoundFilesConf::removeModuleSounds($this->moduleUniqueID);
+
+        // Call the onAfterModuleDisable method if available in the configClass
+        if ($this->configClass !== null
+            && method_exists($this->configClass, SystemConfigInterface::ON_AFTER_MODULE_DISABLE)) {
+            call_user_func([$this->configClass, SystemConfigInterface::ON_AFTER_MODULE_DISABLE]);
+        }
+
         // Merge any additional messages from the configClass
         if ($this->configClass !== null
             && method_exists($this->configClass, 'getMessages')) {
@@ -326,10 +351,10 @@ class PbxExtensionState extends Injectable
         // Attempt to remove the current module, if no errors occur, it can be disabled
         // For example, the module may be referenced by a record in the Extensions table,
         // which needs to be deleted when the module is disabled
-        $modelsFiles = glob("{$this->modulesRoot}/{$this->moduleUniqueID}/Models/*.php", GLOB_NOSORT);
+        $modelsFiles = glob("$this->modulesRoot/$this->moduleUniqueID/Models/*.php", GLOB_NOSORT);
         foreach ($modelsFiles as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
+            $moduleModelClass = "Modules\\$this->moduleUniqueID\\Models\\$className";
             try {
                 if ( ! class_exists($moduleModelClass)) {
                     continue;
@@ -479,11 +504,11 @@ class PbxExtensionState extends Injectable
         // Check for broken references that prevent enabling the module
         // For example, if an employee has been deleted and the module references their extension.
         //
-        $modelsFiles = glob("{$this->modulesRoot}/{$this->moduleUniqueID}/Models/*.php", GLOB_NOSORT);
+        $modelsFiles = glob("$this->modulesRoot/$this->moduleUniqueID/Models/*.php", GLOB_NOSORT);
         $translator  = $this->di->getShared('translation');
         foreach ($modelsFiles as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
+            $moduleModelClass = "Modules\\$this->moduleUniqueID\\Models\\$className";
 
             try {
                 if ( ! class_exists($moduleModelClass)) {
@@ -549,10 +574,10 @@ class PbxExtensionState extends Injectable
     {
         $cacheDirs = [];
         $cacheDirs[] = $this->config->path('adminApplication.voltCacheDir');
-        $rmPath = Util::which('rm');
+        $rm = Util::which('rm');
         foreach ($cacheDirs as $cacheDir) {
             if (!empty($cacheDir)) {
-                Processes::mwExec("{$rmPath} -rf {$cacheDir}/*");
+                Processes::mwExec("$rm -rf $cacheDir/*");
             }
         }
     }

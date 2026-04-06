@@ -1,0 +1,190 @@
+{
+  "ami_user": {
+    "file": "ami_user.json",
+    "count": 2,
+    "keys": [
+      "first.ami.user",
+      "second.ami.user"
+    ]
+  },
+  "audio_files": {
+    "file": "audio_files.json",
+    "count": 5,
+    "keys": [
+      "first.audio",
+      "second.audio",
+      "third.audio",
+      "fourth.audio",
+      "miko_hello.audio"
+    ]
+  },
+  "call_queue": {
+    "file": "call_queue.json",
+    "count": 4,
+    "keys": [
+      "sales.department",
+      "accountant.department",
+      "accountant.department.for.test.dropdown",
+      "sales.department.to.change.extension"
+    ]
+  },
+  "conference_rooms": {
+    "file": "conference_rooms.json",
+    "count": 9,
+    "keys": [
+      "sales.conference",
+      "management.conference",
+      "support.conference",
+      "all.hands.conference",
+      "training.conference",
+      "project.alpha.conference",
+      "emergency.conference",
+      "partner.conference",
+      "tech.conference"
+    ]
+  },
+  "dialplan_applications": {
+    "file": "dialplan_applications.json",
+    "count": 10,
+    "keys": [
+      "echo.test",
+      "time.announcement",
+      "weather.service",
+      "callback.service",
+      "voicemail.check",
+      "conference.info",
+      "directory.service",
+      "music.on.hold.test",
+      "call.recording.test",
+      "emergency.announcement"
+    ]
+  },
+  "employee": {
+    "file": "employee.json",
+    "count": 26,
+    "keys": [
+      "smith.james",
+      "brown.brandon",
+      "collins.melanie",
+      "eugeniy.makrchev",
+      "nikolay.beketov",
+      "svetlana.vlasova",
+      "natalia.beketova",
+      "julia.efimova",
+      "alisher.usmanov",
+      "ivan.maltsev",
+      "alexandr.medvedev",
+      "anna.mzhelskaya",
+      "viktor.mitin",
+      "anton.pasutin",
+      "kristina.perfileva",
+      "alexey.portnov",
+      "tatiana.portnova",
+      "alexandra.pushina",
+      "dmitri.fomichev",
+      "daria.holodova",
+      "ilia.tsvetkov",
+      "maxim.tsvetkov",
+      "viktor.chentcov",
+      "evgenia.chulkova",
+      "nikita.telegrafov",
+      "alexandra.pushina.289"
+    ]
+  },
+  "firewall_rules": {
+    "file": "firewall_rules.json",
+    "count": 3,
+    "keys": [
+      "miko.network",
+      "nikolay.macbook",
+      "miko.vpn"
+    ]
+  },
+  "i_a_x_provider": {
+    "file": "i_a_x_provider.json",
+    "count": 4,
+    "keys": [
+      "voxlink.iax",
+      "provider.iax.delete",
+      "provider.iax.inbound",
+      "provider.iax.noregistration"
+    ]
+  },
+  "i_v_r_menu": {
+    "file": "i_v_r_menu.json",
+    "count": 2,
+    "keys": [
+      "second.ivr.menu",
+      "main.ivr.menu"
+    ]
+  },
+  "incoming_call_rules": {
+    "file": "incoming_call_rules.json",
+    "count": 3,
+    "keys": [
+      "first.rule",
+      "second.rule",
+      "test.provider.rule"
+    ]
+  },
+  "m_o_h_audio_files": {
+    "file": "m_o_h_audio_files.json",
+    "count": 3,
+    "keys": [
+      "first.moh",
+      "second.moh",
+      "third.moh"
+    ]
+  },
+  "module": {
+    "file": "module.json",
+    "count": 8,
+    "keys": [
+      "autoprovision",
+      "backup",
+      "cti.client",
+      "docker",
+      "phonebook",
+      "smart.ivr",
+      "telegram.notify",
+      "users.groups"
+    ]
+  },
+  "out_of_work_periods": {
+    "file": "out_of_work_periods.json",
+    "count": 5,
+    "keys": [
+      "new.year.holidays",
+      "may.holidays",
+      "weekend",
+      "morning",
+      "evening"
+    ]
+  },
+  "outgoing_call_rules": {
+    "file": "outgoing_call_rules.json",
+    "count": 4,
+    "keys": [
+      "local.calls",
+      "international.calls",
+      "cti.test.1",
+      "cti.test.2"
+    ]
+  },
+  "p_b_x_settings": {
+    "file": "p_b_x_settings.json",
+    "count": 1,
+    "keys": [
+      "default"
+    ]
+  },
+  "s_i_p_provider": {
+    "file": "s_i_p_provider.json",
+    "count": 3,
+    "keys": [
+      "pctel",
+      "mango.office",
+      "cti.provider"
+    ]
+  }
+}

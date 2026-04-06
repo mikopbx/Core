@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\Modules\Setup;
-
 
 /**
  * Interface PbxExtensionSetupInterface
@@ -56,7 +56,7 @@ interface PbxExtensionSetupInterface
      *
      * @return bool Returns `true` if PBX version is compatible; otherwise, `false`.
      */
-    public function checkCompatibility():bool;
+    public function checkCompatibility(): bool;
 
     /**
      * Activates the license, applicable only for commercial modules.

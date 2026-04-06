@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -28,7 +29,6 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  */
 class DeleteCallQueueTest extends MikoPBXTestsBase
 {
-
     /**
      * Set up before each test
      *
@@ -44,13 +44,13 @@ class DeleteCallQueueTest extends MikoPBXTestsBase
     /**
      * Test the deletion of an extension.
      *
-     * @depends testLogin
      * @param array $params The parameters for the test.
      */
     public function testDeleteCallQueue(array $params): void
     {
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
+
         $this->clickDeleteButtonOnRowWithText($params['name']);
 
         $this->waitForAjax();
@@ -66,5 +66,4 @@ class DeleteCallQueueTest extends MikoPBXTestsBase
         // Increment assertion counter
         $this->assertTrue(true);
     }
-
 }

@@ -38,7 +38,7 @@ class ActionDialOutworktimes
      *
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         InsertDataToDB::execute($data);
     }

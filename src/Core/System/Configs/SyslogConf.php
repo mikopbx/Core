@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,11 +20,11 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di;
-use Phalcon\Di\Injectable;
+use Phalcon\Di\Di;
 
 /**
  * Class SyslogConf
@@ -32,22 +33,44 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class SyslogConf extends Injectable
+class SyslogConf extends SystemConfigClass
 {
-    public const CONF_FILE   ='/etc/rsyslog.conf';
-    public const PROC_NAME   ='rsyslogd';
-    public const SYS_LOG_LINK='/var/log/messages';
+    public const string CONF_FILE   = '/etc/rsyslog.conf';
+    public const string PROC_NAME   = 'rsyslogd';
+    public const string SYS_LOG_LINK = '/var/log/messages';
+
+    /**
+     * Priority level used to sort configuration objects when generating configs.
+     * Lower values mean higher priority.
+     */
+    public int $priority = 3;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->startCommand = Util::which(self::PROC_NAME);
+    }
+
+    /**
+     * Start the service.
+     *
+     * @return bool True if successful, false otherwise.
+     */
+    public function start(): bool
+    {
+        return $this->reStart();
+    }
 
     /**
      * Restarts syslog daemon.
      */
-    public function reStart(): void
+    public function reStart(): bool
     {
         $this->generateConfigFile();
         $pidSyslogD = Processes::getPidOfProcess('syslogd', self::PROC_NAME);
-        if(!empty($pidSyslogD)){
-            $logreadPath = Util::which('logread');
-            Processes::mwExec("$logreadPath  2>/dev/null >> " . self::SYS_LOG_LINK);
+        if (!empty($pidSyslogD)) {
+            $logReadPath = Util::which('logread');
+            Processes::mwExec("$logReadPath  2>/dev/null >> " . self::SYS_LOG_LINK);
             $oldLogPath = self::SYS_LOG_LINK;
             if (!is_link($oldLogPath)) {
                 $newLogPath = self::getSyslogFile();
@@ -56,35 +79,93 @@ class SyslogConf extends Injectable
             }
             Processes::killByName('syslogd');
         }
-
         RedisConf::generateSyslogConf();
         CronConf::generateSyslogConf();
+        MonitConf::generateSyslogConf();
+        PHPConf::generateSyslogConf();
+        PHPConf::removeLegacyLogSymlink();
 
-        Processes::safeStartDaemon(self::PROC_NAME, '-n');
+        $this->generateMonitConf();
+        $pidSyslogD = Processes::getPidOfProcess(self::PROC_NAME);
+        if(System::isBooting() && empty($pidSyslogD)){
+            Processes::mwExec($this->startCommand);
+            $result = $this->monitWaitStart();
+        }else{
+            $result = $this->monitRestart();
+        }
+        return $result;
+    }
+
+    /**
+     * Attempts to start the service via Monit when a failure is detected.
+     *
+     * This method is typically used as a fallback action to manually restart
+     * the service using Monit if it fails unexpectedly. The current implementation
+     * does not wait for the service to fully start, but the timeout parameter
+     * may be used in extended implementations.
+     *
+     * @return void
+     */
+    public function monitFailStartAction(): void
+    {
+        $binPath = Util::which(self::PROC_NAME);
+        Processes::mwExecBg($binPath);
     }
 
     /**
      * Generates the configuration file.
      */
-    private function generateConfigFile():void{
+    private function generateConfigFile(): void
+    {
         $pathScriptMessages = self::createRotateScript(basename(self::SYS_LOG_LINK));
         $log_fileMessages   = self::getSyslogFile();
 
         file_put_contents($log_fileMessages, '', FILE_APPEND);
-        $conf = PHP_EOL.
-                '$ModLoad imuxsock'.PHP_EOL.
-                'template(name="mikopbx" type="string"'.PHP_EOL.
-                '  string="%TIMESTAMP:::date-rfc3164% %syslogfacility-text%.%syslogseverity-text% %syslogtag% %msg%\n"'."\n".
-                ')'.PHP_EOL.
-                '$ActionFileDefaultTemplate mikopbx'.PHP_EOL.
-                '$IncludeConfig /etc/rsyslog.d/*.conf'.PHP_EOL.
+        $conf = PHP_EOL .
+                '$ModLoad imuxsock' . PHP_EOL .
+                'template(name="mikopbx" type="string"' . PHP_EOL .
+                '  string="%TIMESTAMP:::date-year%-%TIMESTAMP:::date-month%-%TIMESTAMP:::date-day% %TIMESTAMP:::date-hour%:%TIMESTAMP:::date-minute%:%TIMESTAMP:::date-second% %syslogfacility-text%.%syslogseverity-text% %syslogtag% %msg%\n"' . "\n" .
+                ')' . PHP_EOL .
+                '$ActionFileDefaultTemplate mikopbx' . PHP_EOL .
+                '$IncludeConfig /etc/rsyslog.d/*.conf' . PHP_EOL .
 
-                PHP_EOL.
-                '$outchannel log_rotation,'.$log_fileMessages.',10485760,'.$pathScriptMessages.PHP_EOL
-                .'*.* :omfile:$log_rotation'.PHP_EOL;
+                PHP_EOL .
+                '$outchannel log_rotation,' . $log_fileMessages . ',10485760,' . $pathScriptMessages . PHP_EOL
+                . '*.* :omfile:$log_rotation' . PHP_EOL;
         Util::fileWriteContent(self::CONF_FILE, $conf);
         Util::createUpdateSymlink($log_fileMessages, self::SYS_LOG_LINK);
         Util::mwMkdir('/etc/rsyslog.d');
+    }
+
+    /**
+     * Generates a Monit configuration file for the current system service.
+     *
+     * This method creates a basic Monit configuration to monitor the process lifecycle:
+     * - Defines the PID file location
+     * - Specifies commands to start and stop the service
+     * - Sets execution permissions (as root user/group)
+     * - Adds 'noalert' and 'unmonitor' directives to disable alerts and active monitoring
+     *
+     * The configuration is saved to the default Monit configuration directory.
+     *
+     * @return bool Always returns true after writing the configuration file.
+     */
+    public function generateMonitConf(): bool
+    {
+        if(!file_exists(self::CONF_FILE)){
+            return true;
+        }
+        $busyboxPath = Util::which('busybox');
+        $binPath     = Util::which(self::PROC_NAME);
+        $confPath    = $this->getMainMonitConfFile();
+
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid '.PHP_EOL.
+            '    start program = "'.$binPath.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
+            '        as uid root and gid root';
+        $this->saveFileContent($confPath, $conf);
+        return true;
     }
 
     /**
@@ -94,10 +175,10 @@ class SyslogConf extends Injectable
      */
     public static function getSyslogFile(string $name = 'messages'): string
     {
-        $logDir = System::getLogDir() . '/system';
+        $logDir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/system';
         Util::mwMkdir($logDir);
         $logFileName = $logDir . '/' . $name;
-        if (!file_exists($logFileName)){
+        if (!file_exists($logFileName)) {
             file_put_contents($logFileName, '');
         }
         return "$logFileName";
@@ -106,35 +187,41 @@ class SyslogConf extends Injectable
     /**
      * Creates the log rotation script.
      * @param string $serviceName
+     * @param string|null $logFilePath Optional custom log file path. If not provided, uses getSyslogFile().
      * @return string
      */
-    public static function createRotateScript(string $serviceName): string
+    public static function createRotateScript(string $serviceName, ?string $logFilePath = null): string
     {
         $mvPath     = Util::which('mv');
         $chmodPath   = Util::which('chmod');
+        $gzipPath    = Util::which('gzip');
         $di          = Di::getDefault();
-        $logFile     = self::getSyslogFile($serviceName);
-        $textScript  =  '#!/bin/sh'.PHP_EOL.
-                        "logName='{$logFile}';".PHP_EOL.
-                        'if [ ! -f "$logName" ]; then exit; fi'.PHP_EOL.
-                        'for srcId in 5 4 3 2 1 ""; do'.PHP_EOL.
-                        '  dstId=$((srcId + 1));'.PHP_EOL.
-                        '  if [ "x" != "${srcId}x" ]; then'.PHP_EOL.
-                        '    srcId=".${srcId}"'.PHP_EOL.
-                        '  fi'.PHP_EOL.
-                        '  srcFilename="${logName}${srcId}"'.PHP_EOL.
-                        '  if [ -f "$srcFilename" ];then'.PHP_EOL.
-                        '    dstFilename="${logName}.${dstId}"'.PHP_EOL.
-                        '    '.$mvPath.' -f "$srcFilename" "$dstFilename"'.PHP_EOL.
-                        '  fi'.PHP_EOL.
-                        'done'.PHP_EOL.
+        $logFile     = $logFilePath ?? self::getSyslogFile($serviceName);
+        $textScript  =  '#!/bin/sh' . PHP_EOL .
+                        "logName='$logFile';" . PHP_EOL .
+                        'if [ ! -f "$logName" ]; then exit; fi' . PHP_EOL .
+                        'for srcId in 5 4 3 2 1 ""; do' . PHP_EOL .
+                        '  dstId=$((srcId + 1));' . PHP_EOL .
+                        '  if [ "x" != "${srcId}x" ]; then' . PHP_EOL .
+                        '    srcId=".${srcId}"' . PHP_EOL .
+                        '  fi' . PHP_EOL .
+                        '  srcFilename="${logName}${srcId}"' . PHP_EOL .
+                        '  if [ -f "$srcFilename" ];then' . PHP_EOL .
+                        '    dstFilename="${logName}.${dstId}"' . PHP_EOL .
+                        '    ' . $mvPath . ' -f "$srcFilename" "$dstFilename"' . PHP_EOL .
+                        '    # Compress all rotated logs except the most recent one' . PHP_EOL .
+                        '    if [ "$dstId" -gt 1 ]; then' . PHP_EOL .
+                        '      ' . $gzipPath . ' -f "$dstFilename"' . PHP_EOL .
+                        '    fi' . PHP_EOL .
+                        '  fi' . PHP_EOL .
+                        'done' . PHP_EOL .
                         PHP_EOL;
-        if($di){
+        if ($di) {
             $varEtcDir  = $di->getShared('config')->path('core.varEtcDir');
-        }else{
+        } else {
             $varEtcDir = '/etc';
         }
-        $pathScript   = $varEtcDir . '/'.$serviceName.'_logrotate.sh';
+        $pathScript   = $varEtcDir . '/' . $serviceName . '_logrotate.sh';
         file_put_contents($pathScript, $textScript);
         Processes::mwExec("$chmodPath +x $pathScript");
 

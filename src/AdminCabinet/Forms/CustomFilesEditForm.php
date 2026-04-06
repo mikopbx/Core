@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +22,12 @@ namespace MikoPBX\AdminCabinet\Forms;
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-
 
 /**
  * Class CustomFilesEditForm
+ *
+ * Form for editing custom files. Data is loaded via REST API from JavaScript.
  *
  * @package MikoPBX\AdminCabinet\Forms
  * @property TranslationProvider translation
@@ -38,43 +38,39 @@ class CustomFilesEditForm extends BaseForm
     {
         parent::initialize($entity, $options);
 
-        foreach ($entity as $key => $value) {
-            switch ($key) {
-                case "id":
-                case "content":
-                case "filepath":
-                case "***ALL HIDDEN ABOVE***":
-                    $this->add(new Hidden($key));
-                    break;
-                case "description":
-                    $this->addTextArea($key, $value??'', 65);
-                    break;
-                case "mode":
-                    $select = new Select(
-                        $key,
-                        [
-                            CustomFiles::MODE_NONE => $this->translation->_("cf_FileActionsNone"),
-                            CustomFiles::MODE_APPEND => $this->translation->_("cf_FileActionsAppend"),
-                            CustomFiles::MODE_OVERRIDE => $this->translation->_("cf_FileActionsOverride"),
-                            CustomFiles::MODE_SCRIPT => $this->translation->_("cf_FileActionsScript"),
-                        ]
-                        , [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => false,
-                            'class' => 'ui selection dropdown mode-select',
-                        ]
-                    );
-                    $this->add($select);
-                    break;
-                //case "filepath":
-                //    $this->add(new Text($key,array('readonly'=>'readonly')));
-                //    break;
-                default:
-                    $this->add(new Text($key));
-            }
-        }
+        // Hidden fields
+        $this->add(new Hidden('id'));
+        $this->add(new Hidden('content'));
+
+        // Filepath field - will be visible input for user-created files,
+        // read-only for system-managed files
+        $this->add(new Text('filepath', [
+            'class' => 'ui input filepath-input'
+        ]));
+
+        // Description field
+        $this->addTextArea('description', '', 65);
+
+        // Hidden input for custom mode (technical mode not shown in dropdown)
+        $this->add(new Hidden('mode-custom-value'));
+
+        // Mode selection dropdown - using addSemanticUIDropdown for consistency
+        // Note: MODE_CUSTOM is excluded - it's a technical mode set automatically by the system
+        // for user-created files via hidden input and should not be manually selectable
+        $this->addSemanticUIDropdown(
+            'mode',
+            [
+                CustomFiles::MODE_NONE => $this->translation->_("cf_FileActionsNone"),
+                CustomFiles::MODE_APPEND => $this->translation->_("cf_FileActionsAppend"),
+                CustomFiles::MODE_OVERRIDE => $this->translation->_("cf_FileActionsOverride"),
+                CustomFiles::MODE_SCRIPT => $this->translation->_("cf_FileActionsScript"),
+            ],
+            CustomFiles::MODE_NONE,  // Default value
+            [
+                'clearable' => false,
+                'forceSelection' => true,
+                'id' => 'mode-dropdown'
+            ]
+        );
     }
 }

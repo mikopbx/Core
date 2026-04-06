@@ -15,98 +15,154 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global globalRootUrl, SemanticLocalization, UserMessage, Extensions, CallQueuesAPI */
 
-/**
- * callQueuesTable module.
+/*
+ * Call queues table management module using unified base class
  *
- *  Define an object for managing call queue tables
- * @module callQueuesTable
+ * Implements DataTable with Semantic UI following guidelines,
+ * comprehensive XSS protection using SecurityUtils, and follows
+ * MikoPBX standards for user interface (no success messages).
  */
-const callQueuesTable = {
-    $queuesTable: $('#queues-table'),
+
+/* global globalRootUrl, CallQueuesAPI, Extensions, globalTranslate, UserMessage, SemanticLocalization, SecurityUtils, PbxDataTableIndex */
+
+const queueTable = {
+    /**
+     * DataTable instance from base class
+     */
+    dataTableInstance: null,
 
     /**
-     * Initialize the call queue table handlers and DataTable.
+     * Initialize the call queues index module
      */
     initialize() {
-
-        // Add a double-click handler to each cell in the queue row.
-        // This will redirect the user to the modify page for the clicked call queue.
-        $('.queue-row td').on('dblclick', (e) => {
-            const id = $(e.target).closest('tr').attr('id');
-            window.location = `${globalRootUrl}call-queues/modify/${id}`;
-        });
-
-        // Initialize the data table for the call queues table.
-        callQueuesTable.initializeDataTable();
-
-        // Set up delete functionality on delete button click.
-        $('body').on('click', 'a.delete', (e) => {
-            e.preventDefault();
-            $(e.target).addClass('disabled');
-            // Get the call queue ID from the closest table row.
-            const callQueueId = $(e.target).closest('tr').attr('id');
-
-            // Remove any previous AJAX messages.
-            $('.message.ajax').remove();
-
-            // Call the PbxApi method to delete the call queue record.
-            CallQueuesAPI.deleteRecord(callQueueId, callQueuesTable.cbAfterDeleteRecord);
-        });
-
-    },
-
-    /**
-     * Callback function executed after deleting a record.
-     * @param {Object} response - The response object from the API.
-     */
-    cbAfterDeleteRecord(response){
-        if (response.result === true) {
-            // Remove the deleted record's table row.
-            callQueuesTable.$queuesTable.find(`tr[id=${response.data.id}]`).remove();
-            // Call the callback function for data change.
-            Extensions.cbOnDataChanged();
-        } else {
-            // Show an error message if deletion was not successful.
-            UserMessage.showError(response.messages.error, globalTranslate.cq_ImpossibleToDeleteCallQueue);
-        }
-        $('a.delete').removeClass('disabled');
-    },
-
-    /**
-     * Initialize the DataTable for the call queues table.
-     * This adds additional functionality like sorting and pagination.
-     */
-    initializeDataTable() {
-
-        // Initialize DataTable on $queuesTable element with custom settings
-        callQueuesTable.$queuesTable.DataTable({
-            lengthChange: false,  // Disable user to change records per page
-            paging: false, // Disable pagination
-
-            // Define the characteristics of each column in the table
+        // Create instance of base class with Call Queues specific configuration
+        this.dataTableInstance = new PbxDataTableIndex({
+            tableId: 'call-queues-table',
+            apiModule: CallQueuesAPI,
+            routePrefix: 'call-queues',
+            showSuccessMessages: false, // Silent operation - following MikoPBX standards
+            showInfo: true, // Show DataTable info
+            actionButtons: ['edit', 'copy', 'delete'], // Include copy button
+            translations: {
+                deleteError: globalTranslate.cq_ImpossibleToDeleteQueue
+            },
+            descriptionSettings: {
+                maxLines: 3,
+                dynamicHeight: true,
+                calculateLines: (row) => {
+                    // Calculate available lines based on queue members count
+                    const membersCount = (row.members && row.members.length) || 0;
+                    return Math.max(2, Math.min(6, membersCount || 3)); // Min 2 lines, max 6, default 3
+                }
+            },
             columns: [
-                null,
-                null,
-                null,
-                null,
                 {
-                    orderable: false,  // This column is not orderable
-                    searchable: false  // This column is not searchable
+                    data: 'represent',
+                    className: 'collapsing', // Without 'ui' prefix as per guidelines
+                    render: function(data, type, row) {
+                        if (type === 'display') {
+                            // Display the representation
+                            return data || '—';
+                        }
+                        // For search, use the pre-generated search_index from backend
+                        return row.search_index || data || '';
+                    }
                 },
-            ],
-            order: [1, 'asc'],  // By default, order by the second column ascending
-            language: SemanticLocalization.dataTableLocalisation, // Set localisation options
-        });
+                {
+                    data: 'members',
+                    className: 'hide-on-tablet collapsing',
+                    render: function(data, type, row) {
+                        if (!data || data.length === 0) {
+                            return '<small>—</small>';
+                        }
 
-        // Move the "add new" button to the first eight column div
-        $('#add-new-button').appendTo($('div.eight.column:eq(0)'));
+                        if (type === 'display') {
+                            // Get strategy description
+                            const strategyDesc = queueTable.getStrategyDescription(row.strategy);
+                            
+                            // Member representations need proper sanitization
+                            const membersList = data.map(member => {
+                                // Safely sanitize member representation with icon support
+                                const representation = member.represent || member.extension;
+                                return SecurityUtils.sanitizeExtensionsApiContent(representation);
+                            }).join('<br>');
+
+                            return `<div style="color: #999; font-size: 0.8em; margin-bottom: 3px;">${strategyDesc}</div>
+                                    <small>${membersList}</small>`;
+                        }
+                        
+                        // For search, backend provides search_index with all searchable content
+                        return '';
+                    }
+                }
+            ],
+            onDrawCallback: () => {
+                // Custom popup configuration
+                queueTable.dataTableInstance.$table.find('.popuped').popup({
+                    position: 'top right',
+                    variation: 'wide',
+                    hoverable: true,
+                    delay: {
+                        show: 300,
+                        hide: 100
+                    }
+                });
+            }
+        });
+        
+        // Add description column with unified renderer after instance is created
+        this.dataTableInstance.columns.push({
+            data: 'description',
+            className: 'hide-on-mobile',
+            orderable: false,
+            // Use unified description renderer from base class
+            render: this.dataTableInstance.createDescriptionRenderer()
+        });
+        
+        // Override the delete callback to handle array of error messages using showMultiString
+        const originalCallback = this.dataTableInstance.cbAfterDeleteRecord.bind(this.dataTableInstance);
+        this.dataTableInstance.cbAfterDeleteRecord = function(response) {
+            if (response.result === true) {
+                // Just reload table data - NO success message (following MikoPBX standards)
+                this.dataTable.ajax.reload();
+                
+                // Update related components
+                if (typeof ExtensionsAPI !== 'undefined' && ExtensionsAPI.cbOnDataChanged) {
+                    ExtensionsAPI.cbOnDataChanged();
+                }
+            } else {
+                // Show error message (matches conference room behavior)
+                const errorMessage = response.messages?.error || globalTranslate.cq_ImpossibleToDeleteQueue;
+                UserMessage.showError(errorMessage);
+            }
+            
+            // Remove loading state
+            this.$table.find('a.delete').removeClass('loading disabled');
+        };
+        
+        // Initialize the base class
+        this.dataTableInstance.initialize();
     },
+
+    /**
+     * Get human-readable description for queue strategy
+     *
+     * @param {string} strategy Technical strategy name
+     * @returns {string} User-friendly description from translations
+     */
+    getStrategyDescription(strategy) {
+        const translationKey = `cq_strategy_${strategy}_short`;
+        
+        // Use globalTranslate with fallback to strategy name
+        return globalTranslate[translationKey] || strategy;
+    }
 };
 
-// Initialize the call queue table management object when the document is ready
+/**
+ * Initialize on document ready
+ */
 $(document).ready(() => {
-    callQueuesTable.initialize();
+    queueTable.initialize();
 });
 

@@ -41,7 +41,7 @@ class ChanDahdiConf extends AsteriskConfigClass
             "";
 
         // Write the configuration content to the file
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/chan_dahdi.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 
 }

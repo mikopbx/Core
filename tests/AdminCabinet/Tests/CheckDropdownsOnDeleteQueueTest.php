@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,10 +22,12 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
+use MikoPBX\Tests\AdminCabinet\Tests\Data\CallQueueDataFactory;
+use MikoPBX\Tests\AdminCabinet\Tests\Special\AccountantDepartmentForDropDownTest;
 
 class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 {
-
+    private array $queueData;
     /**
      * Set up before each test
      *
@@ -34,31 +37,31 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
     public function setUp(): void
     {
         parent::setUp();
+        $this->queueData = CallQueueDataFactory::getCallQueueData('accountant.department.for.test.dropdown');
         $this->setSessionName("Test: Checking dropdown menus after deleting call queue.");
     }
 
     /**
      * Test checking dropdown menus after deleting queue.
      *
-     * @depends testLogin
-     * @dataProvider additionProvider
-     *
-     * @param array $params The parameters for the extension.
-     *
      * @throws \Facebook\WebDriver\Exception\NoSuchElementException
-     * @throws \Facebook\WebDriver\Exception\TimeoutException
+     * @throws \Facebook\WebDriver\Exception\TimeoutException|\Exception
      */
-    public function testDropdownsOnCreateDeleteQueue(array $params): void
+    public function testDropdownsOnCreateDeleteQueue(): void
     {
+        // Look at the current call queue content
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
+        sleep(5);
+
         // Routing
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
         $this->clickButtonByHref('/admin-cabinet/incoming-routes/modify');
 
-        $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $params['extension']);
+        $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $this->queueData['extension']);
 
         // Asserts
         if ($elementFound) {
-            $this->fail('Found menuitem ' . $params['extension'] . ' before creating it on Incoming routes modify ' . PHP_EOL);
+            $this->fail('Found menuitem ' . $this->queueData['extension'] . ' before creating it on Incoming routes modify ' . PHP_EOL);
         }
 
         // Extensions
@@ -66,26 +69,31 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
         $this->clickButtonByHref('/admin-cabinet/extensions/modify');
 
         $this->changeTabOnCurrentPage('routing');
-        $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $params['extension']);
+        $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $this->queueData['extension']);
 
         // Asserts
         if ($elementFound) {
-            $this->fail('Found menuitem ' . $params['extension'] . ' before creating it on Extension routing tab ' . PHP_EOL);
+            $this->fail('Found menuitem ' . $this->queueData['extension'] . ' before creating it on Extension routing tab ' . PHP_EOL);
         }
 
         // Create Call queue
-        $createCallQueue = new CreateCallQueueTest();
-        $createCallQueue->testCreateCallQueue($this->additionProvider()['Accountant department for test dropdown'][0]);
+        $createCallQueue = new AccountantDepartmentForDropDownTest();
+        $createCallQueue->testCreateCallQueue();
+        sleep(5); //Wait intil system process the creation
+
+        // Look at the current call queue content after creating
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
+        sleep(5);
 
         // Routing
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
         $this->clickButtonByHref('/admin-cabinet/incoming-routes/modify');
 
-        $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $params['extension']);
+        $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $this->queueData['extension']);
 
         // Asserts
         if (!$elementFound) {
-            $this->fail('Not found menuitem ' . $params['extension'] . ' after creating it on Incoming routes modify ' . PHP_EOL);
+            $this->fail('Not found menuitem ' . $this->queueData['extension'] . ' after creating it on Incoming routes modify ' . PHP_EOL);
         }
 
         // Extensions
@@ -93,17 +101,17 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
         $this->clickButtonByHref('/admin-cabinet/extensions/modify');
 
         $this->changeTabOnCurrentPage('routing');
-        $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $params['extension']);
+        $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $this->queueData['extension']);
 
         // Asserts
         if (!$elementFound) {
-            $this->fail('Not found menuitem ' . $params['extension'] . ' after creating it on Extension routing tab ' . PHP_EOL);
+            $this->fail('Not found menuitem ' . $this->queueData['extension'] . ' after creating it on Extension routing tab ' . PHP_EOL);
         }
 
 
         // Delete Call queue
         $deleteCallQueue = new DeleteCallQueueTest();
-        $deleteCallQueue->testDeleteCallQueue($this->additionProvider()['Accountant department for test dropdown'][0]);
+        $deleteCallQueue->testDeleteCallQueue($this->queueData);
 
         // Check again
 
@@ -111,11 +119,11 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
         $this->clickButtonByHref('/admin-cabinet/incoming-routes/modify');
 
-        $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $params['extension']);
+        $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $this->queueData['extension']);
 
         // Asserts
         if ($elementFound) {
-            $this->fail('Found menuitem ' . $params['extension'] . ' before creating it on Incoming routes modify ' . PHP_EOL);
+            $this->fail('Found menuitem ' . $this->queueData['extension'] . ' before creating it on Incoming routes modify ' . PHP_EOL);
         }
 
         // Extensions
@@ -123,45 +131,11 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
         $this->clickButtonByHref('/admin-cabinet/extensions/modify');
 
         $this->changeTabOnCurrentPage('routing');
-        $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $params['extension']);
+        $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $this->queueData['extension']);
 
         // Asserts
         if ($elementFound) {
-            $this->fail('Found menuitem ' . $params['extension'] . ' before creating it on Extension routing tab ' . PHP_EOL);
+            $this->fail('Found menuitem ' . $this->queueData['extension'] . ' before creating it on Extension routing tab ' . PHP_EOL);
         }
-    }
-
-    /**
-     * Dataset provider for call queue parameters.
-     *
-     * @return array
-     */
-    public function additionProvider(): array
-    {
-        $params = [];
-        $params['Accountant department for test dropdown'] = [
-            [
-                'description' => 'Accountant department for test dropdown',
-                'name' => 'Accountant department for test dropdown',
-                'uniqid' => 'QUEUE-C02B7C0BBE8F0A48DE1CDF21DBADC29',
-                'extension' => 20029,
-                'seconds_to_ring_each_member' => 14,
-                'seconds_for_wrapup' => 13,
-                'recive_calls_while_on_a_call' => false,
-                'caller_hear' => 'moh',
-                'announce_position' => false,
-                'announce_hold_time' => true,
-                'periodic_announce_sound_id' => '2',
-                'periodic_announce_frequency' => 24,
-                'timeout_to_redirect_to_extension' => 18,
-                'timeout_extension' => '202',
-                'redirect_to_extension_if_empty' => '201',
-                'agents' => [
-                    '202',
-                    '203',
-                ],
-                'strategy' => 'leastrecent'
-            ]];
-        return $params;
     }
 }

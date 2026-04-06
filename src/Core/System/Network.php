@@ -20,8 +20,12 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\LanInterfaces;
+use MikoPBX\Common\Models\NetworkStaticRoutes;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\System\Configs\DnsConf;
+use MikoPBX\Core\Utilities\IpAddressHelper;
+use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetExternalIpInfoAction;
 use Phalcon\Di\Injectable;
@@ -36,50 +40,39 @@ use Throwable;
  */
 class Network extends Injectable
 {
-    public const INTERNET_FLAG_FILE = '/var/etc/internet_flag';
+    public const string INTERNET_FLAG_FILE = '/var/etc/internet_flag';
 
     /**
-     * Starts the SIP dump process.
+     * State file that stores previously applied route commands for cleanup on reload.
      */
-    public static function startSipDump(): void
-    {
-        $config = new MikoPBXConfig();
-        $use = $config->getGeneralSettings('USE_PCAP_SIP_DUMP');
-        if ($use !== '1') {
-            return;
-        }
-
-        Processes::killByName('pcapsipdump');
-        $log_dir = System::getLogDir() . '/pcapsipdump';
-        Util::mwMkdir($log_dir);
-
-        $network = new Network();
-        $arr_eth = $network->getInterfacesNames();
-        $pcapsipdumpPath = Util::which('pcapsipdump');
-        foreach ($arr_eth as $eth) {
-            $pid_file = "/var/run/pcapsipdump_{$eth}.pid";
-            Processes::mwExecBg(
-                $pcapsipdumpPath . ' -T 120 -P ' . $pid_file . ' -i ' . $eth . ' -m \'^(INVITE|REGISTER)$\' -L ' . $log_dir . '/dump.db'
-            );
-        }
-    }
+    private const CUSTOM_ROUTES_STATE_FILE = '/tmp/mikopbx_custom_routes.state';
 
     /**
      * Retrieves the names of all PCI network interfaces.
      *
-     * @return array An array containing the names of the network interfaces.
+     * @return array<string> An array containing the names of the network interfaces.
      */
     public function getInterfacesNames(): array
     {
-        $grepPath = Util::which('grep');
-        $awkPath = Util::which('awk');
-        if (Util::isDocker()) {
-            $ifconfigPath = Util::which('ifconfig');
-            $command = "{$ifconfigPath} | {$grepPath} -o -E '^[a-zA-Z0-9]+' | {$grepPath} -v 'lo'";
+        $grep = Util::which('grep');
+        $awk = Util::which('awk');
+        if (System::isContainer()) {
+            // In containers (Docker/LXC), network interfaces are virtual (veth pairs)
+            // Use ifconfig -a to list ALL interfaces (including those not yet UP during boot)
+            // Filter out virtual tunnel interfaces (sit, tunl, ip6tnl) - only needed on bare metal for IPv6 tunneling
+            $ifconfig = Util::which('ifconfig');
+            $command = "$ifconfig -a | $grep -o -E '^[a-zA-Z0-9]+' | $grep -v 'lo' | $grep -v -E '^(sit|tunl|ip6tnl)'";
+
+            if (System::isDocker()) {
+                // In Docker with --network=host, the container sees all host interfaces.
+                // Filter out Docker internal bridges (docker0, br-*), veth pairs (vethXXX),
+                // and wireless interfaces (wlan*) which are not manageable from inside Docker.
+                $command .= " | $grep -v -E '^(docker|veth|br-|wlan)'";
+            }
         } else {
-            // Universal command to retrieve all PCI network interfaces.
-            $lsPath = Util::which('ls');
-            $command = "{$lsPath} -l /sys/class/net | {$grepPath} devices | {$grepPath} -v virtual | {$awkPath} '{ print $9 }'";
+            // On bare metal: retrieve PCI network interfaces (exclude virtual)
+            $ls = Util::which('ls');
+            $command = "$ls -l /sys/class/net | $grep devices | $grep -v virtual | $awk '{ print $9 }'";
         }
         Processes::mwExec($command, $names);
         return $names;
@@ -95,7 +88,7 @@ class Network extends Injectable
     public function configureLanInDocker(): void
     {
         // Check if the environment is Docker
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return;
         }
 
@@ -110,12 +103,16 @@ class Network extends Injectable
 
         foreach ($networks as $if_data) {
 
-            $if_name = $if_data['interface'];
-            $if_name = escapeshellcmd(trim($if_name));
+            // Keep original interface name for database operations
+            $if_name = trim($if_data['interface']);
+            // Escape for shell commands only
+            $if_name_escaped = escapeshellarg($if_name);
 
             $commands = [
-                'subnet' => $ifconfig . ' '.$if_name.' | '.$awk.' \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
-                'ipaddr' => $ifconfig . ' '.$if_name.' | '.$awk.' \'/inet / {sub("addr:", "", $2); print $2}\'',
+                // BusyBox: "Mask:255.255.255.0", GNU: "netmask 255.255.255.0"
+                'subnet' => $ifconfig . ' '.$if_name_escaped.' | '.$awk.' \'/[Mm]ask/{for(i=1;i<=NF;i++){if($i=="netmask"){print $(i+1);exit}if($i~/^Mask:/){sub("Mask:","",$i);print $i;exit}}}\'',
+                // BusyBox: "inet addr:172.16.32.49", GNU: "inet 172.16.32.49"
+                'ipaddr' => $ifconfig . ' '.$if_name_escaped.' | '.$awk.' \'/inet / {sub("addr:", "", $2); print $2}\'',
                 'gateway' => $route . ' -n | '.$awk.' \'/^0.0.0.0/ {print $2}\'',
                 'hostname' => $hostname,
             ];
@@ -133,7 +130,7 @@ class Network extends Injectable
                 }
             }
 
-            // Save information to the database.
+            // Save information to the database using original (unescaped) interface name
             $this->updateIfSettings($data, $if_name);
         }
 
@@ -142,7 +139,7 @@ class Network extends Injectable
     /**
      * Retrieves the general network settings and performs additional processing.
      *
-     * @return array An array of network interfaces and their settings.
+     * @return array<string, mixed> An array of network interfaces and their settings.
      */
     public function getGeneralNetSettings(): array
     {
@@ -169,14 +166,30 @@ class Network extends Injectable
 
                 $key = array_search($if_data['interface_orign'], $src_array_eth, true);
                 if ($key !== false) {
-                    // Interface found
-                    // Remove the array element if it's not a VLAN
+                    // Base interface found
                     if ($if_data['vlanid'] === '0') {
+                        // Regular interface (not VLAN)
                         unset($array_eth[$key]);
                         $this->enableLanInterface($if_data['interface_orign']);
+                    } else {
+                        // VLAN interface - check if VLAN interface itself exists
+                        $vlan_key = array_search($if_data['interface'], $src_array_eth, true);
+                        if ($vlan_key !== false) {
+                            // VLAN interface exists physically (e.g., Docker host mode or already created)
+                            unset($array_eth[$vlan_key]);
+                        } elseif (!System::canManageNetwork()) {
+                            // Docker bridge mode: VLANs cannot be created, delete from database
+                            $this->deleteLanInterfaceByVlanId($if_data['interface_orign'], $if_data['vlanid']);
+                            SystemMessages::sysLogMsg(__METHOD__, "VLAN interface {$if_data['interface']} deleted - not supported in Docker environment");
+                            $if_data['disabled'] = 1;
+                        } else {
+                            // Bare-metal or LXC: VLAN doesn't exist YET but will be created by lanConfigure()
+                            // Don't delete - let vconfig add create it
+                            SystemMessages::sysLogMsg(__METHOD__, "VLAN interface {$if_data['interface']} not found - will be created by lanConfigure()");
+                        }
                     }
                 } else {
-                    // Interface does not exist
+                    // Base interface does not exist
                     $this->disableLanInterface($if_data['interface_orign']);
                     // Disable the interface
                     $if_data['disabled'] = 1;
@@ -203,7 +216,7 @@ class Network extends Injectable
             $eth_settings = LanInterfaces::findFirst("disabled='0'");
             if ($eth_settings !== null) {
                 $eth_settings->internet = '1';
-                if (PbxSettings::getValueByKey(PbxSettingsConstants::ENABLE_USE_NAT)==='1'){
+                if (PbxSettings::getValueByKey(PbxSettings::ENABLE_USE_NAT)==='1'){
                     $eth_settings->topology=LanInterfaces::TOPOLOGY_PRIVATE;
                 }
                 $eth_settings->save();
@@ -214,10 +227,16 @@ class Network extends Injectable
     }
 
     /**
-     * Converts a net mask to CIDR notation.
+     * Converts a net mask to CIDR notation (IPv4 only).
      *
-     * @param string $net_mask The net mask to convert.
-     * @return int The CIDR notation.
+     * This method converts IPv4 dotted-decimal subnet masks (e.g., "255.255.255.0")
+     * to CIDR prefix length notation (e.g., 24).
+     *
+     * Note: This method is IPv4-specific. IPv6 does not use dotted-decimal subnet masks;
+     * IPv6 prefix lengths are already stored directly as integers (1-128).
+     *
+     * @param string $net_mask The IPv4 net mask in dotted-decimal format (e.g., "255.255.255.0")
+     * @return int The CIDR prefix length (0-32 for IPv4)
      */
     public function netMaskToCidr(string $net_mask): int
     {
@@ -262,7 +281,10 @@ class Network extends Injectable
      */
     public function disableLanInterface(string $name): void
     {
-        $if_data = LanInterfaces::findFirst("interface = '{$name}'");
+        $if_data = LanInterfaces::findFirst([
+            'conditions' => 'interface = :name:',
+            'bind' => ['name' => $name]
+        ]);
         if ($if_data !== null) {
             $if_data->internet = 0;
             $if_data->disabled = 1;
@@ -271,11 +293,59 @@ class Network extends Injectable
     }
 
     /**
+     * Disables a VLAN interface by interface name and VLAN ID.
+     *
+     * @param string $name The name of the base interface.
+     * @param string|int $vlanId The VLAN ID.
+     * @return void
+     */
+    public function disableLanInterfaceByVlanId(string $name, string|int $vlanId): void
+    {
+        $parameters = [
+            'conditions' => 'interface = :ifName: AND vlanid = :vlanId:',
+            'bind' => [
+                'ifName' => $name,
+                'vlanId' => (string)$vlanId,
+            ],
+        ];
+
+        $if_data = LanInterfaces::findFirst($parameters);
+        if ($if_data !== null) {
+            $if_data->internet = 0;
+            $if_data->disabled = 1;
+            $if_data->update();
+        }
+    }
+
+    /**
+     * Deletes a VLAN interface by interface name and VLAN ID.
+     *
+     * @param string $name The name of the base interface.
+     * @param string|int $vlanId The VLAN ID.
+     * @return void
+     */
+    public function deleteLanInterfaceByVlanId(string $name, string|int $vlanId): void
+    {
+        $parameters = [
+            'conditions' => 'interface = :ifName: AND vlanid = :vlanId:',
+            'bind' => [
+                'ifName' => $name,
+                'vlanId' => (string)$vlanId,
+            ],
+        ];
+
+        $if_data = LanInterfaces::findFirst($parameters);
+        if ($if_data !== null) {
+            $if_data->delete();
+        }
+    }
+
+    /**
      * Adds a LAN interface with the specified name and settings.
      *
      * @param string $name The name of the interface.
      * @param bool $general Flag indicating if the interface is a general interface.
-     * @return array The array representation of the added interface.
+     * @return array<string, mixed> The array representation of the added interface.
      */
     private function addLanInterface(string $name, bool $general = false): array
     {
@@ -298,15 +368,17 @@ class Network extends Injectable
     /**
      * Updates the interface settings with the provided data.
      *
-     * @param array $data The data to update the interface settings with.
+     * @param array<string, mixed> $data The data to update the interface settings with.
      * @param string $name The name of the interface.
-     *
      * @return void;
      */
     public function updateIfSettings(array $data, string $name): void
     {
         /** @var LanInterfaces $res */
-        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
+        $res = LanInterfaces::findFirst([
+            'conditions' => 'interface = :name: AND vlanid = 0',
+            'bind' => ['name' => $name]
+        ]);
         if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
             return;
         }
@@ -319,9 +391,8 @@ class Network extends Injectable
     /**
      * Checks if the network settings have changed.
      *
-     * @param array $data The new network settings.
-     * @param array $dbData The existing network settings from the database.
-     *
+     * @param array<string, mixed> $data The new network settings.
+     * @param array<string, mixed> $dbData The existing network settings from the database.
      * @return bool  Returns true if the settings have changed, false otherwise.
      */
     public function settingsIsChange(array $data, array $dbData): bool
@@ -331,7 +402,7 @@ class Network extends Injectable
             if (!isset($data[$key]) || (string)$value === (string)$data[$key]) {
                 continue;
             }
-            SystemMessages::sysLogMsg(__METHOD__, "Find new network settings: {$key} changed {$value}=>{$data[$key]}");
+            SystemMessages::sysLogMsg(__METHOD__, "Find new network settings: $key changed $value=>$data[$key]");
             $isChange = true;
         }
         return $isChange;
@@ -340,15 +411,17 @@ class Network extends Injectable
     /**
      * Updates the DNS settings with the provided data.
      *
-     * @param array $data The data to update the DNS settings with.
+     * @param array<string, mixed> $data The data to update the DNS settings with.
      * @param string $name The name of the interface.
-     *
      * @return void
      */
     public function updateDnsSettings(array $data, string $name): void
     {
         /** @var LanInterfaces $res */
-        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
+        $res = LanInterfaces::findFirst([
+            'conditions' => 'interface = :name: AND vlanid = 0',
+            'bind' => ['name' => $name]
+        ]);
         if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
             return;
         }
@@ -359,6 +432,11 @@ class Network extends Injectable
             // Swap primary and secondary DNS if primary is empty
             $res->primarydns = $res->secondarydns;
             $res->secondarydns = '';
+        }
+        if (empty($res->primarydns6) && !empty($res->secondarydns6)) {
+            // Swap primary and secondary IPv6 DNS if primary is empty
+            $res->primarydns6 = $res->secondarydns6;
+            $res->secondarydns6 = '';
         }
         $res->save();
     }
@@ -383,7 +461,7 @@ class Network extends Injectable
     /**
      * Retrieves the enabled LAN interfaces.
      *
-     * @return array  An array of enabled LAN interfaces.
+     * @return array<string, mixed>  An array of enabled LAN interfaces.
      */
     public function getEnabledLanInterfaces(): array
     {
@@ -395,27 +473,41 @@ class Network extends Injectable
 
     /**
      * Updates the network settings with the provided data.
-     * @param array $data The network settings data to update.
+     * @param array<string, mixed> $data The network settings data to update.
+     * @return bool
      */
-    public function updateNetSettings(array $data): void
+    public function updateNetSettings(array $data): bool
     {
-        $res = LanInterfaces::findFirst("internet = '1'");
-        $update_inet = false;
+        if(isset( $data['internet']) ){
+            $filter = [
+                "interface <> :interface: AND internet = '1'",
+                'bind' => [
+                    'interface' => $data['interface']
+                ]
+            ];
+            $res = LanInterfaces::findFirst($filter);
+            if($res){
+                $res->internet = 0;
+                $res->save();
+            }
+        }
+        $filter = [
+            "interface = :interface:",
+            'bind' => [
+                'interface' => $data['interface']
+            ]
+        ];
+        $res = LanInterfaces::findFirst($filter);
         if ($res === null) {
-            // If no interface with internet connection is found, get the first interface.
-            $res = LanInterfaces::findFirst();
-            $update_inet = true;
+            return false;
         }
-
-        if ($res !== null) {
-            foreach ($data as $key => $value) {
-                $res->$key = $value;
-            }
-            if ($update_inet === true) {
-                $res->internet = 1;
-            }
-            $res->save();
+        foreach ($data as $key => $value) {
+            $res->$key = $value;
         }
+        if(isset($data['internet'])){
+            $res->internet = 1;
+        }
+        return $res->save();
     }
 
     /**
@@ -423,7 +515,7 @@ class Network extends Injectable
      */
     public function updateExternalIp(): void
     {
-        if (PbxSettings::getValueByKey(PbxSettingsConstants::AUTO_UPDATE_EXTERNAL_IP)!=='1'){
+        if (PbxSettings::getValueByKey(PbxSettings::AUTO_UPDATE_EXTERNAL_IP)!=='1'){
             return;
         }
         $ipInfoResult = GetExternalIpInfoAction::main();
@@ -435,7 +527,7 @@ class Network extends Injectable
                 if ($oldExtIp !== $currentIP) {
                     $lan->extipaddr = $currentIP;
                     if ($lan->save()) {
-                        SystemMessages::sysLogMsg(__METHOD__, "External IP address updated for interface {$lan->interface}");
+                        SystemMessages::sysLogMsg(__METHOD__, "External IP address updated for interface $lan->interface");
                     }
                 }
             }
@@ -452,7 +544,7 @@ class Network extends Injectable
         /**
          * If running inside a Docker container, exit the script.
          */
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             return;
         }
 
@@ -461,13 +553,23 @@ class Network extends Injectable
             /**
              * Generate the resolv.conf file for DNS configuration.
              */
-            $this->resolvConfGenerate();
+            $dnsConf = new DnsConf();
+            $dnsConf->resolveConfGenerate($this->getHostDNS());
+            $dnsConf->reStart();
+
             if (Util::isT2SdeLinux()) {
                 /**
                  * Configure the loopback interface for T2SDE Linux.
                  */
                 $this->loConfigure();
             }
+            /**
+             * Configure TCP keepalive for faster dead connection detection.
+             * Prevents orphaned processes (sngrep, AMI clients) from consuming
+             * memory when SSH/TCP connection drops silently. (#792)
+             */
+            $this->configureTcpKeepalive();
+
             /**
              * Configure the LAN interfaces.
              */
@@ -477,17 +579,17 @@ class Network extends Injectable
                 /**
                  * Stop networking using systemctl (systemd-based systems).
                  */
-                $systemctlPath = Util::which('systemctl');
-                Processes::mwExec("{$systemctlPath} stop networking");
+                $systemctl = Util::which('systemctl');
+                Processes::mwExec("$systemctl stop networking");
             } else {
                 /**
                  * Stop networking on T2SDE (non-systemd) systems.
                  */
                 $if_list = $this->getInterfaces();
                 $arr_commands = [];
-                $ifconfigPath = Util::which('ifconfig');
+                $ifconfig = Util::which('ifconfig');
                 foreach ($if_list as $if_name => $data) {
-                    $arr_commands[] = "{$ifconfigPath} $if_name down";
+                    $arr_commands[] = "$ifconfig $if_name down";
                 }
 
                 /**
@@ -499,84 +601,9 @@ class Network extends Injectable
     }
 
     /**
-     * Generates the resolv.conf file based on system configuration.
-     */
-    public function resolvConfGenerate(): void
-    {
-        if (Util::isDocker()) {
-            return;
-        }
-
-        // Initialize resolv.conf content
-        $resolv_conf = '';
-
-        // Get hostname information
-        $data_hostname = self::getHostName();
-
-        // Append domain to resolv.conf if it is not empty
-        if (trim($data_hostname['domain']) !== '') {
-            $resolv_conf .= "domain {$data_hostname['domain']}\n";
-        }
-
-        // Append local nameserver to resolv.conf
-        $resolv_conf .= "nameserver 127.0.0.1\n";
-
-        // Initialize an array to store named DNS servers
-        $named_dns = [];
-
-        // Retrieve host DNS settings
-        $dns = $this->getHostDNS();
-
-        // Iterate over each DNS server
-        foreach ($dns as $ns) {
-            // Skip empty DNS servers
-            if (trim($ns) === '') {
-                continue;
-            }
-            // Add the DNS server to the named_dns array
-            $named_dns[] = $ns;
-
-            // Append the DNS server to resolv.conf
-            $resolv_conf .= "nameserver {$ns}\n";
-        }
-
-        // If no DNS servers were found, use default ones and add them to named_dns
-        if (count($dns) === 0) {
-            $resolv_conf .= "nameserver 4.4.4.4\n";
-            $named_dns[] .= "8.8.8.8";
-        }
-
-        // Check if systemctl is available
-        if (Util::isSystemctl()) {
-
-            // Generate resolved.conf content for systemd-resolved
-            $s_resolv_conf = "[Resolve]\n"
-                . "DNS=127.0.0.1\n";
-
-            // Append domain to resolved.conf if it is not empty
-            if (trim($data_hostname['domain']) !== '') {
-                $s_resolv_conf .= "Domains={$data_hostname['domain']}\n";
-            }
-
-            // Write resolved.conf content to the file
-            file_put_contents('/etc/systemd/resolved.conf', $s_resolv_conf);
-
-            // Restart systemd-resolved service
-            $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("{$systemctlPath} restart systemd-resolved");
-        } else {
-            // Write resolv.conf content to the file
-            file_put_contents('/etc/resolv.conf', $resolv_conf);
-        }
-
-        // Generate pdnsd configuration using named_dns
-        $this->generatePdnsdConfig($named_dns);
-    }
-
-    /**
      * Retrieves the hostname and domain information.
      *
-     * @return array An array containing the hostname and domain.
+     * @return array<string, string> An array containing the hostname and domain.
      */
     public static function getHostName(): array
     {
@@ -605,7 +632,7 @@ class Network extends Injectable
     /**
      * Retrieves the DNS servers configured for the host.
      *
-     * @return array An array containing the DNS servers.
+     * @return array<string> An array containing the DNS servers.
      */
     public function getHostDNS(): array
     {
@@ -631,74 +658,54 @@ class Network extends Injectable
     }
 
     /**
-     * Generates the pdnsd configuration file and restarts the pdnsd service if necessary.
+     * Retrieves IPv6 DNS servers from LanInterfaces
      *
-     * @param array $named_dns An array of named DNS servers.
+     * Returns array of IPv6 DNS server addresses from all enabled interfaces,
+     * ordered by internet flag (internet interface DNS servers first).
+     *
+     * @return array<string> Array of IPv6 DNS server addresses
      */
-    public function generatePdnsdConfig(array $named_dns): void
+    public function getHostDNS6(): array
     {
-        $tempDir = $this->di->getShared('config')->path('core.tempDir');
-        $cache_dir = $tempDir . '/pdnsd/cache';
-        Util::mwMkdir($cache_dir);
+        $dns = [];
 
-        $conf = 'global {' . "\n" .
-            '	perm_cache=10240;' . "\n" .
-            '	cache_dir="' . $cache_dir . '";' . "\n" .
-            '	pid_file = /var/run/pdnsd.pid;' . "\n" .
-            '	run_as="nobody";' . "\n" .
-            '	server_ip = 127.0.0.1;' . "\n" .
-            '	status_ctl = on;' . "\n" .
-            '	query_method=udp_tcp;' . "\n" .
-            '	min_ttl=15m;' . "\n" .
-            '	max_ttl=1w;' . "\n" .
-            '	timeout=10;' . "\n" .
-            '	neg_domain_pol=on;' . "\n" .
-            '	run_as=root;' . "\n" .
-            '	daemon=on;' . "\n" .
-            '}' . "\n" .
-            'server {' . "\n" .
-            '	label = "main";' . "\n" .
-            '	ip = ' . implode(', ', $named_dns) . ';' . "\n" .
-            '	interface=lo;' . "\n" .
-            '	uptest=if;' . "\n" .
-            '	interval=10m;' . "\n" .
-            '	purge_cache=off;' . "\n" .
-            '}';
+        // Get all enabled interfaces ordered by internet flag (internet interface first)
+        $data = LanInterfaces::find([
+            'conditions' => "disabled IS NULL OR disabled = '0'",
+            'order' => 'internet DESC'
+        ]);
 
-        $pdnsdConfFile = '/etc/pdnsd.conf';
-
-        // Update the pdnsd.conf file if it has changed
-        $savedConf = '';
-        if (file_exists($pdnsdConfFile)) {
-            $savedConf = file_get_contents($pdnsdConfFile);
-        }
-        if ($savedConf !== $conf) {
-            file_put_contents($pdnsdConfFile, $conf);
-        }
-        $pdnsdPath = Util::which('pdnsd');
-        $pid = Processes::getPidOfProcess($pdnsdPath);
-
-        // Check if pdnsd process is running and the configuration has not changed
-        if (!empty($pid) && $savedConf === $conf) {
-
-            // Perform additional check if the DNS server is working
-            $resultResolve = gethostbynamel('lic.miko.ru');
-            if ($resultResolve !== false) {
-                // Configuration has not changed and the DNS server is working,
-                // no need to restart or reload the service
-                return;
+        foreach ($data as $if_data) {
+            // Add primary IPv6 DNS if valid
+            if (!empty($if_data->primarydns6) && IpAddressHelper::isIpv6($if_data->primarydns6)) {
+                $dns[] = $if_data->primarydns6;
             }
-            // Perform a reload of the DNS server
+            // Add secondary IPv6 DNS if valid
+            if (!empty($if_data->secondarydns6) && IpAddressHelper::isIpv6($if_data->secondarydns6)) {
+                $dns[] = $if_data->secondarydns6;
+            }
         }
 
-        // If pdnsd process is running, terminate the process
-        if (!empty($pid)) {
-            $kill = Util::which('kill');
-            Processes::mwExec("$kill '$pid'");
-        }
+        return array_unique($dns);
+    }
 
-        // Start the pdnsd service with the updated configuration
-        Processes::mwExec("{$pdnsdPath} -c /etc/pdnsd.conf -4");
+    /**
+     * Configures TCP keepalive parameters for faster dead connection detection.
+     *
+     * Default Linux values (7200/75/9) mean a broken TCP connection takes ~2.5 hours
+     * to detect. For a PBX this causes orphaned processes (sngrep, AMI clients, WebSocket)
+     * to consume memory indefinitely after network disruption.
+     *
+     * With 60/10/6: dead connections detected in ~120 seconds.
+     *
+     * @return void
+     */
+    private function configureTcpKeepalive(): void
+    {
+        $sysctl = Util::which('sysctl');
+        Processes::mwExec("$sysctl -w net.ipv4.tcp_keepalive_time=60");
+        Processes::mwExec("$sysctl -w net.ipv4.tcp_keepalive_intvl=10");
+        Processes::mwExec("$sysctl -w net.ipv4.tcp_keepalive_probes=6");
     }
 
     /**
@@ -713,13 +720,254 @@ class Network extends Injectable
     }
 
     /**
+     * Configures IPv6 on a network interface based on the specified mode.
+     *
+     * Supports three IPv6 modes:
+     * - Mode '0' (Off): Flushes all IPv6 addresses from the interface
+     * - Mode '1' (Auto/SLAAC): Enables interface for SLAAC autoconfiguration
+     * - Mode '2' (Manual): Configures static IPv6 address and optional gateway
+     *
+     * @param string $ifName The network interface name (e.g., 'eth0', 'vlan100')
+     * @param string $ipv6Mode IPv6 configuration mode: '0'=Off, '1'=Auto, '2'=Manual
+     * @param string $ipv6Addr IPv6 address (required for Manual mode)
+     * @param string $ipv6Subnet IPv6 prefix length (required for Manual mode, e.g., '64')
+     * @param string $ipv6Gateway IPv6 gateway address (optional for Manual mode)
+     * @return array<string> Array of shell commands to configure IPv6
+     */
+    private function configureIpv6Interface(
+        string $ifName,
+        string $ipv6Mode,
+        string $ipv6Addr = '',
+        string $ipv6Subnet = '',
+        string $ipv6Gateway = ''
+    ): array {
+        $arr_commands = [];
+        $ip = Util::which('ip');
+        $sysctl = Util::which('sysctl');
+        $escapedIfName = escapeshellarg($ifName);
+
+        switch ($ipv6Mode) {
+            case '0': // Off - Disable IPv6 completely on this interface
+                SystemMessages::sysLogMsg(__METHOD__, "Disabling IPv6 on $ifName");
+
+                // Disable IPv6 on this specific interface (not globally!)
+                $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.disable_ipv6=1";
+
+                // Flush any existing IPv6 addresses
+                $arr_commands[] = "$ip -6 addr flush dev $escapedIfName 2>/dev/null || true";
+                break;
+
+            case '1': // Auto - DHCPv6 with SLAAC fallback
+                SystemMessages::sysLogMsg(__METHOD__, "Enabling IPv6 Auto (DHCPv6 + SLAAC fallback) on $ifName");
+
+                // CRITICAL: Execute sysctl commands IMMEDIATELY to enable IPv6 before DAD wait
+                // Must be done synchronously BEFORE udhcpc6 launch to prevent race condition
+                $ipv6EnableCommands = [
+                    "$sysctl -w net.ipv6.conf.$ifName.disable_ipv6=0",
+                    "$sysctl -w net.ipv6.conf.$ifName.autoconf=1",
+                    "$sysctl -w net.ipv6.conf.$ifName.accept_ra=1",
+                ];
+                Processes::mwExecCommands($ipv6EnableCommands, $output, 'ipv6_enable');
+
+                // CRITICAL: Wait for link-local address to be generated and DAD to complete
+                // DHCPv6 client requires fully ready link-local address (not in "tentative" state)
+                // DAD (Duplicate Address Detection) typically takes 1-2 seconds
+                // Execute synchronously BEFORE launching udhcpc6 to prevent "can't get link-local IPv6 address"
+                $waitCmd = "for i in 1 2 3 4 5 6 7 8 9 10; do $ip -6 addr show dev $escapedIfName | grep -E 'inet6 fe80.*scope link' | grep -qv tentative && break; sleep 0.5; done";
+                Processes::mwExec($waitCmd);
+                SystemMessages::sysLogMsg(__METHOD__, "Link-local address ready on $ifName for DHCPv6");
+
+                // Launch DHCPv6 client (mimics IPv4 udhcpc pattern)
+                // ARCHITECTURAL DECISION: DHCPv6 client behavior based on Router Advertisement flags
+                // - M-flag set (Managed): Run stateful DHCPv6 to get IPv6 address
+                // - O-flag set (Other Config): Run stateless DHCPv6 to get DNS servers
+                // - Neither flag: SLAAC-only (current behavior)
+                // - If DHCPv6 server doesn't respond: udhcpc6 exits, SLAAC continues (graceful fallback)
+
+                $pid_file = "/var/run/udhcpc6_$ifName";
+
+                // Try to find udhcpc6 symlink first, fallback to busybox direct call
+                $udhcpc6 = Util::which('udhcpc6');
+                if (empty($udhcpc6)) {
+                    $busybox = Util::which('busybox');
+                    if (!empty($busybox)) {
+                        $udhcpc6 = "$busybox udhcpc6";
+                    }
+                }
+
+                if (empty($udhcpc6)) {
+                    SystemMessages::sysLogMsg(__METHOD__, "udhcpc6 not available in busybox, skipping DHCPv6 for $ifName", LOG_WARNING);
+                    break;
+                }
+
+                $nohup = Util::which('nohup');
+                $workerPath = '/etc/rc/udhcpc6_configure';
+
+                // Kill existing udhcpc6 process if running
+                $pid = Processes::getPidOfProcess($pid_file);
+                if (!empty($pid) && file_exists($pid_file)) {
+                    $kill = Util::which('kill');
+                    $cat = Util::which('cat');
+                    // Use $() instead of backticks to avoid quoting issues
+                    system("$kill \$($cat $pid_file) $pid");
+                }
+
+                // Escape shell arguments for udhcpc6 commands
+                $escapedPidFile = escapeshellarg($pid_file);
+                $escapedWorkerPath = escapeshellarg($workerPath);
+
+                // Start persistent udhcpc6 in background (long-running daemon)
+                // REMOVED foreground quick attempt - it fails with short timeouts even after link-local wait
+                // Background daemon with longer timeouts (-t 6 -T 5) handles DHCPv6 acquisition reliably
+                $bgOptions = '-t 6 -T 5 -S -b';  // 6 attempts, 5 sec, syslog, background
+                $bgCommand = "$udhcpc6 $bgOptions -p $escapedPidFile -i $ifName -s $escapedWorkerPath";
+                Processes::mwExecBg($bgCommand);
+
+                // FALLBACK BEHAVIOR:
+                // - If DHCPv6 server responds: udhcpc6 callback updates database with DHCPv6 address
+                // - If DHCPv6 server not available: udhcpc6 exits (no lease), SLAAC continues to work
+                // - Result: Graceful fallback to SLAAC when DHCPv6 unavailable
+                break;
+
+            case '2': // Manual - Static IPv6 configuration
+                if (empty($ipv6Addr) || empty($ipv6Subnet)) {
+                    SystemMessages::sysLogMsg(__METHOD__, "WARNING: Manual IPv6 mode requires address and subnet for $ifName");
+                    break;
+                }
+
+                // Validate IPv6 address format
+                if (!IpAddressHelper::isIpv6($ipv6Addr)) {
+                    SystemMessages::sysLogMsg(__METHOD__, "ERROR: Invalid IPv6 address format: $ipv6Addr");
+                    break;
+                }
+
+                // Validate subnet range
+                if (!IpAddressHelper::isValidSubnet($ipv6Addr, (int)$ipv6Subnet)) {
+                    SystemMessages::sysLogMsg(__METHOD__, "ERROR: Invalid IPv6 subnet: /$ipv6Subnet (must be 1-128)");
+                    break;
+                }
+
+                SystemMessages::sysLogMsg(__METHOD__, "Configuring IPv6 Manual on $ifName: $ipv6Addr/$ipv6Subnet");
+
+                // Escape all shell arguments to prevent command injection
+                $escapedAddr = escapeshellarg($ipv6Addr);
+                $escapedSubnet = escapeshellarg($ipv6Subnet);
+
+                // Enable IPv6 on this interface
+                $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.disable_ipv6=0";
+
+                // Disable autoconf for manual configuration
+                $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.autoconf=0";
+                $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.accept_ra=0";
+
+                // Add static IPv6 address to interface
+                $arr_commands[] = "$ip -6 addr add $escapedAddr/$escapedSubnet dev $escapedIfName";
+
+                // Add default gateway if specified
+                if (!empty($ipv6Gateway)) {
+                    if (!IpAddressHelper::isIpv6($ipv6Gateway)) {
+                        SystemMessages::sysLogMsg(__METHOD__, "WARNING: Invalid IPv6 gateway format: $ipv6Gateway");
+                    } else {
+                        SystemMessages::sysLogMsg(__METHOD__, "Adding IPv6 default gateway: $ipv6Gateway via $ifName");
+                        $escapedGateway = escapeshellarg($ipv6Gateway);
+                        // Delete any existing default IPv6 route on this interface first
+                        $arr_commands[] = "$ip -6 route del default dev $escapedIfName 2>/dev/null || true";
+                        // Add new default route
+                        $arr_commands[] = "$ip -6 route add default via $escapedGateway dev $escapedIfName";
+                    }
+                }
+                break;
+
+            default:
+                SystemMessages::sysLogMsg(__METHOD__, "WARNING: Unknown IPv6 mode '$ipv6Mode' for $ifName");
+                break;
+        }
+
+        return $arr_commands;
+    }
+
+    /**
+     * Configures IPv6 network settings inside Docker container.
+     *
+     * In Docker environment, IPv4 networking is managed by the container runtime,
+     * but IPv6 can be configured manually inside the container using standard Linux commands.
+     * This method applies IPv6 configuration based on the interface mode (Off/Auto/Manual).
+     *
+     * @return void
+     */
+    private function configureIpv6InDocker(): void
+    {
+        // Retrieve network settings from database
+        $networks = $this->getGeneralNetSettings();
+
+        $arr_commands = [];
+
+        foreach ($networks as $if_data) {
+            if ($if_data['disabled'] === '1') {
+                continue;
+            }
+
+            $if_name = trim($if_data['interface']);
+            if (empty($if_name)) {
+                continue;
+            }
+
+            // Get IPv6 configuration
+            $ipv6Mode = $if_data['ipv6_mode'] ?? '0';
+            $ipv6Addr = $if_data['ipv6addr'] ?? '';
+            $ipv6Subnet = $if_data['ipv6_subnet'] ?? '';
+            $ipv6Gateway = $if_data['ipv6_gateway'] ?? '';
+
+            // Configure IPv6 based on mode
+            $ipv6Commands = $this->configureIpv6Interface(
+                $if_name,
+                $ipv6Mode,
+                $ipv6Addr,
+                $ipv6Subnet,
+                $ipv6Gateway
+            );
+
+            $arr_commands = array_merge($arr_commands, $ipv6Commands);
+        }
+
+        // Execute IPv6 configuration commands
+        if (!empty($arr_commands)) {
+            Processes::mwExecCommands($arr_commands, $out, 'net');
+            SystemMessages::sysLogMsg(__METHOD__, 'IPv6 configured in Docker container: ' . implode('; ', $arr_commands));
+        } else {
+            SystemMessages::sysLogMsg(__METHOD__, 'No IPv6 configuration needed in Docker (all interfaces have IPv6 mode=Off or invalid config)');
+        }
+    }
+
+    /**
      * Configures the LAN interfaces and performs related network operations.
      *
      * @return int The result of the configuration process.
      */
-    public function lanConfigure(): int
+    /**
+     * Configures LAN interfaces
+     *
+     * @param bool $skipDhcpRestart If true, preserves running DHCP clients (DHCP renewal scenario)
+     *                              If false, kills all DHCP clients before reconfiguration (mode change scenario)
+     * @return int Status code
+     */
+    public function lanConfigure(bool $skipDhcpRestart = false): int
     {
-        if (Util::isDocker()) {
+        // ALWAYS enable IPv6 at kernel level for stability
+        // This allows applications (Asterisk, Nginx, PHP-FPM) to bind on IPv6 sockets
+        // IPv6 addresses will be managed per-interface based on user configuration
+        $sysctl = Util::which('sysctl');
+        $enableIpv6Commands = [
+            "$sysctl -w net.ipv6.conf.all.disable_ipv6=0",
+            "$sysctl -w net.ipv6.conf.default.disable_ipv6=0",
+        ];
+        Processes::mwExecCommands($enableIpv6Commands, $out, 'ipv6_enable');
+        SystemMessages::sysLogMsg(__METHOD__, 'IPv6 enabled at kernel level');
+
+        if (!System::canManageNetwork()) {
+            // In Docker: Only configure IPv6 (IPv4 is managed by Docker runtime)
+            // LXC containers CAN manage their own network, so they continue below
+            $this->configureIpv6InDocker();
             return 0;
         }
 
@@ -733,7 +981,17 @@ class Network extends Injectable
 
 
         $arr_commands = [];
-        $arr_commands[] = "$killall udhcpc";
+        $ipv6Configs = []; // Collect IPv6 configs for deferred execution after IPv4 setup
+
+        // Conditionally kill DHCP clients based on what changed
+        // Skip killall during DHCP renewal (only IP/DNS changed) to prevent restart loop
+        // Always killall when DHCP mode changes (static↔DHCP, IPv6 mode changes)
+        if (!$skipDhcpRestart) {
+            $arr_commands[] = "$killall udhcpc";
+            SystemMessages::sysLogMsg(__METHOD__, 'Killing all DHCP clients (mode change detected)', LOG_INFO);
+        } else {
+            SystemMessages::sysLogMsg(__METHOD__, 'Preserving DHCP clients (IP/DNS update only, no mode change)', LOG_INFO);
+        }
         $eth_mtu = [];
         foreach ($networks as $if_data) {
             if ($if_data['disabled'] === '1') {
@@ -741,7 +999,7 @@ class Network extends Injectable
             }
 
             $if_name = $if_data['interface'];
-            $if_name = escapeshellcmd(trim($if_name));
+            $if_name = escapeshellarg(trim($if_name));
             if (empty($if_name)) {
                 continue;
             }
@@ -770,32 +1028,30 @@ class Network extends Injectable
                  * -q - exit after obtaining lease.
                  * -n - exit if lease is not obtained.
                  */
-                $pid_file = "/var/run/udhcpc_{$if_name}";
+                $pid_file = "/var/run/udhcpc_$if_name";
                 $pid_pcc = Processes::getPidOfProcess($pid_file);
                 if (!empty($pid_pcc) && file_exists($pid_file)) {
                     // Terminate the old udhcpc process
                     $kill = Util::which('kill');
                     $cat = Util::which('cat');
-                    system("$kill `$cat {$pid_file}` {$pid_pcc}");
+                    system("$kill `$cat $pid_file` $pid_pcc");
                 }
                 $udhcpc = Util::which('udhcpc');
                 $nohup = Util::which('nohup');
 
                 // Obtain IP and wait for the process to finish
                 $workerPath = '/etc/rc/udhcpc_configure';
-                $options = '-t 6 -T 5 -q -n';
+                $options = '-t 2 -T 2 -q -n';
                 $arr_commands[] = "$udhcpc $options -i $if_name -x hostname:$hostname -s $workerPath";
                 // Start a new udhcpc process in the background
                 $options = '-t 6 -T 5 -S -b -n';
-                $arr_commands[] = "$nohup $udhcpc $options -p {$pid_file} -i $if_name -x hostname:$hostname -s $workerPath 2>&1 &";
+                $arr_commands[] = "$nohup $udhcpc $options -p $pid_file -i $if_name -x hostname:$hostname -s $workerPath 2>&1 &";
                 /*
                    udhcpc - utility for configuring the interface
-                               - configures /etc/resolv.conf
+                          - configures /etc/resolv.conf
                     Further route configuration will be performed in udhcpcConfigureRenewBound();
-                    and udhcpcConfigureDeconfig(). These methods will be called by the script WorkerUdhcpcConfigure.php.
-                    // man udhcp
+                    and udhcpcConfigureDeconfig(). These methods will be called by the PHP script udhcpc_configure.
                     // http://pwet.fr/man/linux/administration_systeme/udhcpc/
-
                 */
             } else {
                 // Static IP configuration
@@ -824,9 +1080,12 @@ class Network extends Injectable
                 $route = Util::which('route');
                 $arr_commands[] = "$route del default $if_name";
 
-                /** @var LanInterfaces $if_data */
-                $if_data = LanInterfaces::findFirst("id = '{$if_data['id']}'");
-                $is_inet = ($if_data !== null) ? (string)$if_data->internet : '0';
+                /** @var LanInterfaces $if_data_model */
+                $if_data_model = LanInterfaces::findFirst([
+                    'conditions' => 'id = :id:',
+                    'bind' => ['id' => $if_data['id']]
+                ]);
+                $is_inet = ($if_data_model !== null) ? (string)$if_data_model->internet : '0';
 
                 if ($is_inet === '1') {
                     // Create default route only if the interface is for internet
@@ -837,18 +1096,50 @@ class Network extends Injectable
 
                 $eth_mtu[] = $if_name;
             }
+
+            // Collect IPv6 configuration for deferred execution
+            // IPv6 will be configured AFTER all IPv4 setup is complete
+            // This prevents ifconfig down from destroying link-local addresses
+            $ipv6Configs[] = [
+                'interface' => $if_data['interface'],
+                'mode' => $if_data['ipv6_mode'] ?? '0',
+                'addr' => $if_data['ipv6addr'] ?? '',
+                'subnet' => $if_data['ipv6_subnet'] ?? '',
+                'gateway' => $if_data['ipv6_gateway'] ?? '',
+            ];
         }
         $out = null;
         Processes::mwExecCommands($arr_commands, $out, 'net');
+
+        // Configure IPv6 AFTER all IPv4 setup is complete
+        // This prevents ifconfig down from destroying link-local addresses during udhcpc6 startup
+        foreach ($ipv6Configs as $ipv6Config) {
+            $ipv6Commands = $this->configureIpv6Interface(
+                $ipv6Config['interface'],
+                $ipv6Config['mode'],
+                $ipv6Config['addr'],
+                $ipv6Config['subnet'],
+                $ipv6Config['gateway']
+            );
+
+            if (!empty($ipv6Commands)) {
+                $ipv6Out = [];
+                Processes::mwExecCommands($ipv6Commands, $ipv6Out, 'ipv6');
+            }
+        }
+
         $this->hostsGenerate();
 
         foreach ($eth_mtu as $eth) {
-            Processes::mwExecBg("/etc/rc/networking_set_mtu '{$eth}'");
+            Processes::mwExecBg("/etc/rc/networking_set_mtu '$eth'");
         }
 
-        // Additional "manual" routes
+        // Additional "manual" routes (remove old first, then add current)
+        $this->removeCustomStaticRoutes();
         $this->addCustomStaticRoutes();
-        $this->openVpnConfigure();
+        // Notify modules that network is configured (VPN, overlay networks, etc.)
+        PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::ON_AFTER_NETWORK_CONFIGURED);
+
         return 0;
     }
 
@@ -870,13 +1161,31 @@ class Network extends Injectable
     public function hostnameConfigure(): void
     {
         $data = self::getHostName();
-        $hosts_conf = "127.0.0.1 localhost\n" .
-            "127.0.0.1 {$data['hostname']}\n";
+        $hosts_conf = "127.0.0.1 localhost\n";
+        
+        // Get external hostname to check for conflicts
+        /** @var LanInterfaces|null $res */
+        $res = LanInterfaces::findFirst("internet = '1'");
+        $externalHostname = ($res !== null) ? $res->exthostname : '';
+        
+        // Build full hostname for comparison
+        $fullHostname = $data['hostname'];
         if (!empty($data['domain'])) {
-            $hosts_conf .= "127.0.0.1 {$data['hostname']}.{$data['domain']}\n";
+            $fullHostname .= '.' . $data['domain'];
         }
+        
+        // Only add hostname to /etc/hosts if it doesn't match the external hostname
+        // This prevents DNS resolution conflicts when the same name is used for both local and external access
+        if (strcasecmp($data['hostname'], $externalHostname ?? '') !== 0 &&
+            strcasecmp($fullHostname, $externalHostname ?? '') !== 0) {
+            $hosts_conf .= "127.0.0.1 {$data['hostname']}\n";
+            if (!empty($data['domain'])) {
+                $hosts_conf .= "127.0.0.1 {$data['hostname']}.{$data['domain']}\n";
+            }
+        }
+        
         $hostnamePath = Util::which('hostname');
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             $realHostName = shell_exec($hostnamePath);
             $hosts_conf .= "127.0.0.1 $realHostName\n";
         }
@@ -885,53 +1194,157 @@ class Network extends Injectable
     }
 
     /**
-     * Add custom static routes based on the `/etc/static-routes` file.
+     * Reload static routes: remove previously applied routes and apply current ones from database.
+     *
+     * Called by ReloadStaticRoutesAction when NetworkStaticRoutes model changes.
+     *
+     * @return void
+     */
+    public static function reloadStaticRoutes(): void
+    {
+        $network = new Network();
+        $network->removeCustomStaticRoutes();
+        $network->addCustomStaticRoutes();
+    }
+
+    /**
+     * Remove previously applied custom static routes from the kernel routing table.
+     *
+     * Reads saved route commands from state file and executes their delete counterparts.
+     *
+     * @return void
+     */
+    protected function removeCustomStaticRoutes(): void
+    {
+        if (!file_exists(self::CUSTOM_ROUTES_STATE_FILE)) {
+            return;
+        }
+
+        $commands = file(self::CUSTOM_ROUTES_STATE_FILE, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (empty($commands)) {
+            unlink(self::CUSTOM_ROUTES_STATE_FILE);
+            return;
+        }
+
+        $delCommands = [];
+        foreach ($commands as $addCommand) {
+            // Convert "route add -net ..." to "route del -net ..."
+            // Convert "ip -6 route add ..." to "ip -6 route del ..."
+            $delCommand = preg_replace('/ add /', ' del ', $addCommand, 1);
+            $delCommands[] = $delCommand;
+        }
+
+        if (count($delCommands) > 0) {
+            SystemMessages::sysLogMsg(__METHOD__, 'Removing ' . count($delCommands) . ' previously applied static routes');
+            Processes::mwExecCommands($delCommands, $out, 'static-routes-remove');
+        }
+
+        unlink(self::CUSTOM_ROUTES_STATE_FILE);
+    }
+
+    /**
+     * Add custom static routes from database and legacy `/etc/static-routes` file.
+     *
+     * Saves applied route commands to a state file so they can be removed on next reload.
      *
      * @param string $interface The network interface to add routes to, e.g., eth0 (optional)
      * @return void
      */
     protected function addCustomStaticRoutes(string $interface = ''): void
     {
+        $arr_commands = [];
+
+        // Load static routes from database (ordered by priority)
+        /** @var NetworkStaticRoutes[] $staticRoutes */
+        $staticRoutes = NetworkStaticRoutes::find([
+            'order' => 'priority ASC'
+        ]);
+
+        if (count($staticRoutes) > 0) {
+            $route = Util::which('route');
+            $ip = Util::which('ip');
+
+            foreach ($staticRoutes as $routeData) {
+                // Skip if interface filter is specified and doesn't match
+                if (!empty($interface) && !empty($routeData->interface) && $routeData->interface !== $interface) {
+                    continue;
+                }
+
+                $network = trim($routeData->network ?? '');
+                $subnet = trim($routeData->subnet ?? '');
+                $gateway = trim($routeData->gateway ?? '');
+                $iface = trim($routeData->interface ?? '');
+
+                // Validate required fields
+                if (empty($network) || empty($subnet) || empty($gateway)) {
+                    SystemMessages::sysLogMsg(__METHOD__, "Skipping invalid route: network=$network, subnet=$subnet, gateway=$gateway");
+                    continue;
+                }
+
+                // Detect if this is an IPv6 route by checking the network address
+                $isIpv6 = IpAddressHelper::isIpv6($network);
+
+                if ($isIpv6) {
+                    // IPv6 route using modern 'ip' command
+                    // Command format: ip -6 route add 2001:db8:1::/64 via 2001:db8::1 dev eth0
+                    $command = "$ip -6 route add " . escapeshellarg("$network/$subnet") .
+                               " via " . escapeshellarg($gateway);
+
+                    if (!empty($iface)) {
+                        $command .= " dev " . escapeshellarg($iface);
+                    }
+
+                    $arr_commands[] = $command;
+                    SystemMessages::sysLogMsg(__METHOD__, "Adding IPv6 static route: $network/$subnet via $gateway" . (!empty($iface) ? " dev $iface" : ''));
+                } else {
+                    // IPv4 route using legacy 'route' command (backward compatibility)
+                    // Command format: route add -net 192.168.10.0/24 gw 192.168.1.1 dev eth0
+                    $command = "$route add -net " . escapeshellarg("$network/$subnet") .
+                               " gw " . escapeshellarg($gateway);
+
+                    if (!empty($iface)) {
+                        $command .= " dev " . escapeshellarg($iface);
+                    }
+
+                    $arr_commands[] = $command;
+                    SystemMessages::sysLogMsg(__METHOD__, "Adding IPv4 static route: $network/$subnet via $gateway" . (!empty($iface) ? " dev $iface" : ''));
+                }
+            }
+        }
+
+        // Legacy support: Load routes from /etc/static-routes file
         Util::fileWriteContent('/etc/static-routes', '');
 
         $grep = Util::which('grep');
         $awk = Util::which('awk');
         $cat = Util::which('cat');
+
         if (empty($interface)) {
             $command = "$cat /etc/static-routes | $grep '^rout' | $awk -F ';' '{print $1}'";
         } else {
-            $command = "$cat /etc/static-routes | $grep '^rout' | $awk -F ';' '{print $1}' | $grep '{$interface}'";
+            $command = "$cat /etc/static-routes | $grep '^rout' | $awk -F ';' '{print $1}' | $grep '$interface'";
         }
-        $arr_commands = [];
-        Processes::mwExec($command, $arr_commands);
-        Processes::mwExecCommands($arr_commands, $out, 'rout');
-    }
 
-    /**
-     * Configuring OpenVPN. If a custom configuration file is specified in the system file customization, the network will be brought up.
-     */
-    public function openVpnConfigure(): void
-    {
-        $confFile = '/etc/openvpn.ovpn';
-        Util::fileWriteContent($confFile, '');
-        $data = file_get_contents($confFile);
+        $legacy_commands = [];
+        Processes::mwExec($command, $legacy_commands);
+        $arr_commands = array_merge($arr_commands, $legacy_commands);
 
-        $pidFile = '/var/run/openvpn.pid';
-        $pid = Processes::getPidOfProcess('openvpn');
-        if (!empty($pid)) {
-            // Terminate the process.
-            $kill = Util::which('kill');
-            Processes::mwExec("$kill '$pid'");
+        // Execute all route commands
+        if (count($arr_commands) > 0) {
+            Processes::mwExecCommands($arr_commands, $out, 'static-routes');
         }
-        if (!empty($data)) {
-            $openvpn = Util::which('openvpn');
-            Processes::mwExecBg("$openvpn --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
+
+        // Save applied commands to state file for cleanup on next reload
+        if (count($arr_commands) > 0) {
+            file_put_contents(self::CUSTOM_ROUTES_STATE_FILE, implode("\n", $arr_commands) . "\n");
+        } elseif (file_exists(self::CUSTOM_ROUTES_STATE_FILE)) {
+            unlink(self::CUSTOM_ROUTES_STATE_FILE);
         }
     }
 
     /**
      * Retrieves information about all network interfaces.
-     * @return array An array of network interfaces with their respective information.
+     * @return array<string, mixed> An array of network interfaces with their respective information.
      */
     public function getInterfaces(): array
     {
@@ -948,7 +1361,7 @@ class Network extends Injectable
     /**
      * Retrieves information about a specific network interface.
      * @param string $name The name of the network interface.
-     * @return array An array containing the interface information.
+     * @return array<string, mixed> An array containing the interface information.
      */
     public function getInterface(string $name): array
     {
@@ -957,31 +1370,88 @@ class Network extends Injectable
         // Get ifconfig's output for the specified interface.
         $ifconfig = Util::which('ifconfig');
         Processes::mwExec("$ifconfig $name 2>/dev/null", $output);
-        $output = implode(" ", $output);
+        $outputStr = implode(" ", $output ?? []);
 
         // Parse MAC address.
-        preg_match("/HWaddr (\S+)/", $output, $matches);
-        $interface['mac'] = (count($matches) > 0) ? $matches[1] : '';
+        // BusyBox: "HWaddr 00:50:56:ac:ec:2c"
+        // GNU:     "ether 00:50:56:ac:ec:2c"
+        if (preg_match("/HWaddr\s+(\S+)/", $outputStr, $matches)
+            || preg_match("/ether\s+(\S+)/", $outputStr, $matches)) {
+            $interface['mac'] = $matches[1];
+        } else {
+            $interface['mac'] = '';
+        }
 
-        // Parse IP address.
-        preg_match("/inet addr:(\S+)/", $output, $matches);
-        $interface['ipaddr'] = (count($matches) > 0) ? $matches[1] : '';
+        // Parse IPv4 address.
+        // BusyBox: "inet addr:172.16.32.49"
+        // GNU:     "inet 172.16.32.49"
+        if (preg_match("/inet addr:(\S+)/", $outputStr, $matches)
+            || preg_match("/inet\s+(\d+\.\d+\.\d+\.\d+)/", $outputStr, $matches)) {
+            $interface['ipaddr'] = $matches[1];
+        } else {
+            $interface['ipaddr'] = '';
+        }
 
-        // Parse subnet mask.
-        preg_match("/Mask:(\S+)/", $output, $matches);
-        $subnet = (count($matches) > 0) ? $this->netMaskToCidr($matches[1]) : '';
+        // Parse IPv4 subnet mask.
+        // BusyBox: "Mask:255.255.255.0"
+        // GNU:     "netmask 255.255.255.0"
+        if (preg_match("/Mask:(\S+)/", $outputStr, $matches)
+            || preg_match("/netmask\s+(\S+)/", $outputStr, $matches)) {
+            $subnet = $this->netMaskToCidr($matches[1]);
+        } else {
+            $subnet = '';
+        }
         $interface['subnet'] = $subnet;
 
         // Check if the interface is up.
-        preg_match("/\s+(UP)\s+/", $output, $matches);
-        $status = (count($matches) > 0) ? $matches[1] : '';
-        if ($status === "UP") {
-            $interface['up'] = true;
-        } else {
-            $interface['up'] = false;
+        // BusyBox: " UP "
+        // GNU:     "flags=4163<UP,BROADCAST,RUNNING,MULTICAST>"
+        $interface['up'] = (bool)preg_match("/\bUP\b/", $outputStr);
+
+        // Parse IPv6 addresses (Global and Link-Local)
+        // BusyBox: "inet6 addr: fd07:b51a:cc66:d000::2/64 Scope:Global"
+        // GNU:     "inet6 fd07:b51a:cc66:d000::2  prefixlen 64  scopeid 0x0<global>"
+        $ipv6Addresses = [];
+        foreach ($output as $line) {
+            // BusyBox format
+            if (preg_match("/inet6 addr:\s*([^\s\/]+)\/(\d+)\s+Scope:(\S+)/", $line, $matches)) {
+                $ipv6Address = $matches[1];
+                $ipv6Prefix = $matches[2];
+                $scope = $matches[3];
+
+                if ($scope === 'Global' && !str_starts_with($ipv6Address, 'fe80:')) {
+                    $ipv6Addresses[] = [
+                        'address' => $ipv6Address,
+                        'prefix' => $ipv6Prefix,
+                        'scope' => $scope
+                    ];
+                }
+            // GNU format
+            } elseif (preg_match("/inet6\s+([^\s]+)\s+prefixlen\s+(\d+)\s+scopeid\s+\S+<(\w+)>/", $line, $matches)) {
+                $ipv6Address = $matches[1];
+                $ipv6Prefix = $matches[2];
+                $scope = $matches[3];
+
+                if ($scope === 'global' && !str_starts_with($ipv6Address, 'fe80:')) {
+                    $ipv6Addresses[] = [
+                        'address' => $ipv6Address,
+                        'prefix' => $ipv6Prefix,
+                        'scope' => $scope
+                    ];
+                }
+            }
         }
 
-        // Get the default gateway.
+        // Set IPv6 fields (use first Global address if available)
+        if (!empty($ipv6Addresses)) {
+            $interface['ipv6addr'] = $ipv6Addresses[0]['address'];
+            $interface['ipv6_subnet'] = $ipv6Addresses[0]['prefix'];
+        } else {
+            $interface['ipv6addr'] = '';
+            $interface['ipv6_subnet'] = '';
+        }
+
+        // Get the default IPv4 gateway.
         $grep = Util::which('grep');
         $cut = Util::which('cut');
         $route = Util::which('route');
@@ -995,17 +1465,39 @@ class Network extends Injectable
             $interface['gateway'] = $gw;
         }
 
-        // Get DNS servers.
+        // Get the default IPv6 gateway using ip -6 route
+        $ip = Util::which('ip');
+        Processes::mwExec(
+            "$ip -6 route show default dev $name 2>/dev/null | $grep default | $cut -d ' ' -f 3",
+            $ipv6GwMatches
+        );
+        $ipv6Gw = (count($ipv6GwMatches) > 0) ? trim($ipv6GwMatches[0]) : '';
+        if (filter_var($ipv6Gw, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $interface['ipv6_gateway'] = $ipv6Gw;
+        } else {
+            $interface['ipv6_gateway'] = '';
+        }
+
+        // Get DNS servers (both IPv4 and IPv6).
         $cat = Util::which('cat');
         Processes::mwExec("$cat /etc/resolv.conf | $grep nameserver | $cut -d ' ' -f 2", $dnsout);
 
         $dnsSrv = [];
+        $dnsSrv6 = [];
         foreach ($dnsout as $line) {
-            if (Verify::isIpAddress($line)) {
+            $line = trim($line);
+            if (filter_var($line, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
                 $dnsSrv[] = $line;
+            } elseif (filter_var($line, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                $dnsSrv6[] = $line;
             }
         }
         $interface['dns'] = $dnsSrv;
+        $interface['dns6'] = $dnsSrv6;
+
+        // Set individual IPv6 DNS fields for backward compatibility
+        $interface['primarydns6'] = $dnsSrv6[0] ?? '';
+        $interface['secondarydns6'] = $dnsSrv6[1] ?? '';
 
         return $interface;
     }
@@ -1015,14 +1507,25 @@ class Network extends Injectable
      *
      * @return void
      */
-    public static function networkReload(): void
+    /**
+     * Reloads network configuration
+     *
+     * @param bool $skipDhcpRestart If true, preserves running DHCP clients (useful for DHCP renewal scenarios)
+     *                              If false, kills and restarts all DHCP clients (default for mode changes)
+     * @return void
+     */
+    public static function networkReload(bool $skipDhcpRestart = false): void
     {
         // Create Network object and configure settings
         $network = new Network();
         $network->hostnameConfigure();
-        $network->resolvConfGenerate();
+
+        $dnsConf = new DnsConf();
+        $dnsConf->resolveConfGenerate($network->getHostDNS());
+        $dnsConf->reStart();
+
         $network->loConfigure();
-        $network->lanConfigure();
+        $network->lanConfigure($skipDhcpRestart);
         $network->configureLanInDocker();
         $network->updateExternalIp();
     }

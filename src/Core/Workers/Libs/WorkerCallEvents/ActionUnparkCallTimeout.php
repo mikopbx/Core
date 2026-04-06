@@ -37,7 +37,7 @@ class ActionUnparkCallTimeout
      * @param WorkerCallEvents $worker The worker instance.
      * @param array $data The event data.
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         InsertDataToDB::execute($data);
     }

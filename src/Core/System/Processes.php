@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,19 +20,295 @@
 
 namespace MikoPBX\Core\System;
 
-
+use InvalidArgumentException;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use RuntimeException;
+use Throwable;
 
 /**
  * Class Processes
  *
- * Manage system and PHP processes
+ * Manages system and PHP processes with enhanced safety and reliability.
  *
  * @package MikoPBX\Core\System
  */
 class Processes
 {
+    /**
+     * Default timeout for background process execution in seconds
+    */
+    private const DEFAULT_BG_TIMEOUT = 4;
+
+    /**
+     * Default number of attempts for safe daemon start
+     */
+    private const DEFAULT_START_ATTEMPTS = 20;
+
+    /**
+     * Default timeout between attempts in microseconds
+     */
+    private const DEFAULT_ATTEMPT_TIMEOUT = 1000000;
+
+    /**
+     * Default output file for process logs
+     */
+    private const DEFAULT_OUTPUT_FILE = '/dev/null';
+
+    /**
+     * Directory for temporary shell scripts
+     */
+    private const TEMP_SCRIPTS_DIR = '/tmp';
+
+    /**
+     * Valid process actions
+     */
+    private const VALID_ACTIONS = ['start', 'stop', 'restart', 'status', 'soft-restart'];
+
+
+    /**
+     * Directory for process lock files
+     */
+    private const LOCK_FILE_DIR = '/var/run/php-workers';
+    private const PID_FILE_SUFFIX = '.pid';
+
+    /**
+     * Graceful shutdown timeout in seconds
+     */
+    private const GRACEFUL_SHUTDOWN_TIMEOUT = 30; // Must be well under watchdog (120s)
+
+    /**
+     * Cleans up stale PID files in the workers directory
+     * 
+     * @return void
+     */
+    private static function cleanupStalePidFiles(): void
+    {
+        if (!is_dir(self::LOCK_FILE_DIR)) {
+            return;
+        }
+
+        $files = glob(self::LOCK_FILE_DIR . '/*' . self::PID_FILE_SUFFIX . '*');
+        foreach ($files as $file) {
+            // Read PID from file
+            $pid = @file_get_contents($file);
+            if ($pid === false) {
+                self::removePidFile($file);
+                continue;
+            }
+
+            // Check if process is still running
+            if (!self::isProcessRunning($pid)) {
+                self::removePidFile($file);
+            }
+        }
+    }
+
+    /**
+     * Gets the path to the PID file for a given class name
+     *
+     * @param string $className The class name
+     * @param int $instanceNum The instance number (for workers with multiple instances)
+     * @return string Path to the PID file
+     */
+    public static function getPidFilePath(string $className, int $instanceNum = 1): string
+    {
+        // Ensure PID directory exists
+        Util::mwMkdir(self::LOCK_FILE_DIR, true);
+        $name = str_replace('\\', '-', $className);
+        if ($instanceNum > 1) {
+            return self::LOCK_FILE_DIR . "/$name-$instanceNum" . self::PID_FILE_SUFFIX;
+        }
+        return self::LOCK_FILE_DIR . "/$name" . self::PID_FILE_SUFFIX;
+    }
+
+
+    /**
+     * Saves a PID to a file with proper locking
+     *
+     * @param string $pidFile Path to the PID file
+     * @param int $pid Process ID to save
+     * @throws RuntimeException If unable to write PID file
+     */
+    public static function savePidFile(string $pidFile, int $pid): void
+    {
+        try {
+            $pidDir = dirname($pidFile);
+
+            // Ensure PID directory exists
+            if (!is_dir($pidDir) && !mkdir($pidDir, 0755, true)) {
+                throw new RuntimeException("Could not create PID directory: $pidDir");
+            }
+
+            // Use atomic write: write to temp file then rename
+            $tempFile = $pidFile . '.tmp.' . uniqid('', true);
+            
+            if (file_put_contents($tempFile, (string)$pid, LOCK_EX) === false) {
+                throw new RuntimeException("Could not write to temp PID file: $tempFile");
+            }
+
+            // Atomic rename - this will overwrite existing file if present
+            if (!rename($tempFile, $pidFile)) {
+                @unlink($tempFile);
+                throw new RuntimeException("Could not atomically create PID file: $pidFile");
+            }
+
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Failed to save PID file: " . $e->getMessage(),
+                LOG_WARNING
+            );
+            throw new RuntimeException('PID file operation failed', 0, $e);
+        }
+    }
+
+    /**
+     * Removes a PID file if it exists and belongs to the specified process
+     *
+     * @param string $pidFile Path to the PID file
+     * @param int|null $expectedPid Expected PID (if null, removes without checking)
+     * @return bool True if file was removed, false otherwise
+     */
+    public static function removePidFile(string $pidFile, ?int $expectedPid = null): bool
+    {
+        if (!file_exists($pidFile)) {
+            return false;
+        }
+
+        try {
+            // If expectedPid is provided, verify it matches
+            if ($expectedPid !== null) {
+                $storedPid = @file_get_contents($pidFile);
+                if ($storedPid === false || (int)$storedPid !== $expectedPid) {
+                    return false;
+                }
+            }
+
+            return @unlink($pidFile);
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Failed to remove PID file {$pidFile}: " . $e->getMessage(),
+                LOG_WARNING
+            );
+            return false;
+        }
+    }
+
+    /**
+     * Validates process action.
+     *
+     * @param string $action Action to validate
+     * @return bool
+     */
+    private static function isValidAction(string $action): bool
+    {
+        return in_array($action, self::VALID_ACTIONS, true);
+    }
+
+    /**
+     * Checks if a process is running.
+     *
+     * @param string $processIdOrName Process ID or name
+     * @return bool
+     */
+    public static function isProcessRunning(string $processIdOrName): bool
+    {
+        if (is_numeric($processIdOrName)) {
+            // Check by PID
+            return file_exists("/proc/$processIdOrName");
+        }
+        // Check by process name
+        return self::getPidOfProcess($processIdOrName) !== '';
+    }
+
+    /**
+     * Waits for a set of processes to exit.
+     *
+     * @param array $pids Process IDs to wait for
+     * @param int $timeout Maximum seconds to wait
+     * @return bool True if all exited, false on timeout
+     */
+    private static function waitForProcessesExit(array $pids, int $timeout): bool
+    {
+        $start = time();
+        while (time() - $start < $timeout) {
+            $stillRunning = false;
+            foreach ($pids as $pid) {
+                if (!empty($pid) && posix_kill((int)$pid, 0)) {
+                    $stillRunning = true;
+                    break;
+                }
+            }
+            if (!$stillRunning) {
+                return true;
+            }
+            sleep(1);
+        }
+        return false;
+    }
+
+    /**
+     * Safely terminates a process with timeout.
+     *
+     * @param string $pid Process ID to terminate
+     * @param int $timeout Timeout in seconds
+     * @return bool Success status
+     */
+    private static function safeTerminateProcess(string $pid, int $timeout = 10): bool
+    {
+        if (empty($pid)) {
+            return false;
+        }
+
+        $kill = Util::which('kill');
+
+        // First try SIGTERM
+        self::mwExec("$kill -SIGTERM $pid");
+
+        // Wait for process to terminate
+        $startTime = time();
+        while (time() - $startTime < $timeout) {
+            if (!self::isProcessRunning($pid)) {
+                return true;
+            }
+            usleep(100000); // 100ms
+        }
+
+        // Force kill if still running
+        self::mwExec("$kill -9 $pid");
+        return !self::isProcessRunning($pid);
+    }
+
+
+    /**
+     * Waits for a process to start.
+     *
+     * @param string $procName Process name
+     * @param string $excludeName Process name to exclude
+     * @param int $attempts Maximum number of attempts
+     * @param int $timeout Timeout between attempts
+     * @return string Process ID or empty string
+     */
+    private static function waitForProcessStart(
+        string $procName,
+        string $excludeName,
+        int $attempts,
+        int $timeout
+    ): string {
+        $attempt = 1;
+        while ($attempt < $attempts) {
+            $pid = self::getPidOfProcess($procName, $excludeName);
+            if (!empty($pid)) {
+                return $pid;
+            }
+            usleep($timeout);
+            $attempt++;
+        }
+        return '';
+    }
+
     /**
      * Kills a process/daemon by name.
      *
@@ -40,8 +317,11 @@ class Processes
      */
     public static function killByName(string $procName): ?int
     {
-        $killallPath = Util::which('killall');
+        if (empty(trim($procName))) {
+            throw new InvalidArgumentException('Process name cannot be empty');
+        }
 
+        $killallPath = Util::which('killall');
         return self::mwExec($killallPath . ' ' . escapeshellarg($procName));
     }
 
@@ -49,12 +329,17 @@ class Processes
      * Executes a command using exec().
      *
      * @param string $command The command to execute.
-     * @param array|null $outArr Reference to an array to store the command output.
-     * @param int|null $retVal Reference to a variable to store the return value of the execution.
+     * @param array|null $outArr Reference to array for command output.
+     * @param int|null $retVal Reference for return value.
      * @return int The return value of the execution.
+     * @throws RuntimeException If command is empty.
      */
-    public static function mwExec(string $command, &$outArr = null, &$retVal = null): int
+    public static function mwExec(string $command, ?array &$outArr = null, ?int &$retVal = null): int
     {
+        if (empty(trim($command))) {
+            throw new RuntimeException('Empty command provided to mwExec');
+        }
+
         $retVal = 0;
         $outArr = [];
         $di = Di::getDefault();
@@ -68,60 +353,84 @@ class Processes
     }
 
     /**
-     * Executes a command as a background process with an execution timeout.
+     * Executes a command as a background process with timeout.
      *
      * @param string $command The command to execute.
      * @param int $timeout The timeout value in seconds.
-     * @param string $logname The name of the log file to redirect the output.
+     * @param string $logName The name of the log file.
      */
-    public static function mwExecBgWithTimeout($command, $timeout = 4, $logname = '/dev/null'): void
-    {
+    public static function mwExecBgWithTimeout(
+        string $command,
+        int $timeout = self::DEFAULT_BG_TIMEOUT,
+        string $logName = self::DEFAULT_OUTPUT_FILE
+    ): void {
         $di = Di::getDefault();
 
         if ($di !== null && $di->getShared('config')->path('core.debugMode')) {
             echo "mwExecBg(): $command\n";
-
             return;
         }
-        $nohupPath = Util::which('nohup');
-        $timeoutPath = Util::which('timeout');
-        exec("{$nohupPath} {$timeoutPath} {$timeout} {$command} > {$logname} 2>&1 &");
+
+        $nohup = Util::which('nohup');
+        $timeoutBin = Util::which('timeout');
+        exec("$nohup $timeoutBin $timeout $command > $logName 2>&1 &");
     }
 
     /**
-     * Executes multiple commands.
+     * Executes multiple commands sequentially.
      *
-     * @param array $arr_cmds The array of commands to execute.
-     * @param array|null $out Reference to an array to store the output.
-     * @param string $logname The name of the log file to save the output.
+     * @param array $arrCmds The array of commands to execute.
+     * @param array|null $out Reference to array for output.
+     * @param string $logname The log file name.
      */
-    public static function mwExecCommands(array $arr_cmds, &$out = [], string $logname = ''): void
+    public static function mwExecCommands(array $arrCmds, ?array &$out = [], string $logname = ''): void
     {
         $out = [];
-        foreach ($arr_cmds as $cmd) {
+        foreach ($arrCmds as $cmd) {
             $out[] = "$cmd;";
-            $out_cmd = [];
-            self::mwExec($cmd, $out_cmd);
-            $out = array_merge($out, $out_cmd);
+            $outCmd = [];
+            self::mwExec($cmd, $outCmd);
+            $out = array_merge($out, $outCmd);
         }
 
         if ($logname !== '') {
             $result = implode("\n", $out);
-            file_put_contents("/tmp/{$logname}_commands.log", $result);
+            file_put_contents(
+                self::TEMP_SCRIPTS_DIR . "/{$logname}_commands.log",
+                $result
+            );
         }
     }
 
     /**
-     * Restarts all workers in a separate process.
-     * This method is used after module installation or deletion.
+     * Restarts all workers in a separate process with improved pipeline.
+     * 
+     * The restart process:
+     * 1. Starts WorkerSafeScriptsCore with restart parameter
+     * 2. WorkerSafeScriptsCore collects all workers and their forks
+     * 3. Starts new instances of each worker
+     * 4. Gracefully shuts down old workers
+     * 
+     * @param bool $softRestart If true, performs a soft restart (SIGUSR1 only)
      */
-    public static function restartAllWorkers(): void
+    public static function restartAllWorkers(bool $softRestart = false): void
     {
         $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
-        $phpPath = Util::which('php');
-        $WorkerSafeScripts = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
-        self::mwExec($WorkerSafeScripts);
-        SystemMessages::sysLogMsg(static::class, "Service asked for WorkerSafeScriptsCore restart", LOG_DEBUG);
+        $php = Util::which('php');
+                
+        // Set the restart mode
+        $restartMode = $softRestart ? 'soft-restart' : 'restart';
+        
+        // Log the restart mode
+        SystemMessages::sysLogMsg(
+            __CLASS__,
+            "Initiating " . ($softRestart ? "soft" : "full") . " restart of all workers",
+            LOG_NOTICE
+        );
+        
+        // Execute the restart command
+        $workerSafeScripts = "$php -f $workerSafeScriptsPath $restartMode > /dev/null 2> /dev/null";
+        self::mwExec($workerSafeScripts);
     }
 
     /**
@@ -129,107 +438,353 @@ class Processes
      *
      * @param string $className The class name of the PHP worker.
      * @param string $paramForPHPWorker The parameter for the PHP worker.
-     * @param string $action The action to perform (start, stop, restart).
+     * @param string $action The action to perform.
      */
     public static function processPHPWorker(
         string $className,
         string $paramForPHPWorker = 'start',
         string $action = 'restart'
-    ): void
-    {
-        SystemMessages::sysLogMsg(__METHOD__, "processPHPWorker " . $className . " action-" . $action, LOG_DEBUG);
+    ): void {
+        // Clean up stale PID files before managing workers
+        self::cleanupStalePidFiles();
+
+        if (!self::isValidAction($action)) {
+            throw new InvalidArgumentException("Invalid action: $action");
+        }
+
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            "processPHPWorker $className action-$action",
+            LOG_DEBUG
+        );
+
         $workerPath = Util::getFilePathByClassName($className);
-        if (empty($workerPath)) {
+        if (empty($workerPath) || !class_exists($className)) {
             return;
         }
-        $command = "php -f {$workerPath}";
-        $path_kill = Util::which('kill');
+
+        $php = Util::which('php');
+        $command = "$php -f $workerPath";
+        $kill = Util::which('kill');
+
         $activeProcesses = self::getPidOfProcess($className);
-        $processes = explode(' ', $activeProcesses);
-        if (empty($processes[0])) {
-            array_shift($processes);
-        }
+        $processes = array_filter(explode(' ', $activeProcesses));
         $currentProcCount = count($processes);
-
-        if (!class_exists($className)) {
-            return;
+        
+        // Determine the needed instance count from class maxProc property
+        $neededProcCount = 1; // Default to 1 process
+        
+        if (class_exists($className)) {
+            // Get maxProc value from class
+            $reflectionClass = new \ReflectionClass($className);
+            if ($reflectionClass->hasProperty('maxProc')) {
+                $defaultProperties = $reflectionClass->getDefaultProperties();
+                if (isset($defaultProperties['maxProc'])) {
+                    $neededProcCount = (int)$defaultProperties['maxProc'];
+                }
+            }
         }
-        $workerObject = new $className();
-        $neededProcCount = $workerObject->maxProc;
 
+        // Check if it's a soft restart
+        $softRestart = ($action === 'soft-restart');
+        $actualAction = $softRestart ? 'restart' : $action;
+
+        self::handleWorkerAction(
+            $actualAction,
+            $activeProcesses,
+            $command,
+            $paramForPHPWorker,
+            $kill,
+            $currentProcCount,
+            $neededProcCount,
+            $processes,
+            $className,
+            $softRestart
+        );
+    }
+
+    /**
+     * Handles worker process actions.
+     *
+     * @param string $action Action to perform
+     * @param string $activeProcesses Active process IDs
+     * @param string $command Command to execute
+     * @param string $paramForPHPWorker Worker parameters
+     * @param string $kill Kill command path
+     * @param int $currentProcCount Current process count
+     * @param int $neededProcCount Needed process count
+     * @param array $processes Process IDs array
+     * @param string $className Worker class name
+     * @param bool $softRestart Whether to perform a soft restart
+     */
+    private static function handleWorkerAction(
+        string $action,
+        string $activeProcesses,
+        string $command,
+        string $paramForPHPWorker,
+        string $kill,
+        int $currentProcCount,
+        int $neededProcCount,
+        array $processes,
+        string $className = '',
+        bool $softRestart = false
+    ): void {
         switch ($action) {
             case 'restart':
-                // Stop all old workers
-                if ($activeProcesses !== '') {
-                    self::mwExec("{$path_kill} -SIGUSR1 {$activeProcesses}  > /dev/null 2>&1 &");
-                    self::mwExecBg("{$path_kill} -SIGTERM {$activeProcesses}", '/dev/null', 10);
-                    $currentProcCount = 0;
-                }
-
-                // Start new processes
-                while ($currentProcCount < $neededProcCount) {
-                    self::mwExecBg("{$command} {$paramForPHPWorker}");
-                    $currentProcCount++;
-                }
-
+                self::handleRestartAction(
+                    $activeProcesses,
+                    $kill,
+                    $command,
+                    $paramForPHPWorker,
+                    $className,
+                    $neededProcCount,
+                    $softRestart
+                );
                 break;
             case 'stop':
-                if ($activeProcesses !== '') {
-                    self::mwExec("{$path_kill} -SIGUSR2 {$activeProcesses}  > /dev/null 2>&1 &");
-                    self::mwExecBg("{$path_kill} -SIGTERM {$activeProcesses}", '/dev/null', 10);
-                }
+                self::handleStopAction($activeProcesses, $kill);
                 break;
             case 'start':
-                if ($currentProcCount === $neededProcCount) {
-                    return;
+                self::handleStartAction(
+                    $currentProcCount,
+                    $neededProcCount,
+                    $command,
+                    $paramForPHPWorker,
+                    $processes,
+                    $kill
+                );
+                break;
+        }
+    }
+
+    /**
+     * Handles the restart action for a worker.
+     *
+     * @param string $activeProcesses Active process IDs
+     * @param string $kill Kill command path
+     * @param string $command Command to execute
+     * @param string $paramForPHPWorker Worker parameters
+     * @param string $workerClass Worker class name
+     * @param int $neededProcCount Number of instances needed
+     * @param bool $softRestart Whether to perform a soft restart (SIGUSR1 only)
+     */
+    private static function handleRestartAction(
+        string $activeProcesses,
+        string $kill,
+        string $command,
+        string $paramForPHPWorker,
+        string $workerClass = '',
+        int $neededProcCount = 1,
+        bool $softRestart = false
+    ): void {
+        // Debug logging
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            sprintf(
+                "%s worker: %s, neededProcCount=%d, activeProcesses=%s",
+                $softRestart ? "Soft restarting" : "Restarting",
+                $workerClass,
+                $neededProcCount,
+                $activeProcesses
+            ),
+            LOG_NOTICE
+        );
+
+        if ($activeProcesses !== '') {
+            // Always send SIGUSR1 for graceful shutdown
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf("SEND signal: %s", "SIGUSR1 $activeProcesses"),
+                LOG_NOTICE
+            );
+
+            self::mwExec("$kill -SIGUSR1 $activeProcesses > /dev/null 2>&1");
+            $pids = array_filter(explode(' ', $activeProcesses));
+
+            if (!$softRestart) {
+                // Full restart: escalate SIGUSR1 → SIGTERM → SIGKILL
+                if (!self::waitForProcessesExit($pids, self::GRACEFUL_SHUTDOWN_TIMEOUT)) {
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "SIGUSR1 timeout ({$activeProcesses}), escalating to SIGTERM",
+                        LOG_WARNING
+                    );
+                    self::mwExec("$kill -SIGTERM $activeProcesses > /dev/null 2>&1");
+
+                    if (!self::waitForProcessesExit($pids, 10)) {
+                        SystemMessages::sysLogMsg(
+                            __METHOD__,
+                            "SIGTERM timeout ({$activeProcesses}), sending SIGKILL",
+                            LOG_ERR
+                        );
+                        self::mwExec("$kill -9 $activeProcesses > /dev/null 2>&1");
+                        sleep(2); // Kernel needs time to reap killed processes
+
+                        // If processes survived SIGKILL (D-state), don't spawn duplicates
+                        $surviving = array_filter($pids, fn($pid) => !empty($pid) && posix_kill((int)$pid, 0));
+                        if (!empty($surviving)) {
+                            SystemMessages::sysLogMsg(
+                                __METHOD__,
+                                "CRITICAL: PIDs " . implode(',', $surviving) . " survived SIGKILL, skipping restart",
+                                LOG_CRIT
+                            );
+                            return;
+                        }
+                    }
+                }
+            } else {
+                // Soft restart: short wait for graceful shutdown (hot swap for API workers)
+                self::waitForProcessesExit($pids, 5);
+            }
+        }
+
+        // Re-check how many processes are actually running before starting new ones
+        // Prevents duplicates when old processes haven't fully exited yet
+        $remainingPids = self::getPidOfProcess($workerClass);
+        $remainingCount = empty($remainingPids) ? 0 : count(array_filter(explode(' ', $remainingPids)));
+        $toStart = max(0, $neededProcCount - $remainingCount);
+
+        if ($toStart === 0) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "All {$neededProcCount} instances of {$workerClass} already running, skipping start",
+                LOG_DEBUG
+            );
+            return;
+        }
+
+        // Start only the deficit number of workers
+        if ($neededProcCount > 1) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf("Starting %d/%d worker instances for %s (%d already running)",
+                    $toStart, $neededProcCount, $workerClass, $remainingCount),
+                LOG_NOTICE
+            );
+
+            // Start from remainingCount+1 to avoid duplicate instance-IDs
+            for ($i = $remainingCount + 1; $i <= $neededProcCount; $i++) {
+                if ($toStart <= 0) {
+                    break;
+                }
+                $instanceParam = " --instance-id={$i}";
+                self::mwExecBg("{$command} {$paramForPHPWorker}{$instanceParam}");
+                $toStart--;
+                usleep(250000); // 250ms between launches
+            }
+        } else {
+            self::mwExecBg("$command $paramForPHPWorker");
+        }
+    }
+
+    /**
+     * Handles the stop action for a worker.
+     *
+     * @param string $activeProcesses Active process IDs
+     * @param string $kill Kill command path
+     */
+    private static function handleStopAction(string $activeProcesses, string $kill): void
+    {
+        if ($activeProcesses !== '') {
+            self::mwExec("$kill -SIGUSR2 $activeProcesses > /dev/null 2>&1 &");
+            self::mwExecBg("$kill -SIGTERM $activeProcesses");
+        }
+    }
+
+    /**
+     * Handles the start action for a worker.
+     *
+     * @param int $currentProcCount Current process count
+     * @param int $neededProcCount Needed process count
+     * @param string $command Command to execute
+     * @param string $paramForPHPWorker Worker parameters
+     * @param array $processes Process IDs array
+     * @param string $kill Kill command path
+     */
+    private static function handleStartAction(
+        int $currentProcCount,
+        int $neededProcCount,
+        string $command,
+        string $paramForPHPWorker,
+        array $processes,
+        string $kill
+    ): void {
+        if ($currentProcCount === $neededProcCount) {
+            return;
+        }
+
+        // Add debug logging
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            sprintf(
+                "Starting worker pool: currentCount=%d, neededCount=%d, command=%s",
+                $currentProcCount,
+                $neededProcCount,
+                $command
+            ),
+            LOG_DEBUG
+        );
+
+        if ($neededProcCount > $currentProcCount) {
+            // Start only the deficit number of instances
+            $deficit = $neededProcCount - $currentProcCount;
+            for ($i = 0; $i < $deficit; $i++) {
+                $instanceParam = '';
+                if ($neededProcCount > 1) {
+                    $instanceId = $currentProcCount + $i + 1;
+                    $instanceParam = " --instance-id={$instanceId}";
                 }
 
-                if ($neededProcCount > $currentProcCount) {
-                    // Start additional processes
-                    while ($currentProcCount < $neededProcCount) {
-                        self::mwExecBg("{$command} {$paramForPHPWorker}");
-                        $currentProcCount++;
-                    }
-                } elseif ($currentProcCount > $neededProcCount) {
-                    // Find redundant processes
-                    $countProc4Kill = $neededProcCount - $currentProcCount;
-                    // Send SIGUSR1 command to them
-                    while ($countProc4Kill >= 0) {
-                        if (!isset($processes[$countProc4Kill])) {
-                            break;
-                        }
-                        // Kill old processes with timeout, maybe it is a soft restart and the worker dies without any help
-                        self::mwExec("{$path_kill} -SIGUSR1 {$processes[$countProc4Kill]}  > /dev/null 2>&1 &");
-                        self::mwExecBg("{$path_kill} -SIGTERM {$activeProcesses}", '/dev/null', 10);
-                        $countProc4Kill--;
-                    }
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    sprintf(
+                        "Launching instance #%d (deficit %d/%d) with command: %s %s%s",
+                        $currentProcCount + $i + 1,
+                        $i + 1,
+                        $deficit,
+                        $command,
+                        $paramForPHPWorker,
+                        $instanceParam
+                    ),
+                    LOG_DEBUG
+                );
+
+                self::mwExecBg("{$command} {$paramForPHPWorker}{$instanceParam}");
+            }
+        } elseif ($currentProcCount > $neededProcCount) {
+            $countProc4Kill = $currentProcCount - $neededProcCount;
+            for ($i = 0; $i < $countProc4Kill; $i++) {
+                if (!isset($processes[$i])) {
+                    break;
                 }
-                break;
-            default:
+                self::mwExec("$kill -SIGUSR1 {$processes[$i]} > /dev/null 2>&1 &");
+                self::mwExecBg("$kill -SIGTERM {$processes[$i]}");
+            }
         }
     }
 
     /**
      * Retrieves the PID of a process by its name.
      *
-     * @param string $name The name of the process.
-     * @param string $exclude The name of the process to exclude.
-     * @return string The PID of the process.
+     * @param string $name Process name
+     * @param string $exclude Process name to exclude
+     * @return string Process IDs
      */
     public static function getPidOfProcess(string $name, string $exclude = ''): string
     {
-        $path_ps = Util::which('ps');
-        $path_grep = Util::which('grep');
-        $path_awk = Util::which('awk');
+        $ps = Util::which('ps');
+        $grep = Util::which('grep');
+        $awk = Util::which('awk');
 
         $name = addslashes($name);
-        $filter_cmd = '';
+        $filterCmd = '';
         if (!empty($exclude)) {
-            $filter_cmd = "| $path_grep -v " . escapeshellarg($exclude);
+            $filterCmd = "| $grep -v " . escapeshellarg($exclude);
         }
+
         $out = [];
         self::mwExec(
-            "{$path_ps} -A -o 'pid,args' {$filter_cmd} | {$path_grep} '{$name}' | {$path_grep} -v grep | {$path_awk} ' {print $1} '",
+            "$ps -A -o 'pid,args' $filterCmd | $grep '$name' | $grep -v grep | $awk '{print $1}'",
             $out
         );
 
@@ -239,105 +794,175 @@ class Processes
     /**
      * Executes a command as a background process.
      *
-     * @param string $command The command to execute.
-     * @param string $out_file The path to the output file.
-     * @param int $sleep_time The sleep time in seconds.
+     * @param string $command Command to execute
+     * @param string $outFile Output file path
+     * @param int $sleepTime Sleep time in seconds
      */
-    public static function mwExecBg($command, $out_file = '/dev/null', $sleep_time = 0): void
-    {
-        $nohupPath = Util::which('nohup');
-        $shPath = Util::which('sh');
-        $rmPath = Util::which('rm');
-        $sleepPath = Util::which('sleep');
-        if ($sleep_time > 0) {
-            $filename = '/tmp/' . time() . '_noop.sh';
-            file_put_contents($filename, "{$sleepPath} {$sleep_time}; {$command}; {$rmPath} -rf {$filename}");
-            $noop_command = "{$nohupPath} {$shPath} {$filename} > {$out_file} 2>&1 &";
+    public static function mwExecBg(
+        string $command,
+        string $outFile = self::DEFAULT_OUTPUT_FILE,
+        int $sleepTime = 0
+    ): void {
+        $nohup = Util::which('nohup');
+        $sh = Util::which('sh');
+        $rm = Util::which('rm');
+        $sleep = Util::which('sleep');
+
+        if ($sleepTime > 0) {
+            $filename = self::TEMP_SCRIPTS_DIR . '/' . time() . '_noop.sh';
+            file_put_contents(
+                $filename,
+                "$sleep $sleepTime; $command; $rm -rf $filename"
+            );
+            $noopCommand = "$nohup $sh $filename > $outFile 2>&1 &";
         } else {
-            $noop_command = "{$nohupPath} {$command} > {$out_file} 2>&1 &";
+            $noopCommand = "$nohup $command > $outFile 2>&1 &";
         }
-        exec($noop_command);
+        exec($noopCommand);
     }
 
     /**
      * Manages a daemon/worker process.
-     * Returns process statuses by name.
      *
-     * @param string $cmd The command to execute.
-     * @param string $param The parameter to pass to the command.
-     * @param string $proc_name The name of the process.
-     * @param string $action The action to perform (status, restart, stop, start).
-     * @param string $out_file The path to the output file.
-     * @return array|bool The status of the process.
+     * @param string $cmd Command to execute
+     * @param string $param Command parameters
+     * @param string $procName Process name
+     * @param string $action Action to perform
+     * @param string $outFile Output file path
+     *
+     * @return array|bool Process status or operation result
+     * @throws InvalidArgumentException If action is invalid
      */
-    public static function processWorker($cmd, $param, $proc_name, $action, $out_file = '/dev/null')
-    {
-        $path_kill = Util::which('kill');
-        $path_nohup = Util::which('nohup');
-
-        $WorkerPID = self::getPidOfProcess($proc_name);
-
-        switch ($action) {
-            case 'status':
-                $status = ($WorkerPID !== '') ? 'Started' : 'Stoped';
-
-                return ['status' => $status, 'app' => $proc_name, 'PID' => $WorkerPID];
-            case 'restart':
-                if ($WorkerPID !== '') {
-                    self::mwExec("{$path_kill} -9 {$WorkerPID}  > /dev/null 2>&1 &");
-                }
-                self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &");
-                break;
-            case 'stop':
-                if ($WorkerPID !== '') {
-                    self::mwExec("{$path_kill} -9 {$WorkerPID}  > /dev/null 2>&1 &");
-                }
-                break;
-            case 'start':
-                if ($WorkerPID === '') {
-                    self::mwExec("{$path_nohup} {$cmd} {$param}  > {$out_file} 2>&1 &");
-                }
-                break;
-            default:
+    public static function processWorker(
+        string $cmd,
+        string $param,
+        string $procName,
+        string $action,
+        string $outFile = self::DEFAULT_OUTPUT_FILE
+    ): bool|array {
+        if (!self::isValidAction($action)) {
+            throw new InvalidArgumentException("Invalid action: $action");
         }
 
+        $kill = Util::which('kill');
+        $nohup = Util::which('nohup');
+        $workerPID = self::getPidOfProcess($procName);
+
+        return match ($action) {
+            'status' => [
+                'status' => ($workerPID !== '') ? 'Started' : 'Stopped',
+                'app' => $procName,
+                'PID' => $workerPID
+            ],
+            'restart' => self::handleWorkerRestart($kill, $workerPID, $nohup, $cmd, $param, $outFile),
+            'stop' => self::handleWorkerStop($kill, $workerPID),
+            'start' => self::handleWorkerStart($workerPID, $nohup, $cmd, $param, $outFile),
+            default => throw new InvalidArgumentException("Unsupported action: $action"),
+        };
+    }
+
+    /**
+     * Handles worker restart operation.
+     *
+     * @param string $kill Kill command path
+     * @param string $workerPID Worker process ID
+     * @param string $nohup Nohup command path
+     * @param string $cmd Command to execute
+     * @param string $param Command parameters
+     * @param string $outFile Output file path
+     * @return bool
+     */
+    private static function handleWorkerRestart(
+        string $kill,
+        string $workerPID,
+        string $nohup,
+        string $cmd,
+        string $param,
+        string $outFile
+    ): bool {
+        if ($workerPID !== '') {
+            self::safeTerminateProcess($workerPID);
+        }
+        self::mwExec("$nohup $cmd $param > $outFile 2>&1 &");
+        return true;
+    }
+
+    /**
+     * Handles worker stop operation.
+     *
+     * @param string $kill Kill command path
+     * @param string $workerPID Worker process ID
+     * @return bool
+     */
+    private static function handleWorkerStop(string $kill, string $workerPID): bool
+    {
+        if ($workerPID !== '') {
+            self::safeTerminateProcess($workerPID);
+        }
+        return true;
+    }
+
+    /**
+     * Handles worker start operation.
+     *
+     * @param string $workerPID Worker process ID
+     * @param string $nohup Nohup command path
+     * @param string $cmd Command to execute
+     * @param string $param Command parameters
+     * @param string $outFile Output file path
+     * @return bool
+     */
+    private static function handleWorkerStart(
+        string $workerPID,
+        string $nohup,
+        string $cmd,
+        string $param,
+        string $outFile
+    ): bool {
+        if ($workerPID === '') {
+            self::mwExec("$nohup $cmd $param > $outFile 2>&1 &");
+        }
         return true;
     }
 
     /**
      * Starts a daemon process with failure control.
-     * The method waits for the process to start and logs an error if it fails.
      *
-     * @param string $procName The name of the process.
-     * @param string $args The arguments for the process.
-     * @param int $attemptsCount The number of attempts to start the process.
-     * @param int $timout The timeout between attempts in microseconds.
-     * @param string $outFile The path to the output file.
-     * @return bool True if the process starts successfully, false otherwise.
+     * @param string $procName Process name
+     * @param string $args Process arguments
+     * @param int $attemptsCount Number of attempts to start
+     * @param int $timeout Timeout between attempts in microseconds
+     * @param string $outFile Output file path
+     * @return bool Success status
      */
-    public static function safeStartDaemon(string $procName, string $args, int $attemptsCount = 20, int $timout = 1000000, string $outFile='/dev/null'): bool
-    {
+    public static function safeStartDaemon(
+        string $procName,
+        string $args,
+        int $attemptsCount = self::DEFAULT_START_ATTEMPTS,
+        int $timeout = self::DEFAULT_ATTEMPT_TIMEOUT,
+        string $outFile = self::DEFAULT_OUTPUT_FILE
+    ): bool {
         $result = true;
-        $baseName = "safe-{$procName}";
-        $safeLink = "/sbin/{$baseName}";
-        Util::createUpdateSymlink('/etc/rc/worker_reload', $safeLink);
-        self::killByName($baseName);
-        self::killByName($procName);
-        // Start the process in the background.
-        self::mwExecBg("{$safeLink} {$args}", $outFile);
+        $baseName = "safe-$procName";
+        $safeLink = "/sbin/$baseName";
 
-        // Wait for the process to start.
-        $ch = 1;
-        while ($ch < $attemptsCount) {
-            $pid = self::getPidOfProcess($procName, $baseName);
-            if (!empty($pid)) {
-                break;
+        try {
+            Util::createUpdateSymlink('/etc/rc/worker_reload', $safeLink);
+            self::killByName($baseName);
+            self::killByName($procName);
+
+            // Start the process in the background
+            self::mwExecBg("$safeLink $args", $outFile);
+
+            // Wait for the process to start with timeout
+            $pid = self::waitForProcessStart($procName, $baseName, $attemptsCount, $timeout);
+
+            if (empty($pid)) {
+                SystemMessages::echoWithSyslog(" - Wait for start '$procName' fail" . PHP_EOL);
+                $result = false;
             }
-            usleep($timout);
-            $ch++;
-        }
-        if (empty($pid)) {
-            SystemMessages::echoWithSyslog(" - Wait for start '{$procName}' fail" . PHP_EOL);
+        } catch (Throwable $e) {
+            SystemMessages::echoWithSyslog("Error starting daemon '$procName': " . $e->getMessage());
             $result = false;
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,17 +22,11 @@ namespace MikoPBX\AdminCabinet\Library;
 
 use Phalcon\Di\Injectable;
 
-/**
- * Created by PhpStorm.
- * User: nikolaybeketov
- * Date: 12.03.2018
- * Time: 12:09
- */
 class Cidr extends Injectable
 {
     // convert cidr to netmask
     // e.g. 21 = 255.255.248.0
-    public function cidr2netmask($cidr)
+    public function cidr2netmask(int $cidr): false|string
     {
         $bin = '';
         for ($i = 1; $i <= 32; $i++) {
@@ -49,14 +44,17 @@ class Cidr extends Injectable
 
     // get network address from cidr subnet
     // e.g. 10.0.2.56/21 = 10.0.0.0
-    public function cidr2network($ip, $cidr)
+    public function cidr2network(string $ip, int $cidr): false|string
     {
-        return long2ip((ip2long($ip)) & ((-1 << (32 - (int)$cidr))));
+        if ($cidr < 0 || $cidr > 32) {
+            return false;
+        }
+        return long2ip((ip2long($ip)) & ((-1 << (32 - $cidr))));
     }
 
     // convert netmask to cidr
     // e.g. 255.255.255.128 = 25
-    public function netmask2cidr($netmask)
+    public function netmask2cidr(string $netmask): int
     {
         $bits    = 0;
         $netmask = explode(".", $netmask);
@@ -71,12 +69,101 @@ class Cidr extends Injectable
     // is ip in subnet
     // e.g. is 10.5.21.30 in 10.5.16.0/20 == true
     //      is 192.168.50.2 in 192.168.30.0/23 == false
-    public function cidr_match($ip, $network, $cidr)
+    public function cidr_match(string $ip, string $network, int $cidr): bool
     {
-        if ((ip2long($ip) & ~((1 << (32 - $cidr)) - 1)) == ip2long($network)) {
-            return true;
+        if ($cidr < 0 || $cidr > 32) {
+            return false;
+        }
+        return (ip2long($ip) & ~((1 << (32 - $cidr)) - 1)) == ip2long($network);
+    }
+
+    /**
+     * Retrieves an array of IPv4 network masks with CIDR notation as the key and the corresponding netmask.
+     *
+     * @return array<string, string> Associative array where keys are CIDR notation (0-32) and values
+     * are the corresponding netmask strings.
+     */
+    public static function getNetMasks(): array
+    {
+        return self::getIPv4NetMasks();
+    }
+
+    /**
+     * Retrieves an array of IPv4 network masks with CIDR notation as the key and the corresponding netmask.
+     *
+     * @return array<string, string> Associative array where keys are CIDR notation (0-32) and values
+     * are the corresponding netmask strings, sorted from /32 to /0
+     * @phpstan-return array<string, string>
+     */
+    public static function getIPv4NetMasks(): array
+    {
+        // Pre-calculated netmasks for all CIDR values (0-32)
+        $netmaskValues = [
+            "0.0.0.0",
+            "128.0.0.0",
+            "192.0.0.0",
+            "224.0.0.0",
+            "240.0.0.0",
+            "248.0.0.0",
+            "252.0.0.0",
+            "254.0.0.0",
+            "255.0.0.0",
+            "255.128.0.0",
+            "255.192.0.0",
+            "255.224.0.0",
+            "255.240.0.0",
+            "255.248.0.0",
+            "255.252.0.0",
+            "255.254.0.0",
+            "255.255.0.0",
+            "255.255.128.0",
+            "255.255.192.0",
+            "255.255.224.0",
+            "255.255.240.0",
+            "255.255.248.0",
+            "255.255.252.0",
+            "255.255.254.0",
+            "255.255.255.0",
+            "255.255.255.128",
+            "255.255.255.192",
+            "255.255.255.224",
+            "255.255.255.240",
+            "255.255.255.248",
+            "255.255.255.252",
+            "255.255.255.254",
+            "255.255.255.255",
+        ];
+
+        // Build array in reverse order (32 down to 0) with string keys
+        $arrMasks = [];
+        for ($i = 32; $i >= 0; $i--) {
+            $key = (string)$i;
+            $arrMasks[$key] = $key . ' - ' . $netmaskValues[$i];
         }
 
-        return false;
+        // PHPStan workaround: ensure keys are strings
+        /** @var array<string, string> */
+        return $arrMasks;
+    }
+
+    /**
+     * Retrieves an array of IPv6 prefix lengths
+     *
+     * @return array<string, string> Associative array where keys and values are prefix lengths (0-128),
+     * sorted from /128 to /0
+     * @phpstan-return array<string, string>
+     */
+    public static function getIPv6NetMasks(): array
+    {
+        // Build array in reverse order (128 down to 0) with string keys
+        $masks = [];
+        for ($i = 128; $i >= 0; $i--) {
+            $key = (string)$i;
+            $masks[$key] = $key;
+        }
+
+        // PHPStan workaround: ensure keys are strings
+        /** @var array<string, string> */
+        return $masks;
     }
 }

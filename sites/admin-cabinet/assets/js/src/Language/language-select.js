@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,118 +15,107 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global globalWebAdminLanguage, globalAvailableLanguages, globalAvailableLanguageFlags, globalTranslate, globalRootUrl, PbxApi*/
-
+/* global globalWebAdminLanguage, TokenManager */
 
 /**
- * The LanguageSelect object is responsible for changing system interface menu
+ * The LanguageSelect object is responsible for changing system interface language
  *
  * @module LanguageSelect
  */
 const LanguageSelect = {
 
     /**
-     * Array to store possible language keys.
+     * Current language code
+     * @type {string}
      */
-    possibleLanguages: [],
+    currentLanguage: '',
 
     /**
-     * Language selector DOM element.
+     * jQuery selector for language dropdown
      * @type {jQuery}
      */
-    $selector: $('#web-admin-language-selector'),
+    $dropdown: null,
 
     /**
-     * Initializes the LanguageSelect object.
+     * Initializes the LanguageSelect module with static language list from server
      */
     initialize() {
-        if (LanguageSelect.$selector === undefined) {
-            // If language selector DOM element is not found, return
-            return;
+        // Set current language from global variable
+        LanguageSelect.currentLanguage = globalWebAdminLanguage || 'en';
+
+        // Initialize Fomantic UI dropdown with static list (already rendered in template)
+        LanguageSelect.$dropdown = $('#language-selector');
+
+        if (LanguageSelect.$dropdown.length === 0) {
+            return; // No dropdown found
         }
 
-        // Initialize the language selector dropdown
-        LanguageSelect.$selector.dropdown({
-            values: LanguageSelect.prepareMenu(),  // Set dropdown values using the prepared menu
-            templates: {
-                menu: LanguageSelect.customDropdownMenu, // Use custom dropdown menu template
-            },
-            onChange: LanguageSelect.onChangeLanguage,  // Handle language change event
+        // Initialize dropdown with onChange handler
+        LanguageSelect.$dropdown.dropdown({
+            onChange: LanguageSelect.onChangeLanguage
         });
-    },
-
-    /**
-     * Prepares the dropdown menu for the language selector.
-     * @returns {Array} The prepared menu items.
-     */
-    prepareMenu() {
-
-        const resArray = [];    // Array to store menu items
-        const objectAvailableLanguages = JSON.parse(globalAvailableLanguages);  // Parse available languages JSON
-
-        // Iterate over available languages and prepare dropdown menu items
-        $.each(objectAvailableLanguages, (key, value) => {
-            const v = {
-                name: value.name,
-                value: key,
-                flag: value.flag,
-            };
-            if (key === globalWebAdminLanguage) {
-                v.selected = true;  // Set 'selected' property for the current language
-            }
-            resArray.push(v); // Add menu item to the array
-            LanguageSelect.possibleLanguages.push(key); // Add language key to possibleLanguages array
-        });
-        return resArray; // Return the prepared menu
-    },
-
-    /**
-     * Custom dropdown menu template.
-     * @param {object} response - The dropdown menu response.
-     * @param {object} fields - The dropdown menu fields.
-     * @returns {string} The HTML for the custom dropdown menu.
-     */
-    customDropdownMenu(response, fields) {
-        const values = response[fields.values] || {};
-        let html = '';
-        $.each(values, (index, option) => {
-            if (html === '') {
-                html += `<a class="item" target="_blank" href="https://weblate.mikopbx.com/engage/mikopbx/"><i class="pencil alternate icon"></i> ${globalTranslate.lang_HelpWithTranslateIt}</a>`;
-                html += '<div class="divider"></div>';
-            }
-            html += `<div class="item" data-value="${option.value}">`;
-            html += `<i class="flag ${option.flag}"></i>`; // Add flag icon HTML for a given language key.
-            html += option.name;
-            html += '</div>';
-        });
-        return html;
     },
 
     /**
      * Handles the language change event.
-     * @param {string} value - The selected language value.
+     * @param {string} value - The selected language code.
      */
     onChangeLanguage(value) {
-        if (value === globalWebAdminLanguage) {
+        // Prevent unnecessary reload if language hasn't changed
+        if (value === LanguageSelect.currentLanguage) {
             return;
         }
-        if (!LanguageSelect.possibleLanguages.includes(value)) {
-            LanguageSelect.$selector.dropdown("set selected", globalWebAdminLanguage);
+
+        // On login page (no auth token) — skip API call, use ?lang= parameter directly
+        if (!window.TokenManager || !window.TokenManager.accessToken) {
+            localStorage.setItem('mikopbx-preferred-language', value);
+            window.location.href = `${window.location.pathname}?lang=${encodeURIComponent(value)}`;
             return;
         }
-        $.api({
-            url: `${globalRootUrl}language/change/`,
-            data: {newLanguage: value},
-            method: 'POST',
-            on: 'now',
-            onSuccess(response) {
-                if (response !== undefined && response.success === true) {
+
+        // Use REST API endpoint for language change (requires authentication)
+        $.ajax({
+            url: '/pbxcore/api/v3/system:changeLanguage',
+            data: JSON.stringify({language: value}),
+            method: 'PATCH',
+            contentType: 'application/json',
+            dataType: 'json',
+            success(response) {
+                if (response !== undefined && response.result === true) {
+                    // Update current language
+                    LanguageSelect.currentLanguage = value;
+
+                    // If new access token returned, update it in TokenManager
+                    if (response.data && response.data.accessToken && window.TokenManager) {
+                        window.TokenManager.setAccessToken(
+                            response.data.accessToken,
+                            response.data.expiresIn || 900
+                        );
+                    }
+
+                    // Trigger ConfigDataChanged event
                     const event = document.createEvent('Event');
                     event.initEvent('ConfigDataChanged', false, true);
                     window.dispatchEvent(event);
+
+                    // Reload page to apply new language
                     window.location.reload();
                 }
             },
+            error(xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    // Not authenticated (login page) — save preference locally
+                    // and reload with language parameter for server-side rendering
+                    localStorage.setItem('mikopbx-preferred-language', value);
+                    window.location.href = `${window.location.pathname}?lang=${encodeURIComponent(value)}`;
+                    return;
+                }
+                console.error('Language change failed:', xhr);
+                // Revert dropdown to previous language
+                if (LanguageSelect.$dropdown && LanguageSelect.$dropdown.length) {
+                    LanguageSelect.$dropdown.dropdown('set selected', LanguageSelect.currentLanguage);
+                }
+            }
         });
     },
 };

@@ -20,10 +20,11 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Core\System\Configs\SoundFilesConf;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
-use MikoPBX\PBXCoreREST\Lib\System\ConvertAudioFileAction;
 
 /**
  * Class MusicOnHoldConf
@@ -44,7 +45,7 @@ class MusicOnHoldConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $mohPath = $this->config->path('asterisk.mohdir');
+        $mohPath = Directories::getDir(Directories::AST_MOH_DIR);
         $conf    = "[default]\n" .
             "mode=files\n" .
             "directory=$mohPath\n\n";
@@ -61,21 +62,25 @@ class MusicOnHoldConf extends AsteriskConfigClass
         }
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/musiconhold.conf', $conf);
+        $directory = Directories::getDir(Directories::AST_ETC_DIR);
+        Util::fileWriteContent($directory . '/musiconhold.conf', $conf);
         $this->checkMohFiles();
     }
 
     /**
      * Checks the MOH files in the specified path and adds them to the database if they exist.
-     *
+     * Removes orphaned DB records where the file no longer exists on disk.
      */
     protected function checkMohFiles(): void
     {
-        $path  = $this->config->path('asterisk.mohdir');
+        $path  = Directories::getDir(Directories::AST_MOH_DIR);
         $mask  = '/*.mp3';
 
+        // Remove orphaned MOH records where the mp3 file no longer exists on disk
+        $this->cleanOrphanedMohRecords();
+
         // Get the list of MP3 files in the specified path
-        $fList = glob("{$path}{$mask}");
+        $fList = glob("$path$mask");
         if (count($fList) !== 0) {
             // Iterate through the MP3 files and add them to the database
             foreach ($fList as $resultMp3) {
@@ -89,19 +94,48 @@ class MusicOnHoldConf extends AsteriskConfigClass
         SystemMessages::sysLogMsg(static::class, 'Attempt to restore MOH from default...');
 
         // Get the list of MP3 files from the default location
-        $filesList = glob("/offload/asterisk/sounds/moh{$mask}");
-        $cpPath    = Util::which('cp');
+        $filesList = glob("/offload/asterisk/sounds/moh$mask");
+        $cp    = Util::which('cp');
         foreach ($filesList as $srcFile) {
-            $resultMp3 = "{$path}/" . basename($srcFile);
-            $resultWav = Util::trimExtensionForFile($resultMp3) . '.wav';
+            $resultMp3 = "$path/" . basename($srcFile);
+            $baseName = Util::trimExtensionForFile(basename($resultMp3));
 
             // Copy the file to the specified path
-            Processes::mwExec("{$cpPath} $srcFile {$resultMp3}");
+            Processes::mwExec("$cp $srcFile $resultMp3");
 
-            // Convert the MP3 file to WAV format
-            ConvertAudioFileAction::main($resultMp3);
-            if ( ! file_exists($resultWav)) {
-                SystemMessages::sysLogMsg(static::class, "Failed to convert file {$resultWav}...");
+            // Verify copy succeeded before proceeding
+            if (!file_exists($resultMp3)) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    "Failed to copy MOH file $srcFile to $resultMp3"
+                );
+                continue;
+            }
+
+            // Convert the MP3 file to all Asterisk formats
+            $result = SoundFilesConf::convertAudioFile(
+                $resultMp3,
+                ['wav', 'ulaw', 'alaw', 'gsm', 'g722', 'sln'],
+                [
+                    'normalize' => false,
+                    'use_cache' => true,
+                    'force' => false,
+                    'output_dir' => $path,
+                    'base_name' => $baseName,
+                ]
+            );
+
+            if (!$result['success']) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    "Failed to convert MOH file $resultMp3: " . ($result['error'] ?? 'Unknown error')
+                );
+            } else {
+                // Check if at least WAV was created
+                $resultWav = "$path/$baseName.wav";
+                if (!file_exists($resultWav)) {
+                    SystemMessages::sysLogMsg(static::class, "Failed to create WAV file $resultWav");
+                }
             }
 
             // Add the MP3 file to the database
@@ -110,22 +144,75 @@ class MusicOnHoldConf extends AsteriskConfigClass
     }
 
     /**
-     * Check and add file to the database.
+     * Removes MOH database records where the mp3 file no longer exists on disk.
+     */
+    protected function cleanOrphanedMohRecords(): void
+    {
+        $mohRecords = SoundFiles::find([
+            'conditions' => 'category = :category:',
+            'bind' => ['category' => SoundFiles::CATEGORY_MOH],
+        ]);
+        foreach ($mohRecords as $record) {
+            if (empty($record->path) || !file_exists($record->path)) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    "Removing orphaned MOH record: {$record->name} (path: {$record->path})"
+                );
+                $record->delete();
+            }
+        }
+    }
+
+    /**
+     * Check and add file to the database if the file exists on disk.
      *
      * @param string $resultMp3 The path of the mp3 file.
      */
     protected function checkAddFileToDB(string $resultMp3): void
     {
-        /** @var SoundFiles $sf */
-        $sf = SoundFiles::findFirst("path='{$resultMp3}'");
+        if (!file_exists($resultMp3)) {
+            return;
+        }
+        /** @var SoundFiles|null $sf */
+        $sf = SoundFiles::findFirst("path='$resultMp3'");
         if ($sf === null) {
             $sf           = new SoundFiles();
             $sf->category = SoundFiles::CATEGORY_MOH;
             $sf->name     = basename($resultMp3);
             $sf->path     = $resultMp3;
             if ( ! $sf->save()) {
-                SystemMessages::sysLogMsg(static::class, "Error save SoundFiles record {$sf->name}...");
+                SystemMessages::sysLogMsg(static::class, "Error save SoundFiles record $sf->name...");
             }
         }
+    }
+
+    /**
+     * Restores default MOH files from the system default location.
+     * Cleans the MOH directory first, then copies and converts default files.
+     * Creates database records for restored files.
+     */
+    public static function restoreDefaultMoh(): void
+    {
+        $mohPath = Directories::getDir(Directories::AST_MOH_DIR);
+        Util::mwMkdir($mohPath);
+
+        // Clean any remaining files in MOH directory (converted formats, leftovers)
+        $rm = Util::which('rm');
+        Processes::mwExec("$rm -rf " . escapeshellarg($mohPath) . "/*");
+
+        // Restore defaults from /offload/asterisk/sounds/moh/
+        $conf = new self();
+        $conf->checkMohFiles();
+    }
+
+    /**
+     * Reloads the Asterisk music on hold module.
+     */
+    public static function reload(): void
+    {
+        $conf = new self();
+        $conf->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'moh reload'");
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,20 +20,27 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Core\System\PasswordService;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation\Validator\Regex as RegexValidator;
 use Phalcon\Mvc\Model\Relation;
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class Iax
  *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
  * @property Providers Providers
+ * @property NetworkFilters NetworkFilters
  *
  * @package MikoPBX\Common\Models
  */
 class Iax extends ModelsBase
 {
+    // Registration type constants
+    public const REGISTRATION_TYPE_OUTBOUND = 'outbound';
+    public const REGISTRATION_TYPE_INBOUND = 'inbound';
+    public const REGISTRATION_TYPE_NONE = 'none';
     /**
      * @Primary
      * @Identity
@@ -103,6 +111,27 @@ class Iax extends ModelsBase
      */
     public ?string $description = '';
 
+    /**
+     * Registration type (outbound, inbound, none)
+     *
+     * @Column(type="string", nullable=true, default="outbound")
+     */
+    public ?string $registration_type = 'outbound';
+
+    /**
+     * Network filter ID for IP-based restrictions
+     *
+     * @Column(type="integer", nullable=true)
+     */
+    public ?string $networkfilterid = '';
+
+    /**
+     * IAX port
+     *
+     * @Column(type="integer", nullable=true)
+     */
+    public ?string $port = '';
+
 
     /**
      * Initialize the model.
@@ -123,6 +152,18 @@ class Iax extends ModelsBase
                 ],
             ]
         );
+        $this->belongsTo(
+            'networkfilterid',
+            NetworkFilters::class,
+            'id',
+            [
+                'alias' => 'NetworkFilters',
+                'foreignKey' => [
+                    'allowNulls' => true,
+                    'action' => Relation::NO_ACTION,
+                ],
+            ]
+        );
     }
 
     /**
@@ -136,12 +177,23 @@ class Iax extends ModelsBase
     }
 
     /**
+     * Generates a random password for IAX
+     *
+     * @param int $length Password length (default: 16)
+     * @return string
+     */
+    public static function generateIaxPassword(int $length = 16): string
+    {
+        return PasswordService::generate(['length' => $length]);
+    }
+
+    /**
      * Set the manual attributes of the model.
      *
      * @param string $text The manual attributes text.
      * @return void
      */
-    public function setManualAttributes($text): void
+    public function setManualAttributes(string $text): void
     {
         $this->manualattributes = base64_encode($text);
     }
@@ -163,8 +215,19 @@ class Iax extends ModelsBase
             )
         );
 
+        // For inbound providers, validate username contains only allowed characters
+        if ($this->registration_type === self::REGISTRATION_TYPE_INBOUND && !empty($this->username)) {
+            $validation->add(
+                'username',
+                new RegexValidator(
+                    [
+                        'pattern' => '/^[a-zA-Z0-9._-]+$/',
+                        'message' => $this->t('mo_IaxUsernameInvalidCharacters'),
+                    ]
+                )
+            );
+        }
+
         return $this->validate($validation);
     }
-
 }
-

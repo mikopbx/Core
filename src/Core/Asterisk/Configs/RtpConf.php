@@ -20,7 +20,9 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SslCertificateService;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -44,17 +46,50 @@ class RtpConf extends AsteriskConfigClass
     protected function generateConfigProtected(): void
     {
         $stunConfig = '';
-        $stun = trim($this->generalSettings[PbxSettingsConstants::RTP_STUN_SERVER]??'');
+        $stun = trim(PbxSettings::getValueByKey(PbxSettings::RTP_STUN_SERVER));
         if(!empty($stun)){
             $stunConfig = "stunaddr=$stun".PHP_EOL;
         }
+
+        $rtpStart = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_FROM);
+        $rtpEnd = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO);
+
         $conf = "[general]\n" .
             $stunConfig.
-            "rtpstart={$this->generalSettings[PbxSettingsConstants::RTP_PORT_FROM]}".PHP_EOL.
-            "rtpend={$this->generalSettings[PbxSettingsConstants::RTP_PORT_TO]}".PHP_EOL.
-            PHP_EOL;
+            "rtpstart={$rtpStart}".PHP_EOL.
+            "rtpend={$rtpEnd}".PHP_EOL;
+            
+        // Add DTLS configuration for WebRTC if enabled
+        $useWebRTC = PbxSettings::getValueByKey(PbxSettings::USE_WEB_RTC);
+        if ($useWebRTC === '1') {
+            // Prepare certificates for DTLS
+            $certs = SslCertificateService::prepareAsteriskCertificates('asterisk-rtp-dtls');
+            
+            if (!empty($certs['certPath']) && !empty($certs['keyPath'])) {
+                $conf .= PHP_EOL .
+                    "; DTLS configuration for WebRTC\n" .
+                    "dtlsenable=yes".PHP_EOL.
+                    "dtlscertfile={$certs['certPath']}".PHP_EOL.
+                    "dtlsprivatekey={$certs['keyPath']}".PHP_EOL.
+                    "dtlssetup=actpass".PHP_EOL.
+                    "dtlsverify=no".PHP_EOL;
+            }
+        }
+        
+        $conf .= PHP_EOL;
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/rtp.conf', $conf);
+        $this->saveConfig($conf, $this->description);
+    }
+
+    /**
+     * Updates the RTP config file and reloads the module.
+     */
+    public static function reload(): void
+    {
+        $rtp = new self();
+        $rtp->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload res_rtp_asterisk'");
     }
 }

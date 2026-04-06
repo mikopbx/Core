@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global globalTranslate,  PbxApi */
+/* global globalTranslate, FilesAPI, soundFileModifyRest, UserMessage, SystemAPI, PbxApi */
 
 
 /**
@@ -79,7 +79,7 @@ const mergingCheckWorker = {
      * Performs the merging check operation.
      */
     worker() {
-        PbxApi.FilesGetStatusUploadFile(mergingCheckWorker.fileID, mergingCheckWorker.cbAfterResponse);
+        FilesAPI.getStatusUploadFile(mergingCheckWorker.fileID, mergingCheckWorker.cbAfterResponse);
         mergingCheckWorker.timeoutHandle = window.setTimeout(
             mergingCheckWorker.worker,
             mergingCheckWorker.timeOut,
@@ -94,8 +94,8 @@ const mergingCheckWorker = {
         if (mergingCheckWorker.errorCounts > 10) {
             // Show error message if the error count exceeds the threshold
             UserMessage.showMultiString(globalTranslate.sf_UploadError);
-            soundFileModify.$submitButton.removeClass('loading');
-            soundFileModify.$formObj.removeClass('loading');
+            soundFileModifyRest.$submitButton.removeClass('loading');
+            soundFileModifyRest.$formObj.removeClass('loading');
             window.clearTimeout(mergingCheckWorker.timeoutHandle);
         }
         if (response === undefined || Object.keys(response).length === 0) {
@@ -105,8 +105,8 @@ const mergingCheckWorker = {
         }
         if (response.d_status === 'UPLOAD_COMPLETE') {
             // Start converting the audio file if the merging is complete
-            const category = soundFileModify.$formObj.form('get value', 'category');
-            PbxApi.SystemConvertAudioFile(mergingCheckWorker.filePath, category, soundFileModify.cbAfterConvertFile);
+            const category = soundFileModifyRest.$formObj.form('get value', 'category');
+            SystemAPI.convertAudioFile({filename: mergingCheckWorker.filePath, category: category}, soundFileModifyRest.cbAfterConvertFile);
             window.clearTimeout(mergingCheckWorker.timeoutHandle);
         } else if (response.d_status !== undefined) {
             // Reset error count if the response status is defined

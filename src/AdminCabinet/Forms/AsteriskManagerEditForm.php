@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,63 +23,132 @@ namespace MikoPBX\AdminCabinet\Forms;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
  * Class AsteriskManagerEditForm
- * @property TranslationProvider translation
+ * This class is responsible for creating the form used for editing Asterisk managers.
+ * It extends from BaseForm to inherit common form functionality.
  * @package MikoPBX\AdminCabinet\Forms
+ * @property TranslationProvider translation
  */
 class AsteriskManagerEditForm extends BaseForm
 {
+    /**
+     * Initialize the form elements
+     *
+     * @param mixed $entity The entity for which the form is being initialized.
+     * @param mixed $options Additional options that may be needed.
+     */
     public function initialize($entity = null, $options = null): void
     {
         parent::initialize($entity, $options);
 
-        // Id
-        $this->add(new Hidden('id'));
-
-        // Username
-        $this->add(new Text('username'));
-
-        // Secret
-        $this->add(new Text('secret', ["class" => "confidential-field"]));
-
-
-        foreach ($options['array_of_checkboxes'] as $checkBox) {
-            $cheskarr = [];
-            $this->add(new Check($checkBox . '_main', $cheskarr));
-
-            if (strpos($entity->$checkBox, 'read') !== false) {
-                $cheskarr = ['checked' => 'checked', 'value' => null];
-            }
-            $this->add(new Check($checkBox . '_read', $cheskarr));
-
-            if (strpos($entity->$checkBox, 'write') !== false) {
-                $cheskarr = ['checked' => 'checked', 'value' => null];
-            } else {
-                $cheskarr = ['value' => null];
-            }
-            $this->add(new Check($checkBox . '_write', $cheskarr));
+        $this->addHiddenFields();
+        $this->addTextFields();
+        $this->addPasswordField($entity);
+        $this->addPermissionCheckboxes();
+        $this->addNetworkFilterDropdown();
+        $this->addSpecialFields($entity);
+    }
+    
+    /**
+     * Add hidden form fields
+     */
+    private function addHiddenFields(): void
+    {
+        $hiddenFields = [
+            'id' => [],
+        ];
+        
+        foreach ($hiddenFields as $name => $attributes) {
+            $this->add(new Hidden($name, $attributes));
         }
+    }
+    
+    /**
+     * Add text input fields
+     */
+    private function addTextFields(): void
+    {
+        $this->add(new Text('username', [
+            'autocomplete' => 'off',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
+        ]));
+    }
+    
+    /**
+     * Add password field with security attributes
+     */
+    private function addPasswordField($entity): void
+    {
+        $this->add(new Text('secret', [
+            'id' => 'secret',
+            'type' => 'password',
+            'value' => '',
+            'autocomplete' => 'new-password',
+            'data-no-password-manager' => 'true'
+        ]));
+    }
+    
+    /**
+     * Add permission checkboxes
+     * Checkboxes will be populated dynamically via JavaScript
+     */
+    private function addPermissionCheckboxes(): void
+    {
+        // Define available permissions
+        $permissions = [
+            'call', 'cdr', 'originate', 'reporting', 'agent', 'config', 
+            'dialplan', 'dtmf', 'log', 'system', 'user', 'verbose', 'command'
+        ];
+        
+        // Add checkbox elements for each permission (read and write)
+        foreach ($permissions as $permission) {
+            // Add read permission checkbox
+            $this->add(new Check($permission . '_read', [
+                'value' => '1',
+                'id' => $permission . '_read',
+                'class' => 'permission-checkbox'
+            ]));
+            
+            // Add write permission checkbox
+            $this->add(new Check($permission . '_write', [
+                'value' => '1',
+                'id' => $permission . '_write',
+                'class' => 'permission-checkbox'
+            ]));
+        }
+    }
+    
+    /**
+     * Add network filter dropdown using DynamicDropdownBuilder (built by JavaScript)
+     *
+     */
+    private function addNetworkFilterDropdown(): void
+    {
+        // Network filter - using DynamicDropdownBuilder (built by JavaScript)
+        $this->add(new Hidden('networkfilterid'));
+    }
+    
+    /**
+     * Add special form fields
+     *
+     * @param mixed $entity The entity for which the form is being initialized.
+     */
+    private function addSpecialFields($entity): void
+    {
+        // Add text area for Event Filter with auto-resize, 2000 chars limit and placeholder
+        $this->addTextArea('eventfilter', '', 65, [
+            'maxlength' => 2000,
+            'placeholder' => "Event: QueueMemberStatus\n!Event: VarSet"
+        ]);
 
-        // Networkfilterid
-        $networkfilterid = new Select(
-            'networkfilterid', $options['network_filters'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'value' => $entity->networkfilterid,
-                'class' => 'ui selection dropdown network-filter-select',
-            ]
-        );
-        $this->add($networkfilterid);
-
-        // Description
-        $this->addTextArea('description', $entity->description??'', 65);
-
+        // Add text area for Description with auto-resize, 2000 chars limit and placeholder
+        $this->addTextArea('description', '', 65, [
+            'maxlength' => 2000,
+            'placeholder' => $this->translation->_('am_DescriptionPlaceholder')
+        ]);
     }
 }

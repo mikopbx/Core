@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
-
 
 /**
  * Generates the configuration content for cdr_sqlite3_custom.conf.
@@ -51,6 +51,6 @@ class CdrSqlite3CustomConf extends AsteriskConfigClass
             "values => $values \n";
 
         // Write the configuration content to the file
-        file_put_contents($this->config->path('asterisk.astetcdir') . "/cdr_sqlite3_custom.conf", $conf);
+        $this->saveConfig($conf, $this->description);
     }
 }

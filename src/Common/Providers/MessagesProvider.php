@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ use function MikoPBX\Common\Config\appPath;
  */
 class MessagesProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'messages';
+    public const string SERVICE_NAME = 'messages';
 
     /**
      * Register the messages service provider.
@@ -48,7 +48,6 @@ class MessagesProvider implements ServiceProviderInterface
             function () use ($di, $coreConfig) {
                 $cacheKey = false;
                 $language = $di->get(LanguageProvider::SERVICE_NAME);
-                file_put_contents('/tmp/language',$language,FILE_APPEND);
                 if (php_sapi_name() !== 'cli') {
                     $version = PBXConfModulesProvider::getVersionsHash();
                     $cacheKey = 'LocalisationArray:' . $version . ':' . $language;
@@ -58,51 +57,38 @@ class MessagesProvider implements ServiceProviderInterface
                 if ($cacheKey) {
                     $translates = $di->get(ManagedCacheProvider::SERVICE_NAME)->get($cacheKey, 3600);
                     if (is_array($translates)) {
-                        file_put_contents('/tmp/language.fromCache',$language,FILE_APPEND);
                         return $translates;
                     }
-                }
-                file_put_contents('/tmp/language.NotfromCache',$language,FILE_APPEND);
-                // Load English translations
-                $translates = self::includeLanguageFile(appPath('/src/Common/Messages/en.php'));
-
+                }             
+                // Load English translations from directory (new structure for main distribution)
+                $translates = self::loadLanguageDirectory(appPath('/src/Common/Messages/en'));
+                
                 if ($language !== 'en') {
-                    // Check if the translation file exists for the selected language
-                    $langFile = appPath("/src/Common/Messages/{$language}.php");
-                    if (file_exists($langFile)) {
-                        $langArr = self::includeLanguageFile($langFile);
-                        if (!empty($langArr)) {
-                            $translates = array_merge($translates, $langArr);
-                        }
-                    }
-                }
-
-                // Load English translations for extensions
-                $extensionsTranslates = [[]];
-                $results              = glob($coreConfig->modulesDir . '/*/{Messages}/en.php', GLOB_BRACE);
-                foreach ($results as $path) {
-                    $langArr =  self::includeLanguageFile($path);
+                    // Load translations for the selected language from directory
+                    $langDirectory = appPath("/src/Common/Messages/$language");
+                    $langArr = self::loadLanguageDirectory($langDirectory);
                     if (!empty($langArr)) {
-                        $extensionsTranslates[] = $langArr;
+                        $translates = array_merge($translates, $langArr);
                     }
                 }
-                if ($extensionsTranslates !== [[]]) {
-                    $translates = array_merge($translates, ...$extensionsTranslates);
+
+                // Load English translations for extensions (supports both old and new structure)
+                $extensionsTranslates = self::loadModuleTranslations($coreConfig->modulesDir, 'en');
+                if (!empty($extensionsTranslates)) {
+                    $translates = array_merge($translates, $extensionsTranslates);
                 }
+
+                // Load translations for the selected language from modules
                 if ($language !== 'en') {
-                    $additionalTranslates = [[]];
-                    $results              = glob(
-                        $coreConfig->modulesDir . "/*/{Messages}/{$language}.php",
-                        GLOB_BRACE
-                    );
-                    foreach ($results as $path) {
-                        $langArr = self::includeLanguageFile($path);
-                        if (!empty($langArr)) {
-                            $additionalTranslates[] = $langArr;
-                            $translates = array_merge($translates, ...$additionalTranslates);
-                        }
+                    $additionalTranslates = self::loadModuleTranslations($coreConfig->modulesDir, $language);
+                    if (!empty($additionalTranslates)) {
+                        $translates = array_merge($translates, $additionalTranslates);
                     }
                 }
+
+                // Load language static array from LanguageProvider
+                $translates = array_merge($translates, self::getLanguageTranslations());
+
                 if ($cacheKey) {
                     $di->get(ManagedCacheProvider::SERVICE_NAME)->set($cacheKey, $translates);
                 }
@@ -136,5 +122,101 @@ class MessagesProvider implements ServiceProviderInterface
 
         // Return an empty array if there was an error or $langArr is not an array.
         return [];
+    }
+
+    /**
+     * Loads all language files from a directory and merges them into a single array.
+     *
+     * @param string $directory The directory path containing language files.
+     * @return array The merged language array from all files in the directory.
+     */
+    private static function loadLanguageDirectory(string $directory): array
+    {
+        $translations = [];
+        
+        if (!is_dir($directory)) {
+            return $translations;
+        }
+
+        // Get all PHP files in the directory
+        $files = glob($directory . '/*.php');
+        
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                $fileTranslations = self::includeLanguageFile($file);
+                if (!empty($fileTranslations)) {
+                    $translations = array_merge($translations, $fileTranslations);
+                }
+            }
+        }
+        
+        return $translations;
+    }
+
+    /**
+     * Loads translations from all modules for a given language.
+     * Supports both old (single file) and new (directory with multiple files) structures.
+     *
+     * Old structure (backward compatibility):
+     *   ModuleName/Messages/en.php
+     *   ModuleName/Messages/ru.php
+     *
+     * New structure (Language Pack modules):
+     *   ModuleName/Messages/en/Common.php
+     *   ModuleName/Messages/en/Extensions.php
+     *   ModuleName/Messages/ja/Common.php
+     *
+     * @param string $modulesDir The modules directory path.
+     * @param string $language The language code (e.g., 'en', 'ru', 'ja').
+     * @return array The merged translations from all modules.
+     */
+    private static function loadModuleTranslations(string $modulesDir, string $language): array
+    {
+        $translations = [];
+
+        // Get all module directories
+        $moduleDirs = glob($modulesDir . '/*', GLOB_ONLYDIR);
+
+        foreach ($moduleDirs as $moduleDir) {
+            $moduleTranslations = [];
+
+            // Check for NEW structure first (directory with multiple files)
+            $newStructurePath = "$moduleDir/Messages/$language";
+            if (is_dir($newStructurePath)) {
+                // Load all PHP files from the language directory
+                $moduleTranslations = self::loadLanguageDirectory($newStructurePath);
+            } else {
+                // Fallback to OLD structure (single file for backward compatibility)
+                $oldStructurePath = "$moduleDir/Messages/$language.php";
+                if (file_exists($oldStructurePath)) {
+                    $moduleTranslations = self::includeLanguageFile($oldStructurePath);
+                }
+            }
+
+            // Merge module translations into the main array
+            if (!empty($moduleTranslations)) {
+                $translations = array_merge($translations, $moduleTranslations);
+            }
+        }
+
+        return $translations;
+    }
+
+    /**
+     * Generate translation keys for language names (ex_Russian => 'Русский')
+     * Uses LanguageProvider::AVAILABLE_LANGUAGES as single source of truth
+     *
+     * @return array Translation keys mapped to native language names
+     */
+    private static function getLanguageTranslations(): array
+    {
+        $translations = [];
+
+        // Build translations directly from LanguageProvider constant
+        foreach (LanguageProvider::AVAILABLE_LANGUAGES as $info) {
+            $translations[$info['translationKey']] = $info['name'];
+        }
+
+        return $translations;
     }
 }

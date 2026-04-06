@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -38,8 +39,8 @@ class ConferenceRoomEditForm extends BaseForm
         // ID
         $this->add(new Hidden('id'));
 
-        // Uniqid
-        $this->add(new Hidden('uniqid'));
+        // IsNew flag for determining POST vs PUT
+        $this->add(new Hidden('isNew'));
 
         // Name
         $this->add(new Text('name'));

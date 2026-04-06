@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -22,13 +23,11 @@ namespace MikoPBX\Core\System;
 use DateTime;
 use DateTimeZone;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
-use Phalcon\Di;
-
+use Phalcon\Di\Injectable;
 
 /**
  * Class System
@@ -36,10 +35,17 @@ use Phalcon\Di;
  * This class provides various system-level functionalities.
  *
  * @package MikoPBX\Core\System
- * @property \Phalcon\Config config
+ * @property \Phalcon\Config\Config config
  */
-class System extends Di\Injectable
+class System extends Injectable
 {
+    const string BOOTING_FILE_PATH = '/var/run/mikopbx-booting';
+
+    /**
+     * LXC container environment variable value
+     * Set by LXC runtime in the 'container' environment variable
+     */
+    private const string LXC_CONTAINER_ENV_VALUE = 'lxc';
 
     /**
      * Returns the directory where logs are stored.
@@ -88,10 +94,10 @@ class System extends Di\Injectable
      */
     public static function setDate(int $timeStamp, string $remote_tz): bool
     {
-        $datePath = Util::which('date');
+        $date = Util::which('date');
 
         // Fetch timezone from database
-        $db_tz = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE);
+        $db_tz = PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE);
         $origin_tz = '';
 
         // Read existing timezone from file if it exists
@@ -100,7 +106,7 @@ class System extends Di\Injectable
         }
 
         // If the timezones are different, configure the timezone
-        if ($origin_tz !== $db_tz){
+        if ($origin_tz !== $db_tz) {
             self::timezoneConfigure();
         }
 
@@ -114,20 +120,31 @@ class System extends Di\Injectable
         $timeStamp  = $timeStamp - $offset;
 
         // Execute date command to set system time
-        Processes::mwExec("{$datePath} +%s -s @{$timeStamp}");
+        Processes::mwExec("$date +%s -s @$timeStamp");
 
         return true;
     }
 
     /**
      * Reboots the system after calling system_reboot_cleanup()
+     * Works for both Docker containers and VM/Hardware installations
      *
      * @return void
      */
     public static function reboot(): void
     {
-        $pbx_reboot = Util::which('pbx_reboot');
-        Processes::mwExec("{$pbx_reboot} > /dev/null 2>&1");
+        if (self::isDocker()) {
+            // For Docker: Create flag file that docker-entrypoint monitors
+            touch('/tmp/rebooting');
+            SystemMessages::sysLogMsg(__METHOD__, 'Docker container restart initiated', LOG_INFO);
+
+            // Give some time for logs to be written
+            sleep(1);
+        } else {
+            // For VM/Hardware: Use standard pbx_reboot
+            $pbx_reboot = Util::which('pbx_reboot');
+            Processes::mwExecBg("$pbx_reboot", "/dev/null", 1);
+        }
     }
 
     /**
@@ -142,11 +159,22 @@ class System extends Di\Injectable
 
     /**
      * Shutdown the system.
+     * Works for both Docker containers and VM/Hardware installations.
      */
     public static function shutdown(): void
     {
-        $shutdownPath = Util::which('shutdown');
-        Processes::mwExec("{$shutdownPath} > /dev/null 2>&1");
+        if (self::isDocker()) {
+            // For Docker: Create shutdown flag that docker-entrypoint monitors
+            touch('/tmp/shutdown');
+            SystemMessages::sysLogMsg(__METHOD__, 'Docker container shutdown initiated', LOG_INFO);
+
+            // Give some time for logs to be written
+            sleep(1);
+        } else {
+            // For VM/Hardware: Use standard shutdown in background
+            $shutdown = Util::which('shutdown');
+            Processes::mwExecBg($shutdown, '/dev/null', 1);
+        }
     }
 
     /**
@@ -157,7 +185,7 @@ class System extends Di\Injectable
     public static function timezoneConfigure(): void
     {
         // Get the timezone setting from the database
-        $timezone = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE);
+        $timezone = PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE);
 
         // If /etc/TZ or /etc/localtime exist, delete them
         if (file_exists('/etc/TZ')) {
@@ -169,26 +197,24 @@ class System extends Di\Injectable
 
         // If a timezone is set, configure it
         if ($timezone) {
-
             // The path to the zone file
-            $zone_file = "/usr/share/zoneinfo/{$timezone}";
+            $zone_file = "/usr/share/zoneinfo/$timezone";
 
             // If the zone file exists, copy it to /etc/localtime
-            if ( ! file_exists($zone_file)) {
+            if (! file_exists($zone_file)) {
                 return;
             }
-            $cpPath = Util::which('cp');
-            Processes::mwExec("{$cpPath}  {$zone_file} /etc/localtime");
+            $cp = Util::which('cp');
+            Processes::mwExec("$cp $zone_file /etc/localtime");
 
             // Write the timezone to /etc/TZ and set the TZ environment variable
             file_put_contents('/etc/TZ', $timezone);
-            putenv("TZ={$timezone}");
+            putenv("TZ=$timezone");
 
             // Execute the export TZ command and configure PHP's timezone
             Processes::mwExec("export TZ;");
             PHPConf::phpTimeZoneConfigure();
         }
-
     }
 
     /**
@@ -197,18 +223,22 @@ class System extends Di\Injectable
      */
     public static function setupLocales(): void
     {
-        $mountPath = Util::which('mount');
-        shell_exec("$mountPath -o remount,rw /offload 2> /dev/null");
-        $locales = ['en_US', 'en_GB', 'ru_RU'];
-        $localeDefPath = Util::which('localedef');
-        $localePath = Util::which('locale');
-        foreach ($locales as $locale){
-            if(Processes::mwExec("$localePath -a | grep $locale") === 0){
-                continue;
+        $pid = pcntl_fork();
+        if($pid === 0){
+            $busyBoxPath = Util::which('busybox');
+            Processes::mwExec("$busyBoxPath mount -o remount,rw /offload 2> /dev/null");
+            $locales = ['en_US', 'en_GB', 'ru_RU'];
+            $localeDefPath = Util::which('localedef');
+            $localePath = Util::which('locale');
+            foreach ($locales as $locale) {
+                if (Processes::mwExec("$localePath -a | grep $locale") === 0) {
+                    continue;
+                }
+                shell_exec("$localeDefPath -i $locale -f UTF-8 $locale.UTF-8");
             }
-            shell_exec("$localeDefPath -i $locale -f UTF-8 $locale.UTF-8");
+            Processes::mwExec("$busyBoxPath mount -o remount,ro /offload 2> /dev/null");
+            exit(0);
         }
-        shell_exec("$mountPath -o remount,ro /offload 2> /dev/null");
     }
 
     /**
@@ -223,21 +253,292 @@ class System extends Di\Injectable
         $cutPath     = Util::which('cut');
 
         // Get OpenSSL directory and cert file
-        $openSslDir  = trim(shell_exec("$openSslPath version -d | $cutPath -d '\"' -f 2"));
+        $openSslDir  = trim(shell_exec("$openSslPath version -d | $cutPath -d '\"' -f 2")??'');
         $certFile    = "$openSslDir/certs/ca-certificates.crt";
         $tmpFile     = tempnam('/tmp', 'cert-');
         $rawData     = file_get_contents($certFile);
-        $certs       = explode(PHP_EOL.PHP_EOL, $rawData);
-        foreach ($certs as $cert){
-            if(strpos($cert, '-----BEGIN CERTIFICATE-----') === false){
+        $certs       = explode(PHP_EOL . PHP_EOL, $rawData);
+        foreach ($certs as $cert) {
+            if (!str_contains($cert, '-----BEGIN CERTIFICATE-----')) {
                 continue;
             }
             file_put_contents($tmpFile, $cert);
-            $hash = trim(shell_exec("$openSslPath x509 -subject_hash -noout -in '$tmpFile'"));
+            $hash = trim(shell_exec("$openSslPath x509 -subject_hash -noout -in '$tmpFile'")??'');
             rename($tmpFile, "$openSslDir/certs/$hash.0");
         }
-        if(file_exists($tmpFile)){
+        if (file_exists($tmpFile)) {
             unlink($tmpFile);
         }
+    }
+
+/**
+     * Check if the system is booting
+     *
+     * @return boolean
+     */
+    public static function isBooting(): bool
+    {
+        return file_exists(self::BOOTING_FILE_PATH);
+    }
+
+    /**
+     * Set the system as booting
+     *
+     * @param boolean $booting
+     * @return void
+     */
+    public static function setBooting(bool $booting): void
+    {
+        if ($booting) {
+            file_put_contents(self::BOOTING_FILE_PATH, 'true');
+        } elseif (file_exists(self::BOOTING_FILE_PATH)) {
+            unlink(self::BOOTING_FILE_PATH);
+        }
+    }
+
+    /**
+     * Check if the system is running in Docker container
+     *
+     * @return bool True if running in Docker, false otherwise
+     */
+    public static function isDocker(): bool
+    {
+        return file_exists('/.dockerenv');
+    }
+
+    /**
+     * Check if the system is running in any container (Docker or LXC)
+     *
+     * Use this for UI/informational purposes where we need to know
+     * if we're in any container environment.
+     *
+     * @return bool True if running in any container, false otherwise
+     */
+    public static function isContainer(): bool
+    {
+        return self::isDocker() || self::isLxc();
+    }
+
+    /**
+     * Check if the system can manage its own network configuration
+     *
+     * Docker: false - Docker runtime manages networking
+     * LXC: true - LXC containers manage their own network like VMs
+     * Bare-metal: true - Full network control
+     *
+     * @return bool True if system can configure network, false otherwise
+     */
+    public static function canManageNetwork(): bool
+    {
+        return !self::isDocker();
+    }
+
+    /**
+     * Check if the system can manage firewall (iptables)
+     *
+     * Docker: false - Host manages iptables for port forwarding
+     * LXC: depends on CAP_NET_ADMIN capability
+     * Bare-metal: true - Full firewall control
+     *
+     * @return bool True if system can manage iptables, false otherwise
+     */
+    public static function canManageFirewall(): bool
+    {
+        if (self::isDocker()) {
+            return false;
+        }
+
+        if (self::isLxc()) {
+            return self::hasIptablesCapability();
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if iptables is available and functional
+     *
+     * Tests if iptables commands can be executed successfully.
+     * Used to detect CAP_NET_ADMIN capability in LXC containers.
+     *
+     * @return bool True if iptables works, false otherwise
+     */
+    private static function hasIptablesCapability(): bool
+    {
+        static $hasCapability = null;
+
+        if ($hasCapability === null) {
+            $iptables = Util::which('iptables');
+            if (empty($iptables)) {
+                $hasCapability = false;
+            } else {
+                Processes::mwExec("$iptables -L -n 2>/dev/null", $output, $returnCode);
+                $hasCapability = ($returnCode === 0);
+            }
+
+            // Log detection result for LXC debugging
+            if (self::isLxc()) {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    'LXC iptables capability: ' . ($hasCapability ? 'available' : 'unavailable (CAP_NET_ADMIN missing?)'),
+                    LOG_INFO
+                );
+            }
+        }
+
+        return $hasCapability;
+    }
+
+    /**
+     * Check if the system is running on ARM64 architecture
+     *
+     * @return bool True if running on ARM64/aarch64, false otherwise
+     */
+    public static function isARM64(): bool
+    {
+        $pbxEnvDetect = '/sbin/pbx-env-detect';
+
+        if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            $archOutput = [];
+            Processes::mwExec("$pbxEnvDetect --arch 2>/dev/null", $archOutput);
+            $arch = trim(implode('', $archOutput));
+
+            return $arch === 'aarch64';
+        }
+
+        // Fallback: check uname
+        $uname = Util::which('uname');
+        $unameOutput = [];
+        Processes::mwExec("$uname -m", $unameOutput);
+        $arch = trim(implode('', $unameOutput));
+
+        return in_array($arch, ['aarch64', 'arm64'], true);
+    }
+
+    /**
+     * Check if the system is running on AMD64/x86_64 architecture
+     *
+     * @return bool True if running on AMD64/x86_64, false otherwise
+     */
+    public static function isAMD64(): bool
+    {
+        $pbxEnvDetect = '/sbin/pbx-env-detect';
+
+        if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            $archOutput = [];
+            Processes::mwExec("$pbxEnvDetect --arch 2>/dev/null", $archOutput);
+            $arch = trim(implode('', $archOutput));
+
+            return $arch === 'x86_64';
+        }
+
+        // Fallback: check uname
+        $uname = Util::which('uname');
+        $unameOutput = [];
+        Processes::mwExec("$uname -m", $unameOutput);
+        $arch = trim(implode('', $unameOutput));
+
+        return in_array($arch, ['x86_64', 'amd64'], true);
+    }
+
+    /**
+     * Check if the system is running in LXC container
+     *
+     * LXC (Linux Containers) are system containers that behave like lightweight VMs.
+     * Unlike Docker, LXC containers can manage their own networking and firewall.
+     *
+     * Detection methods:
+     * 1. Primary: Check 'container' environment variable (set by LXC runtime)
+     * 2. Fallback: Read /proc/1/environ for container=lxc (when env not inherited)
+     *
+     * @return bool True if running in LXC, false otherwise
+     */
+    public static function isLxc(): bool
+    {
+        // Check container environment variable (set by LXC runtime)
+        if (getenv('container') === self::LXC_CONTAINER_ENV_VALUE) {
+            return true;
+        }
+
+        // Fallback: check init process environment
+        // Needed when PHP process doesn't inherit the container env var
+        $environ = @file_get_contents('/proc/1/environ');
+        if ($environ !== false && strpos($environ, 'container=' . self::LXC_CONTAINER_ENV_VALUE) !== false) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the board type from /etc/miko-board file
+     *
+     * Returns the hardware board identifier (e.g., 'opi', 'rpi', 'generic').
+     * The file is created during system build and contains a single line with the board type.
+     *
+     * @return string Board type string, or 'unknown' if the file does not exist
+     */
+    public static function getBoardType(): string
+    {
+        $boardFile = '/etc/miko-board';
+        if (file_exists($boardFile)) {
+            $board = trim(file_get_contents($boardFile));
+            $board = substr($board, 0, 64);
+            if ($board !== '' && preg_match('/^[a-zA-Z0-9._-]+$/', $board)) {
+                return $board;
+            }
+        }
+
+        return 'unknown';
+    }
+
+    /**
+     * Get the CPU architecture identifier
+     *
+     * @return string 'arm64' or 'amd64'
+     */
+    public static function getArchitecture(): string
+    {
+        return self::isARM64() ? 'arm64' : 'amd64';
+    }
+
+    /**
+     * Get the environment type identifier
+     *
+     * @return string 'docker', 'lxc', or 'bare'
+     */
+    public static function getEnvironmentType(): string
+    {
+        if (self::isDocker()) {
+            return 'docker';
+        }
+        if (self::isLxc()) {
+            return 'lxc';
+        }
+
+        return 'bare';
+    }
+
+    /**
+     * Get platform identification parameters for release server requests
+     *
+     * Returns an array with ARCH, TYPE, and BOARD keys suitable for
+     * merging into HTTP request payloads to releases.mikopbx.com.
+     *
+     * @return array{ARCH: string, TYPE: string, BOARD: string}
+     */
+    private static ?array $platformInfoCache = null;
+
+    public static function getPlatformInfo(): array
+    {
+        if (self::$platformInfoCache === null) {
+            self::$platformInfoCache = [
+                'ARCH' => self::getArchitecture(),
+                'TYPE' => self::getEnvironmentType(),
+                'BOARD' => self::getBoardType(),
+            ];
+        }
+
+        return self::$platformInfoCache;
     }
 }

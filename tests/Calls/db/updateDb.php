@@ -1,15 +1,27 @@
 #!/usr/bin/php
 <?php
 require_once 'Globals.php';
-$dbUpdater = new \MikoPBX\Core\System\Upgrade\UpdateDatabase();
-$dbUpdater->updateDatabaseStructure();
-\MikoPBX\Core\System\PBX::sipReload();
-\MikoPBX\Core\System\PBX::dialplanReload();
-\MikoPBX\Core\System\PBX::managerReload();
-\MikoPBX\Core\System\PBX::modulesReload();
-\MikoPBX\Core\System\PBX::featuresReload();
-\MikoPBX\Core\System\PBX::voicemailReload();
-\MikoPBX\Core\System\PBX::coreReload();
+use MikoPBX\Core\Asterisk\Configs\AsteriskConf;
+use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
+use MikoPBX\Core\Asterisk\Configs\FeaturesConf;
+use MikoPBX\Core\Asterisk\Configs\IndicationConf;
+use MikoPBX\Core\Asterisk\Configs\ManagerConf;
+use MikoPBX\Core\Asterisk\Configs\ModulesConf;
+use MikoPBX\Core\Asterisk\Configs\SIPConf;
+use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
+use MikoPBX\Core\System\Upgrade\UpdateDatabase;
+use MikoPBX\Core\System\Util;
 
-$cmd = \MikoPBX\Core\System\Util::which('pbx-console');
+$dbUpdater = new UpdateDatabase();
+$dbUpdater->updateDatabaseStructure();
+SIPConf::reload();;
+ExtensionsConf::reload();
+ManagerConf::reload();
+ModulesConf::reload();
+FeaturesConf::reload();
+VoiceMailConf::reload();
+AsteriskConf::reload();
+IndicationConf::reload();
+
+$cmd = Util::which('pbx-console');
 shell_exec("$cmd services restart-all");

@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\PasswordService;
 use Phalcon\Di\Injectable;
 
 /**
@@ -46,12 +46,29 @@ class CheckSIPPasswords extends Injectable
             'conditions' => 'weakSecret="0"'
         ];
 
-        $sipRecordsToCheck = SIP::find($parameters);
-        foreach ($sipRecordsToCheck as $sipRecord) {
-            if (Util::isSimplePassword($sipRecord->secret)) {
-                $sipRecord->assign(['weakSecret' => '2']); // Weak password
-            } else {
-                $sipRecord->assign(['weakSecret' => '1']); // OK, it is a strong password
+        $sipRecordsToCheck = Sip::find($parameters);
+        
+        if ($sipRecordsToCheck->count() > 0) {
+            // Collect all passwords for batch checking
+            $passwords = [];
+            $recordMap = [];
+            
+            foreach ($sipRecordsToCheck as $index => $sipRecord) {
+                $passwords[$index] = $sipRecord->secret;
+                $recordMap[$index] = $sipRecord;
+            }
+            
+            // Check passwords individually
+            foreach ($passwords as $index => $password) {
+                $isInDictionary = PasswordService::checkDictionary($password);
+
+                $sipRecord = $recordMap[$index];
+                if ($isInDictionary) {
+                    $sipRecord->assign(['weakSecret' => '2']); // Weak password
+                } else {
+                    $sipRecord->assign(['weakSecret' => '1']); // OK, it is a strong password
+                }
+                $sipRecord->save();
             }
         }
 
@@ -86,7 +103,7 @@ class CheckSIPPasswords extends Injectable
         $queryResult = $this->di->get('modelsManager')->createBuilder($parameters)->getQuery()->execute();
 
         foreach ($queryResult as $user) {
-            $key = "{$user->username} <{$user->number}>";
+            $key = "$user->username <$user->number>";
             $messages['warning'][] =
                 [
                     'messageTpl' => 'adv_SipPasswordWeak',

@@ -10,25 +10,19 @@
         "acceptInsecureCerts": true,
         "fixSessionCapabilities": true,
         "remoteFiles": true,
-        "seleniumVersion": "4.0.0",
         "browserName": "Chrome",
-        "browserstack": {
-            "networkLogs": true,
-            "networkLogsOptions": {
-                "captureContent": true
-            },
-            "console": "verbose",
-            "local": false,
-            "debug": true,
-            "webdriver": {
+        "browserstack.webdriver": {
                     "timeout_options": {
                       "timeout": 15000,
                        "retry_attempts": 3
                     },
                     "keep_alive": true,
                     "start_process": false
-                  }
-        },
+                  },
+        "browserstack.debug": false,
+        "browserstack.local": false,
+        "browserstack.console": "verbose",
+        "browserstack.networkLogs": true,
         "browserstack.chrome": {
             "extends": "browserstack",
             "desiredCapabilities": {
@@ -40,13 +34,13 @@
         }
     },
     "MIKO_LICENSE_KEY": "",
+    "SSH_RSA_KEYS_SET": "",
     "environments": [
         {
             "browser": "chrome",
             "browserVersion": "latest",
             "chromeOptions": {
                 "args": [
-                    "incognito",
                     "--start-maximized",
                     "--no-sandbox"
                 ],

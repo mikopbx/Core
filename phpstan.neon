@@ -1,0 +1,28 @@
+parameters:
+    level: 0
+    paths:
+        - src
+    excludePaths:
+        - src/AdminCabinet/assets/js/vendor/*
+        - tests
+    parallel:
+        jobSize: 20
+        processTimeout: 300.0
+    editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'
+    tmpDir: %currentWorkingDirectory%/build/phpstan
+    ignoreErrors:
+        -
+            message: '#Path in require_once\(\) "Globals\.php" is not a file or it does not exist#'
+            path: '*'
+        -
+            message: '#Argument of an invalid type Phalcon#'
+            path: '*'
+        -
+            message: '#Strict comparison using === between#'
+            path: '*'
+        -
+            message: '#Else branch is unreachable#'
+            path: '*'
+        -
+            message: '#Expression on left side of#'
+            path: '*'

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,10 +22,10 @@ declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Providers;
 
-
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Mvc\View;
+
 use function MikoPBX\Common\Config\appPath;
 
 /**
@@ -34,7 +35,7 @@ use function MikoPBX\Common\Config\appPath;
  */
 class ViewProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'view';
+    public const string SERVICE_NAME = 'view';
 
     /**
      * Register view service provider

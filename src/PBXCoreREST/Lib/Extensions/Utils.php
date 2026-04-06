@@ -20,7 +20,6 @@
 namespace MikoPBX\PBXCoreREST\Lib\Extensions;
 
 use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
 
@@ -49,7 +48,7 @@ class Utils extends Injectable
         foreach ($numbers as $number) {
             $result[$number] = [
                 'number' => $number,
-                'represent' => self::getPhoneRepresent($number)->data,
+                'represent' => self::getPhoneRepresent($number)->data[0] ?? $number,
             ];
         }
         $res->data = $result;
@@ -76,7 +75,7 @@ class Utils extends Injectable
             $parameters = [
                 'conditions' => 'number LIKE :SearchPhrase1:',
                 'bind' => [
-                    'SearchPhrase1' => "%{$seekNumber}",
+                    'SearchPhrase1' => "%$seekNumber",
                 ],
             ];
         } else {

@@ -1,6 +1,8 @@
-<div class="ui error message" id="form-error-messages"></div>
+{% set idSuffix = formId is defined and formId is not empty ? '-' ~ formId : '' %}
 
-<input type="hidden" name="dirrty" id="dirrty"/>
+<div class="ui error message" id="form-error-messages{{ idSuffix }}"></div>
+
+<input type="hidden" name="dirrty" id="dirrty{{ idSuffix }}"/>
 
 {% if  indexurl is not empty %}
     {{ link_to(indexurl, "<i class='list icon'></i>"~t._('bt_BackToList'), "class": "ui labeled large icon button", "id":"back-to-list-button") }}
@@ -10,11 +12,11 @@
     {% if submitMode is not empty %}
         <input type="hidden" name="submitMode" value="{{ submitMode }}"/>
         <div class="ui positive right floated buttons {{ class }}">
-            <div class="ui large left labeled icon button" id="submitbutton">
+            <div class="ui large left labeled icon button" id="submitbutton{{ idSuffix }}">
                 <i class="save icon"></i>
                 {{ t._('bt_'~submitMode) }}
             </div>
-            <div class="ui floating dropdown icon large button" id="dropdownSubmit">
+            <div class="ui floating dropdown icon large button" id="dropdownSubmit{{ idSuffix }}">
                 <i class="dropdown icon"></i>
                 <div class="menu">
                     <div class="item" data-value="SaveSettings"><i class="icons"><i
@@ -27,7 +29,7 @@
             </div>
         </div>
     {% else %}
-        <div class="ui left labeled icon large positive right floated button prevent-word-wrap {{ class }}" id="submitbutton" data-value="save">
+        <div class="ui left labeled icon large positive right floated button prevent-word-wrap {{ class }}" id="submitbutton{{ idSuffix }}" data-value="save">
             {% if submitBtnText is empty %}
                 <i class="save icon"></i>
                 {{ t._('bt_SaveSettings') }}

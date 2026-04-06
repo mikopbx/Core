@@ -16,8 +16,8 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Extensions, Form,
- InputMaskPatterns, avatar, extensionStatusLoopWorker */
+/* global globalRootUrl, globalTranslate, ExtensionsAPI, EmployeesAPI, Form,
+ InputMaskPatterns, avatar, ExtensionModifyStatusMonitor, ClipboardJS, PasswordWidget, UserMessage, ACLHelper */
 
 
 /**
@@ -36,9 +36,14 @@ const extension = {
     $fwd_forwarding: $('#fwd_forwarding'),
     $fwd_forwardingonbusy: $('#fwd_forwardingonbusy'),
     $fwd_forwardingonunavailable: $('#fwd_forwardingonunavailable'),
-    $qualify: $('#qualify'),
-    $qualify_freq: $('#qualify-freq'),
     $email: $('#user_email'),
+    $user_username: $('#user_username'),
+    
+    /**
+     * Password widget instance.
+     * @type {Object}
+     */
+    passwordWidget: null,
 
     /**
      * jQuery object for the form.
@@ -52,6 +57,11 @@ const extension = {
      */
     $tabMenuItems: $('#extensions-menu .item'),
 
+
+    /**
+     * String for the forwarding select.
+     * @type {string}
+     */
     forwardingSelect: '#extensions-form .forwarding-select',
 
     /**
@@ -122,15 +132,9 @@ const extension = {
                     prompt: globalTranslate.ex_ValidateSecretWeak,
                 },
                 {
-                    type: 'notRegExp',
-                    value: /[A-z]/,
-                    prompt: globalTranslate.ex_PasswordNoLowSimvol
-                },
-                {
-                    type: 'notRegExp',
-                    value: /\d/,
-                    prompt: globalTranslate.ex_PasswordNoNumbers
-                },
+                    type: 'passwordStrength',
+                    prompt: globalTranslate.ex_ValidatePasswordTooWeak
+                }
             ],
         },
         fwd_ringlength: {
@@ -181,110 +185,97 @@ const extension = {
      * Initializes the extension form and its interactions.
      */
     initialize() {
-        // Set default values for email, mobile number, and extension number
-        extension.defaultEmail = extension.$email.inputmask('unmaskedvalue');
-        extension.defaultMobileNumber = extension.$mobile_number.inputmask('unmaskedvalue');
-        extension.defaultNumber = extension.$number.inputmask('unmaskedvalue');
+        // Default values will be set after REST API data is loaded
+        // Initialize with empty values since forms are empty until API responds
+        extension.defaultEmail = '';
+        extension.defaultMobileNumber = '';
+        extension.defaultNumber = '';
 
         // Initialize tab menu items, accordions, and dropdown menus
-        extension.$tabMenuItems.tab();
+        extension.$tabMenuItems.tab({
+            history: true,
+            historyType: 'hash',
+        });
         $('#extensions-form .ui.accordion').accordion();
-        $('#extensions-form .dropdown').dropdown();
 
-        // Handle the change event of the "qualify" checkbox
-        extension.$qualify.checkbox({
-            onChange() {
-                if (extension.$qualify.checkbox('is checked')) {
-                    extension.$qualify_freq.removeClass('disabled');
-                } else {
-                    extension.$qualify_freq.addClass('disabled');
-                }
-            },
-        });
-
-        // Initialize the dropdown menu for forwarding select
-        $(extension.forwardingSelect).dropdown(Extensions.getDropdownSettingsWithEmpty());
-
-        // Generate a new SIP password if the field is empty
-        if (extension.$sip_secret.val() === '') extension.generateNewSipPassword();
-
-        // Attach a click event listener to the "generate new password" button
-        $('#generate-new-password').on('click', (e) => {
-            e.preventDefault();
-            extension.generateNewSipPassword();
-            extension.$sip_secret.trigger('change');
-        });
-
-        // Set the "oncomplete" event handler for the extension number input
-        let timeoutNumberId;
-        extension.$number.inputmask('option', {
-            oncomplete: ()=>{
-                    // Clear the previous timer, if it exists
-                    if (timeoutNumberId) {
-                        clearTimeout(timeoutNumberId);
-                    }
-                    // Set a new timer with a delay of 0.5 seconds
-                    timeoutNumberId = setTimeout(() => {
-                        extension.cbOnCompleteNumber();
-                    }, 500);
-            }
-        });
-        extension.$number.on('paste', function() {
-            extension.cbOnCompleteNumber();
-        });
-
-        // Set up the input masks for the mobile number input
-        const maskList = $.masksSort(InputMaskPatterns, ['#'], /[0-9]|#/, 'mask');
-        extension.$mobile_number.inputmasks({
-            inputmask: {
-                definitions: {
-                    '#': {
-                        validator: '[0-9]',
-                        cardinality: 1,
-                    },
-                },
-                oncleared: extension.cbOnClearedMobileNumber,
-                oncomplete: extension.cbOnCompleteMobileNumber,
-                onBeforePaste: extension.cbOnMobileNumberBeforePaste,
-                showMaskOnHover: false,
-            },
-            match: /[0-9]/,
-            replace: '9',
-            list: maskList,
-            listKey: 'mask',
-        });
-
-        // Set up the input mask for the email input
-        let timeoutEmailId;
-        extension.$email.inputmask('email', {
-            oncomplete: ()=>{
-                // Clear the previous timer, if it exists
-                if (timeoutEmailId) {
-                    clearTimeout(timeoutEmailId);
-                }
-                // Set a new timer with a delay of 0.5 seconds
-                timeoutEmailId = setTimeout(() => {
-                    extension.cbOnCompleteEmail();
-                }, 500);
-            },
-        });
-        extension.$email.on('paste', function() {
-            extension.cbOnCompleteEmail();
-        });
-
-        // Attach a focusout event listener to the mobile number input
-        extension.$mobile_number.focusout(function (e) {
-            let phone = $(e.target).val().replace(/[^0-9]/g, "");
-            if (phone === '') {
-                $(e.target).val('');
-            }
-        });
-
-        // Initialize popups for question icons
+        // Initialize popups for question icons and buttons
         $("i.question").popup();
+        $('.popuped').popup();
+
+        // Prevent browser password manager for generated passwords
+        extension.$sip_secret.on('focus', function() {
+            $(this).attr('autocomplete', 'new-password');
+        });
 
         // Initialize the extension form
         extension.initializeForm();
+
+        // Add event handler for username change to update page title
+        extension.$user_username.on('input', function() {
+            const currentNumber = extension.$number.inputmask ? extension.$number.inputmask('unmaskedvalue') : extension.$number.val();
+            extension.updatePageHeader($(this).val(), currentNumber);
+        });
+
+        // Also update header when extension number changes
+        extension.$number.on('input', function() {
+            const currentUsername = extension.$user_username.val();
+            const currentNumber = $(this).inputmask ? $(this).inputmask('unmaskedvalue') : $(this).val();
+            extension.updatePageHeader(currentUsername, currentNumber);
+        });
+
+        // Initialize tooltips for advanced settings using unified system
+        if (typeof ExtensionTooltipManager !== 'undefined') {
+            ExtensionTooltipManager.initialize();
+        } else if (typeof extensionTooltipManager !== 'undefined') {
+            // Fallback to old name if new class not available
+            extensionTooltipManager.initialize();
+        }
+
+        // Apply ACL permissions to UI elements
+        extension.applyACLPermissions();
+
+        // Load extension data via REST API
+        extension.loadExtensionData();
+    },
+
+    /**
+     * Apply ACL permissions to UI elements
+     * Shows/hides buttons and form elements based on user permissions
+     */
+    applyACLPermissions() {
+        // Check if ACL Helper is available
+        if (typeof ACLHelper === 'undefined') {
+            console.warn('ACLHelper is not available, skipping ACL checks');
+            return;
+        }
+
+        // Apply permissions using ACLHelper
+        ACLHelper.applyPermissions({
+            save: {
+                show: '#submitbutton, #dropdownSubmit',
+                enable: '#extensions-form'
+            },
+            delete: {
+                show: '.delete-button, .two-steps-delete'
+            }
+        });
+
+        // Additional checks for specific actions
+        if (!ACLHelper.canSave()) {
+            // Disable form if user cannot save
+            $('#extensions-form input, #extensions-form select, #extensions-form textarea')
+                .prop('readonly', true)
+                .addClass('disabled');
+
+            // Disable password widget
+            if (extension.passwordWidget) {
+                extension.passwordWidget.disable();
+            }
+
+            // Show info message
+            const infoMessage = globalTranslate.ex_NoPermissionToModify || 'You do not have permission to modify extensions';
+            UserMessage.showInformation(infoMessage);
+        }
     },
     /**
      * Callback after paste mobile number from clipboard
@@ -292,6 +283,7 @@ const extension = {
     cbOnMobileNumberBeforePaste(pastedValue) {
         return pastedValue;
     },
+
     /**
      * It is executed after a phone number has been entered completely.
      * It serves to check if there are any conflicts with existing phone numbers.
@@ -306,7 +298,7 @@ const extension = {
         // Call the `checkAvailability` function on `Extensions` object
         // to check whether the entered phone number is already in use.
         // Parameters: default number, new number, class name of error message (number), user id
-        Extensions.checkAvailability(extension.defaultNumber, newNumber, 'number', userId);
+        ExtensionsAPI.checkAvailability(extension.defaultNumber, newNumber, 'number', userId);
     },
     /**
      * It is executed once an email address has been completely entered.
@@ -336,7 +328,7 @@ const extension = {
         const userId = extension.$formObj.form('get value', 'user_id');
 
         // Dynamic check to see if the selected mobile number is available
-        Extensions.checkAvailability(extension.defaultMobileNumber, newMobileNumber, 'mobile-number', userId);
+        ExtensionsAPI.checkAvailability(extension.defaultMobileNumber, newMobileNumber, 'mobile-number', userId);
 
         // Refill the mobile dialstring if the new mobile number is different than the default or if the mobile dialstring is empty
         if (newMobileNumber !== extension.defaultMobileNumber
@@ -350,36 +342,34 @@ const extension = {
             // Get the user's username from the form
             const userName = extension.$formObj.form('get value', 'user_username');
 
-            // Check if call forwarding was set to the default mobile number
-            if (extension.$formObj.form('get value', 'fwd_forwarding') === extension.defaultMobileNumber) {
-                // If the ring length is empty, set it to 45
-                if (extension.$formObj.form('get value', 'fwd_ringlength').length === 0) {
+            // Update forwarding fields that match the old mobile number
+            const currentFwdForwarding = extension.$formObj.form('get value', 'fwd_forwarding');
+            const currentFwdOnBusy = extension.$formObj.form('get value', 'fwd_forwardingonbusy');
+            const currentFwdOnUnavailable = extension.$formObj.form('get value', 'fwd_forwardingonunavailable');
+            
+            // Update fwd_forwarding if it matches old mobile number (including empty)
+            if (currentFwdForwarding === extension.defaultMobileNumber) {
+
+                // Set ring length if empty
+                if (extension.$formObj.form('get value', 'fwd_ringlength').length === 0
+                    || extension.$formObj.form('get value', 'fwd_ringlength')==="0") {
                     extension.$formObj.form('set value', 'fwd_ringlength', 45);
                 }
 
-                // Set the new forwarding mobile number in the dropdown and form
-                extension.$fwd_forwarding
-                    .dropdown('set text', `${userName} <${newMobileNumber}>`)
-                    .dropdown('set value', newMobileNumber);
-                extension.$formObj.form('set value', 'fwd_forwarding', newMobileNumber);
+                // Use ExtensionSelector API for V5.0 unified pattern
+                ExtensionSelector.setValue('fwd_forwarding', newMobileNumber, `${userName} <${newMobileNumber}>`);
             }
 
-            // Check if call forwarding on busy was set to the default mobile number
-            if (extension.$formObj.form('get value', 'fwd_forwardingonbusy') === extension.defaultMobileNumber) {
-                // Set the new forwarding mobile number in the dropdown and form
-                extension.$fwd_forwardingonbusy
-                    .dropdown('set text', `${userName} <${newMobileNumber}>`)
-                    .dropdown('set value', newMobileNumber);
-                extension.$formObj.form('set value', 'fwd_forwardingonbusy', newMobileNumber);
+            // Update fwd_forwardingonbusy if it matches old mobile number (including empty)
+            if (currentFwdOnBusy === extension.defaultMobileNumber) {
+                // Use ExtensionSelector API for V5.0 unified pattern
+                ExtensionSelector.setValue('fwd_forwardingonbusy', newMobileNumber, `${userName} <${newMobileNumber}>`);
             }
 
-            // Check if call forwarding on unavailable was set to the default mobile number
-            if (extension.$formObj.form('get value', 'fwd_forwardingonunavailable') === extension.defaultMobileNumber) {
-                // Set the new forwarding mobile number in the dropdown and form
-                extension.$fwd_forwardingonunavailable
-                    .dropdown('set text', `${userName} <${newMobileNumber}>`)
-                    .dropdown('set value', newMobileNumber);
-                extension.$formObj.form('set value', 'fwd_forwardingonunavailable', newMobileNumber);
+            // Update fwd_forwardingonunavailable if it matches old mobile number (including empty)
+            if (currentFwdOnUnavailable === extension.defaultMobileNumber) {
+                // Use ExtensionSelector API for V5.0 unified pattern
+                ExtensionSelector.setValue('fwd_forwardingonunavailable', newMobileNumber, `${userName} <${newMobileNumber}>`);
             }
         }
         // Set the new mobile number as the default
@@ -390,58 +380,205 @@ const extension = {
      * Called when the mobile phone number is cleared in the employee card.
      */
     cbOnClearedMobileNumber() {
+        // Check current forwarding values before clearing
+        const currentFwdForwarding = extension.$formObj.form('get value', 'fwd_forwarding');
+        const currentFwdOnBusy = extension.$formObj.form('get value', 'fwd_forwardingonbusy');
+        const currentFwdOnUnavailable = extension.$formObj.form('get value', 'fwd_forwardingonunavailable');
+        
         // Clear the 'mobile_dialstring' and 'mobile_number' fields in the form
         extension.$formObj.form('set value', 'mobile_dialstring', '');
         extension.$formObj.form('set value', 'mobile_number', '');
 
         // Check if forwarding was set to the mobile number
-        if (extension.$formObj.form('get value', 'fwd_forwarding') === extension.defaultMobileNumber) {
-            // If so, clear the 'fwd_ringlength' field and set 'fwd_forwarding' to -1
+        if (currentFwdForwarding === extension.defaultMobileNumber) {
+            // If so, clear the 'fwd_ringlength' field and clear forwarding dropdown
             extension.$formObj.form('set value', 'fwd_ringlength', 0);
-            extension.$fwd_forwarding.dropdown('set text', '-').dropdown('set value', -1);
-            extension.$formObj.form('set value', 'fwd_forwarding', -1);
+            // Use ExtensionSelector API for V5.0 unified pattern
+            ExtensionSelector.clear('fwd_forwarding');
         }
 
         // Check if forwarding when busy was set to the mobile number
-        if (extension.$formObj.form('get value', 'fwd_forwardingonbusy') === extension.defaultMobileNumber) {
-            // If so, set 'fwd_forwardingonbusy' to -1
-            extension.$fwd_forwardingonbusy.dropdown('set text', '-').dropdown('set value', -1);
-            extension.$formObj.form('set value', 'fwd_forwardingonbusy', -1);
+        if (currentFwdOnBusy === extension.defaultMobileNumber) {
+            // Use ExtensionSelector API for V5.0 unified pattern
+            ExtensionSelector.clear('fwd_forwardingonbusy');
         }
 
         // Check if forwarding when unavailable was set to the mobile number
-        if (extension.$formObj.form('get value', 'fwd_forwardingonunavailable') === extension.defaultMobileNumber) {
-            // If so, set 'fwd_forwardingonunavailable' to -1
-            extension.$fwd_forwardingonunavailable.dropdown('set text', '-').dropdown('set value', -1);
-            extension.$formObj.form('set value', 'fwd_forwardingonunavailable', -1);
+        if (currentFwdOnUnavailable === extension.defaultMobileNumber) {
+            // Use ExtensionSelector API for V5.0 unified pattern
+            ExtensionSelector.clear('fwd_forwardingonunavailable');
         }
 
         // Clear the default mobile number
         extension.defaultMobileNumber = '';
     },
 
-    /**
-     * Generate a new SIP password.
-     * The generated password will consist of 32 characters from a set of predefined characters.
-     */
-    generateNewSipPassword() {
-        // Predefined characters to be used in the password
-        const chars = 'abcdef1234567890';
+    initializeInputMasks(){
+        // Set up number input mask with correct length from API
+        let timeoutNumberId;
 
-        // Initialize the password string
-        let pass = '';
-
-        // Generate a 32 characters long password
-        for (let x = 0; x < 32; x += 1) {
-            // Select a random character from the predefined characters
-            const i = Math.floor(Math.random() * chars.length);
-
-            // Add the selected character to the password
-            pass += chars.charAt(i);
+        // Always initialize mask based on extensions_length from API
+        // No defaults in JavaScript - value must come from API
+        if (extension.extensionsLength) {
+            const extensionsLength = parseInt(extension.extensionsLength, 10);
+            if (extensionsLength >= 2 && extensionsLength <= 10) {
+                // Initialize mask with correct length and oncomplete handler
+                extension.$number.inputmask({
+                    mask: `9{2,${extensionsLength}}`,
+                    placeholder: '_',
+                    oncomplete: () => {
+                        // Clear the previous timer, if it exists
+                        if (timeoutNumberId) {
+                            clearTimeout(timeoutNumberId);
+                        }
+                        // Set a new timer with a delay of 0.5 seconds
+                        timeoutNumberId = setTimeout(() => {
+                            extension.cbOnCompleteNumber();
+                        }, 500);
+                    }
+                });
+            }
         }
 
-        // Set the generated password as the SIP password
-        extension.$sip_secret.val(pass);
+        extension.$number.on('paste', function() {
+            extension.cbOnCompleteNumber();
+        });
+
+        // Set up the input masks for the mobile number input
+        const maskList = $.masksSort(InputMaskPatterns, ['#'], /[0-9]|#/, 'mask');
+        extension.$mobile_number.inputmasks({
+            inputmask: {
+                definitions: {
+                    '#': {
+                        validator: '[0-9]',
+                        cardinality: 1,
+                    },
+                },
+                oncleared: extension.cbOnClearedMobileNumber,
+                oncomplete: extension.cbOnCompleteMobileNumber,
+                showMaskOnHover: false,
+                // Remove onBeforePaste to prevent conflicts with our custom handler
+            },
+            match: /[0-9]/,
+            replace: '9',
+            list: maskList,
+            listKey: 'mask',
+        });
+
+        // Add handler for programmatic value changes (for tests and automation)
+        const originalVal = $.fn.val;
+        extension.$mobile_number.off('val.override').on('val.override', function() {
+            const $this = $(this);
+            const args = arguments;
+
+            // If setting a value programmatically
+            if (args.length > 0 && typeof args[0] === 'string') {
+                const newValue = args[0];
+
+                // Temporarily remove mask
+                if ($this.data('inputmask')) {
+                    $this.inputmask('remove');
+                }
+
+                // Set the value
+                originalVal.apply(this, args);
+
+                // Reapply mask after a short delay
+                setTimeout(() => {
+                    $this.trigger('input');
+                }, 10);
+            }
+        });
+
+        extension.$mobile_number.on('paste', function(e) {
+            e.preventDefault(); // Prevent default paste behavior
+
+            // Get pasted data from clipboard
+            let pastedData = '';
+
+            // Try to get data from clipboard event
+            if (e.originalEvent && e.originalEvent.clipboardData && e.originalEvent.clipboardData.getData) {
+                pastedData = e.originalEvent.clipboardData.getData('text');
+            } else if (e.clipboardData && e.clipboardData.getData) {
+                // Direct clipboardData access
+                pastedData = e.clipboardData.getData('text');
+            } else if (window.clipboardData && window.clipboardData.getData) {
+                // For IE
+                pastedData = window.clipboardData.getData('text');
+            }
+
+            // If we couldn't get clipboard data, don't process
+            if (!pastedData) {
+                return;
+            }
+
+            // Process the pasted data
+            let processedData;
+            if (pastedData.charAt(0) === '+') {
+                // Keep '+' and remove other non-digit characters
+                processedData = '+' + pastedData.slice(1).replace(/\D/g, '');
+            } else {
+                // Remove all non-digit characters
+                processedData = pastedData.replace(/\D/g, '');
+            }
+
+            // Insert cleaned data into the input field
+            const input = this;
+            const start = input.selectionStart || 0;
+            const end = input.selectionEnd || 0;
+            const currentValue = $(input).val() || '';
+            const newValue = currentValue.substring(0, start) + processedData + currentValue.substring(end);
+
+            // Temporarily remove mask, set value, then reapply
+            extension.$mobile_number.inputmask("remove");
+            extension.$mobile_number.val(newValue);
+
+            // Use setTimeout to ensure the value is set before reapplying mask
+            setTimeout(() => {
+                // Trigger input event to reapply the mask
+                $(input).trigger('input');
+            }, 10);
+        });
+
+        // Set up the input mask for the email input
+        let timeoutEmailId;
+        extension.$email.inputmask('email', {
+            oncomplete: ()=>{
+                // Clear the previous timer, if it exists
+                if (timeoutEmailId) {
+                    clearTimeout(timeoutEmailId);
+                }
+                // Set a new timer with a delay of 0.5 seconds
+                timeoutEmailId = setTimeout(() => {
+                    extension.cbOnCompleteEmail();
+                }, 500);
+            },
+        });
+        extension.$email.on('paste', function() {
+            extension.cbOnCompleteEmail();
+        });
+
+        //Attach a focusout event listener to the mobile number input
+        extension.$mobile_number.focusout(function (e) {
+            let phone = $(e.target).val().replace(/[^0-9]/g, "");
+            if (phone === '') {
+                $(e.target).val('');
+            }
+        });
+    },
+
+
+
+    /**
+     * Generate a new SIP password.
+     * Uses the PasswordWidget button like in AMI manager.
+     */
+    generateNewSipPassword() {
+        // Trigger password generation through the widget button (like in AMI)
+        const $generateBtn = extension.$sip_secret.closest('.ui.input').find('button.generate-password');
+        if ($generateBtn.length > 0) {
+            $generateBtn.trigger('click');
+        }
     },
 
     /**
@@ -451,19 +588,14 @@ const extension = {
      */
     cbBeforeSendForm(settings) {
         const result = settings;
-        result.data = extension.$formObj.form('get values');
         result.data.mobile_number = extension.$mobile_number.inputmask('unmaskedvalue');
 
-        extension.$formObj.find('.checkbox').each((index, obj) => {
-            const input = $(obj).find('input');
-            const id = input.attr('id');
-            if ($(obj).checkbox('is checked')) {
-                result.data[id]='1';
-            } else {
-                result.data[id]='0';
-            }
-        });
+        // Remove form control fields that shouldn't be sent to server
+        delete result.data.dirrty;
+        delete result.data.submitMode;
+        delete result.data.user_id; // Remove user_id field to prevent validation issues
 
+        // Determine if this is a new record (check if we have a real ID)
         return result;
     },
     /**
@@ -471,35 +603,335 @@ const extension = {
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
-        if (PbxApi.successTest(response)){
-            if (response.data.id!==undefined
-                && extension.$formObj.form('get value','id') !== response.data.id){
-                window.location=`${globalRootUrl}extensions/modify/${response.data.id}`
+        if (response.result) {
+            // Store the current extension number as the default number from response
+            if (response.data && response.data.number) {
+                extension.defaultNumber = response.data.number;
+                // Update the phone representation with the new default number
+                ExtensionsAPI.updatePhoneRepresent(extension.defaultNumber);
             }
-
-            // Store the current extension number as the default number
-            extension.defaultNumber = extension.$number.val();
-
-            // Update the phone representation with the new default number
-            Extensions.updatePhoneRepresent(extension.defaultNumber);
-
-            Form.initialize();
+            // Form.js will handle all redirect logic based on submitMode and response.reload from server
         } else {
             UserMessage.showMultiString(response.messages);
         }
-
     },
     /**
-     * Initialize the form with custom settings
+     * Initialize the form with custom settings for REST API integration
      */
     initializeForm() {
+        // Configure Form.js for REST API
         Form.$formObj = extension.$formObj;
-        Form.url = `${Config.pbxUrl}/pbxcore/api/extensions/saveRecord`; // Form submission URL
-        Form.validateRules = extension.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = extension.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = extension.cbAfterSendForm; // Callback after form is sent
+        Form.url = '#'; // Not used with REST API
+        Form.validateRules = extension.validateRules;
+        Form.cbBeforeSendForm = extension.cbBeforeSendForm;
+        Form.cbAfterSendForm = extension.cbAfterSendForm;
+        
+        // Configure REST API integration
+        Form.apiSettings.enabled = true;
+        Form.apiSettings.apiObject = EmployeesAPI;
+        Form.apiSettings.saveMethod = 'saveRecord';
+        
+        // Enable automatic checkbox to boolean conversion
+        // This ensures checkbox values are sent as true/false instead of "on"/undefined
+        Form.convertCheckboxesToBool = true;
+        
+        // Important settings for correct save modes operation
+        Form.afterSubmitIndexUrl = `${globalRootUrl}extensions/index/`;
+        Form.afterSubmitModifyUrl = `${globalRootUrl}extensions/modify/`;
+        
         Form.initialize();
     },
+    /**
+     * V5.0 Architecture: Load extension data via REST API (similar to IVR menu pattern)
+     */
+    loadExtensionData() {
+        const recordId = extension.getRecordId();
+
+        // Use 'new' as ID for new records to get default values from server
+        const apiId = recordId === '' ? 'new' : recordId;
+
+        // Hide monitoring elements for new employees
+        if (apiId === 'new') {
+            $('#status').hide(); // Hide status label
+            $('a[data-tab="status"]').hide(); // Hide monitoring tab
+        }
+
+        EmployeesAPI.getRecord(apiId, (response) => {
+            if (response.result) {
+                // Mark as new record if we don't have an ID (following CallQueues pattern)
+                if (!recordId || recordId === '') {
+                    response.data._isNew = true;
+                }
+
+                extension.populateFormWithData(response.data);
+                // Store default values after data load
+                extension.defaultNumber = response.data.number || '';
+                extension.defaultEmail = response.data.user_email || '';
+                extension.defaultMobileNumber = response.data.mobile_number || '';
+            } else {
+                // For new records, still initialize avatar even if API fails
+                if (recordId === '') {
+                    avatar.initialize();
+                }
+                UserMessage.showError(response.messages?.error || 'Failed to load extension data');
+            }
+        });
+    },
+    
+    /**
+     * Get record ID from URL (like IVR menu)
+     */
+    getRecordId() {
+        const urlParts = window.location.pathname.split('/');
+        const modifyIndex = urlParts.indexOf('modify');
+        if (modifyIndex !== -1 && urlParts[modifyIndex + 1]) {
+            return urlParts[modifyIndex + 1];
+        }
+        return '';
+    },
+    
+    /**
+     * Populate form with data from REST API (V5.0 clean data architecture)
+     */
+    populateFormWithData(data) {
+        // Store extensions_length from API for use in initializeInputMasks
+        // This value MUST come from API - no defaults in JS
+        extension.extensionsLength = data.extensions_length;
+
+        // Use unified silent population approach (same as IVR menu)
+        Form.populateFormSilently(data, {
+            afterPopulate: (formData) => {
+                // Initialize dropdowns with V5.0 specialized classes - complete automation
+                extension.initializeDropdownsWithCleanData(formData);
+
+                // Update extension number in any UI elements if needed
+                if (formData.number) {
+                    $('#extension-number-display').text(formData.number);
+                }
+                
+                // Re-initialize avatar component after form population
+                avatar.initialize();
+                
+                // Set avatar URL dynamically from API data
+                avatar.setAvatarUrl(formData.user_avatar);
+
+                // Initialize extension modify status monitor after form is populated
+                if (typeof ExtensionModifyStatusMonitor !== 'undefined') {
+                    ExtensionModifyStatusMonitor.initialize();
+                }
+
+                // Update page header with employee name and extension number
+                extension.updatePageHeader(formData.user_username, formData.number);
+
+                // Initialize password widget after data is loaded
+                extension.initializePasswordWidget(formData);
+
+                // Initialize input masks after data is loaded
+                extension.initializeInputMasks();
+            }
+        });
+        
+        // NOTE: Form.initializeDirrity() will be called automatically by Form.populateFormSilently()
+    },
+    
+    /**
+     * Initialize dropdowns with clean data - V5.0 Architecture
+     * Uses specialized classes with complete automation (no onChange callbacks needed)
+     */
+    initializeDropdownsWithCleanData(data) {
+        // Destroy existing forwarding dropdown instances before re-initialization
+        // This ensures proper re-creation when form data is reloaded (e.g., after save)
+        const forwardingFields = ['fwd_forwarding', 'fwd_forwardingonbusy', 'fwd_forwardingonunavailable'];
+        forwardingFields.forEach(fieldName => {
+            if (ExtensionSelector.instances.has(fieldName)) {
+                ExtensionSelector.destroy(fieldName);
+                const $dropdown = $(`#${fieldName}-dropdown`);
+                if ($dropdown.length) {
+                    $dropdown.remove();
+                }
+            }
+        });
+        
+        // Extension dropdowns with current extension exclusion - V5.0 specialized class
+        ExtensionSelector.init('fwd_forwarding', {
+            type: 'routing',
+            excludeExtensions: [data.number],
+            includeEmpty: true,
+            data: data
+        });
+        
+        ExtensionSelector.init('fwd_forwardingonbusy', {
+            type: 'routing', 
+            excludeExtensions: [data.number],
+            includeEmpty: true,
+            data: data
+        });
+        
+        ExtensionSelector.init('fwd_forwardingonunavailable', {
+            type: 'routing',
+            excludeExtensions: [data.number],
+            includeEmpty: true,
+            data: data
+        });
+        
+        // Network filter dropdown with API data - V5.0 base class
+        
+        DynamicDropdownBuilder.buildDropdown('sip_networkfilterid', data, {
+            apiUrl: `/pbxcore/api/v3/network-filters:getForSelect?categories[]=SIP`,
+            placeholder: globalTranslate.ex_SelectNetworkFilter,
+            cache: false
+        });
+        
+        // V5.0 architecture with empty form should not have HTML entities issues
+        
+        // Handle extension number changes - rebuild dropdowns with new exclusion
+        extension.$number.off('change.dropdown').on('change.dropdown', () => {
+            const newExtension = extension.$formObj.form('get value', 'number');
+            
+            if (newExtension) {
+                // Update exclusions for forwarding dropdowns
+                extension.updateForwardingDropdownsExclusion(newExtension);
+            }
+        });
+
+        extension.initializeDtmfModeDropdown();
+        extension.initializeTransportDropdown();
+    },
+    
+    /**
+     * Update forwarding dropdowns when extension number changes
+     */
+    updateForwardingDropdownsExclusion(newExtension) {
+        const forwardingFields = ['fwd_forwarding', 'fwd_forwardingonbusy', 'fwd_forwardingonunavailable'];
+        
+        forwardingFields.forEach(fieldName => {
+            const currentValue = $(`#${fieldName}`).val();
+            const $dropdown = $(`#${fieldName}-dropdown`);
+            const currentText = $dropdown.find('.text').not('.default').html() || '';
+            
+            // Destroy existing instance first
+            ExtensionSelector.destroy(fieldName);
+            
+            // Remove old dropdown DOM element
+            $dropdown.remove();
+            
+            // Create new data object with current value for reinitializing
+            const refreshData = {};
+            refreshData[fieldName] = currentValue;
+            refreshData[`${fieldName}_represent`] = currentText;
+            
+            // Reinitialize with new exclusion
+            ExtensionSelector.init(fieldName, {
+                type: 'routing',
+                excludeExtensions: [newExtension],
+                includeEmpty: true,
+                data: refreshData
+            });
+        });
+    },
+    
+    /**
+     * Initialize password widget after form data is loaded
+     * This ensures validation only happens after password is populated from REST API
+     * @param {Object} formData - The form data loaded from REST API
+     */
+    initializePasswordWidget(formData) {
+        if (!extension.$sip_secret.length) {
+            return;
+        }
+
+        // Hide any legacy buttons if they exist
+        $('.clipboard').hide();
+        $('#show-hide-password').hide();
+
+        // Determine if this is a new extension (no ID) or existing one
+        const isNewExtension = !formData.id || formData.id === '';
+
+        const widget = PasswordWidget.init(extension.$sip_secret, {
+            validation: PasswordWidget.VALIDATION.SOFT,  // Soft validation - show warnings but allow submission
+            generateButton: true,         // Show generate button
+            showPasswordButton: true,     // Show show/hide password toggle
+            clipboardButton: true,        // Show copy to clipboard button
+            showStrengthBar: true,        // Show password strength bar
+            showWarnings: true,           // Show validation warnings
+            validateOnInput: true,        // Validate as user types
+            checkOnLoad: true, // Always validate if password field has value
+            minScore: 30,                 // SIP passwords have lower minimum score requirement
+            generateLength: 20,           // 20 chars max for Grandstream GDMS compatibility
+            includeSpecial: false,        // Exclude special characters for SIP compatibility
+            onGenerate: (password) => {
+                // Trigger form change to enable save button
+                Form.dataChanged();
+            },
+            onValidate: (isValid, score, messages) => {
+                // Optional: Handle validation results if needed
+                // The widget will handle visual feedback automatically
+            }
+        });
+        
+        // Store widget instance for later use
+        extension.passwordWidget = widget;
+        
+        // For new extensions only: auto-generate password if field is empty
+        if (isNewExtension && extension.$sip_secret.val() === '') {
+            setTimeout(() => {
+                const $generateBtn = extension.$sip_secret.closest('.ui.input').find('button.generate-password');
+                if ($generateBtn.length > 0) {
+                    $generateBtn.trigger('click');
+                }
+            }, 100);
+        }
+    },
+    /**
+     * Initialize DTMF mode dropdown with standard Fomantic UI (PHP-rendered)
+     */
+    initializeDtmfModeDropdown() {
+            const $dropdown = $('#sip_dtmfmode-dropdown');
+            if ($dropdown.length === 0) return;
+            
+            // Initialize with standard Fomantic UI - it's already rendered by PHP
+            $dropdown.dropdown({
+                onChange: () => Form.dataChanged()
+            });
+     },
+        
+    /**
+     * Initialize transport protocol dropdown with standard Fomantic UI (PHP-rendered)
+     */
+    initializeTransportDropdown() {
+        const $dropdown = $('#sip_transport-dropdown');
+        if ($dropdown.length === 0) return;
+
+        // Initialize with standard Fomantic UI - it's already rendered by PHP
+        $dropdown.dropdown({
+            onChange: () => Form.dataChanged()
+        });
+    },
+
+    /**
+     * Update page header with employee name and extension number
+     * @param {string} employeeName - Name of the employee
+     * @param {string} extensionNumber - Extension number (optional)
+     */
+    updatePageHeader(employeeName, extensionNumber) {
+        let headerText;
+
+        if (employeeName && employeeName.trim() !== '') {
+            // Existing employee with name
+            headerText = '<i class="user outline icon"></i> ' + employeeName;
+
+            // Add extension number if available
+            if (extensionNumber && extensionNumber.trim() !== '') {
+                headerText += ' &lt;' + extensionNumber + '&gt;';
+            }
+        } else {
+            // New employee or no name yet
+            headerText = globalTranslate.ex_CreateNewExtension;
+        }
+
+        // Update main header content
+        $('h1 .content').html(headerText);
+    }
 };
 
 
@@ -534,11 +966,18 @@ $.fn.form.settings.rules.extensionRule = () => {
 $.fn.form.settings.rules.existRule = (value, parameter) => $(`#${parameter}`).hasClass('hidden');
 
 
+$.fn.form.settings.rules.passwordStrength = () => {
+    // Check if password widget exists and password meets minimum score
+    if (extension.passwordWidget) {
+        const state = PasswordWidget.getState(extension.passwordWidget);
+        return state && state.score >= 30; // Minimum score for extensions
+    }
+    return true; // Pass validation if widget not initialized
+};
+
 /**
  *  Initialize Employee form on document ready
  */
 $(document).ready(() => {
     extension.initialize();
-    avatar.initialize();
-    extensionStatusLoopWorker.initialize();
 });

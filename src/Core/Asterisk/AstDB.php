@@ -19,10 +19,10 @@
 
 namespace MikoPBX\Core\Asterisk;
 
+use Phalcon\Di\Injectable;
 use MikoPBX\Core\System\{Util};
-use Phalcon\Di;
 
-class AstDB extends Di\Injectable
+class AstDB extends Injectable
 {
     private AsteriskManager $am;
 
@@ -43,7 +43,7 @@ class AstDB extends Di\Injectable
      *
      * @return bool True if the operation is successful, false otherwise.
      */
-    public function databasePut($family, $key, $value): bool
+    public function databasePut(string $family, string $key, string $value): bool
     {
         $result = false;
         if ($this->am->loggedIn() ) {
@@ -61,7 +61,7 @@ class AstDB extends Di\Injectable
      *
      * @return bool True if the operation is successful, false otherwise.
      */
-    private function databasePutAmi($family, $key, $value): bool
+    private function databasePutAmi(string $family, string $key, string $value): bool
     {
         $result   = false;
         $res_data = $this->am->DBPut($family, $key, $value);

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -28,8 +29,8 @@ use Phalcon\Mvc\Model\Relation;
  */
 class SoundFiles extends ModelsBase
 {
-    public const CATEGORY_MOH = 'moh';
-    public const CATEGORY_CUSTOM = 'custom';
+    public const string CATEGORY_MOH = 'moh';
+    public const string CATEGORY_CUSTOM = 'custom';
 
     /**
      * @Primary
@@ -59,6 +60,12 @@ class SoundFiles extends ModelsBase
      */
     public ?string $category = '';
 
+    /**
+     * Optional description of the sound file
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $description = '';
 
     /**
      * Initialize the model.
@@ -72,7 +79,7 @@ class SoundFiles extends ModelsBase
             CallQueues::class,
             'periodic_announce_sound_id',
             [
-                "alias" => "CallQueues",
+                "alias" => "CallQueuesPeriodicAnnounce",
                 "foreignKey" => [
                     "allowNulls" => true,
                     "action" => Relation::ACTION_RESTRICT,
@@ -84,7 +91,7 @@ class SoundFiles extends ModelsBase
             CallQueues::class,
             'moh_sound_id',
             [
-                "alias" => "CallQueues",
+                "alias" => "CallQueuesMoh",
                 "foreignKey" => [
                     "allowNulls" => true,
                     "action" => Relation::ACTION_RESTRICT,
@@ -116,5 +123,48 @@ class SoundFiles extends ModelsBase
                 ],
             ]
         );
+    }
+
+    /**
+     * Delete physical sound file and related converted files after record deletion
+     */
+    public function afterDelete(): void
+    {
+        if (empty($this->path)) {
+            return;
+        }
+
+        // Delete the main file
+        if (file_exists($this->path)) {
+            unlink($this->path);
+        }
+
+        // Remove extension to get base filename
+        $pathinfo = pathinfo($this->path);
+        $baseFilename = $pathinfo['dirname'] . '/' . $pathinfo['filename'];
+
+        // Delete all related converted files
+        $extensions = ['wav', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln'];
+        foreach ($extensions as $ext) {
+            $convertedFile = "$baseFilename.$ext";
+            if ($convertedFile !== $this->path && file_exists($convertedFile)) {
+                unlink($convertedFile);
+            }
+        }
+
+        // Delete temporary files that may remain after interrupted conversion
+        $tempSuffixes = ['.tmp.wav', '.normalized.wav'];
+        foreach ($tempSuffixes as $suffix) {
+            $tempFile = "$baseFilename$suffix";
+            if (file_exists($tempFile)) {
+                unlink($tempFile);
+            }
+        }
+
+        // Delete sound conversion metadata cache file
+        $metadataFile = $pathinfo['dirname'] . '/.' . $pathinfo['filename'] . '.sound-meta';
+        if (file_exists($metadataFile)) {
+            unlink($metadataFile);
+        }
     }
 }

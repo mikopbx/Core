@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,15 +20,17 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
-use Phalcon\Config;
+use MikoPBX\Core\System\Util;
+use Phalcon\Config\Config;
 use Phalcon\Di\Injectable;
 
 /**
@@ -45,16 +48,23 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     private string $stageMessage = '';
 
     /**
+     * Time when the current stage started (microtime)
+     *
+     * @var float
+     */
+    private float $stageStartTime = 0.0;
+
+    /**
      * Easy way to get or set the PbxSettings values
      *
-     * @var \MikoPBX\Core\System\MikoPBXConfig
+     * @var MikoPBXConfig
      */
     protected MikoPBXConfig $mikoPBXConfig;
 
     /**
      * Access to the /etc/inc/mikopbx-settings.json values
      *
-     * @var \Phalcon\Config
+     * @var Config
      */
     protected Config $config;
 
@@ -73,6 +83,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     protected array $messages;
 
     /**
+     * @deprecated Use PbxSettings::getValueByKey instead
      * Array of PbxSettings values
      */
     protected array $generalSettings;
@@ -85,12 +96,9 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
         $this->config = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME);
         $this->booting = false;
         $this->mikoPBXConfig = new MikoPBXConfig();
-        $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
+        $this->generalSettings = PbxSettings::getAllPbxSettings();
         $this->messages = [];
-
-        if ($this->getDI()->has(RegistryProvider::SERVICE_NAME)){
-            $this->booting = $this->getDI()->getShared(RegistryProvider::SERVICE_NAME)->booting === true;
-        }
+        $this->booting = System::isBooting();
     }
 
     /**
@@ -185,9 +193,9 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     protected function echoGenerateConfig(): void
     {
         if ($this->booting === true && !empty($this->description)) {
-            $this->stageMessage = "   |- generate config {$this->description}...";
+            $this->stageMessage = "   |- $this->description...";
             SystemMessages::echoWithSyslog($this->stageMessage);  // Output the message and log it in syslog
-            SystemMessages::echoToTeletype($this->stageMessage); // Output to TTY
+            $this->stageStartTime = microtime(true);
         }
     }
 
@@ -214,10 +222,15 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     protected function echoDone(): void
     {
         if ($this->booting === true && !empty($this->description)) {
-            // Output the completion message
-            SystemMessages::echoResult($this->stageMessage);
-            SystemMessages::teletypeEchoResult($this->stageMessage);
+            // Calculate elapsed time
+            $elapsedTime = 0.0;
+            if ($this->stageStartTime > 0) {
+                $elapsedTime = round(microtime(true) - $this->stageStartTime, 2);
+            }
+            // Output the completion message with timing
+            SystemMessages::echoResultMsgWithTime($this->stageMessage, SystemMessages::RESULT_DONE, $elapsedTime);
             $this->stageMessage = '';
+            $this->stageStartTime = 0.0;
         }
     }
 
@@ -552,4 +565,15 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
         return $result;
     }
 
+    /**
+     * Saves the configuration to the file.
+     *
+     * @param string $config The configuration to save.
+     * @param string $filename The filename to save the configuration to.
+     */
+    protected function saveConfig(string $config, string $filename): void
+    {
+        $directory = Directories::getDir(Directories::AST_ETC_DIR);
+        Util::fileWriteContent($directory . '/' . $filename, $config);
+    }
 }

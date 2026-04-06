@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,11 +20,9 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
-
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
-
 
 /**
  * Class InsertDataToDB
@@ -33,14 +32,14 @@ use MikoPBX\Core\System\Util;
  */
 class InsertDataToDB
 {
-
     /*
      * Execute the insertion of data into the database.
      *
      * @param array $data The data to be inserted.
+     * @param string $channel Channel data, additional filter.
      * @return void
      */
-    public static function execute($data): void
+    public static function execute($data, string $channel = ''): void
     {
         if (empty($data['UNIQUEID'])) {
             SystemMessages::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data), LOG_DEBUG);
@@ -48,16 +47,19 @@ class InsertDataToDB
         }
 
         $is_new = false;
+        $filter = [
+            "UNIQUEID=:id: AND linkedid=:linkedid:",
+            'bind' => [
+                'id' => $data['UNIQUEID'],
+                'linkedid' => $data['linkedid']
+            ],
+        ];
+        if($channel !== ''){
+            $filter[0].=  " AND (src_chan = :chan: OR dst_chan = :chan: )";
+            $filter['bind']['chan'] = $channel;
+        }
         /** @var CallDetailRecordsTmp $m_data */
-        $m_data = CallDetailRecordsTmp::findFirst(
-            [
-                "UNIQUEID=:id: AND linkedid=:linkedid:",
-                'bind' => [
-                    'id' => $data['UNIQUEID'],
-                    'linkedid' => $data['linkedid']
-                ],
-            ]
-        );
+        $m_data = CallDetailRecordsTmp::findFirst($filter);
         if ($m_data === null) {
             // Create a new call record.
             $m_data = new CallDetailRecordsTmp();
@@ -77,7 +79,7 @@ class InsertDataToDB
      * @param array $data The data to be checked
      * @return bool
      */
-    private static function isOriginateDial($data): bool
+    private static function isOriginateDial(array $data): bool
     {
         return isset($data['IS_ORGNT']) && $data['IS_ORGNT'] !== false && $data['action'] === 'dial';
     }
@@ -90,7 +92,7 @@ class InsertDataToDB
      *
      * @return void
      */
-    private static function processingOriginateData($data, $m_data): void
+    private static function processingOriginateData(array $data, CallDetailRecordsTmp $m_data): void
     {
         if (empty($m_data->endtime)) {
             // If it's an originate dial, it can come twice.
@@ -132,7 +134,7 @@ class InsertDataToDB
      * @param bool $is_new Indicates whether it's a new record.
      * @return void
      */
-    private static function fillCdrData(CallDetailRecordsTmp $m_data, $data, bool $is_new): void
+    private static function fillCdrData(CallDetailRecordsTmp $m_data, array $data, bool $is_new): void
     {
         $f_list = $m_data->toArray();
 
@@ -153,5 +155,4 @@ class InsertDataToDB
             SystemMessages::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
         }
     }
-
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,7 +22,6 @@ declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Providers;
 
-
 use MikoPBX\AdminCabinet\Library\Elements;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
@@ -33,7 +33,7 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class ElementsProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'elements';
+    public const string SERVICE_NAME = 'elements';
 
     /**
      * Register elements service provider

@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\Core\Providers;
 
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
@@ -35,7 +35,7 @@ use function MikoPBX\Common\Config\appPath;
  */
 class AsteriskConfModulesProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'asteriskConfModules';
+    public const string SERVICE_NAME = 'asteriskConfModules';
 
     /**
      * Registers asteriskConfModules service provider
@@ -50,13 +50,13 @@ class AsteriskConfModulesProvider implements ServiceProviderInterface
             function ($methodName=''){
                 $arrObjects = [];
                 $configsDir = appPath('src/Core/Asterisk/Configs');
-                $modulesFiles = glob("{$configsDir}/*.php", GLOB_NOSORT);
+                $modulesFiles = glob("$configsDir/*.php", GLOB_NOSORT);
                 foreach ($modulesFiles as $file) {
                     $className        = pathinfo($file)['filename'];
                     if ($className === 'CoreConfigClass'){
                         continue;
                     }
-                    $fullClassName = "\\MikoPBX\\Core\\Asterisk\\Configs\\{$className}";
+                    $fullClassName = "\\MikoPBX\\Core\\Asterisk\\Configs\\$className";
                     if (class_exists($fullClassName)) {
                         $object = new $fullClassName();
                         if ($object instanceof AsteriskConfigClass){

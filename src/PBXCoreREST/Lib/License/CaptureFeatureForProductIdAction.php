@@ -21,7 +21,8 @@ namespace MikoPBX\PBXCoreREST\Lib\License;
 
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * Class CaptureFeatureForProductIdAction
@@ -29,7 +30,7 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\License
  */
-class CaptureFeatureForProductIdAction extends \Phalcon\Di\Injectable
+class CaptureFeatureForProductIdAction extends Injectable
 {
     /**
      * Tries to capture feature.
@@ -43,11 +44,11 @@ class CaptureFeatureForProductIdAction extends \Phalcon\Di\Injectable
 
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $licFeatureId = $data['licFeatureId'];
-        $licProductId = $data['licProductId'];
+        $licFeatureId = $data['licFeatureId'] ?? $data['featureId'] ?? null;
+        $licProductId = $data['licProductId'] ?? $data['productId'] ?? null;
 
-        if (!isset($licFeatureId, $licProductId)) {
-            $res->messages[] = 'The feature id or product id is empty.';
+        if (empty($licFeatureId) || empty($licProductId)) {
+            $res->messages['error'][] = 'The feature id or product id is empty.';
             return $res;
         }
         $res->success = true;

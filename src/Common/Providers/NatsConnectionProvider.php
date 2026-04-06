@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,7 +22,6 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-
 use Nats\Connection as NatsConnection;
 use Nats\ConnectionOptions as NatsConnectionOptions;
 use Phalcon\Di\DiInterface;
@@ -34,7 +34,7 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class NatsConnectionProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'natsConnection';
+    public const string SERVICE_NAME = 'natsConnection';
 
     /**
      * Registers natsConnection service provider

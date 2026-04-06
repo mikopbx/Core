@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -71,8 +72,8 @@ class OutWorkTimesRouts extends ModelsBase
             ]
         );
 
-        // Establish a hasOne relationship with the IncomingRoutingTable model
-        $this->hasOne(
+        // Establish a belongsTo relationship with the IncomingRoutingTable model
+        $this->belongsTo(
             'routId',
             IncomingRoutingTable::class,
             'id',
@@ -86,4 +87,3 @@ class OutWorkTimesRouts extends ModelsBase
         );
     }
 }
-

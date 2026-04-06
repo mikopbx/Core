@@ -19,18 +19,20 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Sysinfo;
 
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
- * Returns hypervisor information
+ * Returns hypervisor and environment information
  *
  * @package MikoPBX\PBXCoreREST\Lib\Sysinfo
  */
-class GetHypervisorInfoAction extends \Phalcon\Di\Injectable
+class GetHypervisorInfoAction extends Injectable
 {
     /**
-     * Returns hypervisor information
+     * Returns hypervisor information, environment type, and CPU architecture
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -39,15 +41,45 @@ class GetHypervisorInfoAction extends \Phalcon\Di\Injectable
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
 
+        // WHY: Always return 200 OK, even when no hypervisor detected
+        // Bare metal systems (no virtualization) are a valid state, not an error
+        $res->httpCode = 200;
+
+        // Get hypervisor information from dmesg
         $dmesg = Util::which('dmesg');
         $grep = Util::which('grep');
         $awk = Util::which('awk');
-        $result = shell_exec("$dmesg | $grep 'Hypervisor detected' | $awk -F 'Hypervisor detected: ' '{ print $2}'");
-        $result = trim($result);
-        $res->data =['Hypervisor'=>$result];
-        if ($result){
+        $hypervisorOutput = [];
+        Processes::mwExec("$dmesg | $grep 'Hypervisor detected' | $awk -F 'Hypervisor detected: ' '{ print $2}'", $hypervisorOutput);
+        $hypervisor = trim(implode(PHP_EOL, $hypervisorOutput));
+
+        // Get environment type and architecture using pbx-env-detect
+        $pbxEnvDetect = '/sbin/pbx-env-detect';
+        $envType = '';
+        $cpuArch = '';
+
+        if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            $envOutput = [];
+            Processes::mwExec("$pbxEnvDetect --type 2>/dev/null", $envOutput);
+            $envType = trim(implode('', $envOutput));
+
+            $archOutput = [];
+            Processes::mwExec("$pbxEnvDetect --arch 2>/dev/null", $archOutput);
+            $cpuArch = trim(implode('', $archOutput));
+        }
+
+        // Build response data
+        $res->data = [
+            'Hypervisor' => $hypervisor,
+            'environment_type' => $envType,
+            'cpu_architecture' => $cpuArch,
+        ];
+
+        // Consider success if we have at least one piece of information
+        if ($hypervisor || $envType || $cpuArch) {
             $res->success = true;
         }
+
         return $res;
     }
 

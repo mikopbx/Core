@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -22,9 +23,9 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Config;
 
 use MikoPBX\Common\Providers\ConfigProvider;
-use Phalcon\Di;
-use Phalcon\Loader;
-use function MikoPBX\Common\Config\appPath;
+use MikoPBX\Core\System\Directories;
+use Phalcon\Di\Di;
+use Phalcon\Autoload\Loader;
 
 class ClassLoader
 {
@@ -37,9 +38,8 @@ class ClassLoader
         require appPath('vendor/autoload.php');
 
         $di = Di::getDefault();
-        if ($di !== null) {
-            $di->register(new ConfigProvider());
-        }
+        $di?->register(new ConfigProvider());
+
 
         $libraryFiles = [
             // Sentry - cloud error logger
@@ -51,18 +51,17 @@ class ClassLoader
             appPath('vendor/autoload.php'),
         ];
 
-        $modulesDir = $di->getShared('config')->path('core.modulesDir');
+        $modulesDir = Directories::getDir(Directories::CORE_MODULES_DIR);
         $nameSpaces = [
             'Modules' => $modulesDir,
         ];
 
         $loader = new Loader();
-        $loader->registerFiles($libraryFiles);
+        $loader->setFiles($libraryFiles);
 
-        $loader->registerNamespaces($nameSpaces);
+        $loader->setNamespaces($nameSpaces);
         $loader->register();
     }
-
 }
 
 ClassLoader::init();

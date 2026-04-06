@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -28,12 +29,29 @@ use Phalcon\Mvc\Model\Relation;
  */
 class IncomingRoutingTable extends ModelsBase
 {
-    public const ACTION_EXTENSION = 'extension';
-    public const ACTION_HANGUP    = 'hangup';
-    public const ACTION_BUSY      = 'busy';
-    public const ACTION_DID       = 'did2user';
-    public const ACTION_VOICEMAIL = 'voicemail';
-    public const ACTION_PLAYBACK  = 'playback';
+    public const string ACTION_EXTENSION = 'extension';
+    
+    /**
+     * @deprecated Since 2024.12.12 - Use extension='hangup' with ACTION_EXTENSION instead
+     */
+    public const string ACTION_HANGUP    = 'hangup';
+    
+    /**
+     * @deprecated Since 2024.12.12 - Use extension='busy' with ACTION_EXTENSION instead  
+     */
+    public const string ACTION_BUSY      = 'busy';
+    
+    /**
+     * @deprecated Since 2024.12.12 - Use extension='did2user' with ACTION_EXTENSION instead
+     */
+    public const string ACTION_DID       = 'did2user';
+    
+    /**
+     * @deprecated Since 2024.12.12 - Use extension='voicemail' with ACTION_EXTENSION instead
+     */
+    public const string ACTION_VOICEMAIL = 'voicemail';
+    
+    public const string ACTION_PLAYBACK  = 'playback';
 
     /**
      * @Primary
@@ -83,7 +101,7 @@ class IncomingRoutingTable extends ModelsBase
      *
      * @Column(type="integer", nullable=true)
      */
-    public ?string $timeout = '30';
+    public ?string $timeout = '300';
 
     /**
      * Action to be taken for the routing rule
@@ -120,7 +138,8 @@ class IncomingRoutingTable extends ModelsBase
             $defaultRule = new self();
             $defaultRule->id = 1;
         }
-        $defaultRule->action = self::ACTION_BUSY;
+        $defaultRule->action = self::ACTION_EXTENSION;
+        $defaultRule->extension = 'busy';
         $defaultRule->priority = 9999;
         $defaultRule->rulename = 'default action';
         $defaultRule->save();
@@ -160,7 +179,7 @@ class IncomingRoutingTable extends ModelsBase
             ]
         );
 
-        $this->hasOne(
+        $this->hasMany(
             'id',
             OutWorkTimesRouts::class,
             'routId',
@@ -178,14 +197,12 @@ class IncomingRoutingTable extends ModelsBase
      * Returns the maximum priority value of +1
      * @return int
      */
-    public static function getMaxNewPriority():int
+    public static function getMaxNewPriority(): int
     {
         $parameters = [
             'column' => 'priority',
-            'conditions'=>'id!=1'
+            'conditions' => 'id!=1'
         ];
-        return (int)IncomingRoutingTable::maximum($parameters)+1;
+        return (int)IncomingRoutingTable::maximum($parameters) + 1;
     }
-
 }
-

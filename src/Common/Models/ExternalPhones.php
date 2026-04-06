@@ -20,8 +20,8 @@
 namespace MikoPBX\Common\Models;
 
 use Phalcon\Mvc\Model\Relation;
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class ExternalPhones
@@ -132,10 +132,10 @@ class ExternalPhones extends ModelsBase
      *
      * @return string The generated unique id.
      */
-    public static function generateUniqueID($alias=''):string
+    public static function generateUniqueID(string $alias = ''):string
     {
         if (empty($alias)){
-            $alias = Extensions::TYPE_EXTERNAL.'-';
+            $alias = Extensions::PREFIX_EXTERNAL;
         }
         return parent::generateUniqueID($alias);
     }

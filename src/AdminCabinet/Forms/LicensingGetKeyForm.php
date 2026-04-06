@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -35,10 +36,53 @@ class LicensingGetKeyForm extends BaseForm
     {
         parent::initialize($entity, $options);
 
-        $this->add(new Text('companyname'));
-        $this->add(new Text('email'));
-        $this->add(new Text('contact'));
-        $this->add(new Numeric('inn'));
-        $this->add(new Text('telefone'));
+        // Company name field
+        $companyName = new Text('companyname');
+        $companyName->setAttributes([
+            'placeholder' => $this->translation->_('lic_CompanyNameExample'),
+            'class' => 'form-control'
+        ]);
+        $this->add($companyName);
+
+        // Email field
+        $email = new Text('email');
+        $email->setAttributes([
+            'placeholder' => $this->translation->_('lic_EmailExample'),
+            'class' => 'form-control',
+            'type' => 'email',
+            'autocomplete' => 'off',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
+        ]);
+        $this->add($email);
+
+        // Contact person field
+        $contact = new Text('contact');
+        $contact->setAttributes([
+            'placeholder' => $this->translation->_('lic_ContactExample'),
+            'class' => 'form-control'
+        ]);
+        $this->add($contact);
+
+        // INN field
+        $inn = new Numeric('inn');
+        $inn->setAttributes([
+            'placeholder' => $this->translation->_('lic_InnExample'),
+            'class' => 'form-control',
+            'minlength' => '10',
+            'maxlength' => '12'
+        ]);
+        $this->add($inn);
+
+        // Phone field
+        $phone = new Text('telefone');
+        $phone->setAttributes([
+            'placeholder' => $this->translation->_('lic_PhoneExample'),
+            'class' => 'form-control',
+            'autocomplete' => 'off',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
+        ]);
+        $this->add($phone);
     }
 }

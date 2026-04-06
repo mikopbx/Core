@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,21 +16,26 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, PbxApi, clockWorker */
-
+/* global globalRootUrl, globalTranslate, Form, TimeSettingsAPI, clockWorker, UserMessage, DynamicDropdownBuilder */
 
 /**
- * Object for managing time settings.
+ * Object for managing time settings using REST API
  *
- * @module timeSettings
+ * @module timeSettingsModify
  */
-const timeSettings = {
+const timeSettingsModify = {
 
     /**
      * jQuery object for the form.
      * @type {jQuery}
      */
     $formObj: $('#time-settings-form'),
+
+    /**
+     * Original settings data from API
+     * @type {object}
+     */
+    originalData: {},
 
     /**
      * Validation rules for the form fields before submission.
@@ -54,31 +59,109 @@ const timeSettings = {
      * Initializes the time settings.
      */
     initialize() {
-        $('#PBXTimezone').dropdown({
-            fullTextSearch: true,
-        });
+        // Load current settings from API
+        timeSettingsModify.loadSettings();
 
+        // Initialize UI elements
         $('#time-settings-form .checkbox').checkbox({
             onChange() {
-                timeSettings.toggleDisabledFieldClass();
+                timeSettingsModify.toggleDisabledFieldClass();
             },
         });
-        timeSettings.initializeForm();
-        timeSettings.toggleDisabledFieldClass();
+
+        // Initialize clock worker
+        clockWorker.initialize();
+
+        timeSettingsModify.initializeForm();
+    },
+
+    /**
+     * Load settings from REST API
+     */
+    loadSettings() {
+        TimeSettingsAPI.get((response) => {
+            if (response.result === true) {
+                // Store original data
+                timeSettingsModify.originalData = response.data;
+
+                // Populate form with API data
+                timeSettingsModify.populateForm(response.data);
+
+                // Apply UI state (this will start/stop worker as needed)
+                timeSettingsModify.toggleDisabledFieldClass();
+            } else {
+                UserMessage.showMultiString(response.messages);
+            }
+        });
+    },
+
+    /**
+     * Populate form with data from API using unified approach
+     * @param {object} data - Settings data from API
+     */
+    populateForm(data) {
+        // Use unified silent population approach (same as Extensions)
+        Form.populateFormSilently(data, {
+            afterPopulate: (formData) => {
+                // Initialize dropdowns with clean data
+                timeSettingsModify.initializeDropdownsWithCleanData(formData);
+            }
+        });
+    },
+
+    /**
+     * Initialize dropdowns with clean data - following V5.0 Architecture pattern
+     * @param {object} data - Clean data from API
+     */
+    initializeDropdownsWithCleanData(data) {
+        // Build timezone dropdown using DynamicDropdownBuilder with API loading
+        DynamicDropdownBuilder.buildDropdown('PBXTimezone', data, {
+            apiUrl: `/pbxcore/api/v3/time-settings:getAvailableTimezones`,
+            placeholder: globalTranslate.ts_SelectTimezone,
+            additionalClasses: ['search'],
+            cache: true,
+            onResponse: timeSettingsModify.processTimezonesApiResponse
+        });
+    },
+
+    /**
+     * Process API response for timezones dropdown
+     * @param {object} response - API response containing timezones
+     * @returns {object} Formatted response for dropdown
+     */
+    processTimezonesApiResponse(response) {
+        if (response.result && response.data) {
+            return {
+                success: true,
+                results: Object.keys(response.data).map(tzKey => ({
+                    value: tzKey,
+                    text: response.data[tzKey]
+                }))
+            };
+        }
+        return {
+            success: false,
+            results: []
+        };
     },
 
     /**
      * Toggles the disabled field class based on the selected time setting.
      */
     toggleDisabledFieldClass() {
-        if (timeSettings.$formObj.form('get value', 'PBXManualTimeSettings') === 'on') {
-            $('#SetDateTimeBlock').removeClass('disabled');
-            $('#SetNtpServerBlock').addClass('disabled');
+        if (timeSettingsModify.$formObj.form('get value', 'PBXManualTimeSettings') === 'on') {
+            $('#SetDateTimeBlock').show();
+            $('#SetNtpServerBlock').hide();
+            // Reset the touched flag when switching to manual mode
+            // This allows auto-population until user makes their first edit
+            clockWorker.manualFieldTouched = false;
         } else {
-            $('#SetNtpServerBlock').removeClass('disabled');
-            $('#SetDateTimeBlock').addClass('disabled');
-            clockWorker.restartWorker();
+            $('#SetNtpServerBlock').show();
+            $('#SetDateTimeBlock').hide();
+            // Reset touched flag in automatic mode
+            clockWorker.manualFieldTouched = false;
         }
+        // Worker always runs to update the read-only current time display
     },
 
     /**
@@ -88,7 +171,16 @@ const timeSettings = {
      */
     cbBeforeSendForm(settings) {
         const result = settings;
-        result.data = timeSettings.$formObj.form('get values');
+        result.data = timeSettingsModify.$formObj.form('get values');
+
+        // Convert checkbox value to boolean for API
+        result.data.PBXManualTimeSettings = (result.data.PBXManualTimeSettings === 'on');
+
+        // Add user timezone for manual time setting
+        if (result.data.PBXManualTimeSettings === '1' && result.data.ManualDateTime) {
+            result.data.userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
+
         return result;
     },
 
@@ -97,28 +189,38 @@ const timeSettings = {
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
-        if (timeSettings.$formObj.form('get value', 'PBXManualTimeSettings') === 'on') {
-            const manualDate = timeSettings.$formObj.form('get value', 'ManualDateTime');
-            const timestamp = Date.parse(`${manualDate}`) / 1000;
-            const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            PbxApi.UpdateDateTime({timestamp, userTimeZone});
+        if (response.result === true) {
+            // Reload settings to get updated data
+            timeSettingsModify.loadSettings();
+        } else {
+            UserMessage.showMultiString(response.messages);
         }
     },
 
     /**
-     * Initialize the form with custom settings
+     * Initialize the form with REST API integration
      */
     initializeForm() {
-        Form.$formObj = timeSettings.$formObj;
-        Form.url = `${globalRootUrl}time-settings/save`; // Form submission URL
-        Form.validateRules = timeSettings.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = timeSettings.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = timeSettings.cbAfterSendForm; // Callback after form is sent
+        Form.$formObj = timeSettingsModify.$formObj;
+        Form.url = '#'; // Not used with REST API
+        Form.validateRules = timeSettingsModify.validateRules;
+        Form.cbBeforeSendForm = timeSettingsModify.cbBeforeSendForm;
+        Form.cbAfterSendForm = timeSettingsModify.cbAfterSendForm;
+
+        // REST API integration
+        Form.apiSettings.enabled = true;
+        Form.apiSettings.apiObject = TimeSettingsAPI;
+        Form.apiSettings.saveMethod = 'update';
+
+        // Navigation URLs (empty for singleton resource - stay on same page)
+        Form.afterSubmitIndexUrl = '';
+        Form.afterSubmitModifyUrl = globalRootUrl + 'time-settings/modify/';
+
         Form.initialize();
     },
 };
 
 // When the document is ready, initialize the time settings form
 $(document).ready(() => {
-    timeSettings.initialize();
+    timeSettingsModify.initialize();
 });

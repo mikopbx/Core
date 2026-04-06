@@ -23,7 +23,7 @@ namespace MikoPBX\Common\Providers;
 
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Logger;
+use Phalcon\Logger\Logger;
 use Phalcon\Logger\Adapter\Syslog;
 use Phalcon\Logger\Formatter\Line;
 
@@ -34,7 +34,7 @@ use Phalcon\Logger\Formatter\Line;
  */
 class LoggerProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'logger';
+    public const string SERVICE_NAME = 'logger';
 
     /**
      * Register syslog service provider
@@ -52,10 +52,19 @@ class LoggerProvider implements ServiceProviderInterface
         $di->setShared(
             self::SERVICE_NAME,
             function () use ($logLevel, $ident){
+                // Check if we're in a Docker environment or if console output should be suppressed
+                $options = LOG_PID;
+                
+                // Only add LOG_PERROR if we're not in a clean boot environment
+                // This prevents duplicate output during system startup
+                if (!getenv('SUPPRESS_CONSOLE_LOGS') && !file_exists('/tmp/system_boot_start_time')) {
+                    $options |= LOG_PERROR;
+                }
+                
                 $adapter = new Syslog(
                     $ident,
                     [
-                        'option'   => LOG_PID | LOG_PERROR,
+                        'option'   => $options,
                         'facility' => LOG_DAEMON,
                     ]
                 );

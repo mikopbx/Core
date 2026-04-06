@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global moment */
+/* global moment, SystemAPI */
 
 
 /**
@@ -35,11 +35,27 @@ const clockWorker = {
      * @type {object|null}
      */
     options: null,
+    /**
+     * Flag to indicate if worker is running
+     * @type {boolean}
+     */
+    isRunning: false,
+
+    /**
+     * Flag to track if manual field has been modified by user
+     * @type {boolean}
+     */
+    manualFieldTouched: false,
 
     /**
      * Initializes the clock worker.
      */
     initialize() {
+        // Track when user modifies the manual datetime field
+        $('#ManualDateTime').on('change input', () => {
+            clockWorker.manualFieldTouched = true;
+        });
+
         clockWorker.restartWorker();
     },
 
@@ -47,15 +63,29 @@ const clockWorker = {
      * Restarts the clock worker.
      */
     restartWorker() {
-        window.clearTimeout(clockWorker.timeoutHandle);
+        // Stop any existing worker first
+        clockWorker.stopWorker();
+        // Start new worker
+        clockWorker.isRunning = true;
         clockWorker.worker();
+    },
+
+    /**
+     * Stops the clock worker.
+     */
+    stopWorker() {
+        clockWorker.isRunning = false;
+        if (clockWorker.timeOutHandle) {
+            window.clearTimeout(clockWorker.timeOutHandle);
+            clockWorker.timeOutHandle = 0;
+        }
     },
 
     /**
      * Performs the clock worker operations.
      */
     worker() {
-        PbxApi.GetDateTime(clockWorker.cbAfterReceiveDateTimeFromServer);
+        SystemAPI.getDateTime(clockWorker.cbAfterReceiveDateTimeFromServer);
     },
 
     /**
@@ -63,27 +93,40 @@ const clockWorker = {
      * @param {object|boolean} response - The response from the server.
      */
     cbAfterReceiveDateTimeFromServer(response) {
-        const options = {timeZone: timeSettings.$formObj.form('get value', 'PBXTimezone'), timeZoneName: 'short'};
-        if (timeSettings.$formObj.form('get value', 'PBXManualTimeSettings') !== 'on') {
+        const timezone = timeSettingsModify.$formObj.form('get value', 'PBXTimezone');
+        const isManualMode = timeSettingsModify.$formObj.form('get value', 'PBXManualTimeSettings') === 'on';
+
+        // Worker should ALWAYS continue running to update the read-only field
+        if (clockWorker.isRunning) {
             clockWorker.timeoutHandle = window.setTimeout(
                 clockWorker.worker,
                 1000,
             );
-        } else {
-            options.timeZoneName = undefined;
         }
-        if (response !== false) {
 
-            const dateTime = new Date(response.timestamp * 1000);
+        if (response !== false && response.result === true && response.data) {
+            const dateTime = new Date(response.data.timestamp * 1000);
             moment.locale(globalWebAdminLanguage);
-            const m = moment(dateTime,);
-            //timeSettings.$formObj.form('set value', 'ManualDateTime', dateTime.toLocaleString(globalWebAdminLanguage, options));
-            timeSettings.$formObj.form('set value', 'ManualDateTime', m.tz(options.timeZone).format());
+            let m;
+
+            // Format datetime with timezone if available
+            let formattedDateTime;
+            if (typeof moment.tz === 'function' && timezone) {
+                m = moment.tz(dateTime, timezone);
+                // Use consistent format for both fields: YYYY-MM-DD HH:mm:ss
+                formattedDateTime = m.format('YYYY-MM-DD HH:mm:ss');
+            } else {
+                m = moment(dateTime);
+                formattedDateTime = m.format('YYYY-MM-DD HH:mm:ss');
+            }
+
+            // ALWAYS update the read-only current system time display
+            $('#CurrentSystemTime').val(formattedDateTime);
+
+            // Update editable field ONLY in automatic mode OR if user hasn't touched it yet
+            if (!isManualMode || !clockWorker.manualFieldTouched) {
+                timeSettingsModify.$formObj.form('set value', 'ManualDateTime', formattedDateTime);
+            }
         }
     }
 };
-
-// When the document is ready, initialize the time settings worker
-$(document).ready(() => {
-    clockWorker.initialize();
-});

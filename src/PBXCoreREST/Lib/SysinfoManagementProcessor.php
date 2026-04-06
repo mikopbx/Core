@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -59,10 +60,9 @@ class SysinfoManagementProcessor extends Injectable
                 $res = GetDMIInfoAction::main();
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
+                $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
         }
         $res->function = $action;
         return $res;
     }
-
 }

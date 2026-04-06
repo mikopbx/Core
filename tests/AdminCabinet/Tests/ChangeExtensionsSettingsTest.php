@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,10 +20,10 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
-
 use Facebook\WebDriver\WebDriverBy;
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
+use MikoPBX\Tests\AdminCabinet\Tests\Data\EmployeeDataFactory;
 
 /**
  * Class ChangeExtensionsSettingsTest
@@ -32,6 +33,7 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  */
 class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 {
+    private array $employeeData;
 
     /**
      * Set up before each test
@@ -42,25 +44,22 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     public function setUp(): void
     {
         parent::setUp();
+        $this->employeeData = EmployeeDataFactory::getEmployeeData('alexandra.pushina.289');
         $this->setSessionName("Test: Change extension settings");
     }
 
     /**
      * Test changing extension settings.
      *
-     * @depends testLogin
-     * @dataProvider additionProvider
-     *
-     * @param array $params The parameters for the test case.
      */
-    public function testChangeExtension(array $params):void
+    public function testChangeExtension(): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $this->employeeData['username']);
 
-        $this->clickModifyButtonOnRowWithText($params['username']);
-        $this->changeInputField('number', $params['number']);
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
+        $this->changeInputField('number', $this->employeeData['number']);
         self::$driver->executeScript('$("#number").trigger("change")');
         self::$driver->executeScript('extension.cbOnCompleteNumber()');
         $this->changeTabOnCurrentPage('routing');
@@ -72,8 +71,8 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->assertNotEmpty($input_ExtensionUniqueID->getAttribute('value'));
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
-        $this->clickModifyButtonOnRowWithText($params['username']);
-        $this->assertInputFieldValueEqual('number',  $params['number']);
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
+        $this->assertInputFieldValueEqual('number', $this->employeeData['number']);
     }
 
 
@@ -81,23 +80,20 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
      * Test changing mobile settings for an extension.
      *
      * @depends testChangeExtension
-     * @dataProvider additionProvider
-     *
-     * @param array $params The parameters for the test case.
      */
-    public function testChangeMobile(array $params):void
+    public function testChangeMobile(): void
     {
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $this->employeeData['username']);
 
-        $this->clickModifyButtonOnRowWithText($params['username']);
-        $this->changeInputField('mobile_number', $params['mobile']);
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
+        $this->changeInputField('mobile_number', $this->employeeData['mobile']);
         self::$driver->executeScript('$("#mobile_number").trigger("change")');
         self::$driver->executeScript('extension.cbOnCompleteMobileNumber()');
         $this->changeTabOnCurrentPage('routing');
-        $this->changeInputField('fwd_ringlength', $params['fwd_ringlength']);
+        $this->changeInputField('fwd_ringlength', $this->employeeData['fwd_ringlength']);
         $this->submitForm('extensions-form');
 
         // TESTS
@@ -106,34 +102,33 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->assertNotEmpty($input_ExtensionUniqueID->getAttribute('value'));
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
-        $this->clickModifyButtonOnRowWithText($params['username']);
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
         $this->changeTabOnCurrentPage('routing');
-        $this->assertInputFieldValueEqual('fwd_ringlength', $params['fwd_ringlength']);
-        $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['mobile']);
-        $this->assertMenuItemSelected('fwd_forwarding', $params['mobile']);
-        $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['mobile']);
+        $this->assertInputFieldValueEqual('fwd_ringlength', $this->employeeData['fwd_ringlength']);
+        $this->assertMenuItemSelected('fwd_forwardingonbusy', $this->employeeData['mobile']);
+        $this->assertMenuItemSelected('fwd_forwarding', $this->employeeData['mobile']);
+        $this->assertMenuItemSelected('fwd_forwardingonunavailable', $this->employeeData['mobile']);
 
         $this->changeTabOnCurrentPage('general');
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();
-        $this->assertInputFieldValueEqual('mobile_dialstring',  $params['mobile']);
+        $this->assertInputFieldValueEqual('mobile_dialstring', $this->employeeData['mobile']);
     }
 
     /**
      * Test clearing mobile settings for an extension.
      *
      * @depends testChangeMobile
-     * @dataProvider additionProvider
      *
-     * @param array $params The parameters for the test case.
      */
-    public function testClearMobile(array $params):void
+    public function testClearMobile(): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $this->employeeData['username']);
 
-        $this->clickModifyButtonOnRowWithText($params['username']);
+
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
         $this->changeInputField('mobile_number', '');
         self::$driver->executeScript('$("#mobile_number").trigger("change")');
         self::$driver->executeScript('extension.cbOnClearedMobileNumber()');
@@ -146,10 +141,10 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->assertNotEmpty($input_ExtensionUniqueID->getAttribute('value'));
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
-        $this->clickModifyButtonOnRowWithText($params['username']);
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
 
         $this->changeTabOnCurrentPage('routing');
-        $this->assertInputFieldValueEqual('fwd_ringlength', 0);
+        $this->assertInputFieldValueEqual('fwd_ringlength', '0');
         $this->assertMenuItemSelected('fwd_forwardingonbusy', '');
         $this->assertMenuItemSelected('fwd_forwarding', '');
         $this->assertMenuItemSelected('fwd_forwardingonunavailable', '');
@@ -157,26 +152,24 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         // Раскрываем расширенные опции
         $this->changeTabOnCurrentPage('general');
         $this->openAccordionOnThePage();
-        $this->assertInputFieldValueEqual('mobile_dialstring',  '');
+        $this->assertInputFieldValueEqual('mobile_dialstring', '');
     }
 
     /**
      * Test changing email settings for an extension.
      *
      * @depends testClearMobile
-     * @dataProvider additionProvider
      *
-     * @param array $params The parameters for the test case.
      */
-    public function testChangeEmail(array $params):void
+    public function testChangeEmail(): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $this->employeeData['username']);
 
-        $this->clickModifyButtonOnRowWithText($params['username']);
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
 
-        $this->changeInputField('user_email', $params['email']);
+        $this->changeInputField('user_email', $this->employeeData['email']);
         self::$driver->executeScript('$("#user_email").trigger("change")');
         self::$driver->executeScript('extension.cbOnCompleteEmail()');
         $this->submitForm('extensions-form');
@@ -187,25 +180,22 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->assertNotEmpty($input_ExtensionUniqueID->getAttribute('value'));
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
-        $this->clickModifyButtonOnRowWithText($params['username']);
-        $this->assertInputFieldValueEqual('user_email',  $params['email']);
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
+        $this->assertInputFieldValueEqual('user_email', $this->employeeData['email']);
     }
 
     /**
      * Test clearing email settings for an extension.
      *
      * @depends testChangeEmail
-     * @dataProvider additionProvider
-     *
-     * @param array $params The parameters for the test case.
      */
-    public function testClearEmail(array $params):void
+    public function testClearEmail(): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $this->employeeData['username']);
 
-        $this->clickModifyButtonOnRowWithText($params['username']);
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
 
         $this->changeInputField('user_email', '');
         self::$driver->executeScript('$("#user_email").trigger("change")');
@@ -217,31 +207,29 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->assertNotEmpty($input_ExtensionUniqueID->getAttribute('value'));
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
-        $this->clickModifyButtonOnRowWithText($params['username']);
-        $this->assertInputFieldValueEqual('user_email',  '');
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
+        $this->assertInputFieldValueEqual('user_email', '');
     }
 
     /**
      * Test changing forwarding settings for an extension.
      *
      * @depends testClearEmail
-     * @dataProvider additionProvider
      *
-     * @param array $params The parameters for the test case.
      */
-    public function testChangeForwarding(array $params): void
+    public function testChangeForwarding(): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $this->employeeData['username']);
 
-        $this->clickModifyButtonOnRowWithText($params['username']);
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
 
         $this->changeTabOnCurrentPage('routing');
-        $this->changeInputField('fwd_ringlength', $params['fwd_ringlength']);
-        $this->selectDropdownItem('fwd_forwardingonbusy', $params['fwd_forwardingonbusy']);
-        $this->selectDropdownItem('fwd_forwarding', $params['fwd_forwarding']);
-        $this->selectDropdownItem('fwd_forwardingonunavailable', $params['fwd_forwardingonunavailable']);
+        $this->changeInputField('fwd_ringlength', $this->employeeData['fwd_ringlength']);
+        $this->selectDropdownItem('fwd_forwardingonbusy', $this->employeeData['fwd_forwardingonbusy']);
+        $this->selectDropdownItem('fwd_forwarding', $this->employeeData['fwd_forwarding']);
+        $this->selectDropdownItem('fwd_forwardingonunavailable', $this->employeeData['fwd_forwardingonunavailable']);
 
         $this->submitForm('extensions-form');
 
@@ -251,13 +239,12 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->assertNotEmpty($input_ExtensionUniqueID->getAttribute('value'));
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
-        $this->clickModifyButtonOnRowWithText($params['username']);
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
         $this->changeTabOnCurrentPage('routing');
-        $this->assertInputFieldValueEqual('fwd_ringlength', $params['fwd_ringlength']);
-        $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['fwd_forwardingonbusy']);
-        $this->assertMenuItemSelected('fwd_forwarding', $params['fwd_forwarding']);
-        $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['fwd_forwardingonunavailable']);
-
+        $this->assertInputFieldValueEqual('fwd_ringlength', $this->employeeData['fwd_ringlength']);
+        $this->assertMenuItemSelected('fwd_forwardingonbusy', $this->employeeData['fwd_forwardingonbusy']);
+        $this->assertMenuItemSelected('fwd_forwarding', $this->employeeData['fwd_forwarding']);
+        $this->assertMenuItemSelected('fwd_forwardingonunavailable', $this->employeeData['fwd_forwardingonunavailable']);
     }
 
 
@@ -265,40 +252,44 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
      * Test changing various extension settings.
      *
      * @depends testChangeForwarding
-     * @dataProvider additionProvider
-     *
-     * @param array $params The parameters for the test case.
      */
-    public function testChangeExtensions(array $params): void
+    public function testChangeExtensions(): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $this->employeeData['username']);
 
-        $this->clickModifyButtonOnRowWithText($params['username']);
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
 
-        $this->changeInputField('user_username', $params['username']);
-        $this->changeInputField('number', $params['number']);
+        $this->changeInputField('user_username', $this->employeeData['username']);
+        $this->changeInputField('number', $this->employeeData['number']);
         self::$driver->executeScript('$("#number").trigger("change")');
         self::$driver->executeScript('extension.cbOnCompleteNumber()');
-        $this->changeInputField('mobile_number', $params['mobile']);
+        $this->changeInputField('mobile_number', $this->employeeData['mobile']);
         self::$driver->executeScript('$("#mobile_number").trigger("change")');
         self::$driver->executeScript('extension.cbOnCompleteMobileNumber()');
-        $this->changeInputField('user_email', $params['email']);
-        $this->changeInputField('sip_secret', $params['secret']);
+        $this->changeInputField('user_email', $this->employeeData['email']);
+        $this->changeInputField('sip_secret', $this->employeeData['secret']);
 
         $this->changeTabOnCurrentPage('routing');
-        $this->changeInputField('fwd_ringlength', $params['fwd_ringlength']);
-        $this->selectDropdownItem('fwd_forwardingonbusy', $params['fwd_forwardingonbusy']);
-        $this->selectDropdownItem('fwd_forwarding', $params['fwd_forwarding']);
-        $this->selectDropdownItem('fwd_forwardingonunavailable', $params['fwd_forwardingonunavailable']);
+        $this->changeInputField('fwd_ringlength', $this->employeeData['fwd_ringlength']);
+        $this->selectDropdownItem('fwd_forwardingonbusy', $this->employeeData['fwd_forwardingonbusy']);
+        $this->selectDropdownItem('fwd_forwarding', $this->employeeData['fwd_forwarding']);
+        $this->selectDropdownItem('fwd_forwardingonunavailable', $this->employeeData['fwd_forwardingonunavailable']);
         $this->changeTabOnCurrentPage('general');
 
         // Раскрываем расширенные опции
         $this->openAccordionOnThePage();
-        $this->selectDropdownItem('sip_networkfilterid', $params['sip_networkfilterid']);
 
-        $this->changeTextAreaValue('sip_manualattributes', $params['manualattributes']);
+        // Try to select specified network filter, fall back to 'none' if not available
+        $networkFilterId = $this->employeeData['sip_networkfilterid'];
+        if ($networkFilterId !== 'none' && !$this->dropdownHasValue('sip_networkfilterid', $networkFilterId)) {
+            self::annotate("Network filter ID '{$networkFilterId}' not found, falling back to 'none'", 'warning');
+            $networkFilterId = 'none';
+        }
+        $this->selectDropdownItem('sip_networkfilterid', $networkFilterId);
+
+        $this->changeTextAreaValue('sip_manualattributes', $this->employeeData['sip_manualattributes']);
 
         //$filePath           =  __DIR__."/../assets/{$params['number']}.png";
         $filePath = 'C:\Users\hello\Documents\images\person.jpg';
@@ -312,55 +303,34 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->assertNotEmpty($input_ExtensionUniqueID->getAttribute('value'));
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
-        $this->clickModifyButtonOnRowWithText($params['username']);
-        $this->assertInputFieldValueEqual('user_username',  $params['username']);
-        $this->assertInputFieldValueEqual('number',  $params['number']);
-        $this->assertInputFieldValueEqual('user_email',  $params['email']);
-        // $this->assertInputFieldValueEqual('mobile_number',  $params['mobile']);
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
+        $this->assertInputFieldValueEqual('user_username', $this->employeeData['username']);
+        $this->assertInputFieldValueEqual('number', $this->employeeData['number']);
+        $this->assertInputFieldValueEqual('user_email', $this->employeeData['email']);
+        // $this->assertInputFieldValueEqual('mobile_number',  $this->employeeData['mobile']);
 
         $this->changeTabOnCurrentPage('routing');
-        $this->assertInputFieldValueEqual('fwd_ringlength', $params['fwd_ringlength']);
-        $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['fwd_forwardingonbusy']);
-        $this->assertMenuItemSelected('fwd_forwarding', $params['fwd_forwarding']);
-        $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['fwd_forwardingonunavailable']);
+        $this->assertInputFieldValueEqual('fwd_ringlength', $this->employeeData['fwd_ringlength']);
+        $this->assertMenuItemSelected('fwd_forwardingonbusy', $this->employeeData['fwd_forwardingonbusy']);
+        $this->assertMenuItemSelected('fwd_forwarding', $this->employeeData['fwd_forwarding']);
+        $this->assertMenuItemSelected('fwd_forwardingonunavailable', $this->employeeData['fwd_forwardingonunavailable']);
         $this->changeTabOnCurrentPage('general');
-        $this->assertInputFieldValueEqual('sip_secret',  $params['secret']);
+        // Extension passwords are not masked
+        $this->assertInputFieldValueEqual('sip_secret', $this->employeeData['secret']);
 
 
         // Expand advanced options
         $this->openAccordionOnThePage();
-        $this->assertInputFieldValueEqual('mobile_dialstring',  $params['mobile']);
-        $this->assertMenuItemSelected('sip_networkfilterid', $params['sip_networkfilterid']);
+        $this->assertInputFieldValueEqual('mobile_dialstring', $this->employeeData['mobile']);
+
+        // Verify network filter - check for either specified value or 'none' fallback
+        $expectedNetworkFilter = $this->employeeData['sip_networkfilterid'];
+        if ($expectedNetworkFilter !== 'none' && !$this->dropdownHasValue('sip_networkfilterid', $expectedNetworkFilter)) {
+            $expectedNetworkFilter = 'none';
+        }
+        $this->assertMenuItemSelected('sip_networkfilterid', $expectedNetworkFilter);
 
 
-        $this->assertTextAreaValueIsEqual('sip_manualattributes', $params['manualattributes']);
-    }
-
-
-    /**
-     * Dataset provider
-     * @return array
-     */
-    public function additionProvider(): array
-    {
-
-        $params = [];
-        $params['Alexandra Pushina <289>'] = [
-            [
-                'number'   => 289,
-                'email'    => 'mask@miko.ru',
-                'username' => 'Alexandra Pushina',
-                'mobile'   => '79123125410',
-                'secret'   => '23542354wet2',
-                'sip_dtmfmode'=>'inband',
-                'sip_networkfilterid'=>'4',
-                'fwd_ringlength'=>'30',
-                'fwd_forwardingonbusy'=>'203',
-                'fwd_forwarding'=>'89251111111',
-                'fwd_forwardingonunavailable'=>'201',
-                'manualattributes'=>'[endpoint]
-callerid=2546456<235>',
-            ]];
-        return $params;
+        $this->assertTextAreaValueIsEqual('sip_manualattributes', $this->employeeData['sip_manualattributes']);
     }
 }

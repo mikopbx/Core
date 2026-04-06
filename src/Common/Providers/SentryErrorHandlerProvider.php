@@ -37,7 +37,7 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class SentryErrorHandlerProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'sentryErrorHandler';
+    public const string SERVICE_NAME = 'sentryErrorHandler';
 
 
     /**

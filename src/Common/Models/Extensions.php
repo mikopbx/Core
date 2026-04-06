@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +20,12 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use Phalcon\Di\Di;
 use Phalcon\Mvc\Model\Relation;
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Messages\Message;
 
 /**
  * Class Extensions
@@ -45,16 +49,27 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  */
 class Extensions extends ModelsBase
 {
+    public const string TYPE_DIALPLAN_APPLICATION = 'DIALPLAN APPLICATION';
+    public const string TYPE_SIP = 'SIP';
+    public const string TYPE_QUEUE = 'QUEUE';
+    public const string TYPE_EXTERNAL = 'EXTERNAL';
+    public const string TYPE_IVR_MENU = 'IVR MENU';
+    public const string TYPE_CONFERENCE = 'CONFERENCE';
+    public const string TYPE_MODULES = 'MODULES';
+    public const string TYPE_SYSTEM = 'SYSTEM';
+    public const string TYPE_PARKING = 'PARKING';
 
-    public const  TYPE_DIALPLAN_APPLICATION = 'DIALPLAN APPLICATION';
-    public const  TYPE_SIP = 'SIP';
-    public const  TYPE_QUEUE = 'QUEUE';
-    public const  TYPE_EXTERNAL = 'EXTERNAL';
-    public const  TYPE_IVR_MENU = 'IVR MENU';
-    public const  TYPE_CONFERENCE = 'CONFERENCE';
-    public const  TYPE_MODULES = 'MODULES';
-    public const  TYPE_SYSTEM = 'SYSTEM';
-    public const  TYPE_PARKING = 'PARKING';
+    // Prefixes for unique ID generation
+    public const string PREFIX_SIP = 'SIP-PHONE';
+    public const string PREFIX_EXTERNAL = 'EXTERNAL';
+    public const string PREFIX_EXTENSION = 'EXT';
+    public const string PREFIX_DIALPLAN = 'DIALPLAN';
+    public const string PREFIX_IVR = 'IVR';
+    public const string PREFIX_QUEUE = 'QUEUE';
+    public const string PREFIX_CONFERENCE = 'CONFERENCE';
+    public const string PREFIX_TRUNK_SIP = 'SIP-TRUNK';
+    public const string PREFIX_TRUNK_IAX = 'IAX-TRUNK';
+    public const string PREFIX_OUT_WORK_TIME = 'OUT-WORK-TIME';
 
     /**
      * @Primary
@@ -112,6 +127,57 @@ class Extensions extends ModelsBase
      */
     public ?string $is_general_user_number = "0";
 
+    /**
+     * Field with search words for full text search, consist of username, callerid, email, number, mobile in lower case
+     *
+     * @Column(type="string", nullable=true, default="")
+     */
+    public ?string $search_index = "";
+
+
+    /**
+     * Get all system extension numbers from database with caching
+     * 
+     * @return array Array of system extension numbers
+     */
+    public static function getSystemExtensions(): array
+    {
+        $di = DI::getDefault();
+        if ($di === null) {
+            return [];
+        }
+        
+        $cacheKey = 'Models:Extensions:SystemExtensions';
+        
+        // Try to get from cache first
+        if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
+            $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
+            $cached = $managedCache->get($cacheKey);
+            if ($cached !== null) {
+                return $cached;
+            }
+        }
+        
+        // Load from database
+        $systemExtensions = self::find([
+            'conditions' => 'type = :type:',
+            'bind' => ['type' => self::TYPE_SYSTEM],
+            'columns' => 'number'
+        ]);
+        
+        $result = [];
+        foreach ($systemExtensions as $extension) {
+            $result[] = $extension->number;
+        }
+        
+        // Save to cache
+        if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
+            $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
+            $managedCache->set($cacheKey, $result, 3600); // Cache for 1 hour
+        }
+        
+        return $result;
+    }
 
     /**
      * Get the next available application number from the database.
@@ -128,13 +194,49 @@ class Extensions extends ModelsBase
 
         // Find the next available application number starting from 2200100
         $freeExtension = '2200100';
-        for ($i = 100; ; $i++) {
-            $freeExtension = "2200{$i}";
+        for ($i = 100;; $i++) {
+            $freeExtension = "2200$i";
             if (!in_array(['number' => $freeExtension], $result, false)) {
                 break;
             }
         }
         return $freeExtension;
+    }
+
+    /**
+     * Returns Caller ID by phone number.
+     * @param string $number
+     * @return string
+     */
+    public static function getCidByPhoneNumber(string $number): string
+    {
+        if (empty($number)) {
+            return $number;
+        }
+        $number = preg_replace('/\D+/', '', $number);
+        $extensionLength = PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH);
+        if (strlen($number) > $extensionLength) {
+            $query = 'number LIKE :phone:';
+            $phone = '%' . substr($number, -9);
+        } else {
+            $query = 'number = :phone:';
+            $phone = $number;
+        }
+        $filter = [
+            $query,
+            'columns' => 'callerid',
+            'bind' => [
+                'phone' => $phone
+            ]
+        ];
+        $data = self::findFirst($filter);
+        if ($data) {
+            $cid = $data->callerid;
+        } else {
+            $cid = $number;
+        }
+
+        return $cid;
     }
 
     /**
@@ -150,7 +252,7 @@ class Extensions extends ModelsBase
     {
         $parameters = [
             'column' => 'number',
-            'conditions'=>'type="'.Extensions::TYPE_SIP.'" and userid is not null'
+            'conditions' => 'type="' . Extensions::TYPE_SIP . '" and userid is not null'
         ];
         $started = Extensions::minimum($parameters);
         if ($started === null) {
@@ -158,14 +260,14 @@ class Extensions extends ModelsBase
             $started = 200;
         }
 
-        $extensionsLength = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH);
+        $extensionsLength = PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH);
         $maxExtension = (10 ** $extensionsLength) - 1;
 
         $occupied = Extensions::find(['columns' => 'number'])->toArray();
         $occupied = array_column($occupied, 'number');
 
-        for ($i = $started; $i <= $maxExtension ; $i++) {
-            if (!in_array((string)$i, $occupied)){
+        for ($i = $started; $i <= $maxExtension; $i++) {
+            if (!in_array((string)$i, $occupied)) {
                 return (string)$i;
             }
         }
@@ -442,6 +544,83 @@ class Extensions extends ModelsBase
     }
 
     /**
+     * Override delete to check ALL dependencies first before Phalcon does partial check
+     * This ensures all constraint violations are shown at once, not just the first one
+     * 
+     * @return bool True if deletion succeeded, false otherwise
+     */
+    public function delete(): bool
+    {
+        // First, manually check ALL dependencies before Phalcon does its partial check
+        $allBlockingDependencies = [];
+        $relations = $this->getModelsManager()->getRelations(get_class($this));
+        
+        foreach ($relations as $relation) {
+            $foreignKey = $relation->getOption('foreignKey') ?? [];
+            
+            // Only check relations with ACTION_RESTRICT
+            if (!isset($foreignKey['action']) || $foreignKey['action'] !== Relation::ACTION_RESTRICT) {
+                continue;
+            }
+            
+            // Get related model and fields
+            $relatedModel = $relation->getReferencedModel();
+            $mappedFields = $relation->getFields();
+            $mappedFields = is_array($mappedFields) ? $mappedFields : [$mappedFields];
+            $referencedFields = $relation->getReferencedFields();
+            $referencedFields = is_array($referencedFields) ? $referencedFields : [$referencedFields];
+            
+            // Build query parameters
+            $conditions = [];
+            $bind = [];
+            foreach ($referencedFields as $index => $referencedField) {
+                $conditions[] = "$referencedField = :field$index:";
+                $bindField = $mappedFields[$index];
+                $bind["field$index"] = $this->$bindField;
+            }
+            
+            // Find related records that would block deletion
+            $relatedRecords = $relatedModel::find([
+                'conditions' => implode(' OR ', $conditions),
+                'bind' => $bind
+            ]);
+            
+            // Add to blocking dependencies
+            foreach ($relatedRecords as $relatedRecord) {
+                // Skip if it's the same record we're trying to delete
+                if (serialize($relatedRecord) === serialize($this)) {
+                    continue;
+                }
+                $allBlockingDependencies[] = $relatedRecord;
+            }
+        }
+        
+        // If we have blocking dependencies, create comprehensive error message
+        if (!empty($allBlockingDependencies)) {
+            // Build comprehensive HTML message with ALL dependencies
+            $htmlMessage = '<div class="ui header">' . $this->t('ConstraintViolation') . '</div>';
+            $htmlMessage .= '<ul class="list">';
+            
+            foreach ($allBlockingDependencies as $dependency) {
+                if ($dependency instanceof ModelsBase) {
+                    $htmlMessage .= '<li>' . $dependency->getRepresent(true) . '</li>';
+                }
+            }
+            
+            $htmlMessage .= '</ul>';
+            
+            // Add the comprehensive error message
+            $message = new Message($htmlMessage, 'ConstraintViolation', 'number');
+            $this->appendMessage($message);
+            
+            return false; // Prevent deletion and don't call parent
+        }
+        
+        // If no blocking dependencies, proceed with normal deletion
+        return parent::delete();
+    }
+
+    /**
      * Handlers after model data is updated.
      */
     public function afterUpdate(): void
@@ -463,7 +642,8 @@ class Extensions extends ModelsBase
         }
         $relations = $this->_modelsManager->getRelations(__CLASS__);
         foreach ($relations as $relation) {
-            if ($relation->getFields() === 'number'
+            if (
+                $relation->getFields() === 'number'
                 ||
                 (
                     is_array($relation->getFields())
@@ -495,12 +675,66 @@ class Extensions extends ModelsBase
      */
     public function validation(): bool
     {
+        $existingRecord = self::findFirst(
+            [
+                'conditions' => 'number = :number:',
+                'bind'       => ['number' => $this->number],
+            ]
+        );
+        $currentRepresent = 'unknown';
+        if ($existingRecord !== null) {
+            $currentRepresent = $existingRecord->getRepresent();
+        }
+
         $validation = new Validation();
+        
+        // Build exception conditions for uniqueness check
+        $exceptConditions = [];
+        
+        // Always exclude current record by ID if it exists
+        if (!empty($this->id)) {
+            $exceptConditions['id'] = $this->id;
+        }
+        
+        // Check for user general extension uniqueness
+        // Each user should have only one general extension per type
+        if (!empty($this->userid) && $this->is_general_user_number === "1") {
+            $conflictingGeneral = self::findFirst([
+                'conditions' => 'userid = :userid: AND type = :type: AND is_general_user_number = "1" AND id != :id:',
+                'bind' => [
+                    'userid' => $this->userid,
+                    'type' => $this->type,
+                    'id' => $this->id ?: 0
+                ]
+            ]);
+            
+            if ($conflictingGeneral) {
+                $this->appendMessage(
+                    new Message(
+                        $this->t('mo_UserCanHaveOnlyOneGeneralExtensionPerType', [
+                            'type' => $this->type,
+                            'existing' => $conflictingGeneral->getRepresent()
+                        ])
+                    )
+                );
+                return false;
+            }
+        }
+        
+        // For updates: if we have a userid, allow same user to have multiple extensions
+        // (one SIP, one EXTERNAL) but prevent true duplicates
+        if (!empty($this->userid) && $existingRecord && $existingRecord->userid === $this->userid) {
+            // If this is the same user's extension, allow it
+            // This handles cases where user has both SIP extension and mobile EXTERNAL extension
+            return true;
+        }
+
         $validation->add(
             'number',
             new UniquenessValidator(
                 [
-                    'message' => $this->t('mo_ThisNumberNotUniqueForExtensionsModels'),
+                    'message' => $this->t('mo_ThisNumberNotUniqueForExtensionsModels', ['record' => $currentRepresent]),
+                    'except' => $exceptConditions,
                 ]
             )
         );
@@ -523,7 +757,8 @@ class Extensions extends ModelsBase
             $relationFields = $relation->getFields();
 
             // Check if the relation is based on the 'number' field
-            if ($relationFields === 'number'
+            if (
+                $relationFields === 'number'
                 ||
                 (
                     is_array($relationFields)
@@ -557,15 +792,4 @@ class Extensions extends ModelsBase
 
         return $result;
     }
-
-    /**
-     * Sanitizes the caller ID by removing any characters that are not alphanumeric or spaces.
-     * This function is automatically triggered before saving the call model.
-     */
-    public function beforeSave()
-    {
-        // Sanitizes the caller ID by removing any characters that are not alphanumeric or spaces.
-        $this->callerid = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $this->callerid);
-    }
-
 }

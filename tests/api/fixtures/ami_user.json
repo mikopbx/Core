@@ -1,0 +1,38 @@
+{
+  "first.ami.user": {
+    "description": "The first ami user",
+    "username": "firstAmiUser4Test",
+    "secret": "theBigBigSecretWith#And%",
+    "permissions": "ARRAY",
+    "originate": "readwrite",
+    "agent": "write",
+    "dialplan": "readwrite",
+    "log": "read",
+    "user": "readwrite",
+    "cdr": "read",
+    "reporting": "readwrite",
+    "config": "readwrite",
+    "dtmf": "readwrite",
+    "system": "readwrite",
+    "command": "readwrite",
+    "verbose": "read"
+  },
+  "second.ami.user": {
+    "description": "The second one user",
+    "username": "secondAmiUser4Test",
+    "secret": "theBigBigSecretWith#And%and$",
+    "permissions": "ARRAY",
+    "originate": "readwrite",
+    "agent": "write",
+    "dialplan": "write",
+    "log": "readwrite",
+    "user": "read",
+    "cdr": "",
+    "reporting": "read",
+    "config": "read",
+    "dtmf": "read",
+    "system": "read",
+    "command": "read",
+    "verbose": "read"
+  }
+}

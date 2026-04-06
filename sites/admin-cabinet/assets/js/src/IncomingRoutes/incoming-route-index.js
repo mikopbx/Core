@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, Extensions, Form */
-
+/* global globalRootUrl, globalTranslate, IncomingRoutesAPI, SecurityUtils, SemanticLocalization, PbxDataTableIndex, UserMessage, incomingRouteDefault */
 
 /**
  * Object for managing incoming routes table
@@ -26,62 +25,147 @@
  */
 const incomingRoutes = {
     /**
-     * jQuery object for the form.
-     * @type {jQuery}
+     * DataTable instance from base class
      */
-    $formObj: $('#default-rule-form'),
-
-    $actionDropdown: $('#action'),
-
-    /**
-     * Validation rules for the form fields before submission.
-     *
-     * @type {object}
-     */
-    validateRules: {
-        extension: {
-            identifier: 'extension',
-            rules: [
-                {
-                    type: 'extensionRule',
-                    prompt: globalTranslate.ir_ValidateForwardingToBeFilled,
-                },
-            ],
-        },
-    },
+    dataTableInstance: null,
 
     /**
      * Initialize the object
      */
     initialize() {
-        // Initialize table drag-and-drop with the appropriate callbacks
-        $('#routingTable').tableDnD({
-            onDrop: incomingRoutes.cbOnDrop, // Callback on dropping an item
-            onDragClass: 'hoveringRow', // CSS class while dragging
-            dragHandle: '.dragHandle',  // Handle for dragging
+        // Initialize the default route form using dedicated module
+        incomingRouteDefault.initialize();
+
+        // Initialize the incoming routes table with REST API
+        this.initializeDataTable();
+        
+        // Handle empty table state
+        this.checkEmptyTableState();
+    },
+    
+    /**
+     * Initialize DataTable using base class
+     */
+    initializeDataTable() {
+        // Create instance of base class with Incoming Routes specific configuration
+        this.dataTableInstance = new PbxDataTableIndex({
+            tableId: 'incoming-routes-table',
+            apiModule: IncomingRoutesAPI,
+            routePrefix: 'incoming-routes',
+            showSuccessMessages: false,
+            actionButtons: ['edit', 'copy', 'delete'],
+            translations: {
+                deleteError: globalTranslate.ir_ImpossibleToDeleteIncomingRoute
+            },
+            orderable: false, // Disable sorting globally
+            order: [], // No default order
+            onDataLoaded: this.onDataLoaded.bind(this),
+            columns: [
+                {
+                    // Drag handle column
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    className: 'collapsing dragHandle',
+                    render: function() {
+                        return '<i class="sort grey icon"></i>';
+                    }
+                },
+                {
+                    // Details column - main column with rule description
+                    data: null,
+                    className: '',
+                    render: function(data, type, row) {
+                        // For search and type, return empty string since we use custom search
+                        if (type === 'search' || type === 'type') {
+                            return '';
+                        }
+                        
+                        // Use ready-to-use HTML representation from REST API (already safe from server)
+                        const description = row.rule_represent || '';
+                        const disabledClass = row.disabled ? 'disabled' : '';
+                        return '<div class="' + disabledClass + '">' + description + '</div>';
+                    }
+                },
+                {
+                    // Note column - use standard description renderer from PbxDataTableIndex
+                    data: 'note',
+                    className: 'hide-on-mobile',
+                    render: null // Will be set after instance creation
+                }
+            ],
+            onDrawCallback: this.cbDrawComplete.bind(this)
         });
-
-        // Setup the dropdown with callback on change
-        incomingRoutes.$actionDropdown.dropdown({
-            onChange: incomingRoutes.toggleDisabledFieldClass
+        
+        // Set the note column renderer using the instance method
+        this.dataTableInstance.columns[2].render = this.dataTableInstance.createDescriptionRenderer();
+        
+        // Initialize the base class
+        this.dataTableInstance.initialize();
+        
+        // Add custom search functionality after DataTable initialization
+        this.initializeCustomSearch();
+    },
+    
+    /**
+     * Initialize custom search functionality that works with HTML content
+     */
+    initializeCustomSearch() {
+        // Helper function to extract plain text from HTML
+        function extractTextFromHtml(htmlString) {
+            if (!htmlString) return '';
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlString;
+            return tempDiv.textContent || tempDiv.innerText || '';
+        }
+        
+        // Add custom search function to DataTables
+        $.fn.dataTable.ext.search.push((settings, data, dataIndex, rowData, counter) => {
+            // Only apply to our specific table
+            if (settings.nTable.id !== 'incoming-routes-table') {
+                return true;
+            }
+            
+            const searchTerm = $('#incoming-routes-table_filter input').val().toLowerCase();
+            
+            // If no search term, show all rows
+            if (!searchTerm) {
+                return true;
+            }
+            
+            // Build searchable text from all available data
+            const searchableText = [
+                rowData.number || '', 
+                rowData.note || '',
+                rowData.extension || '',
+                extractTextFromHtml(rowData.extension_represent || ''),
+                extractTextFromHtml(rowData.providerid_represent || ''),
+                extractTextFromHtml(rowData.rule_represent || '')
+            ].filter(Boolean).join(' ').toLowerCase();
+            
+            return searchableText.includes(searchTerm);
         });
-
-        // Apply initial class change based on dropdown selection
-        incomingRoutes.toggleDisabledFieldClass();
-
-        // Initialize the form
-        incomingRoutes.initializeForm();
-
-        // Setup the dropdown for forwarding select with options
-        $('.forwarding-select').dropdown(Extensions.getDropdownSettingsForRouting());
-        // Initialize audio message dropdowns
-        $('.audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
-
-        // Add double click listener to table cells
-        $('.rule-row td').on('dblclick', (e) => {
-            // When cell is double clicked, navigate to corresponding modify page
-            const id = $(e.target).closest('tr').attr('id');
-            window.location = `${globalRootUrl}incoming-routes/modify/${id}`;
+    },
+    
+    /**
+     * Callback after table draw is complete
+     */
+    cbDrawComplete() {
+        // Initialize drag-and-drop on the table
+        $('#incoming-routes-table tbody').tableDnD({
+            onDrop: this.cbOnDrop.bind(this),
+            onDragClass: 'hoveringRow',
+            dragHandle: '.dragHandle'
+        });
+        
+        // Add row data attributes for priority tracking
+        $('#incoming-routes-table tbody tr').each(function() {
+            const data = $('#incoming-routes-table').DataTable().row(this).data();
+            if (data) {
+                $(this).attr('id', data.id);
+                $(this).attr('data-value', data.priority);
+                $(this).addClass('rule-row');
+            }
         });
     },
 
@@ -91,95 +175,61 @@ const incomingRoutes = {
     cbOnDrop() {
         let priorityWasChanged = false;
         const priorityData = {};
-        $('.rule-row').each((index, obj) => {
+        
+        $('#incoming-routes-table tbody tr').each((index, obj) => {
             const ruleId = $(obj).attr('id');
             const oldPriority = parseInt($(obj).attr('data-value'), 10);
-            const newPriority = obj.rowIndex;
+            const newPriority = index + 1; // Start from 1, not 0
+            
             if (oldPriority !== newPriority) {
                 priorityWasChanged = true;
                 priorityData[ruleId] = newPriority;
             }
         });
+        
         if (priorityWasChanged) {
-            $.api({
-                on: 'now',
-                url: `${globalRootUrl}incoming-routes/changePriority`,
-                method: 'POST',
-                data: priorityData,
+            // Use REST API to update priorities
+            IncomingRoutesAPI.changePriority(priorityData, (response) => {
+                if (response.result) {
+                    // Reload table to reflect new priorities
+                    this.dataTableInstance.dataTable.ajax.reload();
+                } else {
+                    UserMessage.showMultiString(response.messages);
+                }
             });
         }
     },
-
+    
     /**
-     * Toggle class for disabled field based on dropdown selection
+     * Check if table is empty and show/hide appropriate elements
      */
-    toggleDisabledFieldClass() {
-        let $action = incomingRoutes.$formObj.form('get value', 'action');
-        if ($action === 'extension') {
-            $('#extension-group').show();
-            $('#audio-group').hide();
-            $('#audio_message_id').dropdown('clear');
-        } else if($action === 'playback'){
-            $('#extension-group').hide();
-            $('#audio-group').show();
-            $('#extension').dropdown('clear');
+    checkEmptyTableState() {
+        // This will be called after data loads
+    },
+    
+    /**
+     * Callback when data is loaded
+     * @param {Object} response - The API response
+     */
+    onDataLoaded(response) {
+        // Extract data from response
+        const data = response.data || [];
+        // Check if there are any rules (default rule is not in the table)
+        const hasRules = data.length > 0;
+        
+        if (hasRules) {
+            // Show table and button
+            $('#routes-table-container').show();
+            $('#add-new-button').show();
+            $('#empty-table-placeholder').hide();
         } else {
-            $('#audio-group').hide();
-            $('#extension-group').hide();
-            $('#extension').dropdown('clear');
-            $('#audio_message_id').dropdown('clear');
+            // Show empty placeholder
+            $('#routes-table-container').hide();
+            $('#add-new-button').hide();
+            $('#empty-table-placeholder').show();
         }
-    },
-
-    /**
-     * Callback function to be called before the form is sent
-     * @param {Object} settings - The current settings of the form
-     * @returns {Object} - The updated settings of the form
-     */
-    cbBeforeSendForm(settings) {
-        const result = settings;
-        result.data = incomingRoutes.$formObj.form('get values');
-        return result;
-    },
-
-    /**
-     * Callback function to be called after the form has been sent.
-     * @param {Object} response - The response from the server after the form is sent
-     */
-    cbAfterSendForm(response) {
-
-    },
-
-    /**
-     * Initialize the form with custom settings
-     */
-    initializeForm() {
-        Form.$formObj = incomingRoutes.$formObj;
-        Form.url = `${globalRootUrl}incoming-routes/save`; // Form submission URL
-        Form.validateRules = incomingRoutes.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = incomingRoutes.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = incomingRoutes.cbAfterSendForm; // Callback after form is sent
-        Form.initialize();
-    },
-};
-
-/**
- * Form validation rule for checking if the 'extension' option is chosen and a number is selected.
- *
- * @param {string} value - The value to be checked
- * @returns {boolean} - Returns false if 'extension' is selected but no number is provided. Otherwise, returns true.
- */
-$.fn.form.settings.rules.extensionRule = function (value) {
-    // If 'extension' is selected and no number is provided (-1 or empty string), return false.
-    if (($('#action').val() === 'extension') &&
-        (value === -1 || value === '')) {
-        return false;
     }
-
-    // If conditions aren't met, return true.
-    return true;
 };
-
 
 /**
  *  Initialize incoming routes on document ready

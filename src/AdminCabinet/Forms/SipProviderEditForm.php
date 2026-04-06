@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +26,6 @@ use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
@@ -49,111 +49,96 @@ class SipProviderEditForm extends BaseForm
         // ID
         $this->add(new Hidden('id'));
 
-        // Uniqid
-        $this->add(new Hidden('uniqid'));
-
         // Type
         $this->add(new Hidden('type'));
 
         // Description
         $this->add(new Text('description'));
 
-        // Username
-        $this->add(new Text('username'));
+        // Username (autocomplete="new-password" works better than "off" for browsers)
+        $this->add(new Text('username', [
+            'autocomplete' => 'new-password',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
+        ]));
 
         // Secret
-        $this->add(new Password('secret'));
+        $this->add(new Password('secret', [
+            'autocomplete' => 'new-password',
+            'data-no-password-manager' => 'true'
+        ]));
 
         // Host
         $this->add(new Text('host'));
 
-        // Dtmfmode
-        $arrDTMFType = [
-            'auto' => $this->translation->_('auto'),
-            'inband' => $this->translation->_('inband'),
-            'info' => $this->translation->_('info'),
-            'rfc4733' => $this->translation->_('rfc4733'),
-            'auto_info' => $this->translation->_('auto_info'),
-        ];
-
-        $dtmfmode = new Select(
-            'dtmfmode', $arrDTMFType, [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'value' => $entity->dtmfmode,
-                'class' => 'ui selection dropdown',
+        // DTMF Mode - Universal Dropdown
+        $this->addSemanticUIDropdown(
+            'dtmfmode',
+            [
+                'auto' => $this->translation->_('auto'),
+                'rfc4733' => $this->translation->_('rfc4733'),
+                'info' => $this->translation->_('info'),
+                'inband' => $this->translation->_('inband'),
+                'auto_info' => $this->translation->_('auto_info')
+            ],
+            $entity->dtmfmode ?? 'auto',
+            [
+                'clearable' => false,
+                'forceSelection' => true
             ]
         );
-        $this->add($dtmfmode);
 
-        $regTypeArray = [
-            Sip::REG_TYPE_OUTBOUND => $this->translation->_('sip_REG_TYPE_OUTBOUND'),
-            Sip::REG_TYPE_INBOUND => $this->translation->_('sip_REG_TYPE_INBOUND'),
-            Sip::REG_TYPE_NONE => $this->translation->_('sip_REG_TYPE_NONE'),
-        ];
-
-        $regTypeValue = $entity->registration_type;
-        if (empty($regTypeValue)) {
-            $regTypeValue = ($entity->noregister === '0') ? Sip::REG_TYPE_OUTBOUND : Sip::REG_TYPE_NONE;
-        }
-        $regType = new Select(
-            'registration_type', $regTypeArray, [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'value' => $regTypeValue,
-                'class' => 'ui selection dropdown',
+        // Registration type - Universal Dropdown
+        $this->addSemanticUIDropdown(
+            'registration_type',
+            [
+                'outbound' => $this->translation->_('pr_RegistrationTypeTooltip_outbound'),
+                'inbound' => $this->translation->_('pr_RegistrationTypeTooltip_inbound'),
+                'none' => $this->translation->_('pr_RegistrationTypeTooltip_none')
+            ],
+            $entity->registration_type ?? 'outbound',
+            [
+                'clearable' => false,
+                'forceSelection' => true
             ]
         );
-        $this->add($regType);
 
-        // Transport
-        $arrTransport = [
-            Sip::TRANSPORT_UDP => Sip::TRANSPORT_UDP,
-            Sip::TRANSPORT_TCP => Sip::TRANSPORT_TCP,
-            Sip::TRANSPORT_TLS => Sip::TRANSPORT_TLS,
-        ];
-        $transport = new Select(
-            'transport', $arrTransport, [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'emptyText' => 'udp, tcp',
-                'emptyValue' => ' ',
-                'useEmpty' => true,
-                'value' => empty($entity->transport) ? ' ' : $entity->transport,
-                'class' => 'ui selection dropdown',
+        // Transport protocol - Universal Dropdown
+        $this->addSemanticUIDropdown(
+            'transport',
+            [
+                Sip::TRANSPORT_AUTO => Sip::TRANSPORT_AUTO,
+                Sip::TRANSPORT_UDP => Sip::TRANSPORT_UDP,
+                Sip::TRANSPORT_TCP => Sip::TRANSPORT_TCP,
+                Sip::TRANSPORT_TLS => Sip::TRANSPORT_TLS,
+            ],
+            $entity->transport ?? Sip::TRANSPORT_AUTO,
+            [
+                'clearable' => false,
+                'forceSelection' => true
             ]
         );
-        $this->add($transport);
 
         // Port
         $this->add(new Numeric('port'));
         $this->add(new Text('outbound_proxy'));
 
         // Qualify
-        $cheskarr = ['value' => null];
-        if ($entity->qualify) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-
-        $this->add(new Check('qualify', $cheskarr));
+        $this->addCheckBox('qualify', intval($entity->qualify) === 1, '1');
 
         // Qualifyfreq
-        $this->add(new Numeric('qualifyfreq',["maxlength" => 3,
+        $this->add(new Numeric('qualifyfreq', ["maxlength" => 3,
             "style" => "width: 80px;"]));
 
         // Fromuser
-        $this->add(new Text('fromuser'));
+        $this->add(new Text('fromuser', [
+            'placeholder' => $this->translation->_('pr_FromUserPlaceholder')
+        ]));
 
         // Fromdomain
-        $this->add(new Text('fromdomain'));
+        $this->add(new Text('fromdomain', [
+            'placeholder' => $this->translation->_('pr_FromDomainPlaceholder')
+        ]));
 
         // Noregister
         $cheskarr = ['value' => null];
@@ -163,23 +148,90 @@ class SipProviderEditForm extends BaseForm
         $this->add(new Check('noregister', $cheskarr));
 
         // Disablefromuser
-        $cheskarr = ['value' => null];
-        if ($entity->disablefromuser) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-        $this->add(new Check('disablefromuser', $cheskarr));
+        $this->addCheckBox('disablefromuser', intval($entity->disablefromuser) === 1, '1');
 
-        // Receive_calls_without_auth
-        $cheskarr = ['value' => null];
-        if ($entity->receive_calls_without_auth) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-        $this->add(new Check('receive_calls_without_auth', $cheskarr));
+        // Network Filter - using DynamicDropdownBuilder (built by JavaScript)
+        $this->add(new Hidden('networkfilterid'));
 
         // Manualattributes
-        $this->addTextArea('manualattributes', $entity->getManualAttributes()??'', 65);
+        $placeholderText = "[registration-auth]\nusername=962xxxxx030@ip.beeline.ru\n\n[endpoint-auth]\nusername=962xxxxx030@ip.beeline.ru";
+        $this->addTextArea('manualattributes', $placeholderText, 65, [
+            'placeholder' => $placeholderText,
+            'skipEscaping' => true  // Technical configuration field - preserve special characters
+        ]);
 
         // Note
-        $this->addTextArea('note', $options['note']??'', 80, ['class'=>'confidential-field']);
+        $this->addTextArea('note', $options['note'] ?? '', 80, ['class' => 'confidential-field']);
+        
+        // CallerID/DID Source Settings
+        // CallerID Source - Universal Dropdown
+        $this->addSemanticUIDropdown(
+            'cid_source',
+            [
+                'default' => $this->translation->_('pr_CallerIdSourceDefault'),
+                'from' => $this->translation->_('pr_CallerIdSourceFrom'),
+                'rpid' => $this->translation->_('pr_CallerIdSourceRpid'),
+                'pai' => $this->translation->_('pr_CallerIdSourcePai'),
+                'custom' => $this->translation->_('pr_CallerIdSourceCustom')
+            ],
+            $entity->cid_source ?? 'default',
+            [
+                'clearable' => false,
+                'forceSelection' => true
+            ]
+        );
+        
+        // DID Source - Universal Dropdown
+        $this->addSemanticUIDropdown(
+            'did_source',
+            [
+                'default' => $this->translation->_('pr_DidSourceDefault'),
+                'to' => $this->translation->_('pr_DidSourceTo'),
+                'diversion' => $this->translation->_('pr_DidSourceDiversion'),
+                'custom' => $this->translation->_('pr_DidSourceCustom')
+            ],
+            $entity->did_source ?? 'default',
+            [
+                'clearable' => false,
+                'forceSelection' => true
+            ]
+        );
+        
+        // CallerID Custom Settings
+        $this->add(new Text('cid_custom_header', [
+            'placeholder' => 'X-Caller-ID'
+        ]));
+        
+        $this->add(new Text('cid_parser_start', [
+            'placeholder' => '<'
+        ]));
+        
+        $this->add(new Text('cid_parser_end', [
+            'placeholder' => '>'
+        ]));
+        
+        $this->add(new Text('cid_parser_regex', [
+            'placeholder' => '[+]?[0-9]+'
+        ]));
+
+        // DID Custom Settings
+        $this->add(new Text('did_custom_header', [
+            'placeholder' => 'X-DID'
+        ]));
+
+        $this->add(new Text('did_parser_start', [
+            'placeholder' => '['
+        ]));
+
+        $this->add(new Text('did_parser_end', [
+            'placeholder' => ']'
+        ]));
+
+        $this->add(new Text('did_parser_regex', [
+            'placeholder' => '[0-9]+'
+        ]));
+        
+        // Debug checkbox
+        $this->addCheckBox('cid_did_debug', intval($entity->cid_did_debug) === 1, '1');
     }
 }

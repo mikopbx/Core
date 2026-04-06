@@ -38,21 +38,21 @@ class Fail2BanRules extends ModelsBase
      *
      * @Column(type="integer", nullable=true)
      */
-    public ?int $maxretry = 5;
+    public ?int $maxretry = 20;
 
     /**
      * Duration of ban in seconds
      *
      * @Column(type="integer", nullable=true)
      */
-    public ?int $bantime = 86400;
+    public ?int $bantime = 600;
 
     /**
      * Time window in seconds during which retries are counted
      *
      * @Column(type="integer", nullable=true)
      */
-    public ?int $findtime = 1800;
+    public ?int $findtime = 600;
 
     /**
      * List of whitelisted IPs

@@ -1,4 +1,4 @@
-{{ form('pbx-extension-modules/save', 'role': 'form', 'class': 'ui large form','id':'pbx-extension-modify-form') }}
+{{ form(['action' : 'pbx-extension-modules/save', 'method': 'post', 'role': 'form', 'class': 'ui large form','id':'pbx-extension-modify-form']) }}
 <div class="ui header">{{ title }}</div>
 {{ form.render('key') }}
 {{ form.render('href') }}
@@ -28,4 +28,4 @@
 </div>
 
 {{ partial("partials/submitbutton",['indexurl':indexUrl]) }}
-{{ end_form() }}
+{{ close('form') }}

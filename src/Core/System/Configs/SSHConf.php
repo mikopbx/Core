@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -19,14 +20,11 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Core\System\MikoPBXConfig;
-use MikoPBX\Core\System\Notifications;
+use MikoPBX\Core\System\PasswordService;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Core\Workers\WorkerPrepareAdvice;
 use Phalcon\Di\Injectable;
 
 /**
@@ -36,24 +34,82 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class SSHConf extends Injectable
+class SSHConf extends SystemConfigClass
 {
-    private MikoPBXConfig $mikoPBXConfig;
+    public const string PROC_NAME = 'dropbear';
+
+
+    // Client keep-alive interval in seconds
+    private const int CLIENT_KEEP_ALIVE_INTERVAL = 60;
+
+    // Client idle timeout in seconds
+    private const int CLIENT_IDLE_TIMEOUT = 1800;
 
     /**
-     * Constructor initializing MikoPBX configuration.
+     * Generates the Monit configuration file for monitoring the current service.
+     *
+     * This method:
+     * - Sets up the start command by calling setStartCommand()
+     * - Constructs a stop command using BusyBox to send SIGQUIT to the process
+     * - Defines dependencies (e.g., on php_timezone)
+     * - Specifies user permissions for starting/stopping the service
+     *
+     * The generated configuration is saved to a file in the Monit configuration directory,
+     * with a filename based on the service priority and name.
+     *
+     * @return bool Always returns true after successfully writing the configuration file.
      */
-    public function __construct()
+    public function generateMonitConf(): bool
     {
-        $this->mikoPBXConfig = new MikoPBXConfig();
+        $this->setStartCommand();
+        $port = PbxSettings::getValueByKey(PbxSettings::SSH_PORT);
+        $busyboxPath = Util::which('busybox');
+        $confPath = $this->getMainMonitConfFile();
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
+            '    depends on loopback'.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            "    if failed port $port protocol ssh then restart".PHP_EOL.
+            '    if 5 restarts within 5 cycles then timeout'.PHP_EOL;
+        $this->saveFileContent($confPath, $conf);
+        return true;
+    }
+
+    /**
+     * Starts the service by reinitializing configurations and restarting the monitoring service.
+     *
+     * This method is a wrapper around {@see self::reStart()} and is used to start or restart
+     * the service with full reinitialization of settings and time synchronization.
+     *
+     * @return bool Returns true if the start operation was successful, false otherwise.
+     */
+    public function start(): bool
+    {
+        if(System::isBooting()){
+            $this->configure();
+            Processes::mwExecBg($this->startCommand);
+            $result = $this->monitWaitStart();
+        }else{
+            $result = $this->reStart();
+        }
+        return $result;
+    }
+
+    public function reStart(): bool
+    {
+        $this->generateMonitConf();
+        $this->configure();
+        return $this->monitRestart();
     }
 
     /**
      * Configures SSH settings based on current system settings.
      *
-     * @return bool Returns true if configuration is successful, false otherwise.
+     * @return void
      */
-    public function configure(): bool
+    private function configure(): void
     {
         $lofFile = '/var/log/lastlog';
         if (!file_exists($lofFile)) {
@@ -61,23 +117,46 @@ class SSHConf extends Injectable
         }
         $this->generateDropbearKeys();
         $sshLogin = $this->getCreateSshUser();
-        $sshPort  = escapeshellcmd(PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PORT));
 
         // Update root password and restart SSH server
         $this->updateShellPassword($sshLogin);
 
-        // Killing existing Dropbear processes before restart
-        Processes::killByName('dropbear');
-        usleep(500000); // Delay to ensure process has stopped
-
-        $sshPasswordDisabled = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD) === '1';
-        $options = $sshPasswordDisabled ? '-s' : '';
-        $dropbear = Util::which('dropbear');
-        $result = Processes::mwExec("$dropbear -p '$sshPort' $options -c /etc/rc/hello > /var/log/dropbear_start.log");
+        $this->setStartCommand();
 
         $this->generateAuthorizedKeys($sshLogin);
         $this->fixRights($sshLogin);
-        return ($result === 0);
+    }
+
+    /**
+     * Constructs the start command for the service based on current system settings.
+     *
+     * This method builds the full command line to start the Dropbear SSH server,
+     * taking into account:
+     * - The configured SSH port
+     * - Whether password authentication is disabled
+     * - Keep-alive and idle timeout options
+     *
+     * The resulting command is stored in $this->startCommand for later use
+     * (e.g., by generateMonitConf() when creating Monit configuration).
+     *
+     * @return void
+     */
+    private function setStartCommand()
+    {
+        $sshPort  = escapeshellcmd(PbxSettings::getValueByKey(PbxSettings::SSH_PORT));
+        $sshPasswordDisabled = PbxSettings::getValueByKey(PbxSettings::SSH_DISABLE_SSH_PASSWORD) === '1';
+        $options = $sshPasswordDisabled ? '-s' : '';
+        $dropBear = Util::which(self::PROC_NAME);
+
+        // Adding keep-alive and idle timeout options to Dropbear configuration
+        $this->startCommand = sprintf(
+            "%s -p '%s' %s -K %d -I %d -c /etc/rc/hello",
+            $dropBear,
+            $sshPort,
+            $options,
+            self::CLIENT_KEEP_ALIVE_INTERVAL,
+            self::CLIENT_IDLE_TIMEOUT
+        );
     }
 
     /**
@@ -88,29 +167,47 @@ class SSHConf extends Injectable
     private function generateDropbearKeys(): void
     {
         $keyTypes = [
-            "rsa" => PbxSettingsConstants::SSH_RSA_KEY,
-            "dss" => PbxSettingsConstants::SSH_DSS_KEY,
-            "ecdsa" => PbxSettingsConstants::SSH_ECDSA_KEY,
-            "ed25519" => PbxSettingsConstants::SSH_ED25519_KEY
+            "rsa" => PbxSettings::SSH_RSA_KEY,
+            "dss" => PbxSettings::SSH_DSS_KEY,
+            "ecdsa" => PbxSettings::SSH_ECDSA_KEY,
+            "ed25519" => PbxSettings::SSH_ED25519_KEY
         ];
 
         $dropBearDir = '/etc/dropbear';
         Util::mwMkdir($dropBearDir);
 
-        $dropbearkey = Util::which('dropbearkey');
+        $dropBearKey = Util::which('dropbearkey');
         // Get keys from DB
         foreach ($keyTypes as $keyType => $dbKey) {
-            $resKeyFilePath = "{$dropBearDir}/dropbear_" . $keyType . "_host_key";
+            $resKeyFilePath = "$dropBearDir/dropbear_" . $keyType . "_host_key";
             $keyValue = trim(PbxSettings::getValueByKey($dbKey));
             if (strlen($keyValue) > 100) {
                 file_put_contents($resKeyFilePath, base64_decode($keyValue));
             } elseif (!file_exists($resKeyFilePath)) {
-                Processes::mwExec("$dropbearkey -t $keyType -f $resKeyFilePath");
+                Processes::mwExec("$dropBearKey -t $keyType -f $resKeyFilePath");
                 $newKey = base64_encode(file_get_contents($resKeyFilePath));
-                $this->mikoPBXConfig->setGeneralSettings($dbKey, $newKey);
+                PbxSettings::setValueByKey($dbKey, $newKey);
             }
         }
-
+        $rsaPath = '/root/.ssh/id_rsa';
+        $sshGenPath = Util::which('ssh-keygen');
+        $keyCmd = [
+            [PbxSettings::SSH_ID_RSA, $rsaPath, $sshGenPath.' -t rsa -b 4096 -f '.$rsaPath.' -N "" -q'],
+            [PbxSettings::SSH_ID_RSA_PUB, "$rsaPath.pub", "$sshGenPath -y -f $rsaPath > $rsaPath.pub"],
+        ];
+        foreach ($keyCmd as [$keySetting, $path, $createCmd]){
+            $keyValue = trim(PbxSettings::getValueByKey($keySetting));
+            if(empty($keyValue)){
+                // Remove existing file to prevent ssh-keygen from waiting for interactive confirmation
+                if (file_exists($path)) {
+                    unlink($path);
+                }
+                shell_exec($createCmd);
+                $keyValue = base64_encode(file_get_contents($path));
+                PbxSettings::setValueByKey($keySetting, $keyValue);
+            }
+            file_put_contents($path, base64_decode($keyValue));
+        }
     }
 
     /**
@@ -120,38 +217,35 @@ class SSHConf extends Injectable
      */
     private function getCreateSshUser(): string
     {
-        $sshLogin = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_LOGIN);
+        $cut = Util::which('cut');
+        $chown = Util::which('chown');
+        $deluser = Util::which('deluser');
+        $delgroup = Util::which('delgroup');
+        $addgroup = Util::which('addgroup');
+        $adduser = Util::which('adduser');
+
+        $sshLogin = PbxSettings::getValueByKey(PbxSettings::SSH_LOGIN);
         $homeDir = $this->getUserHomeDir($sshLogin);
-        // System users, you can't touch them
-        $mainUsers = ['root', 'www'];
-        $bbPath = Util::which('busybox');
-        // We clean all non-system users
-        exec("$bbPath cut -f 1 -d ':' < /etc/passwd", $systemUsers);
-        foreach ($systemUsers as $user){
-            if($sshLogin === $user || in_array($user, $mainUsers, true)){
+        $mainUsers = ['root', 'www']; // System users that should not be modified
+
+        // Clean up non-system users
+        exec("$cut -f 1 -d ':' < /etc/passwd", $systemUsers);
+        foreach ($systemUsers as $user) {
+            if ($sshLogin === $user || in_array($user, $mainUsers, true)) {
                 continue;
             }
-            // Deleting the user
-            shell_exec("$bbPath deluser $user");
-            // Deleting the group
-            shell_exec("$bbPath delgroup $user");
+            // Deleting the user and associated group
+            shell_exec("$deluser $user");
+            shell_exec("$delgroup $user");
         }
-        if ($sshLogin !== 'root') {
-            // Adding a group '$sshLogin'
-            shell_exec("$bbPath addgroup $sshLogin");
-            // Adding user '$sshLogin'
-            shell_exec("$bbPath adduser -h $homeDir -g 'MikoPBX SSH Admin' -s /bin/bash -G root -D '$sshLogin'");
-            // Adding a user to the group '$sshLogin'
-            shell_exec("$bbPath addgroup -S '$sshLogin' $sshLogin");
-            // Adding a user to the group 'root'
-            shell_exec("$bbPath addgroup -S '$sshLogin' root");
 
-            $cat = Util::which('cat');
-            $cut = Util::which('cut');
-            $sed = Util::which('sed');
-            $chown = Util::which('chown');
-            $currentGroupId = trim(shell_exec("$cat /etc/passwd | grep '^$sshLogin:' | $cut -f 3 -d ':'"));
-            shell_exec("$sed -i 's/$sshLogin:x:$currentGroupId:/$sshLogin:x:0:/g' /etc/passwd");
+        // Adding SSH user if not root
+        if ($sshLogin !== 'root') {
+            shell_exec("$addgroup $sshLogin 2> /dev/null");
+            shell_exec("$adduser -h $homeDir -g 'MikoPBX SSH Admin' -s /bin/bash -G root -D '$sshLogin' 2> /dev/null");
+            shell_exec("$addgroup -S '$sshLogin' $sshLogin 2> /dev/null");
+            shell_exec("$addgroup -S '$sshLogin' root 2> /dev/null");
+            $this->updateUserGroupId($sshLogin);
             shell_exec("$chown -R $sshLogin:$sshLogin $homeDir");
         }
         return $sshLogin;
@@ -173,35 +267,55 @@ class SSHConf extends Injectable
     /**
      * Updates the shell password for specified SSH login.
      *
+     * Uses SHA-512 crypt hashes with chpasswd -e for secure password storage.
+     * The SSH_PASSWORD field should contain a SHA-512 hash ($6$...) from database.
+     * If a plain text password is provided (legacy/migration), it will be hashed first.
+     *
      * @param string $sshLogin SSH login username.
      * @return void
      */
     private function updateShellPassword(string $sshLogin = 'root'): void
     {
-        $password           = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD);
-        $hashString         = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING);
-        $disablePassLogin   = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD);
+        $storedPassword     = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
+        $disablePassLogin   = PbxSettings::getValueByKey(PbxSettings::SSH_DISABLE_SSH_PASSWORD);
 
         $echo     = Util::which('echo');
         $chpasswd = Util::which('chpasswd');
         $passwd   = Util::which('passwd');
+
+        // Always lock www user
         Processes::mwExec("$passwd -l www");
+
         if ($disablePassLogin === '1') {
+            // Lock both users when password login is disabled
             Processes::mwExec("$passwd -l $sshLogin");
             Processes::mwExec("$passwd -l root");
-        } elseif($sshLogin === 'root') {
-            Processes::mwExec("$echo '$sshLogin:$password' | $chpasswd");
         } else {
-            Processes::mwExec("$passwd -l root");
-            Processes::mwExec("$echo '$sshLogin:$password' | $chpasswd");
+            // Ensure we have a SHA-512 hash for chpasswd -e
+            if (PasswordService::isSha512Hash($storedPassword)) {
+                $passwordHash = $storedPassword;
+            } else {
+                // Legacy plain text password - hash it and update database
+                $passwordHash = PasswordService::generateSha512Hash($storedPassword);
+                PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD, $passwordHash);
+            }
+
+            // Escape the hash for shell (contains $ characters)
+            $escapedHash = escapeshellarg($passwordHash);
+
+            if ($sshLogin === 'root') {
+                // Set password using pre-hashed value with chpasswd -e
+                Processes::mwExec("$echo $sshLogin:$escapedHash | $chpasswd -e");
+            } else {
+                // Lock root and set password for custom SSH user
+                Processes::mwExec("$passwd -l root");
+                Processes::mwExec("$echo $sshLogin:$escapedHash | $chpasswd -e");
+            }
         }
 
-        // Security hash check and notification
+        // Update shadow file hash for security monitoring
         $currentHash = md5_file('/etc/shadow');
-        PbxSettings::setValue(PbxSettingsConstants::SSH_PASSWORD_HASH_FILE, $currentHash);
-        if ($hashString !== md5($password)) {
-            PbxSettings::setValue(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING, md5($password));
-        }
+        PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_FILE, $currentHash);
     }
 
     /**
@@ -216,14 +330,15 @@ class SSHConf extends Injectable
         $sshDir = "$homeDir/.ssh";
         Util::mwMkdir($sshDir);
 
-        $authorizedKeys = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_AUTHORIZED_KEYS);
+        $authorizedKeys = PbxSettings::getValueByKey(PbxSettings::SSH_AUTHORIZED_KEYS);
         file_put_contents("$sshDir/authorized_keys", $authorizedKeys);
     }
 
     /**
      * Corrects file permissions and ownership for SSH user directories.
      *
-     * Sets appropriate permissions and ownership on the home directory and SSH-related files to secure the environment.
+     * Sets appropriate permissions and ownership on the home directory and
+     * SSH-related files to secure the environment.
      *
      * @param string $sshLogin SSH login username.
      * @return void
@@ -252,5 +367,21 @@ class SSHConf extends Injectable
 
         // Change ownership to the user for both home and SSH directories
         Processes::mwExec("$chown -R $sshLogin:$sshLogin $homeDir");
+    }
+
+    /**
+     * Updates the user group ID in /etc/passwd.
+     *
+     * @param string $sshLogin SSH login username.
+     * @return void
+     */
+    private function updateUserGroupId(string $sshLogin): void
+    {
+        $cat = Util::which('cat');
+        $cut = Util::which('cut');
+        $sed = Util::which('sed');
+
+        $currentGroupId = trim(shell_exec("$cat /etc/passwd | grep '^$sshLogin:' | $cut -f 3 -d ':'")??'');
+        shell_exec("$sed -i 's/$sshLogin:x:$currentGroupId:/$sshLogin:x:0:/g' /etc/passwd");
     }
 }

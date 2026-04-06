@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,130 +21,342 @@
 namespace MikoPBX\PBXCoreREST\Lib\Extensions;
 
 use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Common\Models\ExternalPhones;
-use MikoPBX\Common\Models\IncomingRoutingTable;
-use MikoPBX\Common\Models\Sip;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
-class DataStructure
+/**
+ * Data structure for extensions
+ *
+ * Creates consistent data format for API responses.
+ * Implements OpenApiSchemaProvider to provide typed schemas for OpenAPI specification.
+ *
+ * @package MikoPBX\PBXCoreREST\Lib\Extensions
+ */
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
+    /**
+     * Create data array from Extensions model
+     *
+     * Following "Store Clean, Escape at Edge" principle:
+     * Returns raw data that was sanitized on input. HTML escaping
+     * is the responsibility of the presentation layer.
+     *
+     * @param Extensions $model Extension model instance
+     * @return array<string, mixed> Complete data structure
+     */
+    public static function createFromModel($model): array
+    {
+        // WHY: Extensions model doesn't have uniqid/extension fields like other entities,
+        // so we build data directly instead of using createBaseStructure()
 
-    public ?string $id;
+        $data = [];
 
-    public string $type = Extensions::TYPE_SIP;
+        // Add all extension fields from model
+        $data['id'] = $model->number;
+        $data['number'] = $model->number;
+        $data['type'] = $model->type ?? Extensions::TYPE_SIP;
+        $data['callerid'] = $model->callerid ?? '';
+        $data['userid'] = $model->userid ?? '';
+        $data['show_in_phonebook'] = $model->show_in_phonebook ?? '1';
+        $data['public_access'] = $model->public_access ?? '0';
+        $data['is_general_user_number'] = $model->is_general_user_number ?? '1';
 
-    public string $show_in_phonebook = '1';
-    public string $is_general_user_number = '1';
-    public string $public_access = '0';
+        // Apply OpenAPI schema formatting to convert types automatically
+        $data = self::formatBySchema($data, 'detail');
 
-    public string $number = '';
-
-    public ?string $user_id = '';
-    public string $user_avatar = '';
-    public string $user_username = '';
-    public string $user_email = '';
-    public string $mobile_uniqid = '';
-    public string $mobile_number = '';
-    public string $mobile_dialstring = '';
-    public ?string $sip_uniqid = '';
-
-    public string $sip_secret = '';
-    public string $sip_type = 'peer';
-    public string $sip_qualify = '1';
-    public int $sip_qualifyfreq = 60;
-    public string $sip_enableRecording = '1';
-    public string $sip_dtmfmode = 'auto';
-    public string $sip_transport = '';
-    public string $sip_networkfilterid = 'none';
-    public string $sip_manualattributes = '';
-    public int $fwd_ringlength = 45;
-    public string $fwd_forwarding = '';
-    public string $fwd_forwardingonbusy = '';
-    public string $fwd_forwardingonunavailable = '';
+        return $data;
+    }
 
     /**
-     * DataStructure constructor.
+     * Create simplified data structure for list view
      *
-     * Initializes a DataStructure instance with provided data.
-     * If certain properties are empty, it assigns default values.
-     *
-     * @param array $data The input data to initialize the DataStructure.
+     * @param Extensions $model Extension model instance
+     * @return array<string, mixed> Simplified data structure
      */
-    public function __construct(array $data)
+    public static function createForList($model): array
     {
-        // Use Reflection to get information about the class properties.
-        $reflectionClass = new \ReflectionClass($this);
-        $properties = $reflectionClass->getProperties();
+        // WHY: Extensions model doesn't have uniqid/extension fields like other entities,
+        // so we build data directly instead of using parent::createForList()
 
-        foreach ($properties as $property) {
-            $propName = $property->getName();
+        $data = [];
 
-            // Continue if the property doesn't exist in the data array.
-            if (!array_key_exists($propName, $data)) {
+        // Add extension specific fields for list display
+        $data['id'] = $model->number;
+        $data['number'] = $model->number;
+        $data['type'] = $model->type ?? Extensions::TYPE_SIP;
+        $data['callerid'] = $model->callerid ?? '';
+
+        // Apply OpenAPI list schema formatting
+        $data = self::formatBySchema($data, 'list');
+
+        return $data;
+    }
+
+    /**
+     * Get OpenAPI schema for extension list item
+     *
+     * This schema matches the structure returned by createForList() method.
+     * Used for GET /api/v3/extensions endpoint (list of extensions).
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getListItemSchema(): array
+    {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'] ?? [];
+
+        $properties = [];
+
+        // ✨ Inherit request parameters used in list view
+        $listFields = ['number', 'type', 'callerid'];
+        foreach ($listFields as $field) {
+            if (isset($requestParams[$field])) {
+                $properties[$field] = $requestParams[$field];
+                // Transform description key: rest_param_* → rest_schema_*
+                $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            }
+        }
+
+        // ✨ Inherit response-only fields for list (NO duplication!)
+        $listResponseFields = ['id'];
+        foreach ($listResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
+        return [
+            'type' => 'object',
+            'required' => ['id', 'number', 'type'],
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed extension record
+     *
+     * This schema matches the structure returned by createFromModel() method.
+     * Used for GET /api/v3/extensions/{id}, POST, PUT, PATCH endpoints.
+     *
+     * Inherits ALL fields from getParameterDefinitions() (NO duplication!)
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'] ?? [];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            // Skip query parameters (limit, offset, search, order, orderWay)
+            if (in_array($field, ['limit', 'offset', 'search', 'order', 'orderWay'])) {
                 continue;
             }
 
-            // Use Reflection to get the type of the property.
-            $type = $property->getType();
+            // Skip writeOnly fields if any exist
+            if (isset($definition['writeOnly']) && $definition['writeOnly']) {
+                continue;
+            }
 
-            // Assign a default value based on the type.
-            switch ($type->getName()) {
-                case 'string':
-                    $this->$propName = $data[$propName] ?? '';
-                    break;
-                case 'int':
-                    $this->$propName = intval($data[$propName]) ?? 0;
-                    break;
-                // You can add more types here if needed
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+        }
+
+        // ✨ Inherit response-only fields for detail (NO duplication!)
+        $detailResponseFields = ['id'];
+        foreach ($detailResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
             }
         }
 
-        // Fill empty values
-        if (empty($this->sip_uniqid)) {
-            $this->sip_uniqid = Sip::generateUniqueID();
-        }
-        if (empty($this->sip_secret)) {
-            $this->sip_secret = Sip::generateSipPassword();
-        }
-        if (empty($this->mobile_uniqid)) {
-            $this->mobile_uniqid = ExternalPhones::generateUniqueID();
-        }
-        if (empty($this->sip_networkfilterid)) {
-            $this->sip_networkfilterid='none';
-        }
-        if (empty($this->sip_dtmfmode)) {
-            $this->sip_dtmfmode='auto';
-        }
-
-        // Sanitize extension
-        if (!empty($this->number)){
-            $this->number = preg_replace('/\D/', '', $this->number);
-        }
-        if (empty($this->number)) {
-            $this->number = Extensions::getNextInternalNumber();
-        }
-
-        // Sanitize mobile numbers
-        if (!empty($this->mobile_number)){
-            $this->mobile_number = preg_replace('/\D/', '', $this->mobile_number);
-        }
-        if (empty($this->mobile_dialstring)) {
-            $this->mobile_dialstring = $this->mobile_number;
-        }
-        $properties = ['fwd_forwarding', 'fwd_forwardingonunavailable', 'fwd_forwardingonbusy'];
-        foreach ($properties as $property) {
-            if (!empty($this->{$property}) && !in_array($this->{$property}, [IncomingRoutingTable::ACTION_VOICEMAIL, IncomingRoutingTable::ACTION_BUSY, IncomingRoutingTable::ACTION_HANGUP], true)) {
-                $this->{$property} = preg_replace('/\D/', '', $this->{$property});
-            }
-        }
+        return [
+            'type' => 'object',
+            'required' => ['number', 'type'],
+            'properties' => $properties
+        ];
     }
 
     /**
-     * Convert the DataStructure object to an associative array.
+     * ✨ SINGLE SOURCE OF TRUTH - all fields defined once
      *
-     * @return array The DataStructure object as an associative array.
+     * Centralizes ALL field definitions with their constraints, validation rules,
+     * and sanitization. Eliminates duplication between request/response schemas.
+     *
+     * @return array<string, mixed>
      */
-    public function toArray(): array
+    private static function getAllFieldDefinitions(): array
     {
-        return get_object_vars($this);
+        return [
+            // Writable fields - accepted in POST/PUT/PATCH requests
+            'number' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_number',
+                'pattern' => '^[0-9]{2,8}$',
+                'minLength' => 2,
+                'maxLength' => 8,
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => '201'
+            ],
+            'type' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_type',
+                'enum' => ['SIP', 'IAX', 'QUEUE', 'IVR', 'CONFERENCE', 'EXTERNAL'],
+                'default' => 'SIP',
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => 'SIP'
+            ],
+            'callerid' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_callerid',
+                'maxLength' => 100,
+                'sanitize' => 'string',
+                'example' => 'John Doe'
+            ],
+            'userid' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_userid',
+                'pattern' => '^[0-9]*$',
+                'sanitize' => 'string',
+                'example' => '12'
+            ],
+            'show_in_phonebook' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ext_show_in_phonebook',
+                'default' => true,
+                'sanitize' => 'bool',
+                'example' => true
+            ],
+            'public_access' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ext_public_access',
+                'default' => false,
+                'sanitize' => 'bool',
+                'example' => false
+            ],
+            'is_general_user_number' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ext_is_general_user_number',
+                'default' => true,
+                'sanitize' => 'bool',
+                'example' => true
+            ],
+            // Query parameters for getList
+            'limit' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_ext_limit',
+                'minimum' => 1,
+                'maximum' => 100,
+                'default' => 20,
+                'sanitize' => 'int',
+                'example' => 20
+            ],
+            'offset' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_ext_offset',
+                'minimum' => 0,
+                'default' => 0,
+                'sanitize' => 'int',
+                'example' => 0
+            ],
+            'search' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_search',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => '200'
+            ],
+            'order' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_order',
+                'enum' => ['number', 'type', 'callerid'],
+                'default' => 'number',
+                'sanitize' => 'string',
+                'example' => 'number'
+            ],
+            'orderWay' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_orderWay',
+                'enum' => ['ASC', 'DESC'],
+                'default' => 'ASC',
+                'sanitize' => 'string',
+                'example' => 'ASC'
+            ],
+
+            // Read-only fields - only in responses, never accepted in requests
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_id',
+                'pattern' => '^[0-9]{2,8}$',
+                'readOnly' => true,
+                'example' => '201'
+            ]
+        ];
     }
+
+    /**
+     * Get parameter definitions (Single Source of Truth)
+     *
+     * Defines all field schemas, validation rules, defaults, and sanitization rules in one place.
+     *
+     * ✨ Uses getAllFieldDefinitions() to eliminate duplication.
+     *
+     * WHY: Centralizes all extension parameter definitions in one place.
+     * Includes both CRUD fields and query filtering parameters.
+     *
+     * @return array<string, array<string, mixed>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Filter out read-only fields for request schema
+        $writableFields = array_filter($allFields, fn($f) => empty($f['readOnly']));
+
+        // Transform description keys for request parameters: rest_schema_* → rest_param_*
+        $requestFields = [];
+        foreach ($writableFields as $field => $definition) {
+            $requestFields[$field] = $definition;
+            $requestFields[$field]['description'] = str_replace('rest_schema_', 'rest_param_', $definition['description']);
+        }
+
+        return [
+            'request' => $requestFields,
+            'response' => $allFields,  // ALL fields including read-only
+            'related' => [
+                // Note: 'type' field exists in request section for create/update,
+                // but getList uses it as optional filter with different description
+
+                // Custom method: getAvailableForForwarding, checkNumber
+                'number' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ext_number',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => '201'
+                ],
+                // Custom method: deleteNumbers (batch delete)
+                'numbers' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_ext_numbers',
+                    'items' => ['type' => 'string'],
+                    'sanitize' => 'array',
+                    'required' => true,
+                    'example' => ['201', '202', '203']
+                ]
+            ]
+        ];
+    }
+
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

@@ -22,7 +22,6 @@ namespace MikoPBX\PBXCoreREST\Lib\CdrDB;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Exception;
 use Phalcon\Di\Injectable;
 
 /**
@@ -45,7 +44,7 @@ class GetActiveChannelsAction extends Injectable
 
         try {
             $activeChannels = Util::getAstManager('off')->GetChannels();
-        }catch (Exception $e){
+        }catch (\Throwable $e){
             $res->success = false;
             $res->messages[] = $e->getMessage();
             return $res;
@@ -54,7 +53,7 @@ class GetActiveChannelsAction extends Injectable
         $filter = [
             'endtime=""',
             'order' => 'id',
-            'columns' => 'start,answer,src_chan,dst_chan,src_num,dst_num,did,linkedid',
+            'columns' => 'start,answer,src_chan,dst_chan,src_num,src_name,dst_num,dst_name,did,linkedid',
             'miko_tmp_db' => true,
         ];
         $cdrData = CDRDatabaseProvider::getCdr($filter);

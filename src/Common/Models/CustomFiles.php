@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,8 +20,8 @@
 
 namespace MikoPBX\Common\Models;
 
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class CustomFiles
@@ -29,11 +30,21 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  */
 class CustomFiles extends ModelsBase
 {
+    public const string MODE_NONE = 'none';
+    public const string MODE_APPEND = 'append';
+    public const string MODE_OVERRIDE = 'override';
+    public const string MODE_SCRIPT = 'script';
+    public const string MODE_CUSTOM = 'custom';  // User-created custom file
 
-    public const MODE_NONE = 'none';
-    public const MODE_APPEND = 'append';
-    public const MODE_OVERRIDE = 'override';
-    public const MODE_SCRIPT = 'script';
+    /**
+     * Allowed directories for reading files via Files API
+     * Files in these directories can be read even if not registered in CustomFiles table
+     */
+    public const array ALLOWED_DIRECTORIES = [
+        '/etc/',
+        '/storage/usbdisk1/mikopbx/',
+        '/tmp/',
+    ];
 
     /**
      * @Primary
@@ -125,7 +136,7 @@ class CustomFiles extends ModelsBase
      * @param string $text The content to be encoded and set.
      * @return void
      */
-    public function setContent(string  $text): void
+    public function setContent(string $text): void
     {
         $this->content = base64_encode($text);
     }

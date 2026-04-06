@@ -19,14 +19,20 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
+use MikoPBX\AdminCabinet\Plugins\SecurityPlugin;
+use MikoPBX\Common\Library\Text;
+use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
-use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings, PbxSettingsConstants};
+use Phalcon\Filter\Filter;
+use Phalcon\Flash\Exception;
 use Phalcon\Http\ResponseInterface;
-use Phalcon\Mvc\{Controller, Dispatcher, View};
+use Phalcon\Mvc\Controller;
+use Phalcon\Mvc\Dispatcher;
+use Phalcon\Mvc\View;
 use Phalcon\Tag;
-use Phalcon\Text;
 
 /**
  * @property \Phalcon\Session\Manager session
@@ -37,7 +43,7 @@ use Phalcon\Text;
  * @property \Phalcon\Flash\Session flash
  * @property \Phalcon\Tag tag
  * @property \Phalcon\Config\Adapter\Json config
- * @property \Phalcon\Logger loggerAuth
+ * @property \Phalcon\Logger\Logger loggerAuth
  */
 class BaseController extends Controller
 {
@@ -65,24 +71,23 @@ class BaseController extends Controller
     }
 
     /**
-     * Prepares the view by setting necessary variables and configurations.
+     * Prepares the view by setting the necessary variables and configurations.
      *
      * @return void
      */
     protected function prepareView(): void
     {
         // Set the default timezone based on PBX settings
-        date_default_timezone_set(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE));
+        date_default_timezone_set(PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE));
 
-        // Set PBXLicense view variable if session exists
-        if ($this->session->has(SessionController::SESSION_ID)) {
-            $this->view->PBXLicense = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
+        // Set PBXLicense view variable if user is authenticated
+        if ($this->isAuthenticated()) {
+            $this->view->PBXLicense = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
         } else {
             $this->view->PBXLicense = '';
         }
 
-        // Set URLs for Wiki and Support based on language
-        $this->view->urlToWiki = "https://wiki.mikopbx.com/{$this->controllerNameUnCamelized}";
+        // Set Support URL based on language
         if ($this->language === 'ru') {
             $this->view->urlToSupport = 'https://www.mikopbx.ru/support/?fromPBX=true';
         } else {
@@ -92,11 +97,11 @@ class BaseController extends Controller
         // Set the title based on the current action
         $title = 'MikoPBX';
         switch ($this->actionName) {
-            case'index':
-            case'delete':
-            case'save':
-            case'modify':
-            case'*** WITHOUT ACTION ***':
+            case 'index':
+            case 'delete':
+            case 'save':
+            case 'modify':
+            case '*** WITHOUT ACTION ***':
                 $title .= '|' . $this->translation->_("Breadcrumb{$this->controllerName}");
                 break;
             default:
@@ -108,17 +113,21 @@ class BaseController extends Controller
         $this->view->t = $this->translation;
         $this->view->debugMode = $this->config->path('adminApplication.debugMode');
         $this->view->urlToLogo = $this->url->get('assets/img/logo-mikopbx.svg');
+        $this->view->logoHref = $this->getLogoHref();
         $this->view->urlToController = $this->url->get($this->controllerNameUnCamelized);
         $this->view->represent = '';
-        $this->view->WebAdminLanguage = $this->session->get(PbxSettingsConstants::WEB_ADMIN_LANGUAGE)??PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
-        $this->view->AvailableLanguages = json_encode(LanguageController::getAvailableWebAdminLanguages());
-        $this->view->submitMode = $this->session->get('SubmitMode') ?? 'SaveSettings';
+        $this->view->WebAdminLanguage = $this->language;
+
+        // Prepare available languages array for static dropdown
+        $this->view->availableLanguages = \MikoPBX\Common\Providers\LanguageProvider::AVAILABLE_LANGUAGES;
+
+        $this->view->submitMode = 'SaveSettings';
         $this->view->lastSentryEventId = $this->setLastSentryEventId();
-        $this->view->PBXVersion = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
+        $this->view->PBXVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
+        $this->view->PBXName = PbxSettings::getValueByKey(PbxSettings::PBX_NAME);
         $this->view->MetaTegHeadDescription = $this->translation->_('MetaTegHeadDescription');
         $this->view->isExternalModuleController = $this->isExternalModuleController;
-
-        if ($this->controllerClass!==SessionController::class){
+        if ($this->controllerClass!==SessionController::class) {
             $this->view->setTemplateAfter('main');
         }
 
@@ -126,7 +135,8 @@ class BaseController extends Controller
         $this->view->actionName = $this->actionName;
         $this->view->controllerName = $this->controllerName;
         $this->view->controllerClass = $this->controllerClass;
-
+        $this->view->currentPage = "AdminCabinet/$this->controllerName/$this->actionName";
+        
         // Add module variables into view if it is an external module controller
         if ($this->isExternalModuleController) {
             /** @var PbxExtensionModules $module */
@@ -138,42 +148,37 @@ class BaseController extends Controller
             }
             $this->view->module = $module->toArray();
             $this->view->globalModuleUniqueId = $module->uniqid;
+            $this->view->showModuleStatusToggle = $this->showModuleStatusToggle??true;
+            $this->view->currentPage = "$module->uniqid/$this->controllerName/$this->actionName";
         }
     }
 
     /**
      * Performs actions before executing the route.
      *
+     * @param Dispatcher $dispatcher
      * @return void
      */
     public function beforeExecuteRoute(Dispatcher $dispatcher): void
     {
-        // Check if the request method is POST
-        if ($this->request->isPost()) {
-            // Retrieve the 'submitMode' data from the request
-            $data = $this->request->getPost('submitMode');
-            if (!empty($data)) {
-                // Set the 'SubmitMode' session variable to the retrieved data
-                $this->session->set('SubmitMode', $data);
-            }
-        }
-
         $this->actionName = $this->dispatcher->getActionName();
         $this->controllerName = Text::camelize($this->dispatcher->getControllerName(), '_');
         // Add module variables into view if it is an external module controller
         if (str_starts_with($this->dispatcher->getNamespaceName(), 'Modules')) {
-            $this->view->pick("Modules/{$this->getModuleUniqueId()}/{$this->controllerName}/{$this->actionName}");
-        } else  {
-            $this->view->pick("{$this->controllerName}/{$this->actionName}");
+            $this->view->pick("Modules/{$this->getModuleUniqueId()}/$this->controllerName/$this->actionName");
+        } else {
+            $this->view->pick("$this->controllerName/$this->actionName");
         }
 
-        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_EXECUTE_ROUTE,[$dispatcher]);
+        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_EXECUTE_ROUTE, [$dispatcher]);
     }
 
     /**
      * Performs actions after executing the route and returns the response.
      *
-     * @return \Phalcon\Http\ResponseInterface
+     * @param Dispatcher $dispatcher
+     * @return ResponseInterface
+     * @throws Exception
      */
     public function afterExecuteRoute(Dispatcher $dispatcher): ResponseInterface
     {
@@ -192,8 +197,8 @@ class BaseController extends Controller
                 $data['message'] = $data['message'] ?? $this->flash->getMessages();
 
                 // Let's add information about the last error to display a dialog window for the user.
-                $sentry =  $this->di->get(SentryErrorHandlerProvider::SERVICE_NAME,['admin-cabinet']);
-                if ($sentry){
+                $sentry =  $this->di->get(SentryErrorHandlerProvider::SERVICE_NAME, ['admin-cabinet']);
+                if ($sentry) {
                     $data['lastSentryEventId'] = $sentry->getLastEventId();
                 }
 
@@ -202,7 +207,7 @@ class BaseController extends Controller
             $this->response->setContent($result);
         }
 
-        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_EXECUTE_ROUTE,[$dispatcher]);
+        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_EXECUTE_ROUTE, [$dispatcher]);
 
         return $this->response->send();
     }
@@ -216,12 +221,12 @@ class BaseController extends Controller
     protected function forward(string $uri): void
     {
         $uriParts = explode('/', $uri);
-        if ($this->isExternalModuleController and count($uriParts)>2){
+        if ($this->isExternalModuleController and count($uriParts)>2) {
             $params = array_slice($uriParts, 3);
             $moduleUniqueID = $this->getModuleUniqueId();
             $this->dispatcher->forward(
                 [
-                    'namespace'=>"Modules\\{$moduleUniqueID}\\App\\Controllers",
+                    'namespace'=>"Modules\\$moduleUniqueID\\App\\Controllers",
                     'controller' => $uriParts[1],
                     'action' => $uriParts[2],
                     'params' => $params,
@@ -291,7 +296,7 @@ class BaseController extends Controller
         $result = null;
         // Allow anonymous statistics collection for JS code
         $sentry =  $this->di->get(SentryErrorHandlerProvider::SERVICE_NAME);
-        if ($sentry){
+        if ($sentry) {
             $result = $sentry->getLastEventId();
         }
         return $result;
@@ -311,12 +316,43 @@ class BaseController extends Controller
     }
 
     /**
+     * Get the logo href URL based on user's home page from JWT token.
+     *
+     * For users with limited permissions, returns their configured home page.
+     * For admins or when home page is not set, returns default index.
+     *
+     * @return string URL for logo click redirect
+     */
+    private function getLogoHref(): string
+    {
+        $defaultUrl = $this->url->get('index');
+
+        // Try to get home page from refresh token cookie
+        if ($this->cookies->has('refreshToken')) {
+            try {
+                $refreshToken = $this->cookies->get('refreshToken')->getValue();
+                if (!empty($refreshToken)) {
+                    $jwt = $this->di->getShared(\MikoPBX\Common\Providers\JwtProvider::SERVICE_NAME);
+                    $homePage = $jwt->extractHomePageFromRefreshToken($refreshToken);
+                    if (!empty($homePage)) {
+                        return $homePage;
+                    }
+                }
+            } catch (\Throwable) {
+                // Cookie decryption failed - use default
+            }
+        }
+
+        return $defaultUrl;
+    }
+
+    /**
      * Save an entity and handle success or error messages.
      *
      * @param mixed $entity The entity to be saved.
      * @return bool True if the entity was successfully saved, false otherwise.
      */
-    protected function saveEntity($entity, string $reloadPath=''): bool
+    protected function saveEntity(mixed $entity, string $reloadPath = ''): bool
     {
         $success = $entity->save();
 
@@ -325,14 +361,14 @@ class BaseController extends Controller
             $this->flash->error(implode('<br>', $errors));
         } elseif (!$this->request->isAjax()) {
             $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-            if ($reloadPath!==''){
+            if ($reloadPath!=='') {
                 $this->forward($reloadPath);
             }
         }
 
         if ($this->request->isAjax()) {
             $this->view->success = $success;
-            if ($reloadPath!=='' && $success){
+            if ($reloadPath!=='' && $success) {
                 $this->view->reload = str_replace('{id}', $entity->id, $reloadPath);
             }
         }
@@ -347,7 +383,7 @@ class BaseController extends Controller
      * @param mixed $entity The entity to be deleted.
      * @return bool True if the entity was successfully deleted, false otherwise.
      */
-    protected function deleteEntity($entity, string $reloadPath=''): bool
+    protected function deleteEntity(mixed $entity, string $reloadPath = ''): bool
     {
         $success = $entity->delete();
 
@@ -356,14 +392,14 @@ class BaseController extends Controller
             $this->flash->error(implode('<br>', $errors));
         } elseif (!$this->request->isAjax()) {
             // $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-            if ($reloadPath!==''){
+            if ($reloadPath!=='') {
                 $this->forward($reloadPath);
             }
         }
 
         if ($this->request->isAjax()) {
             $this->view->success = $success;
-            if ($reloadPath!=='' && $success){
+            if ($reloadPath!=='' && $success) {
                 $this->view->reload = $reloadPath;
             }
         }
@@ -399,5 +435,69 @@ class BaseController extends Controller
             // Close the file resource
             fclose($ifp);
         }
+    }
+
+    /**
+     * Recursively sanitizes input data based on the provided filter.
+     *
+     * @param array $data The data to be sanitized.
+     * @param \Phalcon\Filter\FilterInterface $filter The filter object used for sanitization.
+     *
+     * @return array The sanitized data.
+     */
+    public static function sanitizeData(array $data, \Phalcon\Filter\FilterInterface $filter): array
+    {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                // Recursively sanitize array values
+                $data[$key] = self::sanitizeData($value, $filter);
+            } elseif (is_string($value)) {
+                // Check if the string is valid JSON
+                $jsonDecoded = json_decode($value, true);
+                if (json_last_error() === JSON_ERROR_NONE && $value !== '') {
+                    // If it's valid JSON, sanitize its content and re-encode
+                    if (is_array($jsonDecoded)) {
+                        // Sanitize the JSON's content recursively
+                        $sanitizedJson = self::sanitizeData($jsonDecoded, $filter);
+                        $data[$key] = json_encode($sanitizedJson);
+                    } else {
+                        // For non-array JSON values (simple values), keep as is
+                        $data[$key] = $value;
+                    }
+                }
+                // Check if the string starts with 'http'
+                else if (stripos($value, 'http') === 0) {
+                    // If the string starts with 'http', sanitize it as a URL
+                    $data[$key] = $filter->sanitize($value, FILTER::FILTER_URL);
+                } else {
+                    // Sanitize regular strings (trim and remove illegal characters)
+                    $data[$key] = $filter->sanitize($value, [FILTER::FILTER_STRING, FILTER::FILTER_TRIM]);
+                }
+            } elseif (is_numeric($value)) {
+                // Sanitize numeric values as integers
+                $data[$key] = $filter->sanitize($value, FILTER::FILTER_INT);
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Checks if the current user is authenticated using JWT tokens.
+     *
+     * This method provides a unified authentication check across all controllers.
+     * It uses the same logic as SecurityPlugin::isAuthenticated() to ensure consistency.
+     *
+     * JWT authentication flow:
+     * 1. AJAX requests: check for Bearer token in Authorization header
+     * 2. Browser page requests: check for refreshToken cookie
+     *    - If cookie exists, user is considered authenticated
+     *    - TokenManager JS will call /auth:refresh to get access token
+     *
+     * @return bool true if the user is authenticated, false otherwise.
+     */
+    protected function isAuthenticated(): bool
+    {
+        return SecurityPlugin::isAuthenticated($this->request, $this->cookies);
     }
 }

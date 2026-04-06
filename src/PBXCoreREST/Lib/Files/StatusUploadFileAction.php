@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -19,9 +20,9 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Files;
 
-
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class StatusUploadFile
@@ -29,9 +30,8 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Files
  */
-class StatusUploadFileAction extends \Phalcon\Di\Injectable
+class StatusUploadFileAction extends Injectable
 {
-
     /**
      * Returns Status of uploading and merging process
      *
@@ -71,10 +71,20 @@ class StatusUploadFileAction extends \Phalcon\Di\Injectable
             $res->success = true;
             $res->data[FilesConstants::D_STATUS_PROGRESS] = '100';
             $res->data[FilesConstants::D_STATUS] = FilesConstants::UPLOAD_COMPLETE;
+        } elseif (str_starts_with(file_get_contents($progress_file), 'VALIDATION_FAILED')) {
+            $res->success = false;
+            $res->data[FilesConstants::D_STATUS_PROGRESS] = '0';
+            $res->data[FilesConstants::D_STATUS] = FilesConstants::UPLOAD_FAILED;
+            $res->messages['error'][] = 'File content validation failed: file type does not match declared category';
         } else {
             $res->success = true;
             $res->data[FilesConstants::D_STATUS_PROGRESS] = file_get_contents($progress_file);
+            $res->data[FilesConstants::D_STATUS] = FilesConstants::UPLOAD_IN_PROGRESS;
         }
+
+        // Add EventBus channel info to response
+        $res->data['channelId'] = "file-upload-{$upload_id}";
+        $res->data['eventBusEnabled'] = true;
 
         return $res;
     }

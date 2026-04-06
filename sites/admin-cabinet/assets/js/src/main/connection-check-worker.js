@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalDebugMode, EventSource */
+/* global globalDebugMode, EventSource, SystemAPI */
 
 /**
  * The connectionCheckWorker object is responsible for checking
@@ -36,23 +36,11 @@ const connectionCheckWorker = {
     $connectionDimmer: $('#connection-dimmer'),
 
     /**
-     * EventSource object for the connection check.
-     * @type {EventSource}
-     */
-    eventSource: null,
-
-    /**
      * Initialize the connection check worker.
      */
     initialize() {
-        connectionCheckWorker.eventSource = new EventSource('/connection-check');
-
-        connectionCheckWorker.eventSource.addEventListener('error', function(event) {
-            connectionCheckWorker.cbAfterResponse(false);
-        });
-
-        connectionCheckWorker.eventSource.addEventListener('open', function(event) {
-            connectionCheckWorker.cbAfterResponse(true);
+        EventBus.subscribe('connection-status', data => {
+            connectionCheckWorker.cbAfterResponse(data);
         });
     },
 
@@ -61,27 +49,52 @@ const connectionCheckWorker = {
      * @param {boolean} result - The result of the connection check.
      */
     cbAfterResponse(result) {
+        // Don't show dimmer if we're already redirecting to login page
+        if (typeof PbxApiClient !== 'undefined' && PbxApiClient.isRedirectingToLogin) {
+            return;
+        }
+
         if (result === true) {
             // If the connection is successful, hide the connection dimmer
             connectionCheckWorker.$connectionDimmer.dimmer('hide');
 
             // Reload the page if the error count exceeds a certain threshold
             if (connectionCheckWorker.errorCounts > 5) {
-                window.location.reload();
+                let pingTimeout;
+                let pingCompleted = false;
+
+                // Set timeout for ping request (3 seconds)
+                pingTimeout = setTimeout(() => {
+                    if (!pingCompleted) {
+                        pingCompleted = true;
+                    }
+                }, 3000);
+
+                // Before reload, check if backend is fully ready with ping
+                SystemAPI.ping((response) => {
+                    if (pingCompleted) {
+                        return; // Timeout already fired
+                    }
+                    clearTimeout(pingTimeout);
+                    pingCompleted = true;
+
+                    if (response && response.result === true) {
+                        // Backend is fully ready, safe to reload
+                        window.location.reload();
+                    }
+                });
             }
 
             // Reset the error count
             connectionCheckWorker.errorCounts = 0;
 
         } else if (connectionCheckWorker.errorCounts > 3) {
-
             // If the connection is unsuccessful and error count exceeds a threshold, show the connection dimmer
             connectionCheckWorker.$connectionDimmer.dimmer('show');
 
             // Increment the error count
             connectionCheckWorker.errorCounts += 1;
         } else {
-
             // Increment the error count
             connectionCheckWorker.errorCounts += 1;
         }

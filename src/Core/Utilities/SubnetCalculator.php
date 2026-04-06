@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,6 +19,7 @@
  */
 
 namespace MikoPBX\Core\Utilities;
+
 use Error;
 
 /**
@@ -61,7 +63,7 @@ class SubnetCalculator
      *
      * @var array
      */
-    private $quads = [];
+    private array $quads = [];
     /**
      * Subnet mask in format used for subnet calculations.
      *
@@ -96,9 +98,9 @@ class SubnetCalculator
      *
      * @throws \Throwable IP or network size not valid.
      */
-    private function validateInputs(string $ip, string $network_size)
+    private function validateInputs(string $ip, string $network_size): void
     {
-        if ( ! filter_var($ip, FILTER_VALIDATE_IP)) {
+        if (! filter_var($ip, FILTER_VALIDATE_IP)) {
             throw new Error("IP address $ip not valid.");
         }
         if (($network_size < 1) || ($network_size > 32)) {
@@ -134,7 +136,7 @@ class SubnetCalculator
      *
      * @return string subnet
      */
-    private function subnetCalculation(string $format, string $separator = ''):string
+    private function subnetCalculation(string $format, string $separator = ''): string
     {
         $mask_quads   = [];
         $mask_quads[] = sprintf($format, ($this->subnet_mask >> 24) & 0xFF);
@@ -163,7 +165,7 @@ class SubnetCalculator
      *
      * @return string formatted subnet mask.
      */
-    private function hostCalculation(string $format, string $separator = ''):string
+    private function hostCalculation(string $format, string $separator = ''): string
     {
         $network_quads   = [];
         $network_quads[] = sprintf("$format", $this->quads[0] & ~($this->subnet_mask >> 24));
@@ -480,7 +482,7 @@ class SubnetCalculator
      * Each of the above is provided in dotted quads, hexedecimal, and binary notation.
      * Also contains number of IP addresses and number of addressable hosts, IP address range, and broadcast address.
      */
-    public function printSubnetReport()
+    public function printSubnetReport(): void
     {
         print($this->__tostring());
     }
@@ -492,7 +494,7 @@ class SubnetCalculator
      */
     public function __tostring()
     {
-        $string = sprintf("%-18s %15s %8s %32s\n", "{$this->ip}/{$this->network_size}", 'Quads', 'Hex', 'Binary');
+        $string = sprintf("%-18s %15s %8s %32s\n", "$this->ip/$this->network_size", 'Quads', 'Hex', 'Binary');
         $string .= sprintf(
             "%-18s %15s %8s %32s\n",
             '------------------',

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -51,9 +52,9 @@ use Throwable;
  */
 class MarketPlaceProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'license';
+    public const string SERVICE_NAME = 'license';
 
-    public const LIC_FILE_PATH = '/var/etc/licenseInfo.json';
+    public const string LIC_FILE_PATH = '/var/etc/licenseInfo.json';
 
     /**
      * Register license service provider
@@ -66,8 +67,8 @@ class MarketPlaceProvider implements ServiceProviderInterface
             self::SERVICE_NAME,
             function () {
                 try {
-                    return new License('http://127.0.0.1:8223');
-                } catch (Throwable $e){
+                    return new License();
+                } catch (Throwable $e) {
                     SystemMessages::sysLogMsg(__CLASS__, $e->getMessage());
                 }
                 return null;

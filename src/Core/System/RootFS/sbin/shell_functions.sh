@@ -22,25 +22,147 @@
 # $1 - method name
 # $2 ... $4 - parameters
 
+# =============================================================================
+# Container Detection Functions
+# =============================================================================
+# These functions provide capability-based container detection matching the PHP API:
+# - is_docker()         -> System::isDocker()    - true ONLY for Docker
+# - is_lxc()            -> System::isLxc()       - true ONLY for LXC
+# - is_container()      -> System::isContainer() - true for Docker OR LXC
+# - can_manage_network() -> System::canManageNetwork() - false for Docker, true otherwise
+#
+# Key difference:
+# - Docker: Runtime manages networking, storage, time -> MikoPBX should NOT configure
+# - LXC: Container manages itself (like a VM) -> MikoPBX MUST configure
+# =============================================================================
+
+# is_docker: Returns true (0) if running in Docker container
+# Docker is detected by /.dockerenv file or DOCKER_CONTAINER env var
+is_docker()
+{
+    [ -f "/.dockerenv" ] || [ -n "$DOCKER_CONTAINER" ]
+}
+
+# is_lxc: Returns true (0) if running in LXC container
+# LXC sets container=lxc environment variable
+is_lxc()
+{
+    [ "$container" = 'lxc' ]
+}
+
+# is_container: Returns true (0) if running in any container (Docker or LXC)
+# Use for operations that should be skipped in ALL container environments
+is_container()
+{
+    is_docker || is_lxc
+}
+
+# can_manage_network: Returns true (0) if system can configure networking
+# Docker: NO - container runtime manages networking
+# LXC: YES - container manages its own network (like a VM)
+# Bare-metal: YES
+can_manage_network()
+{
+    ! is_docker
+}
+
 
 # echoToTeletype: Prints a message to the console and the serial port if available.
 # Args:
 #   $1: Message to be printed.
+# Note: This function is kept for backward compatibility.
+#       New code should use echo_info, echo_error, etc.
 echoToTeletype()
 {
   local message="$1"
-  echo "$message";
-  local dev='/dev/ttyS0';
-  local serialInfo="$(/bin/busybox setserial -g "$dev" 2> /dev/null)";
-  if [ "${serialInfo}x" = 'x' ]; then
-    return;
-  fi;
-  echo "$serialInfo" | /bin/grep unknown > /dev/null 2> /dev/null;
-  resultSetSerial="$?";
-  if [ ! "$resultSetSerial" = '0' ]; then
-     # Device ttys found
-     echo "$1" >> "$dev"
-  fi;
+  # Use the new unified message handler
+  if [ -x "/sbin/pbx-message" ]; then
+    /sbin/pbx-message -t info "$message"
+  else
+    # Fallback to old implementation if pbx-message is not available
+    echo "$message";
+    local dev
+    for dev in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
+               /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
+      if [ -c "$dev" ] && [ -w "$dev" ] && echo -n "" > "$dev" 2>/dev/null; then
+        echo "$1" >> "$dev"
+        break
+      fi
+    done
+  fi
+}
+
+# echo_info: Print an informational message
+# Args:
+#   $1: Message to be printed
+#   $2: Optional -s flag to also log to syslog
+echo_info()
+{
+  local message="$1"
+  local syslog_flag=""
+  if [ "$2" = "-s" ]; then
+    syslog_flag="-s"
+  fi
+  if [ -x "/sbin/pbx-message" ]; then
+    /sbin/pbx-message -t info $syslog_flag "$message"
+  else
+    echoToTeletype "$message"
+  fi
+}
+
+# echo_error: Print an error message
+# Args:
+#   $1: Message to be printed
+echo_error()
+{
+  local message="$1"
+  if [ -x "/sbin/pbx-message" ]; then
+    /sbin/pbx-message -t error -s -l err "$message"
+  else
+    echoToTeletype "ERROR: $message"
+  fi
+}
+
+# echo_start: Print a start message (with no newline)
+# Args:
+#   $1: Message to be printed
+echo_start()
+{
+  local message="$1"
+  if [ -x "/sbin/pbx-message" ]; then
+    /sbin/pbx-message -t start -n "$message"
+  else
+    echo -n " - $message"
+  fi
+}
+
+# echo_result: Print a result (DONE/FAIL/SKIP)
+# Args:
+#   $1: Result type (done, fail, skip)
+echo_result()
+{
+  local result="${1:-done}"
+  if [ -x "/sbin/pbx-message" ]; then
+    # Calculate dots for alignment
+    # This would need the previous message length, so for now just print the result
+    echo -n " "
+    /sbin/pbx-message -t "$result"
+  else
+    case "$result" in
+      done)
+        echo " DONE"
+        ;;
+      fail|failed)
+        echo " FAIL"
+        ;;
+      skip|skipped)
+        echo " SKIP"
+        ;;
+      *)
+        echo " $result"
+        ;;
+    esac
+  fi
 }
 
 # kill_by_pids: Kills processes by their PIDs.
@@ -114,11 +236,12 @@ freeSwapByName(){
 # f_umount: Unmounts a device or a file.
 # Args:
 #   $1: Device or file to be unmounted.
+# Note: Skipped in containers - host manages storage mounts for both Docker and LXC
 f_umount()
 {
-    if [ -f '/.dockerenv' ]; then
-      return;
-    fi;
+    if is_container; then
+      return
+    fi
 
     if [ -b "$1" ]; then
       filter="^$1";

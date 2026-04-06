@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -19,18 +20,43 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\Util;
-use MikoPBX\PBXCoreREST\Lib\System\ConvertAudioFileAction;
-use MikoPBX\PBXCoreREST\Lib\System\GetDateAction;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\PBXCoreREST\Lib\System\ChangeLanguageAction;
+use MikoPBX\PBXCoreREST\Lib\System\CheckForUpdatesAction;
+use MikoPBX\PBXCoreREST\Lib\System\CheckIfNewReleaseAvailableAction;
+use MikoPBX\PBXCoreREST\Lib\System\DateTimeAction;
+use MikoPBX\PBXCoreREST\Lib\System\ExecuteBashCommandAction;
+use MikoPBX\PBXCoreREST\Lib\System\ExecuteSqlRequestAction;
+use MikoPBX\PBXCoreREST\Lib\System\GetAvailableLanguagesAction;
+use MikoPBX\PBXCoreREST\Lib\System\GetDeleteStatisticsAction;
 use MikoPBX\PBXCoreREST\Lib\System\RebootAction;
 use MikoPBX\PBXCoreREST\Lib\System\RestoreDefaultSettingsAction;
-use MikoPBX\PBXCoreREST\Lib\System\SendMailAction;
-use MikoPBX\PBXCoreREST\Lib\System\SetDateAction;
 use MikoPBX\PBXCoreREST\Lib\System\ShutdownAction;
 use MikoPBX\PBXCoreREST\Lib\System\UpdateMailSettingsAction;
 use MikoPBX\PBXCoreREST\Lib\System\UpgradeFromImageAction;
 use Phalcon\Di\Injectable;
+
+/**
+ * Enum for System API actions
+ */
+enum SystemAction: string
+{
+    case PING = 'ping';
+    case CHECK_AUTH = 'checkAuth';
+    case REBOOT = 'reboot';
+    case SHUTDOWN = 'shutdown';
+    case DATETIME = 'datetime';
+    case UPDATE_MAIL_SETTINGS = 'updateMailSettings';
+    case UPGRADE = 'upgrade';
+    case RESTORE_DEFAULT = 'restoreDefault';
+    case GET_DELETE_STATISTICS = 'getDeleteStatistics';
+    case GET_AVAILABLE_LANGUAGES = 'getAvailableLanguages';
+    case CHANGE_LANGUAGE = 'changeLanguage';
+    case CHECK_FOR_UPDATES = 'checkForUpdates';
+    case CHECK_IF_NEW_RELEASE_AVAILABLE = 'checkIfNewReleaseAvailable';
+    case EXECUTE_BASH_COMMAND = 'executeBashCommand';
+    case EXECUTE_SQL_REQUEST = 'executeSqlRequest';
+}
 
 /**
  * Class SystemManagementProcessor
@@ -51,51 +77,94 @@ class SystemManagementProcessor extends Injectable
      */
     public static function callBack(array $request): PBXApiResult
     {
-        $action         = $request['action'];
+        $actionString   = $request['action'];
         $data           = $request['data'];
-        $res            = new PBXApiResult();
-        $res->processor = __METHOD__;
-        switch ($action) {
-            case 'reboot':
-                $res = RebootAction::main();
-                break;
-            case 'shutdown':
-                $res= ShutdownAction::main();
-                break;
-            case 'getDate':
-                $res= GetDateAction::main();
-                break;
-            case 'setDate':
-                $res= SetDateAction::main($data);
-                break;
-            case 'updateMailSettings':
-             $res = UpdateMailSettingsAction::main();
-                break;
-            case 'sendMail':
-                $res = SendMailAction::main($data);
-                break;
-            case 'upgrade':
-                $imageFileLocation = $data['temp_filename']??'';
-                $res = UpgradeFromImageAction::main($imageFileLocation);
-                break;
-            case 'restoreDefault':
-                $ch = 0;
-                do{
-                    $ch++;
-                    $res = RestoreDefaultSettingsAction::main();
-                    sleep(1);
-                }while($ch <= 10 && !$res->success);
-                break;
-            case 'convertAudioFile':
-                $mvPath = Util::which('mv');
-                Processes::mwExec("{$mvPath} {$request['data']['temp_filename']} {$request['data']['filename']}");
-                $res = ConvertAudioFileAction::main($request['data']['filename']);
-                break;
-            default:
-                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
+        $action         = SystemAction::tryFrom($actionString);
+
+        if ($action === null) {
+            $res = new PBXApiResult();
+            $res->processor = __METHOD__;
+            $res->messages['error'][] = "Unknown action - $actionString in " . __CLASS__;
+            $res->function = $actionString;
+            return $res;
         }
 
-        $res->function = $action;
+        $res = match ($action) {
+            SystemAction::PING => self::handlePing(),
+            SystemAction::CHECK_AUTH => self::handleCheckAuth(),
+            SystemAction::REBOOT => RebootAction::main(),
+            SystemAction::SHUTDOWN => ShutdownAction::main(),
+            SystemAction::DATETIME => DateTimeAction::main($data),
+            SystemAction::UPDATE_MAIL_SETTINGS => UpdateMailSettingsAction::main(),
+            SystemAction::UPGRADE => UpgradeFromImageAction::main($data['temp_filename'] ?? ''),
+            SystemAction::RESTORE_DEFAULT => self::handleRestoreDefault($data),
+            SystemAction::GET_DELETE_STATISTICS => GetDeleteStatisticsAction::main(),
+            SystemAction::GET_AVAILABLE_LANGUAGES => GetAvailableLanguagesAction::main($data),
+            SystemAction::CHANGE_LANGUAGE => ChangeLanguageAction::main($data),
+            SystemAction::CHECK_FOR_UPDATES => CheckForUpdatesAction::main(),
+            SystemAction::CHECK_IF_NEW_RELEASE_AVAILABLE => CheckIfNewReleaseAvailableAction::main(),
+            SystemAction::EXECUTE_BASH_COMMAND => ExecuteBashCommandAction::main($data),
+            SystemAction::EXECUTE_SQL_REQUEST => ExecuteSqlRequestAction::main($data),
+        };
+
+        $res->function = $actionString;
+
+        return $res;
+    }
+
+    /**
+     * Handle ping action
+     *
+     * @return PBXApiResult
+     */
+    private static function handlePing(): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $res->success = true;
+        return $res;
+    }
+
+    /**
+     * Handle checkAuth action
+     *
+     * @return PBXApiResult
+     */
+    private static function handleCheckAuth(): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $res->success = true;
+        return $res;
+    }
+
+    /**
+     * Handle restoreDefault action with async/sync modes
+     *
+     * @param array $data Request data
+     * @return PBXApiResult
+     */
+    private static function handleRestoreDefault(array $data): PBXApiResult
+    {
+        // Check if async channel ID is provided
+        $asyncChannelId = $data['asyncChannelId'] ?? '';
+
+        if (!empty($asyncChannelId)) {
+            // Async mode - process with WebSocket events
+            $res = RestoreDefaultSettingsAction::main($asyncChannelId);
+        } else {
+            // Sync mode - retry logic
+            $ch = 0;
+            do {
+                $ch++;
+                $res = RestoreDefaultSettingsAction::main();
+                sleep(1);
+            } while ($ch <= 10 && !$res->success);
+        }
+
+        if ($res->success) {
+            PbxSettings::setValueByKey(PbxSettings::PBX_SETTINGS_WAS_RESET, '1');
+        }
 
         return $res;
     }

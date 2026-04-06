@@ -17,19 +17,25 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-echo " - Start ${0}";
+# Load shell functions for console/serial output
+source /sbin/shell_functions.sh
+
+echo_info "Start ${0}";
 delta=1; i=0;
 freeOffloadFile='/tmp/freeoffload';
+
+# Trap SIGINT (Ctrl+C) to exit to shell instead of respawn
+trap 'touch /tmp/start_sh; exit 0' INT
 
 while : ; do
 
     if [ ! -t 0 ] || [ ! -t 1 ] ; then
         # Not a TTY, disable the menu.
-        exit 2;
+        exit 10;
     fi
     if [ "$i" -gt 3 ]; then
         # System installation, disable the menu.
-        exit 1;
+        exit 10;
     fi
 
     if [ "$delta" = "0" ]; then
@@ -46,13 +52,13 @@ while : ; do
     fi
 
     if [ -f /tmp/rebooting ]; then
-        echo "Reboot pending (${0}). Cancel with rm /tmp/rebooting"
+        echo "Reboot pending (${0}). Cancel with 'touch /tmp/cancel_rebooting'"
         # Waiting timeout
         WAIT_TIME=10
         counter=0
 
         while [ $counter -lt $WAIT_TIME ]; do
-            if [ ! -f /tmp/rebooting ]; then
+            if [ -f /tmp/cancel_rebooting ]; then
                 # Flag file was deleted
                 echo "System reboot was cancelled"
                 touch /tmp/start_sh
@@ -80,18 +86,23 @@ while : ; do
         clear;
         rm -rf /tmp/start_sh;
         if [ -f /etc/debian_version ] ; then
+            # Docker container - no exec, just run bash
             /bin/bash -login;
-        elif [ "${SSH_CLIENT}x" = 'x' ] ; then
-             # Redirect input and output to the console.
-            exec < /dev/console > /dev/console  2>&1
+        elif [ "${SSH_CLIENT}x" = "x" ] ; then
+            # Console (not SSH) - reconnect stdin/stdout to current tty
+            # This fixes terminal state after PhpSchool CliMenu exit
+            current_tty=$(tty)
+            exec < "$current_tty" > "$current_tty" 2>&1
             exec /bin/bash -login;
         else
+            # SSH session
             exec /bin/bash -login;
         fi
     fi
     # Ensure that the /offload partition is mounted.
     if [ ! -f "$freeOffloadFile" ]; then
-        # Console menu depends on the /offload partition.
+        # Show welcome banner, then console menu
+        /etc/rc/welcome_banner 2>/dev/null;
         /etc/rc/console_menu 2>/dev/null;
         resultMenu=$?;
 
@@ -108,7 +119,9 @@ while : ; do
             /bin/sh;
         fi;
     else
+        echo "Waiting free offload ..."
         sleep 5;
+        /bin/sh;
     fi
 
     end_time=$(date +%s);

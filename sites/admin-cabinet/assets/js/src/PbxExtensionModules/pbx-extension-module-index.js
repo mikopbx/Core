@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global SemanticLocalization, PbxExtensionStatus, keyCheck */
+/* global SemanticLocalization, PbxExtensionStatus, keyCheck, marketplace, LicenseAPI */
 
 /**
  * Represents list of extension modules.
@@ -64,20 +64,21 @@ const extensionModules = {
             history: true,
             historyType: 'hash',
             onVisible(){
-                if ($(this).data('tab')==='licensing'){
-                    PbxApi.LicenseGetLicenseInfo(keyCheck.cbAfterGetLicenseInfo);
+                if ($(this).data('tab') === 'licensing'){
+                    LicenseAPI.getLicenseInfo(keyCheck.cbAfterGetLicenseInfo);
                 }
             }
         });
 
+        // Initialize marketplace data loading immediately on page load
+        // This allows showing update badges on installed modules tab
+        // and avoids delay when switching to marketplace tab
+        marketplace.initialize();
+
         extensionModules.initializeDataTable();
 
-        extensionModules.$popupOnClick.popup({
-            on    : 'click',
-            className: {
-                popup: 'ui popup wide'
-            }
-        });
+        // Initialize all popups on the page
+        extensionModules.initializePopups();
 
         extensionModules.$checkboxes.each((index, obj) => {
             const uniqId = $(obj).attr('data-value');
@@ -85,8 +86,6 @@ const extensionModules = {
             pageStatus.initialize(uniqId, false);
             extensionModules.checkBoxes.push(pageStatus);
         });
-
-        $('a[data-content]').popup();
     },
 
     /**
@@ -109,6 +108,24 @@ const extensionModules = {
 
         // Move the "Add New" button to the first eight-column div
         $('.add-new').appendTo($('div.eight.column:eq(0)'));
+    },
+
+    /**
+     * Initialize all popups on the page
+     * This method should be called after any DOM update to re-initialize popup handlers
+     */
+    initializePopups() {
+        // Initialize popups for error icons with HTML content
+        $('i.popup-on-click').popup({
+            on    : 'click',
+            html  : true,
+            className: {
+                popup: 'ui popup wide'
+            }
+        });
+
+        // Initialize standard tooltips
+        $('a[data-content]').popup();
     },
 
 };

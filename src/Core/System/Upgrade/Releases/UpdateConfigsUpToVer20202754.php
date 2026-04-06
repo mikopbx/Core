@@ -22,24 +22,19 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
-use Phalcon\Config as ConfigAlias;
 use Phalcon\Di\Injectable;
 use SQLite3;
 use Throwable;
 
 class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemConfigInterface
 {
-    public const PBX_VERSION = '2020.2.754';
+    public const string PBX_VERSION = '2020.2.754';
 
-    private ConfigAlias $config;
-
-    private MikoPBXConfig $mikoPBXConfig;
 
     private bool $isLiveCD;
 
@@ -48,8 +43,6 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
      */
     public function __construct()
     {
-        $this->config        = $this->getDI()->getShared('config');
-        $this->mikoPBXConfig = new MikoPBXConfig();
         $this->isLiveCD      = file_exists('/offload/livecd');
     }
 
@@ -75,7 +68,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
     /**
      * Deletes all not actual codecs
      */
-    private function deleteOrphanCodecs()
+    private function deleteOrphanCodecs(): void
     {
         $availCodecs = [
             // Видео кодеки.
@@ -145,7 +138,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
                 continue;
             }
             $codecData->name = $availCodec;
-            if (strpos($availCodec, 'h26') === 0) {
+            if (str_starts_with($availCodec, 'h26')) {
                 $type = 'video';
             } else {
                 $type = 'audio';
@@ -243,8 +236,8 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
         ];
         foreach ($oldCacheDirs as $old_cache_dir) {
             if (is_dir($old_cache_dir)) {
-                $rmPath = Util::which('rm');
-                Processes::mwExec("{$rmPath} -rf $old_cache_dir");
+                $rm = Util::which('rm');
+                Processes::mwExec("$rm -rf $old_cache_dir");
             }
         }
     }
@@ -257,7 +250,6 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
         $oldCacheDirs    = [
             "$mediaMountPoint/mikopbx/log/nats/license.key",
             "$mediaMountPoint/mikopbx/log/nats/*.cache",
-            "$mediaMountPoint/mikopbx/log/pdnsd/cache",
             "$mediaMountPoint/mikopbx/log/Module*",
             "$mediaMountPoint/mikopbx/php_session",
             "$mediaMountPoint/mikopbx/tmp/*",
@@ -266,8 +258,8 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
         ];
         foreach ($oldCacheDirs as $old_cache_dir) {
             if (is_dir($old_cache_dir)) {
-                $rmPath = Util::which('rm');
-                Processes::mwExec("{$rmPath} -rf $old_cache_dir");
+                $rm = Util::which('rm');
+                Processes::mwExec("$rm -rf $old_cache_dir");
             }
         }
     }
@@ -288,17 +280,15 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
 
         ];
         $parameters=[
-            'conditions'=>'show_in_phonebook!=1 and type IN ({ids:array})',
+            'conditions'=>'(show_in_phonebook IS NULL OR show_in_phonebook<>1) and type IN ({ids:array})',
             'bind'       => [
                 'ids' => $showInPhonebookTypes,
             ],
         ];
         $extensions           = Extensions::find($parameters);
         foreach ($extensions as $extension) {
-            if (in_array($extension->type, $showInPhonebookTypes)) {
-                $extension->show_in_phonebook = '1';
-                $extension->update();
-            }
+            $extension->show_in_phonebook = '1';
+            $extension->update();
         }
     }
 

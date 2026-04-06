@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,13 +22,14 @@ namespace MikoPBX\PBXCoreREST\Lib\Sip;
 
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Get the SIP secret for the extension sipAPI.js JavaScript script.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Sip
  */
-class GetSipSecretAction extends \Phalcon\Di\Injectable
+class GetSipSecretAction extends Injectable
 {
     /**
      * Get the SIP secret for the AJAX request.
@@ -45,7 +47,7 @@ class GetSipSecretAction extends \Phalcon\Di\Injectable
 
         $extension = Extensions::findFirstByNumber($number);
         if ($extension !== null) {
-            $res->data['secret'] = $extension->Sip->secret??'';
+            $res->data['secret'] = $extension->Sip->secret ?? '';
             return $res;
         }
         return $res;

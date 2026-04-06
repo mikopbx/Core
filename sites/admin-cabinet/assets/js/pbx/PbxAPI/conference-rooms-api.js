@@ -1,0 +1,38 @@
+"use strict";
+
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* global PbxApiClient */
+
+/**
+ * Conference Rooms API using unified PbxApiClient
+ * All standard CRUD operations are provided by the base class
+ */
+var ConferenceRoomsAPI = new PbxApiClient({
+  endpoint: '/pbxcore/api/v3/conference-rooms',
+  customMethods: {
+    getDefault: ':getDefault'
+  }
+}); // The PbxApiClient automatically provides:
+// - getList(callback) or getList(params, callback)
+// - getRecord(id, callback) - uses :getDefault for new records
+// - saveRecord(data, callback) - automatically selects POST/PUT
+// - deleteRecord(id, callback)
+// - callCustomMethod(methodName, data, callback)
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9QYnhBUEkvY29uZmVyZW5jZS1yb29tcy1hcGkuanMiXSwibmFtZXMiOlsiQ29uZmVyZW5jZVJvb21zQVBJIiwiUGJ4QXBpQ2xpZW50IiwiZW5kcG9pbnQiLCJjdXN0b21NZXRob2RzIiwiZ2V0RGVmYXVsdCJdLCJtYXBwaW5ncyI6Ijs7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBOztBQUVBOztBQUVBO0FBQ0E7QUFDQTtBQUNBO0FBQ0EsSUFBTUEsa0JBQWtCLEdBQUcsSUFBSUMsWUFBSixDQUFpQjtBQUN4Q0MsRUFBQUEsUUFBUSxFQUFFLGtDQUQ4QjtBQUV4Q0MsRUFBQUEsYUFBYSxFQUFFO0FBQ1hDLElBQUFBLFVBQVUsRUFBRTtBQUREO0FBRnlCLENBQWpCLENBQTNCLEMsQ0FPQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0EiLCJzb3VyY2VzQ29udGVudCI6WyIvKlxuICogTWlrb1BCWCAtIGZyZWUgcGhvbmUgc3lzdGVtIGZvciBzbWFsbCBidXNpbmVzc1xuICogQ29weXJpZ2h0IMKpIDIwMTctMjAyNSBBbGV4ZXkgUG9ydG5vdiBhbmQgTmlrb2xheSBCZWtldG92XG4gKlxuICogVGhpcyBwcm9ncmFtIGlzIGZyZWUgc29mdHdhcmU6IHlvdSBjYW4gcmVkaXN0cmlidXRlIGl0IGFuZC9vciBtb2RpZnlcbiAqIGl0IHVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgYXMgcHVibGlzaGVkIGJ5XG4gKiB0aGUgRnJlZSBTb2Z0d2FyZSBGb3VuZGF0aW9uOyBlaXRoZXIgdmVyc2lvbiAzIG9mIHRoZSBMaWNlbnNlLCBvclxuICogKGF0IHlvdXIgb3B0aW9uKSBhbnkgbGF0ZXIgdmVyc2lvbi5cbiAqXG4gKiBUaGlzIHByb2dyYW0gaXMgZGlzdHJpYnV0ZWQgaW4gdGhlIGhvcGUgdGhhdCBpdCB3aWxsIGJlIHVzZWZ1bCxcbiAqIGJ1dCBXSVRIT1VUIEFOWSBXQVJSQU5UWTsgd2l0aG91dCBldmVuIHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9mXG4gKiBNRVJDSEFOVEFCSUxJVFkgb3IgRklUTkVTUyBGT1IgQSBQQVJUSUNVTEFSIFBVUlBPU0UuICBTZWUgdGhlXG4gKiBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBmb3IgbW9yZSBkZXRhaWxzLlxuICpcbiAqIFlvdSBzaG91bGQgaGF2ZSByZWNlaXZlZCBhIGNvcHkgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGFsb25nIHdpdGggdGhpcyBwcm9ncmFtLlxuICogSWYgbm90LCBzZWUgPGh0dHBzOi8vd3d3LmdudS5vcmcvbGljZW5zZXMvPi5cbiAqL1xuXG4vKiBnbG9iYWwgUGJ4QXBpQ2xpZW50ICovIFxuXG4vKipcbiAqIENvbmZlcmVuY2UgUm9vbXMgQVBJIHVzaW5nIHVuaWZpZWQgUGJ4QXBpQ2xpZW50XG4gKiBBbGwgc3RhbmRhcmQgQ1JVRCBvcGVyYXRpb25zIGFyZSBwcm92aWRlZCBieSB0aGUgYmFzZSBjbGFzc1xuICovXG5jb25zdCBDb25mZXJlbmNlUm9vbXNBUEkgPSBuZXcgUGJ4QXBpQ2xpZW50KHtcbiAgICBlbmRwb2ludDogJy9wYnhjb3JlL2FwaS92My9jb25mZXJlbmNlLXJvb21zJyxcbiAgICBjdXN0b21NZXRob2RzOiB7XG4gICAgICAgIGdldERlZmF1bHQ6ICc6Z2V0RGVmYXVsdCdcbiAgICB9XG59KTtcblxuLy8gVGhlIFBieEFwaUNsaWVudCBhdXRvbWF0aWNhbGx5IHByb3ZpZGVzOlxuLy8gLSBnZXRMaXN0KGNhbGxiYWNrKSBvciBnZXRMaXN0KHBhcmFtcywgY2FsbGJhY2spXG4vLyAtIGdldFJlY29yZChpZCwgY2FsbGJhY2spIC0gdXNlcyA6Z2V0RGVmYXVsdCBmb3IgbmV3IHJlY29yZHNcbi8vIC0gc2F2ZVJlY29yZChkYXRhLCBjYWxsYmFjaykgLSBhdXRvbWF0aWNhbGx5IHNlbGVjdHMgUE9TVC9QVVRcbi8vIC0gZGVsZXRlUmVjb3JkKGlkLCBjYWxsYmFjaylcbi8vIC0gY2FsbEN1c3RvbU1ldGhvZChtZXRob2ROYW1lLCBkYXRhLCBjYWxsYmFjaykiXX0=

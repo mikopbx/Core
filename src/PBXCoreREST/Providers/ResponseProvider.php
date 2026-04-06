@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -30,7 +31,7 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class ResponseProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'response';
+    public const string SERVICE_NAME = 'response';
 
     /**
      * Register response service provider

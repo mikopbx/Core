@@ -20,7 +20,8 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Providers\ConfigProvider;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * SystemConfiguration class
@@ -28,14 +29,14 @@ use Phalcon\Di;
  * @package MikoPBX\Core\System
  *
  */
-class SystemConfiguration extends Di\Injectable
+class SystemConfiguration extends Injectable
 {
     private string $configDBPath='';
-    private const DEFAULT_CONFIG_DB = '/conf.default/mikopbx.db';
+    private const string DEFAULT_CONFIG_DB = '/conf.default/mikopbx.db';
 
     public function __construct()
     {
-       $this->configDBPath = $this->di->getShared(ConfigProvider::SERVICE_NAME)->path('database.dbfile');
+        $this->configDBPath = $this->di->getShared(ConfigProvider::SERVICE_NAME)->path('database.dbfile');
     }
     /**
      * Trying to restore the backup
@@ -53,12 +54,14 @@ class SystemConfiguration extends Di\Injectable
         $confBackupDir = Directories::getDir(Directories::CORE_CONF_BACKUP_DIR);
         $backupDir   = str_replace(['/storage/usbdisk1','/mountpoint'], ['',''], $confBackupDir);
         $confFile    = $this->configDBPath;
-        foreach ($storages as $dev => $fs){
-            SystemMessages::echoToTeletype(PHP_EOL."    - mount $dev ...".PHP_EOL, true);
+        foreach ($storages as $dev => $fs) {
+            SystemMessages::echoStartMsg(" - Mounting $dev...");
             Util::mwMkdir($tmpMountDir."/$dev");
             $res = Storage::mountDisk($dev, $fs, $tmpMountDir."/$dev");
-            if(!$res){
-                SystemMessages::echoToTeletype("    - fail mount $dev ...".PHP_EOL, true);
+            if (!$res) {
+                SystemMessages::echoResultMsg(SystemMessages::RESULT_FAILED);
+            } else {
+                SystemMessages::echoResultMsg(SystemMessages::RESULT_DONE);
             }
         }
 
@@ -66,27 +69,31 @@ class SystemConfiguration extends Di\Injectable
         $sort    = Util::which('sort');
         $find    = Util::which('find');
         $cut    = Util::which('cut');
-        $lastBackUp  = trim(shell_exec("$find $tmpMountDir/dev/*$backupDir -type f -printf '%T@ %p\\n' | $sort -n | $tail -1 | $cut -f2- -d' '"));
-        if(!empty($lastBackUp)){
+        $lastBackUp  = trim(shell_exec("$find $tmpMountDir/dev/*$backupDir -type f -printf '%T@ %p\\n' | $sort -n | $tail -1 | $cut -f2- -d' '")??'');
+        if (!empty($lastBackUp)) {
             $rm     = Util::which('rm');
             $gzip   = Util::which('gzip');
             $sqlite3= Util::which('sqlite3');
 
-            SystemMessages::echoToTeletype("    - Restore $lastBackUp ...".PHP_EOL, true);
-            shell_exec("$rm -rf {$confFile}*");
+            SystemMessages::echoStartMsg(" - Restoring $lastBackUp...");
+            shell_exec("$rm -rf $confFile*");
             shell_exec("$gzip -c -d $lastBackUp | sqlite3 $confFile");
             Processes::mwExec("$sqlite3 $confFile 'select * from m_Storage'", $out, $ret);
-            if($ret !== 0){
-                SystemMessages::echoToTeletype("    - restore $lastBackUp failed...".PHP_EOL, true);
+            if ($ret !== 0) {
+                SystemMessages::echoResultMsg(SystemMessages::RESULT_FAILED);
                 copy(self::DEFAULT_CONFIG_DB, $confFile);
-            }elseif(!$this->isDefaultConf()){
-                System::reboot();
+            } else {
+                SystemMessages::echoResultMsg(SystemMessages::RESULT_DONE);
+                if (!$this->isDefaultConf()) {
+                    System::reboot();
+                }
             }
         }
         $mount   = Util::which('umount');
-        foreach ($storages as $dev => $fs){
-            SystemMessages::echoToTeletype("    - umount $dev ...".PHP_EOL, true);
+        foreach ($storages as $dev => $fs) {
+            SystemMessages::echoStartMsg(" - Unmounting $dev...");
             shell_exec("$mount $dev");
+            SystemMessages::echoResultMsg(SystemMessages::RESULT_DONE);
         }
     }
 

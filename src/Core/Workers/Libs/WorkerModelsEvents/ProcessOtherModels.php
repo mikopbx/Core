@@ -1,8 +1,26 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents;
 
 use MikoPBX\Common\Models\AsteriskManagerUsers;
+use MikoPBX\Common\Models\AsteriskRestUsers;
 use MikoPBX\Common\Models\CallQueueMembers;
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\Codecs;
@@ -19,23 +37,30 @@ use MikoPBX\Common\Models\IvrMenu;
 use MikoPBX\Common\Models\IvrMenuActions;
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\NetworkFilters;
-use MikoPBX\Common\Models\OutgoingRoutingTable;
+use MikoPBX\Common\Models\NetworkStaticRoutes;
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\OutWorkTimesRouts;
+use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SipHosts;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Models\Users;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDockerNetworkFiltersAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModuleStateAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadMOHAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAriAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModuleStateAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModulesConfAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNetworkAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadStaticRoutesAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNginxAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadQueuesAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordingSettingsAction;
 use Phalcon\Di\Injectable;
 
@@ -50,6 +75,17 @@ class ProcessOtherModels extends Injectable
             ],
             'actions' => [
                 ReloadManagerAction::class,
+                ReloadAdviceAction::class,
+            ],
+        ];
+
+        $tables[] = [
+            'modelClasses' => [
+                AsteriskRestUsers::class,
+            ],
+            'actions' => [
+                ReloadAriAction::class,
+                ReloadAdviceAction::class,
             ],
         ];
 
@@ -97,6 +133,7 @@ class ProcessOtherModels extends Injectable
                 ReloadPJSIPAction::class,
                 ReloadDialplanAction::class,
                 ReloadFirewallAction::class,
+                ReloadAdviceAction::class,
             ],
         ];
 
@@ -136,6 +173,7 @@ class ProcessOtherModels extends Injectable
                 Codecs::class,
             ],
             'actions' => [
+                ReloadModulesConfAction::class,  // Reload codec translator modules when enabled/disabled
                 ReloadIAXAction::class,
                 ReloadPJSIPAction::class,
             ],
@@ -159,6 +197,17 @@ class ProcessOtherModels extends Injectable
                 ReloadNetworkAction::class,
                 ReloadIAXAction::class,
                 ReloadPJSIPAction::class,
+                ReloadNginxAction::class,
+                ReloadFirewallAction::class,
+            ],
+        ];
+
+        $tables[] = [
+            'modelClasses' => [
+                NetworkStaticRoutes::class,
+            ],
+            'actions' => [
+                ReloadStaticRoutesAction::class,
             ],
         ];
 
@@ -180,6 +229,8 @@ class ProcessOtherModels extends Injectable
                 ReloadFirewallAction::class,
                 ReloadPJSIPAction::class,
                 ReloadManagerAction::class,
+                ReloadAdviceAction::class,
+                ReloadDockerNetworkFiltersAction::class,
             ],
         ];
 

@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
@@ -38,6 +39,7 @@ class ActionCelAttendedTransfer
      * @param WorkerCallEvents $worker Instance of WorkerCallEvents.
      * @param array $data Data related to the event.
      * @return void
+     * @throws \Exception
      */
     public static function execute(WorkerCallEvents $worker, array $data): void
     {
@@ -71,11 +73,13 @@ class ActionCelAttendedTransfer
                     if(in_array($row->src_chan, [$extra['channel2_name'], $data['Channel']], true)) {
                         $n_data['dst_chan'] = $row->dst_chan;
                         $n_data['dst_num']  = $row->dst_num;
+                        $n_data['dst_call_id'] = $row->dst_call_id;
                         $n_data['did'] = $row->did;
                         $worker->StopMixMonitor($n_data['dst_chan']);
                     }elseif(in_array($row->dst_chan, [$extra['channel2_name'], $data['Channel']], true)){
                         $n_data['src_chan'] = $row->src_chan;
                         $n_data['src_num']  = $row->src_num;
+                        $n_data['src_call_id'] = $row->src_call_id;
                         $n_data['did'] = $row->did;
                         $worker->StopMixMonitor($n_data['src_chan']);
                     }
@@ -104,11 +108,11 @@ class ActionCelAttendedTransfer
             if(isset($n_data['dst_chan'], $n_data['src_chan'])){
                 if ($worker->enableMonitor($n_data['src_num'] ?? '', $n_data['dst_num'] ?? '')) {
                     $n_data['recordingfile'] = $worker->MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID'], '', '', 'hangupChanCheckSipAttTrtansfer');
+                    $n_data['rec_src_channel'] = $worker->getRecSrcChannel($n_data['dst_chan'], $n_data['src_chan'] ?? '', $n_data['dst_chan']);
                 }
                 InsertDataToDB::execute($n_data);
                 // Sending UserEvent
-                $AgiData = base64_encode(json_encode($n_data));
-                $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
+                $am->UserEvent('CdrConnector', ['AgiData' => AsteriskManager::encodeCdrData($n_data)]);
             }
         }
     }

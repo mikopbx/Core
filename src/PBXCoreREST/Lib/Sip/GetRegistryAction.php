@@ -22,13 +22,14 @@ namespace MikoPBX\PBXCoreREST\Lib\Sip;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Retrieves the statuses of SIP providers registration.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Sip
  */
-class GetRegistryAction extends \Phalcon\Di\Injectable
+class GetRegistryAction extends Injectable
 {
     /**
      * Retrieves the statuses of SIP providers registration.

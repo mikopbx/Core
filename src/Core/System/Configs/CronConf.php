@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,15 +20,13 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Common\Providers\RegistryProvider;
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Modules\Config\SystemConfigInterface;
-use Phalcon\Di\Injectable;
 
 /**
  * Class CronConf
@@ -36,39 +35,86 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class CronConf extends Injectable
+class CronConf extends SystemConfigClass
 {
-    public const PROC_NAME = 'crond';
+    public const string PROC_NAME = 'crond';
 
-    private MikoPBXConfig $mikoPBXConfig;
-
-    /**
-     * CronConf constructor.
-     */
     public function __construct()
     {
-        $this->mikoPBXConfig = new MikoPBXConfig();
+        parent::__construct();
+        $busyboxPath = Util::which('busybox');
+        $binPath = Util::which(self::PROC_NAME);
+        $options = "-f -S -l 0";
+        $this->startCommand = "/bin/sh -c '$busyboxPath nohup $binPath $options > /dev/null 2>&1 & $busyboxPath echo $! > /var/run/".self::PROC_NAME.".pid'";
     }
 
     /**
-     * Setups crond and restarts it.
+     * Start the service.
      *
-     * @return int Returns 0 on success.
+     * @return bool True if successful, false otherwise.
      */
-    public function reStart(): int
+    public function start(): bool
     {
-        $booting = $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting??false;
-        $this->generateConfig($booting);
-        if (Util::isSystemctl()) {
-            $systemctl = Util::which('systemctl');
-            Processes::mwExec("$systemctl restart ".self::PROC_NAME);
-        } else {
-            // T2SDE or Docker
-            $cronPath = Util::which(self::PROC_NAME);
-            Processes::killByName(self::PROC_NAME);
-            Processes::mwExec("$cronPath -S -l 0");
+        $booting = System::isBooting();
+        if($booting){
+            $this->generateConfig($booting);
+            Processes::mwExecBg($this->startCommand);
+            $result = $this->monitWaitStart();
+        }else{
+            $result = $this->reStart();
         }
-        return 0;
+        return $result;
+    }
+
+    /**
+     * Setups cron and restarts it.
+     *
+     * @return bool Returns 0 on success.
+     */
+    public function reStart(): bool
+    {
+        $booting = System::isBooting();
+        $this->generateConfig($booting);
+
+        $this->generateMonitConf();
+        return $this->monitRestart();
+    }
+
+    /**
+     * Stop the cron service via monit.
+     *
+     * @return bool True if the service was stopped successfully.
+     */
+    public function stop(): bool
+    {
+        return $this->monitStop();
+    }
+
+    /**
+     * Generates a Monit configuration file for the current system service.
+     *
+     * This method creates a Monit configuration entry to monitor, start and stop the service.
+     * The generated config includes:
+     * - PID file path definition
+     * - Start command with background execution and PID saving
+     * - Stop command using busybox killall
+     * - Execution permissions (as root user/group)
+     *
+     * The configuration is saved to the default Monit configuration directory.
+     *
+     * @return bool Always returns true after writing the configuration file.
+     */
+    public function generateMonitConf(): bool{
+
+        $confPath = $this->getMainMonitConfFile();
+        $busyboxPath = Util::which('busybox');
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid '.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
+            '        as uid root and gid root';
+        $this->saveFileContent($confPath, $conf);
+        return true;
     }
 
     /**
@@ -85,34 +131,41 @@ class CronConf extends Injectable
         $phpPath               = Util::which('php');
         $WorkerSafeScripts     = "$phpPath -f $workerSafeScriptsPath start > /dev/null 2> /dev/null";
 
-        $restart_night = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::RESTART_EVERY_NIGHT);
-        $asterisk  = Util::which('asterisk');
+        $restart_night =  PbxSettings::getValueByKey(PbxSettings::RESTART_EVERY_NIGHT);
+        $auto_update_external_ip =  PbxSettings::getValueByKey(PbxSettings::AUTO_UPDATE_EXTERNAL_IP);
         $ntpd      = Util::which('ntpd');
         $dump      = Util::which('dump-conf-db');
         $checkIpPath   = Util::which('check-out-ip');
-        $recordsCleaner= Util::which('records-cleaner');
-        $cleanerLinks  = Util::which('cleaner-download-links');
+        $recordsCleaner = Util::which('records-cleaner');
+        $cleanerLinks  = Util::which('cleanup-stale');
 
-        // Restart every night if enabled
+        // Restart every night if enabled (via monit to prevent duplicate instances)
         if ($restart_night === '1') {
-            $mast_have[] = '0 1 * * * ' . $asterisk . ' -rx"core restart now" > /dev/null 2> /dev/null'.PHP_EOL;
+            $monit = Util::which('monit');
+            $mast_have[] = '0 1 * * * ' . $monit . ' restart ' . PbxConf::PROC_NAME . ' > /dev/null 2> /dev/null' . PHP_EOL;
         }
-        // Update NTP time every 5 minutes
-        $mast_have[] = '*/5 * * * * ' . $ntpd . ' -q > /dev/null 2> /dev/null'.PHP_EOL;
+
+        if (!System::isDocker()){
+            // Update NTP time every 5 minutes
+            $mast_have[] = '*/5 * * * * ' . $ntpd . ' -q > /dev/null 2> /dev/null' . PHP_EOL;
+        }
 
         // Perform database dump every 5 minutes
-        $mast_have[] = '*/5 * * * * ' . "$dump > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/5 * * * * ' . "$dump > /dev/null 2> /dev/null" . PHP_EOL;
+        
         // Clearing outdated conversation records
-        $mast_have[] = '*/30 * * * * ' . "$recordsCleaner > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/30 * * * * ' . "$recordsCleaner > /dev/null 2> /dev/null" . PHP_EOL;
 
-        // Check IP address every minute
-        $mast_have[] = '*/1 * * * * ' . "$checkIpPath > /dev/null 2> /dev/null".PHP_EOL;
+        if ($auto_update_external_ip === '1') {
+            // Check IP address every minute
+            $mast_have[] = '*/1 * * * * ' . "$checkIpPath > /dev/null 2> /dev/null" . PHP_EOL;
+        }
 
         // Clean download links every 6 minutes
-        $mast_have[] = '*/6 * * * * ' . "$cleanerLinks > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/6 * * * * ' . "$cleanerLinks > /dev/null 2> /dev/null" . PHP_EOL;
 
         // Run WorkerSafeScripts every minute
-        $mast_have[] = '*/1 * * * * ' . $WorkerSafeScripts.PHP_EOL;
+        $mast_have[] = '*/1 * * * * ' . $WorkerSafeScripts . PHP_EOL;
 
         // Add additional modules includes
         $tasks = [];
@@ -132,14 +185,14 @@ class CronConf extends Injectable
      * Generate additional syslog rules.
      * @return void
      */
-    public static function generateSyslogConf():void
+    public static function generateSyslogConf(): void
     {
         Util::mwMkdir('/etc/rsyslog.d');
-        $log_fileRedis       = SyslogConf::getSyslogFile(self::PROC_NAME);
-        $pathScriptRedis     = SyslogConf::createRotateScript(self::PROC_NAME);
-        $confSyslogD = '$outchannel log_'.self::PROC_NAME.','.$log_fileRedis.',10485760,'.$pathScriptRedis.PHP_EOL.
-            'if $programname == "'.self::PROC_NAME.'" then :omfile:$log_'.self::PROC_NAME.PHP_EOL.
-            'if $programname == "'.self::PROC_NAME.'" then stop'.PHP_EOL;
-        file_put_contents('/etc/rsyslog.d/'.self::PROC_NAME.'.conf', $confSyslogD);
+        $log_file       = SyslogConf::getSyslogFile(self::PROC_NAME);
+        $pathScript     = SyslogConf::createRotateScript(self::PROC_NAME);
+        $confSyslogD = '$outchannel log_' . self::PROC_NAME . ',' . $log_file . ',10485760,' . $pathScript . PHP_EOL .
+            'if $programname == "' . self::PROC_NAME . '" then :omfile:$log_' . self::PROC_NAME . PHP_EOL .
+            'if $programname == "' . self::PROC_NAME . '" then stop' . PHP_EOL;
+        file_put_contents('/etc/rsyslog.d/' . self::PROC_NAME . '.conf', $confSyslogD);
     }
 }

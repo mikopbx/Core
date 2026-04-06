@@ -14,6 +14,6 @@ class ReloadQueuesAction implements ReloadActionInterface
      */
     public function execute(array $parameters = []): void
     {
-        QueueConf::queueReload();
+        QueueConf::reload();
     }
 }

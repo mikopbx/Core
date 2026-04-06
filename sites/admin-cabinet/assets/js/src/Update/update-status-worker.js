@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, globalTranslate, UserMessage, updatePBX */
+/* global PbxApi, globalTranslate, UserMessage, updatePBX, FilesAPI, SystemAPI */
 
 /**
  * Worker object for checking file merging status.
@@ -50,7 +50,7 @@ const upgradeStatusLoopWorker = {
     },
     worker() {
         window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-        PbxApi.FilesFirmwareDownloadStatus(upgradeStatusLoopWorker.filename, upgradeStatusLoopWorker.cbRefreshUpgradeStatus);
+        FilesAPI.getFirmwareStatus(upgradeStatusLoopWorker.filename, upgradeStatusLoopWorker.cbRefreshUpgradeStatus);
     },
     cbRefreshUpgradeStatus(response) {
         upgradeStatusLoopWorker.iterations += 1;
@@ -63,7 +63,7 @@ const upgradeStatusLoopWorker = {
             window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
             $('i.loading.redo').closest('a').find('.percent').text(`${response.d_status_progress}%`);
             $('i.loading.redo').addClass('sync').removeClass('redo');
-            PbxApi.SystemUpgrade(response.filePath, updatePBX.cbAfterStartUpdate);
+            SystemAPI.upgrade({filename: response.filePath}, updatePBX.cbAfterStartUpdate);
         } else if (response.d_status === 'DOWNLOAD_ERROR') {
             window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
             UserMessage.showMultiString(globalTranslate.upd_DownloadUpgradeError);

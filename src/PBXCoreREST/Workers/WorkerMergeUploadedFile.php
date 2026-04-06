@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,9 +22,13 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 require_once 'Globals.php';
 
+use MikoPBX\Common\Providers\EventBusProvider;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
-use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
+use MikoPBX\PBXCoreREST\Lib\Files\UploadFileAction;
+use Phalcon\Di\Di;
 
 
 /**
@@ -33,6 +38,8 @@ use MikoPBX\Core\System\Util;
  */
 class WorkerMergeUploadedFile extends WorkerBase
 {
+    private EventBusProvider $eventBus;
+    private string $uploadId;
     /**
      * Starts the process to merge uploaded files into one.
      *
@@ -41,15 +48,30 @@ class WorkerMergeUploadedFile extends WorkerBase
      */
     public function start(array $argv): void
     {
-        $settings_file = $argv[2]??'';
+        $settings_file = $argv[2] ?? '';
 
         // Check if the settings file exists
-        if ( ! file_exists($settings_file)) {
-            Util::sysLogMsg(__CLASS__, 'File with settings not found', LOG_ERR);
+        if (! file_exists($settings_file)) {
+            SystemMessages::sysLogMsg(__CLASS__, 'File with settings not found', LOG_ERR);
 
             return;
         }
         $settings = json_decode(file_get_contents($settings_file), true);
+
+        // Initialize EventBus
+        $di = Di::getDefault();
+        $this->eventBus = $di->getShared(EventBusProvider::SERVICE_NAME);
+
+        // Extract upload ID from settings and set up channel
+        $this->uploadId = basename($settings['tempDir']);
+        $this->channelId = "file-upload-{$this->uploadId}";
+
+        // Send merge started event
+        $this->publishEvent('merge-started', [
+            'progress' => 0,
+            'status' => FilesConstants::UPLOAD_MERGING
+        ]);
+
         $progress_file = $settings['tempDir'] . '/merging_progress';
         $this->mergeFilesInDirectory(
             $settings['tempDir'],
@@ -61,22 +83,66 @@ class WorkerMergeUploadedFile extends WorkerBase
 
         // Check if the merged file size is equal to the uploaded size
         $resultFileSize = filesize($settings['fullUploadedFileName']);
-        if ((int)$settings['resumableTotalSize'] === $resultFileSize) {
-            file_put_contents($progress_file, '100');
-        } else {
-            Util::sysLogMsg(
-                'UploadFile',
-                "File {$settings['fullUploadedFileName']} size {$resultFileSize} does not equal {$settings['resumableTotalSize']}",
-                LOG_ERR
-            );
+        if ((int)$settings['resumableTotalSize'] !== $resultFileSize) {
+            $errorMessage = "File {$settings['fullUploadedFileName']} "
+                . "size $resultFileSize does not equal {$settings['resumableTotalSize']}";
+            SystemMessages::sysLogMsg('UploadFile', $errorMessage, LOG_ERR);
+
+            // Send error event
+            $this->publishEvent('upload-error', [
+                'error' => $errorMessage,
+                'status' => 'ERROR'
+            ]);
+
+            // Delete uploaded file after 10 minutes
+            $cleanupCmd = '/sbin/shell_functions.sh killprocesses '
+                . $settings['tempDir'] . ' -TERM 0;rm -rf ' . $settings['tempDir'];
+            Processes::mwExecBg($cleanupCmd, '/dev/null', 600);
+            return;
         }
 
-        // Delete uploaded file after 10 minutes
-        Processes::mwExecBg(
-            '/sbin/shell_functions.sh killprocesses ' . $settings['tempDir'] . ' -TERM 0;rm -rf ' . $settings['tempDir'],
-            '/dev/null',
-            600
+        // Validate file content matches declared category using magic bytes
+        $category = $settings['category'] ?? 'unknown';
+        $magicResult = UploadFileAction::validateMagicBytes(
+            $settings['fullUploadedFileName'],
+            $category
         );
+        if (!$magicResult['valid']) {
+            $errorMessage = 'Magic bytes validation failed for '
+                . "{$settings['fullUploadedFileName']}: {$magicResult['error']}";
+            SystemMessages::sysLogMsg('UploadFile', $errorMessage, LOG_ERR);
+
+            // Delete the suspicious file immediately
+            unlink($settings['fullUploadedFileName']);
+
+            file_put_contents($progress_file, 'VALIDATION_FAILED');
+
+            $this->publishEvent('upload-error', [
+                'error' => $magicResult['error'],
+                'status' => FilesConstants::UPLOAD_FAILED
+            ]);
+
+            // Delete temp dir after 10 minutes
+            $cleanupCmd = '/sbin/shell_functions.sh killprocesses '
+                . $settings['tempDir'] . ' -TERM 0;rm -rf ' . $settings['tempDir'];
+            Processes::mwExecBg($cleanupCmd, '/dev/null', 600);
+            return;
+        }
+
+        file_put_contents($progress_file, '100');
+
+        // Send completion event
+        $this->publishEvent('merge-complete', [
+            'progress' => 100,
+            'status' => FilesConstants::UPLOAD_COMPLETE,
+            'filePath' => $settings['fullUploadedFileName'],
+            'fileSize' => $resultFileSize
+        ]);
+
+        // Delete uploaded file after 10 minutes
+        $cleanupCmd = '/sbin/shell_functions.sh killprocesses '
+            . $settings['tempDir'] . ' -TERM 0;rm -rf ' . $settings['tempDir'];
+        Processes::mwExecBg($cleanupCmd, '/dev/null', 600);
     }
 
     /**
@@ -101,21 +167,66 @@ class WorkerMergeUploadedFile extends WorkerBase
         if (($fp = fopen($result_file, 'wb')) !== false) {
             for ($i = 1; $i <= $total_files; $i++) {
                 $tmp_file = $tempDir . '/' . $fileName . '.part' . $i;
+                if (!file_exists($tmp_file)) {
+                    fclose($fp);
+                    $errorMessage = "Chunk file missing: $tmp_file (part $i of $total_files)";
+                    SystemMessages::sysLogMsg('UploadFile', $errorMessage, LOG_ERR);
+                    $this->publishEvent('upload-error', [
+                        'error' => $errorMessage,
+                        'status' => 'ERROR'
+                    ]);
+                    return;
+                }
                 fwrite($fp, file_get_contents($tmp_file));
                 unlink($tmp_file);
                 $currentProgress = round($i / $total_files * 100);
                 $currentProgress = $currentProgress < 99 ? $currentProgress : 99;
-                file_put_contents($progress_file, $currentProgress, 2);
+                file_put_contents($progress_file, (string)$currentProgress, LOCK_EX);
+
+                // Publish progress event via EventBus
+                $this->publishEvent('merge-progress', [
+                    'progress' => $currentProgress,
+                    'status' => FilesConstants::UPLOAD_MERGING
+                ]);
             }
             fclose($fp);
         } else {
-            Util::sysLogMsg('UploadFile', 'cannot create the destination file - ' . $result_file, LOG_ERR);
+            $errorMessage = 'cannot create the destination file - ' . $result_file;
+            SystemMessages::sysLogMsg('UploadFile', $errorMessage, LOG_ERR);
+
+            // Publish error event
+            $this->publishEvent('upload-error', [
+                'error' => $errorMessage,
+                'status' => 'ERROR'
+            ]);
 
             return;
         }
-        Util::sysLogMsg('UploadFile', 'destination file - ' . $result_file, LOG_NOTICE);
+        SystemMessages::sysLogMsg('UploadFile', 'destination file - ' . $result_file, LOG_NOTICE);
+    }
+
+    /**
+     * Publishes an event to the EventBus for this upload session
+     *
+     * @param string $type Event type
+     * @param array $data Event data
+     * @return void
+     */
+    private function publishEvent(string $type, array $data): void
+    {
+        try {
+            $this->eventBus->publish('file-upload', [
+                'event' => $type,
+                'data' => array_merge([
+                    'uploadId' => $this->uploadId,
+                    'timestamp' => time()
+                ], $data)
+            ]);
+        } catch (\Exception $e) {
+            SystemMessages::sysLogMsg(__CLASS__, 'Failed to publish event: ' . $e->getMessage(), LOG_ERR);
+        }
     }
 }
 
-// Start worker process
-WorkerMergeUploadedFile::startWorker($argv??[]);
+// Start a worker process
+WorkerMergeUploadedFile::startWorker($argv ?? []);

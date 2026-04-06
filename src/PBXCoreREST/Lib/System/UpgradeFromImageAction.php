@@ -19,22 +19,24 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\System;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Upgrade the PBX using uploaded IMG file.
  * @package MikoPBX\PBXCoreREST\Lib\System
  */
-class UpgradeFromImageAction extends \Phalcon\Di\Injectable
+class UpgradeFromImageAction extends Injectable
 {
-    const CF_DEVICE = '/var/etc/cfdevice';
-    const STORAGE_DEVICE = '/var/etc/storage_device';
+    public const string CF_DEVICE = '/var/etc/cfdevice';
+    public const string STORAGE_DEVICE = '/var/etc/storage_device';
 
-    const MIN_SPACE_MB = 400;
+    public const int MIN_SPACE_MB = 400;
 
 
     /**
@@ -107,7 +109,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         $messages = [];
         if (!file_exists($imageFileLocation)) {
             $success = false;
-            $messages[] = "The update file '{$imageFileLocation}' could not be found.";
+            $messages[] = "The update file '$imageFileLocation' could not be found.";
         }
 
         if (!file_exists(self::CF_DEVICE)) {
@@ -152,7 +154,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         $awk = Util::which('awk');
         $storageDeviceFile = self::STORAGE_DEVICE;
         $cmd = "$grep $($cat $storageDeviceFile) < /etc/fstab | $awk -F'[= ]' '{ print \$2}'";
-        return trim(shell_exec($cmd));
+        return trim(shell_exec($cmd)??'');
     }
 
     /**
@@ -165,7 +167,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         $grep = Util::which('grep');
         $awk = Util::which('awk');
         $cmd = "$grep '/cf' < /etc/fstab | $awk -F'[= ]' '{ print \$2}'";
-        return trim(shell_exec($cmd));
+        return trim(shell_exec($cmd)??'');
     }
 
     /**
@@ -218,8 +220,8 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
             $res->success = false;
         }
 
-        $umount = Util::which('mount');
-        Processes::mwExec("$umount /dev/{$parameters['bootPartitionName']}");
+        $umount = Util::which('umount');
+        Processes::mwExec("$umount {$parameters['bootPartition']}");
 
         return [$res->success, $res->messages];
     }
@@ -244,18 +246,37 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         Util::mwMkdir($mountPoint);
         Util::mwMkdir($desiredLocation);
 
-        // Decompress the IMG file
-        $gunzip = Util::which('gunzip');
-        $decompressCmd = "$gunzip -c '{$imageFileLocation}' > '{$decompressedImg}'";
+        // Decompress the IMG file using 'busybox gunzip' instead of standalone gunzip.
+        // GNU gzip 1.14 called as 'gunzip' only removes one gzip layer from double-compressed
+        // firmware images. BusyBox gunzip handles this correctly.
+        $busybox = Util::which('busybox');
+        $decompressCmd = "$busybox gunzip -c '$imageFileLocation' > '$decompressedImg'";
         Processes::mwExec($decompressCmd);
 
         // Setup loop device with the correct offset
-        $offset = 1024 * 512;
-        $loopDev = self::setupLoopDevice($decompressedImg, $offset);
+        $parted  = Util::which('parted');
+        $busybox = Util::which('busybox');
+        $cmdOffset = "$parted '$decompressedImg' unit B print | $busybox awk 'NR>3 && /boot/ {gsub(/B/,\"\",$2); print $2+0; exit}' | $busybox head -n 1";
+        $offset = trim(shell_exec($cmdOffset) ?? '');
+
+        // Validate offset before proceeding
+        if (empty($offset) || !is_numeric($offset)) {
+            $res->success = false;
+            $res->messages[] = TranslationProvider::translate('rest_System_UpgradeFailedToDetectOffset');
+            if (file_exists($decompressedImg)) {
+                unlink($decompressedImg);
+            }
+            return $res;
+        }
+
+        $loopDev = self::setupLoopDevice($decompressedImg, (int)$offset);
 
         if (empty($loopDev)) {
             $res->success = false;
-            $res->messages[] = "Failed to set up the loop device.";
+            $res->messages[] = TranslationProvider::translate('rest_System_UpgradeLoopDeviceFailed');
+            if (file_exists($decompressedImg)) {
+                unlink($decompressedImg);
+            }
             return $res;
         }
 
@@ -264,15 +285,19 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         $result = Processes::mwExec("$mount -t vfat $loopDev $mountPoint -o ro,umask=0000");
         if ($result !== 0) {
             $res->success = false;
-            $res->messages[] = "Failed to mount the first partition. Check filesystem and options.";
+            $res->messages[] = TranslationProvider::translate('rest_System_UpgradeMountFailed');
+            self::destroyLoopDevice($loopDev);
+            if (file_exists($decompressedImg)) {
+                unlink($decompressedImg);
+            }
             return $res;
         }
 
         // Extract files from initramfs.igz
-        $initramfsPath = "{$mountPoint}/boot/initramfs.igz";
-        self::extractFileFromInitramfs($initramfsPath, 'sbin/firmware_upgrade.sh', "{$desiredLocation}/firmware_upgrade.sh");
-        self::extractFileFromInitramfs($initramfsPath, 'sbin/pbx_firmware', "{$desiredLocation}/pbx_firmware");
-        self::extractFileFromInitramfs($initramfsPath, 'etc/version', "{$desiredLocation}/version");
+        $initramfsPath = "$mountPoint/boot/initramfs.igz";
+        self::extractFileFromInitramfs($initramfsPath, 'sbin/firmware_upgrade.sh', "$desiredLocation/firmware_upgrade.sh");
+        self::extractFileFromInitramfs($initramfsPath, 'sbin/pbx_firmware', "$desiredLocation/pbx_firmware");
+        self::extractFileFromInitramfs($initramfsPath, 'etc/version', "$desiredLocation/version");
 
         // Clean-up
         $umount = Util::which('umount');
@@ -281,9 +306,9 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         unlink($decompressedImg);
 
         // Check files
-        if (filesize("{$desiredLocation}/firmware_upgrade.sh")===0
-            || filesize("{$desiredLocation}/pbx_firmware")===0
-            || filesize("{$desiredLocation}/version")===0
+        if (filesize("$desiredLocation/firmware_upgrade.sh")===0
+            || filesize("$desiredLocation/pbx_firmware")===0
+            || filesize("$desiredLocation/version")===0
         ) {
             $res->success = false;
             $res->messages[] = "Failed to extract required files from the initramfs image.";
@@ -305,12 +330,18 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         $res->success = true;
-        $upgradeScript = '/sbin/firmware_upgrade.sh';
         $cp = Util::which('cp');
+
+        $upgradeScript = '/sbin/firmware_upgrade.sh';
         Processes::mwExec("$cp -f $upgradeScript $desiredLocation");
 
         $pbx_firmware = '/sbin/pbx_firmware';
         Processes::mwExec("$cp -f $pbx_firmware $desiredLocation");
+
+        // Note: version file is NOT copied from current system here.
+        // firmware_upgrade.sh extracts version from the .img filename instead,
+        // which is the actual target version (not the running system version).
+
         return $res;
     }
 
@@ -324,7 +355,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
     private static function setupLoopDevice(string $filePath, int $offset): ?string
     {
         $losetup = Util::which('losetup');
-        $cmd = "{$losetup} --show -f -o {$offset} {$filePath}";
+        $cmd = "$losetup --show -f -o $offset $filePath";
 
         // Execute the command and capture the output
         Processes::mwExec($cmd, $output, $returnVar);
@@ -346,9 +377,9 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
      */
     private static function extractFileFromInitramfs(string $initramfsPath, string $filePath, string $outputPath): void
     {
-        $gunzip = Util::which('gunzip');
+        $busybox = Util::which('busybox');
         $cpio = Util::which('cpio');
-        $cmd = "$gunzip -c '{$initramfsPath}' | $cpio -i --to-stdout '{$filePath}' 2>/dev/null> '{$outputPath}'";
+        $cmd = "$busybox gunzip -c '$initramfsPath' | $cpio -i --to-stdout '$filePath' 2>/dev/null> '$outputPath'";
         exec($cmd);
     }
 
@@ -361,7 +392,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
     private static function destroyLoopDevice(string $loopDevice): void
     {
         $losetup = Util::which('losetup');
-        $cmd = "{$losetup} -d {$loopDevice}";
+        $cmd = "$losetup -d $loopDevice";
         Processes::mwExec($cmd, $output, $returnVar);
     }
 

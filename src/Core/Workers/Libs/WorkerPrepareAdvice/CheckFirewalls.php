@@ -21,7 +21,6 @@ namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use Phalcon\Di\Injectable;
 
 /**
@@ -41,7 +40,7 @@ class CheckFirewalls extends Injectable
     public function process(): array
     {
         $messages = [];
-        if (PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FIREWALL_ENABLED) === '0'
+        if (PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) === '0'
         || NetworkFilters::count() === 0
         ) {
             $messages['warning'][] =  [

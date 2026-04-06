@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -35,23 +36,27 @@ use Phalcon\Mvc\View;
  */
 interface WebUIConfigInterface
 {
-    public const AUTHENTICATE_USER = 'authenticateUser';
+    public const string AUTHENTICATE_USER = 'authenticateUser';
 
-    public const ON_AFTER_ACL_LIST_PREPARED = 'onAfterACLPrepared';
+    public const string GET_PASSKEY_SESSION_DATA = 'getPasskeySessionData';
 
-    public const ON_BEFORE_HEADER_MENU_SHOW = 'onBeforeHeaderMenuShow';
+    public const string ON_AFTER_ACL_LIST_PREPARED = 'onAfterACLPrepared';
 
-    public const ON_AFTER_ROUTES_PREPARED = 'onAfterRoutesPrepared';
+    public const string ON_BEFORE_HEADER_MENU_SHOW = 'onBeforeHeaderMenuShow';
 
-    public const ON_AFTER_ASSETS_PREPARED = 'onAfterAssetsPrepared';
+    public const string ON_AFTER_ROUTES_PREPARED = 'onAfterRoutesPrepared';
 
-    public const ON_VOLT_BLOCK_COMPILE = 'onVoltBlockCompile';
+    public const string ON_AFTER_ASSETS_PREPARED = 'onAfterAssetsPrepared';
 
-    public const ON_BEFORE_FORM_INITIALIZE = 'onBeforeFormInitialize';
+    public const string ON_VOLT_BLOCK_COMPILE = 'onVoltBlockCompile';
 
-    public const ON_BEFORE_EXECUTE_ROUTE = 'onBeforeExecuteRoute';
+    public const string ON_BEFORE_FORM_INITIALIZE = 'onBeforeFormInitialize';
 
-    public const ON_AFTER_EXECUTE_ROUTE = 'onAfterExecuteRoute';
+    public const string ON_BEFORE_EXECUTE_ROUTE = 'onBeforeExecuteRoute';
+
+    public const string ON_AFTER_EXECUTE_ROUTE = 'onAfterExecuteRoute';
+
+    public const string ON_GET_CONTROLLER_PERMISSIONS = 'onGetControllerPermissions';
 
     /**
      * Authenticates a user over an external module.
@@ -72,7 +77,7 @@ interface WebUIConfigInterface
      *
      * @return void
      */
-    public function onAfterACLPrepared(AclList $aclList):void;
+    public function onAfterACLPrepared(AclList $aclList): void;
 
     /**
      * Modifies the system menu.
@@ -82,7 +87,7 @@ interface WebUIConfigInterface
      *
      * @return void
      */
-    public function onBeforeHeaderMenuShow(array &$menuItems):void;
+    public function onBeforeHeaderMenuShow(array &$menuItems): void;
 
     /**
      * Modifies the system routes.
@@ -92,7 +97,7 @@ interface WebUIConfigInterface
      *
      * @return void
      */
-    public function onAfterRoutesPrepared(Router $router):void;
+    public function onAfterRoutesPrepared(Router $router): void;
 
     /**
      * Modifies the system assets.
@@ -103,7 +108,7 @@ interface WebUIConfigInterface
      *
      * @return void
      */
-    public function onAfterAssetsPrepared(Manager $assets, Dispatcher $dispatcher):void;
+    public function onAfterAssetsPrepared(Manager $assets, Dispatcher $dispatcher): void;
 
     /**
      * Prepares the include block within a Volt template.
@@ -115,7 +120,7 @@ interface WebUIConfigInterface
      *
      * @return string the volt partial file path without extension.
      */
-    public function onVoltBlockCompile(string $controller, string $blockName, View $view):string;
+    public function onVoltBlockCompile(string $controller, string $blockName, View $view): string;
 
     /**
      * Called from BaseForm before the form is initialized.
@@ -127,7 +132,7 @@ interface WebUIConfigInterface
      *
      * @return void
      */
-    public function onBeforeFormInitialize(Form $form, $entity, $options):void;
+    public function onBeforeFormInitialize(Form $form, $entity, $options): void;
 
     /**
      * Called from BaseController before executing a route.
@@ -136,7 +141,7 @@ interface WebUIConfigInterface
      * @param Dispatcher $dispatcher
      * @return void
      */
-    public function onBeforeExecuteRoute(Dispatcher $dispatcher):void;
+    public function onBeforeExecuteRoute(Dispatcher $dispatcher): void;
 
     /**
      * Called from BaseController after executing a route.
@@ -146,7 +151,17 @@ interface WebUIConfigInterface
      *
      * @return void
      */
-    public function onAfterExecuteRoute(Dispatcher $dispatcher):void;
+    public function onAfterExecuteRoute(Dispatcher $dispatcher): void;
 
 
+    /**
+     * Called from AclController to get custom permissions for a controller.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#ongetcontrollerpermissions
+     *
+     * @param string $controller The called controller name.
+     * @param array $permissions The permissions array for modifications.
+     *
+     * @return void
+     */
+    public function onGetControllerPermissions(string $controller, array &$permissions): void;
 }

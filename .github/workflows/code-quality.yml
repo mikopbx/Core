@@ -1,0 +1,77 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyse:
+    name: PHPStan + phpcs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: >-
+            phalcon5, mailparse, redis, sqlite3, pcntl,
+            sockets, curl, zip, simplexml, iconv
+          tools: cs2pr
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Detect changed PHP files
+        id: changed
+        run: |
+          BASE=${{ github.event.before }}
+
+          FILES=$(git diff --name-only --diff-filter=d "$BASE" "${{ github.sha }}" \
+            -- 'src/**/*.php' | head -500)
+
+          if [ -z "$FILES" ]; then
+            echo "count=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "$FILES" > /tmp/changed-php-files.txt
+            echo "count=$(echo "$FILES" | wc -l | tr -d ' ')" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: PHPStan
+        if: steps.changed.outputs.count != '0'
+        run: |
+          mkdir -p build/phpstan
+          cat /tmp/changed-php-files.txt | xargs \
+            vendor/bin/phpstan analyse \
+            --configuration=phpstan.neon \
+            --error-format=github \
+            --memory-limit=512M \
+            --no-progress
+
+      - name: phpcs
+        if: steps.changed.outputs.count != '0'
+        run: >-
+          vendor/bin/phpcs
+          --standard=PSR12
+          --report=checkstyle
+          --file-list=/tmp/changed-php-files.txt
+          -q | cs2pr
+
+      - name: Composer audit
+        run: composer audit --format=plain

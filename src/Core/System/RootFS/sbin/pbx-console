@@ -28,6 +28,8 @@ display_help() {
     echo "    - stop-all         Stop all PBX services"
     echo "    - start-all        Start all PBX services"
     echo "    - restart-all      Restart all PBX services"
+    echo "    - soft-restart     Soft restart (workers complete current tasks)"
+    echo "    - status           Show status of all PBX workers"
     echo "  service <name>      Kill a specific PBX service"
     echo "  debug <name> <ip>   Debug a specific script"
     echo "  xdebug <action> <ip>   Debug whole system"
@@ -57,12 +59,11 @@ if [ "$1" = "help" ] || [ -z "$1" ]; then
     exit 0
 fi
 
-
 # First command line argument is treated as a subcommand
 subcmd=$1;
 
-# Get the name of the safe script from the cron jobs
-safeScript=$(crontab -l | cut -d ' ' -f8 | grep Safe);
+# Direct path to WorkerSafeScriptsCore
+safeScript="/usr/www/src/Core/Workers/Cron/WorkerSafeScriptsCore.php";
 
 # Case switch for the subcommand
 case "${subcmd}" in
@@ -72,45 +73,177 @@ services)
    # Case switch for the action when subcommand is services
    case "${action}" in
    stop-all)
-      # Get process IDs (PIDs) of PHP Worker services
-      pids=$(ps | grep php | grep Worker | cut -d ' ' -f1);
+      echo 'Stopping all PBX services.';
+      # Get all worker PIDs including instances (e.g., WorkerApiCommands-1, WorkerApiCommands-2)
+      # Look for PHP processes containing Worker class names
+      pids=$(ps -A -o pid,args | grep -E 'Worker[A-Za-z]+' | grep -v grep | grep -v "$0" | awk '{print $1}');
 
-      # If PIDs exist, kill the processes
-      if [ "${pids}x" != "x" ];then
-        echo 'Killing all PBX services.';
-        kill "$pids";
+      # If PIDs exist, send SIGUSR1 first for graceful shutdown
+      if [ -n "${pids}" ]; then
+        echo "Sending graceful shutdown signal to workers: ${pids}";
+        for pid in ${pids}; do
+          kill -USR1 ${pid} 2>/dev/null || true;
+        done
+
+        # Wait a bit for graceful shutdown
+        sleep 3;
+
+        # Force kill any remaining processes
+        remaining=$(ps -A -o pid,args | grep -E 'Worker[A-Za-z]+' | grep -v grep | grep -v "$0" | awk '{print $1}');
+        if [ -n "${remaining}" ]; then
+          echo "Force stopping remaining workers: ${remaining}";
+          for pid in ${remaining}; do
+            kill -TERM ${pid} 2>/dev/null || true;
+          done
+        fi
+        echo 'All PBX services stopped.';
       else
-        echo 'PBX services not started.';
+        echo 'No PBX services running.';
       fi
       ;;
    start-all)
      # If safe script exists, start it
      if [ -f "$safeScript" ]; then
+       echo 'Starting all PBX services via WorkerSafeScriptsCore.';
        /usr/bin/php -f "$safeScript" start
+       result=$?
+       if [ "$result" = "0" ]; then
+         echo 'PBX services started successfully.';
+       else
+         echo "Failed to start PBX services. Exit code: $result";
+         exit $result
+       fi
      else
-        echo 'Safe script not found.';
+        echo "Safe script not found at: ${safeScript}";
+        exit 1
+     fi
+     ;;
+   soft-restart)
+     # Soft restart - workers complete current tasks before restarting
+     if [ -f "$safeScript" ]; then
+       echo 'Soft restarting all PBX services (workers will complete current tasks).';
+
+       # Try to call the soft-restart command directly
+       /usr/bin/php -f "$safeScript" soft-restart 2>&1 | head -20 &
+       pid=$!
+
+       # Wait up to 5 seconds for the command to complete
+       count=0
+       while [ $count -lt 5 ] && kill -0 $pid 2>/dev/null; do
+         sleep 1
+         count=$((count + 1))
+       done
+
+       # Kill the process if it's still running
+       if kill -0 $pid 2>/dev/null; then
+         kill -TERM $pid 2>/dev/null || true
+       fi
+
+       echo 'Soft restart initiated successfully.';
+       sleep 2
+       "${0}" services status
+     else
+        echo "Safe script not found at: ${safeScript}";
+        exit 1
      fi
      ;;
    restart-all)
      # If safe script exists, restart it
      if [ -f "$safeScript" ]; then
-       /usr/bin/php -f "$safeScript" restart
+       echo 'Restarting all PBX services.';
+
+       # Find WorkerSafeScriptsCore PID and send SIGUSR1 for soft restart
+       safeScriptsPID=$(ps -A -o pid,args | grep -E 'WorkerSafeScriptsCore start' | grep -v grep | awk '{print $1}' | head -1)
+
+       if [ -n "$safeScriptsPID" ]; then
+         echo "Sending restart signal to WorkerSafeScriptsCore (PID: $safeScriptsPID)";
+         # Send SIGUSR1 — WorkerSafeScriptsCore exits, cron/monit restarts it
+         kill -USR1 $safeScriptsPID 2>/dev/null || true
+
+         # Wait for process to exit
+         sleep 3
+
+         # Check if WorkerSafeScriptsCore is still running
+         if ! kill -0 $safeScriptsPID 2>/dev/null; then
+           echo "WorkerSafeScriptsCore stopped, starting it again...";
+           /usr/bin/php -f "$safeScript" start > /dev/null 2>&1 &
+         fi
+       else
+         echo "WorkerSafeScriptsCore not running, starting all services...";
+         /usr/bin/php -f "$safeScript" start > /dev/null 2>&1 &
+       fi
+
+       # Wait for workers to come up
+       sleep 3
+       "${0}" services status
      else
-        echo 'Safe script not found.';
+        echo "Safe script not found at: ${safeScript}";
+        exit 1
      fi
+     ;;
+   status)
+     echo 'PBX Workers Status:';
+     echo '==================';
+     # Get all PHP worker processes with details
+     ps -A -o pid,ppid,args | grep -E 'Worker[A-Za-z]+' | grep -v grep | grep -v "$0" | grep -v '/bin/bash' | while read line; do
+       pid=$(echo "$line" | awk '{print $1}');
+       ppid=$(echo "$line" | awk '{print $2}');
+       # Extract worker name from the command line - handle namespace format
+       args=$(echo "$line" | cut -d' ' -f3-);
+       # Check if it's just /usr/bin/php without worker name
+       if echo "$args" | grep -q "^/usr/bin/php$"; then
+         continue;
+       fi
+       worker=$(echo "$args" | sed 's/.*Workers\\//' | sed 's/\.php//' | sed 's/.*Worker/Worker/');
+       # Check for instance ID
+       instance=$(echo "$line" | grep -oE -- '--instance-id=[0-9]+' | cut -d= -f2);
+       if [ -z "$instance" ]; then
+         echo "PID: ${pid} PPID: ${ppid} Worker: ${worker}";
+       else
+         echo "PID: ${pid} PPID: ${ppid} Worker: ${worker} Instance: ${instance}";
+       fi
+     done
+
+     # Count workers (exclude /usr/bin/php without worker name)
+     total=$(ps -A -o pid,args | grep -E 'Worker[A-Za-z]+' | grep -v grep | grep -v "$0" | grep -v '/bin/bash' | grep -v "^[[:space:]]*[0-9]*[[:space:]]*/usr/bin/php$" | wc -l);
+     echo "==================";
+     echo "Total workers running: ${total}";
      ;;
   esac
   ;;
 service)
-  # Get PIDs of specific service passed as second argument
-  pids=$(ps | grep "$2" | grep -v grep | grep -v "$0" | cut -d ' ' -f1);
+  serviceName=$2;
+
+  # Handle worker instance numbers (e.g. WorkerApiCommands-1, WorkerApiCommands-2)
+  # Look for exact worker class name or with instance suffix
+  pids=$(ps -A -o pid,args | grep -E "${serviceName}" | grep -v grep | grep -v "$0" | awk '{print $1}');
 
   # If PIDs exist, kill the service
-  if [ "${pids}x" != "x" ];then
-    echo "Killing PBX service ${2}.";
-    echo "${pids}" | xargs kill
+  if [ -n "${pids}" ]; then
+    echo "Stopping PBX service ${serviceName}.";
+    echo "Found PIDs: ${pids}";
+
+    # Try graceful shutdown first
+    for pid in ${pids}; do
+      echo "Sending SIGUSR1 to PID ${pid}";
+      kill -USR1 ${pid} 2>/dev/null || true;
+    done
+
+    # Wait a bit for graceful shutdown
+    sleep 2;
+
+    # Check if processes are still running
+    remaining=$(ps -A -o pid,args | grep -E "${serviceName}" | grep -v grep | grep -v "$0" | awk '{print $1}');
+    if [ -n "${remaining}" ]; then
+      echo "Force stopping remaining processes: ${remaining}";
+      for pid in ${remaining}; do
+        kill -TERM ${pid} 2>/dev/null || true;
+      done
+    fi
+
+    echo "PBX service ${serviceName} stopped.";
   else
-    echo "PBX service ${2} not started.";
+    echo "PBX service ${serviceName} not running.";
   fi
   ;;
 debug)
@@ -121,26 +254,39 @@ debug)
 
   # Find the file to debug
   pathToFile=$(find /usr/www/src/ -name "${scriptName}.php")
-  if [ ! -f "$pathToFile" ];then
+  if [ ! -f "$pathToFile" ]; then
     echo "File ${scriptName}.php not found.";
     exit 2;
   fi
 
   # Stop cron and specific service
+  echo "Stopping cron and ${scriptName} for debug...";
   "${pbxConsole}" cron stop;
-  "${pbxConsole}" service "${scriptName}" stop;
+  "${pbxConsole}" service "${scriptName}";
 
-  # Configure xdebug
-  export XDEBUG_CONFIG="remote_enable=1 remote_mode=req remote_autostart=0 remote_port=9000 remote_host=${ipDebugger} remote_connect_back=0";
+  # Configure xdebug environment variable for PHP
+  # Adjusted for Xdebug 3
+  export XDEBUG_CONFIG="client_host=${ipDebugger} client_port=9003"
+  export XDEBUG_MODE="debug"
+  export XDEBUG_SESSION=1
 
   # Enable xdebug in PHP if it's not enabled
   if [ ! -f /etc/php.d/15-xdebug.ini ]; then
-    cp /etc/php.d/15-xdebug.ini.disabled /etc/php.d/15-xdebug.ini;
-    sed -i "s/xdebug.remote_host=.*/xdebug.remote_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini;
-  fi;
+    echo "Creating Xdebug configuration file..."
+    cat <<EOL > /etc/php.d/15-xdebug.ini
+zend_extension=xdebug.so
+xdebug.mode=debug
+xdebug.start_with_request=yes
+xdebug.client_host=${ipDebugger}
+xdebug.client_port=9003
+EOL
+  else
+    echo "Updating Xdebug client_host to ${ipDebugger}..."
+    sed -i "s/^xdebug\.client_host=.*/xdebug.client_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini
+  fi
 
   # Start the PHP script with xdebug enabled
-  php -f "$pathToFile" start;
+  php -dxdebug.mode=debug -dxdebug.start_with_request=yes -f "$pathToFile" start;
   ;;
 
 xdebug)
@@ -150,28 +296,48 @@ xdebug)
     ipDebugger="$3";
     case "${action}" in
       enable-cli)
-        echo "Renaming 15-xdebug.ini.disabled to 15-xdebug.ini ..."
-        echo "Changing xdebug.remote_host to address ${ipDebugger} ..."
-        sed "s/xdebug.remote_host=.*/xdebug.remote_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
+        echo "Enabling Xdebug for CLI..."
+        if [ -f /etc/php.d/15-xdebug.ini ]; then
+          echo "Updating Xdebug client_host to ${ipDebugger}..."
+          sed -i "s/^xdebug\.client_host=.*/xdebug.client_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini
+        else
+          echo "Creating Xdebug configuration file..."
+          cat <<EOL > /etc/php.d/15-xdebug.ini
+zend_extension=xdebug.so
+xdebug.mode=debug
+xdebug.start_with_request=yes
+xdebug.client_host=${ipDebugger}
+xdebug.client_port=9003
+EOL
+        fi
         echo "Done"
         ;;
       enable-www)
-        echo "Renaming 15-xdebug.ini.disabled to 15-xdebug.ini ..."
-        echo "Changing xdebug.remote_host to address ${ipDebugger} ..."
-        sed "s/xdebug.remote_host=.*/xdebug.remote_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
-        echo "killing the php-fpm processes ..."
+        echo "Enabling Xdebug for WWW..."
+        if [ -f /etc/php.d/15-xdebug.ini ]; then
+          echo "Updating Xdebug client_host to ${ipDebugger}..."
+          sed -i "s/^xdebug\.client_host=.*/xdebug.client_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini
+        else
+          echo "Creating Xdebug configuration file..."
+          cat <<EOL > /etc/php.d/15-xdebug.ini
+zend_extension=xdebug.so
+xdebug.mode=debug
+xdebug.start_with_request=yes
+xdebug.client_host=${ipDebugger}
+xdebug.client_port=9003
+EOL
+        fi
+        echo "Restarting php-fpm..."
         killall php-fpm
         sleep 5;
-        echo "Restarting the php-fpm daemon ..."
         php-fpm -c /etc/php.ini
         echo "Done"
         ;;
       enable-agi)
-        echo "Restarting the asterisk daemon ..."
-        killall safe_asterisk
-        killall asterisk
-        "${pbxConsole}" enable-cli ${ipDebugger}
-        nohup safe_asterisk -f > /dev/null 2>&1 &
+        echo "Enabling Xdebug for AGI..."
+        echo "Restarting the Asterisk daemon..."
+        "${pbxConsole}" xdebug enable-cli ${ipDebugger}
+        monit restart asterisk
         echo "Done"
         ;;
     esac
@@ -184,7 +350,7 @@ cron)
       # If cron is running, kill it
       ps | grep -v grep | grep crond > /dev/null;
       result=$?;
-      if [ "$result" = "0" ];then
+      if [ "$result" = "0" ]; then
         echo 'Killing cron.';
         killall crond;
       else
@@ -193,7 +359,7 @@ cron)
       ;;
     restart)
        # Stop cron and then start it
-      pbx-console cron stop;
+      "${pbxConsole}" cron stop;
       echo 'Starting cron.';
       /usr/sbin/crond -L /dev/null -l 8
       ;;
@@ -201,7 +367,7 @@ cron)
       # If cron is not running, start it
       ps | grep -v grep | grep crond > /dev/null;
       result=$?;
-      if [ "$result" = "1" ];then
+      if [ "$result" = "1" ]; then
         echo 'Starting cron.';
         /usr/sbin/crond -L /dev/null -l 8
       else

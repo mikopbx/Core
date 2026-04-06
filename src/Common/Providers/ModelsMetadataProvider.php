@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,11 +22,10 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-
 use Phalcon\Cache\AdapterFactory;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Mvc\Model\MetaData\Redis;
+use Phalcon\Mvc\Model\MetaData\Redis as MetaDataRedis;
 use Phalcon\Mvc\Model\MetaData\Strategy\Annotations as StrategyAnnotations;
 use Phalcon\Storage\SerializerFactory;
 
@@ -36,7 +36,9 @@ use Phalcon\Storage\SerializerFactory;
  */
 class ModelsMetadataProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'modelsMetadata';
+    public const string SERVICE_NAME = 'modelsMetadata';
+    public const string CACHE_PREFIX = '_PH_METADATA:';
+    public const int DATABASE_INDEX = 2;
 
     /**
      * Register Models metadata service provider.
@@ -48,17 +50,17 @@ class ModelsMetadataProvider implements ServiceProviderInterface
         $config = $di->getShared(ConfigProvider::SERVICE_NAME);
         $di->setShared(
             self::SERVICE_NAME,
-            function () use ($config){
+            function () use ($config) {
                 $serializerFactory = new SerializerFactory();
                 $adapterFactory    = new AdapterFactory($serializerFactory);
                 $options = [
                     'host'       => $config->path('redis.host'),
                     'port'       => $config->path('redis.port'),
-                    'statsKey'   => '_PHCR',
+                    'prefix'   => self::CACHE_PREFIX,
                     'lifetime'   => 600,
-                    'index'      => 2,
+                    'index'      => self::DATABASE_INDEX,
                 ];
-                $metaData = new Redis($adapterFactory, $options);
+                $metaData = new MetaDataRedis($adapterFactory, $options);
 
                 $metaData->setStrategy(
                     new StrategyAnnotations()

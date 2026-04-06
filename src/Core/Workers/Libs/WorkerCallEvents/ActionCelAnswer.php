@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,7 +20,6 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
-
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -36,10 +36,11 @@ class ActionCelAnswer
      * Executes the action when a Call Event Log (CEL) answer event occurs.
      *
      * @param WorkerCallEvents $worker Instance of WorkerCallEvents.
-     * @param array $data Data related to the event.
+     * @param array|null $data Data related to the event.
      * @return void
+     * @throws \Exception
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, ?array $data): void
     {
         $channel = $data['Channel'] ?? '';
         $worker->addActiveChan($channel, $data['LinkedID']);
@@ -96,11 +97,11 @@ class ActionCelAnswer
 
             if ($worker->enableMonitor($insert_data['src_num'] ?? '', $insert_data['dst_num'] ?? '')) {
                 $insert_data['recordingfile'] = $worker->MixMonitor($insert_data['dst_chan'], $insert_data['UNIQUEID'], '', '', 'ret_after_trasfer');
+                $insert_data['rec_src_channel'] = $worker->getRecSrcChannel($insert_data['dst_chan'], $insert_data['src_chan'] ?? '', $insert_data['dst_chan']);
             }
 
             // Insert the new data into the database
             InsertDataToDB::execute($insert_data);
         }
     }
-
 }

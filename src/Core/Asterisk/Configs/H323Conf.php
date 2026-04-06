@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
@@ -36,7 +37,7 @@ class H323Conf extends AsteriskConfigClass
     public int $priority = 1000;
 
     protected string $description = 'ooh323.conf';
-    public const MODULE_NAME = 'chan_ooh323.so';
+    public const string MODULE_NAME = 'chan_ooh323.so';
 
     /**
      * Generates the configuration for the ooh323.conf file.
@@ -59,7 +60,7 @@ class H323Conf extends AsteriskConfigClass
             PHP_EOL;
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/'. $this->description, $conf);
+        $this->saveConfig($conf, $this->description);
     }
 
     /**
@@ -72,8 +73,8 @@ class H323Conf extends AsteriskConfigClass
         $h323 = new H323Conf();
         $h323->generateConfig();
 
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'module reload ".self::MODULE_NAME."'");
+        $asterisk = Util::which(PBX::PROC_NAME);
+        Processes::mwExec("$asterisk -rx 'module reload ".self::MODULE_NAME."'");
     }
 
     /**

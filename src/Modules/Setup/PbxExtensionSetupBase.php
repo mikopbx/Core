@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,19 +20,25 @@
 
 namespace MikoPBX\Modules\Setup;
 
+use Directory;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
+use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Common\Providers\MainDatabaseProvider;
+use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\System\Configs\SoundFilesConf;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
-use MikoPBX\Modules\PbxExtensionUtils;
-use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings, PbxSettingsConstants};
 use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Di\Injectable;
+
 use Throwable;
-
 use function MikoPBX\Common\Config\appPath;
-
 
 /**
  * Base class for module setup.
@@ -61,7 +68,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      * Minimal required version PBX from the module.json
      * @var string
      */
-    protected string $min_pbx_version;
+    protected string $min_pbx_version = '2024.2.3';
 
     /**
      * Module developer name  from the module.json
@@ -89,7 +96,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
     /**
      * Phalcon config service
-     * @var \Phalcon\Config|null
+     * @var \Phalcon\Config\Config|null
      */
     protected $config;
 
@@ -135,10 +142,10 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
         // Initialize properties
         $this->messages = [];
-        $this->db      = $this->getDI()->getShared('db');
-        $this->config  = $this->getDI()->getShared('config');
-        $this->license =  $this->getDI()->getShared('license');
-        $this->moduleDir = $this->config->path('core.modulesDir') . '/' . $this->moduleUniqueID;
+        $this->db      = $this->getDI()->getShared(MainDatabaseProvider::SERVICE_NAME);
+        $this->config  = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME);
+        $this->license =  $this->getDI()->getShared(MarketPlaceProvider::SERVICE_NAME);
+        $this->moduleDir = Directories::getDir(Directories::CORE_MODULES_DIR) . '/' . $this->moduleUniqueID;
 
         // Load module settings from module.json file
         $settings_file = "{$this->moduleDir}/module.json";
@@ -147,7 +154,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
             if ($module_settings) {
                 // Extract module settings
                 $this->version         = $module_settings['version'];
-                $this->min_pbx_version = $module_settings['min_pbx_version']??'';
+                $this->min_pbx_version = $module_settings['min_pbx_version'] ?? '';
                 $this->developer       = $module_settings['developer'];
                 $this->support_email   = $module_settings['support_email'];
 
@@ -166,12 +173,12 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 }
 
                 // Extract wiki links from module settings
-                $wiki_links = $module_settings['wiki_links']??[];
-                if(is_array($wiki_links)){
+                $wiki_links = $module_settings['wiki_links'] ?? [];
+                if (is_array($wiki_links)) {
                     $this->wiki_links = $wiki_links;
                 }
             } else {
-                $this->messages[] = $this->translation->_("ext_ErrorOnDecodeModuleJson",['filename'=>'module.json']);
+                $this->messages[] = $this->translation->_("ext_ErrorOnDecodeModuleJson", ['filename' => 'module.json']);
             }
         }
 
@@ -189,31 +196,30 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     public function installModule(): bool
     {
         try {
-            if (!$this->checkCompatibility()){
+            if (!$this->checkCompatibility()) {
                 return false;
             }
             if (!$this->activateLicense()) {
                 $this->messages[] = $this->translation->_("ext_ErrorOnLicenseActivation");
                 return false;
             }
-            if ( ! $this->installFiles()) {
+            if (! $this->installFiles()) {
                 $this->messages[] = $this->translation->_("ext_ErrorOnInstallFiles");
                 return false;
             }
-            if ( ! $this->installDB()) {
+            if (! $this->installDB()) {
                 $this->messages[] = $this->translation->_("ext_ErrorOnInstallDB");
                 return false;
             }
-            if ( ! $this->fixFilesRights()) {
+            if (! $this->fixFilesRights()) {
                 $this->messages[] = $this->translation->_("ext_ErrorOnAppliesFilesRights");
                 return false;
             }
 
             // Recreate version hash for js files and translations
             PBXConfModulesProvider::getVersionsHash(true);
-
         } catch (Throwable $exception) {
-            $this->messages[] = $exception->getMessage();
+            $this->messages[] = CriticalErrorsHandler::handleExceptionWithSyslog($exception);
             return false;
         }
 
@@ -232,17 +238,17 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      *
      * @return bool Returns `true` if PBX version is compatible; otherwise, `false`.
      */
-    public function checkCompatibility():bool
+    public function checkCompatibility(): bool
     {
         // Get the current PBX version from the settings.
-        $currentVersionPBX = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
+        $currentVersionPBX = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
 
         // Remove any '-dev' suffix from the version.
         $currentVersionPBX = str_replace('-dev', '', $currentVersionPBX);
         if (version_compare($currentVersionPBX, $this->min_pbx_version) < 0) {
             // The current PBX version is lower than the required version.
             // Add a message indicating the compatibility issue.
-            $this->messages[] = $this->translation->_("ext_ModuleDependsHigherVersion",['version'=>$this->min_pbx_version]);
+            $this->messages[] = $this->translation->_("ext_ModuleDependsHigherVersion", ['version' => $this->min_pbx_version]);
 
             // Return false to indicate incompatibility.
             return false;
@@ -260,8 +266,8 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      */
     public function activateLicense(): bool
     {
-        if($this->lic_product_id>0) {
-            $lic = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
+        if ($this->lic_product_id > 0) {
+            $lic = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
             if (empty($lic)) {
                 $this->messages[] = $this->translation->_("ext_EmptyLicenseKey");
                 return false;
@@ -290,12 +296,18 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         // Create links for agi-bin scripts
         PbxExtensionUtils::createAgiBinSymlinks($this->moduleUniqueID);
 
+        // NOTE: Sound files are NOT installed during module installation
+        // Sound files are managed through module enable/disable hooks:
+        // - onAfterModuleEnable(): Install sound files when module is enabled
+        // - onAfterModuleDisable(): Remove sound files when module is disabled
+        // This ensures that disabled modules don't affect the system
+
         // Restore database settings
         $modulesDir          = $this->config->path('core.modulesDir');
-        $backupPath = "{$modulesDir}/Backup/{$this->moduleUniqueID}";
+        $backupPath = "$modulesDir/Backup/$this->moduleUniqueID";
         if (is_dir($backupPath)) {
-            $cpPath = Util::which('cp');
-            Processes::mwExec("{$cpPath} -r {$backupPath}/db/* {$this->moduleDir}/db/");
+            $cp = Util::which('cp');
+            Processes::mwExec("$cp -r $backupPath/db/* $this->moduleDir/db/");
         }
 
         // Volt
@@ -319,7 +331,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
             "{$this->moduleDir}/bin"
         ];
         foreach ($dirs as $dir) {
-            if(file_exists($dir) && is_dir($dir)){
+            if (file_exists($dir) && is_dir($dir)) {
                 // Add executable right to module's binary
                 Util::addExecutableRights($dir);
             }
@@ -362,7 +374,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     {
         $result = true;
         try {
-            if ( ! $this->unInstallDB($keepSettings)) {
+            if (! $this->unInstallDB($keepSettings)) {
                 $this->messages[] = $this->translation->_("ext_UninstallDBError");
                 $result           = false;
             }
@@ -373,7 +385,6 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
             // Recreate version hash for js files and translations
             PBXConfModulesProvider::getVersionsHash(true);
-
         } catch (Throwable $exception) {
             $result         = false;
             $this->messages[] = $exception->getMessage();
@@ -422,40 +433,45 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      *
      * @return bool The result of the deletion process.
      */
-    public function unInstallFiles(bool $keepSettings = false):bool
+    public function unInstallFiles(bool $keepSettings = false): bool
     {
-        $cpPath = Util::which('cp');
-        $rmPath = Util::which('rm');
+        $cp = Util::which('cp');
+        $rm = Util::which('rm');
         $modulesDir          = $this->config->path('core.modulesDir');
-        $backupPath = "{$modulesDir}/Backup/{$this->moduleUniqueID}";
-        Processes::mwExec("{$rmPath} -rf {$backupPath}");
+        $backupPath = "$modulesDir/Backup/$this->moduleUniqueID";
+        Processes::mwExec("$rm -rf {$backupPath}");
         if ($keepSettings) {
             Util::mwMkdir($backupPath);
-            Processes::mwExec("{$cpPath} -r {$this->moduleDir}/db {$backupPath}/");
+            Processes::mwExec("$cp -r {$this->moduleDir}/db {$backupPath}/");
         }
-        Processes::mwExec("{$rmPath} -rf {$this->moduleDir}");
+        Processes::mwExec("$rm -rf {$this->moduleDir}");
 
         // Remove assets
         // IMG
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-        $moduleImageCacheDir = "{$imgCacheDir}/{$this->moduleUniqueID}";
-        if (file_exists($moduleImageCacheDir)){
+        $moduleImageCacheDir = "$imgCacheDir/$this->moduleUniqueID";
+        if (file_exists($moduleImageCacheDir)) {
             unlink($moduleImageCacheDir);
         }
 
         // CSS
         $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
-        $moduleCSSCacheDir = "{$cssCacheDir}/{$this->moduleUniqueID}";
-        if (file_exists($moduleCSSCacheDir)){
+        $moduleCSSCacheDir = "$cssCacheDir/$this->moduleUniqueID";
+        if (file_exists($moduleCSSCacheDir)) {
             unlink($moduleCSSCacheDir);
         }
 
         // JS
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
-        $moduleJSCacheDir = "{$jsCacheDir}/{$this->moduleUniqueID}";
-        if (file_exists($moduleJSCacheDir)){
+        $moduleJSCacheDir = "$jsCacheDir/$this->moduleUniqueID";
+        if (file_exists($moduleJSCacheDir)) {
             unlink($moduleJSCacheDir);
         }
+
+        // NOTE: Sound files are NOT removed during module uninstallation
+        // Sound files should be removed when module is disabled via onAfterModuleDisable() hook
+        // If module was disabled before uninstall, sounds are already removed
+        // If module was enabled, it should be disabled first (which removes sounds)
 
         // Volt
         $this->cleanupVoltCache();
@@ -483,20 +499,20 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     public function registerNewModule(): bool
     {
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
-        if ( ! $module) {
+        if (! $module) {
             $module           = new PbxExtensionModules();
-            $module->name     = $this->translation->_("Breadcrumb{$this->moduleUniqueID}");
+            $module->name     = $this->translation->_("Breadcrumb$this->moduleUniqueID");
             $module->disabled = '1';
         }
         $module->uniqid        = $this->moduleUniqueID;
         $module->developer     = $this->developer;
         $module->version       = $this->version;
-        $module->description   = $this->translation->_("SubHeader{$this->moduleUniqueID}");
+        $module->description   = $this->translation->_("SubHeader$this->moduleUniqueID");
         $module->support_email = $this->support_email;
 
         try {
             $module->wiki_links = json_encode($this->wiki_links, JSON_THROW_ON_ERROR);
-        }catch (\JsonException $e){
+        } catch (\JsonException $e) {
             SystemMessages::sysLogMsg(__CLASS__, $e->getMessage());
         }
 
@@ -519,12 +535,11 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $dbUpgrade = new UpdateDatabase();
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
+            $moduleModelClass = "Modules\\{$this->moduleUniqueID}\\Models\\$className";
             $upgradeResult = $dbUpgrade->createUpdateDbTableByAnnotations($moduleModelClass);
-            if (!$upgradeResult){
+            if (!$upgradeResult) {
                 return false;
             }
-
         }
         // Update database connections after upgrade their structure
         ModulesDBConnectionsProvider::recreateModulesDBConnections();
@@ -540,7 +555,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      */
     public function addToSidebar(): bool
     {
-        $menuSettingsKey           = "AdditionalMenuItem{$this->moduleUniqueID}";
+        $menuSettingsKey           = "AdditionalMenuItem$this->moduleUniqueID";
         $menuSettings              = PbxSettings::findFirstByKey($menuSettingsKey);
         if ($menuSettings === null) {
             $menuSettings      = new PbxSettings();
@@ -550,7 +565,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
             'uniqid'        => $this->moduleUniqueID,
             'group'         => 'modules',
             'iconClass'     => 'puzzle',
-            'caption'       => "Breadcrumb{$this->moduleUniqueID}",
+            'caption'       => "Breadcrumb$this->moduleUniqueID",
             'showAtSidebar' => true,
         ];
         $menuSettings->value = json_encode($value);
@@ -563,14 +578,14 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      *
      * @return void
      */
-    private function cleanupVoltCache():void
+    private function cleanupVoltCache(): void
     {
         $cacheDirs = [];
         $cacheDirs[] = $this->config->path('adminApplication.voltCacheDir');
-        $rmPath = Util::which('rm');
+        $rm = Util::which('rm');
         foreach ($cacheDirs as $cacheDir) {
             if (!empty($cacheDir)) {
-                Processes::mwExec("{$rmPath} -rf {$cacheDir}/*");
+                Processes::mwExec("$rm -rf $cacheDir/*");
             }
         }
     }

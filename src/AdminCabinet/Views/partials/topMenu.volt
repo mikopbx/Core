@@ -1,6 +1,6 @@
 <!--TOP MENU-->
 <div class="ui fixed inverted menu">
-    <a class="item logo hide-on-mobile" href="{{ url.get('index') }}" id="top-left-logo">
+    <a class="item logo hide-on-mobile" href="{{ logoHref }}" id="top-left-logo">
         <img src="{{ urlToLogo }}" class="ui small image"/>
     </a>
 
@@ -17,16 +17,38 @@
         </div>
         <div class="results"></div>
     </div>
-    <a class="item hide-on-mobile hide-on-tablet" href="{{ urlToWiki }}" target="_blank" data-content="{{ t._("GoToWikiDocumentation") }}"
-       data-variation="wide">
+    <a class="item hide-on-mobile hide-on-tablet wiki-help-link" href="#"
+       data-controller="{{ controllerName }}" data-action="{{ actionName }}"
+       {% if globalModuleUniqueId %}data-module-id="{{ globalModuleUniqueId }}"{% endif %}
+       data-content="{{ t._("GoToWikiDocumentation") }}" data-variation="wide">
         <i class="question icon"></i>
     </a>
     <a class="item hide-on-mobile hide-on-tablet" href="{{ urlToSupport }}" target="_blank"><i
                 class="icon conversation"></i> {{ t._("topMenu_Support") }}</a>
-    <div class="ui search dropdown item" id="web-admin-language-selector">
-        <input type="hidden" name="WebAdminLanguage">
-        <div class="text"></div>
-        <i class="dropdown icon"></i>
+    {# Language dropdown - static list, no API calls on load #}
+    <div class="item">
+        <div class="ui dropdown" id="language-selector">
+            <input type="hidden" name="WebAdminLanguage" value="{{ WebAdminLanguage }}">
+            <div class="text">
+                {% if availableLanguages[WebAdminLanguage] is defined %}
+                    <i class="flag {{ availableLanguages[WebAdminLanguage]['flag'] }}"></i>
+                    {{ availableLanguages[WebAdminLanguage]['name'] }}
+                {% endif %}
+            </div>
+            <i class="dropdown icon"></i>
+            <div class="menu">
+                <a class="item" target="_blank" href="https://weblate.mikopbx.com/engage/mikopbx/">
+                    <i class="pencil alternate icon"></i> {{ t._('lang_HelpWithTranslateIt') }}
+                </a>
+                <div class="divider"></div>
+                {% for code, info in availableLanguages %}
+                    <div class="item" data-value="{{ code }}">
+                        <i class="flag {{ info['flag'] }}"></i>
+                        {{ info['name'] }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
     <a class="item hide-on-mobile" id="show-advice-button"><i class="grey icon bell"></i></a>
     <a class="item" href="{{ url.get('session') }}/end"><i class="icon sign out"></i> {{ t._("mm_Logout") }}</a>

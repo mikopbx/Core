@@ -38,13 +38,14 @@ class ActionUnparkCall
      * @param WorkerCallEvents $worker The worker instance.
      * @param array $data The event data.
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         $data['recordingfile'] = "";
 
         // Enable recording if monitoring is enabled.
         if ($worker->enableMonitor($data['src_num'], $data['dst_num'])) {
             $data['recordingfile'] = $worker->MixMonitor($data['dst_chan'], $data['UNIQUEID'], '', '', 'ActionUnparkCall');
+            $data['rec_src_channel'] = $worker->getRecSrcChannel($data['dst_chan'], $data['src_chan'] ?? '', $data['dst_chan']);
         }
 
         // Insert data to DB.

@@ -1,8 +1,6 @@
 <?php
 
-
 namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
-
 
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
@@ -120,16 +118,18 @@ class OutgoingContext extends AsteriskConfigClass
 
         /** @var OutgoingRoutingTable $rout */
         foreach ($routs as $rout) {
-            // Get the technology associated with the provider
-            $technology = $this->getTechByID($rout['providerid']);
+            // Create a copy of the routing data
+            $rout_data = $rout;
+
+            // Get the technology associated with the provider and populate endpoint_name if needed
+            $technology = $this->getTechByID($rout['providerid'], $rout_data);
 
             // Skip if technology is empty
             if (empty($technology)) {
                 continue;
             }
 
-            // Create a copy of the routing data and add technology information
-            $rout_data                       = $rout;
+            // Add technology information
             $rout_data['technology']         = $technology;
 
             // Generate the unique ID for the dialplan
@@ -155,17 +155,33 @@ class OutgoingContext extends AsteriskConfigClass
      * @param string $uniqueID The unique ID of the provider.
      * @return string The technology associated with the unique ID.
      */
-    public function getTechByID(string $uniqueID): string
+    public function getTechByID(string $uniqueID, array &$rout_data = []): string
     {
         $technology = '';
         $provider   = Providers::findFirstByUniqid($uniqueID);
         if ($provider !== null) {
             if ($provider->type === 'SIP') {
                 $account    = Sip::findFirst('disabled="0" AND uniqid = "' . $uniqueID . '"');
-                $technology = ($account === null) ? '' : SIPConf::getTechnology();
+                if ($account !== null) {
+                    $technology = SIPConf::getTechnology();
+                    // For inbound providers, we need to use username as endpoint name
+                    // Only set endpoint_name if username is not empty
+                    if ($account->registration_type === Sip::REG_TYPE_INBOUND && !empty($account->username)) {
+                        $rout_data['endpoint_name'] = $account->username;
+                    }
+                }
             } elseif ($provider->type === 'IAX') {
                 $account    = Iax::findFirst('disabled="0" AND uniqid = "' . $uniqueID . '"');
-                $technology = ($account === null) ? '' : 'IAX2';
+                if ($account !== null) {
+                    $technology = 'IAX2';
+                    // For inbound IAX providers, we need to use username as endpoint name
+                    // Only set endpoint_name if username is not empty
+                    if ($account->registration_type === Iax::REGISTRATION_TYPE_INBOUND && !empty($account->username)) {
+                        $rout_data['endpoint_name'] = $account->username;
+                    }
+                } else {
+                    $technology = '';
+                }
             }
         }
 
@@ -183,7 +199,7 @@ class OutgoingContext extends AsteriskConfigClass
      * @param array $rout The routing data.
      * @return string The generated configuration string.
      */
-    private function generateOutgoingRegexPattern($rout): string
+    private function generateOutgoingRegexPattern(array $rout): string
     {
         $conf         = '';
         $regexPattern = '';
@@ -215,22 +231,19 @@ class OutgoingContext extends AsteriskConfigClass
      * @param string $id_dialplan The ID of the dialplan.
      * @param array $rout The routing data.
      */
-    private function generateProviderContext(string &$conf, $id_dialplan, array $rout): void
+    private function generateProviderContext(string &$conf, string $id_dialplan, array $rout): void
     {
         // Add context header
-        $conf .= "\n[{$id_dialplan}]\n";
+        $conf .= "\n[$id_dialplan]\n";
 
         // Initialize variables for extensionVar and changeExtension
-        [$extensionVar, $changeExtension] = $this->initTrimVariables($rout);
-
+        $extensionVar = $this->initTrimVariables($rout);
 
         // Set number variable with prepend and extensionVar
         $conf .= 'exten => ' . ExtensionsConf::ALL_NUMBER_EXTENSION . ',1,Set(number=' . $rout['prepend'] . $extensionVar . ')' . "\n\t";
 
         // Filter number using regex pattern
         $conf .= 'same => n,Set(number=${FILTER(\*\#\+1234567890,${number})})' . "\n\t";
-
-        $conf .= $changeExtension;
 
         // Hangup if number is empty
         $conf .= 'same => n,ExecIf($["${number}x" == "x"]?Hangup())' . "\n\t";
@@ -246,7 +259,8 @@ class OutgoingContext extends AsteriskConfigClass
         $dialCommand = $this->getDialCommand($rout);
 
         // Set DIAL_COMMAND variable
-        $conf .= 'same => n,Set(DIAL_COMMAND='.$dialCommand.')' . "\n\t";
+        $conf .= 'same => n,Set(DIAL_COMMAND=' . $dialCommand . ')' . "\n\t";
+        $conf .= 'same => n,Set(DIAL_TIMOUT=600)' . "\n\t";
         $conf .= 'same => n,ExecIf($["${DEF_DIAL_COMMAND}x" != "x"]?Set(DIAL_COMMAND=${DEF_DIAL_COMMAND}))' . "\n\t";
 
         // Customize all-outgoing context
@@ -261,18 +275,19 @@ class OutgoingContext extends AsteriskConfigClass
 
         // Generating outgoing dialplan for additional modules; overriding the route's dialplan.
         $confModules = $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_OUT_ROUT_CONTEXT, [$rout]);
-        if ( !empty($confModules)) {
-            $conf .= trim($confModules)."\n\t";
+        if (!empty($confModules)) {
+            $conf .= trim($confModules) . "\n\t";
         }
         // Execute dial based on ISTRANSFER
         $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
 
         $conf .= 'same => n,ExecIf($["${OFF_ANSWER_SUB}" != "1"]?Set(DIAL_OUT_ANSWER_OPTIONS=U(${ISTRANSFER}dial_answer)))' . "\n\t";
-        $conf .= 'same => n,Dial(${DIAL_COMMAND},600,${DOPTIONS}TK${DIAL_OUT_ANSWER_OPTIONS}b(dial_create_chan,s,1))' . "\n\t";
+        $conf .= 'same => n,Set(__CALLER_AUDIOFORMAT=${CHANNEL(audioreadformat)})' . "\n\t";
+        $conf .= 'same => n,Dial(${DIAL_COMMAND},${DIAL_TIMOUT},${DOPTIONS}TK${DIAL_OUT_ANSWER_OPTIONS}b(dial_create_chan,s,1))' . "\n\t";
         // Generate outgoing dialplan for additional modules
         $confModules = $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_OUT_ROUT_AFTER_DIAL_CONTEXT, [$rout]);
-        if ( !empty($confModules)) {
-            $conf .= trim($confModules)."\n\t";
+        if (!empty($confModules)) {
+            $conf .= trim($confModules) . "\n\t";
         }
 
         // Customize provider-specific outgoing context after Dial command
@@ -301,20 +316,18 @@ class OutgoingContext extends AsteriskConfigClass
      * extension configuration accordingly. The variables are returned as an array.
      *
      * @param array $rout The routing data.
-     * @return string[] The extension variable and change extension configuration.
+     * @return string The extension variable and change extension configuration.
      */
-    private function initTrimVariables(array $rout): array
+    private function initTrimVariables(array $rout): string
     {
         $trimFromBegin = (int)($rout['trimfrombegin'] ?? 0);
         if ($trimFromBegin > 0) {
             $extensionVar    = '${EXTEN:' . $rout['trimfrombegin'] . '}';
-            $changeExtension = 'same => n,ExecIf($["${EXTEN}" != "${number}"]?Goto(${CONTEXT},${number},$[${PRIORITY} + 1]))' . "\n\t";
         } else {
             $extensionVar    = '${EXTEN}';
-            $changeExtension = '';
         }
 
-        return [$extensionVar, $changeExtension];
+        return $extensionVar;
     }
 
     /**
@@ -330,9 +343,13 @@ class OutgoingContext extends AsteriskConfigClass
     private function getDialCommand(array $rout): string
     {
         if ($rout['technology'] === IAXConf::TYPE_IAX2) {
-            $command = $rout['technology'] . '/' . $rout['providerid'] . '/${number}';
+            // For inbound IAX providers, use endpoint_name (username) instead of providerid
+            $endpointId = $rout['endpoint_name'] ?? $rout['providerid'];
+            $command = $rout['technology'] . '/' . $endpointId . '/${number}';
         } else {
-            $command = $rout['technology'] . '/${number}@' . $rout['providerid'];
+            // For inbound SIP providers, use endpoint_name (username) instead of providerid
+            $endpointId = $rout['endpoint_name'] ?? $rout['providerid'];
+            $command = $rout['technology'] . '/${number}@' . $endpointId;
         }
         return $command;
     }

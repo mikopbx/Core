@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,10 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
-use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Lib\Files\RestAPIFilesUtils;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use Phalcon\Di\Injectable;
 
 /**
  * Requests a zipped archive containing logs and PCAP file
@@ -29,36 +30,50 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\SysLogs
  */
-class DownloadLogsArchiveAction extends \Phalcon\Di\Injectable
+class DownloadLogsArchiveAction extends Injectable
 {
     /**
      * Requests a zipped archive containing logs and PCAP file
      * Checks if archive ready it returns a download link.
      *
-     * @param string $resultFile
+     * WHY: Uses DataStructure::getSanitizationRules() for consistent parameter handling.
+     * DataStructure is the Single Source of Truth for all field definitions.
+     *
+     * @param array<string, mixed> $data An array containing the following parameters:
+     *                    - filename (string): Path to the archive file.
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function main(string $resultFile): PBXApiResult
+    public static function main(array $data): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $progress_file = "{$resultFile}.progress";
+        // WHY: Get sanitization rules from DataStructure (Single Source of Truth)
+        // DataStructure defines all field constraints, not controller attributes
+        $sanitizationRules = DataStructure::getSanitizationRules();
+
+        // WHY: Sanitize input data for security - never trust user input
+        $sanitizedData = BaseActionHelper::sanitizeData($data, $sanitizationRules);
+
+        // Extract validated parameters
+        $filename = (string)($sanitizedData['filename'] ?? '');
+
+        // WHY: Validate filename is not empty before processing
+        if (empty($filename)) {
+            $res->success = false;
+            $res->messages['error'][] = 'Filename parameter is required and cannot be empty';
+            $res->httpCode = 400;
+            return $res;
+        }
+
+        $progress_file = "$filename.progress";
         if (!file_exists($progress_file)) {
             $res->messages[] = 'Archive does not exist. Try again!';
         } elseif (file_exists($progress_file) && file_get_contents($progress_file) === '100') {
-            $uid = Util::generateRandomString(36);
-            $di = Di::getDefault();
-            $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
-            $result_dir = "{$downloadLink}/{$uid}";
-            Util::mwMkdir($result_dir);
-            $link_name = 'MikoPBXLogs_' . basename($resultFile);
-            Util::createUpdateSymlink($resultFile, "{$result_dir}/{$link_name}");
-            Util::addRegularWWWRights("{$result_dir}/{$link_name}");
-            $res->success = true;
             $res->data['status'] = "READY";
-            $res->data['filename'] = "{$uid}/{$link_name}";
+            $res->data['filename'] = RestAPIFilesUtils::makeFileLinkForDownload($filename, 'MikoPBXLogs_');
+            $res->success          = true;
         } else {
             $res->success = true;
             $res->data['status'] = "PREPARING";

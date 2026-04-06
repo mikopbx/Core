@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,9 +20,7 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
-
 use MikoPBX\Core\Workers\WorkerCallEvents;
-
 
 /**
  * Class ActionVoicemailStart
@@ -38,7 +37,7 @@ class ActionVoicemailStart
      * @param WorkerCallEvents $worker The worker instance.
      * @param array $data The event data.
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         InsertDataToDB::execute($data);
         ActionAppEnd::execute($worker, $data);

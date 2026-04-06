@@ -1,7 +1,7 @@
-{{ form('conference-rooms/save', 'role': 'form', 'class': 'ui large form','id':'conference-room-form') }}
+{{ form(['action' : 'conference-rooms/save', 'method': 'post', 'role': 'form', 'class': 'ui large form','id':'conference-room-form']) }}
 
-{{ form.render('uniqid') }}
 {{ form.render('id') }}
+{{ form.render('isNew') }}
 <div class="ui ribbon label" id="conference-extension-number">
     <i class="phone icon"></i> {{ extension }}
 </div>
@@ -36,4 +36,4 @@
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralMainFields')]) }}
 
 {{ partial("partials/submitbutton",['indexurl':'conference-rooms/index/']) }}
-{{ end_form() }}
+{{ close('form') }}

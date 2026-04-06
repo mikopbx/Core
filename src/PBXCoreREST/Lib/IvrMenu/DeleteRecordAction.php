@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,59 +20,61 @@
 namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 
 use MikoPBX\Common\Models\IvrMenu;
-use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDeleteAction;
 
 /**
- *  Class DeleteRecord
- *  Delete an ivr menu and all its dependencies including actions.
- *
- * @package MikoPBX\PBXCoreREST\Lib\IvrMenu
+ * Action for deleting IVR menu record
+ * 
+ * @api {delete} /pbxcore/api/v2/ivr-menu/deleteRecord/:id Delete IVR menu
+ * @apiVersion 2.0.0
+ * @apiName DeleteRecord
+ * @apiGroup IvrMenu
+ * 
+ * @apiParam {String} id Record ID to delete
+ * 
+ * @apiSuccess {Boolean} result Operation result
+ * @apiSuccess {Object} data Deletion result
+ * @apiSuccess {String} data.deleted_id ID of deleted record
  */
-class DeleteRecordAction extends \Phalcon\Di\Injectable
+class DeleteRecordAction extends AbstractDeleteAction
 {
-
     /**
-     * Deletes the ivr menu record with its dependent tables.
-     *
-     * @param string $id The ID of the queue to be deleted.
-     * @return PBXApiResult Result of the delete operation.
+     * Delete IVR menu record
+     * 
+     * @param string $id - Record ID to delete
+     * @return PBXApiResult
      */
     public static function main(string $id): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $res->success = true;
+        return self::executeStandardDelete(
+            IvrMenu::class,
+            $id,
+            'IVR menu',
+            'api_IvrMenuNotFound',
+            function($ivrMenu) {
+                // Manually delete IvrMenuActions since NO_ACTION is set in the relation
+                /** @var \Phalcon\Mvc\Model\Resultset\Simple $actions */
+                $actions = \MikoPBX\Common\Models\IvrMenuActions::find([
+                    'conditions' => 'ivr_menu_id = :uniqid:',
+                    'bind' => ['uniqid' => $ivrMenu->uniqid]
+                ]);
 
-        $di = Di::getDefault();
-        $db = $di->get(MainDatabaseProvider::SERVICE_NAME);
+                $deletedCount = 0;
+                /** @var \MikoPBX\Common\Models\IvrMenuActions $action */
+                foreach ($actions as $action) {
+                    if (!$action->delete()) {
+                        throw new \Exception('Failed to delete IVR menu actions: ' . implode(', ', $action->getMessages()));
+                    }
+                    $deletedCount++;
+                }
 
-        // Find the queue by ID
-        $record = IvrMenu::findFirstByUniqid($id);
-        if ($record===null){
-            $res->messages['error'][] = 'IvrMenu with id '.$id.' does not exist';
-            $res->success = false;
-            return  $res;
-        }
-
-        $db->begin();
-
-        // Delete associated extensions
-        $extension = $record->Extensions;
-        if ($extension!==null && !$extension->delete()) {
-            $res->messages['error'][] = implode(PHP_EOL, $extension->getMessages());
-            $res->success = false;
-        }
-
-        if (!$res->success) {
-            $db->rollback();
-        } else {
-            $db->commit();
-        }
-
-        $res->data['id'] = $id;
-        return $res;
+                // Return cleanup statistics
+                return [
+                    'deleted_count' => $deletedCount,
+                    'deleted_type' => 'IVR menu action'
+                ];
+            }
+        );
     }
-
 }

@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +21,12 @@
 namespace MikoPBX\Common\Models;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+use MikoPBX\Common\Models\PBXSettings\PbxSettingsConstantsTrait;
+use MikoPBX\Common\Models\PBXSettings\PbxSettingsDefaultValuesTrait;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use Phalcon\Di\Di;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class PbxSettings
@@ -32,6 +37,30 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  */
 class PbxSettings extends ModelsBase
 {
+    use PbxSettingsConstantsTrait;
+    use PbxSettingsDefaultValuesTrait;
+
+    private const string CACHE_KEY = 'PbxSettings';
+
+    /**
+     * Returns Redis adapter with guaranteed correct database selection.
+     *
+     * In worker processes, the raw \Redis connection may have been switched
+     * to a different database (e.g., DB 1 by RedisClientProvider). This method
+     * ensures we always operate on ManagedCacheProvider::DATABASE_INDEX (DB 4).
+     *
+     * @return \Redis
+     */
+    private static function getRedisAdapter(): \Redis
+    {
+        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
+        try {
+            $redis->select(ManagedCacheProvider::DATABASE_INDEX);
+        } catch (\Throwable) {
+            // Redis may not be ready during early boot
+        }
+        return $redis;
+    }
 
     /**
      * Key by which the value is stored
@@ -48,169 +77,148 @@ class PbxSettings extends ModelsBase
      */
     public ?string $value = null;
 
+
     /**
      *  Returns default or saved values for all predefined keys if it exists on DB
+     * 
+     * @param bool $useCache true - use cache, false - get from DB
      *
      * @return array
      */
-    public static function getAllPbxSettings(): array
+    public static function getAllPbxSettings(bool $useCache = true): array
     {
-        $arrayOfSettings = self::getDefaultArrayValues();
-        $parameters = [
-            'cache' => [
-                'key' => ModelsBase::makeCacheKey(PbxSettings::class, 'getAllPbxSettings'),
-                'lifetime' => 3600,
-            ],
-        ];
+        $getDefaultArrayValues = self::getDefaultArrayValues();
+        $redis = self::getRedisAdapter();
+        $currentSettings = [];
 
-        $currentSettings = parent::find($parameters);
+        if ($useCache) {
+           $currentSettings = $redis->hgetall(self::CACHE_KEY) ?? [];
+        }
 
-        foreach ($currentSettings as $record) {
-            if (isset($record->value)) {
-                $arrayOfSettings[$record->key] = $record->value;
+        // If cache is empty or cache is disabled, load from database
+        if ($currentSettings === [] || !$useCache) {
+            $dbSettings = PbxSettings::find()->toArray();
+            
+            // Convert database records to key-value format
+            $currentSettings = [];
+            foreach ($dbSettings as $record) {
+                $currentSettings[$record['key']] = $record['value'];
+                // Update cache if using cache
+                if ($useCache) {
+                    $redis->hset(self::CACHE_KEY, $record['key'], $record['value']);
+                }
+            }
+        }
+        
+        // Merge with default values (database/cache values override defaults)
+        foreach ($currentSettings as $key => $value) {
+            if (array_key_exists($key, $getDefaultArrayValues)) {
+                $getDefaultArrayValues[$key] = $value;
             }
         }
 
-        return $arrayOfSettings;
-    }
-
-    /**
-     * Prepares default values for PbxSettings keys
-     *
-     * @return array default values
-     */
-    public static function getDefaultArrayValues(): array
-    {
-        return [
-            PbxSettingsConstants::PBX_NAME => 'PBX system',
-            PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE => 'BARE METAL',
-            PbxSettingsConstants::PBX_DESCRIPTION => '',
-            PbxSettingsConstants::RESTART_EVERY_NIGHT => '0',
-            PbxSettingsConstants::SIP_PORT => '5060',
-            PbxSettingsConstants::EXTERNAL_SIP_PORT => '5060',
-            PbxSettingsConstants::TLS_PORT => '5061',
-            PbxSettingsConstants::EXTERNAL_TLS_PORT => '5061',
-            PbxSettingsConstants::SIP_DEFAULT_EXPIRY => '120',
-            PbxSettingsConstants::SIP_MIN_EXPIRY => '60',
-            PbxSettingsConstants::SIP_MAX_EXPIRY => '3600',
-            PbxSettingsConstants::RTP_PORT_FROM => '10000',
-            PbxSettingsConstants::RTP_PORT_TO => '10200',
-            PbxSettingsConstants::RTP_STUN_SERVER => '',
-            PbxSettingsConstants::USE_WEB_RTC => '0',
-            PbxSettingsConstants::IAX_PORT => '4569',
-            PbxSettingsConstants::AMI_ENABLED => '1',
-            PbxSettingsConstants::AMI_PORT => '5038',
-            PbxSettingsConstants::AJAM_ENABLED => '1',
-            PbxSettingsConstants::AJAM_PORT => '8088',
-            PbxSettingsConstants::AJAM_PORT_TLS => '8089',
-            PbxSettingsConstants::SSH_PORT => '22',
-            PbxSettingsConstants::SSH_LOGIN => 'root',
-            PbxSettingsConstants::SSH_PASSWORD => 'admin',
-            PbxSettingsConstants::SSH_RSA_KEY => '',
-            PbxSettingsConstants::SSH_DSS_KEY => '',
-            PbxSettingsConstants::SSH_AUTHORIZED_KEYS => '',
-            PbxSettingsConstants::SSH_ECDSA_KEY => '',
-            PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD => '0',
-            PbxSettingsConstants::SSH_LANGUAGE => 'en',
-            PbxSettingsConstants::WEB_PORT => '80',
-            PbxSettingsConstants::WEB_HTTPS_PORT => '443',
-            PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY => '',
-            PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY => '',
-            PbxSettingsConstants::REDIRECT_TO_HTTPS => '0',
-            PbxSettingsConstants::MAIL_SMTP_USE_TLS => '0',
-            PbxSettingsConstants::MAIL_SMTP_CERT_CHECK => '0',
-            PbxSettingsConstants::MAIL_SMTP_HOST => '',
-            PbxSettingsConstants::MAIL_SMTP_PORT => '25',
-            PbxSettingsConstants::MAIL_SMTP_USERNAME => '',
-            PbxSettingsConstants::MAIL_SMTP_PASSWORD => '',
-            PbxSettingsConstants::MAIL_SMTP_FROM_USERNAME => 'PBX',
-            PbxSettingsConstants::MAIL_SMTP_SENDER_ADDRESS => '',
-            PbxSettingsConstants::MAIL_ENABLE_NOTIFICATIONS => '0',
-            PbxSettingsConstants::MAIL_TPL_MISSED_CALL_SUBJECT => 'You have missing call from <MailSMTPSenderAddress>',
-            PbxSettingsConstants::MAIL_TPL_MISSED_CALL_BODY => 'You have missed calls (NOTIFICATION_MISSEDCAUSE) from <NOTIFICATION_CALLERID> at <NOTIFICATION_DATE>',
-            PbxSettingsConstants::MAIL_TPL_MISSED_CALL_FOOTER => '',
-            PbxSettingsConstants::MAIL_TPL_VOICEMAIL_SUBJECT => 'VoiceMail from PBX',
-            PbxSettingsConstants::MAIL_TPL_VOICEMAIL_BODY => 'See attach',
-            PbxSettingsConstants::MAIL_TPL_VOICEMAIL_FOOTER => '',
-            PbxSettingsConstants::NTP_SERVER => '0.pool.ntp.org' . PHP_EOL . '1.pool.ntp.org' . PHP_EOL,
-            PbxSettingsConstants::VOICEMAIL_NOTIFICATIONS_EMAIL => 'admin@mycompany.com',
-            PbxSettingsConstants::VOICEMAIL_EXTENSION => '*001',
-            PbxSettingsConstants::PBX_LANGUAGE => 'en-en',
-            PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH => '3',
-            PbxSettingsConstants::PBX_RECORD_CALLS => '1',
-            PbxSettingsConstants::PBX_RECORD_CALLS_INNER => '1',
-            PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD => '0',
-            PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_IN => '',
-            PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_OUT => '',
-            PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD => '',
-            PbxSettingsConstants::PBX_CALL_PARKING_EXT => '800',
-            PbxSettingsConstants::PBX_CALL_PARKING_FEATURE => '*2',
-            PbxSettingsConstants::PBX_CALL_PARKING_DURATION => '50',
-            PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT => '801',
-            PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT => '820',
-            PbxSettingsConstants::PBX_FEATURE_ATTENDED_TRANSFER => '##',
-            PbxSettingsConstants::PBX_FEATURE_BLIND_TRANSFER => '**',
-            PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN => '*8',
-            PbxSettingsConstants::PBX_FEATURE_DIGIT_TIMEOUT => '2500',
-            PbxSettingsConstants::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT => '45',
-            PbxSettingsConstants::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT => '3',
-            PbxSettingsConstants::PBX_FIREWALL_ENABLED => '0',
-            PbxSettingsConstants::PBX_FAIL2BAN_ENABLED => '0',
-            PbxSettingsConstants::PBX_TIMEZONE => 'Europe/Moscow',
-            PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS=>'0',
-            PbxSettingsConstants::PBX_VERSION => '2020.1.1',
-            PbxSettingsConstants::PBX_ALLOW_GUEST_CALLS => '0',
-            PbxSettingsConstants::WEB_ADMIN_LOGIN => 'admin',
-            PbxSettingsConstants::WEB_ADMIN_PASSWORD => 'admin',
-            PbxSettingsConstants::WEB_ADMIN_LANGUAGE => 'en',
-            PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL => '',
-            PbxSettingsConstants::SYSTEM_EMAIL_FOR_MISSED => '',
-            PbxSettingsConstants::SEND_METRICS => '1',
-            PbxSettingsConstants::CLOUD_INSTANCE_ID => '',
-            PbxSettingsConstants::DISABLE_ALL_MODULES=> '0',
-            PbxSettingsConstants::PBX_LICENSE=>'',
-            PbxSettingsConstants::ENABLE_USE_NAT=> '0',
-            PbxSettingsConstants::AUTO_UPDATE_EXTERNAL_IP=> '0',
-            PbxSettingsConstants::EXTERNAL_SIP_HOST_NAME=>'',
-            PbxSettingsConstants::EXTERNAL_SIP_IP_ADDR=>'',
-        ];
+        return $getDefaultArrayValues;
     }
 
     /**
      * Returns default or saved value for key if it exists on DB
      *
      * @param $key string value key
-     *
+     * @param bool $useCache true - use cache, false - get from DB
+     * 
      * @return string
      */
-    public static function getValueByKey(string $key): string
+    public static function getValueByKey(string $key, bool $useCache = true): string
     {
+        $value = 'UNKNOWN KEY ADD IT TO DEFAULT VALUES';
+        $keyExistsInRedis = false;
+        $keyExistsInDB = false;
+        
         try {
-            $parameters = [
-                'cache' => [
-                    'key' => ModelsBase::makeCacheKey(self::class, 'getValueByKey'),
-                    'lifetime' => 3600,
-                ],
-            ];
-            $currentSettings = parent::find($parameters);
-
-            foreach ($currentSettings as $record) {
-                if ($record->key === $key
-                    && isset($record->value)
-                ) {
-                    return $record->value;
+            if ($useCache) {
+                $redis = self::getRedisAdapter();
+                $keyExistsInRedis = $redis->hexists(self::CACHE_KEY, $key);
+                
+                if ($keyExistsInRedis) {
+                    $value = $redis->hget(self::CACHE_KEY, $key);
                 }
             }
-
-            $arrOfDefaultValues = self::getDefaultArrayValues();
-            if (array_key_exists($key, $arrOfDefaultValues)) {
-                return $arrOfDefaultValues[$key];
+            
+            if (!$keyExistsInRedis) {
+                $currentSettings = PbxSettings::findFirstByKey($key);
+                
+                if ($currentSettings) {
+                    $value = $currentSettings->value;
+                    $keyExistsInDB = true;
+                }
             }
         } catch (\Throwable $e) {
             CriticalErrorsHandler::handleException($e);
         }
+        
+        if (!$keyExistsInRedis && !$keyExistsInDB) {
+            $arrOfDefaultValues = self::getDefaultArrayValues();
+            if (array_key_exists($key, $arrOfDefaultValues)) {
+                $value = $arrOfDefaultValues[$key];
+            }
+        } elseif ($useCache) {
+            $redis->hset(self::CACHE_KEY, $key, $value);
+        }
+        return $value;
+    }
 
-        return '';
+    /**
+     * Set value for a key
+     * @param $key string settings key
+     * @param $value string value
+     * @param $messages array error messages
+     * @return bool Whether the save was successful or not.
+     */
+    public static function setValueByKey(string $key, string $value, array &$messages = []): bool
+    {
+        $record = self::findFirstByKey($key);
+        if ($record === null) {
+            $record = new self();
+            $record->key = $key;
+        }
+        if (isset($record->value) && $record->value === $value) {
+            return true;
+        }
+        $record->value = $value;
+        $result = $record->save();
+        if (!$result) {
+            foreach ($record->getMessages() as $message) {
+                $messages[] = $message->getMessage();
+            }
+        } else {
+            $redis = self::getRedisAdapter();
+            $redis->hset(self::CACHE_KEY, $key, $value);
+        }
+        return $result;
+    }
+
+     /**
+     * Resets a general setting value.
+     *
+     * @param string $db_key The key of the general setting to be reset.
+     *
+     * @return bool True if the value was successfully reset to default, false otherwise.
+     */
+    public static function resetValueToDefault(string $key): bool
+    {
+        $data = PbxSettings::findFirstByKey($key);
+        if (null === $data) {
+            return true;
+        }
+        $data->value = PbxSettings::getDefaultArrayValues()[$key]??'';
+
+        $redis = self::getRedisAdapter();
+        
+        $result =  $data->update();
+        if ($result) {
+            $redis->hset(self::CACHE_KEY, $key, $data->value);
+        }
+        return $result;
     }
 
     /**
@@ -239,31 +247,38 @@ class PbxSettings extends ModelsBase
             )
         );
 
-        return $this->validate($validation);
-    }
+        // Validate port values (must be in range 1-65535)
+        $portKeys = [
+            self::WEB_PORT,
+            self::WEB_HTTPS_PORT,
+            self::SSH_PORT,
+            self::SIP_PORT,
+            self::TLS_PORT,
+            self::EXTERNAL_SIP_PORT,
+            self::EXTERNAL_TLS_PORT,
+            self::IAX_PORT,
+            self::AMI_PORT,
+            self::AJAM_PORT,
+            self::AJAM_PORT_TLS,
+            self::RTP_PORT_FROM,
+            self::RTP_PORT_TO,
+            self::MAIL_SMTP_PORT,
+        ];
 
-    /**
-     * Set value for a key
-     * @param $key string settings key
-     * @param $value string value
-     * @param $messages array error messages
-     * @return bool Whether the save was successful or not.
-     */
-    public static function setValue(string $key, string $value, array &$messages=[]): bool
-    {
-        $record = self::findFirstByKey($key);
-        if ($record === null) {
-            $record = new self();
-            $record->key = $key;
+        if (in_array($this->key, $portKeys, true)) {
+            $port = (int)$this->value;
+            if ($port < 1 || $port > 65535) {
+                $this->appendMessage(
+                    new \Phalcon\Messages\Message(
+                        "Port value must be between 1 and 65535, got: {$this->value}",
+                        'value',
+                        'PortRange'
+                    )
+                );
+                return false;
+            }
         }
-        if (isset($record->value) && $record->value === $value) {
-            return true;
-        }
-        $record->value = $value;
-        $result=$record->save();
-        if (!$result) {
-            $messages[] = $record->getMessages();
-        }
-        return $result;
+
+        return $this->validate($validation);
     }
 }

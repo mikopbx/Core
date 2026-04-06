@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, SemanticLocalization, Extensions, moment, globalTranslate, CDRPlayer */
+/* global globalRootUrl, SemanticLocalization, ExtensionsAPI, moment, globalTranslate, CDRPlayer, CdrAPI, UserMessage, ACLHelper, SecurityUtils */
 
 /**
  * callDetailRecords module.
@@ -42,6 +42,18 @@ const callDetailRecords = {
     $dateRangeSelector: $('#date-range-selector'),
 
     /**
+     * The search CDR input element.
+     * @type {jQuery}
+     */
+    $searchCDRInput: $('#search-cdr-input'),
+
+    /**
+     * The page length selector.
+     * @type {jQuery}
+     */
+    $pageLengthSelector: $('#page-length-select'),
+
+    /**
      * The data table object.
      * @type {Object}
      */
@@ -54,38 +66,287 @@ const callDetailRecords = {
     players: [],
 
     /**
+     * Flag indicating if CDR database has any records
+     * @type {boolean}
+     */
+    hasCDRRecords: true,
+
+    /**
+     * The empty database placeholder element
+     * @type {jQuery}
+     */
+    $emptyDatabasePlaceholder: $('#cdr-empty-database-placeholder'),
+
+    /**
+     * Storage key for filter state in sessionStorage
+     * @type {string}
+     */
+    STORAGE_KEY: 'cdr_filters_state',
+
+    /**
+     * Flag to track if DataTable has completed initialization
+     * WHY: Prevents saving state during initial load before filters are restored
+     * @type {boolean}
+     */
+    isInitialized: false,
+
+    /**
      * Initializes the call detail records.
      */
     initialize() {
-        callDetailRecords.initializeDateRangeSelector();
+        // Listen for hash changes (when user clicks menu link while already on page)
+        // WHY: Browser doesn't reload page on hash-only URL changes
+        $(`a[href='${globalRootUrl}call-detail-records/index/#reset-cache']`).on('click', function(e) {
+            e.preventDefault();
+             // Remove hash from URL without page reload
+             history.replaceState(null, null, window.location.pathname);
+            
+             callDetailRecords.clearFiltersState();
+             // Also clear page length preference
+             localStorage.removeItem('cdrTablePageLength');
+             // Reload page to apply reset
+             window.location.reload();
+        });
+
+        // Fetch metadata first, then initialize DataTable with proper date range
+        // WHY: Prevents double request on page load
+        callDetailRecords.fetchLatestCDRDate();
+    },
+
+    /**
+     * Save current filter state to sessionStorage
+     * Stores date range, search text, current page, and page length
+     */
+    saveFiltersState() {
+        try {
+            // Feature detection - exit silently if sessionStorage not available
+            if (typeof sessionStorage === 'undefined') {
+                console.warn('[CDR] sessionStorage not available');
+                return;
+            }
+
+            const state = {
+                dateFrom: null,
+                dateTo: null,
+                searchText: '',
+                currentPage: 0,
+                pageLength: callDetailRecords.getPageLength()
+            };
+
+            // Get dates from daterangepicker instance
+            const dateRangePicker = callDetailRecords.$dateRangeSelector.data('daterangepicker');
+            if (dateRangePicker && dateRangePicker.startDate && dateRangePicker.endDate) {
+                state.dateFrom = dateRangePicker.startDate.format('YYYY-MM-DD');
+                state.dateTo = dateRangePicker.endDate.format('YYYY-MM-DD');
+            }
+
+            // Get search text from input field
+            state.searchText = callDetailRecords.$globalSearch.val() || '';
+
+            // Get current page from DataTable (if initialized)
+            if (callDetailRecords.dataTable && callDetailRecords.dataTable.page) {
+                const pageInfo = callDetailRecords.dataTable.page.info();
+                state.currentPage = pageInfo.page;
+            }
+
+            sessionStorage.setItem(callDetailRecords.STORAGE_KEY, JSON.stringify(state));
+        } catch (error) {
+            console.error('[CDR] Failed to save filters to sessionStorage:', error);
+        }
+    },
+
+    /**
+     * Load filter state from sessionStorage
+     * @returns {Object|null} Saved state object or null if not found/invalid
+     */
+    loadFiltersState() {
+        try {
+            // Feature detection - return null if sessionStorage not available
+            if (typeof sessionStorage === 'undefined') {
+                console.warn('[CDR] sessionStorage not available for loading');
+                return null;
+            }
+
+            const rawData = sessionStorage.getItem(callDetailRecords.STORAGE_KEY);
+            if (!rawData) {
+                return null;
+            }
+
+            const state = JSON.parse(rawData);
+
+            // Validate state structure
+            if (!state || typeof state !== 'object') {
+                callDetailRecords.clearFiltersState();
+                return null;
+            }
+
+            return state;
+        } catch (error) {
+            console.error('[CDR] Failed to load filters from sessionStorage:', error);
+            // Clear corrupted data
+            callDetailRecords.clearFiltersState();
+            return null;
+        }
+    },
+
+    /**
+     * Clear saved filter state from sessionStorage
+     */
+    clearFiltersState() {
+        try {
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.removeItem(callDetailRecords.STORAGE_KEY);
+            }
+        } catch (error) {
+            console.error('Failed to clear CDR filters from sessionStorage:', error);
+        }
+    },
+
+    /**
+     * Initialize DataTable and event handlers
+     * Called after metadata is received
+     */
+    initializeDataTableAndHandlers() {
+        // Initialize debounce timer variable
+        let searchDebounceTimer = null;
 
         callDetailRecords.$globalSearch.on('keyup', (e) => {
-            if (e.keyCode === 13
-                || e.keyCode === 8
-                || callDetailRecords.$globalSearch.val().length === 0) {
-                const text = `${callDetailRecords.$dateRangeSelector.val()} ${callDetailRecords.$globalSearch.val()}`;
-                callDetailRecords.applyFilter(text);
-            }
+            // Clear previous timer if the user is still typing
+            clearTimeout(searchDebounceTimer);
+
+            // Set a new timer for delayed execution
+            searchDebounceTimer = setTimeout(() => {
+                if (e.keyCode === 13
+                    || e.keyCode === 8
+                    || callDetailRecords.$globalSearch.val().length === 0) {
+                    // Only pass the search keyword, dates are handled separately
+                    const text = callDetailRecords.$globalSearch.val();
+                    callDetailRecords.applyFilter(text);
+                }
+            }, 500); // 500ms delay before executing the search
         });
+
+        // Build columns dynamically based on ACL permissions
+        // WHY: Volt template conditionally renders delete column header based on isAllowed('save')
+        // 'save' is a virtual permission that includes delete capability in ModuleUsersUI
+        // If columns config doesn't match <thead> count, DataTables throws 'style' undefined error
+        const canDelete = typeof ACLHelper !== 'undefined' && ACLHelper.isAllowed('save');
+        const columns = [
+            { data: null, orderable: false },  // 0: expand icon column
+            { data: 0 },                       // 1: date (array index 0)
+            { data: 1 },                       // 2: src_num (array index 1)
+            { data: 2 },                       // 3: dst_num (array index 2)
+            { data: 3 },                       // 4: duration (array index 3)
+        ];
+        if (canDelete) {
+            columns.push({ data: null, orderable: false });  // 5: actions column (logs icon + delete)
+        }
 
         callDetailRecords.$cdrTable.dataTable({
             search: {
-                search: `${callDetailRecords.$dateRangeSelector.val()} ${callDetailRecords.$globalSearch.val()}`,
+                search: callDetailRecords.$globalSearch.val(),
             },
             serverSide: true,
             processing: true,
+            columns: columns,
             columnDefs: [
                 { defaultContent: "-",  targets: "_all"},
             ],
             ajax: {
-                url: `${globalRootUrl}call-detail-records/getNewRecords`,
-                type: 'POST',
+                url: '/pbxcore/api/v3/cdr',
+                type: 'GET',  // REST API uses GET for list retrieval
+                data: function(d) {
+                    const params = {};
+                    let isLinkedIdSearch = false;
+
+                    // 1. Always get dates from date range selector using daterangepicker API
+                    const dateRangePicker = callDetailRecords.$dateRangeSelector.data('daterangepicker');
+                    if (dateRangePicker) {
+                        const startDate = dateRangePicker.startDate;
+                        const endDate = dateRangePicker.endDate;
+
+                        if (startDate && startDate.isValid() && endDate && endDate.isValid()) {
+                            params.dateFrom = startDate.format('YYYY-MM-DD');
+                            params.dateTo = endDate.endOf('day').format('YYYY-MM-DD HH:mm:ss');
+                        }
+                    }
+
+                    // 2. Process search keyword from search input field
+                    const searchKeyword = d.search.value || '';
+
+                    if (searchKeyword.trim()) {
+                        const keyword = searchKeyword.trim();
+
+                        // Parse search prefixes: src:, dst:, did:, linkedid:
+                        if (keyword.startsWith('src:')) {
+                            // Search by source number only
+                            params.src_num = keyword.substring(4).trim();
+                        } else if (keyword.startsWith('dst:')) {
+                            // Search by destination number only
+                            params.dst_num = keyword.substring(4).trim();
+                        } else if (keyword.startsWith('did:')) {
+                            // Search by DID only
+                            params.did = keyword.substring(4).trim();
+                        } else if (keyword.startsWith('linkedid:')) {
+                            // Search by linkedid - ignore date range for linkedid search
+                            params.linkedid = keyword.substring(9).trim();
+                            isLinkedIdSearch = true;
+                            // Remove date params for linkedid search
+                            delete params.dateFrom;
+                            delete params.dateTo;
+                        } else {
+                            // Full-text search: search in src_num, dst_num, and DID
+                            // WHY: User expects search without prefix to find number anywhere
+                            params.search = keyword;
+                        }
+                    }
+
+                    // REST API pagination parameters
+                    params.limit = d.length;
+                    params.offset = d.start;
+                    params.sort = 'start';  // Sort by call start time for chronological order
+                    params.order = 'DESC';
+
+                    // WHY: WebUI always needs grouped records (by linkedid) for proper display
+                    // Backend defaults to grouped=true, but explicit is better than implicit
+                    params.grouped = true;
+
+                    return params;
+                },
+                dataSrc: function(json) {
+                    // API returns PBXApiResult structure:
+                    // {result: true, data: {records: [...], pagination: {...}}}
+                    if (json.result && json.data) {
+                        // Extract records and pagination from nested data object
+                        const restData = json.data.records || [];
+                        const pagination = json.data.pagination || {};
+
+                        // Set DataTables pagination properties
+                        json.recordsTotal = pagination.total || 0;
+                        json.recordsFiltered = pagination.total || 0;
+
+                        // Transform REST records to DataTable rows
+                        return callDetailRecords.transformRestToDataTable(restData);
+                    }
+                    return [];
+                },
+                beforeSend: function(xhr) {
+                    // Add Bearer token for API authentication
+                    if (typeof TokenManager !== 'undefined' && TokenManager.accessToken) {
+                        xhr.setRequestHeader('Authorization', `Bearer ${TokenManager.accessToken}`);
+                    }
+                }
             },
             paging: true,
             //scrollY: $(window).height() - callDetailRecords.$cdrTable.offset().top-150,
             sDom: 'rtip',
             deferRender: true,
-            pageLength: callDetailRecords.calculatePageLength(),
+            pageLength: callDetailRecords.getPageLength(),
+            language: {
+                ...SemanticLocalization.dataTableLocalisation,
+                emptyTable: callDetailRecords.getEmptyTableMessage(),
+                zeroRecords: callDetailRecords.getEmptyTableMessage()
+            },
 
             /**
              * Constructs the CDR row.
@@ -101,47 +362,144 @@ const callDetailRecords = {
                 $('td', row).eq(1).html(data[0]);
                 $('td', row).eq(2)
                     .html(data[1])
-                    .addClass('need-update');
+                    .addClass('need-update')
+                    .attr('data-cdr-name', data[6] || '');
                 $('td', row).eq(3)
                     .html(data[2])
-                    .addClass('need-update');
+                    .addClass('need-update')
+                    .attr('data-cdr-name', data[7] || '');
 
-                let duration = data[3];
-                if (data.ids !== '') {
-                    duration += '<i data-ids="' + data.ids + '" class="file alternate outline icon">';
+                // Duration column (no icons)
+                $('td', row).eq(4).html(data[3]).addClass('right aligned');
+
+                // Actions column: only render if user has delete permission
+                // WHY: Volt template conditionally renders this column based on isAllowed('delete')
+                if (!canDelete) {
+                    return;
                 }
-                $('td', row).eq(4).html(duration).addClass('right aligned');
+
+                // Last column: log icon + delete button
+                let actionsHtml = '';
+
+                // Add log icon if user has access to System Diagnostic
+                // WHY: Log icon links to system-diagnostic page which requires specific permissions
+                const canViewLogs = typeof ACLHelper !== 'undefined' && ACLHelper.isAllowed('viewSystemDiagnostic');
+                if (canViewLogs && data.ids !== '') {
+                    actionsHtml += `<i data-ids="${data.ids}" class="file alternate outline icon" style="cursor: pointer; margin-right: 8px;"></i>`;
+                }
+
+                // Add delete button
+                // WHY: Use two-steps-delete mechanism to prevent accidental deletion
+                // First click changes trash icon to close icon, second click deletes
+                // WHY: Use data.DT_RowId which contains linkedid for grouped records
+                actionsHtml += `<a href="#" class="two-steps-delete delete-record popuped"
+                                   data-record-id="${data.DT_RowId}"
+                                   data-content="${globalTranslate.cdr_DeleteRecord || 'Delete record'}">
+                                   <i class="icon trash red" style="margin: 0;"></i>
+                                </a>`;
+
+                $('td', row).eq(5).html(actionsHtml).addClass('right aligned');
             },
 
             /**
              * Draw event - fired once the table has completed a draw.
              */
             drawCallback() {
-                Extensions.updatePhonesRepresent('need-update');
+                ExtensionsAPI.updatePhonesRepresent('need-update');
+                callDetailRecords.togglePaginationControls();
             },
-            language: SemanticLocalization.dataTableLocalisation,
+            /**
+             * Initialization complete callback - fired after first data load
+             * WHY: Restore filters AFTER DataTable has loaded initial data from server
+             */
+            initComplete() {
+                // Set flag FIRST to allow state saving during filter restoration
+                callDetailRecords.isInitialized = true;
+                // Now restore filters - draw event will correctly save the restored state
+                callDetailRecords.restoreFiltersFromState();
+            },
             ordering: false,
         });
         callDetailRecords.dataTable = callDetailRecords.$cdrTable.DataTable();
 
-        callDetailRecords.dataTable.on('draw', () => {
-            callDetailRecords.$globalSearch.closest('div').removeClass('loading');
+        // Initialize the Search component AFTER DataTable is created
+        callDetailRecords.$searchCDRInput.search({
+            minCharacters: 0,
+            searchOnFocus: false,
+            searchFields: ['title'],
+            showNoResults: false,
+            source: [
+                { title: globalTranslate.cdr_SearchBySourceNumber, value: 'src:' },
+                { title: globalTranslate.cdr_SearchByDestNumber, value: 'dst:' },
+                { title: globalTranslate.cdr_SearchByDID, value: 'did:' },
+                { title: globalTranslate.cdr_SearchByLinkedID, value: 'linkedid:' },
+                { title: globalTranslate.cdr_SearchByCustomPhrase, value: '' },
+            ],
+            onSelect: function(result, response) {
+                callDetailRecords.$globalSearch.val(result.value);
+                callDetailRecords.$searchCDRInput.search('hide results');
+                return false;
+            }
         });
 
-        callDetailRecords.$cdrTable.on('click', 'tr.negative', (e) => {
-            let ids = $(e.target).attr('data-ids');
+        // Start the search when you click on the icon
+        $('#search-icon').on('click', function() {
+            callDetailRecords.$globalSearch.focus();
+            callDetailRecords.$searchCDRInput.search('query');
+        });
+
+        // Event listener to save the user's page length selection and update the table
+        callDetailRecords.$pageLengthSelector.dropdown({
+            onChange(pageLength) {
+                if (pageLength === 'auto') {
+                    pageLength = callDetailRecords.calculatePageLength();
+                    localStorage.removeItem('cdrTablePageLength');
+                } else {
+                    localStorage.setItem('cdrTablePageLength', pageLength);
+                }
+                callDetailRecords.dataTable.page.len(pageLength).draw();
+            },
+        });
+        callDetailRecords.$pageLengthSelector.on('click', function(event) {
+            event.stopPropagation(); // Prevent the event from bubbling
+        });
+
+        // Set the select input value to the saved value if it exists
+        const savedPageLength = localStorage.getItem('cdrTablePageLength');
+        if (savedPageLength) {
+            callDetailRecords.$pageLengthSelector.dropdown('set value', savedPageLength);
+        }
+
+        callDetailRecords.dataTable.on('draw', () => {
+            callDetailRecords.$globalSearch.closest('div').removeClass('loading');
+
+            // Skip saving state during initial load before filters are restored
+            if (!callDetailRecords.isInitialized) {
+                return;
+            }
+
+            // Save state after every draw (pagination, search, date change)
+            callDetailRecords.saveFiltersState();
+        });
+
+        // Add event listener for clicking on icon with data-ids (open in new window)
+        // WHY: Clicking on icon should open System Diagnostic in new window to view verbose logs
+        callDetailRecords.$cdrTable.on('click', '[data-ids]', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent row toggle
+
+            const ids = $(e.currentTarget).attr('data-ids');
             if (ids !== undefined && ids !== '') {
-                window.location = `${globalRootUrl}system-diagnostic/index/?filename=asterisk/verbose&filter=${ids}`;
+                // WHY: Format as query param + hash: ?filter=...#file=...
+                // Open in new window to allow viewing logs while keeping CDR table visible
+                const url = `${globalRootUrl}system-diagnostic/index/?filter=${encodeURIComponent(ids)}#file=asterisk%2Fverbose`;
+                window.open(url, '_blank');
             }
         });
 
         // Add event listener for opening and closing details
-        callDetailRecords.$cdrTable.on('click', 'tr.detailed', (e) => {
-            let ids = $(e.target).attr('data-ids');
-            if (ids !== undefined && ids !== '') {
-                window.location = `${globalRootUrl}system-diagnostic/index/?filename=asterisk/verbose&filter=${ids}`;
-                return;
-            }
+        // WHY: Only expand/collapse on first column (caret icon) click, not on action icons
+        callDetailRecords.$cdrTable.on('click', 'tr.detailed td:first-child', (e) => {
             const tr = $(e.target).closest('tr');
             const row = callDetailRecords.dataTable.row(tr);
 
@@ -157,8 +515,237 @@ const callDetailRecords = {
                     const id = $(playerRow).attr('id');
                     return new CDRPlayer(id);
                 });
-                Extensions.updatePhonesRepresent('need-update');
+                ExtensionsAPI.updatePhonesRepresent('need-update');
             }
+        });
+
+        // Handle second click on delete button (after two-steps-delete changes icon to close)
+        // WHY: Two-steps-delete mechanism prevents accidental deletion
+        // First click: trash → close (by delete-something.js), Second click: execute deletion
+        callDetailRecords.$cdrTable.on('click', 'a.delete-record:not(.two-steps-delete)', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent row expansion
+
+            const $button = $(e.currentTarget);
+            const recordId = $button.attr('data-record-id');
+
+            if (!recordId) {
+                return;
+            }
+
+            // Add loading state
+            $button.addClass('disabled loading');
+
+            // Always delete with recordings and linked records
+            callDetailRecords.deleteRecord(recordId, $button);
+        });
+    },
+
+    /**
+     * Restore filters from saved state after DataTable initialization
+     * WHY: Must be called after DataTable is created to restore search and page
+     */
+    restoreFiltersFromState() {
+        const savedState = callDetailRecords.loadFiltersState();
+        if (!savedState) {
+            return;
+        }
+
+        // Restore search text to input field
+        if (savedState.searchText) {
+            callDetailRecords.$globalSearch.val(savedState.searchText);
+            // Apply search to DataTable
+            callDetailRecords.dataTable.search(savedState.searchText);
+        }
+
+        // Restore page number with delay
+        // WHY: DataTable ignores page() during initComplete, need setTimeout to allow initialization to fully complete
+        if (savedState.currentPage) {
+            setTimeout(() => {
+                callDetailRecords.dataTable.page(savedState.currentPage).draw(false);
+            }, 100);
+        } else if (savedState.searchText) {
+            // If only search text exists, still need to draw
+            callDetailRecords.dataTable.draw();
+        }
+    },
+
+    /**
+     * Delete CDR record via REST API
+     * WHY: Deletes by linkedid - automatically removes entire conversation with all linked records
+     * @param {string} recordId - CDR linkedid (like "mikopbx-1760784793.4627")
+     * @param {jQuery} $button - Button element to update state
+     */
+    deleteRecord(recordId, $button) {
+        // Always delete with recording files
+        // WHY: linkedid automatically deletes all linked records (no deleteLinked parameter needed)
+        CdrAPI.deleteRecord(recordId, { deleteRecording: true }, (response) => {
+            $button.removeClass('loading disabled');
+
+            if (response && response.result === true) {
+                // Silently reload the DataTable to reflect changes
+                // WHY: Visual feedback (disappearing row) is enough, no need for success toast
+                callDetailRecords.dataTable.ajax.reload(null, false);
+            } else {
+                // Show error message only on failure
+                const errorMsg = response?.messages?.error?.[0] ||
+                                globalTranslate.cdr_DeleteFailed ||
+                                'Failed to delete record';
+                UserMessage.showError(errorMsg);
+            }
+        });
+    },
+
+    /**
+     * Toggles the pagination controls visibility based on data size
+     */
+    togglePaginationControls() {
+        const info = callDetailRecords.dataTable.page.info();
+        if (info.pages <= 1) {
+            $(callDetailRecords.dataTable.table().container()).find('.dataTables_paginate').hide();
+        } else {
+            $(callDetailRecords.dataTable.table().container()).find('.dataTables_paginate').show();
+        }
+    },
+
+    /**
+     * Fetches CDR metadata (date range) using CdrAPI
+     * WHY: Lightweight request returns only metadata (dates), not full CDR records
+     * Avoids double request on page load
+     */
+    fetchLatestCDRDate() {
+        // Check for saved state first
+        const savedState = callDetailRecords.loadFiltersState();
+
+        CdrAPI.getMetadata({ limit: 100 }, (data) => {
+            if (data && data.hasRecords) {
+                let startDate, endDate;
+
+                // If we have saved state with dates, use those instead of metadata
+                if (savedState && savedState.dateFrom && savedState.dateTo) {
+                    startDate = moment(savedState.dateFrom);
+                    endDate = moment(savedState.dateTo);
+                } else {
+                    // Convert metadata date strings to moment objects
+                    startDate = moment(data.earliestDate);
+                    endDate = moment(data.latestDate);
+                }
+
+                callDetailRecords.hasCDRRecords = true;
+                callDetailRecords.initializeDateRangeSelector(startDate, endDate);
+
+                // Initialize DataTable only if we have records
+                // WHY: DataTable needs date range to be set first
+                callDetailRecords.initializeDataTableAndHandlers();
+            } else {
+                // No records in database at all or API error
+                callDetailRecords.hasCDRRecords = false;
+                callDetailRecords.showEmptyDatabasePlaceholder();
+                // Don't initialize DataTable at all - just show placeholder
+            }
+        });
+    },
+
+    /**
+     * Gets a styled empty table message
+     * @returns {string} HTML message for empty table
+     */
+    getEmptyTableMessage() {
+        // If database is empty, we don't show this message in table
+        if (!callDetailRecords.hasCDRRecords) {
+            return '';
+        }
+        
+        // Show filtered empty state message
+        return `
+        <div class="ui placeholder segment">
+            <div class="ui icon header">
+                <i class="search icon"></i>
+                ${globalTranslate.cdr_FilteredEmptyTitle}
+            </div>
+            <div class="inline">
+                <div class="ui text">
+                    ${globalTranslate.cdr_FilteredEmptyDescription}
+                </div>
+            </div>
+        </div>`;
+    },
+    
+    /**
+     * Shows the empty database placeholder and hides the table
+     */
+    showEmptyDatabasePlaceholder() {
+        // Hide the table itself (DataTable won't be initialized)
+        callDetailRecords.$cdrTable.hide();
+
+        // Hide search and date controls
+        $('#date-range-selector').closest('.ui.row').hide();
+
+        // Show placeholder
+        callDetailRecords.$emptyDatabasePlaceholder.show();
+    },
+
+    /**
+     * Transform REST API grouped records to DataTable row format
+     * @param {Array} restData - Array of grouped CDR records from REST API
+     * @returns {Array} Array of DataTable rows
+     */
+    transformRestToDataTable(restData) {
+        return restData.map(group => {
+            // Calculate timing display
+            const billsec = group.totalBillsec || 0;
+            const timeFormat = (billsec < 3600) ? 'mm:ss' : 'HH:mm:ss';
+            const timing = billsec > 0 ? moment.utc(billsec * 1000).format(timeFormat) : '';
+
+            // Format start date
+            const formattedDate = moment(group.start).format('DD-MM-YYYY HH:mm:ss');
+
+            // Extract recording records - filter only records with actual recording files
+            const recordings = (group.records || [])
+                .filter(r => r.recordingfile && r.recordingfile.length > 0)
+                .map(r => ({
+                    id: r.id,
+                    src_num: r.src_num,
+                    src_name: r.src_name || '',
+                    dst_num: r.dst_num,
+                    dst_name: r.dst_name || '',
+                    recordingfile: r.recordingfile,
+                    playback_url: r.playback_url,   // Token-based URL for playback
+                    download_url: r.download_url    // Token-based URL for download
+                }));
+
+            // Determine CSS class
+            const hasRecordings = recordings.length > 0;
+            const isAnswered = group.disposition === 'ANSWERED';
+            const dtRowClass = hasRecordings ? 'detailed' : 'ui';
+            const negativeClass = isAnswered ? '' : ' negative';
+
+            // Collect unique verbose call IDs
+            const ids = [...new Set(
+                (group.records || [])
+                    .map(r => r.verbose_call_id)
+                    .filter(id => id && id.length > 0)
+            )].join('&');
+
+            // Return DataTable row format
+            // DataTables needs both array indices AND special properties
+            const row = [
+                formattedDate,              // 0: date
+                group.src_num,              // 1: source number
+                group.dst_num || group.did, // 2: destination number or DID
+                timing,                     // 3: duration
+                recordings,                 // 4: recording records array
+                group.disposition,          // 5: disposition
+                group.src_name || '',       // 6: source caller name from CDR
+                group.dst_name || ''        // 7: destination caller name from CDR
+            ];
+
+            // Add DataTables special properties
+            row.DT_RowId = group.linkedid;
+            row.DT_RowClass = dtRowClass + negativeClass;
+            row.ids = ids; // Store raw IDs without encoding - encoding will be applied when building URL
+
+            return row;
         });
     },
 
@@ -193,33 +780,43 @@ const callDetailRecords = {
     <td class="one wide">
     	<i class="ui icon download" data-value=""></i>
     </td>
-    <td class="right aligned"><span class="need-update">${record.src_num}</span></td>
+    <td class="right aligned"><span class="need-update" data-cdr-name="${SecurityUtils.escapeHtml(record.src_name || '')}">${SecurityUtils.escapeHtml(record.src_num)}</span></td>
     <td class="one wide center aligned"><i class="icon exchange"></i></td>
-   	<td class="left aligned"><span class="need-update">${record.dst_num}</span></td>
+   	<td class="left aligned"><span class="need-update" data-cdr-name="${SecurityUtils.escapeHtml(record.dst_name || '')}">${SecurityUtils.escapeHtml(record.dst_num)}</span></td>
 </tr>`;
             } else {
-                let recordFileName = `Call_record_between_${record.src_num}_and_${record.dst_num}_from_${data[0]}`;
-                recordFileName.replace(/[^\w\s!?]/g, '');
-                recordFileName = encodeURIComponent(recordFileName);
-                const recordFileUri = encodeURIComponent(record.recordingfile);
+                // Use token-based URLs instead of direct file paths
+                // WHY: Security - hides actual file paths from user
+                // Two separate endpoints: :playback (inline) and :download (file)
+                const playbackUrl = record.playback_url || '';
+                const downloadUrl = record.download_url || '';
+
                 htmlPlayer += `
 
 <tr class="detail-record-row" id="${record.id}">
    	<td class="one wide"></td>
    	<td class="one wide right aligned">
    		<i class="ui icon play"></i>
-	   	<audio preload="metadata" id="audio-player-${record.id}" src="/pbxcore/api/cdr/v2/playback?view=${recordFileUri}"></audio>
+	   	<audio preload="metadata" id="audio-player-${record.id}" src="${playbackUrl}"></audio>
 	</td>
     <td class="five wide">
     	<div class="ui range cdr-player" data-value="${record.id}"></div>
     </td>
     <td class="one wide"><span class="cdr-duration"></span></td>
     <td class="one wide">
-    	<i class="ui icon download" data-value="/pbxcore/api/cdr/v2/playback?view=${recordFileUri}&download=1&filename=${recordFileName}.mp3"></i>
+    	<div class="ui compact icon top left pointing dropdown download-format-dropdown" data-download-url="${downloadUrl}">
+    		<i class="download icon"></i>
+    		<div class="menu">
+    			<div class="item" data-format="webm">WebM (Opus)</div>
+    			<div class="item" data-format="mp3">MP3</div>
+    			<div class="item" data-format="wav">WAV</div>
+    			<div class="item" data-format="ogg">OGG (Opus)</div>
+    		</div>
+    	</div>
     </td>
-    <td class="right aligned"><span class="need-update">${record.src_num}</span></td>
+    <td class="right aligned"><span class="need-update" data-cdr-name="${SecurityUtils.escapeHtml(record.src_name || '')}">${SecurityUtils.escapeHtml(record.src_num)}</span></td>
     <td class="one wide center aligned"><i class="icon exchange"></i></td>
-   	<td class="left aligned"><span class="need-update">${record.dst_num}</span></td>
+   	<td class="left aligned"><span class="need-update" data-cdr-name="${SecurityUtils.escapeHtml(record.dst_name || '')}">${SecurityUtils.escapeHtml(record.dst_num)}</span></td>
 </tr>`;
             }
         });
@@ -227,21 +824,48 @@ const callDetailRecords = {
         return htmlPlayer;
     },
 
+    /**
+     * Gets the page length for DataTable, considering user's saved preference
+     * @returns {number}
+     */
+    getPageLength() {
+        // Get the user's saved value or use the automatically calculated value if none exists
+        const savedPageLength = localStorage.getItem('cdrTablePageLength');
+        return savedPageLength ? parseInt(savedPageLength, 10) : callDetailRecords.calculatePageLength();
+    },
+
+    /**
+     * Calculates the number of rows that can fit on a page based on the current window height.
+     * Dynamically measures the actual overhead from DOM elements instead of using a hardcoded estimate.
+     * @returns {number}
+     */
     calculatePageLength() {
-        // Calculate row height
-        let rowHeight = callDetailRecords.$cdrTable.find('tbody > tr').first().outerHeight();
+        // Measure actual row height from rendered row, fallback to compact table default (~36px)
+        let rowHeight = callDetailRecords.$cdrTable.find('tbody > tr').first().outerHeight() || 36;
 
-        // Calculate window height and available space for table
+        // Calculate overhead dynamically from the table's position in the page
         const windowHeight = window.innerHeight;
-        const headerFooterHeight = 400; // Estimate height for header, footer, and other elements
+        let overhead = 400; // safe fallback
+        const tableEl = callDetailRecords.$cdrTable.get(0);
+        if (tableEl) {
+            const thead = callDetailRecords.$cdrTable.find('thead');
+            const theadHeight = thead.length ? thead.outerHeight() : 38;
+            const tableTop = tableEl.getBoundingClientRect().top;
 
-        // Calculate new page length
-        return Math.max(Math.floor((windowHeight - headerFooterHeight) / rowHeight), 5);
+            // Space below: pagination(50) + info bar(30) + segment padding(14) + version footer(35) + margins(10)
+            const bottomReserve = 139;
+
+            overhead = tableTop + theadHeight + bottomReserve;
+        }
+
+        return Math.max(Math.floor((windowHeight - overhead) / rowHeight), 5);
     },
     /**
      * Initializes the date range selector.
+     * @param {moment} startDate - Optional earliest record date from last 100 records
+     * @param {moment} endDate - Optional latest record date from last 100 records
      */
-    initializeDateRangeSelector() {
+    initializeDateRangeSelector(startDate = null, endDate = null) {
         const options = {};
 
         options.ranges = {
@@ -268,12 +892,25 @@ const callDetailRecords = {
             monthNames: SemanticLocalization.calendarText.months,
             firstDay: 1,
         };
-        options.startDate = moment();
-        options.endDate = moment();
+
+        // If we have date range from last 100 records, use it
+        // WHY: Provides meaningful context - user sees period covering recent calls
+        if (startDate && endDate) {
+            options.startDate = moment(startDate).startOf('day');
+            options.endDate = moment(endDate).endOf('day');
+        } else {
+            // Fallback to today if no records
+            options.startDate = moment();
+            options.endDate = moment();
+        }
+
         callDetailRecords.$dateRangeSelector.daterangepicker(
             options,
             callDetailRecords.cbDateRangeSelectorOnSelect,
         );
+
+        // Note: Don't call applyFilter here - DataTable is not initialized yet
+        // DataTable will load data automatically after initialization
     },
 
 
@@ -284,8 +921,9 @@ const callDetailRecords = {
      * @param {string} label - The label.
      */
     cbDateRangeSelectorOnSelect(start, end, label) {
-        const text = `${start.format('DD/MM/YYYY')} ${end.format('DD/MM/YYYY')} ${callDetailRecords.$globalSearch.val()}`;
-        callDetailRecords.applyFilter(text);
+        // Only pass search keyword, dates are read directly from date range selector
+        callDetailRecords.applyFilter(callDetailRecords.$globalSearch.val());
+        // State will be saved automatically in draw event after filter is applied
     },
 
     /**

@@ -22,13 +22,14 @@ namespace MikoPBX\PBXCoreREST\Lib\Users;
 
 use MikoPBX\Common\Models\Users;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Processes Users management requests
  *
  * @package MikoPBX\PBXCoreREST\Lib\Iax
  */
-class AvailableAction extends \Phalcon\Di\Injectable
+class AvailableAction extends Injectable
 {
     /**
      * Processes Users management requests

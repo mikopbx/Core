@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -20,7 +21,6 @@
 namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
@@ -32,21 +32,21 @@ use Phalcon\Di\ServiceProviderInterface;
  *
  * @package MikoPBX\Common\Providers
  */
-class AmiConnectionListener  implements ServiceProviderInterface{
-
-    public const SERVICE_NAME = 'amiListener';
+class AmiConnectionListener implements ServiceProviderInterface
+{
+    public const string SERVICE_NAME = 'amiListener';
 
     /**
      * Register amiListener service provider
      *
-     * @param \Phalcon\Di\DiInterface $di The DI container.
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {
         $di->setShared(
             self::SERVICE_NAME,
             function () {
-                $port   = PbxSettings::getValueByKey(PbxSettingsConstants::AMI_PORT);
+                $port   = PbxSettings::getValueByKey(PbxSettings::AMI_PORT);
                 $am     = new AsteriskManager();
                 $am->connect("127.0.0.1:{$port}", null, null, 'on');
                 return $am;

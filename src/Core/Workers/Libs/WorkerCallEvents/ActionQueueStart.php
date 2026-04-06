@@ -38,12 +38,18 @@ class ActionQueueStart
      * @param array $data The event data.
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         if ($data['transfer'] === '1') {
             // If it's a transfer, perform a search for related data.
             ActionTransferCheck::execute($worker, $data);
         }
+
+        // End previous app (e.g. IVR) BEFORE inserting the queue CDR.
+        // This ensures dtmf_digits are written only to the IVR record,
+        // not to the queue record that hasn't been created yet.
+        ActionAppEnd::execute($worker, $data);
+
         if (isset($data['start'])) {
             // It's a new row.
             InsertDataToDB::execute($data);
@@ -51,6 +57,5 @@ class ActionQueueStart
             // Only data update is required.
             UpdateDataInDB::execute($data);
         }
-        ActionAppEnd::execute($worker, $data);
     }
 }

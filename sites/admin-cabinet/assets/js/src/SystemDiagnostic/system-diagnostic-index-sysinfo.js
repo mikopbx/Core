@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global ace, PbxApi */
+/* global ace, SysinfoAPI */
 
 /**
  * Object for managing system diagnostic system information view.
@@ -46,7 +46,7 @@ const systemDiagnosticSysyinfo = {
             if ($(e.target).attr('data-tab') === 'show-sysinfo'
                 && systemDiagnosticSysyinfo.receivedInfo === false) {
                 systemDiagnosticSysyinfo.initializeAce();
-                PbxApi.SysInfoGetInfo(systemDiagnosticSysyinfo.cbUpdateSysinfoText);
+                SysinfoAPI.getInfo(systemDiagnosticSysyinfo.cbUpdateSysinfoText);
             }
         });
     },
@@ -78,11 +78,15 @@ const systemDiagnosticSysyinfo = {
 
     /**
      * Callback for updating the system information view.
-     * @param data - The system information data.
+     * @param response - The API response object.
      */
-    cbUpdateSysinfoText(data) {
+    cbUpdateSysinfoText(response) {
         systemDiagnosticSysyinfo.$dimmer.removeClass('active');
-        systemDiagnosticSysyinfo.viewer.getSession().setValue(data.content);
+
+        // Extract content from response.data.content
+        const content = response?.data?.content || '';
+        systemDiagnosticSysyinfo.viewer.getSession().setValue(content);
+
         systemDiagnosticSysyinfo.receivedInfo = true;
         systemDiagnosticSysyinfo.$contentFiled.show();
     },

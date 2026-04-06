@@ -19,7 +19,6 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
-
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
@@ -28,7 +27,7 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  *
  * This class contains tests for adding conference rooms.
  */
-class CreateConferenceRoomsTest extends MikoPBXTestsBase
+abstract class CreateConferenceRoomsTest extends MikoPBXTestsBase
 {
 
     /**
@@ -44,16 +43,30 @@ class CreateConferenceRoomsTest extends MikoPBXTestsBase
     }
     /**
      * Test adding a conference room.
+     */
+    public function testCreateConferenceRoom(): void
+    {
+        $this->createConferenceRoom($this->getConferenceRoomData());
+    }
+
+    /**
+     * Get conference room test data
+     * Must be implemented by child classes
      *
-     * @depends testLogin
-     * @dataProvider additionProvider
+     * @return array
+     */
+    abstract protected function getConferenceRoomData(): array;
+
+    /**
+     * Create a conference room with given parameters
      *
      * @param array $params The parameters for the conference room.
      */
-    public function testAddConference(array $params): void
+    protected function createConferenceRoom(array $params): void
     {
         // Navigate to the conference rooms page and delete any existing rooms with the same name
         $this->clickSidebarMenuItemByHref('/admin-cabinet/conference-rooms/index/');
+    
         $this->clickDeleteButtonOnRowWithText($params['name']);
 
         // Click the "Modify" button to add a new conference room
@@ -62,6 +75,11 @@ class CreateConferenceRoomsTest extends MikoPBXTestsBase
         // Set the extension and name for the conference room
         $this->changeInputField('extension', $params['extension']);
         $this->changeInputField('name', $params['name']);
+        
+        // Set PIN code if provided
+        if (isset($params['pinCode'])) {
+            $this->changeInputField('pinCode', $params['pinCode']);
+        }
 
         // Save the conference room
         $this->submitForm('conference-room-form');
@@ -75,35 +93,10 @@ class CreateConferenceRoomsTest extends MikoPBXTestsBase
         // Verify that the name and extension fields match the expected values
         $this->assertInputFieldValueEqual('name', $params['name']);
         $this->assertInputFieldValueEqual('extension', $params['extension']);
-    }
-
-    /**
-     * Dataset provider for conference room parameters.
-     *
-     * @return array
-     */
-    public function additionProvider(): array
-    {
-        $params = [];
-        $params['The first conference room <11112>'] = [
-            [
-                'name' => 'The first conference room',
-                'extension' => '11112',
-            ]
-        ];
-        $params['The second conference room <11113>'] = [
-            [
-                'name' => 'The second conference room',
-                'extension' => '11113',
-            ]
-        ];
-        $params['The third conference room <11114>'] = [
-            [
-                'name' => 'The third conference room',
-                'extension' => '11114',
-            ]
-        ];
-
-        return $params;
+        
+        // Verify PIN code if it was set
+        if (isset($params['pinCode'])) {
+            $this->assertInputFieldValueEqual('pinCode', $params['pinCode']);
+        }
     }
 }

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi, globalPBXLicense, globalTranslate, UserMessage, globalPBXVersion, installStatusLoopWorker, marketplace */
+/* global globalRootUrl, PbxApi, globalPBXLicense, globalTranslate, UserMessage, globalPBXVersion, installStatusLoopWorker, marketplace, ModulesAPI */
 
 /**
  * Manages the installation and updating of PBX extension modules from a repository.
@@ -145,11 +145,11 @@ const installationFromRepo = {
                     $('tr.table-error-messages').remove();
                     $('tr.error').removeClass('error');
 
-                    PbxApi.ModulesInstallFromRepo(params, (response) => {
+                    ModulesAPI.installFromRepo(params, (response) => {
                         console.debug(response);
                         if (response.result === true) {
                             $('html, body').animate({
-                                scrollTop: installationFromRepo.$progressBarBlock.offset().top,
+                                scrollTop: installationFromRepo.$progressBarBlock.offset().top-50,
                             }, 2000);
                         }
                     });
@@ -210,7 +210,7 @@ const installationFromRepo = {
                         channelId: installStatusLoopWorker.channelId,
                         modulesForUpdate: [...uniqueModulesForUpdate],
                     };
-                    PbxApi.ModulesUpdateAll(params, (response) => {
+                    ModulesAPI.updateAll(params, (response) => {
                         console.debug(response);
                     });
 

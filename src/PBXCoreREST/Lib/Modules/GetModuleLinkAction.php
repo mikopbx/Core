@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +21,12 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use GuzzleHttp;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class GetModuleLink
@@ -32,7 +34,7 @@ use GuzzleHttp;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class GetModuleLinkAction extends \Phalcon\Di\Injectable
+class GetModuleLinkAction extends Injectable
 {
     /**
      * Retrieves the installation link for a module.
@@ -46,40 +48,59 @@ class GetModuleLinkAction extends \Phalcon\Di\Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $licenseKey = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
+        $licenseKey = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
 
         $client = new GuzzleHttp\Client();
         $body = '';
-        try {
-            $request = $client->request(
-                'POST',
-                'https://releases.mikopbx.com/releases/v1/mikopbx/getModuleLink',
-                [
-                    'headers' => [
-                        'Content-Type' => 'application/json; charset=utf-8',
-                    ],
-                    'json' => [
-                        'LICENSE' => $licenseKey,
-                        'RELEASEID'=> $moduleReleaseId,
-                    ],
-                    'timeout' => 5,
-                ]
-            );
-            $code = $request->getStatusCode();
-            if ($code === Response::OK){
-                $body = $request->getBody()->getContents();
+
+        $maxAttempts = 3;
+        $attemptDelay = 2; // seconds
+        $code = Response::INTERNAL_SERVER_ERROR;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                $request = $client->request(
+                    'POST',
+                    'https://releases.mikopbx.com/releases/v1/mikopbx/getModuleLink',
+                    [
+                        'headers' => [
+                            'Content-Type' => 'application/json; charset=utf-8',
+                        ],
+                        'json' => array_merge(
+                            [
+                                'LICENSE' => $licenseKey,
+                                'RELEASEID' => $moduleReleaseId,
+                            ],
+                            System::getPlatformInfo()
+                        ),
+                        'timeout' => 15,
+                    ]
+                );
+                $code = $request->getStatusCode();
+                if ($code === Response::OK) {
+                    $body = $request->getBody()->getContents();
+                    break; // Success - exit loop
+                }
+            } catch (\Throwable $e) {
+                $code = Response::INTERNAL_SERVER_ERROR;
+                $errorMessage = "Attempt $attempt/$maxAttempts failed: " . $e->getMessage();
+                SystemMessages::sysLogMsg(static::class, $errorMessage);
+
+                if ($attempt < $maxAttempts) {
+                    // Wait before next attempt
+                    sleep($attemptDelay);
+                } else {
+                    // Last attempt failed - add to response messages
+                    $res->messages[] = $e->getMessage();
+                }
             }
-        } catch (\Throwable $e) {
-            $code = Response::INTERNAL_SERVER_ERROR;
-            Util::sysLogMsg(static::class, $e->getMessage());
-            $res->messages[] = $e->getMessage();
         }
 
         if ($code !== Response::OK) {
             return $res;
         }
 
-        $res->data = json_decode($body, true)??[];
+        $res->data = json_decode($body??'', true) ?? [];
         $res->success = true;
         return $res;
     }

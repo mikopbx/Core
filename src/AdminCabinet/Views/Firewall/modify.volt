@@ -1,4 +1,4 @@
-{{ form('firewall/save', 'role': 'form', 'class': 'ui form large', 'id':'firewall-form') }}
+{{ form(['action' : 'firewall/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'firewall-form']) }}
 
 {{ form.render('id') }}
 
@@ -6,40 +6,52 @@
     <label>{{ t._('fw_Description') }}</label>
     {{ form.render('description') }}
 </div>
-<div class="fields">
-    <div class="field">
-        <label>{{ t._('fw_Permit') }}</label>
-        <div class="field max-width-400">
-            {{ form.render('network') }}
+<div class="field">
+    <div class="fields">
+        <div class="field">
+            <label>{{ t._('fw_IPv4Network') }}</label>
+            {{ form.render('ipv4_network') }}
         </div>
-    </div>
-    <div class="field">
-        <label>{{ t._('fw_Subnet') }}</label>
-        <div class="field max-width-400">
-            {{ form.render('subnet') }}
+        <div class="field">
+            <label>{{ t._('fw_IPv4Subnet') }}</label>
+            {{ form.render('ipv4_subnet') }}
         </div>
+        {% if form.has('ipv6_network') %}
+        <div class="field" style="display: flex; align-items: center; padding-top: 1.75em;">
+            <div class="ui horizontal divider" style="margin: 0 1em;">{{ t._('fw_Or') }}</div>
+        </div>
+        <div class="field">
+            <label>{{ t._('fw_IPv6Network') }}</label>
+            {{ form.render('ipv6_network') }}
+        </div>
+        <div class="field">
+            <label>{{ t._('fw_IPv6Subnet') }}</label>
+            {{ form.render('ipv6_subnet') }}
+        </div>
+        {% endif %}
     </div>
+    {% if form.has('ipv6_network') %}
+    <div class="ui info message">
+        <i class="info circle icon"></i>
+        {{ t._('fw_IPv6OrIPv4Required') }}
+    </div>
+    {% endif %}
 </div>
 <div class="field">
     <h4 class="ui  header">{{ t._('fw_Rules') }}</h4>
-    {% for name, value in firewallRules %}
-        <div class="ui segment">
-            <div class="field">
-                <div class="ui toggle checkbox rules">
-                    <input type="checkbox"
-                           name="rule_{{ name|upper }}" {% if value['action']=='allow' %} checked {% endif %}
-                           tabindex="0" class="hidden">
-                    <label>{{ t._('fw_'~name|lower~'Description') }}</label>
-                </div>
-            </div>
-        </div>
-    {% endfor %}
+    <div id="firewall-rules-container" class="ui loading segment" style="min-height: 200px;">
+        <!-- Rules will be dynamically loaded via JavaScript -->
+    </div>
 </div>
 <h4 class="ui  header">{{ t._('fw_AdditionalRules') }}</h4>
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox rules">
-            <label>{{ t._('fw_ItIsLocalNetwork') }}</label>
+            <label for="local_network">
+                {{ t._('fw_ItIsLocalNetwork') }}
+                <i class="small info circle icon special-checkbox-info"
+                   data-type="local_network"></i>
+            </label>
             {{ form.render('local_network') }}
         </div>
     </div>
@@ -47,7 +59,11 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox rules">
-            <label>{{ t._('fw_NewerBlockIp') }}</label>
+            <label for="newer_block_ip">
+                {{ t._('fw_NewerBlockIp') }}
+                <i class="small info circle icon special-checkbox-info"
+                   data-type="newer_block_ip"></i>
+            </label>
             {{ form.render('newer_block_ip') }}
         </div>
     </div>
@@ -56,4 +72,4 @@
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
 {{ partial("partials/submitbutton",['indexurl':'firewall/index/']) }}
-{{ end_form() }}
+{{ close('form') }}

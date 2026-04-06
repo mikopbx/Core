@@ -24,7 +24,7 @@ namespace MikoPBX\Common\Providers;
 
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Url;
+use Phalcon\Mvc\Url;
 
 /**
  * The URL component is used to generate all kinds of URLs in the application.
@@ -33,7 +33,7 @@ use Phalcon\Url;
  */
 class UrlProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'url';
+    public const string SERVICE_NAME = 'url';
 
     /**
      * Register the URL service provider.

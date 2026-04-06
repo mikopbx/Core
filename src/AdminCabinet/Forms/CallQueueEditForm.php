@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,11 +20,10 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\AdminCabinet\Forms\Elements\SemanticUIDropdown;
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
@@ -36,7 +36,8 @@ class CallQueueEditForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {
-        parent::initialize($entity, $options);
+        // Entity is not used anymore - all data comes from REST API
+        parent::initialize(null, $options);
 
         // ID
         $this->add(new Hidden('id'));
@@ -51,28 +52,23 @@ class CallQueueEditForm extends BaseForm
         $this->add(new Text('extension'));
 
 
-        // Strategy
-        $arrActions = [
-            'ringall' => $this->translation->_('cq_ringall'),
-            'leastrecent' => $this->translation->_('cq_leastrecent'),
-            'fewestcalls' => $this->translation->_('cq_fewestcalls'),
-            'random' => $this->translation->_('cq_random'),
-            'rrmemory' => $this->translation->_('cq_rrmemory'),
-            'linear' => $this->translation->_('cq_linear'),
-        ];
-
-        $strategy = new Select(
-            'strategy', $arrActions, [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'defaultValue' => "ringall",
-                'class' => 'ui selection dropdown strategyselect',
+        // Strategy - static dropdown with PHP rendering
+        $this->addSemanticUIDropdown(
+            'strategy',
+            [
+                'ringall' => $this->translation->_('cq_ringall'),
+                'leastrecent' => $this->translation->_('cq_leastrecent'),
+                'fewestcalls' => $this->translation->_('cq_fewestcalls'),
+                'random' => $this->translation->_('cq_random'),
+                'rrmemory' => $this->translation->_('cq_rrmemory'),
+                'linear' => $this->translation->_('cq_linear')
+            ],
+            'ringall', // Default value, actual value will come from REST API
+            [
+                'clearable' => false,
+                'forceSelection' => true
             ]
         );
-        $this->add($strategy);
 
 
         // Seconds_to_ring_each_member - Seconds between announcements
@@ -82,170 +78,69 @@ class CallQueueEditForm extends BaseForm
         $this->add(new Numeric('seconds_for_wrapup', ["maxlength" => 2, "style" => "width: 80px;"]));
 
         // Recivecallswhileonacall
-        $cheskarr = ['value' => null];
-        if ($entity->recive_calls_while_on_a_call) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-
-        $this->add(new Check('recive_calls_while_on_a_call', $cheskarr));
+        $this->addCheckBox('recive_calls_while_on_a_call', false, true);
 
         // Callerhear
         $arrActions = [
-            'ringing' => $this->translation->_('cq_ringing'),
-            'moh' => $this->translation->_('cq_moh'),
+            ['value' => 'ringing', 'text' => $this->translation->_('cq_ringing')],
+            ['value' => 'moh', 'text' => $this->translation->_('cq_moh')],
         ];
 
-        $callerhear = new Select(
-            'caller_hear', $arrActions, [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
+        $callerhear = new SemanticUIDropdown(
+            'caller_hear',
+            $arrActions,
+            [
+                'placeholder' => '',
                 'class' => 'ui selection dropdown callerhearselect',
             ]
         );
         $this->add($callerhear);
 
         // Announceposition
-        $cheskarr = ['value' => null];
-        if ($entity->announce_position) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-
-        $this->add(new Check('announce_position', $cheskarr));
+        $this->addCheckBox('announce_position', false, true);
 
         // Announceholdtime
-        $cheskarr = ['value' => null];
-        if ($entity->announce_hold_time) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
+        $this->addCheckBox('announce_hold_time', false, true);
 
-        $this->add(new Check('announce_hold_time', $cheskarr));
+        $this->add(new Hidden('periodic_announce_sound_id', [
+            'id' => 'periodic_announce_sound_id'
+        ]));
 
-
-        $periodicannouncesoundid = new Select(
-            'periodic_announce_sound_id', $options['soundfiles'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search periodic-announce-sound-id-select',
-            ]
-        );
-        $this->add($periodicannouncesoundid);
-
-        $periodicannouncesoundid = new Select(
-            'moh_sound_id', $options['mohSoundFiles'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search periodic-announce-sound-id-select',
-            ]
-        );
-        $this->add($periodicannouncesoundid);
+        $this->add(new Hidden('moh_sound_id', [
+            'id' => 'moh_sound_id'
+        ]));
 
         // Periodicannouncefrequency - Seconds between announcements
         $this->add(new Numeric('periodic_announce_frequency', ["maxlength" => 2, "style" => "width: 80px;"]));
 
         // Timeouttoredirecttoextension
-        $ringlength = $entity->timeout_to_redirect_to_extension;
         $this->add(
             new Numeric(
                 'timeout_to_redirect_to_extension',
                 [
                     "maxlength" => 2,
                     "style" => "width: 80px;",
-                    "value" => ($ringlength > 0) ? $ringlength : '',
+                    "value" => 30,
                 ]
             )
         );
 
-        // Timeoutextension
-        $extension = new Select(
-            'timeout_extension', $options['extensions'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search forwarding-select',
-            ]
-        );
-        $this->add($extension);
+        // Timeoutextension - hidden field, dropdown managed by JavaScript
+        $this->add(new Hidden('timeout_extension'));
 
-        // Redirecttoextensionifempty
-        $extension = new Select(
-            'redirect_to_extension_if_empty', $options['extensions'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search forwarding-select',
-            ]
-        );
-        $this->add($extension);
+        // Redirecttoextensionifempty - hidden field, dropdown managed by JavaScript
+        $this->add(new Hidden('redirect_to_extension_if_empty'));
 
-        // Numberunansweredcallstoredirect
-        $ringlength = $entity->number_unanswered_calls_to_redirect;
-        $this->add(
-            new Numeric(
-                'number_unanswered_calls_to_redirect',
-                [
-                    "maxlength" => 2,
-                    "style" => "width: 80px;",
-                    "value" => ($ringlength > 0) ? $ringlength : '',
-                ]
-            )
-        );
-
-        // Redirecttoextensionifunanswered
-        $extension = new Select(
-            'redirect_to_extension_if_unanswered', $options['extensions'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search forwarding-select',
-            ]
-        );
-        $this->add($extension);
-
-        // Numberrepeatunansweredtoredirect
-        $ringlength = $entity->number_repeat_unanswered_to_redirect;
-        $this->add(
-            new Numeric(
-                'number_repeat_unanswered_to_redirect',
-                [
-                    "maxlength" => 2,
-                    "style" => "width: 80px;",
-                    "value" => ($ringlength > 0) ? $ringlength : '',
-                ]
-            )
-        );
-
-        // Redirecttoextensionifrepeatexceeded
-        $extension = new Select(
-            'redirect_to_extension_if_repeat_exceeded', $options['extensions'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search forwarding-select',
-            ]
-        );
-        $this->add($extension);
+        // Hidden fields for database compatibility (not displayed in UI)
+        $this->add(new Hidden('number_unanswered_calls_to_redirect'));
+        $this->add(new Hidden('redirect_to_extension_if_unanswered'));
+        $this->add(new Hidden('number_repeat_unanswered_to_redirect'));
+        $this->add(new Hidden('redirect_to_extension_if_repeat_exceeded'));
 
         // Caller ID prefix
         $this->add(new Text('callerid_prefix'));
 
         // Description
-        $this->addTextArea('description', $entity->description??'', 65);
+        $this->addTextArea('description', '', 65); // Default empty, actual value will come from REST API
     }
 }

@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -35,9 +35,9 @@ use MikoPBX\Core\Workers\WorkerCallEvents;
  */
 class ActionDialAnswer
 {
-    private const NEED_CONTINUE = 1;
-    private const NEED_BREAK = 2;
-    private const NORM_EXIT = 0;
+    private const int NEED_CONTINUE = 1;
+    private const int NEED_BREAK = 2;
+    private const int NORM_EXIT = 0;
 
 
     /**
@@ -46,11 +46,12 @@ class ActionDialAnswer
      * @param WorkerCallEvents $worker Instance of WorkerCallEvents.
      * @param array $data Data related to the event.
      * @return void
+     * @throws \Exception
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array$data): void
     {
         // Retrieve the pickup extension number from the PBX settings.
-        $pickupexten = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN);
+        $pickupexten = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_PICKUP_EXTEN);
 
         // Check if the dialed number (dnid) matches the pickup extension.
         if (trim($data['dnid']) === $pickupexten) {
@@ -93,8 +94,9 @@ class ActionDialAnswer
      * @param WorkerCallEvents $worker Instance of WorkerCallEvents.
      * @param array $data Data related to the event.
      * @return void
+     * @throws \Exception
      */
-    private static function fillPickUpCdr($worker, $data): void
+    private static function fillPickUpCdr(WorkerCallEvents $worker, array $data): void
     {
         // This is a call pickup event.
         // It occurs when we try to answer a call directed to another extension.
@@ -129,6 +131,7 @@ class ActionDialAnswer
             if ($worker->enableMonitor($new_data['src_num'] ?? '', $new_data['dst_num'] ?? '')) {
                 // If it is, start recording the call.
                 $new_data['recordingfile'] = $worker->MixMonitor($new_data['dst_chan'], 'pickup_' . $new_data['UNIQUEID'], '', '', 'fillPickUpCdr');
+                $new_data['rec_src_channel'] = $worker->getRecSrcChannel($new_data['dst_chan'], $new_data['src_chan'] ?? '', $new_data['dst_chan']);
             }
 
             // Unset unnecessary fields from the new data.
@@ -139,9 +142,8 @@ class ActionDialAnswer
 
             // Create Asterisk Manager and send UserEvent.
             $new_data['action'] = 'answer_pickup_create_cdr';
-            $AgiData = base64_encode(json_encode($new_data));
             $am = Util::getAstManager('off');
-            $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
+            $am->UserEvent('CdrConnector', ['AgiData' => AsteriskManager::encodeCdrData($new_data)]);
         }
     }
 
@@ -151,7 +153,7 @@ class ActionDialAnswer
      * @param array $data Data related to the event.
      * @return void
      */
-    private static function checkSmartIvrCalls($data): void
+    private static function checkSmartIvrCalls(array $data): void
     {
         // If the 'ENDCALLONANSWER' field in the data array is empty, return without doing anything.
         if (empty($data['ENDCALLONANSWER'])) {
@@ -197,7 +199,7 @@ class ActionDialAnswer
      * @param array $data Data related to the event.
      * @return array
      */
-    private static function getCallDataFilter($data): array
+    private static function getCallDataFilter(array $data): array
     {
         // The 'org_id' field in the data array represents the original ID of a call.
 
@@ -238,7 +240,7 @@ class ActionDialAnswer
      * @param object $row Current call record.
      * @return int
      */
-    private static function fillAnsweredCdr($worker, $data, $row): int
+    private static function fillAnsweredCdr(WorkerCallEvents $worker, array $data, object $row): int
     {
         // If the dialstatus of the call is 'ORIGINATE', special handling is needed.
         // This typically represents an outgoing call.
@@ -293,7 +295,31 @@ class ActionDialAnswer
         if (!empty($recFile)) {
             $worker->mixMonitorChannels[$data['agi_channel']] = $recFile;
             $row->writeAttribute('recordingfile', $recFile);
+            $recSrcCh = $worker->getRecSrcChannel($data['agi_channel'], $row->src_chan, $row->dst_chan);
+            $row->writeAttribute('rec_src_channel', $recSrcCh);
         }
+
+        // Capture display names via AMI from the A-leg (src_chan) channel.
+        // CONNECTEDLINE(name) on A-leg = destination's display name after answer.
+        $srcChan = $row->src_chan;
+        if (!empty($srcChan)) {
+            try {
+                $am = Util::getAstManager('off');
+                $connectedName = $am->GetVar($srcChan, 'CONNECTEDLINE(name)', null, false);
+                if (is_string($connectedName) && $connectedName !== '' && $connectedName !== $row->dst_num) {
+                    $row->writeAttribute('dst_name', $connectedName);
+                }
+                if (empty($row->src_name)) {
+                    $callerName = $am->GetVar($srcChan, 'CALLERID(name)', null, false);
+                    if (is_string($callerName) && $callerName !== '' && $callerName !== $row->src_num) {
+                        $row->writeAttribute('src_name', $callerName);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Non-critical, name capture failure should not affect CDR
+            }
+        }
+
         $res = $row->save();
         if (!$res) {
             SystemMessages::sysLogMsg('Action_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);

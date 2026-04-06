@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -22,20 +23,22 @@ namespace MikoPBX\PBXCoreREST\Lib\Iax;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Retrieves the statuses of IAX providers registration.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Iax
  */
-class GetRegistryAction extends \Phalcon\Di\Injectable
+class GetRegistryAction extends Injectable
 {
     /**
      * Retrieves the statuses of IAX providers registration.
      *
+     * @param array $data Request data (currently unused, reserved for future filtering)
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function main(): PBXApiResult
+    public static function main(array $data = []): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;

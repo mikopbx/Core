@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,7 +20,6 @@
 
 namespace MikoPBX\Modules\Config;
 
-
 /**
  * Interface SystemConfigInterface
  *
@@ -29,31 +29,37 @@ namespace MikoPBX\Modules\Config;
  */
 interface SystemConfigInterface
 {
+    public const string MODELS_EVENT_NEED_RELOAD = 'modelsEventNeedReload';
 
-    public const MODELS_EVENT_NEED_RELOAD = 'modelsEventNeedReload';
+    public const string MODELS_EVENT_CHANGE_DATA = 'modelsEventChangeData';
 
-    public const MODELS_EVENT_CHANGE_DATA = 'modelsEventChangeData';
+    public const string CREATE_CRON_TASKS = 'createCronTasks';
 
-    public const CREATE_CRON_TASKS = 'createCronTasks';
+    public const string CREATE_NGINX_LOCATIONS = 'createNginxLocations';
 
-    public const CREATE_NGINX_LOCATIONS = 'createNginxLocations';
+    public const string CREATE_NGINX_SERVERS = 'createNginxServers';
 
-    public const GENERATE_FAIL2BAN_JAILS = 'generateFail2BanJails';
+    public const string GENERATE_FAIL2BAN_JAILS = 'generateFail2BanJails';
 
-    public const ON_AFTER_MODULE_DISABLE = 'onAfterModuleDisable';
+    public const string GENERATE_FAIL2BAN_FILTERS = 'generateFail2BanFilters';
 
-    public const ON_AFTER_MODULE_ENABLE = 'onAfterModuleEnable';
+    public const string ON_AFTER_MODULE_DISABLE = 'onAfterModuleDisable';
 
-    public const GET_MODULE_WORKERS = 'getModuleWorkers';
+    public const string ON_AFTER_MODULE_ENABLE = 'onAfterModuleEnable';
 
-    public const GET_DEFAULT_FIREWALL_RULES = 'getDefaultFirewallRules';
+    public const string GET_MODULE_WORKERS = 'getModuleWorkers';
 
-    public const ON_AFTER_PBX_STARTED = 'onAfterPbxStarted';
+    public const string GET_DEFAULT_FIREWALL_RULES = 'getDefaultFirewallRules';
 
-    public const ON_BEFORE_MODULE_DISABLE = 'onBeforeModuleDisable';
+    public const string ON_AFTER_PBX_STARTED = 'onAfterPbxStarted';
 
-    public const ON_BEFORE_MODULE_ENABLE = 'onBeforeModuleEnable';
+    public const string ON_BEFORE_MODULE_DISABLE = 'onBeforeModuleDisable';
 
+    public const string ON_BEFORE_MODULE_ENABLE = 'onBeforeModuleEnable';
+
+    public const string ON_AFTER_IPTABLES_RELOAD = 'onAfterIptablesReload';
+
+    public const string ON_AFTER_NETWORK_CONFIGURED = 'onAfterNetworkConfigured';
 
     /**
      * The callback function will execute after PBX started.
@@ -80,6 +86,17 @@ interface SystemConfigInterface
      * @return string The generated Nginx locations.
      */
     public function createNginxLocations(): string;
+
+    /**
+     * Creates additional Nginx server blocks from modules.
+     *
+     * Modules can return custom server blocks (listening on their own ports).
+     * Use NginxConf::buildServerBlock() helper to generate server blocks
+     * based on the standard HTTP/HTTPS templates.
+     *
+     * @return string The generated Nginx server block configuration.
+     */
+    public function createNginxServers(): string;
 
     /**
      * This method is called in the WorkerModelsEvents after each model change.
@@ -150,6 +167,28 @@ interface SystemConfigInterface
     public function onAfterModuleDisable(): void;
 
     /**
+     * The callback function will execute after iptables rules are applied but before the final DROP rule.
+     * Modules can use this hook to inject custom iptables rules (e.g., ipset-based filtering).
+     *
+     * Rules added here are positioned after explicit subnet ACCEPT rules and SIP provider rules,
+     * but before the final DROP, ensuring that trusted networks have higher priority.
+     *
+     * @return void
+     */
+    public function onAfterIptablesReload(): void;
+
+    /**
+     * The callback function will execute after network interfaces are configured.
+     * Modules can use this hook to start VPN tunnels, configure overlay networks,
+     * or perform other actions that depend on network availability.
+     *
+     * Called from Network::lanConfigure() after all interfaces, routes, and DNS are set up.
+     *
+     * @return void
+     */
+    public function onAfterNetworkConfigured(): void;
+
+    /**
      * Generates additional fail2ban jail conf rules.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatefail2banjails
      *
@@ -166,5 +205,4 @@ interface SystemConfigInterface
      * @return int
      */
     public function getMethodPriority(string $methodName = ''): int;
-
 }

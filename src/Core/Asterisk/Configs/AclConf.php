@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,9 +20,10 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\Sip;
+use MikoPBX\Core\System\DockerNetworkFilterService;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -37,7 +39,7 @@ class AclConf extends AsteriskConfigClass
     public int $priority = 1000;
 
     protected string $description = 'acl.conf';
-    protected array $data_peers;
+    protected array $dataPeers;
 
     /**
      * Returns the models that this class depends on.
@@ -55,7 +57,7 @@ class AclConf extends AsteriskConfigClass
     public function getSettings(): void
     {
         // Settings for the current class.
-        $this->data_peers = $this->getPeers();
+        $this->dataPeers = $this->getPeers();
     }
 
     /**
@@ -66,19 +68,24 @@ class AclConf extends AsteriskConfigClass
     private function getPeers(): array
     {
         $data    = [];
-        $db_data = Sip::find("type = 'peer' AND ( disabled <> '1')");
+        $db_data = Sip::find(["type = 'peer' AND ( disabled <> '1')", 'columns' => 'networkfilterid,manualattributes,extension']);
         foreach ($db_data as $sip_peer) {
-            $arr_data       = $sip_peer->toArray();
-            $network_filter = null;
-            if (null != $sip_peer->networkfilterid) {
+            $arr_data = $sip_peer->toArray();
+            
+            // Handle special case: none or empty (no restrictions)
+            if (empty($sip_peer->networkfilterid) || $sip_peer->networkfilterid === 'none') {
+                // No restrictions - allow all
+                $arr_data['permit'] = '';
+                $arr_data['deny']   = '';
+            } else {
+                // Regular network filter
                 $network_filter = NetworkFilters::findFirst($sip_peer->networkfilterid);
+                $arr_data['permit'] = ($network_filter === null) ? '' : $network_filter->permit;
+                $arr_data['deny']   = ($network_filter === null) ? '' : $network_filter->deny;
             }
-            $arr_data['permit'] = ($network_filter === null) ? '' : $network_filter->permit;
-            $arr_data['deny']   = ($network_filter === null) ? '' : $network_filter->deny;
 
             $data[] = $arr_data;
         }
-
         return $data;
     }
 
@@ -88,22 +95,38 @@ class AclConf extends AsteriskConfigClass
     protected function generateConfigProtected(): void
     {
         $conf_acl = '';
-        foreach ($this->data_peers as $peer) {
+        
+        // Add fail2ban global ACL first (if in Docker)
+        if (System::isDocker()) {
+            $conf_acl .= "; Fail2ban Global ACL for Docker\n";
+            $conf_acl .= "[acl_fail2ban]\n";
+            $conf_acl .= "; This ACL is automatically updated by fail2ban\n";
+            
+            $asteriskEtcDir = \MikoPBX\Core\System\Directories::getDir(\MikoPBX\Core\System\Directories::AST_ETC_DIR);
+            $conf_acl .= "#tryinclude $asteriskEtcDir/fail2ban_sip_acl.conf\n\n";
+            
+            // Add NetworkFilters deny ACL
+            $conf_acl .= "; NetworkFilters Global Deny ACL for Docker\n";
+            $conf_acl .= "[acl_network_filters_deny]\n";
+            $conf_acl .= "; This ACL is automatically generated from NetworkFilters database\n";
+            $conf_acl .= "#tryinclude $asteriskEtcDir/network_filters_deny_acl.conf\n\n";
+            
+            // Generate the NetworkFilters deny ACL file
+            DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
+        }
+        
+        foreach ($this->dataPeers as $peer) {
             $manual_attributes = Util::parseIniSettings($peer['manualattributes'] ?? '');
-
             $deny   = (trim($peer['deny']) === '') ? '0.0.0.0/0.0.0.0' : $peer['deny'];
             $permit = (trim($peer['permit']) === '') ? '0.0.0.0/0.0.0.0' : $peer['permit'];
-
             $options  = [
                 'deny'   => $deny,
                 'permit' => $permit,
             ];
-            $conf_acl .= "[acl_{$peer['extension']}] \n";
+            $conf_acl .= "[acl_$peer[extension]]".PHP_EOL;
             $conf_acl .= Util::overrideConfigurationArray($options, $manual_attributes, 'acl');
         }
 
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/acl.conf', $conf_acl);
+        $this->saveConfig($conf_acl, $this->description);
     }
-
-
 }

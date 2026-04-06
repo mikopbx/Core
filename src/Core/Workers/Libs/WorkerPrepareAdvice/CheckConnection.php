@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -32,21 +33,20 @@ use Phalcon\Di\Injectable;
  */
 class CheckConnection extends Injectable
 {
-
     /**
      * Checks whether internet connection is available or not
      *
      * @return array
      *
      */
-    public function process():array
+    public function process(): array
     {
         $messages = [];
         $pathTimeout = Util::which('timeout');
         $pathCurl = Util::which('curl');
         $retCode = Processes::mwExec("$pathTimeout 5 $pathCurl 'https://www.google.com/'");
         if ($retCode !== 0) {
-            $messages['warning'][] = ['messageTpl'=>'adv_ProblemWithInternetConnection'];
+            $messages['warning'][] = ['messageTpl' => 'adv_ProblemWithInternetConnection'];
             if (file_exists(Network::INTERNET_FLAG_FILE)) {
                 unlink(Network::INTERNET_FLAG_FILE);
             }

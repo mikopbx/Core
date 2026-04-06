@@ -27,16 +27,34 @@
 # Он не должен зависеть от внешних зависимостей и других скриптов,
 # которых может не быть в исходной системе.
 
-if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
-  exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>/dev/console
-else
-  exec </dev/console >/dev/console 2>/dev/console;
+# Setup console output - redirect to /dev/console only if accessible
+# Serial output is handled independently by pbx_firmware and pbx-message
+# Write actual content to test console (empty writes may succeed on broken devices)
+if [ -w /dev/console ] && echo "MikoPBX firmware upgrade" > /dev/console 2>/dev/null; then
+    exec </dev/console >/dev/console 2>/dev/console
 fi
+
+# Detect serial port for this script's own messages (self-contained, no external deps)
+# Scan both x86 (ttyS) and ARM (ttyAMA) serial ports
+_SERIAL=""
+for _DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
+            /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
+    if [ -c "$_DEV" ] && [ -w "$_DEV" ] && echo -n "" > "$_DEV" 2>/dev/null; then
+        _SERIAL="$_DEV"
+        break
+    fi
+done
+
+# Echo to both console (stdout) and serial port
+_echo() {
+    echo "$@"
+    [ -n "$_SERIAL" ] && printf "%s\n" "$*" > "$_SERIAL" 2>/dev/null
+}
 
 # Global variables
 ENV_FILE=".env"
 if [ -f "$ENV_FILE" ]; then
-    export $(cat "$ENV_FILE" | grep -v '^#' | xargs)
+    export $(xargs < "$ENV_FILE");
 fi
 
 # mountDiskPart: Mounts a disk partition by UUID.
@@ -48,7 +66,7 @@ mountDiskPart()
   uuid="$1";
   mountpoint="$2";
   if [ '1' = "$(/sbin/blkid | /bin/busybox grep "$uuid" > /dev/null)" ]; then
-    echo " - Storage disk with UUID=${uuid} not found..."
+    _echo " - Storage disk with UUID=${uuid} not found..."
     exit 1;
   fi
 
@@ -56,7 +74,7 @@ mountDiskPart()
   mount -rw UUID="$uuid" "$mountpoint" 2> /dev/null;
   MOUNT_RESULT=$?;
   if [ ! "${MOUNT_RESULT}" = "0" ] ; then
-    echo " - Fail mount storage with UUID=${uuid} to ${mountpoint} ..."
+    _echo " - Fail mount storage with UUID=${uuid} to ${mountpoint} ..."
     exit 1;
   fi
 }
@@ -77,19 +95,27 @@ executeFirmwareUpdate() {
       echo "$systemDevice" > /var/etc/cfdevice
       /bin/bash pbx_firmware "$UPDATE_IMG_FILE" "$systemDevice"
     else
-      echo ' - System disk not found...'
+      _echo ' - System disk not found...'
       return 1
     fi
 }
 
 # Starts the upgrade process
 startUpgrade() {
-    local updateVersion="version"
-    if [ -f "$updateVersion" ]; then
-      local versionNumber=$(cat "$updateVersion")
-      echo " - Starting upgrade to the version: $versionNumber..."
+    # Extract version from firmware image filename (e.g. mikopbx-2026.1.159-dev-x86_64.img)
+    local versionNumber=""
+    if [ -n "$UPDATE_IMG_FILE" ]; then
+      versionNumber=$(echo "$UPDATE_IMG_FILE" | sed -n 's/.*mikopbx-\([0-9][0-9.]*[a-z-]*\)-.*/\1/p')
+    fi
+    # Fallback to version file (upgrade script version)
+    if [ -z "$versionNumber" ] && [ -f "version" ]; then
+      versionNumber=$(cat "version")
+    fi
+
+    if [ -n "$versionNumber" ]; then
+      _echo " - Starting upgrade to the version: $versionNumber..."
     else
-      echo " - Starting upgrade..."
+      _echo " - Starting upgrade..."
     fi
 
     mountPartitions && executeFirmwareUpdate

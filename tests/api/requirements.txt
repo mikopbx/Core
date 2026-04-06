@@ -1,0 +1,25 @@
+# MikoPBX REST API Test Requirements
+
+# Core testing framework
+pytest>=7.4.0
+pytest-order>=1.1.0  # For test execution ordering
+pytest-dependency>=0.5.1  # For test dependencies
+pytest-xdist>=3.3.0  # For parallel test execution
+
+# HTTP client with retry logic
+requests>=2.31.0
+urllib3>=2.0.0
+
+# Property-based testing with OpenAPI
+schemathesis>=3.19.0
+
+# Code quality
+pytest-cov>=4.1.0  # Coverage reporting
+pytest-timeout>=2.1.0  # Test timeouts
+
+# Optional: Better output and reporting
+pytest-html>=3.2.0  # HTML reports
+pytest-json-report>=1.5.0  # JSON reports for CI/CD
+
+# Configuration management
+python-dotenv>=1.0.0

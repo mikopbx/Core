@@ -118,70 +118,52 @@ check_mount_and_free() {
     local partition_name=$2
     is_mounted=$(mount | grep "$disk")
     if [ "${is_mounted}x" != "x" ]; then
-        echo " - Free storage partition $partition_name ..."
-        /sbin/freestorage
+        echo " - Free storage partition $partition_name ...";
+        /sbin/freestorage;
     fi
 }
 
-check_mount_and_free "$disk" "$partitionName"
+check_mount_and_free "$disk" "$partitionName";
 
 # Partition operations based on partition number
 partition_operations() {
-    local disk=$1
-    local partition_number=$2
-    local partition_name=$3
+    local disk="$1";
+    local partition_number="$2";
+    local partition_name="$3";
     if [[ "$partition_number" == "4" ]]; then
-        # Clear existing configuration for system disk
-        /sbin/freeupoffload
-        echo " - Delete 4-th partition $partition_name from the system disk ..."
-        fdisk "$disk" > /dev/null 2>&1 << EOF
-d
-$partition_number
-w
-EOF
-        echo " - Create the new 4-th partition on the system disk ..."
-        /sbin/initial_storage_part_four create "$disk"
-        sleep 2
+        /sbin/freeupoffload;
+        echo " - Resize 4-th partition $partition_name ...";
     else
-        echo " - Delete 1-st partition $partition_name from the storage disk and create new with whole available space ..."
-        start="$(/bin/busybox fdisk -l "$disk" | /bin/busybox grep -v sectors | /bin/busybox grep "$disk" | /bin/busybox awk  '{ print $4 }')"
-        fdisk "$disk" > /dev/null 2>&1 << EOF
-d
-n
-p
-$partition_number
-$start
-
-w
-EOF
+        echo " - Resize 1-st partition $partition_name from the storage disk and create new with whole available space ...";
     fi
+    /sbin/parted --script "$disk" resizepart "$partition_number" 100% 2>/dev/null;
 }
 
-partition_operations "$disk" "$partitionNumber" "$partitionName"
+partition_operations "$disk" "$partitionNumber" "$partitionName";
 
-echo " - Update the partition table on $disk ..."
-/sbin/blockdev --rereadpt "$disk" > /dev/null 2>&1
-sleep 2
+echo " - Update the partition table on $disk ...";
+/sbin/blockdev --rereadpt "$disk" > /dev/null 2>&1;
+sleep 2;
 
 # Get the file system type for the partition and perform file system operations
 perform_fs_operations() {
-    local partition_name=$1
-    fs_type=$(/sbin/blkid -ofull "$partition_name")
+    local partition_name="$1";
+    fs_type=$(/sbin/blkid -ofull "$partition_name");
     if [ "${fs_type}x" != "x" ]; then
-        echo " - Start e2fsck $partition_name ..."
-        e2fsck -f -p "$partition_name"
-        sleep 2
-        echo " - Start resize2fs $partition_name ..."
-        resize2fs "$partition_name"
-        sleep 2
+        echo " - Start e2fsck $partition_name ...";
+        e2fsck -f -p "$partition_name";
+        sleep 2;
+        echo " - Start resize2fs $partition_name ...";
+        resize2fs "$partition_name" 2> /dev/null > /dev/null;
+        sleep 2;
     else
-        echo " - Error blkid $?"
-        exit 1
+        echo " - Error blkid $?";
+        exit 1;
     fi
 }
 
-perform_fs_operations "$partitionName"
+perform_fs_operations "$partitionName";
 
-echo " - Resize of the storage disk was successfully done."
-sleep 5
-exit 0
+echo " - Resize of the storage disk was successfully done.";
+sleep 1;
+reboot;

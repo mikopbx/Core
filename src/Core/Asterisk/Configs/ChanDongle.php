@@ -20,8 +20,6 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-use MikoPBX\Core\System\Util;
-
 /**
  * Generates the configuration content for dongle.conf.
  *
@@ -43,7 +41,7 @@ class ChanDongle extends AsteriskConfigClass
             'interval=15' . PHP_EOL;
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/dongle.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 
     /**
@@ -70,7 +68,7 @@ class ChanDongle extends AsteriskConfigClass
         foreach ($data as $subData){
             $res = dechex(hexdec($subData[0]) ^ hexdec($subData[1]) ^ hexdec($subData[2]) ^ hexdec($subData[3]));
             if(strlen($res) === 1){
-                $res = "0{$res}";
+                $res = "0$res";
             }
             $hash2.=$res;
         }

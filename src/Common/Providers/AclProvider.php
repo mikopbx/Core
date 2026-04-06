@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -26,7 +27,7 @@ use Phalcon\Acl\Adapter\Memory as AclList;
 use Phalcon\Acl\Component;
 use Phalcon\Acl\Enum as AclEnum;
 use Phalcon\Acl\Role as AclRole;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
@@ -45,24 +46,24 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class AclProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'ACL';
+    public const string SERVICE_NAME = 'ACL';
 
-    public const CACHE_KEY = 'ACLCache';
+    public const string CACHE_KEY = 'ACLCache';
 
-    public const ROLE_ADMINS = 'admins';
-    public const ROLE_GUESTS = 'guests';
+    public const string ROLE_ADMINS = 'admins';
+    public const string ROLE_GUESTS = 'guests';
 
 
     /**
      * Register ACL service provider
      *
-     * @param \Phalcon\Di\DiInterface $di The DI container.
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {
         $di->setShared(
             self::SERVICE_NAME,
-            function () use ($di){
+            function () use ($di) {
 
                 $cache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
                 $acl = $cache->get(self::CACHE_KEY);
@@ -102,10 +103,10 @@ class AclProvider implements ServiceProviderInterface
      *  Clear ACL cache
      * @return void
      */
-    public static function clearCache():void {
+    public static function clearCache(): void
+    {
         $di = Di::getDefault();
         $cache = $di->get(ManagedCacheProvider::SERVICE_NAME);
         $cache->delete(self::CACHE_KEY);
     }
-
 }

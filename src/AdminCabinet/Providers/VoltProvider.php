@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,12 +22,10 @@ declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Providers;
 
-
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Mvc\Dispatcher;
 use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
 
 /**
@@ -36,7 +35,7 @@ use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
  */
 class VoltProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'volt';
+    public const string SERVICE_NAME = 'volt';
 
     /**
      * Register volt service provider
@@ -62,7 +61,7 @@ class VoltProvider implements ServiceProviderInterface
                 $compiler->addFunction('in_array', 'in_array');
                 $compiler->addFunction('is_a', 'is_a');
                 $compiler->addFunction('count', function ($key) {
-                    return "count({$key})";
+                    return "count($key)";
                 });
 
                 if ($appConfig->debugMode === true) {
@@ -81,15 +80,23 @@ class VoltProvider implements ServiceProviderInterface
                 }
 
                 // Allows use isAllowed within volt templates
+                // Usage: isAllowed('action') - checks current controller
+                // Usage: isAllowed('action', 'ControllerClass') - checks specific controller
                 $compiler->addFunction(
                     'isAllowed',
-                    function ($action, $controller = '') {
-                        // If we don't provide the second parameter
-                        // there is some array with parameters instead of empty string.
-                        if (is_array($controller)){
-                            $controller = '$this->dispatcher->getHandlerClass()';
+                    function ($resolvedArgs, $exprArgs) {
+                        // Parse arguments from Volt expression
+                        $action = $exprArgs[0]['expr']['value'] ?? 'index';
+
+                        // Check if second argument (controller) is provided
+                        if (isset($exprArgs[1])) {
+                            // Use provided controller class
+                            $controller = $exprArgs[1]['expr']['value'];
+                            return '$this->di->get("' . SecurityPluginProvider::SERVICE_NAME . '",[\'' . $controller . '\',\'' . $action . '\'])';
                         }
-                        return '$this->di->get("' . SecurityPluginProvider::SERVICE_NAME . '",[' . $controller . ',' . $action . '])';
+
+                        // Default: use current controller from dispatcher
+                        return '$this->di->get("' . SecurityPluginProvider::SERVICE_NAME . '",[$this->dispatcher->getHandlerClass(),\'' . $action . '\'])';
                     }
                 );
 

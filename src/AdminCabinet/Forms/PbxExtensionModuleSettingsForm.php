@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -20,9 +21,7 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
@@ -33,7 +32,6 @@ use Phalcon\Forms\Element\Text;
  */
 class PbxExtensionModuleSettingsForm extends BaseForm
 {
-
     public function initialize($entity = null, $options = null): void
     {
         parent::initialize($entity, $options);
@@ -50,36 +48,30 @@ class PbxExtensionModuleSettingsForm extends BaseForm
         // IconClass
         $this->add(new Hidden('iconClass', ['value' => $options['iconClass']]));
 
-        // Show module at left menu
-        $cheskarr = ['value' => null];
-        if ($options['showAtSidebar']) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-        $this->add(new Check('show-at-sidebar', $cheskarr));
+        // Show module at a left menu
+        $this->addCheckBox('show-at-sidebar', intval($options['showAtSidebar']) === 1);
 
         // Caption
         $this->add(
             new Text(
-                'caption', [
+                'caption',
+                [
                     'value' => $this->di->get('translation')->_($options['caption']),
                 ]
             )
         );
 
-        // Left sidebar groups
+        // Left sidebar groups - V5.0 pattern with SemanticUIDropdown
         $menuGroups = $this->di->getElements()->getMenuGroups();
 
-        $groups = new Select(
-            'menu-group', $menuGroups, [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'value' => $options['group'],
-                'class' => 'ui selection dropdown',
+        $this->addSemanticUIDropdown(
+            'menu-group',
+            $menuGroups,
+            $options['group'],
+            [
+                'clearable' => false,
+                'forceSelection' => true
             ]
         );
-        $this->add($groups);
     }
 }

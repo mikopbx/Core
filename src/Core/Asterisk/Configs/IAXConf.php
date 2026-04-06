@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,8 +22,13 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Iax;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\NetworkFilters;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
+use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -36,9 +42,7 @@ class IAXConf extends AsteriskConfigClass
 {
     // The module hook applying priority
     public int $priority = 600;
-
-    public const TYPE_IAX2 = 'IAX2';
-
+    public const string TYPE_IAX2 = 'IAX2';
     protected string $description = 'iax.conf';
 
     /**
@@ -51,26 +55,29 @@ class IAXConf extends AsteriskConfigClass
         $conf      = '';
         $providers = $this->getProviders();
         foreach ($providers as $provider) {
-            $conf .= IncomingContexts::generate($provider['uniqid']);
+            // For inbound IAX providers, use username as provider ID to match peer name
+            // Fallback to uniqid if username is empty
+            $providerId = ($provider['registration_type'] === Iax::REGISTRATION_TYPE_INBOUND && !empty($provider['username']))
+                ? $provider['username']
+                : $provider['uniqid'];
+            $conf .= IncomingContexts::generate($providerId, $provider['username'], $provider['uniqid']);
         }
 
         return $conf;
     }
 
     /**
-     * Generates the configuration for the iax.conf and iaxprov.conf files.
+     * Generates the configuration for the iax.conf file.
      *
      * @return void
      */
     protected function generateConfigProtected(): void
     {
-        $conf = '';
-        $conf .= $this->generateGeneral();
+        $conf = $this->generateGeneral();
         $conf .= $this->generateProviders();
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/iax.conf', $conf);
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/iaxprov.conf', "[default]\ncodec=alaw\n");
+        $this->saveConfig($conf, $this->description);
     }
 
     /**
@@ -80,17 +87,26 @@ class IAXConf extends AsteriskConfigClass
      */
     private function generateGeneral(): string
     {
-        $iax_port = (trim($this->generalSettings[PbxSettingsConstants::IAX_PORT]) !== '') ? $this->generalSettings[PbxSettingsConstants::IAX_PORT] : '4569';
-        $conf     = '[general]' . "\n";
-        // $conf .= "context=public-direct-dial \n";
-        $conf .= "bindport={$iax_port}\n";
-        $conf .= "bindaddr=0.0.0.0\n";
-        $conf .= "delayreject=yes\n";
-        $conf .= "iaxthreadcount=100\n";
-        $conf .= "iaxmaxthreadcount=200\n";
-        $conf .= "jitterbuffer=no\n";
-        $conf .= "forcejitterbuffer=no\n\n";
-
+        $iax_port = PbxSettings::getValueByKey(PbxSettings::IAX_PORT);
+        $conf     = '[general]' . PHP_EOL;
+        $conf .= "bindport=$iax_port" . PHP_EOL;
+        $conf .= "bindaddr=0.0.0.0" . PHP_EOL;
+        $conf .= "delayreject=yes" . PHP_EOL;
+        $conf .= "iaxthreadcount=100" . PHP_EOL;
+        $conf .= "iaxmaxthreadcount=200" . PHP_EOL;
+        $conf .= "jitterbuffer=no" . PHP_EOL;
+        $conf .= "forcejitterbuffer=no" . PHP_EOL;
+        
+        // In Docker environment, include dynamic fail2ban ACL and network filters
+        if (System::isDocker()) {
+            $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
+            $conf .= PHP_EOL . "; Fail2ban dynamic ACL for Docker" . PHP_EOL;
+            $conf .= "#tryinclude $asteriskEtcDir/fail2ban_iax_deny.conf" . PHP_EOL;
+            $conf .= PHP_EOL . "; NetworkFilters deny ACL for Docker" . PHP_EOL;
+            $conf .= "#tryinclude $asteriskEtcDir/network_filters_deny_iax_acl.conf" . PHP_EOL;
+        }
+        
+        $conf .= PHP_EOL;
         return $conf;
     }
 
@@ -104,40 +120,134 @@ class IAXConf extends AsteriskConfigClass
         $reg_strings = '';
         $prov_config = '';
 
-        $lang      = str_replace('_', '-', strtolower($this->generalSettings[PbxSettingsConstants::PBX_LANGUAGE]));
+        $lang      = str_replace('_', '-', strtolower(PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE)));
         $providers = $this->getProviders();
         foreach ($providers as $provider) {
-            $prov_config .= "[{$provider['uniqid']}];\n";
-            $prov_config .= "type=friend\n";
-            $prov_config .= "auth=md5\n";
-            $prov_config .= "context={$provider['uniqid']}-incoming \n";
-            $prov_config .= "language={$lang}\n";
-            $prov_config .= "qualify=2000\n";
-            $prov_config .= "transfer=mediaonly\n";
-            $prov_config .= "disallow=all\n";
-            $prov_config .= ";username={$provider['username']}\n";
-            $prov_config .= "host=dynamic\n";
-            $prov_config .= "trunk=yes\n";
+            $manual_attributes = Util::parseIniSettings($provider['manualattributes']);
+            
+            // Set registration type from DB or use legacy noregister field
+            $registrationType = $provider['registration_type'] ?? '';
+            if (empty($registrationType)) {
+                // Legacy support: if registration_type is not set, use noregister field
+                $registrationType = ($provider['noregister'] === '0') ? Iax::REGISTRATION_TYPE_OUTBOUND : Iax::REGISTRATION_TYPE_NONE;
+            }
+            
+            // Base options for all types
+            // For inbound providers, use username for context to match peer name
+            // Fallback to uniqid if username is empty
+            $contextId = ($registrationType === Iax::REGISTRATION_TYPE_INBOUND && !empty($provider['username']))
+                ? $provider['username']
+                : $provider['uniqid'];
 
-            $prov_config .= "secret={$provider['secret']}\n";
+            $options = [
+                'type' => 'friend',
+                'auth' => 'plaintext',
+                'context' => "{$contextId}-incoming",
+                'language' => $lang,
+                'qualify' => 2000,
+                'transfer' => 'mediaonly',
+                'disallow' => 'all',
+                'username' => $provider['username'],
+                'secret' => $provider['secret'],
+                'trunk' => 'yes'
+            ];
+
+            // Configure based on registration type
+            switch ($registrationType) {
+                case Iax::REGISTRATION_TYPE_INBOUND:
+                    // For incoming connections, set host to the provider's IP
+                    [$host, ] = explode(':', $provider['host'] . ':');
+                    $options['host'] = $host;
+                    // Port is not used for inbound connections
+
+                    // In Docker environment, add fail2ban ACL reference
+                    if (System::isDocker()) {
+                        // IAX doesn't support multiple ACLs like PJSIP, so we need to use permit/deny
+                        // The fail2ban_iax_dynamic_acl.conf will be included in the general section
+                    }
+
+                    // For inbound providers, keep username as-is to match peer name and context
+                    break;
+                    
+                case Iax::REGISTRATION_TYPE_NONE:
+                    // No registration, static host
+                    [$host, $port] = explode(':', $provider['host'] . ':');
+                    $options['host'] = $host;
+                    if (!empty($port)) {
+                        $options['port'] = $port;
+                    }
+                    break;
+                    
+                case Iax::REGISTRATION_TYPE_OUTBOUND:
+                default:
+                    // For outbound registration, keep dynamic host
+                    $options['host'] = 'dynamic';
+
+                    // Formulate the registration string
+                    $user   = $provider['username'];
+                    $secret = (trim($provider['secret']) === '') ? '' : ":{$provider['secret']}";
+                    [$host, $port] = explode(':', $provider['host'] . ':');
+                    if (!empty($port)) {
+                        $port = ":$port";
+                    } else {
+                        $port = '';
+                    }
+
+                    // Check DNS resolution before adding registration string
+                    if (filter_var($host, FILTER_VALIDATE_IP)) {
+                        $resolveOk = true; // IP address, no DNS check needed
+                    } else {
+                        $resolveOk = Processes::mwExec("timeout 1 getent hosts '$host'") === 0;
+                        if (!$resolveOk) {
+                            SystemMessages::sysLogMsg('IAX2', "WARNING: DNS $host not resolved, registration skipped for provider {$provider['description']} ({$provider['uniqid']})");
+                        }
+                    }
+
+                    if ($resolveOk) {
+                        $reg_strings .= "register => $user$secret@$host$port " . PHP_EOL;
+                    }
+                    break;
+            }
+            
+            // Add network filter permits to options
+            if (!empty($provider['networkfilterid'])) {
+                $networkFilter = NetworkFilters::findFirstById($provider['networkfilterid']);
+                if ($networkFilter) {
+                    $permit = trim($networkFilter->permit);
+                    if (!empty($permit)) {
+                        $permits = array_map('trim', explode(',', $permit));
+                        // Add deny all first, then specific permits
+                        $options['deny'] = '0.0.0.0/0.0.0.0';
+                        $options['permit'] = implode('&', $permits);
+                    }
+                    
+                    // In Docker environment, NetworkFilters deny rules are handled globally
+                    // via included ACL files, so we don't need to add deny rules here
+                }
+            }
+            
+            // Generate provider configuration
+            // For inbound providers, use username as peer name to match the registration
+            // Fallback to uniqid if username is empty
+            $peerName = ($registrationType === Iax::REGISTRATION_TYPE_INBOUND && !empty($provider['username']))
+                ? $provider['username']
+                : $provider['uniqid'];
+
+            $prov_config .= "; Provider: {$provider['description']}" . PHP_EOL;
+            $prov_config .= "[{$peerName}];" . PHP_EOL;
+            $prov_config .= "setvar=contextID={$contextId}-incoming" . PHP_EOL;
+
+            // Apply manual attributes override (includes disallow=all before codecs)
+            $prov_config .= Util::overrideConfigurationArray($options, $manual_attributes, ' ');
+
+            // Add codec allows after disallow=all
             foreach ($provider['codecs'] as $codec) {
-                $prov_config .= "allow={$codec}\n";
+                $prov_config .= "allow=$codec" . PHP_EOL;
             }
-            $prov_config .= "setvar=contextID={$provider['uniqid']}-incoming".PHP_EOL;
-            $prov_config .= "\n";
-
-            // Formulate the registration string
-            if ($provider['noregister'] == 0) {
-                // Registration is only required if the current host has a dynamic IP
-                $user   = $provider['username'];
-                $secret = (trim($provider['secret']) == '') ? '' : ":{$provider['secret']}";
-                $host   = $provider['host'];
-                $port        = '';
-                $reg_strings .= "register => {$user}{$secret}@{$host}{$port} \n";
-            }
+            $prov_config .= PHP_EOL;
         }
 
-        return $reg_strings . "\n" . $prov_config;
+        return $reg_strings . PHP_EOL . $prov_config;
     }
 
     /**
@@ -151,26 +261,37 @@ class IAXConf extends AsteriskConfigClass
         // Получим настройки всех аккаунтов.
         $arrIaxProviders = Iax::find("disabled IS NULL OR disabled = '0'");
         foreach ($arrIaxProviders as $peer) {
-            /** @var \MikoPBX\Common\Models\Iax $peer */
+            /** @var Iax $peer */
             $arr_data = $peer->toArray();
 
-            // $network_filter = NetworkFilters::findFirst($peer->networkfilterid);
-            // $arr_data['permit'] = ($network_filter==null)?'':$network_filter->permit;
-            // $arr_data['deny']   = ($network_filter==null)?'':$network_filter->deny;
+            // Add related network filter data if exists
+            if (!empty($peer->networkfilterid) && $peer->NetworkFilters) {
+                $arr_data['networkfilter'] = $peer->NetworkFilters->toArray();
+            }
 
+            // IAX2 only supports audio codecs
             $arr_data['codecs'] = [];
             $filter             = [
-                'conditions' => 'disabled="0"',
+                'conditions' => 'disabled="0" AND type="audio"',
                 'order'      => 'type, priority',
             ];
-            $codecs             = Codecs::find($filter);
+            $codecs  = Codecs::find($filter);
             foreach ($codecs as $ob_codec) {
                 $arr_data['codecs'][] = $ob_codec->name;
             }
             $data_providers[] = $arr_data;
         }
-
         return $data_providers;
     }
 
+    /**
+     * Refreshes the IAX configurations and reloads the iax2 module.
+     */
+    public static function reload(): void
+    {
+        $iax = new self();
+        $iax->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'iax2 reload'");
+    }
 }

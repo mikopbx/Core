@@ -1,51 +1,85 @@
-<div class="ui basic segment">
-<div class="ui active dimmer" id="get-logs-dimmer">
-    <div class="ui indeterminate text loader">{{ t._('sd_CollectingLogsInfo') }}</div>
-</div>
-<form class="ui form" id="system-diagnostic-form">
-    {{ form.render('filename') }}
-    <input type="hidden" name="offset" id="offset" value=0/>
-    <div class="fields">
-        <div class="eight wide field">
-            <label for="filenames">{{ t._('sd_Filename') }}</label>
-            <div class="fluid field">
-                {{ form.render('filenames') }}
-            </div>
-        </div>
-        <div class="field">
-            <label for="offset">{{ t._('sd_offset') }}</label>
-            <div class="field max-width-100">
-                {{ form.render('offset') }}
-            </div>
-        </div>
-        <div class="field">
-            <label for="lines">{{ t._('sd_lines') }}</label>
-            <div class="field max-width-100">
-                {{ form.render('lines') }}
-            </div>
-        </div>
-        <div class="four wide field">
-            <label>{{ t._('sd_filter') }}</label>
-            <div class="field max-width-400">{{ form.render('filter') }}</div>
-        </div>
-        <div class="ui right floated field">
-            <label>&nbsp;</label>
-            <div class="ui buttons">
-                <div class="ui icon button" id="download-file" data-content="{{ t._('sd_ToolTipDownload') }}" ><i class="download icon"></i></div>
-                <div class="ui icon button" id="show-last-log" data-content="{{ t._('sd_ToolTipRefresh') }}"><i class="refresh icon"></i></div>
-                <div class="ui icon button" id="show-last-log-auto" data-content="{{ t._('sd_ToolTipAutoUpdate') }}">
-                    <i class="icons">
-                        <i class="refresh icon"></i>
-                        <i class="corner font icon"></i>
-                    </i>
+<div class="ui basic segment" id="system-logs-segment">
+    <div class="ui active dimmer" id="get-logs-dimmer">
+        <div class="ui indeterminate text loader">{{ t._('sd_CollectingLogsInfo') }}</div>
+    </div>
+    <form class="ui form" id="system-diagnostic-form">
+        {{ form.render('filename') }}
+        <div class="fields">
+            <div class="four wide field">
+                <label for="filenames">{{ t._('sd_Filename') }}</label>
+                <div class="fluid field">
+                    {{ form.render('filenames') }}
                 </div>
-                <div class="ui icon button" id="erase-file" data-content="{{ t._('sd_ToolTipErase') }}"><i class="red erase icon"></i></div>
             </div>
+
+            <div class="two wide field">
+                <label for="logLevel">{{ t._('sd_LogLevel') }}</label>
+                {{ form.render('logLevel') }}
+            </div>
+
+            <div class="field filter-field">
+                <label>{{ t._('sd_filter') }}</label>
+                {{ form.render('filter') }}
+                <div class="filter-conditions-container" id="filter-conditions-container">
+                    <div class="filter-labels" id="filter-labels"></div>
+                    <input type="text" id="filter-input" placeholder="{{ t._('sd_FilterPlaceholder') }}" autocomplete="off" />
+                    <i class="link grey times icon clear-filter-btn" id="clear-filter-btn" data-content="{{ t._('sd_ClearFilter') }}"></i>
+                    <div class="filter-type-dropdown hidden" id="filter-type-popup">
+                        <div class="filter-type-option" data-type="contains">
+                            <i class="check circle icon teal"></i>
+                            <span>{{ t._('sd_FilterContains') }}</span>
+                        </div>
+                        <div class="filter-type-option" data-type="notContains">
+                            <i class="ban icon red"></i>
+                            <span>{{ t._('sd_FilterNotContains') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field buttons-field">
+                <label>&nbsp;</label>
+                <div class="ui buttons">
+                    <div class="ui icon button" id="download-file" data-content="{{ t._('sd_ToolTipDownload') }}"><i class="download icon"></i></div>
+                    <div class="ui icon button" id="show-last-log" data-content="{{ t._('sd_ToolTipRefresh') }}"><i class="refresh icon"></i></div>
+                    <div class="ui icon button" id="show-last-log-auto" data-content="{{ t._('sd_ToolTipAutoUpdate') }}">
+                        <i class="icons">
+                            <i class="refresh icon"></i>
+                            <i class="corner font icon"></i>
+                        </i>
+                    </div>
+                    <div class="ui icon button" id="erase-file" data-content="{{ t._('sd_ToolTipErase') }}"><i class="red erase icon"></i></div>
+                </div>
+            </div>
+        </div>
+
+        {# Universal navigation - compact single line #}
+        <div id="universal-navigation">
+            <div class="time-navigation-modern">
+                {# Period buttons + timeline in one row #}
+                <div class="time-controls-inline">
+                    <div class="quick-period-buttons" id="period-buttons">
+                        <button type="button" class="period-btn" data-period="3600">1h</button>
+                        <button type="button" class="period-btn" data-period="10800">3h</button>
+                        <button type="button" class="period-btn" data-period="43200">12h</button>
+                        <button type="button" class="period-btn" data-period="86400">1d</button>
+                        <button type="button" class="period-btn" data-period="604800">1w</button>
+                        <button type="button" class="period-btn" data-period="1209600">2w</button>
+                    </div>
+                    <div class="time-slider-inline">
+                        <div id="time-slider-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div class="code-container">
+        <div id="log-content-readonly" class="log-content-readonly">
+            <pre></pre>
+        </div>
+
+        <div class="fullscreen-toggle-btn">
+            <i class="inverted expand icon"></i>
         </div>
     </div>
-</form>
-
-<div id="log-content-readonly" class="log-content-readonly">
-    <pre></pre>
-</div>
 </div>

@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,19 +20,24 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\DockerNetworkFilterService;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
+use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Modules\Config\SystemConfigInterface;
-use Phalcon\Di;
-use Phalcon\Di\Injectable;
-use Phalcon\Text;
+use Phalcon\Di\Di;
 use SQLite3;
 
 /**
@@ -41,74 +47,164 @@ use SQLite3;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class Fail2BanConf extends Injectable
+class Fail2BanConf extends SystemConfigClass
 {
-    private const FILTER_PATH     = '/etc/fail2ban/filter.d';
-    private const ACTION_PATH     = '/etc/fail2ban/action.d';
-    private const JAILS_DIR       = '/etc/fail2ban/jail.d';
-    private const PID_FILE        = '/var/run/fail2ban/fail2ban.pid';
-    public const FAIL2BAN_DB_PATH = '/var/lib/fail2ban/fail2ban.sqlite3';
+    public const string PROC_NAME = 'fail2ban';
+    public const string FB_CONF_PATH = '/etc/fail2ban/fail2ban.conf';
+    public const string FB_CLIENT_BIN = 'fail2ban-client';
+    public const string FB_SERVER_BIN = 'fail2ban-server';
+    private const string FILTER_PATH     = '/etc/fail2ban/filter.d';
+    private const string ACTION_PATH     = '/etc/fail2ban/action.d';
+    private const string JAILS_DIR       = '/etc/fail2ban/jail.d';
+    private const string PID_FILE        = '/var/run/fail2ban/fail2ban.pid';
+    // These paths are static for fail2ban service itself
+    public const string FAIL2BAN_DB_PATH = '/var/lib/fail2ban/fail2ban.sqlite3';
+    public const string FAIL2BAN_DB_DIR_PATH = '/var/lib/fail2ban';
 
-    public bool $fail2ban_enable;
-    private array $allPbxSettings;
+    public bool $fail2banEnable = true;
 
     /**
      * Fail2Ban constructor.
+     *
      */
     public function __construct()
     {
-        $this->allPbxSettings  = PbxSettings::getAllPbxSettings();
-        $fail2ban_enable       = $this->allPbxSettings[PbxSettingsConstants::PBX_FAIL2BAN_ENABLED];
-        $this->fail2ban_enable = ($fail2ban_enable === '1');
+        parent::__construct();
+        $this->fail2banEnable = self::fail2BanEnable();
+        $binPath = Util::which(self::FB_CLIENT_BIN);
+        $this->startCommand = "$binPath -x start";
     }
 
     /**
-     * Check fail2ban service and restart it died
+     * Start the service.
+     *
+     * @return bool True if successful, false otherwise.
      */
-    public static function checkFail2ban(): void
+    public function start(): bool
     {
-        $fail2ban = new self();
-        if ($fail2ban->fail2ban_enable
-            && ! $fail2ban->fail2banIsRunning()) {
-            $fail2ban->fail2banStart();
+        if (System::isBooting()) {
+            if (!$this->fail2banEnable) {
+                return true; // If disabled, return success
+            }
+
+            $this->fail2banMakeDirs();
+            $this->writeConfig();
+            $this->generateModulesFilters();
+
+            // Ensure /var/run/fail2ban directory exists
+            Util::mwMkdir('/var/run/fail2ban');
+
+            // Ensure log files exist before starting fail2ban
+            $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/';
+            Util::mwMkdir($log_dir);
+            $logFiles = ['security_log', 'error', 'messages'];
+            foreach ($logFiles as $logFile) {
+                $logPath = $log_dir . $logFile;
+                if (!file_exists($logPath)) {
+                    touch($logPath);
+                }
+            }
+
+            // Also ensure syslog file exists
+            $syslog_file = SyslogConf::getSyslogFile();
+            if (!file_exists($syslog_file)) {
+                $syslogDir = dirname($syslog_file);
+                Util::mwMkdir($syslogDir);
+                touch($syslog_file);
+            }
+
+            // Ensure nginx log files exist before starting fail2ban
+            // (nginx may not be started yet during boot)
+            $nginxLogDir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nginx/';
+            Util::mwMkdir($nginxLogDir);
+            foreach (['access.log', 'error.log'] as $nginxLog) {
+                $nginxLogPath = $nginxLogDir . $nginxLog;
+                if (!file_exists($nginxLogPath)) {
+                    touch($nginxLogPath);
+                }
+            }
+
+            // Start fail2ban in background
+            Processes::mwExecBg($this->startCommand);
+
+            // Wait for fail2ban to respond, log error if it fails
+            $started = $this->waitForFail2BanStart(15);
+            if (!$started) {
+                SystemMessages::sysLogMsg(__METHOD__, 'Fail2ban failed to start within 15 seconds', LOG_ERR);
+            }
+            return $started;
+        } else {
+            return $this->reStart();
         }
     }
 
     /**
-     * Check fail2ban service status
-     *
-     * @return bool
+     * Restarts Fail2Ban server
      */
-    private function fail2banIsRunning(): bool
+    public function reStart(): bool
     {
-        $fail2banPath = Util::which('fail2ban-client');
-        $res_ping     = Processes::mwExec("$fail2banPath ping");
-        $res_stat     = Processes::mwExec("$fail2banPath status");
+        $result = true;
+        $fail2banPath = Util::which(self::FB_CLIENT_BIN);
 
-        $result = false;
-        if ($res_ping === 0 && $res_stat === 0) {
-            $result = true;
+        $this->generateMonitConf();
+        $this->monitReload();
+        if ($this->fail2banEnable) {
+            $this->fail2banMakeDirs();
+            $this->writeConfig();
+            $result = $this->monitRestart();
+        } else {
+            Processes::mwExec("$fail2banPath -x stop");
         }
 
         return $result;
     }
 
     /**
-     * Start fail2ban service
+     * Generates a Monit configuration file for monitoring the Fail2Ban service.
+     *
+     * This method:
+     * - Locates the Fail2Ban client binary (fail2ban-client)
+     * - Constructs commands to start and stop the service
+     * - Creates a Monit configuration that:
+     *   - Monitors the Fail2Ban configuration file
+     *   - Depends on the config file being present
+     *   - Defines how to start/stop the service as root
+     *
+     * The configuration is saved to a file in the Monit configuration directory,
+     * with a filename based on the service priority and name.
+     *
+     * @return bool Always returns true after successfully writing the configuration file.
      */
-    public function fail2banStart(): void
+    public function generateMonitConf(): bool
     {
-        if (Util::isSystemctl()) {
-            $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("$systemctlPath restart fail2ban");
-            return;
+        if (!$this->fail2banEnable) {
+            $this->deleteMonitConf();
+            return false;
         }
-        // T2SDE or Docker
-        Processes::killByName('fail2ban-server');
-        $fail2banPath = Util::which('fail2ban-client');
-        $cmd_start    = "$fail2banPath -x start";
-        $command      = "($cmd_start;) > /dev/null 2>&1 &";
-        Processes::mwExec($command);
+
+        $binPath = Util::which(self::FB_CLIENT_BIN);
+        $confPath = $this->getMainMonitConfFile();
+        $conf = 'check process '.self::PROC_NAME.' with pidfile '.self::PID_FILE.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'."$binPath -x stop".'"'.PHP_EOL.
+            '        as uid root and gid root';
+        $this->saveFileContent($confPath, $conf);
+        return true;
+    }
+
+    /**
+     * Checks if Fail2Ban is enabled in the system settings.
+     *
+     * This static method retrieves the Fail2Ban enabled flag from the PBX settings
+     * and returns a boolean value indicating whether Fail2Ban is active.
+     *
+     * @return bool True if Fail2Ban is enabled, false otherwise.
+     */
+    public static function fail2BanEnable():bool
+    {
+        $fail2ban_enable       = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
+        return intval($fail2ban_enable) === 1;
     }
 
     /**
@@ -116,43 +212,18 @@ class Fail2BanConf extends Injectable
      */
     public static function reloadFail2ban(): void
     {
-        $fail2banPath = Util::which('fail2ban-client');
-        if(file_exists(self::PID_FILE)){
+        $fail2banPath = Util::which(self::FB_CLIENT_BIN);
+        if (file_exists(self::PID_FILE)) {
             $pid = file_get_contents(self::PID_FILE);
-        }else{
-            $pid = Processes::getPidOfProcess('fail2ban-server');
+        } else {
+            $pid = Processes::getPidOfProcess(self::FB_SERVER_BIN);
         }
         $fail2ban = new self();
-        if($fail2ban->fail2ban_enable && !empty($pid)){
-            $fail2ban->generateConf();
+        if ($fail2ban->fail2banEnable && !empty($pid)) {
+            $fail2ban->writeConfig();
             $fail2ban->generateModulesFilters();
-            $fail2ban->generateModulesJailsLocal();
             // Reload the configuration without restarting Fail2Ban.
             Processes::mwExecBg("$fail2banPath reload");
-        }
-    }
-
-    /**
-     * Generating the fail2ban.conf config
-     * @return void
-     */
-    private function generateConf():void
-    {
-        $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/fail2ban';
-        $lofFileName = "$log_dir/fail2ban.log";
-        Util::mwMkdir($log_dir);
-        $conf = '['.'Definition'.']'.PHP_EOL.
-                'allowipv6 = auto'.PHP_EOL.
-                'loglevel = INFO'.PHP_EOL.
-                "logtarget = $lofFileName".PHP_EOL.
-                'syslogsocket = auto'.PHP_EOL.
-                'socket = /var/run/fail2ban/fail2ban.sock'.PHP_EOL.
-                'pidfile = /var/run/fail2ban/fail2ban.pid'.PHP_EOL.
-                'dbfile = /var/lib/fail2ban/fail2ban.sqlite3'.PHP_EOL.
-                'dbpurgeage = 1d'.PHP_EOL;
-        Util::fileWriteContent('/etc/fail2ban/fail2ban.conf', $conf);
-        if(!file_exists($lofFileName)){
-            file_put_contents($lofFileName, '');
         }
     }
 
@@ -162,18 +233,18 @@ class Fail2BanConf extends Injectable
     public static function logRotate(): void
     {
         $di           = Di::getDefault();
-        $fail2banPath = Util::which('fail2ban-client');
+        $fail2banPath = Util::which(Fail2BanConf::FB_CLIENT_BIN);
 
         if ($di === null) {
             return;
         }
         $max_size    = 10;
         $log_dir     = Directories::getDir(Directories::CORE_LOGS_DIR) . '/fail2ban/';
-        $text_config = $log_dir."fail2ban.log {
+        $text_config = $log_dir . "fail2ban.log {
     nocreate
     nocopytruncate
+    compress
     delaycompress
-    nomissingok
     start 0
     rotate 9
     size {$max_size}M
@@ -182,9 +253,9 @@ class Fail2BanConf extends Injectable
     postrotate
         $fail2banPath set logtarget {$log_dir}fail2ban.log > /dev/null 2> /dev/null
     endscript
-    create 640 www www 
+    create 640 www www
 }";
-        $varEtcDir  = $di->getShared('config')->path('core.varEtcDir');
+        $varEtcDir  = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
         $path_conf   = $varEtcDir . '/fail2ban_logrotate.conf';
         file_put_contents($path_conf, $text_config);
         $mb10 = $max_size * 1024 * 1024;
@@ -197,7 +268,6 @@ class Fail2BanConf extends Injectable
         Processes::mwExecBg("$logrotatePath $options '$path_conf' > /dev/null 2> /dev/null");
     }
 
-
     /**
      * Checks whether BANS table exists in DB or not
      *
@@ -205,82 +275,48 @@ class Fail2BanConf extends Injectable
      *
      * @return bool
      */
-    public function tableBanExists(SQLite3 $db): bool
+    public static function tableBanExists(SQLite3 $db): bool
     {
         $q_check      = 'SELECT name FROM sqlite_master WHERE type = "table" AND name="bans"';
         $result_check = $db->query($q_check);
 
-        return (false !== $result_check && $result_check->fetchArray(SQLITE3_ASSOC) !== false);
+        return false !== $result_check && $result_check->fetchArray(SQLITE3_ASSOC) !== false;
     }
 
     /**
-     * Shutdown fail2ban service
-     */
-    public function fail2banStop(): void
-    {
-        if (Util::isSystemctl()) {
-            $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("$systemctlPath stop fail2ban");
-        } else {
-            $fail2banPath = Util::which('fail2ban-client');
-            Processes::mwExec("$fail2banPath -x stop");
-        }
-    }
-
-    /**
-     * Creates the necessary directories and files for Fail2Ban.
+     * Wait for Fail2Ban to start with timeout
      *
-     * @return string Returns the path to the Fail2Ban database file.
+     * @param int $timeout Maximum number of seconds to wait
+     * @return bool True if fail2ban started within timeout
      */
-    public function fail2banMakeDirs(): string
+    private function waitForFail2BanStart(int $timeout = 20): bool
     {
-        $res_file = self::FAIL2BAN_DB_PATH;
-        $filename = basename($res_file);
-
-        $old_dir_db = '/cf/fail2ban';
-        $dir_db     = $this->di->getShared('config')->path('core.fail2banDbDir');
-        if (empty($dir_db)) {
-            $dir_db = '/var/spool/fail2ban';
+        $fail2banPath = Util::which(self::FB_CLIENT_BIN);
+        if (empty($fail2banPath)) {
+            return false;
         }
-        Util::mwMkdir($dir_db);
 
-        // Create working directories.
-        $db_bd_dir = dirname($res_file);
-        Util::mwMkdir($db_bd_dir);
+        $maxAttempts = $timeout * 2; // Check every 0.5 seconds
 
-        $create_link = false;
+        // Give fail2ban a moment to create socket file
+        usleep(500000); // 0.5 second initial delay
 
-        // Symbolic link to the database.
-        if (file_exists($res_file)){
-            if (filetype($res_file) !== 'link') {
-                unlink($res_file);
-                $create_link = true;
-            } elseif (readlink($res_file) === "$old_dir_db/$filename") {
-                unlink($res_file);
-                $create_link = true;
-                if (file_exists("$old_dir_db/$filename")) {
-                    // Move the file to the new location.
-                    $mvPath = Util::which('mv');
-                    Processes::mwExec("$mvPath '$old_dir_db/$filename' '$dir_db/$filename'");
-                }
+        for ($i = 0; $i < $maxAttempts; $i++) {
+            // Check if fail2ban responds to ping
+            $pingResult = Processes::mwExec("$fail2banPath ping 2>&1", $out);
+            if ($pingResult === 0) {
+                return true;
             }
-        }else{
-            $sqlite3Path = Util::which('sqlite3');
-            Processes::mwExec("$sqlite3Path $dir_db/$filename 'vacuum'");
-            $create_link = true;
+            usleep(500000); // 0.5 second
         }
 
-        if ($create_link === true) {
-            Util::createUpdateSymlink("$dir_db/$filename", $res_file);
-        }
-
-        return $res_file;
+        return false;
     }
 
     /**
      * Writes the Fail2Ban configuration to the jail.local file.
      */
-    public function writeConfig(): void
+    private function writeConfig(): void
     {
         // Initialize properties
         $this->generateConf();
@@ -290,63 +326,172 @@ class Fail2BanConf extends Injectable
 
         // Define ports for different services
         $httpPorts = [
-            $this->allPbxSettings[PbxSettingsConstants::WEB_PORT],
-            $this->allPbxSettings[PbxSettingsConstants::WEB_HTTPS_PORT]
+            PbxSettings::getValueByKey(PbxSettings::WEB_PORT),
+            PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT)
         ];
         $sshPort = [
-            $this->allPbxSettings[PbxSettingsConstants::SSH_PORT],
+            PbxSettings::getValueByKey(PbxSettings::SSH_PORT),
         ];
         $asteriskPorts = [
-            $this->allPbxSettings[PbxSettingsConstants::SIP_PORT],
-            $this->allPbxSettings[PbxSettingsConstants::TLS_PORT],
-            $this->allPbxSettings[PbxSettingsConstants::IAX_PORT],
-            $this->allPbxSettings[PbxSettingsConstants::RTP_PORT_FROM].':'.$this->allPbxSettings[PbxSettingsConstants::RTP_PORT_TO],
-            $this->allPbxSettings[PbxSettingsConstants::AJAM_PORT_TLS]
+            PbxSettings::getValueByKey(PbxSettings::SIP_PORT),
+            PbxSettings::getValueByKey(PbxSettings::TLS_PORT),
+            PbxSettings::getValueByKey(PbxSettings::IAX_PORT),
+            PbxSettings::getValueByKey(PbxSettings::RTP_PORT_FROM) . ':' . PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO),
+            PbxSettings::getValueByKey(PbxSettings::AJAM_PORT_TLS)
         ];
         $asteriskAMI = [
-            $this->allPbxSettings[PbxSettingsConstants::AMI_PORT],
-            $this->allPbxSettings[PbxSettingsConstants::AJAM_PORT],
+            PbxSettings::getValueByKey(PbxSettings::AMI_PORT),
+            PbxSettings::getValueByKey(PbxSettings::AJAM_PORT),
         ];
 
         // Define jails and their corresponding actions
-        $jails        = [
-            'dropbear'    => 'miko-iptables-multiport-all[name=SSH, port="'.implode(',', $sshPort).'"]',
-            'mikopbx-www' => 'miko-iptables-multiport-all[name=HTTP, port="'.implode(',', $httpPorts).'"]',
-        ];
+        // Docker/LXC without iptables: use ACL-based blocking for HTTP
+        // LXC with iptables or bare-metal: use iptables-based blocking
+        $jails = [];
+        if (!System::canManageFirewall()) {
+            $jails = [
+                'dropbear'    => 'miko-iptables-multiport-all[name=SSH, port="' . implode(',', $sshPort) . '"]',
+                'mikopbx-www' => 'miko-nginx-docker[name=HTTP, port="' . implode(',', $httpPorts) . '"]',
+            ];
+        } else {
+            $jails = [
+                'dropbear'    => 'miko-iptables-multiport-all[name=SSH, port="' . implode(',', $sshPort) . '"]',
+                'mikopbx-www' => 'miko-iptables-multiport-all[name=HTTP, port="' . implode(',', $httpPorts) . '"]',
+            ];
+        }
         $this->generateModulesJailsLocal($max_retry, $find_time, $ban_time);
 
         // Generate the Fail2Ban configuration
         $config       = "[DEFAULT]\n" .
-            "ignoreip = 127.0.0.1 $user_whitelist\n\n";
+            "ignoreip = 127.0.0.1 ::1 $user_whitelist\n\n";
         $syslog_file = SyslogConf::getSyslogFile();
-        $commonParams = "enabled = true".PHP_EOL .
-                        "maxretry = $max_retry\n" .
-                        "findtime = $find_time\n" .
-                        "bantime = $ban_time\n" .
-                        "logencoding = utf-8".PHP_EOL;
+        $commonParams = "enabled = true" . PHP_EOL .
+            "maxretry = $max_retry\n" .
+            "findtime = $find_time\n" .
+            "bantime = $ban_time\n" .
+            "logencoding = utf-8" . PHP_EOL;
 
         foreach ($jails as $jail => $action) {
             $config .= "[$jail]\n" .
-                $commonParams.
+                $commonParams .
                 "logpath = $syslog_file\n" .
                 "action = $action\n\n";
         }
+
+        // Jail for exploit scanner detection from nginx access.log
+        // Catches path traversal, .env/.git probing, php-cgi, goform, SDK attacks
+        $nginxAccessLog = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nginx/access.log';
+        $exploitScannerAction = !System::canManageFirewall()
+            ? 'miko-nginx-docker[name=EXPLOIT_SCANNER, port="' . implode(',', $httpPorts) . '"]'
+            : 'miko-iptables-multiport-all[name=EXPLOIT_SCANNER, port="' . implode(',', $httpPorts) . '"]';
+        $config .= "[mikopbx-exploit-scanner]\n" .
+            $commonParams .
+            "logpath = $nginxAccessLog\n" .
+            "action = $exploitScannerAction\n\n";
+
+        // Jail for nginx error.log monitoring
+        // Catches all requests generating nginx errors (non-existent paths, scanner probes)
+        $nginxErrorLog = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nginx/error.log';
+        $nginxErrorsAction = !System::canManageFirewall()
+            ? 'miko-nginx-docker[name=NGINX_ERRORS, port="' . implode(',', $httpPorts) . '"]'
+            : 'miko-iptables-multiport-all[name=NGINX_ERRORS, port="' . implode(',', $httpPorts) . '"]';
+        $config .= "[mikopbx-nginx-errors]\n" .
+            $commonParams .
+            "logpath = $nginxErrorLog\n" .
+            "action = $nginxErrorsAction\n\n";
         $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/';
         $jails = [
             'asterisk_security_log' => ['security_log', '', $asteriskPorts],
             'asterisk_error'        => ['error', '_ERROR', $asteriskPorts],
             'asterisk_public'       => ['messages', '_PUBLIC', $asteriskPorts],
             'asterisk_ami'          => ['messages', '_AMI', $asteriskAMI],
+            'asterisk_iax'          => ['messages', '_IAX', [PbxSettings::getValueByKey(PbxSettings::IAX_PORT)]],
         ];
         foreach ($jails as $jail => [$logPrefix, $actionNamePrefix, $ports]) {
-            $config  .= "[$jail]" . PHP_EOL.
-                $commonParams.
-                "filter = asterisk-main" . PHP_EOL.
-                'action = miko-iptables-multiport-all[name=ASTERISK'.$actionNamePrefix.', port="'.implode(',', $ports).'"]'. PHP_EOL.
-                "logpath = $log_dir$logPrefix". PHP_EOL. PHP_EOL;
+            // Use specific filter for IAX jail
+            $filter = ($jail === 'asterisk_iax') ? 'asterisk-iax' : 'asterisk-main';
+
+            $config  .= "[$jail]" . PHP_EOL .
+                $commonParams .
+                "filter = $filter" . PHP_EOL .
+                'action = miko-iptables-multiport-all[name=ASTERISK' . $actionNamePrefix . ', port="' . implode(',', $ports) . '"]' . PHP_EOL .
+                "logpath = $log_dir$logPrefix" . PHP_EOL . PHP_EOL;
         }
         // Write the Fail2Ban configuration to the jail.local file
         Util::fileWriteContent('/etc/fail2ban/jail.local', $config);
+    }
+
+    /**
+     * Generating the fail2ban.conf config
+     * @return void
+     */
+    private function generateConf(): void
+    {
+        $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/fail2ban';
+        $lofFileName = "$log_dir/fail2ban.log";
+        Util::mwMkdir($log_dir);
+        $conf = '[' . 'Definition' . ']' . PHP_EOL .
+            'allowipv6 = auto' . PHP_EOL .
+            'loglevel = INFO' . PHP_EOL .
+            "logtarget = $lofFileName" . PHP_EOL .
+            'syslogsocket = auto' . PHP_EOL .
+            'socket = /var/run/fail2ban/fail2ban.sock' . PHP_EOL .
+            'pidfile = /var/run/fail2ban/fail2ban.pid' . PHP_EOL .
+            'dbfile = /var/lib/fail2ban/fail2ban.sqlite3' . PHP_EOL .
+            'dbpurgeage = 90d' . PHP_EOL;
+        Util::fileWriteContent(self::FB_CONF_PATH, $conf);
+        if (!file_exists($lofFileName)) {
+            file_put_contents($lofFileName, '');
+        }
+    }
+
+    /**
+     * Creates the necessary directories and files for Fail2Ban.
+     *
+     * @return void
+     */
+    private function fail2banMakeDirs(): void
+    {
+        $res_file = self::FAIL2BAN_DB_DIR_PATH;
+        $old_dir_db = '/cf/fail2ban';
+        $dir_db     = $this->di->getShared('config')->path('core.fail2banDbDir');
+        if (empty($dir_db)) {
+            $dir_db = '/var/spool/fail2ban';
+        }
+        // Create working directories.
+        Util::mwMkdir(dirname($res_file));
+        Util::mwMkdir($dir_db);
+
+        $create_link = false;
+        // Symbolic link to the database.
+        if (file_exists($res_file)) {
+            $mvPath = Util::which('mv');
+            $rmPath = Util::which('rm');
+            if (filetype($res_file) !== 'link') {
+                Processes::mwExec("$mvPath '$res_file'/* '$dir_db'");
+                Processes::mwExec("$rmPath -rf $res_file");
+                $create_link = true;
+            } elseif (readlink($res_file) === "$old_dir_db") {
+                Processes::mwExec("$rmPath -rf $res_file");
+                $create_link = true;
+                if (file_exists("$old_dir_db")) {
+                    // Move the file to the new location.
+                    Processes::mwExec("$mvPath '$old_dir_db'/* '$dir_db'");
+                }
+            }
+        } else {
+            $create_link = true;
+        }
+
+        if ($create_link === true) {
+            Util::createUpdateSymlink("$dir_db", $res_file);
+        }
+
+        $filename = basename(self::FAIL2BAN_DB_PATH);
+        if (file_exists("$dir_db/$filename")) {
+            $sqlite3Path = Util::which('sqlite3');
+            Processes::mwExec("$sqlite3Path $dir_db/$filename 'vacuum'");
+        }
     }
 
     /**
@@ -363,29 +508,49 @@ class Fail2BanConf extends Injectable
         // Define the path to the configuration file
         $path = self::ACTION_PATH;
 
-        // Construct the configuration string
-        $conf = "[INCLUDES]".PHP_EOL.
-                "before = iptables.conf".PHP_EOL.
-                "[Definition]".PHP_EOL.
-                "actionstart = <iptables> -N f2b-<name>".PHP_EOL.
-                "              <iptables> -A f2b-<name> -j <returntype>".PHP_EOL.
-                "              <iptables> -I <chain> -p tcp -m multiport --dports <port> -j f2b-<name>".PHP_EOL.
-                "              <iptables> -I <chain> -p udp -m multiport --dports <port> -j f2b-<name>".PHP_EOL.
-                "actionstop = <iptables> -D <chain> -p tcp -m multiport --dports <port> -j f2b-<name>".PHP_EOL.
-                "             <iptables> -D <chain> -p udp -m multiport --dports <port> -j f2b-<name>".PHP_EOL.
-                "             <actionflush>".PHP_EOL.
-                "             <iptables> -X f2b-<name>".PHP_EOL.
-                "actioncheck = <iptables> -n -L <chain> | grep -q 'f2b-<name>[ \\t]'".PHP_EOL.
-                "actionban = <iptables> -I f2b-<name> 1 -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>".PHP_EOL.
-                "            <iptables> -I f2b-<name> 1 -s <ip> -p udp -m multiport --dports <port> -j <blocktype>".PHP_EOL.
-                "actionunban = <iptables> -D f2b-<name> -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>".PHP_EOL.
-                "              <iptables> -D f2b-<name> -s <ip> -p udp -m multiport --dports <port> -j <blocktype>".PHP_EOL.
-                "[Init]".PHP_EOL.PHP_EOL;
+        if (!System::canManageFirewall()) {
+            // For Docker/LXC without iptables, create an action that blocks IPs via Asterisk ACL
+            $conf = "[Definition]" . PHP_EOL .
+                "actionstart = /bin/true" . PHP_EOL .
+                "actionstop = /bin/true" . PHP_EOL .
+                "actioncheck = /bin/true" . PHP_EOL .
+                "actionban = /etc/rc/fail2ban_asterisk ban <ip>" . PHP_EOL .
+                "actionunban = /etc/rc/fail2ban_asterisk unban <ip>" . PHP_EOL .
+                "[Init]" . PHP_EOL . PHP_EOL;
+
+            // Also create action for Nginx in Docker
+            $nginxConf = "[Definition]" . PHP_EOL .
+                "actionstart = /bin/true" . PHP_EOL .
+                "actionstop = /bin/true" . PHP_EOL .
+                "actioncheck = /bin/true" . PHP_EOL .
+                "actionban = /etc/rc/fail2ban_nginx ban <ip>" . PHP_EOL .
+                "actionunban = /etc/rc/fail2ban_nginx unban <ip>" . PHP_EOL .
+                "[Init]" . PHP_EOL . PHP_EOL;
+            file_put_contents("$path/miko-nginx-docker.conf", $nginxConf);
+        } else {
+            // Construct the configuration string for non-Docker environments
+            $conf = "[INCLUDES]" . PHP_EOL .
+                "before = iptables.conf" . PHP_EOL .
+                "[Definition]" . PHP_EOL .
+                "actionstart = <iptables> -N f2b-<name>" . PHP_EOL .
+                "              <iptables> -A f2b-<name> -j <returntype>" . PHP_EOL .
+                "              <iptables> -I <chain> -p tcp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
+                "              <iptables> -I <chain> -p udp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
+                "actionstop = <iptables> -D <chain> -p tcp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
+                "             <iptables> -D <chain> -p udp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
+                "             <actionflush>" . PHP_EOL .
+                "             <iptables> -X f2b-<name>" . PHP_EOL .
+                "actioncheck = <iptables> -n -L <chain> | grep -q 'f2b-<name>[ \\t]'" . PHP_EOL .
+                "actionban = <iptables> -I f2b-<name> 1 -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
+                "            <iptables> -I f2b-<name> 1 -s <ip> -p udp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
+                "actionunban = <iptables> -D f2b-<name> -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
+                "              <iptables> -D f2b-<name> -s <ip> -p udp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
+                "[Init]" . PHP_EOL . PHP_EOL;
+        }
 
         // Write the configuration string to the configuration file
         file_put_contents("$path/miko-iptables-multiport-all.conf", $conf);
     }
-
 
     /**
      * Generate the jail configurations for various services.
@@ -401,9 +566,9 @@ class Fail2BanConf extends Injectable
         // Define the path to the filter files
         $filterPath = self::FILTER_PATH;
 
-        $commonConf = "[INCLUDES]" . PHP_EOL.
+        $commonConf = "[INCLUDES]" . PHP_EOL .
             "before = common.conf" . PHP_EOL .
-            "[Definition]". PHP_EOL;
+            "[Definition]" . PHP_EOL;
         // Construct the MikoPBX web interface configuration string
         $conf = $commonConf .
             "_daemon = [\S\W\s]+web_auth\n" .
@@ -415,53 +580,107 @@ class Fail2BanConf extends Injectable
         // Write the configuration to the MikoPBX web interface file
         file_put_contents("$filterPath/mikopbx-www.conf", $conf);
 
+        // Construct the exploit scanner detection filter (nginx access.log)
+        // Catches path traversal (..), .env/.git probing, php-cgi, setup.cgi,
+        // SDK/webLanguage, goform, Docker API, Spring actuator, HNAP1 attacks
+        $exploitPatterns = '(?:\.\.|\.env|\.git|/etc/passwd'
+            . '|php-cgi|setup\.cgi|/SDK/|/goform/'
+            . '|/containers/json|/actuator/|HNAP1'
+            . '|playback\?view=.*\.(?:db|sqlite|conf|gz|zip|tar|key|pem|crt))';
+        $logLine = '\s+-\s+\S+\s+(?:\[.*?\]\s+)?"[^"]*';
+        $logEnd = '[^"]*"\s+\d+\s+';
+        $conf = $commonConf .
+            "datepattern = \\[%%Y-%%m-%%dT%%H:%%M:%%S%%z\\]\n" .
+            'prefregex = ^<F-CONTENT>\S+' . $logLine
+            . $exploitPatterns . $logEnd . '.*</F-CONTENT>$' . "\n" .
+            'failregex = ^<HOST>' . $logLine
+            . $exploitPatterns . $logEnd . "\n" .
+            "ignoreregex =\n";
+
+        // Write the configuration to the exploit scanner filter file
+        file_put_contents("$filterPath/mikopbx-exploit-scanner.conf", $conf);
+
+        // Construct the nginx error.log filter
+        // Note: fail2ban strips the timestamp before applying failregex, so regex starts after date
+        // Catches all client requests that generate nginx errors (file not found, permission denied, etc.)
+        $conf = "[Definition]\n" .
+            "datepattern = {^LN-BEG}\n" .
+            'failregex = ^\s*\[error\] \d+#\d+: \*\d+ .*client: <HOST>,.*' . "\n" .
+            'ignoreregex = favicon\.ico' . "\n";
+
+        // Write the configuration to the nginx errors filter file
+        file_put_contents("$filterPath/mikopbx-nginx-errors.conf", $conf);
+
         // Construct the Dropbear SSH server configuration string
         $conf = $commonConf .
-            "_daemon = (authpriv.warn )?dropbear\n" .
-            'prefregex = ^%(__prefix_line)s<F-CONTENT>(?:[Ll]ogin|[Bb]ad|[Ee]xit).+</F-CONTENT>$' . "\n" .
-            'failregex = ^[Ll]ogin attempt for nonexistent user (\'.*\' )?from <HOST>:\d+$' . "\n" .
-            '            ^[Bb]ad (PAM )?password attempt for .+ from <HOST>(:\d+)?$' . "\n" .
-            '            ^[Ee]xit before auth \(user \'.+\', \d+ fails\): Max auth tries reached - user \'.+\' from <HOST>:\d+\s*$' . "\n" .
-            "ignoreregex =\n";
+            "_daemon = (authpriv.warn )?dropbear" . PHP_EOL .
+            'prefregex = ^%(__prefix_line)s<F-CONTENT>(?:[Ll]ogin|[Bb]ad|[Ee]xit).+</F-CONTENT>$' . PHP_EOL .
+            'failregex = ^[Ll]ogin attempt for nonexistent user (\'.*\' )?from <HOST>:\d+$' . PHP_EOL .
+            '            ^[Bb]ad (PAM )?password attempt for .+ from <HOST>(:\d+)?$' . PHP_EOL .
+            '            ^[Ee]xit before auth \(user \'.+\', \d+ fails\): Max auth tries reached - user \'.+\' from <HOST>:\d+\s*$' . PHP_EOL .
+            "ignoreregex =" . PHP_EOL;
 
         // Write the configuration to the Dropbear SSH server file
         file_put_contents("$filterPath/dropbear.conf", $conf);
 
         // Construct the Asterisk AMI configuration string
-        $conf = $commonConf.
-                "_daemon = asterisk".PHP_EOL.PHP_EOL.
-                "__pid_re = (?:\[\d+\])".PHP_EOL.
-                "_c_ooooo = (\[C-\d+[a-z]*\]?)".PHP_EOL.PHP_EOL.
-                "log_prefix= (?:NOTICE|SECURITY)%(__pid_re)s:?%(_c_ooooo)s?:? \S+:\d*( in \w+:)?".PHP_EOL.PHP_EOL.
-                "failregex = ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> failed to authenticate as '[^']*'\$".PHP_EOL.
-                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s(?:\sHost)? <HOST> failed to authenticate as '[^']*'\$".PHP_EOL.PHP_EOL.
-                "ignoreregex =".PHP_EOL.PHP_EOL;
+        $conf = $commonConf .
+            "_daemon = asterisk" . PHP_EOL . PHP_EOL .
+            "__pid_re = (?:\[\d+\])" . PHP_EOL .
+            "_c_ooooo = (\[C-\d+[a-z]*\]?)" . PHP_EOL . PHP_EOL .
+            "log_prefix= (?:NOTICE|SECURITY)%(__pid_re)s:?%(_c_ooooo)s?:? \S+:\d*( in \w+:)?" . PHP_EOL . PHP_EOL .
+            "failregex = ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> failed to authenticate as '[^']*'\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s(?:\sHost)? <HOST> failed to authenticate as '[^']*'\$" . PHP_EOL . PHP_EOL .
+            "ignoreregex =" . PHP_EOL . PHP_EOL;
         // Write the configuration to the Asterisk AMI file
         file_put_contents("$filterPath/asterisk-ami.conf", $conf);
 
 
         // Construct the Asterisk security configuration string
 
-        $conf = $commonConf.
-                "_daemon = asterisk".PHP_EOL.PHP_EOL.
-                "__pid_re = (?:\[\d+\])".PHP_EOL.
-                "_c_ooooo = (\[C-\d+[a-z]*\]?)".PHP_EOL.PHP_EOL.
-                "log_prefix= (?:NOTICE|SECURITY)%(__pid_re)s:?%(_c_ooooo)s?:? \S+:\d*( in \w+:)?".PHP_EOL.PHP_EOL.
-                "failregex = ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Registration from '[^']*' failed for '<HOST>(:\d+)?' - (Wrong password|Username/auth name mismatch|No matching peer found|Not a local domain|Device does not match ACL|Peer is not supposed to register|ACL error \(permit/deny\)|Not a local domain)\$".PHP_EOL.
-                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s No registration for peer '[^']*' \(from <HOST>\)\$".PHP_EOL.
-                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> failed MD5 authentication for '[^']*' \([^)]+\)\$".PHP_EOL.
-                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Failed to authenticate (user|device) [^@]+@<HOST>\S*\$".PHP_EOL.
-                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s (?:handle_request_subscribe: )?Sending fake auth rejection for (device|user) \d*<sip:[^@]+@<HOST>>;tag=\w+\S*\$".PHP_EOL.
-                '            ^(%(__prefix_line)s|\[\]\s*WARNING%(__pid_re)s:?(?:\[C-[\da-f]*\])? )Ext\. s: "Rejecting unknown SIP connection from <HOST>"$'.PHP_EOL.
-                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s <HOST> tried to authenticate with nonexistent user".PHP_EOL.
-                "			^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Request (?:'[^']*' )?from '(?:[^']*|.*?)' failed for '<HOST>(?::\d+)?'\s\(callid: [^\)]*\) - (?:No matching endpoint found|Not match Endpoint(?: Contact)? ACL|(?:Failed|Error) to authenticate)\s*\$".PHP_EOL.
-                "			^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s\s*(anonymous:\s)?Call\s(from)*\s*\((\w*:)?<HOST>:\d+\) to extension '\S*' rejected because extension not found in context 'public-direct-dial'\.\$".PHP_EOL.
-                '            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s SecurityEvent="(?:FailedACL|InvalidAccountID|ChallengeResponseFailed|InvalidPassword)"(?:(?:,(?!RemoteAddress=)\w+="[^"]*")*|.*?),RemoteAddress="IPV[46]/[^/"]+/<HOST>/\d+"(?:,(?!RemoteAddress=)\w+="[^"]*")*$'.PHP_EOL.
-                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s ^hacking attempt detected '<HOST>'\$".PHP_EOL.PHP_EOL.
-                'ignoreregex = Service="AMI"'.PHP_EOL.PHP_EOL;
+        $conf = $commonConf .
+            "_daemon = asterisk" . PHP_EOL . PHP_EOL .
+            "__pid_re = (?:\[\d+\])" . PHP_EOL .
+            "_c_ooooo = (\[C-\d+[a-z]*\]?)" . PHP_EOL . PHP_EOL .
+            "log_prefix= (?:NOTICE|SECURITY)%(__pid_re)s:?%(_c_ooooo)s?:? \S+:\d*( in \w+:)?" . PHP_EOL . PHP_EOL .
+            "failregex = ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Registration from '[^']*' failed for '<HOST>(:\d+)?' - (Wrong password|Username/auth name mismatch|No matching peer found|Not a local domain|Device does not match ACL|Peer is not supposed to register|ACL error \(permit/deny\)|Not a local domain)\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s No registration for peer '[^']*' \(from <HOST>\)\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> failed MD5 authentication for '[^']*' \([^)]+\)\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Failed to authenticate (user|device) [^@]+@<HOST>\S*\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s (?:handle_request_subscribe: )?Sending fake auth rejection for (device|user) \d*<sip:[^@]+@<HOST>>;tag=\w+\S*\$" . PHP_EOL .
+            '            ^(%(__prefix_line)s|\[\]\s*WARNING%(__pid_re)s:?(?:\[C-[\da-f]*\])? )Ext\. s: "Rejecting unknown SIP connection from <HOST>"$' . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s <HOST> tried to authenticate with nonexistent user" . PHP_EOL .
+            "			^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Request (?:'[^']*' )?from '(?:[^']*|.*?)' failed for '<HOST>(?::\d+)?'\s\(callid: [^\)]*\) - (?:No matching endpoint found|Not match Endpoint(?: Contact)? ACL|(?:Failed|Error) to authenticate)\s*\$" . PHP_EOL .
+            "			^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s\s*(anonymous:\s)?Call\s(from)*\s*\((\w*:)?<HOST>:\d+\) to extension '\S*' rejected because extension not found in context 'public-direct-dial'\.\$" . PHP_EOL .
+            '            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s SecurityEvent="(?:FailedACL|InvalidAccountID|ChallengeResponseFailed|InvalidPassword)"(?:(?:,(?!RemoteAddress=)\w+="[^"]*")*|.*?),RemoteAddress="IPV[46]/[^/"]+/<HOST>/\d+"(?:,(?!RemoteAddress=)\w+="[^"]*")*$' . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s ^hacking attempt detected '<HOST>'\$" . PHP_EOL . PHP_EOL .
+            'ignoreregex = Service="AMI"' . PHP_EOL . PHP_EOL;
 
         // Write the configuration to the Asterisk security file
         file_put_contents("$filterPath/asterisk-main.conf", $conf);
+
+        // Construct the Asterisk IAX2 configuration string
+        $conf = $commonConf .
+            "_daemon = asterisk" . PHP_EOL . PHP_EOL .
+            "__pid_re = (?:\[\d+\])" . PHP_EOL .
+            "_c_ooooo = (\[C-\d+[a-z]*\]?)" . PHP_EOL . PHP_EOL .
+            "log_prefix= (?:NOTICE|SECURITY|WARNING)%(__pid_re)s:?%(_c_ooooo)s?:? \S+:\d*( in \w+:)?" . PHP_EOL . PHP_EOL .
+            "# IAX2-specific failure patterns" . PHP_EOL .
+            "failregex = ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> failed IAX2 authentication for user '[^']*'\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s IAX2 authentication failed for '[^']*' from <HOST>\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s No registration for IAX2 peer '[^']*' \(from <HOST>\)\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> denied by IAX2 ACL\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Call rejected, CallToken Support required but not provided by <HOST>\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s IAX2 Peer '[^']*' failed to authenticate from <HOST>\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Rejected IAX2 connect attempt from <HOST>\$" . PHP_EOL .
+            '            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s SecurityEvent="(?:FailedACL|InvalidAccountID|ChallengeResponseFailed|InvalidPassword)",.*EventTV="[^"]*",Severity="[^"]*",Service="IAX2",.*RemoteAddress="IPV[46]/[^/]+/<HOST>/\d+"\$' . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s chan_iax2.c: Host <HOST> failed to authenticate as '[^']*'\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s chan_iax2.c: No authority found from <HOST>\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s chan_iax2.c: Rejected connect attempt from <HOST>" . PHP_EOL . PHP_EOL .
+            "ignoreregex =" . PHP_EOL . PHP_EOL;
+
+        // Write the configuration to the Asterisk IAX2 file
+        file_put_contents("$filterPath/asterisk-iax.conf", $conf);
 
         // Generate the module filters
         $this->generateModulesFilters();
@@ -477,9 +696,9 @@ class Fail2BanConf extends Injectable
         Processes::mwExec("$rmPath -rf $filterPath/module_*.conf");
 
         // Add additional modules routes
-        $additionalModulesJails = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GENERATE_FAIL2BAN_JAILS);
-        foreach ($additionalModulesJails as $moduleUniqueId=>$moduleJailText) {
-            $fileName = Text::uncamelize($moduleUniqueId,'_').'.conf';
+        $additionalModulesJails = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GENERATE_FAIL2BAN_FILTERS);
+        foreach ($additionalModulesJails as $moduleUniqueId => $moduleJailText) {
+            $fileName = Text::uncamelize($moduleUniqueId, '_') . '.conf';
             file_put_contents("$filterPath/$fileName", $moduleJailText);
         }
     }
@@ -499,12 +718,12 @@ class Fail2BanConf extends Injectable
     private function generateModulesJailsLocal(int $max_retry = 0, int $find_time = 0, int $ban_time = 0): void
     {
         // Initialize the properties if they are not provided.
-        if($max_retry === 0){
+        if ($max_retry === 0) {
             [$max_retry, $find_time, $ban_time] = $this->initProperty();
         }
 
         // Create the jail directory if it does not exist
-        if(!is_dir(self::JAILS_DIR)){
+        if (!is_dir(self::JAILS_DIR)) {
             Util::mwMkdir(self::JAILS_DIR);
         }
 
@@ -513,7 +732,7 @@ class Fail2BanConf extends Injectable
         $extension = 'conf';
 
         // Delete all existing jail configuration files
-        Processes::mwExec("rm -rf ".self::JAILS_DIR."/$prefix*.$extension");
+        Processes::mwExec("rm -rf " . self::JAILS_DIR . "/$prefix*.$extension");
 
         // Get the system log file
         $syslog_file = SyslogConf::getSyslogFile();
@@ -522,23 +741,27 @@ class Fail2BanConf extends Injectable
         $additionalModulesJails = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GENERATE_FAIL2BAN_JAILS);
 
         // Iterate over each jail rule provided by the modules
-        foreach ($additionalModulesJails as $moduleUniqueId=>$moduleJailText) {
-
+        foreach ($additionalModulesJails as $moduleUniqueId => $moduleJailText) {
             // Convert the module's unique id to a file-friendly format
-            $fileName = Text::uncamelize($moduleUniqueId,'_');
+            $fileName = Text::uncamelize($moduleUniqueId, '_');
 
-            // Construct the configuration string for the module
-            $config = "[$fileName]\n" .
-                "enabled = true\n" .
-                "logpath = $syslog_file\n" .
-                "maxretry = $max_retry\n" .
-                "findtime = $find_time\n" .
-                "bantime = $ban_time\n" .
-                "logencoding = utf-8\n" .
-                "action = iptables-allports[name=$moduleUniqueId, protocol=all]\n\n";
+            // If module provided jail configuration, use it; otherwise generate default configuration
+            if (!empty($moduleJailText) && $moduleJailText !== '#') {
+                $config = $moduleJailText;
+            } else {
+                // Construct the default configuration string for the module
+                $config = "[$fileName]\n" .
+                    "enabled = true\n" .
+                    "logpath = $syslog_file\n" .
+                    "maxretry = $max_retry\n" .
+                    "findtime = $find_time\n" .
+                    "bantime = $ban_time\n" .
+                    "logencoding = utf-8\n" .
+                    "action = iptables-allports[name=$moduleUniqueId, protocol=all]\n\n";
+            }
 
             // Write the configuration to the jail's configuration file
-            file_put_contents(self::JAILS_DIR."/".$prefix."$fileName.$extension", $config);
+            file_put_contents(self::JAILS_DIR . "/" . $prefix . "$fileName.$extension", $config);
         }
     }
 
@@ -548,9 +771,10 @@ class Fail2BanConf extends Injectable
      * This method retrieves fail2ban rule properties from the database and constructs a whitelist
      * of IPs which should not be banned. If the rule is not found, it assigns default values.
      *
-     * @return array Contains max_retry, find_time, ban_time and user_whitelist.
+     * @return array{int, int, int, string}
      */
-    private function initProperty(): array{
+    private function initProperty(): array
+    {
 
         // Initial empty whitelist.
         $user_whitelist = '';
@@ -588,13 +812,324 @@ class Fail2BanConf extends Injectable
             $user_whitelist = trim($user_whitelist);
         } else {
             // If rule doesn't exist, use default values.
-            $max_retry = 10;
-            $find_time = 1800;
-            $ban_time = 43200;
+            $max_retry = 20;
+            $find_time = 600;
+            $ban_time = 600;
         }
 
         // Return an array of the properties.
         return array($max_retry, $find_time, $ban_time, $user_whitelist);
+    }
+
+    /**
+     * Fail2ban integration for Docker - manages IP blocking via Asterisk ACL
+     *
+     * @param string $action The action to perform (ban/unban)
+     * @param string $ip The IP address to ban/unban
+     * @return void
+     */
+    public static function fail2banAction(string $action, string $ip): void
+    {
+        // Skip when system can manage firewall - they use regular iptables
+        // Only use ACL-based blocking when iptables is unavailable (Docker/LXC without CAP_NET_ADMIN)
+        if (System::canManageFirewall()) {
+            return;
+        }
+
+        // Check if fail2ban is enabled
+        $fail2banEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
+        if ($fail2banEnabled !== '1') {
+            return;
+        }
+
+        // Validate IP address
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+            echo "Invalid IP address: $ip\n";
+            return;
+        }
+
+        switch ($action) {
+            case 'ban':
+                self::banIpAsterisk($ip);
+                break;
+
+            case 'unban':
+                self::unbanIpAsterisk($ip);
+                break;
+
+            default:
+                echo "Invalid action: $action\n";
+        }
+    }
+
+    /**
+     * Ban IP address via Redis for Asterisk
+     *
+     * @param string $ip IP address to ban
+     * @return void
+     */
+    private static function banIpAsterisk(string $ip): void
+    {
+        // Check if IP is localhost (always protected)
+        if (self::isLocalhostAddress($ip)) {
+            SystemMessages::sysLogMsg('fail2ban-asterisk', "Skipped ban for localhost IP: $ip", LOG_INFO);
+            return;
+        }
+
+        // Check if IP is whitelisted
+        if (DockerNetworkFilterService::isIpWhitelisted($ip)) {
+            SystemMessages::sysLogMsg('fail2ban-asterisk', "Skipped ban for whitelisted IP: $ip", LOG_INFO);
+            return;
+        }
+
+        // Get ban time from fail2ban settings
+        $banTime = self::getBanTime();
+
+        // Add IP to Redis blocked list for AMI, SIP and IAX categories
+        DockerNetworkFilterService::addBlockedIp($ip, 'ami', $banTime);
+        DockerNetworkFilterService::addBlockedIp($ip, 'sip', $banTime);
+        DockerNetworkFilterService::addBlockedIp($ip, 'iax', $banTime);
+
+        // Log the ban
+        SystemMessages::sysLogMsg('fail2ban-asterisk', "Banned IP: $ip", LOG_WARNING);
+
+        // Regenerate unified ACL configuration file from Redis
+        self::generateUnifiedFail2BanAcl();
+        DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
+
+        // Reload PJSIP
+        WorkerModelsEvents::invokeAction(ReloadPJSIPAction::class);
+
+        // Reload manager
+        WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
+
+        // Reload IAX
+        WorkerModelsEvents::invokeAction(ReloadIAXAction::class);
+    }
+
+    /**
+     * Unban IP address via Redis for Asterisk
+     *
+     * @param string $ip IP address to unban
+     * @return void
+     */
+    private static function unbanIpAsterisk(string $ip): void
+    {
+        // Remove IP from Redis blocked list for AMI, SIP and IAX categories
+        DockerNetworkFilterService::removeBlockedIp($ip, 'ami');
+        DockerNetworkFilterService::removeBlockedIp($ip, 'sip');
+        DockerNetworkFilterService::removeBlockedIp($ip, 'iax');
+
+        // Log the unban
+        SystemMessages::sysLogMsg('fail2ban-asterisk', "Unbanned IP: $ip", LOG_INFO);
+
+        // Regenerate unified ACL configuration file from Redis
+        self::generateUnifiedFail2BanAcl();
+        DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
+
+        // Reload PJSIP
+        WorkerModelsEvents::invokeAction(ReloadPJSIPAction::class);
+
+        // Reload manager
+        WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
+
+        // Reload IAX
+        WorkerModelsEvents::invokeAction(ReloadIAXAction::class);
+    }
+
+    /**
+     * Generate ACL configuration files for all Asterisk services from fail2ban data
+     *
+     * Creates three separate ACL files for different protocols:
+     * - fail2ban_sip_acl.conf - Named ACL for PJSIP (used in acl.conf)
+     * - fail2ban_manager_deny.conf - Direct deny rules for manager.conf
+     * - fail2ban_iax_deny.conf - Direct deny rules for iax.conf
+     *
+     * @return void
+     */
+    public static function generateUnifiedFail2BanAcl(): void
+    {
+        // Check if fail2ban is enabled
+        $fail2banEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
+
+        // Define paths using Directories constants
+        $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
+        $sipAclFile = $asteriskEtcDir . '/fail2ban_sip_acl.conf';
+        $managerDenyFile = $asteriskEtcDir . '/fail2ban_manager_deny.conf';
+        $iaxDenyFile = $asteriskEtcDir . '/fail2ban_iax_deny.conf';
+
+        // Old files to be removed
+        $oldFiles = [
+            $asteriskEtcDir . '/fail2ban_dynamic_acl.conf',
+            $asteriskEtcDir . '/fail2ban_iax_dynamic_acl.conf',
+            $asteriskEtcDir . '/fail2ban_unified_acl.conf',
+            $asteriskEtcDir . '/manager_fail2ban_deny.conf'
+        ];
+
+        if ($fail2banEnabled !== '1') {
+            // Remove all ACL files if fail2ban is disabled
+            foreach ($oldFiles as $file) {
+                if (file_exists($file)) {
+                    unlink($file);
+                }
+            }
+            if (file_exists($sipAclFile)) {
+                unlink($sipAclFile);
+            }
+            if (file_exists($managerDenyFile)) {
+                unlink($managerDenyFile);
+            }
+            if (file_exists($iaxDenyFile)) {
+                unlink($iaxDenyFile);
+            }
+            return;
+        }
+
+        // Get blocked IPs from Redis for all categories
+        $sipBlockedIps = DockerNetworkFilterService::getBlockedIps('sip');
+        $amiBlockedIps = DockerNetworkFilterService::getBlockedIps('ami');
+        $iaxBlockedIps = DockerNetworkFilterService::getBlockedIps('iax');
+
+        // Generate SIP ACL file with named ACL section
+        $sipContent = "; Fail2ban ACL configuration for PJSIP - DO NOT EDIT MANUALLY\n";
+        $sipContent .= "; This file is automatically generated by fail2ban\n";
+        $sipContent .= "; Last updated: " . date('Y-m-d H:i:s') . "\n\n";
+
+        $sipContent .= "; Named ACL for PJSIP endpoints\n";
+        $sipContent .= "[acl_fail2ban]\n";
+        $sipContent .= "; Always allow localhost access\n";
+        $sipContent .= "permit=127.0.0.1/255.255.255.255\n";
+        $sipContent .= "permit=::1\n";
+
+        if (!empty($sipBlockedIps)) {
+            $sipContent .= "\n; Blocked IPs by fail2ban (SIP)\n";
+            foreach ($sipBlockedIps as $ip) {
+                // Check if IP contains subnet mask
+                if (str_contains($ip, '/')) {
+                    $sipContent .= "deny=$ip\n";
+                } else {
+                    // Asterisk accepts single IPs without netmask for both IPv4 and IPv6
+                    // IPv4: deny=192.168.1.1/255.255.255.255 or deny=192.168.1.1
+                    // IPv6: deny=2001:db8::1 (netmask not needed)
+                    $isIpv6 = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6);
+                    if ($isIpv6) {
+                        $sipContent .= "deny=$ip\n";
+                    } else {
+                        $sipContent .= "deny=$ip/255.255.255.255\n";
+                    }
+                }
+            }
+        }
+
+        file_put_contents($sipAclFile, $sipContent);
+
+        // Generate deny rules for manager.conf (only AMI blocked IPs)
+        $managerContent = "; Fail2ban deny rules for manager.conf - DO NOT EDIT MANUALLY\n";
+        $managerContent .= "; This file is automatically generated by fail2ban\n";
+        $managerContent .= "; Last updated: " . date('Y-m-d H:i:s') . "\n\n";
+
+        if (!empty($amiBlockedIps)) {
+            foreach ($amiBlockedIps as $ip) {
+                // Check if IP contains subnet mask
+                if (str_contains($ip, '/')) {
+                    $managerContent .= "deny=$ip\n";
+                } else {
+                    // Asterisk Manager accepts single IPs without netmask for both protocols
+                    $isIpv6 = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6);
+                    if ($isIpv6) {
+                        $managerContent .= "deny=$ip\n";
+                    } else {
+                        $managerContent .= "deny=$ip/255.255.255.255\n";
+                    }
+                }
+            }
+        }
+
+        file_put_contents($managerDenyFile, $managerContent);
+
+        // Generate IAX deny rules file (since IAX doesn't support named ACLs)
+        $iaxContent = "; Fail2ban deny rules for iax.conf - DO NOT EDIT MANUALLY\n";
+        $iaxContent .= "; This file is automatically generated by fail2ban\n";
+        $iaxContent .= "; Last updated: " . date('Y-m-d H:i:s') . "\n\n";
+
+        // Always permit localhost first
+        $iaxContent .= "; Always allow localhost access\n";
+        $iaxContent .= "permit=127.0.0.1/255.255.255.255\n";
+        $iaxContent .= "permit=::1\n";
+
+        if (!empty($iaxBlockedIps)) {
+            $iaxContent .= "\n; Blocked IPs by fail2ban (IAX)\n";
+            foreach ($iaxBlockedIps as $ip) {
+                // Check if IP contains subnet mask
+                if (str_contains($ip, '/')) {
+                    $iaxContent .= "deny=$ip\n";
+                } else {
+                    // Asterisk IAX accepts single IPs without netmask for both protocols
+                    $isIpv6 = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6);
+                    if ($isIpv6) {
+                        $iaxContent .= "deny=$ip\n";
+                    } else {
+                        $iaxContent .= "deny=$ip/255.255.255.255\n";
+                    }
+                }
+            }
+        }
+
+        file_put_contents($iaxDenyFile, $iaxContent);
+
+        // Clean up old files
+        foreach ($oldFiles as $file) {
+            if (file_exists($file)) {
+                unlink($file);
+            }
+        }
+    }
+
+    /**
+     * Get ban time from fail2ban settings
+     *
+     * @return int Ban time in seconds
+     */
+    public static function getBanTime(): int
+    {
+        // Get fail2ban rules from database
+        $res = Fail2BanRules::findFirst();
+
+        // Return ban time or default value (10 minutes)
+        return $res !== null ? (int)$res->bantime : 600;
+    }
+
+    /**
+     * Check if an IP address is a localhost address
+     *
+     * @param string $ip IP address to check
+     * @return bool True if the address is localhost
+     */
+    private static function isLocalhostAddress(string $ip): bool
+    {
+        // List of localhost addresses
+        $localhostPatterns = [
+            '127.0.0.1',
+            '::1',
+            'localhost'
+        ];
+
+        // Direct match
+        if (in_array($ip, $localhostPatterns)) {
+            return true;
+        }
+
+        // Check if IP is in 127.0.0.0/8 network
+        if (str_starts_with($ip, '127.')) {
+            return true;
+        }
+
+        // Check if it's any loopback network
+        if (preg_match('/^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/', $ip)) {
+            return true;
+        }
+
+        return false;
     }
 
 }

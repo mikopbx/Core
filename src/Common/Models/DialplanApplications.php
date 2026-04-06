@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -20,8 +21,8 @@
 namespace MikoPBX\Common\Models;
 
 use Phalcon\Mvc\Model\Relation;
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class DialplanApplications
@@ -129,7 +130,7 @@ class DialplanApplications extends ModelsBase
      * @param string $text The application logic to be encoded and set.
      * @return void
      */
-    public function setApplicationlogic($text): void
+    public function setApplicationlogic(string $text): void
     {
         $this->applicationlogic = base64_encode($text);
     }

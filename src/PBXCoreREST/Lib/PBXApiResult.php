@@ -64,6 +64,29 @@ class PBXApiResult
     public string $function;
 
     /**
+     * HTTP status code for the response (null = default 200 for success, 400 for error)
+     * Used for v4 API proper HTTP semantics
+     *
+     * @var int|null
+     */
+    public ?int $httpCode = null;
+
+    /**
+     * Pagination metadata for list endpoints
+     * Contains: total, limit, offset, hasMore, lastId
+     *
+     * @var array|null
+     */
+    public ?array $pagination = null;
+
+    /**
+     * Reload path for frontend navigation after successful operation
+     *
+     * @var string
+     */
+    public string $reload = '';
+
+    /**
      * Creates a new instance of PBXApiResult.
      */
     public function __construct()
@@ -83,7 +106,7 @@ class PBXApiResult
      */
     public function getResult(): array
     {
-        return [
+        $result = [
             'result'    => $this->success,
             'data'      => $this->data,
             'messages'  => $this->messages,
@@ -91,5 +114,22 @@ class PBXApiResult
             'processor' => $this->processor,
             'pid'       => getmypid(),
         ];
+
+        // Include HTTP status code if set (for v4 API)
+        if ($this->httpCode !== null) {
+            $result['httpCode'] = $this->httpCode;
+        }
+
+        // Include pagination metadata if set (for list endpoints)
+        if ($this->pagination !== null) {
+            $result['pagination'] = $this->pagination;
+        }
+
+        // Include reload path if set
+        if (!empty($this->reload)) {
+            $result['reload'] = $this->reload;
+        }
+
+        return $result;
     }
 }

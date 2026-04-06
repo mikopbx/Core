@@ -194,6 +194,9 @@ const InputMaskPatterns = [
         mask: '+880-##-###-###', cc: 'BD', name_en: 'Bangladesh', desc_en: '', name_ru: 'Бангладеш', desc_ru: '',
     },
     {
+        mask: '+88-XXX-XXXX-XXXX',  cc: 'BD', name_en: 'Bangladesh', desc_en: '', name_ru: 'Бангладеш', desc_ru: '',
+    },
+    {
         mask: '+32(###)###-###', cc: 'BE', name_en: 'Belgium', desc_en: '', name_ru: 'Бельгия', desc_ru: '',
     },
     {
@@ -543,13 +546,53 @@ const InputMaskPatterns = [
         mask: '+504-####-####', cc: 'HN', name_en: 'Honduras', desc_en: '', name_ru: 'Гондурас', desc_ru: '',
     },
     {
-        mask: '+385-##-###-###', cc: 'HR', name_en: 'Croatia', desc_en: '', name_ru: 'Хорватия', desc_ru: '',
+        mask: '+385-##-###-###',
+        cc: 'HR',
+        name_en: 'Croatia',
+        desc_en: 'Standard format',
+        name_ru: 'Хорватия',
+        desc_ru: 'Стандартный формат',
+    },
+    {
+        mask: '+385-##-#######',
+        cc: 'HR',
+        name_en: 'Croatia',
+        desc_en: 'Continuous format',
+        name_ru: 'Хорватия',
+        desc_ru: 'Непрерывный формат',
+    },
+    {
+        mask: '+381-##-###-####',
+        cc: 'RS',
+        name_en: 'Serbia',
+        desc_en: 'Standard format',
+        name_ru: 'Сербия',
+        desc_ru: 'Стандартный формат',
+    },
+    {
+        mask: '+381-##-######',
+        cc: 'RS',
+        name_en: 'Serbia',
+        desc_en: 'Alternative format',
+        name_ru: 'Сербия',
+        desc_ru: 'Альтернативный формат',
+    },
+    {
+        mask: '+381########',  // Continuous format without separators
+        cc: 'RS',
+        name_en: 'Serbia',
+        desc_en: 'Continuous format',
+        name_ru: 'Сербия',
+        desc_ru: 'Непрерывный формат',
     },
     {
         mask: '+509-##-##-####', cc: 'HT', name_en: 'Haiti', desc_en: '', name_ru: 'Гаити', desc_ru: '',
     },
     {
-        mask: '+36(###)###-###', cc: 'HU', name_en: 'Hungary', desc_en: '', name_ru: 'Венгрия', desc_ru: '',
+        mask: '+36(##)###-####', cc: 'HU', name_en: 'Hungary', desc_en: '', name_ru: 'Венгрия', desc_ru: '',
+    },
+    {
+        mask: '+36(#)###-####', cc: 'HU', name_en: 'Hungary', desc_en: 'Landline (short area code)', name_ru: 'Венгрия', desc_ru: 'Городской (короткий код)',
     },
     {
         mask: '+62(8##)###-####',

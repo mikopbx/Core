@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, globalTranslate, globalPBXVersion */
+/* global PbxApi, globalTranslate, globalPBXVersion, ModulesAPI */
 
 /**
  * Represents list of extension modules.
@@ -55,12 +55,21 @@ const marketplace = {
      */
     $btnUpdateAllModules: $('#update-all-modules-button'),
 
+    /**
+     * jQuery object initialized flag
+     * @type {jQuery}
+     */
+    isInitialized: false,
 
     /**
      * Initialize extensionModulesShowAvailable class
      */
     initialize() {
-        PbxApi.ModulesGetAvailable(marketplace.cbParseModuleUpdates);
+        if (marketplace.isInitialized) {
+            return;
+        }
+        marketplace.isInitialized = true;
+        ModulesAPI.getAvailable(marketplace.cbParseModuleUpdates);
     },
 
     /**
@@ -87,10 +96,24 @@ const marketplace = {
                         if (column.index() === 0) {
                             let title = column.header().textContent;
 
-                            // Create input element
+                            // Create compact search input in Fomantic UI style
+                            let wrapper = document.createElement('div');
+                            wrapper.className = 'ui mini icon input';
                             let input = document.createElement('input');
                             input.placeholder = title;
-                            column.header().replaceChildren(input);
+                            input.type = 'text';
+                            input.style.width = '200px';
+                            let icon = document.createElement('i');
+                            icon.className = 'search icon';
+                            wrapper.appendChild(input);
+                            wrapper.appendChild(icon);
+
+                            // Keep the header text for sorting, add input next to it
+                            column.header().textContent = '';
+                            column.header().appendChild(wrapper);
+
+                            // Prevent input clicks from triggering column sort
+                            wrapper.addEventListener('click', (e) => e.stopPropagation());
 
                             // Event listener for user input
                             input.addEventListener('keyup', () => {
@@ -108,11 +131,21 @@ const marketplace = {
      * Callback function to process the list of modules received from the website.
      * @param {object} response - The response containing the list of modules.
      */
-    cbParseModuleUpdates(response) {
+    cbParseModuleUpdates(responseData, isSuccessful) {
         marketplace.$marketplaceLoader.hide();
 
-        if (response && Array.isArray(response.modules)) {
-            response.modules.forEach((obj) => {
+        // When success, responseData is response.data from API
+        // When failure, responseData is the full response object
+        if (!isSuccessful) {
+            marketplace.$noNewModulesSegment.show();
+            return;
+        }
+
+        // In success case, responseData is response.data which should contain modules
+        const modules = responseData?.modules || [];
+
+        if (Array.isArray(modules) && modules.length > 0) {
+            modules.forEach((obj) => {
                 // Check if this module is compatible with the PBX based on version number
                 const minAppropriateVersionPBX = obj.min_pbx_version;
                 const newModuleVersion = obj.version;
@@ -127,7 +160,7 @@ const marketplace = {
                 // Check if the module is already installed and offer an update
                 const $moduleRow = $(`tr.module-row[data-id=${obj.uniqid}]`);
                 if ($moduleRow.length > 0) {
-                    const installedVer = $moduleRow.find('td.version').text();
+                    const installedVer = $moduleRow.find('td.version').text().trim();
                     const versionCompareResult = marketplace.versionCompare(newModuleVersion, installedVer);
                     if (versionCompareResult > 0) {
                         marketplace.addUpdateButtonToRow(obj);
@@ -138,12 +171,40 @@ const marketplace = {
             });
         }
 
-        if ($('tr.new-module-row').length>0){
+        if ($('tr.new-module-row').length > 0) {
             marketplace.$noNewModulesSegment.hide();
-            marketplace.initializeDataTable();
+            // Only initialize if DataTable is not already initialized
+            if (!$.fn.DataTable.isDataTable(marketplace.$marketplaceTable)) {
+                marketplace.initializeDataTable();
+            } else {
+                // If table is already initialized, just redraw it
+                marketplace.$marketplaceTable.DataTable().draw();
+            }
         } else {
             marketplace.$noNewModulesSegment.show();
         }
+
+        // Check if URL has a module query parameter to auto-open its detail modal
+        marketplace.openModuleFromQueryParam();
+    },
+
+    /**
+     * Checks the URL query parameter for a module uniqid and opens its detail modal.
+     * URL format: ?module=ModuleUniqid#/marketplace
+     */
+    openModuleFromQueryParam() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const uniqid = urlParams.get('module');
+        if (!uniqid) {
+            return;
+        }
+        const $moduleRow = $(`tr.new-module-row[data-id=${uniqid}]`);
+        if ($moduleRow.length > 0) {
+            $moduleRow.find('td.show-details-on-click').first().trigger('click');
+        }
+        // Clean up the URL parameter after opening the modal
+        const cleanUrl = window.location.pathname + window.location.hash;
+        window.history.replaceState(null, '', cleanUrl);
     },
 
     /**
@@ -158,7 +219,7 @@ const marketplace = {
         }
 
         let additionalIcon = '<i class="puzzle piece icon"></i>';
-        if (obj.commercial !== '0') {
+        if (obj.commercial !== 0) {
             additionalIcon = '<i class="ui donate icon"></i>';
         }
         const dynamicRow = `
@@ -189,20 +250,82 @@ const marketplace = {
      * @param {Object} obj - The module object containing information.
      */
     addUpdateButtonToRow(obj) {
-        const $moduleRow = $(`tr[data-id=${obj.uniqid}]`);
+        const $moduleRow = $(`tr.module-row[data-id=${obj.uniqid}]`);
+        
+        // Check if we're working with a DataTable
+        const $table = $('#installed-modules-table');
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable($table)) {
+            const table = $table.DataTable();
+            
+            // Use jQuery element to find the row in DataTable instead of index
+            const dtRow = table.row($moduleRow);
+            
+            if (dtRow.any()) {
+                // Get the row node to work with
+                const $rowNode = $(dtRow.node());
+                
+                // Clone the row's last cell (action buttons cell)
+                const $lastCell = $rowNode.find('td:last').clone();
+                
+                // Remove download button if exists
+                $lastCell.find('a.download').remove();
+                
+                // Create update button
+                const dynamicButton = `<a href="#" class="ui basic icon button update popuped disable-if-no-internet" 
+                    data-content="${globalTranslate.ext_UpdateModule}"
+                    data-version ="${obj.version}"
+                    data-size = "${obj.size}"
+                    data-uniqid ="${obj.uniqid}" 
+                    data-releaseid ="${obj.release_id}">
+                    <i class="icon redo blue"></i> 
+                    </a>`;
+                
+                // Prepend button to action-buttons div
+                $lastCell.find('.action-buttons').prepend(dynamicButton);
+                
+                // Update the cell in DataTable using the row API
+                const cellIndex = $rowNode.find('td').length - 1; // Last cell
+                table.cell(dtRow, cellIndex).data($lastCell.html()).draw(false);
+
+                // Re-initialize all popups after DOM update
+                setTimeout(() => {
+                    extensionModules.initializePopups();
+                }, 100);
+            } else {
+                // If row not found in DataTable, use direct DOM manipulation
+                this.addUpdateButtonDirectly($moduleRow, obj);
+            }
+        } else {
+            // Fallback for non-DataTable scenario
+            this.addUpdateButtonDirectly($moduleRow, obj);
+        }
+        
+        marketplace.$btnUpdateAllModules.show();
+    },
+    
+    /**
+     * Adds update button directly to DOM without DataTable API
+     * @param {jQuery} $moduleRow - The module row jQuery element
+     * @param {Object} obj - The module object containing information
+     */
+    addUpdateButtonDirectly($moduleRow, obj) {
         const $currentDownloadButton = $moduleRow.find('a.download');
         $currentDownloadButton.remove();
-        const dynamicButton
-            = `<a href="#" class="ui basic icon button update popuped disable-if-no-internet" 
-			data-content="${globalTranslate.ext_UpdateModule}"
-			data-version ="${obj.version}"
-			data-size = "${obj.size}"
-			data-uniqid ="${obj.uniqid}" 
-			data-releaseid ="${obj.release_id}">
-			<i class="icon redo blue"></i> 
-			</a>`;
-        $moduleRow.find('.action-buttons').prepend(dynamicButton);
-        marketplace.$btnUpdateAllModules.show();
+        
+        const dynamicButton = `<a href="#" class="ui basic icon button update popuped disable-if-no-internet" 
+            data-content="${globalTranslate.ext_UpdateModule}"
+            data-version ="${obj.version}"
+            data-size = "${obj.size}"
+            data-uniqid ="${obj.uniqid}" 
+            data-releaseid ="${obj.release_id}">
+            <i class="icon redo blue"></i> 
+            </a>`;
+        
+        const $actionButtons = $moduleRow.find('.action-buttons');
+        $actionButtons.prepend(dynamicButton);
+
+        // Re-initialize all popups after DOM update
+        extensionModules.initializePopups();
     },
 
     /**
@@ -278,7 +401,5 @@ const marketplace = {
 
 };
 
-// When the document is ready, initialize the external modules table and fetch a list of available modules from the repo
-$(document).ready(() => {
-    marketplace.initialize();
-});
+// Make marketplace globally accessible
+window.marketplace = marketplace;

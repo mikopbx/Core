@@ -1,0 +1,698 @@
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* global globalRootUrl, globalTranslate, Form, StorageAPI, UserMessage, $ */
+
+/**
+ * Storage management module
+ */
+const storageIndex = {
+    /**
+     * jQuery object for the local storage form (Tab 2).
+     * Sends data to: PATCH /pbxcore/api/v3/storage
+     * @type {jQuery}
+     */
+    $localStorageForm: $('#local-storage-form'),
+
+    /**
+     * jQuery object for the S3 storage form (Tab 3).
+     * Sends data to: PATCH /pbxcore/api/v3/s3-storage
+     * @type {jQuery}
+     */
+    $s3StorageForm: $('#s3-storage-form'),
+
+    /**
+     * jQuery object for the records retention period slider.
+     * @type {jQuery}
+     */
+    $recordsSavePeriodSlider: $('#PBXRecordSavePeriodSlider'),
+
+    /**
+     * jQuery object for the S3 local retention period slider.
+     * @type {jQuery}
+     */
+    $s3LocalDaysSlider: $('#PBXRecordS3LocalDaysSlider'),
+
+    /**
+     * jQuery object for S3 enabled checkbox.
+     * @type {jQuery}
+     */
+    $s3EnabledCheckbox: $('#s3-enabled-checkbox'),
+
+    /**
+     * jQuery object for S3 settings group container.
+     * @type {jQuery}
+     */
+    $s3SettingsGroup: $('#s3-settings-group'),
+
+    /**
+     * jQuery object for test S3 connection button.
+     * @type {jQuery}
+     */
+    $testS3Button: $('#test-s3-connection'),
+
+    /**
+     * Possible period values for the records retention.
+     * Values in days: 30, 90, 180, 360, 1080, '' (infinity)
+     */
+    saveRecordsPeriod: ['30', '90', '180', '360', '1080', ''],
+
+    /**
+     * Possible period values for S3 local retention (in days).
+     * Values: 1, 3, 7, 14, 30, 60, 90 days
+     */
+    s3LocalDaysPeriod: ['1', '3', '7', '14', '30', '60', '90'],
+
+    /**
+     * Get maximum allowed local retention index based on total retention period
+     * @param {string} totalPeriod - Total retention period in days ('' for infinity)
+     * @returns {number} Maximum index for s3LocalDaysPeriod array
+     */
+    getMaxLocalRetentionIndex(totalPeriod) {
+        // If total period is infinity, allow all local options
+        if (totalPeriod === '' || totalPeriod === null || totalPeriod === undefined) {
+            return storageIndex.s3LocalDaysPeriod.length - 1;
+        }
+
+        const totalDays = parseInt(totalPeriod);
+        let maxIndex = storageIndex.s3LocalDaysPeriod.length - 1;
+
+        // Find the highest local retention that is less than total
+        for (let i = storageIndex.s3LocalDaysPeriod.length - 1; i >= 0; i--) {
+            const localDays = parseInt(storageIndex.s3LocalDaysPeriod[i]);
+            if (localDays < totalDays) {
+                maxIndex = i;
+                break;
+            }
+        }
+
+        return maxIndex;
+    },
+
+    /**
+     * Validation rules for the form fields before submission.
+     * @type {object}
+     */
+    validateRules: {
+        s3_endpoint: {
+            identifier: 's3_endpoint',
+            optional: true,
+            rules: [
+                {
+                    type: 'url',
+                    prompt: globalTranslate.st_S3EndpointInvalid
+                }
+            ],
+        },
+        s3_bucket: {
+            identifier: 's3_bucket',
+            optional: true,
+            rules: [
+                {
+                    type: 'regExp',
+                    value: /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/,
+                    prompt: globalTranslate.st_S3BucketInvalid
+                }
+            ],
+        },
+    },
+    
+    /**
+     * Initialize module with event bindings and component initializations.
+     */
+    initialize() {
+        // Enable tab navigation
+        $('#storage-menu').find('.item').tab({
+                history: true,
+                historyType: 'hash',
+                   onVisible: function(tabPath) {
+                // Load storage data when storage info tab is activated
+                if (tabPath === 'storage-info') {
+                    storageIndex.loadStorageData();
+                }
+            },
+        });
+
+        // Initialize records save period slider
+        storageIndex.$recordsSavePeriodSlider
+            .slider({
+                min: 0,
+                max: 5,
+                step: 1,
+                smooth: true,
+                autoAdjustLabels: false,
+                interpretLabel: function (value) {
+                    const labels = {
+                        0: globalTranslate.st_Store1MonthOfRecords,
+                        1: globalTranslate.st_Store3MonthsOfRecords,
+                        2: globalTranslate.st_Store6MonthsOfRecords,
+                        3: globalTranslate.st_Store1YearOfRecords,
+                        4: globalTranslate.st_Store3YearsOfRecords,
+                        5: globalTranslate.st_StoreAllPossibleRecords,
+                    };
+                    return labels[value] || '';
+                },
+                onChange: storageIndex.cbAfterSelectSavePeriodSlider,
+            });
+
+        // Initialize S3 local retention period slider
+        storageIndex.$s3LocalDaysSlider
+            .slider({
+                min: 0,
+                max: 6,
+                step: 1,
+                smooth: true,
+                autoAdjustLabels: false,
+                interpretLabel: function (value) {
+                    const labels = {
+                        0: '1 ' + globalTranslate.st_Day,
+                        1: '3 ' + globalTranslate.st_Days,
+                        2: '7 ' + globalTranslate.st_Days,
+                        3: '14 ' + globalTranslate.st_Days,
+                        4: '30 ' + globalTranslate.st_Days,
+                        5: '60 ' + globalTranslate.st_Days,
+                        6: '90 ' + globalTranslate.st_Days,
+                    };
+                    return labels[value] || '';
+                },
+                onChange: storageIndex.cbAfterSelectS3LocalDaysSlider,
+            });
+
+        // Initialize S3 enabled checkbox with toggle behavior
+        storageIndex.$s3EnabledCheckbox.checkbox({
+            onChange: storageIndex.cbAfterToggleS3Enabled,
+        });
+
+        // Initialize test S3 connection button
+        storageIndex.$testS3Button.on('click', storageIndex.testS3Connection);
+
+        // Initialize tooltips
+        storageIndex.initializeTooltips();
+
+        // Initialize the form
+        storageIndex.initializeForm();
+
+        // Load settings from API
+        storageIndex.loadSettings();
+
+        // Load storage data on page load
+        storageIndex.loadStorageData();
+    },
+    
+    /**
+     * Handle event after the select save period slider is changed.
+     * @param {number} value - The selected value from the slider.
+     */
+    cbAfterSelectSavePeriodSlider(value) {
+        // Get the save period corresponding to the slider value.
+        const savePeriod = storageIndex.saveRecordsPeriod[value];
+
+        // Set the form value for 'PBXRecordSavePeriod' to the selected save period.
+        storageIndex.$formObj.form('set value', 'PBXRecordSavePeriod', savePeriod);
+
+        // Update S3 local retention slider maximum
+        storageIndex.updateS3LocalSliderLimits(savePeriod);
+
+        // Trigger change event to acknowledge the modification
+        Form.dataChanged();
+    },
+
+    /**
+     * Handle event after the S3 local retention slider is changed.
+     * @param {number} value - The selected value from the slider.
+     */
+    cbAfterSelectS3LocalDaysSlider(value) {
+        // Get the local days period corresponding to the slider value.
+        const localDays = storageIndex.s3LocalDaysPeriod[value];
+
+        // Set the form value for 'PBXRecordS3LocalDays'
+        storageIndex.$formObj.form('set value', 'PBXRecordS3LocalDays', localDays);
+
+        // Trigger change event to acknowledge the modification
+        Form.dataChanged();
+    },
+
+    /**
+     * Handle event after S3 enabled checkbox is toggled.
+     */
+    cbAfterToggleS3Enabled() {
+        const isEnabled = storageIndex.$s3EnabledCheckbox.checkbox('is checked');
+
+        // Show/hide S3 settings group
+        if (isEnabled) {
+            storageIndex.$s3SettingsGroup.slideDown();
+        } else {
+            storageIndex.$s3SettingsGroup.slideUp();
+        }
+
+        // Trigger change event to acknowledge the modification
+        Form.dataChanged();
+    },
+
+    /**
+     * Test S3 connection with current settings.
+     */
+    testS3Connection() {
+        // Show loading state
+        storageIndex.$testS3Button.addClass('loading disabled');
+
+        // Prepare test data from current form values
+        const formData = storageIndex.$formObj.form('get values');
+        const testData = {
+            s3_enabled: formData.s3_enabled || 0,
+            s3_endpoint: formData.s3_endpoint,
+            s3_region: formData.s3_region,
+            s3_bucket: formData.s3_bucket,
+            s3_access_key: formData.s3_access_key,
+            s3_secret_key: formData.s3_secret_key,
+        };
+
+        // Call API to test connection
+        StorageAPI.testS3Connection(testData, (response) => {
+            // Remove loading state
+            storageIndex.$testS3Button.removeClass('loading disabled');
+
+            if (response && response.result === true) {
+                const message = response.data?.message || globalTranslate.st_S3TestSuccess;
+                UserMessage.showInformation(message, globalTranslate.st_S3TestSuccess);
+            } else {
+                const errorMessage = response?.data?.message || globalTranslate.st_S3TestFailed;
+                UserMessage.showError(errorMessage, globalTranslate.st_S3TestFailed);
+            }
+        });
+    },
+
+    /**
+     * Load Storage settings from API
+     */
+    loadSettings() {
+        StorageAPI.get((response) => {
+            if (response.result && response.data) {
+                const data = response.data;
+
+                // Set form values including S3 settings
+                storageIndex.$formObj.form('set values', {
+                    PBXRecordSavePeriod: data.PBXRecordSavePeriod,
+                    PBXRecordS3LocalDays: data.PBXRecordS3LocalDays || '7',
+                    s3_enabled: data.s3_enabled || 0,
+                    s3_endpoint: data.s3_endpoint || '',
+                    s3_region: data.s3_region || 'us-east-1',
+                    s3_bucket: data.s3_bucket || '',
+                    s3_access_key: data.s3_access_key || '',
+                    s3_secret_key: data.s3_secret_key || '',
+                });
+
+                // Update total retention period slider
+                const recordSavePeriod = data.PBXRecordSavePeriod || '';
+                storageIndex.$recordsSavePeriodSlider.slider(
+                    'set value',
+                    storageIndex.saveRecordsPeriod.indexOf(recordSavePeriod),
+                    false
+                );
+
+                // Update S3 local slider limits based on total retention
+                storageIndex.updateS3LocalSliderLimits(recordSavePeriod);
+
+                // Update S3 local retention slider
+                const s3LocalDays = data.PBXRecordS3LocalDays || '7';
+                storageIndex.$s3LocalDaysSlider.slider(
+                    'set value',
+                    storageIndex.s3LocalDaysPeriod.indexOf(s3LocalDays),
+                    false
+                );
+
+                // Set S3 enabled checkbox state
+                if (parseInt(data.s3_enabled) === 1) {
+                    storageIndex.$s3EnabledCheckbox.checkbox('check');
+                    storageIndex.$s3SettingsGroup.show();
+                } else {
+                    storageIndex.$s3EnabledCheckbox.checkbox('uncheck');
+                    storageIndex.$s3SettingsGroup.hide();
+                }
+            }
+        });
+    },
+    
+    /**
+     * Load storage usage data from API
+     */
+    loadStorageData() {
+        // Show loading state
+        $('#storage-usage-container .dimmer').addClass('active');
+        $('#storage-details').hide();
+
+        // Make API call to get storage usage using new StorageAPI
+        StorageAPI.getUsage((response) => {
+            if (response.result && response.data) {
+                storageIndex.renderStorageData(response.data);
+            } else {
+                $('#storage-usage-container .dimmer').removeClass('active');
+                UserMessage.showMultiString(globalTranslate.st_StorageLoadError);
+            }
+        });
+    },
+    
+    /**
+     * Render storage usage data in the UI
+     */
+    renderStorageData(data) {
+        // Hide loading and show details
+        $('#storage-usage-container .dimmer').removeClass('active');
+        $('#storage-details').show();
+        
+        // Format size for display
+        const formatSize = (sizeInMb) => {
+            if (sizeInMb >= 1024) {
+                return (sizeInMb / 1024).toFixed(1) + ' GB';
+            }
+            return sizeInMb.toFixed(1) + ' MB';
+        };
+        
+        // Update header information
+        $('#used-space-text').text(formatSize(data.used_space));
+        $('#total-size-text').text(formatSize(data.total_size));
+        
+        // Update progress segments in macOS style
+        let accumulatedWidth = 0;
+        
+        // Process each category
+        ['call_recordings', 'cdr_database', 'system_logs', 'modules', 'backups', 'system_caches', 'other'].forEach(category => {
+            const catData = data.categories[category];
+            const $segment = $(`.progress-segment[data-category="${category}"]`);
+            
+            if (catData && catData.percentage > 0) {
+                $segment.css('width', catData.percentage + '%').show();
+                
+                // Add hover tooltip
+                const categoryKey = 'st_Category' + category.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
+                $segment.attr('title', `${globalTranslate[categoryKey] || category}: ${formatSize(catData.size)} (${catData.percentage}%)`);
+                
+                accumulatedWidth += catData.percentage;
+            } else {
+                $segment.hide();
+            }
+            
+            // Update category size in list
+            $(`#${category}-size`).text(formatSize(catData ? catData.size : 0));
+        });
+        
+        // Add hover effects for progress segments
+        $('.progress-segment').on('mouseenter', function(e) {
+            const $this = $(this);
+            const tooltip = $('<div class="storage-tooltip"></div>').text($this.attr('title'));
+            $('body').append(tooltip);
+            
+            $(document).on('mousemove.tooltip', function(e) {
+                tooltip.css({
+                    left: e.pageX + 10,
+                    top: e.pageY - 30
+                });
+            });
+        }).on('mouseleave', function() {
+            $('.storage-tooltip').remove();
+            $(document).off('mousemove.tooltip');
+        });
+        
+        // Highlight category on hover
+        $('.category-item').on('mouseenter', function() {
+            const category = $(this).data('category');
+            $(`.progress-segment[data-category="${category}"]`).css('opacity', '0.7');
+        }).on('mouseleave', function() {
+            $('.progress-segment').css('opacity', '1');
+        });
+    },
+    
+    /**
+     * Build HTML content for tooltip popup
+     * @param {Object} config - Tooltip configuration object
+     * @returns {string} HTML string for popup content
+     */
+    buildTooltipContent(config) {
+        let html = '<div class="ui relaxed list">';
+
+        // Header
+        if (config.header) {
+            html += `<div class="item"><strong>${config.header}</strong></div>`;
+        }
+
+        // Description
+        if (config.description) {
+            html += `<div class="item">${config.description}</div>`;
+        }
+
+        // Main list
+        if (config.list && config.list.length > 0) {
+            html += '<div class="item"><ul class="ui list">';
+            config.list.forEach(item => {
+                if (typeof item === 'string') {
+                    html += `<li>${item}</li>`;
+                } else if (item.term && item.definition === null) {
+                    // Section header
+                    html += `</ul><strong>${item.term}</strong><ul class="ui list">`;
+                } else if (item.term && item.definition) {
+                    // Term with definition
+                    html += `<li><strong>${item.term}:</strong> ${item.definition}</li>`;
+                }
+            });
+            html += '</ul></div>';
+        }
+
+        // Additional lists (list2-list10)
+        for (let i = 2; i <= 10; i++) {
+            const listKey = `list${i}`;
+            if (config[listKey] && config[listKey].length > 0) {
+                html += '<div class="item"><ul class="ui list">';
+                config[listKey].forEach(item => {
+                    if (typeof item === 'string') {
+                        html += `<li>${item}</li>`;
+                    }
+                });
+                html += '</ul></div>';
+            }
+        }
+
+        // Warning
+        if (config.warning) {
+            html += '<div class="item"><div class="ui orange message">';
+            if (config.warning.header) {
+                html += `<div class="header">${config.warning.header}</div>`;
+            }
+            if (config.warning.text) {
+                html += `<p>${config.warning.text}</p>`;
+            }
+            html += '</div></div>';
+        }
+
+        // Examples
+        if (config.examples && config.examples.length > 0) {
+            if (config.examplesHeader) {
+                html += `<div class="item"><strong>${config.examplesHeader}</strong></div>`;
+            }
+            html += '<div class="item"><pre style="background:#f4f4f4;padding:10px;border-radius:4px;">';
+            html += config.examples.join('\n');
+            html += '</pre></div>';
+        }
+
+        // Note
+        if (config.note) {
+            html += `<div class="item"><em>${config.note}</em></div>`;
+        }
+
+        html += '</div>';
+        return html;
+    },
+
+    /**
+     * Initialize tooltips for form fields
+     */
+    initializeTooltips() {
+        // Tooltip configurations for each field
+        const tooltipConfigs = {
+            record_retention_period: storageIndex.buildTooltipContent({
+                header: globalTranslate.st_tooltip_record_retention_header || 'Total Retention Period',
+                description: globalTranslate.st_tooltip_record_retention_desc || 'How long call recordings are kept in the system',
+                list: [
+                    globalTranslate.st_tooltip_record_retention_item1 || '30 days - minimum storage period',
+                    globalTranslate.st_tooltip_record_retention_item2 || '90 days - recommended for small businesses',
+                    globalTranslate.st_tooltip_record_retention_item3 || '1 year - compliance requirements',
+                    globalTranslate.st_tooltip_record_retention_item4 || 'Unlimited - keep all recordings'
+                ],
+                warning: {
+                    header: globalTranslate.st_tooltip_record_retention_warning_header || 'Storage Warning',
+                    text: globalTranslate.st_tooltip_record_retention_warning || 'Longer retention periods require more disk space'
+                }
+            }),
+
+            s3_enabled: storageIndex.buildTooltipContent({
+                header: globalTranslate.st_tooltip_s3_enabled_header || 'Cloud Storage',
+                description: globalTranslate.st_tooltip_s3_enabled_desc || 'Upload recordings to S3-compatible cloud storage for backup and archival',
+                list: [
+                    globalTranslate.st_tooltip_s3_enabled_item1 || 'Automatic upload after recording completion',
+                    globalTranslate.st_tooltip_s3_enabled_item2 || 'Frees up local disk space',
+                    globalTranslate.st_tooltip_s3_enabled_item3 || 'Compatible with AWS S3, MinIO, Wasabi'
+                ]
+            }),
+
+            s3_endpoint: storageIndex.buildTooltipContent({
+                header: globalTranslate.st_tooltip_s3_endpoint_header || 'S3 Endpoint URL',
+                description: globalTranslate.st_tooltip_s3_endpoint_desc || 'API endpoint for your S3-compatible storage service',
+                examples: [
+                    'AWS S3: https://s3.amazonaws.com',
+                    'MinIO: http://minio.example.com:9000',
+                    'Wasabi: https://s3.wasabisys.com'
+                ],
+                examplesHeader: globalTranslate.st_tooltip_examples || 'Examples'
+            }),
+
+            s3_region: storageIndex.buildTooltipContent({
+                header: globalTranslate.st_tooltip_s3_region_header || 'S3 Region',
+                description: globalTranslate.st_tooltip_s3_region_desc || 'Geographic region where your bucket is located',
+                examples: [
+                    'us-east-1 (default)',
+                    'eu-west-1',
+                    'ap-southeast-1'
+                ],
+                note: globalTranslate.st_tooltip_s3_region_note || 'Must match your bucket region for AWS S3'
+            }),
+
+            s3_bucket: storageIndex.buildTooltipContent({
+                header: globalTranslate.st_tooltip_s3_bucket_header || 'Bucket Name',
+                description: globalTranslate.st_tooltip_s3_bucket_desc || 'Name of the S3 bucket for storing recordings',
+                list: [
+                    globalTranslate.st_tooltip_s3_bucket_item1 || 'Must be unique across all S3 users (for AWS)',
+                    globalTranslate.st_tooltip_s3_bucket_item2 || 'Only lowercase letters, numbers, hyphens',
+                    globalTranslate.st_tooltip_s3_bucket_item3 || 'Must already exist - will not be created'
+                ]
+            }),
+
+            s3_access_key: storageIndex.buildTooltipContent({
+                header: globalTranslate.st_tooltip_s3_access_key_header || 'Access Key ID',
+                description: globalTranslate.st_tooltip_s3_access_key_desc || 'Public identifier for API authentication',
+                note: globalTranslate.st_tooltip_s3_access_key_note || 'Similar to username - safe to display'
+            }),
+
+            s3_secret_key: storageIndex.buildTooltipContent({
+                header: globalTranslate.st_tooltip_s3_secret_key_header || 'Secret Access Key',
+                description: globalTranslate.st_tooltip_s3_secret_key_desc || 'Private key for API authentication',
+                warning: {
+                    header: globalTranslate.st_tooltip_warning || 'Security Warning',
+                    text: globalTranslate.st_tooltip_s3_secret_key_warning || 'Keep this secret safe - treat it like a password'
+                }
+            }),
+
+            local_retention_period: storageIndex.buildTooltipContent({
+                header: globalTranslate.st_tooltip_local_retention_header || 'Local Retention Period',
+                description: globalTranslate.st_tooltip_local_retention_desc || 'How long to keep recordings locally before deleting',
+                list: [
+                    globalTranslate.st_tooltip_local_retention_item1 || 'After this period, recordings are deleted from local storage',
+                    globalTranslate.st_tooltip_local_retention_item2 || 'Files remain in S3 cloud storage',
+                    globalTranslate.st_tooltip_local_retention_item3 || 'Cannot exceed total retention period'
+                ],
+                warning: {
+                    header: globalTranslate.st_tooltip_note || 'Note',
+                    text: globalTranslate.st_tooltip_local_retention_warning || 'Shorter local retention frees disk space faster'
+                }
+            })
+        };
+
+        // Initialize popup for each tooltip icon
+        $('.field-info-icon').each((index, element) => {
+            const $icon = $(element);
+            const fieldName = $icon.data('field');
+            const content = tooltipConfigs[fieldName];
+
+            if (content) {
+                $icon.popup({
+                    html: content,
+                    position: 'top right',
+                    hoverable: true,
+                    delay: {
+                        show: 300,
+                        hide: 100
+                    },
+                    variation: 'flowing'
+                });
+            }
+        });
+    },
+
+    /**
+     * Update S3 local retention slider limits based on total retention period
+     * @param {string} totalPeriod - Total retention period in days ('' for infinity)
+     */
+    updateS3LocalSliderLimits(totalPeriod) {
+        const maxIndex = storageIndex.getMaxLocalRetentionIndex(totalPeriod);
+
+        // Get current value
+        const currentIndex = storageIndex.$s3LocalDaysSlider.slider('get value');
+
+        // Update slider max
+        storageIndex.$s3LocalDaysSlider.slider('setting', 'max', maxIndex);
+
+        // If current value exceeds new max, reset to max
+        if (currentIndex > maxIndex) {
+            storageIndex.$s3LocalDaysSlider.slider('set value', maxIndex);
+            storageIndex.$formObj.form('set value', 'PBXRecordS3LocalDays', storageIndex.s3LocalDaysPeriod[maxIndex]);
+        }
+    },
+
+    /**
+     * Callback function to be called before the form is sent
+     * @param {Object} settings - The current settings of the form
+     * @returns {Object} - The updated settings of the form
+     */
+    cbBeforeSendForm(settings) {
+        const result = settings;
+        result.data = storageIndex.$formObj.form('get values');
+        return result;
+    },
+    
+    /**
+     * Callback function to be called after the form has been sent.
+     * @param {Object} response - The response from the server after the form is sent
+     */
+    cbAfterSendForm(response) {
+        if (!response.success) {
+            Form.$submitButton.removeClass('disabled');
+        }
+    },
+    
+    /**
+     * Initialize the form with custom settings
+     */
+    initializeForm() {
+        Form.$formObj = storageIndex.$formObj;
+        Form.validateRules = storageIndex.validateRules;
+        Form.cbBeforeSendForm = storageIndex.cbBeforeSendForm;
+        Form.cbAfterSendForm = storageIndex.cbAfterSendForm;
+
+        // Configure REST API settings for Form.js (singleton resource)
+        Form.apiSettings = {
+            enabled: true,
+            apiObject: StorageAPI,
+            saveMethod: 'update' // Using standard PUT for singleton update
+        };
+
+        Form.initialize();
+    }
+};
+
+// When the document is ready, initialize the storage management interface.
+$(document).ready(() => {
+    storageIndex.initialize();
+});

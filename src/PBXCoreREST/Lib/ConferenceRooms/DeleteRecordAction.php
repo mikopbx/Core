@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,59 +20,43 @@
 namespace MikoPBX\PBXCoreREST\Lib\ConferenceRooms;
 
 use MikoPBX\Common\Models\ConferenceRooms;
-use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDeleteAction;
 
 /**
- *  Class DeleteRecord
- *  Delete a conference room and all its dependencies.
- *
- * @package MikoPBX\PBXCoreREST\Lib\ConferenceRooms
+ * Action for deleting conference room record
+ * 
+ * Extends AbstractDeleteAction to leverage:
+ * - Standard record deletion patterns
+ * - Automatic extension cleanup
+ * - Transaction-based deletion
+ * - Consistent error handling and logging
+ * 
+ * @api {delete} /pbxcore/api/v2/conference-rooms/deleteRecord/:id Delete conference room
+ * @apiVersion 2.0.0
+ * @apiName DeleteRecord
+ * @apiGroup ConferenceRooms
+ * 
+ * @apiParam {String} id Record ID to delete (uniqid)
+ * 
+ * @apiSuccess {Boolean} result Operation result
  */
-class DeleteRecordAction extends \Phalcon\Di\Injectable
+class DeleteRecordAction extends AbstractDeleteAction
 {
-
     /**
-     * Deletes the conference room record with its dependent tables.
-     *
-     * @param string $id The ID of the conference room to be deleted.
-     * @return PBXApiResult Result of the delete operation.
+     * Delete conference room record
+     * 
+     * @param string $id Record ID to delete (expects uniqid)
+     * @return PBXApiResult
      */
     public static function main(string $id): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $res->success = true;
-
-        $di = Di::getDefault();
-        $db = $di->get(MainDatabaseProvider::SERVICE_NAME);
-
-        // Find the room by ID
-        $record = ConferenceRooms::findFirstByUniqid($id);
-        if ($record===null){
-            $res->messages['error'][] = 'ConferenceRoom with id '.$id.' does not exist';
-            $res->success = false;
-            return  $res;
-        }
-
-        $db->begin();
-
-        // Delete associated extensions
-        $extension = $record->Extensions;
-        if ($extension!==null && !$extension->delete()) {
-            $res->messages['error'][] = implode(PHP_EOL, $extension->getMessages());
-            $res->success = false;
-        }
-
-        if (!$res->success) {
-            $db->rollback();
-        } else {
-            $db->commit();
-        }
-
-        $res->data['id'] = $id;
-        return $res;
+        // Use standard delete execution from parent class
+        return self::executeStandardDelete(
+            ConferenceRooms::class,
+            $id,
+            'Conference room',                  // Entity type for logging
+            'Conference room not found'         // Not found error message
+        );
     }
-
 }

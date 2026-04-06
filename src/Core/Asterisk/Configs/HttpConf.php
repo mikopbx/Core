@@ -19,13 +19,16 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SslCertificateService;
 use MikoPBX\Core\System\Util;
 
 /**
  * Class HttpConf
  *
- * Represents a configuration class for HTTP.
+ * Represents a configuration class for HTTP server used by AJAM and ARI.
+ * HTTP server is enabled if either AJAM or ARI is enabled.
  *
  * @package MikoPBX\Core\Asterisk\Configs
  */
@@ -43,35 +46,42 @@ class HttpConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $enabled = ($this->generalSettings[PbxSettingsConstants::AJAM_ENABLED] === '1') ? 'yes' : 'no';
-        $conf    = "[general]\n" .
-            "enabled={$enabled}\n" .
-            "bindaddr=0.0.0.0\n" .
-            "bindport={$this->generalSettings[PbxSettingsConstants::AJAM_PORT]}\n" .
-            "prefix=asterisk\n" .
-            "enablestatic=yes\n\n";
-
-        if ( ! empty($this->generalSettings[PbxSettingsConstants::AJAM_PORT_TLS])) {
-            $keys_dir = '/etc/asterisk/keys';
-            Util::mwMkdir($keys_dir);
-            $WEBHTTPSPublicKey  = $this->generalSettings[PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY];
-            $WEBHTTPSPrivateKey = $this->generalSettings[PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY];
-
-            if ( ! empty($WEBHTTPSPublicKey) && ! empty($WEBHTTPSPrivateKey)) {
-                $s_data = "{$WEBHTTPSPublicKey}\n{$WEBHTTPSPrivateKey}";
-            } else {
-                // Generate SSL certificate
-                $data   = Util::generateSslCert();
-                $s_data = implode("\n", $data);
+        // HTTP should be enabled if either AJAM or ARI is enabled
+        $ajamEnabled = intval(PbxSettings::getValueByKey(PbxSettings::AJAM_ENABLED)) === 1;
+        $ariEnabled = intval(PbxSettings::getValueByKey(PbxSettings::ARI_ENABLED)) === 1;
+        $isEnable = $ajamEnabled || $ariEnabled;
+        
+        $port = PbxSettings::getValueByKey(PbxSettings::AJAM_PORT);
+        $tlsPort = PbxSettings::getValueByKey(PbxSettings::AJAM_PORT_TLS);
+        $enabled = ($isEnable) ? 'yes' : 'no';
+        $conf    = "[general]".PHP_EOL .
+            "enabled=$enabled".PHP_EOL .
+            "bindaddr=0.0.0.0".PHP_EOL .
+            "bindport={$port}".PHP_EOL .
+            "prefix=asterisk".PHP_EOL .
+            "enablestatic=yes".PHP_EOL.PHP_EOL;
+        if ( ! empty($tlsPort)) {
+            // Use unified Asterisk certificate preparation
+            $certs = SslCertificateService::prepareAsteriskCertificates('asterisk-http');
+            
+            if (!empty($certs['certPath']) && !empty($certs['keyPath'])) {
+                $conf .= "tlsenable=$enabled" . PHP_EOL.
+                    "tlsbindaddr=0.0.0.0:{$tlsPort}".PHP_EOL.
+                    "tlscertfile={$certs['certPath']}".PHP_EOL.
+                    "tlsprivatekey={$certs['keyPath']}".PHP_EOL;
             }
-            $conf .= "tlsenable=yes\n" .
-                "tlsbindaddr=0.0.0.0:{$this->generalSettings[PbxSettingsConstants::AJAM_PORT_TLS]}\n" .
-                "tlscertfile={$keys_dir}/ajam.pem\n" .
-                "tlsprivatekey={$keys_dir}/ajam.pem\n";
-            Util::fileWriteContent("{$keys_dir}/ajam.pem", $s_data);
         }
+        $this->saveConfig($conf, $this->description);
+    }
 
-        // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/http.conf', $conf);
+    /**
+     * Reloads the Asterisk HTTP module.
+     */
+    public static function reload(): void
+    {
+        $conf = new self();
+        $conf->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload http'");
     }
 }

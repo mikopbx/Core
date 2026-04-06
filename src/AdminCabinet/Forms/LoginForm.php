@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -20,11 +21,8 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Form;
-use Phalcon\Html\Helper\Base;
 
 /**
  * Class LoginForm
@@ -46,6 +44,6 @@ class LoginForm extends BaseForm
         $this->add($password);
 
         // RememberMe
-        $this->add(new Check('rememberMeCheckBox', ['value' => null]));
+        $this->addCheckBox('rememberMeCheckBox', false);
     }
 }

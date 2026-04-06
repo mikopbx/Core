@@ -1,0 +1,26 @@
+{
+  "second.ivr.menu": {
+    "description": "Second level IVR menu",
+    "name": "Second IVR menu",
+    "extension": "30021",
+    "audio_message_id": "1",
+    "timeout": 15,
+    "timeout_extension": "202",
+    "menuItems": "ARRAY",
+    "1": "201",
+    "2": "202",
+    "3": "203"
+  },
+  "main.ivr.menu": {
+    "description": "First level IVR menu",
+    "name": "Main IVR menu",
+    "extension": "20020",
+    "audio_message_id": "1",
+    "timeout": 20,
+    "timeout_extension": "201",
+    "menuItems": "ARRAY",
+    "1": "30021",
+    "2": "202",
+    "3": "203"
+  }
+}

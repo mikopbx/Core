@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -20,10 +21,10 @@
 namespace MikoPBX\Common\Models;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use Phalcon\Encryption\Security\Random;
 use Phalcon\Mvc\Model\Relation;
-use Phalcon\Security\Random;
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class AsteriskManagerUsers
@@ -144,7 +145,7 @@ class AsteriskManagerUsers extends ModelsBase
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string  $command = '';
+    public ?string $command = '';
 
     /**
      * ID of the network filter associated with the user
@@ -152,6 +153,14 @@ class AsteriskManagerUsers extends ModelsBase
      * @Column(type="integer", nullable=true)
      */
     public ?string $networkfilterid = '';
+
+    /**
+     * Event filter patterns (one pattern per line).
+     * Format: !Event: EventName or Event: EventName
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $eventfilter = '';
 
     /**
      * AMI users description

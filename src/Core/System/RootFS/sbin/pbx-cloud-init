@@ -1,0 +1,149 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+# Cloud provisioning management script for MikoPBX
+# Usage: pbx-cloud-init [command]
+# Commands:
+#   clean         Remove cloud-init completion flag and allow re-provisioning on next boot
+#   status        Show current cloud provisioning status
+#   help          Show this help message
+
+DB_PATH="/cf/conf/mikopbx.db"
+CLOUD_PROVISIONING_KEY="CloudProvisioning"
+
+# Function to show usage
+show_usage() {
+    cat << EOF
+Usage: pbx-cloud-init [command]
+
+Commands:
+  clean         Remove cloud-init completion flag
+                This allows cloud provisioning to run again on next boot
+
+  status        Show current cloud provisioning status
+                Displays whether cloud-init has been completed
+
+  help          Show this help message
+
+Examples:
+  pbx-cloud-init clean          # Reset cloud-init state
+  pbx-cloud-init status         # Check if cloud-init completed
+
+Note: System will re-provision on next reboot if cloud-init data is available.
+EOF
+}
+
+# Function to check if cloud provisioning is completed
+check_status() {
+    if [ ! -f "$DB_PATH" ]; then
+        echo "Error: Database not found at $DB_PATH" >&2
+        return 1
+    fi
+
+    # Query database for CloudProvisioning key
+    RESULT=$(sqlite3 "$DB_PATH" "SELECT value FROM m_PbxSettings WHERE key='$CLOUD_PROVISIONING_KEY';" 2>/dev/null)
+
+    if [ "$?" -ne 0 ]; then
+        echo "Error: Failed to query database" >&2
+        return 1
+    fi
+
+    if [ -n "$RESULT" ] && [ "$RESULT" = "1" ]; then
+        echo "Cloud provisioning: COMPLETED"
+        echo "Status: Cloud-init has been executed and marked as complete"
+        return 0
+    else
+        echo "Cloud provisioning: NOT COMPLETED"
+        echo "Status: Cloud-init will run on next boot if cloud data is available"
+        return 0
+    fi
+}
+
+# Function to clean cloud provisioning flag
+clean_provisioning() {
+    if [ ! -f "$DB_PATH" ]; then
+        echo "Error: Database not found at $DB_PATH" >&2
+        return 1
+    fi
+
+    # Check current status first
+    CURRENT_VALUE=$(sqlite3 "$DB_PATH" "SELECT value FROM m_PbxSettings WHERE key='$CLOUD_PROVISIONING_KEY';" 2>/dev/null)
+
+    if [ "$?" -ne 0 ]; then
+        echo "Error: Failed to query database" >&2
+        return 1
+    fi
+
+    if [ -z "$CURRENT_VALUE" ]; then
+        echo "Cloud provisioning flag not found in database"
+        echo "Nothing to clean - cloud-init will run on next boot"
+        return 0
+    fi
+
+    # Delete the CloudProvisioning flag
+    sqlite3 "$DB_PATH" "DELETE FROM m_PbxSettings WHERE key='$CLOUD_PROVISIONING_KEY';" 2>/dev/null
+
+    if [ "$?" -ne 0 ]; then
+        echo "Error: Failed to remove cloud provisioning flag" >&2
+        return 1
+    fi
+
+    # Verify deletion
+    VERIFY=$(sqlite3 "$DB_PATH" "SELECT value FROM m_PbxSettings WHERE key='$CLOUD_PROVISIONING_KEY';" 2>/dev/null)
+
+    if [ -z "$VERIFY" ]; then
+        echo "✓ Cloud provisioning flag successfully removed"
+        echo ""
+        echo "Cloud-init state has been reset."
+        echo "On next system reboot, cloud provisioning will run again if:"
+        echo "  - Running in Docker with ENV variables set"
+        echo "  - Running in cloud with IMDS metadata available"
+        echo "  - NoCloud datasource available (ISO, seed directory, HTTP endpoint)"
+        echo ""
+        echo "To apply changes now, restart the system."
+        return 0
+    else
+        echo "Error: Failed to verify cloud provisioning flag removal" >&2
+        return 1
+    fi
+}
+
+# Parse command line arguments
+COMMAND="${1:-help}"
+
+case "$COMMAND" in
+    clean)
+        clean_provisioning
+        exit $?
+        ;;
+    status)
+        check_status
+        exit $?
+        ;;
+    help|--help|-h)
+        show_usage
+        exit 0
+        ;;
+    *)
+        echo "Error: Unknown command '$COMMAND'" >&2
+        echo ""
+        show_usage
+        exit 1
+        ;;
+esac

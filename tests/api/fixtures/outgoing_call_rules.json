@@ -1,0 +1,50 @@
+{
+  "local.calls": {
+    "rulename": "Local outgoing calls",
+    "note": "Local outgoing calls",
+    "numberbeginswith": "(7|8)",
+    "restnumbers": "10",
+    "trimfrombegin": "1",
+    "prepend": "8",
+    "providerid": "SIP-1683372701",
+    "providerName": "",
+    "type": "Local",
+    "description": "Rule for handling local landline calls"
+  },
+  "international.calls": {
+    "rulename": "International outgoing calls",
+    "note": "International outgoing calls",
+    "numberbeginswith": "00",
+    "restnumbers": "10",
+    "trimfrombegin": "2",
+    "prepend": "777",
+    "providerid": "SIP-1683372701",
+    "providerName": "",
+    "type": "International",
+    "description": "Rule for handling international calls"
+  },
+  "cti.test.1": {
+    "rulename": "Outgoing calls for CTI tests 1",
+    "note": "",
+    "numberbeginswith": "",
+    "restnumbers": "10",
+    "trimfrombegin": "0",
+    "prepend": "7",
+    "providerid": "SIP-1683372744",
+    "providerName": "Provider for CTI tests",
+    "type": "Test",
+    "description": "Basic CTI test rule"
+  },
+  "cti.test.2": {
+    "rulename": "Outgoing calls for CTI tests 2",
+    "note": "'1. The client calls in the company\n2. The client hears a voice message\n3. The client dials any extension which exists on PBX (201",
+    "numberbeginswith": "(7|8)",
+    "restnumbers": "10",
+    "trimfrombegin": "0",
+    "prepend": "",
+    "providerid": "SIP-1683372744",
+    "providerName": "Provider for CTI tests",
+    "type": "Test",
+    "description": "Complex CTI test rule with IVR logic"
+  }
+}

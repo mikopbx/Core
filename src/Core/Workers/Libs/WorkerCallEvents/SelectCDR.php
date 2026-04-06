@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,10 +20,11 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Throwable;
 
 /**
@@ -34,6 +36,7 @@ use Throwable;
  */
 class SelectCDR
 {
+    private const int MAX_QUERY_LIMIT = 5000;
 
     /**
      * Execute the selection of Call Detail Records (CDR) based on the specified filters.
@@ -41,28 +44,32 @@ class SelectCDR
      * @param array $filter The filter parameters for selecting CDR.
      * @return string The selected CDR data in JSON format.
      */
-    public static function execute($filter): string
+    public static function execute(array $filter): string
     {
 
         if (self::filterNotValid($filter)) {
             return '[]';
         }
 
-        $res = null;
+        self::enforceQueryLimit($filter);
+
+        $resArray = null;
         try {
             if (isset($filter['miko_tmp_db'])) {
                 $res = CallDetailRecordsTmp::find($filter);
             } else {
                 $res = CallDetailRecords::find($filter);
             }
-            $res_data = json_encode($res->toArray());
+            $resArray = $res->toArray();
+            $res_data = json_encode($resArray);
         } catch (Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
             $res_data = '[]';
         }
 
-        if ($res && isset($filter['add_pack_query'])) {
+        if ($resArray !== null && isset($filter['add_pack_query'])) {
             $arr = [];
-            foreach ($res->toArray() as $row) {
+            foreach ($resArray as $row) {
                 $arr[] = $row[$filter['columns']];
             }
             $filter['add_pack_query']['bind'][$filter['columns']] = $arr;
@@ -71,10 +78,13 @@ class SelectCDR
                 return '[]';
             }
 
+            self::enforceQueryLimit($filter['add_pack_query']);
+
             try {
                 $res = CallDetailRecords::find($filter['add_pack_query']);
                 $res_data = json_encode($res->toArray(), JSON_THROW_ON_ERROR);
             } catch (Throwable $e) {
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
                 $res_data = '[]';
             }
         }
@@ -97,7 +107,18 @@ class SelectCDR
         }
 
         return $res_data;
+    }
 
+    /**
+     * Enforces a maximum row limit on the query filter to prevent memory exhaustion.
+     *
+     * @param array &$filter The filter parameters to enforce the limit on.
+     */
+    private static function enforceQueryLimit(array &$filter): void
+    {
+        if (!isset($filter['limit']) || (int)$filter['limit'] > self::MAX_QUERY_LIMIT) {
+            $filter['limit'] = self::MAX_QUERY_LIMIT;
+        }
     }
 
     /**

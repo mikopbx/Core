@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -29,7 +30,6 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  */
 class CustomFileChangeTest extends MikoPBXTestsBase
 {
-
     /**
      * Set up before each test
      *
@@ -44,7 +44,6 @@ class CustomFileChangeTest extends MikoPBXTestsBase
 
     /**
      * Test to change a custom file.
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for changing the custom file.
@@ -57,6 +56,9 @@ class CustomFileChangeTest extends MikoPBXTestsBase
         // Scroll to the bottom of the sidebar menu to access the files page
         self::$driver->executeScript('document.getElementById("sidebar-menu").scrollTo(0,document.body.scrollHeight);');
         $this->clickSidebarMenuItemByHref("/admin-cabinet/custom-files/index/");
+
+        // Search for the specific file using the search functionality
+        $this->searchForFileInCustomFilesList($params['filePath']);
 
         // Click the modify button on the row with the specified file path
         $this->clickModifyButtonOnRowWithText($params['filePath']);
@@ -91,6 +93,9 @@ class CustomFileChangeTest extends MikoPBXTestsBase
         // Navigate back to the custom files page
         $this->clickSidebarMenuItemByHref("/admin-cabinet/custom-files/index/");
 
+        // Search for the specific file again to verify changes
+        $this->searchForFileInCustomFilesList($params['filePath']);
+
         // Find the files list and assert that the description is present
         $filesList = self::$driver->findElement(WebDriverBy::xpath('id("custom-files-table")'));
         $this->assertStringContainsString($params['description'], $filesList->getText());
@@ -104,9 +109,51 @@ class CustomFileChangeTest extends MikoPBXTestsBase
         // Assert that the selected mode matches
         $this->assertMenuItemSelected('mode', $params['mode']);
 
-        // Find the hidden value and assert that it matches the file contents
-        $hiddenValue = self::$driver->findElement(WebDriverBy::xpath("//*[@id = 'content']"));
-        $this->assertEquals($params['fileContents'], $hiddenValue->getAttribute('value'));
+        // Wait for ACE editor to be initialized
+        self::$driver->wait(10, 500)->until(
+            function () {
+                return self::$driver->executeScript(
+                    'return typeof ace !== "undefined" && ace.edit("user-edit-config") !== null'
+                );
+            }
+        );
+
+        // Get content from ACE editor (the content is not synced to hidden field until form submission)
+        $aceValue = self::$driver->executeScript(
+            'return ace.edit("user-edit-config").getValue();'
+        );
+
+        $this->assertEquals($params['fileContents'], $aceValue);
+    }
+
+    /**
+     * Search for a specific file in the custom files list using the search box.
+     *
+     * @param string $filePath The file path to search for.
+     */
+    private function searchForFileInCustomFilesList(string $filePath): void
+    {
+        self::annotate("Search for file: {$filePath}");
+
+        try {
+            // Find the search box by ID
+            $searchBox = self::$driver->findElement(WebDriverBy::id('global-search'));
+
+            // Clear the search box and enter the file path
+            $searchBox->clear();
+            $searchBox->sendKeys($filePath);
+
+            // Press Enter to trigger the search
+            $searchBox->sendKeys(\Facebook\WebDriver\WebDriverKeys::ENTER);
+
+            // Wait for the search results to load
+            $this->waitForAjax();
+            self::$driver->wait(3); // Additional wait for table refresh
+
+        } catch (\Exception $e) {
+            self::annotate("Error searching for file: " . $e->getMessage());
+            throw $e;
+        }
     }
 
     /**

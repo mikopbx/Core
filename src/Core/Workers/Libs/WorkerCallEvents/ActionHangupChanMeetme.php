@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,7 +20,6 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
-
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -37,10 +37,10 @@ class ActionHangupChanMeetme
      * Executes the hangup channel action for a MeetMe conference.
      *
      * @param WorkerCallEvents $worker The worker instance.
-     * @param mixed $data The data containing call details.
+     * @param array $data The data containing call details.
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         clearstatcache();
         $recordingfile = '';
@@ -63,9 +63,13 @@ class ActionHangupChanMeetme
                 if ($row->UNIQUEID === $data['UNIQUEID'] && $is_local && !$is_stored_local) {
                     $data['src_chan'] = $row->src_chan;
                 }
-                if (file_exists($row->recordingfile) || file_exists(
-                        Util::trimExtensionForFile($row->recordingfile) . '.wav'
-                    )) {
+                $recBase = Util::trimExtensionForFile($row->recordingfile);
+                if (
+                    file_exists($row->recordingfile)
+                    || file_exists($recBase . '.wav48')
+                    || file_exists($recBase . '.wav16')
+                    || file_exists($recBase . '.wav')
+                ) {
                     // Override the recording file path. The conference has only one recording file.
                     $recordingfile = $row->recordingfile;
                 }
@@ -98,9 +102,8 @@ class ActionHangupChanMeetme
             }
             $res = $row->save();
             if (!$res) {
-                Util::sysLogMsg('Action_hangup_chan_meetme', implode(' ', $row->getMessages()), LOG_DEBUG);
+                SystemMessages::sysLogMsg('Action_hangup_chan_meetme', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }
-
 }

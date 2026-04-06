@@ -14,6 +14,7 @@ class ReloadPHPFPMAction implements ReloadActionInterface
      */
     public function execute(array $parameters = []): void
     {
-        PHPConf::reStart();
+        $phpConf = new PHPConf();
+        $phpConf->reStart();
     }
 }

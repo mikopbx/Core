@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,10 +21,12 @@
 namespace MikoPBX\AdminCabinet\Plugins;
 
 use MikoPBX\AdminCabinet\Controllers\ErrorsController;
-use MikoPBX\AdminCabinet\Controllers\LanguageController;
 use MikoPBX\AdminCabinet\Controllers\SessionController;
-use MikoPBX\Common\Models\AuthTokens;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Providers\AclProvider;
+use MikoPBX\Common\Providers\JwtProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use Phalcon\Acl\Enum as AclEnum;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
@@ -32,10 +35,14 @@ use Phalcon\Mvc\Dispatcher;
 /**
  * Handles access control and authentication for the application.
  * Ensures that users access only the areas they are permitted to.
+ *
+ * JWT-based authentication:
+ * - AJAX requests: require Bearer token in Authorization header
+ * - Browser page requests: can use refreshToken cookie (TokenManager will get access token)
+ * - ACL checks: use role from JWT claims (decoded from Bearer token if present)
  */
 class SecurityPlugin extends Injectable
 {
-
     /**
      * Executes before every request is dispatched.
      * Verifies user authentication and authorization for the requested resource.
@@ -49,7 +56,7 @@ class SecurityPlugin extends Injectable
      */
     public function beforeDispatch(/** @scrutinizer ignore-unused */ Event $event, Dispatcher $dispatcher): bool
     {
-        // Determine if the user is authenticated
+        // Determine if the user is authenticated (Bearer token OR refreshToken cookie)
         $isAuthenticated = $this->checkUserAuth() || $this->isLocalHostRequest();
 
         // Identify the requested action and controller
@@ -61,12 +68,14 @@ class SecurityPlugin extends Injectable
         // Define controllers accessible without authentication
         $publicControllers = [
             SessionController::class,
-            LanguageController::class,
             ErrorsController::class
         ];
 
         // Handle unauthenticated access to non-public controllers
         if (!$isAuthenticated && !in_array($controllerClass, $publicControllers)) {
+            // Clear any stale cookies before redirect to prevent loops
+            $this->clearAuthCookies();
+
             // AJAX requests receive a 403 response
             if ($this->request->isAjax()) {
                 $this->response->setStatusCode(403, 'Forbidden')->setContent('This user is not authorized')->send();
@@ -80,15 +89,25 @@ class SecurityPlugin extends Injectable
 
         // Authenticated users: validate access to the requested resource
         if ($isAuthenticated) {
-            // Redirect to home if the controller is missing or irrelevant
-            if (!class_exists($controllerClass)
-                || ($controllerClass === SessionController::class && strtoupper($action) !== 'END')) {
+            // Handle authenticated users on login page (except END action)
+            // This can happen when refreshToken cookie exists but is expired in Redis
+            if ($controllerClass === SessionController::class && strtoupper($action) !== 'END') {
+                // Clear stale cookies to prevent redirect loop
+                $this->clearAuthCookies();
+
+                // Allow access to login page (don't redirect to home)
+                return true;
+            }
+
+            // Redirect to home if the controller is missing
+            if (!class_exists($controllerClass)) {
                 $this->redirectToHome($dispatcher);
                 return true;
             }
 
             // Restrict access to unauthorized resources
-            if (!$this->isLocalHostRequest()
+            if (
+                !$this->isLocalHostRequest()
                 && !$this->isAllowedAction($controllerClass, $action)
                 && !in_array($controllerClass, $publicControllers)
             ) {
@@ -101,124 +120,81 @@ class SecurityPlugin extends Injectable
     }
 
     /**
-     * Redirects to the user's home page or a default page if the home page is not set.
-     *
-     * This method determines the user's home page based on the session data. If the home page path is not set in the session,
-     * it defaults to '/admin-cabinet/extensions/index'. The method then parses the home page path to extract the module,
-     * controller, and action, and uses the dispatcher to forward the request to the appropriate route.
-     *
-     * @param Dispatcher $dispatcher The dispatcher object used to forward the request.
-     */
-    private function redirectToHome($dispatcher): void{
-        // Retrieve the home page path from the session, defaulting to a predefined path if not set
-        $homePath = $this->session->get(SessionController::SESSION_ID)[SessionController::HOME_PAGE];
-        if (empty($homePath)){
-            $homePath='/admin-cabinet/extensions/index';
-        }
-        // Extract the module, controller, and action from the home page path
-        $module = explode('/', $homePath)[1];
-        $controller = explode('/', $homePath)[2];
-        $action = explode('/', $homePath)[3];
-
-        // Forward the request to the determined route
-        $dispatcher->forward([
-            'module' => $module,
-            'controller' => $controller,
-            'action' => $action
-        ]);
-    }
-
-    /**
-     * Redirects the user to a 401 error page.
-     * @param $dispatcher Dispatcher instance for handling the redirection.
-     */
-    private function forwardTo401Error($dispatcher): void{
-        $dispatcher->forward([
-            'module' => 'admin-cabinet',
-            'controller' => 'errors',
-            'action' => 'show401',
-            'namespace' => 'MikoPBX\AdminCabinet\Controllers'
-        ]);
-    }
-
-    /**
-     * Redirects the user to the login page.
-     * @param $dispatcher Dispatcher instance for handling the redirection.
-     */
-    private function forwardToLoginPage($dispatcher): void{
-        $dispatcher->forward([
-            'controller' => 'session',
-            'action' => 'index',
-            'module' => 'admin-cabinet',
-            'namespace' => 'MikoPBX\AdminCabinet\Controllers'
-        ]);
-    }
-    /**
      * Checks if the current user is authenticated.
      *
-     * This method checks if the current user is authenticated based on whether they have an existing session or a valid
-     * "remember me" cookie.
-     * If the request is from localhost or the user already has an active session, the method returns
-     * true.
-     * If a "remember me" cookie exists, the method checks if it matches any active tokens in the AuthTokens table.
-     * If a match is found, the user's session is set, and the method returns true. If none of these conditions are met,
-     * the method returns false.
+     * JWT authentication flow:
+     * 1. AJAX requests: check for Bearer token in Authorization header
+     * 2. Browser page requests: check for refreshToken cookie
+     *    - If cookie exists, user is considered authenticated
+     *    - TokenManager JS will call /auth:refresh to get access token
      *
      * @return bool true if the user is authenticated, false otherwise.
      */
-    private
-    function checkUserAuth(): bool
+    private function checkUserAuth(): bool
     {
-        // Check if it is a localhost request or if the user is already authenticated.
-        if ($this->session->has(SessionController::SESSION_ID)) {
+        $isAuth = self::isAuthenticated($this->request, $this->cookies);
+
+        // Debug logging
+        if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+            $hasBearer = $this->request->getHeader('Authorization') ? 'yes' : 'no';
+            $hasCookie = $this->cookies->has('refreshToken') ? 'yes' : 'no';
+            \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                __METHOD__,
+                "Auth check: result={$isAuth}, Bearer={$hasBearer}, Cookie={$hasCookie}, URI={$this->request->getURI()}",
+                LOG_DEBUG
+            );
+        }
+
+        return $isAuth;
+    }
+
+    /**
+     * Static method to check if user is authenticated.
+     * Can be reused across different parts of the application.
+     *
+     * JWT authentication flow:
+     * 1. AJAX requests: check for Bearer token in Authorization header
+     * 2. Browser page requests: check for refreshToken cookie
+     *    - If cookie exists, user is considered authenticated
+     *    - TokenManager JS will call /auth:refresh to get access token
+     *
+     * @param \Phalcon\Http\RequestInterface $request Request object
+     * @param \Phalcon\Http\Response\CookiesInterface $cookies Cookies object
+     * @return bool true if the user is authenticated, false otherwise.
+     */
+    public static function isAuthenticated(
+        \Phalcon\Http\RequestInterface $request,
+        \Phalcon\Http\Response\CookiesInterface $cookies
+    ): bool {
+        // Check for JWT Bearer token in Authorization header (AJAX requests)
+        $authHeader = $request->getHeader('Authorization');
+        if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
+            // TODO: можно добавить валидацию JWT токена здесь
+            // Но AuthenticationMiddleware уже проверяет его для API запросов
             return true;
         }
 
-        // Check if remember me cookie exists.
-        if (!$this->cookies->has('random_token')) {
-            return false;
-        }
+        // For browser page requests: check for refreshToken cookie
+        // If cookie exists, consider user authenticated - TokenManager will handle token refresh
+        if ($cookies->has('refreshToken')) {
+            try {
+                // Try to read cookie (it's encrypted by CryptProvider)
+                $token = $cookies->get('refreshToken')->getValue();
 
-        $token = $this->cookies->get('random_token')->getValue();
-        $currentDate = date("Y-m-d H:i:s", time());
-
-        // Delete expired tokens and check if the token matches any active tokens.
-        $userTokens = AuthTokens::find();
-        foreach ($userTokens as $userToken) {
-            if ($userToken->expiryDate < $currentDate) {
-                $userToken->delete();
-            } elseif ($this->security->checkHash($token, $userToken->tokenHash)) {
-                $sessionParams = json_decode($userToken->sessionParams, true);
-                $this->session->set(SessionController::SESSION_ID, $sessionParams);
-                return true;
+                // Basic validation: token should not be empty
+                if (!empty($token)) {
+                    // Token exists - user is authenticated
+                    // TokenManager JS will call /auth:refresh to get new access token
+                    return true;
+                }
+            } catch (\Throwable $e) {
+                // Cookie decryption failed or other error
+                // Log but don't block - let user re-login
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
             }
         }
 
         return false;
-    }
-
-    /**
-     * Checks if an action is allowed for the current user.
-     *
-     * This method checks if the specified $action is allowed for the current user based on their role. It gets the user's
-     * role from the session or sets it to 'guests' if no role is set. It then gets the Access Control List (ACL) and checks
-     * if the $action is allowed for the current user's role. If the user is a guest or if the $action is not allowed,
-     * the method returns false. Otherwise, it returns true.
-     *
-     * @param string $controller The full name of the controller class.
-     * @param string $action The name of the action to check.
-     * @return bool true if the action is allowed for the current user, false otherwise.
-     */
-    public function isAllowedAction(string $controller, string $action): bool
-    {
-        $role = $this->session->get(SessionController::SESSION_ID)[SessionController::ROLE] ?? AclProvider::ROLE_GUESTS;
-        $acl = $this->di->get(AclProvider::SERVICE_NAME);
-        $allowed = $acl->isAllowed($role, $controller, $action);
-        if ($allowed != AclEnum::ALLOW) {
-            return false;
-        } else {
-            return true;
-        }
     }
 
     /**
@@ -231,4 +207,207 @@ class SecurityPlugin extends Injectable
         return ($_SERVER['REMOTE_ADDR'] === '127.0.0.1');
     }
 
+    /**
+     * Clear authentication cookies to prevent login loops.
+     * Called when user is not authenticated but has stale cookies.
+     */
+    private function clearAuthCookies(): void
+    {
+        // Determine if connection is secure (HTTPS)
+        $isSecure = $this->request->isSecure();
+
+        // Clear refresh token cookie
+        if ($this->cookies->has('refreshToken')) {
+            $this->cookies->set(
+                'refreshToken',
+                '',
+                time() - 3600,  // Expire in the past
+                '/',
+                $isSecure,      // secure (match protocol)
+                '',             // domain (current domain, empty string for PHP 8.4 compatibility)
+                true,           // httpOnly
+                ['samesite' => 'Strict']
+            );
+
+            // Send cookies to browser
+            $this->cookies->send();
+
+            if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+                \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Cleared stale refreshToken cookie for unauthenticated user",
+                    LOG_DEBUG
+                );
+            }
+        }
+    }
+
+    /**
+     * Redirects the user to the login page.
+     * @param $dispatcher Dispatcher instance for handling the redirection.
+     */
+    private function forwardToLoginPage(Dispatcher $dispatcher): void
+    {
+        $dispatcher->forward([
+            'controller' => 'session',
+            'action' => 'index',
+            'module' => 'admin-cabinet',
+            'namespace' => 'MikoPBX\AdminCabinet\Controllers'
+        ]);
+    }
+
+    /**
+     * Redirects to the user's home page or a default page if the home page is not set.
+     *
+     * For JWT authentication: home page path should be stored in JWT claims or module config.
+     * For now, defaults to '/admin-cabinet/extensions/index'.
+     *
+     * @param Dispatcher $dispatcher The dispatcher object used to forward the request.
+     */
+    private function redirectToHome(Dispatcher $dispatcher): void
+    {
+        // TODO: get home page from JWT claims when token validation is implemented
+        // For now, use default home page
+        $homePath = '/admin-cabinet/extensions/index';
+
+        $redis = $this->di->getShared(ManagedCacheProvider::SERVICE_NAME);
+
+        // Prevent redirect loops
+        $currentPageCacheKey = 'RedirectCount:' . session_id() . ':' . md5($homePath);
+
+        $redirectCount = $redis->get($currentPageCacheKey) ?? 0;
+        $redirectCount++;
+        $redis->set($currentPageCacheKey, $redirectCount, 5);
+        if ($redirectCount > 25) {
+            $redis->delete($currentPageCacheKey);
+            $this->forwardTo401Error($dispatcher);
+            return;
+        }
+
+        // Extract the module, controller, and action from the home page path
+        $module = explode('/', $homePath)[1];
+        $controller = explode('/', $homePath)[2];
+        $action = explode('/', $homePath)[3];
+
+        if (str_starts_with($module, 'module-')) {
+            $camelizedNameSpace = Text::camelize($module);
+            $namespace = "Modules\\$camelizedNameSpace\\App\\Controllers";
+
+            // Forward the request to the determined route with namespace
+            $dispatcher->forward([
+                'module' => $module,
+                'controller' => $controller,
+                'action' => $action,
+                'namespace' => $namespace
+            ]);
+        } else {
+            // Forward the request to the determined route
+            $dispatcher->forward([
+                'module' => $module,
+                'controller' => $controller,
+                'action' => $action
+            ]);
+        }
+    }
+
+    /**
+     * Redirects the user to a 401 error page.
+     * @param $dispatcher Dispatcher instance for handling the redirection.
+     */
+    private function forwardTo401Error(Dispatcher $dispatcher): void
+    {
+        $dispatcher->forward([
+            'module' => 'admin-cabinet',
+            'controller' => 'errors',
+            'action' => 'show401',
+            'namespace' => 'MikoPBX\AdminCabinet\Controllers'
+        ]);
+    }
+
+    /**
+     * Checks if an action is allowed for the current user.
+     *
+     * Extracts role from JWT Bearer token for proper ACL checking.
+     * Falls back to 'admins' role for localhost requests or when no Bearer token present.
+     *
+     * @param string $controller The full name of the controller class.
+     * @param string $action The name of the action to check.
+     * @return bool true if the action is allowed for the current user, false otherwise.
+     */
+    public function isAllowedAction(string $controller, string $action): bool
+    {
+        // Extract role from JWT token if Bearer header present
+        $role = $this->extractRoleFromJwt();
+
+        // Fallback to admins for localhost requests or initial page loads (backward compatibility)
+        if ($role === null) {
+            $role = AclProvider::ROLE_ADMINS;
+        }
+
+        $acl = $this->di->get(AclProvider::SERVICE_NAME);
+        $allowed = $acl->isAllowed($role, $controller, $action);
+
+        if ($allowed != AclEnum::ALLOW) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Extract user role from JWT Bearer token or refreshToken cookie.
+     *
+     * Priority:
+     * 1. Bearer token in Authorization header (AJAX requests)
+     * 2. RefreshToken cookie -> Redis lookup (browser page loads)
+     *
+     * @return string|null Role from JWT claims or Redis, or null if not available
+     */
+    private function extractRoleFromJwt(): ?string
+    {
+        $jwt = $this->di->getShared(JwtProvider::SERVICE_NAME);
+
+        // 1. Try Bearer header first (AJAX requests)
+        $authHeader = $this->request->getHeader('Authorization');
+        $role = $jwt->extractRoleFromHeader($authHeader);
+
+        if ($role !== null) {
+            if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+                \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Role from Bearer header: {$role}",
+                    LOG_DEBUG
+                );
+            }
+            return $role;
+        }
+
+        // 2. Fallback: try refreshToken cookie (browser page load)
+        if ($this->cookies->has('refreshToken')) {
+            try {
+                $refreshToken = $this->cookies->get('refreshToken')->getValue();
+                if (!empty($refreshToken)) {
+                    $role = $jwt->extractRoleFromRefreshToken($refreshToken);
+                    if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+                        \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                            __METHOD__,
+                            "Role from refreshToken cookie: " . ($role ?? 'null') . ", token length: " . strlen($refreshToken),
+                            LOG_DEBUG
+                        );
+                    }
+                    return $role;
+                }
+            } catch (\Throwable $e) {
+                if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+                    \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "Cookie decryption failed: " . $e->getMessage(),
+                        LOG_DEBUG
+                    );
+                }
+            }
+        }
+
+        return null;
+    }
 }

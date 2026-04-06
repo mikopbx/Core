@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -19,6 +20,7 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents;
 
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ApplyCustomFilesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadConferenceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFeaturesAction;
@@ -47,6 +49,7 @@ class ProcessCustomFiles extends Injectable
         $tables[] = [
             'filePath' => '*',
             'actions' => [
+                ApplyCustomFilesAction::class,
                 ReloadPBXCoreAction::class,
             ],
         ];
@@ -138,13 +141,6 @@ class ProcessCustomFiles extends Injectable
         // Restart network if the file /etc/static-routes was changed
         $tables[] = [
             'filePath' => '/etc/static-routes',
-            'actions' => [
-                ReloadNetworkAction::class
-            ],
-        ];
-
-        $tables[] = [
-            'filePath' => '/etc/openvpn.ovpn',
             'actions' => [
                 ReloadNetworkAction::class
             ],

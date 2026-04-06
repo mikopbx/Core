@@ -3,43 +3,50 @@
     "description": "Free PBX system for SMB based on Asterisk",
     "homepage": "https://www.mikopbx.com",
     "require": {
-        "php": "^7.4",
+        "php": "^8.4",
         "ext-curl": "*",
         "ext-iconv": "*",
         "ext-json": "*",
-        "ext-ldap": "*",
+        "ext-mailparse": "*",
         "ext-openssl": "*",
         "ext-pcntl": "*",
         "ext-pdo": "*",
-        "ext-phalcon": "^4.1.0",
+        "ext-phalcon": "^5.9.3",
         "ext-posix": "*",
+        "ext-redis": "*",
         "ext-simplexml": "*",
         "ext-sockets": "*",
         "ext-sqlite3": "*",
+        "ext-xdebug": "*",
         "ext-zip": "*",
+        "aego/oauth2-yandex": "^0.2",
+        "aws/aws-sdk-php": "^3.359",
         "filp/whoops": "^2.15.2",
+        "geoip2/geoip2": "v3.2.0",
         "guzzlehttp/guzzle": "^7.5.3",
-        "malkusch/lock": "*",
+        "lbuchs/webauthn": "^2.0",
+        "league/oauth2-client": "^2.7",
+        "league/oauth2-google": "^4.0",
         "pda/pheanstalk": "^4.0",
-        "php-mime-mail-parser/php-mime-mail-parser": "^7.0",
-        "php-school/cli-menu": "^4.0",
+        "php-mime-mail-parser/php-mime-mail-parser": "^9.0",
+        "php-school/cli-menu": "^4.4",
         "php-school/terminal": "^0.2.1",
         "phplucidframe/console-table": "^1.2",
         "phpmailer/phpmailer": "^6.1",
         "psr/log": "^1.0.1",
-        "recoil/react": "^1.0",
-        "recoil/recoil": "^1.0",
         "repejota/nats": "0.8.4",
-        "sentry/sdk": "^3.3.0"
+        "sentry/sdk": "^4.0.0",
+        "thenetworg/oauth2-azure": "^2.2"
     },
     "require-dev": {
-        "ext-xdebug": "*",
-        "roave/security-advisories": "dev-master",
-        "phpunit/phpunit-selenium": "^8.0",
-        "php-webdriver/webdriver": "^1.14.0",
         "browserstack/browserstack-local": "^v1.1.0",
-        "blackfire/php-sdk": "^v1.33.0",
-        "phalcon/incubator-test": "v1.0.0-alpha.1"
+        "phalcon/ide-stubs": "^5.9",
+        "php-webdriver/webdriver": "^1.14.0",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^9.0",
+        "phpunit/phpunit-selenium": "^9.0",
+        "roave/security-advisories": "dev-master",
+        "squizlabs/php_codesniffer": "*"
     },
     "autoload": {
         "psr-4": {
@@ -67,10 +74,10 @@
     "license": "GPL-3.0-or-later",
     "support": {
         "email": "help@mikopbx.com",
-        "wiki": "https://wiki.mikopbx.com",
+        "wiki": "https://docs.mikopbx.com",
         "issues": "https://github.com/mikopbx/Core/issues",
         "source": "https://github.com/mikopbx/Core",
-        "forum": "https://qa.askozia.ru",
+        "forum": "https://forum.mikopbx.com",
         "chat": "https://t.me/mikopbx_dev"
     },
     "authors": [
@@ -94,10 +101,26 @@
     "config": {
         "sort-packages": true,
         "platform": {
-            "php": "7.4.6"
+            "php": "8.4"
         },
         "allow-plugins": {
             "php-http/discovery": true
         }
+    },
+    "scripts": {
+        "phpcs": "phpcs --standard=PSR12",
+        "generate-extensions-tests": "php tests/AdminCabinet/Scripts/GenerateExtensionTests.php",
+        "generate-ivrmenu-tests": "php tests/AdminCabinet/Scripts/GenerateIVRMenuTests.php",
+        "generate-sip-providers-tests": "php tests/AdminCabinet/Scripts/GenerateSIPProviderTests.php",
+        "generate-iax-providers-tests": "php tests/AdminCabinet/Scripts/GenerateIAXProviderTests.php",
+        "generate-call-queues-tests": "php tests/AdminCabinet/Scripts/GenerateCallQueueTests.php",
+        "generate-ami-users-tests": "php tests/AdminCabinet/Scripts/GenerateAMIUsersTests.php",
+        "generate-modules-tests": "php tests/AdminCabinet/Scripts/GenerateModuleTests.php",
+        "generate-out-off-work-tests": "php tests/AdminCabinet/Scripts/GenerateOutOfWorkPeriodTests.php",
+        "generate-firewall-rules-tests": "php tests/AdminCabinet/Scripts/GenerateFirewallRulesTests.php",
+        "generate-moh-files-tests": "php tests/AdminCabinet/Scripts/GenerateMOHFileTests.php",
+        "generate-audio-files-tests": "php tests/AdminCabinet/Scripts/GenerateAudioFileTests.php",
+        "generate-incoming-call-rules": "php tests/AdminCabinet/Scripts/GenerateIncomingCallRuleTests.php",
+        "generate-outgoing-call-rules": "php tests/AdminCabinet/Scripts/GenerateOutgoingCallRuleTests.php"
     }
 }

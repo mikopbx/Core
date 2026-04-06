@@ -39,7 +39,7 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class WhoopsErrorHandlerProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'whoopsErrorHandler';
+    public const string SERVICE_NAME = 'whoopsErrorHandler';
 
     /**
      * Registers whoops error handler service provider

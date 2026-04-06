@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -54,7 +54,7 @@ class LoggerConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $logDir = System::getLogDir() . '/asterisk/';
+        $logDir = Directories::getDir(Directories::CORE_LOGS_DIR). '/asterisk/';
 
         // Create the log directory if it doesn't exist
         Util::mwMkdir($logDir);
@@ -73,6 +73,6 @@ class LoggerConf extends AsteriskConfigClass
         $conf .= "\n";
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/logger.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 }

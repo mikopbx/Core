@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -21,11 +22,13 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\Create;
+use GuzzleHttp\Promise\PromiseInterface;
 use MikoPBX\Core\System\SystemMessages;
 
 class YandexCloud extends CloudProvider
 {
-    public const CloudID = 'YandexCloud';
+    public const string CloudID = 'YandexCloud';
 
     private Client $client;
 
@@ -35,7 +38,41 @@ class YandexCloud extends CloudProvider
     }
 
     /**
+     * Performs an asynchronous check to determine if this cloud provider is available.
+     *
+     * @return PromiseInterface Promise that resolves to bool
+     */
+    public function checkAvailability(): PromiseInterface
+    {
+        $promise = $this->client->requestAsync('GET', 'http://169.254.169.254/computeMetadata/v1/instance/', [
+            'query' => ['recursive' => 'true', 'alt' => 'json'],
+            'headers' => ['Metadata-Flavor' => 'Google']
+        ]);
+
+        return $promise->then(
+            function ($response) {
+                if ($response->getStatusCode() !== 200) {
+                    return false;
+                }
+
+                $metadata = json_decode($response->getBody()->getContents(), true) ?? [];
+
+                // Verify that metadata not contains the 'serviceAccounts' with 'gserviceaccount' in any value
+                if (empty($metadata['id']) || !$this->notContainsGoogleDomain($metadata)) {
+                    return false;
+                }
+
+                return true;
+            },
+            function () {
+                return false;
+            }
+        );
+    }
+
+    /**
      * Performs the Yandex Cloud provisioning.
+     * Uses direct SQLite queries to avoid Redis/ORM dependency during early boot.
      *
      * @return bool True if the provisioning was successful, false otherwise.
      */
@@ -43,34 +80,63 @@ class YandexCloud extends CloudProvider
     {
         $metadata = $this->retrieveInstanceMetadata();
         if ($metadata === null || empty($metadata['id'])) {
-            // If metadata is null ot machine id is unknown, do not proceed with provisioning.
+            // If metadata is null or machine id is unknown, do not proceed with provisioning.
             return false;
         }
 
-        SystemMessages::echoToTeletype(PHP_EOL);
-
-        $sshKeys = $metadata['attributes']['ssh-keys']??'';
-
-        // Extract username
-        $username = $this->extractUserNameFromSshKeys($sshKeys);
-
-        // Update SSH keys, if available
-        $this->updateSSHKeys($sshKeys);
-
-        // Update machine name
+        // Extract metadata
+        $sshKeys = $metadata['attributes']['ssh-keys'] ?? '';
+        $username = $this->extractUserNameFromSshKeys($sshKeys) ?? 'yc-user';
         $hostname = $metadata['name'] ?? '';
-        $this->updateHostName($hostname);
-
-        // Update LAN settings with the external IP address
         $extIp = $metadata['networkInterfaces'][0]['accessConfigs'][0]['externalIp'] ?? '';
-        $this->updateLanSettings($extIp);
-
-        // Update SSH and WEB passwords using some unique identifier from the metadata
         $vmId = $metadata['id'];
-        $this->updateSSHCredentials($username ?? 'yc-user', $vmId);
-        $this->updateWebPassword($vmId);
 
-        return true;
+        // Build config from IMDS metadata
+        $config = new ProvisioningConfig(
+            hostname: $hostname,
+            externalIp: $extIp,
+            sshKeys: $sshKeys,
+            sshLogin: $username,
+            instanceId: $vmId,
+            webPassword: $vmId
+        );
+
+        // Fetch and merge user-data if available
+        $userData = $this->fetchUserData();
+        if ($userData !== null) {
+            $userConfig = $this->parseUserData($userData);
+            if ($userConfig !== null && !$userConfig->isEmpty()) {
+                SystemMessages::sysLogMsg(__CLASS__, "Applying user-data configuration");
+                $config = $config->merge($userConfig);
+            }
+        }
+
+        // Apply configuration using direct SQLite (no Redis/ORM)
+        return $this->applyConfigDirect($config);
+    }
+
+    /**
+     * Fetches user-data from Yandex Cloud Metadata Service.
+     *
+     * @return string|null User-data content or null if not available
+     */
+    protected function fetchUserData(): ?string
+    {
+        try {
+            $response = $this->client->request('GET', 'http://169.254.169.254/computeMetadata/v1/instance/attributes/user-data', [
+                'headers' => ['Metadata-Flavor' => 'Google'],
+                'http_errors' => false
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                $userData = $response->getBody()->getContents();
+                return !empty($userData) ? $userData : null;
+            }
+        } catch (GuzzleException $e) {
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to fetch user-data: " . $e->getMessage());
+        }
+
+        return null;
     }
 
     /**
@@ -88,7 +154,7 @@ class YandexCloud extends CloudProvider
             ]);
 
             if ($response->getStatusCode() == 200) {
-                $metadata = json_decode($response->getBody()->getContents(), true);
+                $metadata = json_decode($response->getBody()->getContents(), true)??[];
                 // Verify that metadata not contains the 'serviceAccounts' with 'gserviceaccount' in any value
                 if ($this->notContainsGoogleDomain($metadata)) {
                     return $metadata;
@@ -129,7 +195,7 @@ class YandexCloud extends CloudProvider
     {
         if (isset($metadata['serviceAccounts'])) {
             foreach ($metadata['serviceAccounts'] as $account) {
-                if (strpos($account['email'], 'gserviceaccount') !== false) {
+                if (str_contains($account['email'], 'gserviceaccount')) {
                     return false;
                 }
             }

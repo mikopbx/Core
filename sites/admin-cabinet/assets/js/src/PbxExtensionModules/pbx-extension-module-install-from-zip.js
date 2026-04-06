@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global UserMessage, globalTranslate, PbxApi, installStatusLoopWorker */
+/* global UserMessage, globalTranslate, PbxApi, installStatusLoopWorker, ModulesAPI */
 
 /**
  * Handles the process of installing new PBX extensions from a ZIP file.
@@ -73,7 +73,7 @@ const installationFromZip = {
      */
     initialize() {
         installationFromZip.$progressBar.hide();
-        PbxApi.SystemUploadFileAttachToBtn('add-new-button', ['zip'], installationFromZip.cbResumableUploadFile);
+        FilesAPI.attachToBtn('add-new-button', ['zip'], installationFromZip.cbResumableUploadFile);
     },
 
     /**
@@ -133,11 +133,11 @@ const installationFromZip = {
             filePath: json.data.filename,
             channelId: installationFromZip.channelId
         };
-        PbxApi.ModulesInstallFromPackage(params,  (response) => {
+        ModulesAPI.installFromPackage(params,  (response) => {
             console.debug(response);
             if (response.result === true) {
                 $('html, body').animate({
-                    scrollTop: installationFromZip.$progressBarBlock.offset().top,
+                    scrollTop: installationFromZip.$progressBarBlock.offset().top-50,
                 }, 2000);
             }
         });

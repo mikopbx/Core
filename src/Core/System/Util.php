@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,15 +22,14 @@ namespace MikoPBX\Core\System;
 
 use DateTime;
 use Exception;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\{CustomFiles};
-use malkusch\lock\mutex\PHPRedisMutex;
 use MikoPBX\Common\Providers\AmiConnectionCommand;
 use MikoPBX\Common\Providers\AmiConnectionListener;
 use MikoPBX\Common\Providers\LanguageProvider;
-use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use ReflectionClass;
 use ReflectionException;
 use Throwable;
@@ -43,7 +43,6 @@ use Throwable;
  */
 class Util
 {
-
     /**
      * Overrides configuration array with manual attributes for a specific section.
      *
@@ -53,7 +52,7 @@ class Util
      *
      * @return string The resulting configuration string.
      */
-    public static function overrideConfigurationArray($options, $manual_attributes, $section): string
+    public static function overrideConfigurationArray(array &$options, ?array $manual_attributes, string $section): string
     {
         $result_config = '';
         if ($manual_attributes !== null && isset($manual_attributes[$section])) {
@@ -69,10 +68,16 @@ class Util
                 continue;
             }
             if (is_array($value)) {
-                array_unshift($value, ' ');
-                $result_config .= trim(implode("\n{$key} = ", $value)) . "\n";
+                // For codec-related keys (allow/disallow), use comma-separated format
+                // For other array values, use multiple lines
+                if (in_array($key, ['allow', 'disallow'], true)) {
+                    $result_config .= "$key = " . implode(',', $value) . "\n";
+                } else {
+                    array_unshift($value, ' ');
+                    $result_config .= trim(implode("\n$key = ", $value)) . "\n";
+                }
             } else {
-                $result_config .= "{$key} = {$value}\n";
+                $result_config .= "$key = $value\n";
             }
         }
 
@@ -87,13 +92,14 @@ class Util
      * @param string $dest_number The destination number.
      *
      * @return array The result of the Originate command.
+     * @throws Exception
      */
     public static function amiOriginate(string $peer_number, string $peer_mobile, string $dest_number): array
     {
         $am = self::getAstManager('off');
         $channel = 'Local/' . $peer_number . '@internal-originate';
         $context = 'all_peers';
-        $variable = "pt1c_cid={$dest_number},__peer_mobile={$peer_mobile}";
+        $variable = "pt1c_cid=$dest_number,__peer_mobile=$peer_mobile";
 
         return $am->Originate(
             $channel,
@@ -117,7 +123,7 @@ class Util
      *
      * @return AsteriskManager The Asterisk Manager object.
      *
-     * @throws \Phalcon\Exception
+     * @throws Exception
      */
     public static function getAstManager(string $events = 'on'): AsteriskManager
     {
@@ -128,7 +134,7 @@ class Util
         }
         $di = Di::getDefault();
         if ($di === null) {
-            throw new \Phalcon\Exception("di not found");
+            throw new \Exception("di not found");
         }
 
         // Try to connect to Asterisk Manager
@@ -156,6 +162,7 @@ class Util
             try {
                 $randomString .= $characters[random_int(0, $charactersLength - 1)];
             } catch (Throwable $e) {
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
                 $randomString = '';
             }
         }
@@ -170,11 +177,9 @@ class Util
      *
      * @return bool True if the string is a valid JSON, false otherwise.
      */
-    public static function isJson($jsonString): bool
+    public static function isJson(mixed $jsonString): bool
     {
-        json_decode($jsonString, true);
-
-        return (json_last_error() === JSON_ERROR_NONE);
+        return json_validate($jsonString);
     }
 
     /**
@@ -184,7 +189,7 @@ class Util
      *
      * @return float|int The size of the file in megabytes.
      */
-    public static function mFileSize(string $filename)
+    public static function mFileSize(string $filename): float|int
     {
         $size = 0;
         if (file_exists($filename)) {
@@ -220,7 +225,7 @@ class Util
      *
      * @param string $filename The filename.
      *
-     * @return bool True if the file exists and has a non-zero size, false otherwise.
+     * @return ?bool True if the file exists and has a non-zero size, false otherwise.
      */
     public static function recFileExists(string $filename): ?bool
     {
@@ -234,7 +239,7 @@ class Util
      *
      * @return string The converted date string or the original input data.
      */
-    public static function numberToDate($data): string
+    public static function numberToDate(mixed $data): string
     {
         $re_number = '/^\d+.\d+$/';
         preg_match_all($re_number, $data, $matches, PREG_SET_ORDER, 0);
@@ -256,18 +261,21 @@ class Util
     public static function fileWriteContent(string $filename, string $data): void
     {
         /** @var CustomFiles $res */
-        $res = CustomFiles::findFirst("filepath = '{$filename}'");
+        $res = CustomFiles::findFirst([
+            'conditions' => 'filepath = :path:',
+            'bind' => ['path' => $filename],
+        ]);
         if ($res === null) {
             // File is not yet registered in the database, create a new CustomFiles entry
             $res = new CustomFiles();
             $res->writeAttribute('filepath', $filename);
-            $res->writeAttribute('mode',  CustomFiles::MODE_NONE);
+            $res->writeAttribute('mode', CustomFiles::MODE_NONE);
             $res->save();
         }
 
-        $filename_orgn = "{$filename}.orgn";
+        $filename_orgn = "$filename.orgn";
 
-        switch ($res->mode){
+        switch ($res->mode) {
             case CustomFiles::MODE_NONE:
                 if (file_exists($filename_orgn)) {
                     unlink($filename_orgn);
@@ -282,6 +290,7 @@ class Util
                 file_put_contents($filename, $data);
                 break;
             case CustomFiles::MODE_OVERRIDE:
+            case CustomFiles::MODE_CUSTOM:
                 file_put_contents($filename_orgn, $data);
                 // Override the file
                 $data = base64_decode((string)$res->content);
@@ -298,7 +307,7 @@ class Util
                 $scriptText = base64_decode((string)$res->content);
                 $tempScriptFile = tempnam(sys_get_temp_dir(), 'temp_script.sh');
                 file_put_contents($tempScriptFile, $scriptText);
-                $command = "/bin/sh {$tempScriptFile} {$filename}";
+                $command = "/bin/sh $tempScriptFile $filename";
                 Processes::mwExec($command);
                 unlink($tempScriptFile);
 
@@ -349,10 +358,10 @@ class Util
      */
     public static function trimExtensionForFile(string $filename, string $delimiter = '.'): string
     {
-        $tmp_arr = explode((string)$delimiter, $filename);
+        $tmp_arr = explode($delimiter, $filename);
         if (count($tmp_arr) > 1) {
             unset($tmp_arr[count($tmp_arr) - 1]);
-            $filename = implode((string)$delimiter, $tmp_arr);
+            $filename = implode($delimiter, $tmp_arr);
         }
 
         return $filename;
@@ -368,9 +377,9 @@ class Util
     {
         $result = 0;
         if (file_exists($filename)) {
-            $duPath = self::which('du');
-            $awkPath = self::which('awk');
-            Processes::mwExec("{$duPath} -d 0 -k '{$filename}' | {$awkPath}  '{ print $1}'", $out);
+            $du = self::which('du');
+            $awk = self::which('awk');
+            Processes::mwExec("$du -d 0 -k '$filename' | $awk  '{ print $1}'", $out);
             $time_str = implode($out);
             preg_match_all('/^\d+$/', $time_str, $matches, PREG_SET_ORDER, 0);
             if (count($matches) > 0) {
@@ -397,8 +406,8 @@ class Util
 
         // Search for the command in each binary folder
         foreach (explode(':', $binaryFolders) as $path) {
-            if (is_executable("{$path}/{$cmd}")) {
-                return "{$path}/{$cmd}";
+            if (is_executable("$path/$cmd")) {
+                return "$path/$cmd";
             }
         }
 
@@ -436,28 +445,14 @@ class Util
     }
 
     /**
-     * Checks if a password is simple based on a dictionary.
-     *
-     * @param string $value The password to check.
-     *
-     * @return bool True if the password is found in the dictionary, false otherwise.
-     */
-    public static function isSimplePassword(string $value): bool
-    {
-        $passwords = [];
-        Processes::mwExec('/bin/zcat /usr/share/wordlists/rockyou.txt.gz', $passwords);
-        return in_array($value, $passwords, true);
-    }
-
-    /**
      * Sets the Cyrillic font for the console.
      *
      * @return void
      */
     public static function setCyrillicFont(): void
     {
-        $setfontPath = self::which('setfont');
-        Processes::mwExec("{$setfontPath} /usr/share/consolefonts/Cyr_a8x16.psfu.gz 2>/dev/null");
+        $setfont = self::which('setfont');
+        Processes::mwExec("$setfont /usr/share/consolefonts/Cyr_a8x16.psfu.gz 2>/dev/null");
     }
 
     /**
@@ -465,17 +460,18 @@ class Util
      *
      * @param string $text The text to translate.
      * @param bool $cliLang Whether to use CLI language or web language (default: true).
+     * @param array $parameters The parameters to replace in the text.
      *
      * @return string The translated text.
      */
-    public static function translate(string $text, bool $cliLang = true): string
+    public static function translate(string $text, bool $cliLang = true, array $parameters=[]): string
     {
         $di = Di::getDefault();
         if ($di !== null) {
             if (!$cliLang) {
                 $di->setShared(LanguageProvider::PREFERRED_LANG_WEB, true);
             }
-            $text = $di->getShared(TranslationProvider::SERVICE_NAME)->_($text);
+            $text = $di->getShared(TranslationProvider::SERVICE_NAME)->_($text, $parameters);
             if (!$cliLang) {
                 $di->remove(LanguageProvider::PREFERRED_LANG_WEB);
             }
@@ -519,51 +515,18 @@ class Util
     /**
      * Generates an SSL certificate.
      *
+     * @deprecated Since 2025.1.0, use SslCertificateService::generateSelfSignedCertificate() instead
+     * 
      * @param array|null $options The options for the certificate (default: null).
      * @param array|null $config_args_pkey The configuration arguments for the private key (default: null).
      * @param array|null $config_args_csr The configuration arguments for the CSR (default: null).
      *
      * @return array The generated SSL certificate (public and private keys).
      */
-    public static function generateSslCert($options = null, $config_args_pkey = null, $config_args_csr = null): array
+    public static function generateSslCert(?array $options = null, ?array $config_args_pkey = null, ?array $config_args_csr = null): array
     {
-        // Initialize options if not provided
-        if (!$options) {
-            $options = [
-                "countryName" => 'RU',
-                "stateOrProvinceName" => 'Moscow',
-                "localityName" => 'Zelenograd',
-                "organizationName" => 'MIKO LLC',
-                "organizationalUnitName" => 'Software development',
-                "commonName" => 'MIKO PBX',
-                "emailAddress" => 'info@miko.ru',
-            ];
-        }
-
-        // Initialize CSR configuration arguments if not provided
-        if (!$config_args_csr) {
-            $config_args_csr = ['digest_alg' => 'sha256'];
-        }
-
-        // Initialize private key configuration arguments if not provided
-        if (!$config_args_pkey) {
-            $config_args_pkey = [
-                "private_key_bits" => 2048,
-                "private_key_type" => OPENSSL_KEYTYPE_RSA,
-            ];
-        }
-
-        // Generate keys
-        $private_key = openssl_pkey_new($config_args_pkey);
-        $csr = openssl_csr_new($options, /** @scrutinizer ignore-type */$private_key, $config_args_csr);
-        $x509 = openssl_csr_sign($csr, null, $private_key, $days = 3650, $config_args_csr);
-
-        // Export keys
-        openssl_x509_export($x509, $certout);
-        openssl_pkey_export($private_key, $pkeyout);
-        // echo $pkeyout; // -> WEBHTTPSPrivateKey
-        // echo $certout; // -> WEBHTTPSPublicKey
-        return ['PublicKey' => $certout, 'PrivateKey' => $pkeyout];
+        // Delegate to the new SslCertificateService
+        return SslCertificateService::generateSelfSignedCertificate($options, $config_args_pkey, $config_args_csr);
     }
 
     /**
@@ -590,11 +553,15 @@ class Util
     /**
      * Checks whether the current process is running inside a Docker container.
      *
-     * @return bool True if the process is inside a container, false otherwise.
+     * @deprecated Use System::isDocker() for Docker-only check,
+     *             System::isContainer() for any container (Docker or LXC),
+     *             System::canManageNetwork() for capability-based checks.
+     *
+     * @return bool True if the process is inside a Docker container, false otherwise.
      */
     public static function isDocker(): bool
     {
-        return file_exists('/.dockerenv');
+        return System::isDocker();
     }
 
     /**
@@ -657,10 +624,12 @@ class Util
             $arrPaths = explode(' ', $parameters);
             if (count($arrPaths) > 0) {
                 foreach ($arrPaths as $path) {
-                    if (!empty($path)
+                    if (
+                        !empty($path)
                         && !file_exists($path)
                         && !mkdir($path, 0755, true)
-                        && !is_dir($path)) {
+                        && !is_dir($path)
+                    ) {
                         $result = false;
                         SystemMessages::sysLogMsg(__METHOD__, 'Error on create folder ' . $path, LOG_ERR);
                     }
@@ -682,12 +651,15 @@ class Util
     public static function addRegularWWWRights($folder): void
     {
         if (posix_getuid() === 0) {
-            $findPath = self::which('find');
-            $chownPath = self::which('chown');
-            $chmodPath = self::which('chmod');
-            Processes::mwExec("{$findPath} {$folder} -type d -exec {$chmodPath} 755 {} \;");
-            Processes::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 644 {} \;");
-            Processes::mwExec("{$chownPath} -R www:www {$folder}");
+            $find = self::which('find');
+            $chown = self::which('chown');
+            $chmod = self::which('chmod');
+            $xargs = self::which('xargs');
+            
+            // Optimized: only chmod/chown files that need it (avoids redundant syscalls on thousands of files)
+            Processes::mwExec("$find $folder -type d -not -perm 755 -print0 2>/dev/null | $xargs -0 -r -P 4 -n 50 $chmod 755");
+            Processes::mwExec("$find $folder -type f -not -perm 644 -print0 2>/dev/null | $xargs -0 -r -P 4 -n 50 $chmod 644");
+            Processes::mwExec("$find $folder -not -user www -exec $chown www:www {} +");
         }
     }
 
@@ -702,11 +674,11 @@ class Util
     {
         // Check if the script is running with root privileges
         if (posix_getuid() === 0) {
-            $findPath = self::which('find');
-            $chmodPath = self::which('chmod');
-
-            // Execute find command to locate files and modify their permissions
-            Processes::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 755 {} \;");
+            $find = self::which('find');
+            $chmod = self::which('chmod');
+            $xargs = self::which('xargs');
+            // Optimized version using xargs for parallel execution
+            Processes::mwExec("$find $folder -type f -print0 2>/dev/null | $xargs -0 -P 4 -n 50 $chmod 755");
         }
     }
 
@@ -731,41 +703,51 @@ class Util
         foreach ($tmp_arr as &$row) {
             $row = trim($row);
             $pos = strpos($row, ']');
-            if ($pos !== false && strpos($row, '[') === 0) {
-                $row = "\n" . substr($row, 0, $pos);
+            if ($pos !== false && str_starts_with($row, '[')) {
+                $row = "\n" . substr($row, 0, $pos + 1);
             }
         }
         unset($row);
         $manual_attributes = implode("\n", $tmp_arr);
         // TRIMMING END
 
+        $haveSection = strpos($manual_attributes, '[') !== false;
+
         $manual_data = [];
         $sections = explode("\n[", str_replace(']', '', $manual_attributes));
         foreach ($sections as $section) {
             $data_rows = explode("\n", trim($section));
             $section_name = trim($data_rows[0] ?? '');
-            if (!empty($section_name)) {
+            if (!$haveSection && str_contains($section_name, '=')) {
+                // Noname section
+                $section_name = ' ';
+            } else {
                 unset($data_rows[0]);
-                $manual_data[$section_name] = [];
-                foreach ($data_rows as $row) {
-                    $value = '';
+            }
+            $manual_data[$section_name] = [];
+            foreach ($data_rows as $row) {
+                $value = '';
 
-                    // Skip rows without an equal sign
-                    if (strpos($row, '=') === false) {
-                        continue;
-                    }
-                    $key = '';
-                    $arr_value = explode('=', $row);
-                    if (count($arr_value) > 1) {
-                        $key = trim($arr_value[0]);
-                        unset($arr_value[0]);
-                        $value = trim(implode('=', $arr_value));
-                    }
+                // Skip rows without an equal sign
+                if (!str_contains($row, '=')) {
+                    continue;
+                }
+                $key = '';
+                $arr_value = explode('=', $row);
+                if (count($arr_value) > 1) {
+                    $key = trim($arr_value[0]);
+                    unset($arr_value[0]);
+                    $value = trim(implode('=', $arr_value));
+                }
 
-                    // Skip rows with empty key or value not equal to '0'
-                    if (($value !== '0' && empty($value)) || empty($key)) {
-                        continue;
-                    }
+                // Skip rows with empty key or value not equal to '0'
+                if (($value !== '0' && empty($value)) || empty($key)) {
+                    continue;
+                }
+                if( ('set_var' === $key && $section_name === 'endpoint') ||
+                    ('setvar'  === $key && $section_name === ' ')) {
+                    $manual_data[$section_name][$key][] = $value;
+                }else{
                     $manual_data[$section_name][$key] = $value;
                 }
             }
@@ -815,24 +797,6 @@ class Util
         return $filename;
     }
 
-
-    /**
-     * Creates a mutex to ensure synchronized module installation.
-     *
-     * @param string $namespace Namespace for the mutex, used to differentiate mutexes.
-     * @param string $uniqueId Unique identifier for the mutex, usually the module ID.
-     * @param int $timeout Timeout in seconds for the mutex.
-     *
-     * @return PHPRedisMutex Returns an instance of PHPRedisMutex.
-     */
-    public static function createMutex(string $namespace, string $uniqueId, int $timeout = 5): PHPRedisMutex
-    {
-        $di = Di::getDefault();
-        $redisAdapter = $di->get(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
-        $mutexKey = "Mutex:$namespace-" . md5($uniqueId);
-        return new PHPRedisMutex([$redisAdapter], $mutexKey, $timeout);
-    }
-
     /**
      * Adds messages to Syslog.
      * @deprecated Use SystemMessages::sysLogMsg instead
@@ -871,6 +835,5 @@ class Util
     {
         return file_exists('/offload/livecd');
     }
-
 
 }

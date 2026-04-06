@@ -31,8 +31,7 @@ use MikoPBX\PBXCoreREST\Lib\Modules\InstallFromRepoAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\StartDownloadAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\StatusOfModuleInstallationAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\UninstallModuleAction;
-use MikoPBX\PBXCoreREST\Lib\Modules\UpdateAllAction;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
 /**
@@ -60,13 +59,13 @@ class ModulesManagementProcessor extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
             switch ($action) {
-                case 'moduleStartDownload':
+                case 'startDownload':
                     $module = $request['data']['uniqid'];
                     $url = $request['data']['url'];
                     $md5 = $request['data']['md5'];
                     $res = StartDownloadAction::main($module, $url, $md5);
                     break;
-                case 'moduleDownloadStatus':
+                case 'getDownloadStatus':
                     $module = $request['data']['uniqid'];
                     $res = DownloadStatusAction::main($module);
                     break;
@@ -78,46 +77,45 @@ class ModulesManagementProcessor extends Injectable
                     $installer->start();
                     $res->success = true;
                     break;
-                case 'getMetadataFromModulePackage':
+                case 'getMetadataFromPackage':
                     $filePath = $data['filePath'];
                     $res = GetMetadataFromModulePackageAction::main($filePath);
                     break;
                 case 'installFromRepo':
                     $asyncChannelId = $request['asyncChannelId'];
-                    $moduleUniqueID = $data['uniqid'];
+                    $moduleUniqueID = $data['uniqid'] ?? $data['id'];
                     $releaseId = intval($data['releaseId']??0);
                     $installer = new InstallFromRepoAction($asyncChannelId, $moduleUniqueID, $releaseId);
                     $installer->start();
                     $res->success = true;
                     break;
-                case 'updateAll':
-                    $asyncChannelId = $request['asyncChannelId'];
-                    $modulesForUpdate = $data['modulesForUpdate'];
-                    UpdateAllAction::main($asyncChannelId, $modulesForUpdate);
-                    $res->success = true;
-                    break;
                 case 'getModuleInfo':
-                    $moduleUniqueID = $data['uniqid'];
+                    $moduleUniqueID = $data['uniqid'] ?? $data['id'] ?? '';
                     $res = GetModuleInfoAction::main($moduleUniqueID);
                     break;
-                case 'statusOfModuleInstallation':
+                case 'getInstallationStatus':
                     $filePath = $data['filePath'];
                     $res = StatusOfModuleInstallationAction::main($filePath);
                     break;
-                case 'enableModule':
-                    $moduleUniqueID = $data['uniqid'];
-                    $res = EnableModuleAction::main($moduleUniqueID);
+                case 'enable':
+                    $asyncChannelId = $request['asyncChannelId'];
+                    $moduleUniqueID = $data['uniqid'] ?? $data['id'];
+                    $res = EnableModuleAction::main($moduleUniqueID, $asyncChannelId);
                     break;
-                case 'disableModule':
-                    $moduleUniqueID = $data['uniqid'];
+                case 'disable':
+                    $asyncChannelId = $request['asyncChannelId']??'internal-request';
+                    $moduleUniqueID = $data['uniqid'] ?? $data['id'];
                     $reason = $data['reason']??'';
                     $reasonText = $data['reasonText']??'';
-                    $res = DisableModuleAction::main($moduleUniqueID, $reason, $reasonText);
+                    $res = DisableModuleAction::main($moduleUniqueID, $reason, $reasonText, $asyncChannelId);
                     break;
-                case 'uninstallModule':
-                    $moduleUniqueID = $data['uniqid'];
+                case 'uninstall':
+                    $asyncChannelId = $request['asyncChannelId'];
+                    $moduleUniqueID = $data['uniqid'] ?? $data['id'];
                     $keepSettings = $data['keepSettings'] === 'true';
-                    $res = UninstallModuleAction::main($moduleUniqueID, $keepSettings);
+                    $uninstaller = new UninstallModuleAction( $asyncChannelId, $moduleUniqueID, $keepSettings);
+                    $uninstaller->start();
+                    $res->success=true;
                     break;
                 case 'getAvailableModules':
                     $res = GetAvailableModulesAction::main();

@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +21,14 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use GuzzleHttp\Exception\GuzzleException;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
+use MikoPBX\Tests\AdminCabinet\Tests\Data\AudioFilesDataFactory;
 
+/**
+ * Class CheckDropdownAfterCreateAudioFileTest
+ * Tests the dropdown menu functionality after creating audio files
+ */
 class CheckDropdownAfterCreateAudioFileTest extends MikoPBXTestsBase
 {
     /**
@@ -34,46 +40,66 @@ class CheckDropdownAfterCreateAudioFileTest extends MikoPBXTestsBase
     public function setUp(): void
     {
         parent::setUp();
-        $this->setSessionName("Test: Check file selection dropdown after the new one was created");
+        $this->setSessionName('Test: Check file selection dropdown after the new one was created');
     }
 
-
     /**
-     * Test checking the dropdown menu after creating audio files.
+     * Test checking the dropdown menu after creating audio files
      *
-     * @depends testLogin
      * @dataProvider audioFilesProvider
      *
-     * @param array $params The parameters for the audio file.
+     * @param string $audioKey The key identifier for the audio file
+     * @return void
      */
-    public function testCheckDropdownAfterCreateAudioFiles(array $params): void
+    public function testCheckDropdownAfterCreateAudioFiles(string $audioKey): void
     {
-        // Navigate to the recording settings page
-        self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/recording");
+        // Get audio file data from factory
+        $audioData = AudioFilesDataFactory::getAudioFileData($audioKey);
 
-        // Check if the specified element exists in the dropdown menu
-        $elementFound = $this->checkIfElementExistOnDropdownMenu(PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_IN, $params['name']);
+        // Skip files marked for deletion in dropdown tests
+        if ($audioData['for_delete']) {
+            $this->markTestSkipped("Skipping dropdown test for file marked for deletion: {$audioData['name']}");
+        }
 
-        // Asserts
-        if (!$elementFound) {
-            $this->fail('Not found menuitem ' . $params['name'] . PHP_EOL);
-        } else {
-            // Increment assertion counter
-            $this->assertTrue(true);
+        try {
+            // Navigate to the recording settings page
+            self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/recording");
+            $this->waitForAjax();
+
+            // Check if the audio file exists in dropdown
+            $elementFound = $this->checkIfElementExistOnDropdownMenu(
+                PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN,
+                $audioData['name']
+            );
+
+            if (!$elementFound) {
+                $this->fail("Audio file '{$audioData['name']}' not found in dropdown menu");
+            }
+
+            $this->assertTrue(true, "Audio file '{$audioData['name']}' found in dropdown menu");
+
+        } catch (\Exception $e) {
+            $this->fail("Failed to test dropdown menu for audio file '{$audioData['name']}': " . $e->getMessage());
         }
     }
 
     /**
-     * Dataset provider that retrieves data from CreateAudioFilesTest.
+     * Data provider for audio files test
+     * Returns only non-deletable audio files
      *
      * @return array
      */
     public function audioFilesProvider(): array
     {
-        // Create an instance of CreateAudioFilesTest to access its dataset provider
-        $audioFiles = new CreateAudioFilesTest();
+        $testData = [];
 
-        // Return data from the dataset provider of CreateAudioFilesTest
-        return $audioFiles->additionProvider();
+        // Get only non-delete audio file keys
+        $audioKeys = AudioFilesDataFactory::getNonDeleteAudioFileKeys();
+
+        foreach ($audioKeys as $key) {
+            $testData["Audio file: {$key}"] = [$key];
+        }
+
+        return $testData;
     }
 }

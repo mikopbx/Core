@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,9 +20,10 @@
 
 namespace MikoPBX\Modules;
 
-use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Util;
 use Phalcon\Logger\Adapter\Stream as FileLogger;
+use Phalcon\Logger\Exception;
 
 /**
  * Class Logger
@@ -32,7 +34,7 @@ use Phalcon\Logger\Adapter\Stream as FileLogger;
 class Logger
 {
     public bool $debug;
-    private \Phalcon\Logger $logger;
+    private \Phalcon\Logger\Logger $logger;
     private string $module_name;
 
     /**
@@ -40,21 +42,22 @@ class Logger
      *
      * @param string $class The name of the class using the logger.
      * @param string $module_name The name of the module.
+     * @throws Exception
      */
     public function __construct(string $class, string $module_name)
     {
         $this->module_name = $module_name;
         $this->debug    = true;
-        $logPath        = System::getLogDir() . '/' . $this->module_name . '/';
+        $logPath        = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $this->module_name . '/';
 
         // Create the log directory if it does not exist
-        if (!is_dir($logPath)){
+        if (!is_dir($logPath)) {
             Util::mwMkdir($logPath);
             Util::addRegularWWWRights($logPath);
         }
         $logFile  = $logPath . $class . '.log';
         $adapter       = new FileLogger($logFile);
-        $this->logger  = new \Phalcon\Logger(
+        $this->logger  = new \Phalcon\Logger\Logger(
             'messages',
             [
                 'main' => $adapter,
@@ -66,8 +69,9 @@ class Logger
      * Writes log information.
      *
      * @param mixed $data The data to be logged.
+     * @throws Exception
      */
-    public function write($data): void
+    public function write(mixed $data): void
     {
         if ($this->debug) {
             $this->logger->info($this->getDecodedString($data));
@@ -78,8 +82,9 @@ class Logger
      * Writes log error information.
      *
      * @param mixed $data The error data to be logged.
+     * @throws Exception
      */
-    public function writeError($data): void
+    public function writeError(mixed $data): void
     {
         if ($this->debug) {
             $this->logger->error($this->getDecodedString($data));
@@ -90,8 +95,9 @@ class Logger
      * Writes log informational data.
      *
      * @param mixed $data The informational data to be logged.
+     * @throws Exception
      */
-    public function writeInfo($data): void
+    public function writeInfo(mixed $data): void
     {
         if ($this->debug) {
             $this->logger->info($this->getDecodedString($data));
@@ -105,15 +111,14 @@ class Logger
      *
      * @return string The decoded string.
      */
-    private function getDecodedString($data):string
+    private function getDecodedString(mixed $data): string
     {
         $printedData = print_r($data, true);
-        if(is_bool($printedData)){
+        if (is_bool($printedData)) {
             $result = '';
-        }else{
+        } else {
             $result = urldecode($printedData);
         }
         return $result;
     }
-
 }

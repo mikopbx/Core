@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -20,8 +21,8 @@
 namespace MikoPBX\Common\Models;
 
 use Phalcon\Mvc\Model\Relation;
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class Providers
@@ -97,7 +98,7 @@ class Providers extends ModelsBase
                 'foreignKey' => [
                     'allowNulls' => false,
                     'action' => Relation::NO_ACTION,
-                    // This account will be automatically deleted if the SIP record is deleted
+                    // Provider is deleted automatically when SIP record is deleted (reverse cascade)
                 ],
             ]
         );
@@ -112,7 +113,7 @@ class Providers extends ModelsBase
                 'foreignKey' => [
                     'allowNulls' => false,
                     'action' => Relation::NO_ACTION,
-                    // This account will be automatically deleted if the IAX record is deleted
+                    // Provider is deleted automatically when IAX record is deleted (reverse cascade)
                 ],
             ]
         );
@@ -127,7 +128,7 @@ class Providers extends ModelsBase
                 'foreignKey' => [
                     'allowNulls' => false,
                     'message' => 'OutgoingRouting',
-                    'action' => Relation::ACTION_CASCADE,
+                    'action' => Relation::ACTION_CASCADE, // Automatically delete routes when provider is deleted
                 ],
                 'params' => [
                     'order' => 'priority asc',
@@ -145,7 +146,7 @@ class Providers extends ModelsBase
                 'foreignKey' => [
                     'allowNulls' => true,
                     'message' => 'IncomingRouting',
-                    'action' => Relation::NO_ACTION,
+                    'action' => Relation::ACTION_CASCADE, // Automatically delete routes when provider is deleted
                 ],
                 'params' => [
                     'order' => 'priority asc',
@@ -172,5 +173,22 @@ class Providers extends ModelsBase
         );
 
         return $this->validate($validation);
+    }
+
+    /**
+     * Generates a random unique id for provider based on type
+     *
+     * @param string $type Provider type (SIP or IAX)
+     * @return string The generated unique id (e.g., SIP-TRUNK-XXXX or IAX-TRUNK-XXXX)
+     */
+    public static function generateUniqueID(string $type = 'SIP'): string
+    {
+        $prefix = match($type) {
+            'SIP' => Extensions::PREFIX_TRUNK_SIP,
+            'IAX' => Extensions::PREFIX_TRUNK_IAX,
+            default => $type . '-TRUNK'
+        };
+
+        return parent::generateUniqueID($prefix);
     }
 }

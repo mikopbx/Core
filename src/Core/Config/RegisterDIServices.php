@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,15 +22,14 @@ declare(strict_types=1);
 
 namespace MikoPBX\Core\Config;
 
-use MikoPBX\Common\Providers\{AmiConnectionCommand,
+use MikoPBX\Common\Providers\{AclProvider,
+    AmiConnectionCommand,
     AmiConnectionListener,
     BeanstalkConnectionModelsProvider,
-    BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
     MarketPlaceProvider,
     LoggerProvider,
     MainDatabaseProvider,
-    ModelsCacheProvider,
     ManagedCacheProvider,
     ModelsMetadataProvider,
     ModelsAnnotationsProvider,
@@ -37,15 +37,19 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     NatsConnectionProvider,
     PBXConfModulesProvider,
     PBXCoreRESTClientProvider,
+    EventBusProvider,
+    RecordingStorageDatabaseProvider,
+    RedisClientProvider,
     RegistryProvider,
     SentryErrorHandlerProvider,
     TranslationProvider,
     MessagesProvider,
     UrlProvider,
     LanguageProvider,
-    WhoopsErrorHandlerProvider};
+    WhoopsErrorHandlerProvider,
+    MutexProvider};
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 
 /**
  * Initialize services on dependency injector
@@ -75,10 +79,12 @@ class RegisterDIServices
             ModelsMetadataProvider::class,
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,
+            RecordingStorageDatabaseProvider::class,
 
-            // Inject caches
+            // Inject caches and message queues
+            RedisClientProvider::class,
             ManagedCacheProvider::class,
-            ModelsCacheProvider::class,
+            MutexProvider::class,
 
             // Inject Translations
             MessagesProvider::class,
@@ -88,7 +94,6 @@ class RegisterDIServices
             // Inject Queue connection
             NatsConnectionProvider::class,
             BeanstalkConnectionModelsProvider::class,
-            BeanstalkConnectionWorkerApiProvider::class,
 
             // AMI Connectors
             AmiConnectionCommand::class,
@@ -107,15 +112,20 @@ class RegisterDIServices
             PBXConfModulesProvider::class,
             ModulesDBConnectionsProvider::class,
 
+            // Inject Access Control Lists
+            AclProvider::class,
+
             // Inject Rest API client
-            PBXCoreRESTClientProvider::class
+            PBXCoreRESTClientProvider::class,
+            // Inject EventBus provider
+            EventBusProvider::class
 
         ];
 
         foreach ($providersList as $provider) {
             // Delete previous provider
             $di->remove($provider::SERVICE_NAME);
-            $di->register(new $provider());
+            (new $provider())->register($di);
         }
 
         $di->getShared(RegistryProvider::SERVICE_NAME)->libraryName = 'core-workers';
@@ -123,5 +133,4 @@ class RegisterDIServices
         $di->get(SentryErrorHandlerProvider::SERVICE_NAME);
         $di->get(WhoopsErrorHandlerProvider::SERVICE_NAME);
     }
-
 }

@@ -37,17 +37,42 @@ cleanup()
 . /sbin/shell_functions.sh;
 
 # Redirect input, output and error streams to the console
-exec </dev/console >/dev/console 2>/dev/console;
+# Check if console is available before redirecting
+if test -c /dev/console && test -r /dev/console && test -w /dev/console; then
+  exec </dev/console >/dev/console 2>/dev/console;
+fi
 echo;
 
 
 # Set the trap for specific signals to call the cleanup function
-for sig in SIGINT SIGTERM SIGHUP SIGQUIT EXIT; do
-  trap cleanup "$sig";
-done
+# SIGINT   - 2
+# SIGTERM  - 15
+# SIGHUP   - 1
+# SIGQUIT  - 3
+# EXIT
+trap 'cleanup' 2 15 1 3 EXIT
 
 # Start the PHP script in the background
-php -f /offload/rootfs/usr/www/src/Core/System/DockerEntrypoint.php &
+php -f /offload/rootfs/usr/www/src/Core/System/ContainerEntrypoint.php &
 
 # Enter an infinite loop to keep the script running
-while true; do sleep 1; done
+# Check for restart/reboot flags every second
+while true; do 
+  # Check if container restart is requested
+  if [ -f /tmp/rebooting ]; then
+    echo "Container restart requested..."
+    rm -f /tmp/rebooting
+    # Just exit, trap will handle cleanup
+    exit 0
+  fi
+  
+  # Check for shutdown
+  if [ -f /tmp/shutdown ]; then
+    echo "Container shutdown requested..."
+    rm -f /tmp/shutdown
+    # Just exit, trap will handle cleanup
+    exit 0
+  fi
+  
+  sleep 1
+done

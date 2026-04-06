@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 
@@ -39,8 +40,9 @@ class UpdateDataInDB
      *
      * @param array $data The data to be updated.
      * @return void
+     * @throws \Exception
      */
-    public static function execute($data): void
+    public static function execute(array $data): void
     {
         if (empty($data['UNIQUEID'])) {
             SystemMessages::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data), LOG_DEBUG);
@@ -85,8 +87,9 @@ class UpdateDataInDB
      * @param CallDetailRecordsTmp $m_data The CallDetailRecordsTmp object.
      * @param array $data The additional data.
      * @return void
+     * @throws \Exception
      */
-    private static function sendUserEventData(CallDetailRecordsTmp $m_data, $data): void
+    private static function sendUserEventData(CallDetailRecordsTmp $m_data, array $data): void
     {
         $insert_data = $m_data->toArray();
         if ($insert_data['work_completed'] === "1") {
@@ -104,7 +107,7 @@ class UpdateDataInDB
                 $insert_data['transfer']
             );
             $am = Util::getAstManager('off');
-            $am->UserEvent('CdrConnector', ['AgiData' => base64_encode(json_encode($insert_data))]);
+            $am->UserEvent('CdrConnector', ['AgiData' => AsteriskManager::encodeCdrData($insert_data)]);
         }
     }
 }

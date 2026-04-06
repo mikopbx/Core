@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,66 +15,67 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global globalRootUrl, ConferenceRoomsAPI, Extensions, globalTranslate, UserMessage */
+
+/* global globalRootUrl, ConferenceRoomsAPI, Extensions, globalTranslate, UserMessage, SemanticLocalization, PbxDataTableIndex, SecurityUtils */
 
 /**
- * Module handling interactions with the conference room table.
- * @module conferenceTable
+ * Conference rooms table management module using unified base class
  */
-const conferenceTable = {
-
-    $conferencesTable: $('#conference-rooms-table'),
+const conferenceRoomsIndex = {
+    /**
+     * DataTable instance from base class
+     */
+    dataTableInstance: null,
 
     /**
-     * Initializes module functionality.
-     * Specifically, it adds a double click event handler to the rows of the conference table.
+     * Initialize the module
      */
     initialize() {
-
-        // Attach double-click event handler to each cell in the conference room table
-        // The handler redirects to a URL specific to the conference room for editing
-        $('.record-row td').on('dblclick', (e) => {
-            const id = $(e.target).closest('tr').attr('id');
-            window.location = `${globalRootUrl}conference-rooms/modify/${id}`;
+        // Create instance of base class with Conference Rooms specific configuration
+        this.dataTableInstance = new PbxDataTableIndex({
+            tableId: 'conference-rooms-table',
+            apiModule: ConferenceRoomsAPI,
+            routePrefix: 'conference-rooms',
+            showSuccessMessages: true,
+            actionButtons: ['edit', 'delete'], // No copy for Conference Rooms
+            translations: {
+                deleteSuccess: globalTranslate.cr_ConferenceRoomDeleted,
+                deleteError: globalTranslate.cr_ImpossibleToDeleteConferenceRoom
+            },
+            columns: [
+                {
+                    data: null,
+                    className: 'collapsing',
+                    render: function(data, type, row) {
+                        // Create single-line represent format with icon, name, and extension in <>
+                        // This allows DataTable to search by extension number in brackets
+                        const icon = '<i class="phone volume icon"></i>';
+                        const name = row.name ? '<strong>' + window.SecurityUtils.escapeHtml(row.name) + '</strong>' : '';
+                        const extension = row.extension ? ' &lt;' + window.SecurityUtils.escapeHtml(row.extension) + '&gt;' : '';
+                        
+                        return icon + ' ' + name + extension;
+                    }
+                },
+                {
+                    data: 'pinCode',
+                    className: 'center aligned hide-on-mobile',
+                    responsivePriority: 2,
+                    render: function(data) {
+                        // SECURITY: Properly escape PIN code to prevent XSS
+                        return window.SecurityUtils.escapeHtml(data) || '—';
+                    }
+                }
+            ]
         });
-
-        // Set up delete functionality on delete button click.
-        $('body').on('click', 'a.delete', (e) => {
-            e.preventDefault();
-            $(e.target).addClass('disabled');
-            // Get the conference room  ID from the closest table row.
-            const rowId = $(e.target).closest('tr').attr('id');
-
-            // Remove any previous AJAX messages.
-            $('.message.ajax').remove();
-
-            // Call the PbxApi method to delete the conference room record.
-            ConferenceRoomsAPI.deleteRecord(rowId, conferenceTable.cbAfterDeleteRecord);
-        });
-    },
-
-    /**
-     * Callback function executed after deleting a record.
-     * @param {Object} response - The response object from the API.
-     */
-    cbAfterDeleteRecord(response){
-        if (response.result === true) {
-            // Remove the deleted record's table row.
-            conferenceTable.$conferencesTable.find(`tr[id=${response.data.id}]`).remove();
-            // Call the callback function for data change.
-            Extensions.cbOnDataChanged();
-        } else {
-            // Show an error message if deletion was not successful.
-            UserMessage.showError(response.messages.error, globalTranslate.cr_ImpossibleToDeleteConferenceRoom);
-        }
-        $('a.delete').removeClass('disabled');
-    },
+        
+        // Initialize the base class
+        this.dataTableInstance.initialize();
+    }
 };
 
 /**
- *  Initialize conference rooms table on document ready
+ * Initialize Conference Rooms table on document ready
  */
 $(document).ready(() => {
-    conferenceTable.initialize();
+    conferenceRoomsIndex.initialize();
 });
-

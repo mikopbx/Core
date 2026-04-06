@@ -1,0 +1,34 @@
+{
+  "autoprovision": {
+    "moduleId": "ModuleAutoprovision",
+    "enable": false
+  },
+  "backup": {
+    "moduleId": "ModuleBackup",
+    "enable": true
+  },
+  "cti.client": {
+    "moduleId": "ModuleCTIClient",
+    "enable": false
+  },
+  "docker": {
+    "moduleId": "ModuleDocker",
+    "enable": false
+  },
+  "phonebook": {
+    "moduleId": "ModulePhoneBook",
+    "enable": true
+  },
+  "smart.ivr": {
+    "moduleId": "ModuleSmartIVR",
+    "enable": true
+  },
+  "telegram.notify": {
+    "moduleId": "ModuleTelegramNotify",
+    "enable": false
+  },
+  "users.groups": {
+    "moduleId": "ModuleUsersGroups",
+    "enable": true
+  }
+}

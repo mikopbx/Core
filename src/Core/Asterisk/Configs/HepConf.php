@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
@@ -35,7 +36,7 @@ class HepConf extends AsteriskConfigClass
     // The module hook applying priority
     public int $priority = 1000;
 
-    protected string $description = 'cdr.conf';
+    protected string $description = 'hep.conf';
 
     /**
      * Generates the configuration for the hep.conf file.
@@ -51,7 +52,7 @@ class HepConf extends AsteriskConfigClass
             "capture_id = 1234 \n";
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/hep.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 
     /**
@@ -59,9 +60,9 @@ class HepConf extends AsteriskConfigClass
      *
      * @return void
      */
-    public static function reload()
+    public static function reload(): void
     {
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'module reload res_hep.so'", $out);
+        $asterisk = Util::which(PBX::PROC_NAME);
+        Processes::mwExec("$asterisk -rx 'module reload res_hep.so'", $out);
     }
 }

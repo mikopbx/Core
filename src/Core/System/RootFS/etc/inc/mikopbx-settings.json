@@ -10,7 +10,8 @@
   "gnats": {
     "host": "127.0.0.1",
     "port": 4223,
-    "httpPort": 8223
+    "httpPort": 8223,
+    "debug": true
   },
   "asterisk": {
     "astvarlibdir" : "/offload/asterisk",
@@ -24,6 +25,7 @@
     "monitordir" : "/mountpoint/mikopbx/astspool/monitor",
     "mohdir": "/mountpoint/mikopbx/media/moh",
     "customSoundDir": "/mountpoint/mikopbx/media/custom",
+    "astsoundsdir": "/mountpoint/mikopbx/media/sounds",
     "luaDialplanDir": "/etc/asterisk/extensions-lua"
   },
   "database": {
@@ -37,6 +39,12 @@
     "adapter": "Sqlite",
     "dbfile": "/mountpoint/mikopbx/astlogs/asterisk/cdr.db",
     "debugLogFile": "/mountpoint/mikopbx/log/debug-cdr-queries.log"
+  },
+  "recordingStorageDatabase": {
+    "debugMode": false,
+    "adapter": "Sqlite",
+    "dbfile": "/mountpoint/mikopbx/astlogs/asterisk/recording_storage.db",
+    "debugLogFile": "/mountpoint/mikopbx/log/debug-recording-storage-queries.log"
   },
   "astDatabase": {
     "adapter": "Sqlite",
@@ -55,7 +63,9 @@
     "confBackupDir": "/mountpoint/mikopbx/backup/db",
     "logsDir": "/mountpoint/mikopbx/log",
     "mediaMountPoint": "/mountpoint",
-    "fail2banDbDir": "/mountpoint/mikopbx/fail2ban"
+    "fail2banDbDir": "/mountpoint/mikopbx/fail2ban",
+    "geoip2DbDir": "/mountpoint/mikopbx/geoip2",
+    "recordingsCacheDir": "/mountpoint/mikopbx/tmp/recordings_cache"
   },
   "www": {
     "uploadDir": "/mountpoint/mikopbx/tmp/www_cache/upload_cache",

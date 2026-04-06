@@ -1,0 +1,86 @@
+/**
+ * Bulk upload improvements for better UX with large lists
+ */
+
+/* Large list styling */
+.large-list {
+    margin-top: 1em;
+}
+
+.large-list .ui.info.message {
+    margin-bottom: 1em;
+    border-left: 4px solid #31ccec;
+}
+
+/* Improved scrollable table styling */
+.large-list .dataTables_scrollBody {
+    border: 1px solid rgba(34, 36, 38, 0.15);
+    border-radius: 0.28571429rem;
+}
+
+/* Status indicator improvements */
+.status-cell .ui.loading.icon {
+    animation: button-spin 1s linear infinite;
+}
+
+/* Row animation for status updates */
+.preview-table tbody tr {
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.preview-table tbody tr.positive {
+    animation: row-success 0.5s ease-in-out;
+}
+
+.preview-table tbody tr.negative {
+    animation: row-error 0.5s ease-in-out;
+}
+
+.preview-table tbody tr.warning {
+    animation: row-warning 0.5s ease-in-out;
+}
+
+@keyframes row-success {
+    0% { background-color: transparent; }
+    50% { background-color: rgba(33, 186, 69, 0.1); }
+    100% { background-color: transparent; }
+}
+
+@keyframes row-error {
+    0% { background-color: transparent; }
+    50% { background-color: rgba(219, 40, 40, 0.1); }
+    100% { background-color: transparent; }
+}
+
+@keyframes row-warning {
+    0% { background-color: transparent; }
+    50% { background-color: rgba(255, 173, 51, 0.1); }
+    100% { background-color: transparent; }
+}
+
+/* Highlight currently processing row */
+.preview-table tbody tr.active {
+    background-color: rgba(33, 133, 208, 0.05);
+    border-left: 3px solid #2185d0;
+}
+
+/* Better spacing for import progress section */
+#import-progress {
+    margin: 1em 0;
+}
+
+#log-messages {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid rgba(34, 36, 38, 0.15);
+    border-radius: 0.28571429rem;
+    padding: 0.5em;
+}
+
+/* Info message styling */
+.bulk-upload-info {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin-bottom: 1em;
+}

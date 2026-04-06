@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -25,7 +26,6 @@ use MikoPBX\Common\Providers\{LoggerProvider,
     MainDatabaseProvider,
     ManagedCacheProvider,
     ModelsAnnotationsProvider,
-    ModelsCacheProvider,
     ModelsMetadataProvider,
     PBXConfModulesProvider,
     RouterProvider,
@@ -58,7 +58,6 @@ class RegisterDIServices
 
             // Inject caches
             ManagedCacheProvider::class,
-            ModelsCacheProvider::class,
 
             // Inject PBX modules
             PBXConfModulesProvider::class,
@@ -70,7 +69,7 @@ class RegisterDIServices
         foreach ($commonProviders as $provider) {
             // Delete previous provider
             $di->remove($provider::SERVICE_NAME);
-            $di->register(new $provider());
+            (new $provider())->register($di);
         }
     }
 }

@@ -1,0 +1,44 @@
+{
+  "miko.network": {
+    "id": 4,
+    "description": "MikoNetwork",
+    "network": "172.16.32.0",
+    "subnet": 24,
+    "local_network": true,
+    "newer_block_ip": true,
+    "rules": "ARRAY",
+    "WEB": true,
+    "SSH": true,
+    "AMI": true,
+    "AJAM": true,
+    "ICMP": true
+  },
+  "nikolay.macbook": {
+    "id": 5,
+    "description": "Nikolay macbook",
+    "network": "172.16.32.69",
+    "subnet": 32,
+    "local_network": true,
+    "newer_block_ip": true,
+    "rules": "ARRAY",
+    "WEB": true,
+    "SSH": true,
+    "AMI": true,
+    "AJAM": true,
+    "ICMP": true
+  },
+  "miko.vpn": {
+    "id": 6,
+    "description": "MIKOVPN",
+    "network": "172.16.34.0",
+    "subnet": 24,
+    "local_network": true,
+    "newer_block_ip": true,
+    "rules": "ARRAY",
+    "WEB": false,
+    "SSH": false,
+    "AMI": false,
+    "AJAM": false,
+    "ICMP": true
+  }
+}

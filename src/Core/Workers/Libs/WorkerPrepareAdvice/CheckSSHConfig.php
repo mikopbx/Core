@@ -19,9 +19,11 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Notifications;
+use MikoPBX\Core\System\Mail\Builders\SshPasswordChangedNotificationBuilder;
+use MikoPBX\Core\System\Mail\NotificationQueueHelper;
 use Phalcon\Di\Injectable;
 
 /**
@@ -36,25 +38,44 @@ class CheckSSHConfig extends Injectable
     /**
      * Checks the password in case it was changed by an unauthorized means.
      *
-     * @return array An array containing warning messages.
+     * Monitors /etc/shadow for unauthorized modifications.
+     * The SSH password is now stored as SHA-512 hash in SSH_PASSWORD,
+     * so we only check if /etc/shadow was modified outside of MikoPBX.
      *
+     * @return array<string, array<int, array<string, mixed>>> An array containing warning messages.
      */
     public function process(): array
     {
-        $messages   = [];
-        $password   = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD);
-        $hashString = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING);
-        $hashFile   = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD_HASH_FILE);
-        if($hashString !== md5($password)){
-            // The password has been changed in an unusual way.
-            $messages['error'][] =  ['messageTpl'=>'adv_SSHPasswordMismatchStringsHash'];
-        }
-        if($hashFile   !== md5_file('/etc/shadow')){
+        $messages = [];
+        $hashFile = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_FILE, false);
+
+        // Check if /etc/shadow was modified outside of MikoPBX
+        if ($hashFile !== md5_file('/etc/shadow')) {
             // The system password does not match what is set in the configuration file.
-            $messages['error'][] =  ['messageTpl'=>'adv_SSHPasswordMismatchFilesHash'];
+            $messages['error'][] = ['messageTpl' => 'adv_SSHPasswordMismatchFilesHash'];
         }
-        if(isset($messages['error'])){
-            Notifications::sendAdminNotification('adv_SSHPasswordWasChangedSubject', ['adv_SSHPasswordWasChangedBody'], true);
+
+        if (isset($messages['error'])) {
+            // Queue notification for async sending via WorkerNotifyByEmail
+            $adminEmail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
+
+            if (!empty($adminEmail)) {
+                $builder = new SshPasswordChangedNotificationBuilder();
+                $builder->setRecipient($adminEmail)
+                        ->setChangedBy('external')
+                        ->setChangeTime(date('Y-m-d H:i:s'))
+                        ->setSecurityUrl(LanInterfaces::buildAdminUrl('/admin-cabinet/general-settings/modify/#ssh'));
+
+                // Queue with critical priority (security alert is critical)
+                NotificationQueueHelper::queueOrSend(
+                    $builder,
+                    async: true,
+                    priority: NotificationQueueHelper::PRIORITY_CRITICAL
+                );
+            } else {
+                // Fallback to legacy if no admin email configured
+                Notifications::sendAdminNotification(['messageTpl' => 'adv_SSHPasswordWasChangedSubject'], ['messageTpl' => 'adv_SSHPasswordWasChangedBody'], true);
+            }
         }
         return $messages;
     }

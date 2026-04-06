@@ -1,0 +1,848 @@
+<?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+declare(strict_types=1);
+
+namespace MikoPBX\PBXCoreREST\Lib\GeneralSettings;
+
+use MikoPBX\AdminCabinet\Forms\GeneralSettingsEditForm;
+use MikoPBX\Common\Models\Codecs;
+use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\CertificateValidator;
+use MikoPBX\Core\System\PasswordService;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
+use MikoPBX\PBXCoreREST\Lib\GeneralSettings\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Di;
+
+/**
+ * SaveSettingsAction - saves general settings with validation
+ * 
+ * Accepts key-value pairs for settings to update.
+ * Preserves all critical functionality:
+ * - Password validation and synchronization logic
+ * - Port conflict detection  
+ * - Parking extension management
+ * - Transaction safety
+ * - Dependencies between settings
+ */
+class SaveSettingsAction extends AbstractSaveRecordAction
+{
+    /**
+     * Counter for actual database updates
+     * @var int
+     */
+    private static int $actualUpdatesCount = 0;
+    /**
+     * Save general settings
+     *
+     * @param array $data Request data containing key-value pairs of settings to save
+     * @return PBXApiResult Result with success status and messages
+     */
+    public static function main(array $data): PBXApiResult
+    {
+        $res = self::createApiResult(__METHOD__);
+        
+        try {
+            // Extract settings from nested structure if present
+            // API can send either flat structure or nested with 'settings' key
+            $settingsData = $data['settings'] ?? $data;
+
+            // ============ PHASE 1: SCHEMA VALIDATION ============
+            // WHY: Validate against OpenAPI schema constraints BEFORE any processing
+            // This catches invalid port numbers (< 1 or > 65535) early
+            $schemaErrors = self::validateSettingsSchema($settingsData);
+            if (!empty($schemaErrors)) {
+                $res->messages['error'] = $schemaErrors;
+                $res->httpCode = 422; // Unprocessable Entity
+                return $res;
+            }
+
+            // ============ PHASE 2: PASSWORD VALIDATION ============
+            // WHY: Fail fast if passwords are weak (after schema validation)
+            $passwordCheckFail = self::validatePasswords($settingsData);
+            if (!empty($passwordCheckFail)) {
+                foreach ($passwordCheckFail as $settingsKey => $validationResult) {
+                    // Add detailed error messages
+                    foreach ($validationResult['messages'] as $message) {
+                        $res->messages['error'][] = "{$settingsKey}: {$message}";
+                    }
+                    // Add suggestions as warnings
+                    if (!empty($validationResult['suggestions'])) {
+                        $res->messages['warning'][] = "{$settingsKey} suggestions: " . implode('; ', $validationResult['suggestions']);
+                    }
+                }
+                return $res;
+            }
+
+            // ============ PHASE 2.5: CERTIFICATE VALIDATION ============
+            // WHY: Validate SSL certificates and keys before saving
+            $certificateValidation = self::validateCertificates($settingsData);
+            if (!$certificateValidation['valid']) {
+                $res->messages['error'] = $certificateValidation['errors'];
+                if (!empty($certificateValidation['warnings'])) {
+                    $res->messages['warning'] = $certificateValidation['warnings'];
+                }
+                $res->httpCode = 422; // Unprocessable Entity
+                return $res;
+            }
+            // Add warnings even if validation passed
+            if (!empty($certificateValidation['warnings'])) {
+                $res->messages['warning'] = $certificateValidation['warnings'];
+            }
+
+            // ============ PHASE 3: SAVE IN TRANSACTION ============
+            // Execute save operation in transaction
+            $result = self::executeInTransaction(function() use ($settingsData) {
+                
+                // Update PBX settings with special handling for various field types
+                $updateResult = self::updatePBXSettings($settingsData);
+                if (!$updateResult['success']) {
+                    throw new \Exception(self::flattenErrorMessages($updateResult['messages']['error'] ?? []));
+                }
+                
+                // Update codecs if codec data is present
+                if (self::hasCodecData($settingsData)) {
+                    $codecResult = self::updateCodecs($settingsData);
+                    if (!$codecResult['success']) {
+                        throw new \Exception(self::flattenErrorMessages($codecResult['messages']['error'] ?? []));
+                    }
+                }
+                
+                // Update parking extensions if parking settings changed
+                if (self::parkingSettingsChanged($settingsData)) {
+                    $parkingResult = self::updateParkingExtensions($settingsData);
+                    if (!$parkingResult['success']) {
+                        throw new \Exception(self::flattenErrorMessages($parkingResult['messages']['error'] ?? []));
+                    }
+                }
+                
+                return true;
+            });
+            
+            $res->success = $result;
+            if ($result) {
+                // Count only the actual updated settings, not all sent fields
+                $updatedCount = self::$actualUpdatesCount ?? 0;
+                if ($updatedCount === 0) {
+                    $res->messages['info'][] = "No settings were changed";
+                } elseif ($updatedCount === 1) {
+                    $res->messages['success'][] = "1 setting was updated";
+                } else {
+                    $res->messages['success'][] = "{$updatedCount} settings were updated";
+                }
+            }
+            
+        } catch (\Exception $e) {
+            return self::handleError($e, $res);
+        }
+        
+        return $res;
+    }
+    
+    /**
+     * Validate settings data against OpenAPI schema definitions
+     *
+     * WHY: Validates each setting field against its DataStructure definition
+     * (type, minimum, maximum, enum, maxLength, etc.) BEFORE processing.
+     * This provides early validation and user-friendly error messages.
+     *
+     * @param array $settingsData Settings key-value pairs to validate
+     * @return array Array of validation error messages (empty if valid)
+     */
+    private static function validateSettingsSchema(array $settingsData): array
+    {
+        $definitions = DataStructure::getParameterDefinitions();
+        $settingsProperties = $definitions['request']['settings']['properties'] ?? [];
+
+        if (empty($settingsProperties)) {
+            return [];
+        }
+
+        $errors = [];
+
+        foreach ($settingsData as $fieldName => $value) {
+            // Skip fields not defined in schema (they'll be ignored anyway)
+            if (!isset($settingsProperties[$fieldName])) {
+                continue;
+            }
+
+            $fieldDef = $settingsProperties[$fieldName];
+            $type = $fieldDef['type'] ?? 'string';
+
+            // Validate enum constraint
+            if (isset($fieldDef['enum']) && is_array($fieldDef['enum'])) {
+                if (!in_array($value, $fieldDef['enum'], true)) {
+                    $allowedValues = implode(', ', $fieldDef['enum']);
+                    $errors[] = "Field '{$fieldName}' must be one of: {$allowedValues}";
+                    continue;
+                }
+            }
+
+            // Validate range constraints for integers/numbers (ports, timeouts, etc.)
+            if ($type === 'integer' || $type === 'number') {
+                $numericValue = is_numeric($value) ? (int)$value : null;
+
+                if ($numericValue !== null) {
+                    // Check minimum
+                    if (isset($fieldDef['minimum']) && $numericValue < $fieldDef['minimum']) {
+                        $errors[] = "Field '{$fieldName}' must be at least {$fieldDef['minimum']} (got {$numericValue})";
+                        continue;
+                    }
+
+                    // Check maximum
+                    if (isset($fieldDef['maximum']) && $numericValue > $fieldDef['maximum']) {
+                        $errors[] = "Field '{$fieldName}' must be at most {$fieldDef['maximum']} (got {$numericValue})";
+                        continue;
+                    }
+                }
+            }
+
+            // Validate string length (maxLength)
+            if ($type === 'string' && isset($fieldDef['maxLength'])) {
+                $length = is_string($value) ? mb_strlen($value, 'UTF-8') : 0;
+                if ($length > $fieldDef['maxLength']) {
+                    $errors[] = "Field '{$fieldName}' must be at most {$fieldDef['maxLength']} characters (got {$length})";
+                }
+            }
+
+            // Validate pattern (regex)
+            if ($type === 'string' && isset($fieldDef['pattern']) && is_string($value)) {
+                if (!preg_match('/' . $fieldDef['pattern'] . '/', $value)) {
+                    $errors[] = "Field '{$fieldName}' does not match required pattern";
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Flatten error messages array that may contain nested arrays
+     *
+     * @param array $errors Error messages that may be strings or arrays
+     * @return string Flattened error message string
+     */
+    private static function flattenErrorMessages(array $errors): string
+    {
+        $flatMessages = [];
+        
+        foreach ($errors as $error) {
+            if (is_array($error)) {
+                // Handle nested arrays (e.g., from getMessages())
+                foreach ($error as $nestedError) {
+                    if (is_object($nestedError) && method_exists($nestedError, 'getMessage')) {
+                        $flatMessages[] = $nestedError->getMessage();
+                    } elseif (is_string($nestedError)) {
+                        $flatMessages[] = $nestedError;
+                    }
+                }
+            } elseif (is_object($error) && method_exists($error, 'getMessage')) {
+                $flatMessages[] = $error->getMessage();
+            } elseif (is_string($error)) {
+                $flatMessages[] = $error;
+            }
+        }
+        
+        return implode(', ', $flatMessages);
+    }
+    
+    /**
+     * Process SSH authorized keys data
+     * Simply returns the string as-is since JavaScript handles all parsing and validation
+     * 
+     * @param mixed $keysData SSH keys data (should be a string from the hidden field)
+     * @return string SSH keys string
+     */
+    private static function processAuthorizedKeys($keysData): string
+    {
+        // JavaScript now handles all parsing, validation, and formatting
+        // The hidden field contains the properly formatted newline-separated keys
+        if (is_string($keysData)) {
+            return $keysData;
+        }
+        
+        // Fallback for unexpected data types
+        return '';
+    }
+    
+    /**
+     * Validate SSL certificates and private keys using OpenSSL
+     * If only one of the pair is provided, fetches the other from database
+     *
+     * @param array $data Settings data containing certificates
+     * @return array ['valid' => bool, 'errors' => string[], 'warnings' => string[]]
+     */
+    private static function validateCertificates(array $data): array
+    {
+        $result = [
+            'valid' => true,
+            'errors' => [],
+            'warnings' => []
+        ];
+
+        // Check if certificate or key fields are present
+        $hasPublicKey = isset($data[PbxSettings::WEB_HTTPS_PUBLIC_KEY])
+            && $data[PbxSettings::WEB_HTTPS_PUBLIC_KEY] !== GeneralSettingsEditForm::HIDDEN_PASSWORD
+            && $data[PbxSettings::WEB_HTTPS_PUBLIC_KEY] !== '';
+
+        $hasPrivateKey = isset($data[PbxSettings::WEB_HTTPS_PRIVATE_KEY])
+            && $data[PbxSettings::WEB_HTTPS_PRIVATE_KEY] !== GeneralSettingsEditForm::HIDDEN_PASSWORD
+            && $data[PbxSettings::WEB_HTTPS_PRIVATE_KEY] !== '';
+
+        // If neither field is provided, skip validation
+        if (!$hasPublicKey && !$hasPrivateKey) {
+            return $result;
+        }
+
+        // Get certificate and key values
+        $publicKey = null;
+        $privateKey = null;
+
+        // If public key is provided in request, use it
+        if ($hasPublicKey) {
+            $publicKey = $data[PbxSettings::WEB_HTTPS_PUBLIC_KEY];
+        } else {
+            // Otherwise, get from database
+            $publicKey = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PUBLIC_KEY);
+        }
+
+        // If private key is provided in request, use it
+        if ($hasPrivateKey) {
+            $privateKey = $data[PbxSettings::WEB_HTTPS_PRIVATE_KEY];
+        } else {
+            // Otherwise, get from database
+            $privateKey = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
+        }
+
+        // Validate the certificate and key pair
+        if (!empty($publicKey)) {
+            $validation = CertificateValidator::validate($publicKey, !empty($privateKey) ? $privateKey : null);
+
+            if (!$validation['valid']) {
+                $result['valid'] = false;
+                // Translate error messages
+                foreach ($validation['errors'] as $error) {
+                    $result['errors'][] = TranslationProvider::translate($error['key'], $error['params']);
+                }
+            }
+
+            if (!empty($validation['warnings'])) {
+                // Translate warning messages
+                foreach ($validation['warnings'] as $warning) {
+                    $result['warnings'][] = TranslationProvider::translate($warning['key'], $warning['params']);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Validate passwords using unified PasswordService
+     *
+     * @param array $data Settings data containing passwords
+     * @return array Array of password keys that failed validation with details
+     */
+    private static function validatePasswords(array $data): array
+    {
+        $passwordCheckFail = [];
+        
+        $checkPasswordFields = [
+            PbxSettings::SSH_PASSWORD => PasswordService::CONTEXT_SSH,
+            PbxSettings::WEB_ADMIN_PASSWORD => PasswordService::CONTEXT_WEB_ADMIN
+        ];
+        
+        // If SSH is disabled, skip SSH password validation
+        if (($data[PbxSettings::SSH_DISABLE_SSH_PASSWORD] ?? false) === true) {
+            unset($checkPasswordFields[PbxSettings::SSH_PASSWORD]);
+        }
+        
+        foreach ($checkPasswordFields as $field => $context) {
+            if (!isset($data[$field]) || $data[$field] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+                continue;
+            }
+            
+            $password = $data[$field];
+            
+            // Use unified password validator
+            $validationResult = PasswordService::validate($password, $context);
+            
+            if (!$validationResult['isValid']) {
+                $passwordCheckFail[$field] = $validationResult;
+            }
+        }
+        
+        return $passwordCheckFail;
+    }
+    
+    /**
+     * Update PBX settings with special handling for different field types
+     * Migrated from GeneralSettingsController::updatePBXSettings()
+     *
+     * @param array $data Settings data
+     * @return array Result with success status and messages
+     */
+    private static function updatePBXSettings(array $data): array
+    {
+        $messages = ['error' => []];
+        $defaultPbxSettings = PbxSettings::getDefaultArrayValues();
+        $di = Di::getDefault();
+
+        // Reset update counter and field list
+        self::$actualUpdatesCount = 0;
+
+        // Get security service for password hashing
+        $security = $di->getShared('security');
+
+        // Get list of read-only settings
+        $readOnlySettings = DataStructure::getReadOnlySettings();
+
+        foreach ($defaultPbxSettings as $key => $defaultValue) {
+            // Skip if this key is not in the request data
+            if (!array_key_exists($key, $data)) {
+                continue;
+            }
+
+            // Skip read-only fields
+            if (in_array($key, $readOnlySettings, true)) {
+                continue;
+            }
+            
+            $newValue = null;
+            
+            switch ($key) {
+                case PbxSettings::SSH_AUTHORIZED_KEYS:
+                    // Process SSH authorized keys from array format if needed
+                    $newValue = self::processAuthorizedKeys($data[$key]);
+                    break;
+                    
+                case PbxSettings::SSH_PASSWORD:
+                    if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+                        // User changed SSH password - hash it before storage
+                        $newValue = PasswordService::generateSha512Hash($data[$key]);
+                    } elseif (
+                        ($data[PbxSettings::WEB_ADMIN_PASSWORD] ?? GeneralSettingsEditForm::HIDDEN_PASSWORD) !== GeneralSettingsEditForm::HIDDEN_PASSWORD
+                        && self::isDefaultSshPassword(PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD), $defaultPbxSettings)
+                    ) {
+                        // User changed Web password AND current SSH password is default - sync them
+                        $newValue = PasswordService::generateSha512Hash($data[PbxSettings::WEB_ADMIN_PASSWORD]);
+                    } else {
+                        // User did not change SSH password
+                        continue 2;
+                    }
+                    break;
+                    
+                case PbxSettings::SEND_METRICS:
+                    $newValue = DataStructure::convertValueForStorage($key, $data[$key]);
+                    break;
+                    
+                case PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT:
+                    // Calculate transfer digit timeout from feature digit timeout
+                    $featureTimeout = (int)($data[PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT] ?? 1000);
+                    $newValue = (string)ceil($featureTimeout / 1000);
+                    break;
+                    
+                case PbxSettings::SIP_AUTH_PREFIX:
+                    $newValue = trim($data[$key]);
+                    break;
+
+                case PbxSettings::WEB_ADMIN_PASSWORD:
+                    if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+                        // User changed Web password - hash with SHA-512
+                        $newValue = PasswordService::generateSha512Hash($data[$key]);
+                    } elseif (
+                        ($data[PbxSettings::SSH_PASSWORD] ?? GeneralSettingsEditForm::HIDDEN_PASSWORD) !== GeneralSettingsEditForm::HIDDEN_PASSWORD
+                        && self::isDefaultWebPassword(PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD), $defaultPbxSettings)
+                    ) {
+                        // User changed SSH password AND current Web password is default - sync them
+                        $newValue = PasswordService::generateSha512Hash($data[PbxSettings::SSH_PASSWORD]);
+                    } else {
+                        // User did not change Web password
+                        continue 2;
+                    }
+                    break;
+                    
+                case PbxSettings::WEB_HTTPS_PRIVATE_KEY:
+                    // Handle private key with password masking
+                    if ($data[$key] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+                        // Private key wasn't changed, skip update
+                        continue 2;
+                    }
+                    // User provided new private key or cleared it
+                    $newValue = $data[$key];
+                    break;
+
+                case PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN:
+                case PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT:
+                    // Handle sound file selection - convert -1 to empty string
+                    $newValue = ($data[$key] === '-1' || $data[$key] === -1) ? '' : $data[$key];
+                    break;
+
+                default:
+                    // Check if this is a boolean field and convert accordingly
+                    if (DataStructure::getFieldType($key) === 'boolean') {
+                        $newValue = DataStructure::convertValueForStorage($key, $data[$key]);
+                    } else {
+                        // For all other settings, use value as-is
+                        $newValue = $data[$key];
+                    }
+            }
+            
+            // Save the setting only if it changed
+            if ($newValue !== null) {
+                $currentValue = PbxSettings::getValueByKey($key);
+                // Only update if the value actually changed
+                if ($currentValue !== (string)$newValue) {
+                    PbxSettings::setValueByKey($key, (string)$newValue, $messages['error']);
+                    self::$actualUpdatesCount++;
+                }
+            }
+        }
+
+        // Handle password synchronization for PATCH requests where only one password field is present
+        self::handlePasswordSynchronization($data, $defaultPbxSettings, $security, $messages['error']);
+
+        // Reset cloud provision flag only if something was actually updated
+        if (self::$actualUpdatesCount > 0) {
+            PbxSettings::setValueByKey(PbxSettings::CLOUD_PROVISIONING, '1', $messages['error']);
+        }
+        
+        $success = count($messages['error']) === 0;
+        return ['success' => $success, 'messages' => $messages];
+    }
+
+    /**
+     * Handle password synchronization for PATCH requests
+     *
+     * This method ensures that when only one password field is changed in a PATCH request,
+     * the other password is automatically synchronized if it's still at default value.
+     *
+     * @param array $data Request data containing passwords
+     * @param array $defaultPbxSettings Default PBX settings values
+     * @param object $security Security service for password hashing
+     * @param array $errorMessages Reference to error messages array
+     * @return void
+     */
+    private static function handlePasswordSynchronization(array $data, array $defaultPbxSettings, $security, array &$errorMessages): void
+    {
+        $currentSSHPassword = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
+        $currentWEBPassword = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
+
+        $defaultSSHPassword = $defaultPbxSettings[PbxSettings::SSH_PASSWORD];
+        $defaultWEBPassword = $defaultPbxSettings[PbxSettings::WEB_ADMIN_PASSWORD];
+
+        // Case 1: SSH password was changed, but WebAdminPassword was not in the request
+        // Sync WEB password if it's still at default value
+        if (array_key_exists(PbxSettings::SSH_PASSWORD, $data)
+            && !array_key_exists(PbxSettings::WEB_ADMIN_PASSWORD, $data)
+            && ($data[PbxSettings::SSH_PASSWORD] ?? GeneralSettingsEditForm::HIDDEN_PASSWORD) !== GeneralSettingsEditForm::HIDDEN_PASSWORD
+            && self::isDefaultWebPassword($currentWEBPassword, $defaultPbxSettings)) {
+
+            // Hash the new WEB password with SHA-512 before storage
+            $newWEBPassword = PasswordService::generateSha512Hash($data[PbxSettings::SSH_PASSWORD]);
+            $currentWEBPasswordValue = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
+
+            if ($currentWEBPasswordValue !== $newWEBPassword) {
+                PbxSettings::setValueByKey(PbxSettings::WEB_ADMIN_PASSWORD, $newWEBPassword, $errorMessages);
+                self::$actualUpdatesCount++;
+            }
+        }
+
+        // Case 2: WEB password was changed, but SSHPassword was not in the request
+        // Sync SSH password if it's still at default value
+        if (array_key_exists(PbxSettings::WEB_ADMIN_PASSWORD, $data)
+            && !array_key_exists(PbxSettings::SSH_PASSWORD, $data)
+            && ($data[PbxSettings::WEB_ADMIN_PASSWORD] ?? GeneralSettingsEditForm::HIDDEN_PASSWORD) !== GeneralSettingsEditForm::HIDDEN_PASSWORD
+            && self::isDefaultSshPassword($currentSSHPassword, $defaultPbxSettings)) {
+
+            // Hash the new SSH password with SHA-512 before storage
+            $newSSHPasswordHash = PasswordService::generateSha512Hash($data[PbxSettings::WEB_ADMIN_PASSWORD]);
+            $currentSSHPasswordValue = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
+
+            if ($currentSSHPasswordValue !== $newSSHPasswordHash) {
+                PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD, $newSSHPasswordHash, $errorMessages);
+                self::$actualUpdatesCount++;
+            }
+        }
+    }
+
+    /**
+     * Check if codec data is present in the request
+     *
+     * @param array $data Settings data
+     * @return bool True if codec data is present
+     */
+    private static function hasCodecData(array $data): bool
+    {
+        // Check for codec data in either format:
+        // 1. Nested array format: ["codecs" => [...]]
+        // 2. Flat array format: ["codecs[0][name]" => "value"]
+        
+        if (isset($data['codecs']) && is_array($data['codecs'])) {
+            return true;
+        }
+        
+        foreach ($data as $key => $value) {
+            if (strpos($key, 'codecs[') === 0) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Update codec priorities and enabled/disabled status
+     *
+     * @param array $data Settings data containing codec configurations
+     * @return array Result with success status and messages
+     */
+    private static function updateCodecs(array $data): array
+    {
+        $messages = ['error' => []];
+        
+        // Parse codec data from flat array format
+        $codecs = self::parseCodecData($data);
+        
+        if (empty($codecs)) {
+            // No codec data to process
+            return ['success' => true, 'messages' => []];
+        }
+        
+        foreach ($codecs as $codecData) {
+            $codecName = $codecData['name'] ?? '';
+            
+            if (empty($codecName)) {
+                continue;
+            }
+            
+            // Find codec by name
+            $codecRecord = Codecs::findFirst([
+                'conditions' => 'name = :name:',
+                'bind' => ['name' => $codecName]
+            ]);
+            
+            if (!$codecRecord) {
+                $messages['error'][] = "Codec not found: {$codecName}";
+                continue;
+            }
+            
+            // Update priority and disabled status
+            $newPriority = isset($codecData['priority']) ? (string)$codecData['priority'] : $codecRecord->priority;
+            $newDisabled = isset($codecData['disabled']) ? ($codecData['disabled'] === 'true' || $codecData['disabled'] === true ? '1' : '0') : $codecRecord->disabled;
+            
+            // Only update if values changed
+            if ($codecRecord->priority !== $newPriority || $codecRecord->disabled !== $newDisabled) {
+                $codecRecord->priority = $newPriority;
+                $codecRecord->disabled = $newDisabled;
+                
+                if (!$codecRecord->update()) {
+                    $errors = [];
+                    foreach ($codecRecord->getMessages() as $message) {
+                        $errors[] = $message->getMessage();
+                    }
+                    $messages['error'][] = "Failed to update codec {$codecName}: " . implode(', ', $errors);
+                } else {
+                    self::$actualUpdatesCount++;
+                }
+            }
+        }
+        
+        $success = count($messages['error']) === 0;
+        return ['success' => $success, 'messages' => $messages];
+    }
+    
+    /**
+     * Parse codec data from either nested or flat array format
+     * Handles both:
+     * 1. Nested: ["codecs" => [["name" => "alaw", ...], ...]]
+     * 2. Flat: ["codecs[0][name]" => "alaw", ...]
+     *
+     * @param array $data Request data
+     * @return array Structured codec data
+     */
+    private static function parseCodecData(array $data): array
+    {
+        // First check if we have nested array format
+        if (isset($data['codecs']) && is_array($data['codecs'])) {
+            return $data['codecs'];
+        }
+        
+        // Otherwise, parse flat array format
+        $codecs = [];
+        
+        foreach ($data as $key => $value) {
+            // Match patterns like: codecs[0][name], codecs[0][priority], etc.
+            if (preg_match('/^codecs\[(\d+)\]\[(\w+)\]$/', $key, $matches)) {
+                $index = (int)$matches[1];
+                $field = $matches[2];
+                
+                if (!isset($codecs[$index])) {
+                    $codecs[$index] = [];
+                }
+                
+                $codecs[$index][$field] = $value;
+            }
+        }
+        
+        // Re-index array to ensure sequential keys
+        return array_values($codecs);
+    }
+    
+    /**
+     * Check if parking-related settings changed
+     *
+     * @param array $data Settings data
+     * @return bool True if parking settings are present in the data
+     */
+    private static function parkingSettingsChanged(array $data): bool
+    {
+        $parkingKeys = [
+            PbxSettings::PBX_CALL_PARKING_START_SLOT,
+            PbxSettings::PBX_CALL_PARKING_END_SLOT,
+            PbxSettings::PBX_CALL_PARKING_EXT,
+        ];
+        
+        foreach ($parkingKeys as $key) {
+            if (array_key_exists($key, $data)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Update parking extensions based on settings
+     * Migrated from GeneralSettingsController::createParkingExtensions()
+     *
+     * @param array $data Settings data containing parking configuration
+     * @return array Result with success status and messages
+     */
+    private static function updateParkingExtensions(array $data): array
+    {
+        $messages = ['error' => []];
+        
+        $startSlot = (int)($data[PbxSettings::PBX_CALL_PARKING_START_SLOT] ?? 0);
+        $endSlot = (int)($data[PbxSettings::PBX_CALL_PARKING_END_SLOT] ?? 0);
+        $reservedSlot = (int)($data[PbxSettings::PBX_CALL_PARKING_EXT] ?? 0);
+        
+        // Retrieve all current parking slots
+        $currentSlots = Extensions::findByType(Extensions::TYPE_PARKING);
+        
+        // Create array of desired numbers
+        $desiredNumbers = range($startSlot, $endSlot);
+        $desiredNumbers[] = $reservedSlot;
+        
+        // Determine slots to delete
+        $currentNumbers = [];
+        foreach ($currentSlots as $slot) {
+            if (!in_array($slot->number, $desiredNumbers)) {
+                if (!$slot->delete()) {
+                    // Just pass the model's validation messages directly
+                    foreach ($slot->getMessages() as $message) {
+                        $messages['error'][] = $message->getMessage();
+                    }
+                }
+            } else {
+                $currentNumbers[] = $slot->number;
+            }
+        }
+
+        // Determine slots to create
+        $numbersToCreate = array_diff($desiredNumbers, $currentNumbers);
+        foreach ($numbersToCreate as $number) {
+            $record = new Extensions();
+            $record->type = Extensions::TYPE_PARKING;
+            $record->number = (string)$number;
+            $record->show_in_phonebook = '0';
+            if (!$record->create()) {
+                // Just pass the model's validation messages directly
+                foreach ($record->getMessages() as $message) {
+                    $messages['error'][] = $message->getMessage();
+                }
+            }
+        }
+        
+        $success = count($messages['error']) === 0;
+        return ['success' => $success, 'messages' => $messages];
+    }
+
+    /**
+     * Check if stored SSH password is the default password
+     *
+     * Handles both plain text defaults (legacy) and SHA-512 hashed defaults.
+     * Since hashes include random salt, we can only verify plain text matches.
+     *
+     * @param string $storedPassword Current stored SSH password (may be plain text or hash)
+     * @param array $defaultPbxSettings Default PBX settings array
+     * @return bool True if password is the default
+     */
+    private static function isDefaultSshPassword(string $storedPassword, array $defaultPbxSettings): bool
+    {
+        $defaultPassword = $defaultPbxSettings[PbxSettings::SSH_PASSWORD] ?? '';
+
+        // Check if stored password equals plain text default (legacy)
+        if ($storedPassword === $defaultPassword) {
+            return true;
+        }
+
+        // If stored password is a SHA-512 hash, verify against default
+        if (PasswordService::isSha512Hash($storedPassword)) {
+            return PasswordService::verifySha512Hash($defaultPassword, $storedPassword);
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if stored WEB password is the default password
+     *
+     * Handles multiple password formats for backward compatibility:
+     * - Plain text (legacy)
+     * - SHA-512 hash (new format)
+     * - bcrypt hash (existing installations)
+     *
+     * @param string $storedPassword Current stored WEB password (may be plain text or hash)
+     * @param array $defaultPbxSettings Default PBX settings array
+     * @return bool True if password is the default
+     */
+    private static function isDefaultWebPassword(string $storedPassword, array $defaultPbxSettings): bool
+    {
+        $defaultPassword = $defaultPbxSettings[PbxSettings::WEB_ADMIN_PASSWORD] ?? '';
+
+        // Check if stored password equals plain text default (legacy)
+        if ($storedPassword === $defaultPassword) {
+            return true;
+        }
+
+        // If stored password is a SHA-512 hash, verify against default
+        if (PasswordService::isSha512Hash($storedPassword)) {
+            return PasswordService::verifySha512Hash($defaultPassword, $storedPassword);
+        }
+
+        // Note: bcrypt hashes cannot be easily verified without Phalcon Security instance
+        // This is acceptable since new passwords will be SHA-512
+
+        return false;
+    }
+}

@@ -1,0 +1,54 @@
+/* OpenAPI Stoplight Elements Integration with MikoPBX */
+
+/* Container styling */
+#elements-container-wrapper {
+    min-height: 70vh;
+    position: relative;
+}
+
+#elements-loading {
+    padding: 3em;
+    text-align: center;
+}
+
+/* Stoplight Elements container */
+#elements-container {
+    width: 100%;
+    height: auto;
+    min-height: calc(100vh - 180px);
+}
+
+/* Loading state improvements */
+.ui.segment .ui.loader {
+    z-index: 1000;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    #elements-container {
+        min-height: calc(100vh - 100px);
+    }
+
+    .ui.stackable.grid > .row > .column {
+        padding-left: 0.5em !important;
+        padding-right: 0.5em !important;
+    }
+}
+
+/* Override Stoplight Elements default styling to match MikoPBX theme */
+elements-api {
+    --primary-color: #2185d0;
+    --color-success: #21ba45;
+    --color-warning: #fbbd08;
+    --color-danger: #db2828;
+}
+
+/* Error messages */
+.api-error-message {
+    background: #fff6f6;
+    border: 1px solid #e0b4b4;
+    border-radius: .28571429rem;
+    color: #9f3a38;
+    padding: 1em;
+    margin: 1em 0;
+}

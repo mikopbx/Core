@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -19,18 +20,19 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
-use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Returns list of log files to show them on web interface
  *
  * @package MikoPBX\PBXCoreREST\Lib\SysLogs
  */
-class GetLogsListAction extends \Phalcon\Di\Injectable
+class GetLogsListAction extends Injectable
 {
-    public const DEFAULT_FILENAME = 'asterisk/messages';
+    public const string DEFAULT_FILENAME = 'asterisk/messages';
 
     /**
      * Returns list of log files to show them on web interface
@@ -41,15 +43,16 @@ class GetLogsListAction extends \Phalcon\Di\Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $logDir = System::getLogDir();
+        $logDir = Directories::getDir(Directories::CORE_LOGS_DIR);
         $filesList = [];
         $entries = self::scanDirRecursively($logDir);
         $entries = Util::flattenArray($entries);
         $defaultFound = false;
         foreach ($entries as $entry) {
-            $fileSize = filesize($entry);
+            $fileSize = file_exists($entry)?filesize($entry):0;
             $now = time();
-            if ($fileSize === 0
+            if (
+                $fileSize === 0
                 || $now - filemtime($entry) > 604800 // Older than 10 days
             ) {
                 continue;
@@ -60,7 +63,7 @@ class GetLogsListAction extends \Phalcon\Di\Injectable
             $filesList[$relativePath] =
                 [
                     'path' => $relativePath,
-                    'size' => "{$fileSizeKB} kb",
+                    'size' => "$fileSizeKB kb",
                     'default' => $default,
                 ];
             if ($default) {
@@ -70,7 +73,6 @@ class GetLogsListAction extends \Phalcon\Di\Injectable
         if (!$defaultFound) {
             if (isset($filesList['system/messages'])) {
                 $filesList['system/messages']['default'] = true;
-
             } else {
                 $filesList[array_key_first($filesList)]['default'] = true;
             }

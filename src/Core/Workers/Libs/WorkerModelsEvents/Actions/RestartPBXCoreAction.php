@@ -2,7 +2,7 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions;
 
-use MikoPBX\Core\System\PBX;
+use MikoPBX\Core\Asterisk\Configs\AsteriskConf;
 
 class RestartPBXCoreAction implements ReloadActionInterface
 {
@@ -14,6 +14,6 @@ class RestartPBXCoreAction implements ReloadActionInterface
      */
     public function execute(array $parameters = []): void
     {
-        PBX::coreRestart();
+        AsteriskConf::restart();
     }
 }

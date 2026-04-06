@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -22,11 +23,12 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp;
+use GuzzleHttp\Promise\PromiseInterface;
 use MikoPBX\Core\System\SystemMessages;
 
 class AWSCloud extends CloudProvider
 {
-    public const CloudID = 'AWSCloud';
+    public const string CloudID = 'AWSCloud';
 
     private Client $client;
 
@@ -36,7 +38,35 @@ class AWSCloud extends CloudProvider
     }
 
     /**
+     * Performs an asynchronous check to determine if this cloud provider is available.
+     *
+     * @return PromiseInterface Promise that resolves to bool
+     */
+    public function checkAvailability(): PromiseInterface
+    {
+        $url = 'http://169.254.169.254/latest/meta-data/services/partition';
+        $promise = $this->client->requestAsync('GET', $url, [
+            'timeout' => self::HTTP_TIMEOUT,
+            'http_errors' => false
+        ]);
+
+        return $promise->then(
+            function ($response) {
+                if ($response->getStatusCode() === 200) {
+                    $body = $response->getBody()->getContents();
+                    return $body === 'aws';
+                }
+                return false;
+            },
+            function () {
+                return false;
+            }
+        );
+    }
+
+    /**
      * Performs the Amazon Web Services cloud provisioning.
+     * Uses direct SQLite queries to avoid Redis/ORM dependency during early boot.
      *
      * @return bool True if the provisioning was successful, false otherwise.
      */
@@ -44,7 +74,7 @@ class AWSCloud extends CloudProvider
     {
         // Cloud check
         $checkValue = $this->getMetaDataAWS('services/partition');
-        if ($checkValue!=='aws'){
+        if ($checkValue !== 'aws') {
             return false;
         }
 
@@ -54,30 +84,52 @@ class AWSCloud extends CloudProvider
             return false;
         }
 
-        SystemMessages::echoToTeletype(PHP_EOL);
-
-        // Update machine name
-        $this->updateHostName($hostname);
-
-        // Update LAN settings with the external IP address
+        // Get instance metadata
         $extIp = $this->getMetaDataAWS('public-ipv4');
-        $this->updateLanSettings($extIp);
+        $vmId = $this->getMetaDataAWS('instance-id');
 
-        // Update SSH keys, if available
+        // Get SSH keys
         $sshKey = '';
         $sshKeys = $this->getMetaDataAWS('public-keys');
-        $sshId = explode('=', $sshKeys)[0] ?? '';
+        $sshIdParts = explode('=', $sshKeys);
+        $sshId = $sshIdParts[0];
         if ($sshId !== '') {
             $sshKey = $this->getMetaDataAWS("public-keys/$sshId/openssh-key");
         }
-        $this->updateSSHKeys($sshKey);
 
-        // Update SSH and WEB passwords using some unique identifier from the metadata
-        $vmId = $this->getMetaDataAWS('instance-id')??'';
-        $this->updateSSHCredentials('ec2-user', $vmId);
-        $this->updateWebPassword($vmId);
+        // Build config from IMDS metadata
+        $config = new ProvisioningConfig(
+            hostname: $hostname,
+            externalIp: $extIp,
+            sshKeys: $sshKey,
+            sshLogin: 'ec2-user',
+            instanceId: $vmId,
+            webPassword: $vmId
+        );
 
-        return true;
+        // Fetch and merge user-data if available
+        $userData = $this->fetchUserData();
+        if ($userData !== null) {
+            $userConfig = $this->parseUserData($userData);
+            if ($userConfig !== null && !$userConfig->isEmpty()) {
+                SystemMessages::sysLogMsg(__CLASS__, "Applying user-data configuration");
+                $config = $config->merge($userConfig);
+            }
+        }
+
+        // Apply configuration using direct SQLite (no Redis/ORM)
+        return $this->applyConfigDirect($config);
+    }
+
+    /**
+     * Fetches user-data from AWS IMDS.
+     *
+     * @return string|null User-data content or null if not available
+     */
+    protected function fetchUserData(): ?string
+    {
+        $userData = $this->getMetaDataAWS('../user-data');
+        return !empty($userData) ? $userData : null;
     }
 
     /**

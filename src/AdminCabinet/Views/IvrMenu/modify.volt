@@ -1,8 +1,9 @@
-{{ form('ivr-menu/save', 'role': 'form', 'class': 'ui large form','id':'ivr-menu-form') }}
+{{ form(['action' : 'ivr-menu/save', 'method': 'post', 'role': 'form', 'class': 'ui large form','id':'ivr-menu-form']) }}
 {{ form.render('id') }}
-{{ form.render('uniqid') }}
+{{ form.render('isNew') }}
+<input type="hidden" id="copy-from-id" value="{{ copyFromId }}"/>
 <div class="ui ribbon label" id="ivr-menu-extension-number">
-    <i class="phone icon"></i> {{ extension }}
+    <i class="phone icon"></i> {{ extension|e }}
 </div>
 <h3 class="ui hidden header "></h3>
 <div class="field max-width-500">
@@ -13,7 +14,13 @@
     <label>{{ t._('iv_Description') }}</label>
     {{ form.render('description') }}
 </div>
-{{ partial("partials/playAddNewSound", ['label': t._('iv_PlaySound'), 'id':'audio_message_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
+{{ partial("partials/playAddNewSoundWithIcons", [
+    'fieldClass': 'field',
+    'fieldID': 'audio-message-id-field', 
+    'id': 'audio_message_id',
+    'label': t._('iv_PlaySound'),
+    'form': form
+]) }}
 <div class="ui compact segment">
     <div class="ui top attached label">{{ t._('iv_Actions') }}</div>
     <div id="actions-place">
@@ -23,11 +30,7 @@
                 <input name="digits-id" value="" type="text" style="height: 42px;"/>
             </div>
             <div class="eleven wide field">
-                <div class="ui search selection dropdown forwarding-select">
-                    <input type="hidden" name="extension-id" value="">
-                    <i class="dropdown icon"></i>
-                    <div class="default text">Select Number</div>
-                </div>
+                <input type="hidden" name="extension-id" value="">
             </div>
             <div class="one wide field">
                 <div class="ui  icon  button delete-action-row" data-value=""><i class="icon trash red"></i></div>
@@ -44,25 +47,35 @@
 
 <div class="inline field">
     {{ form.render('number_of_repeat') }}
-    <label for="number_of_repeat">{{ t._('iv_NumberOfRepeat') }}</label>
+    <label for="number_of_repeat">{{ t._('iv_NumberOfRepeat') }}
+        <i class="small info circle icon field-info-icon" data-field="number_of_repeat"></i>
+    </label>
 </div>
 <div class="inline field">
     {{ form.render('timeout') }}
-    <label for="timeout">{{ t._('iv_TimeoutToRedirect') }}</label>
+    <label for="timeout">{{ t._('iv_TimeoutToRedirect') }}
+        <i class="small info circle icon field-info-icon" data-field="timeout"></i>
+    </label>
 </div>
 <div class="field">
-    <label for="timeout_extension">{{ t._('iv_TimeoutExtension') }}</label>
+    <label for="timeout_extension">{{ t._('iv_TimeoutExtension') }}
+        <i class="small info circle icon field-info-icon" data-field="timeout_extension"></i>
+    </label>
     {{ form.render('timeout_extension') }}
 </div>
 
 <div class="field">
     <div class="ui toggle checkbox">
         {{ form.render('allow_enter_any_internal_extension') }}
-        <label for="allow_enter_any_internal_extension">{{ t._('iv_AllowEnterAnyInternalExtension') }}</label>
+        <label for="allow_enter_any_internal_extension">{{ t._('iv_AllowEnterAnyInternalExtension') }}
+            <i class="small info circle icon field-info-icon" data-field="allow_enter_any_internal_extension"></i>
+        </label>
     </div>
 </div>
 <div class="field">
-    <label for="extension">{{ t._('iv_Extensions') }}</label>
+    <label for="extension">{{ t._('iv_Extensions') }}
+        <i class="small info circle icon field-info-icon" data-field="extension"></i>
+    </label>
     <div class="field max-width-250">
         <div class="ui icon input extension">
             <i class="search icon"></i>
@@ -78,9 +91,7 @@
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
 {{ partial("partials/submitbutton",['indexurl':'ivr-menu/index']) }}
-{{ end_form() }}
+{{ close('form') }}
 
 
-<script type="application/javascript">
-    var ivrActions = '{{ ivractions|json_encode }}';
-</script>
+{# IVR actions data will be loaded via REST API in JavaScript #}

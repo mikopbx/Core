@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -25,7 +26,7 @@ use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Acl\Adapter\Memory as AclList;
 use Phalcon\Assets\Manager;
-use Phalcon\Config;
+use Phalcon\Config\Config;
 use Phalcon\Forms\Form;
 use Phalcon\Mvc\Dispatcher;
 use Phalcon\Mvc\Micro;
@@ -41,10 +42,10 @@ use ReflectionClass as ReflectionClassAlias;
  * @package MikoPBX\Modules\Config
  */
 abstract class ConfigClass extends AsteriskConfigClass implements
-                             SystemConfigInterface,
-                             RestAPIConfigInterface,
-                             WebUIConfigInterface,
-                             AsteriskConfigInterface
+    SystemConfigInterface,
+    RestAPIConfigInterface,
+    WebUIConfigInterface,
+    AsteriskConfigInterface
 {
     // The module hook applying priority
     protected int $priority = 10000;
@@ -64,7 +65,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
     /**
      * Access to the /etc/inc/mikopbx-settings.json values.
      *
-     * @var \Phalcon\Config
+     * @var \Phalcon\Config\Config
      */
     protected Config $config;
 
@@ -98,7 +99,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
     public function __construct()
     {
 
-       parent::__construct();
+        parent::__construct();
 
         // Get child class parameters and define module Dir and UniqueID
         $reflector        = new ReflectionClassAlias(static::class);
@@ -126,7 +127,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      * @param string $methodName
      * @return int
      */
-    public function getMethodPriority(string $methodName=''):int
+    public function getMethodPriority(string $methodName = ''): int
     {
         return $this->priority;
     }
@@ -235,6 +236,27 @@ abstract class ConfigClass extends AsteriskConfigClass implements
     }
 
     /**
+     * Called after iptables rules are applied but before the final DROP rule.
+     * Override this to inject custom iptables rules (e.g., ipset-based filtering).
+     *
+     * @return void
+     */
+    public function onAfterIptablesReload(): void
+    {
+    }
+
+    /**
+     * Called after network interfaces are configured.
+     * Override this to start VPN tunnels, configure overlay networks,
+     * or perform other actions that depend on network availability.
+     *
+     * @return void
+     */
+    public function onAfterNetworkConfigured(): void
+    {
+    }
+
+    /**
      * Processes actions before enabling the module in the web interface.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforemoduleenable
      *
@@ -283,6 +305,16 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      * @return string The generated Nginx locations.
      */
     public function createNginxLocations(): string
+    {
+        return '';
+    }
+
+    /**
+     * Creates additional Nginx server blocks from modules.
+     *
+     * @return string The generated Nginx server block configuration.
+     */
+    public function createNginxServers(): string
     {
         return '';
     }
@@ -354,7 +386,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onBeforeHeaderMenuShow(array &$menuItems):void
+    public function onBeforeHeaderMenuShow(array &$menuItems): void
     {
     }
 
@@ -366,7 +398,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onAfterRoutesPrepared(Router $router):void
+    public function onAfterRoutesPrepared(Router $router): void
     {
     }
 
@@ -379,7 +411,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onAfterAssetsPrepared(Manager $assets, Dispatcher $dispatcher):void
+    public function onAfterAssetsPrepared(Manager $assets, Dispatcher $dispatcher): void
     {
     }
 
@@ -393,7 +425,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return string the volt partial file path without extension.
      */
-    public function onVoltBlockCompile(string $controller, string $blockName, View $view):string
+    public function onVoltBlockCompile(string $controller, string $blockName, View $view): string
     {
         return '';
     }
@@ -408,7 +440,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onBeforeFormInitialize(Form $form, $entity, $options):void
+    public function onBeforeFormInitialize(Form $form, $entity, $options): void
     {
     }
 
@@ -420,7 +452,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onBeforeExecuteRoute(Dispatcher $dispatcher):void
+    public function onBeforeExecuteRoute(Dispatcher $dispatcher): void
     {
     }
 
@@ -432,7 +464,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onAfterExecuteRoute(Dispatcher $dispatcher):void
+    public function onAfterExecuteRoute(Dispatcher $dispatcher): void
     {
     }
 
@@ -440,13 +472,26 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      * Adds an extra filters before execute request to CDR table.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#applyaclfilterstocdrquery
      *
+     * Called from both AdminCabinet and REST API contexts.
+     *
+     * In REST API context, session is not available. Use $sessionContext to get user role:
+     * - $sessionContext['role'] - User role from JWT token
+     * - $sessionContext['user_name'] - User login from JWT token
+     * - $sessionContext['session_id'] - Session/token ID
+     *
+     * In AdminCabinet context, $sessionContext is empty - use SessionProvider as before.
+     *
      * @param array $parameters The array of parameters prepared for execute query.
+     * @param array $sessionContext Session context from REST API (role, user_name, session_id).
+     *                              Empty array in AdminCabinet context.
      *
      * @return void
      */
-    public function applyACLFiltersToCDRQuery(/** @scrutinizer ignore-unused */ array &$parameters): void
-    {
-        // Implement $parameters modifications
+    public function applyACLFiltersToCDRQuery(
+        /** @scrutinizer ignore-unused */ array &$parameters,
+        /** @scrutinizer ignore-unused */ array $sessionContext = []
+    ): void {
+        // Implement $parameters modifications based on sessionContext['role'] or SessionProvider
     }
 
 
@@ -458,9 +503,8 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onBeforeExecuteRestAPIRoute(Micro $app):void
+    public function onBeforeExecuteRestAPIRoute(Micro $app): void
     {
-
     }
 
     /**
@@ -471,8 +515,20 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onAfterExecuteRestAPIRoute(Micro $app):void
+    public function onAfterExecuteRestAPIRoute(Micro $app): void
     {
+    }
 
+     /**
+     * Called from AclController to get custom permissions for a controller.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#ongetcontrollerpermissions
+     *
+     * @param string $controller The called controller name.
+     * @param array $permissions The permissions array for modifications.
+     *
+     * @return void
+     */
+    public function onGetControllerPermissions(string $controller, array &$permissions): void
+    {
     }
 }

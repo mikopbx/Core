@@ -1,15 +1,25 @@
-{{ form('call-queues/save', 'role': 'form', 'class': 'ui large form','id':'queue-form') }}
+{{ form(['action' : 'call-queues/save', 'method': 'post', 'role': 'form', 'class': 'ui form','id':'queue-form']) }}
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
+<input type="hidden" id="copy-from-id" value="{{ copyFromId }}"/>
 <div class="ui ribbon label" id="queue-extension-number">
-    <i class="phone icon"></i> {{ extension }}
+    <i class="phone icon"></i> <span id="extension-display"></span>
 </div>
-<h3 class="ui dividing header ">{{ t._("cq_QueueSetup") }}</h3>
+<h3 class="ui hidden header "></h3>
 <div class="field max-width-500">
     <label for="name">{{ t._('cq_Name') }}</label>
     {{ form.render('name') }}
 </div>
-
+<div class="field">
+    <label for="extension">{{ t._('cd_Extensions') }}</label>
+    <div class="ui icon input extension field max-width-200">
+        <i class="search icon"></i>
+        {{ form.render('extension') }}
+    </div>
+    <div class="ui top pointing red label hidden" id="extension-error">
+        {{ t._("cq_ThisNumberIsNotFree") }}
+    </div>
+</div>
 <div class="field max-width-800">
     <label for="description">{{ t._('cq_Description') }}</label>
     {{ form.render('description') }}
@@ -18,24 +28,14 @@
 <h3 class="ui dividing header ">{{ t._("cq_QueueMembers") }}</h3>
 <div class="field max-width-500">
     <label for="extensionselect">{{ t._('cq_SelectAgentForAddToQueue') }}</label>
-    <div class="ui selection dropdown search" id="extensionselect">
-        <div class="default text">{{ t._('ex_SelectNumber') }}</div>
-        <i class="dropdown icon"></i>
-    </div>
+    <input type="hidden" name="extensionselect" id="extensionselect" value="">
+    <!-- Dropdown will be created by DynamicDropdownBuilder JavaScript -->
 </div>
 <div class="ui basic compact segment">
     <table class="ui selectable small very compact unstackable table" id="extensionsTable">
         <tbody>
-        {% for extension in extensionsTable %}
-            <tr class="member-row" id="{{ extension['number'] }}">
-                <td class="dragHandle"><i class="sort grey icon"></i></td>
-                <td class="callerid">{{ extension['callerid'] }}</td>
-                <td class="right aligned collapsing">
-                    <div class="ui icon small button delete-row-button"><i class="icon trash red"></i></div>
-                </td>
-            </tr>
-        {% endfor %}
-        <tr class="member-row-tpl" style="display: none">
+        <!-- Member rows will be populated by JavaScript -->
+        <tr class="member-row-template" style="display: none">
             <td class="dragHandle"><i class="sort grey icon"></i></td>
             <td class="callerid"></td>
             <td class="right aligned collapsing">
@@ -60,21 +60,11 @@
     </div>
 
     <div class="content">
-        <div class="field">
-            <label for="extension">{{ t._('cd_Extensions') }}</label>
-            <div class="field max-width-200">
-                <div class="ui icon input extension">
-                    <i class="search icon"></i>
-                    {{ form.render('extension') }}
-                </div>
-                <div class="ui top pointing red label hidden" id="extension-error">
-                    {{ t._("cq_ThisNumberIsNotFree") }}
-                </div>
-            </div>
-        </div>
 
         <div class="field">
-            <label for="callerid_prefix">{{ t._('cq_CallerIDPrefix') }}</label>
+            <label for="callerid_prefix">{{ t._('cq_CallerIDPrefix') }}
+                <i class="small info circle icon field-info-icon" data-field="callerid_prefix"></i>
+            </label>
             <div class="field max-width-200">
                 {{ form.render('callerid_prefix') }}
             </div>
@@ -85,13 +75,16 @@
 
         <div class="inline field">
             {{ form.render('seconds_to_ring_each_member') }}
-            <label>{{ t._('cq_SecRingToEachMembers') }}</label>
-
+            <label>{{ t._('cq_SecRingToEachMembers') }}
+                <i class="small info circle icon field-info-icon" data-field="seconds_to_ring_each_member"></i>
+            </label>
         </div>
 
         <div class="inline field">
             {{ form.render('seconds_for_wrapup') }}
-            <label for="seconds_for_wrapup">{{ t._('cq_WrapupTime') }}</label>
+            <label for="seconds_for_wrapup">{{ t._('cq_WrapupTime') }}
+                <i class="small info circle icon field-info-icon" data-field="seconds_for_wrapup"></i>
+            </label>
         </div>
 
         <div class="field">
@@ -108,7 +101,7 @@
             <label for="caller_hear">{{ t._('cq_CallerHearOnQueued') }}</label>
             {{ form.render('caller_hear') }}
         </div>
-        {{ partial("partials/playAddNewSound", ['label': t._('cq_PereodicAnonceMohSoundFile'), 'id':'moh_sound_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
+        {{ partial("partials/playAddNewSoundWithIcons", ['label': t._('cq_PereodicAnonceMohSoundFile'), 'id':'moh_sound_id', 'fieldClass':'max-width-800 field', 'fieldId':'']) }}
 
         <div class="field">
             <div class="ui toggle checkbox">
@@ -125,7 +118,7 @@
             </div>
         </div>
 
-        {{ partial("partials/playAddNewSound", ['label': t._('cq_PereodicAnonceSoundFile'), 'id':'periodic_announce_sound_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
+        {{ partial("partials/playAddNewSoundWithIcons", ['label': t._('cq_PereodicAnonceSoundFile'), 'id':'periodic_announce_sound_id', 'fieldClass':'max-width-800 field', 'fieldId':'']) }}
 
         <div class="inline field">
             {{ form.render('periodic_announce_frequency') }}
@@ -143,6 +136,7 @@
                 {{ form.render('timeout_to_redirect_to_extension') }}
                 {{ t._("cq_SecondsCallWillBeRoutedTo") }}
                 {{ form.render('timeout_extension') }}
+                <!-- Dropdown created automatically by JavaScript -->
             </div>
 
         </div>
@@ -153,7 +147,7 @@
             <div class="inline field">
                 {{ t._("cq_RedirectToExtensionIfEmtyQueue") }}
                 {{ form.render('redirect_to_extension_if_empty') }}
-            </div>
+                 <!-- Dropdown created automatically by JavaScript -->
 
         </div>
 
@@ -162,6 +156,9 @@
     </div>
 </div>
 
+<div class='hidden divider'></div>
+<div class='ui divider'></div>
+
 {{ partial("partials/submitbutton",['indexurl':'call-queues/index/']) }}
 
-{{ end_form() }}
+{{ close('form') }}

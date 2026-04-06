@@ -32,6 +32,9 @@ backupDirDay="${confBackupDir}/day"
 # Ensure the backup directory exists
 mkdir -p "$backupDirDay";
 
+# Restrict backup file permissions to root only (prevent nginx/www from reading)
+umask 077;
+
 # A file for temporary storage of a backup copy
 tmpBackup="$backupDir/tmp.dmp";
 /usr/bin/sqlite3 "$dbPath" .dump > "$tmpBackup";

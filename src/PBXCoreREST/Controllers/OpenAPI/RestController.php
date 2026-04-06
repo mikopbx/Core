@@ -1,0 +1,192 @@
+<?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+namespace MikoPBX\PBXCoreREST\Controllers\OpenAPI;
+
+use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
+use MikoPBX\PBXCoreREST\Lib\OpenAPIManagementProcessor;
+
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameterRef,
+    ApiResponse,
+    SecurityType,
+    HttpMapping,
+    ResourceSecurity
+};
+
+/**
+ * RESTful controller for OpenAPI specification management (v3 API)
+ *
+ * Provides comprehensive access to OpenAPI documentation and metadata for the MikoPBX REST API.
+ * Implements singleton resource pattern as there's only one OpenAPI specification in the system.
+ *
+ * @package MikoPBX\PBXCoreREST\Controllers\OpenAPI
+ *
+ * @see https://cloud.google.com/apis/design - Google API Design Guide
+ * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
+ */
+#[ApiResource(
+    path: '/pbxcore/api/v3/openapi',
+    tags: ['OpenAPI Documentation'],
+    description: 'rest_OpenAPI_ApiDescription',
+    processor: OpenAPIManagementProcessor::class
+)]
+#[ResourceSecurity('openapi', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getSpecification', 'getAclRules', 'getValidationSchemas', 'getSimplifiedPermissions', 'getDetailedPermissions'],
+        'POST' => ['clearCache'],
+        'DELETE' => ['clearCache']
+    ],
+    resourceLevelMethods: [],
+    collectionLevelMethods: ['clearCache'],
+    customMethods: ['getSpecification', 'getAclRules', 'getValidationSchemas', 'getSimplifiedPermissions', 'getDetailedPermissions', 'clearCache']
+)]
+class RestController extends BaseRestController
+{
+    /**
+     * The processor class to handle requests
+     * @var string
+     */
+    protected string $processorClass = OpenAPIManagementProcessor::class;
+
+    /**
+     * Get OpenAPI specification
+     *
+     * @route GET /pbxcore/api/v3/openapi:getSpecification
+     */
+    #[ApiOperation(
+        summary: 'rest_openapi_GetSpec',
+        description: 'rest_openapi_GetSpecDesc',
+        operationId: 'getOpenAPISpecificationExplicit'
+    )]
+    #[ApiParameterRef('format', required: false)]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getSpecification(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get ACL rules extracted from API metadata
+     *
+     * @route GET /pbxcore/api/v3/openapi:getAclRules
+     */
+    #[ApiOperation(
+        summary: 'rest_openapi_GetAcl',
+        description: 'rest_openapi_GetAclDesc',
+        operationId: 'getAPIAclRules'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getAclRules(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get validation schemas for API endpoints
+     *
+     * @route GET /pbxcore/api/v3/openapi:getValidationSchemas
+     */
+    #[ApiOperation(
+        summary: 'rest_openapi_GetSchemas',
+        description: 'rest_openapi_GetSchemasDesc',
+        operationId: 'getAPIValidationSchemas'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getValidationSchemas(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get simplified permissions structure for UI
+     *
+     * Returns a simplified, grouped view of REST API endpoints suitable for
+     * UI permission selector in API Keys management. Groups endpoints by resource
+     * path and action type (read/write).
+     *
+     * @route GET /pbxcore/api/v3/openapi:getSimplifiedPermissions
+     */
+    #[ApiOperation(
+        summary: 'rest_openapi_GetSimplifiedPerms',
+        description: 'rest_openapi_GetSimplifiedPermsDesc',
+        operationId: 'getSimplifiedPermissions'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getSimplifiedPermissions(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get detailed permissions structure for ACL management
+     *
+     * Returns a comprehensive view of all controllers (AdminCabinet, REST API, Modules)
+     * with their actions for building ACL tree in ModuleUsersUI. Includes exclusion rules
+     * (always allowed, always denied, linked actions).
+     *
+     * @route GET /pbxcore/api/v3/openapi:getDetailedPermissions
+     */
+    #[ApiOperation(
+        summary: 'rest_openapi_GetDetailedPerms',
+        description: 'rest_openapi_GetDetailedPermsDesc',
+        operationId: 'getDetailedPermissions'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getDetailedPermissions(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Clear OpenAPI metadata cache
+     *
+     * @route POST /pbxcore/api/v3/openapi:clearCache
+     * @route DELETE /pbxcore/api/v3/openapi:clearCache
+     */
+    #[ApiOperation(
+        summary: 'rest_openapi_ClearCache',
+        description: 'rest_openapi_ClearCacheDesc',
+        operationId: 'clearOpenAPICache'
+    )]
+    #[ApiResponse(200, 'rest_response_200_deleted')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function clearCache(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+}

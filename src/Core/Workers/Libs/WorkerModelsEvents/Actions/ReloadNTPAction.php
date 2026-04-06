@@ -14,6 +14,7 @@ class ReloadNTPAction implements ReloadActionInterface
      */
     public function execute(array $parameters = []): void
     {
-        NTPConf::configure();
+        $ntpConf = new NTPConf();
+        $ntpConf->reStart();
     }
 }

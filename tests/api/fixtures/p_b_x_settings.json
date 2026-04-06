@@ -1,0 +1,15 @@
+{
+  "default": {
+    "codec_alaw": true,
+    "codec_ulaw": false,
+    "codec_g726": true,
+    "codec_gsm": false,
+    "codec_adpcm": true,
+    "codec_g722": false,
+    "codec_ilbc": true,
+    "codec_opus": false,
+    "codec_h264": true,
+    "codec_h263": false,
+    "codec_h263p": true
+  }
+}

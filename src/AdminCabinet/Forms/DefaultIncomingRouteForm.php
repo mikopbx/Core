@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -24,7 +25,6 @@ use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 
-
 /**
  * Class DefaultIncomingRouteForm
  *
@@ -41,60 +41,26 @@ class DefaultIncomingRouteForm extends BaseForm
             switch ($key) {
                 case 'action' :
                 {
-                    $arrDefaultActions = [
-                        IncomingRoutingTable::ACTION_BUSY       => $this->translation->_('ir_busy_signal'),
-                        IncomingRoutingTable::ACTION_HANGUP     => $this->translation->_('ir_hangup'),
-                        IncomingRoutingTable::ACTION_EXTENSION  => $this->translation->_('ir_extension'),
-                        IncomingRoutingTable::ACTION_PLAYBACK   => $this->translation->_('ir_playback'),
-                    ];
-
-                    $defaultActions = new Select(
-                        'action', $arrDefaultActions, [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => false,
-                            'value' => $value,
-                            'class' => 'ui selection dropdown defaultrouteselect',
-                        ]
-                    );
-                    $this->add($defaultActions);
+                    // Action - Hidden field, dropdown will be populated via JS
+                    $this->add(new Hidden('action', [
+                        'id' => 'action',
+                        'value' => $value ?: IncomingRoutingTable::ACTION_EXTENSION
+                    ]));
                     break;
                 }
                 case 'audio_message_id' :{
-                    // Audio_message_id
-                    $fileId = (string)$options['soundfiles'];
-                    if(empty($fileId)){
-                        $fileId = 'none';
-                    }
-                    $audioMessage = new Select(
-                        'audio_message_id', $fileId, [
-                                              'using' => [
-                                                  'id',
-                                                  'name',
-                                              ],
-                                              'useEmpty' => false,
-                                              'class' => 'ui selection dropdown search audio-message-select',
-                                          ]
-                    );
-                    $this->add($audioMessage);
+                    // Audio message - Hidden field, dropdown will be populated via JS
+                    $this->add(new Hidden('audio_message_id', [
+                        'id' => 'audio_message_id'
+                    ]));
+                    break;
                 }
                 case 'extension' :
                 {
-                    // Extension
-                    $extension = new Select(
-                        'extension', $options['extensions'], [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => true,
-                            'value' => $value,
-                            'class' => 'ui selection dropdown search forwarding-select',
-                        ]
-                    );
-                    $this->add($extension);
+                    // Extension - Hidden field, dropdown will be populated via JS
+                    $this->add(new Hidden('extension', [
+                        'id' => 'extension'
+                    ]));
                     break;
                 }
                 default:

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,10 +20,11 @@
 
 namespace MikoPBX\AdminCabinet\Plugins;
 
+use MikoPBX\Common\Providers\RouterProvider;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
-use Phalcon\Text;
+use MikoPBX\Common\Library\Text;
 
 /**
  * NormalizeControllerNamePlugin
@@ -31,7 +33,6 @@ use Phalcon\Text;
  */
 class NormalizeControllerNamePlugin extends Injectable
 {
-
     /**
      * This action is executed before execute any action in the application
      *
@@ -52,10 +53,10 @@ class NormalizeControllerNamePlugin extends Injectable
         // @examples
         // /admin-cabinet/module-users-groups/index
         // /admin-cabinet/module-users-groups/modify/1
-        if(str_starts_with($dispatcher->getNamespaceName(), 'Modules')){
+        if (str_starts_with($dispatcher->getNamespaceName(), 'Modules')) {
             $controllerClass =  $dispatcher->getHandlerClass();
             $actionMethod = $dispatcher->getActiveMethod();
-            if (!method_exists($controllerClass, $actionMethod)){
+            if (!method_exists($controllerClass, $actionMethod)) {
                 $actionSuffix = $dispatcher->getActionSuffix();
                 $controllerSuffix = $dispatcher->getHandlerSuffix();
                 $checkNamespace = $dispatcher->getNamespaceName();
@@ -63,28 +64,27 @@ class NormalizeControllerNamePlugin extends Injectable
                 // @examples
                 // /admin-cabinet/module-users-groups/module-users-groups/index
                 // /admin-cabinet/module-users-groups/module-users-groups/modify/1
-                $checkController = ucfirst(Text::camelize($dispatcher->getParam('moduleUniqueId'),'-'));
+                $checkController = ucfirst(Text::camelize($dispatcher->getParam(RouterProvider::ModuleUniqueId) ?? '', '-'));
                 $checkAction = $dispatcher->getControllerName();
-                $controllerClass = "{$checkNamespace}\\{$checkController}{$controllerSuffix}";
-                $actionMethod = "{$checkAction}{$actionSuffix}";
-                if (method_exists($controllerClass, $actionMethod)){
+                $controllerClass = "$checkNamespace\\$checkController$controllerSuffix";
+                $actionMethod = "$checkAction$actionSuffix";
+                if (method_exists($controllerClass, $actionMethod)) {
                     $params = $dispatcher->getActionName();
 
-                    $checkController = Text::uncamelize($checkController,'_');
+                    $checkController = Text::uncamelize($checkController, '_');
                     $dispatcher->forward([
                         'controller' => $checkController,
                         'action' => $checkAction,
-                        'namespace'=> $checkNamespace,
-                        'params'=> [$params]
+                        'namespace' => $checkNamespace,
+                        'params' => [$params]
                     ]);
                 }
             } else {
                 $moduleParams = $dispatcher->getParams();
-                unset($moduleParams['moduleUniqueId']);
+                unset($moduleParams[RouterProvider::ModuleUniqueId]);
                 $dispatcher->setParams($moduleParams);
             }
         }
-
     }
 
     /**

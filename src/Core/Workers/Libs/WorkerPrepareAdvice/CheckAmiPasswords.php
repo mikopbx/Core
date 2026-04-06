@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
 use MikoPBX\Common\Models\AsteriskManagerUsers;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\PasswordService;
 use Phalcon\Di\Injectable;
 
 /**
@@ -47,11 +47,28 @@ class CheckAmiPasswords extends Injectable
         ];
 
         $amiUsersToCheck = AsteriskManagerUsers::find($parameters);
-        foreach ($amiUsersToCheck as $amiUser) {
-            if (Util::isSimplePassword($amiUser->secret)) {
-                $amiUser->assign(['weakSecret' => '2']); // Weak password
-            } else {
-                $amiUser->assign(['weakSecret' => '1']); // OK, it is a strong password
+        
+        if ($amiUsersToCheck->count() > 0) {
+            // Collect all passwords for batch checking
+            $passwords = [];
+            $userMap = [];
+            
+            foreach ($amiUsersToCheck as $index => $amiUser) {
+                $passwords[$index] = $amiUser->secret;
+                $userMap[$index] = $amiUser;
+            }
+            
+            // Check passwords individually
+            foreach ($passwords as $index => $password) {
+                $isInDictionary = PasswordService::checkDictionary($password);
+
+                $amiUser = $userMap[$index];
+                if ($isInDictionary) {
+                    $amiUser->assign(['weakSecret' => '2']); // Weak password
+                } else {
+                    $amiUser->assign(['weakSecret' => '1']); // OK, it is a strong password
+                }
+                $amiUser->save();
             }
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -22,16 +23,16 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
-use Phalcon\Config as ConfigAlias;
+use Phalcon\Config\Config as ConfigAlias;
 
 class UpdateConfigsUpToVer20220140 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '2022.1.40';
+    public const string PBX_VERSION = '2022.1.40';
 
-	private ConfigAlias $config;
+    private ConfigAlias $config;
     private bool $isLiveCD;
 
-	/**
+    /**
      * Class constructor.
      */
     public function __construct()
@@ -43,11 +44,11 @@ class UpdateConfigsUpToVer20220140 extends Injectable implements UpgradeSystemCo
     /**
      * https://github.com/mikopbx/Core/issues/269
      */
-    public function processUpdate():void
+    public function processUpdate(): void
     {
         if ($this->isLiveCD) {
             return;
         }
-        shell_exec(Util::which('rm')." -rf /storage/usbdisk*/mikopbx/astlogs/asterisk/events_log.db");
+        shell_exec(Util::which('rm') . " -rf /storage/usbdisk*/mikopbx/astlogs/asterisk/events_log.db");
     }
 }

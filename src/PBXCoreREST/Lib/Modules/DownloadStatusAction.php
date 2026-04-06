@@ -23,7 +23,8 @@ use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class DownloadStatus
@@ -31,7 +32,7 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class DownloadStatusAction extends \Phalcon\Di\Injectable
+class DownloadStatusAction extends Injectable
 {
 
     /**
@@ -60,7 +61,7 @@ class DownloadStatusAction extends \Phalcon\Di\Injectable
         }
 
         // Wait until a download process started
-        $d_pid = Processes::getPidOfProcess("{$moduleDirTmp}/download_settings.json");
+        $d_pid = Processes::getPidOfProcess("$moduleDirTmp/download_settings.json");
         if (empty($d_pid)) {
             usleep(500000);
         }

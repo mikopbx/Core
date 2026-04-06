@@ -19,10 +19,8 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\Extensions\DeleteRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Extensions\DropdownsAction;
-use MikoPBX\PBXCoreREST\Lib\Extensions\GetRecordAction;
-use MikoPBX\PBXCoreREST\Lib\Extensions\SaveRecordAction;
+use MikoPBX\PBXCoreREST\Lib\Extensions\GetListAction;
 use MikoPBX\PBXCoreREST\Lib\Extensions\Utils;
 use Phalcon\Di\Injectable;
 
@@ -37,7 +35,7 @@ class ExtensionsManagementProcessor extends Injectable
     /**
      * Processes Extensions management requests
      *
-     * @param array $request
+     * @param array<string, mixed> $request
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -49,25 +47,16 @@ class ExtensionsManagementProcessor extends Injectable
         $action = $request['action'];
         $data = $request['data'];
         switch ($action) {
-            case 'getRecord':
-                $res = GetRecordAction::main($data['id'] ?? '');
-                break;
-            case 'saveRecord':
-                if (!empty($data['number'])) {
-                    $res = SaveRecordAction::main($data);
-                } else {
-                    $res->messages['error'][] = 'Empty number value in POST/GET data';
-                }
-                break;
-            case 'deleteRecord':
-                if (!empty($data['id'])) {
-                    $res = DeleteRecordAction::main($data['id']);
-                } else {
-                    $res->messages['error'][] = 'Empty ID in POST/GET data';
-                }
+            case 'getList':
+                $res = GetListAction::main($data);
                 break;
             case 'getForSelect':
-                $res = DropdownsAction::getForSelect($data['type'] ?? 'all');
+                $res = DropdownsAction::getForSelect(
+                    $data['type'] ?? 'all',
+                    $data['query'] ?? '',
+                    $data['exclude'] ?? '',
+                    !empty($data['includeEmpty'])
+                );
                 break;
             case 'available':
                 if (!empty($data['number'])) {
@@ -84,8 +73,10 @@ class ExtensionsManagementProcessor extends Injectable
                 }
                 break;
             case 'getPhoneRepresent':
-                if (!empty($data['number'])) {
-                    $res = Utils::getPhoneRepresent($data['number']);
+                // Support both 'number' (collection-level) and 'id' (resource-level)
+                $number = $data['number'] ?? $data['id'] ?? null;
+                if (!empty($number)) {
+                    $res = Utils::getPhoneRepresent($number);
                 } else {
                     $res->messages['error'][] = 'Empty number value in POST/GET data';
                 }

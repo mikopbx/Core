@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -31,7 +32,6 @@ use MikoPBX\Core\Workers\WorkerCallEvents;
  */
 class ActionAppEnd
 {
-
     /**
      * Executes the end application action.
      *
@@ -50,6 +50,13 @@ class ActionAppEnd
         foreach ($m_data as $row) {
             // Update endtime attribute with start data
             $row->writeAttribute('endtime', $data['start']);
+
+            // Write IVR DTMF digits if present (trimming leading comma from accumulation)
+            $ivrDtmf = $data['ivr_dtmf'] ?? '';
+            if ($ivrDtmf !== '') {
+                $row->writeAttribute('dtmf_digits', ltrim($ivrDtmf, ','));
+            }
+
             $res = $row->update();
 
             // Check if the record was updated successfully, if not log the error messages
@@ -74,5 +81,4 @@ class ActionAppEnd
             ],
         ];
     }
-
 }

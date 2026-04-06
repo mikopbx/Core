@@ -9,22 +9,15 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
-            <label>{{ t._('gs_SSHDisablePasswordLogins') }}</label>
+            <label for="SSHDisablePasswordLogins">{{ t._('gs_SSHDisablePasswordLogins') }}
+                <i class="small info circle icon field-info-icon"
+                   data-field="SSHDisablePasswordLogins"></i>
+            </label>
             {{ form.render('SSHDisablePasswordLogins') }}
         </div>
     </div>
 </div>
 <div class="ui basic segment" id="only-if-password-enabled">
-    {% for field in simplePasswords %}
-        {% if field === 'SSHPassword' %}
-            <div class="ui negative message password-validate">
-                <div class="header">
-                    {{ t._('gs_SetPassword') }}
-                </div>
-                <p>{{ t._('gs_SetPasswordInfo') }}</p>
-            </div>
-        {% endif  %}
-    {% endfor  %}
 <div class="two fields">
     <div class="field">
         <label>{{ t._('gs_SSHPassword') }}</label>
@@ -46,9 +39,23 @@
 </div>
 </div>
 <div class="field">
-    <label>{{ t._('gs_SSHAuthorizedKeys') }}</label>
-    {{ form.render('SSHAuthorizedKeys') }}
+    <label>{{ t._('gs_SSHAuthorizedKeys') }}
+        <i class="small info circle icon field-info-icon" 
+           data-field="SSHAuthorizedKeys"></i>
+    </label>
+    <div id="ssh-keys-container">
+        <!-- SSH keys table will be rendered here by JavaScript -->
+    </div>
+    {{ form.render('SSHAuthorizedKeys', ['style': 'display:none;']) }}
 </div>
+<div class="field">
+    <label>{{ t._('gs_SSH_ID_RSA_PUB') }}
+        <i class="small info circle icon field-info-icon" 
+           data-field="SSH_ID_RSA_PUB"></i>
+    </label>
+    {{ form.render('SSH_ID_RSA_PUB', ['data-field-type': 'ssh-public-key']) }}
+</div>
+
 {% if debugMode == true %}
     <div class="field">
         <label>{{ t._('gs_SSHecdsaKey') }}</label>

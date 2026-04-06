@@ -23,7 +23,7 @@
  *
  * @module Form
  */
-const Form = {
+const Form = { 
 
     /**
      * jQuery object for the form.
@@ -45,11 +45,13 @@ const Form = {
     $dirrtyField: $('#dirrty'),
 
     url: '',
+    method: 'POST', // HTTP method for form submission (POST, PATCH, PUT, etc.)
     cbBeforeSendForm: '',
     cbAfterSendForm: '',
     $submitButton: $('#submitbutton'),
     $dropdownSubmit: $('#dropdownSubmit'),
     $submitModeInput: $('input[name="submitMode"]'),
+    isRestoringMode: false, // Flag to prevent saving during restore
     processData: true,
     contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
     keyboardShortcuts: true,
@@ -57,6 +59,44 @@ const Form = {
     afterSubmitIndexUrl: '',
     afterSubmitModifyUrl: '',
     oldFormValues: [],
+    
+    /**
+     * REST API configuration
+     * @type {object}
+     */
+    apiSettings: {
+        /**
+         * Enable REST API mode
+         * @type {boolean}
+         */
+        enabled: false,
+
+        /**
+         * API object with methods (e.g., ConferenceRoomsAPI)
+         * @type {object|null}
+         */
+        apiObject: null,
+
+        /**
+         * Method name for saving records
+         * @type {string}
+         */
+        saveMethod: 'saveRecord'
+    },
+    
+    /**
+     * Convert checkbox values to boolean before form submission
+     * Set to true to enable automatic checkbox boolean conversion
+     * @type {boolean}
+     */
+    convertCheckboxesToBool: false,
+
+    /**
+     * Send only changed fields instead of all form data
+     * When true, compares current values with oldFormValues and sends only differences
+     * @type {boolean}
+     */
+    sendOnlyChanged: false,
     initialize() {
         // Set up custom form validation rules
         Form.$formObj.form.settings.rules.notRegExp = Form.notRegExpValidateRule;
@@ -97,10 +137,18 @@ const Form = {
                     const translateKey = `bt_${value}`;
                     Form.$submitModeInput.val(value);
                     Form.$submitButton
-                        .html(`<i class="save icon"></i> ${globalTranslate[translateKey]}`)
-                        .click();
+                        .html(`<i class="save icon"></i> ${globalTranslate[translateKey]}`);
+                    // Removed .click() to prevent automatic form submission
+
+                    // Save selected mode only if not restoring
+                    if (!Form.isRestoringMode) {
+                        Form.saveSubmitMode(value);
+                    }
                 },
             });
+            
+            // Restore saved submit mode
+            Form.restoreSubmitMode();
         }
 
         // Prevent form submission on enter keypress
@@ -167,131 +215,285 @@ const Form = {
     },
 
     /**
+     * Get only the fields that have changed from their initial values
+     *
+     * @returns {object} Object containing only changed fields
+     */
+    getChangedFields() {
+        const currentValues = Form.$formObj.form('get values');
+        const changedFields = {};
+
+        // Track if any codec fields changed for special handling
+        let codecFieldsChanged = false;
+        const codecFields = {};
+
+        // Compare each field with its original value
+        Object.keys(currentValues).forEach(key => {
+            const currentValue = currentValues[key];
+            const oldValue = Form.oldFormValues[key];
+
+            // Convert to strings for comparison to handle type differences
+            // Skip if both are empty (null, undefined, empty string)
+            const currentStr = String(currentValue || '').trim();
+            const oldStr = String(oldValue || '').trim();
+
+            // Check if this is a codec field
+            if (key.startsWith('codec_')) {
+                // Store codec field for later processing
+                codecFields[key] = currentValue;
+                if (currentStr !== oldStr) {
+                    codecFieldsChanged = true;
+                }
+            } else if (currentStr !== oldStr) {
+                // Regular field has changed, include it
+                changedFields[key] = currentValue;
+            }
+        });
+
+        // Check for fields that existed in old values but not in current
+        // (unchecked checkboxes might not appear in current values)
+        Object.keys(Form.oldFormValues).forEach(key => {
+            if (!(key in currentValues) && Form.oldFormValues[key]) {
+                // Field was removed or unchecked
+                const $element = Form.$formObj.find(`[name="${key}"]`);
+                if ($element.length > 0 && $element.attr('type') === 'checkbox') {
+                    // Check if this is a codec checkbox
+                    if (key.startsWith('codec_')) {
+                        codecFields[key] = '';
+                        // Check if it actually changed
+                        if (Form.oldFormValues[key]) {
+                            codecFieldsChanged = true;
+                        }
+                    } else {
+                        // Regular checkbox was unchecked
+                        changedFields[key] = '';
+                    }
+                }
+            }
+        });
+
+        // Special handling for codec fields:
+        // Include ALL codec fields only if ANY codec changed
+        // This is because codecs need to be processed as a complete set
+        if (codecFieldsChanged) {
+            // Add all codec fields to changed fields
+            Object.keys(codecFields).forEach(key => {
+                changedFields[key] = codecFields[key];
+            });
+
+        }
+
+        return changedFields;
+    },
+
+    /**
+     * Converts checkbox values to boolean in form data
+     * @param {object} formData - The form data object
+     * @returns {object} - Form data with boolean checkbox values
+     */
+    processCheckboxValues(formData) {
+        if (!Form.convertCheckboxesToBool) {
+            return formData;
+        }
+        
+        // Find all checkboxes using Semantic UI structure
+        // We look for the outer div.checkbox container, not the input
+        Form.$formObj.find('.ui.checkbox').each(function() {
+            const $checkbox = $(this);
+            const $input = $checkbox.find('input[type="checkbox"]');
+            
+            if ($input.length > 0) {
+                const fieldName = $input.attr('name');
+                if (fieldName && formData.hasOwnProperty(fieldName)) {
+                    // Use Semantic UI method to get actual checkbox state
+                    // Explicitly ensure we get a boolean value (not string)
+                    const isChecked = $checkbox.checkbox('is checked');
+                    formData[fieldName] = isChecked === true; // Force boolean type
+                }
+            }
+        });
+        
+        return formData;
+    },
+    
+    /**
      * Submits the form to the server.
      */
     submitForm() {
-        $.api({
-            url: Form.url,
-            on: 'now',
-            method: 'POST',
-            processData: Form.processData,
-            contentType: Form.contentType,
-            keyboardShortcuts: Form.keyboardShortcuts,
+        // Add 'loading' class to the submit button
+        Form.$submitButton.addClass('loading');
 
-            /**
-             * Executes before sending the request.
-             * @param {object} settings - The API settings object.
-             * @returns {object} - The modified API settings object.
-             */
-            beforeSend(settings) {
-                // Add 'loading' class to the submit button
-                Form.$submitButton.addClass('loading');
+        // Get form data - either all fields or only changed ones
+        let formData;
+        if (Form.sendOnlyChanged && Form.enableDirrity) {
+            // Get only changed fields
+            formData = Form.getChangedFields();
 
-                // Call cbBeforeSendForm function and handle the result
-                const cbBeforeSendResult = Form.cbBeforeSendForm(settings);
-                if (cbBeforeSendResult === false) {
-                    // If cbBeforeSendForm returns false, remove 'loading' class and perform a 'shake' transition on the submit button
-                    Form.$submitButton
-                        .transition('shake')
-                        .removeClass('loading');
-                } else {
-                    // Iterate over cbBeforeSendResult data, trim string values, and exclude sensitive information from being modified
-                    $.each(cbBeforeSendResult.data, (index, value) => {
-                        if (index.indexOf('ecret') > -1 || index.indexOf('assword') > -1) return;
-                        if (typeof value === 'string') cbBeforeSendResult.data[index] = value.trim();
-                    });
-                }
-                return cbBeforeSendResult;
-            },
+            // Log what fields are being sent
+        } else {
+            // Get all form data
+            formData = Form.$formObj.form('get values');
+        }
 
-            /**
-             * Executes when the request is successful.
-             * @param {object} response - The response object.
-             */
-            onSuccess(response) {
-                // Remove any existing AJAX messages
-                $('.ui.message.ajax').remove();
+        // Process checkbox values if enabled
+        formData = Form.processCheckboxValues(formData);
 
-                // Iterate over response message and handle errors
-                $.each(response.message, (index, value) => {
-                    if (index === 'error') {
-                        // If there is an error, perform a 'shake' transition on the submit button and add an error message after the form
-                        Form.$submitButton.transition('shake').removeClass('loading');
-                        Form.$formObj.after(`<div class="ui ${index} message ajax">${value}</div>`);
-                    }
+        // Call cbBeforeSendForm
+        const settings = { data: formData };
+        const cbBeforeSendResult = Form.cbBeforeSendForm(settings);
+        
+        if (cbBeforeSendResult === false) {
+            // If cbBeforeSendForm returns false, abort submission
+            Form.$submitButton
+                .transition('shake')
+                .removeClass('loading');
+            return;
+        }
+        
+        // Update formData if cbBeforeSendForm modified it
+        if (cbBeforeSendResult && cbBeforeSendResult.data) {
+            formData = cbBeforeSendResult.data;
+            
+            // Trim string values, excluding sensitive fields
+            $.each(formData, (index, value) => {
+                if (index.indexOf('ecret') > -1 || index.indexOf('assword') > -1) return;
+                if (typeof value === 'string') formData[index] = value.trim();
+            });
+        }
+        
+        // Choose submission method based on configuration
+        if (Form.apiSettings.enabled && Form.apiSettings.apiObject) {
+            // REST API submission
+            const apiObject = Form.apiSettings.apiObject;
+            const saveMethod = Form.apiSettings.saveMethod || 'saveRecord';
+
+            // Call the API object's method
+            if (apiObject && typeof apiObject[saveMethod] === 'function') {
+                console.log('Form: Calling API method', saveMethod, 'with data:', formData);
+
+                apiObject[saveMethod](formData, (response) => {
+                    console.log('Form: API response received:', response);
+                    Form.handleSubmitResponse(response);
                 });
-                // Dispatch 'ConfigDataChanged' event
-                const event = document.createEvent('Event');
-                event.initEvent('ConfigDataChanged', false, true);
-                window.dispatchEvent(event);
-
-                // Call cbAfterSendForm function
-                Form.cbAfterSendForm(response);
-
-                // Check response conditions and perform necessary actions
-                if (Form.checkSuccess(response)) {
-                    const submitMode = Form.$submitModeInput.val();
-                    const reloadPath = Form.getReloadPath(response);
-
-                    // Redirect based on submitMode and other conditions
-                    switch (submitMode) {
-                        case 'SaveSettings':
-                            // Redirect to the specified URL if conditions are met
-                            if (reloadPath.length > 0) {
-                                window.location = globalRootUrl + reloadPath;
-                            }
-                            break;
-                        case 'SaveSettingsAndAddNew':
-                            if (Form.afterSubmitModifyUrl.length > 1) {
-                                window.location = Form.afterSubmitModifyUrl;
-                            } else {
-                                const emptyUrl = window.location.href.split('modify');
-                                let action = 'modify';
-                                let prefixData = emptyUrl[1].split('/');
-                                if (prefixData.length > 0) {
-                                    action = action + prefixData[0];
-                                }
-                                if (emptyUrl.length > 1) {
-                                    window.location = `${emptyUrl[0]}${action}/`;
-                                }
-                            }
-                            break;
-                        case 'SaveSettingsAndExit':
-                            if (Form.afterSubmitIndexUrl.length > 1) {
-                                window.location = Form.afterSubmitIndexUrl;
-                            } else {
-                                Form.redirectToAction('index');
-                            }
-                            break;
-                        default:
-                            if (reloadPath.length > 0) {
-                                // Redirect to the specified URL if conditions are met
-                                window.location = globalRootUrl + reloadPath;
-                            }
-                            break;
-                    }
-                    if (Form.enableDirrity) {
-                        // Initialize dirrity if conditions are met
-                        Form.initializeDirrity();
-                    }
-                }
-                // Remove 'loading' class from the submit button
-                Form.$submitButton.removeClass('loading');
-            },
-
-            /**
-             * Executes when the request fails.
-             * @param {object} response - The response object.
-             */
-            onFailure(response) {
-                // Add the response message after the form and perform a 'shake' transition on the submit button
-                Form.$formObj.after(response);
+            } else {
+                console.error('API object or method not found:', saveMethod, apiObject);
+                console.error('Available methods:', apiObject ? Object.getOwnPropertyNames(apiObject) : 'No API object');
                 Form.$submitButton
                     .transition('shake')
                     .removeClass('loading');
-            },
+            }
+        } else {
+            // Traditional form submission
+            $.api({
+                url: Form.url,
+                on: 'now',
+                method: Form.method || 'POST',
+                processData: Form.processData,
+                contentType: Form.contentType,
+                keyboardShortcuts: Form.keyboardShortcuts,
+                data: formData,
+                onSuccess(response) {
+                    Form.handleSubmitResponse(response);
+                },
+                onFailure(response) {
+                    Form.$formObj.after(response);
+                    Form.$submitButton
+                        .transition('shake')
+                        .removeClass('loading');
+                }
+            });
+        }
+    },
+    
+    /**
+     * Handles the response after form submission (unified for both traditional and REST API)
+     * @param {object} response - The response object
+     */
+    handleSubmitResponse(response) {
+        // Remove loading state
+        Form.$submitButton.removeClass('loading');
+        
+        // Remove any existing AJAX messages
+        $('.ui.message.ajax').remove();
+        
+        // Check if submission was successful
+        if (Form.checkSuccess(response)) {
+            // Success
 
-        });
+            // Capture submit mode BEFORE cbAfterSendForm, which may reset it
+            // via populateForm → populateFormSilently → restoreSubmitMode
+            const submitMode = Form.$submitModeInput.val();
+            const reloadPath = Form.getReloadPath(response);
+
+            // Dispatch 'ConfigDataChanged' event
+            const event = new CustomEvent('ConfigDataChanged', {
+                bubbles: false,
+                cancelable: true
+            });
+            window.dispatchEvent(event);
+
+            // Call cbAfterSendForm
+            if (Form.cbAfterSendForm) {
+                Form.cbAfterSendForm(response);
+            }
+            
+            switch (submitMode) {
+                case 'SaveSettings':
+                    if (reloadPath.length > 0) {
+                        window.location = globalRootUrl + reloadPath;
+                    }
+                    break;
+                case 'SaveSettingsAndAddNew':
+                    if (Form.afterSubmitModifyUrl.length > 1) {
+                        window.location = Form.afterSubmitModifyUrl;
+                    } else {
+                        const emptyUrl = window.location.href.split('modify');
+                        let action = 'modify';
+                        let prefixData = emptyUrl[1].split('/');
+                        if (prefixData.length > 0) {
+                            action = action + prefixData[0];
+                        }
+                        if (emptyUrl.length > 1) {
+                            window.location = `${emptyUrl[0]}${action}/`;
+                        }
+                    }
+                    break;
+                case 'SaveSettingsAndExit':
+                    if (Form.afterSubmitIndexUrl.length > 1) {
+                        window.location = Form.afterSubmitIndexUrl;
+                    } else {
+                        Form.redirectToAction('index');
+                    }
+                    break;
+                default:
+                    if (reloadPath.length > 0) {
+                        window.location = globalRootUrl + reloadPath;
+                    }
+                    break;
+            }
+            
+            // Re-initialize dirty checking if enabled
+            if (Form.enableDirrity) {
+                Form.initializeDirrity();
+            }
+        } else {
+            // Error
+            Form.$submitButton.transition('shake');
+            
+            // Show error messages
+            if (response.messages) {
+                if (response.messages.error) {
+                    Form.showErrorMessages(response.messages.error);
+                }
+            } else if (response.message) {
+                // Legacy format support - also show at top via UserMessage
+                $.each(response.message, (index, value) => {
+                    if (index === 'error') {
+                        UserMessage.showError(value);
+                    }
+                });
+            }
+        }
     },
     /**
      * Checks if the response is successful
@@ -335,6 +537,314 @@ const Form = {
      */
     specialCharactersExistValidateRule(value) {
         return value.match(/[()$^;#"><,.%№@!+=_]/) === null;
+    },
+
+    /**
+     * Show loading state on the form
+     * Adds loading class and optionally shows a dimmer with loader
+     *
+     * @param {boolean} withDimmer - Whether to show dimmer overlay (default: false)
+     * @param {string} message - Optional loading message to display
+     */
+    showLoadingState(withDimmer = false, message = '') {
+        if (Form.$formObj && Form.$formObj.length) {
+            Form.$formObj.addClass('loading');
+
+            if (withDimmer) {
+                // Add dimmer with loader if it doesn't exist
+                let $dimmer = Form.$formObj.find('> .ui.dimmer');
+                if (!$dimmer.length) {
+                    const loaderHtml = `
+                        <div class="ui inverted dimmer">
+                            <div class="ui text loader">
+                                ${message || globalTranslate.ex_Loading}
+                            </div>
+                        </div>`;
+                    Form.$formObj.append(loaderHtml);
+                    $dimmer = Form.$formObj.find('> .ui.dimmer');
+                }
+
+                // Update message if provided
+                if (message) {
+                    $dimmer.find('.loader').text(message);
+                }
+
+                // Activate dimmer
+                $dimmer.addClass('active');
+            }
+        }
+    },
+
+    /**
+     * Hide loading state from the form
+     * Removes loading class and hides dimmer if present
+     */
+    hideLoadingState() {
+        if (Form.$formObj && Form.$formObj.length) {
+            Form.$formObj.removeClass('loading');
+
+            // Hide dimmer if present
+            const $dimmer = Form.$formObj.find('> .ui.dimmer');
+            if ($dimmer.length) {
+                $dimmer.removeClass('active');
+            }
+        }
+    },
+    
+    /**
+     * Shows error messages (unified error display at top of page)
+     * @param {string|array|object} errors - Error messages
+     */
+    showErrorMessages(errors) {
+        if (Array.isArray(errors)) {
+            // Array of errors - show at top via UserMessage
+            UserMessage.showError(errors);
+        } else if (typeof errors === 'object') {
+            // Field-specific errors - highlight fields AND show message at top
+            const errorMessages = [];
+            $.each(errors, (field, message) => {
+                const $field = Form.$formObj.find(`[name="${field}"]`);
+                if ($field.length) {
+                    // Highlight field with error state
+                    $field.closest('.field').addClass('error');
+                }
+                // Collect error message for top display
+                errorMessages.push(message);
+            });
+            // Show all errors at top
+            UserMessage.showError(errorMessages);
+        } else {
+            // String error - show at top via UserMessage
+            UserMessage.showError(errors);
+        }
+    },
+    
+    /**
+     * Gets unique key for storing submit mode
+     * @returns {string} - Unique key for localStorage
+     */
+    getSubmitModeKey() {
+        // Use form ID or URL path for uniqueness
+        const formId = Form.$formObj.attr('id') || '';
+        const pathName = window.location.pathname.replace(/\//g, '_');
+        return `submitMode_${formId || pathName}`;
+    },
+    
+    /**
+     * Saves submit mode to localStorage
+     * @param {string} mode - Submit mode value
+     */
+    saveSubmitMode(mode) {
+        try {
+            localStorage.setItem(Form.getSubmitModeKey(), mode);
+        } catch (e) {
+            console.warn('Unable to save submit mode:', e);
+        }
+    },
+    
+    /**
+     * Restores submit mode from localStorage
+     */
+    restoreSubmitMode() {
+        try {
+            // Exit if no dropdown exists
+            if (!Form.$dropdownSubmit || Form.$dropdownSubmit.length === 0) {
+                return;
+            }
+
+            // Set flag to prevent saving during restore
+            Form.isRestoringMode = true;
+
+            // First, reset dropdown to default state (SaveSettings)
+            const defaultMode = 'SaveSettings';
+            Form.$submitModeInput.val(defaultMode);
+            Form.$dropdownSubmit.dropdown('set selected', defaultMode);
+            const defaultTranslateKey = `bt_${defaultMode}`;
+            Form.$submitButton.html(`<i class="save icon"></i> ${globalTranslate[defaultTranslateKey]}`);
+
+            // Check if this is a new object (no id field or empty id)
+            const idValue = Form.$formObj.find('input[name="id"]').val() ||
+                           Form.$formObj.find('input[name="uniqid"]').val() || '';
+            const isNewObject = !idValue || idValue === '' || idValue === '-1';
+
+            // For existing objects, keep the default SaveSettings
+            if (!isNewObject) {
+                Form.isRestoringMode = false;
+                return;
+            }
+
+            // For new objects use saved mode from localStorage
+            const savedMode = localStorage.getItem(Form.getSubmitModeKey());
+
+            if (savedMode && savedMode !== defaultMode) {
+                // Check if the saved mode exists in dropdown options
+                const dropdownValues = [];
+                Form.$dropdownSubmit.find('.item').each(function() {
+                    dropdownValues.push($(this).attr('data-value'));
+                });
+
+                if (dropdownValues.includes(savedMode)) {
+                    // Set saved value
+                    Form.$submitModeInput.val(savedMode);
+                    Form.$dropdownSubmit.dropdown('set selected', savedMode);
+
+                    // Update button text
+                    const translateKey = `bt_${savedMode}`;
+                    Form.$submitButton.html(`<i class="save icon"></i> ${globalTranslate[translateKey]}`);
+                }
+            }
+
+            // Reset flag
+            Form.isRestoringMode = false;
+        } catch (e) {
+            console.warn('Unable to restore submit mode:', e);
+            Form.isRestoringMode = false;
+        }
+    },
+
+    /**
+     * Auto-resize textarea - delegated to FormElements module
+     * @param {jQuery|string} textareaSelector - jQuery object or selector for textarea(s)
+     * @param {number} areaWidth - Width in characters for calculation (optional)
+     * @deprecated Use FormElements.optimizeTextareaSize() instead
+     */
+    autoResizeTextArea(textareaSelector, areaWidth = null) {
+        // Delegate to FormElements module for better architecture
+        if (typeof FormElements !== 'undefined') {
+            FormElements.optimizeTextareaSize(textareaSelector, areaWidth);
+        } else {
+            console.warn('FormElements module not loaded. Please include form-elements.js');
+        }
+    },
+
+    /**
+     * Initialize auto-resize for textarea elements - delegated to FormElements module
+     * @param {string} selector - CSS selector for textareas to auto-resize
+     * @param {number} areaWidth - Width in characters for calculation (optional)
+     * @deprecated Use FormElements.initAutoResizeTextAreas() instead
+     */
+    initAutoResizeTextAreas(selector = 'textarea', areaWidth = null) {
+        // Delegate to FormElements module for better architecture
+        if (typeof FormElements !== 'undefined') {
+            FormElements.initAutoResizeTextAreas(selector, areaWidth);
+        } else {
+            console.warn('FormElements module not loaded. Please include form-elements.js');
+        }
+    },
+
+    /**
+     * Populate form with data without triggering dirty state changes
+     * This method is designed for initial form population from API data
+     * @param {object} data - Form data object
+     * @param {object} options - Configuration options
+     * @param {function} options.beforePopulate - Callback executed before population
+     * @param {function} options.afterPopulate - Callback executed after population
+     * @param {boolean} options.skipSemanticUI - Skip Semantic UI form('set values') call
+     * @param {function} options.customPopulate - Custom population function
+     */
+    populateFormSilently(data, options = {}) {
+        if (!data || typeof data !== 'object') {
+            console.warn('Form.populateFormSilently: invalid data provided');
+            return;
+        }
+
+        // Temporarily disable dirty checking
+        const wasEnabledDirrity = Form.enableDirrity;
+        const originalCheckValues = Form.checkValues;
+        
+        // Disable dirty checking during population
+        Form.enableDirrity = false;
+        Form.checkValues = function() {
+            // Silent during population
+        };
+
+        try {
+            // Execute beforePopulate callback if provided
+            if (typeof options.beforePopulate === 'function') {
+                options.beforePopulate(data);
+            }
+
+            // Handle _isNew flag - create/update hidden field if present
+            if (data._isNew !== undefined) {
+                let $isNewField = Form.$formObj.find('input[name="_isNew"]');
+                if ($isNewField.length === 0) {
+                    // Create hidden field if it doesn't exist
+                    $isNewField = $('<input>').attr({
+                        type: 'hidden',
+                        name: '_isNew',
+                        id: '_isNew'
+                    }).appendTo(Form.$formObj);
+                }
+                // Set value (convert boolean to string for form compatibility)
+                $isNewField.val(data._isNew ? 'true' : 'false');
+            }
+
+            // Custom population or standard Semantic UI
+            if (typeof options.customPopulate === 'function') {
+                options.customPopulate(data);
+            } else if (!options.skipSemanticUI) {
+                Form.$formObj.form('set values', data);
+            }
+
+            // Execute afterPopulate callback if provided
+            if (typeof options.afterPopulate === 'function') {
+                options.afterPopulate(data);
+            }
+
+            // Trigger global event for modules to handle form population
+            $(document).trigger('FormPopulated', [data]);
+            
+            // Reset dirty state after population
+            if (wasEnabledDirrity) {
+                // Save the populated values as initial state
+                Form.oldFormValues = Form.$formObj.form('get values');
+
+                // Ensure buttons are disabled initially
+                Form.$submitButton.addClass('disabled');
+                Form.$dropdownSubmit.addClass('disabled');
+            }
+
+            // Re-check submit mode after form is populated
+            // This is important for forms that load data via REST API
+            if (Form.$dropdownSubmit.length > 0) {
+                Form.restoreSubmitMode();
+            }
+        } finally {
+            // Restore original settings
+            Form.enableDirrity = wasEnabledDirrity;
+            Form.checkValues = originalCheckValues;
+        }
+    },
+
+    /**
+     * Execute function without triggering dirty state changes
+     * Useful for setting values in custom components during initialization
+     * @param {Function} callback - Function to execute silently
+     */
+    executeSilently(callback) {
+        if (typeof callback !== 'function') {
+            console.warn('Form.executeSilently: callback must be a function');
+            return;
+        }
+
+        // Temporarily disable dirty checking
+        const wasEnabledDirrity = Form.enableDirrity;
+        const originalCheckValues = Form.checkValues;
+        
+        // Disable dirty checking during execution
+        Form.enableDirrity = false;
+        Form.checkValues = function() {
+            // Silent during execution
+        };
+
+        try {
+            // Execute the callback
+            callback();
+        } finally {
+            // Restore original settings
+            Form.enableDirrity = wasEnabledDirrity;
+            Form.checkValues = originalCheckValues;
+        }
     }
 };
 

@@ -21,11 +21,12 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Models\ModulesModelsBase;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Events\Manager;
@@ -40,7 +41,7 @@ use ReflectionException;
  */
 class ModulesDBConnectionsProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = '';
+    public const string SERVICE_NAME = '';
 
     /**
      * Register module DB connections service provider.
@@ -51,8 +52,8 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
     {
         $registeredDBServices = [];
         $config = $di->getShared(ConfigProvider::SERVICE_NAME);
-        $modulesDir = $config->path('core.modulesDir');
-
+        $modulesDir = Directories::getDir(Directories::CORE_MODULES_DIR);
+        
         $results = glob($modulesDir . '/*/module.json', GLOB_NOSORT);
 
         foreach ($results as $moduleJson) {
@@ -71,10 +72,10 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 continue;
             }
 
-            $modelsFiles = glob("{$modulesDir}/{$moduleUniqueId}/Models/*.php", GLOB_NOSORT);
+            $modelsFiles = glob("$modulesDir/$moduleUniqueId/Models/*.php", GLOB_NOSORT);
             foreach ($modelsFiles as $file) {
                 $className = pathinfo($file)['filename'];
-                $moduleModelClass = "Modules\\{$moduleUniqueId}\\Models\\{$className}";
+                $moduleModelClass = "Modules\\$moduleUniqueId\\Models\\{$className}";
 
                 // Test whether this class abstract or not
                 try {
@@ -98,20 +99,20 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 }
 
                 // Create and connect database
-                $dbDir = "{$config->path('core.modulesDir')}/{$moduleUniqueId}/db";
+                $dbDir = "{$config->path('core.modulesDir')}/$moduleUniqueId/db";
                 if (!file_exists($dbDir)) {
                     Util::mwMkdir($dbDir, true);
                 }
-                $dbFileName = "{$dbDir}/module.db";
+                $dbFileName = "$dbDir/module.db";
                 $dbFileExistBeforeAttachToConnection = file_exists($dbFileName);
 
                 // Log
                 $logDir = "{$config->path('core.logsDir')}/$moduleUniqueId/db";
-                $logFileName = "{$logDir}/queries.log";
+                $logFileName = "$logDir/queries.log";
                 if (!is_dir($logDir)) {
                     Util::mwMkdir($logDir, true);
-                    $touchPath = Util::which('touch');
-                    Processes::mwExec("{$touchPath} {$logFileName}");
+                    $touch = Util::which('touch');
+                    Processes::mwExec("$touch $logFileName");
                     Util::addRegularWWWRights($logDir);
                 }
 
@@ -127,6 +128,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 // if database was created, we have to apply rules
                 if (!$dbFileExistBeforeAttachToConnection) {
                     Util::addRegularWWWRights($dbDir);
+                    SystemMessages::sysLogMsg(__CLASS__, 'Database file created: ' . $dbFileName, LOG_DEBUG);
                 }
             }
         }
@@ -178,7 +180,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
     public static function recreateModulesDBConnections(): void
     {
         $di = Di::getDefault();
-        $di->register(new self());
+        (new self())->register($di);
 
         ModelsAnnotationsProvider::recreateAnnotationsProvider();
 

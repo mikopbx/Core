@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -26,7 +27,6 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 class ChangeWeakPasswordTest extends MikoPBXTestsBase
 {
-
     /**
      * Set up before each test
      *
@@ -42,7 +42,6 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
     /**
      * Test changing a weak password and verifying the changes.
      *
-     * @depends testLogin
      * @dataProvider passwordChangeProvider
      *
      * @param array $params The parameters for password change.
@@ -54,12 +53,13 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
     {
         // Wait until the password validation message is located on the page
         $xpath = '//div[contains(@class, "password-validate")]';
-        self::$driver->wait()->until(
+        self::$driver->wait(10, 500)->until(
             WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
         );
 
         // Change SSH password
-        $this->changePassword('ssh', 'SSHPassword', $params['password']);;
+        $this->changePassword('ssh', 'SSHPassword', $params['password']);
+
         // Change WebAdmin password
         $this->changePassword('passwords', 'WebAdminPassword', $params['password']);
 
@@ -77,11 +77,43 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
         self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/passwords");
         $this->assertInputFieldValueEqual('WebAdminPassword', $params['checkPassword'], true);
         $this->assertInputFieldValueEqual('WebAdminPasswordRepeat', $params['checkPassword'], true);
+
+        // Check if the red icon exists before waiting for it to disappear
+        $redIconXpath = '//a[contains(@id, "show-advice-button")]/i[contains(@class,"red")]';
+        
+        try {
+            $redIconElements = self::$driver->findElements(WebDriverBy::xpath($redIconXpath));
+            
+            if (count($redIconElements) > 0) {
+                // Only wait for the element to become invisible if it actually exists
+                self::$driver->wait(20, 500)->until(
+                    WebDriverExpectedCondition::invisibilityOfElementLocated(WebDriverBy::xpath($redIconXpath))
+                );
+            }
+            
+            // Check for yellow icon presence, but don't fail the test if it's not there
+            // This is just for additional information
+            $yellowIconXpath = '//a[contains(@id, "show-advice-button")]/i[contains(@class,"yellow")]';
+            $yellowIconElements = self::$driver->findElements(WebDriverBy::xpath($yellowIconXpath));
+            if (count($yellowIconElements) > 0) {
+                self::annotate("Success: Yellow icon is present as expected after password change");
+            } else {
+                self::annotate("Note: Yellow icon is not present after password change, but test continues");
+            }
+            
+        } catch (\Exception $e) {
+            // If we can't find the element, log it but don't fail the test
+            self::fail("Note: Red icon element not found or other issue occurred: " . $e->getMessage());
+        }
     }
 
     // Change password field
-    function changePassword(string $path, string $passwordFieldName, string $password) {
+    private function changePassword(string $path, string $passwordFieldName, string $password): void
+    {
         self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$path}");
+        if ($path==='ssh'){
+            $this->changeCheckBoxState('SSHDisablePasswordLogins', false);
+        }
         $this->changeInputField($passwordFieldName, $password);
         $this->changeInputField($passwordFieldName . 'Repeat', $password);
     }
@@ -99,15 +131,10 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
         $params[] = [
             [
                 'password'       => '123456789MikoPBX#1',
-                'checkPassword'  => 'xxxxxxx',
+                'checkPassword'  => '********',
             ],
         ];
 
         return $params;
     }
 }
-
-
-
-
-

@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +21,8 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Common\Providers\MutexProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -33,7 +35,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  */
 class InstallFromRepoAction extends ModuleInstallationBase
 {
-    const DOWNLOAD_TIMEOUT = 120;
+    const int DOWNLOAD_TIMEOUT = 120;
 
     // Optional release ID for the module. Defaults to 0.
     private int $moduleReleaseId = 0;
@@ -45,13 +47,11 @@ class InstallFromRepoAction extends ModuleInstallationBase
      * @param string $moduleUniqueId The unique identifier for the module to be installed.
      * @param int $moduleReleaseId Optional release ID for the module. Defaults to 0.
      */
-    public function __construct(string $asyncChannelId, string $moduleUniqueId, int $moduleReleaseId=0)
+    public function __construct(string $asyncChannelId, string $moduleUniqueId, int $moduleReleaseId = 0)
     {
-        $this->asyncChannelId = $asyncChannelId;
-        $this->moduleUniqueId = $moduleUniqueId;
-        $this->moduleReleaseId = $moduleReleaseId;
+      $this->moduleReleaseId = $moduleReleaseId;
+      parent::__construct($asyncChannelId, $moduleUniqueId);
     }
-
 
     /**
      * Main entry point to install a new module.
@@ -61,72 +61,68 @@ class InstallFromRepoAction extends ModuleInstallationBase
     public function start(): void
     {
         // Calculate total mutex timeout and extra 5 seconds to prevent installing the same module in the second thread
-        $mutexTimeout = self::INSTALLATION_TIMEOUT+self::DOWNLOAD_TIMEOUT+5;
+        $mutexTimeout = self::INSTALLATION_TIMEOUT + self::DOWNLOAD_TIMEOUT + 5;
 
         // Create a mutex to ensure synchronized access
-        $mutex = Util::createMutex(self::INSTALLATION_MUTEX, $this->moduleUniqueId, $mutexTimeout);
+        $mutex = $this->di->get(MutexProvider::SERVICE_NAME);
 
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         $res->success = true;
 
         // Singleton the installation process
-        try{
-            $mutex->synchronized(
-            function () use (&$res): void {
+        try {
+            $res = $mutex->synchronized(ModuleInstallationBase::MODULE_MANIPULATION_MUTEX_KEY,
+                function () use ($res): PBXApiResult {
 
-                // Retrieve release information
-                list($releaseInfoResult, $res->success) = $this->getReleaseInfo();
-                $this->pushMessageToBrowser(self::STAGE_I_GET_RELEASE, $releaseInfoResult);
-                if (!$res->success) {
-                    $res->messages['error'] = $releaseInfoResult;
-                    return;
-                }
+                    // Retrieve release information
+                    list($releaseInfoResult, $res->success) = $this->getReleaseInfo();
+                    $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_I_GET_RELEASE, $releaseInfoResult);
+                    if (!$res->success) {
+                        $res->messages['error'] = $releaseInfoResult;
+                        return $res;
+                    }
 
-                // Capture the license for the module
-                list($licenseResult, $res->success) = $this->captureFeature($releaseInfoResult);
-                $this->pushMessageToBrowser( self::STAGE_II_CHECK_LICENSE, $licenseResult);
-                if (!$res->success) {
-                    $res->messages = $licenseResult;
-                    return;
-                }
+                    // Capture the license for the module
+                    list($licenseResult, $res->success) = $this->captureFeature($releaseInfoResult);
+                    $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_II_CHECK_LICENSE, $licenseResult);
+                    if (!$res->success) {
+                        $res->messages = $licenseResult;
+                        return $res;
+                    }
 
-                // Get the download link for the module
-                list($moduleLinkResult, $res->success) = $this->getModuleLink($releaseInfoResult);
-                $this->pushMessageToBrowser( self::STAGE_III_GET_LINK, $moduleLinkResult);
-                if (!$res->success) {
-                    $res->messages = $moduleLinkResult;
-                    return;
-                }
+                    // Get the download link for the module
+                    list($moduleLinkResult, $res->success) = $this->getModuleLink($releaseInfoResult);
+                    $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_III_GET_LINK, $moduleLinkResult);
+                    if (!$res->success) {
+                        $res->messages = $moduleLinkResult;
+                        return $res;
+                    }
 
-                // Download the module
-                list($downloadResult, $res->success) = $this->downloadModule($moduleLinkResult);
-                if (!$res->success) {
-                    $res->messages = $downloadResult;
-                    return;
-                } else {
-                    $filePath = $downloadResult; // Path to the downloaded module
-                }
+                    // Download the module
+                    list($downloadResult, $res->success) = $this->downloadModule($moduleLinkResult);
+                    if (!$res->success) {
+                        $res->messages = $downloadResult;
+                        return $res;
+                    } else {
+                        $filePath = $downloadResult; // Path to the downloaded module
+                    }
 
-                // Install the downloaded module
-                list($installationResult, $res->success) = $this->installNewModule($filePath);
-                if (!$res->success) {
-                    $res->messages = $installationResult;
-                    return;
+                    // Install the downloaded module
+                    list($installationResult, $res->success) = $this->installNewModule($filePath);
+                    if (!$res->success) {
+                        $res->messages = $installationResult;
+                        return $res;
+                    }
+                    return $res;
                 }
-
-                // Enable the module if it was previously enabled
-                list($enableResult, $res->success) = $this->enableModule($installationResult);
-                if (!$res->success) {
-                    $res->messages = $enableResult;
-                }
-            });
+            , 10, $mutexTimeout );
         } catch (\Throwable $e) {
             $res->success = false;
             $res->messages['error'][] = $e->getMessage();
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         } finally {
-            $this->pushMessageToBrowser( self::STAGE_VII_FINAL_STATUS, $res->getResult());
+            $this->unifiedModulesEvents->pushMessageToBrowser( self::STAGE_VII_FINAL_STATUS, $res->getResult());
         }
     }
 
@@ -143,9 +139,9 @@ class InstallFromRepoAction extends ModuleInstallationBase
 
         // Check if release information is available
         if (empty($moduleInfo->data['releases'])) {
-            return [[self::ERR_EMPTY_REPO_RESULT], false];
+            return [[TranslationProvider::translate(self::ERR_EMPTY_REPO_RESULT)], false];
         }
-        $releaseInfo =[];
+        $releaseInfo = [];
         $releaseInfo['releaseID'] = 0;
 
         // Find the specified release or the latest one
@@ -175,7 +171,7 @@ class InstallFromRepoAction extends ModuleInstallationBase
     {
         // Check if a feature license is required
         if ($releaseInfo['licFeatureId'] === 0) {
-            return [[self::MSG_NO_LICENSE_REQ], true]; // No license required
+            return [[TranslationProvider::translate(self::MSG_NO_LICENSE_REQ)], true]; // No license required
         }
 
         // Prepare license capture request
@@ -200,12 +196,12 @@ class InstallFromRepoAction extends ModuleInstallationBase
     private function getModuleLink(array $releaseInfo): array
     {
         $res = GetModuleLinkAction::main($releaseInfo['releaseID']);
-        if ($res->success){
-            $modules =  $res->data['modules']??[];
-            if (count($modules) > 0){
+        if ($res->success) {
+            $modules =  $res->data['modules'] ?? [];
+            if (count($modules) > 0) {
                 return [$modules[0], true];
             }
-            return [[self::ERR_EMPTY_GET_MODULE_LINK], false];
+            return [[TranslationProvider::translate(self::ERR_EMPTY_GET_MODULE_LINK)], false];
         }
         return [$res->messages, false];
     }
@@ -227,7 +223,7 @@ class InstallFromRepoAction extends ModuleInstallationBase
 
         // Start the download
         $res = StartDownloadAction::main($this->moduleUniqueId, $url, $md5);
-        $this->pushMessageToBrowser( self::STAGE_IV_DOWNLOAD_MODULE, $res->getResult());
+        $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_IV_DOWNLOAD_MODULE, $res->getResult());
         if (!$res->success) {
             return [$res->messages, false];
         }
@@ -235,7 +231,7 @@ class InstallFromRepoAction extends ModuleInstallationBase
         // Monitor download progress
         while ($maximumDownloadTime > 0) {
             $resDownloadStatus = DownloadStatusAction::main($this->moduleUniqueId);
-            $this->pushMessageToBrowser( self::STAGE_IV_DOWNLOAD_MODULE, $resDownloadStatus->getResult());
+            $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_IV_DOWNLOAD_MODULE, $resDownloadStatus->getResult());
             if (!$resDownloadStatus->success) {
                 return [$resDownloadStatus->messages, false];
             } elseif ($resDownloadStatus->data[FilesConstants::D_STATUS] === FilesConstants::DOWNLOAD_IN_PROGRESS) {
@@ -247,9 +243,8 @@ class InstallFromRepoAction extends ModuleInstallationBase
         }
 
         // Download timeout
-        $this->pushMessageToBrowser( self::STAGE_IV_DOWNLOAD_MODULE, [self::ERR_DOWNLOAD_TIMEOUT]);
-        return [self::ERR_DOWNLOAD_TIMEOUT, false];
+        $errorMessage = TranslationProvider::translate(self::ERR_DOWNLOAD_TIMEOUT);
+        $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_IV_DOWNLOAD_MODULE, [$errorMessage]);
+        return [[$errorMessage], false];
     }
-
-
 }

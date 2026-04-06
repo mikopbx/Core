@@ -20,9 +20,8 @@
 PATH=/sbin:/bin:/usr/bin:/usr/sbin
 export PATH
 
-if [ -f /sbin/shell_functions.sh ]; then
-. /sbin/shell_functions.sh;
-fi
+# Load shell functions for console/serial output
+source /sbin/shell_functions.sh
 
 storage='/storage/usbdisk1';
 
@@ -32,11 +31,12 @@ if [ -f "$file_storage_device" ] ; then
 fi;
 
 # killing processes
+killprocess_by_name 'safe-monit' -TERM 3;
+killprocess_by_name 'monit' -TERM 3;
+
 killprocess_by_name 'cron' -KILL 0;
 killprocess_by_name 'dropbear' -KILL 0;
-killprocess_by_name 'safe_asterisk' -KILL 0;
-killprocess_by_name 'pdnsd' -KILL 0;
-killprocesses '/sbin/monitord' -KILL 1;
+killprocess_by_name 'monit' -KILL 0;
 killprocesses "$storage" -TERM 3;
 killprocesses "$storage" -KILL 1;
 
@@ -44,7 +44,7 @@ killprocesses "$storage" -KILL 1;
 freeSwapByName "$storage";
 
 if [ ! "doNotUnMount" = "$1" ]; then
-
+  defaultHistFile="/root/.bash_history"
   if [ -f "$HISTFILE" ] && [ "$HISTFILE" != "$defaultHistFile" ]; then
       cp "$HISTFILE" "$defaultHistFile"
       export HISTFILE="$defaultHistFile"

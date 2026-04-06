@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, SipAPI, SemanticLocalization, InputMaskPatterns, UserMessage, globalTranslate, Inputmask */
+/* global globalRootUrl, SipAPI, SemanticLocalization, InputMaskPatterns, UserMessage, globalTranslate, Inputmask, ExtensionIndexStatusMonitor, ExtensionsAPI, EmployeesAPI */
 
 
 /**
@@ -40,10 +40,34 @@ const extensionsIndex = {
     $globalSearch: $('#global-search'),
 
     /**
+     * The page length selector.
+     * @type {jQuery}
+     */
+    $pageLengthSelector:$('#page-length-select'),
+
+    /**
+     * The page length selector.
+     * @type {jQuery}
+     */
+    $searchExtensionsInput: $('#search-extensions-input'),
+
+    /**
      * The data table object.
      * @type {Object}
      */
     dataTable: {},
+
+    /**
+     * Draw counter for DataTables draw parameter
+     * @type {number}
+     */
+    drawCounter: 1,
+
+    /**
+     * Timeout reference for retry attempts
+     * @type {number}
+     */
+    retryTimeout: null,
 
     /**
      * The document body.
@@ -68,27 +92,28 @@ const extensionsIndex = {
         // Set up the DataTable on the extensions list.
         extensionsIndex.initializeDataTable();
 
-        // Move the "Add New" button to the first eight-column div.
-        $('#add-new-button').appendTo($('div.eight.column:eq(0)'));
+        // Initialize the bulk actions dropdown
+        $('#bulk-actions-dropdown').dropdown();
 
-        // Set up double-click behavior on the extension rows.
-        $('.extension-row td').on('dblclick', (e) => {
-            const id = $(e.target).closest('tr').attr('id');
-            window.location = `${globalRootUrl}extensions/modify/${id}`;
+        // Set up double-click behavior on the extension rows using delegation for dynamic content.
+        // Exclude buttons column to prevent accidental navigation when trying to delete
+        extensionsIndex.$body.on('dblclick', '.extension-row td:not(:last-child)', (e) => {
+            const extensionId = $(e.target).closest('tr').attr('data-extension-id');
+            window.location = `${globalRootUrl}extensions/modify/${extensionId}`;
         });
 
         // Set up delete functionality on delete button click.
         extensionsIndex.$body.on('click', 'a.delete', (e) => {
             e.preventDefault();
             $(e.target).addClass('disabled');
-            // Get the extension ID from the closest table row.
-            const extensionId = $(e.target).closest('tr').attr('id');
+            // Get the database extension ID from the closest table row.
+            const extensionId = $(e.target).closest('tr').attr('data-extension-id');
 
             // Remove any previous AJAX messages.
             $('.message.ajax').remove();
 
-            // Call the PbxApi method to delete the extension record.
-            PbxApi.ExtensionsDeleteRecord(extensionId, extensionsIndex.cbAfterDeleteRecord);
+            // Call the EmployeesAPI method to delete the employee record.
+            EmployeesAPI.deleteRecord(extensionId, extensionsIndex.cbAfterDeleteRecord);
         });
 
         // Set up copy secret button click.
@@ -108,13 +133,54 @@ const extensionsIndex = {
 
 
         // Reset datatable sorts and page
-        $("a[href='/admin-cabinet/extensions/index/#reset-cache']").on('click', function(e) {
+        $(`a[href='${globalRootUrl}extensions/index/#reset-cache']`).on('click', function(e) {
                 e.preventDefault();
                 extensionsIndex.$extensionsList.DataTable().state.clear();
                 window.location.hash = '#reset-cache';
                 window.location.reload();
         });
 
+        // Event listener to save the user's page length selection and update the table
+        extensionsIndex.$pageLengthSelector.dropdown({
+            onChange(pageLength) {
+                if (pageLength==='auto'){
+                    pageLength = extensionsIndex.calculatePageLength();
+                    localStorage.removeItem('extensionsTablePageLength');
+                } else {
+                    localStorage.setItem('extensionsTablePageLength', pageLength);
+                }
+                extensionsIndex.dataTable.page.len(pageLength).draw();
+            },
+        });
+        extensionsIndex.$pageLengthSelector.on('click', function(event) {
+            event.stopPropagation(); // Prevent the event from bubbling
+        });
+        // Initialize the Search component
+        extensionsIndex.$searchExtensionsInput.search({
+            minCharacters: 0,
+            searchOnFocus: false,
+            searchFields: ['title'],
+            showNoResults: false,
+            source: [
+                { title: globalTranslate.ex_SearchByExtension, value: 'number:' },
+                { title: globalTranslate.ex_SearchByMobile, value: 'mobile:' },
+                { title: globalTranslate.ex_SearchByEmail, value: 'email:' },
+                { title: globalTranslate.ex_SearchByID, value: 'id:' },
+                { title: globalTranslate.ex_SearchByCustomPhrase, value: '' },
+            ],
+            onSelect: function(result, response) {
+                extensionsIndex.$globalSearch.val(result.value);
+                extensionsIndex.$searchExtensionsInput.search('hide results');
+                return false;
+            }
+        });
+
+
+        // Start the search when you click on the icon
+        $('#search-icon').on('click', function() {
+            extensionsIndex.$globalSearch.focus();
+            extensionsIndex.$searchExtensionsInput.search('query');
+        });
     },
 
     // Set up the DataTable on the extensions list.
@@ -124,13 +190,13 @@ const extensionsIndex = {
             localStorage.removeItem('DataTables_extensions-table_/admin-cabinet/extensions/index/');
         }
 
+        // Get the user's saved value or use the automatically calculated value if none exists
+        const savedPageLength = localStorage.getItem('extensionsTablePageLength');
+        const pageLength = savedPageLength ? savedPageLength : extensionsIndex.calculatePageLength();
+
         extensionsIndex.$extensionsList.DataTable({
             // Enable state saving to automatically save and restore the table's state
             stateSave: true,
-
-            search: {
-                search: `${extensionsIndex.$globalSearch.val()}`,
-            },
             columnDefs: [
                 { defaultContent: "-",  targets: "_all"},
                 { responsivePriority: 1,  targets: 0},
@@ -146,46 +212,106 @@ const extensionsIndex = {
             columns: [
                 {
                     name: 'status',
+                    data: null,
                     orderable: false,  // This column is not orderable
                     searchable: false  // This column is not searchable,
                 },
                 {
                     name: 'username',
-                    data: 'Users.username',
+                    data: 'user_username',
                 },
                 {
                     name: 'number',
-                    data: 'CAST(Extensions.number AS INTEGER)',
+                    data: 'number',
                 },
                 {
                     name: 'mobile',
-                    data: 'CAST(ExternalExtensions.number AS INTEGER)',
+                    data: 'mobile',
                 },
                 {
                     name: 'email',
-                    data: 'Users.email',
+                    data: 'user_email',
                 },
                 {
                     name: 'buttons',
+                    data: null,
                     orderable: false,  // This column is not orderable
                     searchable: false,  // This column is not searchable
                 },
             ],
             order: [[1, 'asc']],
             serverSide: true,
-            processing: true,
+            processing: false,
             ajax: {
-                url: `${globalRootUrl}extensions/getNewRecords`,
-                type: 'POST',
+                url: `/pbxcore/api/v3/employees`,
+                type: 'GET',
+                data: function(d) {
+                    // Increment draw counter for this request
+                    extensionsIndex.drawCounter = d.draw || ++extensionsIndex.drawCounter;
+                    
+                    // Transform DataTables request to our REST API format (query params for GET)
+                    const requestData = {
+                        search: d.search.value,
+                        limit: d.length,
+                        offset: d.start
+                    };
+                    
+                    // Add sorting information
+                    if (d.order && d.order.length > 0) {
+                        const orderColumn = d.columns[d.order[0].column];
+                        if (orderColumn && orderColumn.name) {
+                            requestData.order_by = orderColumn.name;
+                            requestData.order_direction = d.order[0].dir.toUpperCase();
+                        }
+                    }
+                    
+                    return requestData;
+                },
+                dataSrc: function(json) {
+                    // Handle pagination format from Employees API
+                    // API returns: {data: {data: [...], recordsTotal: n, recordsFiltered: n}}
+
+                    // Extract data and pagination info from the response
+                    const data = json.data?.data || [];
+                    const recordsTotal = json.data?.recordsTotal || 0;
+                    const recordsFiltered = json.data?.recordsFiltered || recordsTotal;
+
+                    // Set DataTables pagination info on the response object
+                    json.draw = extensionsIndex.drawCounter;
+                    json.recordsTotal = recordsTotal;
+                    json.recordsFiltered = recordsFiltered;
+
+                    // Return just the data array for DataTables to process
+                    return data;
+                },
+                error: function(xhr, textStatus, error) {
+                    // Suppress the default error alert
+
+                    // Clear any existing retry timeout
+                    if (extensionsIndex.retryTimeout) {
+                        clearTimeout(extensionsIndex.retryTimeout);
+                    }
+                    
+                    // Set up retry after 3 seconds
+                    extensionsIndex.retryTimeout = setTimeout(function() {
+                        extensionsIndex.dataTable.ajax.reload(null, false);
+                    }, 3000);
+                    
+                    return false; // Prevent default error handling
+                }
             },
             paging: true,
             // stateSave: true,
             sDom: 'rtip',
             deferRender: true,
-            pageLength: extensionsIndex.calculatePageLength(),
+            pageLength: pageLength,
             scrollCollapse: true,
             // scroller: true,
-            language: SemanticLocalization.dataTableLocalisation,
+            language: {
+                ...SemanticLocalization.dataTableLocalisation,
+                emptyTable: ' ',  // Empty string to hide default message
+                zeroRecords: ' ' // Empty string to hide default message
+            },
             /**
              * Constructs the Extensions row.
              * @param {HTMLElement} row - The row element.
@@ -194,22 +320,56 @@ const extensionsIndex = {
             createdRow(row, data) {
                 const $templateRow  =  $('.extension-row-tpl').clone(true);
                 const $avatar = $templateRow.find('.avatar');
-                $avatar.attr('src',data.avatar);
-                $avatar.after(data.username);
+                $avatar.attr('src', data.avatar);
+                $avatar.on('error', function() {
+                    $(this).off('error');
+                    $(this).attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
+                });
+                $avatar.after(data.user_username);
                 $templateRow.find('.number').text(data.number);
                 $templateRow.find('.mobile input').attr('value', data.mobile);
-                $templateRow.find('.email').text(data.email);
+                $templateRow.find('.email').text(data.user_email);
+
+                $templateRow.find('.action-buttons').removeClass('small').addClass('tiny');
 
                 const $editButton = $templateRow.find('.action-buttons .button.edit');
-                if ($editButton!==undefined){
+                if ($editButton !== undefined){
                     $editButton.attr('href',`${globalRootUrl}extensions/modify/${data.id}`)
                 }
 
                 const $clipboardButton = $templateRow.find('.action-buttons .button.clipboard');
-                if ($clipboardButton!==undefined){
-                    $clipboardButton.attr('data-value',data.number)
+                if ($clipboardButton !== undefined){
+                    $clipboardButton.attr('data-value', data.number)
                 }
                 $(row).attr('data-value', data.number);
+                $(row).attr('id', data.number); // Use extension number as ID for status monitor
+                $(row).attr('data-extension-id', data.id); // Preserve database ID as data attribute
+                $(row).addClass('extension-row'); // Add class for status monitor
+                
+                // Apply disabled class if extension is disabled
+                if (data.disabled) {
+                    $(row).addClass('disabled');
+                }
+                
+                // Apply cached status immediately if available
+                if (typeof ExtensionIndexStatusMonitor !== 'undefined' && ExtensionIndexStatusMonitor.statusCache) {
+                    const cachedStatus = ExtensionIndexStatusMonitor.statusCache[data.number];
+                    if (cachedStatus) {
+                        // Status is available in cache, apply it immediately
+                        const statusColor = ExtensionIndexStatusMonitor.getColorForStatus(cachedStatus.status);
+                        const $statusCell = $(row).find('.extension-status');
+                        if ($statusCell.length) {
+                            const statusHtml = `
+                                <div class="ui ${statusColor} empty circular label" 
+                                     style="width: 1px;height: 1px;"
+                                     title="Extension ${data.number}: ${cachedStatus.status}">
+                                </div>
+                            `;
+                            $statusCell.html(statusHtml);
+                        }
+                    }
+                }
+                
                 $.each($('td', $templateRow), (index, value) => {
                     $('td', row).eq(index)
                         .html($(value).html())
@@ -220,38 +380,138 @@ const extensionsIndex = {
             /**
              * Draw event - fired once the table has completed a draw.
              */
-            drawCallback() {
+            drawCallback(settings) {
                 // Initialize the input mask for mobile numbers.
                 extensionsIndex.initializeInputmask($('input.mobile-number-input'));
+                
+                // Check if table is empty and show appropriate message
+                const api = new $.fn.dataTable.Api(settings);
+                const pageInfo = api.page.info();
+                const hasRecords = pageInfo.recordsDisplay > 0;
+                const searchValue = api.search();
+                
+                if (!hasRecords) {
+                    $('#extensions-table').hide();
+                    
+                    // Check if this is due to search filter or truly empty database
+                    if (searchValue && searchValue.trim() !== '') {
+                        // Show "Nothing found" message for search results
+                        extensionsIndex.showNoSearchResultsMessage();
+                    } else {
+                        // Show "Add first employee" placeholder for empty database
+                        $('#extensions-table-container').hide();
+                        $('#extensions-placeholder').show();
+                        // Initialize dropdown in the placeholder
+                        $('#extensions-placeholder .dropdown').dropdown();
+                    }
+                } else {
+                    $('#extensions-table').show();
+                    $('#extensions-table-container').show();
+                    $('#extensions-placeholder').hide();
+                    extensionsIndex.hideNoSearchResultsMessage();
+                    
+                    // Apply cached statuses to newly rendered rows
+                    if (typeof ExtensionIndexStatusMonitor !== 'undefined') {
+                        // Refresh DOM cache for new rows
+                        ExtensionIndexStatusMonitor.refreshCache();
+                        // Apply cached statuses immediately
+                        ExtensionIndexStatusMonitor.applyStatusesToVisibleRows();
+                        // Request statuses for any new extensions not in cache
+                        ExtensionIndexStatusMonitor.requestStatusesForNewExtensions();
+                    }
+                }
+                
+                // Hide pagination when there are few records (less than page length)
+                extensionsIndex.togglePaginationVisibility(pageInfo);
+                
                 // Set up popups.
                 $('.clipboard').popup({
                     on: 'manual',
                 });
             },
+            // Disable DataTables error alerts completely
+            fnInitComplete: function() {
+                // Override DataTables error event handler
+                $.fn.dataTable.ext.errMode = 'none';
+            }
         });
+
+        // Set the select input value to the saved value if it exists
+        if (savedPageLength) {
+            extensionsIndex.$pageLengthSelector.dropdown('set value',savedPageLength);
+        }
+
         extensionsIndex.dataTable = extensionsIndex.$extensionsList.DataTable();
 
+        // Initialize debounce timer variable
+        let searchDebounceTimer = null;
+
         extensionsIndex.$globalSearch.on('keyup', (e) => {
-            if (e.keyCode === 13
-                || e.keyCode === 8
-                || extensionsIndex.$globalSearch.val().length > 2) {
+            // Clear previous timer if the user is still typing
+            clearTimeout(searchDebounceTimer);
+
+            // Set a new timer for delayed execution
+            searchDebounceTimer = setTimeout(() => {
                 const text = extensionsIndex.$globalSearch.val();
-                extensionsIndex.applyFilter(text);
-            }
+                // Trigger the search if input is valid (Enter, Backspace, or more than 2 characters)
+                if (e.keyCode === 13 || e.keyCode === 8 || text.length >= 2) {
+                    extensionsIndex.applyFilter(text);
+                }
+            }, 500); // 500ms delay before executing the search
         });
 
         extensionsIndex.dataTable.on('draw', () => {
             extensionsIndex.$globalSearch.closest('div').removeClass('loading');
         });
+
+
+        // Restore the saved search phrase from DataTables state
+        const state = extensionsIndex.dataTable.state.loaded();
+        if (state && state.search) {
+            extensionsIndex.$globalSearch.val(state.search.search); // Set the search field with the saved value
+        }
+
+        // Retrieves the value of 'search' query parameter from the URL.
+        const searchValue = extensionsIndex.getQueryParam('search');
+
+        // Sets the global search input value and applies the filter if a search value is provided.
+        if (searchValue) {
+            extensionsIndex.$globalSearch.val(searchValue);
+            extensionsIndex.applyFilter(searchValue);
+        }
+        
+        // Initialize extension index status monitor if available
+        if (typeof ExtensionIndexStatusMonitor !== 'undefined') {
+            ExtensionIndexStatusMonitor.initialize();
+            // Request initial status after table loads
+            setTimeout(() => {
+                extensionsIndex.requestInitialStatus();
+            }, 500);
+        }
     },
 
+    /**
+     * Retrieves the value of a specified query parameter from the URL.
+     *
+     * @param {string} param - The name of the query parameter to retrieve.
+     * @return {string|null} The value of the query parameter, or null if not found.
+     */
+    getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    },
+
+    /**
+     * Calculates the number of rows that can fit on a page based on the current window height.
+     * @returns {number}
+     */
     calculatePageLength() {
         // Calculate row height
         let rowHeight = extensionsIndex.$extensionsList.find('tr').first().outerHeight();
 
         // Calculate window height and available space for table
         const windowHeight = window.innerHeight;
-        const headerFooterHeight = 400; // Estimate height for header, footer, and other elements
+        const headerFooterHeight = 390; // Estimate height for header, footer, and other elements
 
         // Calculate new page length
         return Math.max(Math.floor((windowHeight - headerFooterHeight) / rowHeight), 5);
@@ -263,10 +523,12 @@ const extensionsIndex = {
      */
     cbAfterDeleteRecord(response){
         if (response.result === true) {
-            // Remove the deleted extension's table row.
-            extensionsIndex.$extensionsList.find(`tr[id=${response.data.id}]`).remove();
-            // Call the callback function for data change.
-            Extensions.cbOnDataChanged();
+            // Reload the datatable to reflect changes
+            extensionsIndex.dataTable.ajax.reload(null, false);
+            // Call the callback function for data change if it exists.
+            if (typeof ExtensionsAPI !== 'undefined' && typeof ExtensionsAPI.cbOnDataChanged === 'function') {
+                ExtensionsAPI.cbOnDataChanged();
+            }
         } else {
             // Show an error message if deletion was not successful.
             UserMessage.showError(response.messages.error, globalTranslate.ex_ImpossibleToDeleteExtension);
@@ -327,6 +589,54 @@ const extensionsIndex = {
     },
 
     /**
+     * Shows "No search results found" message
+     */
+    showNoSearchResultsMessage() {
+        // Remove any existing no-results message
+        extensionsIndex.hideNoSearchResultsMessage();
+        
+        // Create and show no results message
+        const noResultsHtml = `
+            <div id="no-search-results" style="margin-top: 2em;">
+                <div class="ui icon message">
+                    <i class="search icon"></i>
+                    <div class="content">
+                        <div class="header">${globalTranslate.ex_NoSearchResults}</div>
+                        <p>${globalTranslate.ex_TryDifferentKeywords}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('#extensions-table-container').after(noResultsHtml);
+    },
+
+    /**
+     * Hides "No search results found" message
+     */
+    hideNoSearchResultsMessage() {
+        $('#no-search-results').remove();
+    },
+
+    /**
+     * Toggles pagination visibility based on number of records
+     * Hides pagination when there are fewer records than the page length
+     * @param {Object} pageInfo - DataTables page info object
+     */
+    togglePaginationVisibility(pageInfo) {
+        const paginationWrapper = $('#extensions-table_paginate');
+        const paginationInfo = $('#extensions-table_info');
+        
+        // Hide pagination if total records fit on one page
+        if (pageInfo.recordsDisplay <= pageInfo.length) {
+            paginationWrapper.hide();
+            paginationInfo.hide();
+        } else {
+            paginationWrapper.show();
+            paginationInfo.show();
+        }
+    },
+
+    /**
      * Copies the text passed as param to the system clipboard
      * Check if using HTTPS and navigator.clipboard is available
      * Then uses standard clipboard API, otherwise uses fallback
@@ -354,6 +664,23 @@ const extensionsIndex = {
         }
         document.body.removeChild(textArea)
     },
+    
+    /**
+     * Request initial extension status on page load
+     */
+    requestInitialStatus() {
+        if (typeof SipAPI !== 'undefined') {
+            // Use simplified mode for index page - pass options as first param, callback as second
+            SipAPI.getStatuses({ simplified: true }, (response) => {
+                // Manually trigger status update
+                if (response && response.data && typeof ExtensionIndexStatusMonitor !== 'undefined') {
+                    ExtensionIndexStatusMonitor.updateAllExtensionStatuses(response.data);
+                    // Mark initial load as complete to allow subsequent pagination requests
+                    ExtensionIndexStatusMonitor.isInitialLoadComplete = true;
+                }
+            });
+        }
+    }
 };
 
 /**

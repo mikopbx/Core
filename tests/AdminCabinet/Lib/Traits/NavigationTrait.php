@@ -1,0 +1,399 @@
+<?php
+
+namespace MikoPBX\Tests\AdminCabinet\Lib\Traits;
+
+use Facebook\WebDriver\Exception\NoSuchElementException;
+use Facebook\WebDriver\Exception\TimeoutException;
+use Facebook\WebDriver\Interactions\WebDriverActions;
+use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverElement;
+use Facebook\WebDriver\WebDriverExpectedCondition;
+use RuntimeException;
+
+/**
+ * Trait NavigationTrait
+ * Handles all navigation-related interactions in Selenium tests
+ */
+trait NavigationTrait
+{
+    /**
+     * Navigation configuration
+     */
+    protected const NAVIGATION = [
+        'timeouts' => [
+            'click' => 5,
+            'wait' => 30,
+            'animation' => 1,
+            'ajax' => 10,  // Reduced from 30s to 10s
+            'ajax_start' => 0.5  // Timeout for waiting AJAX to start
+        ],
+        'retries' => [
+            'navigation' => 3,
+            'click' => 2
+        ],
+        'scroll' => [
+            'behavior' => 'instant',
+            'block' => 'center'
+        ],
+        'wait_intervals' => [
+            'default' => 500,
+            'animation' => 100,
+            'ajax' => 100  // Fast polling for AJAX completion
+        ]
+    ];
+
+
+    /**
+     * Click sidebar menu item by href
+     *
+     * @param string $href Menu item href
+     * @throws RuntimeException|\Exception
+     */
+    protected function clickSidebarMenuItemByHref(string $href): void
+    {
+        $this->logTestAction("Click sidebar menu", ['href' => $href]);
+
+        try {
+            $xpath = sprintf(
+                '//div[@id="sidebar-menu"]//ancestor::a[contains(@class, "item") and contains(@href ,"%s")]',
+                $href
+            );
+
+            $menuItem = $this->waitForElement($xpath);
+            $this->scrollIntoView($menuItem);
+            $menuItem->click();
+            $this->waitForAjax();
+        } catch (\Exception $e) {
+            $this->handleActionError('click sidebar menu item', $href, $e);
+        }
+    }
+
+    /**
+     * Click modify button on row with specific text
+     *
+     * @param string $text Row text to find
+     * @throws RuntimeException
+     */
+    protected function clickModifyButtonOnRowWithText(string $text): void
+    {
+        $this->logTestAction("Click modify button", ['text' => $text]);
+
+        try {
+            // Combined XPath patterns for different table structures:
+            // 1. Legacy tables with class="row" and direct text
+            // 2. Legacy tables with role="row" and direct text  
+            // 3. DataTable with text in any child element (including <strong>)
+            // 4. DataTable with edit button having class "edit"
+            // 5. DataTable with text anywhere in the cell (including after <strong> in angle brackets)
+            $xpath = sprintf(
+                '//td[contains(text(),"%1$s")]/parent::tr[contains(@class, "row")]//a[contains(@href,"modify")] | ' .
+                '//td[contains(text(),"%1$s")]/parent::tr[contains(@role, "row")]//a[contains(@href,"modify")] | ' .
+                '//td[descendant-or-self::*[contains(text(),"%1$s")]]/parent::tr//a[contains(@class,"edit")] | ' .
+                '//td[descendant-or-self::*[contains(text(),"%1$s")]]/parent::tr//a[contains(@href,"modify")] | ' .
+                '//td[contains(.,"%1$s")]/parent::tr//a[contains(@class,"edit")] | ' .
+                '//td[contains(.,"%1$s")]/parent::tr//a[contains(@href,"modify")]',
+                $text
+            );
+            
+            try {
+                $element = self::$driver->findElement(WebDriverBy::xpath($xpath));
+                $actions = new WebDriverActions(self::$driver);
+                $actions->moveToElement($element);
+                $actions->perform();
+                $element->click();
+                $this->waitForAjax();
+            } catch (NoSuchElementException $e) {
+                throw new RuntimeException("Element not found: $xpath", 0, $e);
+            }
+        } catch (\Exception $e) {
+            $this->handleActionError('click modify button', $text, $e);
+        }
+    }
+
+    /**
+     * Click delete button on row with specific text
+     *
+     * @param string $text Row text to find
+     * @param bool $confirmDelete Whether to confirm deletion
+     * @throws RuntimeException
+     */
+    protected function clickDeleteButtonOnRowWithText(string $text, bool $confirmDelete = true): void
+    {
+        $this->logTestAction("Click delete button", ['text' => $text, 'confirm' => $confirmDelete]);
+
+        try {
+            // Combined XPath patterns for different table structures:
+            // 1. Legacy tables with class="row" and direct text
+            // 2. Legacy tables with role="row" and direct text
+            // 3. DataTable with text in any child element (including <strong>)
+            // 4. DataTable with delete button having class "delete"
+            // 5. DataTable with text anywhere in the cell (including after <strong> in angle brackets)
+            $xpath = sprintf(
+                '//td[contains(text(),"%1$s")]/ancestor::tr[contains(@class, "row")]//a[contains(@href,"delete")] | ' .
+                '//td[contains(text(),"%1$s")]/ancestor::tr[contains(@role, "row")]//a[contains(@href,"delete")] | ' .
+                '//td[descendant-or-self::*[contains(text(),"%1$s")]]/parent::tr//a[contains(@class,"delete")] | ' .
+                '//td[descendant-or-self::*[contains(text(),"%1$s")]]/parent::tr//a[contains(@href,"delete")] | ' .
+                '//td[contains(.,"%1$s")]/parent::tr//a[contains(@class,"delete")] | ' .
+                '//td[contains(.,"%1$s")]/parent::tr//a[contains(@href,"delete")]',
+                $text
+            );
+
+            $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
+            
+            if (empty($deleteButtons)) {
+                $this->annotate("Delete buttons not found for element with text: ".$text, 'debug');
+                return;
+            }
+            
+            foreach ($deleteButtons as $deleteButton) {
+                $this->scrollIntoView($deleteButton);
+                $deleteButton->click();
+
+                if ($confirmDelete) {
+                    sleep(self::NAVIGATION['timeouts']['animation']);
+                    $deleteButton->click(); // Confirm deletion
+                }
+
+                $this->waitForAjax();
+            }
+        } catch (\Exception $e) {
+            $this->handleActionError('click delete button', $text, $e);
+        }
+    }
+
+    /**
+     * Change tab on current page
+     *
+     * @param string $anchor Tab anchor
+     * @throws RuntimeException
+     */
+    protected function changeTabOnCurrentPage(string $anchor): void
+    {
+        $this->logTestAction("Change tab", ['anchor' => $anchor]);
+
+        try {
+            // Scroll to top first
+            self::$driver->executeScript(
+                sprintf(
+                    "document.getElementById('main').scrollIntoView({block: 'start', inline: 'nearest', behavior: '%s'})",
+                    self::NAVIGATION['scroll']['behavior']
+                )
+            );
+
+            sleep(self::NAVIGATION['timeouts']['animation']);
+
+            $xpath = sprintf(
+                '//div[contains(@class, "menu")]//a[contains(@data-tab,"%s")]',
+                $anchor
+            );
+
+            $tab = $this->waitForElement($xpath);
+            $this->scrollIntoView($tab);
+            $tab->click();
+            $this->waitForAjax();
+        } catch (\Exception $e) {
+            $this->handleActionError('change tab', $anchor, $e, );
+        }
+    }
+
+    /**
+     * Open accordion on the page
+     *
+     * @param string $selector Optional specific accordion selector
+     * @throws RuntimeException
+     */
+    protected function openAccordionOnThePage(string $selector = ''): void
+    {
+        try {
+            $xpath = $selector ?: '//div[contains(@class, "ui") and contains(@class, "accordion")]//div[contains(@class, "title")]';
+            $this->logTestAction("Open accordion", ['selector' => $xpath]);
+            $accordion = $this->waitForElement($xpath);
+            $this->scrollIntoView($accordion);
+            $accordion->click();
+            $this->waitForAjax();
+        } catch (\Exception $e) {
+            $this->handleActionError('open accordion', $selector, $e);
+        }
+    }
+
+    /**
+     * Click button by href
+     *
+     * @param string $href Button href
+     * @throws RuntimeException
+     */
+    protected function clickButtonByHref(string $href): void
+    {
+        $this->logTestAction("Click button", ['href' => $href]);
+
+        try {
+            // First, try to find any visible button with the exact href
+            $xpath = sprintf('//a[@href="%s"]', $href);
+            $buttons = self::$driver->findElements(WebDriverBy::xpath($xpath));
+            
+            // Look for a visible button
+            foreach ($buttons as $button) {
+                if ($button->isDisplayed()) {
+                    $this->scrollIntoView($button);
+                    $button->click();
+                    $this->waitForAjax();
+                    return;
+                }
+            }
+            
+            // If no visible button found, try to find any button with the href (including hidden ones)
+            if (!empty($buttons)) {
+                $button = $buttons[0];
+                $this->scrollIntoView($button);
+                $button->click();
+                $this->waitForAjax();
+                return;
+            }
+            
+            // Fallback: try to find button with partial href match (for dynamic URLs)
+            $fallbackXpath = sprintf('//a[contains(@href, "%s")]', $href);
+            $fallbackButtons = self::$driver->findElements(WebDriverBy::xpath($fallbackXpath));
+            
+            foreach ($fallbackButtons as $button) {
+                if ($button->isDisplayed()) {
+                    $this->scrollIntoView($button);
+                    $button->click();
+                    $this->waitForAjax();
+                    return;
+                }
+            }
+            
+            // Last resort: try to click hidden buttons if they exist
+            if (!empty($fallbackButtons)) {
+                foreach ($fallbackButtons as $button) {
+                    try {
+                        $this->scrollIntoView($button);
+                        $button->click();
+                        $this->waitForAjax();
+                        return;
+                    } catch (\Exception $ex) {
+                        // Continue to next button
+                    }
+                }
+            }
+            
+            throw new \RuntimeException(sprintf('No clickable button found with href "%s"', $href));
+            
+        } catch (\Exception $e) {
+            $this->handleActionError('click button', $href, $e);
+        }
+    }
+
+    /**
+     * Wait for AJAX requests to complete
+     *
+     * @param int $timeout Timeout in seconds
+     * @param bool $waitForStart Wait for AJAX to start before checking completion (use only when necessary)
+     */
+    protected function waitForAjax(int $timeout = self::NAVIGATION['timeouts']['ajax'], bool $waitForStart = false): void
+    {
+        try {
+            // EARLY EXIT: Quick check if page is already ready
+            $isReady = self::$driver->executeScript(
+                'return (typeof jQuery == "undefined" || jQuery.active == 0) &&
+                        document.querySelectorAll(".ui.loader.active").length === 0 &&
+                        !document.querySelector("form.loading") &&
+                        !document.querySelector("#submitbutton.disabled")'
+            );
+
+            if ($isReady) {
+                return; // Page already ready, no need to wait
+            }
+
+            // If waitForStart is true, give time for AJAX to start
+            if ($waitForStart) {
+                usleep(100000); // 100ms initial delay
+
+                // Wait for AJAX to start (jQuery.active > 0) with reduced timeout
+                try {
+                    self::$driver->wait(self::NAVIGATION['timeouts']['ajax_start'], 50)->until(
+                        function () {
+                            $ajaxActive = self::$driver->executeScript(
+                                'return (typeof jQuery != "undefined") ? jQuery.active > 0 : false'
+                            );
+                            return $ajaxActive;
+                        }
+                    );
+                } catch (TimeoutException $e) {
+                    // No AJAX started within timeout, continue to completion check
+                }
+            }
+
+            // Small delay to allow form submission to start
+            usleep(150000); // 150ms to let submit button change state
+
+            // Wait for all AJAX requests to complete with faster polling interval
+            self::$driver->wait($timeout, self::NAVIGATION['wait_intervals']['ajax'])->until(
+                function () {
+                    try {
+                        // Check jQuery AJAX
+                        $ajaxComplete = self::$driver->executeScript(
+                            'return (typeof jQuery != "undefined") ? jQuery.active == 0 : true'
+                        );
+
+                        if (!$ajaxComplete) {
+                            return false;
+                        }
+
+                        // Check for Semantic UI dimmers/loaders
+                        $noActiveDimmers = self::$driver->executeScript(
+                            'return document.querySelectorAll(".ui.loader.active").length === 0'
+                        );
+
+                        if (!$noActiveDimmers) {
+                            return false;
+                        }
+
+                        // Check form is not in loading state
+                        $formNotLoading = self::$driver->executeScript(
+                            'return !document.querySelector("form.loading")'
+                        );
+
+                        if (!$formNotLoading) {
+                            return false;
+                        }
+
+                        // Check submit button is not disabled (form processing complete)
+                        $submitButtonReady = self::$driver->executeScript(
+                            'return !document.querySelector("#submitbutton.disabled")'
+                        );
+
+                        return $submitButtonReady;
+                    } catch (\Exception $e) {
+                        // Log error but don't fail silently - let caller handle it
+                        self::annotate("Error checking AJAX status: " . $e->getMessage(), 'warning');
+                        // Return false to retry instead of assuming success
+                        return false;
+                    }
+                }
+            );
+        } catch (TimeoutException $e) {
+            self::annotate("Timeout waiting for AJAX completion: " . $e->getMessage(), 'warning');
+        }
+    }
+
+    /**
+     * Scroll element into view
+     *
+     * @param WebDriverElement $element Element to scroll to
+     * @param string $block Scroll alignment
+     */
+    protected function scrollIntoView(
+        WebDriverElement $element,
+        string $block = self::NAVIGATION['scroll']['block']
+    ): void {
+        self::$driver->executeScript(
+            sprintf(
+                "arguments[0].scrollIntoView({block: '%s', behavior: '%s'})",
+                $block,
+                self::NAVIGATION['scroll']['behavior']
+            ),
+            [$element]
+        );
+    }
+}

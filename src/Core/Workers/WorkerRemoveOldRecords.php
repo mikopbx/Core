@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,9 +19,10 @@
  */
 
 namespace MikoPBX\Core\Workers;
+
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{Directories, Processes, Storage, SystemMessages, Util};
+use MikoPBX\Core\System\{Directories, Processes, RecordingDeletionLogger, Storage, SystemMessages, Util};
 
 /**
  * WorkerRemoveOldRecords is a worker class responsible for cleaning monitor records.
@@ -29,8 +31,8 @@ use MikoPBX\Core\System\{Directories, Processes, Storage, SystemMessages, Util};
  */
 class WorkerRemoveOldRecords extends WorkerBase
 {
-    private const MIN_SPACE_MB = 500;
-    public const MIN_SPACE_MB_ALERT = 200;
+    private const int MIN_SPACE_MB = 500;
+    public const int MIN_SPACE_MB_ALERT = 500;
 
     /**
      * Starts the worker and checks disk space. Sends notifications in case of problems.
@@ -45,10 +47,16 @@ class WorkerRemoveOldRecords extends WorkerBase
 
         // Check disk space for each disk
         foreach ($hdd as $disk) {
-            if ($disk['sys_disk'] === true && !Storage::isStorageDiskMounted("{$disk['id']}4")) {
-
-                // Skip the system disk (4th partition) if it's not mounted
-                continue;
+            if ($disk['sys_disk'] === true) {
+                $storagePartition = "{$disk['id']}4";
+                if (!Storage::isStorageDiskMounted($storagePartition)) {
+                    // Skip the system disk if the 4th partition is not mounted as storage
+                    continue;
+                }
+                // On single-disk systems, getAllHdd reports free_space from the first
+                // mounted partition (offload/vda2), not from storage (vda4).
+                // Use the actual storage partition free space for the alert check.
+                $disk['free_space'] = Storage::getFreeSpace($storagePartition);
             }
             [$need_alert, $need_clean, $test_alert] = $this->check($disk);
             if ($need_alert) {
@@ -87,35 +95,26 @@ class WorkerRemoveOldRecords extends WorkerBase
     private function cleanStorage(): void
     {
         $varEtcDir = $this->di->getShared('config')->path('core.varEtcDir');
-        $filename = "{$varEtcDir}/storage_device";
+        $filename = "$varEtcDir/storage_device";
         if (file_exists($filename)) {
-            $mount_point = file_get_contents($filename);
+            $mount_point = trim(file_get_contents($filename));
         } else {
             return;
         }
+
+        $free_space = Storage::getFreeSpace($mount_point);
+        if ($free_space > self::MIN_SPACE_MB) {
+            return;
+        }
+        $monitor_dir = Directories::getDir(Directories::AST_MONITOR_DIR);
         $out = [];
-        $mount = Util::which('mount');
-        $grep = Util::which('grep');
         $head = Util::which('head');
         $sort = Util::which('sort');
         $find = Util::which('find');
         $awk = Util::which('awk');
 
-        // Get the device for the mount point
-        Processes::mwExec("$mount | $grep $mount_point | $awk '{print $1}' | $head -n 1", $out);
-        $dev = implode('', $out);
-
-        $free_space = Storage::getFreeSpace($dev);
-        if ($free_space > self::MIN_SPACE_MB) {
-            // Disk cleanup is not required
-            return;
-        }
-        $monitor_dir = Directories::getDir(Directories::AST_MONITOR_DIR);
-        $out = [];
-
-        // Get the oldest directories in the monitor directory
         Processes::mwExec(
-            "$find {$monitor_dir}/*/*/*  -maxdepth 0 -type d  -printf '%T+ %p\n' 2> /dev/null | $sort | $head -n 10 | $awk '{print $2}'",
+            "$find $monitor_dir/*/*/*  -maxdepth 0 -type d  -printf '%T+ %p\n' 2> /dev/null | $sort | $head -n 10 | $awk '{print $2}'",
             $out
         );
         $rm = Util::which('rm');
@@ -124,15 +123,28 @@ class WorkerRemoveOldRecords extends WorkerBase
             if (!is_dir($dir_info)) {
                 continue;
             }
-            $free_space = Storage::getFreeSpace($dev);
+            $free_space = Storage::getFreeSpace($mount_point);
             if ($free_space > self::MIN_SPACE_MB) {
-                // Disk cleanup is not required
                 break;
             }
-            Processes::mwExec("$rm -rf {$dir_info}");
+            // Log each recording file before removing the directory
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($dir_info, \RecursiveDirectoryIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::LEAVES_ONLY
+            );
+            foreach ($iterator as $file) {
+                if ($file->isFile()) {
+                    RecordingDeletionLogger::log(
+                        RecordingDeletionLogger::DISK_CLEANUP,
+                        $file->getPathname(),
+                        "free_space={$free_space}MB"
+                    );
+                }
+            }
+            Processes::mwExec("$rm -rf $dir_info");
         }
     }
 }
 
-// Start worker process
+// Start a worker process
 WorkerRemoveOldRecords::startWorker($argv ?? []);

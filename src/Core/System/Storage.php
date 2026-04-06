@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -24,20 +25,22 @@ use JsonException;
 use MikoPBX\Common\Config\ClassLoader;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Models\Storage as StorageModel;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Config\RegisterDIServices;
-use MikoPBX\Core\System\Configs\PHPConf;
+use MikoPBX\Core\System\Configs\NginxConf;
+use MikoPBX\Core\System\Configs\PbxConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
-use MikoPBX\PBXCoreREST\Lib\System\ConvertAudioFileAction;
+use MikoPBX\PBXCoreREST\Lib\SoundFiles\ConvertAudioFileAction;
+
+use MikoPBX\Common\Models\StorageSettings;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
-use Phalcon\Di;
+use Phalcon\Di\Injectable;
 use function MikoPBX\Common\Config\appPath;
 
 /**
@@ -46,9 +49,9 @@ use function MikoPBX\Common\Config\appPath;
  * Manages storage-related operations.
  *
  * @package MikoPBX\Core\System
- * @property \Phalcon\Config config
+ * @property \Phalcon\Config\Config config
  */
-class Storage extends Di\Injectable
+class Storage extends Injectable
 {
     /**
      * Move read-only sounds to the storage.
@@ -64,7 +67,7 @@ class Storage extends Di\Injectable
         }
 
         // Create the current media directory if it doesn't exist
-        $currentMediaDir =  $this->config->path('asterisk.customSoundDir'). '/';
+        $currentMediaDir =  $this->config->path('asterisk.customSoundDir') . '/';
         if (!file_exists($currentMediaDir)) {
             Util::mwMkdir($currentMediaDir);
         }
@@ -78,7 +81,7 @@ class Storage extends Di\Injectable
 
                 // Copy the sound file to the new path
                 if (copy($soundFile->path, $newPath)) {
-                    ConvertAudioFileAction::main($newPath);
+                    ConvertAudioFileAction::convertAudioFile($newPath);
 
                     // Update the sound file path and extension
                     $soundFile->path = Util::trimExtensionForFile($newPath) . ".mp3";
@@ -103,7 +106,8 @@ class Storage extends Di\Injectable
     public static function isStorageDiskMounted(string $filter = '', string &$mount_dir = ''): bool
     {
         // Check if it's a T2Sde Linux and /storage/usbdisk1/ exists
-        if (!Util::isT2SdeLinux()
+        if (
+            !Util::isT2SdeLinux()
             && file_exists('/storage/usbdisk1/')
         ) {
             $mount_dir = '/storage/usbdisk1/';
@@ -113,7 +117,8 @@ class Storage extends Di\Injectable
             $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
             $filename = "$varEtcDir/storage_device";
 
-            // If the storage_device file exists, read its contents as the filter, otherwise use 'usbdisk1' as the filter
+            // If the storage_device file exists, read its contents as the filter,
+            // otherwise use 'usbdisk1' as the filter
             if (file_exists($filename)) {
                 $filter = file_get_contents($filename);
             } else {
@@ -129,7 +134,7 @@ class Storage extends Di\Injectable
 
         // Execute the command to filter the mount points based on the filter
         $out = shell_exec("$mount | $grep $filter | $awk '{print $3}' | $head -n 1");
-        $mount_dir = trim($out);
+        $mount_dir = trim($out ?? '');
         return ($mount_dir !== '');
     }
 
@@ -146,7 +151,7 @@ class Storage extends Di\Injectable
             return;
         }
 
-        $oldMohDir =  $this->config->path('asterisk.astvarlibdir'). '/sounds/moh';
+        $oldMohDir =  $this->config->path('asterisk.astvarlibdir') . '/sounds/moh';
         $currentMohDir = $this->config->path('asterisk.mohdir');
 
         // If the old MOH directory doesn't exist or unable to create the current MOH directory, return
@@ -179,7 +184,7 @@ class Storage extends Di\Injectable
      * @param string $dev The device path of the disk.
      * @return bool Returns true if the file system creation process is initiated, false otherwise.
      */
-    public static function mkfs_disk(string $dev):bool
+    public static function mkfsDisk(string $dev): bool
     {
         if (!file_exists($dev)) {
             $dev = "/dev/$dev";
@@ -243,7 +248,7 @@ class Storage extends Di\Injectable
 
         // First, remove existing partitions and then create a new msdos partition table and ext4 partition
         // This command deletes all existing partitions and creates a new primary partition using the full disk
-        $command = "$parted --script --align optimal '$device' 'mklabel msdos'";
+        $command = "$parted --script --align optimal '$device' 'mklabel gpt'";
         Processes::mwExec($command);  // Apply the command to clear the partition table
 
         // Now create a new partition that spans the entire disk
@@ -253,8 +258,27 @@ class Storage extends Di\Injectable
         // Log the result of the create partition command
         SystemMessages::sysLogMsg(__CLASS__, "$createPartCommand returned $retVal", LOG_INFO);
 
-        // Get the newly created partition name, assuming it's always the first partition after a fresh format
-        $partition = self::getDevPartName($device, '1');
+        // Force kernel to re-read partition table after parted changes
+        self::syncAndRereadPartitions($device);
+
+        // Get the newly created partition name with retry (kernel may need time to create device node)
+        $retryDelays = [1, 2, 5, 5, 7];
+        $partition = '';
+        foreach ($retryDelays as $attempt => $delay) {
+            $partition = self::getDevPartName($device, '1', true);
+            if (!empty($partition)) {
+                break;
+            }
+            $attemptNum = $attempt + 1;
+            SystemMessages::sysLogMsg(__CLASS__, "Partition not found after parted, retry {$attemptNum}/" . count($retryDelays) . " (wait {$delay}s)", LOG_WARNING);
+            sleep($delay);
+            self::syncAndRereadPartitions($device);
+        }
+
+        if (empty($partition)) {
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to find partition on $device after formatting", LOG_ERR);
+            return false;
+        }
 
         return $this->formatPartition($partition, $bg);
     }
@@ -275,6 +299,10 @@ class Storage extends Di\Injectable
             $retVal = Processes::mwExec("$cmd 2>&1");
             SystemMessages::sysLogMsg(__CLASS__, "$cmd returned $retVal");
             $result = ($retVal === 0);
+            if ($result) {
+                // Flush filesystem metadata to disk so UUID is immediately visible to lsblk
+                Processes::mwExec('sync');
+            }
         } else {
             usleep(200000);
             // Execute the mkfs command in the background
@@ -314,14 +342,19 @@ class Storage extends Di\Injectable
      * @param bool $forceFormatStorage Flag to determine if the disk should be formatted
      * @return bool Returns true on success, false otherwise
      */
-    public static function selectAndConfigureStorageDisk(bool $automatic=false, bool $forceFormatStorage = false): bool
-    {
+    public static function selectAndConfigureStorageDisk(
+        bool $automatic = false,
+        bool $forceFormatStorage = false
+    ): bool {
         $storage = new self();
 
         // Check if the storage disk is already mounted
         if (self::isStorageDiskMounted()) {
-            SystemMessages::echoWithSyslog(PHP_EOL." " . Util::translate('Storage disk is already mounted...') . " ");
-            sleep(2);
+            // Only show message and pause in interactive (console) mode
+            if (!$automatic) {
+                SystemMessages::echoWithSyslog(PHP_EOL . " " . Util::translate('Storage disk is already mounted...') . " ");
+                sleep(2);
+            }
             return true;
         }
 
@@ -358,7 +391,7 @@ class Storage extends Di\Injectable
             }
 
             // Check if the disk is a system disk and has a valid partition
-           if ($disk['size'] < 2*1024) {
+            if ($disk['size'] < 2 * 1024) {
                 // If the disk size is less than 2 gb, continue to the next iteration
                 continue;
             }
@@ -369,9 +402,9 @@ class Storage extends Di\Injectable
 
         if (empty($validDisks)) {
             // If no valid disks were found, log a message and return 0
-            $message = '   |- '.Util::translate('Valid disks not found...');
+            $message = ' - ' . Util::translate('Valid disks not found...');
             SystemMessages::echoWithSyslog($message);
-            SystemMessages::echoToTeletype(PHP_EOL.$message);
+            SystemMessages::echoToTeletype(PHP_EOL . $message);
             sleep(3);
             return false;
         }
@@ -379,20 +412,22 @@ class Storage extends Di\Injectable
         // Check if the disk selection should be automatic
         if ($automatic) {
             $target_disk_storage = $selected_disk['id'];
-            SystemMessages::echoToTeletype(PHP_EOL.'   - '."Automatically selected storage disk is $target_disk_storage");
+            SystemMessages::echoToTeletype(
+                PHP_EOL . '   - ' . "Automatically selected storage disk is $target_disk_storage"
+            );
         } else {
-            echo PHP_EOL." " . Util::translate('Select the drive to store the data.');
-            echo PHP_EOL." " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m ".PHP_EOL.PHP_EOL;
-            echo(PHP_EOL." " . Util::translate('Valid disks are:') . " ".PHP_EOL.PHP_EOL);
+            echo PHP_EOL . " " . Util::translate('Select the drive to store the data.');
+            echo PHP_EOL . " " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m " . PHP_EOL . PHP_EOL;
+            echo(PHP_EOL . " " . Util::translate('Valid disks are:') . " " . PHP_EOL . PHP_EOL);
             foreach ($validDisks as $disk) {
                 echo($disk);
             }
             echo PHP_EOL;
             // Open standard input in binary mode for interactive reading
             $fp = fopen('php://stdin', 'rb');
-            if ($forceFormatStorage){
+            if ($forceFormatStorage) {
                 echo '*******************************************************************************
-* ' . Util::translate('WARNING').'
+* ' . Util::translate('WARNING') . '
 * - ' . Util::translate('everything on this device will be erased!') . '
 * - ' . Util::translate('this cannot be undone!') . '
 *******************************************************************************';
@@ -416,17 +451,49 @@ class Storage extends Di\Injectable
         }
         $partitionName = self::getDevPartName($target_disk_storage, $part);
         if ($part === '1' && (!self::isStorageDisk($partitionName) || $forceFormatStorage)) {
-            echo PHP_EOL . Util::translate('Partitioning and formatting storage disk').': '.$dev_disk.'...'.PHP_EOL;
-            $storage->formatEntireDisk($dev_disk);
-        } elseif($part === '4' && $forceFormatStorage) {
-            echo PHP_EOL . Util::translate('Formatting storage partition 4 on disk').': '.$dev_disk.'...'.PHP_EOL;
+            echo PHP_EOL . Util::translate('Partitioning and formatting storage disk') . ': ' . $dev_disk . '...' . PHP_EOL;
+            if (!$storage->formatEntireDisk($dev_disk)) {
+                echo PHP_EOL . " - ERROR: Failed to format disk $dev_disk." . PHP_EOL;
+                SystemMessages::sysLogMsg(__CLASS__, "formatEntireDisk failed for $dev_disk", LOG_ERR);
+                sleep(5);
+                return false;
+            }
+        } elseif ($part === '4' && $forceFormatStorage) {
+            echo PHP_EOL . Util::translate('Formatting storage partition 4 on disk') . ': ' . $dev_disk . '...' . PHP_EOL;
             passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four create $dev_disk");
-        } elseif($part === '4') {
-            echo PHP_EOL . Util::translate('Update storage partition 4 on disk').': '.$dev_disk.'...'.PHP_EOL;
+        } elseif ($part === '4') {
+            echo PHP_EOL . Util::translate('Update storage partition 4 on disk') . ': ' . $dev_disk . '...' . PHP_EOL;
             passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four update $dev_disk");
         }
-        $partitionName = self::getDevPartName($target_disk_storage, $part);
-        $uuid = self::getUuid($partitionName);
+
+        // Retry partition detection — kernel may need time to update device nodes after formatting
+        $retryDelays = [1, 2, 5, 5, 7];
+        $partitionName = '';
+        foreach ($retryDelays as $attempt => $delay) {
+            $partitionName = self::getDevPartName($target_disk_storage, $part, true);
+            if (!empty($partitionName)) {
+                break;
+            }
+            $attemptNum = $attempt + 1;
+            echo " - Partition not found, retry {$attemptNum}/" . count($retryDelays) . " (wait {$delay}s)..." . PHP_EOL;
+            sleep($delay);
+            self::syncAndRereadPartitions($dev_disk);
+        }
+
+        // Use retry to ensure UUID is available after formatting
+        // (kernel may need time to update partition metadata)
+        echo PHP_EOL . ' - Waiting for partition UUID...' . PHP_EOL;
+        $uuid = self::getUuidWithRetry($partitionName);
+        if (empty($uuid)) {
+            echo PHP_EOL . " - ERROR: Failed to obtain UUID for $partitionName." . PHP_EOL;
+            echo " - Storage disk cannot be configured." . PHP_EOL;
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to obtain UUID for $partitionName", LOG_ERR);
+            sleep(5);
+            return false;
+        }
+
+        echo " - UUID obtained: $uuid" . PHP_EOL;
+
         // Create an array of disk data
         $data = [
             'device' => $dev_disk,
@@ -434,32 +501,37 @@ class Storage extends Di\Injectable
             'filesystemtype' => 'ext4',
             'name' => 'Storage №1'
         ];
-        echo PHP_EOL ."Disk part: $dev_disk, uid: $uuid".PHP_EOL;
+
         // Save the disk settings
+        echo ' - Saving disk settings...' . PHP_EOL;
         $storage->saveDiskSettings($data);
+
         if (file_exists('/offload/livecd')) {
             // Do not need to start the PBX, it's the station installation in LiveCD mode.
+            echo ' - LiveCD mode: disk settings saved, skipping PBX configuration.' . PHP_EOL;
             return true;
         }
         MainDatabaseProvider::recreateDBConnections();
 
         // Configure the storage
+        echo ' - Mounting storage disk...' . PHP_EOL;
         $storage->configure();
         MainDatabaseProvider::recreateDBConnections();
         $success = self::isStorageDiskMounted();
+
         if ($success === true && $automatic) {
-            SystemMessages::echoToTeletype(PHP_EOL.'   |- The data storage disk has been successfully mounted ... ');
-            sleep(2);
+            SystemMessages::echoStartMsg(' - Storage disk mounted successfully, rebooting...');
+            sleep(3);
             System::reboot();
             return true;
         }
 
-        if ($automatic) {
-            SystemMessages::echoToTeletype(PHP_EOL.'   |- Storage disk was not mounted automatically ... ');
+        if ($automatic && !$success) {
+            SystemMessages::echoStartMsg(' - Storage disk was not mounted automatically...');
         }
 
         fclose(STDERR);
-        echo('   |- Update database ... ' . PHP_EOL);
+        echo ' - Updating database...' . PHP_EOL;
 
         // Update the database
         $dbUpdater = new UpdateDatabase();
@@ -469,11 +541,12 @@ class Storage extends Di\Injectable
         CdrDb::checkDb();
 
         // Restart syslog
+        echo ' - Restarting services...' . PHP_EOL;
         $sysLog = new SyslogConf();
         $sysLog->reStart();
 
         // Configure PBX
-        $pbx = new PBX();
+        $pbx = new PbxConf();
         $pbx->configure();
 
         // Restart processes related to storage
@@ -481,13 +554,14 @@ class Storage extends Di\Injectable
 
         // Check if the disk was mounted successfully
         if ($success === true) {
-            SystemMessages::echoWithSyslog( "\n   |- " . Util::translate('Storage disk was mounted successfully...') . " \n\n");
+            echo PHP_EOL . ' - ' . Util::translate('Storage disk was mounted successfully...') . PHP_EOL;
+            SystemMessages::sysLogMsg(__CLASS__, 'Storage disk mounted successfully', LOG_INFO);
         } else {
-            SystemMessages::echoWithSyslog( "\n   |- " . Util::translate('Failed to mount the disc...') . " \n\n");
+            echo PHP_EOL . ' - ' . Util::translate('Failed to mount the disc...') . PHP_EOL;
+            SystemMessages::sysLogMsg(__CLASS__, 'Failed to mount storage disk', LOG_ERR);
         }
 
-        sleep(3);
-        if ($STDERR!==false){
+        if ($STDERR !== false) {
             fclose($STDERR);
         }
 
@@ -510,25 +584,25 @@ class Storage extends Di\Injectable
         $sortPath  = Util::which('sort');
 
         $basenameDisk = basename($dev);
-        $pathToDisk = trim(shell_exec("$lsBlkPath -n -p -a -r -o NAME,TYPE | $grepPath disk | $grepPath '$basenameDisk' | $cutPath -d ' ' -f 1"));
-        if($verbose) {
-            echo "Get dev full path...".PHP_EOL;
-            echo "Source dev: $dev, result full path: $pathToDisk".PHP_EOL;
+        $pathToDisk = trim(shell_exec("$lsBlkPath -n -p -a -r -o NAME,TYPE | $grepPath disk | $grepPath '$basenameDisk' | $cutPath -d ' ' -f 1")??'');
+        if ($verbose) {
+            echo "Get dev full path..." . PHP_EOL;
+            echo "Source dev: $dev, result full path: $pathToDisk" . PHP_EOL;
         }
             // Touch the disk to update disk tables
         $partProbePath = Util::which('partprobe');
-        shell_exec($partProbePath." '$pathToDisk'");
+        shell_exec($partProbePath . " '$pathToDisk'");
 
         // Touch the disk to update disk tables
         $command = "$lsBlkPath -r -p | $grepPath ' part' | $sortPath -u | $cutPath -d ' ' -f 1 | $grepPath '" . $pathToDisk . "' | $grepPath \"$part\$\"";
-        $devName = trim(shell_exec($command));
-        if(empty($devName) && $verbose ){
-            $verboseMsg = trim(shell_exec("$lsBlkPath -r -p"));
-            echo "---   filtered command   ---".PHP_EOL;
-            echo $command.PHP_EOL;
-            echo "---   result 'lsblk -r -p'   ---".PHP_EOL;
-            echo $verboseMsg.PHP_EOL;
-            echo "---   ---   ---".PHP_EOL;
+        $devName = trim(shell_exec($command??'')??'');
+        if (empty($devName) && $verbose) {
+            $verboseMsg = trim(shell_exec("$lsBlkPath -r -p")??'');
+            echo "---   filtered command   ---" . PHP_EOL;
+            echo $command . PHP_EOL;
+            echo "---   result 'lsblk -r -p'   ---" . PHP_EOL;
+            echo $verboseMsg . PHP_EOL;
+            echo "---   ---   ---" . PHP_EOL;
         }
         return $devName;
     }
@@ -541,12 +615,11 @@ class Storage extends Di\Injectable
      */
     public static function isStorageDisk(string $device): bool
     {
-        $result = false;
         // Check if the device path exists
-        if (!file_exists($device)) {
-            return $result;
+        if (empty($device) || !file_exists($device)) {
+            return false;
         }
-
+        $result = false;
         $tmp_dir = '/tmp/mnt_' . time();
         Util::mwMkdir($tmp_dir);
         $out = [];
@@ -555,18 +628,19 @@ class Storage extends Di\Injectable
         $storage = new self();
         $format = $storage->getFsType($device);
         // If the file system type is not available, return false
-        if ($format === '') {
+        if (empty($format)) {
+            echo("For Disk $device ($uid_part), FS_TYPE empty...") . PHP_EOL;
             return false;
         }
-        $mount = Util::which('mount');
+        echo("For Disk $device get $uid_part, FS_TYPE=$format...") . PHP_EOL;
+        $mount  = Util::which('mount');
         $umount = Util::which('umount');
-        $rm = Util::which('rm');
+        $rm     = Util::which('rm');
 
         Processes::mwExec("$mount -t $format $uid_part $tmp_dir", $out);
         if (is_dir("$tmp_dir/mikopbx") && trim(implode('', $out)) === '') {
-            // $out - empty string, no errors
-            // mikopbx directory exists
             $result = true;
+            echo("Disk $device is storage...") . PHP_EOL;
         }
 
         // Check if the storage disk is mounted, and unmount if necessary
@@ -600,8 +674,8 @@ class Storage extends Di\Injectable
         foreach ($data as $key => $value) {
             $storage_settings->writeAttribute($key, $value);
         }
-        if(!$storage_settings->save()){
-            echo PHP_EOL ."Fail save new storage ID in database...".PHP_EOL;
+        if (!$storage_settings->save()) {
+            echo PHP_EOL . "Fail save new storage ID in database..." . PHP_EOL;
         }
     }
 
@@ -633,14 +707,14 @@ class Storage extends Di\Injectable
      */
     public function configure(): void
     {
-        $varEtcDir = $this->config->path(Directories::CORE_VAR_ETC_DIR);
+        $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
         $storage_dev_file = "$varEtcDir/storage_device";
         if (!Util::isT2SdeLinux()) {
             // Configure for non-T2Sde Linux
             file_put_contents($storage_dev_file, "/storage/usbdisk1");
             $this->updateConfigWithNewMountPoint("/storage/usbdisk1");
             $this->createWorkDirs();
-            PHPConf::setupLog();
+            NginxConf::setupLog();
             return;
         }
 
@@ -688,6 +762,18 @@ class Storage extends Di\Injectable
             $mount_point = "/storage/usbdisk{$disk['id']}";
             Util::mwMkdir($mount_point);
             SystemMessages::sysLogMsg(__METHOD__, "Create mount point: $conf");
+
+            $mountPath = Util::which('mount');
+            $resultMountCode = Processes::mwExec("$mountPath -t $formatFs $str_uid $mount_point", $out);
+            if($resultMountCode !== 0){
+                echo("Fail mount $dev whith $str_uid, FS_TYPE - $formatFs...") . PHP_EOL;
+                echo("Trying check device $dev ...") . PHP_EOL;
+                passthru("/sbin/fsck.$formatFs -y '$dev'");
+                echo("Trying mount device $dev ...") . PHP_EOL;
+                $resultMountCode = Processes::mwExec("$mountPath -t $formatFs $str_uid $mount_point", $out);
+                echo("Result mount code $resultMountCode ...") . PHP_EOL;
+            }
+
         }
 
         // Save the configuration to the fstab file
@@ -695,9 +781,6 @@ class Storage extends Di\Injectable
 
         // Create necessary working directories
         $this->createWorkDirs();
-
-        // Set up the PHP log configuration
-        PHPConf::setupLog();
     }
 
     /**
@@ -765,8 +848,8 @@ class Storage extends Di\Injectable
     private function createWorkDirs(): void
     {
         $path = '';
-        $mountPath = Util::which('mount');
-        Processes::mwExec("$mountPath -o remount,rw /offload 2> /dev/null");
+        $busyBoxPath = Util::which('busybox');
+        Processes::mwExec("$busyBoxPath mount -o remount,rw /offload 2> /dev/null");
 
         $isLiveCd = file_exists('/offload/livecd');
 
@@ -780,7 +863,7 @@ class Storage extends Di\Injectable
                 if (file_exists($entry)) {
                     continue;
                 }
-                if ($isLiveCd && strpos($entry, '/offload/') === 0) {
+                if ($isLiveCd && str_starts_with($entry, '/offload/')) {
                     continue;
                 }
                 $path .= " $entry";
@@ -794,14 +877,20 @@ class Storage extends Di\Injectable
         $downloadCacheDir = appPath('sites/pbxcore/files/cache');
         if (!$isLiveCd) {
             Util::mwMkdir($downloadCacheDir);
-            Util::createUpdateSymlink($this->config->path('www.downloadCacheDir'), $downloadCacheDir);
+            Util::createUpdateSymlink(Directories::getDir(Directories::WWW_DOWNLOAD_CACHE_DIR), $downloadCacheDir);
+        }
+        
+        // Ensure Volt cache directory exists
+        $voltCacheDir = Directories::getDir(Directories::APP_VOLT_CACHE_DIR);
+        if (!file_exists($voltCacheDir)) {
+            Util::mwMkdir($voltCacheDir);
         }
 
         $this->createAssetsSymlinks();
         $this->createViewSymlinks();
         $this->createAGIBINSymlinks($isLiveCd);
 
-        Util::createUpdateSymlink($this->config->path('www.uploadDir'), '/ultmp');
+        Util::createUpdateSymlink(Directories::getDir(Directories::WWW_UPLOAD_DIR), '/ultmp');
 
         $filePath = appPath('src/Core/Asterisk/Configs/lua/extensions.lua');
         Util::createUpdateSymlink($filePath, '/etc/asterisk/extensions.lua');
@@ -809,7 +898,7 @@ class Storage extends Di\Injectable
         $this->clearCacheFiles();
         $this->clearTmpFiles();
         $this->applyFolderRights();
-        Processes::mwExec("$mountPath -o remount,ro /offload 2> /dev/null");
+        Processes::mwExec("$busyBoxPath mount -o remount,ro /offload 2> /dev/null");
     }
 
     /**
@@ -819,14 +908,16 @@ class Storage extends Di\Injectable
      */
     public function clearCacheFiles(): void
     {
+        $assetsCacheDir = Directories::getDir(Directories::APP_ASSETS_CACHE_DIR);
+        
         $cacheDirs = [];
-        $cacheDirs[] = $this->config->path(Directories::WWW_UPLOAD_DIR);
-        $cacheDirs[] = $this->config->path(Directories::WWW_DOWNLOAD_CACHE_DIR);
-        $cacheDirs[] = $this->config->path(Directories::APP_ASSETS_CACHE_DIR) . '/js';
-        $cacheDirs[] = $this->config->path(Directories::APP_ASSETS_CACHE_DIR) . '/css';
-        $cacheDirs[] = $this->config->path(Directories::APP_ASSETS_CACHE_DIR) . '/img';
-        $cacheDirs[] = $this->config->path(Directories::APP_VIEW_CACHE_DIR);
-        $cacheDirs[] = $this->config->path(Directories::APP_VOLT_CACHE_DIR);
+        $cacheDirs[] = Directories::getDir(Directories::WWW_UPLOAD_DIR);
+        $cacheDirs[] = Directories::getDir(Directories::WWW_DOWNLOAD_CACHE_DIR);
+        $cacheDirs[] = $assetsCacheDir . '/js';
+        $cacheDirs[] = $assetsCacheDir . '/css';
+        $cacheDirs[] = $assetsCacheDir . '/img';
+        $cacheDirs[] = Directories::getDir(Directories::APP_VIEW_CACHE_DIR);
+        $cacheDirs[] = Directories::getDir(Directories::APP_VOLT_CACHE_DIR);
         $rmPath = Util::which('rm');
 
         // Clear cache files for each directory
@@ -853,7 +944,7 @@ class Storage extends Di\Injectable
         $mv = Util::which('mv');
         $rm = Util::which('rm');
         $nice = Util::which('nice');
-        $tmpDir = $this->config->path(Directories::CORE_TEMP_DIR);
+        $tmpDir = Directories::getDir(Directories::CORE_TEMP_DIR);
         if (!file_exists($tmpDir)) {
             return;
         }
@@ -883,13 +974,13 @@ class Storage extends Di\Injectable
      */
     private function getStorageDev(array $disk, string $cf_disk): string
     {
-        if (!empty($disk['uniqid']) && strpos($disk['uniqid'], 'STORAGE-DISK') === false) {
+        if (!empty($disk['uniqid']) && !str_contains($disk['uniqid'], 'STORAGE-DISK')) {
             // Find the partition name by UID.
             $lsblk = Util::which('lsblk');
             $grep = Util::which('grep');
             $cut = Util::which('cut');
             $cmd = "$lsblk -r -o NAME,UUID | $grep {$disk['uniqid']} | $cut -d ' ' -f 1";
-            $dev = '/dev/' . trim(shell_exec($cmd));
+            $dev = '/dev/' . trim(shell_exec($cmd) ?? '');
             if ($this->hddExists($dev)) {
                 // Disk exists.
                 return $dev;
@@ -928,8 +1019,11 @@ class Storage extends Di\Injectable
 
         // Record the start time for timeout purposes.
         $startTime = time();
+        
+        // For Docker environments, reduce timeout
+        $maxWaitTime = System::isDocker() ? 3 : 10;
 
-        // Loop for up to 10 seconds or until a non-empty UUID is found.
+        // Loop for up to maxWaitTime seconds or until a non-empty UUID is found.
         while (true) {
             // Retrieve the UUID for the disk.
             $uid = self::getUuid($disk);
@@ -940,8 +1034,8 @@ class Storage extends Di\Injectable
                 return true;
             }
 
-            // Exit the loop if 10 seconds have passed.
-            if ((time() - $startTime) >= 10) {
+            // Exit the loop if maxWaitTime seconds have passed.
+            if ((time() - $startTime) >= $maxWaitTime) {
                 break;
             }
 
@@ -961,7 +1055,7 @@ class Storage extends Di\Injectable
      */
     public function saveFstab(string $conf = ''): void
     {
-        $varEtcDir = $this->config->path(Directories::CORE_VAR_ETC_DIR);
+        $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
 
         // Create the mount point directory for additional disks
         Util::mwMkdir('/storage');
@@ -1001,8 +1095,8 @@ class Storage extends Di\Injectable
         // Mount the file systems
         $mountPath     = Util::which('mount');
         $resultOfMount = Processes::mwExec("$mountPath -a", $out);
-        if($resultOfMount !== 0){
-            SystemMessages::echoToTeletype(" - Error mount ". implode(' ', $out));
+        if ($resultOfMount !== 0) {
+            SystemMessages::echoToTeletype(" - Error mount " . implode(' ', $out));
         }
         // Add regular www rights to /cf directory
         Util::addRegularWWWRights('/cf');
@@ -1081,8 +1175,8 @@ class Storage extends Di\Injectable
     public function createWorkDirsAfterDBUpgrade(): void
     {
         // Remount /offload directory as read-write
-        $mountPath = Util::which('mount');
-        Processes::mwExec("$mountPath -o remount,rw /offload 2> /dev/null");
+        $busyBoxPath = Util::which('busybox');
+        Processes::mwExec("$busyBoxPath mount -o remount,rw /offload 2> /dev/null");
 
         // Create symlinks for module caches
         $this->createModulesCacheSymlinks();
@@ -1091,7 +1185,7 @@ class Storage extends Di\Injectable
         $this->applyFolderRights();
 
         // Remount /offload directory as read-only
-        Processes::mwExec("$mountPath -o remount,ro /offload 2> /dev/null");
+        Processes::mwExec("$busyBoxPath mount -o remount,ro /offload 2> /dev/null");
     }
 
     /**
@@ -1121,18 +1215,19 @@ class Storage extends Di\Injectable
      */
     public function createAssetsSymlinks(): void
     {
+        $assetsCacheDir = Directories::getDir(Directories::APP_ASSETS_CACHE_DIR);
+        
         // Create symlink for JS cache directory
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
-        Util::createUpdateSymlink($this->config->path(Directories::APP_ASSETS_CACHE_DIR) . '/js', $jsCacheDir);
+        Util::createUpdateSymlink($assetsCacheDir . '/js', $jsCacheDir);
 
         // Create symlink for CSS cache directory
         $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
-        Util::createUpdateSymlink($this->config->path(Directories::APP_ASSETS_CACHE_DIR) . '/css', $cssCacheDir);
+        Util::createUpdateSymlink($assetsCacheDir . '/css', $cssCacheDir);
 
         // Create symlink for image cache directory
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-        Util::createUpdateSymlink($this->config->path(Directories::APP_ASSETS_CACHE_DIR) . '/img', $imgCacheDir);
-
+        Util::createUpdateSymlink($assetsCacheDir . '/img', $imgCacheDir);
     }
 
     /**
@@ -1143,7 +1238,7 @@ class Storage extends Di\Injectable
     public function createViewSymlinks(): void
     {
         $viewCacheDir = appPath('src/AdminCabinet/Views/Modules');
-        Util::createUpdateSymlink($this->config->path(Directories::APP_VIEW_CACHE_DIR), $viewCacheDir);
+        Util::createUpdateSymlink(Directories::getDir(Directories::APP_VIEW_CACHE_DIR), $viewCacheDir);
     }
 
     /**
@@ -1154,8 +1249,8 @@ class Storage extends Di\Injectable
      */
     public function createAGIBINSymlinks(bool $isLiveCd): void
     {
-        $agiBinDir = $this->config->path(Directories::AST_AGI_BIN_DIR);
-        if ($isLiveCd && strpos($agiBinDir, '/offload/') !== 0) {
+        $agiBinDir = Directories::getDir(Directories::AST_AGI_BIN_DIR);
+        if ($isLiveCd && !str_starts_with($agiBinDir, '/offload/')) {
             Util::mwMkdir($agiBinDir);
         }
 
@@ -1194,8 +1289,8 @@ class Storage extends Di\Injectable
         }
 
         // Add additional directories with WWW rights
-        $www_dirs[] = $this->config->path(Directories::CORE_TEMP_DIR);
-        $www_dirs[] = $this->config->path(Directories::CORE_LOGS_DIR);
+        $www_dirs[] = Directories::getDir(Directories::CORE_TEMP_DIR);
+        $www_dirs[] = Directories::getDir(Directories::CORE_LOGS_DIR);
 
         // Create empty log files with WWW rights
         $logFiles = [
@@ -1221,9 +1316,8 @@ class Storage extends Di\Injectable
         $exec_dirs[] = appPath('src/Core/Asterisk/agi-bin');
         $exec_dirs[] = appPath('src/Core/Rc');
         Util::addExecutableRights(implode(' ', $exec_dirs));
-
-        $mountPath = Util::which('mount');
-        Processes::mwExec("$mountPath -o remount,ro /offload 2> /dev/null");
+        $busyBoxPath = Util::which('busybox');
+        Processes::mwExec("$busyBoxPath mount -o remount,ro /offload 2> /dev/null");
     }
 
     /**
@@ -1231,7 +1325,7 @@ class Storage extends Di\Injectable
      */
     public function mountSwap(): void
     {
-        $tempDir = $this->config->path(Directories::CORE_TEMP_DIR);
+        $tempDir = Directories::getDir(Directories::CORE_TEMP_DIR);
         $swapFile = "$tempDir/swapfile";
 
         $swapOffCmd = Util::which('swapoff');
@@ -1320,31 +1414,40 @@ class Storage extends Di\Injectable
     {
         $res_disks = [];
 
-        if (Util::isDocker()) {
-
-            // Get disk information for /storage directory
+        if (System::isContainer()) {
+            // Get disk information for /storage directory (Docker and LXC)
             $out = [];
             $grepPath = Util::which('grep');
             $dfPath = Util::which('df');
             $awkPath = Util::which('awk');
 
             // Execute the command to get disk information for /storage directory
+            // Use -P for POSIX format (single line output even with long device names)
             Processes::mwExec(
-                "$dfPath -k /storage | $awkPath  '{ print \$1 \"|\" $3 \"|\" \$4} ' | $grepPath -v 'Available'",
+                "$dfPath -Pk /storage | $awkPath  '{ print \$1 \"|\" \$3 \"|\" \$4} ' | $grepPath -v 'Available'",
                 $out
             );
             $disk_data = explode('|', implode(" ", $out));
             if (count($disk_data) === 3) {
-                $m_size = round(($disk_data[1] + $disk_data[2]) / 1024, 1);
+                $m_size = round((intval($disk_data[1]) + intval($disk_data[2])) / 1024, 1);
 
-                // Add Docker disk information to the result
+                $used_space = round($disk_data[1] / 1024, 1);
+                $free_space = round($disk_data[2] / 1024, 1);
+                $usage_percentage = ($m_size > 0) ? round(($used_space / $m_size) * 100, 1) : 0;
+
+                // Determine vendor based on container type
+                $vendor = System::isDocker() ? 'Docker' : 'LXC';
+
+                // Add container disk information to the result
                 $res_disks[] = [
                     'id' => $disk_data[0],
                     'size' => "" . $m_size,
                     'size_text' => "" . $m_size . " Mb",
-                    'vendor' => 'Debian',
-                    'mounted' => '/storage/usbdisk',
-                    'free_space' => round($disk_data[2] / 1024, 1),
+                    'vendor' => $vendor,
+                    'mounted' => '/storage/usbdisk1',
+                    'free_space' => $free_space,
+                    'used_space' => $used_space,
+                    'usage_percentage' => $usage_percentage,
                     'partitions' => [],
                     'sys_disk' => true,
                 ];
@@ -1358,7 +1461,7 @@ class Storage extends Di\Injectable
         $disks    = $this->diskGetDevices();
 
         $cf_disk = '';
-        $varEtcDir = $this->config->path(Directories::CORE_VAR_ETC_DIR);
+        $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
 
         if (file_exists($varEtcDir . '/cfdevice')) {
             $cf_disk = trim(file_get_contents($varEtcDir . '/cfdevice'));
@@ -1396,16 +1499,18 @@ class Storage extends Di\Injectable
 
                 $arr_disk_info = $this->determineFormatFs($diskInfo);
 
+                // Get used_space from partitions or directly from df
+                $used_space = 0;
                 if (count($arr_disk_info) > 0) {
-                    $used = 0;
                     foreach ($arr_disk_info as $disk_info) {
-                        $used += $disk_info['used_space'];
-                    }
-                    if ($used > 0) {
-                        $free_space = $mb_size - $used;
+                        $used_space += $disk_info['used_space'];
                     }
                 }
 
+                // Calculate usage percentage based on used + free (accounts for reserved blocks)
+                $total_usable = $used_space + $free_space;
+                $usage_percentage = ($total_usable > 0) ? round(($used_space / $total_usable) * 100, 1) : 0;
+                
                 // Add HDD device information to the result
                 $res_disks[] = [
                     'id' => $disk,
@@ -1414,12 +1519,354 @@ class Storage extends Di\Injectable
                     'vendor' => $temp_vendor,
                     'mounted' => $mounted,
                     'free_space' => round($free_space, 1),
+                    'used_space' => round($used_space, 1),
+                    'usage_percentage' => $usage_percentage,
                     'partitions' => $arr_disk_info,
                     'sys_disk' => $sys_disk,
                 ];
             }
         }
         return $res_disks;
+    }
+
+    /**
+     * Get storage usage breakdown by categories.
+     *
+     * @return array An array with storage usage information by category.
+     */
+    public function getStorageUsageByCategory(): array
+    {
+        $result = [
+            'total_size' => 0,
+            'used_space' => 0,
+            'free_space' => 0,
+            'usage_percentage' => 0,
+            'categories' => [
+                'call_recordings' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                'cdr_database' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                'system_logs' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                'modules' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                'backups' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                'system_caches' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                's3_cache' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                'other' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+            ],
+            'remote_storage' => $this->getRemoteStorageInfo(),
+        ];
+
+        // Get storage disk info using media mount point from Directories
+        $storageDir = Directories::getDir(Directories::CORE_MEDIA_MOUNT_POINT_DIR);
+        if (!is_dir($storageDir)) {
+            return $result;
+        }
+
+        // Get total disk info
+        $disks = $this->getAllHdd(true);
+        foreach ($disks as $disk) {
+            if (strpos($disk['mounted'], $storageDir) === 0) {
+                $result['total_size'] = floatval($disk['size']);
+                $result['used_space'] = floatval($disk['used_space']);
+                $result['free_space'] = floatval($disk['free_space']);
+                $result['usage_percentage'] = floatval($disk['usage_percentage']);
+                break;
+            }
+        }
+
+        // Fallback: calculate used_space from total and free when partition analysis fails
+        if ($result['used_space'] == 0 && $result['total_size'] > 0 && $result['free_space'] > 0) {
+            $result['used_space'] = round($result['total_size'] - $result['free_space'], 1);
+            $result['usage_percentage'] = round(($result['used_space'] / $result['total_size']) * 100, 1);
+        }
+        
+        if ($result['total_size'] == 0) {
+            return $result;
+        }
+        
+        // Define paths for each category using Directories class
+        $categoryPaths = $this->getStorageCategoryPaths();
+        
+        // Collect all existing paths and compute sizes in parallel
+        $pathToCategory = [];
+        $existingPathsByCategory = [];
+        $tempDir = Directories::getDir(Directories::CORE_TEMP_DIR);
+
+        foreach ($categoryPaths as $category => $paths) {
+            $existingPathsByCategory[$category] = [];
+            foreach ($paths as $path) {
+                if (is_dir($path)) {
+                    $pathToCategory[$path] = $category;
+                    $existingPathsByCategory[$category][] = $path;
+                }
+            }
+        }
+
+        // Run all du commands in parallel via a single shell invocation
+        $pathSizes = $this->getDirectorySizesBatchMb($pathToCategory, $tempDir);
+
+        // Aggregate sizes by category
+        foreach ($categoryPaths as $category => $paths) {
+            $categorySize = 0;
+            foreach ($existingPathsByCategory[$category] as $path) {
+                $categorySize += $pathSizes[$path] ?? 0.0;
+            }
+            $result['categories'][$category]['size'] = round($categorySize, 1);
+            $result['categories'][$category]['paths'] = $existingPathsByCategory[$category];
+        }
+        
+        // Calculate "other" category (everything else)
+        $categorizedSize = 0;
+        foreach (['call_recordings', 'cdr_database', 'system_logs', 'modules', 'backups', 'system_caches', 's3_cache'] as $category) {
+            $categorizedSize += $result['categories'][$category]['size'];
+        }
+        $result['categories']['other']['size'] = round($result['used_space'] - $categorizedSize, 1);
+        
+        // Calculate percentages
+        foreach ($result['categories'] as $category => &$data) {
+            if ($result['total_size'] > 0) {
+                $data['percentage'] = round(($data['size'] / $result['total_size']) * 100, 1);
+            }
+        }
+        
+        // Sort categories by size (largest first)
+        uasort($result['categories'], function($a, $b) {
+            return $b['size'] <=> $a['size'];
+        });
+        
+        return $result;
+    }
+    
+    /**
+     * Get storage category paths using Directories class.
+     *
+     * @return array Array of category paths
+     */
+    private function getStorageCategoryPaths(): array
+    {
+        // Call recordings (записи разговоров)
+        $recordingPaths = [
+            Directories::getDir(Directories::AST_MONITOR_DIR),
+        ];
+        
+        // Check if voicemail archive exists and add it
+        $voicemailArchive = dirname(Directories::getDir(Directories::AST_MONITOR_DIR)) . '/voicemailarchive';
+        if (is_dir($voicemailArchive)) {
+            $recordingPaths[] = $voicemailArchive;
+        }
+        
+        // CDR database directory (история разговоров - журнал)
+        // Contains cdr.db, cdr.db-shm, cdr.db-wal, old-cdr.db and other CDR-related files
+        $cdrPaths = [
+            Directories::getDir(Directories::AST_LOG_DIR),
+        ];
+        
+        // System logs paths (системные логи)
+        // Note: AST_LOG_DIR is now in cdr_database category (contains only CDR files)
+        $systemLogPaths = [
+            Directories::getDir(Directories::CORE_LOGS_DIR),
+            Directories::getDir(Directories::CORE_FAIL2AN_DB_DIR),
+        ];
+        
+        // Modules (дополнительные модули)
+        $modulesPaths = [
+            Directories::getDir(Directories::CORE_MODULES_DIR),
+        ];
+        
+        // Check if python-src exists and add it
+        $pythonSrc = dirname(Directories::getDir(Directories::CORE_MODULES_DIR)) . '/python-src';
+        if (is_dir($pythonSrc)) {
+            $modulesPaths[] = $pythonSrc;
+        }
+        
+        // Backups (резервные копии)
+        $backupPaths = [
+            Directories::getDir(Directories::CORE_CONF_BACKUP_DIR),
+        ];
+        
+        // Check if general backup directory exists
+        $generalBackup = dirname(Directories::getDir(Directories::CORE_CONF_BACKUP_DIR));
+        if (is_dir($generalBackup) && $generalBackup !== Directories::getDir(Directories::CORE_CONF_BACKUP_DIR)) {
+            $backupPaths[] = $generalBackup;
+        }
+        
+        // System caches (системные кеши)
+        $cachePaths = [
+            Directories::getDir(Directories::CORE_TEMP_DIR),
+            Directories::getDir(Directories::WWW_UPLOAD_DIR),
+            Directories::getDir(Directories::WWW_DOWNLOAD_CACHE_DIR),
+            Directories::getDir(Directories::APP_ASSETS_CACHE_DIR),
+            Directories::getDir(Directories::APP_VOLT_CACHE_DIR),
+            Directories::getDir(Directories::APP_VIEW_CACHE_DIR),
+        ];
+
+        // S3 recordings cache (кеш записей из S3)
+        $s3CachePaths = [
+            Directories::getDir(Directories::CORE_RECORDINGS_CACHE_DIR),
+        ];
+
+        return [
+            'call_recordings' => $recordingPaths,
+            'cdr_database' => $cdrPaths,
+            'system_logs' => $systemLogPaths,
+            'modules' => $modulesPaths,
+            'backups' => $backupPaths,
+            'system_caches' => $cachePaths,
+            's3_cache' => $s3CachePaths,
+        ];
+    }
+
+    /**
+     * Get remote storage (S3) information from database.
+     *
+     * Returns S3 storage stats: enabled status, total size, file count,
+     * bucket and endpoint. Data comes from DB queries, not filesystem.
+     *
+     * @return array Remote storage info with 's3' key
+     */
+    private function getRemoteStorageInfo(): array
+    {
+        $s3Info = [
+            's3' => [
+                'enabled' => false,
+                'size' => 0,
+                'files_count' => 0,
+                'bucket' => '',
+                'endpoint' => '',
+            ],
+        ];
+
+        try {
+            $s3Settings = StorageSettings::getSettings();
+            if ($s3Settings->s3_enabled !== 1) {
+                return $s3Info;
+            }
+
+            $s3Info['s3']['enabled'] = true;
+            $s3Info['s3']['bucket'] = $s3Settings->s3_bucket ?? '';
+            $s3Info['s3']['endpoint'] = $s3Settings->s3_endpoint ?? '';
+
+            $di = $this->getDI();
+            if ($di->has('dbRecordingStorage')) {
+                $db = $di->get('dbRecordingStorage');
+                $stats = $db->fetchOne(
+                    "SELECT COUNT(*) as count, COALESCE(SUM(file_size), 0) as total_size
+                     FROM m_RecordingStorage
+                     WHERE storage_location = 's3'"
+                );
+                $s3Info['s3']['files_count'] = (int)($stats['count'] ?? 0);
+                $s3Info['s3']['size'] = round((int)($stats['total_size'] ?? 0) / (1024 * 1024), 1);
+            }
+        } catch (\Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Failed to get S3 storage info: " . $e->getMessage(),
+                LOG_WARNING
+            );
+        }
+
+        return $s3Info;
+    }
+
+    /**
+     * Get directory size in MB.
+     *
+     * @param string $path Directory path
+     * @return float Size in MB
+     */
+    private function getDirectorySizeMb(string $path): float
+    {
+        $duCmd = Util::which('du');
+        $out = [];
+        
+        // Use du command to get directory size in KB
+        Processes::mwExec("$duCmd -sk \"$path\" 2>/dev/null | awk '{print $1}'", $out);
+        
+        if (!empty($out[0]) && is_numeric($out[0])) {
+            // Convert KB to MB
+            return floatval($out[0]) / 1024;
+        }
+        
+        return 0.0;
+    }
+
+    /**
+     * Get directory size in MB excluding specific files.
+     *
+     * @param string $path Directory path
+     * @param array $excludeFiles Array of file paths to exclude (relative to $path)
+     * @return float Size in MB
+     */
+    private function getDirectorySizeExcludingFiles(string $path, array $excludeFiles): float
+    {
+        $duCmd = Util::which('du');
+        $out = [];
+        
+        // Build exclude options for du command
+        $excludeOptions = '';
+        foreach ($excludeFiles as $excludeFile) {
+            $excludeOptions .= " --exclude=\"$excludeFile\"";
+        }
+        
+        // Use du command to get directory size in KB excluding specified files
+        Processes::mwExec("$duCmd -sk $excludeOptions \"$path\" 2>/dev/null | awk '{print $1}'", $out);
+        
+        if (!empty($out[0]) && is_numeric($out[0])) {
+            // Convert KB to MB
+            return floatval($out[0]) / 1024;
+        }
+        
+        return 0.0;
+    }
+
+    /**
+     * Get sizes for multiple directories in parallel using background du processes.
+     *
+     * @param array<string, string> $pathToCategory Map of path => category name
+     * @param string $tempDir Path to temp directory (swapfile excluded here)
+     * @return array<string, float> Map of path => size in MB
+     */
+    private function getDirectorySizesBatchMb(array $pathToCategory, string $tempDir): array
+    {
+        if (empty($pathToCategory)) {
+            return [];
+        }
+
+        $duCmd = Util::which('du');
+        $results = [];
+
+        // Build a shell script that runs all du commands in parallel
+        // Each writes to a temp file, then we collect results
+        $tmpPrefix = '/tmp/du_batch_' . getmypid() . '_';
+        $commands = [];
+        $index = 0;
+
+        foreach ($pathToCategory as $path => $category) {
+            $escapedPath = escapeshellarg($path);
+            $tmpFile = $tmpPrefix . $index;
+            if ($path === $tempDir) {
+                $commands[] = "($duCmd -sk --exclude=swapfile $escapedPath 2>/dev/null | awk '{print \$1}' > $tmpFile) &";
+            } else {
+                $commands[] = "($duCmd -sk $escapedPath 2>/dev/null | awk '{print \$1}' > $tmpFile) &";
+            }
+            $index++;
+        }
+
+        $commands[] = 'wait';
+
+        // Execute all du commands in parallel
+        $shellScript = implode("\n", $commands);
+        Processes::mwExec($shellScript);
+
+        // Collect results
+        $index = 0;
+        foreach ($pathToCategory as $path => $category) {
+            $tmpFile = $tmpPrefix . $index;
+            $sizeKb = trim(@file_get_contents($tmpFile) ?: '0');
+            @unlink($tmpFile);
+            $results[$path] = is_numeric($sizeKb) ? floatval($sizeKb) / 1024 : 0.0;
+            $index++;
+        }
+
+        return $results;
     }
 
     /**
@@ -1485,15 +1932,15 @@ class Storage extends Di\Injectable
      * @param string $filter The filter to match the disk name.
      * @return string|bool The mount point if the disk is mounted, or false if not mounted.
      */
-    public static function diskIsMounted(string $disk, string $filter = '/dev/')
+    public static function diskIsMounted(string $disk, string $filter = '/dev/'): bool|string
     {
         $out = [];
-        $grepPath = Util::which('grep');
-        $mountPath = Util::which('mount');
-        $headPath = Util::which('head');
+        $grep = Util::which('grep');
+        $mount = Util::which('mount');
+        $head = Util::which('head');
 
         // Execute mount command and grep the output for the disk name
-        Processes::mwExec("$mountPath | $grepPath '$filter${disk}' | $headPath -n 1", $out);
+        Processes::mwExec("$mount | $grep '{$filter}{$disk}' | $head -n 1", $out);
         if (count($out) > 0) {
             $res_out = end($out);
         } else {
@@ -1534,22 +1981,61 @@ class Storage extends Di\Injectable
      * Get the free space in megabytes for a given HDD.
      *
      * @param string $hdd The name of the HDD.
-     * @return int The free space in megabytes.
+     * @return float|int The free space in megabytes.
      */
-    public static function getFreeSpace(string $hdd)
+    public static function getFreeSpace(string $hdd): float|int
     {
         $out = [];
-        $hdd = escapeshellarg($hdd);
-        $grep = Util::which('grep');
-        $awk = Util::which('awk');
         $df = Util::which('df');
-        $head = Util::which('head');
+        $awk = Util::which('awk');
 
-        // Execute df command to get the free space for the HDD
-        Processes::mwExec("$df -m | $grep $hdd | $grep -v custom_modules | $head -n 1 | $awk '{print $4}'", $out);
+        if (str_starts_with($hdd, '/')) {
+            $escaped = escapeshellarg($hdd);
+            Processes::mwExec("$df -Pm $escaped 2>/dev/null | $awk 'NR==2 {print \$4}'", $out);
+        } else {
+            $escaped = escapeshellarg($hdd);
+            $grep = Util::which('grep');
+            $head = Util::which('head');
+            Processes::mwExec("$df -m | $grep $escaped | $grep -v custom_modules | $head -n 1 | $awk '{print \$4}'", $out);
+        }
+
         $result = 0;
+        foreach ($out as $res) {
+            if (!is_numeric($res)) {
+                continue;
+            }
+            $result += (1 * $res);
+        }
 
-        // Sum up the free space values
+        return $result;
+    }
+
+    /**
+     * Get used disk space from df command.
+     *
+     * Uses df output directly to get accurate used space, accounting for
+     * filesystem reserved blocks (e.g., ext4 reserves ~5% for root).
+     *
+     * @param string $hdd The name of the HDD (e.g., "/dev/sdb1").
+     * @return float|int The used space in megabytes.
+     */
+    public static function getUsedSpace(string $hdd): float|int
+    {
+        $out = [];
+        $df = Util::which('df');
+        $awk = Util::which('awk');
+
+        if (str_starts_with($hdd, '/')) {
+            $escaped = escapeshellarg($hdd);
+            Processes::mwExec("$df -Pm $escaped 2>/dev/null | $awk 'NR==2 {print \$3}'", $out);
+        } else {
+            $escaped = escapeshellarg($hdd);
+            $grep = Util::which('grep');
+            $head = Util::which('head');
+            Processes::mwExec("$df -m | $grep $escaped | $grep -v custom_modules | $head -n 1 | $awk '{print \$3}'", $out);
+        }
+
+        $result = 0;
         foreach ($out as $res) {
             if (!is_numeric($res)) {
                 continue;
@@ -1614,12 +2100,12 @@ class Storage extends Di\Injectable
                 $awkPath = Util::which('awk');
                 $mountPath = Util::which('mount');
 
-                // Get the file system type and free space of the mounted device
+                // Get the file system type and used space of the mounted device
                 Processes::mwExec("$mountPath | $grepPath '/dev/$dev' | $awkPath '{print $5}'", $out);
                 $fs = trim(implode("", $out));
                 $fs = ($fs === 'fuseblk') ? 'ntfs' : $fs;
-                $free_space = self::getFreeSpace("/dev/$dev ");
-                $used_space = $mb_size - $free_space;
+                // Use getUsedSpace to get accurate used space from df (accounts for reserved blocks)
+                $used_space = self::getUsedSpace("/dev/$dev ");
             } else {
                 $format = $this->getFsType($device);
 
@@ -1678,7 +2164,7 @@ class Storage extends Di\Injectable
         $type = $data['children'][0]['type'] ?? '';
 
         // Check if the disk is not a RAID type
-        if (strpos($type, 'raid') === false) {
+        if (!str_contains($type, 'raid')) {
             $children = $data['children'] ?? [];
             foreach ($children as $child) {
                 $result[] = $child['name'];
@@ -1764,6 +2250,65 @@ class Storage extends Di\Injectable
     }
 
     /**
+     * Force kernel to re-read partition table on a device.
+     *
+     * After parted creates or modifies partitions, the kernel may still cache the old
+     * partition table. Without this, subsequent lsblk/blkid calls may not see
+     * the new partitions or their UUIDs.
+     *
+     * @param string $device The device path (e.g., "/dev/sdb")
+     */
+    private static function syncAndRereadPartitions(string $device): void
+    {
+        Processes::mwExec('sync');
+
+        $blockdev = Util::which('blockdev');
+        if (!empty($blockdev)) {
+            Processes::mwExec("$blockdev --rereadpt $device 2>/dev/null");
+        }
+
+        $partprobe = Util::which('partprobe');
+        if (!empty($partprobe)) {
+            Processes::mwExec("$partprobe $device 2>/dev/null");
+        }
+
+        // Give the kernel time to update device nodes
+        sleep(1);
+    }
+
+    /**
+     * Get the UUID of a device, retrying if the kernel hasn't updated yet.
+     *
+     * After formatting a partition, the UUID may not be immediately visible to lsblk.
+     * This method retries up to 5 times with 1-second intervals.
+     *
+     * @param string $device The device path (e.g., "/dev/sdb1")
+     * @param int $maxRetries Maximum number of retry attempts
+     * @return string The UUID, or empty string if not found after all retries
+     */
+    public static function getUuidWithRetry(string $device, int $maxRetries = 5): string
+    {
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            $uuid = self::getUuid($device);
+            if (!empty($uuid)) {
+                return $uuid;
+            }
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "UUID not yet available for $device, retry $attempt/$maxRetries...",
+                LOG_WARNING
+            );
+            sleep(1);
+        }
+        SystemMessages::sysLogMsg(
+            __CLASS__,
+            "Failed to get UUID for $device after $maxRetries retries",
+            LOG_ERR
+        );
+        return '';
+    }
+
+    /**
      * Get the UUID (Universally Unique Identifier) of a device.
      *
      * @param string $device The device path.
@@ -1833,12 +2378,12 @@ class Storage extends Di\Injectable
      */
     public static function connectStorageInCloud(): string
     {
-        if (PbxSettings::findFirst('key="' . PbxSettingsConstants::CLOUD_PROVISIONING . '"') === null) {
+        if (PbxSettings::findFirst('key="' . PbxSettings::CLOUD_PROVISIONING . '"') === null) {
             return SystemMessages::RESULT_SKIPPED;
         }
 
         // In some Clouds the virtual machine starts immediately before the storage disk was attached
-        if (!self::selectAndConfigureStorageDisk(true)){
+        if (!self::selectAndConfigureStorageDisk(true)) {
             return SystemMessages::RESULT_FAILED;
         }
 

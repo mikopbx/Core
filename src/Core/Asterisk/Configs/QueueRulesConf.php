@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
-
 
 /**
  * Class QueueRulesConf
@@ -45,6 +45,6 @@ class QueueRulesConf extends AsteriskConfigClass
         $conf = '';
 
         // Write the configuration content to the file
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/queuerules.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 }

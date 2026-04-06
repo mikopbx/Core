@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -22,8 +23,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
-use Phalcon\Forms\Element\Select;
-use Phalcon\Forms\Element\Text;
 
 /**
  * Class SystemDiagnosticForm
@@ -33,19 +32,20 @@ use Phalcon\Forms\Element\Text;
  */
 class SystemDiagnosticForm extends BaseForm
 {
-
     public function initialize($entity = null, $options = null): void
     {
         parent::initialize($entity, $options);
 
-        // Filenames dropdown
-        $filenames = new Select(
-            'filenames', [], ['class' => 'ui fluid selection search dropdown filenames-select']
-        );
-        $this->add($filenames);
-        $this->add(new Hidden('filename', ['value' => $_REQUEST['filename'] ?? '']));
-        $this->add(new Text('filter', ['value' => $_REQUEST['filter'] ?? '']));
-        $this->add(new Numeric('lines', ['value' => '1500']));
+        // Filenames dropdown - V5.0 pattern: hidden input for dynamic dropdown
+        // JavaScript will build the dropdown UI with DynamicDropdownBuilder
+        $this->add(new Hidden('filenames', ['value' => '']));
+        $this->add(new Hidden('filename', ['value' => $options['filename']]));
+
+        // Log level filter - V5.0 pattern: hidden input, dropdown created by DynamicDropdownBuilder
+        $this->add(new Hidden('logLevel', ['value' => '']));
+
+        $this->add(new Hidden('filter', ['value' => $options['filter']]));
+        $this->add(new Numeric('lines', ['value' => '5000']));
         $this->add(new Numeric('offset', ['value' => '0']));
     }
 }

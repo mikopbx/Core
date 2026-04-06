@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Tests\Core\System;
 
+use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
@@ -32,7 +33,7 @@ class UtilTest extends AbstractUnitTest
     {
         $resultCode = 0;
         $output = [];
-        $path_asterisk  = Util::which('asterisk');
+        $path_asterisk  = Util::which(PBX::PROC_NAME);
         Processes::mwExec("{$path_asterisk} -rx 'dialplan reload'", $output,$resultCode);
         $this->assertIsArray($output);
         $this->assertIsInt($resultCode);

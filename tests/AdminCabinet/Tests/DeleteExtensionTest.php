@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -22,6 +23,7 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 use Facebook\WebDriver\WebDriverBy;
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
+use MikoPBX\Tests\AdminCabinet\Tests\Data\EmployeeDataFactory;
 
 /**
  * Class to test the deletion of an extension in the admin cabinet.
@@ -42,7 +44,6 @@ class DeleteExtensionTest extends MikoPBXTestsBase
 
     /**
      * Test the deletion of an extension.
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test.
@@ -52,7 +53,7 @@ class DeleteExtensionTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
         $this->clickModifyButtonOnRowWithText($params['username']);
 
         // TESTS
@@ -62,13 +63,14 @@ class DeleteExtensionTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
         $this->clickDeleteButtonOnRowWithText($params['username']);
+
         $this->waitForAjax();
 
         // Try to find element with ID on page
-        $this->fillDataTableSearchInput('global-search', $params['username']);
-        $xpath = "//table[@id='extensions-table']//tr[@id='{$elementID}']";
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
+        $xpath = "//table[@id='extensions-table']//tr[@data-extension-id='{$elementID}']";
         $els = self::$driver->findElements(WebDriverBy::xpath($xpath));
 
         if ($params['possibleToDelete']) {
@@ -97,18 +99,8 @@ class DeleteExtensionTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params['Alexandra Pushina'] = [
-            [
-                'username' => 'Alexandra Pushina',
-                'possibleToDelete' => true
-            ]
-        ];
-        $params['Smith James'] = [
-            [
-                'username' => 'Smith James',
-                'possibleToDelete' => false
-            ]
-        ];
+        $params['alexandra.pushina'] = [EmployeeDataFactory::getEmployeeData('alexandra.pushina')];
+        $params['smith.james'] = [EmployeeDataFactory::getEmployeeData('smith.james')];
         return $params;
     }
 }

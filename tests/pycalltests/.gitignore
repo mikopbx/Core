@@ -1,0 +1,26 @@
+# Binary executables (platform-specific, downloaded during setup)
+gophone
+cipbx
+
+# Logs
+logs/
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store

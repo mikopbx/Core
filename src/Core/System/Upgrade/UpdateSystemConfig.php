@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,28 +23,24 @@ namespace MikoPBX\Core\System\Upgrade;
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Configs\IptablesConf;
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Modules\PbxExtensionUtils;
-use Phalcon\Di;
+use Phalcon\Di\Injectable;
 
 use function MikoPBX\Common\Config\appPath;
 
-class UpdateSystemConfig extends Di\Injectable
+class UpdateSystemConfig extends Injectable
 {
-
-    private MikoPBXConfig $mikoPBXConfig;
+    public $isTheFirstMessage = true;
 
     /**
-     * System constructor.
+     * Time when the current operation started (microtime)
+     *
+     * @var float
      */
-    public function __construct()
-    {
-        $this->mikoPBXConfig = new MikoPBXConfig();
-    }
+    private float $operationStartTime = 0.0;
 
     /**
      * Updates settings after every new release
@@ -53,7 +50,7 @@ class UpdateSystemConfig extends Di\Injectable
         $this->deleteLostModules();
         // Clear all caches on any changed models
         ModelsBase::clearCache(PbxSettings::class);
-        $previous_version = (string)str_ireplace('-dev', '', $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::PBX_VERSION));
+        $previous_version = (string)str_ireplace('-dev', '',  PbxSettings::getValueByKey(PbxSettings::PBX_VERSION));
         $current_version  = (string)str_ireplace('-dev', '', trim(file_get_contents('/etc/version')));
         if ($previous_version !== $current_version) {
             $upgradeClasses      = [];
@@ -61,29 +58,41 @@ class UpdateSystemConfig extends Di\Injectable
             $upgradeClassesFiles = glob($upgradeClassesDir . '/*.php', GLOB_NOSORT);
             foreach ($upgradeClassesFiles as $file) {
                 $className        = pathinfo($file)['filename'];
-                $moduleModelClass = "\\MikoPBX\\Core\\System\\Upgrade\\Releases\\{$className}";
-                if (class_exists($moduleModelClass)) {
-                    $upgradeClasses[$moduleModelClass::PBX_VERSION] = $moduleModelClass;
+                $upgradeClass = "\\MikoPBX\\Core\\System\\Upgrade\\Releases\\$className";
+                if (class_exists($upgradeClass)) {
+                    $upgradeClasses[$upgradeClass::PBX_VERSION] = $upgradeClass;
                 }
             }
             uksort($upgradeClasses, [__CLASS__, "sortArrayByReleaseNumber"]);
-
+            
             foreach ($upgradeClasses as $releaseNumber => $upgradeClass) {
                 if (version_compare($previous_version, $releaseNumber, '<')) {
+                    $message = '   |- UpdateConfigs: Upgrade system up to ' . $releaseNumber;
+                    $message = $this->publishMessage($message);
+
+                    // Capture processUpdate() output to format it with indentation
+                    ob_start();
                     $processor = new $upgradeClass();
                     $processor->processUpdate();
-                    $message = ' - UpdateConfigs: Upgrade system up to ' . $releaseNumber . ' ';
-                    SystemMessages::echoStartMsg($message);
-                    SystemMessages::echoResultMsg($message);
+                    $output = ob_get_clean();
+
+                    $this->publishResult($message);
+
+                    // Display indented sub-messages from the update
+                    if (!empty(trim($output))) {
+                        foreach (explode("\n", trim($output)) as $line) {
+                            $line = trim($line);
+                            if (!empty($line)) {
+                                SystemMessages::echoWithSyslog("        - {$line}" . PHP_EOL);
+                            }
+                        }
+                    }
                 }
             }
 
             $this->updateConfigEveryNewRelease();
-            $this->mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::PBX_VERSION, trim(file_get_contents('/etc/version')));
+            PbxSettings::setValueByKey(PbxSettings::PBX_VERSION, trim(file_get_contents('/etc/version')));
         }
-        $storage = new Storage();
-        $storage->moveReadOnlySoundsToStorage();
-        $storage->copyMohFilesToStorage();
         return true;
     }
 
@@ -96,7 +105,7 @@ class UpdateSystemConfig extends Di\Injectable
         $modules = PbxExtensionModules::find();
         $modulesDir = $this->getDI()->getShared('config')->path('core.modulesDir');
         foreach ($modules as $module) {
-            if ( ! is_dir("{$modulesDir}/{$module->uniqid}")) {
+            if (! is_dir("$modulesDir/$module->uniqid")) {
                 $module->delete();
             }
         }
@@ -107,8 +116,18 @@ class UpdateSystemConfig extends Di\Injectable
      */
     private function updateConfigEveryNewRelease(): void
     {
+        // Disable old modules
         PbxExtensionUtils::disableOldModules();
+
+        // Update firewall rules
         IptablesConf::updateFirewallRules();
+        
+        // Move read-only sounds to storage
+        $storage = new Storage();
+        $storage->moveReadOnlySoundsToStorage();
+
+        // Copy MOH files to storage
+        $storage->copyMohFilesToStorage();
     }
 
     /**
@@ -119,9 +138,41 @@ class UpdateSystemConfig extends Di\Injectable
      *
      * @return int|bool
      */
-    private function sortArrayByReleaseNumber($a, $b)
+    private function sortArrayByReleaseNumber($a, $b): bool|int
     {
         return version_compare($a, $b);
     }
 
+
+     /**
+     * Publishes a message with PHP_EOL if the first message
+     *
+     * @param string $msg
+     * @return string
+     */
+    private function publishMessage(string $msg): string
+    {
+        if ($this->isTheFirstMessage) {
+            $msg = PHP_EOL.$msg;
+            $this->isTheFirstMessage = false;
+        }
+        SystemMessages::echoStartMsg($msg);
+        $this->operationStartTime = microtime(true);
+        return $msg;
+    }
+
+    /**
+     * Publish result message with timing information
+     * @param string $msg
+     * @param string $result
+     */
+    private function publishResult(string $msg, string $result = SystemMessages::RESULT_DONE): void
+    {
+        $elapsedTime = 0.0;
+        if ($this->operationStartTime > 0) {
+            $elapsedTime = round(microtime(true) - $this->operationStartTime, 2);
+        }
+        SystemMessages::echoResultMsgWithTime($msg, $result, $elapsedTime);
+        $this->operationStartTime = 0.0;
+    }
 }

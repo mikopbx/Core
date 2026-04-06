@@ -11,16 +11,22 @@
 <div class="inline field">
     <div class="ui segment">
     <div class="ui toggle checkbox">
-        <label>{{ t._('gs_RedirectToHttps') }}</label>
+        <label for="RedirectToHttps">{{ t._('gs_RedirectToHttps') }}</label>
         {{ form.render('RedirectToHttps') }}
     </div>
     </div>
 </div>
 <div class="field">
-    <label>{{ t._('gs_WEBHTTPSPublicKey') }}</label>
-    {{ form.render('WEBHTTPSPublicKey') }}
+    <label>{{ t._('gs_WEBHTTPSPublicKey') }}
+        <i class="small info circle icon field-info-icon" 
+           data-field="WEBHTTPSPublicKey"></i>
+    </label>
+    {{ form.render('WEBHTTPSPublicKey', ['data-field-type': 'certificate-public']) }}
 </div>
 <div class="field">
-    <label>{{ t._('gs_WEBHTTPSPrivateKey') }}</label>
-    {{ form.render('WEBHTTPSPrivateKey') }}
+    <label>{{ t._('gs_WEBHTTPSPrivateKey') }}
+        <i class="small info circle icon field-info-icon" 
+           data-field="WEBHTTPSPrivateKey"></i>
+    </label>
+    {{ form.render('WEBHTTPSPrivateKey', ['data-field-type': 'certificate-private']) }}
 </div>

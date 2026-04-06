@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -20,6 +21,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\LanInterfaces;
+use MikoPBX\Core\System\Configs\DnsConf;
 
 /**
  * Class Udhcpc
@@ -29,67 +31,97 @@ use MikoPBX\Common\Models\LanInterfaces;
 class Udhcpc extends Network
 {
     /**
-     * @param string $action
+     * Main entry point for DHCP events
+     *
+     * @param string $action Event type: 'deconfig', 'bound', 'renew'
      * @return void
      */
-    public function configure(string $action):void
+    public function configure(string $action): void
     {
-        /**
-         * Check if running inside a Docker container.
-         * If true, skip the action and exit the script.
-         */
-        if(Util::isDocker()){
-            Util::sysLogMsg(__METHOD__, "Skipped action {$action}... because of docker", LOG_DEBUG);
-            return;
-        } else {
-            Util::sysLogMsg(__METHOD__, "Starting action {$action}...", LOG_DEBUG);
+        $canManageNetwork = System::canManageNetwork();
+
+        if (!$canManageNetwork) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "Docker environment - skipping network commands, updating database only",
+                LOG_DEBUG
+            );
         }
 
-        if ($action === 'deconfig' && Util::isT2SdeLinux()) {
-            /**
-             * Perform deconfiguration for T2SDE Linux.
-             */
+        SystemMessages::sysLogMsg(__METHOD__, "Processing DHCP event: $action", LOG_INFO);
 
-            $this->deconfigAction();
+        // Skip network commands only when we can't manage network (Docker)
+        // LXC and bare-metal should run full network configuration
+        $skipNetworkCommands = !$canManageNetwork;
+
+        if ($action === 'deconfig' && (Util::isT2SdeLinux() || System::isLxc())) {
+            /**
+             * Perform deconfiguration for T2SDE Linux and LXC containers.
+             */
+            $this->deconfigAction($skipNetworkCommands);
         } elseif ('bound' === $action || 'renew' === $action) {
             if (Util::isSystemctl()) {
                 /**
                  * Perform configuration renewal and bound actions using systemctl (systemd-based systems).
                  */
-                $this->renewBoundSystemCtlAction();
-            } elseif (Util::isT2SdeLinux()) {
+                $this->renewBoundSystemCtlAction($skipNetworkCommands);
+            } elseif (Util::isT2SdeLinux() || System::isLxc()) {
                 /**
-                 * Perform configuration renewal and bound actions for T2SDE Linux.
+                 * Perform configuration renewal and bound actions for T2SDE Linux and LXC containers.
                  */
-                $this->renewBoundAction();
+                $this->renewBoundAction($skipNetworkCommands);
             }
         }
     }
 
     /**
      * Performs deconfiguration of the udhcpc configuration.
+     *
+     * @param bool $skipNetworkCommands Whether to skip network commands (true for Docker, false for LXC/bare-metal)
      */
-    private function deconfigAction(): void
+    private function deconfigAction(bool $skipNetworkCommands = false): void
     {
         $interface = trim(getenv('interface'));
 
-        // For MIKO LFS Edition.
-        $ifconfig = Util::which('ifconfig');
+        // Skip network commands when skipNetworkCommands is true (Docker)
+        if (!$skipNetworkCommands) {
+            // For MIKO LFS Edition.
+            $ifconfig = Util::which('ifconfig');
+            $safeInterface = escapeshellarg($interface);
 
-        // Bring the interface up.
-        Processes::mwExec("$ifconfig $interface up");
+            // Bring the interface up.
+            Processes::mwExec("$ifconfig $safeInterface up");
 
-        // Set a default IP configuration for the interface.
-        Processes::mwExec("$ifconfig $interface 192.168.2.1 netmask 255.255.255.0");
+            // Set a default IP configuration for the interface.
+            Processes::mwExec("$ifconfig $safeInterface 192.168.2.1 netmask 255.255.255.0");
+        }
+
+        // Clear DHCP configuration from database
+        // This is now safe because ReloadNetworkAction detects there's no mode change
+        // (dhcp stays '1') and passes skipDhcpRestart=true to prevent killing DHCP client
+        // Database accurately reflects that DHCP lease was lost
+        $data = [
+            'ipaddr' => '',
+            'subnet' => '',
+            'gateway' => '',
+        ];
+        $this->updateIfSettings($data, $interface);
+
+        $data = [
+            'primarydns' => '',
+            'secondarydns' => '',
+        ];
+        $this->updateDnsSettings($data, $interface);
     }
 
     /**
      * Renews and configures the network settings after successful DHCP negotiation using systemd environment variables.
      * For OS systemctl (Debian).
      *  Configures LAN interface FROM dhcpc (renew_bound).
+     * @param bool $skipNetworkCommands Whether to skip network commands (true for Docker, false for LXC/bare-metal)
      * @return void
      */
-    public function renewBoundSystemCtlAction(): void
+    public function renewBoundSystemCtlAction(bool $skipNetworkCommands = false): void
     {
         $prefix = "new_";
 
@@ -112,11 +144,14 @@ class Udhcpc extends Network
 
         // Get the values of environment variables.
         foreach ($env_vars as $key => $value) {
-            $env_vars[$key] = trim(getenv("{$prefix}{$value}"));
+            $env_vars[$key] = trim(getenv("$prefix$value"));
         }
 
         /** @var LanInterfaces $if_data */
-        $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
+        $if_data = LanInterfaces::findFirst([
+            'conditions' => 'interface = :iface:',
+            'bind' => ['iface' => $env_vars['interface']]
+        ]);
         $is_inet = ($if_data !== null) ? (string)$if_data->internet : '0';
 
         $named_dns = [];
@@ -124,8 +159,8 @@ class Udhcpc extends Network
             $named_dns = explode(' ', $env_vars['dns']);
         }
         if ($is_inet === '1') {
-            // Only generate pdnsd config if this interface is for internet.
-            $this->generatePdnsdConfig($named_dns);
+            $dnsConf = new DnsConf();
+            $dnsConf->reStart();
         }
 
         // Save information to the database.
@@ -137,14 +172,39 @@ class Udhcpc extends Network
         if (Verify::isIpAddress($env_vars['ip'])) {
             $data['subnet'] = $this->netMaskToCidr($env_vars['subnet']);
         }
+        SystemMessages::sysLogMsg(
+            'Udhcpc',
+            "renewBoundSystemCtlAction: interface={$env_vars['interface']}, ip={$env_vars['ip']}, gateway={$env_vars['router']}, subnet={$data['subnet']}",
+            LOG_INFO
+        );
         $this->updateIfSettings($data, $env_vars['interface']);
-        $data = [
-            'primarydns' => $named_dns[0] ?? '',
-            'secondarydns' => $named_dns[1] ?? '',
-        ];
-        $this->updateDnsSettings($data, $env_vars['interface']);
 
-        Processes::mwExec("/etc/rc/networking_set_mtu '{$env_vars['interface']}'");
+        // Only update DNS fields that DHCP actually provided.
+        // If DHCP returns only one DNS server, don't clear the user-configured secondary DNS.
+        $data = [];
+        if (isset($named_dns[0])) {
+            $data['primarydns'] = $named_dns[0];
+        }
+        if (isset($named_dns[1])) {
+            $data['secondarydns'] = $named_dns[1];
+        }
+        if (!empty($env_vars['domain'])) {
+            $data['domain'] = $env_vars['domain'];
+        }
+        SystemMessages::sysLogMsg(
+            'Udhcpc',
+            "renewBoundSystemCtlAction DNS: interface={$env_vars['interface']}, dns1=" . ($data['primarydns'] ?? 'unchanged')
+            . ", dns2=" . ($data['secondarydns'] ?? 'unchanged') . ", domain=" . ($data['domain'] ?? 'unchanged'),
+            LOG_INFO
+        );
+        if (!empty($data)) {
+            $this->updateDnsSettings($data, $env_vars['interface']);
+        }
+
+        // Set MTU (skip when skipNetworkCommands is true)
+        if (!$skipNetworkCommands) {
+            Processes::mwExec("/etc/rc/networking_set_mtu '{$env_vars['interface']}'");
+        }
     }
 
     /**
@@ -154,9 +214,10 @@ class Udhcpc extends Network
      * It sets up the interface IP, subnet mask, default gateway, and static routes.
      * It also handles interface configuration deinitialization, DNS settings update, and MTU settings.
      *
+     * @param bool $skipNetworkCommands Whether to skip network commands (true for Docker, false for LXC/bare-metal)
      * @return void
      */
-    public function renewBoundAction(): void
+    public function renewBoundAction(bool $skipNetworkCommands = false): void
     {
         // Initialize an array to store environment variables related to network configuration.
         $env_vars = [
@@ -173,8 +234,8 @@ class Udhcpc extends Network
             'ipttl' => '',
             'lease' => '', // 86400
             'domain' => '', // bad
-            'mtu'=>'' , // 1500
-            'staticroutes'=> '', // 0.0.0.0/0 10.0.0.1 169.254.169.254/32 10.0.0.65 0.0.0.0/0 10.0.0.1
+            'mtu' => '' , // 1500
+            'staticroutes' => '', // 0.0.0.0/0 10.0.0.1 169.254.169.254/32 10.0.0.65 0.0.0.0/0 10.0.0.1
             'mask' => '', // 24
         ];
 
@@ -187,55 +248,72 @@ class Udhcpc extends Network
         }
         unset($value);
 
-        // Configure broadcast address if provided, otherwise leave it blank.
-        $BROADCAST = !empty($env_vars['broadcast']) ? "broadcast {$env_vars['broadcast']}" : "";
-
-        // Handle subnet mask for /32 assignments and other cases.
-        $NET_MASK = (!empty($env_vars['subnet']) && $env_vars['subnet'] !== '255.255.255.255') ? "netmask {$env_vars['subnet']}" : "";
-
-        // Configure the network interface with the provided IP, broadcast, and subnet mask.
-        $ifconfig = Util::which('ifconfig');
-        Processes::mwExec("$ifconfig {$env_vars['interface']} {$env_vars['ip']} $BROADCAST $NET_MASK");
-
-
-        // Remove any existing default gateway routes associated with this interface.
-        while (true) {
-            $out = [];
-            Processes::mwExec("route del default gw 0.0.0.0 dev {$env_vars['interface']}", $out);
-            if (trim(implode('', $out)) !== '') {
-                // An error occurred, indicating that all routes have been cleared.
-                break;
-            }
-            if ($debugMode) {
-                break;
-            } // Otherwise, it will be an infinite loop.
-        }
-
-        // Add a default gateway route if a router address is provided and the interface is for the internet.
-        $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
+        // Get interface data for both Docker and non-Docker environments
+        $if_data = LanInterfaces::findFirst([
+            'conditions' => 'interface = :iface:',
+            'bind' => ['iface' => $env_vars['interface']]
+        ]);
         $is_inet = ($if_data !== null) ? (int)$if_data->internet : 0;
-        if (!empty($env_vars['router']) && $is_inet === 1) {
-            // Only add the default route if this interface is for the internet.
-            $routers = explode(' ', $env_vars['router']);
-            foreach ($routers as $router) {
-                Processes::mwExec("route add default gw {$router} dev {$env_vars['interface']}");
+
+        // Skip network configuration when skipNetworkCommands is true (Docker)
+        if (!$skipNetworkCommands) {
+            // Escape shell arguments for security
+            $safeInterface = escapeshellarg($env_vars['interface']);
+            $safeIp = escapeshellarg($env_vars['ip']);
+            $safeBroadcast = !empty($env_vars['broadcast']) ? escapeshellarg($env_vars['broadcast']) : '';
+            $safeSubnet = !empty($env_vars['subnet']) ? escapeshellarg($env_vars['subnet']) : '';
+
+            // Configure broadcast address if provided, otherwise leave it blank.
+            $BROADCAST = !empty($safeBroadcast) ? "broadcast $safeBroadcast" : "";
+
+            // Handle subnet mask for /32 assignments and other cases.
+            $NET_MASK = (!empty($env_vars['subnet']) && $env_vars['subnet'] !== '255.255.255.255') ? "netmask $safeSubnet" : "";
+
+            // Configure the network interface with the provided IP, broadcast, and subnet mask.
+            $ifconfig = Util::which('ifconfig');
+            Processes::mwExec("$ifconfig $safeInterface $safeIp $BROADCAST $NET_MASK");
+
+
+            // Remove any existing default gateway routes associated with this interface.
+            while (true) {
+                $out = [];
+                Processes::mwExec("route del default gw 0.0.0.0 dev $safeInterface", $out);
+                if (trim(implode('', $out)) !== '') {
+                    // An error occurred, indicating that all routes have been cleared.
+                    break;
+                }
+                if ($debugMode) {
+                    break;
+                } // Otherwise, it will be an infinite loop.
             }
+
+            // Add a default gateway route if a router address is provided and the interface is for the internet.
+            if (!empty($env_vars['router']) && $is_inet === 1) {
+                // Only add the default route if this interface is for the internet.
+                $routers = explode(' ', $env_vars['router']);
+                foreach ($routers as $router) {
+                    $safeRouter = escapeshellarg($router);
+                    Processes::mwExec("route add default gw $safeRouter dev $safeInterface");
+                }
+            }
+
+            // Add custom static routes if any are provided.
+            $this->addStaticRoutes($env_vars['staticroutes'], $env_vars['interface']);
+
+            // Add custom routes.
+            $this->addCustomStaticRoutes($env_vars['interface']);
         }
-
-        // Add custom static routes if any are provided.
-        $this->addStaticRoutes($env_vars['staticroutes'], $env_vars['interface']);
-
-        // Add custom routes.
-        $this->addCustomStaticRoutes($env_vars['interface']);
 
         // Setup DNS.
         $named_dns = [];
         if ('' !== $env_vars['dns']) {
             $named_dns = explode(' ', $env_vars['dns']);
         }
-        if ($is_inet === 1) {
-            // Only generate pdnsd config if this interface is for internet.
-            $this->generatePdnsdConfig($named_dns);
+
+        // Restart DNS (skip when skipNetworkCommands is true as DNS is managed differently)
+        if (!$skipNetworkCommands && $is_inet === 1) {
+            $dnsConf = new DnsConf();
+            $dnsConf->reStart();
         }
 
         // Save information to the database.
@@ -248,15 +326,39 @@ class Udhcpc extends Network
             $data['subnet'] = $this->netMaskToCidr($env_vars['subnet']);
         }
 
+        SystemMessages::sysLogMsg(
+            'Udhcpc',
+            "renewBoundAction: interface={$env_vars['interface']}, ip={$env_vars['ip']}, gateway={$env_vars['router']}, subnet={$data['subnet']}",
+            LOG_INFO
+        );
         $this->updateIfSettings($data, $env_vars['interface']);
 
-        $data = [
-            'primarydns' => $named_dns[0] ?? '',
-            'secondarydns' => $named_dns[1] ?? '',
-        ];
-        $this->updateDnsSettings($data, $env_vars['interface']);
+        // Only update DNS fields that DHCP actually provided.
+        // If DHCP returns only one DNS server, don't clear the user-configured secondary DNS.
+        $data = [];
+        if (isset($named_dns[0])) {
+            $data['primarydns'] = $named_dns[0];
+        }
+        if (isset($named_dns[1])) {
+            $data['secondarydns'] = $named_dns[1];
+        }
+        if (!empty($env_vars['domain'])) {
+            $data['domain'] = $env_vars['domain'];
+        }
+        SystemMessages::sysLogMsg(
+            'Udhcpc',
+            "renewBoundAction DNS: interface={$env_vars['interface']}, dns1=" . ($data['primarydns'] ?? 'unchanged')
+            . ", dns2=" . ($data['secondarydns'] ?? 'unchanged') . ", domain=" . ($data['domain'] ?? 'unchanged'),
+            LOG_INFO
+        );
+        if (!empty($data)) {
+            $this->updateDnsSettings($data, $env_vars['interface']);
+        }
 
-        Processes::mwExec("/etc/rc/networking_set_mtu '{$env_vars['interface']}'");
+        // Set MTU (skip when skipNetworkCommands is true)
+        if (!$skipNetworkCommands) {
+            Processes::mwExec("/etc/rc/networking_set_mtu '{$env_vars['interface']}'");
+        }
     }
 
     /**

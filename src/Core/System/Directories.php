@@ -19,37 +19,42 @@
 
 namespace MikoPBX\Core\System;
 
-use Phalcon\Di;
+use MikoPBX\Common\Providers\ConfigProvider;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
-class Directories extends Di\Injectable
+class Directories extends Injectable
 {
-    const CORE_CF_DIR = 'core.cfDir';
-    const CORE_VAR_ETC_DIR = 'core.varEtcDir';
-    const CORE_MODULES_DIR = 'core.modulesDir';
-    const CORE_TEMP_DIR = 'core.tempDir';
-    const CORE_CONF_BACKUP_DIR = 'core.confBackupDir';
-    const CORE_LOGS_DIR = 'core.logsDir';
-    const CORE_MEDIA_MOUNT_POINT_DIR = 'core.mediaMountPoint';
-    const CORE_FAIL2AN_DB_DIR = 'core.fail2banDbDir';
-    const AST_VAR_LIB_DIR = 'asterisk.astvarlibdir';
-    const AST_ETC_DIR = 'asterisk.astetcdir';
-    const AST_MOD_DIR = 'asterisk.astmoddir';
-    const AST_MOH_DIR = 'asterisk.mohdir';
-    const AST_AGI_BIN_DIR = 'asterisk.astagidir';
-    const AST_DB_DIR = 'asterisk.astdbdir';
-    const AST_LOG_DIR = 'asterisk.astlogdir';
-    const AST_SPOOL_DIR = 'asterisk.astspooldir';
-    const AST_MEDIA_DIR = 'asterisk.mediadir';
-    const AST_MONITOR_DIR = 'asterisk.monitordir';
-    const AST_CUSTOM_SOUND_DIR = 'asterisk.customSoundDir';
-    const AST_LUA_DIALPLAN_DIR = 'asterisk.luaDialplanDir';
-    const WWW_UPLOAD_DIR = 'www.uploadDir';
-    const WWW_DOWNLOAD_CACHE_DIR = 'www.downloadCacheDir';
-    const APP_ASSETS_CACHE_DIR = 'adminApplication.assetsCacheDir';
-    const APP_VOLT_CACHE_DIR = 'adminApplication.voltCacheDir';
-    const APP_VIEW_CACHE_DIR = 'adminApplication.viewCacheDir';
+    public const string CORE_CF_DIR = 'core.cfDir';
+    public const string CORE_VAR_ETC_DIR = 'core.varEtcDir';
+    public const string CORE_MODULES_DIR = 'core.modulesDir';
+    public const string CORE_TEMP_DIR = 'core.tempDir';
+    public const string CORE_CONF_BACKUP_DIR = 'core.confBackupDir';
+    public const string CORE_LOGS_DIR = 'core.logsDir';
+    public const string CORE_MEDIA_MOUNT_POINT_DIR = 'core.mediaMountPoint';
+    public const string CORE_FAIL2AN_DB_DIR = 'core.fail2banDbDir';
+    public const string CORE_GEOIP2_DB_DIR = 'core.geoip2DbDir';
+    public const string AST_VAR_LIB_DIR = 'asterisk.astvarlibdir';
+    public const string AST_ETC_DIR = 'asterisk.astetcdir';
+    public const string AST_MOD_DIR = 'asterisk.astmoddir';
+    public const string AST_MOH_DIR = 'asterisk.mohdir';
+    public const string AST_AGI_BIN_DIR = 'asterisk.astagidir';
+    public const string AST_DB_DIR = 'asterisk.astdbdir';
+    public const string AST_LOG_DIR = 'asterisk.astlogdir';
+    public const string AST_SPOOL_DIR = 'asterisk.astspooldir';
+    public const string AST_MEDIA_DIR = 'asterisk.mediadir';
+    public const string AST_MONITOR_DIR = 'asterisk.monitordir';
+    public const string AST_CUSTOM_SOUND_DIR = 'asterisk.customSoundDir';
+    public const string AST_SOUNDS_DIR = 'asterisk.astsoundsdir';
+    public const string AST_LUA_DIALPLAN_DIR = 'asterisk.luaDialplanDir';
+    public const string WWW_UPLOAD_DIR = 'www.uploadDir';
+    public const string WWW_DOWNLOAD_CACHE_DIR = 'www.downloadCacheDir';
+    public const string APP_ASSETS_CACHE_DIR = 'adminApplication.assetsCacheDir';
+    public const string APP_VOLT_CACHE_DIR = 'adminApplication.voltCacheDir';
+    public const string APP_VIEW_CACHE_DIR = 'adminApplication.viewCacheDir';
+    public const string CORE_RECORDINGS_CACHE_DIR = 'core.recordingsCacheDir';
 
-    const DEFAULT_DIRS = [
+    public const array DEFAULT_DIRS = [
         self::CORE_CF_DIR => '/cf',
         self::CORE_VAR_ETC_DIR => '/var/etc',
         self::CORE_MODULES_DIR => '/mountpoint/mikopbx/custom_modules',
@@ -58,6 +63,7 @@ class Directories extends Di\Injectable
         self::CORE_LOGS_DIR => '/var/log',
         self::CORE_MEDIA_MOUNT_POINT_DIR => '/mountpoint',
         self::CORE_FAIL2AN_DB_DIR => '/mountpoint/mikopbx/fail2ban',
+        self::CORE_GEOIP2_DB_DIR => '/mountpoint/mikopbx/geoip2',
         self::AST_VAR_LIB_DIR => '/offload/asterisk',
         self::AST_ETC_DIR => '/etc/asterisk',
         self::AST_MOD_DIR => '/offload/asterisk/modules',
@@ -69,12 +75,14 @@ class Directories extends Di\Injectable
         self::AST_MONITOR_DIR => '/mountpoint/mikopbx/astspool/monitor',
         self::AST_MOH_DIR => '/mountpoint/mikopbx/media/moh',
         self::AST_CUSTOM_SOUND_DIR => '/mountpoint/mikopbx/media/custom',
+        self::AST_SOUNDS_DIR => '/mountpoint/mikopbx/media/sounds',
         self::AST_LUA_DIALPLAN_DIR => '/etc/asterisk/extensions-lua',
         self::WWW_UPLOAD_DIR => '/mountpoint/mikopbx/tmp/www_cache/upload_cache',
         self::WWW_DOWNLOAD_CACHE_DIR => '/mountpoint/mikopbx/tmp/www_cache/files_cache',
         self::APP_ASSETS_CACHE_DIR => '/var/tmp/www_cache',
         self::APP_VOLT_CACHE_DIR => '/var/tmp/www_cache/volt',
         self::APP_VIEW_CACHE_DIR => '/var/tmp/www_cache/view',
+        self::CORE_RECORDINGS_CACHE_DIR => '/mountpoint/mikopbx/tmp/recordings_cache',
     ];
 
     protected static array $dirCache = [];
@@ -90,7 +98,7 @@ class Directories extends Di\Injectable
     {
         $di = Di::getDefault();
         if ($di !== null) {
-            return $di->getConfig()->path($configPath, $default);
+            return $di->getShared(ConfigProvider::SERVICE_NAME)->path($configPath, $default);
         }
 
         return $default;

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,27 +20,32 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\PasswordService;
 use Phalcon\Di\Injectable;
 
 /**
  * Class CheckSSHPasswords
- * This class is responsible for checking password quality on backend.
+ * This class is responsible for checking SSH password quality using REST API.
  *
  * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice
  */
 class CheckSSHPasswords extends Injectable
 {
     /**
-     * Checks SSH password quality and /etc/shadow integrity
+     * Checks SSH password quality using REST API and /etc/shadow integrity
      *
      * @return array An array containing warning and needUpdate messages.
-     *
      */
     public function process(): array
     {
         $messages = [];
+        
+        // Check if SSH password authentication is disabled
+        $disableSSHPassword = PbxSettings::getValueByKey(PbxSettings::SSH_DISABLE_SSH_PASSWORD);
+        if ($disableSSHPassword === '1') {
+            return $messages; // SSH password authentication is disabled, no need to check
+        }
+        
         $passwords = $this->getPasswordCollection();
 
         $messageParams = [
@@ -48,28 +53,36 @@ class CheckSSHPasswords extends Injectable
             'url' => $this->url->get('general-settings/modify/#/ssh')
         ];
 
+        // Check for default password first
         if ($passwords->sshByDefault === $passwords->ssh
             || $passwords->ssh === $passwords->cloudInstanceId
         ) {
-            // Check for default password
             $messages['error'][] = [
                 'messageTpl' => 'adv_YouUseDefaultSSHPassword',
                 'messageParams' => $messageParams
             ];
-            $messages['needUpdate'][] = PbxSettingsConstants::SSH_PASSWORD;
-        } elseif (Util::isSimplePassword($passwords->ssh)) {
-            // Check for weak password
-            $messages['warning'][] = [
-                'messageTpl' => 'adv_SshPasswordWeak',
-                'messageParams' => $messageParams
-            ];
-        } elseif ($passwords->sshHashFile !== md5_file('/etc/shadow')) {
-            // Check for shadow file integrity
+            $messages['needUpdate'][] = PbxSettings::SSH_PASSWORD;
+            return $messages; // No need to check further if using default
+        }
+        
+        // Check for shadow file integrity
+        if ($passwords->sshHashFile !== md5_file('/etc/shadow')) {
             $messages['error'][] = [
                 'messageTpl' => 'adv_SSHPPasswordCorrupt',
                 'messageParams' => $messageParams
             ];
-            $messages['needUpdate'][] = PbxSettingsConstants::SSH_PASSWORD;
+            $messages['needUpdate'][] = PbxSettings::SSH_PASSWORD;
+            return $messages; // Shadow file corrupted, need to reset password
+        }
+
+        // Check password against dictionary
+        $isInDictionary = PasswordService::checkDictionary($passwords->ssh);
+
+        if ($isInDictionary) {
+            $messages['warning'][] = [
+                'messageTpl' => 'adv_SshPasswordWeak',
+                'messageParams' => $messageParams
+            ];
         }
 
         return $messages;
@@ -85,10 +98,10 @@ class CheckSSHPasswords extends Injectable
         $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
 
         $passwords = new \stdClass();
-        $passwords->ssh = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD);
-        $passwords->sshByDefault = $arrOfDefaultValues[PbxSettingsConstants::SSH_PASSWORD];
-        $passwords->sshHashFile = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD_HASH_FILE);
-        $passwords->cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
+        $passwords->ssh = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD, false);
+        $passwords->sshByDefault = $arrOfDefaultValues[PbxSettings::SSH_PASSWORD];
+        $passwords->sshHashFile = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_FILE, false);
+        $passwords->cloudInstanceId = PbxSettings::getValueByKey(PbxSettings::CLOUD_INSTANCE_ID, false);
         return $passwords;
     }
 

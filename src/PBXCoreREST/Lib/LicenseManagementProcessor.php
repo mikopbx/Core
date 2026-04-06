@@ -21,7 +21,6 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\PBXCoreREST\Lib\License\CaptureFeatureForProductIdAction;
 use MikoPBX\PBXCoreREST\Lib\License\GetLicenseInfoAction;
-use MikoPBX\PBXCoreREST\Lib\License\GetMikoPBXFeatureStatusAction;
 use MikoPBX\PBXCoreREST\Lib\License\PingAction;
 use MikoPBX\PBXCoreREST\Lib\License\ProcessUserRequestAction;
 use MikoPBX\PBXCoreREST\Lib\License\ResetLicenseAction;
@@ -59,9 +58,6 @@ class LicenseManagementProcessor extends Injectable
                 break;
             case 'getLicenseInfo':
                 $res = GetLicenseInfoAction::main();
-                break;
-            case 'getMikoPBXFeatureStatus':
-                $res = GetMikoPBXFeatureStatusAction::main();
                 break;
             case 'captureFeatureForProductId':
                 $res = CaptureFeatureForProductIdAction::main($data);

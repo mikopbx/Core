@@ -23,30 +23,35 @@ namespace MikoPBX\PBXCoreREST\Config;
 
 use MikoPBX\Common\Providers\{AclProvider,
     BeanstalkConnectionModelsProvider,
-    BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
+    CryptProvider,
     LoggerAuthProvider,
     LoggerProvider,
     MainDatabaseProvider,
     MessagesProvider,
-    ModelsCacheProvider,
     ModelsAnnotationsProvider,
     ModelsMetadataProvider,
     ModulesDBConnectionsProvider,
     PBXConfModulesProvider,
     PBXCoreRESTClientProvider,
+    EventBusProvider,
+    RecordingStorageDatabaseProvider,
+    RedisClientProvider,
     RegistryProvider,
     ManagedCacheProvider,
     SentryErrorHandlerProvider,
-    SessionProvider,
     LanguageProvider,
     TranslationProvider,
-    WhoopsErrorHandlerProvider};
+    WhoopsErrorHandlerProvider,
+    MutexProvider
+};
 use MikoPBX\PBXCoreREST\Providers\{
     DispatcherProvider,
+    PublicEndpointsRegistryProvider,
     RequestProvider,
     ResponseProvider,
-    RouterProvider};
+    RouterProvider
+};
 use Phalcon\Di\DiInterface;
 
 /**
@@ -67,6 +72,10 @@ class RegisterDIServices
             SentryErrorHandlerProvider::class,
             WhoopsErrorHandlerProvider::class,
 
+            // Inject Logger
+            LoggerAuthProvider::class,
+            LoggerProvider::class,
+
             // Inject Registry provider
             RegistryProvider::class,
 
@@ -75,14 +84,15 @@ class RegisterDIServices
             ModelsMetadataProvider::class,
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,
+            RecordingStorageDatabaseProvider::class,
             ModulesDBConnectionsProvider::class,
 
-            // Inject caches
+            // Inject caches and message queues
+            RedisClientProvider::class,
             ManagedCacheProvider::class,
-            ModelsCacheProvider::class,
+            MutexProvider::class,
 
             // Inject Queue connection
-            BeanstalkConnectionWorkerApiProvider::class,
             BeanstalkConnectionModelsProvider::class,
 
             // Inject PBX modules
@@ -92,17 +102,14 @@ class RegisterDIServices
             DispatcherProvider::class,
             ResponseProvider::class,
             RequestProvider::class,
+            PublicEndpointsRegistryProvider::class,
             RouterProvider::class,
 
-            // Inject sessions
-            SessionProvider::class,
+            // Inject crypto provider
+            CryptProvider::class,
 
             // Inject Access control lists provider
             AclProvider::class,
-
-            // Inject Logger
-            LoggerAuthProvider::class,
-            LoggerProvider::class,
 
             // Translates
             MessagesProvider::class,
@@ -110,13 +117,16 @@ class RegisterDIServices
             TranslationProvider::class,
 
             // Inject Rest API client
-            PBXCoreRESTClientProvider::class
+            PBXCoreRESTClientProvider::class,
+
+            // Inject EventBus provider
+            EventBusProvider::class
         ];
 
         foreach ($pbxRestAPIProviders as $provider) {
             // Delete previous provider
             $di->remove($provider::SERVICE_NAME);
-            $di->register(new $provider());
+            (new $provider())->register($di);
         }
 
         $di->getShared(RegistryProvider::SERVICE_NAME)->libraryName = 'pbx-core-rest';

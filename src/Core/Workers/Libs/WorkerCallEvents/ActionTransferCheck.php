@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,7 +20,6 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
-
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
@@ -38,7 +38,7 @@ class ActionTransferCheck
      * @param array $data The event data.
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         $filter = [
             'linkedid=:linkedid: AND endtime = "" AND transfer=0 AND (src_chan=:src_chan: OR dst_chan=:src_chan:)',
@@ -51,7 +51,6 @@ class ActionTransferCheck
         /** @var CallDetailRecordsTmp $row */
         $m_data = CallDetailRecordsTmp::find($filter);
         foreach ($m_data as $row) {
-
             // Attempt to stop the call recording.
             $worker->StopMixMonitor($row->dst_chan, 'ActionTransferCheck_' . $row->verbose_call_id);
             $worker->StopMixMonitor($row->src_chan, 'ActionTransferCheck_' . $row->verbose_call_id);

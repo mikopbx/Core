@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,11 +20,8 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
-use MikoPBX\Core\System\Util;
-
 /**
- * Generates the configuration content for cel.conf and cel_beanstalkd.conf.
+ * Generates the configuration content for cel.conf.
  *
  * @package MikoPBX\Core\Asterisk\Configs
  */
@@ -32,16 +30,13 @@ class CelConf extends AsteriskConfigClass
     // The module hook applying priority
     public int $priority = 1000;
 
-    public const BEANSTALK_TUBE = 'asterisk-cel';
     protected string $description = 'cel.conf';
 
     /**
-     * Generates the configuration content for cel.conf and cel_beanstalkd.conf
+     * Generates the configuration content for cel.conf
      */
     protected function generateConfigProtected(): void
     {
-        $config = $this->getDI()->get('config')->beanstalk;
-
         $conf = "[general]\n" .
             "enable=yes\n" .
             "events=USER_DEFINED,ANSWER,ATTENDEDTRANSFER\n" .
@@ -50,17 +45,6 @@ class CelConf extends AsteriskConfigClass
             "enabled = yes\n\n";
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/cel.conf', $conf);
-
-        $conf = "[general]" .PHP_EOL.
-                "enabled = yes" .PHP_EOL.
-                "host = 127.0.0.1" .PHP_EOL.
-                "port = ".$config->port .PHP_EOL.
-                "priority = 1" .PHP_EOL.
-                "tube = asterisk-cel".PHP_EOL;
-
-        // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/cel_beanstalkd.conf', $conf);
-
+        $this->saveConfig($conf, $this->description);
     }
 }

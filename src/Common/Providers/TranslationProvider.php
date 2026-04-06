@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
+use Phalcon\Di\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Translate\InterpolatorFactory;
@@ -35,7 +36,7 @@ use Phalcon\Translate\TranslateFactory;
  */
 class TranslationProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'translation';
+    public const string SERVICE_NAME = 'translation';
 
     /**
      * Register the translation service provider.
@@ -59,5 +60,30 @@ class TranslationProvider implements ServiceProviderInterface
                 );
             }
         );
+    }
+
+    /**
+     * Static method to translate a string using the default DI container
+     * This method provides a cleaner alternative to Util::translate without the Scanner issues
+     * 
+     * @param string $translateKey The translation key to look up
+     * @param array $placeholders Array of placeholder values for interpolation
+     * @return string The translated text with placeholders replaced
+     */
+    public static function translate(string $translateKey, array $placeholders = []): string
+    {
+        $di = Di::getDefault();
+        if ($di === null) {
+            // Fallback if DI is not available
+            return $translateKey;
+        }
+
+        try {
+            $translation = $di->get(self::SERVICE_NAME);
+            return $translation->_($translateKey, $placeholders);
+        } catch (\Exception $e) {
+            // Fallback on any error
+            return $translateKey;
+        }
     }
 }

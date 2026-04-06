@@ -1,0 +1,9 @@
+# Ignore generated files
+scripts/extracted_keys.json
+scripts/__pycache__/
+*.pyc
+*.bak.*
+
+# Ignore test files
+test_*.py
+*_test.py

@@ -20,8 +20,6 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-use MikoPBX\Core\System\Util;
-
 /**
  * Generates the configuration content for cdr_manager.conf.
  *
@@ -47,6 +45,6 @@ class CdrManagerConf extends AsteriskConfigClass
             "recordingfile => recordingfile\n\n";
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . "/cdr_manager.conf", $conf);
+        $this->saveConfig($conf, $this->description);
     }
 }

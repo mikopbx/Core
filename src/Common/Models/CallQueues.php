@@ -20,8 +20,8 @@
 namespace MikoPBX\Common\Models;
 
 use Phalcon\Mvc\Model\Relation;
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class CallQueues
@@ -49,7 +49,7 @@ class CallQueues extends ModelsBase
     /**
      * Name of the call queue.
      *
-     * @Column(type="string", nullable=true)
+     * @Column(type="string", length=100, nullable=true)
      */
     public ?string $name = '';
 
@@ -89,9 +89,9 @@ class CallQueues extends ModelsBase
     public ?string $recive_calls_while_on_a_call = '';
 
     /**
-     * What the caller hears when in the queue. Possible values: 'ringing', 'musiconhold'.
+     * What the caller hears when in the queue. Possible values: 'ringing', 'moh'.
      *
-     * @Column(type="string", nullable=true){'ringing'|'musiconhold'}
+     * @Column(type="string", nullable=true){'ringing'|'moh'}
      */
     public ?string $caller_hear = 'ringing';
 
@@ -181,14 +181,14 @@ class CallQueues extends ModelsBase
     /**
      * Caller ID prefix for the call queue.
      *
-     * @Column(type="string", nullable=true)
+     * @Column(type="string", length=50, nullable=true)
      */
     public ?string $callerid_prefix = '';
 
     /**
      * Description of the call queue.
      *
-     * @Column(type="string", nullable=true)
+     * @Column(type="string", length=500, nullable=true)
      */
     public ?string $description = '';
 
@@ -284,7 +284,7 @@ class CallQueues extends ModelsBase
             [
                 'alias' => 'SoundFiles',
                 'foreignKey' => [
-                    'allowNulls' => false,
+                    'allowNulls' => true,
                     'action' => Relation::NO_ACTION,
                 ],
             ]
@@ -299,7 +299,7 @@ class CallQueues extends ModelsBase
             [
                 'alias' => 'MohSoundFiles',
                 'foreignKey' => [
-                    'allowNulls' => false,
+                    'allowNulls' => true,
                     'action' => Relation::NO_ACTION,
                 ],
             ]

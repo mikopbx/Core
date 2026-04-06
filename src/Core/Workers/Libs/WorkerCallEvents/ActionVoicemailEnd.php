@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -38,9 +39,9 @@ class ActionVoicemailEnd
      * @param WorkerCallEvents $worker The worker instance.
      * @param array $data The event data.
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
-        $recordingFile = VoiceMailConf::getCopyFilename($data['vm-recordingfile'], $data['linkedid'], time(), false);
+        $recordingFile = $data['vm-recordingfile'] ?? '';
         $filter = [
             'linkedid=:linkedid: AND dst_num = "' . VoiceMailConf::VOICE_MAIL_EXT . '"',
             'bind' => [
@@ -57,5 +58,4 @@ class ActionVoicemailEnd
             $row->update();
         }
     }
-
 }

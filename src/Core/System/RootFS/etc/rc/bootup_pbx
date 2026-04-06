@@ -24,6 +24,7 @@ use MikoPBX\Core\System\SystemLoader;
 require_once('Globals.php');
 
 // Create instance of SystemLoader and start MikoPBX
+// Note: setBooting(true) is already set by /etc/rc/bootup before this script runs
 $mikoPBX = new SystemLoader();
 $mikoPBX->startMikoPBX();
 

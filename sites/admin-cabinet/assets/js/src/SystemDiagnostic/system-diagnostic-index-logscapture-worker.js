@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, systemDiagnosticCapture */
+/* global SyslogAPI, systemDiagnosticCapture, UserMessage, globalTranslate */
 
 /**
  * Represents the archive packing check worker object.
@@ -30,12 +30,11 @@ const archivePackingCheckWorker = {
      */
     timeOut: 3000,
 
-
     /**
      * The id of the timer function for the status worker.
      * @type {number}
      */
-    timeOutHandle: 0,
+    timeoutHandle: 0,
 
     /**
      * Error count for tracking errors.
@@ -61,7 +60,8 @@ const archivePackingCheckWorker = {
      */
     initialize(filename) {
         archivePackingCheckWorker.filename = filename;
-        archivePackingCheckWorker.restartWorker(filename);
+        archivePackingCheckWorker.errorCounts = 0;
+        archivePackingCheckWorker.restartWorker();
     },
 
     /**
@@ -76,7 +76,7 @@ const archivePackingCheckWorker = {
      * Worker function for fetching the request.
      */
     worker() {
-        PbxApi.SyslogDownloadLogsArchive(archivePackingCheckWorker.filename, archivePackingCheckWorker.cbAfterResponse);
+        SyslogAPI.downloadArchive(archivePackingCheckWorker.filename, archivePackingCheckWorker.cbAfterResponse);
         archivePackingCheckWorker.timeoutHandle = window.setTimeout(
             archivePackingCheckWorker.worker,
             archivePackingCheckWorker.timeOut,
@@ -89,29 +89,33 @@ const archivePackingCheckWorker = {
      */
     cbAfterResponse(response) {
         if (archivePackingCheckWorker.errorCounts > 50) {
-            UserMessage.showMultiString(globalTranslate.sd_DownloadPcapFileError);
-            systemDiagnosticCapture.$stopBtn
-                .removeClass('disabled loading')
-                .addClass('disabled');
-            systemDiagnosticCapture.$startBtn.removeClass('disabled loading');
             window.clearTimeout(archivePackingCheckWorker.timeoutHandle);
+            UserMessage.showMultiString(globalTranslate.sd_DownloadPcapFileError);
+            systemDiagnosticCapture.resetCaptureState();
+            return;
         }
-        if (response === undefined || Object.keys(response).length === 0) {
+
+        if (!response || !response.result || !response.data) {
             archivePackingCheckWorker.errorCounts += 1;
             return;
         }
-        if (response.status === 'READY') {
-            systemDiagnosticCapture.$stopBtn
-                .removeClass('disabled loading')
-                .addClass('disabled');
-            systemDiagnosticCapture.$startBtn.removeClass('disabled loading');
-            systemDiagnosticCapture.$downloadBtn.removeClass('disabled loading');
-            window.location = response.filename;
+
+        const responseData = response.data;
+        if (responseData.status === 'READY') {
             window.clearTimeout(archivePackingCheckWorker.timeoutHandle);
-            systemDiagnosticCapture.$dimmer.removeClass('active');
-        } else if (response.status === 'PREPARING') {
+
+            // Download file via hidden link to avoid page navigation
+            const a = document.createElement('a');
+            a.href = responseData.filename;
+            a.download = '';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            systemDiagnosticCapture.resetCaptureState();
+        } else if (responseData.status === 'PREPARING') {
             archivePackingCheckWorker.errorCounts = 0;
-            archivePackingCheckWorker.$progress.text(`${response.progress}%`);
+            archivePackingCheckWorker.$progress.text(`${responseData.progress}%`);
         } else {
             archivePackingCheckWorker.errorCounts += 1;
         }

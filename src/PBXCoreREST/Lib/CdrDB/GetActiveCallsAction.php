@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -19,17 +20,17 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\CdrDB;
 
-
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\Workers\WorkerCdr;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Get active calls based on CDR data.
  *
  * @package MikoPBX\PBXCoreREST\Lib\CdrDB
  */
-class GetActiveCallsAction extends \Phalcon\Di\Injectable
+class GetActiveCallsAction extends Injectable
 {
     /**
      * Get active calls based on CDR data.
@@ -43,14 +44,14 @@ class GetActiveCallsAction extends \Phalcon\Di\Injectable
         $res->success = true;
         $filter  = [
             'order'       => 'id',
-            'columns'     => 'start,answer,endtime,src_num,dst_num,did,linkedid',
+            'columns'     => 'start,answer,endtime,src_num,src_name,dst_num,dst_name,did,linkedid',
             'miko_tmp_db' => true,
         ];
         $client  = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
         list($result, $message) = $client->sendRequest(json_encode($filter), 2);
         if ($result === false) {
             $res->data = [];
-        }else{
+        } else {
             $res->data[] = $message;
         }
         return $res;

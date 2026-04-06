@@ -27,7 +27,8 @@ class NTPConfTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
 
     public function testConfigure()
     {
-        NTPConf::configure();
+        $ntpConf = new NTPConf();
+        $ntpConf->reStart();
         $this->assertTrue(true);
     }
 }

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,8 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Common\Providers\MutexProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\Files\StatusUploadFileAction;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -34,7 +35,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 class InstallFromPackageAction extends ModuleInstallationBase
 {
 
-    const UPLOAD_TIMEOUT = 120;
+    const int UPLOAD_TIMEOUT = 120;
 
     // Path to the downloaded zip archive
     private string $filePath;
@@ -49,10 +50,9 @@ class InstallFromPackageAction extends ModuleInstallationBase
      */
     public function __construct(string $asyncChannelId, string $filePath, string $fileId)
     {
-        $this->asyncChannelId = $asyncChannelId;
         $this->filePath = $filePath;
         $this->fileId = $fileId;
-        $this->moduleUniqueId = $fileId;
+        parent::__construct($asyncChannelId, $fileId);
     }
 
     /**
@@ -66,7 +66,7 @@ class InstallFromPackageAction extends ModuleInstallationBase
         $mutexTimeout = self::INSTALLATION_TIMEOUT+self::UPLOAD_TIMEOUT+5;
 
         // Create a mutex to ensure synchronized access
-        $mutex = Util::createMutex(self::INSTALLATION_MUTEX, $this->moduleUniqueId, $mutexTimeout);
+        $mutex = $this->di->get(MutexProvider::SERVICE_NAME);
 
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -74,36 +74,33 @@ class InstallFromPackageAction extends ModuleInstallationBase
 
         // Singleton the installation process
         try{
-            $mutex->synchronized(
-                function () use (&$res): void {
+            $res = $mutex->synchronized(ModuleInstallationBase::MODULE_MANIPULATION_MUTEX_KEY,
+                function () use ($res): PBXApiResult {
 
                     // Wait until file upload and merge
                     list($fileUploadResult, $res->success) = $this->waitForFileUpload($this->fileId);
                     if (!$res->success) {
                         $res->messages = $fileUploadResult;
-                        return;
+                        return $res;
                     }
 
                     // Install the downloaded module
                     list($installationResult, $res->success) = $this->installNewModule($this->filePath);
                     if (!$res->success) {
                         $res->messages = $installationResult;
-                        return;
+                        return $res;
                     }
-
-                    // Enable the module if it was previously enabled
-                    list($enableResult, $res->success) = $this->enableModule($installationResult);
-                    if (!$res->success) {
-                        $res->messages = $enableResult;
-                    }
-
-                });
+                    return $res;
+                },
+                10,
+                $mutexTimeout
+            );
         } catch (\Throwable $e) {
             $res->success = false;
             $res->messages['error'] = $e->getMessage();
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         } finally {
-            $this->pushMessageToBrowser( self::STAGE_VII_FINAL_STATUS, $res->getResult());
+            $this->unifiedModulesEvents->pushMessageToBrowser( self::STAGE_VII_FINAL_STATUS, $res->getResult());
         }
 
     }
@@ -125,19 +122,25 @@ class InstallFromPackageAction extends ModuleInstallationBase
         while ($maximumUploadTime > 0) {
             $resUploadStatus = StatusUploadFileAction::main($fileId);
 
-            $this->pushMessageToBrowser( self::STAGE_I_UPLOAD_MODULE, $resUploadStatus->getResult());
+            $this->unifiedModulesEvents->pushMessageToBrowser( self::STAGE_I_UPLOAD_MODULE, $resUploadStatus->getResult());
             if (!$resUploadStatus->success) {
                 return [$resUploadStatus->messages, false];
-            } elseif ($resUploadStatus->data[FilesConstants::D_STATUS] === FilesConstants::UPLOAD_IN_PROGRESS) {
+            }
+
+            // Get upload status with fallback to UPLOAD_IN_PROGRESS if not set
+            $uploadStatus = $resUploadStatus->data[FilesConstants::D_STATUS] ?? FilesConstants::UPLOAD_IN_PROGRESS;
+
+            if ($uploadStatus === FilesConstants::UPLOAD_IN_PROGRESS) {
                 sleep(1); // Adjust sleep time as needed
                 $maximumUploadTime--;
-            } elseif ($resUploadStatus->data[FilesConstants::D_STATUS] === FilesConstants::UPLOAD_COMPLETE) {
+            } elseif ($uploadStatus === FilesConstants::UPLOAD_COMPLETE) {
                 return [$resUploadStatus->messages, true];
             }
         }
 
         // Upload or merging timeout
-        $this->pushMessageToBrowser( self::STAGE_I_UPLOAD_MODULE, [self::ERR_UPLOAD_TIMEOUT]);
-        return [self::ERR_UPLOAD_TIMEOUT, false];
+        $errorMessage = TranslationProvider::translate(self::ERR_UPLOAD_TIMEOUT);
+        $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_I_UPLOAD_MODULE, [$errorMessage]);
+        return [[$errorMessage], false];
     }
 }

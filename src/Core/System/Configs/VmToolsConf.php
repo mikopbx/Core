@@ -19,7 +19,8 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 
 /**
  * Class VmToolsConf
@@ -28,44 +29,149 @@ use MikoPBX\Core\System\Util;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class VmToolsConf
+class VmToolsConf extends SystemConfigClass
 {
-    public const VMWARE = 'vmware';
+    public const string PROC_NAME = 'vm-tools';
+    public const string VMWARE = 'vmware';
+    public const string KVM = 'kvm';
+    public const string QEMU = 'qemu';
+
+    private ?object $confObject = null;
+
+    /**
+     * Start the service monitored by Monit through a configuration object.
+     *
+     * This method checks if a configuration object (`$this->confObject`) is available.
+     * If so, it:
+     * - Restarts the service via Monit using `monitRestart()`
+     * - Regenerates the Monit configuration file using `generateMonitConf()`
+     *
+     * @return bool True if the restart was successful (or no config object exists), false otherwise.
+     */
+    public function start(): bool
+    {
+        $result = true;
+        if (System::isBooting()) {
+            $this->configure();
+            if ($this->confObject) {
+                $this->confObject->start();
+            }
+        } else {
+            $result = $this->reStart();
+        }
+        return $result;
+    }
+
+    /**
+     * Restarts the service monitored by Monit through a configuration object.
+     *
+     * This method checks if a configuration object (`$this->confObject`) is available.
+     * If so, it:
+     * - Restarts the service via Monit using `monitRestart()`
+     * - Regenerates the Monit configuration file using `generateMonitConf()`
+     *
+     * @return bool True if the restart was successful (or no config object exists), false otherwise.
+     */
+    public function reStart(): bool
+    {
+        $this->configure();
+        $result = true;
+        if ($this->confObject) {
+            $result = $this->monitRestart();
+            $this->generateMonitConf();
+
+        }
+        return $result;
+    }
 
     /**
      * Configure VM tools.
      *
      * @return bool
      */
-    public function configure(): bool
+    private function configure(): bool
     {
-        $result = true;
-        if (Util::isDocker()) {
-            return $result;
+        if (System::isDocker()) {
+            return true;
         }
+        $result = true;
         $vars = [
-            self::VMWARE => VMWareToolsConf::class
+            self::VMWARE => VMWareToolsConf::class,
+            self::KVM => QEMUGuestAgentConf::class,
+            self::QEMU => QEMUGuestAgentConf::class,
         ];
-        $vendor = $this->getCpuVendor();
-        $className = $vars[$vendor] ?? '';
+        $hypervisor = $this->getHypervisor();
+        $className = $vars[$hypervisor] ?? '';
         if (class_exists($className)) {
-            $tools = new $className();
-            $result = $tools->configure();
+            $this->confObject = new $className();
+            $result = $this->confObject->configure();
         }
         return $result;
     }
 
     /**
-     * Get the CPU vendor.
+     * Generates and saves the Monit configuration using an external configuration object.
      *
-     * @return string
+     * This method checks if a configuration object (`$this->confObject`) is available.
+     * If it is, it generates the Monit configuration by calling `getMonitConf()` on that object,
+     * passing in the current class constant `self::VMWARE` as a parameter (likely representing
+     * a service or platform name), then saves the result to a file.
+     *
+     * @return bool True if the configuration was successfully generated and saved, false otherwise.
      */
-    private function getCpuVendor(): string
+    public function generateMonitConf(): bool
     {
-        $lsCpuPath = Util::which('lscpu');
-        $grepPath = Util::which('grep');
-        $awk = Util::which('awk');
-        $result = shell_exec("$lsCpuPath | $grepPath vendor | $awk -F ' ' '{ print $3}'");
-        return strtolower(trim($result));
+        // Skip VM tools service in Docker containers
+        if (System::isDocker()) {
+            $confPath = $this->getMainMonitConfFile();
+            // Write empty config to ensure old configs are removed
+            $this->saveFileContent($confPath, '');
+            return true;
+        }
+
+        if (!$this->confObject) {
+            $this->configure();
+        }
+        if (!$this->confObject) {
+            return false;
+        }
+        $confPath = $this->getMainMonitConfFile();
+        $conf = $this->confObject->getMonitConf(self::PROC_NAME);
+        $this->saveFileContent($confPath, $conf);
+        return true;
+    }
+
+    /**
+     * Detect the hypervisor type using pbx-env-detect script.
+     *
+     * This method uses the centralized pbx-env-detect script which implements
+     * a robust multi-stage detection strategy including DMI, CPU flags, and
+     * hypervisor-specific checks.
+     *
+     * @return string Hypervisor type: 'vmware', 'kvm', 'qemu', or empty string if none detected.
+     */
+    private function getHypervisor(): string
+    {
+        // Use pbx-env-detect for reliable detection
+        $pbxEnvDetect = '/sbin/pbx-env-detect';
+
+        if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            $envOutput = [];
+            Processes::mwExec("$pbxEnvDetect --type 2>/dev/null", $envOutput);
+            $envType = strtolower(trim(implode('', $envOutput)));
+
+            // Map environment types to hypervisor constants
+            return match ($envType) {
+                'vmware' => self::VMWARE,
+                'kvm' => self::KVM,
+                'qemu' => self::QEMU,
+                'vbox', 'xen', 'docker' => '',  // Not supported by VmTools
+                'baremetal' => '',  // Physical machine
+                default => '',  // Unknown or virtual (generic)
+            };
+        }
+
+        // No hypervisor detected
+        return '';
     }
 }

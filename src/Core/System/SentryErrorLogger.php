@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 use Sentry\State\HubInterface;
 use Throwable;

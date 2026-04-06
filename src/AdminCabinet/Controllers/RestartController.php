@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,7 +22,6 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 class RestartController extends BaseController
 {
-
     /**
      * Renders the form with main buttons for station reboot and shutdown.
      */

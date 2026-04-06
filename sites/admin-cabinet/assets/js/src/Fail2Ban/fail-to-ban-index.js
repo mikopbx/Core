@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalTranslate, PbxApi, Form, globalRootUrl, Datatable, SemanticLocalization */
+/* global globalTranslate, PbxApi, Form, globalRootUrl, Datatable, SemanticLocalization, FirewallAPI, Fail2BanAPI, Fail2BanTooltipManager */
 /**
  * The `fail2BanIndex` object contains methods and variables for managing the Fail2Ban system.
  *
@@ -35,6 +35,56 @@ const fail2BanIndex = {
      * @type {jQuery}
      */
     $bannedIpListTable: $('#banned-ip-list-table'),
+
+    /**
+     * The parent segment containing the banned IPs tab (for dimmer overlay)
+     * @type {jQuery}
+     */
+    $bannedIpTabSegment: $('#banned-ip-list-table').closest('.segment'),
+
+    /**
+     * jQuery object for the security preset slider.
+     * @type {jQuery}
+     */
+    $securityPresetSlider: $('#SecurityPresetSlider'),
+
+    /**
+     * Security preset definitions.
+     * Each preset defines maxretry, findtime (seconds), and bantime (seconds).
+     */
+    securityPresets: [
+        { // 0: Weak
+            maxretry: 20,
+            findtime: 600,     // 10 min
+            bantime: 600,      // 10 min
+            maxReqSec: 500,    // SIP rate limit (disabled if >200 extensions)
+        },
+        { // 1: Normal
+            maxretry: 10,
+            findtime: 3600,    // 1 hour
+            bantime: 86400,    // 1 day
+            maxReqSec: 300,
+        },
+        { // 2: Enhanced
+            maxretry: 5,
+            findtime: 21600,   // 6 hours
+            bantime: 604800,   // 7 days
+            maxReqSec: 150,
+        },
+        { // 3: Paranoid
+            maxretry: 3,
+            findtime: 86400,   // 24 hours
+            bantime: 2592000,  // 30 days
+            maxReqSec: 100,
+        },
+    ],
+
+    /**
+     * Number of extensions — loaded from API to determine MaxReqSec behavior.
+     * If >200, MaxReqSec is disabled (NAT scenario).
+     * @type {number}
+     */
+    extensionsCount: 0,
 
     /**
      * The list of banned IPs
@@ -59,55 +109,152 @@ const fail2BanIndex = {
      *
      * @type {object}
      */
-    validateRules: {
-        maxretry: {
-            identifier: 'maxretry',
-            rules: [
-                {
-                    type: 'integer[3..99]',
-                    prompt: globalTranslate.f2b_ValidateMaxRetryRange,
-                },
-            ],
-        },
-        findtime: {
-            identifier: 'findtime',
-            rules: [
-                {
-                    type: 'integer[300..86400]',
-                    prompt: globalTranslate.f2b_ValidateFindTimeRange,
-                },
-            ],
-        },
-        bantime: {
-            identifier: 'bantime',
-            rules: [
-                {
-                    type: 'integer[300..86400]',
-                    prompt: globalTranslate.f2b_ValidateBanTimeRange,
-                },
-            ],
-        },
-    },
+    validateRules: {},
 
     // This method initializes the Fail2Ban management interface.
     initialize() {
         $('#fail2ban-tab-menu .item').tab();
         fail2BanIndex.initializeDataTable();
         fail2BanIndex.initializeForm();
+        fail2BanIndex.loadSettings();
 
-        PbxApi.FirewallGetBannedIp(fail2BanIndex.cbGetBannedIpList);
+        // Initialize tooltips for form fields
+        if (typeof Fail2BanTooltipManager !== 'undefined') {
+            Fail2BanTooltipManager.initialize();
+        }
 
-        fail2BanIndex.$bannedIpListTable.on('click', fail2BanIndex.$unbanButtons, (e) => {
-            const unbannedIp = $(e.target).attr('data-value');
-            fail2BanIndex.$bannedIpListTable.addClass('loading');
-            PbxApi.FirewallUnBanIp(unbannedIp, fail2BanIndex.cbAfterUnBanIp);
+        fail2BanIndex.showBannedListLoader();
+        FirewallAPI.getBannedIps(fail2BanIndex.cbGetBannedIpList);
+
+        fail2BanIndex.$bannedIpListTable.on('click', '.unban-button', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const unbannedIp = $(e.currentTarget).attr('data-value');
+            fail2BanIndex.showBannedListLoader();
+            FirewallAPI.unbanIp(unbannedIp, fail2BanIndex.cbAfterUnBanIp);
         });
+
+        // Initialize security preset slider
+        if (fail2BanIndex.$securityPresetSlider.length > 0) {
+            fail2BanIndex.$securityPresetSlider
+                .slider({
+                    min: 0,
+                    max: 3,
+                    step: 1,
+                    smooth: true,
+                    interpretLabel: function (value) {
+                        const labels = [
+                            globalTranslate.f2b_SecurityPresetWeak,
+                            globalTranslate.f2b_SecurityPresetNormal,
+                            globalTranslate.f2b_SecurityPresetEnhanced,
+                            globalTranslate.f2b_SecurityPresetParanoid,
+                        ];
+                        return labels[value];
+                    },
+                    onChange: fail2BanIndex.cbAfterSelectSecurityPreset,
+                });
+        }
     },
 
     /**
-     * Initialize data table on the page
-     *
+     * Handle event after the security preset slider is changed.
+     * Updates maxretry, findtime, bantime values and the info panel.
+     * @param {number} value - The selected preset index (0-3).
      */
+    cbAfterSelectSecurityPreset(value) {
+        const preset = fail2BanIndex.securityPresets[value];
+        if (!preset) return;
+
+        // Update hidden form fields
+        fail2BanIndex.$formObj.form('set value', 'maxretry', preset.maxretry);
+        fail2BanIndex.$formObj.form('set value', 'findtime', preset.findtime);
+        fail2BanIndex.$formObj.form('set value', 'bantime', preset.bantime);
+
+        // Set MaxReqSec: disabled (0) if >200 extensions (NAT scenario)
+        const maxReqSec = fail2BanIndex.extensionsCount > 200 ? 0 : preset.maxReqSec;
+        fail2BanIndex.$formObj.form('set value', 'PBXFirewallMaxReqSec', String(maxReqSec));
+
+        // Update info panel
+        fail2BanIndex.updatePresetInfoPanel(preset);
+
+        Form.dataChanged();
+    },
+
+    /**
+     * Update the info panel with preset values.
+     * @param {Object} preset - The preset object with maxretry, findtime, bantime.
+     */
+    updatePresetInfoPanel(preset) {
+        $('#preset-maxretry-value').text(preset.maxretry);
+        $('#preset-findtime-value').text(fail2BanIndex.formatDuration(preset.findtime));
+        $('#preset-bantime-value').text(fail2BanIndex.formatDuration(preset.bantime));
+    },
+
+    /**
+     * Format seconds into a human-readable duration string.
+     * @param {number} seconds - Duration in seconds.
+     * @returns {string} Formatted duration.
+     */
+    formatDuration(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (days > 0) {
+            return `${days}${globalTranslate.f2b_DurationDays}`;
+        }
+        if (hours > 0) {
+            return `${hours}${globalTranslate.f2b_DurationHours}`;
+        }
+        return `${minutes}${globalTranslate.f2b_DurationMinutes}`;
+    },
+
+    /**
+     * Detect which security preset matches current values.
+     * Returns preset index (0-3) or defaults to 1 (Normal) if no exact match.
+     * @param {number} maxretry
+     * @param {number} findtime - in seconds
+     * @param {number} bantime - in seconds
+     * @returns {number} Preset index.
+     */
+    detectPresetLevel(maxretry, findtime, bantime) {
+        for (let i = 0; i < fail2BanIndex.securityPresets.length; i++) {
+            const p = fail2BanIndex.securityPresets[i];
+            if (p.maxretry === maxretry && p.findtime === findtime && p.bantime === bantime) {
+                return i;
+            }
+        }
+        // No exact match — find closest by comparing bantime
+        let closest = 1;
+        let minDiff = Infinity;
+        for (let i = 0; i < fail2BanIndex.securityPresets.length; i++) {
+            const diff = Math.abs(fail2BanIndex.securityPresets[i].bantime - bantime);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closest = i;
+            }
+        }
+        return closest;
+    },
+
+
+    /**
+     * Mapping of jail names to short tag labels and colors.
+     * Used to render compact colored labels instead of verbose ban reason text.
+     */
+    jailTagMap: {
+        'asterisk_ami_v2': { tag: 'AMI', color: 'orange' },
+        'asterisk_error_v2': { tag: 'SIP', color: 'blue' },
+        'asterisk_public_v2': { tag: 'SIP', color: 'blue' },
+        'asterisk_security_log_v2': { tag: 'SIP', color: 'blue' },
+        'asterisk_v2': { tag: 'SIP', color: 'blue' },
+        'asterisk_iax_v2': { tag: 'IAX', color: 'teal' },
+        'dropbear_v2': { tag: 'SSH', color: 'grey' },
+        'mikopbx-exploit-scanner_v2': { tag: 'SCAN', color: 'red' },
+        'mikopbx-nginx-errors_v2': { tag: 'NGINX', color: 'purple' },
+        'mikopbx-www_v2': { tag: 'WEB', color: 'olive' },
+    },
+
     initializeDataTable(){
         $('#fail2ban-tab-menu .item').tab({
             onVisible(){
@@ -119,7 +266,6 @@ const fail2BanIndex = {
         });
 
         fail2BanIndex.dataTable = fail2BanIndex.$bannedIpListTable.DataTable({
-            // destroy: true,
             lengthChange: false,
             paging: true,
             pageLength: fail2BanIndex.calculatePageLength(),
@@ -128,73 +274,154 @@ const fail2BanIndex = {
             columns: [
                 // IP
                 {
-                    orderable: true,  // This column is orderable
-                    searchable: true  // This column is searchable
+                    orderable: true,
+                    searchable: true,
                 },
-                // Reason
+                // Reason tags
                 {
-                    orderable: false,  // This column is not orderable
-                    searchable: false  // This column is not searchable
+                    orderable: false,
+                    searchable: false,
+                },
+                // Ban date
+                {
+                    orderable: true,
+                    searchable: false,
+                },
+                // Expires
+                {
+                    orderable: true,
+                    searchable: false,
                 },
                 // Buttons
                 {
-                    orderable: false,  // This column is orderable
-                    searchable: false  // This column is searchable
+                    orderable: false,
+                    searchable: false,
                 },
             ],
             order: [0, 'asc'],
             language: SemanticLocalization.dataTableLocalisation,
-            /**
-             * Constructs the Extensions row.
-             * @param {HTMLElement} row - The row element.
-             * @param {Array} data - The row data.
-             */
-            createdRow(row, data) {
+            createdRow(row) {
                 $('td', row).eq(0).addClass('collapsing');
                 $('td', row).eq(2).addClass('collapsing');
+                $('td', row).eq(3).addClass('collapsing');
+                $('td', row).eq(4).addClass('collapsing');
+            },
+            drawCallback() {
+                // Initialize popups after each DataTable draw (handles pagination)
+                fail2BanIndex.$bannedIpListTable.find('.country-flag').popup({
+                    hoverable: true,
+                    position: 'top center',
+                    delay: { show: 300, hide: 100 },
+                });
+                fail2BanIndex.$bannedIpListTable.find('.ban-reason-tag').popup({
+                    hoverable: true,
+                    position: 'top center',
+                    delay: { show: 300, hide: 100 },
+                });
             },
         });
     },
 
+    /**
+     * Build HTML for reason tags from ban entries.
+     * Groups bans by tag label, deduplicates, and renders colored labels with popup tooltips.
+     *
+     * @param {Array} bans - Array of ban objects with jail, timeofban, timeunban properties.
+     * @returns {string} HTML string with tag labels.
+     */
+    buildReasonTags(bans) {
+        // Group by tag label to deduplicate (e.g. multiple SIP jails → one SIP tag)
+        const tagGroups = {};
+        bans.forEach(ban => {
+            const jail = ban.jail || '';
+            const mapping = fail2BanIndex.jailTagMap[jail] || { tag: jail, color: 'grey' };
+            const translateKey = `f2b_Jail_${jail}`;
+            const fullReason = globalTranslate[translateKey] || jail;
+
+            if (!tagGroups[mapping.tag]) {
+                tagGroups[mapping.tag] = {
+                    color: mapping.color,
+                    reasons: [],
+                };
+            }
+            // Avoid duplicate reasons within the same tag group
+            if (tagGroups[mapping.tag].reasons.indexOf(fullReason) === -1) {
+                tagGroups[mapping.tag].reasons.push(fullReason);
+            }
+        });
+
+        let html = '';
+        Object.keys(tagGroups).forEach(tag => {
+            const group = tagGroups[tag];
+            const tooltipContent = group.reasons.join(', ');
+            html += `<span class="ui mini ${group.color} label ban-reason-tag" data-content="${tooltipContent}" data-position="top center">${tag}</span> `;
+        });
+        return html;
+    },
+
     // This callback method is used to display the list of banned IPs.
     cbGetBannedIpList(response) {
-        fail2BanIndex.$bannedIpListTable.removeClass('loading');
-        if (response === false) {
+        fail2BanIndex.hideBannedListLoader();
+        if (response === false || !response.result) {
             return;
         }
-        // Clear the DataTable
+
+        const bannedIps = response.data || {};
+
         fail2BanIndex.dataTable.clear();
 
-        // Prepare the new data to be added
-        let newData = [];
-        Object.keys(response).forEach(ip => {
-            const bans = response[ip];
-            // Combine all reasons and dates for this IP into one string
-            let reasonsDatesCombined = bans.map(ban => {
-                const blockDate = new Date(ban.timeofban * 1000).toLocaleString();
-                let reason = `f2b_Jail_${ban.jail}`;
-                if (reason in globalTranslate) {
-                    reason = globalTranslate[reason];
-                }
-                return `${reason} - ${blockDate}`;
-            }).join('<br>'); // Use line breaks to separate each reason-date pair
+        const newData = [];
+        Object.keys(bannedIps).forEach(ip => {
+            const ipData = bannedIps[ip];
+            const bans = ipData.bans || [];
+            const country = ipData.country || '';
+            const countryName = ipData.countryName || '';
 
-            // Construct a row: IP, Combined Reasons and Dates, Unban Button
+            // Build IP display with country flag
+            let ipDisplay = ip;
+            if (country) {
+                ipDisplay = `<span class="country-flag" data-content="${countryName}" data-position="top center"><i class="flag ${country.toLowerCase()}"></i></span>${ip}`;
+            }
+
+            // Build reason tags
+            const reasonTags = fail2BanIndex.buildReasonTags(bans);
+
+            // Calculate earliest ban date and latest expiry across all bans
+            let earliestBan = Infinity;
+            let latestExpiry = 0;
+            bans.forEach(ban => {
+                if (ban.timeofban < earliestBan) {
+                    earliestBan = ban.timeofban;
+                }
+                if (ban.timeunban > latestExpiry) {
+                    latestExpiry = ban.timeunban;
+                }
+            });
+
+            const banDateStr = earliestBan < Infinity
+                ? `<span data-order="${earliestBan}">${fail2BanIndex.formatDateTime(earliestBan)}</span>`
+                : '';
+            const expiresStr = latestExpiry > 0
+                ? `<span data-order="${latestExpiry}">${fail2BanIndex.formatDateTime(latestExpiry)}</span>`
+                : '';
+
             const row = [
-                ip,
-                reasonsDatesCombined,
-                `<button class="ui icon basic mini button right floated unban-button" data-value="${ip}"><i class="icon trash red"></i>${globalTranslate.f2b_Unban}</button>`
+                ipDisplay,
+                reasonTags,
+                banDateStr,
+                expiresStr,
+                `<button class="ui icon basic mini button right floated unban-button" data-value="${ip}"><i class="icon trash red"></i> ${globalTranslate.f2b_Unban}</button>`,
             ];
             newData.push(row);
         });
 
-        // Add the new data and redraw the table
         fail2BanIndex.dataTable.rows.add(newData).draw();
     },
 
     // This callback method is used after an IP has been unbanned.
     cbAfterUnBanIp() {
-        PbxApi.FirewallGetBannedIp(fail2BanIndex.cbGetBannedIpList);
+        fail2BanIndex.showBannedListLoader();
+        FirewallAPI.getBannedIps(fail2BanIndex.cbGetBannedIpList);
     },
 
     /**
@@ -205,6 +432,19 @@ const fail2BanIndex = {
     cbBeforeSendForm(settings) {
         const result = settings;
         result.data = fail2BanIndex.$formObj.form('get values');
+
+        // Normalize whitelist: split by any delimiter, keep only valid IPs/CIDRs
+        if (result.data.whitelist) {
+            const entries = result.data.whitelist.split(/[\s,;]+/).filter(entry => {
+                entry = entry.trim();
+                if (!entry) return false;
+                // Basic IPv4, IPv6, CIDR validation
+                return /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/.test(entry)
+                    || /^[0-9a-fA-F:]+(\/\d{1,3})?$/.test(entry);
+            });
+            result.data.whitelist = entries.join(' ');
+        }
+
         return result;
     },
 
@@ -213,7 +453,57 @@ const fail2BanIndex = {
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
+        // Response handling is done by Form.js
+        // This callback is for additional processing if needed
+    },
 
+    /**
+     * Load Fail2Ban settings from API
+     */
+    loadSettings() {
+        Fail2BanAPI.getSettings((response) => {
+            if (response.result && response.data) {
+                const data = response.data;
+                // Set form values
+                fail2BanIndex.$formObj.form('set values', {
+                    maxretry: data.maxretry,
+                    bantime: data.bantime,
+                    findtime: data.findtime,
+                    whitelist: data.whitelist,
+                    PBXFirewallMaxReqSec: data.PBXFirewallMaxReqSec
+                });
+
+                // Store extensions count for MaxReqSec calculation
+                fail2BanIndex.extensionsCount = parseInt(data.extensionsCount, 10) || 0;
+
+                // Detect and set security preset level
+                if (fail2BanIndex.$securityPresetSlider.length > 0) {
+                    const presetIdx = fail2BanIndex.detectPresetLevel(
+                        parseInt(data.maxretry, 10),
+                        parseInt(data.findtime, 10),
+                        parseInt(data.bantime, 10)
+                    );
+                    fail2BanIndex.$securityPresetSlider.slider('set value', presetIdx, false);
+                    fail2BanIndex.updatePresetInfoPanel(fail2BanIndex.securityPresets[presetIdx]);
+                }
+            }
+        });
+    },
+
+    /**
+     * Format unix timestamp as DD.MM.YYYY HH:MM
+     *
+     * @param {number} timestamp - Unix timestamp in seconds.
+     * @returns {string} Formatted date string.
+     */
+    formatDateTime(timestamp) {
+        const d = new Date(timestamp * 1000);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        return `${day}.${month}.${year} ${hours}:${minutes}`;
     },
 
     /**
@@ -233,14 +523,42 @@ const fail2BanIndex = {
     },
 
     /**
+     * Show dimmer with loader on the banned IPs tab segment
+     */
+    showBannedListLoader() {
+        if (!fail2BanIndex.$bannedIpTabSegment.find('> .ui.dimmer').length) {
+            fail2BanIndex.$bannedIpTabSegment.append(
+                `<div class="ui inverted dimmer">
+                    <div class="ui text loader">${globalTranslate.ex_LoadingData}</div>
+                </div>`
+            );
+        }
+        fail2BanIndex.$bannedIpTabSegment.find('> .ui.dimmer').addClass('active');
+    },
+
+    /**
+     * Hide dimmer on the banned IPs tab segment
+     */
+    hideBannedListLoader() {
+        fail2BanIndex.$bannedIpTabSegment.find('> .ui.dimmer').removeClass('active');
+    },
+
+    /**
      * Initialize the form with custom settings
      */
     initializeForm() {
         Form.$formObj = fail2BanIndex.$formObj;
-        Form.url = `${globalRootUrl}fail2-ban/save`; // Form submission URL
-        Form.validateRules = fail2BanIndex.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = fail2BanIndex.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = fail2BanIndex.cbAfterSendForm; // Callback after form is sent
+        Form.validateRules = fail2BanIndex.validateRules;
+        Form.cbBeforeSendForm = fail2BanIndex.cbBeforeSendForm;
+        Form.cbAfterSendForm = fail2BanIndex.cbAfterSendForm;
+
+        // Configure REST API settings for Form.js (singleton resource)
+        Form.apiSettings = {
+            enabled: true,
+            apiObject: Fail2BanAPI,
+            saveMethod: 'update' // Using standard PUT for singleton update
+        };
+
         Form.initialize();
     },
 };
@@ -249,4 +567,3 @@ const fail2BanIndex = {
 $(document).ready(() => {
     fail2BanIndex.initialize();
 });
-

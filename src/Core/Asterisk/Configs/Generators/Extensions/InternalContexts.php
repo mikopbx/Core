@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
 
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
@@ -106,7 +106,7 @@ class InternalContexts extends AsteriskConfigClass
                  'exten => _X!,1,NoOp()'.PHP_EOL."\t";
 
         // If WebRTC is used, set up SIP and WS contacts. Otherwise, set DST contact.
-        if($this->generalSettings[PbxSettingsConstants::USE_WEB_RTC] === '1') {
+        if(PbxSettings::getValueByKey(PbxSettings::USE_WEB_RTC) === '1') {
             $conf .= 'same => n,Set(SIP_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})'.PHP_EOL."\t".
                      'same => n,Set(WS_CONTACTS=${PJSIP_DIAL_CONTACTS(${EXTEN}-WS)})'.PHP_EOL."\t".
                      'same => n,Set(DST_CONTACT=${SIP_CONTACT}${IF($["${SIP_CONTACT}x" != "x" && "${WS_CONTACTS}x" != "x"]?&)}${WS_CONTACTS})'.PHP_EOL."\t";
@@ -170,6 +170,8 @@ class InternalContexts extends AsteriskConfigClass
         // Set forwarding status and handle forwarding if set.
         $conf .= 'same => n,Set(fw=${DB(${dstatus}/${EXTEN})})' . "\n\t";
         $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Set(__pt1c_UNIQUEID=${UNDEFINED})' . "\n\t";
+        // Store the forwarding source extension for modules to use (e.g., for CallerID selection)
+        $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Set(__FW_SOURCE_PEER=${EXTEN}))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Wait(1))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Goto(internal,${fw},1))' . "\n\t";
 
@@ -244,12 +246,16 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'exten => _[hit],1,Hangup()' . " \n";
 
         // Handle pickup extension if it exists.
-        $pickupExtension = $this->generalSettings[PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN];
+        $pickupExtension = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_PICKUP_EXTEN);
         if(!empty($pickupExtension)){
-            $conf            .= 'exten => _' . $pickupExtension . $this->extensionPattern . ',1,Set(PICKUPEER=' . $this->technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
-            $conf            .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";
-            $conf            .= 'same => n,PickupChan(${PICKUPEER})' . "\n\t";
-            $conf            .= 'same => n,Hangup()' . "\n\n";
+            $conf .= 'exten => _' . $pickupExtension . $this->extensionPattern . ',1,Set(PICKUPEER=' . $this->technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
+            // For PJSIP channels: append X-CHAN-ID SIP header to PICKUPEER if present
+            // This allows picking up a specific channel when multiple calls ring the same extension
+            $conf .= 'same => n,Set(X_CHAN_ID=${PJSIP_HEADER(read,X-CHAN-ID)})' . "\n\t";
+            $conf .= 'same => n,ExecIf($["${X_CHAN_ID}x" != "x"]?Set(PICKUPEER=${PICKUPEER}-${X_CHAN_ID}))' . "\n\t";
+            $conf .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";
+            $conf .= 'same => n,PickupChan(${PICKUPEER})' . "\n\t";
+            $conf .= 'same => n,Hangup()' . "\n\n";
         }
 
         // Return the assembled dialplan configuration for all peers.
@@ -386,7 +392,10 @@ class InternalContexts extends AsteriskConfigClass
         // Determine call length and handle custom dialplan execution
         $conf .= 'same => n,Set(ringlength=${DB(FW_TIME/${EXTEN})})' . " \n\t";
         $conf .= 'same => n,ExecIf($["${ringlength}x" == "x"]?Set(ringlength=600))' . " \n\t";
+        // If no forwarding destination is configured, don't apply ring timeout — let the phone ring indefinitely
+        $conf .= 'same => n,ExecIf($["${DB(FW/${EXTEN})}x" == "x"]?Set(ringlength=600))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${QUEUE_SRC_CHAN}x" != "x" && "${ISTRANSFER}x" == "x"]?Set(ringlength=600))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${QUEUE_SRC_CHAN}x" != "x"]?Set(DIAL_QUEUE_OPTIONS=i))' . " \n\t";
 
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1) ' . " \n\t";
 
@@ -394,7 +403,8 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . " \n\t";
         $conf .= 'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${TRANSFER_OPTIONS}x" == "x" || "${ISTRANSFER}x" != "x"]?Set(TRANSFER_OPTIONS=Tt))' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},${TRANSFER_OPTIONS}ekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
+        $conf .= 'same => n,Set(__CALLER_AUDIOFORMAT=${CHANNEL(audioreadformat)})' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},${TRANSFER_OPTIONS}${DIAL_QUEUE_OPTIONS}ekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" == "x"]?Gosub(dial_end,${EXTEN},1))' . " \n\t";
         $conf .= 'same => n(fw_start),NoOp()' . " \n\t";
         // Redirection can be disabled for internal with the FW_DISABLE_ATRANSFER / FW_DISABLE_INTERNAL option
@@ -404,7 +414,6 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,ExecIf($["${FROM_DID}${TO_CHAN}x" == "x" && "${FW_DISABLE_INTERNAL}" == "1"]?Goto(${EXTEN},fw_end))' . " \n\t";
         // QUEUE_SRC_CHAN - set if the call is a server action to an agent in the queue.
         // Checking if call forwarding is needed.
-        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${ISTRANSFER}x" != "x"]?Goto(internal-fw,${EXTEN},1))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${QUEUE_SRC_CHAN}x" == "x"]?Goto(internal-fw,${EXTEN},1))' . " \n\t";
         $conf .= 'same => n(fw_end),ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . " \n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";

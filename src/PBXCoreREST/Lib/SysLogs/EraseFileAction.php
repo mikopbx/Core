@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -19,31 +20,56 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use Phalcon\Di\Injectable;
 
 /**
  * Erase log file with the provided name.
  *
  * @package MikoPBX\PBXCoreREST\Lib\SysLogs
  */
-class EraseFileAction extends \Phalcon\Di\Injectable
+class EraseFileAction extends Injectable
 {
     /**
      * Erase log file with the provided name.
      *
-     * @param string $filename The name of the log file.
+     * WHY: Uses DataStructure::getSanitizationRules() for consistent parameter handling.
+     * DataStructure is the Single Source of Truth for all field definitions.
+     *
+     * @param array<string, mixed> $data An array containing the following parameters:
+     *                    - filename (string): The name of the log file.
      *
      * @return PBXApiResult An object containing the result of the API call.
      *
      */
-    public static function main(string $filename): PBXApiResult
+    public static function main(array $data): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $filename = System::getLogDir() . '/' . $filename;
+
+        // WHY: Get sanitization rules from DataStructure (Single Source of Truth)
+        // DataStructure defines all field constraints, not controller attributes
+        $sanitizationRules = DataStructure::getSanitizationRules();
+
+        // WHY: Sanitize input data for security - never trust user input
+        $sanitizedData = BaseActionHelper::sanitizeData($data, $sanitizationRules);
+
+        // Extract validated parameters
+        $filename = (string)($sanitizedData['filename'] ?? '');
+
+        // WHY: Validate filename is not empty before constructing path
+        if (empty($filename)) {
+            $res->success = false;
+            $res->messages['error'][] = 'Filename parameter is required and cannot be empty';
+            $res->httpCode = 400;
+            return $res;
+        }
+
+        $filename = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
         if (!file_exists($filename)) {
             $res->success = false;
             $res->messages[] = 'File does not exist ' . $filename;

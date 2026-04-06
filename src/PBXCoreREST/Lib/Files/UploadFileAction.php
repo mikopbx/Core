@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -19,13 +20,17 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Files;
 
+use GuzzleHttp\Psr7\HttpFactory;
+use GuzzleHttp\Psr7\UploadedFile;
+use MikoPBX\Common\Providers\EventBusProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Workers\WorkerMergeUploadedFile;
-use Phalcon\Di;
-use Phalcon\Http\Message\StreamFactory;
-use Phalcon\Http\Message\UploadedFile;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class UploadFile
@@ -33,8 +38,78 @@ use Phalcon\Http\Message\UploadedFile;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Files
  */
-class UploadFileAction extends \Phalcon\Di\Injectable
+class UploadFileAction extends Injectable
 {
+    /**
+     * Maximum new upload initiations per interval per IP
+     */
+    private const int MAX_UPLOAD_ATTEMPTS = 15;
+
+    /**
+     * Interval to reset upload attempt counter (seconds)
+     */
+    private const int UPLOAD_ATTEMPTS_INTERVAL = 300;
+
+    // MIME types allowed for different categories
+    private const ALLOWED_MIME_TYPES = [
+        'sound' => [
+            'audio/mpeg',
+            'audio/wav',
+            'audio/ogg',
+            'audio/mp4',
+            'audio/webm',
+            'audio/x-wav',
+            'audio/wave'
+        ],
+        'image' => [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'image/svg+xml',
+            'image/bmp'
+        ],
+        'csv' => [
+            'text/csv',
+            'text/plain',
+            'application/csv',
+            'application/vnd.ms-excel'
+        ],
+        'archive' => [
+            'application/zip',
+            'application/x-zip-compressed',
+            'application/gzip',
+            'application/x-tar',
+            'application/x-gzip'
+        ],
+        'firmware' => [
+            '',  // Empty MIME type when browser can't detect type for .img files
+            'application/octet-stream',
+            'application/x-disk-image',
+            'application/x-raw-disk-image'
+        ]
+    ];
+
+    // Forbidden file extensions (executable files and scripts)
+    private const FORBIDDEN_EXTENSIONS = [
+        'php', 'php3', 'php4', 'php5', 'phtml', 'jsp', 'asp', 'aspx',
+        'js', 'exe', 'bat', 'cmd', 'com', 'scr', 'vbs', 'ps1',
+        'sh', 'bash', 'pl', 'py', 'rb', 'jar', 'class', 'war',
+        'dll', 'so', 'dylib', 'msi', 'deb', 'rpm'
+    ];
+
+    // Expected MIME type prefixes from finfo_file() for each category.
+    // Used to validate actual file content (magic bytes) after merge.
+    // Categories not listed here skip magic bytes validation (too generic).
+    private const MAGIC_BYTES_MIME_PREFIXES = [
+        'sound' => ['audio/', 'application/ogg', 'application/octet-stream'],
+        'image' => ['image/'],
+        'archive' => [
+            'application/zip', 'application/x-zip', 'application/gzip',
+            'application/x-gzip', 'application/x-tar', 'application/x-bzip2',
+        ],
+    ];
+
     /**
      * Process upload files by chunks.
      *
@@ -53,6 +128,38 @@ class UploadFileAction extends \Phalcon\Di\Injectable
 
             return $res;
         }
+
+        // Rate limit new upload initiations (first chunk only)
+        $clientIp = isset($parameters['clientIp']) && is_string($parameters['clientIp'])
+            ? $parameters['clientIp'] : '';
+        if (!empty($clientIp) && (int)($parameters['resumableChunkNumber'] ?? 0) === 1) {
+            $cache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
+            $remaining = self::checkUploadRateLimit($clientIp, $cache);
+            if ($remaining <= 0) {
+                $res->messages['error'][] = TranslationProvider::translate(
+                    'auth_TooManyLoginAttempts',
+                    ['interval' => self::UPLOAD_ATTEMPTS_INTERVAL]
+                );
+                $res->httpCode = 429;
+                return $res;
+            }
+        }
+
+        // Validate file type and security
+        $category = $parameters['category'] ?? 'unknown';
+        $mimeType = $parameters['file_mime_type'] ?? '';
+
+        $validationResult = self::validateFileType(
+            $parameters['resumableFilename'],
+            $mimeType,
+            $category
+        );
+
+        if (!$validationResult['valid']) {
+            $res->success = false;
+            $res->messages['error'] = $validationResult['error'];
+            return $res;
+        }
         $parameters['uploadDir'] = $di->getShared('config')->path('www.uploadDir');
         $parameters['tempDir'] = "{$parameters['uploadDir']}/{$parameters['resumableIdentifier']}";
         if (!Util::mwMkdir($parameters['tempDir'])) {
@@ -62,14 +169,16 @@ class UploadFileAction extends \Phalcon\Di\Injectable
         }
 
         $fileName = (string)pathinfo($parameters['resumableFilename'], PATHINFO_FILENAME);
-        $fileName = preg_replace('/[\W]/', '', $fileName);
-        if (strlen($fileName) < 10) {
+        // Remove unsafe characters but keep hyphens and underscores
+        $fileName = preg_replace('/[^\w\-]/', '', $fileName);
+        // Add unique prefix only for very short filenames to avoid collisions
+        if (strlen($fileName) < 5) {
             $fileName = '' . md5(microtime()) . '-' . $fileName;
         }
         $extension = (string)pathinfo($parameters['resumableFilename'], PATHINFO_EXTENSION);
         $fileName .= '.' . $extension;
         $parameters['resumableFilename'] = $fileName;
-        $parameters['fullUploadedFileName'] = "{$parameters['tempDir']}/{$fileName}";
+        $parameters['fullUploadedFileName'] = "{$parameters['tempDir']}/$fileName";
 
         // Delete old progress and result file
         $oldMergeProgressFile = "{$parameters['tempDir']}/merging_progress";
@@ -78,6 +187,25 @@ class UploadFileAction extends \Phalcon\Di\Injectable
         }
         if (file_exists($parameters['fullUploadedFileName'])) {
             unlink($parameters['fullUploadedFileName']);
+        }
+
+        // Get EventBus service
+        $eventBus = $di->getShared(EventBusProvider::SERVICE_NAME);
+        $uploadId = $parameters['resumableIdentifier'];
+
+        // Publish upload started event (only on first chunk)
+        if ($parameters['resumableChunkNumber'] == 1) {
+            $eventBus->publish('file-upload', [
+                'event' => 'upload-started',
+                'data' => [
+                    'uploadId' => $uploadId,
+                    'category' => $category,
+                    'fileName' => $parameters['resumableFilename'],
+                    'fileSize' => $parameters['resumableTotalSize'],
+                    'chunksTotal' => $parameters['resumableTotalChunks'],
+                    'timestamp' => time()
+                ]
+            ]);
         }
 
         foreach ($parameters['files'] as $file_data) {
@@ -89,8 +217,31 @@ class UploadFileAction extends \Phalcon\Di\Injectable
             $res->data['upload_id'] = $parameters['resumableIdentifier'];
             $res->data['filename'] = $parameters['fullUploadedFileName'];
 
+            // Publish chunk uploaded event
+            $eventBus->publish('file-upload', [
+                'event' => 'chunk-uploaded',
+                'data' => [
+                    'uploadId' => $uploadId,
+                    'chunkNumber' => $parameters['resumableChunkNumber'],
+                    'chunksTotal' => $parameters['resumableTotalChunks'],
+                    'progress' => round(
+                        $parameters['resumableChunkNumber'] / $parameters['resumableTotalChunks'] * 100
+                    ),
+                    'timestamp' => time()
+                ]
+            ]);
+
             if (self::tryToMergeChunksIfAllPartsUploaded($parameters)) {
                 $res->data[FilesConstants::D_STATUS] = FilesConstants::UPLOAD_MERGING;
+
+                // Publish chunks complete event
+                $eventBus->publish('file-upload', [
+                    'event' => 'chunks-complete',
+                    'data' => [
+                        'uploadId' => $uploadId,
+                        'timestamp' => time()
+                    ]
+                ]);
             } else {
                 $res->data[FilesConstants::D_STATUS] = FilesConstants::UPLOAD_WAITING_FOR_NEXT_PART;
             }
@@ -109,10 +260,10 @@ class UploadFileAction extends \Phalcon\Di\Injectable
      */
     private static function moveUploadedPartToSeparateDir(array $parameters, array $file_data): bool
     {
-        if ( ! file_exists($file_data['file_path'])) {
+        if (! file_exists($file_data['file_path'])) {
             return false;
         }
-        $factory          = new StreamFactory();
+        $factory          = new HttpFactory();
         $stream           = $factory->createStreamFromFile($file_data['file_path'], 'r');
         $file             = new UploadedFile(
             $stream,
@@ -121,10 +272,11 @@ class UploadFileAction extends \Phalcon\Di\Injectable
             $file_data['file_name'],
             $file_data['file_type']
         );
-        $chunks_dest_file = "{$parameters['tempDir']}/{$parameters['resumableFilename']}.part{$parameters['resumableChunkNumber']}";
+        $chunks_dest_file = "{$parameters['tempDir']}"
+            . "/{$parameters['resumableFilename']}.part{$parameters['resumableChunkNumber']}";
         if (file_exists($chunks_dest_file)) {
             $rm = Util::which('rm');
-            Processes::mwExec("{$rm} -f {$chunks_dest_file}");
+            Processes::mwExec("$rm -f $chunks_dest_file");
         }
         $file->moveTo($chunks_dest_file);
 
@@ -153,6 +305,7 @@ class UploadFileAction extends \Phalcon\Di\Injectable
                 'resumableFilename'    => $parameters['resumableFilename'],
                 'resumableTotalSize'   => $parameters['resumableTotalSize'],
                 'resumableTotalChunks' => $parameters['resumableTotalChunks'],
+                'category'             => $parameters['category'] ?? 'unknown',
             ];
             $settings_file  = "{$parameters['tempDir']}/merge_settings";
             file_put_contents(
@@ -161,13 +314,195 @@ class UploadFileAction extends \Phalcon\Di\Injectable
             );
 
             // We will start the background process to merge parts into one file
-            $phpPath               = Util::which('php');
+            $php               = Util::which('php');
             $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
-            Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} start '{$settings_file}'");
+            Processes::mwExecBg("$php -f $workerFilesMergerPath start '$settings_file'");
 
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Check rate limiting for upload initiations
+     *
+     * @param string $clientIp Client IP address
+     * @param \Phalcon\Cache\Adapter\AdapterInterface $cache Cache service
+     * @return int Remaining attempts
+     */
+    private static function checkUploadRateLimit(string $clientIp, $cache): int
+    {
+        $intervalStart = (int)(floor(time() / self::UPLOAD_ATTEMPTS_INTERVAL)
+            * self::UPLOAD_ATTEMPTS_INTERVAL);
+        $key = "ratelimit:upload:{$intervalStart}:{$clientIp}";
+
+        $adapter = $cache->getAdapter();
+        $adapter->zIncrBy($key, 1, $clientIp);
+        $adapter->expire($key, self::UPLOAD_ATTEMPTS_INTERVAL);
+
+        $count = (int)$adapter->zScore($key, $clientIp);
+
+        return max(self::MAX_UPLOAD_ATTEMPTS - $count, 0);
+    }
+
+    /**
+     * Validate file type, extension and security
+     *
+     * @param string $filename Original filename
+     * @param string $mimeType MIME type from browser
+     * @param string $category File category (sound, image, csv, archive, firmware)
+     *
+     * @return array Validation result with 'valid' boolean and 'error' message
+     */
+    private static function validateFileType(string $filename, string $mimeType, string $category): array
+    {
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+        // 1. Check forbidden extensions (security)
+        if (in_array($extension, self::FORBIDDEN_EXTENSIONS, true)) {
+            return [
+                'valid' => false,
+                'error' => Util::translate(
+                    'sf_UploadForbiddenExtension',
+                    false,
+                    ['extension' => $extension]
+                )
+            ];
+        }
+
+        // 2. Check MIME type for category
+        if (isset(self::ALLOWED_MIME_TYPES[$category])) {
+            if (!in_array($mimeType, self::ALLOWED_MIME_TYPES[$category], true)) {
+                return [
+                    'valid' => false,
+                    'error' => Util::translate(
+                        'sf_UploadInvalidMimeType', false,
+                        [
+                            'mimetype' => $mimeType,
+                            'category' => $category
+                        ]
+                    )
+                ];
+            }
+        }
+
+        // 3. Special check for .img files (only for firmware)
+        if ($extension === 'img' && $category !== 'firmware') {
+            return [
+                'valid' => false,
+                'error' => Util::translate('sf_UploadImgOnlyForFirmware', false)
+            ];
+        }
+
+        // 4. Additional security check for CSV files
+        if ($category === 'csv' && !in_array($extension, ['csv', 'txt'], true)) {
+            return [
+                'valid' => false,
+                'error' => Util::translate(
+                    'sf_UploadInvalidExtensionForCategory', false,
+                    ['extension' => $extension, 'category' => $category]
+                )
+            ];
+        }
+
+        return ['valid' => true];
+    }
+
+    /**
+     * Validate file content using magic bytes (finfo).
+     *
+     * Called after merge to verify that file content matches the declared category.
+     * This prevents type spoofing where a malicious file is uploaded with a fake MIME header.
+     *
+     * @param string $filePath Absolute path to merged file
+     * @param string $category File category (sound, image, csv, archive, firmware)
+     *
+     * @return array{valid: bool, error?: string} Validation result
+     */
+    public static function validateMagicBytes(string $filePath, string $category): array
+    {
+        // Skip validation for categories where finfo is unreliable
+        if (!isset(self::MAGIC_BYTES_MIME_PREFIXES[$category])) {
+            return ['valid' => true];
+        }
+
+        if (!file_exists($filePath) || filesize($filePath) === 0) {
+            return ['valid' => false, 'error' => 'File not found or empty'];
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $detectedMime = $finfo->file($filePath);
+
+        if ($detectedMime === false) {
+            return ['valid' => false, 'error' => 'Unable to detect file type'];
+        }
+
+        // Check if detected MIME matches any allowed prefix for this category
+        $allowedPrefixes = self::MAGIC_BYTES_MIME_PREFIXES[$category];
+        $matched = false;
+        foreach ($allowedPrefixes as $prefix) {
+            if (str_starts_with($detectedMime, $prefix)) {
+                $matched = true;
+                break;
+            }
+        }
+
+        if (!$matched) {
+            return [
+                'valid' => false,
+                'error' => "File content does not match category '$category': detected '$detectedMime'",
+            ];
+        }
+
+        // SVG-specific check: reject files containing script tags (XSS vector)
+        if ($detectedMime === 'image/svg+xml') {
+            $svgResult = self::validateSvgContent($filePath);
+            if (!$svgResult['valid']) {
+                return $svgResult;
+            }
+        }
+
+        return ['valid' => true];
+    }
+
+    /**
+     * Check SVG file for dangerous content (embedded scripts, event handlers).
+     *
+     * @param string $filePath Path to SVG file
+     *
+     * @return array{valid: bool, error?: string}
+     */
+    private static function validateSvgContent(string $filePath): array
+    {
+        $content = file_get_contents($filePath, false, null, 0, 1024 * 100); // Read first 100KB
+        if ($content === false) {
+            return ['valid' => false, 'error' => 'Unable to read SVG file'];
+        }
+
+        $contentLower = strtolower($content);
+
+        // Check for script tags and event handlers
+        $dangerousPatterns = [
+            '<script',
+            'javascript:',
+            'onload=',
+            'onerror=',
+            'onclick=',
+            'onmouseover=',
+            'onfocus=',
+            'onanimationend=',
+        ];
+
+        foreach ($dangerousPatterns as $pattern) {
+            if (str_contains($contentLower, $pattern)) {
+                return [
+                    'valid' => false,
+                    'error' => 'SVG contains potentially dangerous content',
+                ];
+            }
+        }
+
+        return ['valid' => true];
     }
 }

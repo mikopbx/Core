@@ -25,7 +25,7 @@ use PHPUnit\Framework\TestCase;
 class PBXTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
 {
 
-    public function testDialplanReload()
+    public function testDialplanReload(): void
     {
         PBX::dialplanReload();
         $this->assertTrue(true);

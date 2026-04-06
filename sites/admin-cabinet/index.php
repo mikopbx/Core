@@ -16,12 +16,10 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
+namespace MikoPBX\AdminCabinet;
 
 use MikoPBX\Common\Config\RegisterDIServices as RegisterCommonDIServices;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Providers\RegistryProvider;
-use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
-use MikoPBX\Common\Providers\WhoopsErrorHandlerProvider;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Mvc\Application as BaseApplication;
 
@@ -30,10 +28,10 @@ class Application extends BaseApplication
     /**
      * Register the services here to make them general or register in the ModuleDefinition to make them module-specific
      */
-    protected function registerServices()
+    protected function registerServices(): void
     {
 
-        $di = new Phalcon\Di\FactoryDefault();
+        $di = new \Phalcon\Di\FactoryDefault();
 
         /**
          * Auto-loader configuration
@@ -45,7 +43,7 @@ class Application extends BaseApplication
         $this->setDI($di);
     }
 
-    public function main()
+    public function main(): void
     {
         $this->registerServices();
 
@@ -62,8 +60,10 @@ class Application extends BaseApplication
         PbxExtensionUtils::registerEnabledModulesInApp($this);
 
         try {
-            echo $this->handle($_SERVER['REQUEST_URI'])->getContent();
-        } catch (Throwable $e) {
+            $response = $this->handle($_SERVER['REQUEST_URI']);
+            $content = $response->getContent();
+            echo $content ?? '';
+        } catch (\Throwable $e) {
             CriticalErrorsHandler::handleException($e);
         }
     }

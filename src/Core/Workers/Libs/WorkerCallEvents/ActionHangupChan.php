@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,8 +20,8 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
-
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -34,7 +35,6 @@ use MikoPBX\Core\Workers\WorkerCallEvents;
  */
 class ActionHangupChan
 {
-
     /**
      * Executes the hangup channel action.
      *
@@ -42,6 +42,7 @@ class ActionHangupChan
      * @param array $data The data containing call details.
      *
      * @return void
+     * @throws \Exception
      */
     public static function execute(WorkerCallEvents $worker, array $data): void
     {
@@ -73,14 +74,14 @@ class ActionHangupChan
     /**
      * Hangs up the channel for end calls.
      *
-     * @param mixed $worker The worker instance.
+     * @param WorkerCallEvents $worker The worker instance.
      * @param array $data The data containing call details.
      * @param array $transfer_calls The array to store transfer calls.
      * @param array $channels The array to store channels.
      *
      * @return void
      */
-    private static function hangupChanEndCalls($worker, array $data, array &$transfer_calls, array &$channels): void
+    private static function hangupChanEndCalls(WorkerCallEvents $worker, array $data, array &$transfer_calls, array &$channels): void
     {
         $filter = [
             'linkedid=:linkedid: AND endtime = ""',
@@ -127,7 +128,15 @@ class ActionHangupChan
                 }
             }
             $row->writeAttribute('endtime', $data['end']);
+            $wasTransfer = ($row->transfer === '1');
             $row->writeAttribute('transfer', 0);
+
+            // Write IVR DTMF digits for app (IVR) records on hangup
+            $ivrDtmf = $data['ivr_dtmf'] ?? '';
+            if ($ivrDtmf !== '' && $row->is_app === '1') {
+                $row->writeAttribute('dtmf_digits', ltrim($ivrDtmf, ','));
+            }
+
             if ($transferCdrAnswered === false && count($transfer_calls) === 2) {
                 // Call termination for consultative transfer. Initiator hung up before the destination answered.
                 $row->writeAttribute('a_transfer', 1);
@@ -148,16 +157,58 @@ class ActionHangupChan
                     'chan' => $row->src_chan,
                     'did' => $row->did,
                     'num' => $row->src_num,
+                    'name' => $row->src_name,
                     'out' => true,
                 ];
             } else {
-                $worker->StopMixMonitor($row->dst_chan, 'hangupChanEndCalls');
+                if (!$wasTransfer) {
+                    $worker->StopMixMonitor($row->dst_chan, 'hangupChanEndCalls');
+                }
                 $channels[] = [
                     'chan' => $row->dst_chan,
                     'did' => $row->did,
                     'num' => $row->dst_num,
+                    'name' => $row->dst_name,
                     'out' => false,
                 ];
+            }
+        }
+
+        // Fallback: when a SIP transfer to a queue occurred, the sip_transfer CDR record
+        // was created with the original call's linkedid, but the endpoint's linkedid was NOT
+        // updated by Asterisk (Local channel intermediaries prevent propagation).
+        // Search by channel name to find and close these orphaned CDR records.
+        if ($countRows === 0) {
+            $filter = [
+                '(src_chan=:chan: OR dst_chan=:chan:) AND endtime = ""',
+                'bind' => ['chan' => $data['agi_channel']],
+            ];
+            $fallbackData = CallDetailRecordsTmp::find($filter);
+            foreach ($fallbackData as $row) {
+                $row->writeAttribute('endtime', $data['end']);
+                $row->writeAttribute('transfer', 0);
+                $res = $row->update();
+                if (!$res) {
+                    SystemMessages::sysLogMsg('Action_hangup_chan', implode(' ', $row->getMessages()), LOG_DEBUG);
+                }
+            }
+        }
+
+        // The SRC channel has been completed and DST channel has not been created
+        $filter = [
+            'verbose_call_id=:verbose_call_id: AND endtime = "" AND dst_chan = "" AND src_chan = :src_chan:',
+            'bind' => [
+                'verbose_call_id' => $data['verbose_call_id'],
+                'src_chan' => $data['agi_channel'],
+            ],
+        ];
+        $m_data = CallDetailRecordsTmp::find($filter);
+        foreach ($m_data as $row) {
+            $row->writeAttribute('endtime', $row->start);
+            $row->writeAttribute('transfer', 0);
+            $res = $row->update();
+            if (!$res) {
+                SystemMessages::sysLogMsg('Action_hangup_chan', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
 
@@ -200,19 +251,20 @@ class ActionHangupChan
         $data['start'] = date("Y-m-d H:i:s.v", $time);
         $data['endtime'] = $data['end'];
 
-        InsertDataToDB::execute($data);
+        InsertDataToDB::execute($data, $data['agi_channel']);
     }
 
     /**
      * Checks for SIP transfers when hanging up a channel.
      *
      * @param WorkerCallEvents $worker The worker instance.
-     * @param mixed $data The data containing call details.
+     * @param array $data The data containing call details.
      * @param array $channels The list of channels.
      *
      * @return void
+     * @throws \Exception
      */
-    public static function hangupChanCheckSipTrtansfer(WorkerCallEvents $worker, $data, $channels): void
+    public static function hangupChanCheckSipTrtansfer(WorkerCallEvents $worker, array $data, array $channels): void
     {
         $not_local = (stripos($data['agi_channel'], 'local/') === false);
         if ($not_local === false || $data['OLD_LINKEDID'] !== $data['linkedid']) {
@@ -234,16 +286,33 @@ class ActionHangupChan
             }
 
             $linkedid = $am->GetVar($data_chan['chan'], 'CHANNEL(linkedid)', null, false);
-            if (empty($linkedid) || $linkedid === $data['linkedid']) {
+            if (empty($linkedid)) {
                 continue;
+            }
+            if ($linkedid === $data['linkedid']) {
+                // Direct linkedid check shows no change. Try following the Local channel chain.
+                // When a transfer targets a queue, the endpoint (e.g. PJSIP/201) stays in its
+                // original bridge with Local/xxx;2. The linkedid only propagates in the bridge
+                // where the actual channel swap occurred (Local/xxx;1's bridge).
+                // Traverse: endpoint → BRIDGEPEER(Local;2) → otherHalf(Local;1) → check linkedid.
+                $linkedid = self::resolveLinkedIdThroughLocalChain($am, $data_chan['chan'], $data['linkedid'], $active_chans);
+                if ($linkedid === null) {
+                    continue;
+                }
             }
 
             $CALLERID = $am->GetVar($BRIDGEPEER, 'CALLERID(num)', null, false);
+            $CALLERID_NAME = $am->GetVar($BRIDGEPEER, 'CALLERID(name)', null, false);
+            if (!is_string($CALLERID_NAME) || $CALLERID_NAME === $CALLERID) {
+                $CALLERID_NAME = '';
+            }
             $n_data['action'] = 'sip_transfer';
             $n_data['src_chan'] = $data_chan['out'] ? $data_chan['chan'] : $BRIDGEPEER;
             $n_data['src_num'] = $data_chan['out'] ? $data_chan['num'] : $CALLERID;
+            $n_data['src_name'] = $data_chan['out'] ? ($data_chan['name'] ?? '') : $CALLERID_NAME;
             $n_data['dst_chan'] = $data_chan['out'] ? $BRIDGEPEER : $data_chan['chan'];
             $n_data['dst_num'] = $data_chan['out'] ? $CALLERID : $data_chan['num'];
+            $n_data['dst_name'] = $data_chan['out'] ? $CALLERID_NAME : ($data_chan['name'] ?? '');
             $n_data['start'] = date('Y-m-d H:i:s');
             $n_data['answer'] = date('Y-m-d H:i:s');
             $n_data['linkedid'] = $linkedid;
@@ -251,8 +320,32 @@ class ActionHangupChan
             $n_data['transfer'] = '0';
             if ($worker->enableMonitor($n_data['src_num'] ?? '', $n_data['dst_num'] ?? '')) {
                 $n_data['recordingfile'] = $worker->MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID'], '', '', 'hangupChanCheckSipTrtansfer');
+                $n_data['rec_src_channel'] = $worker->getRecSrcChannel($n_data['dst_chan'], $n_data['src_chan'] ?? '', $n_data['dst_chan']);
             }
             $n_data['did'] = $data_chan['did'];
+
+            // Look up call IDs from existing CDR records in same linkedid
+            $cdrFilter = [
+                'linkedid=:lid:',
+                'bind' => ['lid' => $data['linkedid']],
+            ];
+            foreach (CallDetailRecordsTmp::find($cdrFilter) as $cdr) {
+                if (empty($n_data['src_call_id'])) {
+                    if ($cdr->src_chan === $n_data['src_chan'] && !empty($cdr->src_call_id)) {
+                        $n_data['src_call_id'] = $cdr->src_call_id;
+                    } elseif ($cdr->src_num === $n_data['src_num'] && !empty($cdr->src_call_id)) {
+                        $n_data['src_call_id'] = $cdr->src_call_id;
+                    }
+                }
+                if (empty($n_data['dst_call_id'])) {
+                    if ($cdr->dst_chan === $n_data['dst_chan'] && !empty($cdr->dst_call_id)) {
+                        $n_data['dst_call_id'] = $cdr->dst_call_id;
+                    }
+                }
+                if (!empty($n_data['src_call_id']) && !empty($n_data['dst_call_id'])) {
+                    break;
+                }
+            }
 
             InsertDataToDB::execute($n_data);
             $filter = [
@@ -266,8 +359,86 @@ class ActionHangupChan
             }
 
             // Sending UserEvent
-            $AgiData = base64_encode(json_encode($n_data));
-            $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
+            $am->UserEvent('CdrConnector', ['AgiData' => AsteriskManager::encodeCdrData($n_data)]);
         }
+    }
+
+    /**
+     * Follows the Local channel chain to find a channel with a different linkedid.
+     *
+     * When a SIP transfer targets a queue, the endpoint (e.g. PJSIP/201) remains in its
+     * original bridge with Local/xxx;2 and its linkedid is NOT updated by Asterisk.
+     * However, the other half (Local/xxx;1) IS in the bridge where the transfer channel swap
+     * occurred, so its linkedid WAS updated to the original call's linkedid.
+     *
+     * This method traverses: channel → BRIDGEPEER (Local;2) → otherHalf (Local;1) → linkedid.
+     * Supports multiple levels of Local channel nesting (max depth 3).
+     *
+     * @param \MikoPBX\Core\Asterisk\AsteriskManager $am AMI connection.
+     * @param string $channel Starting channel to trace from.
+     * @param string $originalLinkedid The linkedid to compare against (hangup channel's linkedid).
+     * @param array $activeChans List of currently active channels.
+     * @return string|null The different linkedid found, or null if chain traversal finds nothing.
+     */
+    private static function resolveLinkedIdThroughLocalChain(
+        $am,
+        string $channel,
+        string $originalLinkedid,
+        array $activeChans
+    ): ?string {
+        $maxDepth = 3;
+        $currentChannel = $channel;
+        $visited = [$channel];
+
+        for ($i = 0; $i < $maxDepth; $i++) {
+            $bridgePeer = $am->GetVar($currentChannel, 'BRIDGEPEER', null, false);
+            if (!is_string($bridgePeer) || !in_array($bridgePeer, $activeChans, true)) {
+                break;
+            }
+
+            // BRIDGEPEER must be a Local channel to continue traversal
+            if (stripos($bridgePeer, 'local/') === false) {
+                break;
+            }
+
+            // Get the other half of the Local channel pair (;2 → ;1 or ;1 → ;2)
+            $otherHalf = self::getLocalChannelOtherHalf($bridgePeer);
+            if ($otherHalf === null || !in_array($otherHalf, $activeChans, true)) {
+                break;
+            }
+
+            if (in_array($otherHalf, $visited, true)) {
+                break;
+            }
+            $visited[] = $otherHalf;
+
+            // Check linkedid on the other half — it may have been updated by the bridge merge
+            $linkedid = $am->GetVar($otherHalf, 'CHANNEL(linkedid)', null, false);
+            if (!empty($linkedid) && $linkedid !== $originalLinkedid) {
+                return $linkedid;
+            }
+
+            // Continue traversal from the other half
+            $currentChannel = $otherHalf;
+        }
+
+        return null;
+    }
+
+    /**
+     * Converts a Local channel name from one half to the other.
+     *
+     * @param string $localChannel e.g. "Local/201@internal-00000008;2"
+     * @return string|null The other half, e.g. "Local/201@internal-00000008;1", or null if not a Local channel.
+     */
+    private static function getLocalChannelOtherHalf(string $localChannel): ?string
+    {
+        if (str_ends_with($localChannel, ';1')) {
+            return substr($localChannel, 0, -1) . '2';
+        }
+        if (str_ends_with($localChannel, ';2')) {
+            return substr($localChannel, 0, -1) . '1';
+        }
+        return null;
     }
 }

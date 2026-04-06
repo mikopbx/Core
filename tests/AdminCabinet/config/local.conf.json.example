@@ -1,0 +1,52 @@
+{
+  "user": "your_browserstack_username",
+  "key": "your_browserstack_access_key",
+  "server": "hub-cloud.browserstack.com",
+  "MIKO_LICENSE_KEY": "your_miko_license_key",
+  "SSH_RSA_KEYS_SET": "your_ssh_keys_if_needed",
+  
+  "capabilities": {
+    "project": "MikoPBX",
+    "browserstack.debug": "true",
+    "browserstack.console": "errors",
+    "browserstack.networkLogs": "true",
+    "acceptSslCerts": "true",
+    "browserstack.local": "true",
+    "browserstack.selenium_version": "4.0.0"
+  },
+  
+  "environments": [
+    {
+      "name": "Chrome Latest - macOS",
+      "browser": "chrome",
+      "browser_version": "latest",
+      "os": "OS X",
+      "os_version": "Ventura",
+      "browserName": "chrome"
+    },
+    {
+      "name": "Firefox Latest - macOS", 
+      "browser": "firefox",
+      "browser_version": "latest",
+      "os": "OS X",
+      "os_version": "Ventura",
+      "browserName": "firefox"
+    },
+    {
+      "name": "Safari Latest - macOS",
+      "browser": "safari",
+      "browser_version": "latest",
+      "os": "OS X",
+      "os_version": "Ventura",
+      "browserName": "safari"
+    },
+    {
+      "name": "Edge Latest - Windows",
+      "browser": "edge",
+      "browser_version": "latest",
+      "os": "Windows",
+      "os_version": "11",
+      "browserName": "MicrosoftEdge"
+    }
+  ]
+}

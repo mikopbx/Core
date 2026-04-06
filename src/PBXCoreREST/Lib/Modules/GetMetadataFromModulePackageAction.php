@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,15 +19,17 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use ZipArchive;
+use Phalcon\Di\Injectable;
 
 /**
  * Class GetMetadataFromModulePackage
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class GetMetadataFromModulePackageAction extends \Phalcon\Di\Injectable
+class GetMetadataFromModulePackageAction extends Injectable
 {
     /**
      * Unpacks a module ZIP file and retrieves metadata information from the JSON config inside.
@@ -41,25 +43,69 @@ class GetMetadataFromModulePackageAction extends \Phalcon\Di\Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        if (file_exists($filePath)) {
-            $moduleUniqueID = false;
-            $zip = new ZipArchive();
-            if ($zip->open($filePath) === TRUE) {
-                $out = $zip->getFromName('module.json');
-                $zip->close();
-                $settings       = json_decode($out, true);
-                $moduleUniqueID = $settings['moduleUniqueID'] ?? null;
-            }
-            if (!$moduleUniqueID) {
-                $res->messages[] = 'The" moduleUniqueID " in the module file is not described.the json or file does not exist.';
-                return $res;
-            }
-            $res->success = true;
-            $res->data = [
-                'filePath' => $filePath,
-                'uniqid'   => $moduleUniqueID,
-            ];
+        if (!file_exists($filePath)) {
+            $res->messages[] = TranslationProvider::translate('ext_FileNotFound', ['filePath' => $filePath]);
+            return $res;
         }
+
+        $zip = new ZipArchive();
+        $openResult = $zip->open($filePath);
+
+        if ($openResult !== true) {
+            // ZIP file is corrupted or cannot be opened
+            $errorCode = match($openResult) {
+                ZipArchive::ER_NOZIP => 'NOT_ZIP',
+                ZipArchive::ER_INCONS => 'INCONSISTENT',
+                ZipArchive::ER_CRC => 'CRC_ERROR',
+                ZipArchive::ER_READ => 'READ_ERROR',
+                ZipArchive::ER_SEEK => 'SEEK_ERROR',
+                default => 'UNKNOWN_ERROR'
+            };
+
+            $res->messages[] = TranslationProvider::translate('ext_CorruptedZipFile', [
+                'filePath' => $filePath,
+                'errorCode' => $errorCode
+            ]);
+            return $res;
+        }
+
+        // Try to extract module.json
+        $moduleJsonContent = $zip->getFromName('module.json');
+        $zip->close();
+
+        if ($moduleJsonContent === false) {
+            $res->messages[] = TranslationProvider::translate('ext_ModuleJsonNotFound', [
+                'filePath' => $filePath
+            ]);
+            return $res;
+        }
+
+        // Try to decode JSON
+        $settings = json_decode($moduleJsonContent, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $res->messages[] = TranslationProvider::translate('ext_InvalidModuleJson', [
+                'filePath' => $filePath,
+                'error' => json_last_error_msg()
+            ]);
+            return $res;
+        }
+
+        // Check if moduleUniqueID exists
+        $moduleUniqueID = $settings['moduleUniqueID'] ?? null;
+
+        if (empty($moduleUniqueID)) {
+            $res->messages[] = TranslationProvider::translate('ext_MissingModuleUniqueID', [
+                'filePath' => $filePath
+            ]);
+            return $res;
+        }
+
+        $res->success = true;
+        $res->data = [
+            'filePath' => $filePath,
+            'uniqid'   => $moduleUniqueID,
+        ];
 
         return $res;
     }

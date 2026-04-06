@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +20,12 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Configs\PbxConf;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 
 /**
  * Represents the AsteriskConf class responsible for generating asterisk.conf configuration file.
@@ -43,20 +44,33 @@ class AsteriskConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $lang = $this->generalSettings[PbxSettingsConstants::PBX_LANGUAGE];
+        $lang = PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
+        $astetcdir = Directories::getDir(Directories::AST_ETC_DIR);
+        $astagidir = Directories::getDir(Directories::AST_AGI_BIN_DIR);
+        $astkeydir = $astetcdir;
+        $astrundir = '/var/asterisk/run';
+        $astmoddir = Directories::getDir(Directories::AST_MOD_DIR);
+        $astvarlibdir = Directories::getDir(Directories::AST_VAR_LIB_DIR);
+        $astsoundsdir = Directories::getDir(Directories::AST_SOUNDS_DIR);
+        $astdbdir = Directories::getDir(Directories::AST_DB_DIR);
+        $astlogdir = Directories::getDir(Directories::AST_LOG_DIR);
+        $astspooldir = Directories::getDir(Directories::AST_SPOOL_DIR);
+
+
 
         // Build the configuration content
         $conf = "[directories]\n" .
-            "astetcdir => {$this->config->path('asterisk.astetcdir')}\n" .
-            "astagidir => {$this->config->path('asterisk.astagidir')}\n" .
-            "astkeydir => /etc/asterisk\n" .
-            "astrundir => /var/asterisk/run\n" .
-            "astmoddir => {$this->config->path('asterisk.astmoddir')}\n" .
-            "astvarlibdir => {$this->config->path('asterisk.astvarlibdir')}\n" .
-            "astdbdir => {$this->config->path('asterisk.astdbdir')}\n" .
-            "astlogdir => {$this->config->path('asterisk.astlogdir')}\n" .
-            "astspooldir => {$this->config->path('asterisk.astspooldir')}\n" .
-            "astdatadir => {$this->config->path('asterisk.astvarlibdir')}\n" .
+            "astetcdir => {$astetcdir}\n" .
+            "astagidir => {$astagidir}\n" .
+            "astkeydir => {$astkeydir}\n" .
+            "astrundir => {$astrundir}\n" .
+            "astmoddir => {$astmoddir}\n" .
+            "astvarlibdir => {$astvarlibdir}\n" .
+            "astsoundsdir => {$astsoundsdir}\n" .
+            "astdbdir => {$astdbdir}\n" .
+            "astlogdir => {$astlogdir}\n" .
+            "astspooldir => {$astspooldir}\n" .
+            "astdatadir => {$astvarlibdir}\n" .
             "\n" .
             "\n" .
             "[options]\n" .
@@ -65,18 +79,18 @@ class AsteriskConf extends AsteriskConfigClass
             "dumpcore = no\n" .
             "transcode_via_sln = no\n" .
             "hideconnect = yes\n" .
-            "defaultlanguage = {$lang}\n" .
+            "defaultlanguage = $lang\n" .
             "systemname = mikopbx\n";
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/asterisk.conf', $conf);
+        $this->saveConfig($conf, $this->description);
 
         $logCmdFile  = self::getLogFile();
-        if(!file_exists($logCmdFile)){
+        if (!file_exists($logCmdFile)) {
             file_put_contents($logCmdFile, '');
         }
         $cmdFileLink = '/root/.asterisk_history';
-        if(!file_exists($cmdFileLink)){
+        if (!file_exists($cmdFileLink)) {
             Util::createUpdateSymlink($logCmdFile, $cmdFileLink, true);
         }
 
@@ -89,9 +103,9 @@ class AsteriskConf extends AsteriskConfigClass
      *
      * @return string The log file path.
      */
-    public static function getLogFile():string
+    public static function getLogFile(): string
     {
-        return System::getLogDir() . '/asterisk/asterisk-cli.log';
+        return Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/asterisk-cli.log';
     }
 
     /**
@@ -107,8 +121,8 @@ class AsteriskConf extends AsteriskConfigClass
         $text_config = $f_name . " {
     nocreate
     nocopytruncate
+    compress
     delaycompress
-    nomissingok
     start 0
     rotate 2
     size {$max_size}M
@@ -118,8 +132,8 @@ class AsteriskConf extends AsteriskConfigClass
     endscript
 }";
         $di = Di::getDefault();
-        if ($di !== null){
-            $varEtcDir = $di->getConfig()->path('core.varEtcDir');
+        if ($di !== null) {
+            $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
         } else {
             $varEtcDir = '/var/etc';
         }
@@ -130,6 +144,31 @@ class AsteriskConf extends AsteriskConfigClass
         if (Util::mFileSize($f_name) > $mb10) {
             $options = '-f';
         }
-        Processes::mwExecBg("{$logRotatePath} {$options} '{$path_conf}' > /dev/null 2> /dev/null");
+        Processes::mwExecBg("$logRotatePath $options '$path_conf' > /dev/null 2> /dev/null");
+    }
+
+    /**
+     * Reloads the Asterisk core configuration.
+     */
+    public static function reload(): void
+    {
+        $asteriskConf = new self();
+        $asteriskConf->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'core reload'");
+    }
+
+    /**
+     * Restarts the Asterisk core.
+     */
+    public static function restart(): void
+    {
+        $asteriskConf = new self();
+        $asteriskConf->generateConfig();
+
+        $indicationConf = new IndicationConf();
+        $indicationConf->generateConfig();
+
+        PbxConf::safeRestart();
     }
 }

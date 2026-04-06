@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi, globalTranslate */
+/* global globalRootUrl, ModulesAPI, globalTranslate */
 
 /**
  * Represents the extension module popup.
@@ -63,7 +63,7 @@ const extensionModuleDetail = {
                             closable: true,
                         })
                         .modal('show');
-                    PbxApi.ModulesGetModuleInfo(params, extensionModuleDetail.cbAfterGetModuleDetails);
+                    ModulesAPI.getModuleInfo(params, extensionModuleDetail.cbAfterGetModuleDetails);
                 }
             }
         });
@@ -101,13 +101,12 @@ const extensionModuleDetail = {
      * Callback function to handle the response after fetching module details from the API.
      * It populates the module detail popup with the retrieved data, including name, logo, version, and other module-specific information.
      *
-     * @param {boolean} result - A boolean indicating if the API request was successful.
-     * @param {Object} response - The data returned from the API request, expected to contain module details such as name,
-     *                            logo URL, version, and other relevant information.
+     * @param {Object} repoData - The module data returned from the API request, containing module details such as name,
+     *                            logo URL, version, releases, and other relevant information.
+     * @param {boolean} success - A boolean indicating if the API request was successful.
      */
-    cbAfterGetModuleDetails(result, response) {
-        if(result) {
-            const repoData = response.data;
+    cbAfterGetModuleDetails(repoData, success) {
+        if(success) {
 
             const $newPopup = extensionModuleDetail.$moduleDetailPopup;
 
@@ -163,7 +162,7 @@ const extensionModuleDetail = {
             }
 
             // Screenshots
-            if (repoData.screenshots !== undefined && repoData.screenshots.length>0) {
+            if (repoData.screenshots && repoData.screenshots.length>0) {
                 const screenshotsView = extensionModuleDetail.prepareScreenshotsView(repoData.screenshots);
                 $newPopup.find('.module-screenshots').html(screenshotsView);
             } else {
@@ -181,7 +180,7 @@ const extensionModuleDetail = {
             // Initialize the image slider for screenshots, if any
             extensionModuleDetail.initializeSlider($newPopup);
 
-            // Total count of installations
+            // Eula
             if (repoData.eula) {
                 $newPopup.find('.module-eula').html(UserMessage.convertToText(repoData.eula));
             } else {
@@ -217,7 +216,7 @@ const extensionModuleDetail = {
      * @return {string} HTML string representing the commercial status of the module.
      */
     prepareCommercialView(commercial) {
-        if(commercial==='1'){
+        if(commercial===1){
             return '<i class="ui donate icon"></i> '+globalTranslate.ext_CommercialModule;
         }
         return '<i class="puzzle piece icon"></i> '+globalTranslate.ext_FreeModule;

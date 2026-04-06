@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -19,10 +20,10 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Files;
 
-
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Class RemoveAudioFile
@@ -30,7 +31,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Files
  */
-class RemoveAudioFileAction extends \Phalcon\Di\Injectable
+class RemoveAudioFileAction extends Injectable
 {
     /**
      * Delete file from disk by filepath
@@ -44,30 +45,33 @@ class RemoveAudioFileAction extends \Phalcon\Di\Injectable
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         $extension      = Util::getExtensionOfFile($filePath);
-        if ( ! in_array($extension, ['mp3', 'wav', 'alaw'])) {
+        if (! in_array($extension, ['mp3', 'wav', 'alaw'])) {
             $res->success    = false;
             $res->messages[] = "It is forbidden to remove the file type $extension.";
 
             return $res;
         }
 
-        if ( ! file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             $res->success         = true;
-            $res->data['message'] = "File '{$filePath}' already deleted";
+            $res->data['message'] = "File '$filePath' already deleted";
 
             return $res;
         }
 
         $out = [];
 
+        $basePath = Util::trimExtensionForFile($filePath);
         $arrDeletedFiles = [
-            escapeshellarg(Util::trimExtensionForFile($filePath) . ".wav"),
-            escapeshellarg(Util::trimExtensionForFile($filePath) . ".mp3"),
-            escapeshellarg(Util::trimExtensionForFile($filePath) . ".alaw"),
+            escapeshellarg($basePath . ".wav"),
+            escapeshellarg($basePath . ".wav16"),
+            escapeshellarg($basePath . ".wav48"),
+            escapeshellarg($basePath . ".mp3"),
+            escapeshellarg($basePath . ".alaw"),
         ];
 
-        $rmPath = Util::which('rm');
-        Processes::mwExec("{$rmPath} -rf " . implode(' ', $arrDeletedFiles), $out);
+        $rm = Util::which('rm');
+        Processes::mwExec("$rm -rf " . implode(' ', $arrDeletedFiles), $out);
         if (file_exists($filePath)) {
             $res->success  = false;
             $res->messages = $out;

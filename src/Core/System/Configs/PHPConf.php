@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,14 +20,11 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di;
-use Phalcon\Di\Injectable;
 
 /**
  * Class PHPConf
@@ -35,27 +33,18 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class PHPConf extends Injectable
+class PHPConf extends SystemConfigClass
 {
+    public const string PROC_NAME = 'php-fpm';
+    private const string CONF_PATH = '/etc/php.ini';
+    private const string CONF_TIME_ZONE = '/etc/php.d/01-timezone.ini';
 
-    /**
-     * Relocates PHP error log to the storage mount.
-     *
-     * @return void
-     */
-    public static function setupLog(): void
+    public function __construct()
     {
-        $src_log_file = '/var/log/php_error.log';
-        $dst_log_file = self::getLogFile();
-        if ( ! file_exists($src_log_file)) {
-            file_put_contents($src_log_file, '');
-        }
-        $options = file_exists($dst_log_file) ? '>' : '';
-        $catPath = Util::which('cat');
-        Processes::mwExec("{$catPath} {$src_log_file} 2> /dev/null >{$options} {$dst_log_file}");
-        Util::createUpdateSymlink($dst_log_file, $src_log_file);
+        parent::__construct();
+        $binPath = Util::which(self::PROC_NAME);
+        $this->startCommand = "$binPath -c ".self::CONF_PATH;
     }
-
 
     /**
      * Returns the PHP error log file path.
@@ -64,51 +53,42 @@ class PHPConf extends Injectable
      */
     public static function getLogFile(): string
     {
-        $logdir = System::getLogDir() . '/php';
+        $logdir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/php';
         Util::mwMkdir($logdir);
-        return "$logdir/error.log";
+        return "$logdir/php-error.log";
     }
 
     /**
-     * Rotates the PHP error log.
+     * Generates the rsyslog configuration for PHP logging.
+     * Creates /etc/rsyslog.d/php.conf to redirect PHP logs to a separate file.
      *
      * @return void
      */
-    public static function logRotate(): void
+    public static function generateSyslogConf(): void
     {
-        $logrotatePath = Util::which('logrotate');
+        Util::mwMkdir('/etc/rsyslog.d');
+        $logFile = self::getLogFile();
+        $pathScript = SyslogConf::createRotateScript('php-error.log', $logFile);
+        $confSyslogD = '$outchannel log_php,' . $logFile . ',10485760,' . $pathScript . PHP_EOL .
+            'if $programname == "php" then :omfile:$log_php' . PHP_EOL .
+            'if $programname == "php" then stop' . PHP_EOL;
+        file_put_contents('/etc/rsyslog.d/php.conf', $confSyslogD);
+    }
 
-        $max_size    = 10;
-        $f_name      = self::getLogFile();
-        $text_config = $f_name . " {
-    nocreate
-    nocopytruncate
-    delaycompress
-    nomissingok
-    start 0
-    rotate 9
-    size {$max_size}M
-    missingok
-    noolddir
-    postrotate
-    endscript
-}";
-        // TODO::Add restart PHP-FPM after rotation
-        $di     = Di::getDefault();
-        if ($di !== null){
-            $varEtcDir = $di->getConfig()->path('core.varEtcDir');
-        } else {
-            $varEtcDir = '/var/etc';
+    /**
+     * Removes legacy PHP log symlink.
+     * Called during syslog restart to clean up old configuration.
+     *
+     * @return void
+     */
+    public static function removeLegacyLogSymlink(): void
+    {
+        $legacySymlink = '/var/log/php_error.log';
+        if (is_link($legacySymlink)) {
+            unlink($legacySymlink);
+        } elseif (file_exists($legacySymlink)) {
+            unlink($legacySymlink);
         }
-        $path_conf   = $varEtcDir . '/php_logrotate_' . basename($f_name) . '.conf';
-        file_put_contents($path_conf, $text_config);
-        $mb10 = $max_size * 1024 * 1024;
-
-        $options = '';
-        if (Util::mFileSize($f_name) > $mb10) {
-            $options = '-f';
-        }
-        Processes::mwExecBg("{$logrotatePath} {$options} '{$path_conf}' > /dev/null 2> /dev/null");
     }
 
     /**
@@ -118,32 +98,69 @@ class PHPConf extends Injectable
      */
     public static function phpTimeZoneConfigure(): void
     {
-        $timezone      = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE);
+        $timezone      = PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE);
         date_default_timezone_set($timezone);
         if (file_exists('/etc/TZ')) {
-            $catPath = Util::which('cat');
-            Processes::mwExec("export TZ='$({$catPath} /etc/TZ)'");
+            $cat = Util::which('cat');
+            Processes::mwExec("export TZ='$($cat /etc/TZ)'");
         }
-        $etcPhpIniPath = '/etc/php.d/01-timezone.ini';
-        $contents = 'date.timezone="'.$timezone.'"';
-        file_put_contents($etcPhpIniPath, $contents);
+        file_put_contents(self::CONF_TIME_ZONE, 'date.timezone="' . $timezone . '"');
+    }
+
+    /**
+     * Start the service.
+     *
+     * @return bool True if successful, false otherwise.
+     */
+    public function start(): bool
+    {
+        if(System::isBooting()){
+            Processes::mwExecBg($this->startCommand);
+            $result = $this->monitWaitStart();
+        }else{
+            $result = $this->reStart();
+        }
+        return $result;
     }
 
     /**
      * Restarts php-fpm.
      *
-     * @return void
+     * @return bool
      */
-    public static function reStart(): void
+    public function reStart(): bool
     {
-        $phpFPMPath = Util::which('php-fpm');
+        $this->generateMonitConf();
+        return $this->monitRestart();
+    }
 
-        // Send graceful shutdown signal
-        Processes::mwExec('kill -SIGQUIT "$(cat /var/run/php-fpm.pid)"');
-        usleep(100000);
+    /**
+     * Generates the Monit configuration file for monitoring the current service.
+     *
+     * This method constructs a Monit configuration entry that defines:
+     * - The process name and PID file path
+     * - Start command using the binary with configuration parameter
+     * - Stop command using SIGTERM via BusyBox
+     * - Execution permissions (as root user/group)
+     *
+     * The configuration is saved to a file in the Monit configuration directory,
+     * with a filename generated based on the service priority and name.
+     *
+     * @return bool Always returns true after successfully writing the configuration file.
+     */
+    public function generateMonitConf(): bool
+    {
+        $busyboxPath = Util::which('busybox');
+        $confPath = $this->getMainMonitConfFile();
 
-        // Forcefully terminate
-        Processes::killByName('php-fpm');
-        Processes::mwExec("{$phpFPMPath} -c /etc/php.ini");
+        $stopCommand = "/bin/sh -c '$busyboxPath kill -SIGQUIT `$busyboxPath cat /var/run/".self::PROC_NAME.".pid`'";
+
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$stopCommand.'"'.PHP_EOL.
+            '        as uid root and gid root';
+        $this->saveFileContent($confPath, $conf);
+        return true;
     }
 }

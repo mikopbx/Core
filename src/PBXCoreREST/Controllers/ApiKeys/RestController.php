@@ -1,0 +1,284 @@
+<?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+namespace MikoPBX\PBXCoreREST\Controllers\ApiKeys;
+
+use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
+use MikoPBX\PBXCoreREST\Lib\ApiKeysManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\ApiKeys\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+
+    ApiParameterRef,
+    ApiResponse,
+    ApiDataSchema,
+    SecurityType,
+    ParameterLocation,
+
+    HttpMapping,
+    ResourceSecurity
+};
+
+/**
+ * RESTful controller for API keys management (v3 API)
+ *
+ * Comprehensive API keys management following Google API Design Guide patterns.
+ * Implements full CRUD operations plus custom methods with automatic OpenAPI generation.
+ *
+ * @package MikoPBX\PBXCoreREST\Controllers\ApiKeys
+ *
+ * @see https://cloud.google.com/apis/design - Google API Design Guide
+ * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
+ */
+#[ApiResource(
+    path: '/pbxcore/api/v3/api-keys',    
+    tags: ['API Keys'],
+    description: 'rest_ApiKeys_ApiDescription',
+    processor: ApiKeysManagementProcessor::class
+)]
+#[ResourceSecurity('api_keys', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getList', 'getRecord', 'getDefault'],
+        'POST' => ['create', 'generateKey'],
+        'PUT' => ['update'],
+        'PATCH' => ['patch'],
+        'DELETE' => ['delete']
+    ],
+    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete'],
+    collectionLevelMethods: ['getList', 'create', 'generateKey'],
+    customMethods: ['getDefault', 'generateKey'],
+    idPattern: '[0-9]+'
+)]
+class RestController extends BaseRestController
+{
+    /**
+     * The processor class to handle requests
+     * @var string
+     */
+    protected string $processorClass = ApiKeysManagementProcessor::class;
+
+
+    /**
+     * Get list of all API keys with pagination and filtering
+     *
+     * @route GET /pbxcore/api/v3/api-keys
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'list',
+        isArray: true
+    )]
+    #[ApiOperation(
+        summary: 'rest_ak_GetList',
+        description: 'rest_ak_GetListDesc',
+        operationId: 'getApiKeysList'
+    )]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('search', dataStructure: CommonDataStructure::class, example: 'CRM')]
+    #[ApiParameterRef('order', dataStructure: CommonDataStructure::class, enum: ['description', 'created_at'])]
+    #[ApiParameterRef('orderWay', dataStructure: CommonDataStructure::class)]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getList(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get a specific API key by ID
+     *
+     * @route GET /pbxcore/api/v3/api-keys/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_ak_GetRecord',
+        description: 'rest_ak_GetRecordDesc',
+        operationId: 'getApiKeyById'
+    )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, in: ParameterLocation::PATH, pattern: '^[0-9]+$', example: '12')]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function getRecord(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Create a new API key
+     *
+     * @route POST /pbxcore/api/v3/api-keys
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_ak_Create',
+        description: 'rest_ak_CreateDesc',
+        operationId: 'createApiKey'
+    )]
+    #[ApiParameterRef('description', required: true)]
+    #[ApiParameterRef('key', required: false)]
+    #[ApiParameterRef('full_permissions')]
+    #[ApiParameterRef('allowed_paths')]
+    #[ApiParameterRef('networkfilterid')]
+    #[ApiResponse(201, 'rest_response_201_created')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    public function create(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Update an existing API key (full replacement)
+     *
+     * @route PUT /pbxcore/api/v3/api-keys/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_ak_Update',
+        description: 'rest_ak_UpdateDesc',
+        operationId: 'updateApiKey'
+    )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, in: ParameterLocation::PATH, pattern: '^[0-9]+$', example: '12')]
+    #[ApiParameterRef('description', required: true)]
+    #[ApiParameterRef('key', required: false)]
+    #[ApiParameterRef('full_permissions')]
+    #[ApiParameterRef('allowed_paths')]
+    #[ApiParameterRef('networkfilterid')]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    public function update(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Partially update an existing API key
+     *
+     * @route PATCH /pbxcore/api/v3/api-keys/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_ak_Patch',
+        description: 'rest_ak_PatchDesc',
+        operationId: 'patchApiKey'
+    )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, in: ParameterLocation::PATH, pattern: '^[0-9]+$', example: '12')]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('key')]
+    #[ApiParameterRef('full_permissions')]
+    #[ApiParameterRef('allowed_paths')]
+    #[ApiParameterRef('networkfilterid')]
+    #[ApiResponse(200, 'rest_response_200_patched')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function patch(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Delete an API key
+     *
+     * @route DELETE /pbxcore/api/v3/api-keys/{id}
+     */
+    #[ApiOperation(
+        summary: 'rest_ak_Delete',
+        description: 'rest_ak_DeleteDesc',
+        operationId: 'deleteApiKey'
+    )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, in: ParameterLocation::PATH, pattern: '^[0-9]+$', example: '12')]
+    #[ApiResponse(200, 'rest_response_200_deleted')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    public function delete(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+
+    /**
+     * Get default template for new API key
+     *
+     * @route GET /pbxcore/api/v3/api-keys:getDefault
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_ak_GetDefault',
+        description: 'rest_ak_GetDefaultDesc',
+        operationId: 'getApiKeyDefault'
+    )]
+    #[ApiResponse(200, 'rest_response_200_default')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getDefault(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+
+    /**
+     * Generate new random API key
+     *
+     * @route POST /pbxcore/api/v3/api-keys:generateKey
+     */
+    #[ApiOperation(
+        summary: 'rest_ak_GenerateKey',
+        description: 'rest_ak_GenerateKeyDesc',
+        operationId: 'generateApiKey'
+    )]
+    #[ApiResponse(200, 'rest_response_200_generated')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function generateKey(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+}

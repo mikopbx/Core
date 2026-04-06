@@ -19,12 +19,17 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Models\Codecs;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Configs\PbxConf;
+use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
 /**
  * Class ModulesConf
  *
- * Represents the configuration class for modules.conf and codecs.conf
+ * Represents the configuration class for modules.conf
  *
  * @package MikoPBX\Core\Asterisk\Configs
  */
@@ -36,7 +41,7 @@ class ModulesConf extends AsteriskConfigClass
     protected string $description = 'modules.conf';
 
     /**
-     * Generates the configuration for modules.conf and codecs.conf
+     * Generates the configuration for modules.conf
      */
     protected function generateConfigProtected(): void
     {
@@ -60,31 +65,21 @@ class ModulesConf extends AsteriskConfigClass
             'app_verbose.so',
             'app_voicemail.so',
             'chan_iax2.so',
+        ];
 
-            'codec_alaw.so',
-            'codec_g722.so',
-            'codec_g726.so',
-            'codec_gsm.so',
-            'codec_ulaw.so',
-            'codec_adpcm.so',
-            'codec_speex.so',
-            //
-            'codec_opus.so',
-            'codec_resample.so',
-            'codec_a_mu.so',
-            'codec_ilbc.so',
-            'codec_lpc10.so',
-            'codec_silk.so',
-            'codec_g729.so',
+        // Load codec translator modules based on enabled codecs in database
+        $codecModules = $this->getEnabledCodecModules();
+        $modules = array_merge($modules, $codecModules);
 
-            'format_ogg_speex.so',
+        $modules = array_merge($modules, [
+            // Format modules (file format handlers, not codec translators)
             'format_gsm.so',
             'format_pcm.so',
             'format_wav.so',
             'format_wav_gsm.so',
             'format_ogg_vorbis.so',
             'format_mp3.so',
-            'format_ogg_opus.so',
+            'format_ogg_opus.so',  // Opus file format (requires codec_opus.so for transcoding)
 
             'format_g726.so',
             'format_h263.so',
@@ -145,7 +140,7 @@ class ModulesConf extends AsteriskConfigClass
             'app_channelredirect.so',
             'func_dialplan.so',
             'app_queue.so',
-            'res_crypto.so',
+            // 'res_crypto.so', // Disabled: not used (IAX2 encryption disabled), causes 36s startup delay in Asterisk 20+
             'res_pjproject.so',
             'res_speech.so',
             'res_sorcery_astdb.so',
@@ -205,7 +200,7 @@ class ModulesConf extends AsteriskConfigClass
             // 'res_hep.so',
             // 'res_hep_pjsip.so',
             // 'res_hep_rtcp.so',
-        ];
+        ]);
 
         // Check if specific files exist and add modules accordingly
         if(file_exists('/dev/dahdi/transcode')){
@@ -215,15 +210,140 @@ class ModulesConf extends AsteriskConfigClass
             $modules[] = 'codec_dahdi.so';
         }
 
+        // Filter out modules whose .so files don't exist on this build
+        $astModDir = Directories::getDir(Directories::AST_MOD_DIR);
+        $modules = array_filter(
+            $modules,
+            static fn(string $module): bool => file_exists("$astModDir/$module")
+        );
+
         foreach ($modules as $value) {
             $conf .= "load => $value\n";
+        }
+        
+        // Load ARI modules if ARI is enabled
+        $ariEnabled = PbxSettings::getValueByKey(PbxSettings::ARI_ENABLED) === '1';
+        if ($ariEnabled) {
+            $conf .= "\n; ARI (Asterisk REST Interface) modules\n";
+            $ariModules = AriConf::getAriModules();
+            $ariModules = array_filter(
+                $ariModules,
+                static fn(string $module): bool => file_exists("$astModDir/$module")
+            );
+            foreach ($ariModules as $module) {
+                $conf .= "load => $module\n";
+            }
         }
 
         // Call the hook modules method for generating additional configuration
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_MODULES_CONF);
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/modules.conf', $conf);
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/codecs.conf', '');
+        $this->saveConfig($conf, $this->description);
+    }
+
+    /**
+     * Get list of codec translator modules based on enabled codecs in database.
+     *
+     * Loads codec_*.so modules only for codecs that are enabled (disabled='0') in m_Codecs table.
+     * Always loads critical modules required for system operation.
+     *
+     * @return array Array of codec module names to load
+     */
+    private function getEnabledCodecModules(): array
+    {
+        // CRITICAL: Always load these modules regardless of database settings
+        // These are required for core Asterisk functionality
+        $criticalModules = [
+            'codec_resample.so',  // CRITICAL: Frequency resampling (MixMonitor, Voicemail, Conference, Queue recording)
+            'codec_a_mu.so',      // A-law ↔ μ-law direct translator (efficient conversion)
+            'codec_gsm.so',       // CRITICAL: All system sound files are in GSM format, required for playback
+        ];
+
+        // Mapping: codec name in database → codec module filename
+        // Note: Some codecs may not have modules on all platforms (e.g., opus/silk on ARM64)
+        $codecToModuleMap = [
+            // Core G.711 codecs
+            'alaw'      => 'codec_alaw.so',
+            'ulaw'      => 'codec_ulaw.so',
+
+            // Modern wideband codecs
+            'g722'      => 'codec_g722.so',
+            'opus'      => 'codec_opus.so',      // x86_64 only, ignored on ARM64
+
+            // Legacy/compatible codecs
+            'g726'      => 'codec_g726.so',
+            'g726aal2'  => 'codec_g726.so',      // Uses same module as g726
+            'gsm'       => 'codec_gsm.so',
+            'ilbc'      => 'codec_ilbc.so',
+            'g729'      => 'codec_g729.so',
+
+            // Experimental/extended codecs
+            'silk'      => 'codec_silk.so',      // x86_64 only, ignored on ARM64
+            'silk8'     => 'codec_silk.so',      // All silk variants use same module
+            'silk12'    => 'codec_silk.so',
+            'silk16'    => 'codec_silk.so',
+            'silk24'    => 'codec_silk.so',
+
+            // Obsolete codecs (removed from default loading, but can be enabled if needed)
+            'adpcm'     => 'codec_adpcm.so',
+            'speex'     => 'codec_speex.so',
+            'speex16'   => 'codec_speex.so',
+            'speex32'   => 'codec_speex.so',
+            'lpc10'     => 'codec_lpc10.so',
+        ];
+
+        // Get enabled codecs from database
+        $enabledCodecs = Codecs::find([
+            'conditions' => 'disabled = "0"',
+            'columns'    => 'name',
+        ]);
+
+        $modulesToLoad = [];
+
+        // Add modules for enabled codecs
+        foreach ($enabledCodecs as $codec) {
+            $codecName = strtolower($codec->name);
+
+            if (isset($codecToModuleMap[$codecName])) {
+                $module = $codecToModuleMap[$codecName];
+
+                // Avoid duplicates (e.g., g726 and g726aal2 use same module)
+                if (!in_array($module, $modulesToLoad, true)) {
+                    $modulesToLoad[] = $module;
+                }
+            }
+        }
+
+        // Merge with critical modules (critical modules first)
+        $allModules = array_merge($criticalModules, $modulesToLoad);
+
+        // Remove duplicates while preserving order
+        $allModules = array_values(array_unique($allModules));
+
+        // Filter out modules whose .so files don't exist on this build
+        $astModDir = Directories::getDir(Directories::AST_MOD_DIR);
+        $allModules = array_values(array_filter(
+            $allModules,
+            static fn(string $module): bool => file_exists("$astModDir/$module")
+        ));
+
+        return $allModules;
+    }
+
+    /**
+     * Reloads the Asterisk modules.
+     * @return array
+     */
+    public static function reload(): array
+    {
+        $pbx = new self();
+        $pbx->generateConfig();
+        PbxConf::safeRestart();
+
+        return [
+            'result' => 'Success',
+            'data'   => '',
+        ];
     }
 }

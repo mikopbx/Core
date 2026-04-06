@@ -84,8 +84,105 @@ end
     local currentDate = getNowDate()
 ]]
 function getNowDate()
-    local a,b = math.modf(os.clock())
-    return os.date("%Y-%m-%d %H:%M:%S.")..tostring(b):sub(3,5);
+    return channel["STRFTIME(,,%Y-%m-%d %H:%M:%S.%q)"]:get();
+end
+
+--[[
+    Retrieves CALLERID(name) from the channel.
+    Returns empty string if name equals the number (no useful display name).
+
+    Parameters:
+    - number (string): The caller/callee number to compare against.
+
+    Returns:
+    - The display name, or empty string if it matches the number.
+]]
+function getCallerIdName(number)
+    local name = get_variable("CALLERID(name)");
+    if (name == '' or name == number) then
+        return '';
+    end
+    return name;
+end
+
+--[[
+    Retrieves the SIP Call-ID for the source channel.
+
+    Priority:
+    1. Current channel is PJSIP — read call-id directly and cache it.
+    2. Inherited variable pt1c_SRC_CALL_ID — set by a parent PJSIP channel.
+    3. MASTER_CHANNEL fallback — read call-id from the parent channel
+       (e.g., PJSIP trunk that created this Local channel via Dial()).
+
+    The value is cached as __pt1c_SRC_CALL_ID (double underscore = inherited)
+    so that child channels (Queue Local channels, etc.) receive it automatically.
+
+    Returns:
+    - The SIP Call-ID string, or empty string if not available.
+]]
+function getSrcCallId()
+    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
+    if(is_pjsip) then
+        local call_id = get_variable("CHANNEL(pjsip,call-id)");
+        set_variable("__pt1c_SRC_CALL_ID", call_id);
+        return call_id;
+    end
+    local cached = get_variable("pt1c_SRC_CALL_ID");
+    if(cached ~= '') then
+        return cached;
+    end
+    -- Local channel created by Dial(Local/...) from a PJSIP trunk:
+    -- read call-id from the master (parent) channel and cache for children.
+    local master_chan = get_variable("MASTER_CHANNEL(CHANNEL)");
+    local master_is_pjsip = string.lower(master_chan):find("pjsip/") ~= nil
+    if(master_is_pjsip) then
+        local master_call_id = get_variable("MASTER_CHANNEL(CHANNEL(pjsip,call-id))");
+        if(master_call_id ~= '') then
+            set_variable("__pt1c_SRC_CALL_ID", master_call_id);
+            return master_call_id;
+        end
+    end
+    return '';
+end
+
+--[[
+    Determines the optimal recording file extension based on audio codec.
+
+    This function detects the audio codec from the channel's read format and selects
+    the appropriate WAV file extension to preserve the native sample rate:
+
+    - OPUS codec (48kHz fullband) → .wav48 extension
+    - G.722/Speex16 codec (16kHz wideband) → .wav16 extension
+    - Other codecs (8kHz narrowband) → .wav extension (default)
+
+    This ensures MixMonitor records with the correct sample rate, preserving audio
+    quality for subsequent conversion to WebM/Opus by WorkerWav2Webm.
+
+    Note: Requires Asterisk patched with wav48 format support for 48kHz recording.
+
+    Returns:
+    - The file extension string: "wav48", "wav16", or "wav" (without leading dot)
+
+    Example Usage:
+    local fileExt = getRecordingFileExtension()
+    local filename = "/path/to/file." .. fileExt
+]]
+function getRecordingFileExtension()
+    local audioCodec = get_variable("CHANNEL(audioreadformat)") or "";
+    local callerCodec = get_variable("CALLER_AUDIOFORMAT") or "";
+
+    -- Check both legs: current channel and caller (A-leg) codec
+    -- Choose the highest quality format from either side
+    if audioCodec:find("opus") or callerCodec:find("opus") then
+        return "wav48";
+
+    elseif audioCodec:find("g722") or audioCodec:find("speex16") or audioCodec:find("slin16")
+        or callerCodec:find("g722") or callerCodec:find("speex16") or callerCodec:find("slin16") then
+        return "wav16";
+
+    else
+        return "wav";
+    end
 end
 
 --[[
@@ -184,11 +281,11 @@ function monitorEnable(src, dst)
     end
 
     -- Check if the source or destination numbers are exceptions where conversation recording is disabled
-    if(get_variable("DIALPLAN_EXISTS(monitor-exceptions,"..src..")") == "1")then
-        app["NoOp"]("Is exception numbers. ("..src..") Conversation recording is disabled");
+    if(src and src ~= "" and get_variable("DIALPLAN_EXISTS(monitor-exceptions,"..src..")") == "1")then
+        app["NoOp"](" -- Is exception numbers. ("..src..") Conversation recording is disabled");
         return false;
     end
-    if(get_variable("DIALPLAN_EXISTS(monitor-exceptions,"..dst..")") == "1")then
+    if(dst and dst ~= "" and get_variable("DIALPLAN_EXISTS(monitor-exceptions,"..dst..")") == "1")then
         app["NoOp"]("Is exception numbers. ("..dst..") Conversation recording is disabled");
         return false;
     end
@@ -227,6 +324,8 @@ end
     Note:
     - The function encodes the data using base64 encoding and sends it as a user event.
     - If the 'is_test' variable is defined, the function returns without performing any action.
+    - Empty values are NOT stripped here — PHP consumers expect all keys to be present.
+      Payload compaction is handled by AsteriskManager::encodeCdrData() on the PHP side.
 
     Example Usage:
     local eventData = {
@@ -246,7 +345,13 @@ function userevent_return(data)
 end
 
 --[[
-    Sends a user event with encoded data and hangs up the channel.
+    Sends a user event with encoded data and logs a hangup NoOp message.
+    Does NOT call app["Hangup"]() — the channel teardown is managed by Asterisk
+    (either the 'h' extension handler or normal hangup processing).
+
+    Previously this function called app["Hangup"]() which caused cascade
+    destruction of Local channel pairs during attended transfer, collapsing
+    active bridges (fix for commit 6121edb4d).
 
     Parameters:
     - data: A table containing the data to be encoded and sent as a user event.
@@ -254,14 +359,6 @@ end
     Note:
     - The function encodes the data using base64 encoding and sends it as a user event.
     - If the 'is_test' variable is defined, the function returns without performing any action.
-    - After sending the user event, the function logs a NoOp message indicating the hangup and hangs up the channel.
-
-    Example Usage:
-    local eventData = {
-        key1 = "value1",
-        key2 = "value2",
-    }
-    userevent_hangup(eventData)
 ]]
 function userevent_hangup(data)
     if(is_test ~= nil) then
@@ -271,7 +368,6 @@ function userevent_hangup(data)
     app["CELGenUserEvent"](""..data);
     app["UserEvent"]("CdrConnector,AgiData:"..data);
     app["NoOp"]('Hangup channel ');
-    app["Hangup"]();
 end
 
 
@@ -330,6 +426,11 @@ function event_dial(without_event)
         channel = orign_chan;
     end
 
+    if(channel == '')then
+        channel = get_variable('MASTER_CHANNEL(CHANNEL)');
+        app["NoOp"]('The channel could not be determined. Use Master: ('..channel..')');
+    end
+
     local from_account  = get_variable("FROM_PEER")
     if ( from_account=='' and string.lower(agi_channel):find("local/") == nil )then
         from_account = getAccountName(agi_channel);
@@ -363,6 +464,7 @@ function event_dial(without_event)
 
     data['src_chan'] 	 = channel;
     data['src_num']  	 = src_num;
+    data['src_name']     = getCallerIdName(src_num);
     data['dst_num']  	 = dst_num;
     data['linkedid']  	 = get_variable("CHANNEL(linkedid)");
     data['UNIQUEID']  	 = id;
@@ -374,13 +476,16 @@ function event_dial(without_event)
     if(origCallId ~= '')then
         data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
     end
-    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
-    if(is_pjsip) then
-        data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
+    local src_call_id = getSrcCallId();
+    if(src_call_id ~= '') then
+        data['src_call_id'] = src_call_id;
     end
 
     data['from_account'] = from_account;
     data['IS_ORGNT']     = (IS_ORGNT ~= '');
+
+    -- Read IVR DTMF digits accumulated during IVR menu interaction
+    data['ivr_dtmf'] = get_variable("IVR_DTMF");
 
     set_variable("__pt1c_UNIQUEID", id);
     local chanExists = get_variable('CHANNEL_EXISTS('..data['src_chan']..')');
@@ -390,6 +495,8 @@ function event_dial(without_event)
         return {};
     end
     if(without_event == false)then
+        -- Clear IVR DTMF after reading so next IVR starts fresh
+        set_variable("__IVR_DTMF", "");
         userevent_return(data)
     end
 
@@ -441,14 +548,22 @@ function event_interception_start()
         data['from_account'] = from_account;
         data['src_chan']  	 = data['int_channel'];
         data['src_num']  	 = get_variable("pt1c_cid");
+        data['src_name']     = getCallerIdName(data['src_num']);
         data['dst_num']  	 = get_variable("number");
         data['dialstatus']   = 'ORIGINATE_TRY_INTERCEPTION';
         data['appname']  	 = 'interception';
     else
         data['appname']  	 = 'originate';
         data['src_num']  	 = get_variable("number");
+        data['src_name']     = getCallerIdName(data['src_num']);
         data['dst_num']  	 = get_variable("pt1c_cid");
         data['dialstatus']  = 'ORIGINATE_TRY_DIAL';
+    end
+
+    -- Retrieve the source call ID (from PJSIP or cached)
+    local src_call_id = getSrcCallId();
+    if(src_call_id ~= '') then
+        data['src_call_id'] = src_call_id;
     end
 
     userevent_return(data)
@@ -554,6 +669,7 @@ function event_voicemail_start()
     data['action']          = "voicemail_start";
     data['src_chan'] 	    = get_variable("CHANNEL");
     data['src_num']  	    = get_variable("CALLERID(num)");
+    data['src_name']        = getCallerIdName(data['src_num']);
     data['dst_num']  	    = get_variable("EXTEN");
     data['dst_chan']        = 'VOICEMAIL';
 
@@ -569,10 +685,10 @@ function event_voicemail_start()
         data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
     end
 
-    -- Check if the channel is using PJSIP and retrieve the source call ID
-    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
-    if(is_pjsip) then
-        data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
+    -- Retrieve the source call ID (from PJSIP or cached)
+    local src_call_id = getSrcCallId();
+    if(src_call_id ~= '') then
+        data['src_call_id'] = src_call_id;
     end
 
     -- Set the caller's account information and mark the event as not originating
@@ -649,6 +765,7 @@ function event_dial_interception()
     data['linkedid']  	 = OLD_LINKEDID;
     data['src_chan'] 	 = interceptionChannel;
     data['src_num']  	 = src_num;
+    data['src_name']     = getCallerIdName(src_num);
     data['dst_num']  	 = dst_num;
     data['UNIQUEID']  	 = id;
     data['transfer']  	 = '0';
@@ -660,10 +777,10 @@ function event_dial_interception()
         data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
     end
 
-    -- Check if the channel is using PJSIP and retrieve the source call ID
-    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
-    if(is_pjsip) then
-        data['src_call_id']  = get_variable("CHANNEL(pjsip,call-id)");
+    -- Retrieve the source call ID (from PJSIP or cached)
+    local src_call_id = getSrcCallId();
+    if(src_call_id ~= '') then
+        data['src_call_id'] = src_call_id;
     end
 
     -- Set the caller's account information
@@ -712,7 +829,9 @@ function event_dial_create_chan()
 
     -- Retrieve the unique ID of the call
     local id = get_variable("pt1c_UNIQUEID");
-
+    if(id=='') then
+        id = get_variable("int_UNIQUEID");
+    end
     -- Set the action, event time, unique ID, destination channel, and linked ID for the dial creation channel event
     data['action']      = 'dial_create_chan';
     data['event_time']  = getNowDate();
@@ -730,6 +849,16 @@ function event_dial_create_chan()
     if(is_local ~= true)then
         data['to_account'] = getAccountName(data['dst_chan']);
         app["NoOp"]('to_account set to '..data['to_account']);
+        -- Get destination's display name from PJSIP endpoint callerid configuration
+        if(data['to_account'] ~= '')then
+            local endpoint_cid = get_variable("PJSIP_ENDPOINT(" .. data['to_account'] .. ",callerid)");
+            if(endpoint_cid ~= '')then
+                local name = endpoint_cid:match('"([^"]+)"');
+                if(name and name ~= '' and name ~= data['to_account'])then
+                    data['dst_name'] = name;
+                end
+            end
+        end
     end
 
     -- Check if IS_ORGNT variable exists and retrieve the peer mobile number, then set org_id if it is not already present
@@ -820,6 +949,9 @@ function event_dial_answer()
     data['agi_channel'] = get_variable("CHANNEL");
 
     local id     = get_variable("pt1c_UNIQUEID");
+    if(id=='') then
+        id = get_variable("int_UNIQUEID");
+    end
     local monDir = get_variable("MONITOR_DIR");
 
     -- Check if recording should be enabled based on monitor configuration and channel type
@@ -836,15 +968,19 @@ function event_dial_answer()
             app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
             local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
             local stereoMode = get_variable("MONITOR_STEREO");
+
+            -- Determine optimal file extension based on audio codec
+            local fileExt = getRecordingFileExtension();
+
             local mixOptions = '';
             if('1' == stereoMode )then
-                mixOptions = "ar("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+                mixOptions = "ar("..mixFileName.."_in."..fileExt..")t("..mixFileName.."_out."..fileExt..")";
             else
                 mixOptions = 'a';
             end
-            app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
-            app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
-            data['recordingfile']  	= mixFileName .. ".mp3";
+            app["MixMonitor"](mixFileName .. "." .. fileExt .. ","..mixOptions);
+            app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL") .. ' with format ' .. fileExt);
+            data['recordingfile']  	= mixFileName .. ".webm";
             app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
         end
     end
@@ -1015,10 +1151,10 @@ function event_transfer_dial()
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
     data['UNIQUEID']  	= id;
 
-    -- Check if the channel is using PJSIP and set the src_call_id if applicable
-    local is_pjsip = string.lower(get_variable("CHANNEL")):find("pjsip/") ~= nil
-    if(is_pjsip) then
-        data['src_call_id'] = get_variable("CHANNEL(pjsip,call-id)");
+    -- Retrieve the source call ID (from PJSIP or cached)
+    local src_call_id = getSrcCallId();
+    if(src_call_id ~= '') then
+        data['src_call_id'] = src_call_id;
     end
 
     -- Determine if it's a transfer or a regular dial
@@ -1028,8 +1164,9 @@ function event_transfer_dial()
         data['transfer'] = '1'
     end
 
-    -- Set the source number and destination number
+    -- Set the source number, source name, and destination number
     data['src_num']  	= get_variable("CALLERID(num)");
+    data['src_name']    = getCallerIdName(data['src_num']);
     data['dst_num']  	= get_variable("EXTEN");
 
     set_variable("__transfer_UNIQUEID", id);
@@ -1135,15 +1272,19 @@ function event_transfer_dial_answer()
             app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
             local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
             local stereoMode = get_variable("MONITOR_STEREO");
+
+            -- Determine optimal file extension based on audio codec
+            local fileExt = getRecordingFileExtension();
+
             local mixOptions = '';
             if('1' == stereoMode )then
-                mixOptions = "abr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+                mixOptions = "abr("..mixFileName.."_in."..fileExt..")t("..mixFileName.."_out."..fileExt..")";
             else
                 mixOptions = 'ab';
             end
-            app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
-            app["NoOp"]('Start MixMonitor on channel '.. data['agi_channel']);
-            data['recordingfile']  	= mixFileName .. ".mp3";
+            app["MixMonitor"](mixFileName .. "." .. fileExt .. ","..mixOptions);
+            app["NoOp"]('Start MixMonitor on channel '.. data['agi_channel'] .. ' with format ' .. fileExt);
+            data['recordingfile']  	= mixFileName .. ".webm";
             app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
         end
     end
@@ -1262,7 +1403,15 @@ function event_hangup_chan()
     data['agi_channel'] = get_variable("CHANNEL");
     data['OLD_LINKEDID']= get_variable("OLD_LINKEDID");
     data['UNIQUEID']  	= get_variable("pt1c_UNIQUEID");
+    if( data['UNIQUEID'] == '')then
+        -- Possible this is a call forwarding
+        data['UNIQUEID']  	= get_variable("transfer_UNIQUEID");
+    end
+
     data['VMSTATUS']  	= get_variable("VMSTATUS");
+
+    -- Read IVR DTMF digits for hangup event (used when caller hangs up during IVR)
+    data['ivr_dtmf'] = get_variable("IVR_DTMF");
 
     -- Retrieve the verbose call ID and append the original call ID if available
     data['verbose_call_id']	= get_variable("CHANNEL(callid)");
@@ -1346,9 +1495,16 @@ function event_queue_start()
     if(time_start ~= nil)then
         data['src_chan'] = get_variable("QUEUE_SRC_CHAN");
         data['src_num']  = get_variable("CALLERID(num)");
+        data['src_name'] = getCallerIdName(data['src_num']);
         data['start']    = time_start;
         data['transfer'] = '0';
         set_variable("__pt1c_q_UNIQUEID", id);
+
+        -- Capture src_call_id and cache for child channels (Queue Local channels)
+        local src_call_id = getSrcCallId();
+        if(src_call_id ~= '') then
+            data['src_call_id'] = src_call_id;
+        end
     end
 
     -- Set the transfer flag if it is a transfer call
@@ -1358,6 +1514,10 @@ function event_queue_start()
     else
         data['transfer']  	= '0';
     end
+
+    -- Read IVR DTMF digits so ActionAppEnd can write them to the IVR CDR record
+    data['ivr_dtmf'] = get_variable("IVR_DTMF");
+    set_variable("__IVR_DTMF", "");
 
     -- Send the data as a user event
     userevent_return(data)
@@ -1479,23 +1639,43 @@ function event_dial_app()
         extension = get_variable("EXTEN");
     end
 
+    -- Read and clear IVR DTMF before event_dial(true), because event_dial also reads IVR_DTMF
+    local ivr_dtmf = get_variable("IVR_DTMF");
+    set_variable("__IVR_DTMF", "");
+
+    -- Clear pt1c_UNIQUEID before calling event_dial(true) to prevent early exit.
+    -- event_dial() calls app["return"]() when pt1c_UNIQUEID is set, which terminates
+    -- the entire Gosub and skips the rest of event_dial_app().
+    set_variable("__pt1c_UNIQUEID", "");
+
     -- Call the event_dial() function to handle the common dial logic
     data = event_dial(true);
+
+    -- Restore IVR DTMF into event data (overrides event_dial's empty read after clearing)
+    data['ivr_dtmf'] = ivr_dtmf;
+
+    -- Use "dial_app" action so ActionDialApp handles it (AppEnd before Insert)
+    -- instead of ActionDial which does Insert then AppEnd (immediately closing the new record)
+    data['action'] = "dial_app";
 
     local monDir = get_variable("MONITOR_DIR");
     if(monDir ~= '' and get_variable('NEED_MONITOR')=='1' and  monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"))) then
         app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
         local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
         local stereoMode = get_variable("MONITOR_STEREO");
+
+        -- Determine optimal file extension based on audio codec
+        local fileExt = getRecordingFileExtension();
+
         local mixOptions = '';
         if('1' == stereoMode )then
-            mixOptions = "ar("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+            mixOptions = "ar("..mixFileName.."_in."..fileExt..")t("..mixFileName.."_out."..fileExt..")";
         else
             mixOptions = 'a';
         end
-        app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
-        app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
-        data['recordingfile']  	= mixFileName .. ".mp3";
+        app["MixMonitor"](mixFileName .. "." .. fileExt .. ","..mixOptions);
+        app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL") .. ' with format ' .. fileExt);
+        data['recordingfile']  	= mixFileName .. ".webm";
         app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..CHANNEL);
     end
 
@@ -1571,12 +1751,124 @@ function set_from_peer()
     app["return"]();
 end
 
--- TODO
--- Event_unpark_call
--- Event_unpark_call_timeout
+--[[
+    event_hangup_chan_meetme()
 
--- Event_meetme_dial
--- Event_hangup_chan_meetme
+    Handles the hangup event for a MeetMe/ConfBridge conference channel.
+    Collects conference-related data (conference ID, recording file, unique IDs)
+    and sends a user event for CDR processing.
+
+    This function is called as a hangup handler via:
+        Set(CHANNEL(hangup_handler_wipe)=hangup_chan_meetme,${EXTEN},1)
+
+    Returns:
+        data (table): A table containing the conference hangup information:
+            - action (string): "hangup_chan_meetme"
+            - linkedid (string): The linked ID of the call.
+            - src_chan (string): The source channel.
+            - agi_channel (string): The AGI channel (same as src_chan).
+            - end (string): The end timestamp.
+            - meetme_id (string): The conference unique ID (MEETMEUNIQUEID or CONFBRIDGEUNIQUEID).
+            - conference (string): The conference identifier (mikoidconf).
+            - UNIQUEID (string): The call unique ID (pt1c_q_UNIQUEID).
+            - recordingfile (string): The recording file path with .webm extension.
+]]
+function event_hangup_chan_meetme()
+    local data = {}
+
+    data['action']      = "hangup_chan_meetme"
+    data['linkedid']    = get_variable("CHANNEL(linkedid)")
+    data['src_chan']     = get_variable("CHANNEL")
+    data['agi_channel'] = get_variable("CHANNEL")
+    data['end']         = getNowDate()
+
+    local confId = get_variable("MEETMEUNIQUEID")
+    if confId == '' then
+        confId = get_variable("CONFBRIDGEUNIQUEID")
+    end
+    data['meetme_id']   = confId
+
+    data['conference']  = get_variable("mikoidconf")
+    data['UNIQUEID']    = get_variable("pt1c_q_UNIQUEID")
+
+    local recordingfile = get_variable("MEETME_RECORDINGFILE")
+    data['recordingfile'] = recordingfile .. ".webm"
+
+    userevent_hangup(data)
+    return data
+end
+
+--[[
+    event_unpark_call_timeout()
+
+    Handles the timeout event when a parked call is not picked up within the parking duration.
+    Creates a CDR record for the parking period and sets a new unique ID for subsequent call routing.
+
+    This function is called via Gosub when parking times out:
+        Gosub(unpark_call_timeout,${EXTEN},1)
+
+    Returns:
+        data (table): A table containing the parking timeout information:
+            - action (string): "unpark_call_timeout"
+            - src_chan (string): The parked channel.
+            - src_num (string): The caller ID number.
+            - src_name (string): The caller ID display name.
+            - dst_num (string): The parking space number.
+            - dst_chan (string): "Park:" followed by the parking space.
+            - start (string): The calculated start time (now minus parking duration).
+            - answer (string): Same as start time.
+            - endtime (string): The current time.
+            - did (string): The DID of the call.
+            - UNIQUEID (string): A generated unique ID for this parking record.
+            - transfer (string): "0" (not a transfer).
+            - linkedid (string): The linked ID of the call.
+            - PARKER (string): The channel that parked the call.
+]]
+function event_unpark_call_timeout()
+    local now = getNowDate()
+
+    local PARKING_DURATION = get_variable("PARKING_DURATION")
+    if PARKING_DURATION == '' then
+        PARKING_DURATION = 45
+    else
+        PARKING_DURATION = tonumber(PARKING_DURATION) or 45
+    end
+
+    local time_start    = os.date("%Y-%m-%d %H:%M:%S", os.time() - PARKING_DURATION)
+    local PARKING_SPACE = get_variable("PARKING_SPACE")
+    local src_num       = get_variable("CALLERID(num)")
+
+    local id = get_variable("UNIQUEID") .. '_' .. generateRandomString(6)
+
+    local data = {
+        ['action']   = "unpark_call_timeout",
+        ['src_chan']  = get_variable("CHANNEL"),
+        ['src_num']  = src_num,
+        ['src_name'] = getCallerIdName(src_num),
+        ['dst_num']  = PARKING_SPACE,
+        ['dst_chan']  = "Park:" .. PARKING_SPACE,
+        ['start']    = time_start,
+        ['answer']   = time_start,
+        ['endtime']  = now,
+        ['did']      = get_variable("FROM_DID"),
+        ['UNIQUEID'] = id,
+        ['transfer'] = '0',
+        ['linkedid'] = get_variable("CHANNEL(linkedid)"),
+        ['PARKER']   = get_variable("PARKER"),
+    }
+
+    -- Retrieve the source call ID (from PJSIP or cached)
+    local src_call_id = getSrcCallId();
+    if(src_call_id ~= '') then
+        data['src_call_id'] = src_call_id;
+    end
+
+    local id2 = get_variable("UNIQUEID") .. '_' .. generateRandomString(6)
+    set_variable("__pt1c_UNIQUEID", id2)
+
+    userevent_return(data)
+    return data
+end
 
 extensions = {
     dial = {},
@@ -1598,7 +1890,9 @@ extensions = {
     voicemail_end={},
     interception_start={},
     interception_bridge_result={},
-    dial_end={}
+    dial_end={},
+    hangup_chan_meetme={},
+    unpark_call_timeout={}
 }
 
 -- event_interception_start event_interception_bridge_result
@@ -1622,6 +1916,8 @@ extensions.voicemail_start["_.!"]           = function() event_voicemail_start()
 extensions.interception_start["_.!"]           = function() event_interception_start() end
 extensions.interception_bridge_result["_.!"]   = function() event_interception_bridge_result() end
 extensions.dial_end["_.!"]                     = function() event_dial_end() end
+extensions.hangup_chan_meetme["_.!"]            = function() event_hangup_chan_meetme() end
+extensions.unpark_call_timeout["_.!"]          = function() event_unpark_call_timeout() end
 --
 ------
 ---- Safe connection of additional dialplans described in /etc/asterisk/extensions-lua.

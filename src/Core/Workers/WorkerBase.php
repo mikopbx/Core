@@ -20,96 +20,242 @@
 namespace MikoPBX\Core\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Library\Text;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\Core\System\Util;
-use Phalcon\Di;
-use Phalcon\Text;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
+use RuntimeException;
 use Throwable;
 
 /**
- * Base class for workers. This class is responsible for basic worker management and
- * includes methods for handling signals, saving PID files, and managing worker processes.
+ * Base class for workers.
+ * Provides core functionality for process management, signal handling, and worker lifecycle.
  *
  * @package MikoPBX\Core\Workers
  */
-abstract class WorkerBase extends Di\Injectable implements WorkerInterface
+abstract class WorkerBase extends Injectable implements WorkerInterface
 {
     /**
-     * Maximum number of processes that can be created.
+     * Default restart interval in seconds for worker monitoring
+     */
+    public const int KEEP_ALLIVE_CHECK_INTERVAL = 60;
+
+    /**
+     * Signals that should be handled by the worker
+     */
+    private const array MANAGED_SIGNALS = [
+        SIGUSR1,
+        SIGTERM,
+        SIGINT
+    ];
+    /**
+     * Worker state constants
+     */
+    protected const int STATE_STARTING = 1;
+    protected const int STATE_RUNNING = 2;
+    protected const int STATE_STOPPING = 3;
+    protected const int STATE_RESTARTING = 4;
+
+    /**
+     * Worker state constants with descriptions
+     */
+    protected const array WORKER_STATES = [
+        self::STATE_STARTING => 'STARTING',
+        self::STATE_RUNNING => 'RUNNING',
+        self::STATE_STOPPING => 'STOPPING',
+        self::STATE_RESTARTING => 'RESTARTING'
+    ];
+
+    /**
+     * Resource limits
+     */
+    private const string MEMORY_LIMIT = '256M';
+    private const int ERROR_REPORTING_LEVEL = E_ALL;
+
+    /**
+     * Log message format constants
+     */
+    private const string LOG_FORMAT_STATE = '[%s][%s][%s] %s (%.3fs, PID:%d, Parent:%d)';
+    private const string LOG_FORMAT_SIGNAL = '[%s][%s][%s] Signal %s received from %s (%.3fs, PID:%d, Parent:%d)';
+    private const string LOG_FORMAT_NORMAL_SHUTDOWN = '[%s][%s][RUNNING->SHUTDOWN] Clean exit from %s (%.3fs, PID:%d, Parent:%d)';
+    private const string LOG_FORMAT_NORMAL_EXIT = '[%s][%s] Successfully executed (%.3fs, PID:%d, Parent:%d)';
+    private const string LOG_FORMAT_ERROR_SHUTDOWN = '[%s][%s][SHUTDOWN-ERROR] %s from %s (%.3fs, PID:%d, Parent:%d)';
+    private const string LOG_FORMAT_PING_ERROR = '[%s][%s][PING-ERROR] %s from %s (%.3fs, PID:%d, Parent:%d)';
+
+
+    protected const string LOG_NAMESPACE_SEPARATOR = '\\';
+
+    /**
+     * Redis key prefix for module crash tracking counters.
+     * Full key: module:crashes:{ModuleUniqueID} (INCR counter with 30-min EXPIRE)
+     */
+    public const string REDIS_CRASH_KEY_PREFIX = 'module:crashes:';
+
+    /**
+     * Maximum number of processes that can be created
      *
      * @var int
      */
     public int $maxProc = 1;
 
     /**
-     * Instance of the Asterisk Manager.
+     * Instance identifier for pool workers
+     *
+     * @var int
+     */
+    protected int $instanceId = 1;
+
+    /**
+     * Instance of the Asterisk Manager
      *
      * @var AsteriskManager
      */
     protected AsteriskManager $am;
 
     /**
-     * Flag indicating whether the worker needs to be restarted.
+     * Flag indicating whether the worker needs to be restarted
      *
      * @var bool
      */
     protected bool $needRestart = false;
 
     /**
-     * Time the worker started.
+     * Time the worker started
      *
      * @var float
      */
     protected float $workerStartTime;
 
     /**
-     * Constructs a WorkerBase instance.
+     * Current state of the worker
      *
-     * It is declared as final to prevent overriding in child classes.
-     * Any additional initialization required in child classes should be done in the start() method.
-     *
-     * @return void
+     * @var int
      */
-    final public function __construct()
+    protected int $workerState = self::STATE_STARTING;
+
+
+
+    /**
+     * Constructs a WorkerBase instance.
+     * Initializes signal handlers, sets up resource limits, and saves PID file.
+     *
+     * @throws RuntimeException|Throwable If critical initialization fails
+     */
+    public function __construct()
     {
-        pcntl_async_signals(true);
-        pcntl_signal(
-            SIGUSR1,
-            [$this, 'signalHandler'],
-            true
-        );
-        register_shutdown_function([$this, 'shutdownHandler']);
-        $this->workerStartTime = floatval(microtime(true));
-        $this->savePidFile();
+        try {
+            // Initialize basic properties first
+            $this->workerStartTime = microtime(true);
+            $this->workerState = self::STATE_STARTING;
+
+            // Parse command line arguments for instance ID
+            if (isset($GLOBALS['argv']) && is_array($GLOBALS['argv'])) {
+                foreach ($GLOBALS['argv'] as $arg) {
+                    if (preg_match('/^--instance-id=(\d+)$/', $arg, $matches)) {
+                        $this->instanceId = (int)$matches[1];
+                        break;
+                    }
+                }
+            }
+
+            // Set up basic environment
+            $this->setResourceLimits();
+            $this->initializeSignalHandlers();
+            register_shutdown_function([$this, 'shutdownHandler']);
+
+            // Save PID and update status
+            $this->savePidFile();
+
+        } catch (Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            throw $e;
+        }
     }
 
     /**
-     * Save PID to a file.
-     *
-     * @return void
+     * Get worker-specific check interval in seconds
+     * Can be overridden in child classes to set custom interval
      */
-    private function savePidFile(): void
+    public static function getCheckInterval(): int
     {
-        $activeProcesses = Processes::getPidOfProcess(static::class);
-        $processes = explode(' ', $activeProcesses);
-        if (count($processes) === 1) {
-            file_put_contents($this->getPidFile(), $activeProcesses);
-        } else {
-            $pidFilesDir = dirname($this->getPidFile());
-            $baseName = (string)pathinfo($this->getPidFile(), PATHINFO_BASENAME);
-            $pidFile = $pidFilesDir . '/' . $baseName;
-            // Delete old PID files
-            $rm = Util::which('rm');
-            Processes::mwExec("{$rm} -rf {$pidFile}*");
-            $i = 1;
-            foreach ($processes as $process) {
-                file_put_contents("{$pidFile}-{$i}.pid", $process);
-                $i++;
-            }
+        return self::KEEP_ALLIVE_CHECK_INTERVAL;
+    }
+
+    /**
+     * Sets resource limits for the worker process
+     */
+    protected function setResourceLimits(): void
+    {
+        ini_set('memory_limit', self::MEMORY_LIMIT);
+        error_reporting(self::ERROR_REPORTING_LEVEL);
+        ini_set('display_errors', '1');
+        set_time_limit(0);
+    }
+
+
+    /**
+     * Initializes signal handlers for the worker
+     */
+    private function initializeSignalHandlers(): void
+    {
+        pcntl_async_signals(true);
+        foreach (self::MANAGED_SIGNALS as $signal) {
+            pcntl_signal($signal, [$this, 'signalHandler'], true);
         }
+    }
+
+    /**
+     * Updates worker state and logs the change
+     */
+    protected function setWorkerState(int $state): void
+    {
+        $oldState = $this->workerState ?? 'UNDEFINED';
+        $this->workerState = $state;
+
+        $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
+        $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
+        $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
+
+        $oldLogStateStr = self::WORKER_STATES[$oldState] ?? 'UNDEFINED';
+        $newLogStateStr = self::WORKER_STATES[$state] ?? 'UNDEFINED';
+        if ($oldLogStateStr === $newLogStateStr) {
+            $logState = $oldLogStateStr;
+        } else {
+            $logState = "$oldLogStateStr->$newLogStateStr";
+        }
+
+        SystemMessages::sysLogMsg(
+            static::class,
+            sprintf(
+                self::LOG_FORMAT_STATE,
+                $workerName,
+                'MAIN',
+                $logState,
+                $namespacePath,
+                $timeElapsed,
+                getmypid(),
+                posix_getppid()
+            ),
+            LOG_DEBUG
+        );
+    }
+
+    /**
+     * Get current worker status
+     *
+     * @return array Worker status information
+     */
+    protected function getWorkerStatus(): array
+    {
+        return [
+            'state' => $this->workerState,
+            'uptime' => microtime(true) - $this->workerStartTime,
+            'memory' => memory_get_usage(true)
+        ];
     }
 
     /**
@@ -119,63 +265,164 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     public function getPidFile(): string
     {
-        $name = str_replace("\\", '-', static::class);
-
-        return "/var/run/{$name}.pid";
+        // For regular processes or pool instances, include instance ID
+        return Processes::getPidFilePath(static::class, $this->instanceId);
     }
 
     /**
-     * Starts the worker.
+     * Save PID to file(s) with error handling
      *
-     * @param array $argv The command-line arguments passed to the worker.
-     * @param bool $setProcName Flag to set the process name. Default is true.
+     * @throws RuntimeException If unable to write PID file
+     */
+    private function savePidFile(): void
+    {
+        $pid = getmypid();
+        if ($pid === false) {
+            throw new RuntimeException('Could not get process ID');
+        }
+        $pidFile = $this->getPidFile();
+        Processes::savePidFile($pidFile, $pid);
+    }
+
+    /**
+     * Starts the worker process
      *
+     * @param array $argv Command-line arguments
+     * @param bool $setProcName Whether to set process name
      * @return void
      */
     public static function startWorker(array $argv, bool $setProcName = true): void
     {
-        // The action command parsed from command-line arguments
         $action = $argv[1] ?? '';
         if ($action === 'start') {
-
-            // Get the class name of the worker
             $workerClassname = static::class;
 
-            // Set process title if the flag is set to true
             if ($setProcName) {
                 cli_set_process_title($workerClassname);
             }
-            try {
-                // Create a new worker instance and start it
-                $worker = new $workerClassname();
-                $worker->start($argv);
-                SystemMessages::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
-            } catch (Throwable $e) {
-                // Handle exceptions, log error messages, and pause execution
-                CriticalErrorsHandler::handleExceptionWithSyslog($e);
 
-                // Pause execution for 1 second
+            try {
+                $worker = new $workerClassname();
+                $worker->setWorkerState(self::STATE_RUNNING);
+                $worker->start($argv);
+                $worker->logNormalExit();
+            } catch (Throwable $e) {
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
+                self::recordModuleCrash($workerClassname, $e->getMessage());
                 sleep(1);
             }
         }
     }
 
     /**
-     * Handles the received signal.
+     * Logs normal exit after operation
+     */
+    private function logNormalExit(): void
+    {
+        $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
+        $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
+
+        SystemMessages::sysLogMsg(
+            static::class,
+            sprintf(
+                self::LOG_FORMAT_NORMAL_EXIT,
+                $workerName,
+                'MAIN',
+                $timeElapsed,
+                getmypid(),
+                posix_getppid()
+            ),
+            LOG_DEBUG
+        );
+    }
+
+    /**
+     * Handles various signals received by the worker
      *
-     * @param int $signal The signal to handle.
-     *
+     * @param int $signal Signal number
      * @return void
      */
     public function signalHandler(int $signal): void
     {
-        $processTitle = cli_get_process_title();
-        SystemMessages::sysLogMsg($processTitle, "Receive signal to restart  " . $signal, LOG_DEBUG);
+        $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
+        $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
+        $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
+
+        SystemMessages::sysLogMsg(
+            static::class,
+            sprintf(
+                self::LOG_FORMAT_SIGNAL,
+                $workerName,
+                'MAIN',
+                self::WORKER_STATES[$this->workerState] ?? 'UNKNOWN',
+                $this->getSignalString($signal),
+                $namespacePath,
+                $timeElapsed,
+                getmypid(),
+                posix_getppid()
+            ),
+            LOG_DEBUG
+        );
+
+        switch ($signal) {
+            case SIGUSR1:
+                $this->setWorkerState(self::STATE_RESTARTING);
+
+
+                // Call handler for graceful shutdown implementation
+                $this->handleSignalUsr1();
+                break;
+
+            case SIGTERM:
+            case SIGINT:
+                $this->setWorkerState(self::STATE_STOPPING);
+
+                // Cleanup for Redis-based workers
+                if ($this instanceof WorkerRedisBase) {
+                    if ($this->redis) {
+                        $this->redis->close();
+                    }
+                }
+                exit(0);
+
+            default:
+                // Log unhandled signal
+                SystemMessages::sysLogMsg(
+                    $workerName,
+                    sprintf("Unhandled signal received: %d", $signal),
+                    LOG_WARNING
+                );
+        }
+    }
+
+    /**
+     * Default handler for SIGUSR1 signal
+     * Can be overridden in derived classes to implement graceful shutdown
+     */
+    protected function handleSignalUsr1(): void
+    {
+        // Default implementation just sets the restart flag
         $this->needRestart = true;
     }
 
     /**
-     * Handles the shutdown event.
+     *
+     * @param int $signal
+     * @return string
+     */
+    protected function getSignalString(int $signal): string
+    {
+        $signalNames = [
+            SIGUSR1 => 'SIGUSR1',
+            SIGTERM => 'SIGTERM',
+            SIGINT => 'SIGINT'
+        ];
+
+        return $signalNames[$signal] ?? "SIG_$signal";
+    }
+
+    /**
+     * Handles the shutdown event of the worker
      *
      * @return void
      */
@@ -183,75 +430,214 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     {
         $timeElapsedSecs = round(microtime(true) - $this->workerStartTime, 2);
         $processTitle = cli_get_process_title();
-        $e = error_get_last();
-        if ($e === null) {
-            SystemMessages::sysLogMsg($processTitle, "shutdownHandler after {$timeElapsedSecs} seconds", LOG_DEBUG);
+
+        $error = error_get_last();
+        if ($error === null) {
+            $this->logNormalShutdown($processTitle, $timeElapsedSecs);
         } else {
-            $details = implode(PHP_EOL,$e);
+            $this->logErrorShutdown($processTitle, $timeElapsedSecs, $error);
+        }
+
+        $this->cleanupPidFile();
+    }
+
+    /**
+     * Logs normal shutdown event
+     *
+     * @param string $processTitle Process title
+     * @param float $timeElapsedSecs Time elapsed since start
+     */
+    private function logNormalShutdown(string $processTitle, float $timeElapsedSecs): void
+    {
+        $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
+        $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
+
+        SystemMessages::sysLogMsg(
+            $processTitle,
+            sprintf(
+                self::LOG_FORMAT_NORMAL_SHUTDOWN,
+                $workerName,
+                'MAIN',
+                $namespacePath,
+                $timeElapsedSecs,
+                getmypid(),
+                posix_getppid()
+            ),
+            LOG_DEBUG
+        );
+    }
+
+    /**
+     * Logs error shutdown event
+     *
+     * @param string $processTitle Process title
+     * @param float $timeElapsedSecs Time elapsed since start
+     * @param array $error Error details
+     */
+    private function logErrorShutdown(string $processTitle, float $timeElapsedSecs, array $error): void
+    {
+        $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
+        $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
+        $errorMessage = $error['message'] ?? 'Unknown error';
+
+        SystemMessages::sysLogMsg(
+            $processTitle,
+            sprintf(
+                self::LOG_FORMAT_ERROR_SHUTDOWN,
+                $workerName,
+                'MAIN',
+                $errorMessage,
+                $namespacePath,
+                $timeElapsedSecs,
+                getmypid(),
+                posix_getppid()
+            ),
+            LOG_ERR
+        );
+    }
+
+    /**
+     * Safely cleans up PID file during shutdown
+     */
+    private function cleanupPidFile(): void
+    {
+        $pid = getmypid();
+        if ($pid === false) {
+            return;
+        }
+
+        $pidFile = $this->getPidFile();
+        Processes::removePidFile($pidFile, $pid);
+    }
+
+
+    /**
+     * Handles ping callback to keep connection alive
+     *
+     * @param BeanstalkClient $message Received message
+     * @return void
+     */
+    public function pingCallBack(BeanstalkClient $message): void
+    {
+        $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
+        $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
+        $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
+        try {
+            $message->reply(json_encode($message->getBody() . ':pong', JSON_THROW_ON_ERROR));
+        } catch (Throwable $e) {
             SystemMessages::sysLogMsg(
-                $processTitle,
-                "shutdownHandler after {$timeElapsedSecs} seconds with error: {$details}",
-                LOG_DEBUG
+                static::class,
+                sprintf(
+                    self::LOG_FORMAT_PING_ERROR,
+                    $workerName,
+                    'MAIN',
+                    $e->getMessage(),
+                    $namespacePath,
+                    $timeElapsed,
+                    getmypid(),
+                    posix_getppid()
+                ),
+                LOG_WARNING
             );
         }
     }
 
     /**
-     * Callback for the ping to keep the connection alive.
+     * Replies to a ping request from the worker
      *
-     * @param BeanstalkClient $message The received message.
-     *
-     * @return void
-     */
-    public function pingCallBack(BeanstalkClient $message): void
-    {
-        $processTitle = cli_get_process_title();
-        SystemMessages::sysLogMsg(
-            $processTitle,
-            "pingCallBack on ".__CLASS__." with message: ".json_encode($message->getBody()),
-            LOG_DEBUG
-        );
-        $message->reply(json_encode($message->getBody() . ':pong'));
-    }
-
-    /**
-     * Replies to a ping request from the worker.
-     *
-     * @param array $parameters The parameters of the request.
-     *
-     * @return bool True if the ping request was processed, false otherwise.
+     * @param array $parameters Request parameters
+     * @return bool True if ping request was processed
      */
     public function replyOnPingRequest(array $parameters): bool
     {
-        $pingTube = $this->makePingTubeName(static::class);
-        if ($pingTube === $parameters['UserEvent']) {
-            $this->am->UserEvent("{$pingTube}Pong", []);
-
-            return true;
+        try {
+            $pingTube = $this->makePingTubeName(static::class);
+            if ($pingTube === $parameters['UserEvent']) {
+                $this->am->UserEvent("{$pingTube}Pong", []);
+                return true;
+            }
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                "Ping reply failed: " . $e->getMessage(),
+                LOG_WARNING
+            );
         }
-
         return false;
     }
 
     /**
-     * Generates the name for the ping tube based on the class name.
+     * Generates the ping tube name for a worker class
      *
-     * @param string $workerClassName The class name of the worker.
-     *
-     * @return string The generated ping tube name.
+     * @param string $workerClassName Worker class name
+     * @return string Generated ping tube name
      */
     public function makePingTubeName(string $workerClassName): string
     {
-        return Text::camelize("ping_{$workerClassName}", '\\');
+        return Text::camelize("ping_$workerClassName", '\\');
+    }
+
+
+    /**
+     * Extracts the module unique ID from a worker class name.
+     * Module workers follow the namespace pattern: Modules\{ModuleUniqueID}\bin\{WorkerName}
+     * Core workers start with MikoPBX\ and are excluded.
+     *
+     * @param string $workerClassName Fully qualified worker class name
+     * @return string|null Module unique ID, or null if this is a core worker
+     */
+    public static function getModuleIdFromClassName(string $workerClassName): ?string
+    {
+        $parts = explode('\\', $workerClassName);
+        if ($parts[0] === 'Modules' && isset($parts[1])) {
+            return $parts[1];
+        }
+        return null;
     }
 
     /**
-     * The destructor for the WorkerBase class.
+     * Records a module worker crash in Redis for crash-loop detection.
+     * Only records crashes for module workers (not core workers).
+     * Uses INCR with EXPIRE for a simple crash counter with 30-minute TTL.
      *
-     * @return void
+     * @param string $workerClassName Fully qualified worker class name
+     * @param string $errorMessage The exception/error message (stored for diagnostics)
+     */
+    public static function recordModuleCrash(string $workerClassName, string $errorMessage): void
+    {
+        $moduleId = self::getModuleIdFromClassName($workerClassName);
+        if ($moduleId === null) {
+            return;
+        }
+
+        try {
+            $di = Di::getDefault();
+            if ($di === null) {
+                return;
+            }
+            $redis = $di->getShared(RedisClientProvider::SERVICE_NAME);
+            $key = self::REDIS_CRASH_KEY_PREFIX . $moduleId;
+
+            // Increment crash counter; EXPIRE resets the 30-minute window on each crash
+            $redis->incr($key);
+            $redis->expire($key, 1800);
+
+            // Store last error message for diagnostics (separate key, same TTL)
+            $msgKey = $key . ':last_error';
+            $redis->set($msgKey, mb_substr($errorMessage, 0, 500), ['ex' => 1800]);
+        } catch (Throwable) {
+            // Silently ignore Redis errors — crash recording is best-effort
+        }
+    }
+
+    /**
+     * Destructor - cleanup on object destruction
      */
     public function __destruct()
     {
-        $this->savePidFile();
+        // Only cleanup PID file if we're stopping
+        if ($this->workerState === self::STATE_STOPPING) {
+            $this->cleanupPidFile();
+        }
     }
 }

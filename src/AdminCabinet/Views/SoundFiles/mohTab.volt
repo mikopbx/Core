@@ -58,3 +58,15 @@
         </table>
     {% endif %}
 {% endfor %}
+
+{% if mohFiles|length == 0 %}
+    {{ partial("partials/emptyTablePlaceholder", [
+        'icon': 'sound',
+        'title': t._('sf_EmptyTableTitle'),
+        'description': t._('sf_EmptyTableDescription'),
+        'addButtonText': '<i class="add circle icon"></i> '~t._('sf_AddNewSoundFile'),
+        'addButtonLink': 'sound-files/modify/moh',
+        'showButton': isAllowed('save'),
+        'documentationLink': 'https://wiki.mikopbx.com/sound-files'
+    ]) }}
+{% endif %}

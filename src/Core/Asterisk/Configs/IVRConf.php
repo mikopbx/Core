@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -46,7 +47,7 @@ class IVRConf extends AsteriskConfigClass
         /** @var Sip $sip_peer */
         foreach ($db_data as $sip_peer) {
             $len = strlen($sip_peer['extension']);
-            if ( ! in_array($len, $arr_lens)) {
+            if (! in_array($len, $arr_lens)) {
                 $arr_lens[] = $len;
             }
         }
@@ -80,9 +81,9 @@ class IVRConf extends AsteriskConfigClass
             $conf          .= 'same => n,GotoIf($[${try_count} > ' . $ivr['number_of_repeat'] . ']?internal,' . $ivr['timeout_extension'] . ',1)' . "\n\t";
             $conf          .= 'same => n,Set(try_count=$[${try_count} + 1])' . "\n\t";
             $conf          .= "same => n,Set(TIMEOUT(digit)=2) \n\t";
-            $conf          .= "same => n,Background({$audio_message}) \n\t";
+            $conf          .= "same => n,Background($audio_message) \n\t";
             if ($timeout_wait_exten > 0) {
-                $conf .= "same => n,WaitExten({$timeout_wait_exten}) \n";
+                $conf .= "same => n,WaitExten($timeout_wait_exten) \n";
             } else {
                 $conf .= "same => n,Goto(t,1)\n";
             }
@@ -90,13 +91,16 @@ class IVRConf extends AsteriskConfigClass
             // Fetch IVR menu actions from the database
             $res = IvrMenuActions::find("ivr_menu_id = '{$ivr['uniqid']}'");
             foreach ($res as $ext) {
-                $conf .= "exten => {$ext->digits},1,StopMixMonitor()\n";
-                $conf .= "\tsame => n,Goto(internal,{$ext->extension},1)\n";
+                $conf .= "exten => $ext->digits,1," . 'Set(__IVR_DTMF=${IVR_DTMF},' . "$ext->digits)\n";
+                $conf .= "\tsame => n,StopMixMonitor()\n";
+                $conf .= "\tsame => n,Goto(internal,$ext->extension,1)\n";
             }
 
             // Handle invalid and timeout extensions.
-            $conf .= "exten => i,1,Goto(s,ivr_start)\n";
-            $conf .= "exten => t,1,Goto(s,ivr_start)\n";
+            $conf .= 'exten => i,1,Set(__IVR_DTMF=${IVR_DTMF},i)' . "\n";
+            $conf .= "\tsame => n,Goto(s,ivr_start)\n";
+            $conf .= 'exten => t,1,Set(__IVR_DTMF=${IVR_DTMF},t)' . "\n";
+            $conf .= "\tsame => n,Goto(s,ivr_start)\n";
 
             // Add support for entering any internal extension.
             if ($ivr['allow_enter_any_internal_extension'] === '1') {
@@ -104,6 +108,7 @@ class IVRConf extends AsteriskConfigClass
                     $extension = Util::getExtensionX($len);
                     $conf      .= 'exten => _' . $extension . ',1,ExecIf($["${DIALPLAN_EXISTS(internal,${EXTEN},1)}" == "0"]?Goto(i,1))' . "\n\t";
                     $conf      .= 'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(i,1))' . "\n\t";
+                    $conf      .= 'same => n,Set(__IVR_DTMF=${IVR_DTMF},${EXTEN})' . "\n\t";
                     $conf      .= 'same => n,StopMixMonitor()' . "\n\t";
                     $conf      .= 'same => n,Goto(internal,${EXTEN},1)' . "\n";
                 }
@@ -133,24 +138,20 @@ class IVRConf extends AsteriskConfigClass
      * Retrieves the duration of a sound file.
      *
      * @param string $filename The file name.
-     * @return int The duration of the sound file.
+     * @return float|int The duration of the sound file.
      */
-    public function getSoundFileDuration($filename)
+    public function getSoundFileDuration(string $filename): float|int
     {
         $result = 7;
         if (file_exists($filename)) {
-            $soxiPath = Util::which('soxi');
-            $awkPath  = Util::which('awk');
-            $grepPath = Util::which('grep');
-            Processes::mwExec(
-                "{$soxiPath}  {$filename} 2>/dev/null | {$grepPath} Duration | {$awkPath}  '{ print $3}'",
-                $out
-            );
-            $time_str = implode($out);
-            preg_match_all('/^\d{2}:\d{2}:\d{2}.?\d{0,2}$/', $time_str, $matches, PREG_SET_ORDER, 0);
-            if (count($matches) > 0) {
-                $data   = date_parse($time_str);
-                $result += $data['minute'] * 60 + $data['second'];
+            $ffprobe = Util::which('ffprobe');
+            if (!empty($ffprobe)) {
+                $cmd = "$ffprobe -v quiet -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '$filename' 2>/dev/null";
+                Processes::mwExec($cmd, $out);
+                $duration = (float)trim(implode('', $out));
+                if ($duration > 0) {
+                    $result = (int)ceil($duration);
+                }
             }
         }
 
@@ -185,10 +186,10 @@ class IVRConf extends AsteriskConfigClass
         $db_data = IvrMenu::find()->toArray();
         foreach ($db_data as $ivr) {
             $conf .= 'exten => _' . $ivr['extension'] . ',1,Set(__ISTRANSFER=transfer_)' . " \n\t";
+            $conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${EMPTY})' . " \n\t";
             $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " \n";
         }
 
         return $conf;
     }
-
 }

@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +20,9 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Files;
 
-
 use MikoPBX\Common\Models\CustomFiles;
-use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class GetFileContent
@@ -32,7 +30,7 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Files
  */
-class GetFileContentAction extends \Phalcon\Di\Injectable
+class GetFileContentAction extends Injectable
 {
     /**
      * Returns file content
@@ -46,25 +44,67 @@ class GetFileContentAction extends \Phalcon\Di\Injectable
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        $customFile     = CustomFiles::findFirst("filepath = '{$filename}'");
+
+        // Normalize the file path (add leading slash if missing)
+        if (!str_starts_with($filename, '/')) {
+            $filename = '/' . $filename;
+        }
+
+        // Resolve real path to prevent path traversal via ".." or symlinks
+        $realPath = realpath($filename);
+        if ($realPath === false) {
+            $res->success    = false;
+            $res->messages[] = 'File not found: ' . $filename;
+            return $res;
+        }
+        $filename = $realPath;
+
+        // Check if file exists in CustomFiles table
+        $customFile = CustomFiles::findFirst([
+            'conditions' => 'filepath = :path:',
+            'bind' => ['path' => $filename],
+        ]);
+
         if ($customFile !== null) {
+            // File is registered in CustomFiles - verify it's in allowed directory
+            if (!self::isFileInAllowedDirectory($filename)) {
+                $res->success    = false;
+                $res->messages[] = 'No access to the file ' . $filename;
+                return $res;
+            }
             $filename_orgn = "{$filename}.orgn";
             if ($needOriginal && file_exists($filename_orgn)) {
                 $filename = $filename_orgn;
             }
             $res->success = true;
-            $cat          = Util::which('cat');
-            $di           = Di::getDefault();
-            $dirsConfig   = $di->getShared('config');
-            $filenameTmp  = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' .time(). '.conf';
-            $cmd          = "{$cat} {$filename} > {$filenameTmp}";
-            Processes::mwExec("{$cmd}; chown www:www {$filenameTmp}");
-            $res->data['filename'] = $filenameTmp;
+            $res->data['content'] = mb_convert_encoding('' . file_get_contents($filename), 'UTF-8', 'UTF-8');
         } else {
-            $res->success    = false;
-            $res->messages[] = 'No access to the file ' . $filename;
+            // File is not in CustomFiles - check if it's allowed to be read
+            if (self::isFileInAllowedDirectory($filename)) {
+                $res->success = true;
+                $res->data['content'] = mb_convert_encoding('' . file_get_contents($filename), 'UTF-8', 'UTF-8');
+            } else {
+                $res->success    = false;
+                $res->messages[] = 'No access to the file ' . $filename;
+            }
         }
 
         return $res;
+    }
+
+    /**
+     * Check if file path is in one of the allowed directories
+     *
+     * @param string $filepath
+     * @return bool
+     */
+    private static function isFileInAllowedDirectory(string $filepath): bool
+    {
+        foreach (CustomFiles::ALLOWED_DIRECTORIES as $allowedDir) {
+            if (str_starts_with($filepath, $allowedDir)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

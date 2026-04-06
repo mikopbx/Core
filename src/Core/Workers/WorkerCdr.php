@@ -21,9 +21,11 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Common\Models\{Extensions, ModelsBase, PbxSettings, PbxSettingsConstants, Users};
-use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
+use MikoPBX\Common\Models\{Extensions, ModelsBase, PbxSettings, Users};
+use MikoPBX\Core\System\{BeanstalkClient, Directories, SystemMessages, Util};
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use Phalcon\Di\Di;
 
 /**
  * Class WorkerCdr
@@ -37,8 +39,8 @@ use MikoPBX\Common\Providers\CDRDatabaseProvider;
 class WorkerCdr extends WorkerBase
 {
     // Tube names for Beanstalk queues.
-    public const SELECT_CDR_TUBE = 'select_cdr_tube';
-    public const UPDATE_CDR_TUBE = 'update_cdr_tube';
+    public const string SELECT_CDR_TUBE = 'select_cdr_tube';
+    public const string UPDATE_CDR_TUBE = 'update_cdr_tube';
 
     // Define properties
     private BeanstalkClient $clientQueue;
@@ -82,32 +84,36 @@ class WorkerCdr extends WorkerBase
         // Retrieve system settings
         $this->internal_numbers = [];
         $this->no_answered_calls = [];
-        $this->emailForMissed = PbxSettings::getValueByKey(PbxSettingsConstants::SYSTEM_EMAIL_FOR_MISSED);
+        $this->emailForMissed = PbxSettings::getValueByKey(PbxSettings::SYSTEM_EMAIL_FOR_MISSED);
 
         // Construct parameters for user data query
-        $usersClass = Users::class;
-        $parameters = [
-            'columns' => [
-                'email' => 'email',
-                'language' => 'language',
-                'number' => 'Extensions.number'
-            ],
-            'joins' => [
-                'Extensions' => [
-                    0 => Extensions::class,
-                    1 => "Extensions.userid={$usersClass}.id",
-                    2 => 'Extensions',
-                    3 => 'INNER',
+        $cacheKey = ModelsBase::makeCacheKey(Users::class, 'Workers-WorkerCdr-initSettings');
+        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
+        $results = $redis->get($cacheKey);
+        if (empty($results)) {
+            // Define parameters for user data query
+            $usersClass = Users::class;
+            $parameters = [
+                'columns' => [
+                    'email' => 'email',
+                    'language' => 'language',
+                    'number' => 'Extensions.number'
                 ],
-            ],
-            'cache' => [
-                'key' => ModelsBase::makeCacheKey(Users::class, 'Workers-WorkerCdr-initSettings'),
-                'lifetime' => 300,
-            ]
-        ];
+                'joins' => [
+                    'Extensions' => [
+                        0 => Extensions::class,
+                        1 => "Extensions.userid=$usersClass.id",
+                        2 => 'Extensions',
+                        3 => 'INNER',
+                    ],
+                ]
+            ];
 
-        // Get user data and populate internal_numbers array
-        $results = Users::find($parameters);
+            // Get user data and populate internal_numbers array
+            $results = Users::find($parameters);
+            $redis->set($cacheKey, $results, 300);
+        }
+
         foreach ($results as $record) {
             if (empty($record->email)) {
                 continue;
@@ -123,8 +129,9 @@ class WorkerCdr extends WorkerBase
      * Updates CDR and processes active call chains and unanswered calls.
      *
      * @param array $result CDR data
+     * @throws \Exception
      */
-    private function updateCdr($result): void
+    private function updateCdr(array $result): void
     {
         // Re-initialize system settings for each call to this function
         // to ensure we have the most up-to-date settings.
@@ -193,6 +200,7 @@ class WorkerCdr extends WorkerBase
      *
      * @return array The array of active channels.
      * The array key is the Linkedid of the channel, and the value is an array of channel details.
+     * @throws \Exception
      */
     private function getActiveIdChannels(): array
     {
@@ -214,7 +222,7 @@ class WorkerCdr extends WorkerBase
      *
      * @return array An array consisting of the disposition status and the modified row.
      */
-    private function setDisposition(int $billsec, string $dialstatus, $row): array
+    private function setDisposition(int $billsec, string $dialstatus, array $row): array
     {
 
         // Set the default disposition to 'NOANSWER'
@@ -228,10 +236,15 @@ class WorkerCdr extends WorkerBase
             $disposition = ($dialstatus === 'ANSWERED') ? $disposition : $dialstatus;
         }
 
-        // If the disposition is not 'ANSWERED' and there's a recording file, delete it
+        // If recordingfile is set but neither the converted .webm nor any source format exists,
+        // try to retrieve the recording path from another CDR row for this call leg
+        $basePath = Util::trimExtensionForFile($row['recordingfile']);
+        $sourceExists = file_exists($basePath . '.wav48')
+            || file_exists($basePath . '.wav16')
+            || file_exists($basePath . '.wav');
         if (!empty($row['recordingfile']) &&
             !file_exists($row['recordingfile']) &&
-            !file_exists(Util::trimExtensionForFile($row['recordingfile']) . '.wav')) {
+            !$sourceExists) {
 
             // If the disposition is 'ANSWERED' and the recording file doesn't exist, retrieve it from the database
             $filter = [
@@ -259,28 +272,90 @@ class WorkerCdr extends WorkerBase
      *
      * @return array An array consisting of the modified row and billsec.
      */
-    private function checkBillsecMakeRecFile(int $billsec, $row): array
+    private function checkBillsecMakeRecFile(int $billsec, array $row): array
     {
-
-        // If billsec is less than or equal to zero, the call wasn't answered
         if (!empty(trim($row['recordingfile']))) {
-            // If the call channel with ID doesn't exist anymore, it's safe to remove temporary files
             $p_info = pathinfo($row['recordingfile']);
 
-            // Launch a background process to convert the recording to mp3
-            $wav2mp3Path = Util::which('wav2mp3.sh');
-            $lostWav2mp3Path = Util::which('convert-lost-wav2mp3.sh');
-            $nicePath = Util::which('nice');
-            Processes::mwExecBg("{$nicePath} -n -19 {$wav2mp3Path} '{$p_info['dirname']}/{$p_info['filename']}'");
+            // Validate filename — empty basename means a bug in MixMonitor call
+            if (empty($p_info['filename'])) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf(
+                        'Empty recording filename for linkedid=%s, skipping conversion task (path: %s)',
+                        $row['linkedid'] ?? 'unknown',
+                        $row['recordingfile']
+                    ),
+                    LOG_WARNING
+                );
+                $row['recordingfile'] = '';
+                return [$row, $billsec];
+            }
 
-            // Get the directory with current month's recordings
-            $dir = dirname($p_info['dirname'], 2);
-            Processes::mwExecBg("{$nicePath} -n -19 {$lostWav2mp3Path} '$dir'");
-            // After a successful conversion, the original recording files will be deleted
-        }else{
+            // Create JSON task file for WorkerWav2Webm to process
+            $monitorDir = Directories::getDir(Directories::AST_MONITOR_DIR);
+            $tasksDir = $monitorDir . '/conversion-tasks';
+
+            if (!is_dir($tasksDir)) {
+                Util::mwMkdir($tasksDir, true);
+            }
+
+            $deleteSourceFiles = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_DELETE_SOURCE_AFTER_CONVERT);
+
+            $taskData = [
+                'linkedid' => $row['linkedid'] ?? '',
+                'src_num' => $row['src_num'] ?? '',
+                'dst_num' => $row['dst_num'] ?? '',
+                'start' => $row['start'] ?? '',
+                'duration' => $row['duration'] ?? '',
+                'billsec' => $billsec,
+                'disposition' => $row['disposition'] ?? '',
+                'uniqueid' => $row['UNIQUEID'] ?? '',
+                'input_path' => $p_info['dirname'] . '/' . $p_info['filename'],
+                'delete_source' => $deleteSourceFiles,
+                'created_at' => time(),
+                'attempts' => 0
+            ];
+
+            $jsonData = json_encode($taskData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            if ($jsonData === false) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf(
+                        'Failed to encode conversion task JSON for linkedid=%s: %s',
+                        $row['linkedid'] ?? 'unknown',
+                        json_last_error_msg()
+                    ),
+                    LOG_ERR
+                );
+                $row['recordingfile'] = preg_replace('/\.(wav|wav16|wav48)$/i', '.webm', $row['recordingfile']);
+                return [$row, $billsec];
+            }
+
+            $taskFile = $tasksDir . '/' . ($row['linkedid'] ?? 'unknown') . '_' . uniqid() . '.json';
+            $written = file_put_contents($taskFile, $jsonData);
+
+            if ($written === false) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf(
+                        'Failed to write conversion task file %s for linkedid=%s',
+                        basename($taskFile),
+                        $row['linkedid'] ?? 'unknown'
+                    ),
+                    LOG_ERR
+                );
+                // Don't update recordingfile to .webm — the conversion task was not created,
+                // so the .webm file will never exist. Keep the original source path in CDR.
+                return [$row, $billsec];
+            }
+
+            // Update recordingfile path to point to WebM file (supports .wav, .wav16, .wav48)
+            $row['recordingfile'] = preg_replace('/\.(wav|wav16|wav48)$/i', '.webm', $row['recordingfile']);
+        } else {
             $row['recordingfile'] = '';
         }
-        return array($row, $billsec);
+        return [$row, $billsec];
     }
 
     /**
@@ -303,8 +378,11 @@ class WorkerCdr extends WorkerBase
             $isInternal = true;
         }
 
+        // Resolve destination internal data once (may be empty for external/queue/voicemail destinations)
+        $destInternal = $this->internal_numbers[$row['dst_num']] ?? [];
+
         // Attempt to find the email address associated with the destination number
-        $email = ($this->internal_numbers[$row['dst_num']] ?? [])['email'] ?? '';
+        $email = $destInternal['email'] ?? '';
 
         // If no email was found and this is not an internal call, use the default email for missed calls
         if (empty($email) && !$isInternal) {
@@ -316,15 +394,19 @@ class WorkerCdr extends WorkerBase
             return;
         }
 
+        // Determine language: destination user → system default
+        $language = $destInternal['language'] ?? PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
+
         // Record the details of the call for later processing
         $this->no_answered_calls[$row['linkedid']][] = [
             'from_number' => $row['src_num'],
+            'from_name' => $row['src_name'] ?? '',
             'to_number' => $row['dst_num'],
             'start' => $row['start'],
             'answer' => $row['answer'],
             'endtime' => $row['endtime'],
             'email' => $email,
-            'language' => $this->internal_numbers[$row['dst_num']]['language'],
+            'language' => $language,
             'is_internal' => $isInternal,
             'duration' => $row['duration'],
             'NOANSWER' => true
@@ -395,5 +477,5 @@ class WorkerCdr extends WorkerBase
 
 }
 
-// Start worker process
+// Start a worker process
 WorkerCdr::startWorker($argv ?? []);

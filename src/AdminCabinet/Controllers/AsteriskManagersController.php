@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,12 +20,15 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\AsteriskManagerEditForm;
-use MikoPBX\Common\Models\{AsteriskManagerUsers, NetworkFilters};
-use Phalcon\Mvc\Model\Resultset;
 
+/**
+ * Asterisk Managers Controller
+ * 
+ * Handles the web interface for managing Asterisk Manager Interface (AMI) users.
+ * Uses REST API v2 for all data operations.
+ */
 class AsteriskManagersController extends BaseController
 {
-
     private array $arrCheckBoxes;
 
     /**
@@ -53,132 +56,24 @@ class AsteriskManagersController extends BaseController
 
     /**
      * Generates Asterisk Managers index page
+     * Data is loaded via REST API from JavaScript
      */
-    public function indexAction()
+    public function indexAction(): void
     {
-        $amiUsers = AsteriskManagerUsers::find();
-        $amiUsers->setHydrateMode(
-            Resultset::HYDRATE_ARRAYS
-        );
 
-        $arrNetworkFilters = [];
-        $networkFilters    = NetworkFilters::find();
-        foreach ($networkFilters as $filter) {
-            $arrNetworkFilters[$filter->id] = $filter->getRepresent();
-        }
-        $this->view->setVar('networkFilters', $arrNetworkFilters);
-        $this->view->setVar('amiUsers', $amiUsers);
     }
 
-
     /**
-     * Modifies Asterisk Managers by Webinterface
+     * Shows the edit form for an Asterisk manager.
+     * Creates empty form structure, data is loaded via REST API.
      *
      * @param string $id AsteriskManagerUsers record ID
      */
-    public function modifyAction(string $id = '')
+    public function modifyAction(string $id = ''): void
     {
-        $manager = AsteriskManagerUsers::findFirstById($id);
-        if ($manager === null) {
-            $manager = new AsteriskManagerUsers();
-            $manager->secret = AsteriskManagerUsers::generateAMIPassword();
-        }
-
-        $arrNetworkFilters = [];
-        $networkFilters    = NetworkFilters::getAllowedFiltersForType(
-            [
-                'AJAM',
-                'AMI',
-            ]
-        );
-        $arrNetworkFilters['none'] = $this->translation->_('ex_NoNetworkFilter');
-        foreach ($networkFilters as $filter) {
-            $arrNetworkFilters[$filter->id] = $filter->getRepresent();
-        }
-
-
-        $this->view->form = new AsteriskManagerEditForm(
-            $manager,
-            [
-                'network_filters'     => $arrNetworkFilters,
-                'array_of_checkboxes' => $this->arrCheckBoxes,
-            ]
-        );
-
-        $this->view->setVar('arrCheckBoxes', $this->arrCheckBoxes);
-        $this->view->setVar('represent', $manager->getRepresent());
-    }
-
-
-    /**
-     * Save Asterisk Manager User settings into database
-     */
-    public function saveAction(): void
-    {
-        if (!$this->request->isPost()) {
-            return;
-        }
-        $data    = $this->request->getPost();
-        $manager = null;
-        if (isset($data['id'])) {
-            $manager = AsteriskManagerUsers::findFirst($data['id']);
-        }
-        if ($manager === null) {
-            $manager = new AsteriskManagerUsers();
-        }
-
-        $manager->weakSecret = '0';
-
-        foreach ($manager as $name => $value) {
-            if (in_array($name, $this->arrCheckBoxes, true)) {
-                $manager->$name = ($data[$name . '_read'] === 'on') ? 'read' : '';
-                $manager->$name.= ($data[$name . '_write'] === 'on') ? 'write' : '';
-                continue;
-            }
-            if ( ! array_key_exists($name, $data)) {
-                continue;
-            }
-            $manager->$name = $data[$name];
-        }
-        $this->saveEntity($manager, "asterisk-managers/modify/{$manager->id}");
-    }
-
-    /**
-     * Deletes Asterisk Manager records from database
-     *
-     * @param string $amiId
-     *
-     * @return void
-     */
-    public function deleteAction(string $amiId = ''): void
-    {
-        if ($amiId === '') {
-            return;
-        }
-
-        $manager = AsteriskManagerUsers::findFirstByid($amiId);
-        if ($manager !== null) {
-            $manager->delete();
-        }
-        $this->forward('asterisk-managers/index');
-    }
-
-    /**
-     * Checks uniqueness for AMI username from JS by ajax requests.
-     *
-     * @param string $username
-     *
-     * @return void  result send by ControllerBase::afterExecuteRoute()
-     */
-    public function availableAction(string $username): void
-    {
-        $result = true;
-        $amiUser = AsteriskManagerUsers::findFirst("username = '{$username}'");
-        if ($amiUser !== null) {
-            $result             = false;
-            $this->view->userId = $amiUser->id;
-        }
-        $this->view->setVar('nameAvailable', $result);
-        $this->view->setVar('success', true);
-    }
+        $form = new AsteriskManagerEditForm();
+        
+        $this->view->form = $form;
+        $this->view->arrCheckBoxes = $this->arrCheckBoxes;
+    }    
 }

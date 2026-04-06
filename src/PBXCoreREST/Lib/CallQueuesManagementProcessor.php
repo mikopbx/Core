@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,20 +20,58 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\PBXCoreREST\Lib\CallQueues\DeleteRecordAction;
+use MikoPBX\PBXCoreREST\Lib\CallQueues\GetRecordAction;
+use MikoPBX\PBXCoreREST\Lib\CallQueues\SaveRecordAction;
+use MikoPBX\PBXCoreREST\Lib\CallQueues\GetListAction;
+use MikoPBX\PBXCoreREST\Lib\CallQueues\GetDefaultAction;
+use MikoPBX\PBXCoreREST\Lib\CallQueues\CreateRecordAction;
+use MikoPBX\PBXCoreREST\Lib\CallQueues\UpdateRecordAction;
+use MikoPBX\PBXCoreREST\Lib\CallQueues\PatchRecordAction;
+use MikoPBX\PBXCoreREST\Lib\CallQueues\CopyRecordAction;
 use Phalcon\Di\Injectable;
 
 /**
+ * Available actions for call queues management
+ */
+enum CallQueueAction: string
+{
+    // Standard CRUD operations
+    case GET_LIST = 'getList';
+    case GET_RECORD = 'getRecord';
+    case GET_DEFAULT = 'getDefault';
+    case CREATE = 'create';
+    case UPDATE = 'update';
+    case PATCH = 'patch';
+    case DELETE = 'delete';
+
+    // Custom methods
+    case COPY = 'copy';
+}
+
+/**
  * Class CallQueuesManagementProcessor
+ * 
+ * Processes call queue management requests using uniqid as primary identifier
+ * 
+ * RESTful API mapping:
+ * - GET /call-queues         -> getList
+ * - GET /call-queues/{id}    -> getRecord
+ * - POST /call-queues        -> create
+ * - PUT /call-queues/{id}    -> update
+ * - PATCH /call-queues/{id}  -> patch
+ * - DELETE /call-queues/{id} -> delete
+ * 
+ * Custom methods:
+ * - GET /call-queues:getDefault -> getDefault
  *
  * @package MikoPBX\PBXCoreREST\Lib
- *
  */
 class CallQueuesManagementProcessor extends Injectable
 {
     /**
-     * Processes CallQueues management requests
+     * Processes CallQueues management requests with type-safe enum matching
      *
-     * @param array $request
+     * @param array<string, mixed> $request
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -42,24 +80,40 @@ class CallQueuesManagementProcessor extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $action = $request['action'];
+        $actionString = $request['action'];
         $data = $request['data'];
-        switch ($action) {
-            case 'deleteRecord':
-                if (!empty($data['id'])) {
-                    $res = DeleteRecordAction::main($data['id']);
-                } else {
-                    $res->messages['error'][] = 'Empty ID in POST/GET data';
-                }
-                break;
-            default:
-                $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
+
+        // Pass HTTP method to actions for PUT/PATCH validation
+        // WHY: PUT/PATCH on non-existent resource should return 404, not create new record
+        if (isset($request['httpMethod'])) {
+            $data['httpMethod'] = $request['httpMethod'];
         }
 
-        $res->function = $action;
+        // Type-safe action matching with enum
+        $action = CallQueueAction::tryFrom($actionString);
+        
+        if ($action === null) {
+            $res->messages['error'][] = "Unknown action - $actionString in " . __CLASS__;
+            $res->function = $actionString;
+            return $res;
+        }
+        
+        // Execute action using match expression (PHP 8)
+        $res = match ($action) {
+            // Standard CRUD operations
+            CallQueueAction::GET_LIST => GetListAction::main($data),
+            CallQueueAction::GET_RECORD => GetRecordAction::main($data['id'] ?? ''),
+            CallQueueAction::GET_DEFAULT => GetDefaultAction::main(),
+            CallQueueAction::CREATE => CreateRecordAction::main($data),
+            CallQueueAction::UPDATE => UpdateRecordAction::main($data),
+            CallQueueAction::PATCH => PatchRecordAction::main($data),
+            CallQueueAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
+            // Custom methods
+            CallQueueAction::COPY => CopyRecordAction::main($data['id'] ?? '')
+        };
 
+        $res->function = $actionString;
         return $res;
     }
-
-
+    
 }

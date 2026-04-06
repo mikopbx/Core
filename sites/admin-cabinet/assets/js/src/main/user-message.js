@@ -61,11 +61,17 @@ const UserMessage = {
         let html = '<div class="ui error icon message ajax">';
         html += '<i class="exclamation icon"></i>';
         html += '<div class="content">';
+        
+        // Check if the message already contains a UI header (constraint violation messages)
+        const hasEmbeddedHeader = text.includes('<div class="ui header">');
+        
         if (header !== '') {
             html += `<div class="header">${header}</div>`
-        } else {
+        } else if (!hasEmbeddedHeader) {
+            // Only add default error header if message doesn't already contain a header
             html += `<div class="header">${globalTranslate.msg_ErrorHeader}</div>`
         }
+        
         html += `<p>${text}</p>`;
         html += '</div></div>';
         UserMessage.$ajaxMessagesDiv.after(html);

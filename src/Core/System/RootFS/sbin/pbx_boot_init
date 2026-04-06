@@ -16,13 +16,28 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
 #
-if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
-  exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>&1
-else
-  exec </dev/console >/dev/console 2>/dev/console;
+# Setup console I/O (serial output handled by pbx-message)
+# Only redirect to /dev/console if it's accessible (fixes VMware VMs without serial console)
+# Output version as early diagnostic marker and console test
+if [ -w /dev/console ] && { [ -f /etc/version ] && echo "MikoPBX ver: $(cat /etc/version)" || echo "MikoPBX boot"; } > /dev/console 2>/dev/null; then
+    exec </dev/console >/dev/console 2>/dev/console
 fi
 
-echo " - Start ${0}";
+# Load shell functions for console/serial output
+source /sbin/shell_functions.sh
+
+# Set console framebuffer resolution (for VMware and other hypervisors)
+if [ -w /sys/class/graphics/fb0/virtual_size ]; then
+  echo '1024x768' > /sys/class/graphics/fb0/virtual_size 2>/dev/null
+fi
+
+echo_info "Start ${0}"
+
+# Show current vesion from file/offload/version if it exists
+if [ -f /offload/version ]; then
+  echo_info "Current version: $(cat /etc/version | xargs)"
+fi
+
 # Starting the syslog daemon with specific options
 /sbin/syslogd -S -C512
 
@@ -31,7 +46,7 @@ HOME=/
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 export HOME PATH
-echo ' - Create system dirs'
+echo_info "Create system dirs"
 
 # Creating necessary directories and symbolic links for the system
 mkdir -p /dev/pts \
@@ -48,18 +63,23 @@ chmod 777 /tmp
 ln -s /offload/rootfs/usr /usr
 ln -s /sys/bus/usb /dev/bus/usb
 
+# Create getty symlink for LXC compatibility (Proxmox adds getty to inittab)
+[ ! -e /sbin/getty ] && ln -s /sbin/agetty /sbin/getty
+
 # Creating device nodes for null and initctl
 rm -rf /dev/null
 mknod /dev/null c 1 3
 mknod /dev/initctl p
+
+echo_info "Detecting hardware (udev)..."
 
 # Starting udev to manage the /dev directory dynamically
 /sbin/udevd --daemon
 /sbin/udevadm trigger
 /sbin/udevadm settle
 
-# Waiting for device setup to complete
-sleep 5
+# Brief pause for slow USB devices after udevadm settle
+sleep 1
 
 # Mounting devpts which is a pseudo file system used to access pseudo terminals
 mount -t devpts -o gid=5,mode=620 devpts /dev/pts
@@ -80,34 +100,35 @@ mount -t devpts -o gid=5,mode=620 devpts /dev/pts
 # RAID setup
 mdadmPath=$(/sbin/which mdadm)
 if [ -n "$mdadmPath" ]; then
-  # Initial array setup
-  "$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop >/dev/null 2>/dev/null
-  "$mdadmPath" --assemble --scan
-  mkdir -p /etc/mdadm
-  # Config generation
-  echo "DEVICE partitions" >/etc/mdadm/mdadm.conf
-  arrList=$("$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2)
-  for mdName in $arrList; do
-    # Getting array index
-    mdIndex=$("$mdadmPath" --detail --scan --verbose | /bin/busybox grep "$mdName" | /bin/busybox awk '/ARRAY/ {print}' | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep name | /bin/busybox awk -F'[=]|[:]' ' { print $3} ')
-    dstDev="md${mdIndex}"
-    srcDev=$(/bin/busybox basename "$mdName")
-    "$mdadmPath" --detail --scan --verbose | /bin/busybox grep 'ARRAY' | /bin/busybox grep "$srcDev" | /bin/busybox sed "s/\/${srcDev}/\/${dstDev}/g" >>/etc/mdadm/mdadm.conf
-  done
-  # Stopping all arrays
-  "$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop >/dev/null 2>/dev/null
+  # Quick check: are there any RAID arrays? (/proc/mdstat is instant vs mdadm scan)
+  if [ -e /proc/mdstat ] && grep -q "^md" /proc/mdstat 2>/dev/null; then
+    echo_info "Configuring RAID arrays..."
+    # Initial array setup
+    echo "$arrList" | /bin/xargs "$mdadmPath" --stop >/dev/null 2>/dev/null
+    "$mdadmPath" --assemble --scan > /dev/null 2> /dev/null
+    mkdir -p /etc/mdadm
+    # Config generation
+    echo "DEVICE partitions" >/etc/mdadm/mdadm.conf
+    # Cache verbose output to avoid repeated scans in loop
+    detailVerbose=$("$mdadmPath" --detail --scan --verbose)
+    arrList=$("$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2)
+    for mdName in $arrList; do
+      # Getting array index
+      mdIndex=$(echo "$detailVerbose" | /bin/busybox grep "$mdName" | /bin/busybox awk '/ARRAY/ {print}' | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep name | /bin/busybox awk -F'[=]|[:]' ' { print $3} ')
+      dstDev="md${mdIndex}"
+      srcDev=$(/bin/busybox basename "$mdName")
+      echo "$detailVerbose" | /bin/busybox grep 'ARRAY' | /bin/busybox grep "$srcDev" | /bin/busybox sed "s/\/${srcDev}/\/${dstDev}/g" >>/etc/mdadm/mdadm.conf
+    done
+    # Stopping all arrays
+    "$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop >/dev/null 2>/dev/null
 
-  # Assembling arrays with correct config
-  "$mdadmPath" --assemble --scan
+    # Assembling arrays with correct config
+    "$mdadmPath" --assemble --scan > /dev/null 2> /dev/null
+  fi
 fi
 # RAID END
 
-# Source shell functions for use later in the script
-. /sbin/shell_functions.sh
-
 # Running a system check for updates
-echo
-echo " - Start /sbin/check-update-pbx script ..."
 /sbin/check-update-pbx
 
 # If the system is rebooting, terminate the script
@@ -117,21 +138,21 @@ fi
 
 # Mounting offload and configuration directories
 echo
-echo " - Start /sbin/mountoffload script..."
+echo_info "Start /sbin/mountoffload script..."
 if /sbin/mountoffload; then
-    echo " - Continuing boot process."
-    echo " - Start /etc/rc/mountconfdir script..."
+    echo_info "Continuing boot process."
+    echo_info "Start /etc/rc/mountconfdir script..."
     if /etc/rc/mountconfdir; then
-      echo " - Continuing boot process."
+      echo_info "Continuing boot process."
       # Booting up the system
       /etc/rc/bootup 2>/dev/null
     else
-      echo " - Failed to mount conf, halting boot process."
+      echo_error "Failed to mount conf, halting boot process."
       sleep 15;
       exit 1
     fi
 else
-    echo " - Failed to mount offload, halting boot process."
+    echo_error "Failed to mount offload, halting boot process."
     sleep 15;
     exit 1
 fi

@@ -1,13 +1,16 @@
-<h4 class="ui dividing header ">{{ t._('qf_Qualify') }}</h4>
-<div class="inline fields">
-    <div class="ui toggle checkbox" id="qualify">
+<div class="field">
+    <div class="ui toggle checkbox">
         {{ form.render('qualify') }}
-    </div>
-    <div class="field" id="qualify-freq">
-        {{ t._('qf_Frequency') }}
-        {{ form.render('qualifyfreq') }}
+        <label for="qualify">
+            {{ t._('qf_Qualify') }}
+            <i class="small info circle icon field-info-icon"
+               data-field="qualify_session"></i>
+        </label>
     </div>
 </div>
-<div class='ui info message'>
-    {{ t._('qf_QualifyInstructions') }}
+<div class="field" id="qualify-freq">
+    <label for="qualifyfreq">{{ t._('qf_Frequency') }}</label>
+    <div class="field max-width-200">
+        {{ form.render('qualifyfreq') }}
+    </div>
 </div>

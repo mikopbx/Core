@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,13 +20,11 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Directories;
-use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
-use Phalcon\Di\Injectable;
 
 /**
  * Class NatsConf
@@ -34,30 +33,87 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class NatsConf extends Injectable
+class NatsConf extends SystemConfigClass
 {
-    public const PROC_NAME = 'gnatsd';
-
-    private MikoPBXConfig $mikoPBXConfig;
+    public const string PROC_NAME = 'gnatsd';
+    private string $conf_file = '';
 
     /**
-     * NatsConf constructor.
+     * Start the service.
+     *
+     * @return bool True if successful, false otherwise.
      */
-    public function __construct()
+    public function start(): bool
     {
-        $this->mikoPBXConfig = new MikoPBXConfig();
+        if(System::isBooting()){
+            $this->configure();
+            Processes::mwExec($this->startCommand);
+            $result = $this->monitWaitStart();
+        }else{
+            $result = $this->reStart();
+        }
+        return $result;
     }
 
     /**
      * Restarts the gnats server.
      *
+     * @return bool
+     */
+    public function reStart(): bool
+    {
+        $this->configure();
+        $this->generateMonitConf();
+        return $this->monitRestart();
+    }
+
+    /**
+     * Generates the Monit configuration for the NATS service.
+     *
+     * This method creates a Monit configuration file for the NATS service,
+     * which is used to monitor and manage the service's state.
+     *
+     * @return bool True if the configuration was generated successfully, false otherwise.  
+     *
+     */
+    public function generateMonitConf(): bool
+    {
+        if(empty($this->conf_file)){
+            $this->configure();
+        }
+        $busyboxPath = Util::which('busybox');
+        $confPath = $this->getMainMonitConfFile();
+
+        $stopCommand = "/bin/sh -c '$busyboxPath kill -TERM `$busyboxPath cat /var/run/".self::PROC_NAME.".pid`'";
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid '.PHP_EOL.
+            '    depends on loopback'.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$stopCommand.'"'.PHP_EOL.
+            '        as uid root and gid root';
+
+        $this->saveFileContent($confPath, $conf);
+        return true;
+    }
+
+    /**
+     * Configures the NATS service.
+     *
+     * This method sets up the configuration for the NATS service,
+     * including the configuration file, log directory, and session directory.
+     *
      * @return void
      */
-    public function reStart(): void
+    private function configure():void
     {
         $config = $this->getDI()->get('config')->gnats;
-
         $confDir = '/etc/nats';
+        $this->conf_file = "$confDir/natsd.conf";
+
+        $busyboxPath = Util::which('busybox');
+        $binPath = Util::which(self::PROC_NAME);
+        $this->startCommand = "/bin/sh -c '$busyboxPath nohup $binPath --config $this->conf_file > /dev/null 2>&1 & $busyboxPath echo $! > /var/run/".self::PROC_NAME.".pid && sleep 1'";
+
         Util::mwMkdir($confDir);
 
         $logDir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nats';
@@ -66,12 +122,12 @@ class NatsConf extends Injectable
         $sessionsDir = Directories::getDir(Directories::CORE_TEMP_DIR) . '/nats_cache';
         Util::mwMkdir($sessionsDir);
 
-        $pid_file = '/var/run/gnatsd.pid';
+        $pid_file = '/var/run/'.self::PROC_NAME.'.pid';
         $settings = [
             'port'             => $config->port,
             'http_port'        => $config->httpPort,
-            'debug'            => 'false',
-            'trace'            => 'false',
+            'debug'            => $config->debug?'true':'false',
+            'trace'            => $config->debug?'true':'false',
             'logtime'          => 'true',
             'pid_file'         => $pid_file,
             'max_connections'  => '1000',
@@ -85,25 +141,24 @@ class NatsConf extends Injectable
         foreach ($settings as $key => $val) {
             $config .= "$key: $val\n";
         }
-        $conf_file = "$confDir/natsd.conf";
-        Util::fileWriteContent($conf_file, $config);
+        Util::fileWriteContent($this->conf_file, $config);
 
-        $lic = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::PBX_LICENSE);
+        $lic = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
         file_put_contents("$sessionsDir/license.key", $lic);
+    }
 
-        if (file_exists($pid_file)) {
-            $killAllPath = Util::which('killall');
-            $killPath = Util::which('kill');
-            $catPath = Util::which('cat');
-            Processes::mwExec("$killAllPath safe-".self::PROC_NAME);
-            Processes::mwExec("$killPath $($catPath $pid_file)");
-        }
-        $outFile = "$logDir/gnats_process.log";
-        $args = "--config $conf_file";
-        $result = Processes::safeStartDaemon(self::PROC_NAME, $args, 20, 1000000, $outFile);
-        if(!$result){
-            sleep(10);
-            Processes::safeStartDaemon(self::PROC_NAME, $args, 20, 1000000, $outFile);
-        }
+    /**
+     * Attempts to start the service via Monit when a failure is detected.
+     *
+     * This method is typically used as a fallback action to manually restart
+     * the service using Monit if it fails unexpectedly. The current implementation
+     * does not wait for the service to fully start, but the timeout parameter
+     * may be used in extended implementations.
+     *
+     * @return void
+     */
+    public function monitFailStartAction(): void
+    {
+        sleep(2);
     }
 }

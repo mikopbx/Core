@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,23 +20,36 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\IvrMenu\DeleteRecordAction;
+use MikoPBX\PBXCoreREST\Lib\IvrMenu\{
+    GetRecordAction,
+    GetListAction,
+    SaveRecordAction,
+    DeleteRecordAction,
+    GetDefaultAction,
+    PatchAction,
+    CopyRecordAction
+};
 use Phalcon\Di\Injectable;
 
 /**
- * Class IvrMenuManagementProcessor
+ * IVR menu management processor
  *
+ * Handles all IVR menu management operations including:
+ * - getRecord: Get single IVR menu by ID or create new structure
+ * - getList: Get list of all IVR menus
+ * - create: Create new IVR menu
+ * - update: Update IVR menu
+ * - delete: Delete IVR menu
+ * 
  * @package MikoPBX\PBXCoreREST\Lib
- *
  */
 class IvrMenuManagementProcessor extends Injectable
 {
     /**
-     * Processes IvrMenu management requests
+     * Processes IVR menu management requests
      *
-     * @param array $request
-     *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @param array $request Request data with 'action' and 'data' fields
+     * @return PBXApiResult API response object with success status and data
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -44,22 +58,67 @@ class IvrMenuManagementProcessor extends Injectable
 
         $action = $request['action'];
         $data = $request['data'];
+
+        // Pass HTTP method to actions for PUT/PATCH validation
+        // WHY: PUT/PATCH on non-existent resource should return 404, not create new record
+        if (isset($request['httpMethod'])) {
+            $data['httpMethod'] = $request['httpMethod'];
+        }
+
+        // For debugging purposes, use proper system logging instead of error_log:
+        // SystemMessages::sysLogMsg(__CLASS__, "Processing action: {$action}", LOG_DEBUG);
+
         switch ($action) {
-            case 'deleteRecord':
+            case 'getRecord':
+                $recordId = $data['id'] ?? null;
+                $res = GetRecordAction::main($recordId);
+                break;
+                
+            case 'getList':
+                $res = GetListAction::main($data);
+                break;
+                
+            case 'create':
+                $res = SaveRecordAction::main($data);
+                break;
+                
+            case 'update':
+                $res = SaveRecordAction::main($data);
+                break;
+                
+            case 'delete':
                 if (!empty($data['id'])) {
                     $res = DeleteRecordAction::main($data['id']);
                 } else {
-                    $res->messages['error'][] = 'Empty ID in POST/GET data';
+                    $res->messages['error'][] = 'Empty ID in request data';
                 }
                 break;
+                
+            case 'getDefault':
+                $res = GetDefaultAction::main();
+                break;
+                
+            case 'patch':
+                if (!empty($data['id'])) {
+                    $res = PatchAction::main($data);
+                } else {
+                    $res->messages['error'][] = 'Empty ID in request data for patch operation';
+                }
+                break;
+
+            case 'copy':
+                if (!empty($data['id'])) {
+                    $res = CopyRecordAction::main($data['id']);
+                } else {
+                    $res->messages['error'][] = 'Empty ID in request data for copy operation';
+                }
+                break;
+
             default:
                 $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
         }
 
         $res->function = $action;
-
         return $res;
     }
-
-
 }

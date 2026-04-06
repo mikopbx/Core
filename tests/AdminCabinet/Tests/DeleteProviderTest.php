@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -22,13 +23,14 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 use Facebook\WebDriver\WebDriverBy;
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
+use MikoPBX\Tests\AdminCabinet\Tests\Data\IAXProviderDataFactory;
+use MikoPBX\Tests\AdminCabinet\Tests\Data\SIPProviderDataFactory;
 
 /**
  * Class to test the deletion of a provider in the admin cabinet.
  */
 class DeleteProviderTest extends MikoPBXTestsBase
 {
-
     /**
      * Set up before each test
      *
@@ -43,7 +45,6 @@ class DeleteProviderTest extends MikoPBXTestsBase
 
     /**
      * Test the deletion of a provider.
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test.
@@ -54,12 +55,13 @@ class DeleteProviderTest extends MikoPBXTestsBase
         $this->clickModifyButtonOnRowWithText($params['description']);
 
         // TESTS
-        $xpath = "//input[@name = 'uniqid']";
+        $xpath = "//input[@name = 'id']";
         $input_UniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
         $elementID = $input_UniqueID->getAttribute('value');
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
 
         $this->clickDeleteButtonOnRowWithText($params['description']);
+       
         $this->waitForAjax();
 
         // Try to find element with ID on the page
@@ -93,18 +95,8 @@ class DeleteProviderTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params['Mango office for delete'] = [
-            [
-                'description' => 'Mango office for delete',
-                'possibleToDelete' => true
-            ]
-        ];
-        $params['VoxlinkIAX for delete'] = [
-            [
-                'description' => 'VoxlinkIAX for delete',
-                'possibleToDelete' => true
-            ]
-        ];
+        $params['provider.delete'] = [SIPProviderDataFactory::getSIPProviderData('provider.delete')];
+        $params['provider.iax.delete'] = [IAXProviderDataFactory::getIAXProviderData('provider.iax.delete')];
         return $params;
     }
 }

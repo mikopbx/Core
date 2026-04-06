@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,29 +16,18 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, Extensions, Form  */
+/* global globalRootUrl, ConferenceRoomsAPI, Form, globalTranslate, UserMessage, ExtensionsAPI */
 
 /**
- * Conference module, providing functionality related to conference room management.
- * @module conference
+ * Conference room edit form management module
  */
-const conference = {
-    // jQuery object referencing the extension field in the conference room form
-    $number: $('#extension'),
-
-    /**
-     * jQuery object for the form.
-     * @type {jQuery}
-     */
+const conferenceRoomModify = {
     $formObj: $('#conference-room-form'),
-
-    // Default value for the extension field in the conference room form
+    $number: $('#extension'),
     defaultExtension: '',
-
+    
     /**
-     * Validation rules for the form fields before submission.
-     *
-     * @type {object}
+     * Validation rules
      */
     validateRules: {
         name: {
@@ -46,50 +35,45 @@ const conference = {
             rules: [
                 {
                     type: 'empty',
-                    prompt: globalTranslate.cr_ValidateNameEmpty,
-                },
-            ],
+                    prompt: globalTranslate.cr_ValidateNameIsEmpty
+                }
+            ]
         },
         extension: {
             identifier: 'extension',
             rules: [
                 {
-                    type: 'number',
-                    prompt: globalTranslate.cr_ValidateExtensionNumber,
-                },
-                {
-                    type: 'minLength[2]',
-                    prompt: globalTranslate.cr_ValidateExtensionLen,
-                },
-                {
                     type: 'empty',
-                    prompt: globalTranslate.cr_ValidateExtensionEmpty,
+                    prompt: globalTranslate.cr_ValidateExtensionIsEmpty
+                },
+                {
+                    type: 'regExp[/^[0-9]{2,8}$/]',
+                    prompt: globalTranslate.cr_ValidateExtensionFormat
                 },
                 {
                     type: 'existRule[extension-error]',
                     prompt: globalTranslate.cr_ValidateExtensionDouble,
                 },
-            ],
+            ]
         },
         pinCode: {
             identifier: 'pinCode',
             rules: [
                 {
-                    type: 'number',
+                    type: 'regExp[/^[0-9]*$/]',
                     prompt: globalTranslate.cr_ValidatePinNumber,
                 },
             ],
         },
     },
+    
     /**
-     * Initialize the conference room management functionality.
-     * This method adds handlers and initializes the form.
+     * Module initialization
      */
     initialize() {
-
         // Add handler to dynamically check if the input number is available
         let timeoutId;
-        conference.$number.on('input', () => {
+        conferenceRoomModify.$number.on('input', () => {
             // Clear the previous timer, if it exists
             if (timeoutId) {
                 clearTimeout(timeoutId);
@@ -97,49 +81,134 @@ const conference = {
             // Set a new timer with a delay of 0.5 seconds
             timeoutId = setTimeout(() => {
                 // Get the newly entered number
-                const newNumber = conference.$formObj.form('get value', 'extension');
+                const newNumber = conferenceRoomModify.$formObj.form('get value', 'extension');
 
                 // Execute the availability check for the number
-                Extensions.checkAvailability(conference.defaultNumber, newNumber);
+                ExtensionsAPI.checkAvailability(conferenceRoomModify.defaultExtension, newNumber);
             }, 500);
         });
-
-        // Initialize the conference room form
-        conference.initializeForm();
-
-        // Get the default extension from the form
-        conference.defaultExtension = conference.$formObj.form('get value', 'extension');
+        
+        // Configure Form.js
+        Form.$formObj = conferenceRoomModify.$formObj;
+        Form.url = '#'; // Не используется при REST API
+        Form.validateRules = conferenceRoomModify.validateRules;
+        Form.cbBeforeSendForm = conferenceRoomModify.cbBeforeSendForm;
+        Form.cbAfterSendForm = conferenceRoomModify.cbAfterSendForm;
+        
+        // Настройка REST API
+        Form.apiSettings.enabled = true;
+        Form.apiSettings.apiObject = ConferenceRoomsAPI;
+        Form.apiSettings.saveMethod = 'saveRecord';
+        
+        // Important settings for correct save modes operation
+        Form.afterSubmitIndexUrl = `${globalRootUrl}conference-rooms/index/`;
+        Form.afterSubmitModifyUrl = `${globalRootUrl}conference-rooms/modify/`;
+        
+        // Initialize Form with all standard features:
+        // - Dirty checking (change tracking)
+        // - Dropdown submit (SaveSettings, SaveSettingsAndAddNew, SaveSettingsAndExit)
+        // - Form validation
+        // - AJAX response handling
+        Form.initialize();
+        
+        // Load form data
+        conferenceRoomModify.initializeForm();
     },
-
+    
     /**
-     * Callback function to be called before the form is sent
-     * @param {Object} settings - The current settings of the form
-     * @returns {Object} - The updated settings of the form
-     */
-    cbBeforeSendForm(settings) {
-        const result = settings;
-        result.data = conference.$formObj.form('get values');
-        return result;
-    },
-
-    /**
-     * Callback function to be called after the form has been sent.
-     * @param {Object} response - The response from the server after the form is sent
-     */
-    cbAfterSendForm(response) {
-
-    },
-    /**
-     * Initialize the form with custom settings
+     * Load data into form
      */
     initializeForm() {
-        Form.$formObj = conference.$formObj;
-        Form.url = `${globalRootUrl}conference-rooms/save`; // Form submission URL
-        Form.validateRules = conference.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = conference.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = conference.cbAfterSendForm; // Callback after form is sent
-        Form.initialize();
+        const recordId = conferenceRoomModify.getRecordId();
+        
+        if (!recordId || recordId === '') {
+            // New record - get default values
+            ConferenceRoomsAPI.getRecord('new', (response) => {
+                if (response.result) {
+                    conferenceRoomModify.populateForm(response.data);
+                    // Get the default extension from the form
+                    conferenceRoomModify.defaultExtension = conferenceRoomModify.$formObj.form('get value', 'extension');
+                } else {
+                    UserMessage.showError(response.messages?.error || 'Failed to load default conference room data');
+                }
+            });
+        } else {
+            // Existing record - get by ID
+            ConferenceRoomsAPI.getRecord(recordId, (response) => {
+                if (response.result) {
+                    conferenceRoomModify.populateForm(response.data);
+                    // Get the default extension from the form
+                    conferenceRoomModify.defaultExtension = conferenceRoomModify.$formObj.form('get value', 'extension');
+                } else {
+                    UserMessage.showError(response.messages?.error || 'Failed to load conference room data');
+                }
+            });
+        }
     },
+    
+    /**
+     * Get record ID from URL
+     */
+    getRecordId() {
+        const urlParts = window.location.pathname.split('/');
+        const modifyIndex = urlParts.indexOf('modify');
+        if (modifyIndex !== -1 && urlParts[modifyIndex + 1]) {
+            return urlParts[modifyIndex + 1];
+        }
+        return '';
+    },
+    
+      /**
+     * Callback before form submission
+     */
+    cbBeforeSendForm(settings) {
+        // Get form values including the hidden isNew field
+        const formData = conferenceRoomModify.$formObj.form('get values');
+        
+        // Add _isNew flag based on the form's hidden field value
+        if (formData.isNew === '1') {
+            settings.data._isNew = true;
+        }
+        
+        // Возвращаем settings для продолжения обработки
+        return settings;
+    },
+    
+     /**
+     * Callback after form submission
+     * Handles different save modes (SaveSettings, SaveSettingsAndAddNew, SaveSettingsAndExit)
+     */
+    cbAfterSendForm(response) {
+        if (response.result) {
+
+            if (response.data) {
+                conferenceRoomModify.populateForm(response.data);
+            }
+
+            // Form.js will handle all redirect logic based on submitMode
+            const formData = conferenceRoomModify.$formObj.form('get values');
+            if (formData.isNew === '1' && response.data && response.data.id) {
+                // Update the hidden isNew field to '0' since it's no longer new
+                conferenceRoomModify.$formObj.form('set value', 'isNew', '0');
+            }
+
+        }
+    },
+    
+    /**
+     * Populate form with data
+     */
+    populateForm(data) {
+        // Use unified silent population approach
+        Form.populateFormSilently(data, {
+            afterPopulate: (formData) => {
+                if (Form.enableDirrity) {
+                    Form.saveInitialValues();
+                }
+            }
+        });
+    },
+    
 };
 
 /**
@@ -148,9 +217,9 @@ const conference = {
  */
 $.fn.form.settings.rules.existRule = (value, parameter) => $(`#${parameter}`).hasClass('hidden');
 
-
-// Initialize the conference room modify form when the document is ready
+/**
+ * Initialize on document ready
+ */
 $(document).ready(() => {
-    conference.initialize();
+    conferenceRoomModify.initialize();
 });
-

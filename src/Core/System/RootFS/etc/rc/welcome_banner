@@ -1,0 +1,42 @@
+#!/usr/bin/php
+<?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+namespace MikoPBX\Core\RootFS\etc\rc;
+
+use MikoPBX\Core\System\ConsoleMenu\Banners\WelcomeBanner;
+use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\Util;
+
+require_once 'Globals.php';
+
+// Wait for system boot to complete before showing banner.
+// Banner requires Redis and DB migrations to be ready.
+$maxWait = 120; // seconds
+$waited = 0;
+while (System::isBooting() && $waited < $maxWait) {
+    sleep(1);
+    $waited++;
+}
+
+// Set Cyrillic font for proper Russian text display on physical console
+Util::setCyrillicFont();
+
+$banner = new WelcomeBanner();
+$banner->runWithAutoRefresh();

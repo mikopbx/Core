@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -22,6 +23,7 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 use MikoPBX\Core\System\SystemMessages;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\PromiseInterface;
 
 class GoogleCloud extends CloudProvider
 {
@@ -32,10 +34,44 @@ class GoogleCloud extends CloudProvider
         $this->client = new Client(['timeout' => self::HTTP_TIMEOUT]);
     }
 
-    public const CloudID = 'GoogleCloud';
+    public const string CloudID = 'GoogleCloud';
+
+    /**
+     * Performs an asynchronous check to determine if this cloud provider is available.
+     *
+     * @return PromiseInterface Promise that resolves to bool
+     */
+    public function checkAvailability(): PromiseInterface
+    {
+        $promise = $this->client->requestAsync('GET', 'http://169.254.169.254/computeMetadata/v1/instance/', [
+            'query' => ['recursive' => 'true'],
+            'headers' => ['Metadata-Flavor' => 'Google']
+        ]);
+
+        return $promise->then(
+            function ($response) {
+                if ($response->getStatusCode() !== 200) {
+                    return false;
+                }
+
+                $metadata = json_decode($response->getBody()->getContents(), true) ?? [];
+
+                // Verify that metadata contains 'gserviceaccount' and has id
+                if (empty($metadata['id']) || !$this->containsGoogleDomain($metadata)) {
+                    return false;
+                }
+
+                return true;
+            },
+            function () {
+                return false;
+            }
+        );
+    }
 
     /**
      * Performs the Google Cloud provisioning using the Metadata Service.
+     * Uses direct SQLite queries to avoid Redis/ORM dependency during early boot.
      *
      * @return bool True if the provisioning was successful, false otherwise.
      */
@@ -46,26 +82,61 @@ class GoogleCloud extends CloudProvider
             return false;
         }
 
-        SystemMessages::echoToTeletype(PHP_EOL);
-
         // Extract SSH keys and primary SSH user
         $sshKeys = $metadata['attributes']['ssh-keys'] ?? '';
         $adminUsername = $this->extractPrimaryUser($sshKeys);
 
-        // Update machine name
+        // Extract instance metadata
         $hostname = $metadata['name'] ?? '';
-        $this->updateHostName($hostname);
-
-        // Update LAN settings with the external IP address
         $extIp = $metadata['networkInterfaces'][0]['accessConfigs'][0]['externalIp'] ?? '';
-        $this->updateLanSettings($extIp);
-
-        // Update SSH and WEB passwords using some unique identifier from the metadata
         $vmId = $metadata['id'];
-        $this->updateSSHCredentials($adminUsername, $vmId);
-        $this->updateWebPassword($vmId);
 
-        return true;
+        // Build config from IMDS metadata
+        $config = new ProvisioningConfig(
+            hostname: $hostname,
+            externalIp: $extIp,
+            sshKeys: $sshKeys,
+            sshLogin: $adminUsername,
+            instanceId: $vmId,
+            webPassword: $vmId
+        );
+
+        // Fetch and merge user-data if available
+        $userData = $this->fetchUserData();
+        if ($userData !== null) {
+            $userConfig = $this->parseUserData($userData);
+            if ($userConfig !== null && !$userConfig->isEmpty()) {
+                SystemMessages::sysLogMsg(__CLASS__, "Applying user-data configuration");
+                $config = $config->merge($userConfig);
+            }
+        }
+
+        // Apply configuration using direct SQLite (no Redis/ORM)
+        return $this->applyConfigDirect($config);
+    }
+
+    /**
+     * Fetches user-data from Google Cloud Metadata Service.
+     *
+     * @return string|null User-data content or null if not available
+     */
+    protected function fetchUserData(): ?string
+    {
+        try {
+            $response = $this->client->request('GET', 'http://169.254.169.254/computeMetadata/v1/instance/attributes/user-data', [
+                'headers' => ['Metadata-Flavor' => 'Google'],
+                'http_errors' => false
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                $userData = $response->getBody()->getContents();
+                return !empty($userData) ? $userData : null;
+            }
+        } catch (GuzzleException $e) {
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to fetch user-data: " . $e->getMessage());
+        }
+
+        return null;
     }
 
     /**
@@ -82,7 +153,7 @@ class GoogleCloud extends CloudProvider
             ]);
 
             if ($response->getStatusCode() == 200) {
-                $metadata = json_decode($response->getBody()->getContents(), true);
+                $metadata = json_decode($response->getBody()->getContents(), true)??[];
                 // Verify that metadata contains the 'serviceAccounts' with 'gserviceaccount' in any value
                 if ($this->containsGoogleDomain($metadata)) {
                     return $metadata;
@@ -127,7 +198,7 @@ class GoogleCloud extends CloudProvider
     {
         if (isset($metadata['serviceAccounts'])) {
             foreach ($metadata['serviceAccounts'] as $account) {
-                if (strpos($account['email'], 'gserviceaccount') !== false) {
+                if (str_contains($account['email'], 'gserviceaccount')) {
                     return true;
                 }
             }

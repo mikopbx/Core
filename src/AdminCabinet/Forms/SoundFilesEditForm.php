@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -22,6 +23,7 @@ namespace MikoPBX\AdminCabinet\Forms;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Text;
+use Phalcon\Forms\Element\TextArea;
 
 /**
  * Class SoundFilesEditForm
@@ -35,19 +37,24 @@ class SoundFilesEditForm extends BaseForm
     {
         parent::initialize($entity, $options);
 
-        foreach ($entity as $key => $value) {
-            switch ($key) {
-                case "path":
-                    $this->add(new Text($key));
-                    break;
-                case "id":
-                case "category":
-                case "***ALL HIDDEN ABOVE***":
-                    $this->add(new Hidden($key));
-                    break;
-                default:
-                    $this->add(new Text($key));
-            }
-        }
+        // Hidden fields
+        $this->add(new Hidden('id'));
+        $this->add(new Hidden('category'));
+        
+        // Path field (readonly)
+        $this->add(new Text('path', [
+            'readonly' => true
+        ]));
+        
+        // Text field for name
+        $this->add(new Text('name', [
+            'placeholder' => $this->translation->_('sf_EnterSoundFileName')
+        ]));
+        
+        // Textarea for description
+        $this->add(new TextArea('description', [
+            'placeholder' => $this->translation->_('sf_EnterDescription'),
+            'rows' => 3
+        ]));
     }
 }

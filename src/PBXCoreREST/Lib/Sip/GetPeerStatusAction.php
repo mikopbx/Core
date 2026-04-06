@@ -21,13 +21,14 @@ namespace MikoPBX\PBXCoreREST\Lib\Sip;
 
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Retrieves the status of a SIP peer.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Sip
  */
-class GetPeerStatusAction extends \Phalcon\Di\Injectable
+class GetPeerStatusAction extends Injectable
 {
 
     /**

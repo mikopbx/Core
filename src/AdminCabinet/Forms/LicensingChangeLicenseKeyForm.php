@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -30,10 +31,14 @@ use Phalcon\Forms\Element\Text;
  */
 class LicensingChangeLicenseKeyForm extends BaseForm
 {
-
     public function initialize($entity = null, $options = null): void
     {
         parent::initialize($entity, $options);
-        $this->add(new Text('licKey', ["value" => $options['licKey']]));
+        $this->add(new Text('licKey', [
+            'value' => $options['licKey'],
+            'autocomplete' => 'off',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
+        ]));
     }
 }

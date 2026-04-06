@@ -42,7 +42,7 @@ class ActionDialCreateChan
      *
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         // If the destination channel is not empty, add it to the active channels in the worker.
         $chan = $data['dst_chan'] ?? '';
@@ -108,11 +108,14 @@ class ActionDialCreateChan
                 $row->writeAttribute('dst_chan', $data['dst_chan']);
             }
 
-            if (isset($data['to_account']) && !empty($data['to_account'])) {
+            if (!empty($data['to_account'])) {
                 $row->writeAttribute($account_col, $data['to_account']);
             }
-            if (isset($data['dst_call_id']) && !empty($data['dst_call_id'])) {
+            if (!empty($data['dst_call_id'])) {
                 $row->writeAttribute('dst_call_id', $data['dst_call_id']);
+            }
+            if (!empty($data['dst_name'])) {
+                $row->writeAttribute('dst_name', $data['dst_name']);
             }
 
             // Save the updated record. If saving fails, log the error message.

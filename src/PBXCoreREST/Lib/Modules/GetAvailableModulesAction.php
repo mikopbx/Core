@@ -1,15 +1,34 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
 
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
+use GuzzleHttp;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Common\Providers\MutexProvider;
+use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
-use GuzzleHttp;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class GetAvailableModules
@@ -17,7 +36,7 @@ use GuzzleHttp;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class GetAvailableModulesAction  extends \Phalcon\Di\Injectable
+class GetAvailableModulesAction  extends Injectable
 {
     /**
      * Retrieves available modules on MIKO repository.
@@ -35,16 +54,44 @@ class GetAvailableModulesAction  extends \Phalcon\Di\Injectable
             $res->messages[] = 'Dependency injector does not initialized';
             return $res;
         }
-        $WebUiLanguage = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
+        $WebUiLanguage = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
         $cacheKey = "ModulesManagementProcessor:GetAvailableModules:$WebUiLanguage";
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
-        if ($managedCache->has($cacheKey)){
-            $body = $managedCache->get($cacheKey);
-        } else {
-            $PBXVersion = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
-            $PBXVersion = (string)str_ireplace('-dev', '', $PBXVersion);
-            $body = '';
-            $client = new GuzzleHttp\Client();
+        if ($managedCache->has($cacheKey) && is_array($managedCache->get($cacheKey))) {
+            $res->data = $managedCache->get($cacheKey);
+            $res->success = true;
+            return $res;
+        }
+        return $di->get(MutexProvider::SERVICE_NAME)
+            ->synchronized('getAvailableModules',
+                 function () use ($managedCache, $cacheKey, $WebUiLanguage) {
+                    return self::getAvailableModulesOnline($managedCache, $cacheKey, $WebUiLanguage);
+                 },
+                 10,
+                 30
+                );
+    }
+
+    /**
+     * Retrieves available modules on MIKO repository.
+     *
+     * @return PBXApiResult
+     */
+    private static function getAvailableModulesOnline($managedCache, $cacheKey, $WebUiLanguage): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $PBXVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
+        $PBXVersion = (string)str_ireplace('-dev', '', $PBXVersion);
+
+        $body = '';
+        $client = new GuzzleHttp\Client();
+
+        $maxAttempts = 3;
+        $attemptDelay = 2; // seconds
+        $code = Response::INTERNAL_SERVER_ERROR;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             try {
                 $request = $client->request(
                     'POST',
@@ -53,32 +100,47 @@ class GetAvailableModulesAction  extends \Phalcon\Di\Injectable
                         'headers' => [
                             'Content-Type' => 'application/json; charset=utf-8',
                         ],
-                        'json' => [
-                            'PBXVER' => $PBXVersion,
-                            'LANGUAGE'=> $WebUiLanguage,
-                        ],
-                        'timeout' => 5,
+                        'json' => array_merge(
+                            [
+                                'PBXVER' => $PBXVersion,
+                                'LANGUAGE' => $WebUiLanguage,
+                            ],
+                            System::getPlatformInfo()
+                        ),
+                        'timeout' => 15,
                     ]
                 );
                 $code = $request->getStatusCode();
-                if ($code === Response::OK){
+                if ($code === Response::OK) {
                     $body = $request->getBody()->getContents();
-                    $managedCache->set($cacheKey, $body, 3600);
+                    $res->data = json_decode($body ?? '', true) ?? [];
+
+                    if (is_array($res->data)) {
+                        $managedCache->set($cacheKey, $res->data, 3600);
+                    }
+                    break; // Success - exit loop
+                } else {
+                    SystemMessages::sysLogMsg(static::class, "API request failed with code: $code");
                 }
             } catch (\Throwable $e) {
                 $code = Response::INTERNAL_SERVER_ERROR;
-                Util::sysLogMsg(static::class, $e->getMessage());
-                $res->messages[] = $e->getMessage();
-            }
+                $errorMessage = "Attempt $attempt/$maxAttempts failed: " . $e->getMessage();
+                SystemMessages::sysLogMsg(static::class, $errorMessage);
 
-            if ($code !== Response::OK) {
-                return $res;
+                if ($attempt < $maxAttempts) {
+                    // Wait before next attempt
+                    sleep($attemptDelay);
+                } else {
+                    // Last attempt failed - add to response messages
+                    $res->messages[] = $e->getMessage();
+                }
             }
         }
-        $res->data = json_decode($body, true)??[];
-        $res->success = true;
 
+        if ($code !== Response::OK) {
+            return $res;
+        }
+        $res->success = true;
         return $res;
     }
-
 }

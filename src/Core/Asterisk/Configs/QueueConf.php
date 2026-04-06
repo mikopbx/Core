@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -22,6 +23,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Core\System\{Processes, Util};
+use MikoPBX\Core\System\Configs\PbxConf;
 
 /**
  * Class QueueConf
@@ -39,14 +41,46 @@ class QueueConf extends AsteriskConfigClass
 
     /**
      * Generates queue.conf and restarts the Asterisk queue module.
+     *
+     * @deprecated Use reload() instead for consistency with other config classes
+     * @see reload()
      */
     public static function queueReload(): void
     {
+        self::reload();
+    }
+
+    /**
+     * Reloads the Asterisk queue module using a two-step process.
+     *
+     * Asterisk has two limitations that prevent simple 'queue reload all':
+     *
+     * 1. Strategy container type: LINEAR uses ao2_container_alloc_list (preserves insertion order),
+     *    other strategies use ao2_container_alloc_hash. Switching TO linear is explicitly rejected
+     *    during reload (app_queue.c ~line 3720: "requires asterisk to be restarted").
+     *
+     * 2. Member ordering: existing static members preserve their queuepos during reload
+     *    (app_queue.c ~line 10087: newm->queuepos = cur->queuepos), ignoring config file order.
+     *
+     * Fix: write empty config → reload (destroys queues) → write full config → reload (recreates fresh).
+     *
+     * @see https://community.asterisk.org/t/queue-order-on-queue-reload-all/93833
+     */
+    public static function reload(): void
+    {
         $queue = new self();
+        $asterisk = Util::which(PbxConf::PROC_NAME);
+
+        // Step 1: Write empty config and reload to fully destroy existing queues.
+        // This forces Asterisk to release the old ao2_container (hash or list)
+        // so the queue can be recreated with the correct container type for its strategy.
+        $queue->saveConfig('', $queue->description);
+        Processes::mwExec("{$asterisk} -rx 'queue reload all'");
+
+        // Step 2: Write full config and reload to create queues fresh
+        // with correct container type and member ordering.
         $queue->generateConfig();
-        $out          = [];
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'queue reload all '", $out);
+        Processes::mwExec("{$asterisk} -rx 'queue reload all'");
     }
 
     /**
@@ -57,9 +91,9 @@ class QueueConf extends AsteriskConfigClass
     public function extensionGenContexts(): string
     {
         // Generate internal numbering plan.
-        $conf = PHP_EOL."[queue_agent_answer]".PHP_EOL;
-        $conf .= 'exten => s,1,Gosub(queue_answer,${EXTEN},1)' . PHP_EOL."\t";
-        $conf .= "same => n,Return()".PHP_EOL.PHP_EOL;
+        $conf = PHP_EOL . "[queue_agent_answer]" . PHP_EOL;
+        $conf .= 'exten => s,1,Gosub(queue_answer,${EXTEN},1)' . PHP_EOL . "\t";
+        $conf .= "same => n,Return()" . PHP_EOL . PHP_EOL;
 
         return $conf;
     }
@@ -74,7 +108,7 @@ class QueueConf extends AsteriskConfigClass
         $conf    = '';
         $db_data = $this->getQueueData();
         foreach ($db_data as $queue) {
-            $conf .= "exten => {$queue['extension']},hint,Custom:{$queue['extension']}".PHP_EOL;
+            $conf .= "exten => {$queue['extension']},hint,Custom:{$queue['extension']}" . PHP_EOL;
         }
 
         return $conf;
@@ -90,8 +124,8 @@ class QueueConf extends AsteriskConfigClass
         $conf    = '';
         $db_data = $this->getQueueData();
         foreach ($db_data as $queue) {
-            $conf .= 'exten => _' . $queue['extension'] . ',1,Set(__ISTRANSFER=transfer_)' . PHP_EOL. " \t";
-            $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " ".PHP_EOL;
+            $conf .= 'exten => _' . $queue['extension'] . ',1,Set(__ISTRANSFER=transfer_)' . PHP_EOL . " \t";
+            $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " " . PHP_EOL;
         }
         $conf .= PHP_EOL;
 
@@ -109,12 +143,12 @@ class QueueConf extends AsteriskConfigClass
         $db_data        = $this->getQueueData();
         foreach ($db_data as $queue) {
             $queue_ext_conf .= "exten => {$queue['extension']},1,NoOp(--- Start Queue ---) \n\t";
-            $reservedExtension = trim($queue['redirect_to_extension_if_empty']);
-            if(!empty($reservedExtension)){
+            $reservedExtension = trim($queue['redirect_to_extension_if_empty'] ?? '');
+            if (!empty($reservedExtension)) {
                 // Check if the queue is empty.
-                $queue_ext_conf .= 'same => n,Set(mLogged=${QUEUE_MEMBER('.$queue['uniqid'].',logged)})'.PHP_EOL."\t";
-                $queue_ext_conf .= 'same => n,ExecIf($["${mLogged}" == "0"]?Set(pt1c_UNIQUEID=${UNDEFINED}))'.PHP_EOL."\t";
-                $queue_ext_conf .= 'same => n,GotoIf($["${mLogged}" == "0"]?internal,'.$reservedExtension.',1)'.PHP_EOL."\t";
+                $queue_ext_conf .= 'same => n,Set(mLogged=${QUEUE_MEMBER(' . $queue['uniqid'] . ',logged)})' . PHP_EOL . "\t";
+                $queue_ext_conf .= 'same => n,ExecIf($["${mLogged}" == "0"]?Set(pt1c_UNIQUEID=${UNDEFINED}))' . PHP_EOL . "\t";
+                $queue_ext_conf .= 'same => n,GotoIf($["${mLogged}" == "0"]?internal,' . $reservedExtension . ',1)' . PHP_EOL . "\t";
             }
             // Redirect the call to the queue.
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${CHANNEL})' . "\n\t";
@@ -123,30 +157,40 @@ class QueueConf extends AsteriskConfigClass
             $options = '${MQ_OPTIONS}';
             $callerHear = $queue['caller_hear'] ?? '';
             if ($callerHear === 'ringing') {
-                $queue_ext_conf .= 'same => n,Set(MQ_OPTIONS=${MQ_OPTIONS}r)'."\n\t";
-            }else{
+                $queue_ext_conf .= 'same => n,Set(MQ_OPTIONS=${MQ_OPTIONS}r)' . "\n\t";
+            } else {
                 // We answer if you need MOH
                 $queue_ext_conf .= "same => n,Answer() \n\t";
             }
-            $queue_ext_conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(queue-pre-dial-custom,${EXTEN},1)}" == "1"]?queue-pre-dial-custom,${EXTEN},1)'."\n\t";
+            $queue_ext_conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(queue-pre-dial-custom,${EXTEN},1)}" == "1"]?queue-pre-dial-custom,${EXTEN},1)' . "\n\t";
             $queue_ext_conf .= 'same => n,Gosub(queue_start,${EXTEN},1)' . "\n\t";
             $cid = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $queue['callerid_prefix'] ?? '');
             if (!empty($cid)) {
                 $queue_ext_conf .= "same => n,Set(CALLERID(name)=$cid:" . '${CALLERID(name)}' . ") \n\t";
             }
-            $ringLength = trim($queue['timeout_to_redirect_to_extension']);
+
+            $ringLength = trim($queue['timeout_to_redirect_to_extension'] ?? '');
+            $timeoutExtension = trim($queue['timeout_extension'] ?? '');
+
+            // Timeout=0 causes immediate queue exit without ringing any agent.
+            // Timeout without a redirect extension causes caller disconnection after wait.
+            // In both cases, omit the timeout parameter so the caller waits indefinitely.
+            if ($ringLength === '0' || $timeoutExtension === '') {
+                $ringLength = '';
+            }
+
             $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT$options,,,$ringLength,,,queue_agent_answer) \n\t";
+            $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${EMPTY})' . "\n\t";
             // Notify about the end of the queue.
             $queue_ext_conf .= 'same => n,Gosub(queue_end,${EXTEN},1)' . "\n\t";
-            $timeoutExtension = trim($queue['timeout_extension']);
             if ($timeoutExtension !== '') {
                 // If no answer within the timeout, perform redirection.
-                $queue_ext_conf .= 'same => n,ExecIf($["${QUEUESTATUS}" == "TIMEOUT"]?Goto(internal,'.$timeoutExtension.',1))' . " \n\t";
+                $queue_ext_conf .= 'same => n,ExecIf($["${QUEUESTATUS}" == "TIMEOUT"]?Goto(internal,' . $timeoutExtension . ',1))' . " \n\t";
             }
             if (!empty($reservedExtension)) {
                 // If the queue is empty, perform redirection.
                 $exp            = '$["${QUEUESTATUS}" == "JOINEMPTY" || "${QUEUESTATUS}" == "LEAVEEMPTY" ]';
-                $queue_ext_conf .= 'same => n,ExecIf('.$exp.'?Goto(internal,'.$reservedExtension.',1))' . " \n\t";
+                $queue_ext_conf .= 'same => n,ExecIf(' . $exp . '?Goto(internal,' . $reservedExtension . ',1))' . " \n\t";
             }
             $queue_ext_conf .= "\n";
         }
@@ -155,7 +199,7 @@ class QueueConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the configuration for queues.
+     * Generates the configuration for queues and writes it to queues.conf.
      */
     protected function generateConfigProtected(): void
     {
@@ -174,14 +218,14 @@ class QueueConf extends AsteriskConfigClass
 
             // Check if periodic announce is set
             $periodic_announce = '';
-            if (trim($queue_data['periodic_announce']) !== '') {
+            if (trim($queue_data['periodic_announce'] ?? '') !== '') {
                 $announce_file     = Util::trimExtensionForFile($queue_data['periodic_announce']);
-                $periodic_announce = "periodic-announce={$announce_file} \n";
+                $periodic_announce = "periodic-announce=$announce_file \n";
             }
 
             // Check if periodic announce frequency is set
             $periodic_announce_frequency = '';
-            if (trim($queue_data['periodic_announce_frequency']) !== '') {
+            if (trim($queue_data['periodic_announce_frequency'] ?? '') !== '') {
                 $periodic_announce_frequency = "periodic-announce-frequency={$queue_data['periodic_announce_frequency']} \n";
             }
 
@@ -191,24 +235,30 @@ class QueueConf extends AsteriskConfigClass
                 $announce_frequency .= "announce-frequency=30 \n";
             }
 
-            $mohClass = empty($queue_data['moh_sound'])?'default':$queue_data['moh_sound'];
+            $mohClass = empty($queue_data['moh_sound']) ? 'default' : $queue_data['moh_sound'];
 
             $strategy = $queue_data['strategy'];
 
             // Build the queue configuration string
             $q_conf .= "[{$queue_data['uniqid']}]; {$queue_data['name']}\n";
             $q_conf .= "musicclass=$mohClass \n";
-            $q_conf .= "strategy={$strategy} \n";
-            $q_conf .= "timeout={$timeout} \n";
+            $q_conf .= "strategy=$strategy \n";
+            $q_conf .= "timeout=$timeout \n";
             $q_conf .= "retry=1 \n";
-            $q_conf .= "wrapuptime={$wrapuptime} \n";
-            $q_conf .= "ringinuse={$ringinuse} \n";
+            $q_conf .= "wrapuptime=$wrapuptime \n";
+            $q_conf .= "ringinuse=$ringinuse \n";
             $q_conf .= $periodic_announce;
             $q_conf .= $periodic_announce_frequency;
-            $q_conf .= "joinempty=no \n";
-            $q_conf .= "leavewhenempty=no \n";
-            $q_conf .= "announce-position={$announceposition} \n";
-            $q_conf .= "announce-holdtime={$announceholdtime} \n";
+            // When a redirect extension for empty queue is configured, use Asterisk's
+            // built-in empty detection so Queue() returns JOINEMPTY/LEAVEEMPTY statuses.
+            // "unavailable,invalid" means "empty" only when ALL agents' phones are offline
+            // or invalid — callers still wait when agents are busy/paused/ringing.
+            $hasEmptyRedirect = !empty(trim($queue_data['redirect_to_extension_if_empty'] ?? ''));
+            $emptyPolicy = $hasEmptyRedirect ? 'unavailable,invalid' : 'no';
+            $q_conf .= "joinempty=$emptyPolicy \n";
+            $q_conf .= "leavewhenempty=$emptyPolicy \n";
+            $q_conf .= "announce-position=$announceposition \n";
+            $q_conf .= "announce-holdtime=$announceholdtime \n";
             $q_conf .= "relative-periodic-announce=yes \n";
             $q_conf .= $announce_frequency;
 
@@ -224,13 +274,13 @@ class QueueConf extends AsteriskConfigClass
                 }
 
                 // Add the member to the queue configuration
-                $q_conf .= "member => Local/{$agent['agent']}@internal/n,{$penalty},\"{$agent['agent']}\"{$hint} \n";
+                $q_conf .= "member => Local/{$agent['agent']}@internal/n,$penalty,\"{$agent['agent']}\"$hint \n";
             }
             $q_conf .= "\n";
         }
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/queues.conf', $q_conf);
+        $this->saveConfig($q_conf, $this->description);
     }
 
     /**
@@ -252,12 +302,12 @@ class QueueConf extends AsteriskConfigClass
                     [
                         'agent'      => $agent->extension,
                         'priority'   => $agent->priority,
-                        'isExternal' => ($agent->Extensions->type === Extensions::TYPE_EXTERNAL),
+                        'isExternal' => ($agent->Extensions?->type === Extensions::TYPE_EXTERNAL),
                     ];
             }
             $arrResult[$queueUniqId]['agents'] = $arrAgents;
-            $arrResult[$queueUniqId]['periodic_announce'] = ($queue->SoundFiles)?$queue->SoundFiles->path:'';
-            $arrResult[$queueUniqId]['moh_sound']         = ($queue->MohSoundFiles)?"moh-{$queue->MohSoundFiles->id}":'';
+            $arrResult[$queueUniqId]['periodic_announce'] = ($queue->SoundFiles) ? $queue->SoundFiles->path : '';
+            $arrResult[$queueUniqId]['moh_sound']         = ($queue->MohSoundFiles) ? "moh-{$queue->MohSoundFiles->id}" : '';
 
             foreach ($queue as $key => $value) {
                 if ($key === 'callqueuemembers' || $key === "soundfiles") {

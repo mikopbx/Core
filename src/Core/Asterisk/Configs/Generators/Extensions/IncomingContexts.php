@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,16 +20,15 @@
 
 namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
-
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\IncomingRoutingTable;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\ConferenceConf;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\System\Util;
-
 
 /**
  * This class generates incoming contexts for Asterisk configuration.
@@ -41,7 +41,7 @@ class IncomingContexts extends AsteriskConfigClass
     public int $priority = 530;
 
     // @var array|string $provider Provider information for routing.
-    public $provider;
+    public array|string $provider;
 
     // @var string $login Login information.
     public string $login;
@@ -67,16 +67,19 @@ class IncomingContexts extends AsteriskConfigClass
     // @var bool $need_def_rout Flag for needing a default route.
     private bool $need_def_rout;
 
+    // @var array $systemExtensions System extensions that should use Goto instead of Dial.
+    private array $systemExtensions = [];
+
     /**
      * Generate incoming contexts.
      *
      * @param string|array $provider
-     * @param string|array $login
+     * @param string $login
      * @param string $uniqId
      *
      * @return string
      */
-    public static function generate($provider, string $login = '', string $uniqId = ''): string
+    public static function generate(array|string $provider, string $login = '', string $uniqId = ''): string
     {
         $generator           = new self();
         $generator->provider = $provider;
@@ -100,8 +103,9 @@ class IncomingContexts extends AsteriskConfigClass
     {
         $this->confExtensions = ConferenceConf::getConferenceExtensions();
         $this->routes         = $this->getRoutes();
-        $this->lang           = str_replace('_', '-', $this->generalSettings[PbxSettingsConstants::PBX_LANGUAGE]);
+        $this->lang           = str_replace('_', '-', PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE));
         $this->need_def_rout  = $this->checkNeedDefRout();
+        $this->systemExtensions = Extensions::getSystemExtensions();
     }
 
     /**
@@ -126,7 +130,11 @@ class IncomingContexts extends AsteriskConfigClass
             ];
         } else {
             // Calls via provider.
-            $filter = ["provider = '$this->provider'", 'order' => 'provider,priority,extension',];
+            // Use uniqId for database query when available, because $this->provider
+            // may contain the username (for inbound registration providers) while
+            // IncomingRoutingTable stores the provider's uniqid.
+            $providerId = !empty($this->uniqId) ? $this->uniqId : $this->provider;
+            $filter = ["provider = '$providerId'", 'order' => 'provider,priority,extension',];
         }
 
         $m_data = IncomingRoutingTable::find($filter);
@@ -213,22 +221,22 @@ class IncomingContexts extends AsteriskConfigClass
         $rout_data   = &$this->dialplan[$rout_number];
 
         // If route data is not empty, exit the function.
-        if ( ! empty($rout_data)) {
+        if (! empty($rout_data)) {
             return;
         }
 
         // Determine extension prefix based on the route number.
-        if(mb_strpos($rout_number, '_') === 0){
+        if (mb_strpos($rout_number, '_') === 0) {
             $ext_prefix = '';
-        }elseif(preg_match_all('/^[.|!|N|X|Z|0-9|\[|\]|\-]+$/m', $rout_number, $matches, PREG_SET_ORDER) === 1){
+        } elseif (preg_match_all('/^[.|!|N|X|Z|0-9|\[|\]|\-]+$/m', $rout_number, $matches, PREG_SET_ORDER) === 1) {
             // Likely an EXTEN template.
             $ext_prefix = '_';
-        }else{
+        } else {
             $ext_prefix = '';
         }
 
         // Generate dialplan strings.
-        $rout_data .= "exten => {$ext_prefix}{$rout_number},1,NoOp(--- Incoming call ---)\n\t";
+        $rout_data .= "exten => $ext_prefix$rout_number,1,NoOp(--- Incoming call ---)\n\t";
         $rout_data .= 'same => n,Set(CHANNEL(language)=' . $this->lang . ')' . "\n\t";
         $rout_data .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
         $rout_data .= 'same => n,Set(__FROM_DID=${EXTEN})' . "\n\t";
@@ -246,10 +254,13 @@ class IncomingContexts extends AsteriskConfigClass
         $rout_data .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_INCOMING_ROUT_BEFORE_DIAL_SYSTEM, [$rout_number]);
         $rout_data .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_INCOMING_ROUT_BEFORE_DIAL, [$rout_number]);
 
+        // Process CallerID/DID if system context exists
+        $rout_data .= " \n\t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-cid-did,${EXTEN},1)}" == "1"]?${CONTEXT}-cid-did,${EXTEN},1)';
+
         // Describe the ability to jump into the custom sub context.
         $rout_data .= " \n\t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)';
 
-        if ( ! empty($rout['extension'])) {
+        if (! empty($rout['extension'])) {
             $rout_data = rtrim($rout_data);
         }
     }
@@ -293,24 +304,26 @@ class IncomingContexts extends AsteriskConfigClass
 
         // Check for the existence of the dial status in the route data.
         // This is required for handling parking calls through AMI.
-        if ( ! isset($this->rout_data_dial[$rout_number])) {
+        if (! isset($this->rout_data_dial[$rout_number])) {
             $this->rout_data_dial[$rout_number] = '';
         }
 
-        // Check if the extension is a conference extension.
-        if (in_array($rout['extension'], $this->confExtensions, true)) {
-            // For conference extensions, there's no need to handle answer timeout.
-            // The call will be answered immediately by the conference.
-            $dialplanCommands = " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?'."Goto(internal,{$rout['extension']},1));";
+        // Check if the extension is a system extension or conference extension.
+        if (in_array($rout['extension'], $this->systemExtensions, true) || 
+            in_array($rout['extension'], $this->confExtensions, true)) {
+            // For system extensions and conference extensions, use Goto.
+            // System extensions handle special actions (hangup, busy, voicemail, did2user).
+            // Conference extensions answer immediately.
+            $dialplanCommands = " \n\t" . 'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Goto(internal,{$rout['extension']},1));";
         } else {
-            // For other extensions, handle the answer timeout and generate the appropriate dial command.
-            $dialplanCommands = " \n\t"."same => n,Set(M_TIMEOUT={$timeout})".
-                                " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?'."Dial(Local/{$rout['extension']}@internal-incoming,{$timeout},".'${TRANSFER_OPTIONS}'."Kg));";
+            // For regular extensions, handle the answer timeout and generate the appropriate dial command.
+            $dialplanCommands = " \n\t" . "same => n,Set(M_TIMEOUT=$timeout)" .
+                                " \n\t" . 'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Dial(Local/{$rout['extension']}@internal-incoming,$timeout," . '${TRANSFER_OPTIONS}' . "Kg));";
         }
 
         $mediaFile = $this->getSoundFilePath($rout);
-        if(!empty($mediaFile)){
-            $this->rout_data_dial[$rout_number] .= " \n\t" . 'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?Playback('.$mediaFile.'));' . PHP_EOL;
+        if (!empty($mediaFile)) {
+            $this->rout_data_dial[$rout_number] .= " \n\t" . 'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?Playback(' . $mediaFile . '));' . PHP_EOL;
         }
 
         // Add the generated commands to the route data.
@@ -325,14 +338,14 @@ class IncomingContexts extends AsteriskConfigClass
      * @param array $rout
      * @return string
      */
-    public function getSoundFilePath(array $rout):string
+    public function getSoundFilePath(array $rout): string
     {
-        if(empty($rout['audio_message_id'])){
+        if (empty($rout['audio_message_id'])) {
             return '';
         }
         $res           = SoundFiles::findFirst($rout['audio_message_id']);
         $audio_message = $res === null ? '' : (string)$res->path;
-        if(file_exists($audio_message)){
+        if (file_exists($audio_message)) {
             return Util::trimExtensionForFile($audio_message);
         }
         return '';
@@ -353,7 +366,7 @@ class IncomingContexts extends AsteriskConfigClass
     private function duplicateDialActionsRoutNumber(array $rout, string $dial_command, string $number): void
     {
         // Check if the provider array is properly set.
-        if ( ! is_array($this->provider)) {
+        if (! is_array($this->provider)) {
             return;
         }
 
@@ -361,7 +374,7 @@ class IncomingContexts extends AsteriskConfigClass
         $key = $this->provider[$rout['provider']] ?? '';
 
         // Check for the existence of the dial status in the route data.
-        if ( ! isset($this->rout_data_dial[$key])) {
+        if (! isset($this->rout_data_dial[$key])) {
             $this->rout_data_dial[$key] = '';
         }
 
@@ -390,12 +403,12 @@ class IncomingContexts extends AsteriskConfigClass
         if (is_array($this->provider)) {
             foreach (array_values($this->provider) as $_login) {
                 // If the login is empty, skip to the next iteration.
-                if(empty($_login)){
+                if (empty($_login)) {
                     continue;
                 }
 
                 // Replace the '_X!,1' with the login in the dialplan and assign it to the login key.
-                $this->dialplan[$_login] = str_replace('_X!,1', "{$_login},1", $this->dialplan['X!']);
+                $this->dialplan[$_login] = str_replace('_X!,1', "$_login,1", $this->dialplan['X!']);
             }
         }
     }
@@ -412,11 +425,11 @@ class IncomingContexts extends AsteriskConfigClass
     {
         $add_login_pattern = $this->needAddLoginExtension();
         if ($this->isMultipleRoutes($add_login_pattern)) {
-            $this->dialplan[$this->login]       = str_replace('_X!,1', "{$this->login},1", $this->dialplan['X!']);
+            $this->dialplan[$this->login]       = str_replace('_X!,1', "$this->login,1", $this->dialplan['X!']);
             $this->rout_data_dial[$this->login] = $this->rout_data_dial['X!'];
         } elseif ($this->defaultRouteOnly($add_login_pattern)) {
             // Only default route required.
-            $this->dialplan[$this->login] = str_replace('_X!,1', "{$this->login},1", $this->dialplan['X!']);
+            $this->dialplan[$this->login] = str_replace('_X!,1', "$this->login,1", $this->dialplan['X!']);
         }
     }
 
@@ -438,9 +451,8 @@ class IncomingContexts extends AsteriskConfigClass
 
         // Iterate through the routes
         foreach ($this->routes as $rout) {
-
             // If the login is empty, no additional login extension is required
-            if ( ! $add_login_pattern) {
+            if (! $add_login_pattern) {
                 break;
             }
 
@@ -501,7 +513,7 @@ class IncomingContexts extends AsteriskConfigClass
     private function trimDialPlan(): void
     {
         foreach ($this->dialplan as $key => &$dialplan) {
-            if ( ! array_key_exists($key, $this->rout_data_dial)) {
+            if (! array_key_exists($key, $this->rout_data_dial)) {
                 continue;
             }
             $dialplan = rtrim($dialplan);
@@ -521,15 +533,20 @@ class IncomingContexts extends AsteriskConfigClass
      */
     private function createSummaryDialplan(): string
     {
-        // Find the default action in the incoming routing table
+        // Find the default action in the incoming routing table.
+        // Primary: look for priority=9999 (canonical marker for the default rule).
+        // Fallback: look for id=1 (used by GetDefaultRouteAction and resetDefaultRoute).
         /** @var IncomingRoutingTable $default_action */
         $default_action = IncomingRoutingTable::findFirst('priority = 9999');
+        if ($default_action === null) {
+            $default_action = IncomingRoutingTable::findFirstById(1);
+        }
 
         // Create an ID based on the provider or unique ID
         $id = is_string($this->provider) ? $this->provider : $this->uniqId;
 
         // Initialize the dialplan with the ID
-        $conf = "\n" . "[{$id}-incoming]\n";
+        $conf = "\n" . "[$id-incoming]\n";
 
         // Iterate through the dialplan
         foreach ($this->dialplan as $dpln) {
@@ -565,9 +582,14 @@ class IncomingContexts extends AsteriskConfigClass
     {
         // Initialize the dialplan
         $conf = '';
-        // If the action is an 'extension', modify the dialplan accordingly
-        if ('extension' === $default_action->action) {
-            // Set the dialplan to go to a different extension
+
+        // Prioritize the extension field over the action field.
+        // The action field is no longer maintained by the REST API (deprecated actions
+        // like 'busy', 'hangup', 'voicemail' are now represented as system extension names
+        // in the extension field with action='extension'). Using extension directly
+        // ensures correct behavior even when the action field is stale.
+        if (!empty($default_action->extension)) {
+            // Route to the specified extension (system or regular)
             $conf = $this->createSummaryDialplanGoto($conf, $default_action, $uniqId);
 
             // Check if the 'after-dial-custom' exists in the dialplan
@@ -576,13 +598,13 @@ class IncomingContexts extends AsteriskConfigClass
             // Check if the dial status is 'busy'
             $conf .= " \t" . 'same => n,ExecIf($["${M_DIALSTATUS}" == "BUSY"]?Busy(2));' . PHP_EOL;
 
-        // If the action is 'playback', hangup call
+        // If the action is 'playback', play audio file
         } elseif (IncomingRoutingTable::ACTION_PLAYBACK === $default_action->action) {
             $mediaFile = $this->getSoundFilePath($default_action->toArray());
-            if(!empty($mediaFile)){
-                $conf .= " \n\t" . 'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?Playback('.$mediaFile.'));' . PHP_EOL;
+            if (!empty($mediaFile)) {
+                $conf .= " \n\t" . 'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?Playback(' . $mediaFile . '));' . PHP_EOL;
             }
-        // If the action is 'busy', set the dialplan to busy
+        // Legacy fallback: action='busy' with empty extension (old records not yet migrated)
         } elseif (IncomingRoutingTable::ACTION_BUSY === $default_action->action) {
             $conf .= "\t" . "same => n,Busy(2)" . PHP_EOL;
         }
@@ -610,13 +632,15 @@ class IncomingContexts extends AsteriskConfigClass
         // DIALSTATUS must be checked, especially when dealing with parking lot calls through AMI.
         // The next priority might be executed upon answering.
         $conf .= "\t" . 'same => n,Set(M_TIMEOUT=0)' . "\n";
-        if (in_array($default_action->extension, $this->confExtensions, true)) {
-            // This is a conference. No need to handle answer timeout here.
-            // The call will be immediately answered by the conference.
-            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Goto(internal,{$default_action->extension},1)); default action" . "\n";
+        if (in_array($default_action->extension, $this->systemExtensions, true) || 
+            in_array($default_action->extension, $this->confExtensions, true)) {
+            // System extensions and conferences use Goto.
+            // System extensions: hangup, busy, voicemail, did2user - handle special actions.
+            // Conferences: immediately answer the call.
+            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Goto(internal,$default_action->extension,1)); default action" . "\n";
         } else {
-            // Dial the local extension if the DIALSTATUS is not ANSWER or BUSY.
-            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Dial(Local/{$default_action->extension}@internal,,".'${TRANSFER_OPTIONS}'."Kg)); default action" . "\n";
+            // Regular extensions use Dial.
+            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Dial(Local/$default_action->extension@internal,," . '${TRANSFER_OPTIONS}' . "Kg)); default action" . "\n";
         }
 
         // Execute the hook method for generating the context after the dial.
@@ -624,5 +648,4 @@ class IncomingContexts extends AsteriskConfigClass
 
         return $conf;
     }
-
 }

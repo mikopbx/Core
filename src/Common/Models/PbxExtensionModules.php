@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,10 +20,11 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Core\System\SystemMessages;
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Di\Di;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class PbxExtensionModules
@@ -121,39 +123,73 @@ class PbxExtensionModules extends ModelsBase
      * Prepares an array of enabled modules params for reading
      * @return array
      */
-    public static function getEnabledModulesArray(): array
+    public static function getEnabledModulesArray(bool $useCache = true): array
     {
         // Check if it globally disabled
-        if (PbxSettings::getValueByKey(PbxSettingsConstants::DISABLE_ALL_MODULES)==='1'){
+        if (PbxSettings::getValueByKey(PbxSettings::DISABLE_ALL_MODULES) === '1') {
             return [];
         }
 
-        // Get the list of disabled modules
-        $parameters = [
-            'conditions' => 'disabled="0"',
-            'columns' => 'uniqid',
-            'cache' => [
-                'key' => ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getEnabledModulesArray'),
-                'lifetime' => 3600,
-            ]
-        ];
-        return PbxExtensionModules::find($parameters)->toArray();
+        if ($useCache) {
+            $cacheKey = ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getEnabledModulesArray');
+            $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
+            $modulesArray = $redis->get($cacheKey)??[];
+        } else {
+            $modulesArray = [];
+        }
+        if (empty($modulesArray)) {
+            // Get the list of disabled modules
+            $parameters = [
+                'conditions' => 'disabled="0"',
+                'columns' => 'uniqid'
+            ];
+            $modulesArray = PbxExtensionModules::find($parameters)->toArray();
+            if ($useCache) {
+                $redis->set($cacheKey, $modulesArray, 3600);
+            }
+        }
+        // sort by uniqid
+        uasort($modulesArray, function ($a, $b) {
+            return strcmp($a['uniqid'], $b['uniqid']);
+        });
+        return $modulesArray;
     }
 
     /**
      * Prepares an array of modules params for reading
      * @return array
      */
-    public static function getModulesArray(): array
+    public static function getModulesArray(bool $useCache = true): array
     {
-        $parameters = [
-            'cache' => [
-                'key' => ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getModulesArray'),
-                'lifetime' => 3600,
-            ],
-            'order'=>'id desc',
-        ];
-        return PbxExtensionModules::find($parameters)->toArray();
+        if ($useCache) {
+            $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
+            $cacheKey = ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getModulesArray');
+            $modulesArray = $redis->hgetall($cacheKey)??[];
+        } else {
+            $modulesArray = [];
+        }
+        if (empty($modulesArray)) {
+            $parameters = [
+                'order' => 'uniqid desc',
+            ];
+            $modulesArray = PbxExtensionModules::find($parameters)->toArray();
+            if ($useCache) {
+                foreach ($modulesArray as $module) {
+                    $redis->hset($cacheKey, $module['uniqid'], json_encode($module));
+                }
+            }
+        } else {
+            foreach ($modulesArray as $uniqid => $module) {
+                $modulesArray[$uniqid] = json_decode($module, true);
+            }
+        }
+
+        // sort by uniqid
+        uasort($modulesArray, function ($a, $b) {
+            return strcmp($a['uniqid'], $b['uniqid']);
+        });
+
+        return $modulesArray;
     }
 
     /**
@@ -201,4 +237,3 @@ class PbxExtensionModules extends ModelsBase
         PBXConfModulesProvider::recreateModulesProvider();
     }
 }
-

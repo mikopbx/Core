@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,25 +19,26 @@
  */
 
 namespace MikoPBX\Core\Workers;
+
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{BeanstalkClient, Directories, SystemMessages, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Directories, RecordingDeletionLogger, SystemMessages, Util};
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
-use MikoPBX\Core\Asterisk\Configs\CelConf;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAnswer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAttendedTransfer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
-use Phalcon\Di;
-use Phalcon\Exception;
-use Phalcon\Text;
+use MikoPBX\Core\Asterisk\AsteriskManager;
+use Phalcon\Di\Di;
+use MikoPBX\Common\Library\Text;
 use Throwable;
 use DateTime;
+use MikoPBX\Core\Asterisk\Configs\CelBeanstalkdConf;
 
 /**
  * Class WorkerCallEvents
@@ -49,7 +51,7 @@ use DateTime;
  */
 class WorkerCallEvents extends WorkerBase
 {
-    public const CACHE_KEY_RECORDINGS = 'Workers:WorkerCallEvents:RecordingsSettingsSynced';
+    public const string CACHE_KEY_RECORDINGS = 'Workers:WorkerCallEvents:RecordingsSettingsSynced';
     public array $mixMonitorChannels = [];
     public array $checkChanHangupTransfer = [];
     protected bool $record_calls = true;
@@ -65,7 +67,7 @@ class WorkerCallEvents extends WorkerBase
      * Adds a new active channel to the cache.
      *
      * @param string $channel The name of the channel to be added.
-     *
+     * @param string $id
      * @return void
      */
     public function addActiveChan(string $channel, string $id = ''): void
@@ -110,7 +112,7 @@ class WorkerCallEvents extends WorkerBase
      */
     public function getActiveChanId(string $channel): string
     {
-        return $this->activeChannels[$channel]??'';
+        return $this->activeChannels[$channel] ?? '';
     }
 
     /**
@@ -127,8 +129,10 @@ class WorkerCallEvents extends WorkerBase
         $dst = substr($dst, -9);
         $enable = true;
         $isInner = in_array($src, $this->innerNumbers, true) && in_array($dst, $this->innerNumbers, true);
-        if (($this->notRecInner && $isInner) ||
-            in_array($src, $this->exceptionsNumbers, true) || in_array($dst, $this->exceptionsNumbers, true)) {
+        if (
+            ($this->notRecInner && $isInner) ||
+            in_array($src, $this->exceptionsNumbers, true) || in_array($dst, $this->exceptionsNumbers, true)
+        ) {
             $enable = false;
         }
         return $enable;
@@ -147,22 +151,32 @@ class WorkerCallEvents extends WorkerBase
      */
     public function MixMonitor(string $channel, string $file_name = '', string $sub_dir = '', string $full_name = '', string $actionID = ''): string
     {
-        $resFile = $this->mixMonitorChannels[$channel] ?? '';
-        if ($resFile !== '') {
-            return $resFile;
+        $channelInfo = $this->mixMonitorChannels[$channel] ?? null;
+        if ($channelInfo !== null) {
+            return $channelInfo['result_file'] ?? '';
         }
         $resFile = '';
         $file_name = str_replace('/', '_', $file_name);
         if ($this->record_calls) {
-            [$f, $options] = $this->setMonitorFilenameOptions($full_name, $sub_dir, $file_name);
+            $fileExt = $this->getRecordingFileExtension($channel);
+            [$f, $options] = $this->setMonitorFilenameOptions($full_name, $sub_dir, $file_name, $fileExt);
             $arr = $this->am->GetChannels(false);
             if (!in_array($channel, $arr, true)) {
                 return '';
             }
-            $srcFile = "{$f}.wav";
-            $resFile = "{$f}.mp3";
+            $srcFile = "$f.$fileExt";
+            $resFile = "$f.webm";
             $this->am->MixMonitor($channel, $srcFile, $options, '', $actionID);
-            $this->mixMonitorChannels[$channel] = $resFile;
+
+            // Store full channel information for later conversion
+            $this->mixMonitorChannels[$channel] = [
+                'result_file' => $resFile,
+                'base_path' => $f,
+                'linked_id' => $this->getActiveChanId($channel),
+                'file_name' => $file_name,
+                'timestamp' => time(),
+            ];
+
             $this->am->UserEvent('StartRecording', ['recordingfile' => $resFile, 'recchan' => $channel]);
         }
         return $resFile;
@@ -174,29 +188,69 @@ class WorkerCallEvents extends WorkerBase
      * @param string $full_name The full name of the file. If it exists, it will be used as is.
      * @param string $sub_dir The subdirectory where the file will be stored.
      * @param string $file_name The name of the file.
+     * @param string $fileExt The recording file extension (wav48, wav16, or wav).
      *
      * @return array An array containing the full file path and the options for the recording.
      *               If $this->split_audio_thread is true, options will be set to split audio in two separate files (in/out).
      *               Otherwise, 'ab' will be returned as options.
      */
-    public function setMonitorFilenameOptions(string $full_name, string $sub_dir, string $file_name): array
+    public function setMonitorFilenameOptions(string $full_name, string $sub_dir, string $file_name, string $fileExt = 'wav'): array
     {
-        $full_name = Util::trimExtensionForFile($full_name).'.wav';
+        $full_name = Util::trimExtensionForFile($full_name) . ".$fileExt";
         if (!file_exists($full_name)) {
             $monitor_dir = Directories::getDir(Directories::AST_MONITOR_DIR);
             if (empty($sub_dir)) {
                 $sub_dir = date('Y/m/d/H/');
             }
-            $f = "{$monitor_dir}/{$sub_dir}{$file_name}";
+            $f = "$monitor_dir/$sub_dir$file_name";
         } else {
             $f = Util::trimExtensionForFile($full_name);
         }
         if ($this->split_audio_thread) {
-            $options = "abr({$f}_in.wav)t({$f}_out.wav)";
+            $options = "abr({$f}_in.$fileExt)t({$f}_out.$fileExt)";
         } else {
             $options = 'ab';
         }
         return array($f, $options);
+    }
+
+    /**
+     * Determines the optimal recording file extension based on the channel's audio codec.
+     *
+     * Mirrors the Lua getRecordingFileExtension() in extensions.lua.
+     * Queries CHANNEL(audioreadformat) via AMI for both legs to preserve
+     * the highest native sample rate across the bridge:
+     *   - OPUS (48kHz fullband) → wav48
+     *   - G.722/Speex16 (16kHz wideband) → wav16
+     *   - Other codecs (8kHz narrowband) → wav
+     *
+     * @param string $channel The Asterisk channel to query.
+     * @return string File extension without dot: "wav48", "wav16", or "wav".
+     */
+    private function getRecordingFileExtension(string $channel): string
+    {
+        $audioCodec = strtolower(
+            (string)$this->am->GetVar($channel, 'CHANNEL(audioreadformat)', null, false)
+        );
+
+        // Also check the other leg's codec via BRIDGEPEER
+        $bridgePeer = (string)$this->am->GetVar($channel, 'BRIDGEPEER', null, false);
+        if (!empty($bridgePeer)) {
+            $peerCodec = strtolower(
+                (string)$this->am->GetVar($bridgePeer, 'CHANNEL(audioreadformat)', null, false)
+            );
+            $audioCodec .= ' ' . $peerCodec;
+        }
+
+        if (str_contains($audioCodec, 'opus')) {
+            return 'wav48';
+        }
+
+        if (str_contains($audioCodec, 'g722') || str_contains($audioCodec, 'speex16') || str_contains($audioCodec, 'slin16')) {
+            return 'wav16';
+        }
+
+        return 'wav';
     }
 
     /**
@@ -208,16 +262,47 @@ class WorkerCallEvents extends WorkerBase
      *
      * @return void This function does not return any value.
      */
-    public function StopMixMonitor($channel, string $actionID = ''): void
+    public function StopMixMonitor(string $channel, string $actionID = ''): void
     {
-        if (isset($this->mixMonitorChannels[$channel])) {
-            unset($this->mixMonitorChannels[$channel]);
-        } else {
+        if (!isset($this->mixMonitorChannels[$channel])) {
             return;
         }
+        unset($this->mixMonitorChannels[$channel]);
+
         if ($this->record_calls) {
             $this->am->StopMixMonitor($channel, $actionID);
+            // Audio conversion is now handled by WorkerCdr after CDR completion
+            // This ensures all call metadata is available for Opus tags
         }
+    }
+
+    /**
+     * Determines which stereo channel contains src_num audio.
+     *
+     * In stereo recording mode, MixMonitor splits audio into two files:
+     *   _out.wav (transmit/write to channel) = other party's voice → LEFT channel (0)
+     *   _in.wav  (receive/read from channel) = this channel's voice → RIGHT channel (1)
+     *
+     * When MixMonitor runs on dst_chan: src_num is on LEFT (0).
+     * When MixMonitor runs on src_chan: src_num is on RIGHT (1).
+     *
+     * @param string $recChannel Channel MixMonitor is running on
+     * @param string $srcChan CDR src_chan
+     * @param string $dstChan CDR dst_chan
+     * @return string '0'=LEFT, '1'=RIGHT, ''=mono/undetermined
+     */
+    public function getRecSrcChannel(string $recChannel, string $srcChan, string $dstChan): string
+    {
+        if (!$this->split_audio_thread || empty($recChannel)) {
+            return '';
+        }
+        if ($recChannel === $dstChan) {
+            return '0';
+        }
+        if ($recChannel === $srcChan) {
+            return '1';
+        }
+        return '';
     }
 
     /**
@@ -226,7 +311,8 @@ class WorkerCallEvents extends WorkerBase
      * @param array $argv The command-line arguments passed to the worker.
      *
      * @return void This function does not return any value.
-     * @throws Exception
+     *
+     * @throws \DateMalformedStringException
      */
     public function start(array $argv): void
     {
@@ -251,7 +337,7 @@ class WorkerCallEvents extends WorkerBase
         }
 
         // Subscribe to different tubes for different worker tasks
-        $client->subscribe(CelConf::BEANSTALK_TUBE, [$this, 'callEventsWorker']);
+        $client->subscribe(CelBeanstalkdConf::BEANSTALK_TUBE, [$this, 'callEventsWorker']);
         $client->subscribe(self::class, [$this, 'otherEvents']);
         $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
         $client->subscribe(WorkerCdr::UPDATE_CDR_TUBE, [$this, 'updateCDRWorker']);
@@ -343,9 +429,9 @@ class WorkerCallEvents extends WorkerBase
         }
 
         // Set some class properties based on the PbxSettings values
-        $this->notRecInner = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_CALLS_INNER) === '0';
-        $this->record_calls = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_CALLS) === '1';
-        $this->split_audio_thread = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD) === '1';
+        $this->notRecInner = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_CALLS_INNER) === '0';
+        $this->record_calls = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_CALLS) === '1';
+        $this->split_audio_thread = PbxSettings::getValueByKey(PbxSettings::PBX_SPLIT_AUDIO_THREAD) === '1';
 
         // Store the current timestamp in the cache to track the last execution
         $managedCache->set(self::CACHE_KEY_RECORDINGS, time(), 86400); // Repeat every day
@@ -366,6 +452,7 @@ class WorkerCallEvents extends WorkerBase
      * Ping callback for keep alive check
      *
      * @param BeanstalkClient $message
+     * @throws \DateMalformedStringException
      */
     public function pingCallBack(BeanstalkClient $message): void
     {
@@ -377,9 +464,10 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Calls the events worker.
      *
-     * @param  BeanstalkClient $tube object.
+     * @param BeanstalkClient $tube object.
      *
      * @return void
+     * @throws \Exception
      */
     public function callEventsWorker(BeanstalkClient $tube): void
     {
@@ -393,7 +481,7 @@ class WorkerCallEvents extends WorkerBase
         if ('ANSWER' === $event) {
             ActionCelAnswer::execute($this, $data);
         }
-        if('ATTENDEDTRANSFER' === $event){
+        if ('ATTENDEDTRANSFER' === $event) {
             ActionCelAttendedTransfer::execute($this, $data);
         }
         // If event is not 'USER_DEFINED', return
@@ -401,15 +489,17 @@ class WorkerCallEvents extends WorkerBase
             return;
         }
 
-        // Try to decode the 'AppData' field from base64 and handle any errors
+        // Try to decode the 'AppData' field and handle any errors.
+        // Supports both plain base64 and GZ:-prefixed gzip-compressed payloads.
         try {
             $data = json_decode(
-                base64_decode($data['AppData'] ?? ''),
+                AsteriskManager::decodeCdrData($data['AppData'] ?? ''),
                 true,
                 512,
                 JSON_THROW_ON_ERROR
             );
         } catch (Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
             $data = [];
         }
 
@@ -497,7 +587,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @return void
      */
-    public function errorHandler($m): void
+    public function errorHandler(mixed $m): void
     {
         SystemMessages::sysLogMsg(self::class . '_ERROR', $m, LOG_ERR);
     }
@@ -505,25 +595,31 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Clearing old cdr records
      * @return void
+     * @throws \DateMalformedStringException
      */
     public function deleteOldRecords(): void
     {
         // Cleaning will be performed every ping
         $this->deleteCdrTimer++;
-        if($this->deleteCdrTimer <= 61){
+        if ($this->deleteCdrTimer <= 61) {
             return;
         }
         $this->deleteCdrTimer = 0;
-        $savePeriod = (int)PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD);
-        if($savePeriod < 30){
+        $savePeriod = (int)PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_SAVE_PERIOD);
+        if ($savePeriod < 30) {
             return;
         }
         $limitData  = (new DateTime())->modify("-$savePeriod days")->format('Y-m-d');
+        RecordingDeletionLogger::log(
+            RecordingDeletionLogger::CDR_RETENTION,
+            'cdr_general',
+            "savePeriod={$savePeriod}days, limitDate={$limitData}"
+        );
         $connection = $this->di->get(CDRDatabaseProvider::SERVICE_NAME);
         $connection->execute("DELETE FROM cdr_general WHERE start < '$limitData'");
     }
 }
 
 
-// Start worker process
+// Start a worker process
 WorkerCallEvents::startWorker($argv ?? []);

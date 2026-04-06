@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +21,10 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
+use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
+use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
@@ -45,43 +47,66 @@ class IaxProviderEditForm extends BaseForm
         // ID
         $this->add(new Hidden('id'));
 
-        // Uniqid
-        $this->add(new Hidden('uniqid'));
-
         // Type
         $this->add(new Hidden('type'));
 
         // Description
         $this->add(new Text('description'));
 
-        // Username
-        $this->add(new Text('username'));
+        // Username (autocomplete="new-password" works better than "off" for browsers)
+        $this->add(new Text('username', [
+            'autocomplete' => 'new-password',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
+        ]));
 
         // Secret
-        $this->add(new Password('secret'));
+        $this->add(new Password('secret', [
+            'autocomplete' => 'new-password',
+            'data-no-password-manager' => 'true'
+        ]));
 
         // Host
         $this->add(new Text('host'));
 
+        // Port
+        $this->add(new Numeric('port'));
+
+        // Registration type - Universal Dropdown
+        $this->addSemanticUIDropdown(
+            'registration_type',
+            [
+                'outbound' => $this->translation->_('pr_RegistrationTypeTooltip_outbound'),
+                'inbound' => $this->translation->_('pr_RegistrationTypeTooltip_inbound'),
+                'none' => $this->translation->_('pr_RegistrationTypeTooltip_none')
+            ],
+            $entity->registration_type ?? 'outbound',
+            [
+                'clearable' => false,
+                'forceSelection' => true
+            ]
+        );
+
         // Qualify
-        $cheskarr = ['value' => null];
-        if ($entity->qualify) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
+        $this->addCheckBox(
+            'qualify',
+            intval($entity->qualify) === 1
+        );
 
-        $this->add(new Check('qualify', $cheskarr));
+        // Noregister (hidden for backward compatibility)
+        $this->add(new Hidden('noregister'));
 
-        // Noregister
-        $cheskarr = ['value' => null];
-        if ($entity->noregister) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-        $this->add(new Check('noregister', $cheskarr));
+        // Network Filter - using DynamicDropdownBuilder (built by JavaScript)
+        $this->add(new Hidden('networkfilterid'));
 
         // Manualattributes
-        $this->addTextArea('manualattributes', $entity->getManualAttributes()??'', 80);
+        $placeholderText = "language = ru\ncodecpriority = host\ntrunktimestamps = yes\ntrunk = yes";
+        $this->addTextArea('manualattributes', $placeholderText, 80, [
+            'placeholder' => $placeholderText,
+            'skipEscaping' => true  // Technical configuration field - preserve special characters
+        ]);
 
         // Note
-        $this->addTextArea('note', $options['note']??'', 80,['class'=>'confidential-field']);
+        $this->addTextArea('note', $options['note'] ?? '', 80, ['class' => 'confidential-field']);
     }
 }

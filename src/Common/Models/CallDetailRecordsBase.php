@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -68,6 +69,13 @@ abstract class CallDetailRecordsBase extends ModelsBase
     public ?string $src_num = '';
 
     /**
+     * Display name of the caller as set by CALLERID(name).
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $src_name = '';
+
+    /**
      * Destination channel of the call.
      *
      * @Column(type="string", nullable=true)
@@ -80,6 +88,13 @@ abstract class CallDetailRecordsBase extends ModelsBase
      * @Column(type="string", nullable=true)
      */
     public ?string $dst_num = '';
+
+    /**
+     * Display name of the callee as set by CALLERID(name).
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $dst_name = '';
 
     /**
      * Unique ID of the call.
@@ -206,4 +221,21 @@ abstract class CallDetailRecordsBase extends ModelsBase
      * @Column(type="integer", nullable=true)
      */
     public ?string $a_transfer = '0';
+
+    /**
+     * Stereo channel index containing src_num audio.
+     * '0' = LEFT channel, '1' = RIGHT channel, '' = mono or no recording.
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $rec_src_channel = '';
+
+    /**
+     * DTMF digits pressed during IVR menu interaction.
+     * Comma-separated sequence: digits, 't' for timeout, 'i' for invalid input.
+     * Example: "t,t,3" means two timeouts then pressed 3.
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $dtmf_digits = '';
 }

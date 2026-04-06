@@ -39,7 +39,7 @@ class ActionTransferDialHangup
      * @param array $data The event data.
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         $pos = stripos($data['agi_channel'], 'local/');
         if ($pos === false) {
@@ -58,7 +58,7 @@ class ActionTransferDialHangup
      *
      * @return void
      */
-    private static function fillLocalChannelCdr(WorkerCallEvents $worker, $data): void
+    private static function fillLocalChannelCdr(WorkerCallEvents $worker, array $data): void
     {
 
         // This is NOT a local channel.
@@ -109,6 +109,9 @@ class ActionTransferDialHangup
                 && $worker->enableMonitor($res->src_num, $res->dst_num)
             ) {
                 $worker->MixMonitor($res->dst_chan, $info['filename'], $subDir, '', 'fillLocalChannelCdr');
+                $recSrcCh = $worker->getRecSrcChannel($res->dst_chan, $res->src_chan, $res->dst_chan);
+                $res->writeAttribute('rec_src_channel', $recSrcCh);
+                $res->save();
             }
         }
     }
@@ -121,14 +124,14 @@ class ActionTransferDialHangup
      *
      * @return void
      */
-    private static function fillNotAnsweredCdr(WorkerCallEvents $worker, $data): void
+    private static function fillNotAnsweredCdr(WorkerCallEvents $worker, array $data): void
     {
         $filter = [
             'linkedid=:linkedid: AND endtime = "" AND (src_chan=:src_chan: AND dst_chan=:dst_chan:)',
             'bind' => [
                 'linkedid' => $data['linkedid'],
                 'src_chan' => $data['TRANSFERERNAME'],
-                'dst_chan' => $data['dst_chan'],
+                'dst_chan' => empty($data['dst_chan'])?$data['agi_channel']:$data['dst_chan'],
             ],
         ];
         /** @var CallDetailRecordsTmp $m_data */
@@ -163,6 +166,8 @@ class ActionTransferDialHangup
             // Resume recording if monitoring is enabled.
             if ($worker->enableMonitor($row->src_num, $row->dst_num)) {
                 $worker->MixMonitor($row->dst_chan, $info['filename'], $subDir, '', 'fillNotAnsweredCdr');
+                $recSrcCh = $worker->getRecSrcChannel($row->dst_chan, $row->src_chan, $row->dst_chan);
+                $row->writeAttribute('rec_src_channel', $recSrcCh);
             }
 
             // Remove the transfer flag from the rows.

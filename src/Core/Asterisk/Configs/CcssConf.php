@@ -19,6 +19,8 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
+
 
 /**
  * Generates the configuration content for ccss.conf.
@@ -41,7 +43,6 @@ class CcssConf extends AsteriskConfigClass
             "cc_max_requests = 20\n";
 
         // Write the configuration content to the file
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/ccss.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
-
 }

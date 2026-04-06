@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,8 +22,6 @@
 namespace MikoPBX\AdminCabinet;
 
 use MikoPBX\AdminCabinet\Config\RegisterDIServices;
-use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
-use MikoPBX\Common\Providers\WhoopsErrorHandlerProvider;
 use Phalcon\Di\DiInterface;
 use Phalcon\Mvc\ModuleDefinitionInterface;
 
@@ -33,8 +32,8 @@ class Module implements ModuleDefinitionInterface
      *
      * @param DiInterface|null $container
      */
-    public function registerAutoloaders(DiInterface $container = null){
-
+    public function registerAutoloaders(?DiInterface $container = null)
+    {
     }
 
     /**
@@ -42,8 +41,8 @@ class Module implements ModuleDefinitionInterface
      *
      * @param \Phalcon\Di\DiInterface $container
      */
-    public function registerServices(DiInterface $container){
+    public function registerServices(DiInterface $container): void
+    {
         RegisterDIServices::init($container);
     }
-
 }

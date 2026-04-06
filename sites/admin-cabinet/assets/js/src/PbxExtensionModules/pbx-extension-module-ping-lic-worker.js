@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi */
+/* global globalRootUrl, LicenseAPI */
 
 /**
  * Worker object for checking connection to licensing and repository server.
@@ -77,7 +77,7 @@ const PingLicenseServerWorker = {
     worker() {
         const isConnected = sessionStorage.getItem(PingLicenseServerWorker.cacheKey);
         if (isConnected === 'false') {
-            PbxApi.LicensePing(PingLicenseServerWorker.cbAfterResponse);
+            LicenseAPI.ping(PingLicenseServerWorker.cbAfterResponse);
         }
     },
 

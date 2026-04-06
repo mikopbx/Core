@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,8 +22,8 @@ namespace MikoPBX\Modules\Models;
 
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Providers\ConfigProvider;
-use Phalcon\Text;
-use Phalcon\Url;
+use MikoPBX\Common\Library\Text;
+use Phalcon\Mvc\Url;
 use ReflectionClass as ReflectionClassAlias;
 
 /**
@@ -85,7 +86,7 @@ class ModulesModelsBase extends ModelsBase
             $result = $this->t(
                 'rep' . $this->moduleUniqueId,
                 [
-                    'represent' => "<a href='{$link}'>{$name}</a>",
+                    'represent' => "<a href='$link'>$name</a>",
                 ]
             );
         } else {

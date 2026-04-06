@@ -19,17 +19,20 @@
 
 namespace MikoPBX\Modules;
 
+use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di;
+use MikoPBX\Modules\PbxExtensionState;
+use Phalcon\Di\Di;
 use Phalcon\Mvc\Application;
 use Phalcon\Mvc\Router;
-use Phalcon\Text;
 use Throwable;
-
 use function MikoPBX\Common\Config\appPath;
 
 /**
@@ -47,20 +50,24 @@ class PbxExtensionUtils
      */
     public static function isEnabled(string $moduleUniqueID): bool
     {
-        $parameters = [
-            'conditions' => 'uniqid = :uniqid:',
-            'bind' => [
-                'uniqid' => $moduleUniqueID,
-            ],
-            'cache' => [
-                'key' => ModelsBase::makeCacheKey(PbxExtensionModules::class, 'isEnabled' . $moduleUniqueID),
-                'lifetime' => 3600,
-            ]
-        ];
+        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
+        $cacheKey = ModelsBase::makeCacheKey(PbxExtensionModules::class, 'isEnabled' . $moduleUniqueID);
+        $moduleState = $redis->get($cacheKey);
+        if (empty($moduleState)) {
+            $parameters = [
+                'conditions' => 'uniqid = :uniqid:',
+                'bind' => [
+                    'uniqid' => $moduleUniqueID,
+                ],
+            ];
 
-        $result = PbxExtensionModules::findFirst($parameters);
+            $result = PbxExtensionModules::findFirst($parameters);
 
-        return ($result !== null && $result->disabled !== '1');
+            $moduleState = ($result !== null && $result->disabled !== '1');
+            $redis->set($cacheKey, $moduleState, 3600);
+        }
+
+        return $moduleState;
     }
 
     /**
@@ -74,9 +81,9 @@ class PbxExtensionUtils
         $moduleDir = self::getModuleDir($moduleUniqueID);
 
         // Create symlinks for IMG
-        $moduleImageDir = "{$moduleDir}/public/assets/img";
+        $moduleImageDir = "$moduleDir/public/assets/img";
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-        $moduleImageCacheDir = "{$imgCacheDir}/{$moduleUniqueID}";
+        $moduleImageCacheDir = "$imgCacheDir/$moduleUniqueID";
         if (file_exists($moduleImageCacheDir)) {
             unlink($moduleImageCacheDir);
         }
@@ -85,9 +92,9 @@ class PbxExtensionUtils
         }
 
         // Create symlinks for CSS
-        $moduleCSSDir = "{$moduleDir}/public/assets/css";
+        $moduleCSSDir = "$moduleDir/public/assets/css";
         $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
-        $moduleCSSCacheDir = "{$cssCacheDir}/{$moduleUniqueID}";
+        $moduleCSSCacheDir = "$cssCacheDir/$moduleUniqueID";
         if (file_exists($moduleCSSCacheDir)) {
             unlink($moduleCSSCacheDir);
         }
@@ -96,9 +103,9 @@ class PbxExtensionUtils
         }
 
         // Create symlinks for JS
-        $moduleJSDir = "{$moduleDir}/public/assets/js";
+        $moduleJSDir = "$moduleDir/public/assets/js";
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
-        $moduleJSCacheDir = "{$jsCacheDir}/{$moduleUniqueID}";
+        $moduleJSCacheDir = "$jsCacheDir/$moduleUniqueID";
         if (file_exists($moduleJSCacheDir)) {
             unlink($moduleJSCacheDir);
         }
@@ -117,12 +124,11 @@ class PbxExtensionUtils
     {
         $di = Di::getDefault();
         if ($di === null) {
-            return "/tmp/{$moduleUniqueID}";
+            return "/tmp/$moduleUniqueID";
         }
-        $config = $di->getShared('config');
-        $modulesDir = $config->path('core.modulesDir');
-
-        return "{$modulesDir}/{$moduleUniqueID}";
+        
+        $modulesDir = Directories::getDir(Directories::CORE_MODULES_DIR);
+        return "$modulesDir/$moduleUniqueID";
     }
 
     /**
@@ -139,19 +145,18 @@ class PbxExtensionUtils
         if ($di === null) {
             return;
         }
-        $config = $di->getShared('config');
-
+     
         // Create symlinks to AGI-BIN
-        $agiBinDir = $config->path('asterisk.astagidir');
-        $moduleAgiBinDir = "{$moduleDir}/agi-bin";
+        $agiBinDir = Directories::getDir(Directories::AST_AGI_BIN_DIR);
+        $moduleAgiBinDir = "$moduleDir/agi-bin";
         $files = glob("$moduleAgiBinDir/*.{php}", GLOB_BRACE);
         foreach ($files as $file) {
             $newFilename = $agiBinDir . '/' . basename($file);
             Util::createUpdateSymlink($file, $newFilename);
         }
 
-        $pathChmod = Util::which('chmod');
-        Processes::mwExec("{$pathChmod} +x {$agiBinDir}/*");
+        $chmod = Util::which('chmod');
+        Processes::mwExec("$chmod +x $agiBinDir/*");
     }
 
     /**
@@ -168,9 +173,15 @@ class PbxExtensionUtils
         if ($di === null) {
             return;
         }
-        $moduleViewDir = "{$moduleDir}/App/Views";
+        $moduleViewDir = "$moduleDir/App/Views";
         $viewCacheDir = appPath('src/AdminCabinet/Views/Modules');
-        $moduleViewCacheDir = "{$viewCacheDir}/{$moduleUniqueID}";
+        $moduleViewCacheDir = "$viewCacheDir/$moduleUniqueID";
+
+        // Ensure parent directory exists before creating symlink
+        if (!is_dir($viewCacheDir)) {
+            mkdir($viewCacheDir, 0755, true);
+        }
+
         if (file_exists($moduleViewCacheDir)) {
             unlink($moduleViewCacheDir);
         }
@@ -195,7 +206,7 @@ class PbxExtensionUtils
             $moduleDir = PbxExtensionUtils::getModuleDir($module['uniqid']);
 
             // Check if module.json file exists
-            $moduleJson = "{$moduleDir}/module.json";
+            $moduleJson = "$moduleDir/module.json";
             if (!file_exists($moduleJson)) {
                 $needDisable = true;
             }
@@ -214,12 +225,45 @@ class PbxExtensionUtils
     }
 
     /**
+     * Disables a module by its unique ID.
+     *
+     * @param string $moduleUniqueId The unique ID of the module to be disabled.
+     * @param string $reason The disable reason constant (default: DISABLED_BY_EXCEPTION).
+     * @param string $reasonText The human-readable exception/error message.
+     */
+    public static function forceDisableModule(
+        string $moduleUniqueId,
+        string $reason = PbxExtensionState::DISABLED_BY_EXCEPTION,
+        string $reasonText = ''
+    ): void
+    {
+        try {
+            // Disable the module using the PbxExtensionState class
+            $moduleStateProcessor = new PbxExtensionState($moduleUniqueId);
+            $moduleStateProcessor->disableModule($reason, $reasonText);
+        } catch (Throwable $exception) {
+            // Log an error message if module disabling fails
+            SystemMessages::sysLogMsg(__CLASS__, "Can not disable module $moduleUniqueId Message: $exception", LOG_ERR);
+        } finally {
+            // Update module status to disabled if it was not already disabled
+            $currentModule = PbxExtensionModules::findFirstByUniqid($moduleUniqueId);
+            if ($currentModule !== null && $currentModule->disabled === '0') {
+                SystemMessages::sysLogMsg(__CLASS__, "Force disable module $moduleUniqueId on the PbxExtensionModules table", LOG_ERR);
+                $currentModule->disabled = '1';
+                $currentModule->disableReason = $reason;
+                $currentModule->disableReasonText = $reasonText;
+                $currentModule->update();
+            }
+        }
+    }
+
+    /**
      * Registers enabled modules with App/Module.php file as external modules for the application.
      *
      * @param Application $application The application instance.
      * @return void
      */
-    public static function registerEnabledModulesInApp(Application &$application)
+    public static function registerEnabledModulesInApp(Application &$application): void
     {
         $parameters = [
             'conditions' => 'disabled=0',
@@ -229,11 +273,11 @@ class PbxExtensionUtils
             $moduleUniqueId = $module['uniqid'];
             $moduleDir = PbxExtensionUtils::getModuleDir($moduleUniqueId);
             $unCamelizedModuleName = Text::uncamelize($moduleUniqueId, '-');
-            $moduleAppClass = "{$moduleDir}/App/Module.php";
+            $moduleAppClass = "$moduleDir/App/Module.php";
             if (file_exists($moduleAppClass)) {
                 $application->registerModules([
                     $unCamelizedModuleName => [
-                        "className" => "Modules\\{$moduleUniqueId}\\App\\Module",
+                        "className" => "Modules\\$moduleUniqueId\\App\\Module",
                         "path" => $moduleAppClass,
                     ],
                 ], true);
@@ -247,7 +291,7 @@ class PbxExtensionUtils
      * @param Router $router
      * @return void
      */
-    public static function registerEnabledModulesInRouter(Router &$router)
+    public static function registerEnabledModulesInRouter(Router &$router): void
     {
         $parameters = [
             'conditions' => 'disabled=0',
@@ -257,14 +301,14 @@ class PbxExtensionUtils
             $moduleUniqueId = $module['uniqid'];
             $moduleDir = PbxExtensionUtils::getModuleDir($moduleUniqueId);
             $unCamelizedModuleName = Text::uncamelize($moduleUniqueId, '-');
-            $moduleAppClass = "{$moduleDir}/App/Module.php";
+            $moduleAppClass = "$moduleDir/App/Module.php";
             if (file_exists($moduleAppClass)) {
-                $router->add("/{$unCamelizedModuleName}/:controller/:action/:params", [
+                $router->add("/$unCamelizedModuleName/:controller/:action/:params", [
                     'module' => $unCamelizedModuleName,
                     'controller' => 1,
                     'action' => 2,
                     'params' => 3,
-                    'namespace' => "Modules\\{$moduleUniqueId}\\App\\Controllers"
+                    'namespace' => "Modules\\$moduleUniqueId\\App\\Controllers"
                 ]);
             }
         }
@@ -276,7 +320,7 @@ class PbxExtensionUtils
      * @param string $moduleFile The file path of the module.
      * @param string $exceptionMessage The exception message.
      */
-    public static function disableBadModule(string $moduleFile, string $exceptionMessage=''): void
+    public static function disableBadModule(string $moduleFile, string $exceptionMessage = ''): void
     {
         // Check if the module is within the /custom_modules/ directory
         $customModulesPos = strpos($moduleFile, '/custom_modules/');
@@ -287,39 +331,251 @@ class PbxExtensionUtils
             $moduleUniqueId = $moduleNameParts[0];
             if (!empty($moduleUniqueId)) {
                 // Disable the module using its unique ID
-                self::forceDisableModule($moduleUniqueId, $exceptionMessage);
-                SystemMessages::sysLogMsg(__CLASS__, "The module {$moduleUniqueId} was disabled because an exception occurred in it", LOG_ERR);
+                self::forceDisableModule($moduleUniqueId, PbxExtensionState::DISABLED_BY_EXCEPTION, $exceptionMessage);
+                SystemMessages::sysLogMsg(__CLASS__, "The module $moduleUniqueId was disabled because an exception occurred in it", LOG_ERR);
             }
         }
     }
 
     /**
-     * Disables a module by its unique ID.
+     * Validates all enabled modules for compatibility issues.
+     * Automatically disables modules that cannot be loaded due to Fatal Errors.
+     * This method runs early in the boot process to prevent system crashes.
      *
-     * @param string $moduleUniqueId The unique ID of the module to be disabled.
-     * @param string $exceptionMessage The exception message.
+     * Uses separate process isolation to catch Fatal Errors that cannot be caught
+     * with try-catch (e.g., method signature incompatibility).
+     *
+     * @return void
      */
-    private static function forceDisableModule(string $moduleUniqueId, string $exceptionMessage=''): void
+    public static function validateEnabledModules(): void
     {
-        $reason =  PbxExtensionState::DISABLED_BY_EXCEPTION;
-        $reasonText = $exceptionMessage;
-        try {
-            // Disable the module using the PbxExtensionState class
-            $moduleStateProcessor = new PbxExtensionState($moduleUniqueId);
-            $moduleStateProcessor->disableModule($reason, $reasonText);
-        } catch (Throwable $exception) {
-            // Log an error message if module disabling fails
-            SystemMessages::sysLogMsg(__CLASS__, "Can not disable module {$moduleUniqueId} Message: {$exception}", LOG_ERR);
-        } finally {
-            // Update module status to disabled if it was not already disabled
-            $currentModule = PbxExtensionModules::findFirstByUniqid($moduleUniqueId);
-            if ($currentModule->disabled === '0') {
-                SystemMessages::sysLogMsg(__CLASS__, "Force disable module {$moduleUniqueId} on the PbxExtensionModules table", LOG_ERR);
-                $currentModule->disabled = '1';
-                $currentModule->disableReason = $reason;
-                $currentModule->disableReasonText = $reasonText;
-                $currentModule->update();
+        $modulesToDisable = [];
+        $modules = PbxExtensionModules::find(['conditions' => 'disabled = "0"']);
+
+        foreach ($modules as $module) {
+            $className = str_replace('Module', '', $module->uniqid);
+            $configClassName = "Modules\\{$module->uniqid}\\Lib\\{$className}Conf";
+
+            // WHY: Use separate PHP process to isolate Fatal Errors
+            // Method signature incompatibility cannot be caught with try-catch
+            // because it's a compile-time error, not a runtime exception
+
+            // Create a temporary PHP script that loads autoloader without Whoops
+            // WHY: We disable Whoops to prevent formatted error output that we can't parse
+            $tempScript = sprintf(
+                'define("MIKOPBX_VALIDATION_MODE", true); ' .  // Signal to disable Whoops
+                'require_once "Globals.php"; ' .
+                'class_exists(%s); exit(0);',
+                var_export($configClassName, true)
+            );
+
+            $command = sprintf(
+                'php -r %s 2>&1',
+                escapeshellarg($tempScript)
+            );
+
+            $output = [];
+            $returnCode = 0;
+            exec($command, $output, $returnCode);
+
+            // WHY: Exit code 255 indicates Fatal Error during compilation/autoload
+            // We don't check output because Whoops may format it differently
+            if ($returnCode === 255 || $returnCode !== 0) {
+                // Module has Fatal Error or compatibility issue
+                $errorOutput = implode("\n", $output);
+
+                // Look for signature incompatibility in error output
+                if (strpos($errorOutput, 'must be compatible with') !== false) {
+                    // Extract the specific incompatibility from error message
+                    $errorMessage = TranslationProvider::translate(
+                        'ext_ModuleMethodSignatureIncompatibility',
+                        ['module' => $module->uniqid]
+                    );
+                } elseif (!empty($errorOutput)) {
+                    // Include first line of actual error
+                    $firstLine = explode("\n", $errorOutput)[0];
+                    if (strpos($firstLine, 'Fatal error') !== false || strpos($firstLine, 'Error') !== false) {
+                        $errorMessage = TranslationProvider::translate(
+                            'ext_ModuleIncompatibleWithVersion',
+                            ['module' => $module->uniqid]
+                        ) . ": " . substr($firstLine, 0, 150);
+                    } else {
+                        $errorMessage = TranslationProvider::translate(
+                            'ext_ModuleIncompatibleWithVersion',
+                            ['module' => $module->uniqid]
+                        );
+                    }
+                } else {
+                    $errorMessage = TranslationProvider::translate(
+                        'ext_ModuleIncompatibleWithVersion',
+                        ['module' => $module->uniqid]
+                    );
+                }
+
+                SystemMessages::sysLogMsg(__CLASS__, $errorMessage, LOG_ERR);
+                $modulesToDisable[$module->uniqid] = $errorMessage;
             }
         }
+
+        // Disable all incompatible modules in a single transaction
+        if (!empty($modulesToDisable)) {
+            foreach ($modulesToDisable as $uniqid => $errorMessage) {
+                $module = PbxExtensionModules::findFirstByUniqid($uniqid);
+                if ($module !== null) {
+                    $module->disabled = '1';
+                    $module->disableReason = PbxExtensionState::DISABLED_BY_EXCEPTION;
+                    $module->disableReasonText = $errorMessage;
+                    $module->save();
+
+                    // WHY: Remove module symlink immediately to prevent usage before next restart
+                    // Symlinks are created by Storage::createWorkDirsAfterDBUpgrade() before validation
+                    $moduleDir = "/usr/www/src/Modules/{$uniqid}";
+                    if (is_link($moduleDir)) {
+                        unlink($moduleDir);
+                        SystemMessages::sysLogMsg(
+                            __CLASS__,
+                            "Module {$uniqid} symlink removed after disabling",
+                            LOG_INFO
+                        );
+                    }
+
+                    SystemMessages::sysLogMsg(
+                        __CLASS__,
+                        "Module {$uniqid} has been automatically disabled due to incompatibility",
+                        LOG_WARNING
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Determines if a module is a Language Pack module.
+     *
+     * Checks module.json for "module_type": "languagepack".
+     *
+     * @param string $moduleUniqueID The UniqueID of the module.
+     * @return bool True if module is a Language Pack, false otherwise.
+     */
+    public static function isLanguagePackModule(string $moduleUniqueID): bool
+    {
+        $moduleDir = self::getModuleDir($moduleUniqueID);
+        $moduleJson = "$moduleDir/module.json";
+
+        if (file_exists($moduleJson)) {
+            $jsonString = file_get_contents($moduleJson);
+            $moduleDescription = json_decode($jsonString, true);
+
+            if (isset($moduleDescription['module_type'])) {
+                return $moduleDescription['module_type'] === 'languagepack';
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Gets the language code for a Language Pack module.
+     *
+     * Checks module.json for "language_code" or extracts from sounds directory structure.
+     *
+     * @param string $moduleUniqueID The UniqueID of the module.
+     * @return string|null Language code (e.g., 'de-de', 'ja-ja', 'fr-fr') or null if not found.
+     */
+    public static function getLanguagePackCode(string $moduleUniqueID): ?string
+    {
+        $moduleDir = self::getModuleDir($moduleUniqueID);
+        $moduleJson = "$moduleDir/module.json";
+
+        // Check module.json first
+        if (file_exists($moduleJson)) {
+            $jsonString = file_get_contents($moduleJson);
+            $moduleDescription = json_decode($jsonString, true);
+
+            if (isset($moduleDescription['language_code'])) {
+                return $moduleDescription['language_code'];
+            }
+        }
+
+        // Fallback: detect from sounds directory structure
+        $moduleSoundsDir = "$moduleDir/sounds";
+        if (is_dir($moduleSoundsDir)) {
+            $langDirs = glob("$moduleSoundsDir/*", GLOB_ONLYDIR);
+            if (!empty($langDirs) && count($langDirs) === 1) {
+                // Language Pack should have exactly ONE language directory
+                return basename($langDirs[0]);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Checks for Language Pack conflicts.
+     *
+     * Only one Language Pack per language is allowed.
+     *
+     * @param string $moduleUniqueID The UniqueID of the module to check.
+     * @param string $languageCode The language code to check for conflicts.
+     * @return string|null UniqueID of conflicting module or null if no conflict.
+     */
+    public static function checkLanguagePackConflict(string $moduleUniqueID, string $languageCode): ?string
+    {
+        $parameters = [
+            'conditions' => 'disabled=0 AND uniqid != :uniqid:',
+            'bind' => [
+                'uniqid' => $moduleUniqueID,
+            ],
+        ];
+
+        $modules = PbxExtensionModules::find($parameters)->toArray();
+
+        foreach ($modules as $module) {
+            $otherModuleId = $module['uniqid'];
+
+            // Check if it's a Language Pack
+            if (self::isLanguagePackModule($otherModuleId)) {
+                $otherLanguageCode = self::getLanguagePackCode($otherModuleId);
+
+                // Found conflict - same language code
+                if ($otherLanguageCode === $languageCode) {
+                    return $otherModuleId;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets all enabled Language Pack modules with their language codes.
+     *
+     * Returns associative array where key is language code and value is module UniqueID.
+     *
+     * @return array Associative array [languageCode => moduleUniqueID]
+     */
+    public static function getAllLanguagePackModules(): array
+    {
+        $parameters = [
+            'conditions' => 'disabled=0',
+        ];
+
+        $modules = PbxExtensionModules::find($parameters)->toArray();
+        $languagePacks = [];
+
+        foreach ($modules as $module) {
+            $moduleId = $module['uniqid'];
+
+            // Check if it's a Language Pack
+            if (self::isLanguagePackModule($moduleId)) {
+                $languageCode = self::getLanguagePackCode($moduleId);
+
+                if ($languageCode !== null) {
+                    $languagePacks[$languageCode] = $moduleId;
+                }
+            }
+        }
+
+        return $languagePacks;
     }
 }

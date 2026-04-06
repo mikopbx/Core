@@ -16,6 +16,7 @@ class ReloadNginxConfAction implements ReloadActionInterface
     {
         $nginxConf = new NginxConf();
         $nginxConf->generateModulesConfigs();
+        $nginxConf->generateModulesServerConfigs();
         $nginxConf->reStart();
     }
 }

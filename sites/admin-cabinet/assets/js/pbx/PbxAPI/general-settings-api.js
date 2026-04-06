@@ -1,0 +1,96 @@
+"use strict";
+
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* global globalRootUrl, Config, PbxApi, PbxApiClient, $ */
+
+/**
+ * GeneralSettingsAPI - REST API v3 client for general settings management (Singleton resource)
+ *
+ * Provides a clean interface for general settings operations.
+ * General Settings is a singleton resource - there's only one configuration in the system.
+ *
+ * @class GeneralSettingsAPI 
+ */
+var GeneralSettingsAPI = new PbxApiClient({
+  endpoint: '/pbxcore/api/v3/general-settings',
+  singleton: true,
+  customMethods: {
+    getDefault: ':getDefault',
+    updateCodecs: ':updateCodecs'
+  }
+}); //  Add method aliases for compatibility and easier use
+
+Object.assign(GeneralSettingsAPI, {
+  /**
+   * Get all general settings (GET /general-settings)
+   * @param {Function} callback - Callback function to handle the response
+   */
+  getSettings: function getSettings(callback) {
+    return this.callGet({}, callback);
+  },
+
+  /**
+   * Get single setting by key (GET /general-settings/{key})
+   * @param {string} key - Setting key to retrieve
+   * @param {Function} callback - Callback function to handle the response
+   */
+  getSetting: function getSetting(key, callback) {
+    return this.callGet({}, callback, key);
+  },
+
+  /**
+   * Get default settings values (GET /general-settings:getDefault)
+   * @param {Function} callback - Callback function to handle the response
+   */
+  getDefault: function getDefault(callback) {
+    return this.callCustomMethod('getDefault', {}, callback);
+  },
+
+  /**
+   * Save general settings via PATCH for partial update
+   * This is the main method used by the form for saving settings
+   * @param {Object} data - Settings data to save (partial update)
+   * @param {Function} callback - Callback function to handle the response
+   */
+  saveSettings: function saveSettings(data, callback) {
+    return this.callPatch(data, callback);
+  },
+
+  /**
+   * Full update of settings (PUT /general-settings)
+   * @param {Object} data - Complete settings data to replace existing
+   * @param {Function} callback - Callback function to handle the response
+   */
+  updateSettings: function updateSettings(data, callback) {
+    return this.callPut(data, callback);
+  },
+
+  /**
+   * Update codec configuration (POST /general-settings:updateCodecs)
+   * @param {Array} codecs - Array of codec configurations
+   * @param {Function} callback - Callback function to handle the response
+   */
+  updateCodecs: function updateCodecs(codecs, callback) {
+    return this.callCustomMethod('updateCodecs', {
+      codecs: codecs
+    }, callback, 'POST');
+  }
+});
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9QYnhBUEkvZ2VuZXJhbC1zZXR0aW5ncy1hcGkuanMiXSwibmFtZXMiOlsiR2VuZXJhbFNldHRpbmdzQVBJIiwiUGJ4QXBpQ2xpZW50IiwiZW5kcG9pbnQiLCJzaW5nbGV0b24iLCJjdXN0b21NZXRob2RzIiwiZ2V0RGVmYXVsdCIsInVwZGF0ZUNvZGVjcyIsIk9iamVjdCIsImFzc2lnbiIsImdldFNldHRpbmdzIiwiY2FsbGJhY2siLCJjYWxsR2V0IiwiZ2V0U2V0dGluZyIsImtleSIsImNhbGxDdXN0b21NZXRob2QiLCJzYXZlU2V0dGluZ3MiLCJkYXRhIiwiY2FsbFBhdGNoIiwidXBkYXRlU2V0dGluZ3MiLCJjYWxsUHV0IiwiY29kZWNzIl0sIm1hcHBpbmdzIjoiOztBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7O0FBRUE7O0FBRUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBLElBQU1BLGtCQUFrQixHQUFHLElBQUlDLFlBQUosQ0FBaUI7QUFDeENDLEVBQUFBLFFBQVEsRUFBRSxrQ0FEOEI7QUFFeENDLEVBQUFBLFNBQVMsRUFBRSxJQUY2QjtBQUd4Q0MsRUFBQUEsYUFBYSxFQUFFO0FBQ1hDLElBQUFBLFVBQVUsRUFBRSxhQUREO0FBRVhDLElBQUFBLFlBQVksRUFBRTtBQUZIO0FBSHlCLENBQWpCLENBQTNCLEMsQ0FTQTs7QUFDQUMsTUFBTSxDQUFDQyxNQUFQLENBQWNSLGtCQUFkLEVBQWtDO0FBRTlCO0FBQ0o7QUFDQTtBQUNBO0FBQ0lTLEVBQUFBLFdBTjhCLHVCQU1sQkMsUUFOa0IsRUFNUjtBQUNsQixXQUFPLEtBQUtDLE9BQUwsQ0FBYSxFQUFiLEVBQWlCRCxRQUFqQixDQUFQO0FBQ0gsR0FSNkI7O0FBVTlCO0FBQ0o7QUFDQTtBQUNBO0FBQ0E7QUFDSUUsRUFBQUEsVUFmOEIsc0JBZW5CQyxHQWZtQixFQWVkSCxRQWZjLEVBZUo7QUFDdEIsV0FBTyxLQUFLQyxPQUFMLENBQWEsRUFBYixFQUFpQkQsUUFBakIsRUFBMkJHLEdBQTNCLENBQVA7QUFDSCxHQWpCNkI7O0FBbUI5QjtBQUNKO0FBQ0E7QUFDQTtBQUNJUixFQUFBQSxVQXZCOEIsc0JBdUJuQkssUUF2Qm1CLEVBdUJUO0FBQ2pCLFdBQU8sS0FBS0ksZ0JBQUwsQ0FBc0IsWUFBdEIsRUFBb0MsRUFBcEMsRUFBd0NKLFFBQXhDLENBQVA7QUFDSCxHQXpCNkI7O0FBMkI5QjtBQUNKO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDSUssRUFBQUEsWUFqQzhCLHdCQWlDakJDLElBakNpQixFQWlDWE4sUUFqQ1csRUFpQ0Q7QUFDekIsV0FBTyxLQUFLTyxTQUFMLENBQWVELElBQWYsRUFBcUJOLFFBQXJCLENBQVA7QUFDSCxHQW5DNkI7O0FBcUM5QjtBQUNKO0FBQ0E7QUFDQTtBQUNBO0FBQ0lRLEVBQUFBLGNBMUM4QiwwQkEwQ2ZGLElBMUNlLEVBMENUTixRQTFDUyxFQTBDQztBQUMzQixXQUFPLEtBQUtTLE9BQUwsQ0FBYUgsSUFBYixFQUFtQk4sUUFBbkIsQ0FBUDtBQUNILEdBNUM2Qjs7QUE4QzlCO0FBQ0o7QUFDQTtBQUNBO0FBQ0E7QUFDSUosRUFBQUEsWUFuRDhCLHdCQW1EakJjLE1BbkRpQixFQW1EVFYsUUFuRFMsRUFtREM7QUFDM0IsV0FBTyxLQUFLSSxnQkFBTCxDQUFzQixjQUF0QixFQUFzQztBQUFFTSxNQUFBQSxNQUFNLEVBQUVBO0FBQVYsS0FBdEMsRUFBMERWLFFBQTFELEVBQW9FLE1BQXBFLENBQVA7QUFDSDtBQXJENkIsQ0FBbEMiLCJzb3VyY2VzQ29udGVudCI6WyIvKlxuICogTWlrb1BCWCAtIGZyZWUgcGhvbmUgc3lzdGVtIGZvciBzbWFsbCBidXNpbmVzc1xuICogQ29weXJpZ2h0IMKpIDIwMTctMjAyNSBBbGV4ZXkgUG9ydG5vdiBhbmQgTmlrb2xheSBCZWtldG92XG4gKlxuICogVGhpcyBwcm9ncmFtIGlzIGZyZWUgc29mdHdhcmU6IHlvdSBjYW4gcmVkaXN0cmlidXRlIGl0IGFuZC9vciBtb2RpZnlcbiAqIGl0IHVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgYXMgcHVibGlzaGVkIGJ5XG4gKiB0aGUgRnJlZSBTb2Z0d2FyZSBGb3VuZGF0aW9uOyBlaXRoZXIgdmVyc2lvbiAzIG9mIHRoZSBMaWNlbnNlLCBvclxuICogKGF0IHlvdXIgb3B0aW9uKSBhbnkgbGF0ZXIgdmVyc2lvbi5cbiAqXG4gKiBUaGlzIHByb2dyYW0gaXMgZGlzdHJpYnV0ZWQgaW4gdGhlIGhvcGUgdGhhdCBpdCB3aWxsIGJlIHVzZWZ1bCxcbiAqIGJ1dCBXSVRIT1VUIEFOWSBXQVJSQU5UWTsgd2l0aG91dCBldmVuIHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9mXG4gKiBNRVJDSEFOVEFCSUxJVFkgb3IgRklUTkVTUyBGT1IgQSBQQVJUSUNVTEFSIFBVUlBPU0UuICBTZWUgdGhlXG4gKiBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBmb3IgbW9yZSBkZXRhaWxzLlxuICpcbiAqIFlvdSBzaG91bGQgaGF2ZSByZWNlaXZlZCBhIGNvcHkgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGFsb25nIHdpdGggdGhpcyBwcm9ncmFtLlxuICogSWYgbm90LCBzZWUgPGh0dHBzOi8vd3d3LmdudS5vcmcvbGljZW5zZXMvPi5cbiAqL1xuXG4vKiBnbG9iYWwgZ2xvYmFsUm9vdFVybCwgQ29uZmlnLCBQYnhBcGksIFBieEFwaUNsaWVudCwgJCAqLyBcblxuLyoqXG4gKiBHZW5lcmFsU2V0dGluZ3NBUEkgLSBSRVNUIEFQSSB2MyBjbGllbnQgZm9yIGdlbmVyYWwgc2V0dGluZ3MgbWFuYWdlbWVudCAoU2luZ2xldG9uIHJlc291cmNlKVxuICpcbiAqIFByb3ZpZGVzIGEgY2xlYW4gaW50ZXJmYWNlIGZvciBnZW5lcmFsIHNldHRpbmdzIG9wZXJhdGlvbnMuXG4gKiBHZW5lcmFsIFNldHRpbmdzIGlzIGEgc2luZ2xldG9uIHJlc291cmNlIC0gdGhlcmUncyBvbmx5IG9uZSBjb25maWd1cmF0aW9uIGluIHRoZSBzeXN0ZW0uXG4gKlxuICogQGNsYXNzIEdlbmVyYWxTZXR0aW5nc0FQSSBcbiAqL1xuY29uc3QgR2VuZXJhbFNldHRpbmdzQVBJID0gbmV3IFBieEFwaUNsaWVudCh7XG4gICAgZW5kcG9pbnQ6ICcvcGJ4Y29yZS9hcGkvdjMvZ2VuZXJhbC1zZXR0aW5ncycsXG4gICAgc2luZ2xldG9uOiB0cnVlLFxuICAgIGN1c3RvbU1ldGhvZHM6IHtcbiAgICAgICAgZ2V0RGVmYXVsdDogJzpnZXREZWZhdWx0JyxcbiAgICAgICAgdXBkYXRlQ29kZWNzOiAnOnVwZGF0ZUNvZGVjcydcbiAgICB9XG59KTtcblxuLy8gIEFkZCBtZXRob2QgYWxpYXNlcyBmb3IgY29tcGF0aWJpbGl0eSBhbmQgZWFzaWVyIHVzZVxuT2JqZWN0LmFzc2lnbihHZW5lcmFsU2V0dGluZ3NBUEksIHtcblxuICAgIC8qKlxuICAgICAqIEdldCBhbGwgZ2VuZXJhbCBzZXR0aW5ncyAoR0VUIC9nZW5lcmFsLXNldHRpbmdzKVxuICAgICAqIEBwYXJhbSB7RnVuY3Rpb259IGNhbGxiYWNrIC0gQ2FsbGJhY2sgZnVuY3Rpb24gdG8gaGFuZGxlIHRoZSByZXNwb25zZVxuICAgICAqL1xuICAgIGdldFNldHRpbmdzKGNhbGxiYWNrKSB7XG4gICAgICAgIHJldHVybiB0aGlzLmNhbGxHZXQoe30sIGNhbGxiYWNrKTtcbiAgICB9LFxuXG4gICAgLyoqXG4gICAgICogR2V0IHNpbmdsZSBzZXR0aW5nIGJ5IGtleSAoR0VUIC9nZW5lcmFsLXNldHRpbmdzL3trZXl9KVxuICAgICAqIEBwYXJhbSB7c3RyaW5nfSBrZXkgLSBTZXR0aW5nIGtleSB0byByZXRyaWV2ZVxuICAgICAqIEBwYXJhbSB7RnVuY3Rpb259IGNhbGxiYWNrIC0gQ2FsbGJhY2sgZnVuY3Rpb24gdG8gaGFuZGxlIHRoZSByZXNwb25zZVxuICAgICAqL1xuICAgIGdldFNldHRpbmcoa2V5LCBjYWxsYmFjaykge1xuICAgICAgICByZXR1cm4gdGhpcy5jYWxsR2V0KHt9LCBjYWxsYmFjaywga2V5KTtcbiAgICB9LFxuXG4gICAgLyoqXG4gICAgICogR2V0IGRlZmF1bHQgc2V0dGluZ3MgdmFsdWVzIChHRVQgL2dlbmVyYWwtc2V0dGluZ3M6Z2V0RGVmYXVsdClcbiAgICAgKiBAcGFyYW0ge0Z1bmN0aW9ufSBjYWxsYmFjayAtIENhbGxiYWNrIGZ1bmN0aW9uIHRvIGhhbmRsZSB0aGUgcmVzcG9uc2VcbiAgICAgKi9cbiAgICBnZXREZWZhdWx0KGNhbGxiYWNrKSB7XG4gICAgICAgIHJldHVybiB0aGlzLmNhbGxDdXN0b21NZXRob2QoJ2dldERlZmF1bHQnLCB7fSwgY2FsbGJhY2spO1xuICAgIH0sXG5cbiAgICAvKipcbiAgICAgKiBTYXZlIGdlbmVyYWwgc2V0dGluZ3MgdmlhIFBBVENIIGZvciBwYXJ0aWFsIHVwZGF0ZVxuICAgICAqIFRoaXMgaXMgdGhlIG1haW4gbWV0aG9kIHVzZWQgYnkgdGhlIGZvcm0gZm9yIHNhdmluZyBzZXR0aW5nc1xuICAgICAqIEBwYXJhbSB7T2JqZWN0fSBkYXRhIC0gU2V0dGluZ3MgZGF0YSB0byBzYXZlIChwYXJ0aWFsIHVwZGF0ZSlcbiAgICAgKiBAcGFyYW0ge0Z1bmN0aW9ufSBjYWxsYmFjayAtIENhbGxiYWNrIGZ1bmN0aW9uIHRvIGhhbmRsZSB0aGUgcmVzcG9uc2VcbiAgICAgKi9cbiAgICBzYXZlU2V0dGluZ3MoZGF0YSwgY2FsbGJhY2spIHtcbiAgICAgICAgcmV0dXJuIHRoaXMuY2FsbFBhdGNoKGRhdGEsIGNhbGxiYWNrKTtcbiAgICB9LFxuXG4gICAgLyoqXG4gICAgICogRnVsbCB1cGRhdGUgb2Ygc2V0dGluZ3MgKFBVVCAvZ2VuZXJhbC1zZXR0aW5ncylcbiAgICAgKiBAcGFyYW0ge09iamVjdH0gZGF0YSAtIENvbXBsZXRlIHNldHRpbmdzIGRhdGEgdG8gcmVwbGFjZSBleGlzdGluZ1xuICAgICAqIEBwYXJhbSB7RnVuY3Rpb259IGNhbGxiYWNrIC0gQ2FsbGJhY2sgZnVuY3Rpb24gdG8gaGFuZGxlIHRoZSByZXNwb25zZVxuICAgICAqL1xuICAgIHVwZGF0ZVNldHRpbmdzKGRhdGEsIGNhbGxiYWNrKSB7XG4gICAgICAgIHJldHVybiB0aGlzLmNhbGxQdXQoZGF0YSwgY2FsbGJhY2spO1xuICAgIH0sXG5cbiAgICAvKipcbiAgICAgKiBVcGRhdGUgY29kZWMgY29uZmlndXJhdGlvbiAoUE9TVCAvZ2VuZXJhbC1zZXR0aW5nczp1cGRhdGVDb2RlY3MpXG4gICAgICogQHBhcmFtIHtBcnJheX0gY29kZWNzIC0gQXJyYXkgb2YgY29kZWMgY29uZmlndXJhdGlvbnNcbiAgICAgKiBAcGFyYW0ge0Z1bmN0aW9ufSBjYWxsYmFjayAtIENhbGxiYWNrIGZ1bmN0aW9uIHRvIGhhbmRsZSB0aGUgcmVzcG9uc2VcbiAgICAgKi9cbiAgICB1cGRhdGVDb2RlY3MoY29kZWNzLCBjYWxsYmFjaykge1xuICAgICAgICByZXR1cm4gdGhpcy5jYWxsQ3VzdG9tTWV0aG9kKCd1cGRhdGVDb2RlY3MnLCB7IGNvZGVjczogY29kZWNzIH0sIGNhbGxiYWNrLCAnUE9TVCcpO1xuICAgIH1cbn0pOyJdfQ==

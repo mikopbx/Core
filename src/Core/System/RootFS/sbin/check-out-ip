@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # MikoPBX - free phone system for small business
 # Copyright © 2017-2022 Alexey Portnov and Nikolay Beketov
@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
 #
+. /etc/profile;
 
 /bin/busybox cat /etc/asterisk/pjsip.conf |  /bin/busybox grep external_media_address  > /dev/null 2> /dev/null;
 needCheckOutAddress="$?";
@@ -24,9 +25,8 @@ if [ "$needCheckOutAddress" != '1' ]; then
     exit 0;
 fi;
 
-outIp="$(/usr/bin/curl https://ipecho.net/plain 2> /dev/null)";
-result="$?";
-if [ "$result" != '0' ]; then
+outIp="$(_myip)";
+if [ "$outIp" = '' ]; then
   echo 'Error getting an IP address';
   exit 1;
 fi

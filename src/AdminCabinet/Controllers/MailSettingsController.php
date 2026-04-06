@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,103 +22,55 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\MailSettingsEditForm;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 
+/**
+ * MailSettingsController
+ *
+ * Minimal controller to render the mail settings view.
+ * All data operations are handled through REST API.
+ */
 class MailSettingsController extends BaseController
 {
-
     /**
-     * Modify mail settings action.
-     *
-     * @return void
+     * Mail settings modify page
      */
     public function modifyAction(): void
     {
-        $MailSettingsFields = [];
-        $arrKeys = $this->getEmailSettingsArray();
+        // Get mail-related settings keys
+        $mailSettingKeys = [
+            PbxSettings::MAIL_SMTP_HOST,
+            PbxSettings::MAIL_SMTP_PORT,
+            PbxSettings::MAIL_SMTP_USERNAME,
+            PbxSettings::MAIL_SMTP_PASSWORD,
+            PbxSettings::MAIL_SMTP_USE_TLS,
+            PbxSettings::MAIL_SMTP_CERT_CHECK,
+            PbxSettings::MAIL_SMTP_FROM_USERNAME,
+            PbxSettings::MAIL_SMTP_SENDER_ADDRESS,
+            PbxSettings::MAIL_ENABLE_NOTIFICATIONS,
+            PbxSettings::SEND_MISSED_CALL_NOTIFICATIONS,
+            PbxSettings::SEND_VOICEMAIL_NOTIFICATIONS,
+            PbxSettings::SEND_LOGIN_NOTIFICATIONS,
+            PbxSettings::SEND_SYSTEM_NOTIFICATIONS,
+            PbxSettings::MAIL_SMTP_AUTH_TYPE,
+            PbxSettings::MAIL_OAUTH2_PROVIDER,
+            PbxSettings::MAIL_OAUTH2_CLIENT_ID,
+            PbxSettings::MAIL_OAUTH2_CLIENT_SECRET,
+            PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL,
+            PbxSettings::SYSTEM_EMAIL_FOR_MISSED,
+            PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL,
+        ];
 
-        // Retrieve the values of mail settings from PbxSettings
-        foreach ($arrKeys as $key) {
-            $MailSettingsFields[$key] = PbxSettings::getValueByKey($key);
+        // Initialize settings with empty values for REST API loading
+        $mailSettings = [];
+        foreach ($mailSettingKeys as $key) {
+            $mailSettings[$key] = '';
         }
 
-        $this->view->form       = new MailSettingsEditForm(null, $MailSettingsFields);
+        // Create form with initialized structure
+        $this->view->form = new MailSettingsEditForm(null, $mailSettings);
+
+        // Pass submit mode for API-based form submission
         $this->view->submitMode = null;
     }
 
-    /**
-     *  Get the list of keys for email settings on the station.
-     *
-     * @return array
-     */
-    private function getEmailSettingsArray(): array
-    {
-        return [
-            PbxSettingsConstants::MAIL_SMTP_HOST,
-            PbxSettingsConstants::MAIL_SMTP_PORT,
-            PbxSettingsConstants::MAIL_SMTP_USERNAME,
-            PbxSettingsConstants::MAIL_SMTP_PASSWORD,
-            PbxSettingsConstants::MAIL_ENABLE_NOTIFICATIONS,
-            PbxSettingsConstants::MAIL_SMTP_FROM_USERNAME,
-            PbxSettingsConstants::MAIL_SMTP_SENDER_ADDRESS,
-            PbxSettingsConstants::MAIL_SMTP_USE_TLS,
-            PbxSettingsConstants::MAIL_SMTP_CERT_CHECK,
-            PbxSettingsConstants::MAIL_TPL_MISSED_CALL_SUBJECT,
-            PbxSettingsConstants::MAIL_TPL_MISSED_CALL_BODY,
-            PbxSettingsConstants::MAIL_TPL_MISSED_CALL_FOOTER,
-            PbxSettingsConstants::MAIL_TPL_VOICEMAIL_SUBJECT,
-            PbxSettingsConstants::MAIL_TPL_VOICEMAIL_BODY,
-            PbxSettingsConstants::MAIL_TPL_VOICEMAIL_FOOTER,
-            PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL,
-            PbxSettingsConstants::SYSTEM_EMAIL_FOR_MISSED,
-            PbxSettingsConstants::VOICEMAIL_NOTIFICATIONS_EMAIL,
-        ];
-    }
-
-    /**
-     * Saves the email settings based on the POST data.
-     */
-    public function saveAction(): void
-    {
-        if ( ! $this->request->isPost()) {
-            return;
-        }
-        $data = $this->request->getPost();
-
-        $this->db->begin();
-        $arrSettings = $this->getEmailSettingsArray();
-        foreach ($arrSettings as $key) {
-            $record = PbxSettings::findFirstByKey($key);
-            if ($record === null) {
-                $record      = new PbxSettings();
-                $record->key = $key;
-            }
-
-            switch ($key) {
-                case PbxSettingsConstants::MAIL_ENABLE_NOTIFICATIONS:
-                case PbxSettingsConstants::MAIL_SMTP_USE_TLS:
-                case PbxSettingsConstants::MAIL_SMTP_CERT_CHECK:
-                case "***ALL CHECK BOXES ABOVE***":
-                    $record->value = ($data[$key] == 'on') ? "1" : "0";
-                    break;
-                default:
-                    if ( ! array_key_exists($key, $data)) {
-                        continue 2;
-                    }
-                    $record->value = $data[$key];
-            }
-            if ($record->save() === false) {
-                $errors = $record->getMessages();
-                $this->flash->warning(implode('<br>', $errors));
-                $this->view->success = false;
-                $this->db->rollback();
-
-                return;
-            }
-        }
-
-        $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-        $this->view->success = true;
-        $this->db->commit();
-    }
 }

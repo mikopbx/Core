@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System\Configs;
 
 
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -32,6 +33,28 @@ use MikoPBX\Core\System\Util;
  */
 class VMWareToolsConf
 {
+    public const string PROC_NAME = 'vmtoolsd';
+    public string $startCommand = '';
+
+    public function __construct()
+    {
+        $binPath = Util::which(self::PROC_NAME);
+        $this->startCommand = "$binPath --background=/var/run/".self::PROC_NAME.".pid";
+    }
+
+    /**
+     * Start the service.
+     *
+     * @return bool True if successful, false otherwise.
+     */
+    public function start(): bool
+    {
+        if(System::isBooting()){
+            Processes::mwExecBg($this->startCommand);
+        }
+        return true;
+    }
+
     /**
      * Configure and start VMWareTools.
      *
@@ -39,8 +62,6 @@ class VMWareToolsConf
      */
     public function configure(): bool
     {
-        Processes::killByName("vmtoolsd");
-
         $conf = "[logging]\n"
             . "log = false\n"
             . "vmtoolsd.level = none\n"
@@ -51,11 +72,32 @@ class VMWareToolsConf
         if (!file_exists($dirVM)) {
             Util::mwMkdir($dirVM);
         }
+        file_put_contents("$dirVM/tools.conf", $conf);
+        return true;
+    }
 
-        file_put_contents("{$dirVM}/tools.conf", $conf);
-        $vmtoolsdPath = Util::which('vmtoolsd');
-        $result = Processes::mwExec("{$vmtoolsdPath} --background=/var/run/vmtoolsd.pid > /dev/null 2> /dev/null");
-
-        return $result === 0;
+    /**
+     * Generates a Monit configuration block for the specified process.
+     *
+     * This method returns a string containing the full Monit configuration
+     * for monitoring a process, including:
+     * - PID file path
+     * - Command to start the process in the background
+     * - Command to stop the process using BusyBox
+     * - Execution permissions (as root user/group)
+     *
+     * @param string $procName The name of the process to use in the Monit configuration.
+     *
+     * @return string The generated Monit configuration block as a string.
+     */
+    public function getMonitConf(string $procName): string
+    {
+        $this->configure();
+        $busyboxPath = Util::which('busybox');
+        return 'check process '.$procName.' with pidfile "/var/run/'.self::PROC_NAME.'.pid"'.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
+            '        as uid root and gid root';
     }
 }

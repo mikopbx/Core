@@ -1,19 +1,20 @@
-{{ form('dialplan-applications/save', 'role': 'form', 'class': 'ui form large', 'id':'dialplan-application-form') }}
+{{ form(['action' : 'dialplan-applications/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'dialplan-application-form']) }}
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
 {{ form.render('applicationlogic') }}
+<input type="hidden" id="copy-from-id" value="{{ copyFromId }}"/>
 <div class="ui ribbon label" id="dialplan-application-extension-number">
-    <i class="phone icon"></i> {{ extension }}
+    <i class="phone icon"></i> <span id="extension-display"></span>
 </div>
 <h3 class="ui hidden header "></h3>
 <div class="ui top attached tabular menu" id="application-code-menu">
-    <a class="item" data-tab="main">{{ t._('da_Main') }}</a>
-    <a class="item active" data-tab="code">{{ t._('da_Applicationlogic') }}</a>
+    <a class="item active" data-tab="main">{{ t._('da_Main') }}</a>
+    <a class="item" data-tab="code">{{ t._('da_Applicationlogic') }}</a>
     {{ partial("PbxExtensionModules/hookVoltBlock",
         ['arrayOfPartials':hookVoltBlock('TabularMenu')])
     }}
 </div>
-<div class="ui bottom attached tab segment" data-tab="main">
+<div class="ui bottom attached tab segment active" data-tab="main">
 
     <div class="field">
         <label>{{ t._('da_Name') }}</label>
@@ -43,15 +44,19 @@
     <div class="field">
         <label>{{ t._('da_Type') }}</label>
         <div class="field max-width-300">
-        {{ form.render('type') }}
+            {{ form.render('type') }}
+            <!-- Dropdown created automatically by JavaScript -->
         </div>
     </div>
 
     {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MainTabFields')]) }}
 </div>
-<div class="ui bottom attached tab segment active" data-tab="code">
-    <div id="application-code" class="application-code">
-        <pre></pre>
+<div class="ui bottom attached tab segment" data-tab="code">
+    <div class="code-container">
+        <div id="application-code" class="application-code"></div>
+        <div class="fullscreen-toggle-btn">
+            <i class="inverted expand icon"></i>
+        </div>
     </div>
     {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('CodeTabFields')]) }}
 </div>
@@ -61,4 +66,4 @@
 }}
 
 {{ partial("partials/submitbutton",['indexurl':'dialplan-applications/index/']) }}
-{{ end_form() }}
+{{ close('form') }}

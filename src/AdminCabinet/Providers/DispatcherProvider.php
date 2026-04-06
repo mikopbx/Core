@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,7 +22,6 @@ declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Providers;
 
-
 use MikoPBX\AdminCabinet\{
     Plugins\NormalizeControllerNamePlugin,
     Plugins\NotFoundPlugin,
@@ -41,7 +41,7 @@ use Whoops\Handler\PrettyPageHandler;
  */
 class DispatcherProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'dispatcher';
+    public const string SERVICE_NAME = 'dispatcher';
 
     /**
      * Register dispatcher service provider

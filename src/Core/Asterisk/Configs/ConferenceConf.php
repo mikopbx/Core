@@ -20,6 +20,8 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\ConferenceRooms;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -41,7 +43,7 @@ class ConferenceConf extends AsteriskConfigClass
     {
         $conf = "";
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/confbridge.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 
     /**
@@ -54,7 +56,7 @@ class ConferenceConf extends AsteriskConfigClass
         $conf = '';
         $data = self::getConferenceExtensions();
         foreach ($data as $conference) {
-            $conf .= "exten => {$conference},1,Goto(conference-rooms,{$conference},1)" . "\n";
+            $conf .= "exten => $conference,1,Goto(conference-rooms,$conference,1)" . "\n";
         }
         $conf .= "\n";
 
@@ -71,7 +73,7 @@ class ConferenceConf extends AsteriskConfigClass
         $conf = '';
         $data = self::getConferenceExtensions();
         foreach ($data as $conference) {
-            $conf .= "exten => {$conference},1,Goto(conference-rooms,{$conference},1)" . "\n";
+            $conf .= "exten => $conference,1,Goto(conference-rooms,$conference,1)" . "\n";
         }
         $conf .= "\n";
 
@@ -85,11 +87,11 @@ class ConferenceConf extends AsteriskConfigClass
      */
     public function extensionGenContexts(): string
     {
-        $PBXRecordCalls = $this->generalSettings['PBXRecordCalls'];
+        $PBXRecordCalls = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_CALLS);
 
         // Generate hangup handler
         $conf  = "[hangup_handler_meetme]\n\n";
-        $conf .= "exten => s,1,AGI(cdr_connector.php,hangup_chan_meetme)\n\t";
+        $conf .= "exten => s,1,Gosub(hangup_chan_meetme,\${EXTEN},1)\n\t";
         $conf .= "same => n,return\n\n";
 
         // Generate conference room context
@@ -115,7 +117,7 @@ class ConferenceConf extends AsteriskConfigClass
             $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Hangup())' . "\n\t";
 
             // Send PJSIP channels to the conference room
-            $conf .= 'same => n,AGI(cdr_connector.php,meetme_dial)' . "\n\t";
+            $conf .= 'same => n,AGI(meetme_dial.php)' . "\n\t";
             $conf .= 'same => n,Answer()' . "\n\t";
             $conf .= 'same => n,Gosub(set-answer-state,${EXTEN},1)' . PHP_EOL."\t";
             $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler_meetme,s,1)' . "\n\t";
@@ -153,7 +155,7 @@ class ConferenceConf extends AsteriskConfigClass
         $conf = '';
         $data = self::getConferenceExtensions();
         foreach ($data as $conference) {
-            $conf .= "exten => {$conference},hint,Custom:{$conference} \n";
+            $conf .= "exten => $conference,hint,Custom:$conference \n";
         }
 
         return $conf;
@@ -199,4 +201,14 @@ class ConferenceConf extends AsteriskConfigClass
         return $confExtensions;
     }
 
+    /**
+     * Reloads the Asterisk confbridge module.
+     */
+    public static function reload(): void
+    {
+        $conf = new self();
+        $conf->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload app_confbridge'");
+    }
 }

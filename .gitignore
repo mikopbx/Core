@@ -8,3 +8,71 @@ sites/admin-cabinet/assets/js/cache
 src/AdminCabinet/Views/Modules
 .DS_Store
 *.cache
+CLAUDE.local.md
+build
+.config.json
+docs
+.playwright-mcp
+
+# Python cache directories
+tests/api/__pycache__/
+tests/api/.pytest_cache/
+tests/api/.hypothesis/
+tests/api/**/__pycache__/
+tests/pycalltests/__pycache__/
+tests/pycalltests/.pytest_cache/
+tests/pycalltests/**/__pycache__/
+
+# Python compiled files
+tests/api/*.pyc
+tests/api/**/*.pyc
+tests/pycalltests/*.pyc
+tests/pycalltests/**/*.pyc
+
+# Python dependencies (installed via pip)
+tests/pycalltests/bin/pjsua2/linux-arm64/python_deps/
+tests/pycalltests/vendor_deps/
+
+# Environment files
+.env
+tests/api/.env
+**/.env
+
+# Temporary/debug files
+tests/api/debug_*.py
+tests/api/DEBUGGING_NOTES.md
+tests/api/IMPLEMENTATION_SUMMARY.md
+tests/api/STATUS.md
+
+# Log files and temporary data
+tests/api/*.log
+tests/api/**/*.log
+tests/api/*.tmp
+tests/api/**/*.tmp
+.hypothesis/*
+
+# Translation batch processing temporary files
+.claude/.review-pass
+.claude/.translations-pass
+.claude/temp/
+.claude/*_translated.php
+.claude/batch_*.json
+.claude/batch_*.php
+.claude/analyze_*.php
+.claude/auto_translate_*.php
+.claude/compare_*.php
+.claude/merge_*.php
+.claude/temp_*.php
+.claude/translate_*.php
+.claude/missing_*.json
+.claude/translation_analysis_report.json
+.claude/*.tar.gz
+run-test-from-host.sh
+node_modules/
+seed.spec.ts
+# cc-sessions runtime files
+sessions/sessions-state.json
+sessions/package.json
+sessions/transcripts/
+sessions/.archived/
+tests/pycalltests/.hypothesis/

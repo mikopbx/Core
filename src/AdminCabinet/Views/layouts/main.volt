@@ -10,6 +10,10 @@
         <div class="article">
             <div id="debug-info"></div>
 
+            <!-- ACL Initialization for JavaScript -->
+            {{ partial("partials/acl-init") }}
+            <!-- / ACL Initialization -->
+
             <div class="ui container" id="main-content-container">
                 <!--ADVICE-->
                 <div class="ui flowing popup bottom left transition hidden" id="advice"></div>
@@ -30,7 +34,7 @@
                     {%set contentClass='grey' %}
                 {% endif %}
                     <div class="ui {{ contentClass}} loading segment" id="content-frame">
-                        {% if (isExternalModuleController) %}
+                        {% if (isExternalModuleController AND showModuleStatusToggle) %}
                             {{ partial("partials/modulesStatusToggle") }}
                         {% endif %}
                         <div id="ajax-messages"></div>
@@ -40,7 +44,7 @@
                 <!--/MAIN CONTENT-->
 
                 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Footer')]) }}
-                <div id="pbx-version">MIKOPBX ver: {{ PBXVersion }}</div>
+                <div id="pbx-version">{{ PBXName }} ver: {{ PBXVersion }}</div>
             </div>
 
             <!--CONNECTION DIMMER-->

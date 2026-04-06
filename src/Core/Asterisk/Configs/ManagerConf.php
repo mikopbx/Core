@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,10 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\NetworkFilters;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -63,11 +66,12 @@ class ManagerConf extends AsteriskConfigClass
             'CDR(dst)',
             'CDR(recordingfile)',
         ];
+        $amiPort = PbxSettings::getValueByKey(PbxSettings::AMI_PORT);
 
         // Generate the configuration content
         $conf = "[general]\n" .
             "enabled = yes\n" .
-            "port = {$this->generalSettings[PbxSettingsConstants::AMI_PORT]};\n" .
+            "port = {$amiPort};\n" .
             "bindaddr = 0.0.0.0\n" .
             "displayconnects = no\n" .
             "allowmultiplelogin = yes\n" .
@@ -76,7 +80,7 @@ class ManagerConf extends AsteriskConfigClass
             'channelvars=' . implode(',', $vars) . "\n" .
             "httptimeout = 60\n\n";
 
-        if ($this->generalSettings[PbxSettingsConstants::AMI_ENABLED] === '1') {
+        if (PbxSettings::getValueByKey(PbxSettings::AMI_ENABLED) === '1') {
             // Fetch the Asterisk manager users
             /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $managers */
             /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $user */
@@ -87,18 +91,76 @@ class ManagerConf extends AsteriskConfigClass
             foreach ($managers as $user) {
                 $arr_data = $user->toArray();
 
-                // Fetch the associated network filter
-                /** @var NetworkFilters $network_filter */
-                $network_filter     = NetworkFilters::findFirst($user->networkfilterid);
-                $arr_data['permit'] = $network_filter === null ? '' : $network_filter->permit;
-                $arr_data['deny']   = $network_filter === null ? '' : $network_filter->deny;
+                // Handle special case for localhost-only access
+                if ($user->networkfilterid === 'localhost') {
+                    // Restrict to localhost only
+                    $arr_data['permit'] = '127.0.0.1/255.255.255.255';
+                    $arr_data['deny']   = '0.0.0.0/0.0.0.0';
+                } else {
+                    // Fetch the associated network filter
+                    /** @var NetworkFilters $network_filter */
+                    $network_filter     = NetworkFilters::findFirst($user->networkfilterid);
+                    $arr_data['permit'] = $network_filter === null ? '' : $network_filter->permit;
+                    $arr_data['deny']   = $network_filter === null ? '' : $network_filter->deny;
+                }
                 $result[]           = $arr_data;
+            }
+
+            // In Docker, read ACL deny rules once and apply to each user
+            $aclDenyRules = '';
+            if (System::isDocker()) {
+                $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
+                $fail2banDenyFile = $asteriskEtcDir . '/fail2ban_manager_deny.conf';
+                $networkFiltersDenyFile = $asteriskEtcDir . '/manager_network_filters_deny.conf';
+
+                // Collect unique deny rules from both files
+                $denyRules = [];
+
+                // Read fail2ban deny rules
+                if (file_exists($fail2banDenyFile)) {
+                    $fail2banContent = file_get_contents($fail2banDenyFile);
+                    // Extract only deny= lines (skip comments)
+                    $lines = explode("\n", $fail2banContent);
+                    foreach ($lines as $line) {
+                        $trimmedLine = trim($line);
+                        if (str_starts_with($trimmedLine, 'deny=')) {
+                            // Extract the IP/subnet part
+                            $subnet = substr($trimmedLine, 5); // Remove 'deny='
+                            $denyRules[$subnet] = true; // Use as key to avoid duplicates
+                        }
+                    }
+                }
+
+                // Read network filters deny rules
+                if (file_exists($networkFiltersDenyFile)) {
+                    $networkContent = file_get_contents($networkFiltersDenyFile);
+                    // Extract only deny= lines (skip comments)
+                    $lines = explode("\n", $networkContent);
+                    foreach ($lines as $line) {
+                        $trimmedLine = trim($line);
+                        if (str_starts_with($trimmedLine, 'deny=')) {
+                            // Extract the IP/subnet part
+                            $subnet = substr($trimmedLine, 5); // Remove 'deny='
+                            $denyRules[$subnet] = true; // Use as key to avoid duplicates
+                        }
+                    }
+                }
+
+                // Build unique deny rules string
+                foreach (array_keys($denyRules) as $subnet) {
+                    $aclDenyRules .= "deny=$subnet\n";
+                }
             }
 
             // Generate configuration for each manager user
             foreach ($result as $user) {
                 $conf .= '[' . $user['username'] . "]\n";
                 $conf .= 'secret=' . $user['secret'] . "\n";
+
+                // Add ACL deny rules for each user (inline instead of include)
+                if (!empty($aclDenyRules)) {
+                    $conf .= $aclDenyRules;
+                }
 
                 if (trim($user['deny']) !== '') {
                     $conf .= 'deny=' . $user['deny'] . "\n";
@@ -144,10 +206,24 @@ class ManagerConf extends AsteriskConfigClass
                     $conf .= "write=$write\n";
                 }
 
-                // Exclude specific events from the user
+                // System event filters (always present)
                 $conf .= "eventfilter=!UserEvent: CdrConnector\n";
                 $conf .= "eventfilter=!UserEvent: Ping_\n";
-                $conf .= "eventfilter=!Event: Newexten\n";
+
+                // Add custom event filters from database
+                if (!empty($user['eventfilter'])) {
+                    // Split by newlines and add each filter as separate eventfilter line
+                    $filters = preg_split('/\r\n|\r|\n/', trim($user['eventfilter']));
+                    foreach ($filters as $filter) {
+                        $filter = trim($filter);
+                        if (!empty($filter)) {
+                            $conf .= "eventfilter=$filter\n";
+                        }
+                    }
+                } else {
+                    // Default event filter if none specified
+                    $conf .= "eventfilter=!Event: Newexten\n";
+                }
                 $conf .= "\n";
             }
             $conf .= "\n";
@@ -156,17 +232,40 @@ class ManagerConf extends AsteriskConfigClass
         // Configuration for phpagi user
         $conf .= '[phpagi]' . "\n";
         $conf .= 'secret=phpagi' . "\n";
+        
+        // phpagi is internal user, no need for fail2ban ACL
+        // It only connects from localhost
+        
         $conf .= 'deny=0.0.0.0/0.0.0.0' . "\n";
         $conf .= 'permit=127.0.0.1/255.255.255.255' . "\n";
         $conf .= 'read=all' . "\n";
         $conf .= 'write=all' . "\n";
         $conf .= "eventfilter=!Event: Newexten\n";
+        $conf .= "eventfilter=!Event: RTCPSent\n";
+        $conf .= "eventfilter=!Event: RTCPReceived\n";
         $conf .= "\n";
 
         // Call the hook modules method for generating additional configuration
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_MANAGER_CONF);
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/manager.conf', $conf);
+        $this->saveConfig($conf, $this->description);
+    }
+
+    /**
+     * Reloads the Asterisk manager module and HTTP module.
+     */
+    public static function reload(): void
+    {
+        $conf = new self();
+        $conf->generateConfig();
+
+        // Also generate and reload HTTP configuration
+        $httpConf = new HttpConf();
+        $httpConf->generateConfig();
+
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload manager'");
+        Processes::mwExec("$asterisk -rx 'module reload http'");
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -45,6 +46,6 @@ class CelSqlite3CustomConf extends AsteriskConfigClass
             "values => $values \n";
 
         // Write the configuration content to the file
-        file_put_contents($this->config->path('asterisk.astetcdir') . "/cel_sqlite3_custom.conf", $conf);
+        $this->saveConfig($conf, $this->description);
     }
 }

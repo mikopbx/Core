@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,103 +20,81 @@
 
 namespace MikoPBX\Core\Workers;
 
-use Generator;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Models\AsteriskManagerUsers;
-use MikoPBX\Common\Models\NetworkFilters;
-use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Common\Models\Sip;
+
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAmiPasswords;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAriPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckConnection;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckCorruptedFiles;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckDockerPermissions;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckFirewalls;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckModulesUpdates;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSecurityLog;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSIPPasswords;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckS3Connection;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHConfig;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckStorage;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckStorageUsage;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckUpdates;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckWebPasswords;
-use Phalcon\Di;
-use Recoil\React\ReactKernel;
+use MikoPBX\PBXCoreREST\Lib\Advice\GetAdviceListAction;
 use Throwable;
-
+use RuntimeException;
 require_once 'Globals.php';
 
-
 /**
- * WorkerPrepareAdvice is a worker class responsible for prepare system advice.
- *
- * @package MikoPBX\Core\Workers
+ * WorkerPrepareAdvice is a worker class responsible for preparing system advice.
  */
-class WorkerPrepareAdvice extends WorkerBase
+class WorkerPrepareAdvice extends WorkerRedisBase
 {
-    public const ARR_ADVICE_TYPES = [
-        ['type' => CheckConnection::class, 'cacheTime' => 120],
-        ['type' => CheckCorruptedFiles::class, 'cacheTime' => 3600],
-        ['type' => CheckWebPasswords::class, 'cacheTime' => 864000],
-        ['type' => CheckSSHPasswords::class, 'cacheTime' => 864000],
-        ['type' => CheckFirewalls::class, 'cacheTime' => 864000],
-        ['type' => CheckSIPPasswords::class, 'cacheTime' => 864000],
-        ['type' => CheckAmiPasswords::class, 'cacheTime' => 864000],
-        ['type' => CheckStorage::class, 'cacheTime' => 3600],
-        ['type' => CheckUpdates::class, 'cacheTime' => 86400],
-        ['type' => CheckSSHConfig::class, 'cacheTime' => 3600],
+    private const int PROCESS_CHECK_INTERVAL = 100000; // 100ms
+
+    /**
+     * Number of worker processes that должен запустить WorkerSafeScriptsCore
+     */
+    public int $maxProc = 2;
+
+    /**
+     * Array of advice types with their cache times.
+     *
+     * @var array
+     */
+    public const array ARR_ADVICE_TYPES = [
+        ['type' => CheckConnection::class, 'cacheTime' => 120, 'priority' => 5],
+        ['type' => CheckCorruptedFiles::class, 'cacheTime' => 3600, 'priority' => 5],
+        ['type' => CheckDockerPermissions::class, 'cacheTime' => 3600, 'priority' => 1],
+        ['type' => CheckWebPasswords::class, 'cacheTime' => 864000, 'priority' => 1],
+        ['type' => CheckSSHPasswords::class, 'cacheTime' => 864000, 'priority' => 1],
+        ['type' => CheckFirewalls::class, 'cacheTime' => 864000, 'priority' => 1],
+        ['type' => CheckSIPPasswords::class, 'cacheTime' => 864000, 'priority' => 9],
+        ['type' => CheckAmiPasswords::class, 'cacheTime' => 864000, 'priority' => 9],
+        ['type' => CheckAriPasswords::class, 'cacheTime' => 864000, 'priority' => 9],
+        ['type' => CheckStorage::class, 'cacheTime' => 3600, 'priority' => 2],
+        ['type' => CheckStorageUsage::class, 'cacheTime' => 1800, 'priority' => 3],
+        ['type' => CheckS3Connection::class, 'cacheTime' => 300, 'priority' => 4],
+        ['type' => CheckSecurityLog::class, 'cacheTime' => 600, 'priority' => 1],
+        ['type' => CheckUpdates::class, 'cacheTime' => 86400, 'priority' => 5],
+        ['type' => CheckSSHConfig::class, 'cacheTime' => 3600, 'priority' => 1],
+        ['type' => CheckModulesUpdates::class, 'cacheTime' => 86400, 'priority' => 5],
     ];
 
     // Array of generated advice
     public array $messages;
 
     /**
-     * Cleanup cache for advice after changing any models
-     * @param array $record parameters of the event
-     * @return void
+     * Get check interval for worker monitoring
      */
-    public static function afterModelEvents(array $record): void
+    public static function getCheckInterval(): int
     {
-        SystemMessages::sysLogMsg(__METHOD__, "After models changes:" . PHP_EOL . json_encode($record, JSON_PRETTY_PRINT), LOG_DEBUG);
-        $di = Di::getDefault();
-        $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $cacheKeys = [];
-        switch ($record['model']) {
-            case PbxSettings::class:
-                switch ($record['recordId']) {
-                    case PbxSettingsConstants::SSH_PASSWORD_HASH_STRING:
-                    case PbxSettingsConstants::SSH_PASSWORD:
-                    case PbxSettingsConstants::SSH_PASSWORD_HASH_FILE:
-                        $cacheKeys[self::getCacheKey(CheckSSHPasswords::class)] = true;
-                        $cacheKeys[self::getCacheKey(CheckSSHConfig::class)] = true;
-                        break;
-                    case PbxSettingsConstants::WEB_ADMIN_PASSWORD:
-                        $cacheKeys[self::getCacheKey(CheckWebPasswords::class)] = true;
-                        break;
-                    case PbxSettingsConstants::PBX_FIREWALL_ENABLED:
-                        $cacheKeys[self::getCacheKey(CheckFirewalls::class)] = true;
-                        break;
-                    default:
-                }
-                break;
-            case AsteriskManagerUsers::class:
-                $cacheKeys[self::getCacheKey(CheckAmiPasswords::class)] = true;
-                break;
-            case Sip::class:
-                $cacheKeys[self::getCacheKey(CheckSIPPasswords::class)] = true;
-                break;
-            case NetworkFilters::class:
-                $cacheKeys[self::getCacheKey(CheckFirewalls::class)] = true;
-                break;
-            default:
-        }
-        SystemMessages::sysLogMsg(__METHOD__, "Cleanup the next caches:" . PHP_EOL . json_encode($cacheKeys, JSON_PRETTY_PRINT), LOG_DEBUG);
-        foreach ($cacheKeys as $cacheKey => $value) {
-            $managedCache->delete($cacheKey);
-        }
+        return 15; // Check every 15 seconds
     }
 
     /**
-     * Starts processing advice types.
+     * Starts processing advice types
      *
      * @param array $argv The command-line arguments passed to the worker.
      *
@@ -123,57 +102,144 @@ class WorkerPrepareAdvice extends WorkerBase
      */
     public function start(array $argv): void
     {
-        $adviceTypes = self::ARR_ADVICE_TYPES;
-        // Use ReactKernel to start parallel execution
-        ReactKernel::start(
-            function () use ($adviceTypes) {
-                // Parallel execution https://github.com/recoilphp/recoil
-                foreach ($adviceTypes as $adviceType) {
-                    yield $this->processAdvice($adviceType);
-                }
+        // Process advice types until shutdown
+        while ($this->needRestart === false && !$this->isShuttingDown) {
+            try {
+                // Process signals
+                pcntl_signal_dispatch();
+                
+                // Process any pending advice types
+                $this->processAdviceTypes();
+                
+                // Send heartbeat
+                $this->checkHeartbeat();
+                
+                // Sleep to prevent CPU overuse
+                sleep(5); // Process advice every 5 seconds
+                
+            } catch (Throwable $e) {
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
+                sleep(1);
             }
+        }
+        
+        SystemMessages::sysLogMsg(
+            static::class,
+            "Worker exiting gracefully",
+            LOG_NOTICE
         );
+    }
+
+    /**
+     * Processes advice types.
+     *
+     * @return void
+     */
+    private function processAdviceTypes(): void
+    {
+        $adviceTypes = self::ARR_ADVICE_TYPES;
+        $managedCache = $this->getDI()->get(ManagedCacheProvider::SERVICE_NAME);
+        $filteredAdviceTypes = [];
+        
+        // Filter out advice types that don't need processing based on cache status
+        foreach ($adviceTypes as $adviceType) {
+            $currentAdviceClass = $adviceType['type'];
+            $cacheKey = self::getCacheKey($currentAdviceClass);
+            
+            // Skip if already cached with sufficient TTL
+            if ($managedCache->has($cacheKey)) {
+                // Skip - already cached
+                continue;
+            }
+            $filteredAdviceTypes[] = $adviceType;
+        }
+        
+        // If nothing to process, exit early
+        if (empty($filteredAdviceTypes)) {
+            return;
+        }
+        
+        // Sort advice types by priority (lower number = higher priority)
+        usort($filteredAdviceTypes, function($a, $b) {
+            return $a['priority'] <=> $b['priority'];
+        });
+        
+        // Process one advice type per call - this allows for graceful shutdown between each advice
+        $adviceType = array_shift($filteredAdviceTypes);
+        
+        // Check if shutting down before starting a task
+        if ($this->isShuttingDown) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "Worker is shutting down, skipping advice processing: {$adviceType['type']}",
+                LOG_DEBUG
+            );
+            return;
+        }
+        
+        // Process the advice
+        SystemMessages::sysLogMsg(__METHOD__, "Processing advice: {$adviceType['type']}", LOG_DEBUG);
+        $this->processAdvice($adviceType);
     }
 
     /**
      * Processes advice of a specific type and caches the result.
      *
      * @param array $adviceType An array containing advice type and cache time.
-     *
-     * @return Generator|null A Generator object used for parallel execution.
      */
-    private function processAdvice(array $adviceType): ?Generator
+    private function processAdvice(array $adviceType): void
     {
         $start = microtime(true);
-        $managedCache = $this->getDI()->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $currentAdviceClass = $adviceType['type'];
-        $cacheKey = self::getCacheKey($currentAdviceClass);
-        if (!$managedCache->has($cacheKey)) {
-            // No cache - generate advice and store in cache
-            try {
-                $checkObj = new $currentAdviceClass();
-                $newAdvice = $checkObj->process();
-                $managedCache->set($cacheKey, $newAdvice, $adviceType['cacheTime']);
-            } catch (\Throwable $e) {
-                CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            }
-            $timeElapsedSecs = round(microtime(true) - $start, 2);
-            if ($timeElapsedSecs > 5) {
-                SystemMessages::sysLogMsg(
-                    __METHOD__,
-                    "WARNING: Service WorkerPrepareAdvice:{$adviceType['type']} processed more than {$timeElapsedSecs} seconds",
-                    LOG_WARNING
-                );
-            }
+        // Set a lock to prevent multiple processes from generating the same advice
+        $lockKey = $adviceType['type'] . ':lock';
+
+        if ($this->getDI()->get(MutexProvider::SERVICE_NAME)->isLocked($lockKey)) {
+            return;
         }
-        // Yield to allow parallel execution to continue
-        yield;
+
+        try {
+            $this->getDI()->get(MutexProvider::SERVICE_NAME)->synchronized(
+                $lockKey,
+                function () use ($adviceType) {
+                    // Check if we're shutting down before starting processing
+                    if ($this->isShuttingDown) {
+                        return;
+                    }
+                    
+                    $currentAdviceClass = $adviceType['type'];
+                    $cacheKey = self::getCacheKey($currentAdviceClass);
+                    SystemMessages::sysLogMsg(__METHOD__, "Start advice processing: $cacheKey", LOG_DEBUG);
+                    $checkObj = new $currentAdviceClass();
+                    $newAdvice = $checkObj->process();
+                    $managedCache = $this->getDI()->get(ManagedCacheProvider::SERVICE_NAME);
+                    $managedCache->set($cacheKey, $newAdvice, $adviceType['cacheTime']);
+                    // Send advice to the browser
+                    GetAdviceListAction::main();
+                },
+                3,
+                30
+            );
+        } catch (RuntimeException $e) {
+           // Ignore - ensures that the lock is already acquired
+        } catch (Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+        }
+        
+        $timeElapsedSecs = round(microtime(true) - $start, 2);
+        if ($timeElapsedSecs > 5) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "WARNING: Service WorkerPrepareAdvice:{$adviceType['type']} processed more than $timeElapsedSecs seconds",
+                LOG_WARNING
+            );
+        }
     }
 
     /**
-     * Prepares a redis cache key for an advice type
-     * @param string $currentAdviceType current advice type
-     * @return string cache key
+     * Prepares a cache key for an advice type.
+     *
+     * @param string $currentAdviceType Current advice type.
+     * @return string Cache key.
      */
     public static function getCacheKey(string $currentAdviceType): string
     {

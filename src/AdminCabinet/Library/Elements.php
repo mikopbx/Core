@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -20,11 +21,13 @@
 namespace MikoPBX\AdminCabinet\Library;
 
 use MikoPBX\AdminCabinet\Controllers\AsteriskManagersController;
+use MikoPBX\AdminCabinet\Controllers\AsteriskRestUsersController;
 use MikoPBX\AdminCabinet\Controllers\CallDetailRecordsController;
 use MikoPBX\AdminCabinet\Controllers\CallQueuesController;
 use MikoPBX\AdminCabinet\Controllers\ConferenceRoomsController;
 use MikoPBX\AdminCabinet\Controllers\ConsoleController;
 use MikoPBX\AdminCabinet\Controllers\CustomFilesController;
+use MikoPBX\AdminCabinet\Controllers\ApiKeysController;
 use MikoPBX\AdminCabinet\Controllers\DialplanApplicationsController;
 use MikoPBX\AdminCabinet\Controllers\ExtensionsController;
 use MikoPBX\AdminCabinet\Controllers\Fail2BanController;
@@ -35,23 +38,23 @@ use MikoPBX\AdminCabinet\Controllers\IvrMenuController;
 use MikoPBX\AdminCabinet\Controllers\MailSettingsController;
 use MikoPBX\AdminCabinet\Controllers\NetworkController;
 use MikoPBX\AdminCabinet\Controllers\OutboundRoutesController;
-use MikoPBX\AdminCabinet\Controllers\OutOffWorkTimeController;
+use MikoPBX\AdminCabinet\Controllers\OffWorkTimesController;
 use MikoPBX\AdminCabinet\Controllers\PbxExtensionModulesController;
 use MikoPBX\AdminCabinet\Controllers\ProvidersController;
 use MikoPBX\AdminCabinet\Controllers\RestartController;
 use MikoPBX\AdminCabinet\Controllers\SoundFilesController;
+use MikoPBX\AdminCabinet\Controllers\StorageController;
 use MikoPBX\AdminCabinet\Controllers\SystemDiagnosticController;
 use MikoPBX\AdminCabinet\Controllers\TimeSettingsController;
 use MikoPBX\AdminCabinet\Controllers\UpdateController;
 use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\System;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Di\Injectable;
-use Phalcon\Text;
+use MikoPBX\Common\Library\Text;
 
 /**
  * Elements
@@ -62,7 +65,6 @@ use Phalcon\Text;
  */
 class Elements extends Injectable
 {
-
     private array $_headerMenu
         = [
             'setup' => [
@@ -108,7 +110,7 @@ class Elements extends Injectable
                         'caption' => 'mm_CallDetailRecords',
                         'iconclass' => 'list ul',
                         'action' => 'index',
-                        'param' => '',
+                        'param' => '#reset-cache',
                         'style' => '',
                     ],
                 ],
@@ -126,20 +128,20 @@ class Elements extends Injectable
                     ],
                     IncomingRoutesController::class => [
                         'caption' => 'mm_IncomingRoutes',
-                        'iconclass' => 'map signs',
+                        'iconclass' => 'sign in',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
                     OutboundRoutesController::class => [
                         'caption' => 'mm_OutboundRoutes',
-                        'iconclass' => 'random',
+                        'iconclass' => 'sign out',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    OutOffWorkTimeController::class => [
-                        'caption' => 'mm_OutOffWorkTime',
+                    OffWorkTimesController::class => [
+                        'caption' => 'mm_OffWorkTimes',
                         'iconclass' => 'calendar times outline',
                         'action' => 'index',
                         'param' => '',
@@ -183,6 +185,13 @@ class Elements extends Injectable
                     SystemDiagnosticController::class => [
                         'caption' => 'mm_SystemDiagnostic',
                         'iconclass' => 'stethoscope',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
+                    ],
+                    StorageController::class => [
+                        'caption' => 'mm_Storage',
+                        'iconclass' => 'hdd outline',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
@@ -262,9 +271,23 @@ class Elements extends Injectable
                         'param' => '',
                         'style' => '',
                     ],
+                    AsteriskRestUsersController::class => [
+                        'caption' => 'mm_AsteriskRestUsers',
+                        'iconclass' => 'code branch',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
+                    ],
                     CustomFilesController::class => [
                         'caption' => 'mm_CustomFiles',
                         'iconclass' => 'linux',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
+                    ],
+                    ApiKeysController::class => [
+                        'caption' => 'mm_ApiKeys',
+                        'iconclass' => 'key',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
@@ -281,8 +304,9 @@ class Elements extends Injectable
 
     // Array of controllers that are hidden in menu in the Docker installation
     private array $_hiddenInDocker = [
-        RestartController::class,
-        UpdateController::class
+        // RestartController::class,
+        // UpdateController::class,
+        // TimeSettingsController::class
     ];
 
     /**
@@ -307,12 +331,12 @@ class Elements extends Injectable
                     $groupHtml .= "<i class='{$groupparams['iconclass']} icon'></i>";
                 }
                 $groupHtml .= $this->translation->_($groupparams['caption']) . '</div>';
-                $groupHtml .= "<div class='menu' data-group='{$group}'>";
+                $groupHtml .= "<div class='menu' data-group='$group'>";
                 foreach ($groupparams['submenu'] as $controller => $option) {
                     if ($this->ifItPossibleToShowThisElement($controller, $option['action'])) {
-                        $link = $this->getLinkToControllerAction($controller,  $option['action'], $option['param']);
+                        $link = $this->getLinkToControllerAction($controller, $option['action'], $option['param']);
                         $caption = $this->translation->_($option['caption']);
-                        $groupHtml .= "<a class='item {$option['style']}' href='{$link}'";
+                        $groupHtml .= "<a class='item {$option['style']}' href='$link'";
                         if (isset($option['data-value'])) {
                             $groupHtml .= " data-value='{$option['data-value']}'";
                         }
@@ -326,9 +350,9 @@ class Elements extends Injectable
                 $groupHtml .= '</div>';
                 $groupHtml .= '</div>';
             } elseif ($this->ifItPossibleToShowThisElement($group, $groupparams['action'] ?? 'index')) {
-                    $link = $this->getLinkToControllerAction($group,  $groupparams['action'], $groupparams['param']);
+                    $link = $this->getLinkToControllerAction($group, $groupparams['action'], $groupparams['param']);
                     $caption = $this->translation->_($groupparams['caption']);
-                    $groupHtml .= "<a class='item {$groupparams['style']}' href='{$link}'>
+                    $groupHtml .= "<a class='item {$groupparams['style']}' href='$link'>
                     	    <i class='{$groupparams['iconclass']} icon'></i>{$caption}
                         </a>";
                     $addToHTML = true;
@@ -351,17 +375,22 @@ class Elements extends Injectable
     {
         $result = '';
         foreach ($this->_headerMenu as $index => $group) {
-            if ($index === $controllerClass
-                && array_key_exists('iconclass', $group[$controllerClass])
-                && !empty($group[$controllerClass]['iconclass'])
+            // Direct menu item (no submenu) - $index is controller class, $group is the item config
+            if (
+                $index === $controllerClass
+                && array_key_exists('iconclass', $group)
+                && !empty($group['iconclass'])
             ) {
-                $result = "<i class='{$group[$controllerClass]['iconclass']} icon'></i>";
+                $result = "<i class='{$group['iconclass']} icon'></i>";
                 break;
             }
+            // Group with submenu - search inside submenu
             if (array_key_exists('submenu', $group)) {
                 foreach ($group['submenu'] as $index2 => $submenu) {
-                    if ($index2 === $controllerClass
-                        && !empty($submenu['iconclass'])) {
+                    if (
+                        $index2 === $controllerClass
+                        && !empty($submenu['iconclass'])
+                    ) {
                         $result = "<i class='{$submenu['iconclass']} icon'></i>";
                         break;
                     }
@@ -402,11 +431,11 @@ class Elements extends Injectable
         $modules = PbxExtensionModules::getEnabledModulesArray();
         foreach ($modules as $module) {
             $moduleUniqId = $module['uniqid'];
-            $moduleMainController = "Modules\\{$moduleUniqId}\\App\\Controllers\\{$moduleUniqId}Controller";
+            $moduleMainController = "Modules\\$moduleUniqId\\App\\Controllers\\{$moduleUniqId}Controller";
             if (!class_exists($moduleMainController) || !method_exists($moduleMainController, 'indexAction')) {
                 continue;
             }
-            $menuSettingsKey = "AdditionalMenuItem{$moduleUniqId}";
+            $menuSettingsKey = "AdditionalMenuItem$moduleUniqId";
             $menuSettings = PbxSettings::findFirstByKey($menuSettingsKey);
             if ($menuSettings !== null) {
                 $menuItem = json_decode($menuSettings->value, true);
@@ -422,7 +451,10 @@ class Elements extends Injectable
             }
         }
 
-        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_HEADER_MENU_SHOW, [&$this->_headerMenu]);
+        PBXConfModulesProvider::hookModulesMethod(
+            WebUIConfigInterface::ON_BEFORE_HEADER_MENU_SHOW,
+            [&$this->_headerMenu]
+        );
     }
 
     /**
@@ -432,11 +464,12 @@ class Elements extends Injectable
      */
     private function addMenuItemSSHMenu(): void
     {
-        if (PbxSettings::getValueByKey(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD) !== '1') {
-            $sshPort = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PORT);
-            $this->_headerMenu['maintenance']['submenu'][ConsoleController::class]['data-value'] = "root@{$_SERVER['SERVER_ADDR']}:$sshPort";
+        if (PbxSettings::getValueByKey(PbxSettings::SSH_DISABLE_SSH_PASSWORD) !== '1') {
+            $sshPort = PbxSettings::getValueByKey(PbxSettings::SSH_PORT);
+            $this->_headerMenu['maintenance']['submenu'][ConsoleController::class]['data-value']
+                = "root@{$_SERVER['SERVER_ADDR']}:$sshPort";
         } else {
-            unset ($this->_headerMenu['maintenance']['submenu'][ConsoleController::class]);
+            unset($this->_headerMenu['maintenance']['submenu'][ConsoleController::class]);
         }
     }
 
@@ -459,7 +492,7 @@ class Elements extends Injectable
         // Convert the controller name to a dash-separated format
         $controllerName = Text::uncamelize($controllerName, '-');
 
-        if ($controllerParts[0]==='Module'){
+        if ($controllerParts[0] === 'Modules') {
             // Convert the module name to a dash-separated format
             $moduleName = Text::uncamelize($controllerParts[1], '-');
             $url = $this->url->get("$moduleName/$controllerName/$action/$param");
@@ -477,17 +510,28 @@ class Elements extends Injectable
      * @param string $action The name of the action.
      * @return bool True if the element can be shown, false otherwise.
      */
-    private function ifItPossibleToShowThisElement(string $controller, string $action):bool
+    private function ifItPossibleToShowThisElement(string $controller, string $action): bool
     {
         // Check if the application is running in a Docker environment and if the controller is in the hidden list.
         // If so, return false as the element should not be shown.
-        if (Util::isDocker() and in_array($controller, $this->_hiddenInDocker)){
-           return false;
+        if (System::isDocker() and in_array($controller, $this->_hiddenInDocker)) {
+            return false;
+        }
+
+        // Check if AMI is disabled and hide AMI menu item
+        if ($controller === AsteriskManagersController::class 
+            && PbxSettings::getValueByKey(PbxSettings::AMI_ENABLED) !== '1') {
+            return false;
+        }
+
+        // Check if ARI is disabled and hide ARI menu item
+        if ($controller === AsteriskRestUsersController::class 
+            && PbxSettings::getValueByKey(PbxSettings::ARI_ENABLED) !== '1') {
+            return false;
         }
 
         // If the application is not running in Docker or the controller is not in the hidden list,
         // use the SecurityPluginProvider to check if the element can be shown.
         return $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controller, $action]);
     }
-
 }

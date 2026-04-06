@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
@@ -42,8 +43,9 @@ class CreateRowTransfer
      * @param string $action The action type.
      * @param array $data The event data.
      * @param array|null $calls_data The call data.
+     * @throws \Exception
      */
-    public static function execute(WorkerCallEvents $worker, $action, $data, $calls_data = null): void
+    public static function execute(WorkerCallEvents $worker, string $action, array $data, ?array $calls_data = null): void
     {
         if (isset($worker->checkChanHangupTransfer[$data['agi_channel']])) {
             return;
@@ -65,7 +67,7 @@ class CreateRowTransfer
      * @param array $data The event data.
      * @param array|null $calls_data The call data.
      */
-    private static function initCallsData($data, &$calls_data): void
+    private static function initCallsData(array $data, ?array &$calls_data): void
     {
         if (null === $calls_data) {
             $filter = [
@@ -88,25 +90,40 @@ class CreateRowTransfer
      * @param string $action The action type.
      * @param array $data The event data.
      * @param array $calls_data The call data.
+     * @throws \Exception
      */
-    private static function fillRedirectCdrData($worker, $action, $data, $calls_data): void
+    private static function fillRedirectCdrData(WorkerCallEvents $worker, string $action, array $data, array $calls_data): void
     {
         $insert_data = [];
         foreach ($calls_data as $row_data) {
             if ($row_data['src_chan'] === $data['agi_channel']) {
+                // src_chan is the transferer — take the other party (dst side)
                 $fname_chan = isset($insert_data['dst_chan']) ? 'src_chan' : 'dst_chan';
                 $fname_num = isset($insert_data['dst_num']) ? 'src_num' : 'dst_num';
+                $fname_name = isset($insert_data['dst_name']) ? 'src_name' : 'dst_name';
+                $fname_callid = ($fname_chan === 'dst_chan') ? 'dst_call_id' : 'src_call_id';
 
                 $insert_data[$fname_chan] = $row_data['dst_chan'];
                 $insert_data[$fname_num] = $row_data['dst_num'];
+                $insert_data[$fname_name] = $row_data['dst_name'] ?? '';
+                $insert_data[$fname_callid] = $row_data['dst_call_id'] ?? '';
             } else {
+                // dst_chan is the transferer — take the other party (src side)
                 $fname_chan = !isset($insert_data['src_chan']) ? 'src_chan' : 'dst_chan';
                 $fname_num = !isset($insert_data['src_num']) ? 'src_num' : 'dst_num';
+                $fname_name = !isset($insert_data['src_name']) ? 'src_name' : 'dst_name';
+                $fname_callid = ($fname_chan === 'src_chan') ? 'src_call_id' : 'dst_call_id';
 
                 $insert_data[$fname_chan] = $row_data['src_chan'];
                 $insert_data[$fname_num] = $row_data['src_num'];
+                $insert_data[$fname_name] = $row_data['src_name'] ?? '';
+                $insert_data[$fname_callid] = $row_data['src_call_id'] ?? '';
             }
         }
+
+        // Fill missing names from other CDR records in the same linkedid.
+        self::fillMissingNames($insert_data, $data['linkedid']);
+
         // Запись разговора.
         $worker->StopMixMonitor($insert_data['src_chan'], 'fillRedirectCdrData');
         $worker->StopMixMonitor($insert_data['dst_chan'], 'fillRedirectCdrData');
@@ -123,6 +140,7 @@ class CreateRowTransfer
         }
 
         $insert_data['recordingfile'] = $recordingfile;
+        $insert_data['rec_src_channel'] = $worker->getRecSrcChannel($insert_data['dst_chan'], $insert_data['src_chan'], $insert_data['dst_chan']);
         $insert_data['start'] = $data['end'];
         $insert_data['answer'] = $data['end'];
         $insert_data['linkedid'] = $data['linkedid'];
@@ -133,11 +151,51 @@ class CreateRowTransfer
         // Send UserEvent
         $insert_data['action'] = 'transfer_dial_create_cdr';
 
-        $AgiData = base64_encode(json_encode($insert_data));
         $am = Util::getAstManager('off');
-        $am->UserEvent('CdrConnector', ['AgiData' => $AgiData]);
+        $am->UserEvent('CdrConnector', ['AgiData' => AsteriskManager::encodeCdrData($insert_data)]);
 
         InsertDataToDB::execute($insert_data);
+    }
+
+    /**
+     * Fills missing src_name/dst_name from other CDR records in the same linkedid.
+     *
+     * @param array $insert_data The transfer CDR data being built.
+     * @param string $linkedid The linked ID of the call.
+     */
+    private static function fillMissingNames(array &$insert_data, string $linkedid): void
+    {
+        $needSrcName = empty($insert_data['src_name']);
+        $needDstName = empty($insert_data['dst_name']);
+        if (!$needSrcName && !$needDstName) {
+            return;
+        }
+        $filter = [
+            'linkedid=:linkedid:',
+            'bind' => ['linkedid' => $linkedid],
+        ];
+        $allCdr = CallDetailRecordsTmp::find($filter);
+        foreach ($allCdr as $cdr) {
+            if ($needSrcName && !empty($cdr->src_name) && $cdr->src_num === $insert_data['src_num']) {
+                $insert_data['src_name'] = $cdr->src_name;
+                $needSrcName = false;
+            }
+            if ($needSrcName && !empty($cdr->dst_name) && $cdr->dst_num === $insert_data['src_num']) {
+                $insert_data['src_name'] = $cdr->dst_name;
+                $needSrcName = false;
+            }
+            if ($needDstName && !empty($cdr->dst_name) && $cdr->dst_num === $insert_data['dst_num']) {
+                $insert_data['dst_name'] = $cdr->dst_name;
+                $needDstName = false;
+            }
+            if ($needDstName && !empty($cdr->src_name) && $cdr->src_num === $insert_data['dst_num']) {
+                $insert_data['dst_name'] = $cdr->src_name;
+                $needDstName = false;
+            }
+            if (!$needSrcName && !$needDstName) {
+                break;
+            }
+        }
     }
 
     /**
@@ -146,7 +204,7 @@ class CreateRowTransfer
      * @param array $calls_data The call data.
      * @return bool Whether the transfer is failed or not.
      */
-    private static function isFailRedirect($calls_data): bool
+    private static function isFailRedirect(array $calls_data): bool
     {
         return empty($calls_data[0]['answer']) && count($calls_data) === 1;
     }
@@ -158,7 +216,7 @@ class CreateRowTransfer
      * @param array $data The event data.
      * @param array $calls_data The call data.
      */
-    private static function fillFailRedirectCdrData(WorkerCallEvents $worker, $data, $calls_data): void
+    private static function fillFailRedirectCdrData(WorkerCallEvents $worker, array $data, array $calls_data): void
     {
         // Resume recording when transfer is interrupted.
         $row_data = $calls_data[0];
@@ -190,6 +248,9 @@ class CreateRowTransfer
             // Check if recording file is not empty and enable monitor for the call.
             if (!empty($not_ended_cdr->recordingfile) && $worker->enableMonitor($not_ended_cdr->src_num, $not_ended_cdr->dst_num)) {
                 $worker->MixMonitor($not_ended_cdr->dst_chan, '', '', $not_ended_cdr->recordingfile, 'fillFailRedirectCdrData');
+                $recSrcCh = $worker->getRecSrcChannel($not_ended_cdr->dst_chan, $not_ended_cdr->src_chan, $not_ended_cdr->dst_chan);
+                $not_ended_cdr->writeAttribute('rec_src_channel', $recSrcCh);
+                $not_ended_cdr->save();
             }
         }
     }

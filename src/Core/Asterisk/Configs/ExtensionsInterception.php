@@ -64,20 +64,21 @@ class ExtensionsInterception extends AsteriskConfigClass
     /**
      * Test the originate functionality for interception.
      *
-     * @param string $providerId   The provider ID.
-     * @param string $src          The source number.
-     * @param string $dest_number  The destination number.
+     * @param string $providerId The provider ID.
+     * @param string $src The source number.
+     * @param string $dest_number The destination number.
      *
      * @return void
+     * @throws \Exception
      */
-    public static function testOriginate($providerId = 'SIP-1611151795', $src = '203', $dest_number = '79257184233'):void{
+    public static function testOriginate(string $providerId = 'SIP-1611151795', string $src = '203', string $dest_number = '79257184233'):void{
         $am = Util::getAstManager('off');
         $channels=$am->GetChannels();
         $interceptionChannel = '';
         $interceptionLinkedId = '';
         foreach ($channels as $linkedId => $linkedIdData){
             foreach ($linkedIdData as $tmpChannel){
-                if(strpos($tmpChannel, 'PJSIP/'.$providerId) === false){
+                if(!str_contains($tmpChannel, 'PJSIP/' . $providerId)){
                     continue;
                 }
                 $interceptionChannel  = $tmpChannel;
@@ -88,8 +89,8 @@ class ExtensionsInterception extends AsteriskConfigClass
             SystemMessages::sysLogMsg('Interception', "Chan for $providerId not found...");
             return;
         }
-        $variable    = "pt1c_cid={$dest_number},ALLOW_MULTY_ANSWER=1,_INTECEPTION_CNANNEL={$interceptionChannel},_OLD_LINKEDID={$interceptionLinkedId}";
-        $channel     = "Local/{$src}@internal-originate";
+        $variable    = "pt1c_cid=$dest_number,ALLOW_MULTY_ANSWER=1,_INTECEPTION_CNANNEL=$interceptionChannel,_OLD_LINKEDID=$interceptionLinkedId";
+        $channel     = "Local/$src@internal-originate";
         $context     = 'interception-bridge';
         $am->Originate($channel, $dest_number, $context, '1', null, null, null, $src, $variable, null, false);
     }

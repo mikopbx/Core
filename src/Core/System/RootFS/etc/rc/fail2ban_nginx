@@ -1,0 +1,53 @@
+#!/usr/bin/php
+<?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+require_once 'Globals.php';
+
+use MikoPBX\Core\System\Configs\NginxConf;
+
+// Check command line arguments
+if ($argc !== 3) {
+    echo "Usage: {$argv[0]} <ban|unban> <IP>\n";
+    exit(1);
+}
+
+$action = $argv[1];
+$ip = $argv[2];
+
+// Validate action
+if (!in_array($action, ['ban', 'unban'])) {
+    echo "Invalid action. Use 'ban' or 'unban'\n";
+    exit(1);
+}
+
+// Validate IP address
+if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+    echo "Invalid IP address: $ip\n";
+    exit(1);
+}
+
+// Call the NginxConf static method for fail2ban actions
+try {
+    NginxConf::fail2banNginxAction($action, $ip);
+    exit(0);
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+    exit(1);
+}

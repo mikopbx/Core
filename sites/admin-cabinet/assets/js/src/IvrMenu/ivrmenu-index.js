@@ -16,81 +16,104 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, SemanticLocalization, UserMessage,  */
+/* global globalRootUrl, IvrMenuAPI, Extensions, globalTranslate, UserMessage, SemanticLocalization, PbxDataTableIndex */
 
 /**
- * Define object which manage IVR (Interactive Voice Menu) list
- *
- * @module ivrMenuIndex
+ * IVR menu table management module using unified base class
  */
 const ivrMenuIndex = {
-    $ivrTable: $('#ivr-menu-table'),
+    /**
+     * DataTable instance from base class
+     */
+    dataTableInstance: null,
+
+    /**
+     * Initialize the module
+     */
     initialize() {
-
-        // Add double click listener to table cells
-        $('.menu-row td').on('dblclick', (e) => {
-            // When cell is double clicked, navigate to corresponding modify page
-            const id = $(e.target).closest('tr').attr('id');
-            window.location = `${globalRootUrl}ivr-menu/modify/${id}`;
+        // Create temporary instance to get description renderer
+        const tempInstance = new PbxDataTableIndex({
+            tableId: 'temp',
+            apiModule: IvrMenuAPI,
+            routePrefix: 'ivr-menu',
+            columns: []
         });
-
-        // Initialize the data table
-        ivrMenuIndex.initializeDataTable();
-
-        // Set up delete functionality on delete button click.
-        $('body').on('click', 'a.delete', (e) => {
-            e.preventDefault();
-            $(e.target).addClass('disabled');
-            // Get the ivr menu  ID from the closest table row.
-            const rowId = $(e.target).closest('tr').attr('id');
-
-            // Remove any previous AJAX messages.
-            $('.message.ajax').remove();
-
-            // Call the PbxApi method to delete the IVR menu record.
-            IVRMenuAPI.deleteRecord(rowId, ivrMenuIndex.cbAfterDeleteRecord);
+        
+        // Create configuration with all columns including description
+        const columns = [
+            {
+                data: null,
+                className: 'collapsing',
+                render: function(data, type, row) {
+                    // Create single-line represent format with icon, name, and extension in <>
+                    // This allows DataTable to search by extension number in brackets
+                    const icon = '<i class="sitemap icon"></i>';
+                    const name = row.name ? '<strong>' + window.SecurityUtils.escapeHtml(row.name) + '</strong>' : '';
+                    const extension = row.extension ? ' &lt;' + window.SecurityUtils.escapeHtml(row.extension) + '&gt;' : '';
+                    
+                    return icon + ' ' + name + extension;
+                }
+            },
+            {
+                data: 'actions',
+                className: 'hide-on-mobile collapsing',
+                render: function(data) {
+                    if (!data || data.length === 0) {
+                        return '<small>—</small>';
+                    }
+                    // SECURITY: Properly sanitize all content
+                    const actionsHtml = data.map(action => {
+                        const safeDigits = window.SecurityUtils.escapeHtml(action.digits || '');
+                        // Properly sanitize represent field to preserve safe HTML icons
+                        const safeRepresent = window.SecurityUtils.sanitizeExtensionsApiContent(action.represent || '');
+                        return `${safeDigits} - ${safeRepresent}`;
+                    }).join('<br>');
+                    return `<small>${actionsHtml}</small>`;
+                }
+            },
+            {
+                data: 'timeoutExtensionRepresent',
+                className: 'hide-on-mobile collapsing',
+                render: function(data) {
+                    // Timeout extension representation needs proper sanitization
+                    if (!data) {
+                        return '<small>—</small>';
+                    }
+                    // Properly sanitize data to preserve safe HTML icons
+                    const safeData = window.SecurityUtils.sanitizeExtensionsApiContent(data);
+                    return `<small>${safeData}</small>`;
+                }
+            },
+            {
+                data: 'description',
+                className: 'hide-on-mobile',
+                orderable: false,
+                // Use the description renderer from temp instance
+                render: tempInstance.createDescriptionRenderer()
+            }
+        ];
+        
+        // Create real instance of base class with IVR Menu specific configuration
+        this.dataTableInstance = new PbxDataTableIndex({
+            tableId: 'ivr-menu-table',
+            apiModule: IvrMenuAPI,
+            routePrefix: 'ivr-menu',
+            showSuccessMessages: true,
+            actionButtons: ['edit', 'copy', 'delete'], // Include copy button
+            translations: {
+                deleteSuccess: globalTranslate.iv_IvrMenuDeleted,
+                deleteError: globalTranslate.iv_ImpossibleToDeleteIvrMenu
+            },
+            descriptionSettings: {
+                maxLines: 3,
+                dynamicHeight: false
+            },
+            columns: columns
         });
-    },
-
-    /**
-     * Initialize data tables on table
-     */
-    initializeDataTable() {
-        ivrMenuIndex.$ivrTable.DataTable({
-            lengthChange: false, // Disable ability to change number of entries shown
-            paging: false, // Disable pagination
-            columns: [
-                null,
-                null,
-                null,
-                null,
-                null,
-                {orderable: false, searchable: false},
-            ],
-            order: [1, 'asc'],
-            language: SemanticLocalization.dataTableLocalisation,
-        });
-
-        // Move the "Add New" button to the first eight-column div
-        $('#add-new-button').appendTo($('div.eight.column:eq(0)'));
-    },
-
-    /**
-     * Callback function executed after deleting a record.
-     * @param {Object} response - The response object from the API.
-     */
-    cbAfterDeleteRecord(response){
-        if (response.result === true) {
-            // Remove the deleted record's table row.
-            ivrMenuIndex.$ivrTable.find(`tr[id=${response.data.id}]`).remove();
-            // Call the callback function for data change.
-            Extensions.cbOnDataChanged();
-        } else {
-            // Show an error message if deletion was not successful.
-            UserMessage.showError(response.messages.error, globalTranslate.iv_ImpossibleToDeleteIVRMenu);
-        }
-        $('a.delete').removeClass('disabled');
-    },
+        
+        // Initialize the base class
+        this.dataTableInstance.initialize();
+    }
 };
 
 /**

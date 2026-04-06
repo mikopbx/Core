@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -23,10 +24,10 @@ use MikoPBX\AdminCabinet\Forms\LicensingActivateCouponForm;
 use MikoPBX\AdminCabinet\Forms\LicensingChangeLicenseKeyForm;
 use MikoPBX\AdminCabinet\Forms\LicensingGetKeyForm;
 use MikoPBX\AdminCabinet\Forms\PbxExtensionModuleSettingsForm;
+use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
-use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings, PbxSettingsConstants};
+use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Modules\PbxExtensionState;
-use Phalcon\Text;
 
 class PbxExtensionModulesController extends BaseController
 {
@@ -54,15 +55,15 @@ class PbxExtensionModulesController extends BaseController
                 'permanent' => true,
             ];
 
-            if ($module['disabled'] === '1'){
+            if ($module['disabled'] === '1') {
                 $moduleRecord['status'] = 'disabled';
                 $moduleRecord['disableReason'] = $module['disableReason'];
-                $moduleRecord['disableReasonText'] = $module['disableReasonText'];
+                $moduleRecord['disableReasonText'] = htmlspecialchars($module['disableReasonText']??'');
                 // Translate the license message
-                if ($moduleRecord['disableReason'] === PbxExtensionState::DISABLED_BY_LICENSE
-                    && isset($moduleRecord['disableReasonText'])) {
+                if ($moduleRecord['disableReason'] === PbxExtensionState::DISABLED_BY_LICENSE) {
                     $lic = $this->di->getShared(MarketPlaceProvider::SERVICE_NAME);
-                    $moduleRecord['disableReasonText'] = $lic->translateLicenseErrorMessage((string)$moduleRecord['disableReasonText']);
+                    $moduleRecord['disableReasonText']
+                        = htmlspecialchars($lic->translateLicenseErrorMessage((string)$moduleRecord['disableReasonText']));
                 }
             }
             $moduleList[] = $moduleRecord;
@@ -70,15 +71,19 @@ class PbxExtensionModulesController extends BaseController
         $this->view->modulelist = $moduleList;
 
         // License key management tab //
-        $licKey = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
-        if (strlen($licKey) !== 28
-            || !Text::startsWith($licKey, 'MIKO-')) {
+        $licKey = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
+        if (
+            strlen($licKey) !== 28
+            || !Text::startsWith($licKey, 'MIKO-')
+        ) {
             $licKey = '';
         }
 
         // License key form
-        $this->view->setVar('changeLicenseKeyForm',
-            new LicensingChangeLicenseKeyForm(null, ['licKey' => $licKey]));
+        $this->view->setVar(
+            'changeLicenseKeyForm',
+            new LicensingChangeLicenseKeyForm(null, ['licKey' => $licKey])
+        );
 
         // Coupon form
         $this->view->setVar('activateCouponForm', new LicensingActivateCouponForm());
@@ -87,7 +92,6 @@ class PbxExtensionModulesController extends BaseController
         $this->view->setVar('getKeyForm', new LicensingGetKeyForm());
 
         $this->view->setVar('submitMode', null);
-
     }
 
     /**
@@ -97,7 +101,7 @@ class PbxExtensionModulesController extends BaseController
      */
     public function modifyAction(string $uniqid): void
     {
-        $menuSettings = "AdditionalMenuItem{$uniqid}";
+        $menuSettings = "AdditionalMenuItem$uniqid";
         $unCamelizedControllerName = Text::uncamelize($uniqid, '-');
         $previousMenuSettings = PbxSettings::findFirstByKey($menuSettings);
         $this->view->showAtMainMenu = $previousMenuSettings !== false;
@@ -120,8 +124,8 @@ class PbxExtensionModulesController extends BaseController
         }
         $this->view->form = new PbxExtensionModuleSettingsForm($previousMenuSettings, $options);
         $this->view->title = $this->translation->_('ext_SettingsForModule') . ' ' . $this->translation->_(
-                "Breadcrumb$uniqid"
-            );
+            "Breadcrumb$uniqid"
+        );
         $this->view->submitMode = null;
         $this->view->indexUrl = 'pbx-extension-modules/index/';
     }
@@ -160,5 +164,4 @@ class PbxExtensionModulesController extends BaseController
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
         $this->view->success = true;
     }
-
 }

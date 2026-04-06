@@ -25,12 +25,12 @@ use MikoPBX\Common\Models\SipHosts;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
 class UpdateConfigsUpToVer20213130 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '2021.3.130';
+  	public const string PBX_VERSION = '2021.3.130';
 
     private bool $isLiveCD;
 
@@ -59,7 +59,7 @@ class UpdateConfigsUpToVer20213130 extends Injectable implements UpgradeSystemCo
     /**
      * Delete unused data tables from DB
      */
-    public function deleteOutdatedTables()
+    public function deleteOutdatedTables(): void
     {
         $di = Di::getDefault();
         $connectionService = $di->getShared(MainDatabaseProvider::SERVICE_NAME);
@@ -72,7 +72,7 @@ class UpdateConfigsUpToVer20213130 extends Injectable implements UpgradeSystemCo
      * Deletes all not actual db data
      * https://github.com/mikopbx/Core/issues/144
      */
-    private function deleteOrphanDBRecords()
+    private function deleteOrphanDBRecords(): void
     {
         $sipRecords      = Sip::find();
         /** @var Sip $sipRecord */

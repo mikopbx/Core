@@ -1,0 +1,58 @@
+"use strict";
+
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* global PbxApiClient */
+
+/**
+ * AdviceAPI - REST API v3 client for system advice and notifications
+ *
+ * Provides system notifications about configuration issues, security warnings,
+ * and recommendations. This is a read-only resource with custom methods only.
+ *
+ * @class AdviceAPI 
+ */
+var AdviceAPI = new PbxApiClient({
+  endpoint: '/pbxcore/api/v3/advice',
+  customMethods: {
+    getList: ':getList',
+    refresh: ':refresh'
+  }
+});
+/**
+ * Get list of system advice and notifications
+ * @param {function} callback - Callback function
+ */
+
+AdviceAPI.getList = function (callback) {
+  return this.callCustomMethod('getList', {}, callback, 'GET');
+};
+/**
+ * Force refresh of advice cache and get updated list
+ * @param {function} callback - Callback function
+ */
+
+
+AdviceAPI.refresh = function (callback) {
+  return this.callCustomMethod('refresh', {}, callback, 'POST');
+}; // Export for use in other modules
+
+
+window.AdviceAPI = AdviceAPI;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9QYnhBUEkvYWR2aWNlLWFwaS5qcyJdLCJuYW1lcyI6WyJBZHZpY2VBUEkiLCJQYnhBcGlDbGllbnQiLCJlbmRwb2ludCIsImN1c3RvbU1ldGhvZHMiLCJnZXRMaXN0IiwicmVmcmVzaCIsImNhbGxiYWNrIiwiY2FsbEN1c3RvbU1ldGhvZCIsIndpbmRvdyJdLCJtYXBwaW5ncyI6Ijs7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBOztBQUVBOztBQUVBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQSxJQUFNQSxTQUFTLEdBQUcsSUFBSUMsWUFBSixDQUFpQjtBQUMvQkMsRUFBQUEsUUFBUSxFQUFFLHdCQURxQjtBQUUvQkMsRUFBQUEsYUFBYSxFQUFFO0FBQ1hDLElBQUFBLE9BQU8sRUFBRSxVQURFO0FBRVhDLElBQUFBLE9BQU8sRUFBRTtBQUZFO0FBRmdCLENBQWpCLENBQWxCO0FBUUE7QUFDQTtBQUNBO0FBQ0E7O0FBQ0FMLFNBQVMsQ0FBQ0ksT0FBVixHQUFvQixVQUFTRSxRQUFULEVBQW1CO0FBQ25DLFNBQU8sS0FBS0MsZ0JBQUwsQ0FBc0IsU0FBdEIsRUFBaUMsRUFBakMsRUFBcUNELFFBQXJDLEVBQStDLEtBQS9DLENBQVA7QUFDSCxDQUZEO0FBSUE7QUFDQTtBQUNBO0FBQ0E7OztBQUNBTixTQUFTLENBQUNLLE9BQVYsR0FBb0IsVUFBU0MsUUFBVCxFQUFtQjtBQUNuQyxTQUFPLEtBQUtDLGdCQUFMLENBQXNCLFNBQXRCLEVBQWlDLEVBQWpDLEVBQXFDRCxRQUFyQyxFQUErQyxNQUEvQyxDQUFQO0FBQ0gsQ0FGRCxDLENBSUE7OztBQUNBRSxNQUFNLENBQUNSLFNBQVAsR0FBbUJBLFNBQW5CIiwic291cmNlc0NvbnRlbnQiOlsiLypcbiAqIE1pa29QQlggLSBmcmVlIHBob25lIHN5c3RlbSBmb3Igc21hbGwgYnVzaW5lc3NcbiAqIENvcHlyaWdodCDCqSAyMDE3LTIwMjUgQWxleGV5IFBvcnRub3YgYW5kIE5pa29sYXkgQmVrZXRvdlxuICpcbiAqIFRoaXMgcHJvZ3JhbSBpcyBmcmVlIHNvZnR3YXJlOiB5b3UgY2FuIHJlZGlzdHJpYnV0ZSBpdCBhbmQvb3IgbW9kaWZ5XG4gKiBpdCB1bmRlciB0aGUgdGVybXMgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGFzIHB1Ymxpc2hlZCBieVxuICogdGhlIEZyZWUgU29mdHdhcmUgRm91bmRhdGlvbjsgZWl0aGVyIHZlcnNpb24gMyBvZiB0aGUgTGljZW5zZSwgb3JcbiAqIChhdCB5b3VyIG9wdGlvbikgYW55IGxhdGVyIHZlcnNpb24uXG4gKlxuICogVGhpcyBwcm9ncmFtIGlzIGRpc3RyaWJ1dGVkIGluIHRoZSBob3BlIHRoYXQgaXQgd2lsbCBiZSB1c2VmdWwsXG4gKiBidXQgV0lUSE9VVCBBTlkgV0FSUkFOVFk7IHdpdGhvdXQgZXZlbiB0aGUgaW1wbGllZCB3YXJyYW50eSBvZlxuICogTUVSQ0hBTlRBQklMSVRZIG9yIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFLiAgU2VlIHRoZVxuICogR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgZm9yIG1vcmUgZGV0YWlscy5cbiAqXG4gKiBZb3Ugc2hvdWxkIGhhdmUgcmVjZWl2ZWQgYSBjb3B5IG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBhbG9uZyB3aXRoIHRoaXMgcHJvZ3JhbS5cbiAqIElmIG5vdCwgc2VlIDxodHRwczovL3d3dy5nbnUub3JnL2xpY2Vuc2VzLz4uXG4gKi9cblxuLyogZ2xvYmFsIFBieEFwaUNsaWVudCAqL1xuXG4vKipcbiAqIEFkdmljZUFQSSAtIFJFU1QgQVBJIHYzIGNsaWVudCBmb3Igc3lzdGVtIGFkdmljZSBhbmQgbm90aWZpY2F0aW9uc1xuICpcbiAqIFByb3ZpZGVzIHN5c3RlbSBub3RpZmljYXRpb25zIGFib3V0IGNvbmZpZ3VyYXRpb24gaXNzdWVzLCBzZWN1cml0eSB3YXJuaW5ncyxcbiAqIGFuZCByZWNvbW1lbmRhdGlvbnMuIFRoaXMgaXMgYSByZWFkLW9ubHkgcmVzb3VyY2Ugd2l0aCBjdXN0b20gbWV0aG9kcyBvbmx5LlxuICpcbiAqIEBjbGFzcyBBZHZpY2VBUEkgXG4gKi9cbmNvbnN0IEFkdmljZUFQSSA9IG5ldyBQYnhBcGlDbGllbnQoe1xuICAgIGVuZHBvaW50OiAnL3BieGNvcmUvYXBpL3YzL2FkdmljZScsXG4gICAgY3VzdG9tTWV0aG9kczoge1xuICAgICAgICBnZXRMaXN0OiAnOmdldExpc3QnLFxuICAgICAgICByZWZyZXNoOiAnOnJlZnJlc2gnXG4gICAgfVxufSk7XG5cbi8qKlxuICogR2V0IGxpc3Qgb2Ygc3lzdGVtIGFkdmljZSBhbmQgbm90aWZpY2F0aW9uc1xuICogQHBhcmFtIHtmdW5jdGlvbn0gY2FsbGJhY2sgLSBDYWxsYmFjayBmdW5jdGlvblxuICovXG5BZHZpY2VBUEkuZ2V0TGlzdCA9IGZ1bmN0aW9uKGNhbGxiYWNrKSB7XG4gICAgcmV0dXJuIHRoaXMuY2FsbEN1c3RvbU1ldGhvZCgnZ2V0TGlzdCcsIHt9LCBjYWxsYmFjaywgJ0dFVCcpO1xufTtcblxuLyoqXG4gKiBGb3JjZSByZWZyZXNoIG9mIGFkdmljZSBjYWNoZSBhbmQgZ2V0IHVwZGF0ZWQgbGlzdFxuICogQHBhcmFtIHtmdW5jdGlvbn0gY2FsbGJhY2sgLSBDYWxsYmFjayBmdW5jdGlvblxuICovXG5BZHZpY2VBUEkucmVmcmVzaCA9IGZ1bmN0aW9uKGNhbGxiYWNrKSB7XG4gICAgcmV0dXJuIHRoaXMuY2FsbEN1c3RvbU1ldGhvZCgncmVmcmVzaCcsIHt9LCBjYWxsYmFjaywgJ1BPU1QnKTtcbn07XG5cbi8vIEV4cG9ydCBmb3IgdXNlIGluIG90aGVyIG1vZHVsZXNcbndpbmRvdy5BZHZpY2VBUEkgPSBBZHZpY2VBUEk7Il19

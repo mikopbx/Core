@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -19,18 +20,19 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Starts the collection of logs and captures TCP packets.
  *
  * @package MikoPBX\PBXCoreREST\Lib\SysLogs
  */
-class StartLogAction extends \Phalcon\Di\Injectable
+class StartLogAction extends Injectable
 {
     /**
      * Starts the collection of logs and captures TCP packets.
@@ -41,20 +43,23 @@ class StartLogAction extends \Phalcon\Di\Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $logDir = System::getLogDir();
+        $logDir = Directories::getDir(Directories::CORE_LOGS_DIR);
+
+        // Kill any existing tcpdump processes to prevent duplicates
+        Processes::killByName('tcpdump');
 
         // TCP dump
-        $tcpDumpDir = "{$logDir}/tcpDump";
+        $tcpDumpDir = "$logDir/tcpDump";
         Util::mwMkdir($tcpDumpDir);
         $network = new Network();
         $arr_eth = $network->getInterfacesNames();
-        $tcpdumpPath = Util::which('tcpdump');
+        $tcpdump = Util::which('tcpdump');
         $timeout = 300;
         foreach ($arr_eth as $eth) {
             Processes::mwExecBgWithTimeout(
-                "{$tcpdumpPath} -i {$eth} -n -s 0 -vvv -w {$tcpDumpDir}/{$eth}.pcap",
+                "$tcpdump -i $eth -n -s 0 -vvv -w $tcpDumpDir/$eth.pcap",
                 $timeout,
-                "{$tcpDumpDir}/{$eth}_out.log"
+                "$tcpDumpDir/{$eth}_out.log"
             );
         }
         $res->success = true;

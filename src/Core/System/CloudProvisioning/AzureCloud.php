@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -18,14 +19,15 @@
  */
 
 namespace MikoPBX\Core\System\CloudProvisioning;
+
 use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\Core\System\Util;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\PromiseInterface;
 
 class AzureCloud extends CloudProvider
 {
-    public const CloudID = 'AzureCloud';
+    public const string CloudID = 'AzureCloud';
 
     private Client $client;
 
@@ -35,14 +37,50 @@ class AzureCloud extends CloudProvider
     }
 
     /**
+     * Performs an asynchronous check to determine if this cloud provider is available.
+     *
+     * @return PromiseInterface Promise that resolves to bool
+     */
+    public function checkAvailability(): PromiseInterface
+    {
+        $promise = $this->client->requestAsync('GET', 'http://169.254.169.254/metadata/instance', [
+            'query' => ['api-version' => '2020-09-01', 'format' => 'json'],
+            'headers' => ['Metadata' => 'true']
+        ]);
+
+        return $promise->then(
+            function ($response) {
+                if ($response->getStatusCode() !== 200) {
+                    return false;
+                }
+
+                $metadata = json_decode($response->getBody()->getContents(), true);
+
+                // Verify Azure specific metadata
+                if (empty($metadata['compute']['vmId']) ||
+                    ($metadata['compute']['azEnvironment'] ?? '') !== 'AzurePublicCloud') {
+                    return false;
+                }
+
+                return true;
+            },
+            function () {
+                return false;
+            }
+        );
+    }
+
+    /**
      * Performs the Azure Cloud provisioning using the Metadata Service.
+     * Uses direct SQLite queries to avoid Redis/ORM dependency during early boot.
      *
      * @return bool True if the provisioning was successful, false otherwise.
      */
     public function provision(): bool
     {
         $metadata = $this->retrieveInstanceMetadata();
-        if ($metadata === null
+        if (
+            $metadata === null
             || $metadata['compute']['azEnvironment'] !== 'AzurePublicCloud'
             || empty($metadata['compute']['vmId'])
         ) {
@@ -50,29 +88,65 @@ class AzureCloud extends CloudProvider
             return false;
         }
 
-        SystemMessages::echoToTeletype(PHP_EOL);
-
-        // Extract the admin username from the metadata
+        // Extract metadata
         $adminUsername = $metadata['compute']['osProfile']['adminUsername'] ?? 'azureuser';
-
-        // Update machine name
         $hostname = $metadata['compute']['name'] ?? '';
-        $this->updateHostName($hostname);
-
-        // Update LAN settings the external IP address
         $extIp = $metadata['network']['interface'][0]['ipv4']['ipAddress'][0]['publicIpAddress'] ?? '';
-        $this->updateLanSettings($extIp);
-
-        // Update SSH keys, if available
         $sshKeys = array_column($metadata['compute']['publicKeys'] ?? [], 'keyData');
-        $this->updateSSHKeys(implode(PHP_EOL, $sshKeys));
+        $vmId = $metadata['compute']['vmId'];
 
-        // Update SSH anf WEB password using some unique identifier from the metadata
-        $vmId =$metadata['compute']['vmId'] ;
-        $this->updateSSHCredentials($adminUsername, $vmId);
-        $this->updateWebPassword($vmId);
+        // Build config from IMDS metadata
+        $config = new ProvisioningConfig(
+            hostname: $hostname,
+            externalIp: $extIp,
+            sshKeys: implode(PHP_EOL, $sshKeys),
+            sshLogin: $adminUsername,
+            instanceId: $vmId,
+            webPassword: $vmId
+        );
 
-        return true;
+        // Fetch and merge user-data if available
+        $userData = $this->fetchUserData();
+        if ($userData !== null) {
+            $userConfig = $this->parseUserData($userData);
+            if ($userConfig !== null && !$userConfig->isEmpty()) {
+                SystemMessages::sysLogMsg(__CLASS__, "Applying user-data configuration");
+                $config = $config->merge($userConfig);
+            }
+        }
+
+        // Apply configuration using direct SQLite (no Redis/ORM)
+        return $this->applyConfigDirect($config);
+    }
+
+    /**
+     * Fetches user-data from Azure Instance Metadata Service.
+     * Azure returns user-data as base64-encoded string.
+     *
+     * @return string|null User-data content or null if not available
+     */
+    protected function fetchUserData(): ?string
+    {
+        try {
+            $response = $this->client->request('GET', 'http://169.254.169.254/metadata/instance/compute/userData', [
+                'query' => ['api-version' => '2021-01-01', 'format' => 'text'],
+                'headers' => ['Metadata' => 'true'],
+                'http_errors' => false
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                $encodedData = $response->getBody()->getContents();
+                if (!empty($encodedData)) {
+                    // Azure returns base64-encoded user-data
+                    $decoded = base64_decode($encodedData, true);
+                    return $decoded !== false ? $decoded : null;
+                }
+            }
+        } catch (GuzzleException $e) {
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to fetch user-data: " . $e->getMessage());
+        }
+
+        return null;
     }
 
     /**

@@ -1,7 +1,8 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,14 +20,35 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
+use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverExpectedCondition;
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
- * Class to test the creation of Fail2Ban rules in the admin cabinet.
+ * Class to test Fail2Ban security preset slider and whitelist settings.
+ *
+ * The Fail2Ban settings page uses a security preset slider (0-3)
+ * that controls hidden fields: maxretry, findtime, bantime.
+ * Presets: 0=Weak, 1=Normal, 2=Enhanced, 3=Paranoid.
  */
 class CreateFail2BanRulesTest extends MikoPBXTestsBase
 {
+    /**
+     * Slider initialization timeout in seconds
+     */
+    private const SLIDER_INIT_TIMEOUT = 5;
+
+    /**
+     * Security preset definitions matching fail-to-ban-index.js securityPresets.
+     */
+    private const SECURITY_PRESETS = [
+        0 => ['maxretry' => '20', 'findtime' => '600', 'bantime' => '600'],       // Weak
+        1 => ['maxretry' => '10', 'findtime' => '3600', 'bantime' => '86400'],     // Normal
+        2 => ['maxretry' => '5',  'findtime' => '21600', 'bantime' => '604800'],   // Enhanced
+        3 => ['maxretry' => '3',  'findtime' => '86400', 'bantime' => '2592000'],  // Paranoid
+    ];
+
     /**
      * Set up before each test
      *
@@ -39,44 +61,127 @@ class CreateFail2BanRulesTest extends MikoPBXTestsBase
         $this->setSessionName("Test: Changing Fail2Ban rules");
     }
 
-
     /**
-     * Test the creation of Fail2Ban rules.
+     * Test the Fail2Ban security preset slider and whitelist.
      *
-     * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params The parameters for creating the rule.
+     * @param array $params The parameters for the rule.
      */
     public function testRule(array $params): void
     {
-        // Navigate to the Fail2Ban settings page
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/fail2-ban/index/');
+        $presetIndex = $params['presetIndex'];
+        $expectedValues = self::SECURITY_PRESETS[$presetIndex];
 
-        // Clear input fields and textarea
-        $this->changeInputField('maxretry', '');
-        $this->changeInputField('findtime', '');
-        $this->changeInputField('bantime', '');
+        // Navigate to the Fail2Ban settings page and wait for slider
+        $this->navigateToFail2BanSettings();
+
+        // Set security preset slider via JavaScript
+        self::annotate("Setting security preset slider to index {$presetIndex}");
+        self::$driver->executeScript(
+            "$('#SecurityPresetSlider').slider('set value', {$presetIndex});"
+        );
+
+        // Wait for slider animation and onChange event to update hidden fields
+        $this->waitForAjax();
+        sleep(1);
+
+        // Verify hidden field values match the preset before saving
+        $this->assertHiddenFieldValue('maxretry', $expectedValues['maxretry']);
+        $this->assertHiddenFieldValue('findtime', $expectedValues['findtime']);
+        $this->assertHiddenFieldValue('bantime', $expectedValues['bantime']);
+
+        // Set whitelist
         $this->changeTextAreaValue('whitelist', '');
-
-        // Submit an empty form
-        $this->submitForm('fail2ban-settings-form');
-
-        // Set rule parameters
-        $this->changeInputField('maxretry', $params['maxretry']);
-        $this->changeInputField('findtime', $params['findtime']);
-        $this->changeInputField('bantime', $params['bantime']);
         $this->changeTextAreaValue('whitelist', $params['whitelist']);
 
-        // Save the rule
+        // Save the settings
         $this->submitForm('fail2ban-settings-form');
+
+        // Reload page and verify saved values
+        $this->navigateToFail2BanSettings();
+
+        // Verify hidden field values match the preset after reload
+        self::annotate("Verifying preset values after save and reload");
+        $this->assertHiddenFieldValue('maxretry', $expectedValues['maxretry']);
+        $this->assertHiddenFieldValue('findtime', $expectedValues['findtime']);
+        $this->assertHiddenFieldValue('bantime', $expectedValues['bantime']);
+
+        // Verify whitelist
+        $this->assertTextAreaValueIsEqual('whitelist', $params['whitelist']);
+
+        // Verify slider position
+        $sliderValue = self::$driver->executeScript(
+            "return $('#SecurityPresetSlider').slider('get value');"
+        );
+        self::assertEquals(
+            $presetIndex,
+            (int)$sliderValue,
+            "Security preset slider should be at index {$presetIndex} after reload, but got {$sliderValue}"
+        );
+
+        self::annotate("Fail2Ban preset slider test completed successfully");
+    }
+
+    /**
+     * Navigate to Fail2Ban settings page and wait for slider initialization.
+     */
+    protected function navigateToFail2BanSettings(): void
+    {
+        self::annotate("Navigating to Fail2Ban settings page");
         $this->clickSidebarMenuItemByHref('/admin-cabinet/fail2-ban/index/');
 
-        // Assert rule parameters
-        $this->assertInputFieldValueEqual('maxretry', $params['maxretry']);
-        $this->assertInputFieldValueEqual('findtime', $params['findtime']);
-        $this->assertInputFieldValueEqual('bantime', $params['bantime']);
-        $this->assertTextAreaValueIsEqual('whitelist', $params['whitelist']);
+        // Wait for slider element to appear
+        self::$driver->wait(10)->until(
+            WebDriverExpectedCondition::presenceOfElementLocated(
+                WebDriverBy::id('SecurityPresetSlider')
+            )
+        );
+
+        // Wait for slider to be fully initialized by Fomantic UI
+        $this->waitForSliderInitialization();
+    }
+
+    /**
+     * Wait for the security preset slider to be initialized.
+     */
+    protected function waitForSliderInitialization(): void
+    {
+        self::annotate("Waiting for security preset slider initialization");
+
+        // Wait until slider has the .ui.slider class (Fomantic UI initialized)
+        self::$driver->wait(self::SLIDER_INIT_TIMEOUT)->until(
+            WebDriverExpectedCondition::presenceOfElementLocated(
+                WebDriverBy::cssSelector('#SecurityPresetSlider.ui.slider')
+            )
+        );
+
+        // Wait for API data to load and populate the slider
+        $this->waitForAjax();
+        sleep(1);
+
+        // Verify slider is functional
+        $sliderValue = self::$driver->executeScript(
+            "return $('#SecurityPresetSlider').slider('get value');"
+        );
+        self::assertNotNull($sliderValue, "Security preset slider should be initialized and return a value");
+    }
+
+    /**
+     * Assert the value of a hidden input field.
+     *
+     * @param string $name Field name attribute
+     * @param string $expectedValue Expected value
+     */
+    protected function assertHiddenFieldValue(string $name, string $expectedValue): void
+    {
+        $hiddenInput = self::$driver->findElement(WebDriverBy::name($name));
+        $actualValue = $hiddenInput->getAttribute('value');
+        self::assertEquals(
+            $expectedValue,
+            $actualValue,
+            "Hidden field '{$name}' should be '{$expectedValue}', but got '{$actualValue}'"
+        );
     }
 
     /**
@@ -89,9 +194,7 @@ class CreateFail2BanRulesTest extends MikoPBXTestsBase
         $params = [];
         $params[] = [
             [
-                'maxretry' => '5',
-                'findtime' => '1800',
-                'bantime' => '86400',
+                'presetIndex' => 2, // Enhanced: maxretry=5, findtime=21600 (6h), bantime=604800 (7d)
                 'whitelist' => '93.188.40.99 80.90.117.7 149.11.34.27 149.11.44.91 69.167.178.98 192.99.200.177 38.88.16.66 38.88.16.70 38.88.16.74 38.88.16.78 38.88.16.82 38.88.16.86 38.88.16.90 38.88.16.94 188.120.235.64',
             ]
         ];

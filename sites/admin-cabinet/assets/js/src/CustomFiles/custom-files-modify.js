@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, ace, Form, PbxApi */
+/* global globalRootUrl,globalTranslate, ace, Form, FilesAPI, customFilesAPI, PbxApiClient */
 
 
 /**
@@ -42,7 +42,13 @@ const customFile = {
      * jQuery object for the mode select.
      * @type {jQuery}
      */
-    $modeDropDown: $('#custom-file-form .mode-select'),
+    $modeDropDown: $('#mode-dropdown'),
+
+    /**
+     * jQuery object for the hidden custom mode input.
+     * @type {jQuery}
+     */
+    $modeCustomInput: $('#mode-custom-value'),
 
     /**
      * jQuery object for the tab with original file content.
@@ -67,6 +73,18 @@ const customFile = {
      * @type {jQuery}
      */
     $mainContainer: $('#main-content-container'),
+
+    /**
+     * jQuery object for the filepath input field.
+     * @type {jQuery}
+     */
+    $filepathInput: $('#filepath'),
+
+    /**
+     * jQuery object for the filepath field container.
+     * @type {jQuery}
+     */
+    $filepathField: $('#filepath-field'),
 
 
     /**
@@ -95,10 +113,110 @@ const customFile = {
     },
 
     /**
+     * Decode base64 string to UTF-8
+     * Handles Unicode characters (Russian, Chinese, etc.)
+     *
+     * @param {string} base64Str - Base64 encoded string
+     * @returns {string} UTF-8 decoded string
+     */
+    base64ToUtf8(base64Str) {
+        try {
+            // Decode base64 to binary string
+            const binaryString = atob(base64Str);
+
+            // Use TextDecoder for modern browsers
+            if (typeof TextDecoder !== 'undefined') {
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return new TextDecoder().decode(bytes);
+            } else {
+                // Fallback for older browsers
+                return decodeURIComponent(escape(binaryString));
+            }
+        } catch(e) {
+            console.error('Failed to decode base64:', e);
+            return base64Str; // Return as-is if decode fails
+        }
+    },
+
+    /**
+     * Get current mode value (from dropdown or hidden input for custom mode)
+     * @returns {string} Current mode value
+     */
+    getCurrentMode() {
+        // Check if custom mode is active (hidden input has value)
+        const customModeValue = customFile.$modeCustomInput.val();
+        if (customModeValue === 'custom') {
+            return 'custom';
+        }
+        // Otherwise return dropdown value
+        return customFile.$formObj.form('get value', 'mode');
+    },
+
+    /**
+     * Set mode value (using dropdown for standard modes, hidden input for custom mode)
+     * @param {string} mode - Mode to set
+     */
+    setMode(mode) {
+        if (mode === 'custom') {
+            // Set custom mode via hidden input
+            customFile.$modeCustomInput.val('custom');
+            // Hide dropdown for custom files
+            customFile.$modeDropDown.parent().parent().hide();
+        } else {
+            // Clear custom mode
+            customFile.$modeCustomInput.val('');
+            // Set standard mode via dropdown
+            customFile.$modeDropDown.dropdown('set selected', mode);
+            // Show dropdown
+            customFile.$modeDropDown.parent().parent().show();
+        }
+    },
+
+    /**
+     * Updates the filepath field state based on whether the file is user-created (MODE_CUSTOM) or system-managed.
+     * User-created files have editable filepath but cannot be created (only for new files),
+     * system-managed files have read-only filepath.
+     */
+    updateFilepathFieldState() {
+        const mode = customFile.getCurrentMode();
+        const isUserCreated = mode === 'custom';
+        const fileId = customFile.$formObj.form('get value', 'id');
+
+        if (isUserCreated) {
+            if (!fileId || fileId === '') {
+                // New custom file - filepath is editable
+                customFile.$filepathInput.prop('readonly', false);
+                customFile.$filepathField.removeClass('disabled');
+            } else {
+                // Existing custom file - filepath is read-only (cannot be changed after creation)
+                customFile.$filepathInput.prop('readonly', true);
+                customFile.$filepathField.addClass('disabled');
+            }
+            // Always hide mode selector for custom files
+            customFile.$modeDropDown.parent().parent().hide();
+        } else {
+            // System-managed file - filepath is always read-only
+            customFile.$filepathInput.prop('readonly', true);
+            customFile.$filepathField.addClass('disabled');
+            // Show mode selector for system files
+            customFile.$modeDropDown.parent().parent().show();
+        }
+    },
+
+    /**
      * Initializes the customFile module.
      * Sets up the dropdown, initializes Ace editor, form, and retrieves file content from the server.
      */
     initialize() {
+
+        // Initialize jQuery objects after DOM is ready
+        customFile.$filepathInput = $('#filepath');
+        customFile.$filepathField = $('#filepath-field');
+        customFile.$modeDropDown = $('#mode-dropdown');
+        customFile.$modeCustomInput = $('#mode-custom-value');
 
         // Enable tab navigation with history support
         customFile.$tabMenu.tab({
@@ -110,11 +228,125 @@ const customFile = {
         // Initialize Ace editor
         customFile.initializeAce();
 
-        customFile.$modeDropDown.dropdown({
-            onChange: customFile.cbOnChangeMode
-        });
-        const mode = customFile.$formObj.form('get value', 'mode');
-        customFile.cbOnChangeMode(mode);
+        // Initialize or reinitialize dropdown
+        if (customFile.$modeDropDown.length > 0) {
+            customFile.$modeDropDown.dropdown({
+                onChange: customFile.cbOnChangeMode
+            });
+        }
+
+        // Get file ID from URL or form
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlId = window.location.pathname.match(/modify\/(\d+)/);
+        const fileId = urlId ? urlId[1] : customFile.$formObj.form('get value', 'id');
+
+        if (!fileId || fileId === '') {
+            // Load default values for new custom file
+            customFilesAPI.getRecord('new', (response) => {
+                if (response.result && response.data) {
+                    // Store mode separately to handle it correctly
+                    const mode = response.data.mode || 'none';
+
+                    // Remove mode from response before setting form values
+                    const formData = {...response.data};
+                    delete formData.mode;  // Don't let form('set values') handle mode
+
+                    // Set default values to form fields (without mode)
+                    customFile.$formObj.form('set values', formData);
+
+                    // For new files with MODE_CUSTOM
+                    if (mode === 'custom') {
+                        // Make filepath editable for new custom files
+                        customFile.$filepathInput.prop('readonly', false);
+                        customFile.$filepathField.removeClass('disabled');
+
+                        // Set mode to 'custom' using hidden input
+                        customFile.setMode('custom');
+
+                        // Show only editor tab for custom mode
+                        customFile.$tabMenu.tab('change tab', 'editor');
+                        customFile.$editorTab.show();
+                        customFile.$originalTab.hide();
+                        customFile.$resultTab.hide();
+
+                        // Hide other tab menu items
+                        $('.item[data-tab="original"]').hide();
+                        $('.item[data-tab="result"]').hide();
+
+                        // Initialize empty content in editor for new custom files
+                        if (response.data.content) {
+                            // If default content provided (base64), decode it with UTF-8 support
+                            const decodedContent = customFile.base64ToUtf8(response.data.content);
+                            customFile.editor.setValue(decodedContent);
+                        } else {
+                            // Set empty content for new custom file
+                            customFile.editor.setValue('');
+                        }
+                        customFile.editor.clearSelection();
+                    } else {
+                        // For other modes, use standard behavior (mode already extracted above)
+                        customFile.setMode(mode);
+                        customFile.cbOnChangeMode(mode);
+                        customFile.updateFilepathFieldState();
+                    }
+                }
+            });
+        } else {
+            // Load existing file data via REST API
+            customFilesAPI.getRecord(fileId, (response) => {
+                if (response.result && response.data) {
+                    // Store base64 content separately and remove from form data
+                    const base64Content = response.data.content;
+
+                    // Store mode separately to handle it correctly
+                    const mode = response.data.mode || 'none';
+
+                    // Remove content and mode from response before setting form values
+                    // (content will be taken from ACE editor on save, mode will be set separately)
+                    const formData = {...response.data};
+                    delete formData.content;
+                    delete formData.mode;  // Don't let form('set values') handle mode
+
+                    // Set form values from API response (without content and mode)
+                    customFile.$formObj.form('set values', formData);
+
+                    // Decode base64 content and set in editor with UTF-8 support
+                    if (base64Content) {
+                        const decodedContent = customFile.base64ToUtf8(base64Content);
+                        customFile.editor.setValue(decodedContent);
+                        customFile.editor.clearSelection();
+                    }
+
+                    // Set mode and trigger UI update (mode already extracted above)
+                    if (mode === 'custom') {
+                        // For existing custom files - filepath is read-only
+                        customFile.$filepathInput.prop('readonly', true);
+                        customFile.$filepathField.addClass('disabled');
+
+                        // Set mode to 'custom' using hidden input
+                        customFile.setMode('custom');
+
+                        // Show only editor tab for custom mode
+                        customFile.$tabMenu.tab('change tab', 'editor');
+                        customFile.$editorTab.show();
+                        customFile.$originalTab.hide();
+                        customFile.$resultTab.hide();
+
+                        // Hide other tab menu items
+                        $('.item[data-tab="original"]').hide();
+                        $('.item[data-tab="result"]').hide();
+                    } else {
+                        // For system files - use standard behavior
+                        customFile.setMode(mode);
+                        customFile.cbOnChangeMode(mode);
+                        customFile.updateFilepathFieldState();
+                    }
+                } else {
+                    // If loading fails, redirect to index
+                    window.location = `${globalRootUrl}custom-files/index`;
+                }
+            });
+        }
 
         // Initialize form
         customFile.initializeForm();
@@ -134,6 +366,7 @@ const customFile = {
                 customFile.$tabMenu.tab('change tab','original');
                 break;
             case 'override':
+            case 'custom':  // Custom mode behaves like override
                 customFile.$tabMenu.tab('change tab','editor');
                 break;
             case 'append':
@@ -155,17 +388,14 @@ const customFile = {
      */
     onChangeTab(currentTab){
         const filePath = customFile.$formObj.form('get value', 'filepath');
-        const data = {filename: filePath, needOriginal: true, needLogfile: false};
         switch (currentTab) {
             case 'result':
-                data.needOriginal=false;
                 $('.tab[data-tab="result"]').addClass('loading');
-                PbxApi.GetFileContent(data, customFile.cbGetResultFileContentFromServer);
+                FilesAPI.getFileContent(filePath, customFile.cbGetResultFileContentFromServer, false);
                 break;
             case 'original':
-                data.needOriginal=true;
                 $('.tab[data-tab="original"]').addClass('loading');
-                PbxApi.GetFileContent(data, customFile.cbGetOriginalFileContentFromServer);
+                FilesAPI.getFileContent(filePath, customFile.cbGetOriginalFileContentFromServer, true);
                 break;
             case 'editor':
                 break;
@@ -177,9 +407,15 @@ const customFile = {
      * Adjusts the Ace editor settings accordingly.
      */
     hideShowCode() {
-        // Retrieve 'mode' value from the form
-        const mode = customFile.$formObj.form('get value', 'mode');
-        let content = customFile.$formObj.form('get value', 'content');
+        // Retrieve 'mode' value (from dropdown or hidden input for custom mode)
+        const mode = customFile.getCurrentMode();
+
+        // Get current content from editor (not from form, as form doesn't have it anymore)
+        let content = customFile.editor.getValue();
+
+        // Get tab menu items
+        const $originalTabMenuItem = $('.item[data-tab="original"]');
+        const $resultTabMenuItem = $('.item[data-tab="result"]');
 
         // Handle code visibility and content based on the 'mode'
         switch (mode) {
@@ -189,6 +425,9 @@ const customFile = {
                 customFile.$originalTab.show();
                 customFile.viewerOriginal.navigateFileStart();
                 customFile.$resultTab.hide();
+                // Show/hide menu items
+                $originalTabMenuItem.show();
+                $resultTabMenuItem.hide();
                 break;
             case 'append':
                 // If 'mode' is 'append', show all fields
@@ -197,20 +436,38 @@ const customFile = {
                 customFile.$resultTab.show();
                 customFile.viewerOriginal.navigateFileEnd();
                 customFile.viewerResult.navigateFileEnd();
+                // Show all menu items
+                $originalTabMenuItem.show();
+                $resultTabMenuItem.show();
                 break;
             case 'override':
-                // If 'mode' is 'override', show custom content and hide server content, replace server file content with custom content
+                // If 'mode' is 'override', show editor and hide original, but show result
                 customFile.$editorTab.show();
                 customFile.$originalTab.hide();
                 customFile.$resultTab.hide();
+                // Show/hide menu items
+                $originalTabMenuItem.hide();
+                $resultTabMenuItem.hide();
+                break;
+            case 'custom':
+                // For 'custom' mode, only show editor tab - user fully controls the file
+                customFile.$editorTab.show();
+                customFile.$originalTab.hide();
+                customFile.$resultTab.hide();
+                // Hide other tab menu items for custom files
+                $originalTabMenuItem.hide();
+                $resultTabMenuItem.hide();
                 break;
             case 'script':
                 // If 'mode' is 'script', show both server and custom code, apply custom script to the file content on server
                 customFile.$editorTab.show();
                 customFile.$originalTab.show();
                 customFile.$resultTab.show();
-                // Editor
-                if (!content.includes('#!/bin/bash')) {
+                // Show all menu items for script mode
+                $originalTabMenuItem.show();
+                $resultTabMenuItem.show();
+                // Editor - only set template if content is empty
+                if (!content || content.trim() === '') {
                     content = `#!/bin/bash \n\n`;
                     content += `configPath="$1" # Path to the original config file\n\n`;
                     content += `# Example 1: Replace all values max_contacts = 5 to max_contacts = 1 on pjsip.conf\n`;
@@ -223,8 +480,11 @@ const customFile = {
                     content += `# sed -i '/^\\[playback-exit\\]$/,/^\\[/ s/^\\(\\s*same => n,Hangup()\\)/\\1\\n\\tsame => n,NoOp("Your NoOp comment here")/' "$configPath"\n\n`;
 
                     content += `# Attention! You will see changes after the background worker processes the script or after rebooting the system. \n`;
+
+                    // Only set content if we created a template
+                    customFile.editor.setValue(content);
+                    customFile.editor.clearSelection();
                 }
-                customFile.editor.setValue(content);
 
                 break;
             default:
@@ -234,8 +494,10 @@ const customFile = {
 
         customFile.viewerOriginal.setTheme('ace/theme/monokai');
         customFile.editor.setTheme('ace/theme/monokai');
-        customFile.editor.setValue(content);
-        customFile.editor.clearSelection();
+
+        // Don't overwrite editor content here - it's already set correctly
+        // customFile.editor.setValue(content);
+        // customFile.editor.clearSelection();
     },
 
     /**
@@ -311,8 +573,43 @@ const customFile = {
             // Trigger change event to acknowledge the modification
             Form.dataChanged();
         });
+
+        //  Add handlers for fullscreen mode buttons
+        $('.fullscreen-toggle-btn').on('click', function () {
+            const container = $(this).siblings('.application-code')[0];
+            customFile.toggleFullScreen(container);
+        });
+
+        // Add handler to recalculate sizes when exiting fullscreen mode
+        document.addEventListener('fullscreenchange', customFile.adjustEditorHeight);
+
+    },
+    /**
+     * Enable/disable fullscreen mode for a specific block.
+     *
+     * @param {HTMLElement} container - The container to expand to fullscreen.
+     */
+    toggleFullScreen(container) {
+        if (!document.fullscreenElement) {
+            container.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
     },
 
+    /**
+     * Recalculate editor heights when the screen mode changes.
+     */
+    adjustEditorHeight() {
+        const editors = [customFile.viewerOriginal, customFile.viewerResult, customFile.editor];
+        editors.forEach(editor => {
+            if (editor) {
+                editor.resize();
+            }
+        });
+    },
     /**
      * Callback function to be called before the form is sent
      * @param {Object} settings - The current settings of the form
@@ -320,16 +617,40 @@ const customFile = {
      */
     cbBeforeSendForm(settings) {
         const result = settings;
+
+        // IMPORTANT: Get mode BEFORE form('get values') to prevent dropdown from overriding it
+        const mode = customFile.getCurrentMode();
+
+        // Get all form values
         result.data = customFile.$formObj.form('get values');
-        switch (customFile.$formObj.form('get value', 'mode')) {
+
+        // Override mode with the correct value (from getCurrentMode)
+        result.data.mode = mode;
+
+        // Remove technical field from data
+        delete result.data['mode-custom-value'];
+
+        // Get content from Ace editor based on mode
+        switch (mode) {
             case 'append':
             case 'override':
+            case 'custom':
             case 'script':
-                result.data.content = customFile.editor.getValue();
+                // Get content from Ace editor (not base64 encoded yet)
+                if (!customFile.editor) {
+                    console.error('Editor is not initialized!');
+                    result.data.content = '';
+                } else {
+                    const editorContent = customFile.editor.getValue();
+                    result.data.content = editorContent;
+                }
                 break;
+            case 'none':
             default:
+                // For 'none' mode, clear the content
                 result.data.content = '';
         }
+
         return result;
     },
 
@@ -345,7 +666,16 @@ const customFile = {
      */
     initializeForm() {
         Form.$formObj = customFile.$formObj;
-        Form.url = `${globalRootUrl}custom-files/save`; // Form submission URL
+
+        // Configure REST API settings for Form
+        Form.apiSettings = {
+            enabled: true,
+            apiObject: customFilesAPI,
+            saveMethod: 'save',  // Will use the smart save method that determines create/update
+            autoDetectMethod: false,  // We handle this in our save method
+            idField: 'id'
+        };
+
         Form.validateRules = customFile.validateRules; // Form validation rules
         Form.cbBeforeSendForm = customFile.cbBeforeSendForm; // Callback before form is sent
         Form.cbAfterSendForm = customFile.cbAfterSendForm; // Callback after form is sent

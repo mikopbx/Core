@@ -19,11 +19,11 @@
 
 namespace MikoPBX\Common\Models;
 
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Core\System\PasswordService;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation\Validator\Regex as RegexValidator;
 use Phalcon\Mvc\Model\Relation;
-use Phalcon\Security\Random;
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class Sip
@@ -38,13 +38,27 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  */
 class Sip extends ModelsBase
 {
-    public const TRANSPORT_UDP = 'udp';
-    public const TRANSPORT_TCP = 'tcp';
-    public const TRANSPORT_TLS = 'tls';
+    public const string TRANSPORT_AUTO = 'udp,tcp';
+    public const string TRANSPORT_UDP = 'udp';
+    public const string TRANSPORT_TCP = 'tcp';
+    public const string TRANSPORT_TLS = 'tls';
 
-    public const REG_TYPE_OUTBOUND = 'outbound';
-    public const REG_TYPE_INBOUND = 'inbound';
-    public const REG_TYPE_NONE = 'none';
+    public const string REG_TYPE_OUTBOUND = 'outbound';
+    public const string REG_TYPE_INBOUND = 'inbound';
+    public const string REG_TYPE_NONE = 'none';
+
+    // CallerID source options
+    public const string CALLERID_SOURCE_DEFAULT = 'default';
+    public const string CALLERID_SOURCE_FROM = 'from';
+    public const string CALLERID_SOURCE_RPID = 'rpid';
+    public const string CALLERID_SOURCE_PAI = 'pai';
+    public const string CALLERID_SOURCE_CUSTOM = 'custom';
+
+    // DID source options
+    public const string DID_SOURCE_DEFAULT = 'default';
+    public const string DID_SOURCE_TO = 'to';
+    public const string DID_SOURCE_DIVERSION = 'diversion';
+    public const string DID_SOURCE_CUSTOM = 'custom';
 
     /**
      * @Primary
@@ -75,7 +89,7 @@ class Sip extends ModelsBase
     public ?string $extension = '';
 
     /**
-     * Type of SIP account
+     * Type of SIP account (peer, friend)
      *
      * @Column(type="string", nullable=true)
      */
@@ -201,13 +215,6 @@ class Sip extends ModelsBase
     public ?string $noregister = '0';
 
     /**
-     * Flag indicating whether to receive incoming calls without authentication (0 = disabled, 1 = enabled)
-     *
-     * @Column(type="string", length=1, nullable=true, default="0")
-     */
-    public ?string $receive_calls_without_auth = '0';
-
-    /**
      * Description of the SIP account
      *
      * @Column(type="string", nullable=true)
@@ -228,6 +235,83 @@ class Sip extends ModelsBase
      * @Column(type="integer", nullable=true, default="0")
      */
     public ?string $weakSecret= '0';
+
+    /**
+     * Source for CallerID extraction (default, from, rpid, pai, custom)
+     *
+     * @Column(type="string", nullable=true, default="default")
+     */
+    public ?string $cid_source = 'default';
+
+    /**
+     * Custom header name for CallerID extraction when cid_source is 'custom'
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $cid_custom_header = '';
+
+    /**
+     * Start delimiter for CallerID parsing from custom header
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $cid_parser_start = '';
+
+    /**
+     * End delimiter for CallerID parsing from custom header
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $cid_parser_end = '';
+
+    /**
+     * Regular expression for CallerID parsing from custom header (optional)
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $cid_parser_regex = '';
+
+    /**
+     * Source for DID extraction (default, to, diversion, custom)
+     *
+     * @Column(type="string", nullable=true, default="default")
+     */
+    public ?string $did_source = 'default';
+
+    /**
+     * Custom header name for DID extraction when did_source is 'custom'
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $did_custom_header = '';
+
+    /**
+     * Start delimiter for DID parsing from custom header
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $did_parser_start = '';
+
+    /**
+     * End delimiter for DID parsing from custom header
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $did_parser_end = '';
+
+    /**
+     * Regular expression for DID parsing from custom header (optional)
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $did_parser_regex = '';
+
+    /**
+     * Debug mode for CallerID/DID processing (0 = disabled, 1 = enabled)
+     *
+     * @Column(type="string", length=1, nullable=true, default="0")
+     */
+    public ?string $cid_did_debug = '0';
 
     /**
      * Initialize the model.
@@ -333,25 +417,31 @@ class Sip extends ModelsBase
             )
         );
 
+        // For inbound providers, validate username contains only allowed characters
+        if ($this->registration_type === self::REG_TYPE_INBOUND && !empty($this->username)) {
+            $validation->add(
+                'username',
+                new RegexValidator(
+                    [
+                        'pattern' => '/^[a-zA-Z0-9._-]+$/',
+                        'message' => $this->t('mo_SipUsernameInvalidCharacters'),
+                    ]
+                )
+            );
+        }
+
         return $this->validate($validation);
     }
 
     /**
      * Generates a random SIP password.
      *
+     * @param int $length Password length (default: 20) for Grandstream GDMS compatibility without special characters
      * @return string The generated SIP password.
      */
-    public static function generateSipPassword(): string
+    public static function generateSipPassword(int $length = 20): string
     {
-        $random = new Random();
-        $passwordLength = 8;
-        try {
-            $password = $random->base64Safe($passwordLength);
-        } catch (\Throwable $e) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            $password = md5(microtime());
-        }
-        return $password;
+        return PasswordService::generate(['length' => $length, 'includeSpecial' => false]);
     }
 
     /**
@@ -359,10 +449,10 @@ class Sip extends ModelsBase
      *
      * @return string The generated unique id.
      */
-    public static function generateUniqueID($alias=''):string
+    public static function generateUniqueID(string $alias = ''):string
     {
         if (empty($alias)){
-            $alias = Extensions::TYPE_SIP.'-PHONE-';
+            $alias = Extensions::PREFIX_SIP;
         }
         return parent::generateUniqueID($alias);
     }

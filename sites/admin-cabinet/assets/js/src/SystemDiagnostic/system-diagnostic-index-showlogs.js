@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global ace, PbxApi, updateLogViewWorker, Ace, UserMessage */
+/* global ace, PbxApi, SyslogAPI, updateLogViewWorker, Ace, UserMessage, SVGTimeline */
 
 /**
  * Represents the system diagnostic logs object.
@@ -63,19 +63,13 @@ const systemDiagnosticLogs = {
      * jQuery object for the file select dropdown.
      * @type {jQuery}
      */
-    $fileSelectDropDown: $('#system-diagnostic-form .filenames-select'),
+    $fileSelectDropDown: null,
 
     /**
      * Array of log items.
      * @type {Array}
      */
     logsItems: [],
-
-    /**
-     * Default log item.
-     * @type {Object}
-     */
-    defaultLogItem: null,
 
     /**
      * jQuery object for the dimmer.
@@ -90,74 +84,393 @@ const systemDiagnosticLogs = {
     $formObj: $('#system-diagnostic-form'),
 
     /**
-     * jQuery object for the filename.
-     * @type {jQuery}
+     * Flag to prevent duplicate API calls during initialization
+     * @type {boolean}
      */
-    $fileName: $('#system-diagnostic-form .filename'),
+    isInitializing: true,
+
+    /**
+     * Flag indicating if time slider mode is enabled
+     * @type {boolean}
+     */
+    timeSliderEnabled: false,
+
+    /**
+     * Current time range for the selected log file
+     * @type {object|null}
+     */
+    currentTimeRange: null,
+
+    /**
+     * Flag indicating if auto-update mode is active
+     * @type {boolean}
+     */
+    isAutoUpdateActive: false,
+
+    /**
+     * Array of cascading filter conditions [{type: 'contains'|'notContains', value: string}]
+     * @type {Array}
+     */
+    filterConditions: [],
+
+    /**
+     * Pending filter text waiting for type selection in popup
+     * @type {string}
+     */
+    pendingFilterText: '',
+
+    /**
+     * Last known actual data end timestamp from API response.
+     * Used to anchor refresh time range to real data instead of wall clock time.
+     * WHY: If a log file hasn't been written to recently (e.g., idle module log),
+     * using "now - period" as startTimestamp produces an empty range with no data.
+     * @type {number|null}
+     */
+    lastKnownDataEnd: null,
 
     /**
      * Initializes the system diagnostic logs.
      */
     initialize() {
+        // Ensure filter type popup starts hidden with clean styles
+        $('#filter-type-popup').addClass('hidden').hide().css({top: '', left: ''});
+
         const aceHeight = window.innerHeight - 250;
 
         // Set the minimum height of the log container
         systemDiagnosticLogs.$dimmer.closest('div').css('min-height', `${aceHeight}px`);
 
-        // Initialize the dropdown menu for log files
+        // Create dropdown UI from hidden input (V5.0 pattern)
+        systemDiagnosticLogs.createDropdownFromHiddenInput();
+
+        // Initialize the dropdown menu for log files with tree support
+        // Initialize Semantic UI dropdown with custom menu generation
         systemDiagnosticLogs.$fileSelectDropDown.dropdown({
-                values: systemDiagnosticLogs.logsItems,
                 onChange: systemDiagnosticLogs.cbOnChangeFile,
                 ignoreCase: true,
                 fullTextSearch: true,
                 forceSelection: false,
+                preserveHTML: true,
+                allowCategorySelection: false,
+                match: 'text',
+                filterRemoteData: false,
+                action: 'activate',
+                templates: {
+                    menu: systemDiagnosticLogs.customDropdownMenu
+                }
         });
+
+        // Initialize folder collapse/expand handlers (uses event delegation)
+        systemDiagnosticLogs.initializeFolderHandlers();
 
         // Initialize the ACE editor for log content
         systemDiagnosticLogs.initializeAce();
 
         // Fetch the list of log files
-        PbxApi.SyslogGetLogsList(systemDiagnosticLogs.cbFormatDropdownResults);
+        SyslogAPI.getLogsList(systemDiagnosticLogs.cbFormatDropdownResults);
 
-        // Event listener for "Show Log" button click
-        systemDiagnosticLogs.$showBtn.on('click', (e) => {
+        // Initialize log level dropdown - V5.0 pattern with DynamicDropdownBuilder
+        systemDiagnosticLogs.initializeLogLevelDropdown();
+
+        // Initialize filter conditions from URL parameter (e.g. CDR links with ?filter=...)
+        systemDiagnosticLogs.initializeFilterFromUrl();
+
+        // Event listener for quick period buttons
+        $(document).on('click', '.period-btn', (e) => {
+            e.preventDefault();
+            const $btn = $(e.currentTarget);
+            const period = $btn.data('period');
+
+            // Update active state
+            $('.period-btn').removeClass('active');
+            $btn.addClass('active');
+
+            systemDiagnosticLogs.applyQuickPeriod(period);
+        });
+
+        // Event listener for "Now" button
+        $(document).on('click', '.now-btn', (e) => {
+            e.preventDefault();
+            if (systemDiagnosticLogs.currentTimeRange) {
+                const end = systemDiagnosticLogs.currentTimeRange.end;
+                const oneHour = 3600;
+                const start = Math.max(end - oneHour, systemDiagnosticLogs.currentTimeRange.start);
+                SVGTimeline.setRange(start, end);
+                systemDiagnosticLogs.loadLogByTimeRange(start, end);
+                $('.period-btn').removeClass('active');
+                $('.period-btn[data-period="3600"]').addClass('active');
+            }
+        });
+
+        // Event listener for log level filter buttons
+        $(document).on('click', '.level-btn', (e) => {
+            e.preventDefault();
+            const $btn = $(e.currentTarget);
+            const level = $btn.data('level');
+
+            // Update active state
+            $('.level-btn').removeClass('active');
+            $btn.addClass('active');
+
+            systemDiagnosticLogs.applyLogLevelFilter(level);
+        });
+
+        // Event listener for "Show Log" button click (delegated)
+        $(document).on('click', '#show-last-log', (e) => {
             e.preventDefault();
             systemDiagnosticLogs.updateLogFromServer();
         });
 
-        // Event listener for "Download Log" button click
-        systemDiagnosticLogs.$downloadBtn.on('click', (e) => {
-            e.preventDefault();
-            const data = systemDiagnosticLogs.$formObj.form('get values');
-            PbxApi.SyslogDownloadLogFile(data.filename, systemDiagnosticLogs.cbDownloadFile);
+        // Listen for hash changes to update selected file
+        $(window).on('hashchange', () => {
+            systemDiagnosticLogs.handleHashChange();
         });
 
-        // Event listener for "Auto Refresh" button click
-        systemDiagnosticLogs.$showAutoBtn.on('click', (e) => {
+        // Event listener for "Download Log" button click (delegated)
+        $(document).on('click', '#download-file', (e) => {
             e.preventDefault();
-            const $reloadIcon = systemDiagnosticLogs.$showAutoBtn.find('i.refresh');
+            const data = systemDiagnosticLogs.$formObj.form('get values');
+            SyslogAPI.downloadLogFile(data.filename, true, systemDiagnosticLogs.cbDownloadFile);
+        });
+
+        // Event listener for "Auto Refresh" button click (delegated)
+        $(document).on('click', '#show-last-log-auto', (e) => {
+            e.preventDefault();
+            const $button = $('#show-last-log-auto');
+            const $reloadIcon = $button.find('.icons i.refresh');
             if ($reloadIcon.hasClass('loading')) {
                 $reloadIcon.removeClass('loading');
+                systemDiagnosticLogs.isAutoUpdateActive = false;
                 updateLogViewWorker.stop();
             } else {
                 $reloadIcon.addClass('loading');
+                systemDiagnosticLogs.isAutoUpdateActive = true;
                 updateLogViewWorker.initialize();
             }
         });
 
-        // Event listener for "Erase file" button click
-        systemDiagnosticLogs.$eraseBtn.on('click', (e) => {
+        // Event listener for the "Erase file" button click (delegated)
+        $(document).on('click', '#erase-file', (e) => {
             e.preventDefault();
             systemDiagnosticLogs.eraseCurrentFileContent();
         });
 
+        // Event listener for Enter keypress on filter input — show type popup
+        $(document).on('keydown', '#filter-input', (event) => {
+            const $popup = $('#filter-type-popup');
+            const isPopupVisible = $popup.is(':visible') && !$popup.hasClass('hidden');
 
-        // Event listener for Enter keypress on input fields
-        $('input').keyup((event) => {
-            if (event.keyCode === 13) {
-                systemDiagnosticLogs.updateLogFromServer();
+            // When popup is open, handle arrow keys and Enter for keyboard navigation
+            if (isPopupVisible) {
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    systemDiagnosticLogs.navigateFilterPopup(event.key === 'ArrowDown' ? 1 : -1);
+                    return;
+                }
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const $focused = $popup.find('.filter-type-option.focused');
+                    if ($focused.length) {
+                        $focused.trigger('click');
+                    }
+                    return;
+                }
+            }
+
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const text = $('#filter-input').val().trim();
+                if (text !== '') {
+                    systemDiagnosticLogs.pendingFilterText = text;
+                    systemDiagnosticLogs.showFilterTypePopup();
+                }
+            } else if (event.key === 'Escape') {
+                systemDiagnosticLogs.hideFilterTypePopup();
+            } else if (event.key === 'Backspace' && $('#filter-input').val() === '') {
+                // Remove last chip on Backspace in empty input
+                if (systemDiagnosticLogs.filterConditions.length > 0) {
+                    systemDiagnosticLogs.removeFilterCondition(
+                        systemDiagnosticLogs.filterConditions.length - 1
+                    );
+                }
             }
         });
+
+        // On blur: auto-add text as "contains" filter if popup is not open
+        $(document).on('blur', '#filter-input', () => {
+            // Delay to allow click on popup option to fire first
+            setTimeout(() => {
+                const $popup = $('#filter-type-popup');
+                if ($popup.is(':visible')) {
+                    // Popup is open (user pressed Enter) — let popup handle it
+                    return;
+                }
+                const text = $('#filter-input').val().trim();
+                if (text !== '') {
+                    systemDiagnosticLogs.addFilterCondition('contains', text);
+                }
+            }, 150);
+        });
+
+        // Event listener for filter type option click
+        $(document).on('click', '.filter-type-option', (e) => {
+            const type = $(e.currentTarget).data('type');
+            systemDiagnosticLogs.addFilterCondition(type, systemDiagnosticLogs.pendingFilterText);
+            systemDiagnosticLogs.pendingFilterText = '';
+            systemDiagnosticLogs.hideFilterTypePopup();
+        });
+
+        // Event listener for removing individual filter chip
+        $(document).on('click', '#filter-labels .delete.icon', (e) => {
+            e.stopPropagation();
+            const index = $(e.currentTarget).closest('.filter-condition-label').data('index');
+            systemDiagnosticLogs.removeFilterCondition(index);
+        });
+
+        // Event listener for "Clear Filter" button click
+        $(document).on('click', '#clear-filter-btn', (e) => {
+            e.preventDefault();
+            systemDiagnosticLogs.clearAllFilterConditions();
+        });
+
+        // Click on container focuses input
+        $(document).on('click', '#filter-conditions-container', (e) => {
+            if ($(e.target).is('#filter-conditions-container') || $(e.target).is('#filter-labels')) {
+                $('#filter-input').focus();
+            }
+        });
+
+        // Hide popup when clicking outside
+        $(document).on('click', (e) => {
+            if (!$(e.target).closest('#filter-type-popup, #filter-input').length) {
+                systemDiagnosticLogs.hideFilterTypePopup();
+            }
+        });
+
+        // Event listener for Fullscreen button click
+        $('.fullscreen-toggle-btn').on('click', systemDiagnosticLogs.toggleFullScreen);
+
+        // Listening for the fullscreen change event
+        document.addEventListener('fullscreenchange', systemDiagnosticLogs.adjustLogHeight);
+
+        // Initial height calculation
+        systemDiagnosticLogs.adjustLogHeight();
+    },
+
+    /**
+     * Toggles the full-screen mode of the 'system-logs-segment' element.
+     * If the element is not in full-screen mode, it requests full-screen mode.
+     * If the element is already in full-screen mode, it exits full-screen mode.
+     * Logs an error message to the console if there is an issue enabling full-screen mode.
+     *
+     * @return {void}
+     */
+    toggleFullScreen() {
+        const logContainer = document.getElementById('system-logs-segment');
+
+        if (!document.fullscreenElement) {
+            logContainer.requestFullscreen().catch((err) => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    },
+
+    /**
+     * Function to adjust the height of the logs depending on the screen mode.
+     */
+    adjustLogHeight() {
+        setTimeout(() => {
+            let aceHeight = window.innerHeight - systemDiagnosticLogs.$logContent.offset().top - 55;
+            if (document.fullscreenElement) {
+                // If fullscreen mode is active
+                aceHeight = window.innerHeight - 80;
+            }
+            // Recalculate the size of the ACE editor
+            $('.log-content-readonly').css('min-height',  `${aceHeight}px`);
+            systemDiagnosticLogs.viewer.resize();
+        }, 300);
+    },
+    /**
+     * Initialize log level dropdown - V5.0 pattern with HTML icons
+     * Static dropdown with colored icons and translations
+     */
+    initializeLogLevelDropdown() {
+        const $hiddenInput = $('#logLevel');
+
+        // Check if dropdown already exists
+        if ($('#logLevel-dropdown').length) {
+            return;
+        }
+
+        // Create dropdown HTML with colored icons
+        const $dropdown = $('<div>', {
+            id: 'logLevel-dropdown',
+            class: 'ui selection dropdown'
+        });
+
+        const $text = $('<div>', { class: 'text' }).text(globalTranslate.sd_AllLevels);
+        const $icon = $('<i>', { class: 'dropdown icon' });
+        const $menu = $('<div>', { class: 'menu' });
+
+        // Build menu items with colored icons
+        const items = [
+            { value: '', text: globalTranslate.sd_AllLevels, icon: '' },
+            { value: 'ERROR', text: globalTranslate.sd_Error, icon: '<i class="exclamation circle red icon"></i>' },
+            { value: 'WARNING', text: globalTranslate.sd_Warning, icon: '<i class="exclamation triangle orange icon"></i>' },
+            { value: 'NOTICE', text: globalTranslate.sd_Notice, icon: '<i class="info circle blue icon"></i>' },
+            { value: 'INFO', text: globalTranslate.sd_Info, icon: '<i class="circle grey icon"></i>' },
+            { value: 'DEBUG', text: globalTranslate.sd_Debug, icon: '<i class="bug purple icon"></i>' }
+        ];
+
+        items.forEach(item => {
+            const $item = $('<div>', {
+                class: 'item',
+                'data-value': item.value
+            }).html(item.icon + item.text);
+            $menu.append($item);
+        });
+
+        $dropdown.append($text, $icon, $menu);
+        $hiddenInput.after($dropdown);
+
+        // Initialize Semantic UI dropdown
+        $dropdown.dropdown({
+            onChange: (value) => {
+                $hiddenInput.val(value).trigger('change');
+                systemDiagnosticLogs.updateLogFromServer(true);
+            }
+        });
+    },
+
+    /**
+     * Creates dropdown UI element from hidden input field (V5.0 pattern)
+     */
+    createDropdownFromHiddenInput() {
+        const $hiddenInput = $('#filenames');
+
+        if (!$hiddenInput.length) {
+            console.error('Hidden input #filenames not found');
+            return;
+        }
+
+        const $dropdown = $('<div>', {
+            id: 'filenames-dropdown',
+            class: 'ui search selection dropdown filenames-select fluid'
+        });
+
+        $dropdown.append(
+            $('<i>', { class: 'dropdown icon' }),
+            $('<input>', { type: 'text', class: 'search', tabindex: 0 }),
+            $('<div>', { class: 'default text' }).text('Select log file'),
+            $('<div>', { class: 'menu' })
+        );
+
+        $hiddenInput.before($dropdown);
+        $hiddenInput.hide();
+
+        systemDiagnosticLogs.$fileSelectDropDown = $dropdown;
     },
 
     /**
@@ -183,12 +496,297 @@ const systemDiagnosticLogs = {
             readOnly: true,
         });
 
-        // Resize the ACE editor to fit the window height
-        $(window).load(function () {
-            const aceHeight = window.innerHeight - systemDiagnosticLogs.$logContent.offset().top - 50;
-            $('.log-content-readonly').css('min-height', `${aceHeight}px`);
-            systemDiagnosticLogs.viewer.resize();
+    },
+
+    /**
+     * Builds a hierarchical tree structure from flat file paths
+     * @param {Object} files - The files object from API response
+     * @param {string} defaultPath - The default selected file path
+     * @returns {Array} Tree structure for the dropdown
+     */
+    buildTreeStructure(files, defaultPath) {
+        const tree = {};
+        
+        // Build the tree structure
+        Object.entries(files).forEach(([key, fileData]) => {
+            // Use fileData.path as the actual file path
+            const filePath = fileData.path || key;
+            const parts = filePath.split('/');
+            let current = tree;
+            
+            parts.forEach((part, index) => {
+                if (index === parts.length - 1) {
+                    // This is a file
+                    current[part] = {
+                        type: 'file',
+                        path: filePath,
+                        size: fileData.size,
+                        default: (defaultPath && defaultPath === filePath) || (!defaultPath && fileData.default)
+                    };
+                } else {
+                    // This is a directory
+                    if (!current[part]) {
+                        current[part] = {
+                            type: 'folder',
+                            children: {}
+                        };
+                    }
+                    current = current[part].children;
+                }
+            });
         });
+        
+        // Convert tree to dropdown items
+        return this.treeToDropdownItems(tree, '');
+    },
+    
+    /**
+     * Converts tree structure to dropdown items with proper formatting
+     * @param {Object} tree - The tree structure
+     * @param {string} prefix - Prefix for indentation
+     * @param {string} parentFolder - Parent folder name for grouping
+     * @returns {Array} Formatted dropdown items
+     */
+    treeToDropdownItems(tree, prefix, parentFolderPath = '') {
+        const items = [];
+
+        // Sort entries: folders first, then files
+        const entries = Object.entries(tree).sort(([aKey, aVal], [bKey, bVal]) => {
+            if (aVal.type === 'folder' && bVal.type === 'file') return -1;
+            if (aVal.type === 'file' && bVal.type === 'folder') return 1;
+            return aKey.localeCompare(bKey);
+        });
+
+        entries.forEach(([key, value]) => {
+            if (value.type === 'folder') {
+                // Build unique folder path for hierarchical collapse
+                const folderPath = parentFolderPath ? `${parentFolderPath}/${key}` : key;
+
+                // Add folder header with toggle capability and indentation for nested folders
+                items.push({
+                    name: `${prefix}<i class="caret down icon folder-toggle"></i><i class="folder icon"></i> ${key}`,
+                    value: '',
+                    disabled: true,
+                    type: 'folder',
+                    folderName: folderPath,
+                    parentFolder: parentFolderPath
+                });
+
+                // Add children with increased indentation and parent folder path
+                const childItems = this.treeToDropdownItems(value.children, prefix + '&nbsp;&nbsp;&nbsp;&nbsp;', folderPath);
+                items.push(...childItems);
+            } else {
+                // Add file item with parent folder reference
+                items.push({
+                    name: `${prefix}<i class="file outline icon"></i> ${key} (${value.size})`,
+                    value: value.path,
+                    selected: value.default,
+                    type: 'file',
+                    parentFolder: parentFolderPath
+                });
+            }
+        });
+
+        return items;
+    },
+    
+    /**
+     * Creates custom dropdown menu HTML for log files with collapsible folders
+     * @param {Object} response - The response containing dropdown menu options
+     * @param {Object} fields - The fields in the response to use for the menu options
+     * @returns {string} The HTML string for the custom dropdown menu
+     */
+    customDropdownMenu(response, fields) {
+        const values = response[fields.values] || {};
+        let html = '';
+
+        $.each(values, (index, option) => {
+            // For tree structure items
+            if (systemDiagnosticLogs.logsItems && systemDiagnosticLogs.logsItems[index]) {
+                const item = systemDiagnosticLogs.logsItems[index];
+
+                if (item.type === 'folder') {
+                    // Folder item - clickable header for collapse/expand
+                    // Not using 'disabled' class as it blocks pointer events
+                    const folderParentAttr = item.parentFolder ? `data-parent="${item.parentFolder}"` : '';
+                    html += `<div class="folder-header item" data-folder="${item.folderName}" ${folderParentAttr} data-value="" data-text="${item.folderName}" style="pointer-events: auto !important; cursor: pointer; font-weight: bold; background: #f9f9f9;">${item.name}</div>`;
+                } else {
+                    // File item with parent folder reference for collapse
+                    // data-text contains full path so Fomantic search matches by folder name too
+                    const selected = item.selected ? 'selected active' : '';
+                    const parentAttr = item.parentFolder ? `data-parent="${item.parentFolder}"` : '';
+                    html += `<div class="item file-item ${selected}" data-value="${option[fields.value]}" data-text="${option[fields.value]}" ${parentAttr}>${item.name}</div>`;
+                }
+            } else {
+                // Fallback to regular item
+                const maybeDisabled = (option[fields.disabled]) ? 'disabled ' : '';
+                html += `<div class="${maybeDisabled}item" data-value="${option[fields.value]}">${option[fields.name]}</div>`;
+            }
+        });
+
+        return html;
+    },
+
+    /**
+     * Initializes folder collapse/expand handlers and search behavior
+     */
+    initializeFolderHandlers() {
+        const $dropdown = systemDiagnosticLogs.$fileSelectDropDown;
+
+        // Handle folder header clicks for collapse/expand
+        // Use document-level handler with capture phase to intercept before Fomantic
+        document.addEventListener('click', (e) => {
+            // Check if click is inside our dropdown's folder-header
+            const folderHeader = e.target.closest('#filenames-dropdown .folder-header');
+            if (!folderHeader) return;
+
+            e.stopImmediatePropagation();
+            e.preventDefault();
+
+            const $folder = $(folderHeader);
+            const folderPath = $folder.data('folder');
+            const $toggle = $folder.find('.folder-toggle');
+            const $menu = $dropdown.find('.menu');
+
+            // Toggle folder state
+            const isCollapsed = $toggle.hasClass('right');
+
+            if (isCollapsed) {
+                // Expand folder - show only direct children
+                $toggle.removeClass('right').addClass('down');
+                // Show direct child files and child folder headers
+                $menu.find(`.file-item[data-parent="${folderPath}"]`).show();
+                $menu.find(`.folder-header[data-parent="${folderPath}"]`).show();
+            } else {
+                // Collapse folder - hide all descendants recursively
+                $toggle.removeClass('down').addClass('right');
+                systemDiagnosticLogs.collapseDescendants($menu, folderPath);
+            }
+        }, true); // capture phase - fires before bubbling
+
+        // Handle search input - show all items when searching
+        $dropdown.on('input', 'input.search', (e) => {
+            const searchValue = $(e.target).val().trim();
+            const $menu = $dropdown.find('.menu');
+
+            if (searchValue.length > 0) {
+                // Show all items and expand all folders during search
+                $menu.find('.file-item').show();
+                $menu.find('.folder-header').show();
+                $menu.find('.folder-toggle').removeClass('right').addClass('down');
+            } else {
+                // Restore collapsed state when search is cleared
+                $menu.find('.folder-header').each((_, folder) => {
+                    const $folder = $(folder);
+                    const folderPath = $folder.data('folder');
+                    const isCollapsed = $folder.find('.folder-toggle').hasClass('right');
+                    if (isCollapsed) {
+                        systemDiagnosticLogs.collapseDescendants($menu, folderPath);
+                    }
+                });
+            }
+        });
+    },
+
+    /**
+     * Recursively hides all descendants (files and subfolders) of a given folder
+     * and marks child folders as collapsed
+     * @param {jQuery} $menu - The dropdown menu element
+     * @param {string} folderPath - The folder path whose descendants to hide
+     */
+    collapseDescendants($menu, folderPath) {
+        // Hide direct child files
+        $menu.find(`.file-item[data-parent="${folderPath}"]`).hide();
+
+        // Find direct child folders, collapse them recursively, then hide
+        $menu.find(`.folder-header[data-parent="${folderPath}"]`).each((_, childFolder) => {
+            const $childFolder = $(childFolder);
+            const childPath = $childFolder.data('folder');
+
+            // Mark child folder as collapsed
+            $childFolder.find('.folder-toggle').removeClass('down').addClass('right');
+
+            // Recursively collapse its descendants
+            systemDiagnosticLogs.collapseDescendants($menu, childPath);
+
+            // Hide the child folder header itself
+            $childFolder.hide();
+        });
+    },
+
+    /**
+     * Expands the folder containing the specified file
+     * @param {string} filePath - The file path to find and expand its parent folder
+     */
+    expandFolderForFile(filePath) {
+        if (!filePath) return;
+
+        const $menu = systemDiagnosticLogs.$fileSelectDropDown.find('.menu');
+        const $fileItem = $menu.find(`.file-item[data-value="${filePath}"]`);
+
+        if ($fileItem.length) {
+            // Walk up the ancestor chain expanding each folder
+            let parentPath = $fileItem.data('parent');
+            while (parentPath) {
+                const $folder = $menu.find(`.folder-header[data-folder="${parentPath}"]`);
+                if (!$folder.length) break;
+
+                const $toggle = $folder.find('.folder-toggle');
+
+                // Show the folder header itself (may be hidden if parent was collapsed)
+                $folder.show();
+
+                // Expand if collapsed
+                if ($toggle.hasClass('right')) {
+                    $toggle.removeClass('right').addClass('down');
+                    $menu.find(`.file-item[data-parent="${parentPath}"]`).show();
+                    $menu.find(`.folder-header[data-parent="${parentPath}"]`).show();
+                }
+
+                // Move to grandparent
+                parentPath = $folder.data('parent');
+            }
+        }
+    },
+
+    /**
+     * Handles hash changes to update the selected file
+     */
+    handleHashChange() {
+        // Skip during initialization to prevent duplicate API calls
+        if (systemDiagnosticLogs.isInitializing) {
+            return;
+        }
+
+        const hash = window.location.hash;
+        if (hash && hash.startsWith('#file=')) {
+            const filePath = decodeURIComponent(hash.substring(6));
+            if (filePath && systemDiagnosticLogs.$fileSelectDropDown.dropdown('get value') !== filePath) {
+                // Check if the file exists in dropdown items
+                const fileExists = systemDiagnosticLogs.logsItems.some(item =>
+                    item.type === 'file' && item.value === filePath
+                );
+                if (fileExists) {
+                    // Expand parent folder before selecting file
+                    systemDiagnosticLogs.expandFolderForFile(filePath);
+                    systemDiagnosticLogs.$fileSelectDropDown.dropdown('set selected', filePath);
+                    systemDiagnosticLogs.$fileSelectDropDown.dropdown('set text', filePath);
+                    systemDiagnosticLogs.$formObj.form('set value', 'filename', filePath);
+                    systemDiagnosticLogs.updateLogFromServer();
+                }
+            }
+        }
+    },
+
+    /**
+     * Gets the file path from URL hash if present
+     */
+    getFileFromHash() {
+        const hash = window.location.hash;
+        if (hash && hash.startsWith('#file=')) {
+            return decodeURIComponent(hash.substring(6));
+        }
+        return '';
     },
 
     /**
@@ -196,35 +794,101 @@ const systemDiagnosticLogs = {
      * @param {Object} response - The response data.
      */
     cbFormatDropdownResults(response) {
-        if (response === false) {
+        // Check if response is valid
+        if (!response || !response.result || !response.data || !response.data.files) {
+            // Hide dimmer only if not in auto-update mode
+            if (!systemDiagnosticLogs.isAutoUpdateActive) {
+                systemDiagnosticLogs.$dimmer.removeClass('active');
+            }
             return;
         }
-        // Check if there is a default value set for the filename input field
-        let defVal = '';
-        const fileName = systemDiagnosticLogs.$formObj.form('get value', 'filename');
-        if (systemDiagnosticLogs.logsItems.length === 0 && fileName !== '') {
-            defVal = fileName.trim();
+
+        const files = response.data.files;
+
+        // Check for file from hash first
+        let defVal = systemDiagnosticLogs.getFileFromHash();
+
+        // If no hash value, check if there is a default value set for the filename input field
+        if (!defVal) {
+            const fileName = systemDiagnosticLogs.$formObj.form('get value', 'filename');
+            if (fileName !== '') {
+                defVal = fileName.trim();
+            }
         }
 
-        systemDiagnosticLogs.logsItems = [];
-        const files = response.files;
+        // Build tree structure from files
+        systemDiagnosticLogs.logsItems = systemDiagnosticLogs.buildTreeStructure(files, defVal);
 
-        // Iterate through each file and create the dropdown menu options
-        $.each(files, (index, item) => {
-
-            if (defVal !== '') {
-                item.default = (defVal === item.path);
+        // Create values array for dropdown with all items (including folders)
+        const dropdownValues = systemDiagnosticLogs.logsItems.map((item, index) => {
+            if (item.type === 'folder') {
+                return {
+                    name: item.name.replace(/<[^>]*>/g, ''), // Remove HTML tags for search
+                    value: '',
+                    disabled: true
+                };
+            } else {
+                return {
+                    name: item.name.replace(/<[^>]*>/g, ''), // Remove HTML tags for search
+                    value: item.value,
+                    selected: item.selected
+                };
             }
-            // Create an option object for each file
-            systemDiagnosticLogs.logsItems.push({
-                name: `${index} (${item.size})`,
-                value: item.path,
-                selected: item.default
-            });
+        });
+        
+        // Update dropdown with values
+        systemDiagnosticLogs.$fileSelectDropDown.dropdown('setup menu', {
+            values: dropdownValues
         });
 
-        // Update the dropdown menu values with the newly formatted options
-        systemDiagnosticLogs.$fileSelectDropDown.dropdown('change values', systemDiagnosticLogs.logsItems);
+        // Set the default selected value if any
+        const selectedItem = systemDiagnosticLogs.logsItems.find(item => item.selected);
+        if (selectedItem) {
+            // Use setTimeout to ensure dropdown is fully initialized
+            setTimeout(() => {
+                // Expand parent folder before selecting file
+                systemDiagnosticLogs.expandFolderForFile(selectedItem.value);
+                // Setting selected value will trigger onChange callback which calls updateLogFromServer()
+                systemDiagnosticLogs.$fileSelectDropDown.dropdown('set selected', selectedItem.value);
+                // Force refresh the dropdown to show the selected value
+                systemDiagnosticLogs.$fileSelectDropDown.dropdown('refresh');
+                // Also set the text to show full path
+                systemDiagnosticLogs.$fileSelectDropDown.dropdown('set text', selectedItem.value);
+                systemDiagnosticLogs.$formObj.form('set value', 'filename', selectedItem.value);
+            }, 100);
+        } else if (defVal) {
+            // If we have a default value but no item was marked as selected,
+            // try to find and select it manually
+            const itemToSelect = systemDiagnosticLogs.logsItems.find(item =>
+                item.type === 'file' && item.value === defVal
+            );
+            if (itemToSelect) {
+                setTimeout(() => {
+                    // Expand parent folder before selecting file
+                    systemDiagnosticLogs.expandFolderForFile(itemToSelect.value);
+                    // Setting selected value will trigger onChange callback which calls updateLogFromServer()
+                    systemDiagnosticLogs.$fileSelectDropDown.dropdown('set selected', itemToSelect.value);
+                    systemDiagnosticLogs.$fileSelectDropDown.dropdown('refresh');
+                    systemDiagnosticLogs.$fileSelectDropDown.dropdown('set text', itemToSelect.value);
+                    systemDiagnosticLogs.$formObj.form('set value', 'filename', itemToSelect.value);
+                }, 100);
+            } else {
+                // Hide the dimmer after loading only if no file is selected
+                if (!systemDiagnosticLogs.isAutoUpdateActive) {
+                    systemDiagnosticLogs.$dimmer.removeClass('active');
+                }
+            }
+        } else {
+            // Hide the dimmer after loading only if no file is selected
+            if (!systemDiagnosticLogs.isAutoUpdateActive) {
+                systemDiagnosticLogs.$dimmer.removeClass('active');
+            }
+        }
+
+        // Mark initialization as complete to allow hashchange handler to work
+        setTimeout(() => {
+            systemDiagnosticLogs.isInitializing = false;
+        }, 200);
     },
 
     /**
@@ -235,28 +899,715 @@ const systemDiagnosticLogs = {
         if (value.length === 0) {
             return;
         }
+
+        // Set dropdown text to show the full file path
+        systemDiagnosticLogs.$fileSelectDropDown.dropdown('set text', value);
+
         systemDiagnosticLogs.$formObj.form('set value', 'filename', value);
-        systemDiagnosticLogs.updateLogFromServer();
+
+        // Update URL hash with the selected file
+        window.location.hash = 'file=' + encodeURIComponent(value);
+
+        // Reset filters only if user manually changed the file (not during initialization)
+        if (!systemDiagnosticLogs.isInitializing) {
+            systemDiagnosticLogs.resetFilters();
+        }
+
+        // Hide auto-refresh button for rotated log files (they don't change)
+        systemDiagnosticLogs.updateAutoRefreshVisibility(value);
+
+        // Reset last known data end for new file
+        systemDiagnosticLogs.lastKnownDataEnd = null;
+
+        // Check if time range is available for this file
+        systemDiagnosticLogs.checkTimeRangeAvailability(value);
+    },
+
+    /**
+     * Check if file is a rotated log file (archived, no longer being written to)
+     * Rotated files have suffixes like: .0, .1, .2, .gz, .1.gz, .2.gz, etc.
+     * @param {string} filename - Log file path
+     * @returns {boolean} True if file is rotated/archived
+     */
+    isRotatedLogFile(filename) {
+        if (!filename) {
+            return false;
+        }
+        // Match patterns: .0, .1, .2, ..., .gz, .0.gz, .1.gz, etc.
+        return /\.\d+($|\.gz$)|\.gz$/.test(filename);
+    },
+
+    /**
+     * Update auto-refresh button visibility based on file type
+     * Hide for rotated files, show for active log files
+     * @param {string} filename - Log file path
+     */
+    updateAutoRefreshVisibility(filename) {
+        const $autoBtn = $('#show-last-log-auto');
+        const isRotated = systemDiagnosticLogs.isRotatedLogFile(filename);
+
+        if (isRotated) {
+            // Stop auto-refresh if it was active
+            if (systemDiagnosticLogs.isAutoUpdateActive) {
+                $autoBtn.find('.icons i.refresh').removeClass('loading');
+                systemDiagnosticLogs.isAutoUpdateActive = false;
+                updateLogViewWorker.stop();
+            }
+            $autoBtn.hide();
+        } else {
+            $autoBtn.show();
+        }
+    },
+
+    /**
+     * Show filter type popup below the filter input.
+     * Pre-selects the first option for immediate keyboard navigation.
+     */
+    showFilterTypePopup() {
+        const $popup = $('#filter-type-popup');
+        $popup.removeClass('hidden')
+            .css({top: '', left: '', display: ''})
+            .show();
+        // Pre-select first option for keyboard navigation
+        $popup.find('.filter-type-option').removeClass('focused');
+        $popup.find('.filter-type-option').first().addClass('focused');
+    },
+
+    /**
+     * Hide the filter type popup
+     */
+    hideFilterTypePopup() {
+        const $popup = $('#filter-type-popup');
+        $popup.find('.filter-type-option').removeClass('focused');
+        $popup.addClass('hidden').hide();
+    },
+
+    /**
+     * Navigate filter type popup options with arrow keys.
+     * Wraps around at boundaries.
+     * @param {number} direction - 1 for down, -1 for up
+     */
+    navigateFilterPopup(direction) {
+        const $popup = $('#filter-type-popup');
+        const $options = $popup.find('.filter-type-option');
+        const $focused = $options.filter('.focused');
+
+        let index = $options.index($focused);
+        index += direction;
+
+        // Wrap around
+        if (index < 0) {
+            index = $options.length - 1;
+        }
+        if (index >= $options.length) {
+            index = 0;
+        }
+
+        $options.removeClass('focused');
+        $options.eq(index).addClass('focused');
+    },
+
+    /**
+     * Add a filter condition, sync to form, render labels, and reload log
+     * @param {string} type - 'contains' or 'notContains'
+     * @param {string} value - the filter text
+     */
+    addFilterCondition(type, value) {
+        if (!value || value.trim() === '') {
+            return;
+        }
+        systemDiagnosticLogs.filterConditions.push({type, value: value.trim()});
+        systemDiagnosticLogs.syncFilterConditionsToForm();
+        systemDiagnosticLogs.renderFilterLabels();
+        $('#filter-input').val('');
+        systemDiagnosticLogs.updateLogFromServer(true);
+    },
+
+    /**
+     * Remove a filter condition by index
+     * @param {number} index - condition index to remove
+     */
+    removeFilterCondition(index) {
+        systemDiagnosticLogs.filterConditions.splice(index, 1);
+        systemDiagnosticLogs.syncFilterConditionsToForm();
+        systemDiagnosticLogs.renderFilterLabels();
+        systemDiagnosticLogs.updateLogFromServer(true);
+    },
+
+    /**
+     * Clear all filter conditions
+     */
+    clearAllFilterConditions() {
+        systemDiagnosticLogs.filterConditions = [];
+        systemDiagnosticLogs.syncFilterConditionsToForm();
+        systemDiagnosticLogs.renderFilterLabels();
+        $('#filter-input').val('');
+        systemDiagnosticLogs.updateLogFromServer(true);
+    },
+
+    /**
+     * Serialize filterConditions array as JSON into hidden #filter field
+     */
+    syncFilterConditionsToForm() {
+        const value = systemDiagnosticLogs.filterConditions.length > 0
+            ? JSON.stringify(systemDiagnosticLogs.filterConditions)
+            : '';
+        systemDiagnosticLogs.$formObj.form('set value', 'filter', value);
+    },
+
+    /**
+     * Render label chips inside #filter-labels from filterConditions
+     */
+    renderFilterLabels() {
+        const $container = $('#filter-labels');
+        $container.empty();
+
+        systemDiagnosticLogs.filterConditions.forEach((condition, index) => {
+            const cssClass = condition.type === 'notContains' ? 'not-contains' : 'contains';
+            const iconClass = condition.type === 'notContains' ? 'ban' : 'check circle';
+            const iconColor = condition.type === 'notContains' ? 'red' : 'teal';
+            const $label = $(`<span class="filter-condition-label ${cssClass}" data-index="${index}"></span>`);
+            $label.append(`<i class="${iconClass} icon ${iconColor}"></i>`);
+            $label.append(`<span>${$('<span>').text(condition.value).html()}</span>`);
+            $label.append('<i class="delete icon"></i>');
+            $container.append($label);
+        });
+    },
+
+    /**
+     * Initialize filter conditions from URL parameter or existing hidden field value.
+     * Handles legacy plain-string format (e.g. "[C-00004721]&[C-00004723]" from CDR links)
+     * by converting &-separated parts into individual "contains" conditions.
+     */
+    initializeFilterFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const filterParam = urlParams.get('filter');
+
+        if (filterParam && filterParam.trim() !== '') {
+            const trimmed = filterParam.trim();
+
+            // Check if it's JSON format
+            if (trimmed.startsWith('[')) {
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    if (Array.isArray(parsed)) {
+                        systemDiagnosticLogs.filterConditions = parsed.filter(
+                            (c) => c && c.value && c.type
+                        );
+                    }
+                } catch (e) {
+                    // Invalid JSON, treat as legacy
+                    systemDiagnosticLogs.filterConditions = trimmed
+                        .split('&')
+                        .map((p) => p.trim())
+                        .filter((p) => p !== '')
+                        .map((p) => ({type: 'contains', value: p}));
+                }
+            } else {
+                // Legacy plain string: split by & into contains conditions
+                systemDiagnosticLogs.filterConditions = trimmed
+                    .split('&')
+                    .map((p) => p.trim())
+                    .filter((p) => p !== '')
+                    .map((p) => ({type: 'contains', value: p}));
+            }
+
+            systemDiagnosticLogs.syncFilterConditionsToForm();
+            systemDiagnosticLogs.renderFilterLabels();
+        }
+    },
+
+    /**
+     * Reset all filters when changing log files
+     */
+    resetFilters() {
+        // Deactivate all quick-period buttons
+        $('.period-btn').removeClass('active');
+
+        // Reset logLevel dropdown to default (All Levels - empty value)
+        $('#logLevel-dropdown').dropdown('set selected', '');
+        systemDiagnosticLogs.$formObj.form('set value', 'logLevel', '');
+
+        // NOTE: Filter conditions are intentionally preserved when changing files.
+        // When user navigates from CDR with filter params (e.g. ?filter=[C-00004721]),
+        // the filters should persist across file changes (verbose → verbose.0).
+    },
+
+    /**
+     * Update period buttons visibility based on log file duration
+     * Shows only buttons for periods that are <= log file duration
+     * Hides entire container if no buttons are visible
+     * @param {number} logDuration - Log file duration in seconds
+     */
+    updatePeriodButtonsVisibility(logDuration) {
+        const $periodButtons = $('.period-btn');
+        const $periodContainer = $('#period-buttons');
+        let largestVisiblePeriod = 0;
+        let $largestVisibleButton = null;
+        let visibleCount = 0;
+
+        $periodButtons.each((index, button) => {
+            const $button = $(button);
+            const period = parseInt($button.data('period'), 10);
+
+            // Show button if period is less than or equal to log duration
+            // Add 10% tolerance for rounding/edge cases
+            if (period <= logDuration * 1.1) {
+                $button.show();
+                visibleCount++;
+                // Track the largest visible period for default selection
+                if (period > largestVisiblePeriod) {
+                    largestVisiblePeriod = period;
+                    $largestVisibleButton = $button;
+                }
+            } else {
+                $button.hide();
+            }
+        });
+
+        // Hide entire container if no buttons are visible
+        // Also toggle class on parent to remove gap for proper alignment
+        const $timeControlsInline = $('.time-controls-inline');
+        if (visibleCount === 0) {
+            $periodContainer.hide();
+            $timeControlsInline.addClass('no-period-buttons');
+        } else {
+            $periodContainer.show();
+            $timeControlsInline.removeClass('no-period-buttons');
+        }
+
+        // Set largest visible button as active (if no button is currently active)
+        if ($largestVisibleButton && !$periodButtons.filter('.active').is(':visible')) {
+            $periodButtons.removeClass('active');
+            $largestVisibleButton.addClass('active');
+        }
+    },
+
+    /**
+     * Check if time range is available for the selected log file
+     * @param {string} filename - Log file path
+     */
+    checkTimeRangeAvailability(filename) {
+        // Show dimmer only if not in auto-update mode
+        if (!systemDiagnosticLogs.isAutoUpdateActive) {
+            systemDiagnosticLogs.$dimmer.addClass('active');
+        }
+
+        try {
+            // Try to get time range for this file
+            SyslogAPI.getLogTimeRange(filename, (response) => {
+                if (response && response.result && response.data && response.data.time_range) {
+                    // Time range is available - use time-based navigation
+                    systemDiagnosticLogs.initializeNavigation(response.data);
+                } else {
+                    // Time range not available - use line number fallback
+                    systemDiagnosticLogs.initializeNavigation(null);
+                }
+            });
+        } catch (error) {
+            console.error('Error checking time range:', error);
+            // Fallback to line number mode
+            systemDiagnosticLogs.initializeNavigation(null);
+        }
+    },
+
+    /**
+     * Initialize universal navigation with time or line number mode
+     * @param {object} timeRangeData - Time range data from API (optional)
+     */
+    initializeNavigation(timeRangeData) {
+        // Check if we have valid time range with actual timestamps (not null)
+        const hasValidTimeRange = timeRangeData &&
+            timeRangeData.time_range &&
+            typeof timeRangeData.time_range.start === 'number' &&
+            typeof timeRangeData.time_range.end === 'number';
+
+        // Check if time range is meaningful (more than 1 second of data)
+        const hasMultipleTimestamps = hasValidTimeRange &&
+            (timeRangeData.time_range.end - timeRangeData.time_range.start) > 1;
+
+        if (hasValidTimeRange && hasMultipleTimestamps) {
+            // Time-based mode
+            this.timeSliderEnabled = true;
+            this.currentTimeRange = timeRangeData.time_range;
+
+            // Calculate log file duration and update period buttons visibility
+            const logDuration = this.currentTimeRange.end - this.currentTimeRange.start;
+            this.updatePeriodButtonsVisibility(logDuration);
+
+            // Show period buttons for time-based navigation
+            $('#period-buttons').show();
+
+            // Set server timezone offset
+            if (timeRangeData.server_timezone_offset !== undefined) {
+                SVGTimeline.serverTimezoneOffset = timeRangeData.server_timezone_offset;
+            }
+
+            // Initialize SVG timeline with time range
+            SVGTimeline.initialize('#time-slider-container', this.currentTimeRange);
+
+            // Set callback for time window changes
+            // Always use latest=true so the most recent log entries are displayed
+            // Truncation (if any) happens on the left side, which is less disruptive
+            SVGTimeline.onRangeChange = (start, end, draggedHandle) => {
+                systemDiagnosticLogs.loadLogByTimeRange(start, end, true);
+            };
+
+            // Set callback for truncated zone clicks
+            // Left zones (timeline-truncated-left): data was cut from beginning, load with latest=true
+            // Right zones (timeline-truncated-right): data was cut from end, load with latest=false
+            SVGTimeline.onTruncatedZoneClick = (start, end, isLeftZone) => {
+                systemDiagnosticLogs.loadLogByTimeRange(start, end, isLeftZone);
+            };
+
+            // Load initial chunk with latest=true to show newest entries
+            // Pass isInitialLoad=true to suppress truncated zone display on first load
+            // Use the largest visible period button or 1 hour as fallback
+            const $activeButton = $('.period-btn.active:visible');
+            const initialPeriod = $activeButton.length > 0
+                ? parseInt($activeButton.data('period'), 10)
+                : Math.min(3600, logDuration);
+            const initialStart = Math.max(this.currentTimeRange.end - initialPeriod, this.currentTimeRange.start);
+            this.loadLogByTimeRange(initialStart, this.currentTimeRange.end, true, true);
+        } else {
+            // Line number fallback mode
+            this.timeSliderEnabled = false;
+            this.currentTimeRange = null;
+
+            // Hide period buttons in line number mode
+            $('#period-buttons').hide();
+
+            // Initialize SVG timeline with line numbers
+            // For now, use default range until we get total line count
+            const lineRange = { start: 0, end: 10000 };
+            SVGTimeline.initialize('#time-slider-container', lineRange, 'lines');
+
+            // Set callback for line range changes
+            SVGTimeline.onRangeChange = (start, end) => {
+                // Load by line numbers (offset/lines)
+                systemDiagnosticLogs.loadLogByLines(Math.floor(start), Math.ceil(end - start));
+            };
+
+            // Load initial lines
+            this.updateLogFromServer();
+        }
+    },
+
+    /**
+     * Load log by line numbers (for files without timestamps)
+     * @param {number} offset - Starting line number
+     * @param {number} lines - Number of lines to load
+     */
+    loadLogByLines(offset, lines) {
+        // Show dimmer only if not in auto-update mode
+        if (!systemDiagnosticLogs.isAutoUpdateActive) {
+            systemDiagnosticLogs.$dimmer.addClass('active');
+        }
+
+        const params = {
+            filename: this.$formObj.form('get value', 'filename'),
+            filter: this.$formObj.form('get value', 'filter') || '',
+            logLevel: this.$formObj.form('get value', 'logLevel') || '',
+            offset: Math.max(0, offset),
+            lines: Math.min(5000, Math.max(100, lines))
+        };
+
+        SyslogAPI.getLogFromFile(params, (response) => {
+            // Hide dimmer only if not in auto-update mode
+            if (!systemDiagnosticLogs.isAutoUpdateActive) {
+                systemDiagnosticLogs.$dimmer.removeClass('active');
+            }
+            if (response && response.result && response.data && 'content' in response.data) {
+                // Set content in editor (even if empty)
+                this.viewer.setValue(response.data.content || '', -1);
+
+                // Go to the beginning
+                this.viewer.gotoLine(1);
+                this.viewer.scrollToLine(0, true, true, () => {});
+            }
+        });
+    },
+
+    /**
+     * Load log by time range
+     * @param {number} startTimestamp - Start timestamp
+     * @param {number} endTimestamp - End timestamp
+     * @param {boolean} latest - If true, return newest lines first (for initial load)
+     * @param {boolean} isInitialLoad - If true, suppress truncated zone display
+     * @param {boolean} isAutoUpdate - If true, skip timeline recalculation (only update content)
+     */
+    loadLogByTimeRange(startTimestamp, endTimestamp, latest = false, isInitialLoad = false, isAutoUpdate = false) {
+        // Show dimmer only if not in auto-update mode
+        if (!systemDiagnosticLogs.isAutoUpdateActive) {
+            systemDiagnosticLogs.$dimmer.addClass('active');
+        }
+
+        const params = {
+            filename: this.$formObj.form('get value', 'filename'),
+            filter: this.$formObj.form('get value', 'filter') || '',
+            logLevel: this.$formObj.form('get value', 'logLevel') || '',
+            dateFrom: startTimestamp,
+            dateTo: endTimestamp,
+            lines: 5000, // Maximum lines to load
+            latest: latest // If true, return newest lines (tail | tac)
+        };
+
+        try {
+            SyslogAPI.getLogFromFile(params, (response) => {
+                if (response && response.result && response.data && 'content' in response.data) {
+                    const newContent = response.data.content || '';
+
+                    if (isAutoUpdate && newContent.length > 0) {
+                        // Auto-update mode: append only new lines
+                        const currentContent = this.viewer.getValue();
+                        const newLines = this.findNewLines(currentContent, newContent);
+
+                        if (newLines.length > 0) {
+                            // Append new lines at the end
+                            const session = this.viewer.session;
+                            const lastRow = session.getLength();
+                            session.insert({ row: lastRow, column: 0 }, '\n' + newLines.join('\n'));
+
+                            // Go to the last line to follow new entries
+                            const finalRow = session.getLength() - 1;
+                            const finalColumn = session.getLine(finalRow).length;
+                            this.viewer.gotoLine(finalRow + 1, finalColumn);
+                        }
+                    } else {
+                        // Normal mode: set content and go to end
+                        this.viewer.setValue(newContent, -1);
+
+                        // Go to the end of the log
+                        const row = this.viewer.session.getLength() - 1;
+                        const column = this.viewer.session.getLine(row).length;
+                        this.viewer.gotoLine(row + 1, column);
+                    }
+
+                    // Adjust slider to actual loaded time range (silently)
+                    if (response.data.actual_range) {
+                        const actual = response.data.actual_range;
+
+                        // Always update fullRange boundary based on actual data from server
+                        // This ensures no-data zones display correctly after refresh
+                        if (actual.end) {
+                            SVGTimeline.updateDataBoundary(actual.end);
+                            // Track last known data end for refresh anchoring
+                            systemDiagnosticLogs.lastKnownDataEnd = actual.end;
+                        }
+
+                        // Always update timeline with server response (except during auto-update)
+                        // updateFromServerResponse() handles:
+                        // - Updating selectedRange to actual data boundaries
+                        // - Preserving visibleRange.end if it was extended to current time (for no-data zones)
+                        // - Managing truncation zones display
+                        if (!isAutoUpdate) {
+                            SVGTimeline.updateFromServerResponse(actual, startTimestamp, endTimestamp, isInitialLoad);
+                        }
+                    }
+                }
+
+                // Hide dimmer only if not in auto-update mode
+                if (!systemDiagnosticLogs.isAutoUpdateActive) {
+                    systemDiagnosticLogs.$dimmer.removeClass('active');
+                }
+            });
+        } catch (error) {
+            console.error('Error loading log by time range:', error);
+            // Hide dimmer only if not in auto-update mode
+            if (!systemDiagnosticLogs.isAutoUpdateActive) {
+                systemDiagnosticLogs.$dimmer.removeClass('active');
+            }
+        }
+    },
+
+    /**
+     * Apply quick period selection (Yandex Cloud LogViewer style)
+     * @param {number} periodSeconds - Period in seconds
+     */
+    applyQuickPeriod(periodSeconds) {
+        if (!this.currentTimeRange) {
+            return;
+        }
+
+        // Use new applyPeriod method that handles visible range and auto-centering
+        SVGTimeline.applyPeriod(periodSeconds);
+        // Callback will be triggered automatically by SVGTimeline
+    },
+
+    /**
+     * Apply log level filter
+     * @param {string} level - Log level (all, error, warning, info, debug)
+     */
+    applyLogLevelFilter(level) {
+        let filterPattern = '';
+
+        // Create regex pattern based on level
+        switch (level) {
+            case 'error':
+                filterPattern = 'ERROR|CRITICAL|FATAL';
+                break;
+            case 'warning':
+                filterPattern = 'WARNING|WARN';
+                break;
+            case 'info':
+                filterPattern = 'INFO';
+                break;
+            case 'debug':
+                filterPattern = 'DEBUG';
+                break;
+            case 'all':
+            default:
+                filterPattern = '';
+                break;
+        }
+
+        // Update filter field
+        this.$formObj.form('set value', 'filter', filterPattern);
+
+        // Reload logs with new filter
+        this.updateLogFromServer();
     },
 
     /**
      * Fetches the log file content from the server.
+     * @param {boolean} preserveRange - If true, use current SVG timeline selection instead of
+     *   recalculating to "last 1 hour". Used when filter/level changes to keep the same view.
      */
-    updateLogFromServer() {
-        const params = systemDiagnosticLogs.$formObj.form('get values');
-        PbxApi.SyslogGetLogFromFile(params, systemDiagnosticLogs.cbUpdateLogText);
+    updateLogFromServer(preserveRange = false) {
+        if (this.timeSliderEnabled) {
+            // In time slider mode, reload current window
+            if (this.currentTimeRange) {
+
+                // When preserveRange is true (filter/level change), use current timeline selection
+                // WHY: Changing filters should not reset the time window — user expects to see
+                // the same period with different filtering applied
+                if (preserveRange && SVGTimeline.selectedRange) {
+                    this.loadLogByTimeRange(
+                        SVGTimeline.selectedRange.start,
+                        SVGTimeline.selectedRange.end,
+                        true, false, this.isAutoUpdateActive
+                    );
+                    return;
+                }
+
+                const oneHour = 3600;
+
+                // Get current filename to check if it's a rotated log file
+                const filename = this.$formObj.form('get value', 'filename');
+                const isRotated = this.isRotatedLogFile(filename);
+
+                let endTimestamp;
+                let startTimestamp;
+
+                if (isRotated) {
+                    // For rotated files: use the file's actual time range
+                    // Rotated files don't receive new data, so currentTimeRange is fixed
+                    endTimestamp = this.currentTimeRange.end;
+                    startTimestamp = Math.max(this.currentTimeRange.end - oneHour, this.currentTimeRange.start);
+                } else {
+                    // For active log files: use current time to capture new entries
+                    endTimestamp = Math.floor(Date.now() / 1000);
+
+                    // WHY: Anchor startTimestamp to the last known data end, not wall clock time.
+                    // Using "now - period" produces an empty range when the file hasn't been
+                    // written to recently (e.g., idle module logs like ModuleAutoCRM/SalonSyncer.log).
+                    // lastKnownDataEnd holds the actual timestamp of the last line from the API response.
+                    const dataEnd = this.lastKnownDataEnd || this.currentTimeRange.end;
+                    startTimestamp = Math.max(dataEnd - oneHour, this.currentTimeRange.start);
+
+                    // Update currentTimeRange.end to reflect new data availability
+                    this.currentTimeRange.end = endTimestamp;
+
+                    // FORCE update the SVG timeline visible range to current time
+                    // force=true ensures visibleRange.end is set even if it was already >= endTimestamp
+                    // This handles timezone differences where server time might appear "in the future"
+                    SVGTimeline.extendRange(endTimestamp, true);
+                }
+
+                // Use latest=true to show newest entries (for show-last-log / auto-update buttons)
+                // Pass isAutoUpdate=true when auto-refresh is active to prevent timeline flickering
+                this.loadLogByTimeRange(startTimestamp, endTimestamp, true, false, this.isAutoUpdateActive);
+            }
+        } else {
+            // Line number mode
+            const params = systemDiagnosticLogs.$formObj.form('get values');
+            params.lines = 5000; // Max lines
+            SyslogAPI.getLogFromFile(params, systemDiagnosticLogs.cbUpdateLogText);
+        }
+    },
+
+    /**
+     * Find new lines that are not in current content
+     * Compares last lines of current content with new content to find overlap
+     * @param {string} currentContent - Current editor content
+     * @param {string} newContent - New content from server
+     * @returns {Array} Array of new lines to append
+     */
+    findNewLines(currentContent, newContent) {
+        if (!currentContent || currentContent.trim().length === 0) {
+            // If editor is empty, all lines are new
+            return newContent.split('\n').filter(line => line.trim().length > 0);
+        }
+
+        const currentLines = currentContent.split('\n');
+        const newLines = newContent.split('\n');
+
+        // Get last non-empty line from current content as anchor
+        let anchorLine = '';
+        for (let i = currentLines.length - 1; i >= 0; i--) {
+            if (currentLines[i].trim().length > 0) {
+                anchorLine = currentLines[i];
+                break;
+            }
+        }
+
+        if (!anchorLine) {
+            return newLines.filter(line => line.trim().length > 0);
+        }
+
+        // Find anchor line in new content
+        let anchorIndex = -1;
+        for (let i = newLines.length - 1; i >= 0; i--) {
+            if (newLines[i] === anchorLine) {
+                anchorIndex = i;
+                break;
+            }
+        }
+
+        if (anchorIndex === -1) {
+            // Anchor not found - content changed significantly, return empty
+            // This prevents duplicates when log rotates or filter changes
+            return [];
+        }
+
+        // Return lines after anchor
+        const result = newLines.slice(anchorIndex + 1).filter(line => line.trim().length > 0);
+        return result;
     },
 
     /**
      * Updates the log view.
-     * @param {Object} data - The log data.
+     * @param {Object} response - The response from API.
      */
-    cbUpdateLogText(data) {
-        systemDiagnosticLogs.viewer.getSession().setValue(data.content);
+    cbUpdateLogText(response) {
+        // Hide dimmer only if not in auto-update mode
+        if (!systemDiagnosticLogs.isAutoUpdateActive) {
+            systemDiagnosticLogs.$dimmer.removeClass('active');
+        }
+
+        // Handle v3 API response structure
+        if (!response || !response.result) {
+            if (response && response.messages) {
+                UserMessage.showMultiString(response.messages);
+            }
+            return;
+        }
+
+        const content = response.data?.content || '';
+        systemDiagnosticLogs.viewer.getSession().setValue(content);
         const row = systemDiagnosticLogs.viewer.session.getLength() - 1;
-        const column = systemDiagnosticLogs.viewer.session.getLine(row).length; // or simply Infinity
+        const column = systemDiagnosticLogs.viewer.session.getLine(row).length;
         systemDiagnosticLogs.viewer.gotoLine(row + 1, column);
-        systemDiagnosticLogs.$dimmer.removeClass('active');
     },
 
     /**
@@ -264,8 +1615,11 @@ const systemDiagnosticLogs = {
      * @param {Object} response - The response data.
      */
     cbDownloadFile(response) {
-        if (response !== false) {
-            window.location = response.filename;
+        // Handle v3 API response structure
+        if (response && response.result && response.data) {
+            window.location = response.data.filename || response.data;
+        } else if (response && response.messages) {
+            UserMessage.showMultiString(response.messages);
         }
     },
 
@@ -275,7 +1629,7 @@ const systemDiagnosticLogs = {
     eraseCurrentFileContent(){
         const fileName = systemDiagnosticLogs.$formObj.form('get value', 'filename');
         if (fileName.length>0){
-            PbxApi.SyslogEraseFile(fileName, systemDiagnosticLogs.cbAfterFileErased)
+            SyslogAPI.eraseFile(fileName, systemDiagnosticLogs.cbAfterFileErased)
         }
     },
 

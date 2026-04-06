@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -20,7 +21,6 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
@@ -39,12 +39,12 @@ class IvrMenuEditForm extends BaseForm
         parent::initialize($entity, $options);
         // ID
         $this->add(new Hidden('id'));
+        
+        // isNew flag for determining POST vs PUT
+        $this->add(new Hidden('isNew'));
 
         // Name
         $this->add(new Text('name'));
-
-        // Uniqid
-        $this->add(new Hidden('uniqid'));
 
         // Extension
         $this->add(new Text('extension'));
@@ -52,7 +52,8 @@ class IvrMenuEditForm extends BaseForm
         // Number of repeat
         $this->add(
             new Numeric(
-                'number_of_repeat', [
+                'number_of_repeat',
+                [
                     "maxlength" => 2,
                     "style" => "width: 80px;",
                     "defaultValue" => 3,
@@ -63,7 +64,8 @@ class IvrMenuEditForm extends BaseForm
         // Timeout
         $this->add(
             new Numeric(
-                'timeout', [
+                'timeout',
+                [
                     "maxlength" => 2,
                     "style" => "width: 80px;",
                     "defaultValue" => 7,
@@ -71,42 +73,20 @@ class IvrMenuEditForm extends BaseForm
             )
         );
 
-        // Timeoutextension
-        $extension = new Select(
-            'timeout_extension', $options['extensions'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'class' => 'ui selection dropdown search forwarding-select',
-            ]
-        );
-        $this->add($extension);
+        // Timeout extension - V5.0 Architecture: Hidden input only, dropdown created by JavaScript
+        $this->add(new Hidden('timeout_extension'));
 
-        // Audio_message_id
-        $audioMessage = new Select(
-            'audio_message_id', $options['soundfiles'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'class' => 'ui selection dropdown search audio-message-select',
-            ]
-        );
-        $this->add($audioMessage);
+        // Audio message - using Hidden field instead of SemanticUIDropdown
+        // The dropdown will be created by Volt partial playAddNewSoundWithIcons
+        $this->add(new Hidden('audio_message_id'));
 
         //Allow_enter_any_internal_extension
-        $cheskarr = ['value' => null];
-        if ($entity->allow_enter_any_internal_extension) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-
-        $this->add(new Check('allow_enter_any_internal_extension', $cheskarr));
+        $this->addCheckBox(
+            'allow_enter_any_internal_extension',
+            intval($entity->allow_enter_any_internal_extension) === 1
+        );
 
         // Description
-        $this->addTextArea('description', $entity->description??'', 65);
-
+        $this->addTextArea('description', $entity->description ?? '', 65);
     }
 }

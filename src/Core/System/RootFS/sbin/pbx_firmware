@@ -17,8 +17,80 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-# Source shell functions for use later in the script
-. /sbin/shell_functions.sh;
+# Inline output functions - no external dependencies for maximum compatibility
+# This script must work when updating FROM any old MikoPBX version
+
+# Serial port for headless output (scan x86 ttyS0-5 and ARM ttyAMA0-3, take first available)
+# Cached once at script start to avoid repeated checks
+SERIAL_PORT=""
+for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
+           /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
+    # Check if device exists, is writable, and accepts test write
+    if [ -c "$DEV" ] && [ -w "$DEV" ] && echo -n "" > "$DEV" 2>/dev/null; then
+        SERIAL_PORT="$DEV"
+        break
+    fi
+done
+
+# Prevent duplicate output when stdout is directly connected to the serial port
+if [ -n "$SERIAL_PORT" ]; then
+    stdout_target=$(/bin/readlink /proc/self/fd/1 2>/dev/null)
+    if [ "$stdout_target" = "$SERIAL_PORT" ]; then
+        SERIAL_PORT=""
+    fi
+fi
+
+echo_info() {
+    local msg=" - $1"
+    echo "$msg"
+    if [ -n "$SERIAL_PORT" ]; then
+        # Use printf for atomic write, stty to drain buffer
+        printf "%s\n" "$msg" > "$SERIAL_PORT" 2>/dev/null
+        stty -F "$SERIAL_PORT" drain >/dev/null 2>&1 || sleep 0.05 2>/dev/null || true
+    fi
+    return 0
+}
+
+echo_error() {
+    local msg="ERROR: $1"
+    echo "$msg"
+    if [ -n "$SERIAL_PORT" ]; then
+        printf "%s\n" "$msg" > "$SERIAL_PORT" 2>/dev/null
+        stty -F "$SERIAL_PORT" drain >/dev/null 2>&1 || sleep 0.05 2>/dev/null || true
+    fi
+    return 0
+}
+
+# Interactive pause before critical operations
+# Allows user to cancel upgrade or enter manual shell for debugging
+wait_for_user_input() {
+    local message="${1:-Continuing with upgrade}"
+    echo_info "$message"
+    echo_info "Press 'c' to cancel, 'm' for manual shell, or wait 10 seconds..."
+    local counter=10
+    while [ $counter -gt 0 ]; do
+        read -r -t 1 -n 1 input 2>/dev/null
+        case "$input" in
+            c|C)
+                echo_info "Upgrade cancelled by user."
+                touch /tmp/rebooting
+                exit 1
+                ;;
+            m|M)
+                echo_info "Entering manual shell. Type 'exit' to continue upgrade."
+                echo_info "Available: gdisk, parted, sfdisk, lsblk, blkid, mount, dd, pv"
+                PS1='[manual]# ' /bin/sh -i
+                echo_info "Continue upgrade? (y/n)"
+                read -r -n 1 cont
+                [ "$cont" != "y" ] && [ "$cont" != "Y" ] && exit 1
+                return 0
+                ;;
+        esac
+        echo -ne " - Continuing in $counter seconds...\033[0K\r"
+        counter=$((counter - 1))
+    done
+    echo ""
+}
 
 # Assign input arguments to variables
 img_file="$1";
@@ -26,32 +98,35 @@ systemDevice="$2"
 
 # Inform the user of the firmware upgrade process
 echo;
-echo " - Firmware upgrade in progress...";
-echo " - Backing up configuration...";
+echo_info "Firmware upgrade in progress...";
+echo_info "Backing up configuration...";
 
 # Create a temporary directory to backup configuration
 mkdir -p /tmp/configbak;
 
 # Verify the MD5 hash of the compressed image file
+# The gzip header stores the MD5 hash as the original filename (via gzip -N)
 md5Hash="$(/bin/gunzip -N -l < "${img_file}" | /bin/busybox grep -v uncompressed_name | /bin/busybox awk  '{ print $4}')";
-if [ "$md5Hash" != "$(/bin/gunzip -c "${img_file}" |/bin/busybox md5sum | /bin/busybox cut -f 1 -d ' ')" ] ; then
+# Use busybox gunzip for decompression: GNU gzip 1.14 only removes one gzip layer
+# from double-compressed firmware images, producing wrong MD5
+if [ "$md5Hash" != "$(/bin/busybox gunzip -c "${img_file}" |/bin/busybox md5sum | /bin/busybox cut -f 1 -d ' ')" ] ; then
     # Inform the user of the checksum mismatch and abort the update
-    echo " - The checksum of the system image does not match.";
-    echo " - Update was aborted...";
-    rm -rf "$img_file";
+    echo_error "The checksum of the system image does not match.";
+    echo_error "Update was aborted...";
+    rm -rf "$img_file" 2>/dev/null;
     # Set a flag to indicate rebooting.
     touch /tmp/rebooting;
     exit 0;
 else
     # Inform the user of successful checksum verification
-    echo " - Successful checksum verification! Start the system upgrade ...";
+    echo_info "Successful checksum verification! Start the system upgrade ...";
 fi
 
 # Check if the livecd file exists, and proceed with different operations depending on its existence
 if [ -f /offload/livecd ]; then
   # Copy the configuration to the backup directory and unmount /conf.recover
   /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak | /bin/busybox awk '{print "\t" $0}'
-  echo " - Unmounting /conf.recover partition...";
+  echo_info "Unmounting /conf.recover partition...";
   /bin/umount -f /conf.recover;
 else
 
@@ -61,7 +136,7 @@ else
     /sbin/dump-conf-db
   fi;
   # Copy the configuration to the tmp (RAM) directory
-  echo " - Backup the system settings to temporary directory...";
+  echo_info "Backup the system settings to temporary directory...";
   /bin/busybox cp -Rv /cf/conf/* /tmp/configbak | /bin/busybox awk '{print "\t" $0}'
 
   mounted_storage=$(mount | /bin/busybox grep storage | /bin/busybox awk '{ print $1}');
@@ -80,15 +155,17 @@ else
     rm -rf "$backupDir"; mkdir -p "$backupDir";
 
     # Copy the configuration to the storage and backup the system image
-    echo " - Backup system partition to storage ...";
-    if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
-        /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
-    else
-        /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M >/dev/null 2>&1
-    fi
+    echo_info "Backup system partition to storage ...";
+    LC_ALL=C /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>/tmp/dd_backup_stats
+    # Reset terminal after progress bar
+    printf '\033[0m\n' 2>/dev/null
+    sync
+    dd_line=$(/bin/busybox tail -1 /tmp/dd_backup_stats 2>/dev/null)
+    [ -n "$dd_line" ] && echo_info "Backup: $dd_line"
+    rm -f /tmp/dd_backup_stats
   else
     # Storage is on the main disk which needs to be unmounted, so move the image to RAM
-    echo " - Moving the update img to RAM before storage will be unmounted ..."
+    echo_info "Moving the update img to RAM before storage will be unmounted ..."
     tmp_img=$(/bin/busybox basename "$1");
     img_file="/tmp/${tmp_img}";
 
@@ -99,7 +176,7 @@ else
     fi
 
      # Free up the storage
-    echo " - Umount storage partition ...";
+    echo_info "Umount storage partition ...";
     /sbin/freestorage;
   fi
 
@@ -108,37 +185,173 @@ else
 fi
 
 # Inform the user of the installation process
+DISK="/dev/${systemDevice}";
 if [ -r "${img_file}" ]; then
-  echo " - Installing new image on /dev/${systemDevice}"
-  # Use pv to monitor the progress of the data being piped to the dd command
-   if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
-      /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
-   else
-      /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M >/dev/null 2>&1;
-   fi
-  resultPv="$?";
+  if /sbin/parted -s "${DISK}" print 2> /dev/null | /bin/busybox awk '{$1=$1; print}' | /bin/busybox grep -w '^4' > /dev/null; then
+    partitionFour=$(/bin/lsblk -r "$DISK" -p -o NAME,TYPE | /bin/busybox grep "part$" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$");
+  else
+    partitionFour=''
+  fi
 
-   # If the pv command fails or there aren't three primary partitions, restore the system image from the backup
-  if [ ! "$resultPv" = '0' ] || [ ! "$(/sbin/parted --script --align optimal "/dev/${systemDevice}" "print" | grep primary | /bin/busybox wc -l)" = '3' ]; then
-    if [ -f "$backupImg" ]; then
-      echo " - There are some errors, restoring system from backup to /dev/${systemDevice}"
-      if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
-        /bin/pv -p "$backupImg" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
-      else
-        /bin/pv -p "$backupImg" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M >/dev/null 2>&1;
+  # Allow user to enter manual shell before critical partition operations
+  wait_for_user_input "About to start partition operations on $DISK"
+
+  if command -v gdisk >/dev/null 2>&1 && [ -n "$partitionFour" ]; then
+    # If the 4th section is missing,
+    # then markup conversion is not required,
+    # there is no risk of data loss.
+    PARTITION_TYPE=$(/sbin/parted --script "$DISK" print 2>/dev/null | /bin/busybox grep "Partition Table" | /bin/busybox awk '{print $3}');
+    echo_info "Performing an action for the $PARTITION_TYPE section";
+    if [ "$PARTITION_TYPE" == "msdos" ]; then
+      echo_info "At the end of the 4th partition ($partitionFour), 1 Mb of free space will be required...";
+      REDUCE_BY=1
+      LAST_ENTRY=$(parted -s "$DISK" unit MiB print free 2>/dev/null | tail -n 1)
+      FREE_SPACE=$(echo "$LAST_ENTRY" | /bin/busybox awk '{print $3}' | /bin/busybox grep -o '[0-9]*')
+      if [[ (-z "$FREE_SPACE" || "$FREE_SPACE" -lt "$REDUCE_BY") && -n "$partitionFour" ]]; then
+      	e2fsck -f -y "$partitionFour";
+        echo_info "Reducing the 4th section...";
+        SECTOR_SIZE=$(blockdev --getss "$DISK")
+      	SECTORS_IN_MIB=$((1024 * 1024 / SECTOR_SIZE))
+      	sfdisk -d "$DISK" 2> /dev/null > disk_layout.txt
+      	CURRENT_SIZE=$(/bin/busybox grep "^$partitionFour" disk_layout.txt | /bin/busybox grep -o 'size=[ ]*[0-9]*' | /bin/busybox tr -d ' ' | cut -d= -f2)
+      	NEW_SIZE=$((CURRENT_SIZE - REDUCE_BY * SECTORS_IN_MIB))
+      	NEW_SIZE_MIB=$((CURRENT_SIZE / SECTORS_IN_MIB - 1))
+        sed -i "s|^\($partitionFour.*size=\s*\)[0-9]*\(.*\)$|\1$NEW_SIZE\2|" disk_layout.txt
+      	sfdisk "$DISK"  > /dev/null 2>&1 < disk_layout.txt
+      	rm disk_layout.txt;
+      	/sbin/resize2fs "$partitionFour" "$NEW_SIZE_MIB"M 2> /dev/null > /dev/null;
       fi
+      echo_info "Converting markup to GPT."
+      echo -e "w\nY\n" | /sbin/gdisk "$DISK" > /dev/null;
+      resultGDisk="$?";
+      if [ "$resultGDisk" -eq 0 ]; then
+        echo_info "The conversion to GPT has been completed successfully."
+      else
+        echo_error "Converting to GPT."
+      fi
+    fi
+  fi
+
+  part4Action='create';
+  if [ -n "$partitionFour" ]; then
+    export FS_BACKUP_PART4=fs-backup-part4.img;
+    echo_info "Start backup fs $FS_BACKUP_PART4 super block for part4 ($partitionFour)"
+    dd if="$partitionFour" of="$FS_BACKUP_PART4" bs=1M count=1 >/dev/null 2>&1;
+    part4Action='update';
+  fi
+
+  echo_info "Installing new image on $DISK"
+
+  # Wipe old GPT/MBR structures before dd to prevent stale backup header conflicts.
+  # Old backup GPT at end of disk survives dd of smaller image, causing CRC mismatch.
+  if /sbin/sgdisk --version >/dev/null 2>&1; then
+    echo_info "Clearing old partition table on $DISK..."
+    /sbin/sgdisk -Z "$DISK" > /dev/null 2>&1
+    sync
+  fi
+
+  # Use 'busybox gunzip' instead of standalone gunzip.
+  # GNU gzip 1.14 called as 'gunzip' only removes one gzip layer from double-compressed
+  # firmware images, writing still-compressed data to disk. BusyBox gunzip handles this correctly.
+  LC_ALL=C /bin/pv -p "${img_file}" | /bin/busybox gunzip | dd of="$DISK" bs=4M 2>/tmp/dd_install_stats
+  resultPv="${PIPESTATUS[2]}"  # Exit code of dd (3rd command in pipeline)
+
+  # Reset terminal after progress bar and flush all buffers
+  printf '\033[0m\033[?25h\n' 2>/dev/null
+  stty sane 2>/dev/null || true
+  sync
+  sleep 2
+  dd_line=$(/bin/busybox tail -1 /tmp/dd_install_stats 2>/dev/null)
+  [ -n "$dd_line" ] && echo_info "Install: $dd_line"
+  rm -f /tmp/dd_install_stats
+  echo_info "result install code $resultPv";
+  /sbin/blockdev --rereadpt "$DISK" > /dev/null 2>&1;
+  sync
+  sleep 3
+
+  # Fix GPT backup table location after writing smaller image to larger disk
+  # The backup GPT header must be at the end of the disk, not at original image size
+  # Wait for device node to stabilize after partition table reread
+  if [ ! -b "$DISK" ]; then
+    echo_info "Waiting for device $DISK to become available..."
+    for _i in 1 2 3 4 5 6 7 8 9 10; do
+      [ -b "$DISK" ] && break
+      sleep 1
+    done
+  fi
+
+  if [ ! -b "$DISK" ]; then
+    echo_error "Device $DISK not available, skipping GPT backup header relocation"
+  elif /sbin/sgdisk --version >/dev/null 2>&1; then
+    # Preferred: sgdisk (modern, simple, reliable)
+    # Retry: device may not be fully stable immediately after dd + blockdev --rereadpt
+    echo_info "Relocating GPT backup header to end of disk (sgdisk) on $DISK..."
+    sgdiskResult=1
+    for _attempt in 1 2; do
+      sgdiskOutput=$(/sbin/sgdisk -e "$DISK" 2>&1)
+      sgdiskResult=$?
+      if [ "$sgdiskResult" -eq 0 ]; then
+        break
+      fi
+      if [ "$_attempt" -lt 2 ]; then
+        echo_info "sgdisk attempt $_attempt failed (exit code: $sgdiskResult), retrying in 3 seconds..."
+        sleep 3
+      fi
+    done
+    echo_info "sgdisk exit code: $sgdiskResult"
+    if [ "$sgdiskResult" -ne 0 ] && [ -n "$sgdiskOutput" ]; then
+      echo "$sgdiskOutput" | while IFS= read -r line; do echo_info "sgdisk: $line"; done
+    fi
+  elif /sbin/gdisk --version >/dev/null 2>&1; then
+    # Fallback 1: gdisk (works without controlling terminal via stdin commands)
+    echo_info "Relocating GPT backup header to end of disk (gdisk) on $DISK..."
+    gdiskOutput=$(echo -e "x\ne\nw\nY\n" | /sbin/gdisk "$DISK" 2>&1)
+    gdiskResult=$?
+    echo_info "gdisk exit code: $gdiskResult"
+    if [ -n "$gdiskOutput" ]; then echo "$gdiskOutput" | while IFS= read -r line; do echo_info "gdisk: $line"; done; fi
+  elif [ -x /sbin/parted ]; then
+    # Fallback 2: parted (universal, available on all systems)
+    echo_info "Relocating GPT backup header to end of disk (parted fallback) on $DISK..."
+    partedOutput=$(echo "Fix" | /sbin/parted "$DISK" print ---pretend-input-tty 2>&1)
+    partedResult=$?
+    echo_info "parted exit code: $partedResult"
+    if [ -n "$partedOutput" ]; then echo "$partedOutput" | while IFS= read -r line; do echo_info "parted: $line"; done; fi
+  else
+    echo_error "No GPT utility available to fix backup header!"
+  fi
+
+  /sbin/blockdev --rereadpt "$DISK" > /dev/null 2>&1;
+  sleep 3;
+
+  # If the pv command fails or there aren't four partitions, restore the system image from the backup
+  partitionCount=$(/bin/lsblk -l "$DISK" | /bin/busybox grep -c part)
+  if [ ! "$resultPv" = '0' ] || [ ! "$partitionCount" = '4' ]; then
+    echo_error "Image installation validation failed"
+    echo_info "Validation details: resultPv=$resultPv, partition count=$partitionCount (expected: 4)"
+    echo_info "Current disk state:"
+    /bin/lsblk "$DISK" 2>&1 | while read line; do echo_info "  $line"; done
+
+    wait_for_user_input "About to restore system from backup to $DISK"
+
+    if [ -f "$backupImg" ]; then
+      echo_error "Restoring system from backup to /dev/${systemDevice}"
+
+      LC_ALL=C /bin/pv -p "$backupImg" | /bin/busybox gunzip | dd of="$DISK" bs=4M 2>/dev/null
+      # Reset terminal after progress bar
+      printf '\033[0m\n' 2>/dev/null
+      sync
     fi;
   fi;
   rm -rf "$backupImg";
-  echo " - The execution of the dd command was finished...";
+  echo_info "The execution of the dd command was finished...";
 
   # Update the partition table
-  /sbin/initial_storage_part_four update "/dev/${systemDevice}";
-  echo " - Check if it necessary to update 4-th storage partition. The result is ${?}...";
+  /sbin/initial_storage_part_four "$part4Action" "$DISK";
+  echo_info "Check if it necessary to $part4Action 4-th storage partition. The result is ${?}...";
 fi
 
 # Reread the partition table of the system device
-/sbin/blockdev --rereadpt "/dev/${systemDevice}" > /dev/null 2>&1
+/sbin/blockdev --rereadpt "$DISK" > /dev/null 2>&1
 sleep 3;
 
 # Get the name of the 3rd partition
@@ -146,41 +359,39 @@ partition3Name=$(/bin/lsblk -r -p | /bin/busybox grep "${systemDevice}" | /bin/b
 
 # If the livecd file exists, re-mount /conf.recover, restore configuration, and reboot the system
 if [ -f /offload/livecd ]; then
-  echo " - Re-mounting /conf.recover partition with read/write mode..."
+  echo_info "Re-mounting /conf.recover partition with read/write mode..."
   /bin/mount -w -o noatime "${partition3Name}" /conf.recover | /bin/busybox awk '{print "\t" $0}'
   rm -f /conf.recover/conf/*
-  echo " - Restoring the MikoPBX default configuration ..."
+  echo_info "Restoring the MikoPBX default configuration ..."
   /bin/busybox cp -pv /tmp/configbak/* /conf.recover/conf/ | /bin/busybox awk '{print "\t" $0}'
   touch /tmp/ejectcd
 else
   # Format the 3rd partition and mount it as /cf. Then, copy the configuration back and remove the image file
-  echo " - Formating the 3rd partition (${partition3Name}) and mount it as /cf folder ...";
+  echo_info "Formating the 3rd partition (${partition3Name}) and mount it as /cf folder ...";
   /sbin/mkfs.ext4 -qF "${partition3Name}" | /bin/busybox awk '{print "\t" $0}'
   sleep 3;
   /bin/mount -w -o noatime "${partition3Name}" /cf | /bin/busybox awk '{print "\t" $0}'
   mkdir -p /cf/conf
-  echo " - Restoring the MikoPBX configuration settings...";
+  echo_info "Restoring the MikoPBX configuration settings...";
   /bin/busybox cp -Rv /tmp/configbak/* /cf/conf/ | /bin/busybox awk '{print "\t" $0}'
 
-  echo " - Deleting firmware image...";
+  echo_info "Deleting firmware image...";
   rm -rf "${img_file}";
 fi
 
-echo " - Reboot pending. Cancel with rm /tmp/rebooting ..."
+echo_info "Reboot pending. Cancel with 'touch /tmp/cancel_rebooting'"
 # Waiting timeout
 WAIT_TIME=10
 counter=0
 while [ $counter -lt $WAIT_TIME ]; do
-    if [ ! -f /tmp/rebooting ]; then
+    if [ -f /tmp/cancel_rebooting ]; then
         # Flag file was deleted
-        echo "System reboot was cancelled"
+        echo_info "System reboot was cancelled"
         exit 0
     fi
     sleep 1
     counter=$((counter+1))
 done
 
-echo "Rebooting the system..."
+echo_info "Rebooting the system..."
 /sbin/pbx_reboot;
-
-exit 0;

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,10 +20,8 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
-
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
-
 
 /**
  * Class ActionMeetmeDial
@@ -39,11 +38,11 @@ class ActionMeetmeDial
      * @param array $data The event data.
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         $worker->StopMixMonitor($data['src_chan'], 'ActionMeetMeDial_execute');
 
-        if (strpos($data['src_chan'], 'internal-originate') !== false) {
+        if (str_contains($data['src_chan'], 'internal-originate')) {
             // Determine the channel and recording ID.
             $filter = [
                 'linkedid=:linkedid: AND src_num=:src_num:',
@@ -74,5 +73,4 @@ class ActionMeetmeDial
             ActionAppEnd::execute($worker, $data);
         }
     }
-
 }

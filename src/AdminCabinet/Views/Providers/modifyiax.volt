@@ -1,11 +1,24 @@
 <div class="ui grey top right attached label" id="status"><i
             class="spinner loading icon"></i>{{ t._("pr_UpdateStatus") }}</div>
-{{ form('providers/save/iax', 'role': 'form', 'class': 'ui large form ', 'id':'save-provider-form') }}
+
+<!-- Tab menu -->
+<div class="ui top attached tabular menu" id="provider-tabs-menu">
+    <a class="item active" data-tab="settings">
+        <i class="settings icon"></i> {{ t._('pr_Settings') }}
+    </a>
+    <a class="item" data-tab="diagnostics">
+        <i class="heartbeat icon"></i> {{ t._('pr_Diagnostics') }}
+    </a>
+</div>
+
+<!-- Settings tab -->
+<div class="ui bottom attached tab segment active" data-tab="settings">
+{{ form(['action' : 'providers/save/iax', 'method': 'post', 'role': 'form', 'class': 'ui form ', 'id':'save-provider-form']) }}
 {{ form.render('id') }}
-{{ form.render('uniqid') }}
 {{ form.render('type') }}
 {{ form.render('disabled') }}
-{{ form.render('providerType') }}
+<input type="hidden" id="copy-from-id" value="{{ copyFromId }}"/>
+<input type="hidden" id="providerType" value="IAX" />
 
 
 <div class="required field max-width-500">
@@ -13,19 +26,37 @@
     {{ form.render('description') }}
 </div>
 
-<div class="field required max-width-500">
-    <label for="host">{{ t._('pr_ProviderHostOrIPAddress') }}</label>
+<div class="field max-width-500">
+    <label for="registration_type">
+        {{ t._('iax_registration_type') }}
+        <i class="small info circle icon field-info-icon" 
+           data-field="registration_type"></i>
+    </label>
+    {{ form.render('registration_type') }}
+</div>
+<div id='elHost' class="field required max-width-500">
+    <label for="host">
+        <span id="hostLabelText">{{ t._('pr_ProviderHostOrIPAddress') }}</span>
+        <i class="small info circle icon field-info-icon" 
+           data-field="provider_host"></i>
+    </label>
     {{ form.render('host') }}
 </div>
 
-<div class="field max-width-500">
-    <label for="username">{{ t._('pr_ProviderLogin') }}</label>
+<div id='elUsername' class="field max-width-500">
+    <label for="username"><span id="usernameLabelText">{{ t._('pr_ProviderLogin') }}</span></label>
     {{ form.render('username') }}
 </div>
 
-<div class="field max-width-500">
-    <label for="secret">{{ t._('pr_ProviderPassword') }}</label>
-    {{ form.render('secret') }}
+<div id='elSecret' class="field max-width-500">
+    <label for="secret">
+        <span id="secretLabelText">{{ t._('pr_ProviderPassword') }}</span>
+        <i class="small info circle icon field-info-icon password-tooltip-icon" 
+           data-field="provider_password" style="display: none;"></i>
+    </label>
+    <div class="ui input">
+        {{ form.render('secret') }}
+    </div>
 </div>
 <div class="field max-width-800">
     <label for="note">{{ t._('pr_Note') }}</label>
@@ -40,40 +71,58 @@
     </div>
 
     <div class="content field">
-        <h3 class="ui dividing header ">{{ t._("ConnectionSettings") }}</h3>
-
-        <div class="field max-width-400">
-            <div class="ui segment">
-                <div class="field">
-                    <div class="ui toggle checkbox" id="qualify">
-                        {{ form.render('qualify') }}
-                        <label for="qualify">{{ t._('qf_Qualify') }}</label>
-                    </div>
-                </div>
+        
+        <!-- Группа: Сетевые настройки -->
+        <h4 class="ui dividing header ">{{ t._('pr_NetworkSettings') }}</h4>
+        
+        <div id='elPort' class="field">
+            <label for="port">
+                <span id="portLabelText">{{ t._('pr_IAXPort') }}</span>
+                <i class="small info circle icon field-info-icon" 
+                   data-field="iax_port"></i>
+            </label>
+            <div class="field max-width-200">
+                {{ form.render('port') }}
             </div>
         </div>
-        <div class="ui info message">{{ t._('pr_QualifyInstructionsIAX') }}</div>
+        
+        <!-- Группа: Настройки безопасности -->
+        <h4 class="ui dividing header ">{{ t._('pr_SecuritySettings') }}</h4>
 
-        <h3 class="ui dividing header ">{{ t._("pr_RegistrationSettings") }}</h3>
-
-        <div class="field  max-width-400">
-            <div class="ui segment">
-                <div class="field">
-                    <div class="ui toggle checkbox" id="noregister">
-                        {{ form.render('noregister') }}
-                        <label>{{ t._('pr_NoRegister') }}</label>
-                    </div>
-                </div>
+        <div id="elNetworkFilter" class="field">
+            <label>
+                {{ t._('pr_NetworkFilter') }}
+                <i class="small info circle icon field-info-icon" 
+                   data-field="network_filter"></i>
+            </label>
+            <div class="ten wide field">
+                {{ form.render('networkfilterid') }}
             </div>
         </div>
 
-        <h4 class="ui dividing header ">{{ t._("pr_ManualAdditionalAtributes") }}</h4>
+        <!-- Группа: Дополнительные параметры -->
+        <h4 class="ui dividing header ">{{ t._('pr_AdditionalParameters') }}</h4>
+        
         <div class="field">
+            <label>
+                {{ t._("pr_ManualAdditionalIAXAtributes") }}
+                <i class="small info circle icon field-info-icon" 
+                   data-field="manual_attributes"></i>
+            </label>
             {{ form.render('manualattributes') }}
         </div>
+
+        {{ form.render('noregister') }}
 
         {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('AdvancedFields')]) }}
     </div>
 </div>
 {{ partial("partials/submitbutton",['indexurl':'providers/index/']) }}
-{{ end_form() }}
+{{ close('form') }}
+</div>
+
+<!-- Diagnostics tab -->
+<div class="ui bottom attached tab segment" data-tab="diagnostics">
+    {{ partial("Providers/partials/diagnostics-tab") }}
+</div>
+

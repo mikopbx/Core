@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -40,10 +41,9 @@ class CheckCorruptedFiles extends Injectable
         $messages = [];
         $files = Main::checkForCorruptedFiles();
         if (count($files) !== 0) {
-            $messages['warning'][] =  ['messageTpl'=>'adv_SystemBrokenComment'];
+            $messages['warning'][] =  ['messageTpl' => 'adv_SystemBrokenComment'];
         }
 
         return $messages;
     }
-
 }

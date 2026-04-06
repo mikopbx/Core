@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -20,7 +21,6 @@ declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Providers;
 
-
 use MikoPBX\AdminCabinet\Plugins\SecurityPlugin;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
@@ -32,7 +32,7 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class SecurityPluginProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'securityPlugin';
+    public const string SERVICE_NAME = 'securityPlugin';
 
     /**
      * Register security plugin provider
@@ -43,8 +43,9 @@ class SecurityPluginProvider implements ServiceProviderInterface
     {
         $di->set(
             self::SERVICE_NAME,
-            function (string $controller, string $action='index') {
+            function (string $controller, string $action = 'index') use ($di) {
                 $aclManager = new SecurityPlugin();
+                $aclManager->setDI($di);
                 return $aclManager->isAllowedAction($controller, $action);
             }
         );
