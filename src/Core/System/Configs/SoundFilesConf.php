@@ -1111,6 +1111,17 @@ class SoundFilesConf extends SystemConfigClass
         'sv-sv' => 'sv',
         'cs-cs' => 'cs',
         'tr-tr' => 'tr',
+        'uk-ua' => 'uk',
+        'ka-ge' => 'ka',
+        'vi-vn' => 'vi',
+        'az-az' => 'az',
+        'ro-ro' => 'ro',
+        'th-th' => 'th',
+        'hu-hu' => 'hu',
+        'fi-fi' => 'fi',
+        'hr-hr' => 'hr',
+        'pt-pt' => 'pt',
+        'zh-cn' => 'zh_Hans',
     ];
 
     /**
