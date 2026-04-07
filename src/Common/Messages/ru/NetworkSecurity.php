@@ -10,7 +10,7 @@ return [
     'f2b_SecurityPresetWeak' => 'Слабая',
     'f2b_SecurityPresetNormal' => 'Нормальная',
     'f2b_SecurityPresetEnhanced' => 'Усиленная',
-    'f2b_SecurityPresetParanoid' => 'Параноя',
+    'f2b_SecurityPresetParanoid' => 'Паранойя',
     'f2b_DurationMinutes' => ' мин',
     'f2b_DurationHours' => ' ч',
     'f2b_DurationDays' => ' дн',
