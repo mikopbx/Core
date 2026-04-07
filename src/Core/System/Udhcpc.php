@@ -107,11 +107,9 @@ class Udhcpc extends Network
         ];
         $this->updateIfSettings($data, $interface);
 
-        $data = [
-            'primarydns' => '',
-            'secondarydns' => '',
-        ];
-        $this->updateDnsSettings($data, $interface);
+        // Don't clear DNS on deconfig — keep user-configured DNS servers
+        // until DHCP renew/bound provides new ones. Clearing here causes
+        // loss of secondary DNS on clouds that return only 1 DNS server (issue #984).
     }
 
     /**
