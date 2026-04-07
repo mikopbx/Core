@@ -362,7 +362,7 @@ class SoundFilesConf extends SystemConfigClass
             }
 
             // Copy sound files (with or without prefix based on module type)
-            $soundFiles = glob("$langDir/*.{wav,ulaw,alaw,gsm,g722,sln,mp3}", GLOB_BRACE);
+            $soundFiles = glob("$langDir/*.{wav,ulaw,alaw,gsm,g722,sln,mp3,opus}", GLOB_BRACE);
             foreach ($soundFiles as $soundFile) {
                 $stats['total_files']++;
                 $fileName = basename($soundFile);
@@ -393,7 +393,7 @@ class SoundFilesConf extends SystemConfigClass
                     Util::mwMkdir($targetSubDir);
                 }
 
-                $subSoundFiles = glob("$subDir/*.{wav,ulaw,alaw,gsm,g722,sln,mp3}", GLOB_BRACE);
+                $subSoundFiles = glob("$subDir/*.{wav,ulaw,alaw,gsm,g722,sln,mp3,opus}", GLOB_BRACE);
                 foreach ($subSoundFiles as $soundFile) {
                     $stats['total_files']++;
                     $fileName = basename($soundFile);
@@ -629,6 +629,10 @@ class SoundFilesConf extends SystemConfigClass
                 'options' => '-ar 8000 -ac 1 -acodec pcm_s16le -f wav',
                 'container' => 'wav',
             ],
+            'opus' => [
+                'options' => '-ar 48000 -ac 1 -acodec libopus -b:a 48k -vbr on -compression_level 10 -application voip -f ogg',
+                'container' => 'ogg',
+            ],
         ];
 
         // Prepare source file for conversion
@@ -776,7 +780,7 @@ class SoundFilesConf extends SystemConfigClass
             return;
         }
 
-        $convertibleFormats = '{wav,mp3,gsm,ulaw,alaw,g722,sln}';
+        $convertibleFormats = '{wav,mp3,gsm,ulaw,alaw,g722,sln,opus}';
         $stats = ['converted' => 0, 'skipped' => 0, 'failed' => 0];
 
         // Process all language directories
@@ -884,13 +888,13 @@ class SoundFilesConf extends SystemConfigClass
         // Skip conversion if source is not a convertible format
         $pathInfo = pathinfo($sourceFile);
         $sourceExtension = strtolower($pathInfo['extension'] ?? '');
-        $convertibleFormats = ['wav', 'mp3', 'ulaw', 'alaw', 'gsm', 'g722', 'sln'];
+        $convertibleFormats = ['wav', 'mp3', 'ulaw', 'alaw', 'gsm', 'g722', 'sln', 'opus'];
         if (!in_array($sourceExtension, $convertibleFormats, true)) {
             return 'skipped';
         }
 
         // Define target formats (all Asterisk formats except source format)
-        $targetFormats = ['ulaw', 'alaw', 'gsm', 'g722', 'sln'];
+        $targetFormats = ['ulaw', 'alaw', 'gsm', 'g722', 'sln', 'opus'];
 
         // Call unified converter
         $result = self::convertAudioFile($sourceFile, $targetFormats, [
@@ -999,7 +1003,7 @@ class SoundFilesConf extends SystemConfigClass
             $soundsDir = escapeshellarg($systemSoundsDir);
 
             // Remove all format variants (wav, ulaw, alaw, gsm, g722, sln, mp3)
-            $extensions = ['wav', 'ulaw', 'alaw', 'gsm', 'g722', 'sln', 'mp3'];
+            $extensions = ['wav', 'ulaw', 'alaw', 'gsm', 'g722', 'sln', 'mp3', 'opus'];
             $allSuccess = true;
 
             foreach ($extensions as $ext) {
