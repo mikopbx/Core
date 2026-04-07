@@ -1895,27 +1895,39 @@ extensions = {
     unpark_call_timeout={}
 }
 
--- event_interception_start event_interception_bridge_result
-extensions.dial["_.!"]                      = function() event_dial() end
-extensions.dial_interception["_.!"]         = function() event_dial_interception() end
-extensions.transfer_dial["_.!"]             = function() event_transfer_dial() end
-extensions.lua_dial_create_chan["_.!"]      = function() event_dial_create_chan() end
-extensions.dial_answer["_.!"]               = function() event_dial_answer() end
-extensions.lua_transfer_dial_create_chan["_.!"] = function() event_transfer_dial_create_chan() end
-extensions.transfer_dial_answer["_.!"]      = function() event_transfer_dial_answer() end
-extensions.transfer_dial_hangup["_.!"]      = function() event_transfer_dial_hangup() end
-extensions.hangup_chan["_.!"]               = function() event_hangup_chan() end
-extensions.queue_start["_.!"]               = function() event_queue_start() end
-extensions.queue_answer["_.!"]              = function() event_queue_answer() end
-extensions.queue_end["_.!"]                 = function() event_queue_end() end
-extensions.dial_app["_.!"]                  = function() event_dial_app() end
-extensions.dial_outworktimes["_.!"]         = function() event_dial_outworktimes() end
-extensions.set_from_peer["_.!"]             = function() set_from_peer() end
-extensions.voicemail_start["_.!"]           = function() event_voicemail_start() end
+-- Guard: skip special extensions (h=hangup, t=timeout, i=invalid) in CEL event handlers.
+-- Pattern "_.!" matches them, but they should not generate CDR events —
+-- the hangup_handler context handles hangup CEL separately.
+local function skip_special_exten()
+    local exten = get_variable("EXTEN")
+    if exten == "h" or exten == "t" or exten == "i" then
+        app["return"]();
+        return true
+    end
+    return false
+end
 
-extensions.interception_start["_.!"]           = function() event_interception_start() end
-extensions.interception_bridge_result["_.!"]   = function() event_interception_bridge_result() end
-extensions.dial_end["_.!"]                     = function() event_dial_end() end
+-- event_interception_start event_interception_bridge_result
+extensions.dial["_.!"]                      = function() if not skip_special_exten() then event_dial() end end
+extensions.dial_interception["_.!"]         = function() if not skip_special_exten() then event_dial_interception() end end
+extensions.transfer_dial["_.!"]             = function() if not skip_special_exten() then event_transfer_dial() end end
+extensions.lua_dial_create_chan["_.!"]      = function() if not skip_special_exten() then event_dial_create_chan() end end
+extensions.dial_answer["_.!"]               = function() if not skip_special_exten() then event_dial_answer() end end
+extensions.lua_transfer_dial_create_chan["_.!"] = function() if not skip_special_exten() then event_transfer_dial_create_chan() end end
+extensions.transfer_dial_answer["_.!"]      = function() if not skip_special_exten() then event_transfer_dial_answer() end end
+extensions.transfer_dial_hangup["_.!"]      = function() if not skip_special_exten() then event_transfer_dial_hangup() end end
+extensions.hangup_chan["_.!"]               = function() event_hangup_chan() end
+extensions.queue_start["_.!"]               = function() if not skip_special_exten() then event_queue_start() end end
+extensions.queue_answer["_.!"]              = function() if not skip_special_exten() then event_queue_answer() end end
+extensions.queue_end["_.!"]                 = function() if not skip_special_exten() then event_queue_end() end end
+extensions.dial_app["_.!"]                  = function() if not skip_special_exten() then event_dial_app() end end
+extensions.dial_outworktimes["_.!"]         = function() if not skip_special_exten() then event_dial_outworktimes() end end
+extensions.set_from_peer["_.!"]             = function() set_from_peer() end
+extensions.voicemail_start["_.!"]           = function() if not skip_special_exten() then event_voicemail_start() end end
+
+extensions.interception_start["_.!"]           = function() if not skip_special_exten() then event_interception_start() end end
+extensions.interception_bridge_result["_.!"]   = function() if not skip_special_exten() then event_interception_bridge_result() end end
+extensions.dial_end["_.!"]                     = function() if not skip_special_exten() then event_dial_end() end end
 extensions.hangup_chan_meetme["_.!"]            = function() event_hangup_chan_meetme() end
 extensions.unpark_call_timeout["_.!"]          = function() event_unpark_call_timeout() end
 --

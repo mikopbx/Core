@@ -486,6 +486,11 @@ local function check_rate_limit(is_authenticated)
         return true
     end
 
+    -- Skip rate limiting for chunked file upload POST requests (many sequential chunks)
+    if ngx.req.get_method() == "POST" and ngx.var.uri == "/pbxcore/api/v3/files:upload" then
+        return true
+    end
+
     -- Check if IP is already blocked for rate limiting
     local rate_block_key = "rate_blocked:" .. client_ip
     local block_info = rate_limit_cache:get(rate_block_key)

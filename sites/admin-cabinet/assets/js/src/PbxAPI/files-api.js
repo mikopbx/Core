@@ -171,7 +171,7 @@ FilesAPI.configureResumable = function(resumableConfig = {}) {
     return Object.assign({
         target: `${Config.pbxUrl}/pbxcore/api/v3/files:upload`,
         testChunks: false,
-        chunkSize: 3 * 1024 * 1024, // 3MB chunks
+        chunkSize: 10 * 1024 * 1024, // 10MB chunks (reduces request count for large files)
         simultaneousUploads: 1,
         maxFiles: 1,
         fileType: [],
