@@ -576,9 +576,21 @@ const providerModifyStatusWorker = {
             } else {
                 // Before any real event — no data, grey
                 segmentData[i] = 'grey';
+
             }
         }
         
+
+        // If no events in 24h window but provider has known state, show it
+        if (!hasRealEvent && currentStatus && lastKnownState !== 'grey') {
+            for (let i = 0; i < segments; i++) {
+                segmentData[i] = lastKnownState;
+                if (lastKnownEvent) {
+                    segmentEvents[i] = [{...lastKnownEvent, inherited: true}];
+                }
+            }
+        }
+
         // Render segments
         const segmentWidth = 100 / segments;
         segmentData.forEach((color, index) => {
