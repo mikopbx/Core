@@ -1094,45 +1094,45 @@ class SoundFilesConf extends SystemConfigClass
     }
 
     /**
-     * Mapping between Asterisk sound language codes (xx-xx) and Web admin language codes (xx)
+     * Non-standard Asterisk-to-web language code mappings.
+     * Only codes where the first part of asterisk code doesn't match the web code.
+     * Standard codes (uk-ua → uk, de-de → de, etc.) are resolved automatically.
      *
      * @var array<string, string>
      */
-    private const array ASTERISK_TO_WEB_LANG_MAP = [
-        'en-en' => 'en',
-        'en-gb' => 'en',  // Use English translation for British English
-        'ru-ru' => 'ru',
-        'de-de' => 'de',
-        'da-dk' => 'da',
-        'es-es' => 'es',
-        'gr-gr' => 'el',  // Greek: gr -> el (ISO 639-1)
-        'fr-ca' => 'fr',
-        'it-it' => 'it',
-        'ja-jp' => 'ja',
-        'nl-nl' => 'nl',
-        'pl-pl' => 'pl',
-        'pt-br' => 'pt_BR',
-        'sv-sv' => 'sv',
-        'cs-cs' => 'cs',
-        'tr-tr' => 'tr',
-        'uk-ua' => 'uk',
-        'ka-ge' => 'ka',
-        'vi-vn' => 'vi',
-        'az-az' => 'az',
-        'ro-ro' => 'ro',
-        'th-th' => 'th',
-        'hu-hu' => 'hu',
-        'fi-fi' => 'fi',
-        'hr-hr' => 'hr',
-        'pt-pt' => 'pt',
-        'zh-cn' => 'zh_Hans',
+    private const array ASTERISK_TO_WEB_LANG_EXCEPTIONS = [
+        'gr-gr' => 'el',       // Greek: Asterisk uses 'gr', ISO 639-1 is 'el'
+        'pt-br' => 'pt_BR',    // Brazilian Portuguese: needs script variant
+        'zh-cn' => 'zh_Hans',  // Chinese Simplified: needs script variant
     ];
+
+    /**
+     * Resolves Asterisk sound language code (xx-yy) to web admin language code.
+     *
+     * Priority:
+     * 1. Exception map for non-standard codes
+     * 2. First part of asterisk code (xx-yy → xx)
+     *
+     * @param string $asteriskCode Asterisk language code (e.g. 'uk-ua', 'en-en')
+     * @return string Web admin language code (e.g. 'uk', 'en')
+     */
+    private static function resolveWebLanguageCode(string $asteriskCode): string
+    {
+        if (array_key_exists($asteriskCode, self::ASTERISK_TO_WEB_LANG_EXCEPTIONS)) {
+            return self::ASTERISK_TO_WEB_LANG_EXCEPTIONS[$asteriskCode];
+        }
+
+        // Standard mapping: take the first part (uk-ua → uk, de-de → de, fr-ca → fr)
+        return explode('-', $asteriskCode)[0];
+    }
 
     /**
      * Get all supported languages
      *
      * Returns base system languages plus languages from enabled Language Pack modules.
      * Uses LanguageProvider::AVAILABLE_LANGUAGES as the single source of truth for language names.
+     * Mapping from Asterisk codes to web codes is automatic — no manual updates needed
+     * when new Language Pack modules are installed.
      *
      * @return array Associative array of language codes to display names
      */
@@ -1144,11 +1144,9 @@ class SoundFilesConf extends SystemConfigClass
         $availableLanguages = self::getAvailableLanguages();
 
         foreach ($availableLanguages as $asteriskCode) {
-            // Map Asterisk code to web admin code
-            $webCode = self::ASTERISK_TO_WEB_LANG_MAP[$asteriskCode] ?? null;
+            $webCode = self::resolveWebLanguageCode($asteriskCode);
 
-            if ($webCode !== null && array_key_exists($webCode, LanguageProvider::AVAILABLE_LANGUAGES)) {
-                // Use native name from LanguageProvider
+            if (array_key_exists($webCode, LanguageProvider::AVAILABLE_LANGUAGES)) {
                 $languages[$asteriskCode] = LanguageProvider::AVAILABLE_LANGUAGES[$webCode]['name'];
             } else {
                 // Fallback: use uppercase language code if no mapping found
