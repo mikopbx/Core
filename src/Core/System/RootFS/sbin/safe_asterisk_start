@@ -42,4 +42,9 @@ if [ -f "$PIDFILE" ]; then
 fi
 
 rm -f "$PIDFILE"
+
+# Raise file descriptor limit for high call volume (default 1024 limits ~160 calls)
+# Each call uses ~4-8 FDs (SIP sockets + RTP ports)
+ulimit -n 65535
+
 exec /usr/sbin/asterisk -F

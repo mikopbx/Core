@@ -70,7 +70,8 @@ class PbxConf extends SystemConfigClass
         }
         chmod($this->runDirPath, 0770);
         $binPath = Util::which(self::PROC_NAME);
-        $this->startCommand = "$binPath -F";
+        // Raise FD limit for high call volume (default 1024 limits ~160 concurrent calls)
+        $this->startCommand = "ulimit -n 65535; $binPath -F";
     }
 
     public function generateMonitConf(): bool
