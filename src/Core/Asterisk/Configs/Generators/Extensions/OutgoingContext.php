@@ -121,6 +121,11 @@ class OutgoingContext extends AsteriskConfigClass
             // Create a copy of the routing data
             $rout_data = $rout;
 
+            // Skip routes with missing provider ID (orphaned route in database)
+            if (empty($rout['providerid'])) {
+                continue;
+            }
+
             // Get the technology associated with the provider and populate endpoint_name if needed
             $technology = $this->getTechByID($rout['providerid'], $rout_data);
 
