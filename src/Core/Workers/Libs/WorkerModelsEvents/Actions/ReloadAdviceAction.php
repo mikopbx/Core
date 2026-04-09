@@ -35,6 +35,7 @@ use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHConfig;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckWebPasswords;
 use MikoPBX\Core\Workers\WorkerPrepareAdvice;
+use MikoPBX\PBXCoreREST\Lib\Advice\GetAdviceListAction;
 use Phalcon\Di\Di;
 
 class ReloadAdviceAction implements ReloadActionInterface
@@ -89,6 +90,14 @@ class ReloadAdviceAction implements ReloadActionInterface
                 $managedCache->delete($cacheKey);
                 SystemMessages::sysLogMsg(__METHOD__, "Cache key $cacheKey deleted on reload advice", LOG_DEBUG);
             }
+        }
+
+        // Publish fresh advice to EventBus immediately after clearing cache.
+        // Without this, nchan retains the last stored message (with stale warnings),
+        // and new page loads receive the outdated advice — causing redirect loops
+        // (e.g., default password warning persists after password change).
+        if (!empty($parameters)) {
+            GetAdviceListAction::main();
         }
     }
 }

@@ -71,9 +71,12 @@ class GetAdviceListAction extends Injectable
             }
         }
         $res->data['advice'] = $result;
-        if (count($result) > 0) {
-            $di->get(EventBusProvider::SERVICE_NAME)->publish('advice', $res->getResult());
-        }
+
+        // Always publish to EventBus, even when result is empty.
+        // This replaces stale nchan messages (e.g., after password change clears the warning).
+        // Without this, nchan retains the last stored message with outdated warnings.
+        $di->get(EventBusProvider::SERVICE_NAME)->publish('advice', $res->getResult());
+
         return $res;
     }
 

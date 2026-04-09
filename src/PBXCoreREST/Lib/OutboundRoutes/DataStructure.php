@@ -337,7 +337,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'numberbeginswith' => [
                 'type' => 'string',
                 'description' => 'rest_schema_obr_numberbeginswith',
-                'maxLength' => 20,
+                'maxLength' => 64,
                 'sanitize' => 'string',
                 'example' => '00'
             ],
