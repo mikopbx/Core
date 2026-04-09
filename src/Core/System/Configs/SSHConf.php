@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\PasswordService;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
@@ -166,9 +167,9 @@ class SSHConf extends SystemConfigClass
      */
     private function generateDropbearKeys(): void
     {
+        // DSS/DSA is deprecated and unsupported in modern dropbear builds
         $keyTypes = [
             "rsa" => PbxSettings::SSH_RSA_KEY,
-            "dss" => PbxSettings::SSH_DSS_KEY,
             "ecdsa" => PbxSettings::SSH_ECDSA_KEY,
             "ed25519" => PbxSettings::SSH_ED25519_KEY
         ];
@@ -185,6 +186,10 @@ class SSHConf extends SystemConfigClass
                 file_put_contents($resKeyFilePath, base64_decode($keyValue));
             } elseif (!file_exists($resKeyFilePath)) {
                 Processes::mwExec("$dropBearKey -t $keyType -f $resKeyFilePath");
+                if (!file_exists($resKeyFilePath)) {
+                    SystemMessages::sysLogMsg(__METHOD__, "Failed to generate $keyType host key", LOG_WARNING);
+                    continue;
+                }
                 $newKey = base64_encode(file_get_contents($resKeyFilePath));
                 PbxSettings::setValueByKey($dbKey, $newKey);
             }
@@ -203,6 +208,10 @@ class SSHConf extends SystemConfigClass
                     unlink($path);
                 }
                 shell_exec($createCmd);
+                if (!file_exists($path)) {
+                    SystemMessages::sysLogMsg(__METHOD__, "Failed to generate SSH key: $path", LOG_WARNING);
+                    continue;
+                }
                 $keyValue = base64_encode(file_get_contents($path));
                 PbxSettings::setValueByKey($keySetting, $keyValue);
             }

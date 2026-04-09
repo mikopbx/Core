@@ -207,7 +207,7 @@ const DynamicDropdownBuilder = {
         const settings = {
             allowAdditions: config.allowAdditions || false,
             fullTextSearch: true,
-            forceSelection: false,
+            forceSelection: config.forceSelection !== undefined ? config.forceSelection : !!config.allowAdditions,
             preserveHTML: true, // Allow HTML in dropdown text (for icons, flags, etc.)
             clearable: config.clearable || false,
             filterRemoteData: true,
