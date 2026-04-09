@@ -392,7 +392,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'Advanced features (regex):',
     'or_numberbeginswith_tooltip_desc' => 'Defines starting digits that dialed number must begin with for this route to apply. Supports regular expressions.',
     'or_numberbeginswith_tooltip_header' => 'Dialed number prefix',
-    'or_numberbeginswith_tooltip_limitation1' => 'Maximum 32 characters',
+    'or_numberbeginswith_tooltip_limitation1' => 'Maximum 64 characters',
     'or_numberbeginswith_tooltip_limitation2' => '* and + symbols automatically escaped',
     'or_numberbeginswith_tooltip_limitation3' => '[ ] ( ) { } | symbols work as regex operators',
     'or_numberbeginswith_tooltip_limitations_header' => 'Limitations:',

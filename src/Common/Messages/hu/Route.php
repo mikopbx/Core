@@ -415,7 +415,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'Bővített lehetőségek (regex):',
     'or_numberbeginswith_tooltip_desc' => 'Meghatározza azokat a kezdő számjegyeket, amelyekkel a tárcsázott számnak kell kezdődnie ennek az útvonalnak az alkalmazásához. Támogatja a reguláris kifejezéseket.',
     'or_numberbeginswith_tooltip_header' => 'Tárcsázott szám előtagja',
-    'or_numberbeginswith_tooltip_limitation1' => 'Maximum 32 karakter',
+    'or_numberbeginswith_tooltip_limitation1' => 'Maximum 64 karakter',
     'or_numberbeginswith_tooltip_limitation2' => 'A * és + karakterek automatikusan escape-eljük',
     'or_numberbeginswith_tooltip_limitation3' => 'A [ ] ( ) { } | karakterek regex operátorokként működnek',
     'or_numberbeginswith_tooltip_limitations_header' => 'Korlátozások:',

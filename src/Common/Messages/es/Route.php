@@ -375,7 +375,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'Características avanzadas (regex):',
     'or_numberbeginswith_tooltip_desc' => 'Define los dígitos iniciales con los que debe comenzar el número marcado para que se aplique esta ruta. Soporta expresiones regulares.',
     'or_numberbeginswith_tooltip_header' => 'Prefijo de número marcado',
-    'or_numberbeginswith_tooltip_limitation1' => 'Máximo 32 caracteres',
+    'or_numberbeginswith_tooltip_limitation1' => 'Máximo 64 caracteres',
     'or_numberbeginswith_tooltip_limitation2' => 'Los símbolos * y + se escapan automáticamente',
     'or_numberbeginswith_tooltip_limitation3' => 'Los símbolos [ ] ( ) { } | funcionan como operadores regex',
     'or_numberbeginswith_tooltip_limitations_header' => 'Limitaciones:',

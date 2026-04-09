@@ -375,7 +375,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'Possibilità avanzate (regex):',
     'or_numberbeginswith_tooltip_desc' => 'Determina le cifre iniziali con cui deve iniziare il numero composto per applicare questa rotta. Supporta espressioni regolari.',
     'or_numberbeginswith_tooltip_header' => 'Prefisso del numero composto',
-    'or_numberbeginswith_tooltip_limitation1' => 'Massimo 32 caratteri',
+    'or_numberbeginswith_tooltip_limitation1' => 'Massimo 64 caratteri',
     'or_numberbeginswith_tooltip_limitation2' => 'I simboli * e + vengono automaticamente escape',
     'or_numberbeginswith_tooltip_limitation3' => 'I simboli [ ] ( ) { } | funzionano come operatori regex',
     'or_numberbeginswith_tooltip_limitations_header' => 'Limitazioni:',

@@ -415,7 +415,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'Napredne mogućnosti (regex):',
     'or_numberbeginswith_tooltip_desc' => 'Određuje početne znamenke s kojima mora počinjati broj koji se bira za primjenu ove rute. Podržane su regularni izrazi.',
     'or_numberbeginswith_tooltip_header' => 'Prefiks pozivnog broja',
-    'or_numberbeginswith_tooltip_limitation1' => 'Maksimalno 32 znaka',
+    'or_numberbeginswith_tooltip_limitation1' => 'Maksimalno 64 znaka',
     'or_numberbeginswith_tooltip_limitation2' => 'Znakovi * i + automatski se pobjegavaju',
     'or_numberbeginswith_tooltip_limitation3' => 'Znakovi [ ] ( ) { } | rade kao regex operatori',
     'or_numberbeginswith_tooltip_limitations_header' => 'Ograničenja:',

@@ -390,7 +390,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'Расширенные возможности (regex):',
     'or_numberbeginswith_tooltip_desc' => 'Определяет начальные цифры, с которых должен начинаться набираемый номер для применения этого маршрута. Поддерживаются регулярные выражения.',
     'or_numberbeginswith_tooltip_header' => 'Префикс набираемого номера',
-    'or_numberbeginswith_tooltip_limitation1' => 'Максимум 32 символа',
+    'or_numberbeginswith_tooltip_limitation1' => 'Максимум 64 символа',
     'or_numberbeginswith_tooltip_limitation2' => 'Символы * и + экранируются автоматически',
     'or_numberbeginswith_tooltip_limitation3' => 'Символы [ ] ( ) { } | работают как regex операторы',
     'or_numberbeginswith_tooltip_limitations_header' => 'Ограничения:',

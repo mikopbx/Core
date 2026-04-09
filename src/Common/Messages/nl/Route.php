@@ -375,7 +375,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'Geavanceerde mogelijkheden (regex):',
     'or_numberbeginswith_tooltip_desc' => 'Bepaalt begincijfers waarmee gekozen nummer moet beginnen om deze route toe te passen. Ondersteunt reguliere expressies.',
     'or_numberbeginswith_tooltip_header' => 'Prefix van gekozen nummer',
-    'or_numberbeginswith_tooltip_limitation1' => 'Maximaal 32 tekens',
+    'or_numberbeginswith_tooltip_limitation1' => 'Maximaal 64 tekens',
     'or_numberbeginswith_tooltip_limitation2' => 'Symbolen * en + worden automatisch ge-escaped',
     'or_numberbeginswith_tooltip_limitation3' => 'Symbolen [ ] ( ) { } | werken als regex operators',
     'or_numberbeginswith_tooltip_limitations_header' => 'Beperkingen:',

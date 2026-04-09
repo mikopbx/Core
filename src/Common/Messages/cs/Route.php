@@ -375,7 +375,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'Pokročilé možnosti (regex):',
     'or_numberbeginswith_tooltip_desc' => 'Určuje počáteční číslice, kterými musí začínat vytáčené číslo pro použití této trasy. Podporují se regulární výrazy.',
     'or_numberbeginswith_tooltip_header' => 'Prefix vytáčeného čísla',
-    'or_numberbeginswith_tooltip_limitation1' => 'Maximum 32 znaků',
+    'or_numberbeginswith_tooltip_limitation1' => 'Maximum 64 znaků',
     'or_numberbeginswith_tooltip_limitation2' => 'Znaky * a + se automaticky escapují',
     'or_numberbeginswith_tooltip_limitation3' => 'Znaky [ ] ( ) { } | fungují jako regex operátory',
     'or_numberbeginswith_tooltip_limitations_header' => 'Omezení:',

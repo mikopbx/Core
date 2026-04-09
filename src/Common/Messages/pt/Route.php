@@ -375,7 +375,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'Possibilidades avançadas (regex):',
     'or_numberbeginswith_tooltip_desc' => 'Determina os dígitos iniciais com os quais o número discado deve começar para aplicar esta rota. Suporta expressões regulares.',
     'or_numberbeginswith_tooltip_header' => 'Prefixo do número discado',
-    'or_numberbeginswith_tooltip_limitation1' => 'Máximo 32 caracteres',
+    'or_numberbeginswith_tooltip_limitation1' => 'Máximo 64 caracteres',
     'or_numberbeginswith_tooltip_limitation2' => 'Símbolos * e + são automaticamente escapados',
     'or_numberbeginswith_tooltip_limitation3' => 'Símbolos [ ] ( ) { } | funcionam como operadores regex',
     'or_numberbeginswith_tooltip_limitations_header' => 'Limitações:',

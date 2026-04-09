@@ -77,7 +77,7 @@ class OutgoingRouteEditForm extends BaseForm
         $this->add(new Text('rulename'));
         
         // Number begins with pattern
-        $this->add(new Text('numberbeginswith'));
+        $this->add(new Text('numberbeginswith', ['style' => 'width: 400px;']));
         
         // Prepend digits
         $this->add(new Text('prepend'));

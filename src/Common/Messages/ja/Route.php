@@ -375,7 +375,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => '高度な機能（regex）：',
     'or_numberbeginswith_tooltip_desc' => 'このルートを適用するためにダイヤルされた番号が始まるべき初期桁を定義します。正規表現をサポートします。',
     'or_numberbeginswith_tooltip_header' => 'ダイヤルされた番号のプレフィックス',
-    'or_numberbeginswith_tooltip_limitation1' => '最大32文字',
+    'or_numberbeginswith_tooltip_limitation1' => '最大64文字',
     'or_numberbeginswith_tooltip_limitation2' => '記号*と+は自動的にエスケープされます',
     'or_numberbeginswith_tooltip_limitation3' => '記号 [ ] ( ) { } | はregex演算子として機能します',
     'or_numberbeginswith_tooltip_limitations_header' => '制限：',

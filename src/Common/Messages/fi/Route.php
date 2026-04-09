@@ -415,7 +415,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'Edistyneet ominaisuudet (regex):',
     'or_numberbeginswith_tooltip_desc' => 'Määrittää alkuun numeroita, joilla valittavan numeron tulee alkaa tämän reitin soveltamiseksi. Tukee säännöllisiä lausekkeita.',
     'or_numberbeginswith_tooltip_header' => 'Soittonumeron etuliite',
-    'or_numberbeginswith_tooltip_limitation1' => 'Enintään 32 merkkiä',
+    'or_numberbeginswith_tooltip_limitation1' => 'Enintään 64 merkkiä',
     'or_numberbeginswith_tooltip_limitation2' => 'Merkit * ja + suojataan automaattisesti',
     'or_numberbeginswith_tooltip_limitation3' => 'Merkit [ ] ( ) { } | toimivat regex-operaattoreina',
     'or_numberbeginswith_tooltip_limitations_header' => 'Rajoitukset:',

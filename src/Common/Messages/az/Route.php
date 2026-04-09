@@ -375,7 +375,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'Qabaqcıl imkanlar (regex):',
     'or_numberbeginswith_tooltip_desc' => 'Bu marşrutun tətbiq edilməsi üçün yığılan nömrənin hansı başlanğıc rəqəmlərlə başlamalı olduğunu müəyyən edir. Regex dəstəkləyir.',
     'or_numberbeginswith_tooltip_header' => 'Yığılan nömrənin prefiksi',
-    'or_numberbeginswith_tooltip_limitation1' => 'Maksimum 32 simvol',
+    'or_numberbeginswith_tooltip_limitation1' => 'Maksimum 64 simvol',
     'or_numberbeginswith_tooltip_limitation2' => '* və + simvolları avtomatik escape olur',
     'or_numberbeginswith_tooltip_limitation3' => '[ ] ( ) { } | simvolları regex operatorları kimi işləyir',
     'or_numberbeginswith_tooltip_limitations_header' => 'Məhdudiyyətlər:',

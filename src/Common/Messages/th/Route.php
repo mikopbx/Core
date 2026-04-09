@@ -375,7 +375,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'ฟีเจอร์ขั้นสูง (regex):',
     'or_numberbeginswith_tooltip_desc' => 'กำหนดหลักเริ่มต้นที่หมายเลขที่กดต้องเริ่มต้นด้วยเพื่อใช้เส้นทางนี้ รองรับ regular expressions',
     'or_numberbeginswith_tooltip_header' => 'Prefix ของหมายเลขที่กด',
-    'or_numberbeginswith_tooltip_limitation1' => 'สูงสุด 32 ตัวอักษร',
+    'or_numberbeginswith_tooltip_limitation1' => 'สูงสุด 64 ตัวอักษร',
     'or_numberbeginswith_tooltip_limitation2' => 'สัญลักษณ์ * และ + ถูก escape อัตโนมัติ',
     'or_numberbeginswith_tooltip_limitation3' => 'สัญลักษณ์ [ ] ( ) { } | ทำงานเป็นตัวดำเนินการ regex',
     'or_numberbeginswith_tooltip_limitations_header' => 'ข้อจำกัด:',

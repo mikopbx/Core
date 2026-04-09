@@ -375,7 +375,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => '高级功能（正则表达式）：',
     'or_numberbeginswith_tooltip_desc' => '确定拨打号码应以哪些起始数字开头以应用此路由。支持正则表达式。',
     'or_numberbeginswith_tooltip_header' => '拨打号码前缀',
-    'or_numberbeginswith_tooltip_limitation1' => '最多32个字符',
+    'or_numberbeginswith_tooltip_limitation1' => '最多64个字符',
     'or_numberbeginswith_tooltip_limitation2' => '符号*和+自动转义',
     'or_numberbeginswith_tooltip_limitation3' => '符号[ ](){}|作为正则表达式操作符工作',
     'or_numberbeginswith_tooltip_limitations_header' => '限制：',

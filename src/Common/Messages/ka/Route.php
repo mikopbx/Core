@@ -415,7 +415,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'გაფართოებული შესაძლებლობები (regex):',
     'or_numberbeginswith_tooltip_desc' => 'განსაზღვრავს საწყის ციფრებს რომლითაც უნდა იწყებოდეს დარეკული ნომერი ამ მარშრუტის გამოსაყენებლად. მხარს უჭერს რეგულარულ გამოსახულებებს.',
     'or_numberbeginswith_tooltip_header' => 'დარეკული ნომრის პრეფიქსი',
-    'or_numberbeginswith_tooltip_limitation1' => 'მაქსიმუმ 32 სიმბოლო',
+    'or_numberbeginswith_tooltip_limitation1' => 'მაქსიმუმ 64 სიმბოლო',
     'or_numberbeginswith_tooltip_limitation2' => '* და + სიმბოლოები ავტომატურად escape-დება',
     'or_numberbeginswith_tooltip_limitation3' => '[ ] ( ) { } | სიმბოლოები მუშაობენ როგორც regex ოპერატორები',
     'or_numberbeginswith_tooltip_limitations_header' => 'შეზღუდვები:',

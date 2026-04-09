@@ -415,7 +415,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'Προχωρημένες δυνατότητες (regex):',
     'or_numberbeginswith_tooltip_desc' => 'Καθορίζει τα αρχικά ψηφία με τα οποία πρέπει να αρχίζει ο αριθμός που καλείται για την εφαρμογή αυτής της διαδρομής. Υποστηρίζονται κανονικές εκφράσεις.',
     'or_numberbeginswith_tooltip_header' => 'Πρόθεμα αριθμού κλήσης',
-    'or_numberbeginswith_tooltip_limitation1' => 'Μέγιστο 32 χαρακτήρες',
+    'or_numberbeginswith_tooltip_limitation1' => 'Μέγιστο 64 χαρακτήρες',
     'or_numberbeginswith_tooltip_limitation2' => 'Τα σύμβολα * και + διαφεύγουν αυτόματα',
     'or_numberbeginswith_tooltip_limitation3' => 'Τα σύμβολα [ ] ( ) { } | λειτουργούν ως τελεστές regex',
     'or_numberbeginswith_tooltip_limitations_header' => 'Περιορισμοί:',

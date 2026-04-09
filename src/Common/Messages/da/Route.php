@@ -416,7 +416,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'Avancerede funktioner (regex):',
     'or_numberbeginswith_tooltip_desc' => 'Bestemmer de indledende cifre, som det kaldte nummer skal starte med for at anvende denne rute. Understøtter regulære udtryk.',
     'or_numberbeginswith_tooltip_header' => 'Opkaldt nummer prefiks',
-    'or_numberbeginswith_tooltip_limitation1' => 'Maksimum 32 tegn',
+    'or_numberbeginswith_tooltip_limitation1' => 'Maksimum 64 tegn',
     'or_numberbeginswith_tooltip_limitation2' => 'Symboler * og + escapes automatisk',
     'or_numberbeginswith_tooltip_limitation3' => 'Symboler [ ] ( ) { } | fungerer som regex operatorer',
     'or_numberbeginswith_tooltip_limitations_header' => 'Begrænsninger:',

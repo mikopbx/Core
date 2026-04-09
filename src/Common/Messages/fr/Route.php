@@ -375,7 +375,7 @@ return [
     'or_numberbeginswith_tooltip_advanced_header' => 'Capacités avancées (regex) :',
     'or_numberbeginswith_tooltip_desc' => 'Détermine les chiffres de début avec lesquels le numéro composé doit commencer pour appliquer cette route. Les expressions régulières sont prises en charge.',
     'or_numberbeginswith_tooltip_header' => 'Préfixe du numéro composé',
-    'or_numberbeginswith_tooltip_limitation1' => 'Maximum 32 caractères',
+    'or_numberbeginswith_tooltip_limitation1' => 'Maximum 64 caractères',
     'or_numberbeginswith_tooltip_limitation2' => 'Les symboles * et + sont automatiquement échappés',
     'or_numberbeginswith_tooltip_limitation3' => 'Les symboles [ ] ( ) { } | fonctionnent comme des opérateurs regex',
     'or_numberbeginswith_tooltip_limitations_header' => 'Limitations :',
