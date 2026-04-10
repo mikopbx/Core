@@ -15,7 +15,39 @@
 -- If not, see <https://www.gnu.org/licenses/>.
 
 -- Initializing helper procedures and functions.
-JSON = (loadfile "/usr/www/src/Core/Asterisk/Configs/lua/JSON.lua")();
+-- Load JSON library with fallback to prevent cascading dialplan failure
+-- when file descriptors are exhausted (Too many open files).
+local json_loader, json_err = loadfile("/usr/www/src/Core/Asterisk/Configs/lua/JSON.lua");
+if json_loader then
+    local ok, result = pcall(json_loader);
+    if ok then
+        JSON = result;
+    end
+end
+if not JSON then
+    -- Minimal fallback encoder for flat string key-value tables.
+    -- Ensures set_from_peer, hangup_chan, and other critical dialplan
+    -- contexts remain functional even when JSON.lua cannot be loaded.
+    JSON = {
+        encode = function(self, tbl)
+            if type(tbl) ~= "table" then
+                return tostring(tbl);
+            end
+            local parts = {};
+            for k, v in pairs(tbl) do
+                local key = '"' .. tostring(k):gsub('\\', '\\\\'):gsub('"', '\\"') .. '"';
+                local val;
+                if type(v) == "boolean" then
+                    val = v and "true" or "false";
+                else
+                    val = '"' .. tostring(v):gsub('\\', '\\\\'):gsub('"', '\\"') .. '"';
+                end
+                parts[#parts + 1] = key .. ":" .. val;
+            end
+            return "{" .. table.concat(parts, ",") .. "}";
+        end
+    };
+end
 local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
 --[[
