@@ -80,7 +80,8 @@ class AsteriskConf extends AsteriskConfigClass
             "transcode_via_sln = no\n" .
             "hideconnect = yes\n" .
             "defaultlanguage = $lang\n" .
-            "systemname = mikopbx\n";
+            "systemname = mikopbx\n" .
+            "maxfiles = 65535\n";
 
         // Write the configuration content to the file
         $this->saveConfig($conf, $this->description);

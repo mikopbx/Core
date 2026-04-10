@@ -97,6 +97,13 @@ mount -t devpts -o gid=5,mode=620 devpts /dev/pts
 /sbin/sysctl vm.overcommit_memory=1 >/dev/null 2>/dev/null
 /sbin/sysctl net.core.somaxconn=65535 >/dev/null 2>/dev/null
 
+# Raise system-wide file descriptor limits before any services start.
+# Default kernel nr_open is 1048576, but PID 1 inherits a low hard limit (4096)
+# which all child processes (monit, asterisk) inherit and cannot exceed.
+# Each concurrent call uses ~10 FDs (SIP + RTP + RTCP + pipes).
+/sbin/sysctl -w fs.file-max=1048576 >/dev/null 2>/dev/null
+ulimit -n 65535
+
 # RAID setup
 mdadmPath=$(/sbin/which mdadm)
 if [ -n "$mdadmPath" ]; then
