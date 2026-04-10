@@ -1228,9 +1228,11 @@ class Network extends Injectable
 
         $delCommands = [];
         foreach ($commands as $addCommand) {
-            // Convert "route add -net ..." to "route del -net ..."
+            // Convert "ip route replace ..." to "ip route del ..."
             // Convert "ip -6 route add ..." to "ip -6 route del ..."
-            $delCommand = preg_replace('/ add /', ' del ', $addCommand, 1);
+            // Legacy: "route add -net ..." to "route del -net ..."
+            $delCommand = preg_replace('/ replace /', ' del ', $addCommand, 1);
+            $delCommand = preg_replace('/ add /', ' del ', $delCommand, 1);
             $delCommands[] = $delCommand;
         }
 
@@ -1261,7 +1263,6 @@ class Network extends Injectable
         ]);
 
         if (count($staticRoutes) > 0) {
-            $route = Util::which('route');
             $ip = Util::which('ip');
 
             foreach ($staticRoutes as $routeData) {
@@ -1297,10 +1298,10 @@ class Network extends Injectable
                     $arr_commands[] = $command;
                     SystemMessages::sysLogMsg(__METHOD__, "Adding IPv6 static route: $network/$subnet via $gateway" . (!empty($iface) ? " dev $iface" : ''));
                 } else {
-                    // IPv4 route using legacy 'route' command (backward compatibility)
-                    // Command format: route add -net 192.168.10.0/24 gw 192.168.1.1 dev eth0
-                    $command = "$route add -net " . escapeshellarg("$network/$subnet") .
-                               " gw " . escapeshellarg($gateway);
+                    // IPv4 route using 'ip route replace' (idempotent, supports CIDR notation)
+                    // BusyBox 'route add -net' does not support CIDR /32 host routes
+                    $command = "$ip route replace " . escapeshellarg("$network/$subnet") .
+                               " via " . escapeshellarg($gateway);
 
                     if (!empty($iface)) {
                         $command .= " dev " . escapeshellarg($iface);
