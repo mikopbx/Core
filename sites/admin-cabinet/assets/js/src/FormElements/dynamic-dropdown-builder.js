@@ -138,9 +138,16 @@ const DynamicDropdownBuilder = {
         
         // Set value in hidden input
         $hiddenInput.val(currentValue);
-        
+
         // Initialize dropdown
         this.initializeDropdown(fieldName, config);
+
+        // Restore value and display text after Fomantic UI initialization
+        // Fomantic may reset text to placeholder during dropdown setup
+        if (currentValue) {
+            $hiddenInput.val(currentValue);
+            $dropdown.find('> .text').html(currentText).removeClass('default');
+        }
     },
     
     /**
@@ -187,6 +194,14 @@ const DynamicDropdownBuilder = {
         
         // Re-initialize dropdown with new configuration
         this.initializeDropdown(fieldName, config);
+
+        // Restore value and display text after Fomantic UI re-initialization
+        if (currentValue) {
+            $hiddenInput.val(currentValue);
+        }
+        if (currentText) {
+            $dropdown.find('> .text').html(currentText).removeClass('default');
+        }
     },
     
     /**
@@ -207,7 +222,7 @@ const DynamicDropdownBuilder = {
         const settings = {
             allowAdditions: config.allowAdditions || false,
             fullTextSearch: true,
-            forceSelection: config.forceSelection !== undefined ? config.forceSelection : !!config.allowAdditions,
+            forceSelection: config.forceSelection || false,
             preserveHTML: true, // Allow HTML in dropdown text (for icons, flags, etc.)
             clearable: config.clearable || false,
             filterRemoteData: true,
@@ -330,6 +345,7 @@ const DynamicDropdownBuilder = {
                     }
                 };
             }
+
         } else if (config.staticOptions) {
             // For static options, populate menu immediately
             this.populateStaticOptions($dropdown, config.staticOptions);
@@ -337,6 +353,39 @@ const DynamicDropdownBuilder = {
 
         // Initialize native Fomantic UI dropdown
         $dropdown.dropdown(settings);
+
+        // For allowAdditions dropdowns: commit typed text when search input loses focus.
+        // Fomantic UI does not auto-commit custom values on blur with forceSelection:false.
+        // We attach directly to the search input (created by Fomantic during init)
+        // instead of using onHide, which depends on animation state.
+        if (config.allowAdditions) {
+            const $searchInput = $dropdown.find('input.search');
+            if ($searchInput.length) {
+                $searchInput.on('blur.ddbAdditions', function () {
+                    const $si = $(this);
+                    // Delay to let Fomantic process menu item clicks first.
+                    // If user selected from menu, Fomantic clears search input
+                    // before our timeout fires, so searchText will be empty.
+                    setTimeout(() => {
+                        const searchText = $si.val().trim();
+                        if (searchText && searchText !== $hiddenInput.val()) {
+                            $hiddenInput.val(searchText);
+                            $hiddenInput.trigger('change');
+                            if (typeof Form !== 'undefined' && Form.dataChanged) {
+                                Form.dataChanged();
+                            }
+                            if (config.onChange) {
+                                config.onChange(searchText, searchText, null);
+                            }
+                            $dropdown.find('> .text')
+                                .html(DynamicDropdownBuilder.escapeHtml(searchText))
+                                .removeClass('default');
+                            $si.val('');
+                        }
+                    }, 150);
+                });
+            }
+        }
 
         // Set selected value for static options after initialization
         if (config.staticOptions) {
