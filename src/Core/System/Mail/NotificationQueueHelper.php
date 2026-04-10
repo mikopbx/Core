@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\Mail;
 
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Mail\Builders\AbstractNotificationBuilder;
+use MikoPBX\Core\System\Mail\Builders\VoicemailNotificationBuilder;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 
@@ -177,8 +178,13 @@ class NotificationQueueHelper
             LOG_INFO
         );
 
+        $attachmentFile = '';
+        if ($builder instanceof VoicemailNotificationBuilder) {
+            $attachmentFile = $builder->getRecordingFile();
+        }
+
         $service = new EmailNotificationService();
-        return $service->sendNotification($builder);
+        return $service->sendNotification($builder, attachmentFile: $attachmentFile);
     }
 
     /**

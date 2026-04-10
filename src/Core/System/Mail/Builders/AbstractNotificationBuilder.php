@@ -337,10 +337,6 @@ abstract class AbstractNotificationBuilder
         if (!filter_var($this->recipient, FILTER_VALIDATE_EMAIL)) {
             throw new \RuntimeException('Invalid email address: ' . $this->recipient);
         }
-
-        if (empty($this->subject) && empty($this->mainMessage)) {
-            throw new \RuntimeException('Either subject or main message must be set');
-        }
     }
 
     /**
