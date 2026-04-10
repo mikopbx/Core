@@ -356,31 +356,21 @@ const DynamicDropdownBuilder = {
 
         // For allowAdditions dropdowns: commit typed text when search input loses focus.
         // Fomantic UI does not auto-commit custom values on blur with forceSelection:false.
-        // We attach directly to the search input (created by Fomantic during init)
-        // instead of using onHide, which depends on animation state.
+        // Solution: use Fomantic's own 'set selected' API which properly adds the value
+        // to the dropdown, updates text, fires onChange, and maintains internal state.
         if (config.allowAdditions) {
             const $searchInput = $dropdown.find('input.search');
             if ($searchInput.length) {
-                $searchInput.on('blur.ddbAdditions', function () {
+                $searchInput.off('blur.ddbAdditions').on('blur.ddbAdditions', function () {
                     const $si = $(this);
-                    // Delay to let Fomantic process menu item clicks first.
-                    // If user selected from menu, Fomantic clears search input
-                    // before our timeout fires, so searchText will be empty.
+                    // Delay lets Fomantic process menu item clicks first.
+                    // If user selected from menu, search input is already cleared.
                     setTimeout(() => {
                         const searchText = $si.val().trim();
-                        if (searchText && searchText !== $hiddenInput.val()) {
-                            $hiddenInput.val(searchText);
-                            $hiddenInput.trigger('change');
-                            if (typeof Form !== 'undefined' && Form.dataChanged) {
-                                Form.dataChanged();
-                            }
-                            if (config.onChange) {
-                                config.onChange(searchText, searchText, null);
-                            }
-                            $dropdown.find('> .text')
-                                .html(DynamicDropdownBuilder.escapeHtml(searchText))
-                                .removeClass('default');
-                            $si.val('');
+                        if (searchText) {
+                            // Use Fomantic API to add and select the custom value.
+                            // This updates text, hidden input, and internal state consistently.
+                            $dropdown.dropdown('set selected', searchText);
                         }
                     }, 150);
                 });
