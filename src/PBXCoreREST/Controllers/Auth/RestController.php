@@ -208,55 +208,42 @@ class RestController extends BaseRestController
             return;
         }
 
-        // For refresh and logout, inject refreshToken from cookie and client info into request data
+        // All auth methods need clientIp/userAgent injected before sending to
+        // the worker — these are only available in php-fpm context (REMOTE_ADDR).
+        if (empty($this->processorClass)) {
+            $this->sendErrorResponse('Processor class not configured', 500);
+            return;
+        }
+
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
+        $requestData['clientIp'] = $this->request->getClientAddress();
+        $requestData['userAgent'] = $this->request->getUserAgent();
+
+        // For refresh and logout, inject refreshToken from httpOnly cookie
         if (in_array($methodName, ['refresh', 'logout'], true)) {
-            // Validate processor class is set
-            if (empty($this->processorClass)) {
-                $this->sendErrorResponse('Processor class not configured', 500);
-                return;
-            }
-
-            // Get request data using proper Request methods
-            $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-
-            // Try to read and decrypt refresh token from cookie
             $refreshToken = null;
 
             if ($this->cookies->has('refreshToken')) {
                 try {
-                    // This will decrypt the cookie automatically using CryptProvider
                     $refreshToken = $this->cookies->get('refreshToken')->getValue();
                 } catch (\Throwable $e) {
-                    // Decryption failed - maybe cookie is corrupted or crypt key changed
-                    // Try reading raw value from $_COOKIE as fallback
+                    // Decryption failed — try raw value from $_COOKIE as fallback
                     $refreshToken = $_COOKIE['refreshToken'] ?? null;
                 }
             } elseif (isset($_COOKIE['refreshToken'])) {
-                // Cookie exists in $_COOKIE but Phalcon doesn't see it
-                // Use raw encrypted value
                 $refreshToken = $_COOKIE['refreshToken'];
             }
 
-            // Add refresh token to request data if available
             if ($refreshToken !== null) {
                 $requestData['refreshToken'] = $refreshToken;
             }
-
-            // Add client info for security tracking
-            $requestData['clientIp'] = $this->request->getClientAddress();
-            $requestData['userAgent'] = $this->request->getUserAgent();
-
-            // Send directly to backend worker (bypass parent's handleCustomRequest)
-            $this->sendRequestToBackendWorker(
-                $this->processorClass,
-                $methodName,
-                $requestData
-            );
-            return;
         }
 
-        // For other methods, use parent implementation
-        parent::handleCustomRequest($idOrMethod, $customMethod);
+        $this->sendRequestToBackendWorker(
+            $this->processorClass,
+            $methodName,
+            $requestData
+        );
     }
 
     /**
