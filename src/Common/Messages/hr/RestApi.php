@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Izrada direktorija nije uspjela',
     'rest_err_file_write_failed' => 'Pisanje datoteke nije uspjelo',
     'rest_err_syslog_invalid_path' => 'Nevažeća putanja do datoteke dnevnika',
+    'rest_err_syslog_filename_required' => 'Parametar naziva datoteke je obavezan i ne smije biti prazan',
+    'rest_err_syslog_file_not_found' => 'Datoteka dnevnika nije pronađena',
+    'rest_err_syslog_path_is_directory' => 'Putanja ukazuje na direktorij, a ne na datoteku',
+    'rest_err_syslog_archive_not_found' => 'Arhiva ne postoji. Pokušajte ponovo!',
+    'rest_err_syslog_no_matching_entries' => 'Nisu pronađeni odgovarajući zapisi dnevnika ili izvođenje naredbe nije uspjelo',
     'rest_err_firmware_invalid_version' => 'Nevažeći format verzije firmwarea',
 ];

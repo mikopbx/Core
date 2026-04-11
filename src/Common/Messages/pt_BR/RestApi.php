@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Falha ao criar o diretório',
     'rest_err_file_write_failed' => 'Falha ao gravar o arquivo',
     'rest_err_syslog_invalid_path' => 'Caminho do arquivo de log inválido',
+    'rest_err_syslog_filename_required' => 'O parâmetro nome do arquivo é obrigatório e não pode estar vazio',
+    'rest_err_syslog_file_not_found' => 'Arquivo de log não encontrado',
+    'rest_err_syslog_path_is_directory' => 'O caminho aponta para um diretório, não para um arquivo',
+    'rest_err_syslog_archive_not_found' => 'O arquivo compactado não existe. Tente novamente!',
+    'rest_err_syslog_no_matching_entries' => 'Nenhuma entrada de log correspondente encontrada ou a execução do comando falhou',
     'rest_err_firmware_invalid_version' => 'Formato de versão de firmware inválido',
 ];

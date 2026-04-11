@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Falha ao criar o diretório',
     'rest_err_file_write_failed' => 'Falha ao escrever o ficheiro',
     'rest_err_syslog_invalid_path' => 'Caminho do ficheiro de registo inválido',
+    'rest_err_syslog_filename_required' => 'O parâmetro nome do ficheiro é obrigatório e não pode estar vazio',
+    'rest_err_syslog_file_not_found' => 'Ficheiro de registo não encontrado',
+    'rest_err_syslog_path_is_directory' => 'O caminho aponta para um diretório, não para um ficheiro',
+    'rest_err_syslog_archive_not_found' => 'O arquivo não existe. Tente novamente!',
+    'rest_err_syslog_no_matching_entries' => 'Não foram encontradas entradas de registo correspondentes ou a execução do comando falhou',
     'rest_err_firmware_invalid_version' => 'Formato de versão de firmware inválido',
 ];

@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Αποτυχία δημιουργίας καταλόγου',
     'rest_err_file_write_failed' => 'Αποτυχία εγγραφής αρχείου',
     'rest_err_syslog_invalid_path' => 'Μη έγκυρη διαδρομή αρχείου καταγραφής',
+    'rest_err_syslog_filename_required' => 'Η παράμετρος ονόματος αρχείου είναι υποχρεωτική και δεν μπορεί να είναι κενή',
+    'rest_err_syslog_file_not_found' => 'Το αρχείο καταγραφής δεν βρέθηκε',
+    'rest_err_syslog_path_is_directory' => 'Η διαδρομή οδηγεί σε κατάλογο, όχι σε αρχείο',
+    'rest_err_syslog_archive_not_found' => 'Το αρχείο δεν υπάρχει. Δοκιμάστε ξανά!',
+    'rest_err_syslog_no_matching_entries' => 'Δεν βρέθηκαν αντίστοιχες εγγραφές καταγραφής ή η εκτέλεση εντολής απέτυχε',
     'rest_err_firmware_invalid_version' => 'Μη έγκυρη μορφή έκδοσης firmware',
 ];

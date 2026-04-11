@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Не вдалося створити каталог',
     'rest_err_file_write_failed' => 'Не вдалося записати файл',
     'rest_err_syslog_invalid_path' => 'Недійсний шлях до файлу журналу',
+    'rest_err_syslog_filename_required' => 'Параметр імені файлу є обов\'язковим і не може бути порожнім',
+    'rest_err_syslog_file_not_found' => 'Файл журналу не знайдено',
+    'rest_err_syslog_path_is_directory' => 'Шлях вказує на каталог, а не на файл',
+    'rest_err_syslog_archive_not_found' => 'Архів не існує. Спробуйте ще раз!',
+    'rest_err_syslog_no_matching_entries' => 'Відповідні записи журналу не знайдені або виконання команди завершилось невдало',
     'rest_err_firmware_invalid_version' => 'Недійсний формат версії прошивки',
 ];

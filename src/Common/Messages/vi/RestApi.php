@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Không thể tạo thư mục',
     'rest_err_file_write_failed' => 'Không thể ghi tệp',
     'rest_err_syslog_invalid_path' => 'Đường dẫn tệp nhật ký không hợp lệ',
+    'rest_err_syslog_filename_required' => 'Tham số tên tệp là bắt buộc và không được để trống',
+    'rest_err_syslog_file_not_found' => 'Không tìm thấy tệp nhật ký',
+    'rest_err_syslog_path_is_directory' => 'Đường dẫn trỏ đến thư mục, không phải tệp',
+    'rest_err_syslog_archive_not_found' => 'Kho lưu trữ không tồn tại. Hãy thử lại!',
+    'rest_err_syslog_no_matching_entries' => 'Không tìm thấy mục nhật ký phù hợp hoặc thực thi lệnh thất bại',
     'rest_err_firmware_invalid_version' => 'Định dạng phiên bản firmware không hợp lệ',
 ];

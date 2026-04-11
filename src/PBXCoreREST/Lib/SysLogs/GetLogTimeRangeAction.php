@@ -60,7 +60,7 @@ class GetLogTimeRangeAction extends Injectable
         // WHY: Validate filename is not empty before constructing path
         if (empty($filename)) {
             $res->success = false;
-            $res->messages['error'][] = 'Filename parameter is required and cannot be empty';
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_syslog_filename_required');
             $res->httpCode = 400;
             return $res;
         }
@@ -83,7 +83,7 @@ class GetLogTimeRangeAction extends Injectable
         // file_exists returns true for directories, which causes fopen/fgets errors
         if (!file_exists($fullPath)) {
             $res->success = false;
-            $res->messages[] = 'Log file not found: ' . $filename;
+            $res->messages[] = TranslationProvider::translate('rest_err_syslog_file_not_found') . ': ' . $filename;
             return $res;
         }
 

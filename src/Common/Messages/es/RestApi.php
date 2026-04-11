@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'No se pudo crear el directorio',
     'rest_err_file_write_failed' => 'No se pudo escribir el archivo',
     'rest_err_syslog_invalid_path' => 'Ruta de archivo de registro no válida',
+    'rest_err_syslog_filename_required' => 'El parámetro de nombre de archivo es obligatorio y no puede estar vacío',
+    'rest_err_syslog_file_not_found' => 'Archivo de registro no encontrado',
+    'rest_err_syslog_path_is_directory' => 'La ruta apunta a un directorio, no a un archivo',
+    'rest_err_syslog_archive_not_found' => 'El archivo no existe. ¡Inténtelo de nuevo!',
+    'rest_err_syslog_no_matching_entries' => 'No se encontraron entradas de registro coincidentes o la ejecución del comando falló',
     'rest_err_firmware_invalid_version' => 'Formato de versión de firmware no válido',
 ];

@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'A könyvtár létrehozása sikertelen',
     'rest_err_file_write_failed' => 'A fájl írása sikertelen',
     'rest_err_syslog_invalid_path' => 'Érvénytelen naplófájl elérési út',
+    'rest_err_syslog_filename_required' => 'A fájlnév paraméter kötelező és nem lehet üres',
+    'rest_err_syslog_file_not_found' => 'A naplófájl nem található',
+    'rest_err_syslog_path_is_directory' => 'Az elérési út könyvtárra mutat, nem fájlra',
+    'rest_err_syslog_archive_not_found' => 'Az archívum nem létezik. Próbálja újra!',
+    'rest_err_syslog_no_matching_entries' => 'Nem található egyező naplóbejegyzés, vagy a parancs végrehajtása sikertelen',
     'rest_err_firmware_invalid_version' => 'Érvénytelen firmware-verzió formátum',
 ];

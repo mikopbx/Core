@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Nie udało się utworzyć katalogu',
     'rest_err_file_write_failed' => 'Nie udało się zapisać pliku',
     'rest_err_syslog_invalid_path' => 'Nieprawidłowa ścieżka do pliku dziennika',
+    'rest_err_syslog_filename_required' => 'Parametr nazwy pliku jest wymagany i nie może być pusty',
+    'rest_err_syslog_file_not_found' => 'Plik dziennika nie został znaleziony',
+    'rest_err_syslog_path_is_directory' => 'Ścieżka wskazuje na katalog, a nie na plik',
+    'rest_err_syslog_archive_not_found' => 'Archiwum nie istnieje. Spróbuj ponownie!',
+    'rest_err_syslog_no_matching_entries' => 'Nie znaleziono pasujących wpisów dziennika lub wykonanie polecenia nie powiodło się',
     'rest_err_firmware_invalid_version' => 'Nieprawidłowy format wersji oprogramowania',
 ];

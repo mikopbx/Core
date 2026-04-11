@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'ไม่สามารถสร้างไดเรกทอรีได้',
     'rest_err_file_write_failed' => 'ไม่สามารถเขียนไฟล์ได้',
     'rest_err_syslog_invalid_path' => 'เส้นทางไฟล์บันทึกไม่ถูกต้อง',
+    'rest_err_syslog_filename_required' => 'พารามิเตอร์ชื่อไฟล์จำเป็นต้องระบุและต้องไม่ว่างเปล่า',
+    'rest_err_syslog_file_not_found' => 'ไม่พบไฟล์บันทึก',
+    'rest_err_syslog_path_is_directory' => 'เส้นทางชี้ไปยังไดเรกทอรี ไม่ใช่ไฟล์',
+    'rest_err_syslog_archive_not_found' => 'ไม่มีไฟล์เก็บถาวร กรุณาลองอีกครั้ง!',
+    'rest_err_syslog_no_matching_entries' => 'ไม่พบรายการบันทึกที่ตรงกันหรือการดำเนินการคำสั่งล้มเหลว',
     'rest_err_firmware_invalid_version' => 'รูปแบบเวอร์ชัน firmware ไม่ถูกต้อง',
 ];

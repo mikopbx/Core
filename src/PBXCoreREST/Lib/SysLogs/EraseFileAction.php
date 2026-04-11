@@ -65,7 +65,7 @@ class EraseFileAction extends Injectable
         // WHY: Validate filename is not empty before constructing path
         if (empty($filename)) {
             $res->success = false;
-            $res->messages['error'][] = 'Filename parameter is required and cannot be empty';
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_syslog_filename_required');
             $res->httpCode = 400;
             return $res;
         }
@@ -86,7 +86,7 @@ class EraseFileAction extends Injectable
 
         if (!file_exists($filename)) {
             $res->success = false;
-            $res->messages[] = 'File does not exist ' . $filename;
+            $res->messages[] = TranslationProvider::translate('rest_err_syslog_file_not_found') . ': ' . basename($filename);
         } else {
             $echoPath = Util::which('echo');
             Processes::mwExec("$echoPath ' ' > " . escapeshellarg($filename));

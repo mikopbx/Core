@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Verzeichnis konnte nicht erstellt werden',
     'rest_err_file_write_failed' => 'Datei konnte nicht geschrieben werden',
     'rest_err_syslog_invalid_path' => 'Ungültiger Pfad zur Protokolldatei',
+    'rest_err_syslog_filename_required' => 'Der Dateiname-Parameter ist erforderlich und darf nicht leer sein',
+    'rest_err_syslog_file_not_found' => 'Protokolldatei nicht gefunden',
+    'rest_err_syslog_path_is_directory' => 'Der Pfad verweist auf ein Verzeichnis, nicht auf eine Datei',
+    'rest_err_syslog_archive_not_found' => 'Archiv existiert nicht. Bitte erneut versuchen!',
+    'rest_err_syslog_no_matching_entries' => 'Keine passenden Protokolleinträge gefunden oder Befehlsausführung fehlgeschlagen',
     'rest_err_firmware_invalid_version' => 'Ungültiges Format der Firmware-Version',
 ];

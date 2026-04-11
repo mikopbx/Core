@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 use MikoPBX\PBXCoreREST\Lib\Files\RestAPIFilesUtils;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Di\Injectable;
 
 /**
@@ -62,14 +63,14 @@ class DownloadLogsArchiveAction extends Injectable
         // WHY: Validate filename is not empty before processing
         if (empty($filename)) {
             $res->success = false;
-            $res->messages['error'][] = 'Filename parameter is required and cannot be empty';
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_syslog_filename_required');
             $res->httpCode = 400;
             return $res;
         }
 
         $progress_file = "$filename.progress";
         if (!file_exists($progress_file)) {
-            $res->messages[] = 'Archive does not exist. Try again!';
+            $res->messages[] = TranslationProvider::translate('rest_err_syslog_archive_not_found');
         } elseif (file_exists($progress_file) && file_get_contents($progress_file) === '100') {
             $res->data['status'] = "READY";
             $res->data['filename'] = RestAPIFilesUtils::makeFileLinkForDownload($filename, 'MikoPBXLogs_');

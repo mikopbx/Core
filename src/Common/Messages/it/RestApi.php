@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Impossibile creare la directory',
     'rest_err_file_write_failed' => 'Impossibile scrivere il file',
     'rest_err_syslog_invalid_path' => 'Percorso del file di log non valido',
+    'rest_err_syslog_filename_required' => 'Il parametro nome file è obbligatorio e non può essere vuoto',
+    'rest_err_syslog_file_not_found' => 'File di log non trovato',
+    'rest_err_syslog_path_is_directory' => 'Il percorso punta a una directory, non a un file',
+    'rest_err_syslog_archive_not_found' => 'L\'archivio non esiste. Riprovare!',
+    'rest_err_syslog_no_matching_entries' => 'Nessuna voce di log corrispondente trovata o esecuzione del comando fallita',
     'rest_err_firmware_invalid_version' => 'Formato versione firmware non valido',
 ];

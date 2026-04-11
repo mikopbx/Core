@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Map aanmaken mislukt',
     'rest_err_file_write_failed' => 'Bestand schrijven mislukt',
     'rest_err_syslog_invalid_path' => 'Ongeldig pad naar logbestand',
+    'rest_err_syslog_filename_required' => 'De bestandsnaam-parameter is vereist en mag niet leeg zijn',
+    'rest_err_syslog_file_not_found' => 'Logbestand niet gevonden',
+    'rest_err_syslog_path_is_directory' => 'Het pad verwijst naar een map, niet naar een bestand',
+    'rest_err_syslog_archive_not_found' => 'Archief bestaat niet. Probeer het opnieuw!',
+    'rest_err_syslog_no_matching_entries' => 'Geen overeenkomende logvermeldingen gevonden of uitvoering van opdracht mislukt',
     'rest_err_firmware_invalid_version' => 'Ongeldig versieformaat voor firmware',
 ];

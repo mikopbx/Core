@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => '创建目录失败',
     'rest_err_file_write_failed' => '写入文件失败',
     'rest_err_syslog_invalid_path' => '日志文件路径无效',
+    'rest_err_syslog_filename_required' => '文件名参数为必填项，不能为空',
+    'rest_err_syslog_file_not_found' => '日志文件未找到',
+    'rest_err_syslog_path_is_directory' => '路径指向目录而非文件',
+    'rest_err_syslog_archive_not_found' => '归档文件不存在，请重试！',
+    'rest_err_syslog_no_matching_entries' => '未找到匹配的日志条目或命令执行失败',
     'rest_err_firmware_invalid_version' => '固件版本格式无效',
 ];

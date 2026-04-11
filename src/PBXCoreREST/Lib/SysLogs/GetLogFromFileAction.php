@@ -74,7 +74,7 @@ class GetLogFromFileAction extends Injectable
         // WHY: Prevent directory path instead of file path (security + correct behavior)
         if (empty($filename)) {
             $res->success = false;
-            $res->messages['error'][] = 'Filename parameter is required and cannot be empty';
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_syslog_filename_required');
             $res->httpCode = 400;
             return $res;
         }
@@ -97,11 +97,11 @@ class GetLogFromFileAction extends Injectable
         // WHY: Prevents commands like "tail /path/to/directory/" which produce empty output
         if (!file_exists($filename)) {
             $res->success = false;
-            $res->messages['error'][] = 'Log file not found: ' . basename($filename);
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_syslog_file_not_found') . ': ' . basename($filename);
             $res->httpCode = 404;
         } elseif (is_dir($filename)) {
             $res->success = false;
-            $res->messages['error'][] = 'Path points to directory, not a file: ' . basename($filename);
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_syslog_path_is_directory') . ': ' . basename($filename);
             $res->httpCode = 400;
         } else {
             $res->success = true;
@@ -310,7 +310,7 @@ class GetLogFromFileAction extends Injectable
                     $res->data['content'] = mb_convert_encoding(implode("\n", $output), 'UTF-8', 'UTF-8');
                 } else {
                     $res->data['content'] = '';
-                    $res->messages['warning'][] = 'No matching log entries found or command execution failed';
+                    $res->messages['warning'][] = TranslationProvider::translate('rest_err_syslog_no_matching_entries');
                 }
             }
 

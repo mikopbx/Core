@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Det lykkedes ikke at oprette mappen',
     'rest_err_file_write_failed' => 'Det lykkedes ikke at skrive filen',
     'rest_err_syslog_invalid_path' => 'Ugyldig sti til logfil',
+    'rest_err_syslog_filename_required' => 'Filnavn-parameteren er påkrævet og må ikke være tom',
+    'rest_err_syslog_file_not_found' => 'Logfilen blev ikke fundet',
+    'rest_err_syslog_path_is_directory' => 'Stien peger på en mappe, ikke en fil',
+    'rest_err_syslog_archive_not_found' => 'Arkivet eksisterer ikke. Prøv igen!',
+    'rest_err_syslog_no_matching_entries' => 'Ingen matchende logposter fundet eller kommandoudførelsen mislykkedes',
     'rest_err_firmware_invalid_version' => 'Ugyldigt format for firmwareversion',
 ];

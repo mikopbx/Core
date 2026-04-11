@@ -2053,6 +2053,11 @@ return [
 
     // Security: syslog path validation
     'rest_err_syslog_invalid_path' => 'Invalid log file path',
+    'rest_err_syslog_filename_required' => 'Filename parameter is required and cannot be empty',
+    'rest_err_syslog_file_not_found' => 'Log file not found',
+    'rest_err_syslog_path_is_directory' => 'Path points to directory, not a file',
+    'rest_err_syslog_archive_not_found' => 'Archive does not exist. Try again!',
+    'rest_err_syslog_no_matching_entries' => 'No matching log entries found or command execution failed',
 
     // Security: firmware version validation
     'rest_err_firmware_invalid_version' => 'Invalid firmware version format',

@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'ディレクトリの作成に失敗しました',
     'rest_err_file_write_failed' => 'ファイルの書き込みに失敗しました',
     'rest_err_syslog_invalid_path' => 'ログファイルのパスが無効です',
+    'rest_err_syslog_filename_required' => 'ファイル名パラメータは必須であり、空にすることはできません',
+    'rest_err_syslog_file_not_found' => 'ログファイルが見つかりません',
+    'rest_err_syslog_path_is_directory' => 'パスはファイルではなくディレクトリを指しています',
+    'rest_err_syslog_archive_not_found' => 'アーカイブが存在しません。もう一度お試しください！',
+    'rest_err_syslog_no_matching_entries' => '一致するログエントリが見つからないか、コマンドの実行に失敗しました',
     'rest_err_firmware_invalid_version' => 'ファームウェアのバージョン形式が無効です',
 ];

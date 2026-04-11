@@ -2479,6 +2479,11 @@ return [
 
     // Security: syslog path validation
     'rest_err_syslog_invalid_path' => 'Недопустимый путь к файлу журнала',
+    'rest_err_syslog_filename_required' => 'Параметр имени файла обязателен и не может быть пустым',
+    'rest_err_syslog_file_not_found' => 'Файл журнала не найден',
+    'rest_err_syslog_path_is_directory' => 'Путь указывает на директорию, а не на файл',
+    'rest_err_syslog_archive_not_found' => 'Архив не существует. Попробуйте ещё раз!',
+    'rest_err_syslog_no_matching_entries' => 'Подходящие записи не найдены или произошла ошибка выполнения команды',
 
     // Security: firmware version validation
     'rest_err_firmware_invalid_version' => 'Недопустимый формат версии прошивки',

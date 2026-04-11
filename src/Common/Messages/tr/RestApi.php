@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Dizin oluşturulamadı',
     'rest_err_file_write_failed' => 'Dosya yazılamadı',
     'rest_err_syslog_invalid_path' => 'Geçersiz günlük dosyası yolu',
+    'rest_err_syslog_filename_required' => 'Dosya adı parametresi zorunludur ve boş olamaz',
+    'rest_err_syslog_file_not_found' => 'Günlük dosyası bulunamadı',
+    'rest_err_syslog_path_is_directory' => 'Yol bir dosyaya değil, dizine işaret ediyor',
+    'rest_err_syslog_archive_not_found' => 'Arşiv mevcut değil. Tekrar deneyin!',
+    'rest_err_syslog_no_matching_entries' => 'Eşleşen günlük girişi bulunamadı veya komut yürütme başarısız oldu',
     'rest_err_firmware_invalid_version' => 'Geçersiz firmware sürüm biçimi',
 ];

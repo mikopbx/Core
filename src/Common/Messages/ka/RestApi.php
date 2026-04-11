@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'დირექტორიის შექმნა ვერ მოხერხდა',
     'rest_err_file_write_failed' => 'ფაილში ჩაწერა ვერ მოხერხდა',
     'rest_err_syslog_invalid_path' => 'ჟურნალის ფაილის გზა არასწორია',
+    'rest_err_syslog_filename_required' => 'ფაილის სახელის პარამეტრი სავალდებულოა და არ შეიძლება იყოს ცარიელი',
+    'rest_err_syslog_file_not_found' => 'ჟურნალის ფაილი ვერ მოიძებნა',
+    'rest_err_syslog_path_is_directory' => 'გზა მიმართავს დირექტორიაზე, არა ფაილზე',
+    'rest_err_syslog_archive_not_found' => 'არქივი არ არსებობს. სცადეთ ხელახლა!',
+    'rest_err_syslog_no_matching_entries' => 'შესაბამისი ჟურნალის ჩანაწერები ვერ მოიძებნა ან ბრძანების შესრულება ვერ მოხერხდა',
     'rest_err_firmware_invalid_version' => 'პროგრამული უზრუნველყოფის ვერსიის ფორმატი არასწორია',
 ];

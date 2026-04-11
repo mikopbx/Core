@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Det gick inte att skapa katalogen',
     'rest_err_file_write_failed' => 'Det gick inte att skriva filen',
     'rest_err_syslog_invalid_path' => 'Ogiltig sökväg till loggfil',
+    'rest_err_syslog_filename_required' => 'Filnamnsparametern är obligatorisk och kan inte vara tom',
+    'rest_err_syslog_file_not_found' => 'Loggfilen hittades inte',
+    'rest_err_syslog_path_is_directory' => 'Sökvägen pekar på en katalog, inte en fil',
+    'rest_err_syslog_archive_not_found' => 'Arkivet finns inte. Försök igen!',
+    'rest_err_syslog_no_matching_entries' => 'Inga matchande loggposter hittades eller kommandokörningen misslyckades',
     'rest_err_firmware_invalid_version' => 'Ogiltigt format för firmware-version',
 ];

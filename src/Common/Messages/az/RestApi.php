@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Qovluq yaratmaq alınmadı',
     'rest_err_file_write_failed' => 'Fayl yazmaq alınmadı',
     'rest_err_syslog_invalid_path' => 'Jurnal faylının yolu yanlışdır',
+    'rest_err_syslog_filename_required' => 'Fayl adı parametri tələb olunur və boş ola bilməz',
+    'rest_err_syslog_file_not_found' => 'Jurnal faylı tapılmadı',
+    'rest_err_syslog_path_is_directory' => 'Yol fayla deyil, qovluğa işarə edir',
+    'rest_err_syslog_archive_not_found' => 'Arxiv mövcud deyil. Yenidən cəhd edin!',
+    'rest_err_syslog_no_matching_entries' => 'Uyğun jurnal qeydləri tapılmadı və ya əmrin icrası uğursuz oldu',
     'rest_err_firmware_invalid_version' => 'Proqram təminatı versiyasının formatı yanlışdır',
 ];

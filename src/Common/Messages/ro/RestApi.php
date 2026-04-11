@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Crearea directorului a eșuat',
     'rest_err_file_write_failed' => 'Scrierea fișierului a eșuat',
     'rest_err_syslog_invalid_path' => 'Cale invalidă pentru fișierul de jurnal',
+    'rest_err_syslog_filename_required' => 'Parametrul nume fișier este obligatoriu și nu poate fi gol',
+    'rest_err_syslog_file_not_found' => 'Fișierul de jurnal nu a fost găsit',
+    'rest_err_syslog_path_is_directory' => 'Calea indică un director, nu un fișier',
+    'rest_err_syslog_archive_not_found' => 'Arhiva nu există. Încercați din nou!',
+    'rest_err_syslog_no_matching_entries' => 'Nu au fost găsite intrări de jurnal corespunzătoare sau execuția comenzii a eșuat',
     'rest_err_firmware_invalid_version' => 'Format invalid pentru versiunea de firmware',
 ];

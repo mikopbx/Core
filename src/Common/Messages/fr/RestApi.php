@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Impossible de créer le répertoire',
     'rest_err_file_write_failed' => 'Impossible d\'écrire le fichier',
     'rest_err_syslog_invalid_path' => 'Chemin du fichier journal invalide',
+    'rest_err_syslog_filename_required' => 'Le paramètre nom de fichier est obligatoire et ne peut pas être vide',
+    'rest_err_syslog_file_not_found' => 'Fichier journal introuvable',
+    'rest_err_syslog_path_is_directory' => 'Le chemin pointe vers un répertoire, pas vers un fichier',
+    'rest_err_syslog_archive_not_found' => 'L\'archive n\'existe pas. Réessayez !',
+    'rest_err_syslog_no_matching_entries' => 'Aucune entrée de journal correspondante trouvée ou l\'exécution de la commande a échoué',
     'rest_err_firmware_invalid_version' => 'Format de version du firmware invalide',
 ];

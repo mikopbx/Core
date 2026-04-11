@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Vytvoření adresáře se nezdařilo',
     'rest_err_file_write_failed' => 'Zápis souboru se nezdařil',
     'rest_err_syslog_invalid_path' => 'Neplatná cesta k souboru protokolu',
+    'rest_err_syslog_filename_required' => 'Parametr názvu souboru je povinný a nesmí být prázdný',
+    'rest_err_syslog_file_not_found' => 'Soubor protokolu nebyl nalezen',
+    'rest_err_syslog_path_is_directory' => 'Cesta odkazuje na adresář, nikoli na soubor',
+    'rest_err_syslog_archive_not_found' => 'Archiv neexistuje. Zkuste to znovu!',
+    'rest_err_syslog_no_matching_entries' => 'Nebyly nalezeny žádné odpovídající záznamy nebo provedení příkazu selhalo',
     'rest_err_firmware_invalid_version' => 'Neplatný formát verze firmwaru',
 ];

@@ -2319,5 +2319,10 @@ return [
     'rest_err_file_mkdir_failed' => 'Hakemiston luominen epäonnistui',
     'rest_err_file_write_failed' => 'Tiedoston kirjoittaminen epäonnistui',
     'rest_err_syslog_invalid_path' => 'Virheellinen lokitiedoston polku',
+    'rest_err_syslog_filename_required' => 'Tiedostonimi-parametri on pakollinen eikä se voi olla tyhjä',
+    'rest_err_syslog_file_not_found' => 'Lokitiedostoa ei löydy',
+    'rest_err_syslog_path_is_directory' => 'Polku osoittaa hakemistoon, ei tiedostoon',
+    'rest_err_syslog_archive_not_found' => 'Arkistoa ei ole olemassa. Yritä uudelleen!',
+    'rest_err_syslog_no_matching_entries' => 'Vastaavia lokimerkintöjä ei löydy tai komennon suoritus epäonnistui',
     'rest_err_firmware_invalid_version' => 'Virheellinen laiteohjelmiston versiomuoto',
 ];
