@@ -2304,4 +2304,20 @@ return [
     // SIP specific parameters
     'rest_param_sip_extension' => 'หมายเลขต่อภายในหรือรหัสอุปกรณ์ SIP',
     'rest_schema_gs_pbx_name' => 'ชื่อของระบบ PBX',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'รับสถานะการจับแพ็กเกต',
+    'rest_syslog_GetCaptureStatusDesc' => 'ตรวจสอบว่าการจับแพ็กเกตเครือข่าย (tcpdump) กำลังทำงานอยู่หรือไม่',
+    'rest_param_syslog_latest' => 'ถ้าเป็น true ให้ส่งคืนรายการล็อกล่าสุด เมื่อข้อมูลเกินขีดจำกัดบรรทัด การตัดทอนจะเกิดขึ้นที่ต้น (รายการเก่าที่สุดจะถูกตัดออก)',
+    'rest_schema_syslog_latest' => 'ส่งคืนรายการล็อกล่าสุดเมื่อข้อมูลเกินขีดจำกัด',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'ไม่อนุญาตให้เขียนไปยังเส้นทางนี้',
+    'rest_err_file_invalid_target_dir' => 'ไดเรกทอรีปลายทางไม่ถูกต้อง',
+    'rest_err_file_filename_required' => 'จำเป็นต้องระบุชื่อไฟล์',
+    'rest_err_file_content_required' => 'จำเป็นต้องระบุเนื้อหาไฟล์',
+    'rest_err_file_mkdir_failed' => 'ไม่สามารถสร้างไดเรกทอรีได้',
+    'rest_err_file_write_failed' => 'ไม่สามารถเขียนไฟล์ได้',
+    'rest_err_syslog_invalid_path' => 'เส้นทางไฟล์บันทึกไม่ถูกต้อง',
+    'rest_err_firmware_invalid_version' => 'รูปแบบเวอร์ชัน firmware ไม่ถูกต้อง',
 ];

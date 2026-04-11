@@ -2306,4 +2306,18 @@ return [
     'rest_schema_gs_ssh_dss_key' => 'SSHサーバーのDSS秘密鍵',
     'rest_schema_gs_ssh_ecdsa_key' => 'SSHサーバーのECDSA秘密鍵',
     'rest_schema_provider_host_id' => 'ホストID',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'パケットキャプチャのステータスを取得',
+    'rest_syslog_GetCaptureStatusDesc' => 'ネットワークパケットキャプチャ（tcpdump）が現在実行中かどうかを確認する',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'このパスへの書き込みは許可されていません',
+    'rest_err_file_invalid_target_dir' => '無効なターゲットディレクトリです',
+    'rest_err_file_filename_required' => 'ファイル名は必須です',
+    'rest_err_file_content_required' => 'ファイルの内容は必須です',
+    'rest_err_file_mkdir_failed' => 'ディレクトリの作成に失敗しました',
+    'rest_err_file_write_failed' => 'ファイルの書き込みに失敗しました',
+    'rest_err_syslog_invalid_path' => 'ログファイルのパスが無効です',
+    'rest_err_firmware_invalid_version' => 'ファームウェアのバージョン形式が無効です',
 ];

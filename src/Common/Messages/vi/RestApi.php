@@ -2304,4 +2304,20 @@ return [
     'rest_schema_gs_use_webrtc' => 'Bật hỗ trợ WebRTC',
     'rest_schema_owt_time_from' => 'Thời gian bắt đầu của khoảng thời gian không làm việc',
     'IAX' => 'IAX',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Lấy trạng thái bắt gói tin',
+    'rest_syslog_GetCaptureStatusDesc' => 'Kiểm tra xem tính năng bắt gói tin mạng (tcpdump) có đang chạy hay không',
+    'rest_param_syslog_latest' => 'Nếu đúng, trả về các mục nhật ký mới nhất. Khi dữ liệu vượt giới hạn dòng, việc cắt bớt xảy ra ở đầu (các mục cũ nhất bị loại bỏ)',
+    'rest_schema_syslog_latest' => 'Trả về các mục nhật ký mới nhất khi dữ liệu vượt quá giới hạn',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Không được phép ghi vào đường dẫn này',
+    'rest_err_file_invalid_target_dir' => 'Thư mục đích không hợp lệ',
+    'rest_err_file_filename_required' => 'Tên tệp là bắt buộc',
+    'rest_err_file_content_required' => 'Nội dung tệp là bắt buộc',
+    'rest_err_file_mkdir_failed' => 'Không thể tạo thư mục',
+    'rest_err_file_write_failed' => 'Không thể ghi tệp',
+    'rest_err_syslog_invalid_path' => 'Đường dẫn tệp nhật ký không hợp lệ',
+    'rest_err_firmware_invalid_version' => 'Định dạng phiên bản firmware không hợp lệ',
 ];

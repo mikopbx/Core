@@ -2304,4 +2304,20 @@ return [
     'rest_schema_ivr_action_repr' => 'Reprezentarea HTML a acțiunii',
     'rest_schema_fw_description' => 'Descrierea regulii firewall',
     'rest_resource_ivrmenu' => 'Meniu IVR',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Obțineți starea capturii de pachete',
+    'rest_syslog_GetCaptureStatusDesc' => 'Verificați dacă captura de pachete de rețea (tcpdump) rulează în prezent',
+    'rest_param_syslog_latest' => 'Dacă este adevărat, returnează cele mai recente intrări din jurnal. Când datele depășesc limita de linii, trunchierea are loc de la început (cele mai vechi intrări sunt eliminate)',
+    'rest_schema_syslog_latest' => 'Returnează cele mai recente intrări din jurnal când datele depășesc limita',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Scrierea în această cale nu este permisă',
+    'rest_err_file_invalid_target_dir' => 'Director de destinație invalid',
+    'rest_err_file_filename_required' => 'Numele fișierului este obligatoriu',
+    'rest_err_file_content_required' => 'Conținutul fișierului este obligatoriu',
+    'rest_err_file_mkdir_failed' => 'Crearea directorului a eșuat',
+    'rest_err_file_write_failed' => 'Scrierea fișierului a eșuat',
+    'rest_err_syslog_invalid_path' => 'Cale invalidă pentru fișierul de jurnal',
+    'rest_err_firmware_invalid_version' => 'Format invalid pentru versiunea de firmware',
 ];

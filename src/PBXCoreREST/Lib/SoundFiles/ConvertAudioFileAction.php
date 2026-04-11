@@ -251,7 +251,7 @@ class ConvertAudioFileAction extends Injectable
 
         // Move file to target location
         $mv = Util::which('mv');
-        Processes::mwExec("$mv {$uploadedFilename} {$targetPath}");
+        Processes::mwExec("$mv " . escapeshellarg($uploadedFilename) . " " . escapeshellarg($targetPath));
 
         return $res;
     }

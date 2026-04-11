@@ -2306,4 +2306,18 @@ return [
     'rest_cq_GetRecord' => 'Hent kø efter ID',
     'rest_schema_s3_access_key' => 'S3-adgangsnøgle-ID (synlig i svar)',
     'rest_S3Storage_ApiDescription' => 'Administrer S3-kompatibel cloud-lagring til arkivering af opkaldsoptagelser. Denne singleton-ressource leverer konfiguration til AWS S3, MinIO, Wasabi og andre S3-kompatible lagringstjenester. Funktionerne omfatter automatisk upload af optagelser til cloud-lagring efter udløbet af den lokale opbevaringsperiode, transparent afspilning fra S3-cache og en todelt lagringsstrategi (hot local storage + cold cloud archive). Legitimationsoplysninger krypteres automatisk før lagring.',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Hent pakkefangststatus',
+    'rest_syslog_GetCaptureStatusDesc' => 'Kontroller om netværkspakkefangst (tcpdump) kører i øjeblikket',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Skrivning til denne sti er ikke tilladt',
+    'rest_err_file_invalid_target_dir' => 'Ugyldig målmappe',
+    'rest_err_file_filename_required' => 'Filnavn er påkrævet',
+    'rest_err_file_content_required' => 'Filindhold er påkrævet',
+    'rest_err_file_mkdir_failed' => 'Det lykkedes ikke at oprette mappen',
+    'rest_err_file_write_failed' => 'Det lykkedes ikke at skrive filen',
+    'rest_err_syslog_invalid_path' => 'Ugyldig sti til logfil',
+    'rest_err_firmware_invalid_version' => 'Ugyldigt format for firmwareversion',
 ];

@@ -169,9 +169,16 @@ class SecurityPlugin extends Injectable
         // Check for JWT Bearer token in Authorization header (AJAX requests)
         $authHeader = $request->getHeader('Authorization');
         if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
-            // TODO: можно добавить валидацию JWT токена здесь
-            // Но AuthenticationMiddleware уже проверяет его для API запросов
-            return true;
+            $token = substr($authHeader, 7);
+            $di = \Phalcon\Di\Di::getDefault();
+            if ($di !== null) {
+                $jwt = $di->getShared(JwtProvider::SERVICE_NAME);
+                $payload = $jwt->validate($token);
+                if ($payload !== null) {
+                    return true;
+                }
+            }
+            // Invalid or expired token — fall through to cookie check
         }
 
         // For browser page requests: check for refreshToken cookie

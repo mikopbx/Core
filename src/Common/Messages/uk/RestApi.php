@@ -2304,4 +2304,20 @@ return [
     'rest_schema_auth_clientIp' => 'IP адреса клієнта',
     'rest_schema_ivr_name' => 'Назва IVR меню',
     'rest_param_gs_pbxname' => 'Назва АТС',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Отримати статус захоплення пакетів',
+    'rest_syslog_GetCaptureStatusDesc' => 'Перевірити, чи виконується в даний момент захоплення мережевих пакетів (tcpdump)',
+    'rest_param_syslog_latest' => 'Якщо true, повертати останні (найновіші) записи журналу. Коли дані перевищують ліміт рядків, усікання відбувається на початку (найстаріші записи відкидаються)',
+    'rest_schema_syslog_latest' => 'Повертати останні (найновіші) записи при перевищенні ліміту',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Запис за цим шляхом заборонено',
+    'rest_err_file_invalid_target_dir' => 'Недійсний цільовий каталог',
+    'rest_err_file_filename_required' => 'Ім\'я файлу є обов\'язковим',
+    'rest_err_file_content_required' => 'Вміст файлу є обов\'язковим',
+    'rest_err_file_mkdir_failed' => 'Не вдалося створити каталог',
+    'rest_err_file_write_failed' => 'Не вдалося записати файл',
+    'rest_err_syslog_invalid_path' => 'Недійсний шлях до файлу журналу',
+    'rest_err_firmware_invalid_version' => 'Недійсний формат версії прошивки',
 ];

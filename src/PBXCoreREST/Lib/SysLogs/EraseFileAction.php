@@ -25,6 +25,7 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Di\Injectable;
 
 /**
@@ -70,12 +71,25 @@ class EraseFileAction extends Injectable
         }
 
         $filename = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
+
+        // Security: path traversal protection
+        $realLogDir = realpath(Directories::getDir(Directories::CORE_LOGS_DIR));
+        $realFilename = realpath($filename);
+        if ($realFilename === false || $realLogDir === false
+            || !str_starts_with($realFilename . '/', $realLogDir . '/')) {
+            $res->success = false;
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_syslog_invalid_path');
+            $res->httpCode = 400;
+            return $res;
+        }
+        $filename = $realFilename;
+
         if (!file_exists($filename)) {
             $res->success = false;
             $res->messages[] = 'File does not exist ' . $filename;
         } else {
             $echoPath = Util::which('echo');
-            Processes::mwExec("$echoPath ' ' > $filename");
+            Processes::mwExec("$echoPath ' ' > " . escapeshellarg($filename));
             $res->success = true;
         }
 

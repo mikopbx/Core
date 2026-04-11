@@ -2306,4 +2306,18 @@ return [
     'rest_schema_provider_cid_did_debug' => 'Ota käyttöön soittajan tunnuksen ja DID-jäsennyksen virheenkorjaus',
     'rest_schema_provider_represent' => 'Palveluntarjoajan HTML-esitys alasvetovalikoille',
     'Search' => 'Haku',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Hae pakettien sieppauksen tila',
+    'rest_syslog_GetCaptureStatusDesc' => 'Tarkista, onko verkkopakettien sieppaus (tcpdump) käynnissä tällä hetkellä',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Kirjoittaminen tähän polkuun ei ole sallittu',
+    'rest_err_file_invalid_target_dir' => 'Virheellinen kohdehakemisto',
+    'rest_err_file_filename_required' => 'Tiedostonimi on pakollinen',
+    'rest_err_file_content_required' => 'Tiedoston sisältö on pakollinen',
+    'rest_err_file_mkdir_failed' => 'Hakemiston luominen epäonnistui',
+    'rest_err_file_write_failed' => 'Tiedoston kirjoittaminen epäonnistui',
+    'rest_err_syslog_invalid_path' => 'Virheellinen lokitiedoston polku',
+    'rest_err_firmware_invalid_version' => 'Virheellinen laiteohjelmiston versiomuoto',
 ];

@@ -55,11 +55,16 @@ class DownloadNewFirmwareAction extends Injectable
             $uploadDir = '/tmp';
         }
         $version = $data['version'] ?? $data['md5'] ?? (string)time();
+        // Security: sanitize version to prevent shell injection via directory path
+        $version = preg_replace('/[^a-zA-Z0-9._\-]/', '', $version);
+        if (empty($version)) {
+            $version = (string)time();
+        }
         $firmwareDirTmp = "$uploadDir/{$version}";
 
         if (file_exists($firmwareDirTmp)) {
             $rm = Util::which('rm');
-            Processes::mwExec("$rm -rf $firmwareDirTmp/* ");
+            Processes::mwExec("$rm -rf " . escapeshellarg($firmwareDirTmp) . "/* ");
         } else {
             Util::mwMkdir($firmwareDirTmp);
         }
@@ -77,7 +82,7 @@ class DownloadNewFirmwareAction extends Injectable
             json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
         $php = Util::which('php');
-        Processes::mwExecBg("$php -f $workerDownloaderPath start $firmwareDirTmp/download_settings.json");
+        Processes::mwExecBg("$php -f $workerDownloaderPath start " . escapeshellarg("$firmwareDirTmp/download_settings.json"));
 
         $res                   = new PBXApiResult();
         $res->processor        = __METHOD__;

@@ -2304,4 +2304,20 @@ return [
     'rest_S3Storage_ApiDescription' => 'Hantera S3-kompatibel molnlagring för arkivering av samtalsinspelningar. Denna singleton-resurs tillhandahåller konfiguration för AWS S3, MinIO, Wasabi och andra S3-kompatibla lagringstjänster. Funktionerna inkluderar automatisk uppladdning av inspelningar till molnlagring efter att den lokala lagringsperioden har löpt ut, transparent uppspelning från S3-cache och en tvånivåslagringsstrategi (varm lokal lagring + kall molnarkiv). Autentiseringsuppgifter krypteras automatiskt före lagring.',
     'Fail2Ban' => 'Fail2Ban-inställningar',
     'rest_tag_Media' => 'Media',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Hämta status för paketinsamling',
+    'rest_syslog_GetCaptureStatusDesc' => 'Kontrollera om nätverkspaketinsamling (tcpdump) körs för närvarande',
+    'rest_param_syslog_latest' => 'Om sant, returnera de senaste loggposterna. När data överskrider radgränsen sker trunkering från början (äldsta poster tas bort)',
+    'rest_schema_syslog_latest' => 'Returnera de senaste loggposterna när data överskrider gränsen',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Skrivning till denna sökväg är inte tillåten',
+    'rest_err_file_invalid_target_dir' => 'Ogiltig målkatalog',
+    'rest_err_file_filename_required' => 'Filnamn krävs',
+    'rest_err_file_content_required' => 'Filinnehåll krävs',
+    'rest_err_file_mkdir_failed' => 'Det gick inte att skapa katalogen',
+    'rest_err_file_write_failed' => 'Det gick inte att skriva filen',
+    'rest_err_syslog_invalid_path' => 'Ogiltig sökväg till loggfil',
+    'rest_err_firmware_invalid_version' => 'Ogiltigt format för firmware-version',
 ];

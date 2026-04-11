@@ -2304,4 +2304,20 @@ return [
     'rest_param_file_firmware_url' => 'Ürün yazılımını indirmek için URL',
     'rest_S3Storage_ApiDescription' => 'Çağrı kayıtlarını arşivlemek için S3 uyumlu bulut depolama alanını yönetin. Bu tekil kaynak, AWS S3, MinIO, Wasabi ve diğer S3 uyumlu depolama hizmetleri için yapılandırma sağlar. Özellikler arasında, yerel saklama süresi dolduktan sonra kayıtların bulut depolama alanına otomatik olarak yüklenmesi, S3 önbelleğinden şeffaf oynatma ve iki katmanlı depolama stratejisi (sıcak yerel depolama + soğuk bulut arşivi) yer almaktadır. Kimlik bilgileri depolamadan önce otomatik olarak şifrelenir.',
     'IVR Menu' => 'IVR menüsü',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Paket yakalama durumunu al',
+    'rest_syslog_GetCaptureStatusDesc' => 'Ağ paket yakalamanın (tcpdump) şu anda çalışıp çalışmadığını kontrol edin',
+    'rest_param_syslog_latest' => 'True ise en son (yeni) log kayıtlarını döndürür. Veriler satır limitini aştığında kesme başlangıçtan gerçekleşir (en eski kayıtlar kaldırılır)',
+    'rest_schema_syslog_latest' => 'Veriler limiti aştığında en son (yeni) log kayıtlarını döndürür',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Bu yola yazma izni verilmemiştir',
+    'rest_err_file_invalid_target_dir' => 'Geçersiz hedef dizin',
+    'rest_err_file_filename_required' => 'Dosya adı gereklidir',
+    'rest_err_file_content_required' => 'Dosya içeriği gereklidir',
+    'rest_err_file_mkdir_failed' => 'Dizin oluşturulamadı',
+    'rest_err_file_write_failed' => 'Dosya yazılamadı',
+    'rest_err_syslog_invalid_path' => 'Geçersiz günlük dosyası yolu',
+    'rest_err_firmware_invalid_version' => 'Geçersiz firmware sürüm biçimi',
 ];

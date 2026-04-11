@@ -24,6 +24,7 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Di\Injectable;
 
 /**
@@ -80,6 +81,18 @@ class GetLogFromFileAction extends Injectable
 
         $filename = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
 
+        // Security: path traversal protection
+        $realLogDir = realpath(Directories::getDir(Directories::CORE_LOGS_DIR));
+        $realFilename = realpath($filename);
+        if ($realFilename === false || $realLogDir === false
+            || !str_starts_with($realFilename . '/', $realLogDir . '/')) {
+            $res->success = false;
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_syslog_invalid_path');
+            $res->httpCode = 400;
+            return $res;
+        }
+        $filename = $realFilename;
+
         // Validate the result is a file, not a directory
         // WHY: Prevents commands like "tail /path/to/directory/" which produce empty output
         if (!file_exists($filename)) {
@@ -117,15 +130,15 @@ class GetLogFromFileAction extends Injectable
                 // Decompress based on file extension
                 switch ($fileExtension) {
                     case 'gz':
-                        $cmd = Util::which('busybox') . ' gunzip -c ' . $filename . ' > ' . $decompressedFile;
+                        $cmd = Util::which('busybox') . ' gunzip -c ' . escapeshellarg($filename) . ' > ' . escapeshellarg($decompressedFile);
                         Processes::mwExec($cmd);
                         break;
                     case 'bz2':
-                        $cmd = Util::which('bunzip2') . ' -c ' . $filename . ' > ' . $decompressedFile;
+                        $cmd = Util::which('bunzip2') . ' -c ' . escapeshellarg($filename) . ' > ' . escapeshellarg($decompressedFile);
                         Processes::mwExec($cmd);
                         break;
                     case 'xz':
-                        $cmd = Util::which('unxz') . ' -c ' . $filename . ' > ' . $decompressedFile;
+                        $cmd = Util::which('unxz') . ' -c ' . escapeshellarg($filename) . ' > ' . escapeshellarg($decompressedFile);
                         Processes::mwExec($cmd);
                         break;
                     case 'zip':

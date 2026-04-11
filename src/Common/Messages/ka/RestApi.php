@@ -2306,4 +2306,18 @@ return [
     'rest_resource_extension' => 'გაფართოება',
     'rest_tag_SIP' => 'SIP',
     'rest_tag_Media' => 'მედია',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'პაკეტების გადაღების სტატუსის მიღება',
+    'rest_syslog_GetCaptureStatusDesc' => 'შეამოწმეთ, მიმდინარეობს თუ არა ამჟამად ქსელური პაკეტების გადაღება (tcpdump)',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'ამ მისამართზე ჩაწერა დაუშვებელია',
+    'rest_err_file_invalid_target_dir' => 'არასწორი სამიზნე დირექტორია',
+    'rest_err_file_filename_required' => 'ფაილის სახელი სავალდებულოა',
+    'rest_err_file_content_required' => 'ფაილის შინაარსი სავალდებულოა',
+    'rest_err_file_mkdir_failed' => 'დირექტორიის შექმნა ვერ მოხერხდა',
+    'rest_err_file_write_failed' => 'ფაილში ჩაწერა ვერ მოხერხდა',
+    'rest_err_syslog_invalid_path' => 'ჟურნალის ფაილის გზა არასწორია',
+    'rest_err_firmware_invalid_version' => 'პროგრამული უზრუნველყოფის ვერსიის ფორმატი არასწორია',
 ];

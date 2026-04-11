@@ -2306,4 +2306,18 @@ return [
     'rest_cf_GetList' => 'Získejte seznam uživatelských souborů',
     'rest_cf_GetRecord' => 'Získání uživatelského souboru podle ID',
     'rest_cf_GetRecordDesc' => 'Získejte podrobné informace o uživatelském souboru, včetně jeho cesty, obsahu a režimu použití.',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Získat stav zachytávání paketů',
+    'rest_syslog_GetCaptureStatusDesc' => 'Zkontrolujte, zda zachytávání síťových paketů (tcpdump) právě probíhá',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Zápis do této cesty není povolen',
+    'rest_err_file_invalid_target_dir' => 'Neplatný cílový adresář',
+    'rest_err_file_filename_required' => 'Název souboru je povinný',
+    'rest_err_file_content_required' => 'Obsah souboru je povinný',
+    'rest_err_file_mkdir_failed' => 'Vytvoření adresáře se nezdařilo',
+    'rest_err_file_write_failed' => 'Zápis souboru se nezdařil',
+    'rest_err_syslog_invalid_path' => 'Neplatná cesta k souboru protokolu',
+    'rest_err_firmware_invalid_version' => 'Neplatný formát verze firmwaru',
 ];

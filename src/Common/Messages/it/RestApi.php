@@ -2306,4 +2306,18 @@ return [
     'rest_cf_DeleteDesc' => 'Elimina un file utente tramite ID',
     'rest_cf_GetDefault' => 'Ottieni valori predefiniti',
     'rest_cf_GetDefaultDesc' => 'Ottieni i valori predefiniti per la creazione di un nuovo file utente',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Ottieni lo stato della cattura dei pacchetti',
+    'rest_syslog_GetCaptureStatusDesc' => 'Verifica se la cattura dei pacchetti di rete (tcpdump) è attualmente in esecuzione',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'La scrittura in questo percorso non è consentita',
+    'rest_err_file_invalid_target_dir' => 'Directory di destinazione non valida',
+    'rest_err_file_filename_required' => 'Il nome del file è obbligatorio',
+    'rest_err_file_content_required' => 'Il contenuto del file è obbligatorio',
+    'rest_err_file_mkdir_failed' => 'Impossibile creare la directory',
+    'rest_err_file_write_failed' => 'Impossibile scrivere il file',
+    'rest_err_syslog_invalid_path' => 'Percorso del file di log non valido',
+    'rest_err_firmware_invalid_version' => 'Formato versione firmware non valido',
 ];

@@ -25,6 +25,7 @@ use MikoPBX\PBXCoreREST\Lib\Files\GetFileContentAction;
 use MikoPBX\PBXCoreREST\Lib\Files\RemoveAudioFileAction;
 use MikoPBX\PBXCoreREST\Lib\Files\StatusUploadFileAction;
 use MikoPBX\PBXCoreREST\Lib\Files\UploadFileAction;
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Di\Injectable;
 
 /**
@@ -197,6 +198,15 @@ class FilesManagementProcessor extends Injectable
      * @param array<string, mixed> $data Request data with filename/id and content
      * @return PBXApiResult
      */
+    /**
+     * Directories where file writes are permitted via the PUT /files/{path} API.
+     * Intentionally excludes /etc/ (read-only for CustomFiles; write via CustomFiles model workflow).
+     */
+    private const array ALLOWED_WRITE_DIRECTORIES = [
+        '/storage/usbdisk1/mikopbx/',
+        '/tmp/',
+    ];
+
     private static function uploadFileContent(array $data): PBXApiResult
     {
         $res = new PBXApiResult();
@@ -213,20 +223,63 @@ class FilesManagementProcessor extends Injectable
         }
 
         if (empty($filename)) {
-            $res->messages['error'][] = 'Filename is required';
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_file_filename_required');
+            return $res;
+        }
+
+        // Security: reject path traversal sequences and null bytes early,
+        // before any filesystem operations (mkdir, realpath)
+        if (str_contains($filename, '..') || str_contains($filename, "\0")) {
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_file_write_not_permitted');
             return $res;
         }
 
         if (empty($content)) {
-            $res->messages['error'][] = 'File content is required';
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_file_content_required');
             return $res;
         }
 
         try {
-            // Ensure directory exists
-            $directory = dirname($filename);
-            if (!is_dir($directory) && !mkdir($directory, 0755, true)) {
-                $res->messages['error'][] = "Failed to create directory: $directory";
+            // Security: validate target path BEFORE any filesystem operations.
+            // Check the requested directory against the whitelist first to prevent
+            // creating arbitrary directory trees outside allowed roots.
+            $targetDir = dirname($filename);
+            $allowed = false;
+            foreach (self::ALLOWED_WRITE_DIRECTORIES as $dir) {
+                if (str_starts_with($targetDir . '/', $dir)) {
+                    $allowed = true;
+                    break;
+                }
+            }
+            if (!$allowed) {
+                $res->messages['error'][] = TranslationProvider::translate('rest_err_file_write_not_permitted');
+                return $res;
+            }
+
+            // Now safe to create directory (already validated against whitelist)
+            if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true)) {
+                $res->messages['error'][] = TranslationProvider::translate('rest_err_file_mkdir_failed') . ": $targetDir";
+                return $res;
+            }
+
+            // Resolve to canonical path after directory exists
+            $realParent = realpath($targetDir);
+            if ($realParent === false) {
+                $res->messages['error'][] = TranslationProvider::translate('rest_err_file_invalid_target_dir');
+                return $res;
+            }
+            $filename = $realParent . '/' . basename($filename);
+
+            // Re-validate resolved path (prevents symlink escapes)
+            $allowed = false;
+            foreach (self::ALLOWED_WRITE_DIRECTORIES as $dir) {
+                if (str_starts_with($filename . '/', $dir)) {
+                    $allowed = true;
+                    break;
+                }
+            }
+            if (!$allowed) {
+                $res->messages['error'][] = TranslationProvider::translate('rest_err_file_write_not_permitted');
                 return $res;
             }
 
@@ -234,7 +287,7 @@ class FilesManagementProcessor extends Injectable
             $bytesWritten = file_put_contents($filename, $content);
 
             if ($bytesWritten === false) {
-                $res->messages['error'][] = "Failed to write file: $filename";
+                $res->messages['error'][] = TranslationProvider::translate('rest_err_file_write_failed') . ": $filename";
                 return $res;
             }
 

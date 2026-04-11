@@ -2468,4 +2468,18 @@ return [
     // MISC
     // ============================================================================
     'rest_password' => 'Пароль',
+
+    // Security: file operation error messages
+    'rest_err_file_write_not_permitted' => 'Запись в указанный путь запрещена',
+    'rest_err_file_invalid_target_dir' => 'Недопустимая целевая директория',
+    'rest_err_file_filename_required' => 'Необходимо указать имя файла',
+    'rest_err_file_content_required' => 'Необходимо указать содержимое файла',
+    'rest_err_file_mkdir_failed' => 'Не удалось создать директорию',
+    'rest_err_file_write_failed' => 'Не удалось записать файл',
+
+    // Security: syslog path validation
+    'rest_err_syslog_invalid_path' => 'Недопустимый путь к файлу журнала',
+
+    // Security: firmware version validation
+    'rest_err_firmware_invalid_version' => 'Недопустимый формат версии прошивки',
 ];

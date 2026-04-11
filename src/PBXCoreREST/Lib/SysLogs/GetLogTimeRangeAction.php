@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Di\Injectable;
 
 /**
@@ -56,7 +57,27 @@ class GetLogTimeRangeAction extends Injectable
         // Extract validated parameters
         $filename = (string)($sanitizedData['filename'] ?? '');
 
+        // WHY: Validate filename is not empty before constructing path
+        if (empty($filename)) {
+            $res->success = false;
+            $res->messages['error'][] = 'Filename parameter is required and cannot be empty';
+            $res->httpCode = 400;
+            return $res;
+        }
+
         $fullPath = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
+
+        // Security: path traversal protection
+        $realLogDir = realpath(Directories::getDir(Directories::CORE_LOGS_DIR));
+        $realFullPath = realpath($fullPath);
+        if ($realFullPath === false || $realLogDir === false
+            || !str_starts_with($realFullPath . '/', $realLogDir . '/')) {
+            $res->success = false;
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_syslog_invalid_path');
+            $res->httpCode = 400;
+            return $res;
+        }
+        $fullPath = $realFullPath;
 
         // WHY: Check file_exists first, then is_file to prevent directory access
         // file_exists returns true for directories, which causes fopen/fgets errors

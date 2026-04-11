@@ -2306,4 +2306,18 @@ return [
     'Custom Files' => 'Editando arquivos do sistema',
     'Dialplan Applications' => 'Aplicativo Dialplan',
     'rest_schema_cq_name' => 'Nome da fila',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Obter estado de captura de pacotes',
+    'rest_syslog_GetCaptureStatusDesc' => 'Verificar se a captura de pacotes de rede (tcpdump) está atualmente em execução',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Escrita neste caminho não é permitida',
+    'rest_err_file_invalid_target_dir' => 'Diretório de destino inválido',
+    'rest_err_file_filename_required' => 'O nome do ficheiro é obrigatório',
+    'rest_err_file_content_required' => 'O conteúdo do ficheiro é obrigatório',
+    'rest_err_file_mkdir_failed' => 'Falha ao criar o diretório',
+    'rest_err_file_write_failed' => 'Falha ao escrever o ficheiro',
+    'rest_err_syslog_invalid_path' => 'Caminho do ficheiro de registo inválido',
+    'rest_err_firmware_invalid_version' => 'Formato de versão de firmware inválido',
 ];

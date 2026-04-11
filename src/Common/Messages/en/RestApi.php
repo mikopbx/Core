@@ -2042,4 +2042,18 @@ return [
     'rest_err_system_query_exception' => 'Failed to execute SQL query',
     'rest_tag_S3Storage' => 'S3 Cloud Storage',
     'rest_schema_system_query' => 'Executed SQL query',
+
+    // Security: file operation error messages
+    'rest_err_file_write_not_permitted' => 'Write not permitted to this path',
+    'rest_err_file_invalid_target_dir' => 'Invalid target directory',
+    'rest_err_file_filename_required' => 'Filename is required',
+    'rest_err_file_content_required' => 'File content is required',
+    'rest_err_file_mkdir_failed' => 'Failed to create directory',
+    'rest_err_file_write_failed' => 'Failed to write file',
+
+    // Security: syslog path validation
+    'rest_err_syslog_invalid_path' => 'Invalid log file path',
+
+    // Security: firmware version validation
+    'rest_err_firmware_invalid_version' => 'Invalid firmware version format',
 ];

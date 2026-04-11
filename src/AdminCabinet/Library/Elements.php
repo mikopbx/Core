@@ -328,7 +328,8 @@ class Elements extends Injectable
                 $groupHtml .= '<div class="item">';
                 $groupHtml .= '<div class="header">';
                 if (array_key_exists('iconclass', $groupparams) && !empty($groupparams['iconclass'])) {
-                    $groupHtml .= "<i class='{$groupparams['iconclass']} icon'></i>";
+                    $escapedIconClass = htmlspecialchars($groupparams['iconclass'], ENT_QUOTES, 'UTF-8');
+                    $groupHtml .= "<i class='{$escapedIconClass} icon'></i>";
                 }
                 $groupHtml .= $this->translation->_($groupparams['caption']) . '</div>';
                 $groupHtml .= "<div class='menu' data-group='$group'>";
@@ -340,8 +341,9 @@ class Elements extends Injectable
                         if (isset($option['data-value'])) {
                             $groupHtml .= " data-value='{$option['data-value']}'";
                         }
+                        $escapedIconClass = htmlspecialchars($option['iconclass'], ENT_QUOTES, 'UTF-8');
                         $groupHtml .= ">
-                    		<i class='{$option['iconclass']} icon'></i>{$caption}
+                    		<i class='{$escapedIconClass} icon'></i>{$caption}
                     	 </a>";
 
                         $addToHTML = true;
@@ -352,8 +354,9 @@ class Elements extends Injectable
             } elseif ($this->ifItPossibleToShowThisElement($group, $groupparams['action'] ?? 'index')) {
                     $link = $this->getLinkToControllerAction($group, $groupparams['action'], $groupparams['param']);
                     $caption = $this->translation->_($groupparams['caption']);
+                    $escapedIconClass = htmlspecialchars($groupparams['iconclass'], ENT_QUOTES, 'UTF-8');
                     $groupHtml .= "<a class='item {$groupparams['style']}' href='$link'>
-                    	    <i class='{$groupparams['iconclass']} icon'></i>{$caption}
+                    	    <i class='{$escapedIconClass} icon'></i>{$caption}
                         </a>";
                     $addToHTML = true;
             }
@@ -381,7 +384,8 @@ class Elements extends Injectable
                 && array_key_exists('iconclass', $group)
                 && !empty($group['iconclass'])
             ) {
-                $result = "<i class='{$group['iconclass']} icon'></i>";
+                $escapedIconClass = htmlspecialchars($group['iconclass'], ENT_QUOTES, 'UTF-8');
+                $result = "<i class='{$escapedIconClass} icon'></i>";
                 break;
             }
             // Group with submenu - search inside submenu
@@ -391,7 +395,8 @@ class Elements extends Injectable
                         $index2 === $controllerClass
                         && !empty($submenu['iconclass'])
                     ) {
-                        $result = "<i class='{$submenu['iconclass']} icon'></i>";
+                        $escapedIconClass = htmlspecialchars($submenu['iconclass'], ENT_QUOTES, 'UTF-8');
+                        $result = "<i class='{$escapedIconClass} icon'></i>";
                         break;
                     }
                 }

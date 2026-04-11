@@ -2306,4 +2306,18 @@ return [
     'rest_cf_GetDefault' => 'Λήψη προεπιλεγμένων τιμών',
     'rest_resource_license' => 'Αδεια',
     'rest_schema_file_filename' => 'Όνομα αρχείου',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Λήψη κατάστασης σύλληψης πακέτων',
+    'rest_syslog_GetCaptureStatusDesc' => 'Ελέγξτε αν η σύλληψη πακέτων δικτύου (tcpdump) εκτελείται αυτή τη στιγμή',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Η εγγραφή σε αυτή τη διαδρομή δεν επιτρέπεται',
+    'rest_err_file_invalid_target_dir' => 'Μη έγκυρος κατάλογος προορισμού',
+    'rest_err_file_filename_required' => 'Το όνομα αρχείου είναι υποχρεωτικό',
+    'rest_err_file_content_required' => 'Το περιεχόμενο αρχείου είναι υποχρεωτικό',
+    'rest_err_file_mkdir_failed' => 'Αποτυχία δημιουργίας καταλόγου',
+    'rest_err_file_write_failed' => 'Αποτυχία εγγραφής αρχείου',
+    'rest_err_syslog_invalid_path' => 'Μη έγκυρη διαδρομή αρχείου καταγραφής',
+    'rest_err_firmware_invalid_version' => 'Μη έγκυρη μορφή έκδοσης firmware',
 ];

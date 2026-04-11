@@ -2306,4 +2306,18 @@ return [
     'rest_schema_provider_secret' => 'Provayderlə identifikasiya üçün parol',
     'API Keys' => 'API açarı',
     'Asterisk Managers' => 'AMI istifadəçisi',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Paket tutma vəziyyətini al',
+    'rest_syslog_GetCaptureStatusDesc' => 'Şəbəkə paket tutmasının (tcpdump) hal-hazırda işlədiyini yoxlayın',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Bu yola yazma icazəsi yoxdur',
+    'rest_err_file_invalid_target_dir' => 'Yanlış hədəf qovluğu',
+    'rest_err_file_filename_required' => 'Fayl adı tələb olunur',
+    'rest_err_file_content_required' => 'Fayl məzmunu tələb olunur',
+    'rest_err_file_mkdir_failed' => 'Qovluq yaratmaq alınmadı',
+    'rest_err_file_write_failed' => 'Fayl yazmaq alınmadı',
+    'rest_err_syslog_invalid_path' => 'Jurnal faylının yolu yanlışdır',
+    'rest_err_firmware_invalid_version' => 'Proqram təminatı versiyasının formatı yanlışdır',
 ];

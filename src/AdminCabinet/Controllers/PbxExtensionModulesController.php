@@ -149,7 +149,7 @@ class PbxExtensionModulesController extends BaseController
             'uniqid' => $data['uniqid'],
             'href' => $data['href'],
             'group' => $data['menu-group'],
-            'iconClass' => $data['iconClass'],
+            'iconClass' => preg_replace('/[^a-zA-Z0-9\s\-_]/', '', $data['iconClass'] ?? ''),
             'caption' => $data['caption'],
             'showAtSidebar' => $data['show-at-sidebar'] === 'on',
         ];

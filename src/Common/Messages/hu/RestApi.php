@@ -2306,4 +2306,18 @@ return [
     'rest_cf_PatchDesc' => 'Csak a megadott felhasználói fájlparaméterek frissítése',
     'rest_mod_GetRecord' => 'Modul beolvasása azonosító alapján',
     'rest_tag_SIP' => 'KORTY',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Csomagrögzítés állapotának lekérése',
+    'rest_syslog_GetCaptureStatusDesc' => 'Ellenőrizze, hogy a hálózati csomagrögzítés (tcpdump) jelenleg fut-e',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Írás erre az elérési útra nem engedélyezett',
+    'rest_err_file_invalid_target_dir' => 'Érvénytelen célkönyvtár',
+    'rest_err_file_filename_required' => 'A fájlnév megadása kötelező',
+    'rest_err_file_content_required' => 'A fájl tartalmának megadása kötelező',
+    'rest_err_file_mkdir_failed' => 'A könyvtár létrehozása sikertelen',
+    'rest_err_file_write_failed' => 'A fájl írása sikertelen',
+    'rest_err_syslog_invalid_path' => 'Érvénytelen naplófájl elérési út',
+    'rest_err_firmware_invalid_version' => 'Érvénytelen firmware-verzió formátum',
 ];

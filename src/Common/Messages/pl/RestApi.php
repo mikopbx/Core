@@ -2306,4 +2306,18 @@ return [
     'rest_gs_Patch' => 'Częściowa aktualizacja ustawień ogólnych',
     'rest_am_Delete' => 'Usuń użytkownika AMI',
     'rest_tag_SIP' => 'ŁYK',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Pobierz status przechwytywania pakietów',
+    'rest_syslog_GetCaptureStatusDesc' => 'Sprawdź, czy przechwytywanie pakietów sieciowych (tcpdump) jest aktualnie uruchomione',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Zapis do tej ścieżki jest niedozwolony',
+    'rest_err_file_invalid_target_dir' => 'Nieprawidłowy katalog docelowy',
+    'rest_err_file_filename_required' => 'Nazwa pliku jest wymagana',
+    'rest_err_file_content_required' => 'Zawartość pliku jest wymagana',
+    'rest_err_file_mkdir_failed' => 'Nie udało się utworzyć katalogu',
+    'rest_err_file_write_failed' => 'Nie udało się zapisać pliku',
+    'rest_err_syslog_invalid_path' => 'Nieprawidłowa ścieżka do pliku dziennika',
+    'rest_err_firmware_invalid_version' => 'Nieprawidłowy format wersji oprogramowania',
 ];

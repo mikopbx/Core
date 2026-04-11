@@ -2304,4 +2304,20 @@ return [
     // MISC
     // ============================================================================
     'rest_password' => '密码',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => '获取数据包捕获状态',
+    'rest_syslog_GetCaptureStatusDesc' => '检查网络数据包捕获（tcpdump）是否正在运行',
+    'rest_param_syslog_latest' => '如果为真，返回最新的日志条目。当数据超过行数限制时，从头部截断（最旧的条目被丢弃）',
+    'rest_schema_syslog_latest' => '当数据超过限制时返回最新的日志条目',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => '不允许写入此路径',
+    'rest_err_file_invalid_target_dir' => '无效的目标目录',
+    'rest_err_file_filename_required' => '文件名为必填项',
+    'rest_err_file_content_required' => '文件内容为必填项',
+    'rest_err_file_mkdir_failed' => '创建目录失败',
+    'rest_err_file_write_failed' => '写入文件失败',
+    'rest_err_syslog_invalid_path' => '日志文件路径无效',
+    'rest_err_firmware_invalid_version' => '固件版本格式无效',
 ];

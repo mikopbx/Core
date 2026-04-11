@@ -2304,4 +2304,20 @@ return [
     'rest_cf_GetDefault' => 'Obter valores padrão',
     'rest_cf_GetDefaultDesc' => 'Obtenha os valores padrão para a criação de um novo arquivo de usuário.',
     'rest_tag_PBXStatus' => 'status do PBX',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Obter status da captura de pacotes',
+    'rest_syslog_GetCaptureStatusDesc' => 'Verificar se a captura de pacotes de rede (tcpdump) está em execução no momento',
+    'rest_param_syslog_latest' => 'Se verdadeiro, retorna as entradas de log mais recentes. Quando os dados excedem o limite de linhas, o truncamento ocorre no início (entradas mais antigas são removidas)',
+    'rest_schema_syslog_latest' => 'Retorna as entradas de log mais recentes quando os dados excedem o limite',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Gravação neste caminho não é permitida',
+    'rest_err_file_invalid_target_dir' => 'Diretório de destino inválido',
+    'rest_err_file_filename_required' => 'O nome do arquivo é obrigatório',
+    'rest_err_file_content_required' => 'O conteúdo do arquivo é obrigatório',
+    'rest_err_file_mkdir_failed' => 'Falha ao criar o diretório',
+    'rest_err_file_write_failed' => 'Falha ao gravar o arquivo',
+    'rest_err_syslog_invalid_path' => 'Caminho do arquivo de log inválido',
+    'rest_err_firmware_invalid_version' => 'Formato de versão de firmware inválido',
 ];

@@ -2306,4 +2306,18 @@ return [
     'rest_gs_GetSettingDesc' => 'Obtenir la valeur d\'un paramètre spécifique par clé',
     'rest_gs_Update' => 'Mettre à jour les paramètres généraux',
     'rest_schema_stg_device' => 'Chemin d\'accès au périphérique',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Obtenir l\'état de la capture de paquets',
+    'rest_syslog_GetCaptureStatusDesc' => 'Vérifier si la capture de paquets réseau (tcpdump) est actuellement en cours d\'exécution',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'L\'écriture vers ce chemin n\'est pas autorisée',
+    'rest_err_file_invalid_target_dir' => 'Répertoire cible invalide',
+    'rest_err_file_filename_required' => 'Le nom de fichier est obligatoire',
+    'rest_err_file_content_required' => 'Le contenu du fichier est obligatoire',
+    'rest_err_file_mkdir_failed' => 'Impossible de créer le répertoire',
+    'rest_err_file_write_failed' => 'Impossible d\'écrire le fichier',
+    'rest_err_syslog_invalid_path' => 'Chemin du fichier journal invalide',
+    'rest_err_firmware_invalid_version' => 'Format de version du firmware invalide',
 ];

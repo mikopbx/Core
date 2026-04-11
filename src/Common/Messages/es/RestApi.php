@@ -2306,4 +2306,18 @@ return [
     'rest_cf_GetRecord' => 'Obtener archivo de usuario por ID',
     'rest_resource_file' => 'Archivo',
     'rest_param_pk_user_id' => 'ID de usuario',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Obtener estado de captura de paquetes',
+    'rest_syslog_GetCaptureStatusDesc' => 'Verificar si la captura de paquetes de red (tcpdump) está en ejecución actualmente',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'No se permite escribir en esta ruta',
+    'rest_err_file_invalid_target_dir' => 'Directorio de destino no válido',
+    'rest_err_file_filename_required' => 'El nombre de archivo es obligatorio',
+    'rest_err_file_content_required' => 'El contenido del archivo es obligatorio',
+    'rest_err_file_mkdir_failed' => 'No se pudo crear el directorio',
+    'rest_err_file_write_failed' => 'No se pudo escribir el archivo',
+    'rest_err_syslog_invalid_path' => 'Ruta de archivo de registro no válida',
+    'rest_err_firmware_invalid_version' => 'Formato de versión de firmware no válido',
 ];

@@ -2306,4 +2306,18 @@ return [
     'rest_schema_provider_cid_did_debug' => 'Omogući otklanjanje pogrešaka u raščlanjivanju CallerID-a i DID-a',
     'rest_schema_s3_access_key' => 'ID pristupnog ključa S3 (vidljiv u odgovorima)',
     'rest_schema_provider_represent' => 'HTML prikaz pružatelja usluga za padajuće popise',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Dohvati status snimanja paketa',
+    'rest_syslog_GetCaptureStatusDesc' => 'Provjerite je li snimanje mrežnih paketa (tcpdump) trenutno aktivno',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Pisanje na ovu putanju nije dopušteno',
+    'rest_err_file_invalid_target_dir' => 'Nevažeći ciljni direktorij',
+    'rest_err_file_filename_required' => 'Naziv datoteke je obavezan',
+    'rest_err_file_content_required' => 'Sadržaj datoteke je obavezan',
+    'rest_err_file_mkdir_failed' => 'Izrada direktorija nije uspjela',
+    'rest_err_file_write_failed' => 'Pisanje datoteke nije uspjelo',
+    'rest_err_syslog_invalid_path' => 'Nevažeća putanja do datoteke dnevnika',
+    'rest_err_firmware_invalid_version' => 'Nevažeći format verzije firmwarea',
 ];

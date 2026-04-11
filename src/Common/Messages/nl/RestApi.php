@@ -2306,4 +2306,18 @@ return [
     'rest_System_UpgradeFailedToDetectOffset' => 'De offset van de opstartpartitie kan niet worden vastgesteld.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Het is niet gelukt om een lusapparaat aan te maken.',
     'rest_System_UpgradeMountFailed' => 'Partitie kon niet worden gekoppeld. Controleer het bestandssysteem.',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Pakketopnamestatus ophalen',
+    'rest_syslog_GetCaptureStatusDesc' => 'Controleer of netwerk pakketopname (tcpdump) momenteel actief is',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Schrijven naar dit pad is niet toegestaan',
+    'rest_err_file_invalid_target_dir' => 'Ongeldige doelmap',
+    'rest_err_file_filename_required' => 'Bestandsnaam is verplicht',
+    'rest_err_file_content_required' => 'Bestandsinhoud is verplicht',
+    'rest_err_file_mkdir_failed' => 'Map aanmaken mislukt',
+    'rest_err_file_write_failed' => 'Bestand schrijven mislukt',
+    'rest_err_syslog_invalid_path' => 'Ongeldig pad naar logbestand',
+    'rest_err_firmware_invalid_version' => 'Ongeldig versieformaat voor firmware',
 ];

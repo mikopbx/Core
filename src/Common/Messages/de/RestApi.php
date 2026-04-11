@@ -2306,4 +2306,18 @@ return [
     'rest_pvd_UpdateStatus' => 'Anbieterstatus aktualisieren',
     'rest_param_emp_export_format' => 'Exportformat: Minimal (7 Felder), Standard (13 Felder), Vollständig (15 Felder)',
     'rest_ms_RefreshToken' => 'OAuth2-Token aktualisieren',
+
+    // Syslog: packet capture and log retrieval
+    'rest_syslog_GetCaptureStatus' => 'Paketerfassungsstatus abrufen',
+    'rest_syslog_GetCaptureStatusDesc' => 'Prüfen, ob die Netzwerkpaketerfassung (tcpdump) derzeit läuft',
+
+    // Security: file operation and path validation errors
+    'rest_err_file_write_not_permitted' => 'Schreiben in diesen Pfad ist nicht erlaubt',
+    'rest_err_file_invalid_target_dir' => 'Ungültiges Zielverzeichnis',
+    'rest_err_file_filename_required' => 'Dateiname ist erforderlich',
+    'rest_err_file_content_required' => 'Dateiinhalt ist erforderlich',
+    'rest_err_file_mkdir_failed' => 'Verzeichnis konnte nicht erstellt werden',
+    'rest_err_file_write_failed' => 'Datei konnte nicht geschrieben werden',
+    'rest_err_syslog_invalid_path' => 'Ungültiger Pfad zur Protokolldatei',
+    'rest_err_firmware_invalid_version' => 'Ungültiges Format der Firmware-Version',
 ];
