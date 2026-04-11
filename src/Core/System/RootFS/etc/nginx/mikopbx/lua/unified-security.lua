@@ -405,8 +405,20 @@ end
 
 local function check_basic_security()
     local uri = ngx.var.uri
-    local args = ngx.var.args
+    local raw_args = ngx.var.args
+    -- Decode query args so %2e%2e%2f is caught as ../
+    local args = raw_args and ngx.unescape_uri(raw_args) or nil
     local user_agent = ngx.var.http_user_agent or ""
+
+    -- Check for double-encoded traversal in raw query string
+    -- %252e%252e = double-encoded "..", %252e%252e%252f = double-encoded "../"
+    if raw_args then
+        local lower_raw = string.lower(raw_args)
+        if string.find(lower_raw, "%252e%252e", 1, true) then
+            ngx.log(ngx.WARN, "WAF: double-encoded traversal attempt from: ", client_ip)
+            return false
+        end
+    end
 
     -- Check for SQL injection patterns
     local sql_patterns = {
@@ -424,15 +436,21 @@ local function check_basic_security()
         "1' or '1'='1"
     }
 
-    local check_string = string.lower(uri .. (args or "") .. user_agent)
+    -- Check each component separately to avoid false matches across boundaries
+    -- Build table without nil holes so ipairs iterates all entries
+    local check_strings = {string.lower(uri)}
+    if args then check_strings[#check_strings + 1] = string.lower(args) end
+    check_strings[#check_strings + 1] = string.lower(user_agent)
     for _, pattern in ipairs(sql_patterns) do
-        if string.match(check_string, pattern) then
-            ngx.log(ngx.WARN, "SQL injection attempt from: ", client_ip, " pattern: ", pattern)
-            return false
+        for _, str in ipairs(check_strings) do
+            if str and string.match(str, pattern) then
+                ngx.log(ngx.WARN, "SQL injection attempt from: ", client_ip, " pattern: ", pattern)
+                return false
+            end
         end
     end
 
-    -- Check for path traversal in URL path and query string
+    -- Check for path traversal in URL path and decoded query string
     if string.match(uri, "%.%.") or (args and string.match(args, "%.%.")) or string.match(uri, "//") then
         ngx.log(ngx.WARN, "Path traversal attempt from: ", client_ip)
         return false
@@ -442,6 +460,71 @@ local function check_basic_security()
     if string.match(uri, "%z") or (args and string.match(args, "%z")) then
         ngx.log(ngx.WARN, "Null byte injection attempt from: ", client_ip)
         return false
+    end
+
+    -- Check POST/PUT/PATCH body for attacks (defense-in-depth)
+    -- Skip endpoints that legitimately send SQL, shell commands, or code in body
+    local body_scan_whitelist = {
+        ["/pbxcore/api/v3/system:executeSqlRequest"] = true,
+        ["/pbxcore/api/v3/system:executeBashCommand"] = true,
+        ["/pbxcore/api/v3/dialplan-applications"] = true,
+        ["/pbxcore/api/v3/custom-files"] = true,
+    }
+
+    local method = ngx.req.get_method()
+    if (method == "POST" or method == "PUT" or method == "PATCH")
+       and not body_scan_whitelist[uri] then
+        local content_type = ngx.var.content_type or ""
+        local lower_content_type = string.lower(content_type)
+        -- Skip multipart (file uploads) to avoid reading large bodies into memory
+        if not string.find(lower_content_type, "multipart", 1, true) then
+            ngx.req.read_body()
+            local body = ngx.req.get_body_data()
+            -- Fallback: read from temp file if body was buffered to disk
+            if not body then
+                local body_file = ngx.req.get_body_file()
+                if body_file then
+                    local f = io.open(body_file, "r")
+                    if f then
+                        body = f:read(65536)
+                        f:close()
+                    end
+                end
+            end
+            if body and #body < 65536 then
+                local check_body
+                -- Only URL-decode for form-urlencoded; JSON/other use raw body
+                if string.find(lower_content_type, "x-www-form-urlencoded", 1, true) then
+                    check_body = ngx.unescape_uri(body)
+                else
+                    check_body = body
+                end
+                local lower_body = string.lower(check_body)
+
+                -- Traversal in body (require path separator after "..")
+                if string.match(check_body, "%.%.[/\\]") then
+                    ngx.log(ngx.WARN, "WAF: path traversal in POST body from: ", client_ip,
+                            " uri: ", uri)
+                    return false
+                end
+
+                -- Null bytes in body (check both raw and decoded)
+                if string.match(body, "%z") or string.match(check_body, "%z") then
+                    ngx.log(ngx.WARN, "WAF: null byte in POST body from: ", client_ip,
+                            " uri: ", uri)
+                    return false
+                end
+
+                -- SQL injection in body
+                for _, pattern in ipairs(sql_patterns) do
+                    if string.match(lower_body, pattern) then
+                        ngx.log(ngx.WARN, "WAF: SQL injection in POST body from: ", client_ip,
+                                " uri: ", uri, " pattern: ", pattern)
+                        return false
+                    end
+                end
+            end
+        end
     end
 
     return true
