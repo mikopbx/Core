@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'L\'archive n\'existe pas. Réessayez !',
     'rest_err_syslog_no_matching_entries' => 'Aucune entrée de journal correspondante trouvée ou l\'exécution de la commande a échoué',
     'rest_err_firmware_invalid_version' => 'Format de version du firmware invalide',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Erreur lors de l\'extraction du module',
+    'rest_err_module_path_traversal' => 'Archive malveillante : l\'entrée «%entryName%» contient un path traversal',
+    'rest_err_module_path_escape' => 'Archive malveillante : l\'entrée «%entryName%» se trouve en dehors du répertoire du module',
 ];

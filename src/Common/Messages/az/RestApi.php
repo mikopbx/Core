@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Arxiv mövcud deyil. Yenidən cəhd edin!',
     'rest_err_syslog_no_matching_entries' => 'Uyğun jurnal qeydləri tapılmadı və ya əmrin icrası uğursuz oldu',
     'rest_err_firmware_invalid_version' => 'Proqram təminatı versiyasının formatı yanlışdır',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Modul açılması zamanı xəta baş verdi',
+    'rest_err_module_path_traversal' => 'Zərərli arxiv: «%entryName%» girişi yol keçidini ehtiva edir',
+    'rest_err_module_path_escape' => 'Zərərli arxiv: «%entryName%» girişi modul qovluğundan kənara çıxır',
 ];

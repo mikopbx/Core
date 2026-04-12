@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Arhiva nu există. Încercați din nou!',
     'rest_err_syslog_no_matching_entries' => 'Nu au fost găsite intrări de jurnal corespunzătoare sau execuția comenzii a eșuat',
     'rest_err_firmware_invalid_version' => 'Format invalid pentru versiunea de firmware',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Eroare la extragerea modulului',
+    'rest_err_module_path_traversal' => 'Arhivă malițioasă: intrarea «%entryName%» conține path traversal',
+    'rest_err_module_path_escape' => 'Arhivă malițioasă: intrarea «%entryName%» se află în afara directorului modulului',
 ];

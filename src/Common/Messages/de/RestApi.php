@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Archiv existiert nicht. Bitte erneut versuchen!',
     'rest_err_syslog_no_matching_entries' => 'Keine passenden Protokolleinträge gefunden oder Befehlsausführung fehlgeschlagen',
     'rest_err_firmware_invalid_version' => 'Ungültiges Format der Firmware-Version',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Fehler beim Entpacken des Moduls',
+    'rest_err_module_path_traversal' => 'Schädliches Archiv: Eintrag «%entryName%» enthält path traversal',
+    'rest_err_module_path_escape' => 'Schädliches Archiv: Eintrag «%entryName%» liegt außerhalb des Modulverzeichnisses',
 ];

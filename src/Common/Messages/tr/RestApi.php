@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Arşiv mevcut değil. Tekrar deneyin!',
     'rest_err_syslog_no_matching_entries' => 'Eşleşen günlük girişi bulunamadı veya komut yürütme başarısız oldu',
     'rest_err_firmware_invalid_version' => 'Geçersiz firmware sürüm biçimi',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Modül çıkartılırken hata oluştu',
+    'rest_err_module_path_traversal' => 'Kötü amaçlı arşiv: «%entryName%» girişi path traversal içeriyor',
+    'rest_err_module_path_escape' => 'Kötü amaçlı arşiv: «%entryName%» girişi modül dizininin dışına çıkıyor',
 ];

@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Az archívum nem létezik. Próbálja újra!',
     'rest_err_syslog_no_matching_entries' => 'Nem található egyező naplóbejegyzés, vagy a parancs végrehajtása sikertelen',
     'rest_err_firmware_invalid_version' => 'Érvénytelen firmware-verzió formátum',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Hiba a modul kicsomagolásakor',
+    'rest_err_module_path_traversal' => 'Kártékony archívum: a(z) «%entryName%» bejegyzés path traversal támadást tartalmaz',
+    'rest_err_module_path_escape' => 'Kártékony archívum: a(z) «%entryName%» bejegyzés a modulkönyvtáron kívülre mutat',
 ];

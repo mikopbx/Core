@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Archiwum nie istnieje. Spróbuj ponownie!',
     'rest_err_syslog_no_matching_entries' => 'Nie znaleziono pasujących wpisów dziennika lub wykonanie polecenia nie powiodło się',
     'rest_err_firmware_invalid_version' => 'Nieprawidłowy format wersji oprogramowania',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Wystąpił błąd podczas rozpakowywania modułu',
+    'rest_err_module_path_traversal' => 'Złośliwe archiwum: wpis «%entryName%» zawiera path traversal',
+    'rest_err_module_path_escape' => 'Złośliwe archiwum: wpis «%entryName%» wykracza poza katalog modułu',
 ];

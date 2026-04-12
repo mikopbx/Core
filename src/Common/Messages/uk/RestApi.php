@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Архів не існує. Спробуйте ще раз!',
     'rest_err_syslog_no_matching_entries' => 'Відповідні записи журналу не знайдені або виконання команди завершилось невдало',
     'rest_err_firmware_invalid_version' => 'Недійсний формат версії прошивки',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Помилка під час розпакування модуля',
+    'rest_err_module_path_traversal' => 'Шкідливий архів: запис «%entryName%» містить обхід шляху',
+    'rest_err_module_path_escape' => 'Шкідливий архів: запис «%entryName%» виходить за межі директорії модуля',
 ];

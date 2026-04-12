@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'არქივი არ არსებობს. სცადეთ ხელახლა!',
     'rest_err_syslog_no_matching_entries' => 'შესაბამისი ჟურნალის ჩანაწერები ვერ მოიძებნა ან ბრძანების შესრულება ვერ მოხერხდა',
     'rest_err_firmware_invalid_version' => 'პროგრამული უზრუნველყოფის ვერსიის ფორმატი არასწორია',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'მოდულის ამოხსნისას შეცდომა მოხდა',
+    'rest_err_module_path_traversal' => 'მავნე არქივი: ჩანაწერი «%entryName%» შეიცავს path traversal-ს',
+    'rest_err_module_path_escape' => 'მავნე არქივი: ჩანაწერი «%entryName%» მოდულის დირექტორიის გარეთ გადის',
 ];

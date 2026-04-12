@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'L\'archivio non esiste. Riprovare!',
     'rest_err_syslog_no_matching_entries' => 'Nessuna voce di log corrispondente trovata o esecuzione del comando fallita',
     'rest_err_firmware_invalid_version' => 'Formato versione firmware non valido',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Errore durante l\'estrazione del modulo',
+    'rest_err_module_path_traversal' => 'Archivio dannoso: la voce «%entryName%» contiene path traversal',
+    'rest_err_module_path_escape' => 'Archivio dannoso: la voce «%entryName%» si trova al di fuori della directory del modulo',
 ];

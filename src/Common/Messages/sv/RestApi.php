@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Arkivet finns inte. Försök igen!',
     'rest_err_syslog_no_matching_entries' => 'Inga matchande loggposter hittades eller kommandokörningen misslyckades',
     'rest_err_firmware_invalid_version' => 'Ogiltigt format för firmware-version',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Det uppstod ett fel vid uppackning av modulen',
+    'rest_err_module_path_traversal' => 'Skadligt arkiv: posten «%entryName%» innehåller path traversal',
+    'rest_err_module_path_escape' => 'Skadligt arkiv: posten «%entryName%» befinner sig utanför modulkatalogen',
 ];

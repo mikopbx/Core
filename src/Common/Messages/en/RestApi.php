@@ -2061,4 +2061,9 @@ return [
 
     // Security: firmware version validation
     'rest_err_firmware_invalid_version' => 'Invalid firmware version format',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Error occurred during module extraction',
+    'rest_err_module_path_traversal' => 'Malicious archive: entry \'%entryName%\' contains path traversal',
+    'rest_err_module_path_escape' => 'Malicious archive: entry \'%entryName%\' resolved outside module directory',
 ];

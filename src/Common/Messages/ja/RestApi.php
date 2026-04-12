@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'アーカイブが存在しません。もう一度お試しください！',
     'rest_err_syslog_no_matching_entries' => '一致するログエントリが見つからないか、コマンドの実行に失敗しました',
     'rest_err_firmware_invalid_version' => 'ファームウェアのバージョン形式が無効です',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'モジュールの展開中にエラーが発生しました',
+    'rest_err_module_path_traversal' => '不正なアーカイブ: エントリ「%entryName%」にパストラバーサルが含まれています',
+    'rest_err_module_path_escape' => '不正なアーカイブ: エントリ「%entryName%」がモジュールディレクトリの外に解決されました',
 ];

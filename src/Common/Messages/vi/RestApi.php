@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Kho lưu trữ không tồn tại. Hãy thử lại!',
     'rest_err_syslog_no_matching_entries' => 'Không tìm thấy mục nhật ký phù hợp hoặc thực thi lệnh thất bại',
     'rest_err_firmware_invalid_version' => 'Định dạng phiên bản firmware không hợp lệ',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Đã xảy ra lỗi trong quá trình giải nén module',
+    'rest_err_module_path_traversal' => 'Kho lưu trữ độc hại: mục «%entryName%» chứa path traversal',
+    'rest_err_module_path_escape' => 'Kho lưu trữ độc hại: mục «%entryName%» nằm ngoài thư mục module',
 ];

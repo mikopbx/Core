@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Arkistoa ei ole olemassa. Yritä uudelleen!',
     'rest_err_syslog_no_matching_entries' => 'Vastaavia lokimerkintöjä ei löydy tai komennon suoritus epäonnistui',
     'rest_err_firmware_invalid_version' => 'Virheellinen laiteohjelmiston versiomuoto',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Virhe moduulin purkamisen aikana',
+    'rest_err_module_path_traversal' => 'Haitallinen arkisto: merkintä «%entryName%» sisältää path traversal -hyökkäyksen',
+    'rest_err_module_path_escape' => 'Haitallinen arkisto: merkintä «%entryName%» sijaitsee moduulihakemiston ulkopuolella',
 ];

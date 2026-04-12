@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'O arquivo não existe. Tente novamente!',
     'rest_err_syslog_no_matching_entries' => 'Não foram encontradas entradas de registo correspondentes ou a execução do comando falhou',
     'rest_err_firmware_invalid_version' => 'Formato de versão de firmware inválido',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Ocorreu um erro durante a extração do módulo',
+    'rest_err_module_path_traversal' => 'Ficheiro malicioso: a entrada «%entryName%» contém path traversal',
+    'rest_err_module_path_escape' => 'Ficheiro malicioso: a entrada «%entryName%» está fora do diretório do módulo',
 ];

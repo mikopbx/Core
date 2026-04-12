@@ -2487,4 +2487,9 @@ return [
 
     // Security: firmware version validation
     'rest_err_firmware_invalid_version' => 'Недопустимый формат версии прошивки',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Ошибка при распаковке модуля',
+    'rest_err_module_path_traversal' => 'Вредоносный архив: запись «%entryName%» содержит обход пути',
+    'rest_err_module_path_escape' => 'Вредоносный архив: запись «%entryName%» выходит за пределы директории модуля',
 ];

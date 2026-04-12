@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Το αρχείο δεν υπάρχει. Δοκιμάστε ξανά!',
     'rest_err_syslog_no_matching_entries' => 'Δεν βρέθηκαν αντίστοιχες εγγραφές καταγραφής ή η εκτέλεση εντολής απέτυχε',
     'rest_err_firmware_invalid_version' => 'Μη έγκυρη μορφή έκδοσης firmware',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Σφάλμα κατά την αποσυμπίεση της μονάδας',
+    'rest_err_module_path_traversal' => 'Κακόβουλο αρχείο: η εγγραφή «%entryName%» περιέχει path traversal',
+    'rest_err_module_path_escape' => 'Κακόβουλο αρχείο: η εγγραφή «%entryName%» βρίσκεται εκτός του καταλόγου της μονάδας',
 ];

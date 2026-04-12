@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Arhiva ne postoji. Pokušajte ponovo!',
     'rest_err_syslog_no_matching_entries' => 'Nisu pronađeni odgovarajući zapisi dnevnika ili izvođenje naredbe nije uspjelo',
     'rest_err_firmware_invalid_version' => 'Nevažeći format verzije firmwarea',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Greška pri raspakivanju modula',
+    'rest_err_module_path_traversal' => 'Zlonamjerni arhiv: unos «%entryName%» sadrži path traversal',
+    'rest_err_module_path_escape' => 'Zlonamjerni arhiv: unos «%entryName%» nalazi se izvan direktorija modula',
 ];

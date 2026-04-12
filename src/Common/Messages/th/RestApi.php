@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'ไม่มีไฟล์เก็บถาวร กรุณาลองอีกครั้ง!',
     'rest_err_syslog_no_matching_entries' => 'ไม่พบรายการบันทึกที่ตรงกันหรือการดำเนินการคำสั่งล้มเหลว',
     'rest_err_firmware_invalid_version' => 'รูปแบบเวอร์ชัน firmware ไม่ถูกต้อง',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'เกิดข้อผิดพลาดระหว่างการแตกไฟล์โมดูล',
+    'rest_err_module_path_traversal' => 'ไฟล์เก็บถาวรอันตราย: รายการ «%entryName%» มี path traversal',
+    'rest_err_module_path_escape' => 'ไฟล์เก็บถาวรอันตราย: รายการ «%entryName%» อยู่นอกไดเรกทอรีของโมดูล',
 ];

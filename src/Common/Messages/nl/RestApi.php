@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Archief bestaat niet. Probeer het opnieuw!',
     'rest_err_syslog_no_matching_entries' => 'Geen overeenkomende logvermeldingen gevonden of uitvoering van opdracht mislukt',
     'rest_err_firmware_invalid_version' => 'Ongeldig versieformaat voor firmware',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Fout opgetreden bij het uitpakken van de module',
+    'rest_err_module_path_traversal' => 'Kwaadaardig archief: vermelding «%entryName%» bevat path traversal',
+    'rest_err_module_path_escape' => 'Kwaadaardig archief: vermelding «%entryName%» bevindt zich buiten de modulemap',
 ];

@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Arkivet eksisterer ikke. Prøv igen!',
     'rest_err_syslog_no_matching_entries' => 'Ingen matchende logposter fundet eller kommandoudførelsen mislykkedes',
     'rest_err_firmware_invalid_version' => 'Ugyldigt format for firmwareversion',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Der opstod en fejl under udpakning af modulet',
+    'rest_err_module_path_traversal' => 'Ondsindet arkiv: indgang «%entryName%» indeholder path traversal',
+    'rest_err_module_path_escape' => 'Ondsindet arkiv: indgang «%entryName%» befinder sig uden for modulets mappe',
 ];

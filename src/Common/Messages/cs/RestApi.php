@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => 'Archiv neexistuje. Zkuste to znovu!',
     'rest_err_syslog_no_matching_entries' => 'Nebyly nalezeny žádné odpovídající záznamy nebo provedení příkazu selhalo',
     'rest_err_firmware_invalid_version' => 'Neplatný formát verze firmwaru',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => 'Při rozbalování modulu došlo k chybě',
+    'rest_err_module_path_traversal' => 'Škodlivý archiv: položka «%entryName%» obsahuje path traversal',
+    'rest_err_module_path_escape' => 'Škodlivý archiv: položka «%entryName%» se nachází mimo adresář modulu',
 ];

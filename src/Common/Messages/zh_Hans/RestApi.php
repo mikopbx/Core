@@ -2325,4 +2325,9 @@ return [
     'rest_err_syslog_archive_not_found' => '归档文件不存在，请重试！',
     'rest_err_syslog_no_matching_entries' => '未找到匹配的日志条目或命令执行失败',
     'rest_err_firmware_invalid_version' => '固件版本格式无效',
+
+    // Security: module installation
+    'rest_err_module_extraction_failed' => '解压模块时发生错误',
+    'rest_err_module_path_traversal' => '恶意压缩包：条目「%entryName%」包含路径遍历',
+    'rest_err_module_path_escape' => '恶意压缩包：条目「%entryName%」解析到模块目录之外',
 ];

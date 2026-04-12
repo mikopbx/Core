@@ -24,6 +24,7 @@ require_once 'Globals.php';
 
 use MikoPBX\Common\Providers\LanguageProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
@@ -117,11 +118,11 @@ class WorkerModuleInstaller extends WorkerBase
 
                     // Zip Slip protection: reject entries with path traversal sequences
                     if (str_contains($entryName, '..')) {
-                        file_put_contents(
-                            $this->error_file,
-                            "Malicious archive: entry '$entryName' contains path traversal.",
-                            FILE_APPEND
+                        $message = TranslationProvider::translate(
+                            'rest_err_module_path_traversal',
+                            ['entryName' => $entryName]
                         );
+                        file_put_contents($this->error_file, $message, FILE_APPEND);
                         $result = false;
                         break;
                     }
@@ -138,11 +139,11 @@ class WorkerModuleInstaller extends WorkerBase
                         ) {
                             // File escaped module directory — remove it and abort
                             @unlink($extractedPath);
-                            file_put_contents(
-                                $this->error_file,
-                                "Malicious archive: entry '$entryName' resolved outside module directory.",
-                                FILE_APPEND
+                            $message = TranslationProvider::translate(
+                                'rest_err_module_path_escape',
+                                ['entryName' => $entryName]
                             );
+                            file_put_contents($this->error_file, $message, FILE_APPEND);
                             $result = false;
                             break;
                         }
@@ -159,7 +160,11 @@ class WorkerModuleInstaller extends WorkerBase
             }
             
             if ($result === false) {
-                file_put_contents($this->error_file, 'Error occurred during module extraction.', FILE_APPEND);
+                file_put_contents(
+                    $this->error_file,
+                    TranslationProvider::translate('rest_err_module_extraction_failed'),
+                    FILE_APPEND
+                );
                 file_put_contents($this->progress_file, '0');
                 return;
             }
