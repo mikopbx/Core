@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\Service\Main;
@@ -284,13 +285,19 @@ class GetInfoAction extends Injectable
      */
     private static function getIptablesInfo(): string
     {
-        $content      = '────────────────────────────────────────── iptables ──────────────────────────────────────';
-        $content      .= PHP_EOL . PHP_EOL;
-        $iptables = Util::which('iptables');
-        $out          = [];
-        Processes::mwExec("$iptables -S", $out);
-        $iptablesOut = implode(PHP_EOL, $out);
-        $content     .= $iptablesOut . PHP_EOL;
+        $content = '────────────────────────────────────────── iptables ──────────────────────────────────────';
+        $content .= PHP_EOL . PHP_EOL;
+        if (!System::canManageFirewall()) {
+            $reason = System::isDocker()
+                ? 'Firewall managed by host (Docker)'
+                : 'Firewall unavailable (container without CAP_NET_ADMIN)';
+            $content .= $reason . PHP_EOL;
+        } else {
+            $iptables = Util::which('iptables');
+            $out = [];
+            Processes::mwExec("$iptables -S", $out);
+            $content .= implode(PHP_EOL, $out) . PHP_EOL;
+        }
         $content .= PHP_EOL . PHP_EOL;
         return $content;
     }
