@@ -305,6 +305,8 @@ class ActionHangupChan
             $CALLERID_NAME = $am->GetVar($BRIDGEPEER, 'CALLERID(name)', null, false);
             if (!is_string($CALLERID_NAME) || $CALLERID_NAME === $CALLERID) {
                 $CALLERID_NAME = '';
+            } else {
+                $CALLERID_NAME = strip_tags($CALLERID_NAME);
             }
             $n_data['action'] = 'sip_transfer';
             $n_data['src_chan'] = $data_chan['out'] ? $data_chan['chan'] : $BRIDGEPEER;

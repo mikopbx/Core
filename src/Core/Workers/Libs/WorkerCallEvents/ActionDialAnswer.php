@@ -307,12 +307,12 @@ class ActionDialAnswer
                 $am = Util::getAstManager('off');
                 $connectedName = $am->GetVar($srcChan, 'CONNECTEDLINE(name)', null, false);
                 if (is_string($connectedName) && $connectedName !== '' && $connectedName !== $row->dst_num) {
-                    $row->writeAttribute('dst_name', $connectedName);
+                    $row->writeAttribute('dst_name', strip_tags($connectedName));
                 }
                 if (empty($row->src_name)) {
                     $callerName = $am->GetVar($srcChan, 'CALLERID(name)', null, false);
                     if (is_string($callerName) && $callerName !== '' && $callerName !== $row->src_num) {
-                        $row->writeAttribute('src_name', $callerName);
+                        $row->writeAttribute('src_name', strip_tags($callerName));
                     }
                 }
             } catch (\Throwable $e) {

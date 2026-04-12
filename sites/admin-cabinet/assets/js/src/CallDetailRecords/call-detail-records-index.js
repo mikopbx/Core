@@ -359,13 +359,13 @@ const callDetailRecords = {
                 } else {
                     $('td', row).eq(0).html('');
                 }
-                $('td', row).eq(1).html(data[0]);
+                $('td', row).eq(1).html(SecurityUtils.escapeHtml(data[0]));
                 $('td', row).eq(2)
-                    .html(data[1])
+                    .html(SecurityUtils.escapeHtml(data[1]))
                     .addClass('need-update')
                     .attr('data-cdr-name', data[6] || '');
                 $('td', row).eq(3)
-                    .html(data[2])
+                    .html(SecurityUtils.escapeHtml(data[2]))
                     .addClass('need-update')
                     .attr('data-cdr-name', data[7] || '');
 
@@ -385,7 +385,7 @@ const callDetailRecords = {
                 // WHY: Log icon links to system-diagnostic page which requires specific permissions
                 const canViewLogs = typeof ACLHelper !== 'undefined' && ACLHelper.isAllowed('viewSystemDiagnostic');
                 if (canViewLogs && data.ids !== '') {
-                    actionsHtml += `<i data-ids="${data.ids}" class="file alternate outline icon" style="cursor: pointer; margin-right: 8px;"></i>`;
+                    actionsHtml += `<i data-ids="${SecurityUtils.escapeHtml(data.ids)}" class="file alternate outline icon" style="cursor: pointer; margin-right: 8px;"></i>`;
                 }
 
                 // Add delete button
@@ -393,7 +393,7 @@ const callDetailRecords = {
                 // First click changes trash icon to close icon, second click deletes
                 // WHY: Use data.DT_RowId which contains linkedid for grouped records
                 actionsHtml += `<a href="#" class="two-steps-delete delete-record popuped"
-                                   data-record-id="${data.DT_RowId}"
+                                   data-record-id="${SecurityUtils.escapeHtml(data.DT_RowId)}"
                                    data-content="${globalTranslate.cdr_DeleteRecord || 'Delete record'}">
                                    <i class="icon trash red" style="margin: 0;"></i>
                                 </a>`;
