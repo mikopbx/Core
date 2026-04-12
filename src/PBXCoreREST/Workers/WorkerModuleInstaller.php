@@ -103,9 +103,51 @@ class WorkerModuleInstaller extends WorkerBase
                 
                 // Extract files one by one to track progress
                 $result = true;
+
+                // Ensure module directory exists before resolving its real path
+                if (!is_dir($currentModuleDir)) {
+                    mkdir($currentModuleDir, 0755, true);
+                }
+                $realModuleDir = realpath($currentModuleDir);
+                if ($realModuleDir === false) {
+                    $result = false;
+                }
                 for ($i = 0; $i < $totalFiles && $result; $i++) {
-                    $result = $zip->extractTo($currentModuleDir, [$zip->getNameIndex($i)]);
-                    
+                    $entryName = $zip->getNameIndex($i);
+
+                    // Zip Slip protection: reject entries with path traversal sequences
+                    if (str_contains($entryName, '..')) {
+                        file_put_contents(
+                            $this->error_file,
+                            "Malicious archive: entry '$entryName' contains path traversal.",
+                            FILE_APPEND
+                        );
+                        $result = false;
+                        break;
+                    }
+
+                    $result = $zip->extractTo($currentModuleDir, [$entryName]);
+
+                    // Post-extraction confinement: verify extracted path stays within module dir
+                    if ($result) {
+                        $extractedPath = realpath($currentModuleDir . '/' . $entryName);
+                        if (
+                            $extractedPath !== false
+                            && !str_starts_with($extractedPath, $realModuleDir . '/')
+                            && $extractedPath !== $realModuleDir
+                        ) {
+                            // File escaped module directory — remove it and abort
+                            @unlink($extractedPath);
+                            file_put_contents(
+                                $this->error_file,
+                                "Malicious archive: entry '$entryName' resolved outside module directory.",
+                                FILE_APPEND
+                            );
+                            $result = false;
+                            break;
+                        }
+                    }
+
                     // Calculate and update progress (25% to 50% range)
                     $extractionProgress = 25 + round(($i / $totalFiles) * 25);
                     file_put_contents($this->progress_file, (string)$extractionProgress);
