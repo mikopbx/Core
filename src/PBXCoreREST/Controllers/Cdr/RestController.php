@@ -66,8 +66,8 @@ use MikoPBX\PBXCoreREST\Attributes\{
     // 'mikopbx-' generates mikopbx-[^/:]+  (matches linkedid like "mikopbx-1760784793.4627")
     //
     // IMPORTANT: Individual methods further restrict ID format via ApiParameterRef pattern:
-    // - getRecord, playback, download: numeric only (pattern: '^[0-9]+$')
-    // - delete: numeric OR linkedid (pattern: '^([0-9]+|mikopbx-.+)$')
+    // - getRecord, delete: numeric OR linkedid (pattern: '^([0-9]+|mikopbx-.+)$')
+    // - playback, download: numeric only (pattern: '^[0-9]+$')
     //
     // SECURITY NOTE: ResourceSecurity removed from class level because this resource has mixed security:
     // - getList/getRecord/delete: require Bearer token (added at method level)
@@ -129,7 +129,7 @@ class RestController extends BaseRestController
         description: 'rest_cdr_GetRecordDesc',
         operationId: 'getCdrById'
     )]
-    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '12345')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^([0-9]+|mikopbx-.+)$', example: '12345')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
