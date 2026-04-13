@@ -208,6 +208,19 @@ class LogTimestampParser
     }
 
     /**
+     * Maximum buffered chunk size for backward reading.
+     * Files without newlines (binary, single-line JSON, corrupted logs) would otherwise
+     * grow $chunk unbounded and OOM the worker. 1 MiB is far above any plausible log line.
+     */
+    private const READ_LAST_LINES_MAX_BUFFER = 1048576;
+
+    /**
+     * Files at or below this size are read whole instead of doing backward chunk seeks —
+     * simpler, faster, and avoids the entire failure mode of the seeking algorithm.
+     */
+    private const READ_LAST_LINES_SMALL_FILE_THRESHOLD = 65536;
+
+    /**
      * Read last N lines from file efficiently
      *
      * @param string $filename Full path to log file
@@ -216,42 +229,74 @@ class LogTimestampParser
      */
     private static function readLastLines(string $filename, int $lines): array
     {
-        $handle = fopen($filename, 'r');
+        $size = @filesize($filename);
+        if ($size === false || $size === 0 || $lines <= 0) {
+            return [];
+        }
+
+        // Small file: just read it whole. file() handles trailing newlines correctly
+        // and avoids the backward-seek state machine entirely.
+        if ($size <= self::READ_LAST_LINES_SMALL_FILE_THRESHOLD) {
+            $allLines = @file($filename, FILE_IGNORE_NEW_LINES);
+            if ($allLines === false) {
+                return [];
+            }
+            return array_slice($allLines, -$lines);
+        }
+
+        $handle = @fopen($filename, 'rb');
         if ($handle === false) {
             return [];
         }
 
-        $buffer = 4096;
-        $output = [];
-
+        // If the file ends with '\n', virtually clip it so that explode() won't produce
+        // a spurious empty trailing element that would consume one of the requested slots.
+        // Matches file()/FILE_IGNORE_NEW_LINES semantics for normal log files.
         fseek($handle, -1, SEEK_END);
-
-        if (fread($handle, 1) !== "\n") {
-            $line = fgets($handle);
-            if ($line !== false) {
-                $output[] = $line;
-            }
+        if (fread($handle, 1) === "\n") {
+            $size--;
         }
 
+        $output = [];
         $chunk = '';
+        $pos = $size;
+        $bufferSize = 4096;
 
-        while (ftell($handle) > 0 && count($output) < $lines) {
-            $seek = min(ftell($handle), $buffer);
-            fseek($handle, -$seek, SEEK_CUR);
-            $chunk = fread($handle, $seek) . $chunk;
-            fseek($handle, -mb_strlen($chunk, '8bit'), SEEK_CUR);
+        while ($pos > 0 && count($output) < $lines) {
+            // Bail out on files without newlines (binary data, single huge JSON, etc.)
+            // before $chunk grows large enough to exhaust memory_limit. See issue #1021.
+            if (strlen($chunk) > self::READ_LAST_LINES_MAX_BUFFER) {
+                break;
+            }
 
+            $readSize = (int)min($pos, $bufferSize);
+            $pos -= $readSize;
+            if (fseek($handle, $pos, SEEK_SET) !== 0) {
+                break;
+            }
+            $data = fread($handle, $readSize);
+            if ($data === false) {
+                break;
+            }
+
+            $chunk = $data . $chunk;
             $linesArray = explode("\n", $chunk);
+            // First element may be a partial line whose start lives in the not-yet-read part
+            // of the file. Stash it for the next iteration; the rest are complete lines.
             $chunk = array_shift($linesArray);
-
             $output = array_merge($linesArray, $output);
         }
 
-        if (count($output) >= $lines) {
-            $output = array_slice($output, -$lines);
+        // Reached the start of the file: $chunk now holds the very first line.
+        if ($pos === 0 && $chunk !== '') {
+            array_unshift($output, $chunk);
         }
 
         fclose($handle);
+
+        if (count($output) > $lines) {
+            $output = array_slice($output, -$lines);
+        }
 
         return $output;
     }
