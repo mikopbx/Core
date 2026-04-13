@@ -1,10 +1,12 @@
 {
   "mcpServers": {
     "playwright-test": {
-      "command": "npx",
+      "command": "./.claude/playwright/node_modules/.bin/playwright",
       "args": [
-        "playwright",
-        "run-test-mcp-server"
+        "run-test-mcp-server",
+        "-c",
+        "./.claude/playwright",
+        "--headless"
       ]
     },
     "code-review-graph": {

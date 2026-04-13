@@ -202,64 +202,55 @@ const adviceWorker = {
      * @param {object} response - Response object from the API.
      */
     cbAfterResponse(response) {
-        if (response.result === false) {
+        // Two entry paths: REST API ({result, data, ...}) and EventBus nchan
+        // payload (raw object, structure may differ). Guard against both.
+        if (!response || response.result === false
+            || !response.data || response.data.advice === undefined) {
             return;
         }
-        
+
         adviceWorker.$advice.html('');
-        
-        if (response.data.advice !== undefined) {
-            const adviceData = response.data.advice;
-            
-            // Store raw advice data for later use
-            sessionStorage.setItem(adviceWorker.storageKeyRawAdvice, JSON.stringify(adviceData));
-            
-            // Generate HTML and update UI
-            const adviceResult = adviceWorker.generateAdviceHtml(adviceData);
-            
-            adviceWorker.$advice.html(adviceResult.html);
-            
-            if (adviceResult.count > 0) {
-                const bellHtml = `<i class="${adviceResult.iconClass}"></i>${adviceResult.count}`;
-                adviceWorker.$adviceBellButton
-                    .html(bellHtml)
-                    .popup({
-                        position: 'bottom left',
-                        popup: adviceWorker.$advice,
-                        delay: {
-                            show: 300,
-                            hide: 10000,
-                        },
-                        on: 'click',
-                        movePopup: false,
-                    });
-                adviceWorker.$adviceBellButton.find('i')
-                    .transition('set looping')
-                    .transition('pulse', '1000ms');
-            } else {
-                adviceWorker.$adviceBellButton
-                    .html(`<i class="grey icon bell"></i>`);
-            }
-            
-            // Cache the bell state
-            sessionStorage.setItem(adviceWorker.storageKeyBellState, adviceWorker.$adviceBellButton.html());
-            
-            // Set timeout for next update
-            adviceWorker.timeoutHandle = window.setTimeout(
-                adviceWorker.worker,
-                adviceWorker.timeOut,
-            );
-        } else if (response.result === true
-            && response.data.advice !== undefined
-            && response.data.advice.length === 0) {
-            
-            // Clear cache if there are no advice messages
-            sessionStorage.removeItem(adviceWorker.storageKeyRawAdvice);
-            sessionStorage.removeItem(adviceWorker.storageKeyBellState);
-            
+
+        const adviceData = response.data.advice;
+
+        // Store raw advice data for later use
+        sessionStorage.setItem(adviceWorker.storageKeyRawAdvice, JSON.stringify(adviceData));
+
+        // Generate HTML and update UI
+        const adviceResult = adviceWorker.generateAdviceHtml(adviceData);
+
+        adviceWorker.$advice.html(adviceResult.html);
+
+        if (adviceResult.count > 0) {
+            const bellHtml = `<i class="${adviceResult.iconClass}"></i>${adviceResult.count}`;
+            adviceWorker.$adviceBellButton
+                .html(bellHtml)
+                .popup({
+                    position: 'bottom left',
+                    popup: adviceWorker.$advice,
+                    delay: {
+                        show: 300,
+                        hide: 10000,
+                    },
+                    on: 'click',
+                    movePopup: false,
+                });
+            adviceWorker.$adviceBellButton.find('i')
+                .transition('set looping')
+                .transition('pulse', '1000ms');
+        } else {
             adviceWorker.$adviceBellButton
                 .html('<i class="grey icon bell outline"></i>');
         }
+
+        // Cache the bell state
+        sessionStorage.setItem(adviceWorker.storageKeyBellState, adviceWorker.$adviceBellButton.html());
+
+        // Set timeout for next update
+        adviceWorker.timeoutHandle = window.setTimeout(
+            adviceWorker.worker,
+            adviceWorker.timeOut,
+        );
     },
 };
 

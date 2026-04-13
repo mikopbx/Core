@@ -514,6 +514,23 @@ const DynamicDropdownBuilder = {
     },
 
     /**
+     * Cache-clear hook used by selectors (extension-selector, sound-file-selector).
+     *
+     * Fomantic UI's apiSettings cache has no public per-URL invalidation API.
+     * Visible reload is achieved by callers via clear(fieldId) + selector.refresh(fieldId),
+     * which reinitialises the dropdown and forces a fresh remote query. This method
+     * is intentionally a no-op so the call sites don't TypeError; deeper cache
+     * invalidation would require tracking instances by URL.
+     *
+     * @param {string} apiUrl - API endpoint URL (informational)
+     * @param {object} [params] - Cache key parameters (informational)
+     */
+    // eslint-disable-next-line no-unused-vars
+    clearCacheFor(apiUrl, params = {}) {
+        // No-op — see method comment.
+    },
+
+    /**
      * Escape HTML to prevent XSS
      * @param {string} text - Text to escape
      * @returns {string} Escaped text

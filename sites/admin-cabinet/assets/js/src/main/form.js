@@ -447,13 +447,15 @@ const Form = {
                     if (Form.afterSubmitModifyUrl.length > 1) {
                         window.location = Form.afterSubmitModifyUrl;
                     } else {
+                        // Guard before indexing: if current URL has no 'modify' segment,
+                        // there's nothing to derive a "new modify" target from — stay put.
                         const emptyUrl = window.location.href.split('modify');
-                        let action = 'modify';
-                        let prefixData = emptyUrl[1].split('/');
-                        if (prefixData.length > 0) {
-                            action = action + prefixData[0];
-                        }
                         if (emptyUrl.length > 1) {
+                            let action = 'modify';
+                            const prefixData = emptyUrl[1].split('/');
+                            if (prefixData.length > 0) {
+                                action += prefixData[0];
+                            }
                             window.location = `${emptyUrl[0]}${action}/`;
                         }
                     }

@@ -1,0 +1,8 @@
+{
+  "name": "mikopbx-claude-playwright",
+  "private": true,
+  "description": "Isolated Playwright workspace for Claude Code MCP server. Not part of production.",
+  "dependencies": {
+    "@playwright/test": "1.58.2"
+  }
+}
