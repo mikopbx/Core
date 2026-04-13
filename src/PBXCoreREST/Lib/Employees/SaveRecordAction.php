@@ -100,6 +100,13 @@ class SaveRecordAction extends AbstractSaveRecordAction
             ];
             $sanitizedData = self::sanitizeRoutingDestinations($sanitizedData, $routingFields, 20);
 
+            // Auto-generate SIP password on create when omitted (e.g. CSV bulk import without sip_secret column).
+            // Mirrors DataStructure::createForNewEmployee() which fills the value for the manual-create form.
+            // Must run before Phase 2 required-field validation.
+            if (empty($sanitizedData['id']) && empty($sanitizedData['sip_secret'])) {
+                $sanitizedData['sip_secret'] = Sip::generateSipPassword();
+            }
+
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
             return $res;
@@ -120,13 +127,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             ],
         ];
 
-        // sip_secret required only for CREATE (UPDATE can skip if keeping existing password)
         $isCreateOperation = empty($sanitizedData['id']);
-        if ($isCreateOperation) {
-            $validationRules['sip_secret'] = [
-                ['type' => 'required', 'message' => 'ex_ValidateSecretEmpty']
-            ];
-        }
 
         $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
         if (!empty($validationErrors)) {

@@ -138,7 +138,19 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
             'fwd_forwardingonunavailable',
         ];
         $sanitizedData = self::sanitizeRoutingDestinations($sanitizedData, $routingFields, 20);
-        
+
+        // On create (e.g. CSV bulk import without all columns) apply DataStructure defaults
+        // and auto-generate SIP password if missing. Mirrors SaveRecordAction Phase 4 / the
+        // form path createForNewEmployee(). Without defaults, dtmfmode/transport remain NULL,
+        // pjsip.conf gets `dtmf_mode = ` (empty enum), Asterisk silently rejects the endpoint
+        // and SIP auth fails even though the row exists in DB and the file. Issue #996.
+        if (empty($sanitizedData['id'])) {
+            $sanitizedData = DataStructure::applyDefaults($sanitizedData);
+            if (empty($sanitizedData['sip_secret'])) {
+                $sanitizedData['sip_secret'] = Sip::generateSipPassword();
+            }
+        }
+
         return $sanitizedData;
     }
     

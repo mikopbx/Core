@@ -1022,7 +1022,16 @@ const extensionsBulkUpload = {
 
         // Update row class and status
         $row.removeClass('positive negative warning active disabled').addClass(statusClass);
-        $statusCell.html(`<i class="${statusIcon} icon"></i> <span class="status-text">${statusText}</span>`);
+        // Surface backend error message inline (issue #996) — escape via jQuery .text() to prevent XSS.
+        let detailHtml = '';
+        if (status === 'error' && message) {
+            const safeMessage = $('<div>').text(message).html();
+            detailHtml = ` <span class="status-detail">— ${safeMessage}</span>`;
+            $statusCell.attr('title', message);
+        } else {
+            $statusCell.removeAttr('title');
+        }
+        $statusCell.html(`<i class="${statusIcon} icon"></i> <span class="status-text">${statusText}</span>${detailHtml}`);
 
         console.log(`✅ [BulkUpload] Updated row ${number} to status: ${statusText}, class: ${statusClass}`);
 
