@@ -247,7 +247,7 @@ class RestController extends BaseRestController
         operationId: 'downloadFirmware'
     )]
     #[ApiParameterRef('url', required: true)]
-    #[ApiParameterRef('md5')]
+    #[ApiParameterRef('md5', required: true)]
     #[ApiResponse(200, 'rest_response_200_firmware_downloading')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

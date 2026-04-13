@@ -184,10 +184,9 @@ const updatePBX = {
                             // Prepare parameters for firmware download
                             const params = {};
                             const $aLink = $(e.target).closest('a');
-                            params.updateLink = $aLink.attr('href');
+                            params.url = $aLink.attr('href');
                             params.md5 = $aLink.attr('data-md5');
                             params.version = $aLink.attr('data-version');
-                            params.size = $aLink.attr('data-size');
                             $aLink.find('i').addClass('loading');
                             updatePBX.upgradeInProgress = true;
                             FilesAPI.downloadFirmware(params, updatePBX.cbAfterStartDownloadFirmware);

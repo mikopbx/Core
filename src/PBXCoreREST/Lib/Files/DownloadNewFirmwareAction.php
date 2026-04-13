@@ -39,25 +39,51 @@ class DownloadNewFirmwareAction extends Injectable
      * Downloads the firmware file from the provided URL.
      *
      * @param array $data The data array containing the following parameters:
-     *   - Md5: The MD5 hash of the file.
-     *   - size: The size of the file.
-     *   - version: The version of the file.
-     *   - Url: The download URL of the file.
+     *   - url: The download URL of the file (required).
+     *   - md5: The MD5 hash of the file (required, used for integrity verification).
+     *   - version: The version of the file (optional, used as directory name).
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
     public static function main(array $data): PBXApiResult
     {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+
+        $url = is_string($data['url'] ?? null) ? trim($data['url']) : '';
+        $md5 = is_string($data['md5'] ?? null) ? trim($data['md5']) : '';
+
+        if ($url === '') {
+            $res->success = false;
+            $res->messages['error'][] = 'Download URL is required';
+            $res->httpCode = 400;
+            return $res;
+        }
+        if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('#^https?://#i', $url)) {
+            $res->success = false;
+            $res->messages['error'][] = 'Download URL must be a valid http(s) URL';
+            $res->httpCode = 400;
+            return $res;
+        }
+        if ($md5 === '' || !preg_match('/^[a-f0-9]{32}$/i', $md5)) {
+            $res->success = false;
+            $res->messages['error'][] = 'A valid MD5 hash (32 hex characters) is required';
+            $res->httpCode = 400;
+            return $res;
+        }
+        // Normalize to lowercase: WorkerDownloader compares against md5_file() which returns lowercase.
+        $md5 = strtolower($md5);
+
         $di = Di::getDefault();
         if ($di !== null) {
             $uploadDir = $di->getConfig()->path('www.uploadDir');
         } else {
             $uploadDir = '/tmp';
         }
-        $version = $data['version'] ?? $data['md5'] ?? (string)time();
+        $version = $data['version'] ?? $md5;
         // Security: sanitize version to prevent shell injection via directory path
-        $version = preg_replace('/[^a-zA-Z0-9._\-]/', '', $version);
-        if (empty($version)) {
+        $version = preg_replace('/[^a-zA-Z0-9._\-]/', '', (string)$version);
+        if ($version === '') {
             $version = (string)time();
         }
         $firmwareDirTmp = "$uploadDir/{$version}";
@@ -71,9 +97,8 @@ class DownloadNewFirmwareAction extends Injectable
 
         $download_settings = [
             'res_file' => "$firmwareDirTmp/update.img",
-            'url'      => $data['url'],
-            'size'     => $data['size'],
-            'md5'      => $data['md5'],
+            'url'      => $url,
+            'md5'      => $md5,
         ];
 
         $workerDownloaderPath = Util::getFilePathByClassName(WorkerDownloader::class);
@@ -84,8 +109,6 @@ class DownloadNewFirmwareAction extends Injectable
         $php = Util::which('php');
         Processes::mwExecBg("$php -f $workerDownloaderPath start " . escapeshellarg("$firmwareDirTmp/download_settings.json"));
 
-        $res                   = new PBXApiResult();
-        $res->processor        = __METHOD__;
         $res->success          = true;
         $res->data['filename'] = $download_settings['res_file'];
         $res->data[FilesConstants::D_STATUS] = FilesConstants::DOWNLOAD_IN_PROGRESS;
