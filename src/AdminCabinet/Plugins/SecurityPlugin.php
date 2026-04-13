@@ -27,7 +27,6 @@ use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\JwtProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
-use Phalcon\Acl\Enum as AclEnum;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
@@ -89,13 +88,17 @@ class SecurityPlugin extends Injectable
 
         // Authenticated users: validate access to the requested resource
         if ($isAuthenticated) {
-            // Handle authenticated users on login page (except END action)
-            // This can happen when refreshToken cookie exists but is expired in Redis
-            if ($controllerClass === SessionController::class && strtoupper($action) !== 'END') {
-                // Clear stale cookies to prevent redirect loop
+            // Handle authenticated users on the login page itself.
+            // This covers the edge case where refreshToken cookie exists but the
+            // Redis-side session is gone — we clear the stale cookie so the login
+            // form can be used. Narrowed to the 'index' action only — other Session
+            // actions (end, or any unknown action that will 404) must NOT clear the
+            // cookie, otherwise visiting /session/<anything> logs the user out.
+            if (
+                $controllerClass === SessionController::class
+                && strtolower($action) === 'index'
+            ) {
                 $this->clearAuthCookies();
-
-                // Allow access to login page (don't redirect to home)
                 return true;
             }
 
@@ -132,20 +135,7 @@ class SecurityPlugin extends Injectable
      */
     private function checkUserAuth(): bool
     {
-        $isAuth = self::isAuthenticated($this->request, $this->cookies);
-
-        // Debug logging
-        if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
-            $hasBearer = $this->request->getHeader('Authorization') ? 'yes' : 'no';
-            $hasCookie = $this->cookies->has('refreshToken') ? 'yes' : 'no';
-            \MikoPBX\Core\System\SystemMessages::sysLogMsg(
-                __METHOD__,
-                "Auth check: result={$isAuth}, Bearer={$hasBearer}, Cookie={$hasCookie}, URI={$this->request->getURI()}",
-                LOG_DEBUG
-            );
-        }
-
-        return $isAuth;
+        return self::isAuthenticated($this->request, $this->cookies);
     }
 
     /**
@@ -343,22 +333,19 @@ class SecurityPlugin extends Injectable
      */
     public function isAllowedAction(string $controller, string $action): bool
     {
-        // Extract role from JWT token if Bearer header present
         $role = $this->extractRoleFromJwt();
 
-        // Fallback to admins for localhost requests or initial page loads (backward compatibility)
+        // Secure-by-default: anonymous remote requests are GUESTS (default-deny in ACL).
+        // Localhost keeps ADMINS so internal workers and health checks still work.
         if ($role === null) {
-            $role = AclProvider::ROLE_ADMINS;
+            $role = $this->isLocalHostRequest()
+                ? AclProvider::ROLE_ADMINS
+                : AclProvider::ROLE_GUESTS;
         }
 
         $acl = $this->di->get(AclProvider::SERVICE_NAME);
-        $allowed = $acl->isAllowed($role, $controller, $action);
 
-        if ($allowed != AclEnum::ALLOW) {
-            return false;
-        }
-
-        return true;
+        return (bool) $acl->isAllowed($role, $controller, $action);
     }
 
     /**
@@ -377,15 +364,7 @@ class SecurityPlugin extends Injectable
         // 1. Try Bearer header first (AJAX requests)
         $authHeader = $this->request->getHeader('Authorization');
         $role = $jwt->extractRoleFromHeader($authHeader);
-
         if ($role !== null) {
-            if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
-                \MikoPBX\Core\System\SystemMessages::sysLogMsg(
-                    __METHOD__,
-                    "Role from Bearer header: {$role}",
-                    LOG_DEBUG
-                );
-            }
             return $role;
         }
 
@@ -394,24 +373,10 @@ class SecurityPlugin extends Injectable
             try {
                 $refreshToken = $this->cookies->get('refreshToken')->getValue();
                 if (!empty($refreshToken)) {
-                    $role = $jwt->extractRoleFromRefreshToken($refreshToken);
-                    if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
-                        \MikoPBX\Core\System\SystemMessages::sysLogMsg(
-                            __METHOD__,
-                            "Role from refreshToken cookie: " . ($role ?? 'null') . ", token length: " . strlen($refreshToken),
-                            LOG_DEBUG
-                        );
-                    }
-                    return $role;
+                    return $jwt->extractRoleFromRefreshToken($refreshToken);
                 }
-            } catch (\Throwable $e) {
-                if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
-                    \MikoPBX\Core\System\SystemMessages::sysLogMsg(
-                        __METHOD__,
-                        "Cookie decryption failed: " . $e->getMessage(),
-                        LOG_DEBUG
-                    );
-                }
+            } catch (\Throwable) {
+                // Cookie decryption failed — treat as unauthenticated.
             }
         }
 

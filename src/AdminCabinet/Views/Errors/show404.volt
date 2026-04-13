@@ -1,16 +1,7 @@
-<div class="sixteen wide column">
-    {{ content() }}
-
-
-    <div class="ui warning message">
-        <i class="close icon"></i>
-        <div class="header">
-            {{ t._('er_PageNotFound') }}
-        </div>
-        {{ t._('er_PageNotFoundDescription') }}
-
+<h2 class="ui center aligned icon header">
+    <i class="question circle outline icon"></i>
+    <div class="content">
+        {{ t._('er_PageNotFound') }}
+        <div class="sub header">{{ t._('er_PageNotFoundDescription') }}</div>
     </div>
-
-    {{ link_to('index', t._('er_Home'), 'class': 'ui button') }}
-
-</div>
+</h2>

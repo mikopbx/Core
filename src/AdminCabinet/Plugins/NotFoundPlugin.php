@@ -29,45 +29,37 @@ use Phalcon\Dispatcher\Exception as DispatcherException;
 /**
  * NotFoundPlugin
  *
- * Handles not-found controller/actions
+ * Forwards dispatcher "handler/action not found" exceptions to the 404 page.
+ * Other exceptions are left to propagate so WhoopsErrorHandlerProvider can log
+ * them (including to Sentry).
  */
 class NotFoundPlugin extends Injectable
 {
-    /**
-     * This action is executed before perform any action in the application
-     *
-     * @param Event $event
-     * @param MvcDispatcher $dispatcher
-     * @param Exception $exception
-     *
-     * @return bool
-     */
     public function beforeException(
         /** @scrutinizer ignore-unused */ Event $event,
         MvcDispatcher $dispatcher,
         Exception $exception
     ): bool {
-        if ($exception instanceof DispatcherException) {
-            switch ($exception->getCode()) {
-                case DispatcherException::EXCEPTION_HANDLER_NOT_FOUND:
-                case DispatcherException::EXCEPTION_ACTION_NOT_FOUND:
-                    $dispatcher->forward(
-                        [
-                            'controller' => 'errors',
-                            'action'     => 'show404',
-                        ]
-                    );
-
-                    return false;
-            }
+        // Return true → Phalcon re-throws the original exception from the
+        // dispatcher loop, so WhoopsErrorHandlerProvider still catches it and
+        // reports to Sentry. Only silently-recoverable 404-type exceptions are
+        // forwarded to the errors/show404 action.
+        if (! $exception instanceof DispatcherException) {
+            return true;
         }
 
-        $dispatcher->forward(
-            [
-                'controller' => 'errors',
-                'action'     => 'show500',
-            ]
-        );
+        $code = $exception->getCode();
+        if (
+            $code !== DispatcherException::EXCEPTION_HANDLER_NOT_FOUND
+            && $code !== DispatcherException::EXCEPTION_ACTION_NOT_FOUND
+        ) {
+            return true;
+        }
+
+        $dispatcher->forward([
+            'controller' => 'errors',
+            'action'     => 'show404',
+        ]);
 
         return false;
     }

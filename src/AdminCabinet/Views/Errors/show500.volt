@@ -1,11 +1,7 @@
-<div class="sixteen wide column">
-    {{ content() }}
-    <div class="ui warning message">
-        <i class="close icon"></i>
-        <div class="header">
-            {{ t._('er_InternalServerError') }}
-        </div>
-        {{ t._('er_InternalServerErrorDescription') }}
+<h2 class="ui center aligned icon header">
+    <i class="exclamation triangle icon"></i>
+    <div class="content">
+        {{ t._('er_InternalServerError') }}
+        <div class="sub header">{{ t._('er_InternalServerErrorDescription') }}</div>
     </div>
-    {{ link_to('index', t._('er_Home'), 'class': 'ui button') }}
-</div>
+</h2>

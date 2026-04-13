@@ -31,18 +31,21 @@ class ErrorsController extends BaseController
 
     public function show404Action(): void
     {
+        $this->response->setStatusCode(404, 'Not Found');
         $this->view->success = false;
         $this->view->message = 'Page not found - 404';
     }
 
     public function show401Action(): void
     {
+        $this->response->setStatusCode(401, 'Unauthorized');
         $this->view->success = false;
         $this->view->message =  'Unauthorized - 401';
     }
 
     public function show500Action(): void
     {
+        $this->response->setStatusCode(500, 'Internal Server Error');
         $this->view->success = false;
         $this->view->message =  'Server error - 500';
     }

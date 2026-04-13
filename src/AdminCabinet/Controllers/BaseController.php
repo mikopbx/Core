@@ -94,20 +94,24 @@ class BaseController extends Controller
             $this->view->urlToSupport = 'https://www.mikopbx.com/support/?fromPBX=true';
         }
 
-        // Set the title based on the current action
-        $title = 'MikoPBX';
-        switch ($this->actionName) {
-            case 'index':
-            case 'delete':
-            case 'save':
-            case 'modify':
-            case '*** WITHOUT ACTION ***':
-                $title .= '|' . $this->translation->_("Breadcrumb{$this->controllerName}");
-                break;
-            default:
-                $title .= '|' . $this->translation->_("Breadcrumb{$this->controllerName}{$this->actionName}");
+        // Set the title based on the current action.
+        // ErrorsController sets its own title in initialize() — don't overwrite it
+        // with a non-existent Breadcrumb* translation key.
+        if ($this->controllerClass !== ErrorsController::class) {
+            $title = 'MikoPBX';
+            switch ($this->actionName) {
+                case 'index':
+                case 'delete':
+                case 'save':
+                case 'modify':
+                case '*** WITHOUT ACTION ***':
+                    $title .= '|' . $this->translation->_("Breadcrumb{$this->controllerName}");
+                    break;
+                default:
+                    $title .= '|' . $this->translation->_("Breadcrumb{$this->controllerName}{$this->actionName}");
+            }
+            Tag::setTitle($title);
         }
-        Tag::setTitle($title);
 
         // Set other view variables
         $this->view->t = $this->translation;
@@ -127,7 +131,20 @@ class BaseController extends Controller
         $this->view->PBXName = PbxSettings::getValueByKey(PbxSettings::PBX_NAME);
         $this->view->MetaTegHeadDescription = $this->translation->_('MetaTegHeadDescription');
         $this->view->isExternalModuleController = $this->isExternalModuleController;
-        if ($this->controllerClass!==SessionController::class) {
+        // Layout selection:
+        //   - SessionController      : no template (login page renders itself)
+        //   - ErrorsController       : dedicated self-contained "error" layout.
+        //                              Render stops at LEVEL_AFTER_TEMPLATE so the
+        //                              main Views/index.volt (and all its polling
+        //                              workers) is NOT loaded. This keeps the error
+        //                              page lightweight and avoids stray API calls
+        //                              that would 401 and trigger a redirect loop.
+        //   - everything else        : main admin layout with sidebar/top menu.
+        if ($this->controllerClass === ErrorsController::class) {
+            $this->view->setTemplateAfter('error');
+            $this->view->setRenderLevel(View::LEVEL_AFTER_TEMPLATE);
+            $this->view->isUserAuthenticated = $this->isAuthenticated();
+        } elseif ($this->controllerClass !== SessionController::class) {
             $this->view->setTemplateAfter('main');
         }
 

@@ -47,6 +47,7 @@ use MikoPBX\AdminCabinet\Controllers\StorageController;
 use MikoPBX\AdminCabinet\Controllers\SystemDiagnosticController;
 use MikoPBX\AdminCabinet\Controllers\TimeSettingsController;
 use MikoPBX\AdminCabinet\Controllers\UpdateController;
+use MikoPBX\AdminCabinet\Plugins\SecurityPlugin;
 use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
@@ -317,6 +318,12 @@ class Elements extends Injectable
      */
     public function getMenu(): void
     {
+        // Anonymous requests must never see the menu — it leaks installed modules,
+        // feature flags and attack surface. Render nothing for unauthenticated callers.
+        if (!SecurityPlugin::isAuthenticated($this->request, $this->cookies)) {
+            return;
+        }
+
         $resultHtml = '';
         $this->addMenuItemSSHMenu();
         $this->addMenuItemsFromExternalModules();
