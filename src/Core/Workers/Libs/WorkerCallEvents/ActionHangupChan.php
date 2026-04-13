@@ -20,12 +20,14 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
+use Throwable;
 
 /**
  * Class ActionHangupChan
@@ -49,18 +51,23 @@ class ActionHangupChan
         // Remove the agi_channel from the active channels in the worker.
         $worker->removeActiveChan($data['agi_channel']);
 
-        // Initialize arrays for channels and transfer calls.
-        $channels = [];
-        $transfer_calls = [];
+        try {
+            // Initialize arrays for channels and transfer calls.
+            $channels = [];
+            $transfer_calls = [];
 
-        // Hangup channel for end calls.
-        self::hangupChanEndCalls($worker, $data, $transfer_calls, $channels);
+            // Hangup channel for end calls.
+            self::hangupChanEndCalls($worker, $data, $transfer_calls, $channels);
 
-        // Check if it's a regular transfer.
-        CreateRowTransfer::execute($worker, 'hangup_chan', $data, $transfer_calls);
+            // Check if it's a regular transfer.
+            CreateRowTransfer::execute($worker, 'hangup_chan', $data, $transfer_calls);
 
-        // Check if it's a SIP transfer.
-        self::hangupChanCheckSipTrtansfer($worker, $data, $channels);
+            // Check if it's a SIP transfer.
+            self::hangupChanCheckSipTrtansfer($worker, $data, $channels);
+        } catch (Throwable $e) {
+            // Prevent crash loop when CDR DB is unavailable or table is missing (issue #1000).
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+        }
 
         // Clear memory.
         if (isset($worker->checkChanHangupTransfer[$data['agi_channel']])) {

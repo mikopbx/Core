@@ -89,17 +89,23 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
         // If work is completed (value of 'work_completed' is '1') and should be moved to general CDR,
         // create a new CallDetailRecords instance and copy relevant attributes.
         if ($work_completed === '1' && $moveToGeneral) {
-            $newCdr = new CallDetailRecords();
-            $vars = $this->toArray();
-            foreach ($vars as $key => $value) {
-                if ('id' === $key) {
-                    continue;
+            try {
+                $newCdr = new CallDetailRecords();
+                $vars = $this->toArray();
+                foreach ($vars as $key => $value) {
+                    if ('id' === $key) {
+                        continue;
+                    }
+                    if (property_exists($newCdr, $key)) {
+                        $newCdr->writeAttribute($key, $value);
+                    }
                 }
-                if (property_exists($newCdr, $key)) {
-                    $newCdr->writeAttribute($key, $value);
-                }
+                $newCdr->save();
+            } catch (Throwable $e) {
+                // Prevent crash loop when cdr_general table is missing (issue #1000).
+                // The temporary record remains in `cdr` and will be retried by WorkerCdr.
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
             }
-            $newCdr->save();
         }
         $this->saveCdrCache();
     }

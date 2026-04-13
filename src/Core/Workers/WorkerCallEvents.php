@@ -28,9 +28,11 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Common\Providers\DatabaseProviderBase;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAnswer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAttendedTransfer;
+use MikoPBX\Core\Workers\Libs\WorkerCallEvents\DeleteCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
 use MikoPBX\Core\Asterisk\AsteriskManager;
@@ -316,6 +318,9 @@ class WorkerCallEvents extends WorkerBase
      */
     public function start(array $argv): void
     {
+        // Recover CDR tables if missing (issue #1000 — crash loop on "no such table: cdr")
+        DatabaseProviderBase::ensureCdrTables();
+
         // Update the recording options for the worker
         $this->updateRecordingOptions();
         $this->deleteOldRecords();
@@ -341,6 +346,7 @@ class WorkerCallEvents extends WorkerBase
         $client->subscribe(self::class, [$this, 'otherEvents']);
         $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
         $client->subscribe(WorkerCdr::UPDATE_CDR_TUBE, [$this, 'updateCDRWorker']);
+        $client->subscribe(WorkerCdr::DELETE_CDR_TUBE, [$this, 'deleteCDRWorker']);
 
         // Subscribe to ping tube for keep alive checks
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
@@ -581,6 +587,21 @@ class WorkerCallEvents extends WorkerBase
     }
 
     /**
+     * Deletes a CDR record through the single-writer tube.
+     *
+     * Called from the REST API DeleteRecordAction via Beanstalk to serialise
+     * all writes on cdr_general through this worker (issue #1000 / #1019).
+     */
+    public function deleteCDRWorker(BeanstalkClient $tube): void
+    {
+        $request = json_decode($tube->getBody(), true);
+        if (!is_array($request)) {
+            $request = [];
+        }
+        $tube->reply(DeleteCDR::execute($request));
+    }
+
+    /**
      * Error handler.
      *
      * @param mixed $m The error message.
@@ -615,8 +636,22 @@ class WorkerCallEvents extends WorkerBase
             'cdr_general',
             "savePeriod={$savePeriod}days, limitDate={$limitData}"
         );
-        $connection = $this->di->get(CDRDatabaseProvider::SERVICE_NAME);
-        $connection->execute("DELETE FROM cdr_general WHERE start < '$limitData'");
+        try {
+            /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
+            $connection = $this->di->get(CDRDatabaseProvider::SERVICE_NAME);
+            // Skip cleanup if recovery hasn't restored the table yet — avoids
+            // logging a fresh exception every minute when ensureCdrTables() failed.
+            if (!$connection->tableExists('cdr_general')) {
+                return;
+            }
+            $connection->execute(
+                'DELETE FROM cdr_general WHERE start < ?',
+                [$limitData]
+            );
+        } catch (Throwable $e) {
+            // Prevent crash loop when cdr_general table is missing (issue #1000).
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+        }
     }
 }
 

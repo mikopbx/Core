@@ -24,6 +24,7 @@ require_once 'Globals.php';
 use MikoPBX\Common\Models\{Extensions, ModelsBase, PbxSettings, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Directories, SystemMessages, Util};
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Common\Providers\DatabaseProviderBase;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use Phalcon\Di\Di;
 
@@ -41,6 +42,7 @@ class WorkerCdr extends WorkerBase
     // Tube names for Beanstalk queues.
     public const string SELECT_CDR_TUBE = 'select_cdr_tube';
     public const string UPDATE_CDR_TUBE = 'update_cdr_tube';
+    public const string DELETE_CDR_TUBE = 'delete_cdr_tube';
 
     // Define properties
     private BeanstalkClient $clientQueue;
@@ -56,6 +58,9 @@ class WorkerCdr extends WorkerBase
      */
     public function start(array $argv): void
     {
+        // Recover CDR tables if missing (issue #1000 — crash loop on "no such table: cdr")
+        DatabaseProviderBase::ensureCdrTables();
+
         // Establish connection with Beanstalk queue
         $this->clientQueue = new BeanstalkClient(self::SELECT_CDR_TUBE);
         $this->clientQueue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);

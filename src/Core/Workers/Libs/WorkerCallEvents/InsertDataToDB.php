@@ -20,9 +20,11 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
+use Throwable;
 
 /**
  * Class InsertDataToDB
@@ -46,31 +48,37 @@ class InsertDataToDB
             return;
         }
 
-        $is_new = false;
-        $filter = [
-            "UNIQUEID=:id: AND linkedid=:linkedid:",
-            'bind' => [
-                'id' => $data['UNIQUEID'],
-                'linkedid' => $data['linkedid']
-            ],
-        ];
-        if($channel !== ''){
-            $filter[0].=  " AND (src_chan = :chan: OR dst_chan = :chan: )";
-            $filter['bind']['chan'] = $channel;
-        }
-        /** @var CallDetailRecordsTmp $m_data */
-        $m_data = CallDetailRecordsTmp::findFirst($filter);
-        if ($m_data === null) {
-            // Create a new call record.
-            $m_data = new CallDetailRecordsTmp();
-            $is_new = true;
-        } elseif (self::isOriginateDial($data)) {
-            self::processingOriginateData($data, $m_data);
-            // Further processing is not required.
-            return;
-        }
+        try {
+            $is_new = false;
+            $filter = [
+                "UNIQUEID=:id: AND linkedid=:linkedid:",
+                'bind' => [
+                    'id' => $data['UNIQUEID'],
+                    'linkedid' => $data['linkedid']
+                ],
+            ];
+            if ($channel !== '') {
+                $filter[0] .= " AND (src_chan = :chan: OR dst_chan = :chan: )";
+                $filter['bind']['chan'] = $channel;
+            }
+            /** @var CallDetailRecordsTmp $m_data */
+            $m_data = CallDetailRecordsTmp::findFirst($filter);
+            if ($m_data === null) {
+                // Create a new call record.
+                $m_data = new CallDetailRecordsTmp();
+                $is_new = true;
+            } elseif (self::isOriginateDial($data)) {
+                self::processingOriginateData($data, $m_data);
+                // Further processing is not required.
+                return;
+            }
 
-        self::fillCdrData($m_data, $data, $is_new);
+            self::fillCdrData($m_data, $data, $is_new);
+        } catch (Throwable $e) {
+            // Prevent crash loop when CDR DB is unavailable or table is missing (issue #1000).
+            // Recovery is handled at worker startup via DatabaseProviderBase::ensureCdrTables().
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+        }
     }
 
     /**

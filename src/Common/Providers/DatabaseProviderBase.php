@@ -22,13 +22,18 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
+use MikoPBX\Common\Models\CallDetailRecords;
+use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Logger\Adapter\Stream as FileLogger;
 use Phalcon\Logger\Logger;
+use Throwable;
 
 /**
  * Main database connection is created based in the parameters defined in the configuration file
@@ -99,21 +104,38 @@ abstract class DatabaseProviderBase
                  */
                 $connection->setNestedTransactionsWithSavepoints(false);
 
-                if (!System::isBooting() && $serviceName === MainDatabaseProvider::SERVICE_NAME) {
+                $optimizedServices = [
+                    MainDatabaseProvider::SERVICE_NAME,
+                    CDRDatabaseProvider::SERVICE_NAME,
+                    RecordingStorageDatabaseProvider::SERVICE_NAME,
+                ];
+                if (!System::isBooting() && in_array($serviceName, $optimizedServices, true)) {
                     // Optimize SQLite for better concurrency
                     // Set busy timeout to 5 seconds - wait for lock instead of immediate failure
                     $connection->execute("PRAGMA busy_timeout = 5000");
-            
-                    // Keep WAL mode for better concurrency (already set, but ensure it)
-                    $connection->execute("PRAGMA journal_mode = WAL");
-            
+
+                    // WAL: readers don't block writers and vice versa, only one writer at a time.
+                    // Required for CDR database where WorkerCallEvents (writer) runs in parallel
+                    // with WorkerApiCommands (REST API readers) and Asterisk AGI CdrDb.php.
+                    // Skip on network filesystems (NFS/SMB/SSHFS) where WAL shared-memory is
+                    // unsafe and can corrupt the database — fall back to rollback journal.
+                    if (self::isWalSafeFilesystem($dbConfig['dbfile'])) {
+                        $connection->execute("PRAGMA journal_mode = WAL");
+                    } else {
+                        SystemMessages::sysLogMsg(
+                            self::class,
+                            "WAL disabled for {$serviceName}: filesystem under {$dbConfig['dbfile']} is not WAL-safe",
+                            LOG_NOTICE
+                        );
+                    }
+
                     // Use NORMAL synchronous mode for better performance while maintaining durability
                     // FULL is very safe but slower, NORMAL is good balance
                     $connection->execute("PRAGMA synchronous = NORMAL");
-            
+
                     // // Increase cache size to 10MB for better performance
                     $connection->execute("PRAGMA cache_size = -10000");
-            
+
                     // Use memory for temp tables
                     $connection->execute("PRAGMA temp_store = MEMORY");
                 }
@@ -166,6 +188,142 @@ abstract class DatabaseProviderBase
         );
 
         $connection->setEventsManager($eventsManager);
+    }
+
+    /**
+     * Ensures CDR tables (`cdr` and `cdr_general`) exist in the CDR database.
+     *
+     * Called at worker startup to recover from corruption or storage remount
+     * scenarios that cause the CDR database file to be recreated empty.
+     * Without this, WorkerCallEvents and WorkerCdr crash-loop with
+     * "no such table: cdr" (Sentry #27651, GitHub issue #1000).
+     *
+     * IMPORTANT: this method MUST only be called from a worker startup path,
+     * before any Phalcon model instance has been created in the current process.
+     * `recreateDBConnections()` re-registers DI services and invalidates any
+     * model instances that already cached a connection. Calling this from a
+     * mid-request context will silently break previously-loaded models.
+     *
+     * The static guard prevents accidental re-entry in the same process.
+     * The mutex serialises parallel `WorkerCallEvents`/`WorkerCdr` startup
+     * across processes (`WorkerSafeScriptsCore` restarts both via Fibers).
+     *
+     * All errors are caught and logged — recovery failures must not prevent
+     * the worker from starting, otherwise we trade a crash loop for a silent
+     * refusal to start.
+     */
+    public static function ensureCdrTables(): void
+    {
+        static $alreadyRun = false;
+        if ($alreadyRun) {
+            return;
+        }
+        $alreadyRun = true;
+
+        try {
+            $di = Di::getDefault();
+            if ($di === null) {
+                return;
+            }
+
+            $recovery = static function () use ($di): void {
+                /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
+                $connection = $di->get(CDRDatabaseProvider::SERVICE_NAME);
+                if ($connection->tableExists('cdr') && $connection->tableExists('cdr_general')) {
+                    return;
+                }
+
+                SystemMessages::sysLogMsg(
+                    self::class,
+                    'CDR tables missing, recreating from model annotations',
+                    LOG_WARNING
+                );
+
+                $dbUpdater = new UpdateDatabase();
+                $dbUpdater->createUpdateDbTableByAnnotations(CallDetailRecordsTmp::class);
+                $dbUpdater->createUpdateDbTableByAnnotations(CallDetailRecords::class);
+
+                self::recreateDBConnections();
+            };
+
+            try {
+                /** @var \MikoPBX\Common\Providers\MutexProvider|object $mutex */
+                $mutex = $di->get(MutexProvider::SERVICE_NAME);
+                $mutex->synchronized('cdr-tables-recovery', $recovery, 30, 60);
+            } catch (Throwable $mutexError) {
+                // Mutex provider unavailable (e.g. Redis down at boot) — fall
+                // back to direct execution. SQLite's busy_timeout still
+                // serialises parallel CREATE TABLE attempts.
+                SystemMessages::sysLogMsg(
+                    self::class,
+                    'CDR recovery mutex unavailable, falling back: ' . $mutexError->getMessage(),
+                    LOG_NOTICE
+                );
+                $recovery();
+            }
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                self::class,
+                'CDR tables recovery failed: ' . $e->getMessage(),
+                LOG_ERR
+            );
+        }
+    }
+
+    /**
+     * Determines whether the filesystem hosting the given DB file supports
+     * SQLite WAL safely. WAL relies on shared-memory mmap and atomic fsync
+     * which break on network filesystems (NFS/SMB/SSHFS) and may silently
+     * corrupt the database.
+     *
+     * Detection is best-effort: we read `/proc/mounts`, find the longest
+     * matching mount point for the given path, and reject known-unsafe
+     * filesystem types. On any error or unknown FS we default to ALLOWING
+     * WAL — that matches the previous behavior for MainDatabaseProvider
+     * and avoids surprising regressions on exotic local filesystems.
+     */
+    private static function isWalSafeFilesystem(string $dbFile): bool
+    {
+        $unsafeFsTypes = [
+            'nfs', 'nfs4', 'cifs', 'smb', 'smbfs', 'smb2', 'smb3',
+            'sshfs', 'davfs', 'glusterfs', 'ceph', 'lustre', 'gpfs',
+        ];
+
+        try {
+            $mountsContent = @file_get_contents('/proc/mounts');
+            if ($mountsContent === false || $mountsContent === '') {
+                return true;
+            }
+
+            $bestMatch = '';
+            $bestType = '';
+            foreach (explode("\n", $mountsContent) as $line) {
+                $parts = preg_split('/\s+/', trim($line));
+                if (!is_array($parts) || count($parts) < 3) {
+                    continue;
+                }
+                $mountPoint = $parts[1];
+                $fsType = $parts[2];
+                if ($mountPoint === '') {
+                    continue;
+                }
+                $needle = ($mountPoint === '/') ? '/' : $mountPoint . '/';
+                if (str_starts_with($dbFile . '/', $needle)
+                    && strlen($mountPoint) > strlen($bestMatch)
+                ) {
+                    $bestMatch = $mountPoint;
+                    $bestType = $fsType;
+                }
+            }
+
+            if ($bestType === '') {
+                return true;
+            }
+
+            return !in_array(strtolower($bestType), $unsafeFsTypes, true);
+        } catch (Throwable) {
+            return true;
+        }
     }
 
     /**

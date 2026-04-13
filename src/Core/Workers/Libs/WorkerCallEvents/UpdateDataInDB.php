@@ -20,10 +20,12 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
+use Throwable;
 
 
 /**
@@ -48,37 +50,41 @@ class UpdateDataInDB
             SystemMessages::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data), LOG_DEBUG);
             return;
         }
-        $filter = [
-            "UNIQUEID=:id:",
-            'bind' => ['id' => $data['UNIQUEID'],],
-        ];
-        /** @var CallDetailRecordsTmp $m_data */
-        $m_data = CallDetailRecordsTmp::findFirst($filter);
-        if ($m_data === null) {
-            return;
-        }
-        $f_list = $m_data->toArray();
-        foreach ($data as $attribute => $value) {
-            if (!array_key_exists($attribute, $f_list)) {
-                continue;
+        try {
+            $filter = [
+                "UNIQUEID=:id:",
+                'bind' => ['id' => $data['UNIQUEID'],],
+            ];
+            /** @var CallDetailRecordsTmp $m_data */
+            $m_data = CallDetailRecordsTmp::findFirst($filter);
+            if ($m_data === null) {
+                return;
             }
-            if ('UNIQUEID' === $attribute) {
-                continue;
+            $f_list = $m_data->toArray();
+            foreach ($data as $attribute => $value) {
+                if (!array_key_exists($attribute, $f_list)) {
+                    continue;
+                }
+                if ('UNIQUEID' === $attribute) {
+                    continue;
+                }
+                $m_data->writeAttribute($attribute, $value);
             }
-            $m_data->writeAttribute($attribute, $value);
-        }
-        $res = $m_data->save();
-        if (!$res) {
-            SystemMessages::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
-        }
+            $res = $m_data->save();
+            if (!$res) {
+                SystemMessages::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
+            }
 
-        self::sendUserEventData($m_data, $data);
+            self::sendUserEventData($m_data, $data);
 
-        if ($res && $m_data->work_completed === "1") {
-            // Delete data from the temporary table, as they have already been moved to the permanent one.
-            $m_data->delete();
+            if ($res && $m_data->work_completed === "1") {
+                // Delete data from the temporary table, as they have already been moved to the permanent one.
+                $m_data->delete();
+            }
+        } catch (Throwable $e) {
+            // Prevent crash loop when CDR DB is unavailable or table is missing (issue #1000).
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
-
     }
 
     /**

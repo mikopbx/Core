@@ -19,10 +19,10 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Cdr;
 
-use MikoPBX\Common\Models\CallDetailRecords;
-use MikoPBX\Core\System\RecordingDeletionLogger;
+use MikoPBX\Core\System\BeanstalkClient;
+use MikoPBX\Core\Workers\WorkerCdr;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di\Di;
+use Throwable;
 
 /**
  * Class DeleteRecordAction
@@ -30,6 +30,11 @@ use Phalcon\Di\Di;
  * Supports two deletion modes based on ID format:
  * - linkedid (mikopbx-*): Deletes ALL records with this linkedid (entire conversation)
  * - numeric ID: Deletes single record only
+ *
+ * The actual database write is performed inside WorkerCallEvents via the
+ * DELETE_CDR_TUBE Beanstalk queue to keep cdr.db writes serialised through a
+ * single process (issue #1000 / #1019). This REST action only validates input
+ * and forwards the request.
  *
  * Examples:
  * - DELETE /cdr/mikopbx-1760784793.4627 → deletes entire conversation (all linked records)
@@ -41,17 +46,27 @@ use Phalcon\Di\Di;
 class DeleteRecordAction
 {
     /**
-     * Delete CDR record(s) by numeric ID or linkedid
+     * Maximum time the REST caller will wait for the single-writer worker.
      *
-     * ID Format:
-     * - "mikopbx-*" (linkedid): Deletes ALL records with this linkedid (entire conversation)
-     * - Numeric (e.g., "718517"): Deletes single record by ID only
+     * A linkedid cascade with hundreds of related records and recording-file
+     * unlinks on slow USB storage can take tens of seconds. The timeout is a
+     * cap, not a target — typical single-id deletes complete in a few ms.
      *
-     * @param string|null $id CDR record ID (numeric like "718517") or linkedid (like "mikopbx-1760784793.4627")
-     * @param array<string, mixed> $data Request data with optional parameters:
-     *                                    - deleteRecording: boolean (default: false) - Delete recording files
+     * Note: if this timeout fires, the worker is unaware and will keep
+     * processing the request. The DB ends up consistent (the worker
+     * eventually finishes) but the caller sees a 503. Clients should retry
+     * GET to confirm final state rather than assume failure.
+     */
+    private const int WORKER_TIMEOUT_SECONDS = 60;
+
+    /**
+     * Delete CDR record(s) by numeric ID or linkedid.
      *
-     * @return PBXApiResult Result object containing deletion information
+     * @param string|null          $id             CDR record ID or linkedid (mikopbx-*)
+     * @param array<string, mixed> $data           Optional parameters (deleteRecording: bool)
+     * @param array<string, mixed> $sessionContext {user_name, remote_addr} from BaseController
+     *
+     * @return PBXApiResult
      */
     public static function main(?string $id, array $data = [], array $sessionContext = []): PBXApiResult
     {
@@ -59,7 +74,6 @@ class DeleteRecordAction
         $res->processor = __METHOD__;
 
         // ============ PHASE 1: VALIDATION ============
-        // WHY: Validate ID before any processing
         if (empty($id)) {
             $res->messages['error'][] = 'Invalid record ID';
             $res->httpCode = 400;
@@ -67,13 +81,11 @@ class DeleteRecordAction
         }
 
         // ============ PHASE 2: DETERMINE ID TYPE ============
-        // WHY: Support two deletion modes:
-        // - linkedid (mikopbx-*): Delete ALL records with this linkedid (entire conversation)
-        // - numeric ID: Delete single record only
+        // - linkedid (mikopbx-*): delete ALL records with this linkedid
+        // - numeric ID: delete single record only
         $isLinkedId = str_starts_with($id, 'mikopbx-');
 
-        // WHY: Reject decimal numbers (12.34) - only accept integers
-        // Security: is_numeric() accepts floats, but CDR IDs must be integers
+        // Reject decimal numbers (12.34) — only accept integers.
         $isNumericId = is_numeric($id) && (string)(int)$id === $id;
 
         if (!$isLinkedId && !$isNumericId) {
@@ -82,210 +94,57 @@ class DeleteRecordAction
             return $res;
         }
 
-        if ($isLinkedId) {
-            // linkedid string: find first record with this linkedid
-            $record = CallDetailRecords::findFirst([
-                'conditions' => 'linkedid = :linkedid:',
-                'bind' => ['linkedid' => $id]
-            ]);
-        } else {
-            // Numeric ID: find single record by ID
-            $record = CallDetailRecords::findFirst([
-                'conditions' => 'id = :id:',
-                'bind' => ['id' => (int)$id]
-            ]);
-        }
-
-        if (!$record) {
-            $res->messages['error'][] = 'Record not found';
-            $res->httpCode = 404;
-            return $res;
-        }
-
         // ============ PHASE 3: EXTRACT PARAMETERS ============
-        // WHY: Prepare deletion options
         $deleteRecording = filter_var($data['deleteRecording'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
-        // Preserve info for logging and response
-        $recordingFile = $record->recordingfile ?? '';
-        $linkedId = $record->linkedid ?? '';
-        $recordingDeleted = false;
-        $linkedRecordsDeleted = 0;
-
-        // ============ PHASE 4: DELETE LINKED RECORDS ============
-        // WHY: Two deletion scenarios:
-        // 1. Delete by linkedid (mikopbx-*) → delete ALL records with this linkedid
-        // 2. Delete by numeric ID → delete only this single record
-        // Build API context string from sessionContext (populated by BaseController)
-        $username = $sessionContext['user_name'] ?? 'api';
-        $remoteAddr = $sessionContext['remote_addr'] ?? 'unknown';
-        $apiContext = "user={$username}, ip={$remoteAddr}, linkedid={$linkedId}";
-
-        if ($isLinkedId && !empty($linkedId)) {
-            $linkedRecordsDeleted = self::deleteLinkedRecords(
-                $linkedId,
-                (int)$record->id,
-                $deleteRecording,
-                $apiContext
+        // ============ PHASE 4: DISPATCH TO SINGLE-WRITER WORKER ============
+        try {
+            $client = new BeanstalkClient(WorkerCdr::DELETE_CDR_TUBE);
+            // BeanstalkClient::__construct catches its own connect errors and
+            // sets isConnected = false instead of throwing, so we have to ask.
+            if (!$client->isConnected()) {
+                $res->messages['error'][] = 'CDR delete queue unavailable';
+                $res->httpCode = 503;
+                return $res;
+            }
+            [$ok, $message] = $client->sendRequest(
+                json_encode([
+                    'id' => $id,
+                    'isLinkedId' => $isLinkedId,
+                    'deleteRecording' => $deleteRecording,
+                    'sessionContext' => $sessionContext,
+                ]),
+                self::WORKER_TIMEOUT_SECONDS
             );
-        }
-
-        // ============ PHASE 5: DELETE RECORDING FILES ============
-        // WHY: Delete files before DB record (cleanup even if DB delete fails)
-        if ($deleteRecording && !empty($recordingFile)) {
-            $recordingDeleted = self::deleteRecordingFiles($recordingFile, $apiContext);
-        }
-
-        // ============ PHASE 6: DELETE DATABASE RECORD ============
-        // WHY: Remove record from database
-        if (!$record->delete()) {
-            $res->messages['error'][] = 'Failed to delete record: ' .
-                implode(', ', $record->getMessages());
+        } catch (Throwable $e) {
+            $res->messages['error'][] = 'CDR delete dispatch failed: ' . $e->getMessage();
             $res->httpCode = 500;
             return $res;
         }
 
-        // ============ PHASE 7: LOGGING ============
-        // WHY: Security audit trail for deletions
-        self::logDeletion($id, $linkedId, $recordingDeleted, $recordingFile, $linkedRecordsDeleted, $username, $remoteAddr);
+        if ($ok === false) {
+            $res->messages['error'][] = 'CDR delete worker did not respond within timeout';
+            $res->httpCode = 503;
+            return $res;
+        }
 
-        // ============ PHASE 8: RESPONSE ============
-        // WHY: Provide detailed feedback about deletion
-        $res->data = [
-            'id' => $id,
-            'linkedid' => $linkedId,
-            'recordingDeleted' => $recordingDeleted,
-            'linkedRecordsDeleted' => $linkedRecordsDeleted,
-        ];
+        $reply = json_decode($message, true);
+        if (!is_array($reply)) {
+            $res->messages['error'][] = 'Invalid worker response';
+            $res->httpCode = 500;
+            return $res;
+        }
+
+        if (empty($reply['success'])) {
+            $res->messages['error'][] = $reply['error'] ?? 'Unknown error';
+            $res->httpCode = (int)($reply['httpCode'] ?? 500);
+            return $res;
+        }
+
+        $res->data = $reply['data'] ?? [];
         $res->success = true;
         $res->httpCode = 200;
 
         return $res;
-    }
-
-    /**
-     * Delete all records with the same linkedid (except the main record)
-     *
-     * @param string $linkedId LinkedID to match
-     * @param int $excludeId Main record ID to exclude from deletion
-     * @param bool $deleteRecording Whether to delete recording files
-     *
-     * @return int Number of linked records deleted
-     */
-    private static function deleteLinkedRecords(string $linkedId, int $excludeId, bool $deleteRecording, string $apiContext): int
-    {
-        $deleted = 0;
-
-        // Find all linked records except the main one
-        /** @var \Phalcon\Mvc\Model\ResultsetInterface|CallDetailRecords[] $linkedRecords */
-        $linkedRecords = CallDetailRecords::find([
-            'conditions' => 'linkedid = :linkedid: AND id != :excludeId:',
-            'bind' => [
-                'linkedid' => $linkedId,
-                'excludeId' => $excludeId
-            ]
-        ]);
-
-        /** @var CallDetailRecords $linkedRecord */
-        foreach ($linkedRecords as $linkedRecord) {
-            // Delete recording files if requested
-            if ($deleteRecording && !empty($linkedRecord->recordingfile)) {
-                self::deleteRecordingFiles($linkedRecord->recordingfile, $apiContext);
-            }
-
-            // Delete the record
-            if ($linkedRecord->delete()) {
-                $deleted++;
-            }
-        }
-
-        return $deleted;
-    }
-
-    /**
-     * Delete recording files (all formats: .mp3, .wav, .ogg)
-     *
-     * @param string $recordingFile Path to the main recording file
-     *
-     * @return bool True if at least one file was deleted
-     */
-    private static function deleteRecordingFiles(string $recordingFile, string $apiContext = ''): bool
-    {
-        $deleted = false;
-
-        // Delete the main file if exists
-        if (file_exists($recordingFile)) {
-            RecordingDeletionLogger::log(RecordingDeletionLogger::API_DELETE, $recordingFile, $apiContext);
-            if (@unlink($recordingFile)) {
-                $deleted = true;
-            }
-        }
-
-        // Delete alternative format files
-        $pathInfo = pathinfo($recordingFile);
-        $basePath = $pathInfo['dirname'] . '/' . $pathInfo['filename'];
-
-        foreach (['.wav', '.wav16', '.wav48', '.mp3', '.ogg'] as $ext) {
-            $file = $basePath . $ext;
-
-            // Skip if it's the same as main file
-            if ($file === $recordingFile) {
-                continue;
-            }
-
-            // Delete if exists
-            if (file_exists($file)) {
-                RecordingDeletionLogger::log(RecordingDeletionLogger::API_DELETE, $file, $apiContext);
-                if (@unlink($file)) {
-                    $deleted = true;
-                }
-            }
-        }
-
-        return $deleted;
-    }
-
-    /**
-     * Log CDR deletion for security audit
-     *
-     * @param string $id Record ID
-     * @param string $linkedId LinkedID
-     * @param bool $recordingDeleted Whether recording was deleted
-     * @param string|null $recordingFile Recording file path
-     * @param int $linkedRecordsDeleted Number of linked records deleted
-     *
-     * @return void
-     */
-    private static function logDeletion(
-        string $id,
-        string $linkedId,
-        bool $recordingDeleted,
-        ?string $recordingFile,
-        int $linkedRecordsDeleted,
-        string $username = 'api',
-        string $remoteAddr = 'unknown'
-    ): void {
-        $di = Di::getDefault();
-
-        // Get logger if available
-        if (!$di->has('logger')) {
-            return;
-        }
-
-        $logger = $di->get('logger');
-
-        // Build log message
-        $message = sprintf(
-            'CDR deleted: ID=%s, LinkedID=%s, Recording=%s, File=%s, LinkedRecords=%d, User=%s, IP=%s',
-            $id,
-            $linkedId,
-            $recordingDeleted ? 'deleted' : 'kept',
-            $recordingFile ?: 'none',
-            $linkedRecordsDeleted,
-            $username,
-            $remoteAddr
-        );
-
-        $logger->info($message);
     }
 }
