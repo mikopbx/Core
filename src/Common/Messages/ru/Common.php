@@ -794,6 +794,7 @@ return [
     'sf_AddNewAudioFile' => 'Добавить новый аудиофайл',
     'sf_AddNewSoundFile' => 'Добавить новый звуковой файл',
     'sf_AudioFileLoadError' => 'Ошибка при загрузке аудио файла',
+    'sf_AudioFileMissingWarning' => 'Файл отсутствует на диске. Загрузите его заново.',
     'sf_ColumnFile' => 'Имя',
     'sf_ColumnPlayer' => 'Плеер',
     'sf_CustomSounds' => 'Аудиофайлы',

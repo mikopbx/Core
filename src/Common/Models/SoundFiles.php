@@ -143,8 +143,10 @@ class SoundFiles extends ModelsBase
         $pathinfo = pathinfo($this->path);
         $baseFilename = $pathinfo['dirname'] . '/' . $pathinfo['filename'];
 
-        // Delete all related converted files
-        $extensions = ['wav', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln'];
+        // Delete all related converted files. Must stay in sync with the formats produced by
+        // SoundFilesConf::convertAudioFile() — adding a new format there requires extending
+        // this list, otherwise orphaned files leak on delete.
+        $extensions = ['wav', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln', 'opus'];
         foreach ($extensions as $ext) {
             $convertedFile = "$baseFilename.$ext";
             if ($convertedFile !== $this->path && file_exists($convertedFile)) {
@@ -158,6 +160,15 @@ class SoundFiles extends ModelsBase
             $tempFile = "$baseFilename$suffix";
             if (file_exists($tempFile)) {
                 unlink($tempFile);
+            }
+        }
+
+        // Sweep any stray atomic-rename tempfiles left by SoundFilesConf::convertAudioFile()
+        // if the worker was killed mid-conversion (e.g. "$baseFilename.mp3.converting").
+        $strayTmpFiles = glob("$baseFilename.*.converting") ?: [];
+        foreach ($strayTmpFiles as $strayTmpFile) {
+            if (is_file($strayTmpFile)) {
+                @unlink($strayTmpFile);
             }
         }
 

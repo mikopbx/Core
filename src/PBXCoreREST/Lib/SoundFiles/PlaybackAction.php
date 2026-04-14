@@ -95,9 +95,13 @@ class PlaybackAction
             return $res;
         }
 
-        // Check if file exists
-        if (!file_exists($filePath)) {
-            $res->messages['error'][] = 'File not found';
+        // File missing on disk: return 410 Gone (not the default 422 "validation failed").
+        // The DB record still exists, the file does not — usually the result of a previous
+        // botched conversion or manual deletion. The UI uses 410 to render a "missing file"
+        // badge and prompt the user to re-upload, instead of showing an opaque 422.
+        if (!file_exists($filePath) || filesize($filePath) === 0) {
+            $res->messages['error'][] = 'File not found or empty on disk';
+            $res->httpCode = 410;
             return $res;
         }
 

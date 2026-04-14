@@ -642,6 +642,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'sf_AddNewAudioFile' => 'Ajouter un nouveau fichier audio',
     'sf_AddNewSoundFile' => 'Ajouter un nouveau fichier son',
     'sf_AudioFileLoadError' => 'Erreur lors du chargement du fichier audio',
+    'sf_AudioFileMissingWarning' => 'Le fichier audio est manquant sur le disque. Veuillez le téléverser à nouveau.',
     'sf_ColumnFile' => 'Prénom',
     'sf_ColumnPlayer' => 'Joueur',
     'sf_CustomSounds' => 'Fichiers audio',

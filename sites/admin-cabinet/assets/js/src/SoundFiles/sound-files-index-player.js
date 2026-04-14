@@ -119,6 +119,13 @@ class IndexSoundPlayer {
             headers
         })
         .then(response => {
+            // 410 Gone: backend tells us the audio file is missing on disk while the DB
+            // record still exists. Mark the row as broken so the user gets a clear hint
+            // (and disables the play button) instead of being confused by a generic 422.
+            if (response.status === 410) {
+                this.markAsMissing();
+                return;
+            }
             if (!response.ok) {
                 return;
             }
@@ -137,6 +144,30 @@ class IndexSoundPlayer {
         .catch(() => {
             // Silently fail - metadata is not critical
         });
+    }
+
+    /**
+     * Mark this player row as having a missing/broken audio file.
+     * Disables the play button, shows a warning icon and a tooltip explaining what to do.
+     */
+    markAsMissing() {
+        const $row = $(`#${this.id}`);
+        if ($row.hasClass('audio-file-missing')) {
+            return;
+        }
+        $row.addClass('audio-file-missing');
+        const tooltipText = (typeof globalTranslate !== 'undefined'
+            && globalTranslate.sf_AudioFileMissingWarning)
+            ? globalTranslate.sf_AudioFileMissingWarning
+            : 'Audio file is missing on disk, please re-upload';
+        this.$pButton
+            .prop('disabled', true)
+            .addClass('disabled')
+            .attr('title', tooltipText)
+            .find('i')
+            .removeClass('play pause')
+            .addClass('exclamation triangle');
+        this.$spanDuration.text('--:--');
     }
 
     /**
@@ -316,6 +347,14 @@ class IndexSoundPlayer {
         // Fetch audio file with authentication
         fetch(fullUrl, { headers })
             .then(response => {
+                if (response.status === 410) {
+                    this.markAsMissing();
+                    const friendly = (typeof globalTranslate !== 'undefined'
+                        && globalTranslate.sf_AudioFileMissingWarning)
+                        ? globalTranslate.sf_AudioFileMissingWarning
+                        : 'Audio file is missing on disk, please re-upload';
+                    throw new Error(friendly);
+                }
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }

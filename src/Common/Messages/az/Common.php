@@ -957,4 +957,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'cf_EnterSearchPhrase' => 'Axtarış məlumatlarınızı daxil edin',
     'st_tooltip_note' => 'Qeyd',
     'sf_AudioFileLoadError' => 'Audio faylı yüklənərkən xəta baş verdi',
+    'sf_AudioFileMissingWarning' => 'Səs faylı diskdə yoxdur. Yenidən yükləyin.',
 ];

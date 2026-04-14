@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Configs\SoundFilesConf;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
@@ -144,42 +145,117 @@ class ConvertAudioFileAction extends Injectable
             $res->messages['error'][] = $result['error'] ?? 'Audio conversion failed';
 
             // Add format-specific errors if available
+            $failedFormats = [];
             foreach ($result['formats'] as $format => $formatResult) {
                 if ($formatResult['status'] === 'failed' && isset($formatResult['error'])) {
+                    $failedFormats[] = $format;
                     $res->messages['error'][] = "Failed to convert to $format: {$formatResult['error']}";
                 }
             }
 
+            // Audit log: original is preserved on failure (early return below)
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "Conversion failed for '$filename' (failed formats: "
+                . implode(',', $failedFormats) . "); original file preserved",
+                LOG_WARNING
+            );
+
             return $res;
         }
 
-        // Get converted MP3 file path (for backward compatibility, return MP3)
-        $mp3Path = $result['formats']['mp3']['path'] ?? null;
-        if ($mp3Path === null || !file_exists($mp3Path)) {
-            $res->success = false;
-            $res->messages['error'][] = 'MP3 conversion failed';
-            return $res;
-        }
-
-        // Collect all converted file paths
+        // Collect all converted file paths that actually exist on disk with non-zero size.
+        // ffmpeg exit code 0 does NOT guarantee a usable output (e.g. truncated or 0-byte file
+        // on disk-full / interrupted process). Be paranoid here — a missing target is a reason
+        // to keep the original.
         $convertedPaths = [];
+        $invalidPaths = [];
         foreach ($result['formats'] as $format => $formatResult) {
-            if ($formatResult['status'] === 'converted' && isset($formatResult['path'])) {
-                $convertedPaths[$format] = $formatResult['path'];
+            if (($formatResult['status'] ?? '') !== 'converted' || !isset($formatResult['path'])) {
+                continue;
+            }
+            $path = $formatResult['path'];
+            if (is_file($path) && filesize($path) > 0) {
+                $convertedPaths[$format] = $path;
+            } else {
+                $invalidPaths[$format] = $path;
             }
         }
 
-        // Remove original file if it's different from all converted files
+        // Get converted MP3 file path (for backward compatibility, return MP3)
+        $mp3Path = $convertedPaths['mp3'] ?? null;
+        if ($mp3Path === null) {
+            $res->success = false;
+            $res->messages['error'][] = 'MP3 conversion failed';
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "MP3 conversion validation failed for '$filename' (mp3 missing or empty); original preserved",
+                LOG_WARNING
+            );
+            return $res;
+        }
+
+        // Determine whether the original file is itself one of the converted outputs.
+        // Use realpath() to defeat trailing-slash / relative-path tricks, fall back to a
+        // case-insensitive basename compare ONLY when the source and target live in the
+        // same directory (otherwise an upload at /upload/audio.wav and a target at
+        // /target/audio.wav would be treated as the same file and the upload would never
+        // be cleaned up — orphan leak).
+        $originalRealpath = realpath($filename);
+        $originalDir = dirname($filename);
+        $originalBasename = basename($filename);
         $isOriginalConverted = false;
         foreach ($convertedPaths as $convertedPath) {
-            if ($filename === $convertedPath) {
+            $convertedRealpath = realpath($convertedPath);
+            if (
+                $originalRealpath !== false
+                && $convertedRealpath !== false
+                && $originalRealpath === $convertedRealpath
+            ) {
+                $isOriginalConverted = true;
+                break;
+            }
+            if (
+                dirname($convertedPath) === $originalDir
+                && strcasecmp($originalBasename, basename($convertedPath)) === 0
+            ) {
                 $isOriginalConverted = true;
                 break;
             }
         }
 
-        if (!$isOriginalConverted && is_file($filename)) {
-            unlink($filename);
+        // Multi-guard unlink gate. The original file is ONLY removed when:
+        //   - at least one target format was actually written successfully,
+        //   - no requested format failed (atomicity: refuse to drop the source on partial success),
+        //   - the original is not itself one of the converted outputs,
+        //   - the original still exists on disk.
+        // Any other case keeps the original to prevent unrecoverable data loss.
+        $anyConverted = count($convertedPaths) > 0;
+        $allRequestedOk = ($result['stats']['failed'] ?? 0) === 0 && empty($invalidPaths);
+
+        if ($anyConverted && $allRequestedOk && !$isOriginalConverted && is_file($filename)) {
+            if (@unlink($filename)) {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Removed original after successful conversion: $filename",
+                    LOG_DEBUG
+                );
+            } else {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Failed to remove original after conversion: $filename",
+                    LOG_WARNING
+                );
+            }
+        } else {
+            $reason = !$anyConverted ? 'no_formats_converted'
+                : (!$allRequestedOk ? 'partial_failure_or_invalid_targets'
+                    : ($isOriginalConverted ? 'is_original_target' : 'file_already_gone'));
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "Skipping unlink of original '$filename': reason=$reason",
+                LOG_INFO
+            );
         }
 
         // Return MP3 path for backward compatibility (API clients expect this)

@@ -619,6 +619,7 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     // SF
     'sf_AddNewSoundFile' => 'Neue Audio-Datei',
     'sf_AudioFileLoadError' => 'Fehler beim Laden der Audiodatei',
+    'sf_AudioFileMissingWarning' => 'Audiodatei fehlt auf dem Datenträger. Bitte laden Sie sie erneut hoch.',
     'sf_ColumnFile' => 'Dateiname',
     'sf_ColumnPlayer' => 'Abspielen',
     'sf_CustomSounds' => 'Audiodateien',

@@ -609,6 +609,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'sf_AddNewAudioFile' => 'Lägg till ny ljudfil',
     'sf_AddNewSoundFile' => 'Lägg till ny ljudfil',
     'sf_AudioFileLoadError' => 'Fel vid laddning av ljudfil',
+    'sf_AudioFileMissingWarning' => 'Ljudfilen saknas på disken. Vänligen ladda upp den igen.',
     'sf_ColumnFile' => 'Förnamn',
     'sf_ColumnPlayer' => 'spelare',
     'sf_CustomSounds' => 'Ljudfiler',

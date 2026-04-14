@@ -642,6 +642,7 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'sf_AddNewAudioFile' => 'Adăugați fișier audio nou',
     'sf_AddNewSoundFile' => 'Adăugați un fișier de sunet nou',
     'sf_AudioFileLoadError' => 'Eroare la încărcarea fișierului audio',
+    'sf_AudioFileMissingWarning' => 'Fișierul audio lipsește de pe disc. Vă rugăm să-l reîncărcați.',
     'sf_ColumnFile' => 'Nume',
     'sf_ColumnPlayer' => 'Jucător',
     'sf_CustomSounds' => 'Fișiere audio',

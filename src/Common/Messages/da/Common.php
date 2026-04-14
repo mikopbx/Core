@@ -957,4 +957,5 @@ Du kan få en ny nøgle automatisk ved at udfylde registreringsformularen.<br>',
     'st_tooltip_note' => 'Note',
     'sf_CsvCategory' => 'CSV-filer',
     'sf_AudioFileLoadError' => 'Fejl ved indlæsning af lydfil',
+    'sf_AudioFileMissingWarning' => 'Lydfilen mangler på disken. Upload den venligst igen.',
 ];

@@ -642,6 +642,7 @@ Nowy klucz możesz otrzymać automatycznie wypełniając formularz rejestracyjny
     'sf_AddNewAudioFile' => 'Dodaj nowy plik audio',
     'sf_AddNewSoundFile' => 'Dodaj nowy plik dźwiękowy',
     'sf_AudioFileLoadError' => 'Błąd podczas ładowania pliku audio',
+    'sf_AudioFileMissingWarning' => 'Brak pliku audio na dysku. Załaduj go ponownie.',
     'sf_ColumnFile' => 'Imię',
     'sf_ColumnPlayer' => 'Gracz',
     'sf_CustomSounds' => 'Pliki audio',

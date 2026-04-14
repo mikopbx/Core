@@ -674,7 +674,15 @@ class SoundFilesConf extends SystemConfigClass
             }
         }
 
-        // Convert to all target formats
+        // Convert to all target formats.
+        //
+        // Atomicity: ffmpeg writes into a sibling "$targetFile.converting" tempfile and we
+        // only rename() it onto $targetFile after verifying exit==0 AND the file exists with
+        // a non-zero size. This protects two scenarios:
+        //   1. ffmpeg crashes / OOM / disk-full mid-write — $targetFile is never touched.
+        //   2. The source path equals the target path (e.g. wav source with wav target):
+        //      we never overwrite the source until the new content has been successfully
+        //      produced in the tempfile.
         $source = escapeshellarg($normalizedSource);
         foreach ($targetFormats as $format) {
             // Skip unsupported formats
@@ -690,7 +698,6 @@ class SoundFilesConf extends SystemConfigClass
 
             $spec = $formatSpecs[$format];
             $targetFile = "$outputDir/$baseName.$format";
-            $dest = escapeshellarg($targetFile);
 
             // Skip if target file already exists (unless force reconvert)
             if (!$forceReconvert && file_exists($targetFile)) {
@@ -702,11 +709,21 @@ class SoundFilesConf extends SystemConfigClass
                 continue;
             }
 
-            // Build and execute ffmpeg command
-            $command = "$ffmpegPath -i $source {$spec['options']} -y $dest 2>&1";
+            // Atomic write via tempfile + rename.
+            $tmpTarget = "$targetFile.converting";
+            // Track the tmp path so the cleanup loop below sweeps it on any failure path.
+            $tempFiles[] = $tmpTarget;
+            $tmpDest = escapeshellarg($tmpTarget);
+
+            // Build and execute ffmpeg command writing into the tempfile
+            $command = "$ffmpegPath -i $source {$spec['options']} -y $tmpDest 2>&1";
+            $output = [];
             $exitCode = Processes::mwExec($command, $output);
 
-            if ($exitCode === 0) {
+            $tmpExists = is_file($tmpTarget);
+            $tmpSize = $tmpExists ? filesize($tmpTarget) : 0;
+
+            if ($exitCode === 0 && $tmpExists && $tmpSize > 0 && @rename($tmpTarget, $targetFile)) {
                 $result['formats'][$format] = [
                     'path' => $targetFile,
                     'status' => 'converted',
@@ -714,25 +731,34 @@ class SoundFilesConf extends SystemConfigClass
                 $result['stats']['converted']++;
             } else {
                 $outputText = implode("\n", $output);
+                $reason = $exitCode !== 0
+                    ? "ffmpeg exit $exitCode"
+                    : (!$tmpExists ? 'tempfile missing'
+                        : ($tmpSize === 0 ? 'tempfile empty' : 'rename failed'));
                 $result['formats'][$format] = [
                     'status' => 'failed',
-                    'error' => "Exit code: $exitCode. Output: $outputText",
+                    'error' => "$reason. Output: $outputText",
                 ];
                 $result['stats']['failed']++;
                 $result['success'] = false;
+
+                // Drop the half-written tempfile immediately; the cleanup loop is a safety net.
+                if ($tmpExists) {
+                    @unlink($tmpTarget);
+                }
 
                 // Check if codec is not supported (not critical for some formats)
                 if (strpos($outputText, "Unknown encoder") === false) {
                     SystemMessages::sysLogMsg(
                         __METHOD__,
-                        "Failed to convert to $format format. Exit code: $exitCode",
+                        "Failed to convert '$sourceFile' to $format format ($reason)",
                         LOG_WARNING
                     );
                 }
             }
         }
 
-        // Clean up temporary files
+        // Clean up temporary files (intermediates AND any stray .converting tempfiles)
         foreach ($tempFiles as $tempFile) {
             if (file_exists($tempFile)) {
                 @unlink($tempFile);

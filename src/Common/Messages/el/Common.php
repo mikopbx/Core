@@ -560,6 +560,7 @@ return [
     // SF
     'sf_AddNewSoundFile' => 'Προσθήκη νέου αρχείου ήχου',
     'sf_AudioFileLoadError' => 'Σφάλμα κατά τη φόρτωση αρχείου ήχου',
+    'sf_AudioFileMissingWarning' => 'Το αρχείο ήχου λείπει από τον δίσκο. Παρακαλούμε ανεβάστε το ξανά.',
     'sf_ColumnFile' => 'Ονομα',
     'sf_ColumnPlayer' => 'Παίχτης',
     'sf_CustomSounds' => 'Αρχεία ήχου',

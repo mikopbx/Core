@@ -609,6 +609,7 @@ return [
     'sf_AddNewAudioFile' => 'เพิ่มไฟล์เสียงใหม่',
     'sf_AddNewSoundFile' => 'เพิ่มไฟล์เสียงใหม่',
     'sf_AudioFileLoadError' => 'เกิดข้อผิดพลาดในการโหลดไฟล์เสียง',
+    'sf_AudioFileMissingWarning' => 'ไม่พบไฟล์เสียงในดิสก์ กรุณาอัปโหลดอีกครั้ง',
     'sf_ColumnFile' => 'ชื่อ',
     'sf_ColumnPlayer' => 'ผู้เล่น',
     'sf_CustomSounds' => 'ไฟล์เสียง',

@@ -642,6 +642,7 @@ return [
     'sf_AddNewAudioFile' => '添加新音频文件',
     'sf_AddNewSoundFile' => '添加新的声音文件',
     'sf_AudioFileLoadError' => '加载音频文件时出错',
+    'sf_AudioFileMissingWarning' => '磁盘上缺少音频文件，请重新上传。',
     'sf_ColumnFile' => '名',
     'sf_ColumnPlayer' => '播放器',
     'sf_CustomSounds' => '音频文件',

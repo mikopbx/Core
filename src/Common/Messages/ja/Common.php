@@ -641,6 +641,7 @@ return [
     // SF
     'sf_AddNewSoundFile' => '新しいサウンドファイルを追加',
     'sf_AudioFileLoadError' => 'オーディオファイルの読み込みエラー',
+    'sf_AudioFileMissingWarning' => 'ディスク上に音声ファイルがありません。再アップロードしてください。',
     'sf_ColumnFile' => '名',
     'sf_ColumnPlayer' => 'プレイヤー',
     'sf_CustomSounds' => '音声ファイル',

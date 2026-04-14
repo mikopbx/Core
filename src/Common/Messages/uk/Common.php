@@ -642,6 +642,7 @@ return [
     'sf_AddNewAudioFile' => 'Додати новий аудіофайл',
     'sf_AddNewSoundFile' => 'Додати новий звуковий файл',
     'sf_AudioFileLoadError' => 'Помилка завантаження аудіофайлу',
+    'sf_AudioFileMissingWarning' => 'Аудіофайл відсутній на диску. Завантажте його повторно.',
     'sf_ColumnFile' => 'Им\'я',
     'sf_ColumnPlayer' => 'Плеєр',
     'sf_CustomSounds' => 'Аудіофайли',

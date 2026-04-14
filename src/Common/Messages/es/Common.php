@@ -570,6 +570,7 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     // SF
     'sf_AddNewSoundFile' => 'Agregar nuevo archivo de sonido',
     'sf_AudioFileLoadError' => 'Error al cargar el archivo de audio',
+    'sf_AudioFileMissingWarning' => 'El archivo de audio falta en el disco. Por favor, vuelva a subirlo.',
     'sf_ColumnFile' => 'Nombre',
     'sf_ColumnPlayer' => 'Jugador',
     'sf_CustomSounds' => 'Archivos de sonido',

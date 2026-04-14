@@ -957,4 +957,5 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'cdr_DeleteFailed' => 'Nepodařilo se smazat položku',
     'cdr_NoPermissionToDelete' => 'Nemáte oprávnění k mazání příspěvků.',
     'sf_AudioFileLoadError' => 'Chyba při načítání audio souboru',
+    'sf_AudioFileMissingWarning' => 'Zvukový soubor chybí na disku. Nahrajte jej znovu.',
 ];

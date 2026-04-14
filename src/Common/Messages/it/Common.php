@@ -642,6 +642,7 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'sf_AddNewAudioFile' => 'Aggiungi nuovo file audio',
     'sf_AddNewSoundFile' => 'Aggiungi nuovo file audio',
     'sf_AudioFileLoadError' => 'Errore durante il caricamento del file audio',
+    'sf_AudioFileMissingWarning' => 'Il file audio non è presente sul disco. Caricalo di nuovo.',
     'sf_ColumnFile' => 'Nome',
     'sf_ColumnPlayer' => 'giocatore',
     'sf_CustomSounds' => 'File audio',

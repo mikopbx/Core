@@ -642,6 +642,7 @@ return [
     'sf_AddNewAudioFile' => 'ახალი აუდიო ფაილის დამატება',
     'sf_AddNewSoundFile' => 'დაამატეთ ახალი ხმოვანი ფაილი',
     'sf_AudioFileLoadError' => 'აუდიო ფაილის ჩატვირთვის შეცდომა',
+    'sf_AudioFileMissingWarning' => 'აუდიო ფაილი დისკზე არ მოიძებნა. გთხოვთ, ხელახლა ატვირთოთ.',
     'sf_ColumnFile' => 'სახელი',
     'sf_ColumnPlayer' => 'მოთამაშე',
     'sf_CustomSounds' => 'აუდიო ფაილები',
