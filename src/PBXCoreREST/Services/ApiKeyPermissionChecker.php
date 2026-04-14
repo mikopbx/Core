@@ -271,10 +271,10 @@ class ApiKeyPermissionChecker
             return true;
         }
 
-        // MikoPBX prefixed ID pattern: UPPERCASE-digits
-        // Examples: SIP-201, IAX-100, EXTENSION-123, CONFERENCE-ROOM-1
-        // Must have at least one uppercase letter, a hyphen, and end with digits
-        if (preg_match('/^[A-Z]+-.*\d+$/', $segment)) {
+        // MikoPBX prefixed ID pattern: UPPERCASE-digits(HEX)
+        // Examples: SIP-201, IAX-100, EXTENSION-123, CONFERENCE-ROOM-1, SIP-TRUNK-DEADC0DE
+        // Must have at least one uppercase letter, a hyphen, and end with digits or uppercase A-F letters
+        if (preg_match('/^(?:[A-Z]+-)+[A-F0-9]+$/', $segment)) {
             return true;
         }
 
