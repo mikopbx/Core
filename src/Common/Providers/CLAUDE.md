@@ -58,7 +58,7 @@ Providers/
 | LoggerAuthProvider | `loggerAuth` | Yes | Syslog AUTH | Auth audit trail |
 | LoggerProvider | `logger` | Yes | Syslog | UDP 127.0.0.1:514 |
 | MainDatabaseProvider | `db` | Yes | SQLite | mikopbx.db |
-| ManagedCacheProvider | `managedCache` | No | Redis DB4 | 1h TTL |
+| ManagedCacheProvider | `managedCache` | Yes | Redis DB4 | 1h TTL, shared singleton per process (issue #1022) |
 | MarketPlaceProvider | `license` | Yes | License class | Module marketplace |
 | MessagesProvider | `messages` | Yes | Files/Cache | 29 languages |
 | ModelsAnnotationsProvider | `annotations` | Yes | Memory | Model annotations |
@@ -69,7 +69,7 @@ Providers/
 | PBXConfModulesProvider | `pbxConfModules` | Yes | DB | Module hooks + priority |
 | PBXCoreRESTClientProvider | `restAPIClient` | No | HTTP | GuzzleHttp, 30s timeout |
 | RecordingStorageDatabaseProvider | `dbRecordingStorage` | Yes | SQLite | recording_storage.db |
-| RedisClientProvider | `redis` | No | Redis DB1 | Worker IPC |
+| RedisClientProvider | `redis` | Yes | Redis DB1 | Worker IPC, shared singleton per process (issue #1022) |
 | RegistryProvider | `registry` | Yes | Memory | Global state |
 | RouterProvider | `router` | No | Config | Module route integration |
 | SentryErrorHandlerProvider | `sentryErrorHandler` | No | Sentry API | Production error tracking |

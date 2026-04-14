@@ -77,6 +77,14 @@ class WorkerApiCommands extends WorkerRedisBase
     private const int DB_LOCKED_MAX_RETRIES = 3;
     private const int DB_LOCKED_BASE_DELAY_US = 100_000; // 100ms
 
+    /**
+     * Number of consecutive RedisException/Phalcon\Storage\Exception failures
+     * that must occur before the main loop emits its "Redis unreachable"
+     * syslog marker. Prevents the reconnect storm described in issue #1022
+     * from producing thousands of duplicate Sentry events per outage.
+     */
+    private const int REDIS_BACKOFF_LOG_THRESHOLD = 5;
+
 
     /**
      * Default to 3 concurrent worker processes instead of 1
@@ -118,30 +126,47 @@ class WorkerApiCommands extends WorkerRedisBase
                 LOG_NOTICE
             );
 
-            // Process requests until shutdown
+            // Process requests until shutdown.
+            //
+            // Consecutive Redis failures trigger an exponential backoff
+            // (1,2,4,8,16,30s — capped) to avoid the reconnect storm that
+            // caused issue #1022. A single syslog marker is emitted at
+            // `REDIS_BACKOFF_LOG_THRESHOLD` so Sentry gets one alert per
+            // extended outage instead of one per loop iteration.
+            $consecutiveFailures = 0;
             while (!$this->isShuttingDown && $this->needRestart === false) {
                 try {
                     // Process signals
                     pcntl_signal_dispatch();
-                    
+
                     // Send periodic heartbeat
                     $this->checkHeartbeat();
-                    
-                    // Connect to Redis
+
+                    // Connect to Redis (shared singleton — see issue #1022
+                    // fix in RedisClientProvider; returns the same \Redis
+                    // instance reused by this worker for its whole lifetime).
                     $this->redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
-                    
+
                     // Periodically check queue state (every minute)
                     static $lastQueueCheckTime = 0;
                     if (time() - $lastQueueCheckTime > 60) {
                         $this->checkQueueState();
                         $lastQueueCheckTime = time();
                     }
-                    
-                    // Get job from queue with 5 second timeout
-                    $result = $this->redis->blpop(
-                        [self::REDIS_API_QUEUE, self::REDIS_FAILED_JOBS_QUEUE], 
-                        5
+
+                    // Get job from queue with 5 second timeout.
+                    // Wrapped in the short-retry helper so a single transient
+                    // glitch on the BLPOP socket does not drop us into the
+                    // main-loop catch and waste a full backoff cycle.
+                    $result = $this->withRedisRetry(
+                        fn() => $this->redis->blpop(
+                            [self::REDIS_API_QUEUE, self::REDIS_FAILED_JOBS_QUEUE],
+                            5
+                        )
                     );
+
+                    // BLPOP returned normally — reset the backoff counter.
+                    $consecutiveFailures = 0;
                     
                     // No job available, check signals and continue
                     if (!is_array($result) || count($result) !== 2) {
@@ -215,7 +240,31 @@ class WorkerApiCommands extends WorkerRedisBase
                         break;
                     }
                     
+                } catch (\RedisException | \Phalcon\Storage\Exception $e) {
+                    // Extended Redis outage path. Apply exponential backoff so
+                    // we do not hammer Redis while it recovers, and emit
+                    // exactly one syslog line per outage episode (instead of
+                    // one Sentry event per loop) — see issue #1022.
+                    $consecutiveFailures++;
+                    if ($consecutiveFailures === self::REDIS_BACKOFF_LOG_THRESHOLD) {
+                        SystemMessages::sysLogMsg(
+                            static::class,
+                            sprintf(
+                                "reason=redis_unreachable_extended "
+                                . "consecutive_failures=%d last_error=%s",
+                                $consecutiveFailures,
+                                $e->getMessage()
+                            ),
+                            LOG_ERR
+                        );
+                        // Report once to Sentry as well so the alert still
+                        // lands in the error tracker, but only once per burst.
+                        CriticalErrorsHandler::handleExceptionWithSyslog($e);
+                    }
+                    $backoffSeconds = min(1 << min($consecutiveFailures - 1, 5), 30);
+                    sleep($backoffSeconds);
                 } catch (Throwable $e) {
+                    // Non-Redis exception — keep the historical behaviour.
                     CriticalErrorsHandler::handleExceptionWithSyslog($e);
                     sleep(1);
                 }

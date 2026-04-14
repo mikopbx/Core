@@ -127,12 +127,25 @@ class RedisConf extends SystemConfigClass
 
         $busyboxPath = Util::which('busybox');
         $confPath    = $this->getMainMonitConfFile();
+        $redisPort   = $this->port !== '' ? $this->port : '6379';
 
+        // Monit now also runs a TCP PING/PONG probe on the Redis port on top
+        // of the pidfile check. This catches frozen-but-alive Redis processes
+        // (blocked event loop, stuck I/O) that the PID-only check could not
+        // detect — see issue #1022. `for 3 cycles` at the 5 s daemon tick
+        // means the probe must fail for ~15 s before monit restarts Redis,
+        // which avoids flapping restarts on brief hiccups. The hard limit of
+        // 5 restarts per 10 cycles is a safety valve against restart loops.
         $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/redis.pid '.PHP_EOL.
             '    start program = "'.$this->startCommand.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
             '    stop program = "'.$busyboxPath.' sh -c \''.$busyboxPath.' killall '.self::PROC_NAME.'; rm -f /var/run/redis.pid\''.'"'.PHP_EOL.
-            '        as uid root and gid root';
+            '        as uid root and gid root'.PHP_EOL.
+            '    if failed port '.$redisPort.' type tcp protocol default'.PHP_EOL.
+            '       send "PING\r\n" expect "PONG" timeout 5 seconds'.PHP_EOL.
+            '       for 3 cycles'.PHP_EOL.
+            '    then restart'.PHP_EOL.
+            '    if 5 restarts within 10 cycles then timeout';
 
         $this->saveFileContent($confPath, $conf);
         return true;
@@ -167,6 +180,23 @@ class RedisConf extends SystemConfigClass
         # Prevents write-blocking when /var/tmp (tmpfs) overflows (issue #651).
         $conf  .= "save \"\"" . PHP_EOL;
         $conf  .= "stop-writes-on-bgsave-error no" . PHP_EOL;
+
+        # Client/memory caps (issue #1022).
+        #  - maxclients: hard ceiling so leaked or stale sockets cannot pile
+        #    up to the phpredis/Redis default limit and knock out all three
+        #    WorkerApiCommands instances simultaneously. 300 leaves ample
+        #    headroom for the usual 50-ish active clients (3 API workers +
+        #    php-fpm pool + module workers).
+        #  - maxmemory: small systems must not let Redis grow unbounded and
+        #    trigger OOM killer. 64 MB matches the current working set
+        #    (heartbeat keys + metadata cache + short-lived queues).
+        #  - maxmemory-policy allkeys-lru: evict the oldest keys instead of
+        #    rejecting writes under pressure (the default `noeviction` would
+        #    otherwise make every `set` fail when the cap is reached).
+        $conf  .= "maxclients 300" . PHP_EOL;
+        $conf  .= "maxmemory 64mb" . PHP_EOL;
+        $conf  .= "maxmemory-policy allkeys-lru" . PHP_EOL;
+
         file_put_contents(self::CONF_FILE, $conf);
     }
 

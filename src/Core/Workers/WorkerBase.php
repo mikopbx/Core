@@ -137,6 +137,17 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
      */
     protected int $workerState = self::STATE_STARTING;
 
+    /**
+     * Redis client held by this worker. Can be a raw phpredis \Redis (from
+     * RedisClientProvider) or a Phalcon cache wrapper (from
+     * ManagedCacheProvider) depending on the subclass. Declared explicitly
+     * to avoid the PHP 8.2+ dynamic-property deprecation AND to stop
+     * Phalcon\Di\Injectable::__get() from silently resurrecting a fresh
+     * connection inside destructors or signal handlers — a real hazard
+     * raised in the #1022 code review.
+     */
+    protected mixed $redis = null;
+
 
 
     /**
@@ -183,6 +194,90 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
     public static function getCheckInterval(): int
     {
         return self::KEEP_ALLIVE_CHECK_INTERVAL;
+    }
+
+    /**
+     * Run a Redis operation with a short exponential backoff retry loop.
+     *
+     * Used to survive transient Redis glitches without dropping in-flight
+     * jobs. The backoff is intentionally short (100 ms / 200 ms / 400 ms)
+     * so the BLPOP main loop does not block for more than ~1 s total —
+     * if Redis is down for longer, the outer main-loop catch handles the
+     * extended outage with a larger backoff and a single syslog marker
+     * (`reason=redis_unreachable_extended`) instead of spamming Sentry.
+     *
+     * Phalcon Storage\Adapter\Redis reconnects automatically through its
+     * `checkConnect()` on every operation, so we only need to retry and
+     * wait; there is no need to tear down the shared adapter here.
+     *
+     * Introduced for issue #1022.
+     *
+     * @template T
+     * @param callable(): T $op          Redis operation to execute.
+     * @param int           $maxAttempts Attempts including the first try.
+     * @return T
+     * @throws \RedisException|\Phalcon\Storage\Exception on terminal failure
+     * @throws \InvalidArgumentException when $maxAttempts is < 1
+     */
+    protected function withRedisRetry(callable $op, int $maxAttempts = 3): mixed
+    {
+        if ($maxAttempts < 1) {
+            throw new \InvalidArgumentException(
+                'withRedisRetry: $maxAttempts must be >= 1, got ' . $maxAttempts
+            );
+        }
+        $lastException = null;
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                return $op();
+            } catch (\RedisException | \Phalcon\Storage\Exception $e) {
+                $lastException = $e;
+                if ($attempt === $maxAttempts) {
+                    break;
+                }
+                // 100 ms, 200 ms, 400 ms — geometric, capped at 2 s total.
+                // The shift is clamped to prevent integer overflow when a
+                // subclass passes a pathologically large $maxAttempts.
+                $shift = min($attempt - 1, 20);
+                usleep(min((1 << $shift) * 100_000, 2_000_000));
+            }
+        }
+        throw $lastException;
+    }
+
+    /**
+     * Best-effort close of the phpredis socket held by this worker.
+     *
+     * Hoisted here (instead of WorkerRedisBase) so that every subclass —
+     * Beanstalk workers that touch ManagedCacheProvider, Redis-pool
+     * workers, and shutdown signal handlers — can release their socket
+     * without duplicating the wrapper-vs-raw detection logic.
+     *
+     * Safe to call multiple times and to call when Redis is unreachable:
+     * any error is swallowed so the shutdown path never blocks.
+     * Introduced for issue #1022 — prevents the "200+ stale Redis
+     * connections from terminated PHP workers" pattern documented in
+     * commit e2e191abb.
+     */
+    protected function closeRedis(): void
+    {
+        try {
+            if (isset($this->redis) && is_object($this->redis)) {
+                if (method_exists($this->redis, 'close')) {
+                    // phpredis \Redis::close() — hard close the socket.
+                    @$this->redis->close();
+                } elseif (method_exists($this->redis, 'getAdapter')) {
+                    // Phalcon cache wrapper — reach through to phpredis.
+                    $inner = $this->redis->getAdapter();
+                    if (is_object($inner) && method_exists($inner, 'close')) {
+                        @$inner->close();
+                    }
+                }
+            }
+        } catch (Throwable) {
+            // Ignore — the whole point of this method is to release the
+            // socket on the way out, not to surface errors.
+        }
     }
 
     /**
@@ -377,12 +472,11 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
             case SIGINT:
                 $this->setWorkerState(self::STATE_STOPPING);
 
-                // Cleanup for Redis-based workers
-                if ($this instanceof WorkerRedisBase) {
-                    if ($this->redis) {
-                        $this->redis->close();
-                    }
-                }
+                // Release the Redis socket via the wrapper-aware helper
+                // (the raw `$this->redis->close()` path would bomb on a
+                // Phalcon cache wrapper now that providers can return one —
+                // see issue #1022 code review BLOCKER).
+                $this->closeRedis();
                 exit(0);
 
             default:

@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
+use Phalcon\Cache\Adapter\Redis as CacheAdapterRedis;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Cache\Adapter\Redis as CacheAdapterRedis;
 use Phalcon\Storage\SerializerFactory;
 
 /**
@@ -45,20 +45,30 @@ class ManagedCacheProvider implements ServiceProviderInterface
     public function register(DiInterface $di): void
     {
         $config = $di->getShared(ConfigProvider::SERVICE_NAME);
-        $di->set(
+        // Shared (singleton) per process — see issue #1022. Before this change
+        // the provider was registered with $di->set(), so every di->get() (and
+        // some workers call it every 5s inside BLPOP loops) created a fresh
+        // TCP socket. Those sockets accumulated until phpredis/kernel ran out
+        // of descriptors and the whole worker pool lost Redis simultaneously.
+        $di->setShared(
             self::SERVICE_NAME,
             function () use ($config) {
                 $serializerFactory = new SerializerFactory();
-
                 $options = [
                     'lifetime'          => 3600,
                     'host'              => $config->path('redis.host'),
                     'port'              => $config->path('redis.port'),
                     'index'             => self::DATABASE_INDEX,
-                    'prefix'            => self::CACHE_PREFIX
+                    'prefix'            => self::CACHE_PREFIX,
+                    'persistent'        => false,
                 ];
-
-                return new CacheAdapterRedis($serializerFactory, $options);
+                $cacheAdapter = new CacheAdapterRedis($serializerFactory, $options);
+                // Prime the underlying phpredis socket so OPT_TCP_KEEPALIVE /
+                // OPT_READ_TIMEOUT apply on a live connection. The wrapper
+                // keeps its reference to the same \Redis, so later cache
+                // operations benefit from these options transparently.
+                RedisClientProvider::primeRedisAdapter($cacheAdapter->getAdapter());
+                return $cacheAdapter;
             }
         );
     }

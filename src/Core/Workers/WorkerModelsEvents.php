@@ -127,7 +127,15 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Save worker state to Redis
+     * Save worker state to Redis.
+     *
+     * Called from the shutdown path (handleShutdownSignal), so the single
+     * retry matters: without it, losing the shutdown-time write means the
+     * queued reload actions are gone on the next restart. This was Sentry
+     * issue #27017 under #1022 — `Connection lost` in Redis::set during
+     * shutdown. One retry with the short-backoff helper is cheap insurance
+     * and survives both a stale-socket case (retry reopens) and a flapping
+     * Redis case (retry waits 100 ms).
      */
     private function saveStateToRedis(): void
     {
@@ -138,9 +146,11 @@ class WorkerModelsEvents extends WorkerBase
                 'last_change' => $this->last_change,
                 'timestamp' => time()
             ];
-            
+
             $workerKey = self::REDIS_PREFIX . self::class . ':' . getmypid();
-            $this->managedCache->set($workerKey, $state, self::REDIS_TTL);
+            $this->withRedisRetry(
+                fn() => $this->managedCache->set($workerKey, $state, self::REDIS_TTL)
+            );
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }

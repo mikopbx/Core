@@ -188,6 +188,13 @@ abstract class WorkerRedisBase extends WorkerBase
                 LOG_WARNING
             );
         }
+
+        // Explicitly close the phpredis socket. Without this, relying on
+        // the GC-driven destructor left hundreds of stale connections on
+        // the server side (issue #1022 + the "200+ stale connections"
+        // note in commit e2e191abb). closeRedis() lives on WorkerBase so
+        // every worker type can reuse it.
+        $this->closeRedis();
     }
 
     /**
@@ -196,7 +203,7 @@ abstract class WorkerRedisBase extends WorkerBase
     protected function updateWorkerStatus(): void
     {
         try {
-            $this->redis = $this->di->get(RedisClientProvider::SERVICE_NAME);;
+            $this->redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
             $currentTime = microtime(true);
             $memoryUsage = memory_get_usage(true);
 
@@ -417,5 +424,9 @@ abstract class WorkerRedisBase extends WorkerBase
         if ($this->maxProc > 1) {
             $this->unregisterFromPool();
         }
+
+        // Safety net: ensure the phpredis socket is released even when
+        // shutdown went through a code path that skipped cleanupRedisKeys().
+        $this->closeRedis();
     }
 }
