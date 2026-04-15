@@ -111,11 +111,9 @@ class WorkerSafeScriptsCore extends WorkerBase
      */
     private array $pingFailureCounts = [];
 
-    /**
-     * Redis connection instance
-     * @var \Redis
-     */
-    protected $redis;
+    // Redis handle inherited from WorkerBase::$redis (protected mixed, default null).
+    // A local override here would break PHP 8.2+ property type covariance —
+    // see hotfix for issue #1022 WorkerSafeScriptsCore::$redis regression.
 
     /**
      * Dedicated AMI connection for worker ping/pong checks.

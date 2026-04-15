@@ -60,7 +60,8 @@ class WorkerProviderStatusMonitor extends WorkerRedisBase
     ];
     
     private ?UserPageTrackerLib $pageTracker = null;
-    protected $redis;
+    // $redis inherited from WorkerBase (protected mixed $redis = null);
+    // a local untyped override would break PHP 8.2+ property-type covariance.
     private int $lastCheckTime = 0;
     
     /**
