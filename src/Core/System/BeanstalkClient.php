@@ -23,9 +23,12 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Di\Injectable;
 use Pheanstalk\Contract\JobIdInterface;
-use Pheanstalk\Contract\PheanstalkInterface;
-use Pheanstalk\Job;
+use Pheanstalk\Contract\PheanstalkPublisherInterface;
+use Pheanstalk\Exception\JobNotFoundException;
 use Pheanstalk\Pheanstalk;
+use Pheanstalk\Values\Job;
+use Pheanstalk\Values\Timeout;
+use Pheanstalk\Values\TubeName;
 use Throwable;
 
 /**
@@ -42,6 +45,24 @@ class BeanstalkClient extends Injectable
     public const string QUEUE_ERROR = 'queue_error';
 
     public const string RESPONSE_IN_FILE = 'response-in-file';
+
+    /**
+     * Connect timeout passed to Pheanstalk::create(). Kept short so that a
+     * dead beanstalkd never hangs a worker on TCP handshake (issue #1010).
+     */
+    private const int CONNECT_TIMEOUT_SECONDS = 2;
+
+    /**
+     * Receive timeout passed to Pheanstalk::create(). Propagated through
+     * Pheanstalk 8.x's Timeout objects to SO_RCVTIMEO on the underlying
+     * socket — this is the key fix for the "Maximum execution time of 30
+     * seconds exceeded" fatal in SocketSocket.php documented by Sentry
+     * cluster #27085. See Pheanstalk 4.x SocketSocket.php which set the
+     * receive timeout for connect() but then *restored the default* after
+     * connecting, leaving read() unbounded. 8.x keeps the receive timeout
+     * throughout the socket's lifetime.
+     */
+    private const int RECEIVE_TIMEOUT_SECONDS = 10;
 
     /** @var Pheanstalk */
     private Pheanstalk $queue;
@@ -74,14 +95,23 @@ class BeanstalkClient extends Injectable
     public function reconnect(): void
     {
         $config = $this->di->getShared(ConfigProvider::SERVICE_NAME)->beanstalk;
-        $tmpPort   = $config->port;
-        if ( ! empty($this->port) && is_numeric($this->port)) {
-            $tmpPort = $this->port;
+        $tmpPort = (int)$config->port;
+        if (!empty($this->port) && is_numeric($this->port)) {
+            $tmpPort = (int)$this->port;
         }
-        $this->queue = Pheanstalk::create($config->host, $tmpPort);
+        // Pheanstalk 8.x wires the receive timeout through Timeout value
+        // objects into SO_RCVTIMEO on the socket (issue #1010 root-cause
+        // fix). The connect timeout is short so a dead beanstalkd surfaces
+        // a ConnectionException fast instead of hanging the worker.
+        $this->queue = Pheanstalk::create(
+            $config->host,
+            $tmpPort,
+            new Timeout(self::CONNECT_TIMEOUT_SECONDS),
+            new Timeout(self::RECEIVE_TIMEOUT_SECONDS)
+        );
         try {
-            $this->queue->useTube($this->tube);
-        }catch (Throwable $e){
+            $this->queue->useTube(new TubeName($this->tube));
+        } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
             $this->connected = false;
             return;
@@ -101,8 +131,8 @@ class BeanstalkClient extends Injectable
     public function subscribe(string $tube, array $callback): void
     {
         $tube = str_replace("\\", '-', $tube);
-        $this->queue->watch($tube);
-        $this->queue->ignore('default');
+        $this->queue->watch(new TubeName($tube));
+        $this->queue->ignore(TubeName::default());
         $this->subscriptions[$tube] = $callback;
     }
 
@@ -127,11 +157,12 @@ class BeanstalkClient extends Injectable
      *
      * @return bool|string
      */
-    public function request($job_data, int $timeout = 10, int $priority = PheanstalkInterface::DEFAULT_PRIORITY): bool|string
+    public function request($job_data, int $timeout = 10, int $priority = PheanstalkPublisherInterface::DEFAULT_PRIORITY): bool|string
     {
         $this->message = false;
         $inbox_tube    = uniqid(self::INBOX_PREFIX, true);
-        $this->queue->watch($inbox_tube);
+        $inboxTubeName = new TubeName($inbox_tube);
+        $this->queue->watch($inboxTubeName);
 
         // Send message to backend worker
         $requestMessage = [
@@ -147,13 +178,17 @@ class BeanstalkClient extends Injectable
                 $this->message = $job->getData();
                 $this->queue->delete($job);
             }
+        } catch (JobNotFoundException $e) {
+            // Expected race: worker TTR expired or the job was already removed.
+            // Do not spam Sentry with this (issue #1010 related cluster #27284).
+            SystemMessages::sysLogMsg(__METHOD__, 'job gone during delete: ' . $e->getMessage(), LOG_DEBUG);
         } catch (Throwable $exception) {
             SystemMessages::sysLogMsg(__METHOD__, $exception->getMessage(), LOG_ERR);
-            if(isset($job)){
+            if (isset($job)) {
                 $this->buryJob($job);
             }
         }
-        $this->queue->ignore($inbox_tube);
+        $this->queue->ignore($inboxTubeName);
 
         return $this->message;
     }
@@ -168,11 +203,12 @@ class BeanstalkClient extends Injectable
      *
      * @return array
      */
-    public function sendRequest($job_data, int $timeout = 10, int $priority = PheanstalkInterface::DEFAULT_PRIORITY):array
+    public function sendRequest($job_data, int $timeout = 10, int $priority = PheanstalkPublisherInterface::DEFAULT_PRIORITY):array
     {
         $result = true;
         $inbox_tube    = uniqid(self::INBOX_PREFIX, true);
-        $this->queue->watch($inbox_tube);
+        $inboxTubeName = new TubeName($inbox_tube);
+        $this->queue->watch($inboxTubeName);
 
         // Send message to backend worker
         $requestMessage = [
@@ -191,15 +227,21 @@ class BeanstalkClient extends Injectable
                 $this->message = '{"'.self::QUEUE_ERROR.'":"Worker did not answer within timeout '.$timeout.' sec"}';
                 $result = false;
             }
+        } catch (JobNotFoundException $e) {
+            // Expected race: job already gone. Surface as a queue error but
+            // do not report to Sentry (issue #1010 related cluster #27284).
+            SystemMessages::sysLogMsg(__METHOD__, 'job gone during delete: ' . $e->getMessage(), LOG_DEBUG);
+            $this->message = '{"'.self::QUEUE_ERROR.'":"Job already gone before response"}';
+            $result = false;
         } catch (Throwable $e) {
-            if(isset($job)){
+            if (isset($job)) {
                 $this->buryJob($job);
             }
             $prettyMessage = CriticalErrorsHandler::handleExceptionWithSyslog($e);
             $this->message = '{"'.self::QUEUE_ERROR.'":"Exception on '.__METHOD__.' with message: '.$prettyMessage.'"}';
             $result = false;
         }
-        $this->queue->ignore($inbox_tube);
+        $this->queue->ignore($inboxTubeName);
 
         return [$result, $this->message];
     }
@@ -215,27 +257,29 @@ class BeanstalkClient extends Injectable
      * @param int     $delay    delay before insert job into work query
      * @param int     $ttr      time to execute this job
      *
-     * @return \Pheanstalk\Job
+     * @return JobIdInterface The job id handle returned by beanstalkd.
+     *                         Pheanstalk 8.x returns a lightweight JobId from
+     *                         put() rather than the full Job value object.
      */
     public function publish(
         mixed $job_data,
         ?string $tube = null,
-        int $priority = PheanstalkInterface::DEFAULT_PRIORITY,
-        int $delay = PheanstalkInterface::DEFAULT_DELAY,
-        int $ttr = PheanstalkInterface::DEFAULT_TTR
-    ): Job {
-        $tube = str_replace("\\", '-', $tube??'');
+        int $priority = PheanstalkPublisherInterface::DEFAULT_PRIORITY,
+        int $delay = PheanstalkPublisherInterface::DEFAULT_DELAY,
+        int $ttr = PheanstalkPublisherInterface::DEFAULT_TTR
+    ): JobIdInterface {
+        $tube = str_replace("\\", '-', $tube ?? '');
 
         // Change tube
-        if ( ! empty($tube) && $this->tube !== $tube) {
-            $this->queue->useTube($tube);
+        if ($tube !== '' && $this->tube !== $tube) {
+            $this->queue->useTube(new TubeName($tube));
         }
         $job_data = serialize($job_data);
         // Send JOB to queue
         $result = $this->queue->put($job_data, $priority, $delay, $ttr);
 
         // Return original tube
-        $this->queue->useTube($this->tube);
+        $this->queue->useTube(new TubeName($this->tube));
 
         return $result;
     }
@@ -247,13 +291,19 @@ class BeanstalkClient extends Injectable
     {
         $tubes          = $this->queue->listTubes();
         $deletedJobInfo = [];
+        // Pheanstalk 8.x returns a TubeList (IteratorAggregate<TubeName>), so
+        // $tube below is already a TubeName value object, not a string.
         foreach ($tubes as $tube) {
             try {
                 $this->queue->useTube($tube);
-                $queueStats = $this->queue->stats()->getArrayCopy();
+                // 8.x fix: use statsTube() for per-tube counters instead of
+                // stats() which returns global ServerStats. The 4.x code
+                // confusingly accessed `current-jobs-buried` on global stats
+                // but it was never scoped to the tube under the use-loop.
+                $tubeStats = $this->queue->statsTube($tube);
 
                 // Delete buried jobs
-                $countBuried = $queueStats['current-jobs-buried'];
+                $countBuried = $tubeStats->currentJobsBuried;
                 while ($job = $this->queue->peekBuried()) {
                     $countBuried--;
                     if ($countBuried < 0) {
@@ -262,34 +312,66 @@ class BeanstalkClient extends Injectable
                     $id = $job->getId();
                     SystemMessages::sysLogMsg(
                         __METHOD__,
-                        "Deleted buried job with ID $id from $tube with message {$job->getData()}",
+                        "Deleted buried job with ID $id from {$tube->value} with message {$job->getData()}",
                         LOG_DEBUG
                     );
-                    $this->queue->delete($job);
-                    $deletedJobInfo[] = "$id from $tube";
+                    try {
+                        $this->queue->delete($job);
+                        $deletedJobInfo[] = "$id from {$tube->value}";
+                    } catch (JobNotFoundException $e) {
+                        // Race: job gone between peek and delete — expected
+                        // when another worker or GC grabbed it. Do not report
+                        // to Sentry (issue #1010 / #27116 noise source).
+                        SystemMessages::sysLogMsg(
+                            __METHOD__,
+                            "buried job $id vanished before delete: " . $e->getMessage(),
+                            LOG_DEBUG
+                        );
+                    }
                 }
 
                 // Delete outdated jobs
-                $countReady = $queueStats['current-jobs-ready'];
+                $countReady = $tubeStats->currentJobsReady;
                 while ($job = $this->queue->peekReady()) {
                     $countReady--;
                     if ($countReady < 0) {
                         break;
                     }
-                    $id                    = $job->getId();
-                    $jobStats              = $this->queue->statsJob($job)->getArrayCopy();
-                    $age                   = (int)$jobStats['age'];
-                    $expectedTimeToExecute = (int)$jobStats['ttr'] * 2;
+                    $id = $job->getId();
+                    try {
+                        $jobStats = $this->queue->statsJob($job);
+                    } catch (JobNotFoundException $e) {
+                        // Race: job gone between peek and statsJob.
+                        SystemMessages::sysLogMsg(
+                            __METHOD__,
+                            "ready job $id vanished before statsJob: " . $e->getMessage(),
+                            LOG_DEBUG
+                        );
+                        continue;
+                    }
+                    $age                   = $jobStats->age;
+                    $expectedTimeToExecute = $jobStats->timeToRelease * 2;
                     if ($age > $expectedTimeToExecute) {
                         SystemMessages::sysLogMsg(
                             __METHOD__,
-                            "Deleted outdated job with ID $id from $tube with message {$job->getData()}",
+                            "Deleted outdated job with ID $id from {$tube->value} with message {$job->getData()}",
                             LOG_DEBUG
                         );
-                        $this->queue->delete($job);
-                        $deletedJobInfo[] = "$id from $tube";
+                        try {
+                            $this->queue->delete($job);
+                            $deletedJobInfo[] = "$id from {$tube->value}";
+                        } catch (JobNotFoundException $e) {
+                            SystemMessages::sysLogMsg(
+                                __METHOD__,
+                                "outdated job $id vanished before delete: " . $e->getMessage(),
+                                LOG_DEBUG
+                            );
+                        }
                     }
                 }
+            } catch (JobNotFoundException $e) {
+                // Expected race on peek/stats/delete — swallow without Sentry.
+                SystemMessages::sysLogMsg(__METHOD__, 'job gone during cleanup: ' . $e->getMessage(), LOG_DEBUG);
             } catch (Throwable $e) {
                 CriticalErrorsHandler::handleExceptionWithSyslog($e);
             }
@@ -348,19 +430,33 @@ class BeanstalkClient extends Injectable
         }
         $this->message = $mData;
 
-        // Check the job stats
-        $stats           = $this->queue->statsJob($job);
-        if (intval($stats['reserves'])>3){
+        // Check the job stats. Pheanstalk 8.x returns a JobStats value
+        // object with typed properties (->reserves, ->tube as TubeName, ...)
+        // instead of the 4.x ArrayResponse with string indices.
+        try {
+            $stats = $this->queue->statsJob($job);
+        } catch (JobNotFoundException $e) {
+            // Job vanished between reserve and statsJob — race, nothing to
+            // do here. Do not report to Sentry (issue #1010).
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "job {$job->getId()} vanished before statsJob: " . $e->getMessage(),
+                LOG_DEBUG
+            );
+            return;
+        }
+        if ($stats->reserves > 3) {
             // Probably an exception did happen during the previous job execution, force to delete it.
-            $errorMessage = 'This job has attempted to execute more than 3 times without success.'.PHP_EOL;
-            $errorMessage .= '  Job stats: '.json_encode($stats).PHP_EOL;
-            $errorMessage .= '  Message: '.json_encode($this->message);
-            SystemMessages::sysLogMsg(__METHOD__,$errorMessage,LOG_ALERT);
+            $errorMessage  = 'This job has attempted to execute more than 3 times without success.' . PHP_EOL;
+            $errorMessage .= '  Job reserves: ' . $stats->reserves . PHP_EOL;
+            $errorMessage .= '  Job tube: ' . $stats->tube->value . PHP_EOL;
+            $errorMessage .= '  Message: ' . json_encode($this->message);
+            SystemMessages::sysLogMsg(__METHOD__, $errorMessage, LOG_ALERT);
             $this->buryJob($job);
         }
 
         // Find the subscribed function for the tube
-        $requestFormTube = $stats['tube'];
+        $requestFormTube = $stats->tube->value;
         $func            = $this->subscriptions[$requestFormTube] ?? null;
         if ($func === null) {
             // No action found, bury the job
@@ -375,6 +471,15 @@ class BeanstalkClient extends Injectable
                 }
                 // Removes the job from the queue when it has been successfully completed
                 $this->queue->delete($job);
+            } catch (JobNotFoundException $e) {
+                // Worker ran past the job's TTR so beanstalkd moved it back
+                // to ready before we got here. Nothing to do, and nothing
+                // worth reporting to Sentry (issue #1010 / #27284).
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "job {$job->getId()} vanished before delete: " . $e->getMessage(),
+                    LOG_DEBUG
+                );
             } catch (Throwable $e) {
                 // Marks the job as terminally failed and no workers will restart it.
                 $this->buryJob($job);
@@ -390,11 +495,19 @@ class BeanstalkClient extends Injectable
      */
     private function buryJob(?JobIdInterface $job):void
     {
-        if(!isset($job)){
+        if (!isset($job)) {
             return;
         }
         try {
             $this->queue->bury($job);
+        } catch (JobNotFoundException $e) {
+            // Job already removed (TTR race) — nothing to bury, skip Sentry.
+            // Issue #1010 / #27283 noise source.
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "job {$job->getId()} gone before bury: " . $e->getMessage(),
+                LOG_DEBUG
+            );
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
@@ -428,13 +541,13 @@ class BeanstalkClient extends Injectable
     public function reply(string $response): void
     {
         if (isset($this->message['inbox_tube'])) {
-            $this->queue->useTube($this->message['inbox_tube']);
+            $this->queue->useTube(new TubeName($this->message['inbox_tube']));
             try {
                 $this->queue->put($response);
             } catch (\Throwable $exception) {
                 CriticalErrorsHandler::handleExceptionWithSyslog($exception);
             }
-            $this->queue->useTube($this->tube);
+            $this->queue->useTube(new TubeName($this->tube));
         }
     }
 
@@ -479,7 +592,7 @@ class BeanstalkClient extends Injectable
     public function getMessagesFromTube(string $tube = ''): array
     {
         if ($tube !== '') {
-            $this->queue->useTube($tube);
+            $this->queue->useTube(new TubeName($tube));
         }
         $arrayOfMessages = [];
         while ($job = $this->queue->peekReady()) {
@@ -489,9 +602,34 @@ class BeanstalkClient extends Injectable
                 $mData = unserialize($job->getData(), ['allowed_classes' => false]);
             }
             $arrayOfMessages[] = $mData;
-            $this->queue->delete($job);
+            try {
+                $this->queue->delete($job);
+            } catch (JobNotFoundException $e) {
+                // Race: job disappeared between peek and delete.
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "job {$job->getId()} vanished before delete: " . $e->getMessage(),
+                    LOG_DEBUG
+                );
+            }
         }
 
         return $arrayOfMessages;
+    }
+
+    /**
+     * Release the underlying socket. Thin wrapper around Pheanstalk 8.x's
+     * disconnect() so workers can explicitly free resources on shutdown
+     * instead of relying on garbage collection. Mirrors the WorkerBase
+     * closeRedis() pattern from issue #1022.
+     */
+    public function close(): void
+    {
+        try {
+            $this->queue->disconnect();
+        } catch (Throwable) {
+            // Ignore — shutdown path, best-effort release.
+        }
+        $this->connected = false;
     }
 }

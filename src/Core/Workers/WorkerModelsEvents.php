@@ -78,7 +78,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessOtherModels;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessPBXSettings;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Di;
-use Pheanstalk\Contract\PheanstalkInterface;
+use Pheanstalk\Contract\PheanstalkPublisherInterface;
 use RuntimeException;
 use Throwable;
 
@@ -220,7 +220,7 @@ class WorkerModelsEvents extends WorkerBase
         // Prepare the job data
         $jobData = json_encode(['source' => BeanstalkConnectionModelsProvider::SOURCE_INVOKE_ACTION, 'action' => $action, 'parameters' => $parameters, 'model' => '']);
         // Publish the job to the Beanstalk queue
-        $queue->publish($jobData, self::class, $priority, PheanstalkInterface::DEFAULT_DELAY, 3600);
+        $queue->publish($jobData, self::class, $priority, PheanstalkPublisherInterface::DEFAULT_DELAY, 3600);
     }
 
     /**

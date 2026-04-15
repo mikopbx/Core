@@ -5,7 +5,7 @@ namespace MikoPBX\PBXCoreREST\Controllers\Modules;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
-use Pheanstalk\Contract\PheanstalkInterface;
+use Pheanstalk\Contract\PheanstalkPublisherInterface;
 
 /**
  * Base controller for handling module-related actions.
@@ -50,7 +50,7 @@ class ModulesControllerBase extends BaseController
     public function callActionForModule(string $moduleName, string $actionName): void
     {
         $maxTimeout = max(10, $this->request->getRequestTimeout());
-        $priority = max(PheanstalkInterface::DEFAULT_PRIORITY, $this->request->getRequestPriority());
+        $priority = max(PheanstalkPublisherInterface::DEFAULT_PRIORITY, $this->request->getRequestPriority());
         // Old style modules, we can remove it after 2025
         $payload =$this->request->getData();
         $payload['ip_srv'] = $_SERVER['SERVER_ADDR'];
