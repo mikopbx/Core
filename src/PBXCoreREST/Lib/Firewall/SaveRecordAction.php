@@ -26,7 +26,6 @@ use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di\Di;
 
 /**
  * ✨ REFERENCE IMPLEMENTATION: Firewall Save Action (Security Critical)
@@ -219,100 +218,98 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         // ============================================================
         // PHASE 6: SAVE TO DATABASE
-        // WHY: All-or-nothing transaction for NetworkFilter + FirewallRules
+        // All writes run inside shared 'db-write' mutex + transaction
+        // via BaseActionHelper::executeInTransaction(). This avoids
+        // "database is locked" races with WorkerModelsEvents / IptablesConf
+        // (see GitHub #1020, Sentry MIKOPBX-KMK/MIKOPBX-KMM).
         // ============================================================
 
-        $di = Di::getDefault();
-        if ($di === null) {
-            $res->messages['error'][] = 'DI container is not available';
-            $res->httpCode = 500;
-            return $res;
-        }
-        $db = $di->get('db');
-
         try {
-            $db->begin();
+            self::executeInTransaction(function () use (
+                $networkFilter,
+                $sanitizedData,
+                $isNewRecord,
+                $httpMethod,
+                $res
+            ): void {
+                // Process network/subnet fields to calculate permit (CIDR notation)
+                if (isset($sanitizedData['network']) && isset($sanitizedData['subnet'])) {
+                    $network = $sanitizedData['network'];
+                    $subnet  = $sanitizedData['subnet'];
 
-            // Process network/subnet fields to calculate permit (CIDR notation)
-            if (isset($sanitizedData['network']) && isset($sanitizedData['subnet'])) {
-                $network = $sanitizedData['network'];
-                $subnet = $sanitizedData['subnet'];
+                    // Detect IP version to apply correct normalization
+                    $version = IpAddressHelper::getIpVersion($network);
 
-                // Detect IP version to apply correct normalization
-                $version = IpAddressHelper::getIpVersion($network);
-
-                if ($version === IpAddressHelper::IP_VERSION_4) {
-                    // IPv4: Normalize network address using Cidr calculator
-                    $calculator = new Cidr();
-                    $normalizedNetwork = $calculator->cidr2network($network, intval($subnet));
-                    $networkFilter->permit = $normalizedNetwork . '/' . $subnet;
-                } else {
-                    // IPv6: Use address as-is (already validated in validateIpAndCidr)
-                    $networkFilter->permit = $network . '/' . $subnet;
-                }
-            }
-
-            // Convert boolean fields to '0'/'1' strings
-            $sanitizedData = self::convertBooleanFields($sanitizedData, ['newer_block_ip', 'local_network']);
-
-            // Update NetworkFilter fields
-            // For CREATE: All fields from $sanitizedData (with defaults)
-            // For PATCH: Only provided fields (no defaults)
-            if (isset($sanitizedData['deny'])) {
-                $networkFilter->deny = $sanitizedData['deny'];
-            }
-            if (isset($sanitizedData['description'])) {
-                $networkFilter->description = $sanitizedData['description'];
-            }
-            if (isset($sanitizedData['newer_block_ip'])) {
-                $networkFilter->newer_block_ip = $sanitizedData['newer_block_ip'];
-            }
-            if (isset($sanitizedData['local_network'])) {
-                $networkFilter->local_network = $sanitizedData['local_network'];
-            }
-
-            if (!$networkFilter->save()) {
-                $errors = $networkFilter->getMessages();
-                foreach ($errors as $error) {
-                    $res->messages['error'][] = $error->getMessage();
-                }
-                $db->rollback();
-                $res->success = false;
-                return $res;
-            }
-
-            // Update FirewallRules if currentRules data is provided
-            if (isset($sanitizedData['currentRules']) && is_array($sanitizedData['currentRules'])) {
-                if ($isNewRecord) {
-                    // CREATE: Create new rules
-                    if (!self::createFirewallRules($networkFilter->id, $sanitizedData['currentRules'])) {
-                        $res->messages['error'][] = 'Failed to create firewall rules';
-                        $db->rollback();
-                        $res->success = false;
-                        return $res;
-                    }
-                } else {
-                    // UPDATE/PATCH: Update existing rules
-                    // WHY: PATCH = partial update (only provided fields), PUT = full update (all fields)
-                    $isPatch = ($httpMethod === 'PATCH');
-                    if (!self::updateFirewallRules($networkFilter->id, $sanitizedData['currentRules'], $isPatch)) {
-                        $res->messages['error'][] = 'Failed to update firewall rules';
-                        $db->rollback();
-                        $res->success = false;
-                        return $res;
+                    if ($version === IpAddressHelper::IP_VERSION_4) {
+                        // IPv4: Normalize network address using Cidr calculator
+                        $calculator = new Cidr();
+                        $normalizedNetwork = $calculator->cidr2network($network, intval($subnet));
+                        $networkFilter->permit = $normalizedNetwork . '/' . $subnet;
+                    } else {
+                        // IPv6: Use address as-is (already validated in validateIpAndCidr)
+                        $networkFilter->permit = $network . '/' . $subnet;
                     }
                 }
-            } elseif ($isNewRecord) {
-                // CREATE without rules: Use defaults
-                if (!self::createFirewallRules($networkFilter->id, [])) {
-                    $res->messages['error'][] = 'Failed to create default firewall rules';
-                    $db->rollback();
-                    $res->success = false;
-                    return $res;
-                }
-            }
 
-            $db->commit();
+                // Convert boolean fields to '0'/'1' strings
+                $convertedData = self::convertBooleanFields(
+                    $sanitizedData,
+                    ['newer_block_ip', 'local_network']
+                );
+
+                // Update NetworkFilter fields
+                // For CREATE: All fields from $convertedData (with defaults)
+                // For PATCH: Only provided fields (no defaults)
+                if (isset($convertedData['deny'])) {
+                    $networkFilter->deny = $convertedData['deny'];
+                }
+                if (isset($convertedData['description'])) {
+                    $networkFilter->description = $convertedData['description'];
+                }
+                if (isset($convertedData['newer_block_ip'])) {
+                    $networkFilter->newer_block_ip = $convertedData['newer_block_ip'];
+                }
+                if (isset($convertedData['local_network'])) {
+                    $networkFilter->local_network = $convertedData['local_network'];
+                }
+
+                if (!$networkFilter->save()) {
+                    // Preserve per-field error messages as individual array
+                    // entries so the frontend can still display them one by
+                    // one. Throwing \DomainException signals a validation
+                    // failure (not an infrastructure error) — the outer catch
+                    // handles it without pushing another combined message.
+                    foreach ($networkFilter->getMessages() as $message) {
+                        $res->messages['error'][] = $message->getMessage();
+                    }
+                    throw new \DomainException('Network filter validation failed');
+                }
+
+                // Update FirewallRules if currentRules data is provided
+                if (isset($sanitizedData['currentRules']) && is_array($sanitizedData['currentRules'])) {
+                    if ($isNewRecord) {
+                        // CREATE: Create new rules
+                        if (!self::createFirewallRules($networkFilter->id, $sanitizedData['currentRules'])) {
+                            $res->messages['error'][] = 'Failed to create firewall rules';
+                            throw new \DomainException('createFirewallRules returned false');
+                        }
+                    } else {
+                        // UPDATE/PATCH: Update existing rules
+                        // WHY: PATCH = partial update (only provided fields), PUT = full update (all fields)
+                        $isPatch = ($httpMethod === 'PATCH');
+                        if (!self::updateFirewallRules($networkFilter->id, $sanitizedData['currentRules'], $isPatch)) {
+                            $res->messages['error'][] = 'Failed to update firewall rules';
+                            throw new \DomainException('updateFirewallRules returned false');
+                        }
+                    }
+                } elseif ($isNewRecord) {
+                    // CREATE without rules: Use defaults
+                    if (!self::createFirewallRules($networkFilter->id, [])) {
+                        $res->messages['error'][] = 'Failed to create default firewall rules';
+                        throw new \DomainException('createFirewallRules (defaults) returned false');
+                    }
+                }
+            });
 
             // ============================================================
             // PHASE 7: BUILD RESPONSE
@@ -324,10 +321,18 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $res->httpCode = $isNewRecord ? 201 : 200; // 201 Created, 200 OK
             $res->reload = "firewall/modify/{$networkFilter->id}";
 
-            self::logSuccessfulSave('Firewall rule', $networkFilter->description ?: $networkFilter->permit, (string)$networkFilter->id, __METHOD__);
-
+            self::logSuccessfulSave(
+                'Firewall rule',
+                $networkFilter->description ?: $networkFilter->permit,
+                (string)$networkFilter->id,
+                __METHOD__
+            );
+        } catch (\DomainException) {
+            // Validation/business failure — messages already populated inside
+            // the callback, rollback already performed by executeInTransaction.
+            // Deliberately swallow the exception (no syslog, no extra message).
+            $res->success = false;
         } catch (\Exception $e) {
-            $db->rollback();
             return self::handleError($e, $res);
         }
 

@@ -21,6 +21,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\{FirewallRules, NetworkFilters, PbxSettings, Sip};
+use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Processes;
@@ -29,6 +30,8 @@ use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\Modules\Config\SystemConfigInterface;
+use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
 /**
@@ -451,7 +454,16 @@ class IptablesConf extends Injectable
     }
 
     /**
-     * Updates firewall rules according to default template
+     * Updates firewall rules according to default template.
+     *
+     * Normally runs inside the shared 'db-write' mutex + SQLite transaction so
+     * the batch update cannot race with parallel API writes from
+     * WorkerApiCommands (see GitHub #1020 and Sentry MIKOPBX-KMK/MIKOPBX-KMM).
+     *
+     * When MutexProvider/Redis is not yet reachable — as happens during early
+     * boot and the release-upgrade path (UpdateSystemConfig) — this method
+     * degrades to a direct per-row save without transaction. Upgrade code is
+     * single-threaded in that phase, so there is no writer to race with.
      */
     public static function updateFirewallRules(): void
     {
@@ -465,15 +477,80 @@ class IptablesConf extends Injectable
             ],
         ];
         $rules = FirewallRules::find($conditions);
+
+        // Materialize only rules that actually change, so we skip
+        // taking the mutex and opening a transaction on the common no-op path.
+        $toUpdate = [];
         foreach ($rules as $rule) {
             $from = $portSet[$rule->portFromKey] ?? '0';
-            $to = $portSet[$rule->portToKey] ?? '0';
+            $to   = $portSet[$rule->portToKey] ?? '0';
             if ($from === $rule->portfrom && $to === $rule->portto) {
                 continue;
             }
             $rule->portfrom = $from;
-            $rule->portto = $to;
-            $rule->update();
+            $rule->portto   = $to;
+            $toUpdate[]     = $rule;
+        }
+
+        if (empty($toUpdate)) {
+            return;
+        }
+
+        $applyUpdates = static function () use ($toUpdate): void {
+            foreach ($toUpdate as $rule) {
+                if (!$rule->save()) {
+                    $messages = array_map(
+                        static fn($m) => (string)$m->getMessage(),
+                        $rule->getMessages()
+                    );
+                    throw new \RuntimeException(
+                        'IptablesConf::updateFirewallRules failed: ' . implode(', ', $messages)
+                    );
+                }
+            }
+        };
+
+        if (self::isMutexAvailable()) {
+            BaseActionHelper::executeInTransaction($applyUpdates);
+            return;
+        }
+
+        // Fallback: early boot / release upgrade — Redis not ready yet.
+        $applyUpdates();
+    }
+
+    /**
+     * Probe MutexProvider / Redis availability.
+     *
+     * Used by updateFirewallRules() to decide between the mutex-guarded path
+     * (runtime) and the direct-write fallback (early boot / upgrade). A failure
+     * here is not cached so transient Redis outages auto-recover on the next
+     * call.
+     */
+    private static function isMutexAvailable(): bool
+    {
+        try {
+            $di = Di::getDefault();
+            if ($di === null || !$di->has(MutexProvider::SERVICE_NAME)) {
+                return false;
+            }
+
+            /** @var MutexProvider $mutex */
+            $mutex = $di->get(MutexProvider::SERVICE_NAME);
+
+            // Force a real Redis round-trip so providers that defer the
+            // connection until first use surface their failure here.
+            $mutex->isLocked('iptables-conf-probe');
+
+            return true;
+        } catch (\Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                'Mutex/Redis unavailable, falling back to direct firewall rule writes: '
+                . $e->getMessage(),
+                LOG_WARNING
+            );
+            return false;
         }
     }
 
