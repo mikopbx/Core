@@ -40,6 +40,13 @@ class StartDownloadAction extends Injectable
     /**
      * Starts the module download in a separate background process.
      *
+     * Security note: all three inputs are treated as untrusted. The module id
+     * becomes a directory name (`$moduleDirTmp`) that is later passed through
+     * the shell to launch WorkerDownloader, so shell meta-characters are
+     * rejected up front and every interpolated path goes through
+     * escapeshellarg(). See CVE-2025-52207 for the same class of bug in
+     * DownloadNewFirmwareAction.
+     *
      * @param string $moduleUniqueID The module unique id.
      * @param string $url The download URL of the module.
      * @param string $md5 The MD5 hash of the module file.
@@ -50,6 +57,33 @@ class StartDownloadAction extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
+
+        // Module ids follow a restricted charset (typically "ModuleFooBar").
+        // Reject anything that would let us break out of the directory name.
+        $moduleUniqueID = trim($moduleUniqueID);
+        if ($moduleUniqueID === '' || !preg_match('/^[A-Za-z0-9_\-]{1,128}$/', $moduleUniqueID)) {
+            $res->success = false;
+            $res->messages['error'][] = 'Invalid module unique id';
+            $res->httpCode = 400;
+            return $res;
+        }
+
+        $url = trim($url);
+        if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL) || !preg_match('#^https?://#i', $url)) {
+            $res->success = false;
+            $res->messages['error'][] = 'Download URL must be a valid http(s) URL';
+            $res->httpCode = 400;
+            return $res;
+        }
+
+        $md5 = strtolower(trim($md5));
+        if (!preg_match('/^[a-f0-9]{32}$/', $md5)) {
+            $res->success = false;
+            $res->messages['error'][] = 'A valid MD5 hash (32 hex characters) is required';
+            $res->httpCode = 400;
+            return $res;
+        }
+
         $di = Di::getDefault();
         if ($di !== null) {
             $tempDir = Directories::getDir(Directories::WWW_UPLOAD_DIR);
@@ -80,7 +114,9 @@ class StartDownloadAction extends Injectable
         );
         $workerDownloaderPath = Util::getFilePathByClassName(WorkerDownloader::class);
         $php = Util::which('php');
-        Processes::mwExecBg("$php -f $workerDownloaderPath start $moduleDirTmp/download_settings.json");
+        Processes::mwExecBg(
+            "$php -f $workerDownloaderPath start " . escapeshellarg("$moduleDirTmp/download_settings.json")
+        );
 
         $res->data['uniqid'] = $moduleUniqueID;
         $res->data[FilesConstants::D_STATUS] = FilesConstants::DOWNLOAD_IN_PROGRESS;

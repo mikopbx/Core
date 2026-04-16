@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\System;
 
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\System;
@@ -51,6 +52,16 @@ class UpgradeFromImageAction extends Injectable
         $res->processor = __METHOD__;
         $res->success = true;
         $res->data['message'] = 'In progress...';
+
+        // Confine the uploaded image path to the configured upload directory
+        // so a crafted API payload cannot point at arbitrary files or smuggle
+        // shell meta-characters through $imageFileLocation.
+        $imageFileLocation = self::confineToUploadDir($imageFileLocation);
+        if ($imageFileLocation === null) {
+            $res->success = false;
+            $res->messages[] = 'Invalid image file location';
+            return $res;
+        }
 
         // Validate input parameters.
         list($res->success, $res->messages) = self::validateParameters($imageFileLocation);
@@ -96,6 +107,34 @@ class UpgradeFromImageAction extends Injectable
             System::reboot();
         }
         return $res;
+    }
+
+    /**
+     * Validate that the supplied image path resolves inside the configured
+     * upload directory and exists on disk. Returns the realpath on success
+     * or null on any failure — the caller must reject a null result.
+     *
+     * This is the primary defence against command injection via
+     * $imageFileLocation because the rest of this class interpolates the
+     * string into shell pipelines. A realpath prefix match makes path
+     * traversal impossible and the character set of an upload-directory
+     * path makes shell meta-characters irrelevant too.
+     */
+    private static function confineToUploadDir(string $imageFileLocation): ?string
+    {
+        $uploadDir = Directories::getDir(Directories::WWW_UPLOAD_DIR);
+        $allowedRoot = realpath($uploadDir);
+        if ($allowedRoot === false) {
+            return null;
+        }
+        $real = realpath($imageFileLocation);
+        if ($real === false) {
+            return null;
+        }
+        if (!str_starts_with($real, $allowedRoot . DIRECTORY_SEPARATOR) && $real !== $allowedRoot) {
+            return null;
+        }
+        return $real;
     }
 
     /**
@@ -197,11 +236,22 @@ class UpgradeFromImageAction extends Injectable
         $res->processor = __METHOD__;
         $res->success = true;
 
+        // The boot partition name comes from lsblk output in
+        // getBootPartitionName() — in practice a /dev/* node — but we still
+        // whitelist it here so a future refactor or compromised lsblk cannot
+        // break the shell boundary.
+        $bootPartition = (string)($parameters['bootPartition'] ?? '');
+        if (!preg_match('#^/dev/[A-Za-z0-9/_\-]+$#', $bootPartition)) {
+            return [false, ["Refusing to mount suspicious boot partition path: $bootPartition"]];
+        }
+
         // Mount boot partition
         $systemDir = '/system';
         Util::mwMkdir($systemDir);
         $mount = Util::which('mount');
-        $result = Processes::mwExec("$mount {$parameters['bootPartition']} $systemDir");
+        $result = Processes::mwExec(
+            "$mount " . escapeshellarg($bootPartition) . ' ' . escapeshellarg($systemDir)
+        );
         if ($result === 0) {
             $upgradeScriptDir = "$systemDir/upgrade";
             Util::mwMkdir($upgradeScriptDir);
@@ -216,12 +266,12 @@ class UpgradeFromImageAction extends Injectable
                 }
             }
         } else {
-            $res->messages[] = "Failed to mount the boot partition {$parameters['bootPartition']}";
+            $res->messages[] = "Failed to mount the boot partition $bootPartition";
             $res->success = false;
         }
 
         $umount = Util::which('umount');
-        Processes::mwExec("$umount {$parameters['bootPartition']}");
+        Processes::mwExec("$umount " . escapeshellarg($bootPartition));
 
         return [$res->success, $res->messages];
     }
@@ -249,14 +299,19 @@ class UpgradeFromImageAction extends Injectable
         // Decompress the IMG file using 'busybox gunzip' instead of standalone gunzip.
         // GNU gzip 1.14 called as 'gunzip' only removes one gzip layer from double-compressed
         // firmware images. BusyBox gunzip handles this correctly.
+        //
+        // Both operands are escapeshellarg()'d — the original single-quoted
+        // form broke on any apostrophe or $() inside the path.
         $busybox = Util::which('busybox');
-        $decompressCmd = "$busybox gunzip -c '$imageFileLocation' > '$decompressedImg'";
+        $decompressCmd = "$busybox gunzip -c " . escapeshellarg($imageFileLocation)
+            . ' > ' . escapeshellarg($decompressedImg);
         Processes::mwExec($decompressCmd);
 
         // Setup loop device with the correct offset
         $parted  = Util::which('parted');
         $busybox = Util::which('busybox');
-        $cmdOffset = "$parted '$decompressedImg' unit B print | $busybox awk 'NR>3 && /boot/ {gsub(/B/,\"\",$2); print $2+0; exit}' | $busybox head -n 1";
+        $cmdOffset = "$parted " . escapeshellarg($decompressedImg)
+            . " unit B print | $busybox awk 'NR>3 && /boot/ {gsub(/B/,\"\",$2); print $2+0; exit}' | $busybox head -n 1";
         $offset = trim(shell_exec($cmdOffset) ?? '');
 
         // Validate offset before proceeding

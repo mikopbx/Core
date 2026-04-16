@@ -160,6 +160,26 @@ class UploadFileAction extends Injectable
             $res->messages['error'] = $validationResult['error'];
             return $res;
         }
+        // Security: resumableIdentifier is HTTP-attacker-controlled and will
+        // become part of filesystem + shell paths (via $chunks_dest_file,
+        // $settings_file). Restrict it to a safe charset before any
+        // interpolation. Empty / malformed values get a deterministic fallback
+        // so a crafted request cannot target arbitrary directories.
+        $rawIdentifier = (string)($parameters['resumableIdentifier'] ?? '');
+        $safeIdentifier = preg_replace('/[^A-Za-z0-9._\-]/', '', $rawIdentifier);
+        if ($safeIdentifier === '' || $safeIdentifier !== $rawIdentifier) {
+            // Rejecting is safer than silently rewriting because the client
+            // uses the identifier to resume/track the upload.
+            $res->success = false;
+            $res->messages['error'] = 'Invalid resumableIdentifier';
+            return $res;
+        }
+        $parameters['resumableIdentifier'] = $safeIdentifier;
+
+        // Also coerce the chunk number to an integer — it participates in
+        // shell paths below and must not carry metacharacters.
+        $parameters['resumableChunkNumber'] = (int)($parameters['resumableChunkNumber'] ?? 0);
+
         $parameters['uploadDir'] = $di->getShared('config')->path('www.uploadDir');
         $parameters['tempDir'] = "{$parameters['uploadDir']}/{$parameters['resumableIdentifier']}";
         if (!Util::mwMkdir($parameters['tempDir'])) {
@@ -176,6 +196,10 @@ class UploadFileAction extends Injectable
             $fileName = '' . md5(microtime()) . '-' . $fileName;
         }
         $extension = (string)pathinfo($parameters['resumableFilename'], PATHINFO_EXTENSION);
+        // Security: extension from pathinfo() is attacker-controlled too
+        // (e.g. "rce;touch /tmp/pwn" parses as extension "rce;touch /tmp/pwn").
+        // Limit to a conservative alnum set and cap the length.
+        $extension = substr(preg_replace('/[^A-Za-z0-9]/', '', $extension), 0, 16);
         $fileName .= '.' . $extension;
         $parameters['resumableFilename'] = $fileName;
         $parameters['fullUploadedFileName'] = "{$parameters['tempDir']}/$fileName";
@@ -276,7 +300,7 @@ class UploadFileAction extends Injectable
             . "/{$parameters['resumableFilename']}.part{$parameters['resumableChunkNumber']}";
         if (file_exists($chunks_dest_file)) {
             $rm = Util::which('rm');
-            Processes::mwExec("$rm -f $chunks_dest_file");
+            Processes::mwExec("$rm -f " . escapeshellarg($chunks_dest_file));
         }
         $file->moveTo($chunks_dest_file);
 
@@ -316,7 +340,9 @@ class UploadFileAction extends Injectable
             // We will start the background process to merge parts into one file
             $php               = Util::which('php');
             $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
-            Processes::mwExecBg("$php -f $workerFilesMergerPath start '$settings_file'");
+            Processes::mwExecBg(
+                "$php -f $workerFilesMergerPath start " . escapeshellarg($settings_file)
+            );
 
             return true;
         }
@@ -357,7 +383,13 @@ class UploadFileAction extends Injectable
      */
     private static function validateFileType(string $filename, string $mimeType, string $category): array
     {
+        // Security: pathinfo() preserves any shell meta-characters the client
+        // appended to the extension ("hack.php;touch" parses as "php;touch"
+        // and would slip past the blacklist below). Normalize to a plain
+        // alnum set before comparison so the FORBIDDEN_EXTENSIONS check
+        // cannot be bypassed by appending a separator character.
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $extension = preg_replace('/[^a-z0-9]/', '', $extension);
 
         // 1. Check forbidden extensions (security)
         if (in_array($extension, self::FORBIDDEN_EXTENSIONS, true)) {

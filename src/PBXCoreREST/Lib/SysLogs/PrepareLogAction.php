@@ -66,7 +66,11 @@ class PrepareLogAction extends Injectable
         file_put_contents($settings_file, json_encode($merge_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
         $php = Util::which('php');
         $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMakeLogFilesArchive::class);
-        Processes::mwExecBg("$php -f $workerFilesMergerPath start '$settings_file'");
+        // Defence in depth: the $prefix is derived from a bool flag today, but
+        // escapeshellarg removes any future risk if a refactor widens it.
+        Processes::mwExecBg(
+            "$php -f $workerFilesMergerPath start " . escapeshellarg($settings_file)
+        );
 
         return $res;
     }

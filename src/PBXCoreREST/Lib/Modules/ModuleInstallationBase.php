@@ -242,8 +242,12 @@ class ModuleInstallationBase extends Injectable
         $php = Util::which('php');
         $workerModuleInstallerPath = Util::getFilePathByClassName(WorkerModuleInstaller::class);
 
-        // Execute the background process to install the module
-        Processes::mwExecBg("$php -f $workerModuleInstallerPath start '$settings_file'");
+        // Execute the background process to install the module.
+        // escapeshellarg replaces the fragile single-quote wrapping: a path
+        // containing an apostrophe used to break out into the shell.
+        Processes::mwExecBg(
+            "$php -f $workerModuleInstallerPath start " . escapeshellarg($settings_file)
+        );
 
         $res->data[FilesConstants::FILE_PATH] = $filePath;
         $res->data[self::MODULE_WAS_ENABLED] = $moduleWasEnabled;

@@ -110,6 +110,14 @@ class UninstallModuleAction extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
+        // Validate module id up front: it becomes part of shell/filesystem
+        // paths below. Only [A-Za-z0-9_-] is ever a legitimate module id.
+        if (!preg_match('/^[A-Za-z0-9_\-]{1,128}$/', $this->moduleUniqueId)) {
+            $res->success = false;
+            $res->messages['error'] = 'Invalid module unique id';
+            return $res;
+        }
+
         $currentModuleDir = PbxExtensionUtils::getModuleDir($this->moduleUniqueId);
 
         if (PbxExtensionUtils::isEnabled($this->moduleUniqueId)) {
@@ -120,19 +128,37 @@ class UninstallModuleAction extends Injectable
             }
         }
 
-        // Kill all module processes
+        // Kill all module processes.
+        //
+        // The previous implementation used a nested $() subshell —
+        //     "$kill -9 $($lsof $currentModuleDir/bin/* | $grep -v COMMAND | $awk '{print $2}' | $uniq)"
+        // which is an arbitrary command injection sink the moment
+        // $currentModuleDir contains a shell meta-character. Even though the
+        // module id is now validated above, we avoid the nested shell
+        // altogether: lsof output is captured into a PHP array and PIDs are
+        // sent via posix_kill(), so no shell interpolation of a path happens.
         if (is_dir("$currentModuleDir/bin")) {
             $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_II_STOP_PROCESSES, $res->getResult());
-            $kill = Util::which('kill');
-            $lsof = Util::which('lsof');
-            $grep = Util::which('grep');
-            $awk = Util::which('awk');
-            $uniq = Util::which('uniq');
 
-            // Execute the command to kill all processes related to the module
-            Processes::mwExec(
-                "$kill -9 $($lsof $currentModuleDir/bin/* |  $grep -v COMMAND | $awk  '{ print $2}' | $uniq)"
-            );
+            $lsof = Util::which('lsof');
+            $lsofCmd = $lsof . ' ' . escapeshellarg("$currentModuleDir/bin") . '/*';
+            $lsofOutput = [];
+            Processes::mwExec($lsofCmd, $lsofOutput);
+
+            $pids = [];
+            foreach ($lsofOutput as $line) {
+                if (str_starts_with($line, 'COMMAND')) {
+                    continue;
+                }
+                $fields = preg_split('/\s+/', trim($line));
+                if (isset($fields[1]) && ctype_digit($fields[1])) {
+                    $pids[(int)$fields[1]] = true;
+                }
+            }
+            foreach (array_keys($pids) as $pid) {
+                // SIGKILL each open file-holding process, mirroring the old kill -9 loop.
+                @posix_kill($pid, SIGKILL);
+            }
         }
 
         // Uninstall module with keep settings and backup db
@@ -160,8 +186,10 @@ class UninstallModuleAction extends Injectable
                 $rm = Util::which('rm');
 
                 $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_V_DELETE_MODULE_FOLDER, $res->getResult());
-                // Remove the module directory recursively
-                Processes::mwExec("$rm -rf $currentModuleDir");
+                // Remove the module directory recursively.
+                // escapeshellarg prevents command injection even if a future
+                // refactor relaxes the module id validation above.
+                Processes::mwExec("$rm -rf " . escapeshellarg($currentModuleDir));
 
                 // Use the fallback class to unregister the module from the database
                 $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_VI_UNREGISTER_MODULE, $res->getResult());
