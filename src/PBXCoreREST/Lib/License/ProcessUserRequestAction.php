@@ -46,6 +46,11 @@ class ProcessUserRequestAction extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
+        // License errors must return HTTP 200 so the frontend Fomantic UI API
+        // module parses the response body and displays messages.license to the
+        // user. BaseController defaults result=false to 422, which jQuery
+        // treats as a transport error and never shows the message content.
+        $res->httpCode = 200;
         $di = Di::getDefault();
         $translation = $di->get(TranslationProvider::SERVICE_NAME);
         $license = $di->get(MarketPlaceProvider::SERVICE_NAME);
@@ -70,60 +75,46 @@ class ProcessUserRequestAction extends Injectable
                     $res->messages['info'][] = $translation->_('lic_SuccessfulActivation');
                     $res->success = true;
                 } elseif (!$licenseInfo['success'] && !empty($licenseInfo['error'])) {
-                    // Use translateLicenseErrorMessage to handle all error codes
                     $translatedError = $license->translateLicenseErrorMessage($licenseInfo['error']);
                     $res->messages['license'][] = $translatedError;
                     $res->success = false;
-
-                    // Determine HTTP code based on Zephir library response code
-                    $errorCode = $licenseInfo['code'] ?? 0;
-
-                    if ($errorCode === 400 || str_contains($licenseInfo['error'], '2026')) {
-                        // Invalid license key - client error
-                        $res->httpCode = 400; // Bad Request
-                    } elseif ($errorCode === 0) {
-                        // Connection error - no response from GNATS
-                        $res->httpCode = 503; // Service Unavailable
-                    } elseif ($errorCode >= 500) {
-                        // Server error from license server
-                        $res->httpCode = 502; // Bad Gateway
-                    } else {
-                        // Other client errors (invalid format, etc.)
-                        $res->httpCode = 400; // Bad Request
-                    }
                 } else {
                     $res->messages['license'][] = $translation->_('lic_FailedCheckLicense');
                     $res->success = false;
-                    $res->httpCode = 502; // Bad Gateway - unexpected response
                 }
             }
             if (!empty($data['coupon'])) {
-                $result = $license->activateCoupon($data['coupon']);
-                if ($result === true) {
+                $couponResult = $license->activateCoupon($data['coupon']);
+                if (!empty($couponResult['success'])) {
                     $res->messages['info'][] = $translation->_('lic_SuccessfulCouponActivation');
                     $res->success = true;
                 } else {
-                    $res->messages['license'][] = $license->translateLicenseErrorMessage((string)$result);
+                    $couponError = $couponResult['error'] ?? '';
+                    $res->messages['license'][] = $license->translateLicenseErrorMessage($couponError);
                     $res->success = false;
-                    $res->httpCode = 502; // Bad Gateway - license server communication error
                 }
             }
-        } else { // Only add trial for a license key
-            $newLicenseKey = (string)$license->getTrialLicense($data);
-            if (
-                strlen($newLicenseKey) === 28
-                && Text::startsWith($newLicenseKey, 'MIKO-')
-            ) {
-                PbxSettings::setValueByKey(PbxSettings::PBX_LICENSE, $newLicenseKey);
-                $license->changeLicenseKey($newLicenseKey);
-                $res->success = true;
-                $res->data[PbxSettings::PBX_LICENSE] = $newLicenseKey;
-                $res->messages['info'] = $translation->_('lic_SuccessfulActivation');
+        } else {
+            $trialResult = $license->getTrialLicense($data);
+            if (!empty($trialResult['success'])) {
+                $newLicenseKey = (string)($trialResult['result'] ?? '');
+                if (
+                    strlen($newLicenseKey) === 28
+                    && Text::startsWith($newLicenseKey, 'MIKO-')
+                ) {
+                    PbxSettings::setValueByKey(PbxSettings::PBX_LICENSE, $newLicenseKey);
+                    $license->changeLicenseKey($newLicenseKey);
+                    $res->success = true;
+                    $res->data[PbxSettings::PBX_LICENSE] = $newLicenseKey;
+                    $res->messages['info'] = $translation->_('lic_SuccessfulActivation');
+                } else {
+                    $res->messages['license'][] = $translation->_('lic_FailedCheckLicense');
+                    $res->success = false;
+                }
             } else {
-                // No internet connection, or wrong data sent to license server, or something else
-                $res->messages['license'][] = $license->translateLicenseErrorMessage($newLicenseKey);
+                $trialError = $trialResult['error'] ?? '';
+                $res->messages['license'][] = $license->translateLicenseErrorMessage($trialError);
                 $res->success = false;
-                $res->httpCode = 502; // Bad Gateway - license server communication error
             }
         }
         return $res;

@@ -25,9 +25,9 @@ use SimpleXMLElement;
  * @method void __construct() Constructor.
  * @method void __destruct() Destructor.
  * @method string|SimpleXMLElement getLicenseInfo(string $key) Retrieves license information.
- * @method bool|string getTrialLicense(array $params) Retrieves trial license.
+ * @method array getTrialLicense(array $params) Retrieves trial license. Returns ['success'=>bool, 'result'=>string] or ['success'=>false, 'error'=>string, 'code'=>int].
  * @method bool|string addTrial(string $productId) Adds a trial to the license key.
- * @method bool|string activateCoupon(string $coupon) Activates a coupon.
+ * @method array activateCoupon(string $coupon) Activates a coupon. Returns ['success'=>true] or ['success'=>false, 'error'=>string, 'code'=>int].
  * @method void changeLicenseKey(string $newKey) Changes the license key.
  * @method void sendLicenseMetrics(string $key, array $params) Sends metrics to the licensing server.
  * @method array captureFeature(string $featureId) Captures the specified feature in the license.

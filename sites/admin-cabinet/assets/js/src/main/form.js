@@ -481,7 +481,13 @@ const Form = {
         } else {
             // Error
             Form.$submitButton.transition('shake');
-            
+
+            // Call cbAfterSendForm on error too — modules like keyCheck
+            // handle messages.license inside their own callback.
+            if (Form.cbAfterSendForm) {
+                Form.cbAfterSendForm(response);
+            }
+
             // Show error messages
             if (response.messages) {
                 if (response.messages.error) {

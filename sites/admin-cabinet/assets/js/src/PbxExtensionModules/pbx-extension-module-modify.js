@@ -81,7 +81,9 @@ const pbxExtensionModuleModify = {
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
-        window.location = window.location.href;
+        if (response.result === true) {
+            window.location = window.location.href;
+        }
     },
 
     /**
