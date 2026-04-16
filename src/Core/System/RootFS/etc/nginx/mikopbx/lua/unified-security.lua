@@ -403,17 +403,38 @@ end
 
 -- ===== BASIC ATTACK PROTECTION =====
 
+-- Return the request path used for WAF checks:
+--   1. Starts from `ngx.var.request_uri` (the URI as received from the client,
+--      BEFORE nginx's internal rewrites). `ngx.var.uri` is post-rewrite and
+--      for MikoPBX API requests is always `/pbxcore/index.php`, which would
+--      defeat whitelist lookups and path-based checks.
+--   2. Query string is stripped.
+--   3. Percent-encoded sequences are decoded via `ngx.unescape_uri()`, so
+--      attacks like `%2e%2e%2f` or `%00` are visible to the Lua pattern
+--      matchers (`%.%.`, `%z`, SQL patterns). A separate check above catches
+--      double-encoded (`%252e%252e`) sequences on the raw request URI.
+local function get_request_path()
+    local req = ngx.var.request_uri or ngx.var.uri or ""
+    local qmark = string.find(req, "?", 1, true)
+    if qmark then
+        req = string.sub(req, 1, qmark - 1)
+    end
+    return ngx.unescape_uri(req)
+end
+
 local function check_basic_security()
-    local uri = ngx.var.uri
+    local uri = get_request_path()
     local raw_args = ngx.var.args
     -- Decode query args so %2e%2e%2f is caught as ../
     local args = raw_args and ngx.unescape_uri(raw_args) or nil
     local user_agent = ngx.var.http_user_agent or ""
 
-    -- Check for double-encoded traversal in raw query string
-    -- %252e%252e = double-encoded "..", %252e%252e%252f = double-encoded "../"
-    if raw_args then
-        local lower_raw = string.lower(raw_args)
+    -- Check for double-encoded traversal anywhere in the raw request URI
+    -- (path + query). `%252e%252e` = double-encoded "..". This has to run
+    -- on the raw bytes because get_request_path() already single-decodes.
+    local raw_request_uri = ngx.var.request_uri
+    if raw_request_uri then
+        local lower_raw = string.lower(raw_request_uri)
         if string.find(lower_raw, "%252e%252e", 1, true) then
             ngx.log(ngx.WARN, "WAF: double-encoded traversal attempt from: ", client_ip)
             return false
@@ -542,9 +563,15 @@ if not rate_limit_enabled then
     end
 end
 
--- Check if request is for static resource
+-- Check if request is for static resource.
+-- Intentionally uses `ngx.var.uri` (post-rewrite) rather than the raw request
+-- path: for real static files nginx does not rewrite, so `ngx.var.uri` stays
+-- as the filename (e.g. `/assets/style.css`); for API requests nginx rewrites
+-- to `/pbxcore/index.php`, which naturally fails every extension match. Using
+-- the raw request path here would misclassify API routes whose last segment
+-- happens to end in `.js`/`.css`/`.map` and let them bypass rate limiting.
 local function is_static_resource()
-    local uri = ngx.var.uri
+    local uri = ngx.var.uri or ""
     local static_extensions = {
         "%.css$", "%.js$", "%.jpg$", "%.jpeg$", "%.png$", "%.gif$", "%.ico$",
         "%.svg$", "%.woff$", "%.woff2$", "%.ttf$", "%.eot$", "%.map$"
@@ -570,7 +597,7 @@ local function check_rate_limit(is_authenticated)
     end
 
     -- Skip rate limiting for chunked file upload POST requests (many sequential chunks)
-    if ngx.req.get_method() == "POST" and ngx.var.uri == "/pbxcore/api/v3/files:upload" then
+    if ngx.req.get_method() == "POST" and get_request_path() == "/pbxcore/api/v3/files:upload" then
         return true
     end
 
@@ -600,7 +627,7 @@ local function check_rate_limit(is_authenticated)
     local limit = rate_limit_requests
     if is_authenticated then
         limit = rate_limit_requests_auth
-    elseif string.match(ngx.var.uri, "^/pbxcore/api/") then
+    elseif string.match(get_request_path(), "^/pbxcore/api/") then
         limit = rate_limit_requests_api
     end
 
