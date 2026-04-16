@@ -105,7 +105,18 @@ class Storage extends Injectable
      */
     public static function isStorageDiskMounted(string $filter = '', string &$mount_dir = ''): bool
     {
-        // Check if it's a T2Sde Linux and /storage/usbdisk1/ exists
+        // Container-aware check: in Docker/LXC the host mounts a volume
+        // directly at /storage (no usbdisk1 subdirectory in the mount
+        // table). The df-based fallback below searches for "usbdisk1" in
+        // the mount table and will never find it, causing a false
+        // "storage disk not connected" alarm. See GitHub #956.
+        if (System::isContainer() && is_dir('/storage') && is_writable('/storage')) {
+            $mount_dir = '/storage';
+            return true;
+        }
+
+        // Check if it's a non-T2SDE Linux and /storage/usbdisk1/ exists
+        // (created by Storage::configure() during boot).
         if (
             !Util::isT2SdeLinux()
             && file_exists('/storage/usbdisk1/')
@@ -1438,13 +1449,17 @@ class Storage extends Injectable
                 // Determine vendor based on container type
                 $vendor = System::isDocker() ? 'Docker' : 'LXC';
 
-                // Add container disk information to the result
+                // Add container disk information to the result.
+                // Use '/storage' — the actual volume mount point — instead of
+                // the bare-metal convention '/storage/usbdisk1'. The old
+                // hardcoded value caused CheckStorage to miss the disk when
+                // the df parse path failed. See GitHub #956.
                 $res_disks[] = [
                     'id' => $disk_data[0],
                     'size' => "" . $m_size,
                     'size_text' => "" . $m_size . " Mb",
                     'vendor' => $vendor,
-                    'mounted' => '/storage/usbdisk1',
+                    'mounted' => '/storage',
                     'free_space' => $free_space,
                     'used_space' => $used_space,
                     'usage_percentage' => $usage_percentage,
@@ -1560,10 +1575,14 @@ class Storage extends Injectable
             return $result;
         }
 
-        // Get total disk info
+        // Get total disk info.
+        // Match either:
+        //   - mount point contains storageDir (bare-metal: mounted=/storage/usbdisk1, storageDir=/storage/usbdisk1)
+        //   - storageDir starts with mount point (container: mounted=/storage, storageDir=/storage/usbdisk1)
         $disks = $this->getAllHdd(true);
         foreach ($disks as $disk) {
-            if (strpos($disk['mounted'], $storageDir) === 0) {
+            if (strpos($disk['mounted'], $storageDir) === 0
+                || strpos($storageDir, $disk['mounted']) === 0) {
                 $result['total_size'] = floatval($disk['size']);
                 $result['used_space'] = floatval($disk['used_space']);
                 $result['free_space'] = floatval($disk['free_space']);

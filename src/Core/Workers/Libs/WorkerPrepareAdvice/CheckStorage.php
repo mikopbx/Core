@@ -52,8 +52,11 @@ class CheckStorage extends Injectable
         $minFreeSpace = 0;
 
         foreach ($disks as $disk) {
+            // Bare-metal mounts at /storage/usbdisk{N}; containers report
+            // '/storage' directly (see Storage::getAllHdd and GitHub #956).
             if (array_key_exists('mounted', $disk)
-                && strpos($disk['mounted'], '/storage/usbdisk') !== false) {
+                && (strpos($disk['mounted'], '/storage/usbdisk') !== false
+                    || $disk['mounted'] === '/storage')) {
                 $storageDiskMounted = true;
                 if ($disk['free_space'] < WorkerRemoveOldRecords::MIN_SPACE_MB_ALERT) {
                     $messages['error'][] = [
