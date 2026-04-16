@@ -65,11 +65,10 @@ class WorkerCurrentPageEvents extends WorkerBase
                 foreach ($apiMapping as $apiClass => $apiParams) {
                     $apiClass::{$apiParams['method']}($apiParams['params']);
                 }
+                foreach ($viewers as $viewer) {
+                    $this->redis->expire("page:{$pageName}:viewers:{$viewer}", 300);
+                }
             }
-        }
-        $viewers = $this->redis->sMembers("page:{$pageName}:viewers");
-        foreach ($viewers as $viewer) {
-            $this->redis->expire("page:{$pageName}:viewers:{$viewer}", 300);
         }
     }  
 }
