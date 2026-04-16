@@ -22,9 +22,9 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 require_once 'Globals.php';
 
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\Sip\GetPeersStatusesAction;
-use Redis;
 /**
  * The WorkerCurrentPageEvents class is responsible for tracking current page events.
  *
@@ -41,25 +41,24 @@ class WorkerCurrentPageEvents extends WorkerBase
             ],
         ],
     ];
-    /**
-     * The Redis instance.
-     *
-     * @var \Redis
-     */
-    private Redis $redis;
 
+    // $redis is inherited from WorkerBase (protected mixed $redis = null).
+    // Do NOT redeclare — PHP 8.2+ covariance rules require the type to match.
 
     /**
      * Starts the process to track current page events.
-     * TODO: можно реализовать отправку событий на фронт отслеживая 
+     * TODO: можно реализовать отправку событий на фронт отслеживая
      * на каких страницах находятся пользователи и отправляя события на соответствующие страницы
      * с определенным интервалом
-     * 
+     *
      * @param array $argv The command-line arguments passed to the worker.
      * @return void
      */
     public function start(array $argv): void
     {
+        // Initialize Redis explicitly — WorkerBase declares $redis = null
+        // to suppress Injectable::__get() magic (issue #1022).
+        $this->redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
         foreach (self::PAGE_API_MAPPING as $pageName => $apiMapping) {
             $viewers = $this->redis->sMembers("page:{$pageName}:viewers");
             if (!empty($viewers)) {

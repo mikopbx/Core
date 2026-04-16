@@ -24,6 +24,7 @@ require_once 'Globals.php';
 
 use MikoPBX\Common\Providers\LanguageProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
@@ -67,6 +68,12 @@ class WorkerModuleInstaller extends WorkerBase
         $this->moduleWasEnabled = $settings['moduleWasEnabled'] ?? false;
         
         cli_set_process_title(__CLASS__.'-'.$this->moduleUniqueId);
+
+        // Initialize Redis connection explicitly — WorkerBase declares
+        // $redis = null to suppress Injectable::__get() magic (issue #1022),
+        // so we must obtain the client from DI ourselves.
+        $this->redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
+
         $temp_dir            = dirname($settings['filePath']);
         $this->progress_file = $temp_dir . '/installation_progress';
         $this->error_file    = $temp_dir . '/installation_error';
