@@ -356,7 +356,13 @@ class TestSoundFiles:
         print(f"  Merged file path: {merged_file_path}")
 
     def test_10_convert_uploaded_audio_file(self, api_client):
-        """Test POST /sound-files:convertAudioFile - Convert uploaded file to system format"""
+        """Test POST /sound-files:convertAudioFile - Convert uploaded file to system format
+
+        Verifies that conversion produces ALL Asterisk-compatible formats (wav, mp3,
+        ulaw, alaw, gsm, g722, sln) plus that each output file exists and is non-empty.
+        Regression: commit 74c1a9f4e introduced atomic .converting tempfiles that broke
+        MP3 output because ffmpeg couldn't infer the format from the .converting extension.
+        """
         if not hasattr(self.__class__, 'uploaded_file_path') or not self.uploaded_file_path:
             pytest.skip("No uploaded file from previous test")
 
@@ -376,12 +382,53 @@ class TestSoundFiles:
         data = response.get('data', {})
         print(f"  Convert response data: {data}")
 
-        # ConvertAudioFile returns array with MP3 path as first element
+        # Verify ALL expected Asterisk formats exist on disk via bash command
+        # The API returns only the MP3 path, but we need to verify all formats
         if isinstance(data, list) and len(data) > 0:
-            converted_path = data[0]
+            converted_path = data[0]  # MP3 path
             self.__class__.converted_file_path = converted_path
-            print(f"✓ Audio file converted to MP3")
-            print(f"  Converted path: {converted_path}")
+
+            # Derive base path (without extension) to check all formats
+            import os
+            base_path = os.path.splitext(converted_path)[0]
+            expected_formats = ['wav', 'mp3', 'ulaw', 'alaw', 'gsm', 'g722', 'sln']
+
+            # Verify each format via executeBashCommand
+            check_cmd = ' && '.join(
+                f'test -s "{base_path}.{fmt}" && echo "{fmt}:OK" || echo "{fmt}:MISSING"'
+                for fmt in expected_formats
+            )
+            check_response = api_client.post(
+                'system:executeBashCommand',
+                {'command': check_cmd, 'timeout': 10}
+            )
+
+            if check_response.get('result'):
+                output = check_response.get('data', {}).get('output', '')
+                missing_formats = []
+                for line in output.strip().split('\n'):
+                    line = line.strip()
+                    if ':MISSING' in line:
+                        fmt_name = line.split(':')[0]
+                        missing_formats.append(fmt_name)
+                    elif ':OK' in line:
+                        fmt_name = line.split(':')[0]
+                        print(f"  ✓ {fmt_name} format exists and non-empty")
+
+                assert not missing_formats, (
+                    f"Conversion produced incomplete output. Missing formats: {missing_formats}. "
+                    f"Base path: {base_path}. This may indicate ffmpeg cannot determine the "
+                    f"output format from the .converting temp extension (needs explicit -f flag)."
+                )
+            else:
+                pytest.fail(
+                    "Cannot verify converted formats: system:executeBashCommand "
+                    "unavailable. Format verification is required to catch "
+                    "ffmpeg atomic-write regressions."
+                )
+
+            print(f"✓ Audio file converted to all {len(expected_formats)} formats")
+            print(f"  MP3 path: {converted_path}")
 
             # Now create a sound file record manually with retry on database lock
             import time

@@ -606,7 +606,7 @@ class SoundFilesConf extends SystemConfigClass
                 'container' => 'wav',
             ],
             'mp3' => [
-                'options' => "-codec:a libmp3lame -b:a $mp3Bitrate",
+                'options' => "-codec:a libmp3lame -b:a $mp3Bitrate -f mp3",
                 'container' => 'mp3',
             ],
             'ulaw' => [
