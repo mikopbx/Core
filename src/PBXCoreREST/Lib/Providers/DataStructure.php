@@ -511,7 +511,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'manualattributes' => [
                 'type' => 'string',
                 'description' => 'rest_schema_provider_manualattributes',
-                'sanitize' => 'text',
+                'sanitize' => 'string',
                 'default' => '',
                 'example' => 'context=from-trunk\nallow=ulaw,alaw'
             ],

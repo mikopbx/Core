@@ -81,7 +81,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // ============================================================
 
         $sanitizationRules = DataStructure::getSanitizationRules();
-        $textFields = ['note', 'description', 'manualattributes'];
+        $textFields = ['note', 'description'];
 
         // Preserve ID field (not in sanitization rules, uses uniqid)
         $recordId = $data['id'] ?? null;

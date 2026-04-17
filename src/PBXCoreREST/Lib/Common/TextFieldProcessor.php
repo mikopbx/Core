@@ -78,7 +78,9 @@ class TextFieldProcessor
         $text = preg_replace('/data:text\/html[^"\']*["\']?/i', '', $text);
         
         // Remove on* event handlers (onclick, onload, etc.)
-        $text = preg_replace('/\s*on\w+\s*=\s*[^>]*/i', '', $text);
+        // (?:\s|^) requires leading whitespace or start of string (prevents matching inside words like "context=")
+        // [a-z]+ instead of \w+ excludes underscores (prevents matching "one_touch_recording=")
+        $text = preg_replace('/(?:\s|^)on[a-z]+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]*)/i', '', $text);
         
         // Remove form tags to prevent form injection
         $text = preg_replace('/<\/?form[^>]*>/i', '', $text);
@@ -194,8 +196,8 @@ class TextFieldProcessor
             $threats[] = 'Data URLs with script content detected';
         }
         
-        // Check for event handlers
-        if (preg_match('/\s*on\w+\s*=\s*[^>]*/i', $text)) {
+        // Check for event handlers (require leading whitespace or start of string, alpha-only suffix)
+        if (preg_match('/(?:\s|^)on[a-z]+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]*)/i', $text)) {
             $threats[] = 'Event handlers detected';
         }
         
