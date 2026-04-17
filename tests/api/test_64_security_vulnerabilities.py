@@ -409,7 +409,24 @@ class TestFirmwareDownloadCommandInjection:
                 verify=False,
             )
 
-            resp_data = response.json()
+            # WAF may block requests with path traversal (../) or
+            # shell metacharacters in JSON body → 403 plain text
+            if response.status_code == 403:
+                print(f"✓ WAF blocked dangerous version '{version}' (HTTP 403)")
+                continue
+
+            try:
+                resp_data = response.json()
+            except ValueError:
+                # Non-JSON response — only accept if it's a clear rejection (4xx).
+                # 5xx or 200 with non-JSON is a regression, not a security block.
+                if 400 <= response.status_code < 500:
+                    print(f"✓ Dangerous version '{version}' rejected (HTTP {response.status_code}, non-JSON)")
+                    continue
+                pytest.fail(
+                    f"Unexpected non-JSON response for version '{version}': "
+                    f"HTTP {response.status_code} — may indicate server error or bypass"
+                )
 
             # After fix: should either reject (result=false, 4xx status)
             # or sanitize the version to remove dangerous characters.

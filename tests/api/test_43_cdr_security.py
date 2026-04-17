@@ -44,8 +44,8 @@ class TestCDRSQLInjectionProtection:
         SECURITY TEST: SQL injection attempt with DROP TABLE
 
         Attack: GET /cdr?sort=id; DROP TABLE cdr_general; --
-        Expected: Safe fallback to default sort, no data loss
-        Verification: Response succeeds and pagination intact
+        Expected: Either WAF blocks (403) or app uses safe fallback (200)
+        Verification: Injection does not execute
         """
         response = api_client.get_raw(
             '/cdr',
@@ -55,9 +55,14 @@ class TestCDRSQLInjectionProtection:
             }
         )
 
-        # Should succeed with safe fallback (not reject outright)
-        assert response.status_code == 200, \
-            f"Expected 200, got {response.status_code}"
+        # WAF may block SQL injection at nginx level (403)
+        # or PHP may handle it with safe fallback (200)
+        assert response.status_code in [200, 403], \
+            f"Expected 200 (safe fallback) or 403 (WAF block), got {response.status_code}"
+
+        if response.status_code == 403:
+            print(f"✓ WAF blocked SQL injection at nginx level (HTTP 403)")
+            return
 
         data = response.json()
 
@@ -81,8 +86,8 @@ class TestCDRSQLInjectionProtection:
         SECURITY TEST: SQL injection with UNION SELECT
 
         Attack: GET /cdr?sort=id UNION SELECT password FROM users --
-        Expected: Safe fallback, no data leakage
-        Verification: No sensitive fields in response
+        Expected: Either WAF blocks (403) or app uses safe fallback (200)
+        Verification: No sensitive data leakage
         """
         response = api_client.get_raw(
             '/cdr',
@@ -92,30 +97,28 @@ class TestCDRSQLInjectionProtection:
             }
         )
 
-        assert response.status_code == 200, \
-            f"Expected safe fallback, got {response.status_code}"
+        assert response.status_code in [200, 403], \
+            f"Expected 200 (safe fallback) or 403 (WAF block), got {response.status_code}"
+
+        if response.status_code == 403:
+            print(f"✓ WAF blocked UNION SELECT injection at nginx level (HTTP 403)")
+            return
 
         data = response.json()
         response_text = str(data).lower()
 
         # Critical: No sensitive data leakage
-        # WHY: 'password', 'secret', 'token' should never appear in CDR data
-        # EXCEPT: 'playback_url', 'download_url' contain legitimate tokens (not sensitive)
         sensitive_fields = ['password', 'sip_secret']
         for field in sensitive_fields:
             assert field not in response_text, \
                 f"CRITICAL: Sensitive field '{field}' found in response!"
-
-        # WHY: 'hash' appears in 'meta.hash' (response integrity checksum) which is legitimate
-        # Only 'password_hash', 'md5_secret' etc would be security issues
-        # No need to check for hash - it's always in meta.hash which is expected
 
     def test_sort_field_sql_injection_stacked_queries(self, api_client):
         """
         SECURITY TEST: Stacked queries injection
 
         Attack: GET /cdr?sort=id; UPDATE m_Users SET login='hacked' WHERE id=1; --
-        Expected: Query ignored, safe fallback to default sort
+        Expected: Either WAF blocks (403) or app uses safe fallback (200)
         """
         response = api_client.get_raw(
             '/cdr',
@@ -125,9 +128,12 @@ class TestCDRSQLInjectionProtection:
             }
         )
 
-        # Should succeed with fallback
-        assert response.status_code == 200, \
-            f"Expected 200 with safe fallback, got {response.status_code}"
+        assert response.status_code in [200, 403], \
+            f"Expected 200 (safe fallback) or 403 (WAF block), got {response.status_code}"
+
+        if response.status_code == 403:
+            print(f"✓ WAF blocked stacked query injection at nginx level (HTTP 403)")
+            return
 
         data = response.json()
         assert data.get('data') is not None, \
@@ -413,7 +419,7 @@ class TestCDRParameterValidation:
         SECURITY TEST: Search parameter SQL quotes escaped
 
         Attack: GET /cdr?search=' OR '1'='1
-        Expected: Treated as literal string search, not SQL injection
+        Expected: Either WAF blocks (403) or app treats as literal string (200)
         """
         response = api_client.get_raw(
             '/cdr',
@@ -423,8 +429,12 @@ class TestCDRParameterValidation:
             }
         )
 
-        assert response.status_code == 200, \
-            f"Expected 200, got {response.status_code}"
+        assert response.status_code in [200, 403], \
+            f"Expected 200 (escaped) or 403 (WAF block), got {response.status_code}"
+
+        if response.status_code == 403:
+            print(f"✓ WAF blocked SQL quotes injection at nginx level (HTTP 403)")
+            return
 
         data = response.json()
         # Should search for literal string, not execute SQL injection
@@ -458,7 +468,7 @@ class TestCDRParameterValidation:
         SECURITY TEST: Order parameter injection protection
 
         Attack: GET /cdr?order=DESC; DROP TABLE cdr_general
-        Expected: Safe fallback to valid order (ASC/DESC)
+        Expected: Either WAF blocks (403) or app uses safe fallback (200)
         """
         response = api_client.get_raw(
             '/cdr',
@@ -469,8 +479,12 @@ class TestCDRParameterValidation:
             }
         )
 
-        assert response.status_code == 200, \
-            f"Expected 200 with safe fallback, got {response.status_code}"
+        assert response.status_code in [200, 403], \
+            f"Expected 200 (safe fallback) or 403 (WAF block), got {response.status_code}"
+
+        if response.status_code == 403:
+            print(f"✓ WAF blocked ORDER BY injection at nginx level (HTTP 403)")
+            return
 
         data = response.json()
         # Table must still exist

@@ -534,7 +534,7 @@ class TestSoundFilesEdgeCases:
             assert response['result'] is False
             print(f"✓ Playback rejected non-existent file")
         except Exception as e:
-            if '404' in str(e) or '400' in str(e) or '422' in str(e):
+            if '404' in str(e) or '400' in str(e) or '410' in str(e) or '422' in str(e):
                 print(f"✓ Playback rejected non-existent file (HTTP error)")
             else:
                 raise

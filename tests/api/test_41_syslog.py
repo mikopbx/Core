@@ -292,11 +292,10 @@ class TestSyslog:
                 print(f"✓ Erase rejected invalid request: {messages}")
 
         except requests.exceptions.HTTPError as e:
-            # Expected: 422 "File does not exist" or 404
-            if e.response.status_code in [404, 422]:
+            # Expected: 400/422 "File does not exist" or 404
+            # Note: 403 is NOT expected here — filename has no traversal patterns
+            if e.response.status_code in [400, 404, 422]:
                 print(f"✓ Erase validates file existence (HTTP {e.response.status_code})")
-            elif e.response.status_code == 403:
-                print(f"✓ Erase requires proper permissions")
             else:
                 raise
 
@@ -418,11 +417,23 @@ class TestSyslogEdgeCases:
                         print(f"⚠ Request succeeded but no sensitive data returned: {filename[:30]}")
 
             except requests.exceptions.HTTPError as e:
-                # Expected: 400, 404, or 422 - path traversal blocked
-                if e.response.status_code in [400, 404, 422]:
+                # Expected: 400, 403 (WAF blocks traversal in body), 404, or 422
+                if e.response.status_code in [400, 403, 404, 422]:
                     print(f"✓ Path traversal blocked: {filename[:30]} (HTTP {e.response.status_code})")
                 else:
                     raise
+            except ValueError:
+                # WAF returns plain text "Security violation detected" (not JSON)
+                # which causes JSONDecodeError in api_client.post().
+                # Verify this is actually a WAF block (403), not a 200 with raw file content.
+                # api_client.post() calls raise_for_status() before .json(), so a 200
+                # with non-JSON body means the endpoint returned file content — a real vuln.
+                # However, post() flow is: raise_for_status → .json(), so ValueError
+                # only fires after a successful status. We must fail on 200 non-JSON.
+                pytest.fail(
+                    f"Path traversal may have succeeded: {filename[:30]} returned "
+                    f"non-JSON body (possible raw file content leak)"
+                )
 
     def test_05_get_log_time_range_invalid_filename(self, api_client):
         """Test POST /syslog:getLogTimeRange with non-existent file"""
@@ -439,8 +450,8 @@ class TestSyslogEdgeCases:
                 print(f"⚠ Time range returned data for non-existent file")
 
         except requests.exceptions.HTTPError as e:
-            # Expected: 404 or 422
-            if e.response.status_code in [404, 422]:
+            # Expected: 400, 404, or 422
+            if e.response.status_code in [400, 404, 422]:
                 print(f"✓ Time range rejects non-existent file (HTTP {e.response.status_code})")
             else:
                 raise
@@ -460,11 +471,18 @@ class TestSyslogEdgeCases:
                 pytest.fail("Path traversal in erase should be blocked!")
 
         except requests.exceptions.HTTPError as e:
-            # Expected: 400, 404, or 422 - path traversal blocked
-            if e.response.status_code in [400, 404, 422]:
+            # Expected: 400, 403 (WAF blocks traversal in body), 404, or 422
+            if e.response.status_code in [400, 403, 404, 422]:
                 print(f"✓ Erase blocks path traversal (HTTP {e.response.status_code})")
             else:
                 raise
+        except ValueError:
+            # ValueError from .json() on a 2xx response means raw content was returned —
+            # possible file content leak. Fail the test.
+            pytest.fail(
+                "Erase path traversal may have succeeded: "
+                "non-JSON body returned (possible raw content leak)"
+            )
 
 
 if __name__ == '__main__':

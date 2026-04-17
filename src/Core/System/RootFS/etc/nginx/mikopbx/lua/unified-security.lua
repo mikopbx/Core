@@ -472,7 +472,10 @@ local function check_basic_security()
     end
 
     -- Check for path traversal in URL path and decoded query string
-    if string.match(uri, "%.%.") or (args and string.match(args, "%.%.")) or string.match(uri, "//") then
+    -- Note: "//" check removed — it false-positives on /files/{absolute_path}
+    -- where the file path starts with "/" (e.g. /files//tmp/foo). Real traversal
+    -- is caught by the ".." check; "//" alone has no traversal value.
+    if string.match(uri, "%.%.") or (args and string.match(args, "%.%.")) then
         ngx.log(ngx.WARN, "Path traversal attempt from: ", client_ip)
         return false
     end
