@@ -23,10 +23,9 @@ namespace MikoPBX\PBXCoreREST\Lib\Employees;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\Users;
-use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\PBXCoreREST\Lib\Common\AvatarHelper;
+use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di\Di;
 
 /**
  * Action for deleting employee record
@@ -63,9 +62,6 @@ class DeleteRecordAction
         }
 
         try {
-            $di = Di::getDefault();
-            $db = $di->get(MainDatabaseProvider::SERVICE_NAME);
-            
             // Find user by ID (convert to int to ensure proper type)
             $user = Users::findFirstById($id);
             if (!$user) {
@@ -76,40 +72,36 @@ class DeleteRecordAction
             // Save avatar path for cleanup after successful commit
             $avatarToDelete = $user->avatar;
 
-            // Begin transaction
-            $db->begin();
+            // Use executeInTransaction to acquire Redis mutex and prevent "database is locked"
+            BaseActionHelper::executeInTransaction(function () use ($user) {
+                // Follow original ExtensionsController delete pattern:
+                // 1. First delete forwarding settings to avoid circular references
+                // 2. Then delete user (which will cascade to extensions, sip, external phones)
 
-            // Follow original ExtensionsController delete pattern:
-            // 1. First delete forwarding settings to avoid circular references
-            // 2. Then delete user (which will cascade to extensions, sip, external phones)
+                $extensions = $user->Extensions;
 
-            $errors = null;
-            $extensions = $user->Extensions;
-            
-            // Delete forwarding rights first for all user extensions to avoid circular references
-            foreach ($extensions as $extension) {
-                if ($extension->ExtensionForwardingRights && !$extension->ExtensionForwardingRights->delete()) {
-                    $errors = $extension->ExtensionForwardingRights->getMessages();
-                    break;
+                // Delete forwarding rights first for all user extensions to avoid circular references
+                foreach ($extensions as $extension) {
+                    if ($extension->ExtensionForwardingRights && !$extension->ExtensionForwardingRights->delete()) {
+                        $errors = $extension->ExtensionForwardingRights->getMessages();
+                        $errorMessages = [];
+                        foreach ($errors as $message) {
+                            $errorMessages[] = $message->getMessage();
+                        }
+                        throw new \Exception(implode(', ', $errorMessages));
+                    }
                 }
-            }
 
-            // If no errors with forwarding rights, delete the user (cascade will handle the rest)
-            if (!$errors && !$user->delete()) {
-                $errors = $user->getMessages();
-            }
-
-            if ($errors) {
-                $db->rollback();
-                $res->messages['error'] = [];
-                foreach ($errors as $message) {
-                    $res->messages['error'][] = $message->getMessage();
+                // Delete the user (cascade will handle the rest)
+                if (!$user->delete()) {
+                    $errors = $user->getMessages();
+                    $errorMessages = [];
+                    foreach ($errors as $message) {
+                        $errorMessages[] = $message->getMessage();
+                    }
+                    throw new \Exception(implode(', ', $errorMessages));
                 }
-                return $res;
-            }
-
-            // Commit transaction
-            $db->commit();
+            });
 
             // Delete avatar file after successful commit (outside transaction)
             if (!empty($avatarToDelete)) {
@@ -121,9 +113,6 @@ class DeleteRecordAction
             $res->success = true;
 
         } catch (\Exception $e) {
-            if (isset($db)) {
-                $db->rollback();
-            }
             $res->messages['error'][] = $e->getMessage();
 
             // Constraint violations are expected business logic, not critical errors

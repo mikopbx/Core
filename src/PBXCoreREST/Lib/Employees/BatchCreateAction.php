@@ -119,9 +119,9 @@ class BatchCreateAction
                         $recordResult['status'] = 'validated';
                         $recordResult['data'] = $preparedData;
                     } else {
-                        // Create employee
-                        $saveResult = SaveEmployeeAction::main($preparedData);
-                        
+                        // Create employee with retry on "database is locked"
+                        $saveResult = self::saveWithRetry($preparedData);
+
                         if ($saveResult->success) {
                             $recordResult['status'] = 'created';
                             $recordResult['data'] = $saveResult->data;
@@ -133,7 +133,7 @@ class BatchCreateAction
                             $stats['errors'][] = TranslationProvider::translate('ex_BatchRecordCreateFailed', [
                                 'index' => $index
                             ]);
-                            
+
                             if (!$skipErrors) {
                                 $results[] = $recordResult;
                                 break; // Stop on first error
@@ -193,6 +193,43 @@ class BatchCreateAction
         return $res;
     }
     
+    /**
+     * Save employee with retry on "database is locked" errors.
+     *
+     * System workers (WorkerModelsEvents, config generators) write to SQLite
+     * concurrently and may hold write locks. Retry with exponential backoff
+     * to handle transient SQLite SQLITE_BUSY errors.
+     *
+     * @param array $preparedData Prepared employee data
+     * @param int $maxRetries Maximum number of retry attempts
+     * @return PBXApiResult
+     */
+    private static function saveWithRetry(array $preparedData, int $maxRetries = 5): PBXApiResult
+    {
+        $lastResult = null;
+
+        for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
+            $lastResult = SaveEmployeeAction::main($preparedData);
+
+            if ($lastResult->success) {
+                return $lastResult;
+            }
+
+            // Check if failure is due to "database is locked"
+            $errorText = implode(' ', $lastResult->messages['error'] ?? []);
+            if (stripos($errorText, 'database is locked') === false) {
+                return $lastResult; // Not a lock error, don't retry
+            }
+
+            if ($attempt < $maxRetries) {
+                // Exponential backoff: 200ms, 400ms, 800ms, 1600ms, 3200ms
+                usleep(200000 * (2 ** $attempt));
+            }
+        }
+
+        return $lastResult;
+    }
+
     /**
      * Intelligently merge employee data with defaults
      * Based on PatchRecordAction::intelligentMerge logic

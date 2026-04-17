@@ -25,7 +25,6 @@ use MikoPBX\Common\Models\ExternalPhones;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
-use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
@@ -163,21 +162,16 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
      */
     private static function saveEntities(array $sanitizedData, PBXApiResult &$res): ?Users
     {
-        $di = Di::getDefault();
-        $db = $di->get(MainDatabaseProvider::SERVICE_NAME);
-        $db->begin();
+        $userEntity = null;
 
-        try {
+        self::executeInTransaction(function () use ($sanitizedData, &$res, &$userEntity) {
             // Save user entity (returns pending avatar data for processing after getting ID)
             list($userEntity, $res->success, $pendingAvatarData) = self::saveUser($sanitizedData);
             if (!$res->success) {
-                // Handle errors and rollback
                 $res->messages['error'] = array_merge($res->messages['error'] ?? [], $userEntity->getMessages());
-                $db->rollback();
-                return null;
-            } else {
-                $sanitizedData['id'] = $userEntity->id;
+                throw new \Exception('Failed to save user entity');
             }
+            $sanitizedData['id'] = $userEntity->id;
 
             // Save avatar file now that we have user ID
             if (!empty($pendingAvatarData)) {
@@ -198,28 +192,22 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
             // Save extension entity
             list($extension, $res->success) = self::saveExtension($sanitizedData, false);
             if (!$res->success) {
-                // Handle errors and rollback
                 $res->messages['error'] = array_merge($res->messages['error'] ?? [], $extension->getMessages());
-                $db->rollback();
-                return null;
+                throw new \Exception('Failed to save extension entity');
             }
 
             // Save SIP entity
             list($sipEntity, $res->success) = self::saveSip($sanitizedData);
             if (!$res->success) {
-                // Handle errors and rollback
                 $res->messages['error'] = array_merge($res->messages['error'] ?? [], $sipEntity->getMessages());
-                $db->rollback();
-                return null;
+                throw new \Exception('Failed to save SIP entity');
             }
 
             // Save forwarding rights entity
             list($fwdEntity, $res->success) = self::saveForwardingRights($sanitizedData);
             if (!$res->success) {
-                // Handle errors and rollback
                 $res->messages['error'] = array_merge($res->messages['error'] ?? [], $fwdEntity->getMessages());
-                $db->rollback();
-                return null;
+                throw new \Exception('Failed to save forwarding rights entity');
             }
 
             // Check mobile number presence and save related entities
@@ -227,37 +215,27 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
                 // Save mobile extension
                 list($mobileExtension, $res->success) = self::saveExtension($sanitizedData, true);
                 if (!$res->success) {
-                    // Handle errors and rollback
                     $res->messages['error'] = array_merge($res->messages['error'] ?? [], $mobileExtension->getMessages());
-                    $db->rollback();
-                    return null;
+                    throw new \Exception('Failed to save mobile extension entity');
                 }
 
                 // Save ExternalPhones for mobile number
                 list($externalPhone, $res->success) = self::saveExternalPhones($sanitizedData);
                 if (!$res->success) {
-                    // Handle errors and rollback
                     $res->messages['error'] = array_merge($res->messages['error'] ?? [], $externalPhone->getMessages());
-                    $db->rollback();
-                    return null;
+                    throw new \Exception('Failed to save external phones entity');
                 }
             } else {
                 // Delete mobile number if it was associated with the user
                 list($deletedMobileNumber, $res->success) = self::deleteMobileNumber($sanitizedData);
                 if (!$res->success) {
                     $res->messages['error'] = array_merge($res->messages['error'] ?? [], $deletedMobileNumber->getMessages());
-                    $db->rollback();
-                    return null;
+                    throw new \Exception('Failed to delete mobile number');
                 }
             }
-            
-            $db->commit();
-            return $userEntity;
-            
-        } catch (\Exception $e) {
-            $db->rollback();
-            throw $e;
-        }
+        });
+
+        return $userEntity;
     }
 
     /**
