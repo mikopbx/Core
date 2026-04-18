@@ -25,6 +25,7 @@ use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\ModelsAnnotationsProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -55,12 +56,41 @@ class UpdateDatabase extends Injectable
      * @var float
      */
     private float $operationStartTime = 0.0;
+
+    /**
+     * Flush Redis DB 2 (model metadata cache) to prevent stale schema data
+     * from surviving Docker/LXC upgrades with persistent volumes.
+     *
+     * Phalcon's MetaData\Redis::reset() only clears in-memory arrays,
+     * NOT the Redis-backed cache. Stale Redis metadata causes UpdateDatabase
+     * to read old column lists and skip adding new columns.
+     */
+    private function flushMetadataCache(): void
+    {
+        try {
+            $redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
+            $currentDb = ModelsMetadataProvider::DATABASE_INDEX;
+            $redis->select($currentDb);
+            $redis->flushDB();
+            // Select back to default DB (1)
+            $redis->select(1);
+        } catch (Throwable $e) {
+            // Redis unavailable during early boot — safe to ignore,
+            // metadata will be rebuilt from annotations
+        }
+    }
+
     /**
      * Updates database structure according to models annotations
      */
     public function updateDatabaseStructure(): void
     {
         try {
+            // Flush stale model metadata cache in Redis DB 2.
+            // On Docker/LXC upgrades with persistent volumes, Redis may retain
+            // old schema metadata causing UpdateDatabase to skip new columns (#1026).
+            $this->flushMetadataCache();
+
             MainDatabaseProvider::recreateDBConnections(); // after storage remount
             $this->updateDbStructureByModelsAnnotations();
             $this->updateModulesDbStructure();
