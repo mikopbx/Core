@@ -452,16 +452,13 @@ class SIPConf extends AsteriskConfigClass
             $extension = Extensions::findFirst("number = '$arr_data[extension]'");
             if (null === $extension) {
                 $arr_data['publicaccess'] = false;
-                // Language is not per-extension, using system-wide setting
                 $arr_data['calleridname'] = $arr_data['extension'];
+                $arr_data['user_id'] = 0;
             } else {
                 $arr_data['publicaccess'] = $extension->public_access;
                 $arr_data['calleridname'] = $extension->callerid;
                 $user                     = Users::findFirst($extension->userid);
-                if (null !== $user) {
-                    // Language is not per-extension, using system-wide setting
-                    $arr_data['user_id']  = $user->id;
-                }
+                $arr_data['user_id'] = ($user !== null) ? $user->id : 0;
             }
             // Retrieve extension forwarding rights.
             $extensionForwarding = ExtensionForwardingRights::findFirst("extension = '$arr_data[extension]'");
