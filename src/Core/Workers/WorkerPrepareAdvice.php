@@ -73,7 +73,7 @@ class WorkerPrepareAdvice extends WorkerRedisBase
         ['type' => CheckSIPPasswords::class, 'cacheTime' => 864000, 'priority' => 9],
         ['type' => CheckAmiPasswords::class, 'cacheTime' => 864000, 'priority' => 9],
         ['type' => CheckAriPasswords::class, 'cacheTime' => 864000, 'priority' => 9],
-        ['type' => CheckStorage::class, 'cacheTime' => 3600, 'priority' => 2],
+        ['type' => CheckStorage::class, 'cacheTime' => 300, 'priority' => 2],
         ['type' => CheckStorageUsage::class, 'cacheTime' => 1800, 'priority' => 3],
         ['type' => CheckS3Connection::class, 'cacheTime' => 300, 'priority' => 4],
         ['type' => CheckSecurityLog::class, 'cacheTime' => 600, 'priority' => 1],

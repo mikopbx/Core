@@ -21,10 +21,12 @@ namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Mail\Builders\DiskSpaceNotificationBuilder;
 use MikoPBX\Core\System\Mail\NotificationQueueHelper;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
 /**
@@ -119,23 +121,41 @@ class CheckStorage extends Injectable
         }
 
         // Queue disk space notification for async sending if we have critical disks
+        // Rate-limited: send email at most once per hour to avoid spam
         if (!empty($criticalDisks)) {
             $adminEmail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
 
             if (!empty($adminEmail)) {
-                $builder = new DiskSpaceNotificationBuilder();
-                $builder->setRecipient($adminEmail)
-                        ->setDiskUsage($maxUsagePercentage)
-                        ->setFreeSpace($minFreeSpace . ' MB')
-                        ->setPartitions($criticalDisks)
-                        ->setAdminUrl(LanInterfaces::buildAdminUrl('/admin-cabinet/system-diagnostic/index/'));
+                $emailCooldownKey = 'CheckStorage:lastDiskSpaceEmail';
+                try {
+                    $cache = Di::getDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
+                    $alreadySent = $cache->has($emailCooldownKey);
+                } catch (\Throwable $e) {
+                    $alreadySent = false;
+                }
 
-                // Queue with high priority (disk space is important but not critical like security)
-                NotificationQueueHelper::queueOrSend(
-                    $builder,
-                    async: true,
-                    priority: NotificationQueueHelper::PRIORITY_HIGH
-                );
+                if (!$alreadySent) {
+                    $builder = new DiskSpaceNotificationBuilder();
+                    $builder->setRecipient($adminEmail)
+                            ->setDiskUsage($maxUsagePercentage)
+                            ->setFreeSpace($minFreeSpace . ' MB')
+                            ->setPartitions($criticalDisks)
+                            ->setAdminUrl(LanInterfaces::buildAdminUrl('/admin-cabinet/system-diagnostic/index/'));
+
+                    // Queue with high priority
+                    NotificationQueueHelper::queueOrSend(
+                        $builder,
+                        async: true,
+                        priority: NotificationQueueHelper::PRIORITY_HIGH
+                    );
+
+                    // Set cooldown: don't send another email for 1 hour
+                    try {
+                        $cache->set($emailCooldownKey, time(), 3600);
+                    } catch (\Throwable $e) {
+                        // Ignore cache errors
+                    }
+                }
             }
         }
 
