@@ -69,9 +69,10 @@ class CheckStorage extends Injectable
                     ];
 
                     // Calculate usage percentage for email notification
-                    $totalSpace = ($disk['size_bytes'] ?? 0);
-                    $usedSpace = $totalSpace - ($disk['free_space'] * 1024 * 1024);
-                    $usagePercentage = $totalSpace > 0 ? (int)(($usedSpace / $totalSpace) * 100) : 0;
+                    // size and free_space are both in MB from Storage::getAllHdd()
+                    $totalMB = (float)($disk['size'] ?? 0);
+                    $freeMB = (float)$disk['free_space'];
+                    $usagePercentage = $totalMB > 0 ? (int)round((($totalMB - $freeMB) / $totalMB) * 100) : 0;
 
                     $criticalDisks[] = [
                         'name' => $disk['mounted'] ?? 'Unknown',
