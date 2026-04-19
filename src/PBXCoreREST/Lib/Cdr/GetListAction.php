@@ -538,6 +538,9 @@ class GetListAction
             if (!empty($record->did)) {
                 // If this record has DID, always use it as dst_num for display
                 $grouped[$linkedId]['dst_num'] = $record->did;
+                // Clear dst_name: DID is an external number, not an employee extension,
+                // so showing employee name next to DID is misleading (#1029 feedback)
+                $grouped[$linkedId]['dst_name'] = '';
                 // Also update the group's DID field to ensure consistency
                 $grouped[$linkedId]['did'] = $record->did;
             }
