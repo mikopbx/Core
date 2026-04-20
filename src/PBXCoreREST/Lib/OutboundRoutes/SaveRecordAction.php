@@ -217,7 +217,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 }
 
                 if (isset($sanitizedData['numberbeginswith'])) {
-                    $route->numberbeginswith = $sanitizedData['numberbeginswith'] ?: '';
+                    $route->numberbeginswith = $sanitizedData['numberbeginswith'] ?? '';
                 }
 
                 if (isset($sanitizedData['restnumbers'])) {
@@ -232,11 +232,11 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 }
 
                 if (isset($sanitizedData['prepend'])) {
-                    $route->prepend = $sanitizedData['prepend'] ?: '';
+                    $route->prepend = $sanitizedData['prepend'] ?? '';
                 }
 
                 if (isset($sanitizedData['note'])) {
-                    $route->note = $sanitizedData['note'] ?: '';
+                    $route->note = $sanitizedData['note'] ?? '';
                 }
 
                 if (!$route->save()) {

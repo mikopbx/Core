@@ -471,8 +471,8 @@ const ivrMenuModify = {
               const digits = ivrMenuModify.$formObj.form('get value', `digits-${rowId}`);
               const extension = ivrMenuModify.$formObj.form('get value', `extension-${rowId}`);
               
-              // Only add if both values exist
-              if (digits && extension) {
+              // Only add if both values are non-empty (allow "0" as valid digit)
+              if (digits != null && digits !== '' && extension != null && extension !== '') {
                   actions.push({
                       digits: digits,
                       extension: extension

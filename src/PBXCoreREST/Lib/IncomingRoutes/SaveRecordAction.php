@@ -208,7 +208,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
                     $route->rulename = $sanitizedData['rulename'];
                 }
                 if (isset($sanitizedData['number'])) {
-                    $route->number = $sanitizedData['number'] ?: '';  // Empty string allowed
+                    $route->number = $sanitizedData['number'] ?? '';  // Empty string and "0" allowed
                 }
 
                 // WHY: Use array_key_exists instead of isset because provider can be null
@@ -235,7 +235,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 }
 
                 if (isset($sanitizedData['extension'])) {
-                    $route->extension = $sanitizedData['extension'] ?: '';
+                    $route->extension = $sanitizedData['extension'] ?? '';
                 }
 
                 if (isset($sanitizedData['audio_message_id'])) {
@@ -243,7 +243,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 }
 
                 if (isset($sanitizedData['note'])) {
-                    $route->note = $sanitizedData['note'] ?: '';
+                    $route->note = $sanitizedData['note'] ?? '';
                 }
 
                 if (!$route->save()) {

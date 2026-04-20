@@ -454,7 +454,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         if (isset($data['networkfilterid'])) {
-            $sip->networkfilterid = $data['networkfilterid'] ?: '';
+            $sip->networkfilterid = $data['networkfilterid'] ?? '';
         }
 
         if (isset($data['manualattributes'])) {
@@ -593,7 +593,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         if (isset($data['networkfilterid'])) {
-            $iax->networkfilterid = $data['networkfilterid'] ?: '';
+            $iax->networkfilterid = $data['networkfilterid'] ?? '';
         }
 
         // Fixed fields for providers

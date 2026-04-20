@@ -226,7 +226,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
                 // Optional sound file ID
                 if (isset($sanitizedData['audio_message_id'])) {
-                    $ivrMenu->audio_message_id = $sanitizedData['audio_message_id'] ?: '';
+                    $ivrMenu->audio_message_id = $sanitizedData['audio_message_id'] ?? '';
                 }
 
                 // Timeout (validated against min/max)
@@ -236,7 +236,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
                 // Optional timeout extension
                 if (isset($sanitizedData['timeout_extension'])) {
-                    $ivrMenu->timeout_extension = $sanitizedData['timeout_extension'] ?: '';
+                    $ivrMenu->timeout_extension = $sanitizedData['timeout_extension'] ?? '';
                 }
 
                 // Number of repeats (validated against min/max)
@@ -246,7 +246,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
                 // Optional description
                 if (isset($sanitizedData['description'])) {
-                    $ivrMenu->description = $sanitizedData['description'] ?: '';
+                    $ivrMenu->description = $sanitizedData['description'] ?? '';
                 }
 
                 // Boolean field (convert string/int to boolean)
@@ -420,8 +420,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 }
             }
 
-            // Only add if both fields are non-empty
-            if (!empty($sanitizedAction['digits']) && !empty($sanitizedAction['extension'])) {
+            // Only add if both fields are non-empty (use !== '' to allow "0" as valid digit)
+            if ($sanitizedAction['digits'] !== '' && $sanitizedAction['extension'] !== '') {
                 $sanitizedActions[] = $sanitizedAction;
             }
         }
