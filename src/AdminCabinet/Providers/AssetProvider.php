@@ -272,6 +272,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/form-elements.js', true)
                 ->addJs('js/pbx/main/sidebar-menu-show-active.js', true)
                 ->addJs('js/pbx/Advice/advice-worker.js', true)
+                ->addJs('js/pbx/Advice/update-banner.js', true)
                 ->addJs('js/pbx/Security/check-passwords.js', true)
                 ->addJs('js/pbx/SendMetrics/send-metrics-index.js', true)
                 ->addJs('js/pbx/TopMenuSearch/top-menu-search.js', true)

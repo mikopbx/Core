@@ -59,7 +59,7 @@ Models/
 ├── CallDetailRecordsBase.php          # CDR base class
 ├── CallDetailRecordsTmp.php           # CDR temporary (cdr)
 │
-├── PbxExtensionModules.php            # Installed modules registry
+├── PbxExtensionModules.php            # Installed modules registry (incl. `module_type`: open enum `general`|`languagepack`|`security`|`cti`|`utility`|`call_feature`|`ai`|…, default `general`; used by advice banner classification and marketplace category filter)
 └── LongPollSubscribe.php              # Event subscriptions
 ```
 

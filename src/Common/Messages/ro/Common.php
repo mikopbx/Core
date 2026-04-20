@@ -257,6 +257,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'Parola SSH pentru accesarea MikoPBX a fost modificată!',
     'adv_SSHPasswordWasChangedSubject' => 'Atenţie! Parola SSH a fost schimbată!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Atenţie! Parola SSH a fost schimbată fără a se conecta la interfața MikoPBX!',
+    'adv_SecurityPatchAvailable' => 'Actualizare de securitate disponibilă: modul <a href="%url%" class="advices-module-update">%module%</a> %ver%. Se recomandă instalarea.',
     'adv_SipPasswordWeak' => 'Parola SIP simplă la <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'Parola simplă a contului SSH <a href=\'%url%\'>schimbați</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Discul pentru stocare rămâne fără spațiu liber (%free% Mb)</a>',
@@ -336,6 +337,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Introduceți autentificare',
     'auth_ValidatePasswordNotEmpty' => 'Introdu parola',
     'auth_WrongLoginPassword' => 'Autorizarea nu a reușit, mai aveți %attempts% încercări',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'Închide',
+    'banner_InstallNow' => 'Instalează acum',
+    'banner_RemindIn3Days' => 'Amintește-mi în 3 zile',
+    'banner_SecurityPatchAvailable' => 'Patch de securitate disponibil: modul %module% %ver%',
+    'banner_SecurityUpdateCritical' => 'Actualizare critică de securitate %ver%! Instalați imediat.',
+    'banner_UpdateAvailable' => 'Actualizare MikoPBX %ver% disponibilă',
+
     // BT
     'bt_Add' => 'Adăuga',
     'bt_ApplyChangesToPBX' => 'Aplica schimbarile',

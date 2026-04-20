@@ -62,6 +62,18 @@ const marketplace = {
     isInitialized: false,
 
     /**
+     * Currently selected module_type filter value ('all' shows every row).
+     * @type {string}
+     */
+    selectedType: 'all',
+
+    /**
+     * Registered DataTable custom filter function (so it can be removed on re-init).
+     * @type {?Function}
+     */
+    typeFilterFn: null,
+
+    /**
      * Initialize extensionModulesShowAvailable class
      */
     initialize() {
@@ -128,6 +140,119 @@ const marketplace = {
     },
 
     /**
+     * Register DataTable custom filter for module_type.
+     * Idempotent — if called multiple times, previous filter fn is removed first.
+     */
+    registerTypeFilter() {
+        if (!$.fn.DataTable || !$.fn.DataTable.ext || !$.fn.DataTable.ext.search) {
+            return;
+        }
+        const searchStack = $.fn.DataTable.ext.search;
+        if (marketplace.typeFilterFn) {
+            const idx = searchStack.indexOf(marketplace.typeFilterFn);
+            if (idx !== -1) {
+                searchStack.splice(idx, 1);
+            }
+        }
+        marketplace.typeFilterFn = function (settings, data, dataIndex, rowData, invalidated, row) {
+            // Only apply to the marketplace table.
+            if (!settings || !settings.nTable || settings.nTable.id !== 'new-modules-table') {
+                return true;
+            }
+            if (marketplace.selectedType === 'all') {
+                return true;
+            }
+            const rowNode = row || (settings.aoData[dataIndex] ? settings.aoData[dataIndex].nTr : null);
+            if (!rowNode) {
+                return true;
+            }
+            const rowType = $(rowNode).attr('data-type') || 'general';
+            return rowType === marketplace.selectedType;
+        };
+        searchStack.push(marketplace.typeFilterFn);
+    },
+
+    /**
+     * Collect unique module_type values from rendered rows, (re-)populate dropdown.
+     * Hides the filter UI entirely if only one category is present (nothing to filter).
+     */
+    populateTypeFilter() {
+        const $wrapper = $('#module-type-filter-wrapper');
+        const $dropdown = $('#module-type-filter');
+        if ($wrapper.length === 0 || $dropdown.length === 0) {
+            return;
+        }
+
+        const typesSet = {};
+        $('tr.new-module-row').each(function () {
+            const type = $(this).attr('data-type') || 'general';
+            typesSet[type] = true;
+        });
+        const types = Object.keys(typesSet).sort();
+
+        if (types.length <= 1) {
+            $wrapper.hide();
+            return;
+        }
+
+        const allLabel = (globalTranslate && globalTranslate.ext_ModuleTypeAll) || 'All';
+        let menuHtml = '<div class="item" data-value="all">' + allLabel + '</div>';
+        types.forEach((type) => {
+            const label = marketplace.moduleTypeLabel(type);
+            menuHtml += '<div class="item" data-value="' + type + '">' + label + '</div>';
+        });
+        $dropdown.find('.menu').html(menuHtml);
+
+        // Preserve current selection if the type is still present; otherwise fall back to 'all'.
+        const previousType = marketplace.selectedType;
+        const nextType = previousType === 'all' || typesSet[previousType] ? previousType : 'all';
+
+        $dropdown.dropdown({
+            onChange: function (value) {
+                marketplace.applyTypeFilter(value || 'all');
+            },
+        });
+        $dropdown.dropdown('set selected', nextType);
+        $wrapper.show();
+    },
+
+    /**
+     * Set active filter value and redraw the table.
+     * @param {string} type
+     */
+    applyTypeFilter(type) {
+        marketplace.selectedType = type || 'all';
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable(marketplace.$marketplaceTable)) {
+            marketplace.$marketplaceTable.DataTable().draw();
+        }
+    },
+
+    /**
+     * Resolve UI label for a module_type. Uses globalTranslate when a known key exists,
+     * otherwise falls back to the raw type string (forward-compat with new server types).
+     * @param {string} type
+     * @returns {string}
+     */
+    moduleTypeLabel(type) {
+        if (!type) {
+            return 'General';
+        }
+        // camelCase-ify snake_case: 'call_feature' -> 'CallFeature'
+        const camel = type.split('_').map((part) => {
+            if (part.length === 0) {
+                return '';
+            }
+            return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+        }).join('');
+        const key = 'ext_ModuleType' + camel;
+        if (globalTranslate && typeof globalTranslate[key] === 'string' && globalTranslate[key].length > 0) {
+            return globalTranslate[key];
+        }
+        // Fallback: capitalized raw type (keeps the UI readable for unknown categories).
+        return type.charAt(0).toUpperCase() + type.slice(1);
+    },
+
+    /**
      * Callback function to process the list of modules received from the website.
      * @param {object} response - The response containing the list of modules.
      */
@@ -176,10 +301,12 @@ const marketplace = {
             // Only initialize if DataTable is not already initialized
             if (!$.fn.DataTable.isDataTable(marketplace.$marketplaceTable)) {
                 marketplace.initializeDataTable();
+                marketplace.registerTypeFilter();
             } else {
                 // If table is already initialized, just redraw it
                 marketplace.$marketplaceTable.DataTable().draw();
             }
+            marketplace.populateTypeFilter();
         } else {
             marketplace.$noNewModulesSegment.show();
         }
@@ -222,8 +349,11 @@ const marketplace = {
         if (obj.commercial !== 0) {
             additionalIcon = '<i class="ui donate icon"></i>';
         }
+        const moduleType = (obj.module_type && typeof obj.module_type === 'string')
+            ? obj.module_type
+            : 'general';
         const dynamicRow = `
-			<tr class="new-module-row" data-id="${obj.uniqid}" data-name="${decodeURIComponent(obj.name)}">
+			<tr class="new-module-row" data-id="${obj.uniqid}" data-name="${decodeURIComponent(obj.name)}" data-type="${moduleType}">
 						<td class="show-details-on-click">${additionalIcon} ${decodeURIComponent(obj.name)}<br>
 						    <span class="features">${decodeURIComponent(obj.description)} ${promoLink}</span>
 						</td>

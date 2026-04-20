@@ -257,6 +257,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'Het SSH-wachtwoord voor toegang tot MikoPBX is gewijzigd!',
     'adv_SSHPasswordWasChangedSubject' => 'Aandacht! Het SSH-wachtwoord is gewijzigd!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Aandacht! Het SSH-wachtwoord is gewijzigd zonder in te loggen op de MikoPBX-interface!',
+    'adv_SecurityPatchAvailable' => 'Beveiligingsupdate beschikbaar: module <a href="%url%" class="advices-module-update">%module%</a> %ver%. Installatie aanbevolen.',
     'adv_SipPasswordWeak' => 'Eenvoudig SIP-wachtwoord op <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'Eenvoudig SSH-accountwachtwoord <a href=\'%url%\'> wijzigen </a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'De opslagschijf heeft bijna geen vrije ruimte meer (%free% Mb)</a>',
@@ -336,6 +337,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Voer inloggen in',
     'auth_ValidatePasswordNotEmpty' => 'voer wachtwoord in',
     'auth_WrongLoginPassword' => 'Autorisatie mislukt, u heeft nog %attempts% pogingen over',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'Sluiten',
+    'banner_InstallNow' => 'Nu installeren',
+    'banner_RemindIn3Days' => 'Herinnering over 3 dagen',
+    'banner_SecurityPatchAvailable' => 'Beveiligingspatch beschikbaar: module %module% %ver%',
+    'banner_SecurityUpdateCritical' => 'Kritieke beveiligingsupdate %ver%! Installeer onmiddellijk.',
+    'banner_UpdateAvailable' => 'MikoPBX-update %ver% beschikbaar',
+
     // BT
     'bt_Add' => 'Toevoegen',
     'bt_ApplyChangesToPBX' => 'Wijzigingen toepassen',

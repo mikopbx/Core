@@ -257,6 +257,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'Heslo SSH pro přístup k MikoPBX bylo změněno!',
     'adv_SSHPasswordWasChangedSubject' => 'Pozornost! Heslo SSH bylo změněno!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Pozornost! Heslo SSH bylo změněno bez přihlášení do rozhraní MikoPBX!',
+    'adv_SecurityPatchAvailable' => 'K dispozici je bezpečnostní aktualizace: modul <a href="%url%" class="advices-module-update">%module%</a> %ver%. Doporučujeme nainstalovat.',
     'adv_SipPasswordWeak' => 'Jednoduché heslo SIP na <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'Jednoduché heslo účtu SSH <a href=\'%url%\'>změnit</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Na disku pro ukládání dochází volné místo (%free% Mb) </a>',
@@ -336,6 +337,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Zadejte přihlašovací jméno',
     'auth_ValidatePasswordNotEmpty' => 'Zadejte heslo',
     'auth_WrongLoginPassword' => 'Autorizace se nezdařila, zbývá %attempts% pokusů',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'Zavřít',
+    'banner_InstallNow' => 'Nainstalovat nyní',
+    'banner_RemindIn3Days' => 'Připomenout za 3 dny',
+    'banner_SecurityPatchAvailable' => 'K dispozici je bezpečnostní záplata: modul %module% %ver%',
+    'banner_SecurityUpdateCritical' => 'Kritická bezpečnostní aktualizace %ver%! Nainstalujte okamžitě.',
+    'banner_UpdateAvailable' => 'K dispozici je aktualizace MikoPBX verze %ver%',
+
     // BT
     'bt_Add' => 'Přidat',
     'bt_ApplyChangesToPBX' => 'Použít změny',

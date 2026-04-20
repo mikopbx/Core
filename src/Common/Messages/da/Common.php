@@ -257,6 +257,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'SSH-adgangskoden til at få adgang til MikoPBX er blevet ændret!',
     'adv_SSHPasswordWasChangedSubject' => 'Opmærksomhed! SSH-adgangskoden er blevet ændret!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Opmærksomhed! SSH-adgangskoden er blevet ændret uden at logge ind på MikoPBX-grænsefladen!',
+    'adv_SecurityPatchAvailable' => 'Sikkerhedsopdatering tilgængelig: modul <a href="%url%" class="advices-module-update">%module%</a> %ver%. Installation anbefales.',
     'adv_SipPasswordWeak' => 'Enkel SIP-adgangskode på <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'Enkel SSH-kontoadgangskode <a href=\'%url%\'>skift</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Disken til lagring løber tør for ledig plads (%free% Mb) </a>',
@@ -336,6 +337,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Indtast login',
     'auth_ValidatePasswordNotEmpty' => 'Indtast adgangskode',
     'auth_WrongLoginPassword' => 'Godkendelse mislykkedes, du har %attempts% forsøg tilbage',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'Luk',
+    'banner_InstallNow' => 'Installer nu',
+    'banner_RemindIn3Days' => 'Påmind mig om 3 dage',
+    'banner_SecurityPatchAvailable' => 'Sikkerhedspatch tilgængelig: modul %module% %ver%',
+    'banner_SecurityUpdateCritical' => 'Kritisk sikkerhedsopdatering %ver%! Installer straks.',
+    'banner_UpdateAvailable' => 'MikoPBX-opdatering %ver% er tilgængelig',
+
     // BT
     'bt_Add' => 'Tilføj',
     'bt_ApplyChangesToPBX' => 'Anvend ændringer',

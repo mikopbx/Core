@@ -270,6 +270,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'Пароль SSH для доступа к MikoPBX был изменен!',
     'adv_SSHPasswordWasChangedSubject' => 'Внимание! Пароль SSH был изменен!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Внимание! Пароль SSH был изменен без входа в интерфейс MikoPBX!',
+    'adv_SecurityPatchAvailable' => 'Доступно обновление безопасности: модуль <a href="%url%" class="advices-module-update">%module%</a> %ver%. Рекомендуется установить.',
     'adv_SipPasswordWeak' => 'Простой пароль SIP у <a href=\'%url%\'>%record%</a>',
     'adv_SecurityLogCriticalGrowth' => 'Критический рост лога безопасности Asterisk: %growth% МБ за %interval% минут. Общий размер: %totalSize% МБ. Возможна атака на систему! <a href=\'%url%\'>Проверить лог</a>',
     'adv_SecurityLogSuspiciousGrowth' => 'Подозрительный рост лога безопасности Asterisk: %growth% МБ за %interval% минут. Общий размер: %totalSize% МБ. Рекомендуется проверить настройки безопасности.',
@@ -387,6 +388,14 @@ return [
     'auth_ValidatePasswordNotEmpty' => 'Введите пароль',
     'auth_WrongLoginPassword' => 'Ошибка авторизации, у вас осталось %attempts% попыток',
     'auth_ServerUnavailable' => 'Сервер недоступен или загружается. Попробуйте позже.',
+
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_UpdateAvailable' => 'Доступно обновление MikoPBX версии %ver%',
+    'banner_SecurityUpdateCritical' => 'Критическое обновление безопасности %ver%! Рекомендуется установить немедленно.',
+    'banner_SecurityPatchAvailable' => 'Доступен патч безопасности: модуль %module% %ver%',
+    'banner_InstallNow' => 'Установить сейчас',
+    'banner_RemindIn3Days' => 'Напомнить через 3 дня',
+    'banner_Dismiss' => 'Скрыть',
 
     // BT
     'bt_Add' => 'Добавить',

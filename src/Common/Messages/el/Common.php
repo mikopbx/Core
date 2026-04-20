@@ -252,6 +252,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'Ο κωδικός πρόσβασης SSH για πρόσβαση στο MikoPBX έχει αλλάξει!',
     'adv_SSHPasswordWasChangedSubject' => 'Προσοχή! Ο κωδικός πρόσβασης SSH έχει αλλάξει!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Προσοχή! Ο κωδικός πρόσβασης SSH έχει αλλάξει χωρίς να συνδεθείτε στη διεπαφή MikoPBX!',
+    'adv_SecurityPatchAvailable' => 'Διαθέσιμη ενημέρωση ασφαλείας: άρθρωμα <a href="%url%" class="advices-module-update">%module%</a> %ver%. Συνιστάται εγκατάσταση.',
     'adv_SipPasswordWeak' => 'Απλός κωδικός πρόσβασης SIP στο <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'Απλός κωδικός πρόσβασης λογαριασμού SSH <a href=\'%url%\'>αλλαγή</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Ο ελεύθερος χώρος της μονάδας αποθήκευσης εξαντλείται (%free% Mb)</a>',
@@ -291,6 +292,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Εισαγάγετε τη σύνδεση',
     'auth_ValidatePasswordNotEmpty' => 'εισάγετε τον κωδικό πρόσβασης',
     'auth_WrongLoginPassword' => 'Η εξουσιοδότηση απέτυχε, απομένουν %attempts% προσπάθειες',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'Κλείσιμο',
+    'banner_InstallNow' => 'Εγκατάσταση τώρα',
+    'banner_RemindIn3Days' => 'Υπενθύμιση σε 3 ημέρες',
+    'banner_SecurityPatchAvailable' => 'Διαθέσιμο patch ασφαλείας: άρθρωμα %module% %ver%',
+    'banner_SecurityUpdateCritical' => 'Κρίσιμη ενημέρωση ασφαλείας %ver%! Εγκαταστήστε αμέσως.',
+    'banner_UpdateAvailable' => 'Διαθέσιμη ενημέρωση MikoPBX έκδοσης %ver%',
+
     // BT
     'bt_ApplyChangesToPBX' => 'Εφαρμογή αλλαγών',
     'bt_Back' => 'Πίσω',
@@ -680,6 +689,7 @@ return [
     'sd_Last12Hours' => 'Τελευταίες 12 ώρες',
     'SubHeaderStorage' => 'Χρήση χώρου στο δίσκο και ρυθμίσεις αποθήκευσης',
     'am_tooltip_call_write' => 'Τερματισμός κλήσης, μεταφορά, αναμονή',
+
     // BT
     'bt_Add' => 'Προσθήκη',
     'st_1Month' => '1 μήνα',

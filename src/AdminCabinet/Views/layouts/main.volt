@@ -8,6 +8,10 @@
         </div>
         <!-- ARTICLE-->
         <div class="article">
+            <!-- UPDATE BANNER (GitLab-style, hidden until update-banner.js has advice) -->
+            <div id="update-banner" class="update-banner hidden" aria-live="polite"></div>
+            <!--/ UPDATE BANNER -->
+
             <div id="debug-info"></div>
 
             <!-- ACL Initialization for JavaScript -->

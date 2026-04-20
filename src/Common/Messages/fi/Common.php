@@ -257,6 +257,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'MikoPBX:n SSH-salasana on vaihdettu!',
     'adv_SSHPasswordWasChangedSubject' => 'Huomio! SSH-salasana on vaihdettu!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Huomio! SSH-salasana vaihdettiin ilman kirjautumista MikoPBX-liittymään!',
+    'adv_SecurityPatchAvailable' => 'Tietoturvapäivitys saatavilla: moduuli <a href="%url%" class="advices-module-update">%module%</a> %ver%. Asennus suositellaan.',
     'adv_SipPasswordWeak' => 'Yksinkertainen SIP-salasana: <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'Yksinkertainen SSH-tilin salasana <a href=\'%url%\'>muutos</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Tallennuslevyltä on loppumassa vapaa tila (%free% Mt)</a>',
@@ -336,6 +337,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Anna käyttäjätunnuksesi',
     'auth_ValidatePasswordNotEmpty' => 'Kirjoita salasanasi',
     'auth_WrongLoginPassword' => 'Valtuutus epäonnistui, sinulla on %attempts% yritystä jäljellä',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'Sulje',
+    'banner_InstallNow' => 'Asenna nyt',
+    'banner_RemindIn3Days' => 'Muistuta 3 päivän kuluttua',
+    'banner_SecurityPatchAvailable' => 'Tietoturvapäivitys saatavilla: moduuli %module% %ver%',
+    'banner_SecurityUpdateCritical' => 'Kriittinen tietoturvapäivitys %ver%! Asenna välittömästi.',
+    'banner_UpdateAvailable' => 'MikoPBX-päivitys %ver% on saatavilla',
+
     // BT
     'bt_Add' => 'Lisää',
     'bt_ApplyChangesToPBX' => 'Ota muutokset käyttöön',

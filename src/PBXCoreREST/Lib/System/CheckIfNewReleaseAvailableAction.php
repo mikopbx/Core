@@ -111,10 +111,13 @@ class CheckIfNewReleaseAvailableAction
             }
 
             // Build response data
+            // `severity` comes from the release server for critical/security firmware updates.
+            // Missing field defaults to 'info' so pre-severity server responses keep working.
             $res->data = [
                 'currentVersion' => $pbxVersion,
                 'newVersionAvailable' => $updateData['newVersionAvailable'] ?? false,
                 'latestVersion' => $updateData['version'] ?? null,
+                'severity' => $updateData['severity'] ?? 'info',
                 'lastCheck' => date('Y-m-d H:i:s'),
             ];
 

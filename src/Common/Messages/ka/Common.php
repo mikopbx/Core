@@ -257,6 +257,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'SSH პაროლი MikoPBX-ზე წვდომისთვის შეიცვალა!',
     'adv_SSHPasswordWasChangedSubject' => 'ყურადღება! SSH პაროლი შეიცვალა!',
     'adv_SSHPasswordWasCompromisedSubject' => 'ყურადღება! SSH პაროლი შეიცვალა MikoPBX ინტერფეისში შესვლის გარეშე!',
+    'adv_SecurityPatchAvailable' => 'უსაფრთხოების განახლება ხელმისაწვდომია: მოდული <a href="%url%" class="advices-module-update">%module%</a> %ver%. რეკომენდებულია დაყენება.',
     'adv_SipPasswordWeak' => 'მარტივი SIP პაროლი <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'მარტივი SSH ანგარიშის პაროლი <a href=\'%url%\'>შეცვლა</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'შენახვის დისკს თავისუფალი ადგილი ეწურება (%free% მბ) </a>',
@@ -336,6 +337,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'შეიყვანეთ სისტემაში',
     'auth_ValidatePasswordNotEmpty' => 'შეიყვანეთ პაროლი',
     'auth_WrongLoginPassword' => 'ავტორიზაცია ვერ მოხერხდა, დაგრჩათ %attempts% მცდელობა',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'დახურვა',
+    'banner_InstallNow' => 'ახლა დაყენება',
+    'banner_RemindIn3Days' => 'შემახსენე 3 დღეში',
+    'banner_SecurityPatchAvailable' => 'უსაფრთხოების პატჩი ხელმისაწვდომია: მოდული %module% %ver%',
+    'banner_SecurityUpdateCritical' => 'კრიტიკული უსაფრთხოების განახლება %ver%! დაუყოვნებლივ დაყენება.',
+    'banner_UpdateAvailable' => 'MikoPBX-ის ვერსიის %ver% განახლება ხელმისაწვდომია',
+
     // BT
     'bt_Add' => 'დამატება',
     'bt_ApplyChangesToPBX' => 'ცვლილებების გამოყენება',

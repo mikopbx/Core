@@ -106,6 +106,15 @@ class PbxExtensionModules extends ModelsBase
     public ?string $disabled = '1';
 
     /**
+     * Module category used by advice pipeline and marketplace filter.
+     * Known values: general, languagepack, security, cti, utility, call_feature, ai.
+     * Unknown values are passed through verbatim (forward-compat with release server).
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $module_type = 'general';
+
+    /**
      * Store the reason why the module was disabled as a flag
      *
      * @Column(type="string", nullable=true)

@@ -257,6 +257,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'Пароль SSH для доступу до MikoPBX було змінено!',
     'adv_SSHPasswordWasChangedSubject' => 'Увага! Пароль SSH змінено!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Увага! Пароль SSH змінено без входу в інтерфейс MikoPBX!',
+    'adv_SecurityPatchAvailable' => 'Доступне оновлення безпеки: модуль <a href="%url%" class="advices-module-update">%module%</a> %ver%. Рекомендується встановити.',
     'adv_SipPasswordWeak' => 'Простий пароль SIP у <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'Простий пароль облікового запису SSH <a href=\'%url%\'>змінити</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'На диску для зберігання закінчується вільне місце (%free% Mb)</a>',
@@ -336,6 +337,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Введіть логін',
     'auth_ValidatePasswordNotEmpty' => 'Введіть пароль',
     'auth_WrongLoginPassword' => 'Помилка авторизації, у вас залишилося %attempts% спроб',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'Приховати',
+    'banner_InstallNow' => 'Встановити зараз',
+    'banner_RemindIn3Days' => 'Нагадати через 3 дні',
+    'banner_SecurityPatchAvailable' => 'Доступний патч безпеки: модуль %module% %ver%',
+    'banner_SecurityUpdateCritical' => 'Критичне оновлення безпеки %ver%! Рекомендується встановити негайно.',
+    'banner_UpdateAvailable' => 'Доступне оновлення MikoPBX версії %ver%',
+
     // BT
     'bt_Add' => 'Додати',
     'bt_ApplyChangesToPBX' => 'Застосувати зміни',

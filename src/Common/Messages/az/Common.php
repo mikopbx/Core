@@ -257,6 +257,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'MikoPBX-ə daxil olmaq üçün SSH parolu dəyişdirildi!',
     'adv_SSHPasswordWasChangedSubject' => 'Diqqət! SSH parolu dəyişdirildi!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Diqqət! SSH parolu MikoPBX interfeysinə daxil olmadan dəyişdirildi!',
+    'adv_SecurityPatchAvailable' => 'Təhlükəsizlik yeniləməsi mövcuddur: modul <a href="%url%" class="advices-module-update">%module%</a> %ver%. Quraşdırılması tövsiyə olunur.',
     'adv_SipPasswordWeak' => 'Sadə SIP Parol <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'Sadə SSH hesabı parolu <a href=\'%url%\'>dəyişiklik</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Yaddaş sürücüsündə boş yer tükənir (%free% Mb)</a>',
@@ -336,6 +337,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Giriş daxil edin',
     'auth_ValidatePasswordNotEmpty' => 'parol daxil edin',
     'auth_WrongLoginPassword' => 'Avtorizasiya uğursuz oldu, %attempts% cəhdiniz qalıb',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'Bağla',
+    'banner_InstallNow' => 'İndi quraşdır',
+    'banner_RemindIn3Days' => '3 gündən sonra xatırlat',
+    'banner_SecurityPatchAvailable' => 'Təhlükəsizlik yamağı mövcuddur: modul %module% %ver%',
+    'banner_SecurityUpdateCritical' => 'Kritik təhlükəsizlik yeniləməsi %ver%! Dərhal quraşdırın.',
+    'banner_UpdateAvailable' => 'MikoPBX-in %ver% versiyası mövcuddur',
+
     // BT
     'bt_Add' => 'Əlavə et',
     'bt_ApplyChangesToPBX' => 'Dəyişiklikləri Tətbiq edin',

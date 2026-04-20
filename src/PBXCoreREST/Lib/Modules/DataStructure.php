@@ -63,6 +63,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         $data['developer'] = $model->developer ?? '';
         $data['description'] = $model->description ?? '';
         $data['disabled'] = $model->disabled ?? '0';
+        $data['module_type'] = $model->module_type ?? 'general';
 
         // Add path information
         $data['path'] = $model->path ?? '';
@@ -94,6 +95,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'description' => $moduleData['description'] ?? '',
             'installed' => false,
             'commercial' => $moduleData['commercial'] ?? false,
+            'module_type' => $moduleData['module_type'] ?? 'general',
             'min_pbx_version' => $moduleData['min_pbx_version'] ?? '',
             'max_pbx_version' => $moduleData['max_pbx_version'] ?? '',
             'release_id' => $moduleData['release_id'] ?? 0,
@@ -121,7 +123,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         $responseFields = $definitions['response'];
 
         // ✨ Inherit common fields (NO duplication!)
-        $commonFields = ['id', 'name', 'version', 'developer', 'description', 'disabled'];
+        $commonFields = ['id', 'name', 'version', 'developer', 'description', 'disabled', 'module_type'];
         $properties = [];
         foreach ($commonFields as $field) {
             if (isset($responseFields[$field])) {
@@ -275,6 +277,14 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'default' => false,
                 'sanitize' => 'bool',
                 'example' => false
+            ],
+            'module_type' => [
+                'type' => 'string',
+                'description' => 'rest_schema_module_type',
+                'maxLength' => 50,
+                'default' => 'general',
+                'sanitize' => 'string',
+                'example' => 'security'
             ],
             // Installation parameters
             'release_id' => [

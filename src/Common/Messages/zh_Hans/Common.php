@@ -257,6 +257,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => '访问MikoPBX的SSH密码已更改！',
     'adv_SSHPasswordWasChangedSubject' => '注意力！ SSH密码已更改！',
     'adv_SSHPasswordWasCompromisedSubject' => '注意力！未登录MikoPBX界面已更改SSH密码！',
+    'adv_SecurityPatchAvailable' => '有可用的安全更新：模块 <a href="%url%" class="advices-module-update">%module%</a> %ver%。建议安装。',
     'adv_SipPasswordWeak' => '<a href=\'%url%\'>%record%</a> 的简单 SIP 密码',
     'adv_SshPasswordWeak' => '简单SSH账户密码<a href=\'%url%\'>更改</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => '可用磁盘空间在存储驱动器上用完（%free%Mb）</a>',
@@ -336,6 +337,14 @@ return [
     'auth_ValidateLoginNotEmpty' => '输入登录名',
     'auth_ValidatePasswordNotEmpty' => '输入密码',
     'auth_WrongLoginPassword' => '授权失败，您还有 %attempts% 次尝试机会',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => '关闭',
+    'banner_InstallNow' => '立即安装',
+    'banner_RemindIn3Days' => '3天后提醒',
+    'banner_SecurityPatchAvailable' => '有可用的安全补丁：模块 %module% %ver%',
+    'banner_SecurityUpdateCritical' => '关键安全更新 %ver%！请立即安装。',
+    'banner_UpdateAvailable' => 'MikoPBX 版本 %ver% 更新可用',
+
     // BT
     'bt_Add' => '添加',
     'bt_ApplyChangesToPBX' => '套用变更',
