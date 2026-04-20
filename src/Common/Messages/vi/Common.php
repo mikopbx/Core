@@ -257,6 +257,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'Mật khẩu SSH để truy cập MikoPBX đã được thay đổi!',
     'adv_SSHPasswordWasChangedSubject' => 'Chú ý! Mật khẩu SSH đã được thay đổi!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Chú ý! Mật khẩu SSH đã được thay đổi mà không cần đăng nhập vào giao diện MikoPBX!',
+    'adv_SecurityPatchAvailable' => 'Có bản cập nhật bảo mật: mô-đun <a href="%url%" class="advices-module-update">%module%</a> %ver%. Nên cài đặt.',
     'adv_SipPasswordWeak' => 'Mật khẩu SIP đơn giản tại <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'Mật khẩu tài khoản SSH đơn giản <a href=\'%url%\'>thay đổi</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Dung lượng đĩa trống hết trên ổ lưu trữ (%free% Mb) </a>',
@@ -336,6 +337,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Nhập đăng nhập',
     'auth_ValidatePasswordNotEmpty' => 'Nhập mật khẩu',
     'auth_WrongLoginPassword' => 'Việc ủy quyền không thành công, bạn còn %attempts% lần thử',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'Đóng',
+    'banner_InstallNow' => 'Cài đặt ngay',
+    'banner_RemindIn3Days' => 'Nhắc nhở sau 3 ngày',
+    'banner_SecurityPatchAvailable' => 'Có bản vá bảo mật: mô-đun %module% %ver%',
+    'banner_SecurityUpdateCritical' => 'Cập nhật bảo mật quan trọng %ver%! Cài đặt ngay lập tức.',
+    'banner_UpdateAvailable' => 'Có bản cập nhật MikoPBX phiên bản %ver%',
+
     // BT
     'bt_Add' => 'Thêm',
     'bt_ApplyChangesToPBX' => 'Áp dụng thay đổi',

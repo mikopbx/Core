@@ -253,6 +253,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => '¡La contraseña SSH para acceder a MikoPBX ha sido cambiada!',
     'adv_SSHPasswordWasChangedSubject' => '¡Atención! ¡La contraseña SSH ha sido cambiada!',
     'adv_SSHPasswordWasCompromisedSubject' => '¡Atención! ¡La contraseña SSH se ha cambiado sin iniciar sesión en la interfaz MikoPBX!',
+    'adv_SecurityPatchAvailable' => 'Actualización de seguridad disponible: módulo <a href="%url%" class="advices-module-update">%module%</a> %ver%. Se recomienda instalar.',
     'adv_SipPasswordWeak' => 'Contraseña SIP simple en <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'Contraseña de cuenta SSH simple <a href=\'%url%\'>cambiar</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'El disco de almacenamiento se está quedando sin espacio libre (%free% Mb) </a>',
@@ -292,6 +293,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Ingrese inicio de sesión',
     'auth_ValidatePasswordNotEmpty' => 'Ingrese contraseña',
     'auth_WrongLoginPassword' => 'La autorización falló, te quedan %attempts% intentos',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'Cerrar',
+    'banner_InstallNow' => 'Instalar ahora',
+    'banner_RemindIn3Days' => 'Recordarme en 3 días',
+    'banner_SecurityPatchAvailable' => 'Parche de seguridad disponible: módulo %module% %ver%',
+    'banner_SecurityUpdateCritical' => '¡Actualización de seguridad crítica %ver%! Instalar de inmediato.',
+    'banner_UpdateAvailable' => 'Actualización de MikoPBX %ver% disponible',
+
     // BT
     'bt_ApplyChangesToPBX' => 'Aplicar cambios',
     'bt_Back' => 'Volver',
@@ -928,6 +937,7 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'adv_S3CheckUnexpectedError' => 'Error inesperado al comprobar S3: %error%',
     'am_CopyRecord' => 'Copiar',
     'auth_ServerUnavailable' => 'El servidor no está disponible o está cargando. Inténtalo de nuevo más tarde.',
+
     // BT
     'bt_Add' => 'Agregar',
     'bt_Cancel' => 'Cancelar',

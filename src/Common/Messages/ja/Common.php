@@ -257,6 +257,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'MikoPBX にアクセスするための SSH パスワードが変更されました!',
     'adv_SSHPasswordWasChangedSubject' => '注意！ SSHパスワードが変更されました！',
     'adv_SSHPasswordWasCompromisedSubject' => '注意！ MikoPBX インターフェイスにログインせずに SSH パスワードが変更されました!',
+    'adv_SecurityPatchAvailable' => 'セキュリティアップデートが利用可能です: モジュール <a href="%url%" class="advices-module-update">%module%</a> %ver%。インストールを推奨します。',
     'adv_SipPasswordWeak' => '<a href=\'%url%\'>%record%</a> の簡易 SIP パスワード',
     'adv_SshPasswordWeak' => 'シンプルな SSH アカウントのパスワード <a href=\'%url%\'>変更</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'ストレージドライブの空きディスク容量が不足しています（%free%Mb）</a>',
@@ -336,6 +337,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'ログインを入力してください',
     'auth_ValidatePasswordNotEmpty' => 'パスワードを入力してください',
     'auth_WrongLoginPassword' => '認証に失敗しました。残り %attempts% 回の試行が残っています',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => '閉じる',
+    'banner_InstallNow' => '今すぐインストール',
+    'banner_RemindIn3Days' => '3日後に通知',
+    'banner_SecurityPatchAvailable' => 'セキュリティパッチが利用可能: モジュール %module% %ver%',
+    'banner_SecurityUpdateCritical' => '重要なセキュリティアップデート %ver%！すぐにインストールしてください。',
+    'banner_UpdateAvailable' => 'MikoPBX バージョン %ver% のアップデートが利用可能です',
+
     // BT
     'bt_ApplyChangesToPBX' => '変更を適用',
     'bt_Back' => '戻る',

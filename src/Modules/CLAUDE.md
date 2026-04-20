@@ -25,7 +25,7 @@ Modules/
 │   └── ModulesModelsBase.php          # Base for module models (auto DB connection)
 │
 └── Setup/
-    ├── PbxExtensionSetupBase.php      # Install/uninstall base class
+    ├── PbxExtensionSetupBase.php      # Install/uninstall base class (persists `$module_type` from `module.json` in `registerNewModule()`; default `'general'`)
     ├── PbxExtensionSetupInterface.php # Setup contract
     └── PbxExtensionSetupFailure.php   # Fallback for missing modules
 ```

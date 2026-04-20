@@ -78,11 +78,18 @@ class CheckUpdates extends Injectable
 
             // Check if new version is available
             if (!empty($restResponse->data['newVersionAvailable']) && !empty($restResponse->data['latestVersion'])) {
-                $messages['info'][] = [
+                // Map release server `severity` onto advice buckets.
+                // 'critical'|'warning' -> warning (red), anything else -> info (blue).
+                // Missing/unknown severity defaults to info for backward compatibility.
+                $severity = (string)($restResponse->data['severity'] ?? 'info');
+                $bucket = in_array($severity, ['critical', 'warning'], true) ? 'warning' : 'info';
+
+                $messages[$bucket][] = [
                     'messageTpl' => 'adv_AvailableNewVersionPBX',
                     'messageParams' => [
                         'url' => $this->url->get('update/index/'),
                         'ver' => $restResponse->data['latestVersion'],
+                        'severity' => $severity,
                     ]
                 ];
             }

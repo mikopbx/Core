@@ -257,6 +257,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'A MikoPBX eléréséhez szükséges SSH jelszó megváltozott!',
     'adv_SSHPasswordWasChangedSubject' => 'Figyelem! Az SSH jelszó megváltozott!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Figyelem! Az SSH jelszó a MikoPBX felületre való bejelentkezés nélkül megváltozott!',
+    'adv_SecurityPatchAvailable' => 'Biztonsági frissítés elérhető: modul <a href="%url%" class="advices-module-update">%module%</a> %ver%. Telepítés ajánlott.',
     'adv_SipPasswordWeak' => 'Egyszerű SIP jelszó: <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'Egyszerű SSH-fiók jelszava <a href=\'%url%\'>módosítás</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'A tárolólemezen kifogy a szabad hely (%free% Mb)</a>',
@@ -336,6 +337,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Adja meg a bejelentkezést',
     'auth_ValidatePasswordNotEmpty' => 'írd be a jelszót',
     'auth_WrongLoginPassword' => 'Az engedélyezés nem sikerült, még %attempts% próbálkozása van hátra',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'Bezár',
+    'banner_InstallNow' => 'Telepítés most',
+    'banner_RemindIn3Days' => 'Emlékeztessen 3 nap múlva',
+    'banner_SecurityPatchAvailable' => 'Biztonsági javítás elérhető: modul %module% %ver%',
+    'banner_SecurityUpdateCritical' => 'Kritikus biztonsági frissítés %ver%! Telepítse azonnal.',
+    'banner_UpdateAvailable' => 'MikoPBX frissítés %ver% elérhető',
+
     // BT
     'bt_Add' => 'Hozzáadás',
     'bt_ApplyChangesToPBX' => 'Módosítások elfogadása',

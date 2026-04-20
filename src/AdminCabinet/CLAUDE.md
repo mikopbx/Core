@@ -104,7 +104,7 @@ AdminCabinet/
 │
 └── Views/                             # 35 view directories
     ├── layouts/
-    │   └── main.volt                  # Main layout template
+    │   └── main.volt                  # Main layout template (hosts `#update-banner` DOM populated by `update-banner.js`)
     ├── partials/                       # 12 reusable partials
     │   ├── acl-init.volt              # ACL initialization
     │   ├── emptyTablePlaceholder.volt
@@ -178,7 +178,7 @@ Each section has its own JS module with `initialize()` pattern:
 
 ```
 src/
-├── Advice/               # System advice/tips
+├── Advice/               # System advice/tips — `advice-worker.js` (bell icon, all buckets) + `update-banner.js` (GitLab-style top banner, warning-bucket only: critical core updates + uninstalled security modules; dismiss persisted in localStorage keyed on `messageTpl+module+version`)
 ├── ApiKeys/              # API key management
 ├── AsteriskManagers/     # AMI user UI
 ├── AsteriskRestUsers/    # ARI user UI

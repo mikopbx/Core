@@ -5,6 +5,18 @@
 
 <input type="file" name="update-file" accept=".zip" style="display: none!important;"/>
 
+<div class="ui form module-type-filter-wrapper" id="module-type-filter-wrapper" style="display:none; margin: 0 0 10px 0;">
+    <div class="inline field">
+        <label for="module-type-filter">{{ t._('ext_ModuleTypeFilter') }}</label>
+        <div class="ui selection dropdown" id="module-type-filter">
+            <input type="hidden" name="module-type-filter-value" value="all">
+            <i class="dropdown icon"></i>
+            <div class="default text">{{ t._('ext_ModuleTypeAll') }}</div>
+            <div class="menu"></div>
+        </div>
+    </div>
+</div>
+
 <table class="ui celled selectable unstackable very compact table" id="new-modules-table" style="display: none;">
     <thead>
     <tr>

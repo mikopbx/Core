@@ -257,6 +257,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'Hasło SSH dostępu do MikoPBX zostało zmienione!',
     'adv_SSHPasswordWasChangedSubject' => 'Uwaga! Hasło SSH zostało zmienione!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Uwaga! Hasło SSH zostało zmienione bez logowania do interfejsu MikoPBX!',
+    'adv_SecurityPatchAvailable' => 'Dostępna aktualizacja zabezpieczeń: moduł <a href="%url%" class="advices-module-update">%module%</a> %ver%. Zalecana instalacja.',
     'adv_SipPasswordWeak' => 'Proste hasło SIP pod adresem <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'Proste hasło do konta SSH <a href=\'%url%\'>zmień</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Na dysku do przechowywania kończy się wolne miejsce (%free% Mb) </a>',
@@ -336,6 +337,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Wpisz login',
     'auth_ValidatePasswordNotEmpty' => 'Wpisz hasło',
     'auth_WrongLoginPassword' => 'Autoryzacja nie powiodła się, pozostało Ci %attempts% prób',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'Zamknij',
+    'banner_InstallNow' => 'Zainstaluj teraz',
+    'banner_RemindIn3Days' => 'Przypomnij za 3 dni',
+    'banner_SecurityPatchAvailable' => 'Dostępna łatka bezpieczeństwa: moduł %module% %ver%',
+    'banner_SecurityUpdateCritical' => 'Krytyczna aktualizacja zabezpieczeń %ver%! Zainstaluj natychmiast.',
+    'banner_UpdateAvailable' => 'Dostępna aktualizacja MikoPBX w wersji %ver%',
+
     // BT
     'bt_Add' => 'Dodaj',
     'bt_ApplyChangesToPBX' => 'Zastosuj zmiany',

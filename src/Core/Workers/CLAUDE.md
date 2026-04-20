@@ -100,8 +100,8 @@ Workers/
         ├── CheckStorage.php           # Storage health (3600s, priority 2)
         ├── CheckStorageUsage.php      # Disk usage (1800s, priority 3)
         ├── CheckS3Connection.php      # S3 connection (300s, priority 4)
-        ├── CheckUpdates.php           # System updates (86400s, priority 5)
-        └── CheckModulesUpdates.php    # Module updates (86400s, priority 5)
+        ├── CheckUpdates.php           # System updates (86400s, priority 5) — severity-aware: server `severity` critical|warning → warning bucket, else info
+        └── CheckModulesUpdates.php    # Module updates (86400s, priority 5) — two passes: (a) installed version compare (security modules → warning), (b) uninstalled security modules → warning bucket via `adv_SecurityPatchAvailable`
 ```
 
 **Also:** `src/PBXCoreREST/Workers/WorkerApiCommands.php` - REST API processor (Redis pool, maxProc=3, 15s interval)

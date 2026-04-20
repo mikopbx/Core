@@ -131,6 +131,12 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     public array $wiki_links = [];
 
     /**
+     * Module category from module.json (general|languagepack|security|cti|utility|call_feature|ai|...).
+     * @var string
+     */
+    public string $module_type = 'general';
+
+    /**
      * Constructor for the module class.
      *
      * @param string $moduleUniqueID The unique identifier of the module.
@@ -176,6 +182,11 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 $wiki_links = $module_settings['wiki_links'] ?? [];
                 if (is_array($wiki_links)) {
                     $this->wiki_links = $wiki_links;
+                }
+
+                // Extract module category (general|languagepack|security|cti|utility|call_feature|ai|...)
+                if (!empty($module_settings['module_type']) && is_string($module_settings['module_type'])) {
+                    $this->module_type = $module_settings['module_type'];
                 }
             } else {
                 $this->messages[] = $this->translation->_("ext_ErrorOnDecodeModuleJson", ['filename' => 'module.json']);
@@ -509,6 +520,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $module->version       = $this->version;
         $module->description   = $this->translation->_("SubHeader$this->moduleUniqueID");
         $module->support_email = $this->support_email;
+        $module->module_type   = $this->module_type;
 
         try {
             $module->wiki_links = json_encode($this->wiki_links, JSON_THROW_ON_ERROR);

@@ -217,6 +217,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'รหัสผ่าน SSH สำหรับการเข้าถึง MikoPBX มีการเปลี่ยนแปลง!',
     'adv_SSHPasswordWasChangedSubject' => 'ความสนใจ! รหัสผ่าน SSH มีการเปลี่ยนแปลง!',
     'adv_SSHPasswordWasCompromisedSubject' => 'ความสนใจ! รหัสผ่าน SSH ถูกเปลี่ยนโดยไม่ต้องเข้าสู่อินเทอร์เฟซ MikoPBX!',
+    'adv_SecurityPatchAvailable' => 'มีการอัปเดตความปลอดภัย: โมดูล <a href="%url%" class="advices-module-update">%module%</a> %ver% แนะนำให้ติดตั้ง',
     'adv_SipPasswordWeak' => 'รหัสผ่าน SIP แบบง่ายสำหรับ <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'รหัสผ่านบัญชี SSH อย่างง่าย <a href=\'%url%\'> เปลี่ยน </a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'ดิสก์จัดเก็บข้อมูลมีพื้นที่ว่างไม่เพียงพอ (%free% Mb)</a>',
@@ -294,6 +295,15 @@ return [
     'auth_ValidateLoginNotEmpty' => 'เข้าสู่ระบบ',
     'auth_ValidatePasswordNotEmpty' => 'ใส่รหัสผ่าน',
     'auth_WrongLoginPassword' => 'การอนุมัติล้มเหลว คุณพยายามได้อีก %attempts% ครั้ง',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'ปิด',
+    'banner_InstallNow' => 'ติดตั้งตอนนี้',
+    'banner_RemindIn3Days' => 'แจ้งเตือนใน 3 วัน',
+    'banner_SecurityPatchAvailable' => 'มีแพตช์ความปลอดภัย: โมดูล %module% %ver%',
+    'banner_SecurityUpdateCritical' => 'การอัปเดตความปลอดภัยวิกฤต %ver%! ติดตั้งทันที',
+    'banner_UpdateAvailable' => 'มีการอัปเดต MikoPBX เวอร์ชัน %ver%',
+
+    // BT
     'bt_Add' => 'เพิ่ม',
     'bt_ApplyChangesToPBX' => 'ใช้การเปลี่ยนแปลง',
     'bt_Back' => 'กลับ',

@@ -262,6 +262,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'SSH password for MikoPBX access has been changed!',
     'adv_SSHPasswordWasChangedSubject' => 'Attention! SSH password has been changed!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Attention! SSH password was changed without logging into MikoPBX interface!',
+    'adv_SecurityPatchAvailable' => 'Security patch available: module <a href="%url%" class="advices-module-update">%module%</a> %ver%. Installation recommended.',
     'adv_SipPasswordWeak' => 'Weak SIP password for <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'Weak SSH account password <a href=\'%url%\'>change</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Storage disk running out of free space (%free% Mb)</a>',
@@ -348,6 +349,15 @@ return [
     'auth_ValidatePasswordNotEmpty' => 'Enter password',
     'auth_WrongLoginPassword' => 'Authorization error, you have %attempts% attempts left',
     'auth_ServerUnavailable' => 'Server unavailable or loading. Please try again later.',
+
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_UpdateAvailable' => 'MikoPBX update %ver% is available',
+    'banner_SecurityUpdateCritical' => 'Critical security update %ver%! Install immediately.',
+    'banner_SecurityPatchAvailable' => 'Security patch available: module %module% %ver%',
+    'banner_InstallNow' => 'Install now',
+    'banner_RemindIn3Days' => 'Remind me in 3 days',
+    'banner_Dismiss' => 'Dismiss',
+
     // BT
     'bt_Add' => 'Add',
     'bt_ApplyChangesToPBX' => 'Apply changes',

@@ -257,6 +257,7 @@ return [
     'adv_SSHPasswordWasChangedBody' => 'SSH lozinka za pristup MikoPBX-u je promijenjena!',
     'adv_SSHPasswordWasChangedSubject' => 'Pažnja! SSH lozinka je promijenjena!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Pažnja! SSH lozinka je promijenjena bez prijave na MikoPBX sučelje!',
+    'adv_SecurityPatchAvailable' => 'Dostupno sigurnosno ažuriranje: modul <a href="%url%" class="advices-module-update">%module%</a> %ver%. Preporučuje se instalacija.',
     'adv_SipPasswordWeak' => 'Jednostavna SIP lozinka za <a href=\'%url%\'>%record%</a>',
     'adv_SshPasswordWeak' => 'Jednostavna lozinka za SSH račun <a href=\'%url%\'>promjena</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Na disku za pohranu ponestaje slobodnog prostora (%free% Mb)</a>',
@@ -336,6 +337,14 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Unesite svoju prijavu',
     'auth_ValidatePasswordNotEmpty' => 'Unesite svoju lozinku',
     'auth_WrongLoginPassword' => 'Autorizacija nije uspjela, imate još %attempts% pokušaja',
+    // Update notification banner (GitLab-style, shown at the top of every page)
+    'banner_Dismiss' => 'Zatvori',
+    'banner_InstallNow' => 'Instaliraj sada',
+    'banner_RemindIn3Days' => 'Podsjeti me za 3 dana',
+    'banner_SecurityPatchAvailable' => 'Dostupna sigurnosna zakrpa: modul %module% %ver%',
+    'banner_SecurityUpdateCritical' => 'Kritično sigurnosno ažuriranje %ver%! Instalirajte odmah.',
+    'banner_UpdateAvailable' => 'Dostupno ažuriranje MikoPBX verzije %ver%',
+
     // BT
     'bt_Add' => 'Dodaj',
     'bt_ApplyChangesToPBX' => 'Primijeni promjene',

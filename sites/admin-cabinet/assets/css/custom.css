@@ -628,3 +628,70 @@ a.ui.button.pbx-extensions-settings {
     background-color: rgba(0,0,0,.05) !important;
 }
 
+/* Update notification banner (GitLab-style, top of every page) */
+.update-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    margin: 0 0 12px 0;
+    border-radius: 4px;
+    border-left: 4px solid;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.update-banner.hidden {
+    display: none;
+}
+
+.update-banner.info {
+    background-color: #e8f0fe;
+    border-color: #2185d0;
+    color: #1a4a7a;
+}
+
+.update-banner.warning {
+    background-color: #fdecea;
+    border-color: #db2828;
+    color: #7a1a1a;
+}
+
+.update-banner .update-banner-icon {
+    font-size: 18px;
+}
+
+.update-banner .update-banner-message {
+    flex: 1;
+}
+
+.update-banner .update-banner-message a {
+    color: inherit;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.update-banner .update-banner-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.update-banner .update-banner-actions .ui.button {
+    margin: 0;
+}
+
+.update-banner .update-banner-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.6;
+    padding: 4px 8px;
+    font-size: 16px;
+}
+
+.update-banner .update-banner-close:hover {
+    opacity: 1;
+}
+

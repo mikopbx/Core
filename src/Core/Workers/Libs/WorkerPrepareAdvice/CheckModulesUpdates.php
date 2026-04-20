@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2026 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,17 +26,21 @@ use Phalcon\Di\Injectable;
 
 /**
  * Class CheckModulesUpdates
- * This class is responsible for checking modules updates.
+ *
+ * Produces advice entries for:
+ *   - new versions of already-installed modules (info, or warning for security),
+ *   - security-type modules not yet installed (warning).
  *
  * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice
  */
 class CheckModulesUpdates extends Injectable
 {
+    private const string SECURITY_TYPE = 'security';
+
     /**
-     * Check for a new version PBX
+     * Check for module updates and uninstalled security patches.
      *
-     * @return array An array containing information messages about available updates.
-     *
+     * @return array<string, array<int, array<string, mixed>>>
      */
     public function process(): array
     {
@@ -50,24 +54,51 @@ class CheckModulesUpdates extends Injectable
         $modulesFromServer = $res->data['modules'] ?? [];
         $modulesFromLocal = PbxExtensionModules::getModulesArray();
 
+        $marketplaceBaseUrl = $this->url->get('pbx-extension-modules/index/');
+
         foreach ($modulesFromServer as $module) {
-            if (isset($modulesFromLocal[$module['uniqid']])) {
-                $moduleFromLocal = $modulesFromLocal[$module['uniqid']];
-                $localVersion = $moduleFromLocal['version'] ?? '0.0.0';
-                $remoteVersion = $module['version'] ?? '0.0.0';
+            $uniqid = (string)($module['uniqid'] ?? '');
+            if ($uniqid === '') {
+                continue;
+            }
+            $moduleType = (string)($module['module_type'] ?? 'general');
+            $moduleUrl = $marketplaceBaseUrl . '?module=' . urlencode($uniqid) . '#/marketplace';
+            $remoteVersion = (string)($module['version'] ?? '0.0.0');
+            $name = (string)($module['name'] ?? $uniqid);
+
+            if (isset($modulesFromLocal[$uniqid])) {
+                // Installed — advise when a newer version is available.
+                $localVersion = (string)($modulesFromLocal[$uniqid]['version'] ?? '0.0.0');
                 if (version_compare($localVersion, $remoteVersion, '<')) {
-                    $messages['info'][] = [
+                    $bucket = $moduleType === self::SECURITY_TYPE ? 'warning' : 'info';
+                    $messages[$bucket][] = [
                         'messageTpl' => 'adv_AvailableNewVersionModule',
                         'messageParams' => [
-                            'url' => $this->url->get('pbx-extension-modules/index/') . '?module=' . urlencode($module['uniqid']) . '#/marketplace',
+                            'url' => $moduleUrl,
                             'ver' => $remoteVersion,
-                            'module' => $module['name'],
+                            'module' => $name,
                             'currentVer' => $localVersion,
-                        ]
+                            'module_type' => $moduleType,
+                        ],
                     ];
                 }
+                continue;
+            }
+
+            // Not installed — surface security patches as warning-level advice.
+            if ($moduleType === self::SECURITY_TYPE) {
+                $messages['warning'][] = [
+                    'messageTpl' => 'adv_SecurityPatchAvailable',
+                    'messageParams' => [
+                        'url' => $moduleUrl,
+                        'module' => $name,
+                        'ver' => $remoteVersion,
+                        'module_type' => $moduleType,
+                    ],
+                ];
             }
         }
+
         return $messages;
     }
 }
