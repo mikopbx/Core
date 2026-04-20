@@ -51,7 +51,7 @@
             {% endif %}
         </div>
 
-        <div id="pbx-version">{{ PBXName }} ver: {{ PBXVersion }}</div>
+        <div id="pbx-version">{{ PBXName }}</div>
     </div>
 </div>
 </body>

@@ -2,7 +2,7 @@ ssl_session_cache   shared:SSL:10m;
 ssl_session_timeout 5m;
 ssl_prefer_server_ciphers on;
 server {
-    listen       <WEBHTTPSPort> ssl;
+    listen       <WEBHTTPSPort> ssl http2;
     server_name  default;
     resolver <DNS>;
 
@@ -12,8 +12,7 @@ server {
     ssl_certificate_key    /etc/ssl/private/nginx.key;
 
     more_clear_headers Server;
-    add_header Strict-Transport-Security 'max-age=15768000; includeSubDomains';
-    add_header 'Access-Control-Allow-Origin' '*' always;
+    add_header Strict-Transport-Security 'max-age=31536000; includeSubDomains; preload' always;
     include mikopbx/security-headers.conf;
 
     # locations files
