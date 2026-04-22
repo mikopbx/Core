@@ -134,6 +134,11 @@ class SoundFiles extends ModelsBase
             return;
         }
 
+        // Skip deletion for files on read-only /offload partition (default system sounds)
+        if (str_starts_with($this->path, '/offload/')) {
+            return;
+        }
+
         // Delete the main file
         if (file_exists($this->path)) {
             unlink($this->path);
