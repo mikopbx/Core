@@ -450,26 +450,7 @@ const callQueueModifyRest = {
      * @param {string} newNumber - New extension number to check
      */
     checkExtensionAvailability(oldNumber, newNumber) {
-        if (oldNumber === newNumber) {
-            $('.ui.input.extension').parent().removeClass('error');
-            $('#extension-error').addClass('hidden');
-            return;
-        }
-
-        // Use CallQueuesAPI to check extension availability
-        CallQueuesAPI.checkExtensionAvailability(newNumber, (response) => {
-            if (response.result !== undefined) {
-                if (response.result === false) {
-                    // Extension is not available
-                    $('.ui.input.extension').parent().addClass('error');
-                    $('#extension-error').removeClass('hidden');
-                } else {
-                    // Extension is available
-                    $('.ui.input.extension').parent().removeClass('error');
-                    $('#extension-error').addClass('hidden');
-                }
-            }
-        });
+        ExtensionsAPI.checkAvailability(oldNumber, newNumber);
     },
 
 

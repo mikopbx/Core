@@ -55,18 +55,16 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
         $this->setConnectionService('dbCDR');
     }
 
-    public function beforeSave(): void
+    public function beforeSave(): bool
     {
         if (empty($this->linkedid)) {
-            $trace = debug_backtrace();
-            $error =  "Call trace:\n";
-            foreach ($trace as $index => $item) {
-                if ($index > 0) {
-                    $error .= "$index. {$item['file']} (line {$item['line']})\n";
-                }
-            }
-            SystemMessages::sysLogMsg('ERROR_CDR ' . getmypid(), $error);
+            SystemMessages::sysLogMsg(
+                'ERROR_CDR ' . getmypid(),
+                'Blocked save with empty linkedid: ' . json_encode($this->toArray(), JSON_UNESCAPED_UNICODE)
+            );
+            return false;
         }
+        return true;
     }
 
     /**

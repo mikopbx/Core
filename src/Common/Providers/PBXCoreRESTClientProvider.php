@@ -143,11 +143,13 @@ class PBXCoreRESTClientProvider implements ServiceProviderInterface
         // Get the web port from PbxSettings
         $webPort = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
 
-        // Create a new HTTP client instance
+        // Create a new HTTP client instance for internal API calls.
+        // Use 127.0.0.1 (not localhost) to guarantee IPv4 and match nginx $is_local map.
+        // Disable redirects to prevent HTTPS redirect loops when REDIRECT_TO_HTTPS is enabled.
         $client = new Client([
-            'base_uri' => 'http://localhost:' . $webPort,
+            'base_uri' => 'http://127.0.0.1:' . $webPort,
             'timeout' => 30,
-            'allow_redirects' => true
+            'allow_redirects' => false,
         ]);
 
         try {

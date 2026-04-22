@@ -271,7 +271,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             // WHY: Frontend needs to know where to redirect after save
             $res->reload = "incoming-routes/modify/{$savedRoute->id}";
 
-            self::logSuccessfulSave('Incoming route', $savedRoute->rulename, $savedRoute->number, __METHOD__);
+            self::logSuccessfulSave('Incoming route', $savedRoute->rulename ?? (string)$savedRoute->id, $savedRoute->number ?? '', __METHOD__);
 
         } catch (\Exception $e) {
             return self::handleError($e, $res);

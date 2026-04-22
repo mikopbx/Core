@@ -253,14 +253,14 @@ abstract class AbstractSaveRecordAction
      * Log successful save operation
      *
      * @param string $entityType Type of entity (e.g., 'Call queue', 'IVR menu')
-     * @param string $entityName Name/identifier of saved entity
-     * @param string $extension Extension number of entity
+     * @param string|null $entityName Name/identifier of saved entity
+     * @param string|null $extension Extension number of entity
      * @param string $method Method that performed the save
      */
     protected static function logSuccessfulSave(
         string $entityType,
-        string $entityName,
-        string $extension,
+        ?string $entityName,
+        ?string $extension,
         string $method
     ): void {
         SystemMessages::sysLogMsg(
