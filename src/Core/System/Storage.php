@@ -1399,7 +1399,6 @@ class Storage extends Injectable
      */
     public function getStorageFreeSpaceMb(): int
     {
-        $size = 0;
         $mntDir = '';
         $mounted = self::isStorageDiskMounted('', $mntDir);
         if (!$mounted) {
@@ -1407,12 +1406,19 @@ class Storage extends Injectable
         }
         $hd = $this->getAllHdd(true);
         foreach ($hd as $disk) {
+            // For sys_disk, 'mounted' points to /offload (partition 2), not storage (partition 4).
+            // Use getFreeSpace on partition 4 directly.
+            if ($disk['sys_disk'] === true) {
+                $storagePartition = $disk['id'] . '4';
+                if (self::isStorageDiskMounted($storagePartition)) {
+                    return (int)self::getFreeSpace($storagePartition);
+                }
+            }
             if ($disk['mounted'] === $mntDir) {
-                $size = $disk['free_space'];
-                break;
+                return (int)$disk['free_space'];
             }
         }
-        return $size;
+        return 0;
     }
 
     /**
@@ -1581,7 +1587,23 @@ class Storage extends Injectable
         //   - storageDir starts with mount point (container: mounted=/storage, storageDir=/storage/usbdisk1)
         $disks = $this->getAllHdd(true);
         foreach ($disks as $disk) {
-            if (strpos($disk['mounted'], $storageDir) === 0
+            // For sys_disk, 'mounted' points to /offload (partition 2), not /storage/usbdisk1 (partition 4).
+            // Check storage partition directly: it's always partition 4 of the system disk.
+            if ($disk['sys_disk'] === true) {
+                $storagePartition = $disk['id'] . '4';
+                if (self::isStorageDiskMounted($storagePartition)) {
+                    $storageFreeSpace = self::getFreeSpace($storagePartition);
+                    $result['free_space'] = round($storageFreeSpace, 1);
+                    // Find partition 4 size from partitions array
+                    foreach ($disk['partitions'] as $part) {
+                        if ($part['dev'] === $storagePartition) {
+                            $result['total_size'] = floatval($part['size']);
+                            break;
+                        }
+                    }
+                    break;
+                }
+            } elseif (strpos($disk['mounted'], $storageDir) === 0
                 || strpos($storageDir, $disk['mounted']) === 0) {
                 $result['total_size'] = floatval($disk['size']);
                 $result['used_space'] = floatval($disk['used_space']);

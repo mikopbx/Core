@@ -241,30 +241,30 @@ const storageIndex = {
             $(`#${category}-size`).text(formatSize(catData ? catData.size : 0));
         });
         
-        // Add hover effects for progress segments
-        $('.progress-segment').on('mouseenter', function(e) {
-            const $this = $(this);
-            const tooltip = $('<div class="storage-tooltip"></div>').text($this.attr('title'));
-            $('body').append(tooltip);
-            
-            $(document).on('mousemove.tooltip', function(e) {
-                tooltip.css({
-                    left: e.pageX + 10,
-                    top: e.pageY - 30
+        // Bind hover effects only once (not on every data refresh)
+        if (!storageIndex._hoverBound) {
+            storageIndex._hoverBound = true;
+
+            // Tooltip for progress segments
+            $('#storage-progress').on('mouseenter', '.progress-segment', function (e) {
+                const tooltip = $('<div class="storage-tooltip"></div>').text($(this).attr('title'));
+                $('body').append(tooltip);
+                $(document).on('mousemove.tooltip', function (ev) {
+                    tooltip.css({ left: ev.pageX + 10, top: ev.pageY - 30 });
                 });
+            }).on('mouseleave', '.progress-segment', function () {
+                $('.storage-tooltip').remove();
+                $(document).off('mousemove.tooltip');
             });
-        }).on('mouseleave', function() {
-            $('.storage-tooltip').remove();
-            $(document).off('mousemove.tooltip');
-        });
-        
-        // Highlight category on hover
-        $('.category-item').on('mouseenter', function() {
-            const category = $(this).data('category');
-            $(`.progress-segment[data-category="${category}"]`).css('opacity', '0.7');
-        }).on('mouseleave', function() {
-            $('.progress-segment').css('opacity', '1');
-        });
+
+            // Highlight matching progress segment on category list hover via CSS class
+            $('.category-item').on('mouseenter', function () {
+                const category = $(this).data('category');
+                $(`.progress-segment[data-category="${category}"]`).addClass('highlighted');
+            }).on('mouseleave', function () {
+                $('.progress-segment').removeClass('highlighted');
+            });
+        }
 
         // Render remote storage info (S3)
         if (data.remote_storage && data.remote_storage.s3 && data.remote_storage.s3.enabled && data.remote_storage.s3.size > 0) {

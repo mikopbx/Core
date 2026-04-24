@@ -149,8 +149,9 @@
     cursor: pointer;
 }
 
-.progress-segment:hover {
-    opacity: 0.85;
+.progress-segment:hover,
+.progress-segment.highlighted {
+    opacity: 0.7;
 }
 
 /* Tooltip styling */
