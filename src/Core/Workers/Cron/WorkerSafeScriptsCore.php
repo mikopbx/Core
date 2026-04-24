@@ -134,6 +134,12 @@ class WorkerSafeScriptsCore extends WorkerBase
     private const int POOL_KILL_TIMEOUT_SEC = 30;
 
     /**
+     * Maximum seconds a pool may stay in rollover state (actualCount > targetCount).
+     * After this, excess processes are killed to restore exact target count.
+     */
+    private const int POOL_ROLLOVER_TIMEOUT_SEC = 60;
+
+    /**
      * Processes that must never be killed by emergency memory watchdog.
      */
     private const array EMERGENCY_KILL_WHITELIST = [
@@ -172,6 +178,13 @@ class WorkerSafeScriptsCore extends WorkerBase
      * @var array<int, int> pid => SIGTERM sent timestamp
      */
     private array $pendingKills = [];
+
+    /**
+     * Tracks when a pool first entered rollover state (actualCount > targetCount).
+     * If rollover persists beyond POOL_ROLLOVER_TIMEOUT_SEC, excess is killed.
+     * @var array<string, int> workerClassName => first seen timestamp
+     */
+    private array $rolloverSince = [];
 
     /**
      * Timestamp of last periodic memory report.
@@ -1254,10 +1267,40 @@ class WorkerSafeScriptsCore extends WorkerBase
                 return;
             }
 
-            // 4. If actual count already fills rollover slot, skip spawning — old ones are still dying
-            if ($actualCount >= $maxAllowed) {
+            // 4. If actual count exceeds target, track rollover duration
+            if ($actualCount > $targetCount) {
+                if (!isset($this->rolloverSince[$workerClassName])) {
+                    $this->rolloverSince[$workerClassName] = time();
+                }
+                $rolloverDuration = time() - $this->rolloverSince[$workerClassName];
+
+                if ($rolloverDuration > self::POOL_ROLLOVER_TIMEOUT_SEC) {
+                    // Rollover persisted too long — kill oldest excess to restore exact target
+                    sort($actualPids, SORT_NUMERIC);
+                    $excessPids = array_slice($actualPids, 0, $actualCount - $targetCount);
+                    foreach ($excessPids as $pid) {
+                        SystemMessages::sysLogMsg(
+                            static::class,
+                            sprintf(
+                                "Killing stale rollover process: %s PID=%d (rollover for %ds, target=%d)",
+                                $workerClassName,
+                                $pid,
+                                $rolloverDuration,
+                                $targetCount
+                            ),
+                            LOG_WARNING
+                        );
+                        posix_kill($pid, SIGTERM);
+                        $this->pendingKills[$pid] = time();
+                    }
+                    unset($this->rolloverSince[$workerClassName]);
+                }
+                // Either way, don't spawn while over target
                 return;
             }
+
+            // Pool is at or below target — clear rollover tracker
+            unset($this->rolloverSince[$workerClassName]);
 
             // 5. Determine missing instances from pool registry
             $activeWorkers = $poolManager->getActiveWorkers($workerClassName);
