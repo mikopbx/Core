@@ -25,6 +25,7 @@ use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\DockerNetworkFilterService;
 use MikoPBX\Core\System\Processes;
@@ -795,7 +796,7 @@ class Fail2BanConf extends SystemConfigClass
 
             // Verify and add each IP to user whitelist.
             foreach ($arr_whitelist as $ip_string) {
-                if (Verify::isIpAddress($ip_string)) {
+                if (Verify::isIpAddress($ip_string) || IpAddressHelper::normalizeCidr($ip_string) !== false) {
                     $user_whitelist .= "$ip_string ";
                 }
             }
@@ -805,7 +806,9 @@ class Fail2BanConf extends SystemConfigClass
 
             // Add each filter's permit IP to user whitelist.
             foreach ($net_filters as $filter) {
-                $user_whitelist .= "$filter->permit ";
+                if (Verify::isIpAddress($filter->permit) || IpAddressHelper::normalizeCidr($filter->permit) !== false) {
+                    $user_whitelist .= "$filter->permit ";
+                }
             }
 
             // Trim any trailing spaces from the user whitelist.
