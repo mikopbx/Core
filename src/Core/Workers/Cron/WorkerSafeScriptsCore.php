@@ -129,6 +129,11 @@ class WorkerSafeScriptsCore extends WorkerBase
     private const int MEMORY_REPORT_INTERVAL = 300; // 5 minutes
 
     /**
+     * Seconds to wait after SIGTERM before sending SIGKILL to excess pool workers.
+     */
+    private const int POOL_KILL_TIMEOUT_SEC = 30;
+
+    /**
      * Processes that must never be killed by emergency memory watchdog.
      */
     private const array EMERGENCY_KILL_WHITELIST = [
@@ -161,6 +166,12 @@ class WorkerSafeScriptsCore extends WorkerBase
      * @var array<string, array<int, int>>
      */
     private array $restartHistory = [];
+
+    /**
+     * PIDs pending graceful shutdown. If still alive after 30s, force-killed.
+     * @var array<int, int> pid => SIGTERM sent timestamp
+     */
+    private array $pendingKills = [];
 
     /**
      * Timestamp of last periodic memory report.
@@ -1149,6 +1160,35 @@ class WorkerSafeScriptsCore extends WorkerBase
     }
 
     /**
+     * Force-kill processes that were sent SIGTERM but didn't die within POOL_KILL_TIMEOUT_SEC.
+     * Also cleans up entries for processes that already exited.
+     */
+    private function reapPendingKills(): void
+    {
+        $now = time();
+        foreach ($this->pendingKills as $pid => $sentAt) {
+            if (!posix_kill($pid, 0)) {
+                // Process already dead — clean up
+                unset($this->pendingKills[$pid]);
+                continue;
+            }
+            if (($now - $sentAt) > self::POOL_KILL_TIMEOUT_SEC) {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    sprintf(
+                        'Force-killing stale process PID=%d after %ds timeout',
+                        $pid,
+                        self::POOL_KILL_TIMEOUT_SEC
+                    ),
+                    LOG_WARNING
+                );
+                posix_kill($pid, SIGKILL);
+                unset($this->pendingKills[$pid]);
+            }
+        }
+    }
+
+    /**
      * Check and maintain a pool of worker instances
      *
      * @param string $workerClassName The worker class name
@@ -1157,35 +1197,72 @@ class WorkerSafeScriptsCore extends WorkerBase
     private function checkWorkerPool(string $workerClassName, int $targetCount): void
     {
         try {
+            // 1. Force-kill processes that didn't die after SIGTERM within timeout
+            $this->reapPendingKills();
+
             $poolManager = new WorkerPoolManager();
-            
+
             // Clean orphan processes first
             $killedOrphans = $poolManager->cleanOrphanProcesses($workerClassName);
             if (!empty($killedOrphans)) {
                 SystemMessages::sysLogMsg(
                     static::class,
-                    sprintf("Cleaned %d orphan processes for %s: %s", 
-                        count($killedOrphans), 
-                        $workerClassName, 
+                    sprintf(
+                        "Cleaned %d orphan processes for %s: %s",
+                        count($killedOrphans),
+                        $workerClassName,
                         implode(', ', $killedOrphans)
                     ),
                     LOG_WARNING
                 );
             }
-            
-            // Get active workers from pool
-            $activeWorkers = $poolManager->getActiveWorkers($workerClassName);
-            $runningCount = count($activeWorkers);
-            
+
+            // 2. Count actual running processes by PID (ground truth, not pool registry)
+            $actualPids = array_map(
+                'intval',
+                array_filter(explode(' ', Processes::getPidOfProcess($workerClassName)))
+            );
+            $actualCount = count($actualPids);
+            $maxAllowed = $targetCount + 1; // +1 slot for graceful rollover during restart
+
             SystemMessages::sysLogMsg(
                 static::class,
-                "Checking worker pool: $workerClassName - $runningCount/$targetCount instances running",
+                "Checking worker pool: $workerClassName - $actualCount actual PIDs, $targetCount target (+1 rollover)",
                 LOG_DEBUG
             );
-            
-            // Determine which instances are missing
+
+            // 3. Kill excess processes (oldest first) if over the rollover limit
+            if ($actualCount > $maxAllowed) {
+                sort($actualPids, SORT_NUMERIC); // lower PID = older process
+                $excessPids = array_slice($actualPids, 0, $actualCount - $maxAllowed);
+                foreach ($excessPids as $pid) {
+                    SystemMessages::sysLogMsg(
+                        static::class,
+                        sprintf(
+                            "Killing excess pool process: %s PID=%d (%d running, %d allowed)",
+                            $workerClassName,
+                            $pid,
+                            $actualCount,
+                            $maxAllowed
+                        ),
+                        LOG_WARNING
+                    );
+                    posix_kill($pid, SIGTERM);
+                    $this->pendingKills[$pid] = time();
+                }
+                // Don't spawn anything this cycle — wait for cleanup
+                return;
+            }
+
+            // 4. If actual count already fills rollover slot, skip spawning — old ones are still dying
+            if ($actualCount >= $maxAllowed) {
+                return;
+            }
+
+            // 5. Determine missing instances from pool registry
+            $activeWorkers = $poolManager->getActiveWorkers($workerClassName);
             $runningInstanceIds = array_column($activeWorkers, 'instance_id');
-            
+
             // Check for duplicates before starting new instances
             $instanceCounts = array_count_values($runningInstanceIds);
             foreach ($instanceCounts as $instanceId => $count) {
@@ -1195,36 +1272,42 @@ class WorkerSafeScriptsCore extends WorkerBase
                         "Duplicate instance $instanceId detected for $workerClassName, cleaning up",
                         LOG_WARNING
                     );
-                    
+
                     // Get all workers with this instance ID
-                    $duplicates = array_filter($activeWorkers, function($w) use ($instanceId) {
+                    $duplicates = array_filter($activeWorkers, function ($w) use ($instanceId) {
                         return $w['instance_id'] == $instanceId;
                     });
-                    
+
                     // Sort by start time (keep newest)
-                    usort($duplicates, function($a, $b) {
+                    usort($duplicates, function ($a, $b) {
                         return $b['start_time'] <=> $a['start_time'];
                     });
-                    
+
                     // Kill older duplicates
                     for ($j = 1; $j < count($duplicates); $j++) {
                         $pid = $duplicates[$j]['pid'];
                         $poolManager->unregisterWorker($workerClassName, $pid);
                         posix_kill($pid, SIGTERM);
+                        $this->pendingKills[$pid] = time();
                     }
                 }
             }
-            
+
             // Re-check active workers after cleanup
             $activeWorkers = $poolManager->getActiveWorkers($workerClassName);
             $runningInstanceIds = array_column($activeWorkers, 'instance_id');
-            
-            // Start missing instances (skip if module is in crash loop)
+
             $missingInstances = [];
             for ($i = 1; $i <= $targetCount; $i++) {
                 if (!in_array($i, $runningInstanceIds)) {
                     $missingInstances[] = $i;
                 }
+            }
+
+            // 6. Spawn only what the PID-based budget allows
+            $pidBudget = $maxAllowed - $actualCount;
+            if ($pidBudget < count($missingInstances)) {
+                $missingInstances = array_slice($missingInstances, 0, $pidBudget);
             }
 
             if (!empty($missingInstances)
@@ -1249,7 +1332,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     shell_exec($command);
                 }
             }
-            
+
             // Clean dead workers from pool
             $cleanedCount = $poolManager->cleanDeadWorkers();
             if ($cleanedCount > 0) {
@@ -1259,7 +1342,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     LOG_DEBUG
                 );
             }
-            
+
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(
                 static::class,
