@@ -50,6 +50,7 @@ use MikoPBX\Core\Workers\WorkerS3Upload;
 use MikoPBX\Core\Workers\WorkerS3CacheCleaner;
 use MikoPBX\Core\Workers\WorkerSoundFilesInit;
 use MikoPBX\Core\Workers\WorkerWav2Webm;
+use MikoPBX\Common\Models\StorageSettings;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\Modules\PbxExtensionState;
 use MikoPBX\Modules\PbxExtensionUtils;
@@ -94,6 +95,50 @@ class WorkerSafeScriptsCore extends WorkerBase
     private const int CRASH_LOOP_THRESHOLD = 100;
 
     /**
+     * Memory thresholds for system memory watchdog (percentage of MemTotal).
+     * WARNING: stop spawning new workers, only monitor existing.
+     * EMERGENCY: kill the fattest PHP process to free memory.
+     */
+    private const int MEMORY_WARNING_PERCENT = 15;
+    private const int MEMORY_EMERGENCY_PERCENT = 5;
+
+    /**
+     * RSS threshold in bytes for logging a warning when restarting a worker.
+     * Workers consuming more than this are likely leaking memory.
+     */
+    private const int RSS_WARNING_THRESHOLD = 100 * 1024 * 1024; // 100MB
+
+    /**
+     * Restart throttling: sliding window duration in seconds.
+     */
+    private const int THROTTLE_WINDOW_SEC = 180; // 3 minutes
+
+    /**
+     * Restart throttling: backoff tiers [max_restarts => backoff_seconds].
+     * Checked in descending order — first match wins.
+     */
+    private const array THROTTLE_TIERS = [
+        10 => 120,  // >10 restarts in 3 min → wait 120s
+        5  => 60,   // >5 restarts in 3 min → wait 60s
+        3  => 30,   // >3 restarts in 3 min → wait 30s
+    ];
+
+    /**
+     * Interval between periodic memory reports (seconds).
+     */
+    private const int MEMORY_REPORT_INTERVAL = 300; // 5 minutes
+
+    /**
+     * Processes that must never be killed by emergency memory watchdog.
+     */
+    private const array EMERGENCY_KILL_WHITELIST = [
+        'php-fpm',
+        'WorkerSafeScriptsCore',
+        'WorkerCdr',
+        'WorkerCallEvents',
+    ];
+
+    /**
      * Singleton instance
      */
     private static ?self $instance = null;
@@ -110,6 +155,45 @@ class WorkerSafeScriptsCore extends WorkerBase
      * @var array<string, int>
      */
     private array $pingFailureCounts = [];
+
+    /**
+     * Restart history for throttling: workerClass => [timestamp, timestamp, ...]
+     * @var array<string, array<int, int>>
+     */
+    private array $restartHistory = [];
+
+    /**
+     * Timestamp of last periodic memory report.
+     */
+    private int $lastMemoryReportTime = 0;
+
+    /**
+     * Current memory state flag set by getSystemMemoryState().
+     * 'normal', 'warning', or 'emergency'.
+     */
+    private string $memoryState = 'normal';
+
+    /**
+     * Cached meminfo values from current monitoring cycle.
+     * Reset at the beginning of each getSystemMemoryState() call.
+     * @var array{memTotal: int, memAvailable: int, availablePercent: float}
+     */
+    private array $cachedMeminfo = ['memTotal' => 0, 'memAvailable' => 0, 'availablePercent' => 0];
+
+    /**
+     * Cached S3 enabled state. Refreshed every S3_CHECK_INTERVAL seconds.
+     */
+    private bool $s3Enabled = false;
+
+    /**
+     * Timestamp of last S3 settings check.
+     */
+    private int $lastS3CheckTime = 0;
+
+    /**
+     * Interval between S3 configuration checks (seconds).
+     */
+    private const int S3_CHECK_INTERVAL = 300; // 5 minutes
 
     // Redis handle inherited from WorkerBase::$redis (protected mixed, default null).
     // A local override here would break PHP 8.2+ property type covariance —
@@ -360,12 +444,16 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerDhcpv6Renewal::class,
                     WorkerLogRotate::class,
                     WorkerRemoveOldRecords::class,
-                    WorkerS3Upload::class,
-                    WorkerS3CacheCleaner::class,
                     WorkerNotifyAdministrator::class,
                     WorkerWav2Webm::class,
                 ],
         ];
+
+        // Add S3 workers only when S3 storage is configured (saves ~100MB RAM otherwise)
+        if ($this->isS3Enabled()) {
+            $arrWorkers[self::CHECK_BY_PID_NOT_ALERT][] = WorkerS3Upload::class;
+            $arrWorkers[self::CHECK_BY_PID_NOT_ALERT][] = WorkerS3CacheCleaner::class;
+        }
 
         // Get the list of module workers.
         $arrModulesWorkers = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GET_MODULE_WORKERS);
@@ -413,6 +501,12 @@ class WorkerSafeScriptsCore extends WorkerBase
                 sleep(5);
                 continue;
             }
+
+            // Check system memory state before processing workers
+            $this->getSystemMemoryState();
+
+            // Periodic memory report (every 5 minutes)
+            $this->logMemoryReport();
 
             // Prepare the list of workers to be started.
             $arrWorkers = $this->prepareWorkersList();
@@ -471,8 +565,13 @@ class WorkerSafeScriptsCore extends WorkerBase
                 // Check service with higher priority
                 [$result] = $queue->sendRequest('ping', 5, 1);
             }
-            if (false === $result && !$this->isModuleInCrashLoop($workerClassName)) {
-                // Kill the entire process group before restarting
+            if (false === $result
+                && !$this->isModuleInCrashLoop($workerClassName)
+                && $this->memoryState === 'normal'
+                && !$this->shouldThrottleRestart($workerClassName)
+            ) {
+                $this->logWorkerRssBeforeRestart($workerClassName, $WorkerPID);
+                $this->recordRestart($workerClassName);
                 Processes::processPHPWorker($workerClassName);
                 SystemMessages::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
             }
@@ -510,16 +609,14 @@ class WorkerSafeScriptsCore extends WorkerBase
         $start = microtime(true);
         $WorkerPID = Processes::getPidOfProcess($workerClassName);
         $result = ($WorkerPID !== '');
-        if (false === $result && !$this->isModuleInCrashLoop($workerClassName)) {
-            // Kill the entire process group before restarting
-            if ($WorkerPID !== '') {
-                // Send SIGTERM to process group
-                posix_kill(-intval($WorkerPID), SIGTERM);
-                sleep(1); // Give processes time to cleanup
-                // Force kill any remaining processes
-                posix_kill(-intval($WorkerPID), SIGKILL);
-            }
-
+        if (false === $result
+            && !$this->isModuleInCrashLoop($workerClassName)
+            && $this->memoryState === 'normal'
+            && !$this->shouldThrottleRestart($workerClassName)
+        ) {
+            // PID is empty here (result=false means WorkerPID===''),
+            // so no RSS to log — the process already exited.
+            $this->recordRestart($workerClassName);
             Processes::processPHPWorker($workerClassName);
         }
         $timeElapsedSecs = round(microtime(true) - $start, 2);
@@ -574,7 +671,13 @@ class WorkerSafeScriptsCore extends WorkerBase
 
                 if ($this->isModuleInCrashLoop($workerClassName)) {
                     // Module disabled by crash-loop watchdog — logged inside isModuleInCrashLoop()
+                } elseif ($this->memoryState !== 'normal') {
+                    // Skip restart during memory pressure (warning or emergency)
+                } elseif ($this->shouldThrottleRestart($workerClassName)) {
+                    // Skip restart due to throttling — logged inside shouldThrottleRestart()
                 } elseif ($failures <= self::MAX_PING_FAILURES) {
+                    $this->logWorkerRssBeforeRestart($workerClassName, $WorkerPID);
+                    $this->recordRestart($workerClassName);
                     Processes::processPHPWorker($workerClassName);
                     SystemMessages::sysLogMsg(
                         __METHOD__,
@@ -656,6 +759,19 @@ class WorkerSafeScriptsCore extends WorkerBase
             if ($this->isModuleInCrashLoop($workerClassName)) {
                 return;
             }
+
+            if ($this->memoryState !== 'normal') {
+                return;
+            }
+
+            if ($this->shouldThrottleRestart($workerClassName)) {
+                return;
+            }
+
+            // Log RSS before restart and record for throttling
+            $workerPID = Processes::getPidOfProcess($workerClassName);
+            $this->logWorkerRssBeforeRestart($workerClassName, $workerPID);
+            $this->recordRestart($workerClassName);
 
             // Restart the worker
             Processes::processPHPWorker($workerClassName);
@@ -755,6 +871,284 @@ class WorkerSafeScriptsCore extends WorkerBase
     }
 
     /**
+     * Checks if S3 storage is configured and enabled.
+     * Caches the result for S3_CHECK_INTERVAL seconds to avoid repeated DB reads.
+     *
+     * @return bool True if S3 is enabled and configured
+     */
+    private function isS3Enabled(): bool
+    {
+        $now = time();
+        if (($now - $this->lastS3CheckTime) >= self::S3_CHECK_INTERVAL) {
+            $this->lastS3CheckTime = $now;
+            try {
+                $settings = StorageSettings::getSettings();
+                $this->s3Enabled = ($settings->s3_enabled === 1 && $settings->isS3Configured());
+            } catch (Throwable) {
+                $this->s3Enabled = false;
+            }
+        }
+        return $this->s3Enabled;
+    }
+
+    /**
+     * Reads /proc/meminfo and returns the current system memory state.
+     * Updates $this->memoryState ('normal', 'warning', 'emergency').
+     *
+     * @return string Current memory state
+     */
+    private function getSystemMemoryState(): string
+    {
+        $meminfo = @file_get_contents('/proc/meminfo');
+        if ($meminfo === false) {
+            $this->memoryState = 'normal';
+            return $this->memoryState;
+        }
+
+        $memTotal = 0;
+        $memAvailable = 0;
+
+        if (preg_match('/^MemTotal:\s+(\d+)\s+kB$/m', $meminfo, $m)) {
+            $memTotal = (int)$m[1];
+        }
+        if (preg_match('/^MemAvailable:\s+(\d+)\s+kB$/m', $meminfo, $m)) {
+            $memAvailable = (int)$m[1];
+        }
+
+        if ($memTotal === 0) {
+            $this->memoryState = 'normal';
+            return $this->memoryState;
+        }
+
+        $availablePercent = ($memAvailable / $memTotal) * 100;
+
+        // Cache for logMemoryReport() to avoid re-reading /proc/meminfo
+        $this->cachedMeminfo = [
+            'memTotal' => $memTotal,
+            'memAvailable' => $memAvailable,
+            'availablePercent' => $availablePercent,
+        ];
+
+        if ($availablePercent < self::MEMORY_EMERGENCY_PERCENT) {
+            $this->memoryState = 'emergency';
+            $this->handleMemoryEmergency($memTotal, $memAvailable, $availablePercent);
+        } elseif ($availablePercent < self::MEMORY_WARNING_PERCENT) {
+            $this->memoryState = 'warning';
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf(
+                    'LOW MEMORY WARNING: available=%.1f%% (%dMB/%dMB) — skipping worker spawns this cycle',
+                    $availablePercent,
+                    (int)($memAvailable / 1024),
+                    (int)($memTotal / 1024)
+                ),
+                LOG_WARNING
+            );
+        } else {
+            $this->memoryState = 'normal';
+        }
+
+        return $this->memoryState;
+    }
+
+    /**
+     * Emergency handler: kills the fattest PHP process (excluding whitelist) to free memory.
+     *
+     * @param int $memTotal Total memory in kB
+     * @param int $memAvailable Available memory in kB
+     * @param float $availablePercent Available memory percentage
+     */
+    private function handleMemoryEmergency(int $memTotal, int $memAvailable, float $availablePercent): void
+    {
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            sprintf(
+                'MEMORY EMERGENCY: available=%.1f%% (%dMB/%dMB) — looking for process to kill',
+                $availablePercent,
+                (int)($memAvailable / 1024),
+                (int)($memTotal / 1024)
+            ),
+            LOG_ERR
+        );
+
+        $phpProcesses = Processes::getPhpProcessesWithRss();
+        if (empty($phpProcesses)) {
+            return;
+        }
+
+        // Find the fattest process not in whitelist
+        foreach ($phpProcesses as $proc) {
+            $isWhitelisted = false;
+            foreach (self::EMERGENCY_KILL_WHITELIST as $protected) {
+                if (stripos($proc['name'], $protected) !== false) {
+                    $isWhitelisted = true;
+                    break;
+                }
+            }
+            if ($isWhitelisted) {
+                continue;
+            }
+
+            // Kill this process
+            $rssMB = (int)($proc['rss'] / 1024 / 1024);
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf(
+                    'EMERGENCY KILL: process %s PID=%d RSS=%dMB — freeing memory',
+                    $proc['name'],
+                    $proc['pid'],
+                    $rssMB
+                ),
+                LOG_ERR
+            );
+            posix_kill($proc['pid'], SIGKILL);
+            return;
+        }
+
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            'MEMORY EMERGENCY: all PHP processes are whitelisted, cannot free memory',
+            LOG_CRIT
+        );
+    }
+
+    /**
+     * Checks if a worker restart should be throttled due to too-frequent restarts.
+     * Uses a sliding window to track restart timestamps.
+     *
+     * @param string $workerClassName The worker class name
+     * @return bool True if restart should be skipped (throttled)
+     */
+    private function shouldThrottleRestart(string $workerClassName): bool
+    {
+        $now = time();
+
+        // Clean old entries outside the sliding window
+        if (isset($this->restartHistory[$workerClassName])) {
+            $this->restartHistory[$workerClassName] = array_values(
+                array_filter(
+                    $this->restartHistory[$workerClassName],
+                    static fn(int $ts) => ($now - $ts) < self::THROTTLE_WINDOW_SEC
+                )
+            );
+        }
+
+        $recentCount = count($this->restartHistory[$workerClassName] ?? []);
+
+        // Check throttle tiers (descending order)
+        foreach (self::THROTTLE_TIERS as $maxRestarts => $backoffSec) {
+            if ($recentCount >= $maxRestarts) {
+                // Check if enough time passed since last restart
+                $lastRestart = end($this->restartHistory[$workerClassName]);
+                if ($lastRestart !== false && ($now - $lastRestart) < $backoffSec) {
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        sprintf(
+                            'THROTTLED: %s restarted %d times in %ds, backing off %ds',
+                            $workerClassName,
+                            $recentCount,
+                            self::THROTTLE_WINDOW_SEC,
+                            $backoffSec
+                        ),
+                        LOG_WARNING
+                    );
+                    return true;
+                }
+                break;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Records a worker restart timestamp for throttling.
+     *
+     * @param string $workerClassName The worker class name
+     */
+    private function recordRestart(string $workerClassName): void
+    {
+        $this->restartHistory[$workerClassName][] = time();
+    }
+
+    /**
+     * Logs the RSS of a worker process before restart.
+     * Emits a WARNING if RSS exceeds the threshold.
+     *
+     * @param string $workerClassName The worker class name
+     * @param string $workerPID Space-separated PIDs from getPidOfProcess
+     */
+    private function logWorkerRssBeforeRestart(string $workerClassName, string $workerPID): void
+    {
+        if (empty($workerPID)) {
+            return;
+        }
+        $pids = array_filter(explode(' ', $workerPID));
+        foreach ($pids as $pidStr) {
+            $pid = (int)$pidStr;
+            $rss = Processes::getProcessRss($pid);
+            if ($rss > self::RSS_WARNING_THRESHOLD) {
+                $rssMB = (int)($rss / 1024 / 1024);
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    sprintf(
+                        'HIGH RSS: %s PID=%d RSS=%dMB before restart',
+                        $workerClassName,
+                        $pid,
+                        $rssMB
+                    ),
+                    LOG_WARNING
+                );
+            }
+        }
+    }
+
+    /**
+     * Writes a periodic memory report to syslog.
+     * Called every MEMORY_REPORT_INTERVAL seconds with top PHP processes by RSS.
+     */
+    private function logMemoryReport(): void
+    {
+        $now = time();
+        if (($now - $this->lastMemoryReportTime) < self::MEMORY_REPORT_INTERVAL) {
+            return;
+        }
+        $this->lastMemoryReportTime = $now;
+
+        // Use cached values from getSystemMemoryState() — already called this cycle
+        $memTotal = $this->cachedMeminfo['memTotal'];
+        $memAvailable = $this->cachedMeminfo['memAvailable'];
+        $availablePercent = $this->cachedMeminfo['availablePercent'];
+
+        if ($memTotal === 0) {
+            return;
+        }
+
+        $phpProcesses = Processes::getPhpProcessesWithRss();
+        $processCount = count($phpProcesses);
+
+        // Top 3 by RSS
+        $topEntries = [];
+        foreach (array_slice($phpProcesses, 0, 3) as $proc) {
+            $topEntries[] = sprintf('%s=%dMB', $proc['name'], (int)($proc['rss'] / 1024 / 1024));
+        }
+        $topStr = implode(', ', $topEntries);
+
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            sprintf(
+                'Memory report: available=%.0f%% (%dMB/%dMB), PHP processes: %d, top RSS: %s',
+                $availablePercent,
+                (int)($memAvailable / 1024),
+                (int)($memTotal / 1024),
+                $processCount,
+                $topStr ?: 'none'
+            ),
+            LOG_INFO
+        );
+    }
+
+    /**
      * Check and maintain a pool of worker instances
      *
      * @param string $workerClassName The worker class name
@@ -833,7 +1227,15 @@ class WorkerSafeScriptsCore extends WorkerBase
                 }
             }
 
-            if (!empty($missingInstances) && !$this->isModuleInCrashLoop($workerClassName)) {
+            if (!empty($missingInstances)
+                && !$this->isModuleInCrashLoop($workerClassName)
+                && $this->memoryState === 'normal'
+                && !$this->shouldThrottleRestart($workerClassName)
+            ) {
+                // Record each instance spawn individually for accurate throttle counting
+                foreach ($missingInstances as $ignored) {
+                    $this->recordRestart($workerClassName);
+                }
                 foreach ($missingInstances as $instanceId) {
                     SystemMessages::sysLogMsg(
                         static::class,

@@ -792,6 +792,88 @@ class Processes
     }
 
     /**
+     * Returns the RSS (Resident Set Size) of a process in bytes.
+     * Reads from /proc/{pid}/status to avoid forking a new process.
+     *
+     * @param int $pid Process ID
+     * @return int RSS in bytes, or 0 if process not found or unreadable
+     */
+    public static function getProcessRss(int $pid): int
+    {
+        $statusFile = "/proc/{$pid}/status";
+        if (!file_exists($statusFile)) {
+            return 0;
+        }
+        $content = @file_get_contents($statusFile);
+        if ($content === false) {
+            return 0;
+        }
+        // VmRSS line format: "VmRSS:    12345 kB"
+        if (preg_match('/^VmRSS:\s+(\d+)\s+kB$/m', $content, $matches)) {
+            return (int)$matches[1] * 1024;
+        }
+        return 0;
+    }
+
+    /**
+     * Returns an array of all PHP worker processes with their PID, RSS and command name.
+     * Reads /proc directly to avoid expensive fork+exec.
+     *
+     * @return array<int, array{pid: int, rss: int, name: string}> Sorted by RSS descending
+     */
+    public static function getPhpProcessesWithRss(): array
+    {
+        $processes = [];
+        $procDirs = @scandir('/proc');
+        if ($procDirs === false) {
+            return [];
+        }
+
+        foreach ($procDirs as $entry) {
+            if (!ctype_digit($entry)) {
+                continue;
+            }
+            $pid = (int)$entry;
+            $cmdlineFile = "/proc/{$pid}/cmdline";
+            $cmdline = @file_get_contents($cmdlineFile);
+            if ($cmdline === false || stripos($cmdline, 'php') === false) {
+                continue;
+            }
+
+            // Extract readable process name from cmdline (null-separated args)
+            $args = explode("\0", trim($cmdline, "\0"));
+            $name = '';
+            foreach ($args as $arg) {
+                // Look for class name or script path
+                if (str_contains($arg, '\\') || str_ends_with($arg, '.php')) {
+                    $name = basename($arg, '.php');
+                    // For namespaced class names, take last part
+                    $parts = explode('\\', $name);
+                    $name = end($parts);
+                    break;
+                }
+            }
+            if ($name === '') {
+                $name = basename($args[0] ?? 'php');
+            }
+
+            $rss = self::getProcessRss($pid);
+            if ($rss > 0) {
+                $processes[] = [
+                    'pid' => $pid,
+                    'rss' => $rss,
+                    'name' => $name,
+                ];
+            }
+        }
+
+        // Sort by RSS descending
+        usort($processes, static fn($a, $b) => $b['rss'] <=> $a['rss']);
+
+        return $processes;
+    }
+
+    /**
      * Executes a command as a background process.
      *
      * @param string $command Command to execute

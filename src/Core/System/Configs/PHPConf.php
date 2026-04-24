@@ -152,13 +152,28 @@ class PHPConf extends SystemConfigClass
     {
         $busyboxPath = Util::which('busybox');
         $confPath = $this->getMainMonitConfFile();
+        $pidFile = '/var/run/' . self::PROC_NAME . '.pid';
+        $sockFile = '/var/run/' . self::PROC_NAME . '.sock';
 
-        $stopCommand = "/bin/sh -c '$busyboxPath kill -SIGQUIT `$busyboxPath cat /var/run/".self::PROC_NAME.".pid`'";
+        // Stop: SIGQUIT for graceful shutdown (finish in-flight requests),
+        // wait for PID to disappear, then remove stale socket
+        // to prevent "already listen" race condition on restart.
+        $stopCommand = "/bin/sh -c '"
+            . "$busyboxPath kill -SIGQUIT `$busyboxPath cat $pidFile 2>/dev/null` 2>/dev/null; "
+            . "for i in 1 2 3 4 5 6 7 8 9 10; do "
+            .   "[ ! -f $pidFile ] && break; "
+            .   "$busyboxPath sleep 1; "
+            . "done; "
+            . "$busyboxPath rm -f $sockFile $pidFile"
+            . "'";
 
-        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
-            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
-            '        as uid root and gid root'.PHP_EOL.
-            '    stop program = "'.$stopCommand.'"'.PHP_EOL.
+        // Start: remove stale socket as safety net before launching php-fpm.
+        $startCommand = "/bin/sh -c '$busyboxPath rm -f $sockFile; {$this->startCommand}'";
+
+        $conf = 'check process ' . self::PROC_NAME . ' with pidfile ' . $pidFile . PHP_EOL .
+            '    start program = "' . $startCommand . '"' . PHP_EOL .
+            '        as uid root and gid root' . PHP_EOL .
+            '    stop program = "' . $stopCommand . '"' . PHP_EOL .
             '        as uid root and gid root';
         $this->saveFileContent($confPath, $conf);
         return true;

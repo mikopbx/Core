@@ -119,7 +119,9 @@ class WorkerS3CacheCleaner extends WorkerBase
      */
     public function start(array $argv): void
     {
-        // Check if S3 storage is enabled before starting
+        // Check if S3 storage is enabled before starting.
+        // WorkerSafeScriptsCore only spawns this worker when S3 is configured,
+        // so this is a safety check — just exit if S3 is not available.
         $settings = StorageSettings::getSettings();
         if ($settings->s3_enabled !== 1 || !$settings->isS3Configured()) {
             SystemMessages::sysLogMsg(
@@ -133,6 +135,17 @@ class WorkerS3CacheCleaner extends WorkerBase
         SystemMessages::sysLogMsg(__CLASS__, 'S3 Cache Cleaner started', LOG_INFO);
 
         while ($this->needRestart === false) {
+            // Re-check S3 config — exit if S3 was disabled at runtime
+            $currentSettings = StorageSettings::getSettings();
+            if ($currentSettings->s3_enabled !== 1 || !$currentSettings->isS3Configured()) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    'S3 storage disabled - worker exiting',
+                    LOG_INFO
+                );
+                break;
+            }
+
             try {
                 $this->cleanCache();
             } catch (Throwable $e) {
