@@ -96,21 +96,22 @@ class AclConf extends AsteriskConfigClass
     {
         $conf_acl = '';
         
-        // Add fail2ban global ACL first (if in Docker)
-        if (System::isDocker()) {
-            $conf_acl .= "; Fail2ban Global ACL for Docker\n";
+        // Add fail2ban and NetworkFilters global ACLs when iptables is unavailable
+        // (Docker, LXC without CAP_NET_ADMIN) — consistent with Fail2BanConf::fail2banAction()
+        if (!System::canManageFirewall()) {
+            $conf_acl .= "; Fail2ban Global ACL (ACL-based blocking)\n";
             $conf_acl .= "[acl_fail2ban]\n";
             $conf_acl .= "; This ACL is automatically updated by fail2ban\n";
-            
+
             $asteriskEtcDir = \MikoPBX\Core\System\Directories::getDir(\MikoPBX\Core\System\Directories::AST_ETC_DIR);
             $conf_acl .= "#tryinclude $asteriskEtcDir/fail2ban_sip_acl.conf\n\n";
-            
+
             // Add NetworkFilters deny ACL
-            $conf_acl .= "; NetworkFilters Global Deny ACL for Docker\n";
+            $conf_acl .= "; NetworkFilters Global Deny ACL\n";
             $conf_acl .= "[acl_network_filters_deny]\n";
             $conf_acl .= "; This ACL is automatically generated from NetworkFilters database\n";
             $conf_acl .= "#tryinclude $asteriskEtcDir/network_filters_deny_acl.conf\n\n";
-            
+
             // Generate the NetworkFilters deny ACL file
             DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
         }

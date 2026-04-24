@@ -36,7 +36,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\CallerIdDidProcessor;
-use MikoPBX\Core\System\{ Network, Processes, SslCertificateService, SystemMessages, Util};
+use MikoPBX\Core\System\{ Network, Processes, SslCertificateService, System, SystemMessages, Util};
 use MikoPBX\Core\System\Configs\PbxConf;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\Core\System\Directories;
@@ -682,6 +682,21 @@ class SIPConf extends AsteriskConfigClass
         $conf  = $this->generateGeneralPj();
         $conf .= $this->generateProvidersPj();
         $conf .= $this->generatePeersPj();
+
+        // In environments without iptables (Docker, LXC without CAP_NET_ADMIN),
+        // add global PJSIP ACL sections that check ALL incoming SIP requests
+        // before endpoint identification and authentication (res_pjsip_acl module).
+        // This is required because per-endpoint 'acl' only applies after auth.
+        if (!System::canManageFirewall()) {
+            $conf .= "\n; === Global ACL filters (checked on every incoming SIP request) ===\n";
+            $conf .= "[fail2ban-acl]\n";
+            $conf .= "type = acl\n";
+            $conf .= "acl = acl_fail2ban\n\n";
+
+            $conf .= "[network-filters-deny-acl]\n";
+            $conf .= "type = acl\n";
+            $conf .= "acl = acl_network_filters_deny\n\n";
+        }
 
         // Write pjsip.conf file
         $this->saveConfig($conf, $this->description);
