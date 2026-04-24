@@ -795,7 +795,7 @@ class Fail2BanConf extends SystemConfigClass
 
             // Verify and add each IP to user whitelist.
             foreach ($arr_whitelist as $ip_string) {
-                if (Verify::isIpAddress($ip_string)) {
+                if (self::isValidIgnoreIpEntry($ip_string)) {
                     $user_whitelist .= "$ip_string ";
                 }
             }
@@ -860,6 +860,16 @@ class Fail2BanConf extends SystemConfigClass
             default:
                 echo "Invalid action: $action\n";
         }
+    }
+
+    private static function isValidIgnoreIpEntry(string $value): bool
+    {
+        if (Verify::isIpAddress($value)) {
+            return true;
+        }
+
+        return preg_match('#^(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}$#', $value) === 1
+            || preg_match('#^[0-9a-fA-F:]+/\d{1,3}$#', $value) === 1;
     }
 
     /**
