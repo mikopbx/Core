@@ -35,7 +35,7 @@ use Throwable;
  * 
  * This action checks provider statuses directly from Asterisk and manages
  * all status enrichment, history tracking, and statistics calculation.
- * The WorkerProviderStatusMonitor now acts as a scheduler that calls this action.
+ * The WorkerStatusMonitor acts as a scheduler that calls this action.
  * 
  * @api {get} /pbxcore/api/v2/providers/getStatuses Get all provider statuses
  * @apiVersion 2.0.0

@@ -35,7 +35,7 @@ use Throwable;
  * 
  * This action checks extension statuses directly from Asterisk PJSIP and manages
  * all status enrichment, history tracking, and statistics calculation.
- * The WorkerExtensionStatusMonitor acts as a scheduler that calls this action.
+ * The WorkerStatusMonitor acts as a scheduler that calls this action.
  * 
  * @api {get} /pbxcore/api/v2/extensions/getStatuses Get all extension statuses
  * @apiVersion 2.0.0

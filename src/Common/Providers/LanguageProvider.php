@@ -22,12 +22,11 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\Workers\WorkerExtensionStatusMonitor;
+use MikoPBX\Core\Workers\WorkerStatusMonitor;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerNotifyAdministrator;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerPrepareAdvice;
-use MikoPBX\Core\Workers\WorkerProviderStatusMonitor;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use MikoPBX\PBXCoreREST\Workers\WorkerBulkEmployees;
 use MikoPBX\PBXCoreREST\Workers\WorkerMergeUploadedFile;
@@ -150,11 +149,10 @@ class LanguageProvider implements ServiceProviderInterface
             WorkerModelsEvents::class,
             WorkerBulkEmployees::class,
             WorkerMergeUploadedFile::class,
-            WorkerExtensionStatusMonitor::class,
+            WorkerStatusMonitor::class,
             WorkerNotifyAdministrator::class,
             WorkerNotifyByEmail::class,
             WorkerPrepareAdvice::class,
-            WorkerProviderStatusMonitor::class,
         ];
 
         foreach ($eventBusWorkers as $workerClass) {
