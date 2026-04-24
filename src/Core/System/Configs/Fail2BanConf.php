@@ -33,9 +33,7 @@ use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Di;
@@ -896,18 +894,20 @@ class Fail2BanConf extends SystemConfigClass
         // Log the ban
         SystemMessages::sysLogMsg('fail2ban-asterisk', "Banned IP: $ip", LOG_WARNING);
 
-        // Regenerate unified ACL configuration file from Redis
+        // Regenerate ACL files from current Redis state
         self::generateUnifiedFail2BanAcl();
         DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
 
-        // Reload PJSIP
-        WorkerModelsEvents::invokeAction(ReloadPJSIPAction::class);
+        // Reload only the ACL-related modules — no need to regenerate pjsip.conf/iax.conf.
+        // PJSIP: global 'type = acl' sections in pjsip.conf reference named ACLs from acl.conf,
+        //   which includes fail2ban_sip_acl.conf via #tryinclude. Reloading the acl module
+        //   re-reads the named ACL and res_pjsip_acl picks up changes via stasis subscription.
+        // IAX: iax.conf includes fail2ban_iax_deny.conf via #tryinclude, reloaded by chan_iax2.
+        // Manager: uses inline deny= rules read at config generation time, needs full regeneration.
+        self::reloadAsteriskAclModules();
 
-        // Reload manager
+        // Manager requires config regeneration because deny rules are inlined in manager.conf
         WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
-
-        // Reload IAX
-        WorkerModelsEvents::invokeAction(ReloadIAXAction::class);
     }
 
     /**
@@ -926,18 +926,34 @@ class Fail2BanConf extends SystemConfigClass
         // Log the unban
         SystemMessages::sysLogMsg('fail2ban-asterisk', "Unbanned IP: $ip", LOG_INFO);
 
-        // Regenerate unified ACL configuration file from Redis
+        // Regenerate ACL files from current Redis state
         self::generateUnifiedFail2BanAcl();
         DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
 
-        // Reload PJSIP
-        WorkerModelsEvents::invokeAction(ReloadPJSIPAction::class);
+        // Reload only ACL-related modules (see banIpAsterisk for rationale)
+        self::reloadAsteriskAclModules();
 
-        // Reload manager
+        // Manager requires config regeneration (inline deny rules)
         WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
+    }
 
-        // Reload IAX
-        WorkerModelsEvents::invokeAction(ReloadIAXAction::class);
+    /**
+     * Reload only the Asterisk modules that consume ACL files.
+     *
+     * PJSIP: 'module reload acl' re-reads acl.conf (and its #tryinclude files).
+     *   The global 'type = acl' objects in pjsip.conf reference named ACLs,
+     *   so res_pjsip_acl picks up changes without regenerating pjsip.conf.
+     * IAX: 'iax2 reload' re-reads iax.conf (and its #tryinclude files).
+     *
+     * This is much lighter than a full SIPConf::reload() / core reload.
+     *
+     * @return void
+     */
+    private static function reloadAsteriskAclModules(): void
+    {
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload acl'");
+        Processes::mwExec("$asterisk -rx 'iax2 reload'");
     }
 
     /**
