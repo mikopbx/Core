@@ -65,6 +65,8 @@ return [
     'rest_response_200_validated' => 'Data validoitu onnistuneesti',
     'rest_response_500_internal' => 'Pyyntöä käsiteltäessä tapahtui sisäinen palvelinvirhe.',
     'rest_param_s3_local_retention' => 'Paikallinen tallennusaika ennen lataamista S3:een (päivinä)',
+    'rest_param_s3_provider_preset' => 'S3-palveluntarjoajan presetin tunnus (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Käyttöliittymä käyttää sitä oletusarvojen esitäyttöön.',
+    'rest_param_s3_use_path_style' => 'Käytä path-style-URL:eja virtual-hosted-osoituksen sijaan (0=virtual-hosted, 1=path-style). Ota käyttöön MinIO:lle, Garagelle, Ceph RadosGW:lle ja muille self-hosted S3-yhteensopiville tallennustiloille.',
     'rest_schema_s3_enabled' => 'S3-tallennustilan käyttöönottotila (0 = poistettu käytöstä, 1 = käytössä)',
     'rest_cr_PatchDesc' => 'Päivitä vain olemassa olevan kokoushuoneen määritetyt kentät',
     'rest_am_GetRecordDesc' => 'Hanki yksityiskohtaisia tietoja Asterisk Manager -käyttöliittymän käyttäjästä',
@@ -2026,6 +2028,9 @@ return [
     'rest_schema_s3_access_key' => 'S3-käyttöavaimen tunnus (näkyy vastauksissa)',
     'rest_schema_s3_secret_key' => 'S3-salainen käyttöavain (vastauksissa tähdellä peitettynä)',
     'rest_schema_s3_local_retention' => 'Kuinka monta päivää tietueet tallennetaan paikallisesti ennen S3:een lataamista',
+    'rest_schema_s3_provider_preset' => 'Käyttöliittymän käyttämän presetin tunnus oletusarvojen esitäyttöön (moottorikoodi ei riipu siitä ja lukee vain eksplisiittiset asetukset).',
+    'rest_schema_s3_use_path_style' => 'Path-style-URL-lippu (1=path-style MinIO/Garage/Ceph:lle, 0=virtual-hosted AWS S3:lle ja useimmille SaaS-palveluntarjoajille).',
+    'rest_schema_s3_available_presets' => 'Katalogi tunnetuista S3-palveluntarjoajista, sisältää päätepisteen placeholderin, oletusalueen, path-style-lipun ja dokumentaatiolinkin. Vain luku — generoidaan S3ProviderPresets-rekisteristä.',
     // ============================================================================
     // System Upgrade
     // ============================================================================
@@ -2196,6 +2201,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'S3-bucket-nimi ei saa olla IP-osoitteen muodossa',
     'rest_err_s3_bucket_xn_prefix' => 'S3-bucket-nimi ei saa alkaa merkillä "xn--"',
     'rest_err_s3_bucket_reserved_suffix' => 'S3-bucket-nimi ei saa päättyä merkkijonoon "-s3alias" tai "--ol-s3"',
+    'rest_err_s3_hint_signature_mismatch' => 'Pyynnön allekirjoitus ei täsmää. Tarkista, että S3-alue on oikea — sitä käytetään SigV4-allekirjoituksessa.',
+    'rest_err_s3_hint_no_such_bucket' => 'Annettua bucketia ei löytynyt. Tarkista bucketin nimi ja tunnusten käyttöoikeudet.',
+    'rest_err_s3_hint_try_path_style' => 'Päätepisteen isäntänimeä ei voitu selvittää. Tyypillistä MinIO:lle, Garagelle ja Cephille: ota path-style-URL:t käyttöön valitussa palveluntarjoajan presetissä.',
 
     'rest_System_ApiDescription' => 'Yksittäinen koko järjestelmän laajuinen hallintaresurssi. Tarjoaa virranhallinnan (uudelleenkäynnistys, sammutus), kunnonvalvonnan (ping, checkAuth), päivämäärä-/kellonaikatoiminnot, kieliasetukset, äänen muuntamisen, järjestelmäpäivitykset ja tehdasasetusten palautuksen.',
     'Fail2Ban' => 'Fail2Ban-asetukset',

@@ -503,6 +503,9 @@ return [
     'rest_param_s3_enabled' => 'Povolit cloudové úložiště S3 pro nahrávky (0=zakázáno, 1=povoleno)',
     'rest_param_s3_bucket' => 'Název kontejneru S3 pro ukládání záznamů (3–63 malých písmen)',
     'rest_schema_s3_local_retention' => 'Počet dní pro lokální uložení záznamů před nahráním do S3',
+    'rest_schema_s3_provider_preset' => 'ID presetu, které UI používá pro předvyplnění výchozích hodnot (kód jádra na něm nezávisí a čte pouze explicitní nastavení).',
+    'rest_schema_s3_use_path_style' => 'Příznak path-style URL (1=path-style pro MinIO/Garage/Ceph, 0=virtual-hosted pro AWS S3 a většinu SaaS poskytovatelů).',
+    'rest_schema_s3_available_presets' => 'Katalog známých poskytovatelů S3 s placeholderem endpointu, výchozím regionem, příznakem path-style a odkazem na dokumentaci. Pouze pro čtení — generován z registru S3ProviderPresets.',
     'rest_Search_ApiDescription' => 'Globální systémové vyhledávání pro rychlý přístup k libovolné entitě a stránce. Poskytuje jednotný přístup ke všem dostupným prvkům, včetně databázových entit (uživatelé, poskytovatelé, fronty atd.) a statických stránek nabídky. Podporuje filtrování podle čísla, názvu nebo indexu vyhledávání s načítáním výsledků při psaní.',
     'Dialplan Applications' => 'Aplikace Dialplan',
     'Conference Rooms' => 'Konferenční místnost',
@@ -2106,6 +2109,8 @@ return [
     'rest_param_s3_secret_key' => 'Tajný přístupový klíč S3 pro ověřování (bude šifrovaný)',
     'rest_param_s3_total_retention' => 'Celková doba uchovávání záznamů ve dnech (lokální + S3)',
     'rest_param_s3_local_retention' => 'Doba lokálního ukládání před nahráním do S3 (ve dnech)',
+    'rest_param_s3_provider_preset' => 'ID presetu poskytovatele S3 (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Používá ho UI pro předvyplnění výchozích hodnot.',
+    'rest_param_s3_use_path_style' => 'Použít path-style URL místo virtual-hosted (0=virtual-hosted, 1=path-style). Zapněte pro MinIO, Garage, Ceph RadosGW a další self-hosted úložiště kompatibilní s S3.',
     'rest_schema_s3_total_retention' => 'Celková doba uložení záznamů ve dnech (lokální + cloudové úložiště)',
     // ============================================================================
     // System Upgrade
@@ -2188,6 +2193,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'Název bucketu S3 nesmí být ve formátu IP adresy',
     'rest_err_s3_bucket_xn_prefix' => 'Název bucketu S3 nesmí začínat na "xn--"',
     'rest_err_s3_bucket_reserved_suffix' => 'Název bucketu S3 nesmí končit na "-s3alias" nebo "--ol-s3"',
+    'rest_err_s3_hint_signature_mismatch' => 'Podpis požadavku nesouhlasí. Ověřte, zda je správně nastaven region S3 — používá se pro podpis SigV4.',
+    'rest_err_s3_hint_no_such_bucket' => 'Zadaný bucket nebyl nalezen. Zkontrolujte jeho název a oprávnění přihlašovacích údajů.',
+    'rest_err_s3_hint_try_path_style' => 'Hostitele endpointu se nepodařilo přeložit. Typické pro MinIO, Garage a Ceph: zapněte path-style URL ve zvoleném presetu poskytovatele.',
 
     'Fail2Ban' => 'Nastavení Fail2Ban',
     'Custom Files' => 'Úprava systémových souborů',

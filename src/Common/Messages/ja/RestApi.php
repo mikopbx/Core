@@ -1205,12 +1205,17 @@ return [
     'rest_param_s3_access_key' => '認証用のS3アクセスキーID',
     'rest_param_s3_secret_key' => '認証用の S3 シークレットアクセスキー（暗号化されます）',
     'rest_param_s3_local_retention' => 'S3 にアップロードするまでのローカル保存期間（日数）',
+    'rest_param_s3_provider_preset' => 'S3 プロバイダープリセット ID（aws、minio、garage、ceph、wasabi、digitalocean、yandex、vkcloud、selectel、custom）。UI が既定値の補完に使用します。',
+    'rest_param_s3_use_path_style' => 'virtual-hosted の代わりに path-style URL を使用（0=virtual-hosted、1=path-style）。MinIO、Garage、Ceph RadosGW など、セルフホスト型の S3 互換ストレージで有効にしてください。',
     'rest_schema_s3_region' => 'AWS リージョンまたは同等の S3 サービスリージョン ID',
     'rest_schema_s3_bucket' => 'レコードが保存されているS3バケットの名前',
     'rest_schema_s3_access_key' => 'S3 アクセスキー ID (レスポンスに表示されます)',
     'rest_schema_s3_secret_key' => 'S3 シークレット アクセス キー (応答ではアスタリスクでマスクされます)',
     'rest_schema_s3_total_retention' => '記録の合計保存期間（日数）（ローカル + クラウド ストレージ）',
     'rest_schema_s3_local_retention' => 'S3 にアップロードする前にローカルにレコードを保存する日数',
+    'rest_schema_s3_provider_preset' => 'UI が既定値の補完に使用するプリセット ID（エンジンコードはこれに依存せず、明示的な設定のみを参照します）。',
+    'rest_schema_s3_use_path_style' => 'path-style URL フラグ（1=path-style：MinIO/Garage/Ceph 用、0=virtual-hosted：AWS S3 およびほとんどの SaaS プロバイダー用）。',
+    'rest_schema_s3_available_presets' => '既知の S3 プロバイダーのカタログ。エンドポイントのプレースホルダー、既定リージョン、path-style フラグ、ドキュメントリンクを含みます。読み取り専用 — S3ProviderPresets レジストリから生成されます。',
     // ============================================================================
     // System Upgrade
     // ============================================================================
@@ -1222,6 +1227,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'S3バケット名をIPアドレス形式にすることはできません',
     'rest_err_s3_bucket_xn_prefix' => 'S3バケット名を"xn--"で始めることはできません',
     'rest_err_s3_bucket_reserved_suffix' => 'S3バケット名を"-s3alias"または"--ol-s3"で終わらせることはできません',
+    'rest_err_s3_hint_signature_mismatch' => 'リクエストの署名が一致しません。SigV4 署名に使用される S3 リージョンが正しいか確認してください。',
+    'rest_err_s3_hint_no_such_bucket' => '指定されたバケットが見つかりません。バケット名と資格情報の権限を確認してください。',
+    'rest_err_s3_hint_try_path_style' => 'エンドポイントのホスト名を解決できません。MinIO、Garage、Ceph で一般的です。選択したプロバイダープリセットで path-style URL を有効にしてください。',
 
     'rest_Sysinfo_ApiDescription' => 'シングルトンのシステム情報および診断リソース。ハードウェア、ネットワーク構成、仮想化プラットフォーム、DMIデータに関する詳細情報を提供します。システムの監視とトラブルシューティングのための読み取り専用インターフェースです。',
     'rest_Syslog_ApiDescription' => 'システムログ管理および診断ツール。システムログへのアクセス、ログフィルタリング、ネットワークパケットキャプチャ、アーカイブ生成を提供します。トラブルシューティングとシステム監視に不可欠です。',

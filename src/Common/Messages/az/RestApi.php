@@ -2057,12 +2057,17 @@ return [
     'rest_param_s3_access_key' => 'Doğrulama üçün S3 giriş açarı ID-si',
     'rest_param_s3_total_retention' => 'Günlərlə ümumi qeyd saxlama müddəti (yerli + S3)',
     'rest_param_s3_local_retention' => 'S3-ə yükləməzdən əvvəl yerli saxlama müddəti (günlərlə)',
+    'rest_param_s3_provider_preset' => 'S3 provayder presetinin ID-si (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). UI standart dəyərləri doldurmaq üçün istifadə edir.',
+    'rest_param_s3_use_path_style' => 'Virtual-hosted əvəzinə path-style URL istifadə et (0=virtual-hosted, 1=path-style). MinIO, Garage, Ceph RadosGW və digər self-hosted S3 uyğun saxlama vasitələri üçün aktivləşdirin.',
     'rest_schema_s3_enabled' => 'S3 yaddaşının aktiv statusu (0=deaktiv, 1=aktiv)',
     'rest_schema_s3_region' => 'AWS Regionu və ya ekvivalent S3 xidmət regionu ID-si',
     'rest_schema_s3_bucket' => 'Qeydlərin saxlanıldığı S3 çömçəsinin adı',
     'rest_schema_s3_access_key' => 'S3 giriş açarı ID-si (cavablarda görünür)',
     'rest_schema_s3_secret_key' => 'S3 gizli giriş açarı (cavablarda ulduzlarla gizlədilib)',
     'rest_schema_s3_local_retention' => 'S3-ə yükləməzdən əvvəl qeydləri yerli olaraq saxlamaq üçün günlərin sayı',
+    'rest_schema_s3_provider_preset' => 'UI tərəfindən standart dəyərləri doldurmaq üçün istifadə olunan presetin ID-si (mühərrik kodu ondan asılı deyil və yalnız açıq ayarları oxuyur).',
+    'rest_schema_s3_use_path_style' => 'Path-style URL bayrağı (1=path-style MinIO/Garage/Ceph üçün, 0=virtual-hosted AWS S3 və əksər SaaS provayderləri üçün).',
+    'rest_schema_s3_available_presets' => 'Tanınan S3 provayderlərinin kataloqu: endpoint placeholder, standart region, path-style bayrağı və sənədlərə keçid. Yalnız oxumaq üçün — S3ProviderPresets reyestrindən yaradılır.',
     'rest_System_UpgradeMountFailed' => 'Bölməni quraşdırmaq mümkün olmadı. Fayl sistemini yoxlayın.',
     // ============================================================================
     // MISC
@@ -2146,6 +2151,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'S3 bucket adı IP ünvanı formatında olmamalıdır',
     'rest_err_s3_bucket_xn_prefix' => 'S3 bucket adı "xn--" ilə başlamamalıdır',
     'rest_err_s3_bucket_reserved_suffix' => 'S3 bucket adı "-s3alias" və ya "--ol-s3" ilə bitməməlidir',
+    'rest_err_s3_hint_signature_mismatch' => 'Sorğu imzası uyğun gəlmir. SigV4 imzalamasında istifadə olunduğu üçün S3 regionunun düzgün olduğunu yoxlayın.',
+    'rest_err_s3_hint_no_such_bucket' => 'Göstərilən bucket tapılmadı. Bucket adını və hesab məlumatlarının icazələrini yoxlayın.',
+    'rest_err_s3_hint_try_path_style' => 'Endpoint hostunu həll etmək mümkün olmadı. MinIO, Garage və Ceph üçün tipikdir: seçilmiş provayder presetində path-style URL-ləri aktivləşdirin.',
 
     'Extensions' => 'İşçi',
     'Files' => 'Fayl',

@@ -51,6 +51,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'S3 bucket name must not be formatted as an IP address',
     'rest_err_s3_bucket_xn_prefix' => 'S3 bucket name must not start with "xn--"',
     'rest_err_s3_bucket_reserved_suffix' => 'S3 bucket name must not end with "-s3alias" or "--ol-s3"',
+    'rest_err_s3_hint_signature_mismatch' => 'The request signature does not match. Verify that the S3 region is correct — it is used for SigV4 signing.',
+    'rest_err_s3_hint_no_such_bucket' => 'The specified bucket was not found. Check the bucket name and the credentials\' permission to access it.',
+    'rest_err_s3_hint_try_path_style' => 'Could not resolve the endpoint host. This is typical for MinIO, Garage and Ceph: enable path-style URLs in the chosen provider preset.',
     'rest_Sysinfo_ApiDescription' => 'System information and diagnostics singleton resource. Provides comprehensive details about hardware, network configuration, virtualization platform, and DMI data. Read-only interface for system monitoring and troubleshooting.',
     'rest_Syslog_ApiDescription' => 'System logs management and diagnostics tools. Provides access to system logs, log filtering, network packet capture, and archive generation. Essential for troubleshooting and system monitoring.',
     'rest_System_ApiDescription' => 'System-wide management singleton resource. Provides power management (reboot, shutdown), health monitoring (ping, checkAuth), datetime operations, language settings, audio conversion, system upgrades and factory reset.',
@@ -2005,6 +2008,8 @@ return [
     'rest_param_s3_secret_key' => 'S3 secret access key for authentication (will be encrypted)',
     'rest_param_s3_total_retention' => 'Total recording retention period in days (both local + S3)',
     'rest_param_s3_local_retention' => 'Local storage period before uploading to S3 (in days)',
+    'rest_param_s3_provider_preset' => 'S3 provider preset id (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Used by the UI to pre-fill defaults.',
+    'rest_param_s3_use_path_style' => 'Use path-style URLs instead of virtual-hosted (0=virtual-hosted, 1=path-style). Enable for MinIO, Garage, Ceph RadosGW and other self-hosted S3-compatible storage.',
     'rest_schema_s3_enabled' => 'S3 storage enabled status (0=disabled, 1=enabled)',
     'rest_schema_s3_endpoint' => 'S3-compatible endpoint URL (AWS S3, MinIO, Wasabi, etc.)',
     'rest_schema_s3_region' => 'AWS region or S3 service equivalent region identifier',
@@ -2013,6 +2018,9 @@ return [
     'rest_schema_s3_secret_key' => 'S3 secret access key (masked with asterisks in responses)',
     'rest_schema_s3_total_retention' => 'Total retention period for recordings in days (local + cloud storage)',
     'rest_schema_s3_local_retention' => 'Number of days to keep recordings locally before uploading to S3',
+    'rest_schema_s3_provider_preset' => 'S3 provider preset id used by the UI to pre-fill defaults (engine code does not depend on it and reads only the explicit settings).',
+    'rest_schema_s3_use_path_style' => 'Path-style URL flag (1=path-style for MinIO/Garage/Ceph, 0=virtual-hosted for AWS S3 and most SaaS providers).',
+    'rest_schema_s3_available_presets' => 'Catalogue of known S3 providers with endpoint placeholder, default region, path-style flag and documentation link. Read-only — generated from the S3ProviderPresets registry.',
     // ============================================================================
     // System Upgrade
     // ============================================================================

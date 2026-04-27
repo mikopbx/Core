@@ -1301,8 +1301,13 @@ return [
     'rest_param_s3_secret_key' => 'Khóa truy cập bí mật S3 để xác thực (sẽ được mã hóa)',
     'rest_param_s3_total_retention' => 'Tổng thời gian lưu giữ hồ sơ tính bằng ngày (nội địa + S3)',
     'rest_param_s3_local_retention' => 'Thời gian lưu trữ cục bộ trước khi tải lên S3 (tính bằng ngày)',
+    'rest_param_s3_provider_preset' => 'ID preset nhà cung cấp S3 (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Giao diện sử dụng để điền sẵn giá trị mặc định.',
+    'rest_param_s3_use_path_style' => 'Dùng URL path-style thay vì virtual-hosted (0=virtual-hosted, 1=path-style). Bật cho MinIO, Garage, Ceph RadosGW và các kho lưu trữ S3 tương thích tự lưu trữ khác.',
     'rest_schema_s3_secret_key' => 'Khóa truy cập bí mật S3 (được che giấu bằng dấu sao trong phản hồi)',
     'rest_schema_s3_local_retention' => 'Số ngày lưu trữ hồ sơ cục bộ trước khi tải lên S3',
+    'rest_schema_s3_provider_preset' => 'ID preset mà giao diện dùng để điền sẵn giá trị mặc định (engine code không phụ thuộc vào nó và chỉ đọc các thiết lập rõ ràng).',
+    'rest_schema_s3_use_path_style' => 'Cờ URL path-style (1=path-style cho MinIO/Garage/Ceph, 0=virtual-hosted cho AWS S3 và hầu hết nhà cung cấp SaaS).',
+    'rest_schema_s3_available_presets' => 'Danh mục các nhà cung cấp S3 được biết đến với placeholder endpoint, khu vực mặc định, cờ path-style và liên kết tài liệu. Chỉ đọc — được tạo từ sổ đăng ký S3ProviderPresets.',
     // ============================================================================
     // MISC
     // ============================================================================
@@ -2257,6 +2262,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'Tên bucket S3 không được có định dạng địa chỉ IP',
     'rest_err_s3_bucket_xn_prefix' => 'Tên bucket S3 không được bắt đầu bằng "xn--"',
     'rest_err_s3_bucket_reserved_suffix' => 'Tên bucket S3 không được kết thúc bằng "-s3alias" hoặc "--ol-s3"',
+    'rest_err_s3_hint_signature_mismatch' => 'Chữ ký yêu cầu không khớp. Kiểm tra xem khu vực S3 có đúng không — nó được dùng cho chữ ký SigV4.',
+    'rest_err_s3_hint_no_such_bucket' => 'Không tìm thấy bucket được chỉ định. Kiểm tra tên bucket và quyền của thông tin xác thực.',
+    'rest_err_s3_hint_try_path_style' => 'Không phân giải được host của endpoint. Thường gặp với MinIO, Garage và Ceph: bật URL path-style trong preset nhà cung cấp đã chọn.',
 
     'rest_Sysinfo_ApiDescription' => 'Một nguồn tài nguyên thông tin và chẩn đoán hệ thống duy nhất. Cung cấp thông tin chi tiết về phần cứng, cấu hình mạng, nền tảng ảo hóa và dữ liệu DMI. Giao diện chỉ đọc để giám sát và khắc phục sự cố hệ thống.',
     'rest_Syslog_ApiDescription' => 'Công cụ quản lý nhật ký hệ thống và chẩn đoán. Cung cấp quyền truy cập vào nhật ký hệ thống, lọc nhật ký, thu thập gói mạng và tạo bản lưu trữ. Cần thiết cho việc khắc phục sự cố và giám sát hệ thống.',

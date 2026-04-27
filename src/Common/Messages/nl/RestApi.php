@@ -236,6 +236,9 @@ return [
     'rest_openapi_GetDetailedPerms' => 'Ontvang een gedetailleerde lijst met machtigingen',
     'rest_param_s3_access_key' => 'S3-toegangssleutel-ID voor authenticatie',
     'rest_schema_s3_local_retention' => 'Aantal dagen dat records lokaal moeten worden opgeslagen voordat ze naar S3 worden geüpload',
+    'rest_schema_s3_provider_preset' => 'ID van het preset dat de UI gebruikt om standaardwaarden in te vullen (de engine-code is er niet van afhankelijk en leest alleen de expliciete instellingen).',
+    'rest_schema_s3_use_path_style' => 'Vlag voor path-style-URL (1=path-style voor MinIO/Garage/Ceph, 0=virtual-hosted voor AWS S3 en de meeste SaaS-aanbieders).',
+    'rest_schema_s3_available_presets' => 'Catalogus van bekende S3-providers met endpoint-placeholder, standaardregio, path-style-vlag en documentatielink. Alleen-lezen — gegenereerd uit het S3ProviderPresets-register.',
     // ============================================================================
     // MISC
     // ============================================================================
@@ -1260,6 +1263,8 @@ return [
     'rest_param_s3_secret_key' => 'S3 geheime toegangssleutel voor authenticatie (wordt gecodeerd)',
     'rest_param_s3_total_retention' => 'Totale bewaartermijn van gegevens in dagen (lokaal + S3)',
     'rest_param_s3_local_retention' => 'Lokale opslagperiode vóór uploaden naar S3 (in dagen)',
+    'rest_param_s3_provider_preset' => 'ID van het S3-provider-preset (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Wordt gebruikt door de UI om standaardwaarden in te vullen.',
+    'rest_param_s3_use_path_style' => 'Gebruik path-style-URL’s in plaats van virtual-hosted (0=virtual-hosted, 1=path-style). Schakel in voor MinIO, Garage, Ceph RadosGW en andere zelfgehoste S3-compatibele opslag.',
     'rest_schema_s3_enabled' => 'S3-opslagstatus ingeschakeld (0=uitgeschakeld, 1=ingeschakeld)',
     'rest_schema_s3_access_key' => 'S3-toegangssleutel-ID (zichtbaar in reacties)',
     'rest_schema_s3_secret_key' => 'S3 geheime toegangssleutel (gemaskeerd door asterisken in antwoorden)',
@@ -2297,6 +2302,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'De naam van de S3-bucket mag niet de indeling van een IP-adres hebben',
     'rest_err_s3_bucket_xn_prefix' => 'De naam van de S3-bucket mag niet beginnen met "xn--"',
     'rest_err_s3_bucket_reserved_suffix' => 'De naam van de S3-bucket mag niet eindigen op "-s3alias" of "--ol-s3"',
+    'rest_err_s3_hint_signature_mismatch' => 'De handtekening van de aanvraag komt niet overeen. Controleer of de S3-regio juist is — deze wordt gebruikt voor SigV4-ondertekening.',
+    'rest_err_s3_hint_no_such_bucket' => 'De opgegeven bucket is niet gevonden. Controleer de bucketnaam en de rechten van de inloggegevens.',
+    'rest_err_s3_hint_try_path_style' => 'De endpoint-host kan niet worden gevonden. Typisch voor MinIO, Garage en Ceph: schakel path-style-URL’s in via het gekozen provider-preset.',
 
     'rest_s3_StatsDesc' => 'Geeft gedetailleerde synchronisatiestatistieken van S3-cloudopslag weer: aantal bestanden in S3 en lokaal, totale grootte, synchronisatiepercentage, status (gesynchroniseerd/synchroniserend/in behandeling/uitgeschakeld), tijdstip van laatste upload en datum van het oudste bestand in behandeling.',
     'rest_s3_Stats' => 'S3-synchronisatiestatistieken ophalen',

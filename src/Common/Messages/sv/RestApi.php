@@ -1395,6 +1395,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'S3-bucketnamnet får inte ha formatet för en IP-adress',
     'rest_err_s3_bucket_xn_prefix' => 'S3-bucketnamnet får inte börja med "xn--"',
     'rest_err_s3_bucket_reserved_suffix' => 'S3-bucketnamnet får inte sluta med "-s3alias" eller "--ol-s3"',
+    'rest_err_s3_hint_signature_mismatch' => 'Begärans signatur stämmer inte. Kontrollera att S3-regionen är korrekt — den används för SigV4-signering.',
+    'rest_err_s3_hint_no_such_bucket' => 'Angiven bucket hittades inte. Kontrollera bucketnamnet och behörigheterna för inloggningsuppgifterna.',
+    'rest_err_s3_hint_try_path_style' => 'Det gick inte att slå upp värddatorn för slutpunkten. Vanligt med MinIO, Garage och Ceph: aktivera path-style-URL:er i det valda leverantörspresetet.',
 
     'rest_Sysinfo_ApiDescription' => 'En resurs för systeminformation och diagnostik för enskilda enheter. Ger detaljerad information om hårdvara, nätverkskonfiguration, virtualiseringsplattform och DMI-data. Ett skrivskyddat gränssnitt för systemövervakning och felsökning.',
     'rest_Syslog_ApiDescription' => 'Verktyg för systemlogghantering och diagnostik. Ger åtkomst till systemloggar, loggfiltrering, nätverkspaketinsamling och arkivgenerering. Viktigt för felsökning och systemövervakning.',
@@ -2241,6 +2244,8 @@ return [
     'rest_param_s3_secret_key' => 'S3 hemlig åtkomstnyckel för autentisering (kommer att krypteras)',
     'rest_param_s3_total_retention' => 'Total lagringsperiod för poster i dagar (lokal + S3)',
     'rest_param_s3_local_retention' => 'Lokal lagringsperiod före uppladdning till S3 (i dagar)',
+    'rest_param_s3_provider_preset' => 'ID för S3-leverantörspresetet (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Används av gränssnittet för att förfylla standardvärden.',
+    'rest_param_s3_use_path_style' => 'Använd path-style-URL:er istället för virtual-hosted (0=virtual-hosted, 1=path-style). Aktivera för MinIO, Garage, Ceph RadosGW och annan självhostad S3-kompatibel lagring.',
     'rest_schema_s3_enabled' => 'Status för aktivering av S3-lagring (0=inaktiverad, 1=aktiverad)',
     'rest_schema_s3_endpoint' => 'URL till en S3-kompatibel slutpunkt (AWS S3, MinIO, Wasabi, etc.)',
     'rest_schema_s3_region' => 'AWS-region eller motsvarande S3-tjänstregions-ID',
@@ -2249,6 +2254,9 @@ return [
     'rest_schema_s3_secret_key' => 'S3 hemlig åtkomstnyckel (maskerad med asterisker i svar)',
     'rest_schema_s3_total_retention' => 'Total lagringsperiod för poster i dagar (lokal + molnlagring)',
     'rest_schema_s3_local_retention' => 'Antal dagar att lagra poster lokalt innan uppladdning till S3',
+    'rest_schema_s3_provider_preset' => 'ID för det preset som gränssnittet använder för att förfylla standardvärden (motorkoden är inte beroende av det och läser endast de explicita inställningarna).',
+    'rest_schema_s3_use_path_style' => 'Flagga för path-style-URL (1=path-style för MinIO/Garage/Ceph, 0=virtual-hosted för AWS S3 och de flesta SaaS-leverantörer).',
+    'rest_schema_s3_available_presets' => 'Katalog över kända S3-leverantörer med slutpunktsplaceholder, standardregion, path-style-flagga och dokumentationslänk. Skrivskyddad — genereras från registret S3ProviderPresets.',
     'rest_System_UpgradeMountFailed' => 'Misslyckades med att montera partitionen. Kontrollera filsystemet.',
     // ============================================================================
     // MISC

@@ -391,6 +391,11 @@ const storageIndex = {
                 ]
             }),
 
+            s3_provider_preset: storageIndex.buildTooltipContent({
+                header: globalTranslate.st_tooltip_s3_preset_header,
+                description: globalTranslate.st_tooltip_s3_preset_desc,
+            }),
+
             s3_endpoint: storageIndex.buildTooltipContent({
                 header: globalTranslate.st_tooltip_s3_endpoint_header,
                 description: globalTranslate.st_tooltip_s3_endpoint_desc,

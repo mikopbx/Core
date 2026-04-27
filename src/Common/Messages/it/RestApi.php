@@ -1382,9 +1382,14 @@ return [
     'rest_param_s3_secret_key' => 'Chiave di accesso segreta S3 per l\'autenticazione (sarà crittografata)',
     'rest_param_s3_total_retention' => 'Periodo totale di conservazione dei record in giorni (locale + S3)',
     'rest_param_s3_local_retention' => 'Periodo di archiviazione locale prima del caricamento su S3 (in giorni)',
+    'rest_param_s3_provider_preset' => 'ID del preset del provider S3 (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Usato dall’interfaccia per precompilare i valori predefiniti.',
+    'rest_param_s3_use_path_style' => 'Usa URL path-style invece di virtual-hosted (0=virtual-hosted, 1=path-style). Abilita per MinIO, Garage, Ceph RadosGW e altri storage S3-compatibili self-hosted.',
     'rest_schema_s3_enabled' => 'Stato di abilitazione dell\'archiviazione S3 (0=disabilitato, 1=abilitato)',
     'rest_schema_s3_endpoint' => 'URL di un endpoint compatibile con S3 (AWS S3, MinIO, Wasabi, ecc.)',
     'rest_schema_s3_local_retention' => 'Numero di giorni per archiviare i record localmente prima di caricarli su S3',
+    'rest_schema_s3_provider_preset' => 'ID del preset usato dall’interfaccia per precompilare i valori predefiniti (il codice del motore non ne dipende e legge solo le impostazioni esplicite).',
+    'rest_schema_s3_use_path_style' => 'Flag URL path-style (1=path-style per MinIO/Garage/Ceph, 0=virtual-hosted per AWS S3 e la maggior parte dei provider SaaS).',
+    'rest_schema_s3_available_presets' => 'Catalogo dei provider S3 noti con placeholder per endpoint, regione predefinita, flag path-style e link alla documentazione. Sola lettura — generato dal registro S3ProviderPresets.',
     // ============================================================================
     // System Upgrade
     // ============================================================================
@@ -1482,6 +1487,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'Il nome del bucket S3 non deve essere in formato indirizzo IP',
     'rest_err_s3_bucket_xn_prefix' => 'Il nome del bucket S3 non deve iniziare con "xn--"',
     'rest_err_s3_bucket_reserved_suffix' => 'Il nome del bucket S3 non deve terminare con "-s3alias" o "--ol-s3"',
+    'rest_err_s3_hint_signature_mismatch' => 'La firma della richiesta non corrisponde. Verifica che la regione S3 sia corretta — viene usata per la firma SigV4.',
+    'rest_err_s3_hint_no_such_bucket' => 'Il bucket specificato non è stato trovato. Verifica il nome del bucket e i permessi delle credenziali.',
+    'rest_err_s3_hint_try_path_style' => 'Impossibile risolvere l’host del endpoint. È tipico con MinIO, Garage e Ceph: abilita gli URL path-style nel preset del provider.',
 
     'rest_TimeSettings_ApiDescription' => 'Gestione completa dell\'ora e del fuso orario per MikoPBX. Questa risorsa singleton fornisce accesso alla configurazione dell\'ora di sistema, inclusa la selezione del fuso orario, le impostazioni del server NTP e le regolazioni manuali dell\'ora. È essenziale per garantire timestamp accurati delle chiamate, esecuzione delle attività pianificate e correlazione dei log di sistema. Supporta la sincronizzazione automatica dell\'ora tramite NTP o l\'impostazione manuale dell\'ora per reti isolate.',
     'rest_UserPageTracker_ApiDescription' => 'Tiene traccia dell\'attività degli utenti sulle pagine dell\'interfaccia amministrativa. Registra le visualizzazioni e le uscite delle pagine per tenere traccia di quali amministratori stanno visualizzando quali pagine. Viene utilizzato per la gestione delle sessioni, il monitoraggio delle attività e la prevenzione di conflitti durante la modifica simultanea.',

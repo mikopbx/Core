@@ -20,7 +20,10 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\AdminCabinet\Forms\Elements\SemanticUIDropdown;
+use MikoPBX\Common\Library\S3ProviderPresets;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\StorageSettings;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Password;
@@ -43,6 +46,25 @@ class S3StorageEditForm extends BaseForm
         // S3 Storage settings group
         // Enable S3 storage checkbox
         $this->add(new Check('s3_enabled', ['value' => 1]));
+
+        // Provider preset dropdown — pre-fills endpoint placeholder, region
+        // default, and the path-style flag based on the chosen S3-compatible
+        // provider. The actual settings (region, endpoint, use_path_style)
+        // remain plain fields in the database; the preset is only a UI helper.
+        // Labels and placeholder are resolved server-side here because
+        // SemanticUIDropdown renders option text and the empty-state via
+        // htmlspecialchars and never calls TranslationProvider itself.
+        $presetOptions = [];
+        foreach (S3ProviderPresets::all() as $preset) {
+            $presetOptions[$preset['id']] = $this->translation->_($preset['label_key']);
+        }
+        $presetDropdown = new SemanticUIDropdown('s3_provider_preset', $presetOptions, [
+            'class' => 'ui selection dropdown s3-preset-dropdown',
+            'placeholder' => $this->translation->_('storage_s3_preset_placeholder'),
+            'id' => 's3-provider-preset-dropdown',
+        ]);
+        $presetDropdown->setDefault(StorageSettings::PRESET_CUSTOM);
+        $this->add($presetDropdown);
 
         // S3 Endpoint URL
         $this->add(new Text('s3_endpoint', [
@@ -71,6 +93,10 @@ class S3StorageEditForm extends BaseForm
             'autocomplete' => 'new-password',
             'data-no-password-manager' => 'true',
         ]));
+
+        // Path-style URL flag — driven by the preset dropdown but exposed as
+        // a hidden field so explicit toggling and form serialization work.
+        $this->add(new Hidden('s3_use_path_style', ['value' => 0]));
 
         // Local retention period (how long to keep files locally before uploading to S3)
         // The actual value will be loaded via REST API in JavaScript

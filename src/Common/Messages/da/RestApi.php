@@ -2260,6 +2260,8 @@ return [
     'rest_param_s3_secret_key' => 'S3 hemmelig adgangsnøgle til godkendelse (vil blive krypteret)',
     'rest_param_s3_total_retention' => 'Samlet opbevaringsperiode for poster i dage (lokal + S3)',
     'rest_param_s3_local_retention' => 'Lokal lagringsperiode før upload til S3 (i dage)',
+    'rest_param_s3_provider_preset' => 'ID for S3-udbyderpreset (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Bruges af brugergrænsefladen til at udfylde standardværdier.',
+    'rest_param_s3_use_path_style' => 'Brug path-style-URL\'er i stedet for virtual-hosted (0=virtual-hosted, 1=path-style). Aktivér for MinIO, Garage, Ceph RadosGW og andre selvhostede S3-kompatible lagre.',
     'rest_schema_s3_endpoint' => 'URL til et S3-kompatibelt slutpunkt (AWS S3, MinIO, Wasabi osv.)',
     'rest_schema_s3_region' => 'AWS-region eller tilsvarende S3-serviceregions-ID',
     'rest_S3LocalRetentionMustBeLess' => 'Den lokale opbevaringsperiode (%local% dage) skal være kortere end den samlede opbevaringsperiode (%total% dage)',
@@ -2269,6 +2271,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'S3 bucket-navn må ikke være formateret som en IP-adresse',
     'rest_err_s3_bucket_xn_prefix' => 'S3 bucket-navn må ikke begynde med "xn--"',
     'rest_err_s3_bucket_reserved_suffix' => 'S3 bucket-navn må ikke slutte med "-s3alias" eller "--ol-s3"',
+    'rest_err_s3_hint_signature_mismatch' => 'Anmodningens signatur stemmer ikke. Kontrollér, at S3-regionen er korrekt — den bruges til SigV4-signering.',
+    'rest_err_s3_hint_no_such_bucket' => 'Den angivne bucket blev ikke fundet. Kontrollér bucketnavnet og legitimationsoplysningernes rettigheder.',
+    'rest_err_s3_hint_try_path_style' => 'Endpointets vært kunne ikke opløses. Typisk for MinIO, Garage og Ceph: aktivér path-style-URL\'er i det valgte udbyderpreset.',
 
     'rest_s3_GetRecord' => 'Hent S3-lagerkonfiguration',
     'rest_s3_GetRecordDesc' => 'Hent den aktuelle S3-lagerkonfiguration, inklusive aktiveringsstatus, slutpunkts-URL, bucketnavn, region og indstillinger for opbevaring af poster til cloud-arkivering.',
@@ -2294,6 +2299,9 @@ return [
     'rest_schema_s3_secret_key' => 'S3 hemmelig adgangsnøgle (maskeret med stjerner i svar)',
     'rest_schema_s3_total_retention' => 'Samlet lagringsperiode for poster i dage (lokal + cloud-lagring)',
     'rest_schema_s3_local_retention' => 'Antal dage til lagring af poster lokalt før upload til S3',
+    'rest_schema_s3_provider_preset' => 'ID for det preset, brugergrænsefladen bruger til at udfylde standardværdier (motorkoden afhænger ikke af det og læser kun de eksplicitte indstillinger).',
+    'rest_schema_s3_use_path_style' => 'Path-style-URL-flag (1=path-style for MinIO/Garage/Ceph, 0=virtual-hosted for AWS S3 og de fleste SaaS-udbydere).',
+    'rest_schema_s3_available_presets' => 'Katalog over kendte S3-udbydere med endpoint-placeholder, standardregion, path-style-flag og dokumentationslink. Kun læsning — genereres fra S3ProviderPresets-registret.',
     // ============================================================================
     // System Upgrade
     // ============================================================================

@@ -485,6 +485,9 @@ return [
     'rest_schema_s3_secret_key' => 'Chave de acesso secreta S3 (mascarada por asteriscos nas respostas)',
     'rest_schema_s3_total_retention' => 'Período total de armazenamento dos registros em dias (armazenamento local + em nuvem)',
     'rest_schema_s3_local_retention' => 'Número de dias para armazenar registros localmente antes de enviá-los para o S3.',
+    'rest_schema_s3_provider_preset' => 'Identificador do preset usado pela interface para preencher valores predefinidos (o código do motor não depende dele e lê apenas as definições explícitas).',
+    'rest_schema_s3_use_path_style' => 'Indicador de URL path-style (1=path-style para MinIO/Garage/Ceph, 0=virtual-hosted para AWS S3 e a maioria dos fornecedores SaaS).',
+    'rest_schema_s3_available_presets' => 'Catálogo de fornecedores S3 conhecidos com placeholder de endpoint, região predefinida, indicador path-style e link para documentação. Apenas leitura — gerado a partir do registo S3ProviderPresets.',
     // ============================================================================
     // System Upgrade
     // ============================================================================
@@ -1432,6 +1435,8 @@ return [
     'rest_param_s3_access_key' => 'ID da chave de acesso S3 para autenticação',
     'rest_param_s3_secret_key' => 'Chave de acesso secreta S3 para autenticação (será criptografada)',
     'rest_param_s3_local_retention' => 'Período de armazenamento local antes do upload para o S3 (em dias)',
+    'rest_param_s3_provider_preset' => 'Identificador do preset de fornecedor S3 (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Usado pela interface para preencher valores predefinidos.',
+    'rest_param_s3_use_path_style' => 'Usar URLs path-style em vez de virtual-hosted (0=virtual-hosted, 1=path-style). Ative para MinIO, Garage, Ceph RadosGW e outros armazenamentos S3-compatíveis self-hosted.',
     'rest_schema_s3_enabled' => 'Status de ativação do armazenamento S3 (0 = desativado, 1 = ativado)',
     'rest_schema_s3_bucket' => 'Nome do bucket S3 onde os registros estão armazenados.',
     'rest_schema_s3_access_key' => 'ID da chave de acesso S3 (visível nas respostas)',
@@ -1487,6 +1492,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'O nome do bucket S3 não deve estar no formato de endereço IP',
     'rest_err_s3_bucket_xn_prefix' => 'O nome do bucket S3 não deve começar com "xn--"',
     'rest_err_s3_bucket_reserved_suffix' => 'O nome do bucket S3 não deve terminar com "-s3alias" ou "--ol-s3"',
+    'rest_err_s3_hint_signature_mismatch' => 'A assinatura do pedido não corresponde. Verifique se a região S3 está correta — é usada na assinatura SigV4.',
+    'rest_err_s3_hint_no_such_bucket' => 'O bucket indicado não foi encontrado. Verifique o nome do bucket e as permissões das credenciais.',
+    'rest_err_s3_hint_try_path_style' => 'Não foi possível resolver o host do endpoint. Típico em MinIO, Garage e Ceph: ative URLs path-style no preset do fornecedor.',
 
     'rest_Sysinfo_ApiDescription' => 'Um recurso de sistema único para informações e diagnósticos. Fornece informações detalhadas sobre hardware, configuração de rede, plataforma de virtualização e dados DMI. Uma interface somente leitura para monitoramento e solução de problemas do sistema.',
     'rest_Syslog_ApiDescription' => 'Ferramentas de gerenciamento e diagnóstico de logs do sistema. Fornece acesso a logs do sistema, filtragem de logs, captura de pacotes de rede e geração de arquivos. Essencial para solução de problemas e monitoramento do sistema.',

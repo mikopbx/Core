@@ -63,6 +63,8 @@ return [
     'rest_schema_owt_calUrl' => 'Kalender-URL',
     'rest_schema_provider_secret' => 'Passwort zur Authentifizierung beim Anbieter',
     'rest_param_s3_local_retention' => 'Lokale Speicherdauer vor dem Hochladen auf S3 (in Tagen)',
+    'rest_param_s3_provider_preset' => 'ID des S3-Anbieter-Presets (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Wird von der UI für Standardwerte verwendet.',
+    'rest_param_s3_use_path_style' => 'Path-Style-URLs statt Virtual-Hosted verwenden (0=virtual-hosted, 1=path-style). Aktivieren Sie dies für MinIO, Garage, Ceph RadosGW und andere selbstgehostete S3-kompatible Speicher.',
     /**
  * REST API translations for OpenAPI documentation
  * These translations are used in REST API controllers and OpenAPI specification generation
@@ -1287,6 +1289,9 @@ return [
     'rest_schema_s3_secret_key' => 'S3-Geheimschlüssel (in Antworten durch Sternchen maskiert)',
     'rest_schema_s3_total_retention' => 'Gesamtspeicherdauer für Datensätze in Tagen (lokaler Speicher + Cloud-Speicher)',
     'rest_schema_s3_local_retention' => 'Anzahl der Tage, für die Datensätze lokal gespeichert werden, bevor sie in S3 hochgeladen werden.',
+    'rest_schema_s3_provider_preset' => 'ID des S3-Anbieter-Presets, das die UI zur Vorbefüllung verwendet (der Engine-Code hängt nicht davon ab und liest nur die expliziten Einstellungen).',
+    'rest_schema_s3_use_path_style' => 'Path-Style-URL-Flag (1=path-style für MinIO/Garage/Ceph, 0=virtual-hosted für AWS S3 und die meisten SaaS-Anbieter).',
+    'rest_schema_s3_available_presets' => 'Katalog bekannter S3-Anbieter mit Endpoint-Platzhalter, Standardregion, Path-Style-Flag und Dokumentationslink. Schreibgeschützt — wird aus der S3ProviderPresets-Registry generiert.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Fehler beim Erstellen des Loop-Geräts.',
     'rest_System_UpgradeMountFailed' => 'Die Partition konnte nicht eingebunden werden. Überprüfen Sie das Dateisystem.',
     // ============================================================================
@@ -2197,6 +2202,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'Der S3-Bucket-Name darf nicht im Format einer IP-Adresse sein',
     'rest_err_s3_bucket_xn_prefix' => 'Der S3-Bucket-Name darf nicht mit "xn--" beginnen',
     'rest_err_s3_bucket_reserved_suffix' => 'Der S3-Bucket-Name darf nicht mit "-s3alias" oder "--ol-s3" enden',
+    'rest_err_s3_hint_signature_mismatch' => 'Die Anforderungssignatur stimmt nicht überein. Prüfen Sie die S3-Region — sie wird für die SigV4-Signatur verwendet.',
+    'rest_err_s3_hint_no_such_bucket' => 'Der angegebene Bucket wurde nicht gefunden. Prüfen Sie den Bucket-Namen und die Berechtigungen des Zugangs.',
+    'rest_err_s3_hint_try_path_style' => 'Endpoint-Host konnte nicht aufgelöst werden. Typisch für MinIO, Garage und Ceph: Aktivieren Sie Path-Style-URLs im gewählten Anbieter-Preset.',
 
     'rest_Sysinfo_ApiDescription' => 'Eine zentrale Systeminformations- und Diagnoseressource. Sie liefert detaillierte Informationen zu Hardware, Netzwerkkonfiguration, Virtualisierungsplattform und DMI-Daten. Eine schreibgeschützte Schnittstelle dient der Systemüberwachung und Fehlerbehebung.',
     'rest_pvd_GetStatuses' => 'Den Status aller Anbieter abrufen',

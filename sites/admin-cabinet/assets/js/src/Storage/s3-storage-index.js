@@ -97,6 +97,58 @@ const s3StorageIndex = {
     $s3StatsDetails: $('#s3-stats-details'),
 
     /**
+     * jQuery object for the provider preset dropdown.
+     * @type {jQuery}
+     */
+    $presetDropdown: $('#s3-provider-preset-dropdown'),
+
+    /**
+     * jQuery object for the preset hint container.
+     * @type {jQuery}
+     */
+    $presetHint: $('#s3-preset-hint'),
+
+    /**
+     * jQuery object for the preset docs link.
+     * @type {jQuery}
+     */
+    $presetDocsLink: $('#s3-preset-docs-link'),
+
+    /**
+     * jQuery object for the endpoint input (cached for placeholder updates).
+     * @type {jQuery}
+     */
+    $s3EndpointInput: $('#s3-storage-form input[name="s3_endpoint"]'),
+
+    /**
+     * Provider presets received from /s3-storage GET response.
+     * Indexed by preset id for O(1) lookup.
+     * @type {Object<string, Object>}
+     */
+    presetCatalogue: {},
+
+    /**
+     * Base URL for documentation links.
+     * @type {string}
+     */
+    docsBaseUrl: 'https://docs.mikopbx.com/',
+
+    /**
+     * Default preset id used when the server has no value yet.
+     * @type {string}
+     */
+    DEFAULT_PRESET_ID: 'custom',
+
+    /**
+     * Suppresses the dropdown onChange handler while loadSettings()
+     * synchronises the form with server data. Without this, setting the
+     * dropdown's value during load would re-apply preset defaults and
+     * clobber the freshly-loaded use_path_style flag.
+     * @type {boolean}
+     */
+    isLoadingFromServer: false,
+
+    /**
      * Possible period values for S3 local retention (in days).
      * Values: 7, 30, 90, 180, 365 days (1 week, 1/3/6 months, 1 year)
      */
@@ -187,6 +239,20 @@ const s3StorageIndex = {
         // Initialize S3 enabled checkbox
         s3StorageIndex.$s3EnabledCheckbox.checkbox({
             onChange: s3StorageIndex.toggleS3SettingsVisibility
+        });
+
+        // Initialize provider preset dropdown. The user-driven path applies
+        // preset defaults to the form; loadSettings() guards against this
+        // firing on programmatic value changes.
+        s3StorageIndex.$presetDropdown.dropdown({
+            onChange(value) {
+                if (s3StorageIndex.isLoadingFromServer) {
+                    return;
+                }
+                s3StorageIndex.applyPresetToForm(value);
+                s3StorageIndex.updatePresetUI(value);
+                Form.dataChanged();
+            },
         });
 
         // Test S3 connection button handler
@@ -394,6 +460,80 @@ const s3StorageIndex = {
     },
 
     /**
+     * Write preset-derived defaults into the form. Region is only filled
+     * when the user has nothing typed; path-style always tracks the preset
+     * because that's the actual cross-provider fix the dropdown exists for.
+     *
+     * Called from the dropdown's user-driven onChange. loadSettings() does
+     * NOT call this — server values win on load.
+     *
+     * @param {string} presetId
+     */
+    applyPresetToForm(presetId) {
+        const preset = s3StorageIndex.presetCatalogue[presetId];
+        if (!preset) {
+            return;
+        }
+
+        const currentRegion = s3StorageIndex.$formObj.form('get value', 's3_region');
+        if (!currentRegion) {
+            s3StorageIndex.$formObj.form('set value', 's3_region', preset.region_default || '');
+        }
+
+        s3StorageIndex.$formObj.form('set value', 's3_use_path_style', preset.use_path_style ? 1 : 0);
+    },
+
+    /**
+     * Update the preset-driven non-form UI: endpoint placeholder, hint
+     * banner, docs link. Safe to call during initial load — does not write
+     * form values.
+     *
+     * @param {string} presetId
+     */
+    updatePresetUI(presetId) {
+        const preset = s3StorageIndex.presetCatalogue[presetId];
+        if (!preset) {
+            return;
+        }
+
+        s3StorageIndex.$s3EndpointInput.attr('placeholder', preset.endpoint_placeholder || '');
+
+        const hintText = globalTranslate[preset.hint_key] || '';
+        if (hintText) {
+            s3StorageIndex.$presetHint.find('.hint-text').text(hintText);
+            s3StorageIndex.$presetHint.show();
+        } else {
+            s3StorageIndex.$presetHint.hide();
+        }
+
+        if (preset.docs_path) {
+            s3StorageIndex.$presetDocsLink
+                .attr('href', s3StorageIndex.docsBaseUrl + preset.docs_path)
+                .show();
+        } else {
+            s3StorageIndex.$presetDocsLink.hide();
+        }
+    },
+
+    /**
+     * Cache the preset catalogue from the API response so applyPresetDefaults
+     * can look up metadata without another round-trip.
+     *
+     * @param {Array<Object>} presets - available_presets array from /s3-storage GET
+     */
+    cachePresetCatalogue(presets) {
+        s3StorageIndex.presetCatalogue = {};
+        if (!Array.isArray(presets)) {
+            return;
+        }
+        presets.forEach((preset) => {
+            if (preset && preset.id) {
+                s3StorageIndex.presetCatalogue[preset.id] = preset;
+            }
+        });
+    },
+
+    /**
      * Test S3 connection with current form values
      */
     testS3Connection() {
@@ -406,7 +546,9 @@ const s3StorageIndex = {
             s3_region: s3StorageIndex.$formObj.form('get value', 's3_region'),
             s3_bucket: s3StorageIndex.$formObj.form('get value', 's3_bucket'),
             s3_access_key: s3StorageIndex.$formObj.form('get value', 's3_access_key'),
-            s3_secret_key: s3StorageIndex.$formObj.form('get value', 's3_secret_key')
+            s3_secret_key: s3StorageIndex.$formObj.form('get value', 's3_secret_key'),
+            s3_provider_preset: s3StorageIndex.$formObj.form('get value', 's3_provider_preset'),
+            s3_use_path_style: s3StorageIndex.$formObj.form('get value', 's3_use_path_style')
         };
 
         // Call API to test connection
@@ -417,10 +559,29 @@ const s3StorageIndex = {
             if (response && response.result === true) {
                 const message = response.data?.message || globalTranslate.st_S3TestSuccess;
                 UserMessage.showInformation(message, globalTranslate.st_S3TestConnectionHeader);
-            } else {
-                const errorMessage = response?.data?.message || globalTranslate.st_S3TestFailed;
-                UserMessage.showError(errorMessage, globalTranslate.st_S3TestConnectionHeader);
+                return;
             }
+
+            // Failure path — surface the actionable diagnostic chain when
+            // available: hint > underlying SDK message > generic fallback.
+            const data = response?.data || {};
+            const lines = [];
+            if (data.message) {
+                lines.push(data.message);
+            }
+            if (data.aws_error_code) {
+                lines.push((globalTranslate.st_S3ErrorCodePrefix || 'AWS error') + ': ' + data.aws_error_code);
+            }
+            if (data.error_class) {
+                lines.push((globalTranslate.st_S3ErrorTypePrefix || 'Type') + ': ' + data.error_class);
+            }
+            if (data.hint) {
+                lines.push(data.hint);
+            }
+            const errorMessage = lines.length > 0
+                ? lines.join('\n')
+                : globalTranslate.st_S3TestFailed;
+            UserMessage.showError(errorMessage, globalTranslate.st_S3TestConnectionHeader);
         });
     },
 
@@ -431,6 +592,10 @@ const s3StorageIndex = {
         S3StorageAPI.get((response) => {
             if (response.result === true && response.data) {
                 const data = response.data;
+
+                // Cache preset catalogue first so the dropdown change handler
+                // can resolve the chosen preset against it.
+                s3StorageIndex.cachePresetCatalogue(data.available_presets || []);
 
                 // Set checkbox state
                 if (data.s3_enabled === '1' || data.s3_enabled === 1 || data.s3_enabled === true) {
@@ -445,6 +610,19 @@ const s3StorageIndex = {
                 s3StorageIndex.$formObj.form('set value', 's3_bucket', data.s3_bucket || '');
                 s3StorageIndex.$formObj.form('set value', 's3_access_key', data.s3_access_key || '');
                 s3StorageIndex.$formObj.form('set value', 's3_secret_key', data.s3_secret_key || '');
+
+                // Set preset dropdown without firing the onChange handler —
+                // server values are authoritative on load. Then refresh the
+                // preset-driven UI bits (placeholder, hint, docs link).
+                s3StorageIndex.isLoadingFromServer = true;
+                try {
+                    const presetId = data.s3_provider_preset || s3StorageIndex.DEFAULT_PRESET_ID;
+                    s3StorageIndex.$presetDropdown.dropdown('set selected', presetId);
+                    s3StorageIndex.$formObj.form('set value', 's3_use_path_style', data.s3_use_path_style ? 1 : 0);
+                    s3StorageIndex.updatePresetUI(presetId);
+                } finally {
+                    s3StorageIndex.isLoadingFromServer = false;
+                }
 
                 // Set S3 local retention slider
                 const localDays = String(data.PBXRecordS3LocalDays);

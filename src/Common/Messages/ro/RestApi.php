@@ -128,6 +128,9 @@ return [
     'rest_schema_provider_dtmfmode' => 'Mod de transmisie DTMF (rfc2833, inband, info, auto)',
     'rest_response_200_upgrading' => 'Sistemul este actualizat',
     'rest_schema_s3_local_retention' => 'Numărul de zile pentru stocarea locală a înregistrărilor înainte de încărcarea în S3',
+    'rest_schema_s3_provider_preset' => 'ID-ul preset-ului folosit de UI pentru a precompleta valorile implicite (codul motorului nu depinde de el și citește doar setările explicite).',
+    'rest_schema_s3_use_path_style' => 'Indicator URL path-style (1=path-style pentru MinIO/Garage/Ceph, 0=virtual-hosted pentru AWS S3 și majoritatea furnizorilor SaaS).',
+    'rest_schema_s3_available_presets' => 'Catalog al furnizorilor S3 cunoscuți cu placeholder de endpoint, regiune implicită, indicator path-style și link către documentație. Doar citire — generat din registrul S3ProviderPresets.',
     'rest_schema_s3_secret_key' => 'Cheie secretă de acces S3 (mascată prin asteriscuri în răspunsuri)',
     // ============================================================================
     // System Upgrade
@@ -1244,6 +1247,8 @@ return [
     'rest_param_s3_secret_key' => 'Cheie secretă de acces S3 pentru autentificare (va fi criptată)',
     'rest_param_s3_total_retention' => 'Perioada totală de păstrare a înregistrărilor în zile (locală + S3)',
     'rest_param_s3_local_retention' => 'Perioada de stocare locală înainte de încărcarea în S3 (în zile)',
+    'rest_param_s3_provider_preset' => 'ID-ul preset-ului furnizorului S3 (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Folosit de UI pentru a precompleta valorile implicite.',
+    'rest_param_s3_use_path_style' => 'Folosește URL-uri path-style în loc de virtual-hosted (0=virtual-hosted, 1=path-style). Activați pentru MinIO, Garage, Ceph RadosGW și alte stocări S3-compatibile self-hosted.',
     'rest_schema_s3_region' => 'ID-ul regiunii AWS sau al regiunii de servicii S3 echivalente',
     'rest_schema_s3_bucket' => 'Numele bucket-ului S3 în care sunt stocate înregistrările',
     'rest_schema_s3_access_key' => 'ID-ul cheii de acces S3 (vizibil în răspunsuri)',
@@ -1310,6 +1315,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'Numele bucket-ului S3 nu trebuie să fie în format de adresă IP',
     'rest_err_s3_bucket_xn_prefix' => 'Numele bucket-ului S3 nu trebuie să înceapă cu "xn--"',
     'rest_err_s3_bucket_reserved_suffix' => 'Numele bucket-ului S3 nu trebuie să se termine cu "-s3alias" sau "--ol-s3"',
+    'rest_err_s3_hint_signature_mismatch' => 'Semnătura cererii nu corespunde. Verificați dacă regiunea S3 este corectă — este folosită la semnarea SigV4.',
+    'rest_err_s3_hint_no_such_bucket' => 'Bucket-ul specificat nu a fost găsit. Verificați numele și permisiunile credențialelor.',
+    'rest_err_s3_hint_try_path_style' => 'Nu s-a putut rezolva hostul endpoint-ului. Tipic pentru MinIO, Garage și Ceph: activați URL-urile path-style în preset-ul ales al furnizorului.',
 
     'rest_TimeSettings_ApiDescription' => 'Gestionare completă a orei și fusului orar pentru MikoPBX. Această resursă singleton oferă acces la configurarea orei sistemului, inclusiv selectarea fusului orar, setările serverului NTP și ajustările manuale ale orei. Este esențială pentru asigurarea unor marcaje temporale precise ale apelurilor, execuția programată a sarcinilor și corelarea jurnalelor de sistem. Acceptă sincronizarea automată a orei prin NTP sau setarea manuală a orei pentru rețele izolate.',
     'rest_UserPageTracker_ApiDescription' => 'Urmărește activitatea utilizatorilor pe paginile interfeței administrative. Înregistrează vizualizările și ieșirile de pagină pentru a urmări care administratori vizualizează ce pagini în prezent. Această funcție este utilizată pentru gestionarea sesiunilor, monitorizarea activității și prevenirea conflictelor în timpul editării simultane.',

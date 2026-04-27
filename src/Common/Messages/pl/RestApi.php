@@ -455,6 +455,9 @@ return [
     'rest_schema_s3_secret_key' => 'Tajny klucz dostępu S3 (maskowany gwiazdkami w odpowiedziach)',
     'rest_schema_s3_total_retention' => 'Całkowity okres przechowywania rekordów w dniach (przechowywanie lokalne + w chmurze)',
     'rest_schema_s3_local_retention' => 'Liczba dni przechowywania rekordów lokalnie przed przesłaniem do usługi S3',
+    'rest_schema_s3_provider_preset' => 'Identyfikator presetu używany przez UI do wypełniania wartości domyślnych (kod silnika nie zależy od niego i czyta wyłącznie jawne ustawienia).',
+    'rest_schema_s3_use_path_style' => 'Flaga URL path-style (1=path-style dla MinIO/Garage/Ceph, 0=virtual-hosted dla AWS S3 i większości dostawców SaaS).',
+    'rest_schema_s3_available_presets' => 'Katalog znanych dostawców S3 z placeholderem endpointu, domyślnym regionem, flagą path-style oraz linkiem do dokumentacji. Tylko do odczytu — generowany z rejestru S3ProviderPresets.',
     'rest_param_ivr_number_of_repeat' => 'Liczba odtworzeń menu',
     // ============================================================================
     // System Upgrade
@@ -1338,6 +1341,8 @@ return [
     'rest_param_s3_secret_key' => 'Tajny klucz dostępu S3 do uwierzytelniania (będzie szyfrowany)',
     'rest_param_s3_total_retention' => 'Całkowity okres przechowywania rekordów w dniach (lokalny + S3)',
     'rest_param_s3_local_retention' => 'Okres przechowywania lokalnego przed przesłaniem do S3 (w dniach)',
+    'rest_param_s3_provider_preset' => 'Identyfikator presetu dostawcy S3 (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Używany przez UI do wypełniania wartości domyślnych.',
+    'rest_param_s3_use_path_style' => 'Użyj URL path-style zamiast virtual-hosted (0=virtual-hosted, 1=path-style). Włącz dla MinIO, Garage, Ceph RadosGW i innych samodzielnie hostowanych magazynów zgodnych z S3.',
     'rest_schema_s3_enabled' => 'Status włączenia pamięci masowej S3 (0=wyłączony, 1=włączony)',
     'rest_schema_s3_endpoint' => 'Adres URL punktu końcowego zgodnego z S3 (AWS S3, MinIO, Wasabi itp.)',
     'rest_schema_s3_region' => 'Region AWS lub równoważny identyfikator regionu usługi S3',
@@ -1385,6 +1390,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'Nazwa bucketu S3 nie może mieć formatu adresu IP',
     'rest_err_s3_bucket_xn_prefix' => 'Nazwa bucketu S3 nie może zaczynać się od "xn--"',
     'rest_err_s3_bucket_reserved_suffix' => 'Nazwa bucketu S3 nie może kończyć się na "-s3alias" ani "--ol-s3"',
+    'rest_err_s3_hint_signature_mismatch' => 'Podpis żądania nie pasuje. Sprawdź, czy region S3 jest poprawny — jest używany w podpisie SigV4.',
+    'rest_err_s3_hint_no_such_bucket' => 'Podany bucket nie został znaleziony. Sprawdź nazwę bucketa i uprawnienia poświadczeń.',
+    'rest_err_s3_hint_try_path_style' => 'Nie udało się rozwiązać hosta endpointu. Typowe dla MinIO, Garage i Ceph: włącz URL path-style w wybranym presecie dostawcy.',
 
     'rest_TimeSettings_ApiDescription' => 'Kompleksowe zarządzanie czasem i strefą czasową w MikoPBX. Ten pojedynczy zasób zapewnia dostęp do konfiguracji czasu systemowego, w tym do wyboru strefy czasowej, ustawień serwera NTP i ręcznej korekty czasu. Jest niezbędny do zapewnienia dokładnych znaczników czasu połączeń, zaplanowanego wykonywania zadań i korelacji logów systemowych. Obsługuje automatyczną synchronizację czasu przez NTP lub ręczne ustawianie czasu w sieciach odizolowanych.',
     'rest_UserPageTracker_ApiDescription' => 'Śledzi aktywność użytkowników na stronach interfejsu administracyjnego. Rejestruje wyświetlenia i wyjścia ze stron, aby śledzić, którzy administratorzy aktualnie przeglądają poszczególne strony. Służy do zarządzania sesjami, monitorowania aktywności i zapobiegania konfliktom podczas jednoczesnej edycji.',

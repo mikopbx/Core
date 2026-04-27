@@ -1438,6 +1438,8 @@ return [
     'rest_param_s3_secret_key' => 'S3 titkos hozzáférési kulcs a hitelesítéshez (titkosítva lesz)',
     'rest_param_s3_total_retention' => 'Teljes rekordmegőrzési időszak napokban (helyi + S3)',
     'rest_param_s3_local_retention' => 'Helyi tárolási időszak az S3-ra való feltöltés előtt (napokban)',
+    'rest_param_s3_provider_preset' => 'S3-szolgáltatói preset azonosítója (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). A felhasználói felület alapértékek beállítására használja.',
+    'rest_param_s3_use_path_style' => 'Path-style URL-ek használata virtual-hosted helyett (0=virtual-hosted, 1=path-style). Kapcsolja be MinIO, Garage, Ceph RadosGW és más self-hosted S3-kompatibilis tárolókhoz.',
     'rest_schema_s3_enabled' => 'S3 tároló engedélyezési állapota (0=letiltva, 1=engedélyezve)',
     'rest_schema_s3_endpoint' => 'S3-kompatibilis végpont URL-címe (AWS S3, MinIO, Wasabi stb.)',
     'rest_schema_s3_bucket' => 'Az S3 vödör neve, ahol a rekordok tárolva vannak',
@@ -1445,6 +1447,9 @@ return [
     'rest_schema_s3_secret_key' => 'S3 titkos hozzáférési kulcs (csillaggal eltakarva a válaszokban)',
     'rest_schema_s3_total_retention' => 'A rekordok teljes tárolási ideje napokban (helyi + felhőalapú tárhely)',
     'rest_schema_s3_local_retention' => 'A rekordok helyi tárolásának napjainak száma az S3-ra való feltöltés előtt',
+    'rest_schema_s3_provider_preset' => 'A felhasználói felület által alapértékek kitöltésére használt preset azonosítója (a motor kód nem függ tőle, csak az explicit beállításokat olvassa).',
+    'rest_schema_s3_use_path_style' => 'Path-style URL jelző (1=path-style MinIO/Garage/Ceph esetén, 0=virtual-hosted AWS S3 és a legtöbb SaaS-szolgáltató esetén).',
+    'rest_schema_s3_available_presets' => 'Az ismert S3-szolgáltatók katalógusa végpont placeholderrel, alapértelmezett régióval, path-style jelzővel és dokumentációs linkkel. Csak olvasható — az S3ProviderPresets nyilvántartásból generálódik.',
     // ============================================================================
     // System Upgrade
     // ============================================================================
@@ -2264,6 +2269,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'Az S3 bucket neve nem lehet IP-cím formátumban',
     'rest_err_s3_bucket_xn_prefix' => 'Az S3 bucket neve nem kezdődhet "xn--" előtaggal',
     'rest_err_s3_bucket_reserved_suffix' => 'Az S3 bucket neve nem végződhet "-s3alias" vagy "--ol-s3" utótaggal',
+    'rest_err_s3_hint_signature_mismatch' => 'A kérés aláírása nem egyezik. Ellenőrizze, hogy az S3-régió helyes-e — ez kerül felhasználásra a SigV4 aláíráshoz.',
+    'rest_err_s3_hint_no_such_bucket' => 'A megadott bucket nem található. Ellenőrizze a bucket nevét és a hitelesítő adatok jogosultságait.',
+    'rest_err_s3_hint_try_path_style' => 'A végpont hosztja nem oldható fel. Jellemző MinIO, Garage és Ceph esetén: engedélyezze a path-style URL-eket a választott szolgáltatói presetben.',
 
     'IVR Menu' => 'IVR menü',
     'Network' => 'Hálózati interfész',

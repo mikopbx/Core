@@ -194,6 +194,23 @@
             <!-- S3 Configuration Fields (visible when S3 enabled) -->
             <div id="s3-settings-group" style="display: none;">
 
+                <!-- Provider preset selector — pre-fills endpoint placeholder,
+                     region default, and the path-style flag. The hint below
+                     the dropdown links to the per-provider documentation. -->
+                <div class="field">
+                    <label>{{ t._('storage_s3_preset_label') }}
+                        <i class="small info circle icon field-info-icon" data-field="s3_provider_preset"></i>
+                    </label>
+                    {{ s3StorageForm.render('s3_provider_preset') }}
+                    {{ s3StorageForm.render('s3_use_path_style') }}
+                    <div id="s3-preset-hint" class="ui small info message" style="display: none;">
+                        <span class="hint-text"></span>
+                        <a id="s3-preset-docs-link" href="#" target="_blank" rel="noopener noreferrer" style="display: none;">
+                            {{ t._('storage_s3_preset_docs_link') }}
+                        </a>
+                    </div>
+                </div>
+
                 <div class="two fields">
                     <div class="field">
                         <label>{{ t._('st_S3Endpoint') }}

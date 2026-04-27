@@ -1092,12 +1092,17 @@ return [
     'rest_param_s3_bucket' => 'Kayıtların saklanacağı S3 kova adı (3-63 küçük harf)',
     'rest_param_s3_total_retention' => 'Toplam kayıt saklama süresi (gün olarak) (yerel + S3)',
     'rest_param_s3_local_retention' => 'S3\'e yüklemeden önce yerel depolama süresi (gün olarak)',
+    'rest_param_s3_provider_preset' => 'S3 sağlayıcı preset kimliği (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Arayüz tarafından varsayılanları doldurmak için kullanılır.',
+    'rest_param_s3_use_path_style' => 'Virtual-hosted yerine path-style URL kullan (0=virtual-hosted, 1=path-style). MinIO, Garage, Ceph RadosGW ve diğer self-hosted S3 uyumlu depolar için etkinleştirin.',
     'rest_schema_am_perm_config_read' => 'GetConfig aracılığıyla yapılandırmayı okuma izni.',
     'rest_schema_s3_enabled' => 'S3 depolama etkinleştirme durumu (0=devre dışı, 1=etkin)',
     'rest_schema_s3_endpoint' => 'S3 uyumlu bir uç noktanın (AWS S3, MinIO, Wasabi, vb.) URL\'si.',
     'rest_schema_s3_region' => 'AWS Bölgesi veya eşdeğer S3 hizmet bölgesi kimliği',
     'rest_schema_s3_total_retention' => 'Kayıtların toplam saklama süresi (gün olarak) (yerel + bulut depolama)',
     'rest_schema_s3_local_retention' => 'Kayıtların S3\'e yüklenmeden önce yerel olarak saklanacağı gün sayısı.',
+    'rest_schema_s3_provider_preset' => 'Arayüzün varsayılan değerleri doldurmak için kullandığı preset kimliği (motor kodu bunu kullanmaz ve yalnızca açık ayarları okur).',
+    'rest_schema_s3_use_path_style' => 'Path-style URL bayrağı (1=path-style MinIO/Garage/Ceph için, 0=virtual-hosted AWS S3 ve çoğu SaaS sağlayıcısı için).',
+    'rest_schema_s3_available_presets' => 'Bilinen S3 sağlayıcılarının kataloğu: endpoint placeholder, varsayılan bölge, path-style bayrağı ve dokümantasyon bağlantısı. Yalnızca okunur — S3ProviderPresets kayıt defterinden oluşturulur.',
     'rest_System_UpgradeMountFailed' => 'Bölüm bağlanamadı. Dosya sistemini kontrol edin.',
     // ============================================================================
     // MISC
@@ -1171,6 +1176,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'S3 bucket adı IP adresi biçiminde olmamalıdır',
     'rest_err_s3_bucket_xn_prefix' => 'S3 bucket adı "xn--" ile başlamamalıdır',
     'rest_err_s3_bucket_reserved_suffix' => 'S3 bucket adı "-s3alias" veya "--ol-s3" ile bitmemelidir',
+    'rest_err_s3_hint_signature_mismatch' => 'İstek imzası eşleşmiyor. SigV4 imzalamada kullanıldığı için S3 bölgesinin doğru olduğunu doğrulayın.',
+    'rest_err_s3_hint_no_such_bucket' => 'Belirtilen bucket bulunamadı. Bucket adını ve kimlik bilgilerinin yetkilerini kontrol edin.',
+    'rest_err_s3_hint_try_path_style' => 'Endpoint hostu çözümlenemedi. MinIO, Garage ve Ceph için tipiktir: seçili sağlayıcı presetinde path-style URL\'leri etkinleştirin.',
 
     'rest_Sysinfo_ApiDescription' => 'Tekil bir sistem bilgi ve teşhis kaynağı. Donanım, ağ yapılandırması, sanallaştırma platformu ve DMI verileri hakkında ayrıntılı bilgi sağlar. Sistem izleme ve sorun giderme için salt okunur bir arayüzdür.',
     'rest_Syslog_ApiDescription' => 'Sistem günlük yönetimi ve teşhis araçları. Sistem günlüklerine erişim, günlük filtreleme, ağ paketi yakalama ve arşiv oluşturma imkanı sağlar. Sorun giderme ve sistem izleme için vazgeçilmezdir.',

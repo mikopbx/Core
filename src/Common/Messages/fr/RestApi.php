@@ -1424,6 +1424,8 @@ return [
     'rest_param_s3_secret_key' => 'Clé d\'accès secrète S3 pour l\'authentification (sera chiffrée)',
     'rest_param_s3_total_retention' => 'Durée totale de conservation des enregistrements en jours (locale + S3)',
     'rest_param_s3_local_retention' => 'Durée de stockage local avant le chargement sur S3 (en jours)',
+    'rest_param_s3_provider_preset' => 'Identifiant du preset de fournisseur S3 (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Utilisé par l’interface pour préremplir les valeurs par défaut.',
+    'rest_param_s3_use_path_style' => 'Utiliser des URL path-style au lieu de virtual-hosted (0=virtual-hosted, 1=path-style). Activez-le pour MinIO, Garage, Ceph RadosGW et tout autre stockage S3-compatible auto-hébergé.',
     'rest_schema_s3_enabled' => 'État d\'activation du stockage S3 (0=désactivé, 1=activé)',
     'rest_schema_s3_region' => 'ID de région AWS ou de région de service S3 équivalent',
     'rest_schema_s3_bucket' => 'Nom du compartiment S3 où sont stockés les enregistrements',
@@ -1431,6 +1433,9 @@ return [
     'rest_schema_s3_secret_key' => 'Clé d\'accès secrète S3 (masquée par des astérisques dans les réponses)',
     'rest_schema_s3_total_retention' => 'Durée totale de conservation des enregistrements en jours (stockage local + stockage cloud)',
     'rest_schema_s3_local_retention' => 'Nombre de jours pendant lesquels les enregistrements doivent être stockés localement avant d\'être téléchargés sur S3',
+    'rest_schema_s3_provider_preset' => 'Identifiant du preset utilisé par l’interface pour préremplir les valeurs par défaut (le code moteur n’en dépend pas et ne lit que les paramètres explicites).',
+    'rest_schema_s3_use_path_style' => 'Indicateur d’URL path-style (1=path-style pour MinIO/Garage/Ceph, 0=virtual-hosted pour AWS S3 et la plupart des fournisseurs SaaS).',
+    'rest_schema_s3_available_presets' => 'Catalogue des fournisseurs S3 connus avec placeholder de endpoint, région par défaut, indicateur path-style et lien vers la documentation. Lecture seule — généré à partir du registre S3ProviderPresets.',
     // ============================================================================
     // System Upgrade
     // ============================================================================
@@ -1538,6 +1543,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'Le nom du bucket S3 ne doit pas être au format d\'une adresse IP',
     'rest_err_s3_bucket_xn_prefix' => 'Le nom du bucket S3 ne doit pas commencer par "xn--"',
     'rest_err_s3_bucket_reserved_suffix' => 'Le nom du bucket S3 ne doit pas se terminer par "-s3alias" ou "--ol-s3"',
+    'rest_err_s3_hint_signature_mismatch' => 'La signature de la requête ne correspond pas. Vérifiez que la région S3 est correcte — elle est utilisée pour la signature SigV4.',
+    'rest_err_s3_hint_no_such_bucket' => 'Le bucket spécifié est introuvable. Vérifiez le nom du bucket et les autorisations des identifiants.',
+    'rest_err_s3_hint_try_path_style' => 'Impossible de résoudre l’hôte du endpoint. Cas typique pour MinIO, Garage et Ceph : activez les URL path-style dans le preset du fournisseur.',
 
     'rest_UserPageTracker_ApiDescription' => 'Ce système enregistre l\'activité des utilisateurs sur les pages de l\'interface d\'administration. Il consigne les pages consultées et les sorties afin de savoir quels administrateurs consultent actuellement quelles pages. Ces données servent à la gestion des sessions, au suivi de l\'activité et à la prévention des conflits lors de modifications simultanées.',
     'rest_Users_ApiDescription' => 'Gestion des comptes utilisateurs pour l\'accès à l\'interface d\'administration. Prend en charge toutes les opérations CRUD ainsi que des méthodes personnalisées pour vérifier la disponibilité des adresses e-mail. Les utilisateurs peuvent s\'authentifier dans l\'interface d\'administration et bénéficier de paramètres personnalisés, tels que la langue et l\'avatar.',

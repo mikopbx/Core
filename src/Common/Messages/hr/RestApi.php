@@ -690,6 +690,8 @@ return [
     'rest_param_s3_secret_key' => 'S3 tajni pristupni ključ za autentifikaciju (bit će šifriran)',
     'rest_param_s3_total_retention' => 'Ukupno razdoblje čuvanja zapisa u danima (lokalno + S3)',
     'rest_param_s3_local_retention' => 'Razdoblje lokalne pohrane prije prijenosa na S3 (u danima)',
+    'rest_param_s3_provider_preset' => 'ID preseta pružatelja S3 (aws, minio, garage, ceph, wasabi, digitalocean, yandex, vkcloud, selectel, custom). Koristi UI za predispunjavanje zadanih vrijednosti.',
+    'rest_param_s3_use_path_style' => 'Koristi path-style URL-ove umjesto virtual-hosted (0=virtual-hosted, 1=path-style). Uključite za MinIO, Garage, Ceph RadosGW i druga self-hosted S3-kompatibilna spremišta.',
     'rest_schema_s3_enabled' => 'Status omogućenja S3 pohrane (0=onemogućeno, 1=omogućeno)',
     'rest_schema_s3_endpoint' => 'URL krajnje točke kompatibilne sa S3 (AWS S3, MinIO, Wasabi, itd.)',
     'rest_schema_s3_region' => 'AWS Regija ili ekvivalentni ID regije usluge S3',
@@ -728,6 +730,9 @@ return [
     'rest_err_s3_bucket_ip_format' => 'Naziv S3 bucketa ne smije biti u formatu IP adrese',
     'rest_err_s3_bucket_xn_prefix' => 'Naziv S3 bucketa ne smije počinjati s "xn--"',
     'rest_err_s3_bucket_reserved_suffix' => 'Naziv S3 bucketa ne smije završavati s "-s3alias" ili "--ol-s3"',
+    'rest_err_s3_hint_signature_mismatch' => 'Potpis zahtjeva ne odgovara. Provjerite je li S3 regija ispravna — koristi se za SigV4 potpisivanje.',
+    'rest_err_s3_hint_no_such_bucket' => 'Navedeni bucket nije pronađen. Provjerite naziv bucketa i ovlasti vjerodajnica.',
+    'rest_err_s3_hint_try_path_style' => 'Nije moguće razriješiti host endpointa. Tipično za MinIO, Garage i Ceph: uključite path-style URL-ove u odabranom presetu pružatelja.',
 
     'rest_Syslog_ApiDescription' => 'Alati za upravljanje sistemskim zapisnicima i dijagnostiku. Omogućuje pristup sistemskim zapisnicima, filtriranje zapisnika, snimanje mrežnih paketa i generiranje arhive. Neophodno za rješavanje problema i nadzor sustava.',
     'rest_System_ApiDescription' => 'Resursi za upravljanje cijelim sustavom s jednim tonom. Pruža upravljanje napajanjem (ponovno pokretanje, isključivanje), praćenje ispravnosti (ping, checkAuth), operacije s datumom/vremenom, postavke jezika, pretvorbu zvuka, ažuriranja sustava i vraćanje na tvorničke postavke.',
@@ -2037,6 +2042,9 @@ return [
     'rest_schema_s3_secret_key' => 'S3 tajni pristupni ključ (maskiran zvjezdicama u odgovorima)',
     'rest_schema_s3_total_retention' => 'Ukupno razdoblje pohrane zapisa u danima (lokalna + pohrana u oblaku)',
     'rest_schema_s3_local_retention' => 'Broj dana za lokalno pohranjivanje zapisa prije prijenosa na S3',
+    'rest_schema_s3_provider_preset' => 'ID preseta koji UI koristi za predispunjavanje zadanih vrijednosti (engine kod ne ovisi o njemu i čita samo eksplicitne postavke).',
+    'rest_schema_s3_use_path_style' => 'Oznaka path-style URL-a (1=path-style za MinIO/Garage/Ceph, 0=virtual-hosted za AWS S3 i većinu SaaS pružatelja).',
+    'rest_schema_s3_available_presets' => 'Katalog poznatih pružatelja S3 s placeholderom endpointa, zadanom regijom, oznakom path-style i poveznicom na dokumentaciju. Samo za čitanje — generira se iz registra S3ProviderPresets.',
     // ============================================================================
     // System Upgrade
     // ============================================================================
