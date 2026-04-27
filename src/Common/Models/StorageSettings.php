@@ -39,9 +39,21 @@ use Phalcon\Filter\Validation\Validator\PresenceOf;
  * @property string|null $s3_bucket    S3 bucket name
  * @property string|null $s3_access_key S3 access key
  * @property string|null $s3_secret_key S3 secret key (ENCRYPTED)
+ * @property string|null $s3_provider_preset Provider preset id (aws|minio|garage|ceph|wasabi|digitalocean|yandex|vkcloud|selectel|custom)
+ * @property int $s3_use_path_style Use path-style URLs instead of virtual-hosted (0=virtual-hosted, 1=path-style)
  */
 class StorageSettings extends ModelsBase
 {
+    public const string PRESET_AWS = 'aws';
+    public const string PRESET_MINIO = 'minio';
+    public const string PRESET_GARAGE = 'garage';
+    public const string PRESET_CEPH = 'ceph';
+    public const string PRESET_WASABI = 'wasabi';
+    public const string PRESET_DIGITALOCEAN = 'digitalocean';
+    public const string PRESET_YANDEX = 'yandex';
+    public const string PRESET_VKCLOUD = 'vkcloud';
+    public const string PRESET_SELECTEL = 'selectel';
+    public const string PRESET_CUSTOM = 'custom';
 
     /**
      * @Primary
@@ -100,6 +112,27 @@ class StorageSettings extends ModelsBase
     public ?string $s3_secret_key = null;
 
     /**
+     * Provider preset id used by the admin UI to pre-fill defaults.
+     * Engine code (S3Client) ignores this field — it only reads the explicit
+     * settings (region, endpoint, use_path_style). The preset is a UI helper.
+     *
+     * Known values: aws, minio, garage, ceph, wasabi, digitalocean, yandex,
+     *               vkcloud, selectel, custom. See S3ProviderPresets registry.
+     *
+     * @Column(type="string", nullable=true, default="custom")
+     */
+    public ?string $s3_provider_preset = self::PRESET_CUSTOM;
+
+    /**
+     * Use path-style URLs instead of virtual-hosted URLs.
+     * Required for self-hosted S3-compatible storage (MinIO, Garage, Ceph
+     * RadosGW, etc.). AWS S3 uses virtual-hosted by default.
+     *
+     * @Column(type="integer", nullable=false, default=0)
+     */
+    public int $s3_use_path_style = 0;
+
+    /**
      * Initialize model
      *
      * @return void
@@ -155,6 +188,26 @@ class StorageSettings extends ModelsBase
             && !empty($this->s3_bucket)
             && !empty($this->s3_access_key)
             && !empty($this->s3_secret_key);
+    }
+
+    /**
+     * Provider preset id, falling back to PRESET_CUSTOM when unset.
+     * UI helper only — engine code reads explicit settings instead.
+     */
+    public function getProviderPreset(): string
+    {
+        $preset = $this->s3_provider_preset;
+        return ($preset === null || $preset === '') ? self::PRESET_CUSTOM : $preset;
+    }
+
+    /**
+     * True when the AWS SDK should construct path-style URLs
+     * (https://endpoint/bucket/key) instead of virtual-hosted
+     * (https://bucket.endpoint/key). Required for MinIO, Garage, Ceph.
+     */
+    public function usesPathStyle(): bool
+    {
+        return (int)$this->s3_use_path_style === 1;
     }
 
     /**

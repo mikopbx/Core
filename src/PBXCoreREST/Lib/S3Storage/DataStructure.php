@@ -21,7 +21,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\S3Storage;
 
+use MikoPBX\Common\Library\S3ProviderPresets;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\StorageSettings;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
@@ -157,6 +159,31 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'sanitize' => 'text',
                 'format' => 'password',
                 'example' => 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+            ],
+
+            's3_provider_preset' => [
+                'type' => 'string',
+                'description' => 'rest_schema_s3_provider_preset',
+                'enum' => S3ProviderPresets::ids(),
+                'sanitize' => 'text',
+                'default' => StorageSettings::PRESET_CUSTOM,
+                'example' => StorageSettings::PRESET_GARAGE,
+            ],
+
+            's3_use_path_style' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_s3_use_path_style',
+                'enum' => [0, 1],
+                'sanitize' => 'int',
+                'default' => 0,
+                'example' => 1,
+            ],
+
+            'available_presets' => [
+                'type' => 'array',
+                'description' => 'rest_schema_s3_available_presets',
+                'readOnly' => true,
+                'items' => ['type' => 'object'],
             ],
 
             // ============ RETENTION PERIOD FIELDS ============

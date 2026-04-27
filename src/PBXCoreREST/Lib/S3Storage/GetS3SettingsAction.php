@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\S3Storage;
 
+use MikoPBX\Common\Library\S3ProviderPresets;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\StorageSettings;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -85,6 +86,9 @@ class GetS3SettingsAction
 
             // ============ STEP 4: PREPARE RESPONSE ============
             // WHY: Consistent format matches DataStructure schema
+            // available_presets is included so the UI dropdown can render
+            // without a second round-trip and stays in sync with the backend
+            // registry (single source of truth for endpoint/region defaults).
             $res->data = [
                 // S3 Configuration
                 's3_enabled' => $settings->s3_enabled,
@@ -93,10 +97,15 @@ class GetS3SettingsAction
                 's3_bucket' => $settings->s3_bucket,
                 's3_access_key' => $settings->s3_access_key,
                 's3_secret_key' => $maskedSecretKey,
+                's3_provider_preset' => $settings->getProviderPreset(),
+                's3_use_path_style' => (int)$settings->s3_use_path_style,
 
                 // Retention Settings
                 PbxSettings::PBX_RECORD_SAVE_PERIOD => (int)$totalRetentionDays,
                 PbxSettings::PBX_RECORD_S3_LOCAL_DAYS => (int)$localRetentionDays,
+
+                // Provider catalogue for the UI dropdown
+                'available_presets' => S3ProviderPresets::all(),
             ];
 
             $res->success = true;

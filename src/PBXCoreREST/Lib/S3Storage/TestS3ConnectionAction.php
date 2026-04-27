@@ -111,29 +111,39 @@ class TestS3ConnectionAction
 
             // ============ STEP 4: FORMAT RESPONSE ============
             // WHY: Consistent API format for success and failure cases
+            $baseData = [
+                'endpoint' => $settings->s3_endpoint,
+                'bucket' => $settings->s3_bucket,
+                'region' => $settings->s3_region ?? 'us-east-1',
+                'use_path_style' => $settings->usesPathStyle(),
+                'provider_preset' => $settings->getProviderPreset(),
+            ];
+
             if ($testResult['success']) {
                 $res->success = true;
                 $res->httpCode = 200;
-                $res->data = [
+                $res->data = $baseData + [
                     'status' => 'connected',
                     'message' => $testResult['message'],
-                    'endpoint' => $settings->s3_endpoint,
-                    'bucket' => $settings->s3_bucket,
-                    'region' => $settings->s3_region ?? 'us-east-1'
                 ];
                 $res->messages['info'][] = $testResult['message'];
             } else {
                 $res->success = false;
                 $res->httpCode = 200; // Not a server error, but connection test failure
-                $res->data = [
+                $hint = self::diagnoseHint($testResult, $settings);
+                $res->data = $baseData + [
                     'status' => 'failed',
-                    'message' => $testResult['message'], // Technical details for diagnostics
-                    'endpoint' => $settings->s3_endpoint,
-                    'bucket' => $settings->s3_bucket,
-                    'region' => $settings->s3_region ?? 'us-east-1'
+                    'message' => $testResult['message'],
+                    'error_class' => $testResult['error_class'] ?? null,
+                    'aws_error_code' => $testResult['aws_error_code'] ?? null,
+                    'http_status' => $testResult['http_status'] ?? null,
+                    'hint' => $hint,
                 ];
                 // Short user-friendly message for UI
                 $res->messages['error'][] = TranslationProvider::translate('rest_err_s3_connection_failed');
+                if ($hint !== null) {
+                    $res->messages['warning'][] = $hint;
+                }
             }
 
         } catch (\Exception $e) {
@@ -145,5 +155,50 @@ class TestS3ConnectionAction
         }
 
         return $res;
+    }
+
+    /**
+     * Map an AWS SDK failure to an actionable hint translation key.
+     *
+     * Common failure shapes worth nudging the user about:
+     *   - DNS / connection failure to a virtual-hosted URL → user likely
+     *     forgot path-style (Garage/Ceph/MinIO).
+     *   - SignatureDoesNotMatch → wrong region for SigV4 signing.
+     *   - NoSuchBucket → bucket missing on the provider side.
+     *
+     * Returns null when no specific guidance applies (UI then falls back
+     * to the raw error class / message already in the response).
+     */
+    private static function diagnoseHint(array $testResult, StorageSettings $settings): ?string
+    {
+        $awsCode = $testResult['aws_error_code'] ?? null;
+        $errorClass = $testResult['error_class'] ?? '';
+        $message = (string)($testResult['message'] ?? '');
+
+        if ($awsCode === 'SignatureDoesNotMatch') {
+            return TranslationProvider::translate('rest_err_s3_hint_signature_mismatch');
+        }
+
+        if ($awsCode === 'NoSuchBucket') {
+            return TranslationProvider::translate('rest_err_s3_hint_no_such_bucket');
+        }
+
+        // Path-style hint applies only when the endpoint is clearly not
+        // AWS S3. Suggesting path-style to a user who hit a transient DNS
+        // hiccup against amazonaws.com would be actively wrong advice.
+        $endpoint = (string)($settings->s3_endpoint ?? '');
+        $isAwsEndpoint = str_contains($endpoint, '.amazonaws.com');
+        $looksLikeNetwork = !$settings->usesPathStyle()
+            && !$isAwsEndpoint
+            && (
+                str_contains($errorClass, 'ConnectException')
+                || str_contains($message, 'Could not resolve host')
+                || str_contains($message, 'cURL error 6')
+            );
+        if ($looksLikeNetwork) {
+            return TranslationProvider::translate('rest_err_s3_hint_try_path_style');
+        }
+
+        return null;
     }
 }

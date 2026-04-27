@@ -80,8 +80,11 @@ class S3Client
             ],
         ];
 
-        // Enable path-style endpoints for MinIO and similar services
-        if (str_contains($settings->s3_endpoint, 'minio') || str_contains($settings->s3_endpoint, ':9000')) {
+        // Path-style addressing is selected explicitly per StorageSettings.
+        // Required for self-hosted S3-compatible storage (MinIO, Garage, Ceph
+        // RadosGW, etc.). The choice is exposed in the admin UI as part of the
+        // provider preset; engine code stays provider-agnostic.
+        if ($settings->usesPathStyle()) {
             $config['use_path_style_endpoint'] = true;
         }
 
@@ -207,7 +210,11 @@ class S3Client
      * - Bucket exists
      * - Permissions are sufficient
      *
-     * @return array{success: bool, message: string} Test result
+     * On failure returns the underlying SDK error class, AWS error code,
+     * and HTTP status so the API layer can show actionable diagnostics
+     * (path-style misconfiguration, signature mismatch, missing bucket).
+     *
+     * @return array{success: bool, message: string, error_class?: string, aws_error_code?: ?string, http_status?: ?int} Test result
      */
     public function testConnection(): array
     {
@@ -225,7 +232,18 @@ class S3Client
         } catch (AwsException $e) {
             return [
                 'success' => false,
+                'message' => TranslationProvider::translate('st_S3TestFailed') . ': ' . $e->getAwsErrorMessage(),
+                'error_class' => get_class($e),
+                'aws_error_code' => $e->getAwsErrorCode(),
+                'http_status' => $e->getStatusCode(),
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'success' => false,
                 'message' => TranslationProvider::translate('st_S3TestFailed') . ': ' . $e->getMessage(),
+                'error_class' => get_class($e),
+                'aws_error_code' => null,
+                'http_status' => null,
             ];
         }
     }

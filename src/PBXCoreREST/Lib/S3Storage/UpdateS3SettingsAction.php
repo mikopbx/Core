@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\S3Storage;
 
+use MikoPBX\Common\Library\S3ProviderPresets;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\StorageSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
@@ -170,6 +171,15 @@ class UpdateS3SettingsAction
                     $settings->s3_secret_key = $data['s3_secret_key'];
                 }
             }
+            if (isset($data['s3_provider_preset'])) {
+                $preset = (string)$data['s3_provider_preset'];
+                $settings->s3_provider_preset = S3ProviderPresets::isKnown($preset)
+                    ? $preset
+                    : StorageSettings::PRESET_CUSTOM;
+            }
+            if (isset($data['s3_use_path_style'])) {
+                $settings->s3_use_path_style = ((int)$data['s3_use_path_style']) === 1 ? 1 : 0;
+            }
 
             // Save StorageSettings
             if (!$settings->save()) {
@@ -244,6 +254,8 @@ class UpdateS3SettingsAction
             's3_bucket' => $settings->s3_bucket,
             's3_access_key' => $settings->s3_access_key,
             's3_secret_key' => $maskedSecretKey,
+            's3_provider_preset' => $settings->getProviderPreset(),
+            's3_use_path_style' => (int)$settings->s3_use_path_style,
             PbxSettings::PBX_RECORD_SAVE_PERIOD => (int)PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_SAVE_PERIOD),
             PbxSettings::PBX_RECORD_S3_LOCAL_DAYS => (int)PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_S3_LOCAL_DAYS),
         ];
