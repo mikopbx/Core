@@ -110,14 +110,17 @@ class NatsConf extends SystemConfigClass
         $confDir = '/etc/nats';
         $this->conf_file = "$confDir/natsd.conf";
 
-        $busyboxPath = Util::which('busybox');
-        $binPath = Util::which(self::PROC_NAME);
-        $this->startCommand = "/bin/sh -c '$busyboxPath nohup $binPath --config $this->conf_file > /dev/null 2>&1 & $busyboxPath echo $! > /var/run/".self::PROC_NAME.".pid && sleep 1'";
-
         Util::mwMkdir($confDir);
 
         $logDir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nats';
         Util::mwMkdir($logDir);
+
+        $busyboxPath = Util::which('busybox');
+        $binPath = Util::which(self::PROC_NAME);
+        // Capture stderr (panics, fatal errors) into a dedicated file. Without this, early-boot
+        // crashes are swallowed by /dev/null and surface only as a 60s monitWaitStart timeout.
+        $stderrLog = "$logDir/gnatsd-stderr.log";
+        $this->startCommand = "/bin/sh -c '$busyboxPath nohup $binPath --config $this->conf_file >> $stderrLog 2>&1 & $busyboxPath echo $! > /var/run/".self::PROC_NAME.".pid && sleep 1'";
 
         $sessionsDir = Directories::getDir(Directories::CORE_TEMP_DIR) . '/nats_cache';
         Util::mwMkdir($sessionsDir);
