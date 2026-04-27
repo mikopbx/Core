@@ -35,8 +35,13 @@ tests/pycalltests/vendor_deps/
 
 # Environment files
 .env
+.env.*
+!.env.example
+!**/.env.example
 tests/api/.env
 **/.env
+**/.env.*
+!**/.env.example
 
 # Temporary/debug files
 tests/api/debug_*.py

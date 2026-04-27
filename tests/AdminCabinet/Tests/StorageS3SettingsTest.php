@@ -45,6 +45,13 @@ class StorageS3SettingsTest extends MikoPBXTestsBase
             // Test enabling S3 and filling form fields
             $this->testS3FormFields($s3Data);
 
+            // Test the new provider-preset dropdown (issue mikopbx/Core#1036).
+            // Validates that picking a preset propagates the path-style flag,
+            // refreshes the endpoint placeholder, shows the hint and the
+            // doc link — without clobbering values the user already typed.
+            $this->testProviderPresetDropdown();
+            $this->testPresetDoesNotClobberUserRegion();
+
             // Test S3 local retention slider
             $this->testS3LocalRetentionSlider();
 
@@ -413,6 +420,134 @@ class StorageS3SettingsTest extends MikoPBXTestsBase
         self::annotate("S3 settings group not visible after {$maxWait}s, enabling checkbox");
         $this->enableS3Checkbox();
         $this->waitForElementVisible(WebDriverBy::id('s3-settings-group'));
+    }
+
+    /**
+     * Verify the provider-preset dropdown drives the dependent UI fields.
+     *
+     * For each preset in StorageDataFactory::getS3PresetTestData() this
+     * picks the option, waits for the JS handler, and asserts:
+     *   - the hidden s3_use_path_style field matches the preset
+     *   - the endpoint input placeholder contains the expected fragment
+     *   - the hint banner becomes visible (per-preset hint translation)
+     *   - the docs link points at the right per-provider page
+     *
+     * Then saves once with the last preset and reloads to confirm the
+     * dropdown value round-trips through the API.
+     */
+    protected function testProviderPresetDropdown(): void
+    {
+        self::annotate("Testing provider-preset dropdown behaviour");
+
+        $this->waitForS3SettingsVisible();
+        $this->waitForElementPresent(WebDriverBy::id('s3-provider-preset-dropdown'));
+
+        $presets = StorageDataFactory::getS3PresetTestData();
+        $lastPresetId = null;
+
+        foreach ($presets as $presetId => $expected) {
+            self::annotate("Selecting preset '{$presetId}'");
+
+            // Drive the dropdown via Fomantic UI so the registered onChange
+            // handler runs (selectDropdownItem trait may not exist for this
+            // particular dropdown id — JS API is the safe path).
+            self::$driver->executeScript(
+                "$('#s3-provider-preset-dropdown').dropdown('set selected', arguments[0]);",
+                [$presetId]
+            );
+            $this->waitForAjax();
+            sleep(1);
+
+            // Hidden flag — the engine setting that actually fixes
+            // Garage/Ceph/MinIO connectivity.
+            $usePathStyle = (string)self::$driver->executeScript(
+                "return $('#s3-storage-form input[name=\"s3_use_path_style\"]').val();"
+            );
+            self::assertSame(
+                (string)$expected['expected_path_style'],
+                $usePathStyle,
+                "Preset '{$presetId}' should set s3_use_path_style="
+                . $expected['expected_path_style']
+            );
+
+            // Endpoint placeholder should reflect the chosen provider.
+            $placeholder = (string)self::$driver->executeScript(
+                "return $('#s3-storage-form input[name=\"s3_endpoint\"]').attr('placeholder') || '';"
+            );
+            self::assertStringContainsStringIgnoringCase(
+                $expected['endpoint_fragment'],
+                $placeholder,
+                "Endpoint placeholder for preset '{$presetId}' should contain '"
+                . $expected['endpoint_fragment'] . "'"
+            );
+
+            // Hint banner: visible with non-empty text.
+            $hintVisible = self::$driver->executeScript(
+                "return $('#s3-preset-hint').is(':visible');"
+            );
+            self::assertTrue(
+                (bool)$hintVisible,
+                "Hint banner should be visible after picking preset '{$presetId}'"
+            );
+
+            // Docs link points to the right per-provider doc.
+            $docsHref = (string)self::$driver->executeScript(
+                "return $('#s3-preset-docs-link').attr('href') || '';"
+            );
+            self::assertStringEndsWith(
+                $expected['docs_path'],
+                $docsHref,
+                "Docs link for preset '{$presetId}' should end with '{$expected['docs_path']}'"
+            );
+
+            $lastPresetId = $presetId;
+        }
+
+        // Persist the last preset and verify it survives a reload — round-trip
+        // through PATCH /s3-storage and back through GET.
+        $this->submitFormWithoutReload('s3-storage-form');
+        $this->navigateToCloudStorageTab();
+        $this->waitForS3SettingsVisible();
+        $this->waitForElementPresent(WebDriverBy::id('s3-provider-preset-dropdown'));
+
+        $savedPreset = (string)self::$driver->executeScript(
+            "return $('#s3-provider-preset-dropdown').dropdown('get value');"
+        );
+        self::assertSame(
+            $lastPresetId,
+            $savedPreset,
+            "Saved preset should round-trip through GET (expected '{$lastPresetId}', got '{$savedPreset}')"
+        );
+
+        self::annotate("Provider-preset dropdown test completed successfully");
+    }
+
+    /**
+     * Picking a preset must NOT overwrite a region the user has already
+     * typed manually. This guards the loadSettings()/onChange split done
+     * during the simplify-pass review of s3-storage-index.js.
+     */
+    protected function testPresetDoesNotClobberUserRegion(): void
+    {
+        self::annotate("Testing that picking a preset preserves a user-typed region");
+
+        $this->waitForS3SettingsVisible();
+
+        // Type a region the user explicitly chose.
+        $userRegion = 'eu-west-1';
+        $this->fillInputField('s3_region', $userRegion);
+
+        // Switch preset to AWS (whose default region is us-east-1).
+        self::$driver->executeScript(
+            "$('#s3-provider-preset-dropdown').dropdown('set selected', 'aws');"
+        );
+        $this->waitForAjax();
+        sleep(1);
+
+        // The region field must still show the user's value, not the preset default.
+        $this->verifyInputFieldValue('s3_region', $userRegion);
+
+        self::annotate("Region preserved across preset change as expected");
     }
 
     /**
