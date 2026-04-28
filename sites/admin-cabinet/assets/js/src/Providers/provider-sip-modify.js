@@ -438,6 +438,15 @@ class ProviderSIP extends ProviderBase {
         // Call parent method first
         super.populateFormData(data);
 
+        // SRV-based registration (RFC 3263): API returns port=0 to indicate
+        // "no explicit port — discover via DNS SRV". In the UI we show this as
+        // an empty field so the SRV intent is visually obvious.
+        // Note: must clear the input directly because Form.populateFormSilently
+        // has already written "0" before this callback runs.
+        if (data.port === 0 || data.port === '0') {
+            $('#port').val('');
+        }
+
         // Additional hosts - populate after form is ready
         if (data.additionalHosts) {
             this.populateAdditionalHosts(data.additionalHosts);

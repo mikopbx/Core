@@ -119,8 +119,10 @@ class SipProviderEditForm extends BaseForm
             ]
         );
 
-        // Port
-        $this->add(new Numeric('port'));
+        // Port: empty = SRV-based discovery (RFC 3263). Placeholder hints at 5060 default.
+        $this->add(new Numeric('port', [
+            'placeholder' => '5060',
+        ]));
         $this->add(new Text('outbound_proxy'));
 
         // Qualify
