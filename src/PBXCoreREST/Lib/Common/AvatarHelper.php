@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\Common;
 
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 
 use function MikoPBX\Common\Config\appPath;
@@ -145,22 +146,75 @@ class AvatarHelper
         $imgCacheDir = appPath(self::CACHE_DIR);
         $imgFile = "{$imgCacheDir}/{$filename}.jpg";
 
-        // Ensure cache directory exists
-        if (!is_dir($imgCacheDir)) {
-            if (!mkdir($imgCacheDir, 0755, true)) {
-                return self::DEFAULT_AVATAR;
-            }
+        // Ensure cache directory exists.
+        // Race-safe and broken-symlink-safe: re-check is_dir() after mkdir() to handle
+        // both concurrent worker races and dangling symlinks (whose target was removed).
+        if (!self::ensureCacheDirectory($imgCacheDir)) {
+            return self::DEFAULT_AVATAR;
         }
 
         // Process avatar file if it doesn't exist yet
-        if (!file_exists($imgFile)) {
-            if (!self::base64ToJpegFile($avatarData, $imgFile)) {
-                return self::DEFAULT_AVATAR;
-            }
+        if (!file_exists($imgFile) && !self::base64ToJpegFile($avatarData, $imgFile)) {
+            return self::DEFAULT_AVATAR;
         }
 
         // Return the cache URL
         return "/admin-cabinet/assets/img/cache/{$filename}.jpg";
+    }
+
+    /**
+     * Ensure the avatar cache directory is usable.
+     *
+     * Returns true if the directory already exists or can be created.
+     * On failure, logs the underlying cause once and degrades gracefully — the caller
+     * falls back to the default avatar instead of surfacing a PHP warning through the
+     * API error pipeline. Self-healing of a broken symlink is intentionally NOT done
+     * here; that belongs to Storage::createAssetsSymlinks() at boot/storage init.
+     *
+     * The mkdir() call is wrapped in a scoped E_WARNING handler so the "File exists"
+     * warning produced by a TOCTOU race (concurrent worker won the create) is captured
+     * for logging instead of leaking into the response.
+     *
+     * @param string $cacheDir Absolute path to the avatar cache directory
+     * @return bool True if directory exists/created, false otherwise (logged)
+     */
+    private static function ensureCacheDirectory(string $cacheDir): bool
+    {
+        if (is_dir($cacheDir)) {
+            return true;
+        }
+
+        $capturedError = null;
+        set_error_handler(static function (int $errno, string $errstr) use (&$capturedError): bool {
+            $capturedError = $errstr;
+            return true;
+        }, E_WARNING);
+
+        try {
+            $created = mkdir($cacheDir, 0755, true);
+        } finally {
+            restore_error_handler();
+        }
+
+        // Re-check after mkdir to absorb the race-with-other-worker case where another
+        // process created the directory between our is_dir() check and mkdir() call.
+        if ($created || is_dir($cacheDir)) {
+            return true;
+        }
+
+        // Genuine failure: dangling symlink, missing parent, permission issue, etc.
+        // Log once so the operator can see the real cause instead of a silent fallback.
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            sprintf(
+                'Avatar cache directory is not usable: %s (%s). Falling back to default avatar.',
+                $cacheDir,
+                $capturedError ?? 'unknown error'
+            ),
+            LOG_WARNING
+        );
+
+        return false;
     }
 
     /**
@@ -192,8 +246,24 @@ class AvatarHelper
     private static function base64ToJpegFile(string $base64String, string $outputFile): bool
     {
         try {
-            $ifp = fopen($outputFile, 'wb');
+            // Capture fopen warning so a broken cache target does not leak the PHP warning
+            // into the API error pipeline. The caller falls back to DEFAULT_AVATAR on false.
+            $capturedError = null;
+            set_error_handler(static function (int $errno, string $errstr) use (&$capturedError): bool {
+                $capturedError = $errstr;
+                return true;
+            }, E_WARNING);
+            try {
+                $ifp = fopen($outputFile, 'wb');
+            } finally {
+                restore_error_handler();
+            }
             if ($ifp === false) {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    sprintf('Cannot open avatar cache file %s: %s', $outputFile, $capturedError ?? 'unknown'),
+                    LOG_WARNING
+                );
                 return false;
             }
 
