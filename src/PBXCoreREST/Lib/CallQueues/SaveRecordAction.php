@@ -348,17 +348,50 @@ class SaveRecordAction extends AbstractSaveRecordAction
                         'bind' => ['queue' => $queue->uniqid]
                     ])->delete();
 
-                    // Add new members
+                    // For linear_progressive strategy, priority is auto-assigned
+                    // by member order (0, 1, 2, ...). It does NOT map to Asterisk
+                    // penalty (all members get penalty=0 in queues.conf — non-zero
+                    // would be filtered out by app_queue). Instead, priority drives
+                    // the per-member dialplan delay: QueueConf::extensionGenInternal
+                    // emits MSet(__Q_TIMEOUT_<EXT>=priority * seconds_to_ring_each_member)
+                    // before Queue(), and [internal-users] uses that to Wait() before
+                    // the actual SIP Dial. See CR#19 for details.
+                    $isProgressive = ($queue->strategy === 'linear_progressive');
+                    $autoPriority = 0;
+
                     foreach ($sanitizedData['members'] as $memberData) {
                         if (!empty($memberData['extension'])) {
                             $member = new CallQueueMembers();
                             $member->queue = $queue->uniqid;
                             $member->extension = $memberData['extension'];
-                            $member->priority = $memberData['priority'] ?? 0;
+                            $member->priority = $isProgressive
+                                ? $autoPriority++
+                                : ($memberData['priority'] ?? 0);
 
                             if (!$member->save()) {
                                 throw new \Exception('Failed to save queue member: ' . implode(', ', $member->getMessages()));
                             }
+                        }
+                    }
+                } elseif ($queue->strategy === 'linear_progressive') {
+                    // PATCH that switches strategy to linear_progressive WITHOUT
+                    // sending a members array: re-assign priorities of existing
+                    // members to 0..N-1 in their current sort order, otherwise
+                    // every member would keep penalty=0 and the ramp-up never kicks in.
+                    /** @var \Phalcon\Mvc\Model\Resultset\Simple $existingMembers */
+                    $existingMembers = CallQueueMembers::find([
+                        'conditions' => 'queue = :queue:',
+                        'bind' => ['queue' => $queue->uniqid],
+                        'order' => 'priority ASC, id ASC',
+                    ]);
+                    $autoPriority = 0;
+                    foreach ($existingMembers as $existingMember) {
+                        $existingMember->priority = $autoPriority++;
+                        if (!$existingMember->save()) {
+                            throw new \Exception(
+                                'Failed to re-assign priority on strategy switch: '
+                                . implode(', ', $existingMember->getMessages())
+                            );
                         }
                     }
                 }
@@ -418,9 +451,17 @@ class SaveRecordAction extends AbstractSaveRecordAction
             if (!empty($member['extension'])) {
                 $extension = SystemSanitizer::sanitizeExtension($member['extension']);
                 if (SystemSanitizer::isValidExtension($extension)) {
+                    // Priority is also used as a position index in the queue
+                    // members table (drag-and-drop UI) and, for linear_progressive,
+                    // as the multiplier for the per-member dialplan delay
+                    // (Q_TIMEOUT = priority * seconds_to_ring_each_member).
+                    // The 0..1000 range is intentionally generous: real-world
+                    // contact centers occasionally have 30–50 agents in a queue.
+                    // The earlier 0..10 cap silently truncated positions, which
+                    // collapsed linear_progressive ramp-up into one big bucket.
                     $sanitizedMembers[] = [
                         'extension' => $extension,
-                        'priority' => max(0, min(10, (int)($member['priority'] ?? 0)))
+                        'priority' => max(0, min(1000, (int)($member['priority'] ?? 0)))
                     ];
                 }
             }

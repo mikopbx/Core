@@ -179,7 +179,51 @@ class QueueConf extends AsteriskConfigClass
                 $ringLength = '';
             }
 
-            $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT$options,,,$ringLength,,,queue_agent_answer) \n\t";
+            // Queue() argument layout in Asterisk 21+ (after the `macro` slot was removed):
+            //   Queue(queuename, options, URL, announceoverride, timeout, AGI, gosub, rule, position)
+            // The historical MikoPBX format `,,,queue_agent_answer)` (one extra comma)
+            // pushed `queue_agent_answer` into the `rule` slot, which silently broke
+            // both the gosub-on-answer hook AND any defaultrule lookup (Asterisk
+            // searched queuerules.conf for `[queue_agent_answer]` and gave up).
+            // Correct layout: 6 commas to reach the gosub slot.
+            // No rule arg for linear_progressive — see comment above queues.conf
+            // section. Ramp-up is done via dialplan Wait(), not penaltychange.
+            $ruleArg = '';
+
+            // linear_progressive ramp-up via dialplan staggering:
+            //
+            // Asterisk's `app_queue` evaluates `penaltychange` rules only while
+            // the caller is in `wait_our_turn()`. Once `try_calling()` begins
+            // ringing a member, `qe->max_penalty` is frozen and rules can no
+            // longer add new members to the in-flight call. So we can't use
+            // penaltychange for accumulating ringing pool.
+            //
+            // Workaround: pre-set per-member delay variables Q_TIMEOUT_<EXT>
+            // before Queue(). Asterisk's `ringall` strategy then immediately
+            // dials all members via Local channels in parallel — but each
+            // Local channel hits `[internal-users]` first, where the dialplan
+            // sleeps for Q_TIMEOUT_<EXT> seconds before dialing the actual
+            // SIP endpoint. Result: all members "ring" simultaneously from
+            // app_queue's POV, but the actual phones light up staggered.
+            //
+            // Inheritance: `__` (double-underscore) prefix makes the variable
+            // propagate into the Local/<EXT>@internal channel that app_queue
+            // creates per member.
+            if ($queue['strategy'] === 'linear_progressive' && !empty($queue['agents'])) {
+                $stepSeconds = (int)($queue['seconds_to_ring_each_member'] ?? 0);
+                if ($stepSeconds < 1) {
+                    $stepSeconds = 15;
+                }
+                $msetPairs = [];
+                foreach ($queue['agents'] as $agent) {
+                    $delay = (int)($agent['priority'] ?? 0) * $stepSeconds;
+                    $msetPairs[] = "__Q_TIMEOUT_{$agent['agent']}={$delay}";
+                }
+                if (!empty($msetPairs)) {
+                    $queue_ext_conf .= 'same => n,MSet(' . implode(',', $msetPairs) . ") \n\t";
+                }
+            }
+            $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT$options,,,$ringLength,,queue_agent_answer$ruleArg) \n\t";
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${EMPTY})' . "\n\t";
             // Notify about the end of the queue.
             $queue_ext_conf .= 'same => n,Gosub(queue_end,${EXTEN},1)' . "\n\t";
@@ -214,6 +258,30 @@ class QueueConf extends AsteriskConfigClass
             $announceholdtime = ($queue_data['announce_hold_time'] === '1') ? 'yes' : 'no';
 
             $timeout           = empty($queue_data['seconds_to_ring_each_member']) ? '60' : $queue_data['seconds_to_ring_each_member'];
+            // For linear_progressive the per-attempt timeout must cover the full
+            // ramp-up window, otherwise Asterisk's ringall would hang up every
+            // member at `timeout` seconds (= seconds_to_ring_each_member) and
+            // restart the round, making accumulation impossible.
+            //
+            // Note on semantics: `timeout_to_redirect_to_extension` is the
+            // MikoPBX-level "queue overall timeout before redirect" budget,
+            // while Asterisk's `timeout` is per-attempt. We reuse the former
+            // as the latter because for linear_progressive a single attempt
+            // is enough to ring every member (penaltychange grows the pool
+            // inside one attempt), and there is no logical reason for the
+            // attempt to be shorter than the user-visible queue timeout.
+            //
+            // Fallback: if the overall timeout is unset, use the actual
+            // ramp-up duration = seconds_to_ring × member_count, with a
+            // 60-second floor for empty/single-member queues.
+            if ($queue_data['strategy'] === 'linear_progressive') {
+                $overallTimeout = (int)($queue_data['timeout_to_redirect_to_extension'] ?? 0);
+                if ($overallTimeout < 1) {
+                    $memberCount = max(1, count($queue_data['agents'] ?? []));
+                    $overallTimeout = max(60, (int)$timeout * $memberCount);
+                }
+                $timeout = (string)$overallTimeout;
+            }
             $wrapuptime        = empty($queue_data['seconds_for_wrapup']) ? '3' : $queue_data['seconds_for_wrapup'];
 
             // Check if periodic announce is set
@@ -237,12 +305,23 @@ class QueueConf extends AsteriskConfigClass
 
             $mohClass = empty($queue_data['moh_sound']) ? 'default' : $queue_data['moh_sound'];
 
-            $strategy = $queue_data['strategy'];
+            // linear_progressive maps to Asterisk's plain `ringall` — but with
+            // a dialplan-level staggered ramp-up (see queue extension and
+            // [internal-users] Wait(${Q_TIMEOUT_<EXTEN>})). All members get
+            // penalty=0 so Asterisk's app_queue doesn't filter any of them out;
+            // every Local channel starts in parallel, and `Wait()` inside each
+            // member's leg defers the actual SIP dial to the right moment.
+            $isProgressive = ($queue_data['strategy'] === 'linear_progressive');
+            $strategy = $isProgressive ? 'ringall' : $queue_data['strategy'];
 
             // Build the queue configuration string
             $q_conf .= "[{$queue_data['uniqid']}]; {$queue_data['name']}\n";
             $q_conf .= "musicclass=$mohClass \n";
             $q_conf .= "strategy=$strategy \n";
+            // No defaultrule for linear_progressive — penaltychange is unusable
+            // (see CR#19): app_queue freezes qe->max_penalty when try_calling()
+            // starts, so dynamic raising of MAX_PENALTY can't add members to
+            // an in-flight call. We use dialplan staggering instead.
             $q_conf .= "timeout=$timeout \n";
             $q_conf .= "retry=1 \n";
             $q_conf .= "wrapuptime=$wrapuptime \n";
@@ -262,8 +341,6 @@ class QueueConf extends AsteriskConfigClass
             $q_conf .= "relative-periodic-announce=yes \n";
             $q_conf .= $announce_frequency;
 
-            $penalty = 0;
-
             // Iterate through the agents in the queue
             foreach ($queue_data['agents'] as $agent) {
                 $hint = '';
@@ -272,6 +349,13 @@ class QueueConf extends AsteriskConfigClass
                 if ($agent['isExternal'] === false) {
                     $hint = ",hint:{$agent['agent']}@internal-hints";
                 }
+
+                // All members get penalty=0 — including linear_progressive. We
+                // can't use penalty to gate accumulation (see CR#19) because
+                // app_queue would skip non-zero-penalty members entirely from
+                // the ringall fan-out. Staggering happens in [internal-users]
+                // via Wait(${Q_TIMEOUT_<EXTEN>}).
+                $penalty = 0;
 
                 // Add the member to the queue configuration
                 $q_conf .= "member => Local/{$agent['agent']}@internal/n,$penalty,\"{$agent['agent']}\"$hint \n";
@@ -296,7 +380,12 @@ class QueueConf extends AsteriskConfigClass
             $queueUniqId = $queue->uniqid; // Queue identifier
 
             $arrAgents = [];
-            $agents    = $queue->CallQueueMembers;
+            // Explicit ORDER BY priority (defense-in-depth): linear and
+            // linear_progressive both depend on member order matching the
+            // priority field. The CallQueues hasMany relation already sets
+            // this order, but pinning it here too prevents silent regressions
+            // if the relation is ever overridden by a module hook.
+            $agents = $queue->getRelated('CallQueueMembers', ['order' => 'priority ASC']);
             foreach ($agents as $agent) {
                 $arrAgents[] =
                     [

@@ -212,13 +212,80 @@ const callQueueModifyRest = {
 
         // Initialize with standard Fomantic UI - it's already rendered by PHP
         $dropdown.dropdown({
-            onChange: () => Form.dataChanged()
+            onChange: (value) => {
+                callQueueModifyRest.updateStrategyDescription(value);
+                callQueueModifyRest.refreshProgressiveTimeoutWarning();
+                Form.dataChanged();
+            }
         });
 
         // Set the value if data is provided
         if (data && data.strategy) {
             $dropdown.dropdown('set selected', data.strategy);
         }
+
+        // Render description for the currently selected strategy
+        const initialValue = $('#strategy').val() || (data && data.strategy) || 'ringall';
+        callQueueModifyRest.updateStrategyDescription(initialValue);
+
+        // Refresh warning when timeout/seconds_to_ring fields change
+        $('#seconds_to_ring_each_member, #timeout_to_redirect_to_extension')
+            .off('input.progressiveWarn change.progressiveWarn')
+            .on('input.progressiveWarn change.progressiveWarn',
+                () => callQueueModifyRest.refreshProgressiveTimeoutWarning());
+
+        callQueueModifyRest.refreshProgressiveTimeoutWarning();
+    },
+
+    /**
+     * Update the descriptive hint shown below the strategy dropdown.
+     * Reads the long description from globalTranslate.cq_<strategy>.
+     * @param {string} strategy - Strategy code (e.g. 'linear_progressive')
+     */
+    updateStrategyDescription(strategy) {
+        const key = `cq_${strategy}`;
+        const text = (globalTranslate && globalTranslate[key]) ? globalTranslate[key] : '';
+        $('#strategy-description-hint .description-text').text(text);
+    },
+
+    /**
+     * Show a soft, non-blocking warning when the linear_progressive strategy
+     * is selected and the queue's overall timeout is shorter than the time
+     * needed to ramp up to the last member
+     * (seconds_to_ring_each_member × (members − 1)).
+     */
+    refreshProgressiveTimeoutWarning() {
+        const $warning = $('#strategy-progressive-timeout-warning');
+        if ($warning.length === 0) return;
+
+        const strategy = $('#strategy').val();
+        if (strategy !== 'linear_progressive') {
+            $warning.addClass('hidden').removeClass('visible');
+            return;
+        }
+
+        const memberCount = $('#extensionsTable tbody tr.member-row').length;
+        const stepSeconds = parseInt($('#seconds_to_ring_each_member').val(), 10) || 0;
+        const queueTimeout = parseInt($('#timeout_to_redirect_to_extension').val(), 10) || 0;
+
+        if (memberCount < 2 || stepSeconds < 1 || queueTimeout < 1) {
+            $warning.addClass('hidden').removeClass('visible');
+            return;
+        }
+
+        const estimated = stepSeconds * (memberCount - 1);
+        if (queueTimeout >= estimated) {
+            $warning.addClass('hidden').removeClass('visible');
+            return;
+        }
+
+        const tpl = (globalTranslate && globalTranslate.cq_linear_progressive_timeout_warning)
+            ? globalTranslate.cq_linear_progressive_timeout_warning : '';
+        const text = tpl
+            .replace('%timeout%', queueTimeout)
+            .replace('%estimated%', estimated);
+        $warning.find('.warning-text').text(text);
+        $warning.removeClass('hidden').addClass('visible');
     },
 
 
@@ -367,6 +434,9 @@ const callQueueModifyRest = {
             // Store priority as data attribute for backend processing
             $(row).attr('data-priority', index + 1);
         });
+
+        // Member count affects the linear_progressive ramp-up estimate
+        callQueueModifyRest.refreshProgressiveTimeoutWarning();
     },
 
     /**

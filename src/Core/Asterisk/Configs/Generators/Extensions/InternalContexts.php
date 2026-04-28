@@ -374,8 +374,22 @@ class InternalContexts extends AsteriskConfigClass
         // Initialize internal users context
         $conf = "[internal-users] \n";
 
+        // linear_progressive ramp-up: if the calling Queue() set a per-member
+        // delay variable Q_TIMEOUT_<EXTEN>, hold this Local channel for that
+        // many seconds before dialing the actual SIP endpoint. This lets all
+        // members ring through Asterisk's `ringall` strategy in a single
+        // attempt, but in a staggered (accumulating) way at the dialplan level
+        // — bypassing app_queue's wait_for_answer() penalty-freeze limitation.
+        //
+        // CRITICAL: this must run on priority 1, BEFORE the hangup_handler is
+        // installed below. If a parallel member answers while we're still in
+        // Wait(), app_queue tears down our Local channel; running Wait first
+        // means the hangup happens before the handler is registered, so no
+        // spurious CdrConnector "incoming call" events fire for members that
+        // never actually rang.
+        $conf .= 'exten => _' . $this->extensionPattern . ',1,ExecIf($["${Q_TIMEOUT_' . '${EXTEN}}" != "" && ${Q_TIMEOUT_' . '${EXTEN}} > 0]?Wait(${Q_TIMEOUT_' . '${EXTEN}}))' . " \n\t";
         // Set channel hangup handler and execute other operations
-        $conf .= 'exten => _' . $this->extensionPattern . ',1,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . " \n\t";
+        $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . " \n\t";
         $conf .= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Set(SIPADDHEADER01=${EMPTY_VAR})' . " \n\t";
         $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . " \n\t";
 

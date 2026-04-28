@@ -49,6 +49,15 @@
 <div class="field">
     <label>{{ t._('cq_QueueStrategy') }}</label>
     {{ form.render('strategy') }}
+    <div class="ui compact info message" id="strategy-description-hint">
+        <div class="content">
+            <p class="description-text"></p>
+        </div>
+    </div>
+    <div class="ui yellow message hidden" id="strategy-progressive-timeout-warning">
+        <i class="warning sign icon"></i>
+        <span class="warning-text"></span>
+    </div>
 </div>
 
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MainFields')]) }}

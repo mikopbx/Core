@@ -263,3 +263,26 @@ class WorkerMyFeature extends WorkerBase
 ```
 
 Register in `WorkerSafeScriptsCore::prepareWorkersList()` with check method.
+
+## Deploying changes to long-running worker code
+
+Workers are long-running PHP processes that load classes once at startup. Hot-patching a file under `src/` does **not** propagate to running workers — they keep the old class definitions in memory.
+
+This matters especially for files loaded by `WorkerModelsEvents`:
+- Any `src/Core/Asterisk/Configs/*Conf.php` (config generators).
+- Any `src/Core/Workers/Libs/WorkerModelsEvents/Actions/Reload*Action.php`.
+- Anything in `src/Common/Models/` referenced by reload actions.
+
+After hot-patching such files, kill the affected worker(s) so `WorkerSafeScriptsCore` respawns them with a fresh autoloader:
+
+```bash
+# Re-spawn WorkerModelsEvents (most config regeneration goes through it)
+pkill -TERM -f WorkerModelsEvents
+# WorkerSafeScriptsCore will start a fresh process within ~5 seconds.
+```
+
+Trigger an actual regeneration by either:
+- Calling the relevant `Reload*Action::execute()` directly via `php -r 'require_once "Globals.php"; (new \Namespace\ReloadFooAction())->execute();'`
+- Or saving the relevant model through the REST API (which produces the model event WorkerModelsEvents listens for).
+
+Note: a raw `sqlite3 UPDATE` does **not** trigger Phalcon model events and therefore does **not** queue a reload action.

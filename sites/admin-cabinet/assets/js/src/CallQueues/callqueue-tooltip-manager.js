@@ -117,7 +117,8 @@ class CallQueueTooltipManager {
                         definition: null
                     },
                     `${globalTranslate.cq_SecondsToRingEachMemberTooltip_linear} - ${globalTranslate.cq_SecondsToRingEachMemberTooltip_linear_desc}`,
-                    `${globalTranslate.cq_SecondsToRingEachMemberTooltip_ringall} - ${globalTranslate.cq_SecondsToRingEachMemberTooltip_ringall_desc}`
+                    `${globalTranslate.cq_SecondsToRingEachMemberTooltip_ringall} - ${globalTranslate.cq_SecondsToRingEachMemberTooltip_ringall_desc}`,
+                    `${globalTranslate.cq_SecondsToRingEachMemberTooltip_linear_progressive} - ${globalTranslate.cq_SecondsToRingEachMemberTooltip_linear_progressive_desc}`
                 ],
                 list2: [
                     {

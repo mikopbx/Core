@@ -20,6 +20,8 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Models\CallQueues;
+
 /**
  * Class QueueRulesConf
  *
@@ -38,13 +40,16 @@ class QueueRulesConf extends AsteriskConfigClass
     /**
      * Generates the queuerules.conf configuration content and writes it to the file.
      *
-     * @return void
+     * Currently empty — `linear_progressive` strategy was originally designed to
+     * use Asterisk's `penaltychange` rules here, but app_queue freezes the
+     * ringing pool at try_calling() start, so the rule can't add members to an
+     * in-flight call. The strategy now does ramp-up purely on the dialplan
+     * level (see QueueConf::generateConfigProtected and InternalContexts:
+     * MSet(__Q_TIMEOUT_<EXT>=N) before Queue() + Wait(${Q_TIMEOUT_<EXT>}) in
+     * the per-member dialplan leg), so this file stays empty.
      */
     protected function generateConfigProtected(): void
     {
-        $conf = '';
-
-        // Write the configuration content to the file
-        $this->saveConfig($conf, $this->description);
+        $this->saveConfig('', $this->description);
     }
 }

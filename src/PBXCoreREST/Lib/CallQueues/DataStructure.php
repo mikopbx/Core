@@ -298,7 +298,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'strategy' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cq_strategy',
-                'enum' => ['ringall', 'leastrecent', 'fewestcalls', 'random', 'rrmemory', 'linear'],
+                'enum' => ['ringall', 'leastrecent', 'fewestcalls', 'random', 'rrmemory', 'linear', 'linear_progressive'],
                 'sanitize' => 'string',
                 'default' => 'ringall',
                 'example' => 'ringall'

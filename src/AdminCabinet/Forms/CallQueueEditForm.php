@@ -52,16 +52,20 @@ class CallQueueEditForm extends BaseForm
         $this->add(new Text('extension'));
 
 
-        // Strategy - static dropdown with PHP rendering
+        // Strategy - static dropdown with PHP rendering.
+        // Short labels in the dropdown; the long description is rendered
+        // dynamically below the dropdown in a Fomantic UI hint segment
+        // (see Views/CallQueues/modify.volt and callqueue-modify.js).
         $this->addSemanticUIDropdown(
             'strategy',
             [
-                'ringall' => $this->translation->_('cq_ringall'),
-                'leastrecent' => $this->translation->_('cq_leastrecent'),
-                'fewestcalls' => $this->translation->_('cq_fewestcalls'),
-                'random' => $this->translation->_('cq_random'),
-                'rrmemory' => $this->translation->_('cq_rrmemory'),
-                'linear' => $this->translation->_('cq_linear')
+                'ringall' => $this->translation->_('cq_strategy_ringall_short'),
+                'linear' => $this->translation->_('cq_strategy_linear_short'),
+                'linear_progressive' => $this->translation->_('cq_strategy_linear_progressive_short'),
+                'leastrecent' => $this->translation->_('cq_strategy_leastrecent_short'),
+                'fewestcalls' => $this->translation->_('cq_strategy_fewestcalls_short'),
+                'rrmemory' => $this->translation->_('cq_strategy_rrmemory_short'),
+                'random' => $this->translation->_('cq_strategy_random_short'),
             ],
             'ringall', // Default value, actual value will come from REST API
             [
