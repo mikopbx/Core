@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'SIP ปกติ',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'SIP ที่มีการเข้ารหัส (TLS)',
+    'pr_SIPPortTooltip_srv' => 'การลงทะเบียนผ่าน SRV',
+    'pr_SIPPortTooltip_srv_desc' => 'ปล่อยช่องว่างไว้ — เซิร์ฟเวอร์และพอร์ตจะถูกค้นหาผ่าน DNS SRV record (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'พอร์ตมาตรฐาน',
     'pr_SIPProviders' => 'ผู้ให้บริการ SIP',
     'pr_Seconds' => 'วินาที',

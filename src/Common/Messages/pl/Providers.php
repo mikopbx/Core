@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'zwykły SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'SIP z szyfrowaniem (TLS)',
+    'pr_SIPPortTooltip_srv' => 'Rejestracja oparta na SRV',
+    'pr_SIPPortTooltip_srv_desc' => 'pozostaw pole puste — serwer i port zostaną wykryte przez rekordy DNS SRV (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Standardowe porty',
     'pr_SIPProviders' => 'Dostawcy SIP',
     'pr_Seconds' => 's',

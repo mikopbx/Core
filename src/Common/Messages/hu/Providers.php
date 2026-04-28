@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'normál SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'titkosított SIP (TLS)',
+    'pr_SIPPortTooltip_srv' => 'SRV-alapú regisztráció',
+    'pr_SIPPortTooltip_srv_desc' => 'hagyja a mezőt üresen — a kiszolgáló és a port a DNS SRV rekordokból derül ki (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Szabványos portok',
     'pr_SIPProviders' => 'SIP szolgáltatók',
     'pr_Seconds' => 'm',

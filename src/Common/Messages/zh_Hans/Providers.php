@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => '普通SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => '加密SIP（TLS）',
+    'pr_SIPPortTooltip_srv' => '基于SRV的注册',
+    'pr_SIPPortTooltip_srv_desc' => '保留此字段为空 — 服务器和端口将通过DNS SRV记录获取（RFC 3263）',
     'pr_SIPPortTooltip_standard_ports' => '标准端口',
     'pr_SIPProviders' => 'SIP提供商',
     'pr_Seconds' => '秒',

@@ -225,6 +225,10 @@ class ProviderSipTooltipManager extends ProviderTooltipManager {
                 {
                     term: globalTranslate.pr_SIPPortTooltip_port_5061,
                     definition: globalTranslate.pr_SIPPortTooltip_port_5061_desc
+                },
+                {
+                    term: globalTranslate.pr_SIPPortTooltip_srv,
+                    definition: globalTranslate.pr_SIPPortTooltip_srv_desc
                 }
             ],
             note: globalTranslate.pr_SIPPortTooltip_note

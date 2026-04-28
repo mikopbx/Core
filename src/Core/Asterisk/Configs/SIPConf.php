@@ -537,7 +537,9 @@ class SIPConf extends AsteriskConfigClass
                     $arr_data['registration_type'] = Sip::REG_TYPE_NONE;
                 }
             }
-            $arr_data['port']  = (trim($arr_data['port']) === '') ? self::DEFAULT_SIP_PORT : $arr_data['port'];
+            // Preserve empty/zero port as marker for SRV-based discovery (RFC 3263).
+            // Trim whitespace; do NOT substitute default — generators below build URI without :port.
+            $arr_data['port'] = trim((string)($arr_data['port'] ?? ''));
             $data[]                 = $arr_data;
         }
 
@@ -1453,12 +1455,15 @@ class SIPConf extends AsteriskConfigClass
             'expiration'               => PbxSettings::getValueByKey(PbxSettings::SIP_DEFAULT_EXPIRY),
         ];
 
-        // Unique parameters not in template
+        // Unique parameters not in template.
+        // Empty/zero port → omit ":port" from URI so PJSIP performs SRV-based discovery
+        // (RFC 3263): _sip._udp/_tcp/_tls.<host>. Required by SRV-only providers.
+        $hostPort = self::buildHostPort($provider['host'], $provider['port']);
         $uniqueParams = [
             'outbound_auth' => "{$provider['uniqid']}-REG-AUTH",
             'contact_user'  => $provider['username'],
-            'server_uri'    => "sip:{$provider['host']}:{$provider['port']}",
-            'client_uri'    => "sip:{$provider['username']}@{$provider['host']}:{$provider['port']}",
+            'server_uri'    => "sip:{$hostPort}",
+            'client_uri'    => "sip:{$provider['username']}@{$hostPort}",
         ];
 
         if (!empty($provider['transport']) && $provider['transport'] !== Sip::TRANSPORT_AUTO) {
@@ -1597,11 +1602,13 @@ class SIPConf extends AsteriskConfigClass
         // Unique parameters not in template
         $uniqueParams = [];
 
-        // Add contact for outbound and peer trunk types
+        // Add contact for outbound and peer trunk types.
+        // Empty/zero port → omit ":port" so PJSIP performs SRV-based discovery (RFC 3263).
+        $hostPort = self::buildHostPort($provider['host'], $provider['port']);
         if ($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND) {
-            $uniqueParams['contact'] = "sip:{$provider['username']}@{$provider['host']}:{$provider['port']}";
+            $uniqueParams['contact'] = "sip:{$provider['username']}@{$hostPort}";
         } elseif ($provider['registration_type'] === Sip::REG_TYPE_NONE) {
-            $uniqueParams['contact'] = "sip:{$provider['host']}:{$provider['port']}";
+            $uniqueParams['contact'] = "sip:{$hostPort}";
         }
 
         if ($provider['qualify'] === '1') {
@@ -1930,8 +1937,44 @@ class SIPConf extends AsteriskConfigClass
     {
         // Use hostname directly without DNS resolution to avoid blocking during config generation
         // DNS resolution can take several seconds per unreachable host, causing slow startup
-        // The context ID only needs to be unique and stable, not IP-based
-        return preg_replace("/[^a-z\d]/iu", '', $name . $port) . '-incoming';
+        // The context ID only needs to be unique and stable, not IP-based.
+        //
+        // Empty port = SRV-based discovery (RFC 3263). Use 'srv' marker so context names are
+        // self-documenting (e.g. "example.com-srv-incoming") and SRV providers do not silently
+        // merge with legacy records that happen to have an empty port column from older versions.
+        $portMarker = (trim($port) === '' || (int)$port === 0) ? 'srv' : $port;
+
+        return preg_replace("/[^a-z\d]/iu", '', $name . $portMarker) . '-incoming';
+    }
+
+    /**
+     * Build "host:port" segment for a SIP URI, omitting ":port" when port is
+     * empty or zero. An empty port is the marker for SRV-based discovery
+     * (RFC 3263) — PJSIP only performs _sip._udp/_tcp/_tls SRV lookups when
+     * the URI contains no explicit port.
+     *
+     * Literal IPv6 addresses are wrapped in brackets per RFC 3986 / RFC 5118
+     * so that the trailing ":port" is unambiguously parsed (e.g.
+     * "[2001:db8::1]:5060" instead of "2001:db8::1:5060" which PJSIP parses
+     * as a hostname).
+     *
+     * @param string|null $host Provider host, hostname, IPv4 or IPv6 literal
+     * @param string|int|null $port Provider port ('', '0', 0 → SRV mode)
+     * @return string "host", "host:port", "[ipv6]" or "[ipv6]:port"
+     */
+    public static function buildHostPort(?string $host, $port): string
+    {
+        $hostStr = (string)($host ?? '');
+        $portInt = (int)($port ?? 0);
+
+        // Wrap literal IPv6 in brackets. Detection: contains ':' (invalid in
+        // hostnames per RFC 1123 and not present in IPv4 literals) and not
+        // already bracketed.
+        if (str_contains($hostStr, ':') && ($hostStr === '' || $hostStr[0] !== '[')) {
+            $hostStr = '[' . $hostStr . ']';
+        }
+
+        return $portInt > 0 ? "{$hostStr}:{$portInt}" : $hostStr;
     }
 
 

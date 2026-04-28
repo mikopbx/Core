@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'almindelig SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'SIP med kryptering (TLS)',
+    'pr_SIPPortTooltip_srv' => 'SRV-baseret registrering',
+    'pr_SIPPortTooltip_srv_desc' => 'lad feltet være tomt — server og port findes via DNS SRV-poster (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Standardporte',
     'pr_SIPProviders' => 'SIP-udbydere',
     'pr_Seconds' => 's',

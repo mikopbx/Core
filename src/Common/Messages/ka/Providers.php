@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'ჩვეულებრივი SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'დაშიფრული SIP (TLS)',
+    'pr_SIPPortTooltip_srv' => 'SRV-ზე დაფუძნებული რეგისტრაცია',
+    'pr_SIPPortTooltip_srv_desc' => 'დატოვეთ ველი ცარიელი — სერვერი და პორტი მოიძებნება DNS SRV ჩანაწერებით (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'სტანდარტული პორტები',
     'pr_SIPProviders' => 'SIP პროვაიდერები',
     'pr_Seconds' => 'წმ',

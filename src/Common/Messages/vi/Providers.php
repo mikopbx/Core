@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'SIP thông thường',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'SIP với mã hóa (TLS)',
+    'pr_SIPPortTooltip_srv' => 'Đăng ký dựa trên SRV',
+    'pr_SIPPortTooltip_srv_desc' => 'để trống trường này — máy chủ và cổng sẽ được phát hiện qua bản ghi DNS SRV (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Cổng chuẩn',
     'pr_SIPProviders' => 'Nhà cung cấp SIP',
     'pr_Seconds' => 'g',

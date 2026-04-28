@@ -205,13 +205,27 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // ============================================================
 
         if ($isNewRecord) {
+            // Capture port presence BEFORE applyDefaults() to distinguish
+            // "user omitted port" from "schema injected SIP default 5060".
+            // applyDefaults() is type-blind and the shared schema default is
+            // SIP-centric — IAX providers need 4569, not 5060.
+            $portWasProvided = array_key_exists('port', $sanitizedData)
+                && $sanitizedData['port'] !== null;
+
             // ✅ CREATE: Apply defaults for missing fields
-            // Type-specific defaults: SIP uses port 5060, IAX uses 4569
             $sanitizedData = DataStructure::applyDefaults($sanitizedData);
 
-            // Override port default based on provider type
-            if (!isset($sanitizedData['port']) || empty($sanitizedData['port'])) {
+            // Type-specific port default (only when user did not provide one).
+            // Note: SIP user can submit port=0 explicitly to request SRV-based
+            // discovery (RFC 3263) — that is preserved here.
+            if (!$portWasProvided) {
                 $sanitizedData['port'] = ($providerType === 'IAX') ? 4569 : 5060;
+            }
+
+            // IAX does not support SRV-based discovery — coerce explicit 0/invalid
+            // to the canonical IAX2 port.
+            if ($providerType === 'IAX' && (int)$sanitizedData['port'] < 1) {
+                $sanitizedData['port'] = 4569;
             }
         }
         // ❌ UPDATE/PATCH: Do NOT apply defaults (would overwrite existing values!)
@@ -420,7 +434,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         if (isset($data['port'])) {
-            $sip->port = (string)$data['port'];
+            // Empty/zero port = SRV-based discovery (RFC 3263). Store as empty string.
+            $sip->port = ((int)$data['port'] > 0) ? (string)$data['port'] : '';
         } elseif ($isNewRecord) {
             $sip->port = '5060';
         }

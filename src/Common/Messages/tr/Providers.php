@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'normal SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'şifreli SIP (TLS)',
+    'pr_SIPPortTooltip_srv' => 'SRV tabanlı kayıt',
+    'pr_SIPPortTooltip_srv_desc' => 'alanı boş bırakın — sunucu ve port DNS SRV kayıtları üzerinden bulunacak (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Standart portlar',
     'pr_SIPProviders' => 'SIP sağlayıcıları',
     'pr_Seconds' => 's',

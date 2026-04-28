@@ -366,6 +366,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'обычный SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'SIP с шифрованием (TLS)',
+    'pr_SIPPortTooltip_srv' => 'SRV-регистрация',
+    'pr_SIPPortTooltip_srv_desc' => 'оставьте поле пустым — порт и сервер будут получены через DNS SRV-запись (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Стандартные порты',
     'pr_SIPProviders' => 'SIP провайдеры',
     'pr_Seconds' => 'с',

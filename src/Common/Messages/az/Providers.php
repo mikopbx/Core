@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'adi SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'şifrələnmiş SIP (TLS)',
+    'pr_SIPPortTooltip_srv' => 'SRV əsaslı qeydiyyat',
+    'pr_SIPPortTooltip_srv_desc' => 'sahəni boş buraxın — server və port DNS SRV qeydləri vasitəsilə tapılacaq (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Standart portlar',
     'pr_SIPProviders' => 'SIP provayderləri',
     'pr_Seconds' => 's',

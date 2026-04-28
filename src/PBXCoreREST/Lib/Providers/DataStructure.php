@@ -131,7 +131,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             // Type-specific fields
             if ($provider->type === 'SIP') {
                 $data['transport'] = $config->transport ?? Sip::TRANSPORT_AUTO;
-                $data['port'] = (int)($config->port ?? 5060);
+                // Empty port = SRV-based discovery (RFC 3263). Expose as 0 in API.
+                $data['port'] = ($config->port === '' || $config->port === null) ? 0 : (int)$config->port;
             } else {
                 // IAX provider
                 $data['port'] = (int)($config->port ?? 4569);
@@ -194,7 +195,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'username' => $sip->username ?? '',
             'secret' => $secret,
             'host' => $sip->host ?? '',
-            'port' => (int)($sip->port ?? 5060),
+            // Empty port = SRV-based discovery (RFC 3263). Expose as 0 in API.
+            'port' => ($sip->port === '' || $sip->port === null) ? 0 : (int)$sip->port,
             'transport' => $sip->transport ?? Sip::TRANSPORT_AUTO,
             'qualify' => $sip->qualify === '1',
             'qualifyfreq' => (int)($sip->qualifyfreq ?? 60),
@@ -494,10 +496,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'port' => [
                 'type' => 'integer',
                 'description' => 'rest_schema_provider_port',
-                'minimum' => 1,
+                'minimum' => 0,
                 'maximum' => 65535,
                 'sanitize' => 'int',
-                'default' => 5060,  // SIP default, IAX uses 4569
+                'default' => 5060,  // SIP default, IAX uses 4569; 0 = SRV-based discovery (SIP only, RFC 3263)
                 'example' => 5060
             ],
             'registration_type' => [

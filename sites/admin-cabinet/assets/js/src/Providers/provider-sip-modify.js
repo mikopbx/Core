@@ -577,13 +577,12 @@ class ProviderSIP extends ProviderBase {
                 optional: true,
                 rules: [],
             },
+            // Port is optional: empty value enables SRV-based discovery (RFC 3263).
+            // PJSIP queries _sip._udp/_tcp/_tls.<host> when URI has no explicit port.
             port: {
                 identifier: 'port',
+                optional: true,
                 rules: [
-                    {
-                        type: 'empty',
-                        prompt: globalTranslate.pr_ValidationProviderPortIsEmpty,
-                    },
                     {
                         type: 'integer[1..65535]',
                         prompt: globalTranslate.pr_ValidationProviderPortInvalid,
@@ -687,13 +686,11 @@ class ProviderSIP extends ProviderBase {
                     },
                 ],
             },
+            // Port is optional: empty value enables SRV-based discovery (RFC 3263).
             port: {
                 identifier: 'port',
+                optional: true,
                 rules: [
-                    {
-                        type: 'empty',
-                        prompt: globalTranslate.pr_ValidationProviderPortIsEmpty,
-                    },
                     {
                         type: 'integer[1..65535]',
                         prompt: globalTranslate.pr_ValidationProviderPortInvalid,

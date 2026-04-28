@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'vanlig SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'SIP med kryptering (TLS)',
+    'pr_SIPPortTooltip_srv' => 'SRV-baserad registrering',
+    'pr_SIPPortTooltip_srv_desc' => 'lämna fältet tomt — server och port hittas via DNS SRV-poster (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Standardportar',
     'pr_SIPProviders' => 'SIP-leverantörer',
     'pr_Seconds' => 's',

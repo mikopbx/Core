@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'tavallinen SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'SIP salauksella (TLS)',
+    'pr_SIPPortTooltip_srv' => 'SRV-pohjainen rekisteröinti',
+    'pr_SIPPortTooltip_srv_desc' => 'jätä kenttä tyhjäksi — palvelin ja portti haetaan DNS SRV -tietueista (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Vakioportit',
     'pr_SIPProviders' => 'SIP-palveluntarjoajat',
     'pr_Seconds' => 's',

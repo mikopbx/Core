@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'obični SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'SIP s enkripcijom (TLS)',
+    'pr_SIPPortTooltip_srv' => 'SRV-bazirana registracija',
+    'pr_SIPPortTooltip_srv_desc' => 'ostavite polje praznim — poslužitelj i port bit će otkriveni putem DNS SRV zapisa (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Standardni portovi',
     'pr_SIPProviders' => 'SIP davatelji usluga',
     'pr_Seconds' => 's',

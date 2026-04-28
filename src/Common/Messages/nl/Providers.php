@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'normale SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'versleutelde SIP (TLS)',
+    'pr_SIPPortTooltip_srv' => 'SRV-gebaseerde registratie',
+    'pr_SIPPortTooltip_srv_desc' => 'laat het veld leeg — server en poort worden gedetecteerd via DNS SRV-records (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Standaardpoorten',
     'pr_SIPProviders' => 'SIP-providers',
     'pr_Seconds' => 'sec',

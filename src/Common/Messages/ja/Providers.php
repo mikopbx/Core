@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => '通常のSIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => '暗号化SIP（TLS）',
+    'pr_SIPPortTooltip_srv' => 'SRVベースの登録',
+    'pr_SIPPortTooltip_srv_desc' => 'フィールドを空のままにすると、サーバーとポートはDNS SRVレコード経由で取得されます（RFC 3263）',
     'pr_SIPPortTooltip_standard_ports' => '標準ポート',
     'pr_SIPProviders' => 'SIPプロバイダー',
     'pr_Seconds' => '秒',

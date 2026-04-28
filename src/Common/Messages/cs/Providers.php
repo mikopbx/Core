@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'běžný SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'šifrovaný SIP (TLS)',
+    'pr_SIPPortTooltip_srv' => 'Registrace přes SRV',
+    'pr_SIPPortTooltip_srv_desc' => 'ponechte pole prázdné — server a port budou zjištěny pomocí DNS SRV záznamů (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Standardní porty',
     'pr_SIPProviders' => 'SIP poskytovatelé',
     'pr_Seconds' => 's',

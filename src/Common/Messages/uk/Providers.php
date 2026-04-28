@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'звичайний SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'SIP з шифруванням (TLS)',
+    'pr_SIPPortTooltip_srv' => 'SRV-реєстрація',
+    'pr_SIPPortTooltip_srv_desc' => 'залиште поле порожнім — сервер і порт буде отримано через DNS SRV-запис (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Стандартні порти',
     'pr_SIPProviders' => 'SIP провайдери',
     'pr_Seconds' => 'с',

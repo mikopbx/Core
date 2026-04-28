@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'SIP obișnuit',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'SIP cu criptare (TLS)',
+    'pr_SIPPortTooltip_srv' => 'Înregistrare bazată pe SRV',
+    'pr_SIPPortTooltip_srv_desc' => 'lăsați câmpul gol — serverul și portul vor fi descoperite prin înregistrările DNS SRV (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Porturi standard',
     'pr_SIPProviders' => 'Furnizori SIP',
     'pr_Seconds' => 's',

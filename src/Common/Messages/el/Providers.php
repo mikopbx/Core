@@ -357,6 +357,8 @@ return [
     'pr_SIPPortTooltip_port_5060_desc' => 'κανονικό SIP',
     'pr_SIPPortTooltip_port_5061' => '5061',
     'pr_SIPPortTooltip_port_5061_desc' => 'SIP με κρυπτογράφηση (TLS)',
+    'pr_SIPPortTooltip_srv' => 'Καταχώρηση βάσει SRV',
+    'pr_SIPPortTooltip_srv_desc' => 'αφήστε το πεδίο κενό — ο διακομιστής και η θύρα θα εντοπιστούν μέσω εγγραφών DNS SRV (RFC 3263)',
     'pr_SIPPortTooltip_standard_ports' => 'Τυπικές θύρες',
     'pr_SIPProviders' => 'SIP πάροχοι',
     'pr_Seconds' => 'δ',
