@@ -66,7 +66,7 @@ class ExtensionsManagementProcessor extends Injectable
                 }
                 break;
             case 'getPhonesRepresent':
-                if (!empty($data['numbers']) || !is_array($data['numbers'])) {
+                if (!empty($data['numbers']) && is_array($data['numbers'])) {
                     $res = Utils::getPhonesRepresent($data['numbers']);
                 } else {
                     $res->messages['error'][] = 'Wrong numbers value in POST/GET data';
