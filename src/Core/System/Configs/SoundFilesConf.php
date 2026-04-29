@@ -43,9 +43,19 @@ class SoundFilesConf extends SystemConfigClass
     public const string PROC_NAME = 'soundfiles';
 
     /**
-     * Source directory for system sound files (read-only)
+     * Source directory for system sound files (read-only, baked into rootfs).
+     *
+     * On first boot, SoundFilesConf::start() copies these into AST_SOUNDS_DIR
+     * (writable storage). Asterisk itself reads sounds via the runtime symlink
+     * /offload/asterisk/sounds → /storage/usbdisk1/mikopbx/media/sounds created
+     * by Storage::createWorkDirs(), so this base path is consulted only by the
+     * PHP installer, never by Asterisk directly.
+     *
+     * Asterisk has no `astsoundsdir` directive — it always reads sounds from
+     * `${astdatadir}/sounds/`, which on MikoPBX is `/offload/asterisk/sounds/`.
+     * The symlink redirects that to writable storage.
      */
-    private const string SOURCE_SOUNDS_DIR = '/offload/asterisk/sounds';
+    private const string SOURCE_SOUNDS_DIR = '/offload/asterisk/sounds-base';
 
     /**
      * Redis key prefix for sound conversion cache
@@ -74,6 +84,21 @@ class SoundFilesConf extends SystemConfigClass
         // Get target directory path
         $targetSoundsDir = Directories::getDir(Directories::AST_SOUNDS_DIR);
 
+        // Create target directory if it doesn't exist
+        Util::mwMkdir($targetSoundsDir);
+
+        // Always ensure supplementary content (moh/, other/, blacklist.txt,
+        // filter.sh) is present in the writable target. Runs on every boot
+        // before the language-init early-return so upgrade scenarios (where
+        // languages are already populated by older code that never copied
+        // moh/other) still get supplementary files dropped in.
+        // Idempotent: cp -Rn preserves user customisations (replaced MOH
+        // tracks, custom files in other/).
+        // Without this, MusicOnHoldConf::checkMohFiles() restore-from-defaults
+        // path (/offload/asterisk/sounds/moh/* via symlink) finds an empty
+        // directory and leaves MOH silent on fresh installs.
+        $this->copySupplementaryFiles($targetSoundsDir);
+
         // Check if sounds directory is already initialized
         if ($this->isSoundsDirectoryInitialized($targetSoundsDir)) {
             SystemMessages::sysLogMsg(__METHOD__, 'Sound files already initialized: ' . $targetSoundsDir, LOG_DEBUG);
@@ -83,9 +108,6 @@ class SoundFilesConf extends SystemConfigClass
 
             return true;
         }
-
-        // Create target directory if it doesn't exist
-        Util::mwMkdir($targetSoundsDir);
 
         // Get all languages from source directory
         $sourceLanguages = $this->getSourceLanguages();
@@ -185,6 +207,50 @@ class SoundFilesConf extends SystemConfigClass
 
         sort($languages);
         return $languages;
+    }
+
+    /**
+     * Copy non-language entries (moh/, other/, blacklist.txt, filter.sh)
+     * from source to target sounds directory.
+     *
+     * Language-country directories (xx-xx pattern) are handled by
+     * copyLanguageDirectoryOnly(); this method covers everything else
+     * shipped in the rootfs sounds-base directory so that the writable
+     * sounds tree (exposed to Asterisk through the runtime symlink in
+     * Storage::createWorkDirs()) contains all content the rest of the
+     * system expects to find at /offload/asterisk/sounds/{moh,other,...}.
+     *
+     * Uses `cp -Rn` (recursive, no-clobber) so existing user
+     * customisations in the target (replaced MOH tracks, custom
+     * sounds in other/) are never overwritten. Safe to call on every
+     * boot.
+     *
+     * @param string $targetSoundsDir Target sounds directory
+     */
+    private function copySupplementaryFiles(string $targetSoundsDir): void
+    {
+        if (!is_dir(self::SOURCE_SOUNDS_DIR)) {
+            return;
+        }
+
+        $entries = glob(self::SOURCE_SOUNDS_DIR . '/*');
+        if ($entries === false || empty($entries)) {
+            return;
+        }
+
+        $cpPath = Util::which('cp');
+        $targetEscaped = escapeshellarg($targetSoundsDir);
+
+        foreach ($entries as $entry) {
+            $name = basename($entry);
+            // Skip language-country directories (handled by language init flow)
+            if (preg_match('/^[a-z]{2}-[a-z]{2}$/i', $name)) {
+                continue;
+            }
+            $srcEscaped = escapeshellarg($entry);
+            // -R recursive, -n no-clobber: preserves user customisations
+            Processes::mwExec("$cpPath -Rn $srcEscaped $targetEscaped");
+        }
     }
 
     /**

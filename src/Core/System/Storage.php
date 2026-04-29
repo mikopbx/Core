@@ -897,6 +897,19 @@ class Storage extends Injectable
             Util::mwMkdir($voltCacheDir);
         }
 
+        // Asterisk sounds: expose writable sounds directory at the path Asterisk
+        // actually reads from (${astdatadir}/sounds = /offload/asterisk/sounds).
+        // Stock Asterisk has no astsoundsdir directive, so we use a symlink —
+        // same pattern as createAssetsSymlinks/createViewSymlinks below.
+        // Base languages live at /offload/asterisk/sounds-base/ (rootfs), which
+        // SoundFilesConf::start() copies into the writable target on first boot.
+        // Without this symlink, custom Language Pack modules and pre-converted
+        // codec formats are invisible to Asterisk (issue #1038).
+        Util::createUpdateSymlink(
+            Directories::getDir(Directories::AST_SOUNDS_DIR),
+            '/offload/asterisk/sounds'
+        );
+
         $this->createAssetsSymlinks();
         $this->createViewSymlinks();
         $this->createAGIBINSymlinks($isLiveCd);
