@@ -65,11 +65,13 @@ class GetRegistryAction extends Injectable
                     ];
                     continue;
                 }
+                $providerHost = strtolower(rtrim((string)$provider->host, '.'));
                 foreach ($peers as &$peer) {
                     if (!empty($peer['id'])) {
                         continue;
                     }
-                    if ($peer['host'] !== $provider->host || $peer['username'] !== $provider->username) {
+                    $peerHost = strtolower(rtrim((string)($peer['host'] ?? ''), '.'));
+                    if ($peerHost !== $providerHost || $peer['username'] !== $provider->username) {
                         continue;
                     }
                     $peer['id'] = $provider->uniqid;

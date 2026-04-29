@@ -1440,18 +1440,44 @@ class AsteriskManager
         $result = $this->sendRequestTimeout('PJSIPShowRegistrationsOutbound');
         if (isset($result['data']['OutboundRegistrationDetail'])) {
             foreach ($result['data']['OutboundRegistrationDetail'] as $peer) {
-                [$sip, $host, $port] = explode(':', $peer['ServerUri']);
                 $peers[] = [
                     'id'       => str_replace('REG-', '', $peer['ObjectName']),
                     'state'    => strtoupper($peer['Status']),
-                    'host'     => $host,
+                    'host'     => self::parseSipUriHost($peer['ServerUri'] ?? ''),
                     'username' => $peer['ContactUser'],
                 ];
-                unset($sip, $port);
             }
         }
 
         return $peers;
+    }
+
+    /**
+     * Extract the host part from a SIP/SIPS URI.
+     *
+     * Handles SRV-mode URIs without a port (`sip:host`), URI parameters
+     * (`sip:host;transport=udp`), userinfo (`sip:user@host:5060`) and
+     * bracketed IPv6 literals (`sips:[2001:db8::1]:5061`).
+     */
+    private static function parseSipUriHost(string $uri): string
+    {
+        if ($uri === '') {
+            return '';
+        }
+        $uri = (string)preg_replace('/^sips?:/i', '', $uri, 1);
+        $uri = strtok($uri, ';?');
+        if ($uri === false || $uri === '') {
+            return '';
+        }
+        if (str_contains($uri, '@')) {
+            $uri = substr($uri, strrpos($uri, '@') + 1);
+        }
+        if (isset($uri[0]) && $uri[0] === '[') {
+            $end = strpos($uri, ']');
+            return $end === false ? trim($uri, '[]') : substr($uri, 1, $end - 1);
+        }
+        $colon = strpos($uri, ':');
+        return $colon === false ? $uri : substr($uri, 0, $colon);
     }
 
     /**

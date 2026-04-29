@@ -79,7 +79,7 @@ abstract class AbstractProviderStatusAction extends Injectable
             $registrations = $am->getPjSipRegistry();
             $registryMap = [];
             foreach ($registrations as $reg) {
-                $key = $reg['username'] . '@' . $reg['host'];
+                $key = $reg['username'] . '@' . self::normalizeHost($reg['host'] ?? '');
                 $registryMap[$key] = $reg;
             }
             
@@ -210,7 +210,7 @@ abstract class AbstractProviderStatusAction extends Injectable
                 }
                 // For OUTBOUND registration - check our registration status with provider's server
                 elseif ($registrationType === 'outbound') {
-                    $regKey = $provider->username . '@' . $provider->host;
+                    $regKey = $provider->username . '@' . self::normalizeHost((string)$provider->host);
                     $registration = $registryMap[$regKey] ?? null;
 
                     if ($registration) {
@@ -578,6 +578,19 @@ abstract class AbstractProviderStatusAction extends Injectable
     }
 
     // State normalization methods
+
+    /**
+     * Normalize a SIP host for comparison: lowercase + strip trailing dot.
+     *
+     * Provider host stored in DB and host parsed from PJSIP ServerUri may
+     * differ in case or carry a trailing FQDN dot — both must collapse to
+     * the same key for outbound-registration lookups (incl. SRV mode where
+     * port is absent from the URI).
+     */
+    protected static function normalizeHost(?string $host): string
+    {
+        return strtolower(rtrim((string)$host, '.'));
+    }
 
     protected static function normalizeSipState(string $state): string
     {
