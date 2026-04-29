@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, firewallTooltips, FirewallAPI, UserMessage, SemanticLocalization, $ */
+/* global globalRootUrl, globalTranslate, firewallTooltips, FirewallAPI, UserMessage, SecurityUtils, SemanticLocalization, $ */
 
 /**
  * The `firewallTable` object contains methods and variables for managing the Firewall system.
@@ -132,8 +132,11 @@ const firewallTable = {
         if (firewallTable.permissions.modify) {
             html += `<a href="${globalRootUrl}firewall/modify" class="ui blue button" id="add-new-button">`;
             html += `<i class="add icon"></i> ${globalTranslate.fw_AddNewRule}</a>`;
+
+            // "Allow my current IP" helper button (only when client IP is public AND not yet covered by a host rule)
+            html += firewallTable.buildAllowMyIpButton(data);
         }
-        
+
         // Build firewall table
         html += firewallTable.buildFirewallTable(data.items, data);
         
@@ -146,6 +149,35 @@ const firewallTable = {
     },
     
     /**
+     * Build "Allow my current IP" helper button.
+     * Rendered next to #add-new-button only if the backend reports a public client IP
+     * and no existing rule already covers it as a host (/32 for IPv4, /128 for IPv6).
+     *
+     * @param {Object} data - Firewall data from API
+     * @returns {string} HTML string (empty if conditions not met)
+     */
+    buildAllowMyIpButton(data) {
+        const clientIp = data.clientIp || '';
+        if (!clientIp || data.clientIpRuleId) {
+            return '';
+        }
+
+        // Backend already restricts clientIp to a public IPv4 literal — /32 is the only host mask.
+        const ruleName = globalTranslate.fw_MyCurrentIpRuleName || 'My current IP';
+        const url = `${globalRootUrl}firewall/modify/`
+            + `?network=${encodeURIComponent(clientIp)}`
+            + `&subnet=32`
+            + `&ruleName=${encodeURIComponent(ruleName)}`;
+
+        return `
+            <a href="${url}" class="ui green button" id="allow-my-ip-button">
+                <i class="shield alternate icon"></i>
+                ${SecurityUtils.escapeHtml(globalTranslate.fw_AllowMyIpButton)} (${clientIp})
+            </a>
+        `;
+    },
+
+    /**
      * Build Docker environment notice
      * @returns {string} HTML string
      */
@@ -154,8 +186,8 @@ const firewallTable = {
             <div class="ui info icon message">
                 <i class="info circle icon"></i>
                 <div class="content">
-                    <div class="header">${globalTranslate.fw_DockerEnvironmentNotice}</div>
-                    <p>${globalTranslate.fw_DockerLimitedServicesInfo}</p>
+                    <div class="header">${SecurityUtils.escapeHtml(globalTranslate.fw_DockerEnvironmentNotice)}</div>
+                    <p>${SecurityUtils.escapeHtml(globalTranslate.fw_DockerLimitedServicesInfo)}</p>
                 </div>
             </div>
         `;
@@ -169,7 +201,7 @@ const firewallTable = {
      */
     buildFirewallTable(rules, data) {
         if (!rules || rules.length === 0) {
-            return '<div class="ui message">' + globalTranslate.fw_NoRulesConfigured + '</div>';
+            return '<div class="ui message">' + SecurityUtils.escapeHtml(globalTranslate.fw_NoRulesConfigured) + '</div>';
         }
         
         let html = '<table class="ui selectable very basic compact unstackable table" id="firewall-table">';
@@ -185,7 +217,7 @@ const firewallTable = {
             const limitedClass = isLimited ? 'docker-limited' : '';
             
             html += `<th width="20px" class="firewall-category ${limitedClass}">`;
-            html += `<div><span>${categoryData.name}</span></div>`;
+            html += `<div><span>${SecurityUtils.escapeHtml(categoryData.name)}</span></div>`;
             html += '</th>';
         });
         
@@ -215,7 +247,8 @@ const firewallTable = {
         const permit = `${rule.network}/${rule.subnet}`;
         const isCatchAll = (permit === '0.0.0.0/0' || permit === '::/0');
         const noDragClass = isCatchAll ? ' nodrag nodrop' : '';
-        let html = `<tr class="rule-row${noDragClass}" id="${rule.id || ''}" data-value="${priority}">`;
+        const clientIpClass = rule.isClientIp ? ' client-ip-rule' : '';
+        let html = `<tr class="rule-row${noDragClass}${clientIpClass}" id="${rule.id || ''}" data-value="${priority}">`;
 
         // Drag handle cell — empty for catch-all rules (not draggable)
         if (isCatchAll) {
@@ -226,9 +259,15 @@ const firewallTable = {
 
         // Network and description cell
         html += '<td>';
-        html += `${rule.network} - ${rule.description}`;
+        if (rule.isClientIp) {
+            const hint = SecurityUtils.escapeHtml(globalTranslate.fw_ThisIsYourCurrentIpHint);
+            html += `<i class="user circle blue icon popuped client-ip-hint" data-content="${hint}"></i> `;
+        }
+        // rule.description is admin-controlled and stored in the DB without HTML stripping —
+        // escape it (and rule.network for symmetry) before injecting into the table.
+        html += `${SecurityUtils.escapeHtml(rule.network)} - ${SecurityUtils.escapeHtml(rule.description)}`;
         if (!rule.id) {
-            html += `<br><span class="features">${globalTranslate.fw_NeedConfigureRule}</span>`;
+            html += `<br><span class="features">${SecurityUtils.escapeHtml(globalTranslate.fw_NeedConfigureRule)}</span>`;
         }
         html += '</td>';
         
@@ -244,7 +283,7 @@ const firewallTable = {
             const limitedClass = isLimited ? 'docker-limited' : '';
             const action = categoryRule.action ? 'allow' : 'block';
             
-            html += `<td class="center aligned marks ${limitedClass}" data-action="${action}" data-network="${rule.network}">`;
+            html += `<td class="center aligned marks ${limitedClass}" data-action="${action}" data-network="${SecurityUtils.escapeHtml(rule.network)}">`;
             html += '<i class="icons">';
             
             if (action === 'allow') {
@@ -287,9 +326,9 @@ const firewallTable = {
             const modifyClass = firewallTable.permissions.modify ? '' : 'disabled';
             html += `<a href="${globalRootUrl}firewall/modify/${rule.id}" `;
             html += `class="ui button edit popuped ${modifyClass}" `;
-            html += `data-content="${globalTranslate.bt_ToolTipEdit}">`;
+            html += `data-content="${SecurityUtils.escapeHtml(globalTranslate.bt_ToolTipEdit)}">`;
             html += '<i class="icon edit blue"></i></a>';
-            
+
             if (rule.permanent) {
                 html += `<a href="#" class="ui disabled button"><i class="icon trash red"></i></a>`;
             } else {
@@ -297,7 +336,7 @@ const firewallTable = {
                 html += `<a href="#" `;
                 html += `class="ui button delete two-steps-delete popuped ${deleteClass}" `;
                 html += `data-value="${rule.id}" `;
-                html += `data-content="${globalTranslate.bt_ToolTipDelete}">`;
+                html += `data-content="${SecurityUtils.escapeHtml(globalTranslate.bt_ToolTipDelete)}">`;
                 html += '<i class="icon trash red"></i></a>';
             }
         }

@@ -205,17 +205,40 @@ class GetListAction
             // Sort by priority: records from DB are already sorted by priority,
             // unsaved default records (no id) go to the end
             usort($networksTable, [__CLASS__, 'sortArrayByPriority']);
-            
+
+            // "Allow my current IP" helper: tag the matching host rule so the UI can highlight it
+            // and decide whether to show the helper button. Currently restricted to public IPv4
+            // because the modify form only fully supports IPv4; expand when IPv6 modify lands.
+            $clientIpRaw = isset($data['clientIp']) ? trim((string)$data['clientIp']) : '';
+            $clientIp = ($clientIpRaw !== '' && IpAddressHelper::isIpv4($clientIpRaw)
+                && IpAddressHelper::isPublicIp($clientIpRaw)) ? $clientIpRaw : '';
+            $clientIpRuleId = '';
+
+            if ($clientIp !== '') {
+                foreach ($networksTable as &$networkRow) {
+                    if (($networkRow['network'] ?? '') === $clientIp
+                        && (string)($networkRow['subnet'] ?? '') === '32'
+                    ) {
+                        $networkRow['isClientIp'] = true;
+                        if (!empty($networkRow['id'])) {
+                            $clientIpRuleId = (string)$networkRow['id'];
+                        }
+                        break;
+                    }
+                }
+                unset($networkRow);
+            }
+
             // Apply pagination if requested
             $offset = isset($data['offset']) ? (int)$data['offset'] : 0;
             $limit = isset($data['limit']) ? (int)$data['limit'] : 0;
-            
+
             $total = count($networksTable);
-            
+
             if ($limit > 0) {
                 $networksTable = array_slice($networksTable, $offset, $limit);
             }
-            
+
             // Add system status
             $res->data = [
                 'items' => $networksTable,
@@ -223,7 +246,9 @@ class GetListAction
                 'firewallEnabled' => PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED),
                 'fail2banEnabled' => PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED),
                 'isDocker' => System::isDocker(),
-                'dockerSupportedServices' => ['WEB', 'AMI', 'SIP & RTP', 'IAX']
+                'dockerSupportedServices' => ['WEB', 'AMI', 'SIP & RTP', 'IAX'],
+                'clientIp' => $clientIp,
+                'clientIpRuleId' => $clientIpRuleId
             ];
             
             $res->success = true;

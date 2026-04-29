@@ -101,11 +101,17 @@ class FirewallManagementProcessor extends Injectable
 
         // Type-safe action matching with enum
         $action = FirewallAction::tryFrom($actionString);
-        
+
         if ($action === null) {
             $res->messages['error'][] = "Unknown action - $actionString in " . __CLASS__;
             $res->function = $actionString;
             return $res;
+        }
+
+        // Forward authenticated client IP only to GET_LIST — used by the index page to render
+        // the "Allow my current IP" helper. Other actions don't need it and shouldn't see it.
+        if ($action === FirewallAction::GET_LIST) {
+            $data['clientIp'] = $request['sessionContext']['remote_addr'] ?? '';
         }
         
         // Execute action using match expression (PHP 8)

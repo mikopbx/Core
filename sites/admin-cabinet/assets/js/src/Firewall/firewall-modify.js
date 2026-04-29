@@ -167,6 +167,14 @@ const firewall = {
                     window.currentSubnet = response.data.subnet;
                     window.isDocker = response.data.isDocker || false;
                     window.dockerSupportedServices = response.data.dockerSupportedServices || [];
+
+                    // For new records prefilled from URL parameters (e.g. "Allow my IP" helper)
+                    // mark the form dirty so Save activates. populateFormSilently resets dirty
+                    // state and re-disables the Save button AFTER this callback returns, so we
+                    // defer the call to the next tick.
+                    if (!response.data.id && firewall.urlParameters.network) {
+                        setTimeout(() => Form.dataChanged(), 0);
+                    }
                 }
             });
         });

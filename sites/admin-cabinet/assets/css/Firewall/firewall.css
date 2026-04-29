@@ -49,3 +49,14 @@ th.firewall-category > div > span {
 #firewall-table tbody > tr:last-child > td {
     border-bottom: 1px solid rgba(34, 36, 38, .15);
 }
+
+/* Highlight the rule that already covers the admin's current public IP */
+#firewall-table tbody > tr.client-ip-rule > td {
+    color: #2185d0;
+    font-weight: 700;
+}
+
+/* Spacer so the helper button breathes next to #add-new-button */
+#allow-my-ip-button {
+    margin-left: 0.5em;
+}

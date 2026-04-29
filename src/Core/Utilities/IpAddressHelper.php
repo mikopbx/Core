@@ -381,4 +381,36 @@ class IpAddressHelper
         // Global Unicast: 2000::/3 (addresses starting with 2 or 3)
         return preg_match('/^[23]/', $normalized) === 1;
     }
+
+    /**
+     * Check if IP address is publicly routable.
+     *
+     * Returns false for: empty/invalid input, loopback, link-local, private (RFC1918),
+     * shared address space (CGNAT), broadcast/reserved, multicast and ULA (IPv6).
+     * For IPv4 uses PHP filter flags FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE.
+     * For IPv6 requires global unicast (2000::/3) per RFC 4291.
+     *
+     * @param string $ip IP address to check
+     * @return bool True only if the address is publicly routable
+     */
+    public static function isPublicIp(string $ip): bool
+    {
+        if ($ip === '') {
+            return false;
+        }
+
+        if (self::isIpv4($ip)) {
+            return filter_var(
+                $ip,
+                FILTER_VALIDATE_IP,
+                FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+            ) !== false;
+        }
+
+        if (self::isIpv6($ip)) {
+            return self::isGlobalUnicast($ip);
+        }
+
+        return false;
+    }
 }
