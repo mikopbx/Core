@@ -136,7 +136,7 @@ class ExtensionEditForm extends BaseForm
         $this->add(new Hidden('sip_networkfilterid'));
 
         // SIP Manualattributes
-        $placeholderText = "[endpoint]\ndevice_state_busy_at = 10\n\n[aor]\nmax_contacts = 5";
+        $placeholderText = "[endpoint]\ndevice_state_busy_at = 10\nset_var = LEGACY_CP1251=1 ; For old Panasonic,Eltex,Welltech,AddPac\n\n[aor]\nmax_contacts = 5";
         $this->addTextArea('sip_manualattributes', $placeholderText, 80, [
             'placeholder' => $placeholderText,
             'skipEscaping' => true  // Technical configuration field - preserve special characters

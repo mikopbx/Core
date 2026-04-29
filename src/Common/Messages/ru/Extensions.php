@@ -219,6 +219,8 @@ return [
     'ex_SipManualattributesTooltip_list_qualify_timeout_desc' => 'таймаут ожидания ответа на OPTIONS в секундах (по умолчанию: 5)',
     'ex_SipManualattributesTooltip_list_remove_unavailable' => 'remove_unavailable',
     'ex_SipManualattributesTooltip_list_remove_unavailable_desc' => 'удалять недоступные контакты при регистрации (yes/no, по умолчанию: yes)',
+    'ex_SipManualattributesTooltip_list_set_var' => 'set_var = LEGACY_CP1251=1',
+    'ex_SipManualattributesTooltip_list_set_var_desc' => 'принудительно использовать CP1251 (Windows-1251) для отображаемого имени на устаревших SIP-телефонах (Panasonic, Eltex, Welltech, AddPac и других старых моделях, не поддерживающих UTF-8)',
     'ex_SipManualattributesTooltip_note' => 'Параметры применяются к секциям [endpoint], [aor], [auth] и [acl]',
     'ex_SipManualattributesTooltip_warning' => 'Используйте только если понимаете работу Asterisk PJSIP. Неправильные параметры могут привести к неработоспособности телефона.',
     'ex_SipManualattributesTooltip_warning_header' => 'Внимание!',

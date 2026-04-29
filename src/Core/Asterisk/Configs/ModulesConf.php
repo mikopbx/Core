@@ -111,6 +111,7 @@ class ModulesConf extends AsteriskConfigClass
             'res_timing_timerfd.so',
             'res_timing_pthread.so',
             'res_mutestream.so',
+            'res_legacy_cp1251.so',
 
             'func_timeout.so',
             'res_parking.so',

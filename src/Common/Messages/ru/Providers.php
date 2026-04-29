@@ -237,6 +237,8 @@ return [
     'pr_ManualAttributesTooltip_header' => 'Дополнительные атрибуты PJSIP',
     'pr_ManualAttributesTooltip_rtp_symmetric' => 'rtp_symmetric',
     'pr_ManualAttributesTooltip_rtp_symmetric_desc' => 'симметричный RTP для NAT',
+    'pr_ManualAttributesTooltip_set_var' => 'set_var = LEGACY_CP1251=1',
+    'pr_ManualAttributesTooltip_set_var_desc' => 'Принудительно использовать CP1251 (Windows-1251) для отображаемого имени на устаревших SIP-телефонах (Panasonic, Eltex, Welltech, AddPac и других старых моделях, не поддерживающих UTF-8).',
     'pr_ManualAttributesTooltip_timers' => 'timers',
     'pr_ManualAttributesTooltip_timers_desc' => 'таймеры сессии (yes/no)',
     'pr_ManualAttributesTooltip_warning' => 'Используйте только если понимаете назначение параметров PJSIP',

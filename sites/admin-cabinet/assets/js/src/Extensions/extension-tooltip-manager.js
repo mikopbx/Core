@@ -212,6 +212,7 @@ class ExtensionTooltipManager {
                     'rtp_timeout=180',
                     'rtp_timeout_hold=900',
                     'rtp_keepalive=60',
+                    'set_var = LEGACY_CP1251=1 ; For old Panasonic,Eltex,Welltech,AddPac',
                     '',
                     '',
                     '[aor]',
@@ -285,6 +286,10 @@ class ExtensionTooltipManager {
                     {
                         term: globalTranslate.ex_SipManualattributesTooltip_list_remove_unavailable,
                         definition: globalTranslate.ex_SipManualattributesTooltip_list_remove_unavailable_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipManualattributesTooltip_list_set_var,
+                        definition: globalTranslate.ex_SipManualattributesTooltip_list_set_var_desc
                     }
                 ],
                 note: globalTranslate.ex_SipManualattributesTooltip_note,

@@ -265,7 +265,8 @@ class ProviderSipTooltipManager extends ProviderTooltipManager {
                 'rtp_symmetric=no',
                 'timers=10',
                 'max_retries=10',
-                '', 
+                'set_var = LEGACY_CP1251=1 ; For old Panasonic,Eltex,Welltech,AddPac',
+                '',
                 '',
                 '[aor]',
                 'qualify_frequency=60',
@@ -295,6 +296,10 @@ class ProviderSipTooltipManager extends ProviderTooltipManager {
                 {
                     term: globalTranslate.pr_ManualAttributesTooltip_timers,
                     definition: globalTranslate.pr_ManualAttributesTooltip_timers_desc
+                },
+                {
+                    term: globalTranslate.pr_ManualAttributesTooltip_set_var,
+                    definition: globalTranslate.pr_ManualAttributesTooltip_set_var_desc
                 }
             ],
             note: globalTranslate.pr_ManualAttributesTooltip_warning
