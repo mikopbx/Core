@@ -233,6 +233,8 @@ return [
     'pr_ManualAttributesTooltip_header' => 'Додаткові атрибути PJSIP',
     'pr_ManualAttributesTooltip_rtp_symmetric' => 'rtp_symmetric',
     'pr_ManualAttributesTooltip_rtp_symmetric_desc' => 'симетричний RTP для NAT',
+    'pr_ManualAttributesTooltip_set_var' => 'set_var=LEGACY_CP1251=1',
+    'pr_ManualAttributesTooltip_set_var_desc' => 'Примусово використовувати CP1251 (Windows-1251) для відображуваного імені на застарілих SIP-телефонах (Panasonic, Eltex, Welltech, AddPac та інших старих моделях, що не підтримують UTF-8).',
     'pr_ManualAttributesTooltip_timers' => 'timers',
     'pr_ManualAttributesTooltip_timers_desc' => 'таймери сесії (yes/no)',
     'pr_ManualAttributesTooltip_warning' => 'Використовуйте тільки якщо розумієте призначення параметрів PJSIP',
@@ -438,7 +440,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Некоректна IP адреса або доменне ім\'я',
     'pr_ValidationProviderHostInvalidCharacters' => 'Адреса може містити тільки латинські літери, цифри, крапки, дефіси та підкреслення',
     'pr_ValidationProviderHostIsEmpty' => 'Введіть ім\'я сервера або IP адресу провайдера',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Логін може містити тільки латинські літери, цифри та символи: _ - . +',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Логін може містити тільки латинські літери, цифри та символи: _ - . + *',
     'pr_ValidationProviderLoginIsEmpty' => 'Введіть логін для авторизації у провайдера',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Логін повинен бути довшим за один символ',
     'pr_ValidationProviderNameIsEmpty' => 'Введіть назву провайдера',
@@ -464,7 +466,7 @@ return [
     'pr_StateChangedFromTo' => 'Статус змінився з %previousState% на %newState%',
     // MO - Models validation
     'mo_IaxUsernameInvalidCharacters' => 'Ім\'я користувача IAX для вхідної реєстрації може містити лише латинські літери, цифри та символи: _ - .',
-    'mo_SipUsernameInvalidCharacters' => 'Ім\'я користувача SIP для вхідної реєстрації може містити лише латинські літери, цифри та символи: _ - .',
+    'mo_SipUsernameInvalidCharacters' => 'Ім\'я користувача SIP для вхідної реєстрації може містити лише латинські літери, цифри та символи: _ - . + *',
     'pr_RegisteredFrom' => 'Зареєстрований з',
     'pr_RegisteredTo' => 'Зареєстрований на',
 ];

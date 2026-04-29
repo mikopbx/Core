@@ -233,6 +233,8 @@ return [
     'pr_ManualAttributesTooltip_header' => 'Extra PJSIP-attributen',
     'pr_ManualAttributesTooltip_rtp_symmetric' => 'rtp_symmetric',
     'pr_ManualAttributesTooltip_rtp_symmetric_desc' => 'symmetrische RTP voor NAT',
+    'pr_ManualAttributesTooltip_set_var' => 'set_var=LEGACY_CP1251=1',
+    'pr_ManualAttributesTooltip_set_var_desc' => 'Forceer CP1251 (Windows-1251) codering voor de weergavenaam op verouderde SIP-telefoons (Panasonic, Eltex, Welltech, AddPac en andere oudere modellen die UTF-8 niet ondersteunen).',
     'pr_ManualAttributesTooltip_timers' => 'timers',
     'pr_ManualAttributesTooltip_timers_desc' => 'sessietimers (yes/no)',
     'pr_ManualAttributesTooltip_warning' => 'Alleen gebruiken als u het doel van PJSIP-parameters begrijpt',
@@ -438,7 +440,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Ongeldig IP-adres of domeinnaam',
     'pr_ValidationProviderHostInvalidCharacters' => 'Adres mag alleen Latijnse letters, cijfers, punten, koppeltekens en underscores bevatten',
     'pr_ValidationProviderHostIsEmpty' => 'Voer servernaam of provider IP-adres in',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Login mag alleen Latijnse letters, cijfers en symbolen bevatten: _ - . +',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Login mag alleen Latijnse letters, cijfers en symbolen bevatten: _ - . + *',
     'pr_ValidationProviderLoginIsEmpty' => 'Voer login in voor autorisatie bij provider',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Login moet langer zijn dan één symbool',
     'pr_ValidationProviderNameIsEmpty' => 'Voer providernaam in',
@@ -464,7 +466,7 @@ return [
     'pr_StateChangedFromTo' => 'De status is gewijzigd van %previousState% naar %newState%',
     // MO - Models validation
     'mo_IaxUsernameInvalidCharacters' => 'De IAX-gebruikersnaam voor inkomende registratie mag alleen Latijnse letters, cijfers en symbolen bevatten: _ - .',
-    'mo_SipUsernameInvalidCharacters' => 'De SIP-gebruikersnaam voor inkomende registratie mag alleen Latijnse letters, cijfers en symbolen bevatten: _ - .',
+    'mo_SipUsernameInvalidCharacters' => 'De SIP-gebruikersnaam voor inkomende registratie mag alleen Latijnse letters, cijfers en symbolen bevatten: _ - . + *',
     'pr_Disabled' => 'uit',
     'pr_CheckingStatus' => 'Status controleren...',
 ];

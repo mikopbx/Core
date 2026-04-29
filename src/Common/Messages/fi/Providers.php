@@ -233,6 +233,8 @@ return [
     'pr_ManualAttributesTooltip_header' => 'PJSIP-lisäattribuutit',
     'pr_ManualAttributesTooltip_rtp_symmetric' => 'rtp_symmetric',
     'pr_ManualAttributesTooltip_rtp_symmetric_desc' => 'symmetrinen RTP NAT:lle',
+    'pr_ManualAttributesTooltip_set_var' => 'set_var=LEGACY_CP1251=1',
+    'pr_ManualAttributesTooltip_set_var_desc' => 'Pakota CP1251 (Windows-1251) -koodaus näyttönimeen vanhoissa SIP-puhelimissa (Panasonic, Eltex, Welltech, AddPac ja muut vanhemmat mallit, jotka eivät tue UTF-8:aa).',
     'pr_ManualAttributesTooltip_timers' => 'timers',
     'pr_ManualAttributesTooltip_timers_desc' => 'istunnon ajastimet (yes/no)',
     'pr_ManualAttributesTooltip_warning' => 'Käytä vain jos ymmärrät PJSIP-parametrien tarkoituksen',
@@ -438,7 +440,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Virheellinen IP-osoite tai verkko-osoite',
     'pr_ValidationProviderHostInvalidCharacters' => 'Osoite voi sisältää vain latinalaisia kirjaimia, numeroita, pisteitä, viivoja ja alaviivoja',
     'pr_ValidationProviderHostIsEmpty' => 'Anna palvelimen nimi tai palveluntarjoajan IP-osoite',
-    'pr_ValidationProviderLoginInvalidCharacters' => 'Käyttäjätunnus voi sisältää vain latinalaisia kirjaimia, numeroita ja merkkejä: _ - . +',
+    'pr_ValidationProviderLoginInvalidCharacters' => 'Käyttäjätunnus voi sisältää vain latinalaisia kirjaimia, numeroita ja merkkejä: _ - . + *',
     'pr_ValidationProviderLoginIsEmpty' => 'Anna käyttäjätunnus palveluntarjoajan valtuutukseen',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Käyttäjätunnuksen tulee olla pidempi kuin yksi merkki',
     'pr_ValidationProviderNameIsEmpty' => 'Anna palveluntarjoajan nimi',
@@ -466,5 +468,5 @@ return [
     'pr_ValidationProviderLogin' => 'Syötä kirjautumistunnuksesi kirjautuaksesi palveluntarjoajaasi.',
     // MO - Models validation
     'mo_IaxUsernameInvalidCharacters' => 'Saapuvan rekisteröitymisen IAX-käyttäjätunnus voi sisältää vain latinalaisia kirjaimia, numeroita ja symboleja: _ - .',
-    'mo_SipUsernameInvalidCharacters' => 'Saapuvan rekisteröitymisen SIP-käyttäjätunnus voi sisältää vain latinalaisia kirjaimia, numeroita ja symboleja: _ - .',
+    'mo_SipUsernameInvalidCharacters' => 'Saapuvan rekisteröitymisen SIP-käyttäjätunnus voi sisältää vain latinalaisia kirjaimia, numeroita ja symboleja: _ - . + *',
 ];

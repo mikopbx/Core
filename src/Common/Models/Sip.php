@@ -423,7 +423,7 @@ class Sip extends ModelsBase
                 'username',
                 new RegexValidator(
                     [
-                        'pattern' => '/^[a-zA-Z0-9._-]+$/',
+                        'pattern' => '/^[a-zA-Z0-9._+*-]+$/',
                         'message' => $this->t('mo_SipUsernameInvalidCharacters'),
                     ]
                 )
