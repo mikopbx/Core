@@ -172,6 +172,9 @@ System:         RegistryProvider, CryptProvider, PBXCoreRESTClientProvider, Even
 
 ## Frontend Architecture
 
+### Localization Asset Cache
+`AssetProvider::makeLocalizationAssets()` (Providers/AssetProvider.php:320-341) writes one cache file per language at `js/cache/localization-<lang>-<version>.min.js` (deployed: `/var/tmp/www_cache/js/`). The version hash is NOT recomputed from `Messages/*` content — after editing translations on a deployed host, delete the cache file or `globalTranslate` keeps stale values.
+
 ### JavaScript Source (`sites/admin-cabinet/assets/js/src/`)
 
 Each section has its own JS module with `initialize()` pattern:

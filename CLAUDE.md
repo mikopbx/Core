@@ -93,6 +93,12 @@ busybox mount -o remount,ro /offload
 **Important:** Use `busybox mount`, not bare `mount` — the system `mount` may fail on T2/Linux.
 Mount point is `/offload` (not `/offload/rootfs`).
 
+### macOS Hot-Patch Tar
+When packaging files on macOS for `/offload/rootfs/usr/www`, use `COPYFILE_DISABLE=1 tar --no-xattrs ...` to suppress AppleDouble (`._*`) artefacts. Otherwise every directory on the host gets a parallel `._*` file (Forms/, Configs/, Messages/, …).
+
+### Translation Cache Invalidation
+After editing any `src/Common/Messages/*.php`, the cached `globalTranslateArray` at `/var/tmp/www_cache/js/localization-<lang>-<hash>.min.js` MUST be deleted on the target host. `AssetProvider::makeLocalizationAssets()` regenerates it only if the file is missing — the version hash does NOT recompute from translation content changes.
+
 ### Test Directory Mapping
 Tests are automatically synchronized between host and container:
 - **Host**: `src/Core/tests`
