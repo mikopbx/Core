@@ -156,7 +156,7 @@ class SipProviderEditForm extends BaseForm
         $this->add(new Hidden('networkfilterid'));
 
         // Manualattributes
-        $placeholderText = "[registration-auth]\nusername=962xxxxx030@ip.beeline.ru\n\n[endpoint-auth]\nusername=962xxxxx030@ip.beeline.ru\n\n[endpoint]\nset_var = LEGACY_CP1251=1 ; For old Panasonic,Eltex,Welltech,AddPac";
+        $placeholderText = "[registration-auth]\nusername=962xxxxx030@ip.beeline.ru\n\n[endpoint-auth]\nusername=962xxxxx030@ip.beeline.ru\n\n[endpoint]\nset_var=LEGACY_CP1251=1";
         $this->addTextArea('manualattributes', $placeholderText, 65, [
             'placeholder' => $placeholderText,
             'skipEscaping' => true  // Technical configuration field - preserve special characters

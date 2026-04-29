@@ -212,7 +212,7 @@ class ExtensionTooltipManager {
                     'rtp_timeout=180',
                     'rtp_timeout_hold=900',
                     'rtp_keepalive=60',
-                    'set_var = LEGACY_CP1251=1 ; For old Panasonic,Eltex,Welltech,AddPac',
+                    'set_var=LEGACY_CP1251=1',
                     '',
                     '',
                     '[aor]',

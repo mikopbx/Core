@@ -265,7 +265,7 @@ class ProviderSipTooltipManager extends ProviderTooltipManager {
                 'rtp_symmetric=no',
                 'timers=10',
                 'max_retries=10',
-                'set_var = LEGACY_CP1251=1 ; For old Panasonic,Eltex,Welltech,AddPac',
+                'set_var=LEGACY_CP1251=1',
                 '',
                 '',
                 '[aor]',
