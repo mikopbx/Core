@@ -85,7 +85,7 @@
                        data-field="additional_hosts"></i>
                 </label>
                 <div class="ui input" id="additional-host">
-                    <input type="text" name="additional-host" placeholder="{{ t._('pr_EnterHostOrIpPlaceholder') }}" />
+                    <input type="text" name="additional-host" placeholder="{{ t._('pr_EnterHostOrIpPlaceholder') }}" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')" />
                 </div>
                 <div class="ui basic compact segment">
                     <table class="ui small very compact table" id="additional-hosts-table">

@@ -52,8 +52,12 @@ class SipProviderEditForm extends BaseForm
         // Type
         $this->add(new Hidden('type'));
 
-        // Description
-        $this->add(new Text('description'));
+        // Description (autocomplete trick prevents browser autofill)
+        $this->add(new Text('description', [
+            'autocomplete' => 'new-password',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
+        ]));
 
         // Username (autocomplete="new-password" works better than "off" for browsers)
         $this->add(new Text('username', [
@@ -68,8 +72,12 @@ class SipProviderEditForm extends BaseForm
             'data-no-password-manager' => 'true'
         ]));
 
-        // Host
-        $this->add(new Text('host'));
+        // Host (autocomplete trick mirrors username field — prevents browser autofill)
+        $this->add(new Text('host', [
+            'autocomplete' => 'new-password',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
+        ]));
 
         // DTMF Mode - Universal Dropdown
         $this->addSemanticUIDropdown(
@@ -132,14 +140,20 @@ class SipProviderEditForm extends BaseForm
         $this->add(new Numeric('qualifyfreq', ["maxlength" => 3,
             "style" => "width: 80px;"]));
 
-        // Fromuser
+        // Fromuser (autocomplete trick prevents browser autofill)
         $this->add(new Text('fromuser', [
-            'placeholder' => $this->translation->_('pr_FromUserPlaceholder')
+            'placeholder' => $this->translation->_('pr_FromUserPlaceholder'),
+            'autocomplete' => 'new-password',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
         ]));
 
-        // Fromdomain
+        // Fromdomain (autocomplete trick prevents browser autofill)
         $this->add(new Text('fromdomain', [
-            'placeholder' => $this->translation->_('pr_FromDomainPlaceholder')
+            'placeholder' => $this->translation->_('pr_FromDomainPlaceholder'),
+            'autocomplete' => 'new-password',
+            'readonly' => 'readonly',
+            'onfocus' => "this.removeAttribute('readonly')",
         ]));
 
         // Noregister
