@@ -1951,7 +1951,7 @@ return [
     'rest_schema_gs_attended_transfer' => 'Kód pro převod se srážkou',
     'rest_schema_gs_atxfer_abort' => 'Kód pro zrušení převodu',
     'rest_schema_gs_codecs' => 'Seznam podporovaných kodeků',
-    'rest_schema_gs_digit_timeout' => 'Časový limit pro vytáčení čísel (sekundy)',
+    'rest_schema_gs_digit_timeout' => 'Časový limit pro vytáčení čísel (milisekundy)',
     'rest_schema_gs_rtp_port_to' => 'Koncový port rozsahu RTP',
     'rest_schema_sip_auth_extension' => 'Interní číslo pro ověření',
     'rest_schema_sip_secret' => 'Objekt s daty tajného klíče zařízení SIP',

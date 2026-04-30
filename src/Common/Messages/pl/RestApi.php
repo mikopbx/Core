@@ -402,7 +402,7 @@ return [
     'rest_schema_gs_call_parking_ext' => 'Zadzwoń pod numer parkingowy',
     'rest_schema_gs_call_parking_start_slot' => 'Pierwsze miejsce parkingowe na wezwanie',
     'rest_schema_gs_codecs' => 'Lista obsługiwanych kodeków',
-    'rest_schema_gs_digit_timeout' => 'Limit czasu wybierania cyfr (sekundy)',
+    'rest_schema_gs_digit_timeout' => 'Limit czasu wybierania cyfr (milisekundy)',
     'rest_schema_gs_iax_port' => 'Port dla protokołu IAX2',
     'rest_schema_gs_is_default_web_password' => 'Używane jest domyślne hasło interfejsu internetowego.',
     'rest_schema_gs_password_validation' => 'Włącz sprawdzanie złożoności hasła',

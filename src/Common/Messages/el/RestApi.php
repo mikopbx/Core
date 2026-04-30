@@ -1110,7 +1110,7 @@ return [
     'rest_schema_gs_call_parking_ext' => 'Καλέστε τον αριθμό στάθμευσης',
     'rest_schema_gs_call_parking_start_slot' => 'Θέση στάθμευσης αρχικής κλήσης',
     'rest_schema_gs_codecs' => 'Λίστα υποστηριζόμενων κωδικοποιητών',
-    'rest_schema_gs_digit_timeout' => 'Χρονικό όριο κλήσης ψηφίων (δευτερόλεπτα)',
+    'rest_schema_gs_digit_timeout' => 'Χρονικό όριο κλήσης ψηφίων (χιλιοστά του δευτερολέπτου)',
     'rest_schema_gs_internal_extension_length' => 'Μήκος εσωτερικών αριθμών',
     'rest_schema_gs_is_default_ssh_password' => 'Χρησιμοποιείται ο τυπικός κωδικός πρόσβασης SSH.',
     'rest_schema_gs_is_default_web_password' => 'Χρησιμοποιείται ο προεπιλεγμένος κωδικός πρόσβασης διεπαφής ιστού.',

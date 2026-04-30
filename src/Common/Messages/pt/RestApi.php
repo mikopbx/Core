@@ -1319,7 +1319,7 @@ return [
     'rest_schema_gs_ami_enabled' => 'Habilitar a Interface de Gerenciamento do Asterisk (AMI)',
     'rest_schema_gs_ami_port' => 'Porta para interface do Asterisk Manager',
     'rest_schema_gs_atxfer_abort' => 'Código para cancelar uma transferência',
-    'rest_schema_gs_digit_timeout' => 'Tempo limite de discagem de dígitos (segundos)',
+    'rest_schema_gs_digit_timeout' => 'Tempo limite de discagem de dígitos (milissegundos)',
     'rest_schema_gs_iax_port' => 'Porta para protocolo IAX2',
     'rest_schema_gs_internal_extension_length' => 'Comprimento dos números internos',
     'rest_schema_gs_is_default_ssh_password' => 'A senha SSH padrão é utilizada.',

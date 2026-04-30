@@ -319,7 +319,7 @@ return [
     'rest_schema_gs_call_parking_ext' => 'Ligue para o número do estacionamento.',
     'rest_schema_gs_call_parking_start_slot' => 'Vaga de estacionamento para chamada inicial',
     'rest_schema_gs_codecs' => 'Lista de codecs suportados',
-    'rest_schema_gs_digit_timeout' => 'Tempo limite de discagem de dígitos (segundos)',
+    'rest_schema_gs_digit_timeout' => 'Tempo limite de discagem de dígitos (milissegundos)',
     'rest_schema_gs_iax_port' => 'Porta para protocolo IAX2',
     'rest_schema_gs_is_default_web_password' => 'A senha padrão da interface web é utilizada.',
     'rest_schema_gs_password_validation' => 'Ativar verificação de complexidade de senha',
