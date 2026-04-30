@@ -46,6 +46,11 @@ class WelcomeBanner implements BannerInterface
 {
     private const int MIN_WIDTH = 60;
     private const int FULLSCREEN_MIN_WIDTH = 80;
+    // Compact fullscreen renders ~25 lines (with all warnings & description),
+    // so anything below this threshold falls back to the small compact banner
+    private const int FULLSCREEN_MIN_HEIGHT = 25;
+    // Width of horizontal `-----` section separators in compact mode
+    private const int COMPACT_SEPARATOR_WIDTH = 71;
     private const int STARTUP_GRACE_PERIOD = 120; // seconds - services shown as "starting" if uptime < this
 
     // Adaptive refresh settings
@@ -113,7 +118,7 @@ class WelcomeBanner implements BannerInterface
         $lines[] = '*** ' . $translation->_('cm_ThisIs') . ' '
             . MenuStyleConfig::colorize("MikoPBX v.$version$versionSuffix", MenuStyleConfig::COLOR_GREEN);
         $lines[] = "    Built: $buildTime ($arch)";
-        $lines[] = '';
+        $lines[] = $this->compactSeparator();
 
         // Warnings section
         if ($this->dataCollector->hasCorruptedFiles()) {
@@ -141,22 +146,117 @@ class WelcomeBanner implements BannerInterface
             $lines[] = '    Station: ' . MenuStyleConfig::colorize($pbxName, MenuStyleConfig::COLOR_CYAN);
         }
 
-        $lines[] = '';
+        $lines[] = $this->compactSeparator();
 
-        // Web Interface URL
+        // Collect endpoints (Web/SSH) data — rendered later so its `|` can be
+        // aligned with the metrics block below.
         $webInfo = $this->dataCollector->getWebInterfaceInfo();
-        if (!empty($webInfo['url'])) {
-            $lines[] = '    Web: ' . MenuStyleConfig::colorize($webInfo['url'], MenuStyleConfig::COLOR_CYAN);
+        $hasExternal = !empty($webInfo['externalUrl']);
+        $sshLogin = $this->dataCollector->getSshLogin();
+        $sshPort = $this->dataCollector->getSshPort();
+
+        // Drop the `https://` prefix when the URL pair would overflow the current
+        // terminal width. Fixed framing per row: 4 indent + 3 label + 3 ' | ' + 3 ' | '
+        // = 13 chars, so URL budget = terminalWidth - 13. Floor at 20 chars to keep the
+        // strip threshold meaningful even on a tiny terminal. Both URLs stripped
+        // symmetrically — the `Web` label still implies the protocol.
+        $webExternal = $webInfo['externalUrl'] ?? '';
+        $webLocal = $webInfo['url'] ?? '';
+        $urlBudget = max(20, $this->styleConfig->getTerminalWidth() - 13);
+        if ((mb_strlen($webExternal) + mb_strlen($webLocal)) > $urlBudget) {
+            $webExternal = preg_replace('#^https?://#', '', $webExternal);
+            $webLocal = preg_replace('#^https?://#', '', $webLocal);
         }
 
-        // SSH access
-        $sshPort = $this->dataCollector->getSshPort();
-        if (!empty($webInfo['ip'])) {
-            $sshCmd = 'ssh ' . $this->dataCollector->getSshLogin() . '@' . $webInfo['ip'];
-            if ($sshPort !== '22') {
-                $sshCmd .= " -p $sshPort";
+        $endpointRows = [];
+        if ($hasExternal) {
+            $endpointRows[] = ['Web', $webExternal, $webLocal];
+            $extSsh = $this->buildSshArgs($sshLogin, $webInfo['externalHost'], $sshPort);
+            $localSsh = !empty($webInfo['ip']) ? $this->buildSshArgs($sshLogin, $webInfo['ip'], $sshPort) : '';
+            $endpointRows[] = ['SSH', $extSsh, $localSsh];
+        } elseif (!empty($webLocal)) {
+            $endpointRows[] = ['Web', $webLocal, ''];
+            $endpointRows[] = ['SSH', $this->buildSshArgs($sshLogin, $webInfo['ip'], $sshPort), ''];
+        }
+
+        // Collect metrics block data — same reason: align `|` with endpoints.
+        $uptimeSeconds = $this->dataCollector->getUptimeSeconds();
+        $uptime = $this->dataCollector->getUptime();
+        $isStarting = $uptimeSeconds > 0 && $uptimeSeconds < self::STARTUP_GRACE_PERIOD;
+
+        $loadAvg = $this->dataCollector->getLoadAverage();
+        $memInfo = $this->dataCollector->getMemoryInfo();
+        $storageInfo = $this->dataCollector->getStorageInfo();
+
+        $metricsLeft = ['', '', ''];
+        if (!empty($uptime)) {
+            $metricsLeft[0] = $translation->_('cm_Uptime') . ': ' . $uptime;
+        }
+        if ($loadAvg !== null) {
+            $cpuCores = $this->dataCollector->getCpuCores();
+            $metricsLeft[2] = 'Load: '
+                . MenuStyleConfig::formatLoadValue($loadAvg['load1']) . ' '
+                . MenuStyleConfig::formatLoadValue($loadAvg['load5']) . ' '
+                . MenuStyleConfig::formatLoadValue($loadAvg['load15'])
+                . " ($cpuCores cores)";
+        }
+
+        $metricsRight = ['', '', ''];
+        if ($memInfo !== null) {
+            $memColor = $memInfo['mem_percent'] > 90
+                ? MenuStyleConfig::COLOR_RED
+                : ($memInfo['mem_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
+            $metricsRight[0] = 'Mem:     ' . MenuStyleConfig::colorize(
+                "{$memInfo['mem_used']} / {$memInfo['mem_total']} ({$memInfo['mem_percent']}%)",
+                $memColor
+            );
+            if ($memInfo['swap_percent'] > 0) {
+                $swapColor = $memInfo['swap_percent'] > 90
+                    ? MenuStyleConfig::COLOR_RED
+                    : ($memInfo['swap_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
+                $metricsRight[1] = 'Swap:    ' . MenuStyleConfig::colorize(
+                    "{$memInfo['swap_used']} / {$memInfo['swap_total']} ({$memInfo['swap_percent']}%)",
+                    $swapColor
+                );
             }
-            $lines[] = '    SSH: ' . $sshCmd;
+        }
+        if ($storageInfo !== null) {
+            $storageColor = $storageInfo['percent'] > 90
+                ? MenuStyleConfig::COLOR_RED
+                : ($storageInfo['percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
+            $metricsRight[2] = $translation->_('cm_Storage') . ': ' . MenuStyleConfig::colorize(
+                "{$storageInfo['used']} / {$storageInfo['total']} ({$storageInfo['percent']}%)",
+                $storageColor
+            );
+        }
+
+        // Compute the column position where the divider `|` lives.
+        // Endpoint row before `|`: '    Web | <primary>' → indent(4) + label(3) + ' | '(3) + len(primary).
+        // Metrics row before `|`:  '    <left>'         → indent(4) + len(left).
+        // We pick the maximum so both blocks share one vertical line.
+        $endpointPrimaryMax = 0;
+        foreach ($endpointRows as [, $primary]) {
+            $endpointPrimaryMax = max($endpointPrimaryMax, $this->visibleWidth($primary));
+        }
+        $metricsLeftMax = 0;
+        foreach ($metricsLeft as $left) {
+            $metricsLeftMax = max($metricsLeftMax, $this->visibleWidth($left));
+        }
+        $endpointPipeCol = $endpointRows ? (4 + 3 + 3 + $endpointPrimaryMax) : 0;
+        $metricsPipeCol = ($metricsLeftMax > 0) ? (4 + $metricsLeftMax) : 0;
+        $pipeCol = max($endpointPipeCol, $metricsPipeCol);
+
+        // Render endpoints block
+        foreach ($endpointRows as [$label, $primary, $secondary]) {
+            $primaryColored = MenuStyleConfig::colorize($primary, MenuStyleConfig::COLOR_CYAN);
+            $line = '    ' . $label . ' | ' . $primaryColored;
+            if ($secondary !== '') {
+                // 4 indent + 3 label + 3 ' | ' + visibleWidth(primary) = current visible length
+                $visibleLen = 4 + 3 + 3 + $this->visibleWidth($primary);
+                $line .= str_repeat(' ', max(1, $pipeCol - $visibleLen + 1)) . '| '
+                    . MenuStyleConfig::colorize($secondary, MenuStyleConfig::COLOR_GRAY);
+            }
+            $lines[] = $line;
         }
 
         // Last login info
@@ -171,68 +271,19 @@ class WelcomeBanner implements BannerInterface
             $lines[] = $loginStr;
         }
 
-        $lines[] = '';
+        $lines[] = $this->compactSeparator();
 
-        // Get uptime for metrics and service status logic
-        $uptimeSeconds = $this->dataCollector->getUptimeSeconds();
-        $uptime = $this->dataCollector->getUptime();
-        $isStarting = $uptimeSeconds > 0 && $uptimeSeconds < self::STARTUP_GRACE_PERIOD;
-
-        // Line 1: Uptime | Load (cores)
-        $line1 = [];
-        if (!empty($uptime)) {
-            $line1[] = $translation->_('cm_Uptime') . ': ' . $uptime;
-        }
-        $loadAvg = $this->dataCollector->getLoadAverage();
-        if ($loadAvg !== null) {
-            $cpuCores = $this->dataCollector->getCpuCores();
-            $loadStr = MenuStyleConfig::formatLoadValue($loadAvg['load1']) . ' '
-                . MenuStyleConfig::formatLoadValue($loadAvg['load5']) . ' '
-                . MenuStyleConfig::formatLoadValue($loadAvg['load15'])
-                . " ($cpuCores cores)";
-            $line1[] = 'Load: ' . $loadStr;
-        }
-        if (!empty($line1)) {
-            $lines[] = '    ' . implode(' | ', $line1);
-        }
-
-        // Line 2: Mem | Swap (if used)
-        $memInfo = $this->dataCollector->getMemoryInfo();
-        if ($memInfo !== null) {
-            $line2 = [];
-            $memColor = $memInfo['mem_percent'] > 90
-                ? MenuStyleConfig::COLOR_RED
-                : ($memInfo['mem_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
-            $line2[] = 'Mem: ' . MenuStyleConfig::colorize(
-                "{$memInfo['mem_used']} / {$memInfo['mem_total']} ({$memInfo['mem_percent']}%)",
-                $memColor
-            );
-            if ($memInfo['swap_percent'] > 0) {
-                $swapColor = $memInfo['swap_percent'] > 90
-                    ? MenuStyleConfig::COLOR_RED
-                    : ($memInfo['swap_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
-                $line2[] = 'Swap: ' . MenuStyleConfig::colorize(
-                    "{$memInfo['swap_used']} / {$memInfo['swap_total']} ({$memInfo['swap_percent']}%)",
-                    $swapColor
-                );
+        // Render metrics block — 3×2 grid using the shared $pipeCol
+        for ($i = 0; $i < 3; $i++) {
+            if ($metricsLeft[$i] === '' && $metricsRight[$i] === '') {
+                continue;
             }
-            $lines[] = '    ' . implode(' | ', $line2);
+            $visibleLen = 4 + $this->visibleWidth($metricsLeft[$i]);
+            $pad = str_repeat(' ', max(1, $pipeCol - $visibleLen + 1));
+            $lines[] = '    ' . $metricsLeft[$i] . $pad . '| ' . $metricsRight[$i];
         }
 
-        // Line 3: Storage
-        $storageInfo = $this->dataCollector->getStorageInfo();
-        if ($storageInfo !== null) {
-            $storageColor = $storageInfo['percent'] > 90
-                ? MenuStyleConfig::COLOR_RED
-                : ($storageInfo['percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
-            $lines[] = '    ' . $translation->_('cm_Storage') . ': '
-                . MenuStyleConfig::colorize(
-                    "{$storageInfo['used']} / {$storageInfo['total']} ({$storageInfo['percent']}%)",
-                    $storageColor
-                );
-        }
-
-        $lines[] = '';
+        $lines[] = $this->compactSeparator();
 
         // Service status - all 7 services in one line
         // During startup (uptime < 2 min), show stopped services as yellow instead of red
@@ -291,10 +342,7 @@ class WelcomeBanner implements BannerInterface
         // Top border
         $lines[] = self::BOX_TOP_LEFT . str_repeat(self::BOX_HORIZONTAL, $innerWidth) . self::BOX_TOP_RIGHT;
 
-        // Empty line
-        $lines[] = $this->boxLine('', $innerWidth);
-
-        // ASCII Logo (centered)
+        // ASCII Logo (centered) — top padding dropped to keep the banner ≤25 lines
         foreach (self::ASCII_LOGO as $logoLine) {
             $lines[] = $this->boxLine($this->centerText($logoLine, $innerWidth), $innerWidth);
         }
@@ -302,7 +350,6 @@ class WelcomeBanner implements BannerInterface
         // Slogan
         $slogan = 'Free phone system for small business';
         $lines[] = $this->boxLine($this->centerText($slogan, $innerWidth), $innerWidth);
-        $lines[] = $this->boxLine('', $innerWidth);
 
         // PBX Name and Description section (if set)
         $pbxName = $this->dataCollector->getPbxName();
@@ -384,68 +431,78 @@ class WelcomeBanner implements BannerInterface
             true
         );
 
-        // Row 2: Built (left) | Load with cores (right)
-        $leftCol = "  Built: $buildTime";
+        // System info block — semantically grouped 3×2 grid:
+        //   Left column  (system/time): Built | Load | Uptime
+        //   Right column (resources):   Mem   | Swap | Storage
+        // Skip swap row entirely when swap_percent == 0 (no swap configured/used).
         $loadAvg = $this->dataCollector->getLoadAverage();
+        $memInfo = $this->dataCollector->getMemoryInfo();
+        $storageInfo = $this->dataCollector->getStorageInfo();
+
+        $rowLeft = ['', '', ''];
+        $rowRight = ['', '', ''];
+
+        $rowLeft[0] = "  Built: $buildTime";
         if ($loadAvg !== null) {
             $cpuCores = $this->dataCollector->getCpuCores();
-            $rightCol = 'Load: ' . MenuStyleConfig::formatLoadValue($loadAvg['load1']) . ' '
+            $rowLeft[1] = '  Load: '
+                . MenuStyleConfig::formatLoadValue($loadAvg['load1']) . ' '
                 . MenuStyleConfig::formatLoadValue($loadAvg['load5']) . ' '
                 . MenuStyleConfig::formatLoadValue($loadAvg['load15'])
                 . " ($cpuCores cores)";
-        } else {
-            $rightCol = '';
         }
-        $lines[] = $this->boxLineTwoCol($leftCol, $rightCol, $innerWidth);
+        $rowLeft[2] = '  ' . $translation->_('cm_Uptime') . ': ' . $uptime;
 
-        // Row 3: Uptime (left) | Mem (right)
-        $leftCol = '  ' . $translation->_('cm_Uptime') . ': ' . $uptime;
-        $memInfo = $this->dataCollector->getMemoryInfo();
         if ($memInfo !== null) {
             $memColor = $memInfo['mem_percent'] > 90
                 ? MenuStyleConfig::COLOR_RED
                 : ($memInfo['mem_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
-            $rightCol = 'Mem: ' . MenuStyleConfig::colorize(
+            $rowRight[0] = 'Mem: ' . MenuStyleConfig::colorize(
                 "{$memInfo['mem_used']} / {$memInfo['mem_total']} ({$memInfo['mem_percent']}%)",
                 $memColor
             );
-        } else {
-            $rightCol = '';
+            if ($memInfo['swap_percent'] > 0) {
+                $swapColor = $memInfo['swap_percent'] > 90
+                    ? MenuStyleConfig::COLOR_RED
+                    : ($memInfo['swap_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
+                $rowRight[1] = 'Swap: ' . MenuStyleConfig::colorize(
+                    "{$memInfo['swap_used']} / {$memInfo['swap_total']} ({$memInfo['swap_percent']}%)",
+                    $swapColor
+                );
+            }
         }
-        $lines[] = $this->boxLineTwoCol($leftCol, $rightCol, $innerWidth);
-
-        // Row 4: Storage (left) | Swap (right)
-        $storageInfo = $this->dataCollector->getStorageInfo();
-        $leftCol = '';
-        $rightCol = '';
         if ($storageInfo !== null) {
             $storageColor = $storageInfo['percent'] > 90
                 ? MenuStyleConfig::COLOR_RED
                 : ($storageInfo['percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
-            $leftCol = '  ' . $translation->_('cm_Storage') . ': '
-                . MenuStyleConfig::colorize(
-                    "{$storageInfo['used']} / {$storageInfo['total']} ({$storageInfo['percent']}%)",
-                    $storageColor
-                );
-        }
-        if ($memInfo !== null && $memInfo['swap_percent'] > 0) {
-            $swapColor = $memInfo['swap_percent'] > 90
-                ? MenuStyleConfig::COLOR_RED
-                : ($memInfo['swap_percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
-            $rightCol = 'Swap: ' . MenuStyleConfig::colorize(
-                "{$memInfo['swap_used']} / {$memInfo['swap_total']} ({$memInfo['swap_percent']}%)",
-                $swapColor
+            $rowRight[2] = $translation->_('cm_Storage') . ': ' . MenuStyleConfig::colorize(
+                "{$storageInfo['used']} / {$storageInfo['total']} ({$storageInfo['percent']}%)",
+                $storageColor
             );
         }
-        if (!empty($leftCol) || !empty($rightCol)) {
-            $lines[] = $this->boxLineTwoCol($leftCol, $rightCol, $innerWidth);
+
+        // When swap row is empty on both sides, collapse it (Storage moves up to align with Load)
+        for ($i = 0; $i < 3; $i++) {
+            if ($rowLeft[$i] === '' && $rowRight[$i] === '') {
+                continue;
+            }
+            $lines[] = $this->boxLineTwoCol($rowLeft[$i], $rowRight[$i], $innerWidth);
         }
 
         // Network section
         $lines[] = $this->boxSeparator($innerWidth);
 
+        // Web Interface — single line; when behind NAT show external (cyan, primary)
+        // and local (gray, secondary) side-by-side as two columns
         $webInfo = $this->dataCollector->getWebInterfaceInfo();
-        if (!empty($webInfo['url'])) {
+        $hasExternal = !empty($webInfo['externalUrl']);
+        if ($hasExternal) {
+            $left = '  Web : ' . MenuStyleConfig::colorize($webInfo['externalUrl'], MenuStyleConfig::COLOR_CYAN);
+            $right = !empty($webInfo['url'])
+                ? MenuStyleConfig::colorize($webInfo['url'], MenuStyleConfig::COLOR_GRAY)
+                : '';
+            $lines[] = $this->boxLineTwoCol($left, $right, $innerWidth);
+        } elseif (!empty($webInfo['url'])) {
             $lines[] = $this->boxLine(
                 '  ' . $translation->_('cm_WebInterfaceUrl') . ': '
                 . MenuStyleConfig::colorize($webInfo['url'], MenuStyleConfig::COLOR_CYAN),
@@ -454,13 +511,23 @@ class WelcomeBanner implements BannerInterface
             );
         }
 
+        // SSH access — same two-column layout when external address is configured
         $sshPort = $this->dataCollector->getSshPort();
-        if (!empty($webInfo['ip'])) {
-            $sshCmd = 'ssh ' . $this->dataCollector->getSshLogin() . '@' . $webInfo['ip'];
-            if ($sshPort !== '22') {
-                $sshCmd .= " -p $sshPort";
-            }
-            $lines[] = $this->boxLine('  SSH Access:    ' . $sshCmd, $innerWidth);
+        $sshLogin = $this->dataCollector->getSshLogin();
+        if ($hasExternal) {
+            $left = '  SSH : ' . $this->buildSshCommand($sshLogin, $webInfo['externalHost'], $sshPort);
+            $right = !empty($webInfo['ip'])
+                ? MenuStyleConfig::colorize(
+                    $this->buildSshCommand($sshLogin, $webInfo['ip'], $sshPort),
+                    MenuStyleConfig::COLOR_GRAY
+                )
+                : '';
+            $lines[] = $this->boxLineTwoCol($left, $right, $innerWidth);
+        } elseif (!empty($webInfo['ip'])) {
+            $lines[] = $this->boxLine(
+                '  SSH Access:    ' . $this->buildSshCommand($sshLogin, $webInfo['ip'], $sshPort),
+                $innerWidth
+            );
         }
 
         // Last login info
@@ -479,45 +546,26 @@ class WelcomeBanner implements BannerInterface
         // During startup (uptime < 2 min), show stopped services as yellow instead of red
         $lines[] = $this->boxSeparator($innerWidth);
 
+        // Services in a single row (Core + System merged with a separator) to save space
         $services = $this->dataCollector->getServiceStatuses();
-        $serviceNames = array_keys($services);
-
-        // First row: Core services (Asterisk, Nginx, PHP)
-        $coreServices = array_slice($serviceNames, 0, 3);
-        $coreParts = [];
-        foreach ($coreServices as $name) {
-            $coreParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($services[$name], $isStarting);
+        $serviceParts = [];
+        foreach ($services as $name => $running) {
+            $serviceParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($running, $isStarting);
         }
         $lines[] = $this->boxLine(
-            '  Core:    ' . implode('   ', $coreParts),
+            '  ' . implode('  ', $serviceParts),
             $innerWidth,
             true
         );
 
-        // Second row: System services (Redis, Nats, Fail2ban, Monit)
-        $systemServices = array_slice($serviceNames, 3);
-        $systemParts = [];
-        foreach ($systemServices as $name) {
-            $systemParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($services[$name], $isStarting);
-        }
-        $lines[] = $this->boxLine(
-            '  System:  ' . implode('   ', $systemParts),
-            $innerWidth,
-            true
-        );
-
-        // Footer section
+        // Footer — single hint line combines "any key for menu" and "Ctrl+C to shell"
         $lines[] = $this->boxSeparator($innerWidth);
 
-        $hint1 = $translation->_('cm_PressAnyKey') . '...';
-        $hint2 = 'Press Ctrl+C ' . $translation->_('cm_ForShell');
-
-        $lines[] = $this->boxLine(
-            $this->centerText(MenuStyleConfig::colorize($hint1, MenuStyleConfig::COLOR_YELLOW), $innerWidth),
-            $innerWidth,
-            true
-        );
-        $lines[] = $this->boxLine($this->centerText($hint2, $innerWidth), $innerWidth);
+        $hint = MenuStyleConfig::colorize(
+            $translation->_('cm_PressAnyKey'),
+            MenuStyleConfig::COLOR_YELLOW
+        ) . '  •  Ctrl+C ' . $translation->_('cm_ForShell');
+        $lines[] = $this->boxLine($this->centerText($hint, $innerWidth), $innerWidth, true);
 
         // Bottom border
         $lines[] = self::BOX_BOTTOM_LEFT . str_repeat(self::BOX_HORIZONTAL, $innerWidth) . self::BOX_BOTTOM_RIGHT;
@@ -584,6 +632,48 @@ class WelcomeBanner implements BannerInterface
     }
 
     /**
+     * Render a horizontal `-----` section separator for the compact banner.
+     * Indented to match the 4-space content margin.
+     */
+    private function compactSeparator(): string
+    {
+        return '    ' . str_repeat('-', self::COMPACT_SEPARATOR_WIDTH);
+    }
+
+    /**
+     * Visible character width — strips ANSI escape sequences before counting.
+     * Used for column alignment math where padding must account for color codes.
+     */
+    private function visibleWidth(string $s): int
+    {
+        return mb_strlen(preg_replace('/\033\[[0-9;]*m/', '', $s));
+    }
+
+    /**
+     * Build SSH connection arguments "user@host[ -p port]" — valid OpenSSH syntax,
+     * port omitted when default 22. Use buildSshCommand() to prepend the `ssh` binary.
+     *
+     * Note: `user@host:port` is NOT valid SSH command syntax (OpenSSH parses
+     * `host:port` as a literal hostname). The `-p` flag is the canonical form.
+     */
+    private function buildSshArgs(string $login, string $host, string $port): string
+    {
+        $args = $login . '@' . $host;
+        if ($port !== '' && $port !== '22') {
+            $args .= ' -p ' . $port;
+        }
+        return $args;
+    }
+
+    /**
+     * Build full "ssh user@host[ -p port]" command string for fullscreen banner.
+     */
+    private function buildSshCommand(string $login, string $host, string $port): string
+    {
+        return 'ssh ' . $this->buildSshArgs($login, $host, $port);
+    }
+
+    /**
      * Center text within given width
      *
      * @param string $text Text to center
@@ -627,9 +717,12 @@ class WelcomeBanner implements BannerInterface
         // Static flag to prevent multiple shutdown handler registrations
         static $shutdownRegistered = false;
 
-        // Determine display mode based on console type
+        // Determine display mode based on console type and terminal size.
+        // Width and height are both checked — narrow OR short terminals get the
+        // compact (~10-line) banner so the menu prompt stays visible without scroll.
         $useFullscreen = $this->envHelper->supportsFullscreenBanner()
-            && $this->styleConfig->getTerminalWidth() >= self::FULLSCREEN_MIN_WIDTH;
+            && $this->styleConfig->getTerminalWidth() >= self::FULLSCREEN_MIN_WIDTH
+            && $this->styleConfig->getTerminalHeight() >= self::FULLSCREEN_MIN_HEIGHT;
 
         // Set terminal to non-blocking mode for key detection
         system('stty -icanon -echo');

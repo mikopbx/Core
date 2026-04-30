@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\System\ConsoleMenu\Banners;
 
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
@@ -151,11 +152,35 @@ class BannerDataCollector
     /**
      * Get web interface URL for the internet interface
      *
-     * @return array{url: string, ip: string, port: string} Web interface info
+     * Returns local interface URL (always populated when interface has IP) plus
+     * external URL/host when topology=private and exthostname/extipaddr is
+     * configured. The external pair lets callers show both addresses behind NAT
+     * (cloud, on-prem NAT) so that users connecting via the public IP/hostname
+     * see a reachable URL.
+     *
+     * Resolution priority for the external host (topology=private only):
+     *   1. exthostname — preferred when set (FQDN survives IP changes)
+     *   2. extipaddr   — fallback IP, supports optional `host:port` form
+     *
+     * @return array{
+     *     url: string,
+     *     ip: string,
+     *     port: string,
+     *     externalUrl: string,
+     *     externalHost: string,
+     *     externalPort: string
+     * }
      */
     public function getWebInterfaceInfo(): array
     {
-        $result = ['url' => '', 'ip' => '', 'port' => ''];
+        $result = [
+            'url' => '',
+            'ip' => '',
+            'port' => '',
+            'externalUrl' => '',
+            'externalHost' => '',
+            'externalPort' => '',
+        ];
 
         $networks = $this->network->getEnabledLanInterfaces();
 
@@ -181,24 +206,91 @@ class BannerDataCollector
 
             $httpsPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT) ?: '443';
 
-            // Build URL with proper IPv6 bracket handling
-            $webUrl = 'https://';
-            if (IpAddressHelper::isIpv6($ip)) {
-                $webUrl .= '[' . $ip . ']';
-            } else {
-                $webUrl .= $ip;
-            }
+            $result['url'] = $this->buildHttpsUrl($ip, $httpsPort);
+            $result['ip'] = $ip;
+            $result['port'] = $httpsPort;
 
-            // Add port only if non-standard
-            if ($httpsPort !== '443') {
-                $webUrl .= ':' . $httpsPort;
+            // External (NAT) address — only when topology=private. Prefer exthostname over
+            // extipaddr (FQDN survives DHCP/IP changes). Both fields may carry an explicit
+            // `host:port` suffix that overrides the system HTTPS port for the external URL.
+            $isPrivate = ($if_data['topology'] ?? '') === LanInterfaces::TOPOLOGY_PRIVATE;
+            if ($isPrivate) {
+                $external = $this->resolveExternalHost(
+                    $if_data['exthostname'] ?? '',
+                    $if_data['extipaddr'] ?? '',
+                    $httpsPort
+                );
+                if ($external !== null) {
+                    [$host, $port] = $external;
+                    $result['externalUrl'] = $this->buildHttpsUrl($host, $port);
+                    $result['externalHost'] = $host;
+                    $result['externalPort'] = $port;
+                }
             }
-
-            $result = ['url' => $webUrl, 'ip' => $ip, 'port' => $httpsPort];
             break;
         }
 
         return $result;
+    }
+
+    /**
+     * Resolve external (NAT) host + port from exthostname/extipaddr.
+     *
+     * exthostname wins when set (FQDN). Each field may carry an optional `host:port`
+     * suffix that overrides the system HTTPS port. Returns [host, port] or null when
+     * neither field is configured.
+     *
+     * IpAddressHelper::parseIpWithOptionalPort() is tried first because it correctly
+     * handles IPv6 literals (`[2001:db8::1]:5060`, bare `2001:db8::1`) and IPv4:port.
+     * For non-IP hostnames the trailing-`:port` regex is used as fallback. Bare
+     * regex `/^(.+):(\d+)$/` alone misparses bare IPv6 (matches `2001:db8::` + `1`).
+     *
+     * Note: LanInterfaces::validateHostnameField rejects colons in exthostname on save,
+     * so the regex branch handles only legacy/unmigrated rows; it's still required
+     * defensively because older builds tolerated raw `:port` suffixes.
+     *
+     * @return array{0: string, 1: string}|null
+     */
+    private function resolveExternalHost(string $exthostname, string $extipaddr, string $defaultPort): ?array
+    {
+        if (!empty($exthostname)) {
+            // IP literal first (handles IPv6 brackets, bare IPv6, IPv4:port robustly)
+            $parsed = IpAddressHelper::parseIpWithOptionalPort($exthostname);
+            if ($parsed !== false) {
+                [$host, $port] = $parsed;
+                return [$host, $port ?: $defaultPort];
+            }
+            // Hostname[:port] fallback for legacy/unmigrated FQDN values
+            if (preg_match('/^(.+):(\d+)$/', $exthostname, $m)) {
+                return [$m[1], $m[2]];
+            }
+            return [$exthostname, $defaultPort];
+        }
+
+        if (!empty($extipaddr)) {
+            $parsed = IpAddressHelper::parseIpWithOptionalPort($extipaddr);
+            if ($parsed !== false) {
+                [$ip, $port] = $parsed;
+                return [$ip, $port ?: $defaultPort];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Build https://host[:port] URL with proper IPv6 bracket handling.
+     *
+     * Standard 443 port is omitted to keep the URL short.
+     */
+    private function buildHttpsUrl(string $ip, string $port): string
+    {
+        $url = 'https://';
+        $url .= IpAddressHelper::isIpv6($ip) ? '[' . $ip . ']' : $ip;
+        if ($port !== '' && $port !== '443') {
+            $url .= ':' . $port;
+        }
+        return $url;
     }
 
     /**

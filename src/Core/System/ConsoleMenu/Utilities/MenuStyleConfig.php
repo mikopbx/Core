@@ -45,6 +45,7 @@ class MenuStyleConfig
     public const string COLOR_BLUE = "\033[01;34m";
     public const string COLOR_WHITE = "\033[01;37m";
     public const string COLOR_ORANGE = "\033[38;5;208m";  // Claude Code style accent
+    public const string COLOR_GRAY = "\033[38;5;245m";    // Muted gray for secondary info
     public const string COLOR_RESET = "\033[39m";
     public const string COLOR_BOLD = "\033[1m";
     public const string COLOR_RESET_ALL = "\033[0m";

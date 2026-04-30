@@ -546,8 +546,11 @@ class SystemLoader extends Injectable
         $this->echoStartMsg($welcomeMessage);
 
         if (!$this->isDocker) {
-            // Display the console menu info
-            $message =  PHP_EOL . PHP_EOL . 'Run /etc/rc/console_menu if you want to start the console menu...' . PHP_EOL;
+            // welcome_banner is the unified entry point — shows status and lets the user
+            // press any key for the menu or Ctrl+C for shell. The old "Run console_menu"
+            // hint is dropped because it skipped the status view and duplicated the
+            // banner's own footer hints.
+            $message = PHP_EOL . 'Type /etc/rc/welcome_banner to show the system status and menu...' . PHP_EOL;
             SystemMessages::echoToTeletype($message);
         }
 
