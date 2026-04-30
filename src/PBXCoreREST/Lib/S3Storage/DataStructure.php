@@ -265,10 +265,15 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getSanitizationRules(): array
     {
-        $allFields = self::getAllFieldDefinitions();
+        // WHY: Iterate request-only fields (excludes readOnly catalogues like
+        // available_presets). Without this, GET→PUT round-trips fed
+        // readOnly array fields into sanitizeData() and triggered
+        // "Array to string conversion" inside (string)$value cast.
+        $definitions = self::getParameterDefinitions();
+        $requestFields = $definitions['request'] ?? [];
         $rules = [];
 
-        foreach ($allFields as $fieldName => $fieldDef) {
+        foreach ($requestFields as $fieldName => $fieldDef) {
             $ruleParts = [];
 
             // Add type

@@ -62,9 +62,11 @@ class CheckForUpdatesAction
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
+        // Get current PBX version up front so degraded responses can echo it
+        // (when the release server is unreachable).
+        $pbxVersion = (string)PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
+
         try {
-            // Get current PBX version and language
-            $pbxVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
             $language = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
 
             // Prepare request data with platform identification
@@ -90,9 +92,16 @@ class CheckForUpdatesAction
 
             // Check response status
             if ($response->getStatusCode() !== Response::OK) {
-                $res->messages['error'][] = 'Failed to get firmware details: HTTP ' . $response->getStatusCode();
-                $res->httpCode = Response::INTERNAL_SERVER_ERROR;
-                return $res;
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    'Update server returned HTTP ' . $response->getStatusCode(),
+                    LOG_ERR
+                );
+                return self::degradedResult(
+                    $res,
+                    $pbxVersion,
+                    'Update server returned HTTP ' . $response->getStatusCode()
+                );
             }
 
             // Parse response body
@@ -100,23 +109,24 @@ class CheckForUpdatesAction
             $updateData = json_decode($body, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                $res->messages['error'][] = 'Invalid JSON response from update server';
-                $res->httpCode = Response::INTERNAL_SERVER_ERROR;
                 SystemMessages::sysLogMsg(
                     __METHOD__,
                     'Invalid JSON from update server: ' . json_last_error_msg(),
                     LOG_ERR
                 );
-                return $res;
+                return self::degradedResult($res, $pbxVersion, 'Invalid JSON response from update server');
             }
 
             // Handle both SUCCESS and FAILURE responses
             // SUCCESS: firmware details available
             // FAILURE: no updates available (normal case, not an error)
             if (!isset($updateData['result'])) {
-                $res->messages['error'][] = 'Invalid response format from update server';
-                $res->httpCode = Response::INTERNAL_SERVER_ERROR;
-                return $res;
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    'Invalid response format from update server',
+                    LOG_ERR
+                );
+                return self::degradedResult($res, $pbxVersion, 'Invalid response format from update server');
             }
 
             $hasUpdates = $updateData['result'] === 'SUCCESS'
@@ -130,29 +140,59 @@ class CheckForUpdatesAction
                 'hasUpdates' => $hasUpdates,
                 'firmware' => $hasUpdates ? $updateData['firmware'] : [],
                 'lastCheck' => date('Y-m-d H:i:s'),
+                'checkSucceeded' => true,
             ];
 
             $res->success = true;
             $res->httpCode = Response::OK;
 
         } catch (GuzzleException $e) {
-            $res->messages['error'][] = 'Network error while checking for updates';
-            $res->httpCode = Response::INTERNAL_SERVER_ERROR;
             SystemMessages::sysLogMsg(
                 __METHOD__,
                 'Failed to check updates: ' . $e->getMessage(),
                 LOG_ERR
             );
+            return self::degradedResult($res, $pbxVersion, 'Network error while checking for updates');
         } catch (\Throwable $e) {
-            $res->messages['error'][] = 'Unexpected error while checking for updates';
-            $res->httpCode = Response::INTERNAL_SERVER_ERROR;
             SystemMessages::sysLogMsg(
                 __METHOD__,
                 'Unexpected error: ' . $e->getMessage(),
                 LOG_ERR
             );
+            return self::degradedResult($res, $pbxVersion, 'Unexpected error while checking for updates');
         }
 
+        return $res;
+    }
+
+    /**
+     * Build a successful HTTP 200 response that signals "could not check".
+     *
+     * WHY: Mirror the resilience contract used by the lightweight quick-check
+     * endpoint (CheckIfNewReleaseAvailableAction). The web update page and
+     * any consumer that calls both endpoints in sequence (CI tests included)
+     * can rely on a stable response shape — `checkSucceeded` discriminates
+     * between "no update" and "could not reach the update server" without
+     * forcing every caller to handle HTTP 500. Errors are preserved in
+     * syslog and as a non-fatal `messages.warning` entry.
+     *
+     * @param PBXApiResult $res         Pre-allocated result object
+     * @param string       $pbxVersion  Current PBX version (echoed back)
+     * @param string       $reason      Human-readable reason for degradation
+     * @return PBXApiResult
+     */
+    private static function degradedResult(PBXApiResult $res, string $pbxVersion, string $reason): PBXApiResult
+    {
+        $res->data = [
+            'currentVersion' => $pbxVersion,
+            'hasUpdates' => false,
+            'firmware' => [],
+            'lastCheck' => date('Y-m-d H:i:s'),
+            'checkSucceeded' => false,
+        ];
+        $res->messages['warning'][] = $reason;
+        $res->success = true;
+        $res->httpCode = Response::OK;
         return $res;
     }
 }

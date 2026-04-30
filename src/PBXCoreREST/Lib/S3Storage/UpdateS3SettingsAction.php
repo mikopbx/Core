@@ -279,8 +279,16 @@ class UpdateS3SettingsAction
 
         foreach ($data as $key => $value) {
             if (isset($rules[$key])) {
-                // Simple sanitization - extend as needed
                 $ruleParts = explode('|', $rules[$key]);
+
+                // Defense-in-depth: never coerce non-scalar to a primitive.
+                // readOnly fields are already excluded from the rules, but a
+                // stray array/object input must not crash the sanitizer with
+                // a PHP "Array to string conversion" exception. Drop it.
+                if (!is_scalar($value) && $value !== null) {
+                    continue;
+                }
+
                 $sanitized[$key] = match (true) {
                     in_array('int', $ruleParts) || in_array('integer', $ruleParts) => (int)$value,
                     in_array('float', $ruleParts) => (float)$value,
