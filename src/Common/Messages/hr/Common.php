@@ -837,7 +837,6 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'Pružatelj S3 pohrane',
     'storage_s3_preset_placeholder' => 'Odaberite pružatelja',
-    'storage_s3_preset_docs_link' => 'Otvori upute',
     'storage_s3_preset_aws' => 'Amazon S3',
     'storage_s3_preset_minio' => 'MinIO',
     'storage_s3_preset_garage' => 'Garage',

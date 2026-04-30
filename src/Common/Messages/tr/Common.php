@@ -754,7 +754,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'S3 depolama sağlayıcısı',
     'storage_s3_preset_placeholder' => 'Bir sağlayıcı seçin',
-    'storage_s3_preset_docs_link' => 'Kılavuzu aç',
     'storage_s3_preset_aws' => 'Amazon S3',
     'storage_s3_preset_minio' => 'MinIO',
     'storage_s3_preset_garage' => 'Garage',

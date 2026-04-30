@@ -875,7 +875,6 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'Provider di archiviazione S3',
     'storage_s3_preset_placeholder' => 'Seleziona un provider',
-    'storage_s3_preset_docs_link' => 'Apri la guida',
     'storage_s3_preset_aws' => 'Amazon S3',
     'storage_s3_preset_minio' => 'MinIO',
     'storage_s3_preset_garage' => 'Garage',

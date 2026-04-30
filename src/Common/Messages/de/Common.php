@@ -792,7 +792,6 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'S3-Speicheranbieter',
     'storage_s3_preset_placeholder' => 'Anbieter auswählen',
-    'storage_s3_preset_docs_link' => 'Anleitung öffnen',
     'storage_s3_preset_aws' => 'Amazon S3',
     'storage_s3_preset_minio' => 'MinIO',
     'storage_s3_preset_garage' => 'Garage',

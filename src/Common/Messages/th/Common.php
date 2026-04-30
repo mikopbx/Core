@@ -873,7 +873,6 @@ return [
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'ผู้ให้บริการพื้นที่จัดเก็บ S3',
     'storage_s3_preset_placeholder' => 'เลือกผู้ให้บริการ',
-    'storage_s3_preset_docs_link' => 'เปิดคู่มือ',
     'storage_s3_preset_aws' => 'Amazon S3',
     'storage_s3_preset_minio' => 'MinIO',
     'storage_s3_preset_garage' => 'Garage',

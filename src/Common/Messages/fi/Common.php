@@ -787,7 +787,6 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'S3-tallennuspalveluntarjoaja',
     'storage_s3_preset_placeholder' => 'Valitse palveluntarjoaja',
-    'storage_s3_preset_docs_link' => 'Avaa ohje',
     'storage_s3_preset_aws' => 'Amazon S3',
     'storage_s3_preset_minio' => 'MinIO',
     'storage_s3_preset_garage' => 'Garage',

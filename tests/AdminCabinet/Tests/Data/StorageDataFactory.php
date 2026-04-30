@@ -192,11 +192,11 @@ class StorageDataFactory
      * validate the dropdown's effect on the dependent UI fields.
      *
      * Keys mirror StorageSettings::PRESET_* / S3ProviderPresets::all().
-     * The expected_endpoint_placeholder fragment is checked with
-     * str_contains so we don't pin the exact URL — only the substring
-     * that proves the right preset fired.
+     * The endpoint_fragment is checked with str_contains so we don't pin
+     * the exact URL — only the substring that proves the right preset
+     * fired.
      *
-     * @return array<string, array{expected_path_style:int, expected_region:string, endpoint_fragment:string, docs_path:string}>
+     * @return array<string, array{expected_path_style:int, expected_region:string, endpoint_fragment:string}>
      */
     public static function getS3PresetTestData(): array
     {
@@ -205,25 +205,21 @@ class StorageDataFactory
                 'expected_path_style' => 0,
                 'expected_region' => 'us-east-1',
                 'endpoint_fragment' => 'amazonaws.com',
-                'docs_path' => 'manual/maintenance/storage/aws.md',
             ],
             'minio' => [
                 'expected_path_style' => 1,
                 'expected_region' => 'us-east-1',
                 'endpoint_fragment' => 'minio',
-                'docs_path' => 'manual/maintenance/storage/minio.md',
             ],
             'garage' => [
                 'expected_path_style' => 1,
                 'expected_region' => 'garage',
                 'endpoint_fragment' => 'garage',
-                'docs_path' => 'manual/maintenance/storage/garage.md',
             ],
             'ceph' => [
                 'expected_path_style' => 1,
                 'expected_region' => 'default',
                 'endpoint_fragment' => 'rgw',
-                'docs_path' => 'manual/maintenance/storage/ceph.md',
             ],
         ];
     }

@@ -130,16 +130,16 @@ class TestS3GaragePreset:
             f"Path-style must be on exactly for MinIO/Garage/Ceph, got {path_style_on}"
         )
 
-        # Each preset must carry endpoint placeholder, region default, docs path
-        # and a translation hint key — used by the UI dropdown.
+        # Each preset must carry endpoint placeholder, region default and
+        # a translation hint key — used by the UI dropdown and folded into
+        # the s3_endpoint field tooltip on selection.
         for preset in data['available_presets']:
-            for field in ('label_key', 'region_default', 'use_path_style', 'docs_path', 'hint_key'):
+            for field in ('label_key', 'endpoint_placeholder', 'region_default', 'use_path_style', 'hint_key'):
                 assert field in preset, f"Preset {preset['id']} missing field {field}"
 
         # Spot-check garage defaults — region must match the Garage cluster default.
         garage_preset = next(p for p in data['available_presets'] if p['id'] == 'garage')
         assert garage_preset['region_default'] == 'garage'
-        assert garage_preset['docs_path'].endswith('garage.md')
 
     def test_02_save_garage_preset_persists_path_style(self, api_client, garage_config):
         """Saving the preset must propagate s3_use_path_style=1 — this is

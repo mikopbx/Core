@@ -761,7 +761,6 @@ Du kan få en ny nøgle automatisk ved at udfylde registreringsformularen.<br>',
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'S3-lagerudbyder',
     'storage_s3_preset_placeholder' => 'Vælg en udbyder',
-    'storage_s3_preset_docs_link' => 'Åbn vejledningen',
     'storage_s3_preset_aws' => 'Amazon S3',
     'storage_s3_preset_minio' => 'MinIO',
     'storage_s3_preset_garage' => 'Garage',

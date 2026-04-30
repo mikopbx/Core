@@ -756,7 +756,6 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'Proveedor de almacenamiento S3',
     'storage_s3_preset_placeholder' => 'Seleccione un proveedor',
-    'storage_s3_preset_docs_link' => 'Abrir la guía',
     'storage_s3_preset_aws' => 'Amazon S3',
     'storage_s3_preset_minio' => 'MinIO',
     'storage_s3_preset_garage' => 'Garage',

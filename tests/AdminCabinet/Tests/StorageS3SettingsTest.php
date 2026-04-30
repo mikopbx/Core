@@ -481,23 +481,16 @@ class StorageS3SettingsTest extends MikoPBXTestsBase
                 . $expected['endpoint_fragment'] . "'"
             );
 
-            // Hint banner: visible with non-empty text.
-            $hintVisible = self::$driver->executeScript(
-                "return $('#s3-preset-hint').is(':visible');"
+            // The per-preset hint is folded into the s3_endpoint tooltip
+            // (no standalone banner). Confirm the storageIndex state holds
+            // the preset note text — the tooltip popup itself is hover-only
+            // and rebuilt from this state via Fomantic 'change content'.
+            $presetNote = (string)self::$driver->executeScript(
+                "return (typeof storageIndex !== 'undefined') ? storageIndex.s3EndpointPresetNote : '';"
             );
-            self::assertTrue(
-                (bool)$hintVisible,
-                "Hint banner should be visible after picking preset '{$presetId}'"
-            );
-
-            // Docs link points to the right per-provider doc.
-            $docsHref = (string)self::$driver->executeScript(
-                "return $('#s3-preset-docs-link').attr('href') || '';"
-            );
-            self::assertStringEndsWith(
-                $expected['docs_path'],
-                $docsHref,
-                "Docs link for preset '{$presetId}' should end with '{$expected['docs_path']}'"
+            self::assertNotEmpty(
+                $presetNote,
+                "Preset '{$presetId}' should populate storageIndex.s3EndpointPresetNote"
             );
 
             $lastPresetId = $presetId;

@@ -754,7 +754,6 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'Poskytovatel úložiště S3',
     'storage_s3_preset_placeholder' => 'Vyberte poskytovatele',
-    'storage_s3_preset_docs_link' => 'Otevřít návod',
     'storage_s3_preset_aws' => 'Amazon S3',
     'storage_s3_preset_minio' => 'MinIO',
     'storage_s3_preset_garage' => 'Garage',

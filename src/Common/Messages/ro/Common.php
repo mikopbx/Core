@@ -872,7 +872,6 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'Furnizor de stocare S3',
     'storage_s3_preset_placeholder' => 'Selectați un furnizor',
-    'storage_s3_preset_docs_link' => 'Deschide ghidul',
     'storage_s3_preset_aws' => 'Amazon S3',
     'storage_s3_preset_minio' => 'MinIO',
     'storage_s3_preset_garage' => 'Garage',

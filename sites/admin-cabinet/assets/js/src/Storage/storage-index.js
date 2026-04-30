@@ -67,6 +67,15 @@ const storageIndex = {
      * @type {object}
      */
     validateRules: {},
+
+    /**
+     * Per-preset note appended to the s3_endpoint field tooltip. Updated
+     * by setS3EndpointPresetNote() each time the operator picks a different
+     * provider preset; rendered as the `note` slot of the s3_endpoint
+     * tooltip config so all per-field hints stay in one place.
+     * @type {string}
+     */
+    s3EndpointPresetNote: '',
     
     /**
      * Initialize module with event bindings and component initializations.
@@ -361,6 +370,56 @@ const storageIndex = {
     },
 
     /**
+     * Build the s3_endpoint tooltip HTML, weaving in the current
+     * per-preset note (if any) as the trailing `note` slot. Lives in its
+     * own method so setS3EndpointPresetNote() can rebuild the content on
+     * the fly without re-running the rest of the tooltip machinery.
+     *
+     * @returns {string} HTML
+     */
+    buildS3EndpointTooltipContent() {
+        return storageIndex.buildTooltipContent({
+            header: globalTranslate.st_tooltip_s3_endpoint_header,
+            description: globalTranslate.st_tooltip_s3_endpoint_desc,
+            examples: [
+                'AWS S3: https://s3.ap-southeast-1.amazonaws.com',
+                'Yandex Cloud: https://storage.yandexcloud.net',
+                'VK Cloud: https://hb.kz-ast.vkcloud-storage.ru',
+                'Cloudflare R2: https://<ACCOUNT_ID>.r2.cloudflarestorage.com',
+                'DigitalOcean: https://sgp1.digitaloceanspaces.com',
+                'MinIO: http://minio.example.com:9000',
+            ],
+            examplesHeader: globalTranslate.st_tooltip_examples,
+            note: storageIndex.s3EndpointPresetNote || null,
+        });
+    },
+
+    /**
+     * Update the per-preset note that the s3_endpoint tooltip carries and
+     * push the rebuilt HTML into the live Fomantic popup. Called from
+     * s3-storage-index.js whenever the provider preset changes so the
+     * preset-specific guidance lives next to the field it actually
+     * affects (no separate hint banner needed).
+     *
+     * @param {string} text
+     */
+    setS3EndpointPresetNote(text) {
+        storageIndex.s3EndpointPresetNote = text || '';
+        const $icon = $('.field-info-icon[data-field="s3_endpoint"]');
+        if ($icon.length === 0) {
+            return;
+        }
+        // If the popup hasn't been initialised yet (e.g. cloud tab not
+        // visited yet), do nothing extra — initializeTooltips() will pick
+        // up the new state via buildS3EndpointTooltipContent() on first
+        // init. Avoids a destroy/reinit race that would otherwise wipe
+        // the dynamic note when initializeTooltips() runs later.
+        if ($icon.popup('exists')) {
+            $icon.popup('change content', storageIndex.buildS3EndpointTooltipContent());
+        }
+    },
+
+    /**
      * Initialize tooltips for form fields
      */
     initializeTooltips() {
@@ -396,19 +455,7 @@ const storageIndex = {
                 description: globalTranslate.st_tooltip_s3_preset_desc,
             }),
 
-            s3_endpoint: storageIndex.buildTooltipContent({
-                header: globalTranslate.st_tooltip_s3_endpoint_header,
-                description: globalTranslate.st_tooltip_s3_endpoint_desc,
-                examples: [
-                    'AWS S3: https://s3.ap-southeast-1.amazonaws.com',
-                    'Yandex Cloud: https://storage.yandexcloud.net',
-                    'VK Cloud: https://hb.kz-ast.vkcloud-storage.ru',
-                    'Cloudflare R2: https://<ACCOUNT_ID>.r2.cloudflarestorage.com',
-                    'DigitalOcean: https://sgp1.digitaloceanspaces.com',
-                    'MinIO: http://minio.example.com:9000',
-                ],
-                examplesHeader: globalTranslate.st_tooltip_examples
-            }),
+            s3_endpoint: storageIndex.buildS3EndpointTooltipContent(),
 
             s3_region: storageIndex.buildTooltipContent({
                 header: globalTranslate.st_tooltip_s3_region_header,

@@ -770,7 +770,6 @@ return [
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'S3 存储提供商',
     'storage_s3_preset_placeholder' => '选择提供商',
-    'storage_s3_preset_docs_link' => '打开指南',
     'storage_s3_preset_aws' => 'Amazon S3',
     'storage_s3_preset_minio' => 'MinIO',
     'storage_s3_preset_garage' => 'Garage',

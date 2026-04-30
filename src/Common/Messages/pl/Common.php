@@ -751,7 +751,6 @@ Nowy klucz możesz otrzymać automatycznie wypełniając formularz rejestracyjny
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'Dostawca pamięci S3',
     'storage_s3_preset_placeholder' => 'Wybierz dostawcę',
-    'storage_s3_preset_docs_link' => 'Otwórz instrukcję',
     'storage_s3_preset_aws' => 'Amazon S3',
     'storage_s3_preset_minio' => 'MinIO',
     'storage_s3_preset_garage' => 'Garage',

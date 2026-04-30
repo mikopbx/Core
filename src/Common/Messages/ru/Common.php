@@ -913,7 +913,6 @@ return [
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'Провайдер S3-хранилища',
     'storage_s3_preset_placeholder' => 'Выберите провайдера',
-    'storage_s3_preset_docs_link' => 'Открыть инструкцию',
     'storage_s3_preset_aws' => 'Amazon S3',
     'storage_s3_preset_minio' => 'MinIO',
     'storage_s3_preset_garage' => 'Garage',

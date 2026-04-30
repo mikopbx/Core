@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, S3StorageAPI, UserMessage, $ */
+/* global globalRootUrl, globalTranslate, Form, S3StorageAPI, UserMessage, storageIndex, $ */
 
 /**
  * S3 Storage management module
@@ -103,18 +103,6 @@ const s3StorageIndex = {
     $presetDropdown: $('#s3-provider-preset-dropdown'),
 
     /**
-     * jQuery object for the preset hint container.
-     * @type {jQuery}
-     */
-    $presetHint: $('#s3-preset-hint'),
-
-    /**
-     * jQuery object for the preset docs link.
-     * @type {jQuery}
-     */
-    $presetDocsLink: $('#s3-preset-docs-link'),
-
-    /**
      * jQuery object for the endpoint input (cached for placeholder updates).
      * @type {jQuery}
      */
@@ -126,12 +114,6 @@ const s3StorageIndex = {
      * @type {Object<string, Object>}
      */
     presetCatalogue: {},
-
-    /**
-     * Base URL for documentation links.
-     * @type {string}
-     */
-    docsBaseUrl: 'https://docs.mikopbx.com/',
 
     /**
      * Default preset id used when the server has no value yet.
@@ -484,9 +466,12 @@ const s3StorageIndex = {
     },
 
     /**
-     * Update the preset-driven non-form UI: endpoint placeholder, hint
-     * banner, docs link. Safe to call during initial load — does not write
-     * form values.
+     * Update the preset-driven non-form UI: endpoint placeholder and the
+     * preset-specific note that gets folded into the s3_endpoint field
+     * tooltip (no standalone hint banner — uses the existing tooltip
+     * mechanism in storage-index.js so all per-field hints live in one
+     * place). Safe to call during initial load — does not write form
+     * values.
      *
      * @param {string} presetId
      */
@@ -499,19 +484,8 @@ const s3StorageIndex = {
         s3StorageIndex.$s3EndpointInput.attr('placeholder', preset.endpoint_placeholder || '');
 
         const hintText = globalTranslate[preset.hint_key] || '';
-        if (hintText) {
-            s3StorageIndex.$presetHint.find('.hint-text').text(hintText);
-            s3StorageIndex.$presetHint.show();
-        } else {
-            s3StorageIndex.$presetHint.hide();
-        }
-
-        if (preset.docs_path) {
-            s3StorageIndex.$presetDocsLink
-                .attr('href', s3StorageIndex.docsBaseUrl + preset.docs_path)
-                .show();
-        } else {
-            s3StorageIndex.$presetDocsLink.hide();
+        if (typeof storageIndex !== 'undefined' && typeof storageIndex.setS3EndpointPresetNote === 'function') {
+            storageIndex.setS3EndpointPresetNote(hintText);
         }
     },
 

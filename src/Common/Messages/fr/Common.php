@@ -752,7 +752,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'Fournisseur de stockage S3',
     'storage_s3_preset_placeholder' => 'Sélectionnez un fournisseur',
-    'storage_s3_preset_docs_link' => 'Ouvrir le guide',
     'storage_s3_preset_aws' => 'Amazon S3',
     'storage_s3_preset_minio' => 'MinIO',
     'storage_s3_preset_garage' => 'Garage',
