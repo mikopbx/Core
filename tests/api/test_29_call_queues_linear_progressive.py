@@ -286,7 +286,14 @@ class TestCallQueueLinearProgressive:
         queue_id = getattr(self.__class__, '_queue_id', None)
         assert queue_id, "Queue ID not set (test_01 must run first)"
 
-        response = api_client.patch(f'call-queues/{queue_id}', {'strategy': 'definitely_not_a_strategy'})
+        # allow_404=True lets the conftest client surface 4xx (404/422) as a
+        # parsed JSON body instead of raising HTTPError; we expect a 422 with
+        # an enum-validation message from the API.
+        response = api_client.patch(
+            f'call-queues/{queue_id}',
+            {'strategy': 'definitely_not_a_strategy'},
+            allow_404=True,
+        )
         assert response.get('result') is False or response.get('messages'), (
             f"Invalid strategy must not be accepted by API. Response: {response}"
         )
