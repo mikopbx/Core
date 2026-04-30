@@ -2243,7 +2243,7 @@ return [
     'rest_schema_gs_call_parking_ext' => 'Номер для парковки вызовов',
     'rest_schema_gs_call_parking_start_slot' => 'Начальный слот парковки вызовов',
     'rest_schema_gs_codecs' => 'Список поддерживаемых кодеков',
-    'rest_schema_gs_digit_timeout' => 'Таймаут ожидания набора цифры (секунды)',
+    'rest_schema_gs_digit_timeout' => 'Таймаут ожидания набора цифры (миллисекунды)',
     'rest_schema_gs_iax_port' => 'Порт для IAX2 протокола',
     'rest_schema_gs_internal_extension_length' => 'Длина внутренних номеров',
     'rest_schema_gs_is_default_ssh_password' => 'Используется стандартный SSH пароль',

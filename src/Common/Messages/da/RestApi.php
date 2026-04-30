@@ -1736,7 +1736,7 @@ return [
     'rest_schema_am_perm_originate_read' => 'Tilladelse til at modtage Originate-begivenheder',
     'rest_schema_am_perm_cdr_read' => 'Tilladelse til at modtage CDR-hændelser',
     'rest_ivr_GetDefaultDesc' => 'Hent standardværdier for oprettelse af en ny IVR-menu',
-    'rest_schema_gs_digit_timeout' => 'Timeout for cifferopkald (sekunder)',
+    'rest_schema_gs_digit_timeout' => 'Timeout for cifferopkald (millisekunder)',
     'rest_ms_PatchDesc' => 'Opdater kun de angivne mailserverindstillinger (andre felter forbliver uændrede)',
     'rest_response_200_patched' => 'Ændringen blev gennemført.',
     'rest_schema_gs_is_default_web_password' => 'Standardadgangskoden til webgrænsefladen bruges.',

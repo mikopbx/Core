@@ -1969,7 +1969,7 @@ return [
     'rest_schema_gs_call_parking_end_slot' => 'Parkirno mjesto za završetak poziva',
     'rest_schema_gs_call_parking_start_slot' => 'Početno parkirno mjesto za poziv',
     'rest_schema_gs_codecs' => 'Popis podržanih kodeka',
-    'rest_schema_gs_digit_timeout' => 'Vrijeme čekanja za biranje brojeva (sekunde)',
+    'rest_schema_gs_digit_timeout' => 'Vrijeme čekanja za biranje brojeva (milisekunde)',
     'rest_schema_gs_iax_port' => 'Port za IAX2 protokol',
     'rest_schema_gs_is_default_ssh_password' => 'Koristi se standardna SSH lozinka.',
     'rest_schema_gs_is_default_web_password' => 'Koristi se zadana lozinka web sučelja.',

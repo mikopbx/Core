@@ -1178,7 +1178,7 @@ return [
     'rest_schema_gs_call_parking_end_slot' => 'Avsluta samtalsparkeringsplats',
     'rest_schema_gs_call_parking_start_slot' => 'Parkeringsplats för första samtal',
     'rest_schema_gs_codecs' => 'Lista över codecs som stöds',
-    'rest_schema_gs_digit_timeout' => 'Timeout för sifferuppringning (sekunder)',
+    'rest_schema_gs_digit_timeout' => 'Timeout för sifferuppringning (millisekunder)',
     'rest_schema_gs_iax_port' => 'Port för IAX2-protokollet',
     'rest_schema_gs_internal_extension_length' => 'Längden på interna nummer',
     'rest_schema_gs_is_default_ssh_password' => 'Standard SSH-lösenordet används.',

@@ -1186,7 +1186,7 @@ return [
     'rest_schema_gs_call_parking_ext' => 'โทรติดต่อหมายเลขที่จอดรถ',
     'rest_schema_gs_call_parking_start_slot' => 'ช่องจอดรถสำหรับการโทรครั้งแรก',
     'rest_schema_gs_codecs' => 'รายชื่อตัวแปลงสัญญาณที่รองรับ',
-    'rest_schema_gs_digit_timeout' => 'เวลาหมดเวลาในการกดหมายเลข (วินาที)',
+    'rest_schema_gs_digit_timeout' => 'เวลาหมดเวลาในการกดหมายเลข (มิลลิวินาที)',
     'rest_schema_gs_iax_port' => 'พอร์ตสำหรับโปรโตคอล IAX2',
     'rest_schema_gs_internal_extension_length' => 'ความยาวของตัวเลขภายใน',
     'rest_schema_gs_is_default_ssh_password' => 'ใช้รหัสผ่าน SSH มาตรฐาน',

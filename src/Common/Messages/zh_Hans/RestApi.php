@@ -2076,7 +2076,7 @@ return [
     'rest_schema_gs_call_parking_ext' => '拨打停车电话',
     'rest_schema_gs_call_parking_start_slot' => '初始呼叫停车位',
     'rest_schema_gs_codecs' => '支持的编解码器列表',
-    'rest_schema_gs_digit_timeout' => '数字拨号超时时间（秒）',
+    'rest_schema_gs_digit_timeout' => '数字拨号超时时间（毫秒）',
     'rest_schema_gs_is_default_ssh_password' => '使用标准 SSH 密码。',
     'rest_schema_gs_is_default_web_password' => '使用默认的网页界面密码。',
     'rest_schema_gs_password_validation' => '启用密码复杂度检查',

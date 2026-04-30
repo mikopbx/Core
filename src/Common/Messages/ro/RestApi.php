@@ -1067,7 +1067,7 @@ return [
     'rest_schema_gs_atxfer_no_answer_timeout' => 'Timp de așteptare pentru transferul fără răspuns (secunde)',
     'rest_schema_gs_blind_transfer' => 'Cod de traducere orbă',
     'rest_schema_gs_call_parking_end_slot' => 'Slotul de parcare pentru încheierea apelului',
-    'rest_schema_gs_digit_timeout' => 'Timp de așteptare pentru apelarea cifrelor (secunde)',
+    'rest_schema_gs_digit_timeout' => 'Timp de așteptare pentru apelarea cifrelor (milisecunde)',
     'rest_schema_gs_iax_port' => 'Port pentru protocolul IAX2',
     'rest_schema_gs_internal_extension_length' => 'Lungimea numerelor interne',
     'rest_schema_gs_is_default_ssh_password' => 'Se folosește parola SSH standard.',

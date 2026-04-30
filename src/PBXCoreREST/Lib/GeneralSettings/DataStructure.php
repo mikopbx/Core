@@ -677,7 +677,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'integer',
                 'description' => 'rest_schema_gs_digit_timeout',
                 'minimum' => 1,
-                'maximum' => 60,
+                'maximum' => 60000,
                 'sanitize' => 'int',
                 'default' => (int)self::getDefaultValue(PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT),
                 'example' => (int)self::getDefaultValue(PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT)

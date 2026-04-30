@@ -277,7 +277,7 @@ return [
     'rest_schema_gs_call_parking_ext' => 'დარეკეთ პარკირების ნომერზე',
     'rest_schema_gs_call_parking_start_slot' => 'პირველადი გამოძახების პარკირების ადგილი',
     'rest_schema_gs_codecs' => 'მხარდაჭერილი კოდეკების სია',
-    'rest_schema_gs_digit_timeout' => 'ციფრების აკრეფის დროის ამოწურვა (წამები)',
+    'rest_schema_gs_digit_timeout' => 'ციფრების აკრეფის დროის ამოწურვა (მილიწამები)',
     'rest_schema_gs_internal_extension_length' => 'შიდა რიცხვების სიგრძე',
     'rest_schema_gs_is_default_ssh_password' => 'სტანდარტული SSH პაროლი გამოიყენება.',
     'rest_schema_gs_is_default_web_password' => 'გამოიყენება ვებ ინტერფეისის სტანდარტული პაროლი.',

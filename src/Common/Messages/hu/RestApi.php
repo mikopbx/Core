@@ -1285,7 +1285,7 @@ return [
     'rest_schema_gs_call_parking_end_slot' => 'Hívás befejezése parkolóhelyen',
     'rest_schema_gs_call_parking_start_slot' => 'Kezdeti hívásparkolóhely',
     'rest_schema_gs_codecs' => 'A támogatott kodekek listája',
-    'rest_schema_gs_digit_timeout' => 'Számjegyes tárcsázási időtúllépés (másodperc)',
+    'rest_schema_gs_digit_timeout' => 'Számjegyes tárcsázási időtúllépés (ezredmásodperc)',
     'rest_schema_gs_internal_extension_length' => 'A belső számok hossza',
     'rest_schema_gs_is_default_ssh_password' => 'A szabványos SSH jelszót használják.',
     'rest_schema_gs_is_default_web_password' => 'Az alapértelmezett webes felület jelszava használatos.',

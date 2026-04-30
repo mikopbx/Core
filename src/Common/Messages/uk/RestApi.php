@@ -1292,7 +1292,7 @@ return [
     // ============================================================================
     'rest_password' => 'Пароль',
     'rest_schema_gs_codecs' => 'Список кодеків, що підтримуються',
-    'rest_schema_gs_digit_timeout' => 'Таймаут очікування набору цифри (секунди)',
+    'rest_schema_gs_digit_timeout' => 'Таймаут очікування набору цифри (мілісекунди)',
     'rest_schema_gs_iax_port' => 'Порт для IAX2 протоколу',
     'rest_schema_gs_internal_extension_length' => 'Довжина внутрішніх номерів',
     'rest_schema_gs_is_default_ssh_password' => 'Використовується стандартний пароль SSH',

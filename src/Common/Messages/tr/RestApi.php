@@ -970,7 +970,7 @@ return [
     'rest_schema_gs_call_parking_ext' => 'Otopark Numarasını Arayın',
     'rest_schema_gs_call_parking_start_slot' => 'İlk arama park yeri',
     'rest_schema_gs_codecs' => 'Desteklenen codec\'lerin listesi',
-    'rest_schema_gs_digit_timeout' => 'Dijital arama zaman aşımı (saniye)',
+    'rest_schema_gs_digit_timeout' => 'Dijital arama zaman aşımı (milisaniye)',
     'rest_schema_gs_iax_port' => 'IAX2 protokolü için port',
     'rest_schema_gs_internal_extension_length' => 'Dahili sayıların uzunluğu',
     'rest_schema_gs_is_default_ssh_password' => 'Standart SSH şifresi kullanılıyor.',

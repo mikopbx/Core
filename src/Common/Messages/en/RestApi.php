@@ -1813,7 +1813,7 @@ return [
     'rest_schema_gs_call_parking_ext' => 'Call parking extension number',
     'rest_schema_gs_call_parking_start_slot' => 'Call parking start slot',
     'rest_schema_gs_codecs' => 'List of supported codecs',
-    'rest_schema_gs_digit_timeout' => 'Digit input timeout (seconds)',
+    'rest_schema_gs_digit_timeout' => 'Digit input timeout (milliseconds)',
     'rest_schema_gs_iax_port' => 'Port for IAX2 protocol',
     'rest_schema_gs_internal_extension_length' => 'Internal extension number length',
     'rest_schema_gs_is_default_ssh_password' => 'Default SSH password is in use',

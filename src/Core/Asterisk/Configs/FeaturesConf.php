@@ -62,7 +62,7 @@ class FeaturesConf extends AsteriskConfigClass
 
         $digitTimeout = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT);
         if (empty($digitTimeout)) {
-            $digitTimeout = 10;
+            $digitTimeout = 1000;
         }
 
         $transferDigitTimeout = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT);
