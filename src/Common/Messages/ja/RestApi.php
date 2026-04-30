@@ -1024,7 +1024,7 @@ return [
     'rest_schema_gs_call_parking_end_slot' => '通話終了パーキングスロット',
     'rest_schema_gs_call_parking_ext' => '駐車場番号に電話する',
     'rest_schema_gs_codecs' => 'サポートされているコーデックのリスト',
-    'rest_schema_gs_digit_timeout' => '数字ダイヤルタイムアウト（秒）',
+    'rest_schema_gs_digit_timeout' => '数字ダイヤルタイムアウト（ミリ秒）',
     'rest_schema_gs_iax_port' => 'IAX2プロトコル用のポート',
     'rest_schema_gs_internal_extension_length' => '内部番号の長さ',
     'rest_schema_gs_is_default_ssh_password' => '標準の SSH パスワードが使用されます。',

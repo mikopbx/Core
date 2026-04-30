@@ -1164,7 +1164,7 @@ return [
     'rest_schema_gs_call_parking_ext' => 'Gọi số điện thoại đỗ xe',
     'rest_schema_gs_call_parking_start_slot' => 'chỗ đỗ xe cho cuộc gọi ban đầu',
     'rest_schema_gs_codecs' => 'Danh sách các codec được hỗ trợ',
-    'rest_schema_gs_digit_timeout' => 'Thời gian chờ quay số (giây)',
+    'rest_schema_gs_digit_timeout' => 'Thời gian chờ quay số (mili giây)',
     'rest_schema_gs_iax_port' => 'Cổng cho giao thức IAX2',
     'rest_schema_gs_internal_extension_length' => 'Độ dài của các số nội bộ',
     'rest_schema_gs_is_default_ssh_password' => 'Mật khẩu SSH tiêu chuẩn được sử dụng.',

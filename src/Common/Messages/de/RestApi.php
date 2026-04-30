@@ -1158,7 +1158,7 @@ return [
     'rest_schema_gs_ami_port' => 'Port für die Asterisk Manager-Schnittstelle',
     'rest_schema_gs_ari_allowed_origins' => 'Zulässige Ursprünge für die Asterisk REST-Schnittstelle (CORS)',
     'rest_schema_gs_call_parking_start_slot' => 'Erster Anruf Parkplatz',
-    'rest_schema_gs_digit_timeout' => 'Zeitüberschreitung für die Ziffernwahl (Sekunden)',
+    'rest_schema_gs_digit_timeout' => 'Zeitüberschreitung für die Ziffernwahl (Millisekunden)',
     'rest_schema_gs_internal_extension_length' => 'Länge der internen Zahlen',
     'rest_schema_gs_is_default_ssh_password' => 'Es wird das Standard-SSH-Passwort verwendet.',
     'rest_schema_gs_is_default_web_password' => 'Es wird das Standardpasswort der Weboberfläche verwendet.',

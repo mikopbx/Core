@@ -565,7 +565,7 @@ return [
     'rest_schema_firmware_description' => 'Description des modifications apportées à la version',
     'rest_schema_wl_controller' => 'Nom du contrôleur pour la recherche de documentation',
     'rest_tag_FilesManagement' => 'Opérations sur les fichiers',
-    'rest_schema_gs_digit_timeout' => 'Délai d\'attente pour la numérotation des chiffres (secondes)',
+    'rest_schema_gs_digit_timeout' => 'Délai d\'attente pour la numérotation des chiffres (millisecondes)',
     'rest_schema_gs_pickup_exten' => 'code d\'interception d\'appels',
     'rest_response_200_stopped' => 'Le service a été arrêté avec succès.',
     'rest_param_s3_endpoint' => 'URL du point de terminaison compatible S3 (par exemple, https://s3.amazonaws.com pour AWS S3)',

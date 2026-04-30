@@ -1375,7 +1375,7 @@ return [
     'rest_tag_Modules' => 'Əlavə modullar',
     'rest_schema_gs_ami_enabled' => 'Asterisk Menecer İnterfeysini (AMI) aktivləşdirin',
     'rest_schema_gs_ami_port' => 'Asterisk Manager İnterfeysi üçün Port',
-    'rest_schema_gs_digit_timeout' => 'Rəqəm yığım fasiləsi (saniyə)',
+    'rest_schema_gs_digit_timeout' => 'Rəqəm yığım fasiləsi (millisaniyə)',
     'rest_schema_gs_internal_extension_length' => 'Daxili ədədlərin uzunluğu',
     'rest_schema_gs_is_default_ssh_password' => 'Standart SSH parolu istifadə olunur.',
     'rest_schema_gs_is_default_web_password' => 'Standart veb interfeysi parolu istifadə olunur.',

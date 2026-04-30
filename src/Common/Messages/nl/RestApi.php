@@ -1116,7 +1116,7 @@ return [
     'rest_schema_gs_call_parking_end_slot' => 'Einde oproep parkeerslot',
     'rest_schema_gs_call_parking_ext' => 'Nummer voor gesprek parkeren',
     'rest_schema_gs_codecs' => 'Lijst met ondersteunde codecs',
-    'rest_schema_gs_digit_timeout' => 'Time-out voor het kiezen van cijfers (seconden)',
+    'rest_schema_gs_digit_timeout' => 'Time-out voor het kiezen van cijfers (milliseconden)',
     'rest_schema_gs_internal_extension_length' => 'Lengte interne nummers',
     'rest_schema_gs_is_default_ssh_password' => 'Er wordt gebruikgemaakt van het standaard SSH-wachtwoord.',
     'rest_schema_gs_is_default_web_password' => 'Er wordt gebruikgemaakt van het standaard wachtwoord voor de webinterface.',

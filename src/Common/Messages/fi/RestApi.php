@@ -175,7 +175,7 @@ return [
     'rest_schema_gs_blind_transfer' => 'Sokea käännöskoodi',
     'rest_schema_gs_call_parking_end_slot' => 'Puhelun lopettamisen pysäköintipaikka',
     'rest_schema_gs_codecs' => 'Tuettujen koodekkien luettelo',
-    'rest_schema_gs_digit_timeout' => 'Numeronvalinnan aikakatkaisu (sekunteina)',
+    'rest_schema_gs_digit_timeout' => 'Numeronvalinnan aikakatkaisu (millisekunteina)',
     'rest_schema_gs_iax_port' => 'IAX2-protokollan portti',
     'rest_schema_gs_internal_extension_length' => 'Sisäisten numeroiden pituus',
     'rest_schema_gs_pickup_exten' => 'Puhelun sieppauskoodi',

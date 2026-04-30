@@ -1216,7 +1216,7 @@ return [
     'rest_schema_gs_call_parking_ext' => 'Chiama il numero di parcheggio',
     'rest_schema_gs_call_parking_start_slot' => 'Parcheggio per la prima chiamata',
     'rest_schema_gs_codecs' => 'Elenco dei codec supportati',
-    'rest_schema_gs_digit_timeout' => 'Timeout di composizione numerica (secondi)',
+    'rest_schema_gs_digit_timeout' => 'Timeout di composizione numerica (millisecondi)',
     'rest_schema_gs_internal_extension_length' => 'Lunghezza dei numeri interni',
     'rest_schema_gs_is_default_ssh_password' => 'Viene utilizzata la password SSH standard.',
     'rest_schema_gs_is_default_web_password' => 'Viene utilizzata la password predefinita dell\'interfaccia web.',
