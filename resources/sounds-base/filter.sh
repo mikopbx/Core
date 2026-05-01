@@ -25,8 +25,16 @@ do
 done
 
 # Оставляем только файлы, которые есть в RU директории.
+# -mindepth 1 excludes "$soundsDir" itself (would otherwise be returned by
+# find on its starting point at depth 0). Including the top dir caused the
+# inner `find ./ -type f` to walk EVERY file recursively, and the
+# `${ruDir}${filename}` concatenation (no separator) produced non-existent
+# paths so the existence check always failed and the rm branch deleted
+# every file. Before the resources/sounds → resources/sounds-base rename,
+# the pre-existing `! -name sounds` filter happened to exclude the top
+# dir by basename — a coincidence that broke when the basename changed.
 ruDir="$soundsDir/ru-ru"
-find "$soundsDir" -maxdepth 1 -type d ! -name other ! -name moh ! -name sounds | while IFS= read -r dirName
+find "$soundsDir" -mindepth 1 -maxdepth 1 -type d ! -name other ! -name moh | while IFS= read -r dirName
 do
   ( cd "$dirName" || exit; find ./ -type f ) | sed 's/\.\///' | while IFS= read -r filename
   do
