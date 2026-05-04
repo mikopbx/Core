@@ -65,6 +65,18 @@ class AuthenticationMiddleware implements MiddlewareInterface
     use ResponseTrait;
 
     /**
+     * ACL check outcomes returned by checkAclPermission()
+     *
+     * ACL_ALLOWED   — role permitted to perform action on resource
+     * ACL_DENIED    — ACL knows the resource but explicitly denies the role
+     * ACL_NOT_FOUND — ACL has no component matching the parsed controller path
+     *                 (treated as "endpoint does not exist" for authenticated users)
+     */
+    private const string ACL_ALLOWED = 'allowed';
+    private const string ACL_DENIED = 'denied';
+    private const string ACL_NOT_FOUND = 'not_found';
+
+    /**
      * Main middleware entry point
      *
      * @param Micro $application
@@ -74,8 +86,6 @@ class AuthenticationMiddleware implements MiddlewareInterface
     {
         /** @var Request $request */
         $request = $application->getService(RequestProvider::SERVICE_NAME);
-        /** @var Response $response */
-        $response = $application->getService(ResponseProvider::SERVICE_NAME);
 
         // Check if this is a public endpoint or no-auth API FIRST
         if ($this->isPublicEndpoint($application) || $request->thisIsModuleNoAuthRequest($application)) {
@@ -161,7 +171,11 @@ class AuthenticationMiddleware implements MiddlewareInterface
             // ACL Authorization check (skip for localhost)
             // WHY: Localhost requests are trusted internal calls from workers/scripts
             if (!$request->isLocalHostRequest()) {
-                if (!$this->checkAclPermission($request, $application)) {
+                $aclResult = $this->checkAclPermission($request, $application);
+                if ($aclResult === self::ACL_NOT_FOUND) {
+                    return $this->denyAccessNotFound($application, $request);
+                }
+                if ($aclResult !== self::ACL_ALLOWED) {
                     return $this->denyAccessForbidden($application, $request, 'Access denied by ACL');
                 }
             }
@@ -244,15 +258,17 @@ class AuthenticationMiddleware implements MiddlewareInterface
      */
     private function denyAccess(Micro $application, Request $request, string $reason): bool
     {
-        /** @var Response $response */
-        $response = $application->getService(ResponseProvider::SERVICE_NAME);
-
         $this->logAuthFailure(
             $application,
             "From: {$request->getClientAddress()} UserAgent: {$request->getUserAgent()} Cause: {$reason}"
         );
 
-        $this->halt($application, $response::UNAUTHORIZED, 'The user isn\'t authenticated.');
+        $this->haltWithStatus(
+            $application,
+            $request,
+            \MikoPBX\PBXCoreREST\Http\Response::UNAUTHORIZED,
+            'The user isn\'t authenticated.'
+        );
         return false;
     }
 
@@ -289,20 +305,28 @@ class AuthenticationMiddleware implements MiddlewareInterface
      * Extracts role from JWT payload and checks if the role has access
      * to the requested controller/action via Phalcon ACL.
      *
+     * Returns one of three states (see ACL_* constants):
+     *  - ACL_ALLOWED   – role permitted, dispatch handler
+     *  - ACL_DENIED    – component exists in ACL but role denied → 403
+     *  - ACL_NOT_FOUND – component absent from ACL → endpoint truly unknown,
+     *                    surface as 404 instead of leaking 403 for typos
+     *
      * @param Request $request The current request (must have jwtPayload set)
      * @param Micro $application The application instance
-     * @return bool True if access is allowed, false otherwise
+     * @return string One of the ACL_* constants
      */
-    private function checkAclPermission(Request $request, Micro $application): bool
+    private function checkAclPermission(Request $request, Micro $application): string
     {
         // Extract role from JWT payload
         $jwtPayload = $request->getJwtPayload();
         $role = $jwtPayload['role'] ?? AclProvider::ROLE_GUESTS;
 
         // Built-in admins role has super privileges - bypass ACL entirely
-        // WHY: admins should have unrestricted access to all REST API endpoints
+        // WHY: admins should have unrestricted access to all REST API endpoints.
+        // Unknown endpoints still surface as 404 because BaseRestController /
+        // RouterProvider::notFound handle the missing route after middleware.
         if ($role === AclProvider::ROLE_ADMINS) {
-            return true;
+            return self::ACL_ALLOWED;
         }
 
         // Get ACL service for non-admin roles
@@ -315,14 +339,14 @@ class AuthenticationMiddleware implements MiddlewareInterface
                 $application,
                 "ACL service unavailable: {$e->getMessage()}, role={$role}, uri={$request->getURI()}"
             );
-            return false;
+            return self::ACL_DENIED;
         }
 
         // Check if role has full access (wildcard permission '*', '*')
         // WHY: This handles ModuleUsersUI groups with fullAccess=1
         // Note: isAllowed() returns boolean in Phalcon 5.x
         if ($acl->isAllowed($role, '*', '*') === true) {
-            return true;
+            return self::ACL_ALLOWED;
         }
 
         // Parse request URI into controller and action
@@ -331,20 +355,113 @@ class AuthenticationMiddleware implements MiddlewareInterface
         // If we couldn't parse the request, allow by default (let controller handle it)
         // WHY: Some routes may not follow standard REST patterns
         if ($controller === null || $action === null) {
-            return true;
+            return self::ACL_ALLOWED;
         }
 
         // Check if role is allowed to access controller/action
         // Note: isAllowed() returns boolean in Phalcon 5.x
-        if ($acl->isAllowed($role, $controller, $action) !== true) {
-            $this->logAuthFailure(
-                $application,
-                "ACL denied: role={$role}, controller={$controller}, action={$action}, uri={$request->getURI()}"
-            );
-            return false;
+        if ($acl->isAllowed($role, $controller, $action) === true) {
+            return self::ACL_ALLOWED;
         }
 
-        return true;
+        // ACL refused. Distinguish "endpoint not registered" from "endpoint denied":
+        //  - If the component is unknown to ACL, the user is hitting a typo / removed
+        //    endpoint — return ACL_NOT_FOUND so the caller responds with 404.
+        //  - Otherwise the component exists and the role was explicitly denied → 403.
+        if (!$this->aclKnowsComponent($acl, $controller, $application)) {
+            return self::ACL_NOT_FOUND;
+        }
+
+        $this->logAuthFailure(
+            $application,
+            "ACL denied: role={$role}, controller={$controller}, action={$action}, uri={$request->getURI()}"
+        );
+        return self::ACL_DENIED;
+    }
+
+    /**
+     * Check whether ACL has any registered component matching the controller path.
+     *
+     * Modules register ACL components for the resources they expose (see
+     * ModuleUsersUI hooks). If nothing matches, the endpoint is genuinely
+     * unknown to the system and we should surface a 404 — not a 403 — to
+     * authenticated users so REST clients can distinguish typos from
+     * permission errors. Anonymous callers continue to see 401 via denyAccess().
+     *
+     * Falls back to safe "true" (treat as known) when the ACL adapter does
+     * not expose introspection, so we never accidentally widen 404 surface.
+     */
+    private function aclKnowsComponent(object $acl, string $controller, Micro $application): bool
+    {
+        // Phalcon\Acl\Adapter\Memory exposes isComponent() in 5.x.
+        // Custom adapters may throw on unknown components or DB errors —
+        // catch broadly so a flaky ACL never demotes a 403 into a 500.
+        // Returning true (= "treat as known") preserves the pre-fix 403
+        // behavior on failure and avoids leaking 404s under ACL outages,
+        // but we MUST log so an exploding ACL stays observable.
+        try {
+            if (method_exists($acl, 'isComponent') && $acl->isComponent($controller)) {
+                return true;
+            }
+        } catch (\Throwable $e) {
+            $this->logAuthFailure(
+                $application,
+                "ACL introspection failed (isComponent): {$e->getMessage()}, controller={$controller}"
+            );
+            return true;
+        }
+
+        if (!method_exists($acl, 'getComponents')) {
+            // Unknown adapter — be conservative and assume the component exists
+            return true;
+        }
+
+        try {
+            foreach ($acl->getComponents() as $component) {
+                $name = is_object($component) && method_exists($component, 'getName')
+                    ? $component->getName()
+                    : (string) $component;
+
+                if ($name === $controller) {
+                    return true;
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->logAuthFailure(
+                $application,
+                "ACL introspection failed (getComponents): {$e->getMessage()}, controller={$controller}"
+            );
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Deny access with 404 Not Found (for authenticated callers hitting
+     * unknown endpoints). Mirrors denyAccessForbidden/denyAccess shape.
+     *
+     * @return bool Always false to halt the middleware chain
+     */
+    private function denyAccessNotFound(Micro $application, Request $request): bool
+    {
+        // Mirror denyAccess()/denyAccessForbidden() field layout (From / UserAgent / Cause)
+        // so log-analyzer skill and human grep see all auth events in one regex.
+        // Fail2ban does NOT consume this log today (auth log is not in any jail's
+        // logpath), so format alignment is for tooling/humans, not jail filters.
+        $this->logAuthFailure(
+            $application,
+            "NOT_FOUND From: {$request->getClientAddress()} UserAgent: {$request->getUserAgent()} "
+                . "Cause: Endpoint not found, URI: {$request->getURI()}"
+        );
+
+        $this->haltWithStatus(
+            $application,
+            $request,
+            \MikoPBX\PBXCoreREST\Http\Response::NOT_FOUND,
+            'Endpoint not found.'
+        );
+        return false;
     }
 
     /**
@@ -531,15 +648,42 @@ class AuthenticationMiddleware implements MiddlewareInterface
      */
     private function denyAccessForbidden(Micro $application, Request $request, string $reason): bool
     {
-        /** @var Response $response */
-        $response = $application->getService(ResponseProvider::SERVICE_NAME);
-
         $this->logAuthFailure(
             $application,
             "FORBIDDEN From: {$request->getClientAddress()} UserAgent: {$request->getUserAgent()} Cause: {$reason}"
         );
 
-        $this->halt($application, $response::FORBIDDEN, 'Access denied. You do not have permission to access this resource.');
+        $this->haltWithStatus(
+            $application,
+            $request,
+            \MikoPBX\PBXCoreREST\Http\Response::FORBIDDEN,
+            'Access denied. You do not have permission to access this resource.'
+        );
         return false;
+    }
+
+    /**
+     * Halt the middleware chain with the given status, suppressing the body for HEAD.
+     *
+     * Centralises RFC 7231 compliance: HEAD responses share status and headers with
+     * GET but MUST NOT include a message body. Project Response::send() always wraps
+     * content in a meta envelope, so we bypass it via sendRaw() with empty content
+     * for HEAD. ETag/meta intentionally NOT emitted on HEAD-error: there is no
+     * representation to validate against, per RFC 7232 §2.3 — do NOT copy this
+     * pattern to 200 HEAD paths where ETag is required for cache validation.
+     */
+    private function haltWithStatus(Micro $application, Request $request, int $status, string $message): void
+    {
+        if ($request->getMethod() === 'HEAD') {
+            /** @var Response $response */
+            $response = $application->getService(ResponseProvider::SERVICE_NAME);
+            $response->setStatusCode($status)
+                ->setContent('')
+                ->sendRaw();
+            $application->stop();
+            return;
+        }
+
+        $this->halt($application, $status, $message);
     }
 }
