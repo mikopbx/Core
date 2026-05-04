@@ -21,11 +21,13 @@ namespace MikoPBX\Core\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Library\Text;
+use MikoPBX\Common\Providers\LoggerProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\System\Util;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 use RuntimeException;
@@ -297,9 +299,70 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
      */
     private function initializeSignalHandlers(): void
     {
+        // Eagerly resolve every class reachable from the signal-handler chain
+        // BEFORE pcntl_async_signals(true) lets a signal interrupt the script
+        // mid-opcode. Otherwise a SIGTERM landing while Composer's autoloader
+        // is in the middle of resolving an unrelated class can re-enter the
+        // autoloader and surface as `Class "MikoPBX\\Core\\System\\SystemMessages"
+        // not found` (Sentry MIKOPBX-MGF, issue #1052) — the worker then
+        // exits without releasing its Redis socket or PID file, feeding the
+        // socket-churn pattern from #1022 and the orphan-PID pattern from #1051.
+        $this->preloadSignalHandlerDependencies();
+
         pcntl_async_signals(true);
         foreach (self::MANAGED_SIGNALS as $signal) {
             pcntl_signal($signal, [$this, 'signalHandler'], true);
+        }
+    }
+
+    /**
+     * Force the autoloader to resolve every class reachable from
+     * signalHandler() and its callees, so the handler never has to
+     * autoload while running inside an async signal context.
+     *
+     * `class_exists($name, true)` is idempotent and cheap once the class
+     * is loaded; calling it from `__construct` keeps signal-time work
+     * limited to already-resolved opcodes.
+     *
+     * Issue #1052.
+     */
+    private function preloadSignalHandlerDependencies(): void
+    {
+        // Classes statically referenced from the signal-time call graph:
+        //   signalHandler() → dispatchSignal() → setWorkerState()  → SystemMessages::sysLogMsg
+        //                                                            → LoggerProvider::SERVICE_NAME
+        //                                       → handleSignalUsr1() (subclass-overridable)
+        //                                       → closeRedis()
+        //                   → exit() → shutdown function: shutdownHandler()
+        //                                       → cleanupPidFile() → Processes::removePidFile
+        //                                       → getPidFile()     → Processes::getPidFilePath
+        //                                                            → Util::mwMkdir
+        //
+        // LoggerProvider is the subtle one: SystemMessages::sysLogMsg
+        // accesses LoggerProvider::SERVICE_NAME which triggers autoload
+        // of the provider class. Today RegisterDIServices::init() loads
+        // it before WorkerBase::__construct runs, so the original Sentry
+        // MGF stack named SystemMessages — but any future bootstrap
+        // reorder would push the same race onto LoggerProvider. List it
+        // explicitly so we don't silently depend on Globals.php ordering.
+        //
+        // Excluded by design:
+        //   - Phalcon\Di\Di / Injectable: shipped from the C extension,
+        //     class_exists() never autoloads a C-extension class.
+        //   - CriticalErrorsHandler: only used by __construct / startWorker,
+        //     both run before pcntl_async_signals() is enabled.
+        //   - BeanstalkClient, Text: only reachable via pingCallBack /
+        //     makePingTubeName, never from the signal handler.
+        //   - RedisClientProvider: referenced by recordModuleCrash (not
+        //     signal-time) and by DI services already loaded at boot.
+        $signalHandlerChain = [
+            SystemMessages::class,
+            LoggerProvider::class,
+            Processes::class,
+            Util::class,
+        ];
+        foreach ($signalHandlerChain as $cls) {
+            class_exists($cls, true);
         }
     }
 
@@ -434,10 +497,67 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
     /**
      * Handles various signals received by the worker
      *
+     * Wrapped in a try/Throwable with a stdlib-only fallback because
+     * `pcntl_async_signals(true)` can deliver a signal while the
+     * autoloader is busy resolving another class. Even with the
+     * preload in {@see preloadSignalHandlerDependencies()}, a future
+     * helper call from a subclass might trigger a fresh autoload —
+     * we must never let that abort the shutdown path. Issue #1052.
+     *
      * @param int $signal Signal number
      * @return void
      */
     public function signalHandler(int $signal): void
+    {
+        try {
+            $this->dispatchSignal($signal);
+        } catch (Throwable $e) {
+            // stdlib-only fallback: openlog/syslog never autoloads.
+            // Don't rethrow — the worker is on its way out and the
+            // supervisor will respawn it; surfacing this as a fatal
+            // would only spam Sentry with the same race.
+            @openlog('mikopbx-worker', LOG_PID, LOG_DAEMON);
+            @syslog(
+                LOG_WARNING,
+                sprintf(
+                    'WorkerBase::signalHandler crashed (%s, sig=%d): %s',
+                    static::class,
+                    $signal,
+                    $e->getMessage()
+                )
+            );
+            @closelog();
+
+            if ($signal === SIGTERM || $signal === SIGINT) {
+                // Best-effort: free the socket even if logging blew up,
+                // then exit so the supervisor can respawn cleanly.
+                try {
+                    $this->closeRedis();
+                } catch (Throwable) {
+                    // Already in defensive shutdown — swallow.
+                }
+                exit(1);
+            }
+
+            if ($signal === SIGUSR1) {
+                // Preserve the SIGUSR1 contract even when dispatch fails:
+                // the supervisor expects a graceful restart on the next
+                // main-loop tick, so flip the flag the inner dispatch
+                // would have flipped via handleSignalUsr1(). Without this,
+                // a mid-autoload race would silently swallow the restart
+                // request and the worker would keep running with stale
+                // state. Issue #1052 review.
+                $this->needRestart = true;
+            }
+        }
+    }
+
+    /**
+     * Inner body of the signal handler, kept separate so the outer
+     * {@see signalHandler()} wrapper can guarantee a stdlib-only
+     * fallback on any Throwable. Issue #1052.
+     */
+    private function dispatchSignal(int $signal): void
     {
         $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
         $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
