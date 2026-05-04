@@ -1011,6 +1011,12 @@ class SIPConf extends AsteriskConfigClass
             "inband_progress = yes\n" .
             "tone_zone = {$templateParams['toneZone']}\n\n";
 
+        // AUTO template — no pinned transport; PJSIP selects per contact URI.
+        // Used when peer has multiple transports (e.g. TRANSPORT_AUTO = 'udp,tcp')
+        // so that qualify/OPTIONS to TCP-registered contacts does not fail with
+        // PJSIP_ETPNOTSUITABLE on a UDP-only endpoint.
+        $conf .= "[endpoint-auto](endpoint-base,!)\n\n";
+
         // Transport-specific templates
         $conf .= "[endpoint-udp](endpoint-base,!)\n" .
             "transport = transport-udp\n\n";
@@ -2257,9 +2263,12 @@ class SIPConf extends AsteriskConfigClass
             $peer['transport'] = '';
         }
 
-        // Determine template name based on transport (default to udp)
-        $transportTemplate = 'endpoint-udp';
-        if (!empty($peer['transport'])) {
+        // Determine template name based on transport.
+        // For AUTO (empty after normalization above) or any multi-value transport,
+        // use endpoint-auto template — it has no fixed `transport=` line so PJSIP
+        // picks the correct one from the contact URI for both incoming and qualify.
+        $transportTemplate = 'endpoint-auto';
+        if (!empty($peer['transport']) && !str_contains($peer['transport'], ',')) {
             $transportTemplate = "endpoint-{$peer['transport']}";
         }
 
