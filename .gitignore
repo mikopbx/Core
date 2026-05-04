@@ -83,4 +83,13 @@ sessions/sessions-state.json
 sessions/package.json
 sessions/transcripts/
 sessions/.archived/
+sessions/mode-revert-debug.log
 tests/pycalltests/.hypothesis/
+
+# Claude Code local automation (worktrees, scheduling locks, TeamCity poll scripts)
+.claude/worktrees/
+.claude/scheduled_tasks.lock
+
+# Local dev artifacts
+/resources/mikopbx.db
+/github-issue-*.md
