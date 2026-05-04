@@ -1153,12 +1153,29 @@ class SoundFilesConf extends SystemConfigClass
     }
 
     /**
-     * Get list of languages available in system sounds directory
+     * Built-in system languages always available without a Language Pack module.
+     */
+    private const array BUILT_IN_LANGUAGES = ['en-en', 'ru-ru'];
+
+    /**
+     * Audio file extensions used to confirm a language directory is non-empty.
+     */
+    private const string AUDIO_GLOB_PATTERN = '*.{wav,ulaw,alaw,gsm,g722,sln,mp3,opus}';
+
+    /**
+     * Get list of languages actually usable by Asterisk.
      *
-     * Returns all language directories found in the sounds directory,
-     * including base system languages and languages added by Language Pack modules.
+     * A language directory is reported only when:
+     *   1. Its name matches the xx-xx Asterisk format, AND
+     *   2. It is either built-in (en-en, ru-ru) OR backed by an enabled
+     *      Language Pack module declaring this language_code, AND
+     *   3. It contains at least one audio file (wav/ulaw/alaw/gsm/g722/sln/mp3/opus).
      *
-     * @return array List of language codes (e.g., ['en-en', 'ru-ru', 'de-de', 'ja-ja'])
+     * Empty directories left behind by removed modules or older builds are
+     * filtered out so the system-language dropdown never offers a code that
+     * Asterisk would silently fall back from.
+     *
+     * @return array List of language codes (e.g., ['en-en', 'ru-ru', 'cs-cs'])
      */
     public static function getAvailableLanguages(): array
     {
@@ -1168,18 +1185,35 @@ class SoundFilesConf extends SystemConfigClass
             return [];
         }
 
+        $enabledLanguagePacks = array_keys(PbxExtensionUtils::getAllLanguagePackModules());
+
         $languages = [];
         $dirs = glob("$systemSoundsDir/*", GLOB_ONLYDIR);
 
         foreach ($dirs as $dir) {
             $lang = basename($dir);
-            // Only include directories that match language-country format (xx-xx)
-            if (preg_match('/^[a-z]{2}-[a-z]{2}$/i', $lang)) {
-                $languages[] = $lang;
+
+            if (!preg_match('/^[a-z]{2}-[a-z]{2}$/i', $lang)) {
+                continue;
             }
+
+            $isBuiltIn = in_array($lang, self::BUILT_IN_LANGUAGES, true);
+            $hasEnabledPack = in_array($lang, $enabledLanguagePacks, true);
+            if (!$isBuiltIn && !$hasEnabledPack) {
+                continue;
+            }
+
+            // Require at least one playable file so empty directories never
+            // leak into the dropdown — Asterisk would silently fall back to
+            // the default language and the user would just hear nothing.
+            $audio = glob("$dir/" . self::AUDIO_GLOB_PATTERN, GLOB_BRACE);
+            if (empty($audio)) {
+                continue;
+            }
+
+            $languages[] = $lang;
         }
 
-        // Sort alphabetically
         sort($languages);
 
         return $languages;
