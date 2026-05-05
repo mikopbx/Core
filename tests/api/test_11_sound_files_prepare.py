@@ -358,10 +358,9 @@ class TestSoundFiles:
     def test_10_convert_uploaded_audio_file(self, api_client):
         """Test POST /sound-files:convertAudioFile - Convert uploaded file to system format
 
-        Verifies that conversion produces ALL Asterisk-compatible formats (wav, mp3,
-        ulaw, alaw, gsm, g722, sln) plus that each output file exists and is non-empty.
-        Regression: commit 74c1a9f4e introduced atomic .converting tempfiles that broke
-        MP3 output because ffmpeg couldn't infer the format from the .converting extension.
+        Verifies that conversion produces all required formats: webm (browser preview)
+        plus the Asterisk codec siblings (wav, ulaw, alaw, gsm, g722, sln). The API
+        returns the webm path; the codec files live next to it under the same basename.
         """
         if not hasattr(self.__class__, 'uploaded_file_path') or not self.uploaded_file_path:
             pytest.skip("No uploaded file from previous test")
@@ -382,16 +381,16 @@ class TestSoundFiles:
         data = response.get('data', {})
         print(f"  Convert response data: {data}")
 
-        # Verify ALL expected Asterisk formats exist on disk via bash command
-        # The API returns only the MP3 path, but we need to verify all formats
+        # Verify ALL expected formats exist on disk via bash command.
+        # The API returns the webm path; codec siblings share the same basename.
         if isinstance(data, list) and len(data) > 0:
-            converted_path = data[0]  # MP3 path
+            converted_path = data[0]  # webm path
             self.__class__.converted_file_path = converted_path
 
             # Derive base path (without extension) to check all formats
             import os
             base_path = os.path.splitext(converted_path)[0]
-            expected_formats = ['wav', 'mp3', 'ulaw', 'alaw', 'gsm', 'g722', 'sln']
+            expected_formats = ['webm', 'wav', 'ulaw', 'alaw', 'gsm', 'g722', 'sln']
 
             # Verify each format via executeBashCommand
             check_cmd = ' && '.join(
@@ -417,8 +416,8 @@ class TestSoundFiles:
 
                 assert not missing_formats, (
                     f"Conversion produced incomplete output. Missing formats: {missing_formats}. "
-                    f"Base path: {base_path}. This may indicate ffmpeg cannot determine the "
-                    f"output format from the .converting temp extension (needs explicit -f flag)."
+                    f"Base path: {base_path}. Expected webm (browser preview) plus Asterisk "
+                    f"codec siblings."
                 )
             else:
                 pytest.fail(
@@ -428,7 +427,7 @@ class TestSoundFiles:
                 )
 
             print(f"✓ Audio file converted to all {len(expected_formats)} formats")
-            print(f"  MP3 path: {converted_path}")
+            print(f"  WebM path: {converted_path}")
 
             # Now create a sound file record manually with retry on database lock
             import time
