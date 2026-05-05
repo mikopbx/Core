@@ -846,9 +846,11 @@ $.api = $.fn.api = function(parameters) {
           var
             xhr = module.get.xhr()
           ;
-          if( xhr && xhr.state() !== 'resolved') {
+          if( xhr && typeof xhr.state === 'function' && xhr.state() !== 'resolved') {
             module.debug('Cancelling API request');
-            xhr.abort();
+            if(typeof xhr.abort === 'function') {
+              xhr.abort();
+            }
           }
         },
 

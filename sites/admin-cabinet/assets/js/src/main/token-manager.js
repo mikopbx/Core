@@ -214,30 +214,110 @@ const TokenManager = {
 
             // Wait for TokenManager initialization before proceeding
             if (window.tokenManagerReady) {
-                // Create jQuery Deferred to maintain compatibility with jQuery code
+                // Shallow-clone options (and headers) so our header injection
+                // and pre-dispatch setRequestHeader writes don't mutate the
+                // caller's object. Eliminates aliasing leaks if the same
+                // settings object is reused across multiple $.ajax calls.
+                options = options
+                    ? Object.assign({}, options, { headers: Object.assign({}, options.headers) })
+                    : {};
+
+                // Create jQuery Deferred to maintain compatibility with jQuery code.
+                // We must expose a jqXHR-shaped object: callers (Semantic UI api,
+                // dropdown queryRemote) call .abort() / .state() / .setRequestHeader()
+                // on the return value. A bare Deferred().promise() lacks .abort()
+                // which crashes Semantic UI's abort path with
+                // "TypeError: e.abort is not a function" (see Sentry MIKOPBX-MHC).
                 const deferred = $.Deferred();
+                let pendingJqXHR = null;
+                let aborted = false;
 
                 window.tokenManagerReady.then(() => {
+                    // Caller already aborted before we got a chance to dispatch;
+                    // abort() has already rejected the deferred — nothing to do.
+                    if (aborted) {
+                        return;
+                    }
+
                     // Add Authorization header
-                    options = options || {};
-                    options.headers = options.headers || {};
                     if (self.accessToken && !options.headers.Authorization) {
                         options.headers.Authorization = `Bearer ${self.accessToken}`;
                     }
 
-                    // Call original $.ajax and forward its result to our deferred
-                    const jqXHR = url ? originalAjax.call(this, url, options) : originalAjax.call(this, options);
+                    // Assign pendingJqXHR BEFORE chaining so a synchronous abort()
+                    // (e.g., from a settled-from-cache jqXHR) routes via the
+                    // post-dispatch branch instead of re-rejecting the deferred.
+                    pendingJqXHR = url
+                        ? originalAjax.call(this, url, options)
+                        : originalAjax.call(this, options);
 
-                    // Forward all callbacks
-                    jqXHR.done((...args) => deferred.resolve(...args))
-                         .fail((...args) => deferred.reject(...args));
-
+                    // Forward all callbacks (preserve `this` and full argument list).
+                    pendingJqXHR
+                        .done(function (...args) { deferred.resolveWith(this, args); })
+                        .fail(function (...args) { deferred.rejectWith(this, args); });
                 }).catch((error) => {
                     console.error('TokenManager initialization failed:', error);
                     deferred.reject(error);
                 });
 
-                return deferred.promise();
+                const jqXHRProxy = deferred.promise();
+                jqXHRProxy.abort = function (statusText) {
+                    if (pendingJqXHR && typeof pendingJqXHR.abort === 'function') {
+                        pendingJqXHR.abort(statusText);
+                        return jqXHRProxy;
+                    }
+                    // Pre-dispatch abort: mark the request and reject the deferred
+                    // ourselves; the .then() callback will see `aborted` and skip
+                    // the originalAjax call entirely. statusText is forwarded to
+                    // listeners via rejectWith — no need to stash it separately.
+                    aborted = true;
+                    deferred.rejectWith(this, [null, 'abort', statusText || 'abort']);
+                    return jqXHRProxy;
+                };
+                jqXHRProxy.setRequestHeader = function (name, value) {
+                    if (pendingJqXHR && typeof pendingJqXHR.setRequestHeader === 'function') {
+                        pendingJqXHR.setRequestHeader(name, value);
+                        return jqXHRProxy;
+                    }
+                    // Pre-dispatch: stash header in (cloned) options so it ships
+                    // with the request once tokenManagerReady resolves.
+                    options.headers[name] = value;
+                    return jqXHRProxy;
+                };
+                jqXHRProxy.getResponseHeader = function (name) {
+                    return pendingJqXHR && typeof pendingJqXHR.getResponseHeader === 'function'
+                        ? pendingJqXHR.getResponseHeader(name)
+                        : null;
+                };
+                jqXHRProxy.getAllResponseHeaders = function () {
+                    return pendingJqXHR && typeof pendingJqXHR.getAllResponseHeaders === 'function'
+                        ? pendingJqXHR.getAllResponseHeaders()
+                        : '';
+                };
+                // Defined as non-enumerable getters by design so the proxy
+                // doesn't expose extra keys to `for…in` consumers (real jqXHR
+                // exposes these as own enumerable properties; the proxy is
+                // intentionally a stricter subset).
+                Object.defineProperty(jqXHRProxy, 'readyState', {
+                    get() { return pendingJqXHR ? pendingJqXHR.readyState : 0; },
+                });
+                Object.defineProperty(jqXHRProxy, 'status', {
+                    get() { return pendingJqXHR ? pendingJqXHR.status : 0; },
+                });
+                Object.defineProperty(jqXHRProxy, 'statusText', {
+                    get() { return pendingJqXHR ? pendingJqXHR.statusText : ''; },
+                });
+                Object.defineProperty(jqXHRProxy, 'responseText', {
+                    get() { return pendingJqXHR ? pendingJqXHR.responseText : ''; },
+                });
+                Object.defineProperty(jqXHRProxy, 'responseJSON', {
+                    get() { return pendingJqXHR ? pendingJqXHR.responseJSON : undefined; },
+                });
+                Object.defineProperty(jqXHRProxy, 'responseXML', {
+                    get() { return pendingJqXHR ? pendingJqXHR.responseXML : undefined; },
+                });
+
+                return jqXHRProxy;
             }
 
             // TokenManager not initialized yet - proceed without token
@@ -260,56 +340,13 @@ const TokenManager = {
             }
         });
 
-        // Wrap Semantic UI $.api() if available
-        // This is needed because some modules use $.api() instead of $.ajax()
-        if ($.fn.api) {
-            const originalApi = $.fn.api;
-            $.fn.api = function(settings) {
-                // Get settings
-                const config = settings || {};
-
-                // Skip auth endpoints
-                const url = config.url || '';
-                if (url.includes('/auth:login') || url.includes('/auth:refresh')) {
-                    return originalApi.call(this, settings);
-                }
-
-                // Wrap beforeSend to add Authorization header
-                const originalBeforeSend = config.beforeSend;
-                config.beforeSend = function(settings) {
-                    // Wait for TokenManager if available
-                    if (window.tokenManagerReady) {
-                        const deferred = $.Deferred();
-
-                        window.tokenManagerReady.then(() => {
-                            // Add Authorization header
-                            settings.beforeXHR = function(xhr) {
-                                if (self.accessToken) {
-                                    xhr.setRequestHeader('Authorization', `Bearer ${self.accessToken}`);
-                                }
-                            };
-
-                            // Call original beforeSend if exists
-                            if (originalBeforeSend) {
-                                originalBeforeSend.call(this, settings);
-                            }
-
-                            deferred.resolve(settings);
-                        });
-
-                        return deferred.promise();
-                    }
-
-                    // Call original beforeSend
-                    if (originalBeforeSend) {
-                        return originalBeforeSend.call(this, settings);
-                    }
-                    return settings;
-                };
-
-                return originalApi.call(this, config);
-            };
-        }
+        // Note: we deliberately do NOT wrap $.fn.api here. Semantic UI's
+        // $.fn.api uses $.ajax() under the hood, so the wrapper above already
+        // injects the Authorization header. A second wrapper that returned a
+        // Deferred from beforeSend violates Semantic UI's contract (it expects
+        // settings or false) and was the original source of the
+        // "TypeError: e.abort is not a function" crashes in dropdown
+        // queryRemote (see Sentry MIKOPBX-MHC and related groups).
     },
 
     /**
