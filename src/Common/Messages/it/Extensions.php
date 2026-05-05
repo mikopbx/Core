@@ -163,6 +163,19 @@ return [
     'ex_dropdownCategory_USER' => 'personale',
     'ex_dropdownCategory_USERS' => 'personale',
     'ex_enableRecording' => 'Registra tutte le conversazioni del dipendente',
+    'ex_SipManualattributesTooltip_list_set_var' => 'set_var=LEGACY_CP1251=1',
+    'ex_SipManualattributesTooltip_list_set_var_desc' => 'forzare CP1251 (Windows-1251) per il nome visualizzato sui vecchi telefoni SIP (Panasonic, Eltex, Welltech, AddPac e altri modelli datati senza supporto UTF-8)',
+    'ex_AcceptMultipleCalls' => 'Accettare più chiamate simultanee',
+    'ex_AcceptMultipleCallsTooltip_header' => 'Più chiamate simultanee',
+    'ex_AcceptMultipleCallsTooltip_desc' => 'Cosa fare quando il dipendente viene chiamato mentre è già al telefono.',
+    'ex_AcceptMultipleCallsTooltip_off' => 'Disattivato (predefinito)',
+    'ex_AcceptMultipleCallsTooltip_off_desc' => 'Il secondo chiamante riceve il segnale di occupato e la chiamata segue le regole di inoltro per occupato (cellulare, segreteria, agente successivo in coda). La spia BLF sui telefoni dei colleghi mostra il dipendente come occupato.',
+    'ex_AcceptMultipleCallsTooltip_on' => 'Attivato',
+    'ex_AcceptMultipleCallsTooltip_on_desc' => 'Il telefono riceve una notifica della seconda chiamata (call waiting). Il dipendente decide se rispondere (mettendo la prima in attesa) o rifiutare. Adatto a centralinisti, dispatcher e telefoni IP multi-linea.',
+    'ex_AcceptMultipleCallsTooltip_warning_header' => 'Cosa cambia attivandolo',
+    'ex_AcceptMultipleCallsTooltip_warning' => 'Il BLF sui telefoni dei colleghi mostrerà occupato solo dalla seconda chiamata attiva e code o inoltro su occupato non si attiveranno più alla prima chiamata — suonerà semplicemente sul telefono del dipendente.',
+    'ex_AcceptMultipleCallsTooltip_note' => 'Se il dipendente deve accettare tre o più chiamate simultanee (ad esempio su un telefono IP multi-linea), imposta la soglia manualmente nella sezione "Attributi SIP aggiuntivi", ad esempio: [endpoint] device_state_busy_at = 3',
+
     'ex_ImportFromCSV' => 'Importa da CSV',
     'ex_ValidationMessage' => 'Messaggio di convalida',
     // Export section
@@ -372,4 +385,5 @@ return [
     'ex_SipManualattributesTooltip_list_remove_unavailable' => 'rimuovi_non disponibile',
     'ex_SipManualattributesTooltip_list_remove_unavailable_desc' => 'rimuovere i contatti non disponibili al momento della registrazione (sì/no, predefinito: sì)',
     'ex_SipManualattributesTooltip_note' => 'I parametri si applicano alle sezioni [endpoint], [aor], [auth] e [acl].',
+    'ex_Errors' => 'Errori',
 ];

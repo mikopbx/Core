@@ -163,6 +163,19 @@ return [
     'ex_dropdownCategory_USER' => 'Empleados',
     'ex_dropdownCategory_USERS' => 'Empleados',
     'ex_enableRecording' => 'Permitir',
+    'ex_SipManualattributesTooltip_list_set_var' => 'set_var=LEGACY_CP1251=1',
+    'ex_SipManualattributesTooltip_list_set_var_desc' => 'forzar el uso de CP1251 (Windows-1251) para el nombre visible en teléfonos SIP antiguos (Panasonic, Eltex, Welltech, AddPac y otros modelos antiguos sin soporte UTF-8)',
+    'ex_AcceptMultipleCalls' => 'Aceptar varias llamadas simultáneas',
+    'ex_AcceptMultipleCallsTooltip_header' => 'Varias llamadas simultáneas',
+    'ex_AcceptMultipleCallsTooltip_desc' => 'Qué hacer cuando llaman al empleado mientras ya está hablando.',
+    'ex_AcceptMultipleCallsTooltip_off' => 'Desactivado (por defecto)',
+    'ex_AcceptMultipleCallsTooltip_off_desc' => 'La segunda llamada recibe la señal de ocupado y se desvía según las reglas de reenvío por ocupado (móvil, buzón de voz, siguiente agente de la cola). La luz BLF en los teléfonos de los compañeros muestra al empleado como ocupado.',
+    'ex_AcceptMultipleCallsTooltip_on' => 'Activado',
+    'ex_AcceptMultipleCallsTooltip_on_desc' => 'El teléfono recibe una notificación de la segunda llamada (call waiting). El empleado decide si la atiende (poniendo la primera en espera) o la rechaza. Adecuado para recepcionistas, despachadores y teléfonos IP multilínea.',
+    'ex_AcceptMultipleCallsTooltip_warning_header' => 'Qué cambia al activarlo',
+    'ex_AcceptMultipleCallsTooltip_warning' => 'El BLF en los teléfonos de los compañeros mostrará ocupado sólo durante la segunda conversación activa, y las colas y el reenvío por ocupado dejarán de activarse en la primera llamada: simplemente sonará en la extensión del empleado.',
+    'ex_AcceptMultipleCallsTooltip_note' => 'Si el empleado debe aceptar tres o más llamadas simultáneas (por ejemplo, en un teléfono IP multilínea), defina el umbral manualmente en la sección "Atributos SIP adicionales", por ejemplo: [endpoint] device_state_busy_at = 3',
+
     'ex_SecurityNoFailures' => 'No se detectaron intentos de autorización no válidos.',
     // Security section
     'ex_Security' => 'Seguridad',
@@ -372,4 +385,5 @@ return [
     'ex_CancelImport' => 'Cancelar descarga',
     'ex_ImportCancelled' => 'Importación cancelada',
     'ex_ShowingAllRecords' => 'Mostrar todo',
+    'ex_Errors' => 'Errores',
 ];

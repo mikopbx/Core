@@ -1621,6 +1621,7 @@ return [
     'rest_param_emp_sip_secret' => 'SIP-tilin salasana',
     'rest_param_emp_sip_manualattributes' => 'Lisä-SIP-parametrit (eroteltuna rivinvaihdoilla)',
     'rest_param_emp_sip_enableRecording' => 'Ota puheluiden tallennus käyttöön',
+    'rest_param_emp_sip_acceptMultipleCalls' => 'Salli toinen samanaikainen puhelu (call waiting)',
     'rest_param_emp_sip_networkfilterid' => 'Verkkosuodattimen tunnus käyttöoikeutta varten',
     'rest_param_emp_fwd_ringlength' => 'Vastauksen aikakatkaisu sekunteina ennen uudelleenohjausta',
     'rest_param_emp_fwd_forwarding' => 'Ehdottoman edelleenlähetyksen jatko',
@@ -1678,6 +1679,7 @@ return [
     'rest_schema_emp_sip_transport' => 'SIP-siirtoprotokolla (UDP/TCP/TLS)',
     'rest_schema_emp_sip_manualattributes' => 'Lisä-SIP-parametrit (eroteltuna rivinvaihdoilla)',
     'rest_schema_emp_sip_enableRecording' => 'Ota puheluiden tallennus käyttöön',
+    'rest_schema_emp_sip_acceptMultipleCalls' => 'Salli toinen samanaikainen puhelu (call waiting)',
     'rest_schema_emp_search_index' => 'Hakuindeksi suodatusta varten',
     // Schema: Fail2Ban (singleton resource)
     'rest_schema_f2b_maxretry' => 'IP-estoa edeltävien epäonnistuneiden yritysten enimmäismäärä',

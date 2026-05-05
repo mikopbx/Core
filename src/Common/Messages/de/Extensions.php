@@ -163,6 +163,19 @@ return [
     'ex_dropdownCategory_USER' => 'Mitarbeiter',
     'ex_dropdownCategory_USERS' => 'Mitarbeiter',
     'ex_enableRecording' => 'Erlauben',
+    'ex_SipManualattributesTooltip_list_set_var' => 'set_var=LEGACY_CP1251=1',
+    'ex_SipManualattributesTooltip_list_set_var_desc' => 'CP1251 (Windows-1251) für den Anzeigenamen auf älteren SIP-Telefonen erzwingen (Panasonic, Eltex, Welltech, AddPac und andere alte Modelle ohne UTF-8-Unterstützung)',
+    'ex_AcceptMultipleCalls' => 'Mehrere gleichzeitige Anrufe annehmen',
+    'ex_AcceptMultipleCallsTooltip_header' => 'Mehrere gleichzeitige Anrufe',
+    'ex_AcceptMultipleCallsTooltip_desc' => 'Was passieren soll, wenn der Mitarbeiter angerufen wird, während er bereits telefoniert.',
+    'ex_AcceptMultipleCallsTooltip_off' => 'Aus (Standard)',
+    'ex_AcceptMultipleCallsTooltip_off_desc' => 'Der zweite Anrufer hört ein Besetztzeichen und der Anruf folgt den Weiterleitungsregeln bei Besetzt (Mobil, Voicemail, nächster Agent in der Warteschlange). Die BLF-Lampe an den Telefonen der Kollegen zeigt den Mitarbeiter als besetzt.',
+    'ex_AcceptMultipleCallsTooltip_on' => 'Ein',
+    'ex_AcceptMultipleCallsTooltip_on_desc' => 'Das Telefon erhält eine Benachrichtigung über den zweiten Anruf (call waiting). Der Mitarbeiter entscheidet selbst, ob er den zweiten Anruf annimmt (mit dem ersten auf Halten) oder ablehnt. Geeignet für Empfangsmitarbeiter, Disponenten und Multi-Line-IP-Telefone.',
+    'ex_AcceptMultipleCallsTooltip_warning_header' => 'Was sich beim Aktivieren ändert',
+    'ex_AcceptMultipleCallsTooltip_warning' => 'BLF an den Telefonen der Kollegen zeigt erst beim zweiten aktiven Gespräch besetzt an, und Warteschlangen bzw. Weiterleitung bei Besetzt werden beim ersten Anruf nicht mehr ausgelöst — der Anruf klingelt einfach am Apparat des Mitarbeiters.',
+    'ex_AcceptMultipleCallsTooltip_note' => 'Wenn der Mitarbeiter drei oder mehr gleichzeitige Anrufe entgegennehmen soll (z. B. an einem Multi-Line-IP-Telefon), legen Sie den Schwellenwert manuell im Bereich "Zusätzliche SIP-Attribute" fest, z. B.: [endpoint] device_state_busy_at = 3',
+
     // ACL permissions messages
     'ex_NoPermissionToModify' => 'Sie haben kein Recht, Mitarbeiter auszutauschen.',
     'ex_NoPermissionToDelete' => 'Sie haben keine Berechtigung, Mitarbeiter zu löschen.',
@@ -372,4 +385,5 @@ return [
     'ex_CancelImport' => 'Download abbrechen',
     'ex_ImportCancelled' => 'Import storniert',
     'ex_ShowingAllRecords' => 'Alle anzeigen',
+    'ex_Errors' => 'Fehler',
 ];

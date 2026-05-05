@@ -137,6 +137,7 @@ return [
     'rest_param_emp_export_format' => 'Format eksportu: minimalny (7 pól), standardowy (13 pól), pełny (15 pól)',
     'rest_param_emp_sip_transport' => 'Protokół transportowy SIP (udp, tcp, tls, udp, tcp, udp, tcp, tls)',
     'rest_param_emp_sip_enableRecording' => 'Włącz nagrywanie rozmów',
+    'rest_param_emp_sip_acceptMultipleCalls' => 'Zezwalaj na drugie jednoczesne połączenie (call waiting)',
     'rest_param_ext_type_filter' => 'Filtruj według typu dodatku',
     'rest_param_ext_userid' => 'Powiązany identyfikator użytkownika',
     'rest_schema_ext_show_in_phonebook' => 'Pokaż numer wewnętrzny w książce telefonicznej',
@@ -166,6 +167,7 @@ return [
     // Schema: Employees (Сотрудники)
     'rest_schema_emp_id' => 'Unikalny identyfikator pracownika',
     'rest_schema_emp_sip_enableRecording' => 'Włącz nagrywanie rozmów',
+    'rest_schema_emp_sip_acceptMultipleCalls' => 'Zezwalaj na drugie jednoczesne połączenie (call waiting)',
     'rest_schema_emp_sip_networkfilterid' => 'Identyfikator filtra sieciowego dla dostępu',
     'rest_schema_emp_fwd_forwardingonunavailable' => 'Rozszerzenie umożliwiające przekierowanie połączeń w przypadku niedostępności',
     'rest_schema_fw_newer_block_ip' => 'Flaga zaufanej podsieci (adresy nie będą blokowane przez Fail2Ban)',

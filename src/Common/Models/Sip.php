@@ -228,6 +228,17 @@ class Sip extends ModelsBase
      */
     public ?string $enableRecording = '1';
 
+    /**
+     * Whether the endpoint should accept a second concurrent call (call waiting).
+     * '0' = single line per device (device_state_busy_at = 1, BLF goes red on first call,
+     *        queue/follow-me treat the user as busy on the first call).
+     * '1' = call waiting (device_state_busy_at = 2, second call rings as a waiting call).
+     * Power users can override device_state_busy_at via SIP manualattributes for higher values.
+     *
+     * @Column(type="string", length=1, nullable=true, default="0")
+     */
+    public ?string $accept_multiple_calls = '0';
+
 
     /**
      * Status of the peer secret check by weak dictionary (0 = not checked, 1 = ok, 2 = weak).

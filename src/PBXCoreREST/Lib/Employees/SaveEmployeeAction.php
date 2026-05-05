@@ -109,6 +109,7 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
             'sip_secret' => 'string|max:64',
             'sip_networkfilterid' => 'string|max:64|empty_to_null',
             'sip_enableRecording' => 'bool',
+            'sip_acceptMultipleCalls' => 'bool',
             'sip_dtmfmode' => 'string|max:20',
             'sip_transport' => 'string|max:20',
             'sip_manualattributes' => 'string|max:1024|empty_to_null',
@@ -416,7 +417,13 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
                     if (isset($sanitizedData['sip_enableRecording'])) {
                         $sipEntity->$name = $sanitizedData['sip_enableRecording'] ? '1' : '0';
                     }
-                    break;    
+                    break;
+                case 'accept_multiple_calls':
+                    // 3CX-style "Accept multiple calls" toggle (drives device_state_busy_at)
+                    if (isset($sanitizedData['sip_acceptMultipleCalls'])) {
+                        $sipEntity->$name = $sanitizedData['sip_acceptMultipleCalls'] ? '1' : '0';
+                    }
+                    break;
                 case 'manualattributes':
                     // Set 'manualattributes' using the value of sip_manualattributes
                     $sipEntity->setManualAttributes($sanitizedData['sip_manualattributes']??'');

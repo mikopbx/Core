@@ -375,6 +375,7 @@ class WorkerBulkEmployees extends WorkerBase
             'sip_dtmfmode' => $sip?->dtmfmode ?? '',
             'sip_transport' => $sip?->transport ?? '',
             'sip_enableRecording' => $sip?->enableRecording ?? '0',
+            'sip_acceptMultipleCalls' => $sip?->accept_multiple_calls ?? '0',
             'sip_networkfilterid' => $sip?->networkfilterid ?? '',
             'sip_manualattributes' => $sip?->getManualAttributes() ?? '',
             'fwd_forwarding' => $forwarding?->forwarding ?? '',
@@ -397,19 +398,29 @@ class WorkerBulkEmployees extends WorkerBase
         $fieldsToCompare = [
             'user_username', 'user_email', 'mobile_number', 'mobile_dialstring',
             'sip_secret', 'sip_dtmfmode', 'sip_transport', 'sip_enableRecording',
+            'sip_acceptMultipleCalls',
             'sip_networkfilterid', 'sip_manualattributes',
             'fwd_forwarding', 'fwd_forwardingonbusy', 'fwd_forwardingonunavailable',
             'fwd_ringlength'
         ];
 
         foreach ($fieldsToCompare as $field) {
-            $csvValue = trim((string)($csvData[$field] ?? ''));
+            // If the CSV omits this column entirely, treat the field as not-a-diff. The
+            // import path only writes fields that are present (SaveEmployeeAction uses
+            // isset() per field), so flagging an absent column as different would produce
+            // an unending update loop on every re-import.
+            if (!array_key_exists($field, $csvData)) {
+                continue;
+            }
+            $csvValue = trim((string)$csvData[$field]);
             $currentValue = trim((string)($currentData[$field] ?? ''));
 
-            // Special handling for boolean fields
-            if ($field === 'sip_enableRecording') {
-                $csvValue = $csvValue ? '1' : '0';
-                $currentValue = $currentValue ? '1' : '0';
+            // Boolean fields: CSV may carry literal strings like "true"/"false"/"0"/"1",
+            // which a plain truthy check would mishandle ("false" is truthy in PHP). Use
+            // FILTER_VALIDATE_BOOLEAN so both sides collapse to canonical '0'/'1' before diff.
+            if ($field === 'sip_enableRecording' || $field === 'sip_acceptMultipleCalls') {
+                $csvValue = filter_var($csvValue, FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
+                $currentValue = filter_var($currentValue, FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
             }
 
             // Special handling for numeric fields

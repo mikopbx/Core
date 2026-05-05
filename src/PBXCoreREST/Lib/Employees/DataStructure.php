@@ -87,6 +87,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 $data['sip_transport'] = $sipRecord->transport ?: Sip::TRANSPORT_AUTO;
                 $data['sip_manualattributes'] = $sipRecord->getManualAttributes();
                 $data['sip_enableRecording'] = $sipRecord->enableRecording === '1';
+                $data['sip_acceptMultipleCalls'] = ($sipRecord->accept_multiple_calls ?? '0') === '1';
                 
                 // Add network filter field with representation
                 $data = parent::addNetworkFilterField($data, 'sip_networkfilterid', $sipRecord->networkfilterid ?? 'none');
@@ -190,6 +191,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'extensions_length' => (int)PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH),
             'sip_secret' => Sip::generateSipPassword(),
             'sip_enableRecording' => true,
+            'sip_acceptMultipleCalls' => false,
             'sip_dtmfmode' => 'auto',
             'sip_transport' => Sip::TRANSPORT_AUTO,
             'sip_manualattributes' => '',
@@ -386,6 +388,13 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'sanitize' => 'bool',
                 'default' => true,
                 'example' => true
+            ],
+            'sip_acceptMultipleCalls' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_emp_sip_acceptMultipleCalls',
+                'sanitize' => 'bool',
+                'default' => false,
+                'example' => false
             ],
             'sip_networkfilterid' => [
                 'type' => 'string',

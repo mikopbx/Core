@@ -175,6 +175,27 @@ class ExtensionTooltipManager {
                 ]
             },
             
+            // Accept multiple calls tooltip (3CX-style call waiting)
+            sip_acceptMultipleCalls: {
+                header: globalTranslate.ex_AcceptMultipleCallsTooltip_header,
+                description: globalTranslate.ex_AcceptMultipleCallsTooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.ex_AcceptMultipleCallsTooltip_off,
+                        definition: globalTranslate.ex_AcceptMultipleCallsTooltip_off_desc
+                    },
+                    {
+                        term: globalTranslate.ex_AcceptMultipleCallsTooltip_on,
+                        definition: globalTranslate.ex_AcceptMultipleCallsTooltip_on_desc
+                    }
+                ],
+                warning: {
+                    header: globalTranslate.ex_AcceptMultipleCallsTooltip_warning_header,
+                    text: globalTranslate.ex_AcceptMultipleCallsTooltip_warning
+                },
+                note: globalTranslate.ex_AcceptMultipleCallsTooltip_note
+            },
+
             // Network filter tooltip
             sip_networkfilterid: {
                 header: globalTranslate.ex_SipNetworkfilteridTooltip_header,

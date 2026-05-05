@@ -163,6 +163,19 @@ return [
     'ex_dropdownCategory_USER' => 'პერსონალი',
     'ex_dropdownCategory_USERS' => 'პერსონალი',
     'ex_enableRecording' => 'ყველა თანამშრომლის საუბრის ჩაწერა',
+    'ex_SipManualattributesTooltip_list_set_var' => 'set_var=LEGACY_CP1251=1',
+    'ex_SipManualattributesTooltip_list_set_var_desc' => 'CP1251 (Windows-1251)-ის იძულებითი გამოყენება საჩვენებელი სახელისთვის ძველ SIP ტელეფონებზე (Panasonic, Eltex, Welltech, AddPac და სხვა ძველი მოდელები, რომლებიც UTF-8-ს არ უჭერენ მხარს)',
+    'ex_AcceptMultipleCalls' => 'მიიღე რამდენიმე ერთდროული ზარი',
+    'ex_AcceptMultipleCallsTooltip_header' => 'რამდენიმე ერთდროული ზარი',
+    'ex_AcceptMultipleCallsTooltip_desc' => 'რა მოხდეს, როდესაც თანამშრომელს ურეკავენ, ხოლო ის უკვე საუბრობს ტელეფონზე.',
+    'ex_AcceptMultipleCallsTooltip_off' => 'გამორთული (ნაგულისხმევი)',
+    'ex_AcceptMultipleCallsTooltip_off_desc' => 'მეორე დამრეკავი მიიღებს დაკავებულობის სიგნალს და ზარი გადამისამართდება დაკავებულობის წესების მიხედვით (მობილური, ხმოვანი ფოსტა, რიგში შემდეგი ოპერატორი). კოლეგების ტელეფონებზე BLF ლამპა აჩვენებს თანამშრომელს დაკავებულად.',
+    'ex_AcceptMultipleCallsTooltip_on' => 'ჩართული',
+    'ex_AcceptMultipleCallsTooltip_on_desc' => 'ტელეფონი მიიღებს შეტყობინებას მეორე ზარის შესახებ (call waiting). თანამშრომელი თავად გადაწყვეტს, უპასუხოს ის (პირველი ზარის შეჩერებით) თუ უარყოს. შესაფერისი მისაღებებისთვის, დისპეჩერებისთვის და მრავალხაზიანი IP ტელეფონებისთვის.',
+    'ex_AcceptMultipleCallsTooltip_warning_header' => 'რა იცვლება ჩართვისას',
+    'ex_AcceptMultipleCallsTooltip_warning' => 'BLF კოლეგების ტელეფონებზე დაკავებულობას აჩვენებს მხოლოდ მეორე აქტიური საუბრის დროს და რიგები ან დაკავებული გადამისამართება აღარ გაშვებულია პირველ ზარზე — ის უბრალოდ დარეკავს თანამშრომელთან.',
+    'ex_AcceptMultipleCallsTooltip_note' => 'თუ თანამშრომელს სჭირდება სამი ან მეტი ერთდროული ზარის მიღება (მაგ., მრავალხაზიან IP ტელეფონზე), დააყენეთ ზღვარი ხელით განყოფილებაში "დამატებითი SIP ატრიბუტები", მაგ.: [endpoint] device_state_busy_at = 3',
+
     'ex_DeviceConnected' => 'დაკავშირებულია',
     'ex_IpCopied' => 'IP დაკოპირდა',
     'ex_MonitoringTab' => 'მონიტორინგი',
@@ -372,4 +385,5 @@ return [
     // Bulk upload translations (новые ключи)
     'ex_BulkUploadFieldRequired' => 'ველი „%field%“ აუცილებელია.',
     'ex_BulkUploadInvalidEmail' => 'ელფოსტის არასწორი ფორმატი: %email%',
+    'ex_Errors' => 'შეცდომები',
 ];

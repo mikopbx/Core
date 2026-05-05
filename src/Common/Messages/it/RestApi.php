@@ -68,6 +68,7 @@ return [
     'rest_schema_ms_password' => 'Password SMTP (per metodi semplici o di accesso)',
     'rest_schema_ms_test_email_to' => 'Indirizzo email del destinatario dell\'email di prova',
     'rest_schema_emp_sip_enableRecording' => 'Abilita la registrazione delle chiamate',
+    'rest_schema_emp_sip_acceptMultipleCalls' => 'Consenti una seconda chiamata simultanea (call waiting)',
     'rest_param_file_total_chunks' => 'Numero totale di blocchi',
     'rest_param_file_firmware_url' => 'URL per scaricare il firmware',
     'rest_schema_syslog_archive' => 'Utilizzare i registri di archivio',
@@ -357,6 +358,7 @@ return [
     'rest_param_emp_batch_employees' => 'Matrice di dati dei dipendenti per la creazione in blocco (massimo 20 record)',
     'rest_param_emp_batch_mode' => 'Modalità operativa: convalida (solo convalida) o crea (crea)',
     'rest_param_emp_sip_enableRecording' => 'Abilita la registrazione delle chiamate',
+    'rest_param_emp_sip_acceptMultipleCalls' => 'Consenti una seconda chiamata simultanea (call waiting)',
     'rest_param_emp_sip_networkfilterid' => 'ID filtro di rete per l\'accesso',
     'rest_param_emp_fwd_ringlength' => 'Timeout di risposta in secondi prima del reindirizzamento',
     // Extensions specific parameters

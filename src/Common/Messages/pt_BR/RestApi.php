@@ -1597,6 +1597,7 @@ return [
     'rest_schema_emp_number' => 'Número de ramal interno',
     'rest_schema_emp_sip_dtmfmode' => 'Modo de transmissão de tom DTMF',
     'rest_schema_emp_sip_enableRecording' => 'Ativar gravação de chamadas',
+    'rest_schema_emp_sip_acceptMultipleCalls' => 'Permitir uma segunda chamada simultânea (call waiting)',
     'rest_schema_emp_sip_networkfilterid' => 'ID do filtro de rede para acesso',
     'rest_schema_emp_fwd_forwardingonbusy' => 'Extensão para encaminhamento de chamadas quando estiver ocupado.',
     // Schema: Fail2Ban (singleton resource)
@@ -1866,6 +1867,7 @@ return [
     'rest_param_emp_export_number_from' => 'Número inicial do intervalo para exportação',
     'rest_param_emp_batch_skip_errors' => 'Continuar o processamento em caso de erros (verdadeiro) ou parar no primeiro erro (falso)',
     'rest_param_emp_sip_enableRecording' => 'Ativar gravação de chamadas',
+    'rest_param_emp_sip_acceptMultipleCalls' => 'Permitir uma segunda chamada simultânea (call waiting)',
     'rest_param_emp_sip_networkfilterid' => 'ID do filtro de rede para acesso',
     'rest_param_emp_fwd_ringlength' => 'Tempo limite de resposta em segundos antes do redirecionamento',
     'rest_param_emp_mobile_number' => 'Número de celular para encaminhamento de chamadas externas',

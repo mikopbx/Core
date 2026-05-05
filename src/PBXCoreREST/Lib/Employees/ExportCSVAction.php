@@ -76,6 +76,7 @@ class ExportCSVAction
             'sip_dtmfmode',
             'sip_transport',
             'sip_enableRecording',
+            'sip_acceptMultipleCalls',
             'sip_manualattributes',
             'fwd_ringlength',
             'fwd_forwarding',
@@ -202,6 +203,7 @@ class ExportCSVAction
                 'sip_transport' => 'Sip.transport',
                 'sip_manualattributes' => 'Sip.manualattributes',
                 'sip_enableRecording' => 'Sip.enableRecording',
+                'sip_acceptMultipleCalls' => 'Sip.accept_multiple_calls',
                 'mobile_number' => 'MobileExtensions.number',
                 'mobile_dialstring' => 'ExternalPhones.dialstring',
                 'fwd_ringlength' => 'ForwardingRights.ringlength',
@@ -262,6 +264,10 @@ class ExportCSVAction
                 // Special handling for boolean fields
                 if ($field === 'sip_enableRecording') {
                     $value = $value ? 'true' : 'false';
+                }
+
+                if ($field === 'sip_acceptMultipleCalls') {
+                    $value = ((string)$value === '1') ? 'true' : 'false';
                 }
 
                 // Decode base64 for manualattributes
@@ -326,6 +332,7 @@ class ExportCSVAction
                 'sip_dtmfmode' => 'auto',
                 'sip_transport' => 'udp',
                 'sip_enableRecording' => 'true',
+                'sip_acceptMultipleCalls' => 'false',
                 'sip_networkfilterid' => '',
                 'sip_manualattributes' => '',
                 'fwd_forwarding' => '100',
@@ -344,6 +351,7 @@ class ExportCSVAction
                 'sip_dtmfmode' => 'rfc4733',
                 'sip_transport' => 'tcp',
                 'sip_enableRecording' => 'false',
+                'sip_acceptMultipleCalls' => 'true',
                 'sip_networkfilterid' => '',
                 'sip_manualattributes' => '',
                 'fwd_forwarding' => '201',

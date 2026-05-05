@@ -105,6 +105,16 @@ return [
     'ex_ValidateUsernameEmpty' => 'Введите имя пользователя',
     'ex_ValidateUsernameSpecialCharacters' => 'ФИО не должно содержать специальных символов',
     'ex_enableRecording' => 'Записывать все вызовы сотрудника',
+    'ex_AcceptMultipleCalls' => 'Принимать несколько вызовов одновременно',
+    'ex_AcceptMultipleCallsTooltip_header' => 'Несколько одновременных вызовов',
+    'ex_AcceptMultipleCallsTooltip_desc' => 'Что делать, когда сотруднику звонят, а он уже разговаривает.',
+    'ex_AcceptMultipleCallsTooltip_off' => 'Выключено (по умолчанию)',
+    'ex_AcceptMultipleCallsTooltip_off_desc' => 'Второй вызов получит сигнал «занято» и отработает по правилам переадресации (мобильный, голосовая почта, следующий агент в очереди). Лампа BLF на телефонах коллег покажет, что сотрудник занят.',
+    'ex_AcceptMultipleCallsTooltip_on' => 'Включено',
+    'ex_AcceptMultipleCallsTooltip_on_desc' => 'Телефон получит уведомление о втором вызове (call waiting). Сотрудник сам решит — принять второй звонок, поставив первый на удержание, или отклонить. Подходит для секретарей, диспетчеров и многолинейных IP-телефонов.',
+    'ex_AcceptMultipleCallsTooltip_warning_header' => 'Что меняется при включении',
+    'ex_AcceptMultipleCallsTooltip_warning' => 'BLF на телефонах коллег покажет «занято» только при втором активном разговоре, а очереди и переадресация по занятости перестанут срабатывать на первом вызове — звонок будет ждать у сотрудника.',
+    'ex_AcceptMultipleCallsTooltip_note' => 'Если сотруднику нужно принимать три и более одновременных вызова (например, на многолинейный IP-телефон), задайте порог вручную в разделе «Дополнительные SIP-атрибуты», например: [endpoint] device_state_busy_at = 3',
 
     // Bulk upload translations (новые ключи)
     'ex_BulkUploadFieldRequired' => 'Поле "%field%" обязательно для заполнения',

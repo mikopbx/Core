@@ -163,6 +163,19 @@ return [
     'ex_dropdownCategory_USER' => 'Çalışanlar',
     'ex_dropdownCategory_USERS' => 'Çalışanlar',
     'ex_enableRecording' => 'Çalışanın tüm görüşmelerini kaydet',
+    'ex_SipManualattributesTooltip_list_set_var' => 'set_var=LEGACY_CP1251=1',
+    'ex_SipManualattributesTooltip_list_set_var_desc' => 'eski SIP telefonlarda görünen ad için CP1251 (Windows-1251) kullanımını zorla (Panasonic, Eltex, Welltech, AddPac ve UTF-8 desteklemeyen diğer eski modeller)',
+    'ex_AcceptMultipleCalls' => 'Aynı anda birden fazla çağrıyı kabul et',
+    'ex_AcceptMultipleCallsTooltip_header' => 'Aynı anda birden fazla çağrı',
+    'ex_AcceptMultipleCallsTooltip_desc' => 'Çalışan zaten konuşurken arandığında ne yapılacağını belirler.',
+    'ex_AcceptMultipleCallsTooltip_off' => 'Kapalı (varsayılan)',
+    'ex_AcceptMultipleCallsTooltip_off_desc' => 'İkinci arayan meşgul tonu duyar ve çağrı, meşgulken yönlendirme kurallarını izler (cep telefonu, sesli mesaj, kuyruktaki bir sonraki temsilci). Meslektaşların telefonlarındaki BLF lambası çalışanı meşgul olarak gösterir.',
+    'ex_AcceptMultipleCallsTooltip_on' => 'Açık',
+    'ex_AcceptMultipleCallsTooltip_on_desc' => 'Telefon, ikinci çağrı hakkında bir bildirim alır (call waiting). Çalışan, ilkini beklemeye alarak ikinciyi cevaplamayı veya reddetmeyi kendisi seçer. Resepsiyonistler, operatörler ve çok hatlı IP telefonlar için uygundur.',
+    'ex_AcceptMultipleCallsTooltip_warning_header' => 'Etkinleştirildiğinde ne değişir',
+    'ex_AcceptMultipleCallsTooltip_warning' => 'Meslektaşların telefonlarındaki BLF, yalnızca ikinci aktif görüşmede meşgul gösterecek; kuyruklar ve meşgulken yönlendirme ilk çağrıda artık tetiklenmeyecek — çağrı doğrudan çalışanın hattında çalacak.',
+    'ex_AcceptMultipleCallsTooltip_note' => 'Çalışan üç veya daha fazla eşzamanlı çağrı kabul etmek zorundaysa (ör. çok hatlı bir IP telefonda), eşik değerini "Ek SIP öznitelikleri" bölümünde manuel olarak ayarlayın, ör.: [endpoint] device_state_busy_at = 3',
+
     'ex_SipManualattributesTooltip_list_direct_media_desc' => 'Cihazlar arasında doğrudan medya aktarımı (evet/hayır)',
     'ex_SipManualattributesTooltip_list_qualify_frequency' => 'nitelik_frekansı',
     'ex_NoSearchResults' => 'Hiçbir şey bulunamadı',
@@ -372,4 +385,5 @@ return [
     'ex_ImportErrorBasic' => 'Satır %line%: sayı %number%',
     // Specific error messages without number duplication
     'ex_MobileNumberAlreadyUsed' => 'Cep telefonu numarası zaten kullanımda.',
+    'ex_Errors' => 'Hatalar',
 ];

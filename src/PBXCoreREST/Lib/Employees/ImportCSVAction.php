@@ -50,6 +50,7 @@ class ImportCSVAction
         'sip_dtmfmode',
         'sip_transport',
         'sip_enableRecording',
+        'sip_acceptMultipleCalls',
         'sip_networkfilterid',
         'sip_manualattributes',
         'fwd_forwarding',

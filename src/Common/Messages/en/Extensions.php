@@ -105,6 +105,19 @@ return [
     'ex_ValidateUsernameEmpty' => 'Enter username',
     'ex_ValidateUsernameSpecialCharacters' => 'Full name must not contain special characters',
     'ex_enableRecording' => 'Record all employee calls',
+    'ex_SipManualattributesTooltip_list_set_var' => 'set_var=LEGACY_CP1251=1',
+    'ex_SipManualattributesTooltip_list_set_var_desc' => 'force CP1251 (Windows-1251) for the display name on legacy SIP phones (Panasonic, Eltex, Welltech, AddPac and other old models that do not support UTF-8)',
+
+    'ex_AcceptMultipleCalls' => 'Accept multiple simultaneous calls',
+    'ex_AcceptMultipleCallsTooltip_header' => 'Multiple simultaneous calls',
+    'ex_AcceptMultipleCallsTooltip_desc' => 'What happens when this employee is called while already on the phone.',
+    'ex_AcceptMultipleCallsTooltip_off' => 'Off (default)',
+    'ex_AcceptMultipleCallsTooltip_off_desc' => 'The second caller hears a busy tone and the call follows busy-forwarding rules (mobile, voicemail, next agent in the queue). The BLF lamp on colleagues\' phones shows the employee as busy.',
+    'ex_AcceptMultipleCallsTooltip_on' => 'On',
+    'ex_AcceptMultipleCallsTooltip_on_desc' => 'The phone receives a notification about the second call (call waiting). The employee decides whether to answer it (placing the first call on hold) or reject it. Suitable for receptionists, dispatchers and multi-line IP phones.',
+    'ex_AcceptMultipleCallsTooltip_warning_header' => 'What changes when enabled',
+    'ex_AcceptMultipleCallsTooltip_warning' => 'BLF on colleagues\' phones will only show busy when a second call is active, and queues or busy-forwarding will no longer trigger on the first call — it will just ring on the employee\'s line.',
+    'ex_AcceptMultipleCallsTooltip_note' => 'If the employee needs to accept three or more simultaneous calls (e.g. on a multi-line IP phone), set the threshold manually in the "Additional SIP attributes" section, e.g.: [endpoint] device_state_busy_at = 3',
 
     // Bulk upload translations
     'ex_BulkUploadFieldRequired' => 'Field "%field%" is required',

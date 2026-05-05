@@ -453,6 +453,10 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $sipEntity->enableRecording = $sanitizedData['sip_enableRecording'] ? '1' : '0';
         }
 
+        if (isset($sanitizedData['sip_acceptMultipleCalls'])) {
+            $sipEntity->accept_multiple_calls = $sanitizedData['sip_acceptMultipleCalls'] ? '1' : '0';
+        }
+
         $result = $sipEntity->save();
         return [$sipEntity, $result];
     }

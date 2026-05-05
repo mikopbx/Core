@@ -163,6 +163,19 @@ return [
     'ex_dropdownCategory_USER' => 'Zaměstnanci',
     'ex_dropdownCategory_USERS' => 'Zaměstnanci',
     'ex_enableRecording' => 'Nahrávat všechny hovory zaměstnance',
+    'ex_SipManualattributesTooltip_list_set_var' => 'set_var=LEGACY_CP1251=1',
+    'ex_SipManualattributesTooltip_list_set_var_desc' => 'vynutit CP1251 (Windows-1251) pro zobrazované jméno na starších SIP telefonech (Panasonic, Eltex, Welltech, AddPac a dalších starších modelech bez podpory UTF-8)',
+    'ex_AcceptMultipleCalls' => 'Přijímat více současných hovorů',
+    'ex_AcceptMultipleCallsTooltip_header' => 'Více současných hovorů',
+    'ex_AcceptMultipleCallsTooltip_desc' => 'Co se má stát, když je zaměstnanec volán, zatímco již telefonuje.',
+    'ex_AcceptMultipleCallsTooltip_off' => 'Vypnuto (výchozí)',
+    'ex_AcceptMultipleCallsTooltip_off_desc' => 'Druhý volající uslyší obsazený tón a hovor bude zpracován podle pravidel přesměrování na obsazení (mobil, hlasová schránka, další agent ve frontě). Kontrolka BLF na telefonech kolegů zobrazí zaměstnance jako obsazeného.',
+    'ex_AcceptMultipleCallsTooltip_on' => 'Zapnuto',
+    'ex_AcceptMultipleCallsTooltip_on_desc' => 'Telefon obdrží upozornění na druhý hovor (call waiting). Zaměstnanec sám rozhodne, zda jej přijme (s prvním hovorem v podržení) nebo odmítne. Vhodné pro recepční, dispečery a vícekanálové IP telefony.',
+    'ex_AcceptMultipleCallsTooltip_warning_header' => 'Co se mění při zapnutí',
+    'ex_AcceptMultipleCallsTooltip_warning' => 'BLF na telefonech kolegů zobrazí obsazeno až při druhém aktivním hovoru a fronty či přesměrování na obsazení se při prvním hovoru přestanou spouštět — hovor jednoduše zazvoní u zaměstnance.',
+    'ex_AcceptMultipleCallsTooltip_note' => 'Pokud má zaměstnanec přijímat tři nebo více současných hovorů (např. na vícekanálovém IP telefonu), nastavte prah ručně v sekci "Další SIP atributy", např.: [endpoint] device_state_busy_at = 3',
+
     // ACL permissions messages
     'ex_NoPermissionToModify' => 'Nemáte právo měnit zaměstnance',
     'ex_NoPermissionToDelete' => 'Nemáte oprávnění k odstranění zaměstnanců.',
@@ -372,4 +385,5 @@ return [
     'ex_SecurityActions' => 'Akce',
     'ex_SecurityUnban' => 'Odblokovat',
     'ex_SecurityNoFailures' => 'Nebyly zjištěny žádné neplatné pokusy o autorizaci.',
+    'ex_Errors' => 'Chyby',
 ];

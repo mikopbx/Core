@@ -163,6 +163,19 @@ return [
     'ex_dropdownCategory_USER' => 'personale',
     'ex_dropdownCategory_USERS' => 'personale',
     'ex_enableRecording' => 'Give lov til',
+    'ex_SipManualattributesTooltip_list_set_var' => 'set_var=LEGACY_CP1251=1',
+    'ex_SipManualattributesTooltip_list_set_var_desc' => 'gennemtving CP1251 (Windows-1251) for det viste navn på ældre SIP-telefoner (Panasonic, Eltex, Welltech, AddPac og andre gamle modeller uden UTF-8-understøttelse)',
+    'ex_AcceptMultipleCalls' => 'Accepter flere samtidige opkald',
+    'ex_AcceptMultipleCallsTooltip_header' => 'Flere samtidige opkald',
+    'ex_AcceptMultipleCallsTooltip_desc' => 'Hvad der skal ske, når medarbejderen ringes op, mens han allerede er i samtale.',
+    'ex_AcceptMultipleCallsTooltip_off' => 'Fra (standard)',
+    'ex_AcceptMultipleCallsTooltip_off_desc' => 'Den anden opkalder får optaget-tone, og opkaldet følger reglerne for viderestilling ved optaget (mobil, telefonsvarer, næste agent i køen). BLF-lampen på kollegernes telefoner viser medarbejderen som optaget.',
+    'ex_AcceptMultipleCallsTooltip_on' => 'Til',
+    'ex_AcceptMultipleCallsTooltip_on_desc' => 'Telefonen får en notifikation om det andet opkald (call waiting). Medarbejderen beslutter selv, om vedkommende svarer (sætter det første på hold) eller afviser. Velegnet til receptionister, dispatchere og IP-telefoner med flere linjer.',
+    'ex_AcceptMultipleCallsTooltip_warning_header' => 'Hvad ændres ved aktivering',
+    'ex_AcceptMultipleCallsTooltip_warning' => 'BLF på kollegernes telefoner viser kun optaget under den anden aktive samtale, og køer eller viderestilling ved optaget udløses ikke længere ved det første opkald — det ringer blot hos medarbejderen.',
+    'ex_AcceptMultipleCallsTooltip_note' => 'Hvis medarbejderen skal modtage tre eller flere samtidige opkald (f.eks. på en IP-telefon med flere linjer), kan du sætte tærsklen manuelt i sektionen "Yderligere SIP-attributter", fx: [endpoint] device_state_busy_at = 3',
+
     // ACL permissions messages
     'ex_NoPermissionToModify' => 'Du har ikke ret til at skifte medarbejdere',
     'ex_NoPermissionToDelete' => 'Du har ikke tilladelse til at slette medarbejdere.',
@@ -372,4 +385,5 @@ return [
     'ex_ImportCancelled' => 'Importen annulleret',
     'ex_ShowingAllRecords' => 'Vis alle',
     'ex_SecurityNoFailures' => 'Der blev ikke registreret nogen ugyldige godkendelsesforsøg.',
+    'ex_Errors' => 'Fejl',
 ];

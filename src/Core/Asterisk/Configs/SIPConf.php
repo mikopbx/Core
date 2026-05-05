@@ -447,6 +447,7 @@ class SIPConf extends AsteriskConfigClass
             // Retrieve used codecs.
             $arr_data['codecs'] = $this->getCodecs();
             $arr_data['enableRecording'] = $arr_data['enableRecording'] !== '0';
+            $arr_data['accept_multiple_calls'] = ($arr_data['accept_multiple_calls'] ?? '0') === '1';
 
             // Retrieve employee name.
             $extension = Extensions::findFirst("number = '$arr_data[extension]'");
@@ -2285,6 +2286,12 @@ class SIPConf extends AsteriskConfigClass
             'dtmf_mode'      => $dtmfmode,
         ];
 
+        // Override device_state_busy_at only when the user enabled call waiting,
+        // since the endpoint-base template already has device_state_busy_at = 1.
+        if (!empty($peer['accept_multiple_calls'])) {
+            $uniqueParams['device_state_busy_at'] = '2';
+        }
+
         // Add ACL only if network filter exists
         if (!empty($peer['permit']) || !empty($peer['deny'])) {
             $uniqueParams['acl'] = "acl_{$peer['extension']}";
@@ -2292,6 +2299,15 @@ class SIPConf extends AsteriskConfigClass
 
         // Extensions always use system language settings
         // No individual language configuration per extension
+
+        // device_state_busy_at: number of active calls at which the endpoint is reported BUSY.
+        // 1 (default, hardcoded in endpoint-base template) — single-line behaviour: BLF goes red on
+        //   the first call, queues/follow-me treat the user as busy. Matches the 3CX default
+        //   ("Accept multiple calls" off).
+        // 2 — call waiting: second concurrent call is allowed, BLF stays "InUse" until the second
+        //   call lands. Toggled per-extension via Sip.accept_multiple_calls — emitted as a unique
+        //   param above so it overrides the template only when needed.
+        // For higher concurrency (shared endpoints with max_contacts>1) override via manualattributes.
 
         // Get full options for module override detection
         $fullOptions = array_merge([
@@ -2309,7 +2325,7 @@ class SIPConf extends AsteriskConfigClass
             'named_pickup_group'   => '1',
             'sdp_session'          => 'PBX',
             'language'             => $asteriskLang,
-            'device_state_busy_at' => "1",
+            'device_state_busy_at' => !empty($peer['accept_multiple_calls']) ? '2' : '1',
             'timers'               => 'no',
             'rtp_timeout'          => (string)self::RTP_TIMEOUT,
             'rtp_timeout_hold'     => (string)self::RTP_TIMEOUT_HOLD,
@@ -2398,6 +2414,12 @@ class SIPConf extends AsteriskConfigClass
             $conf .= "auth = {$peer['extension']}-AUTH\n";
             $conf .= "outbound_auth = {$peer['extension']}-AUTH\n";
             $conf .= "dtmf_mode = $dtmfmode\n";
+
+            // Mirror the call-waiting override on the WebRTC endpoint so the toggle behaves
+            // the same whether the user is registered via SIP or the built-in WebRTC client.
+            if (!empty($peer['accept_multiple_calls'])) {
+                $conf .= "device_state_busy_at = 2\n";
+            }
 
             // Add ACL if exists
             if (!empty($peer['permit']) || !empty($peer['deny'])) {

@@ -43,7 +43,8 @@ class ExtensionEditForm extends BaseForm
      * @var array
      */
     public array $checkboxFields = [
-        'sip_enableRecording'
+        'sip_enableRecording',
+        'sip_acceptMultipleCalls',
     ];
     
     public function initialize($entity = null, $options = null): void
@@ -113,6 +114,11 @@ class ExtensionEditForm extends BaseForm
 
         // SIP EnableRecording
         $this->addCheckBox('sip_enableRecording', false); // Default value, actual value will come from REST API
+
+        // SIP Accept multiple calls (3CX-style call waiting toggle)
+        // Off (default) — endpoint reports BUSY on the first call (BLF/queue-friendly).
+        // On — endpoint accepts a second concurrent call (device_state_busy_at = 2).
+        $this->addCheckBox('sip_acceptMultipleCalls', false);
 
 
         // SIP Transport

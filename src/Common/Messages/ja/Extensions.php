@@ -163,6 +163,19 @@ return [
     'ex_dropdownCategory_USER' => '従業員',
     'ex_dropdownCategory_USERS' => '従業員',
     'ex_enableRecording' => 'すべての従業員通話を録音',
+    'ex_SipManualattributesTooltip_list_set_var' => 'set_var=LEGACY_CP1251=1',
+    'ex_SipManualattributesTooltip_list_set_var_desc' => '古い SIP 電話機（Panasonic、Eltex、Welltech、AddPac、その他 UTF-8 非対応の旧モデル）の表示名に CP1251 (Windows-1251) を強制使用します',
+    'ex_AcceptMultipleCalls' => '複数の同時着信を受け付ける',
+    'ex_AcceptMultipleCallsTooltip_header' => '複数の同時着信',
+    'ex_AcceptMultipleCallsTooltip_desc' => '従業員が通話中にさらに着信があった場合の動作を指定します。',
+    'ex_AcceptMultipleCallsTooltip_off' => 'オフ（既定）',
+    'ex_AcceptMultipleCallsTooltip_off_desc' => '2件目の発信者は話中音を聞き、着信は話中時の転送ルール（携帯電話、ボイスメール、キューの次のエージェント）に従って処理されます。同僚の電話機の BLF ランプは、その従業員を話中として表示します。',
+    'ex_AcceptMultipleCallsTooltip_on' => 'オン',
+    'ex_AcceptMultipleCallsTooltip_on_desc' => '電話機は2件目の着信通知（call waiting）を受け取ります。従業員は最初の通話を保留にして応答するか、拒否するかを自分で判断します。受付、ディスパッチャー、複数回線対応の IP 電話に適しています。',
+    'ex_AcceptMultipleCallsTooltip_warning_header' => '有効にした場合の変更点',
+    'ex_AcceptMultipleCallsTooltip_warning' => '同僚の BLF は2件目の通話が始まるまで話中を表示せず、キューや話中転送は最初の着信では作動せず、そのまま従業員の内線で鳴ります。',
+    'ex_AcceptMultipleCallsTooltip_note' => '従業員が3件以上の同時着信を受ける必要がある場合（例: 複数回線対応の IP 電話）、「追加 SIP 属性」セクションで手動で閾値を設定してください。例: [endpoint] device_state_busy_at = 3',
+
     'ex_CreateNewExtension' => '新しい従業員の作成',
     'ex_ErrorLoadingData' => 'データの読み込みエラー',
     // Bulk upload translations (новые ключи)
@@ -372,4 +385,5 @@ return [
     'ex_NoPermissionToModify' => '従業員を変更する権利はありません',
     'ex_NoPermissionToDelete' => '従業員を削除する権限がありません。',
     'ex_NoPermissionToCreate' => '従業員を作成する権限がありません。',
+    'ex_Errors' => 'エラー',
 ];

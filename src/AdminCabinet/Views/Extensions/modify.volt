@@ -124,6 +124,17 @@
                 </div>
             </div>
 
+            <div class="ten wide field">
+                <div class="ui toggle checkbox">
+                    {{ form.render('sip_acceptMultipleCalls') }}
+                    <label for="sip_acceptMultipleCalls">
+                        {{ t._('ex_AcceptMultipleCalls') }}
+                        <i class="small info circle icon field-info-icon"
+                           data-field="sip_acceptMultipleCalls"></i>
+                    </label>
+                </div>
+            </div>
+
             <div class="field">
                 <label>{{ t._('ex_DTMFMode') }}
                     <i class="small info circle icon field-info-icon" 

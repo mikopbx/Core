@@ -163,6 +163,19 @@ return [
     'ex_dropdownCategory_USER' => 'Funcionários',
     'ex_dropdownCategory_USERS' => 'Funcionários',
     'ex_enableRecording' => 'Gravar todas as conversas do funcionário',
+    'ex_SipManualattributesTooltip_list_set_var' => 'set_var=LEGACY_CP1251=1',
+    'ex_SipManualattributesTooltip_list_set_var_desc' => 'forçar CP1251 (Windows-1251) para o nome a exibir em telefones SIP antigos (Panasonic, Eltex, Welltech, AddPac e outros modelos antigos sem suporte UTF-8)',
+    'ex_AcceptMultipleCalls' => 'Aceitar várias chamadas em simultâneo',
+    'ex_AcceptMultipleCallsTooltip_header' => 'Várias chamadas em simultâneo',
+    'ex_AcceptMultipleCallsTooltip_desc' => 'O que acontece quando o colaborador é chamado enquanto já está ao telefone.',
+    'ex_AcceptMultipleCallsTooltip_off' => 'Desativado (predefinição)',
+    'ex_AcceptMultipleCallsTooltip_off_desc' => 'A segunda chamada recebe o sinal de ocupado e segue as regras de encaminhamento por ocupado (telemóvel, voicemail, próximo agente na fila). A luz BLF nos telefones dos colegas indica o colaborador como ocupado.',
+    'ex_AcceptMultipleCallsTooltip_on' => 'Ativado',
+    'ex_AcceptMultipleCallsTooltip_on_desc' => 'O telefone recebe uma notificação da segunda chamada (call waiting). O colaborador decide se atende (colocando a primeira em espera) ou rejeita. Adequado para rececionistas, despachantes e telefones IP multi-linha.',
+    'ex_AcceptMultipleCallsTooltip_warning_header' => 'O que muda ao ativar',
+    'ex_AcceptMultipleCallsTooltip_warning' => 'O BLF nos telefones dos colegas só mostra ocupado a partir da segunda chamada ativa, e filas ou encaminhamento por ocupado deixam de ser acionados na primeira chamada — esta toca diretamente no posto do colaborador.',
+    'ex_AcceptMultipleCallsTooltip_note' => 'Se o colaborador precisar atender três ou mais chamadas em simultâneo (por exemplo, num telefone IP multi-linha), defina o limiar manualmente na secção "Atributos SIP adicionais", por exemplo: [endpoint] device_state_busy_at = 3',
+
     'ex_ErrorLoadingData' => 'Erro ao carregar os dados',
     'ex_DeviceConnected' => 'Conectado',
     'ex_DeviceDisconnected' => 'Desabilitado',
@@ -372,4 +385,5 @@ return [
     // Import progress translations
     'ex_Records' => 'registros',
     'ex_SecurityNoFailures' => 'Nenhuma tentativa de autorização inválida foi detectada.',
+    'ex_Errors' => 'Erros',
 ];

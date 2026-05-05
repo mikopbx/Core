@@ -10,6 +10,7 @@ return [
     'rest_param_cq_members' => 'Matrice de configurații ale membrilor cozii',
     'rest_param_emp_import_action' => 'Acțiune de import: previzualizare sau import',
     'rest_param_emp_sip_enableRecording' => 'Activează înregistrarea apelurilor',
+    'rest_param_emp_sip_acceptMultipleCalls' => 'Permite un al doilea apel simultan (call waiting)',
     'rest_param_emp_fwd_forwardingonunavailable' => 'Extensie pentru redirecționarea apelurilor atunci când nu este disponibilă',
     'rest_param_ext_numbers' => 'Matrice de numere de extensie',
     // Passwords schema field descriptions
@@ -388,6 +389,7 @@ return [
     'rest_schema_emp_extensions_length' => 'Lungimea numerelor interne din sistem',
     'rest_schema_emp_sip_manualattributes' => 'Parametri SIP suplimentari (separați prin linii noi)',
     'rest_schema_emp_sip_enableRecording' => 'Activează înregistrarea apelurilor',
+    'rest_schema_emp_sip_acceptMultipleCalls' => 'Permite un al doilea apel simultan (call waiting)',
     'rest_schema_emp_sip_networkfilterid' => 'ID-ul filtrului de rețea pentru acces',
     'rest_schema_emp_sip_networkfilterid_represent' => 'Reprezentarea HTML a unui filtru de rețea',
     'rest_schema_emp_fwd_ringlength' => 'Timp de răspuns în secunde înainte de redirecționare',
