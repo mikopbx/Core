@@ -439,7 +439,7 @@ class SoundFilesConf extends SystemConfigClass
             }
 
             // Copy sound files (with or without prefix based on module type)
-            $soundFiles = glob("$langDir/*.{wav,ulaw,alaw,gsm,g722,sln,mp3,opus}", GLOB_BRACE);
+            $soundFiles = glob("$langDir/*.{wav,ulaw,alaw,gsm,g722,sln,mp3,opus,webm}", GLOB_BRACE);
             foreach ($soundFiles as $soundFile) {
                 $stats['total_files']++;
                 $fileName = basename($soundFile);
@@ -470,7 +470,7 @@ class SoundFilesConf extends SystemConfigClass
                     Util::mwMkdir($targetSubDir);
                 }
 
-                $subSoundFiles = glob("$subDir/*.{wav,ulaw,alaw,gsm,g722,sln,mp3,opus}", GLOB_BRACE);
+                $subSoundFiles = glob("$subDir/*.{wav,ulaw,alaw,gsm,g722,sln,mp3,opus,webm}", GLOB_BRACE);
                 foreach ($subSoundFiles as $soundFile) {
                     $stats['total_files']++;
                     $fileName = basename($soundFile);
@@ -1071,8 +1071,10 @@ class SoundFilesConf extends SystemConfigClass
             return 'skipped';
         }
 
-        // Define target formats (all Asterisk formats except source format)
-        $targetFormats = ['ulaw', 'alaw', 'gsm', 'g722', 'sln', 'opus'];
+        // Define target formats: Asterisk codecs + WebM/Opus as browser-preview format
+        // for the admin UI (HTML5 <audio> plays .webm natively in Chrome/Firefox/Edge and
+        // Safari 14.1+, unlike .opus/.ogg which Safari refuses).
+        $targetFormats = ['ulaw', 'alaw', 'gsm', 'g722', 'sln', 'opus', 'webm'];
 
         // Call unified converter
         $result = self::convertAudioFile($sourceFile, $targetFormats, [
@@ -1180,8 +1182,8 @@ class SoundFilesConf extends SystemConfigClass
             $findPath = Util::which('find');
             $soundsDir = escapeshellarg($systemSoundsDir);
 
-            // Remove all format variants (wav, ulaw, alaw, gsm, g722, sln, mp3)
-            $extensions = ['wav', 'ulaw', 'alaw', 'gsm', 'g722', 'sln', 'mp3', 'opus'];
+            // Remove all format variants (wav, ulaw, alaw, gsm, g722, sln, mp3, opus, webm)
+            $extensions = ['wav', 'ulaw', 'alaw', 'gsm', 'g722', 'sln', 'mp3', 'opus', 'webm'];
             $allSuccess = true;
 
             foreach ($extensions as $ext) {
@@ -1246,7 +1248,7 @@ class SoundFilesConf extends SystemConfigClass
     /**
      * Audio file extensions used to confirm a language directory is non-empty.
      */
-    private const string AUDIO_GLOB_PATTERN = '*.{wav,ulaw,alaw,gsm,g722,sln,mp3,opus}';
+    private const string AUDIO_GLOB_PATTERN = '*.{wav,ulaw,alaw,gsm,g722,sln,mp3,opus,webm}';
 
     /**
      * Get list of languages actually usable by Asterisk.

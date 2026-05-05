@@ -60,7 +60,7 @@ class SoundFilesAfterDeleteTest extends AbstractUnitTest
         $base = $this->tmpDir . '/jingle';
         $primary = $base . '.mp3';
 
-        $allFormats = ['wav', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln', 'opus'];
+        $allFormats = ['wav', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln', 'opus', 'webm'];
         foreach ($allFormats as $ext) {
             file_put_contents("$base.$ext", "fake-$ext-payload");
         }
