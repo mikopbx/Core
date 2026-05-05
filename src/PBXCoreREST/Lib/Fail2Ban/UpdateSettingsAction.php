@@ -89,6 +89,17 @@ class UpdateSettingsAction extends Injectable
                 );
             }
 
+            // Update PBX_SECURITY_MODE setting if provided (rate-limit profile for nginx Lua filter).
+            // DataStructure already enforces the enum on the way in; this is a belt-and-braces
+            // guard for direct API callers that bypass the schema layer.
+            if (isset($data[PbxSettings::PBX_SECURITY_MODE])) {
+                $mode = (string)$data[PbxSettings::PBX_SECURITY_MODE];
+                if (!in_array($mode, PbxSettings::PBX_SECURITY_MODES, true)) {
+                    $mode = 'balanced';
+                }
+                PbxSettings::setValueByKey(PbxSettings::PBX_SECURITY_MODE, $mode);
+            }
+
             $db->commit();
 
             $res->success = true;

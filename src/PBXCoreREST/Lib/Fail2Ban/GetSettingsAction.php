@@ -57,6 +57,7 @@ class GetSettingsAction extends Injectable
 
             // Get max requests per second setting
             $maxReqPerSec = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_MAX_REQ);
+            $securityMode = PbxSettings::getValueByKey(PbxSettings::PBX_SECURITY_MODE);
 
             // Prepare response data (without ID and PBXFail2BanEnabled)
             $res->data = [
@@ -65,6 +66,7 @@ class GetSettingsAction extends Injectable
                 'findtime' => $rules->findtime,
                 'whitelist' => $rules->whitelist,
                 PbxSettings::PBX_FIREWALL_MAX_REQ => $maxReqPerSec,
+                PbxSettings::PBX_SECURITY_MODE => $securityMode,
                 'extensionsCount' => (int)Extensions::count(),
             ];
 

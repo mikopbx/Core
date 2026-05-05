@@ -56,5 +56,8 @@ class Fail2BanEditForm extends BaseForm
 
         // Hidden field for max requests per second
         $this->add(new Hidden(PbxSettings::PBX_FIREWALL_MAX_REQ));
+
+        // Hidden field for HTTP security mode (rate-limit profile, set by preset slider)
+        $this->add(new Hidden(PbxSettings::PBX_SECURITY_MODE));
     }
 }

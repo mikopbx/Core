@@ -58,24 +58,28 @@ const fail2BanIndex = {
             findtime: 600,     // 10 min
             bantime: 600,      // 10 min
             maxReqSec: 500,    // SIP rate limit (disabled if >200 extensions)
+            securityMode: 'relaxed',
         },
         { // 1: Normal
             maxretry: 10,
             findtime: 3600,    // 1 hour
             bantime: 86400,    // 1 day
             maxReqSec: 300,
+            securityMode: 'balanced',
         },
         { // 2: Enhanced
             maxretry: 5,
             findtime: 21600,   // 6 hours
             bantime: 604800,   // 7 days
             maxReqSec: 150,
+            securityMode: 'strict',
         },
         { // 3: Paranoid
             maxretry: 3,
             findtime: 86400,   // 24 hours
             bantime: 2592000,  // 30 days
             maxReqSec: 100,
+            securityMode: 'paranoid',
         },
     ],
 
@@ -173,6 +177,9 @@ const fail2BanIndex = {
         // Set MaxReqSec: disabled (0) if >200 extensions (NAT scenario)
         const maxReqSec = fail2BanIndex.extensionsCount > 200 ? 0 : preset.maxReqSec;
         fail2BanIndex.$formObj.form('set value', 'PBXFirewallMaxReqSec', String(maxReqSec));
+
+        // HTTP rate-limit profile read by unified-security.lua
+        fail2BanIndex.$formObj.form('set value', 'PBXSecurityMode', preset.securityMode);
 
         // Update info panel
         fail2BanIndex.updatePresetInfoPanel(preset);
@@ -470,13 +477,15 @@ const fail2BanIndex = {
                     bantime: data.bantime,
                     findtime: data.findtime,
                     whitelist: data.whitelist,
-                    PBXFirewallMaxReqSec: data.PBXFirewallMaxReqSec
+                    PBXFirewallMaxReqSec: data.PBXFirewallMaxReqSec,
                 });
 
                 // Store extensions count for MaxReqSec calculation
                 fail2BanIndex.extensionsCount = parseInt(data.extensionsCount, 10) || 0;
 
-                // Detect and set security preset level
+                // Detect and set security preset level. The slider is the single source of
+                // truth for PBXSecurityMode — taking the saved value from the API would let
+                // it silently drift away from the slider on the next nudge.
                 if (fail2BanIndex.$securityPresetSlider.length > 0) {
                     const presetIdx = fail2BanIndex.detectPresetLevel(
                         parseInt(data.maxretry, 10),
@@ -485,6 +494,11 @@ const fail2BanIndex = {
                     );
                     fail2BanIndex.$securityPresetSlider.slider('set value', presetIdx, false);
                     fail2BanIndex.updatePresetInfoPanel(fail2BanIndex.securityPresets[presetIdx]);
+                    fail2BanIndex.$formObj.form(
+                        'set value',
+                        'PBXSecurityMode',
+                        fail2BanIndex.securityPresets[presetIdx].securityMode
+                    );
                 }
             }
         });

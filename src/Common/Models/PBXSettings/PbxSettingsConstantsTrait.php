@@ -266,6 +266,15 @@ trait PbxSettingsConstantsTrait
     public const string PBX_FIREWALL_MAX_REQ = 'PBXFirewallMaxReqSec';
     /** @FieldType('boolean') */
     public const string PBX_RATE_LIMIT_ENABLED = 'PBXRateLimitEnabled';
+    /** @FieldType('string') */
+    public const string PBX_SECURITY_MODE = 'PBXSecurityMode';
+    /**
+     * Allowed values for PBX_SECURITY_MODE. Source of truth for the PHP side
+     * (NginxConf, Fail2Ban DataStructure/UpdateSettingsAction). The Lua filter
+     * and JS slider keep their own copies — keep all four in sync when adding
+     * a mode.
+     */
+    public const array PBX_SECURITY_MODES = ['relaxed', 'balanced', 'strict', 'paranoid'];
     /** @FieldType('boolean') */
     public const string PBX_ALLOW_GUEST_CALLS = 'PBXAllowGuestCalls';
 

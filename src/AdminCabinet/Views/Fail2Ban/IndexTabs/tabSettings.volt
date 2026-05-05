@@ -27,6 +27,7 @@
 </div>
 
 {{ form.render('PBXFirewallMaxReqSec') }}
+{{ form.render('PBXSecurityMode') }}
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
     {{ partial("partials/submitbutton") }}

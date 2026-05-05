@@ -391,7 +391,14 @@ class NginxConf extends SystemConfigClass
         $redisVars .= "    \n";
         $redisVars .= "    # Security configuration\n";
         $redisVars .= "    set \$is_docker '" . (System::isDocker() ? '1' : '0') . "';\n";
-        $redisVars .= "    set \$security_mode 'balanced';\n";
+
+        // Security mode is set by the Fail2Ban tab security preset slider and read by
+        // the unified-security Lua script to pick rate limit / WAF aggressiveness.
+        $securityMode = (string)PbxSettings::getValueByKey(PbxSettings::PBX_SECURITY_MODE);
+        if (!in_array($securityMode, PbxSettings::PBX_SECURITY_MODES, true)) {
+            $securityMode = 'balanced';
+        }
+        $redisVars .= "    set \$security_mode '$securityMode';\n";
         $redisVars .= "    set \$session_check_required '0';\n";
 
         // Rate limiting: ENV override takes priority, then PbxSettings, default enabled

@@ -243,6 +243,7 @@ class ProcessPBXSettings extends Injectable
                 PbxSettings::WEB_HTTPS_PRIVATE_KEY,
                 PbxSettings::REDIRECT_TO_HTTPS,
                 PbxSettings::PBX_RATE_LIMIT_ENABLED,
+                PbxSettings::PBX_SECURITY_MODE,
             ],
             'actions' => [
                 ReloadNginxAction::class,

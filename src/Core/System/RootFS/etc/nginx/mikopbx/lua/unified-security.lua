@@ -40,14 +40,23 @@ local CATEGORY_HTTP = "http"
 local CATEGORY_WHITELIST = "whitelist"
 local RATE_LIMIT_PREFIX = "_PH_REDIS_CLIENT:rate_limit:"
 
--- Rate limiting settings
-local rate_limit_requests = 180  -- requests per minute for anonymous
-local rate_limit_requests_auth = 600  -- requests per minute for authenticated
-local rate_limit_requests_api = 180  -- requests per minute for API endpoints
-local rate_limit_window = 60  -- window in seconds
-local rate_limit_burst = 20  -- burst allowance
-local rate_limit_block_time = 300  -- block time in seconds (5 minutes)
-local rate_limit_progressive_multiplier = 2  -- multiply block time for repeat offenders
+-- Rate limiting profiles indexed by security_mode.
+-- Window is fixed at 60s; per-mode values cover anonymous/authenticated/api caps,
+-- burst slack, and the IP block duration when an IP exceeds the effective cap.
+local rate_limit_window = 60
+local rate_limit_progressive_multiplier = 2
+local rate_limit_profiles = {
+    relaxed  = { anon = 360,  auth = 2400, api = 800,  burst = 60, block = 60  },
+    balanced = { anon = 240,  auth = 1500, api = 500,  burst = 40, block = 120 },
+    strict   = { anon = 180,  auth = 900,  api = 300,  burst = 25, block = 300 },
+    paranoid = { anon = 90,   auth = 450,  api = 180,  burst = 15, block = 600 },
+}
+local rate_limit_profile = rate_limit_profiles[security_mode] or rate_limit_profiles.balanced
+local rate_limit_requests       = rate_limit_profile.anon
+local rate_limit_requests_auth  = rate_limit_profile.auth
+local rate_limit_requests_api   = rate_limit_profile.api
+local rate_limit_burst          = rate_limit_profile.burst
+local rate_limit_block_time     = rate_limit_profile.block
 
 -- ===== JWT VALIDATION FUNCTIONS =====
 
@@ -597,6 +606,19 @@ local function check_rate_limit(is_authenticated)
     -- Skip rate limiting for static resources
     if is_static_resource() then
         return true
+    end
+
+    -- Skip rate limiting for HEAD on audio metadata endpoints. List views
+    -- (sound files, CDR recordings) fire one HEAD per row in parallel just to
+    -- read X-Audio-Duration; counting those toward the cap turns a single page
+    -- render into an IP-block event. Scoped to the playback/CDR routes only —
+    -- a global HEAD bypass would let a client flood any dynamic endpoint.
+    if ngx.req.get_method() == "HEAD" then
+        local req_path = get_request_path()
+        if req_path == "/pbxcore/api/v3/sound-files:playback"
+            or req_path == "/pbxcore/api/v3/cdr:playback" then
+            return true
+        end
     end
 
     -- Skip rate limiting for chunked file upload POST requests (many sequential chunks)

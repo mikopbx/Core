@@ -51,6 +51,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         if ($maxReqPerSec === null) {
             $maxReqPerSec = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_MAX_REQ);
         }
+        $securityMode = PbxSettings::getValueByKey(PbxSettings::PBX_SECURITY_MODE);
 
         $data = [
             'maxretry' => $model->maxretry,
@@ -58,6 +59,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'findtime' => $model->findtime,
             'whitelist' => $model->whitelist ?? '',
             'PBXFirewallMaxReqSec' => $maxReqPerSec,
+            'PBXSecurityMode' => $securityMode,
         ];
 
         // Apply OpenAPI schema formatting to convert types automatically
@@ -79,6 +81,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'findtime' => 600,
             'whitelist' => '',
             'PBXFirewallMaxReqSec' => '100',
+            'PBXSecurityMode' => 'balanced',
         ];
 
         return $data;
@@ -183,6 +186,14 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'default' => '100',
                 'sanitize' => 'string',
                 'example' => '100'
+            ],
+            'PBXSecurityMode' => [
+                'type' => 'string',
+                'description' => 'rest_schema_f2b_security_mode',
+                'enum' => PbxSettings::PBX_SECURITY_MODES,
+                'default' => 'balanced',
+                'sanitize' => 'string',
+                'example' => 'balanced'
             ]
         ];
     }
