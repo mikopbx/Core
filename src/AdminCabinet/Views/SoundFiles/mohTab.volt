@@ -37,7 +37,7 @@
                             <i class="ui icon download" data-value=""></i>
                         {% else %}
                             <i class="ui icon download"
-                               data-value="{{ '/pbxcore/api/cdr/v2/playback?view='~record.path~'&download=1&filename='~record.name~'.mp3' }}"></i>
+                               data-value="{{ '/pbxcore/api/v3/sound-files:playback?view='~record.path~'&download=1&filename='~record.name~'.'~pathinfo(record.path, 4) }}"></i>
                         {% endif %}
 
                     </td>

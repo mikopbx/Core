@@ -45,7 +45,13 @@ class RemoveAudioFileAction extends Injectable
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         $extension      = Util::getExtensionOfFile($filePath);
-        if (! in_array($extension, ['mp3', 'wav', 'alaw'])) {
+
+        // Whitelist must mirror everything SoundFilesConf::convertAudioFile() can produce
+        // (and SoundFiles::afterDelete() cleans up), otherwise replacing an existing sound
+        // through the edit flow rejects the cleanup of the previous physical file by
+        // extension and leaks it on disk together with all its siblings.
+        $allowedExtensions = ['mp3', 'wav', 'wav16', 'wav48', 'ulaw', 'alaw', 'gsm', 'g722', 'sln', 'opus', 'webm'];
+        if (! in_array($extension, $allowedExtensions, true)) {
             $res->success    = false;
             $res->messages[] = "It is forbidden to remove the file type $extension.";
 
@@ -61,14 +67,13 @@ class RemoveAudioFileAction extends Injectable
 
         $out = [];
 
+        // Sibling list = same whitelist; the converter writes one file per extension under
+        // the shared basename, so cleanup must hit them all to avoid leftover ulaw/gsm/etc.
         $basePath = Util::trimExtensionForFile($filePath);
-        $arrDeletedFiles = [
-            escapeshellarg($basePath . ".wav"),
-            escapeshellarg($basePath . ".wav16"),
-            escapeshellarg($basePath . ".wav48"),
-            escapeshellarg($basePath . ".mp3"),
-            escapeshellarg($basePath . ".alaw"),
-        ];
+        $arrDeletedFiles = array_map(
+            static fn(string $ext): string => escapeshellarg($basePath . '.' . $ext),
+            $allowedExtensions
+        );
 
         $rm = Util::which('rm');
         Processes::mwExec("$rm -rf " . implode(' ', $arrDeletedFiles), $out);

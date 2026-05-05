@@ -81,14 +81,17 @@ class Storage extends Injectable
 
                 // Copy the sound file to the new path
                 if (copy($soundFile->path, $newPath)) {
-                    ConvertAudioFileAction::convertAudioFile($newPath);
+                    // ConvertAudioFileAction returns the canonical preview-format path
+                    // (currently webm) as $result->data[0]. Use that instead of guessing
+                    // an extension — the previous hardcoded ".mp3" silently broke when
+                    // the converter switched to webm.
+                    $convertResult = ConvertAudioFileAction::convertAudioFile($newPath);
+                    if ($convertResult->success && !empty($convertResult->data[0])) {
+                        $soundFile->path = $convertResult->data[0];
 
-                    // Update the sound file path and extension
-                    $soundFile->path = Util::trimExtensionForFile($newPath) . ".mp3";
-
-                    // Update the sound file if the new path exists
-                    if (file_exists($soundFile->path)) {
-                        $soundFile->update();
+                        if (file_exists($soundFile->path)) {
+                            $soundFile->update();
+                        }
                     }
                 }
             }

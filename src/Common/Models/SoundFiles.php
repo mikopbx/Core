@@ -151,7 +151,7 @@ class SoundFiles extends ModelsBase
         // Delete all related converted files. Must stay in sync with the formats produced by
         // SoundFilesConf::convertAudioFile() — adding a new format there requires extending
         // this list, otherwise orphaned files leak on delete.
-        $extensions = ['wav', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln', 'opus'];
+        $extensions = ['wav', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln', 'opus', 'webm'];
         foreach ($extensions as $ext) {
             $convertedFile = "$baseFilename.$ext";
             if ($convertedFile !== $this->path && file_exists($convertedFile)) {
@@ -165,6 +165,16 @@ class SoundFiles extends ModelsBase
             $tempFile = "$baseFilename$suffix";
             if (file_exists($tempFile)) {
                 unlink($tempFile);
+            }
+        }
+
+        // Sweep self-overwrite snapshot files left by SoundFilesConf::convertAudioFile().
+        // Pattern: "$baseFilename.source-snapshot.<ext>" — created when source extension
+        // collides with a target format and ffmpeg was killed before the cleanup loop ran.
+        $snapshotFiles = glob("$baseFilename.source-snapshot.*") ?: [];
+        foreach ($snapshotFiles as $snapshotFile) {
+            if (is_file($snapshotFile)) {
+                @unlink($snapshotFile);
             }
         }
 

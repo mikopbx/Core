@@ -64,6 +64,17 @@ class SoundFilesConf extends SystemConfigClass
     public const string REDIS_SOUND_CONVERSION_PREFIX = 'sound_conversion:';
 
     /**
+     * Adaptive Opus bitrates for WebM preview (mirrors WorkerWav2Webm but mono since
+     * sound files are single-source — no speaker diarization needed).
+     *  - 8 kHz source (G.711, GSM, narrowband recordings) → 24k mono
+     *  - 16 kHz source (G.722, wideband)                  → 32k mono
+     *  - ≥22.05 kHz source (Piper TTS, hi-fi WAV/MP3)     → 48k mono
+     */
+    private const string OPUS_BITRATE_NB = '24k';
+    private const string OPUS_BITRATE_WB = '32k';
+    private const string OPUS_BITRATE_FB = '48k';
+
+    /**
      * Redis key for system sounds conversion status
      */
     public const string REDIS_SYSTEM_SOUNDS_KEY = self::REDIS_SOUND_CONVERSION_PREFIX . 'system';
@@ -581,7 +592,12 @@ class SoundFilesConf extends SystemConfigClass
         $normalize = $options['normalize'] ?? false;
         $forceReconvert = $options['force'] ?? false;
         $useCache = $options['use_cache'] ?? true;
-        $sampleRate = $options['sample_rate'] ?? 8000;
+        // Sample rate for wav/mp3 only: explicit option > detected source rate > 8 kHz fallback.
+        // Asterisk codec formats (ulaw/alaw/gsm/g722/sln) ignore this — their formatSpec hardcodes
+        // the codec-mandated rate. Webm ignores it too (libopus picks its own internal rate).
+        // Defaulting to source rate (instead of the old hardcoded 8000) is what preserves quality
+        // for high-fidelity uploads like Piper TTS.
+        $explicitRate = $options['sample_rate'] ?? null;
         $mp3Bitrate = $options['bitrate'] ?? '16k';
 
         // Get output directory and base name
@@ -621,16 +637,30 @@ class SoundFilesConf extends SystemConfigClass
             }
         }
 
-        // Detect source codec for special handling (MPEG formats)
+        // Detect source codec AND sample rate in a single ffprobe call.
+        // Sample rate drives adaptive Opus bitrate for WebM preview — see selectOpusBitrate().
         $sourceCodec = '';
+        $sourceSampleRate = 0;
         if (!empty($ffprobePath)) {
             $sourceEscaped = escapeshellarg($sourceFile);
-            $codecCommand = "$ffprobePath -v error -select_streams a:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 $sourceEscaped 2>&1";
-            exec($codecCommand, $codecOutput, $codecExitCode);
-            if ($codecExitCode === 0 && !empty($codecOutput)) {
-                $sourceCodec = trim($codecOutput[0] ?? '');
+            $probeCmd = "$ffprobePath -v error -select_streams a:0 -show_entries stream=codec_name,sample_rate -of default=noprint_wrappers=1:nokey=0 $sourceEscaped 2>&1";
+            exec($probeCmd, $streamOut, $streamExit);
+            if ($streamExit === 0) {
+                foreach ($streamOut as $line) {
+                    if (str_starts_with($line, 'codec_name=')) {
+                        $sourceCodec = trim(substr($line, 11));
+                    } elseif (str_starts_with($line, 'sample_rate=')) {
+                        $sourceSampleRate = (int)trim(substr($line, 12));
+                    }
+                }
             }
         }
+        $opusBitrate = self::selectOpusBitrate($sourceSampleRate);
+
+        // Resolve effective rate for wav/mp3 formatSpec interpolation:
+        // explicit option > detected source > 8 kHz fallback (legacy behaviour for callers
+        // that pass nothing AND ffprobe couldn't read a rate).
+        $sampleRate = $explicitRate ?? ($sourceSampleRate > 0 ? $sourceSampleRate : 8000);
 
         // Check metadata for smart caching
         $metadataFile = "$outputDir/.$baseName.sound-meta";
@@ -699,11 +729,43 @@ class SoundFilesConf extends SystemConfigClass
                 'options' => '-ar 48000 -ac 1 -acodec libopus -b:a 48k -vbr on -compression_level 10 -application voip -f ogg',
                 'container' => 'ogg',
             ],
+            // WebM/Opus — primary browser-preview format. Preserves source sample rate
+            // (libopus internally resamples to 48 kHz; -ar omitted intentionally), mono,
+            // adaptive bitrate from source (24k/32k/48k). VBR + max compression because this
+            // runs once per upload, not per playback.
+            'webm' => [
+                'options' => "-vn -c:a libopus -b:a $opusBitrate -ac 1 -vbr on -compression_level 10 -application voip -frame_duration 20 -f webm",
+                'container' => 'webm',
+            ],
         ];
 
         // Prepare source file for conversion
         $conversionSource = $sourceFile;
         $tempFiles = [];
+
+        // Self-overwrite guard: if any requested target format would land on the same path
+        // as the source (typical for .webm/.wav uploads where source extension == target
+        // format), the first ffmpeg pass for that format atomically renames its output onto
+        // the source. Subsequent passes (wav, ulaw, alaw, gsm, g722, sln) would then read
+        // from the freshly transcoded — and lossy — output instead of the original upload.
+        // Snapshot the source to a temp file first and let all subsequent passes read from it.
+        $sourceExt = strtolower(pathinfo($sourceFile, PATHINFO_EXTENSION));
+        if (in_array($sourceExt, $targetFormats, true)
+            && pathinfo($sourceFile, PATHINFO_DIRNAME) === $outputDir
+            && pathinfo($sourceFile, PATHINFO_FILENAME) === $baseName
+        ) {
+            $snapshotFile = "$outputDir/$baseName.source-snapshot.$sourceExt";
+            $tempFiles[] = $snapshotFile;
+            if (@copy($sourceFile, $snapshotFile)) {
+                $conversionSource = $snapshotFile;
+            } else {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Failed to snapshot source for self-overwrite protection: $sourceFile",
+                    LOG_WARNING
+                );
+            }
+        }
 
         // Handle MPEG formats: convert to WAV first
         if (in_array($sourceCodec, ['mp3', 'mp2', 'mp1'], true) && in_array('wav', $targetFormats)) {
@@ -854,6 +916,30 @@ class SoundFilesConf extends SystemConfigClass
         }
 
         return $result;
+    }
+
+    /**
+     * Pick optimal Opus bitrate from source sample rate. Mono variant of
+     * WorkerWav2Webm::selectOptimalBitrate() — sound files have a single source,
+     * no L/R speaker split, so half the per-channel bitrate is enough.
+     *
+     * @param int $sourceSampleRate Detected source rate in Hz (0 if unknown → safe default)
+     * @return string ffmpeg bitrate string ('24k', '32k', '48k')
+     */
+    private static function selectOpusBitrate(int $sourceSampleRate): string
+    {
+        if ($sourceSampleRate <= 0) {
+            // Unknown source — bias toward quality, not size. WebM file for one prompt
+            // is ~10–50 KB anyway, an extra 16 kbit/s is noise.
+            return self::OPUS_BITRATE_FB;
+        }
+        if ($sourceSampleRate <= 8000) {
+            return self::OPUS_BITRATE_NB;
+        }
+        if ($sourceSampleRate <= 16000) {
+            return self::OPUS_BITRATE_WB;
+        }
+        return self::OPUS_BITRATE_FB;
     }
 
     /**

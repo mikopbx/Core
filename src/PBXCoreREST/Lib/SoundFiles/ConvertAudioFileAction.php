@@ -95,13 +95,23 @@ class ConvertAudioFileAction extends Injectable
     }
 
     /**
-     * Convert the audio file to all Asterisk formats (ulaw, alaw, gsm, g722, sln) plus WAV and MP3
+     * Convert the uploaded audio file synchronously to all required formats.
      *
-     * Uses SoundFilesConf::convertAudioFile() for consistent conversion logic
-     * with normalization and caching support.
+     * Generates in one REST call (Codex review correctly flagged the original lazy split
+     * as unsafe — IVR/MOH save+reload runs immediately after this returns and Asterisk
+     * needs the codec variants on disk before the dialplan reload):
+     *   - WebM/Opus at source's native sample rate, adaptive bitrate — browser preview
+     *     and SoundFiles.path value.
+     *   - WAV (16-bit PCM, native sample rate) — generic fallback.
+     *   - ulaw / alaw / gsm / g722 / sln — Asterisk codec variants. Each uses its
+     *     codec-mandated sample rate inside SoundFilesConf::convertAudioFile() formatSpecs;
+     *     the global `sample_rate` option is no longer forced to 8000.
      *
-     * @param string $filename The path of the audio file to be converted
-     * @return PBXApiResult An object containing the result of the API call
+     * NO loudnorm pass: it was the actual quality-killer (loudnorm internally resamples
+     * to whatever -ar follows it, which used to be 8000). Original audio dynamics preserved.
+     *
+     * @param string $filename Path of the (already-moved) source audio file
+     * @return PBXApiResult First element of $data is the webm path used as SoundFiles.path
      */
     public static function convertAudioFile(string $filename): PBXApiResult
     {
@@ -121,21 +131,20 @@ class ConvertAudioFileAction extends Injectable
         $baseName = Util::trimExtensionForFile($filename);
         $baseName = basename($baseName);
 
-        // Convert to all Asterisk formats + WAV + MP3 (same as modules do)
-        $targetFormats = ['wav', 'mp3', 'ulaw', 'alaw', 'gsm', 'g722', 'sln'];
+        // WebM first so its path is the canonical preview returned to caller.
+        // Asterisk codec formats follow — each ffmpeg pass uses its own -ar from the
+        // formatSpec, source quality preserved (no loudnorm, no global resample).
+        $targetFormats = ['webm', 'wav', 'ulaw', 'alaw', 'gsm', 'g722', 'sln'];
 
-        // Use unified converter with normalization
         $result = SoundFilesConf::convertAudioFile(
             $filename,
             $targetFormats,
             [
-                'normalize' => true,
+                'normalize' => false,
                 'use_cache' => false,
                 'force' => true,
                 'output_dir' => $outputDir,
                 'base_name' => $baseName,
-                'sample_rate' => 8000,
-                'bitrate' => '16k',
             ]
         );
 
@@ -182,14 +191,14 @@ class ConvertAudioFileAction extends Injectable
             }
         }
 
-        // Get converted MP3 file path (for backward compatibility, return MP3)
-        $mp3Path = $convertedPaths['mp3'] ?? null;
-        if ($mp3Path === null) {
+        // WebM is the new browser-preview format and the value stored in SoundFiles.path.
+        $webmPath = $convertedPaths['webm'] ?? null;
+        if ($webmPath === null) {
             $res->success = false;
-            $res->messages['error'][] = 'MP3 conversion failed';
+            $res->messages['error'][] = 'WebM conversion failed';
             SystemMessages::sysLogMsg(
                 __METHOD__,
-                "MP3 conversion validation failed for '$filename' (mp3 missing or empty); original preserved",
+                "WebM conversion validation failed for '$filename' (webm missing or empty); original preserved",
                 LOG_WARNING
             );
             return $res;
@@ -258,9 +267,12 @@ class ConvertAudioFileAction extends Injectable
             );
         }
 
-        // Return MP3 path for backward compatibility (API clients expect this)
+        // Return WebM path — becomes SoundFiles.path; the index page audio tag streams it.
+        // The Asterisk codec siblings (ulaw/alaw/gsm/g722/sln/wav) live next to it under the
+        // same basename, so dialplan generators that hand Asterisk the extensionless path
+        // still find a playable variant immediately on save+reload.
         $res->success = true;
-        $res->data = [$mp3Path];
+        $res->data = [$webmPath];
 
         return $res;
     }

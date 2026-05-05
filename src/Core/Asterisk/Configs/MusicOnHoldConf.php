@@ -74,27 +74,52 @@ class MusicOnHoldConf extends AsteriskConfigClass
     protected function checkMohFiles(): void
     {
         $path  = Directories::getDir(Directories::AST_MOH_DIR);
-        $mask  = '/*.mp3';
+        // Discovery glob includes webm because ConvertAudioFileAction now produces a WebM/Opus
+        // preview file as the canonical SoundFiles.path value (mp3 was dropped from the upload
+        // pipeline). Both extensions need to be re-discoverable after a DB restore/reset, or
+        // user-uploaded MOH tracks would silently disappear from the UI on rescan.
+        // The shipped default MOH files (under /offload/.../moh/) remain mp3 — the same brace
+        // pattern just falls through to mp3 there.
+        $userMask = '/*.{mp3,webm}';
+        $defaultMask = '/*.mp3';
 
-        // Remove orphaned MOH records where the mp3 file no longer exists on disk
+        // Remove orphaned MOH records where the underlying file no longer exists on disk
         $this->cleanOrphanedMohRecords();
 
-        // Get the list of MP3 files in the specified path
-        $fList = glob("$path$mask");
-        if (count($fList) !== 0) {
-            // Iterate through the MP3 files and add them to the database
-            foreach ($fList as $resultMp3) {
-                $this->checkAddFileToDB($resultMp3);
+        // Get the list of audio files in the specified path (mp3 + webm).
+        // Dedup by basename (without extension): one MOH track may have BOTH a legacy
+        // .mp3 (original upload preserved before the WebM-first conversion landed) and
+        // its canonical .webm sibling on disk. checkAddFileToDB() keys on the full path,
+        // so naive globbing would create two SoundFiles rows for the same track and
+        // duplicate the entry in musiconhold.conf after every regenerate/restore.
+        // Resolution rule: prefer .webm when present (current canonical preview path),
+        // otherwise fall back to whatever extension exists.
+        $fList = glob("$path$userMask", GLOB_BRACE);
+        if (!empty($fList)) {
+            $byBasename = [];
+            foreach ($fList as $resultFile) {
+                $key = pathinfo($resultFile, PATHINFO_FILENAME);
+                $existing = $byBasename[$key] ?? null;
+                if ($existing === null) {
+                    $byBasename[$key] = $resultFile;
+                    continue;
+                }
+                // Already have a candidate for this basename — keep the .webm one.
+                if (strtolower(pathinfo($resultFile, PATHINFO_EXTENSION)) === 'webm') {
+                    $byBasename[$key] = $resultFile;
+                }
+            }
+            foreach ($byBasename as $resultFile) {
+                $this->checkAddFileToDB($resultFile);
             }
 
             return;
         }
 
-        // If no MP3 files are found in the specified path, attempt to restore from the default location
+        // If nothing found, fall back to shipped defaults (mp3-only) and convert them.
         SystemMessages::sysLogMsg(static::class, 'Attempt to restore MOH from default...');
 
-        // Get the list of MP3 files from the default location
-        $filesList = glob("/offload/asterisk/sounds/moh$mask");
+        $filesList = glob("/offload/asterisk/sounds/moh$defaultMask");
         $cp    = Util::which('cp');
         foreach ($filesList as $srcFile) {
             $resultMp3 = "$path/" . basename($srcFile);
