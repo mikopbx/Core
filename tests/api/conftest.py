@@ -54,6 +54,7 @@ class MikoPBXClient:
         self.login = login
         self.password = password
         self.access_token: Optional[str] = auth_token  # Can be set directly for API keys
+        self.uses_static_auth_token = auth_token is not None and not (login and password)
         self.session = self._create_session()
         self.verify_ssl = False  # Store for compatibility
 
@@ -175,7 +176,16 @@ class MikoPBXClient:
             if isinstance(error_messages, str):
                 error_messages = [error_messages]
 
-            return any('database is locked' in str(e).lower() for e in error_messages)
+            lock_markers = (
+                'database is locked',
+                'database table is locked',
+                'general error: 5',
+                'sqlstate[hy000]',
+            )
+            return any(
+                any(marker in str(e).lower() for marker in lock_markers)
+                for e in error_messages
+            )
         except (ValueError, KeyError):
             return False
 
@@ -191,6 +201,9 @@ class MikoPBXClient:
             False if 401 should be raised as error
         """
         if response.status_code != 401:
+            return False
+
+        if self.uses_static_auth_token:
             return False
 
         try:
@@ -655,6 +668,16 @@ def is_docker(api_client) -> bool:
     return api_client.is_docker_environment()
 
 
+@pytest.fixture(autouse=True)
+def docker_test_pacing(is_docker):
+    """Throttle Docker REST tests slightly so background workers and SQLite settle."""
+    yield
+    if is_docker:
+        delay = float(os.getenv('MIKOPBX_DOCKER_TEST_DELAY', '0.25'))
+        if delay > 0:
+            time.sleep(delay)
+
+
 @pytest.fixture(scope='session')
 def fixtures() -> Dict[str, Dict[str, Any]]:
     """
@@ -1105,9 +1128,18 @@ def assert_record_exists(api_client: MikoPBXClient, resource: str, record_id: st
     Raises:
         AssertionError: If record doesn't exist
     """
-    response = api_client.get(f"{resource}/{record_id}")
-    assert_api_success(response, f"Record {record_id} not found in {resource}")
-    return response['data']
+    last_error = None
+    for attempt in range(5):
+        try:
+            response = api_client.get(f"{resource}/{record_id}")
+            assert_api_success(response, f"Record {record_id} not found in {resource}")
+            return response['data']
+        except (AssertionError, requests.exceptions.HTTPError) as e:
+            last_error = e
+            if attempt < 4:
+                time.sleep(1)
+
+    raise last_error
 
 
 def assert_record_deleted(api_client: MikoPBXClient, resource: str, record_id: str) -> None:

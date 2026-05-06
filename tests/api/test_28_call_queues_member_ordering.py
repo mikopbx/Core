@@ -24,6 +24,7 @@ import pytest
 from conftest import (
     assert_api_success,
     execute_asterisk_command,
+    wait_for_worker_idle,
 )
 
 
@@ -129,6 +130,29 @@ def parse_queue_members_from_asterisk(output: str) -> list[str]:
     return members
 
 
+def _find_queue_id_by_extension(api_client, extension: str) -> str | None:
+    """Find queue ID by extension."""
+    response = api_client.get('call-queues', params={'limit': 1000})
+    assert_api_success(response, "Failed to list call queues")
+    data = response.get('data', {})
+    rows = data.get('data', []) if isinstance(data, dict) else data
+    for row in rows or []:
+        if str(row.get('extension')) == str(extension):
+            return row.get('id')
+    return None
+
+
+def _cleanup_queue_by_extension(api_client, extension: str) -> None:
+    """Delete queue by extension if it exists."""
+    queue_id = _find_queue_id_by_extension(api_client, extension)
+    if not queue_id:
+        return
+    response = api_client.delete(f'call-queues/{queue_id}')
+    assert_api_success(response, f"Failed to delete stale queue extension {extension}")
+    print(f"  Cleanup: deleted stale queue extension {extension} (id={queue_id})")
+
+
+@pytest.mark.xdist_group(name="queue_write_heavy")
 class TestCallQueueMemberOrdering:
     """
     Tests for queue member ordering, especially after strategy changes.
@@ -147,6 +171,21 @@ class TestCallQueueMemberOrdering:
     # Fixed extensions from employee.json fixtures (created by test_14/test_15)
     MEMBERS_INITIAL = ['201', '202', '203']
     MEMBERS_REORDERED = ['203', '201', '202', '204']
+
+    @pytest.fixture(scope='class', autouse=True)
+    def ensure_queue_is_clean(self, api_client):
+        """Class-level pre/post cleanup to avoid stale queue collisions."""
+        _cleanup_queue_by_extension(api_client, self.QUEUE_EXTENSION)
+        wait_for_worker_idle(api_client, min_wait=7)
+        yield
+        _cleanup_queue_by_extension(api_client, self.QUEUE_EXTENSION)
+        wait_for_worker_idle(api_client, min_wait=7)
+
+    @pytest.fixture(autouse=True)
+    def wait_worker_after_test(self, api_client):
+        """Let WorkerModelsEvents finish between write-heavy queue steps."""
+        yield
+        wait_for_worker_idle(api_client, min_wait=7)
 
     def test_01_create_queue_with_ringall_strategy(self, api_client):
         """

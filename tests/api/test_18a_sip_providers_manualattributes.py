@@ -20,6 +20,22 @@ class TestSIPProvidersManualAttributes:
 
     created_provider_id = None
 
+    @pytest.fixture(scope='class', autouse=True)
+    def ensure_cleanup(self, request, api_client):
+        """Ensure provider cleanup happens even if a prior test fails."""
+        yield
+        provider_id = TestSIPProvidersManualAttributes.created_provider_id
+        if not provider_id:
+            return
+        try:
+            response = api_client.delete(f"sip-providers/{provider_id}")
+            if response.get('result'):
+                print(f"✓ Finalizer cleanup deleted test provider {provider_id}")
+        except Exception as e:
+            print(f"⚠ Finalizer cleanup failed for provider {provider_id}: {str(e)[:100]}")
+        finally:
+            TestSIPProvidersManualAttributes.created_provider_id = None
+
     def test_01_create_provider_with_manualattributes(self, api_client):
         """Test creating SIP provider with manualattributes - should encode to base64"""
         test_data = {
@@ -142,7 +158,10 @@ class TestSIPProvidersManualAttributes:
     def test_06_cleanup_test_provider(self, api_client):
         """Clean up test provider"""
         provider_id = TestSIPProvidersManualAttributes.created_provider_id
+        if not provider_id:
+            pytest.skip("No provider to clean up")
 
         response = api_client.delete(f"sip-providers/{provider_id}")
         assert_api_success(response, "Failed to delete provider")
+        TestSIPProvidersManualAttributes.created_provider_id = None
         print(f"✓ Deleted test provider {provider_id}")
