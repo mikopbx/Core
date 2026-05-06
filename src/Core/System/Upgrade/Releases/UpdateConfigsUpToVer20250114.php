@@ -108,9 +108,10 @@ class UpdateConfigsUpToVer20250114 extends Injectable implements UpgradeSystemCo
                 );
             } else {
                 $messages = implode(', ', $newRoute->getMessages());
+                $iface = $route['interface'] !== '' ? " dev {$route['interface']}" : '';
                 SystemMessages::sysLogMsg(
                     __METHOD__,
-                    "Failed to migrate route {$route['network']}: {$messages}",
+                    "Failed to migrate route {$route['network']}/{$route['subnet']} via {$route['gateway']}{$iface}: {$messages}",
                     LOG_WARNING
                 );
             }
@@ -125,10 +126,11 @@ class UpdateConfigsUpToVer20250114 extends Injectable implements UpgradeSystemCo
     /**
      * Parse static routes from file content
      *
-     * Expected format examples:
+     * Expected format examples (all variants supported):
      * - route add -net 192.168.10.0/24 gw 192.168.1.1;
      * - route add -net 10.0.0.0/8 gw 192.168.1.254 dev eth0;
      * - route add -net 172.16.0.0 netmask 255.255.0.0 gw 192.168.1.1;
+     * - route add -net 192.168.8.0 netmask 255.255.248.0 gateway 192.168.1.242 eth1
      *
      * @param string $content File content
      * @return array Array of parsed routes
@@ -160,6 +162,10 @@ class UpdateConfigsUpToVer20250114 extends Injectable implements UpgradeSystemCo
     /**
      * Parse a single route line
      *
+     * Tolerates both BusyBox (`gw`) and net-tools (`gateway`) keywords for the
+     * gateway, and accepts the interface either as `dev <if>` or as a bare
+     * trailing token (which net-tools `route` allows, e.g. `... gateway X eth1`).
+     *
      * @param string $line Route command line
      * @return array|null Parsed route or null if invalid
      */
@@ -168,7 +174,7 @@ class UpdateConfigsUpToVer20250114 extends Injectable implements UpgradeSystemCo
         // Remove trailing semicolon and extra spaces
         $line = trim($line, "; \t\n\r\0\x0B");
 
-        // Expected pattern: route add -net <network>[/<cidr>] [netmask <mask>] gw <gateway> [dev <interface>]
+        // Expected pattern: route add -net <network>[/<cidr>] [netmask <mask>] (gw|gateway) <gateway> [(dev <interface>|<interface>)]
         if (!preg_match('/^route\s+add\s+/i', $line)) {
             SystemMessages::sysLogMsg(
                 __METHOD__,
@@ -208,8 +214,8 @@ class UpdateConfigsUpToVer20250114 extends Injectable implements UpgradeSystemCo
             return null;
         }
 
-        // Extract gateway: gw 192.168.1.1
-        if (preg_match('/gw\s+([\d\.]+)/i', $line, $matches)) {
+        // Extract gateway: accept both BusyBox `gw <ip>` and net-tools `gateway <ip>`
+        if (preg_match('/\b(?:gw|gateway)\s+([\d\.]+)/i', $line, $matches)) {
             $route['gateway'] = $matches[1];
         } else {
             SystemMessages::sysLogMsg(
@@ -220,8 +226,15 @@ class UpdateConfigsUpToVer20250114 extends Injectable implements UpgradeSystemCo
             return null;
         }
 
-        // Extract interface (optional): dev eth0
-        if (preg_match('/dev\s+(\S+)/i', $line, $matches)) {
+        // Extract interface (optional). Two forms supported:
+        //   - explicit:  `... dev eth0`
+        //   - implicit:  `... gateway 192.168.1.1 eth0` (bare trailing token)
+        // The implicit form excludes net-tools flag keywords that may legitimately
+        // appear as the last token (`reject`, `mod`, `dyn`, `reinstate`) so they
+        // are not misread as an interface name.
+        if (preg_match('/\bdev\s+(\S+)/i', $line, $matches)) {
+            $route['interface'] = $matches[1];
+        } elseif (preg_match('/\b(?:gw|gateway)\s+[\d\.]+\s+(?!(?:reject|mod|dyn|reinstate)\b)([a-zA-Z][\w.:\-]*)\s*$/i', $line, $matches)) {
             $route['interface'] = $matches[1];
         }
 
