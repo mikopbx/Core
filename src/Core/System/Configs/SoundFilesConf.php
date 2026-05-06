@@ -439,7 +439,7 @@ class SoundFilesConf extends SystemConfigClass
             }
 
             // Copy sound files (with or without prefix based on module type)
-            $soundFiles = glob("$langDir/*.{wav,ulaw,alaw,gsm,g722,sln,mp3,opus,webm}", GLOB_BRACE);
+            $soundFiles = glob("$langDir/*.{wav,wav16,wav48,ulaw,alaw,gsm,g722,sln,mp3,opus,webm}", GLOB_BRACE);
             foreach ($soundFiles as $soundFile) {
                 $stats['total_files']++;
                 $fileName = basename($soundFile);
@@ -470,7 +470,7 @@ class SoundFilesConf extends SystemConfigClass
                     Util::mwMkdir($targetSubDir);
                 }
 
-                $subSoundFiles = glob("$subDir/*.{wav,ulaw,alaw,gsm,g722,sln,mp3,opus,webm}", GLOB_BRACE);
+                $subSoundFiles = glob("$subDir/*.{wav,wav16,wav48,ulaw,alaw,gsm,g722,sln,mp3,opus,webm}", GLOB_BRACE);
                 foreach ($subSoundFiles as $soundFile) {
                     $stats['total_files']++;
                     $fileName = basename($soundFile);
@@ -958,7 +958,7 @@ class SoundFilesConf extends SystemConfigClass
             return;
         }
 
-        $convertibleFormats = '{wav,mp3,gsm,ulaw,alaw,g722,sln,opus}';
+        $convertibleFormats = '{wav,wav16,wav48,mp3,gsm,ulaw,alaw,g722,sln,opus}';
         $stats = ['converted' => 0, 'skipped' => 0, 'failed' => 0];
 
         // Process all language directories
@@ -1066,7 +1066,7 @@ class SoundFilesConf extends SystemConfigClass
         // Skip conversion if source is not a convertible format
         $pathInfo = pathinfo($sourceFile);
         $sourceExtension = strtolower($pathInfo['extension'] ?? '');
-        $convertibleFormats = ['wav', 'mp3', 'ulaw', 'alaw', 'gsm', 'g722', 'sln', 'opus'];
+        $convertibleFormats = ['wav', 'wav16', 'wav48', 'mp3', 'ulaw', 'alaw', 'gsm', 'g722', 'sln', 'opus'];
         if (!in_array($sourceExtension, $convertibleFormats, true)) {
             return 'skipped';
         }
@@ -1182,8 +1182,8 @@ class SoundFilesConf extends SystemConfigClass
             $findPath = Util::which('find');
             $soundsDir = escapeshellarg($systemSoundsDir);
 
-            // Remove all format variants (wav, ulaw, alaw, gsm, g722, sln, mp3, opus, webm)
-            $extensions = ['wav', 'ulaw', 'alaw', 'gsm', 'g722', 'sln', 'mp3', 'opus', 'webm'];
+            // Remove all format variants (wav, wav16, wav48, ulaw, alaw, gsm, g722, sln, mp3, opus, webm)
+            $extensions = ['wav', 'wav16', 'wav48', 'ulaw', 'alaw', 'gsm', 'g722', 'sln', 'mp3', 'opus', 'webm'];
             $allSuccess = true;
 
             foreach ($extensions as $ext) {
@@ -1248,7 +1248,7 @@ class SoundFilesConf extends SystemConfigClass
     /**
      * Audio file extensions used to confirm a language directory is non-empty.
      */
-    private const string AUDIO_GLOB_PATTERN = '*.{wav,ulaw,alaw,gsm,g722,sln,mp3,opus,webm}';
+    private const string AUDIO_GLOB_PATTERN = '*.{wav,wav16,wav48,ulaw,alaw,gsm,g722,sln,mp3,opus,webm}';
 
     /**
      * Get list of languages actually usable by Asterisk.

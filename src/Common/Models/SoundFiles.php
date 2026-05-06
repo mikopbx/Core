@@ -151,7 +151,7 @@ class SoundFiles extends ModelsBase
         // Delete all related converted files. Must stay in sync with the formats produced by
         // SoundFilesConf::convertAudioFile() — adding a new format there requires extending
         // this list, otherwise orphaned files leak on delete.
-        $extensions = ['wav', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln', 'opus', 'webm'];
+        $extensions = ['wav', 'wav16', 'wav48', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln', 'opus', 'webm'];
         foreach ($extensions as $ext) {
             $convertedFile = "$baseFilename.$ext";
             if ($convertedFile !== $this->path && file_exists($convertedFile)) {
