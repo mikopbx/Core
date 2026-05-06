@@ -73,7 +73,7 @@ class Test01CDRSeeding:
     # Class variable to store seeded CDR IDs for other tests
     seeded_cdr_ids = []
 
-    @pytest.mark.order(1)  # Ensure this runs FIRST
+    @pytest.mark.order(10)  # Ensure this runs after optional system reset
     def test_01_seed_cdr_database(self):
         """
         Seed CDR database with test data
@@ -165,7 +165,7 @@ class Test01CDRSeeding:
         print(f"✓ CDR IDs: {min(seeded_ids)} - {max(seeded_ids)}")
         print("=" * 60)
 
-    @pytest.mark.order(2)
+    @pytest.mark.order(11)
     def test_02_verify_cdr_data_available(self, api_client):
         """
         Verify CDR data is accessible via API
