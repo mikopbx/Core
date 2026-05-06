@@ -17,7 +17,8 @@ from conftest import (
     assert_api_success,
     assert_record_exists,
     assert_record_deleted,
-    convert_call_queue_fixture_to_api_format
+    convert_call_queue_fixture_to_api_format,
+    generate_unique_extension,
 )
 
 
@@ -48,6 +49,7 @@ def test_create_single_call_queue(api_client, call_queue_fixtures):
 
     # Convert to API format
     api_data = convert_call_queue_fixture_to_api_format(fixture_data)
+    api_data['extension'] = generate_unique_extension(prefix='7', width=5)
 
     # Verify required fields
     assert api_data.get('name'), "Missing name"
@@ -284,7 +286,7 @@ def test_call_queue_crud_cycle(api_client):
     print(f"{'='*70}")
 
     # Use unique extension for test
-    test_extension = "9999"
+    test_extension = generate_unique_extension(prefix='7', width=5)
     queue_id = None
 
     try:
@@ -490,7 +492,7 @@ def test_call_queue_copy(api_client):
 
         source_data = {
             'name': 'Source Copy Test Queue',
-            'extension': '7777',
+            'extension': generate_unique_extension(prefix='7', width=5),
             'strategy': 'ringall',
             'description': 'Original queue for copy test',
             'seconds_to_ring_each_member': 25,
@@ -744,7 +746,7 @@ def test_update_nonexistent_call_queue_returns_404(api_client):
         create_data = {
             'id': nonexistent_id,
             'name': 'POST Creates New',
-            'extension': '8889',
+            'extension': generate_unique_extension(prefix='7', width=5),
             'strategy': 'ringall'
         }
 

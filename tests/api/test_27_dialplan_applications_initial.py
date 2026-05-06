@@ -11,7 +11,8 @@ from conftest import (
     assert_api_success,
     assert_record_exists,
     assert_record_deleted,
-    convert_dialplan_app_fixture_to_api_format
+    convert_dialplan_app_fixture_to_api_format,
+    generate_unique_extension,
 )
 
 
@@ -42,6 +43,7 @@ def test_create_single_dialplan_app(api_client, dialplan_app_fixtures):
 
     # Convert to API format
     api_data = convert_dialplan_app_fixture_to_api_format(fixture_data)
+    api_data['extension'] = generate_unique_extension(prefix='5', width=5)
 
     # Verify required fields
     assert api_data.get('name'), "Missing name"
@@ -279,7 +281,7 @@ def test_dialplan_app_crud_cycle(api_client):
     print(f"{'='*70}")
 
     # Use unique extension for test
-    test_extension = "8888"
+    test_extension = generate_unique_extension(prefix='5', width=5)
     app_id = None
     copied_app_id = None
 
@@ -535,7 +537,7 @@ def test_update_nonexistent_dialplan_app_returns_404(api_client):
 
     update_data = {
         'name': 'Should Not Be Created',
-        'extension': '9999',
+        'extension': generate_unique_extension(prefix='5', width=5),
         'type': 'plaintext',
         'applicationlogic': 'NoOp(Test)',
         'description': 'This should fail with 404'
@@ -611,7 +613,7 @@ def test_update_nonexistent_dialplan_app_returns_404(api_client):
     create_data = {
         'id': custom_id,
         'name': 'Custom ID Application',
-        'extension': '7777',
+        'extension': generate_unique_extension(prefix='5', width=5),
         'type': 'plaintext',
         'applicationlogic': 'NoOp(Custom ID test)',
         'description': 'Created with custom ID for migration'

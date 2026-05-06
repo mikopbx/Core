@@ -29,6 +29,23 @@ class TestApiKeys:
 
     created_ids = []
 
+    @staticmethod
+    def _normalize_keys_list(payload):
+        if isinstance(payload, dict):
+            nested = payload.get('data')
+            if isinstance(nested, list):
+                return nested
+        return payload if isinstance(payload, list) else []
+
+    def _get_live_key_id(self, api_client):
+        for key_id in self.created_ids:
+            try:
+                assert_record_exists(api_client, 'api-keys', key_id)
+                return str(key_id)
+            except Exception:
+                continue
+        return None
+
     def test_01_get_default_template(self, api_client):
         """Test GET /api-keys:getDefault - Get default key template"""
         response = api_client.get('api-keys:getDefault')
@@ -175,12 +192,14 @@ class TestApiKeys:
         response = api_client.get('api-keys', params={'limit': 20, 'offset': 0})
         assert_api_success(response, "Failed to get API keys list")
 
-        data = response['data']
+        data = self._normalize_keys_list(response['data'])
         assert isinstance(data, list), "Response data should be a list"
 
-        if len(self.created_ids) > 0:
-            assert len(data) >= len(self.created_ids), \
-                f"Expected at least {len(self.created_ids)} keys"
+        if self.created_ids:
+            live_id = self._get_live_key_id(api_client)
+            assert live_id is not None, "No live API key available from previously created keys"
+            listed_ids = {str(item.get('id')) for item in data if isinstance(item, dict)}
+            assert live_id in listed_ids, f"Created API key {live_id} is missing in GET /api-keys"
 
         print(f"✓ Found {len(data)} API keys")
 
@@ -205,7 +224,9 @@ class TestApiKeys:
         if not self.created_ids:
             pytest.skip("No keys created yet")
 
-        key_id = self.created_ids[0]
+        key_id = self._get_live_key_id(api_client)
+        if not key_id:
+            pytest.fail("No live API key available for GET by ID")
         record = assert_record_exists(api_client, 'api-keys', key_id)
 
         # Verify structure
@@ -224,7 +245,9 @@ class TestApiKeys:
         if not self.created_ids:
             pytest.skip("No keys created yet")
 
-        key_id = self.created_ids[0]
+        key_id = self._get_live_key_id(api_client)
+        if not key_id:
+            pytest.fail("No live API key available for PUT test")
         current = assert_record_exists(api_client, 'api-keys', key_id)
 
         # Update with all required fields
@@ -249,7 +272,9 @@ class TestApiKeys:
         if not self.created_ids:
             pytest.skip("No keys created yet")
 
-        key_id = self.created_ids[0]
+        key_id = self._get_live_key_id(api_client)
+        if not key_id:
+            pytest.fail("No live API key available for PATCH test")
 
         patch_data = {
             'description': 'Patched Key Description',

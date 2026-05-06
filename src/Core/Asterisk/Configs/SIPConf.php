@@ -1443,9 +1443,22 @@ class SIPConf extends AsteriskConfigClass
     private function generateProvidersPj(): string
     {
         $conf = '';
+        $seenProviderUniqids = [];
 
         // Iterate through each data provider
         foreach ($this->data_providers as $provider) {
+            // Defensive dedup at render stage (issue #1045):
+            // if upstream provider collection returns duplicate uniqids for any reason,
+            // skip later rows to keep pjsip.conf parseable.
+            if ($this->shouldSkipDuplicateUniqid(
+                (string)($provider['uniqid'] ?? ''),
+                (string)($provider['id'] ?? ''),
+                $seenProviderUniqids,
+                'provider'
+            )) {
+                continue;
+            }
+
             $manual_attributes = Util::parseIniSettings($provider['manualattributes'] ?? '');
 
             // Add visual separator for provider

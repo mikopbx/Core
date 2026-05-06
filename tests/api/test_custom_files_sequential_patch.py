@@ -13,6 +13,48 @@ from typing import Optional
 from conftest import read_file_from_container
 
 
+def _get_live_custom_file_data(api_client, file_id: str) -> Optional[dict]:
+    """
+    Validate that custom file ID is still accessible.
+    Returns data dict for live record, or None for stale/non-existent ID.
+    """
+    response = api_client.get_raw(f"custom-files/{file_id}")
+
+    if response.status_code in (404, 422):
+        return None
+
+    response.raise_for_status()
+    payload = response.json()
+    if not payload.get("result"):
+        return None
+
+    return payload.get("data")
+
+
+def _find_live_custom_file_id_by_path(api_client, filepath: str) -> Optional[str]:
+    """
+    Find custom file by filepath and return only a live (GET-accessible) ID.
+    """
+    response = api_client.get("custom-files", params={
+        "search": filepath.split("/")[-1],
+        "limit": 100,
+    })
+
+    if not response.get("result") or not response.get("data"):
+        return None
+
+    for file_data in response["data"]:
+        if file_data.get("filepath") != filepath or not file_data.get("id"):
+            continue
+
+        candidate_id = str(file_data["id"])
+        live_data = _get_live_custom_file_data(api_client, candidate_id)
+        if live_data and live_data.get("filepath") == filepath:
+            return candidate_id
+
+    return None
+
+
 def _get_or_create_manager_conf_file(api_client) -> Optional[str]:
     """
     Find existing custom file for /etc/asterisk/manager.conf or create one.
@@ -20,17 +62,11 @@ def _get_or_create_manager_conf_file(api_client) -> Optional[str]:
     """
     filepath = "/etc/asterisk/manager.conf"
 
-    # First, try to find existing custom file
-    response = api_client.get('custom-files', params={
-        'search': 'manager.conf',
-        'limit': 50
-    })
-
-    if response.get('result') and response.get('data'):
-        for file in response['data']:
-            if file.get('filepath') == filepath:
-                print(f"Found existing custom file for {filepath}, ID={file['id']}")
-                return str(file['id'])
+    # First, try to find existing live custom file
+    existing_id = _find_live_custom_file_id_by_path(api_client, filepath)
+    if existing_id:
+        print(f"Found existing live custom file for {filepath}, ID={existing_id}")
+        return existing_id
 
     # Not found - try to create
     print(f"Custom file for {filepath} not found, creating...")
@@ -51,10 +87,17 @@ def _get_or_create_manager_conf_file(api_client) -> Optional[str]:
             return file_id
         else:
             print(f"Failed to create custom file: {create_response.get('messages', {})}")
-            return None
     except Exception as e:
         print(f"Error creating custom file: {e}")
-        return None
+
+    # Recovery for create races:
+    # If another test/process created file first, re-discover and validate live ID.
+    recovered_id = _find_live_custom_file_id_by_path(api_client, filepath)
+    if recovered_id:
+        print(f"Recovered live custom file for {filepath} after create race, ID={recovered_id}")
+        return recovered_id
+
+    return None
 
 
 def test_sequential_patch_custom_file(api_client):

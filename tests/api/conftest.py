@@ -1113,6 +1113,40 @@ def assert_api_success(response: Dict[str, Any], message: str = "API request fai
         f"{message}. Messages: {response.get('messages', {})}"
 
 
+def generate_unique_extension(prefix: str = '9', width: int = 5) -> str:
+    """
+    Generate a time-based numeric extension for collision-safe test data.
+    """
+    safe_width = max(int(width), 4)
+    prefix_digit = ''.join(ch for ch in str(prefix) if ch.isdigit())[:1] or '9'
+    tail_width = safe_width - 1
+    tail = int(time.time_ns() % (10 ** tail_width))
+    return f"{prefix_digit}{tail:0{tail_width}d}"
+
+
+def generate_unique_mobile(prefix: str = '79') -> str:
+    """
+    Generate a unique mobile number in +79XXXXXXXXX format for test data.
+    """
+    safe_prefix = ''.join(ch for ch in str(prefix) if ch.isdigit())[:2] or '79'
+    tail = int(time.time_ns() % 1_000_000_000)
+    return f"+{safe_prefix}{tail:09d}"
+
+
+def _is_extension_conflict(response: Dict[str, Any]) -> bool:
+    """
+    Detect API error responses caused by extension-number collisions.
+    """
+    if response.get('result') is True:
+        return False
+    messages = json.dumps(response.get('messages', {}), ensure_ascii=False).lower()
+    return (
+        'extension' in messages and (
+            'exist' in messages or 'occupied' in messages or 'already' in messages
+        )
+    )
+
+
 def assert_record_exists(api_client: MikoPBXClient, resource: str, record_id: str) -> Dict[str, Any]:
     """
     Assert that a record exists and return it
@@ -1433,9 +1467,20 @@ def sample_conference_room(api_client, conference_room_fixtures):
     fixture_key = list(conference_room_fixtures.keys())[0]
     room_data = conference_room_fixtures[fixture_key].copy()
 
-    # Create the conference room
-    response = api_client.post('conference-rooms', room_data)
-    assert response['result'] is True, f"Failed to create sample conference room: {response.get('messages')}"
+    # Avoid extension collisions with data created by earlier tests in the same run.
+    response = None
+    for _ in range(8):
+        candidate = room_data.copy()
+        candidate['extension'] = generate_unique_extension(prefix='6', width=5)
+        response = api_client.post('conference-rooms', candidate)
+        if response.get('result') is True:
+            room_data = candidate
+            break
+        if not _is_extension_conflict(response):
+            break
+
+    assert response and response.get('result') is True, \
+        f"Failed to create sample conference room: {response.get('messages') if response else 'No response'}"
 
     room_id = response['data']['id']
     print(f"\n✓ Created sample conference room: {room_id}")
@@ -1465,9 +1510,20 @@ def sample_call_queue(api_client, call_queue_fixtures):
     # Convert fixture format to API format if needed
     queue_data = convert_call_queue_fixture_to_api_format(queue_data)
 
-    # Create the call queue
-    response = api_client.post('call-queues', queue_data)
-    assert response['result'] is True, f"Failed to create sample call queue: {response.get('messages')}"
+    # Avoid extension collisions with data created by earlier tests in the same run.
+    response = None
+    for _ in range(8):
+        candidate = queue_data.copy()
+        candidate['extension'] = generate_unique_extension(prefix='7', width=5)
+        response = api_client.post('call-queues', candidate)
+        if response.get('result') is True:
+            queue_data = candidate
+            break
+        if not _is_extension_conflict(response):
+            break
+
+    assert response and response.get('result') is True, \
+        f"Failed to create sample call queue: {response.get('messages') if response else 'No response'}"
 
     queue_id = response['data']['id']
     print(f"\n✓ Created sample call queue: {queue_id}")

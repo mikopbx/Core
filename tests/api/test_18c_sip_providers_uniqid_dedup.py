@@ -28,7 +28,6 @@ from conftest import (
     assert_api_success,
     execute_asterisk_command,
     read_file_from_container,
-    wait_for_worker_idle,
 )
 
 
@@ -141,18 +140,21 @@ class TestSIPProvidersUniqidDedup:
     @pytest.mark.dependency(depends=[
         'TestSIPProvidersUniqidDedup::test_02_force_duplicate_uniqid_via_direct_sql'])
     def test_03_trigger_regeneration_and_wait(self, api_client):
-        """PATCH provider A (no-op description) — triggers pjsip.conf regen."""
-        cls = TestSIPProvidersUniqidDedup
-        response = api_client.patch(
-            f'sip-providers/{cls.provider_a_id}',
-            {'description': 'Dedup test provider A (touched)'},
-        )
-        assert_api_success(response, 'PATCH on provider A failed')
+        """Force pjsip.conf regeneration from DB state with duplicated uniqid.
 
-        # Background workers regenerate pjsip.conf and reload PJSIP.
-        # Polls beanstalkd queue until WorkerModelsEvents drains — the canonical
-        # wait pattern in this suite, far more reliable than a flat sleep.
-        wait_for_worker_idle(api_client)
+        We intentionally bypass REST save/patch here: after SQL-level duplication
+        of m_Sip.uniqid, any provider PATCH is expected to fail at ORM uniqueness
+        validation before SIPConf generation starts. For regression #1045 we need
+        to validate defensive dedup in SIPConf::reload(), not CRUD validation.
+        """
+        cmd = (
+            "cd /usr/www/src && "
+            "php -r \""
+            "require_once 'Globals.php'; "
+            "\\MikoPBX\\Core\\Asterisk\\Configs\\SIPConf::reload();"
+            "\""
+        )
+        self._bash(api_client, cmd)
 
     @pytest.mark.dependency(depends=[
         'TestSIPProvidersUniqidDedup::test_03_trigger_regeneration_and_wait'])

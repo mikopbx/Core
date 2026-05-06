@@ -8,6 +8,7 @@ Business rule:
 """
 
 import pytest
+from conftest import generate_unique_extension
 
 
 def test_fwd_ringlength_empty_when_no_forwarding(api_client):
@@ -17,10 +18,12 @@ def test_fwd_ringlength_empty_when_no_forwarding(api_client):
     Scenario: User clears both fwd_forwarding and fwd_ringlength in web interface
     Expected: Should save successfully without validation error
     """
+    test_number = generate_unique_extension(prefix='8', width=5)
+
     # Create employee with forwarding disabled
     response = api_client.post('employees', {
         'user_username': 'test_no_forwarding',
-        'number': '9001',
+        'number': test_number,
         'sip_secret': 'StrongP@ss123',
         'fwd_forwarding': '',  # Empty - no forwarding
         'fwd_ringlength': 0     # Zero - should be allowed
@@ -43,12 +46,14 @@ def test_fwd_ringlength_validation_when_forwarding_set(api_client):
     """
     import requests
 
+    test_number = generate_unique_extension(prefix='8', width=5)
+
     # Try to create employee with invalid ring length
     # This should fail with 422 Unprocessable Entity
     try:
         response = api_client.post('employees', {
             'user_username': 'test_with_forwarding',
-            'number': '9002',
+            'number': test_number,
             'sip_secret': 'StrongP@ss123',
             'fwd_forwarding': '201',  # Forwarding enabled
             'fwd_ringlength': 1        # Invalid - too short (< 3)
@@ -68,10 +73,12 @@ def test_fwd_ringlength_valid_range_when_forwarding_set(api_client):
     Scenario: User sets forwarding with valid ring length
     Expected: Should save successfully
     """
+    test_number = generate_unique_extension(prefix='8', width=5)
+
     # Create employee with valid forwarding settings
     response = api_client.post('employees', {
         'user_username': 'test_valid_forwarding',
-        'number': '9003',
+        'number': test_number,
         'sip_secret': 'StrongP@ss123',
         'fwd_forwarding': '201',  # Forwarding enabled
         'fwd_ringlength': 30       # Valid - in range [3, 180]
@@ -92,10 +99,12 @@ def test_update_employee_clear_forwarding(api_client):
     Scenario: User updates existing employee and clears forwarding
     Expected: Should accept fwd_ringlength=0 when fwd_forwarding is cleared
     """
+    test_number = generate_unique_extension(prefix='8', width=5)
+
     # Create employee with forwarding
     create_response = api_client.post('employees', {
         'user_username': 'test_clear_forwarding',
-        'number': '9004',
+        'number': test_number,
         'sip_secret': 'StrongP@ss123',
         'fwd_forwarding': '201',
         'fwd_ringlength': 30
@@ -107,7 +116,7 @@ def test_update_employee_clear_forwarding(api_client):
     # Simulating web form submission where empty string is sent
     put_response = api_client.put(f'employees/{employee_id}', {
         'user_username': 'test_clear_forwarding',
-        'number': '9004',
+        'number': test_number,
         'sip_secret': 'StrongP@ss123',
         'fwd_forwarding': '',      # Clear forwarding (empty string from web form)
         'fwd_ringlength': ''       # Empty string (will be converted to 0 by sanitization)

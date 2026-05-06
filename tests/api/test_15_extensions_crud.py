@@ -10,7 +10,9 @@ from conftest import (
     assert_api_success,
     assert_record_exists,
     assert_record_deleted,
-    convert_employee_fixture_to_api_format
+    convert_employee_fixture_to_api_format,
+    generate_unique_extension,
+    generate_unique_mobile,
 )
 
 
@@ -34,7 +36,7 @@ def test_employee_full_crud_cycle(api_client, employee_fixtures):
     print(f"{'='*70}")
 
     # Use a unique number for this test to avoid conflicts
-    test_number = "9999"
+    test_number = generate_unique_extension(prefix='8', width=5)
     employee_id = None
 
     try:
@@ -52,8 +54,8 @@ def test_employee_full_crud_cycle(api_client, employee_fixtures):
         # Modify for uniqueness
         template_data['number'] = test_number
         template_data['username'] = 'Test CRUD User'
-        template_data['email'] = 'crud.test@example.com'
-        template_data['mobile'] = '+79999999999'
+        template_data['email'] = f'crud.test.{test_number}@example.com'
+        template_data['mobile'] = generate_unique_mobile()
 
         # Convert to API format
         create_data = convert_employee_fixture_to_api_format(template_data)
@@ -106,7 +108,7 @@ def test_employee_full_crud_cycle(api_client, employee_fixtures):
         update_data['id'] = employee_id
         update_data['user_username'] = 'Updated CRUD User'
         update_data['user_email'] = 'updated.crud@example.com'
-        update_data['mobile_number'] = '+79888888888'
+        update_data['mobile_number'] = generate_unique_mobile()
         update_data['sip_enableRecording'] = False  # Toggle recording
 
         print(f"Updating to:")
@@ -341,12 +343,12 @@ def test_employee_delete_cascade(api_client, employee_fixtures):
     print(f"{'='*70}")
 
     # Create temporary employee
-    test_number = "9998"
+    test_number = generate_unique_extension(prefix='8', width=5)
     template = list(employee_fixtures.values())[0].copy()
     template['number'] = test_number
     template['username'] = 'Delete Test User'
-    template['email'] = 'delete.test@example.com'
-    template['mobile'] = '+79777777777'  # Unique mobile number to avoid conflicts
+    template['email'] = f'delete.test.{test_number}@example.com'
+    template['mobile'] = generate_unique_mobile()
 
     create_data = convert_employee_fixture_to_api_format(template)
 
