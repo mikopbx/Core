@@ -19,9 +19,11 @@
 
 namespace MikoPBX\Core\Asterisk;
 
-use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\System\{Directories, Util};
 use Phalcon\Di\Di;
+use Throwable;
 
 /**
  * Additional methods
@@ -43,36 +45,60 @@ class CdrDb
     }
 
     /**
-     * Checks the CDR database for "broken" rows.
+     * Closes "broken" temporary CDR rows whose `endtime` was never set
+     * (process crash, ungraceful shutdown, etc.).
+     *
+     * Implemented as a single parameterised SQL UPDATE in both modes:
+     *
+     *  - **Booting** (Asterisk not started yet): no live channels can exist,
+     *    every row with empty `endtime` is by definition orphaned. The
+     *    previous ORM-row-loop here used to stall `PbxConf::configure()` for
+     *    minutes on 300k+ stale rows (3GB cdr.db boot regression).
+     *
+     *  - **Running**: queries AMI for active channels and excludes their
+     *    linkedids via `linkedid NOT IN (…)`. The list of active linkedids
+     *    is bounded by concurrent calls (typically <1000), so binding it
+     *    inline is cheap.
+     *
+     * The `endtime` value mirrors the original branch's semantics: prefer
+     * `answer` when present, otherwise fall back to `start`. `NULLIF(answer,
+     * '')` collapses both NULL and empty-string answer columns to NULL, and
+     * `COALESCE` then picks `start`.
      */
     public static function checkDb(): void
     {
         $di = Di::getDefault();
-        if(!$di){
+        if (!$di) {
             return;
         }
         $booting = ($di->getShared('registry')->booting === true);
-        $channels_id = [];
-        // Если booting, то asterisk не запущен.
-        if(!$booting){
-            $am          = Util::getAstManager('off');
-            $channels_id = $am->GetChannels();
+
+        $activeLinkedIds = [];
+        if (!$booting) {
+            try {
+                $am = Util::getAstManager('off');
+                $activeLinkedIds = array_keys($am->GetChannels());
+            } catch (Throwable $e) {
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
+                return;
+            }
         }
-        /** @var CallDetailRecordsTmp $data_cdr */
-        /** @var CallDetailRecordsTmp $row_cdr */
-        $data_cdr = CallDetailRecordsTmp::find();
-        foreach ($data_cdr as $row_cdr) {
-            if (array_key_exists($row_cdr->linkedid, $channels_id)) {
-                continue;
+
+        try {
+            /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
+            $connection = $di->get(CDRDatabaseProvider::SERVICE_NAME);
+
+            $sql = "UPDATE cdr SET endtime = COALESCE(NULLIF(answer, ''), start) "
+                 . "WHERE (endtime IS NULL OR endtime = '')";
+            $bind = [];
+            if (!empty($activeLinkedIds)) {
+                $placeholders = implode(',', array_fill(0, count($activeLinkedIds), '?'));
+                $sql         .= " AND linkedid NOT IN ($placeholders)";
+                $bind         = array_values($activeLinkedIds);
             }
-            if ( ! $row_cdr->endtime) {
-                if ($row_cdr->answer) {
-                    $row_cdr->endtime = $row_cdr->answer;
-                } else {
-                    $row_cdr->endtime = $row_cdr->start;
-                }
-                $row_cdr->save();
-            }
+            $connection->execute($sql, $bind);
+        } catch (Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
     }
 

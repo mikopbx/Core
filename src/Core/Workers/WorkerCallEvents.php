@@ -36,6 +36,7 @@ use MikoPBX\Core\Workers\Libs\WorkerCallEvents\DeleteCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
 use MikoPBX\Core\Asterisk\AsteriskManager;
+use Phalcon\Db\Adapter\Pdo\Sqlite as PdoSqliteAdapter;
 use Phalcon\Di\Di;
 use MikoPBX\Common\Library\Text;
 use Throwable;
@@ -54,6 +55,35 @@ use MikoPBX\Core\Asterisk\Configs\CelBeanstalkdConf;
 class WorkerCallEvents extends WorkerBase
 {
     public const string CACHE_KEY_RECORDINGS = 'Workers:WorkerCallEvents:RecordingsSettingsSynced';
+
+    /**
+     * Maximum rows deleted in a single SQLite statement. The writer lock
+     * is held for the duration of one chunk, so this bounds how long
+     * other CDR writers (Insert/UpdateDataInDB) can be blocked at once.
+     * The full-pass budget is governed by {@see self::DELETE_DEADLINE_SECONDS}.
+     */
+    private const int DELETE_CHUNK_SIZE = 1000;
+
+    /**
+     * Hard time-box shared across the entire cleanup pass (general + tmp).
+     * Must stay well below the 120s WorkerSafeScripts watchdog so a long
+     * purge can't be SIGKILLed mid-DELETE and restarted from scratch — that
+     * was the original regression: 100% CPU + no new CDR writes until the
+     * user disabled retention.
+     */
+    private const float DELETE_DEADLINE_SECONDS = 5.0;
+
+    /**
+     * Retention for the temporary `cdr` (`CallDetailRecordsTmp`) table.
+     * Rows here that are older than this and whose `linkedid` is no longer
+     * on Asterisk are crash artefacts (`WorkerCdr` migrates completed calls
+     * to `cdr_general` via `afterSave`). Independent from the user-facing
+     * PBXRecordSavePeriod, which only governs `cdr_general`. 30 d is chosen
+     * to safely cover long-parked calls, abandoned voicemail, and multi-week
+     * conferences — anything still in `cdr` past that is debris.
+     */
+    private const int DELETE_TMP_DAYS = 30;
+
     public array $mixMonitorChannels = [];
     public array $checkChanHangupTransfer = [];
     protected bool $record_calls = true;
@@ -614,7 +644,22 @@ class WorkerCallEvents extends WorkerBase
     }
 
     /**
-     * Clearing old cdr records
+     * Periodic CDR retention cleanup.
+     *
+     * Runs every {@see self::$deleteCdrTimer} ping cycles and trims:
+     *   1. `cdr_general` rows older than `PBXRecordSavePeriod` days
+     *      (user-facing retention).
+     *   2. `cdr` (tmp) rows older than {@see self::DELETE_TMP_DAYS} whose
+     *      `linkedid` is not currently on Asterisk — crash artefacts that
+     *      `WorkerCdr` never managed to migrate to `cdr_general`.
+     *
+     * Both passes share a single {@see self::DELETE_DEADLINE_SECONDS}
+     * budget via the absolute `$deadline` timestamp. The cap stays well
+     * below the 120s WorkerSafeScripts watchdog so a long purge can never
+     * be SIGKILLed mid-DELETE and restarted from scratch — that was the
+     * original regression: 100% CPU + no new CDR writes until the user
+     * disabled retention.
+     *
      * @return void
      * @throws \DateMalformedStringException
      */
@@ -626,32 +671,146 @@ class WorkerCallEvents extends WorkerBase
             return;
         }
         $this->deleteCdrTimer = 0;
+
+        try {
+            /** @var PdoSqliteAdapter $connection */
+            $connection = $this->di->get(CDRDatabaseProvider::SERVICE_NAME);
+            $deadline   = microtime(true) + self::DELETE_DEADLINE_SECONDS;
+
+            $totalDeleted  = $this->deleteOldFromGeneral($connection, $deadline);
+            $totalDeleted += $this->deleteOldFromTmp($connection, $deadline);
+
+            // Free disk space and bound WAL growth after a successful purge.
+            // wal_checkpoint(TRUNCATE) is best-effort: it returns busy when
+            // readers hold a snapshot, in which case the next pass will retry.
+            if ($totalDeleted > 0) {
+                try {
+                    $connection->execute('PRAGMA wal_checkpoint(TRUNCATE)');
+                } catch (Throwable $e) {
+                    SystemMessages::sysLogMsg(
+                        self::class,
+                        'WAL checkpoint after CDR cleanup did not complete: ' . $e->getMessage(),
+                        LOG_DEBUG
+                    );
+                }
+            }
+        } catch (Throwable $e) {
+            // Prevent crash loop when cdr/cdr_general are missing (issue #1000).
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+        }
+    }
+
+    /**
+     * Trims `cdr_general` to PBXRecordSavePeriod days. No-op when retention
+     * is set to "unlimited" (savePeriod < 30) or the table is missing.
+     */
+    private function deleteOldFromGeneral(PdoSqliteAdapter $connection, float $deadline): int
+    {
         $savePeriod = (int)PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_SAVE_PERIOD);
         if ($savePeriod < 30) {
-            return;
+            return 0;
         }
-        $limitData  = (new DateTime())->modify("-$savePeriod days")->format('Y-m-d');
+        if (!$connection->tableExists('cdr_general')) {
+            return 0;
+        }
+
+        $limitData = (new DateTime())->modify("-$savePeriod days")->format('Y-m-d');
         RecordingDeletionLogger::log(
             RecordingDeletionLogger::CDR_RETENTION,
             'cdr_general',
             "savePeriod={$savePeriod}days, limitDate={$limitData}"
         );
-        try {
-            /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
-            $connection = $this->di->get(CDRDatabaseProvider::SERVICE_NAME);
-            // Skip cleanup if recovery hasn't restored the table yet — avoids
-            // logging a fresh exception every minute when ensureCdrTables() failed.
-            if (!$connection->tableExists('cdr_general')) {
-                return;
-            }
-            $connection->execute(
-                'DELETE FROM cdr_general WHERE start < ?',
-                [$limitData]
-            );
-        } catch (Throwable $e) {
-            // Prevent crash loop when cdr_general table is missing (issue #1000).
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+
+        // Subquery+rowid form is used because SQLite's `DELETE … LIMIT`
+        // requires the SQLITE_ENABLE_UPDATE_DELETE_LIMIT compile flag,
+        // which is not enabled in the bundled BusyBox sqlite.
+        return $this->deleteInChunks(
+            $connection,
+            'DELETE FROM cdr_general WHERE rowid IN '
+                . '(SELECT rowid FROM cdr_general WHERE start < ? LIMIT ' . self::DELETE_CHUNK_SIZE . ')',
+            [$limitData],
+            $deadline
+        );
+    }
+
+    /**
+     * Trims abandoned tmp rows from `cdr` older than DELETE_TMP_DAYS, but
+     * never touches rows that belong to a still-active call. The same
+     * `linkedid NOT IN (active channels)` guard `WorkerCdr::updateCdr()`
+     * uses, so a long-running parked call or open voicemail box can never
+     * be silently dropped.
+     */
+    private function deleteOldFromTmp(PdoSqliteAdapter $connection, float $deadline): int
+    {
+        if (microtime(true) >= $deadline) {
+            return 0;
         }
+        if (!$connection->tableExists('cdr')) {
+            return 0;
+        }
+
+        $activeLinkedIds = [];
+        try {
+            $am              = Util::getAstManager('off');
+            $activeLinkedIds = array_keys($am->GetChannels());
+        } catch (Throwable $e) {
+            // AMI unavailable — bail out. We must not run the DELETE without
+            // the live-channel guard, otherwise we'd wipe in-flight calls.
+            SystemMessages::sysLogMsg(
+                self::class,
+                'Skipping cdr (tmp) cleanup: AMI unavailable: ' . $e->getMessage(),
+                LOG_WARNING
+            );
+            return 0;
+        }
+
+        $tmpLimit = (new DateTime())->modify('-' . self::DELETE_TMP_DAYS . ' days')->format('Y-m-d');
+        RecordingDeletionLogger::log(
+            RecordingDeletionLogger::CDR_RETENTION,
+            'cdr',
+            'tmpRetention=' . self::DELETE_TMP_DAYS . "days, limitDate={$tmpLimit}, "
+                . 'activeChannels=' . count($activeLinkedIds)
+        );
+
+        $sql  = 'DELETE FROM cdr WHERE rowid IN '
+            . '(SELECT rowid FROM cdr WHERE start < ?';
+        $bind = [$tmpLimit];
+        if (!empty($activeLinkedIds)) {
+            $placeholders = implode(',', array_fill(0, count($activeLinkedIds), '?'));
+            $sql         .= " AND linkedid NOT IN ($placeholders)";
+            $bind         = array_merge($bind, array_values($activeLinkedIds));
+        }
+        $sql .= ' LIMIT ' . self::DELETE_CHUNK_SIZE . ')';
+
+        return $this->deleteInChunks($connection, $sql, $bind, $deadline);
+    }
+
+    /**
+     * Run a parameterised DELETE in chunks until either no rows are left
+     * or the absolute `$deadline` (microtime) is reached. Returns the
+     * total number of rows deleted across chunks.
+     *
+     * The deadline is shared across the whole cleanup pass, so consecutive
+     * calls (cdr_general → cdr) cooperate on a single budget rather than
+     * each consuming their own — preventing the writer lock from being
+     * held for double the configured limit.
+     */
+    private function deleteInChunks(
+        PdoSqliteAdapter $connection,
+        string $sql,
+        array $bind,
+        float $deadline
+    ): int {
+        $total = 0;
+        do {
+            if (microtime(true) >= $deadline) {
+                break;
+            }
+            $connection->execute($sql, $bind);
+            $affected = (int)$connection->affectedRows();
+            $total   += $affected;
+        } while ($affected > 0);
+        return $total;
     }
 }
 
