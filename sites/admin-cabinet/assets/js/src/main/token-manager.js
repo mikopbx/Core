@@ -252,9 +252,37 @@ const TokenManager = {
                         : originalAjax.call(this, options);
 
                     // Forward all callbacks (preserve `this` and full argument list).
+                    // Issue #1056: jqXHR.fail occasionally routes a jQuery.Event
+                    // through errorThrown (third arg) when the request was
+                    // aborted by an event-driven handler (e.g. DataTables
+                    // aborting an in-flight search on a new draw). The event
+                    // would then escape to window.onerror as a non-Error throw
+                    // and produce a fresh Sentry fingerprint per jQuery22<id>
+                    // cache id (Sentry MIKOPBX-MHA/MHD/MHE/MHJ/MHP). Replace
+                    // any jQuery.Event-shaped argument with a real Error so
+                    // downstream listeners see a stable, groupable value.
                     pendingJqXHR
                         .done(function (...args) { deferred.resolveWith(this, args); })
-                        .fail(function (...args) { deferred.rejectWith(this, args); });
+                        .fail(function (...args) {
+                            // Skip args[0] — by jQuery contract that's the
+                            // jqXHR object; downstream listeners (Semantic UI
+                            // api, $(document).ajaxError) call .status / .abort
+                            // on it and would crash if we replaced it.
+                            // errorThrown sits at args[2]; we still scan the
+                            // tail in case third-party plugins shift positions.
+                            for (let i = 1; i < args.length; i += 1) {
+                                const a = args[i];
+                                if (a && typeof a === 'object' && !(a instanceof Error)
+                                    && ('isTrigger' in a || 'isDefaultPrevented' in a)) {
+                                    const wrapped = new Error(
+                                        `jqXHR.fail received jQuery.Event: ${a.type || 'unknown'}`
+                                    );
+                                    wrapped.name = 'JqEventInFail';
+                                    args[i] = wrapped;
+                                }
+                            }
+                            deferred.rejectWith(this, args);
+                        });
                 }).catch((error) => {
                     console.error('TokenManager initialization failed:', error);
                     deferred.reject(error);
