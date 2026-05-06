@@ -387,7 +387,11 @@ class InternalContexts extends AsteriskConfigClass
         // means the hangup happens before the handler is registered, so no
         // spurious CdrConnector "incoming call" events fire for members that
         // never actually rang.
-        $conf .= 'exten => _' . $this->extensionPattern . ',1,ExecIf($["${Q_TIMEOUT_' . '${EXTEN}}" != "" && ${Q_TIMEOUT_' . '${EXTEN}} > 0]?Wait(${Q_TIMEOUT_' . '${EXTEN}}))' . " \n\t";
+        // Use `0${VAR}` concatenation: empty → "0", "15" → "015" (parsed as 15
+        // by strtoll). Avoids syntax error in `$[]` parser when Q_TIMEOUT_<EXT>
+        // is unset on regular (non-queue) extension calls — `${var} > 0` would
+        // otherwise produce a bare `> 0` token at parse time.
+        $conf .= 'exten => _' . $this->extensionPattern . ',1,ExecIf($[0${Q_TIMEOUT_' . '${EXTEN}} > 0]?Wait(${Q_TIMEOUT_' . '${EXTEN}}))' . " \n\t";
         // Set channel hangup handler and execute other operations
         $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . " \n\t";
         $conf .= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Set(SIPADDHEADER01=${EMPTY_VAR})' . " \n\t";
