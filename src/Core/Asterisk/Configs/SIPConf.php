@@ -110,6 +110,14 @@ class SIPConf extends AsteriskConfigClass
     protected int $limitSelectPeers = self::PEERS_BATCH_SIZE;
 
     /**
+     * Track peer uniqids already emitted across paginated getPeers() calls.
+     * Reset on each fresh paging cycle (offsetPeers === 0). See #1045.
+     *
+     * @var array<string,string>
+     */
+    protected array $seenPeerUniqids = [];
+
+    /**
      * Providers data.
      *
      * @var array|null
@@ -420,19 +428,42 @@ class SIPConf extends AsteriskConfigClass
     {
         $data    = [];
 
+        // Issue #1045 (peers symmetry): start of a fresh paging cycle — clear
+        // the duplicate tracker so a new generation does not see ghosts from
+        // a previous one. ORDER BY id ASC keeps the smallest-id row as the
+        // dedup winner across pages.
+        if ($this->offsetPeers === 0) {
+            $this->seenPeerUniqids = [];
+        }
+
         $filter = [
             "type = 'peer' AND ( disabled <> '1')",
-            "offset" => $this->offsetPeers,
-            'limit'  => $this->limitSelectPeers
+            'order'  => 'id ASC',
+            'offset' => $this->offsetPeers,
+            'limit'  => $this->limitSelectPeers,
         ];
         $db_data = Sip::find($filter)->toArray();
         $this->offsetPeers += $this->limitSelectPeers;
         if(count($db_data)===0){
             $this->offsetPeers = 0;
+            $this->seenPeerUniqids = [];
             return $data;
         }
         // Process each SIP peer.
         foreach ($db_data as $arr_data) {
+            // Issue #1045: same dedup as for providers — duplicate uniqid in
+            // m_Sip rows of type='peer' would emit duplicate [name](aor) and
+            // [name](endpoint) sections and Asterisk 22 res_sorcery_config
+            // would reject pjsip.conf as a whole. Skip the later row.
+            if ($this->shouldSkipDuplicateUniqid(
+                (string)($arr_data['uniqid'] ?? ''),
+                (string)($arr_data['id'] ?? ''),
+                $this->seenPeerUniqids,
+                'peer'
+            )) {
+                continue;
+            }
+
             $network_filter = null;
             // Retrieve associated network filter if available.
             if (!empty($arr_data['networkfilterid'])) {
@@ -505,6 +536,50 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
+     * Decide whether a SIP row with the given uniqid is a duplicate that
+     * must be skipped to keep pjsip.conf parseable.
+     *
+     * Issue #1045: when two m_Sip rows share one uniqid, pjsip.conf gets
+     * duplicate `[name](aor)`/`[name](endpoint)` sections and Asterisk 22
+     * res_sorcery_config rejects the whole file. Caller iterates rows in
+     * id ASC order — the smallest-id row registers as the winner here, all
+     * later rows are reported as duplicates and skipped.
+     *
+     * @param string             $uniqid       Row uniqid (already cast to string).
+     * @param string             $rowId        m_Sip.id of the current row.
+     * @param array<string,string> $seenUniqids Tracker mutated by this method:
+     *                                          uniqid → winning rowId.
+     * @param string             $kind         "provider"|"peer" — used in log only.
+     *
+     * @return bool true if the caller must skip this row.
+     */
+    protected function shouldSkipDuplicateUniqid(
+        string $uniqid,
+        string $rowId,
+        array &$seenUniqids,
+        string $kind
+    ): bool {
+        if (isset($seenUniqids[$uniqid])) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf(
+                    'Duplicate SIP %s uniqid "%s" detected (m_Sip.id=%s, kept m_Sip.id=%s). '
+                    . 'Skipping duplicate to keep pjsip.conf parseable. '
+                    . 'Fix: rewrite uniqid for the offending row or delete it.',
+                    $kind,
+                    $uniqid,
+                    $rowId,
+                    $seenUniqids[$uniqid]
+                ),
+                LOG_WARNING
+            );
+            return true;
+        }
+        $seenUniqids[$uniqid] = $rowId;
+        return false;
+    }
+
+    /**
      * Get providers.
      *
      * Retrieves and returns the providers data as an array.
@@ -516,8 +591,28 @@ class SIPConf extends AsteriskConfigClass
     {
         $data    = [];
         $codecs  = $this->getCodecs();
-        $db_data = Sip::find("type = 'friend' AND ( disabled <> '1')");
+        // ORDER BY id ASC: on duplicate uniqid the earlier-created row wins,
+        // later collisions are skipped (see #1045 dedup loop below).
+        $db_data = Sip::find([
+            "type = 'friend' AND ( disabled <> '1')",
+            'order' => 'id ASC',
+        ]);
+
+        // Issue #1045: defensive dedup against duplicate provider uniqids.
+        // Two providers sharing one uniqid produce duplicate [name](aor)/[name](endpoint)
+        // sections in pjsip.conf. Asterisk 22 res_sorcery_config rejects the WHOLE file
+        // on a duplicate object, taking down all extensions.
+        $seenUniqids = [];
         foreach ($db_data as $sip_peer) {
+            if ($this->shouldSkipDuplicateUniqid(
+                (string)$sip_peer->uniqid,
+                (string)$sip_peer->id,
+                $seenUniqids,
+                'provider'
+            )) {
+                continue;
+            }
+
             $arr_data                               = $sip_peer->toArray();
             $network_filter                         = NetworkFilters::findFirst($sip_peer->networkfilterid);
             $arr_data['permit']                     = ($network_filter === null) ? '' : $network_filter->permit;
@@ -558,7 +653,11 @@ class SIPConf extends AsteriskConfigClass
     {
         $data    = [];
         $routs   = OutgoingRoutingTable::find(['order' => 'priority']);
-        $db_data = Sip::find("type = 'friend' AND ( disabled <> '1')");
+        // ORDER BY id ASC keeps the same dedup winner as getProviders() (see #1045).
+        $db_data = Sip::find([
+            "type = 'friend' AND ( disabled <> '1')",
+            'order' => 'id ASC',
+        ]);
 
         // Process each outgoing route.
         foreach ($routs as $rout) {
@@ -570,6 +669,11 @@ class SIPConf extends AsteriskConfigClass
                 $arr_data['description'] = $sip_peer->description;
                 $arr_data['uniqid']      = $sip_peer->uniqid;
                 $data[]                  = $arr_data;
+                // Issue #1045: stop on first match — if uniqid collides in m_Sip,
+                // bind the route only to the row with the smallest id (the same
+                // winner that getProviders() emits to pjsip.conf). Without this
+                // break the dialplan would grow duplicate sections per route.
+                break;
             }
         }
 
