@@ -198,20 +198,34 @@ const installationFromRepo = {
                     $('a.button').addClass('disabled');
 
                     $currentButton.removeClass('disabled');
-                    $currentButton.closest('i.icon')
+                    $currentButton.find('i.icon')
                         .removeClass('redo')
                         .addClass('spinner loading');
 
-                    let uniqueModulesForUpdate = new Set();
+                    const uniqueModulesForUpdate = new Set();
                     $('a.update').each((index, $button)=>{
                         uniqueModulesForUpdate.add($($button).data('uniqid'));
                     });
+                    const modulesForUpdate = [...uniqueModulesForUpdate];
+                    if (modulesForUpdate.length === 0) {
+                        $('a.button').removeClass('disabled');
+                        return true;
+                    }
+                    installStatusLoopWorker.startBatchUpdate(modulesForUpdate);
                     const params = {
                         channelId: installStatusLoopWorker.channelId,
-                        modulesForUpdate: [...uniqueModulesForUpdate],
+                        modulesForUpdate: modulesForUpdate,
                     };
-                    ModulesAPI.updateAll(params, (response) => {
+                    ModulesAPI.updateAll(params, (response, success) => {
                         console.debug(response);
+                        if (success === false || response.result === false) {
+                            installStatusLoopWorker.resetBatchUpdate();
+                            installationFromRepo.$progressBarBlock.hide();
+                            $('a.button').removeClass('disabled');
+                            $currentButton.find('i.icon')
+                                .removeClass('spinner loading')
+                                .addClass('redo');
+                        }
                     });
 
                     $('tr.table-error-messages').remove();

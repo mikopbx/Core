@@ -27,11 +27,13 @@ class UnifiedModulesEvents extends Injectable
 {
     private string $asyncChannelId;
     private string $moduleUniqueId;
+    private string $batchId;
 
-    public function __construct(string $asyncChannelId, string $moduleUniqueId)
+    public function __construct(string $asyncChannelId, string $moduleUniqueId, string $batchId = '')
     {   
         $this->asyncChannelId = $asyncChannelId;
         $this->moduleUniqueId = $moduleUniqueId;
+        $this->batchId = $batchId;
     }
 
     /**
@@ -48,6 +50,10 @@ class UnifiedModulesEvents extends Injectable
             'stageDetails' => $data,
             'pid' => posix_getpid()
         ];
+        if ($this->batchId !== '') {
+            $message['batchId'] = $this->batchId;
+            $message['batchMode'] = true;
+        }
 
         SystemMessages::sysLogMsg(
             __CLASS__,

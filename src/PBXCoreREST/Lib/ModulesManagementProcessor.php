@@ -31,6 +31,7 @@ use MikoPBX\PBXCoreREST\Lib\Modules\InstallFromRepoAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\StartDownloadAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\StatusOfModuleInstallationAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\UninstallModuleAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\UpdateAllModulesAction;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
@@ -85,9 +86,15 @@ class ModulesManagementProcessor extends Injectable
                     $asyncChannelId = $request['asyncChannelId'];
                     $moduleUniqueID = $data['uniqid'] ?? $data['id'];
                     $releaseId = intval($data['releaseId']??0);
-                    $installer = new InstallFromRepoAction($asyncChannelId, $moduleUniqueID, $releaseId);
+                    $batchId = $data['batchId'] ?? '';
+                    $installer = new InstallFromRepoAction($asyncChannelId, $moduleUniqueID, $releaseId, $batchId);
                     $installer->start();
                     $res->success = true;
+                    break;
+                case 'updateAll':
+                    $asyncChannelId = $request['asyncChannelId'];
+                    $modulesForUpdate = $data['modulesForUpdate'] ?? [];
+                    $res = UpdateAllModulesAction::main($asyncChannelId, is_array($modulesForUpdate) ? $modulesForUpdate : []);
                     break;
                 case 'getModuleInfo':
                     $moduleUniqueID = $data['uniqid'] ?? $data['id'] ?? '';

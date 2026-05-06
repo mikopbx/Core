@@ -488,28 +488,16 @@ class RestController extends BaseRestController
             return;
         }
 
-        // Get installed modules
-        $parameters = [
-            'columns' => ['uniqid'],
-            'conditions' => 'uniqid IN ({uniqid:array})',
-            'bind' => ['uniqid' => $modulesForUpdate]
-        ];
-
-        $installedModules = \MikoPBX\Common\Models\PbxExtensionModules::find($parameters)->toArray();
-
-        // Install each module
-        foreach ($installedModules as $module) {
-            $data = [
+        $this->sendRequestToBackendWorker(
+            $this->processorClass,
+            'updateAll',
+            [
                 'asyncChannelId' => $asyncChannelId,
-                'uniqid' => $module['uniqid'],
-                'releaseId' => 0
-            ];
-            $this->sendRequestToBackendWorker(
-                $this->processorClass,
-                'installFromRepo',
-                $data
-            );
-        }
+                'modulesForUpdate' => $modulesForUpdate
+            ],
+            '',
+            600
+        );
     }
 
     /**

@@ -61,6 +61,18 @@ const installStatusLoopWorker = {
     channelId: 'install-module',
 
     /**
+     * State of a bulk module update session.
+     * @type {Object}
+     */
+    batchUpdate: {
+        active: false,
+        batchId: '',
+        total: 0,
+        completed: new Set(),
+        failed: new Set(),
+    },
+
+    /**
      * Initializes the installStatusLoopWorker module by setting up the connection to receive server-sent events.
      */
     initialize(){
@@ -77,6 +89,9 @@ const installStatusLoopWorker = {
      */
     processModuleInstallation(response){
         installStatusLoopWorker.saveMessage(response);
+        if (installStatusLoopWorker.processBatchEvent(response)) {
+            return;
+        }
         const moduleUniqueId = response.moduleUniqueId;
         const stage = response.stage;
         const stageDetails = response.stageDetails;
@@ -94,8 +109,11 @@ const installStatusLoopWorker = {
         } else if (stage === 'Stage_V_InstallModule'){
             installStatusLoopWorker.cbAfterReceiveNewInstallationStatus(moduleUniqueId, stageDetails);
         } else if (stage === 'Stage_VI_EnableModule'){
-
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_InstallationInProgress, 99);
         } else if (stage === 'Stage_VII_FinalStatus'){
+            if (response.batchMode === true || response.batchId !== undefined) {
+                return;
+            }
             if (stageDetails.result===false){
                 installStatusLoopWorker.$progressBarBlock.hide();
                 if (stageDetails.messages !== undefined) {
@@ -126,6 +144,137 @@ const installStatusLoopWorker = {
         
         // Сохраняем обновленную историю
         localStorage.setItem('wsHistory', JSON.stringify(history));
+    },
+
+    /**
+     * Starts local UI tracking for a batch update.
+     * @param {Array<string>} modulesForUpdate
+     */
+    startBatchUpdate(modulesForUpdate) {
+        installStatusLoopWorker.batchUpdate = {
+            active: true,
+            batchId: '',
+            total: modulesForUpdate.length,
+            completed: new Set(),
+            failed: new Set(),
+        };
+        installStatusLoopWorker.$progressBarBlock.show();
+        installStatusLoopWorker.$progressBar.show();
+        installStatusLoopWorker.$progressBarLabel.text(globalTranslate.ext_UpdateAllModulesTitle);
+        installStatusLoopWorker.$progressBar.progress({
+            percent: 1,
+        });
+    },
+
+    /**
+     * Stops local UI tracking for a batch update.
+     */
+    resetBatchUpdate() {
+        installStatusLoopWorker.batchUpdate = {
+            active: false,
+            batchId: '',
+            total: 0,
+            completed: new Set(),
+            failed: new Set(),
+        };
+    },
+
+    /**
+     * Process server-side batch update events.
+     * @param {Object} response
+     * @returns {boolean}
+     */
+    processBatchEvent(response) {
+        if (response.batchMode !== true && response.batchId === undefined) {
+            return false;
+        }
+
+        const stage = response.stage;
+        const stageDetails = response.stageDetails || {};
+        const batch = installStatusLoopWorker.batchUpdate;
+
+        if (stage === 'BatchStarted') {
+            batch.active = true;
+            batch.batchId = response.batchId || '';
+            batch.total = stageDetails.total || batch.total;
+            installStatusLoopWorker.updateBatchProgress(stageDetails.total > 0 ? 1 : 0);
+            return true;
+        }
+
+        if (stage === 'BatchModuleStarted') {
+            batch.active = true;
+            batch.batchId = response.batchId || batch.batchId;
+            batch.total = stageDetails.total || batch.total;
+            installStatusLoopWorker.updateBatchProgress(
+                installStatusLoopWorker.calculateBatchPercent(stageDetails.current || 1, batch.total)
+            );
+            return true;
+        }
+
+        if (stage === 'BatchModuleCompleted') {
+            batch.completed.add(stageDetails.moduleUniqueId || response.moduleUniqueId);
+            installStatusLoopWorker.updateBatchProgress(
+                installStatusLoopWorker.calculateBatchPercent(stageDetails.current || batch.completed.size, batch.total)
+            );
+            return true;
+        }
+
+        if (stage === 'BatchModuleFailed') {
+            const moduleUniqueId = stageDetails.moduleUniqueId || response.moduleUniqueId;
+            batch.failed.add(moduleUniqueId);
+            installStatusLoopWorker.updateBatchProgress(
+                installStatusLoopWorker.calculateBatchPercent(stageDetails.current || batch.completed.size + batch.failed.size, batch.total)
+            );
+            if (stageDetails.messages !== undefined) {
+                const $row = $(`tr[data-id=${moduleUniqueId}]`);
+                installStatusLoopWorker.showModuleInstallationError($row, globalTranslate.ext_InstallationError, stageDetails.messages);
+            }
+            return true;
+        }
+
+        if (stage === 'BatchFinished') {
+            // Ignore stragglers from a previous batch (e.g., user re-triggered Update All).
+            if (batch.batchId !== '' && response.batchId && response.batchId !== batch.batchId) {
+                return true;
+            }
+            installStatusLoopWorker.updateBatchProgress(100);
+            installStatusLoopWorker.resetBatchUpdate();
+            if (stageDetails.result === false) {
+                $('a.button').removeClass('disabled');
+                installStatusLoopWorker.$progressBarBlock.hide();
+                return true;
+            }
+            window.location = `${globalRootUrl}pbx-extension-modules/index/`;
+            return true;
+        }
+
+        return false;
+    },
+
+    /**
+     * Calculates aggregate batch progress.
+     * @param {number} current
+     * @param {number} total
+     * @returns {number}
+     */
+    calculateBatchPercent(current, total) {
+        if (total <= 0) {
+            return 1;
+        }
+        return Math.min(Math.max(Math.round((current - 1) / total * 100), 1), 99);
+    },
+
+    /**
+     * Updates the aggregate batch progress bar.
+     * @param {number} percent
+     */
+    updateBatchProgress(percent) {
+        installStatusLoopWorker.$progressBarBlock.show();
+        installStatusLoopWorker.$progressBar.show();
+        installStatusLoopWorker.$progressBarLabel.text(globalTranslate.ext_UpdateAllModulesTitle);
+        installStatusLoopWorker.$progressBar.progress({
+            percent: percent,
+        });
     },
 
     /**

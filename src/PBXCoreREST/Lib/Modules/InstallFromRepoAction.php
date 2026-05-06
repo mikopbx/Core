@@ -47,10 +47,15 @@ class InstallFromRepoAction extends ModuleInstallationBase
      * @param string $moduleUniqueId The unique identifier for the module to be installed.
      * @param int $moduleReleaseId Optional release ID for the module. Defaults to 0.
      */
-    public function __construct(string $asyncChannelId, string $moduleUniqueId, int $moduleReleaseId = 0)
+    public function __construct(
+        string $asyncChannelId,
+        string $moduleUniqueId,
+        int $moduleReleaseId = 0,
+        string $batchId = ''
+    )
     {
-      $this->moduleReleaseId = $moduleReleaseId;
-      parent::__construct($asyncChannelId, $moduleUniqueId);
+        $this->moduleReleaseId = $moduleReleaseId;
+        parent::__construct($asyncChannelId, $moduleUniqueId, $batchId);
     }
 
     /**
@@ -123,6 +128,9 @@ class InstallFromRepoAction extends ModuleInstallationBase
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         } finally {
             $this->unifiedModulesEvents->pushMessageToBrowser( self::STAGE_VII_FINAL_STATUS, $res->getResult());
+            if ($this->batchId !== '' && !$res->success) {
+                UpdateAllModulesAction::failModule($this->batchId, $this->moduleUniqueId, $res->messages);
+            }
         }
     }
 
