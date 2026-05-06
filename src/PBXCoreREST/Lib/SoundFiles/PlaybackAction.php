@@ -40,13 +40,15 @@ class PlaybackAction
      * Supported audio formats and their MIME types
      */
     private const MIME_TYPES = [
-        'mp3'  => 'audio/mpeg',
-        'wav'  => 'audio/x-wav',
-        'ogg'  => 'audio/ogg',
-        'opus' => 'audio/ogg',  // SoundFilesConf 'opus' formatSpec wraps in ogg container
-        'webm' => 'audio/webm', // primary preview format (libopus in WebM)
-        'm4a'  => 'audio/mp4',
-        'aac'  => 'audio/aac'
+        'mp3'   => 'audio/mpeg',
+        'wav'   => 'audio/x-wav',
+        'wav16' => 'audio/x-wav', // MikoPBX format_wav extension (16 kHz mono PCM, slin16)
+        'wav48' => 'audio/x-wav', // MikoPBX format_wav extension (48 kHz mono PCM, slin48)
+        'ogg'   => 'audio/ogg',
+        'opus'  => 'audio/ogg',   // SoundFilesConf 'opus' formatSpec wraps in ogg container
+        'webm'  => 'audio/webm',  // primary preview format (libopus in WebM)
+        'm4a'   => 'audio/mp4',
+        'aac'   => 'audio/aac'
     ];
     /**
      * Stream or download sound file
