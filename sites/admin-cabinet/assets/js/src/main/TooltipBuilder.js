@@ -173,6 +173,9 @@ const TooltipBuilder = {
                         hide: settings.hideDelay
                     },
                     variation: settings.variation,
+                    className: {
+                        popup: 'ui popup field-info-popup'
+                    },
                     on: 'manual'  // Manual control for better handling inside labels
                 });
 
@@ -237,6 +240,9 @@ const TooltipBuilder = {
                     hide: 100
                 },
                 variation: 'flowing',
+                className: {
+                    popup: 'ui popup field-info-popup'
+                },
                 on: 'manual'
             });
 

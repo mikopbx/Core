@@ -40,6 +40,19 @@ body {
     color: #1678c2;
 }
 
+/* Field-info popups: keep tall tooltips inside the viewport with scrolling */
+.ui.popup.field-info-popup {
+    max-height: calc(100vh - 80px);
+    max-width: min(560px, calc(100vw - 32px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.ui.popup.field-info-popup pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
 /* Search field */
 #top-menu-search {
     min-width: 500px;

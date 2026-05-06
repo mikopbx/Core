@@ -324,13 +324,9 @@ class AssetProvider implements ServiceProviderInterface
         if (!file_exists($fileName)) {
             $arrStr = [];
             foreach ($di->getShared(MessagesProvider::SERVICE_NAME) as $key => $value) {
-                $arrStr[$key] = str_replace(
-                    "'",
-                    "\\'",
-                    str_replace(["\n", '  '], '', $value)
-                );
+                $arrStr[$key] = str_replace(["\n", '  '], '', $value);
             }
-            $scriptArray = json_encode($arrStr);
+            $scriptArray = json_encode($arrStr, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             $proxyCode = "const globalTranslateArray = $scriptArray;";
             file_put_contents($fileName, $proxyCode);
         }
