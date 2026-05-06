@@ -9,6 +9,7 @@ Issue: Second PATCH operation may not be applied if the first one hasn't complet
 import pytest
 import time
 import base64
+import requests
 from typing import Optional
 from conftest import read_file_from_container
 
@@ -100,6 +101,35 @@ def _get_or_create_manager_conf_file(api_client) -> Optional[str]:
     return None
 
 
+def _is_custom_file_not_found_error(exc: Exception) -> bool:
+    error_text = str(exc)
+    return (
+        'Custom file not found' in error_text
+        or '404' in error_text
+    )
+
+
+def _patch_custom_file_with_recovery(api_client, file_id: str, patch_data: dict, filepath: str):
+    """
+    PATCH custom file by ID, recover once if ID became stale.
+    Returns tuple: (actual_file_id_used, response_json).
+    """
+    try:
+        response = api_client.patch(f"custom-files/{file_id}", patch_data)
+        return file_id, response
+    except requests.exceptions.HTTPError as exc:
+        if not _is_custom_file_not_found_error(exc):
+            raise
+
+    refreshed_id = _find_live_custom_file_id_by_path(api_client, filepath)
+    if not refreshed_id:
+        refreshed_id = _get_or_create_manager_conf_file(api_client)
+
+    assert refreshed_id, f"Unable to recover custom file ID for {filepath}"
+    response = api_client.patch(f"custom-files/{refreshed_id}", patch_data)
+    return refreshed_id, response
+
+
 def test_sequential_patch_custom_file(api_client):
     """
     Test that sequential PATCH operations on the same file are properly applied.
@@ -176,12 +206,11 @@ eventfilter=!Event: Newexten
     print("\n[STEP 2] First PATCH - Adding [phpagi99] section...")
 
     patch_data_1 = {
-        "id": file_id,
         "content": first_content,
         "mode": "append"
     }
 
-    result_1 = api_client.patch("custom-files", patch_data_1)
+    file_id, result_1 = _patch_custom_file_with_recovery(api_client, file_id, patch_data_1, filepath)
     print(f"First PATCH response: result={result_1.get('result')}")
     assert result_1.get("result") is True, f"First PATCH result should be true: {result_1}"
     assert result_1["data"]["changed"] == "1", "Changed flag should be '1' after first PATCH"
@@ -231,12 +260,11 @@ eventfilter=!Event: Newexten
     print("\n[STEP 5] Second PATCH - Changing to [phpagi11] section...")
 
     patch_data_2 = {
-        "id": file_id,
         "content": second_content,
         "mode": "append"
     }
 
-    result_2 = api_client.patch("custom-files", patch_data_2)
+    file_id, result_2 = _patch_custom_file_with_recovery(api_client, file_id, patch_data_2, filepath)
     print(f"Second PATCH response: result={result_2.get('result')}")
     assert result_2.get("result") is True, f"Second PATCH result should be true: {result_2}"
     assert result_2["data"]["changed"] == "1", "Changed flag should be '1' after second PATCH"
@@ -341,7 +369,7 @@ def test_rapid_sequential_patches(api_client):
         }
 
         # PATCH goes to resource URL: /custom-files/{id}
-        result = api_client.patch(f"custom-files/{file_id}", patch_data)
+        file_id, result = _patch_custom_file_with_recovery(api_client, file_id, patch_data, filepath)
         assert result.get("result") is True, f"PATCH {i} failed: {result}"
         print(f"PATCH {i} response - changed: {result['data'].get('changed', 'N/A')}")
 
