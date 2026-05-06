@@ -159,10 +159,10 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
             $module_settings = json_decode(file_get_contents($settings_file), true);
             if ($module_settings) {
                 // Extract module settings
-                $this->version         = $module_settings['version'];
+                $this->version         = $module_settings['version']         ?? '';
                 $this->min_pbx_version = $module_settings['min_pbx_version'] ?? '';
-                $this->developer       = $module_settings['developer'];
-                $this->support_email   = $module_settings['support_email'];
+                $this->developer       = $module_settings['developer']       ?? '';
+                $this->support_email   = $module_settings['support_email']   ?? '';
 
                 // Check if license product ID is defined in module settings
                 if (array_key_exists('lic_product_id', $module_settings)) {
@@ -192,9 +192,6 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 $this->messages[] = $this->translation->_("ext_ErrorOnDecodeModuleJson", ['filename' => 'module.json']);
             }
         }
-
-        // Reset messages array
-        $this->messages  = [];
     }
 
     /**
