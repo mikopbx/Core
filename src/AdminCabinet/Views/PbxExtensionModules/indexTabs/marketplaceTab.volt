@@ -23,11 +23,7 @@
         <th>{{ t._('ext_TableColumnDescription') }}</th>
         <th class="collapsing">{{ t._('ext_TableColumnDeveloper') }}</th>
         <th class="collapsing center aligned column">{{ t._('ext_TableColumnVersion') }}</th>
-        <th class="collapsing column"><div class="ui small basic icon buttons action-buttons">
-                <a class="ui button popuped disable-if-no-internet" data-content="{{ t._('ext_UpdateAllModules') }}" id="update-all-modules-button">
-                    <i class="icon redo blue" ></i>
-                </a>
-            </div></th>
+        <th class="collapsing column"></th>
     </tr>
     </thead>
     <tbody>

@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => 'Το αρχείο της ενότητας δεν βρέθηκε: %filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => 'Η ενότητα %module% δεν είναι συμβατή με την τρέχουσα έκδοση του MikoPBX: εντοπίστηκε ασυμβατότητα υπογραφής μεθόδου',
+    'ext_ConfigureModule' => 'Διαμόρφωση μονάδας',
+    'ext_ConfirmUpdate' => 'Εφαρμογή ενημέρωσης',
+    'ext_FailedToLoadChangelog' => 'Αποτυχία φόρτωσης ιστορικού αλλαγών από το αποθετήριο. Δοκιμάστε ξανά αργότερα.',
+    'ext_LoadingChangelog' => 'Φόρτωση ιστορικού αλλαγών…',
+    'ext_NoChangelogAvailable' => 'Δεν υπάρχει διαθέσιμο ιστορικό αλλαγών για αυτήν την έκδοση.',
+    'ext_UpdateAllModulesChangelogIntro' => 'Επιλέξτε τις μονάδες που θέλετε να ενημερώσετε. Αναπτύξτε κάθε καταχώριση για να δείτε το ιστορικό αλλαγών πριν την επιβεβαίωση.',
+    'ext_UpdateAllModulesShort' => 'Ενημέρωση όλων',
+    'ext_UpdateChangelogIntro' => 'Η μονάδα <b>%name%</b> θα ενημερωθεί από την έκδοση <b>%from%</b> στην <b>%to%</b>. Ελέγξτε τις αλλαγές παρακάτω πριν την επιβεβαίωση.',
 ];

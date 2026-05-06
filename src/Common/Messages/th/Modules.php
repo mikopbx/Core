@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => 'ไม่พบไฟล์โมดูล: %filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => 'โมดูล %module% ไม่เข้ากันกับ MikoPBX เวอร์ชันปัจจุบัน: ตรวจพบความไม่เข้ากันของลายเซ็นเมธอด',
+    'ext_ConfigureModule' => 'ตั้งค่าโมดูล',
+    'ext_ConfirmUpdate' => 'นำการอัปเดตไปใช้',
+    'ext_FailedToLoadChangelog' => 'ไม่สามารถโหลดบันทึกการเปลี่ยนแปลงจากที่เก็บข้อมูลได้ โปรดลองใหม่ภายหลัง',
+    'ext_LoadingChangelog' => 'กำลังโหลดบันทึกการเปลี่ยนแปลง…',
+    'ext_NoChangelogAvailable' => 'ไม่มีบันทึกการเปลี่ยนแปลงสำหรับรุ่นนี้',
+    'ext_UpdateAllModulesChangelogIntro' => 'เลือกโมดูลที่คุณต้องการอัปเดต ขยายแต่ละรายการเพื่อตรวจสอบบันทึกการเปลี่ยนแปลงก่อนยืนยัน',
+    'ext_UpdateAllModulesShort' => 'อัปเดตทั้งหมด',
+    'ext_UpdateChangelogIntro' => 'โมดูล <b>%name%</b> จะถูกอัปเดตจากเวอร์ชัน <b>%from%</b> เป็น <b>%to%</b> ตรวจสอบการเปลี่ยนแปลงด้านล่างก่อนยืนยัน',
 ];

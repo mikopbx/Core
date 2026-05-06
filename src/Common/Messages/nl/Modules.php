@@ -116,4 +116,12 @@ return [
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'Module %module% is niet compatibel met de huidige versie van MikoPBX.',
     'ext_ModuleMethodSignatureIncompatibility' => 'Module %module% is incompatibel met de huidige versie van MikoPBX: incompatibiliteit van methodesignatuur gedetecteerd',
+    'ext_ConfigureModule' => 'Module configureren',
+    'ext_ConfirmUpdate' => 'Update toepassen',
+    'ext_FailedToLoadChangelog' => 'Kon de changelog niet laden vanuit de repository. Probeer het later opnieuw.',
+    'ext_LoadingChangelog' => 'Changelog wordt geladen…',
+    'ext_NoChangelogAvailable' => 'Geen changelog beschikbaar voor deze release.',
+    'ext_UpdateAllModulesChangelogIntro' => 'Selecteer de modules die u wilt bijwerken. Vouw elk item uit om de changelog te bekijken voordat u bevestigt.',
+    'ext_UpdateAllModulesShort' => 'Alles bijwerken',
+    'ext_UpdateChangelogIntro' => 'Module <b>%name%</b> wordt bijgewerkt van versie <b>%from%</b> naar <b>%to%</b>. Bekijk de onderstaande wijzigingen voordat u bevestigt.',
 ];

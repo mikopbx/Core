@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => 'Fișierul modulului nu a fost găsit: %filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => 'Modulul %module% este incompatibil cu versiunea curentă a MikoPBX: s-a detectat o incompatibilitate a semnăturii metodei.',
+    'ext_ConfigureModule' => 'Configurează modulul',
+    'ext_ConfirmUpdate' => 'Aplică actualizarea',
+    'ext_FailedToLoadChangelog' => 'Nu s-a putut încărca jurnalul de modificări din depozit. Încearcă mai târziu.',
+    'ext_LoadingChangelog' => 'Se încarcă jurnalul de modificări…',
+    'ext_NoChangelogAvailable' => 'Nu există un jurnal de modificări pentru această versiune.',
+    'ext_UpdateAllModulesChangelogIntro' => 'Selectează modulele pe care vrei să le actualizezi. Extinde fiecare intrare pentru a revizui jurnalul de modificări înainte de confirmare.',
+    'ext_UpdateAllModulesShort' => 'Actualizează tot',
+    'ext_UpdateChangelogIntro' => 'Modulul <b>%name%</b> va fi actualizat de la versiunea <b>%from%</b> la <b>%to%</b>. Revizuiește modificările de mai jos înainte de confirmare.',
 ];

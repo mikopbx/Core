@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => 'Datoteka modula nije pronađena: %filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => 'Modul %module% nije kompatibilan s trenutnom verzijom MikoPBX-a: otkrivena je nekompatibilnost potpisa metode',
+    'ext_ConfigureModule' => 'Konfiguriraj modul',
+    'ext_ConfirmUpdate' => 'Primijeni ažuriranje',
+    'ext_FailedToLoadChangelog' => 'Učitavanje popisa promjena iz repozitorija nije uspjelo. Pokušajte kasnije.',
+    'ext_LoadingChangelog' => 'Učitavanje popisa promjena…',
+    'ext_NoChangelogAvailable' => 'Za ovo izdanje nije dostupan popis promjena.',
+    'ext_UpdateAllModulesChangelogIntro' => 'Odaberite module koje želite ažurirati. Proširite svaku stavku da biste pregledali popis promjena prije potvrde.',
+    'ext_UpdateAllModulesShort' => 'Ažuriraj sve',
+    'ext_UpdateChangelogIntro' => 'Modul <b>%name%</b> bit će ažuriran s verzije <b>%from%</b> na <b>%to%</b>. Pregledajte promjene ispod prije potvrde.',
 ];

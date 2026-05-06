@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => 'Modül dosyası bulunamadı: %filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => '%module% modülü, MikoPBX\'in mevcut sürümüyle uyumlu değil: yöntem imzası uyumsuzluğu tespit edildi.',
+    'ext_ConfigureModule' => 'Modülü yapılandır',
+    'ext_ConfirmUpdate' => 'Güncellemeyi uygula',
+    'ext_FailedToLoadChangelog' => 'Depodaki değişiklik günlüğü yüklenemedi. Lütfen daha sonra tekrar deneyin.',
+    'ext_LoadingChangelog' => 'Değişiklik günlüğü yükleniyor…',
+    'ext_NoChangelogAvailable' => 'Bu sürüm için değişiklik günlüğü mevcut değil.',
+    'ext_UpdateAllModulesChangelogIntro' => 'Güncellemek istediğiniz modülleri seçin. Onaylamadan önce her girdiyi açarak değişiklik günlüğünü inceleyin.',
+    'ext_UpdateAllModulesShort' => 'Tümünü güncelle',
+    'ext_UpdateChangelogIntro' => '<b>%name%</b> modülü <b>%from%</b> sürümünden <b>%to%</b> sürümüne güncellenecek. Onaylamadan önce aşağıdaki değişiklikleri inceleyin.',
 ];

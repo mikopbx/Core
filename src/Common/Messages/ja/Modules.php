@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => 'モジュールファイルが見つかりません: %filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => 'モジュール %module% は、MikoPBX の現在のバージョンと互換性がありません: メソッド シグネチャの非互換性が検出されました',
+    'ext_ConfigureModule' => 'モジュールを設定',
+    'ext_ConfirmUpdate' => '更新を適用',
+    'ext_FailedToLoadChangelog' => 'リポジトリから変更履歴を読み込めませんでした。後でもう一度お試しください。',
+    'ext_LoadingChangelog' => '変更履歴を読み込み中…',
+    'ext_NoChangelogAvailable' => 'このリリースの変更履歴はありません。',
+    'ext_UpdateAllModulesChangelogIntro' => '更新するモジュールを選択してください。各エントリを展開し、確認前に変更履歴をご確認ください。',
+    'ext_UpdateAllModulesShort' => 'すべて更新',
+    'ext_UpdateChangelogIntro' => 'モジュール <b>%name%</b> はバージョン <b>%from%</b> から <b>%to%</b> に更新されます。確認前に以下の変更内容をご確認ください。',
 ];

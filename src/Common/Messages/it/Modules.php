@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => 'File del modulo non trovato: %filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => 'Il modulo %module% non è compatibile con la versione corrente di MikoPBX: rilevata incompatibilità della firma del metodo',
+    'ext_ConfigureModule' => 'Configura modulo',
+    'ext_ConfirmUpdate' => 'Applica aggiornamento',
+    'ext_FailedToLoadChangelog' => 'Impossibile caricare il registro delle modifiche dal repository. Riprova più tardi.',
+    'ext_LoadingChangelog' => 'Caricamento del registro delle modifiche…',
+    'ext_NoChangelogAvailable' => 'Nessun registro delle modifiche disponibile per questa versione.',
+    'ext_UpdateAllModulesChangelogIntro' => 'Seleziona i moduli da aggiornare. Espandi ogni voce per consultare il registro delle modifiche prima di confermare.',
+    'ext_UpdateAllModulesShort' => 'Aggiorna tutto',
+    'ext_UpdateChangelogIntro' => 'Il modulo <b>%name%</b> verrà aggiornato dalla versione <b>%from%</b> alla <b>%to%</b>. Rivedi le modifiche di seguito prima di confermare.',
 ];

@@ -12,7 +12,12 @@
             <th>{{ t._('ext_TableColumnDescription') }}</th>
             <th>{{ t._('ext_TableColumnDeveloper') }}</th>
             <th>{{ t._('ext_TableColumnVersion') }}</th>
-            <th colspan="2" class="ui right aligned"></th>
+            <th colspan="2" class="ui right aligned collapsing">
+                <a href="#" class="ui tiny basic icon button popuped disable-if-no-internet" id="update-all-modules-button"
+                   data-content="{{ t._('ext_UpdateAllModules') }}" style="display:none;">
+                    <i class="redo blue icon"></i>
+                </a>
+            </th>
         </tr>
         </thead>
         <tbody>
@@ -46,12 +51,16 @@
                     class="features">{{ t._('SubHeader'~module['uniqid']) }}</span></td>
         <td class="{{ module['status'] }} disability show-details-on-click">{{ module['developer'] }}</td>
         <td class="{{ module['status'] }} disability version show-details-on-click">{{ module['version'] }}</td>
-        {{ partial("partials/tablesbuttons",
-            [
-                'id': '',
-                'edit' : module['classname']~'//'~module['classname']~'//index',
-                'delete': 'pbx-extension-modules/delete/'
-            ]) }}
+        <td class="ui right aligned">
+            <div class="ui tiny basic icon buttons action-buttons">
+                {% if isAllowed('edit') or isAllowed('modify') %}
+                    {{ link_to(module['classname']~'//'~module['classname']~'//index', '<i class="cog blue icon"></i> ', "class": "ui button edit popuped", "data-content": t._('ext_ConfigureModule')) }}
+                {% endif %}
+                {% if isAllowed('delete') %}
+                    {{ link_to('pbx-extension-modules/delete/', '<i class="trash red icon"></i> ', "class": "ui button delete two-steps-delete popuped", "data-content": t._('bt_ToolTipDelete')) }}
+                {% endif %}
+            </div>
+        </td>
     </tr>
     {% if loop.last %}
         </tbody>

@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => 'Không tìm thấy tệp mô-đun: %filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => 'Mô-đun %module% không tương thích với phiên bản MikoPBX hiện tại: phát hiện không tương thích chữ ký phương thức.',
+    'ext_ConfigureModule' => 'Cấu hình mô-đun',
+    'ext_ConfirmUpdate' => 'Áp dụng cập nhật',
+    'ext_FailedToLoadChangelog' => 'Không thể tải nhật ký thay đổi từ kho. Vui lòng thử lại sau.',
+    'ext_LoadingChangelog' => 'Đang tải nhật ký thay đổi…',
+    'ext_NoChangelogAvailable' => 'Không có nhật ký thay đổi cho phiên bản này.',
+    'ext_UpdateAllModulesChangelogIntro' => 'Chọn các mô-đun bạn muốn cập nhật. Mở rộng từng mục để xem nhật ký thay đổi trước khi xác nhận.',
+    'ext_UpdateAllModulesShort' => 'Cập nhật tất cả',
+    'ext_UpdateChangelogIntro' => 'Mô-đun <b>%name%</b> sẽ được cập nhật từ phiên bản <b>%from%</b> lên <b>%to%</b>. Vui lòng xem lại các thay đổi bên dưới trước khi xác nhận.',
 ];

@@ -1,5 +1,6 @@
 {{ partial("PbxExtensionModules/moduleDeleteModal")}}
 {{ partial("PbxExtensionModules/moduleInstallModal")}}
+{{ partial("PbxExtensionModules/moduleUpdateChangelogModal")}}
 {{ partial("PbxExtensionModules/moduleDetailsModal")}}
 
 <div class="show-if-no-internet">

@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => 'Modulfájl nem található: %filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => 'A(z) %module% modul nem kompatibilis a MikoPBX jelenlegi verziójával: metódus-aláírás-inkompatibilitás észlelve.',
+    'ext_ConfigureModule' => 'Modul konfigurálása',
+    'ext_ConfirmUpdate' => 'Frissítés alkalmazása',
+    'ext_FailedToLoadChangelog' => 'Nem sikerült betölteni a változási naplót a tárolóból. Próbálja meg később.',
+    'ext_LoadingChangelog' => 'Változási napló betöltése…',
+    'ext_NoChangelogAvailable' => 'Ehhez a kiadáshoz nincs változási napló.',
+    'ext_UpdateAllModulesChangelogIntro' => 'Válassza ki a frissíteni kívánt modulokat. Nyissa ki az egyes elemeket a változási napló megtekintéséhez a megerősítés előtt.',
+    'ext_UpdateAllModulesShort' => 'Összes frissítése',
+    'ext_UpdateChangelogIntro' => 'A(z) <b>%name%</b> modul a(z) <b>%from%</b> verzióról <b>%to%</b> verzióra frissül. A megerősítés előtt tekintse át az alábbi változásokat.',
 ];

@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => 'Soubor modulu nenalezen: %filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => 'Modul %module% není kompatibilní s aktuální verzí MikoPBX: detekována nekompatibilita signatury metody',
+    'ext_ConfigureModule' => 'Konfigurovat modul',
+    'ext_ConfirmUpdate' => 'Použít aktualizaci',
+    'ext_FailedToLoadChangelog' => 'Nepodařilo se načíst seznam změn z repozitáře. Zkuste to později.',
+    'ext_LoadingChangelog' => 'Načítání seznamu změn…',
+    'ext_NoChangelogAvailable' => 'Pro tento release není k dispozici žádný seznam změn.',
+    'ext_UpdateAllModulesChangelogIntro' => 'Vyberte moduly, které chcete aktualizovat. Rozbalte záznam pro zobrazení seznamu změn před potvrzením.',
+    'ext_UpdateAllModulesShort' => 'Aktualizovat vše',
+    'ext_UpdateChangelogIntro' => 'Modul <b>%name%</b> bude aktualizován z verze <b>%from%</b> na <b>%to%</b>. Před potvrzením si projděte změny níže.',
 ];

@@ -286,29 +286,67 @@ const extensionModuleDetail = {
         let html = '';
         $.each(repoData.releases, function (index, release) {
             let releaseDate = release.created;
-            releaseDate = releaseDate.split(" ")[0];
+            releaseDate = releaseDate ? String(releaseDate).split(' ')[0] : '';
             const sizeText = extensionModuleDetail.convertBytesToReadableFormat(release.size);
-            let changeLogText = UserMessage.convertToText(release.changelog);
-            if (changeLogText === 'null') {
-                changeLogText = '';
-            }
+            const changeLogText = extensionModuleDetail.formatChangelogText(release.changelog);
+            const safeVersion = extensionModuleDetail.escapeHtml(release.version);
+            const safeDate = extensionModuleDetail.escapeHtml(releaseDate);
+            const safeDownloads = extensionModuleDetail.escapeHtml(release.downloads);
+            const safeRequire = extensionModuleDetail.escapeHtml(release.require_version);
+            const safeUniqid = extensionModuleDetail.escapeHtml(repoData.uniqid);
+            const safeReleaseId = extensionModuleDetail.escapeHtml(release.releaseID);
             html += '<div class="ui clearing segment">';
-            html += `<div class="ui top attached label">${globalTranslate.ext_InstallModuleReleaseTag}: ${release.version} ${globalTranslate.ext_FromDate} ${releaseDate}</div>`;
-            html += `<div class="ui top right attached label"><i class="icon grey download"></i> <span class="ui mini gray text">${release.downloads}</span></div>`;
+            html += `<div class="ui top attached label">${globalTranslate.ext_InstallModuleReleaseTag}: ${safeVersion} ${globalTranslate.ext_FromDate} ${safeDate}</div>`;
+            html += `<div class="ui top right attached label"><i class="icon grey download"></i> <span class="ui mini gray text">${safeDownloads}</span></div>`;
             html += `<div class='ui basic segment'><p>${changeLogText}</p>`;
 
-            html += `<p><b>${globalTranslate.ext_SystemVersionRequired}: ${release.require_version}</b></p>`;
+            html += `<p><b>${globalTranslate.ext_SystemVersionRequired}: ${safeRequire}</b></p>`;
             html += `<a href="#" class="ui icon labeled small blue right floated button download"
-               data-uniqid = "${repoData.uniqid}"
-               data-version = "${release.version}"
-               data-releaseid ="${release.releaseID}">
+               data-uniqid = "${safeUniqid}"
+               data-version = "${safeVersion}"
+               data-releaseid ="${safeReleaseId}">
                 <i class="icon download"></i>
-                ${globalTranslate.ext_InstallModuleVersion} ${release.version} (${sizeText})
+                ${globalTranslate.ext_InstallModuleVersion} ${safeVersion} (${extensionModuleDetail.escapeHtml(sizeText)})
             </a>`;
             html += '</div></div>';
         });
         return html;
-    }
+    },
+
+    /**
+     * Safely formats a repository-provided changelog value for HTML insertion.
+     * HTML-escapes the raw text, treats missing/null/undefined as a placeholder,
+     * and converts newlines to <br>.
+     */
+    formatChangelogText(raw) {
+        if (raw === null || raw === undefined) {
+            return `<i>${globalTranslate.ext_NoChangelogAvailable || ''}</i>`;
+        }
+        const text = String(raw);
+        if (text === '' || text === 'null' || text === 'undefined') {
+            return `<i>${globalTranslate.ext_NoChangelogAvailable || ''}</i>`;
+        }
+        const escaped = extensionModuleDetail.escapeHtml(text);
+        if (escaped.trim() === '') {
+            return `<i>${globalTranslate.ext_NoChangelogAvailable || ''}</i>`;
+        }
+        return escaped.replace(/\n/g, '<br>');
+    },
+
+    /**
+     * Minimal HTML escape for values injected into the detail popup.
+     */
+    escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    },
 }
 
 // When the document is ready, initialize the external modules detail page

@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => 'მოდულის ფაილი ვერ მოიძებნა: %filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => 'მოდული %module% შეუთავსებელია MikoPBX-ის მიმდინარე ვერსიასთან: აღმოჩენილია მეთოდის ხელმოწერის შეუთავსებლობა.',
+    'ext_ConfigureModule' => 'მოდულის კონფიგურაცია',
+    'ext_ConfirmUpdate' => 'განახლების გამოყენება',
+    'ext_FailedToLoadChangelog' => 'საცავიდან ცვლილებების ჩამონათვალის ჩატვირთვა ვერ მოხერხდა. სცადეთ მოგვიანებით.',
+    'ext_LoadingChangelog' => 'ცვლილებების ჩამონათვალი იტვირთება…',
+    'ext_NoChangelogAvailable' => 'ამ რელიზის ცვლილებების ჩამონათვალი არ არის ხელმისაწვდომი.',
+    'ext_UpdateAllModulesChangelogIntro' => 'აირჩიეთ მოდულები, რომელთა განახლებაც გსურთ. გააფართოვეთ თითოეული ჩანაწერი, რომ გადახედოთ ცვლილებების ჩამონათვალს დადასტურებამდე.',
+    'ext_UpdateAllModulesShort' => 'ყველას განახლება',
+    'ext_UpdateChangelogIntro' => 'მოდული <b>%name%</b> განახლდება ვერსიიდან <b>%from%</b> ვერსიამდე <b>%to%</b>. დადასტურებამდე გადახედეთ ცვლილებებს ქვემოთ.',
 ];

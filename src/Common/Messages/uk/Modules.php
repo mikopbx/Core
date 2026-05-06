@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => 'Файл модуля не знайдено: %filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => 'Модуль %module% несумісний із поточною версією MikoPBX: виявлено несумісність сигнатури методу',
+    'ext_ConfigureModule' => 'Налаштувати модуль',
+    'ext_ConfirmUpdate' => 'Застосувати оновлення',
+    'ext_FailedToLoadChangelog' => 'Не вдалося завантажити список змін зі сховища. Спробуйте пізніше.',
+    'ext_LoadingChangelog' => 'Завантаження списку змін…',
+    'ext_NoChangelogAvailable' => 'Опис змін для цього релізу відсутній.',
+    'ext_UpdateAllModulesChangelogIntro' => 'Виберіть модулі, які потрібно оновити. Розгорніть запис модуля, щоб ознайомитися зі списком змін перед підтвердженням.',
+    'ext_UpdateAllModulesShort' => 'Оновити всі',
+    'ext_UpdateChangelogIntro' => 'Модуль <b>%name%</b> буде оновлено з версії <b>%from%</b> до версії <b>%to%</b>. Ознайомтеся зі змінами нижче перед підтвердженням.',
 ];

@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => '未找到模块文件：%filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => '模块 %module% 与当前版本的 MikoPBX 不兼容：检测到方法签名不兼容。',
+    'ext_ConfigureModule' => '配置模块',
+    'ext_ConfirmUpdate' => '应用更新',
+    'ext_FailedToLoadChangelog' => '无法从仓库加载变更日志，请稍后重试。',
+    'ext_LoadingChangelog' => '正在加载变更日志…',
+    'ext_NoChangelogAvailable' => '此版本未提供变更日志。',
+    'ext_UpdateAllModulesChangelogIntro' => '选择需要更新的模块。展开每个条目以在确认前查看变更日志。',
+    'ext_UpdateAllModulesShort' => '全部更新',
+    'ext_UpdateChangelogIntro' => '模块 <b>%name%</b> 将从版本 <b>%from%</b> 更新到 <b>%to%</b>。请在确认前查看下方变更内容。',
 ];

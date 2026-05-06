@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => 'Modulfilen hittades inte: %filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => 'Modulen %module% är inkompatibel med den aktuella versionen av MikoPBX: metodsignaturinkompatibilitet upptäckt',
+    'ext_ConfigureModule' => 'Konfigurera modul',
+    'ext_ConfirmUpdate' => 'Tillämpa uppdatering',
+    'ext_FailedToLoadChangelog' => 'Det gick inte att läsa in ändringsloggen från arkivet. Försök igen senare.',
+    'ext_LoadingChangelog' => 'Läser in ändringslogg…',
+    'ext_NoChangelogAvailable' => 'Ingen ändringslogg tillgänglig för denna version.',
+    'ext_UpdateAllModulesChangelogIntro' => 'Välj de moduler du vill uppdatera. Expandera varje post för att granska ändringsloggen innan du bekräftar.',
+    'ext_UpdateAllModulesShort' => 'Uppdatera alla',
+    'ext_UpdateChangelogIntro' => 'Modulen <b>%name%</b> kommer att uppdateras från version <b>%from%</b> till <b>%to%</b>. Granska ändringarna nedan innan du bekräftar.',
 ];

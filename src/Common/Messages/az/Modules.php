@@ -116,4 +116,12 @@ return [
     // Module package validation errors
     'ext_FileNotFound' => 'Modul faylı tapılmadı: %filePath%',
     'ext_ModuleMethodSignatureIncompatibility' => '%module% modulu MikoPBX-in cari versiyası ilə uyğun deyil: metod imza uyğunsuzluğu aşkarlandı',
+    'ext_ConfigureModule' => 'Modulu konfiqurasiya et',
+    'ext_ConfirmUpdate' => 'Yenilənməni tətbiq et',
+    'ext_FailedToLoadChangelog' => 'Repozitoriydən dəyişikliklər siyahısı yüklənmədi. Daha sonra cəhd edin.',
+    'ext_LoadingChangelog' => 'Dəyişikliklər siyahısı yüklənir…',
+    'ext_NoChangelogAvailable' => 'Bu buraxılış üçün dəyişikliklər siyahısı təqdim edilməyib.',
+    'ext_UpdateAllModulesChangelogIntro' => 'Yeniləmək istədiyiniz modulları seçin. Təsdiq etmədən əvvəl hər birinin dəyişikliklər siyahısı ilə tanış olmaq üçün açın.',
+    'ext_UpdateAllModulesShort' => 'Hamısını yenilə',
+    'ext_UpdateChangelogIntro' => '<b>%name%</b> modulu <b>%from%</b> versiyasından <b>%to%</b> versiyasına yenilənəcək. Təsdiq etmədən əvvəl aşağıdakı dəyişikliklərə baxın.',
 ];
