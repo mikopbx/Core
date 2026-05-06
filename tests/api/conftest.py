@@ -72,8 +72,12 @@ class MikoPBXClient:
         # Retry strategy for transient failures and connection errors
         # Only retry on temporary/gateway errors, NOT on 500 (server logic errors)
         retry_strategy = Retry(
-            total=5,
-            backoff_factor=1,  # 1, 2, 4, 8, 16 seconds
+            total=2,
+            status=2,
+            connect=0,
+            read=0,
+            other=0,
+            backoff_factor=0.5,  # 0.5, 1 seconds for HTTP status retries
             status_forcelist=[429, 502, 503, 504],  # No 500 - that's a logic error
             allowed_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
             raise_on_status=False  # Don't raise on status errors, let us handle them
@@ -157,9 +161,6 @@ class MikoPBXClient:
         Returns:
             True if response contains database lock error
         """
-        if response.status_code not in (422, 500):
-            return False
-
         try:
             data = response.json()
             messages = data.get('messages', {})
@@ -182,6 +183,8 @@ class MikoPBXClient:
                 'general error: 5',
                 'sqlstate[hy000]',
             )
+            if any(marker in str(data).lower() for marker in lock_markers):
+                return True
             return any(
                 any(marker in str(e).lower() for marker in lock_markers)
                 for e in error_messages
@@ -229,8 +232,8 @@ class MikoPBXClient:
             requests.Response object with status_code, headers, text, json() methods
         """
         import time
-        max_attempts = 5
-        base_delay = 3
+        max_attempts = 3
+        base_delay = 1
 
         for attempt in range(max_attempts):
             try:
@@ -265,8 +268,8 @@ class MikoPBXClient:
     def post(self, path: str, data: Optional[Dict] = None, _auth_retried: bool = False) -> Dict[str, Any]:
         """POST request with connection retry, database lock retry, and auto token refresh"""
         import time
-        max_attempts = 5
-        base_delay = 2
+        max_attempts = 4
+        base_delay = 1
 
         for attempt in range(max_attempts):
             try:
@@ -320,8 +323,8 @@ class MikoPBXClient:
             allow_404: If True, don't raise exception on 404/422 response (for testing non-existent resources)
         """
         import time
-        max_attempts = 5
-        base_delay = 2
+        max_attempts = 4
+        base_delay = 1
 
         for attempt in range(max_attempts):
             try:
@@ -376,8 +379,8 @@ class MikoPBXClient:
             allow_404: If True, don't raise exception on 404/422 response (for testing non-existent resources)
         """
         import time
-        max_attempts = 5
-        base_delay = 2
+        max_attempts = 4
+        base_delay = 1
 
         for attempt in range(max_attempts):
             try:
@@ -431,8 +434,8 @@ class MikoPBXClient:
             data: Optional data to send with DELETE request (e.g., deleteRecording flag)
         """
         import time
-        max_attempts = 5
-        base_delay = 2
+        max_attempts = 4
+        base_delay = 1
 
         for attempt in range(max_attempts):
             try:
@@ -673,7 +676,7 @@ def docker_test_pacing(is_docker):
     """Throttle Docker REST tests slightly so background workers and SQLite settle."""
     yield
     if is_docker:
-        delay = float(os.getenv('MIKOPBX_DOCKER_TEST_DELAY', '0.25'))
+        delay = float(os.getenv('MIKOPBX_DOCKER_TEST_DELAY', '0'))
         if delay > 0:
             time.sleep(delay)
 
