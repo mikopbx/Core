@@ -114,23 +114,21 @@ class UpdateRecordAction
 
                 // Convert value to storage format based on field type
                 // For boolean fields: true/false -> "1"/"0"
-                $value = DataStructure::convertValueForStorage($key, $value);
+                $value = (string)DataStructure::convertValueForStorage($key, $value);
 
-                // Save setting
+                // Save setting and keep PbxSettings cache in sync.
+                // testConnection reads settings through PbxSettings::getValueByKey(),
+                // so direct model saves can leave stale Redis values active.
                 $record = PbxSettings::findFirstByKey($key);
-                if ($record === null) {
-                    $record = new PbxSettings();
-                    $record->key = $key;
-                }
+                $currentValue = $record?->value;
 
                 // Check if value actually changed
-                if ($record->value !== $value) {
-                    $record->value = $value;
+                if ($currentValue !== $value) {
+                    $messages = [];
 
-                    if (!$record->save()) {
-                        $errors = $record->getMessages();
-                        foreach ($errors as $error) {
-                            $res->messages['error'][] = $error->getMessage();
+                    if (!PbxSettings::setValueByKey($key, $value, $messages)) {
+                        foreach ($messages as $message) {
+                            $res->messages['error'][] = (string)$message;
                         }
                         $db->rollback();
                         return $res;

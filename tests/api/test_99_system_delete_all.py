@@ -111,30 +111,12 @@ class TestSystemDeleteAllDRYRUN:
     """Test delete all operation in DRY RUN mode (safe to run)"""
 
     def test_01_check_delete_all_endpoint_exists(self, api_client):
-        """Test if delete all endpoint exists (without actually deleting)"""
+        """Test delete-all support without calling destructive restoreDefault"""
         try:
-            # Try to find the endpoint
-            endpoints_to_try = [
-                'system:restoreDefault',
-                'general-settings:restoreDefault',
-                'system:deleteAll',
-                'general-settings:deleteAll',
-                'system/restore-default',
-            ]
-
-            for endpoint in endpoints_to_try:
-                try:
-                    # Try with dry_run parameter if possible
-                    response = api_client.post(endpoint, {'dry_run': True})
-                    if response:
-                        print(f"✓ Found delete all endpoint: {endpoint}")
-                        return
-                except Exception as e:
-                    error_msg = str(e)
-                    if '404' not in error_msg and '501' not in error_msg:
-                        print(f"  Endpoint {endpoint} exists but requires parameters")
-
-            print(f"⚠ Delete all endpoint not found or requires special parameters")
+            response = api_client.get('system:getDeleteStatistics')
+            assert_api_success(response, "Failed to get delete statistics")
+            print("✓ Delete-all statistics endpoint is available")
+            print("✓ Skipping restoreDefault dry-run probe: API does not implement dry_run and POST is destructive")
 
         except Exception as e:
             print(f"⚠ Error checking endpoint: {str(e)[:100]}")
