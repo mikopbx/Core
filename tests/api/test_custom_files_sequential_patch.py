@@ -11,6 +11,8 @@ import time
 import base64
 import requests
 import uuid
+import os
+import shlex
 from typing import Optional
 from conftest import read_file_from_container
 
@@ -19,9 +21,15 @@ BASE_FILE_CONTENT = "; Base custom file used by REST sequential PATCH tests\n"
 
 
 def _prepare_base_file(api_client, filepath: str) -> None:
-    response = api_client.put(f"files/{filepath}", {
-        "filename": filepath,
-        "content": BASE_FILE_CONTENT,
+    encoded_content = base64.b64encode(BASE_FILE_CONTENT.encode()).decode()
+    command = (
+        f"mkdir -p {shlex.quote(os.path.dirname(filepath))} && "
+        f"rm -f {shlex.quote(filepath)} {shlex.quote(filepath + '.orgn')} && "
+        f"printf %s {shlex.quote(encoded_content)} | base64 -d > {shlex.quote(filepath)}"
+    )
+    response = api_client.post('system:executeBashCommand', {
+        'command': command,
+        'timeout': 30,
     })
     assert response.get("result") is True, f"Failed to prepare base file {filepath}: {response}"
 
