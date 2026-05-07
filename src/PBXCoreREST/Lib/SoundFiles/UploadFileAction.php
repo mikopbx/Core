@@ -65,17 +65,16 @@ class UploadFileAction
                 'conditions' => 'path = :path:',
                 'bind' => ['path' => $filePath]
             ]);
-            
+
             if (!$soundFile) {
+                // Auto-fill name from filename only for newly created records.
+                // Re-uploading over an existing record must keep the user-entered display name.
                 $soundFile = new SoundFiles();
                 $soundFile->path = $filePath;
                 $soundFile->category = $category;
+                $soundFile->name = pathinfo($filePath, PATHINFO_FILENAME);
             }
-            
-            // Extract filename without extension
-            $filename = pathinfo($filePath, PATHINFO_FILENAME);
-            $soundFile->name = $filename;
-            
+
             if ($soundFile->save()) {
                 $uploadResult->data['sound_file_id'] = $soundFile->id;
             } else {

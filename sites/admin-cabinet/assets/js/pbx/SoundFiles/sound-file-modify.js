@@ -105,6 +105,17 @@ var soundFileModifyRest = {
   },
 
   /**
+   * Returns true when the name field may be auto-populated from the uploaded
+   * file name. Auto-fill is allowed only when the field is empty so that
+   * re-uploading audio over an existing record preserves the user's display name.
+   * @returns {boolean}
+   */
+  shouldAutoFillName: function shouldAutoFillName() {
+    var currentName = (soundFileModifyRest.$soundFileName.val() || '').trim();
+    return currentName === '';
+  },
+
+  /**
    * Initializes the sound file modification functionality.
    */
   initialize: function initialize() {
@@ -127,8 +138,9 @@ var soundFileModifyRest = {
             var fileName = params.file.fileName || params.file.name;
             console.log('[sound-file-modify] extracted fileName:', fileName);
 
-            if (fileName) {
-              // Update name field with filename without extension
+            if (fileName && soundFileModifyRest.shouldAutoFillName()) {
+              // Auto-fill name from filename only when the field is empty (new record).
+              // Re-uploading over an existing record keeps the user-entered display name.
               soundFileModifyRest.$soundFileName.val(fileName.replace(/\.[^/.]+$/, ''));
             } // Create blob URL for preview
 
@@ -288,10 +300,10 @@ var soundFileModifyRest = {
         var response = PbxApi.tryParseJSON(params.response);
 
         if (response !== false && response.data.filename !== undefined) {
-          // Get filename from resumable.js file object and remove extension
+          // Auto-fill name only on new records — preserve user input on re-upload.
           var fileName = params.file.fileName || params.file.name;
 
-          if (fileName) {
+          if (fileName && soundFileModifyRest.shouldAutoFillName()) {
             soundFileModifyRest.$soundFileName.val(fileName.replace(/\.[^/.]+$/, ''));
           }
 
