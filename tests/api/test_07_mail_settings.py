@@ -547,39 +547,33 @@ class TestMailPlainTextToggle:
         print(f"✓ String '1' normalized to True")
 
     def test_04b_invalidate_cached_value_clears_redis(self, api_client):
-        """Regression guard for the cache-coherency hole behind ResetToDefaultsAction.
+        """Regression guard for stale PbxSettings Redis fields after reset.
 
-        PbxSettings has no afterDelete hook, so a raw $record->delete() leaves
-        the Redis hash holding the previous value. The fix exposes a public
-        invalidateCachedValue($key) helper which the reset action now calls
-        per deleted key. This test exercises the helper end-to-end without
-        triggering the DELETE /mail-settings endpoint (which would wipe the
-        user's actual SMTP credentials).
-
-        Scenario (pure PHP CLI inside the container, doesn't touch REST):
-          1. Write the toggle through setValueByKey('1') → both DB + cache hold '1'.
-          2. Delete the DB row directly through the ORM, mimicking the path in
-             ResetToDefaultsAction. The cached '1' is intentionally left stale.
-          3. Read with cache enabled → still '1' because cache is stale.
-          4. Call invalidateCachedValue() → drops the hash field.
-          5. Read with cache enabled → falls through to defaults trait → '0'.
-
-        The two cache reads in steps 3 and 5 must differ — that's the proof
-        that the helper actually drains the cache and that ResetToDefaultsAction's
-        new invalidation loop closes the gap.
+        Model afterDelete currently clears the PbxSettings hash when a row is
+        deleted, but ResetToDefaultsAction also invalidates every reset key to
+        cover stale fields left by older runs where the DB row is already gone.
+        This test creates that exact stale-cache state without calling
+        DELETE /mail-settings, which would wipe the user's SMTP credentials.
         """
         php_script = (
             'require_once "Globals.php"; '
             'use MikoPBX\\Common\\Models\\PbxSettings; '
+            'use MikoPBX\\Common\\Providers\\ManagedCacheProvider; '
+            'use Phalcon\\Di\\Di; '
             '$key = PbxSettings::MAIL_PLAIN_TEXT; '
             '$msgs = []; '
             'PbxSettings::setValueByKey($key, "1", $msgs); '
             '$rec = PbxSettings::findFirstByKey($key); '
             'if ($rec !== null) { $rec->delete(); } '
+            '$afterDelete = PbxSettings::getValueByKey($key, true); '
+            '$redis = Di::getDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter(); '
+            '$redis->select(ManagedCacheProvider::DATABASE_INDEX); '
+            '$redis->hSet("PbxSettings", $key, "1"); '
             '$staleFromCache = PbxSettings::getValueByKey($key, true); '
             'PbxSettings::invalidateCachedValue($key); '
             '$freshFromCache = PbxSettings::getValueByKey($key, true); '
             'echo json_encode(['
+            '"after_delete" => $afterDelete, '
             '"stale_from_cache" => $staleFromCache, '
             '"fresh_from_cache" => $freshFromCache'
             '], JSON_UNESCAPED_SLASHES);'
@@ -597,13 +591,17 @@ class TestMailPlainTextToggle:
         except json.JSONDecodeError as e:
             pytest.fail(f"Non-JSON output from PHP CLI: {output!r} ({e})")
 
-        # Step 3: with stale cache, getValueByKey($key, true) still returns '1'
-        assert result.get('stale_from_cache') == '1', (
-            f"Pre-invalidation cache read expected '1' (proving cache was populated), "
-            f"got {result.get('stale_from_cache')!r}. "
-            f"setValueByKey() may not be writing the cache."
+        assert result.get('after_delete') == '0', (
+            f"Raw delete should fall through to the default before stale-cache injection; "
+            f"got {result.get('after_delete')!r}."
         )
-        # Step 5: after invalidateCachedValue(), cache miss → defaults trait → '0'
+        # After deliberately injecting a stale hash field, cached reads must see it.
+        assert result.get('stale_from_cache') == '1', (
+            f"Pre-invalidation cache read expected injected stale '1', "
+            f"got {result.get('stale_from_cache')!r}. "
+            f"Failed to create the stale Redis state under test."
+        )
+        # After invalidateCachedValue(), cache miss falls through to defaults trait.
         assert result.get('fresh_from_cache') == '0', (
             f"Post-invalidation cache read expected '0' (default fallback), "
             f"got {result.get('fresh_from_cache')!r}. "
