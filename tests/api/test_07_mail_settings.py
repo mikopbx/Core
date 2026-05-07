@@ -280,10 +280,24 @@ class TestMailSettings:
         """Test POST /mail-settings:testConnection returns structured failure for a safe invalid SMTP host"""
         baseline_lines = self._get_system_log_lines(api_client)
         safe_settings = self._safe_test_connection_settings()
+        safe_update = safe_settings.copy()
+        safe_update['MailFromAddress'] = (
+            TestMailSettings.original_settings or {}
+        ).get('MailFromAddress', 'admin@localhost')
 
         try:
-            patch_response = api_client.patch('mail-settings', safe_settings)
-            assert_api_success(patch_response, "Failed to prepare safe SMTP settings for contract test")
+            update_response = api_client.put('mail-settings', safe_update)
+            assert_api_success(update_response, "Failed to prepare safe SMTP settings for contract test")
+
+            prepared = api_client.get('mail-settings')
+            assert_api_success(prepared, "Failed to verify prepared safe SMTP settings")
+            prepared_data = prepared.get('data', {})
+            assert prepared_data.get('MailSMTPHost') == safe_settings['MailSMTPHost'], (
+                f"Safe SMTP host was not applied, got {prepared_data.get('MailSMTPHost')!r}"
+            )
+            assert str(prepared_data.get('MailSMTPPort')) == str(safe_settings['MailSMTPPort']), (
+                f"Safe SMTP port was not applied, got {prepared_data.get('MailSMTPPort')!r}"
+            )
 
             response = self._call_test_connection(api_client, safe_settings)
             self._assert_test_connection_contract(
