@@ -122,17 +122,19 @@ class UpdateRecordAction
                 $record = PbxSettings::findFirstByKey($key);
                 $currentValue = $record?->value;
 
-                // Check if value actually changed
-                if ($currentValue !== $value) {
-                    $messages = [];
+                $messages = [];
 
-                    if (!PbxSettings::setValueByKey($key, $value, $messages)) {
-                        foreach ($messages as $message) {
-                            $res->messages['error'][] = (string)$message;
-                        }
-                        $db->rollback();
-                        return $res;
+                if (!PbxSettings::setValueByKey($key, $value, $messages)) {
+                    foreach ($messages as $message) {
+                        $res->messages['error'][] = (string)$message;
                     }
+                    $db->rollback();
+                    return $res;
+                }
+
+                // Count only real DB value changes, but always call setValueByKey()
+                // to refresh Redis cache even when DB already contains the value.
+                if ($currentValue !== $value) {
                     $updatedCount++;
                 }
             }

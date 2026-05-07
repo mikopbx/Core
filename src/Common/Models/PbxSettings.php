@@ -182,6 +182,8 @@ class PbxSettings extends ModelsBase
             $record->key = $key;
         }
         if (isset($record->value) && $record->value === $value) {
+            $redis = self::getRedisAdapter();
+            $redis->hset(self::CACHE_KEY, $key, $value);
             return true;
         }
         $record->value = $value;
