@@ -168,8 +168,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         
         // Get extension representation with icon
         $extensionDisplay = '';
-        if (!empty($data['extensionRepresent'])) {
-            $extensionDisplay = '<span class="callerid">' . $data['extensionRepresent'] . '</span>';
+        if (!empty($data['extension_represent'])) {
+            $extensionDisplay = '<span class="callerid">' . $data['extension_represent'] . '</span>';
         } elseif (!empty($model->extension)) {
             $extensionDisplay = '<span class="callerid">' . htmlspecialchars($model->extension) . '</span>';
         }
