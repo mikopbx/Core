@@ -366,7 +366,8 @@ const mailSettings = {
                             'SendMissedCallNotifications',
                             'SendVoicemailNotifications',
                             'SendLoginNotifications',
-                            'SendSystemNotifications'
+                            'SendSystemNotifications',
+                            'MailPlainText'
                         ];
                         booleanFields.forEach(key => {
                             if (data[key] !== undefined) {
@@ -433,7 +434,8 @@ const mailSettings = {
                             'SendMissedCallNotifications',
                             'SendVoicemailNotifications',
                             'SendLoginNotifications',
-                            'SendSystemNotifications'
+                            'SendSystemNotifications',
+                            'MailPlainText'
                         ];
                         notificationToggles.forEach(fieldName => {
                             if (data[fieldName] !== undefined) {

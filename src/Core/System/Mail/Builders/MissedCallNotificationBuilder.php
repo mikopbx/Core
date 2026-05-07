@@ -103,7 +103,8 @@ class MissedCallNotificationBuilder extends AbstractNotificationBuilder
      */
     public function setCallTime(string $time): static
     {
-        $this->callTime = $time;
+        // CDR stores `start` as Y-m-d H:i:s.v for sort precision; trim sub-second part for display.
+        $this->callTime = preg_replace('/\.\d+$/', '', $time);
         return $this;
     }
 

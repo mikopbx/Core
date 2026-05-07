@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\System\Mail;
 
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Mail\Builders\AbstractNotificationBuilder;
 use MikoPBX\Core\System\Notifications;
 
@@ -66,9 +67,12 @@ class EmailNotificationService
         ?Notifications $legacyNotifier = null,
         string $attachmentFile = ''
     ): bool {
-        // Build HTML email first (this populates subject/mainMessage via buildVariables())
+        // Pick body format based on the global MailPlainText toggle.
+        // Plain-text mode disables HTML formatting for users who want minimal emails.
+        $plainText = PbxSettings::getValueByKey(PbxSettings::MAIL_PLAIN_TEXT) === '1';
+
         try {
-            $html = $builder->buildHtml();
+            $body = $plainText ? $builder->buildPlainText() : $builder->buildHtml();
         } catch (\Throwable $e) {
             // Log template rendering error
             \MikoPBX\Core\System\SystemMessages::sysLogMsg(
@@ -99,9 +103,10 @@ class EmailNotificationService
         // Use provided notifier or create new one
         $notifier = $legacyNotifier ?? new Notifications();
 
-        // Send email via legacy system with optional attachment
-        // This maintains backward compatibility and reuses existing SMTP configuration
-        return $notifier->sendMail($recipient, $subject, $html, $attachmentFile);
+        // Send email via legacy system with optional attachment.
+        // The isHtml flag switches Content-Type so plain-text mode produces text/plain.
+        $errorInfo = null;
+        return $notifier->sendMail($recipient, $subject, $body, $attachmentFile, $errorInfo, !$plainText);
     }
 
     /**

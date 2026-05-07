@@ -455,6 +455,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Stuur spraakberichtmeldingen',
     'ms_SendLoginNotifications' => 'Stuur inlogmeldingen',
     'ms_SendSystemNotifications' => 'Systeemmeldingen verzenden',
+    'ms_MailPlainText' => 'Meldingen als platte tekst verzenden (zonder HTML-opmaak)',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'Server',

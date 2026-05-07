@@ -407,6 +407,7 @@ return [
     'ms_DiagnosticTechnicalDetails' => 'Detalhes técnicos',
     'ms_SendLoginNotifications' => 'Enviar notificações de login no sistema',
     'ms_SendSystemNotifications' => 'Enviar notificações do sistema',
+    'ms_MailPlainText' => 'Enviar notificações como texto simples (sem formatação HTML)',
     'ms_SendMissedCallNotifications' => 'Enviar notificações de chamadas perdidas',
     'ms_SendVoicemailNotifications' => 'Enviar notificações de mensagens de voz',
     'ms_EmailNotification_SMTPTest_SMTPConnection' => 'Conectando ao SMTP',

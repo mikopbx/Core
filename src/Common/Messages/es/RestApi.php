@@ -254,6 +254,7 @@ return [
     'rest_schema_ts_tz_identifier' => 'Identificador de zona horaria en formato IANA',
     'rest_schema_ms_send_login_notifications' => 'Enviar notificaciones de inicio de sesión',
     'rest_schema_ms_send_system_notifications' => 'Enviar notificaciones del sistema',
+    'rest_schema_ms_plain_text' => 'Enviar notificaciones como texto sin formato (sin formato HTML)',
     'rest_schema_ms_oauth2_client_id' => 'ID de cliente OAuth2',
     'rest_param_file_firmware_name' => 'Nombre del archivo de firmware',
     // SoundFiles specific parameters
@@ -857,6 +858,7 @@ return [
     'rest_param_ms_send_voicemail_notifications' => 'Enviar notificaciones de mensajes de voz',
     'rest_param_ms_send_login_notifications' => 'Enviar notificaciones de inicio de sesión',
     'rest_param_ms_send_system_notifications' => 'Enviar notificaciones del sistema',
+    'rest_param_ms_plain_text' => 'Enviar notificaciones como texto sin formato (sin formato HTML)',
     'rest_param_ms_test_email_to' => 'Dirección de correo electrónico del destinatario del correo electrónico de prueba',
     'rest_param_ms_test_email_subject' => 'Asunto del correo electrónico de prueba',
     'rest_param_ms_test_email_body' => 'Texto del correo electrónico de prueba',

@@ -96,6 +96,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Отправлять уведомления о голосовых сообщениях',
     'ms_SendLoginNotifications' => 'Отправлять уведомления о входах в систему',
     'ms_SendSystemNotifications' => 'Отправлять системные уведомления',
+    'ms_MailPlainText' => 'Отправлять уведомления простым текстом (без HTML-оформления)',
     'ms_MailSysadminEmail' => 'Email системного администратора',
     'ms_SystemEmailForMissed' => 'Единый Email для уведомлений о пропущенных вызовах',
     'ms_VoicemailCommonEmail' => 'Единый Email для сообщений голосовой почты',

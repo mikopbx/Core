@@ -460,6 +460,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Səsli mesaj bildirişləri göndərin',
     'ms_SendLoginNotifications' => 'Giriş bildirişlərini göndərin',
     'ms_SendSystemNotifications' => 'Sistem bildirişlərini göndərin',
+    'ms_MailPlainText' => 'Bildirişləri sadə mətn kimi göndər (HTML formatlaşdırması olmadan)',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'Server',

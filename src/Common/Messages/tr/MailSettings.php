@@ -455,6 +455,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Sesli mesaj bildirimleri gönder',
     'ms_SendLoginNotifications' => 'Giriş bildirimleri gönder',
     'ms_SendSystemNotifications' => 'Sistem bildirimleri gönder',
+    'ms_MailPlainText' => 'Bildirimleri düz metin olarak gönder (HTML biçimlendirmesi olmadan)',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'Sunucu',

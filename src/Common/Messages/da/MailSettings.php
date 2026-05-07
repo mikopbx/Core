@@ -466,6 +466,7 @@ return [
     'ms_SendMissedCallNotifications' => 'Send beskeder om ubesvarede opkald',
     'ms_SendLoginNotifications' => 'Send login-notifikationer',
     'ms_SendSystemNotifications' => 'Send systemnotifikationer',
+    'ms_MailPlainText' => 'Send underretninger som almindelig tekst (uden HTML-formatering)',
     'ms_EmailNotification_Footer_AutomatedNotification' => 'Dette er en automatisk notifikation. Besvar venligst ikke denne e-mail.',
     'ms_EmailNotification_Voicemail_Preheader' => 'Du har modtaget en ny talebesked.',
     'ms_EmailNotification_Voicemail_Message' => 'En ny talebesked er ankommet til din postkasse.',

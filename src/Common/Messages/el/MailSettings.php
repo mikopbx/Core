@@ -438,6 +438,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Αποστολή ειδοποιήσεων φωνητικών μηνυμάτων',
     'ms_SendLoginNotifications' => 'Αποστολή ειδοποιήσεων σύνδεσης',
     'ms_SendSystemNotifications' => 'Αποστολή ειδοποιήσεων συστήματος',
+    'ms_MailPlainText' => 'Αποστολή ειδοποιήσεων ως απλό κείμενο (χωρίς μορφοποίηση HTML)',
     'ms_EmailNotification_SMTPTest_SMTPConnection' => 'Σύνδεση με SMTP',
     'ms_EmailNotification_SMTPTest_EmailDelivery' => 'Παράδοση ηλεκτρονικού ταχυδρομείου',
     'ms_EmailNotification_SMTPTest_HelpText' => 'Εάν λάβατε αυτό το μήνυμα ηλεκτρονικού ταχυδρομείου, σημαίνει ότι η διαμόρφωση του ηλεκτρονικού σας ταχυδρομείου έχει διαμορφωθεί σωστά και είναι έτοιμη για αποστολή ειδοποιήσεων.',

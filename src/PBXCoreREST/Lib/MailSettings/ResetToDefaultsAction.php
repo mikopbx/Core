@@ -62,6 +62,7 @@ class ResetToDefaultsAction
                 PbxSettings::MAIL_SMTP_FROM_USERNAME,
                 PbxSettings::MAIL_SMTP_SENDER_ADDRESS,
                 PbxSettings::MAIL_ENABLE_NOTIFICATIONS,
+                PbxSettings::MAIL_PLAIN_TEXT,
 
                 // OAuth2 settings
                 PbxSettings::MAIL_SMTP_AUTH_TYPE,
@@ -97,6 +98,15 @@ class ResetToDefaultsAction
             }
 
             $db->commit();
+
+            // PbxSettings has no afterDelete hook, so $record->delete() leaves the
+            // Redis hash holding the previous value. Invalidate every reset key
+            // (not only rows we just removed) — a previous reset performed before
+            // this fix may have left the cache dirty for keys whose DB rows are
+            // already gone, and hDel on a missing field is a cheap no-op.
+            foreach ($mailSettingKeys as $key) {
+                PbxSettings::invalidateCachedValue($key);
+            }
 
             $res->success = true;
             if ($deletedCount === 0) {

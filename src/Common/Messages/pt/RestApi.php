@@ -320,6 +320,7 @@ return [
     'rest_param_ms_send_voicemail_notifications' => 'Enviar notificações de mensagens de voz',
     'rest_param_ms_send_login_notifications' => 'Enviar notificações de login',
     'rest_param_ms_send_system_notifications' => 'Enviar notificações do sistema',
+    'rest_param_ms_plain_text' => 'Enviar notificações como texto simples (sem formatação HTML)',
     'rest_schema_sip_auth_failure_count' => 'Número de tentativas de autenticação falhas',
     // IAX schema fields
     'rest_schema_iax_id' => 'Identificador único do provedor IAX',
@@ -992,6 +993,7 @@ return [
     'rest_schema_ms_send_voicemail_notifications' => 'Enviar notificações sobre novas mensagens de voz',
     'rest_schema_ms_send_login_notifications' => 'Enviar notificações de login',
     'rest_schema_ms_send_system_notifications' => 'Enviar notificações do sistema',
+    'rest_schema_ms_plain_text' => 'Enviar notificações como texto simples (sem formatação HTML)',
     'rest_schema_ms_oauth2_client_id' => 'ID do cliente OAuth2',
     'rest_param_sf_path' => 'Caminho para o arquivo de áudio no sistema de arquivos',
     'rest_param_sip_date_to' => 'Data final para filtragem de histórico (ISO 8601)',

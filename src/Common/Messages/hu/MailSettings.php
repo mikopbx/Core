@@ -407,6 +407,7 @@ return [
     'ms_DiagnosticTechnicalDetails' => 'Műszaki részletek',
     'ms_SendLoginNotifications' => 'Bejelentkezési értesítések küldése',
     'ms_SendSystemNotifications' => 'Rendszerértesítések küldése',
+    'ms_MailPlainText' => 'Értesítések küldése egyszerű szövegként (HTML formázás nélkül)',
     'ms_EmailNotification_SecurityLog_Critical' => 'KRITIKUS SZINT',
     'ms_EmailNotification_SMTPTest_Successful' => 'Gratulálunk! Az SMTP-beállításai megfelelően működnek.',
     'ms_EmailNotification_SMTPTest_SMTPServer' => 'SMTP-kiszolgáló',

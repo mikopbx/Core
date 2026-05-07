@@ -453,6 +453,7 @@ return [
     'ms_EmailNotification_SMTPTest_Message' => 'Ceci est un courriel de test destiné à vérifier les paramètres de votre serveur de messagerie.',
     'ms_EmailNotification_SMTPTest_Successful' => 'Félicitations ! Vos paramètres SMTP fonctionnent correctement.',
     'ms_SendSystemNotifications' => 'Envoyer des notifications système',
+    'ms_MailPlainText' => 'Envoyer les notifications en texte brut (sans mise en forme HTML)',
     'ms_EmailNotification_Footer_PoweredBy' => 'Alimenté par',
     // Voicemail Notifications
     'ms_EmailNotification_Voicemail_Subject' => 'Nouveau message vocal',

@@ -297,6 +297,8 @@ trait PbxSettingsConstantsTrait
     public const string SEND_VOICEMAIL_NOTIFICATIONS = 'SendVoicemailNotifications'; // Send email notification for new voicemail messages
     /** @FieldType('boolean') */
     public const string SEND_SYSTEM_NOTIFICATIONS = 'SendSystemNotifications'; // Send system email notifications (errors, warnings, etc.)
+    /** @FieldType('boolean') */
+    public const string MAIL_PLAIN_TEXT = 'MailPlainText'; // Send notifications as plain text (no HTML formatting)
 
     /** @FieldType('string') */
     public const string NTP_SERVER = 'NTPServer';

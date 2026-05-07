@@ -460,6 +460,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Надсилати повідомлення про голосові повідомлення',
     'ms_SendLoginNotifications' => 'Надсилати повідомлення про входи до системи',
     'ms_SendSystemNotifications' => 'Надсилати системні повідомлення',
+    'ms_MailPlainText' => 'Надсилати сповіщення простим текстом (без HTML-форматування)',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'Сервер',

@@ -460,6 +460,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Wysyłaj powiadomienia o wiadomościach głosowych',
     'ms_SendLoginNotifications' => 'Wyślij powiadomienia o logowaniu',
     'ms_SendSystemNotifications' => 'Wysyłaj powiadomienia systemowe',
+    'ms_MailPlainText' => 'Wysyłaj powiadomienia jako zwykły tekst (bez formatowania HTML)',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'Serwer',

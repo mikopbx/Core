@@ -474,6 +474,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Slanje obavijesti o glasovnim porukama',
     'ms_SendLoginNotifications' => 'Pošalji obavijesti o prijavi',
     'ms_SendSystemNotifications' => 'Pošalji obavijesti sustava',
+    'ms_MailPlainText' => 'Šalji obavijesti kao običan tekst (bez HTML oblikovanja)',
     'ms_EmailNotification_SSHPassword_ChangedBy' => 'Promijenjeno',
     'ms_EmailNotification_SSHPassword_IPAddress' => 'IP adresa',
     'ms_EmailNotification_SSHPassword_Footer' => 'Ovo je kritično sigurnosno upozorenje. Neignoriranje ove poruke može dovesti do kompromitiranja sustava.',

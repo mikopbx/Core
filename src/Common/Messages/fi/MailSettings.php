@@ -454,6 +454,7 @@ return [
     'ms_EmailNotification_SMTPTest_Authentication' => 'Todennus',
     'ms_SendVoicemailNotifications' => 'Lähetä ääniviesti-ilmoituksia',
     'ms_SendSystemNotifications' => 'Lähetä järjestelmäilmoituksia',
+    'ms_MailPlainText' => 'Lähetä ilmoitukset pelkkänä tekstinä (ilman HTML-muotoilua)',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'Palvelin',

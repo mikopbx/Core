@@ -458,6 +458,7 @@ return [
     'ms_SendVoicemailNotifications' => '发送语音消息通知',
     'ms_SendLoginNotifications' => '发送登录通知',
     'ms_SendSystemNotifications' => '发送系统通知',
+    'ms_MailPlainText' => '以纯文本形式发送通知（无 HTML 格式）',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => '服务器',

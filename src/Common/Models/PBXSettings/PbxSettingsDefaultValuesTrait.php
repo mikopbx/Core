@@ -134,6 +134,7 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::SEND_MISSED_CALL_NOTIFICATIONS => '1',
             PbxSettings::SEND_VOICEMAIL_NOTIFICATIONS => '1',
             PbxSettings::SEND_SYSTEM_NOTIFICATIONS => '1',
+            PbxSettings::MAIL_PLAIN_TEXT => '0',
             PbxSettings::CLOUD_INSTANCE_ID => '',
             PbxSettings::JWT_SECRET => '',
             PbxSettings::DISABLE_ALL_MODULES => '0',

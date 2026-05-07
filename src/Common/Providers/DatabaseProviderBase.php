@@ -143,9 +143,50 @@ abstract class DatabaseProviderBase
                 if ($dbConfig['debugMode']) {
                     $this->setupDebugMode($connection, $dbConfig);
                 }
+                $this->setupTransactionEventHandlers($connection, $serviceName);
                 return $connection;
             }
         );
+    }
+
+    /**
+     * Register central transaction lifecycle handlers.
+     *
+     * PbxSettings maintains a Redis hash cache outside the Phalcon managed
+     * cache. Model afterSave events can run before the outer SQLite commit, so
+     * PbxSettings defers cache updates while a transaction is active and these
+     * DB events flush or discard the deferred values centrally.
+     *
+     * @param mixed $connection Database connection
+     * @param string $serviceName DI database service name
+     */
+    private function setupTransactionEventHandlers($connection, string $serviceName): void
+    {
+        if ($serviceName !== MainDatabaseProvider::SERVICE_NAME) {
+            return;
+        }
+
+        $eventsManager = $connection->getEventsManager();
+        if ($eventsManager === null) {
+            $eventsManager = new EventsManager();
+        }
+
+        $eventsManager->attach(
+            'db',
+            function ($event): void {
+                switch ($event->getType()) {
+                    case 'commitTransaction':
+                        \MikoPBX\Common\Models\PbxSettings::flushPendingCacheUpdates();
+                        break;
+                    case 'rollbackTransaction':
+                        \MikoPBX\Common\Models\PbxSettings::discardPendingCacheUpdates();
+                        break;
+                    default:
+                }
+            }
+        );
+
+        $connection->setEventsManager($eventsManager);
     }
 
     /**

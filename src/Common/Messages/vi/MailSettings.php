@@ -460,6 +460,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Gửi thông báo tin nhắn thoại',
     'ms_SendLoginNotifications' => 'Gửi thông báo đăng nhập',
     'ms_SendSystemNotifications' => 'Gửi thông báo hệ thống',
+    'ms_MailPlainText' => 'Gửi thông báo dưới dạng văn bản thuần (không có định dạng HTML)',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'Máy chủ',

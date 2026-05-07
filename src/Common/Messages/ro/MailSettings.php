@@ -457,6 +457,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Trimite notificări prin mesaje vocale',
     'ms_SendLoginNotifications' => 'Trimiteți notificări de conectare',
     'ms_SendSystemNotifications' => 'Trimiteți notificări de sistem',
+    'ms_MailPlainText' => 'Trimite notificări ca text simplu (fără formatare HTML)',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'Server',

@@ -412,6 +412,7 @@ return [
     'ms_SendVoicemailNotifications' => '音声メッセージ通知を送信する',
     'ms_SendLoginNotifications' => 'ログイン通知を送信する',
     'ms_SendSystemNotifications' => 'システム通知を送信する',
+    'ms_MailPlainText' => '通知をプレーンテキストで送信する（HTMLフォーマットなし）',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'サーバー',

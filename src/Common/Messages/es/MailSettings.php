@@ -469,6 +469,7 @@ return [
     'ms_EmailNotification_Login_Subject' => 'Inicie sesión en el panel de administración de MikoPBX',
     'ms_EmailNotification_Login_Time' => 'Hora de entrada',
     'ms_SendSystemNotifications' => 'Enviar notificaciones del sistema',
+    'ms_MailPlainText' => 'Enviar notificaciones como texto sin formato (sin formato HTML)',
     'ms_EmailNotification_SMTPTest_SMTPConnection' => 'Conectarse a SMTP',
     'ms_SendMissedCallNotifications' => 'Enviar notificaciones de llamadas perdidas',
     // Voicemail Notifications

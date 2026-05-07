@@ -96,6 +96,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Send voicemail notifications',
     'ms_SendLoginNotifications' => 'Send login notifications',
     'ms_SendSystemNotifications' => 'Send system notifications',
+    'ms_MailPlainText' => 'Send notifications as plain text (no HTML formatting)',
     'ms_MailSysadminEmail' => 'System Administrator Email',
     'ms_SystemEmailForMissed' => 'Common Email for Missed Call Notifications',
     'ms_VoicemailCommonEmail' => 'Common Email for Voicemail Messages',

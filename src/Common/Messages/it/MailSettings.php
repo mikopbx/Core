@@ -459,6 +459,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Invia notifiche tramite messaggi vocali',
     'ms_SendLoginNotifications' => 'Invia notifiche di accesso',
     'ms_SendSystemNotifications' => 'Invia notifiche di sistema',
+    'ms_MailPlainText' => 'Inviare le notifiche come testo semplice (senza formattazione HTML)',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'Server',

@@ -114,9 +114,18 @@ class Notifications
         $text .= '<br><br>' . SystemMessages::getInfoMessage("The MikoPBX connection information");
         $text = str_replace(PHP_EOL, '<br>', $text);
 
+        // Honor the global plain-text mail toggle so admin notifications stay
+        // consistent with other notification flows.
+        $plainText = PbxSettings::getValueByKey(PbxSettings::MAIL_PLAIN_TEXT) === '1';
+        if ($plainText) {
+            $text = preg_replace('/<br\s*\/?>/i', "\n", $text);
+            $text = trim(strip_tags($text));
+        }
+
         // Get the admin email address from PbxSettings.
         $notify = new Notifications();
-        $result = $notify->sendMail($adminMail, $subject, trim($text));
+        $errorInfo = null;
+        $result = $notify->sendMail($adminMail, $subject, trim($text), '', $errorInfo, !$plainText);
 
         // If the notification was sent successfully, cache it to prevent duplicates.
         if ($result) {
@@ -134,7 +143,17 @@ class Notifications
             return false;
         }
         $systemNotificationsEmail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
-        $result = $this->sendMail($systemNotificationsEmail, 'Test mail from MIKO PBX', '<b>Test message</b><hr>');
+        $plainText = PbxSettings::getValueByKey(PbxSettings::MAIL_PLAIN_TEXT) === '1';
+        $body = $plainText ? 'Test message' : '<b>Test message</b><hr>';
+        $errorInfo = null;
+        $result = $this->sendMail(
+            $systemNotificationsEmail,
+            'Test mail from MIKO PBX',
+            $body,
+            '',
+            $errorInfo,
+            !$plainText
+        );
         return ($result === true);
     }
 
@@ -163,9 +182,10 @@ class Notifications
      * @param string $message The body of the email.
      * @param string $filename The path to the file to be attached (optional).
      * @param string|null &$errorInfo Reference to store PHPMailer error info
+     * @param bool $isHtml If true (default), send body as text/html; if false, send as text/plain.
      * @return bool True if the email is sent successfully, false otherwise.
      */
-    public function sendMail(array|string $to, string $subject, string $message, string $filename = '', ?string &$errorInfo = null): bool
+    public function sendMail(array|string $to, string $subject, string $message, string $filename = '', ?string &$errorInfo = null, bool $isHtml = true): bool
     {
         if (!$this->enableNotifications) {
             $errorInfo = 'Email notifications are disabled';
@@ -184,9 +204,13 @@ class Notifications
             if (file_exists($filename)) {
                 $mail->addAttachment($filename);
             }
-            $mail->isHTML(true);
+            $mail->isHTML($isHtml);
             $mail->Subject = $subject;
             $mail->Body = $message;
+            if (!$isHtml) {
+                // text/plain content type still benefits from the right charset for non-ASCII bodies.
+                $mail->CharSet = PHPMailer::CHARSET_UTF8;
+            }
 
             if (!self::checkConnection(self::TYPE_PHP_MAILER)) {
                 $errorInfo = 'Could not establish SMTP connection';

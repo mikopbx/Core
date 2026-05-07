@@ -459,6 +459,7 @@ return [
     'ms_SendVoicemailNotifications' => 'ხმოვანი შეტყობინებების გაგზავნა',
     'ms_SendLoginNotifications' => 'შესვლის შეტყობინებების გაგზავნა',
     'ms_SendSystemNotifications' => 'სისტემის შეტყობინებების გაგზავნა',
+    'ms_MailPlainText' => 'შეტყობინებების გაგზავნა მარტივი ტექსტით (HTML ფორმატის გარეშე)',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'სერვერი',

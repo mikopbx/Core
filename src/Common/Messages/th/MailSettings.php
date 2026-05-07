@@ -461,6 +461,7 @@ return [
     'ms_SendVoicemailNotifications' => 'ส่งการแจ้งเตือนข้อความเสียง',
     'ms_SendLoginNotifications' => 'ส่งการแจ้งเตือนการเข้าสู่ระบบ',
     'ms_SendSystemNotifications' => 'ส่งการแจ้งเตือนระบบ',
+    'ms_MailPlainText' => 'ส่งการแจ้งเตือนเป็นข้อความธรรมดา (ไม่มีการจัดรูปแบบ HTML)',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'เซิร์ฟเวอร์',

@@ -459,6 +459,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Skicka röstmeddelandeaviseringar',
     'ms_SendLoginNotifications' => 'Skicka inloggningsmeddelanden',
     'ms_SendSystemNotifications' => 'Skicka systemmeddelanden',
+    'ms_MailPlainText' => 'Skicka aviseringar som vanlig text (utan HTML-formatering)',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'Server',

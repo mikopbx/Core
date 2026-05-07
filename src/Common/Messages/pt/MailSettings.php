@@ -470,6 +470,7 @@ return [
     'ms_EmailNotification_Login_Time' => 'Horário de entrada',
     'ms_EmailNotification_SSHPassword_SecurityNotice' => 'Aviso de segurança',
     'ms_SendSystemNotifications' => 'Enviar notificações do sistema',
+    'ms_MailPlainText' => 'Enviar notificações como texto simples (sem formatação HTML)',
     'ms_EmailNotification_SMTPTest_SMTPConnection' => 'Conectando ao SMTP',
     'ms_SendMissedCallNotifications' => 'Enviar notificações de chamadas perdidas',
     // Voicemail Notifications

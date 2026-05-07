@@ -51,6 +51,7 @@ class MailSettingsController extends BaseController
             PbxSettings::SEND_VOICEMAIL_NOTIFICATIONS,
             PbxSettings::SEND_LOGIN_NOTIFICATIONS,
             PbxSettings::SEND_SYSTEM_NOTIFICATIONS,
+            PbxSettings::MAIL_PLAIN_TEXT,
             PbxSettings::MAIL_SMTP_AUTH_TYPE,
             PbxSettings::MAIL_OAUTH2_PROVIDER,
             PbxSettings::MAIL_OAUTH2_CLIENT_ID,

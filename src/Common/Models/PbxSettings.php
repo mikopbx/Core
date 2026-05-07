@@ -23,6 +23,7 @@ namespace MikoPBX\Common\Models;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PBXSettings\PbxSettingsConstantsTrait;
 use MikoPBX\Common\Models\PBXSettings\PbxSettingsDefaultValuesTrait;
+use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use Phalcon\Di\Di;
 use Phalcon\Filter\Validation;
@@ -41,6 +42,18 @@ class PbxSettings extends ModelsBase
     use PbxSettingsDefaultValuesTrait;
 
     private const string CACHE_KEY = 'PbxSettings';
+
+    /**
+     * Values saved while the main DB transaction is still open.
+     *
+     * Model afterSave events fire before the outer transaction commit, so
+     * writing Redis immediately can be overwritten by model-change workers
+     * that still see the old SQLite state. Flush these values only on the DB
+     * commitTransaction event.
+     *
+     * @var array<string, string>
+     */
+    private static array $pendingCacheUpdates = [];
 
     /**
      * Returns Redis adapter with guaranteed correct database selection.
@@ -182,8 +195,7 @@ class PbxSettings extends ModelsBase
             $record->key = $key;
         }
         if (isset($record->value) && $record->value === $value) {
-            $redis = self::getRedisAdapter();
-            $redis->hset(self::CACHE_KEY, $key, $value);
+            self::syncCachedValueAfterSave($key, $value);
             return true;
         }
         $record->value = $value;
@@ -193,10 +205,96 @@ class PbxSettings extends ModelsBase
                 $messages[] = $message->getMessage();
             }
         } else {
-            $redis = self::getRedisAdapter();
-            $redis->hset(self::CACHE_KEY, $key, $value);
+            self::syncCachedValueAfterSave($key, $value);
         }
         return $result;
+    }
+
+    /**
+     * Synchronize Redis cache after a successful save.
+     *
+     * @param string $key Settings key
+     * @param string $value Stored value
+     */
+    private static function syncCachedValueAfterSave(string $key, string $value): void
+    {
+        if (self::isMainDatabaseTransactionActive()) {
+            self::$pendingCacheUpdates[$key] = $value;
+            return;
+        }
+
+        $redis = self::getRedisAdapter();
+        $redis->hset(self::CACHE_KEY, $key, $value);
+    }
+
+    /**
+     * Checks whether the main database connection currently owns an active transaction.
+     *
+     * @return bool
+     */
+    private static function isMainDatabaseTransactionActive(): bool
+    {
+        $di = Di::getDefault();
+        if ($di === null || !$di->has(MainDatabaseProvider::SERVICE_NAME)) {
+            return false;
+        }
+
+        try {
+            return $di->get(MainDatabaseProvider::SERVICE_NAME)->isUnderTransaction();
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * Flushes deferred Redis updates after successful transaction commit.
+     */
+    public static function flushPendingCacheUpdates(): void
+    {
+        if (self::$pendingCacheUpdates === []) {
+            return;
+        }
+
+        $updates = self::$pendingCacheUpdates;
+        self::$pendingCacheUpdates = [];
+
+        $redis = self::getRedisAdapter();
+        foreach ($updates as $key => $value) {
+            $redis->hset(self::CACHE_KEY, $key, $value);
+        }
+    }
+
+    /**
+     * Drops deferred Redis updates after transaction rollback.
+     */
+    public static function discardPendingCacheUpdates(): void
+    {
+        self::$pendingCacheUpdates = [];
+    }
+
+    /**
+     * Drop the cached value for a single key.
+     *
+     * Direct row deletes via Phalcon's ORM (e.g. ResetToDefaultsAction) bypass
+     * setValueByKey/resetValueToDefault and therefore leave the Redis hash
+     * holding the stale value, so getValueByKey($key, true) keeps returning the
+     * old value instead of falling back to defaults. Callers that delete rows
+     * outside those helpers must call this method to keep the cache coherent.
+     *
+     * Failures are intentionally swallowed: the cache will repopulate on the
+     * next read miss in getValueByKey().
+     *
+     * @param string $key Settings key to invalidate
+     * @return void
+     */
+    public static function invalidateCachedValue(string $key): void
+    {
+        try {
+            $redis = self::getRedisAdapter();
+            $redis->hDel(self::CACHE_KEY, $key);
+        } catch (\Throwable) {
+            // Non-fatal: cache will rebuild on next read miss.
+        }
     }
 
      /**
@@ -213,12 +311,10 @@ class PbxSettings extends ModelsBase
             return true;
         }
         $data->value = PbxSettings::getDefaultArrayValues()[$key]??'';
-
-        $redis = self::getRedisAdapter();
         
         $result =  $data->update();
         if ($result) {
-            $redis->hset(self::CACHE_KEY, $key, $data->value);
+            self::syncCachedValueAfterSave($key, $data->value);
         }
         return $result;
     }

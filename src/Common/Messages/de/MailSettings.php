@@ -442,6 +442,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Sprachnachrichtenbenachrichtigungen senden',
     'ms_SendLoginNotifications' => 'Anmeldebenachrichtigungen senden',
     'ms_SendSystemNotifications' => 'Systembenachrichtigungen senden',
+    'ms_MailPlainText' => 'Benachrichtigungen als reinen Text senden (ohne HTML-Formatierung)',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'Server',

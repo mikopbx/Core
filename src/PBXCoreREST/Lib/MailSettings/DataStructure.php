@@ -334,6 +334,13 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'sanitize' => 'bool',
                 'example' => (bool)self::getDefaultValue(PbxSettings::SEND_SYSTEM_NOTIFICATIONS)
             ],
+            PbxSettings::MAIL_PLAIN_TEXT => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ms_plain_text',
+                'default' => (bool)self::getDefaultValue(PbxSettings::MAIL_PLAIN_TEXT),
+                'sanitize' => 'bool',
+                'example' => (bool)self::getDefaultValue(PbxSettings::MAIL_PLAIN_TEXT)
+            ],
             // OAuth2 settings
             PbxSettings::MAIL_OAUTH2_CLIENT_ID => [
                 'type' => 'string',

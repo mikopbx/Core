@@ -83,6 +83,17 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="field">
+                    <div class="ui segment">
+                        <div class="ui toggle checkbox">
+                            {{ form.render('MailPlainText') }}
+                            <label for="MailPlainText">{{ t._('ms_MailPlainText') }}
+                                <i class="small info circle icon field-info-icon" data-field="MailPlainText"></i>
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {# Email addresses section - always visible #}

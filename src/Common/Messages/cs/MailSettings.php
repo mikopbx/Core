@@ -467,6 +467,7 @@ return [
     'ms_SendVoicemailNotifications' => 'Odesílat oznámení hlasovými zprávami',
     'ms_SendLoginNotifications' => 'Odesílat oznámení o přihlášení',
     'ms_SendSystemNotifications' => 'Odesílat systémová oznámení',
+    'ms_MailPlainText' => 'Odesílat oznámení jako prostý text (bez HTML formátování)',
     // MS - Email Notification System
     // Common
     'ms_EmailNotification_Server' => 'Server',

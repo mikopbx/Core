@@ -166,6 +166,7 @@ return [
     'rest_schema_ms_enable_notifications' => 'Povolit odesílání e-mailových oznámení ze systému',
     'rest_schema_ms_send_login_notifications' => 'Odesílat oznámení o přihlášení',
     'rest_schema_ms_send_system_notifications' => 'Odesílat systémová oznámení',
+    'rest_schema_ms_plain_text' => 'Odesílat oznámení jako prostý text (bez HTML formátování)',
     'rest_schema_ms_oauth2_client_id' => 'ID klienta OAuth2',
     'rest_schema_ms_oauth2_client_secret' => 'Tajný klíč klienta OAuth2',
     'rest_schema_ms_test_email_to' => 'E-mailová adresa příjemce testovacího e-mailu',
@@ -1729,6 +1730,7 @@ return [
     'rest_param_ms_smtp_port' => 'Port SMTP serveru (obvykle 587 pro TLS, 465 pro SSL, 25 pro nezabezpečené)',
     'rest_param_ms_from_address' => 'E-mailová adresa odesílatele',
     'rest_param_ms_send_system_notifications' => 'Odesílat systémová oznámení',
+    'rest_param_ms_plain_text' => 'Odesílat oznámení jako prostý text (bez HTML formátování)',
     'rest_param_ms_oauth2_provider' => 'Poskytovatel OAuth2 pro autorizaci (Google, Microsoft, Yahoo)',
     // SIP specific parameters
     'rest_param_sip_extension' => 'Číslo pobočky nebo ID zařízení SIP',

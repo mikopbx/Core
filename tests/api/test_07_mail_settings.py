@@ -415,6 +415,269 @@ class TestMailSettings:
             print(f"⚠ Error restoring settings: {str(e)[:50]}")
 
 
+class TestMailPlainTextToggle:
+    """
+    Tests for the MailPlainText global toggle.
+
+    Verifies that the new global setting that switches all email notifications
+    between HTML (default) and plain-text mode:
+      - is exposed by GET with the correct default value (False),
+      - can be toggled to True via PATCH and is persisted (DB + cache),
+      - can be toggled back to False via PATCH,
+      - the original value is restored at the end of the suite.
+    """
+
+    SETTING_KEY = 'MailPlainText'
+    original_value = None
+
+    @staticmethod
+    def _read_php_value(api_client) -> dict:
+        """Read MailPlainText directly from the PHP runtime to verify DB+cache persistence."""
+        command = (
+            'php -r \'require_once "Globals.php"; '
+            '$key=\\MikoPBX\\Common\\Models\\PbxSettings::MAIL_PLAIN_TEXT; '
+            'echo json_encode(['
+            '"key"=>$key,'
+            '"cache"=>\\MikoPBX\\Common\\Models\\PbxSettings::getValueByKey($key,true),'
+            '"db"=>\\MikoPBX\\Common\\Models\\PbxSettings::getValueByKey($key,false)'
+            '], JSON_UNESCAPED_SLASHES);\''
+        )
+        response = api_client.post('system:executeBashCommand', {
+            'command': command,
+            'timeout': 15,
+        })
+        assert_api_success(response, "Failed to read MailPlainText via PHP CLI")
+        output = response['data'].get('output', '').strip()
+        assert output, f"Empty output from PHP CLI for {TestMailPlainTextToggle.SETTING_KEY}"
+        try:
+            return json.loads(output)
+        except json.JSONDecodeError as e:
+            pytest.fail(f"PHP CLI returned non-JSON output: {output!r} ({e})")
+
+    @staticmethod
+    def _as_bool(value) -> bool:
+        """Normalize the API/DB representation to a Python bool.
+
+        REST schema marks the field as boolean, but PHP's PbxSettings stores
+        booleans as the strings '0'/'1' — accept either representation.
+        """
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, int):
+            return value != 0
+        if isinstance(value, str):
+            return value.strip() in ('1', 'true', 'True', 'TRUE')
+        return False
+
+    def test_01_capture_original(self, api_client):
+        """GET /mail-settings exposes MailPlainText and we capture its current value
+        for restoration. Either True or False is a valid persisted state on a
+        configured PBX, so we don't assert a specific default here — the toggle
+        behaviour itself is verified by test_02 / test_03 below.
+        """
+        response = api_client.get('mail-settings')
+        assert_api_success(response, "Failed to get mail settings")
+
+        data = response['data']
+        assert self.SETTING_KEY in data, (
+            f"{self.SETTING_KEY} missing from mail-settings response. "
+            f"Keys present: {sorted(data.keys())}"
+        )
+
+        TestMailPlainTextToggle.original_value = self._as_bool(data[self.SETTING_KEY])
+        print(f"✓ Captured {self.SETTING_KEY}={TestMailPlainTextToggle.original_value}")
+
+    def test_02_patch_enable_plain_text(self, api_client):
+        """PATCH MailPlainText=True persists and is reflected in GET + PHP runtime."""
+        response = api_client.patch('mail-settings', {self.SETTING_KEY: True})
+        assert_api_success(response, f"Failed to enable {self.SETTING_KEY}")
+
+        # 1) Verify via REST GET
+        verify = api_client.get('mail-settings')
+        assert_api_success(verify, "Failed to re-read mail settings after PATCH")
+        assert self.SETTING_KEY in verify['data'], (
+            f"{self.SETTING_KEY} missing from response after PATCH"
+        )
+        assert self._as_bool(verify['data'][self.SETTING_KEY]) is True, (
+            f"PATCH did not flip {self.SETTING_KEY} to True; "
+            f"got {verify['data'][self.SETTING_KEY]!r}"
+        )
+
+        # 2) Verify via PHP runtime — value reaches both cache and DB
+        php = self._read_php_value(api_client)
+        assert php.get('cache') == '1', (
+            f"PbxSettings cache lookup expected '1', got {php.get('cache')!r}"
+        )
+        assert php.get('db') == '1', (
+            f"PbxSettings DB lookup expected '1', got {php.get('db')!r}"
+        )
+        print(f"✓ {self.SETTING_KEY}=True persisted (REST + cache + DB)")
+
+    def test_03_patch_disable_plain_text(self, api_client):
+        """PATCH MailPlainText=False flips it back and is reflected everywhere."""
+        response = api_client.patch('mail-settings', {self.SETTING_KEY: False})
+        assert_api_success(response, f"Failed to disable {self.SETTING_KEY}")
+
+        verify = api_client.get('mail-settings')
+        assert_api_success(verify, "Failed to re-read mail settings after PATCH")
+        assert self._as_bool(verify['data'][self.SETTING_KEY]) is False, (
+            f"PATCH did not flip {self.SETTING_KEY} back to False; "
+            f"got {verify['data'][self.SETTING_KEY]!r}"
+        )
+
+        php = self._read_php_value(api_client)
+        assert php.get('cache') == '0', (
+            f"PbxSettings cache lookup expected '0', got {php.get('cache')!r}"
+        )
+        assert php.get('db') == '0', (
+            f"PbxSettings DB lookup expected '0', got {php.get('db')!r}"
+        )
+        print(f"✓ {self.SETTING_KEY}=False persisted (REST + cache + DB)")
+
+    def test_04_patch_string_one_is_normalized(self, api_client):
+        """The DataStructure 'sanitize'=>'bool' rule normalizes string '1' to True."""
+        response = api_client.patch('mail-settings', {self.SETTING_KEY: '1'})
+        assert_api_success(response, f"Failed to PATCH {self.SETTING_KEY} with string '1'")
+
+        verify = api_client.get('mail-settings')
+        assert self._as_bool(verify['data'][self.SETTING_KEY]) is True, (
+            f"String '1' should be normalized to True; got {verify['data'][self.SETTING_KEY]!r}"
+        )
+        print(f"✓ String '1' normalized to True")
+
+    def test_04b_invalidate_cached_value_clears_redis(self, api_client):
+        """Regression guard for the cache-coherency hole behind ResetToDefaultsAction.
+
+        PbxSettings has no afterDelete hook, so a raw $record->delete() leaves
+        the Redis hash holding the previous value. The fix exposes a public
+        invalidateCachedValue($key) helper which the reset action now calls
+        per deleted key. This test exercises the helper end-to-end without
+        triggering the DELETE /mail-settings endpoint (which would wipe the
+        user's actual SMTP credentials).
+
+        Scenario (pure PHP CLI inside the container, doesn't touch REST):
+          1. Write the toggle through setValueByKey('1') → both DB + cache hold '1'.
+          2. Delete the DB row directly through the ORM, mimicking the path in
+             ResetToDefaultsAction. The cached '1' is intentionally left stale.
+          3. Read with cache enabled → still '1' because cache is stale.
+          4. Call invalidateCachedValue() → drops the hash field.
+          5. Read with cache enabled → falls through to defaults trait → '0'.
+
+        The two cache reads in steps 3 and 5 must differ — that's the proof
+        that the helper actually drains the cache and that ResetToDefaultsAction's
+        new invalidation loop closes the gap.
+        """
+        php_script = (
+            'require_once "Globals.php"; '
+            'use MikoPBX\\Common\\Models\\PbxSettings; '
+            '$key = PbxSettings::MAIL_PLAIN_TEXT; '
+            '$msgs = []; '
+            'PbxSettings::setValueByKey($key, "1", $msgs); '
+            '$rec = PbxSettings::findFirstByKey($key); '
+            'if ($rec !== null) { $rec->delete(); } '
+            '$staleFromCache = PbxSettings::getValueByKey($key, true); '
+            'PbxSettings::invalidateCachedValue($key); '
+            '$freshFromCache = PbxSettings::getValueByKey($key, true); '
+            'echo json_encode(['
+            '"stale_from_cache" => $staleFromCache, '
+            '"fresh_from_cache" => $freshFromCache'
+            '], JSON_UNESCAPED_SLASHES);'
+        )
+        command = "php -r " + json.dumps(php_script)
+        response = api_client.post('system:executeBashCommand', {
+            'command': command,
+            'timeout': 20,
+        })
+        assert_api_success(response, "Failed to exercise invalidateCachedValue() via PHP CLI")
+        output = response['data'].get('output', '').strip()
+        assert output, "Empty output from PHP CLI cache test"
+        try:
+            result = json.loads(output)
+        except json.JSONDecodeError as e:
+            pytest.fail(f"Non-JSON output from PHP CLI: {output!r} ({e})")
+
+        # Step 3: with stale cache, getValueByKey($key, true) still returns '1'
+        assert result.get('stale_from_cache') == '1', (
+            f"Pre-invalidation cache read expected '1' (proving cache was populated), "
+            f"got {result.get('stale_from_cache')!r}. "
+            f"setValueByKey() may not be writing the cache."
+        )
+        # Step 5: after invalidateCachedValue(), cache miss → defaults trait → '0'
+        assert result.get('fresh_from_cache') == '0', (
+            f"Post-invalidation cache read expected '0' (default fallback), "
+            f"got {result.get('fresh_from_cache')!r}. "
+            f"PbxSettings::invalidateCachedValue() did not drain the Redis hash field."
+        )
+
+        # Re-PATCH MailPlainText=True so the next test has the same pre-condition
+        # as the suite expects (test_04 left it True before the cache experiment).
+        re_enable = api_client.patch('mail-settings', {self.SETTING_KEY: True})
+        assert_api_success(re_enable, f"Failed to restore {self.SETTING_KEY}=True after cache test")
+        print(f"✓ invalidateCachedValue() drains the {self.SETTING_KEY} hash field")
+
+    def test_05_plain_text_preserves_alert_details(self, api_client):
+        """Regression guard: plain-text DiskSpace email must still contain the actual
+        disk percentage, free-space value and CTA URL — i.e. dynamicContent /
+        INFO_BOX_CONTENT / HELP_TEXT / CTA_* are rendered in plain mode, not stripped.
+
+        The check runs the builder directly via PHP CLI so we don't depend on a
+        real SMTP server while still exercising the production rendering code.
+        """
+        php_script = (
+            'require_once "Globals.php"; '
+            '$b = new \\MikoPBX\\Core\\System\\Mail\\Builders\\DiskSpaceNotificationBuilder(); '
+            '$b->setRecipient("admin@example.com")'
+            '  ->setDiskUsage(95)'
+            '  ->setFreeSpace("420 MB")'
+            '  ->setPartitions([["name"=>"/storage","usage"=>95]])'
+            '  ->setAdminUrl("https://pbx.example.com/admin"); '
+            'echo $b->buildPlainText();'
+        )
+        command = "php -r " + json.dumps(php_script)
+        response = api_client.post('system:executeBashCommand', {
+            'command': command,
+            'timeout': 20,
+        })
+        assert_api_success(response, "Failed to render DiskSpace plain text via PHP CLI")
+        body = response['data'].get('output', '')
+        assert body, "Empty plain-text body returned by builder"
+
+        required = {
+            '95%': 'disk usage percentage',
+            '420 MB': 'free-space value',
+            '/storage': 'affected partition name',
+            'https://pbx.example.com/admin': 'CTA admin panel URL',
+        }
+        missing = [label for needle, label in required.items() if needle not in body]
+        assert not missing, (
+            f"Plain-text DiskSpace alert lost critical detail(s): {missing}.\n"
+            f"--- rendered body ---\n{body}\n---"
+        )
+
+        # No HTML tags should leak into a plain-text body.
+        assert '<' not in body and '>' not in body, (
+            f"HTML tags leaked into plain-text body:\n{body}"
+        )
+        print(f"✓ DiskSpace plain-text body preserves disk %, free space, partition and CTA URL")
+
+    def test_06_restore_original(self, api_client):
+        """Restore the original MailPlainText value so other suites are unaffected."""
+        if TestMailPlainTextToggle.original_value is None:
+            pytest.skip("No original value captured; nothing to restore")
+
+        response = api_client.patch('mail-settings', {
+            self.SETTING_KEY: TestMailPlainTextToggle.original_value
+        })
+        assert_api_success(response, f"Failed to restore {self.SETTING_KEY}")
+
+        verify = api_client.get('mail-settings')
+        restored = self._as_bool(verify['data'][self.SETTING_KEY])
+        assert restored == TestMailPlainTextToggle.original_value, (
+            f"Restoration failed: expected {TestMailPlainTextToggle.original_value}, got {restored}"
+        )
+        print(f"✓ {self.SETTING_KEY} restored to {TestMailPlainTextToggle.original_value}")
+
+
 class TestMailSettingsEdgeCases:
     """Edge cases for mail settings"""
 
