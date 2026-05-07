@@ -70,9 +70,10 @@ class TestMailSettings:
     @staticmethod
     def _safe_test_connection_settings() -> dict:
         return {
-            'MailSMTPHost': 'smtp.invalid',
-            'MailSMTPPort': 587,
+            'MailSMTPHost': '127.0.0.1',
+            'MailSMTPPort': 1,
             'MailSMTPAuthType': 'none',
+            'MailSMTPUseTLS': 'none',
         }
 
     @classmethod
@@ -81,7 +82,7 @@ class TestMailSettings:
             return
 
         restore_data = {}
-        for field in ['MailSMTPHost', 'MailSMTPPort', 'MailSMTPAuthType', 'MailFromAddress']:
+        for field in ['MailSMTPHost', 'MailSMTPPort', 'MailSMTPAuthType', 'MailFromAddress', 'MailSMTPUseTLS']:
             if field in cls.original_settings:
                 restore_data[field] = cls.original_settings[field]
 
@@ -284,10 +285,7 @@ class TestMailSettings:
             patch_response = api_client.patch('mail-settings', safe_settings)
             assert_api_success(patch_response, "Failed to prepare safe SMTP settings for contract test")
 
-            response = self._call_test_connection(api_client, {
-                'MailSMTPHost': 'smtp.gmail.com',
-                'MailSMTPPort': 587
-            })
+            response = self._call_test_connection(api_client, safe_settings)
             self._assert_test_connection_contract(
                 response,
                 expected_host=safe_settings['MailSMTPHost'],
@@ -371,7 +369,7 @@ class TestMailSettingsEdgeCases:
             return
 
         restore_data = {}
-        for field in ['MailSMTPHost', 'MailSMTPPort', 'MailFromAddress', 'MailSMTPAuthType']:
+        for field in ['MailSMTPHost', 'MailSMTPPort', 'MailFromAddress', 'MailSMTPAuthType', 'MailSMTPUseTLS']:
             if field in TestMailSettings.original_settings:
                 restore_data[field] = TestMailSettings.original_settings[field]
 

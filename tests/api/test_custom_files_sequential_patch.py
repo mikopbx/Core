@@ -10,8 +10,20 @@ import pytest
 import time
 import base64
 import requests
+import uuid
 from typing import Optional
 from conftest import read_file_from_container
+
+
+BASE_FILE_CONTENT = "; Base custom file used by REST sequential PATCH tests\n"
+
+
+def _prepare_base_file(api_client, filepath: str) -> None:
+    response = api_client.put(f"files/{filepath}", {
+        "filename": filepath,
+        "content": BASE_FILE_CONTENT,
+    })
+    assert response.get("result") is True, f"Failed to prepare base file {filepath}: {response}"
 
 
 def _get_live_custom_file_data(api_client, file_id: str) -> Optional[dict]:
@@ -56,13 +68,11 @@ def _find_live_custom_file_id_by_path(api_client, filepath: str) -> Optional[str
     return None
 
 
-def _get_or_create_manager_conf_file(api_client) -> Optional[str]:
+def _get_or_create_test_custom_file(api_client, filepath: str) -> Optional[str]:
     """
-    Find existing custom file for /etc/asterisk/manager.conf or create one.
+    Find existing custom file for filepath or create one.
     Returns the file ID or None if failed.
     """
-    filepath = "/etc/asterisk/manager.conf"
-
     # First, try to find existing live custom file
     existing_id = _find_live_custom_file_id_by_path(api_client, filepath)
     if existing_id:
@@ -123,7 +133,7 @@ def _patch_custom_file_with_recovery(api_client, file_id: str, patch_data: dict,
 
     refreshed_id = _find_live_custom_file_id_by_path(api_client, filepath)
     if not refreshed_id:
-        refreshed_id = _get_or_create_manager_conf_file(api_client)
+        refreshed_id = _get_or_create_test_custom_file(api_client, filepath)
 
     assert refreshed_id, f"Unable to recover custom file ID for {filepath}"
     response = api_client.patch(f"custom-files/{refreshed_id}", patch_data)
@@ -143,12 +153,13 @@ def test_sequential_patch_custom_file(api_client):
     6. Wait for file to be applied to disk
     7. Verify second content is applied
     """
-    filepath = "/etc/asterisk/manager.conf"
+    filepath = f"/tmp/mikopbx_custom_file_seq_{uuid.uuid4().hex}.conf"
+    _prepare_base_file(api_client, filepath)
 
     # Get or create the custom file dynamically
-    file_id = _get_or_create_manager_conf_file(api_client)
+    file_id = _get_or_create_test_custom_file(api_client, filepath)
     if not file_id:
-        pytest.skip("Could not find or create custom file for manager.conf")
+        pytest.skip(f"Could not find or create custom file for {filepath}")
 
     # First content to add
     first_content = """[phpagi99]
@@ -336,12 +347,13 @@ def test_rapid_sequential_patches(api_client):
 
     This tests the race condition where second PATCH happens before first is processed.
     """
-    filepath = "/etc/asterisk/manager.conf"
+    filepath = f"/tmp/mikopbx_custom_file_rapid_{uuid.uuid4().hex}.conf"
+    _prepare_base_file(api_client, filepath)
 
     # Get or create the custom file dynamically
-    file_id = _get_or_create_manager_conf_file(api_client)
+    file_id = _get_or_create_test_custom_file(api_client, filepath)
     if not file_id:
-        pytest.skip("Could not find or create custom file for manager.conf")
+        pytest.skip(f"Could not find or create custom file for {filepath}")
 
     print("=" * 80)
     print(f"TEST: Rapid sequential PATCH operations on custom file ID={file_id}")

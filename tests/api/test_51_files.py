@@ -240,8 +240,8 @@ class TestFilesAPI:
             f"Expected DOWNLOAD_COMPLETE, got: {data}"
         assert data.get('d_status_progress') == '100', \
             f"Expected progress=100, got: {data}"
-        assert data.get('filename') == firmware_file, \
-            f"Expected filename={firmware_file}, got: {data}"
+        assert data.get('filePath') == firmware_file, \
+            f"Expected filePath={firmware_file}, got: {data}"
 
         print(f"✓ Firmware status contract reports completed download for prepared files")
 
