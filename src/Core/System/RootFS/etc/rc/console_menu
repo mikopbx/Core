@@ -22,6 +22,24 @@ use MikoPBX\Core\System\ConsoleMenu;
 use MikoPBX\Core\System\System;
 require_once('Globals.php');
 
+// STDIN watchdog: if controlling pty is hung up (SSH disconnect, console drop)
+// the underlying CliMenu read-loop spins on EOF at 100% CPU. Periodically poll
+// STDIN; on EOF/!isatty terminate cleanly so dropbear's child group can be reaped.
+if (function_exists('pcntl_async_signals') && function_exists('pcntl_signal') && function_exists('pcntl_alarm')) {
+    pcntl_async_signals(true);
+    $stdinWatchdog = static function () use (&$stdinWatchdog): void {
+        if (feof(STDIN) || @posix_isatty(STDIN) === false) {
+            exit(0);
+        }
+        pcntl_signal(SIGALRM, $stdinWatchdog);
+        pcntl_alarm(2);
+    };
+    pcntl_signal(SIGALRM, $stdinWatchdog);
+    pcntl_signal(SIGHUP, static function (): void { exit(0); });
+    pcntl_signal(SIGTERM, static function (): void { exit(0); });
+    pcntl_alarm(2);
+}
+
 // Wait for system boot to complete before starting console menu.
 // Console menu requires Redis and DB migrations to be ready.
 $maxWait = 120; // seconds

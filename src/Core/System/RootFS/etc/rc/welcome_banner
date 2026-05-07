@@ -26,6 +26,24 @@ use MikoPBX\Core\System\Util;
 
 require_once 'Globals.php';
 
+// STDIN watchdog: if controlling pty is hung up (SSH disconnect, console drop)
+// the banner read-loop spins on EOF. Periodically poll STDIN and exit cleanly
+// so the parent pbx_init can re-evaluate `[ ! -t 0 ]` and stop respawning.
+if (function_exists('pcntl_async_signals') && function_exists('pcntl_signal') && function_exists('pcntl_alarm')) {
+    pcntl_async_signals(true);
+    $stdinWatchdog = static function () use (&$stdinWatchdog): void {
+        if (feof(STDIN) || @posix_isatty(STDIN) === false) {
+            exit(0);
+        }
+        pcntl_signal(SIGALRM, $stdinWatchdog);
+        pcntl_alarm(2);
+    };
+    pcntl_signal(SIGALRM, $stdinWatchdog);
+    pcntl_signal(SIGHUP, static function (): void { exit(0); });
+    pcntl_signal(SIGTERM, static function (): void { exit(0); });
+    pcntl_alarm(2);
+}
+
 // Wait for system boot to complete before showing banner.
 // Banner requires Redis and DB migrations to be ready.
 $maxWait = 120; // seconds

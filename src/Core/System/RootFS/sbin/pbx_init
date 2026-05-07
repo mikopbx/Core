@@ -27,6 +27,11 @@ freeOffloadFile='/tmp/freeoffload';
 # Trap SIGINT (Ctrl+C) to exit to shell instead of respawn
 trap 'touch /tmp/start_sh; exit 0' INT
 
+# Trap SIGHUP/SIGTERM (e.g. SSH disconnect closes controlling pty) — actively
+# tear down the whole process group so the PHP welcome_banner / console_menu
+# child cannot survive as an orphan and busy-loop on the deleted pty.
+trap 'trap - HUP TERM; kill 0 2>/dev/null; exit 0' HUP TERM
+
 while : ; do
 
     if [ ! -t 0 ] || [ ! -t 1 ] ; then

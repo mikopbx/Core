@@ -19,4 +19,12 @@
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin;
 export PATH;
+
+# Defence in depth: when dropbear/sshd closes the slave pty after a sudden
+# disconnect, the kernel sends SIGHUP only to the session leader (this script).
+# By default sh inherits SIG_IGN for SIGHUP from its parent, leaving the whole
+# child chain (pbx_init → console_menu) orphaned. Explicitly trap and kill the
+# entire process group so PHP children terminate too.
+trap 'trap - HUP TERM; kill 0 2>/dev/null; exit 0' HUP TERM
+
 /sbin/pbx_init;
