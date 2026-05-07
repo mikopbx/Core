@@ -1,3 +1,5 @@
+include mikopbx/csp-img-src.conf;
+
 server {
     listen      <WEBPort>;
     server_name   default;
