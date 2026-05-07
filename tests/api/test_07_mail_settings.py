@@ -24,6 +24,7 @@ Test email sending operations are safe but require valid SMTP configuration.
 import pytest
 import requests
 import time
+import json
 from conftest import assert_api_success
 
 
@@ -95,6 +96,32 @@ class TestMailSettings:
             return api_client.post('mail-settings:testConnection', payload)
         except requests.exceptions.HTTPError as e:
             return e.response.json()
+
+    @classmethod
+    def _get_mail_settings_runtime_debug(cls, api_client) -> str:
+        command = (
+            'php -r \'require_once "Globals.php"; '
+            '$key=\\MikoPBX\\Common\\Models\\PbxSettings::MAIL_SMTP_HOST; '
+            '$port=\\MikoPBX\\Common\\Models\\PbxSettings::MAIL_SMTP_PORT; '
+            '$auth=\\MikoPBX\\Common\\Models\\PbxSettings::MAIL_SMTP_AUTH_TYPE; '
+            '$tls=\\MikoPBX\\Common\\Models\\PbxSettings::MAIL_SMTP_USE_TLS; '
+            'echo json_encode(['
+            '"host_cache"=>\\MikoPBX\\Common\\Models\\PbxSettings::getValueByKey($key,true),'
+            '"host_db"=>\\MikoPBX\\Common\\Models\\PbxSettings::getValueByKey($key,false),'
+            '"port_cache"=>\\MikoPBX\\Common\\Models\\PbxSettings::getValueByKey($port,true),'
+            '"port_db"=>\\MikoPBX\\Common\\Models\\PbxSettings::getValueByKey($port,false),'
+            '"auth_cache"=>\\MikoPBX\\Common\\Models\\PbxSettings::getValueByKey($auth,true),'
+            '"auth_db"=>\\MikoPBX\\Common\\Models\\PbxSettings::getValueByKey($auth,false),'
+            '"tls_cache"=>\\MikoPBX\\Common\\Models\\PbxSettings::getValueByKey($tls,true),'
+            '"tls_db"=>\\MikoPBX\\Common\\Models\\PbxSettings::getValueByKey($tls,false)'
+            '], JSON_UNESCAPED_SLASHES);\''
+        )
+
+        try:
+            result = cls._exec_bash(api_client, command)
+            return result.get('output', '').strip()
+        except Exception as e:
+            return f'failed to collect runtime debug: {str(e)[:200]}'
 
     @staticmethod
     def _assert_test_connection_contract(response: dict, expected_host: str, expected_port: int) -> None:
@@ -288,18 +315,33 @@ class TestMailSettings:
         try:
             update_response = api_client.put('mail-settings', safe_update)
             assert_api_success(update_response, "Failed to prepare safe SMTP settings for contract test")
+            print("MAIL DEBUG update_response:")
+            print(json.dumps(update_response, ensure_ascii=False, sort_keys=True))
 
             prepared = api_client.get('mail-settings')
             assert_api_success(prepared, "Failed to verify prepared safe SMTP settings")
             prepared_data = prepared.get('data', {})
-            assert prepared_data.get('MailSMTPHost') == safe_settings['MailSMTPHost'], (
-                f"Safe SMTP host was not applied, got {prepared_data.get('MailSMTPHost')!r}"
-            )
-            assert str(prepared_data.get('MailSMTPPort')) == str(safe_settings['MailSMTPPort']), (
-                f"Safe SMTP port was not applied, got {prepared_data.get('MailSMTPPort')!r}"
-            )
+            print("MAIL DEBUG prepared_get_response:")
+            print(json.dumps(prepared, ensure_ascii=False, sort_keys=True))
+
+            if (
+                prepared_data.get('MailSMTPHost') != safe_settings['MailSMTPHost']
+                or str(prepared_data.get('MailSMTPPort')) != str(safe_settings['MailSMTPPort'])
+            ):
+                runtime_debug = self._get_mail_settings_runtime_debug(api_client)
+                print(f"MAIL DEBUG runtime_settings: {runtime_debug}")
+                pytest.fail(
+                    "Safe SMTP settings were not applied. "
+                    f"expected_host={safe_settings['MailSMTPHost']!r}, "
+                    f"actual_host={prepared_data.get('MailSMTPHost')!r}, "
+                    f"expected_port={safe_settings['MailSMTPPort']!r}, "
+                    f"actual_port={prepared_data.get('MailSMTPPort')!r}, "
+                    f"runtime_debug={runtime_debug}"
+                )
 
             response = self._call_test_connection(api_client, safe_settings)
+            print("MAIL DEBUG test_connection_response:")
+            print(json.dumps(response, ensure_ascii=False, sort_keys=True))
             self._assert_test_connection_contract(
                 response,
                 expected_host=safe_settings['MailSMTPHost'],
