@@ -126,6 +126,65 @@ class SoundFiles extends ModelsBase
     }
 
     /**
+     * Resolve a usable Asterisk-side audio path for a stored SoundFiles.path value.
+     *
+     * Returns the path stripped of its extension (the form Asterisk's Background()
+     * and Playback() applications expect), provided that *some* sibling file with a
+     * recognisable audio extension exists next to it. Returns an empty string when
+     * neither the stored path nor any sibling can be found on disk.
+     *
+     * Why this exists: dialplan generators (IVRConf, IncomingContexts, OutWorkTime,
+     * announce-recording) historically did `if (file_exists($path)) trim(); else
+     * fallback`. After upgrading from MikoPBX ≤ 2022.x — where SoundFiles.path was
+     * stored as ".mp3" — a later format pipeline change can leave the .mp3 absent
+     * while the .wav (or .webm) sibling still lives next to it. Strict file_exists
+     * on the stored extension reports false in that case, the dialplan substitutes
+     * 'vm-enter-num-to-call', the language pack may not ship that prompt, and the
+     * IVR ends up dropping the call. Resolving by basename avoids that whole class
+     * of failure without touching the DB row.
+     *
+     * @param string $storedPath Value of SoundFiles.path as persisted in the DB.
+     * @return string Path without extension if any audio sibling exists, '' otherwise.
+     */
+    public static function resolveAsteriskAudioPath(string $storedPath): string
+    {
+        if ($storedPath === '') {
+            return '';
+        }
+
+        // Fast path: the stored file is on disk — keep the historical behaviour.
+        if (file_exists($storedPath)) {
+            $pathinfo = pathinfo($storedPath);
+            return ($pathinfo['dirname'] ?? '.') . '/' . ($pathinfo['filename'] ?? '');
+        }
+
+        // Stored extension is gone — look for a sibling with the same base name.
+        // .mp3/.webm/.opus are intentionally excluded from candidates: the very
+        // failure mode this function exists for is "the .mp3 stored in DB was
+        // dropped by a later pipeline change and only the .wav/.gsm/.* siblings
+        // remain". Probing for the same compressed format we're working around
+        // would defeat the purpose. SoundFilesConf does load format_mp3 and
+        // format_ogg_opus, so Asterisk *could* decode them — we just don't want
+        // to pick them up here.
+        $pathinfo = pathinfo($storedPath);
+        $dirname = rtrim($pathinfo['dirname'] ?? '.', '/');
+        $filename = $pathinfo['filename'] ?? '';
+        if ($filename === '' || $dirname === '') {
+            return '';
+        }
+        $base = $dirname . '/' . $filename;
+
+        $candidateExtensions = ['wav', 'wav16', 'wav48', 'sln', 'gsm', 'ulaw', 'alaw', 'g722'];
+        foreach ($candidateExtensions as $ext) {
+            if (file_exists("$base.$ext")) {
+                return $base;
+            }
+        }
+
+        return '';
+    }
+
+    /**
      * Delete physical sound file and related converted files after record deletion
      */
     public function afterDelete(): void

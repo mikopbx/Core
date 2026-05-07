@@ -28,7 +28,6 @@ use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\ConferenceConf;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
-use MikoPBX\Core\System\Util;
 
 /**
  * This class generates incoming contexts for Asterisk configuration.
@@ -343,12 +342,11 @@ class IncomingContexts extends AsteriskConfigClass
         if (empty($rout['audio_message_id'])) {
             return '';
         }
-        $res           = SoundFiles::findFirst($rout['audio_message_id']);
-        $audio_message = $res === null ? '' : (string)$res->path;
-        if (file_exists($audio_message)) {
-            return Util::trimExtensionForFile($audio_message);
-        }
-        return '';
+        $res = SoundFiles::findFirst($rout['audio_message_id']);
+        // Resolve by base name so legacy DB rows pointing at a now-removed
+        // extension (.mp3 after a 2022 upgrade) still surface a usable path
+        // when the .wav sibling is on disk. Matches the IVRConf logic.
+        return SoundFiles::resolveAsteriskAudioPath($res === null ? '' : (string)$res->path);
     }
 
     /**

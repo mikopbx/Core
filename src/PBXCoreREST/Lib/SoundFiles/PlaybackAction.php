@@ -69,10 +69,35 @@ class PlaybackAction
             return $res;
         }
 
-        // Validate file path - must be in allowed directories
+        // Refuse non-audio extensions outright. AST_MEDIA_DIR (added below) is the
+        // parent of customSoundDir/mohdir/astsoundsdir but also of avatars/, the
+        // text2speech cache, voicemail recordings and any future subdirectory the
+        // platform decides to drop under /media/. Without this gate, anyone with
+        // the sound_files Bearer permission could pull /media/avatars/user_*.jpg
+        // or arbitrary non-audio content via this endpoint — a privilege confusion
+        // bug that pre-existed for customSoundDir/mohdir as well (e.g. .conf or
+        // .db files dropped there manually). Filter by the same extensions the
+        // MIME table understands.
+        $extension = strtolower(Util::getExtensionOfFile($filePath));
+        if ($extension === '' || !isset(self::MIME_TYPES[$extension])) {
+            $res->messages['error'][] = 'Unsupported file type for playback';
+            return $res;
+        }
+
+        // Validate file path - must be in allowed directories.
+        //
+        // AST_MEDIA_DIR is included to keep playback working for SoundFiles rows
+        // migrated from MikoPBX ≤ 2022.x. Back then convertAudioFile saved user
+        // uploads directly under /storage/.../media/<file>.{mp3,wav}, not under
+        // /media/custom/. After upgrading, the row's path field still points at
+        // the legacy flat layout — without this entry the UI returns 403 even
+        // though the file is physically present and the IVR plays it fine. The
+        // entry only widens reach within /media/<audio-extension> files because
+        // of the MIME_TYPES allowlist gate above.
         $allowedDirs = [
             Directories::getDir(Directories::AST_CUSTOM_SOUND_DIR) . '/',
             Directories::getDir(Directories::AST_MOH_DIR) . '/',
+            Directories::getDir(Directories::AST_MEDIA_DIR) . '/',
             Directories::getDir(Directories::AST_VAR_LIB_DIR) . '/sounds/',
             Directories::getDir(Directories::CORE_TEMP_DIR) . '/',
             '/tmp/' // Keep /tmp as fallback for temporary files
@@ -109,9 +134,9 @@ class PlaybackAction
             return $res;
         }
 
-        // Determine content type based on file extension
-        $extension = Util::getExtensionOfFile($filePath);
-        $contentType = self::MIME_TYPES[$extension] ?? 'application/octet-stream';
+        // Determine content type based on file extension. $extension was already
+        // validated against MIME_TYPES above, so the lookup never falls back here.
+        $contentType = self::MIME_TYPES[$extension];
 
         // Get audio duration for metadata
         $duration = self::getAudioDuration($filePath);

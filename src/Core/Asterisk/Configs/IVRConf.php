@@ -60,12 +60,14 @@ class IVRConf extends AsteriskConfigClass
         foreach ($db_data as $ivr) {
             /** @var \MikoPBX\Common\Models\SoundFiles $res */
             $res           = SoundFiles::findFirst($ivr['audio_message_id']);
-            $audio_message = $res === null ? '' : (string)$res->path;
+            $storedPath    = $res === null ? '' : (string)$res->path;
 
             $timeout_wait_exten = max($ivr['timeout'], 0);
-            if (file_exists($audio_message)) {
-                $audio_message = Util::trimExtensionForFile($audio_message);
-            } else {
+            // Resolve by base name so legacy DB rows (.mp3 path) still play when
+            // only the .wav sibling survived the upgrade. Falls back to the
+            // built-in 'vm-enter-num-to-call' only when nothing on disk matches.
+            $audio_message = SoundFiles::resolveAsteriskAudioPath($storedPath);
+            if ($audio_message === '') {
                 $audio_message = 'vm-enter-num-to-call';
             }
 

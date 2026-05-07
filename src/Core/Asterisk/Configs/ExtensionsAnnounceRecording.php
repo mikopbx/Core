@@ -20,7 +20,6 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Core\System\Util;
 
 /**
  * Represents the Asterisk configuration class for handling announce recordings.
@@ -70,7 +69,10 @@ class ExtensionsAnnounceRecording extends AsteriskConfigClass
             /** @var SoundFiles $fileData */
             $fileData = SoundFiles::findFirst($id);
             if ($fileData !== null) {
-                $filename = Util::trimExtensionForFile($fileData->path??'');
+                // Resolve by base name so legacy DB rows whose stored extension
+                // was removed during an upgrade still resolve to a usable
+                // sibling on disk (e.g. .mp3 in DB but only .wav on disk).
+                $filename = SoundFiles::resolveAsteriskAudioPath((string)($fileData->path ?? ''));
             }
         }
 

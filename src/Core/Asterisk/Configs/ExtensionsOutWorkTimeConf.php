@@ -365,7 +365,10 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         } else {
             /** @var SoundFiles $res */
             $res = SoundFiles::findFirst($ruleData['audio_message_id']);
-            $audio_message = ($res === null) ? '' : Util::trimExtensionForFile($res->path ?? '');
+            // Use base-name resolution so legacy paths (post-2022 upgrade where
+            // the stored .mp3 may be gone but the .wav sibling remains) still
+            // produce a usable Background()/Playback() path.
+            $audio_message = SoundFiles::resolveAsteriskAudioPath($res === null ? '' : (string)($res->path ?? ''));
             $dialplanName = "work-time-set-var-{$ruleData['id']}";
             if (
                 !str_contains($conf_out_set_var, "[$dialplanName]")
