@@ -247,6 +247,14 @@ class MikoPBXClient:
                 if response.status_code == 401 and not _auth_retried and not skip_auth_retry:
                     if self._handle_401_and_retry(response):
                         return self.get_raw(path, params, _auth_retried=True)
+                # GETs can still hit SQLite lock while background workers regenerate config.
+                if self._is_db_locked_response(response):
+                    if attempt < max_attempts - 1:
+                        delay = base_delay * (2 ** attempt)
+                        print(f"\n⚠️  Database locked on GET (attempt {attempt + 1}/{max_attempts}), "
+                              f"retrying in {delay}s...")
+                        time.sleep(delay)
+                        continue
                 # Don't raise for status - let caller check status_code
                 return response
             except (requests.exceptions.ConnectionError,

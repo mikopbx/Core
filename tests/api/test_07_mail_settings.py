@@ -22,6 +22,8 @@ Test email sending operations are safe but require valid SMTP configuration.
 # Mail OAuth2 workflow is not stable in Docker REST test container
 
 import pytest
+import requests
+import time
 from conftest import assert_api_success
 
 
@@ -29,6 +31,99 @@ class TestMailSettings:
     """Mail Settings operations tests"""
 
     original_settings = None
+
+    @staticmethod
+    def _exec_bash(api_client, command: str, timeout: int = 30) -> dict:
+        response = api_client.post('system:executeBashCommand', {
+            'command': command,
+            'timeout': timeout,
+        })
+        assert_api_success(response, f"Failed to execute: {command[:80]}")
+        return response['data']
+
+    @classmethod
+    def _get_system_log_lines(cls, api_client) -> int:
+        result = cls._exec_bash(
+            api_client,
+            'wc -l < /storage/usbdisk1/mikopbx/log/system/messages'
+        )
+        return int(result['output'].strip())
+
+    @classmethod
+    def _assert_no_new_mail_php_fatals(cls, api_client, baseline_lines: int) -> None:
+        time.sleep(1)
+        result = cls._exec_bash(
+            api_client,
+            (
+                f'tail -n +{baseline_lines + 1} '
+                '/storage/usbdisk1/mikopbx/log/system/messages '
+                '| grep -i "TestConnectionAction\\|PHPMailer\\|Fatal error" || true'
+            )
+        )
+        new_log_lines = result['output'].strip().splitlines()
+        fatal_lines = [line for line in new_log_lines if 'fatal error' in line.lower()]
+        assert not fatal_lines, (
+            "PHP Fatal errors detected after mail-settings:testConnection:\n"
+            + '\n'.join(fatal_lines)
+        )
+
+    @staticmethod
+    def _safe_test_connection_settings() -> dict:
+        return {
+            'MailSMTPHost': 'smtp.invalid',
+            'MailSMTPPort': 587,
+            'MailSMTPAuthType': 'none',
+        }
+
+    @classmethod
+    def _restore_original_settings(cls, api_client) -> None:
+        if not cls.original_settings:
+            return
+
+        restore_data = {}
+        for field in ['MailSMTPHost', 'MailSMTPPort', 'MailSMTPAuthType', 'MailFromAddress']:
+            if field in cls.original_settings:
+                restore_data[field] = cls.original_settings[field]
+
+        if restore_data:
+            api_client.patch('mail-settings', restore_data)
+
+    @staticmethod
+    def _call_test_connection(api_client, payload: dict) -> dict:
+        try:
+            return api_client.post('mail-settings:testConnection', payload)
+        except requests.exceptions.HTTPError as e:
+            return e.response.json()
+
+    @staticmethod
+    def _assert_test_connection_contract(response: dict, expected_host: str, expected_port: int) -> None:
+        assert 'result' in response, "testConnection should return structured result"
+        assert 'data' in response, "testConnection should return response data"
+        assert 'messages' in response, "testConnection should return messages"
+
+        data = response['data']
+        assert isinstance(data, dict), "testConnection data should be an object"
+        assert 'connected' in data, "testConnection data should include connected flag"
+        assert isinstance(data['connected'], bool), "connected should be boolean"
+        assert data['connected'] is False, "Safe smtp.invalid contract should not connect successfully"
+
+        diagnostics = data.get('diagnostics')
+        assert isinstance(diagnostics, dict), "testConnection should include diagnostics"
+        assert diagnostics.get('smtp_host') == expected_host, (
+            f"Expected diagnostics smtp_host={expected_host!r}, got {diagnostics.get('smtp_host')!r}"
+        )
+        assert str(diagnostics.get('smtp_port')) == str(expected_port), (
+            f"Expected diagnostics smtp_port={expected_port!r}, got {diagnostics.get('smtp_port')!r}"
+        )
+        assert diagnostics.get('auth_type') == 'none', (
+            f"Expected auth_type='none', got {diagnostics.get('auth_type')!r}"
+        )
+
+        if not response['result'] and 'error_details' in data:
+            error_details = data['error_details']
+            assert isinstance(error_details, dict), "error_details should be an object when present"
+            assert 'error_type' in error_details, "error_details should include error_type"
+            assert 'probable_cause' in error_details, "error_details should include probable_cause"
 
     def test_01_get_default_template(self, api_client):
         """Test GET /mail-settings:getDefault - Get default template"""
@@ -181,27 +276,27 @@ class TestMailSettings:
                 print(f"⚠ Unexpected error: {str(e)[:50]}")
 
     def test_08_test_connection_basic(self, api_client, is_docker):
-        """Test POST /mail-settings:testConnection - Test SMTP connection"""
-        if is_docker:
-            pytest.skip("SMTP connection workflow is not stable in Docker REST test container")
+        """Test POST /mail-settings:testConnection returns structured failure for a safe invalid SMTP host"""
+        baseline_lines = self._get_system_log_lines(api_client)
+        safe_settings = self._safe_test_connection_settings()
 
         try:
-            # Test with basic parameters
-            response = api_client.post('mail-settings:testConnection', {
+            patch_response = api_client.patch('mail-settings', safe_settings)
+            assert_api_success(patch_response, "Failed to prepare safe SMTP settings for contract test")
+
+            response = self._call_test_connection(api_client, {
                 'MailSMTPHost': 'smtp.gmail.com',
                 'MailSMTPPort': 587
             })
-
-            if response['result']:
-                print(f"✓ SMTP connection test executed (may have failed connection)")
-            else:
-                # Expected - connection might fail without credentials
-                print(f"✓ SMTP connection test rejected or failed (expected without credentials)")
-        except Exception as e:
-            if '422' in str(e) or '400' in str(e):
-                print(f"✓ Connection test validation works")
-            else:
-                print(f"⚠ Unexpected error: {str(e)[:50]}")
+            self._assert_test_connection_contract(
+                response,
+                expected_host=safe_settings['MailSMTPHost'],
+                expected_port=safe_settings['MailSMTPPort']
+            )
+            self._assert_no_new_mail_php_fatals(api_client, baseline_lines)
+            print("✓ SMTP testConnection returns a structured failure without PHP Fatal in Docker/non-Docker")
+        finally:
+            self._restore_original_settings(api_client)
 
     def test_09_get_oauth2_url_google(self, api_client):
         """Test GET /mail-settings:getOAuth2Url - Get Google OAuth2 URL"""
@@ -459,25 +554,26 @@ class TestMailSettingsEdgeCases:
             self._restore_original_settings(api_client)
 
     def test_10_test_connection_without_host(self, api_client, is_docker):
-        """Test POST /mail-settings:testConnection - Missing host"""
-        if is_docker:
-            pytest.skip("SMTP connection workflow is not stable in Docker REST test container")
+        """Test POST /mail-settings:testConnection stays structured when request payload omits host"""
+        baseline_lines = TestMailSettings._get_system_log_lines(api_client)
+        safe_settings = TestMailSettings._safe_test_connection_settings()
 
         try:
-            response = api_client.post('mail-settings:testConnection', {
-                'MailSMTPPort': 587
-                # Missing MailSMTPHost
-            })
+            patch_response = api_client.patch('mail-settings', safe_settings)
+            assert_api_success(patch_response, "Failed to prepare safe SMTP settings for contract test")
 
-            if not response['result']:
-                print(f"✓ Connection test without host rejected")
-            else:
-                print(f"⚠ Connection test without host accepted (may use saved settings)")
-        except Exception as e:
-            if '422' in str(e) or '400' in str(e):
-                print(f"✓ Connection test validation works")
-            else:
-                print(f"⚠ Unexpected error: {str(e)[:50]}")
+            response = TestMailSettings._call_test_connection(api_client, {
+                'MailSMTPPort': safe_settings['MailSMTPPort']
+            })
+            TestMailSettings._assert_test_connection_contract(
+                response,
+                expected_host=safe_settings['MailSMTPHost'],
+                expected_port=safe_settings['MailSMTPPort']
+            )
+            TestMailSettings._assert_no_new_mail_php_fatals(api_client, baseline_lines)
+            print("✓ SMTP testConnection tolerates missing host in payload and still returns structured diagnostics")
+        finally:
+            TestMailSettings._restore_original_settings(api_client)
 
 
 if __name__ == '__main__':

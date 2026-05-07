@@ -12,7 +12,7 @@ Related bug fix: manualattributes was stored as plain text instead of base64
 
 import base64
 import pytest
-from conftest import assert_api_success
+from conftest import assert_api_success, wait_for_worker_idle
 
 
 class TestSIPProvidersManualAttributes:
@@ -35,6 +35,16 @@ class TestSIPProvidersManualAttributes:
             print(f"⚠ Finalizer cleanup failed for provider {provider_id}: {str(e)[:100]}")
         finally:
             TestSIPProvidersManualAttributes.created_provider_id = None
+
+    @pytest.fixture(autouse=True)
+    def wait_for_workers_between_tests(self, api_client, is_docker):
+        """
+        Provider writes trigger config regeneration; in Docker the next test can
+        hit SQLite locks while reading the freshly-saved provider.
+        """
+        yield
+        if is_docker:
+            wait_for_worker_idle(api_client, min_wait=7)
 
     def test_01_create_provider_with_manualattributes(self, api_client):
         """Test creating SIP provider with manualattributes - should encode to base64"""

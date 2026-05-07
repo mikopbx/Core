@@ -21,6 +21,7 @@ import pytest
 import time
 import tempfile
 import os
+import uuid
 from conftest import assert_api_success
 
 
@@ -29,6 +30,15 @@ class TestFilesAPI:
 
     test_file_path = None
     test_content = "Test file content for MikoPBX Files API\nLine 2\nLine 3"
+
+    @staticmethod
+    def _put_test_file(api_client, path, content):
+        response = api_client.put(f'files/{path}', {
+            'filename': path,
+            'content': content
+        })
+        assert_api_success(response, f"Failed to prepare test file {path}")
+        return response
 
     def test_01_upload_file_simple(self, api_client):
         """Test PUT /files/{path} - Simple file upload with content"""
@@ -170,37 +180,76 @@ class TestFilesAPI:
         print(f"✓ Upload complete: d_status={final_status}, progress={final_progress}, "
               f"channelId={status_data['channelId']}")
 
-    def test_04_firmware_download_initiate(self, api_client):
-        """Test POST /files:downloadFirmware - Initiate firmware download
+    @pytest.mark.parametrize(
+        ('firmware_data', 'expected_message'),
+        [
+            (
+                {'url': 'not-a-valid-url', 'md5': '0123456789abcdef0123456789abcdef'},
+                'valid http(s) URL'
+            ),
+            (
+                {'url': 'https://example.invalid/mikopbx.img', 'md5': 'abc123'},
+                'valid MD5 hash'
+            ),
+        ]
+    )
+    def test_04_firmware_download_validates_contract(self, api_client, firmware_data, expected_message):
+        """Test POST /files:downloadFirmware request validation without starting firmware workflow.
 
-        In Docker we validate request contract with an invalid URL so firmware
-        workflow is not started and the container lifecycle is unaffected.
+        WHY: Docker tests must not trigger the real updater because it can terminate
+        the running container. Validation errors let us verify the public contract
+        and HTTP semantics while keeping the environment stable.
         """
-        firmware_data = {
-            'url': 'not-a-valid-url',
-            'md5': 'abc123def456789'
-        }
+        response = api_client.session.post(
+            f"{api_client.base_url}/files:downloadFirmware",
+            json=firmware_data,
+            headers=api_client._get_headers(),
+            timeout=30
+        )
 
-        try:
-            response = api_client.post('files:downloadFirmware', firmware_data)
-            assert response.get('result') is False, \
-                f"Invalid URL must be rejected, got successful response: {response}"
-            print(f"✓ Firmware download request with invalid URL rejected")
+        assert response.status_code == 400, \
+            f"Expected HTTP 400 for invalid payload, got {response.status_code}: {response.text}"
 
-        except Exception as e:
-            if '422' in str(e) or '400' in str(e):
-                print(f"✓ Firmware download validation works (rejected invalid URL)")
-            elif '501' in str(e):
-                print(f"⚠ Firmware download not implemented")
-            else:
-                print(f"⚠ Firmware download error: {str(e)[:100]}")
+        body = response.json()
+        assert body.get('result') is False, f"Expected result=false, got: {body}"
+        error_text = ' '.join(body.get('messages', {}).get('error', []))
+        assert expected_message in error_text, \
+            f"Expected error containing '{expected_message}', got: {body}"
 
-    def test_05_firmware_status_not_found(self, api_client):
-        """Test GET /files:firmwareStatus for non-existent firmware
+        print(f"✓ Firmware download validation rejected invalid payload: {error_text}")
 
-        WHY: Verifies the endpoint returns proper error structure (not just any error).
-        The backend returns success=false with STATUS_NOT_FOUND → HTTP 422.
-        We assert specific HTTP status code and response body fields.
+    def test_05_firmware_status_complete_from_prepared_progress_file(self, api_client):
+        """Test GET /files:firmwareStatus using prepared files instead of real downloader.
+
+        WHY: The endpoint contract is filesystem-driven. In Docker we can verify it
+        by creating the expected `progress` and image files via PUT /files/{path}
+        without spawning WorkerDownloader or touching the real firmware workflow.
+        """
+        run_id = uuid.uuid4().hex
+        firmware_dir = f'/tmp/mikopbx_firmware_status_{run_id}'
+        firmware_file = f'{firmware_dir}/update.img'
+
+        self._put_test_file(api_client, firmware_file, 'fake firmware image payload')
+        self._put_test_file(api_client, f'{firmware_dir}/progress', '100')
+
+        response = api_client.get('files:firmwareStatus', params={'filename': firmware_file})
+        assert_api_success(response, "Expected firmware status success for prepared completed download")
+
+        data = response.get('data', {})
+        assert data.get('d_status') == 'DOWNLOAD_COMPLETE', \
+            f"Expected DOWNLOAD_COMPLETE, got: {data}"
+        assert data.get('d_status_progress') == '100', \
+            f"Expected progress=100, got: {data}"
+        assert data.get('filename') == firmware_file, \
+            f"Expected filename={firmware_file}, got: {data}"
+
+        print(f"✓ Firmware status contract reports completed download for prepared files")
+
+    def test_06_firmware_status_not_found(self, api_client):
+        """Test GET /files:firmwareStatus for non-existent firmware.
+
+        WHY: Verifies the endpoint returns the documented error structure when no
+        prepared download state exists.
         """
         test_firmware = '/tmp/nonexistent_firmware_12345.img'
 

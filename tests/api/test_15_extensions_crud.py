@@ -13,7 +13,19 @@ from conftest import (
     convert_employee_fixture_to_api_format,
     generate_unique_extension,
     generate_unique_mobile,
+    wait_for_worker_idle,
 )
+
+
+@pytest.fixture(autouse=True)
+def wait_for_workers_between_tests(api_client, is_docker):
+    """
+    Employees writes enqueue WorkerModelsEvents reloads.
+    In Docker + SQLite, the next test can start while those reloads still hold locks.
+    """
+    yield
+    if is_docker:
+        wait_for_worker_idle(api_client, min_wait=7)
 
 
 def test_employee_full_crud_cycle(api_client, employee_fixtures):

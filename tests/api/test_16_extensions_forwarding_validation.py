@@ -8,7 +8,18 @@ Business rule:
 """
 
 import pytest
-from conftest import generate_unique_extension
+from conftest import generate_unique_extension, wait_for_worker_idle
+
+
+@pytest.fixture(autouse=True)
+def wait_for_workers_between_tests(api_client, is_docker):
+    """
+    Forwarding validation tests create/delete employees back-to-back.
+    Wait only in Docker so the next test does not race WorkerModelsEvents.
+    """
+    yield
+    if is_docker:
+        wait_for_worker_idle(api_client, min_wait=7)
 
 
 def test_fwd_ringlength_empty_when_no_forwarding(api_client):
