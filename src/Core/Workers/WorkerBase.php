@@ -25,6 +25,7 @@ use MikoPBX\Common\Providers\LoggerProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\BeanstalkClient;
+use MikoPBX\Core\System\Exceptions\OutOfDiskSpaceException;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -98,6 +99,53 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
     public const string REDIS_CRASH_KEY_PREFIX = 'module:crashes:';
 
     /**
+     * Redis key prefix for core worker crash tracking counters.
+     * Full key: core:crashes:{FullyQualifiedClassName} (INCR counter
+     * with 30-min EXPIRE).
+     *
+     * Core workers (everything outside the `Modules\\` namespace) cannot
+     * be disabled the way module workers can — the system needs them to
+     * function. So this counter exists only to let the supervisor
+     * suppress respawns during a sustained crash loop and emit a single
+     * ALERT-level syslog line per window, instead of letting the
+     * Sentry-capturing restart loop generate 50k events/day on a
+     * tmpfs-full or similar environmental failure. Issue #1051.
+     */
+    public const string REDIS_CORE_CRASH_KEY_PREFIX = 'core:crashes:';
+
+    /**
+     * Minimum free space (bytes) on the PID directory required to start
+     * a worker. /var/run is normally tmpfs (RAM-backed) and small; a
+     * full tmpfs makes {@see Processes::savePidFile()} fail with ENOSPC
+     * for every spawn. Refusing to start at this point — before the
+     * Sentry-capturing `__construct` body runs — short-circuits the
+     * 50k-events/day storm documented in issue #1051.
+     *
+     * 64 KiB is intentionally generous: a PID file is <16 bytes plus
+     * filesystem block overhead, so this leaves headroom for the
+     * atomic-write tmp file and a few sibling worker spawns in the
+     * same cycle without false positives on a healthy host.
+     *
+     * MUST stay strictly below
+     * {@see \MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore::DISK_WARNING_FREE_BYTES}
+     * (currently 256 KiB). The supervisor's higher threshold means it
+     * stops *spawning* before this worker-side hard floor would
+     * stop *starting* — preserving in-flight work and giving
+     * {@see \MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore::maybeCleanupOnDiskWarning()}
+     * a window to free space before workers begin to bail outright.
+     */
+    private const int PID_DIR_MIN_FREE_BYTES = 65536;
+
+    /**
+     * Exit code used when the worker refuses to start due to a full
+     * PID-file filesystem. Matches BSD's `EX_TEMPFAIL` (sysexits.h)
+     * so the supervisor / init system can recognise this as a
+     * transient, environment-driven failure rather than a code crash.
+     * Issue #1051.
+     */
+    private const int EXIT_CODE_TEMPFAIL = 75;
+
+    /**
      * Maximum number of processes that can be created
      *
      * @var int
@@ -156,6 +204,13 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
      * Constructs a WorkerBase instance.
      * Initializes signal handlers, sets up resource limits, and saves PID file.
      *
+     * Refuses to start (exits with EX_TEMPFAIL=75, no Sentry capture)
+     * when the PID directory's filesystem is critically low on space.
+     * This breaks the ENOSPC respawn loop from issue #1051: every
+     * worker would crash on `Processes::savePidFile()`, the supervisor
+     * would respawn it, and the cycle generated 50k+ Sentry events/day
+     * on a single host until the disk was freed.
+     *
      * @throws RuntimeException|Throwable If critical initialization fails
      */
     public function __construct()
@@ -175,6 +230,12 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
                 }
             }
 
+            // Pre-flight check: bail out BEFORE wiring up signal
+            // handlers / shutdown functions / Sentry-capturing catch
+            // blocks if the PID-file filesystem is out of space.
+            // Issue #1051.
+            $this->refuseStartIfPidDirFull();
+
             // Set up basic environment
             $this->setResourceLimits();
             $this->initializeSignalHandlers();
@@ -182,11 +243,86 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
 
             // Save PID and update status
             $this->savePidFile();
-
+        } catch (OutOfDiskSpaceException $e) {
+            // Disk-full is operational, not a bug. Log via raw syslog
+            // (no autoload, no DI) and exit silently — Sentry capture
+            // here is what produced the 50k-events/day storm in #1051.
+            $this->logQuietTempFailure($e->getMessage());
+            // Record the crash so the supervisor's
+            // isCoreWorkerInCrashLoop() can suppress further spawns
+            // even when the pre-flight short-circuit fires before
+            // startWorker()'s catch chain runs. Best-effort — Redis
+            // unreachable here just falls back to in-memory throttle.
+            self::recordCoreWorkerCrash(static::class, $e->getMessage());
+            exit(self::EXIT_CODE_TEMPFAIL);
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
             throw $e;
         }
+    }
+
+    /**
+     * Refuses to start the worker when the PID-file directory is on
+     * a near-full filesystem (typically a tmpfs at /var/run that has
+     * been exhausted). Throws {@see OutOfDiskSpaceException} so the
+     * surrounding catch in {@see __construct()} can route to a quiet
+     * exit without engaging Sentry. Issue #1051.
+     *
+     * @throws OutOfDiskSpaceException If free space is below the threshold
+     */
+    private function refuseStartIfPidDirFull(): void
+    {
+        // Read the directory directly from Processes::getLockFileDir()
+        // instead of going through $this->getPidFile() — the latter
+        // calls Processes::getPidFilePath() which has a Util::mwMkdir
+        // side-effect (and a $addWWWRights=true chown/chmod pass)
+        // that we want to avoid before deciding whether to start at
+        // all. Issue #1051.
+        $pidDir = Processes::getLockFileDir();
+
+        // disk_free_space() returns false on errors (missing dir,
+        // unreadable, statfs() failure). Treat unknown as "available"
+        // so the next savePidFile() can produce the real diagnostic;
+        // we are only catching the hot-path ENOSPC scenario here.
+        $free = @disk_free_space($pidDir);
+        if ($free === false) {
+            return;
+        }
+        if ($free >= self::PID_DIR_MIN_FREE_BYTES) {
+            return;
+        }
+
+        throw new OutOfDiskSpaceException(sprintf(
+            '%s: PID dir %s has only %d bytes free (threshold %d) — refusing to start',
+            static::class,
+            $pidDir,
+            (int)$free,
+            self::PID_DIR_MIN_FREE_BYTES
+        ));
+    }
+
+    /**
+     * Writes a single-line WARNING-level message to syslog using only
+     * stdlib functions (`openlog`/`syslog`/`closelog`) — no autoload,
+     * no DI, no Sentry. Used by the ENOSPC short-circuit so the
+     * fallout from a full filesystem cannot recurse into the very
+     * subsystem that needs disk space to log. Issue #1051.
+     *
+     * Severity is intentionally WARNING (not ALERT): a single-worker
+     * pre-flight refusal is operational, not "action must be taken
+     * immediately". The page-worthy signal is the supervisor-level
+     * `CORE WORKER CRASH LOOP` ALERT in
+     * {@see \MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore::isCoreWorkerInCrashLoop()}
+     * which fires once after sustained crashes — not 14 times per
+     * tmpfs-full event. Severity downgrade per issue #1051 review.
+     *
+     * @param string $message Diagnostic text to log
+     */
+    private function logQuietTempFailure(string $message): void
+    {
+        @openlog('mikopbx-worker', LOG_PID, LOG_DAEMON);
+        @syslog(LOG_WARNING, $message);
+        @closelog();
     }
 
     /**
@@ -464,9 +600,35 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
                 $worker->setWorkerState(self::STATE_RUNNING);
                 $worker->start($argv);
                 $worker->logNormalExit();
+            } catch (OutOfDiskSpaceException $e) {
+                // ENOSPC is operational, not a code defect. Skip the
+                // Sentry capture path entirely — without this the first
+                // ~50 crashes per core worker still emit events, which
+                // multiplied by ~5 affected workers in a real storm
+                // means ~250 events/30min before the supervisor's
+                // crash-loop watchdog stops spawning. Issue #1051.
+                //
+                // Order matters: still record the crash so the
+                // supervisor's Redis-based isCoreWorkerInCrashLoop()
+                // suppresses respawns; still sleep(1) to slow the
+                // tight loop until the supervisor catches up.
+                @openlog('mikopbx-worker', LOG_PID, LOG_DAEMON);
+                @syslog(LOG_NOTICE, sprintf(
+                    'Worker %s exited on ENOSPC (no Sentry): %s',
+                    $workerClassname,
+                    $e->getMessage()
+                ));
+                @closelog();
+                self::recordCoreWorkerCrash($workerClassname, $e->getMessage());
+                sleep(1);
             } catch (Throwable $e) {
                 CriticalErrorsHandler::handleExceptionWithSyslog($e);
+                // Module workers and core workers go to disjoint
+                // Redis prefixes — recordModuleCrash() exits early
+                // for core, recordCoreWorkerCrash() exits early for
+                // modules. Both are safe to call unconditionally.
                 self::recordModuleCrash($workerClassname, $e->getMessage());
+                self::recordCoreWorkerCrash($workerClassname, $e->getMessage());
                 sleep(1);
             }
         }
@@ -841,6 +1003,49 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
             $redis->set($msgKey, mb_substr($errorMessage, 0, 500), ['ex' => 1800]);
         } catch (Throwable) {
             // Silently ignore Redis errors — crash recording is best-effort
+        }
+    }
+
+    /**
+     * Records a core worker crash in Redis for crash-loop detection.
+     * Symmetric to {@see recordModuleCrash()} but covers everything
+     * outside the `Modules\\` namespace — `MikoPBX\\Core\\Workers\\*`,
+     * `MikoPBX\\PBXCoreREST\\Workers\\*`, etc. Issue #1051.
+     *
+     * Unlike module crashes, the supervisor never *disables* a core
+     * worker on threshold breach (the system needs it to function);
+     * it only suppresses the respawn until the 30-minute Redis TTL
+     * expires, breaking the Sentry-event storm without permanently
+     * losing the worker.
+     *
+     * @param string $workerClassName Fully qualified worker class name
+     * @param string $errorMessage The exception/error message (stored for diagnostics)
+     */
+    public static function recordCoreWorkerCrash(string $workerClassName, string $errorMessage): void
+    {
+        // Skip module workers — they go through recordModuleCrash().
+        // Both methods are called from startWorker(); this guard
+        // prevents double-counting under the same Redis prefix.
+        if (self::getModuleIdFromClassName($workerClassName) !== null) {
+            return;
+        }
+
+        try {
+            $di = Di::getDefault();
+            if ($di === null) {
+                return;
+            }
+            $redis = $di->getShared(RedisClientProvider::SERVICE_NAME);
+            $key = self::REDIS_CORE_CRASH_KEY_PREFIX . $workerClassName;
+
+            $redis->incr($key);
+            $redis->expire($key, 1800);
+
+            $msgKey = $key . ':last_error';
+            $redis->set($msgKey, mb_substr($errorMessage, 0, 500), ['ex' => 1800]);
+        } catch (Throwable) {
+            // Best-effort — Redis being unreachable should not amplify a
+            // worker crash into a second failure mode.
         }
     }
 

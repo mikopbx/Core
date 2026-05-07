@@ -21,6 +21,7 @@
 namespace MikoPBX\Core\System;
 
 use InvalidArgumentException;
+use MikoPBX\Core\System\Exceptions\OutOfDiskSpaceException;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use Phalcon\Di\Di;
 use RuntimeException;
@@ -73,35 +74,145 @@ class Processes
     private const PID_FILE_SUFFIX = '.pid';
 
     /**
+     * Suffix marker for atomic-rename temp PID files (`.pid.tmp.<pid>`).
+     * Kept as a constant so {@see cleanupStalePidFiles()} can sweep
+     * orphans left behind by an ENOSPC-triggered crash without
+     * duplicating the literal. Issue #1051.
+     */
+    private const PID_TMP_MARKER = '.pid.tmp.';
+
+    /**
+     * Maximum age (seconds) of an orphan `.pid.tmp.<pid>` file before
+     * {@see cleanupStalePidFiles()} unlinks it. A live worker should
+     * complete its `file_put_contents → rename` cycle in microseconds,
+     * so anything older than this is by definition a leak from a
+     * crashed atomic write (typically ENOSPC). Issue #1051.
+     */
+    private const PID_TMP_ORPHAN_AGE_SEC = 60;
+
+    /**
      * Graceful shutdown timeout in seconds
      */
     private const GRACEFUL_SHUTDOWN_TIMEOUT = 30; // Must be well under watchdog (120s)
 
     /**
-     * Cleans up stale PID files in the workers directory
-     * 
+     * Returns the directory where worker PID and temp PID files live.
+     * Single source of truth for callers outside this class
+     * ({@see WorkerSafeScriptsCore::getDiskState()},
+     * {@see WorkerBase::refuseStartIfPidDirFull()}) so they cannot
+     * drift from this class's internal `LOCK_FILE_DIR` literal.
+     * Issue #1051.
+     */
+    public static function getLockFileDir(): string
+    {
+        return self::LOCK_FILE_DIR;
+    }
+
+    /**
+     * Cleans up stale PID files in the workers directory. Thin
+     * wrapper around {@see cleanupStalePidFilesIn()} that pins the
+     * production location; the helper takes a `$dir` argument so unit
+     * tests can exercise the same logic against a sandbox.
+     *
      * @return void
      */
     private static function cleanupStalePidFiles(): void
     {
-        if (!is_dir(self::LOCK_FILE_DIR)) {
+        self::cleanupStalePidFilesIn(self::LOCK_FILE_DIR);
+    }
+
+    /**
+     * Per-directory cleanup of stale PID files. Two passes:
+     *
+     *   1. Real PID files (`*.pid`) — unlinked when the recorded PID is
+     *      no longer running. Same behaviour as before.
+     *   2. Orphan `.tmp.<pid>` files left behind by a crashed atomic
+     *      write (typically ENOSPC during {@see savePidFile()}). The
+     *      embedded PID lets a live worker recognise its own in-flight
+     *      tmp file and skip it; older files are unconditionally
+     *      unlinked to free tmpfs space and keep the directory listing
+     *      from growing unbounded. Issue #1051.
+     *
+     * Visibility is `public` so two callers can target it:
+     *   - production: {@see WorkerSafeScriptsCore::maybeCleanupOnDiskWarning()}
+     *     forces a sweep during disk pressure when the normal
+     *     `processPHPWorker()` path is gated off by the disk-watchdog;
+     *   - unit tests: exercise the algorithm against a sandbox dir.
+     *
+     * Production callers MUST pass {@see getLockFileDir()} — passing
+     * any other path bypasses the single source of truth that
+     * {@see cleanupStalePidFiles()} pins. Issue #1051.
+     *
+     * @param string $dir Absolute directory path to clean
+     * @return void
+     */
+    public static function cleanupStalePidFilesIn(string $dir): void
+    {
+        if (!is_dir($dir)) {
             return;
         }
 
-        $files = glob(self::LOCK_FILE_DIR . '/*' . self::PID_FILE_SUFFIX . '*');
-        foreach ($files as $file) {
-            // Read PID from file
-            $pid = @file_get_contents($file);
-            if ($pid === false) {
-                self::removePidFile($file);
-                continue;
-            }
-
-            // Check if process is still running
-            if (!self::isProcessRunning($pid)) {
-                self::removePidFile($file);
+        // Pass 1: real PID files only. The previous glob `*.pid*` also
+        // matched `.pid.tmp.*` files, which produced spurious "PID is not
+        // running" cleanups for in-flight atomic writes. Limit the glob
+        // to suffix-terminated names to keep that branch focused.
+        $pidFiles = glob($dir . '/*' . self::PID_FILE_SUFFIX);
+        if ($pidFiles !== false) {
+            foreach ($pidFiles as $file) {
+                $pid = @file_get_contents($file);
+                if ($pid === false) {
+                    self::removePidFile($file);
+                    continue;
+                }
+                if (!self::isProcessRunning($pid)) {
+                    self::removePidFile($file);
+                }
             }
         }
+
+        // Pass 2: orphan atomic-write temp files. Each tmp name embeds
+        // the writer's PID (see savePidFile()), so we can drop the
+        // owner check and rely on age + PID liveness alone.
+        $tmpFiles = glob($dir . '/*' . self::PID_TMP_MARKER . '*');
+        if ($tmpFiles === false) {
+            return;
+        }
+        $now = time();
+        foreach ($tmpFiles as $file) {
+            $mtime = @filemtime($file);
+            if ($mtime !== false && ($now - $mtime) < self::PID_TMP_ORPHAN_AGE_SEC) {
+                // Recent file — could belong to a worker mid-write. Skip.
+                continue;
+            }
+            // Best-effort: also skip if the embedded PID is alive and
+            // the file is on the borderline; otherwise unlink. This
+            // protects a worker that legitimately stalled between
+            // file_put_contents and rename (rare, but possible under
+            // heavy I/O pressure).
+            $writerPid = self::extractPidFromTmpName($file);
+            if ($writerPid > 0 && self::isProcessRunning((string)$writerPid)) {
+                continue;
+            }
+            @unlink($file);
+        }
+    }
+
+    /**
+     * Extracts the writer PID from an atomic-write temp filename.
+     * Filenames have the shape `<class>.pid.tmp.<pid>` — see
+     * {@see savePidFile()} for the producer side. Issue #1051.
+     *
+     * @param string $tmpFile Absolute path of the temp file
+     * @return int Writer PID, or 0 if the suffix is unrecognised
+     */
+    private static function extractPidFromTmpName(string $tmpFile): int
+    {
+        $pos = strrpos($tmpFile, self::PID_TMP_MARKER);
+        if ($pos === false) {
+            return 0;
+        }
+        $tail = substr($tmpFile, $pos + strlen(self::PID_TMP_MARKER));
+        return ctype_digit($tail) ? (int)$tail : 0;
     }
 
     /**
@@ -124,35 +235,69 @@ class Processes
 
 
     /**
-     * Saves a PID to a file with proper locking
+     * Saves a PID to a file with proper locking.
+     *
+     * On ENOSPC (errno=28, "No space left on device" — also reported by
+     * some filesystems for inode exhaustion) throws an
+     * {@see OutOfDiskSpaceException} instead of a generic RuntimeException
+     * so callers can distinguish operational failure from a code defect
+     * and skip Sentry capture / restart-loop. Issue #1051.
+     *
+     * The temp filename embeds the writer PID (`.pid.tmp.<pid>`) instead
+     * of `uniqid()` so:
+     *   - Sentry deduplicates correctly (the temp path appears in the
+     *     exception text); previously every event had a unique
+     *     fingerprint, producing 14 sibling issue groups for one root
+     *     cause.
+     *   - {@see cleanupStalePidFiles()} can verify whether the writer
+     *     is still alive before unlinking an orphan tmp file.
      *
      * @param string $pidFile Path to the PID file
      * @param int $pid Process ID to save
-     * @throws RuntimeException If unable to write PID file
+     * @throws OutOfDiskSpaceException When the filesystem is out of space/inodes
+     * @throws RuntimeException For other I/O failures (permissions, races, etc.)
      */
     public static function savePidFile(string $pidFile, int $pid): void
     {
         try {
             $pidDir = dirname($pidFile);
 
-            // Ensure PID directory exists
+            // Ensure PID directory exists. mkdir() failure on a full
+            // filesystem also surfaces ENOSPC; classify it here so the
+            // caller does not paper over it with a generic Runtime error.
             if (!is_dir($pidDir) && !mkdir($pidDir, 0755, true)) {
+                self::throwIfOutOfSpace("Could not create PID directory: $pidDir");
                 throw new RuntimeException("Could not create PID directory: $pidDir");
             }
 
-            // Use atomic write: write to temp file then rename
-            $tempFile = $pidFile . '.tmp.' . uniqid('', true);
-            
+            // Atomic write: temp file → rename. The PID-suffix keeps
+            // each writer's tmp name stable so concurrent restarts do
+            // not pile up `*.pid.tmp.<rand>` orphans on tmpfs.
+            $tempFile = $pidFile . self::PID_TMP_MARKER . $pid;
+
             if (file_put_contents($tempFile, (string)$pid, LOCK_EX) === false) {
+                self::throwIfOutOfSpace("Could not write to temp PID file: $tempFile");
                 throw new RuntimeException("Could not write to temp PID file: $tempFile");
             }
 
-            // Atomic rename - this will overwrite existing file if present
+            // Atomic rename. Overwrites an existing PID file if present
+            // (e.g. a previous crashed run left one behind).
             if (!rename($tempFile, $pidFile)) {
                 @unlink($tempFile);
+                self::throwIfOutOfSpace("Could not atomically create PID file: $pidFile");
                 throw new RuntimeException("Could not atomically create PID file: $pidFile");
             }
-
+        } catch (OutOfDiskSpaceException $e) {
+            // Already-typed disk-full failure. Log at NOTICE rather than
+            // WARNING — operational, not exceptional — and rethrow as-is
+            // so {@see WorkerBase::__construct()} can route around the
+            // Sentry capture path.
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Disk full while saving PID file ($pidFile): " . $e->getMessage(),
+                LOG_NOTICE
+            );
+            throw $e;
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(
                 __CLASS__,
@@ -161,6 +306,103 @@ class Processes
             );
             throw new RuntimeException('PID file operation failed', 0, $e);
         }
+    }
+
+    /**
+     * Inspects {@see error_get_last()} for an ENOSPC signal and, when
+     * present, throws an {@see OutOfDiskSpaceException} carrying both
+     * the caller-supplied context and the libc error message.
+     *
+     * Centralises the detection so the three failure branches in
+     * {@see savePidFile()} stay symmetric. Issue #1051.
+     *
+     * Detection strategy is belt-and-braces:
+     *
+     *   1. Match the English libc strerror "No space left on device"
+     *      (canonical across glibc/musl/uclibc under LANG=C/POSIX).
+     *   2. Match the locale-translated strerror via {@see posix_strerror()}
+     *      — covers a worker accidentally inheriting LANG=ru_RU.UTF-8
+     *      etc., where glibc returns "На устройстве не осталось…".
+     *   3. As a last resort, probe {@see disk_free_space()} on the
+     *      writable directory inferred from $context. If the fs is
+     *      effectively empty (< 4 KiB), classify as ENOSPC regardless
+     *      of message text. This catches a localised system whose
+     *      strerror text we have not anticipated, and the brief
+     *      between-syscalls race where the message disappeared from
+     *      `error_get_last()` because of an intervening @-suppressed
+     *      operation.
+     *
+     * We deliberately avoid relying on `errno` ints — PHP does not
+     * expose them on `file_put_contents`/`mkdir`/`rename` failures.
+     *
+     * @param string $context Caller-supplied description (must include
+     *                        a path so the disk_free_space probe can
+     *                        derive the target filesystem)
+     * @throws OutOfDiskSpaceException When the last error matches ENOSPC
+     */
+    private static function throwIfOutOfSpace(string $context): void
+    {
+        $err = error_get_last();
+        $msg = $err === null ? '' : (string)($err['message'] ?? '');
+
+        // (1) English strerror — fast path, covers C/POSIX locale.
+        $isEnospc = ($msg !== '' && stripos($msg, 'No space left on device') !== false);
+
+        // (2) Locale-translated strerror — only built once, cached on
+        // a static for cheap repeated lookups in restart loops.
+        if (!$isEnospc && $msg !== '' && function_exists('posix_strerror')) {
+            static $localisedEnospc = null;
+            if ($localisedEnospc === null) {
+                // 28 == ENOSPC. posix_strerror() respects LC_MESSAGES.
+                $localisedEnospc = (string)posix_strerror(28);
+            }
+            if ($localisedEnospc !== '' && stripos($msg, $localisedEnospc) !== false) {
+                $isEnospc = true;
+            }
+        }
+
+        // (3) Belt-and-braces: probe the filesystem directly. If the
+        // hosting fs is effectively empty, classify as ENOSPC even
+        // when the message text was lost or untranslated.
+        if (!$isEnospc) {
+            $probeDir = self::extractProbeDir($context);
+            if ($probeDir !== '' && is_dir($probeDir)) {
+                $free = @disk_free_space($probeDir);
+                if ($free !== false && $free < 4096) {
+                    $isEnospc = true;
+                }
+            }
+        }
+
+        if (!$isEnospc) {
+            return;
+        }
+        throw new OutOfDiskSpaceException("$context: " . ($msg !== '' ? $msg : 'disk full (probe)'));
+    }
+
+    /**
+     * Extracts a directory path from the {@see throwIfOutOfSpace()}
+     * context string for a `disk_free_space()` probe. The context is
+     * caller-formatted (`"Could not write to temp PID file: $tempFile"`,
+     * etc.); we look for the absolute-path tail and normalise it to
+     * the parent directory. Returns an empty string if no plausible
+     * path is found. Issue #1051.
+     */
+    private static function extractProbeDir(string $context): string
+    {
+        $pos = strpos($context, '/');
+        if ($pos === false) {
+            return '';
+        }
+        $path = substr($context, $pos);
+        // Strip a trailing colon-and-text combinator if the caller
+        // appended a libc message after the path (defensive — the
+        // current call sites do not, but future ones may).
+        $colon = strpos($path, ':');
+        if ($colon !== false) {
+            $path = substr($path, 0, $colon);
+        }
+        return is_dir($path) ? $path : dirname($path);
     }
 
     /**

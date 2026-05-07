@@ -93,12 +93,68 @@ class WorkerSafeScriptsCore extends WorkerBase
     private const int CRASH_LOOP_THRESHOLD = 100;
 
     /**
+     * Crash count threshold for suppressing core-worker respawns.
+     * Half of the module threshold because we cannot *disable* a
+     * core worker on breach — we can only stop spawning it for the
+     * remainder of the 30-minute Redis TTL. Lower threshold = the
+     * Sentry-event storm gets capped sooner. Issue #1051.
+     */
+    private const int CORE_CRASH_LOOP_THRESHOLD = 50;
+
+    /**
+     * Interval (seconds) between consecutive core-worker crash-loop
+     * syslog warnings per worker class. Without this, a sustained
+     * crash loop would emit one ALERT per monitoring cycle. Issue #1051.
+     */
+    private const int CORE_CRASH_LOG_INTERVAL_SEC = 300;
+
+    /**
+     * Interval (seconds) between forced PID-dir cleanup passes when
+     * disk is in `warning` state. The normal cleanup path runs inside
+     * {@see Processes::processPHPWorker()}, which the supervisor
+     * skips during disk pressure — so without a separate periodic
+     * sweep, accumulated `*.pid.tmp.*` orphans from before the fix
+     * was deployed (or from the brief race window before
+     * disk-watchdog kicked in) would persist forever. Issue #1051.
+     */
+    private const int DISK_WARNING_CLEANUP_INTERVAL_SEC = 60;
+
+    /**
      * Memory thresholds for system memory watchdog (percentage of MemTotal).
      * WARNING: stop spawning new workers, only monitor existing.
      * EMERGENCY: kill the fattest PHP process to free memory.
      */
     private const int MEMORY_WARNING_PERCENT = 15;
     private const int MEMORY_EMERGENCY_PERCENT = 5;
+
+    /**
+     * Minimum free space (bytes) on the PID-file filesystem before
+     * the supervisor switches to `disk_warning` and stops spawning
+     * new workers. /var/run is normally a small tmpfs, so this
+     * threshold is intentionally low (256 KiB) — anything tighter
+     * triggers false positives during normal worker churn.
+     * Issue #1051.
+     *
+     * MUST stay strictly above
+     * {@see \MikoPBX\Core\Workers\WorkerBase::PID_DIR_MIN_FREE_BYTES}
+     * (currently 64 KiB). The 4× headroom is deliberate: it gives
+     * {@see maybeCleanupOnDiskWarning()} a window to reclaim orphan
+     * tmp files before the worker-side pre-flight refuses outright.
+     */
+    private const int DISK_WARNING_FREE_BYTES = 262144;
+
+    // The disk-watchdog path is read from {@see Processes::getLockFileDir()}
+    // at runtime so we cannot drift from the producer's literal. The
+    // previous local DISK_WATCHDOG_PATH constant was removed when the
+    // public getter was added. Issue #1051.
+
+    /**
+     * Interval (seconds) between consecutive disk-warning syslog
+     * messages. Without this, a sustained ENOSPC condition would
+     * generate one syslog line per 5-second monitoring cycle (~17 280
+     * lines/day). Issue #1051.
+     */
+    private const int DISK_WARNING_LOG_INTERVAL_SEC = 300;
 
     /**
      * RSS threshold in bytes for logging a warning when restarting a worker.
@@ -194,6 +250,38 @@ class WorkerSafeScriptsCore extends WorkerBase
      * 'normal', 'warning', or 'emergency'.
      */
     private string $memoryState = 'normal';
+
+    /**
+     * Current PID-dir disk state flag set by getDiskState().
+     * 'normal' or 'warning'. There is no `emergency` tier because
+     * the supervisor cannot safely free tmpfs space — that is the
+     * job of WorkerLogRotate / the operator. Issue #1051.
+     */
+    private string $diskState = 'normal';
+
+    /**
+     * Timestamp of the last disk-warning syslog message. Used to
+     * rate-limit the warning to once per
+     * DISK_WARNING_LOG_INTERVAL_SEC. Issue #1051.
+     */
+    private int $lastDiskWarningTime = 0;
+
+    /**
+     * Per-class timestamps of the last core-worker crash-loop
+     * warning. Keyed by fully qualified worker class name. Used to
+     * rate-limit the ALERT log to once per
+     * CORE_CRASH_LOG_INTERVAL_SEC per worker. Issue #1051.
+     *
+     * @var array<string, int>
+     */
+    private array $lastCoreCrashWarningTime = [];
+
+    /**
+     * Timestamp of the last forced PID-dir cleanup. Used to
+     * rate-limit the periodic sweep to once per
+     * DISK_WARNING_CLEANUP_INTERVAL_SEC seconds. Issue #1051.
+     */
+    private int $lastDiskWarningCleanupTime = 0;
 
     /**
      * Cached meminfo values from current monitoring cycle.
@@ -525,6 +613,25 @@ class WorkerSafeScriptsCore extends WorkerBase
             // Check system memory state before processing workers
             $this->getSystemMemoryState();
 
+            // Check PID-dir disk state. When the tmpfs holding
+            // /var/run/php-workers fills up, every worker spawn
+            // crashes on Processes::savePidFile() with ENOSPC; the
+            // pre-flight check in WorkerBase short-circuits silently,
+            // but we should also stop *trying* to spawn so the
+            // restart-history throttle does not get exhausted on a
+            // condition the supervisor cannot fix. Issue #1051.
+            $this->getDiskState();
+
+            // Force a PID-dir cleanup pass while we are in disk
+            // pressure. The normal cleanup runs inside
+            // Processes::processPHPWorker() which the disk-watchdog
+            // skips below — without this, accumulated `*.pid.tmp.*`
+            // orphans from before the fix was deployed (or from the
+            // brief race between supervisor and worker pre-flight)
+            // would persist and prevent recovery. Rate-limited to
+            // once per DISK_WARNING_CLEANUP_INTERVAL_SEC. Issue #1051.
+            $this->maybeCleanupOnDiskWarning();
+
             // Periodic memory report (every 5 minutes)
             $this->logMemoryReport();
 
@@ -587,7 +694,9 @@ class WorkerSafeScriptsCore extends WorkerBase
             }
             if (false === $result
                 && !$this->isModuleInCrashLoop($workerClassName)
+                && !$this->isCoreWorkerInCrashLoop($workerClassName)
                 && $this->memoryState === 'normal'
+                && $this->diskState === 'normal'
                 && !$this->shouldThrottleRestart($workerClassName)
             ) {
                 $this->logWorkerRssBeforeRestart($workerClassName, $WorkerPID);
@@ -631,7 +740,9 @@ class WorkerSafeScriptsCore extends WorkerBase
         $result = ($WorkerPID !== '');
         if (false === $result
             && !$this->isModuleInCrashLoop($workerClassName)
+            && !$this->isCoreWorkerInCrashLoop($workerClassName)
             && $this->memoryState === 'normal'
+            && $this->diskState === 'normal'
             && !$this->shouldThrottleRestart($workerClassName)
         ) {
             // PID is empty here (result=false means WorkerPID===''),
@@ -691,8 +802,12 @@ class WorkerSafeScriptsCore extends WorkerBase
 
                 if ($this->isModuleInCrashLoop($workerClassName)) {
                     // Module disabled by crash-loop watchdog — logged inside isModuleInCrashLoop()
+                } elseif ($this->isCoreWorkerInCrashLoop($workerClassName)) {
+                    // Core worker crash-loop — logged inside isCoreWorkerInCrashLoop() (#1051)
                 } elseif ($this->memoryState !== 'normal') {
                     // Skip restart during memory pressure (warning or emergency)
+                } elseif ($this->diskState !== 'normal') {
+                    // Skip restart during disk pressure — logged inside getDiskState() (#1051)
                 } elseif ($this->shouldThrottleRestart($workerClassName)) {
                     // Skip restart due to throttling — logged inside shouldThrottleRestart()
                 } elseif ($failures <= self::MAX_PING_FAILURES) {
@@ -780,7 +895,17 @@ class WorkerSafeScriptsCore extends WorkerBase
                 return;
             }
 
+            if ($this->isCoreWorkerInCrashLoop($workerClassName)) {
+                // Core worker crash-loop — logged inside method (#1051)
+                return;
+            }
+
             if ($this->memoryState !== 'normal') {
+                return;
+            }
+
+            if ($this->diskState !== 'normal') {
+                // Disk pressure on PID-file fs — skip spawn (#1051)
                 return;
             }
 
@@ -891,6 +1016,75 @@ class WorkerSafeScriptsCore extends WorkerBase
     }
 
     /**
+     * Checks if a core worker is in a crash loop and should be skipped
+     * for respawn. Symmetric to {@see isModuleInCrashLoop()} but without
+     * the disable side-effect: core workers cannot be turned off, so
+     * the supervisor only suppresses the spawn until the 30-minute
+     * Redis TTL on the crash counter expires.
+     *
+     * Returns true when the caller MUST skip the spawn this cycle.
+     * Returns false for module workers (handled by isModuleInCrashLoop)
+     * and when crash count is below threshold. Issue #1051.
+     *
+     * Emits a single ALERT-level syslog line per
+     * CORE_CRASH_LOG_INTERVAL_SEC per worker class so a sustained
+     * crash loop does not flood the log.
+     *
+     * @param string $workerClassName Fully qualified worker class name
+     * @return bool True if respawn should be suppressed
+     */
+    private function isCoreWorkerInCrashLoop(string $workerClassName): bool
+    {
+        // Module workers are handled by isModuleInCrashLoop(); this
+        // method is only the fallback for core workers.
+        if (WorkerBase::getModuleIdFromClassName($workerClassName) !== null) {
+            return false;
+        }
+
+        try {
+            if (!isset($this->redis) || !$this->redis) {
+                $this->redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
+            }
+
+            $key = WorkerBase::REDIS_CORE_CRASH_KEY_PREFIX . $workerClassName;
+            $crashCount = (int)$this->redis->get($key);
+
+            if ($crashCount < self::CORE_CRASH_LOOP_THRESHOLD) {
+                return false;
+            }
+
+            $now = time();
+            $lastWarn = $this->lastCoreCrashWarningTime[$workerClassName] ?? 0;
+            if (($now - $lastWarn) >= self::CORE_CRASH_LOG_INTERVAL_SEC) {
+                $this->lastCoreCrashWarningTime[$workerClassName] = $now;
+                $lastError = $this->redis->get($key . ':last_error') ?: 'Unknown error';
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    sprintf(
+                        'CORE WORKER CRASH LOOP: %s crashed %d times in 30 minutes — suppressing respawn. Last error: %s',
+                        $workerClassName,
+                        $crashCount,
+                        $lastError
+                    ),
+                    LOG_ALERT
+                );
+            }
+            return true;
+        } catch (Throwable $e) {
+            // Best-effort: if Redis is unreachable we cannot determine
+            // crash-loop state, so let the in-memory throttle do its
+            // job. Don't surface this through Sentry — it would be a
+            // second source of noise on top of the original crash.
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "isCoreWorkerInCrashLoop check failed: " . $e->getMessage(),
+                LOG_DEBUG
+            );
+            return false;
+        }
+    }
+
+    /**
      * Checks if S3 storage is configured and enabled.
      * Caches the result for S3_CHECK_INTERVAL seconds to avoid repeated DB reads.
      *
@@ -969,6 +1163,91 @@ class WorkerSafeScriptsCore extends WorkerBase
         }
 
         return $this->memoryState;
+    }
+
+    /**
+     * Reads disk_free_space() on the PID-file directory and updates
+     * $this->diskState ('normal' or 'warning'). When in 'warning',
+     * worker check methods skip restart attempts so the throttle
+     * history does not get exhausted on an ENOSPC condition the
+     * supervisor cannot resolve.
+     *
+     * Logs are rate-limited to one line per
+     * DISK_WARNING_LOG_INTERVAL_SEC seconds. Issue #1051.
+     *
+     * @return string Current disk state
+     */
+    private function getDiskState(): string
+    {
+        $watchPath = Processes::getLockFileDir();
+        $free = @disk_free_space($watchPath);
+        if ($free === false) {
+            // statfs() failed (path missing, fs error). Treat as
+            // normal — savePidFile() will produce the real error if
+            // we actually try to spawn.
+            $this->diskState = 'normal';
+            return $this->diskState;
+        }
+
+        if ($free >= self::DISK_WARNING_FREE_BYTES) {
+            $this->diskState = 'normal';
+            return $this->diskState;
+        }
+
+        $this->diskState = 'warning';
+        $now = time();
+        if (($now - $this->lastDiskWarningTime) >= self::DISK_WARNING_LOG_INTERVAL_SEC) {
+            $this->lastDiskWarningTime = $now;
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf(
+                    'LOW DISK on %s: free=%dB (threshold %dB) — skipping worker spawns until disk is freed',
+                    $watchPath,
+                    (int)$free,
+                    self::DISK_WARNING_FREE_BYTES
+                ),
+                LOG_WARNING
+            );
+        }
+        return $this->diskState;
+    }
+
+    /**
+     * Forces a PID-dir cleanup pass during disk-pressure cycles.
+     * Rate-limited to once per DISK_WARNING_CLEANUP_INTERVAL_SEC so
+     * the supervisor does not glob the directory every 5-second
+     * cycle. Only runs when {@see $diskState} is in `warning` mode —
+     * during normal operation, the cleanup inside
+     * {@see Processes::processPHPWorker()} keeps the directory tidy.
+     * Issue #1051.
+     */
+    private function maybeCleanupOnDiskWarning(): void
+    {
+        if ($this->diskState !== 'warning') {
+            return;
+        }
+        $now = time();
+        if (($now - $this->lastDiskWarningCleanupTime) < self::DISK_WARNING_CLEANUP_INTERVAL_SEC) {
+            return;
+        }
+        $this->lastDiskWarningCleanupTime = $now;
+
+        try {
+            Processes::cleanupStalePidFilesIn(Processes::getLockFileDir());
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                'Forced PID-dir cleanup during disk pressure (issue #1051 recovery path)',
+                LOG_NOTICE
+            );
+        } catch (Throwable $e) {
+            // Best-effort — cleanup failure must not propagate, the
+            // main loop is the only thing keeping the system going.
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                'Forced cleanup failed: ' . $e->getMessage(),
+                LOG_WARNING
+            );
+        }
     }
 
     /**
@@ -1351,7 +1630,9 @@ class WorkerSafeScriptsCore extends WorkerBase
 
             if (!empty($missingInstances)
                 && !$this->isModuleInCrashLoop($workerClassName)
+                && !$this->isCoreWorkerInCrashLoop($workerClassName)
                 && $this->memoryState === 'normal'
+                && $this->diskState === 'normal'
                 && !$this->shouldThrottleRestart($workerClassName)
             ) {
                 // Record each instance spawn individually for accurate throttle counting
