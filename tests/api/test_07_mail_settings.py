@@ -25,6 +25,7 @@ import pytest
 import requests
 import time
 import json
+import shlex
 from conftest import assert_api_success
 
 
@@ -583,7 +584,7 @@ class TestMailPlainTextToggle:
             '"fresh_from_cache" => $freshFromCache'
             '], JSON_UNESCAPED_SLASHES);'
         )
-        command = "php -r " + json.dumps(php_script)
+        command = "php -r " + shlex.quote(php_script)
         response = api_client.post('system:executeBashCommand', {
             'command': command,
             'timeout': 20,
@@ -633,7 +634,7 @@ class TestMailPlainTextToggle:
             '  ->setAdminUrl("https://pbx.example.com/admin"); '
             'echo $b->buildPlainText();'
         )
-        command = "php -r " + json.dumps(php_script)
+        command = "php -r " + shlex.quote(php_script)
         response = api_client.post('system:executeBashCommand', {
             'command': command,
             'timeout': 20,

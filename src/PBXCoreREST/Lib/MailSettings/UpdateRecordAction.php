@@ -68,6 +68,8 @@ class UpdateRecordAction
                 foreach ($emailValidation['messages'] as $message) {
                     $res->messages['error'][] = $message;
                 }
+                $db->rollback();
+                PbxSettings::discardPendingCacheUpdates();
                 return $res;
             }
 
@@ -80,6 +82,8 @@ class UpdateRecordAction
                     foreach ($passwordValidation['messages'] as $message) {
                         $res->messages['error'][] = $message;
                     }
+                    $db->rollback();
+                    PbxSettings::discardPendingCacheUpdates();
                     return $res;
                 }
             }
@@ -129,6 +133,7 @@ class UpdateRecordAction
                         $res->messages['error'][] = (string)$message;
                     }
                     $db->rollback();
+                    PbxSettings::discardPendingCacheUpdates();
                     return $res;
                 }
 
@@ -140,6 +145,7 @@ class UpdateRecordAction
             }
 
             $db->commit();
+            PbxSettings::flushPendingCacheUpdates();
 
             $res->success = true;
             if ($updatedCount === 0) {
@@ -151,6 +157,7 @@ class UpdateRecordAction
 
         } catch (\Exception $e) {
             $db->rollback();
+            PbxSettings::discardPendingCacheUpdates();
             $res->messages['error'][] = $e->getMessage();
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
