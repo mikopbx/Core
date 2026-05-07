@@ -1,482 +1,147 @@
 # MikoPBX REST API Tests
 
-Comprehensive test suite for MikoPBX REST API v3 using pytest and Schemathesis.
+Pytest-based integration test suite for the MikoPBX REST API v3.
 
-## Quick Start
+The suite runs against a live MikoPBX instance (Docker container, LXC, VM, or
+cloud deployment) and covers authentication, CRUD on every domain object,
+network/firewall settings, CDR, files, modules, and security regressions.
 
-### 1. Install Dependencies
+> 87 `test_*.py` modules · ~720+ tests · sequential by file name
 
-```bash
-cd /Users/nb/PhpstormProjects/mikopbx/Core/tests/api
-pip3 install -r requirements.txt
-```
-
-### 2. Configure Environment
+## Quick start
 
 ```bash
-export MIKOPBX_API_URL="http://mikopbx-php83.localhost:8081/pbxcore/api/v3"
-export MIKOPBX_LOGIN="admin"
-export MIKOPBX_PASSWORD="123456789MikoPBX#1"
-```
+cd tests/api
 
-### 3. Run Tests
+# 1) Configure connection
+cp .env.example .env
+$EDITOR .env             # set MIKOPBX_API_URL / username / password
 
-⚠️ **IMPORTANT:** Some tests modify network settings (firewall, routes, DNS) and may break connectivity.
+# 2) Install Python deps (host or CI runner — Python 3.10+)
+pip install -r requirements.txt
 
-```bash
-# Run SAFE tests only (recommended)
+# 3) Run safe tests
 ./run-safe-tests.sh
-
-# Run all tests including dangerous ones
-pytest -v
-
-# Run dangerous network tests only (⚠️ may break connectivity)
-./run-dangerous-tests.sh
-
-# Run specific test suite
-pytest -v setup/
-
-# Run with coverage
-pytest --cov=. --cov-report=html
-
-# Run in parallel
-pytest -n auto
 ```
 
-See [DANGEROUS_NETWORK_TESTS.md](DANGEROUS_NETWORK_TESTS.md) for details about network tests.
+The default `MIKOPBX_API_URL` points at the local Docker stack
+(`https://192.168.97.2:8445/pbxcore/api/v3`). For any other target — VM, LXC,
+remote host — change the URL and credentials in `.env`. See
+[docs/configuration.md](docs/configuration.md) for all execution modes.
 
-## Project Structure
+## Layout
 
 ```
 tests/api/
-├── conftest.py              # Pytest configuration and fixtures
-├── requirements.txt         # Python dependencies
-├── README.md               # This file
+├── README.md                         # this file
+├── conftest.py                       # API client + global fixtures
+├── config.py                         # central env/.env loader
+├── pytest.ini                        # markers and discovery
+├── requirements.txt
+├── .env.example                      # documented template
 │
-├── fixtures/               # Test data (JSON)
-│   ├── index.json         # Fixture index
-│   ├── employee.json      # Extension/Employee test data
-│   ├── call_queue.json    # Call Queue test data
-│   └── ...                # Other fixtures
+├── docs/
+│   ├── configuration.md              # execution modes, env vars, .env
+│   ├── teamcity.md                   # CI integration on TeamCity
+│   ├── running-on-vm.md              # remote VM / LXC / cloud targets
+│   └── dangerous-tests.md            # network-mutating tests
 │
-├── setup/                 # Setup tests (populate MikoPBX)
-│   ├── 01_test_setup_pbx_settings.py
-│   ├── 02_test_setup_extensions.py
-│   ├── 03_test_setup_providers.py
-│   └── ...
+├── test_*.py                         # 87 sequential test modules
+├── fixtures/                         # JSON test data (16 domains) + CDR seed
+├── helpers/                          # cdr_seeder, reboot_helper, runner glue
+├── scripts/                          # remote bash helpers (CDR seed/cleanup)
+├── tools/                            # one-off generators (PHP→JSON fixtures)
 │
-├── crud/                  # CRUD tests per resource
-│   ├── test_extensions_crud.py
-│   ├── test_call_queues_crud.py
-│   └── ...
-│
-├── schemathesis/         # Property-based tests
-│   └── test_api_contracts.py
-│
-└── tools/                # Utilities
-    └── generate_fixtures.py  # PHP -> JSON converter
+├── run-safe-tests.sh                 # default runner (skips dangerous_network)
+├── run-dangerous-tests.sh            # runs only network-mutating tests
+├── run_all_tests.sh                  # legacy priority-based runner
+├── run-reboot-test.sh                # two-phase reboot orchestrator
+├── run-test-from-host.sh             # cache-clean wrapper for one test
+└── bootstrap-s3-providers.sh         # spins up Garage+MinIO via docker compose
 ```
 
-## Test Organization
+## Test execution order
 
-### Setup Tests (Phase 1)
+Files are picked up alphabetically. The numeric prefix encodes the phase:
 
-Sequential tests that populate MikoPBX with test data via REST API.
-Replaces Selenium-based data population.
+| Range          | Phase                                          |
+|----------------|------------------------------------------------|
+| `test_00_*`    | Optional clean-system reset & CDR seeding      |
+| `test_01–09_*` | Auth, ACL, passwords, settings, license, files |
+| `test_10–19_*` | Storage, sound files, extensions, providers    |
+| `test_20–29_*` | Settings, routes, queues, IVR, dialplan apps   |
+| `test_30–39_*` | Provider deletion, network, firewall, AMI/ARI  |
+| `test_40–49_*` | Sysinfo, syslog, advice, CDR, passkeys, OpenAPI|
+| `test_50–63_*` | Unified providers, files, search, public APIs  |
+| `test_64–99_*` | Security regressions, log analysis, teardown   |
 
-**Order (pytest-order):**
-1. PBX Settings (time, general)
-2. Extensions/Employees
-3. Providers (SIP, IAX)
-4. Audio Files
-5. Incoming Routes
-6. Outgoing Routes
-7. Call Queues
-8. IVR Menus
-9. Conference Rooms
-10. Dialplan Applications
-11. Out of Work Periods
-12. Firewall Rules
-13. AMI Users
-14. Modules
+`test_00_setup_clean_system.py` runs only when `ENABLE_SYSTEM_RESET=1`.
+`test_99_system_delete_all.py` is destructive and gated likewise.
 
-**Run:**
-```bash
-pytest -v setup/ --order-dependencies
-```
-
-### CRUD Tests (Phase 2)
-
-Comprehensive CRUD tests for each resource covering:
-- ✅ Create (POST /resource)
-- ✅ Read List (GET /resource)
-- ✅ Read Single (GET /resource/{id})
-- ✅ Update Full (PUT /resource/{id})
-- ✅ Update Partial (PATCH /resource/{id})
-- ✅ Delete (DELETE /resource/{id})
-- ✅ Custom Methods (e.g., /resource:copy)
-
-**Run:**
-```bash
-pytest -v crud/
-```
-
-### Security Tests
-
-**ACL Authorization Tests** (`test_02_acl.py`):
-- Tests ACL (Access Control List) authorization layer
-- Verifies role-based permissions after JWT authentication
-- Covers authentication failures (401 Unauthorized)
-- Covers authorization failures (403 Forbidden)
-- Tests request-to-ACL mapping for various URI patterns
-- Tests HTTP method to action mapping (GET→getList/getRecord, POST→create, etc.)
-- Tests public endpoint bypass
-- Tests localhost bypass
-
-**Run:**
-```bash
-pytest -v test_02_acl.py
-```
-
-### Schemathesis Tests (Phase 3)
-
-Property-based testing using OpenAPI schema:
-- Validates all endpoints against OpenAPI spec
-- Tests edge cases (boundary values, invalid data)
-- Fuzzing with generated test data
-- Contract testing
-
-**Run:**
-```bash
-pytest -v schemathesis/
-```
-
-## Fixtures
-
-Test data is loaded from JSON files in `fixtures/` directory.
-
-### Available Fixtures
-
-| Fixture Name | Records | Description |
-|-------------|---------|-------------|
-| `employee` | 26 | Extensions and employees |
-| `s_i_p_provider` | 3 | SIP providers |
-| `i_a_x_provider` | 4 | IAX providers |
-| `call_queue` | 4 | Call queues |
-| `i_v_r_menu` | 2 | IVR menus |
-| `incoming_call_rules` | 3 | Incoming routes |
-| `outgoing_call_rules` | 4 | Outgoing routes |
-| `firewall_rules` | 3 | Firewall rules |
-| `ami_user` | 2 | AMI users |
-| `conference_rooms` | 9 | Conference rooms |
-| `dialplan_applications` | 10 | Dialplan apps |
-| `audio_files` | 5 | Custom audio files |
-| `m_o_h_audio_files` | 3 | MOH audio files |
-| `out_of_work_periods` | 5 | Out of work periods |
-| `module` | 8 | PBX modules |
-| `p_b_x_settings` | 1 | PBX settings |
-
-### Using Fixtures
-
-```python
-def test_create_extension(api_client, employee_fixtures):
-    # Get specific employee from fixtures
-    employee = employee_fixtures['smith.james']
-
-    # Create extension via API
-    response = api_client.post('extensions', employee)
-
-    # Verify success
-    assert response['result'] is True
-    assert 'id' in response['data']
-```
-
-### Regenerating Fixtures
-
-If PHP Data Factories are updated:
+## Running tests
 
 ```bash
-cd tools/
-python3 generate_fixtures.py \
-  --data-dir ../../AdminCabinet/Tests/Data \
-  --output-dir ../fixtures
+# Everything except network-mutating tests (default)
+./run-safe-tests.sh
+
+# Only network-mutating tests (firewall, routes, DNS — see docs)
+./run-dangerous-tests.sh
+
+# A single file or test
+pytest -v test_01_auth.py
+pytest -v test_15_extensions_crud.py::TestExtensionsCRUD::test_01_create
+
+# By marker
+pytest -v -m "smoke"
+pytest -v -m "telephony"
+pytest -v -m "not dangerous_network"
 ```
 
-## API Client
+Available markers (see `pytest.ini` for the full list):
+`smoke`, `auth`, `telephony`, `routing`, `settings`, `security`, `files`,
+`utility`, `destructive`, `slow`, `performance`, `dangerous_network`.
 
-The `MikoPBXClient` class provides:
+## Writing new tests
 
-### Features
-- ✅ JWT authentication with access token (15 min)
-- ✅ Refresh token cookie handling (30 days)
-- ✅ Automatic token refresh
-- ✅ Retry logic for transient failures
-- ✅ Session management
-- ✅ Clean logout
+1. Pick the next free `test_NN_*.py` slot in the right phase.
+2. Use the `api_client` fixture from `conftest.py` (`MikoPBXClient`) — it
+   handles JWT login, refresh-token cookie, and retries.
+3. Load test data from `fixtures/<domain>.json` rather than inlining it.
+4. Use the `assert_api_success`, `assert_record_exists`,
+   `assert_record_deleted` helpers from `conftest.py`.
+5. Tag the test with relevant markers; add `@pytest.mark.dangerous_network`
+   for anything that mutates firewall, routes, or DNS — see
+   [docs/dangerous-tests.md](docs/dangerous-tests.md).
 
-### Usage
-
-```python
-def test_example(api_client):
-    # GET request
-    response = api_client.get('extensions', params={'limit': 10})
-
-    # POST request
-    response = api_client.post('extensions', data={
-        'number': '201',
-        'username': 'test',
-        'secret': 'password'
-    })
-
-    # PUT request (full update)
-    response = api_client.put('extensions/EXT-ABC123', data={...})
-
-    # PATCH request (partial update)
-    response = api_client.patch('extensions/EXT-ABC123', data={
-        'username': 'new_name'
-    })
-
-    # DELETE request
-    response = api_client.delete('extensions/EXT-ABC123')
-
-    # Custom method
-    response = api_client.post('extensions/EXT-ABC123:copy', data={
-        'newNumber': '202'
-    })
-```
-
-## Helper Functions
-
-### assert_api_success
+Example skeleton:
 
 ```python
-from conftest import assert_api_success
-
-def test_something(api_client):
-    response = api_client.post('extensions', data)
-    assert_api_success(response, "Failed to create extension")
-```
-
-### assert_record_exists
-
-```python
-from conftest import assert_record_exists
-
-def test_record_created(api_client):
-    record = assert_record_exists(api_client, 'extensions', 'EXT-ABC123')
-    assert record['number'] == '201'
-```
-
-### assert_record_deleted
-
-```python
-from conftest import assert_record_deleted
-
-def test_record_deleted(api_client):
-    api_client.delete('extensions/EXT-ABC123')
-    assert_record_deleted(api_client, 'extensions', 'EXT-ABC123')
-```
-
-## Writing New Tests
-
-### Test Template
-
-```python
-#!/usr/bin/env python3
-"""
-Test suite for [Resource] CRUD operations
-"""
-
 import pytest
 from conftest import assert_api_success, assert_record_exists
 
 
-class TestResourceCRUD:
-    """CRUD tests for [Resource]"""
-
-    def test_01_create_resource(self, api_client, resource_fixtures):
-        """Test POST /resource - Create new resource"""
-        test_data = resource_fixtures['test.key']
-
-        response = api_client.post('resource', test_data)
-        assert_api_success(response, "Failed to create resource")
-
-        # Store ID for other tests
-        resource_id = response['data']['id']
-        assert resource_id is not None
-
-        return resource_id
-
-    def test_02_get_list(self, api_client):
-        """Test GET /resource - Get list"""
-        response = api_client.get('resource', params={'limit': 10})
-        assert_api_success(response)
-        assert 'items' in response['data']
-        assert len(response['data']['items']) > 0
-
-    def test_03_get_record(self, api_client):
-        """Test GET /resource/{id} - Get single record"""
-        # Use ID from test_01_create_resource
-        resource_id = 'RESOURCE-12345678'
-
-        record = assert_record_exists(api_client, 'resource', resource_id)
-        assert record['name'] == 'Expected Name'
-
-    def test_04_update_full(self, api_client):
-        """Test PUT /resource/{id} - Full update"""
-        resource_id = 'RESOURCE-12345678'
-
-        update_data = {
-            'id': resource_id,
-            'name': 'Updated Name',
-            # ... all required fields
-        }
-
-        response = api_client.put(f'resource/{resource_id}', update_data)
-        assert_api_success(response)
-
-    def test_05_update_partial(self, api_client):
-        """Test PATCH /resource/{id} - Partial update"""
-        resource_id = 'RESOURCE-12345678'
-
-        patch_data = {
-            'id': resource_id,
-            'name': 'Patched Name'
-        }
-
-        response = api_client.patch(f'resource/{resource_id}', patch_data)
-        assert_api_success(response)
-
-    def test_06_delete(self, api_client):
-        """Test DELETE /resource/{id}"""
-        resource_id = 'RESOURCE-12345678'
-
-        response = api_client.delete(f'resource/{resource_id}')
-        assert_api_success(response)
-
-        assert_record_deleted(api_client, 'resource', resource_id)
+class TestExtensionsCrud:
+    def test_01_create(self, api_client, employee_fixtures):
+        data = employee_fixtures["smith.james"]
+        response = api_client.post("extensions", data)
+        assert_api_success(response, "Failed to create extension")
+        assert response["data"]["id"]
 ```
 
-## Best Practices
+## Documentation index
 
-### 1. Test Independence
-- Each test should be able to run independently
-- Use fixtures for test data, not hardcoded values
-- Clean up created resources in teardown
+- [docs/configuration.md](docs/configuration.md) — `.env`, execution modes
+  (`docker` / `api` / `ssh` / `local`), all environment variables.
+- [docs/teamcity.md](docs/teamcity.md) — TeamCity build configuration, CDR
+  seeding on remote hosts, troubleshooting.
+- [docs/running-on-vm.md](docs/running-on-vm.md) — pointing the suite at a
+  MikoPBX VM / LXC / cloud instance over REST API.
+- [docs/dangerous-tests.md](docs/dangerous-tests.md) — what
+  `dangerous_network` tests do and how to recover.
 
-### 2. Test Naming
-- Prefix with number for execution order: `test_01_`, `test_02_`
-- Use descriptive names: `test_create_extension_with_voicemail`
-- Follow pattern: `test_<action>_<resource>_<scenario>`
+## Related test suites in this repo
 
-### 3. Assertions
-- Use helper functions: `assert_api_success()`, `assert_record_exists()`
-- Check response structure: `assert 'data' in response`
-- Verify data: `assert record['field'] == expected_value`
-
-### 4. Error Handling
-- Test both success and failure cases
-- Verify error messages: `assert 'error' in response['messages']`
-- Check HTTP status codes: `response.status_code == 422`
-
-### 5. Data Management
-- Use fixtures for test data
-- Don't rely on specific IDs from fixtures
-- Create temporary data for tests, clean up after
-
-## CI/CD Integration
-
-### GitHub Actions Example
-
-```yaml
-name: API Tests
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    services:
-      mikopbx:
-        image: mikopbx/mikopbx:latest
-        ports:
-          - 8081:80
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          cd tests/api
-          pip install -r requirements.txt
-
-      - name: Run tests
-        env:
-          MIKOPBX_API_URL: http://localhost:8081/pbxcore/api/v3
-        run: |
-          cd tests/api
-          pytest -v --cov=. --cov-report=xml --cov-report=html
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./tests/api/coverage.xml
-```
-
-## Troubleshooting
-
-### Authentication Issues
-
-```bash
-# Test authentication manually
-python3 -c "
-from conftest import MikoPBXClient
-client = MikoPBXClient('http://mikopbx-php83.localhost:8081/pbxcore/api/v3', 'admin', '123456789MikoPBX#1')
-client.authenticate()
-print('Access Token:', client.access_token[:30] + '...')
-"
-```
-
-### Fixture Issues
-
-```bash
-# Verify fixtures are loaded
-pytest -v --fixtures | grep fixtures
-
-# Check specific fixture
-python3 -c "
-import json
-with open('fixtures/employee.json') as f:
-    data = json.load(f)
-    print(f'Loaded {len(data)} employees')
-"
-```
-
-### Connection Issues
-
-```bash
-# Check API is accessible
-curl http://mikopbx-php83.localhost:8081/pbxcore/api/health
-
-# Check with authentication
-TOKEN=$(curl -s -X POST http://mikopbx-php83.localhost:8081/pbxcore/api/v3/auth:login \
-  -d "login=admin&password=123456789MikoPBX%231" | \
-  python3 -c "import sys, json; print(json.load(sys.stdin)['data']['accessToken'])")
-
-curl -H "Authorization: Bearer $TOKEN" \
-  http://mikopbx-php83.localhost:8081/pbxcore/api/v3/extensions | python3 -m json.tool
-```
-
-## Resources
-
-- [MikoPBX REST API Documentation](https://docs.mikopbx.com/api)
-- [OpenAPI Specification](http://mikopbx-php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification)
-- [Pytest Documentation](https://docs.pytest.org/)
-- [Schemathesis Documentation](https://schemathesis.readthedocs.io/)
-- [Requests Library](https://requests.readthedocs.io/)
+- `tests/AdminCabinet/` — Selenium browser automation (PHPUnit).
+- `tests/Calls/` — Asterisk call-flow integration tests on port 5062.
+- `tests/pycalltests/` — PJSUA2 SIP scenarios run inside the container.
+- `tests/PBXCoreREST/` — pure PHP unit tests for the REST API layer.
