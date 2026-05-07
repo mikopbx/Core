@@ -17,7 +17,7 @@ This is a DESTRUCTIVE operation that:
 
 import os
 import pytest
-from conftest import assert_api_success
+from conftest import assert_api_success, wait_for_api_ready
 
 
 class TestSystemDeleteStatistics:
@@ -134,6 +134,7 @@ class TestSystemDeleteAllWARNING:
         os.getenv('ENABLE_DESTRUCTIVE_TESTS') != '1',
         reason="DESTRUCTIVE TEST - Set ENABLE_DESTRUCTIVE_TESTS=1 to enable"
     )
+    @pytest.mark.order("last")
     def test_DANGEROUS_delete_all_settings(self, api_client):
         """
         ⚠️ DANGER: This test WILL DELETE ALL SYSTEM DATA ⚠️
@@ -187,6 +188,7 @@ class TestSystemDeleteAllWARNING:
                 print("\n✓ Delete all operation started successfully")
                 print("  System will restart and reset to defaults")
                 print("  All data has been deleted")
+                wait_for_api_ready(api_client, timeout=300, interval=10, initial_delay=20)
             else:
                 print("\n✗ Delete all operation failed or endpoint not found")
                 if response:

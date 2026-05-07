@@ -104,7 +104,8 @@ class MikoPBXClient:
                 'password': self.password,
                 'rememberMe': 'true'
             },
-            headers={'Content-Type': 'application/x-www-form-urlencoded'}
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+            timeout=30
         )
 
         response.raise_for_status()
@@ -597,6 +598,42 @@ class MikoPBXClient:
             finally:
                 self.access_token = None
                 self.session.cookies.clear()
+
+
+def wait_for_api_ready(api_client: Optional[MikoPBXClient] = None,
+                       timeout: int = 300,
+                       interval: int = 5,
+                       initial_delay: int = 0) -> MikoPBXClient:
+    """Wait until the REST API responds after a restart and refresh auth."""
+    if initial_delay > 0:
+        print(f"\nWaiting {initial_delay} seconds before API readiness checks...")
+        time.sleep(initial_delay)
+
+    deadline = time.time() + timeout
+    attempt = 0
+    last_error = "unknown error"
+    ping_url = f"{API_URL.rstrip('/')}/system:ping"
+
+    while time.time() < deadline:
+        attempt += 1
+        try:
+            response = requests.get(ping_url, timeout=5, verify=False)
+            response.raise_for_status()
+
+            client = api_client or MikoPBXClient(API_URL, API_USERNAME, API_PASSWORD)
+            client.access_token = None
+            client.session.cookies.clear()
+            client.authenticate()
+
+            print(f"API is ready after {attempt} readiness check(s)")
+            return client
+        except Exception as e:
+            last_error = f"{type(e).__name__}: {str(e)[:120]}"
+            remaining = max(0, int(deadline - time.time()))
+            print(f"API is not ready yet (attempt {attempt}, {remaining}s left): {last_error}")
+            time.sleep(interval)
+
+    raise TimeoutError(f"API did not become ready within {timeout}s; last error: {last_error}")
 
 
 # ============================================================================

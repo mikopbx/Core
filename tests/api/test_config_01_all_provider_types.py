@@ -18,7 +18,12 @@ Then validates:
 
 import pytest
 import time
-from conftest import assert_api_success, read_file_from_container, execute_asterisk_command
+from conftest import (
+    assert_api_success,
+    execute_asterisk_command,
+    read_file_from_container,
+    wait_for_api_ready,
+)
 
 
 class TestAllProviderTypes:
@@ -332,8 +337,7 @@ class TestAllProviderTypes:
             pytest.fail(f"Failed to restart container: {response.get('messages')}")
 
         print("✓ Container restart initiated")
-        print("Waiting 10 seconds for container to fully restart...")
-        time.sleep(10)
+        wait_for_api_ready(api_client, timeout=180, interval=5, initial_delay=10)
         print("✓ Configuration regeneration completed")
 
     @pytest.mark.dependency(depends=["TestAllProviderTypes::test_12_trigger_config_regeneration"])

@@ -31,7 +31,7 @@ import os
 import time
 import pytest
 import requests
-from conftest import MikoPBXClient
+from conftest import MikoPBXClient, wait_for_worker_idle
 from config import get_config
 
 config = get_config()
@@ -271,6 +271,25 @@ class Test00SystemReset:
                 if total_items == 0:
                     print("\n✅ VERIFICATION SUCCESSFUL")
                     print("   System has been completely reset to factory defaults")
+
+                    try:
+                        response = api_client.patch(
+                            'general-settings',
+                            {'settings': {'PBXRateLimitEnabled': '0'}}
+                        )
+                        if response.get('result'):
+                            print("✓ Rate limiting disabled after system reset")
+                            time.sleep(3)
+                        else:
+                            print(
+                                "⚠️  Could not disable rate limiting after reset: "
+                                f"{response.get('messages', {})}"
+                            )
+                    except Exception as e:
+                        print(f"⚠️  Failed to disable rate limiting after reset: {e}")
+
+                    assert wait_for_worker_idle(api_client, timeout=180, min_wait=10), \
+                        "WorkerModelsEvents did not become idle after system reset"
                 else:
                     print("\n⚠️  WARNING: Some items remain:")
                     for key, value in data.items():
