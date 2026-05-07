@@ -24,34 +24,35 @@
  */
 const extensionsBulkUpload = {
     /**
-     * jQuery elements
+     * jQuery elements.
+     * Resolved in initialize() — must not call $() at module-load time.
      */
-    $uploadButton: $('#upload-button'),
-    $uploadSegment: $('#upload-segment'),
-    $previewSection: $('#preview-section'),
-    $progressSection: $('#progress-section'),
-    $resultsSection: $('#results-section'),
-    $previewTable: $('#preview-table'),
-    $importProgress: $('#import-progress'),
-    $progressLabel: $('#progress-label'),
-    $progressText: $('#progress-text'),
-    $resultMessage: $('#result-message'),
-    $totalCount: $('#total-count'),
-    $validCount: $('#valid-count'),
-    $duplicateCount: $('#duplicate-count'),
-    $errorCount: $('#error-count'),
-    $confirmImport: $('#confirm-import'),
-    $cancelImport: $('#cancel-import'),
-    $cancelImportProcess: $('#cancel-import-process'),
-    $newImport: $('#new-import'),
-    $importControls: $('#import-controls'),
-    $exportButton: $('#export-button'),
-    $downloadTemplate: $('#download-template'),
-    $importStrategy: $('#import-strategy'),
-    $exportFormat: $('#export-format'),
-    $templateFormat: $('#template-format'),
-    $numberFrom: $('#number-from'),
-    $numberTo: $('#number-to'),
+    $uploadButton: null,
+    $uploadSegment: null,
+    $previewSection: null,
+    $progressSection: null,
+    $resultsSection: null,
+    $previewTable: null,
+    $importProgress: null,
+    $progressLabel: null,
+    $progressText: null,
+    $resultMessage: null,
+    $totalCount: null,
+    $validCount: null,
+    $duplicateCount: null,
+    $errorCount: null,
+    $confirmImport: null,
+    $cancelImport: null,
+    $cancelImportProcess: null,
+    $newImport: null,
+    $importControls: null,
+    $exportButton: null,
+    $downloadTemplate: null,
+    $importStrategy: null,
+    $exportFormat: null,
+    $templateFormat: null,
+    $numberFrom: null,
+    $numberTo: null,
 
     /**
      * Current upload data
@@ -68,6 +69,35 @@ const extensionsBulkUpload = {
      * Initialize the module
      */
     initialize() {
+        // Resolve jQuery wrappers here — at module-load time jQuery may
+        // not yet be defined (Sentry MIKOPBX-MG9 pattern).
+        extensionsBulkUpload.$uploadButton = $('#upload-button');
+        extensionsBulkUpload.$uploadSegment = $('#upload-segment');
+        extensionsBulkUpload.$previewSection = $('#preview-section');
+        extensionsBulkUpload.$progressSection = $('#progress-section');
+        extensionsBulkUpload.$resultsSection = $('#results-section');
+        extensionsBulkUpload.$previewTable = $('#preview-table');
+        extensionsBulkUpload.$importProgress = $('#import-progress');
+        extensionsBulkUpload.$progressLabel = $('#progress-label');
+        extensionsBulkUpload.$progressText = $('#progress-text');
+        extensionsBulkUpload.$resultMessage = $('#result-message');
+        extensionsBulkUpload.$totalCount = $('#total-count');
+        extensionsBulkUpload.$validCount = $('#valid-count');
+        extensionsBulkUpload.$duplicateCount = $('#duplicate-count');
+        extensionsBulkUpload.$errorCount = $('#error-count');
+        extensionsBulkUpload.$confirmImport = $('#confirm-import');
+        extensionsBulkUpload.$cancelImport = $('#cancel-import');
+        extensionsBulkUpload.$cancelImportProcess = $('#cancel-import-process');
+        extensionsBulkUpload.$newImport = $('#new-import');
+        extensionsBulkUpload.$importControls = $('#import-controls');
+        extensionsBulkUpload.$exportButton = $('#export-button');
+        extensionsBulkUpload.$downloadTemplate = $('#download-template');
+        extensionsBulkUpload.$importStrategy = $('#import-strategy');
+        extensionsBulkUpload.$exportFormat = $('#export-format');
+        extensionsBulkUpload.$templateFormat = $('#template-format');
+        extensionsBulkUpload.$numberFrom = $('#number-from');
+        extensionsBulkUpload.$numberTo = $('#number-to');
+
         console.log('🎯 [BulkUpload] Module initialization started');
 
         // Initialize tabs with event handler to clear messages

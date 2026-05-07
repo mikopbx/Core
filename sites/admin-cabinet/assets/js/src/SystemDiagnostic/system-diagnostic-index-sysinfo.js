@@ -25,14 +25,18 @@
 const systemDiagnosticSysyinfo = {
     viewer: '',
     receivedInfo: false,
-    $tabMenuItems: $('#system-diagnostic-menu .item'),
-    $dimmer: $('#sysinfo-dimmer'),
-    $contentFiled: $('#sysinfo-content-readonly'),
+    $tabMenuItems: null,
+    $dimmer: null,
+    $contentFiled: null,
 
     /**
      * Initializes the system diagnostic system information view.
      */
     initialize() {
+        systemDiagnosticSysyinfo.$tabMenuItems = $('#system-diagnostic-menu .item');
+        systemDiagnosticSysyinfo.$dimmer = $('#sysinfo-dimmer');
+        systemDiagnosticSysyinfo.$contentFiled = $('#sysinfo-content-readonly');
+
         const aceHeight = window.innerHeight - 300;
 
         // Set the minimum height of the system information container

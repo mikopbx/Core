@@ -26,27 +26,28 @@ const fail2BanIndex = {
 
     /**
      * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#fail2ban-settings-form'),
+    $formObj: null,
 
     /**
      * The list of banned IPs
      * @type {jQuery}
      */
-    $bannedIpListTable: $('#banned-ip-list-table'),
+    $bannedIpListTable: null,
 
     /**
      * The parent segment containing the banned IPs tab (for dimmer overlay)
      * @type {jQuery}
      */
-    $bannedIpTabSegment: $('#banned-ip-list-table').closest('.segment'),
+    $bannedIpTabSegment: null,
 
     /**
      * jQuery object for the security preset slider.
      * @type {jQuery}
      */
-    $securityPresetSlider: $('#SecurityPresetSlider'),
+    $securityPresetSlider: null,
 
     /**
      * Security preset definitions.
@@ -100,13 +101,13 @@ const fail2BanIndex = {
      * The unban buttons
      * @type {jQuery}
      */
-    $unbanButtons: $('.unban-button'),
+    $unbanButtons: null,
 
     /**
      * The global search input element.
      * @type {jQuery}
      */
-    $globalSearch: $('#global-search'),
+    $globalSearch: null,
 
     /**
      * Validation rules for the form fields before submission.
@@ -117,6 +118,13 @@ const fail2BanIndex = {
 
     // This method initializes the Fail2Ban management interface.
     initialize() {
+        fail2BanIndex.$formObj = $('#fail2ban-settings-form');
+        fail2BanIndex.$bannedIpListTable = $('#banned-ip-list-table');
+        fail2BanIndex.$bannedIpTabSegment = fail2BanIndex.$bannedIpListTable.closest('.segment');
+        fail2BanIndex.$securityPresetSlider = $('#SecurityPresetSlider');
+        fail2BanIndex.$unbanButtons = $('.unban-button');
+        fail2BanIndex.$globalSearch = $('#global-search');
+
         $('#fail2ban-tab-menu .item').tab();
         fail2BanIndex.initializeDataTable();
         fail2BanIndex.initializeForm();

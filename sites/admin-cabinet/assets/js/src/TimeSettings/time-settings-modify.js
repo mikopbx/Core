@@ -27,9 +27,10 @@ const timeSettingsModify = {
 
     /**
      * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#time-settings-form'),
+    $formObj: null,
 
     /**
      * Original settings data from API
@@ -59,6 +60,8 @@ const timeSettingsModify = {
      * Initializes the time settings.
      */
     initialize() {
+        timeSettingsModify.$formObj = $('#time-settings-form');
+
         // Load current settings from API
         timeSettingsModify.loadSettings();
 

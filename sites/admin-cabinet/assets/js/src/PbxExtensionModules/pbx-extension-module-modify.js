@@ -25,21 +25,22 @@
 const pbxExtensionModuleModify = {
     /**
      * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#pbx-extension-modify-form'),
+    $formObj: null,
 
     /**
      * jQuery object for the back button.
      * @type {jQuery}
      */
-    $backButton: $('#back-to-list-button'),
+    $backButton: null,
 
     /**
      * jQuery object for the dropdown menu.
      * @type {jQuery}
      */
-    $dropdownMenuGroups: $('#menu-group'),
+    $dropdownMenuGroups: null,
 
     /**
      * Validation rules for the form fields before submission.
@@ -61,6 +62,10 @@ const pbxExtensionModuleModify = {
      * Initializes the module.
      */
     initialize() {
+        pbxExtensionModuleModify.$formObj = $('#pbx-extension-modify-form');
+        pbxExtensionModuleModify.$backButton = $('#back-to-list-button');
+        pbxExtensionModuleModify.$dropdownMenuGroups = $('#menu-group');
+
         pbxExtensionModuleModify.$dropdownMenuGroups.dropdown();
         pbxExtensionModuleModify.initializeForm();
     },

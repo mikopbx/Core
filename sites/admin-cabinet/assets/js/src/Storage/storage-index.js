@@ -24,34 +24,35 @@
 const storageIndex = {
     /**
      * jQuery object for the local storage form (Tab 2).
-     * Sends data to: PATCH /pbxcore/api/v3/storage
+     * Sends data to: PATCH /pbxcore/api/v3/storage.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#local-storage-form'),
+    $formObj: null,
 
     /**
      * jQuery object for the submit button (unique to this form).
      * @type {jQuery}
      */
-    $submitButton: $('#submitbutton-local'),
+    $submitButton: null,
 
     /**
      * jQuery object for the dropdown submit (unique to this form).
      * @type {jQuery}
      */
-    $dropdownSubmit: $('#dropdownSubmit-local'),
+    $dropdownSubmit: null,
 
     /**
      * jQuery object for the dirty field (unique to this form).
      * @type {jQuery}
      */
-    $dirrtyField: $('#dirrty-local'),
+    $dirrtyField: null,
 
     /**
      * jQuery object for the records retention period slider.
      * @type {jQuery}
      */
-    $recordsSavePeriodSlider: $('#PBXRecordSavePeriodSlider'),
+    $recordsSavePeriodSlider: null,
 
 
     /**
@@ -81,6 +82,12 @@ const storageIndex = {
      * Initialize module with event bindings and component initializations.
      */
     initialize() {
+        storageIndex.$formObj = $('#local-storage-form');
+        storageIndex.$submitButton = $('#submitbutton-local');
+        storageIndex.$dropdownSubmit = $('#dropdownSubmit-local');
+        storageIndex.$dirrtyField = $('#dirrty-local');
+        storageIndex.$recordsSavePeriodSlider = $('#PBXRecordSavePeriodSlider');
+
         // Enable tab navigation
         $('#storage-menu').find('.item').tab({
                 history: true,

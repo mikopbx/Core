@@ -28,63 +28,64 @@ const customFile = {
 
     /**
      * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#custom-file-form'),
+    $formObj: null,
 
     /**
      * jQuery object for the tab menu.
      * @type {jQuery}
      */
-    $tabMenu: $('#custom-files-menu .item'),
+    $tabMenu: null,
 
     /**
      * jQuery object for the mode select.
      * @type {jQuery}
      */
-    $modeDropDown: $('#mode-dropdown'),
+    $modeDropDown: null,
 
     /**
      * jQuery object for the hidden custom mode input.
      * @type {jQuery}
      */
-    $modeCustomInput: $('#mode-custom-value'),
+    $modeCustomInput: null,
 
     /**
      * jQuery object for the tab with original file content.
      * @type {jQuery}
      */
-    $originalTab: $('a[data-tab="original"]'),
+    $originalTab: null,
 
     /**
      * jQuery object for the tab with user content/script editor.
      * @type {jQuery}
      */
-    $editorTab: $('a[data-tab="editor"]'),
+    $editorTab: null,
 
     /**
      * jQuery object for the tab with resulted file content.
      * @type {jQuery}
      */
-    $resultTab: $('a[data-tab="result"]'),
+    $resultTab: null,
 
     /**
      * jQuery element for the main content container.
      * @type {jQuery}
      */
-    $mainContainer: $('#main-content-container'),
+    $mainContainer: null,
 
     /**
      * jQuery object for the filepath input field.
      * @type {jQuery}
      */
-    $filepathInput: $('#filepath'),
+    $filepathInput: null,
 
     /**
      * jQuery object for the filepath field container.
      * @type {jQuery}
      */
-    $filepathField: $('#filepath-field'),
+    $filepathField: null,
 
 
     /**
@@ -211,8 +212,13 @@ const customFile = {
      * Sets up the dropdown, initializes Ace editor, form, and retrieves file content from the server.
      */
     initialize() {
-
         // Initialize jQuery objects after DOM is ready
+        customFile.$formObj = $('#custom-file-form');
+        customFile.$tabMenu = $('#custom-files-menu .item');
+        customFile.$originalTab = $('a[data-tab="original"]');
+        customFile.$editorTab = $('a[data-tab="editor"]');
+        customFile.$resultTab = $('a[data-tab="result"]');
+        customFile.$mainContainer = $('#main-content-container');
         customFile.$filepathInput = $('#filepath');
         customFile.$filepathField = $('#filepath-field');
         customFile.$modeDropDown = $('#mode-dropdown');

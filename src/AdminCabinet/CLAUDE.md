@@ -210,10 +210,12 @@ src/
 
 ```javascript
 const extensionsIndex = {
-    $extensionsList: $('#extensions-table'),
+    // jQuery wrappers — set to null and resolved inside initialize().
+    $extensionsList: null,
     dataTable: {},
 
     initialize() {
+        extensionsIndex.$extensionsList = $('#extensions-table');
         extensionsIndex.initializeDataTable();
         // Event handlers...
     },
@@ -231,6 +233,15 @@ $(document).ready(() => {
     extensionsIndex.initialize();
 });
 ```
+
+**Never call `$()` in top-level object-literal initialisers.** Issue #1054
+(Sentry MIKOPBX-MG9) was caused by `$formObj: $('#login-form')` in the
+literal of `loginForm`: `$()` runs at script-parse time, so if jQuery
+hasn't bound `window.$` yet (extensions, slow CDN, CSP-induced reorder)
+the whole module throws `ReferenceError: $ is not defined` and never
+publishes `initialize()`. Always declare jQuery properties as `null` and
+assign them inside `initialize()` (or via a lazy getter for objects used
+without an explicit init step, e.g. `UserMessage.getMessagesDiv()`).
 
 ### Form Handling
 

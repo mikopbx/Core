@@ -22,10 +22,14 @@
  * IVR menu edit form management module
  */
 const ivrMenuModify = {
-  $formObj: $('#ivr-menu-form'),
-  $number: $('#extension'),
-  $actionsPlace: $('#actions-place'),
-  $rowTemplate: $('#row-template'),
+  /**
+   * Resolved in initialize() — must not call $() at module-load time.
+   * @type {jQuery}
+   */
+  $formObj: null,
+  $number: null,
+  $actionsPlace: null,
+  $rowTemplate: null,
   actionsRowsCount: 0,
   defaultExtension: '',
 
@@ -83,6 +87,11 @@ const ivrMenuModify = {
   },
 
   initialize() {
+      ivrMenuModify.$formObj = $('#ivr-menu-form');
+      ivrMenuModify.$number = $('#extension');
+      ivrMenuModify.$actionsPlace = $('#actions-place');
+      ivrMenuModify.$rowTemplate = $('#row-template');
+
       // Add handler to dynamically check if the input number is available
       let timeoutId;
       ivrMenuModify.$number.on('input', () => {

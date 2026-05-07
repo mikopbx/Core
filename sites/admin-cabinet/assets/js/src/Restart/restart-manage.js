@@ -27,9 +27,10 @@ const restart = {
 
     /**
      * jQuery object for the active calls modal.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $modal: $('#active-calls-modal'),
+    $modal: null,
 
     /**
      * Current action type: 'restart' or 'shutdown'.
@@ -41,6 +42,8 @@ const restart = {
      * Initializes the restart object by attaching event listeners to the restart and shutdown buttons.
      */
     initialize() {
+        restart.$modal = $('#active-calls-modal');
+
         // Initialize modal
         restart.$modal.modal({
             closable: false,

@@ -24,24 +24,28 @@
  * @module networks
  */
 const networks = {
-    $getMyIpButton: $('#getmyip'),
+    /**
+     * Resolved in initialize() — must not call $() at module-load time.
+     * @type {jQuery}
+     */
+    $getMyIpButton: null,
 
     /**
      * jQuery object for the form.
      * @type {jQuery}
      */
-    $formObj: $('#network-form'),
+    $formObj: null,
 
-    $dropDowns: $('#network-form .dropdown'),
-    $extipaddr: $('#extipaddr'),
-    $ipaddressInput: $('.ipaddress'),
+    $dropDowns: null,
+    $extipaddr: null,
+    $ipaddressInput: null,
     vlansArray: {},
 
     /**
      * jQuery object for the elements with we should hide from the form for docker installation.
      * @type {jQuery}
      */
-    $notShowOnDockerDivs: $('.do-not-show-if-docker'),
+    $notShowOnDockerDivs: null,
 
     /**
      * Validation rules for the form fields before submission.
@@ -81,6 +85,13 @@ const networks = {
      * Initializes the network settings form.
      */
     initialize() {
+        networks.$getMyIpButton = $('#getmyip');
+        networks.$formObj = $('#network-form');
+        networks.$dropDowns = $('#network-form .dropdown');
+        networks.$extipaddr = $('#extipaddr');
+        networks.$ipaddressInput = $('.ipaddress');
+        networks.$notShowOnDockerDivs = $('.do-not-show-if-docker');
+
         // Load configuration via REST API
         networks.loadConfiguration();
 
@@ -1791,9 +1802,13 @@ $.fn.form.settings.rules.validHostname = (value) => {
  * Manages static route configuration when multiple network interfaces exist
  */
 const StaticRoutesManager = {
-    $table: $('#static-routes-table'),
-    $section: $('#static-routes-section'),
-    $addButton: $('#add-new-route'),
+    /**
+     * jQuery wrappers — resolved in initialize() to avoid module-load
+     * `$ is not defined` (Sentry MIKOPBX-MG9 / issue #1054).
+     */
+    $table: null,
+    $section: null,
+    $addButton: null,
     $tableContainer: null,
     $emptyPlaceholder: null,
     routes: [],
@@ -1804,6 +1819,9 @@ const StaticRoutesManager = {
      */
     initialize() {
         // Cache elements
+        StaticRoutesManager.$table = $('#static-routes-table');
+        StaticRoutesManager.$section = $('#static-routes-section');
+        StaticRoutesManager.$addButton = $('#add-new-route');
         StaticRoutesManager.$emptyPlaceholder = $('#static-routes-empty-placeholder');
         StaticRoutesManager.$tableContainer = $('#static-routes-table-container');
 

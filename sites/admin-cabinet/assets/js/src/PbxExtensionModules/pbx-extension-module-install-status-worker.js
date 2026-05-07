@@ -28,24 +28,22 @@
 const installStatusLoopWorker = {
     /**
      * The jQuery object representing the progress bar element in the DOM.
-     * Used to visually indicate the progress of module installation or updates.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $progressBar: $('#upload-progress-bar'),
+    $progressBar: null,
 
     /**
      * The jQuery object for the container of the progress bar.
-     * This element is shown and hidden based on the presence of active installation or update processes.
      * @type {jQuery}
      */
-    $progressBarBlock: $('#upload-progress-bar-block'),
+    $progressBarBlock: null,
 
     /**
      * The jQuery object for the label element associated with the progress bar.
-     * Used to display textual information about the current stage of the installation or update process.
      * @type {jQuery}
      */
-    $progressBarLabel: $('#upload-progress-bar-label'),
+    $progressBarLabel: null,
 
     /**
      * The EventSource object used for receiving real-time updates from the server about module installation statuses.
@@ -76,6 +74,10 @@ const installStatusLoopWorker = {
      * Initializes the installStatusLoopWorker module by setting up the connection to receive server-sent events.
      */
     initialize(){
+        installStatusLoopWorker.$progressBar = $('#upload-progress-bar');
+        installStatusLoopWorker.$progressBarBlock = $('#upload-progress-bar-block');
+        installStatusLoopWorker.$progressBarLabel = $('#upload-progress-bar-label');
+
         EventBus.subscribe(this.channelId, data => {
            installStatusLoopWorker.processModuleInstallation(data);
         });

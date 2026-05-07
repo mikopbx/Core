@@ -26,87 +26,88 @@
 const s3StorageIndex = {
     /**
      * jQuery object for the S3 storage form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#s3-storage-form'),
+    $formObj: null,
 
     /**
      * jQuery object for the submit button (unique to this form).
      * @type {jQuery}
      */
-    $submitButton: $('#submitbutton-s3'),
+    $submitButton: null,
 
     /**
      * jQuery object for the dropdown submit (unique to this form).
      * @type {jQuery}
      */
-    $dropdownSubmit: $('#dropdownSubmit-s3'),
+    $dropdownSubmit: null,
 
     /**
      * jQuery object for the dirty field (unique to this form).
      * @type {jQuery}
      */
-    $dirrtyField: $('#dirrty-s3'),
+    $dirrtyField: null,
 
     /**
      * jQuery object for the S3 local retention period slider.
      * @type {jQuery}
      */
-    $s3LocalDaysSlider: $('#PBXRecordS3LocalDaysSlider'),
+    $s3LocalDaysSlider: null,
 
     /**
      * jQuery object for S3 enabled checkbox.
      * @type {jQuery}
      */
-    $s3EnabledCheckbox: $('#s3-enabled-checkbox'),
+    $s3EnabledCheckbox: null,
 
     /**
      * jQuery object for S3 settings group container.
      * @type {jQuery}
      */
-    $s3SettingsGroup: $('#s3-settings-group'),
+    $s3SettingsGroup: null,
 
     /**
      * jQuery object for test S3 connection button.
      * @type {jQuery}
      */
-    $testS3Button: $('#test-s3-connection'),
+    $testS3Button: null,
 
     /**
      * jQuery object for S3 stats container.
      * @type {jQuery}
      */
-    $s3StatsContainer: $('#s3-stats-container'),
+    $s3StatsContainer: null,
 
     /**
      * jQuery object for S3 stats message element.
      * @type {jQuery}
      */
-    $s3StatsMessage: $('#s3-stats-message'),
+    $s3StatsMessage: null,
 
     /**
      * jQuery object for S3 stats header.
      * @type {jQuery}
      */
-    $s3StatsHeader: $('#s3-stats-header'),
+    $s3StatsHeader: null,
 
     /**
      * jQuery object for S3 stats details.
      * @type {jQuery}
      */
-    $s3StatsDetails: $('#s3-stats-details'),
+    $s3StatsDetails: null,
 
     /**
      * jQuery object for the provider preset dropdown.
      * @type {jQuery}
      */
-    $presetDropdown: $('#s3-provider-preset-dropdown'),
+    $presetDropdown: null,
 
     /**
      * jQuery object for the endpoint input (cached for placeholder updates).
      * @type {jQuery}
      */
-    $s3EndpointInput: $('#s3-storage-form input[name="s3_endpoint"]'),
+    $s3EndpointInput: null,
 
     /**
      * Provider presets received from /s3-storage GET response.
@@ -214,6 +215,21 @@ const s3StorageIndex = {
      * Initialize S3 storage module
      */
     initialize() {
+        s3StorageIndex.$formObj = $('#s3-storage-form');
+        s3StorageIndex.$submitButton = $('#submitbutton-s3');
+        s3StorageIndex.$dropdownSubmit = $('#dropdownSubmit-s3');
+        s3StorageIndex.$dirrtyField = $('#dirrty-s3');
+        s3StorageIndex.$s3LocalDaysSlider = $('#PBXRecordS3LocalDaysSlider');
+        s3StorageIndex.$s3EnabledCheckbox = $('#s3-enabled-checkbox');
+        s3StorageIndex.$s3SettingsGroup = $('#s3-settings-group');
+        s3StorageIndex.$testS3Button = $('#test-s3-connection');
+        s3StorageIndex.$s3StatsContainer = $('#s3-stats-container');
+        s3StorageIndex.$s3StatsMessage = $('#s3-stats-message');
+        s3StorageIndex.$s3StatsHeader = $('#s3-stats-header');
+        s3StorageIndex.$s3StatsDetails = $('#s3-stats-details');
+        s3StorageIndex.$presetDropdown = $('#s3-provider-preset-dropdown');
+        s3StorageIndex.$s3EndpointInput = $('#s3-storage-form input[name="s3_endpoint"]');
+
         // Initialize S3 local retention period slider with default max (all options available)
         const defaultMaxIndex = s3StorageIndex.s3LocalDaysPeriod.length - 1;
         s3StorageIndex.initializeSlider(defaultMaxIndex);

@@ -24,9 +24,11 @@
 const sshConsole = {
     /**
      * jQuery object for the SSH console menu link.
+     * Resolved in initialize() — must not call $() at module-load time
+     * because jQuery may not yet be bound to window.$.
      * @type {jQuery}
      */
-    $menuLink: $(`a[href$="${globalRootUrl}console/index/"]`),
+    $menuLink: null,
 
     /**
      * SSH console link.
@@ -50,6 +52,7 @@ const sshConsole = {
      * Initializes the SSH console functionality.
      */
     initialize() {
+        sshConsole.$menuLink = $(`a[href$="${globalRootUrl}console/index/"]`);
         if (!sshConsole.$menuLink.length) {
             return;
         }

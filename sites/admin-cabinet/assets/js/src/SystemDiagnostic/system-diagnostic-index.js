@@ -22,20 +22,23 @@
 const systemDiagnostic = {
     /**
      * jQuery element for the tab menu items.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $tabMenuItems: $('#system-diagnostic-menu .item'),
+    $tabMenuItems: null,
 
     /**
      * jQuery element for the main content container.
      * @type {jQuery}
      */
-    $mainContainer: $('#main-content-container'),
+    $mainContainer: null,
 
     /**
      * Initializes the system diagnostic tabs and menu.
      */
     initialize() {
+        systemDiagnostic.$tabMenuItems = $('#system-diagnostic-menu .item');
+        systemDiagnostic.$mainContainer = $('#main-content-container');
         systemDiagnostic.$tabMenuItems.tab();
         systemDiagnostic.$tabMenuItems.tab('change tab', 'show-log');
         systemDiagnostic.$mainContainer.removeClass('container');

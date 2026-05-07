@@ -31,14 +31,17 @@ const connectionCheckWorker = {
 
     /**
      * jQuery object for the no connection dimmer element.
+     * Resolved in initialize() — must not call $() at module-load time
+     * because jQuery may not yet be bound to window.$.
      * @type {jQuery}
      */
-    $connectionDimmer: $('#connection-dimmer'),
+    $connectionDimmer: null,
 
     /**
      * Initialize the connection check worker.
      */
     initialize() {
+        connectionCheckWorker.$connectionDimmer = $('#connection-dimmer');
         EventBus.subscribe('connection-status', data => {
             connectionCheckWorker.cbAfterResponse(data);
         });

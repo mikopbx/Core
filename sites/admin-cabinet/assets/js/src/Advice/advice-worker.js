@@ -38,15 +38,16 @@ const adviceWorker = {
 
     /**
      * jQuery element for advice container.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $advice: $('#advice'),
+    $advice: null,
 
     /**
      * jQuery element for advice bell button.
      * @type {jQuery}
      */
-    $adviceBellButton: $('#show-advice-button'),
+    $adviceBellButton: null,
 
     /**
      * Storage key for raw advice data
@@ -64,6 +65,8 @@ const adviceWorker = {
      * Initializes the advice worker.
      */
     initialize() {
+        adviceWorker.$advice = $('#advice');
+        adviceWorker.$adviceBellButton = $('#show-advice-button');
         adviceWorker.showPreviousAdvice();
         EventBus.subscribe('advice', data => {
             adviceWorker.cbAfterResponse(data);

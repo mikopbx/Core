@@ -28,9 +28,10 @@ const installationFromZip = {
     /**
      * The jQuery object representing the upload button element in the DOM.
      * Users interact with this button to select and upload ZIP files containing new extensions.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $uploadButton: $('#add-new-button'),
+    $uploadButton: null,
 
 
     /**
@@ -38,21 +39,21 @@ const installationFromZip = {
      * This element is shown during the file upload process to provide visual feedback to the user.
      * @type {jQuery}
      */
-    $progressBarBlock: $('#upload-progress-bar-block'),
+    $progressBarBlock: null,
 
     /**
      * The jQuery object for the actual progress bar element.
      * It visually represents the progress of the file upload operation to the user.
      * @type {jQuery}
      */
-    $progressBar: $('#upload-progress-bar'),
+    $progressBar: null,
 
     /**
      * The jQuery object for the label element associated with the progress bar.
      * This label provides textual feedback about the upload status (e.g., percentage completed, errors).
      * @type {jQuery}
      */
-    $progressBarLabel: $('#upload-progress-bar-label'),
+    $progressBarLabel: null,
 
     /**
      * A flag indicating whether a file upload is currently in progress.
@@ -72,6 +73,11 @@ const installationFromZip = {
      * and attaching event listeners for file uploads.
      */
     initialize() {
+        installationFromZip.$uploadButton = $('#add-new-button');
+        installationFromZip.$progressBarBlock = $('#upload-progress-bar-block');
+        installationFromZip.$progressBar = $('#upload-progress-bar');
+        installationFromZip.$progressBarLabel = $('#upload-progress-bar-label');
+
         installationFromZip.$progressBar.hide();
         FilesAPI.attachToBtn('add-new-button', ['zip'], installationFromZip.cbResumableUploadFile);
     },

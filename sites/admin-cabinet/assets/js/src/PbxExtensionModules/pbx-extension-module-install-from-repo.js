@@ -36,28 +36,29 @@ const installationFromRepo = {
 
     /**
      * jQuery object for the button responsible for updating all installed modules.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $btnUpdateAllModules: $('#update-all-modules-button'),
+    $btnUpdateAllModules: null,
 
     /**
      * jQuery object for the block that contains the progress bar, used to indicate
      * the progress of module installation or updating processes.
      * @type {jQuery}
      */
-    $progressBarBlock: $('#upload-progress-bar-block'),
+    $progressBarBlock: null,
 
     /**
      * jQuery object for the installation module modal form.
      * @type {jQuery}
      */
-    $installModuleModalForm: $('#install-modal-form'),
+    $installModuleModalForm: null,
 
     /**
      * jQuery object for the update changelog confirmation modal.
      * @type {jQuery}
      */
-    $updateChangelogModal: $('#update-changelog-modal'),
+    $updateChangelogModal: null,
 
     /**
      * Monotonically increasing token bumped each time the changelog modal is opened.
@@ -74,6 +75,11 @@ const installationFromRepo = {
      * and hides UI elements that are not immediately needed.
      */
     initialize() {
+        installationFromRepo.$btnUpdateAllModules = $('#update-all-modules-button');
+        installationFromRepo.$progressBarBlock = $('#upload-progress-bar-block');
+        installationFromRepo.$installModuleModalForm = $('#install-modal-form');
+        installationFromRepo.$updateChangelogModal = $('#update-changelog-modal');
+
         installationFromRepo.initializeButtonEvents();
         installationFromRepo.$progressBarBlock.hide();
         installationFromRepo.$btnUpdateAllModules.hide(); // Until at least one update available

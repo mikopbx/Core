@@ -26,21 +26,22 @@
 const mailSettings = {
     /**
      * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#mail-settings-form'),
+    $formObj: null,
 
     /**
      * jQuery object for the checkboxes.
      * @type {jQuery}
      */
-    $checkBoxes: $('#mail-settings-form .checkbox'),
+    $checkBoxes: null,
 
     /**
      * jQuery object for the menu items.
      * @type {jQuery}
      */
-    $menuItems: $('#mail-settings-menu .item'),
+    $menuItems: null,
 
     /**
      * OAuth2 window reference
@@ -222,6 +223,10 @@ const mailSettings = {
      * Initialize the mail settings page.
      */
     initialize() {
+        mailSettings.$formObj = $('#mail-settings-form');
+        mailSettings.$checkBoxes = $('#mail-settings-form .checkbox');
+        mailSettings.$menuItems = $('#mail-settings-menu .item');
+
         // Check for OAuth2 callback parameters in URL
         mailSettings.handleOAuth2Callback();
 

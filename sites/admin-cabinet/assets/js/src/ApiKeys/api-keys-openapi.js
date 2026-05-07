@@ -24,9 +24,10 @@
  */
 const ApiKeysOpenAPI = {
     /**
-     * jQuery object for the main container
+     * jQuery object for the main container.
+     * Resolved in initialize() — must not call $() at module-load time.
      */
-    $container: $('#elements-container'),
+    $container: null,
 
     /**
      * URL to the OpenAPI specification
@@ -36,12 +37,15 @@ const ApiKeysOpenAPI = {
     /**
      * jQuery object for the main container
      */
-    $mainContainer: $('#main-content-container'),
+    $mainContainer: null,
 
     /**
      * Initialize the OpenAPI documentation page
      */
     initialize() {
+        ApiKeysOpenAPI.$container = $('#elements-container');
+        ApiKeysOpenAPI.$mainContainer = $('#main-content-container');
+
         // Set up Stoplight Elements security scheme provider
         // WHY: Stoplight Elements will call this function to get auth tokens dynamically
         // This integrates with TokenManager without storing tokens in localStorage

@@ -27,27 +27,28 @@ globalWebAdminLanguage, showdown, UserMessage, upgradeStatusLoopWorker, SystemAP
 const updatePBX = {
     /**
      * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#upgrade-form'),
+    $formObj: null,
 
     /**
      * jQuery object for the submit button.
      * @type {jQuery}
      */
-    $submitButton: $('#submitbutton'),
+    $submitButton: null,
 
     /**
      * jQuery object for the progress bar.
      * @type {jQuery}
      */
-    $progressBar: $('#upload-progress-bar'),
+    $progressBar: null,
 
     /**
      * jQuery object for the progress bar label.
      * @type {jQuery}
      */
-    $progressBarLabel: $('#upload-progress-bar-label'),
+    $progressBarLabel: null,
 
     /**
      * Current version of the PBX firmware.
@@ -59,19 +60,19 @@ const updatePBX = {
      * jQuery object for the modal form before upgrade.
      * @type {jQuery}
      */
-    $upgradeModalForm: $('#update-modal-form'),
+    $upgradeModalForm: null,
 
     /**
      * jQuery object for the "I have backup" input field.
      * @type {jQuery}
      */
-    $iHaveBackupInput: $("input[name='i-have-backup-input']"),
+    $iHaveBackupInput: null,
 
     /**
      * jQuery object for the green button on modal form before upgrade.
      * @type {jQuery}
      */
-    $startUpgradeButton: $('#start-upgrade-button'),
+    $startUpgradeButton: null,
 
     /**
      * There is upgrade process working now flag.
@@ -89,6 +90,13 @@ const updatePBX = {
      * Initializes the update PBX firmware functionality.
      */
     initialize() {
+        updatePBX.$formObj = $('#upgrade-form');
+        updatePBX.$submitButton = $('#submitbutton');
+        updatePBX.$progressBar = $('#upload-progress-bar');
+        updatePBX.$progressBarLabel = $('#upload-progress-bar-label');
+        updatePBX.$upgradeModalForm = $('#update-modal-form');
+        updatePBX.$iHaveBackupInput = $("input[name='i-have-backup-input']");
+        updatePBX.$startUpgradeButton = $('#start-upgrade-button');
 
         // Open the upgrade modal form
         updatePBX.$upgradeModalForm.modal();

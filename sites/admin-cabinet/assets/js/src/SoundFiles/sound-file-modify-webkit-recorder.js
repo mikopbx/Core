@@ -23,12 +23,16 @@
  * @module webkitRecorder
  */
 const webkitRecorder = {
-    $recordLabel: $('#record-label'),
-    $recordButton: $('#start-record-button'),
-    $stopButton: $('#stop-record-button'),
-    $selectAudioInput: $('#select-audio-button'),
-    $audioPlayer: $('#audio-player'),
-    audioInputMenu: document.getElementById('audio-input-select'),
+    /**
+     * Resolved in initialize() — must not call $() at module-load time.
+     * @type {jQuery}
+     */
+    $recordLabel: null,
+    $recordButton: null,
+    $stopButton: null,
+    $selectAudioInput: null,
+    $audioPlayer: null,
+    audioInputMenu: null,
     chunks: [],
     mediaRecorder: '',
 
@@ -36,6 +40,13 @@ const webkitRecorder = {
      * Initialize the WebKit sound recorder module.
      */
     initialize() {
+        webkitRecorder.$recordLabel = $('#record-label');
+        webkitRecorder.$recordButton = $('#start-record-button');
+        webkitRecorder.$stopButton = $('#stop-record-button');
+        webkitRecorder.$selectAudioInput = $('#select-audio-button');
+        webkitRecorder.$audioPlayer = $('#audio-player');
+        webkitRecorder.audioInputMenu = document.getElementById('audio-input-select');
+
         webkitRecorder.$stopButton.addClass('disabled');
 
         // Event listener for the record button

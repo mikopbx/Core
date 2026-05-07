@@ -22,8 +22,12 @@
  * Sound files table management module with template preservation
  */
 const soundFilesTable = {
-    $customTab: $('#custom-sound-files-table'),
-    $mohTab: $('#moh-sound-files-table'),
+    /**
+     * Resolved in initialize() — must not call $() at module-load time.
+     * @type {jQuery}
+     */
+    $customTab: null,
+    $mohTab: null,
     activeCategory: 'custom',
     soundPlayers: {},
     customDataTable: null,
@@ -33,6 +37,9 @@ const soundFilesTable = {
      * Initialize the module
      */
     initialize() {
+        soundFilesTable.$customTab = $('#custom-sound-files-table');
+        soundFilesTable.$mohTab = $('#moh-sound-files-table');
+
         // Initialize tabs
         $('#sound-files-menu .item').tab({
             history: true,

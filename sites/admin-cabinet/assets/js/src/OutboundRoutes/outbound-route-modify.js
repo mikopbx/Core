@@ -16,10 +16,11 @@
  */
 const outboundRoute = {
     /**
-     * jQuery object for the form
+     * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#outbound-route-form'),
+    $formObj: null,
     
     /**
      * Route data from API
@@ -97,6 +98,8 @@ const outboundRoute = {
      * Initializes the outbound route form
      */
     initialize() {
+        outboundRoute.$formObj = $('#outbound-route-form');
+
         // Get route ID from form or URL
         const routeId = this.getRouteId();
         

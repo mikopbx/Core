@@ -39,18 +39,20 @@ const Form = {
     validateRules: {},
 
     /**
-     * Dirty check field, for checking if something on the form was changed
+     * Dirty check field, for checking if something on the form was changed.
+     * Resolved in initialize() — must not call $() at module-load time
+     * because jQuery may not yet be bound to window.$.
      * @type {jQuery}
      */
-    $dirrtyField: $('#dirrty'),
+    $dirrtyField: null,
 
     url: '',
     method: 'POST', // HTTP method for form submission (POST, PATCH, PUT, etc.)
     cbBeforeSendForm: '',
     cbAfterSendForm: '',
-    $submitButton: $('#submitbutton'),
-    $dropdownSubmit: $('#dropdownSubmit'),
-    $submitModeInput: $('input[name="submitMode"]'),
+    $submitButton: null,
+    $dropdownSubmit: null,
+    $submitModeInput: null,
     isRestoringMode: false, // Flag to prevent saving during restore
     processData: true,
     contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -98,6 +100,23 @@ const Form = {
      */
     sendOnlyChanged: false,
     initialize() {
+        // Resolve jQuery wrappers here — at module-load time jQuery may
+        // not yet be defined. Consumers may have already overridden these
+        // (e.g. Storage/storage-index sets its own buttons), so respect
+        // pre-existing assignments.
+        if (!Form.$dirrtyField || !Form.$dirrtyField.length) {
+            Form.$dirrtyField = $('#dirrty');
+        }
+        if (!Form.$submitButton || !Form.$submitButton.length) {
+            Form.$submitButton = $('#submitbutton');
+        }
+        if (!Form.$dropdownSubmit || !Form.$dropdownSubmit.length) {
+            Form.$dropdownSubmit = $('#dropdownSubmit');
+        }
+        if (!Form.$submitModeInput || !Form.$submitModeInput.length) {
+            Form.$submitModeInput = $('input[name="submitMode"]');
+        }
+
         // Set up custom form validation rules
         Form.$formObj.form.settings.rules.notRegExp = Form.notRegExpValidateRule;
         Form.$formObj.form.settings.rules.specialCharactersExist = Form.specialCharactersExistValidateRule;

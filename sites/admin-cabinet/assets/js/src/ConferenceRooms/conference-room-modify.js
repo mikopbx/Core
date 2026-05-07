@@ -22,8 +22,12 @@
  * Conference room edit form management module
  */
 const conferenceRoomModify = {
-    $formObj: $('#conference-room-form'),
-    $number: $('#extension'),
+    /**
+     * Resolved in initialize() — must not call $() at module-load time.
+     * @type {jQuery}
+     */
+    $formObj: null,
+    $number: null,
     defaultExtension: '',
     
     /**
@@ -71,6 +75,9 @@ const conferenceRoomModify = {
      * Module initialization
      */
     initialize() {
+        conferenceRoomModify.$formObj = $('#conference-room-form');
+        conferenceRoomModify.$number = $('#extension');
+
         // Add handler to dynamically check if the input number is available
         let timeoutId;
         conferenceRoomModify.$number.on('input', () => {

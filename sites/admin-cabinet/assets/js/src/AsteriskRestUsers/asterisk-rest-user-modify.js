@@ -26,33 +26,34 @@ const AsteriskRestUserModify = {
     
     /**
      * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#asterisk-rest-user-form'),
-    
+    $formObj: null,
+
     /**
      * jQuery object for the username field.
      * @type {jQuery}
      */
-    $username: $('#username'),
-    
+    $username: null,
+
     /**
      * jQuery object for the password field.
      * @type {jQuery}
      */
-    $password: $('#password'),
-    
+    $password: null,
+
     /**
      * jQuery object for the description field.
      * @type {jQuery}
      */
-    $description: $('#description'),
-    
+    $description: null,
+
     /**
      * jQuery object for the applications dropdown.
      * @type {jQuery}
      */
-    $applications: $('#applications'),
+    $applications: null,
     
     /**
      * Password widget instance.
@@ -99,6 +100,12 @@ const AsteriskRestUserModify = {
      * Initialize the module.
      */
     initialize() {
+        AsteriskRestUserModify.$formObj = $('#asterisk-rest-user-form');
+        AsteriskRestUserModify.$username = $('#username');
+        AsteriskRestUserModify.$password = $('#password');
+        AsteriskRestUserModify.$description = $('#description');
+        AsteriskRestUserModify.$applications = $('#applications');
+
         // Initialize Form first to enable form methods
         this.initializeForm();
         

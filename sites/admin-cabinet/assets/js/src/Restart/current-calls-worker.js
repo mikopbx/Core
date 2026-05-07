@@ -39,14 +39,16 @@ const currentCallsWorker = {
 
     /**
      * jQuery object for the current calls information container.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $currentCallsInfo: $('#current-calls-info'),
+    $currentCallsInfo: null,
 
     /**
      * Initializes the current calls worker by restarting the worker.
      */
     initialize() {
+        currentCallsWorker.$currentCallsInfo = $('#current-calls-info');
         currentCallsWorker.restartWorker();
     },
 

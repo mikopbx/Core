@@ -27,21 +27,22 @@ const marketplace = {
 
     /**
      * jQuery object for the table with available modules.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $marketplaceTable: $('#new-modules-table'),
+    $marketplaceTable: null,
 
     /**
      * jQuery object for the loader instead of available modules.
      * @type {jQuery}
      */
-    $marketplaceLoader: $('#new-modules-loader'),
+    $marketplaceLoader: null,
 
     /**
      * jQuery object for the information when no any modules available to install.
      * @type {jQuery}
      */
-    $noNewModulesSegment: $('#no-new-modules-segment'),
+    $noNewModulesSegment: null,
 
     /**
      * Store current installed a PBX version without a div postfix
@@ -53,7 +54,7 @@ const marketplace = {
      * jQuery object for the button which responsible for update all installed modules
      * @type {jQuery}
      */
-    $btnUpdateAllModules: $('#update-all-modules-button'),
+    $btnUpdateAllModules: null,
 
     /**
      * jQuery object initialized flag
@@ -80,6 +81,11 @@ const marketplace = {
         if (marketplace.isInitialized) {
             return;
         }
+        marketplace.$marketplaceTable = $('#new-modules-table');
+        marketplace.$marketplaceLoader = $('#new-modules-loader');
+        marketplace.$noNewModulesSegment = $('#no-new-modules-segment');
+        marketplace.$btnUpdateAllModules = $('#update-all-modules-button');
+
         marketplace.isInitialized = true;
         ModulesAPI.getAvailable(marketplace.cbParseModuleUpdates);
     },

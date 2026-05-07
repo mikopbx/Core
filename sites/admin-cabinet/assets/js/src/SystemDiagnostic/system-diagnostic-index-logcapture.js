@@ -25,38 +25,45 @@
 const systemDiagnosticCapture = {
     /**
      * jQuery element for the start button.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $startBtn: $('#start-capture-button'),
+    $startBtn: null,
 
     /**
      * jQuery element for the download button.
      * @type {jQuery}
      */
-    $downloadBtn: $('#download-logs-button'),
+    $downloadBtn: null,
 
     /**
      * jQuery element for the stop button.
      * @type {jQuery}
      */
-    $stopBtn: $('#stop-capture-button'),
+    $stopBtn: null,
 
     /**
      * jQuery element for the show button.
      * @type {jQuery}
      */
-    $showBtn: $('#show-last-log'),
+    $showBtn: null,
 
     /**
      * jQuery element for the dimmer.
      * @type {jQuery}
      */
-    $dimmer: $('#capture-log-dimmer'),
+    $dimmer: null,
 
     /**
      * Initializes the system diagnostic capture.
      */
     initialize() {
+        systemDiagnosticCapture.$startBtn = $('#start-capture-button');
+        systemDiagnosticCapture.$downloadBtn = $('#download-logs-button');
+        systemDiagnosticCapture.$stopBtn = $('#stop-capture-button');
+        systemDiagnosticCapture.$showBtn = $('#show-last-log');
+        systemDiagnosticCapture.$dimmer = $('#capture-log-dimmer');
+
         const segmentHeight = window.innerHeight - 300;
         $(window).load(() => {
             systemDiagnosticCapture.$dimmer.closest('div').css('min-height', `${segmentHeight}px`);

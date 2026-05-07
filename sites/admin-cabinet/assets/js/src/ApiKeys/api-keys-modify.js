@@ -22,7 +22,11 @@
  * API key edit form management module
  */
 const apiKeysModify = {
-    $formObj: $('#save-api-key-form'),
+    /**
+     * Resolved in initialize() — must not call $() at module-load time.
+     * @type {jQuery}
+     */
+    $formObj: null,
     permissionsTable: null,
     generatedApiKey: '',
     handlers: {},  // Store event handlers for cleanup
@@ -48,6 +52,8 @@ const apiKeysModify = {
      * Module initialization
      */
     initialize() {
+        apiKeysModify.$formObj = $('#save-api-key-form');
+
         // Configure Form.js
         Form.$formObj = apiKeysModify.$formObj;
         Form.url = '#'; // Not used with REST API

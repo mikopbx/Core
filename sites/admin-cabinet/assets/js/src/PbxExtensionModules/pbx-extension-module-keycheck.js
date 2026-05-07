@@ -27,32 +27,33 @@
 const keyCheck = {
     /**
      * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#licencing-modify-form'),
+    $formObj: null,
 
-    $emptyLicenseKeyInfo: $('.empty-license-key-info'),
-    $filledLicenseKeyHeader: $('.filled-license-key-header'),
-    $filledLicenseKeyInfo: $('.filled-license-key-info'),
-    $filledLicenseKeyPlaceholder: $('.filled-license-key-info .confidential-field'),
-    $getNewKeyLicenseSection: $('#getNewKeyLicenseSection'),
-    $couponSection: $('#couponSection'),
-    $formErrorMessages: $('#form-error-messages'),
-    $licKey: $('#licKey'),
-    $coupon: $('#coupon'),
-    $email: $('#email'),
-    $ajaxMessages: $('.ui.message.ajax'),
-    $licenseDetailInfo: $('#licenseDetailInfo'),
-    $productDetails: $('#productDetails'),
-    $accordions: $('#licencing-modify-form .ui.accordion'),
+    $emptyLicenseKeyInfo: null,
+    $filledLicenseKeyHeader: null,
+    $filledLicenseKeyInfo: null,
+    $filledLicenseKeyPlaceholder: null,
+    $getNewKeyLicenseSection: null,
+    $couponSection: null,
+    $formErrorMessages: null,
+    $licKey: null,
+    $coupon: null,
+    $email: null,
+    $ajaxMessages: null,
+    $licenseDetailInfo: null,
+    $productDetails: null,
+    $accordions: null,
 
-    $resetButton: $('#reset-license-button'),
-    $saveKeyButton: $('#save-license-key-button'),
-    $activateCouponButton: $('#coupon-activation-button'),
-    $manageKeyButton: $('#manage-license-button'),
+    $resetButton: null,
+    $saveKeyButton: null,
+    $activateCouponButton: null,
+    $manageKeyButton: null,
 
-    $resetConfirmModal: $('#reset-license-confirm-modal'),
-    $confirmResetButton: $('#confirm-reset-license-button'),
+    $resetConfirmModal: null,
+    $confirmResetButton: null,
 
     /**
      * Validation rules for the form fields before submission.
@@ -112,6 +113,30 @@ const keyCheck = {
 
     // Initialize the licensing page.
     initialize() {
+        // Resolve jQuery wrappers here — at module-load time jQuery may
+        // not yet be defined (Sentry MIKOPBX-MG9 pattern).
+        keyCheck.$formObj = $('#licencing-modify-form');
+        keyCheck.$emptyLicenseKeyInfo = $('.empty-license-key-info');
+        keyCheck.$filledLicenseKeyHeader = $('.filled-license-key-header');
+        keyCheck.$filledLicenseKeyInfo = $('.filled-license-key-info');
+        keyCheck.$filledLicenseKeyPlaceholder = $('.filled-license-key-info .confidential-field');
+        keyCheck.$getNewKeyLicenseSection = $('#getNewKeyLicenseSection');
+        keyCheck.$couponSection = $('#couponSection');
+        keyCheck.$formErrorMessages = $('#form-error-messages');
+        keyCheck.$licKey = $('#licKey');
+        keyCheck.$coupon = $('#coupon');
+        keyCheck.$email = $('#email');
+        keyCheck.$ajaxMessages = $('.ui.message.ajax');
+        keyCheck.$licenseDetailInfo = $('#licenseDetailInfo');
+        keyCheck.$productDetails = $('#productDetails');
+        keyCheck.$accordions = $('#licencing-modify-form .ui.accordion');
+        keyCheck.$resetButton = $('#reset-license-button');
+        keyCheck.$saveKeyButton = $('#save-license-key-button');
+        keyCheck.$activateCouponButton = $('#coupon-activation-button');
+        keyCheck.$manageKeyButton = $('#manage-license-button');
+        keyCheck.$resetConfirmModal = $('#reset-license-confirm-modal');
+        keyCheck.$confirmResetButton = $('#confirm-reset-license-button');
+
         keyCheck.$accordions.accordion();
         keyCheck.$licenseDetailInfo.hide();
 

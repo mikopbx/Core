@@ -24,9 +24,22 @@
 const UserMessage = {
     /**
      * jQuery object for the AJAX messages container.
+     * Resolved lazily by getMessagesDiv() — must not call $() at
+     * module-load time because jQuery may not yet be bound to window.$.
      * @type {jQuery}
      */
-    $ajaxMessagesDiv: $('#ajax-messages'),
+    $ajaxMessagesDiv: null,
+
+    /**
+     * Lazy resolver for the AJAX messages container.
+     * @returns {jQuery}
+     */
+    getMessagesDiv() {
+        if (!UserMessage.$ajaxMessagesDiv || !UserMessage.$ajaxMessagesDiv.length) {
+            UserMessage.$ajaxMessagesDiv = $('#ajax-messages');
+        }
+        return UserMessage.$ajaxMessagesDiv;
+    },
 
     /**
      * Convert text data to a more user-friendly format.
@@ -74,7 +87,7 @@ const UserMessage = {
         
         html += `<p>${text}</p>`;
         html += '</div></div>';
-        UserMessage.$ajaxMessagesDiv.after(html);
+        UserMessage.getMessagesDiv().after(html);
         if (!disableScroll) {
             UserMessage.scrollToMessages();
         }
@@ -116,7 +129,7 @@ const UserMessage = {
         }
         html += `<p>${text}</p>`;
         html += '</div></div>';
-        UserMessage.$ajaxMessagesDiv.after(html);
+        UserMessage.getMessagesDiv().after(html);
         if (!disableScroll) {
             UserMessage.scrollToMessages();
         }
@@ -140,7 +153,7 @@ const UserMessage = {
         }
         html += `<p>${text}</p>`;
         html += '</div></div>';
-        UserMessage.$ajaxMessagesDiv.after(html);
+        UserMessage.getMessagesDiv().after(html);
         if (!disableScroll) {
             UserMessage.scrollToMessages();
         }
@@ -218,7 +231,7 @@ const UserMessage = {
      */
     scrollToMessages() {
         $('html, body').animate({
-            scrollTop: UserMessage.$ajaxMessagesDiv.offset().top - 50,
+            scrollTop: UserMessage.getMessagesDiv().offset().top - 50,
         }, 2000);
     },
 };

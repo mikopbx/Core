@@ -21,33 +21,35 @@
 const loginForm = {
     /**
      * jQuery object for the form.
+     * Assigned in initialize() — must not call $() at module-load time
+     * because jQuery may not yet be bound to window.$ (Sentry MIKOPBX-MG9).
      * @type {jQuery}
      */
-    $formObj: $('#login-form'),
+    $formObj: null,
 
     /**
      * The jQuery object for the submit button.
      * @type {jQuery}
      */
-    $submitButton: $('#submitbutton'),
+    $submitButton: null,
 
     /**
      * The jQuery object for the password field.
      * @type {jQuery}
      */
-    $passwordField: $('#password'),
+    $passwordField: null,
 
     /**
      * The jQuery object for the checkboxes.
      * @type {jQuery}
      */
-    $checkBoxes: $('.checkbox'),
+    $checkBoxes: null,
 
     /**
      * Passkey login button
      * @type {jQuery}
      */
-    $passkeyButton: $('#passkey-login-button'),
+    $passkeyButton: null,
 
     /**
      * Validation rules for the form fields before submission.
@@ -77,8 +79,16 @@ const loginForm = {
 
     /**
      * Initializes the login form functionality.
+     * jQuery selectors are resolved here — by the time $(document).ready
+     * fires jQuery is guaranteed to be defined.
      */
     initialize() {
+        loginForm.$formObj       = $('#login-form');
+        loginForm.$submitButton  = $('#submitbutton');
+        loginForm.$passwordField = $('#password');
+        loginForm.$checkBoxes    = $('.checkbox');
+        loginForm.$passkeyButton = $('#passkey-login-button');
+
         loginForm.checkPasskeySupport();
         loginForm.bindEvents();
         loginForm.initializeFormValidation();

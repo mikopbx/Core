@@ -36,14 +36,17 @@ const customFilesTable = {
     dataTableInstance: null,
 
     /**
-     * jQuery object for the page length dropdown
+     * jQuery object for the page length dropdown.
+     * Resolved in initialize() — must not call $() at module-load time.
      */
-    $pageLengthDropdown: $('#page-length-select'),
+    $pageLengthDropdown: null,
 
     /**
      * Initializes the custom files table, applying DataTable features and setting up event handlers.
      */
     initialize() {
+        customFilesTable.$pageLengthDropdown = $('#page-length-select');
+
         // Initialize dropdown for page length selection
         customFilesTable.initializePageLengthDropdown();
 

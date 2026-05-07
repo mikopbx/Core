@@ -28,16 +28,17 @@
 const providerModifyStatusWorker = {
 
     /**
-     * jQuery object for the form
+     * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#save-provider-form'),
+    $formObj: null,
 
     /**
-     * jQuery object for the status label
+     * jQuery object for the status label.
      * @type {jQuery}
      */
-    $status: $('#status'),
+    $status: null,
 
     /**
      * Provider type determined from the page URL
@@ -85,6 +86,9 @@ const providerModifyStatusWorker = {
      * Initialize the provider status worker with EventBus subscription
      */
     initialize() {
+        providerModifyStatusWorker.$formObj = $('#save-provider-form');
+        providerModifyStatusWorker.$status = $('#status');
+
         // Determine provider type and uniqid
         if (window.location.pathname.includes('modifysip')) {
             this.providerType = 'sip';

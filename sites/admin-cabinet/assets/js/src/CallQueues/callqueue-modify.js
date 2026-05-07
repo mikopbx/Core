@@ -36,52 +36,53 @@
  */
 const callQueueModifyRest = {
     /**
-     * Form jQuery object
+     * Form jQuery object.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#queue-form'),
+    $formObj: null,
 
     /**
      * Extension number input field
      * @type {jQuery}
      */
-    $extension: $('#extension'),
+    $extension: null,
 
     /**
      * Members table for drag-and-drop management
      * @type {jQuery}
      */
-    $extensionsTable: $('#extensionsTable'),
+    $extensionsTable: null,
 
     /**
      * Dropdown UI components
      * @type {jQuery}
      */
-    $dropDowns: $('#queue-form .dropdown'),
+    $dropDowns: null,
 
     /**
      * Accordion UI components
      * @type {jQuery}
      */
-    $accordions: $('#queue-form .ui.accordion'),
+    $accordions: null,
 
     /**
      * Checkbox UI components
      * @type {jQuery}
      */
-    $checkBoxes: $('#queue-form .checkbox'),
+    $checkBoxes: null,
 
     /**
      * Error messages container
      * @type {jQuery}
      */
-    $errorMessages: $('#form-error-messages'),
+    $errorMessages: null,
 
     /**
      * Delete row buttons
      * @type {jQuery}
      */
-    $deleteRowButton: $('.delete-row-button'),
+    $deleteRowButton: null,
 
 
 
@@ -135,6 +136,15 @@ const callQueueModifyRest = {
      * Initialize the call queue form management module
      */
     initialize() {
+        callQueueModifyRest.$formObj = $('#queue-form');
+        callQueueModifyRest.$extension = $('#extension');
+        callQueueModifyRest.$extensionsTable = $('#extensionsTable');
+        callQueueModifyRest.$dropDowns = $('#queue-form .dropdown');
+        callQueueModifyRest.$accordions = $('#queue-form .ui.accordion');
+        callQueueModifyRest.$checkBoxes = $('#queue-form .checkbox');
+        callQueueModifyRest.$errorMessages = $('#form-error-messages');
+        callQueueModifyRest.$deleteRowButton = $('.delete-row-button');
+
         // Initialize UI components first
         callQueueModifyRest.initializeUIComponents();
           

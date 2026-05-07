@@ -26,14 +26,17 @@ const sidebarMenuShowActive = {
 
     /**
      * jQuery object for the sidebar menu.
+     * Resolved in initialize() — must not call $() at module-load time
+     * because jQuery may not yet be bound to window.$.
      * @type {jQuery}
      */
-    $sidebarMenu: $('#toc'),
+    $sidebarMenu: null,
 
     /**
      * Initializes the sidebar menu and sets the active menu item.
      */
     initialize() {
+        sidebarMenuShowActive.$sidebarMenu = $('#toc');
         sidebarMenuShowActive.$sidebarMenu.sidebar('setting', 'transition', 'overlay');
         sidebarMenuShowActive.$sidebarMenu.sidebar('attach events', '#sidebar-menu-button');
         sidebarMenuShowActive.makeMenuActiveElement();

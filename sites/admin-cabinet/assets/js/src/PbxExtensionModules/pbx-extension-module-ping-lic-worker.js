@@ -33,9 +33,10 @@ const PingLicenseServerWorker = {
 
     /**
      * jQuery object for the div with information if no internet.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $noInternet: $('div.show-if-no-internet'),
+    $noInternet: null,
 
     /**
      * Class name that should be disabled if no internet connection.
@@ -59,6 +60,7 @@ const PingLicenseServerWorker = {
      * Initializes the worker.
      */
     initialize() {
+        PingLicenseServerWorker.$noInternet = $('div.show-if-no-internet');
         PingLicenseServerWorker.changeTabsAvailability();
         PingLicenseServerWorker.restartWorker();
     },

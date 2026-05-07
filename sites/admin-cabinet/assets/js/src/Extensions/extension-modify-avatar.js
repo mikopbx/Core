@@ -19,9 +19,9 @@
 /* global globalRootUrl, Form, extension, Image  */
 
 const avatar = {
-    // Store reference to the avatar picture element
-    $picture: $('#avatar'),
-    
+    // Resolved in initialize() — must not call $() at module-load time.
+    $picture: null,
+
     // Flag to prevent multiple initializations
     initialized: false,
 
@@ -32,6 +32,7 @@ const avatar = {
             return;
         }
         avatar.initialized = true;
+        avatar.$picture = $('#avatar');
 
         // Dynamic avatar loading will be handled by setAvatarUrl method
         // No need to check src here as it's set in template

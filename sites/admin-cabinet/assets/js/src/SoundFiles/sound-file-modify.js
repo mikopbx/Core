@@ -34,28 +34,29 @@ const soundFileModifyRest = {
 
     /**
      * jQuery object for the sound upload button.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $soundUploadButton: $('#upload-sound-file'),
+    $soundUploadButton: null,
 
 
     /**
      * jQuery object for the sound file name input.
      * @type {jQuery}
      */
-    $soundFileName: $('#name'),
+    $soundFileName: null,
 
     /**
      * jQuery object for the audio player.
      * @type {jQuery}
      */
-    $audioPlayer: $('#audio-player'),
+    $audioPlayer: null,
 
     /**
      * jQuery object for the submit button.
      * @type {jQuery}
      */
-    $submitButton: $('#submitbutton'),
+    $submitButton: null,
 
     /**
      * The Blob URL object.
@@ -67,13 +68,13 @@ const soundFileModifyRest = {
      * jQuery object for the form.
      * @type {jQuery}
      */
-    $formObj: $('#sound-file-form'),
+    $formObj: null,
 
     /**
      * jQuery object for the form dropdowns.
      * @type {jQuery}
      */
-    $dropDowns: $('#sound-file-form .dropdown'),
+    $dropDowns: null,
 
     /**
      * Track if this is a new sound file (not existing in database)
@@ -122,6 +123,13 @@ const soundFileModifyRest = {
      * Initializes the sound file modification functionality.
      */
     initialize() {
+        soundFileModifyRest.$soundUploadButton = $('#upload-sound-file');
+        soundFileModifyRest.$soundFileName = $('#name');
+        soundFileModifyRest.$audioPlayer = $('#audio-player');
+        soundFileModifyRest.$submitButton = $('#submitbutton');
+        soundFileModifyRest.$formObj = $('#sound-file-form');
+        soundFileModifyRest.$dropDowns = $('#sound-file-form .dropdown');
+
         // Initialize dropdowns
         soundFileModifyRest.$dropDowns.dropdown();
         

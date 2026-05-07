@@ -50,15 +50,17 @@ const archivePackingCheckWorker = {
 
     /**
      * jQuery element for the progress bar.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $progress: $('#capture-log-dimmer span.progress'),
+    $progress: null,
 
     /**
      * Initializes the archive packing check worker.
      * @param {string} filename - The filename of the archive packing.
      */
     initialize(filename) {
+        archivePackingCheckWorker.$progress = $('#capture-log-dimmer span.progress');
         archivePackingCheckWorker.filename = filename;
         archivePackingCheckWorker.errorCounts = 0;
         archivePackingCheckWorker.restartWorker();

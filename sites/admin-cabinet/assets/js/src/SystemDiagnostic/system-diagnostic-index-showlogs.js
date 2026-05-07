@@ -25,33 +25,34 @@
 const systemDiagnosticLogs = {
     /**
      * jQuery object for the "Show Last Log" button.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $showBtn: $('#show-last-log'),
+    $showBtn: null,
 
     /**
      * jQuery object for the "Download File" button.
      * @type {jQuery}
      */
-    $downloadBtn: $('#download-file'),
+    $downloadBtn: null,
 
     /**
      * jQuery object for the "Show Last Log (Auto)" button.
      * @type {jQuery}
      */
-    $showAutoBtn: $('#show-last-log-auto'),
+    $showAutoBtn: null,
 
     /**
      * jQuery object for the "Erase current file content" button.
      * @type {jQuery}
      */
-    $eraseBtn: $('#erase-file'),
+    $eraseBtn: null,
 
     /**
      * jQuery object for the log content.
      * @type {jQuery}
      */
-    $logContent: $('#log-content-readonly'),
+    $logContent: null,
 
     /**
      * The viewer for displaying the log content.
@@ -75,13 +76,13 @@ const systemDiagnosticLogs = {
      * jQuery object for the dimmer.
      * @type {jQuery}
      */
-    $dimmer: $('#get-logs-dimmer'),
+    $dimmer: null,
 
     /**
      * jQuery object for the form.
      * @type {jQuery}
      */
-    $formObj: $('#system-diagnostic-form'),
+    $formObj: null,
 
     /**
      * Flag to prevent duplicate API calls during initialization
@@ -132,6 +133,16 @@ const systemDiagnosticLogs = {
      * Initializes the system diagnostic logs.
      */
     initialize() {
+        // Resolve jQuery wrappers here — at module-load time jQuery may
+        // not yet be defined (Sentry MIKOPBX-MG9 pattern).
+        systemDiagnosticLogs.$showBtn = $('#show-last-log');
+        systemDiagnosticLogs.$downloadBtn = $('#download-file');
+        systemDiagnosticLogs.$showAutoBtn = $('#show-last-log-auto');
+        systemDiagnosticLogs.$eraseBtn = $('#erase-file');
+        systemDiagnosticLogs.$logContent = $('#log-content-readonly');
+        systemDiagnosticLogs.$dimmer = $('#get-logs-dimmer');
+        systemDiagnosticLogs.$formObj = $('#system-diagnostic-form');
+
         // Ensure filter type popup starts hidden with clean styles
         $('#filter-type-popup').addClass('hidden').hide().css({top: '', left: ''});
 

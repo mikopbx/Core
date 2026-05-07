@@ -30,15 +30,19 @@ const extension = {
     defaultEmail: '',
     defaultNumber: '',
     defaultMobileNumber: '',
-    $number: $('#number'),
-    $sip_secret: $('#sip_secret'),
-    $mobile_number: $('#mobile_number'),
-    $fwd_forwarding: $('#fwd_forwarding'),
-    $fwd_forwardingonbusy: $('#fwd_forwardingonbusy'),
-    $fwd_forwardingonunavailable: $('#fwd_forwardingonunavailable'),
-    $email: $('#user_email'),
-    $user_username: $('#user_username'),
-    
+    /**
+     * Resolved in initialize() — must not call $() at module-load time.
+     * @type {jQuery}
+     */
+    $number: null,
+    $sip_secret: null,
+    $mobile_number: null,
+    $fwd_forwarding: null,
+    $fwd_forwardingonbusy: null,
+    $fwd_forwardingonunavailable: null,
+    $email: null,
+    $user_username: null,
+
     /**
      * Password widget instance.
      * @type {Object}
@@ -49,13 +53,13 @@ const extension = {
      * jQuery object for the form.
      * @type {jQuery}
      */
-    $formObj: $('#extensions-form'),
+    $formObj: null,
 
     /**
      * jQuery object for the tabular menu.
      * @type {jQuery}
      */
-    $tabMenuItems: $('#extensions-menu .item'),
+    $tabMenuItems: null,
 
 
     /**
@@ -185,6 +189,19 @@ const extension = {
      * Initializes the extension form and its interactions.
      */
     initialize() {
+        // Resolve jQuery wrappers here — at module-load time jQuery may
+        // not yet be defined (Sentry MIKOPBX-MG9 pattern).
+        extension.$number = $('#number');
+        extension.$sip_secret = $('#sip_secret');
+        extension.$mobile_number = $('#mobile_number');
+        extension.$fwd_forwarding = $('#fwd_forwarding');
+        extension.$fwd_forwardingonbusy = $('#fwd_forwardingonbusy');
+        extension.$fwd_forwardingonunavailable = $('#fwd_forwardingonunavailable');
+        extension.$email = $('#user_email');
+        extension.$user_username = $('#user_username');
+        extension.$formObj = $('#extensions-form');
+        extension.$tabMenuItems = $('#extensions-menu .item');
+
         // Default values will be set after REST API data is loaded
         // Initialize with empty values since forms are empty until API responds
         extension.defaultEmail = '';

@@ -26,9 +26,10 @@
 const extensionModuleDetail = {
     /**
      * jQuery object for the module detail form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $moduleDetailPopupTpl: $('#module-details-template'),
+    $moduleDetailPopupTpl: null,
 
     /**
      * jQuery object for the module detail form.
@@ -43,6 +44,8 @@ const extensionModuleDetail = {
      * when a user clicks on a module row within the PBX system interface.
      */
     initialize() {
+        extensionModuleDetail.$moduleDetailPopupTpl = $('#module-details-template');
+
         // The table rows which activate a detail popup.
         $(document).on('click', 'tr.new-module-row', (event)=>{
             event.preventDefault();

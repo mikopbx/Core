@@ -26,11 +26,12 @@
 const incomingRouteModify = {
     /**
      * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#incoming-route-form'),
+    $formObj: null,
 
-    $forwardingSelectDropdown: $('.forwarding-select'),
+    $forwardingSelectDropdown: null,
 
     /**
      * Validation rules for the form fields before submission.
@@ -62,6 +63,9 @@ const incomingRouteModify = {
      * Initialize the object
      */
     initialize() {
+        incomingRouteModify.$formObj = $('#incoming-route-form');
+        incomingRouteModify.$forwardingSelectDropdown = $('.forwarding-select');
+
         // Note: Sound file selector will be initialized in populateForm() with proper data
 
         // Initialize the form

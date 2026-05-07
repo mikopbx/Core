@@ -29,27 +29,28 @@ const extensionsIndex = {
 
     /**
      * The extensions table element.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $extensionsList: $('#extensions-table'),
+    $extensionsList: null,
 
     /**
      * The global search input element.
      * @type {jQuery}
      */
-    $globalSearch: $('#global-search'),
+    $globalSearch: null,
 
     /**
      * The page length selector.
      * @type {jQuery}
      */
-    $pageLengthSelector:$('#page-length-select'),
+    $pageLengthSelector: null,
 
     /**
      * The page length selector.
      * @type {jQuery}
      */
-    $searchExtensionsInput: $('#search-extensions-input'),
+    $searchExtensionsInput: null,
 
     /**
      * The data table object.
@@ -73,7 +74,7 @@ const extensionsIndex = {
      * The document body.
      * @type {jQuery}
      */
-    $body: $('body'),
+    $body: null,
 
 
     /**
@@ -81,6 +82,11 @@ const extensionsIndex = {
      * Sets up necessary interactivity and features on the page.
      */
     initialize() {
+        extensionsIndex.$extensionsList = $('#extensions-table');
+        extensionsIndex.$globalSearch = $('#global-search');
+        extensionsIndex.$pageLengthSelector = $('#page-length-select');
+        extensionsIndex.$searchExtensionsInput = $('#search-extensions-input');
+        extensionsIndex.$body = $('body');
 
         // Handle avatars with missing src
         $('.avatar').each(function () {

@@ -30,14 +30,17 @@ const providers = {
     dataTableInstance: null,
 
     /**
-     * Delete modal form
+     * Delete modal form.
+     * Resolved in initialize() — must not call $() at module-load time.
      */
-    $deleteModalForm: $('#delete-modal-form'),
+    $deleteModalForm: null,
 
     /**
      * Initialize the object
      */
     initialize() {
+        providers.$deleteModalForm = $('#delete-modal-form');
+
         // Initialize delete modal
         providers.$deleteModalForm.modal();
         

@@ -26,9 +26,10 @@
 const firewall = {
     /**
      * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#firewall-form'),
+    $formObj: null,
     
     /**
      * Firewall record ID.
@@ -85,6 +86,8 @@ const firewall = {
 
     // Initialization function to set up form behavior
     initialize() {
+        firewall.$formObj = $('#firewall-form');
+
         // Initialize global variables for tooltips and Docker detection
         // These will be updated when data is loaded from API
         window.servicePortInfo = {};

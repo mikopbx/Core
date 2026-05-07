@@ -25,33 +25,34 @@
 const generalSettingsModify = {
     /**
      * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#general-settings-form'),
+    $formObj: null,
 
     /**
      * jQuery object for the web admin password input field.
      * @type {jQuery}
      */
-    $webAdminPassword: $('#WebAdminPassword'),
+    $webAdminPassword: null,
 
     /**
      * jQuery object for the ssh password input field.
      * @type {jQuery}
      */
-    $sshPassword: $('#SSHPassword'),
+    $sshPassword: null,
 
     /**
      * jQuery object for the web ssh password input field.
      * @type {jQuery}
      */
-    $disableSSHPassword: $('#SSHDisablePasswordLogins').parent('.checkbox'),
+    $disableSSHPassword: null,
 
     /**
      * jQuery object for the SSH password fields
      * @type {jQuery}
      */
-    $sshPasswordSegment: $('#only-if-password-enabled'),
+    $sshPasswordSegment: null,
 
     /**
      * If password set, it will be hided from web ui.
@@ -267,6 +268,11 @@ const generalSettingsModify = {
      *  Initialize module with event bindings and component initializations.
      */
     initialize() {
+        generalSettingsModify.$formObj = $('#general-settings-form');
+        generalSettingsModify.$webAdminPassword = $('#WebAdminPassword');
+        generalSettingsModify.$sshPassword = $('#SSHPassword');
+        generalSettingsModify.$disableSSHPassword = $('#SSHDisablePasswordLogins').parent('.checkbox');
+        generalSettingsModify.$sshPasswordSegment = $('#only-if-password-enabled');
 
         // Initialize password widgets
         // Web Admin Password widget - only validation and warnings, no buttons

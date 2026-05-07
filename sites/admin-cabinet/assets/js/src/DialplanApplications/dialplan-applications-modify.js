@@ -9,9 +9,13 @@
  * Dialplan application edit form management module with enhanced security
  */
 var dialplanApplicationModify = {
-    $formObj: $('#dialplan-application-form'),
-    $number: $('#extension'),
-    $tabMenuItems: $('#application-code-menu .item'),
+    /**
+     * Resolved in initialize() — must not call $() at module-load time.
+     * @type {jQuery}
+     */
+    $formObj: null,
+    $number: null,
+    $tabMenuItems: null,
     defaultExtension: '',
     editor: null,
     currentActiveTab: 'main', // Track current active tab
@@ -74,6 +78,10 @@ var dialplanApplicationModify = {
      * Initialize the module
      */
     initialize: function() {
+        dialplanApplicationModify.$formObj = $('#dialplan-application-form');
+        dialplanApplicationModify.$number = $('#extension');
+        dialplanApplicationModify.$tabMenuItems = $('#application-code-menu .item');
+
         // Enable tab navigation with history support
         dialplanApplicationModify.$tabMenuItems.tab({
             history: true,

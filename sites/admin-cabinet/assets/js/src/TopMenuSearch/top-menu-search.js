@@ -26,14 +26,16 @@
 const topMenuSearch = {
     /**
      * jQuery object for the search input field.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $input: $('#top-menu-search'),
+    $input: null,
 
     /**
      * Initializes the top menu search functionality.
      */
     initialize() {
+        topMenuSearch.$input = $('#top-menu-search');
         topMenuSearch.$input.dropdown({
             apiSettings: {
                 url: '/pbxcore/api/v3/search:getSearchItems?query={query}',

@@ -27,16 +27,17 @@
  */
 const incomingRouteDefault = {
     /**
-     * jQuery object for the form
+     * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#default-rule-form'),
-    
+    $formObj: null,
+
     /**
      * Action dropdown element
      * @type {jQuery}
      */
-    $actionDropdown: $('#action-dropdown'),
+    $actionDropdown: null,
     
     /**
      * Extension dropdown element (will be created by DynamicDropdownBuilder)
@@ -89,6 +90,9 @@ const incomingRouteDefault = {
      * Initialize the default route module
      */
     initialize() {
+        incomingRouteDefault.$formObj = $('#default-rule-form');
+        incomingRouteDefault.$actionDropdown = $('#action-dropdown');
+
         // Initialize action dropdown - this is a static dropdown handled by HTML/CSS only
         // The DynamicDropdownBuilder is not needed here as it's a simple static dropdown
         incomingRouteDefault.$actionDropdown.dropdown({

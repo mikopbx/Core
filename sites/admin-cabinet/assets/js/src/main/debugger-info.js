@@ -22,7 +22,12 @@
  * @module DebuggerInfo
  */
 const DebuggerInfo = {
-    $debugInfoDiv: $('#debug-info'),
+    /**
+     * Resolved in initialize() — must not call $() at module-load time
+     * because jQuery may not yet be bound to window.$.
+     * @type {jQuery}
+     */
+    $debugInfoDiv: null,
     delta: 500,
     lastKeypressTime: 0,
 
@@ -30,6 +35,7 @@ const DebuggerInfo = {
      * Initializes the debugger info.
      */
     initialize() {
+        DebuggerInfo.$debugInfoDiv = $('#debug-info');
 
         // Add CSS class to the debug info div
         DebuggerInfo.$debugInfoDiv.addClass('ui right very wide sidebar');

@@ -25,15 +25,16 @@
 const manager = {
     /**
      * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#save-ami-form'),
+    $formObj: null,
 
     /**
      * jQuery objects for dropdown elements.
      * @type {jQuery}
      */
-    $dropDowns: $('#save-ami-form .ui.dropdown'),
+    $dropDowns: null,
 
     /**
      * jQuery objects for all checkbox elements.
@@ -57,7 +58,7 @@ const manager = {
      * jQuery object for the username input field.
      * @type {jQuery}
      */
-    $username: $('#username'),
+    $username: null,
 
     /**
      * jQuery object for the secret input field.
@@ -124,6 +125,9 @@ const manager = {
      */
     initialize() {
         // Initialize jQuery selectors that need DOM to be ready
+        manager.$formObj = $('#save-ami-form');
+        manager.$dropDowns = $('#save-ami-form .ui.dropdown');
+        manager.$username = $('#username');
         manager.$secret = $('#secret');
         manager.$unCheckButton = $('.uncheck.button');
         manager.$checkAllButton = $('.check-all.button');

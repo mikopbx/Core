@@ -31,16 +31,17 @@
 const outOfWorkTimeRecord = {
     /**
      * jQuery object for the form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $formObj: $('#save-outoffwork-form'),
+    $formObj: null,
 
     /**
      * Record ID from URL
      * @type {string}
      */
     recordId: null, // Will be set in initialize()
-    
+
     /**
      * Store loaded record data
      * @type {object|null}
@@ -48,54 +49,54 @@ const outOfWorkTimeRecord = {
     recordData: null,
 
     // Form field jQuery objects
-    $time_from: $('#time_from'),
-    $time_to: $('#time_to'),
-    $rulesTable: $('#routing-table'),
-    
+    $time_from: null,
+    $time_to: null,
+    $rulesTable: null,
+
     // Hidden input fields
-    $idField: $('#id'),
-    $weekdayFromField: $('#weekday_from'),
-    $weekdayToField: $('#weekday_to'),
-    $actionField: $('#action'),
-    $calTypeField: $('#calType'),
-    $extensionField: $('#extension'),
-    $allowRestrictionField: $('#allowRestriction'),
-    $descriptionField: $('#description'),
-    
+    $idField: null,
+    $weekdayFromField: null,
+    $weekdayToField: null,
+    $actionField: null,
+    $calTypeField: null,
+    $extensionField: null,
+    $allowRestrictionField: null,
+    $descriptionField: null,
+
     // Dropdown elements
-    $actionDropdown: $('#action-dropdown'),
-    $calTypeDropdown: $('.calType-select'),
-    $weekdayFromDropdown: $('.weekday-from-select'),
-    $weekdayToDropdown: $('.weekday-to-select'),
-    
+    $actionDropdown: null,
+    $calTypeDropdown: null,
+    $weekdayFromDropdown: null,
+    $weekdayToDropdown: null,
+
     // Tab elements
-    $tabMenu: $('#out-time-modify-menu .item'),
+    $tabMenu: null,
     $rulesTab: null, // Will be initialized later
     $generalTab: null, // Will be initialized later
     $rulesTabSegment: null, // Will be initialized later
     $generalTabSegment: null, // Will be initialized later
-    
+
     // Row elements
-    $extensionRow: $('#extension-row'),
-    $audioMessageRow: $('#audio-message-row'),
-    
+    $extensionRow: null,
+    $audioMessageRow: null,
+
     // Calendar tab elements
-    $calendarTab: $('#call-type-calendar-tab'),
-    $mainTab: $('#call-type-main-tab'),
-    
+    $calendarTab: null,
+    $mainTab: null,
+
     // Date/time calendar elements
-    $rangeDaysStart: $('#range-days-start'),
-    $rangeDaysEnd: $('#range-days-end'),
-    $rangeTimeStart: $('#range-time-start'),
-    $rangeTimeEnd: $('#range-time-end'),
-    
+    $rangeDaysStart: null,
+    $rangeDaysEnd: null,
+    $rangeTimeStart: null,
+    $rangeTimeEnd: null,
+
     // Erase buttons
-    $eraseDatesBtn: $('#erase-dates'),
-    $eraseWeekdaysBtn: $('#erase-weekdays'),
-    $eraseTimeperiodBtn: $('#erase-timeperiod'),
-    
+    $eraseDatesBtn: null,
+    $eraseWeekdaysBtn: null,
+    $eraseTimeperiodBtn: null,
+
     // Error message element
-    $errorMessage: $('.form .error.message'),
+    $errorMessage: null,
     
     // Audio message ID for sound file selector
     audioMessageId: 'audio_message_id',
@@ -166,9 +167,41 @@ const outOfWorkTimeRecord = {
      * Initialize the module
      */
     initialize() {
+        // Resolve jQuery wrappers here — at module-load time jQuery may
+        // not yet be defined (Sentry MIKOPBX-MG9 pattern).
+        outOfWorkTimeRecord.$formObj = $('#save-outoffwork-form');
+        outOfWorkTimeRecord.$time_from = $('#time_from');
+        outOfWorkTimeRecord.$time_to = $('#time_to');
+        outOfWorkTimeRecord.$rulesTable = $('#routing-table');
+        outOfWorkTimeRecord.$idField = $('#id');
+        outOfWorkTimeRecord.$weekdayFromField = $('#weekday_from');
+        outOfWorkTimeRecord.$weekdayToField = $('#weekday_to');
+        outOfWorkTimeRecord.$actionField = $('#action');
+        outOfWorkTimeRecord.$calTypeField = $('#calType');
+        outOfWorkTimeRecord.$extensionField = $('#extension');
+        outOfWorkTimeRecord.$allowRestrictionField = $('#allowRestriction');
+        outOfWorkTimeRecord.$descriptionField = $('#description');
+        outOfWorkTimeRecord.$actionDropdown = $('#action-dropdown');
+        outOfWorkTimeRecord.$calTypeDropdown = $('.calType-select');
+        outOfWorkTimeRecord.$weekdayFromDropdown = $('.weekday-from-select');
+        outOfWorkTimeRecord.$weekdayToDropdown = $('.weekday-to-select');
+        outOfWorkTimeRecord.$tabMenu = $('#out-time-modify-menu .item');
+        outOfWorkTimeRecord.$extensionRow = $('#extension-row');
+        outOfWorkTimeRecord.$audioMessageRow = $('#audio-message-row');
+        outOfWorkTimeRecord.$calendarTab = $('#call-type-calendar-tab');
+        outOfWorkTimeRecord.$mainTab = $('#call-type-main-tab');
+        outOfWorkTimeRecord.$rangeDaysStart = $('#range-days-start');
+        outOfWorkTimeRecord.$rangeDaysEnd = $('#range-days-end');
+        outOfWorkTimeRecord.$rangeTimeStart = $('#range-time-start');
+        outOfWorkTimeRecord.$rangeTimeEnd = $('#range-time-end');
+        outOfWorkTimeRecord.$eraseDatesBtn = $('#erase-dates');
+        outOfWorkTimeRecord.$eraseWeekdaysBtn = $('#erase-weekdays');
+        outOfWorkTimeRecord.$eraseTimeperiodBtn = $('#erase-timeperiod');
+        outOfWorkTimeRecord.$errorMessage = $('.form .error.message');
+
         // Set record ID from DOM
         outOfWorkTimeRecord.recordId = outOfWorkTimeRecord.$idField.val();
-        
+
         // Initialize tab references that depend on DOM
         outOfWorkTimeRecord.$rulesTab = $('#out-time-modify-menu .item[data-tab="rules"]');
         outOfWorkTimeRecord.$generalTab = $('#out-time-modify-menu .item[data-tab="general"]');

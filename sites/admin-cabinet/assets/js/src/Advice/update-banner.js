@@ -29,8 +29,11 @@
  * versions automatically re-show the banner.
  */
 const updateBanner = {
-    /** Banner container created in main.volt. */
-    $banner: $('#update-banner'),
+    /**
+     * Banner container created in main.volt.
+     * Resolved in initialize() — must not call $() at module-load time.
+     */
+    $banner: null,
 
     /** Advice templates surfaced by the banner. */
     bannerTemplates: [
@@ -43,6 +46,7 @@ const updateBanner = {
     remindLaterMs: 3 * 24 * 60 * 60 * 1000,
 
     initialize() {
+        updateBanner.$banner = $('#update-banner');
         if (updateBanner.$banner.length === 0) {
             return;
         }

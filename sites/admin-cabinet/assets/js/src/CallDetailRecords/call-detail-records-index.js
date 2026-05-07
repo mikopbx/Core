@@ -25,33 +25,34 @@
 const callDetailRecords = {
     /**
      * The call detail records table element.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $cdrTable: $('#cdr-table'),
+    $cdrTable: null,
 
     /**
      * The global search input element.
      * @type {jQuery}
      */
-    $globalSearch: $('#globalsearch'),
+    $globalSearch: null,
 
     /**
      * The date range selector element.
      * @type {jQuery}
      */
-    $dateRangeSelector: $('#date-range-selector'),
+    $dateRangeSelector: null,
 
     /**
      * The search CDR input element.
      * @type {jQuery}
      */
-    $searchCDRInput: $('#search-cdr-input'),
+    $searchCDRInput: null,
 
     /**
      * The page length selector.
      * @type {jQuery}
      */
-    $pageLengthSelector: $('#page-length-select'),
+    $pageLengthSelector: null,
 
     /**
      * The data table object.
@@ -75,7 +76,7 @@ const callDetailRecords = {
      * The empty database placeholder element
      * @type {jQuery}
      */
-    $emptyDatabasePlaceholder: $('#cdr-empty-database-placeholder'),
+    $emptyDatabasePlaceholder: null,
 
     /**
      * Storage key for filter state in sessionStorage
@@ -94,6 +95,13 @@ const callDetailRecords = {
      * Initializes the call detail records.
      */
     initialize() {
+        callDetailRecords.$cdrTable = $('#cdr-table');
+        callDetailRecords.$globalSearch = $('#globalsearch');
+        callDetailRecords.$dateRangeSelector = $('#date-range-selector');
+        callDetailRecords.$searchCDRInput = $('#search-cdr-input');
+        callDetailRecords.$pageLengthSelector = $('#page-length-select');
+        callDetailRecords.$emptyDatabasePlaceholder = $('#cdr-empty-database-placeholder');
+
         // Listen for hash changes (when user clicks menu link while already on page)
         // WHY: Browser doesn't reload page on hash-only URL changes
         $(`a[href='${globalRootUrl}call-detail-records/index/#reset-cache']`).on('click', function(e) {

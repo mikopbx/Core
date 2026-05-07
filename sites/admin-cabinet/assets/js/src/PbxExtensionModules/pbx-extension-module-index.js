@@ -27,15 +27,16 @@ const extensionModules = {
 
     /**
      * jQuery object for the table with installed modules.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $installedModulesTable: $('#installed-modules-table'),
+    $installedModulesTable: null,
 
     /**
      * jQuery object for the checkboxes.
      * @type {jQuery}
      */
-    $checkboxes: $('.module-row .checkbox'),
+    $checkboxes: null,
 
     /**
      * Store array of module checkboxes.
@@ -47,18 +48,23 @@ const extensionModules = {
      * jQuery object for icon with popup text
      * @type {jQuery}
      */
-    $popupOnClick: $('i.popup-on-click'),
+    $popupOnClick: null,
 
     /**
      * jQuery object for the tabular menu.
      * @type {jQuery}
      */
-    $tabMenuItems: $('#pbx-extensions-tab-menu .item'),
+    $tabMenuItems: null,
 
     /**
      * Initialize extensionModules list
      */
     initialize() {
+        extensionModules.$installedModulesTable = $('#installed-modules-table');
+        extensionModules.$checkboxes = $('.module-row .checkbox');
+        extensionModules.$popupOnClick = $('i.popup-on-click');
+        extensionModules.$tabMenuItems = $('#pbx-extensions-tab-menu .item');
+
         // Enable tab navigation with history support
         extensionModules.$tabMenuItems.tab({
             history: true,

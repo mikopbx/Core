@@ -28,15 +28,16 @@ const deleteModule = {
 
     /**
      * jQuery object for the delete module modal form.
+     * Resolved in initialize() — must not call $() at module-load time.
      * @type {jQuery}
      */
-    $deleteModalForm: $('#delete-modal-form'),
+    $deleteModalForm: null,
 
     /**
      * jQuery object for checkbox which flags store module settings for future installations or not.
      * @type {jQuery}
      */
-    $keepSettingsCheckbox: $('#keepModuleSettings'),
+    $keepSettingsCheckbox: null,
 
     /**
      * The identifier for the PUB/SUB channel used to subscribe to uninstallation status updates.
@@ -48,6 +49,8 @@ const deleteModule = {
      * Initialize module deinstalation
      */
     initialize() {
+        deleteModule.$deleteModalForm = $('#delete-modal-form');
+        deleteModule.$keepSettingsCheckbox = $('#keepModuleSettings');
 
         deleteModule.$deleteModalForm.modal();
 
