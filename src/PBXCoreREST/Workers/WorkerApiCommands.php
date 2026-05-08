@@ -6,6 +6,7 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\{Processes, SystemMessages};
 use MikoPBX\Core\Workers\WorkerRedisBase;
@@ -112,7 +113,7 @@ class WorkerApiCommands extends WorkerRedisBase
     {
         try {
             // Check for pending module post-installations immediately after worker starts
-            ModuleInstallationBase::processModulePostInstallations();     
+            ModuleInstallationBase::processModulePostInstallations();
 
             // Log worker instance information
             SystemMessages::sysLogMsg(
@@ -167,15 +168,15 @@ class WorkerApiCommands extends WorkerRedisBase
 
                     // BLPOP returned normally — reset the backoff counter.
                     $consecutiveFailures = 0;
-                    
+
                     // No job available, check signals and continue
                     if (!is_array($result) || count($result) !== 2) {
                         continue;
                     }
-                    
+
                     // Process job data
                     [$queue, $requestData] = $result;
-                    
+
                     // Verify job data
                     if (!is_string($requestData)) {
                         SystemMessages::sysLogMsg(
@@ -185,7 +186,7 @@ class WorkerApiCommands extends WorkerRedisBase
                         );
                         continue;
                     }
-                    
+
                     // Parse JSON data
                     $request = json_decode($requestData, true);
                     if ($request === null && json_last_error() !== JSON_ERROR_NONE) {
@@ -196,9 +197,9 @@ class WorkerApiCommands extends WorkerRedisBase
                         );
                         continue;
                     }
-                    
+
                     $jobId = $request['request_id'] ?? uniqid('job_'.$request['action'], true);
-                    
+
                     if (!$this->shouldProcessJob($jobId)) {
                         continue;
                     }
@@ -215,7 +216,7 @@ class WorkerApiCommands extends WorkerRedisBase
                         ),
                         LOG_DEBUG
                     );
-                    
+
                     // Save information about which worker is processing the job
                     $this->redis->setex(
                         'api:job:worker:' . $jobId,
@@ -226,10 +227,10 @@ class WorkerApiCommands extends WorkerRedisBase
                             'started_at' => microtime(true)
                         ])
                     );
-                    
+
                     // Process the job
                     $this->processJobDirect($jobId, $requestData);
-                    
+
                     // If worker is in shutdown mode, exit after completing this job
                     if ($this->isShuttingDown) {
                         SystemMessages::sysLogMsg(
@@ -239,7 +240,7 @@ class WorkerApiCommands extends WorkerRedisBase
                         );
                         break;
                     }
-                    
+
                 } catch (\RedisException | \Phalcon\Storage\Exception $e) {
                     // Extended Redis outage path. Apply exponential backoff so
                     // we do not hammer Redis while it recovers, and emit
@@ -269,7 +270,7 @@ class WorkerApiCommands extends WorkerRedisBase
                     sleep(1);
                 }
             }
-            
+
             SystemMessages::sysLogMsg(
                 static::class,
                 "Worker exiting gracefully",
@@ -289,15 +290,15 @@ class WorkerApiCommands extends WorkerRedisBase
         try {
             // Get main queue length
             $queueLength = $this->redis->lLen(self::REDIS_API_QUEUE);
-            
+
             // Check all response keys
             $responseKeys = $this->redis->keys(self::REDIS_API_RESPONSE_PREFIX . '*');
             $responseCount = count($responseKeys);
-            
+
             // Check pending requests
             $jobsInProgressKeys = $this->redis->keys('api:job:worker:*');
             $jobsInProgress = count($jobsInProgressKeys);
-            
+
             // Log queue state information
             SystemMessages::sysLogMsg(
                 static::class,
@@ -311,7 +312,7 @@ class WorkerApiCommands extends WorkerRedisBase
                 ),
                 LOG_INFO
             );
-            
+
             // If there are tasks in queue but no workers processing them, show warning
             if ($queueLength > 0 && $jobsInProgress === 0) {
                 SystemMessages::sysLogMsg(
@@ -322,7 +323,7 @@ class WorkerApiCommands extends WorkerRedisBase
                     ),
                     LOG_WARNING
                 );
-                
+
                 // Additionally check which tasks are in the queue
                 $queueItems = $this->redis->lRange(self::REDIS_API_QUEUE, 0, 5); // First 5 items
                 foreach ($queueItems as $index => $queueItem) {
@@ -384,7 +385,7 @@ class WorkerApiCommands extends WorkerRedisBase
         if (empty($request['processor'])) {
             throw new RuntimeException('Processor not specified in request');
         }
-        
+
         // Old style compatibility, can be removed in 2025
         if ($request['processor'] === 'modules') {
             $request['processor'] = PbxExtensionsProcessor::class;
@@ -536,7 +537,7 @@ class WorkerApiCommands extends WorkerRedisBase
             $perfMetrics = [
                 'start' => microtime(true)
             ];
-            
+
             $responseKey = WorkerApiCommands::REDIS_API_RESPONSE_PREFIX . ($request['request_id'] ?? $jobId);
 
             // Clean UTF-8 data before encoding to prevent JSON encoding errors
@@ -545,7 +546,7 @@ class WorkerApiCommands extends WorkerRedisBase
 
             $perfMetrics['encoding_time'] = microtime(true) - $perfMetrics['start'];
             $perfMetrics['encoded_size'] = strlen($encodedResult);
-            
+
             // Check if response is too large for Redis
             $largeResponseTime = 0;
             if (strlen($encodedResult) > self::MAX_RESPONSE_SIZE) {
@@ -554,17 +555,17 @@ class WorkerApiCommands extends WorkerRedisBase
                 $largeResponseTime = microtime(true) - $largeResponseStart;
             }
             $perfMetrics['large_response_time'] = $largeResponseTime;
-            
+
             // Store response in Redis
             $redisStart = microtime(true);
-            
+
             // Store response with TTL
             $setResult = $this->redis->setex($responseKey, self::REDIS_RESPONSE_TTL, $encodedResult);
-            
+
             // Store metrics for performance analysis (but not visible in logs)
             $metricsKey = "api:metrics:{$request['request_id']}";
             $this->redis->setex($metricsKey, self::REDIS_RESPONSE_TTL, json_encode($perfMetrics));
-            
+
             // Only log errors, not success cases
             // WHY: If setex() returns true, Redis guarantees data is written
             // Double-checking with get() can cause false positives due to:
@@ -595,10 +596,10 @@ class WorkerApiCommands extends WorkerRedisBase
                     );
                 }
             }
-            
+
             $perfMetrics['redis_time'] = microtime(true) - $redisStart;
             $perfMetrics['total_time'] = microtime(true) - $perfMetrics['start'];
-            
+
             // Only log slow operations
             if ($perfMetrics['total_time'] > 0.5) {  // Increased threshold to 500ms
                 SystemMessages::sysLogMsg(
@@ -638,23 +639,23 @@ class WorkerApiCommands extends WorkerRedisBase
     {
         // Compress data using gzencode
         $compressedData = gzencode(serialize($result), 9); // Maximum compression
-        
+
         // If compressed data is still too large for Redis, use file storage
         if (strlen($compressedData) > self::MAX_RESPONSE_SIZE) {
             return $this->handleLargeResponseWithFile($compressedData);
         }
-        
+
         // Otherwise, store compressed data in Redis with special key
         $largeResponseKey = 'large_response:' . uniqid('', true);
         $this->redis->setex($largeResponseKey, self::REDIS_RESPONSE_TTL, $compressedData);
-        
+
         // Return reference to compressed data in Redis
         return json_encode([
             'large_response_redis' => $largeResponseKey,
             'compressed' => true
         ], JSON_THROW_ON_ERROR);
     }
-    
+
     /**
      * Handle extremely large response with file storage
      *
@@ -712,7 +713,7 @@ class WorkerApiCommands extends WorkerRedisBase
 
     /**
      * Process a job directly
-     * 
+     *
      * @param string $jobId Unique job identifier
      * @param string $requestData Job request data
      */
@@ -728,6 +729,8 @@ class WorkerApiCommands extends WorkerRedisBase
 
         $this->logJobStart($jobId, $request);
 
+        $this->resetOrmStateBeforeJob();
+
         // Initialize performance metrics
         $metrics = new PerformanceMetrics($jobId, $request);
 
@@ -737,14 +740,14 @@ class WorkerApiCommands extends WorkerRedisBase
 
             // Execute request
             $res = $this->executeRequest($request, $res, $processor, $metrics);
-            
+
         } catch (Throwable $e) {
             $this->handleJobFailure($jobId, $e, $res);
         } finally {
             $this->finalizeJob($jobId, $request, $res, $metrics);
         }
     }
-    
+
     /**
      * Check if request is stale (older than API_REQUEST_TTL).
      * Debug requests and legacy requests without created_at are never stale.
@@ -790,6 +793,59 @@ class WorkerApiCommands extends WorkerRedisBase
     }
 
     /**
+     * Reset per-process ORM and SQLite state before handling the next API job.
+     *
+     * WorkerApiCommands processes many requests in one PHP process. A worker can
+     * cache a not-found lookup or keep a stale SQLite read snapshot while another
+     * worker creates the record, which makes later PUT/PATCH requests randomly
+     * return 404 for records that are already committed.
+     */
+    private function resetOrmStateBeforeJob(): void
+    {
+        try {
+            /** @phpstan-ignore-next-line inherited from Phalcon Injectable */
+            $di = $this->di;
+            if ($di === null) {
+                return;
+            }
+
+            if ($di->has('modelsManager')) {
+                $di->getShared('modelsManager')->clearReusableObjects();
+            }
+
+            if (!$di->has(MainDatabaseProvider::SERVICE_NAME)) {
+                return;
+            }
+
+            $db = $di->getShared(MainDatabaseProvider::SERVICE_NAME);
+            if (method_exists($db, 'isUnderTransaction') && $db->isUnderTransaction()) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    sprintf(
+                        'Database transaction leaked from previous API job; rolling back before ORM reset (PID: %d)',
+                        getmypid()
+                    ),
+                    LOG_WARNING
+                );
+                $db->rollback();
+            }
+
+            if (method_exists($db, 'close')) {
+                $db->close();
+            }
+
+            $di->remove(MainDatabaseProvider::SERVICE_NAME);
+            (new MainDatabaseProvider())->register($di);
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                'Unable to reset ORM state before API job: ' . $e->getMessage(),
+                LOG_WARNING
+            );
+        }
+    }
+
+    /**
      * Log job start information
      *
      * @param string $jobId Job identifier
@@ -809,10 +865,10 @@ class WorkerApiCommands extends WorkerRedisBase
             LOG_INFO
         );
     }
-    
+
     /**
      * Prepare and validate processor
-     * 
+     *
      * @param array $request Request data
      * @param PBXApiResult $res Result object
      * @param PerformanceMetrics $metrics Performance metrics
@@ -822,17 +878,17 @@ class WorkerApiCommands extends WorkerRedisBase
     private function prepareProcessor(array $request, PBXApiResult $res, PerformanceMetrics $metrics): string
     {
         $metrics->startStage('prepare');
-        
+
         $res->processor = $this->getProcessor($request);
         $processor = $res->processor;
 
         if (!method_exists($processor, 'callback')) {
             throw new RuntimeException("Unknown processor - {$processor}");
         }
-        
+
         $metrics->endStage('prepare');
         $metrics->logPreparationComplete($processor);
-        
+
         return $processor;
     }
 
@@ -898,10 +954,10 @@ class WorkerApiCommands extends WorkerRedisBase
 
         throw $lastException;
     }
-    
+
     /**
      * Handle job failure
-     * 
+     *
      * @param string $jobId Job identifier
      * @param Throwable $e Exception
      * @param PBXApiResult $res Result object
@@ -920,11 +976,11 @@ class WorkerApiCommands extends WorkerRedisBase
             ),
             LOG_ERR
         );
-        
+
         $this->handleJobError($jobId, $e);
         $this->handleProcessingError($e, $res);
     }
-    
+
     /**
      * Recursively clean UTF-8 data to prevent JSON encoding errors
      *
@@ -975,9 +1031,9 @@ class WorkerApiCommands extends WorkerRedisBase
 
         // Always send a response
         $this->sendResponse($jobId, $request, $result);
-        
+
         $metrics->endStage('response_preparation');
-        
+
         // Log completion
         $metrics->logJobCompletion($res->success);
     }

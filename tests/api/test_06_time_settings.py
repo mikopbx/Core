@@ -92,6 +92,52 @@ class TestTimeSettings:
             f"last error: {last_error}"
         )
 
+    @staticmethod
+    def _wait_for_settings_reload(api_client, context):
+        """Wait until accepted time-settings writes finish background reload actions."""
+        print(f"⏳ Waiting for system reload after time settings change ({context})...")
+
+        assert wait_for_worker_idle(api_client, timeout=240, min_wait=7), (
+            f"WorkerModelsEvents did not become idle after time settings change ({context})"
+        )
+        wait_for_api_ready(api_client, timeout=180, interval=3)
+        print(f"✓ System reload completed after time settings change ({context})")
+
+    @staticmethod
+    def _restore_original_settings(api_client, context):
+        """Restore settings captured by test_01_get_time_settings after a write test."""
+        if not TestTimeSettings.original_settings:
+            print(f"⚠ Original time settings unavailable, cannot restore after {context}")
+            return
+
+        restore_data = {
+            key: TestTimeSettings.original_settings[key]
+            for key in ['PBXTimezone', 'NTPServer', 'PBXManualTimeSettings']
+            if key in TestTimeSettings.original_settings
+        }
+        if not restore_data:
+            print(f"⚠ Original time settings are empty, cannot restore after {context}")
+            return
+
+        response = api_client.patch('time-settings', restore_data)
+        if not response.get('result'):
+            print(f"⚠ Failed to restore original settings after {context}")
+            return
+
+        target_timezone = restore_data.get('PBXTimezone')
+        if target_timezone:
+            TestTimeSettings._wait_for_timezone_reload(
+                api_client,
+                target_timezone,
+                f'restore after {context}'
+            )
+        else:
+            TestTimeSettings._wait_for_settings_reload(
+                api_client,
+                f'restore after {context}'
+            )
+        print(f"✓ Original settings restored after {context}")
+
     def test_01_get_time_settings(self, api_client):
         """Test GET /time-settings - Get current time configuration"""
         response = api_client.get('time-settings')
@@ -188,6 +234,7 @@ class TestTimeSettings:
             })
 
             if response['result']:
+                self._wait_for_settings_reload(api_client, 'patch NTP server')
                 print(f"✓ NTP server patched successfully")
             else:
                 print(f"✓ NTP server patch rejected (may require validation)")
@@ -234,25 +281,7 @@ class TestTimeSettings:
             pytest.skip("No original settings to restore")
 
         try:
-            # Restore original timezone at least
-            if 'PBXTimezone' in TestTimeSettings.original_settings:
-                current = api_client.get('time-settings')
-                current_timezone = current.get('data', {}).get('PBXTimezone')
-                target_timezone = TestTimeSettings.original_settings['PBXTimezone']
-                response = api_client.patch('time-settings', {
-                    'PBXTimezone': target_timezone
-                })
-
-                if response['result']:
-                    print(f"✓ Original settings restored")
-                    if current_timezone != target_timezone:
-                        self._wait_for_timezone_reload(
-                            api_client,
-                            target_timezone,
-                            'restore original timezone'
-                        )
-                else:
-                    print(f"⚠ Failed to restore original settings")
+            self._restore_original_settings(api_client, 'restore original settings')
         except Exception as e:
             pytest.fail(f"Failed to restore time settings: {e}")
 
@@ -270,6 +299,8 @@ class TestTimeSettingsEdgeCases:
             if not response['result']:
                 print(f"✓ Invalid timezone rejected")
             else:
+                TestTimeSettings._wait_for_settings_reload(api_client, 'accepted invalid timezone')
+                TestTimeSettings._restore_original_settings(api_client, 'accepted invalid timezone')
                 print(f"⚠ Invalid timezone accepted")
         except Exception as e:
             if '422' in str(e) or '400' in str(e):
@@ -287,6 +318,8 @@ class TestTimeSettingsEdgeCases:
             if not response['result']:
                 print(f"✓ Empty timezone rejected")
             else:
+                TestTimeSettings._wait_for_settings_reload(api_client, 'accepted empty timezone')
+                TestTimeSettings._restore_original_settings(api_client, 'accepted empty timezone')
                 print(f"⚠ Empty timezone accepted")
         except Exception as e:
             if '422' in str(e) or '400' in str(e):
@@ -304,6 +337,8 @@ class TestTimeSettingsEdgeCases:
             if not response['result']:
                 print(f"✓ Invalid NTP server rejected")
             else:
+                TestTimeSettings._wait_for_settings_reload(api_client, 'accepted invalid NTP server')
+                TestTimeSettings._restore_original_settings(api_client, 'accepted invalid NTP server')
                 print(f"⚠ Invalid NTP server accepted (may be validated later)")
         except Exception as e:
             if '422' in str(e) or '400' in str(e):
@@ -321,6 +356,8 @@ class TestTimeSettingsEdgeCases:
             if not response['result']:
                 print(f"✓ Invalid manual mode value rejected")
             else:
+                TestTimeSettings._wait_for_settings_reload(api_client, 'accepted invalid manual mode')
+                TestTimeSettings._restore_original_settings(api_client, 'accepted invalid manual mode')
                 print(f"⚠ Invalid manual mode accepted (may be converted)")
         except Exception as e:
             if '422' in str(e) or '400' in str(e):
@@ -339,6 +376,8 @@ class TestTimeSettingsEdgeCases:
             if not response['result']:
                 print(f"✓ Invalid datetime format rejected")
             else:
+                TestTimeSettings._wait_for_settings_reload(api_client, 'accepted invalid datetime')
+                TestTimeSettings._restore_original_settings(api_client, 'accepted invalid datetime')
                 print(f"⚠ Invalid datetime format accepted")
         except Exception as e:
             if '422' in str(e) or '400' in str(e):
@@ -357,6 +396,8 @@ class TestTimeSettingsEdgeCases:
             if not response['result']:
                 print(f"✓ Missing required fields rejected")
             else:
+                TestTimeSettings._wait_for_settings_reload(api_client, 'accepted missing required fields')
+                TestTimeSettings._restore_original_settings(api_client, 'accepted missing required fields')
                 print(f"⚠ Missing required fields accepted (may have defaults)")
         except Exception as e:
             if '422' in str(e) or '400' in str(e):
@@ -375,6 +416,8 @@ class TestTimeSettingsEdgeCases:
             if not response['result']:
                 print(f"✓ Invalid case rejected (timezones are case-sensitive)")
             else:
+                TestTimeSettings._wait_for_settings_reload(api_client, 'accepted invalid timezone case')
+                TestTimeSettings._restore_original_settings(api_client, 'accepted invalid timezone case')
                 print(f"⚠ Invalid case accepted (may be normalized)")
         except Exception as e:
             if '422' in str(e) or '400' in str(e):

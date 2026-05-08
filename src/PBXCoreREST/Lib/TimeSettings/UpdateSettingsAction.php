@@ -64,6 +64,7 @@ class UpdateSettingsAction
                 foreach ($allowedKeys as $key) {
                     if (!isset($data[$key]) && $key !== PbxSettings::PBX_MANUAL_TIME_SETTINGS) {
                         $res->messages['error'][] = "Missing required field: $key";
+                        $db->rollback();
                         return $res;
                     }
                 }

@@ -1782,7 +1782,7 @@ def get_extension_secret(extension_number: str, api_client: 'MikoPBXClient' = No
 # ============================================================================
 
 
-def wait_for_worker_idle(api_client, timeout=600, min_wait=7):
+def wait_for_worker_idle(api_client, timeout=600, min_wait=7, stable_polls=3):
     """Wait until WorkerModelsEvents has processed all pending events.
 
     WorkerModelsEvents debounces 5 seconds after the last model change
@@ -1794,13 +1794,30 @@ def wait_for_worker_idle(api_client, timeout=600, min_wait=7):
         api_client: Authenticated MikoPBXClient
         timeout: Max seconds to poll after min_wait (default 600)
         min_wait: Minimum wait covering 5s debounce + 2s buffer (default 7)
+        stable_polls: Consecutive idle samples required before returning
 
     Returns:
         True if worker became idle, False on timeout
     """
+    def parse_tube_stats(output):
+        stats = {}
+        for line in output.splitlines():
+            if ':' not in line:
+                continue
+            key, value = line.split(':', 1)
+            key = key.strip()
+            value = value.strip()
+            try:
+                stats[key] = int(value)
+            except ValueError:
+                continue
+        return stats
+
     time.sleep(min_wait)
     deadline = time.time() + timeout
     poll_count = 0
+    idle_count = 0
+    last_summary = 'unknown'
     while time.time() < deadline:
         poll_count += 1
         try:
@@ -1817,27 +1834,54 @@ def wait_for_worker_idle(api_client, timeout=600, min_wait=7):
             exit_code = response.get('data', {}).get('exitCode', -1)
         except Exception as e:
             print(f"  [poll {poll_count}] API error: {e}")
+            idle_count = 0
             time.sleep(2)
             continue
 
-        if poll_count <= 3 or poll_count % 5 == 0:
-            # Log first few polls and every 5th for diagnostics
-            jobs_ready = 'unknown'
-            for line in output.split('\n'):
-                if 'current-jobs-ready' in line:
-                    jobs_ready = line.strip()
-                    break
-            print(f"  [poll {poll_count}] exitCode={exit_code}, {jobs_ready}")
+        stats = parse_tube_stats(output)
+        queue_counters = {
+            'ready': stats.get('current-jobs-ready', -1),
+            'reserved': stats.get('current-jobs-reserved', -1),
+            'delayed': stats.get('current-jobs-delayed', -1),
+            'buried': stats.get('current-jobs-buried', -1),
+        }
+        counters_known = all(value >= 0 for value in queue_counters.values())
+        idle_now = False
 
-        # NOT_FOUND = tube doesn't exist = no pending jobs
         if 'NOT_FOUND' in output:
-            print(f"  [poll {poll_count}] Tube not found - worker idle")
-            return True
-        if 'current-jobs-ready: 0' in output:
-            print(f"  [poll {poll_count}] Jobs ready = 0 - worker idle")
+            idle_now = True
+            last_summary = 'tube not found'
+        elif counters_known:
+            idle_now = all(value == 0 for value in queue_counters.values())
+            last_summary = (
+                f"ready={queue_counters['ready']}, "
+                f"reserved={queue_counters['reserved']}, "
+                f"delayed={queue_counters['delayed']}, "
+                f"buried={queue_counters['buried']}"
+            )
+        else:
+            last_summary = 'tube stats unavailable'
+
+        if idle_now:
+            idle_count += 1
+        else:
+            idle_count = 0
+
+        if poll_count <= 3 or poll_count % 5 == 0:
+            print(
+                f"  [poll {poll_count}] exitCode={exit_code}, "
+                f"{last_summary}, stable={idle_count}/{stable_polls}"
+            )
+
+        if idle_count >= stable_polls:
+            print(
+                f"  [poll {poll_count}] WorkerModelsEvents idle "
+                f"({last_summary}, stable={idle_count}/{stable_polls})"
+            )
             return True
         time.sleep(2)
-    print(f"  [timeout] After {poll_count} polls, last output: {output[:200]}")
+    print(f"  [timeout] After {poll_count} polls, last state: {last_summary}")
+    print(f"  [timeout] Last output: {output[:200]}")
     return False
 
 
