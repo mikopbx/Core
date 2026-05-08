@@ -358,11 +358,16 @@ const systemDiagnosticLogs = {
             }
         });
 
-        // Event listener for Fullscreen button click
-        $('.fullscreen-toggle-btn').on('click', systemDiagnosticLogs.toggleFullScreen);
-
-        // Listening for the fullscreen change event
-        document.addEventListener('fullscreenchange', systemDiagnosticLogs.adjustLogHeight);
+        // Event listener for Fullscreen button click. Hides the toggle on
+        // browsers without Fullscreen API for DOM elements (e.g. iPhone WebKit).
+        const $fullscreenBtn = $('.fullscreen-toggle-btn');
+        const logContainer = document.getElementById('system-logs-segment');
+        if (FullscreenToggle.isSupported(logContainer)) {
+            $fullscreenBtn.on('click', systemDiagnosticLogs.toggleFullScreen);
+            FullscreenToggle.onChange(systemDiagnosticLogs.adjustLogHeight);
+        } else {
+            $fullscreenBtn.hide();
+        }
 
         // Initial height calculation
         systemDiagnosticLogs.adjustLogHeight();
@@ -370,22 +375,16 @@ const systemDiagnosticLogs = {
 
     /**
      * Toggles the full-screen mode of the 'system-logs-segment' element.
-     * If the element is not in full-screen mode, it requests full-screen mode.
-     * If the element is already in full-screen mode, it exits full-screen mode.
-     * Logs an error message to the console if there is an issue enabling full-screen mode.
+     * Uses FullscreenToggle helper to handle prefixed APIs and unsupported
+     * environments (iPhone WebKit has no Fullscreen API for DOM elements).
      *
      * @return {void}
      */
     toggleFullScreen() {
         const logContainer = document.getElementById('system-logs-segment');
-
-        if (!document.fullscreenElement) {
-            logContainer.requestFullscreen().catch((err) => {
-                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-            });
-        } else {
-            document.exitFullscreen();
-        }
+        FullscreenToggle.toggle(logContainer).catch((err) => {
+            console.error(`Error attempting to toggle full-screen mode: ${err.message}`);
+        });
     },
 
     /**
@@ -394,7 +393,7 @@ const systemDiagnosticLogs = {
     adjustLogHeight() {
         setTimeout(() => {
             let aceHeight = window.innerHeight - systemDiagnosticLogs.$logContent.offset().top - 55;
-            if (document.fullscreenElement) {
+            if (FullscreenToggle.getActiveElement()) {
                 // If fullscreen mode is active
                 aceHeight = window.innerHeight - 80;
             }

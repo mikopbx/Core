@@ -580,29 +580,30 @@ const customFile = {
             Form.dataChanged();
         });
 
-        //  Add handlers for fullscreen mode buttons
-        $('.fullscreen-toggle-btn').on('click', function () {
-            const container = $(this).siblings('.application-code')[0];
-            customFile.toggleFullScreen(container);
-        });
-
-        // Add handler to recalculate sizes when exiting fullscreen mode
-        document.addEventListener('fullscreenchange', customFile.adjustEditorHeight);
+        // Add handlers for fullscreen mode buttons. Hides the toggle on
+        // browsers without Fullscreen API for DOM elements (e.g. iPhone WebKit).
+        const $fullscreenBtn = $('.fullscreen-toggle-btn');
+        const sampleContainer = $fullscreenBtn.first().siblings('.application-code')[0];
+        if (FullscreenToggle.isSupported(sampleContainer)) {
+            $fullscreenBtn.on('click', function () {
+                const container = $(this).siblings('.application-code')[0];
+                customFile.toggleFullScreen(container);
+            });
+            FullscreenToggle.onChange(customFile.adjustEditorHeight);
+        } else {
+            $fullscreenBtn.hide();
+        }
 
     },
     /**
-     * Enable/disable fullscreen mode for a specific block.
+     * Enable/disable fullscreen mode for a specific block via FullscreenToggle helper.
      *
      * @param {HTMLElement} container - The container to expand to fullscreen.
      */
     toggleFullScreen(container) {
-        if (!document.fullscreenElement) {
-            container.requestFullscreen().catch(err => {
-                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-            });
-        } else {
-            document.exitFullscreen();
-        }
+        FullscreenToggle.toggle(container).catch(err => {
+            console.error(`Error attempting to toggle full-screen mode: ${err.message}`);
+        });
     },
 
     /**

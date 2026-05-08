@@ -306,15 +306,28 @@ var dialplanApplicationModify = {
     },
     
     /**
-     * Initialize fullscreen handlers
+     * Stored unsubscribe handle for fullscreenchange listeners.
+     */
+    _fullscreenUnsubscribe: null,
+
+    /**
+     * Initialize fullscreen handlers. Hides the toggle on browsers without
+     * Fullscreen API for DOM elements (e.g. iPhone WebKit).
      */
     initializeFullscreenHandlers: function() {
-        $('.fullscreen-toggle-btn').on('click', function () {
+        var $btn = $('.fullscreen-toggle-btn');
+        var sample = $btn.first().siblings('.application-code')[0];
+        if (!FullscreenToggle.isSupported(sample)) {
+            $btn.hide();
+            return;
+        }
+        $btn.on('click', function () {
             var container = $(this).siblings('.application-code')[0];
             dialplanApplicationModify.toggleFullScreen(container);
         });
-
-        document.addEventListener('fullscreenchange', dialplanApplicationModify.adjustEditorHeight);
+        dialplanApplicationModify._fullscreenUnsubscribe = FullscreenToggle.onChange(
+            dialplanApplicationModify.adjustEditorHeight
+        );
     },
 
     /**
@@ -322,33 +335,32 @@ var dialplanApplicationModify = {
      */
     cleanup: function() {
         // Remove fullscreen event listener
-        document.removeEventListener('fullscreenchange', dialplanApplicationModify.adjustEditorHeight);
-        
+        if (typeof dialplanApplicationModify._fullscreenUnsubscribe === 'function') {
+            dialplanApplicationModify._fullscreenUnsubscribe();
+            dialplanApplicationModify._fullscreenUnsubscribe = null;
+        }
+
         // Cleanup other event listeners if needed
         $(window).off('load');
         $('.fullscreen-toggle-btn').off('click');
         $('textarea[name="description"]').off('input paste keyup');
-        
+
         // Cleanup ACE editor
         if (dialplanApplicationModify.editor) {
             dialplanApplicationModify.editor.destroy();
             dialplanApplicationModify.editor = null;
         }
     },
-    
+
     /**
-     * Toggle fullscreen mode
-     * 
+     * Toggle fullscreen mode via cross-browser FullscreenToggle helper.
+     *
      * @param {HTMLElement} container - Container element
      */
     toggleFullScreen: function(container) {
-        if (!document.fullscreenElement) {
-            container.requestFullscreen().catch(function(err) {
-                console.error('Error attempting to enable full-screen mode: ' + err.message);
-            });
-        } else {
-            document.exitFullscreen();
-        }
+        FullscreenToggle.toggle(container).catch(function(err) {
+            console.error('Error attempting to toggle full-screen mode: ' + err.message);
+        });
     },
 
     /**
