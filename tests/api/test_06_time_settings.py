@@ -17,14 +17,50 @@ All operations work without resource ID.
 NOTE: Write operations (PUT/PATCH) modify system time configuration and should be used carefully.
 """
 
+import time
+
 import pytest
-from conftest import assert_api_success
+from conftest import assert_api_success, wait_for_api_ready, wait_for_worker_idle
 
 
 class TestTimeSettings:
     """Time Settings operations tests"""
 
     original_settings = None
+
+    @staticmethod
+    def _alternate_timezone(current_timezone):
+        """Pick a valid timezone different from the current one."""
+        for candidate in ['Europe/London', 'Europe/Moscow', 'UTC']:
+            if candidate != current_timezone:
+                return candidate
+        return 'Europe/London'
+
+    @staticmethod
+    def _wait_for_timezone_reload(api_client, expected_timezone, context):
+        """Wait until timezone-triggered reload actions finish and REST API is stable."""
+        print(f"⏳ Waiting for system reload after timezone change ({context})...")
+
+        assert wait_for_worker_idle(api_client, timeout=240, min_wait=7), (
+            f"WorkerModelsEvents did not become idle after timezone change ({context})"
+        )
+        wait_for_api_ready(api_client, timeout=180, interval=3)
+
+        for attempt in range(1, 4):
+            response = api_client.get('time-settings')
+            assert_api_success(
+                response,
+                f"REST API did not stabilize after timezone change ({context}), attempt {attempt}"
+            )
+            actual_timezone = response.get('data', {}).get('PBXTimezone')
+            assert actual_timezone == expected_timezone, (
+                f"Timezone did not stabilize after {context}: "
+                f"expected {expected_timezone}, got {actual_timezone}"
+            )
+            if attempt < 3:
+                time.sleep(1)
+
+        print(f"✓ System reload completed and API is stable after timezone change ({context})")
 
     def test_01_get_time_settings(self, api_client):
         """Test GET /time-settings - Get current time configuration"""
@@ -83,8 +119,8 @@ class TestTimeSettings:
         if not TestTimeSettings.original_settings:
             pytest.skip("No original settings available")
 
-        # Try to set a different timezone
-        new_timezone = 'Europe/London'  # Different from most defaults
+        original_timezone = TestTimeSettings.original_settings.get('PBXTimezone')
+        new_timezone = self._alternate_timezone(original_timezone)
 
         try:
             response = api_client.patch('time-settings', {
@@ -93,6 +129,11 @@ class TestTimeSettings:
 
             if response['result']:
                 assert_api_success(response, "Failed to patch timezone")
+                self._wait_for_timezone_reload(
+                    api_client,
+                    new_timezone,
+                    'patch timezone'
+                )
 
                 # Verify change
                 updated = api_client.get('time-settings')
@@ -108,7 +149,7 @@ class TestTimeSettings:
             if '422' in str(e) or '400' in str(e):
                 print(f"✓ Timezone validation works (rejected invalid/unauthorized change)")
             else:
-                print(f"⚠ Unexpected error: {str(e)[:50]}")
+                raise
 
     def test_04_patch_ntp_server(self, api_client):
         """Test PATCH /time-settings - Update only NTP server"""
@@ -143,6 +184,12 @@ class TestTimeSettings:
             response = api_client.put('time-settings', update_data)
 
             if response['result']:
+                target_timezone = update_data['PBXTimezone']
+                self._wait_for_timezone_reload(
+                    api_client,
+                    target_timezone,
+                    'full update'
+                )
                 print(f"✓ Full time settings update successful")
             else:
                 print(f"✓ Full update rejected (may require additional fields)")
@@ -150,7 +197,7 @@ class TestTimeSettings:
             if '422' in str(e) or '400' in str(e):
                 print(f"✓ Full update validation works")
             else:
-                print(f"⚠ Unexpected error: {str(e)[:50]}")
+                raise
 
     def test_06_restore_original_settings(self, api_client):
         """Test - Restore original settings"""
@@ -160,16 +207,25 @@ class TestTimeSettings:
         try:
             # Restore original timezone at least
             if 'PBXTimezone' in TestTimeSettings.original_settings:
+                current = api_client.get('time-settings')
+                current_timezone = current.get('data', {}).get('PBXTimezone')
+                target_timezone = TestTimeSettings.original_settings['PBXTimezone']
                 response = api_client.patch('time-settings', {
-                    'PBXTimezone': TestTimeSettings.original_settings['PBXTimezone']
+                    'PBXTimezone': target_timezone
                 })
 
                 if response['result']:
                     print(f"✓ Original settings restored")
+                    if current_timezone != target_timezone:
+                        self._wait_for_timezone_reload(
+                            api_client,
+                            target_timezone,
+                            'restore original timezone'
+                        )
                 else:
                     print(f"⚠ Failed to restore original settings")
         except Exception as e:
-            print(f"⚠ Error restoring settings: {str(e)[:50]}")
+            pytest.fail(f"Failed to restore time settings: {e}")
 
 
 class TestTimeSettingsEdgeCases:
