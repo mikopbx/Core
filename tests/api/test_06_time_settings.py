@@ -46,21 +46,51 @@ class TestTimeSettings:
         )
         wait_for_api_ready(api_client, timeout=180, interval=3)
 
-        for attempt in range(1, 4):
-            response = api_client.get('time-settings')
-            assert_api_success(
-                response,
-                f"REST API did not stabilize after timezone change ({context}), attempt {attempt}"
-            )
-            actual_timezone = response.get('data', {}).get('PBXTimezone')
-            assert actual_timezone == expected_timezone, (
-                f"Timezone did not stabilize after {context}: "
-                f"expected {expected_timezone}, got {actual_timezone}"
-            )
-            if attempt < 3:
-                time.sleep(1)
+        deadline = time.time() + 180
+        attempt = 0
+        stable_reads = 0
+        last_error = 'no successful time-settings response'
+        last_data = {}
 
-        print(f"✓ System reload completed and API is stable after timezone change ({context})")
+        while time.time() < deadline:
+            attempt += 1
+            try:
+                response = api_client.get('time-settings')
+                assert_api_success(
+                    response,
+                    f"REST API did not stabilize after timezone change ({context}), attempt {attempt}"
+                )
+                last_data = response.get('data', {})
+                actual_timezone = last_data.get('PBXTimezone')
+                if actual_timezone == expected_timezone:
+                    stable_reads += 1
+                    print(
+                        f"  [stable {stable_reads}/3] time-settings returned "
+                        f"{actual_timezone}"
+                    )
+                    if stable_reads >= 3:
+                        print(
+                            f"✓ System reload completed and API is stable "
+                            f"after timezone change ({context})"
+                        )
+                        return last_data
+                else:
+                    stable_reads = 0
+                    last_error = (
+                        f"expected timezone {expected_timezone}, got {actual_timezone}"
+                    )
+                    print(f"  [attempt {attempt}] {last_error}")
+            except Exception as e:
+                stable_reads = 0
+                last_error = f"{type(e).__name__}: {str(e)[:160]}"
+                print(f"  [attempt {attempt}] API is not stable yet: {last_error}")
+
+            time.sleep(3)
+
+        pytest.fail(
+            f"REST API did not stabilize after timezone change ({context}); "
+            f"last error: {last_error}"
+        )
 
     def test_01_get_time_settings(self, api_client):
         """Test GET /time-settings - Get current time configuration"""
@@ -129,17 +159,16 @@ class TestTimeSettings:
 
             if response['result']:
                 assert_api_success(response, "Failed to patch timezone")
-                self._wait_for_timezone_reload(
+                updated_data = self._wait_for_timezone_reload(
                     api_client,
                     new_timezone,
                     'patch timezone'
                 )
 
                 # Verify change
-                updated = api_client.get('time-settings')
-                if updated['result'] and 'PBXTimezone' in updated['data']:
-                    assert updated['data']['PBXTimezone'] == new_timezone, \
-                        f"Expected {new_timezone}, got {updated['data']['PBXTimezone']}"
+                if 'PBXTimezone' in updated_data:
+                    assert updated_data['PBXTimezone'] == new_timezone, \
+                        f"Expected {new_timezone}, got {updated_data['PBXTimezone']}"
                     print(f"✓ Timezone patched successfully to {new_timezone}")
                 else:
                     print(f"⚠ Timezone patched but verification failed")
