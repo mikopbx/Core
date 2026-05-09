@@ -1,6 +1,6 @@
 <?php
 return [
-    'f2b_BlockingRulesHeader' => 'Blocking rules',
+    'f2b_BlockingRulesHeader' => 'Regras de bloqueio',
     'f2b_AdditionalSettingsHeader' => 'Additional settings',
     'f2b_SecurityPresetHeader' => 'Nível de proteção',
     'f2b_SecurityPresetLabel' => 'Nível de proteção contra ataques',
@@ -64,7 +64,6 @@ return [
     'f2b_ValidateFindTimeRange' => 'O período de análise das tentativas de autorização não está definido corretamente',
     'f2b_ValidateMaxRetryRange' => 'O parâmetro do número de tentativas está definido incorretamente',
     'f2b_WhiteList' => 'Lista de endereços que nunca são bloqueados',
-
     // FW
     'fw_ErrorLoadingData' => 'Erro ao carregar os dados',
     'fw_ErrorLoadingRecord' => 'Erro ao carregar a entrada',
@@ -149,7 +148,6 @@ return [
     'fw_sshDescriptionHint' => 'SSH (Secure Shell) - acesso seguro à linha de comando Linux<br>Usado para administração remota do sistema<br>Conexão com nome de usuário root e senha ou chave SSH',
     'fw_webDescription' => 'WEB - acesso à interface administrativa',
     'fw_webDescriptionHint' => 'HTTP/HTTPS - protocolos para acesso à interface web do MikoPBX<br>Acesso via navegador com nome de usuário e senha de administrador<br>Recomenda-se usar HTTPS para segurança',
-
     // IPv6 Firewall Support
     'fw_ValidateIPv4Address' => 'Formato de endereço IPv4 inválido',
     'fw_ValidateIPv6Address' => 'Formato de endereço IPv6 inválido',
@@ -161,7 +159,6 @@ return [
     'fw_IPv6Subnet' => 'Prefixo IPv6',
     'fw_IPv6OrIPv4Required' => 'Especifique uma rede IPv4 ou IPv6 (não necessariamente ambas). Cada regra usa apenas um tipo de endereço IP.',
     'fw_Or' => 'OU',
-
     // Backend Validation Messages
     'fw_ValidationInvalidIPFormat' => 'Formato de endereço IP inválido: %network%',
     'fw_ValidationIPv4SubnetRange' => 'O prefixo de rede IPv4 deve estar entre 0 e 32, recebido: %subnet%',
@@ -171,12 +168,10 @@ return [
     'fw_ValidationIPv6ZoneIdNotAllowed' => 'IDs de zona IPv6 (por exemplo, %%eth0) não são permitidos em regras de firewall: %network%',
     'fw_ValidationIPv6InvalidFormat' => 'Formato de endereço IPv6 inválido: %network%',
     'fw_ValidationInvalidCIDRFormat' => 'Formato de notação CIDR inválido: %cidr%',
-
     // Default firewall rule names
     'fw_AllIPv4NetworkRule' => 'Toda a rede IPv4',
     'fw_AllIPv6NetworkRule' => 'Toda a rede IPv6',
     'fw_LocalNetworkRuleDescription' => 'Rede local',
-
     // NW
     'nw_AllowNatPortForwarding' => 'Esta estação está localizada atrás de um roteador NAT',
     'nw_CurrentIPFromDHCP' => 'Endereço IP atual obtido via DHCP',
@@ -238,7 +233,6 @@ return [
     'nw_RouteDescription' => 'Descrição',
     'nw_RouteDescriptionPlaceholder' => 'Descreva o propósito da rota.',
     'rest_schema_net_route_description' => 'Descrição do percurso para documentação interna',
-
     // Fail2Ban Tooltips
     // Max Retry tooltip
     'f2b_MaxRetryTooltip_header' => 'Limiar de proteção',
@@ -252,7 +246,6 @@ return [
     'f2b_MaxRetryTooltip_warning_header' => '⚠️ Importante',
     'f2b_MaxRetryTooltip_warning' => 'Um valor muito baixo pode bloquear o acesso de usuários legítimos devido a erros acidentais de senha. Considere as especificidades da sua rede.',
     'f2b_MaxRetryTooltip_note' => 'Funciona em conjunto com o parâmetro findtime. Por exemplo: 10 tentativas em 30 minutos.',
-
     // Whitelist tooltip
     'f2b_WhitelistTooltip_header' => 'Endereços confiáveis',
     'f2b_WhitelistTooltip_desc' => 'Endereços IP ou sub-redes que nunca serão bloqueados. O sistema adiciona automaticamente endereços de filtros de rede com a opção "Nunca bloquear".',
@@ -271,7 +264,6 @@ return [
     'f2b_WhitelistTooltip_warning_header' => '⚠️ Segurança',
     'f2b_WhitelistTooltip_warning' => 'Adicione apenas endereços IP de escritórios confiáveis, endereços estáticos de funcionários ou redes internas. Não adicione endereços dinâmicos ou públicos.',
     'f2b_WhitelistTooltip_note' => 'O localhost (127.0.0.1) é adicionado automaticamente e é sempre seguro.',
-
     // Ban Time tooltip
     'f2b_BanTimeTooltip_header' => 'Duração do bloqueio',
     'f2b_BanTimeTooltip_desc' => 'O tempo, em segundos, que um endereço IP permanece bloqueado após exceder o limite de tentativas malsucedidas. Após esse período, o endereço IP é desbloqueado automaticamente.',
@@ -282,7 +274,6 @@ return [
     'f2b_BanTimeTooltip_note' => '86400 (24 horas) - segurança reforçada para serviços públicos',
     'f2b_BanTimeTooltip_warning_header' => '💡 Recomendação',
     'f2b_BanTimeTooltip_warning' => 'O tempo de bloqueio deve ser longo o suficiente para evitar ataques repetidos, mas não tão longo a ponto de prejudicar usuários legítimos com bugs.',
-
     // Find Time tooltip
     'f2b_FindTimeTooltip_header' => 'Janela de observação',
     'f2b_FindTimeTooltip_desc' => 'O intervalo de tempo em segundos para contabilizar as tentativas falhas. Se o número de tentativas exceder o valor de maxretry durante esse período, o endereço IP será bloqueado.',
@@ -294,7 +285,6 @@ return [
     'f2b_FindTimeTooltip_note' => '⚠️ Uma janela muito curta não protegerá contra ataques de negação de serviço distribuídos (DDoS), enquanto uma janela muito longa pode bloquear usuários por erros em diferentes horários do dia.',
     'f2b_FindTimeTooltip_warning_header' => 'Como funciona',
     'f2b_FindTimeTooltip_warning' => 'Por exemplo: com maxretry=10 e findtime=1800, se houver 10 tentativas malsucedidas de um mesmo endereço IP em 30 minutos, o IP será bloqueado.',
-
     // PBXFirewallMaxReqSec tooltip
     'f2b_PBXFirewallMaxReqSecTooltip_header' => 'Limitação da taxa de requisições SIP',
     'f2b_PBXFirewallMaxReqSecTooltip_desc' => 'Número máximo de novas conexões SIP por segundo a partir de um único endereço IP. Protege contra ataques DDoS e de inundação ao servidor SIP.',
@@ -313,7 +303,6 @@ return [
     'f2b_PBXFirewallMaxReqSecTooltip_warning_header' => '⚠️ Importante',
     'f2b_PBXFirewallMaxReqSecTooltip_warning' => 'Um valor muito baixo pode bloquear o tráfego legítimo durante o recadastramento em massa de dispositivos após uma reinicialização. Considere o número de dispositivos SIP na rede.',
     'f2b_PBXFirewallMaxReqSecTooltip_note' => 'A proteção funciona apenas para as portas TCP e UDP SIP (5060) e TLS (5061). Não afeta conexões já estabelecidas.',
-
     // IPv4 Configuration
     'nw_IPv4Mode' => 'Modo IPv4',
     'nw_IPv4ModeManual' => 'Manual',
@@ -321,7 +310,6 @@ return [
     'nw_IPv4Gateway' => 'Gateway IPv4',
     'nw_IPv4PrimaryDNS' => 'DNS IPv4 (primário)',
     'nw_IPv4SecondaryDNS' => 'DNS IPv4 (secundário)',
-
     // IPv6 Configuration (Phase 3)
     'nw_IPv6Configuration' => 'Configuração IPv6',
     'nw_IPv6Mode' => 'Modo IPv6',
@@ -339,14 +327,11 @@ return [
     'nw_ValidateIPv6GatewayInvalid' => 'Formato de gateway IPv6 incorreto',
     'nw_ValidateIPv6AddressRequired' => 'É necessário um endereço IPv6 para o modo manual.',
     'nw_ValidateIPv6SubnetRequired' => 'O comprimento do prefixo IPv6 é necessário para o modo manual.',
-
     // IPv6 DNS Fields (Phase 6)
     'nw_IPv6PrimaryDNS' => 'DNS IPv6 (primário)',
     'nw_IPv6SecondaryDNS' => 'DNS IPv6 (secundário)',
-
     // Docker IPv6 Info (Phase 6)
     'nw_DockerIPv6Info' => 'As configurações de IPv6 são aplicadas dentro do contêiner. A configuração de IPv4 é gerenciada pelo Docker.',
-
     // DHCP Info Messages (Phase 6)
     'nw_DHCPInfoHeader' => 'Configuração DHCP recebida',
     'nw_DHCPInfoIP' => 'Endereço de IP',
@@ -355,14 +340,12 @@ return [
     'nw_DHCPInfoDNS' => 'DNS',
     'nw_DHCPInfoDomain' => 'Domínio',
     'nw_DHCPInfoHostname' => 'Nome do host',
-
     // IPv6 Auto (SLAAC) Info Messages (Phase 6)
     'nw_IPv6AutoInfoHeader' => 'Autoconfiguração IPv6 (SLAAC/DHCPv6)',
     'nw_IPv6AutoInfoAddress' => 'Endereço IPv6',
     'nw_IPv6AutoInfoPrefix' => 'comprimento do prefixo',
     'nw_IPv6AutoInfoGateway' => 'Portal',
     'nw_IPv6AutoInfoDNS' => 'DNS',
-
     // Dual-Stack Configuration (Phase 6)
     'nw_DualStackConfiguration' => 'Configuração de pilha dupla',
     'nw_DualStackHostnameRequired' => 'Nome de host externo (obrigatório)',
@@ -380,7 +363,6 @@ return [
     'nw_DualStackIpv6Info' => 'IPv6',
     'nw_DualStackIpv6InfoDescription' => 'O NAT não é necessário. Certifique-se de que seu firewall permita conexões de entrada nas mesmas portas.',
     'nw_ValidateExternalHostnameEmpty' => 'É necessário um nome de host externo no modo Dual-Stack.',
-
     // Additional Network Form Labels
     'nw_InternetIPv4' => 'Configurações de Internet IPv4',
     'nw_InternetIPv6' => 'Configurações de Internet IPv6',
@@ -389,7 +371,6 @@ return [
     'nw_PlaceholderDhcpHostname' => 'Obtido via DHCP',
     'nw_PlaceholderIPv6Dns' => '2001:4860:4860::8888',
     'nw_SelectIPv4Mode' => 'Selecione o modo IPv4',
-
     // Docker Environment Messages
     'nw_DockerIPv4Info' => 'Configuração atual de IPv4 (Docker)',
     'nw_DockerIPv4InfoNote' => 'As configurações de rede são gerenciadas pelo ambiente de execução do Docker. Somente os servidores DNS podem ser alterados.',

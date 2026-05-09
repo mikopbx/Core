@@ -57,7 +57,7 @@ return [
     'cm_QuickSetupWizard' => 'Configuração rápida (assistente)',
     'cm_ConfiguringUsingDHCP' => 'Configuração via DHCP',
     'cm_ManualSetting' => 'Configuração manual',
-    'cm_SetInternetInterface' => 'Instale a interface de internet.',
+    'cm_SetInternetInterface' => 'Configurar interface de internet',
     'cm_SetupLanIpAddress' => 'Configurar endereço IP da LAN',
     // Network configuration prompts
     'cm_EnterInterfaceName' => 'Digite o nome da interface... %interfaces%: ',
@@ -148,7 +148,7 @@ return [
     'cm_ShowNetworkInfo' => 'Exibir informações da rede',
     'cm_Mtr' => 'MTR (diagnóstico de rede)',
     'cm_MtrSelectHost' => 'Selecione um host para MTR',
-    'cm_MtrGateway' => 'Portal',
+    'cm_MtrGateway' => 'Gateway',
     'cm_MtrCustomHost' => 'Insira seu endereço',
     'cm_NoInterfacesConfigured' => 'As interfaces de rede não estão configuradas.',
     'cm_RoutingTables' => 'Tabelas de roteamento',

@@ -344,7 +344,6 @@ return [
     'banner_SecurityPatchAvailable' => 'Patch de segurança disponível: módulo %module% %ver%',
     'banner_SecurityUpdateCritical' => 'Atualização de segurança crítica %ver%! Instale imediatamente.',
     'banner_UpdateAvailable' => 'Atualização MikoPBX %ver% disponível',
-
     // BT
     'bt_Add' => 'Adicionar',
     'bt_ApplyChangesToPBX' => 'Aplicar mudanças',
@@ -778,7 +777,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'mo_S3AccessKeyRequired' => 'É necessária uma chave de acesso ao S3 quando o armazenamento S3 está ativado.',
     'bt_ToolTipCopyRoute' => 'Copiar rota',
     'adv_SecurityLogCriticalGrowth' => 'O log de segurança do Asterisk cresceu criticamente: %growth% MB em %interval% minutos. O sistema está sob ataque! <a href=\'%url%\'>Verificar log</a>',
-    'adv_SecurityLogSuspiciousGrowth' => 'O registro de segurança do Asterisk cresceu de forma suspeita: %growth% MB em %interval% minutos. Recomenda-se revisar suas configurações de segurança.',
+    'adv_SecurityLogSuspiciousGrowth' => 'Crescimento suspeito do log de segurança do Asterisk: %growth% MB em %interval% minutos. Tamanho total: %totalSize% MB. Recomenda-se verificar as configurações de segurança.',
     'adv_AsteriskLogCriticalGrowth' => 'Crescimento crítico do log do Asterisk (%logFile%): %growth% MB em %interval% minutos. Tamanho total: %totalSize% MB. Possível erro de configuração ou ataque.',
     'adv_AsteriskLogSuspiciousGrowth' => 'Crescimento suspeito do log do Asterisk (%logFile%): %growth% MB em %interval% minutos. Tamanho total: %totalSize% MB.',
     'am_EventFilterTooltip_list_newchannel_desc' => 'Criando um novo canal',
@@ -816,7 +815,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'st_S3StatusUploading' => 'Os arquivos são enviados ativamente para o S3.',
     'st_TestS3Connection' => 'Verifique a conexão',
     'st_ValidationError' => 'Erro de validação',
-
     // S3 Provider Preset (dropdown + per-provider labels and hints)
     'storage_s3_preset_label' => 'Provedor de armazenamento S3',
     'storage_s3_preset_placeholder' => 'Selecione um provedor',
@@ -992,7 +990,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'st_Days' => 'dias',
     'st_EnableS3Storage' => 'Ativar armazenamento S3',
     'st_tooltip_record_retention_warning_header' => 'Aviso de armazenamento',
-
     'st_tooltip_s3_preset_header' => 'Preset de provedor S3',
     'st_tooltip_s3_preset_desc' => 'Escolha um provedor para preencher automaticamente os valores corretos de endpoint, região e modo de endereçamento (path-style para MinIO, Garage, Ceph). O motor continua usando as configurações explícitas — o preset é apenas uma dica para a UI.',
     'st_tooltip_s3_enabled_header' => 'Armazenamento em nuvem',

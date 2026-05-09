@@ -120,7 +120,7 @@ return [
     'ex_ThisNumberNotExistInSipModel' => 'Este número não tem uma configuração SIP correspondente',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Interseção com vários números de estacionamento',
     'ex_ThisUserIdNotExistInUsersModel' => 'Esse usuário não existe',
-    'ex_Transport' => 'protocolo de transporte',
+    'ex_Transport' => 'Protocolo de transporte',
     'ex_UpdateStatus' => 'Atualização de status',
     'ex_UserPhotography' => 'foto do ramal',
     'ex_Username' => 'Nome completo do usuário',
@@ -169,7 +169,6 @@ return [
     'ex_AcceptMultipleCallsTooltip_warning_header' => 'O que muda ao ativar',
     'ex_AcceptMultipleCallsTooltip_warning' => 'O BLF nos telefones dos colegas só mostrará ocupado quando houver uma segunda chamada ativa, e filas ou encaminhamento por ocupado deixarão de disparar na primeira chamada — ela tocará diretamente no ramal do funcionário.',
     'ex_AcceptMultipleCallsTooltip_note' => 'Se o funcionário precisar atender três ou mais chamadas simultâneas (por exemplo, em um telefone IP multilinhas), defina o limite manualmente na seção "Atributos SIP adicionais", por exemplo: [endpoint] device_state_busy_at = 3',
-
     'ex_ErrorLoadingData' => 'Erro ao carregar os dados',
     'ex_DeviceConnected' => 'Conectado',
     'ex_DeviceDisconnected' => 'Desabilitado',
@@ -300,7 +299,7 @@ return [
     'ex_SipManualattributesTooltip_note' => 'Os parâmetros se aplicam às seções [endpoint], [aor], [auth] e [acl].',
     'ex_TryDifferentKeywords' => 'Tente alterar o termo de pesquisa ou limpar os filtros.',
     // Batch create employees translations
-    'ex_BatchEmployeesArrayRequired' => 'É necessário preencher a lista de funcionários.',
+    'ex_BatchEmployeesArrayRequired' => 'É necessário preencher a lista de ramais.',
     'ex_BatchRecordError' => 'Gravação %index%: %error%',
     'ex_BatchCreatedSuccess' => '%count% dos funcionários criaram com sucesso',
     'ex_ImportInvalidForwarding' => 'Encaminhamento de chamadas para um número inexistente %number%',

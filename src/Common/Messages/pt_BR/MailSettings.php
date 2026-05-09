@@ -240,9 +240,9 @@ return [
     'ms_SystemEmailForMissedTooltip_example_crm' => 'Integração com um sistema CRM para registro automático de chamadas perdidas.',
     'ms_SystemEmailForMissedTooltip_recommendations' => 'Recomendações',
     'ms_SystemEmailForMissedTooltip_use_group' => 'Utilize uma caixa de correio de grupo para processamento colaborativo.',
-    'ms_SystemEmailForMissedTooltip_configure_personal' => 'Configure endereços de e-mail personalizados para que os funcionários recebam notificações personalizadas.',
+    'ms_SystemEmailForMissedTooltip_configure_personal' => 'Configure endereços de e-mail personalizados para que os ramais recebam notificações personalizadas.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Por favor, verifique esta caixa de correio regularmente.',
-    'ms_SystemEmailForMissedTooltip_note' => 'Se este campo for deixado em branco, as notificações sobre chamadas externas perdidas não serão enviadas aos funcionários que não possuírem um endereço de e-mail pessoal.',
+    'ms_SystemEmailForMissedTooltip_note' => 'Se este campo for deixado em branco, as notificações sobre chamadas externas perdidas não serão enviadas aos ramais que não possuírem um endereço de e-mail pessoal',
     // Available macros for missed call templates
     'ms_MissedCallMacros_header' => '',
     'ms_MissedCallMacros_description' => '',
@@ -271,7 +271,7 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_audio_attachment' => 'A mensagem de voz é enviada como um anexo de áudio (formato WAV).',
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'A carta contém informações sobre quem ligou e a hora da chamada.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'A duração da mensagem é exibida no corpo do e-mail.',
-    'ms_VoicemailNotificationsEmailTooltip_note' => 'Recomenda-se configurar endereços de e-mail pessoais para os funcionários, para o envio de mensagens de voz personalizadas.',
+    'ms_VoicemailNotificationsEmailTooltip_note' => 'Recomenda-se configurar endereços de e-mail pessoais para os ramais, para o envio de mensagens de voz personalizadas',
     // Available macros for voicemail templates
     'ms_VoicemailMacros_header' => '',
     'ms_VoicemailMacros_description' => '',
@@ -484,7 +484,7 @@ return [
     // Missed Call Notifications
     'ms_EmailNotification_MissedCall_Subject' => 'Chamada perdida',
     'ms_EmailNotification_MissedCall_Preheader' => 'Você tem uma chamada perdida.',
-    'ms_EmailNotification_MissedCall_From' => 'De quem?',
+    'ms_EmailNotification_MissedCall_From' => 'De quem',
     'ms_EmailNotification_MissedCall_ToExtension' => 'Para',
     'ms_EmailNotification_MissedCall_Time' => 'Horário de chamada',
     'ms_EmailNotification_MissedCall_Footer' => 'Por favor, entre em contato com o assinante o mais breve possível.',

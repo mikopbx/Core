@@ -534,7 +534,7 @@ return [
     'rest_emp_ConfirmImport' => 'Confirmar importação',
     'rest_emp_ConfirmImportDesc' => 'Confirme e aplique a importação de funcionários após a pré-visualização.',
     'rest_emp_BatchCreate' => 'Criação em massa de funcionários',
-    'rest_emp_BatchCreateDesc' => 'Criar vários funcionários com uma única solicitação',
+    'rest_emp_BatchCreateDesc' => 'Criar vários ramais com uma única solicitação',
     'rest_emp_BatchDelete' => 'Demissão em massa de funcionários',
     'rest_emp_BatchDeleteDesc' => 'Excluir vários funcionários com uma única solicitação',
     // ============================================================================
@@ -704,9 +704,9 @@ return [
     'rest_DialplanApplications_ApiDescription' => 'Gerencie aplicativos de plano de discagem para lógica e recursos de processamento de chamadas personalizados.',
     'rest_iaxp_Create' => 'Criar um provedor IAX',
     'rest_iaxp_CreateDesc' => 'Crie um novo provedor IAX com os parâmetros de conexão especificados.',
-    'rest_Employees_ApiDescription' => 'Gestão completa de funcionários – usuários de PBX. Os funcionários são contratados em tempo integral com ramais, contas de usuário e credenciais SIP.',
+    'rest_Employees_ApiDescription' => 'Gestão completa de ramais – usuários de PBX. Os funcionários são contratados em tempo integral com ramais, contas de usuário e credenciais SIP.',
     'rest_iaxp_Update' => 'Atualizar provedor IAX',
-    'rest_Extensions_ApiDescription' => 'Gerenciamento completo de ramais de PBX. Os ramais são criados por meio de diversas entidades (funcionários, menus IVR, filas, etc.). Esta API fornece acesso unificado para visualizar, pesquisar e gerenciar todos os ramais, incluindo informações de tipo e verificações de disponibilidade.',
+    'rest_Extensions_ApiDescription' => 'Gerenciamento completo de ramais de PBX. Os ramais são criados por meio de diversas entidades (ramais, menus IVR, filas, etc.). Esta API fornece acesso unificado para visualizar, pesquisar e gerenciar todos os ramais, incluindo informações de tipo e verificações de disponibilidade.',
     'rest_iaxp_UpdateDesc' => 'Atualize completamente o provedor IAX existente (substitua todos os campos).',
     'rest_Fail2Ban_ApiDescription' => 'Gerenciamento completo do sistema de prevenção de intrusões Fail2Ban. Fornece operações REST simples para configurar políticas de bloqueio, tempos limite e listas de permissão de IP. Bloqueia automaticamente endereços IP maliciosos após detectar tentativas repetidas de autenticação falhadas.',
     'rest_Files_ApiDescription' => 'Operações abrangentes de gerenciamento de arquivos. Oferece operações REST para leitura, upload e exclusão de arquivos, além de métodos personalizados para uploads em partes e downloads de firmware. Suporta uploads PUT simples e uploads em partes com possibilidade de retomada, através do protocolo Resumable.js.',
@@ -1137,7 +1137,6 @@ return [
     'rest_err_s3_hint_signature_mismatch' => 'A assinatura da requisição não corresponde. Verifique se a região do S3 está correta — é usada na assinatura SigV4.',
     'rest_err_s3_hint_no_such_bucket' => 'O bucket informado não foi encontrado. Verifique o nome do bucket e as permissões das credenciais.',
     'rest_err_s3_hint_try_path_style' => 'Não foi possível resolver o host do endpoint. Típico em MinIO, Garage e Ceph: ative URLs path-style no preset do provedor.',
-
     'rest_Sysinfo_ApiDescription' => 'Um recurso de sistema único para informações e diagnósticos. Fornece informações detalhadas sobre hardware, configuração de rede, plataforma de virtualização e dados DMI. Uma interface somente leitura para monitoramento e solução de problemas do sistema.',
     'rest_Syslog_ApiDescription' => 'Ferramentas de gerenciamento e diagnóstico de logs do sistema. Fornece acesso a logs do sistema, filtragem de logs, captura de pacotes de rede e geração de arquivos. Essencial para solução de problemas e monitoramento do sistema.',
     'rest_System_ApiDescription' => 'Um recurso de gerenciamento de sistema único. Fornece gerenciamento de energia (reinicialização, desligamento), monitoramento de integridade (ping, verificação de autenticação), operações de data/hora, configurações de idioma, conversão de áudio, atualizações do sistema e restauração de fábrica.',
@@ -2316,13 +2315,11 @@ return [
     'rest_cf_GetDefault' => 'Obter valores padrão',
     'rest_cf_GetDefaultDesc' => 'Obtenha os valores padrão para a criação de um novo arquivo de usuário.',
     'rest_tag_PBXStatus' => 'status do PBX',
-
     // Syslog: packet capture and log retrieval
     'rest_syslog_GetCaptureStatus' => 'Obter status da captura de pacotes',
     'rest_syslog_GetCaptureStatusDesc' => 'Verificar se a captura de pacotes de rede (tcpdump) está em execução no momento',
     'rest_param_syslog_latest' => 'Se verdadeiro, retorna as entradas de log mais recentes. Quando os dados excedem o limite de linhas, o truncamento ocorre no início (entradas mais antigas são removidas)',
     'rest_schema_syslog_latest' => 'Retorna as entradas de log mais recentes quando os dados excedem o limite',
-
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Gravação neste caminho não é permitida',
     'rest_err_file_invalid_target_dir' => 'Diretório de destino inválido',
@@ -2337,7 +2334,6 @@ return [
     'rest_err_syslog_archive_not_found' => 'O arquivo compactado não existe. Tente novamente!',
     'rest_err_syslog_no_matching_entries' => 'Nenhuma entrada de log correspondente encontrada ou a execução do comando falhou',
     'rest_err_firmware_invalid_version' => 'Formato de versão de firmware inválido',
-
     // Security: module installation
     'rest_err_module_extraction_failed' => 'Ocorreu um erro durante a extração do módulo',
     'rest_err_module_path_traversal' => 'Arquivo malicioso: a entrada «%entryName%» contém path traversal',
