@@ -175,7 +175,12 @@ trait NavigationTrait
             // Scroll to top first
             self::$driver->executeScript(
                 sprintf(
-                    "document.getElementById('main').scrollIntoView({block: 'start', inline: 'nearest', behavior: '%s'})",
+                    "const main = document.getElementById('main');"
+                    . "if (main) {"
+                    . "main.scrollIntoView({block: 'start', inline: 'nearest', behavior: '%s'});"
+                    . "} else {"
+                    . "window.scrollTo(0, 0);"
+                    . "}",
                     self::NAVIGATION['scroll']['behavior']
                 )
             );

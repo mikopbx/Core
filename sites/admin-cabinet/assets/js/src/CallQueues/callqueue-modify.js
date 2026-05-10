@@ -191,6 +191,7 @@ const callQueueModifyRest = {
 
         // Initialize timeout_extension dropdown with exclusion logic
         if (!$('#timeout_extension-dropdown').length) {
+            ExtensionSelector.destroy('timeout_extension');
             const currentExtension = callQueueModifyRest.$formObj.form('get value', 'extension');
             const excludeExtensions = currentExtension ? [currentExtension] : [];
 
@@ -198,6 +199,7 @@ const callQueueModifyRest = {
                 type: 'routing',
                 excludeExtensions: excludeExtensions,
                 includeEmpty: true,
+                additionalClasses: ['forwarding-select'],
                 data: data
             });
         }
@@ -207,6 +209,7 @@ const callQueueModifyRest = {
             ExtensionSelector.init('redirect_to_extension_if_empty', {
                 type: 'routing',
                 includeEmpty: true,
+                additionalClasses: ['forwarding-select'],
                 data: data
             });
         }
@@ -510,13 +513,15 @@ const callQueueModifyRest = {
                         timeout_extension: $('#timeout_extension').val(),
                         timeout_extension_represent: $dropdown.find('.text').html()
                     };
-                    
+
                     // Remove old dropdown and re-initialize
+                    ExtensionSelector.destroy('timeout_extension');
                     $dropdown.remove();
                     ExtensionSelector.init('timeout_extension', {
                         type: 'routing',
                         excludeExtensions: excludeExtensions,
                         includeEmpty: true,
+                        additionalClasses: ['forwarding-select'],
                         data: currentData
                     });
                 }
