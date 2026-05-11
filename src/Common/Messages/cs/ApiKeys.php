@@ -6,6 +6,13 @@ return [
     // AK
     'ak_AddNewApiKey' => 'Přidat API klíč',
     'ak_AddNewKey' => 'Přidat API klíč',
+    'ak_CreateBouncerToken' => 'Token pro bouncer',
+    'ak_CreateBouncerTokenHint' => 'Předvyplnit API klíč omezený na endpoint pro export firewall-bouncer — pro použití s cs-firewall-bouncer a dalšími CrowdSec kompatibilními bouncery.',
+    'ak_BouncerPresetDescription' => 'Externí firewall bouncer (kompatibilní s CrowdSec)',
+    'ak_BouncerSnippetModalTitle' => 'Konfigurace cs-firewall-bouncer',
+    'ak_BouncerSnippetModalHint' => 'Zkopírujte tento úryvek do /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml na hostiteli, kde běží bouncer. API klíč se zobrazí pouze jednou — uložte ho do správce hesel před zavřením tohoto dialogu.',
+    'ak_Copy' => 'Kopírovat',
+    'ak_Close' => 'Zavřít',
     'ak_AllControllers' => 'Všechny řadiče (bez omezení)',
     'ak_Allowed' => 'Povoleno',
     'ak_AllowedEndpoints' => 'Povolené endpointy',

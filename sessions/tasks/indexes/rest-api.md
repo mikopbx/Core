@@ -10,6 +10,7 @@ description: Tasks related to REST API routing, authentication, controllers, mid
 
 ### High Priority
 - `h-refactor-ssh-password-storage/` - Refactor SSH password storage to SHA-512 hashes (security improvement)
+- `h-implement-firewall-bouncer-api/` - CrowdSec LAPI-compatible export endpoint for external firewall enforcement (Docker host-level protection via `cs-firewall-bouncer`)
 
 ### Medium Priority
 - `m-fix-zabbix-module-api-flooding.md` - ModuleZabbixAgent5 caching to stop REST API flooding

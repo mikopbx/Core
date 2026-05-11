@@ -246,6 +246,56 @@ class CallQueuesManagementProcessor extends Injectable {
 - **API Keys**: 64-char hex tokens, bcrypt hashed, optional path restrictions
 - **ACL**: Resource:Action RBAC after authentication
 
+## Forwarded HTTP Headers (worker envelope)
+
+Worker actions run in a separate process and cannot reach Phalcon's
+`Request`. `BaseController::prepareRequestMessage()` therefore pre-extracts
+a **filtered** subset of incoming HTTP headers into the message envelope
+under the key `httpHeaders` (lowercased keys, single string values).
+
+Policy lives in `src/PBXCoreREST/Http/ForwardedHeaderFilter.php`:
+
+* **Deny-list (final word)** — `Authorization`, `Cookie`, `Set-Cookie`,
+  `Proxy-Authorization`, and the `Authentication-*` family are stripped
+  unconditionally. They must never reach an action, even via accident.
+* **Allow-list** — public-safe proxy / client metadata
+  (`X-Forwarded-*`, `X-Real-IP`, `User-Agent`, `Referer`, `Origin`,
+  `Host`, `Accept-Language`).
+* **Allow-prefixes** — reserved namespaces:
+  * `X-Mikopbx-*` — core features (debug toggles, async hints, …)
+  * `X-Module-*` — extension modules (per-module conventions)
+
+Each header value is capped at `ForwardedHeaderFilter::MAX_VALUE_LENGTH`
+(1024 bytes) to bound the queue payload. Array-typed values from
+Phalcon are joined with `, ` per RFC 7230 §3.2.2.
+
+### Reading headers in an action
+
+```php
+public static function main(array $data, array $httpHeaders = []): PBXApiResult
+{
+    $ua  = $httpHeaders['user-agent'] ?? '';
+    $xff = $httpHeaders['x-forwarded-for'] ?? '';  // already first-hop-able by caller
+    // ...
+}
+```
+
+The processor must explicitly forward both bags from the request envelope:
+
+```php
+SystemAction::CHECK_CLIENT_IP_VISIBILITY => CheckClientIpVisibilityAction::main(
+    $request['sessionContext'] ?? [],
+    $request['httpHeaders']    ?? []
+),
+```
+
+### Adding a new module header
+
+Pick a name under `X-Module-<YourModule>-` — no edits to `BaseController`
+or `ForwardedHeaderFilter` are required. The filter's allow-prefix list
+already lets it through. Document the header's contract in your module's
+`CLAUDE.md`.
+
 ## URL Routing
 
 ```

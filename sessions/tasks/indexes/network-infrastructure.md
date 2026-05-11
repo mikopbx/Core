@@ -10,6 +10,7 @@ description: Tasks related to network configuration, system utilities, firewall 
 
 ### High Priority
 - `h-implement-dhcpv6-client-support.md` - Add RFC-compliant DHCPv6 client with SLAAC fallback for enterprise production environments
+- `h-implement-firewall-bouncer-api/` - External firewall enforcement for Docker: CrowdSec LAPI-compatible export + Docker bridge/host network mode detector + UI banner
 
 ### Medium Priority
 - `m-refactor-console-menu.md` - Refactor console menu with ESXi-style banner, grouped navigation, log viewer, and modular architecture

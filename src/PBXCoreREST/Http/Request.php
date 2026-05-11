@@ -193,27 +193,46 @@ class Request extends PhRequest
     }
 
     /**
-     * Check if request has Bearer token in Authorization header
-     * 
-     * @return bool
+     * Check if request carries an API token, in either accepted form:
+     *   - `Authorization: Bearer <token>` (canonical MikoPBX form)
+     *   - `X-Api-Key: <token>` (CrowdSec convention; used by stock
+     *     cs-firewall-bouncer and the rest of the LAPI ecosystem
+     *     polling `/pbxcore/api/v3/firewall-bouncer/...`)
+     *
+     * Both headers carry the SAME token type — a 64-char hex API key
+     * stored hashed in the `ApiKeys` model. Path restrictions and the
+     * usual permission checks apply identically regardless of which
+     * header delivered the token, so widening the extraction surface
+     * does not widen the privilege surface.
      */
     public function hasBearerToken(): bool
     {
-        $authHeader = $this->getHeader('Authorization');
-        return $authHeader && str_starts_with($authHeader, 'Bearer ');
+        return $this->getBearerToken() !== null;
     }
-    
+
     /**
-     * Get Bearer token from Authorization header
-     *
-     * @return string|null
+     * Get the API token from the request, preferring `Authorization: Bearer`
+     * and falling back to `X-Api-Key`. See {@see hasBearerToken()} for the
+     * rationale behind accepting both headers.
      */
     public function getBearerToken(): ?string
     {
         $authHeader = $this->getHeader('Authorization');
         if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
-            return substr($authHeader, 7); // Remove "Bearer " prefix
+            $token = trim(substr($authHeader, 7));
+            if ($token !== '') {
+                return $token;
+            }
         }
+
+        $apiKeyHeader = $this->getHeader('X-Api-Key');
+        if (is_string($apiKeyHeader)) {
+            $apiKeyHeader = trim($apiKeyHeader);
+            if ($apiKeyHeader !== '') {
+                return $apiKeyHeader;
+            }
+        }
+
         return null;
     }
 

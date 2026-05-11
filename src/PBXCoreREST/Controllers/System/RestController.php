@@ -53,14 +53,14 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('system', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'checkForUpdates', 'checkIfNewReleaseAvailable'],
+        'GET' => ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'checkForUpdates', 'checkIfNewReleaseAvailable', 'checkClientIpVisibility'],
         'PUT' => ['datetime'],
         'POST' => ['reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage', 'executeBashCommand', 'executeSqlRequest'],
         'PATCH' => ['changeLanguage']
     ],
     resourceLevelMethods: [],
     collectionLevelMethods: [],
-    customMethods: ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'checkForUpdates', 'checkIfNewReleaseAvailable', 'reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage', 'executeBashCommand', 'executeSqlRequest'],
+    customMethods: ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'checkForUpdates', 'checkIfNewReleaseAvailable', 'checkClientIpVisibility', 'reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage', 'executeBashCommand', 'executeSqlRequest'],
     idPattern: ''
 )]
 class RestController extends BaseRestController
@@ -101,6 +101,50 @@ class RestController extends BaseRestController
     #[ApiResponse(200, 'rest_response_200_authenticated')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     public function checkAuth(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Self-check: report how the PBX sees the current HTTP client.
+     *
+     * Used by the Firewall page UI and by admins debugging Docker
+     * deployments. Returns the request peer address, any proxy headers
+     * (X-Forwarded-For / X-Real-IP), the detected Docker network mode
+     * (`native|host|bridge|unknown`) and a single-word verdict
+     * (`ip_visible|ip_not_visible|proxy_detected`) that the UI maps to
+     * one of three human-readable messages. The verdict is heuristic —
+     * see {@see \MikoPBX\PBXCoreREST\Lib\System\CheckClientIpVisibilityAction}.
+     *
+     * @route GET /pbxcore/api/v3/system:checkClientIpVisibility
+     */
+    #[ApiOperation(
+        summary: 'rest_system_CheckClientIpVisibility',
+        description: 'rest_system_CheckClientIpVisibilityDesc',
+        operationId: 'checkClientIpVisibility'
+    )]
+    #[ApiResponse(
+        statusCode: 200,
+        description: 'rest_response_200_clientip',
+        content: [
+            'application/json' => [
+                'schema' => [
+                    'type' => 'object',
+                    'required' => ['remote_addr', 'container_mode', 'is_docker', 'verdict'],
+                    'properties' => [
+                        'remote_addr'     => ['type' => 'string', 'description' => 'rest_schema_clientip_remote', 'example' => '203.0.113.7'],
+                        'x_forwarded_for' => ['type' => 'string', 'nullable' => true, 'description' => 'rest_schema_clientip_xff'],
+                        'x_real_ip'       => ['type' => 'string', 'nullable' => true, 'description' => 'rest_schema_clientip_xrip'],
+                        'container_mode'  => ['type' => 'string', 'enum' => ['native', 'host', 'bridge', 'unknown'], 'description' => 'rest_schema_clientip_mode'],
+                        'is_docker'       => ['type' => 'boolean', 'description' => 'rest_schema_clientip_docker'],
+                        'verdict'         => ['type' => 'string', 'enum' => ['ip_visible', 'ip_not_visible', 'proxy_detected'], 'description' => 'rest_schema_clientip_verdict'],
+                    ],
+                ],
+            ],
+        ]
+    )]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    public function checkClientIpVisibility(): void
     {
         // Implementation handled by BaseRestController
     }

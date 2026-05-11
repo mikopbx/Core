@@ -55,10 +55,14 @@ class DockerNetworkFilterService extends Injectable
     /**
      * Get list of IPs to deny from NetworkFilters for specific categories
      *
+     * Exposed publicly so the firewall-bouncer export endpoint can include
+     * NetworkFilters deny rules in its CrowdSec-LAPI response. Internal callers
+     * (ACL generation) keep using it as before.
+     *
      * @param array<string> $categories Traffic categories to filter (e.g., ['SIP', 'WEB'])
      * @return array<string> List of IP addresses/networks to deny
      */
-    private static function getNetworkFiltersDenyList(array $categories = []): array
+    public static function getNetworkFiltersDenyList(array $categories = []): array
     {
         $denyList = [];
         
@@ -188,9 +192,13 @@ class DockerNetworkFilterService extends Injectable
     /**
      * Get list of IPs that should never be blocked (whitelist)
      *
+     * Exposed publicly so the firewall-bouncer export endpoint can include
+     * the operator-defined whitelist alongside the ban list. Internal callers
+     * (sync to Redis, isIpWhitelisted) keep using it as before.
+     *
      * @return array<string> List of whitelisted IP addresses/networks
      */
-    private static function getNetworkFiltersWhitelist(): array
+    public static function getNetworkFiltersWhitelist(): array
     {
         $whitelist = [];
         
@@ -601,6 +609,58 @@ class DockerNetworkFilterService extends Injectable
     
     
     
+    /**
+     * Read all Redis-stored fail2ban ban decisions across all categories.
+     *
+     * Used by the firewall-bouncer export endpoint to produce CrowdSec-LAPI
+     * decisions. Unlike {@see getBlockedIps()}, this method does NOT
+     * short-circuit on `canManageFirewall()` because the bouncer is an
+     * external enforcer that should receive whatever fail2ban put in Redis
+     * regardless of the local enforcement strategy.
+     *
+     * @return array<int, array{ip: string, category: string, ttl: int}>
+     *         One entry per Redis ban key. TTL is the seconds remaining
+     *         until expiry (Redis loses the original duration). When ttl is
+     *         -1 the ban is persistent; -2 means the key vanished mid-read.
+     */
+    public static function getRedisBouncerDecisions(): array
+    {
+        $decisions = [];
+
+        try {
+            $di    = Di::getDefault();
+            $redis = $di->getShared(RedisClientProvider::SERVICE_NAME);
+
+            foreach ([self::CATEGORY_SIP, self::CATEGORY_HTTP, self::CATEGORY_AMI, self::CATEGORY_IAX] as $category) {
+                $pattern = self::REDIS_PREFIX . $category . ':*';
+                $keys    = $redis->keys($pattern);
+
+                if (!is_array($keys)) {
+                    continue;
+                }
+
+                foreach ($keys as $key) {
+                    $keyWithoutClientPrefix = str_replace(RedisClientProvider::CACHE_PREFIX, '', (string)$key);
+                    $ip = str_replace(self::REDIS_PREFIX . $category . ':', '', $keyWithoutClientPrefix);
+                    if ($ip === '') {
+                        continue;
+                    }
+
+                    $ttl = $redis->ttl($keyWithoutClientPrefix);
+                    $decisions[] = [
+                        'ip'       => $ip,
+                        'category' => $category,
+                        'ttl'      => is_int($ttl) ? $ttl : -2,
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            SystemMessages::sysLogMsg(__CLASS__, 'Failed to read bouncer decisions: ' . $e->getMessage(), LOG_ERR);
+        }
+
+        return $decisions;
+    }
+
     /**
      * Get whitelist from Redis
      *

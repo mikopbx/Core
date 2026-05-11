@@ -95,7 +95,21 @@ const apiKeysModify = {
      */
     initializeForm() {
         const recordId = apiKeysModify.getRecordId();
-        
+
+        // Preset support: pre-fill the form for a specific use case so junior
+        // admins do not have to invent the right path-scoping by hand. Triggered
+        // from the Firewall page bouncer banner via ?preset=bouncer.
+        const presetName = apiKeysModify.getPresetName();
+        if (!recordId && presetName) {
+            const presetData = apiKeysModify.buildPresetData(presetName);
+            if (presetData) {
+                apiKeysModify.activePreset = presetName;
+                apiKeysModify.populateForm(presetData);
+                apiKeysModify.generateApiKey();
+                return;
+            }
+        }
+
         ApiKeysAPI.getRecord(recordId, (response) => {
             const { result, data, messages } = response || {};
 
@@ -110,6 +124,54 @@ const apiKeysModify = {
                 UserMessage.showError(messages?.error || 'Failed to load API key data');
             }
         });
+    },
+
+    /**
+     * Active preset name (e.g. 'bouncer'), or null if no preset is active.
+     * Set during initializeForm() and used by cbAfterSendForm() to decide
+     * whether to surface the preset-specific success modal.
+     *
+     * @type {?string}
+     */
+    activePreset: null,
+
+    /**
+     * Read the `preset` query parameter from the page URL.
+     *
+     * @returns {?string} Preset name or null when absent / empty.
+     */
+    getPresetName() {
+        try {
+            const value = new URLSearchParams(window.location.search).get('preset');
+            return value ? value.trim() : null;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    /**
+     * Build the data object used to pre-fill the form for a known preset.
+     *
+     * Returns `null` for unknown presets so the caller falls back to the
+     * normal "blank new record" flow.
+     *
+     * @param {string} presetName Preset identifier from the URL.
+     * @returns {?Object} Form data shape compatible with populateForm().
+     */
+    buildPresetData(presetName) {
+        if (presetName === 'bouncer') {
+            return {
+                id: '',
+                description: globalTranslate.ak_BouncerPresetDescription
+                    || 'External firewall bouncer (CrowdSec-compatible)',
+                full_permissions: false,
+                allowed_paths: { '/api/v3/firewall-bouncer': 'read' },
+                networkfilterid: 'none',
+                key_display: '',
+                last_used_at: '',
+            };
+        }
+        return null;
     },
 
     /**
@@ -404,6 +466,22 @@ const apiKeysModify = {
     cbAfterSendForm(response) {
         if (response.result) {
             if (response.data) {
+                // Preset-aware: surface the bouncer config snippet BEFORE
+                // populateForm() blanks the in-memory plaintext key (the
+                // backend never returns the key plaintext again).
+                //
+                // We also clear `response.reload` so form.js does NOT
+                // redirect to the new record's edit page right after this
+                // callback returns — that navigation would unmount the
+                // modal before the admin could copy the one-time secret.
+                // (`Form.handleSubmitResponse` reads reloadPath after this
+                // callback runs, so the mutation here is effective.)
+                if (apiKeysModify.activePreset === 'bouncer' && apiKeysModify.generatedApiKey) {
+                    apiKeysModify.showBouncerSnippetModal(apiKeysModify.generatedApiKey);
+                    apiKeysModify.activePreset = null;
+                    response.reload = '';
+                }
+
                 apiKeysModify.populateForm(response.data);
 
                 // Update page state for existing record
@@ -417,6 +495,56 @@ const apiKeysModify = {
             }
             // Form.js will handle all redirect logic based on submitMode
         }
+    },
+
+    /**
+     * Show a one-shot modal with a ready-to-paste cs-firewall-bouncer config.
+     *
+     * The plaintext token is only available client-side at this moment —
+     * the backend hashes it on save and never returns it again. We render
+     * the host (window.location.origin) plus the token into the YAML
+     * template so the admin can copy-paste the result straight into
+     * `/etc/crowdsec/bouncers/cs-firewall-bouncer.yaml`.
+     *
+     * @param {string} plaintextKey The freshly-generated API key.
+     */
+    showBouncerSnippetModal(plaintextKey) {
+        // CrowdSec cs-firewall-bouncer treats `api_url` as the LAPI BASE
+        // URL and appends `/v1/decisions/stream` itself; the token is
+        // sent in the `X-Api-Key` header. We must therefore advertise
+        // the base path with a trailing slash — NOT the full decisions
+        // path and NOT an `Authorization: Bearer` URL.
+        const apiUrl = `${window.location.origin}/pbxcore/api/v3/firewall-bouncer/`;
+        const snippet = `api_url: ${apiUrl}\napi_key: ${plaintextKey}\nupdate_frequency: 10s\nmode: iptables\n`;
+        const title = globalTranslate.ak_BouncerSnippetModalTitle || 'External bouncer configuration';
+        const hint = globalTranslate.ak_BouncerSnippetModalHint
+            || 'Copy this snippet into /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml on the host where the bouncer runs.';
+        const closeLabel = globalTranslate.ak_Close || 'Close';
+
+        const $modal = $(`
+            <div class="ui modal" id="bouncer-snippet-modal">
+                <div class="header">${title}</div>
+                <div class="content">
+                    <p>${hint}</p>
+                    <textarea class="ui input" readonly rows="6" style="width:100%; font-family: monospace;">${snippet}</textarea>
+                </div>
+                <div class="actions">
+                    <button class="ui primary button" data-copy>${globalTranslate.ak_Copy || 'Copy'}</button>
+                    <button class="ui button" data-close>${closeLabel}</button>
+                </div>
+            </div>
+        `);
+        $('body').append($modal);
+        $modal.find('[data-copy]').on('click', () => {
+            navigator.clipboard.writeText(snippet);
+        });
+        $modal.find('[data-close]').on('click', () => {
+            $modal.modal('hide');
+        });
+        $modal.modal({
+            closable: false,
+            onHidden: () => $modal.remove(),
+        }).modal('show');
     },
 
     /**

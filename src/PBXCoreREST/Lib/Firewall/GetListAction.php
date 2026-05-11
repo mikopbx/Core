@@ -239,6 +239,13 @@ class GetListAction
                 $networksTable = array_slice($networksTable, $offset, $limit);
             }
 
+            // Docker networking diagnostics — drives the "external bouncer needed"
+            // banner on the UI. `dockerNetworkMode` is `'bridge'` only when we are
+            // running in Docker AND the eth0 interface has a veth pair, i.e. the
+            // failure mode where host iptables / client-IP visibility break down.
+            $dockerNetworkMode = System::getDockerNetworkMode();
+            $clientIpVisible = $clientIp !== '' || $dockerNetworkMode !== 'bridge';
+
             // Add system status
             $res->data = [
                 'items' => $networksTable,
@@ -248,7 +255,9 @@ class GetListAction
                 'isDocker' => System::isDocker(),
                 'dockerSupportedServices' => ['WEB', 'AMI', 'SIP & RTP', 'IAX'],
                 'clientIp' => $clientIp,
-                'clientIpRuleId' => $clientIpRuleId
+                'clientIpRuleId' => $clientIpRuleId,
+                'dockerNetworkMode' => $dockerNetworkMode,
+                'clientIpVisible' => $clientIpVisible,
             ];
             
             $res->success = true;

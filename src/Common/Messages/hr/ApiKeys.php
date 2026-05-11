@@ -6,6 +6,13 @@ return [
     // AK
     'ak_AddNewApiKey' => 'Dodaj API ključ',
     'ak_AddNewKey' => 'Dodaj API ključ',
+    'ak_CreateBouncerToken' => 'Token za bouncer',
+    'ak_CreateBouncerTokenHint' => 'Predpopunite API ključ ograničen na endpoint za izvoz firewall-bouncera — za korištenje s cs-firewall-bouncerom i drugim CrowdSec kompatibilnim bouncerima.',
+    'ak_BouncerPresetDescription' => 'Vanjski firewall bouncer (kompatibilan s CrowdSec)',
+    'ak_BouncerSnippetModalTitle' => 'Konfiguracija cs-firewall-bouncera',
+    'ak_BouncerSnippetModalHint' => 'Kopirajte ovaj isječak u /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml na hostu gdje bouncer radi. API ključ se prikazuje samo jednom — pohranite ga u upravitelj lozinki prije zatvaranja ovog dijaloga.',
+    'ak_Copy' => 'Kopiraj',
+    'ak_Close' => 'Zatvori',
     'ak_AllControllers' => 'Svi kontroleri (bez ograničenja)',
     'ak_Allowed' => 'Dozvoljeno',
     'ak_AllowedEndpoints' => 'Dozvoljene krajnje točke',

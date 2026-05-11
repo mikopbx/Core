@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Lib\System\ChangeLanguageAction;
+use MikoPBX\PBXCoreREST\Lib\System\CheckClientIpVisibilityAction;
 use MikoPBX\PBXCoreREST\Lib\System\CheckForUpdatesAction;
 use MikoPBX\PBXCoreREST\Lib\System\CheckIfNewReleaseAvailableAction;
 use MikoPBX\PBXCoreREST\Lib\System\DateTimeAction;
@@ -43,6 +44,7 @@ enum SystemAction: string
 {
     case PING = 'ping';
     case CHECK_AUTH = 'checkAuth';
+    case CHECK_CLIENT_IP_VISIBILITY = 'checkClientIpVisibility';
     case REBOOT = 'reboot';
     case SHUTDOWN = 'shutdown';
     case DATETIME = 'datetime';
@@ -92,6 +94,10 @@ class SystemManagementProcessor extends Injectable
         $res = match ($action) {
             SystemAction::PING => self::handlePing(),
             SystemAction::CHECK_AUTH => self::handleCheckAuth(),
+            SystemAction::CHECK_CLIENT_IP_VISIBILITY => CheckClientIpVisibilityAction::main(
+                $request['sessionContext'] ?? [],
+                $request['httpHeaders'] ?? []
+            ),
             SystemAction::REBOOT => RebootAction::main(),
             SystemAction::SHUTDOWN => ShutdownAction::main(),
             SystemAction::DATETIME => DateTimeAction::main($data),
