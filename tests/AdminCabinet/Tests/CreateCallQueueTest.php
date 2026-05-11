@@ -67,6 +67,7 @@ abstract class CreateCallQueueTest extends MikoPBXTestsBase
         $this->clickDeleteButtonOnRowWithText($params['name']);
        
         $this->clickButtonByHref('/admin-cabinet/call-queues/modify');
+        $this->waitForCallQueueFormReady();
 
         $this->fillBasicFields($params);
         $this->fillAdvancedOptions($params);
@@ -81,6 +82,8 @@ abstract class CreateCallQueueTest extends MikoPBXTestsBase
      */
     protected function fillBasicFields(array $params): void
     {
+        $this->waitForCallQueueFormReady();
+
         self::$driver->executeScript(
             "$('#queue-form').form('set value','uniqid','{$params['uniqid']}');"
         );
@@ -89,6 +92,32 @@ abstract class CreateCallQueueTest extends MikoPBXTestsBase
         $this->changeInputField('extension', $params['extension']);
         $this->changeInputField('name', $params['name']);
         $this->selectDropdownItem('strategy', $params['strategy']);
+    }
+
+    /**
+     * Wait until the call queue form is ready for direct input interactions.
+     */
+    protected function waitForCallQueueFormReady(): void
+    {
+        self::$driver->wait(self::WAIT_TIMEOUT, 500)->until(
+            static function (): bool {
+                return (bool) self::$driver->executeScript(
+                    <<<'JS'
+const form = document.querySelector('#queue-form');
+const extension = document.querySelector('#queue-form input[name="extension"]');
+
+return document.readyState === 'complete'
+    && !!form
+    && !!extension
+    && !extension.disabled
+    && extension.offsetParent !== null
+    && !document.querySelector('.ui.loader.active')
+    && !document.querySelector('.ui.dimmer.active')
+    && !document.querySelector('form.loading');
+JS
+                );
+            }
+        );
     }
 
     /**
