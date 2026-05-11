@@ -53,9 +53,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
     public function testAddNewVLAN(array $params): void
     {
         // Click on the network modification page in the admin cabinet.
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-
-        $this->waitForAjax();
+        $this->openNetworkModifyPage();
 
         // Delete existing VLAN22 if it exists from previous test run
         try {
@@ -102,8 +100,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
                 sleep(2);
 
                 // Navigate back to network page
-                $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-                $this->waitForAjax();
+                $this->openNetworkModifyPage();
 
                 echo "DEBUG: Successfully deleted existing VLAN '{$params['name_0']}'\n";
             }
@@ -147,13 +144,8 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         // Submit the network form.
         $this->submitForm('network-form');
 
-        // Click on the network modification page again.
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-
-        $this->waitForAjax();
-
-        // Click on the eth0 tab.
-        $this->changeTabOnCurrentPage('1');
+        // Click on the network modification page again and wait for dynamic tabs.
+        $this->openNetworkModifyPage('1');
 
         // Wait for JavaScript updateDualStackNatLogic() to complete
         // This function may clear extipaddr in dual-stack mode
@@ -231,6 +223,66 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         return $params;
     }
 
+    private function openNetworkModifyPage(?string $tabAnchor = null): void
+    {
+        $lastError = '';
+
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            try {
+                if ($attempt > 1) {
+                    self::annotate(
+                        sprintf('Retry opening network modify page, attempt %d/3: %s', $attempt, $lastError),
+                        'warning'
+                    );
+                    self::$driver->navigate()->refresh();
+                    sleep(2);
+                }
+
+                $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
+                $this->waitForAjax();
+
+                self::$driver->wait(30, 500)->until(
+                    static function (): bool {
+                        return (bool) self::$driver->executeScript(
+                            <<<'JS'
+return document.readyState === 'complete'
+    && document.querySelectorAll('#eth-interfaces-menu a.item[data-tab]').length > 0
+    && !document.querySelector('form.loading');
+JS
+                        );
+                    }
+                );
+
+                if ($tabAnchor !== null) {
+                    $this->changeTabOnCurrentPage($tabAnchor);
+                }
+
+                return;
+            } catch (\Exception $e) {
+                $lastError = $e->getMessage();
+                sleep(3);
+            }
+        }
+
+        $availableTabs = self::$driver->executeScript(
+            <<<'JS'
+return Array.from(document.querySelectorAll('#eth-interfaces-menu a.item[data-tab]'))
+    .map((item) => `${item.getAttribute('data-tab')}:${item.textContent.trim()}`)
+    .join(', ');
+JS
+        );
+
+        $this->assertTrue(
+            false,
+            sprintf(
+                'Network modify page did not expose interface tab "%s". Available tabs: %s. Last error: %s',
+                $tabAnchor ?? '*',
+                $availableTabs ?: 'none',
+                $lastError
+            )
+        );
+    }
+
     /**
      * Test adding a static route configuration.
      * Must run after VLAN test because static routes section is only visible when multiple interfaces exist.
@@ -242,8 +294,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->setSessionName("Test: Static Routes Configuration");
 
         // Navigate to network configuration page
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-        $this->waitForAjax();
+        $this->openNetworkModifyPage();
 
         // Click "Add route" button
         $addRouteButton = self::$driver->findElement(WebDriverBy::id('add-first-route-button'));
@@ -292,8 +343,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->submitForm('network-form');
 
         // Verify route was saved - reload page
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-        $this->waitForAjax();
+        $this->openNetworkModifyPage();
 
         // Check that route exists in table
         $savedRouteRow = self::$driver->findElement(WebDriverBy::cssSelector('#static-routes-table tbody tr:not(.route-row-template)'));
@@ -323,12 +373,8 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
     {
         $this->setSessionName("Test: IPv4 DHCP/Manual Mode Switching");
 
-        // Navigate to network configuration page
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-        $this->waitForAjax();
-
-        // Switch to eth0 tab (ID 1)
-        $this->changeTabOnCurrentPage('1');
+        // Navigate to network configuration page and switch to eth0 tab (ID 1)
+        $this->openNetworkModifyPage('1');
         sleep(1);
 
         // Test 1: Verify DHCP mode (initial state)
@@ -379,9 +425,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->submitForm('network-form');
 
         // Test 4: Verify Manual configuration was saved
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-        $this->waitForAjax();
-        $this->changeTabOnCurrentPage('1');
+        $this->openNetworkModifyPage('1');
         sleep(1);
 
         // Verify saved values
@@ -422,9 +466,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->submitForm('network-form');
 
         // Verify DHCP mode was saved
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-        $this->waitForAjax();
-        $this->changeTabOnCurrentPage('1');
+        $this->openNetworkModifyPage('1');
 
         $this->assertMenuItemSelected('ipv4_mode_1', '1'); // DHCP mode
     }
@@ -438,12 +480,8 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
     {
         $this->setSessionName("Test: IPv6 Manual Configuration");
 
-        // Navigate to network configuration page
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-        $this->waitForAjax();
-
-        // Switch to eth0 tab (ID 1)
-        $this->changeTabOnCurrentPage('1');
+        // Navigate to network configuration page and switch to eth0 tab (ID 1)
+        $this->openNetworkModifyPage('1');
 
         // Select IPv6 Mode = Manual (value '2')
         $this->selectDropdownItem('ipv6_mode_1', '2');
@@ -460,9 +498,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->submitForm('network-form');
 
         // Reload page and verify settings
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-        $this->waitForAjax();
-        $this->changeTabOnCurrentPage('1');
+        $this->openNetworkModifyPage('1');
 
         // Verify IPv6 settings
         $this->assertMenuItemSelected('ipv6_mode_1', '2');
@@ -484,9 +520,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
     {
         $this->setSessionName("Test: IPv6 Auto Configuration (SLAAC)");
 
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-        $this->waitForAjax();
-        $this->changeTabOnCurrentPage('1');
+        $this->openNetworkModifyPage('1');
 
         // Select IPv6 Mode = Auto (value '1')
         $this->selectDropdownItem('ipv6_mode_1', '1');
@@ -498,9 +532,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->submitForm('network-form');
 
         // Verify Auto mode was saved
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-        $this->waitForAjax();
-        $this->changeTabOnCurrentPage('1');
+        $this->openNetworkModifyPage('1');
 
         $this->assertMenuItemSelected('ipv6_mode_1', '1');
 
@@ -518,9 +550,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
     {
         $this->setSessionName("Test: Dual-Stack NAT Section");
 
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-        $this->waitForAjax();
-        $this->changeTabOnCurrentPage('1');
+        $this->openNetworkModifyPage('1');
 
         // DON'T change IPv4 mode - leave it as is (DHCP or Manual) to avoid network disruption
         // Dual-stack detection works regardless of IPv4 mode (static or DHCP)
@@ -548,9 +578,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->submitForm('network-form');
 
         // Verify hostname was saved
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-        $this->waitForAjax();
-        $this->changeTabOnCurrentPage('1');
+        $this->openNetworkModifyPage('1');
 
         $this->assertInputFieldValueEqual('exthostname', 'mikopbx-dualstack.example.com');
 
@@ -568,9 +596,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
     {
         $this->setSessionName("Test: IPv6 DNS Fields");
 
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-        $this->waitForAjax();
-        $this->changeTabOnCurrentPage('1');
+        $this->openNetworkModifyPage('1');
 
         // Enable IPv6 Manual mode to make DNS fields visible
         $this->selectDropdownItem('ipv6_mode_1', '2');
@@ -588,9 +614,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->submitForm('network-form');
 
         // Verify DNS servers were saved
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
-        $this->waitForAjax();
-        $this->changeTabOnCurrentPage('1');
+        $this->openNetworkModifyPage('1');
 
         $this->assertInputFieldValueEqual('primarydns6_1', '2001:4860:4860::8888');
         $this->assertInputFieldValueEqual('secondarydns6_1', '2001:4860:4860::8844');

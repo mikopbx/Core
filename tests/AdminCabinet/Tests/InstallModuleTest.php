@@ -264,12 +264,8 @@ if (!toggle || !checkbox) {
 const statusIcon = row.querySelector('i.status-icon');
 const statusIconBusy = statusIcon
     && (statusIcon.classList.contains('loading') || statusIcon.classList.contains('spinner'));
-const ajaxReady = typeof jQuery === 'undefined' || jQuery.active === 0;
-const loadersReady = document.querySelectorAll('.ui.loader.active').length === 0;
 
 return document.readyState === 'complete'
-    && ajaxReady
-    && loadersReady
     && !toggle.classList.contains('disabled')
     && !toggle.classList.contains('loading')
     && !statusIconBusy;
