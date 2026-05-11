@@ -58,7 +58,7 @@ class DeleteExtensionTest extends MikoPBXTestsBase
 
         // TESTS
         $xpath = "//input[@name = 'id']";
-        $input_ExtensionUniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
+        $input_ExtensionUniqueID = $this->waitForElement($xpath);
         $elementID = $input_ExtensionUniqueID->getAttribute('value');
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 

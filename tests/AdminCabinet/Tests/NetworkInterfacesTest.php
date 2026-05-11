@@ -234,11 +234,11 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
                         sprintf('Retry opening network modify page, attempt %d/3: %s', $attempt, $lastError),
                         'warning'
                     );
-                    self::$driver->navigate()->refresh();
                     sleep(2);
                 }
 
-                $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
+                $url = rtrim($GLOBALS['SERVER_PBX'], '/') . '/admin-cabinet/network/modify/';
+                self::$driver->get($url);
                 $this->waitForAjax();
 
                 self::$driver->wait(30, 500)->until(
@@ -246,6 +246,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
                         return (bool) self::$driver->executeScript(
                             <<<'JS'
 return document.readyState === 'complete'
+    && window.location.pathname.indexOf('/admin-cabinet/network/modify') !== -1
     && document.querySelectorAll('#eth-interfaces-menu a.item[data-tab]').length > 0
     && !document.querySelector('form.loading');
 JS
