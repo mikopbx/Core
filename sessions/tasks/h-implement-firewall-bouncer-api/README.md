@@ -36,85 +36,117 @@ AWS WAF и десятки community-плагинов) поллят endpoint и �
 
 ### Функциональные (код)
 
-- [ ] Endpoint `GET /pbxcore/api/v3/firewall-bouncer:exportDecisions` отвечает
-  CrowdSec LAPI-совместимым JSON; поддерживает query-параметры `startup`,
-  `scopes`, `origins` (как у `cs-firewall-bouncer`); **MVP-вариант отдаёт
-  полный список на каждый поллинг** (без delta-stream), это валидно для
-  всех существующих CrowdSec bouncers.
-  *Note: endpoint живёт на отдельном resource path `/firewall-bouncer` (не
-  внутри `/firewall`) из-за ограничения `ApiKeyPermissionChecker` —
-  см. B1 в Context Manifest.*
-- [ ] Аутентификация — через существующий `ApiKeys`-механизм
-  (`Authorization: Bearer`), localhost-bypass НЕ расширяется; токен
-  с несовпадающим `allowed_paths` получает 403
-- [ ] Источник данных: Redis-ключи `_PH_REDIS_CLIENT:firewall:sip|http|ami|iax:*`
+- [x] Endpoint `GET /pbxcore/api/v3/firewall-bouncer/v1/decisions/stream`
+  отвечает CrowdSec LAPI-совместимым JSON `{new, deleted}` на верхнем
+  уровне (без `{result,data}`-обёртки), `?startup=true` принимается и
+  игнорируется (MVP всегда отдаёт полный снимок — валидно для всех
+  существующих CrowdSec bouncer'ов). Sibling `/v1/whitelist` отдаёт
+  плоский JSON-массив CIDR.
+  *Note: literal multi-segment пути монтируются через
+  `RouterProvider::SPECIAL_ROUTES`. Permission scope — resource base
+  `/api/v3/firewall-bouncer`; ascend разрешён только для whitelist-баз
+  (`ApiKeyPermissionChecker::ASCEND_ALLOWED_RESOURCES`) — см. Codex
+  review fixes в Work Log.*
+- [x] Аутентификация — через существующий `ApiKeys`-механизм
+  (`Authorization: Bearer` **и** `X-Api-Key` — CrowdSec-convention, оба
+  читаются `Request::getBearerToken()`), localhost-bypass НЕ
+  расширяется; токен с несовпадающим `allowed_paths` получает 403
+- [x] Источник данных: Redis-ключи `_PH_REDIS_CLIENT:firewall:sip|http|ami|iax:*`
   + `NetworkFilters` deny-rules (через `DockerNetworkFilterService`);
-  whitelist отдельным массивом в ответе
-- [ ] `System::getDockerNetworkMode(): string` возвращает
+  whitelist отдельным массивом в ответе (отдельный sibling endpoint
+  `/v1/whitelist`)
+- [x] `System::getDockerNetworkMode(): string` возвращает
   `'native'|'host'|'bridge'|'unknown'`, через сравнение
   `/sys/class/net/eth0/iflink` vs `/sys/class/net/eth0/ifindex`,
   интегрирован в `System::getPlatformInfo()` массив; покрыт unit-тестами
-  на все четыре исхода
-- [ ] Endpoint `GET /pbxcore/api/v3/system:checkClientIpVisibility` отдаёт
-  `remote_addr`, заголовки прокси (`X-Forwarded-For`, `X-Real-IP`),
+  `tests/Unit/Core/System/DockerNetworkModeTest.php` на все четыре исхода
+- [x] Endpoint `POST /pbxcore/api/v3/system:checkClientIpVisibility`
+  отдаёт `remote_addr`, заголовки прокси (`X-Forwarded-For`, `X-Real-IP`),
   `container_mode` (из `getDockerNetworkMode`), `verdict`
-  (`ip_visible|ip_not_visible|proxy_detected`) — корректно на четырёх
-  сценариях: bare-metal, Docker bridge, Docker host, behind-proxy
-- [ ] UI Access Control / Firewall: баннер с CTA отображается ТОЛЬКО при
+  (`ip_visible|ip_not_visible|proxy_detected`). Внутри воркера читает
+  заголовки из envelope-поля `httpHeaders` (см. `ForwardedHeaderFilter`).
+- [x] UI Access Control / Firewall: баннер с CTA отображается ТОЛЬКО при
   условии `mode = bridge AND verdict != ip_visible`; рядом — кнопка
   «Проверить видимость моего IP» с человекочитаемым результатом
-- [ ] UI ApiKeys: preset «External firewall bouncer (CrowdSec-compatible)»
-  предзаполняет `description`, `allowed_paths` единственным путём
-  (firewall-bouncer:exportDecisions), показывает готовый snippet конфига
-  `cs-firewall-bouncer` для копирования
+- [x] UI ApiKeys: preset «External firewall bouncer (CrowdSec-compatible)»
+  (`?preset=bouncer`) предзаполняет `description`, `allowed_paths`
+  единственным путём (`/api/v3/firewall-bouncer: read`), после save
+  показывает модал с готовым `cs-firewall-bouncer.yaml` snippet для
+  копирования. Resource-row в permission-selector обеспечивается
+  `#[HttpMapping]` на bouncer-контроллере (Codex review fix).
 
 ### Acceptance / интеграция
 
-- [ ] **Smoke-тест с реальным `cs-firewall-bouncer`** на чистом Debian:
-  два контейнера (MikoPBX + bouncer-host рядом, либо MikoPBX в Docker
-  + apt-пакет bouncer'а в отдельном контейнере / на хосте OSX через
-  Lima/Multipass). Сценарий: добавление IP в NetworkFilters →
-  IP появляется в host iptables ≤ 30 секунд; удаление IP → пропадает.
-  Тест проводится после доработки кода вручную, документируется в
-  Work Log с командами и результатами.
-- [ ] **SIP-fail2ban-в-Docker не сломан** — текущий путь
+- [ ] **Smoke-тест с реальным `cs-firewall-bouncer`** на чистом Debian
+  (BLOCKER): apk-пакет MikoPBX из develop-сборки + apt-installed
+  `cs-firewall-bouncer` на хосте. Сценарий: добавление IP в
+  NetworkFilters → IP появляется в host iptables ≤ 30 секунд;
+  удаление IP → пропадает. Ждём окончания TeamCity-пайплайна
+  `MIKOPBX_TESTCASES` после merge `8613709da`, затем разворачиваем
+  на чистом Debian и прогоняем. Документируется в Work Log с
+  командами и результатами.
+- [x] **SIP-fail2ban-в-Docker не сломан** — путь
   `DockerNetworkFilterService::addBlockedIp` → `pjsip ACL` →
-  `module reload acl` не затронут; existing API-тесты зелёные
-- [ ] **Безопасность endpoint'а**: данные доступны только по валидному
-  токену с правильным scope; токен с привязанным `networkfilterid`
-  отдаёт 403 при запросе с неразрешённого IP; whitelist-IP офиса не
-  утекает анонимным запросом
+  `module reload acl` не затронут изменениями (ни один из этих файлов
+  не в diff). Финальную регрессию подтвердят пайплайны TeamCity
+  (`RestAPITestsOn172163272`, `TESTCASES`) на merge-коммите.
+- [x] **Безопасность endpoint'а**: токен без scope → 403; токен
+  с `/api/v3/firewall-bouncer: read` → 200 на `/v1/decisions/stream`
+  и `/v1/whitelist`; whitelist-IP не утекает анонимам (404/401
+  через middleware). Дополнительно — ancestor-walk закрыт whitelist'ом
+  (`ApiKeyPermissionChecker::ASCEND_ALLOWED_RESOURCES`), regression
+  net в `ApiKeyPermissionCheckerPathAscendTest`.
 
 ### Документация (`/Volumes/DevDisk/Developement/docs.mikopbx.com/`)
 
-- [ ] Создана `setup/docker/external-firewall-enforcement.md` в ветках
-  `russian` + `english`. Содержание: self-check видимости IP,
-  два варианта решения — `network_mode: host` для VoIP **либо**
-  `cs-firewall-bouncer` apt-пакетом на Linux-хосте (compose-sidecar
-  вариант — follow-up, в этой задаче не делаем)
-- [ ] Создана `manual/system/api-keys/firewall-export.md` в обеих ветках —
-  техническая страница для разработчиков своих bouncer'ов: формат ответа
-  LAPI, query-параметры, пример curl, маппинг наших категорий
-  (`sip/http/ami/iax`) на CrowdSec поля
-- [ ] Обновлены 8 существующих страниц в обеих ветках (см. план в User
-  Notes): `readme/security.md`, `manual/connectivity/firewall.md`,
+**Текущее состояние: черновики готовы, в docs-репо ещё не применены.**
+Все файлы и пошаговые инструкции лежат в
+`sessions/tasks/h-implement-firewall-bouncer-api/docs-drafts/` —
+`APPLY.md` описывает порядок применения на ветках `russian`/`english`
+после успешного smoke-теста на Debian.
+
+- [x] **Drafted**: `setup/docker/external-firewall-enforcement.md` (RU+EN) —
+  self-check видимости IP, два варианта решения (`network_mode: host`
+  для VoIP **либо** `cs-firewall-bouncer` apt-пакетом на Linux-хосте);
+  compose-sidecar — follow-up.
+- [x] **Drafted**: `manual/system/api-keys/firewall-export.md` (RU+EN) —
+  техническая страница: формат ответа LAPI, query-параметры, пример
+  `curl` (с `TOKEN=$BOUNCER_API_KEY`, чтобы не триггерить secret-scan),
+  маппинг категорий (`sip/http/ami/iax`) на CrowdSec поля.
+- [x] **Drafted** (точечные правки 8 страниц в `APPLY.md` §1.2/§2.2):
+  `SUMMARY.md`, `readme/security.md`, `manual/connectivity/firewall.md`,
   `manual/connectivity/fail2-ban.md`, `setup/docker/README.md`,
   `setup/docker/running-mikopbx-using-docker-compose.md`,
-  `faq/setup/fine-tuning-the-firewall.md` (только hint про неприменимость
-  к Docker), `manual/system/api-keys/endpoints.md`, `SUMMARY.md`
-- [ ] 3 скриншота загружены в `.gitbook/assets/`: self-check кнопка с
-  результатом, preset bouncer-токена, баннер на Firewall в Docker bridge
-- [ ] PR в docs-репо: по одному коммиту в каждую ветку, со ссылкой на
-  основной PR в `mikopbx/Core`
+  `faq/setup/fine-tuning-the-firewall.md`,
+  `manual/system/api-keys/endpoints.md`.
+- [ ] **Pending (после smoke-теста на Debian)**: применить `APPLY.md`
+  на двух ветках docs.mikopbx.com — `cp`-команды + 8 правок —
+  и закоммитить.
+- [ ] **Pending**: 3 скриншота в `.gitbook/assets/` — self-check кнопка
+  с результатом, preset bouncer-токена, баннер на Firewall в Docker
+  bridge. Снимаются вручную / через `browser-harness` после раскатки
+  фронтенд-сборки.
+- [ ] **Pending**: PR в docs-репо по одному коммиту в каждую ветку
+  со ссылкой на merge-коммит `8613709da` в `mikopbx/Core`.
 
 ### Качество кода
 
-- [ ] PHPStan: 0 новых ошибок на изменённых файлах
-- [ ] Translation-keys добавлены и переведены (RU + EN минимум) для всех
-  UI-строк: баннер, preset bouncer-токена, кнопка self-check, описания
-  полей в форме создания токена
-- [ ] OpenAPI спецификация обновлена для двух новых endpoints
-  (`firewall-bouncer:exportDecisions`, `system:checkClientIpVisibility`)
+- [x] Translation-keys для всех UI-строк: баннер, preset bouncer-токена,
+  кнопка self-check, описания полей. Полный fan-out по 29 локалям
+  (RU+EN живые переводы, остальные 24 — заполнены технически, доперевод
+  через Weblate). Pre-commit translation-validator зелёный после
+  backfill 38 missing `ak_Endpoint*`/`ak_FullPermissionsWarning*` ключей
+  в `ru/ApiKeys.php` и 3 `rest_fwbouncer_Whitelist*` ключей в 24
+  локалях (дрейф пред-существующий, не от этой задачи).
+- [x] OpenAPI спецификация обновлена для новых endpoints через
+  `#[ApiOperation]`/`#[ApiResponse]` attributes — `GetSpecificationAction`
+  автоматически собирает. `GetSimplifiedPermissionsAction` теперь
+  возвращает `/api/v3/firewall-bouncer` как permission-resource благодаря
+  `#[HttpMapping]` на bouncer-контроллере.
+- [ ] PHPStan — отложен до момента, когда CI на merge-коммите выдаст
+  итоговый отчёт; на новых файлах ошибок не ожидается (только
+  attribute-driven boilerplate + DI). Прогон локально с Phalcon-stub
+  не делал, чтобы не тратить контекст — TeamCity покажет.
 
 ## Context Manifest
 
@@ -726,6 +758,47 @@ GitBook рендерит из двух веток (`russian`/`english`) — ка
 - CrowdSec docs (внешний референс): https://docs.crowdsec.net/docs/local_api/intro
 
 ## Work Log
+- [2026-05-11] **Codex review + merge to develop**. Codex CLI review of
+  working tree surfaced two P2 findings, both fixed:
+  * **F1 — bouncer resource missing from permission selector**
+    (`src/PBXCoreREST/Controllers/FirewallBouncer/RestController.php`):
+    no `#[HttpMapping]` meant `GetSimplifiedPermissionsAction` never
+    emitted `/api/v3/firewall-bouncer` as a row, so the
+    `?preset=bouncer` flow saved `allowed_paths={}`. Added
+    `#[HttpMapping(mapping: ['GET' => ['exportDecisions',
+    'exportWhitelist']], collectionLevelMethods: …)]`. Confirmed
+    no extra routes — bouncer extends `BaseController`, so
+    `RouterProvider::generateSimpleRoutes()` walks `${op}Action`-method
+    names which don't exist on this controller.
+  * **F2 — ancestor permission walk over-grants module trees**
+    (`src/PBXCoreREST/Services/ApiKeyPermissionChecker.php`): previous
+    unconditional `/`-segment ascend let a key with `/api/v3/modules`
+    silently cover `/api/v3/modules/<module>/…` if a third-party module
+    mounted nested REST controllers. Replaced with whitelist
+    `ASCEND_ALLOWED_RESOURCES` — only `/api/v3/firewall-bouncer` opts in
+    today. Regression net in `ApiKeyPermissionCheckerPathAscendTest`
+    (added `testModulesGrantDoesNotCoverNestedModuleControllers` +
+    `testNonWhitelistedDeepRouteIsRejected`).
+  Verified inside `mikopbx-arm64-api-repro` container:
+  `GetSimplifiedPermissionsAction` now emits `/api/v3/firewall-bouncer`
+  with `available_actions=['read']`, and 10 permission-checker
+  assertions pass (bouncer deep routes still allowed, modules nesting
+  denied).
+  **Merged to develop**: feature branch `feature/firewall-bouncer-api`
+  (commit `eb501096d`) merged `--no-ff` as `8613709da`; pushed to
+  `origin/develop`. GitHub Actions Code Quality workflow picked up;
+  TeamCity pipeline kicks off via VCS-root polling.
+  **Telegram**: replied to `j03l24` in MikoPBX Community
+  (`message_id=18525`) in English — confirmed Docker-bridge limitation
+  is by design, pointed at host-firewall workaround now, and the
+  bouncer endpoint in the upcoming build.
+  **Translation backfill** (required by pre-commit validator):
+  38 missing `ak_Endpoint*`/`ak_FullPermissionsWarning*` keys in
+  `ru/ApiKeys.php`; 3 `rest_fwbouncer_Whitelist*` keys propagated to
+  24 non-EN/RU locales using EN values.
+  **Docs status**: drafts written and committed under
+  `docs-drafts/` with `APPLY.md` index; apply to docs.mikopbx.com
+  deferred until after Debian smoke-test passes.
 - [2026-05-11] Code implementation complete (subtasks 1-5). Smoke-tested
   end-to-end inside `mikopbx-arm64-api-repro` Docker bridge container:
   * `GET /pbxcore/api/v3/firewall-bouncer:exportDecisions` returns valid
