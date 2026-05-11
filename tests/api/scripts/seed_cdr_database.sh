@@ -127,15 +127,19 @@ log_completion() {
 # Priority:
 # 1. FIXTURES_DIR env variable (if set)
 # 2. /usr/www/tests/api/fixtures (Docker containers with synced tests)
-# 3. /storage/usbdisk1/mikopbx/python-tests/fixtures (Remote/VM persistent storage)
+# 3. /storage/usbdisk1/mikopbx/Core/tests/api/fixtures (TeamCity VM upload path)
+# 4. /storage/usbdisk1/mikopbx/python-tests/fixtures (legacy Remote/VM persistent storage)
 if [ -n "$FIXTURES_DIR" ]; then
     # User explicitly set FIXTURES_DIR
     :
 elif [ -d "/usr/www/tests/api/fixtures" ]; then
     # Docker container with synced tests
     FIXTURES_DIR="/usr/www/tests/api/fixtures"
+elif [ -d "/storage/usbdisk1/mikopbx/Core/tests/api/fixtures" ]; then
+    # TeamCity VM upload path
+    FIXTURES_DIR="/storage/usbdisk1/mikopbx/Core/tests/api/fixtures"
 elif [ -d "/storage/usbdisk1/mikopbx/python-tests/fixtures" ]; then
-    # Remote/VM persistent storage
+    # Legacy Remote/VM persistent storage
     FIXTURES_DIR="/storage/usbdisk1/mikopbx/python-tests/fixtures"
 else
     # Fallback to default
@@ -207,6 +211,7 @@ generate_dynamic_fixtures() {
     if [ ! -f "$GENERATOR_SCRIPT" ]; then
         # Try alternative paths for remote execution
         for alt_path in \
+            "/storage/usbdisk1/mikopbx/Core/tests/api/scripts/generate_cdr_fixtures.py" \
             "/storage/usbdisk1/mikopbx/python-tests/scripts/generate_cdr_fixtures.py" \
             "/usr/www/tests/api/scripts/generate_cdr_fixtures.py"; do
             if [ -f "$alt_path" ]; then

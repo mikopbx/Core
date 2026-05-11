@@ -83,6 +83,7 @@ class TestConfig:
         ENABLE_CDR_SEED        - Enable CDR database seeding (default: 1)
         ENABLE_CDR_CLEANUP     - Enable CDR cleanup after tests (default: 1)
         ENABLE_SYSTEM_RESET    - Enable system reset before tests (default: 0)
+        MIKOPBX_REMOTE_TESTS_DIR - Remote tests root for uploaded helper scripts
     """
 
     def __init__(self, env_file: Optional[Path] = None):
@@ -324,8 +325,9 @@ class TestConfig:
             Full path to script on target system
         """
         if self.is_remote_execution():
-            # Remote execution via SSH or API - use persistent storage path
-            return f'/storage/usbdisk1/mikopbx/python-tests/scripts/{script_name}'
+            # Remote execution via SSH or API - TeamCity uploads Core/tests/api under storage root
+            remote_root = os.getenv('MIKOPBX_REMOTE_TESTS_DIR', '/storage/usbdisk1/mikopbx/Core/tests/api')
+            return f'{remote_root.rstrip("/")}/scripts/{script_name}'
         else:
             # Docker/VM/local execution - use universal MikoPBX test directory path
             return f'/offload/rootfs/usr/www/tests/api/scripts/{script_name}'

@@ -26,6 +26,7 @@ Usage:
 """
 
 import os
+import shlex
 import subprocess
 from typing import List, Optional
 
@@ -50,7 +51,14 @@ class CDRSeederRemote:
         MIKOPBX_EXECUTION_MODE - Force execution mode: docker|api|ssh|local
         ENABLE_CDR_SEED       - Enable/disable seeding (default: 1)
         ENABLE_CDR_CLEANUP    - Enable/disable cleanup (default: 1)
+        MIKOPBX_REMOTE_TESTS_DIR - Remote tests root, if TeamCity uploads to a custom path
     """
+
+    DEFAULT_REMOTE_TEST_ROOTS = [
+        '/storage/usbdisk1/mikopbx/Core/tests/api',
+        '/storage/usbdisk1/mikopbx/python-tests',
+        '/usr/www/tests/api',
+    ]
 
     def __init__(self):
         # Execution mode detection
@@ -63,18 +71,67 @@ class CDRSeederRemote:
         self.api_base_url = os.getenv('MIKOPBX_API_URL', '')
         self.api_login = os.getenv('MIKOPBX_API_USERNAME', 'admin')
         self.api_password = os.getenv('MIKOPBX_API_PASSWORD', 'admin')
+        self.remote_test_roots = self._remote_test_roots()
 
         # Script path on station
         # Path priorities:
         # 1. Docker containers: /usr/www/tests/api/scripts/seed_cdr_database.sh (synced from host)
-        # 2. Remote/VM hosts: /storage/usbdisk1/mikopbx/python-tests/scripts/seed_cdr_database.sh
-        # 3. REST API execution: /storage/usbdisk1/mikopbx/python-tests/scripts/seed_cdr_database.sh
+        # 2. Remote/VM hosts: first existing root from remote_test_roots
         if self.execution_mode in ['ssh', 'api']:
-            # Remote execution via SSH or REST API - use persistent storage path
-            self.script_path = '/storage/usbdisk1/mikopbx/python-tests/scripts/seed_cdr_database.sh'
+            # Remote execution via SSH or REST API - resolved on the station before execution
+            self.script_path = f'{self.remote_test_roots[0]}/scripts/seed_cdr_database.sh'
         else:
             # Docker/local execution - use synced test directory
             self.script_path = '/usr/www/tests/api/scripts/seed_cdr_database.sh'
+
+    def _remote_test_roots(self) -> List[str]:
+        """Return candidate remote test roots in priority order."""
+        roots = []
+        env_root = os.getenv('MIKOPBX_REMOTE_TESTS_DIR') or os.getenv('MIKOPBX_REMOTE_TEST_ROOT')
+        if env_root:
+            roots.append(env_root.rstrip('/'))
+
+        roots.extend(self.DEFAULT_REMOTE_TEST_ROOTS)
+
+        deduped = []
+        for root in roots:
+            if root and root not in deduped:
+                deduped.append(root)
+        return deduped
+
+    def _remote_seed_command(self, action: str, exports: Optional[dict] = None) -> str:
+        """Build a remote shell command that resolves uploaded test assets on the station."""
+        roots = ' '.join(shlex.quote(root) for root in self.remote_test_roots)
+        checked_roots = shlex.quote(', '.join(self.remote_test_roots))
+        export_lines = []
+
+        for name, value in (exports or {}).items():
+            export_lines.append(f'export {name}={shlex.quote(value)}')
+
+        return f'''
+SCRIPT_PATH=""
+FIXTURES_DIR="${{FIXTURES_DIR:-}}"
+for TEST_ROOT in {roots}; do
+    if [ -f "$TEST_ROOT/scripts/seed_cdr_database.sh" ]; then
+        SCRIPT_PATH="$TEST_ROOT/scripts/seed_cdr_database.sh"
+        if [ -z "$FIXTURES_DIR" ] && [ -d "$TEST_ROOT/fixtures" ]; then
+            FIXTURES_DIR="$TEST_ROOT/fixtures"
+        fi
+        break
+    fi
+done
+if [ -z "$SCRIPT_PATH" ]; then
+    echo "CDR seed script not found. Checked roots:" >&2
+    echo {checked_roots} >&2
+    exit 127
+fi
+chmod +x "$SCRIPT_PATH"
+if [ -n "$FIXTURES_DIR" ]; then
+    export FIXTURES_DIR
+fi
+{os.linesep.join(export_lines)}
+"$SCRIPT_PATH" {shlex.quote(action)}
+'''.strip()
 
     def _detect_mode(self) -> str:
         """Auto-detect execution mode"""
@@ -403,13 +460,7 @@ class CDRSeederRemote:
 
             # For API/SSH modes on remote hosts, ensure script is executable and set environment
             if self.execution_mode in ['api', 'ssh']:
-                # Build command with chmod and environment variables
-                command = f'''
-chmod +x {self.script_path}
-export ENABLE_CDR_SEED=1
-export FIXTURES_DIR=/storage/usbdisk1/mikopbx/python-tests/fixtures
-{self.script_path} seed
-'''.strip()
+                command = self._remote_seed_command('seed', {'ENABLE_CDR_SEED': '1'})
             else:
                 # Docker/local mode - use simple command
                 command = f'{self.script_path} seed'
@@ -444,7 +495,7 @@ export FIXTURES_DIR=/storage/usbdisk1/mikopbx/python-tests/fixtures
         try:
             # For API/SSH modes on remote hosts, ensure script is executable
             if self.execution_mode in ['api', 'ssh']:
-                command = f'chmod +x {self.script_path} && {self.script_path} cleanup'
+                command = self._remote_seed_command('cleanup')
             else:
                 command = f'{self.script_path} cleanup'
 
@@ -469,7 +520,7 @@ export FIXTURES_DIR=/storage/usbdisk1/mikopbx/python-tests/fixtures
         try:
             # For API/SSH modes on remote hosts, ensure script is executable
             if self.execution_mode in ['api', 'ssh']:
-                command = f'chmod +x {self.script_path} && {self.script_path} verify'
+                command = self._remote_seed_command('verify')
             else:
                 command = f'{self.script_path} verify'
 
@@ -491,7 +542,7 @@ export FIXTURES_DIR=/storage/usbdisk1/mikopbx/python-tests/fixtures
         try:
             # For API/SSH modes on remote hosts, ensure script is executable
             if self.execution_mode in ['api', 'ssh']:
-                command = f'chmod +x {self.script_path} && {self.script_path} ids'
+                command = self._remote_seed_command('ids')
             else:
                 command = f'{self.script_path} ids'
 
@@ -561,8 +612,11 @@ export FIXTURES_DIR=/storage/usbdisk1/mikopbx/python-tests/fixtures
         report.append("")
         report.append("--- Fixtures Check ---")
         try:
-            fixtures_dir = '/storage/usbdisk1/mikopbx/python-tests/fixtures'
-            check_cmd = f'ls -la {fixtures_dir}/ 2>&1 | head -10'
+            fixtures_checks = ' '.join(
+                f'ls -la {shlex.quote(root)}/fixtures 2>&1 | head -10;'
+                for root in self.remote_test_roots
+            )
+            check_cmd = fixtures_checks
             result = self._execute_command(check_cmd, timeout=10)
             report.append(result.stdout if result.stdout else result.stderr)
         except Exception as e:

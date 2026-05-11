@@ -48,6 +48,7 @@ def get_fixtures_dir() -> Path:
     # Priority 4: Common paths
     common_paths = [
         Path('/usr/www/tests/api/fixtures'),
+        Path('/storage/usbdisk1/mikopbx/Core/tests/api/fixtures'),
         Path('/storage/usbdisk1/mikopbx/python-tests/fixtures'),
     ]
     for path in common_paths:
