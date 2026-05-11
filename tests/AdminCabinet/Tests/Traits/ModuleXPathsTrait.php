@@ -46,6 +46,14 @@ trait ModuleXPathsTrait
         );
     }
 
+    protected function getToggleContainerXPath(string $moduleId): string
+    {
+        return sprintf(
+            '//tr[contains(@class,"module-row") and @data-id="%s"]//input[@type="checkbox"]/parent::div',
+            $moduleId
+        );
+    }
+
     protected function getModalApproveButtonXPath(): string
     {
         return '//div[@id="install-modal-form" and contains(@class,"visible")]//div[contains(@class,"approve button")]';

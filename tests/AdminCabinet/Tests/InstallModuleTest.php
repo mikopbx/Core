@@ -13,8 +13,9 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
 {
     use ModuleXPathsTrait;
     protected const int INSTALLATION_TIMEOUT = 180;
-    protected const int STATE_CHANGE_TIMEOUT = 45;
+    protected const int STATE_CHANGE_TIMEOUT = 120;
     protected const int STATE_CHECK_INTERVAL = 5;
+    protected const int STATE_WAIT_INTERVAL_MS = 500;
     protected const int MODAL_WAIT_TIME = 2;
 
     protected function setUp(): void
@@ -149,6 +150,7 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
                 
                 if ($deleteButton->isDisplayed()) {
                     $success = true;
+                    $this->waitForModuleControlsReady($params['moduleId']);
                     break;
                 }
             } catch (\Exception $e) {
@@ -168,13 +170,10 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
     protected function configureModuleState(array $params): void
     {
         // Enable by default after installation
-        sleep(10);
         $this->changeModuleState($params['moduleId']);
-        sleep(10);
 
         // Set to desired state
         $this->changeModuleState($params['moduleId'], $params['enable']);
-        sleep(10);
     }
 
     /**
@@ -184,49 +183,144 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
      */
     protected function changeModuleState(string $moduleId, bool $enable = true): void
     {
-        $xpath = $this->getToggleCheckboxXPath($moduleId);
-        $checkbox = self::$driver->findElement(WebDriverBy::xpath($xpath));
+        $this->waitForModuleControlsReady($moduleId);
 
-        if (($enable && !$checkbox->isSelected()) || (!$enable && $checkbox->isSelected())) {
-            $parentXPath = sprintf(
-                '//tr[contains(@class,"module-row") and @data-id="%s"]//input[@type="checkbox"]/parent::div',
-                $moduleId
-            );
-            $toggleDiv = self::$driver->findElement(WebDriverBy::xpath($parentXPath));
-
-            $actions = new WebDriverActions(self::$driver);
-            $actions->moveToElement($toggleDiv)->perform();
-            $toggleDiv->click();
-
-            $this->waitForAjax();
+        if ($this->getModuleEnabledState($moduleId) === $enable) {
             $this->verifyStateChange($moduleId, $enable);
+            return;
         }
+
+        $toggleDiv = self::$driver->wait(
+            self::STATE_CHANGE_TIMEOUT,
+            self::STATE_WAIT_INTERVAL_MS
+        )->until(
+            WebDriverExpectedCondition::elementToBeClickable(
+                WebDriverBy::xpath($this->getToggleContainerXPath($moduleId))
+            )
+        );
+
+        $actions = new WebDriverActions(self::$driver);
+        $actions->moveToElement($toggleDiv)->perform();
+        $toggleDiv->click();
+
+        $this->waitForAjax(self::STATE_CHANGE_TIMEOUT, true);
+        $this->verifyStateChange($moduleId, $enable);
     }
 
     protected function verifyStateChange(string $moduleId, bool $expectedState): void
     {
-        $waitTime = 0;
-        $changed = false;
+        $startTime = time();
+        $lastState = null;
+        $lastError = '';
 
-        while ($waitTime < self::STATE_CHANGE_TIMEOUT) {
-            sleep(self::STATE_CHECK_INTERVAL);
+        while (time() - $startTime < self::STATE_CHANGE_TIMEOUT) {
+            try {
+                $this->waitForModuleControlsReady($moduleId, self::STATE_CHECK_INTERVAL);
+                $lastState = $this->getModuleEnabledState($moduleId);
 
-            $checkbox = self::$driver->findElement(
-                WebDriverBy::xpath($this->getToggleCheckboxXPath($moduleId))
-            );
+                if ($lastState === $expectedState && $this->verifyModuleStateAfterRefresh($moduleId, $expectedState)) {
+                    return;
+                }
 
-            if ($checkbox->isSelected() === $expectedState) {
-                $changed = true;
-                break;
+                self::$driver->navigate()->refresh();
+                $this->waitForPageReady();
+                $this->changeTabOnCurrentPage('installed');
+            } catch (\Exception $e) {
+                $lastError = $e->getMessage();
             }
 
-            $waitTime += self::STATE_CHECK_INTERVAL;
+            sleep(self::STATE_CHECK_INTERVAL);
         }
 
+        $actualState = $lastState === null ? 'unknown' : ($lastState ? 'enabled' : 'disabled');
         $this->assertTrue(
-            $changed,
+            false,
             "Module {$moduleId} state was not changed to " . ($expectedState ? 'enabled' : 'disabled')
-            . " during {$waitTime} seconds"
+            . " during " . self::STATE_CHANGE_TIMEOUT . " seconds. Last state: {$actualState}."
+            . ($lastError === '' ? '' : " Last error: {$lastError}")
         );
+    }
+
+    protected function waitForModuleControlsReady(string $moduleId, int $timeout = self::STATE_CHANGE_TIMEOUT): void
+    {
+        self::$driver->wait($timeout, self::STATE_WAIT_INTERVAL_MS)->until(
+            function () use ($moduleId): bool {
+                try {
+                    return (bool) self::$driver->executeScript(
+                        <<<'JS'
+const moduleId = arguments[0];
+const row = Array.from(document.querySelectorAll('tr.module-row'))
+    .find((item) => item.getAttribute('data-id') === moduleId);
+if (!row || row.offsetParent === null) {
+    return false;
+}
+
+const toggle = row.querySelector('.ui.toggle.checkbox');
+const checkbox = row.querySelector('input[type="checkbox"]');
+if (!toggle || !checkbox) {
+    return false;
+}
+
+const statusIcon = row.querySelector('i.status-icon');
+const statusIconBusy = statusIcon
+    && (statusIcon.classList.contains('loading') || statusIcon.classList.contains('spinner'));
+const ajaxReady = typeof jQuery === 'undefined' || jQuery.active === 0;
+const loadersReady = document.querySelectorAll('.ui.loader.active').length === 0;
+
+return document.readyState === 'complete'
+    && ajaxReady
+    && loadersReady
+    && !toggle.classList.contains('disabled')
+    && !toggle.classList.contains('loading')
+    && !statusIconBusy;
+JS,
+                        [$moduleId]
+                    );
+                } catch (\Exception $e) {
+                    return false;
+                }
+            }
+        );
+    }
+
+    protected function getModuleEnabledState(string $moduleId): ?bool
+    {
+        $state = self::$driver->executeScript(
+            <<<'JS'
+const moduleId = arguments[0];
+const row = Array.from(document.querySelectorAll('tr.module-row'))
+    .find((item) => item.getAttribute('data-id') === moduleId);
+const checkbox = row ? row.querySelector('input[type="checkbox"]') : null;
+return checkbox ? checkbox.checked : null;
+JS,
+            [$moduleId]
+        );
+
+        return is_bool($state) ? $state : null;
+    }
+
+    protected function verifyModuleStateAfterRefresh(string $moduleId, bool $expectedState): bool
+    {
+        try {
+            self::$driver->navigate()->refresh();
+            $this->waitForPageReady();
+            $this->changeTabOnCurrentPage('installed');
+            $this->waitForModuleControlsReady($moduleId);
+
+            if ($this->getModuleEnabledState($moduleId) !== $expectedState) {
+                return false;
+            }
+
+            sleep(self::STATE_CHECK_INTERVAL);
+            $this->waitForModuleControlsReady($moduleId, self::STATE_CHECK_INTERVAL);
+
+            return $this->getModuleEnabledState($moduleId) === $expectedState;
+        } catch (\Exception $e) {
+            self::annotate(
+                sprintf('Module %s state refresh verification failed: %s', $moduleId, $e->getMessage()),
+                'warning'
+            );
+            return false;
+        }
     }
 }

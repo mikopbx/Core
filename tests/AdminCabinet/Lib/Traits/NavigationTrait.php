@@ -171,34 +171,105 @@ trait NavigationTrait
     {
         $this->logTestAction("Change tab", ['anchor' => $anchor]);
 
-        try {
-            // Scroll to top first
-            self::$driver->executeScript(
-                sprintf(
-                    "const main = document.getElementById('main');"
-                    . "if (main) {"
-                    . "main.scrollIntoView({block: 'start', inline: 'nearest', behavior: '%s'});"
-                    . "} else {"
-                    . "window.scrollTo(0, 0);"
-                    . "}",
-                    self::NAVIGATION['scroll']['behavior']
-                )
-            );
+        $xpath = sprintf(
+            '//div[contains(@class, "menu")]//a[contains(@data-tab,"%s")]',
+            $anchor
+        );
+        $lastException = null;
 
-            sleep(self::NAVIGATION['timeouts']['animation']);
+        for ($attempt = 1; $attempt <= self::NAVIGATION['retries']['navigation']; $attempt++) {
+            try {
+                $this->waitForPageReady();
+                $this->scrollToMainOrTop();
 
-            $xpath = sprintf(
-                '//div[contains(@class, "menu")]//a[contains(@data-tab,"%s")]',
-                $anchor
-            );
+                $tab = self::$driver->wait(
+                    self::NAVIGATION['timeouts']['wait'],
+                    self::NAVIGATION['wait_intervals']['default']
+                )->until(
+                    WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::xpath($xpath))
+                );
 
-            $tab = $this->waitForElement($xpath);
-            $this->scrollIntoView($tab);
-            $tab->click();
-            $this->waitForAjax();
-        } catch (\Exception $e) {
-            $this->handleActionError('change tab', $anchor, $e, );
+                $this->scrollIntoView($tab);
+                $tab->click();
+                $this->waitForAjax(self::NAVIGATION['timeouts']['ajax'], true);
+                return;
+            } catch (\Exception $e) {
+                $lastException = $e;
+                self::annotate(
+                    sprintf(
+                        'Retry changing tab "%s" attempt %d/%d: %s',
+                        $anchor,
+                        $attempt,
+                        self::NAVIGATION['retries']['navigation'],
+                        $e->getMessage()
+                    ),
+                    'warning'
+                );
+                sleep(self::NAVIGATION['timeouts']['animation']);
+            }
         }
+
+        try {
+            $elementSource = self::$driver->getPageSource();
+        } catch (\Exception $e) {
+            $elementSource = '';
+        }
+
+        $this->handleActionError(
+            'change tab',
+            $anchor,
+            new RuntimeException(
+                sprintf(
+                    'Tab "%s" was not clickable after %d attempts. Last error: %s',
+                    $anchor,
+                    self::NAVIGATION['retries']['navigation'],
+                    $lastException?->getMessage() ?? 'unknown'
+                ),
+                0,
+                $lastException
+            ),
+            $elementSource
+        );
+    }
+
+    /**
+     * Wait until the current page is ready after navigation or reload.
+     *
+     * @param int $timeout Timeout in seconds
+     */
+    protected function waitForPageReady(int $timeout = self::NAVIGATION['timeouts']['wait']): void
+    {
+        self::$driver->wait($timeout, self::NAVIGATION['wait_intervals']['default'])->until(
+            function (): bool {
+                try {
+                    return (bool) self::$driver->executeScript(
+                        'return document.readyState === "complete";'
+                    );
+                } catch (\Exception $e) {
+                    return false;
+                }
+            }
+        );
+
+        $this->waitForAjax();
+    }
+
+    /**
+     * Scroll to the main page container if it exists, otherwise scroll to top.
+     */
+    protected function scrollToMainOrTop(): void
+    {
+        self::$driver->executeScript(
+            sprintf(
+                "const main = document.getElementById('main');"
+                . "if (main) {"
+                . "main.scrollIntoView({block: 'start', inline: 'nearest', behavior: '%s'});"
+                . "} else {"
+                . "window.scrollTo(0, 0);"
+                . "}",
+                self::NAVIGATION['scroll']['behavior']
+            )
+        );
     }
 
     /**
