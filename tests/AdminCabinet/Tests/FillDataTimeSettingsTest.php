@@ -114,21 +114,72 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         $maxRetries = 10;
         $retryCount = 0;
         $success = false;
+        $lastError = '';
         
         while (!$success && $retryCount < $maxRetries) {
             try {
-                $this->clickSidebarMenuItemByHref('/admin-cabinet/time-settings/modify/');
+                $url = $GLOBALS['SERVER_PBX'] . '/admin-cabinet/time-settings/modify/';
+                self::$driver->get($url);
+                $this->waitForPageReady();
+                $this->waitForAjax();
+
+                if ($this->isLoginPageDisplayed()) {
+                    $this->reLoginAfterTimeChange();
+                    self::$driver->get($url);
+                    $this->waitForPageReady();
+                    $this->waitForAjax();
+                }
+
+                $this->waitForTimeSettingsFormReady();
                 $success = true;
             } catch (\Exception $e) {
                 $retryCount++;
+                $lastError = $e->getMessage();
                 self::annotate("Failed to navigate to time settings: {$e->getMessage()}. Retry {$retryCount}/{$maxRetries}");
                 sleep(5);
             }
         }
         
         if (!$success) {
-            self::fail("Could not navigate to time settings page after multiple attempts");
+            self::fail("Could not navigate to time settings page after multiple attempts. Last error: {$lastError}");
         }
+    }
+
+    protected function waitForTimeSettingsFormReady(int $timeout = 30): void
+    {
+        self::$driver->wait($timeout, 500)->until(
+            static function (): bool {
+                return (bool) self::$driver->executeScript(
+                    <<<'JS'
+const form = document.querySelector('#time-settings-form');
+const timezoneInput = document.querySelector('#PBXTimezone');
+const timezoneDropdown = document.querySelector('#PBXTimezone-dropdown');
+const manualCheckbox = document.querySelector('input[name="PBXManualTimeSettings"]');
+const submitButton = document.querySelector('#submitbutton');
+const ajaxReady = typeof jQuery === 'undefined' || jQuery.active === 0;
+
+return document.readyState === 'complete'
+    && ajaxReady
+    && !!form
+    && !!timezoneInput
+    && !!timezoneDropdown
+    && !!manualCheckbox
+    && !!submitButton
+    && !form.classList.contains('loading');
+JS
+                );
+            }
+        );
+    }
+
+    protected function isLoginPageDisplayed(): bool
+    {
+        return (bool) self::$driver->executeScript(
+            <<<'JS'
+return window.location.href.indexOf('/session/index') !== -1
+    || !!document.querySelector('#login-form');
+JS
+        );
     }
     
     /**
@@ -139,6 +190,7 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         $maxRetries = 3;
         $retryCount = 0;
         $success = false;
+        $lastError = '';
         
         while (!$success && $retryCount < $maxRetries) {
             try {
@@ -166,13 +218,14 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
                 
             } catch (\Exception $e) {
                 $retryCount++;
+                $lastError = $e->getMessage();
                 self::annotate("Verification attempt {$retryCount} failed: {$e->getMessage()}", 'warning');
                 sleep(5);
             }
         }
         
         if (!$success) {
-            self::fail("Failed to verify time settings after multiple attempts");
+            self::fail("Failed to verify time settings after multiple attempts. Last error: {$lastError}");
         }
     }
 
