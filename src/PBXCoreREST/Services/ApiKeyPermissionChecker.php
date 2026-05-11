@@ -36,6 +36,25 @@ use MikoPBX\PBXCoreREST\Attributes\ActionType;
 class ApiKeyPermissionChecker
 {
     /**
+     * Resource bases whose grant covers ALL deeper `/`-segment-bounded sub-routes.
+     *
+     * These are resources with multi-segment routes that the simplified
+     * permission UI renders as a single base entry (today: only the firewall
+     * bouncer LAPI surface — `/v1/decisions/stream`, `/v1/whitelist`).
+     *
+     * Adding a path here is a deliberate scope-widening: any key that grants
+     * the base path will cover EVERY sub-route under it. Resources that own
+     * nested REST controllers (notably `/api/v3/modules`, where third-party
+     * modules may register their own controllers at
+     * `/api/v3/modules/<module>/...`) must NOT appear here, or a key granted
+     * the parent resource would silently inherit access to all child
+     * controllers it was never explicitly granted.
+     */
+    private const ASCEND_ALLOWED_RESOURCES = [
+        '/api/v3/firewall-bouncer',
+    ];
+
+    /**
      * Cache for logging availability check
      * Null = not yet checked, true = available, false = not available
      */
@@ -101,15 +120,49 @@ class ApiKeyPermissionChecker
         $basePath = $this->extractBasePath($normalizedPath);
 
         // STEP 5: Check if path exists in permissions
-        // WHY: No point checking action if path is not allowed at all
-        if (!isset($permissions[$basePath])) {
+        //
+        // Exact match handles the common case where the granted path equals
+        // the resource base ({"/api/v3/extensions": "write"} vs
+        // /api/v3/extensions/123 — the ID is already stripped in step 4).
+        //
+        // For multi-segment routes that live UNDER a known resource base — e.g.
+        // the firewall-bouncer LAPI surface at
+        // /api/v3/firewall-bouncer/v1/decisions/stream, granted via the
+        // standard preset {"/api/v3/firewall-bouncer": "read"} — we accept the
+        // grant only if the granted base appears in `ASCEND_ALLOWED_RESOURCES`
+        // AND is a strict path-prefix of the request along `/` boundaries.
+        //
+        // The whitelist exists to prevent a single grant from silently widening
+        // into deeper REST sub-trees that may be owned by other controllers.
+        // In particular, third-party modules can register their own REST
+        // controllers under `/api/v3/modules/<module>/...`; without this
+        // restriction, a key granted only the built-in `/api/v3/modules`
+        // resource would inherit access to every nested module controller.
+        $matchedPath = null;
+        if (isset($permissions[$basePath])) {
+            $matchedPath = $basePath;
+        } else {
+            foreach (self::ASCEND_ALLOWED_RESOURCES as $whitelistedBase) {
+                if (!isset($permissions[$whitelistedBase])) {
+                    continue;
+                }
+                if ($basePath === $whitelistedBase
+                    || str_starts_with($basePath, $whitelistedBase . '/')
+                ) {
+                    $matchedPath = $whitelistedBase;
+                    break;
+                }
+            }
+        }
+
+        if ($matchedPath === null) {
             $this->logDebug($apiKey, $requestPath, $httpMethod, false, "path not in permissions: {$basePath}");
             return false;
         }
 
         // STEP 6: Get granted action type from permissions
         // WHY: Convert string 'read'/'write' to ActionType enum
-        $grantedActionString = $permissions[$basePath];
+        $grantedActionString = $permissions[$matchedPath];
         $grantedAction = ActionType::tryFrom($grantedActionString);
 
         if ($grantedAction === null) {

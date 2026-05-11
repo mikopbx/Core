@@ -440,9 +440,12 @@ const Form = {
             // Success
 
             // Capture submit mode BEFORE cbAfterSendForm, which may reset it
-            // via populateForm → populateFormSilently → restoreSubmitMode
+            // via populateForm → populateFormSilently → restoreSubmitMode.
+            // Reload path is captured AFTER cbAfterSendForm so callbacks can
+            // suppress the redirect by clearing `response.reload` — used by
+            // one-time-secret modals (e.g. ApiKeys bouncer preset) that must
+            // not be unmounted by navigation before the admin closes them.
             const submitMode = Form.$submitModeInput.val();
-            const reloadPath = Form.getReloadPath(response);
 
             // Dispatch 'ConfigDataChanged' event
             const event = new CustomEvent('ConfigDataChanged', {
@@ -455,7 +458,9 @@ const Form = {
             if (Form.cbAfterSendForm) {
                 Form.cbAfterSendForm(response);
             }
-            
+
+            const reloadPath = Form.getReloadPath(response);
+
             switch (submitMode) {
                 case 'SaveSettings':
                     if (reloadPath.length > 0) {

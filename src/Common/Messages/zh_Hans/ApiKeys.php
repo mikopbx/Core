@@ -6,6 +6,13 @@ return [
     // AK
     'ak_AddNewApiKey' => '添加API密钥',
     'ak_AddNewKey' => '添加API密钥',
+    'ak_CreateBouncerToken' => 'Bouncer令牌',
+    'ak_CreateBouncerTokenHint' => '预填一个限制于firewall-bouncer导出端点的API密钥——用于cs-firewall-bouncer及其他兼容CrowdSec的bouncer。',
+    'ak_BouncerPresetDescription' => '外部firewall bouncer（兼容CrowdSec）',
+    'ak_BouncerSnippetModalTitle' => 'cs-firewall-bouncer配置',
+    'ak_BouncerSnippetModalHint' => '将此片段复制到运行bouncer的主机上的/etc/crowdsec/bouncers/cs-firewall-bouncer.yaml。API密钥仅显示一次——在关闭此对话框之前请将其保存到密码管理器中。',
+    'ak_Copy' => '复制',
+    'ak_Close' => '关闭',
     'ak_AllControllers' => '所有控制器（无限制）',
     'ak_Allowed' => '允许',
     'ak_AllowedEndpoints' => '允许的端点',

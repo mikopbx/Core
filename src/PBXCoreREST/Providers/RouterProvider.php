@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Providers;
 
+use MikoPBX\PBXCoreREST\Controllers\FirewallBouncer\RestController as FirewallBouncerRestController;
 use MikoPBX\PBXCoreREST\Controllers\Modules\ModulesControllerBase;
 
 use MikoPBX\Common\Models\PbxExtensionModules;
@@ -61,9 +62,21 @@ class RouterProvider implements ServiceProviderInterface
     ];
 
     /**
-     * Special routes that don't follow standard patterns
+     * Special routes that don't follow standard patterns.
+     *
+     * Format: [controllerClass, controllerMethod, prefix, httpMethod, pattern]
+     *
+     * The firewall-bouncer routes serve CrowdSec Local API (LAPI) shape on a
+     * multi-segment path (`/v1/decisions/stream`, `/v1/whitelist`) that the
+     * universal `:method` discovery cannot express. Mounted here so stock
+     * `cs-firewall-bouncer` and other CrowdSec ecosystem bouncers can point
+     * `api_url` at `/pbxcore/api/v3/firewall-bouncer/` and have the protocol
+     * just work.
      */
-    private const SPECIAL_ROUTES = [];
+    private const SPECIAL_ROUTES = [
+        [FirewallBouncerRestController::class, 'exportDecisions', '/pbxcore/api/v3/firewall-bouncer/v1/decisions/stream', 'get', ''],
+        [FirewallBouncerRestController::class, 'exportWhitelist', '/pbxcore/api/v3/firewall-bouncer/v1/whitelist', 'get', ''],
+    ];
 
 
     /**

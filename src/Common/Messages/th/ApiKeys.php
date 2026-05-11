@@ -6,6 +6,13 @@ return [
     // AK
     'ak_AddNewApiKey' => 'เพิ่มคีย์ API',
     'ak_AddNewKey' => 'เพิ่มคีย์ API',
+    'ak_CreateBouncerToken' => 'Token สำหรับ bouncer',
+    'ak_CreateBouncerTokenHint' => 'กรอกคีย์ API ล่วงหน้าที่จำกัดเฉพาะ endpoint ส่งออก firewall-bouncer — สำหรับใช้กับ cs-firewall-bouncer และ bouncer ที่รองรับ CrowdSec อื่น ๆ',
+    'ak_BouncerPresetDescription' => 'Firewall bouncer ภายนอก (รองรับ CrowdSec)',
+    'ak_BouncerSnippetModalTitle' => 'การกำหนดค่า cs-firewall-bouncer',
+    'ak_BouncerSnippetModalHint' => 'คัดลอกข้อความนี้ไปยัง /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml บนโฮสต์ที่ bouncer ทำงานอยู่ คีย์ API จะแสดงเพียงครั้งเดียว — บันทึกไว้ในตัวจัดการรหัสผ่านก่อนปิดกล่องโต้ตอบนี้',
+    'ak_Copy' => 'คัดลอก',
+    'ak_Close' => 'ปิด',
     'ak_AllControllers' => 'ทุกตัวควบคุม (ไม่มีข้อจำกัด)',
     'ak_Allowed' => 'อนุญาต',
     'ak_AllowedEndpoints' => 'จุดสิ้นสุดที่อนุญาต',

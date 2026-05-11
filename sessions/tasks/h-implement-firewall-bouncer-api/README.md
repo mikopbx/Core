@@ -1,7 +1,7 @@
 ---
 name: h-implement-firewall-bouncer-api
 branch: feature/firewall-bouncer-api
-status: pending
+status: in-progress
 created: 2026-05-10
 ---
 
@@ -726,6 +726,59 @@ GitBook рендерит из двух веток (`russian`/`english`) — ка
 - CrowdSec docs (внешний референс): https://docs.crowdsec.net/docs/local_api/intro
 
 ## Work Log
+- [2026-05-11] Code implementation complete (subtasks 1-5). Smoke-tested
+  end-to-end inside `mikopbx-arm64-api-repro` Docker bridge container:
+  * `GET /pbxcore/api/v3/firewall-bouncer:exportDecisions` returns valid
+    CrowdSec-LAPI snapshot. Verified with two synthetic Redis bans
+    (`firewall:sip:198.51.100.42` TTL 3600s → duration `3600s`;
+    `firewall:http:203.0.113.99` TTL 1800s → `1800s`) — both surfaced
+    in `new[]` with correct origin/scope/scenario/value/id fields.
+  * `GET /pbxcore/api/v3/system:checkClientIpVisibility` executes end-to-end
+    through the worker queue. Returns `container_mode=bridge` and `is_docker=true`
+    correctly. The verdict heuristic flags `ip_not_visible` only when
+    `remote_addr` is a private/docker-bridge address — verified via the
+    GetListAction response (`dockerNetworkMode=bridge`, `clientIpVisible=false`).
+  * `GET /pbxcore/api/v3/firewall` extended with `dockerNetworkMode` and
+    `clientIpVisible` — banner-trigger condition correctly satisfied in
+    the Docker bridge container.
+  * Auto-discovery (RouterProvider) picked up `/firewall-bouncer` resource
+    on first request, no manual route registration needed.
+- [2026-05-11] **Manifest deviation, resolved**: §7 recommended option (b)
+  (bypass worker for the self-check endpoint). Initially shipped option (a)
+  with X-Forwarded-For/X-Real-IP forwarded ad-hoc through `sessionContext`.
+  User pushed back: rather than hard-coding a few headers, generalize so
+  future modules can carry their own. Final design (committed): new
+  `ForwardedHeaderFilter` class with **allow-list + namespace prefixes +
+  unconditional deny-list**. `BaseController::prepareRequestMessage()`
+  populates `httpHeaders` field of every worker message (lowercased keys,
+  RFC 7230 join, 1024-byte cap per value). Sensitive headers
+  (Authorization / Cookie / Authentication-*) are stripped at the gateway
+  and never reach actions. Reserved namespaces `X-Mikopbx-*` / `X-Module-*`
+  let core and modules add headers without re-editing the filter. 11-case
+  unit test covers allow / deny / prefix / casing / size cap / collision.
+  Documented in `src/PBXCoreREST/CLAUDE.md` (#Forwarded HTTP Headers).
+  Smoke-tested in `mikopbx-arm64-api-repro`: XFF/X-Real-IP/X-Module-Demo
+  flow through, Cookie/Authorization stripped, bouncer+getList endpoints
+  unaffected.
+- [2026-05-11] **Subtask 5 — full 26-language fan-out completed.** Initially
+  shipped RU+EN only; on user request ran 3 parallel background
+  `pbx-translation-expert` agents (one per file). Result:
+  * `NetworkSecurity.php` — 24 languages × 7 new keys (`fw_BouncerBanner*`,
+    `fw_CheckIpVisibility*`), inserted after `fw_AllowMyIpButton`.
+  * `ApiKeys.php` — 24 languages × 7 new keys (`ak_CreateBouncerToken*`,
+    `ak_BouncerPreset/Snippet*`, `ak_Copy`, `ak_Close`), after `ak_AddNewKey`.
+  * `RestApi.php` — 24 languages × 23 new keys (`rest_FirewallBouncer_*`,
+    `rest_fwbouncer_*`, `rest_schema_fwbouncer_*`,
+    `rest_system_CheckClientIpVisibility*`, `rest_schema_clientip_*`),
+    after `rest_Firewall_ApiDescription`.
+  Total: ~888 translations across 72 files. Technical terms (Docker, bridge,
+  CrowdSec, LAPI, bouncer, fail2ban, X-Forwarded-For, IP, CIDR, ban, scenario,
+  scope) kept untranslated everywhere. All 72 files pass `php -l` validation;
+  key positions match the Russian source structure.
+- [2026-05-11] **Smoke test with real cs-firewall-bouncer**: still pending —
+  requires clean Debian host with apt-installed `cs-firewall-bouncer` package
+  and is a manual acceptance step per the success criteria. Implementation
+  is ready: bouncer config snippet is auto-generated post-token-create.
 - [2026-05-10] Created task, captured design decisions from discussion
 - [2026-05-11] Reviewed docs.mikopbx.com (russian branch): identified target pages,
   noted `fine-tuning-the-firewall.md` is dated (legacy scanner signatures, no Docker

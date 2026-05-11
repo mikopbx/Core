@@ -6,6 +6,13 @@ return [
     // AK
     'ak_AddNewApiKey' => 'API-sleutel toevoegen',
     'ak_AddNewKey' => 'API-sleutel toevoegen',
+    'ak_CreateBouncerToken' => 'Bouncer-token',
+    'ak_CreateBouncerTokenHint' => 'Een API-sleutel vooraf invullen die beperkt is tot het firewall-bouncer export endpoint — voor gebruik met cs-firewall-bouncer en andere CrowdSec-compatibele bouncers.',
+    'ak_BouncerPresetDescription' => 'Externe firewall bouncer (CrowdSec-compatibel)',
+    'ak_BouncerSnippetModalTitle' => 'cs-firewall-bouncer configuratie',
+    'ak_BouncerSnippetModalHint' => 'Kopieer dit fragment naar /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml op de host waar de bouncer draait. De API-sleutel wordt slechts één keer getoond — sla hem op in uw wachtwoordbeheerder voordat u dit dialoog sluit.',
+    'ak_Copy' => 'Kopiëren',
+    'ak_Close' => 'Sluiten',
     'ak_AllControllers' => 'Alle controllers (geen beperkingen)',
     'ak_Allowed' => 'Toegestaan',
     'ak_AllowedEndpoints' => 'Toegestane endpoints',

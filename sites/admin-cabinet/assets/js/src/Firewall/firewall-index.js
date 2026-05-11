@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, firewallTooltips, FirewallAPI, UserMessage, SecurityUtils, SemanticLocalization, $ */
+/* global globalRootUrl, globalTranslate, firewallTooltips, FirewallAPI, SystemAPI, UserMessage, SecurityUtils, SemanticLocalization, $ */
 
 /**
  * The `firewallTable` object contains methods and variables for managing the Firewall system.
@@ -122,12 +122,20 @@ const firewallTable = {
      */
     buildSettingsSection(data) {
         let html = '<div class="ui basic segment" id="firewall-settings">';
-        
+
         // Docker notice if applicable
         if (data.isDocker) {
             html += firewallTable.buildDockerNotice();
         }
-        
+
+        // Bouncer banner: only when we know the local firewall path is blind
+        // (Docker bridge AND remote_addr is hidden behind docker0 gateway).
+        // Surfaces the external-bouncer workflow as a CTA so junior admins do not
+        // need to find the documentation page on their own.
+        if (data.dockerNetworkMode === 'bridge' && data.clientIpVisible === false) {
+            html += firewallTable.buildBouncerBanner();
+        }
+
         // Add new rule button
         if (firewallTable.permissions.modify) {
             html += `<a href="${globalRootUrl}firewall/modify" class="ui blue button" id="add-new-button">`;
@@ -188,6 +196,105 @@ const firewallTable = {
                 <div class="content">
                     <div class="header">${SecurityUtils.escapeHtml(globalTranslate.fw_DockerEnvironmentNotice)}</div>
                     <p>${SecurityUtils.escapeHtml(globalTranslate.fw_DockerLimitedServicesInfo)}</p>
+                </div>
+            </div>
+        `;
+    },
+
+    /**
+     * Build the "Docker bridge — external bouncer needed" banner.
+     *
+     * Only shown when GetListAction reports `dockerNetworkMode === 'bridge'`
+     * and `clientIpVisible === false`. The "Check my IP visibility" button
+     * calls system:checkClientIpVisibility and renders the verdict inline so
+     * the admin can confirm the diagnosis without re-loading the page.
+     *
+     * @returns {string} HTML string
+     */
+    buildBouncerBanner() {
+        const title = SecurityUtils.escapeHtml(globalTranslate.fw_BouncerBannerTitle);
+        const body = SecurityUtils.escapeHtml(globalTranslate.fw_BouncerBannerBody);
+        const cta = SecurityUtils.escapeHtml(globalTranslate.fw_BouncerBannerCta);
+        const checkBtn = SecurityUtils.escapeHtml(globalTranslate.fw_CheckIpVisibility);
+        const apiKeysUrl = `${globalRootUrl}api-keys/modify?preset=bouncer`;
+        return `
+            <div class="ui warning icon message" id="firewall-bouncer-banner">
+                <i class="shield icon"></i>
+                <div class="content">
+                    <div class="header">${title}</div>
+                    <p>${body}</p>
+                    <div class="ui buttons">
+                        <a href="${apiKeysUrl}" class="ui orange button">
+                            <i class="key icon"></i> ${cta}
+                        </a>
+                        <button class="ui basic button" id="check-ip-visibility-button">
+                            <i class="eye icon"></i> ${checkBtn}
+                        </button>
+                    </div>
+                    <div id="ip-visibility-result" class="ui basic segment" style="display:none;"></div>
+                </div>
+            </div>
+        `;
+    },
+
+    /**
+     * Wire the self-check button on the bouncer banner.
+     *
+     * Called from initializeUIElements after the banner is in the DOM.
+     */
+    initBouncerBannerHandlers() {
+        const $btn = $('#check-ip-visibility-button');
+        if ($btn.length === 0) {
+            return;
+        }
+        const $result = $('#ip-visibility-result');
+
+        $btn.on('click', () => {
+            $btn.addClass('loading disabled');
+            $result.hide().empty();
+
+            SystemAPI.checkClientIpVisibility((response) => {
+                $btn.removeClass('loading disabled');
+                if (!response || response.result !== true || !response.data) {
+                    $result.html(`<div class="ui red message">${SecurityUtils.escapeHtml(globalTranslate.fw_ErrorLoadingData)}</div>`).show();
+                    return;
+                }
+                $result.html(firewallTable.renderClientIpVerdict(response.data)).show();
+            });
+        });
+    },
+
+    /**
+     * Render the verdict + raw header data returned by the self-check endpoint.
+     *
+     * @param {Object} data Self-check payload (remote_addr / verdict / etc.)
+     * @returns {string} HTML
+     */
+    renderClientIpVerdict(data) {
+        const remote = SecurityUtils.escapeHtml(data.remote_addr || '');
+        const xff = data.x_forwarded_for ? SecurityUtils.escapeHtml(String(data.x_forwarded_for)) : '—';
+        const xRealIp = data.x_real_ip ? SecurityUtils.escapeHtml(String(data.x_real_ip)) : '—';
+        const mode = SecurityUtils.escapeHtml(data.container_mode || '');
+
+        let verdictKey = 'fw_CheckIpVisibilityResultVisible';
+        let color = 'green';
+        if (data.verdict === 'ip_not_visible') {
+            verdictKey = 'fw_CheckIpVisibilityResultNotVisible';
+            color = 'red';
+        } else if (data.verdict === 'proxy_detected') {
+            verdictKey = 'fw_CheckIpVisibilityResultProxy';
+            color = 'yellow';
+        }
+        const verdictText = SecurityUtils.escapeHtml(globalTranslate[verdictKey] || verdictKey);
+
+        return `
+            <div class="ui ${color} message">
+                <div class="header"><i class="info circle icon"></i> ${verdictText}</div>
+                <div class="ui list">
+                    <div class="item"><b>remote_addr:</b> <code>${remote}</code></div>
+                    <div class="item"><b>X-Forwarded-For:</b> <code>${xff}</code></div>
+                    <div class="item"><b>X-Real-IP:</b> <code>${xRealIp}</code></div>
+                    <div class="item"><b>container_mode:</b> <code>${mode}</code></div>
                 </div>
             </div>
         `;
@@ -379,6 +486,10 @@ const firewallTable = {
      * @param {Object} data - Firewall data for context
      */
     initializeUIElements(data) {
+
+        // Bouncer banner self-check button (only rendered in Docker bridge with
+        // hidden client IP — initialization is a no-op when the button is absent).
+        firewallTable.initBouncerBannerHandlers();
 
         // Initialize drag-and-drop reordering for priority
         $('#firewall-table tbody').tableDnD({

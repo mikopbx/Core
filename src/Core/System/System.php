@@ -390,6 +390,58 @@ class System extends Injectable
     }
 
     /**
+     * Detect Docker container networking mode
+     *
+     * Distinguishes between Docker `--network=host` and Docker bridge networking
+     * by comparing `/sys/class/net/eth0/iflink` and `/sys/class/net/eth0/ifindex`:
+     * with a veth pair (bridge), the two values differ; without it (host or
+     * bare-metal), they are equal.
+     *
+     * Possible return values:
+     *  - 'native'  - not running in Docker at all (LXC or bare-metal)
+     *  - 'host'    - Docker with --network=host (or eth0 has no veth pair)
+     *  - 'bridge'  - Docker with default bridge networking (client IP hidden)
+     *  - 'unknown' - cannot determine (eth0 missing or sysfs unreadable)
+     *
+     * @return string One of 'native'|'host'|'bridge'|'unknown'
+     */
+    public static function getDockerNetworkMode(): string
+    {
+        if (!self::isDocker()) {
+            return 'native';
+        }
+
+        $iflinkPath  = '/sys/class/net/eth0/iflink';
+        $ifindexPath = '/sys/class/net/eth0/ifindex';
+        $iflink      = file_exists($iflinkPath) ? trim(@file_get_contents($iflinkPath) ?: '') : '';
+        $ifindex     = file_exists($ifindexPath) ? trim(@file_get_contents($ifindexPath) ?: '') : '';
+
+        return self::detectDockerNetworkMode(true, $iflink !== '' ? $iflink : null, $ifindex !== '' ? $ifindex : null);
+    }
+
+    /**
+     * Pure helper for {@see getDockerNetworkMode()} — testable without filesystem.
+     *
+     * @param bool        $isDocker Whether the host is detected as Docker.
+     * @param string|null $iflink   Contents of /sys/class/net/eth0/iflink, or null if unreadable.
+     * @param string|null $ifindex  Contents of /sys/class/net/eth0/ifindex, or null if unreadable.
+     *
+     * @return string One of 'native'|'host'|'bridge'|'unknown'
+     */
+    public static function detectDockerNetworkMode(bool $isDocker, ?string $iflink, ?string $ifindex): string
+    {
+        if (!$isDocker) {
+            return 'native';
+        }
+
+        if ($iflink === null || $ifindex === null || $iflink === '' || $ifindex === '') {
+            return 'unknown';
+        }
+
+        return $iflink !== $ifindex ? 'bridge' : 'host';
+    }
+
+    /**
      * Check if the system is running on ARM64 architecture
      *
      * @return bool True if running on ARM64/aarch64, false otherwise
@@ -522,10 +574,10 @@ class System extends Injectable
     /**
      * Get platform identification parameters for release server requests
      *
-     * Returns an array with ARCH, TYPE, and BOARD keys suitable for
-     * merging into HTTP request payloads to releases.mikopbx.com.
+     * Returns an array with ARCH, TYPE, BOARD and DOCKER_NETWORK_MODE keys
+     * suitable for merging into HTTP request payloads to releases.mikopbx.com.
      *
-     * @return array{ARCH: string, TYPE: string, BOARD: string}
+     * @return array{ARCH: string, TYPE: string, BOARD: string, DOCKER_NETWORK_MODE: string}
      */
     private static ?array $platformInfoCache = null;
 
@@ -536,6 +588,7 @@ class System extends Injectable
                 'ARCH' => self::getArchitecture(),
                 'TYPE' => self::getEnvironmentType(),
                 'BOARD' => self::getBoardType(),
+                'DOCKER_NETWORK_MODE' => self::getDockerNetworkMode(),
             ];
         }
 

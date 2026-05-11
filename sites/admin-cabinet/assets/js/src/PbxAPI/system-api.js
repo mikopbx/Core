@@ -33,6 +33,7 @@ const SystemAPI = new PbxApiClient({
         // Health check methods
         ping: ':ping',
         checkAuth: ':checkAuth',
+        checkClientIpVisibility: ':checkClientIpVisibility',
 
         // Power management
         reboot: ':reboot',
@@ -67,6 +68,20 @@ Object.assign(SystemAPI, {
      */
     checkAuth(callback) {
         return this.callCustomMethod('checkAuth', {}, callback, 'GET');
+    },
+
+    /**
+     * Self-check: how does the PBX see the current HTTP client?
+     *
+     * Returns the request peer address, proxy headers (X-Forwarded-For /
+     * X-Real-IP), the detected Docker network mode, and a single-word verdict
+     * (`ip_visible`, `ip_not_visible`, `proxy_detected`). Used by the Firewall
+     * page banner to confirm "external bouncer is required" without manual diagnosis.
+     *
+     * @param {function} callback - Callback function receiving the API response
+     */
+    checkClientIpVisibility(callback) {
+        return this.callCustomMethod('checkClientIpVisibility', {}, callback, 'GET');
     },
 
     /**

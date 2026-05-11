@@ -26,6 +26,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\PBXCoreREST\Http\ForwardedHeaderFilter;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Filter\Filter;
@@ -345,9 +346,18 @@ class BaseController extends Controller
         }
 
         $requestMessage['debug'] = $this->request->isDebugRequest();
-        
+
         // Add HTTP method to help backend distinguish between CREATE and UPDATE operations
         $requestMessage['httpMethod'] = $this->request->getMethod();
+
+        // Forward a filtered subset of HTTP headers into the worker queue.
+        // Authorization / Cookie / Authentication-* are denied unconditionally.
+        // Allow-list covers proxy / client metadata; X-Mikopbx-* and X-Module-*
+        // prefixes are reserved namespaces for core and module-defined headers.
+        // See \MikoPBX\PBXCoreREST\Http\ForwardedHeaderFilter for the policy.
+        $requestMessage['httpHeaders'] = ForwardedHeaderFilter::filter(
+            $this->request->getHeaders()
+        );
 
         // Pass authentication context for WebAuthn and other security features
         if ($this->request->hasBearerToken()) {
@@ -458,7 +468,47 @@ class BaseController extends Controller
             return $this->handleFileStreaming($response['data']['fpassthru']);
         }
 
+        // Type 4: Raw JSON body — bypass the {result, data, ...} envelope.
+        // Used by endpoints that must match a third-party protocol shape at
+        // the top level (e.g. CrowdSec LAPI for the firewall-bouncer routes).
+        if (isset($response['data']['raw_json_body'])) {
+            return $this->handleRawJsonResponse($response['data']);
+        }
+
         return false;
+    }
+
+    /**
+     * Emit a pre-serialised JSON body verbatim, without the standard
+     * `{result, data, messages, meta}` envelope that
+     * {@see \MikoPBX\PBXCoreREST\Http\Response::send()} re-wraps every
+     * normal response into.
+     *
+     * The worker action must put `raw_json_body` (string), and may put
+     * `content_type` and `http_code` on `$res->data`. We trust the action
+     * to produce well-formed JSON — this path exists precisely so the action
+     * can decide the exact wire shape (e.g. CrowdSec LAPI top-level
+     * `{new, deleted}`).
+     *
+     * We call `sendRaw()` here, which bypasses the meta-wrapping in
+     * `Response::send()` and marks the response as sent so the trailing
+     * {@see \MikoPBX\PBXCoreREST\Middleware\ResponseMiddleware} skips its
+     * own `send()` call.
+     *
+     * @param array<string, mixed> $data Worker action payload.
+     */
+    private function handleRawJsonResponse(array $data): bool
+    {
+        $body = (string)$data['raw_json_body'];
+        $contentType = (string)($data['content_type'] ?? 'application/json');
+        $httpCode = (int)($data['http_code'] ?? 200);
+
+        $this->response->setStatusCode($httpCode);
+        $this->response->setContentType($contentType, 'UTF-8');
+        $this->response->setContent($body);
+        $this->response->sendRaw();
+
+        return true;
     }
 
     /**
