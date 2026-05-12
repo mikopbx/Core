@@ -296,6 +296,58 @@ or `ForwardedHeaderFilter` are required. The filter's allow-prefix list
 already lets it through. Document the header's contract in your module's
 `CLAUDE.md`.
 
+## Session Context (worker envelope)
+
+Alongside `httpHeaders`, `BaseController::prepareRequestMessage()`
+populates a `sessionContext` envelope key whenever the request carries a
+Bearer token (JWT or API Key). Workers receive it under
+`$request['sessionContext']`; localhost / public-endpoint requests
+arrive with the key absent (treat as `[]`).
+
+Populated fields (see `BaseController` lines 360–388):
+
+* `auth_type`     — currently always `bearer_token`
+* `token_id`      — `m_ApiKeys.id` of the row that validated the request
+* `origin`        — `scheme://host` of the inbound request (WebAuthn RP)
+* `remote_addr`   — client IP after the proxy-aware resolution chain
+* `user_name`     — JWT `userId` (absent for raw API-Key callers)
+* `role`          — JWT role claim (absent for raw API-Key callers)
+* `session_id`    — JWT `userId`, reused as the WebAuthn challenge slot
+
+Processors that consume any of these MUST forward the bag explicitly to
+their action — actions are not Injectable across the queue boundary.
+The pattern is identical to `httpHeaders`:
+
+```php
+FirewallBouncerAction::EXPORT_DECISIONS => ExportDecisionsAction::main(
+    $request['sessionContext'] ?? [],
+    $request['data']           ?? []
+),
+```
+
+### Per-token state via `token_id`
+
+`token_id` is the canonical key for per-bouncer / per-client state
+that must survive across queue invocations. Current consumers:
+
+* **WebAuthn challenge storage** — Passkeys actions key challenges by
+  `session_id` (JWT userId) plus `origin`.
+* **Firewall-bouncer snapshot cursor** —
+  `ExportDecisionsAction` stores the previous snapshot at
+  `_PH_REDIS_CLIENT:fwbouncer:cursor:<token_id>` (TTL 1 h, refreshed
+  every poll, falls back to `…:anon` when `token_id` is missing) so
+  the next poll can emit `deleted[]` decisions within one cycle
+  instead of waiting for natural TTL decay. See
+  `Lib/FirewallBouncer/ExportDecisionsAction.php` (`CURSOR_KEY_PREFIX`,
+  `CURSOR_TTL`) for cursor semantics and the `?startup=true` reset.
+* **CDR ACL filtering** — `CdrManagementProcessor` forwards
+  `sessionContext` so `GetListAction` can scope rows by `role`.
+
+Redis exceptions in cursor-style helpers should be caught and
+degraded to first-poll behaviour (logged via
+`SystemMessages::sysLogMsg`) — mirrors
+`DockerNetworkFilterService::getRedisBouncerDecisions()`.
+
 ## URL Routing
 
 ```

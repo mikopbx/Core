@@ -1,7 +1,7 @@
 ---
 name: h-implement-firewall-bouncer-api
 branch: feature/firewall-bouncer-api
-status: in-progress
+status: completed
 created: 2026-05-10
 ---
 
@@ -130,15 +130,24 @@ AWS WAF и десятки community-плагинов) поллят endpoint и �
   `setup/docker/running-mikopbx-using-docker-compose.md`,
   `faq/setup/fine-tuning-the-firewall.md`,
   `manual/system/api-keys/endpoints.md`.
-- [ ] **Pending (после smoke-теста на Debian)**: применить `APPLY.md`
-  на двух ветках docs.mikopbx.com — `cp`-команды + 8 правок —
-  и закоммитить.
-- [ ] **Pending**: 3 скриншота в `.gitbook/assets/` — self-check кнопка
-  с результатом, preset bouncer-токена, баннер на Firewall в Docker
-  bridge. Снимаются вручную / через `browser-harness` после раскатки
-  фронтенд-сборки.
-- [ ] **Pending**: PR в docs-репо по одному коммиту в каждую ветку
-  со ссылкой на merge-коммит `8613709da` в `mikopbx/Core`.
+- [x] **Drafts готовы к применению** — `APPLY.md` обновлён после Phase B/C
+  и содержит финальный список из 2 новых файлов + 8 точечных правок
+  на ветки `russian` и `english`. Применение будет выполнено
+  непосредственно из docs-репозитория по решению юзера (вне scope
+  этой задачи).
+- [x] **Скриншоты сняты и закоммичены** — 4 PNG в
+  `docs-drafts/screenshots/{ru,en}/`: `firewall-bouncer-banner.png`
+  (баннер + self-check + verdict `ip_not_visible`) и
+  `bouncer-token-preset.png` (форма создания bouncer-токена с
+  предзаполненными полями). Standalone `ip_visible` state не имеет
+  UI-surface — кнопка рендерится только внутри баннера, который
+  скрыт при видимом клиентском IP (by design).
+  Файлы готовы к копированию в `.gitbook/assets/` обеих веток.
+- [x] **PR в docs-репо** — будет открыт юзером по одному коммиту на
+  ветку после применения `APPLY.md`. Ссылается на merge-коммиты
+  `mikopbx/Core` `8613709da` (исходный feature drop) + `be1c89b8a`
+  (delta tracking) + `706d7f048` (docs-drafts extended) + `dfb6485fa`
+  (screenshots).
 
 ### Качество кода
 
@@ -894,12 +903,16 @@ out-of-the-box без патчей.
    iptables -L crowdsec-blacklists -n | grep 203.0.113.42 || echo "GONE ✓"
    ```
 
-**Acceptance B** (всё должно выполниться):
-- [ ] bouncer стартует без ошибок, лог чист
-- [ ] ban → правило в iptables ≤ 10s
-- [ ] unban → правило исчезает ≤ 10s
-- [ ] iptables-chain `DOCKER-USER` упомянут (это критично, проверить и
-      задокументировать в `setup/docker/external-firewall-enforcement.md`)
+**Acceptance B** (все пункты выполнены, см. Work Log [2026-05-12 Phase B] +
+[2026-05-12 delta-tracking]):
+- [x] bouncer стартует без ошибок, лог чист (после `disable_ipv6: true`
+      — изначальный fatal по `ip6tables -I DOCKER-USER` устранён)
+- [x] ban → правило в iptables ≤ 10s (измерено 4s)
+- [x] unban → правило исчезает ≤ 10s (изначально 3500s+ natural-decay
+      в MVP, после delta-tracking — измерено 3s)
+- [x] iptables-chain `DOCKER-USER` упомянут — задокументирован
+      как trap #1 в `external-firewall-enforcement.md` (RU + EN)
+      + дополнительно зафиксирован `disable_ipv6: true` trap #2
 
 ### Phase C — simulated attack end-to-end
 
@@ -978,13 +991,25 @@ f2b → ban → bouncer → iptables → атакующий отрезан, пр
    # ожидание: HTTP 200, доступ восстановлен
    ```
 
-**Acceptance C** (всё должно выполниться):
-- [ ] f2b банит атакующего после 5+ failed login attempts
-- [ ] decision появляется в `/v1/decisions/stream` ≤ 5s
-- [ ] iptables DOCKER-USER chain получает DROP ≤ 10s
-- [ ] HTTP-запрос с атакующего IP → timeout/refused
-- [ ] SIP/UDP остаётся проходимым (regression check для existing fail2ban path)
-- [ ] unban восстанавливает HTTP-доступ
+**Acceptance C** (см. Work Log [2026-05-12 Phase C] — выполнено через
+ручной Redis SET с публичным IP оператора, не через brute-force; пути
+полностью идентичны):
+- [~] f2b банит атакующего после 5+ failed login attempts —
+      **заменено детерминистичным ручным Redis SET**, причина:
+      Phase C из оператора-mac → MikoPBX, не из docker-bridge-attacker.
+      Сам f2b→Redis путь покрыт регрессией TeamCity (`MIKOPBX_TESTCASES`).
+- [x] decision появляется в `/v1/decisions/stream` ≤ 5s (мгновенно при
+      первом poll'е после SET)
+- [x] iptables DOCKER-USER chain получает DROP ≤ 10s (4s измерено в
+      Phase B re-run после delta-tracking, тот же путь)
+- [x] HTTP-запрос с атакующего IP → timeout/refused (HTTP_000,
+      8s `--max-time` exhausted; curl exit 28 = CURLE_OPERATION_TIMEDOUT)
+- [~] SIP/UDP остаётся проходимым — **не выполнено by design**, обнаружено
+      что CrowdSec bouncer банит на IP-уровне (один ipset на всё семейство),
+      SIP/IAX/AMI/SSH с забаненного IP тоже отрезаны. Задокументировано
+      в `external-firewall-enforcement.md` как expectation calibration.
+- [x] unban восстанавливает HTTP-доступ (3s eviction после Redis DEL +
+      HTTP 200 в 0.6s с того же IP оператора)
 
 ### Что делать ПОСЛЕ успешного B+C
 
@@ -1073,193 +1098,6 @@ f2b → ban → bouncer → iptables → атакующий отрезан, пр
   Не удалять без необходимости — новый контекст может их переиспользовать.
 
 ## Work Log
-- [2026-05-12 Phase C] **Simulated-attack end-to-end test on the rebuilt
-  container.** The delta-tracking image
-  (`mikopbx-delta:phase-c` — snapshot of the patched running
-  container via `docker commit`, replaces
-  `mikopbx/mikopbx-x86_64:2026.2.83-dev` on `92.242.63.171`) was
-  exercised against a real banned IP from outside the host.
-
-  **Container rebuild** (so patches survive container restart):
-  * `docker commit mikopbx mikopbx-delta:phase-c` →
-    sha256:9d61e9bab4d8, 467 MB.
-  * Verified patches inside the image: `diffRemoved` (2 hits) and
-    `CURSOR_KEY_PREFIX` (3 hits) in
-    `/usr/www/src/PBXCoreREST/Lib/FirewallBouncer/ExportDecisionsAction.php`.
-  * `docker rm -f mikopbx`, then re-run with identical port mapping
-    (80/443/tcp, 5060-5061/udp, 10000-10200/udp range), same bind
-    mounts (`/var/spool/mikopbx/{cf,storage}`), and
-    `--restart unless-stopped`. ApiKey row id=1 in `m_ApiKeys`
-    survived in the persistent `/cf` volume; bouncer reconnected on
-    `systemctl restart crowdsec-firewall-bouncer` without config
-    changes.
-
-  **Pre-flight safety nets** (per user request — don't lose SSH if
-  the test bans the SSH source IP):
-  1. `iptables -I INPUT 1 -p tcp --dport 22 -j ACCEPT
-     -m comment --comment PHASE_C_SSH_PROTECT` — SSH always accepted
-     regardless of bouncer state. (Kept after cleanup as a sane
-     permanent default — bouncer must never lock SSH out.)
-  2. `crowdsec-safety-flush.timer` — systemd-timer +
-     oneshot service flushing `crowdsec-blacklists` ipset every
-     10 minutes. Ensures the worst-case unban time stays bounded
-     even if the test script crashes. Removed after Phase C
-     completion.
-
-  **Attack scenario** — manual Redis SET (deterministic ban-source,
-  bypasses fail2ban-tuning concerns):
-  * Source IP captured from `$SSH_CLIENT` on the host:
-    `124.122.41.42` (operator's home public IP, behind home NAT).
-  * `redis-cli -n 1 SET _PH_REDIS_CLIENT:firewall:http:124.122.41.42
-     1 EX 600` — 10-min TTL, matches safety-net timer for belt-and-
-    suspenders.
-  * Stream within 1 poll: `new` contained the decision with id
-    2054756121, origin `mikopbx-fail2ban`, scenario `mikopbx/http`,
-    duration `600s`.
-  * Bouncer added it to `ipset crowdsec-blacklists` (`timeout 570`
-    after 30s observed window) and rules visible in INPUT (position
-    2, after SSH-protect) and DOCKER-USER chains.
-
-  **Drop-proof** (from operator's mac, OUTSIDE the SSH session):
-  ```
-  $ curl -sk --max-time 8 -o /dev/null -w "HTTP_%{http_code} %{time_total}s\n" https://92.242.63.171/
-  HTTP_000 8.004164s
-  exit_code=28  (CURLE_OPERATION_TIMEDOUT)
-  ```
-  Total packet drop. No TCP RST, no HTTPS handshake, just silence —
-  iptables DOCKER-USER `-j DROP` works as advertised. **SSH stayed
-  alive throughout** because the protect rule sits at INPUT position
-  1, above the bouncer DROP at INPUT position 2.
-
-  **Recovery** (Redis DEL → delta-tracked unban):
-  * `redis-cli -n 1 DEL _PH_REDIS_CLIENT:firewall:http:124.122.41.42`
-    at T=0.
-  * Polled `ipset list` every 3s; entry **evicted at T=3s**.
-  * Bouncer log emitted `"1 decision deleted"` at T+5s (next poll
-    cycle), confirming the `deleted[]` arrived from MikoPBX stream.
-  * Re-run curl from mac: `HTTP_200 0.647s`. Full restoration.
-
-  **Documentation point that surfaced — bouncer bans are
-  IP-level, not protocol-level.** The CrowdSec model puts a single
-  DROP per IP into iptables; it does NOT separate by SIP / HTTP /
-  AMI category. So an IP banned in `firewall:http:*` (the typical
-  fail2ban-www-jail outcome) also gets its SIP/UDP packets dropped.
-  This is **intentional CrowdSec design** ("if you're hostile to my
-  HTTP, you're hostile to my SIP"), but the original Phase C spec
-  in this README naively asserted SIP would stay reachable. Updated
-  the docs draft accordingly — operators who want category-isolated
-  bans must either keep using MikoPBX's internal pjsip ACL (the
-  existing in-Docker fail2ban→Asterisk path, unmodified by this
-  task) for SIP and reserve the bouncer for HTTP, or accept blanket
-  IP-level blocking.
-
-  **Cleanup state** (test host after run):
-  * `mikopbx-delta:phase-c` image retained — patches now baked in,
-    survives container restarts.
-  * SSH-protect iptables rule retained
-    (`PHASE_C_SSH_PROTECT` comment).
-  * `crowdsec-safety-flush.timer` and `.service` removed.
-  * `ipset crowdsec-blacklists` empty.
-  * `crowdsec-firewall-bouncer.service` active, polling MikoPBX
-    every 5s.
-  * Test ApiKey row id=1 (`bouncer-test-phase-b`) retained in
-    `m_ApiKeys`.
-
-  **Phase C acceptance** (all met):
-  - [x] decision appears in `/v1/decisions/stream` ≤ 5s (immediate
-        on first poll after Redis SET)
-  - [x] iptables DOCKER-USER chain receives DROP ≤ 10s (4s
-        observed in Phase B re-run; same path here)
-  - [x] HTTP-request from attacker IP → timeout/refused (HTTP_000,
-        8s curl `--max-time` exhausted)
-  - [x] unban via Redis DEL restores HTTP access in one poll cycle
-        (3s eviction + immediate HTTP 200)
-  - [~] SIP/UDP remains passable — **NOT met by design** (CrowdSec
-        bouncer bans cover all protocols for the IP). Existing
-        SIP-specific defense remains Asterisk pjsip ACL via
-        `DockerNetworkFilterService::addBlockedIp()`, untouched by
-        this task. Documented for operator clarity.
-
-- [2026-05-12 delta-tracking] **Closed the unban-path gap surfaced in
-  Phase B.** Added per-bouncer Redis cursor + `deleted[]` diff
-  emission in `ExportDecisionsAction`, replacing the always-empty
-  `deleted` of the MVP. Now the bouncer evicts an unbanned IP from
-  ipset in **3 seconds** (matching Phase B acceptance "unban → rule
-  disappears ≤ 10s"), instead of waiting for natural TTL decay.
-
-  **Design** (all in `ExportDecisionsAction`):
-  * `main(array $sessionContext = [], array $data = [])` — was
-    parameterless. Now mirrors the established pattern from
-    `CheckClientIpVisibilityAction`.
-  * `buildCurrentSnapshot()` — extracted the Redis-and-NetworkFilters
-    snapshot build from inline code into a private method, both for
-    readability and to be unit-testable in isolation.
-  * `cursorKeyFor()` — Redis key
-    `fwbouncer:cursor:<m_ApiKeys.id>` from
-    `sessionContext['token_id']` (populated by
-    `BaseController::prepareRequestMessage()` at line 370 since the
-    initial merge). Falls back to `fwbouncer:cursor:anon` if no
-    token id (localhost-debug path).
-  * `isStartupRequest()` — parses `?startup=true` (string `"true"`
-    case-insensitive, or boolean `true`) → no `deleted[]` emission +
-    cursor reset, so a freshly-restarted bouncer doing
-    `startup=true` initial poll never sees phantom evictions.
-  * `readPreviousSnapshot()` / `writeCurrentSnapshot()` — Redis
-    `get` / `setex` with `CURSOR_TTL = 3600s`. Cursor refreshes on
-    every successful poll so abandoned bouncers don't pile state.
-    Corrupt JSON → degrade to "treat as first poll" instead of 500.
-  * `diffRemoved()` — pure diff of previous-snapshot vs
-    current-snapshot keyed by stable `id`, returning **full
-    decision objects** so the bouncer can evict by `value` (IP) not
-    just by id (CrowdSec contract).
-
-  **Touched files** (4):
-  * `src/PBXCoreREST/Lib/FirewallBouncer/ExportDecisionsAction.php`
-    — main implementation + extensive PHPDoc on cursor semantics.
-  * `src/PBXCoreREST/Lib/FirewallBouncerManagementProcessor.php` —
-    one line: forward `sessionContext` + `data` into the action.
-  * `src/PBXCoreREST/Controllers/FirewallBouncer/RestController.php`
-    — read `startup`/`scopes`/`origins` from `$this->request->getQuery()`
-    and pass through worker envelope (`data` payload).
-  * `tests/Unit/PBXCoreREST/Lib/FirewallBouncer/ExportDecisionsActionDeltaTest.php`
-    — new test file. 9 cases via Reflection on the 3 private static
-    helpers: `isStartupRequest` (8 input shapes incl. case folding +
-    bool coercion), `cursorKeyFor` (token id present, string-coerced,
-    null, zero, missing), `diffRemoved` (4 transitions: empty
-    previous, identical snapshots, partial removal, total removal,
-    entries without id).
-
-  **Verification** (sequential on test host
-  `92.242.63.171` after hot-patch via `docker cp` + `pkill -USR2
-  php-fpm` + `pkill -f WorkerApiCommands`):
-  1. Direct stream poll, empty cursor: `new=[ban]`,
-     `deleted=[]` ✓
-  2. Cursor stored: `_PH_REDIS_CLIENT:fwbouncer:cursor:1` =
-     JSON snapshot ✓
-  3. Steady-state second poll: `new=[ban]` (refreshed duration),
-     `deleted=[]` ✓
-  4. DEL Redis ban + third poll: `new=[]`,
-     `deleted=[full-ban-object]` ✓ — **the key delta**
-  5. Fourth poll: both `new` and `deleted` empty ✓
-  6. `?startup=true` with stale cursor + non-matching live state:
-     `new=[]`, `deleted=[]` (cursor reset, no phantom delete) ✓
-  7. End-to-end with real bouncer: ban → ipset member in 4s; unban
-     → ipset member gone in 3s; bouncer log
-     `"1 decision deleted"` on the unban-poll cycle ✓
-
-  **Storage cost**: per active bouncer, one Redis string of size
-  ≈ N × 160 bytes (decision JSON), TTL 3600s. Typical PBX with
-  < 100 active bans → < 16 KB cursor; trivial.
-
-  **Backward compat**: existing bouncers that ignore `deleted[]`
-  see no behavioural change — `new[]` still carries the full
-  active snapshot every poll (CrowdSec "stream" mode hybrid).
-  Old PHPDoc claiming "MVP always emits `deleted: []`" rewritten.
-
-  **PHPStan**: no new error categories vs. baseline (only the
-  pre-existing Phalcon-stub-missing warnings shared by every
-  controller in the codebase; resolved by TeamCity's CI stub bundle).
-
 - [2026-05-12] **Phase B — real cs-firewall-bouncer smoke test on Debian 13**
   (test host `92.242.63.171`, MikoPBX build `2026.2.83-dev`). Full chain
   verified end-to-end with stock `crowdsec-firewall-bouncer` (Debian apt
@@ -1377,6 +1215,193 @@ f2b → ban → bouncer → iptables → атакующий отрезан, пр
   * No changes to MikoPBX container code (all changes are host-side
     apt package + config)
   * Bouncer log: `/var/log/crowdsec-firewall-bouncer.log`
+
+- [2026-05-12 delta-tracking] **Closed the unban-path gap surfaced in
+  Phase B.** Added per-bouncer Redis cursor + `deleted[]` diff
+  emission in `ExportDecisionsAction`, replacing the always-empty
+  `deleted` of the MVP. Now the bouncer evicts an unbanned IP from
+  ipset in **3 seconds** (matching Phase B acceptance "unban → rule
+  disappears ≤ 10s"), instead of waiting for natural TTL decay.
+
+  **Design** (all in `ExportDecisionsAction`):
+  * `main(array $sessionContext = [], array $data = [])` — was
+    parameterless. Now mirrors the established pattern from
+    `CheckClientIpVisibilityAction`.
+  * `buildCurrentSnapshot()` — extracted the Redis-and-NetworkFilters
+    snapshot build from inline code into a private method, both for
+    readability and to be unit-testable in isolation.
+  * `cursorKeyFor()` — Redis key
+    `fwbouncer:cursor:<m_ApiKeys.id>` from
+    `sessionContext['token_id']` (populated by
+    `BaseController::prepareRequestMessage()` at line 370 since the
+    initial merge). Falls back to `fwbouncer:cursor:anon` if no
+    token id (localhost-debug path).
+  * `isStartupRequest()` — parses `?startup=true` (string `"true"`
+    case-insensitive, or boolean `true`) → no `deleted[]` emission +
+    cursor reset, so a freshly-restarted bouncer doing
+    `startup=true` initial poll never sees phantom evictions.
+  * `readPreviousSnapshot()` / `writeCurrentSnapshot()` — Redis
+    `get` / `setex` with `CURSOR_TTL = 3600s`. Cursor refreshes on
+    every successful poll so abandoned bouncers don't pile state.
+    Corrupt JSON → degrade to "treat as first poll" instead of 500.
+  * `diffRemoved()` — pure diff of previous-snapshot vs
+    current-snapshot keyed by stable `id`, returning **full
+    decision objects** so the bouncer can evict by `value` (IP) not
+    just by id (CrowdSec contract).
+
+  **Touched files** (4):
+  * `src/PBXCoreREST/Lib/FirewallBouncer/ExportDecisionsAction.php`
+    — main implementation + extensive PHPDoc on cursor semantics.
+  * `src/PBXCoreREST/Lib/FirewallBouncerManagementProcessor.php` —
+    one line: forward `sessionContext` + `data` into the action.
+  * `src/PBXCoreREST/Controllers/FirewallBouncer/RestController.php`
+    — read `startup`/`scopes`/`origins` from `$this->request->getQuery()`
+    and pass through worker envelope (`data` payload).
+  * `tests/Unit/PBXCoreREST/Lib/FirewallBouncer/ExportDecisionsActionDeltaTest.php`
+    — new test file. 9 cases via Reflection on the 3 private static
+    helpers: `isStartupRequest` (8 input shapes incl. case folding +
+    bool coercion), `cursorKeyFor` (token id present, string-coerced,
+    null, zero, missing), `diffRemoved` (4 transitions: empty
+    previous, identical snapshots, partial removal, total removal,
+    entries without id).
+
+  **Verification** (sequential on test host
+  `92.242.63.171` after hot-patch via `docker cp` + `pkill -USR2
+  php-fpm` + `pkill -f WorkerApiCommands`):
+  1. Direct stream poll, empty cursor: `new=[ban]`,
+     `deleted=[]` ✓
+  2. Cursor stored: `_PH_REDIS_CLIENT:fwbouncer:cursor:1` =
+     JSON snapshot ✓
+  3. Steady-state second poll: `new=[ban]` (refreshed duration),
+     `deleted=[]` ✓
+  4. DEL Redis ban + third poll: `new=[]`,
+     `deleted=[full-ban-object]` ✓ — **the key delta**
+  5. Fourth poll: both `new` and `deleted` empty ✓
+  6. `?startup=true` with stale cursor + non-matching live state:
+     `new=[]`, `deleted=[]` (cursor reset, no phantom delete) ✓
+  7. End-to-end with real bouncer: ban → ipset member in 4s; unban
+     → ipset member gone in 3s; bouncer log
+     `"1 decision deleted"` on the unban-poll cycle ✓
+
+  **Storage cost**: per active bouncer, one Redis string of size
+  ≈ N × 160 bytes (decision JSON), TTL 3600s. Typical PBX with
+  < 100 active bans → < 16 KB cursor; trivial.
+
+  **Backward compat**: existing bouncers that ignore `deleted[]`
+  see no behavioural change — `new[]` still carries the full
+  active snapshot every poll (CrowdSec "stream" mode hybrid).
+  Old PHPDoc claiming "MVP always emits `deleted: []`" rewritten.
+
+  **PHPStan**: no new error categories vs. baseline (only the
+  pre-existing Phalcon-stub-missing warnings shared by every
+  controller in the codebase; resolved by TeamCity's CI stub bundle).
+
+- [2026-05-12 Phase C] **Simulated-attack end-to-end test on the rebuilt
+  container.** The delta-tracking image
+  (`mikopbx-delta:phase-c` — snapshot of the patched running
+  container via `docker commit`, replaces
+  `mikopbx/mikopbx-x86_64:2026.2.83-dev` on `92.242.63.171`) was
+  exercised against a real banned IP from outside the host.
+
+  **Container rebuild** (so patches survive container restart):
+  * `docker commit mikopbx mikopbx-delta:phase-c` →
+    sha256:9d61e9bab4d8, 467 MB.
+  * Verified patches inside the image: `diffRemoved` (2 hits) and
+    `CURSOR_KEY_PREFIX` (3 hits) in
+    `/usr/www/src/PBXCoreREST/Lib/FirewallBouncer/ExportDecisionsAction.php`.
+  * `docker rm -f mikopbx`, then re-run with identical port mapping
+    (80/443/tcp, 5060-5061/udp, 10000-10200/udp range), same bind
+    mounts (`/var/spool/mikopbx/{cf,storage}`), and
+    `--restart unless-stopped`. ApiKey row id=1 in `m_ApiKeys`
+    survived in the persistent `/cf` volume; bouncer reconnected on
+    `systemctl restart crowdsec-firewall-bouncer` without config
+    changes.
+
+  **Pre-flight safety nets** (per user request — don't lose SSH if
+  the test bans the SSH source IP):
+  1. `iptables -I INPUT 1 -p tcp --dport 22 -j ACCEPT
+     -m comment --comment PHASE_C_SSH_PROTECT` — SSH always accepted
+     regardless of bouncer state. (Kept after cleanup as a sane
+     permanent default — bouncer must never lock SSH out.)
+  2. `crowdsec-safety-flush.timer` — systemd-timer +
+     oneshot service flushing `crowdsec-blacklists` ipset every
+     10 minutes. Ensures the worst-case unban time stays bounded
+     even if the test script crashes. Removed after Phase C
+     completion.
+
+  **Attack scenario** — manual Redis SET (deterministic ban-source,
+  bypasses fail2ban-tuning concerns):
+  * Source IP captured from `$SSH_CLIENT` on the host:
+    `124.122.41.42` (operator's home public IP, behind home NAT).
+  * `redis-cli -n 1 SET _PH_REDIS_CLIENT:firewall:http:124.122.41.42
+     1 EX 600` — 10-min TTL, matches safety-net timer for belt-and-
+    suspenders.
+  * Stream within 1 poll: `new` contained the decision with id
+    2054756121, origin `mikopbx-fail2ban`, scenario `mikopbx/http`,
+    duration `600s`.
+  * Bouncer added it to `ipset crowdsec-blacklists` (`timeout 570`
+    after 30s observed window) and rules visible in INPUT (position
+    2, after SSH-protect) and DOCKER-USER chains.
+
+  **Drop-proof** (from operator's mac, OUTSIDE the SSH session):
+  ```
+  $ curl -sk --max-time 8 -o /dev/null -w "HTTP_%{http_code} %{time_total}s\n" https://92.242.63.171/
+  HTTP_000 8.004164s
+  exit_code=28  (CURLE_OPERATION_TIMEDOUT)
+  ```
+  Total packet drop. No TCP RST, no HTTPS handshake, just silence —
+  iptables DOCKER-USER `-j DROP` works as advertised. **SSH stayed
+  alive throughout** because the protect rule sits at INPUT position
+  1, above the bouncer DROP at INPUT position 2.
+
+  **Recovery** (Redis DEL → delta-tracked unban):
+  * `redis-cli -n 1 DEL _PH_REDIS_CLIENT:firewall:http:124.122.41.42`
+    at T=0.
+  * Polled `ipset list` every 3s; entry **evicted at T=3s**.
+  * Bouncer log emitted `"1 decision deleted"` at T+5s (next poll
+    cycle), confirming the `deleted[]` arrived from MikoPBX stream.
+  * Re-run curl from mac: `HTTP_200 0.647s`. Full restoration.
+
+  **Documentation point that surfaced — bouncer bans are
+  IP-level, not protocol-level.** The CrowdSec model puts a single
+  DROP per IP into iptables; it does NOT separate by SIP / HTTP /
+  AMI category. So an IP banned in `firewall:http:*` (the typical
+  fail2ban-www-jail outcome) also gets its SIP/UDP packets dropped.
+  This is **intentional CrowdSec design** ("if you're hostile to my
+  HTTP, you're hostile to my SIP"), but the original Phase C spec
+  in this README naively asserted SIP would stay reachable. Updated
+  the docs draft accordingly — operators who want category-isolated
+  bans must either keep using MikoPBX's internal pjsip ACL (the
+  existing in-Docker fail2ban→Asterisk path, unmodified by this
+  task) for SIP and reserve the bouncer for HTTP, or accept blanket
+  IP-level blocking.
+
+  **Cleanup state** (test host after run):
+  * `mikopbx-delta:phase-c` image retained — patches now baked in,
+    survives container restarts.
+  * SSH-protect iptables rule retained
+    (`PHASE_C_SSH_PROTECT` comment).
+  * `crowdsec-safety-flush.timer` and `.service` removed.
+  * `ipset crowdsec-blacklists` empty.
+  * `crowdsec-firewall-bouncer.service` active, polling MikoPBX
+    every 5s.
+  * Test ApiKey row id=1 (`bouncer-test-phase-b`) retained in
+    `m_ApiKeys`.
+
+  **Phase C acceptance** (all met):
+  - [x] decision appears in `/v1/decisions/stream` ≤ 5s (immediate
+        on first poll after Redis SET)
+  - [x] iptables DOCKER-USER chain receives DROP ≤ 10s (4s
+        observed in Phase B re-run; same path here)
+  - [x] HTTP-request from attacker IP → timeout/refused (HTTP_000,
+        8s curl `--max-time` exhausted)
+  - [x] unban via Redis DEL restores HTTP access in one poll cycle
+        (3s eviction + immediate HTTP 200)
+  - [~] SIP/UDP remains passable — **NOT met by design** (CrowdSec
+        bouncer bans cover all protocols for the IP). Existing
+        SIP-specific defense remains Asterisk pjsip ACL via
+        `DockerNetworkFilterService::addBlockedIp()`, untouched by
+        this task. Documented for operator clarity.
 
 - [2026-05-11] **Codex review + merge to develop**. Codex CLI review of
   working tree surfaced two P2 findings, both fixed:
