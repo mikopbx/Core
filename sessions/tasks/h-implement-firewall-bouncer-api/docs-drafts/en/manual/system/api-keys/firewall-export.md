@@ -83,18 +83,38 @@ nftables generators).
 | `mikopbx/iax`              | scenario tag        | Redis `iax` category                    |
 | `mikopbx/manual`           | scenario tag        | Operator-defined Firewall UI entries    |
 
-## MVP behaviour
+## Polling semantics
 
 * Every poll returns the **full** snapshot of currently active bans in
-  `new`. The `deleted` array is always empty.
-* This is a valid CrowdSec LAPI variant — bouncers apply decisions
-  idempotently. It's the simplest thing that works, not an optimisation.
-* `update_frequency: 10s` is the recommended polling interval.
+  `new`. Bouncers refresh their ipset / nftables entry timeouts on
+  every appearance, so a still-active ban stays alive at the source's
+  declared `duration`.
+* `deleted` carries the per-bouncer **diff** since the previous poll.
+  MikoPBX stores the last-served snapshot per ApiKey id (Redis key
+  `_PH_REDIS_CLIENT:fwbouncer:cursor:<token-id>`, TTL 1 h **refreshed
+  on every poll** — the cursor expires only after one hour of bouncer
+  silence). Decisions that disappeared between two polls —
+  operator-triggered unban, ban TTL elapsed, NetworkFilters entry
+  deleted — appear in `deleted` as full decision objects on the next
+  poll, so the bouncer evicts the entry from its local store
+  immediately rather than waiting for natural ipset timeout.
+* `update_frequency: 5–10s` is the recommended polling interval.
 
-The `startup`, `scopes`, and `origins` query parameters sent by
-`cs-firewall-bouncer` are accepted but ignored in the MVP — the full
-snapshot is always returned. This works with every existing CrowdSec
-bouncer.
+The bouncer-sent query parameters behave as follows:
+
+| Param     | Behaviour                                                                                                                                                                                                                                                                                                                                                  |
+| --------- | -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `startup` | `startup=true` ignores the stored cursor for this poll only — full snapshot in `new`, empty `deleted` — then writes the just-served snapshot to the cursor. The NEXT poll diffs against that fresh snapshot normally. Bouncers send this on the first poll after restart. Other values (including `false`) are treated as steady-state polls.              |
+| `scopes`  | Accepted but ignored. MikoPBX only emits `scope=Ip` and `scope=Range`; no filtering applied server-side.                                                                                                                                                                                                                                                    |
+| `origins` | Accepted but ignored. Both origins (`mikopbx-fail2ban`, `mikopbx-networkfilters`) always present in the response. Bouncers that want to filter must do so client-side.                                                                                                                                                                                      |
+
+Cursor isolation lets multiple independent bouncers (e.g. one running
+nftables locally, another driving a Cloudflare endpoint) each track
+their own delta — **issue one ApiKey per bouncer**. Sharing one ApiKey
+between two or more bouncers makes them share a single cursor: polls
+from different bouncers interleave their snapshot writes, producing
+nondeterministic `deleted[]` timing and missed eviction events for
+short-lived bans.
 
 ## Examples
 

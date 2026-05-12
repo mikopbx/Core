@@ -4,6 +4,15 @@
 > рассчитаны на ветки `russian` и `english` репозитория
 > `docs.mikopbx.com`. По договорённости в задаче (см. README.md User Notes)
 > работаем без worktree, обычными `git checkout`.
+>
+> **Обновлено 2026-05-12** после Phase B/C: в
+> `external-firewall-enforcement.md` (обе ветки) добавлены три новых
+> production-блока — `iptables_chains` с обязательным `DOCKER-USER`,
+> `disable_ipv6` caveat, защита SSH через ACCEPT-правило, опциональный
+> systemd-timer safety-net, и важная калибровка "bouncer banit на
+> уровне IP, а не протокола". В `firewall-export.md` (обе ветки)
+> заменён раздел "MVP behaviour" на актуальную семантику per-token
+> delta tracking + reset через `?startup=true`.
 
 ## 0. Перед стартом
 
