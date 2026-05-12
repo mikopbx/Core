@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'Intet filter',
     'ak_RegenerateApiKey' => 'Generer ny nøgle',
     'ak_Restricted' => 'Begrænset',
+    'ak_SelectNetworkFilter' => 'Vælg netværksfilter',
     'ak_ShowHideApiKey' => 'Vis/skjul API nøgle',
     'ak_StatusDisabled' => 'Deaktiveret',
     'ak_StatusEnabled' => 'Aktiv',

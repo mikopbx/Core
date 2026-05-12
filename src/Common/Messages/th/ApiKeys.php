@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'ไม่มีตัวกรอง',
     'ak_RegenerateApiKey' => 'สร้างคีย์ใหม่',
     'ak_Restricted' => 'จำกัด',
+    'ak_SelectNetworkFilter' => 'เลือกตัวกรองเครือข่าย',
     'ak_ShowHideApiKey' => 'แสดง/ซ่อนคีย์ API',
     'ak_StatusDisabled' => 'ปิดใช้งาน',
     'ak_StatusEnabled' => 'เปิดใช้งาน',

@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'ფილტრის გარეშე',
     'ak_RegenerateApiKey' => 'ახალი გასაღების შექმნა',
     'ak_Restricted' => 'შეზღუდული',
+    'ak_SelectNetworkFilter' => 'აირჩიეთ ქსელური ფილტრი',
     'ak_ShowHideApiKey' => 'API გასაღების ჩვენება/დაფარვა',
     'ak_StatusDisabled' => 'გამორთული',
     'ak_StatusEnabled' => 'აქტიური',

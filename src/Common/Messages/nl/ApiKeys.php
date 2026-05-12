@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'Geen filter',
     'ak_RegenerateApiKey' => 'Nieuwe sleutel genereren',
     'ak_Restricted' => 'Beperkt',
+    'ak_SelectNetworkFilter' => 'Selecteer netwerkfilter',
     'ak_ShowHideApiKey' => 'API-sleutel tonen/verbergen',
     'ak_StatusDisabled' => 'Uitgeschakeld',
     'ak_StatusEnabled' => 'Actief',

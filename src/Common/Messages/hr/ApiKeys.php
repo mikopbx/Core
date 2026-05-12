@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'Bez filtra',
     'ak_RegenerateApiKey' => 'Generiraj novi ključ',
     'ak_Restricted' => 'Ograničeno',
+    'ak_SelectNetworkFilter' => 'Odaberite mrežni filtar',
     'ak_ShowHideApiKey' => 'Prikaži/sakrij API ključ',
     'ak_StatusDisabled' => 'Onemogućeno',
     'ak_StatusEnabled' => 'Aktivno',

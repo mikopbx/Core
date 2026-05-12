@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'Inget filter',
     'ak_RegenerateApiKey' => 'Generera ny nyckel',
     'ak_Restricted' => 'Begränsad',
+    'ak_SelectNetworkFilter' => 'Välj nätverksfilter',
     'ak_ShowHideApiKey' => 'Visa/dölj API-nyckel',
     'ak_StatusDisabled' => 'Inaktiverad',
     'ak_StatusEnabled' => 'Aktiv',

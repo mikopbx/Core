@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'Bez filtru',
     'ak_RegenerateApiKey' => 'Vygenerovat nový klíč',
     'ak_Restricted' => 'Omezený',
+    'ak_SelectNetworkFilter' => 'Vyberte síťový filtr',
     'ak_ShowHideApiKey' => 'Zobrazit/skrýt API klíč',
     'ak_StatusDisabled' => 'Zakázáno',
     'ak_StatusEnabled' => 'Aktivní',

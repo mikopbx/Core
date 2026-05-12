@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'Kein Filter',
     'ak_RegenerateApiKey' => 'Neuen Schlüssel generieren',
     'ak_Restricted' => 'Eingeschränkt',
+    'ak_SelectNetworkFilter' => 'Netzwerkfilter auswählen',
     'ak_ShowHideApiKey' => 'API-Schlüssel anzeigen/verbergen',
     'ak_StatusDisabled' => 'Deaktiviert',
     'ak_StatusEnabled' => 'Aktiv',

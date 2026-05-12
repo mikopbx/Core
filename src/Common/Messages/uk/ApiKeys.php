@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'Без фільтра',
     'ak_RegenerateApiKey' => 'Згенерувати новий ключ',
     'ak_Restricted' => 'Обмежений',
+    'ak_SelectNetworkFilter' => 'Оберіть мережевий фільтр',
     'ak_ShowHideApiKey' => 'Показати/приховати API ключ',
     'ak_StatusDisabled' => 'Вимкнено',
     'ak_StatusEnabled' => 'Активний',

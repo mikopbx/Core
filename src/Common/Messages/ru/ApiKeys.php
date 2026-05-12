@@ -116,6 +116,7 @@ return [
     'ak_NoFilter' => 'Без фильтра',
     'ak_RegenerateApiKey' => 'Сгенерировать новый ключ',
     'ak_Restricted' => 'Ограниченный',
+    'ak_SelectNetworkFilter' => 'Выберите сетевой фильтр',
     'ak_ShowHideApiKey' => 'Показать/скрыть API ключ',
     'ak_StatusDisabled' => 'Отключен',
     'ak_StatusEnabled' => 'Активен',

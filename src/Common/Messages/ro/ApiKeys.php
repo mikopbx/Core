@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'Fără filtru',
     'ak_RegenerateApiKey' => 'Generează cheie nouă',
     'ak_Restricted' => 'Restricționat',
+    'ak_SelectNetworkFilter' => 'Alegeți filtrul de rețea',
     'ak_ShowHideApiKey' => 'Afișează/ascunde cheia API',
     'ak_StatusDisabled' => 'Dezactivat',
     'ak_StatusEnabled' => 'Activ',

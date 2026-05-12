@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'Không có bộ lọc',
     'ak_RegenerateApiKey' => 'Tạo khóa mới',
     'ak_Restricted' => 'Bị hạn chế',
+    'ak_SelectNetworkFilter' => 'Chọn bộ lọc mạng',
     'ak_ShowHideApiKey' => 'Hiển thị/ẩn khóa API',
     'ak_StatusDisabled' => 'Đã tắt',
     'ak_StatusEnabled' => 'Hoạt động',

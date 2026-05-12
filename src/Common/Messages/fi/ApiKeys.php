@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'Ei suodatinta',
     'ak_RegenerateApiKey' => 'Luo uusi avain',
     'ak_Restricted' => 'Rajoitettu',
+    'ak_SelectNetworkFilter' => 'Valitse verkkosuodatin',
     'ak_ShowHideApiKey' => 'Näytä/piilota API avain',
     'ak_StatusDisabled' => 'Poistettu käytöstä',
     'ak_StatusEnabled' => 'Aktiivinen',

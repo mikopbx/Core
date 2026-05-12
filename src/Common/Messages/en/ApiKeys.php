@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'No filter',
     'ak_RegenerateApiKey' => 'Generate new key',
     'ak_Restricted' => 'Restricted',
+    'ak_SelectNetworkFilter' => 'Select network filter',
     'ak_ShowHideApiKey' => 'Show/hide API key',
     'ak_StatusDisabled' => 'Disabled',
     'ak_StatusEnabled' => 'Active',

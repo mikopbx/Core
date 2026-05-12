@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'フィルターなし',
     'ak_RegenerateApiKey' => '新しいキーを生成',
     'ak_Restricted' => '制限付き',
+    'ak_SelectNetworkFilter' => 'ネットワークフィルターを選択',
     'ak_ShowHideApiKey' => 'APIキーを表示/非表示',
     'ak_StatusDisabled' => '無効',
     'ak_StatusEnabled' => '有効',

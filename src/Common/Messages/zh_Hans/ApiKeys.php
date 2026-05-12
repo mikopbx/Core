@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => '无过滤器',
     'ak_RegenerateApiKey' => '生成新密钥',
     'ak_Restricted' => '受限',
+    'ak_SelectNetworkFilter' => '选择网络过滤器',
     'ak_ShowHideApiKey' => '显示/隐藏API密钥',
     'ak_StatusDisabled' => '已禁用',
     'ak_StatusEnabled' => '已启用',

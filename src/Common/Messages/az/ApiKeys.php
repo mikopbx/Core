@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'Filtrsiz',
     'ak_RegenerateApiKey' => 'Yeni açar yarat',
     'ak_Restricted' => 'Məhdudlaşdırılmış',
+    'ak_SelectNetworkFilter' => 'Şəbəkə filtrini seçin',
     'ak_ShowHideApiKey' => 'API açarını göstər/gizlət',
     'ak_StatusDisabled' => 'Deaktiv',
     'ak_StatusEnabled' => 'Aktiv',

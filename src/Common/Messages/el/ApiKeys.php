@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'Χωρίς φίλτρο',
     'ak_RegenerateApiKey' => 'Δημιουργία νέου κλειδιού',
     'ak_Restricted' => 'Περιορισμένο',
+    'ak_SelectNetworkFilter' => 'Επιλέξτε δικτυακό φίλτρο',
     'ak_ShowHideApiKey' => 'Εμφάνιση/απόκρυψη API κλειδιού',
     'ak_StatusDisabled' => 'Απενεργοποιημένο',
     'ak_StatusEnabled' => 'Ενεργό',

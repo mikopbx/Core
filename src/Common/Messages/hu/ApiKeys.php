@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'Szűrő nélkül',
     'ak_RegenerateApiKey' => 'Új kulcs generálása',
     'ak_Restricted' => 'Korlátozott',
+    'ak_SelectNetworkFilter' => 'Válasszon hálózati szűrőt',
     'ak_ShowHideApiKey' => 'API kulcs megjelenítése/elrejtése',
     'ak_StatusDisabled' => 'Letiltva',
     'ak_StatusEnabled' => 'Aktív',

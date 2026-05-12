@@ -115,6 +115,7 @@ return [
     'ak_NoFilter' => 'Filtre yok',
     'ak_RegenerateApiKey' => 'Yeni anahtar oluştur',
     'ak_Restricted' => 'Kısıtlı',
+    'ak_SelectNetworkFilter' => 'Ağ filtresini seçin',
     'ak_ShowHideApiKey' => 'API anahtarını göster/gizle',
     'ak_StatusDisabled' => 'Devre dışı',
     'ak_StatusEnabled' => 'Aktif',
