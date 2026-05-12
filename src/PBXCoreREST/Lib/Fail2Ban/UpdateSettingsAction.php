@@ -115,32 +115,92 @@ class UpdateSettingsAction extends Injectable
     }
 
     /**
-     * Normalize whitelist string: split by any common delimiter (comma, newline, semicolon, tab),
-     * validate each entry as IPv4/IPv6 address or CIDR notation, and rejoin with spaces.
+     * Normalize a whitelist string: split by any common delimiter (comma,
+     * newline, semicolon, tab), validate each entry as IPv4/IPv6 host or CIDR,
+     * canonicalize IPv6 via inet_pton/inet_ntop (so "2001:db8::1" and
+     * "2001:0db8:0000:0000:0000:0000:0000:0001" collapse to one entry),
+     * drop redundant /32 and /128 host masks, and dedupe.
      *
      * @param string $whitelist Raw whitelist input from user.
      * @return string Normalized whitelist with space-separated valid entries.
      */
     private static function normalizeWhitelist(string $whitelist): string
     {
-        // Split by any combination of commas, semicolons, newlines, tabs, spaces
         $entries = preg_split('/[\s,;]+/', trim($whitelist), -1, PREG_SPLIT_NO_EMPTY);
 
+        $seen = [];
         $valid = [];
         foreach ($entries as $entry) {
-            $entry = trim($entry);
-            if ($entry === '') {
+            $canonical = self::canonicalizeEntry(trim($entry));
+            if ($canonical === null || isset($seen[$canonical])) {
                 continue;
             }
-            // Accept valid IPv4, IPv6, or CIDR notation
-            if (filter_var($entry, FILTER_VALIDATE_IP) !== false
-                || preg_match('#^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$#', $entry)
-                || preg_match('#^[0-9a-fA-F:]+/\d{1,3}$#', $entry)
-            ) {
-                $valid[] = $entry;
-            }
+            $seen[$canonical] = true;
+            $valid[] = $canonical;
         }
 
         return implode(' ', $valid);
+    }
+
+    /**
+     * Canonicalize a single whitelist entry.
+     *
+     * Returns null for anything that does not parse as a valid IPv4/IPv6
+     * address or CIDR. IPv6 addresses are normalised via inet_pton/inet_ntop,
+     * which collapses every textual form of the same address (case, leading
+     * zeros, "::" compression) into a single canonical string. Redundant
+     * host masks (/32 for IPv4, /128 for IPv6) are stripped so the stored
+     * form matches what the UI shows after `normalizeEntry()` on the client.
+     *
+     * @param string $entry Raw entry, e.g. "2001:0db8::1" or "10.0.0.0/24".
+     * @return string|null Canonical form, or null if invalid.
+     */
+    private static function canonicalizeEntry(string $entry): ?string
+    {
+        if ($entry === '') {
+            return null;
+        }
+
+        $prefix = null;
+        if (str_contains($entry, '/')) {
+            [$address, $prefix] = explode('/', $entry, 2);
+            if (!ctype_digit($prefix)) {
+                return null;
+            }
+        } else {
+            $address = $entry;
+        }
+
+        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
+            if ($prefix === null) {
+                return $address;
+            }
+            $p = (int)$prefix;
+            if ($p < 0 || $p > 32) {
+                return null;
+            }
+            return $p === 32 ? $address : "$address/$p";
+        }
+
+        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false) {
+            $packed = @inet_pton($address);
+            if ($packed === false) {
+                return null;
+            }
+            $canonical = inet_ntop($packed);
+            if ($canonical === false) {
+                return null;
+            }
+            if ($prefix === null) {
+                return $canonical;
+            }
+            $p = (int)$prefix;
+            if ($p < 0 || $p > 128) {
+                return null;
+            }
+            return $p === 128 ? $canonical : "$canonical/$p";
+        }
+
+        return null;
     }
 }

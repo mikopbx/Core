@@ -119,15 +119,21 @@ const firewall = {
     },
 
     /**
-     * Get URL parameters for prefilling the form
-     * @returns {Object} Object with network, subnet, and ruleName parameters
+     * Get URL parameters for prefilling the form.
+     * `trust=1` is set only by the "Allow my current IP" helper and is the
+     * sole signal that pre-checking `newer_block_ip` is wanted — other
+     * prefill links (e.g. ?network=... from list rows) must not flip that
+     * security-sensitive flag.
+     *
+     * @returns {Object} Object with network, subnet, ruleName and trust parameters
      */
     getUrlParameters() {
         const params = new URLSearchParams(window.location.search);
         return {
             network: params.get('network') || '',
             subnet: params.get('subnet') || '',
-            ruleName: params.get('ruleName') || ''
+            ruleName: params.get('ruleName') || '',
+            trust: params.get('trust') || ''
         };
     },
 
@@ -200,10 +206,17 @@ const firewall = {
      * @returns {Object} Form data ready for Form.populateFormSilently()
      */
     prepareFormData(data) {
+        // The "Allow my current IP" helper appends ?trust=1 to its URL; that is the
+        // single, explicit signal the operator chose the trust flow. Generic prefill
+        // links (`?network=...` from list rows or default-rule edit buttons) MUST NOT
+        // flip `newer_block_ip` automatically — that would silently mark broad
+        // networks as Fail2Ban-trusted without operator intent.
+        const isAllowMyIpHelper = !data.id && firewall.urlParameters.trust === '1';
+
         const formData = {
             id: data.id || '',
             description: data.description || '',
-            newer_block_ip: data.newer_block_ip === true,
+            newer_block_ip: isAllowMyIpHelper ? true : (data.newer_block_ip === true),
             local_network: data.local_network === true
         };
 

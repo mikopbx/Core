@@ -72,20 +72,12 @@ class Fail2BanTooltipManager {
      */
     static getTooltipConfigurations() {
         return {
-            // Security preset slider tooltip
+            // Security preset slider tooltip — concrete per-level values now live
+            // in the metric panel under the slider, so we only keep the high-level
+            // context (what the slider does + the operator warning) here.
             securityPreset: {
                 header: globalTranslate.f2b_SecurityPresetTooltip_header,
                 description: globalTranslate.f2b_SecurityPresetTooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.f2b_SecurityPresetTooltip_levels_header,
-                        definition: null
-                    },
-                    globalTranslate.f2b_SecurityPresetTooltip_level_weak,
-                    globalTranslate.f2b_SecurityPresetTooltip_level_normal,
-                    globalTranslate.f2b_SecurityPresetTooltip_level_enhanced,
-                    globalTranslate.f2b_SecurityPresetTooltip_level_paranoid,
-                ],
                 note: globalTranslate.f2b_SecurityPresetTooltip_note
             },
 

@@ -58,6 +58,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'bantime' => $model->bantime,
             'findtime' => $model->findtime,
             'whitelist' => $model->whitelist ?? '',
+            'autoWhitelist' => [],
             'PBXFirewallMaxReqSec' => $maxReqPerSec,
             'PBXSecurityMode' => $securityMode,
         ];
@@ -100,6 +101,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     {
         $definitions = self::getParameterDefinitions();
         $requestParams = $definitions['request'];
+        $responseParams = $definitions['response'] ?? [];
 
         $properties = [];
 
@@ -109,6 +111,14 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             // Transform description key: rest_param_* → rest_schema_*
             $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
             // Remove sanitization and validation-only properties
+            unset($properties[$field]['sanitize'], $properties[$field]['required']);
+        }
+
+        // Response-only fields (e.g. autoWhitelist) carry rest_schema_* descriptions
+        // already and have readOnly already set — keep them as documented in the GET
+        // response so generated SDK clients see every field the UI consumes.
+        foreach ($responseParams as $field => $definition) {
+            $properties[$field] = $definition;
             unset($properties[$field]['sanitize'], $properties[$field]['required']);
         }
 
@@ -194,6 +204,24 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'default' => 'balanced',
                 'sanitize' => 'string',
                 'example' => 'balanced'
+            ],
+            // ========== RESPONSE-ONLY FIELDS ==========
+            'autoWhitelist' => [
+                'type' => 'array',
+                'description' => 'rest_schema_f2b_auto_whitelist',
+                'readOnly' => true,
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'filter_id' => ['type' => 'string', 'example' => '42'],
+                        'ip' => ['type' => 'string', 'example' => '192.168.1.0/24'],
+                        'version' => ['type' => 'string', 'enum' => ['v4', 'v6'], 'example' => 'v4'],
+                        'description' => ['type' => 'string', 'example' => 'Office VPN'],
+                    ],
+                ],
+                'example' => [
+                    ['filter_id' => '42', 'ip' => '192.168.1.0/24', 'version' => 'v4', 'description' => 'Office VPN'],
+                ],
             ]
         ];
     }

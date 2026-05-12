@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Fail2Ban;
 
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\Fail2BanRules;
+use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
@@ -65,6 +66,7 @@ class GetSettingsAction extends Injectable
                 'bantime' => $rules->bantime,
                 'findtime' => $rules->findtime,
                 'whitelist' => $rules->whitelist,
+                'autoWhitelist' => self::getAutoWhitelist(),
                 PbxSettings::PBX_FIREWALL_MAX_REQ => $maxReqPerSec,
                 PbxSettings::PBX_SECURITY_MODE => $securityMode,
                 'extensionsCount' => (int)Extensions::count(),
@@ -77,5 +79,56 @@ class GetSettingsAction extends Injectable
         }
 
         return $res;
+    }
+
+    /**
+     * Collect addresses auto-trusted by firewall rules with newer_block_ip=1.
+     *
+     * The NetworkFilters.permit column is comma-separated and may carry both an
+     * IPv4 and an IPv6 CIDR for the same rule — each entry is emitted as its own
+     * row so the UI can present them as separate, individually-traceable items.
+     * Entries that would whitelist the whole world (0.0.0.0, 0.0.0.0/0, ::, ::/0)
+     * are dropped to match DockerNetworkFilterService::getNetworkFiltersWhitelist().
+     *
+     * @return array<int, array{filter_id:string, ip:string, version:string, description:string}>
+     */
+    private static function getAutoWhitelist(): array
+    {
+        $entries = [];
+        $blocked = ['0.0.0.0', '0.0.0.0/0', '::', '::/0'];
+        // Dedupe by (filter_id, ip) so two firewall rules permitting the same
+        // address render once per source rule rather than once per occurrence.
+        $seen = [];
+
+        $filters = NetworkFilters::find([
+            'conditions' => 'newer_block_ip = :newer_block:',
+            'bind' => ['newer_block' => '1'],
+        ]);
+
+        /** @var NetworkFilters[] $filters */
+        foreach ($filters as $filter) {
+            if (empty($filter->permit)) {
+                continue;
+            }
+            foreach (explode(',', $filter->permit) as $ip) {
+                $ip = trim($ip);
+                if ($ip === '' || in_array($ip, $blocked, true)) {
+                    continue;
+                }
+                $key = $filter->id . '|' . $ip;
+                if (isset($seen[$key])) {
+                    continue;
+                }
+                $seen[$key] = true;
+                $entries[] = [
+                    'filter_id' => (string)$filter->id,
+                    'ip' => $ip,
+                    'version' => str_contains($ip, ':') ? 'v6' : 'v4',
+                    'description' => (string)($filter->description ?? ''),
+                ];
+            }
+        }
+
+        return $entries;
     }
 }

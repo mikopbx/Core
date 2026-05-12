@@ -15,16 +15,38 @@
     </div>
 </div>
 
+<style>
+    #preset-info-panel .ui.segment {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    #preset-info-panel .preset-label { color: #888; }
+    #preset-info-panel .preset-value { font-size: 1.25em; font-weight: 700; }
+</style>
+
+<div class="ui segments" id="preset-info-panel" style="margin-top: 1.5em;">
+    <div class="ui segment">
+        <span class="preset-label">{{ t._('f2b_MaxRetry') }}</span>
+        <span class="preset-value" id="preset-maxretry-value">--</span>
+    </div>
+    <div class="ui segment">
+        <span class="preset-label">{{ t._('f2b_FindTime') }}</span>
+        <span class="preset-value" id="preset-findtime-value">--</span>
+    </div>
+    <div class="ui segment">
+        <span class="preset-label">{{ t._('f2b_BanTime') }}</span>
+        <span class="preset-value" id="preset-bantime-value">--</span>
+    </div>
+    <div class="ui segment">
+        <span class="preset-label">{{ t._('f2b_PBXFirewallMaxReqSec') }}</span>
+        <span class="preset-value" id="preset-maxreqsec-value">--</span>
+    </div>
+</div>
+
 {{ form.render('maxretry') }}
 {{ form.render('bantime') }}
 {{ form.render('findtime') }}
-
-<div class="field disability">
-    <label>{{ t._('f2b_WhiteList') }}
-        <i class="circle info icon field-info-icon" data-field="whitelist"></i>
-    </label>
-    <textarea name="whitelist" rows="2" cols="95"></textarea>
-</div>
 
 {{ form.render('PBXFirewallMaxReqSec') }}
 {{ form.render('PBXSecurityMode') }}
