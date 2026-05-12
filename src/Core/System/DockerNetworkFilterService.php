@@ -214,8 +214,13 @@ class DockerNetworkFilterService extends Injectable
                 $permitIps = explode(',', $filter->permit);
                 foreach ($permitIps as $ip) {
                     $ip = trim($ip);
-                    // Skip invalid whitelist entries like 0.0.0.0/0 which would whitelist everything
-                    if (!empty($ip) && !in_array($ip, $whitelist) && $ip !== '0.0.0.0/0' && $ip !== '0.0.0.0') {
+                    // Skip catch-all whitelist entries that would exempt the entire Internet
+                    // from Fail2Ban — both IPv4 (0.0.0.0, 0.0.0.0/0) and IPv6 (::, ::/0).
+                    if (!empty($ip)
+                        && !in_array($ip, $whitelist, true)
+                        && $ip !== '0.0.0.0/0' && $ip !== '0.0.0.0'
+                        && $ip !== '::/0' && $ip !== '::'
+                    ) {
                         $whitelist[] = $ip;
                     }
                 }
@@ -228,7 +233,11 @@ class DockerNetworkFilterService extends Injectable
             $fail2banWhitelist = explode(' ', $fail2banRule->whitelist);
             foreach ($fail2banWhitelist as $ip) {
                 $ip = trim($ip);
-                if (!empty($ip) && !in_array($ip, $whitelist) && $ip !== '0.0.0.0/0' && $ip !== '0.0.0.0') {
+                if (!empty($ip)
+                    && !in_array($ip, $whitelist, true)
+                    && $ip !== '0.0.0.0/0' && $ip !== '0.0.0.0'
+                    && $ip !== '::/0' && $ip !== '::'
+                ) {
                     $whitelist[] = $ip;
                 }
             }
