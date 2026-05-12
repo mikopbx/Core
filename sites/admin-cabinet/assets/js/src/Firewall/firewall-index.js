@@ -173,10 +173,14 @@ const firewallTable = {
         }
 
         // Backend already restricts clientIp to a public IPv4 literal — /32 is the only host mask.
+        // `trust=1` is the explicit marker that this is the "Allow my current IP" helper,
+        // so the modify form can default `newer_block_ip=true` only for this flow and not
+        // for generic prefill links (e.g. edit buttons for default rows).
         const ruleName = globalTranslate.fw_MyCurrentIpRuleName || 'My current IP';
         const url = `${globalRootUrl}firewall/modify/`
             + `?network=${encodeURIComponent(clientIp)}`
             + `&subnet=32`
+            + `&trust=1`
             + `&ruleName=${encodeURIComponent(ruleName)}`;
 
         return `
