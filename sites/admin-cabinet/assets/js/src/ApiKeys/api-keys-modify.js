@@ -190,11 +190,13 @@ const apiKeysModify = {
      * Initialize UI components
      */
     initializeUIComponents() {
-        // Initialize checkboxes
-        $('.ui.checkbox').checkbox();
+        // Initialize checkboxes within the form only (avoid clobbering global widgets)
+        $('#save-api-key-form .ui.checkbox').checkbox();
 
-        // Initialize dropdowns (network filter will be built by DynamicDropdownBuilder)
-        $('.ui.dropdown').dropdown();
+        // Initialize dropdowns within the form only — global selectors would re-init
+        // #language-selector in the top menu and drop its onChange handler.
+        // Network filter is built later by DynamicDropdownBuilder.
+        $('#save-api-key-form .ui.dropdown').dropdown();
 
         // Initialize full permissions toggle with PermissionsSelector integration
         $('#full-permissions-toggle').checkbox({
