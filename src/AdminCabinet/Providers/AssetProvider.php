@@ -899,6 +899,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/fail2ban-api.js', true)
                 ->addJs('js/pbx/FormElements/sound-file-selector.js', true)
                 ->addJs('js/pbx/Fail2Ban/fail2ban-tooltip-manager.js', true)
+                ->addJs('js/pbx/Fail2Ban/fail2ban-whitelist.js', true)
                 ->addJs('js/pbx/Fail2Ban/fail-to-ban-index.js', true);
         }
     }

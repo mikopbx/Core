@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalTranslate, PbxApi, Form, globalRootUrl, Datatable, SemanticLocalization, FirewallAPI, Fail2BanAPI, Fail2BanTooltipManager */
+/* global globalTranslate, PbxApi, Form, globalRootUrl, Datatable, SemanticLocalization, FirewallAPI, Fail2BanAPI, Fail2BanTooltipManager, fail2banWhitelist */
 /**
  * The `fail2BanIndex` object contains methods and variables for managing the Fail2Ban system.
  *
@@ -196,13 +196,24 @@ const fail2BanIndex = {
     },
 
     /**
-     * Update the info panel with preset values.
-     * @param {Object} preset - The preset object with maxretry, findtime, bantime.
+     * Update the info panel under the slider with the current preset's values.
+     * MaxReqSec shows ∞ when the rate limit is auto-disabled (>200 extensions —
+     * NAT scenario where the per-source limit is unsafe and we already drop it
+     * to 0 in cbAfterSelectSecurityPreset).
+     *
+     * @param {Object} preset - The preset object with maxretry, findtime, bantime, maxReqSec.
      */
     updatePresetInfoPanel(preset) {
         $('#preset-maxretry-value').text(preset.maxretry);
         $('#preset-findtime-value').text(fail2BanIndex.formatDuration(preset.findtime));
         $('#preset-bantime-value').text(fail2BanIndex.formatDuration(preset.bantime));
+
+        const maxReqSec = fail2BanIndex.extensionsCount > 200 ? 0 : preset.maxReqSec;
+        $('#preset-maxreqsec-value').text(
+            maxReqSec === 0
+                ? (globalTranslate.f2b_MaxReqSecUnlimited || '∞')
+                : maxReqSec
+        );
     },
 
     /**
@@ -440,26 +451,18 @@ const fail2BanIndex = {
     },
 
     /**
-     * Callback function to be called before the form is sent
+     * Callback function to be called before the form is sent.
+     * Whitelist is managed in its own tab via fail2ban-whitelist.js and is NOT
+     * part of this form — do not include it in the PATCH payload, otherwise we'd
+     * clobber edits made through the dedicated tab.
+     *
      * @param {Object} settings - The current settings of the form
      * @returns {Object} - The updated settings of the form
      */
     cbBeforeSendForm(settings) {
         const result = settings;
         result.data = fail2BanIndex.$formObj.form('get values');
-
-        // Normalize whitelist: split by any delimiter, keep only valid IPs/CIDRs
-        if (result.data.whitelist) {
-            const entries = result.data.whitelist.split(/[\s,;]+/).filter(entry => {
-                entry = entry.trim();
-                if (!entry) return false;
-                // Basic IPv4, IPv6, CIDR validation
-                return /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/.test(entry)
-                    || /^[0-9a-fA-F:]+(\/\d{1,3})?$/.test(entry);
-            });
-            result.data.whitelist = entries.join(' ');
-        }
-
+        delete result.data.whitelist;
         return result;
     },
 
@@ -479,12 +482,11 @@ const fail2BanIndex = {
         Fail2BanAPI.getSettings((response) => {
             if (response.result && response.data) {
                 const data = response.data;
-                // Set form values
+                // Set form values (whitelist is managed in its own tab — not part of this form).
                 fail2BanIndex.$formObj.form('set values', {
                     maxretry: data.maxretry,
                     bantime: data.bantime,
                     findtime: data.findtime,
-                    whitelist: data.whitelist,
                     PBXFirewallMaxReqSec: data.PBXFirewallMaxReqSec,
                 });
 

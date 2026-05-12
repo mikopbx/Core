@@ -1,5 +1,6 @@
 <div class="ui top attached tabular menu" id="fail2ban-tab-menu">
     <a class="item active" data-tab="settings">{{ t._('f2b_SettingsTabHeader')}}</a>
+    <a class="item" data-tab="whitelist">{{ t._('f2b_WhitelistTabHeader')}}</a>
     <a class="item" data-tab="banned">{{ t._('f2b_BannedIpTabHeader')}}</a>
     {{ partial("PbxExtensionModules/hookVoltBlock",
         ['arrayOfPartials':hookVoltBlock('TabularMenu')])
@@ -8,6 +9,9 @@
 
 <div class="ui bottom attached tab segment active" data-tab="settings">
     {{ partial("Fail2Ban/IndexTabs/tabSettings") }}
+</div>
+<div class="ui bottom attached tab segment" data-tab="whitelist">
+    {{ partial("Fail2Ban/IndexTabs/tabWhitelist") }}
 </div>
 <div class="ui bottom attached tab segment" data-tab="banned">
     {{ partial("Fail2Ban/IndexTabs/tabBanned") }}

@@ -48,8 +48,8 @@ class Fail2BanEditForm extends BaseForm
         $this->add(new Hidden('bantime'));
         $this->add(new Hidden('findtime'));
 
-        // Textarea for whitelist
-        $this->addTextArea('whitelist', '', 95);
+        // Whitelist is managed in a dedicated "Trusted addresses" tab (fail2ban-whitelist.js)
+        // — no form field here.
 
         // Checkbox for enabling/disabling Fail2Ban
         $this->addCheckBox(PbxSettings::PBX_FAIL2BAN_ENABLED, false);
