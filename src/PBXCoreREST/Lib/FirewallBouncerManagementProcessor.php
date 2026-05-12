@@ -65,7 +65,10 @@ class FirewallBouncerManagementProcessor extends Injectable
         }
 
         $res = match ($action) {
-            FirewallBouncerAction::EXPORT_DECISIONS => ExportDecisionsAction::main(),
+            FirewallBouncerAction::EXPORT_DECISIONS => ExportDecisionsAction::main(
+                $request['sessionContext'] ?? [],
+                $request['data'] ?? []
+            ),
             FirewallBouncerAction::EXPORT_WHITELIST => ExportWhitelistAction::main(),
         };
 
