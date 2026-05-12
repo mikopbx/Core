@@ -60,6 +60,11 @@ body {
     padding-bottom: 0;
 }
 
+/* Language dropdown: cap height to viewport so the list scrolls on short screens */
+#language-selector.scrolling.dropdown > .menu {
+    max-height: calc(100vh - 80px);
+}
+
 .prevent-word-wrap {
     white-space: nowrap;
 }

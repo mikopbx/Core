@@ -52,7 +52,6 @@ class LanguageProvider implements ServiceProviderInterface
      */
     public const array AVAILABLE_LANGUAGES = [
         'en' => ['name' => 'English', 'flag' => 'united kingdom', 'translationKey' => 'ex_English'],
-        'en_GB' => ['name' => 'English (UK)', 'flag' => 'united kingdom', 'translationKey' => 'ex_EnglishUK'],
         'ru' => ['name' => 'Русский', 'flag' => 'russia', 'translationKey' => 'ex_Russian'],
         'de' => ['name' => 'Deutsch', 'flag' => 'germany', 'translationKey' => 'ex_Deutsch'],
         'es' => ['name' => 'Español', 'flag' => 'spain', 'translationKey' => 'ex_Spanish'],
@@ -130,10 +129,21 @@ class LanguageProvider implements ServiceProviderInterface
         $processTitle = cli_get_process_title();
 
         if ($this->isApiOrModelEventProcess($processTitle) || $di->has(self::PREFERRED_LANG_WEB)) {
-            return PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
+            return $this->normalizeWebLanguage(PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE));
         }
 
         return PbxSettings::getValueByKey(PbxSettings::SSH_LANGUAGE);
+    }
+
+    /**
+     * Normalizes a web admin language code: returns it if known, falls back to 'en' otherwise.
+     *
+     * Guards against stale values stored in PbxSettings or JWT payloads after a language
+     * is removed from AVAILABLE_LANGUAGES (e.g. legacy 'en_GB').
+     */
+    private function normalizeWebLanguage(string $language): string
+    {
+        return array_key_exists($language, self::AVAILABLE_LANGUAGES) ? $language : 'en';
     }
 
     /**
@@ -182,7 +192,7 @@ class LanguageProvider implements ServiceProviderInterface
             if (method_exists($request, 'getJwtPayload')) {
                 $jwtPayload = $request->getJwtPayload();
                 if ($jwtPayload !== null && isset($jwtPayload['language']) && is_string($jwtPayload['language'])) {
-                    return $jwtPayload['language'];
+                    return $this->normalizeWebLanguage($jwtPayload['language']);
                 }
             }
 
@@ -194,6 +204,6 @@ class LanguageProvider implements ServiceProviderInterface
         }
 
         // Fall back to system settings
-        return PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
+        return $this->normalizeWebLanguage(PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE));
     }
 }

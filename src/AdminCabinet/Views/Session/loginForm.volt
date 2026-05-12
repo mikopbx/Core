@@ -8,7 +8,7 @@
 {{ form(['action' : '','method': 'post', 'class': 'ui large form segment', 'id' :'login-form']) }}
 <h6 class="ui center aligned header">
     {# Language dropdown - static list, no API calls on load #}
-    <div class="ui dropdown" id="language-selector">
+    <div class="ui scrolling dropdown" id="language-selector">
         <input type="hidden" name="WebAdminLanguage" value="{{ WebAdminLanguage }}">
         <div class="text">
             {% if availableLanguages[WebAdminLanguage] is defined %}

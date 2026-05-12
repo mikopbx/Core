@@ -27,7 +27,7 @@
                 class="icon conversation"></i> {{ t._("topMenu_Support") }}</a>
     {# Language dropdown - static list, no API calls on load #}
     <div class="item">
-        <div class="ui dropdown" id="language-selector">
+        <div class="ui scrolling dropdown" id="language-selector">
             <input type="hidden" name="WebAdminLanguage" value="{{ WebAdminLanguage }}">
             <div class="text">
                 {% if availableLanguages[WebAdminLanguage] is defined %}
