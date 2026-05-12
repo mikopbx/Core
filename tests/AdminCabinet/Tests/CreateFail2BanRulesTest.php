@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2026 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,27 +26,35 @@ use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
- * Class to test Fail2Ban security preset slider and whitelist settings.
+ * Browser tests for the Fail2Ban page: security preset slider, the metric
+ * panel under it, and the dedicated "Trusted addresses" tab.
  *
- * The Fail2Ban settings page uses a security preset slider (0-3)
- * that controls hidden fields: maxretry, findtime, bantime.
- * Presets: 0=Weak, 1=Normal, 2=Enhanced, 3=Paranoid.
+ * The Settings tab carries the slider (0–3 presets) and a panel rendering
+ * the current preset's maxretry / findtime / bantime / MaxReqSec values.
+ * Whitelist management lives on its own tab — the legacy textarea is gone,
+ * replaced by a single input that doubles as a live filter and bulk-add
+ * field, plus a DataTable with per-row delete buttons. Manual entries are
+ * committed through PATCH /fail2ban on every add/remove, so this test
+ * deliberately exercises the per-action HTTP round-trip rather than relying
+ * on the form's Save button for the whitelist part.
  */
 class CreateFail2BanRulesTest extends MikoPBXTestsBase
 {
     /**
-     * Slider initialization timeout in seconds
+     * Slider initialization timeout in seconds.
      */
     private const SLIDER_INIT_TIMEOUT = 5;
 
     /**
      * Security preset definitions matching fail-to-ban-index.js securityPresets.
+     * MaxReqSec is auto-disabled (0) when extensionsCount > 200; on a fresh
+     * test container we always hit the non-NAT branch shown here.
      */
     private const SECURITY_PRESETS = [
-        0 => ['maxretry' => '20', 'findtime' => '600', 'bantime' => '600'],       // Weak
-        1 => ['maxretry' => '10', 'findtime' => '3600', 'bantime' => '86400'],     // Normal
-        2 => ['maxretry' => '5',  'findtime' => '21600', 'bantime' => '604800'],   // Enhanced
-        3 => ['maxretry' => '3',  'findtime' => '86400', 'bantime' => '2592000'],  // Paranoid
+        0 => ['maxretry' => '20', 'findtime' => '600',   'bantime' => '600',     'maxReqSec' => '500'],
+        1 => ['maxretry' => '10', 'findtime' => '3600',  'bantime' => '86400',   'maxReqSec' => '300'],
+        2 => ['maxretry' => '5',  'findtime' => '21600', 'bantime' => '604800',  'maxReqSec' => '150'],
+        3 => ['maxretry' => '3',  'findtime' => '86400', 'bantime' => '2592000', 'maxReqSec' => '100'],
     ];
 
     /**
@@ -62,7 +70,8 @@ class CreateFail2BanRulesTest extends MikoPBXTestsBase
     }
 
     /**
-     * Test the Fail2Ban security preset slider and whitelist.
+     * Drive the slider, save settings, then exercise the new whitelist UX:
+     * bulk add, persistence across reload, single delete.
      *
      * @dataProvider additionProvider
      *
@@ -70,47 +79,36 @@ class CreateFail2BanRulesTest extends MikoPBXTestsBase
      */
     public function testRule(array $params): void
     {
-        $presetIndex = $params['presetIndex'];
-        $expectedValues = self::SECURITY_PRESETS[$presetIndex];
+        $presetIndex  = $params['presetIndex'];
+        $expected     = self::SECURITY_PRESETS[$presetIndex];
+        $whitelistIps = preg_split('/\s+/', trim($params['whitelist']), -1, PREG_SPLIT_NO_EMPTY);
 
-        // Navigate to the Fail2Ban settings page and wait for slider
+        // === Phase 1: drive the slider and verify the metric panel ===
         $this->navigateToFail2BanSettings();
 
-        // Set security preset slider via JavaScript
         self::annotate("Setting security preset slider to index {$presetIndex}");
         self::$driver->executeScript(
             "$('#SecurityPresetSlider').slider('set value', {$presetIndex});"
         );
-
-        // Wait for slider animation and onChange event to update hidden fields
         $this->waitForAjax();
         sleep(1);
 
-        // Verify hidden field values match the preset before saving
-        $this->assertHiddenFieldValue('maxretry', $expectedValues['maxretry']);
-        $this->assertHiddenFieldValue('findtime', $expectedValues['findtime']);
-        $this->assertHiddenFieldValue('bantime', $expectedValues['bantime']);
+        $this->assertHiddenFieldValue('maxretry', $expected['maxretry']);
+        $this->assertHiddenFieldValue('findtime', $expected['findtime']);
+        $this->assertHiddenFieldValue('bantime',  $expected['bantime']);
+        $this->assertPresetPanelMatches($expected);
 
-        // Set whitelist
-        $this->changeTextAreaValue('whitelist', '');
-        $this->changeTextAreaValue('whitelist', $params['whitelist']);
-
-        // Save the settings
+        // Save the slider state. Whitelist is intentionally NOT in this form
+        // anymore — its tab persists changes per-action via PATCH.
         $this->submitForm('fail2ban-settings-form');
 
-        // Reload page and verify saved values
+        // === Phase 2: reload, confirm preset stuck through the DB ===
         $this->navigateToFail2BanSettings();
-
-        // Verify hidden field values match the preset after reload
         self::annotate("Verifying preset values after save and reload");
-        $this->assertHiddenFieldValue('maxretry', $expectedValues['maxretry']);
-        $this->assertHiddenFieldValue('findtime', $expectedValues['findtime']);
-        $this->assertHiddenFieldValue('bantime', $expectedValues['bantime']);
+        $this->assertHiddenFieldValue('maxretry', $expected['maxretry']);
+        $this->assertHiddenFieldValue('findtime', $expected['findtime']);
+        $this->assertHiddenFieldValue('bantime',  $expected['bantime']);
 
-        // Verify whitelist
-        $this->assertTextAreaValueIsEqual('whitelist', $params['whitelist']);
-
-        // Verify slider position
         $sliderValue = self::$driver->executeScript(
             "return $('#SecurityPresetSlider').slider('get value');"
         );
@@ -120,7 +118,39 @@ class CreateFail2BanRulesTest extends MikoPBXTestsBase
             "Security preset slider should be at index {$presetIndex} after reload, but got {$sliderValue}"
         );
 
-        self::annotate("Fail2Ban preset slider test completed successfully");
+        // === Phase 3: switch tabs, start from an empty manual list ===
+        $this->switchToWhitelistTab();
+        $this->clearAllManualWhitelist();
+
+        // === Phase 4: bulk add every IP from the data provider in one go ===
+        $this->bulkAddWhitelist($params['whitelist']);
+
+        self::annotate("Verifying " . count($whitelistIps) . " whitelist entries are visible");
+        foreach ($whitelistIps as $ip) {
+            $this->assertWhitelistContains($ip);
+        }
+
+        // === Phase 5: reload, switch back, confirm persistence ===
+        $this->navigateToFail2BanSettings();
+        $this->switchToWhitelistTab();
+        self::annotate("Verifying whitelist persists after page reload");
+        foreach ($whitelistIps as $ip) {
+            $this->assertWhitelistContains($ip);
+        }
+
+        // === Phase 6: delete one entry, the rest must survive ===
+        $deletedIp = $whitelistIps[0];
+        self::annotate("Removing whitelist entry {$deletedIp}");
+        $this->deleteWhitelistEntry($deletedIp);
+        $this->assertWhitelistMissing($deletedIp);
+        foreach (array_slice($whitelistIps, 1) as $ip) {
+            $this->assertWhitelistContains($ip);
+        }
+
+        // === Phase 7: clean up so repeated runs don't accumulate state ===
+        $this->clearAllManualWhitelist();
+
+        self::annotate("Fail2Ban preset + whitelist test completed successfully");
     }
 
     /**
@@ -131,14 +161,12 @@ class CreateFail2BanRulesTest extends MikoPBXTestsBase
         self::annotate("Navigating to Fail2Ban settings page");
         $this->clickSidebarMenuItemByHref('/admin-cabinet/fail2-ban/index/');
 
-        // Wait for slider element to appear
         self::$driver->wait(10)->until(
             WebDriverExpectedCondition::presenceOfElementLocated(
                 WebDriverBy::id('SecurityPresetSlider')
             )
         );
 
-        // Wait for slider to be fully initialized by Fomantic UI
         $this->waitForSliderInitialization();
     }
 
@@ -149,18 +177,15 @@ class CreateFail2BanRulesTest extends MikoPBXTestsBase
     {
         self::annotate("Waiting for security preset slider initialization");
 
-        // Wait until slider has the .ui.slider class (Fomantic UI initialized)
         self::$driver->wait(self::SLIDER_INIT_TIMEOUT)->until(
             WebDriverExpectedCondition::presenceOfElementLocated(
                 WebDriverBy::cssSelector('#SecurityPresetSlider.ui.slider')
             )
         );
 
-        // Wait for API data to load and populate the slider
         $this->waitForAjax();
         sleep(1);
 
-        // Verify slider is functional
         $sliderValue = self::$driver->executeScript(
             "return $('#SecurityPresetSlider').slider('get value');"
         );
@@ -182,6 +207,215 @@ class CreateFail2BanRulesTest extends MikoPBXTestsBase
             $actualValue,
             "Hidden field '{$name}' should be '{$expectedValue}', but got '{$actualValue}'"
         );
+    }
+
+    /**
+     * Verify the metric panel under the slider reflects the selected preset.
+     * The numeric maxretry/maxReqSec cells are compared exactly; findtime and
+     * bantime go through JS formatDuration() (e.g. "1h"/"1d") so we just assert
+     * the cell is populated rather than parsing the localised duration.
+     */
+    protected function assertPresetPanelMatches(array $expected): void
+    {
+        self::annotate("Verifying preset info panel reflects current preset");
+
+        $maxRetryShown = trim(
+            self::$driver->findElement(WebDriverBy::id('preset-maxretry-value'))->getText()
+        );
+        self::assertSame(
+            $expected['maxretry'],
+            $maxRetryShown,
+            "preset-maxretry-value should be '{$expected['maxretry']}'"
+        );
+
+        foreach (['preset-findtime-value', 'preset-bantime-value', 'preset-maxreqsec-value'] as $id) {
+            $text = trim(self::$driver->findElement(WebDriverBy::id($id))->getText());
+            self::assertNotSame('--', $text, "Panel cell #{$id} should be populated, got '--'");
+            self::assertNotSame('', $text, "Panel cell #{$id} should be populated, got empty string");
+        }
+    }
+
+    /**
+     * Click the "Trusted addresses" tab and wait for its DataTable to render.
+     * Pagination is then disabled (page.len(-1)) so every row — including
+     * read-only auto-trusted rows coming from firewall rules with
+     * "Never block" — lives in <tbody> at once. Every downstream assertion
+     * walks the rendered DOM, so without this the test would flake on any
+     * environment that already has a single auto-trusted firewall rule
+     * (auto rows push seeded manual IPs onto page 2 and the XPath misses
+     * them).
+     */
+    protected function switchToWhitelistTab(): void
+    {
+        self::annotate("Switching to 'Trusted addresses' tab");
+
+        $tab = self::$driver->findElement(
+            WebDriverBy::cssSelector('#fail2ban-tab-menu .item[data-tab="whitelist"]')
+        );
+        $this->scrollIntoView($tab);
+        $tab->click();
+
+        self::$driver->wait(10)->until(
+            WebDriverExpectedCondition::visibilityOfElementLocated(
+                WebDriverBy::id('whitelist-table')
+            )
+        );
+
+        $this->waitForAjax();
+        // Give the DataTable redraw a beat after the API call populates rows.
+        sleep(1);
+
+        // Disable DataTable pagination for the test session — see method docblock.
+        self::$driver->executeScript(
+            "if (window.jQuery && jQuery.fn.DataTable"
+            . " && jQuery.fn.DataTable.isDataTable('#whitelist-table')) {"
+            . "  jQuery('#whitelist-table').DataTable().page.len(-1).draw();"
+            . "}"
+        );
+        sleep(1);
+    }
+
+    /**
+     * Iterate over every visible trash button on the whitelist tab and click
+     * them one by one. Auto-trusted rows (from firewall rules with
+     * "Never block") render a disabled lock button so they are skipped via
+     * the :not(.disabled) selector.
+     */
+    protected function clearAllManualWhitelist(): void
+    {
+        self::annotate("Clearing existing manual whitelist entries");
+
+        // Guard against runaway loops if something on the page breaks.
+        $maxIterations = 200;
+        $iteration     = 0;
+
+        while ($iteration++ < $maxIterations) {
+            $buttons = self::$driver->findElements(
+                WebDriverBy::cssSelector('button.whitelist-delete-btn:not(.disabled)')
+            );
+            if (empty($buttons)) {
+                return;
+            }
+
+            $first = $buttons[0];
+            $ip    = (string)$first->getAttribute('data-ip');
+            $this->scrollIntoView($first);
+            $first->click();
+
+            $this->waitForAjax();
+            self::$driver->wait(10)->until(function () use ($ip) {
+                $rows = self::$driver->findElements(
+                    WebDriverBy::cssSelector("button.whitelist-delete-btn[data-ip='{$ip}']")
+                );
+                return count($rows) === 0;
+            });
+        }
+
+        self::fail("clearAllManualWhitelist exceeded {$maxIterations} iterations");
+    }
+
+    /**
+     * Paste the whole address list into the single input and press Add — the
+     * JS bulk parser splits by whitespace/comma/semicolon, validates, dedupes
+     * and commits the new IPs in one PATCH /fail2ban round trip.
+     */
+    protected function bulkAddWhitelist(string $spaceSeparated): void
+    {
+        self::annotate("Bulk-adding whitelist entries");
+
+        $input = self::$driver->findElement(WebDriverBy::id('whitelist-input'));
+        $input->clear();
+        $input->sendKeys($spaceSeparated);
+
+        $addBtn = self::$driver->findElement(WebDriverBy::id('whitelist-add-btn'));
+        $addBtn->click();
+
+        $this->waitForAjax();
+        // The success branch of commit() empties the input — wait for that
+        // signal rather than racing the DataTable redraw blind.
+        self::$driver->wait(15)->until(function () {
+            $val = self::$driver
+                ->findElement(WebDriverBy::id('whitelist-input'))
+                ->getAttribute('value');
+            return $val === '' || $val === null;
+        });
+        sleep(1);
+    }
+
+    /**
+     * Look for a whitelist row whose visible text contains the IP literal.
+     * pageLength=15 in the DataTable matches the size of the seed list, so
+     * pagination should not hide expected rows during the test.
+     */
+    protected function assertWhitelistContains(string $ip): void
+    {
+        $rows = self::$driver->findElements(
+            WebDriverBy::xpath(
+                "//table[@id='whitelist-table']/tbody/tr[contains(., " . $this->xpathLiteral($ip) . ")]"
+            )
+        );
+        self::assertNotEmpty(
+            $rows,
+            "Expected whitelist row for IP '{$ip}', but none was found"
+        );
+    }
+
+    /**
+     * Negative-form assertion: the IP must not appear in any rendered row.
+     */
+    protected function assertWhitelistMissing(string $ip): void
+    {
+        $rows = self::$driver->findElements(
+            WebDriverBy::xpath(
+                "//table[@id='whitelist-table']/tbody/tr[contains(., " . $this->xpathLiteral($ip) . ")]"
+            )
+        );
+        self::assertEmpty(
+            $rows,
+            "Whitelist row for IP '{$ip}' should be gone, but was still present"
+        );
+    }
+
+    /**
+     * Click the trash button for a given IP. data-ip carries the normalised
+     * value; for plain IPv4 host addresses the literal input equals the
+     * normalised form.
+     */
+    protected function deleteWhitelistEntry(string $ip): void
+    {
+        $button = self::$driver->findElement(
+            WebDriverBy::cssSelector("button.whitelist-delete-btn[data-ip='{$ip}']")
+        );
+        $this->scrollIntoView($button);
+        $button->click();
+
+        $this->waitForAjax();
+        self::$driver->wait(10)->until(function () use ($ip) {
+            $rows = self::$driver->findElements(
+                WebDriverBy::xpath(
+                    "//table[@id='whitelist-table']/tbody/tr[contains(., " . $this->xpathLiteral($ip) . ")]"
+                )
+            );
+            return count($rows) === 0;
+        });
+    }
+
+    /**
+     * Escape an arbitrary string for embedding in an XPath 1.0 literal.
+     * XPath 1.0 has no escape sequences, so values containing both ' and "
+     * must use concat() — uncommon for IPv4 but keeps the helper safe for
+     * future IPv6/CIDR inputs.
+     */
+    private function xpathLiteral(string $value): string
+    {
+        if (!str_contains($value, "'")) {
+            return "'{$value}'";
+        }
+        if (!str_contains($value, '"')) {
+            return "\"{$value}\"";
+        }
+        $parts = explode("'", $value);
+        return "concat('" . implode("',\"'\",'", $parts) . "')";
     }
 
     /**
