@@ -6,8 +6,6 @@ return [
     // AK
     'ak_AddNewApiKey' => 'Lägg till API-nyckel',
     'ak_AddNewKey' => 'Lägg till API-nyckel',
-    'ak_CreateBouncerToken' => 'Bouncer-token',
-    'ak_CreateBouncerTokenHint' => 'Fyll i en API-nyckel begränsad till firewall-bouncer-exportens endpoint — för användning med cs-firewall-bouncer och andra CrowdSec-kompatibla bouncers.',
     'ak_BouncerPresetDescription' => 'Extern firewall bouncer (CrowdSec-kompatibel)',
     'ak_BouncerSnippetModalTitle' => 'cs-firewall-bouncer konfiguration',
     'ak_BouncerSnippetModalHint' => 'Kopiera detta utdrag till /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml på värden där bouncer körs. API-nyckeln visas bara en gång — spara den i din lösenordshanterare innan du stänger den här dialogen.',
@@ -115,6 +113,7 @@ return [
     'ak_NoFilter' => 'Inget filter',
     'ak_RegenerateApiKey' => 'Generera ny nyckel',
     'ak_Restricted' => 'Begränsad',
+    'ak_SelectNetworkFilter' => 'Välj nätverksfilter',
     'ak_ShowHideApiKey' => 'Visa/dölj API-nyckel',
     'ak_StatusDisabled' => 'Inaktiverad',
     'ak_StatusEnabled' => 'Aktiv',

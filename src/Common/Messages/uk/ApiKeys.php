@@ -6,8 +6,6 @@ return [
     // AK
     'ak_AddNewApiKey' => 'Додати API ключ',
     'ak_AddNewKey' => 'Додати API ключ',
-    'ak_CreateBouncerToken' => 'Токен для bouncer',
-    'ak_CreateBouncerTokenHint' => 'Попередньо заповнити API ключ, обмежений endpoint-ом експорту firewall-bouncer — для використання з cs-firewall-bouncer та іншими CrowdSec-сумісними bouncer-ами.',
     'ak_BouncerPresetDescription' => 'Зовнішній firewall bouncer (CrowdSec-сумісний)',
     'ak_BouncerSnippetModalTitle' => 'Конфігурація cs-firewall-bouncer',
     'ak_BouncerSnippetModalHint' => 'Скопіюйте цей фрагмент у /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml на хості, де запущений bouncer. API ключ показується лише один раз — збережіть його в менеджері паролів перед закриттям цього діалогу.',
@@ -115,6 +113,7 @@ return [
     'ak_NoFilter' => 'Без фільтра',
     'ak_RegenerateApiKey' => 'Згенерувати новий ключ',
     'ak_Restricted' => 'Обмежений',
+    'ak_SelectNetworkFilter' => 'Оберіть мережевий фільтр',
     'ak_ShowHideApiKey' => 'Показати/приховати API ключ',
     'ak_StatusDisabled' => 'Вимкнено',
     'ak_StatusEnabled' => 'Активний',

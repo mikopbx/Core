@@ -6,8 +6,6 @@ return [
     // AK
     'ak_AddNewApiKey' => 'Ajouter une clé API',
     'ak_AddNewKey' => 'Ajouter une clé API',
-    'ak_CreateBouncerToken' => 'Token bouncer',
-    'ak_CreateBouncerTokenHint' => 'Pré-remplir une clé API limitée au point de terminaison d\'exportation firewall-bouncer — pour une utilisation avec cs-firewall-bouncer et d\'autres bouncers compatibles CrowdSec.',
     'ak_BouncerPresetDescription' => 'Firewall bouncer externe (compatible CrowdSec)',
     'ak_BouncerSnippetModalTitle' => 'Configuration de cs-firewall-bouncer',
     'ak_BouncerSnippetModalHint' => 'Copiez ce fragment dans /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml sur l\'hôte où le bouncer s\'exécute. La clé API n\'est affichée qu\'une seule fois — enregistrez-la dans votre gestionnaire de mots de passe avant de fermer cette boîte de dialogue.',
@@ -115,6 +113,7 @@ return [
     'ak_NoFilter' => 'Aucun filtre',
     'ak_RegenerateApiKey' => 'Générer une nouvelle clé',
     'ak_Restricted' => 'Restreint',
+    'ak_SelectNetworkFilter' => 'Sélectionner le filtre réseau',
     'ak_ShowHideApiKey' => 'Afficher/masquer la clé API',
     'ak_StatusDisabled' => 'Désactivé',
     'ak_StatusEnabled' => 'Actif',

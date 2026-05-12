@@ -1123,11 +1123,19 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/api-keys-api.js', true)
                 ->addJs('js/pbx/ApiKeys/api-keys-index.js', true);
         } elseif ($action === 'modify') {
-            // Add modal and DataTable CSS
+            // Modal CSS/JS power the "bouncer config snippet" popup shown
+            // after creating an ApiKey via the `?preset=bouncer` flow
+            // (api-keys-modify.js::showBouncerConfigModal). Without
+            // Fomantic's modal plugin loaded, `$modal.modal('show')`
+            // throws "is not a function" and the snippet HTML leaks into
+            // the page body. DataTable CSS/JS power the optional
+            // network-filters picker.
             $this->semanticCollectionCSS
+                ->addCss('css/vendor/semantic/modal.min.css', true)
                 ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/clipboard/clipboard.js', true)
+                ->addJs('js/vendor/semantic/modal.min.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.min.js', true)
                 ->addJs('js/pbx/PbxAPI/api-keys-api.js', true)
                 ->addJs('js/pbx/PbxAPI/openapi-api.js', true)

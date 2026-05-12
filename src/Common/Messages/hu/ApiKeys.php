@@ -6,8 +6,6 @@ return [
     // AK
     'ak_AddNewApiKey' => 'API kulcs hozzáadása',
     'ak_AddNewKey' => 'API kulcs hozzáadása',
-    'ak_CreateBouncerToken' => 'Bouncer token',
-    'ak_CreateBouncerTokenHint' => 'API kulcs előre kitöltése, amely a firewall-bouncer export végpontra van korlátozva — cs-firewall-bouncer és más CrowdSec-kompatibilis bouncerekhez való használatra.',
     'ak_BouncerPresetDescription' => 'Külső firewall bouncer (CrowdSec-kompatibilis)',
     'ak_BouncerSnippetModalTitle' => 'cs-firewall-bouncer konfiguráció',
     'ak_BouncerSnippetModalHint' => 'Másolja be ezt a részletet a /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml fájlba azon a hoston, ahol a bouncer fut. Az API kulcs csak egyszer jelenik meg — mentse el a jelszókezelőjébe, mielőtt bezárja ezt a párbeszédablakot.',
@@ -115,6 +113,7 @@ return [
     'ak_NoFilter' => 'Szűrő nélkül',
     'ak_RegenerateApiKey' => 'Új kulcs generálása',
     'ak_Restricted' => 'Korlátozott',
+    'ak_SelectNetworkFilter' => 'Válasszon hálózati szűrőt',
     'ak_ShowHideApiKey' => 'API kulcs megjelenítése/elrejtése',
     'ak_StatusDisabled' => 'Letiltva',
     'ak_StatusEnabled' => 'Aktív',

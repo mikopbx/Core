@@ -6,8 +6,6 @@ return [
     // AK
     'ak_AddNewApiKey' => 'API açarı əlavə et',
     'ak_AddNewKey' => 'API açarı əlavə et',
-    'ak_CreateBouncerToken' => 'Bouncer tokeni',
-    'ak_CreateBouncerTokenHint' => 'Firewall-bouncer ixrac endpoint-i ilə məhdudlaşdırılmış API açarını əvvəlcədən doldurun — cs-firewall-bouncer və digər CrowdSec uyğun bouncer-lər ilə istifadə üçün.',
     'ak_BouncerPresetDescription' => 'Xarici firewall bouncer (CrowdSec uyğun)',
     'ak_BouncerSnippetModalTitle' => 'cs-firewall-bouncer konfiqurasiyası',
     'ak_BouncerSnippetModalHint' => 'Bu fraqmenti bouncer-in işlədildiyi host-da /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml faylına kopyalayın. API açarı yalnız bir dəfə göstərilir — bu dialoqu bağlamadan əvvəl onu şifrə menecerinizdə saxlayın.',
@@ -115,6 +113,7 @@ return [
     'ak_NoFilter' => 'Filtrsiz',
     'ak_RegenerateApiKey' => 'Yeni açar yarat',
     'ak_Restricted' => 'Məhdudlaşdırılmış',
+    'ak_SelectNetworkFilter' => 'Şəbəkə filtrini seçin',
     'ak_ShowHideApiKey' => 'API açarını göstər/gizlət',
     'ak_StatusDisabled' => 'Deaktiv',
     'ak_StatusEnabled' => 'Aktiv',

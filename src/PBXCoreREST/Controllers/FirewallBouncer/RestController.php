@@ -122,11 +122,18 @@ class RestController extends BaseController
      * Returns the raw LAPI snapshot at the top level (NOT wrapped in
      * `{result, data, ...}`), so stock cs-firewall-bouncer and the rest of
      * the CrowdSec ecosystem can parse the response with no custom adapter.
-     * MVP returns the full snapshot in `new` on every poll, with `deleted`
-     * always empty — bouncers reapply idempotently.
      *
-     * The `?startup=true` query parameter that bouncers send on the first
-     * call is accepted but has no effect: we always emit a full snapshot.
+     * `new[]` carries the full active snapshot (bouncers refresh entry
+     * timeouts on every poll). `deleted[]` is computed per-bouncer as
+     * the diff between the previous snapshot and the current one,
+     * keyed by the authenticated ApiKey id, so bouncers remove
+     * unbanned entries from their local ipset / nftables within one
+     * poll cycle instead of waiting for natural TTL decay.
+     *
+     * The `?startup=true` query parameter that bouncers send on the
+     * first call after restart resets the per-bouncer cursor —
+     * `deleted[]` is empty on that response so the bouncer can do a
+     * clean re-sync without phantom evictions.
      *
      * @route GET /pbxcore/api/v3/firewall-bouncer/v1/decisions/stream
      */
@@ -176,10 +183,20 @@ class RestController extends BaseController
     #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     public function exportDecisions(): void
     {
+        // Forward only the CrowdSec query param the action actually
+        // consumes (`startup` — resets the per-bouncer cursor).
+        // `scopes` / `origins` are part of the LAPI contract but
+        // semantically a no-op for MikoPBX (we never filter by them
+        // server-side); keep them out of the worker payload so an
+        // authenticated client cannot pad the queue message with
+        // arbitrary-length unused strings.
+        $payload = [
+            'startup' => (string)$this->request->getQuery('startup', null, ''),
+        ];
         $this->sendRequestToBackendWorker(
             $this->processorClass,
             'exportDecisions',
-            []
+            $payload
         );
     }
 

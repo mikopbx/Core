@@ -102,6 +102,20 @@ update_frequency: 10s
 mode: iptables
 log_mode: stdout
 log_level: info
+
+# КРИТИЧНО для Docker-развёртываний: правило ОБЯЗАНО быть в цепочке
+# DOCKER-USER, иначе трафик, который Docker пробрасывает в контейнер,
+# обходит INPUT/FORWARD полностью, и бан в iptables есть, а атакующий
+# проходит как ни в чём не бывало.
+iptables_chains:
+  - INPUT
+  - FORWARD
+  - DOCKER-USER
+
+# Отключите IPv6, если Docker без IPv6-bridge'а. На хостах без Docker
+# IPv6 в ip6tables нет цепочки DOCKER-USER, и bouncer падает с
+# fatal-ошибкой при запуске.
+disable_ipv6: true
 ```
 
 > 📌 `api_url` — это **базовый URL**. cs-firewall-bouncer сам дописывает
@@ -111,6 +125,13 @@ log_level: info
 
 > ⚠️ Если ваш MikoPBX слушает HTTPS с self-signed сертификатом, добавьте
 > `insecure_skip_verify: true` или установите CA-сертификат на хост.
+
+> 🚨 `iptables_chains: [INPUT, FORWARD, DOCKER-USER]` — это **не**
+> дефолт CrowdSec (по умолчанию там только `INPUT`). Без `DOCKER-USER`
+> трафик, который Docker маршрутизирует в контейнер, идёт через
+> цепочку `DOCKER` и не доходит до DROP-правила bouncer'а — бан виден
+> в iptables, но в реальности не работает. Это самая частая ловушка
+> при подключении CrowdSec к Docker-развёрнутой АТС.
 
 ```bash
 sudo systemctl restart crowdsec-firewall-bouncer.service
@@ -125,6 +146,95 @@ sudo systemctl status crowdsec-firewall-bouncer.service
 * Заблокируйте тестовый IP вручную через раздел **Файрвол → Сети** или
   спровоцируйте fail2ban-блокировку и убедитесь, что строка появилась в
   iptables хоста в течение 30 секунд.
+
+## Замечания по production-развёртыванию
+
+### Защита SSH (и других админ-портов) от bouncer'а
+
+Bouncer'ы CrowdSec блокируют **на уровне IP, а не протокола** — одна
+запись в ipset дропает все TCP- и UDP-пакеты с забаненного адреса. В
+том числе порт 22. Если IP оператора по ошибке попадёт в бан-лист
+(скажем, fail2ban зафиксировал три неудачных `auth:login` с NAT-IP
+офиса), то SSH тоже отрежется, и админ запрётся снаружи хоста.
+
+Вставьте высокоприоритетный ACCEPT для админ-порта **до** DROP-правила
+bouncer'а, чтобы административный доступ оставался жив даже если IP
+самого оператора попадёт в бан:
+
+```bash
+# Always-accept SSH (port 22) — переживает любые изменения bouncer'а
+sudo iptables -I INPUT 1 -p tcp --dport 22 -j ACCEPT \
+  -m comment --comment "admin-protect"
+
+# Сохранить между ребутами (Debian / Ubuntu)
+sudo apt-get install -y iptables-persistent
+sudo netfilter-persistent save
+```
+
+Повторите для любых других портов, через которые вы администрируете
+машину (Wireguard, serial-консоль провайдера и т.д.) — для всего, что
+**не должно** падать под bouncer'а.
+
+### Опционально: safety-net на systemd-timer
+
+Для инсталляций, где потеря доступа к хосту дорого стоит, добавьте
+systemd-timer, периодически чистящий ipset bouncer'а. Bouncer
+перезальёт текущие баны на следующем poll'е, так что это безопасный
+safety-net с ограниченным blast radius, а не отключение функции:
+
+```ini
+# /etc/systemd/system/crowdsec-safety-flush.service
+[Unit]
+Description=Safety net - flush crowdsec ipset to prevent lockout
+After=crowdsec-firewall-bouncer.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/ipset flush crowdsec-blacklists
+```
+
+```ini
+# /etc/systemd/system/crowdsec-safety-flush.timer
+[Unit]
+Description=Run crowdsec ipset flush every 30 minutes
+
+[Timer]
+OnBootSec=30min
+OnUnitActiveSec=30min
+Unit=crowdsec-safety-flush.service
+
+[Install]
+WantedBy=timers.target
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now crowdsec-safety-flush.timer
+```
+
+30 минут — разумный дефолт: короче, чем время остывания кофе
+оператора, если он случайно себя забанит, и длинее, чем нужно
+реальной атаке, чтобы заметно ущербнуть.
+
+### Bouncer-баны покрывают все протоколы — by design
+
+CrowdSec мапит решения в один ipset на IP-семейство. Правила iptables
+дропают **весь** трафик с перечисленных IP, независимо от протокола
+и порта. Бан `mikopbx/http` (HTTP-брутфорс) автоматически отрезает
+тому же IP и SIP / IAX / AMI / SSH — и наоборот: бан `mikopbx/sip`
+(fail2ban-jail Asterisk) тоже дропнет HTTP и AMI от того же IP.
+MikoPBX отдаёт в bouncer-стрим **все четыре категории** банов (`sip`,
+`http`, `ami`, `iax`) одинаково, так что после подключения bouncer'а
+любая блокировка становится IP-wide.
+
+Для большинства инсталляций это правильное поведение — если IP
+агрессивен к HTTP, в SIP его пускать тоже незачем, и наоборот. Но
+если нужно **по-протокольное** разделение (например, блокировать
+HTTP-брутфорсеров, не трогая их SIP), bouncer для этой АТС поднимать
+**не нужно**. Существующий путь защиты SIP внутри Docker'а
+(`fail2ban` → Redis → pjsip ACL внутри Asterisk) изолирует SIP-баны
+именно потому, что они не уходят в host ipset — а bouncer ровно это
+поведение и меняет.
 
 ## Формат ответа эндпоинта
 
@@ -150,10 +260,19 @@ MikoPBX:
 }
 ```
 
-В MVP-варианте на каждый poll возвращается **полный** список текущих
-блокировок в массиве `new`, а массив `deleted` пуст. Bouncer применяет
-решения идемпотентно — повторная отправка одного и того же IP не вызывает
-ошибки.
+Массив `new[]` всегда содержит полный снимок текущих банов — bouncer
+обновляет таймауты своих ipset/nftables-записей до значения `duration`
+на каждом poll'е, поэтому активный бан живёт ровно столько, сколько
+указал источник. Массив `deleted[]` считается per-token (MikoPBX хранит
+прошлый снимок по id'у ApiKey) и содержит решения, которые исчезли с
+предыдущего опроса. Снятие бана оператором доходит до ipset bouncer'а
+за один poll-цикл (≈ 5–10 секунд), а не ждёт естественного истечения
+TTL.
+
+`?startup=true` на первом poll'е после рестарта bouncer'а сбрасывает
+per-token cursor и возвращает `deleted: []` — свежезапущенный bouncer
+не получит фантомных удалений для состояния, которое он никогда не
+отслеживал.
 
 Оба варианта заголовков аутентифицируют один и тот же токен:
 

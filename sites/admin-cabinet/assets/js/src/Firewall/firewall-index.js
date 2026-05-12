@@ -123,16 +123,18 @@ const firewallTable = {
     buildSettingsSection(data) {
         let html = '<div class="ui basic segment" id="firewall-settings">';
 
-        // Docker notice if applicable
-        if (data.isDocker) {
-            html += firewallTable.buildDockerNotice();
-        }
-
         // Bouncer banner: only when we know the local firewall path is blind
         // (Docker bridge AND remote_addr is hidden behind docker0 gateway).
         // Surfaces the external-bouncer workflow as a CTA so junior admins do not
         // need to find the documentation page on their own.
-        if (data.dockerNetworkMode === 'bridge' && data.clientIpVisible === false) {
+        const showBouncerBanner = data.dockerNetworkMode === 'bridge' && data.clientIpVisible === false;
+
+        // Generic Docker notice is redundant when the more actionable bouncer banner is rendered.
+        if (data.isDocker && !showBouncerBanner) {
+            html += firewallTable.buildDockerNotice();
+        }
+
+        if (showBouncerBanner) {
             html += firewallTable.buildBouncerBanner();
         }
 
