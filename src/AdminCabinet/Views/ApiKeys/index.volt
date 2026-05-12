@@ -2,7 +2,6 @@
     {% if isAllowed('save') %}
         <div class="ui buttons">
             {{ link_to("api-keys/modify", '<i class="add circle icon"></i> '~t._('ak_AddNewApiKey'), "class": "ui blue button") }}
-            {{ link_to("api-keys/modify?preset=bouncer", '<i class="shield alternate icon"></i> '~t._('ak_CreateBouncerToken'), "class": "ui basic orange button", "id": "create-bouncer-token-button", "title": t._('ak_CreateBouncerTokenHint')) }}
             {{ link_to("api-keys/openapi", '<i class="code icon"></i> '~t._('ak_ApiDocumentation'), "class": "ui basic blue button") }}
         </div>
     {% endif %}

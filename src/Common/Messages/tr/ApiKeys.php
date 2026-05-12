@@ -6,8 +6,6 @@ return [
     // AK
     'ak_AddNewApiKey' => 'API anahtarı ekle',
     'ak_AddNewKey' => 'API anahtarı ekle',
-    'ak_CreateBouncerToken' => 'Bouncer token\'ı',
-    'ak_CreateBouncerTokenHint' => 'Firewall-bouncer dışa aktarma endpoint\'iyle sınırlı bir API anahtarını önceden doldurun — cs-firewall-bouncer ve diğer CrowdSec uyumlu bouncerlarla kullanım için.',
     'ak_BouncerPresetDescription' => 'Harici firewall bouncer (CrowdSec uyumlu)',
     'ak_BouncerSnippetModalTitle' => 'cs-firewall-bouncer yapılandırması',
     'ak_BouncerSnippetModalHint' => 'Bu parçacığı bouncer\'ın çalıştığı host\'taki /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml dosyasına kopyalayın. API anahtarı yalnızca bir kez gösterilir — bu iletişim kutusunu kapatmadan önce şifre yöneticinize kaydedin.',

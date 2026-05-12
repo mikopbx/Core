@@ -6,8 +6,6 @@ return [
     // AK
     'ak_AddNewApiKey' => 'Lisää API avain',
     'ak_AddNewKey' => 'Lisää API avain',
-    'ak_CreateBouncerToken' => 'Bouncer-token',
-    'ak_CreateBouncerTokenHint' => 'Esitäytä API-avain, joka on rajoitettu firewall-bouncerin vientipäätepisteeseen — käytettäväksi cs-firewall-bouncerin ja muiden CrowdSec-yhteensopivien bouncereiden kanssa.',
     'ak_BouncerPresetDescription' => 'Ulkoinen firewall bouncer (CrowdSec-yhteensopiva)',
     'ak_BouncerSnippetModalTitle' => 'cs-firewall-bouncer-konfiguraatio',
     'ak_BouncerSnippetModalHint' => 'Kopioi tämä pätkä /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml-tiedostoon sillä isännällä, jolla bouncer toimii. API-avain näytetään vain kerran — tallenna se salasananhallintaasi ennen tämän dialogin sulkemista.',

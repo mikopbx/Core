@@ -6,8 +6,6 @@ return [
     // AK
     'ak_AddNewApiKey' => 'API გასაღების დამატება',
     'ak_AddNewKey' => 'API გასაღების დამატება',
-    'ak_CreateBouncerToken' => 'Bouncer-ის ტოკენი',
-    'ak_CreateBouncerTokenHint' => 'წინასწარ შეავსეთ API გასაღები, რომელიც შეზღუდულია firewall-bouncer-ის ექსპორტის endpoint-ით — cs-firewall-bouncer-თან და სხვა CrowdSec-თავსებად bouncer-ებთან გამოსაყენებლად.',
     'ak_BouncerPresetDescription' => 'გარე firewall bouncer (CrowdSec-თავსებადი)',
     'ak_BouncerSnippetModalTitle' => 'cs-firewall-bouncer-ის კონფიგურაცია',
     'ak_BouncerSnippetModalHint' => 'დააკოპირეთ ეს ფრაგმენტი /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml-ში იმ ჰოსტზე, სადაც bouncer მუშაობს. API გასაღები მხოლოდ ერთხელ ჩანს — შეინახეთ პაროლის მენეჯერში ამ დიალოგის დახურვამდე.',

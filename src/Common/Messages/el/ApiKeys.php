@@ -6,8 +6,6 @@ return [
     // AK
     'ak_AddNewApiKey' => 'Προσθήκη API κλειδιού',
     'ak_AddNewKey' => 'Προσθήκη API κλειδιού',
-    'ak_CreateBouncerToken' => 'Token bouncer',
-    'ak_CreateBouncerTokenHint' => 'Προσυμπλήρωση API κλειδιού περιορισμένου στο endpoint εξαγωγής firewall-bouncer — για χρήση με cs-firewall-bouncer και άλλα CrowdSec-συμβατά bouncers.',
     'ak_BouncerPresetDescription' => 'Εξωτερικό firewall bouncer (συμβατό με CrowdSec)',
     'ak_BouncerSnippetModalTitle' => 'Διαμόρφωση cs-firewall-bouncer',
     'ak_BouncerSnippetModalHint' => 'Αντιγράψτε αυτό το απόσπασμα στο /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml στον κεντρικό υπολογιστή όπου εκτελείται το bouncer. Το API κλειδί εμφανίζεται μόνο μία φορά — αποθηκεύστε το στη διαχείριση κωδικών πρόσβασης πριν κλείσετε αυτόν τον διάλογο.',

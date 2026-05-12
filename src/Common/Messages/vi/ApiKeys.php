@@ -6,8 +6,6 @@ return [
     // AK
     'ak_AddNewApiKey' => 'Thêm khóa API',
     'ak_AddNewKey' => 'Thêm khóa API',
-    'ak_CreateBouncerToken' => 'Token cho bouncer',
-    'ak_CreateBouncerTokenHint' => 'Điền trước khóa API bị giới hạn ở endpoint xuất firewall-bouncer — để sử dụng với cs-firewall-bouncer và các bouncer tương thích CrowdSec khác.',
     'ak_BouncerPresetDescription' => 'Firewall bouncer bên ngoài (tương thích CrowdSec)',
     'ak_BouncerSnippetModalTitle' => 'Cấu hình cs-firewall-bouncer',
     'ak_BouncerSnippetModalHint' => 'Sao chép đoạn này vào /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml trên máy chủ nơi bouncer đang chạy. Khóa API chỉ được hiển thị một lần — lưu nó vào trình quản lý mật khẩu trước khi đóng hộp thoại này.',

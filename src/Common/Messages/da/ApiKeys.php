@@ -6,8 +6,6 @@ return [
     // AK
     'ak_AddNewApiKey' => 'Tilføj API nøgle',
     'ak_AddNewKey' => 'Tilføj API nøgle',
-    'ak_CreateBouncerToken' => 'Bouncer token',
-    'ak_CreateBouncerTokenHint' => 'Forudfyld en API nøgle begrænset til firewall-bouncer eksport endpoint — til brug med cs-firewall-bouncer og andre CrowdSec-kompatible bouncers.',
     'ak_BouncerPresetDescription' => 'Ekstern firewall bouncer (CrowdSec-kompatibel)',
     'ak_BouncerSnippetModalTitle' => 'cs-firewall-bouncer konfiguration',
     'ak_BouncerSnippetModalHint' => 'Kopiér dette uddrag til /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml på den vært, hvor bouncer kører. API nøglen vises kun én gang — gem den i din adgangskodeadministrator, før du lukker denne dialog.',

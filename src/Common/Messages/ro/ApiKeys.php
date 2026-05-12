@@ -6,8 +6,6 @@ return [
     // AK
     'ak_AddNewApiKey' => 'Adaugă cheie API',
     'ak_AddNewKey' => 'Adaugă cheie API',
-    'ak_CreateBouncerToken' => 'Token pentru bouncer',
-    'ak_CreateBouncerTokenHint' => 'Precompletați o cheie API restricționată la endpoint-ul de export al firewall-bouncer — pentru utilizare cu cs-firewall-bouncer și alți bounceri compatibili CrowdSec.',
     'ak_BouncerPresetDescription' => 'Firewall bouncer extern (compatibil CrowdSec)',
     'ak_BouncerSnippetModalTitle' => 'Configurație cs-firewall-bouncer',
     'ak_BouncerSnippetModalHint' => 'Copiați acest fragment în /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml pe gazda unde rulează bouncer-ul. Cheia API este afișată o singură dată — salvați-o în managerul de parole înainte de a închide acest dialog.',

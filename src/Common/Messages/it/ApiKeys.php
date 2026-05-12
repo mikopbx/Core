@@ -6,8 +6,6 @@ return [
     // AK
     'ak_AddNewApiKey' => 'Aggiungi chiave API',
     'ak_AddNewKey' => 'Aggiungi chiave API',
-    'ak_CreateBouncerToken' => 'Token per bouncer',
-    'ak_CreateBouncerTokenHint' => 'Precompila una chiave API limitata all\'endpoint di esportazione firewall-bouncer — per l\'uso con cs-firewall-bouncer e altri bouncer compatibili con CrowdSec.',
     'ak_BouncerPresetDescription' => 'Firewall bouncer esterno (compatibile con CrowdSec)',
     'ak_BouncerSnippetModalTitle' => 'Configurazione cs-firewall-bouncer',
     'ak_BouncerSnippetModalHint' => 'Copia questo frammento in /etc/crowdsec/bouncers/cs-firewall-bouncer.yaml sull\'host dove è in esecuzione il bouncer. La chiave API viene mostrata solo una volta — salvala nel tuo gestore di password prima di chiudere questo dialogo.',
