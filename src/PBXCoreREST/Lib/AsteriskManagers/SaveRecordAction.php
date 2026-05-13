@@ -239,7 +239,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 }
 
                 // Process network filter
-                if (isset($sanitizedData['networkfilterid']) || $isNewRecord) {
+                // WHY array_key_exists: Phase 1 converts 'none' to null. isset() returns false for null,
+                // which would skip clearing the filter on UPDATE/PATCH when user picks "any address".
+                if (array_key_exists('networkfilterid', $sanitizedData) || $isNewRecord) {
                     self::processNetworkFilter($manager, $sanitizedData);
                 }
 

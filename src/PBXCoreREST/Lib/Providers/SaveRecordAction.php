@@ -468,7 +468,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $sip->description = $data['description'];
         }
 
-        if (isset($data['networkfilterid'])) {
+        // WHY array_key_exists: Phase 1 converts 'none' to null. isset() returns false for null,
+        // which would skip clearing the filter on UPDATE/PATCH when user picks "any address".
+        if (array_key_exists('networkfilterid', $data)) {
             $sip->networkfilterid = $data['networkfilterid'] ?? '';
         }
 
@@ -607,7 +609,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $iax->setManualAttributes($data['manualattributes']);
         }
 
-        if (isset($data['networkfilterid'])) {
+        // WHY array_key_exists: Phase 1 converts 'none' to null. isset() returns false for null,
+        // which would skip clearing the filter on UPDATE/PATCH when user picks "any address".
+        if (array_key_exists('networkfilterid', $data)) {
             $iax->networkfilterid = $data['networkfilterid'] ?? '';
         }
 

@@ -239,8 +239,10 @@ class SaveRecordAction extends AbstractSaveRecordAction
                     $apiKey->key_display = DataStructure::generateKeyDisplay($key);
                 }
 
-                // Update network filter (PATCH support with isset())
-                if (isset($sanitizedData['networkfilterid'])) {
+                // Update network filter (PATCH support with array_key_exists())
+                // WHY array_key_exists: Phase 1 converts 'none' to null. isset() returns false for null,
+                // which would skip clearing the filter on UPDATE/PATCH when user picks "any address".
+                if (array_key_exists('networkfilterid', $sanitizedData)) {
                     $apiKey->networkfilterid = $sanitizedData['networkfilterid'];
                 } elseif ($isNewRecord) {
                     $apiKey->networkfilterid = null;
