@@ -122,7 +122,9 @@ class LoginAction
         $sessionToken = isset($data['sessionToken']) && is_string($data['sessionToken']) ? $data['sessionToken'] : null;
         $login = isset($data['login']) && is_string($data['login']) ? $data['login'] : null;
         $password = isset($data['password']) && is_string($data['password']) ? $data['password'] : null;
-        $rememberMe = ($data['rememberMe'] ?? false) === true;
+        // Form-encoded POST delivers rememberMe as the string "true"/"false";
+        // FILTER_VALIDATE_BOOLEAN normalises both that and a real bool from JSON.
+        $rememberMe = filter_var($data['rememberMe'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         $sessionParams = null;
 
