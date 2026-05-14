@@ -22,11 +22,12 @@ namespace MikoPBX\AdminCabinet\Plugins;
 
 use MikoPBX\AdminCabinet\Controllers\ErrorsController;
 use MikoPBX\AdminCabinet\Controllers\SessionController;
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Library\Auth\RedisTokenStorage;
 use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\JwtProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
@@ -89,15 +90,23 @@ class SecurityPlugin extends Injectable
         // Authenticated users: validate access to the requested resource
         if ($isAuthenticated) {
             // Handle authenticated users on the login page itself.
-            // This covers the edge case where refreshToken cookie exists but the
-            // Redis-side session is gone — we clear the stale cookie so the login
-            // form can be used. Narrowed to the 'index' action only — other Session
-            // actions (end, or any unknown action that will 404) must NOT clear the
+            // Narrowed to the 'index' action only — other Session actions
+            // (end, or any unknown action that will 404) must NOT touch the
             // cookie, otherwise visiting /session/<anything> logs the user out.
             if (
                 $controllerClass === SessionController::class
                 && strtolower($action) === 'index'
             ) {
+                // isAuthenticated() only proves the cookie is present, not that
+                // its session is alive. If the refreshToken still maps to a live
+                // Redis session, send the user home instead of wiping a valid
+                // cookie (issue #1065 regression from commit 0313611cc). Only a
+                // genuinely stale cookie — present but with no Redis session —
+                // gets cleared, so the login form stays usable without a loop.
+                if ($this->refreshTokenHasLiveSession()) {
+                    $this->redirectToHome($dispatcher);
+                    return true;
+                }
                 $this->clearAuthCookies();
                 return true;
             }
@@ -185,9 +194,18 @@ class SecurityPlugin extends Injectable
                     return true;
                 }
             } catch (\Throwable $e) {
-                // Cookie decryption failed or other error
-                // Log but don't block - let user re-login
-                CriticalErrorsHandler::handleExceptionWithSyslog($e);
+                // A refreshToken cookie that fails to decrypt is a benign,
+                // expected condition (tampered cookie, crypt-key rotation,
+                // stale cross-environment cookie). It must NOT go through
+                // CriticalErrorsHandler — that path renders via Whoops and
+                // forces HTTP 500. Degrade quietly to "not authenticated".
+                if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+                    \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        'Failed to read refreshToken cookie: ' . $e->getMessage(),
+                        LOG_DEBUG
+                    );
+                }
             }
         }
 
@@ -236,6 +254,44 @@ class SecurityPlugin extends Injectable
                     LOG_DEBUG
                 );
             }
+        }
+    }
+
+    /**
+     * Authoritative check that the refreshToken cookie maps to a live session.
+     *
+     * isAuthenticated() only checks cookie presence — it cannot distinguish a
+     * live session from a stale cookie. This validates the (decrypted) token
+     * against the Redis session store so beforeDispatch() can redirect a
+     * logged-in user home instead of wiping a valid cookie.
+     *
+     * @return bool true if the cookie carries a token with a live Redis session
+     */
+    private function refreshTokenHasLiveSession(): bool
+    {
+        if (!$this->cookies->has('refreshToken')) {
+            return false;
+        }
+        try {
+            $token = $this->cookies->get('refreshToken')->getValue();
+            if (!is_string($token) || $token === '') {
+                return false;
+            }
+            $redis = $this->di->getShared(RedisClientProvider::SERVICE_NAME);
+            return (new RedisTokenStorage($redis))->exists($token);
+        } catch (\Throwable $e) {
+            // A cookie that fails to decrypt / a Redis hiccup is not a
+            // critical error — must not route through CriticalErrorsHandler
+            // (it renders via Whoops and forces HTTP 500). Treat as "no live
+            // session" so the caller falls back to clearing the stale cookie.
+            if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+                \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    'Could not validate refreshToken cookie: ' . $e->getMessage(),
+                    LOG_DEBUG
+                );
+            }
+            return false;
         }
     }
 
