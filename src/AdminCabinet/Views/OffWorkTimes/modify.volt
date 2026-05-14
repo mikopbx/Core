@@ -30,8 +30,8 @@
             <div class="default text">{{ t._('tf_SelectCalendarType') }}</div>
             <div class="menu">
                 <div class="item" data-value="timeframe">{{ t._('tf_CAL_TYPE_TIMEFRAME') }}</div>
-                {# <div class="item" data-value="ICAL">{{ t._('tf_CAL_TYPE_ICAL') }}</div> #}
-                <div class="item" data-value="CALDAV">{{ t._('tf_CAL_TYPE_CALDAV') }}</div>
+                {# <div class="item" data-value="ical">{{ t._('tf_CAL_TYPE_ICAL') }}</div> #}
+                <div class="item" data-value="caldav">{{ t._('tf_CAL_TYPE_CALDAV') }}</div>
             </div>
         </div>
     </div>

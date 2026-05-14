@@ -501,7 +501,7 @@ var outOfWorkTimeRecord = {
       // Show main time/date configuration
       outOfWorkTimeRecord.$calendarTab.hide();
       outOfWorkTimeRecord.$mainTab.show();
-    } else if (calType === 'CALDAV' || calType === 'ICAL') {
+    } else if (calType === 'caldav' || calType === 'ical') {
       // Show calendar URL configuration
       outOfWorkTimeRecord.$calendarTab.show();
       outOfWorkTimeRecord.$mainTab.hide();
