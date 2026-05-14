@@ -119,6 +119,24 @@ def wait_for_context_in_file(api_client, context_name: str,
     return False
 
 
+def wait_for_provider_reference_absent(api_client, provider_id: str,
+                                       timeout: int = MAX_POLL_SECONDS) -> bool:
+    """
+    Poll extensions.conf until no references to a provider ID remain.
+
+    The incoming context can disappear before late-generated globals such as
+    CONTEXT_ID_<provider> are rewritten, so the final no-orphans assertion must
+    wait for the whole file to converge.
+    """
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        content = read_extensions_conf(api_client)
+        if provider_id not in content:
+            return True
+        time.sleep(POLL_INTERVAL)
+    return False
+
+
 def list_contexts(content: str) -> list[str]:
     """Extract all context names from extensions.conf content."""
     return re.findall(r'^\[([^\]]+)\]', content, re.MULTILINE)
@@ -370,8 +388,9 @@ class TestProviderDeletionDialplanCleanup:
         provider_id = getattr(self.__class__, '_provider_id', None)
         assert provider_id, "Provider ID not set (test_01 must run first)"
 
+        removed = wait_for_provider_reference_absent(api_client, provider_id)
         content = read_extensions_conf(api_client)
-        if provider_id in content:
+        if not removed:
             # Find lines containing the provider ID
             lines_with_ref = []
             for i, line in enumerate(content.split('\n'), 1):
