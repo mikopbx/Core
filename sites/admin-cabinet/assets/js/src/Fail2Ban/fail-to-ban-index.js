@@ -308,15 +308,36 @@ const fail2BanIndex = {
                     orderable: false,
                     searchable: false,
                 },
-                // Ban date
+                // Ban date — orthogonal data: numeric timestamp for sorting,
+                // formatted DD.MM.YYYY HH:MM for display. Without this DataTables
+                // falls back to lexicographic sort on the rendered string and
+                // 05.05.2026 ends up "before" 30.04.2026.
                 {
                     orderable: true,
                     searchable: false,
+                    type: 'num',
+                    render(data, type) {
+                        if (type === 'display') {
+                            return Number.isFinite(data) && data > 0
+                                ? fail2BanIndex.formatDateTime(data)
+                                : '';
+                        }
+                        return data;
+                    },
                 },
-                // Expires
+                // Expires — same orthogonal-data pattern as Ban date.
                 {
                     orderable: true,
                     searchable: false,
+                    type: 'num',
+                    render(data, type) {
+                        if (type === 'display') {
+                            return Number.isFinite(data) && data > 0
+                                ? fail2BanIndex.formatDateTime(data)
+                                : '';
+                        }
+                        return data;
+                    },
                 },
                 // Buttons
                 {
@@ -424,18 +445,17 @@ const fail2BanIndex = {
                 }
             });
 
-            const banDateStr = earliestBan < Infinity
-                ? `<span data-order="${earliestBan}">${fail2BanIndex.formatDateTime(earliestBan)}</span>`
-                : '';
-            const expiresStr = latestExpiry > 0
-                ? `<span data-order="${latestExpiry}">${fail2BanIndex.formatDateTime(latestExpiry)}</span>`
-                : '';
+            // Pass raw timestamps; the column's render() formats for display
+            // and returns the number for sort/type/filter (orthogonal data).
+            // null for "unknown" so DataTables sorts those rows to the end on asc.
+            const banDateValue = earliestBan < Infinity ? earliestBan : null;
+            const expiresValue = latestExpiry > 0 ? latestExpiry : null;
 
             const row = [
                 ipDisplay,
                 reasonTags,
-                banDateStr,
-                expiresStr,
+                banDateValue,
+                expiresValue,
                 `<button class="ui icon basic mini button right floated unban-button" data-value="${ip}"><i class="icon trash red"></i> ${globalTranslate.f2b_Unban}</button>`,
             ];
             newData.push(row);
