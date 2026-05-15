@@ -104,8 +104,14 @@ class SecurityPlugin extends Injectable
                 // genuinely stale cookie — present but with no Redis session —
                 // gets cleared, so the login form stays usable without a loop.
                 if ($this->refreshTokenHasLiveSession()) {
-                    $this->redirectToHome($dispatcher);
-                    return true;
+                    // HTTP 302 — must actually change the URL in the browser.
+                    // $dispatcher->forward() keeps the URL at /session/index,
+                    // which token-manager.js and PbxApiClient detect by pathname
+                    // and treat as "login page": access token is never loaded,
+                    // every API call returns 401, PbxApiClient.handleAuthError
+                    // bounces back to /session/index → infinite refresh loop.
+                    $this->response->redirect('extensions/index')->send();
+                    return false;
                 }
                 $this->clearAuthCookies();
                 return true;
