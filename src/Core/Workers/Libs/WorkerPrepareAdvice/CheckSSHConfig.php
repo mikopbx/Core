@@ -42,11 +42,25 @@ class CheckSSHConfig extends Injectable
      * The SSH password is now stored as SHA-512 hash in SSH_PASSWORD,
      * so we only check if /etc/shadow was modified outside of MikoPBX.
      *
+     * When password-based SSH logins are disabled (SSHDisablePasswordLogins=true),
+     * /etc/shadow is not security-relevant for SSH access — dropbear accepts
+     * public-key auth only. PAM bookkeeping (lastchg, locking, system maintenance)
+     * still mutates /etc/shadow and would otherwise raise spurious alerts.
+     *
      * @return array<string, array<int, array<string, mixed>>> An array containing warning messages.
      */
     public function process(): array
     {
         $messages = [];
+
+        $passwordLoginsDisabled = PbxSettings::getValueByKey(
+            PbxSettings::SSH_DISABLE_SSH_PASSWORD,
+            false
+        );
+        if (filter_var($passwordLoginsDisabled, FILTER_VALIDATE_BOOLEAN)) {
+            return $messages;
+        }
+
         $hashFile = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_FILE, false);
 
         // Check if /etc/shadow was modified outside of MikoPBX

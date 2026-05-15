@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\Calls\Scripts;
 use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Common\Models\ExtensionForwardingRights;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\Directories;
@@ -89,16 +90,33 @@ class TestCallsBase {
         return $db_data;
     }
 
-    /** Возвращает недоступные пиры */
+    /**
+     * Returns unreachable peers (PJSIP state != OK).
+     * Skips peers that have any forwarding configured (forwarding / forwardingonbusy /
+     * forwardingonunavailable). Otherwise test 09 receives an ANSWERED CDR to the
+     * redirect target instead of the expected NO_ANSWER on the offline endpoint.
+     */
     public static function getOffPeers():array{
         $am = Util::getAstManager('off');
         $result = $am->getPjSipPeers();
-        $db_data = array();
-        foreach ($result as $peer){
-            if($peer['state']!== 'OK' && is_numeric($peer['id'])){
-                $db_data[] = $peer['id'];
+        $forwardedExtensions = [];
+        $fwdRows = ExtensionForwardingRights::find();
+        foreach ($fwdRows as $row){
+            if (!empty($row->forwarding) || !empty($row->forwardingonbusy) || !empty($row->forwardingonunavailable)){
+                $forwardedExtensions[$row->extension] = true;
             }
         }
+        $db_data = array();
+        foreach ($result as $peer){
+            if($peer['state'] === 'OK' || !is_numeric($peer['id'])){
+                continue;
+            }
+            if(isset($forwardedExtensions[$peer['id']])){
+                continue;
+            }
+            $db_data[] = $peer['id'];
+        }
+        sort($db_data, SORT_NUMERIC);
         return $db_data;
     }
 

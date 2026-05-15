@@ -20,9 +20,11 @@ use MikoPBX\Tests\Calls\Scripts\TestCallsBase;
 require_once __DIR__.'/../TestCallsBase.php';
 
 $sampleCDR = [];
+// Main A↔B conversation continues after the failed attended-transfer attempt;
+// the call recording resumes within the same CDR (single recording file).
 $sampleCDR[] = ['src_num'=>'aNum', 'dst_num'=>'bNum',  'duration'=>'14', 'billsec'=>'12', 'fileDuration' => '7'];
-$sampleCDR[] = ['src_num'=>'bNum', 'dst_num'=>'offNum','duration'=>'1',  'billsec'=>'0',  'fileDuration' => '0'];
-$sampleCDR[] = ['src_num'=>'bNum', 'duration'=>'3',  'billsec'=>'2',  'fileDuration' => '2'];
-$sampleCDR[] = ['src_num'=>'aNum', 'duration'=>'5',  'billsec'=>'5',  'fileDuration' => '5'];
+// Attended-transfer attempt to an unreachable offNum — separate CDR, NO_ANSWER, no recording.
+// Asterisk retries the unreachable PJSIP endpoint for ~6s before giving up.
+$sampleCDR[] = ['src_num'=>'bNum', 'dst_num'=>'offNum','duration'=>'6',  'billsec'=>'0',  'fileDuration' => '0'];
 
 TestCallsBase::executeTest($sampleCDR);

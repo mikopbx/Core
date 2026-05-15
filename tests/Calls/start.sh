@@ -38,8 +38,38 @@ function cleanup() {
 
     # Восстанавливаем production базу данных
     if [ "$didSwapDb" = "true" ] && [ -f "$dumpConfFile" ]; then
+        echo_info "Stopping services holding the DB...";
+        # Stop only the services that hold mikopbx.db open. NEVER call `monit stop all`:
+        # it brings down dropbear/sshd and locks the host out of remote access.
+        monit stop asterisk > /dev/null 2>&1 || true;
+        monit stop php-fpm  > /dev/null 2>&1 || true;
+
+        # Wait up to ~30s for processes to release the DB.
+        local i;
+        for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+            if [ -z "$(lsof "$confFile" 2>/dev/null | awk 'NR>1')" ]; then
+                break;
+            fi
+            sleep 2;
+        done
+
+        # Force-kill any stragglers (PHP workers outside monit). Never touches the SSH session.
+        local stragglers;
+        stragglers=$(lsof "$confFile" 2>/dev/null | awk 'NR>1 {print $2}' | sort -u);
+        if [ -n "$stragglers" ]; then
+            echo "$stragglers" | xargs -r kill -TERM 2>/dev/null || true;
+            sleep 2;
+            stragglers=$(lsof "$confFile" 2>/dev/null | awk 'NR>1 {print $2}' | sort -u);
+            [ -n "$stragglers" ] && echo "$stragglers" | xargs -r kill -KILL 2>/dev/null || true;
+        fi
+
         echo_info "Restoring production database...";
+        # Remove stale WAL/SHM from the test DB BEFORE cp.
+        # Otherwise SQLite will replay the old WAL on top of the restored file and the DB
+        # ends up "malformed" — exactly the corruption we observed before this fix.
+        rm -f "${confFile}-wal" "${confFile}-shm";
         cp "$dumpConfFile" "$confFile";
+        sync;
 
         if [ "${debugParams}x" != "x" ]; then
             export XDEBUG_CONFIG="${EMPTY}";
@@ -47,6 +77,10 @@ function cleanup() {
         php -f "$dirName/db/updateDb.php" > /dev/null 2>/dev/null;
         iptables -F 2>/dev/null; iptables -X 2>/dev/null;
         export XDEBUG_CONFIG="${debugParams}";
+
+        # Bring services back via monit, named (not `start all`) — see comment above.
+        monit start php-fpm  > /dev/null 2>&1 || true;
+        monit start asterisk > /dev/null 2>&1 || true;
     fi
 }
 trap cleanup EXIT INT TERM

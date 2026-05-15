@@ -1947,7 +1947,13 @@ extensions.lua_dial_create_chan["_.!"]      = function() if not skip_special_ext
 extensions.dial_answer["_.!"]               = function() if not skip_special_exten() then event_dial_answer() end end
 extensions.lua_transfer_dial_create_chan["_.!"] = function() if not skip_special_exten() then event_transfer_dial_create_chan() end end
 extensions.transfer_dial_answer["_.!"]      = function() if not skip_special_exten() then event_transfer_dial_answer() end end
-extensions.transfer_dial_hangup["_.!"]      = function() if not skip_special_exten() then event_transfer_dial_hangup() end end
+-- transfer_dial_hangup runs from two paths:
+--   1) `exten => h,1,Goto(transfer_dial_hangup,h,1)` (hangup handler, EXTEN='h')
+--   2) `Gosub(transfer_dial_hangup,${EXTEN},1)` (post-Dial, EXTEN=dialed number)
+-- event_transfer_dial_hangup() branches on EXTEN internally and is safe in both cases —
+-- never gate it with skip_special_exten(): that suppressed the 'h' path entirely and
+-- broke MixMonitor resume after failed attended transfers.
+extensions.transfer_dial_hangup["_.!"]      = function() event_transfer_dial_hangup() end
 extensions.hangup_chan["_.!"]               = function() event_hangup_chan() end
 extensions.queue_start["_.!"]               = function() if not skip_special_exten() then event_queue_start() end end
 extensions.queue_answer["_.!"]              = function() if not skip_special_exten() then event_queue_answer() end end

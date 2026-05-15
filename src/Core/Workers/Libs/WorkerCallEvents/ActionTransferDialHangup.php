@@ -126,12 +126,14 @@ class ActionTransferDialHangup
      */
     private static function fillNotAnsweredCdr(WorkerCallEvents $worker, array $data): void
     {
+        // Close the transfer-attempt CDR. When the transfer target never picked up
+        // (e.g. CHANUNAVAIL / NO_CONTACTS), the row has transfer=1 and an empty dst_chan —
+        // matching on src_chan=TRANSFERERNAME is enough to identify it.
         $filter = [
-            'linkedid=:linkedid: AND endtime = "" AND (src_chan=:src_chan: AND dst_chan=:dst_chan:)',
+            'linkedid=:linkedid: AND endtime = "" AND transfer = "1" AND src_chan = :src_chan:',
             'bind' => [
                 'linkedid' => $data['linkedid'],
                 'src_chan' => $data['TRANSFERERNAME'],
-                'dst_chan' => empty($data['dst_chan'])?$data['agi_channel']:$data['dst_chan'],
             ],
         ];
         /** @var CallDetailRecordsTmp $m_data */
@@ -152,7 +154,8 @@ class ActionTransferDialHangup
             ],
         ];
         $m_data = CallDetailRecordsTmp::find($filter);
-        if ($m_data->count() !== '1') {
+        // Phalcon Resultset::count() returns int — compare as int, not against string '1'.
+        if ($m_data->count() !== 1) {
             // The transfer is not completed or channels no longer exist.
             return;
         }
