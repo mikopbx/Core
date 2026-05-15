@@ -20,8 +20,10 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Core\System\Storage;
+use MikoPBX\PBXCoreREST\Lib\Storage\GetIoBenchmarkAction;
 use MikoPBX\PBXCoreREST\Lib\Storage\GetSettingsAction;
 use MikoPBX\PBXCoreREST\Lib\Storage\GetUsageAction;
+use MikoPBX\PBXCoreREST\Lib\Storage\RunIoBenchmarkAction;
 use MikoPBX\PBXCoreREST\Lib\Storage\UpdateSettingsAction;
 use Phalcon\Di\Injectable;
 
@@ -45,6 +47,8 @@ enum StorageAction: string
     case UMOUNT = 'umount';
     case MKFS = 'mkfs';
     case STATUS_MKFS = 'statusMkfs';
+    case IO_BENCHMARK_GET = 'ioBenchmark';
+    case IO_BENCHMARK_RUN = 'runIoBenchmark';
 }
 
 /**
@@ -105,6 +109,8 @@ class StorageManagementProcessor extends Injectable
             StorageAction::UMOUNT => self::umount($data),
             StorageAction::MKFS => self::mkfs($data),
             StorageAction::STATUS_MKFS => self::statusMkfs($data),
+            StorageAction::IO_BENCHMARK_GET => GetIoBenchmarkAction::main(),
+            StorageAction::IO_BENCHMARK_RUN => RunIoBenchmarkAction::main(),
         };
 
         $res->function = $actionString;

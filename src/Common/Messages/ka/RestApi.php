@@ -1779,6 +1779,10 @@ return [
     'rest_ts_Patch' => 'დროის პარამეტრების ნაწილობრივი განახლება',
     'rest_ts_PatchDesc' => 'განაახლეთ მხოლოდ მითითებული დროისა და დროის სარტყლის პარამეტრები',
     'rest_stg_UsageDesc' => 'მიიღეთ დისკის სივრცის გამოყენების დეტალური სტატისტიკა, დაყოფილი მონაცემთა ტიპის მიხედვით',
+    'rest_stg_IoBenchmarkGet' => 'Get cached disk I/O benchmark',
+    'rest_stg_IoBenchmarkGetDesc' => 'Return the last sequential write/read benchmark result, or null when no measurement has been performed yet',
+    'rest_stg_IoBenchmarkRun' => 'Run disk I/O benchmark',
+    'rest_stg_IoBenchmarkRunDesc' => 'Run a sequential write+read benchmark on the storage volume using dd. Blocks until both phases complete and persists the result for subsequent ioBenchmark calls',
     'rest_s3_PatchDesc' => 'განაახლეთ მხოლოდ მითითებული S3 კონფიგურაციის პარამეტრები. სასარგებლოა ჩართული სტატუსის გადართვისთვის, ავტორიზაციის მონაცემების შესაცვლელად ან შენახვის პერიოდების კორექტირებისთვის სხვა პარამეტრების შეცვლის გარეშე.',
     'rest_s3_TestConnectionDesc' => 'S3 კავშირისა და ავტორიზაციის მონაცემების შემოწმება ბაკეტზე წვდომის შემოწმებით. კონფიგურაციას არ ცვლის - კავშირის ტესტირებისთვის მონაცემთა ბაზიდან მიმდინარე პარამეტრებს იყენებს.',
     // ============================================================================

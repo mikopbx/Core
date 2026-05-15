@@ -1,5 +1,10 @@
 /* macOS Style Storage Progress Bar */
 .storage-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
     margin-bottom: 20px;
 }
 
@@ -7,6 +12,77 @@
     color: #666;
     font-size: 1.1em;
     font-weight: 500;
+}
+
+/* Inline disk-speed chips in the header */
+.disk-speed-chips {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: #555;
+    font-size: 0.95em;
+}
+
+.speed-chip-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.speed-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
+    color: #333;
+}
+
+.speed-chip i.icon {
+    color: #888;
+    margin: 0;
+    font-size: 0.9em;
+}
+
+.speed-chip-unit,
+.speed-chip-meta {
+    color: #888;
+}
+
+.speed-chip-empty,
+.speed-chip-running {
+    color: #888;
+    font-style: italic;
+}
+
+.speed-chip-button {
+    background: transparent;
+    border: 1px solid #e0e0e0;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    cursor: pointer;
+    color: #666;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, border-color .15s, color .15s;
+}
+
+.speed-chip-button:hover {
+    background: #f5f5f5;
+    color: #333;
+    border-color: #ccc;
+}
+
+.speed-chip-button:disabled {
+    opacity: .4;
+    cursor: default;
+}
+
+.speed-chip-button i.icon {
+    margin: 0;
+    font-size: .95em;
 }
 
 /* macOS Progress Bar */

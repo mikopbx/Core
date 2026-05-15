@@ -26,6 +26,29 @@
                     <div class="storage-subtitle">
                         <span id="used-space-text">0 GB</span> {{ t._("st_Of") }} <span id="total-size-text">0 GB</span> {{ t._("st_Used") }}
                     </div>
+                    <div class="disk-speed-chips" id="disk-speed-chips">
+                        <span class="speed-chip-group" id="disk-speed-result" style="display:none;">
+                            <span class="speed-chip" data-tooltip="{{ t._('st_DiskSpeedWrite') }}" data-position="top center">
+                                <i class="arrow up icon"></i><span id="disk-benchmark-write">—</span>
+                            </span>
+                            <span class="speed-chip" data-tooltip="{{ t._('st_DiskSpeedRead') }}" data-position="top center">
+                                <i class="arrow down icon"></i><span id="disk-benchmark-read">—</span>
+                                <span class="speed-chip-unit">{{ t._('st_DiskSpeedUnit') }}</span>
+                            </span>
+                            <span class="speed-chip-meta" id="disk-benchmark-measured-at">—</span>
+                        </span>
+                        <span class="speed-chip-empty" id="disk-speed-empty" style="display:none;">
+                            {{ t._('st_DiskSpeedNoData') }}
+                        </span>
+                        <span class="speed-chip-running" id="disk-speed-running" style="display:none;">
+                            <i class="ui mini active inline loader"></i>
+                            {{ t._('st_DiskSpeedRunning') }}
+                        </span>
+                        <button type="button" class="speed-chip-button" id="disk-benchmark-run-button"
+                                data-tooltip="{{ t._('st_DiskSpeedRunButton') }}" data-position="top right">
+                            <i class="redo icon"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- macOS Style Progress Bar -->
@@ -156,6 +179,7 @@
                         <div class="details" id="remote-storage-details"></div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>

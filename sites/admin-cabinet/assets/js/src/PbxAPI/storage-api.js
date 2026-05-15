@@ -31,7 +31,9 @@ const StorageAPI = new PbxApiClient({
     singleton: true,
     customMethods: {
         getUsage: ':usage',
-        getList: ':list'
+        getList: ':list',
+        getIoBenchmark: ':ioBenchmark',
+        runIoBenchmark: ':runIoBenchmark'
     }
 });
 
@@ -142,6 +144,31 @@ StorageAPI.getStorageList = function(callback) {
             callback(false);
         }
     });
+};
+
+/**
+ * Get cached disk I/O benchmark result (Custom method).
+ *
+ * Returns the last measured sequential write/read speeds, or
+ * response.data === null when no measurement has been run yet.
+ *
+ * @param {function} callback - Callback function to handle the response
+ */
+StorageAPI.getIoBenchmark = function(callback) {
+    return this.callCustomMethod('getIoBenchmark', {}, callback);
+};
+
+/**
+ * Run a fresh disk I/O benchmark (Custom method).
+ *
+ * Blocking on the server side (~5–30 s) — caller should keep a UI
+ * indicator visible until the response arrives. Result is cached on
+ * the server, so subsequent getIoBenchmark() calls return it instantly.
+ *
+ * @param {function} callback - Callback function to handle the response
+ */
+StorageAPI.runIoBenchmark = function(callback) {
+    return this.callCustomMethod('runIoBenchmark', {}, callback, 'POST');
 };
 
 /**

@@ -79,6 +79,14 @@ const storageIndex = {
     s3EndpointPresetNote: '',
     
     /**
+     * Whether a benchmark run is currently in flight. Prevents the user
+     * from kicking off a second concurrent dd run by spam-clicking the
+     * button while the first one is still blocking the server worker.
+     * @type {boolean}
+     */
+    benchmarkRunning: false,
+
+    /**
      * Initialize module with event bindings and component initializations.
      */
     initialize() {
@@ -141,6 +149,9 @@ const storageIndex = {
 
         // Load storage data on page load
         storageIndex.loadStorageData();
+
+        // Disk benchmark — load cached result and wire the "run" button.
+        storageIndex.initializeDiskBenchmark();
     },
     
     /**
@@ -296,6 +307,95 @@ const storageIndex = {
         }
     },
     
+    /**
+     * Wire the disk benchmark card: load the last cached measurement on
+     * page open, hand the "Run again" button to runDiskBenchmark().
+     */
+    initializeDiskBenchmark() {
+        StorageAPI.getIoBenchmark((response) => {
+            if (response.result && response.data) {
+                storageIndex.renderDiskBenchmark(response.data);
+            } else {
+                storageIndex.showDiskBenchmarkEmpty();
+            }
+        });
+
+        $('#disk-benchmark-run-button').off('click.diskbench').on('click.diskbench', (e) => {
+            e.preventDefault();
+            storageIndex.runDiskBenchmark();
+        });
+    },
+
+    /**
+     * Show the "no measurement yet" state.
+     */
+    showDiskBenchmarkEmpty() {
+        $('#disk-speed-empty').show();
+        $('#disk-speed-result').hide();
+        $('#disk-speed-running').hide();
+    },
+
+    /**
+     * Show the dd write/read numbers and the timestamp from the cached
+     * result. Both numbers are pre-rounded server-side; we only format
+     * the localised date here.
+     *
+     * @param {{writeMBps:number, readMBps:number, measuredAt:number}} data
+     */
+    renderDiskBenchmark(data) {
+        $('#disk-speed-empty').hide();
+        $('#disk-speed-running').hide();
+        $('#disk-speed-result').css('display', 'inline-flex');
+
+        $('#disk-benchmark-write').text(
+            typeof data.writeMBps === 'number' ? data.writeMBps.toFixed(1) : '—'
+        );
+        $('#disk-benchmark-read').text(
+            typeof data.readMBps === 'number' ? data.readMBps.toFixed(1) : '—'
+        );
+
+        if (data.measuredAt) {
+            const d = new Date(data.measuredAt * 1000);
+            const pad = (n) => String(n).padStart(2, '0');
+            $('#disk-benchmark-measured-at').text(
+                `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} `
+                + `${pad(d.getHours())}:${pad(d.getMinutes())}`
+            );
+        } else {
+            $('#disk-benchmark-measured-at').text('—');
+        }
+    },
+
+    /**
+     * Kick off a fresh benchmark. The POST blocks server-side for ~5–30 s
+     * while dd runs both phases; we just toggle the running state and
+     * re-render with whatever the server returns.
+     */
+    runDiskBenchmark() {
+        if (storageIndex.benchmarkRunning) {
+            return;
+        }
+        storageIndex.benchmarkRunning = true;
+        $('#disk-speed-empty').hide();
+        $('#disk-speed-result').hide();
+        $('#disk-speed-running').show();
+        $('#disk-benchmark-run-button').prop('disabled', true);
+
+        StorageAPI.runIoBenchmark((response) => {
+            storageIndex.benchmarkRunning = false;
+            $('#disk-benchmark-run-button').prop('disabled', false);
+
+            if (response.result && response.data) {
+                storageIndex.renderDiskBenchmark(response.data);
+            } else {
+                storageIndex.showDiskBenchmarkEmpty();
+                if (typeof UserMessage !== 'undefined' && response.messages) {
+                    UserMessage.showMultiString(response.messages);
+                }
+            }
+        });
+    },
+
     /**
      * Build HTML content for tooltip popup
      * @param {Object} config - Tooltip configuration object

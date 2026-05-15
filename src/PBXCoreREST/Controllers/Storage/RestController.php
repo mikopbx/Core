@@ -45,14 +45,14 @@ use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
 #[ResourceSecurity('storage', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getRecord', 'usage', 'list'],
+        'GET' => ['getRecord', 'usage', 'list', 'ioBenchmark'],
         'PUT' => ['update'],
         'PATCH' => ['patch'],
-        'POST' => ['mount', 'umount', 'mkfs', 'statusMkfs']
+        'POST' => ['mount', 'umount', 'mkfs', 'statusMkfs', 'runIoBenchmark']
     ],
     resourceLevelMethods: [],
-    collectionLevelMethods: ['usage', 'list', 'mount', 'umount', 'mkfs', 'statusMkfs'],
-    customMethods: ['usage', 'list', 'mount', 'umount', 'mkfs', 'statusMkfs'],
+    collectionLevelMethods: ['usage', 'list', 'mount', 'umount', 'mkfs', 'statusMkfs', 'ioBenchmark', 'runIoBenchmark'],
+    customMethods: ['usage', 'list', 'mount', 'umount', 'mkfs', 'statusMkfs', 'ioBenchmark', 'runIoBenchmark'],
     idPattern: null
 )]
 class RestController extends BaseRestController
@@ -281,6 +281,50 @@ class RestController extends BaseRestController
     )]
     #[ApiResponse(statusCode: 404, description: 'Task not found')]
     public function statusMkfs(): void
+    {
+        // Implemented by processor
+    }
+
+    /**
+     * Get the cached storage I/O benchmark result
+     *
+     * Returns the last sequential write/read speeds measured with dd, or
+     * null in data when no measurement has been performed yet. Cheap call —
+     * just reads a small JSON file from the storage temp directory.
+     */
+    #[ApiOperation(
+        summary: 'rest_stg_IoBenchmarkGet',
+        description: 'rest_stg_IoBenchmarkGetDesc',
+        operationId: 'getStorageIoBenchmark'
+    )]
+    #[ApiResponse(
+        statusCode: 200,
+        description: 'Cached benchmark result (null when never measured)'
+    )]
+    public function ioBenchmark(): void
+    {
+        // Implemented by processor
+    }
+
+    /**
+     * Run a fresh storage I/O benchmark
+     *
+     * Performs a sequential write + read benchmark of 128 MiB on the storage
+     * volume using BusyBox dd (conv=fdatasync on write, iflag=direct on read).
+     * Blocks until both phases complete (~5–30 s depending on the disk) and
+     * persists the result so subsequent ioBenchmark GETs return it without
+     * re-running the test.
+     */
+    #[ApiOperation(
+        summary: 'rest_stg_IoBenchmarkRun',
+        description: 'rest_stg_IoBenchmarkRunDesc',
+        operationId: 'runStorageIoBenchmark'
+    )]
+    #[ApiResponse(
+        statusCode: 200,
+        description: 'Benchmark completed with write/read speeds, or result=false with an error message on dd failure'
+    )]
+    public function runIoBenchmark(): void
     {
         // Implemented by processor
     }

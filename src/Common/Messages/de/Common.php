@@ -972,6 +972,12 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'st_CategoryS3Cache' => 'S3-Aufnahmecache',
     'st_S3RemoteStorageTitle' => 'Cloud-Speicher (S3)',
     'st_S3RemoteStorageInfo' => '%files% Aufnahmen (%size%) in %bucket%',
+    'st_DiskSpeedWrite' => 'Schreiben',
+    'st_DiskSpeedRead' => 'Lesen',
+    'st_DiskSpeedUnit' => 'MB/s',
+    'st_DiskSpeedRunButton' => 'Festplattengeschwindigkeit messen',
+    'st_DiskSpeedRunning' => 'Messung läuft…',
+    'st_DiskSpeedNoData' => 'Noch nicht gemessen',
     'st_Day' => 'Tag',
     'st_Days' => 'Tage',
     // CDR UI Translations (for search and pagination)
