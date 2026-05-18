@@ -65,8 +65,11 @@ class OutgoingContext extends AsteriskConfigClass
         // Hangup if peer_mobile is set
         $conf .= 'same => n,ExecIf($["${peer_mobile}x" != "x"]?Hangup())' . " \n\t";
 
-        // Perform blind transfer if dial status is not ANSWER
-        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${BLINDTRANSFER}x" != "x" && "${ISTRANSFER}x" != "x"]?Gosub(transfer_dial_hangup,${EXTEN},1))' . "\n\t";
+        // Perform blind transfer if dial status is not ANSWER.
+        // ARG1=return tells event_transfer_dial_hangup() in Lua to call app["return"]()
+        // so the Gosub frame is popped properly. Without ARG1 (the Goto path from h-extensions),
+        // Lua skips the return and Asterisk auto-fallthroughs — preventing "Return without Gosub".
+        $conf .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${BLINDTRANSFER}x" != "x" && "${ISTRANSFER}x" != "x"]?Gosub(transfer_dial_hangup,${EXTEN},1(return)))' . "\n\t";
 
         // Check if BLINDTRANSFER is set and execute check_redirect.php
         $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . " \n\t";
@@ -298,8 +301,9 @@ class OutgoingContext extends AsteriskConfigClass
         // Customize provider-specific outgoing context after Dial command
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN}),1}" == "1"]?' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN},1)' . "\n\t";
 
-        // Perform transfer_dial_hangup if ISTRANSFER is set
-        $conf .= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(transfer_dial_hangup,${EXTEN},1))' . "\n\t";
+        // Perform transfer_dial_hangup if ISTRANSFER is set.
+        // ARG1=return: see comment on the matching Gosub call in [outgoing]:_X. above.
+        $conf .= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Gosub(transfer_dial_hangup,${EXTEN},1(return)))' . "\n\t";
 
         // Hangup if DIALSTATUS is ANSWER
         $conf .= 'same => n,ExecIf($["${DIALSTATUS}" = "ANSWER"]?Hangup())' . "\n\t";

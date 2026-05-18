@@ -1375,13 +1375,16 @@ function event_transfer_dial_hangup()
         data['dst_chan'] 	   = get_variable("CDR(dstchannel)");
     end
 
-    -- Check the extension and invoke the appropriate function
-    local EXTEN = get_variable("EXTEN");
-    if('h' == EXTEN)then
-        userevent_hangup(data);
-    else
-        -- Send the data as a user event
+    -- Pick helper by entry style, not by EXTEN. Gosub callers from [outgoing] pass
+    -- ARG1="return" so userevent_return() can pop the Gosub frame via app["return"]().
+    -- Goto callers from h-extensions ([internal], [internal-users], [internal-fw],
+    -- [outgoing]) leave ARG1 unset — userevent_hangup() emits the same event but
+    -- skips app["return"](), so Asterisk auto-fallthroughs cleanly without
+    -- triggering "Return without Gosub: stack is empty".
+    if(get_variable("ARG1") == "return") then
         userevent_return(data);
+    else
+        userevent_hangup(data);
     end
 
     return data;
@@ -1948,11 +1951,13 @@ extensions.dial_answer["_.!"]               = function() if not skip_special_ext
 extensions.lua_transfer_dial_create_chan["_.!"] = function() if not skip_special_exten() then event_transfer_dial_create_chan() end end
 extensions.transfer_dial_answer["_.!"]      = function() if not skip_special_exten() then event_transfer_dial_answer() end end
 -- transfer_dial_hangup runs from two paths:
---   1) `exten => h,1,Goto(transfer_dial_hangup,h,1)` (hangup handler, EXTEN='h')
---   2) `Gosub(transfer_dial_hangup,${EXTEN},1)` (post-Dial, EXTEN=dialed number)
--- event_transfer_dial_hangup() branches on EXTEN internally and is safe in both cases —
--- never gate it with skip_special_exten(): that suppressed the 'h' path entirely and
--- broke MixMonitor resume after failed attended transfers.
+--   1) `exten => h,1,Goto(transfer_dial_hangup,h,1)` (hangup handler, no Gosub stack)
+--   2) `Gosub(transfer_dial_hangup,${EXTEN},1(return))` (post-Dial from [outgoing])
+-- event_transfer_dial_hangup() emits the CDR/CEL event in both cases and only invokes
+-- app["return"]() when ARG1="return" is passed — so the Goto path doesn't trip
+-- "Return without Gosub: stack is empty". Never gate this with skip_special_exten():
+-- that suppressed the 'h' path entirely and broke MixMonitor resume after failed
+-- attended transfers.
 extensions.transfer_dial_hangup["_.!"]      = function() event_transfer_dial_hangup() end
 extensions.hangup_chan["_.!"]               = function() event_hangup_chan() end
 extensions.queue_start["_.!"]               = function() if not skip_special_exten() then event_queue_start() end end
