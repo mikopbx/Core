@@ -187,6 +187,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'Включить отладку CallerID/DID',
     'pr_EnterHostOrIp' => 'Дополнительные адреса провайдера',
     'pr_EnterHostOrIpPlaceholder' => 'Введите IP адрес или подсеть и нажмите Enter',
+    'pr_InvalidHostAddress' => 'Введите корректный IP адрес, подсеть в нотации CIDR (например 10.0.0.0/8) или имя хоста',
     'pr_Event' => 'Событие',
     'pr_EventHistory' => 'История событий',
     'pr_EventTypeError' => 'Ошибка',

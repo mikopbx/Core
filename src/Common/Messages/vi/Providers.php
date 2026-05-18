@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'Bật debug CallerID/DID',
     'pr_EnterHostOrIp' => 'Địa chỉ nhà cung cấp bổ sung',
     'pr_EnterHostOrIpPlaceholder' => 'Nhập địa chỉ IP hoặc mạng con và nhấn Enter',
+    'pr_InvalidHostAddress' => 'Nhập địa chỉ IP hợp lệ, mạng con CIDR (ví dụ 10.0.0.0/8) hoặc tên máy chủ',
     'pr_Event' => 'Sự kiện',
     'pr_EventHistory' => 'Lịch sử sự kiện',
     'pr_EventTypeError' => 'Lỗi',

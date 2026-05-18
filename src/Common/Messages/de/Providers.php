@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'CallerID/DID-Debug aktivieren',
     'pr_EnterHostOrIp' => 'Zusätzliche Provider-Adressen',
     'pr_EnterHostOrIpPlaceholder' => 'Geben Sie IP-Adresse oder Subnetz ein und drücken Sie Enter',
+    'pr_InvalidHostAddress' => 'Geben Sie eine gültige IP-Adresse, ein CIDR-Subnetz (z.B. 10.0.0.0/8) oder einen Hostnamen ein',
     'pr_Event' => 'Ereignis',
     'pr_EventHistory' => 'Ereignisverlauf',
     'pr_EventTypeError' => 'Fehler',

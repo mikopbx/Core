@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'CallerID/DID hata ayıklamasını etkinleştir',
     'pr_EnterHostOrIp' => 'Ek sağlayıcı adresleri',
     'pr_EnterHostOrIpPlaceholder' => 'IP adresini veya alt ağı girin ve Enter\'a basın',
+    'pr_InvalidHostAddress' => 'Geçerli bir IP adresi, CIDR alt ağı (örn. 10.0.0.0/8) veya ana bilgisayar adı girin',
     'pr_Event' => 'Olay',
     'pr_EventHistory' => 'Olay geçmişi',
     'pr_EventTypeError' => 'Hata',

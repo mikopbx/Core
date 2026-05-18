@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'Habilitar depuración CallerID/DID',
     'pr_EnterHostOrIp' => 'Direcciones de proveedores adicionales',
     'pr_EnterHostOrIpPlaceholder' => 'Ingrese la dirección IP o subred y presione Enter',
+    'pr_InvalidHostAddress' => 'Ingrese una dirección IP válida, subred CIDR (p.ej. 10.0.0.0/8) o nombre de host',
     'pr_Event' => 'Evento',
     'pr_EventHistory' => 'Historial de eventos',
     'pr_EventTypeError' => 'Error',

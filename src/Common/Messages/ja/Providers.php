@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'CallerID/DIDデバッグを有効化',
     'pr_EnterHostOrIp' => '追加プロバイダーアドレス',
     'pr_EnterHostOrIpPlaceholder' => 'IPアドレスまたはサブネットを入力してEnterキーを押してください',
+    'pr_InvalidHostAddress' => '有効なIPアドレス、CIDRサブネット（例: 10.0.0.0/8）またはホスト名を入力してください',
     'pr_Event' => 'イベント',
     'pr_EventHistory' => 'イベント履歴',
     'pr_EventTypeError' => 'エラー',

@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'CallerID/DID hibakeresés engedélyezése',
     'pr_EnterHostOrIp' => 'További szolgáltatói címek',
     'pr_EnterHostOrIpPlaceholder' => 'Írja be az IP-címet vagy az alhálózatot, és nyomja meg az Enter billentyűt',
+    'pr_InvalidHostAddress' => 'Adjon meg érvényes IP-címet, CIDR-alhálózatot (pl. 10.0.0.0/8) vagy gazdanevet',
     'pr_Event' => 'Esemény',
     'pr_EventHistory' => 'Eseménytörténet',
     'pr_EventTypeError' => 'Hiba',

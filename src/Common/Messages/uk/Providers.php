@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'Увімкнути відладку CallerID/DID',
     'pr_EnterHostOrIp' => 'Додаткові адреси провайдера',
     'pr_EnterHostOrIpPlaceholder' => 'Введіть IP-адресу або підсіть і натисніть Enter',
+    'pr_InvalidHostAddress' => 'Введіть коректну IP-адресу, підмережу у нотації CIDR (наприклад 10.0.0.0/8) або ім\'я хоста',
     'pr_Event' => 'Подія',
     'pr_EventHistory' => 'Історія подій',
     'pr_EventTypeError' => 'Помилка',

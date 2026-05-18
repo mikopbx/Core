@@ -56,13 +56,12 @@ class ProviderBase {
         // Track if form is fully initialized
         this.formInitialized = false;
         
-        // Host input validation regex
+        // Host input validation regex: IPv4 address, IPv4 CIDR (/0-/32), or hostname
         this.hostInputValidation = new RegExp(
             '^(((\\d|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])\\.){3}'
             + '(\\d|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])'
-            + '(\\/(\d|[1-2]\d|3[0-2]))?'
-            + '|[a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\\.[a-zA-Z]{2,})+)$',
-            'gm'
+            + '(\\/(\\d|[1-2]\\d|3[0-2]))?'
+            + '|[a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\\.[a-zA-Z]{2,})+)$'
         );
     }
 

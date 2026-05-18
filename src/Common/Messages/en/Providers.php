@@ -200,6 +200,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'Enable CallerID/DID debug',
     'pr_EnterHostOrIp' => 'Additional provider addresses',
     'pr_EnterHostOrIpPlaceholder' => 'Enter IP address or subnet and press Enter',
+    'pr_InvalidHostAddress' => 'Enter a valid IP address, CIDR subnet (e.g. 10.0.0.0/8), or hostname',
     'pr_Event' => 'Event',
     'pr_EventHistory' => 'Event history',
     'pr_EventTypeError' => 'Error',

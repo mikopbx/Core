@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'Zapnout ladění CallerID/DID',
     'pr_EnterHostOrIp' => 'Další adresy poskytovatele',
     'pr_EnterHostOrIpPlaceholder' => 'Zadejte IP adresu nebo podsíť a stiskněte Enter',
+    'pr_InvalidHostAddress' => 'Zadejte platnou IP adresu, podsíť CIDR (např. 10.0.0.0/8) nebo název hostitele',
     'pr_Event' => 'Událost',
     'pr_EventHistory' => 'Historie událostí',
     'pr_EventTypeError' => 'Chyba',

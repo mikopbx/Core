@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'Omogućiti CallerID/DID otkrivanje grešaka',
     'pr_EnterHostOrIp' => 'Dodatne adrese pružatelja usluga',
     'pr_EnterHostOrIpPlaceholder' => 'Unesite IP adresu ili podmrežu i pritisnite Enter',
+    'pr_InvalidHostAddress' => 'Unesite valjanu IP adresu, CIDR podmrežu (npr. 10.0.0.0/8) ili ime domaćina',
     'pr_Event' => 'Događaj',
     'pr_EventHistory' => 'Povjest događaja',
     'pr_EventTypeError' => 'Greška',

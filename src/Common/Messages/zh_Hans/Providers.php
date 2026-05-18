@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => '启用CallerID/DID调试',
     'pr_EnterHostOrIp' => '额外的提供商地址',
     'pr_EnterHostOrIpPlaceholder' => '输入IP地址或子网并按Enter',
+    'pr_InvalidHostAddress' => '请输入有效的IP地址、CIDR子网（如 10.0.0.0/8）或主机名',
     'pr_Event' => '事件',
     'pr_EventHistory' => '事件历史',
     'pr_EventTypeError' => '错误',

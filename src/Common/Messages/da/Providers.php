@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'Aktivér CallerID/DID debug',
     'pr_EnterHostOrIp' => 'Yderligere udbyderadresser',
     'pr_EnterHostOrIpPlaceholder' => 'Indtast IP-adresse eller subnet og tryk Enter',
+    'pr_InvalidHostAddress' => 'Indtast en gyldig IP-adresse, CIDR-subnet (f.eks. 10.0.0.0/8) eller værtsnavn',
     'pr_Event' => 'Begivenhed',
     'pr_EventHistory' => 'Begivenhedshistorik',
     'pr_EventTypeError' => 'Fejl',

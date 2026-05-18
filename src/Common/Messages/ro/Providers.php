@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'Activează depanarea CallerID/DID',
     'pr_EnterHostOrIp' => 'Adrese suplimentare ale furnizorilor',
     'pr_EnterHostOrIpPlaceholder' => 'Introduceți adresa IP sau subrețea și apăsați Enter',
+    'pr_InvalidHostAddress' => 'Introduceți o adresă IP validă, o subrețea CIDR (ex. 10.0.0.0/8) sau un nume de gazdă',
     'pr_Event' => 'Eveniment',
     'pr_EventHistory' => 'Istoricul evenimentelor',
     'pr_EventTypeError' => 'Eroare',

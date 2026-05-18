@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'Abilita debug CallerID/DID',
     'pr_EnterHostOrIp' => 'Indirizzi di provider aggiuntivi',
     'pr_EnterHostOrIpPlaceholder' => 'Immettere l\'indirizzo IP o la sottorete e premere Invio',
+    'pr_InvalidHostAddress' => 'Inserire un indirizzo IP valido, una sottorete CIDR (es. 10.0.0.0/8) o un nome host',
     'pr_Event' => 'Evento',
     'pr_EventHistory' => 'Cronologia eventi',
     'pr_EventTypeError' => 'Errore',

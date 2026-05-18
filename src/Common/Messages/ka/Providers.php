@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'CallerID/DID გამართვის ჩართვა',
     'pr_EnterHostOrIp' => 'პროვაიდერის დამატებითი მისამართები',
     'pr_EnterHostOrIpPlaceholder' => 'შეიყვანეთ IP მისამართი ან ქვექსელი და დააჭირეთ Enter-ს',
+    'pr_InvalidHostAddress' => 'შეიყვანეთ სწორი IP მისამართი, CIDR ქვექსელი (მაგ. 10.0.0.0/8) ან ჰოსტის სახელი',
     'pr_Event' => 'მოვლენა',
     'pr_EventHistory' => 'მოვლენების ისტორია',
     'pr_EventTypeError' => 'შეცდომა',

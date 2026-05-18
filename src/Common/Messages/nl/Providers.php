@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'CallerID/DID debugging inschakelen',
     'pr_EnterHostOrIp' => 'Extra provideradressen',
     'pr_EnterHostOrIpPlaceholder' => 'Voer IP-adres of subnet in en druk Enter',
+    'pr_InvalidHostAddress' => 'Voer een geldig IP-adres, CIDR-subnet (bijv. 10.0.0.0/8) of hostnaam in',
     'pr_Event' => 'Gebeurtenis',
     'pr_EventHistory' => 'Gebeurtenisgeschiedenis',
     'pr_EventTypeError' => 'Fout',

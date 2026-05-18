@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'Aktivera CallerID/DID-felsökning',
     'pr_EnterHostOrIp' => 'Ytterligare leverantörsadresser',
     'pr_EnterHostOrIpPlaceholder' => 'Ange IP-adress eller subnät och tryck Enter',
+    'pr_InvalidHostAddress' => 'Ange en giltig IP-adress, CIDR-subnät (t.ex. 10.0.0.0/8) eller värdnamn',
     'pr_Event' => 'Händelse',
     'pr_EventHistory' => 'Händelsehistorik',
     'pr_EventTypeError' => 'Fel',

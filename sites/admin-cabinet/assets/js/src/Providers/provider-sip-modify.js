@@ -895,6 +895,39 @@ class ProviderSIP extends ProviderBase {
     }
     
     /**
+     * Show inline validation error on the additional-host input.
+     * Pairs the existing shake animation with a Fomantic pointing label
+     * placed directly under the input, since shake alone leaves the user
+     * wondering why their input was rejected.
+     */
+    showHostInputError() {
+        const message = (typeof globalTranslate !== 'undefined' && globalTranslate.pr_InvalidHostAddress)
+            ? globalTranslate.pr_InvalidHostAddress
+            : 'Введите корректный IP адрес, подсеть в нотации CIDR (например 10.0.0.0/8) или имя хоста';
+
+        const $wrapper = this.$additionalHostInput.parent();
+        // Always recreate the label so we never inherit stale Fomantic transition state
+        $wrapper.parent().find('.host-input-error').remove();
+
+        const $label = $('<div class="ui pointing red basic label host-input-error" role="alert"></div>')
+            .text(message);
+        $wrapper.after($label);
+
+        clearTimeout(this._hostErrorTimer);
+        this._hostErrorTimer = setTimeout(() => $label.remove(), 5000);
+
+        this.$additionalHostInput.transition('shake');
+    }
+
+    /**
+     * Hide the inline validation error, if any.
+     */
+    hideHostInputError() {
+        clearTimeout(this._hostErrorTimer);
+        this.$additionalHostInput.parent().parent().find('.host-input-error').remove();
+    }
+
+    /**
      * Handle completion of host address input
      */
     cbOnCompleteHostAddress() {
@@ -905,10 +938,13 @@ class ProviderSIP extends ProviderBase {
             
             // Validate the input value
             if (validation === null || validation.length === 0) {
-                this.$additionalHostInput.transition('shake');
+                this.showHostInputError();
                 return;
             }
-            
+
+            // Hide any previous validation error on successful input
+            this.hideHostInputError();
+
             // Check if the host address already exists
             if ($(`.host-row[data-value=\"${value}\"]`).length === 0) {
                 const $tr = this.$additionalHostsTemplate.last();
@@ -918,7 +954,7 @@ class ProviderSIP extends ProviderBase {
                     .addClass('host-row')
                     .show();
                 $clone.attr('data-value', value);
-                $clone.find('.address').html(value);
+                $clone.find('.address').text(value);
                 const $existingHostRows = this.$formObj.find(ProviderSIP.SIP_SELECTORS.HOST_ROW);
                 if ($existingHostRows.last().length === 0) {
                     $tr.after($clone);
@@ -970,7 +1006,7 @@ class ProviderSIP extends ProviderBase {
                     .addClass('host-row')
                     .show();
                 $clone.attr('data-value', hostAddress);
-                $clone.find('.address').html(hostAddress);
+                $clone.find('.address').text(hostAddress);
                 
                 // Insert the cloned row
                 const $existingHostRows = this.$formObj.find(ProviderSIP.SIP_SELECTORS.HOST_ROW);

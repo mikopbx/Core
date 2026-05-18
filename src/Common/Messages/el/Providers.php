@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'Ενεργοποίηση εντοπισμού σφαλμάτων CallerID/DID',
     'pr_EnterHostOrIp' => 'Πρόσθετες διευθύνσεις παρόχου',
     'pr_EnterHostOrIpPlaceholder' => 'Εισαγάγετε τη διεύθυνση IP ή το υποδίκτυο και πατήστε Enter',
+    'pr_InvalidHostAddress' => 'Εισαγάγετε έγκυρη διεύθυνση IP, υποδίκτυο CIDR (π.χ. 10.0.0.0/8) ή όνομα κεντρικού υπολογιστή',
     'pr_Event' => 'Συμβάν',
     'pr_EventHistory' => 'Ιστορικό συμβάντων',
     'pr_EventTypeError' => 'Σφάλμα',

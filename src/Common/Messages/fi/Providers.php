@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'Ota CallerID/DID vianetsintä käyttöön',
     'pr_EnterHostOrIp' => 'Palveluntarjoajan lisäosoitteet',
     'pr_EnterHostOrIpPlaceholder' => 'Anna IP-osoite tai aliverkko ja paina Enter',
+    'pr_InvalidHostAddress' => 'Anna kelvollinen IP-osoite, CIDR-aliverkko (esim. 10.0.0.0/8) tai isäntänimi',
     'pr_Event' => 'Tapahtuma',
     'pr_EventHistory' => 'Tapahtumahistoria',
     'pr_EventTypeError' => 'Virhe',

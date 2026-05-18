@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'เปิดใช้งานการดีบัก CallerID/DID',
     'pr_EnterHostOrIp' => 'ที่อยู่ผู้ให้บริการเพิ่มเติม',
     'pr_EnterHostOrIpPlaceholder' => 'ป้อนที่อยู่ IP หรือซับเน็ตแล้วกด Enter',
+    'pr_InvalidHostAddress' => 'ป้อนที่อยู่ IP ที่ถูกต้อง ซับเน็ต CIDR (เช่น 10.0.0.0/8) หรือชื่อโฮสต์',
     'pr_Event' => 'เหตุการณ์',
     'pr_EventHistory' => 'ประวัติเหตุการณ์',
     'pr_EventTypeError' => 'ข้อผิดพลาด',

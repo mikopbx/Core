@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'CallerID/DID debug-ını aktivləşdirin',
     'pr_EnterHostOrIp' => 'Provayderin əlavə ünvanları',
     'pr_EnterHostOrIpPlaceholder' => 'IP ünvanını və ya alt şəbəkəni daxil edin və Enter düyməsini basın',
+    'pr_InvalidHostAddress' => 'Düzgün IP ünvanı, CIDR alt şəbəkəsi (məs. 10.0.0.0/8) və ya host adı daxil edin',
     'pr_Event' => 'Hadisə',
     'pr_EventHistory' => 'Hadisələr tarixi',
     'pr_EventTypeError' => 'Xəta',

@@ -183,6 +183,7 @@ return [
     'pr_EnableCallerIdDidDebug' => 'Activer le débogage CallerID/DID',
     'pr_EnterHostOrIp' => 'Adresses de fournisseurs supplémentaires',
     'pr_EnterHostOrIpPlaceholder' => 'Entrez l\'adresse IP ou le sous-réseau et appuyez sur Entrée',
+    'pr_InvalidHostAddress' => 'Saisissez une adresse IP valide, un sous-réseau CIDR (ex. 10.0.0.0/8) ou un nom d\'hôte',
     'pr_Event' => 'Événement',
     'pr_EventHistory' => 'Historique des événements',
     'pr_EventTypeError' => 'Erreur',
