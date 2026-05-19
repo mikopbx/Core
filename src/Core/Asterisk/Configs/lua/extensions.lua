@@ -303,10 +303,11 @@ function monitorEnable(src, dst, fromPeer)
     src = string.sub(src, -9);
     dst = string.sub(dst, -9);
 
-    -- Normalize FROM_PEER: strip WebRTC "-WS" suffix so the endpoint name
-    -- "204-WS" matches the extension "204" stored in [monitor-exceptions].
+    -- Normalize FROM_PEER: strip transport variant suffix ("-WS" for WebRTC,
+    -- "-TLS" for SIP/TLS) so endpoint names like "204-WS" or "204-TLS" match
+    -- the extension "204" stored in [monitor-exceptions].
     if(fromPeer and fromPeer ~= '')then
-        fromPeer = fromPeer:gsub("%-WS$", "");
+        fromPeer = fromPeer:gsub("%-WS$", ""):gsub("%-TLS$", "");
         fromPeer = string.sub(fromPeer, -9);
     else
         fromPeer = '';

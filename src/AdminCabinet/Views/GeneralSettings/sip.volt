@@ -38,17 +38,6 @@
         {{ form.render('SIPAuthPrefix') }}
     </div>
 </div>
-<div class="field">
-    <div class="ui segment">
-        <div class="ui toggle checkbox">
-            <label for="UseWebRTC">{{ t._('gs_UseWebRTC') }}
-                <i class="small info circle icon field-info-icon"
-                   data-field="UseWebRTC"></i>
-            </label>
-            {{ form.render('UseWebRTC') }}
-        </div>
-    </div>
-</div>
 
 <h4 class="ui header">{{ t._('gs_KeepAliveHeader') }}</h4>
 <div class="inline field">

@@ -89,6 +89,12 @@ class SIPConf extends AsteriskConfigClass
     // Database batch processing
     private const int PEERS_BATCH_SIZE = 150;
 
+    /**
+     * Cached TLS-certificate presence check.
+     * Used to gate WebRTC (-WS) and SIP/TLS (-TLS) endpoint generation.
+     */
+    private static ?bool $hasCertsCache = null;
+
     // Default tone zone for unspecified languages (Russian market focus)
     private const string DEFAULT_TONE_ZONE = 'ru';
 
@@ -685,6 +691,40 @@ class SIPConf extends AsteriskConfigClass
      *
      * @return string
      */
+    /**
+     * Whether Asterisk has a usable TLS certificate file pair available.
+     *
+     * Result is cached per-process because the underlying SslCertificateService call
+     * is invoked from generatePeerAor/Endpoint for every extension and from
+     * InternalContexts dialplan generation. Only file presence is checked — expiry
+     * validation is intentionally left to Asterisk at TLS handshake time.
+     *
+     * In long-running workers (WorkerApiCommands, WorkerSafeScriptsCore) the cache
+     * can outlive the certificate file lifecycle (e.g. cert was created after the
+     * first false-result was cached). resetCertsCache() must be called at the
+     * start of every fresh config regeneration to force a re-probe.
+     *
+     * @return bool True if both certPath and keyPath are non-empty.
+     */
+    public static function hasCertificates(): bool
+    {
+        if (self::$hasCertsCache === null) {
+            $certs = SslCertificateService::prepareAsteriskCertificates('asterisk-pjsip');
+            self::$hasCertsCache = !empty($certs['certPath']) && !empty($certs['keyPath']);
+        }
+        return self::$hasCertsCache;
+    }
+
+    /**
+     * Invalidate the cached TLS-certificate presence flag. Called from the top of
+     * every fresh pjsip.conf / dialplan generation so a long-running worker picks
+     * up newly-issued certificates without process restart.
+     */
+    public static function resetCertsCache(): void
+    {
+        self::$hasCertsCache = null;
+    }
+
     public static function getTechnology(): string
     {
         return self::TYPE_PJSIP;
@@ -727,8 +767,9 @@ class SIPConf extends AsteriskConfigClass
             $data_peers = $this->getPeers();
             foreach ($data_peers as $peer) {
                 $hint = "$this->technology/$peer[extension]";
-                if (PbxSettings::getValueByKey(PbxSettings::USE_WEB_RTC) === '1') {
+                if (self::hasCertificates()) {
                     $hint .= "&$this->technology/$peer[extension]-WS";
+                    $hint .= "&$this->technology/$peer[extension]-TLS";
                 }
                 $conf .= "exten => $peer[extension],hint,$hint&Custom:$peer[extension] \n";
             }
@@ -786,6 +827,10 @@ class SIPConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
+        // Force a fresh certificate-presence probe so long-running workers pick up
+        // newly-issued certs without restart.
+        self::resetCertsCache();
+
         $conf  = $this->generateGeneralPj();
         $conf .= $this->generateProvidersPj();
         $conf .= $this->generatePeersPj();
@@ -2265,7 +2310,7 @@ class SIPConf extends AsteriskConfigClass
      * It creates the aor section with the qualify frequency, qualify timeout, and max contacts options.
      * The PJSIP options can be overridden using the overridePJSIPOptionsFromModules() method.
      * The manual attributes are applied using the Util::overrideConfigurationArray() method.
-     * If the "UseWebRTC" general setting is enabled, it also generates an additional aor section for WebRTC.
+     * When TLS certificates are present, it also generates additional aor sections for WebRTC (-WS) and SIP/TLS (-TLS).
      *
      * @param array $peer The data of the SIP peer.
      * @param array $manual_attributes The manual attributes for the peer.
@@ -2323,8 +2368,9 @@ class SIPConf extends AsteriskConfigClass
             $conf .= "[{$peer['extension']}](aor-common)\n\n";
         }
 
-        // Generate the WebRTC aor section if enabled
-        if (PbxSettings::getValueByKey(PbxSettings::USE_WEB_RTC) === '1') {
+        // Generate the WebRTC aor section when TLS certificates are present
+        // (WSS transport and endpoint-wss template depend on the same certs).
+        if (self::hasCertificates()) {
             // WebRTC AOR also needs to match extension name for registration
             if ($hasCustomizations) {
                 $conf .= "[{$peer['extension']}-WS](aor-common)\n";
@@ -2344,6 +2390,30 @@ class SIPConf extends AsteriskConfigClass
                 $conf .= "\n";
             } else {
                 $conf .= "[{$peer['extension']}-WS](aor-common)\n\n";
+            }
+        }
+
+        // Generate the SIP/TLS aor section when TLS certificates are present.
+        if (self::hasCertificates()) {
+            // TLS AOR also needs to match endpoint name for registration
+            if ($hasCustomizations) {
+                $conf .= "[{$peer['extension']}-TLS](aor-common)\n";
+                $customParams = array_diff_assoc($overriddenOptions, $options);
+                foreach ($customParams as $key => $value) {
+                    if ($key !== 'type') {
+                        $conf .= "$key = $value\n";
+                    }
+                }
+                if (!empty($manual_attributes['aor'])) {
+                    foreach ($manual_attributes['aor'] as $key => $value) {
+                        if ($key !== 'type') {
+                            $conf .= "$key = $value\n";
+                        }
+                    }
+                }
+                $conf .= "\n";
+            } else {
+                $conf .= "[{$peer['extension']}-TLS](aor-common)\n\n";
             }
         }
 
@@ -2523,8 +2593,8 @@ class SIPConf extends AsteriskConfigClass
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
         $conf .= "\n";
 
-        // Generate the WebRTC endpoint section if enabled
-        if (PbxSettings::getValueByKey(PbxSettings::USE_WEB_RTC) === '1') {
+        // Generate the WebRTC endpoint section when TLS certificates are present.
+        if (self::hasCertificates()) {
             $conf .= "[{$peer['extension']}-WS](endpoint-wss)\n";
             $conf .= "callerid = $calleridname <{$peer['extension']}>\n";
             $conf .= "aors = {$peer['extension']}-WS\n";  // WebRTC AOR matches endpoint name
@@ -2570,6 +2640,41 @@ class SIPConf extends AsteriskConfigClass
             $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
             $conf .= "\n";
         }
+
+        // Generate the SIP/TLS endpoint section when TLS certificates are present.
+        // Inherits transport=transport-tls and media_encryption=sdes from [endpoint-tls] template
+        // (created only when TLS certificates exist — see generateEndpointTemplates()).
+        if (self::hasCertificates()) {
+            $conf .= "[{$peer['extension']}-TLS](endpoint-tls)\n";
+            $conf .= "callerid = $calleridname <{$peer['extension']}>\n";
+            $conf .= "aors = {$peer['extension']}-TLS\n";
+            $conf .= "auth = {$peer['extension']}-AUTH\n";
+            $conf .= "outbound_auth = {$peer['extension']}-AUTH\n";
+            $conf .= "dtmf_mode = $dtmfmode\n";
+
+            // Mirror call-waiting toggle on the TLS endpoint.
+            if (!empty($peer['accept_multiple_calls'])) {
+                $conf .= "device_state_busy_at = 2\n";
+            }
+
+            // Add ACL if exists
+            if (!empty($peer['permit']) || !empty($peer['deny'])) {
+                $conf .= "acl = acl_{$peer['extension']}\n";
+            }
+
+            // Apply manual attributes for TLS endpoint
+            if (!empty($manual_attributes['endpoint'])) {
+                foreach ($manual_attributes['endpoint'] as $key => $value) {
+                    if (!in_array($key, ['type', 'callerid', 'aors', 'auth', 'outbound_auth', 'dtmf_mode', 'acl', 'transport', 'media_encryption'])) {
+                        $conf .= "$key = $value\n";
+                    }
+                }
+            }
+
+            $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
+            $conf .= "\n";
+        }
+
         return $conf;
     }
 

@@ -48,7 +48,6 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::RTP_PORT_FROM => '10000',
             PbxSettings::RTP_PORT_TO => '10200',
             PbxSettings::RTP_STUN_SERVER => '',
-            PbxSettings::USE_WEB_RTC => '0',
             PbxSettings::IAX_PORT => '4569',
             PbxSettings::AMI_ENABLED => '1',
             PbxSettings::AMI_PORT => '5038',

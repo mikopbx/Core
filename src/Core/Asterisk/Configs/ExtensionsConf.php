@@ -62,6 +62,10 @@ class ExtensionsConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
+        // Force a fresh certificate-presence probe — InternalContexts uses
+        // SIPConf::hasCertificates() to decide whether to wire WS/TLS dial buckets.
+        SIPConf::resetCertsCache();
+
         /** @scrutinizer ignore-call */
         $conf              = "[globals]" .PHP_EOL.
             "TRANSFER_CONTEXT=internal-transfer;".PHP_EOL;
@@ -124,7 +128,7 @@ class ExtensionsConf extends AsteriskConfigClass
                  'exten => _X.,1,NoOp("Sending message, To ${MESSAGE(to)}, Hint ${ARG1}, From ${MESSAGE(from)}, CID ${CALLERID}, Body ${MESSAGE(body)}")' . PHP_EOL ."\t".
                  'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . PHP_EOL ."\t".
                  'same => n,While($["${SET(contact=${SHIFT(DST_CONTACT,&):6})}" != ""])' . PHP_EOL ."\t".
-                 'same => n,MessageSend(pjsip:${contact},${REPLACE(MESSAGE(from),-WS)})' . PHP_EOL ."\t".
+                 'same => n,MessageSend(pjsip:${contact},${STRREPLACE(STRREPLACE(MESSAGE(from),-WS,),-TLS,)})' . PHP_EOL ."\t".
                  'same => n,NoOp("Send status is ${MESSAGE_SEND_STATUS}")' . PHP_EOL ."\t".
                  'same => n,EndWhile' . PHP_EOL ."\t".
                  'same => n,HangUp()' . PHP_EOL .PHP_EOL;

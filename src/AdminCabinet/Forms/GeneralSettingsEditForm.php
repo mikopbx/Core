@@ -167,7 +167,6 @@ class GeneralSettingsEditForm extends BaseForm
                     break;
                 case PbxSettings::PBX_RECORD_CALLS:
                 case PbxSettings::PBX_RECORD_CALLS_INNER:
-                case PbxSettings::USE_WEB_RTC:
                 case PbxSettings::AJAM_ENABLED:
                 case PbxSettings::AMI_ENABLED:
                 case PbxSettings::ARI_ENABLED:

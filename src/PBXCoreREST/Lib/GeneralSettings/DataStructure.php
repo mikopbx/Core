@@ -478,13 +478,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'default' => (string)self::getDefaultValue(PbxSettings::SIP_AUTH_PREFIX),
                 'example' => (string)self::getDefaultValue(PbxSettings::SIP_AUTH_PREFIX),
             ],
-            PbxSettings::USE_WEB_RTC => [
-                'type' => 'boolean',
-                'description' => 'rest_schema_gs_use_webrtc',
-                'sanitize' => 'bool',
-                'default' => (bool)self::getDefaultValue(PbxSettings::USE_WEB_RTC),
-                'example' => (bool)self::getDefaultValue(PbxSettings::USE_WEB_RTC)
-            ],
             PbxSettings::SIP_DEFAULT_EXPIRY => [
                 'type' => 'integer',
                 'description' => 'rest_schema_gs_sip_default_expiry',

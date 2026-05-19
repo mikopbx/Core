@@ -26,7 +26,6 @@ return [
     'gs_RTPStunServer' => 'Адрес STUN сервера (пример: stun.test.net:10000)',
     'gs_SIPAuthPrefix' => 'Префикс Auth Username для авторизации. Префикс будет добавлен в конец Username.',
     'gs_SIPAuthPrefixInvalid' => 'Префикс Auth Username может содержать только латинские буквы.',
-    'gs_UseWebRTC' => 'Использовать WebRTC',
     'gs_DisableAllModules' => 'Отключить маркетплейс',
     'gs_ErrorSaveSettings' => 'Ошибка сохранения настроек',
     'gs_SSHDisablePasswordLogins' => 'Отключить авторизацию по паролю',

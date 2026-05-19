@@ -59,21 +59,18 @@ class RtpConf extends AsteriskConfigClass
             "rtpstart={$rtpStart}".PHP_EOL.
             "rtpend={$rtpEnd}".PHP_EOL;
             
-        // Add DTLS configuration for WebRTC if enabled
-        $useWebRTC = PbxSettings::getValueByKey(PbxSettings::USE_WEB_RTC);
-        if ($useWebRTC === '1') {
-            // Prepare certificates for DTLS
-            $certs = SslCertificateService::prepareAsteriskCertificates('asterisk-rtp-dtls');
-            
-            if (!empty($certs['certPath']) && !empty($certs['keyPath'])) {
-                $conf .= PHP_EOL .
-                    "; DTLS configuration for WebRTC\n" .
-                    "dtlsenable=yes".PHP_EOL.
-                    "dtlscertfile={$certs['certPath']}".PHP_EOL.
-                    "dtlsprivatekey={$certs['keyPath']}".PHP_EOL.
-                    "dtlssetup=actpass".PHP_EOL.
-                    "dtlsverify=no".PHP_EOL;
-            }
+        // Add DTLS configuration for WebRTC when certificates are available.
+        // WebRTC clients require DTLS-SRTP; without certs the WSS transport and
+        // -WS endpoints aren't generated either, so this block stays consistent.
+        $certs = SslCertificateService::prepareAsteriskCertificates('asterisk-rtp-dtls');
+        if (!empty($certs['certPath']) && !empty($certs['keyPath'])) {
+            $conf .= PHP_EOL .
+                "; DTLS configuration for WebRTC\n" .
+                "dtlsenable=yes".PHP_EOL.
+                "dtlscertfile={$certs['certPath']}".PHP_EOL.
+                "dtlsprivatekey={$certs['keyPath']}".PHP_EOL.
+                "dtlssetup=actpass".PHP_EOL.
+                "dtlsverify=no".PHP_EOL;
         }
         
         $conf .= PHP_EOL;

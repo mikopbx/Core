@@ -154,7 +154,6 @@ class ProcessPBXSettings extends Injectable
         $tables[] = [
             'keys' => [
                 PbxSettings::PBX_ALLOW_GUEST_CALLS,
-                PbxSettings::USE_WEB_RTC,
             ],
             'actions' => [
                 ReloadPJSIPAction::class,

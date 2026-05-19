@@ -24,7 +24,6 @@ return [
     'gs_RTPStunServer' => 'STUN server address (example: stun.test.net:10000)',
     'gs_SIPAuthPrefix' => 'Auth Username prefix for authorization. The prefix will be added to the end of Username.',
     'gs_SIPAuthPrefixInvalid' => 'The Auth Username prefix can only contain Latin letters.',
-    'gs_UseWebRTC' => 'Use WebRTC',
     'gs_DisableAllModules' => 'Disable marketplace',
     'gs_ErrorSaveSettings' => 'Error saving settings',
     'gs_SSHDisablePasswordLogins' => 'Disable password authentication',

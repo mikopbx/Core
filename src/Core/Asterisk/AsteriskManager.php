@@ -1572,8 +1572,17 @@ class AsteriskManager
             if ($wsResult['state'] !== 'UNKNOWN') {
                 $result = $wsResult;
             }
+            // Query SIP/TLS variant endpoint and append its contacts with a -TLS{idx} suffix
+            // so they coexist with the base and WebRTC endpoints in the same result map.
+            $tlsRes = $this->sendRequestTimeout('PJSIPShowEndpoint', ['Endpoint' => trim($peer) . "-TLS"]);
+            foreach ($tlsRes['data']['ContactStatusDetail'] ?? [] as $index => $tlsData) {
+                $suffix = "-TLS$index";
+                foreach ($tlsData as $key => $value) {
+                    $result["$key$suffix"] = $value;
+                }
+            }
             $parameters = ['Endpoint' => trim($peer)];
-            unset($wsResult);
+            unset($wsResult, $tlsRes);
         } else {
             $parameters = ['Endpoint' => trim($peer) . "-$prefix"];
         }
@@ -1622,6 +1631,15 @@ class AsteriskManager
         foreach ($wsRes['data']['ContactStatusDetail'] ?? [] as $contactData) {
             if (!empty($contactData['URI'])) {
                 $contactData['IsWebRTC'] = true;
+                $contacts[] = $contactData;
+            }
+        }
+
+        // Also check for SIP/TLS endpoint
+        $tlsRes = $this->sendRequestTimeout('PJSIPShowEndpoint', ['Endpoint' => trim($peer) . "-TLS"]);
+        foreach ($tlsRes['data']['ContactStatusDetail'] ?? [] as $contactData) {
+            if (!empty($contactData['URI'])) {
+                $contactData['IsTls'] = true;
                 $contacts[] = $contactData;
             }
         }

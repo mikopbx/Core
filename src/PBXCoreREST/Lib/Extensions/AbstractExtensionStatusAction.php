@@ -273,7 +273,8 @@ abstract class AbstractExtensionStatusAction extends Injectable
                                 'user_agent' => $peerInfo['UserAgent'] ?? '',
                                 'reg_expire' => $peerInfo['RegExpire'] ?? null,
                                 'call_id' => $peerInfo['CallID'] ?? '',
-                                'is_webrtc' => $peerInfo['IsWebRTC'] ?? false
+                                'is_webrtc' => $peerInfo['IsWebRTC'] ?? false,
+                                'is_tls' => $peerInfo['IsTls'] ?? false
                             ];
                         }
                     }

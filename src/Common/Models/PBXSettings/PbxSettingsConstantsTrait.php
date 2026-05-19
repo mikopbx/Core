@@ -125,9 +125,6 @@ trait PbxSettingsConstantsTrait
     public const string RTP_PORT_TO = 'RTPPortTo';
     /** @FieldType('string') */
     public const string RTP_STUN_SERVER = 'RTPStunServer';
-    /** @FieldType('boolean') */
-    public const string USE_WEB_RTC = 'UseWebRTC';
-
     // IAX settings
     /** @FieldType('integer') */
     public const string IAX_PORT = 'IAXPort';

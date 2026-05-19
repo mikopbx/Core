@@ -105,13 +105,22 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= '[set-dial-contacts]'.PHP_EOL.
                  'exten => _X!,1,NoOp()'.PHP_EOL."\t";
 
-        // If WebRTC is used, set up SIP and WS contacts. Otherwise, set DST contact.
-        if(PbxSettings::getValueByKey(PbxSettings::USE_WEB_RTC) === '1') {
-            $conf .= 'same => n,Set(SIP_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})'.PHP_EOL."\t".
-                     'same => n,Set(WS_CONTACTS=${PJSIP_DIAL_CONTACTS(${EXTEN}-WS)})'.PHP_EOL."\t".
-                     'same => n,Set(DST_CONTACT=${SIP_CONTACT}${IF($["${SIP_CONTACT}x" != "x" && "${WS_CONTACTS}x" != "x"]?&)}${WS_CONTACTS})'.PHP_EOL."\t";
-        }else{
-            $conf .= 'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})'.PHP_EOL."\t";
+        // Resolve dial contacts for every transport variant of the extension.
+        // PJSIP_DIAL_CONTACTS returns empty string when the endpoint has no registered
+        // contacts. Buckets are stitched with '&' only when both sides are non-empty.
+        //
+        // IMPORTANT: variables containing ':' (PJSIP_DIAL_CONTACTS returns URIs like
+        // "PJSIP/201/sip:201@host:port") MUST stay outside ${IF(...?...)} — the IF
+        // function treats ':' as the true/false separator and would slice the URI in half.
+        // The safe pattern is: ${VAR_A}${IF(both_nonempty?&)}${VAR_B} — VAR_A/VAR_B
+        // outside the IF, only the neutral '&' inside.
+        $hasCerts = SIPConf::hasCertificates();
+        $conf .= 'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})'.PHP_EOL."\t";
+        if ($hasCerts) {
+            $conf .= 'same => n,Set(WS_CONTACTS=${PJSIP_DIAL_CONTACTS(${EXTEN}-WS)})'.PHP_EOL."\t".
+                     'same => n,Set(DST_CONTACT=${DST_CONTACT}${IF($["${DST_CONTACT}x" != "x" && "${WS_CONTACTS}x" != "x"]?&)}${WS_CONTACTS})'.PHP_EOL."\t".
+                     'same => n,Set(TLS_CONTACTS=${PJSIP_DIAL_CONTACTS(${EXTEN}-TLS)})'.PHP_EOL."\t".
+                     'same => n,Set(DST_CONTACT=${DST_CONTACT}${IF($["${DST_CONTACT}x" != "x" && "${TLS_CONTACTS}x" != "x"]?&)}${TLS_CONTACTS})'.PHP_EOL."\t";
         }
         $conf .= 'same => n,return'.PHP_EOL.PHP_EOL;
 
@@ -403,7 +412,12 @@ class InternalContexts extends AsteriskConfigClass
 
         // Generate additional modules internal users context
         $conf .= $this->generateAdditionalModulesInternalUsersContext();
-        $conf .= 'same => n,ExecIf($["${DEVICE_STATE(' . $this->technology . '/${EXTEN})}" == "BUSY" || "${DEVICE_STATE(' . $this->technology . '/${EXTEN}-WS)}" == "BUSY"]?Set(IS_BUSY=1))' . " \n\t";
+        $busyCheck = '"${DEVICE_STATE(' . $this->technology . '/${EXTEN})}" == "BUSY"';
+        if (SIPConf::hasCertificates()) {
+            $busyCheck .= ' || "${DEVICE_STATE(' . $this->technology . '/${EXTEN}-WS)}" == "BUSY"'
+                . ' || "${DEVICE_STATE(' . $this->technology . '/${EXTEN}-TLS)}" == "BUSY"';
+        }
+        $conf .= 'same => n,ExecIf($[' . $busyCheck . ']?Set(IS_BUSY=1))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${IS_BUSY}" == "1"]?Set(DIALSTATUS=BUSY))' . " \n\t";
         $conf .= 'same => n,GotoIf($["${IS_BUSY}" == "1" && "${QUEUE_SRC_CHAN}x" == "x"]?fw_start)' . " \n\t";
 
