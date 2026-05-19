@@ -66,6 +66,8 @@ class WhoopsErrorHandlerProvider implements ServiceProviderInterface
                     $handler = new PrettyPageHandler();
                 }
                 $whoops->appendHandler($handler);
+                // Deprecation notices must never break production flow.
+                error_reporting(error_reporting() & ~E_DEPRECATED & ~E_USER_DEPRECATED);
                 $whoops->register();
                 return $whoops;
             }

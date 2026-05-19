@@ -77,7 +77,7 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
      * Resource limits
      */
     private const string MEMORY_LIMIT = '256M';
-    private const int ERROR_REPORTING_LEVEL = E_ALL;
+    private const int ERROR_REPORTING_LEVEL = E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED;
 
     /**
      * Log message format constants

@@ -82,9 +82,6 @@ use Pheanstalk\Contract\PheanstalkPublisherInterface;
 use RuntimeException;
 use Throwable;
 
-ini_set('error_reporting', E_ALL);
-ini_set('display_startup_errors', 1);
-
 /**
  * WorkerModelsEvents.
  *
