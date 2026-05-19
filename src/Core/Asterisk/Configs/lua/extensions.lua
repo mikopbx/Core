@@ -297,12 +297,22 @@ end
     local destinationNumber = "987654321"
     local isRecordingEnabled = monitorEnable(sourceNumber, destinationNumber)
 ]]
-function monitorEnable(src, dst)
+function monitorEnable(src, dst, fromPeer)
 
     -- Extract the last 9 digits from the source and destination numbers
     src = string.sub(src, -9);
     dst = string.sub(dst, -9);
-    app["NoOp"]("Check (".. src.." -> "..dst..")");
+
+    -- Normalize FROM_PEER: strip WebRTC "-WS" suffix so the endpoint name
+    -- "204-WS" matches the extension "204" stored in [monitor-exceptions].
+    if(fromPeer and fromPeer ~= '')then
+        fromPeer = fromPeer:gsub("%-WS$", "");
+        fromPeer = string.sub(fromPeer, -9);
+    else
+        fromPeer = '';
+    end
+
+    app["NoOp"]("Check (".. src.." -> "..dst.." from "..fromPeer..")");
 
     -- Check if the call is an inner call and conversation recording is disabled for inner calls
     local isInner     = get_variable("DIALPLAN_EXISTS(monitor-internal,"..src..")") == "1" and get_variable("DIALPLAN_EXISTS(monitor-internal,"..dst..")") == "1";
@@ -321,6 +331,16 @@ function monitorEnable(src, dst)
         app["NoOp"]("Is exception numbers. ("..dst..") Conversation recording is disabled");
         return false;
     end
+
+    -- Check the call initiator endpoint. On outbound calls to a trunk and on
+    -- queue agent legs CALLERID/CONNECTEDLINE no longer carry the originating
+    -- internal number, so the per-employee "record calls" switch was ignored.
+    -- FROM_PEER preserves the originating endpoint across those legs.
+    if(fromPeer ~= "" and get_variable("DIALPLAN_EXISTS(monitor-exceptions,"..fromPeer..")") == "1")then
+        app["NoOp"](" -- Is exception numbers. (FROM_PEER="..fromPeer..") Conversation recording is disabled");
+        return false;
+    end
+
     return true;
 end
 
@@ -996,7 +1016,7 @@ function event_dial_answer()
 
     if(monDir ~= '' and string.lower(data['agi_channel']):find("local/") == nil and isSrcChan) then
         -- Enable recording for real channels
-        if(monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"))) then
+        if(monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"), get_variable("FROM_PEER"))) then
             app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
             local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
             local stereoMode = get_variable("MONITOR_STEREO");
@@ -1300,7 +1320,7 @@ function event_transfer_dial_answer()
     local monDir = get_variable("MONITOR_DIR");
     if(monDir ~= '' and string.lower(data['agi_channel']):find("local/") == nil )then
         -- Activate call recording for real channels
-        if(monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"))) then
+        if(monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"), get_variable("FROM_PEER"))) then
             app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
             local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
             local stereoMode = get_variable("MONITOR_STEREO");
@@ -1694,7 +1714,7 @@ function event_dial_app()
     data['action'] = "dial_app";
 
     local monDir = get_variable("MONITOR_DIR");
-    if(monDir ~= '' and get_variable('NEED_MONITOR')=='1' and  monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"))) then
+    if(monDir ~= '' and get_variable('NEED_MONITOR')=='1' and  monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"), get_variable("FROM_PEER"))) then
         app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
         local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
         local stereoMode = get_variable("MONITOR_STEREO");
