@@ -294,7 +294,12 @@ class WorkerStatusMonitor extends WorkerRedisBase
             if (!isset($statusData['devices']) || !is_array($statusData['devices'])) {
                 continue;
             }
-            $this->processExtensionDevices($extension, $statusData['devices'], $currentTime);
+            // PHP silently coerces numeric-string keys to int at array construction.
+            // On installations where every extension is purely numeric (the common
+            // case for PBX) the foreach key ALWAYS arrives as int, violating the
+            // string type-hint on processExtensionDevices(). Cast explicitly so
+            // the callee always receives the contract it declares.
+            $this->processExtensionDevices((string) $extension, $statusData['devices'], $currentTime);
         }
     }
 
