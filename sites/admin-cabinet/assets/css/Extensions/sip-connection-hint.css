@@ -1,0 +1,111 @@
+.sip-connection-hint {
+    margin-top: 0.75em;
+    padding: 0.75em 1em;
+    border: none;
+    border-radius: 4px;
+    background-color: #fafbfc;
+}
+
+.sip-connection-hint-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-bottom: 0.5em;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s;
+}
+
+.sip-connection-hint-header:hover .sip-connection-hint-title {
+    color: #2185d0;
+}
+
+.sip-connection-hint-header:focus-visible {
+    outline: 2px solid #b1d8fb;
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+
+.sip-connection-hint-title {
+    font-weight: 600;
+    color: #555;
+    flex: 1;
+    transition: color 0.15s;
+}
+
+.sip-connection-hint .sip-connection-hint-title i.icon.sip-connection-hint-chevron {
+    margin-left: 0.4em;
+    color: #999;
+    font-size: 0.9em;
+    transition: transform 0.2s ease-out;
+}
+
+.sip-connection-hint.collapsed .sip-connection-hint-chevron {
+    transform: rotate(-90deg);
+}
+
+.sip-connection-hint-actions {
+    margin-left: auto;
+}
+
+.sip-connection-hint-body {
+    overflow: hidden;
+    max-height: 600px;
+    opacity: 1;
+    transition: max-height 0.3s ease-out, opacity 0.2s ease-out, margin-top 0.2s;
+}
+
+.sip-connection-hint.collapsed .sip-connection-hint-body {
+    max-height: 0;
+    opacity: 0;
+    margin-top: -0.5em;
+}
+
+.sip-connection-hint.collapsed .sip-connection-hint-header {
+    margin-bottom: 0;
+}
+
+/*
+ * Use double-class specificity (.sip-connection-hint .ui.table) to override
+ * Fomantic UI's .ui.basic.table styles without resorting to !important.
+ */
+.sip-connection-hint .ui.table.sip-connection-hint-table {
+    margin: 0;
+    background: transparent;
+}
+
+.sip-connection-hint .ui.table.sip-connection-hint-table thead th {
+    background: transparent;
+    color: #888;
+    font-weight: 500;
+    font-size: 0.85em;
+    padding: 0.4em 0.6em;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.sip-connection-hint .ui.table.sip-connection-hint-table tbody td {
+    padding: 0.45em 0.6em;
+    vertical-align: middle;
+}
+
+.sip-connection-hint .ui.table.sip-connection-hint-table tbody tr + tr td {
+    border-top: 1px dashed #ececec;
+}
+
+.sip-connection-hint-table code {
+    background: #eef1f4;
+    padding: 0.1em 0.45em;
+    border-radius: 3px;
+    font-size: 0.92em;
+    color: #2b3038;
+}
+
+@media (max-width: 768px) {
+    .sip-connection-hint .ui.table.sip-connection-hint-table {
+        font-size: 0.85em;
+    }
+    .sip-connection-hint .ui.table.sip-connection-hint-table tbody td,
+    .sip-connection-hint .ui.table.sip-connection-hint-table thead th {
+        padding: 0.35em 0.4em;
+    }
+}

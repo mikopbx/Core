@@ -52,6 +52,8 @@
                 <label>{{ t._('ex_Secret') }}</label>
                 {{ form.render('sip_secret') }}
             </div>
+
+            {{ partial("partials/sipConnectionHint") }}
         </div>
         <div class="field">
             <div class="field">

@@ -21,9 +21,13 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\ExtensionEditForm;
+use MikoPBX\Common\Models\PbxSettings;
 
 class ExtensionsController extends BaseController
 {
+    private const string WSS_PATH = '/asterisk/ws';
+
+
     /**
      * Build the list of internal numbers and employees.
      */
@@ -46,7 +50,7 @@ class ExtensionsController extends BaseController
     public function modifyAction(string $id = ''): void
     {
         $this->view->form = new ExtensionEditForm();
-        
+
         // All data loading moved to JavaScript via REST API - no server-side DB queries needed
         if (empty($id) || $id === 'new') {
             $this->view->represent = $this->translation->_("ex_CreateNewExtension");
@@ -54,6 +58,24 @@ class ExtensionsController extends BaseController
             // Generic placeholder - actual data will be loaded via JavaScript
             $this->view->represent = $this->translation->_("ex_ModifyEmployee");
         }
+
+        $settings   = PbxSettings::getAllPbxSettings();
+        $sipPort    = (int) ($settings[PbxSettings::SIP_PORT] ?? 0);
+        $tlsPort    = (int) ($settings[PbxSettings::TLS_PORT] ?? 0);
+        $extSipPort = (int) ($settings[PbxSettings::EXTERNAL_SIP_PORT] ?? 0);
+        $extTlsPort = (int) ($settings[PbxSettings::EXTERNAL_TLS_PORT] ?? 0);
+
+        $this->view->sipConnectionParams = [
+            'sipPort'    => $sipPort,
+            'tlsPort'    => $tlsPort,
+            'extSipPort' => $extSipPort > 0 ? $extSipPort : $sipPort,
+            'extTlsPort' => $extTlsPort > 0 ? $extTlsPort : $tlsPort,
+            'hasExtSip'  => $extSipPort > 0 && $extSipPort !== $sipPort,
+            'hasExtTls'  => $extTlsPort > 0 && $extTlsPort !== $tlsPort,
+            'wssPort'    => (int) ($settings[PbxSettings::AJAM_PORT_TLS] ?? 0),
+            'wssPath'    => self::WSS_PATH,
+            'authPrefix' => (string) ($settings[PbxSettings::SIP_AUTH_PREFIX] ?? ''),
+        ];
     }
 
     /**

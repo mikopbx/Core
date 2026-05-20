@@ -938,7 +938,8 @@ class AssetProvider implements ServiceProviderInterface
             
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/semantic/card.min.css', true)
-                ->addCss('css/vendor/semantic/list.min.css', true);
+                ->addCss('css/vendor/semantic/list.min.css', true)
+                ->addCss('css/Extensions/sip-connection-hint.css', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
@@ -952,12 +953,13 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/employees-api.js', true)
                 ->addJs('js/pbx/PbxAPI/network-filters-api.js', true)
                 ->addJs('js/pbx/PbxAPI/firewall-api.js', true)
-                ->addJs('js/pbx/FormElements/extension-selector.js', true)        
+                ->addJs('js/pbx/FormElements/extension-selector.js', true)
                 ->addJs('js/vendor/resumable.js', true)
                 ->addJs('js/pbx/Extensions/extension-modify-avatar.js', true)
-                ->addJs('js/pbx/Extensions/extension-modify-status-monitor.js', true)                
-                ->addJs('js/pbx/Extensions/extension-tooltip-manager.js', true)   
-                ->addJs('js/pbx/Extensions/extension-modify.js', true);            
+                ->addJs('js/pbx/Extensions/extension-modify-status-monitor.js', true)
+                ->addJs('js/pbx/Extensions/extension-tooltip-manager.js', true)
+                ->addJs('js/pbx/Extensions/extension-sip-connection-hint.js', true)
+                ->addJs('js/pbx/Extensions/extension-modify.js', true);
         } elseif ($action === 'bulkupload') {
             // CSS for bulk upload interface
             $this->semanticCollectionCSS
