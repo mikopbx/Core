@@ -23,10 +23,15 @@ use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SipHosts;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\Utilities\DnsResolver;
+use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Throwable;
 
 /**
  * ✨ REFERENCE IMPLEMENTATION: Provider Save Action (Polymorphic)
@@ -543,6 +548,25 @@ class SaveRecordAction extends AbstractSaveRecordAction
         if (isset($data['additionalHosts'])) {
             self::updateAdditionalHosts($sip->uniqid, $data['additionalHosts']);
         }
+
+        // Pre-warm the DNS-resolve cache before WorkerModelsEvents picks up the
+        // model change and triggers ReloadPJSIPAction / ReloadDialplanAction.
+        // Without this, the first regeneration after Save runs with an empty
+        // resolved-IP cache for any brand-new hostname, so:
+        //   - identify match= omits the hostname's IPs (incoming calls fall
+        //     into anonymous until WorkerSipDnsResolver ticks, up to 5 min);
+        //   - getIncomingContextId() falls back to a hostname-derived context
+        //     name, then has to be replaced by the canonical-IP-based name a
+        //     few minutes later — creating churn in pjsip.conf / extensions.conf.
+        //
+        // Running the resolve synchronously here is acceptable because
+        // warmupDnsCache() enforces a hard 2-second wall-clock budget
+        // (see self::WARMUP_BUDGET_SEC). Typical real-world cost is ~40ms
+        // when DNS is healthy; an unresponsive resolver costs at most 2s
+        // and the warmup short-circuits early if the cache is already warm.
+        if (!empty($sip->host)) {
+            self::warmupDnsCache((string)$sip->host);
+        }
     }
 
     /**
@@ -629,7 +653,15 @@ class SaveRecordAction extends AbstractSaveRecordAction
     }
 
     /**
-     * Update additional SIP hosts
+     * Update additional SIP hosts.
+     *
+     * Additional hosts go verbatim into pjsip.conf `identify match=` at config
+     * generation time — they are the admin-controlled trusted-source-IP whitelist
+     * for incoming SIP packets. Hostnames here are nonsensical because identify
+     * has no DNS resolver of its own (the whole DnsResolver/WorkerSipDnsResolver
+     * machinery only applies to provider.host, not to m_SipHosts). We therefore
+     * reject anything that is not an IP/CIDR literal at save time, logging a
+     * warning so an operator notices the typo.
      *
      * @param string $sipUniqid SIP unique identifier
      * @param array $hosts Array of host configurations
@@ -648,12 +680,237 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         // Add new hosts
         foreach ($hosts as $hostData) {
-            if (!empty($hostData['address'])) {
-                $sipHost = new SipHosts();
-                $sipHost->provider_id = $sipUniqid;
-                $sipHost->address = $hostData['address'];
-                $sipHost->save();
+            $address = isset($hostData['address']) ? trim((string)$hostData['address']) : '';
+            if ($address === '') {
+                continue;
             }
+            if (!SIPConf::isIpOrCidr($address)) {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Additional host '$address' for provider $sipUniqid is not an IP/CIDR literal — skipped",
+                    LOG_WARNING
+                );
+                continue;
+            }
+            $sipHost = new SipHosts();
+            $sipHost->provider_id = $sipUniqid;
+            $sipHost->address = $address;
+            $sipHost->save();
+        }
+    }
+
+    /**
+     * Process-local re-entrancy guard for {@see self::warmupDnsCache()}.
+     *
+     * A single worker process must not have two warmups in flight at the same
+     * time — each warmup can spawn up to ~23 concurrent nslookup children
+     * (3 SRV + up to 10 targets × 2 A/AAAA + 2 bare A/AAAA), and a worker that
+     * recurses into Save (e.g., via a CRUD-on-save module hook) would
+     * multiply that fan-out without bound. WorkerApiCommands runs 3 parallel
+     * processes; with this guard the absolute ceiling of concurrent nslookup
+     * children attributable to warmup is 3 × ~23 = 69, which is safely within
+     * PID and FD limits on every supported MikoPBX deployment.
+     *
+     * @var bool
+     */
+    private static bool $warmupInFlight = false;
+
+    /**
+     * Total wall-clock budget for warmupDnsCache, in seconds.
+     *
+     * Must stay well under WorkerApiCommands' API_REQUEST_TTL (default 35s)
+     * so a Save can never end up dropped as stale and reported to the admin
+     * as a failure while the row is already persisted in the DB. 2 seconds
+     * is generous for a healthy local resolver (typical real-world warmup
+     * is ~40ms) and short enough that even a completely unresponsive DNS
+     * server cannot stall the UI.
+     */
+    private const int WARMUP_BUDGET_SEC = 2;
+
+    /**
+     * Pre-warm the resolved-IP Redis cache for a hostname-shaped SIP host.
+     *
+     * Called from saveSipConfiguration() right after the model is persisted.
+     * Skips IP/CIDR literals (no DNS needed) and hostnames whose cache is
+     * already warm (avoids redundant work on routine PATCH operations that
+     * don't touch the host field).
+     *
+     * Enforces a HARD wall-clock budget of {@see self::WARMUP_BUDGET_SEC}
+     * across all DNS work. SRV expansion (3 prefixes × N targets × 2 A/AAAA)
+     * can otherwise pile up unbounded latency on a flaky resolver — see
+     * code-review item Critical-3.
+     *
+     * On resolution failure (no addresses or budget exhausted) we log INFO
+     * and let WorkerSipDnsResolver retry on its next tick. Last-known-good
+     * cache entries are never overwritten with a blank result.
+     *
+     * @param string $rawHost Raw host string from the request (may be IP, CIDR,
+     *                        hostname, FQDN with trailing dot, or whitespace-laden)
+     */
+    private static function warmupDnsCache(string $rawHost): void
+    {
+        $host = trim($rawHost);
+        if ($host === '' || SIPConf::isIpOrCidr($host)) {
+            return;
+        }
+
+        // Process-local re-entrancy guard. See $warmupInFlight docblock.
+        if (self::$warmupInFlight) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "Concurrent warmup attempt for $host within the same worker process — skipped",
+                LOG_INFO
+            );
+            return;
+        }
+        self::$warmupInFlight = true;
+
+        // Drop any stale resolved-IP memo so the SIPConf instance we
+        // construct below reads fresh values from Redis. Long-running
+        // WorkerApiCommands processes can otherwise hold a stale memo
+        // from a previous Save in the same process — an architectural
+        // invariant: any code path that mutates the resolved-IPs cache
+        // first invalidates the memo.
+        SIPConf::resetResolvedIpsMemo();
+
+        try {
+            $di = \Phalcon\Di\Di::getDefault();
+            if ($di === null) {
+                return;
+            }
+            $cache = $di->get(RedisClientProvider::SERVICE_NAME);
+
+            $hostKey = SIPConf::normalizeHostnameKey($host);
+            if ($hostKey === '') {
+                return;
+            }
+            $cacheKey = SIPConf::CACHE_KEY_RESOLVED_PREFIX . $hostKey;
+
+            // Cheap short-circuit: if the entry already exists with a payload
+            // that decodes to a non-empty IP list, do not pay DNS latency.
+            $existing = $cache->get($cacheKey);
+            if (is_string($existing) && $existing !== '') {
+                $decoded = json_decode($existing, true);
+                if (is_array($decoded) && !empty($decoded['ips'])) {
+                    return;
+                }
+            }
+
+            $deadline = microtime(true) + self::WARMUP_BUDGET_SEC;
+            $budgetExhausted = static fn() => microtime(true) >= $deadline;
+            $remainingTimeout = static fn() => max(
+                1,
+                (int)ceil(max(0.0, $deadline - microtime(true)))
+            );
+
+            // Two-stage concurrent resolution, mirroring
+            // WorkerSipDnsResolver::resolveSrvWithFallback(). Each stage runs
+            // all of its queries concurrently through DnsResolver::resolveBatch
+            // so the wall-clock cost is ~max(per_query), not ~sum. The 2-second
+            // global budget is enforced by passing the remaining time to each
+            // batch.
+            $ips = [];
+            $src = 'A';
+
+            // Stage 1: concurrent SRV across the three SIP service prefixes.
+            $srvResults = DnsResolver::resolveBatch(
+                [
+                    'udp' => ['type' => 'SRV', 'name' => '_sip._udp.' . $hostKey],
+                    'tcp' => ['type' => 'SRV', 'name' => '_sip._tcp.' . $hostKey],
+                    'tls' => ['type' => 'SRV', 'name' => '_sips._tcp.' . $hostKey],
+                ],
+                $remainingTimeout()
+            );
+            $targets = [];
+            foreach ($srvResults as $list) {
+                foreach ($list as $target) {
+                    $targets[$target] = true;
+                }
+            }
+
+            // Stage 2a: concurrent A + AAAA across every collected target.
+            if (!empty($targets) && !$budgetExhausted()) {
+                $addrQueries = [];
+                foreach (array_keys($targets) as $target) {
+                    $addrQueries["{$target}__A"]    = ['type' => 'A',    'name' => $target];
+                    $addrQueries["{$target}__AAAA"] = ['type' => 'AAAA', 'name' => $target];
+                }
+                foreach (DnsResolver::resolveBatch($addrQueries, $remainingTimeout()) as $list) {
+                    $ips = array_merge($ips, $list);
+                }
+            }
+
+            if (!empty($ips)) {
+                $src = 'SRV';
+            } elseif (!$budgetExhausted()) {
+                // Stage 2b: bare A/AAAA on the hostname itself, also concurrent.
+                $bareResults = DnsResolver::resolveBatch(
+                    [
+                        'A'    => ['type' => 'A',    'name' => $hostKey],
+                        'AAAA' => ['type' => 'AAAA', 'name' => $hostKey],
+                    ],
+                    $remainingTimeout()
+                );
+                $ips = array_merge($bareResults['A'] ?? [], $bareResults['AAAA'] ?? []);
+            }
+
+            $valid = [];
+            foreach ($ips as $ip) {
+                // Reject loopback/RFC1918/link-local from upstream DNS — see
+                // WorkerSipDnsResolver::uniqueValidIps() for the rationale.
+                $ip = (string)$ip;
+                if (IpAddressHelper::isPublicIp($ip)) {
+                    $valid[$ip] = true;
+                }
+            }
+            if (empty($valid)) {
+                // Defer to the worker — never leave a "blank" entry that would
+                // shadow a previous successful resolve (last-known-good rule).
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "DNS warmup yielded no addresses for $hostKey — leaving to WorkerSipDnsResolver"
+                    . ($budgetExhausted() ? ' (budget exhausted)' : ''),
+                    LOG_INFO
+                );
+                return;
+            }
+
+            // Lexicographic sort — stable and deterministic. Not numeric IP
+            // order ("10.0.0.1" < "9.0.0.1") but that is fine: the canonical
+            // IP only needs to be the same across all writers (worker, save,
+            // SIPConf), and the sort comparator is identical in all places.
+            $resolvedIps = array_keys($valid);
+            sort($resolvedIps);
+
+            $payload = json_encode([
+                'ips' => $resolvedIps,
+                'at'  => time(),
+                'src' => $src,
+            ]);
+            if ($payload === false) {
+                return;
+            }
+            $cache->setex($cacheKey, SIPConf::CACHE_TTL_RESOLVED, $payload);
+
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf(
+                    'DNS warmup for %s via %s: [%s]',
+                    $hostKey,
+                    $src,
+                    implode(',', $resolvedIps)
+                ),
+                LOG_INFO
+            );
+        } catch (Throwable $e) {
+            // Save must not fail because DNS is flaky — degrade silently.
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                'DNS warmup failed: ' . $e->getMessage(),
+                LOG_WARNING
+            );
+        } finally {
+            self::$warmupInFlight = false;
         }
     }
 

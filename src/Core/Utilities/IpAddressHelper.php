@@ -361,7 +361,20 @@ class IpAddressHelper
      * Check if IPv6 address is a global unicast address (publicly routable)
      *
      * Global unicast addresses are defined by RFC 4291 as 2000::/3
-     * (addresses starting with binary 001, which means first hex digit is 2 or 3)
+     * (addresses starting with binary 001, which means first hex digit is 2 or 3).
+     *
+     * Additionally rejects three sub-ranges that fall inside 2000::/3 but are
+     * NOT safe for use as a SIP peer's match-IP:
+     *   - 2001:0000::/32  — Teredo tunnelling (RFC 4380); the encoded IPv4
+     *                       inside can be loopback/RFC1918 of the tunnel relay.
+     *   - 2001:db8::/32   — documentation prefix (RFC 3849); never appears in
+     *                       legitimate production traffic.
+     *   - 2002::/16       — 6to4 tunnelling (RFC 3056); hextets 2-3 encode an
+     *                       IPv4 address. `2002:7f00:1::` encodes 127.0.0.1
+     *                       and `2002:0a00::/24` encodes 10.0.0.0/8, giving
+     *                       attacker-controlled DNS an IPv6 path to the
+     *                       loopback/RFC1918 bypass that isPublicIp() blocks
+     *                       on the IPv4 side.
      *
      * @param string $ip IPv6 address to check (can include CIDR notation)
      * @return bool True if the address is a global unicast IPv6 address
@@ -375,11 +388,45 @@ class IpAddressHelper
         // Remove CIDR notation if present
         $ipWithoutCidr = explode('/', $ip)[0];
 
-        // Normalize to lowercase and trim
-        $normalized = strtolower(trim($ipWithoutCidr));
+        // Canonicalise via inet_pton → inet_ntop so subsequent prefix checks
+        // always see the RFC 5952 form (lowercase, shortest representation,
+        // leading zeros removed). Without this step, attacker-controlled
+        // inputs like "2001:0db8::1" or "2001:0:0:0::1" would slip past
+        // str_starts_with checks that compare against canonical strings.
+        $binary = @inet_pton(trim($ipWithoutCidr));
+        if ($binary === false) {
+            return false;
+        }
+        $normalized = @inet_ntop($binary);
+        if ($normalized === false) {
+            return false;
+        }
+        $normalized = strtolower($normalized);
 
         // Global Unicast: 2000::/3 (addresses starting with 2 or 3)
-        return preg_match('/^[23]/', $normalized) === 1;
+        if (preg_match('/^[23]/', $normalized) !== 1) {
+            return false;
+        }
+
+        // Reject 6to4 (2002::/16) — encoded IPv4 may be loopback/RFC1918.
+        if (str_starts_with($normalized, '2002:')) {
+            return false;
+        }
+
+        // Reject the RFC 3849 documentation prefix (2001:db8::/32). Canonical
+        // form is "2001:db8:" or the bare "2001:db8::".
+        if (str_starts_with($normalized, '2001:db8:') || $normalized === '2001:db8::') {
+            return false;
+        }
+
+        // Reject Teredo (2001:0000::/32). In canonical form the all-zero
+        // second group collapses to either an empty hextet ("2001::") or
+        // a literal zero ("2001:0:"). The regex covers both shapes.
+        if (preg_match('/^2001:0?:/', $normalized) === 1 || str_starts_with($normalized, '2001::')) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

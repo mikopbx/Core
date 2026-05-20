@@ -491,6 +491,14 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'description' => 'rest_schema_provider_host',
                 'maxLength' => 255,
                 'sanitize' => 'string',
+                // Accept hostnames (RFC 1123), IPv4 literals, and IPv6 with or
+                // without brackets. Reject anything that could be interpreted as
+                // a shell/log-injection vector — whitespace, newlines, $, `, ;,
+                // |, &, etc. The value flows into syslog messages and (after
+                // escapeshellarg) into nslookup, so a strict whitelist here is
+                // the cheapest defence-in-depth. Empty string is allowed for
+                // INBOUND providers that have no outgoing host.
+                'pattern' => '^[a-zA-Z0-9._\-:\[\]]*$',
                 'example' => 'sip.provider.com'
             ],
             'port' => [
@@ -756,7 +764,16 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                             'type' => 'string',
                             'description' => 'rest_schema_provider_host_address',
                             'maxLength' => 255,
-                            'example' => 'backup.provider.com'
+                            // Additional hosts go verbatim into pjsip.conf identify
+                            // match= (admin-controlled trust whitelist), so they
+                            // must be IP/CIDR literals. Hostnames here are nonsensical
+                            // — identify cannot resolve them, and DnsResolver does
+                            // not consult m_SipHosts. The same character whitelist as
+                            // provider.host plus `/` for CIDR notation; isIpOrCidr()
+                            // enforces structure at save time (see
+                            // SaveRecordAction::updateAdditionalHosts).
+                            'pattern' => '^[a-zA-Z0-9._\-:\[\]/]*$',
+                            'example' => '198.51.100.0/24'
                         ]
                     ]
                 ],

@@ -46,6 +46,7 @@ use MikoPBX\Core\Workers\WorkerRedisBase;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\Core\Workers\WorkerS3Upload;
 use MikoPBX\Core\Workers\WorkerS3CacheCleaner;
+use MikoPBX\Core\Workers\WorkerSipDnsResolver;
 use MikoPBX\Core\Workers\WorkerSoundFilesInit;
 use MikoPBX\Core\Workers\WorkerWav2Webm;
 use MikoPBX\Common\Models\StorageSettings;
@@ -553,6 +554,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerLogRotate::class,
                     WorkerRemoveOldRecords::class,
                     WorkerNotifyAdministrator::class,
+                    WorkerSipDnsResolver::class,
                     WorkerWav2Webm::class,
                 ],
         ];

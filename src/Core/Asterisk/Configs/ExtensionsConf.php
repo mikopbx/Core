@@ -314,6 +314,14 @@ class ExtensionsConf extends AsteriskConfigClass
      */
     public static function reload(): void
     {
+        // The off-work-times generator inside generateConfig() calls
+        // SIPConf::getIncomingContextId() which consults a process-local memo
+        // of resolved IPs. When this reload action runs standalone (i.e.
+        // without an intervening SIPConf::generateConfig that would have
+        // reset the memo), the memo can serve IPs from a previous tick.
+        // Drop it before regenerating to guarantee context-name freshness.
+        SIPConf::resetResolvedIpsMemo();
+
         $conf = new self();
         $conf->generateConfig();
 

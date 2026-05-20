@@ -32,12 +32,15 @@ use MikoPBX\Common\Models\{Codecs,
     SipHosts,
     Users};
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\CallerIdDidProcessor;
 use MikoPBX\Core\System\{ Network, Processes, SslCertificateService, System, SystemMessages, Util};
 use MikoPBX\Core\System\Configs\PbxConf;
+use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\Core\System\Directories;
 use Throwable;
@@ -138,11 +141,82 @@ class SIPConf extends AsteriskConfigClass
     protected ?array $data_rout = null;
 
     /**
+     * Cache key holding the list of provider hostnames that need periodic
+     * DNS resolution for identify match=. Written at the end of each
+     * pjsip.conf generation; read by WorkerSipDnsResolver. Lives on
+     * RedisClientProvider (DB1, worker-IPC namespace) — admin-facing
+     * "cache clear" buttons that wipe DB4 must NOT erase this state.
+     */
+    public const string CACHE_KEY_PENDING_HOSTS = 'pjsip:identify:pending-hosts';
+
+    /**
+     * Cache key prefix for the resolved-IP record of a single hostname.
+     * Full key: CACHE_KEY_RESOLVED_PREFIX . normalizeHostnameKey($hostname).
+     * Value: ['ips' => [...], 'at' => <unix-ts>, 'src' => 'A'|'SRV'].
+     * Lives on RedisClientProvider (DB1).
+     */
+    public const string CACHE_KEY_RESOLVED_PREFIX = 'pjsip:identify:resolved:';
+
+    /**
+     * Resolved-IP records live 7 days. Long TTL is deliberate: it lets the
+     * last known-good identify match= survive transient DNS outages spanning
+     * reboots, while WorkerSipDnsResolver refreshes the value every few
+     * minutes when DNS is healthy.
+     */
+    public const int CACHE_TTL_RESOLVED = 7 * 86400;
+
+    /**
+     * Defensive cap on IPs read from one resolved-IP cache entry. A poisoned
+     * Redis payload could otherwise flood pjsip.conf `identify match=` with
+     * thousands of IPs, blowing up config size and Asterisk's identify-lookup
+     * table. 64 IPs covers every real ITSP we have seen (Twilio publishes ≤4
+     * regional IPs per signaling endpoint); anything larger is an indicator
+     * of either misconfiguration or attack.
+     */
+    public const int MAX_IPS_PER_RESOLVED_ENTRY = 64;
+
+    /**
+     * Mutex name used to serialize concurrent pjsip.conf regeneration between
+     * WorkerModelsEvents (ReloadPJSIPAction) and WorkerSipDnsResolver
+     * (ReloadPJSIPIdentifyAction). Without this both PIDs may write the file
+     * and the topology hash at the same wall-clock moment, leaving Asterisk
+     * to module-reload a half-flushed config. See code-review item Critical-1.
+     */
+    public const string MUTEX_CONF_WRITE = 'pjsip-conf-write';
+
+    /**
      * SIP hosts data.
      *
      * @var array
      */
     protected array $dataSipHosts;
+
+    /**
+     * Hostnames collected during pjsip.conf generation that need to be
+     * resolved by WorkerSipDnsResolver. Persisted at the end of generation
+     * into CACHE_KEY_PENDING_HOSTS so the worker has a single source of
+     * truth and stale entries do not linger across config regenerations.
+     *
+     * @var array<string,true> Set-semantics: hostname keys, true values.
+     */
+    protected array $pendingResolveHostnames = [];
+
+    /**
+     * Process-local memo of resolved-IP lookups, keyed by normalized hostname.
+     * A full pjsip.conf + extensions.conf regeneration calls
+     * {@see self::readResolvedIps()} multiple times per hostname (from
+     * generateProviderIdentify, getIncomingContextId for each peer/provider,
+     * and from ExtensionsOutWorkTimeConf). Without this memo each call is a
+     * Redis GET on a loopback socket — fast, but multiplied by N providers
+     * × 4 call-sites it adds up needlessly.
+     *
+     * Reset at the top of {@see self::generateConfigProtected()} so stale
+     * data from a previous generation cannot leak across calls in the long-
+     * running WorkerModelsEvents process.
+     *
+     * @var array<string,array<int,string>>
+     */
+    private static array $resolvedIpsMemo = [];
 
     /**
      * The SIP technology used.
@@ -831,6 +905,22 @@ class SIPConf extends AsteriskConfigClass
         // newly-issued certs without restart.
         self::resetCertsCache();
 
+        // Reset the per-generation hostname collector. Without this, repeated
+        // generations on the same long-running object would accumulate stale
+        // entries from providers that were since removed or renamed.
+        $this->pendingResolveHostnames = [];
+
+        // NOTE: resolvedIpsMemo reset has been moved out of this method to
+        // the top-level callers (SIPConf::reloadUnderLock, ExtensionsConf::
+        // reload, ReloadPJSIPIdentifyAction::regenerateAndReload, and
+        // SaveRecordAction::warmupDnsCache). Resetting here would wipe the
+        // memo that getSettings() / refreshProviders() / getIncomingContextId()
+        // populated BEFORE generateConfigProtected() runs in the parent
+        // generateConfig() flow, producing a mismatch between the context
+        // name baked into endpoint.context (step 1) and the match-IPs read
+        // for the identify section (step 3) when WorkerSipDnsResolver
+        // updates Redis between those two steps.
+
         $conf  = $this->generateGeneralPj();
         $conf .= $this->generateProvidersPj();
         $conf .= $this->generatePeersPj();
@@ -852,6 +942,12 @@ class SIPConf extends AsteriskConfigClass
 
         // Write pjsip.conf file
         $this->saveConfig($conf, $this->description);
+
+        // Publish the SET of provider hostnames that still need DNS resolution.
+        // Populated incrementally by generateProviderIdentify() for every provider
+        // whose host or outbound_proxy is a hostname (not an IP/CIDR literal).
+        // Read by WorkerSipDnsResolver on its next tick.
+        $this->persistPendingHostnames();
 
         // Asterisk has to be restarted to apply the changes over ami
         if ($this->booting !== true) {
@@ -1871,15 +1967,46 @@ class SIPConf extends AsteriskConfigClass
      */
     private function generateProviderIdentify(array $provider, array $manual_attributes): string
     {
+        // identify match= MUST contain literal IP/CIDR — res_pjsip_endpoint_identifier_ip
+        // resolves match through the PJLIB DNS resolver exactly once at module load and
+        // never re-resolves. A failed resolve at load (DNS race on boot, NXDOMAIN at the
+        // moment) leaves identify empty forever and incoming INVITEs fall into anonymous.
+        //
+        // Source order for the literal IP/CIDR pool:
+        //   1. admin-controlled m_SipHosts (passed through verbatim — admin's responsibility)
+        //   2. provider.host         if it is itself an IP/CIDR (else recorded as pending DNS)
+        //   3. outbound_proxy host   same rule
+        //   4. cached resolved IPs   from CACHE_KEY_RESOLVED_PREFIX populated by
+        //                            WorkerSipDnsResolver via SRV+A/AAAA (multiple IPs per host)
+        //
+        // Hostnames that need DNS go into $pendingResolveHostnames; the worker reads the
+        // accumulated SET at CACHE_KEY_PENDING_HOSTS after we persist it at end of generation.
         $providerHosts = $this->dataSipHosts[$provider['uniqid']] ?? [];
-        if (!empty($provider['host'])) {
-            $providerHosts[] = $provider['host'];
+
+        foreach ([$provider['host'] ?? '', self::extractHostFromOutboundProxy($provider['outbound_proxy'] ?? '')] as $rawHost) {
+            $rawHost = trim((string)$rawHost);
+            if ($rawHost === '') {
+                continue;
+            }
+            if (self::isIpOrCidr($rawHost)) {
+                $providerHosts[] = $rawHost;
+                continue;
+            }
+            // Hostname — defer to cache. Worker fills CACHE_KEY_RESOLVED_PREFIX.
+            $hostKey = self::normalizeHostnameKey($rawHost);
+            $this->pendingResolveHostnames[$hostKey] = true;
+            $cachedIps = self::readResolvedIps($hostKey);
+            if (!empty($cachedIps)) {
+                $providerHosts = array_merge($providerHosts, $cachedIps);
+            }
         }
-        if (!empty($provider['outbound_proxy'])) {
-            $providerHosts[] = explode(':', $provider['outbound_proxy'])[0];
-        }
+
         if (empty($providerHosts)) {
-            // Return empty configuration if provider hosts are empty
+            // No literal IP/CIDR available (yet). identify section is omitted; incoming
+            // calls from this provider will not be identified by IP until either:
+            //   - admin adds an IP/CIDR to "Additional hosts" (m_SipHosts), or
+            //   - WorkerSipDnsResolver successfully resolves the hostname and we
+            //     regenerate via ReloadPJSIPIdentifyAction.
             return '';
         }
 
@@ -2093,6 +2220,206 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
+     * Clear the process-local resolved-IP memo populated by {@see self::readResolvedIps()}.
+     *
+     * Must be called at the top of any code path that may consume the cached
+     * resolved IPs but does NOT go through {@see self::generateConfigProtected()}.
+     * In particular, {@see ExtensionsConf::reload()} calls
+     * {@see self::getIncomingContextId()} via the off-work-times generator
+     * without first regenerating pjsip.conf — without this reset the memo
+     * survives across two unrelated reload actions in a single long-running
+     * WorkerModelsEvents process and serves stale data.
+     */
+    public static function resetResolvedIpsMemo(): void
+    {
+        self::$resolvedIpsMemo = [];
+    }
+
+    /**
+     * Whether a string is a literal IPv4/IPv6 address or CIDR block.
+     * Used as the gate that decides if a provider host is suitable for
+     * identify match= directly, or whether it must go through DNS resolution
+     * (which is deferred to WorkerSipDnsResolver, never done synchronously
+     * during pjsip.conf generation — see SIPConf.php:2107-2109 comment).
+     */
+    public static function isIpOrCidr(string $value): bool
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return false;
+        }
+        $ip = explode('/', $value, 2)[0];
+        return IpAddressHelper::isIpv4($ip) || IpAddressHelper::isIpv6($ip);
+    }
+
+    /**
+     * Canonical key for a hostname used in cache lookups. Mirrors the
+     * normalizeHost() rule from #1044 (AbstractProviderStatusAction) so that
+     * hostnames stored in DB and hostnames returned from the SRV/A resolver
+     * collapse to the same key regardless of case or trailing FQDN dot.
+     *
+     * Also strips any character outside the host whitelist (same one enforced
+     * by the API DataStructure pattern for provider.host) as defence-in-depth:
+     * pre-patch DB rows or m_SipHosts entries written before the validation
+     * existed could contain newlines or control characters that would land in
+     * syslog formatting via the worker (see audit finding INFO-LEAK-1).
+     */
+    public static function normalizeHostnameKey(string $hostname): string
+    {
+        $stripped = preg_replace('/[^a-zA-Z0-9._\-:\[\]]/', '', $hostname) ?? '';
+        return strtolower(rtrim(trim($stripped), '.'));
+    }
+
+    /**
+     * Extract the host portion from an outbound_proxy value, handling:
+     *   - bare hostname/IP                       → "host"
+     *   - hostname/IPv4 with port                → "host:port" → "host"
+     *   - IPv6 in brackets, optional port        → "[2001:db8::1]:5060" → "2001:db8::1"
+     *   - SIP URI with parameters                → "host;transport=udp" → "host"
+     * Mirrors the bracketing rules of buildHostPort() (the inverse direction).
+     */
+    public static function extractHostFromOutboundProxy(string $outboundProxy): string
+    {
+        $value = trim($outboundProxy);
+        if ($value === '') {
+            return '';
+        }
+        // Strip URI parameters (;transport=...) and scheme (sip:/sips:) — outbound_proxy
+        // in MikoPBX is normally just host[:port] but be defensive.
+        $value = preg_replace('/^sips?:/i', '', $value);
+        $value = explode(';', $value, 2)[0];
+
+        // Bracketed IPv6: [2001:db8::1] or [2001:db8::1]:5060
+        if (str_starts_with($value, '[')) {
+            $end = strpos($value, ']');
+            if ($end !== false) {
+                return substr($value, 1, $end - 1);
+            }
+        }
+        // hostname/IPv4 [:port]
+        $parts = explode(':', $value);
+        if (count($parts) === 2) {
+            return $parts[0];
+        }
+        // Bare IPv6 without brackets — return whole string; isIpOrCidr will validate.
+        return $value;
+    }
+
+    /**
+     * Read the cached resolved-IP set for a normalized hostname key.
+     * Returns an array of literal IPs (filtered to valid IPv4/IPv6 only).
+     * Empty array on cache miss, malformed payload, or DI absence.
+     *
+     * Cache lives on RedisClientProvider (DB1) — same namespace as the rest
+     * of worker IPC; survives admin-side "cache clear" of DB4.
+     *
+     * Storage shape: raw \Redis (DB1) returns string|false. We store payloads
+     * JSON-encoded so the format is explicit and format-independent
+     * (Phalcon's PHP serializer is bypassed because RedisClientProvider
+     * returns the bare \Redis client, not its Storage Adapter wrapper).
+     *
+     * Process-local memo (see {@see self::$resolvedIpsMemo}) collapses the
+     * 4+ Redis GETs per hostname during a single full generation pass into
+     * one. Memo is reset at the top of generateConfigProtected().
+     */
+    private static function readResolvedIps(string $hostKey): array
+    {
+        if (isset(self::$resolvedIpsMemo[$hostKey])) {
+            return self::$resolvedIpsMemo[$hostKey];
+        }
+
+        $di = \Phalcon\Di\Di::getDefault();
+        if ($di === null) {
+            return self::$resolvedIpsMemo[$hostKey] = [];
+        }
+        try {
+            $cache = $di->get(RedisClientProvider::SERVICE_NAME);
+            $raw = $cache->get(self::CACHE_KEY_RESOLVED_PREFIX . $hostKey);
+        } catch (Throwable) {
+            return self::$resolvedIpsMemo[$hostKey] = [];
+        }
+        if (!is_string($raw) || $raw === '') {
+            return self::$resolvedIpsMemo[$hostKey] = [];
+        }
+        $payload = json_decode($raw, true);
+        if (!is_array($payload) || empty($payload['ips']) || !is_array($payload['ips'])) {
+            return self::$resolvedIpsMemo[$hostKey] = [];
+        }
+        // Defensive truncation BEFORE the per-IP validation loop — a payload
+        // with tens of thousands of strings would otherwise pay the
+        // filter_var() cost on every entry. Anyone exceeding the cap is
+        // either misconfigured or hostile; log once so operators can spot it.
+        $ips = $payload['ips'];
+        if (count($ips) > self::MAX_IPS_PER_RESOLVED_ENTRY) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf(
+                    'Resolved-IP cache entry for %s holds %d entries (max %d) — truncated',
+                    $hostKey,
+                    count($ips),
+                    self::MAX_IPS_PER_RESOLVED_ENTRY
+                ),
+                LOG_WARNING
+            );
+            $ips = array_slice($ips, 0, self::MAX_IPS_PER_RESOLVED_ENTRY);
+        }
+        // Defense in depth: even though WorkerSipDnsResolver and
+        // SaveRecordAction::warmupDnsCache already filter via isPublicIp()
+        // on write, drop any non-public IPs that might have landed in
+        // Redis from an older patch revision or direct Redis-side
+        // tampering. Without this, `identify match=` in pjsip.conf could
+        // accept attacker-controlled traffic from loopback / RFC1918.
+        $valid = [];
+        foreach ($ips as $ip) {
+            $ip = (string)$ip;
+            if (IpAddressHelper::isPublicIp($ip)) {
+                $valid[] = $ip;
+            }
+        }
+        return self::$resolvedIpsMemo[$hostKey] = $valid;
+    }
+
+    /**
+     * Persist the list of hostnames encountered during this generation pass
+     * so WorkerSipDnsResolver can iterate them on its next tick.
+     * Single overwrite — old entries removed implicitly when no provider
+     * references that hostname anymore.
+     *
+     * Stored on RedisClientProvider (DB1) as a JSON-encoded array; the raw
+     * \Redis client does not auto-serialize, so we encode explicitly.
+     *
+     * Degradation mode: if Redis is down at generation time the list is
+     * never published, the worker reads `false` and sleeps until the next
+     * generation succeeds. pjsip.conf is still self-consistent — identify
+     * sections for hostname providers were also omitted because the
+     * resolved-IP cache was unreachable in the same call.
+     */
+    protected function persistPendingHostnames(): void
+    {
+        $di = \Phalcon\Di\Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+        try {
+            $cache = $di->get(RedisClientProvider::SERVICE_NAME);
+            $payload = json_encode(array_keys($this->pendingResolveHostnames));
+            if ($payload === false) {
+                return; // unreachable for a plain array of strings, but defensive
+            }
+            // setex semantics: SET key TTL value. Long TTL — refreshed implicitly
+            // on every pjsip.conf regeneration. If generation stops happening
+            // for >7 days the list expires and the worker has nothing to do.
+            $cache->setex(self::CACHE_KEY_PENDING_HOSTS, self::CACHE_TTL_RESOLVED, $payload);
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                'Failed to persist pending hostnames: ' . $e->getMessage(),
+                LOG_WARNING
+            );
+        }
+    }
+
+    /**
      * Get the incoming context ID for a given name and port.
      *
      * This method generates the incoming context ID by removing non-alphanumeric characters
@@ -2104,14 +2431,36 @@ class SIPConf extends AsteriskConfigClass
      */
     public static function getIncomingContextId(string $name, string $port): string
     {
-        // Use hostname directly without DNS resolution to avoid blocking during config generation
-        // DNS resolution can take several seconds per unreachable host, causing slow startup
-        // The context ID only needs to be unique and stable, not IP-based.
-        //
         // Empty port = SRV-based discovery (RFC 3263). Use 'srv' marker so context names are
         // self-documenting (e.g. "example.com-srv-incoming") and SRV providers do not silently
         // merge with legacy records that happen to have an empty port column from older versions.
         $portMarker = (trim($port) === '' || (int)$port === 0) ? 'srv' : $port;
+
+        // Two providers whose distinct hostnames resolve to the same backing IP must share
+        // one incoming dialplan context (issue #1066). Pre-6e4d8bbb0c achieved this by calling
+        // `gethostbyname()` here synchronously — which we will not re-introduce: that path
+        // blocks 30-50s per unreachable host and was the very reason 6e4d8bbb0c removed it.
+        //
+        // Instead read the Redis-cached resolved-IP set populated by WorkerSipDnsResolver.
+        // The canonical IP is the lexicographically smallest entry (sort() is stable on
+        // strings) — NOT the numerically smallest. "10.0.0.1" lexsorts BEFORE "9.0.0.1".
+        // That is intentional and safe: the ONLY requirement is that every writer of the
+        // resolved-IPs cache (WorkerSipDnsResolver, SaveRecordAction::warmupDnsCache, this
+        // method) picks the SAME canonical via the SAME comparator, so different writers
+        // can never disagree on the context name. Lexicographic `sort()` on strings is
+        // identical in all three call sites.
+        //
+        // Cache miss (worker never ran, Redis down, brand-new hostname) → fall back to
+        // hostname-as-string, matching post-6e4d8bbb0c behaviour. WorkerSipDnsResolver
+        // will populate the cache within one tick and trigger a regeneration that picks
+        // up the IP-based name.
+        if (!self::isIpOrCidr($name)) {
+            $cachedIps = self::readResolvedIps(self::normalizeHostnameKey($name));
+            if (!empty($cachedIps)) {
+                sort($cachedIps);
+                $name = $cachedIps[0];
+            }
+        }
 
         return preg_replace("/[^a-z\d]/iu", '', $name . $portMarker) . '-incoming';
     }
@@ -2702,6 +3051,12 @@ class SIPConf extends AsteriskConfigClass
     /**
      * Refreshes the SIP configurations and reloads the PJSIP module.
      * Synchronizes codec database with Asterisk before regenerating config.
+     *
+     * Serialized through MUTEX_CONF_WRITE so it cannot race with the narrow
+     * ReloadPJSIPIdentifyAction (which also regenerates pjsip.conf). Both
+     * paths writing the same file at the same wall-clock moment would let
+     * Asterisk module-reload a half-flushed config — see code-review
+     * item Critical-1.
      */
     public static function reload(): void
     {
@@ -2709,7 +3064,39 @@ class SIPConf extends AsteriskConfigClass
         if ($di === null) {
             return;
         }
-        
+
+        try {
+            $di->get(MutexProvider::SERVICE_NAME)->synchronized(
+                self::MUTEX_CONF_WRITE,
+                static fn() => self::reloadUnderLock(),
+                timeout: 10,
+                ttl: 30
+            );
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                'pjsip.conf reload skipped: could not acquire mutex (' . $e->getMessage() . ')',
+                LOG_WARNING
+            );
+        }
+    }
+
+    /**
+     * Body of {@see self::reload()}, separated to keep the mutex-acquisition
+     * and the configuration-regeneration paths visually distinct.
+     *
+     * Callers MUST hold MUTEX_CONF_WRITE for the duration of this call. The
+     * single caller is the closure inside {@see self::reload()} itself —
+     * external callers go through `reload()` to acquire the lock first.
+     */
+    private static function reloadUnderLock(): void
+    {
+        // Top-level reset so a stale Redis miss cached by a previous
+        // generation in the same long-lived process cannot leak into
+        // this pjsip.conf write — see code-review Pass 5 finding on
+        // mid-generation memo reset.
+        self::resetResolvedIpsMemo();
+
         $sip = new self();
         $needRestart = $sip->needAsteriskRestart();
         $sip->generateConfig();
