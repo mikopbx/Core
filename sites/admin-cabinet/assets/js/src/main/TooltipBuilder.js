@@ -176,6 +176,12 @@ const TooltipBuilder = {
                     className: {
                         popup: 'ui popup field-info-popup'
                     },
+                    // Force placement even when no position fully fits the viewport.
+                    // Why: Tall PJSIP/manualattributes tooltip can exceed available space
+                    // on either side of the icon at common viewport heights (~720-800px),
+                    // and Fomantic otherwise hides the popup. The CSS cap on
+                    // .field-info-popup adds overflow-y:auto for scrolling.
+                    lastResort: true,
                     on: 'manual'  // Manual control for better handling inside labels
                 });
 
@@ -243,6 +249,7 @@ const TooltipBuilder = {
                 className: {
                     popup: 'ui popup field-info-popup'
                 },
+                lastResort: true,
                 on: 'manual'
             });
 
