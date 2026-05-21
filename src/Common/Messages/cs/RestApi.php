@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Při rozbalování modulu došlo k chybě',
     'rest_err_module_path_traversal' => 'Škodlivý archiv: položka «%entryName%» obsahuje path traversal',
     'rest_err_module_path_escape' => 'Škodlivý archiv: položka «%entryName%» se nachází mimo adresář modulu',
+    'rest_fw_ChangePriority' => 'Změnit prioritu pravidla firewallu',
+
+    'rest_fw_ChangePriorityDesc' => 'Přesune pravidlo nahoru nebo dolů v seznamu — pravidla se aplikují podle priority shora dolů.',
+
+    'rest_schema_banned_ips_envelope' => 'Odpověď se zablokovanými IP: mapa adres v items, metadata časového pásma serveru v _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'Auto-whitelist: IP adresy a podsítě z pravidel firewallu s povoleným příznakem newer_block_ip',
+
+    'rest_schema_f2b_security_mode' => 'Úroveň zabezpečení Fail2Ban: relaxed, balanced, strict nebo paranoid',
+
+    'rest_schema_module_type' => 'Typ modulu: core (vestavěný) nebo external (instalovatelný)',
+
+    'rest_schema_server_timezone' => 'Název časového pásma IANA serveru PBX (např. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Posun časového pásma serveru od UTC v sekundách',
+
+    'rest_schema_server_tz_meta' => 'Metadata časového pásma serveru PBX používaná uživatelským rozhraním pro zobrazení časových razítek',
+
+    'rest_response_200_priority_changed' => 'Priorita úspěšně změněna',
+
+    'rest_response_422_validation_error' => 'Chyba ověření požadavku',
+
+    'rest_param_cdr_format' => 'Formát exportu CDR: csv, json nebo xml',
+
 ];

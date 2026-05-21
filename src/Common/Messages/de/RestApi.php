@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Fehler beim Entpacken des Moduls',
     'rest_err_module_path_traversal' => 'Schädliches Archiv: Eintrag «%entryName%» enthält path traversal',
     'rest_err_module_path_escape' => 'Schädliches Archiv: Eintrag «%entryName%» liegt außerhalb des Modulverzeichnisses',
+    'rest_fw_ChangePriority' => 'Firewall-Regel-Priorität ändern',
+
+    'rest_fw_ChangePriorityDesc' => 'Verschiebt die Regel in der Liste nach oben oder unten — Regeln werden nach Priorität von oben nach unten angewendet.',
+
+    'rest_schema_banned_ips_envelope' => 'Antwort mit gesperrten IPs: Adresszuordnung unter items, Server-Zeitzone-Metadaten unter _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'Auto-Whitelist: IP-Adressen und Subnetze aus Firewall-Regeln mit aktiviertem newer_block_ip-Flag',
+
+    'rest_schema_f2b_security_mode' => 'Fail2Ban-Sicherheitsstufe: relaxed, balanced, strict oder paranoid',
+
+    'rest_schema_module_type' => 'Modultyp: core (eingebaut) oder external (installierbar)',
+
+    'rest_schema_server_timezone' => 'IANA-Zeitzonenname des PBX-Servers (z. B. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Server-Zeitzonen-Offset gegenüber UTC, in Sekunden',
+
+    'rest_schema_server_tz_meta' => 'PBX-Server-Zeitzonen-Metadaten, die von der UI zur Anzeige von Zeitstempeln verwendet werden',
+
+    'rest_response_200_priority_changed' => 'Priorität erfolgreich geändert',
+
+    'rest_response_422_validation_error' => 'Validierungsfehler der Anfrage',
+
+    'rest_param_cdr_format' => 'CDR-Exportformat: csv, json oder xml',
+
 ];

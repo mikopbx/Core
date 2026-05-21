@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalTranslate, PasskeysAPI, UserMessage, ClipboardJS */
+/* global globalTranslate, PasskeysAPI, UserMessage, ClipboardJS, PbxDateTime */
 
 /**
  * GeneralSettingsPasskeys object is responsible for managing Passkeys in General Settings
@@ -121,12 +121,24 @@ const GeneralSettingsPasskeys = {
     },
 
     /**
-     * Load passkeys from server
+     * Load passkeys from server. The endpoint wraps the array in
+     * `{ items, _meta }` so the UI can format `last_used_at` in server TZ;
+     * accept the legacy raw-array shape for backward compatibility.
      */
     loadPasskeys() {
         PasskeysAPI.getList((response) => {
             if (response.result && response.data) {
-                this.passkeys = response.data;
+                const payload = response.data;
+                if (Array.isArray(payload)) {
+                    this.passkeys = payload;
+                } else if (payload.items && Array.isArray(payload.items)) {
+                    this.passkeys = payload.items;
+                    if (payload._meta) {
+                        PbxDateTime.setServerMeta(payload._meta);
+                    }
+                } else {
+                    this.passkeys = [];
+                }
             } else {
                 this.passkeys = [];
             }
@@ -154,9 +166,25 @@ const GeneralSettingsPasskeys = {
 
             // Add passkey rows
             this.passkeys.forEach((passkey) => {
-                const lastUsed = passkey.last_used_at
-                    ? this.formatDate(passkey.last_used_at)
-                    : globalTranslate.pk_NeverUsed;
+                let lastUsedHtml;
+                if (passkey.last_used_at) {
+                    const { display, tooltipHtml } = this.formatDate(passkey.last_used_at);
+                    if (tooltipHtml) {
+                        // Use the same Fomantic popup contract as the rest of the
+                        // table (`data-content` is consumed by $table.find('[data-content]').popup()`).
+                        // Adding `data-variation="inverted"` matches the styling used in Fail2Ban.
+                        const safe = tooltipHtml.replace(/"/g, '&quot;');
+                        lastUsedHtml = (
+                            `<span class="passkey-last-used-tooltip" data-html="${safe}"`
+                            + ' data-position="top center" data-variation="inverted">'
+                            + `${this.escapeHtml(display)}</span>`
+                        );
+                    } else {
+                        lastUsedHtml = `<span>${this.escapeHtml(display)}</span>`;
+                    }
+                } else {
+                    lastUsedHtml = this.escapeHtml(globalTranslate.pk_NeverUsed);
+                }
 
                 const html = `
                     <tr data-id="${passkey.id}">
@@ -165,7 +193,7 @@ const GeneralSettingsPasskeys = {
                                 <strong>${this.escapeHtml(passkey.name)}</strong>
                             </div>
                             <div style="font-size: 0.85em; color: rgba(0,0,0,.4);">
-                                ${globalTranslate.pk_ColumnLastUsed}: ${lastUsed}
+                                ${globalTranslate.pk_ColumnLastUsed}: ${lastUsedHtml}
                             </div>
                         </td>
                         <td class="right aligned collapsing">
@@ -195,18 +223,43 @@ const GeneralSettingsPasskeys = {
 
             // Initialize tooltips
             $table.find('[data-content]').popup();
+            // Last-used cells carry the dual-TZ HTML in data-html. Fomantic's
+            // `html` setting accepts a raw template string, so we wire it up
+            // per element to give each cell its own popup body.
+            $table.find('.passkey-last-used-tooltip').each(function () {
+                const $el = $(this);
+                $el.popup('destroy');
+                $el.popup({
+                    html: $el.attr('data-html'),
+                    hoverable: true,
+                    variation: 'inverted',
+                    position: 'top center',
+                    delay: { show: 200, hide: 100 },
+                });
+            });
         }
     },
 
     /**
-     * Format date for display
-     * @param {string} dateString - ISO date string
-     * @returns {string} Formatted date
+     * Format `last_used_at` for display. The backend stores it as a
+     * `Y-m-d H:i:s` string already in server TZ; we render the server-side
+     * value as-is and expose the browser equivalent via a Fomantic popup.
+     *
+     * @param {string} dateString - Server-side "Y-m-d H:i:s" string
+     * @returns {{display:string, tooltipHtml:string}}
      */
     formatDate(dateString) {
-        if (!dateString) return '-';
-        const date = new Date(dateString);
-        return date.toLocaleString();
+        if (!dateString) {
+            return { display: '-', tooltipHtml: '' };
+        }
+        const ts = PbxDateTime.serverStringToTimestamp(dateString);
+        if (ts === null) {
+            return { display: dateString, tooltipHtml: '' };
+        }
+        return {
+            display: PbxDateTime.formatServerTime(ts),
+            tooltipHtml: PbxDateTime.buildDualTooltipHtml(ts),
+        };
     },
 
     /**

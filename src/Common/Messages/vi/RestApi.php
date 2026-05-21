@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Đã xảy ra lỗi trong quá trình giải nén module',
     'rest_err_module_path_traversal' => 'Kho lưu trữ độc hại: mục «%entryName%» chứa path traversal',
     'rest_err_module_path_escape' => 'Kho lưu trữ độc hại: mục «%entryName%» nằm ngoài thư mục module',
+    'rest_fw_ChangePriority' => 'Thay đổi mức ưu tiên của quy tắc tường lửa',
+
+    'rest_fw_ChangePriorityDesc' => 'Di chuyển quy tắc lên hoặc xuống trong danh sách — các quy tắc được áp dụng theo mức ưu tiên từ trên xuống dưới.',
+
+    'rest_schema_banned_ips_envelope' => 'Phản hồi IP bị cấm: bản đồ địa chỉ trong items, siêu dữ liệu múi giờ máy chủ trong _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'Danh sách trắng tự động: địa chỉ IP và mạng con từ các quy tắc tường lửa có cờ newer_block_ip được bật',
+
+    'rest_schema_f2b_security_mode' => 'Cấp độ bảo mật Fail2Ban: relaxed, balanced, strict hoặc paranoid',
+
+    'rest_schema_module_type' => 'Loại module: core (tích hợp sẵn) hoặc external (có thể cài đặt)',
+
+    'rest_schema_server_timezone' => 'Tên múi giờ IANA của máy chủ PBX (ví dụ: Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Chênh lệch múi giờ máy chủ so với UTC, tính bằng giây',
+
+    'rest_schema_server_tz_meta' => 'Siêu dữ liệu múi giờ máy chủ PBX được UI dùng để hiển thị dấu thời gian',
+
+    'rest_response_200_priority_changed' => 'Đã thay đổi mức ưu tiên thành công',
+
+    'rest_response_422_validation_error' => 'Lỗi xác thực yêu cầu',
+
+    'rest_param_cdr_format' => 'Định dạng xuất CDR: csv, json hoặc xml',
+
 ];

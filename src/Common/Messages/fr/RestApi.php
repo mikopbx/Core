@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Erreur lors de l\'extraction du module',
     'rest_err_module_path_traversal' => 'Archive malveillante : l\'entrée «%entryName%» contient un path traversal',
     'rest_err_module_path_escape' => 'Archive malveillante : l\'entrée «%entryName%» se trouve en dehors du répertoire du module',
+    'rest_fw_ChangePriority' => 'Modifier la priorité de la règle de pare-feu',
+
+    'rest_fw_ChangePriorityDesc' => 'Déplace la règle vers le haut ou le bas dans la liste — les règles s\'appliquent par priorité du haut vers le bas.',
+
+    'rest_schema_banned_ips_envelope' => 'Réponse des IPs bannies : carte d\'adresses dans items, métadonnées du fuseau horaire du serveur dans _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'Liste blanche automatique : adresses IP et sous-réseaux des règles de pare-feu avec le drapeau newer_block_ip activé',
+
+    'rest_schema_f2b_security_mode' => 'Niveau de sécurité Fail2Ban : relaxed, balanced, strict ou paranoid',
+
+    'rest_schema_module_type' => 'Type de module : core (intégré) ou external (installable)',
+
+    'rest_schema_server_timezone' => 'Nom de fuseau horaire IANA du serveur PBX (par ex. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Décalage du fuseau horaire du serveur par rapport à UTC, en secondes',
+
+    'rest_schema_server_tz_meta' => 'Métadonnées du fuseau horaire du serveur PBX utilisées par l\'UI pour afficher les horodatages',
+
+    'rest_response_200_priority_changed' => 'Priorité modifiée avec succès',
+
+    'rest_response_422_validation_error' => 'Erreur de validation de la requête',
+
+    'rest_param_cdr_format' => 'Format d\'export CDR : csv, json ou xml',
+
 ];

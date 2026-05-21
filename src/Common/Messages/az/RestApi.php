@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Modul açılması zamanı xəta baş verdi',
     'rest_err_module_path_traversal' => 'Zərərli arxiv: «%entryName%» girişi yol keçidini ehtiva edir',
     'rest_err_module_path_escape' => 'Zərərli arxiv: «%entryName%» girişi modul qovluğundan kənara çıxır',
+    'rest_fw_ChangePriority' => 'Firewall qaydasının prioritetini dəyişdir',
+
+    'rest_fw_ChangePriorityDesc' => 'Qaydanı siyahıda yuxarı və ya aşağı hərəkət etdirir — qaydalar yuxarıdan aşağıya prioritetə görə tətbiq olunur.',
+
+    'rest_schema_banned_ips_envelope' => 'Bloklanmış IP-lərin cavabı: ünvan xəritəsi items-də, server saat qurşağının metaməlumatları _meta-da',
+
+    'rest_schema_f2b_auto_whitelist' => 'Avto-ağ siyahı: newer_block_ip bayrağı aktiv olan firewall qaydalarından IP ünvanları və alt şəbəkələr',
+
+    'rest_schema_f2b_security_mode' => 'Fail2Ban təhlükəsizlik səviyyəsi: relaxed, balanced, strict və ya paranoid',
+
+    'rest_schema_module_type' => 'Modul növü: core (daxili) və ya external (quraşdırıla bilən)',
+
+    'rest_schema_server_timezone' => 'PBX serverinin IANA saat qurşağının adı (məsələn, Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Server saat qurşağının UTC-dən fərqi, saniyələrlə',
+
+    'rest_schema_server_tz_meta' => 'PBX serverinin saat qurşağının metaməlumatları, UI tərəfindən vaxt damğalarını göstərmək üçün istifadə olunur',
+
+    'rest_response_200_priority_changed' => 'Prioritet uğurla dəyişdirildi',
+
+    'rest_response_422_validation_error' => 'Sorğunun yoxlama xətası',
+
+    'rest_param_cdr_format' => 'CDR ixrac formatı: csv, json və ya xml',
+
 ];

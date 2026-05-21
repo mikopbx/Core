@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Der opstod en fejl under udpakning af modulet',
     'rest_err_module_path_traversal' => 'Ondsindet arkiv: indgang «%entryName%» indeholder path traversal',
     'rest_err_module_path_escape' => 'Ondsindet arkiv: indgang «%entryName%» befinder sig uden for modulets mappe',
+    'rest_fw_ChangePriority' => 'Skift firewall-regelprioritet',
+
+    'rest_fw_ChangePriorityDesc' => 'Flytter reglen op eller ned på listen — regler anvendes efter prioritet fra top til bund.',
+
+    'rest_schema_banned_ips_envelope' => 'Svar med blokerede IP\'er: adressekort under items, server-tidszonemetadata under _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'Auto-hvidliste: IP-adresser og undernet fra firewall-regler med newer_block_ip-flaget aktiveret',
+
+    'rest_schema_f2b_security_mode' => 'Fail2Ban-sikkerhedsniveau: relaxed, balanced, strict eller paranoid',
+
+    'rest_schema_module_type' => 'Modultype: core (indbygget) eller external (installerbar)',
+
+    'rest_schema_server_timezone' => 'IANA-tidszonenavn for PBX-serveren (f.eks. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Server-tidszone-offset fra UTC, i sekunder',
+
+    'rest_schema_server_tz_meta' => 'PBX-server-tidszonemetadata brugt af UI til at vise tidsstempler',
+
+    'rest_response_200_priority_changed' => 'Prioritet ændret',
+
+    'rest_response_422_validation_error' => 'Anmodningsvalideringsfejl',
+
+    'rest_param_cdr_format' => 'CDR-eksportformat: csv, json eller xml',
+
 ];

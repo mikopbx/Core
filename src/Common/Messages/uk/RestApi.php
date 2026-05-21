@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Помилка під час розпакування модуля',
     'rest_err_module_path_traversal' => 'Шкідливий архів: запис «%entryName%» містить обхід шляху',
     'rest_err_module_path_escape' => 'Шкідливий архів: запис «%entryName%» виходить за межі директорії модуля',
+    'rest_fw_ChangePriority' => 'Змінити пріоритет правила брандмауера',
+
+    'rest_fw_ChangePriorityDesc' => 'Переміщує правило вгору або вниз у списку — правила застосовуються за пріоритетом зверху вниз.',
+
+    'rest_schema_banned_ips_envelope' => 'Відповідь зі списком заблокованих IP: карта адрес у items, метадані часового поясу сервера у _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'Авто-білий список: IP-адреси та підмережі з правил брандмауера з увімкненим прапором newer_block_ip',
+
+    'rest_schema_f2b_security_mode' => 'Рівень безпеки Fail2Ban: relaxed, balanced, strict або paranoid',
+
+    'rest_schema_module_type' => 'Тип модуля: core (вбудований) або external (встановлюваний)',
+
+    'rest_schema_server_timezone' => 'Назва часового поясу IANA сервера PBX (наприклад, Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Зсув часового поясу сервера відносно UTC, у секундах',
+
+    'rest_schema_server_tz_meta' => 'Метадані часового поясу сервера PBX, які UI використовує для відображення міток часу',
+
+    'rest_response_200_priority_changed' => 'Пріоритет успішно змінено',
+
+    'rest_response_422_validation_error' => 'Помилка валідації запиту',
+
+    'rest_param_cdr_format' => 'Формат експорту CDR: csv, json або xml',
+
 ];

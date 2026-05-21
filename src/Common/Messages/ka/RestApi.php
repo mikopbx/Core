@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'მოდულის ამოხსნისას შეცდომა მოხდა',
     'rest_err_module_path_traversal' => 'მავნე არქივი: ჩანაწერი «%entryName%» შეიცავს path traversal-ს',
     'rest_err_module_path_escape' => 'მავნე არქივი: ჩანაწერი «%entryName%» მოდულის დირექტორიის გარეთ გადის',
+    'rest_fw_ChangePriority' => 'Firewall წესის პრიორიტეტის შეცვლა',
+
+    'rest_fw_ChangePriorityDesc' => 'წესს ჩამოწევს ან ზევით აქცევს სიაში — წესები გამოიყენება პრიორიტეტის მიხედვით ზევიდან ქვევით.',
+
+    'rest_schema_banned_ips_envelope' => 'დაბლოკილი IP-ების პასუხი: მისამართების რუკა items-ში, სერვერის დროის ზონის მეტამონაცემები _meta-ში',
+
+    'rest_schema_f2b_auto_whitelist' => 'ავტო-თეთრი სია: IP მისამართები და ქვექსელები firewall წესებიდან newer_block_ip ალმის ჩართვით',
+
+    'rest_schema_f2b_security_mode' => 'Fail2Ban უსაფრთხოების დონე: relaxed, balanced, strict ან paranoid',
+
+    'rest_schema_module_type' => 'მოდულის ტიპი: core (ჩაშენებული) ან external (დასაყენებელი)',
+
+    'rest_schema_server_timezone' => 'PBX სერვერის IANA დროის ზონის სახელი (მაგ. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'სერვერის დროის ზონის გადახრა UTC-დან, წამებში',
+
+    'rest_schema_server_tz_meta' => 'PBX სერვერის დროის ზონის მეტამონაცემები, რომელსაც UI იყენებს დროის ნიშნულების ჩვენებისთვის',
+
+    'rest_response_200_priority_changed' => 'პრიორიტეტი წარმატებით შეიცვალა',
+
+    'rest_response_422_validation_error' => 'მოთხოვნის ვალიდაციის შეცდომა',
+
+    'rest_param_cdr_format' => 'CDR ექსპორტის ფორმატი: csv, json ან xml',
+
 ];

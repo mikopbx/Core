@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Firewall;
 
+use DateTime;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\GeoIP2Conf;
@@ -35,11 +36,17 @@ use SQLite3;
  */
 class GetBannedIpsAction extends Injectable
 {
-    public const string CACHE_KEY = 'firewall:bannedIps';
+    public const string CACHE_KEY = 'firewall:bannedIps:v2';
     private const int CACHE_TTL = 30;
 
     /**
      * Retrieve a list of banned IP addresses or get data for a specific IP address.
+     *
+     * Response envelope:
+     *   data: {
+     *       items: { "<ip>": { country, countryName, bans: [...] }, ... },
+     *       _meta: { server_timezone: "Europe/Moscow", server_timezone_offset: 10800 }
+     *   }
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -58,10 +65,26 @@ class GetBannedIpsAction extends Injectable
             return $res;
         }
 
-        $res->data = self::getBanIpWithTime();
+        $res->data = [
+            'items' => self::getBanIpWithTime(),
+            '_meta' => self::buildMeta(),
+        ];
         $managedCache->set(self::CACHE_KEY, $res->data, self::CACHE_TTL);
 
         return $res;
+    }
+
+    /**
+     * Build the response `_meta` envelope describing the PBX server timezone.
+     *
+     * @return array{server_timezone:string, server_timezone_offset:int}
+     */
+    private static function buildMeta(): array
+    {
+        return [
+            'server_timezone' => date_default_timezone_get(),
+            'server_timezone_offset' => (new DateTime())->getOffset(),
+        ];
     }
 
     /**

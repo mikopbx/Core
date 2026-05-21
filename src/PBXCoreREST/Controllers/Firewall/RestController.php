@@ -327,81 +327,111 @@ class RestController extends BaseRestController
             'application/json' => [
                 'schema' => [
                     'type' => 'object',
-                    'description' => 'rest_schema_banned_ip_map',
-                    'additionalProperties' => [
-                        'type' => 'object',
-                        'required' => ['country', 'countryName', 'bans'],
-                        'properties' => [
-                            'country' => [
-                                'type' => 'string',
-                                'description' => 'rest_schema_banned_ip_country',
-                                'pattern' => '^[A-Z]{2}$|^$',
-                                'example' => 'US'
-                            ],
-                            'countryName' => [
-                                'type' => 'string',
-                                'description' => 'rest_schema_banned_ip_country_name',
-                                'example' => 'United States'
-                            ],
-                            'bans' => [
-                                'type' => 'array',
-                                'description' => 'rest_schema_banned_ip_bans',
-                                'items' => [
-                                    'type' => 'object',
-                                    'required' => ['jail', 'timeofban', 'timeunban', 'v'],
-                                    'properties' => [
-                                        'jail' => [
-                                            'type' => 'string',
-                                            'description' => 'rest_schema_banned_ip_jail',
-                                            'example' => 'asterisk-security_v2'
-                                        ],
-                                        'timeofban' => [
-                                            'type' => 'integer',
-                                            'description' => 'rest_schema_banned_ip_timeofban',
-                                            'minimum' => 0,
-                                            'example' => 1704067200
-                                        ],
-                                        'timeunban' => [
-                                            'type' => 'integer',
-                                            'description' => 'rest_schema_banned_ip_timeunban',
-                                            'minimum' => 0,
-                                            'example' => 1704153600
-                                        ],
-                                        'v' => [
-                                            'type' => 'string',
-                                            'description' => 'rest_schema_banned_ip_version',
-                                            'enum' => ['2'],
-                                            'example' => '2'
+                    'description' => 'rest_schema_banned_ips_envelope',
+                    'required' => ['items', '_meta'],
+                    'properties' => [
+                        'items' => [
+                            'type' => 'object',
+                            'description' => 'rest_schema_banned_ip_map',
+                            'additionalProperties' => [
+                                'type' => 'object',
+                                'required' => ['country', 'countryName', 'bans'],
+                                'properties' => [
+                                    'country' => [
+                                        'type' => 'string',
+                                        'description' => 'rest_schema_banned_ip_country',
+                                        'pattern' => '^[A-Z]{2}$|^$',
+                                        'example' => 'US'
+                                    ],
+                                    'countryName' => [
+                                        'type' => 'string',
+                                        'description' => 'rest_schema_banned_ip_country_name',
+                                        'example' => 'United States'
+                                    ],
+                                    'bans' => [
+                                        'type' => 'array',
+                                        'description' => 'rest_schema_banned_ip_bans',
+                                        'items' => [
+                                            'type' => 'object',
+                                            'required' => ['jail', 'timeofban', 'timeunban', 'v'],
+                                            'properties' => [
+                                                'jail' => [
+                                                    'type' => 'string',
+                                                    'description' => 'rest_schema_banned_ip_jail',
+                                                    'example' => 'asterisk-security_v2'
+                                                ],
+                                                'timeofban' => [
+                                                    'type' => 'integer',
+                                                    'description' => 'rest_schema_banned_ip_timeofban',
+                                                    'minimum' => 0,
+                                                    'example' => 1704067200
+                                                ],
+                                                'timeunban' => [
+                                                    'type' => 'integer',
+                                                    'description' => 'rest_schema_banned_ip_timeunban',
+                                                    'minimum' => 0,
+                                                    'example' => 1704153600
+                                                ],
+                                                'v' => [
+                                                    'type' => 'string',
+                                                    'description' => 'rest_schema_banned_ip_version',
+                                                    'enum' => ['2'],
+                                                    'example' => '2'
+                                                ]
+                                            ]
                                         ]
                                     ]
+                                ]
+                            ]
+                        ],
+                        '_meta' => [
+                            'type' => 'object',
+                            'description' => 'rest_schema_server_tz_meta',
+                            'required' => ['server_timezone', 'server_timezone_offset'],
+                            'properties' => [
+                                'server_timezone' => [
+                                    'type' => 'string',
+                                    'description' => 'rest_schema_server_timezone',
+                                    'example' => 'Europe/Moscow'
+                                ],
+                                'server_timezone_offset' => [
+                                    'type' => 'integer',
+                                    'description' => 'rest_schema_server_timezone_offset',
+                                    'example' => 10800
                                 ]
                             ]
                         ]
                     ],
                     'example' => [
-                        '192.168.1.100' => [
-                            'country' => 'US',
-                            'countryName' => 'United States',
-                            'bans' => [
-                                [
-                                    'jail' => 'asterisk-security_v2',
-                                    'timeofban' => 1704067200,
-                                    'timeunban' => 1704153600,
-                                    'v' => '2'
+                        'items' => [
+                            '192.168.1.100' => [
+                                'country' => 'US',
+                                'countryName' => 'United States',
+                                'bans' => [
+                                    [
+                                        'jail' => 'asterisk-security_v2',
+                                        'timeofban' => 1704067200,
+                                        'timeunban' => 1704153600,
+                                        'v' => '2'
+                                    ]
+                                ]
+                            ],
+                            '10.0.0.50' => [
+                                'country' => 'RU',
+                                'countryName' => 'Russia',
+                                'bans' => [
+                                    [
+                                        'jail' => 'asterisk-security_v2',
+                                        'timeofban' => 1704070800,
+                                        'timeunban' => 1704157200,
+                                        'v' => '2'
+                                    ]
                                 ]
                             ]
                         ],
-                        '10.0.0.50' => [
-                            'country' => 'RU',
-                            'countryName' => 'Russia',
-                            'bans' => [
-                                [
-                                    'jail' => 'asterisk-security_v2',
-                                    'timeofban' => 1704070800,
-                                    'timeunban' => 1704157200,
-                                    'v' => '2'
-                                ]
-                            ]
+                        '_meta' => [
+                            'server_timezone' => 'Europe/Moscow',
+                            'server_timezone_offset' => 10800
                         ]
                     ]
                 ]

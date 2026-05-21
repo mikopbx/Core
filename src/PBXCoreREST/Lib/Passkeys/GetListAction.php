@@ -61,8 +61,15 @@ class GetListAction
             'order' => 'created_at DESC'
         ]);
 
-        // Format for API response
-        $res->data = PasskeyDataStructure::getList($passkeys);
+        // Format for API response (envelope: items + _meta so the UI can
+        // render timestamps in server TZ regardless of the browser locale)
+        $res->data = [
+            'items' => PasskeyDataStructure::getList($passkeys),
+            '_meta' => [
+                'server_timezone' => date_default_timezone_get(),
+                'server_timezone_offset' => (new \DateTime())->getOffset(),
+            ],
+        ];
         $res->success = true;
 
         return $res;

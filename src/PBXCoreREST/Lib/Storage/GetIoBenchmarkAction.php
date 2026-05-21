@@ -50,6 +50,15 @@ class GetIoBenchmarkAction
 
             $raw = @file_get_contents($cacheFile);
             $decoded = $raw !== false ? json_decode($raw, true) : null;
+            if (is_array($decoded) && !isset($decoded['_meta'])) {
+                // Backfill the TZ envelope for cache files written before the
+                // _meta field was introduced — keeps the UI tooltip honest
+                // until the next manual re-run rewrites the file.
+                $decoded['_meta'] = [
+                    'server_timezone' => date_default_timezone_get(),
+                    'server_timezone_offset' => (new \DateTime())->getOffset(),
+                ];
+            }
             $res->data = is_array($decoded) ? $decoded : null;
             $res->success = true;
             return $res;

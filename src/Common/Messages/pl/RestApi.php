@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Wystąpił błąd podczas rozpakowywania modułu',
     'rest_err_module_path_traversal' => 'Złośliwe archiwum: wpis «%entryName%» zawiera path traversal',
     'rest_err_module_path_escape' => 'Złośliwe archiwum: wpis «%entryName%» wykracza poza katalog modułu',
+    'rest_fw_ChangePriority' => 'Zmień priorytet reguły zapory sieciowej',
+
+    'rest_fw_ChangePriorityDesc' => 'Przenosi regułę w górę lub w dół na liście — reguły są stosowane według priorytetu od góry do dołu.',
+
+    'rest_schema_banned_ips_envelope' => 'Odpowiedź z zablokowanymi IP: mapa adresów w items, metadane strefy czasowej serwera w _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'Automatyczna biała lista: adresy IP i podsieci z reguł zapory z włączoną flagą newer_block_ip',
+
+    'rest_schema_f2b_security_mode' => 'Poziom bezpieczeństwa Fail2Ban: relaxed, balanced, strict lub paranoid',
+
+    'rest_schema_module_type' => 'Typ modułu: core (wbudowany) lub external (instalowalny)',
+
+    'rest_schema_server_timezone' => 'Nazwa strefy czasowej IANA serwera PBX (np. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Przesunięcie strefy czasowej serwera względem UTC, w sekundach',
+
+    'rest_schema_server_tz_meta' => 'Metadane strefy czasowej serwera PBX używane przez UI do wyświetlania znaczników czasu',
+
+    'rest_response_200_priority_changed' => 'Pomyślnie zmieniono priorytet',
+
+    'rest_response_422_validation_error' => 'Błąd walidacji żądania',
+
+    'rest_param_cdr_format' => 'Format eksportu CDR: csv, json lub xml',
+
 ];

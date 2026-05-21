@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalTranslate, PbxApi, Form, globalRootUrl, Datatable, SemanticLocalization, FirewallAPI, Fail2BanAPI, Fail2BanTooltipManager, fail2banWhitelist */
+/* global globalTranslate, PbxApi, Form, globalRootUrl, Datatable, SemanticLocalization, FirewallAPI, Fail2BanAPI, Fail2BanTooltipManager, fail2banWhitelist, PbxDateTime */
 /**
  * The `fail2BanIndex` object contains methods and variables for managing the Fail2Ban system.
  *
@@ -309,7 +309,7 @@ const fail2BanIndex = {
                     searchable: false,
                 },
                 // Ban date — orthogonal data: numeric timestamp for sorting,
-                // formatted DD.MM.YYYY HH:MM for display. Without this DataTables
+                // formatted in server TZ for display. Without this DataTables
                 // falls back to lexicographic sort on the rendered string and
                 // 05.05.2026 ends up "before" 30.04.2026.
                 {
@@ -319,7 +319,7 @@ const fail2BanIndex = {
                     render(data, type) {
                         if (type === 'display') {
                             return Number.isFinite(data) && data > 0
-                                ? fail2BanIndex.formatDateTime(data)
+                                ? fail2BanIndex.renderServerTime(data)
                                 : '';
                         }
                         return data;
@@ -333,7 +333,7 @@ const fail2BanIndex = {
                     render(data, type) {
                         if (type === 'display') {
                             return Number.isFinite(data) && data > 0
-                                ? fail2BanIndex.formatDateTime(data)
+                                ? fail2BanIndex.renderServerTime(data)
                                 : '';
                         }
                         return data;
@@ -364,6 +364,21 @@ const fail2BanIndex = {
                     hoverable: true,
                     position: 'top center',
                     delay: { show: 300, hide: 100 },
+                });
+                // Ban-date / Expires cells — Fomantic's `html` setting
+                // accepts a raw HTML string (or a function). We stash the
+                // payload in data-html and bind per-element so each cell
+                // gets its own rendered template.
+                fail2BanIndex.$bannedIpListTable.find('.ban-date-tooltip').each(function () {
+                    const $el = $(this);
+                    $el.popup('destroy');
+                    $el.popup({
+                        html: $el.attr('data-html'),
+                        hoverable: true,
+                        position: 'top center',
+                        variation: 'inverted',
+                        delay: { show: 200, hide: 100 },
+                    });
                 });
             },
         });
@@ -413,7 +428,16 @@ const fail2BanIndex = {
             return;
         }
 
-        const bannedIps = response.data || {};
+        // The backend wraps the IP map under `items` and ships server TZ
+        // metadata under `_meta`. Older cached payloads (and the legacy v1
+        // shape if it ever leaks through) skip the wrapper — handle both.
+        const payload = response.data || {};
+        const bannedIps = (payload && typeof payload === 'object' && payload.items)
+            ? payload.items
+            : payload;
+        if (payload && payload._meta) {
+            PbxDateTime.setServerMeta(payload._meta);
+        }
 
         fail2BanIndex.dataTable.clear();
 
@@ -535,19 +559,25 @@ const fail2BanIndex = {
     },
 
     /**
-     * Format unix timestamp as DD.MM.YYYY HH:MM
+     * Render a unix timestamp in the PBX server's timezone, with a Fomantic
+     * popup that also shows the browser-local rendering. Both labels carry
+     * the IANA name and UTC offset so the operator can't mistake one for
+     * the other. The popup is initialised in `drawCallback` after each
+     * DataTables redraw — keeping the markup pure data lets us re-bind
+     * popups across pagination without leaking handlers.
      *
      * @param {number} timestamp - Unix timestamp in seconds.
-     * @returns {string} Formatted date string.
+     * @returns {string} HTML <span> carrying popup metadata.
      */
-    formatDateTime(timestamp) {
-        const d = new Date(timestamp * 1000);
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-        const hours = String(d.getHours()).padStart(2, '0');
-        const minutes = String(d.getMinutes()).padStart(2, '0');
-        return `${day}.${month}.${year} ${hours}:${minutes}`;
+    renderServerTime(timestamp) {
+        const visible = PbxDateTime.formatServerTime(timestamp);
+        const tooltipHtml = PbxDateTime.buildDualTooltipHtml(timestamp);
+        // Escape the HTML payload for safe attribute embedding.
+        const safe = tooltipHtml.replace(/"/g, '&quot;');
+        return (
+            `<span class="ban-date-tooltip" data-html="${safe}" data-position="top center" data-variation="inverted">`
+            + `${visible}</span>`
+        );
     },
 
     /**

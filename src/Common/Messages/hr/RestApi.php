@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Greška pri raspakivanju modula',
     'rest_err_module_path_traversal' => 'Zlonamjerni arhiv: unos «%entryName%» sadrži path traversal',
     'rest_err_module_path_escape' => 'Zlonamjerni arhiv: unos «%entryName%» nalazi se izvan direktorija modula',
+    'rest_fw_ChangePriority' => 'Promijeni prioritet pravila vatrozida',
+
+    'rest_fw_ChangePriorityDesc' => 'Pomiče pravilo gore ili dolje na popisu — pravila se primjenjuju prema prioritetu odozgo prema dolje.',
+
+    'rest_schema_banned_ips_envelope' => 'Odgovor blokiranih IP-ova: karta adresa pod items, metapodaci vremenske zone poslužitelja pod _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'Automatska bijela lista: IP adrese i podmreže iz pravila vatrozida s omogućenom zastavicom newer_block_ip',
+
+    'rest_schema_f2b_security_mode' => 'Razina sigurnosti Fail2Ban: relaxed, balanced, strict ili paranoid',
+
+    'rest_schema_module_type' => 'Vrsta modula: core (ugrađeni) ili external (mogući za instalaciju)',
+
+    'rest_schema_server_timezone' => 'IANA naziv vremenske zone PBX poslužitelja (npr. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Pomak vremenske zone poslužitelja od UTC, u sekundama',
+
+    'rest_schema_server_tz_meta' => 'Metapodaci vremenske zone PBX poslužitelja koje sučelje koristi za prikaz vremenskih oznaka',
+
+    'rest_response_200_priority_changed' => 'Prioritet uspješno promijenjen',
+
+    'rest_response_422_validation_error' => 'Pogreška provjere zahtjeva',
+
+    'rest_param_cdr_format' => 'Format izvoza CDR: csv, json ili xml',
+
 ];

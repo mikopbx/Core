@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Virhe moduulin purkamisen aikana',
     'rest_err_module_path_traversal' => 'Haitallinen arkisto: merkintä «%entryName%» sisältää path traversal -hyökkäyksen',
     'rest_err_module_path_escape' => 'Haitallinen arkisto: merkintä «%entryName%» sijaitsee moduulihakemiston ulkopuolella',
+    'rest_fw_ChangePriority' => 'Muuta palomuurisäännön prioriteettia',
+
+    'rest_fw_ChangePriorityDesc' => 'Siirtää säännön ylös tai alas luettelossa — säännöt sovelletaan prioriteettijärjestyksessä ylhäältä alas.',
+
+    'rest_schema_banned_ips_envelope' => 'Estettyjen IP-osoitteiden vastaus: osoitekartta items-kentässä, palvelimen aikavyöhykkeen metatiedot _meta-kentässä',
+
+    'rest_schema_f2b_auto_whitelist' => 'Automaattinen valkoinen lista: IP-osoitteet ja aliverkot palomuurisäännöistä, joissa newer_block_ip-lippu on käytössä',
+
+    'rest_schema_f2b_security_mode' => 'Fail2Ban-suojaustaso: relaxed, balanced, strict tai paranoid',
+
+    'rest_schema_module_type' => 'Moduulin tyyppi: core (sisäänrakennettu) tai external (asennettava)',
+
+    'rest_schema_server_timezone' => 'PBX-palvelimen IANA-aikavyöhykkeen nimi (esim. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Palvelimen aikavyöhykkeen poikkeama UTC:stä sekunneissa',
+
+    'rest_schema_server_tz_meta' => 'PBX-palvelimen aikavyöhykkeen metatiedot, joita käyttöliittymä käyttää aikaleimojen näyttämiseen',
+
+    'rest_response_200_priority_changed' => 'Prioriteetti muutettu onnistuneesti',
+
+    'rest_response_422_validation_error' => 'Pyynnön validointivirhe',
+
+    'rest_param_cdr_format' => 'CDR-vientimuoto: csv, json tai xml',
+
 ];

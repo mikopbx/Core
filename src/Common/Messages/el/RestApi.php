@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Σφάλμα κατά την αποσυμπίεση της μονάδας',
     'rest_err_module_path_traversal' => 'Κακόβουλο αρχείο: η εγγραφή «%entryName%» περιέχει path traversal',
     'rest_err_module_path_escape' => 'Κακόβουλο αρχείο: η εγγραφή «%entryName%» βρίσκεται εκτός του καταλόγου της μονάδας',
+    'rest_fw_ChangePriority' => 'Αλλαγή προτεραιότητας κανόνα τείχους προστασίας',
+
+    'rest_fw_ChangePriorityDesc' => 'Μετακινεί τον κανόνα πάνω ή κάτω στη λίστα — οι κανόνες εφαρμόζονται κατά προτεραιότητα από πάνω προς τα κάτω.',
+
+    'rest_schema_banned_ips_envelope' => 'Απάντηση αποκλεισμένων IP: χάρτης διευθύνσεων στο items, μεταδεδομένα ζώνης ώρας διακομιστή στο _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'Αυτόματη λευκή λίστα: διευθύνσεις IP και υποδίκτυα από κανόνες τείχους προστασίας με ενεργοποιημένη τη σημαία newer_block_ip',
+
+    'rest_schema_f2b_security_mode' => 'Επίπεδο ασφαλείας Fail2Ban: relaxed, balanced, strict ή paranoid',
+
+    'rest_schema_module_type' => 'Τύπος module: core (ενσωματωμένο) ή external (εγκαταστάσιμο)',
+
+    'rest_schema_server_timezone' => 'Όνομα ζώνης ώρας IANA του διακομιστή PBX (π.χ. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Απόκλιση ζώνης ώρας διακομιστή από το UTC, σε δευτερόλεπτα',
+
+    'rest_schema_server_tz_meta' => 'Μεταδεδομένα ζώνης ώρας διακομιστή PBX που χρησιμοποιούνται από το UI για την εμφάνιση χρονοσημάνσεων',
+
+    'rest_response_200_priority_changed' => 'Η προτεραιότητα άλλαξε επιτυχώς',
+
+    'rest_response_422_validation_error' => 'Σφάλμα επικύρωσης αιτήματος',
+
+    'rest_param_cdr_format' => 'Μορφή εξαγωγής CDR: csv, json ή xml',
+
 ];

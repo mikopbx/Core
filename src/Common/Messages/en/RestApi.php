@@ -2108,4 +2108,28 @@ return [
     'rest_err_module_extraction_failed' => 'Error occurred during module extraction',
     'rest_err_module_path_traversal' => 'Malicious archive: entry \'%entryName%\' contains path traversal',
     'rest_err_module_path_escape' => 'Malicious archive: entry \'%entryName%\' resolved outside module directory',
+    'rest_fw_ChangePriority' => 'Change firewall rule priority',
+
+    'rest_fw_ChangePriorityDesc' => 'Moves the rule up or down in the list — rules apply by priority from top to bottom.',
+
+    'rest_schema_banned_ips_envelope' => 'Banned IPs response: address map under items, server timezone metadata under _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'Auto-whitelist: IP addresses and subnets from firewall rules with the newer_block_ip flag enabled',
+
+    'rest_schema_f2b_security_mode' => 'Fail2Ban security level: relaxed, balanced, strict, or paranoid',
+
+    'rest_schema_module_type' => 'Module type: core (built-in) or external (installable)',
+
+    'rest_schema_server_timezone' => 'IANA timezone name of the PBX server (e.g. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Server timezone offset from UTC, in seconds',
+
+    'rest_schema_server_tz_meta' => 'PBX server timezone metadata used by the UI to render timestamps',
+
+    'rest_response_200_priority_changed' => 'Priority changed successfully',
+
+    'rest_response_422_validation_error' => 'Request validation error',
+
+    'rest_param_cdr_format' => 'CDR export format: csv, json or xml',
+
 ];

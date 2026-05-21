@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Hiba a modul kicsomagolásakor',
     'rest_err_module_path_traversal' => 'Kártékony archívum: a(z) «%entryName%» bejegyzés path traversal támadást tartalmaz',
     'rest_err_module_path_escape' => 'Kártékony archívum: a(z) «%entryName%» bejegyzés a modulkönyvtáron kívülre mutat',
+    'rest_fw_ChangePriority' => 'Tűzfal szabály prioritás módosítása',
+
+    'rest_fw_ChangePriorityDesc' => 'A szabályt felfelé vagy lefelé mozgatja a listán — a szabályok prioritás szerint felülről lefelé érvényesülnek.',
+
+    'rest_schema_banned_ips_envelope' => 'Tiltott IP-k válasza: címtérkép az items alatt, szerver időzóna metaadatok a _meta alatt',
+
+    'rest_schema_f2b_auto_whitelist' => 'Automatikus engedélyezési lista: IP-címek és alhálózatok engedélyezett newer_block_ip jelzővel rendelkező tűzfal szabályokból',
+
+    'rest_schema_f2b_security_mode' => 'Fail2Ban biztonsági szint: relaxed, balanced, strict vagy paranoid',
+
+    'rest_schema_module_type' => 'Modul típusa: core (beépített) vagy external (telepíthető)',
+
+    'rest_schema_server_timezone' => 'PBX szerver IANA időzóna neve (pl. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Szerver időzóna eltolódása az UTC-től, másodpercben',
+
+    'rest_schema_server_tz_meta' => 'A PBX szerver időzóna metaadatai, amelyeket a felület használ az időbélyegek megjelenítéséhez',
+
+    'rest_response_200_priority_changed' => 'Prioritás sikeresen módosítva',
+
+    'rest_response_422_validation_error' => 'Kérés érvényesítési hiba',
+
+    'rest_param_cdr_format' => 'CDR exportálási formátum: csv, json vagy xml',
+
 ];

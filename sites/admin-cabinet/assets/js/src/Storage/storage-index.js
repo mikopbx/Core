@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, StorageAPI, UserMessage, s3StorageIndex, $ */
+/* global globalRootUrl, globalTranslate, Form, StorageAPI, UserMessage, s3StorageIndex, $, PbxDateTime */
 
 /**
  * Storage management module
@@ -354,15 +354,25 @@ const storageIndex = {
             typeof data.readMBps === 'number' ? data.readMBps.toFixed(1) : '—'
         );
 
+        if (data._meta) {
+            PbxDateTime.setServerMeta(data._meta);
+        }
         if (data.measuredAt) {
-            const d = new Date(data.measuredAt * 1000);
-            const pad = (n) => String(n).padStart(2, '0');
-            $('#disk-benchmark-measured-at').text(
-                `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} `
-                + `${pad(d.getHours())}:${pad(d.getMinutes())}`
-            );
+            // Render in server TZ + Fomantic popup with the dual-TZ tooltip.
+            // The operator should never have to convert between "browser
+            // said" and "server logged" when reviewing a benchmark timestamp.
+            const $cell = $('#disk-benchmark-measured-at');
+            $cell.text(PbxDateTime.formatServerTime(data.measuredAt));
+            $cell.popup('destroy');
+            $cell.popup({
+                html: PbxDateTime.buildDualTooltipHtml(data.measuredAt),
+                hoverable: true,
+                position: 'top left',
+                variation: 'inverted',
+                delay: { show: 200, hide: 100 },
+            });
         } else {
-            $('#disk-benchmark-measured-at').text('—');
+            $('#disk-benchmark-measured-at').text('—').popup('destroy');
         }
     },
 

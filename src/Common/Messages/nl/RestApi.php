@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Fout opgetreden bij het uitpakken van de module',
     'rest_err_module_path_traversal' => 'Kwaadaardig archief: vermelding «%entryName%» bevat path traversal',
     'rest_err_module_path_escape' => 'Kwaadaardig archief: vermelding «%entryName%» bevindt zich buiten de modulemap',
+    'rest_fw_ChangePriority' => 'Firewall-regel prioriteit wijzigen',
+
+    'rest_fw_ChangePriorityDesc' => 'Verplaatst de regel omhoog of omlaag in de lijst — regels worden toegepast op prioriteit van boven naar beneden.',
+
+    'rest_schema_banned_ips_envelope' => 'Antwoord met geblokkeerde IPs: adressenmap onder items, server-tijdzonemetadata onder _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'Auto-whitelist: IP-adressen en subnetten van firewallregels met de newer_block_ip-vlag ingeschakeld',
+
+    'rest_schema_f2b_security_mode' => 'Fail2Ban-beveiligingsniveau: relaxed, balanced, strict of paranoid',
+
+    'rest_schema_module_type' => 'Moduletype: core (ingebouwd) of external (installeerbaar)',
+
+    'rest_schema_server_timezone' => 'IANA-tijdzonenaam van de PBX-server (bijv. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Server-tijdzone-offset ten opzichte van UTC, in seconden',
+
+    'rest_schema_server_tz_meta' => 'Metadata van de PBX-servertijdzone, gebruikt door de UI om tijdstempels weer te geven',
+
+    'rest_response_200_priority_changed' => 'Prioriteit succesvol gewijzigd',
+
+    'rest_response_422_validation_error' => 'Validatiefout van verzoek',
+
+    'rest_param_cdr_format' => 'CDR-exportformaat: csv, json of xml',
+
 ];

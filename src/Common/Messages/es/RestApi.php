@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Error al descomprimir el módulo',
     'rest_err_module_path_traversal' => 'Archivo malicioso: la entrada «%entryName%» contiene path traversal',
     'rest_err_module_path_escape' => 'Archivo malicioso: la entrada «%entryName%» se encuentra fuera del directorio del módulo',
+    'rest_fw_ChangePriority' => 'Cambiar prioridad de regla de firewall',
+
+    'rest_fw_ChangePriorityDesc' => 'Mueve la regla hacia arriba o abajo en la lista — las reglas se aplican por prioridad de arriba hacia abajo.',
+
+    'rest_schema_banned_ips_envelope' => 'Respuesta de IPs bloqueadas: mapa de direcciones en items, metadatos de zona horaria del servidor en _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'Lista blanca automática: direcciones IP y subredes de reglas de firewall con el flag newer_block_ip activado',
+
+    'rest_schema_f2b_security_mode' => 'Nivel de seguridad de Fail2Ban: relaxed, balanced, strict o paranoid',
+
+    'rest_schema_module_type' => 'Tipo de módulo: core (integrado) o external (instalable)',
+
+    'rest_schema_server_timezone' => 'Nombre de zona horaria IANA del servidor PBX (p. ej. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Desfase de zona horaria del servidor respecto a UTC, en segundos',
+
+    'rest_schema_server_tz_meta' => 'Metadatos de zona horaria del servidor PBX usados por la UI para mostrar marcas de tiempo',
+
+    'rest_response_200_priority_changed' => 'Prioridad cambiada correctamente',
+
+    'rest_response_422_validation_error' => 'Error de validación de la solicitud',
+
+    'rest_param_cdr_format' => 'Formato de exportación de CDR: csv, json o xml',
+
 ];

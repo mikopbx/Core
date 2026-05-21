@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'モジュールの展開中にエラーが発生しました',
     'rest_err_module_path_traversal' => '不正なアーカイブ: エントリ「%entryName%」にパストラバーサルが含まれています',
     'rest_err_module_path_escape' => '不正なアーカイブ: エントリ「%entryName%」がモジュールディレクトリの外に解決されました',
+    'rest_fw_ChangePriority' => 'ファイアウォール規則の優先順位を変更',
+
+    'rest_fw_ChangePriorityDesc' => 'リスト内でルールを上下に移動します — ルールは上から下への優先順位で適用されます。',
+
+    'rest_schema_banned_ips_envelope' => 'ブロックされたIPの応答: items の下にアドレスマップ、_meta の下にサーバータイムゾーンのメタデータ',
+
+    'rest_schema_f2b_auto_whitelist' => '自動ホワイトリスト: newer_block_ip フラグが有効なファイアウォール規則の IP アドレスとサブネット',
+
+    'rest_schema_f2b_security_mode' => 'Fail2Ban セキュリティレベル: relaxed、balanced、strict、または paranoid',
+
+    'rest_schema_module_type' => 'モジュールタイプ: core (組み込み) または external (インストール可能)',
+
+    'rest_schema_server_timezone' => 'PBX サーバーの IANA タイムゾーン名 (例: Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'UTC からのサーバータイムゾーンオフセット (秒)',
+
+    'rest_schema_server_tz_meta' => 'UI がタイムスタンプを表示するために使用する PBX サーバーのタイムゾーンメタデータ',
+
+    'rest_response_200_priority_changed' => '優先順位を正常に変更しました',
+
+    'rest_response_422_validation_error' => 'リクエストの検証エラー',
+
+    'rest_param_cdr_format' => 'CDR エクスポート形式: csv、json または xml',
+
 ];

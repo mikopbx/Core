@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Modül çıkartılırken hata oluştu',
     'rest_err_module_path_traversal' => 'Kötü amaçlı arşiv: «%entryName%» girişi path traversal içeriyor',
     'rest_err_module_path_escape' => 'Kötü amaçlı arşiv: «%entryName%» girişi modül dizininin dışına çıkıyor',
+    'rest_fw_ChangePriority' => 'Güvenlik duvarı kuralı önceliğini değiştir',
+
+    'rest_fw_ChangePriorityDesc' => 'Kuralı listede yukarı veya aşağı taşır — kurallar öncelik sırasına göre yukarıdan aşağıya uygulanır.',
+
+    'rest_schema_banned_ips_envelope' => 'Yasaklı IP\'ler yanıtı: adres haritası items içinde, sunucu saat dilimi meta verileri _meta içinde',
+
+    'rest_schema_f2b_auto_whitelist' => 'Otomatik beyaz liste: newer_block_ip bayrağı etkinleştirilmiş güvenlik duvarı kurallarındaki IP adresleri ve alt ağlar',
+
+    'rest_schema_f2b_security_mode' => 'Fail2Ban güvenlik düzeyi: relaxed, balanced, strict veya paranoid',
+
+    'rest_schema_module_type' => 'Modül türü: core (yerleşik) veya external (yüklenebilir)',
+
+    'rest_schema_server_timezone' => 'PBX sunucusunun IANA saat dilimi adı (ör. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Sunucu saat diliminin UTC\'ye göre farkı, saniye olarak',
+
+    'rest_schema_server_tz_meta' => 'PBX sunucusu saat dilimi meta verileri, UI tarafından zaman damgalarını göstermek için kullanılır',
+
+    'rest_response_200_priority_changed' => 'Öncelik başarıyla değiştirildi',
+
+    'rest_response_422_validation_error' => 'İstek doğrulama hatası',
+
+    'rest_param_cdr_format' => 'CDR dışa aktarma biçimi: csv, json veya xml',
+
 ];

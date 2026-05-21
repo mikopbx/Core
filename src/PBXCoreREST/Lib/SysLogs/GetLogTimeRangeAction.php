@@ -112,6 +112,7 @@ class GetLogTimeRangeAction extends Injectable
                 'end_formatted' => $timeRange['end_formatted'],
             ],
             'total_lines' => $timeRange['total_lines'],
+            'server_timezone' => date_default_timezone_get(), // IANA name, e.g. "Europe/Moscow"
             'server_timezone_offset' => (new \DateTime())->getOffset(), // Server timezone offset in seconds
         ];
 

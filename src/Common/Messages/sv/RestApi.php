@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Det uppstod ett fel vid uppackning av modulen',
     'rest_err_module_path_traversal' => 'Skadligt arkiv: posten «%entryName%» innehåller path traversal',
     'rest_err_module_path_escape' => 'Skadligt arkiv: posten «%entryName%» befinner sig utanför modulkatalogen',
+    'rest_fw_ChangePriority' => 'Ändra brandväggsregelns prioritet',
+
+    'rest_fw_ChangePriorityDesc' => 'Flyttar regeln upp eller ner i listan — regler tillämpas efter prioritet uppifrån och ner.',
+
+    'rest_schema_banned_ips_envelope' => 'Svar med blockerade IP-adresser: adresskarta under items, server-tidszonsmetadata under _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'Auto-vitlista: IP-adresser och undernät från brandväggsregler med newer_block_ip-flaggan aktiverad',
+
+    'rest_schema_f2b_security_mode' => 'Fail2Ban-säkerhetsnivå: relaxed, balanced, strict eller paranoid',
+
+    'rest_schema_module_type' => 'Modultyp: core (inbyggd) eller external (installerbar)',
+
+    'rest_schema_server_timezone' => 'IANA-tidszonsnamn för PBX-servern (t.ex. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Server-tidszonens offset från UTC, i sekunder',
+
+    'rest_schema_server_tz_meta' => 'Metadata för PBX-serverns tidszon som används av UI för att visa tidsstämplar',
+
+    'rest_response_200_priority_changed' => 'Prioritet ändrad',
+
+    'rest_response_422_validation_error' => 'Valideringsfel för begäran',
+
+    'rest_param_cdr_format' => 'CDR-exportformat: csv, json eller xml',
+
 ];

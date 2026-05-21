@@ -1252,6 +1252,18 @@ const systemDiagnosticLogs = {
             if (timeRangeData.server_timezone_offset !== undefined) {
                 SVGTimeline.serverTimezoneOffset = timeRangeData.server_timezone_offset;
             }
+            // Share TZ metadata with the global PbxDateTime helper so any
+            // formatter on this page (slider tooltips, popups, future tables)
+            // renders in PBX-server time regardless of browser locale.
+            PbxDateTime.setServerMeta({
+                server_timezone: timeRangeData.server_timezone,
+                server_timezone_offset: timeRangeData.server_timezone_offset,
+            });
+            // Keep the time slider's local offset in sync with PbxDateTime
+            // because TimeSlider.formatTimestamp now delegates to the helper.
+            if (typeof TimeSlider !== 'undefined') {
+                TimeSlider.serverTimezoneOffset = PbxDateTime.serverTimezoneOffset;
+            }
 
             // Initialize SVG timeline with time range
             SVGTimeline.initialize('#time-slider-container', this.currentTimeRange);

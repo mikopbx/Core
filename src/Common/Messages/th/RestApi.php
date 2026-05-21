@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'เกิดข้อผิดพลาดระหว่างการแตกไฟล์โมดูล',
     'rest_err_module_path_traversal' => 'ไฟล์เก็บถาวรอันตราย: รายการ «%entryName%» มี path traversal',
     'rest_err_module_path_escape' => 'ไฟล์เก็บถาวรอันตราย: รายการ «%entryName%» อยู่นอกไดเรกทอรีของโมดูล',
+    'rest_fw_ChangePriority' => 'เปลี่ยนลำดับความสำคัญของกฎไฟร์วอลล์',
+
+    'rest_fw_ChangePriorityDesc' => 'ย้ายกฎขึ้นหรือลงในรายการ — กฎจะถูกนำไปใช้ตามลำดับความสำคัญจากบนลงล่าง',
+
+    'rest_schema_banned_ips_envelope' => 'การตอบกลับ IP ที่ถูกบล็อก: แผนที่ที่อยู่ภายใต้ items, ข้อมูลเมตาเขตเวลาของเซิร์ฟเวอร์ภายใต้ _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'รายการอนุญาตอัตโนมัติ: ที่อยู่ IP และซับเน็ตจากกฎไฟร์วอลล์ที่เปิดใช้ flag newer_block_ip',
+
+    'rest_schema_f2b_security_mode' => 'ระดับความปลอดภัย Fail2Ban: relaxed, balanced, strict หรือ paranoid',
+
+    'rest_schema_module_type' => 'ประเภทโมดูล: core (ในตัว) หรือ external (ติดตั้งได้)',
+
+    'rest_schema_server_timezone' => 'ชื่อเขตเวลา IANA ของเซิร์ฟเวอร์ PBX (เช่น Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'ความเหลื่อมของเขตเวลาเซิร์ฟเวอร์จาก UTC เป็นวินาที',
+
+    'rest_schema_server_tz_meta' => 'ข้อมูลเมตาเขตเวลาของเซิร์ฟเวอร์ PBX ที่ UI ใช้แสดงประทับเวลา',
+
+    'rest_response_200_priority_changed' => 'เปลี่ยนลำดับความสำคัญสำเร็จ',
+
+    'rest_response_422_validation_error' => 'ข้อผิดพลาดในการตรวจสอบคำขอ',
+
+    'rest_param_cdr_format' => 'รูปแบบการส่งออก CDR: csv, json หรือ xml',
+
 ];

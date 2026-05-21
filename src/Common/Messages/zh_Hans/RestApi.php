@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => '解压模块时发生错误',
     'rest_err_module_path_traversal' => '恶意压缩包：条目「%entryName%」包含路径遍历',
     'rest_err_module_path_escape' => '恶意压缩包：条目「%entryName%」解析到模块目录之外',
+    'rest_fw_ChangePriority' => '更改防火墙规则优先级',
+
+    'rest_fw_ChangePriorityDesc' => '在列表中上下移动规则 — 规则按优先级从上到下应用。',
+
+    'rest_schema_banned_ips_envelope' => '已封禁 IP 响应：items 下的地址映射，_meta 下的服务器时区元数据',
+
+    'rest_schema_f2b_auto_whitelist' => '自动白名单：来自启用了 newer_block_ip 标志的防火墙规则的 IP 地址和子网',
+
+    'rest_schema_f2b_security_mode' => 'Fail2Ban 安全级别：relaxed、balanced、strict 或 paranoid',
+
+    'rest_schema_module_type' => '模块类型：core（内置）或 external（可安装）',
+
+    'rest_schema_server_timezone' => 'PBX 服务器的 IANA 时区名称（例如 Europe/Moscow）',
+
+    'rest_schema_server_timezone_offset' => '服务器时区相对于 UTC 的偏移量（秒）',
+
+    'rest_schema_server_tz_meta' => 'UI 用于显示时间戳的 PBX 服务器时区元数据',
+
+    'rest_response_200_priority_changed' => '优先级修改成功',
+
+    'rest_response_422_validation_error' => '请求验证错误',
+
+    'rest_param_cdr_format' => 'CDR 导出格式：csv、json 或 xml',
+
 ];

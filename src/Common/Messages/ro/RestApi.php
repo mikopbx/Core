@@ -2372,4 +2372,28 @@ return [
     'rest_err_module_extraction_failed' => 'Eroare la extragerea modulului',
     'rest_err_module_path_traversal' => 'Arhivă malițioasă: intrarea «%entryName%» conține path traversal',
     'rest_err_module_path_escape' => 'Arhivă malițioasă: intrarea «%entryName%» se află în afara directorului modulului',
+    'rest_fw_ChangePriority' => 'Modificare prioritate regulă firewall',
+
+    'rest_fw_ChangePriorityDesc' => 'Mută regula în sus sau în jos în listă — regulile se aplică în ordinea priorității de sus în jos.',
+
+    'rest_schema_banned_ips_envelope' => 'Răspuns IP-uri blocate: hartă adrese în items, metadate fus orar server în _meta',
+
+    'rest_schema_f2b_auto_whitelist' => 'Listă albă automată: adrese IP și subrețele din reguli firewall cu indicatorul newer_block_ip activat',
+
+    'rest_schema_f2b_security_mode' => 'Nivel de securitate Fail2Ban: relaxed, balanced, strict sau paranoid',
+
+    'rest_schema_module_type' => 'Tip modul: core (integrat) sau external (instalabil)',
+
+    'rest_schema_server_timezone' => 'Numele fusului orar IANA al serverului PBX (ex. Europe/Moscow)',
+
+    'rest_schema_server_timezone_offset' => 'Decalaj fus orar server față de UTC, în secunde',
+
+    'rest_schema_server_tz_meta' => 'Metadate fus orar server PBX folosite de interfață pentru afișarea marcajelor temporale',
+
+    'rest_response_200_priority_changed' => 'Prioritatea a fost modificată cu succes',
+
+    'rest_response_422_validation_error' => 'Eroare de validare a cererii',
+
+    'rest_param_cdr_format' => 'Format export CDR: csv, json sau xml',
+
 ];

@@ -285,15 +285,9 @@ const TimeSlider = {
      * @returns {string} Formatted date/time string (YYYY-MM-DD HH:MM:SS)
      */
     formatTimestamp(timestamp) {
-        const date = new Date((timestamp + this.serverTimezoneOffset) * 1000);
-        const year = date.getUTCFullYear();
-        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(date.getUTCDate()).padStart(2, '0');
-        const hours = String(date.getUTCHours()).padStart(2, '0');
-        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-        const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        // PbxDateTime mirrors `this.serverTimezoneOffset` once
+        // SVGTimeline.setServerTimezoneOffset propagates the value.
+        return PbxDateTime.formatServerTime(timestamp, { withSeconds: true });
     },
 
     /**
@@ -302,20 +296,15 @@ const TimeSlider = {
      * @returns {string} Formatted time string (HH:MM or DD HH:MM)
      */
     formatTimestampShort(timestamp) {
-        const date = new Date((timestamp + this.serverTimezoneOffset) * 1000);
-        const day = String(date.getUTCDate()).padStart(2, '0');
-        const hours = String(date.getUTCHours()).padStart(2, '0');
-        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-
-        // Calculate time range duration
+        const full = PbxDateTime.formatServerTime(timestamp); // YYYY-MM-DD HH:MM
         const timeRangeDuration = this.timeRange.end - this.timeRange.start;
+        const day = full.slice(8, 10);
+        const hhmm = full.slice(11, 16);
 
-        // If range is more than 1 day, show day + time, otherwise just time
         if (timeRangeDuration > 86400) {
-            return `${day} ${hours}:${minutes}`;
-        } else {
-            return `${hours}:${minutes}`;
+            return `${day} ${hhmm}`;
         }
+        return hhmm;
     },
 
     /**
