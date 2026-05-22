@@ -42,6 +42,7 @@ use MikoPBX\Common\Providers\{AclProvider,
     SentryErrorHandlerProvider,
     LanguageProvider,
     TranslationProvider,
+    WafProvider,
     WhoopsErrorHandlerProvider,
     MutexProvider
 };
@@ -120,7 +121,11 @@ class RegisterDIServices
             PBXCoreRESTClientProvider::class,
 
             // Inject EventBus provider
-            EventBusProvider::class
+            EventBusProvider::class,
+
+            // Inject WAF exemption registry (used by Enable/DisableModuleAction
+            // to keep `_PH_REDIS_CLIENT:waf:exemptions` in sync with module state).
+            WafProvider::class,
         ];
 
         foreach ($pbxRestAPIProviders as $provider) {

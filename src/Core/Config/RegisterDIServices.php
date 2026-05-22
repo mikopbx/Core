@@ -46,6 +46,7 @@ use MikoPBX\Common\Providers\{AclProvider,
     MessagesProvider,
     UrlProvider,
     LanguageProvider,
+    WafProvider,
     WhoopsErrorHandlerProvider,
     MutexProvider};
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
@@ -118,7 +119,11 @@ class RegisterDIServices
             // Inject Rest API client
             PBXCoreRESTClientProvider::class,
             // Inject EventBus provider
-            EventBusProvider::class
+            EventBusProvider::class,
+
+            // Inject WAF exemption registry (Redis-backed declarations from
+            // Core REST controllers and modules; consumed by unified-security.lua).
+            WafProvider::class,
 
         ];
 

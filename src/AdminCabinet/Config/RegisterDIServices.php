@@ -53,6 +53,7 @@ use MikoPBX\Common\Providers\RouterProvider;
 use MikoPBX\Common\Providers\SessionProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Common\Providers\UrlProvider;
+use MikoPBX\Common\Providers\WafProvider;
 use Phalcon\Di\DiInterface;
 
 class RegisterDIServices
@@ -126,7 +127,10 @@ class RegisterDIServices
             PBXCoreRESTClientProvider::class,
 
             // Inject EventBus provider
-            EventBusProvider::class
+            EventBusProvider::class,
+
+            // Inject WAF exemption registry
+            WafProvider::class,
         ];
 
         foreach ($adminCabinetProviders as $provider) {

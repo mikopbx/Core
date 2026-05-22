@@ -25,11 +25,14 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
+use MikoPBX\Common\Providers\WafProvider;
 use MikoPBX\Core\System\Configs\SoundFilesConf;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Modules\Config\SystemConfigInterface;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 use ReflectionClass;
 use Throwable;
@@ -181,6 +184,12 @@ class PbxExtensionState extends Injectable
         // Cleanup volt cache, because them module can interact with volt templates
         $this->cleanupVoltCache();
 
+        // Publish this module's WAF exemption declarations to Redis. Done here
+        // (the shared enable chokepoint) rather than in EnableModuleAction so
+        // operator-driven paths (console menu, ModulesActions) and watchdog
+        // re-enables all stay in sync.
+        $this->syncWafExemptions(true);
+
         return true;
     }
 
@@ -317,7 +326,46 @@ class PbxExtensionState extends Injectable
         // Cleanup volt cache, because them module can interact with volt templates
         $this->cleanupVoltCache();
 
+        // Drop this module's WAF exemption declarations from Redis. Same
+        // chokepoint reasoning as enableModule(): every disable path
+        // (REST API, console menu, crash-loop watchdog via forceDisableModule)
+        // funnels through here.
+        $this->syncWafExemptions(false);
+
         return true;
+    }
+
+    /**
+     * Publish or revoke this module's WAF exemption declarations.
+     *
+     * Wrapped in try/catch because module state transitions must not fail
+     * because of a Redis hiccup; on the next boot {@see WafRegistry::rebuildAll()}
+     * reconciles whatever drifted.
+     */
+    private function syncWafExemptions(bool $enabled): void
+    {
+        try {
+            $registry = Di::getDefault()?->getShared(WafProvider::SERVICE_NAME);
+            if ($registry === null) {
+                return;
+            }
+            if ($enabled) {
+                $registry->onModuleEnabled($this->moduleUniqueID);
+            } else {
+                $registry->onModuleDisabled($this->moduleUniqueID);
+            }
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf(
+                    'WAF: sync for module %s (%s) failed: %s',
+                    $this->moduleUniqueID,
+                    $enabled ? 'enable' : 'disable',
+                    $e->getMessage()
+                ),
+                LOG_WARNING
+            );
+        }
     }
 
     /**

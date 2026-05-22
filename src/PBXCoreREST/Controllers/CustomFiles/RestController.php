@@ -33,6 +33,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     HttpMapping,
     ResourceSecurity
 };
+use MikoPBX\PBXCoreREST\Lib\Waf\Attributes\WafExempt;
 
 /**
  * RESTful controller for custom files management (v3 API)
@@ -64,6 +65,10 @@ use MikoPBX\PBXCoreREST\Attributes\{
     collectionLevelMethods: ['getList', 'create'],
     customMethods: ['getDefault'],
     idPattern: '[0-9]+'
+)]
+#[WafExempt(
+    scopes: ['body-scan'],
+    reason: 'Skip endpoint that legitimately sends file content (may contain SQL/shell-shaped strings) in body'
 )]
 class RestController extends BaseRestController
 {

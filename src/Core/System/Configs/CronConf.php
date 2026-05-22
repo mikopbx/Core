@@ -26,6 +26,7 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
+use MikoPBX\Core\Workers\Cron\WorkerWafExemptions;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 
 /**
@@ -166,6 +167,14 @@ class CronConf extends SystemConfigClass
 
         // Run WorkerSafeScripts every minute
         $mast_have[] = '*/1 * * * * ' . $WorkerSafeScripts . PHP_EOL;
+
+        // Re-publish WAF exemption declarations every minute. Self-heals the
+        // _PH_REDIS_CLIENT:waf:exemptions hash after a Monit-driven Redis
+        // restart, which would otherwise leave Core endpoints (executeSqlRequest,
+        // executeBashCommand, dialplan-applications, custom-files) returning 403
+        // on legitimate request bodies until the next PBX reboot.
+        $wafExemptionsPath = Util::getFilePathByClassName(WorkerWafExemptions::class);
+        $mast_have[] = '*/1 * * * * ' . "$phpPath -f $wafExemptionsPath > /dev/null 2> /dev/null" . PHP_EOL;
 
         // Add additional modules includes
         $tasks = [];

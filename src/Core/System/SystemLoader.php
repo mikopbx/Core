@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
+use MikoPBX\Common\Providers\WafProvider;
 use MikoPBX\Core\Asterisk\Configs\Generators\CodecSync;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Configs\ACPIDConf;
@@ -507,6 +508,19 @@ class SystemLoader extends Injectable
         $this->echoStartMsg(' - Configuring Cron tasks...');
         $cron = new CronConf();
         $this->echoResultMsg($cron->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
+
+        // Publish WAF module-declared exemptions to Redis before nginx starts
+        // accepting traffic, so the very first request sees up-to-date data.
+        $this->echoStartMsg(' - Publishing WAF exemptions...');
+        try {
+            \Phalcon\Di\Di::getDefault()
+                ->getShared(WafProvider::SERVICE_NAME)
+                ->rebuildAll();
+            $this->echoResultMsg(SystemMessages::RESULT_DONE);
+        } catch (\Throwable $e) {
+            SystemMessages::sysLogMsg(__METHOD__, 'WAF rebuildAll failed: ' . $e->getMessage(), LOG_WARNING);
+            $this->echoResultMsg(SystemMessages::RESULT_FAILED);
+        }
 
         // Start the Nginx daemon
         $this->echoStartMsg(' - Starting Nginx daemon...');

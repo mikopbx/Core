@@ -236,6 +236,47 @@ abstract class ConfigClass extends AsteriskConfigClass implements
     }
 
     /**
+     * Returns module-declared WAF exemptions to be published by
+     * {@see \MikoPBX\PBXCoreREST\Lib\Waf\WafRegistry}.
+     *
+     * Each entry maps a URI to either a list of scopes (shorthand, defaults to
+     * exact matching) or a descriptor array with `scopes` and an optional
+     * `prefix` flag. Valid scopes:
+     *  - `body-scan`    — skip POST/PUT/PATCH body inspection
+     *  - `request-line` — skip URI / query / User-Agent inspection
+     *  - `rate-limit`   — skip per-IP rate limiting
+     *
+     * Example:
+     * <code>
+     *     public function getWafExemptions(): array
+     *     {
+     *         return [
+     *             // Shorthand — exact URI match only.
+     *             '/pbxcore/api/billing/webhook' => ['body-scan'],
+     *
+     *             // Verbose — prefix match. Covers /pbxcore/api/billing/items,
+     *             // /pbxcore/api/billing/items/{id}, /...items:export, etc.
+     *             '/pbxcore/api/billing/items' => [
+     *                 'scopes' => ['body-scan', 'rate-limit'],
+     *                 'prefix' => true,
+     *             ],
+     *         ];
+     *     }
+     * </code>
+     *
+     * Modules with `#[WafExempt]` attributes on their REST controllers do not
+     * need to override this method: class-level attributes publish as prefix
+     * automatically, method-level attributes as exact.
+     *
+     * @return array<string, array<int|string, mixed>> URI => shorthand scope
+     *     list or verbose `['scopes' => [...], 'prefix' => bool]` descriptor.
+     */
+    public function getWafExemptions(): array
+    {
+        return [];
+    }
+
+    /**
      * Called after iptables rules are applied but before the final DROP rule.
      * Override this to inject custom iptables rules (e.g., ipset-based filtering).
      *

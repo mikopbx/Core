@@ -11,6 +11,7 @@
 -- Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
 
 local redis = require "resty.redis"
+local cjson = require "cjson.safe"
 
 -- Get configuration from nginx variables
 local redis_host = ngx.var.redis_host or "127.0.0.1"
@@ -33,6 +34,15 @@ local blocked_ips_cache = ngx.shared.blocked_ips
 local firewall_state_cache = ngx.shared.firewall_state
 local access_cache = ngx.shared.access_cache
 local rate_limit_cache = ngx.shared.rate_limit
+-- Module-declared WAF exemptions. Mirrors the firewall path:
+-- Redis hash _PH_REDIS_CLIENT:waf:exemptions, read on miss, cached in shared-dict
+-- with a 10 s TTL (same as blocked_ips_cache / firewall_state_cache).
+local waf_exemptions_cache = ngx.shared.waf_exemptions
+local WAF_EXEMPTIONS_KEY = "_PH_REDIS_CLIENT:waf:exemptions"
+local WAF_EXEMPTIONS_TTL = 10
+-- Negative-cache sentinel: stored in the shared dict for URIs that resolve to
+-- "no exemption" so we don't repeat the HGET miss for ~99 % of traffic.
+local WAF_NEG_SENTINEL = "__none__"
 
 -- Redis key prefixes
 local REDIS_PREFIX = "_PH_REDIS_CLIENT:firewall:"
@@ -410,6 +420,126 @@ local function connect_to_redis()
     return red
 end
 
+-- ===== WAF MODULE-DECLARED EXEMPTIONS =====
+--
+-- Look up the WAF exemption record for `uri` and return its `scopes` table,
+-- or `nil` when the URI is not exempt. Returns `nil` when Redis is unreachable
+-- (the safe default — WAF rules continue to apply).
+--
+-- MATCHING STRATEGY:
+--   The Redis hash holds two entry kinds, distinguished by the `match` field
+--   in the stored JSON value:
+--     * `exact`  — applies only when the request URI is identical to the key.
+--                   Method-level #[WafExempt] and module getWafExemptions()
+--                   shorthand entries publish under this mode.
+--     * `prefix` — applies when the request URI equals the key OR descends
+--                   from it through one-or-more `/segment` or `:method`
+--                   suffixes. Class-level #[WafExempt] on a REST controller
+--                   publishes its $basePath under this mode, so a `PUT
+--                   /resource/{id}` request inherits the controller's
+--                   exemption from `/resource`.
+--
+--   Resolution does at most six HGETs (one exact + up to five walk-up
+--   iterations stripping `:method` then `/segment`). The final outcome is
+--   cached in the shared dict under the ORIGINAL request URI, so subsequent
+--   requests pay one shared-dict get regardless of which level resolved them.
+--
+-- Cache strategy mirrors the firewall path (blocked_ips_cache,
+-- firewall_state_cache): positive results cached as the raw JSON value for
+-- 10 s; negative results cached as WAF_NEG_SENTINEL.
+--
+-- WAF_WALK_UP_MAX caps the parent-path walk. A class-level #[WafExempt]
+-- sitting at `/pbxcore/api/v3/<resource>` resolves any descendant within
+-- five hops (worst case today: `/<resource>/{id}:<method>` is one
+-- :method-strip + one /segment-strip below the base). If MikoPBX ever
+-- adds an API surface deeper than 5 segments below the controller base,
+-- raise this constant — the limit exists to bound worst-case Redis HGETs,
+-- not to enforce any policy.
+local WAF_WALK_UP_MAX = 5
+
+local function get_exempt_scopes(uri)
+    local cached = waf_exemptions_cache:get(uri)
+    if cached == WAF_NEG_SENTINEL then
+        return nil
+    end
+    if cached then
+        local decoded = cjson.decode(cached)
+        if type(decoded) == "table" then
+            return decoded.scopes
+        end
+        return nil
+    end
+
+    local red = connect_to_redis()
+    if not red then
+        -- Redis down → no exempts → WAF defaults apply. Do NOT cache this
+        -- transient state in the shared dict.
+        return nil
+    end
+
+    -- Step 1: exact match on the full URI. An exact-stored entry resolves
+    -- here regardless of its `match` flag; a prefix-stored entry whose key
+    -- equals the URI also resolves here.
+    local val, err = red:hget(WAF_EXEMPTIONS_KEY, uri)
+    if not err and val ~= ngx.null and val then
+        red:set_keepalive(10000, 100)
+        waf_exemptions_cache:set(uri, val, WAF_EXEMPTIONS_TTL)
+        local decoded = cjson.decode(val)
+        if type(decoded) == "table" then
+            return decoded.scopes
+        end
+        return nil
+    end
+
+    -- Step 2: walk up parent paths looking for a `prefix`-mode entry. Strip
+    -- a trailing `:method` first (so `/r/{id}:copy` becomes `/r/{id}`), then
+    -- strip trailing `/segment`. Cap iterations to bound the worst case.
+    local u = uri
+    for _ = 1, WAF_WALK_UP_MAX do
+        local colon = string.find(u, ":[^/:]*$")
+        if colon then
+            u = string.sub(u, 1, colon - 1)
+        else
+            local slash = string.find(u, "/[^/]*$")
+            if not slash or slash <= 1 then
+                break
+            end
+            u = string.sub(u, 1, slash - 1)
+        end
+        if u == "" then
+            break
+        end
+
+        local pval, perr = red:hget(WAF_EXEMPTIONS_KEY, u)
+        if not perr and pval ~= ngx.null and pval then
+            local decoded = cjson.decode(pval)
+            if type(decoded) == "table" and decoded.match == "prefix" then
+                red:set_keepalive(10000, 100)
+                -- Cache under the ORIGINAL uri so future requests skip the walk.
+                waf_exemptions_cache:set(uri, pval, WAF_EXEMPTIONS_TTL)
+                return decoded.scopes
+            end
+            -- Exact-stored entry on a parent does NOT cover children.
+        end
+    end
+
+    red:set_keepalive(10000, 100)
+    waf_exemptions_cache:set(uri, WAF_NEG_SENTINEL, WAF_EXEMPTIONS_TTL)
+    return nil
+end
+
+local function scope_exempt(scopes, name)
+    if not scopes then
+        return false
+    end
+    for _, s in ipairs(scopes) do
+        if s == name then
+            return true
+        end
+    end
+    return false
+end
+
 -- ===== BASIC ATTACK PROTECTION =====
 
 -- Return the request path used for WAF checks:
@@ -431,8 +561,14 @@ local function get_request_path()
     return ngx.unescape_uri(req)
 end
 
+-- Notes on security_mode interaction with module-declared exemptions:
+--   - In `relaxed`, check_basic_security() is skipped wholesale (see the
+--     "MAIN SECURITY LOGIC" section), so exemptions are moot.
+--   - In `balanced` / `strict` / `paranoid`, exemptions apply uniformly to
+--     the `request-line` and `body-scan` scopes below.
 local function check_basic_security()
     local uri = get_request_path()
+    local exempt_scopes = get_exempt_scopes(uri)
     local raw_args = ngx.var.args
     -- Decode query args so %2e%2e%2f is caught as ../
     local args = raw_args and ngx.unescape_uri(raw_args) or nil
@@ -441,6 +577,8 @@ local function check_basic_security()
     -- Check for double-encoded traversal anywhere in the raw request URI
     -- (path + query). `%252e%252e` = double-encoded "..". This has to run
     -- on the raw bytes because get_request_path() already single-decodes.
+    -- This check is INTENTIONALLY not exposed as a WAF scope — double-encoding
+    -- is a parser-targeting attack with no legitimate content carrier.
     local raw_request_uri = ngx.var.request_uri
     if raw_request_uri then
         local lower_raw = string.lower(raw_request_uri)
@@ -450,7 +588,8 @@ local function check_basic_security()
         end
     end
 
-    -- Check for SQL injection patterns
+    -- SQL-injection patterns are also used by the body scan below, so the
+    -- table is declared once at function scope.
     local sql_patterns = {
         "union%s+select",
         "select%s+.*%s+from",
@@ -466,94 +605,97 @@ local function check_basic_security()
         "1' or '1'='1"
     }
 
-    -- Check each component separately to avoid false matches across boundaries
-    -- Build table without nil holes so ipairs iterates all entries
-    local check_strings = {string.lower(uri)}
-    if args then check_strings[#check_strings + 1] = string.lower(args) end
-    check_strings[#check_strings + 1] = string.lower(user_agent)
-    for _, pattern in ipairs(sql_patterns) do
-        for _, str in ipairs(check_strings) do
-            if str and string.match(str, pattern) then
-                ngx.log(ngx.WARN, "SQL injection attempt from: ", client_ip, " pattern: ", pattern)
-                return false
+    -- WAF scope `request-line` — covers SQL / traversal / null-byte checks
+    -- against URI, query args and User-Agent. Skipped when the URI declares
+    -- it via #[WafExempt(scopes: ['request-line'])].
+    if not scope_exempt(exempt_scopes, 'request-line') then
+        -- Check each component separately to avoid false matches across boundaries
+        -- Build table without nil holes so ipairs iterates all entries
+        local check_strings = {string.lower(uri)}
+        if args then check_strings[#check_strings + 1] = string.lower(args) end
+        check_strings[#check_strings + 1] = string.lower(user_agent)
+        for _, pattern in ipairs(sql_patterns) do
+            for _, str in ipairs(check_strings) do
+                if str and string.match(str, pattern) then
+                    ngx.log(ngx.WARN, "SQL injection attempt from: ", client_ip, " pattern: ", pattern)
+                    return false
+                end
             end
+        end
+
+        -- Check for path traversal in URL path and decoded query string
+        -- Note: "//" check removed — it false-positives on /files/{absolute_path}
+        -- where the file path starts with "/" (e.g. /files//tmp/foo). Real traversal
+        -- is caught by the ".." check; "//" alone has no traversal value.
+        if string.match(uri, "%.%.") or (args and string.match(args, "%.%.")) then
+            ngx.log(ngx.WARN, "Path traversal attempt from: ", client_ip)
+            return false
+        end
+
+        -- Check for null bytes
+        if string.match(uri, "%z") or (args and string.match(args, "%z")) then
+            ngx.log(ngx.WARN, "Null byte injection attempt from: ", client_ip)
+            return false
         end
     end
 
-    -- Check for path traversal in URL path and decoded query string
-    -- Note: "//" check removed — it false-positives on /files/{absolute_path}
-    -- where the file path starts with "/" (e.g. /files//tmp/foo). Real traversal
-    -- is caught by the ".." check; "//" alone has no traversal value.
-    if string.match(uri, "%.%.") or (args and string.match(args, "%.%.")) then
-        ngx.log(ngx.WARN, "Path traversal attempt from: ", client_ip)
-        return false
-    end
-
-    -- Check for null bytes
-    if string.match(uri, "%z") or (args and string.match(args, "%z")) then
-        ngx.log(ngx.WARN, "Null byte injection attempt from: ", client_ip)
-        return false
-    end
-
-    -- Check POST/PUT/PATCH body for attacks (defense-in-depth)
-    -- Skip endpoints that legitimately send SQL, shell commands, or code in body
-    local body_scan_whitelist = {
-        ["/pbxcore/api/v3/system:executeSqlRequest"] = true,
-        ["/pbxcore/api/v3/system:executeBashCommand"] = true,
-        ["/pbxcore/api/v3/dialplan-applications"] = true,
-        ["/pbxcore/api/v3/custom-files"] = true,
-    }
-
-    local method = ngx.req.get_method()
-    if (method == "POST" or method == "PUT" or method == "PATCH")
-       and not body_scan_whitelist[uri] then
-        local content_type = ngx.var.content_type or ""
-        local lower_content_type = string.lower(content_type)
-        -- Skip multipart (file uploads) to avoid reading large bodies into memory
-        if not string.find(lower_content_type, "multipart", 1, true) then
-            ngx.req.read_body()
-            local body = ngx.req.get_body_data()
-            -- Fallback: read from temp file if body was buffered to disk
-            if not body then
-                local body_file = ngx.req.get_body_file()
-                if body_file then
-                    local f = io.open(body_file, "r")
-                    if f then
-                        body = f:read(65536)
-                        f:close()
+    -- WAF scope `body-scan` — covers POST/PUT/PATCH body inspection (defense
+    -- in depth). Skipped when the URI declares it via
+    -- #[WafExempt(scopes: ['body-scan'])]. Core controllers that legitimately
+    -- accept SQL / shell / dialplan code in their bodies (system:executeSqlRequest,
+    -- system:executeBashCommand, dialplan-applications, custom-files) declare
+    -- this scope; see src/PBXCoreREST/Controllers/.
+    if not scope_exempt(exempt_scopes, 'body-scan') then
+        local method = ngx.req.get_method()
+        if method == "POST" or method == "PUT" or method == "PATCH" then
+            local content_type = ngx.var.content_type or ""
+            local lower_content_type = string.lower(content_type)
+            -- Skip multipart (file uploads) to avoid reading large bodies into memory
+            if not string.find(lower_content_type, "multipart", 1, true) then
+                ngx.req.read_body()
+                local body = ngx.req.get_body_data()
+                -- Fallback: read from temp file if body was buffered to disk
+                if not body then
+                    local body_file = ngx.req.get_body_file()
+                    if body_file then
+                        local f = io.open(body_file, "r")
+                        if f then
+                            body = f:read(65536)
+                            f:close()
+                        end
                     end
                 end
-            end
-            if body and #body < 65536 then
-                local check_body
-                -- Only URL-decode for form-urlencoded; JSON/other use raw body
-                if string.find(lower_content_type, "x-www-form-urlencoded", 1, true) then
-                    check_body = ngx.unescape_uri(body)
-                else
-                    check_body = body
-                end
-                local lower_body = string.lower(check_body)
+                if body and #body < 65536 then
+                    local check_body
+                    -- Only URL-decode for form-urlencoded; JSON/other use raw body
+                    if string.find(lower_content_type, "x-www-form-urlencoded", 1, true) then
+                        check_body = ngx.unescape_uri(body)
+                    else
+                        check_body = body
+                    end
+                    local lower_body = string.lower(check_body)
 
-                -- Traversal in body (require path separator after "..")
-                if string.match(check_body, "%.%.[/\\]") then
-                    ngx.log(ngx.WARN, "WAF: path traversal in POST body from: ", client_ip,
-                            " uri: ", uri)
-                    return false
-                end
-
-                -- Null bytes in body (check both raw and decoded)
-                if string.match(body, "%z") or string.match(check_body, "%z") then
-                    ngx.log(ngx.WARN, "WAF: null byte in POST body from: ", client_ip,
-                            " uri: ", uri)
-                    return false
-                end
-
-                -- SQL injection in body
-                for _, pattern in ipairs(sql_patterns) do
-                    if string.match(lower_body, pattern) then
-                        ngx.log(ngx.WARN, "WAF: SQL injection in POST body from: ", client_ip,
-                                " uri: ", uri, " pattern: ", pattern)
+                    -- Traversal in body (require path separator after "..")
+                    if string.match(check_body, "%.%.[/\\]") then
+                        ngx.log(ngx.WARN, "WAF: path traversal in POST body from: ", client_ip,
+                                " uri: ", uri)
                         return false
+                    end
+
+                    -- Null bytes in body (check both raw and decoded)
+                    if string.match(body, "%z") or string.match(check_body, "%z") then
+                        ngx.log(ngx.WARN, "WAF: null byte in POST body from: ", client_ip,
+                                " uri: ", uri)
+                        return false
+                    end
+
+                    -- SQL injection in body
+                    for _, pattern in ipairs(sql_patterns) do
+                        if string.match(lower_body, pattern) then
+                            ngx.log(ngx.WARN, "WAF: SQL injection in POST body from: ", client_ip,
+                                    " uri: ", uri, " pattern: ", pattern)
+                            return false
+                        end
                     end
                 end
             end
@@ -606,6 +748,18 @@ local function check_rate_limit(is_authenticated)
     -- Skip rate limiting for static resources
     if is_static_resource() then
         return true
+    end
+
+    -- WAF scope `rate-limit` — skipped when the URI declares it via
+    -- #[WafExempt(scopes: ['rate-limit'])] or via ConfigClass::getWafExemptions().
+    -- Checked AFTER the static-resource skip (which is engine-level) but
+    -- BEFORE any rate-block lookup, so exempt endpoints never count against
+    -- the IP's bucket and cannot be IP-blocked by their own traffic.
+    do
+        local exempt_scopes = get_exempt_scopes(get_request_path())
+        if scope_exempt(exempt_scopes, 'rate-limit') then
+            return true
+        end
     end
 
     -- Skip rate limiting for HEAD on audio metadata endpoints. List views

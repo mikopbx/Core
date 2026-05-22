@@ -33,6 +33,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     HttpMapping,
     ResourceSecurity
 };
+use MikoPBX\PBXCoreREST\Lib\Waf\Attributes\WafExempt;
 
 /**
  * RESTful controller for dialplan applications management (v3 API)
@@ -94,6 +95,10 @@ use MikoPBX\PBXCoreREST\Attributes\{
     collectionLevelMethods: ['getList', 'create'],
     customMethods: ['getDefault', 'copy'],
     idPattern: ['DIALPLAN-', 'DIALPLAN-APPLICATION-', 'APPLICATION-MAPPING-']  // Modern: DIALPLAN-xxx, Legacy: DIALPLAN-APPLICATION-xxx, APPLICATION-MAPPING-xxx
+)]
+#[WafExempt(
+    scopes: ['body-scan'],
+    reason: 'Skip endpoint that legitimately sends dialplan code (PHP/Lua/JS) in body'
 )]
 class RestController extends BaseRestController
 {

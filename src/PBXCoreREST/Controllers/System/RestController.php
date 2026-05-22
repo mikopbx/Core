@@ -31,6 +31,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     HttpMapping,
     ResourceSecurity
 };
+use MikoPBX\PBXCoreREST\Lib\Waf\Attributes\WafExempt;
 
 /**
  * RESTful controller for system management (v3 API)
@@ -399,6 +400,10 @@ class RestController extends BaseRestController
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(500, 'rest_response_500_internal', 'PBXApiResult')]
+    #[WafExempt(
+        scopes: ['body-scan'],
+        reason: 'Skip endpoint that legitimately sends shell commands in body'
+    )]
     public function executeBashCommand(): void
     {
         // Implementation handled by BaseRestController
@@ -424,6 +429,10 @@ class RestController extends BaseRestController
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(500, 'rest_response_500_internal', 'PBXApiResult')]
+    #[WafExempt(
+        scopes: ['body-scan'],
+        reason: 'Skip endpoint that legitimately sends SQL in body'
+    )]
     public function executeSqlRequest(): void
     {
         // Implementation handled by BaseRestController
