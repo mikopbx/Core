@@ -154,7 +154,16 @@ class IptablesConf extends Injectable
             return;
         }
 
+        // Per-phase profiling. One log line at the end pinpoints which phase
+        // stalls when "Configuring Firewall" boot stage hangs (e.g. broken VPC,
+        // DNS timeouts, slow ipset loads in module hooks).
+        $totalStart = hrtime(true);
+        $phases     = [];
+
+        $t = hrtime(true);
         $this->dropAllRules();
+        $phases['drop'] = $this->phaseElapsed($t);
+
         if ($this->firewall_enable) {
             // Check if any firewall rules exist in database
             // If no rules configured - allow all traffic (don't apply DROP at the end)
@@ -164,7 +173,9 @@ class IptablesConf extends Injectable
             $arr_command[] = $this->getIptablesInputRule('', '-m conntrack --ctstate ESTABLISHED,RELATED');
 
             // Drop packets from known SIP scanners by User-Agent string match
+            $t = hrtime(true);
             $this->addSipScannerRules($arr_command);
+            $phases['scanner'] = $this->phaseElapsed($t);
 
             if ($this->maxReqSec > 0) {
                 $advancedSipRules = [
@@ -183,8 +194,13 @@ class IptablesConf extends Injectable
             }
             // Add allowed services (regular subnets only, catch-all separated)
             $catchAllCommands = [];
+            $t = hrtime(true);
             $this->addMainFirewallRules($arr_command, $catchAllCommands);
+            $phases['main'] = $this->phaseElapsed($t);
+
+            $t = hrtime(true);
             $this->addAdditionalFirewallRules($arr_command);
+            $phases['add'] = $this->phaseElapsed($t);
 
             // Add firewall rules customisation
             $arr_commands_custom = [];
@@ -197,25 +213,37 @@ class IptablesConf extends Injectable
             $cmd = "$cat /etc/firewall_additional"
                 . " | $grep -v '|' | $grep -v '&'"
                 . " | $grep '^iptables' | $awk -F ';' '{print $1}'";
+            $t = hrtime(true);
             Processes::mwExec($cmd, $arr_commands_custom);
+            $phases['custom_read'] = $this->phaseElapsed($t);
 
             // Execute regular subnet rules and SIP provider rules
+            $t = hrtime(true);
             Processes::mwExecCommands($arr_command, $out, 'firewall');
+            $phases['exec_main'] = $this->phaseElapsed($t);
+
+            $t = hrtime(true);
             Processes::mwExecCommands($arr_commands_custom, $out, 'firewall_additional');
+            $phases['exec_custom'] = $this->phaseElapsed($t);
 
             // Allow modules to inject custom iptables rules (e.g., ipset-based GeoIP filtering)
             // Positioned after explicit subnet ACCEPT and SIP provider rules, before catch-all ACCEPT
+            $t = hrtime(true);
             PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::ON_AFTER_IPTABLES_RELOAD);
+            $phases['hooks'] = $this->phaseElapsed($t);
 
             // Apply catch-all rules (0.0.0.0/0, ::/0) AFTER module hooks
             // This ensures GeoIP DROP rules take effect before the catch-all ACCEPT
             if (!empty($catchAllCommands)) {
+                $t = hrtime(true);
                 Processes::mwExecCommands($catchAllCommands, $out, 'firewall_catchall');
+                $phases['catchall'] = $this->phaseElapsed($t);
             }
 
             // Drop everything else - but ONLY if rules are configured
             // If no rules exist, allow all traffic to prevent lockout
             if ($hasRules) {
+                $t = hrtime(true);
                 // IPv4 DROP
                 $dropCommand = $this->getIptablesInputRule('', '', 'DROP');
                 Processes::mwExec($dropCommand);
@@ -225,8 +253,37 @@ class IptablesConf extends Injectable
                 if (!empty($ip6tablesPath)) {
                     Processes::mwExec("$ip6tablesPath -A INPUT -j DROP");
                 }
+                $phases['drop_final'] = $this->phaseElapsed($t);
             }
         }
+
+        $phases['total'] = $this->phaseElapsed($totalStart);
+        SystemMessages::sysLogMsg(__METHOD__, 'firewall profile: ' . $this->formatPhases($phases), LOG_INFO);
+    }
+
+    /**
+     * Returns elapsed seconds since a `hrtime(true)` reference, rounded to 2 decimals.
+     *
+     * Uses the monotonic clock so the measurement survives NTP step adjustments
+     * that can fire during early boot.
+     */
+    private function phaseElapsed(int $startNs): float
+    {
+        return round((hrtime(true) - $startNs) / 1_000_000_000, 2);
+    }
+
+    /**
+     * Formats the phase timing map as a single-line `key=Vs key=Vs …` string.
+     *
+     * @param array<string, float> $phases
+     */
+    private function formatPhases(array $phases): string
+    {
+        $parts = [];
+        foreach ($phases as $name => $seconds) {
+            $parts[] = sprintf('%s=%.2fs', $name, $seconds);
+        }
+        return implode(' ', $parts);
     }
 
     /**
