@@ -445,14 +445,21 @@ class WorkerSipDnsResolver extends WorkerBase
      *
      * Filter (delegated to IpAddressHelper::isPublicIp):
      *   - IPv4: rejects loopback, RFC1918 (10/8, 172.16/12, 192.168/16),
-     *     link-local (169.254/16), Class E reserved, broadcast.
-     *     CGNAT (100.64/10), multicast (224/4) and TEST-NET ranges
-     *     pass PHP's filter flags — accepted by design (CGNAT can be
-     *     legitimate peering, the others are not realistic SIP source
-     *     addresses but accepting them costs nothing).
+     *     link-local (169.254/16), Class E reserved, broadcast — via
+     *     PHP's FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE.
+     *     Additionally rejects CGNAT (100.64/10, RFC 6598), multicast
+     *     (224.0.0.0/4, RFC 5771), and TEST-NET-{1,2,3} (192.0.2.0/24,
+     *     198.51.100.0/24, 203.0.113.0/24, RFC 5737) — PHP's filter
+     *     flags do NOT cover these, so explicit checks in
+     *     IpAddressHelper::isPublicIp close the gap (round N+1 security
+     *     review). A DNS-poisoning attacker who shares a CGNAT block
+     *     with the victim PBX could otherwise inject their own IP into
+     *     pjsip identify match= and gain inbound SIP trust.
      *   - IPv6: requires global unicast 2000::/3 AND rejects 6to4
      *     (2002::/16), Teredo (2001:0000::/32), documentation prefix
-     *     (2001:db8::/32) — see IpAddressHelper::isGlobalUnicast.
+     *     (2001:db8::/32), Benchmarking (2001:2::/48), ORCHIDv1
+     *     (2001:10::/28) and ORCHIDv2 (2001:20::/28) — see
+     *     IpAddressHelper::isGlobalUnicast.
      *
      * Providers that legitimately use private peering configure their
      * match-IPs through `m_SipHosts` (IP/CIDR direct, bypasses DNS).

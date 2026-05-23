@@ -391,4 +391,325 @@ class SIPConfTest extends AbstractUnitTest
             SIPConf::getIncomingContextId('Host.Example.Net.', '1000')
         );
     }
+
+    // -----------------------------------------------------------------------
+    // isValidHostname — used by m_SipHosts ingest and warmup so admin-added
+    // hostnames flow through the same Redis-cache pipeline as provider.host.
+    // The whitelist intentionally permits SRV labels (`_sip._tcp.example.com`),
+    // IDN punycode, and dashes; it intentionally rejects raw single labels
+    // (almost always a typo for an IP).
+    // -----------------------------------------------------------------------
+
+    public function testIsValidHostnameAcceptsFqdn(): void
+    {
+        $this->assertTrue(SIPConf::isValidHostname('sip.example.com'));
+    }
+
+    public function testIsValidHostnameAcceptsTrailingDotFqdn(): void
+    {
+        // Canonical absolute FQDN form ends with a single dot.
+        $this->assertTrue(SIPConf::isValidHostname('sip.example.com.'));
+    }
+
+    public function testIsValidHostnameAcceptsPunycodeIdn(): void
+    {
+        $this->assertTrue(SIPConf::isValidHostname('xn--80aaxitdbjk.xn--p1ai'));
+    }
+
+    public function testIsValidHostnameAcceptsHyphensInLabel(): void
+    {
+        // Hyphens are legal LDH characters as long as the label doesn't
+        // start or end with them.
+        $this->assertTrue(SIPConf::isValidHostname('sip-edge-01.example.com'));
+    }
+
+    public function testIsValidHostnameRejectsSingleLabel(): void
+    {
+        // Single labels are almost always typos for a literal IP — reject.
+        $this->assertFalse(SIPConf::isValidHostname('localhost'));
+        $this->assertFalse(SIPConf::isValidHostname('foo'));
+        $this->assertFalse(SIPConf::isValidHostname('pbx1'));
+    }
+
+    public function testIsValidHostnameRejectsBracketedIpv6(): void
+    {
+        // filter_var rejects brackets so isIpOrCidr returns false for
+        // '[2001:db8::1]'; isValidHostname MUST also reject it, otherwise
+        // it'd route into the DNS pipeline as a bogus hostname (see
+        // code-review finding #3).
+        $this->assertFalse(SIPConf::isValidHostname('[2001:db8::1]'));
+        $this->assertFalse(SIPConf::isValidHostname('[2001:db8::1]:5060'));
+    }
+
+    public function testIsValidHostnameRejectsHostPort(): void
+    {
+        // 'host:port' is admin copy-paste typo for additional hosts; the
+        // colon previously broke the warmup demux (#2 + #5).
+        $this->assertFalse(SIPConf::isValidHostname('sip.example.com:5060'));
+        $this->assertFalse(SIPConf::isValidHostname('host.example.org:443'));
+    }
+
+    public function testIsValidHostnameRejectsSrvLabel(): void
+    {
+        // SRV service labels start with '_' which is NOT a valid host
+        // character per RFC 1123. Accepting these caused warmup to
+        // re-prefix them ('_sip._udp._sip._tcp.example.com') → NXDOMAIN
+        // forever (code-review finding #4).
+        $this->assertFalse(SIPConf::isValidHostname('_sip._tcp.example.com'));
+        $this->assertFalse(SIPConf::isValidHostname('_sips._tcp.foo.bar'));
+    }
+
+    public function testIsValidHostnameRejectsStructuralGarbage(): void
+    {
+        // Strings of only delimiter chars used to pass the old permissive
+        // regex (code-review finding #10).
+        $this->assertFalse(SIPConf::isValidHostname('::::'));
+        $this->assertFalse(SIPConf::isValidHostname('.....'));
+        $this->assertFalse(SIPConf::isValidHostname(':::.'));
+        $this->assertFalse(SIPConf::isValidHostname('[]:'));
+    }
+
+    public function testIsValidHostnameRejectsLabelEdgeHyphen(): void
+    {
+        // RFC 1123: labels must not start or end with a hyphen.
+        $this->assertFalse(SIPConf::isValidHostname('-sip.example.com'));
+        $this->assertFalse(SIPConf::isValidHostname('sip-.example.com'));
+        $this->assertFalse(SIPConf::isValidHostname('sip.-example.com'));
+        $this->assertFalse(SIPConf::isValidHostname('sip.example-.com'));
+    }
+
+    public function testIsValidHostnameRejectsControlCharacters(): void
+    {
+        // Newline / tab / shell-metachar injection.
+        $this->assertFalse(SIPConf::isValidHostname("evil.com\n"));
+        $this->assertFalse(SIPConf::isValidHostname("evil.com\tfoo"));
+        $this->assertFalse(SIPConf::isValidHostname('evil.com;rm -rf /'));
+    }
+
+    public function testIsValidHostnameRejectsOverLongInput(): void
+    {
+        // RFC 1035 maximum hostname length is 253 octets after stripping
+        // the canonical trailing dot.
+        //
+        // Construct 253 chars using ≤63-char labels (per-label cap is
+        // also enforced by the regex): 4 × 62-char labels + 3 separators
+        // = 251 chars; add ".aa" → 254 chars (rejected), or ".a" → 253
+        // (accepted).
+        $label62 = str_repeat('a', 62);
+        $ok      = "$label62.$label62.$label62.$label62.a";       // 4*62 + 4 = 252
+        $tooLong = "$label62.$label62.$label62.$label62.$label62"; // 5*62 + 4 = 314
+        $this->assertTrue(SIPConf::isValidHostname($ok));
+        $this->assertFalse(SIPConf::isValidHostname($tooLong));
+    }
+
+    public function testIsValidHostnameBoundaryAt253Chars(): void
+    {
+        // Exact RFC 1035 boundary — guards against future off-by-one when
+        // the > 253 check is refactored (e.g. accidentally flipped to >= 253).
+        // Code-review finding #14.
+        $label63 = str_repeat('a', 63);
+        $label62 = str_repeat('a', 62);
+        // 63 + 1 + 63 + 1 + 63 + 1 + 61 = 253
+        $exactly253 = "$label63.$label63.$label63." . str_repeat('a', 61);
+        // 63 + 1 + 63 + 1 + 63 + 1 + 62 = 254
+        $exactly254 = "$label63.$label63.$label63.$label62";
+
+        $this->assertSame(253, strlen($exactly253));
+        $this->assertSame(254, strlen($exactly254));
+        $this->assertTrue(SIPConf::isValidHostname($exactly253));
+        $this->assertFalse(SIPConf::isValidHostname($exactly254));
+    }
+
+    public function testIsValidHostnameRejectsLabelOver63Chars(): void
+    {
+        // RFC 1035 per-label cap is 63 octets.
+        $label64 = str_repeat('a', 64);
+        $this->assertFalse(SIPConf::isValidHostname("$label64.io"));
+    }
+
+    public function testIsValidHostnameRejectsEmpty(): void
+    {
+        $this->assertFalse(SIPConf::isValidHostname(''));
+        $this->assertFalse(SIPConf::isValidHostname('   '));
+        $this->assertFalse(SIPConf::isValidHostname('.'));
+        $this->assertFalse(SIPConf::isValidHostname('..'));
+    }
+
+    // -----------------------------------------------------------------------
+    // isAcceptableAdditionalHost — composite gate enforced by
+    // SaveRecordAction::updateAdditionalHosts when ingesting m_SipHosts rows.
+    // Must mirror the union: IP/CIDR OR hostname (resolved via cache).
+    // -----------------------------------------------------------------------
+
+    public function testIsAcceptableAdditionalHostAcceptsIp(): void
+    {
+        $this->assertTrue(SIPConf::isAcceptableAdditionalHost('203.0.113.10'));
+        $this->assertTrue(SIPConf::isAcceptableAdditionalHost('203.0.113.0/24'));
+        $this->assertTrue(SIPConf::isAcceptableAdditionalHost('2001:db8::/64'));
+    }
+
+    public function testIsAcceptableAdditionalHostAcceptsHostname(): void
+    {
+        // The regression that motivated this patch: existing admin-saved
+        // hostnames in m_SipHosts must keep working after the round-trip
+        // through SaveRecordAction::updateAdditionalHosts.
+        $this->assertTrue(SIPConf::isAcceptableAdditionalHost('mikoru.mangosip.ru'));
+        $this->assertTrue(SIPConf::isAcceptableAdditionalHost('sirena2.reconn.ru'));
+        $this->assertTrue(SIPConf::isAcceptableAdditionalHost('ip.beeline.ru'));
+    }
+
+    public function testIsAcceptableAdditionalHostRejectsGarbage(): void
+    {
+        $this->assertFalse(SIPConf::isAcceptableAdditionalHost(''));
+        // Single label — typo more often than legitimate intent.
+        $this->assertFalse(SIPConf::isAcceptableAdditionalHost('localhost'));
+        // Control character / shell-metachar injection.
+        $this->assertFalse(SIPConf::isAcceptableAdditionalHost("evil.com\n"));
+        $this->assertFalse(SIPConf::isAcceptableAdditionalHost('foo bar baz'));
+        // Specific code-review regressions — bracketed IPv6, host:port,
+        // SRV label, structural garbage.
+        $this->assertFalse(SIPConf::isAcceptableAdditionalHost('[2001:db8::1]'));
+        $this->assertFalse(SIPConf::isAcceptableAdditionalHost('sip.example.com:5060'));
+        $this->assertFalse(SIPConf::isAcceptableAdditionalHost('_sip._tcp.example.com'));
+        $this->assertFalse(SIPConf::isAcceptableAdditionalHost('::::'));
+    }
+
+    public function testIsAcceptableAdditionalHostRejectsWildcardCidr(): void
+    {
+        // Reviewer-agent finding R6-P1: /0 wildcard collapses identify
+        // match= to "trust ALL" and silently disables the source-IP ACL.
+        // Reject both IPv4 and IPv6 wildcards explicitly.
+        $this->assertFalse(SIPConf::isAcceptableAdditionalHost('0.0.0.0/0'));
+        $this->assertFalse(SIPConf::isAcceptableAdditionalHost('::/0'));
+        // Realistic non-zero prefixes still accepted — admins may
+        // legitimately whitelist large blocks (e.g., regional ITSP /24).
+        $this->assertTrue(SIPConf::isAcceptableAdditionalHost('203.0.113.0/24'));
+        $this->assertTrue(SIPConf::isAcceptableAdditionalHost('2001:db8::/32'));
+        // Boundary: /1 is still extremely permissive (half the address
+        // space) but admin-intentional shapes should pass — the gate
+        // rejects ONLY /0.
+        $this->assertTrue(SIPConf::isAcceptableAdditionalHost('128.0.0.0/1'));
+    }
+
+    // -----------------------------------------------------------------------
+    // stripIpv6Brackets — shared normalization helper applied by both
+    // provider.host and additionalHosts ingest paths (self-review M2).
+    // -----------------------------------------------------------------------
+
+    public function testStripIpv6BracketsRemovesSurroundingBrackets(): void
+    {
+        $this->assertSame(
+            '2001:db8::1',
+            SIPConf::stripIpv6Brackets('[2001:db8::1]')
+        );
+    }
+
+    public function testStripIpv6BracketsPreservesUnbrackedValue(): void
+    {
+        // Bare IPv6, IPv4, hostname — all flow through unchanged.
+        $this->assertSame('2001:db8::1', SIPConf::stripIpv6Brackets('2001:db8::1'));
+        $this->assertSame('203.0.113.1', SIPConf::stripIpv6Brackets('203.0.113.1'));
+        $this->assertSame('sip.example.com', SIPConf::stripIpv6Brackets('sip.example.com'));
+    }
+
+    public function testStripIpv6BracketsLeavesUnbalancedPairUntouched(): void
+    {
+        // Only strip when BOTH `[` at start and `]` at end are present.
+        // Half-brackets propagate to the structural gate, which then rejects.
+        $this->assertSame('[2001:db8::1', SIPConf::stripIpv6Brackets('[2001:db8::1'));
+        $this->assertSame('2001:db8::1]', SIPConf::stripIpv6Brackets('2001:db8::1]'));
+    }
+
+    public function testStripIpv6BracketsTrimsWhitespace(): void
+    {
+        // Admins copy-paste with stray whitespace from SIP URI captures.
+        $this->assertSame('2001:db8::1', SIPConf::stripIpv6Brackets('  [2001:db8::1]  '));
+    }
+
+    public function testStripIpv6BracketsCompositionWithIsAcceptable(): void
+    {
+        // The provider.host ingest path is `strip → isAcceptableAdditionalHost`.
+        // Document the composition here: bracketed IPv6 is accepted via the
+        // pipeline but NOT by isAcceptableAdditionalHost alone (self-review m4).
+        $bracketed = '[2001:db8::1]';
+        $this->assertFalse(SIPConf::isAcceptableAdditionalHost($bracketed));
+        $this->assertTrue(
+            SIPConf::isAcceptableAdditionalHost(SIPConf::stripIpv6Brackets($bracketed))
+        );
+    }
+
+    public function testStripIpv6BracketsEmptyBracketsCollapseToEmpty(): void
+    {
+        // "[]" should be normalized to "" — downstream gates then reject as
+        // empty (provider.host treats "" as INBOUND-only; additionalHosts
+        // skips empty rows).
+        $this->assertSame('', SIPConf::stripIpv6Brackets('[]'));
+    }
+
+    // -----------------------------------------------------------------------
+    // flattenBucketsToLegacyShape — IPs-first ordering invariant for the
+    // legacy `getSipHosts()` API (reviewer-agent finding R5-4 / H8).
+    // 3rd-party modules in /var/www/mikopbx/ depend on this contract.
+    // -----------------------------------------------------------------------
+
+    public function testFlattenBucketsLegacyShapeIpsBeforeHostnames(): void
+    {
+        $buckets = [
+            'P1' => [
+                'ips'       => ['203.0.113.10', '198.51.100.0/24'],
+                'hostnames' => ['sip.example.com'],
+            ],
+        ];
+        $flat = SIPConf::flattenBucketsToLegacyShape($buckets);
+        // IPs MUST precede hostnames in the flat list (2026.x ordering
+        // contract). Any module sorting / index-based access depends on this.
+        $this->assertSame(
+            ['203.0.113.10', '198.51.100.0/24', 'sip.example.com'],
+            $flat['P1']
+        );
+    }
+
+    public function testFlattenBucketsLegacyShapeMultipleProviders(): void
+    {
+        $buckets = [
+            'P1' => ['ips' => ['10.0.0.1'],            'hostnames' => []],
+            'P2' => ['ips' => [],                       'hostnames' => ['sip.b.com']],
+            'P3' => ['ips' => ['2001:db8::1'],         'hostnames' => ['sip.c.com', 'sip.d.com']],
+        ];
+        $flat = SIPConf::flattenBucketsToLegacyShape($buckets);
+        $this->assertSame(['10.0.0.1'], $flat['P1']);
+        $this->assertSame(['sip.b.com'], $flat['P2']);
+        $this->assertSame(['2001:db8::1', 'sip.c.com', 'sip.d.com'], $flat['P3']);
+    }
+
+    public function testFlattenBucketsLegacyShapeEmptyInput(): void
+    {
+        $this->assertSame([], SIPConf::flattenBucketsToLegacyShape([]));
+    }
+
+    public function testFlattenBucketsLegacyShapeMissingInnerKeysAreTolerated(): void
+    {
+        // Defensive: if a future refactor emits a bucket without `ips` or
+        // `hostnames`, the wrapper still returns an empty list for that
+        // provider rather than fatal'ing on undefined key.
+        $buckets = [
+            'P1' => ['ips' => ['10.0.0.1']],            // hostnames missing
+            'P2' => ['hostnames' => ['sip.b.com']],     // ips missing
+            'P3' => [],                                  // both missing
+        ];
+        $flat = SIPConf::flattenBucketsToLegacyShape($buckets);
+        $this->assertSame(['10.0.0.1'], $flat['P1']);
+        $this->assertSame(['sip.b.com'], $flat['P2']);
+        $this->assertSame([], $flat['P3']);
+    }
+
+    public function testFlattenBucketsLegacyShapePreservesNumericIndex(): void
+    {
+        // Output values are always 0-indexed contiguous arrays (array_values).
+        // Modules iterating with `foreach ($flat[$id] as $i => $addr)` need
+        // consistent integer keys starting at 0.
+        $buckets = ['P1' => ['ips' => ['a', 'b'], 'hostnames' => ['c']]];
+        $flat = SIPConf::flattenBucketsToLegacyShape($buckets);
+        $this->assertSame([0, 1, 2], array_keys($flat['P1']));
+    }
 }

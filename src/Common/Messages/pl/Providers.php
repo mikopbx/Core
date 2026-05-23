@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Formaty',
     'pr_AdditionalHostsTooltip_header' => 'Dodatkowe adresy dostawcy',
     'pr_AdditionalHostsTooltip_important' => 'Ważne: używane tylko do identyfikacji połączeń przychodzących, NIE do balansowania połączeń wychodzących',
+    'pr_AdditionalHostsTooltip_trust' => 'Nazwy domen są rozwiązywane przez Twój serwer DNS; jeśli ten DNS jest pod kontrolą atakującego, jego adresy IP mogą trafić na białą listę. Dla krytycznych dostawców podawaj IP/podsieć bezpośrednio.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Identyfikacja połączeń przychodzących od dostawcy',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Wsparcie dla dostawców z wieloma serwerami',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Bezpieczeństwo przez IP whitelist',

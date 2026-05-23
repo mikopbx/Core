@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => '格式',
     'pr_AdditionalHostsTooltip_header' => '提供商的额外地址',
     'pr_AdditionalHostsTooltip_important' => '重要：仅用于识别入站呼叫，不用于出站负载均衡',
+    'pr_AdditionalHostsTooltip_trust' => '域名通过您的DNS服务器解析；如果该DNS被攻击者控制，攻击者的IP可能被加入白名单。对于关键提供商，请直接指定IP/子网。',
     'pr_AdditionalHostsTooltip_purpose_id' => '识别来自提供商的入站呼叫',
     'pr_AdditionalHostsTooltip_purpose_multi' => '支持多服务器提供商',
     'pr_AdditionalHostsTooltip_purpose_security' => '通过IP白名单确保安全',

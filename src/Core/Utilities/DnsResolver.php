@@ -136,6 +136,15 @@ final class DnsResolver
             return $results;
         }
 
+        // Callers (warmupDnsCache, …) pass 0 once their shared deadline is
+        // already exhausted. Spawning N children only to SIGKILL them at the
+        // very next poll is pure waste plus log noise — short-circuit here
+        // BEFORE the spawn loop so no proc_open/fork/exec ever happens.
+        // See code-review finding #11.
+        if ($timeoutSec <= 0) {
+            return $results;
+        }
+
         $nslookup = Util::which('nslookup');
         if ($nslookup === '') {
             SystemMessages::sysLogMsg(__METHOD__, 'nslookup binary not found', LOG_ERR);
@@ -191,7 +200,12 @@ final class DnsResolver
             ];
         }
 
-        $deadline = microtime(true) + max(1, $timeoutSec);
+        // Callers (e.g. SaveRecordAction::warmupDnsCache) sometimes pass 0 to
+        // request a hard short-circuit when their shared budget is already
+        // exhausted. Honor that — children spawned just above will be killed
+        // immediately by the deadline check below. The previous floor of 1
+        // produced ~1s overshoots per stage on flaky resolvers.
+        $deadline = microtime(true) + max(0, $timeoutSec);
 
         while (!empty($running)) {
             // Build the read set fresh each iteration; stream_select rewrites

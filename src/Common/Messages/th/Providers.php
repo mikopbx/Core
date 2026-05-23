@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'รูปแบบ',
     'pr_AdditionalHostsTooltip_header' => 'ที่อยู่ผู้ให้บริการเพิ่มเติม',
     'pr_AdditionalHostsTooltip_important' => 'สำคัญ: ใช้เฉพาะสำหรับการระบุสายเข้า ไม่ใช่สำหรับการปรับสมดุลขาออก',
+    'pr_AdditionalHostsTooltip_trust' => 'ชื่อโดเมนถูกแก้ไขผ่านเซิร์ฟเวอร์ DNS ของคุณ หาก DNS นี้ตกอยู่ภายใต้การควบคุมของผู้โจมตี IP ของผู้โจมตีอาจถูกเพิ่มเข้าใน whitelist ได้ สำหรับผู้ให้บริการที่สำคัญ ให้ระบุ IP/ซับเน็ตโดยตรง',
     'pr_AdditionalHostsTooltip_purpose_id' => 'การระบุสายเข้าจากผู้ให้บริการ',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'สนับสนุนผู้ให้บริการที่มีเซิร์ฟเวอร์หลายตัว',
     'pr_AdditionalHostsTooltip_purpose_security' => 'ความปลอดภัยผ่าน IP whitelist',

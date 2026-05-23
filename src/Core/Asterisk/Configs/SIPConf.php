@@ -160,8 +160,9 @@ class SIPConf extends AsteriskConfigClass
     /**
      * Resolved-IP records live 7 days. Long TTL is deliberate: it lets the
      * last known-good identify match= survive transient DNS outages spanning
-     * reboots, while WorkerSipDnsResolver refreshes the value every few
-     * minutes when DNS is healthy.
+     * reboots, while {@see \MikoPBX\Core\Workers\WorkerSipDnsResolver} refreshes
+     * the value every `WorkerSipDnsResolver::CHECK_INTERVAL_SECONDS` (300s =
+     * 5 minutes) when DNS is healthy (reviewer-agent finding R5-1).
      */
     public const int CACHE_TTL_RESOLVED = 7 * 86400;
 
@@ -185,9 +186,19 @@ class SIPConf extends AsteriskConfigClass
     public const string MUTEX_CONF_WRITE = 'pjsip-conf-write';
 
     /**
-     * SIP hosts data.
+     * Provider → {ips: [], hostnames: []} map of admin-controlled additional
+     * hosts loaded from m_SipHosts. IPs go straight into identify match=;
+     * hostnames flow through the same Redis-cache pipeline as provider.host
+     * (pendingResolveHostnames + readResolvedIps).
      *
-     * @var array
+     * Shape: [
+     *   'provider_uniqid' => [
+     *     'ips'       => ['1.2.3.4/32', ...],
+     *     'hostnames' => ['sip.example.com', ...],
+     *   ],
+     * ]
+     *
+     * @var array<string, array{ips: array<int, string>, hostnames: array<int, string>}>
      */
     protected array $dataSipHosts;
 
@@ -494,7 +505,7 @@ class SIPConf extends AsteriskConfigClass
         $this->refreshProviders();
         $this->data_rout         = $this->getOutRoutes();
         $this->technology        = self::getTechnology();
-        $this->dataSipHosts      = self::getSipHosts();
+        $this->dataSipHosts      = self::getSipHostsBuckets();
     }
 
     /**
@@ -805,23 +816,138 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Get SIP hosts.
+     * Per-process memo of m_SipHosts row IDs already reported as invalid by
+     * {@see self::getSipHostsBuckets()}. WorkerModelsEvents fires
+     * getSipHostsBuckets on every related model change (SIP, Extension, Route
+     * saves), which can easily reach dozens of regens per day. Without
+     * de-duplication a single legacy invalid row would flood syslog with one
+     * identical WARNING per regen — see code-review finding #10. Memoizing
+     * per-process keeps the operator-visible signal (one log line on the
+     * first regen after upgrade) without the noise.
      *
-     * Retrieves and returns the SIP hosts data as an array.
+     * @var array<string, true>
+     */
+    private static array $warnedInvalidSipHostIds = [];
+
+    /**
+     * Flat per-provider list of address strings (IPs and hostnames mixed).
      *
-     * @return array The SIP hosts data.
+     * Kept as the stable public API for 3rd-party modules in /var/www/mikopbx/
+     * that iterate as `foreach ($hosts as $address) {...}`. Core consumers
+     * inside this repo use {@see self::getSipHostsBuckets()} directly when
+     * they need the IP/hostname split (for handing hostnames to
+     * WorkerSipDnsResolver or for skipping non-IPs in the iptables whitelist).
+     *
+     * **Order contract** (changed in 2026.x; reviewer-agent finding A5):
+     * within each provider's list, IP/CIDR literals come FIRST, hostnames
+     * SECOND. Pre-2026.x this returned rows in SQLite-defined natural order,
+     * which interspersed the two types. Modules that depended on insertion
+     * order should switch to {@see self::getSipHostsBuckets()} and consume
+     * `ips` / `hostnames` independently, or sort the flat list themselves.
+     * Invalid rows that {@see self::getSipHostsBuckets()} drops with a
+     * WARNING are also absent here — modules that need to surface invalid
+     * data in their UI should iterate `SipHosts::find()` directly.
+     *
+     * Code-review finding #5.
+     *
+     * @return array<string, array<int, string>>
      */
     public static function getSipHosts(): array
     {
-        $dataSipHosts = [];
-        $sipHosts = SipHosts::find();
+        return self::flattenBucketsToLegacyShape(self::getSipHostsBuckets());
+    }
 
-        // Process each SIP host.
+    /**
+     * Pure transformation: bucket shape → legacy flat shape.
+     *
+     * Extracted as a testable static (reviewer-agent finding R5-4 / H8) so
+     * the IPs-first ordering invariant — load-bearing for 3rd-party modules
+     * pinned to pre-2026.x layout — has a unit test that doesn't need a DB.
+     * If anyone "simplifies" by reverting to a single-pass `SipHosts::find()`
+     * loop, the test fires before review.
+     *
+     * @param array<string, array{ips: array<int, string>, hostnames: array<int, string>}> $buckets
+     * @return array<string, array<int, string>>
+     */
+    public static function flattenBucketsToLegacyShape(array $buckets): array
+    {
+        $flat = [];
+        foreach ($buckets as $providerId => $bucket) {
+            $flat[$providerId] = array_values(array_merge(
+                $bucket['ips'] ?? [],
+                $bucket['hostnames'] ?? []
+            ));
+        }
+        return $flat;
+    }
+
+    /**
+     * Load admin-controlled additional hosts (m_SipHosts) grouped by provider,
+     * pre-split into IP/CIDR literals and hostnames.
+     *
+     * IPs land in identify match= verbatim; hostnames are queued for
+     * WorkerSipDnsResolver and their resolved IPs are merged in at generation
+     * time from the Redis cache. Invalid rows (control characters, totally
+     * malformed values from pre-validation DB writes) are dropped here so the
+     * generator never has to think about defence-in-depth on the bucket.
+     *
+     * @return array<string, array{ips: array<int, string>, hostnames: array<int, string>}>
+     */
+    public static function getSipHostsBuckets(): array
+    {
+        $dataSipHosts = [];
+        // Deterministic order: SQLite returns rows in implementation-defined
+        // order otherwise, which makes the per-row WARNING block below flap
+        // between regens and confuses log-aggregation correlation
+        // (code-review finding #15).
+        $sipHosts = SipHosts::find(['order' => 'id']);
+
         foreach ($sipHosts as $hostData) {
-            if (! isset($dataSipHosts[$hostData->provider_id])) {
-                $dataSipHosts[$hostData->provider_id] = [];
+            $providerId = (string)$hostData->provider_id;
+            if (!isset($dataSipHosts[$providerId])) {
+                $dataSipHosts[$providerId] = ['ips' => [], 'hostnames' => []];
             }
-            $dataSipHosts[$hostData->provider_id][] = str_replace(PHP_EOL, '', $hostData->address);
+
+            // Strip stray newlines that pre-validation DB writes might have
+            // landed (older code accepted raw textarea input verbatim).
+            $address = trim(str_replace(PHP_EOL, '', (string)$hostData->address));
+            if ($address === '') {
+                continue;
+            }
+
+            if (self::isIpOrCidr($address)) {
+                $dataSipHosts[$providerId]['ips'][] = $address;
+                continue;
+            }
+            if (self::isValidHostname($address)) {
+                $dataSipHosts[$providerId]['hostnames'][] = $address;
+                continue;
+            }
+            // Anything left here is neither IP/CIDR nor a usable hostname —
+            // a stale row from a release older than this validation gate, or
+            // a value inserted directly via SQL. Emit the WARNING once per
+            // process (memoized below) so operators upgrading from <2026.x
+            // notice the silent drop, without flooding syslog on every regen
+            // (code-review findings #9 and #10).
+            $rowId = (string)$hostData->id;
+            if (!isset(self::$warnedInvalidSipHostIds[$rowId])) {
+                self::$warnedInvalidSipHostIds[$rowId] = true;
+                // SIP-IDENT-DROP prefix groups all silent-drop sites
+                // (additional hosts, additionalHosts ingest, warmup
+                // failure) under one grep / alertmanager pattern
+                // (reviewer-agent finding R5-3).
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    sprintf(
+                        "SIP-IDENT-DROP: m_SipHosts row id=%s provider=%s address=%s "
+                        . "rejected by validation — skipped on regen",
+                        $rowId,
+                        $providerId,
+                        $address
+                    ),
+                    LOG_WARNING
+                );
+            }
         }
 
         return $dataSipHosts;
@@ -1973,16 +2099,24 @@ class SIPConf extends AsteriskConfigClass
         // moment) leaves identify empty forever and incoming INVITEs fall into anonymous.
         //
         // Source order for the literal IP/CIDR pool:
-        //   1. admin-controlled m_SipHosts (passed through verbatim — admin's responsibility)
-        //   2. provider.host         if it is itself an IP/CIDR (else recorded as pending DNS)
-        //   3. outbound_proxy host   same rule
-        //   4. cached resolved IPs   from CACHE_KEY_RESOLVED_PREFIX populated by
-        //                            WorkerSipDnsResolver via SRV+A/AAAA (multiple IPs per host)
+        //   1. admin-controlled m_SipHosts IPs  (literal, used verbatim)
+        //   2. provider.host                    if it is itself an IP/CIDR
+        //   3. outbound_proxy host              same rule
+        //   4. cached resolved IPs              from CACHE_KEY_RESOLVED_PREFIX, populated by
+        //                                       WorkerSipDnsResolver via SRV+A/AAAA, for
+        //                                       provider.host, outbound_proxy AND any
+        //                                       hostname stored in m_SipHosts
         //
-        // Hostnames that need DNS go into $pendingResolveHostnames; the worker reads the
-        // accumulated SET at CACHE_KEY_PENDING_HOSTS after we persist it at end of generation.
-        $providerHosts = $this->dataSipHosts[$provider['uniqid']] ?? [];
+        // Hostnames (from any source) go into $pendingResolveHostnames; the worker reads
+        // the accumulated SET at CACHE_KEY_PENDING_HOSTS after we persist it at end of
+        // generation. Graceful degradation: when an admin-stored hostname has no cache
+        // entry yet, only that hostname is silently dropped from match= — sibling
+        // IP literals stay, so identify remains operational on its known-good subset.
+        $bucket = $this->dataSipHosts[$provider['uniqid']]
+            ?? ['ips' => [], 'hostnames' => []];
+        $providerHosts = $bucket['ips'];
 
+        $hostnamesToResolve = $bucket['hostnames'];
         foreach ([$provider['host'] ?? '', self::extractHostFromOutboundProxy($provider['outbound_proxy'] ?? '')] as $rawHost) {
             $rawHost = trim((string)$rawHost);
             if ($rawHost === '') {
@@ -1992,8 +2126,15 @@ class SIPConf extends AsteriskConfigClass
                 $providerHosts[] = $rawHost;
                 continue;
             }
+            $hostnamesToResolve[] = $rawHost;
+        }
+
+        foreach ($hostnamesToResolve as $rawHost) {
             // Hostname — defer to cache. Worker fills CACHE_KEY_RESOLVED_PREFIX.
             $hostKey = self::normalizeHostnameKey($rawHost);
+            if ($hostKey === '') {
+                continue;
+            }
             $this->pendingResolveHostnames[$hostKey] = true;
             $cachedIps = self::readResolvedIps($hostKey);
             if (!empty($cachedIps)) {
@@ -2253,6 +2394,129 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
+     * Strict RFC 1123 hostname check used by m_SipHosts ingest, warmup and
+     * generation. Intentionally NARROW: only LDH characters (Letter / Digit /
+     * Hyphen), dots between labels, no colons, no brackets, no underscores.
+     *
+     * Rejected by design (each was a source of silent failure in prior
+     * iterations — see follow-up code review of dad236bba):
+     *   - bracketed IPv6 `[2001:db8::1]` (filter_var rejects brackets, so
+     *     isIpOrCidr returns false; if isValidHostname accepted the bracket
+     *     form the value would route to the DNS pipeline and never resolve).
+     *   - `host:port` shape `sip.example.com:5060` (admin copy-paste typo —
+     *     the colon broke the warmup batch key demux `{host}::{tag}`).
+     *   - SRV labels `_sip._tcp.example.com` (warmup re-prefixes with the
+     *     same SIP service prefixes, producing nonsense queries like
+     *     `_sip._udp._sip._tcp.example.com` which always NXDOMAIN).
+     *   - bare colons / structural garbage `::::`, `.....`, `:::.`.
+     *
+     * IPv6 in canonical (unbracketed) form is handled by {@see self::isIpOrCidr()};
+     * CIDR is also handled there. Punycoded IDNs pass because they are pure
+     * LDH (e.g. `xn--80aaxitdbjk.xn--p1ai`).
+     *
+     * @internal The strict gate is the load-bearing invariant for the
+     *           `{hostKey}::{tag}` key scheme in
+     *           {@see SaveRecordAction::warmupDnsCache()}. Loosening it to
+     *           re-admit `:` requires switching that delimiter to a sentinel
+     *           that cannot appear in any hostname (e.g. `"\x1f"`).
+     */
+    public static function isValidHostname(string $value): bool
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return false;
+        }
+        // FQDN canonical form may end with a trailing dot — accept that
+        // shape but require the labels themselves to validate.
+        $value = rtrim($value, '.');
+        // Total length cap from RFC 1035 (253 octets, not counting the
+        // implicit final dot). Per-label length cap is 63, enforced by
+        // the regex below.
+        if ($value === '' || strlen($value) > 253) {
+            return false;
+        }
+        // Per-label: starts and ends with alphanumeric, may contain
+        // alphanumeric or hyphens in between, length 1..63. At least two
+        // labels required (otherwise single-label `pbx1`/`localhost` slip
+        // through — almost always typos for a literal IP).
+        $label = '[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?';
+        return (bool)preg_match("/^{$label}(?:\\.{$label})+$/", $value);
+    }
+
+    /**
+     * Composite gate for additional-hosts ingest (m_SipHosts).
+     * True if the value is either an IP/CIDR literal or a hostname.
+     *
+     * Upgrade note (code-review finding #6): pre-2026.x deployments may
+     * carry single-label hostnames in m_SipHosts (e.g. corporate `mainpbx`
+     * resolvable through a DHCP search domain). After this patch they no
+     * longer satisfy {@see self::isValidHostname()} and are skipped here
+     * AND rejected upstream by the OpenAPI pattern in
+     * {@see \MikoPBX\PBXCoreREST\Lib\Providers\DataStructure}'s
+     * `additionalHosts[].address`. The result is loud, not silent: the
+     * REST API returns HTTP 422 (schema validation) before
+     * {@see SaveRecordAction::updateAdditionalHosts()} ever runs, so
+     * legacy rows stay in the DB untouched until the admin edits them.
+     * Per-process WARNING from {@see SIPConf::getSipHosts()} surfaces the
+     * dead rows in syslog so operators can clean them up post-upgrade.
+     */
+    public static function isAcceptableAdditionalHost(string $value): bool
+    {
+        // CIDR path: parse strictly via IpAddressHelper::normalizeCidr(),
+        // which applies FILTER_VALIDATE_INT to the prefix and enforces the
+        // legal range (1..32 for IPv4, 1..128 for IPv6) — then explicitly
+        // reject prefix 0.
+        //
+        // The previous gate compared the prefix string against the literal
+        // "0" after trim(), which was bypassable by any non-canonical
+        // decimal-equivalent shape: "/00", "/+0", "/-0", "/0x0". Each of
+        // those left the string-compare unequal, then fell through to
+        // isIpOrCidr() — which only validates the IP half and accepts any
+        // garbage prefix. The value then landed verbatim in pjsip identify
+        // match= and iptables -s, where Asterisk / netfilter parse the
+        // prefix with C-style atoi() and collapse it to /0 ("trust ALL
+        // source IPs", "ACCEPT from anywhere") — silently disabling the
+        // entire SIP source-IP ACL (security review finding H1 / extends
+        // reviewer-agent finding R6-P1).
+        //
+        // Non-CIDR shapes fall through to the existing union check.
+        $trimmed = trim($value);
+        if (str_contains($trimmed, '/')) {
+            $cidr = IpAddressHelper::normalizeCidr($trimmed);
+            if ($cidr === false || $cidr['prefix'] === 0) {
+                return false;
+            }
+            return true;
+        }
+        return self::isIpOrCidr($value) || self::isValidHostname($value);
+    }
+
+    /**
+     * Strip the surrounding brackets from a `[IPv6]`-shaped string and
+     * return the bare IPv6 literal; pass anything else through unchanged.
+     *
+     * Admins commonly copy-paste IPv6 from SIP URIs where bracketing is
+     * canonical (e.g. `[2001:db8::1]`). MikoPBX stores host fields without
+     * brackets, so both the provider.host ingest path and the
+     * m_SipHosts additionalHosts ingest path normalize here before the
+     * structural gate {@see self::isAcceptableAdditionalHost()}. Keeping the
+     * normalization in one place avoids the asymmetry where one ingest
+     * accepts bracketed IPv6 and the other silently drops it.
+     */
+    public static function stripIpv6Brackets(string $value): string
+    {
+        $value = trim($value);
+        if (
+            strlen($value) >= 2
+            && $value[0] === '['
+            && str_ends_with($value, ']')
+        ) {
+            return substr($value, 1, -1);
+        }
+        return $value;
+    }
+
+    /**
      * Canonical key for a hostname used in cache lookups. Mirrors the
      * normalizeHost() rule from #1044 (AbstractProviderStatusAction) so that
      * hostnames stored in DB and hostnames returned from the SRV/A resolver
@@ -2321,8 +2585,15 @@ class SIPConf extends AsteriskConfigClass
      * Process-local memo (see {@see self::$resolvedIpsMemo}) collapses the
      * 4+ Redis GETs per hostname during a single full generation pass into
      * one. Memo is reset at the top of generateConfigProtected().
+     *
+     * Public so cross-config consumers (e.g. {@see \MikoPBX\Core\System\Configs\IptablesConf}
+     * for the additional-hosts firewall whitelist) can share the same cache
+     * and memo as pjsip identify match= generation, keeping identify trust
+     * and firewall trust end-to-end consistent (code-review finding #7).
+     * Callers MUST pass a key already normalized via
+     * {@see self::normalizeHostnameKey()}.
      */
-    private static function readResolvedIps(string $hostKey): array
+    public static function readResolvedIps(string $hostKey): array
     {
         if (isset(self::$resolvedIpsMemo[$hostKey])) {
             return self::$resolvedIpsMemo[$hostKey];

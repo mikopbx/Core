@@ -261,4 +261,43 @@ TXT;
         $stdout = "_sip._udp.example.com\tservice = sip-broken.example.com.\n";
         $this->assertSame([], DnsResolver::parseSrvOutput($stdout));
     }
+
+    // -----------------------------------------------------------------------
+    // resolveBatch — zero-budget short-circuit (code-review finding #11).
+    // -----------------------------------------------------------------------
+
+    public function testResolveBatchZeroBudgetShortCircuitsBeforeSpawn(): void
+    {
+        // Self-review m5: callers pass 0 once their shared deadline is gone.
+        // resolveBatch must NOT fork/exec any nslookup children — it should
+        // return immediately with empty results per query key. We can't
+        // observe the absence of fork directly, but we can observe the
+        // wall-clock cost: with N=10 queries and 0 budget the call should
+        // complete in well under 100ms (a real spawn+kill cycle would
+        // easily push past that on macOS/Linux).
+        $queries = [];
+        for ($i = 0; $i < 10; $i++) {
+            $queries["q$i"] = ['type' => 'A', 'name' => "host$i.test.invalid"];
+        }
+        $start = microtime(true);
+        $results = DnsResolver::resolveBatch($queries, 0);
+        $elapsed = microtime(true) - $start;
+
+        $this->assertLessThan(
+            0.1,
+            $elapsed,
+            'Zero-budget resolveBatch should short-circuit before any spawn'
+        );
+        $this->assertCount(10, $results, 'Result keyed by all input keys');
+        foreach ($queries as $key => $_) {
+            $this->assertSame([], $results[$key], "Empty result for $key");
+        }
+    }
+
+    public function testResolveBatchEmptyQueriesReturnsEmpty(): void
+    {
+        // Pre-existing guard, regression-protected.
+        $this->assertSame([], DnsResolver::resolveBatch([], 5));
+        $this->assertSame([], DnsResolver::resolveBatch([], 0));
+    }
 }

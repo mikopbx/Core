@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'フォーマット',
     'pr_AdditionalHostsTooltip_header' => '追加プロバイダーアドレス',
     'pr_AdditionalHostsTooltip_important' => '重要: 着信識別にのみ使用され、発信の負荷分散には使用されません',
+    'pr_AdditionalHostsTooltip_trust' => 'ドメイン名はお使いのDNSサーバーで解決されます。このDNSが攻撃者の支配下にある場合、攻撃者のIPがホワイトリストに入る可能性があります。重要なプロバイダにはIP/サブネットを直接指定してください。',
     'pr_AdditionalHostsTooltip_purpose_id' => 'プロバイダーからの着信の識別',
     'pr_AdditionalHostsTooltip_purpose_multi' => '複数サーバーを持つプロバイダーのサポート',
     'pr_AdditionalHostsTooltip_purpose_security' => 'IPホワイトリストによるセキュリティ',

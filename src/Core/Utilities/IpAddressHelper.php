@@ -426,6 +426,27 @@ class IpAddressHelper
             return false;
         }
 
+        // Reject RFC 5180 Benchmarking (2001:2::/48). Canonical form is
+        // "2001:2:" for every host in the /48 — the bare network address
+        // 2001:2:: normalises to "2001:2::" which also starts with this
+        // prefix.
+        if (str_starts_with($normalized, '2001:2:')) {
+            return false;
+        }
+
+        // Reject ORCHIDv1 (2001:10::/28, RFC 4843, deprecated) and
+        // ORCHIDv2 (2001:20::/28, RFC 7343). The /28 boundary means the
+        // first hextet's last nibble distinguishes 10..1f and 20..2f.
+        // No real SIP provider operates in either block, so admin-added
+        // hostnames resolving here are almost certainly DNS poisoning
+        // (security review finding M2).
+        if (preg_match('/^2001:1[0-9a-f]:/', $normalized) === 1) {
+            return false;
+        }
+        if (preg_match('/^2001:2[0-9a-f]:/', $normalized) === 1) {
+            return false;
+        }
+
         return true;
     }
 
@@ -447,11 +468,46 @@ class IpAddressHelper
         }
 
         if (self::isIpv4($ip)) {
-            return filter_var(
-                $ip,
-                FILTER_VALIDATE_IP,
-                FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
-            ) !== false;
+            if (
+                filter_var(
+                    $ip,
+                    FILTER_VALIDATE_IP,
+                    FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+                ) === false
+            ) {
+                return false;
+            }
+            // PHP's FILTER_FLAG_NO_RES_RANGE does NOT block CGNAT
+            // (100.64.0.0/10 per RFC 6598), multicast (224.0.0.0/4), or
+            // TEST-NET (192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24)
+            // ranges even though the docblock above implies it does
+            // (reviewer-agent finding R6-P2). Without these explicit
+            // checks, a DNS-poisoning attacker can inject CGNAT IPs into
+            // the pjsip identify trust whitelist, gaining inbound SIP
+            // trust for any peer sharing the same carrier CGNAT block.
+            $octets = explode('.', $ip);
+            $o0 = (int)$octets[0];
+            $o1 = (int)$octets[1];
+            // CGNAT: 100.64.0.0 - 100.127.255.255 (RFC 6598)
+            if ($o0 === 100 && $o1 >= 64 && $o1 <= 127) {
+                return false;
+            }
+            // Multicast: 224.0.0.0 - 239.255.255.255 (RFC 5771)
+            if ($o0 >= 224 && $o0 <= 239) {
+                return false;
+            }
+            // Documentation / TEST-NET ranges (RFC 5737) — should never
+            // legitimately appear from a real DNS resolver.
+            if ($o0 === 192 && $o1 === 0 && (int)$octets[2] === 2) {
+                return false;
+            }
+            if ($o0 === 198 && $o1 === 51 && (int)$octets[2] === 100) {
+                return false;
+            }
+            if ($o0 === 203 && $o1 === 0 && (int)$octets[2] === 113) {
+                return false;
+            }
+            return true;
         }
 
         if (self::isIpv6($ip)) {

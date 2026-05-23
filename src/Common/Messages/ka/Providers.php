@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'ფორმატები',
     'pr_AdditionalHostsTooltip_header' => 'პროვაიდერის დამატებითი მისამართები',
     'pr_AdditionalHostsTooltip_important' => 'მნიშვნელოვანი: გამოიყენება მხოლოდ შემომავალი ზარების იდენტიფიკაციისთვის, არა გამავალი ზარების ბალანსირებისთვის',
+    'pr_AdditionalHostsTooltip_trust' => 'დომენის სახელები გადაიყვანება თქვენი DNS სერვერით; თუ ეს DNS თავდამსხმელის კონტროლის ქვეშაა, მისი IP-ები შესაძლოა მოხვდეს whitelist-ში. კრიტიკული პროვაიდერებისთვის მიუთითეთ IP/ქვექსელი პირდაპირ.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'პროვაიდერისგან შემომავალი ზარების იდენტიფიკაცია',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'მრავალი სერვერის მქონე პროვაიდერების მხარდაჭერა',
     'pr_AdditionalHostsTooltip_purpose_security' => 'უსაფრთხოება IP თეთრი სიის მეშვეობით',

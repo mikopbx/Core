@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Format',
     'pr_AdditionalHostsTooltip_header' => 'Ytterligare leverantörsadresser',
     'pr_AdditionalHostsTooltip_important' => 'Viktigt: används endast för identifiering av inkommande samtal, INTE för utgående balansering',
+    'pr_AdditionalHostsTooltip_trust' => 'Domännamn slås upp via din DNS-server; om denna DNS är under en angripares kontroll kan dennes IP-adresser hamna på whitelistan. Ange IP/subnät direkt för kritiska leverantörer.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Identifiering av inkommande samtal från leverantör',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Support för leverantörer med flera servrar',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Säkerhet genom IP-vitlista',

@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Formáty',
     'pr_AdditionalHostsTooltip_header' => 'Další adresy poskytovatele',
     'pr_AdditionalHostsTooltip_important' => 'Důležité: používají se pouze pro identifikaci příchozích hovorů, NE pro vyvažování odchozích',
+    'pr_AdditionalHostsTooltip_trust' => 'Doménová jména jsou překládána přes váš DNS server; pokud je tento DNS pod kontrolou útočníka, jeho IP adresy se mohou dostat do whitelistu. U kritických poskytovatelů uvádějte IP/podsíť přímo.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Identifikace příchozích hovorů od poskytovatele',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Podpora poskytovatelů s více servery',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Bezpečnost prostřednictvím IP whitelist',

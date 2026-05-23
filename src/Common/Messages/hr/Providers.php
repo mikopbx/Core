@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Formati',
     'pr_AdditionalHostsTooltip_header' => 'Dodatne adrese davatelja usluga',
     'pr_AdditionalHostsTooltip_important' => 'Važno: koristi se samo za identificiranje dolaznih poziva, NE za balansiranje odlaznih',
+    'pr_AdditionalHostsTooltip_trust' => 'Imena domena rješavaju se preko vašeg DNS poslužitelja; ako je taj DNS pod kontrolom napadača, njegovi IP-ovi mogu završiti u whitelistu. Za kritične davatelje izravno navedite IP/podmrežu.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Identificiranje dolaznih poziva od davatelja usluga',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Podrška davatelja usluga s više poslužitelja',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Sigurnost kroz IP bijelu listu',

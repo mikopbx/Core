@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Formatos',
     'pr_AdditionalHostsTooltip_header' => 'Direcciones adicionales del proveedor',
     'pr_AdditionalHostsTooltip_important' => 'Importante: se usan solo para identificación de llamadas entrantes, NO para balanceo de llamadas salientes',
+    'pr_AdditionalHostsTooltip_trust' => 'Los nombres de dominio se resuelven mediante su servidor DNS; si dicho DNS está bajo el control de un atacante, sus IPs pueden acabar en la whitelist. Para proveedores críticos indique IP/subred directamente.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Identificación de llamadas entrantes del proveedor',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Soporte de proveedores con múltiples servidores',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Seguridad a través de lista blanca de IP',

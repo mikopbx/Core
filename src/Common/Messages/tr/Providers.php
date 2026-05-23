@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Biçimler',
     'pr_AdditionalHostsTooltip_header' => 'Sağlayıcının ek adresleri',
     'pr_AdditionalHostsTooltip_important' => 'Önemli: yalnızca gelen çağrıları tanımlamak için kullanılır, giden dengeleme için DEĞİL',
+    'pr_AdditionalHostsTooltip_trust' => 'Alan adları DNS sunucunuz aracılığıyla çözümlenir; bu DNS bir saldırganın kontrolündeyse onun IP\'leri whitelist\'e girebilir. Kritik sağlayıcılar için doğrudan IP/alt ağ belirtin.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Sağlayıcıdan gelen çağrıları tanımlama',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Çoklu sunuculu sağlayıcılar için destek',
     'pr_AdditionalHostsTooltip_purpose_security' => 'IP beyaz liste ile güvenlik',

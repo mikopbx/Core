@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Μορφές',
     'pr_AdditionalHostsTooltip_header' => 'Πρόσθετες διευθύνσεις παρόχου',
     'pr_AdditionalHostsTooltip_important' => 'Σημαντικό: χρησιμοποιούνται μόνο για αναγνώριση εισερχόμενων κλήσεων, ΟΧΙ για εξισορρόπηση εξερχόμενων',
+    'pr_AdditionalHostsTooltip_trust' => 'Τα ονόματα τομέα επιλύονται μέσω του DNS διακομιστή σας· αν αυτός ο DNS είναι υπό έλεγχο επιτιθέμενου, οι IP του μπορεί να καταλήξουν στη whitelist. Για κρίσιμους παρόχους ορίστε απευθείας IP/υποδίκτυο.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Αναγνώριση εισερχόμενων κλήσεων από πάροχο',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Υποστήριξη παρόχων με πολλαπλούς διακομιστές',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Ασφάλεια μέσω IP whitelist',

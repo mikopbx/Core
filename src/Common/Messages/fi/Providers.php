@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Muodot',
     'pr_AdditionalHostsTooltip_header' => 'Palveluntarjoajan lisäosoitteet',
     'pr_AdditionalHostsTooltip_important' => 'Tärkeää: käytetään vain saapuvien puhelujen tunnistamiseen, EI lähtevien kuormantasaukseen',
+    'pr_AdditionalHostsTooltip_trust' => 'Verkkotunnukset resolvoidaan DNS-palvelimesi kautta; jos kyseinen DNS on hyökkääjän hallinnassa, hänen IP-osoitteensa voivat päätyä sallittujen luetteloon. Kriittisille palveluntarjoajille määritä IP/aliverkko suoraan.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Saapuvien puhelujen tunnistus palveluntarjoajalta',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Useita palvelimia omaavien palveluntarjoajien tuki',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Turvallisuus IP-valkolistan kautta',

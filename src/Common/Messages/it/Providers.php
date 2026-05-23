@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Formati',
     'pr_AdditionalHostsTooltip_header' => 'Indirizzi provider aggiuntivi',
     'pr_AdditionalHostsTooltip_important' => 'Importante: utilizzati solo per identificare chiamate in entrata, NON per bilanciamento del carico in uscita',
+    'pr_AdditionalHostsTooltip_trust' => 'I nomi di dominio vengono risolti tramite il vostro server DNS; se tale DNS è sotto il controllo di un attaccante, i suoi IP possono finire nella whitelist. Per provider critici specificate direttamente IP/sottorete.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Identificazione di chiamate in entrata dal provider',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Supporto per provider multi-server',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Sicurezza tramite whitelist IP',

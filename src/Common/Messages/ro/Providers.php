@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Formate',
     'pr_AdditionalHostsTooltip_header' => 'Adrese suplimentare ale furnizorului',
     'pr_AdditionalHostsTooltip_important' => 'Important: se folosesc doar pentru identificarea apelurilor de intrare, NU pentru echilibrarea ieșirilor',
+    'pr_AdditionalHostsTooltip_trust' => 'Numele de domenii sunt rezolvate prin serverul DNS al dumneavoastră; dacă acest DNS este sub controlul unui atacator, IP-urile acestuia pot ajunge în whitelist. Pentru furnizori critici specificați direct IP/subrețea.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Identificarea apelurilor de intrare de la furnizor',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Suport pentru furnizori cu mai multe servere',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Securitate prin whitelist IP',

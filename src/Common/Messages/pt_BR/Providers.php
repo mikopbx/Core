@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Formatos',
     'pr_AdditionalHostsTooltip_header' => 'Endereços adicionais do provedor',
     'pr_AdditionalHostsTooltip_important' => 'Importante: usado apenas para identificação de chamadas de entrada, NÃO para balanceamento de saída',
+    'pr_AdditionalHostsTooltip_trust' => 'Os nomes de domínio são resolvidos pelo seu servidor DNS; se esse DNS estiver sob controle de um atacante, os IPs dele podem entrar na whitelist. Para provedores críticos, informe diretamente o IP/sub-rede.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Identificação de chamadas de entrada do provedor',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Suporte para provedores com múltiplos servidores',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Segurança através de whitelist de IP',

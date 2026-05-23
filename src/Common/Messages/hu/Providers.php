@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Formátumok',
     'pr_AdditionalHostsTooltip_header' => 'További szolgáltatói címek',
     'pr_AdditionalHostsTooltip_important' => 'Fontos: csak bejövő hívások azonosításához használatos, NEM kimenő terheléselosztáshoz',
+    'pr_AdditionalHostsTooltip_trust' => 'A domain neveket a DNS-kiszolgálója oldja fel; ha ez a DNS támadó irányítása alatt áll, az ő IP-címei is bekerülhetnek a whitelistre. Kritikus szolgáltatókhoz közvetlenül IP-t/alhálózatot adjon meg.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Szolgáltatótól érkező bejövő hívások azonosítása',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Többszerveres szolgáltatók támogatása',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Biztonság IP fehér listán keresztül',

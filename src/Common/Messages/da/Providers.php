@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Formater',
     'pr_AdditionalHostsTooltip_header' => 'Yderligere udbyderadresser',
     'pr_AdditionalHostsTooltip_important' => 'Vigtigt: bruges kun til identifikation af indgående opkald, IKKE til lastbalancering af udgående',
+    'pr_AdditionalHostsTooltip_trust' => 'Domænenavne opløses via din DNS-server; hvis denne DNS er under en angribers kontrol, kan deres IP\'er ende på whitelisten. For kritiske udbydere skal du angive IP/undernet direkte.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Identifikation af indgående opkald fra udbyder',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Understøttelse af udbydere med flere servere',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Sikkerhed gennem IP whitelist',

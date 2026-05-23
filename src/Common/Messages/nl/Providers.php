@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Formaten',
     'pr_AdditionalHostsTooltip_header' => 'Extra provideradressen',
     'pr_AdditionalHostsTooltip_important' => 'Belangrijk: alleen gebruikt voor identificatie van inkomende oproepen, NIET voor load balancing van uitgaande',
+    'pr_AdditionalHostsTooltip_trust' => 'Domeinnamen worden opgelost via uw DNS-server; als deze DNS onder controle van een aanvaller staat, kunnen diens IP\'s in de whitelist terechtkomen. Geef voor kritieke providers IP/subnet rechtstreeks op.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Identificatie van inkomende oproepen van provider',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Ondersteuning van providers met meerdere servers',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Beveiliging via IP whitelist',

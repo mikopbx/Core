@@ -76,6 +76,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Formats',
     'pr_AdditionalHostsTooltip_header' => 'Additional provider addresses',
     'pr_AdditionalHostsTooltip_important' => 'Important: used only for identifying incoming calls, NOT for outbound load balancing',
+    'pr_AdditionalHostsTooltip_trust' => 'Domain names are resolved via your DNS server; if this DNS is under attacker control, their IPs may end up in the whitelist. For critical providers specify IP/subnet directly.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Identification of incoming calls from provider',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Support for providers with multiple servers',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Security through IP whitelist',

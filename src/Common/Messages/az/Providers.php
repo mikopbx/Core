@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Formatlar',
     'pr_AdditionalHostsTooltip_header' => 'Provayderin əlavə ünvanları',
     'pr_AdditionalHostsTooltip_important' => 'Vacib: yalnız gələn zənglərin identifikasiyası üçün istifadə olunur, gedən balanslaşdırma üçün DEYİL',
+    'pr_AdditionalHostsTooltip_trust' => 'Domen adları sizin DNS serveriniz vasitəsilə həll edilir; əgər bu DNS təcavüzkarın nəzarəti altındadırsa, onun IP-ləri whitelist-ə düşə bilər. Kritik provayderlər üçün birbaşa IP/şəbəkə göstərin.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Provayderdən gələn zənglərin identifikasiyası',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Çoxlu serveri olan provayderlərin dəstəyi',
     'pr_AdditionalHostsTooltip_purpose_security' => 'IP whitelist vasitəsilə təhlükəsizlik',

@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Formate',
     'pr_AdditionalHostsTooltip_header' => 'Zusätzliche Provider-Adressen',
     'pr_AdditionalHostsTooltip_important' => 'Wichtig: nur zur Identifizierung eingehender Anrufe verwendet, NICHT für Lastverteilung ausgehender',
+    'pr_AdditionalHostsTooltip_trust' => 'Domainnamen werden über Ihren DNS-Server aufgelöst; befindet sich dieser DNS unter Kontrolle eines Angreifers, können dessen IPs in die Whitelist gelangen. Geben Sie für kritische Anbieter IP/Subnetz direkt an.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Identifizierung eingehender Anrufe vom Provider',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Unterstützung von Providern mit mehreren Servern',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Sicherheit durch IP-Whitelist',

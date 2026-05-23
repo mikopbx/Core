@@ -384,13 +384,57 @@ class IptablesConf extends Injectable
     private function addAdditionalFirewallRules(array &$arr_command): void
     {
         $db_data  = Sip::find("type = 'friend' AND ( disabled <> '1')");
-        $sipHosts = SIPConf::getSipHosts();
+        // getSipHostsBuckets — split shape {ips, hostnames}. SIPConf's
+        // public getSipHosts() is the LEGACY flat shape kept for 3rd-party
+        // module compat (code-review finding #5); core consumers use the
+        // bucket variant directly.
+        $sipHosts = SIPConf::getSipHostsBuckets();
+
+        // Reset SIPConf's process-local resolved-IPs memo BEFORE we start
+        // calling readResolvedIps below (reviewer-agent finding R4-2).
+        // This iptables generator runs OUTSIDE SIPConf::generateConfigProtected,
+        // which is where the memo is normally reset at the top of each pjsip
+        // regen. Without an explicit reset here, a long-lived process
+        // (WorkerApiCommands, ~weeks of uptime) accumulates memo entries
+        // from prior generations and never sees updates that
+        // WorkerSipDnsResolver writes to Redis between iptables regens —
+        // producing iptables rules pinned to stale ITSP IPs for the
+        // lifetime of the worker process.
+        SIPConf::resetResolvedIpsMemo();
 
         $hashArray = [];
         /** @var Sip $data */
         foreach ($db_data as $data) {
-            $data = $sipHosts[$data->uniqid] ?? [];
-            foreach ($data as $host) {
+            // SIPConf::getSipHostsBuckets() returns
+            //   [uniqid => ['ips' => [...], 'hostnames' => [...]]]
+            // Shape is guaranteed by getSipHosts construction — no defensive
+            // `?? []` on the inner keys, so a future contract break would
+            // surface loudly instead of silently dropping firewall rules
+            // (code-review finding #9).
+            $bucket = $sipHosts[$data->uniqid] ?? ['ips' => [], 'hostnames' => []];
+
+            // Literal IP/CIDR rows go straight into iptables -s.
+            // Hostname rows are resolved out-of-band by
+            // WorkerSipDnsResolver; we read the same Redis cache that
+            // pjsip identify match= reads (SIPConf::readResolvedIps) so
+            // identify trust and firewall trust stay end-to-end consistent
+            // (code-review finding #7). Until WorkerSipDnsResolver has run
+            // at least once for a hostname, its resolved IPs are absent
+            // here and incoming SIP from that resolved address will be
+            // dropped at INPUT — same behaviour as before the cache
+            // existed, no worse.
+            $hostsForFirewall = $bucket['ips'];
+            foreach ($bucket['hostnames'] as $hostname) {
+                $hostKey = SIPConf::normalizeHostnameKey((string)$hostname);
+                if ($hostKey === '') {
+                    continue;
+                }
+                foreach (SIPConf::readResolvedIps($hostKey) as $resolvedIp) {
+                    $hostsForFirewall[] = $resolvedIp;
+                }
+            }
+
+            foreach ($hostsForFirewall as $host) {
                 // Skip localhost addresses (IPv4 and IPv6)
                 if ($host === '127.0.0.1' || $host === '::1') {
                     continue;

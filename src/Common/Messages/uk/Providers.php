@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Формати',
     'pr_AdditionalHostsTooltip_header' => 'Додаткові адреси провайдера',
     'pr_AdditionalHostsTooltip_important' => 'Важливо: використовуються тільки для ідентифікації вхідних викликів, НЕ для балансування вихідних',
+    'pr_AdditionalHostsTooltip_trust' => 'Доменні імена резолвляться через ваш DNS-сервер; якщо цей DNS під контролем зловмисника, у whitelist можуть потрапити його IP. Для критичних провайдерів вказуйте IP/підмережу безпосередньо.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Ідентифікація вхідних викликів від провайдера',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Підтримка провайдерів з декількома серверами',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Безпека через IP whitelist',

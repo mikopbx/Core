@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Formats',
     'pr_AdditionalHostsTooltip_header' => 'Adresses supplémentaires du fournisseur',
     'pr_AdditionalHostsTooltip_important' => 'Important : utilisé uniquement pour identifier les appels entrants, PAS pour l\'équilibrage de charge sortant',
+    'pr_AdditionalHostsTooltip_trust' => 'Les noms de domaine sont résolus via votre serveur DNS ; si ce DNS est sous le contrôle d\'un attaquant, ses IP peuvent se retrouver dans la liste blanche. Pour les fournisseurs critiques, indiquez directement l\'IP/sous-réseau.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Identification des appels entrants du fournisseur',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Prise en charge des fournisseurs avec plusieurs serveurs',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Sécurité via liste blanche IP',

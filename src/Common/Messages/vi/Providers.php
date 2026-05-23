@@ -59,6 +59,7 @@ return [
     'pr_AdditionalHostsTooltip_formats' => 'Định dạng',
     'pr_AdditionalHostsTooltip_header' => 'Địa chỉ nhà cung cấp bổ sung',
     'pr_AdditionalHostsTooltip_important' => 'Quan trọng: chỉ được sử dụng để nhận dạng cuộc gọi đến, KHÔNG để cân bằng tải đi',
+    'pr_AdditionalHostsTooltip_trust' => 'Tên miền được phân giải qua máy chủ DNS của bạn; nếu DNS này nằm dưới sự kiểm soát của kẻ tấn công, IP của hắn có thể lọt vào whitelist. Đối với các nhà cung cấp quan trọng, hãy chỉ định trực tiếp IP/dải mạng.',
     'pr_AdditionalHostsTooltip_purpose_id' => 'Nhận dạng cuộc gọi đến từ nhà cung cấp',
     'pr_AdditionalHostsTooltip_purpose_multi' => 'Hỗ trợ nhà cung cấp có nhiều máy chủ',
     'pr_AdditionalHostsTooltip_purpose_security' => 'Bảo mật qua danh sách trắng IP',

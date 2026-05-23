@@ -489,16 +489,32 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'host' => [
                 'type' => 'string',
                 'description' => 'rest_schema_provider_host',
-                'maxLength' => 255,
+                // RFC 1035 hostname cap is 253 octets; downstream gate
+                // SIPConf::isValidHostname() enforces strlen > 253 → reject.
+                // Matching the schema limit here means 254/255-byte input
+                // surfaces as HTTP 422 at schema validation instead of
+                // bubbling out of executeInTransaction() as HTTP 500
+                // (symmetric with additionalHosts[].address; round N+2
+                // correctness review).
+                'maxLength' => 253,
                 'sanitize' => 'string',
                 // Accept hostnames (RFC 1123), IPv4 literals, and IPv6 with or
                 // without brackets. Reject anything that could be interpreted as
                 // a shell/log-injection vector — whitespace, newlines, $, `, ;,
                 // |, &, etc. The value flows into syslog messages and (after
                 // escapeshellarg) into nslookup, so a strict whitelist here is
-                // the cheapest defence-in-depth. Empty string is allowed for
-                // INBOUND providers that have no outgoing host.
-                'pattern' => '^[a-zA-Z0-9._\-:\[\]]*$',
+                // the cheapest defence-in-depth.
+                //
+                // Empty string is allowed for INBOUND providers that have no
+                // outgoing host. Non-empty values MUST contain at least one
+                // `.` (FQDN/IPv4) or `:` (IPv6) — single-label values like
+                // "pbx1" / "localhost" are almost always typos and fail the
+                // downstream SIPConf::isAcceptableAdditionalHost() gate
+                // anyway. Pre-2026.x they bubbled out of executeInTransaction
+                // as HTTP 500; pinning the lookahead here surfaces them at
+                // schema validation as HTTP 422, symmetric with the
+                // additionalHosts[].address pattern (security review M4).
+                'pattern' => '^$|^(?=.*[.:])[a-zA-Z0-9._\-:\[\]]+$',
                 'example' => 'sip.provider.com'
             ],
             'port' => [
@@ -763,17 +779,34 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                         'address' => [
                             'type' => 'string',
                             'description' => 'rest_schema_provider_host_address',
-                            'maxLength' => 255,
-                            // Additional hosts go verbatim into pjsip.conf identify
-                            // match= (admin-controlled trust whitelist), so they
-                            // must be IP/CIDR literals. Hostnames here are nonsensical
-                            // — identify cannot resolve them, and DnsResolver does
-                            // not consult m_SipHosts. The same character whitelist as
-                            // provider.host plus `/` for CIDR notation; isIpOrCidr()
-                            // enforces structure at save time (see
-                            // SaveRecordAction::updateAdditionalHosts).
-                            'pattern' => '^[a-zA-Z0-9._\-:\[\]/]*$',
-                            'example' => '198.51.100.0/24'
+                            // RFC 1035 hostname limit is 253 octets; the
+                            // downstream gate SIPConf::isValidHostname()
+                            // enforces strlen > 253 → reject. Matching the
+                            // schema limit means a 254-byte input is
+                            // rejected at schema validation (HTTP 422)
+                            // instead of silently dropping inside
+                            // updateAdditionalHosts() with SIP-IDENT-DROP
+                            // and no HTTP error (security review M3).
+                            'maxLength' => 253,
+                            // Additional hosts are admin-controlled trust whitelist
+                            // entries for identify match=. Accepts both IP/CIDR
+                            // literals (used verbatim) and hostnames (resolved by
+                            // WorkerSipDnsResolver + Redis cache, same pipeline as
+                            // provider.host). Character whitelist is provider.host's
+                            // plus `/` for CIDR notation; structural validation
+                            // happens at save time via
+                            // SIPConf::isAcceptableAdditionalHost() in
+                            // SaveRecordAction::updateAdditionalHosts.
+                            //
+                            // The pattern requires the input to contain at least one
+                            // `.` (FQDN/IPv4), `:` (IPv6) or `/` (CIDR) — single-label
+                            // values like "localhost" or "pbx1" therefore fail OpenAPI
+                            // validation with HTTP 422 instead of silently dropping
+                            // server-side (see code-review finding #7).
+                            // PCRE pattern is wrapped in `/.../` by SchemaValidator,
+                            // so `/` MUST be escaped as `\/` inside the regex.
+                            'pattern' => '^(?=.*[.:\/])[a-zA-Z0-9._\-:\[\]\/]+$',
+                            'example' => 'sip.example.com'
                         ]
                     ]
                 ],

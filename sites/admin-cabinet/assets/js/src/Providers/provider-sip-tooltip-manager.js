@@ -385,7 +385,10 @@ class ProviderSipTooltipManager extends ProviderTooltipManager {
                 globalTranslate.pr_AdditionalHostsTooltip_format_subnet,
                 globalTranslate.pr_AdditionalHostsTooltip_format_domain
             ],
-            note: globalTranslate.pr_AdditionalHostsTooltip_important
+            note: globalTranslate.pr_AdditionalHostsTooltip_important,
+            warning: {
+                text: globalTranslate.pr_AdditionalHostsTooltip_trust
+            }
         };
     }
 
