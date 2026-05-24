@@ -9,9 +9,17 @@ Tooltips (всплывающие подсказки) в MikoPBX использу
 ### 1. Компоненты системы
 
 - **HTML-разметка**: Иконки с классом `field-info-icon` и атрибутом `data-field`
-- **JavaScript-инициализация**: Метод `initializeTooltips()` для привязки popup к иконкам
-- **Генератор контента**: Метод `buildTooltipContent()` для создания HTML-содержимого
+- **JavaScript-инициализация**: ВСЕГДА через `TooltipBuilder.initialize(htmlConfigs, options)` — см. `sites/admin-cabinet/assets/js/src/main/TooltipBuilder.js`
+- **Генератор контента**: `TooltipBuilder.buildContent(config)` (либо обёртка `form.buildTooltipContent()` страницы, которая делегирует в `TooltipBuilder`)
 - **Переводы**: Локализованные тексты в файлах переводов (`src/Common/Messages/*.php`)
+- **Глобальная защита от toggle-чекбоксов**: `TooltipBuilder.js` в DOMReady навешивает делегированный `click.global-tooltip` на `.field-info-icon, .special-checkbox-info, .service-info-icon`, который останавливает propagation/preventDefault, если иконка вложена в `<label>`. Дублировать это per-page НЕ нужно.
+
+### ⛔ Запрещено
+
+- **Не вызывайте `$icon.popup({...})` напрямую** для `.field-info-icon`. Голый `popup()` без `on: 'manual'` и без `lastResort: true`:
+  - hover не срабатывает стабильно, когда иконка вложена в `<label>` тогл-чекбокса (Semantic UI checkbox перехватывает указатель на всём label),
+  - Fomantic скрывает тултип целиком, если ни одна позиция не помещается во вьюпорт (тогда как `lastResort: true` форсирует размещение и включает скролл внутри `.field-info-popup`).
+- **Не дублируйте per-page handler `click.tooltip-prevent`** — глобальный делегат в `TooltipBuilder.js` уже это закрывает; per-icon `click.popup-trigger` ставит сам `TooltipBuilder.initialize()`.
 
 ### 2. Структура данных Tooltip
 
@@ -66,70 +74,85 @@ Tooltips (всплывающие подсказки) в MikoPBX использу
 </div>
 ```
 
-### 2. JavaScript инициализация
+### 2. JavaScript инициализация (канонический паттерн)
+
+Эталон — `GeneralSettings/general-settings-tooltip-manager.js` (статический класс-менеджер на страницу) + `main/TooltipBuilder.js` (общая фабрика popup-ов).
 
 ```javascript
-const myForm = {
-    /**
-     * Initialize tooltips for form fields
-     */
-    initializeTooltips() {
-        // Конфигурация tooltip для каждого поля
-        const tooltipConfigs = {
-            field_name: myForm.buildTooltipContent({
+/* global globalTranslate, TooltipBuilder */
+
+class MyPageTooltipManager {
+    constructor() {
+        throw new Error('MyPageTooltipManager is static');
+    }
+
+    static getTooltipConfigurations() {
+        return {
+            field_name: {
                 header: globalTranslate.field_tooltip_header,
                 description: globalTranslate.field_tooltip_desc,
                 list: [
                     globalTranslate.field_tooltip_item1,
-                    { 
-                        term: globalTranslate.field_tooltip_term,
-                        definition: globalTranslate.field_tooltip_definition
-                    }
+                    { term: globalTranslate.field_tooltip_term,
+                      definition: globalTranslate.field_tooltip_definition }
                 ],
                 warning: {
                     header: globalTranslate.field_tooltip_warning_header,
                     text: globalTranslate.field_tooltip_warning
                 }
-            }),
-            
-            // Другие поля...
+            },
+            // ...
         };
-        
-        // Инициализация popup для каждой иконки
-        $('.field-info-icon').each((index, element) => {
-            const $icon = $(element);
-            const fieldName = $icon.data('field');
-            const content = tooltipConfigs[fieldName];
-            
-            if (content) {
-                $icon.popup({
-                    html: content,
-                    position: 'top right',
-                    hoverable: true,
-                    delay: {
-                        show: 300,
-                        hide: 100
-                    },
-                    variation: 'flowing'
-                });
-            }
+    }
+
+    static initialize() {
+        if (typeof TooltipBuilder === 'undefined') {
+            console.error('TooltipBuilder is not available');
+            return;
+        }
+        // TooltipBuilder сам выполнит buildContent() для каждого конфига,
+        // навесит popup({on: 'manual', lastResort: true, ...}) и
+        // click.popup-trigger с stopPropagation/preventDefault.
+        TooltipBuilder.initialize(this.getTooltipConfigurations(), {
+            selector: '.field-info-icon',
+            position: 'top right',
+            hoverable: true,
+            showDelay: 300,
+            hideDelay: 100,
+            variation: 'flowing'
         });
-    },
-    
-    /**
-     * Build HTML content for tooltip popup
-     * Используйте готовую реализацию из extension-modify.js или provider-base-modify.js
-     */
-    buildTooltipContent(config) {
-        // Копируйте реализацию из существующих файлов
-    },
-    
+    }
+}
+```
+
+Подключение в `*-modify.js`:
+
+```javascript
+const myPage = {
     initialize() {
         // ... другая инициализация
-        myForm.initializeTooltips();
+        if (typeof MyPageTooltipManager !== 'undefined') {
+            MyPageTooltipManager.initialize();
+        }
     }
 };
+
+$(document).ready(() => myPage.initialize());
+// НЕ добавляйте здесь свой $('.field-info-icon').on('click.tooltip-prevent', ...).
+// Это уже сделано глобально в TooltipBuilder.js DOMReady.
 ```
+
+#### Почему `on: 'manual'` обязателен
+
+Когда иконка вложена в `<label>` для тогл-чекбокса/радио (Semantic UI `.ui.toggle.checkbox`), label-площадь перехватывает указатель — hover на `<i>` не срабатывает. `on: 'manual'` + `click.popup-trigger` явно показывает popup по клику на иконку и НЕ переключает чекбокс (благодаря `stopPropagation()`).
+
+#### Почему `lastResort: true` обязателен
+
+Длинные тултипы (несколько `list1..list10`) на типовых высотах вьюпорта (~720-800px) не помещаются ни в одну позицию из списка кандидатов. Без `lastResort: true` Fomantic скрывает popup целиком вместо того, чтобы разместить его по-умолчанию и включить скролл внутри `.field-info-popup` (CSS делает `overflow-y: auto`).
+
+#### Когда нужна страница-специфичная обёртка `form.buildTooltipContent(...)`
+
+Если вы хотите хранить конфиги в формате *уже-HTML* (например, для динамических вставок типа firewall с iptables-командами), оборачивайте `TooltipBuilder.buildContent()` и передавайте в `TooltipBuilder.initialize()` уже строки HTML. `TooltipBuilder.initialize()` корректно отрабатывает оба варианта (объект-конфиг и готовая HTML-строка).
 
 ### 3. Переводы
 
@@ -200,7 +223,8 @@ Tooltips для:
 - Всегда используйте класс `field-info-icon` для иконок
 - Обязательно указывайте атрибут `data-field` с именем поля
 - Инициализируйте tooltips после загрузки DOM
-- Используйте параметр `hoverable: true` для интерактивных подсказок
+- ВСЕГДА используйте `TooltipBuilder.initialize()` — никогда `$icon.popup()` напрямую
+- Параметр `hoverable: true` оставляйте включённым (это поведение popup-а, удерживающего его при наведении на сам popup)
 - Задавайте задержки показа/скрытия для улучшения UX
 
 ## Интеграция с модулями

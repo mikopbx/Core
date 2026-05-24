@@ -1615,12 +1615,4 @@ const mailSettings = {
 // Initialize when DOM is ready
 $(document).ready(() => {
     mailSettings.initialize();
-
-    // Ensure click prevention for tooltip icons in checkboxes
-    // This prevents checkbox toggle when clicking on tooltip icon
-    $('.field-info-icon').off('click.tooltip-prevent').on('click.tooltip-prevent', function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        return false;
-    });
 });

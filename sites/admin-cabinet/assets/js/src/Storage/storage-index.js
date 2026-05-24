@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, StorageAPI, UserMessage, s3StorageIndex, $, PbxDateTime */
+/* global globalRootUrl, globalTranslate, Form, StorageAPI, UserMessage, s3StorageIndex, $, PbxDateTime, TooltipBuilder */
 
 /**
  * Storage management module
@@ -625,24 +625,22 @@ const storageIndex = {
             })
         };
 
-        // Initialize popup for each tooltip icon
-        $('.field-info-icon').each((index, element) => {
-            const $icon = $(element);
-            const fieldName = $icon.data('field');
-            const content = tooltipConfigs[fieldName];
-
-            if (content) {
-                $icon.popup({
-                    html: content,
-                    position: 'top right',
-                    hoverable: true,
-                    delay: {
-                        show: 300,
-                        hide: 100
-                    },
-                    variation: 'flowing'
-                });
-            }
+        // Delegate to TooltipBuilder so popups use `on: 'manual'` +
+        // `click.popup-trigger` + `lastResort: true`. Without this, a click
+        // on the s3_enabled icon (nested inside the toggle <label>) flips
+        // the storage mode, and long tooltips get hidden on small viewports.
+        // See docs/TOOLTIP_GUIDELINES.md.
+        if (typeof TooltipBuilder === 'undefined') {
+            console.error('storageIndex: TooltipBuilder is not available');
+            return;
+        }
+        TooltipBuilder.initialize(tooltipConfigs, {
+            selector: '.field-info-icon',
+            position: 'top right',
+            hoverable: true,
+            showDelay: 300,
+            hideDelay: 100,
+            variation: 'flowing'
         });
     },
 
