@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalTranslate */
+/* global globalTranslate, TooltipBuilder */
 
 /**
  * MailSettingsTooltipManager - Tooltip management for mail settings
@@ -56,27 +56,24 @@ class MailSettingsTooltipManager {
             return;
         }
 
-        // Get all tooltip configurations
-        const tooltipConfigs = this.getAllTooltipConfigurations(form);
+        if (typeof TooltipBuilder === 'undefined') {
+            console.error('MailSettingsTooltipManager: TooltipBuilder is not available');
+            return;
+        }
 
-        // Initialize popup for each icon
-        $('.field-info-icon').each((index, element) => {
-            const $icon = $(element);
-            const fieldName = $icon.data('field');
-            const content = tooltipConfigs[fieldName];
-
-            if (content) {
-                $icon.popup({
-                    html: content,
-                    position: 'top right',
-                    hoverable: true,
-                    delay: {
-                        show: 300,
-                        hide: 100
-                    },
-                    variation: 'flowing'
-                });
-            }
+        // Delegate to TooltipBuilder so popups use `on: 'manual'` +
+        // `click.popup-trigger` + `lastResort: true`. Hover-mode (the
+        // raw $().popup() default) is unreliable for icons nested in
+        // toggle-checkbox <label>s — Semantic UI's checkbox swallows
+        // pointer events on the label area, so hover never fires on
+        // the inner <i>. See docs/TOOLTIP_GUIDELINES.md.
+        TooltipBuilder.initialize(this.getAllTooltipConfigurations(form), {
+            selector: '.field-info-icon',
+            position: 'top right',
+            hoverable: true,
+            showDelay: 300,
+            hideDelay: 100,
+            variation: 'flowing'
         });
     }
 

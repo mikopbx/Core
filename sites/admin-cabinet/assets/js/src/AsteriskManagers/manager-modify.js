@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, AsteriskManagersAPI, UserMessage, FormElements, PasswordWidget, DynamicDropdownBuilder */
+/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, AsteriskManagersAPI, UserMessage, FormElements, PasswordWidget, DynamicDropdownBuilder, TooltipBuilder */
 
 /**
  * Manager module using REST API v2.
@@ -480,25 +480,27 @@ const manager = {
             }
         };
 
-        // Initialize popup for each tooltip icon
-        $('.field-info-icon').each((index, element) => {
-            const $icon = $(element);
-            const fieldName = $icon.data('field');
-            const config = tooltipConfigs[fieldName];
-
-            if (config) {
-                const content = manager.buildTooltipContent(config);
-                $icon.popup({
-                    html: content,
-                    position: 'top right',
-                    hoverable: true,
-                    delay: {
-                        show: 300,
-                        hide: 100
-                    },
-                    variation: 'flowing'
-                });
-            }
+        // Delegate to TooltipBuilder so popups use `on: 'manual'` +
+        // `click.popup-trigger` + `lastResort: true` — required so that
+        // tall tooltips (eventfilter has list1..list3 + warning) stay
+        // visible on small viewport heights. See docs/TOOLTIP_GUIDELINES.md.
+        if (typeof TooltipBuilder === 'undefined') {
+            console.error('manager: TooltipBuilder is not available');
+            return;
+        }
+        // Pre-build HTML via the existing page-local renderer to preserve
+        // current output, then pass strings to TooltipBuilder.
+        const htmlConfigs = {};
+        Object.entries(tooltipConfigs).forEach(([fieldName, config]) => {
+            htmlConfigs[fieldName] = manager.buildTooltipContent(config);
+        });
+        TooltipBuilder.initialize(htmlConfigs, {
+            selector: '.field-info-icon',
+            position: 'top right',
+            hoverable: true,
+            showDelay: 300,
+            hideDelay: 100,
+            variation: 'flowing'
         });
     },
 
