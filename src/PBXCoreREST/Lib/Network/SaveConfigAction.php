@@ -543,7 +543,10 @@ class SaveConfigAction
                     // WHY: Clear IPv6 fields when IPv6 is disabled to prevent stale data
                     $fieldKey = $name . '_' . $eth->id;
                     $modeKey = 'ipv6_mode_' . $eth->id;
-                    $mode = $data[$modeKey] ?? '0';
+                    // WHY: Fall back to current DB value when ipv6_mode not provided (PATCH support).
+                    // Otherwise omitting ipv6_mode would silently clear address/gateway while the
+                    // model still has ipv6_mode='2' (Manual), causing "Invalid IPv6 address" on save.
+                    $mode = $data[$modeKey] ?? $eth->ipv6_mode ?? '0';
 
                     // Clear IPv6 fields when IPv6 is disabled (mode='0')
                     if ($mode === '0') {
@@ -558,7 +561,8 @@ class SaveConfigAction
                     // WHY: Clear subnet when IPv6 is disabled to ensure complete IPv6 cleanup
                     $fieldKey = $name . '_' . $eth->id;
                     $modeKey = 'ipv6_mode_' . $eth->id;
-                    $mode = $data[$modeKey] ?? '0';
+                    // WHY: Fall back to current DB value when ipv6_mode not provided (PATCH support).
+                    $mode = $data[$modeKey] ?? $eth->ipv6_mode ?? '0';
 
                     // Clear IPv6 subnet when IPv6 is disabled (mode='0')
                     if ($mode === '0') {
