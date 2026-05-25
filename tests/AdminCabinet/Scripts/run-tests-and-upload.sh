@@ -35,9 +35,12 @@ NC='\033[0m' # No Color
 
 # Configuration
 CONTAINER_NAME="${CONTAINER_NAME:-mikopbx-php83}"
+MIKOPBX_TEST_ARCH="${MIKOPBX_TEST_ARCH:-$(uname -m)}"
 TESTSUITE="${1:-}"
 PHPUNIT_CONFIG="/offload/rootfs/usr/www/tests/AdminCabinet/phpunit.xml"
-JUNIT_REPORT="/offload/rootfs/usr/www/tests/AdminCabinet/reports/junit.xml"
+PHPUNIT_CONFIG="${PHPUNIT_CONFIG_OVERRIDE:-$PHPUNIT_CONFIG}"
+JUNIT_REPORT="${JUNIT_REPORT:-/offload/rootfs/usr/www/tests/AdminCabinet/reports/junit.xml}"
+HOST_JUNIT_REPORT="${HOST_JUNIT_REPORT:-tests/AdminCabinet/reports/junit.xml}"
 UPLOAD_SCRIPT="tests/AdminCabinet/Scripts/upload-junit-to-browserstack.sh"
 
 ###############################################################################
@@ -83,6 +86,7 @@ run_phpunit_tests() {
 
     # Build PHPUnit command
     PHPUNIT_CMD="/offload/rootfs/usr/www/vendor/bin/phpunit"
+    PHPUNIT_CMD="${PHPUNIT_BIN:-$PHPUNIT_CMD}"
     PHPUNIT_CMD="$PHPUNIT_CMD --configuration $PHPUNIT_CONFIG"
     PHPUNIT_CMD="$PHPUNIT_CMD --log-junit $JUNIT_REPORT"
 
@@ -94,9 +98,30 @@ run_phpunit_tests() {
         print_info "Running all test suites"
     fi
 
+    if [ -n "${PHPUNIT_FILTER:-}" ]; then
+        PHPUNIT_CMD="$PHPUNIT_CMD --filter '$PHPUNIT_FILTER'"
+        print_info "PHPUnit filter: $PHPUNIT_FILTER"
+    fi
+
+    print_info "Test architecture: $MIKOPBX_TEST_ARCH"
+    if [ -n "${SERVER_PBX:-}" ]; then
+        print_info "Target PBX: $SERVER_PBX"
+    fi
+
     # Execute tests
     echo ""
-    if docker exec "$CONTAINER_NAME" /bin/sh -c "$PHPUNIT_CMD"; then
+    if docker exec \
+        -e BROWSERSTACK_DAEMON_STARTED="${BROWSERSTACK_DAEMON_STARTED:-true}" \
+        -e BROWSERSTACK_LOCAL="${BROWSERSTACK_LOCAL:-true}" \
+        -e BROWSERSTACK_LOCAL_IDENTIFIER="${BROWSERSTACK_LOCAL_IDENTIFIER:-local_test}" \
+        -e BROWSERSTACK_USERNAME="${BROWSERSTACK_USERNAME:-}" \
+        -e BROWSERSTACK_ACCESS_KEY="${BROWSERSTACK_ACCESS_KEY:-}" \
+        -e BUILD_NUMBER="${BUILD_NUMBER:-}" \
+        -e CONFIG_FILE="${CONFIG_FILE:-}" \
+        -e MIKO_LICENSE_KEY="${MIKO_LICENSE_KEY:-}" \
+        -e SERVER_PBX="${SERVER_PBX:-}" \
+        -e SSH_RSA_KEYS_SET="${SSH_RSA_KEYS_SET:-}" \
+        "$CONTAINER_NAME" /bin/sh -c "mkdir -p \"$(dirname "$JUNIT_REPORT")\" && $PHPUNIT_CMD"; then
         print_info "Tests completed successfully ✓"
         TEST_RESULT=0
     else
@@ -114,9 +139,12 @@ check_junit_report() {
     if docker exec "$CONTAINER_NAME" test -f "$JUNIT_REPORT"; then
         print_info "JUnit report generated ✓"
 
+        mkdir -p "$(dirname "$HOST_JUNIT_REPORT")"
+        docker cp "$CONTAINER_NAME:$JUNIT_REPORT" "$HOST_JUNIT_REPORT"
+
         # Show report summary
         print_info "Report location (in container): $JUNIT_REPORT"
-        print_info "Report location (on host): tests/AdminCabinet/reports/junit.xml"
+        print_info "Report location (on host): $HOST_JUNIT_REPORT"
 
         # Display report stats
         TESTS=$(docker exec "$CONTAINER_NAME" grep -o 'tests="[0-9]*"' "$JUNIT_REPORT" | head -1 | grep -o '[0-9]*')
@@ -146,7 +174,12 @@ upload_to_browserstack() {
     fi
 
     # Execute upload script
-    if bash "$UPLOAD_SCRIPT" "tests/AdminCabinet/reports/junit.xml"; then
+    if [ "${SKIP_BROWSERSTACK_UPLOAD:-0}" = "1" ]; then
+        print_warning "BrowserStack upload skipped by SKIP_BROWSERSTACK_UPLOAD=1"
+        return 0
+    fi
+
+    if bash "$UPLOAD_SCRIPT" "$HOST_JUNIT_REPORT"; then
         return 0
     else
         return 1
@@ -165,6 +198,12 @@ Options:
 
 Environment Variables:
   CONTAINER_NAME              Docker container name (default: mikopbx-php83)
+  MIKOPBX_TEST_ARCH           Architecture label for reports/tags (default: uname -m)
+  SERVER_PBX                  PBX URL opened by BrowserStack tests
+  JUNIT_REPORT                JUnit path inside container
+  HOST_JUNIT_REPORT           JUnit path on host for BrowserStack upload
+  PHPUNIT_FILTER              Optional PHPUnit --filter value
+  SKIP_BROWSERSTACK_UPLOAD    Set to 1 to run tests without uploading report
   BROWSERSTACK_USERNAME       BrowserStack username (required for upload)
   BROWSERSTACK_ACCESS_KEY     BrowserStack access key (required for upload)
   BROWSERSTACK_PROJECT_NAME   Project name (default: MikoPBX AdminCabinet Tests)

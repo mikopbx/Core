@@ -27,6 +27,10 @@
             <file>Tests/ChangeWeakPasswordTest.php</file>
         </testsuite>
 
+        <testsuite name="BrowserStackSmoke">
+            <file>Tests/BrowserStackSmokeTest.php</file>
+        </testsuite>
+
         <testsuite name="DeleteAllSettingsTest">
             <file>Tests/DeleteAllSettingsTest.php</file>
         </testsuite>

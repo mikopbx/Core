@@ -9,22 +9,21 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Load configuration
-CONFIG_FILE="${CONFIG_FILE:-config/local.conf.json}"
+# Load configuration. Prefer env credentials so CI can keep secrets outside files.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+CONFIG_FILE="${CONFIG_FILE:-$SCRIPT_DIR/config/local.conf.json}"
 if [ ! -f "$CONFIG_FILE" ]; then
-    CONFIG_FILE="../config/local.conf.json"
+    CONFIG_FILE="$SCRIPT_DIR/../config/local.conf.json"
 fi
 
-if [ ! -f "$CONFIG_FILE" ]; then
-    echo -e "${RED}Error: Configuration file not found${NC}"
-    exit 1
+BROWSERSTACK_KEY="${BROWSERSTACK_ACCESS_KEY:-}"
+if [ -z "$BROWSERSTACK_KEY" ] && [ -f "$CONFIG_FILE" ]; then
+    BROWSERSTACK_KEY=$(grep -o '"key"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | cut -d'"' -f4)
 fi
-
-# Extract BrowserStack key from config
-BROWSERSTACK_KEY=$(grep -o '"key"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | cut -d'"' -f4)
 
 if [ -z "$BROWSERSTACK_KEY" ]; then
-    echo -e "${RED}Error: BrowserStack key not found in config${NC}"
+    echo -e "${RED}Error: BrowserStack access key not found${NC}"
+    echo "Set BROWSERSTACK_ACCESS_KEY or provide tests/AdminCabinet/config/local.conf.json"
     exit 1
 fi
 

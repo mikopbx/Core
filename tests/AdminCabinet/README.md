@@ -50,6 +50,52 @@ docker exec -t mikopbx-php83 /bin/sh -c "
 "
 ```
 
+### Architecture matrix
+Prepare two isolated target containers first:
+
+```bash
+tests/AdminCabinet/Scripts/ensure-browserstack-targets.sh
+```
+
+Use the matrix runner when the same BrowserStack UI suite must pass against
+both Docker architectures. Each matrix entry is
+`arch:container[:server_pbx]`; when `server_pbx` is omitted, the runner uses
+the container IP from Docker/OrbStack and builds `SERVER_PBX` with
+`MIKOPBX_BROWSERSTACK_SCHEME` (`https` by default) plus `WEB_HTTPS_PORT` or
+`WEB_PORT` from the container environment. The runner creates a separate JUnit
+report and BrowserStack build identifier per architecture.
+
+```bash
+MIKOPBX_BROWSERSTACK_MATRIX="amd64:mikopbx-amd64 arm64:mikopbx-arm64" \
+  tests/AdminCabinet/Scripts/run-browserstack-arch-matrix.sh
+```
+
+With the default containers created by the helper:
+
+```bash
+START_BROWSERSTACK_LOCAL=1 \
+MIKOPBX_BROWSERSTACK_MATRIX="arm64:mikopbx-e2e-arm64 amd64:mikopbx-e2e-amd64" \
+  tests/AdminCabinet/Scripts/run-browserstack-arch-matrix.sh
+```
+
+For a TeamCity build such as `Mikopbx_DockerUpgradeFromMaster`, point the
+matrix entries at the upgraded AMD64 and ARM64 containers, keep
+`BROWSERSTACK_DAEMON_STARTED=true`, and publish
+`tests/AdminCabinet/reports/arch-matrix/*.xml` as JUnit artifacts. To run only
+one suite while stabilizing failures:
+
+```bash
+MIKOPBX_BROWSERSTACK_MATRIX="arm64:mikopbx-arm64" \
+  tests/AdminCabinet/Scripts/run-browserstack-arch-matrix.sh PBXSettings
+```
+
+To verify resolved OrbStack targets without opening BrowserStack sessions:
+
+```bash
+DRY_RUN=1 MIKOPBX_BROWSERSTACK_MATRIX="arm64:mikopbx-arm64" \
+  tests/AdminCabinet/Scripts/run-browserstack-arch-matrix.sh
+```
+
 ## VSCode Configuration
 
 Your `.vscode/settings.json` should include:
