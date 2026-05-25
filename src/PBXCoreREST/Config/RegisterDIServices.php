@@ -124,7 +124,7 @@ class RegisterDIServices
             EventBusProvider::class,
 
             // Inject WAF exemption registry (used by Enable/DisableModuleAction
-            // to keep `_PH_REDIS_CLIENT:waf:exemptions` in sync with module state).
+            // to keep `_PH_REDIS_CLIENT:waf:exempt:*` in sync with module state).
             WafProvider::class,
         ];
 

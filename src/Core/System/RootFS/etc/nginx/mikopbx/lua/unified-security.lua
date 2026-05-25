@@ -11,7 +11,6 @@
 -- Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
 
 local redis = require "resty.redis"
-local cjson = require "cjson.safe"
 
 -- Get configuration from nginx variables
 local redis_host = ngx.var.redis_host or "127.0.0.1"
@@ -35,14 +34,17 @@ local firewall_state_cache = ngx.shared.firewall_state
 local access_cache = ngx.shared.access_cache
 local rate_limit_cache = ngx.shared.rate_limit
 -- Module-declared WAF exemptions. Mirrors the firewall path:
--- Redis hash _PH_REDIS_CLIENT:waf:exemptions, read on miss, cached in shared-dict
--- with a 10 s TTL (same as blocked_ips_cache / firewall_state_cache).
+-- six per-scope Redis SETs (_PH_REDIS_CLIENT:waf:exempt:<scope>:<exact|prefix>),
+-- read on miss, results cached in shared-dict with a 10 s TTL (same as
+-- blocked_ips_cache / firewall_state_cache).
+--
+-- Cache key shape: "<uri>|<scope>" → numeric 0/1 (negative/positive). Keeping
+-- the result per-(uri, scope) lets each call site answer with a single
+-- shared-dict get; the trade-off is up to three cache entries per active URI,
+-- which costs ~150 bytes apiece in `ngx.shared.waf_exemptions`.
 local waf_exemptions_cache = ngx.shared.waf_exemptions
-local WAF_EXEMPTIONS_KEY = "_PH_REDIS_CLIENT:waf:exemptions"
+local WAF_EXEMPT_PREFIX = "_PH_REDIS_CLIENT:waf:exempt:"
 local WAF_EXEMPTIONS_TTL = 10
--- Negative-cache sentinel: stored in the shared dict for URIs that resolve to
--- "no exemption" so we don't repeat the HGET miss for ~99 % of traffic.
-local WAF_NEG_SENTINEL = "__none__"
 
 -- Redis key prefixes
 local REDIS_PREFIX = "_PH_REDIS_CLIENT:firewall:"
@@ -422,121 +424,111 @@ end
 
 -- ===== WAF MODULE-DECLARED EXEMPTIONS =====
 --
--- Look up the WAF exemption record for `uri` and return its `scopes` table,
--- or `nil` when the URI is not exempt. Returns `nil` when Redis is unreachable
--- (the safe default — WAF rules continue to apply).
+-- Answer "is this URI exempt from the given WAF scope?" backed by six
+-- per-scope Redis SETs published by `WafRegistry::rebuildAll()`:
 --
--- MATCHING STRATEGY:
---   The Redis hash holds two entry kinds, distinguished by the `match` field
---   in the stored JSON value:
---     * `exact`  — applies only when the request URI is identical to the key.
---                   Method-level #[WafExempt] and module getWafExemptions()
---                   shorthand entries publish under this mode.
---     * `prefix` — applies when the request URI equals the key OR descends
---                   from it through one-or-more `/segment` or `:method`
---                   suffixes. Class-level #[WafExempt] on a REST controller
---                   publishes its $basePath under this mode, so a `PUT
---                   /resource/{id}` request inherits the controller's
---                   exemption from `/resource`.
+--   _PH_REDIS_CLIENT:waf:exempt:body-scan:exact      SET of exact URIs
+--   _PH_REDIS_CLIENT:waf:exempt:body-scan:prefix     SET of URI prefixes
+--   …same pair for request-line, rate-limit
 --
---   Resolution does at most six HGETs (one exact + up to five walk-up
---   iterations stripping `:method` then `/segment`). The final outcome is
---   cached in the shared dict under the ORIGINAL request URI, so subsequent
---   requests pay one shared-dict get regardless of which level resolved them.
---
--- Cache strategy mirrors the firewall path (blocked_ips_cache,
--- firewall_state_cache): positive results cached as the raw JSON value for
--- 10 s; negative results cached as WAF_NEG_SENTINEL.
+-- Resolution path:
+--   1. Shared-dict cache hit (per `(uri, scope)`) returns immediately.
+--   2. Pipelined `SISMEMBER` against `:exact` and `:prefix` for the literal
+--      URI. Either set returning 1 → exempt.
+--   3. Walk-up loop strips a trailing `:method` (so `/r/{id}:copy` becomes
+--      `/r/{id}`), then trailing `/segment`, capped at WAF_WALK_UP_MAX
+--      hops. At each level a `SISMEMBER` consults only `:prefix`, because
+--      exact-stored entries on a parent do NOT cover descendants.
+--   4. Negative result cached for 10 s under the same `(uri, scope)` key.
 --
 -- WAF_WALK_UP_MAX caps the parent-path walk. A class-level #[WafExempt]
 -- sitting at `/pbxcore/api/v3/<resource>` resolves any descendant within
 -- five hops (worst case today: `/<resource>/{id}:<method>` is one
 -- :method-strip + one /segment-strip below the base). If MikoPBX ever
 -- adds an API surface deeper than 5 segments below the controller base,
--- raise this constant — the limit exists to bound worst-case Redis HGETs,
--- not to enforce any policy.
+-- raise this constant — the limit exists to bound worst-case Redis SISMEMBERs.
 local WAF_WALK_UP_MAX = 5
 
-local function get_exempt_scopes(uri)
-    local cached = waf_exemptions_cache:get(uri)
-    if cached == WAF_NEG_SENTINEL then
+-- Build the cache key for a (uri, scope) pair. The `|` separator is safe
+-- because allowed scope names contain only `[a-z-]`.
+local function waf_cache_key(uri, scope)
+    return uri .. "|" .. scope
+end
+
+-- Strip one URI segment for walk-up matching:
+--   "/r/{id}:copy" → "/r/{id}"   (drop trailing `:method`)
+--   "/r/{id}"     → "/r"        (drop trailing `/segment`)
+-- Returns nil when the path can no longer be shortened (root reached).
+local function strip_one_segment(u)
+    local colon = string.find(u, ":[^/:]*$")
+    if colon then
+        return string.sub(u, 1, colon - 1)
+    end
+    local slash = string.find(u, "/[^/]*$")
+    if not slash or slash <= 1 then
         return nil
     end
-    if cached then
-        local decoded = cjson.decode(cached)
-        if type(decoded) == "table" then
-            return decoded.scopes
-        end
-        return nil
+    return string.sub(u, 1, slash - 1)
+end
+
+local function is_scope_exempt(uri, scope)
+    local cache_key = waf_cache_key(uri, scope)
+    local cached = waf_exemptions_cache:get(cache_key)
+    if cached == 1 then
+        return true
+    end
+    if cached == 0 then
+        return false
     end
 
     local red = connect_to_redis()
     if not red then
-        -- Redis down → no exempts → WAF defaults apply. Do NOT cache this
+        -- Redis down → cannot resolve → WAF defaults apply. Do NOT cache the
         -- transient state in the shared dict.
-        return nil
+        return false
     end
 
-    -- Step 1: exact match on the full URI. An exact-stored entry resolves
-    -- here regardless of its `match` flag; a prefix-stored entry whose key
-    -- equals the URI also resolves here.
-    local val, err = red:hget(WAF_EXEMPTIONS_KEY, uri)
-    if not err and val ~= ngx.null and val then
+    local exact_key  = WAF_EXEMPT_PREFIX .. scope .. ":exact"
+    local prefix_key = WAF_EXEMPT_PREFIX .. scope .. ":prefix"
+
+    -- One round-trip: ask both sets in a pipeline.
+    red:init_pipeline()
+    red:sismember(exact_key, uri)
+    red:sismember(prefix_key, uri)
+    local res, perr = red:commit_pipeline()
+    if type(res) == "table"
+        and (res[1] == 1 or res[2] == 1) then
         red:set_keepalive(10000, 100)
-        waf_exemptions_cache:set(uri, val, WAF_EXEMPTIONS_TTL)
-        local decoded = cjson.decode(val)
-        if type(decoded) == "table" then
-            return decoded.scopes
-        end
-        return nil
+        waf_exemptions_cache:set(cache_key, 1, WAF_EXEMPTIONS_TTL)
+        return true
+    end
+    if perr then
+        ngx.log(ngx.ERR, "WAF SISMEMBER pipeline failed: ", perr)
+        red:close()
+        return false
     end
 
-    -- Step 2: walk up parent paths looking for a `prefix`-mode entry. Strip
-    -- a trailing `:method` first (so `/r/{id}:copy` becomes `/r/{id}`), then
-    -- strip trailing `/segment`. Cap iterations to bound the worst case.
+    -- Walk-up loop — only the `:prefix` set is consulted at parent levels.
     local u = uri
     for _ = 1, WAF_WALK_UP_MAX do
-        local colon = string.find(u, ":[^/:]*$")
-        if colon then
-            u = string.sub(u, 1, colon - 1)
-        else
-            local slash = string.find(u, "/[^/]*$")
-            if not slash or slash <= 1 then
-                break
-            end
-            u = string.sub(u, 1, slash - 1)
-        end
-        if u == "" then
+        u = strip_one_segment(u)
+        if not u or u == "" then
             break
         end
-
-        local pval, perr = red:hget(WAF_EXEMPTIONS_KEY, u)
-        if not perr and pval ~= ngx.null and pval then
-            local decoded = cjson.decode(pval)
-            if type(decoded) == "table" and decoded.match == "prefix" then
-                red:set_keepalive(10000, 100)
-                -- Cache under the ORIGINAL uri so future requests skip the walk.
-                waf_exemptions_cache:set(uri, pval, WAF_EXEMPTIONS_TTL)
-                return decoded.scopes
-            end
-            -- Exact-stored entry on a parent does NOT cover children.
+        local pval, serr = red:sismember(prefix_key, u)
+        if serr then
+            ngx.log(ngx.ERR, "WAF SISMEMBER failed: ", serr)
+            break
+        end
+        if pval == 1 then
+            red:set_keepalive(10000, 100)
+            waf_exemptions_cache:set(cache_key, 1, WAF_EXEMPTIONS_TTL)
+            return true
         end
     end
 
     red:set_keepalive(10000, 100)
-    waf_exemptions_cache:set(uri, WAF_NEG_SENTINEL, WAF_EXEMPTIONS_TTL)
-    return nil
-end
-
-local function scope_exempt(scopes, name)
-    if not scopes then
-        return false
-    end
-    for _, s in ipairs(scopes) do
-        if s == name then
-            return true
-        end
-    end
+    waf_exemptions_cache:set(cache_key, 0, WAF_EXEMPTIONS_TTL)
     return false
 end
 
@@ -568,7 +560,6 @@ end
 --     the `request-line` and `body-scan` scopes below.
 local function check_basic_security()
     local uri = get_request_path()
-    local exempt_scopes = get_exempt_scopes(uri)
     local raw_args = ngx.var.args
     -- Decode query args so %2e%2e%2f is caught as ../
     local args = raw_args and ngx.unescape_uri(raw_args) or nil
@@ -608,7 +599,7 @@ local function check_basic_security()
     -- WAF scope `request-line` — covers SQL / traversal / null-byte checks
     -- against URI, query args and User-Agent. Skipped when the URI declares
     -- it via #[WafExempt(scopes: ['request-line'])].
-    if not scope_exempt(exempt_scopes, 'request-line') then
+    if not is_scope_exempt(uri, 'request-line') then
         -- Check each component separately to avoid false matches across boundaries
         -- Build table without nil holes so ipairs iterates all entries
         local check_strings = {string.lower(uri)}
@@ -645,7 +636,7 @@ local function check_basic_security()
     -- accept SQL / shell / dialplan code in their bodies (system:executeSqlRequest,
     -- system:executeBashCommand, dialplan-applications, custom-files) declare
     -- this scope; see src/PBXCoreREST/Controllers/.
-    if not scope_exempt(exempt_scopes, 'body-scan') then
+    if not is_scope_exempt(uri, 'body-scan') then
         local method = ngx.req.get_method()
         if method == "POST" or method == "PUT" or method == "PATCH" then
             local content_type = ngx.var.content_type or ""
@@ -755,11 +746,8 @@ local function check_rate_limit(is_authenticated)
     -- Checked AFTER the static-resource skip (which is engine-level) but
     -- BEFORE any rate-block lookup, so exempt endpoints never count against
     -- the IP's bucket and cannot be IP-blocked by their own traffic.
-    do
-        local exempt_scopes = get_exempt_scopes(get_request_path())
-        if scope_exempt(exempt_scopes, 'rate-limit') then
-            return true
-        end
+    if is_scope_exempt(get_request_path(), 'rate-limit') then
+        return true
     end
 
     -- Skip rate limiting for HEAD on audio metadata endpoints. List views

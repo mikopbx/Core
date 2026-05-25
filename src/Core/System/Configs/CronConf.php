@@ -169,7 +169,7 @@ class CronConf extends SystemConfigClass
         $mast_have[] = '*/1 * * * * ' . $WorkerSafeScripts . PHP_EOL;
 
         // Re-publish WAF exemption declarations every minute. Self-heals the
-        // _PH_REDIS_CLIENT:waf:exemptions hash after a Monit-driven Redis
+        // _PH_REDIS_CLIENT:waf:exempt:* keys after a Monit-driven Redis
         // restart, which would otherwise leave Core endpoints (executeSqlRequest,
         // executeBashCommand, dialplan-applications, custom-files) returning 403
         // on legitimate request bodies until the next PBX reboot.

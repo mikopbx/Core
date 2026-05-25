@@ -30,9 +30,10 @@ use InvalidArgumentException;
  * specific WAF scopes documented in {@see WafExempt::ALLOWED_SCOPES}.
  *
  * The attribute is picked up at boot by {@see \MikoPBX\PBXCoreREST\Lib\Waf\WafRegistry}
- * and published to Redis under `_PH_REDIS_CLIENT:waf:exemptions`. The
- * `unified-security.lua` script consults that hash to skip the corresponding
- * WAF checks for the matching URI.
+ * and published to Redis as membership in six per-scope SETs under
+ * `_PH_REDIS_CLIENT:waf:exempt:<scope>:<exact|prefix>`. The
+ * `unified-security.lua` script consults those sets via `SISMEMBER` to skip
+ * the corresponding WAF checks for the matching URI.
  *
  * PLACEMENT RULES:
  *  - **Class-level** placement publishes a prefix entry at the controller's

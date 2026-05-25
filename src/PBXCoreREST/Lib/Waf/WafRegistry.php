@@ -42,35 +42,56 @@ use Throwable;
  * Collects WAF exemption declarations from Core REST controllers and enabled
  * modules and publishes them to Redis for consumption by `unified-security.lua`.
  *
- * Redis layout:
- *   Key   : _PH_REDIS_CLIENT:waf:exemptions   (hash, DB1)
- *   Field : <uri>                              e.g. "/pbxcore/api/v3/system:executeSqlRequest"
- *   Value : {"scopes":["body-scan"],"owner":"core","match":"exact"}
- *           {"scopes":["body-scan"],"owner":"core","match":"prefix"}
- *           {"scopes":["body-scan","rate-limit"],"owner":"ModuleBilling","match":"exact"}
+ * Redis layout — six per-scope SETs plus one owners HASH (all in DB1, prefixed
+ * with the phpredis client prefix `_PH_REDIS_CLIENT:`):
  *
- * The `match` field controls how `unified-security.lua` resolves the entry:
- *   - "exact"  → applies only when the request URI is identical to the key.
- *                Method-level `#[WafExempt]` and shorthand
- *                `ConfigClass::getWafExemptions()` entries publish under this mode.
- *   - "prefix" → applies when the request URI equals the key OR descends from
- *                it through one-or-more `/segment` or `:method` suffixes.
- *                Class-level `#[WafExempt]` on a REST controller publishes its
- *                `$basePath` under this mode so resource-level writes
- *                (e.g. PUT /resource/{id}) inherit the controller's exemption.
+ *   waf:exempt:body-scan:exact       SET of URIs (exact-match exemption from body-scan)
+ *   waf:exempt:body-scan:prefix      SET of URI prefixes (prefix-match)
+ *   waf:exempt:request-line:exact    SET of URIs
+ *   waf:exempt:request-line:prefix   SET of URI prefixes
+ *   waf:exempt:rate-limit:exact      SET of URIs
+ *   waf:exempt:rate-limit:prefix     SET of URI prefixes
+ *   waf:exempt:owners                HASH (URI -> owner string)
  *
- * The phpredis client returned by {@see RedisClientProvider} is configured with
- * the `_PH_REDIS_CLIENT:` prefix, so callers in this class use the unprefixed
- * key `waf:exemptions`.
+ * The Lua reader only touches the six scope-sets; one `SISMEMBER` answers
+ * each scope check in O(1) without any parsing. The owners hash is read only
+ * from PHP — for conflict detection in {@see self::writeEntry()} and to find
+ * what to drop in {@see self::onModuleDisabled()}.
+ *
+ * Why a `:prefix` set instead of one `:exact` set with a flag — `unified-security.lua`
+ * does walk-up matching only for prefix entries (resource controllers that
+ * exempt every `<basePath>/{id}` or `<basePath>:<method>` descendant). Keeping
+ * exact and prefix in separate sets lets the Lua side ask each question
+ * directly: first a pair of `SISMEMBER`s on `:exact` + `:prefix` for the
+ * literal URI, then a walk-up loop that only consults `:prefix`.
+ *
+ * Match modes (referenced from {@see self::writeEntry()} and the collectors):
+ *   - "exact"  → applies only when the request URI is identical to the
+ *                stored member. Method-level `#[WafExempt]` and shorthand
+ *                `ConfigClass::getWafExemptions()` entries publish under
+ *                this mode.
+ *   - "prefix" → applies when the request URI equals the stored member OR
+ *                descends from it through one-or-more `/segment` or `:method`
+ *                suffixes. Class-level `#[WafExempt]` on a REST controller
+ *                publishes its `$basePath` under this mode so resource-level
+ *                writes (e.g. PUT /resource/{id}) inherit the controller's
+ *                exemption.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Waf
  */
 class WafRegistry
 {
     /**
-     * Hash key (without the phpredis client prefix `_PH_REDIS_CLIENT:`).
+     * Common prefix for every Redis key managed by this class (without the
+     * phpredis client prefix `_PH_REDIS_CLIENT:`). Concrete keys are formed
+     * via {@see self::scopeSetKey()} and {@see self::OWNERS_KEY}.
      */
-    public const string HASH_KEY = 'waf:exemptions';
+    public const string KEY_PREFIX = 'waf:exempt:';
+
+    /**
+     * Owners hash (URI => owner string). Read only by PHP — never by Lua.
+     */
+    public const string OWNERS_KEY = self::KEY_PREFIX . 'owners';
 
     /**
      * Sentinel owner value used for declarations coming from Core REST controllers.
@@ -96,6 +117,64 @@ class WafRegistry
     public const string MATCH_EXACT = 'exact';
     public const string MATCH_PREFIX = 'prefix';
     private const array ALLOWED_MATCHES = [self::MATCH_EXACT, self::MATCH_PREFIX];
+
+    /**
+     * Suffix appended to live keys to form their shadow counterparts during
+     * an atomic {@see self::rebuildAll()}. Public so callers / tests that
+     * inspect Redis state can construct the names deterministically.
+     */
+    public const string SHADOW_SUFFIX = ':next';
+
+    /**
+     * Lua script body used by {@see self::rebuildAll()} to atomically swap
+     * every shadow key onto its live counterpart inside a single Redis
+     * transaction. Logic per key: if `<key>:next` exists → `RENAME` it onto
+     * `<key>`; otherwise → `DEL <key>` so the live key never lingers stale
+     * after a rebuild produced no entries for that scope.
+     *
+     * KEYS holds the live key names (no `:next` suffix); the shadow names
+     * are derived inside the script by appending ARGV[1]. Returns the
+     * number of keys processed.
+     */
+    private const string ATOMIC_SWAP_SCRIPT = <<<'LUA'
+        local suffix = ARGV[1]
+        for i = 1, #KEYS do
+            local shadow = KEYS[i] .. suffix
+            if redis.call('EXISTS', shadow) == 1 then
+                redis.call('RENAME', shadow, KEYS[i])
+            else
+                redis.call('DEL', KEYS[i])
+            end
+        end
+        return #KEYS
+        LUA;
+
+    /**
+     * Build the Redis key for a (scope, match-mode) pair. Lua's
+     * {@see unified-security.lua} constructs the same name pattern, so this
+     * helper is the single source of truth — keep both sides aligned.
+     */
+    public static function scopeSetKey(string $scope, string $match): string
+    {
+        return self::KEY_PREFIX . $scope . ':' . $match;
+    }
+
+    /**
+     * @return array<int, string> All six live scope-set key names plus the
+     *                            owners hash, in a stable order suitable for
+     *                            both Redis EVAL KEYS and rebuild iteration.
+     */
+    private static function allLiveKeys(): array
+    {
+        $keys = [];
+        foreach (self::ALLOWED_SCOPES as $scope) {
+            foreach (self::ALLOWED_MATCHES as $match) {
+                $keys[] = self::scopeSetKey($scope, $match);
+            }
+        }
+        $keys[] = self::OWNERS_KEY;
+        return $keys;
+    }
 
     /**
      * Lazily-computed set of every URI namespace owned by a Core REST
@@ -199,11 +278,25 @@ class WafRegistry
     }
 
     /**
-     * Drop and rebuild the whole hash from Core + enabled modules.
+     * Drop and rebuild every WAF exemption key from Core + enabled modules.
      *
      * Called from {@see \MikoPBX\Core\System\SystemLoader::startMikoPBX()} after
-     * modules are loaded and before nginx is started so the live cache is in
-     * sync with the on-disk source of truth on every boot.
+     * modules are loaded and before nginx is started so the live state is in
+     * sync with the on-disk source of truth on every boot, and periodically
+     * by {@see \MikoPBX\Core\Workers\Cron\WorkerWafExemptions} to self-heal
+     * after a Monit-driven Redis restart.
+     *
+     * Strategy: build all seven new keys under `<key>:next` shadow names,
+     * then have Redis atomically swap every shadow onto its live counterpart
+     * inside a single EVAL transaction. The Lua reader therefore sees either
+     * the complete old state or the complete new state — never a partially
+     * rebuilt mix.
+     *
+     * Race note: a concurrent {@see self::onModuleEnabled()} that fires AFTER
+     * the shadow build started but BEFORE the atomic swap will write to live
+     * keys and be lost when the swap renames the shadows over them. This is
+     * rare (operator action vs cron tick) and self-heals on the next cron
+     * pass within ≤60 s.
      */
     public function rebuildAll(): void
     {
@@ -212,60 +305,67 @@ class WafRegistry
             return;
         }
 
-        // Build the new state into a shadow key, then RENAME atomically onto
-        // the live key. Avoids the empty-hash window a naive DEL+HSET loop
-        // would expose on every cron tick — the Lua reader sees either the
-        // old hash or the new one, never empty.
-        //
-        // Race note: a concurrent onModuleEnabled() that fires AFTER the
-        // shadow build started but BEFORE the RENAME will write to the live
-        // hash and be lost on rename. This is rare (operator action vs cron
-        // tick) and self-heals on the next cron pass within ≤60 s.
-        $shadowKey = self::HASH_KEY . ':next';
+        $liveKeys = self::allLiveKeys();
+        $shadowKeys = array_map(static fn(string $k): string => $k . self::SHADOW_SUFFIX, $liveKeys);
 
+        // Clear stale shadows from a previous failed rebuild before populating.
         try {
-            $redis->del($shadowKey);
+            $redis->del(...$shadowKeys);
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(
                 __METHOD__,
-                'WAF: failed to clear shadow hash: ' . $e->getMessage(),
+                'WAF: failed to clear shadow keys: ' . $e->getMessage(),
                 LOG_WARNING
             );
             return;
         }
 
         foreach ($this->collectCore() as $uri => $entry) {
-            $this->writeEntry($redis, $shadowKey, $uri, $entry);
+            $this->writeEntry($redis, self::SHADOW_SUFFIX, $uri, $entry);
         }
         foreach ($this->collectModules() as $uri => $entry) {
-            $this->writeEntry($redis, $shadowKey, $uri, $entry);
+            $this->writeEntry($redis, self::SHADOW_SUFFIX, $uri, $entry);
         }
 
         try {
-            if ($redis->hLen($shadowKey) > 0) {
-                $redis->rename($shadowKey, self::HASH_KEY);
-            } else {
-                // Nothing collected (e.g. broken filesystem). Unconditionally
-                // clear the live hash so stale entries don't linger.
-                $redis->del(self::HASH_KEY);
-                $redis->del($shadowKey);
-            }
+            // Atomic swap inside Redis: RENAME existing shadows onto live keys
+            // and DEL live keys whose shadow is empty. One transaction covers
+            // all seven keys so the Lua reader can never observe a partial
+            // rebuild (e.g. owners hash already swapped but scope-sets still
+            // holding the old data). phpredis::eval() takes the combined
+            // keys+args array and the key count, so the suffix lands in
+            // ARGV[1] inside the script.
+            $redis->eval(
+                self::ATOMIC_SWAP_SCRIPT,
+                [...$liveKeys, self::SHADOW_SUFFIX],
+                count($liveKeys)
+            );
+            // Trailing safety net — RENAME on an existing shadow consumes it,
+            // but if no shadow was built for some key the DEL branch already
+            // ran inside EVAL. This second pass is a no-op in the happy path
+            // and only clears shadows left behind by a partial EVAL failure.
+            $redis->del(...$shadowKeys);
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(
                 __METHOD__,
-                'WAF: atomic shadow rename failed: ' . $e->getMessage(),
+                'WAF: atomic shadow swap failed: ' . $e->getMessage(),
                 LOG_WARNING
             );
             try {
-                $redis->del($shadowKey);
+                $redis->del(...$shadowKeys);
             } catch (Throwable) {
-                // Best-effort.
+                // Best-effort cleanup; next rebuild will retry.
             }
         }
     }
 
     /**
-     * Add a single module's declarations to the hash.
+     * Add a single module's declarations to the live keys.
+     *
+     * Writes directly to the live scope-sets and owners hash — there is no
+     * shadow staging here because the input is small (one module's URIs) and
+     * each `SADD` is idempotent; partial visibility during the write would
+     * already be valid intermediate state, not a corruption window.
      */
     public function onModuleEnabled(string $moduleUniqueID): void
     {
@@ -274,12 +374,18 @@ class WafRegistry
             return;
         }
         foreach ($this->collectModule($moduleUniqueID) as $uri => $entry) {
-            $this->writeEntry($redis, self::HASH_KEY, $uri, $entry);
+            $this->writeEntry($redis, '', $uri, $entry);
         }
     }
 
     /**
-     * Remove all entries owned by the given module.
+     * Remove every exemption owned by the given module.
+     *
+     * Reads the owners hash to find which URIs belong to this module, then
+     * removes each URI from every scope-set (idempotent — `SREM` of a
+     * non-member is a no-op) and finally drops its row from the owners hash.
+     * Six `SREM`s per URI is wasteful in theory but module disable is rare
+     * and bounded by the module's own URI count.
      */
     public function onModuleDisabled(string $moduleUniqueID): void
     {
@@ -289,33 +395,39 @@ class WafRegistry
         }
 
         try {
-            /** @var array<string, string>|false $all */
-            $all = $redis->hGetAll(self::HASH_KEY);
+            /** @var array<string, string>|false $owners */
+            $owners = $redis->hGetAll(self::OWNERS_KEY);
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(
                 __METHOD__,
-                'WAF: failed to read exemption hash on module disable: ' . $e->getMessage(),
+                'WAF: failed to read owners hash on module disable: ' . $e->getMessage(),
                 LOG_WARNING
             );
             return;
         }
 
-        if (!is_array($all)) {
+        if (!is_array($owners)) {
             return;
         }
 
-        foreach ($all as $uri => $json) {
-            $decoded = json_decode((string)$json, true);
-            if (is_array($decoded) && ($decoded['owner'] ?? null) === $moduleUniqueID) {
-                try {
-                    $redis->hDel(self::HASH_KEY, (string)$uri);
-                } catch (Throwable $e) {
-                    SystemMessages::sysLogMsg(
-                        __METHOD__,
-                        sprintf('WAF: failed to drop exemption %s: %s', $uri, $e->getMessage()),
-                        LOG_WARNING
-                    );
+        foreach ($owners as $uri => $owner) {
+            if ((string)$owner !== $moduleUniqueID) {
+                continue;
+            }
+            $uriStr = (string)$uri;
+            try {
+                foreach (self::ALLOWED_SCOPES as $scope) {
+                    foreach (self::ALLOWED_MATCHES as $match) {
+                        $redis->sRem(self::scopeSetKey($scope, $match), $uriStr);
+                    }
                 }
+                $redis->hDel(self::OWNERS_KEY, $uriStr);
+            } catch (Throwable $e) {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    sprintf('WAF: failed to drop exemption %s: %s', $uriStr, $e->getMessage()),
+                    LOG_WARNING
+                );
             }
         }
     }
@@ -729,13 +841,16 @@ class WafRegistry
      * Validate scopes and write a single entry, honouring first-writer-wins
      * and the Core URI namespace boundary.
      *
-     * `$hashKey` selects the target hash (live `HASH_KEY` for module
-     * lifecycle events, the `HASH_KEY:next` shadow during `rebuildAll()`).
+     * Writes the URI into each `waf:exempt:<scope>:<match>` SET it qualifies
+     * for, plus a row in the owners hash for conflict detection and module
+     * cleanup. `$keySuffix` is appended to every target key name — empty
+     * during live writes (module enable, single-entry republish) or
+     * {@see self::SHADOW_SUFFIX} during {@see self::rebuildAll()}.
      *
      * @param \Redis $redis
      * @param array{scopes: array<int, string>, owner: string, match?: string} $entry
      */
-    private function writeEntry(\Redis $redis, string $hashKey, string $uri, array $entry): void
+    private function writeEntry(\Redis $redis, string $keySuffix, string $uri, array $entry): void
     {
         $scopes = array_values(array_intersect($entry['scopes'], self::ALLOWED_SCOPES));
         if ($scopes === []) {
@@ -754,7 +869,7 @@ class WafRegistry
         // Reject module-owned writes that intrude on a Core controller's URI
         // namespace. Validates against the on-disk source of truth
         // (controller-class ApiResource attributes), so the check holds even
-        // when the live Redis hash is empty after a Monit-driven Redis
+        // when the live owners hash is empty after a Monit-driven Redis
         // restart — closes the privilege-escalation window where a
         // first-enabled module could claim arbitrary Core URIs.
         if ($entry['owner'] !== self::CORE_OWNER && $this->isCoreNamespaceUri($uri)) {
@@ -775,56 +890,43 @@ class WafRegistry
             $match = self::MATCH_EXACT;
         }
 
+        $ownersKey = self::OWNERS_KEY . $keySuffix;
+
         try {
-            /** @var string|false $existing */
-            $existing = $redis->hGet($hashKey, $uri);
+            /** @var string|false $existingOwner */
+            $existingOwner = $redis->hGet($ownersKey, $uri);
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(
                 __METHOD__,
-                sprintf('WAF: HGET failed for %s: %s', $uri, $e->getMessage()),
+                sprintf('WAF: owners HGET failed for %s: %s', $uri, $e->getMessage()),
                 LOG_WARNING
             );
             return;
         }
 
-        if (is_string($existing) && $existing !== '') {
-            $existingDecoded = json_decode($existing, true);
-            if (is_array($existingDecoded) && ($existingDecoded['owner'] ?? null) !== $entry['owner']) {
-                SystemMessages::sysLogMsg(
-                    __METHOD__,
-                    sprintf(
-                        'WAF exemption conflict on %s: owned by %s, %s ignored',
-                        $uri,
-                        (string)$existingDecoded['owner'],
-                        $entry['owner']
-                    ),
-                    LOG_WARNING
-                );
-                return; // first-writer-wins
+        if (is_string($existingOwner) && $existingOwner !== '' && $existingOwner !== $entry['owner']) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf(
+                    'WAF exemption conflict on %s: owned by %s, %s ignored',
+                    $uri,
+                    $existingOwner,
+                    $entry['owner']
+                ),
+                LOG_WARNING
+            );
+            return; // first-writer-wins
+        }
+
+        try {
+            foreach ($scopes as $scope) {
+                $redis->sAdd(self::scopeSetKey($scope, $match) . $keySuffix, $uri);
             }
-        }
-
-        $payload = json_encode([
-            'scopes' => $scopes,
-            'owner' => $entry['owner'],
-            'match' => $match,
-        ], JSON_UNESCAPED_SLASHES);
-
-        if ($payload === false) {
-            SystemMessages::sysLogMsg(
-                __METHOD__,
-                sprintf('WAF: cannot JSON-encode entry for %s', $uri),
-                LOG_WARNING
-            );
-            return;
-        }
-
-        try {
-            $redis->hSet($hashKey, $uri, $payload);
+            $redis->hSet($ownersKey, $uri, $entry['owner']);
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(
                 __METHOD__,
-                sprintf('WAF: HSET failed for %s: %s', $uri, $e->getMessage()),
+                sprintf('WAF: write failed for %s: %s', $uri, $e->getMessage()),
                 LOG_WARNING
             );
         }

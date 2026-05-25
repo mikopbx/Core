@@ -33,29 +33,28 @@ use Throwable;
 /**
  * Periodic WAF exemption republisher.
  *
- * Cron-invoked one-shot that rebuilds the
- * `_PH_REDIS_CLIENT:waf:exemptions` hash from the on-disk source of truth
- * (Core REST controller attributes and enabled-module `ConfigClass`
- * declarations) by calling {@see \MikoPBX\PBXCoreREST\Lib\Waf\WafRegistry::rebuildAll()}.
+ * Cron-invoked one-shot that rebuilds every WAF exemption key under
+ * `_PH_REDIS_CLIENT:waf:exempt:*` from the on-disk source of truth (Core
+ * REST controller attributes and enabled-module `ConfigClass` declarations)
+ * by calling {@see \MikoPBX\PBXCoreREST\Lib\Waf\WafRegistry::rebuildAll()}.
  *
  * Why a periodic rebuild exists at all:
  *   Redis on MikoPBX is configured without persistence and is managed by
  *   Monit, which restarts the service automatically on crash/upgrade. The
  *   rest of the system self-heals after such a restart (sessions reload,
  *   queues drain and refill, firewall workers republish blocked/whitelist
- *   data). The WAF exemption hash, however, is otherwise written only at
- *   `SystemLoader::startMikoPBX()` boot time — so after a Redis restart it
- *   would stay empty until the next full PBX reboot, breaking Core
- *   endpoints such as `system:executeSqlRequest`,
- *   `system:executeBashCommand`, dialplan-applications saves, and
- *   custom-files saves whose request bodies legitimately contain SQL or
- *   shell-shaped tokens.
+ *   data). The WAF exemption sets, however, are otherwise written only at
+ *   `SystemLoader::startMikoPBX()` boot time — so after a Redis restart they
+ *   would stay empty until the next full PBX reboot, breaking Core endpoints
+ *   such as `system:executeSqlRequest`, `system:executeBashCommand`,
+ *   dialplan-applications saves, and custom-files saves whose request bodies
+ *   legitimately contain SQL or shell-shaped tokens.
  *
  * Resolution window after Redis loss is bounded to the cron interval
  * (one minute) plus the Lua shared-dict TTL (10 s).
  *
- * Idempotent: rebuildAll() issues `DEL` + `HSET` and overwrites any
- * existing hash entries.
+ * Idempotent: rebuildAll() stages shadow keys and atomically swaps them
+ * onto the live keys, overwriting any existing entries.
  */
 final class WorkerWafExemptions
 {
