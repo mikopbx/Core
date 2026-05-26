@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\System\ConsoleMenu\Wizards;
 
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\ConsoleMenu\Utilities\MenuStyleConfig;
 use MikoPBX\Core\System\SystemMessages;
@@ -242,222 +243,249 @@ class WizardHelpers
     }
 
     /**
-     * Show configuration summary before applying
+     * Render the pending configuration as a diff against the current DB record.
      *
-     * @param array $config Configuration to display
-     * @return void
+     * Returns a multi-line string (no trailing newline) suitable for handing
+     * straight to CliMenu::setTitle, so the box is drawn inside the same
+     * alternate-screen frame as the menu items and doesn't get cleared on open.
+     *
+     * Shows only fields that actually change (old → new). Headline carries the
+     * interface name on the right. When nothing changes, returns a single line
+     * stating that Apply will only refresh DNS.
+     *
+     * Width is 64 to leave room for CliMenu's margin/border/padding on terminals
+     * down to 80 columns.
+     *
+     * @param array $config Pending configuration from the wizard
+     * @param LanInterfaces|null $current Existing record for the interface, or null if new
+     * @return string Box ready to be used as menu title
      */
-    public function showConfigSummary(array $config): void
+    public function renderChangesBoxed(array $config, ?LanInterfaces $current): string
     {
-        echo "\n" . str_repeat('=', 70) . "\n";
-        echo "CONFIGURATION SUMMARY\n";
-        echo str_repeat('=', 70) . "\n\n";
+        // 60 leaves comfortable headroom for CliMenu's margin/border/padding when
+        // the title is rendered as a StaticItem on terminals down to ~76 cols.
+        $width = 60;
+        $interface = (string)($config['interface'] ?? '');
+        $diff = $this->buildConfigDiff($config, $current);
+        $title = $current === null ? 'NEW INTERFACE' : 'CHANGES TO APPLY';
 
-        echo "Interface: {$config['interface']}\n\n";
+        $lines = [];
+        $lines[] = $this->boxTopLine($width, $title, $interface);
+        $lines[] = $this->boxLine($width, '');
 
-        // IPv4 section
-        echo "IPv4 Configuration:\n";
-        if (!empty($config['dhcp']) && $config['dhcp'] == '1') {
-            echo "  Mode: DHCP (automatic)\n";
-        } elseif (!empty($config['ipaddr'])) {
-            echo "  Mode: Static\n";
-            echo "  Address: {$config['ipaddr']}/{$config['subnet']}\n";
-            if (!empty($config['gateway'])) {
-                echo "  Gateway: {$config['gateway']}\n";
-            }
+        if (empty($diff)) {
+            $lines[] = $this->boxLine($width, '  no changes (Apply will refresh DNS only)');
         } else {
-            echo "  Mode: Disabled\n";
-        }
-
-        // IPv6 section
-        echo "\nIPv6 Configuration:\n";
-        $ipv6Mode = $config['ipv6_mode'] ?? '0';
-        switch ($ipv6Mode) {
-            case '1':
-                echo "  Mode: Auto (SLAAC/DHCPv6)\n";
-                break;
-            case '2':
-                echo "  Mode: Manual\n";
-                if (!empty($config['ipv6addr'])) {
-                    echo "  Address: {$config['ipv6addr']}/{$config['ipv6_subnet']}\n";
-                }
-                if (!empty($config['ipv6_gateway'])) {
-                    echo "  Gateway: {$config['ipv6_gateway']}\n";
-                }
-                break;
-            default:
-                echo "  Mode: Disabled\n";
-                break;
-        }
-
-        // DNS section
-        if (!empty($config['primarydns']) || !empty($config['primarydns6'])) {
-            echo "\nDNS Configuration:\n";
-            if (!empty($config['primarydns'])) {
-                echo "  Primary DNS (IPv4): {$config['primarydns']}\n";
-            }
-            if (!empty($config['secondarydns'])) {
-                echo "  Secondary DNS (IPv4): {$config['secondarydns']}\n";
-            }
-            if (!empty($config['primarydns6'])) {
-                echo "  Primary DNS (IPv6): {$config['primarydns6']}\n";
-            }
-            if (!empty($config['secondarydns6'])) {
-                echo "  Secondary DNS (IPv6): {$config['secondarydns6']}\n";
+            foreach ($diff as [$field, $oldVal, $newVal]) {
+                $lines[] = $this->boxLine($width, $this->formatDiffRow($field, $oldVal, $newVal));
             }
         }
 
-        // Internet interface flag
-        if (!empty($config['internet'])) {
-            echo "\nInternet Interface: Yes\n";
-        }
+        $lines[] = $this->boxLine($width, '');
+        $lines[] = $this->boxBottomLine($width);
 
-        echo "\n" . str_repeat('=', 70) . "\n";
+        return implode("\n", $lines);
     }
 
     /**
-     * Show configuration summary in boxed format with ASCII art
+     * Build a list of [field, old, new] triples for fields that change.
      *
-     * Displays configuration in a visually appealing box using box drawing characters.
-     * Similar to WelcomeBanner style for consistency.
-     *
-     * @param array $config Configuration to display
-     * @return void
+     * @param array $config Pending configuration
+     * @param LanInterfaces|null $current Current record (null = new interface)
+     * @return array<int, array{0:string,1:string,2:string}>
      */
-    public function showConfigSummaryBoxed(array $config): void
+    private function buildConfigDiff(array $config, ?LanInterfaces $current): array
     {
-        $width = 70;
+        $dash = '—';
 
-        $this->printBoxTop($width);
-        $this->printBoxLine($width, "CONFIGURATION SUMMARY", true);
-        $this->printBoxSeparator($width);
-        $this->printBoxLine($width, "");
-        $this->printBoxLine($width, "Interface: {$config['interface']}", true);
-        $this->printBoxLine($width, "");
-        $this->printBoxSeparator($width);
+        $currentIpv4Mode = $current !== null
+            ? $this->labelIpv4Mode((string)$current->dhcp, (string)$current->ipaddr)
+            : $dash;
+        $newIpv4Mode = $this->labelIpv4Mode(
+            (string)($config['dhcp'] ?? '0'),
+            (string)($config['ipaddr'] ?? '')
+        );
 
-        // IPv4 Configuration
-        $this->printBoxLine($width, "IPv4 Configuration:", true);
-        if (!empty($config['dhcp']) && $config['dhcp'] == '1') {
-            $this->printBoxLine($width, "  Mode: DHCP (automatic)");
-        } elseif (!empty($config['ipaddr'])) {
-            $this->printBoxLine($width, "  Mode: Static");
-            $this->printBoxLine($width, "  Address: {$config['ipaddr']}/{$config['subnet']}");
-            if (!empty($config['gateway'])) {
-                $this->printBoxLine($width, "  Gateway: {$config['gateway']}");
+        $currentIpv4Addr = $current !== null && !empty($current->ipaddr)
+            ? $current->ipaddr . (!empty($current->subnet) ? '/' . $current->subnet : '')
+            : $dash;
+        $newIpv4Addr = !empty($config['ipaddr'])
+            ? $config['ipaddr'] . (!empty($config['subnet']) ? '/' . $config['subnet'] : '')
+            : $dash;
+
+        $currentIpv4Gw = $current !== null && !empty($current->gateway) ? (string)$current->gateway : $dash;
+        $newIpv4Gw = !empty($config['gateway']) ? (string)$config['gateway'] : $dash;
+
+        $currentIpv6Mode = $current !== null ? $this->labelIpv6Mode((string)$current->ipv6_mode) : $dash;
+        $newIpv6Mode = $this->labelIpv6Mode((string)($config['ipv6_mode'] ?? '0'));
+
+        $currentIpv6Addr = $current !== null && !empty($current->ipv6addr)
+            ? $current->ipv6addr . (!empty($current->ipv6_subnet) ? '/' . $current->ipv6_subnet : '')
+            : $dash;
+        $newIpv6Addr = !empty($config['ipv6addr'])
+            ? $config['ipv6addr'] . (!empty($config['ipv6_subnet']) ? '/' . $config['ipv6_subnet'] : '')
+            : $dash;
+
+        $currentIpv6Gw = $current !== null && !empty($current->ipv6_gateway) ? (string)$current->ipv6_gateway : $dash;
+        $newIpv6Gw = !empty($config['ipv6_gateway']) ? (string)$config['ipv6_gateway'] : $dash;
+
+        $currentIpv4Dns = $this->labelIpv4Dns(
+            $current !== null ? (string)$current->dhcp : '0',
+            $current !== null ? (string)$current->primarydns : '',
+            $current !== null ? (string)$current->secondarydns : ''
+        );
+        $newIpv4Dns = $this->labelIpv4Dns(
+            (string)($config['dhcp'] ?? '0'),
+            (string)($config['primarydns'] ?? ''),
+            (string)($config['secondarydns'] ?? '')
+        );
+
+        $currentIpv6Dns = $this->labelIpv6Dns(
+            $current !== null ? (string)$current->ipv6_mode : '0',
+            $current !== null ? (string)$current->primarydns6 : '',
+            $current !== null ? (string)$current->secondarydns6 : ''
+        );
+        $newIpv6Dns = $this->labelIpv6Dns(
+            (string)($config['ipv6_mode'] ?? '0'),
+            (string)($config['primarydns6'] ?? ''),
+            (string)($config['secondarydns6'] ?? '')
+        );
+
+        $currentInternet = $current !== null ? ((string)$current->internet === '1' ? 'yes' : 'no') : $dash;
+        // NetworkWizard::configureDNS always sets $config['internet'] before this
+        // step, so no fallback is needed.
+        $newInternet = ($config['internet'] ?? '0') === '1' ? 'yes' : 'no';
+
+        $candidates = [
+            ['IPv4 mode',  $currentIpv4Mode, $newIpv4Mode],
+            ['IPv4 addr',  $currentIpv4Addr, $newIpv4Addr],
+            ['IPv4 gw',    $currentIpv4Gw,   $newIpv4Gw],
+            ['IPv6 mode',  $currentIpv6Mode, $newIpv6Mode],
+            ['IPv6 addr',  $currentIpv6Addr, $newIpv6Addr],
+            ['IPv6 gw',    $currentIpv6Gw,   $newIpv6Gw],
+            ['DNS (v4)',   $currentIpv4Dns,  $newIpv4Dns],
+            ['DNS (v6)',   $currentIpv6Dns,  $newIpv6Dns],
+            ['Internet',   $currentInternet, $newInternet],
+        ];
+
+        $diff = [];
+        foreach ($candidates as [$field, $oldVal, $newVal]) {
+            if ($oldVal !== $newVal) {
+                $diff[] = [$field, $oldVal, $newVal];
             }
-        } else {
-            $this->printBoxLine($width, "  Mode: Disabled");
         }
+        return $diff;
+    }
 
-        $this->printBoxSeparator($width);
-
-        // IPv6 Configuration
-        $this->printBoxLine($width, "IPv6 Configuration:", true);
-        $ipv6Mode = $config['ipv6_mode'] ?? '0';
-        switch ($ipv6Mode) {
-            case '1':
-                $this->printBoxLine($width, "  Mode: Auto (DHCPv6 + SLAAC)");
-                break;
-            case '2':
-                $this->printBoxLine($width, "  Mode: Manual");
-                if (!empty($config['ipv6addr'])) {
-                    $this->printBoxLine($width, "  Address: {$config['ipv6addr']}/{$config['ipv6_subnet']}");
-                }
-                if (!empty($config['ipv6_gateway'])) {
-                    $this->printBoxLine($width, "  Gateway: {$config['ipv6_gateway']}");
-                }
-                break;
-            default:
-                $this->printBoxLine($width, "  Mode: Disabled");
-                break;
+    private function labelIpv4Mode(string $dhcp, string $ipaddr): string
+    {
+        if ($dhcp === '1') {
+            return 'DHCP';
         }
-
-        // DNS Configuration
-        if (!empty($config['primarydns']) || !empty($config['primarydns6'])) {
-            $this->printBoxSeparator($width);
-            $this->printBoxLine($width, "DNS Configuration:", true);
-            if (!empty($config['primarydns'])) {
-                $this->printBoxLine($width, "  Primary DNS (IPv4): {$config['primarydns']}");
-            }
-            if (!empty($config['secondarydns'])) {
-                $this->printBoxLine($width, "  Secondary DNS (IPv4): {$config['secondarydns']}");
-            }
-            if (!empty($config['primarydns6'])) {
-                $this->printBoxLine($width, "  Primary DNS (IPv6): {$config['primarydns6']}");
-            }
-            if (!empty($config['secondarydns6'])) {
-                $this->printBoxLine($width, "  Secondary DNS (IPv6): {$config['secondarydns6']}");
-            }
+        if ($ipaddr !== '') {
+            return 'Static';
         }
+        return 'Disabled';
+    }
 
-        // Internet interface flag
-        if (!empty($config['internet'])) {
-            $this->printBoxSeparator($width);
-            $this->printBoxLine($width, "Internet Interface: Yes", true);
+    private function labelIpv6Mode(string $mode): string
+    {
+        return match ($mode) {
+            '1' => 'Auto (DHCPv6+SLAAC)',
+            '2' => 'Manual',
+            default => 'Disabled',
+        };
+    }
+
+    private function labelIpv4Dns(string $dhcp, string $primary, string $secondary): string
+    {
+        if ($dhcp === '1') {
+            return 'via DHCP';
         }
+        $parts = array_values(array_filter([$primary, $secondary], static fn (string $v) => $v !== ''));
+        return $parts === [] ? 'auto (fallback)' : implode(', ', $parts);
+    }
 
-        $this->printBoxLine($width, "");
-        $this->printBoxBottom($width);
+    private function labelIpv6Dns(string $ipv6Mode, string $primary, string $secondary): string
+    {
+        if ($ipv6Mode === '0') {
+            return $primary === '' && $secondary === '' ? 'disabled' : implode(', ', array_filter([$primary, $secondary]));
+        }
+        if ($ipv6Mode === '1') {
+            return 'via DHCPv6';
+        }
+        // Mode 2 (Manual): show explicit values or note that nothing was set.
+        $parts = array_values(array_filter([$primary, $secondary], static fn (string $v) => $v !== ''));
+        return $parts === [] ? 'none' : implode(', ', $parts);
     }
 
     /**
-     * Print top border of the box
+     * Format a single diff row: field name + old value + arrow + new value.
      *
-     * @param int $width Box width
-     * @return void
+     * Uses character-aware padding (mb_strlen) so multi-byte glyphs like '—'
+     * and '→' don't push columns sideways — sprintf '%-Ns' counts bytes, which
+     * breaks alignment for UTF-8 box drawings.
      */
-    private function printBoxTop(int $width): void
+    private function formatDiffRow(string $field, string $oldVal, string $newVal): string
     {
-        echo "╔" . str_repeat("═", $width - 2) . "╗\n";
-    }
+        $fieldWidth = 10;
+        $valWidth = 16;
 
-    /**
-     * Print bottom border of the box
-     *
-     * @param int $width Box width
-     * @return void
-     */
-    private function printBoxBottom(int $width): void
-    {
-        echo "╚" . str_repeat("═", $width - 2) . "╝\n";
-    }
-
-    /**
-     * Print separator line inside the box
-     *
-     * @param int $width Box width
-     * @return void
-     */
-    private function printBoxSeparator(int $width): void
-    {
-        echo "╠" . str_repeat("═", $width - 2) . "╣\n";
-    }
-
-    /**
-     * Print a line of text inside the box
-     *
-     * Automatically pads the text to fit the box width and adds vertical borders.
-     * Supports bold formatting for headers using ANSI escape codes.
-     *
-     * @param int $width Box width
-     * @param string $text Text to display
-     * @param bool $bold Use bold formatting
-     * @return void
-     */
-    private function printBoxLine(int $width, string $text, bool $bold = false): void
-    {
-        // Calculate padding needed
-        // Strip ANSI codes for length calculation
-        $cleanText = preg_replace('/\033\[[0-9;]+m/', '', $text);
-        $textLength = mb_strlen($cleanText);
-        $paddingNeeded = $width - $textLength - 4; // 4 = "║ " + " ║"
-        $padding = str_repeat(" ", max(0, $paddingNeeded));
-
-        if ($bold) {
-            echo "║ \033[1m{$text}\033[0m{$padding} ║\n";
-        } else {
-            echo "║ {$text}{$padding} ║\n";
+        if (mb_strlen($oldVal) > $valWidth) {
+            $oldVal = mb_substr($oldVal, 0, $valWidth - 1) . '…';
         }
+        if (mb_strlen($newVal) > $valWidth) {
+            $newVal = mb_substr($newVal, 0, $valWidth - 1) . '…';
+        }
+
+        return '  '
+            . $this->padRight($field, $fieldWidth)
+            . '  '
+            . $this->padRight($oldVal, $valWidth)
+            . '  →  '
+            . $newVal;
     }
+
+    /**
+     * Right-pad a UTF-8 string to a visible character width.
+     */
+    private function padRight(string $s, int $width): string
+    {
+        $missing = $width - mb_strlen($s);
+        return $missing > 0 ? $s . str_repeat(' ', $missing) : $s;
+    }
+
+    /**
+     * Build the top border line: ╔══ <title> ═══...═══ <right> ══╗
+     */
+    private function boxTopLine(int $width, string $title = '', string $right = ''): string
+    {
+        if ($title === '' && $right === '') {
+            return '╔' . str_repeat('═', $width - 2) . '╗';
+        }
+        $leftPiece = $title !== '' ? "╔══ {$title} " : '╔';
+        $rightPiece = $right !== '' ? " {$right} ══╗" : '╗';
+        $fill = $width - mb_strlen($leftPiece) - mb_strlen($rightPiece);
+        return $leftPiece . str_repeat('═', max(0, $fill)) . $rightPiece;
+    }
+
+    /**
+     * Build the bottom border line: ╚════...════╝
+     */
+    private function boxBottomLine(int $width): string
+    {
+        return '╚' . str_repeat('═', $width - 2) . '╝';
+    }
+
+    /**
+     * Build a content line with vertical borders, padded to the box width.
+     */
+    private function boxLine(int $width, string $text): string
+    {
+        $clean = preg_replace('/\033\[[0-9;]+m/', '', $text);
+        $textLength = mb_strlen($clean);
+        $padding = max(0, $width - $textLength - 4);
+        return '║ ' . $text . str_repeat(' ', $padding) . ' ║';
+    }
+
 }

@@ -447,10 +447,19 @@ class NetworkWizard
      */
     private function reviewAndConfirm(CliMenu $menu, array $config): ?bool
     {
-        $this->helpers->showConfigSummaryBoxed($config);
+        // Diff the pending config against the live DB record so the user sees
+        // only what will actually change before pressing Apply.
+        $current = LanInterfaces::findFirst([
+            'interface = :interface:',
+            'bind' => ['interface' => $config['interface']]
+        ]);
 
-        echo "\n" . $this->translation->_('cm_PressEnterToContinue') . "\n";
-        fgets(STDIN);
+        // Box is embedded in the menu title so it survives CliMenu's
+        // configureTerminal() -> clear() on open. A naive echo before
+        // $menu->open() would be wiped immediately.
+        $title = $this->translation->_('cm_ReviewConfiguration')
+            . "\n\n"
+            . $this->helpers->renderChangesBoxed($config, $current);
 
         $options = [
             'apply' => $this->translation->_('cm_ApplyConfiguration'),
@@ -460,7 +469,7 @@ class NetworkWizard
 
         $choice = $this->helpers->showArrowChoiceMenu(
             $menu,
-            $this->translation->_('cm_ReviewConfiguration'),
+            $title,
             $options
         );
 
