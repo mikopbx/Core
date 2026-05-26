@@ -141,6 +141,7 @@ return [
     'cm_IPv6ConfigMode' => 'IPv6 設定モード:',
     'cm_IPv6KeepCurrent' => '現在のIPv6設定をそのままにする',
     'cm_EnterSecondaryDNS6' => '追加の IPv6 DNS (スキップするには Enter キーを押します): ',
+    'cm_DnsViaDhcp' => 'DNSサーバーはDHCP/DHCPv6経由で自動的に取得されます。',
     'cm_ApplyConfiguration' => '構成を適用する',
     'cm_EditConfiguration' => '編集（戻る）',
     'cm_ConfigurationSaved' => '設定が保存されました。ネットワークの変更は自動的に適用されます...',

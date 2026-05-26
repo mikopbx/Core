@@ -121,6 +121,7 @@ return [
     'cm_EnterPrimaryDNS' => 'Ensisijainen DNS (esim. 8.8.8.8 tai 1.1.1.1): ',
     'cm_EnterSecondaryDNS' => 'Lisä-DNS (Enter ohittaaksesi): ',
     'cm_EnterSecondaryDNS6' => 'Lisä-IPv6-nimipalvelin (Enter ohittaaksesi): ',
+    'cm_DnsViaDhcp' => 'DNS-palvelimet haetaan automaattisesti DHCP/DHCPv6:n kautta.',
     'cm_ApplyConfiguration' => 'Käytä konfiguraatiota',
     'cm_EditConfiguration' => 'Muokkaa (takaisin)',
     'cm_ConfigurationSaved' => 'Määritykset on tallennettu. Verkkomuutokset otetaan käyttöön automaattisesti...',

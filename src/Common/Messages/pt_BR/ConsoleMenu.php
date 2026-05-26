@@ -129,6 +129,7 @@ return [
     'cm_EnterIPv6Subnet' => 'Comprimento do prefixo (ex.: 64): ',
     'cm_EnterPrimaryDNS6' => 'DNS IPv6 primário (Pressione Enter para ignorar): ',
     'cm_EnterSecondaryDNS6' => 'DNS IPv6 adicional (Pressione Enter para ignorar): ',
+    'cm_DnsViaDhcp' => 'Os servidores DNS serão obtidos automaticamente via DHCP/DHCPv6.',
     'cm_EditConfiguration' => 'Editar (voltar)',
     'cm_ConfigurationSaved' => 'A configuração foi salva. As alterações de rede serão aplicadas automaticamente...',
     'cm_WizardCancelled' => 'O assistente foi cancelado. Nenhuma alteração foi feita.',

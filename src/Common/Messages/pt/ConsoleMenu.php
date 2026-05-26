@@ -35,6 +35,7 @@ return [
     'cm_EnterIPv6Address' => 'Endereço IPv6 (por exemplo, 2001:db8::1): ',
     'cm_EnterPrimaryDNS6' => 'DNS IPv6 primário (Pressione Enter para ignorar): ',
     'cm_EnterSecondaryDNS6' => 'DNS IPv6 adicional (Pressione Enter para ignorar): ',
+    'cm_DnsViaDhcp' => 'Os servidores DNS serão obtidos automaticamente via DHCP/DHCPv6.',
     // Network info display
     'cm_NetworkInformation' => 'Informações de rede',
     'cm_CurrentNetworkConfiguration' => 'Configuração de rede atual',

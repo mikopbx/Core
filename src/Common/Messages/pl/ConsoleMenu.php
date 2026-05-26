@@ -41,6 +41,7 @@ return [
     'cm_IPv4KeepCurrent' => 'Pozostaw obecne ustawienia IPv4',
     'cm_EnterIPv4Gateway' => 'Brama (na przykład 192.168.1.1): ',
     'cm_EnterSecondaryDNS6' => 'Dodatkowy DNS IPv6 (Enter, aby pominąć): ',
+    'cm_DnsViaDhcp' => 'Serwery DNS zostaną pobrane automatycznie przez DHCP/DHCPv6.',
     'cm_ApplyConfiguration' => 'Zastosuj konfigurację',
     // Validation errors
     'cm_InvalidIPv6Address' => 'Nieprawidłowy adres IPv6',

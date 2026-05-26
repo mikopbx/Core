@@ -121,6 +121,7 @@ return [
     'cm_EnterSecondaryDNS' => 'Thông tin DNS bổ sung (Nhấn Enter để bỏ qua): ',
     'cm_EnterPrimaryDNS6' => 'DNS IPv6 chính (Nhấn Enter để bỏ qua): ',
     'cm_EnterSecondaryDNS6' => 'DNS IPv6 bổ sung (Nhấn Enter để bỏ qua): ',
+    'cm_DnsViaDhcp' => 'Máy chủ DNS sẽ được lấy tự động qua DHCP/DHCPv6.',
     // Review and confirmation
     'cm_ReviewConfiguration' => 'Kiểm tra cấu hình:',
     'cm_ApplyConfiguration' => 'Áp dụng cấu hình',

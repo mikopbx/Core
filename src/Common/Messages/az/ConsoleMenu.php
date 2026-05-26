@@ -113,6 +113,7 @@ return [
     'cm_EnterSecondaryDNS' => 'Əlavə DNS (Keçmək üçün daxil edin): ',
     'cm_EnterPrimaryDNS6' => 'Əsas IPv6 DNS (Keçmək üçün daxil edin): ',
     'cm_EnterSecondaryDNS6' => 'Əlavə IPv6 DNS (Keçmək üçün daxil edin): ',
+    'cm_DnsViaDhcp' => 'DNS serverləri DHCP/DHCPv6 vasitəsilə avtomatik alınacaq.',
     'cm_ConfigurationSaved' => 'Konfiqurasiya yadda saxlanıldı. Şəbəkə dəyişiklikləri avtomatik olaraq tətbiq olunacaq...',
     'cm_WizardCancelled' => 'Sehrbaz ləğv edildi. Heç bir dəyişiklik edilmədi.',
     // Validation errors

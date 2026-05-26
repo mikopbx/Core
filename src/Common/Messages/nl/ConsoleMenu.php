@@ -64,6 +64,7 @@ return [
     'cm_IPv6KeepCurrent' => 'Laat de huidige IPv6-instellingen staan',
     'cm_DoYouWantResetPassword' => 'Wilt u uw wachtwoord opnieuw instellen? (j/n):',
     'cm_EnterSecondaryDNS6' => 'Aanvullende IPv6 DNS-servers (druk op Enter om over te slaan): ',
+    'cm_DnsViaDhcp' => 'DNS-servers worden automatisch verkregen via DHCP/DHCPv6.',
     'cm_PingHost' => 'Hostping',
     'cm_EnterNewLanIpAddress' => 'Voer het nieuwe LAN IP-adres in: ',
     'cm_InvalidIPv6Gateway' => 'Ongeldige IPv6-gateway',

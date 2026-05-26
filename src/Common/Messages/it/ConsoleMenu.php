@@ -115,6 +115,7 @@ return [
     'cm_EnterSecondaryDNS' => 'DNS aggiuntivo (Invio per saltare): ',
     'cm_EnterPrimaryDNS6' => 'DNS IPv6 primario (Invio per saltare): ',
     'cm_EnterSecondaryDNS6' => 'DNS IPv6 aggiuntivo (Invio per saltare): ',
+    'cm_DnsViaDhcp' => 'I server DNS saranno ottenuti automaticamente tramite DHCP/DHCPv6.',
     'cm_ApplyConfiguration' => 'Applica configurazione',
     'cm_EditConfiguration' => 'Modifica (indietro)',
     'cm_ConfigurationSaved' => 'La configurazione è stata salvata. Le modifiche di rete verranno applicate automaticamente...',

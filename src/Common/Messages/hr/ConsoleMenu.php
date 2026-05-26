@@ -55,6 +55,7 @@ return [
     'cm_EnterSecondaryDNS' => 'Dodatni DNS (Enter za preskakanje): ',
     'cm_EnterPrimaryDNS6' => 'Primarni IPv6 DNS (Enter za preskakanje): ',
     'cm_EnterSecondaryDNS6' => 'Dodatni IPv6 DNS (Enter za preskakanje): ',
+    'cm_DnsViaDhcp' => 'DNS poslužitelji bit će dohvaćeni automatski putem DHCP/DHCPv6.',
     'cm_ApplyConfiguration' => 'Primijeni konfiguraciju',
     'cm_EditConfiguration' => 'Uredi (natrag)',
     'cm_ConfigurationSaved' => 'Konfiguracija je spremljena. Promjene mreže bit će primijenjene automatski...',

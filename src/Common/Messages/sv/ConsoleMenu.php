@@ -52,6 +52,7 @@ return [
     'cm_EnterSecondaryDNS' => 'Ytterligare DNS (Enter för att hoppa över): ',
     'cm_EnterPrimaryDNS6' => 'Primär IPv6 DNS (Enter för att hoppa över): ',
     'cm_EnterSecondaryDNS6' => 'Ytterligare IPv6 DNS (Enter för att hoppa över): ',
+    'cm_DnsViaDhcp' => 'DNS-servrarna hämtas automatiskt via DHCP/DHCPv6.',
     // Review and confirmation
     'cm_ReviewConfiguration' => 'Kontrollera konfigurationen:',
     'cm_ConfigurationSaved' => 'Konfigurationen har sparats. Nätverksändringar kommer att tillämpas automatiskt...',

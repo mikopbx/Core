@@ -111,6 +111,7 @@ return [
     'cm_EnterSecondaryDNS' => 'Yderligere DNS (Enter for at springe over): ',
     'cm_EnterPrimaryDNS6' => 'Primær IPv6 DNS (Enter for at springe over): ',
     'cm_EnterSecondaryDNS6' => 'Yderligere IPv6 DNS (Enter for at springe over): ',
+    'cm_DnsViaDhcp' => 'DNS-servere hentes automatisk via DHCP/DHCPv6.',
     'cm_WizardCancelled' => 'Guiden blev annulleret. Der blev ikke foretaget nogen ændringer.',
     // Validation errors
     'cm_InvalidIPv6Address' => 'Ugyldig IPv6-adresse',

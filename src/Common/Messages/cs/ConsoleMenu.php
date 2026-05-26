@@ -138,6 +138,7 @@ return [
     'cm_EnterSecondaryDNS' => 'Další DNS (Enter pro přeskočení): ',
     'cm_EnterPrimaryDNS6' => 'Primární DNS server IPv6 (Enter pro přeskočení): ',
     'cm_EnterSecondaryDNS6' => 'Další DNS servery IPv6 (přeskočit pomocí klávesy Enter): ',
+    'cm_DnsViaDhcp' => 'DNS servery budou získány automaticky přes DHCP/DHCPv6.',
     'cm_ConfigurationSaved' => 'Konfigurace byla uložena. Změny sítě se projeví automaticky...',
     'cm_MonitoringAndDiagnostics' => 'Monitorování a diagnostika',
     'cm_NetworkAndConnection' => 'Síť a připojení',

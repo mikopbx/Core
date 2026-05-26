@@ -144,6 +144,7 @@ return [
     'cm_EnterIPv6Gateway' => 'IPv6 átjáró (például 2001:db8::ffff): ',
     'cm_EnterPrimaryDNS6' => 'Elsődleges IPv6 DNS (Enter billentyűvel kihagyható): ',
     'cm_EnterSecondaryDNS6' => 'További IPv6 DNS (Enter billentyűvel kihagyható): ',
+    'cm_DnsViaDhcp' => 'A DNS-kiszolgálókat automatikusan a DHCP/DHCPv6 biztosítja.',
     // Review and confirmation
     'cm_ReviewConfiguration' => 'Ellenőrizd a konfigurációt:',
     'cm_ApplyConfiguration' => 'Konfiguráció alkalmazása',

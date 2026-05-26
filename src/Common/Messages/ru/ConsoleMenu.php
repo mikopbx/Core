@@ -121,6 +121,7 @@ return [
     'cm_EnterSecondaryDNS' => 'Дополнительный DNS (Enter чтобы пропустить): ',
     'cm_EnterPrimaryDNS6' => 'Основной IPv6 DNS (Enter чтобы пропустить): ',
     'cm_EnterSecondaryDNS6' => 'Дополнительный IPv6 DNS (Enter чтобы пропустить): ',
+    'cm_DnsViaDhcp' => 'DNS-серверы будут получены автоматически по DHCP/DHCPv6.',
 
     // Review and confirmation
     'cm_ReviewConfiguration' => 'Проверьте конфигурацию:',

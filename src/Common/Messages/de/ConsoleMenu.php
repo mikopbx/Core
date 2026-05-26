@@ -121,6 +121,7 @@ return [
     'cm_EnterSecondaryDNS' => 'Zusätzliche DNS-Server (Eingabetaste zum Überspringen): ',
     'cm_EnterPrimaryDNS6' => 'Primärer IPv6-DNS-Server (Eingabetaste zum Überspringen): ',
     'cm_EnterSecondaryDNS6' => 'Zusätzliche IPv6-DNS-Server (Eingabetaste zum Überspringen): ',
+    'cm_DnsViaDhcp' => 'DNS-Server werden automatisch über DHCP/DHCPv6 bezogen.',
     // Review and confirmation
     'cm_ReviewConfiguration' => 'Überprüfen Sie die Konfiguration:',
     'cm_ApplyConfiguration' => 'Konfiguration anwenden',

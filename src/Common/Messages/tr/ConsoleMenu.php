@@ -38,6 +38,7 @@ return [
     'cm_EnterPrimaryDNS' => 'Birincil DNS (örneğin 8.8.8.8 veya 1.1.1.1): ',
     'cm_EnterPrimaryDNS6' => 'Birincil IPv6 DNS (Atlamak için Enter tuşuna basın): ',
     'cm_EnterSecondaryDNS6' => 'Ek IPv6 DNS (Atlamak için Enter tuşuna basın): ',
+    'cm_DnsViaDhcp' => 'DNS sunucuları DHCP/DHCPv6 üzerinden otomatik olarak alınacak.',
     'cm_EditConfiguration' => 'Düzenle (geri)',
     'cm_ConfigurationSaved' => 'Yapılandırma kaydedildi. Ağ değişiklikleri otomatik olarak uygulanacaktır...',
     'cm_WizardCancelled' => 'Sihirbaz iptal edildi. Herhangi bir değişiklik yapılmadı.',

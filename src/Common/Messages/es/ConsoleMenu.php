@@ -113,6 +113,7 @@ return [
     'cm_EnterSecondaryDNS' => 'DNS adicional (Intro para omitir): ',
     'cm_EnterPrimaryDNS6' => 'DNS IPv6 primario (Intro para omitir): ',
     'cm_EnterSecondaryDNS6' => 'DNS IPv6 adicional (Intro para omitir): ',
+    'cm_DnsViaDhcp' => 'Los servidores DNS se obtendrán automáticamente vía DHCP/DHCPv6.',
     'cm_EditConfiguration' => 'Editar (atrás)',
     'cm_ConfigurationSaved' => 'La configuración se ha guardado. Los cambios de red se aplicarán automáticamente.',
     'cm_WizardCancelled' => 'El asistente fue cancelado. No se realizaron cambios.',

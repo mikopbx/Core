@@ -39,6 +39,7 @@ return [
     'cm_EnterIPv6Gateway' => 'Πύλη IPv6 (για παράδειγμα 2001:db8::ffff): ',
     'cm_CurrentNetworkConfiguration' => 'Τρέχουσα διαμόρφωση δικτύου',
     'cm_EnterSecondaryDNS6' => 'Επιπλέον IPv6 DNS (Enter για παράλειψη): ',
+    'cm_DnsViaDhcp' => 'Οι διακομιστές DNS θα ληφθούν αυτόματα μέσω DHCP/DHCPv6.',
     'cm_SelectLogMode' => 'Επιλογή λειτουργίας προβολής',
     'cm_SelectLogAndMode' => 'Επιλέξτε μια λειτουργία καταγραφής και προβολής',
     'cm_LogAsteriskMessages' => 'Βασικός αστερίσκος',

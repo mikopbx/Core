@@ -40,6 +40,7 @@ return [
     'cm_CurrentInterface' => 'Interfața curentă: %interface%',
     'cm_KeepCurrent' => 'Lăsați curentul',
     'cm_EnterSecondaryDNS6' => 'DNS IPv6 suplimentar (Introduceți pentru a omite): ',
+    'cm_DnsViaDhcp' => 'Serverele DNS vor fi obținute automat prin DHCP/DHCPv6.',
     'cm_ApplyConfiguration' => 'Aplicați configurația',
     // New modular menu system (ESXi-style)
     'cm_Settings' => 'Setări',

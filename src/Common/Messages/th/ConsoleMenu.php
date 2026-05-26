@@ -141,6 +141,7 @@ return [
     'cm_IPv6Disabled' => 'พิการ',
     'cm_IPv6KeepCurrent' => 'ปล่อยการตั้งค่า IPv6 ปัจจุบันไว้',
     'cm_EnterSecondaryDNS6' => 'DNS IPv6 เพิ่มเติม (กด Enter เพื่อข้าม): ',
+    'cm_DnsViaDhcp' => 'เซิร์ฟเวอร์ DNS จะได้รับโดยอัตโนมัติผ่าน DHCP/DHCPv6',
     'cm_Services' => 'บริการ',
     // Network info display
     'cm_NetworkInformation' => 'ข้อมูลเครือข่าย',

@@ -122,6 +122,7 @@ return [
     'cm_EnterPrimaryDNS' => '主 DNS 服务器（例如 8.8.8.8 或 1.1.1.1）： ',
     'cm_EnterPrimaryDNS6' => '主 IPv6 DNS 服务器（按 Enter 键跳过）： ',
     'cm_EnterSecondaryDNS6' => '其他 IPv6 DNS 服务器（按 Enter 键跳过）： ',
+    'cm_DnsViaDhcp' => 'DNS 服务器将通过 DHCP/DHCPv6 自动获取。',
     'cm_ConfigurationSaved' => '配置已保存。网络更改将自动应用……',
     'cm_WizardCancelled' => '巫师任务被取消了。没有做任何更改。',
     // Validation errors

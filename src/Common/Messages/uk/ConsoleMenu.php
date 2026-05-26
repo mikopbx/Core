@@ -56,6 +56,7 @@ return [
     'cm_DoYouWantResetPassword' => 'Ви хочете скинути пароль? (y/n):',
     'cm_PasswordSuccessfullyReset' => 'Пароль успішно скинутий. Новий логін: %login%. Новий пароль: %password%.',
     'cm_EnterSecondaryDNS6' => 'Додатковий IPv6 DNS (Enter щоб пропустити): ',
+    'cm_DnsViaDhcp' => 'DNS-сервери будуть отримані автоматично через DHCP/DHCPv6.',
     // Review and confirmation
     'cm_ReviewConfiguration' => 'Перевірте конфігурацію:',
     'cm_NetworkAndConnection' => 'Мережа та підключення',

@@ -63,6 +63,7 @@ return [
     'cm_EnterSecondaryDNS' => 'DNS supplémentaire (Entrez pour ignorer) : ',
     'cm_EnterPrimaryDNS6' => 'DNS IPv6 principal (Entrée pour ignorer) : ',
     'cm_EnterSecondaryDNS6' => 'DNS IPv6 supplémentaire (Entrez pour ignorer) : ',
+    'cm_DnsViaDhcp' => 'Les serveurs DNS seront obtenus automatiquement via DHCP/DHCPv6.',
     'cm_EnterIPv4Subnet' => 'Longueur du préfixe de sous-réseau (par exemple, 24 pour un réseau /24) : ',
     'cm_MtrSelectHost' => 'Sélectionnez un hôte pour MTR',
     'cm_MtrGateway' => 'Porte',

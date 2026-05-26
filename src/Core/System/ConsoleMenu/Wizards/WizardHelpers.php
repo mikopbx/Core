@@ -62,10 +62,16 @@ class WizardHelpers
      * @param string $title Menu title
      * @param array $options Array of options: ['key' => 'Display text', ...]
      * @param string|null $currentValue Current value to show (optional)
+     * @param int|null $defaultIndex 1-based index of the option to pre-select (optional)
      * @return int|null Returns 1-based index of selected option, or null if cancelled
      */
-    public function showArrowChoiceMenu(CliMenu $parentMenu, string $title, array $options, ?string $currentValue = null): ?int
-    {
+    public function showArrowChoiceMenu(
+        CliMenu $parentMenu,
+        string $title,
+        array $options,
+        ?string $currentValue = null,
+        ?int $defaultIndex = null
+    ): ?int {
         $selectedIndex = null;
         $optionKeys = array_keys($options);
 
@@ -100,6 +106,27 @@ class WizardHelpers
 
         try {
             $menu = $builder->build();
+
+            // Digit hotkeys: pressing 1..min(9, count) selects the matching option.
+            $hotkeyLimit = min(9, count($options));
+            for ($position = 1; $position <= $hotkeyLimit; $position++) {
+                $digit = (string)$position;
+                $menu->addCustomControlMapping(
+                    $digit,
+                    function (CliMenu $hotkeyMenu) use ($position, &$selectedIndex) {
+                        $selectedIndex = $position;
+                        $hotkeyMenu->close();
+                    }
+                );
+            }
+
+            // Pre-select a specific item if requested (e.g. "Keep current").
+            if ($defaultIndex !== null && $defaultIndex >= 1 && $defaultIndex <= count($options)) {
+                $item = $menu->getItemByIndex($defaultIndex - 1);
+                if ($item->canSelect()) {
+                    $menu->setSelectedItem($item);
+                }
+            }
             $menu->open();
         } catch (\Throwable $e) {
             SystemMessages::sysLogMsg('WizardHelpers', 'Arrow menu error: ' . $e->getMessage());

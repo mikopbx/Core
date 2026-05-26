@@ -85,7 +85,7 @@ class NetworkWizard
         $config = array_merge($config, $ipv6Config);
 
         // Step 4: Configure DNS and internet flag
-        $dnsConfig = $this->configureDNS($menu, $interfaceName);
+        $dnsConfig = $this->configureDNS($menu, $interfaceName, $config);
         if ($dnsConfig === null) {
             $this->showCancelled();
             return;
@@ -182,11 +182,16 @@ class NetworkWizard
             'back' => $this->translation->_('cm_GoBack'),
         ];
 
+        // Pre-select "Keep current" when an existing record is present
+        // so a casual Enter keeps the current network setup untouched.
+        $defaultIndex = $interface !== null ? 4 : null;
+
         $choice = $this->helpers->showArrowChoiceMenu(
             $menu,
             $this->translation->_('cm_IPv4ConfigMode'),
             $options,
-            $currentMode
+            $currentMode,
+            $defaultIndex
         );
 
         if ($choice === null || $choice === 5) {
@@ -274,11 +279,14 @@ class NetworkWizard
             'back' => $this->translation->_('cm_GoBack'),
         ];
 
+        $defaultIndex = $interface !== null ? 4 : null;
+
         $choice = $this->helpers->showArrowChoiceMenu(
             $menu,
             $this->translation->_('cm_IPv6ConfigMode'),
             $options,
-            $currentMode
+            $currentMode,
+            $defaultIndex
         );
 
         if ($choice === null || $choice === 5) {
@@ -346,11 +354,17 @@ class NetworkWizard
      * If only one interface exists, automatically marks it as internet interface.
      * For multiple interfaces, asks user which one provides internet access.
      *
+     * When IPv4 is configured via DHCP and IPv6 is either disabled or Auto
+     * (SLAAC/DHCPv6), DNS servers are obtained automatically from the DHCP/DHCPv6
+     * server, so the manual DNS prompt is skipped. If DHCP does not supply DNS,
+     * DnsConf::resolveConfGenerate() falls back to a locale-aware default list.
+     *
      * @param CliMenu $menu Current menu
      * @param string $interfaceName Current interface being configured
+     * @param array $currentConfig IPv4/IPv6 settings collected in previous steps
      * @return array|null DNS config or null if cancelled
      */
-    private function configureDNS(CliMenu $menu, string $interfaceName): ?array
+    private function configureDNS(CliMenu $menu, string $interfaceName, array $currentConfig): ?array
     {
         $dnsConfig = [];
 
@@ -358,10 +372,14 @@ class NetworkWizard
         $interfaces = LanInterfaces::find(['columns' => 'interface'])->toArray();
         $interfaceCount = count($interfaces);
 
+        // DNS is auto-provided when IPv4 uses DHCP and IPv6 is Off or Auto.
+        $dhcpMode = (string)($currentConfig['dhcp'] ?? '0');
+        $ipv6Mode = (string)($currentConfig['ipv6_mode'] ?? '0');
+        $dnsAutoProvided = $dhcpMode === '1' && in_array($ipv6Mode, ['0', '1'], true);
+
         if ($interfaceCount <= 1) {
             // Single interface - automatically mark as internet interface
             $dnsConfig['internet'] = '1';
-            echo "\n" . $this->translation->_('cm_ConfigureDNS') . " ($interfaceName)\n\n";
         } else {
             // Multiple interfaces - ask user
             echo "\n";
@@ -377,9 +395,17 @@ class NetworkWizard
                 // Not internet interface - skip DNS configuration
                 return $dnsConfig;
             }
-
-            echo "\n" . $this->translation->_('cm_ConfigureDNS') . "\n\n";
         }
+
+        // DHCP/DHCPv6 will deliver DNS — skip the manual prompts entirely.
+        if ($dnsAutoProvided) {
+            echo "\n" . $this->translation->_('cm_DnsViaDhcp') . "\n";
+            sleep(1);
+            return $dnsConfig;
+        }
+
+        echo "\n" . $this->translation->_('cm_ConfigureDNS')
+            . ($interfaceCount <= 1 ? " ($interfaceName)" : '') . "\n\n";
 
         // Primary DNS
         $primaryDns = $this->helpers->askIPAddress($menu, $this->translation->_('cm_EnterPrimaryDNS'), 'both', true);

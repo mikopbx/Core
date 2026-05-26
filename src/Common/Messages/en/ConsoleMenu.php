@@ -121,6 +121,7 @@ return [
     'cm_EnterSecondaryDNS' => 'Secondary DNS (press Enter to skip): ',
     'cm_EnterPrimaryDNS6' => 'Primary IPv6 DNS (press Enter to skip): ',
     'cm_EnterSecondaryDNS6' => 'Secondary IPv6 DNS (press Enter to skip): ',
+    'cm_DnsViaDhcp' => 'DNS servers will be obtained automatically via DHCP/DHCPv6.',
 
     // Review and confirmation
     'cm_ReviewConfiguration' => 'Review your configuration:',

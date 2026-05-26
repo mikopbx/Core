@@ -108,6 +108,7 @@ return [
     'cm_EnterSecondaryDNS' => 'დამატებითი DNS (გამოსატოვებლად Enter): ',
     'cm_EnterPrimaryDNS6' => 'ძირითადი IPv6 DNS (გამოსატოვებლად Enter): ',
     'cm_EnterSecondaryDNS6' => 'დამატებითი IPv6 DNS (გამოსატოვებლად Enter): ',
+    'cm_DnsViaDhcp' => 'DNS სერვერები ავტომატურად მიიღება DHCP/DHCPv6-ის მეშვეობით.',
     'cm_IPv6KeepCurrent' => 'დატოვეთ მიმდინარე IPv6 პარამეტრები',
     // DNS configuration
     'cm_IsInternetInterface' => 'ეს ვებ ინტერფეისია? (დიახ/არა): ',
