@@ -144,11 +144,19 @@ class WorkerModuleInstaller extends WorkerBase
                     for ($i = 0; $i < $totalFiles && $result; $i++) {
                         $entryName = $zip->getNameIndex($i);
 
-                        // Zip Slip protection: reject entries with path traversal sequences
-                        if (str_contains($entryName, '..')) {
+                        // Zip Slip protection: reject path traversal sequences, absolute
+                        // paths and backslash separators before extracting. The
+                        // post-extraction confinement check below is the second line of
+                        // defence. (getNameIndex() returns false on a bad index.)
+                        if (
+                            $entryName === false
+                            || str_contains($entryName, '..')
+                            || str_starts_with($entryName, '/')
+                            || str_contains($entryName, '\\')
+                        ) {
                             $message = TranslationProvider::translate(
                                 'rest_err_module_path_traversal',
-                                ['entryName' => $entryName]
+                                ['entryName' => (string)$entryName]
                             );
                             file_put_contents($this->error_file, $message, FILE_APPEND);
                             $result = false;
@@ -157,7 +165,11 @@ class WorkerModuleInstaller extends WorkerBase
 
                         $result = $zip->extractTo($currentModuleDir, [$entryName]);
 
-                        // Post-extraction confinement: verify extracted path stays within module dir
+                        // Post-extraction confinement: verify extracted path stays within module dir.
+                        // realpath() === false is left as a pass: directory entries and
+                        // freshly-created paths can legitimately fail to resolve, and the
+                        // pre-extraction guard above already rejects '..', absolute and
+                        // backslash entry names — the actual traversal vectors.
                         if ($result) {
                             $extractedPath = realpath($currentModuleDir . '/' . $entryName);
                             if (
@@ -236,6 +248,14 @@ class WorkerModuleInstaller extends WorkerBase
 
                     if (!$installResult) {
                         $errorMessage = implode(" ", $setup->getMessages());
+                        if (trim($errorMessage) === '') {
+                            // installModule() returned false but reported no message.
+                            // The status reader decides COMPLETE vs ERROR purely by
+                            // whether the error file is non-empty, so a silent failure
+                            // would otherwise be reported as success. Guarantee a
+                            // non-empty error.
+                            $errorMessage = "Module $moduleUniqueID installation failed without a specific error message.";
+                        }
                         file_put_contents($this->error_file, $errorMessage, FILE_APPEND);
                         SystemMessages::sysLogMsg(__CLASS__, "Installation error: {$errorMessage}", LOG_ERR);
 

@@ -35,19 +35,6 @@ abstract class WorkerRedisBase extends WorkerBase
     public const string REDIS_HEARTBEAT_KEY_PREFIX = 'worker:heartbeat:';
 
     /**
-     * Process types and states
-     */
-    protected const array PROCESS_TYPES = [
-        'MAIN' => 'main',
-        'WORKER' => 'worker'
-    ];
-
-    /**
-     * Current process type
-     */
-    protected string $processType = self::PROCESS_TYPES['MAIN'];
-
-    /**
      * Last heartbeat time
      */
     protected float $lastHeartbeatTime = 0;
@@ -100,71 +87,6 @@ abstract class WorkerRedisBase extends WorkerBase
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
             throw new RuntimeException('Failed to initialize Redis worker: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * Set process type and update process title
-     */
-    protected function setProcessType(string $type): void
-    {
-        $this->processType = $type;
-        cli_set_process_title(sprintf(
-            '%s_%s',
-            static::class,
-            strtolower($type)
-        ));
-    }
-
-    /**
-     * Handle signals for graceful shutdown
-     */
-    protected function handleSignals(): void
-    {
-        pcntl_signal(SIGUSR1, function ($signal) {
-            try {
-                switch($this->processType) {
-                    case self::PROCESS_TYPES['MAIN']:
-                        // Main process - mark for shutdown but let child processes finish current jobs
-                        $this->setWorkerState(self::STATE_STOPPING);
-                        $this->isShuttingDown = true;
-
-                        // Update status to indicate stopping state
-                        $this->updateWorkerStatus();
-
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            "Main process received shutdown signal, current jobs will finish before exit",
-                            LOG_NOTICE
-                        );
-                        break;
-
-                    case self::PROCESS_TYPES['WORKER']:
-                        // Worker processes should finish current job and exit
-                        $this->isShuttingDown = true;
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            "Worker process will exit after completing current job",
-                            LOG_DEBUG
-                        );
-                        break;
-                }
-
-            } catch (Throwable $e) {
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "Error during shutdown signal handling: " . $e->getMessage(),
-                    LOG_ERR
-                );
-            }
-        });
-
-        pcntl_signal(SIGTERM, function ($signal) {
-            // Immediate termination
-            $this->cleanupRedisKeys();
-            exit(0);
-        });
-
-        pcntl_signal_dispatch();
     }
 
     /**
