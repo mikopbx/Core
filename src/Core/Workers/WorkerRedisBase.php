@@ -399,19 +399,12 @@ abstract class WorkerRedisBase extends WorkerBase
         $unit = strtolower(substr($limit, -1));
         $value = (int) $limit;
 
-        switch ($unit) {
-            case 'g':
-                $value *= 1024 * 1024 * 1024;
-                break;
-            case 'm':
-                $value *= 1024 * 1024;
-                break;
-            case 'k':
-                $value *= 1024;
-                break;
-        }
-
-        return $value;
+        return $value * match ($unit) {
+            'g' => 1024 * 1024 * 1024,
+            'm' => 1024 * 1024,
+            'k' => 1024,
+            default => 1,
+        };
     }
 
     /**

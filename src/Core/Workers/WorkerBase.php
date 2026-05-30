@@ -239,7 +239,7 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
             // Set up basic environment
             $this->setResourceLimits();
             $this->initializeSignalHandlers();
-            register_shutdown_function([$this, 'shutdownHandler']);
+            register_shutdown_function($this->shutdownHandler(...));
 
             // Save PID and update status
             $this->savePidFile();
@@ -447,7 +447,7 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
 
         pcntl_async_signals(true);
         foreach (self::MANAGED_SIGNALS as $signal) {
-            pcntl_signal($signal, [$this, 'signalHandler'], true);
+            pcntl_signal($signal, $this->signalHandler(...), true);
         }
     }
 
