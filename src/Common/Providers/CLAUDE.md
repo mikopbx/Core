@@ -2,7 +2,7 @@
 
 Service providers that register services in the Phalcon DI container. All providers implement `ServiceProviderInterface` and define a `SERVICE_NAME` constant.
 
-## File Inventory (33 providers)
+## File Inventory
 
 ```
 Providers/
@@ -80,10 +80,10 @@ Providers/
 
 ## Key Provider Details
 
-### CryptProvider (NEW)
+### CryptProvider
 Cookie and session encryption using `Phalcon\Encryption\Crypt`. Key from `PbxSettings.WWW_ENCRYPTION_KEY`, auto-generated with `Random::base64Safe(16)` if missing.
 
-### JwtProvider (NEW)
+### JwtProvider
 JWT token validation with HMAC-SHA256. 600-second leeway for clock skew.
 
 ```php
@@ -94,14 +94,13 @@ extractRoleFromRefreshToken(string $token): ?string
 extractUserIdFromRefreshToken(string $token): ?string
 extractHomePageFromRefreshToken(string $token): ?string
 ```
-
 Secret key: `PbxSettings.SSH_RSA_KEY` (primary), `PbxSettings.WEB_ADMIN_PASSWORD` (fallback). Refresh tokens stored in Redis via `RedisTokenStorage`.
 
-### RecordingStorageDatabaseProvider (NEW)
+### RecordingStorageDatabaseProvider
 Separate SQLite database at `/storage/usbdisk1/mikopbx/astlogs/asterisk/recording_storage.db` for tracking recording file locations (local vs S3). Reduces main DB size.
 
 ### MutexProvider (Redis-based locking)
-Full distributed mutex implementation (not a placeholder):
+Full distributed mutex implementation (not a placeholder).
 
 ```php
 // Execute callback with mutex protection
@@ -114,47 +113,28 @@ $mutex->tryLock('name', ttl: 30): bool
 $mutex->isLocked('name'): bool
 $mutex->getTTL('name'): int
 ```
-
 Uses Redis `SET NX EX` with atomic Lua script release. Key prefix: `mutex:`. Lock token: 16-byte random hex.
 
 ### SessionProvider (DEPRECATED)
-Redis backend (DB5), 3600s lifetime. Replaced by JWT-based authentication via `JwtProvider` and `AuthenticationMiddleware`.
+3600s lifetime. Replaced by JWT auth via `JwtProvider` and `AuthenticationMiddleware`.
 
 ### LanguageProvider (Context-aware)
-Returns language code based on execution context:
-
-- **CLI (EventBus workers)**: `PbxSettings.WEB_ADMIN_LANGUAGE`
-- **CLI (other)**: `PbxSettings.SSH_LANGUAGE`
-- **Web (authenticated)**: JWT token `language` claim
-- **Web (fallback)**: `PbxSettings.WEB_ADMIN_LANGUAGE`
-
-Defines `AVAILABLE_LANGUAGES` constant with 29 languages including name, flag class, and translation key.
+Returns language code by execution context: CLI EventBus workers → `PbxSettings.WEB_ADMIN_LANGUAGE`; CLI other → `PbxSettings.SSH_LANGUAGE`; Web authenticated → JWT `language` claim; Web fallback → `PbxSettings.WEB_ADMIN_LANGUAGE`. Defines `AVAILABLE_LANGUAGES` constant (29 languages: name, flag class, translation key).
 
 ### LoggerProvider
-Uses **Phalcon\Logger** with **Syslog adapter** (not Monolog). Ident: `php.backend`/`php.frontend`. Facility: `LOG_DAEMON`. Environment-aware: suppresses console output during boot.
+**Phalcon\Logger** with Syslog adapter (not Monolog). Ident: `php.backend`/`php.frontend`. Facility: `LOG_DAEMON`. Suppresses console output during boot.
 
 ### ModelsMetadataProvider
-Backend: **Redis** (DB2), not Memory/Files. Adapter: `Phalcon\Mvc\Model\MetaData\Redis`. Strategy: `Annotations`. TTL: 600s.
+Adapter: `Phalcon\Mvc\Model\MetaData\Redis` (not Memory/Files). Strategy: `Annotations`.
 
 ### MessagesProvider
-Loads translation arrays from multiple sources:
-1. English from `/src/Common/Messages/en/*.php`
-2. Language-specific from `/src/Common/Messages/{lang}/*.php`
-3. Module translations: `{moduleDir}/Messages/{lang}/*.php` or `{moduleDir}/Messages/{lang}.php`
-4. Language metadata from `LanguageProvider::AVAILABLE_LANGUAGES`
-
-Cached via ManagedCache with key `LocalisationArray:{version_hash}:{language}`.
+Loads translation arrays from: (1) English `/src/Common/Messages/en/*.php`; (2) language-specific `/src/Common/Messages/{lang}/*.php`; (3) module `{moduleDir}/Messages/{lang}/*.php` or `{moduleDir}/Messages/{lang}.php`; (4) language metadata from `LanguageProvider::AVAILABLE_LANGUAGES`. Cached via ManagedCache, key `LocalisationArray:{version_hash}:{language}`.
 
 ### DatabaseProviderBase
-Abstract base for all database providers. SQLite PRAGMA settings:
-- `busy_timeout = 5000` (5s wait on lock)
-- `journal_mode = WAL` (Write-Ahead Logging)
-- `synchronous = NORMAL`
-- `cache_size = -10000` (10MB)
-- `temp_store = MEMORY`
+Abstract base for all database providers. SQLite PRAGMA settings: `busy_timeout = 5000` (5s wait on lock), `journal_mode = WAL`, `synchronous = NORMAL`, `cache_size = -10000` (10MB), `temp_store = MEMORY`.
 
 ### EventBusProvider
-Publishes events via HTTP POST to `/pbxcore/api/nchan/pub/event-bus`. Uses `PBXCoreRESTClientProvider` internally. HTTP 201 on success.
+Publishes events via HTTP POST to `/pbxcore/api/nchan/pub/event-bus` (HTTP 201 on success). Uses `PBXCoreRESTClientProvider` internally.
 
 ```php
 $eventBus->publish('models-changed', ['model' => 'Extensions', 'recordId' => '123']);

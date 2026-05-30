@@ -2,14 +2,14 @@
 
 Unified system for automatic MikoPBX configuration during initial boot across all deployment environments.
 
-## File Inventory (14 files)
+## File Inventory
 
 ```
 CloudProvisioning/
-├── CloudProvider.php          # Abstract base class (888 lines) - SQLite direct access, user-data parsing
-├── ProvisioningConfig.php     # DTO (667 lines) - validation, sanitization, factory methods
+├── CloudProvider.php          # Abstract base class - SQLite direct access, user-data parsing
+├── ProvisioningConfig.php     # DTO - validation, sanitization, factory methods
 ├── DockerCloud.php            # Docker containers - ENV variables, every-start overrides
-├── LxcCloud.php               # LXC containers (602 lines) - Proxmox files, network parsing
+├── LxcCloud.php               # LXC containers - Proxmox files, network parsing
 ├── AWSCloud.php               # Amazon EC2 - IMDS at 169.254.169.254
 ├── GoogleCloud.php            # Google Cloud - Metadata-Flavor: Google header
 ├── AzureCloud.php             # Microsoft Azure - Metadata: true header
@@ -19,7 +19,7 @@ CloudProvisioning/
 ├── SelectelCloud.php          # Selectel - DMI sys_vendor + OpenStack x_sel_ metadata keys
 ├── VKCloud.php                # VK Cloud - OpenStack vkcloud_project_id detection
 ├── AlibabaCloud.php           # Alibaba Cloud - IMDS at 100.100.100.200
-└── NoCloud.php                # On-premise (545 lines) - ISO/seed/HTTP/cmdline datasources
+└── NoCloud.php                # On-premise - ISO/seed/HTTP/cmdline datasources
 ```
 
 ## Two-Phase Boot Architecture
@@ -52,7 +52,7 @@ CloudProvisioning::start()
   → Mark complete: CLOUD_PROVISIONING=1, enable firewall/fail2ban
 ```
 
-## Provider Priority Order (12 providers)
+## Provider Priority Order
 
 1. **DockerCloud** - `/.dockerenv` exists
 2. **LxcCloud** - `container=lxc` ENV

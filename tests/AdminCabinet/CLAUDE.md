@@ -2,123 +2,44 @@
 
 PHPUnit + Selenium WebDriver browser automation tests with BrowserStack cloud testing.
 
+For BrowserStack account/local-binary setup, see `BROWSERSTACK_SETUP.md`. For JUnit
+upload details, see `JUNIT_UPLOAD_GUIDE.md`.
+
 ## File Inventory
 
 ```
 tests/AdminCabinet/
-├── phpunit.xml                        # Main config (20+ suites, JUnit/HTML output)
-├── phpunit-audiofiles.xml             # Audio files suite config
-├── debug-unit.xml                     # Debug configuration
+├── phpunit.xml                # Main config (20+ suites, JUnit/HTML output)
+├── phpunit-audiofiles.xml     # Audio-files suite (shares one BrowserStack session)
+├── debug-unit.xml             # Debug configuration
 │
-├── Lib/                               # Base classes and core functionality
-│   ├── BrowserStackTest.php           # WebDriver setup, BrowserStack integration
+├── Lib/                       # Base classes and core functionality
+│   ├── BrowserStackTest.php           # WebDriver setup, BrowserStack capabilities
 │   ├── MikoPBXTestsBase.php           # Main base class (extends BrowserStackTest)
 │   ├── BrowserStackReportUploader.php # Report upload utilities
 │   ├── globals.php                    # Global test configuration
-│   ├── Exceptions/
-│   │   └── TestException.php          # Custom test exception
-│   └── Traits/                        # 7 core traits
-│       ├── AssertionTrait.php         # assertInputFieldValueEqual, assertCheckboxState
-│       ├── DropdownInteractionTrait.php # selectDropdownItem, assertDropdownSelection (27KB)
-│       ├── ElementInteractionTrait.php  # clickElement, waitForElement
-│       ├── FormInteractionTrait.php     # changeInputField, changeCheckBoxState, submitForm
-│       ├── NavigationTrait.php          # clickSidebarMenuItemByHref, openAccordionOnThePage
-│       ├── ScreenshotTrait.php          # takeScreenshot
-│       └── TableSearchTrait.php         # searchTableByInputName, extensionExistsBySearch
+│   ├── Exceptions/TestException.php   # Custom test exception
+│   └── Traits/                        # Core interaction traits (see below)
 │
-├── Tests/                             # 130 test files
-│   ├── Data/                          # 17 data factories
-│   │   ├── AmiUserDataFactory.php
-│   │   ├── AudioFilesDataFactory.php
-│   │   ├── CallQueueDataFactory.php
-│   │   ├── ConferenceRoomsDataFactory.php
-│   │   ├── DialplanApplicationsDataFactory.php
-│   │   ├── EmployeeDataFactory.php    # 22 employee profiles
-│   │   ├── FirewallRulesDataFactory.php
-│   │   ├── IAXProviderDataFactory.php
-│   │   ├── IncomingCallRulesDataFactory.php
-│   │   ├── IVRMenuDataFactory.php
-│   │   ├── ModuleDataFactory.php
-│   │   ├── MOHAudioFilesDataFactory.php
-│   │   ├── OutgoingCallRulesDataFactory.php
-│   │   ├── OutOfWorkPeriodsDataFactory.php
-│   │   ├── PBXSettingsDataFactory.php
-│   │   ├── SIPProviderDataFactory.php
-│   │   └── StorageDataFactory.php
-│   │
-│   ├── Traits/                        # 10 test-specific traits
-│   │   ├── AmiPermissionsTrait.php
-│   │   ├── AudioFilesTrait.php
-│   │   ├── EntityCreationTrait.php
-│   │   ├── FirewallRulesTrait.php
-│   │   ├── IncomingCallRulesTrait.php
-│   │   ├── LoginTrait.php
-│   │   ├── ModuleXPathsTrait.php
-│   │   ├── OutgoingCallRulesTrait.php
-│   │   ├── OutOfWorkPeriodsTrait.php
-│   │   └── TabNavigationTrait.php
-│   │
-│   ├── Extensions/                    # 22 individual employee tests
-│   ├── AudioFiles/                    # 5 tests
-│   ├── ConferenceRooms/               # 10 tests
-│   ├── DialplanApplications/          # 11 tests
-│   ├── CallQueues/                    # 2 tests
-│   ├── MOHFiles/                      # 4 tests
-│   ├── OutOfWorkPeriods/              # 5 tests
-│   ├── OutgoingCallRules/             # 4 tests
-│   ├── IncomingCallRules/             # 3 tests
-│   ├── IAXProviders/                  # 4 tests
-│   ├── SIPProviders/                  # 4 tests
-│   ├── FirewallRules/                 # 3 tests
-│   ├── AMIUsers/                      # 2 tests
-│   ├── PBXExtensions/                 # 7 module tests
-│   ├── Special/                       # 1 test
-│   │
-│   └── [Root-level tests]             # ~30 orchestration tests
-│       ├── LoginTest.php
-│       ├── CreateExtensionsTest.php   # Abstract base
-│       ├── ChangeExtensionsSettingsTest.php
-│       ├── DeleteExtensionTest.php
-│       ├── CreateAudioFileTest.php
-│       ├── CreateConferenceRoomsTest.php
-│       ├── CreateCallQueueTest.php
-│       ├── CreateSIPProviderTest.php
-│       ├── CreateIAXProviderTest.php
-│       ├── CreateIncomingCallRuleTest.php
-│       ├── CreateOutgoingCallRuleTest.php
-│       ├── CreateIVRMenuTest.php
-│       ├── CreateDialPlanApplicationTest.php
-│       ├── CreateOutOfWorkPeriodTest.php
-│       ├── CreateFirewallRuleTest.php
-│       ├── CreateAmiUserTest.php
-│       ├── CreateFail2BanRulesTest.php
-│       ├── InstallModuleTest.php
-│       ├── FillPBXSettingsTest.php
-│       ├── FillDataTimeSettingsTest.php
-│       ├── ChangeWeakPasswordTest.php
-│       ├── ChangeLicenseKeyTest.php
-│       ├── NetworkInterfacesTest.php
-│       ├── StorageRetentionPeriodTest.php
-│       ├── StorageS3SettingsTest.php
-│       ├── CustomFileChangeTest.php
-│       ├── DeleteAllSettingsTest.php
-│       └── CheckDropdown*Tests.php    # 6 dropdown verification tests
+├── Tests/                     # Test files, organized by feature
+│   ├── Data/                  # One DataFactory per feature (static test data)
+│   ├── Traits/                # Test-specific traits (Login, EntityCreation,
+│   │                          #   TabNavigation, ModuleXPaths, per-feature helpers)
+│   ├── Extensions/            # Per-employee tests (generated)
+│   ├── AudioFiles/  MOHFiles/  ConferenceRooms/  CallQueues/  IVRMenus/
+│   ├── DialplanApplications/  OutOfWorkPeriods/
+│   ├── OutgoingCallRules/  IncomingCallRules/
+│   ├── SIPProviders/  IAXProviders/  FirewallRules/  AMIUsers/  PBXExtensions/  Special/
+│   └── [Root-level tests]     # Orchestration tests (Login, Create*, Fill*, Change*,
+│                              #   Delete*, NetworkInterfaces, Storage*, CheckDropdown*)
 │
-├── Scripts/                           # 16 files
-│   ├── Generate*.php                  # 15 test generators (from data factories)
-│   ├── run-tests-and-upload.sh        # Main test runner
-│   ├── test-upload-report.php         # Report upload helper
-│   └── upload-junit-to-browserstack.sh
-│
-├── config/
-│   ├── local.conf.json                # Local test configuration
-│   ├── local.conf.json.example
-│   └── local.conf.json.template
-│
-└── assets/                            # Test resources
-    ├── *.png                          # 26 UI reference screenshots
-    └── *.wav                          # 3 test audio samples
+├── Scripts/                   # Generate*.php test generators + runner/upload shell scripts
+├── config/                    # local.conf.json (create from .example / .template)
+└── assets/                    # UI reference screenshots (*.png) + test audio (*.wav)
 ```
+
+Generated test classes (`Tests/Extensions/`, `Tests/CallQueues/`, etc.) are created by
+the matching `Scripts/Generate*.php` from the `Tests/Data/*DataFactory.php` static arrays.
 
 ## Architecture
 
@@ -126,34 +47,32 @@ tests/AdminCabinet/
 
 ```
 PHPUnit\Framework\TestCase
-  → BrowserStackTest          # WebDriver init, BrowserStack capabilities, annotations
-    → MikoPBXTestsBase        # MikoPBX login, 8 trait compositions, retry logic
-      → Individual Test        # Feature-specific test class
+  → BrowserStackTest    # WebDriver init, BrowserStack capabilities, annotations
+    → MikoPBXTestsBase  # MikoPBX login, trait compositions, retry logic
+      → Individual Test # Feature-specific test class
 ```
 
-### MikoPBXTestsBase Traits
+`MikoPBXTestsBase` composes the core `Lib/Traits/` plus `LoginTrait` (from `Tests/Traits/`):
 
-```php
-class MikoPBXTestsBase extends BrowserStackTest
-{
-    use AssertionTrait;              // assertInputFieldValueEqual, assertCheckboxState
-    use DropdownInteractionTrait;    // selectDropdownItem, assertDropdownSelection
-    use ElementInteractionTrait;     // clickElement, waitForElement
-    use FormInteractionTrait;        // changeInputField, submitForm
-    use NavigationTrait;             // clickSidebarMenuItemByHref
-    use ScreenshotTrait;             // takeScreenshot
-    use TableSearchTrait;            // searchTableByInputName
-    // + LoginTrait from Tests/Traits
-}
-```
+- `AssertionTrait` — assertInputFieldValueEqual, assertCheckboxState, assertTextAreaValueEqual, assertMenuItemSelected
+- `DropdownInteractionTrait` — selectDropdownItem, assertDropdownSelection
+- `ElementInteractionTrait` — clickElement, waitForElement
+- `FormInteractionTrait` — changeInputField, changeCheckBoxState, submitForm
+- `NavigationTrait` — clickSidebarMenuItemByHref, openAccordionOnThePage
+- `ScreenshotTrait` — takeScreenshot
+- `TableSearchTrait` — searchTableByInputName, extensionExistsBySearch
+- `LoginTrait` — fresh per-process login
 
-### JWT Authentication
+### JWT Authentication & session sharing (gotcha)
 
-- **Access Token**: 15-min, stored in browser memory (TokenManager)
-- **Refresh Token**: 30-day, httpOnly cookie (cannot be persisted by WebDriver)
-- **Session sharing**: `processIsolation="false"` in phpunit.xml
-- **Per-process login**: Each isolated process performs fresh login
-- **Session indicator**: `#top-menu-search` element presence
+- **Access Token**: 15-min, stored in browser memory (TokenManager).
+- **Refresh Token**: 30-day, httpOnly cookie — WebDriver cannot persist it across
+  isolated PHP processes.
+- Because of that, tests rely on **processIsolation being off** so a single browser
+  session stays alive (PHPUnit's default; set explicitly as `processIsolation="false"`
+  in `phpunit-audiofiles.xml` to share one BrowserStack session). Each isolated process
+  that does start performs a fresh login.
+- **Session indicator**: presence of the `#top-menu-search` element.
 
 ## Test Organization
 
@@ -165,91 +84,52 @@ Login → Create entities → Verify → Modify → Verify dropdowns → Delete 
 
 ### Test Suites (phpunit.xml)
 
-20+ suites organized by feature:
-- TestMikoPBXPasswords, PBXSettings, StorageRetentionPeriod
-- AudioFiles (pre/during/post creation)
-- Extensions (with before/after creation)
-- ConferenceRooms, DialplanApplications, CallQueues, IVRMenus
-- Providers (SIP, IAX), Routes (Incoming, Outgoing)
-- FirewallRules, AMIUsers, Modules
-- CheckDropdowns (verification after all entities created)
-- DeleteAll (cleanup)
+20+ suites organized by feature: passwords, PBXSettings, StorageRetentionPeriod,
+AudioFiles (pre/during/post creation), Extensions (before/after creation),
+ConferenceRooms, DialplanApplications, CallQueues, IVRMenus, Providers (SIP, IAX),
+Routes (Incoming, Outgoing), FirewallRules, AMIUsers, Modules, CheckDropdowns
+(verification after all entities exist), DeleteAll (cleanup).
 
 ### Data Factories
 
-Static arrays providing consistent test data:
+`Tests/Data/*DataFactory.php` expose static arrays of consistent test data, keyed by
+entity. Example shape (`EmployeeDataFactory`):
 
 ```php
-// EmployeeDataFactory — 22 profiles
-[
-    'smith.james' => [
-        'number' => '201', 'email' => 'smith@example.com',
-        'secret' => 'SRTP123', 'dtmfmode' => 'auto',
-        'fwd_ringlength' => '15', 'fwd_forwardingonbusy' => '202',
-        'possibleToDelete' => true,
-    ],
-    // ... 21 more profiles
-]
+'smith.james' => [
+    'number' => '201', 'email' => 'smith@example.com',
+    'secret' => 'SRTP123', 'dtmfmode' => 'auto',
+    'fwd_ringlength' => '15', 'fwd_forwardingonbusy' => '202',
+    'possibleToDelete' => true,
+],
 ```
-
-### Test Generators (Scripts/)
-
-15 generators auto-create test classes from data factories:
-- `GenerateExtensionTests.php` → `Tests/Extensions/SmithJamesTest.php`
-- `GenerateCallQueueTests.php` → `Tests/CallQueues/Queue1Test.php`
-- etc.
 
 ## Common Test Patterns
 
-### Navigation
-
 ```php
+// Navigation
 $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 $this->clickModifyButtonOnRowWithText('Test Extension');
-```
 
-### Form Interaction
-
-```php
+// Form interaction
 $this->changeInputField('fieldname', 'value');
 $this->selectDropdownItem('dropdown-id', 'option-value');
 $this->changeCheckBoxState('checkbox-id', true);
 $this->submitForm('form-id');
-```
 
-### Assertions
-
-```php
+// Assertions
 $this->assertInputFieldValueEqual('field-id', 'expected-value');
-$this->assertTextAreaValueEqual('textarea-id', 'expected');
 $this->assertCheckboxState('checkbox-id', true);
-$this->assertMenuItemSelected('menu-item-href');
-```
 
-### Waiting
-
-```php
+// Waiting
 self::$driver->wait(10, 500)->until(
-    WebDriverExpectedCondition::visibilityOfElementLocated(
-        WebDriverBy::id('element-id')
-    )
+    WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('element-id'))
 );
 $this->waitForAjax();
 ```
 
-### Modal Confirmation
-
-```php
-$resetButton->click();
-$modalXpath = "//div[contains(@class, 'modal') and contains(@class, 'visible')]";
-self::$driver->wait(10, 500)->until(
-    WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::xpath($modalXpath))
-);
-$confirmButton->click();
-self::$driver->wait(10, 500)->until(
-    WebDriverExpectedCondition::invisibilityOfElementLocated(WebDriverBy::xpath($modalXpath))
-);
-```
+Modal confirmation: wait for `//div[contains(@class,'modal') and contains(@class,'visible')]`
+to become visible, click confirm, then wait for the same XPath to become invisible.
 
 ## Running Tests
 
@@ -272,9 +152,9 @@ bash tests/AdminCabinet/Scripts/run-tests-and-upload.sh
 
 ## Debugging
 
-- **BrowserStack**: Session recordings, network logs, console logs
-- **Screenshots**: Captured on failure via `ScreenshotTrait`
-- **Annotations**: `self::annotate('step description')` for BrowserStack logs
+- **BrowserStack**: session recordings, network logs, console logs.
+- **Screenshots**: captured on failure via `ScreenshotTrait`.
+- **Annotations**: `self::annotate('step description')` adds BrowserStack log markers.
 - **TokenManager check**:
   ```php
   $isAuth = self::$driver->executeScript(
@@ -284,10 +164,9 @@ bash tests/AdminCabinet/Scripts/run-tests-and-upload.sh
 
 ## Creating New Tests
 
-1. Create data factory in `Tests/Data/` with static arrays
-2. Create test generator in `Scripts/Generate*.php`
-3. Run generator to create individual test files
-4. Add test suite to `phpunit.xml`
-5. Use `MikoPBXTestsBase` as base class
-6. Use appropriate traits for form/navigation/assertion
-7. Add `self::annotate()` calls for BrowserStack debugging
+1. Create a data factory in `Tests/Data/` with static arrays.
+2. Create a test generator in `Scripts/Generate*.php`.
+3. Run the generator to create individual test files.
+4. Add the test suite to `phpunit.xml`.
+5. Extend `MikoPBXTestsBase`; use the relevant form/navigation/assertion traits.
+6. Add `self::annotate()` calls for BrowserStack debugging.

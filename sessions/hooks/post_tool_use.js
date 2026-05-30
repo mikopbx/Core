@@ -58,7 +58,6 @@ try {
 
 const toolName = inputData.tool_name || "";
 const toolInput = inputData.tool_input || {};
-const cwd = inputData.cwd || "";
 let mod = false;
 
 const STATE = loadState();
@@ -77,20 +76,12 @@ Handles post-tool execution cleanup and state management:
 - Cleans up subagent context flags and transcript directories after Task tool completion
 - Auto-returns to discussion mode when all todos are marked complete
 - Enforces todo-based execution boundaries in implementation mode
-- Provides directory navigation feedback after cd commands
 */
 
 // ===== EXECUTION ===== //
 
-//!> Claude compass (directory position reminder)
-if (toolName === "Bash") {
-    const command = toolInput.command || "";
-    if (command.includes("cd ")) {
-        console.error(`[You are in: ${cwd}]`);
-        mod = true;
-    }
-}
-//!<
+// NOTE: Removed the "Claude compass" cd-reminder — redundant with the harness's own
+// "Shell cwd was reset to <dir>" notice, and it surfaced as a "blocking error" on every cd.
 
 //!> Subagent cleanup
 if (toolName === "Task" && STATE.flags.subagent) {
