@@ -124,7 +124,7 @@ public function disableModule(string $reason, string $reasonText): bool
 Static utilities for module management:
 
 ```php
-static forceDisableModule(string $moduleUniqueId, string $reason, string $reasonText): void
+static forceDisableModule(string $moduleUniqueId, string $reason, string $reasonText): bool // true only when confirmed disabled (or module absent)
 static isEnabled(string $moduleUniqueID): bool           // Redis-cached
 static createAssetsSymlinks(string $moduleUniqueID): void // JS/CSS/IMG symlinks
 static createAgiBinSymlinks(string $moduleUniqueID): void // AGI script symlinks

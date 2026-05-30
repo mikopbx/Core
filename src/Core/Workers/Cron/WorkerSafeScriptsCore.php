@@ -1001,14 +1001,21 @@ class WorkerSafeScriptsCore extends WorkerBase
                     "Module {$moduleId} disabled: {$reasonText}",
                     LOG_ERR
                 );
-                PbxExtensionUtils::forceDisableModule(
+                $disabled = PbxExtensionUtils::forceDisableModule(
                     $moduleId,
                     PbxExtensionState::DISABLED_BY_CRASH_LOOP,
                     $reasonText
                 );
 
-                // Clean up crash data after disabling
-                $this->redis->del([$key, $key . ':last_error']);
+                // Clean up crash data only when the module is confirmed disabled.
+                // If the disable could not be persisted (e.g. locked DB), keep the
+                // counters so the next tick retries instead of restarting the count
+                // from zero (which would let the crashing worker loop indefinitely).
+                if ($disabled) {
+                    $this->redis->del([$key, $key . ':last_error']);
+                }
+
+                // Either way, do not respawn the crashing worker in this cycle.
                 return true;
             }
         } catch (Throwable $e) {
