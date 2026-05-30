@@ -1,16 +1,7 @@
 {
   "includeCoAuthoredBy": false,
   "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/sessions/hooks/user_messages.js"
-          }
-        ]
-      }
-    ],
+    "UserPromptSubmit": [],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -24,24 +15,6 @@
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-translations.js"
           }
         ]
-      },
-      {
-        "matcher": "Task",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/sessions/hooks/subagent_hooks.js"
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit|MultiEdit|Task|Bash|TodoWrite|NotebookEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/sessions/hooks/sessions_enforce.js"
-          }
-        ]
       }
     ],
     "PostToolUse": [
@@ -53,31 +26,9 @@
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/post-commit-cleanup.js"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/sessions/hooks/post_tool_use.js"
-          }
-        ]
       }
     ],
-    "SessionStart": [
-      {
-        "matcher": "startup|clear",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/sessions/hooks/session_start.js"
-          }
-        ]
-      }
-    ]
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "node $CLAUDE_PROJECT_DIR/sessions/statusline.js"
+    "SessionStart": []
   },
   "enabledPlugins": {
     "php-lsp@claude-plugins-official": true,
