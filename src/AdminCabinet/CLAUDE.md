@@ -50,7 +50,7 @@ AdminCabinet/
     │                            #   emptyTablePlaceholder, playAddNewSoundWithIcons
     ├── ApiKeys/                 # + openapi.volt
     ├── Errors/                  # show401, show404, show500
-    ├── Fail2Ban/               # + IndexTabs/ (tabBanned, tabSettings)
+    ├── Fail2Ban/               # + IndexTabs/ (tabBanned, tabWhitelist, tabSettings)
     ├── GeneralSettings/         # tab views: general, api, codecs, ssh, sip, recording, web,
     │                            #   passwords, features, deleteall
     ├── MailSettings/            # + oauth2-callback.volt
@@ -92,19 +92,20 @@ Session/Sec:  SessionProvider, AclProvider, JwtProvider
 Queue:        BeanstalkConnectionModelsProvider
 Translation:  MessagesProvider, TranslationProvider, LanguageProvider
 License/Mod:  MarketPlaceProvider, PBXConfModulesProvider
-System:       RegistryProvider, CryptProvider, PBXCoreRESTClientProvider, EventBusProvider
+System:       RegistryProvider, CryptProvider, PBXCoreRESTClientProvider, EventBusProvider,
+              WafProvider (WAF exemption registry; from Common\Providers)
 ```
 
 ## Frontend Architecture
 
 ### Localization Asset Cache
-See root CLAUDE.md "Translation Cache Invalidation" — `AssetProvider::makeLocalizationAssets()` regenerates the cache only when the file is missing, and the version hash does NOT recompute from translation content. AdminCabinet-specific path: `js/cache/localization-<lang>-<version>.min.js`; stale entries surface as wrong `globalTranslate` values.
+See root CLAUDE.md "Translation Cache Invalidation" — `AssetProvider::makeLocalizationAssets()` regenerates the cache only when the file is missing, and the version hash does NOT recompute from translation content. AdminCabinet-specific path: `sites/admin-cabinet/assets/js/cache/localization-<lang>-<version>.min.js` (the relative web path registered via `addJs()` is `js/cache/localization-<lang>-<version>.min.js`); stale entries surface as wrong `globalTranslate` values.
 
 ### JavaScript Source (`sites/admin-cabinet/assets/js/src/`)
 
-Each section is its own JS module following an `initialize()` pattern (Advice, ApiKeys, AsteriskManagers, AsteriskRestUsers, CallDetailRecords, CallQueues, ConferenceRooms, CustomFiles, DialplanApplications, Extensions, Fail2Ban, Firewall, FormElements, GeneralSettings, IncomingRoutes, IvrMenu, Language, MailSettings, Network, PbxAPI, SoundFiles, SystemDiagnostic, …).
+Each section is its own JS module following an `initialize()` pattern (Advice, ApiKeys, AsteriskManagers, AsteriskRestUsers, CallDetailRecords, CallQueues, ConferenceRooms, CustomFiles, DialplanApplications, Extensions, Fail2Ban, Firewall, FormElements, GeneralSettings, IncomingRoutes, IvrMenu, Language, MailSettings, Network, PbxAPI, Security, SendMetrics, SoundFiles, SystemDiagnostic, TopMenuSearch, …).
 
-`Advice/` has two pieces: `advice-worker.js` (bell icon, all buckets) and `update-banner.js` (GitLab-style top banner, warning-bucket only — critical core updates + uninstalled security modules; dismiss persisted in localStorage keyed on `messageTpl+module+version`).
+`Advice/` has two pieces: `advice-worker.js` (bell icon, all buckets) and `update-banner.js` (GitLab-style top banner, warning-bucket only — critical/important PBX core updates, uninstalled security modules, and updates of installed security modules; surfaces only the `adv_AvailableNewVersionPBX`, `adv_AvailableNewVersionModule`, `adv_SecurityPatchAvailable` templates; dismiss persisted in localStorage keyed on `messageTpl+module+version`).
 
 ### Module Pattern
 

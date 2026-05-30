@@ -137,7 +137,7 @@ in natural language (EN/RU) and the matching one is selected. Notable groups:
 - **API/DB testing**: `api-client`, `auth-token-manager`, `openapi-analyzer`, `endpoint-validator`, `api-test-generator`, `sqlite-inspector`, `restapi-translations`
 - **Infra/diagnostics**: `container-inspector`, `log-analyzer`, `asterisk-validator`, `asterisk-tester`, `teamcity-monitor`, `browserstack-tester`, `sentry-analyzer`
 - **Code quality**: `php-style`, `js-style`, `code-search` (ast-grep), `babel-compiler`, `translations`, `commit-messages`
-- **Agents** (`.claude/agents/`): `test-fix-loop-agent`, `js-optimizer-mikopbx`, `php-refactoring-specialist`, `security-audit-analyzer`, `pbx-translation-expert`, `rest-api-docker-tester`, `mikopbx-web-tester`, `playwright-test-{generator,healer,planner}`
+- **Agents** (`.claude/agents/`): `test-fix-loop-agent`, `js-optimizer-mikopbx`, `php-refactoring-specialist`, `security-audit-analyzer`, `pbx-translation-expert`, `rest-api-docker-tester`, `mikopbx-web-tester`, `lxc-provisioning-tester`, `service-documentation`
 
 ## Reference Docs
 - Security/UI: [XSS Protection](docs/xss-protection-guidelines.md), [DataTable Guidelines](docs/datatable-semantic-ui-guidelines.md), [Tooltip Guidelines](docs/TOOLTIP_GUIDELINES.md)
@@ -145,14 +145,8 @@ in natural language (EN/RU) and the matching one is selected. Notable groups:
 
 ## Philosophy
 
-### Error Handling
-- **Fail fast** for critical configuration (missing text model)
-- **Log and continue** for optional features (extraction model)
-- **Graceful degradation** when external services unavailable
-- **User-friendly messages** through resilience layer
-
 ### Testing
-- Always use the test-runner agent to execute tests.
+- Use the `test-fix-loop-agent` to execute API tests with automated remediation.
 - Do not use mock services for anything ever.
 - Do not move on to the next test until the current test is complete.
 - If the test fails, consider checking if the test is structured correctly before deciding we need to refactor the codebase.

@@ -39,7 +39,7 @@ StorageSettings.php     # S3 storage configuration
 Storage.php             # Local storage devices
 
 PbxSettings.php         # Key-value system settings
-PbxSettingsConstants.php # Constants class (uses trait)
+PbxSettingsConstants.php # Constants-only class (NOT an ORM model; just `use`s PbxSettingsConstantsTrait). @deprecated since 2024.2.30 — use PbxSettings:: instead
 SoundFiles.php          # Audio files
 Codecs.php              # Audio/video codecs
 CustomFiles.php         # Custom config file overrides
@@ -83,7 +83,7 @@ Providers ──hasMany──> IncomingRoutingTable <──belongsTo── Exten
 - **Central Hub**: `Extensions` connects all phone number types (polymorphic — links to different entities by `type`).
 - **Auto Caching**: Redis caching via `ManagedCacheProvider`.
 - **Change Tracking**: all models inherit `ModelsBase` snapshot tracking (`keepSnapshots(true)`).
-- **Cascade Operations**: automatic related-record management via `beforeDelete` (deleting an Extension removes related records).
+- **Cascade Operations**: each relation's delete behavior is declared per-relation in the model's `initialize()` via the `foreignKey` `'action'` option (`Relation::ACTION_CASCADE` / `ACTION_RESTRICT` / `NO_ACTION`) and enforced generically by `ModelsBase::beforeDelete()`. Some relations cascade (e.g. deleting an Extension removes its Sip/CallQueues/IvrMenu rows); others RESTRICT the delete when children exist.
 
 ## Key Constants
 
@@ -139,6 +139,12 @@ public const string DID_SOURCE_CUSTOM = 'custom';
 ```
 
 ## Models with Custom Schema/Helpers
+
+### Extensions (`m_Extensions`) — static helpers
+- `static getSystemExtensions(): array` — system extension numbers (`type = TYPE_SYSTEM`), Redis-cached 1h.
+- `static getNextFreeApplicationNumber(): string` — next free dialplan-application number (from `2200100`).
+- `static getCidByPhoneNumber(string $number): string` — Caller ID for a number, falls back to the number itself.
+- `static getNextInternalNumber(): string` — next free internal extension number.
 
 ### ApiKeys (`m_ApiKeys`) — REST API Bearer token storage
 Fields: `id, description, key_hash` (bcrypt), `key_suffix` (last 4 chars), `key_display` (masked), `networkfilterid, allowed_paths` (JSON), `full_permissions, created_at, last_used_at`.
@@ -197,4 +203,4 @@ if (!$model->save()) {                                  // always validate saves
 2. Validate saves and check `getMessages()`.
 3. Use transactions for related operations.
 4. Check existence before accessing relations.
-5. Handle cascades — deleting an Extension removes related records.
+5. Handle cascades — deleting an Extension cascades to some related records and is blocked (RESTRICT) by others; the action is set per-relation in `initialize()`.

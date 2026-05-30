@@ -34,7 +34,15 @@ use Throwable;
 /**
  * Class Network
  *
+ * Network configuration manager with dual-stack IPv4/IPv6 support. Configures LAN
+ * interfaces, static/DHCP addressing, routes and DNS, and orchestrates the DHCP
+ * clients (IPv4 udhcpc, IPv6 udhcpc6 with SLAAC fallback for ipv6_mode=Auto).
  *
+ * Whether the actual network commands run depends on the execution context: in
+ * Docker the runtime manages networking, so {@see lanConfigure()} short-circuits
+ * after configuring IPv6 unless {@see System::canManageNetwork()} is true (LXC and
+ * bare-metal manage their own network). The database is always synchronized
+ * regardless of context.
  *
  * @package MikoPBX\Core\System
  */
@@ -139,7 +147,12 @@ class Network extends Injectable
     /**
      * Retrieves the general network settings and performs additional processing.
      *
-     * @return array<string, mixed> An array of network interfaces and their settings.
+     * Reads LAN interfaces from the database, reconciles them against the
+     * interfaces the OS actually sees, adds defaults for unconfigured NICs, and
+     * ensures one enabled interface is flagged as the internet uplink.
+     *
+     * @return array<int, array<string, mixed>> A list of interface settings arrays
+     *                                           (one per LAN interface).
      */
     public function getGeneralNetSettings(): array
     {
@@ -939,11 +952,6 @@ class Network extends Injectable
         }
     }
 
-    /**
-     * Configures the LAN interfaces and performs related network operations.
-     *
-     * @return int The result of the configuration process.
-     */
     /**
      * Configures LAN interfaces
      *

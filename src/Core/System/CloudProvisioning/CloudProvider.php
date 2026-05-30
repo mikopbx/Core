@@ -28,6 +28,24 @@ use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use ReflectionClass;
 
+/**
+ * Abstract base class for all cloud provisioning providers.
+ *
+ * Provisioning runs in two phases during early boot. Phase 1 environment
+ * overrides (e.g. {@see DockerCloud::applyEnvironmentOverrides()}) run on every
+ * container start and may use the Phalcon ORM because Redis is already up.
+ * Phase 2 — the one-time {@see provision()} flow orchestrated by
+ * {@see \MikoPBX\Core\System\CloudProvisioning::start()} — can run before Redis
+ * is available, so the *Direct() methods on this class read and write the SQLite
+ * database at {@see PATH_DB} directly instead of going through the ORM (which
+ * depends on a Redis-backed metadata cache).
+ *
+ * Direct SQLite access is guarded against SQL injection: PbxSettings keys are
+ * validated against the settings whitelist and LAN columns against
+ * {@see VALID_LAN_COLUMNS}, with values escaped via escapeshellarg().
+ *
+ * @package MikoPBX\Core\System\CloudProvisioning
+ */
 abstract class CloudProvider
 {
     protected const int HTTP_TIMEOUT = 3;
@@ -54,6 +72,17 @@ abstract class CloudProvider
         'disabled'
     ];
 
+    /**
+     * Performs one-time provisioning for this provider (Phase 2, first boot only).
+     *
+     * Called by {@see \MikoPBX\Core\System\CloudProvisioning::start()} for the first
+     * available provider, after {@see checkAvailability()} resolves true. Fetches
+     * metadata/user-data and applies it via the direct SQLite *Direct() methods so it
+     * works before Redis is available. On success the caller marks provisioning
+     * complete via {@see markProvisioningCompleteDirect()}.
+     *
+     * @return bool True if provisioning succeeded, false otherwise.
+     */
     abstract public function provision(): bool;
 
     private bool $isTheFirstMessage = true;

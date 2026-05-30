@@ -11,7 +11,11 @@ PBXCoreREST/
 │   ├── BaseRestController.php       # CRUD/Custom method routing
 │   └── {Resource}/RestController.php # One per resource (Advice, ApiKeys, Auth,
 │                                    #   CallQueues, Cdr, Extensions, Firewall,
-│                                    #   Modules, Network, Sip, Storage, System, …)
+│                                    #   Modules, Network, Sip, SipProviders, Iax,
+│                                    #   IaxProviders, OffWorkTimes, Storage, System, …)
+│                                    #   Some resource dirs add extra controllers:
+│                                    #   Modules/ModulesControllerBase.php,
+│                                    #   MailSettings/OAuth2CallbackController.php
 │
 ├── Lib/                             # Action/processor implementations per resource
 │   ├── Common/                      # Abstract/utility base classes:
@@ -25,12 +29,18 @@ PBXCoreREST/
 │   │   #  AvatarHelper, SearchIndexTrait (full-text index),
 │   │   #  OpenApiSchemaProvider (schema from attributes)
 │   │
-│   ├── {Resource}/                  # Per-resource: DataStructure, Actions, Processor
+│   ├── {Resource}/                  # Per-resource subdir: DataStructure + Action classes
 │   │   ├── DataStructure.php        # Parameter definitions (single source of truth)
 │   │   ├── SaveRecordAction.php     # Create/Update/Patch logic
-│   │   ├── GetListAction.php / GetRecordAction.php / DeleteAction.php
-│   │   └── {Resource}ManagementProcessor.php  # Enum-based action routing
+│   │   └── GetListAction.php / GetRecordAction.php / DeleteAction.php
+│   │   #  Extra resource subdirs: CdrDB, Waf (note naming split — the
+│   │   #  OffWorkTimes controller maps to Lib/OutWorkTimes)
 │   │
+│   ├── {Resource}ManagementProcessor.php  # FLAT at Lib/ top-level (NOT inside the
+│   │                                #   subdir): enum-based action routing. ~45 of
+│   │                                #   them (also *Processor.php variants, e.g.
+│   │                                #   SIPStackProcessor, SearchProcessor)
+│   ├── ResponseSchemaValidator.php  # Response schema validation (flat in Lib/)
 │   ├── PBXApiResult.php             # API result container
 │   └── PerformanceMetrics.php       # Performance tracking
 │
@@ -49,7 +59,7 @@ PBXCoreREST/
 │                                   #   (security headers), ResponseMiddleware (JSON)
 ├── Services/                       # SecurityResolver, TokenValidationService,
 │                                   #   PublicEndpointsRegistry, ApiMetadataRegistry,
-│                                   #   ApiKeyPermissionChecker, ServiceRegistry
+│                                   #   ApiKeyPermissionChecker
 ├── Providers/                      # Request/Response/Dispatcher providers,
 │                                   #   RouterProvider (route auto-discovery from
 │                                   #   attributes), PublicEndpointsRegistryProvider
@@ -135,7 +145,7 @@ Phase 7: RESPONSE — DataStructure::createFromModel(), 201/200
 ## Processor Pattern (Enum-Based)
 
 ```php
-enum CallQueuesAction: string {
+enum CallQueueAction: string {
     case GET_LIST = 'getList';
     case CREATE = 'create';
     case UPDATE = 'update';
@@ -145,9 +155,9 @@ enum CallQueuesAction: string {
 
 class CallQueuesManagementProcessor extends Injectable {
     public static function callBack(array $request): PBXApiResult {
-        $action = CallQueuesAction::tryFrom($request['action']);
+        $action = CallQueueAction::tryFrom($request['action']);
         return match($action) {
-            CallQueuesAction::GET_LIST => GetListAction::main($request['data']),
+            CallQueueAction::GET_LIST => GetListAction::main($request['data']),
             // ...
         };
     }
@@ -241,6 +251,23 @@ DELETE /pbxcore/api/v3/{resource}/{id}      → delete
 GET    /pbxcore/api/v3/{resource}:custom    → custom method
 POST   /pbxcore/api/v3/{resource}/{id}:copy → custom with ID
 ```
+
+## Unit Tests
+
+PBXCoreREST unit tests live under `tests/Unit/PBXCoreREST` (Services, Http, Lib).
+`tests/Unit/phpunit.xml` defines no `<testsuites>`, so pass the path explicitly:
+
+```bash
+# whole PBXCoreREST unit slice
+vendor/bin/phpunit -c tests/Unit/phpunit.xml tests/Unit/PBXCoreREST
+
+# one file
+vendor/bin/phpunit -c tests/Unit/phpunit.xml tests/Unit/PBXCoreREST/Http/ForwardedHeaderFilterTest.php
+```
+
+Run inside the PHP container so the `vendor/` autoloader matches production. Older
+integration-style tests also live under `tests/PBXCoreREST` (Middleware, Workers,
+Lib/Waf). See `tests/Unit/CLAUDE.md` for the full unit-test workflow.
 
 ## PBXApiResult
 

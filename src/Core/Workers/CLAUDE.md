@@ -13,11 +13,12 @@ Workers/
 ├── WorkerRedisBase.php       # Enhanced base for Redis workers — pool, heartbeat, health
 ├── Pool/WorkerPoolManager.php          # Redis-based pool tracking and load balancing
 ├── Cron/WorkerSafeScriptsCore.php      # Master supervisor (Singleton, watchdog, PHP Fibers)
+├── Cron/WorkerWafExemptions.php        # Cron-invoked one-shot (not supervised) — republishes WAF exemption Redis keys after a Redis restart
 │
-├── Worker{Cdr,CallEvents,ModelsEvents,NotifyAdministrator,NotifyByEmail}.php  # Beanstalk queue workers
-├── Worker{PrepareAdvice,ExtensionStatusMonitor,ProviderStatusMonitor,AuthFailureMonitor}.php  # Redis-pool workers
+├── Worker{Cdr,CallEvents,ModelsEvents,NotifyByEmail}.php  # Beanstalk queue workers
+├── Worker{PrepareAdvice,StatusMonitor}.php  # Redis-pool workers (StatusMonitor merges the former Extension/Provider/AuthFailure monitors)
 ├── Worker{LogRotate,S3Upload,S3CacheCleaner,RemoveOldRecords,BeanstalkdTidyUp,
-│          Dhcpv6Renewal,SoundFilesInit,MarketplaceChecker}.php  # PID-based workers
+│          Dhcpv6Renewal,SoundFilesInit,MarketplaceChecker,NotifyAdministrator,SipDnsResolver}.php  # PID-based workers
 ├── WorkerWav2Webm.php        # Audio conversion (file-based JSON tasks, 5s interval)
 │
 └── Libs/
@@ -34,13 +35,20 @@ Workers/
 
 | Worker | Type | Base | Check method | Pool | Interval |
 |--------|------|------|--------------|------|----------|
-| WorkerCdr / WorkerCallEvents / WorkerNotifyAdministrator / WorkerNotifyByEmail | Beanstalk | WorkerBase | BEANSTALK | 1 | 60s |
+| WorkerCdr / WorkerCallEvents / WorkerNotifyByEmail | Beanstalk | WorkerBase | BEANSTALK | 1 | 60s |
 | WorkerModelsEvents | Beanstalk | WorkerBase | BEANSTALK | 1 | 5s |
 | WorkerApiCommands | Redis | WorkerRedisBase | REDIS | 3 | 15s |
 | WorkerPrepareAdvice | Redis | WorkerRedisBase | REDIS | 2 | 15s |
-| WorkerExtensionStatusMonitor / WorkerProviderStatusMonitor / WorkerAuthFailureMonitor | Redis | WorkerRedisBase | REDIS | 1 | 60s |
-| WorkerLogRotate / WorkerS3Upload / WorkerS3CacheCleaner / WorkerRemoveOldRecords / WorkerBeanstalkdTidyUp / WorkerDhcpv6Renewal / WorkerSoundFilesInit / WorkerMarketplaceChecker | PID | WorkerBase | PID_NOT_ALERT | 1 | 60s |
+| WorkerStatusMonitor | Redis | WorkerRedisBase | REDIS | 1 | 60s |
+| WorkerLogRotate / WorkerS3Upload / WorkerS3CacheCleaner / WorkerRemoveOldRecords / WorkerBeanstalkdTidyUp / WorkerDhcpv6Renewal / WorkerSoundFilesInit / WorkerMarketplaceChecker / WorkerNotifyAdministrator / WorkerSipDnsResolver | PID | WorkerBase | PID_NOT_ALERT | 1 | 60s |
 | WorkerWav2Webm | File | WorkerBase | PID_NOT_ALERT | 1 | 5s |
+
+`WorkerStatusMonitor` is the single monitor that replaced the former
+`WorkerExtensionStatusMonitor`, `WorkerProviderStatusMonitor`, and
+`WorkerAuthFailureMonitor` (now merged into one class). `WorkerNotifyAdministrator`
+and `WorkerSipDnsResolver` are PID-checked workers in the supervisor's
+`CHECK_BY_PID_NOT_ALERT` list. `WorkerWafExemptions` is a cron-invoked one-shot
+(a plain class, not a supervised `WorkerBase` subclass) and so does not appear here.
 
 ## WorkerBase
 
@@ -76,6 +84,15 @@ supervisor can detect crash loops. Prefix `REDIS_CRASH_KEY_PREFIX = 'module:cras
 Redis keys (both EXPIRE 1800s / 30 min):
 - `module:crashes:{ModuleUniqueID}` — integer counter.
 - `module:crashes:{ModuleUniqueID}:last_error` — last error text (max 500 chars).
+
+Core (non-module) workers have a symmetric mechanism via
+`recordCoreWorkerCrash()` (also called from `startWorker()`), using prefix
+`REDIS_CORE_CRASH_KEY_PREFIX = 'core:crashes:'`:
+- `core:crashes:{FullyQualifiedClassName}` — integer counter (EXPIRE 1800s).
+- `core:crashes:{FullyQualifiedClassName}:last_error` — last error text (max 500 chars).
+
+Unlike modules, a core worker is never *disabled* on threshold breach; the
+supervisor only suppresses its respawn until the 30-minute TTL expires.
 
 ## WorkerRedisBase
 
@@ -115,7 +132,11 @@ for monit to restart it.
 - Reads the counter from `module:crashes:{ModuleUniqueID}`. When exceeded: disables the
   module via `PbxExtensionUtils::forceDisableModule()` with reason `DISABLED_BY_CRASH_LOOP`,
   logs the last error, and cleans up the Redis crash data.
-- Core (non-module) workers are unaffected — `getModuleIdFromClassName()` returns null for them.
+- Core (non-module) workers are unaffected by *this* path — `getModuleIdFromClassName()`
+  returns null for them — but the supervisor also runs `isCoreWorkerInCrashLoop()` for them:
+  `CORE_CRASH_LOOP_THRESHOLD = 50` crashes (counter `core:crashes:{FQCN}`, 30-min window).
+  On breach it suppresses the respawn (never disables the worker) and logs a
+  `CORE WORKER CRASH LOOP` alert, rate-limited to once per `CORE_CRASH_LOG_INTERVAL_SEC = 300`.
 
 ## WorkerModelsEvents
 

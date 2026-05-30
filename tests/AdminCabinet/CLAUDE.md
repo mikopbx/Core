@@ -3,13 +3,13 @@
 PHPUnit + Selenium WebDriver browser automation tests with BrowserStack cloud testing.
 
 For BrowserStack account/local-binary setup, see `BROWSERSTACK_SETUP.md`. For JUnit
-upload details, see `JUNIT_UPLOAD_GUIDE.md`.
+upload details, see `JUNIT_UPLOAD_GUIDE.md`. For a quick overview, see `README.md`.
 
 ## File Inventory
 
 ```
 tests/AdminCabinet/
-├── phpunit.xml                # Main config (20+ suites, JUnit/HTML output)
+├── phpunit.xml                # Main config (26 suites, JUnit/HTML output)
 ├── phpunit-audiofiles.xml     # Audio-files suite (shares one BrowserStack session)
 ├── debug-unit.xml             # Debug configuration
 │
@@ -30,10 +30,14 @@ tests/AdminCabinet/
 │   ├── DialplanApplications/  OutOfWorkPeriods/
 │   ├── OutgoingCallRules/  IncomingCallRules/
 │   ├── SIPProviders/  IAXProviders/  FirewallRules/  AMIUsers/  PBXExtensions/  Special/
+│   ├── BrowserStackSmokeTest.php # Smoke test: open + log in to MikoPBX
 │   └── [Root-level tests]     # Orchestration tests (Login, Create*, Fill*, Change*,
 │                              #   Delete*, NetworkInterfaces, Storage*, CheckDropdown*)
 │
 ├── Scripts/                   # Generate*.php test generators + runner/upload shell scripts
+│                              #   run-browserstack-arch-matrix.sh + ensure-browserstack-targets.sh
+│                              #   (ARM64/AMD64 BrowserStack arch matrix)
+├── README.md                  # Quick overview of the AdminCabinet test suite
 ├── config/                    # local.conf.json (create from .example / .template)
 └── assets/                    # UI reference screenshots (*.png) + test audio (*.wav)
 ```
@@ -56,11 +60,11 @@ PHPUnit\Framework\TestCase
 
 - `AssertionTrait` — assertInputFieldValueEqual, assertCheckboxState, assertTextAreaValueEqual, assertMenuItemSelected
 - `DropdownInteractionTrait` — selectDropdownItem, assertDropdownSelection
-- `ElementInteractionTrait` — clickElement, waitForElement
+- `ElementInteractionTrait` — findElementSafely, waitForElement, clickModifyButtonOnRowWithID
 - `FormInteractionTrait` — changeInputField, changeCheckBoxState, submitForm
 - `NavigationTrait` — clickSidebarMenuItemByHref, openAccordionOnThePage
 - `ScreenshotTrait` — takeScreenshot
-- `TableSearchTrait` — searchTableByInputName, extensionExistsBySearch
+- `TableSearchTrait` — searchEntityInTable, extensionExistsBySearch
 - `LoginTrait` — fresh per-process login
 
 ### JWT Authentication & session sharing (gotcha)
@@ -84,7 +88,7 @@ Login → Create entities → Verify → Modify → Verify dropdowns → Delete 
 
 ### Test Suites (phpunit.xml)
 
-20+ suites organized by feature: passwords, PBXSettings, StorageRetentionPeriod,
+26 suites organized by feature: passwords, BrowserStackSmoke, PBXSettings, StorageRetentionPeriod,
 AudioFiles (pre/during/post creation), Extensions (before/after creation),
 ConferenceRooms, DialplanApplications, CallQueues, IVRMenus, Providers (SIP, IAX),
 Routes (Incoming, Outgoing), FirewallRules, AMIUsers, Modules, CheckDropdowns
@@ -97,10 +101,13 @@ entity. Example shape (`EmployeeDataFactory`):
 
 ```php
 'smith.james' => [
-    'number' => '201', 'email' => 'smith@example.com',
-    'secret' => 'SRTP123', 'dtmfmode' => 'auto',
-    'fwd_ringlength' => '15', 'fwd_forwardingonbusy' => '202',
-    'possibleToDelete' => true,
+    'number' => 201, 'username' => 'Smith James',
+    'mobile' => '89261111111', 'email' => '',
+    'secret' => '5b66b92d5714f921cfcde78a4fda0f58',
+    'sip_enableRecording' => true, 'sip_dtmfmode' => 'auto',
+    'sip_networkfilterid' => 'none', 'sip_transport' => 'udp,tcp',
+    'fwd_ringlength' => '45', 'fwd_forwardingonbusy' => '89261111111',
+    'possibleToDelete' => false,
 ],
 ```
 

@@ -32,6 +32,24 @@
   },
   "enabledPlugins": {
     "php-lsp@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true
+    "typescript-lsp@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true
+  },
+  "permissions": {
+    "deny": [
+      "Read(/vendor/**)",
+      "Read(/**/node_modules/**)",
+      "Read(/build/**)",
+      "Read(/sites/admin-cabinet/assets/js/pbx/**)",
+      "Read(/sites/admin-cabinet/assets/js/vendor/**)",
+      "Read(/**/*.min.js)",
+      "Read(/**/*.min.css)",
+      "Read(/resources/db/**)",
+      "Read(/resources/sounds-base/**)",
+      "Read(/resources/rootfs/**)",
+      "Read(/.claude/.backup-*/**)",
+      "Read(/tests/AdminCabinet/reports/**)",
+      "Read(/.hypothesis/**)"
+    ]
   }
 }
