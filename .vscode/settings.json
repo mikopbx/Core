@@ -1,0 +1,8 @@
+{
+  "//": "Intelephense (php-lsp) config. Phalcon is a C extension, so its classes are invisible to static analysis without IDE stubs. The phalcon/ide-stubs dev package (declared in composer.json) provides them — run `composer install` so vendor/phalcon/ide-stubs/src exists, then intelephense resolves Phalcon\\* symbols and the 'undefined type/method' diagnostics clear.",
+  "intelephense.environment.includePaths": [
+    "vendor/phalcon/ide-stubs/src"
+  ],
+  "intelephense.diagnostics.undefinedTypes": true,
+  "intelephense.files.maxSize": 5000000
+}

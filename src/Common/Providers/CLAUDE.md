@@ -1,6 +1,6 @@
 # CLAUDE.md - Common Providers
 
-Service providers that register services in the Phalcon DI container. All providers implement `ServiceProviderInterface` and define a `SERVICE_NAME` constant.
+Service providers that register services in the Phalcon DI container. Most providers implement `ServiceProviderInterface` and define a `SERVICE_NAME` constant. Exception: `MutexProvider` does not implement `ServiceProviderInterface` (it still defines `SERVICE_NAME = 'mutex'`). `DatabaseProviderBase` is an abstract base and is not a provider itself.
 
 ## File Inventory
 
@@ -38,6 +38,7 @@ Providers/
 ├── SessionProvider.php                    # Sessions (DEPRECATED → JWT)
 ├── TranslationProvider.php                # i18n translation factory
 ├── UrlProvider.php                        # URL generation
+├── WafProvider.php                        # WAF registry (WafRegistry service)
 └── WhoopsErrorHandlerProvider.php         # Pretty error pages + JSON
 ```
 
@@ -76,6 +77,7 @@ Providers/
 | SessionProvider | `session` | Yes | Redis DB5 | DEPRECATED (use JWT) |
 | TranslationProvider | `translation` | Yes | Messages | Phalcon factory |
 | UrlProvider | `url` | Yes | Config | Base URI |
+| WafProvider | `wafRegistry` | Yes | WafRegistry | Enable/disable invoked directly by module actions (no event bus) |
 | WhoopsErrorHandlerProvider | `whoopsErrorHandler` | No | Output | Pretty errors + JSON |
 
 ## Key Provider Details
@@ -84,7 +86,7 @@ Providers/
 Cookie and session encryption using `Phalcon\Encryption\Crypt`. Key from `PbxSettings.WWW_ENCRYPTION_KEY`, auto-generated with `Random::base64Safe(16)` if missing.
 
 ### JwtProvider
-JWT token validation with HMAC-SHA256. 600-second leeway for clock skew.
+JWT token validation with HMAC-SHA256. 600-second (10-minute) leeway for clock skew (`JwtProvider::LEEWAY`).
 
 ```php
 // Methods
@@ -141,7 +143,7 @@ $eventBus->publish('models-changed', ['model' => 'Extensions', 'recordId' => '12
 ```
 
 ### PBXCoreRESTClientProvider
-GuzzleHttp client for internal REST API. Base URI: `http://localhost:{WEB_PORT}`. Supports GET, POST, PUT, PATCH, DELETE. Returns `PBXApiResult`.
+GuzzleHttp client for internal REST API. Base URI: `http://127.0.0.1:{WEB_PORT}` (uses `127.0.0.1`, not `localhost`, to guarantee IPv4 and match the nginx `$is_local` map). Supports GET, POST, PUT, PATCH, DELETE. Returns `PBXApiResult`.
 
 ### PBXConfModulesProvider
 Module hook system. Loads enabled modules, instantiates config classes, sorts by priority.

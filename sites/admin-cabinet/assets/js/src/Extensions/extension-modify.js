@@ -430,6 +430,19 @@ const extension = {
         extension.defaultMobileNumber = '';
     },
 
+    /**
+     * Initializes the input masks for the extension number and mobile number fields.
+     *
+     * The extension number mask length is driven by the API: it uses
+     * `extension.extensionsLength` (populated from the server, no JavaScript default)
+     * to build a `9{2,N}` digit mask, applied only when N is between 2 and 10.
+     * Its `oncomplete` handler is debounced with a 500ms setTimeout (clearing any
+     * pending timer) before invoking `cbOnCompleteNumber()`.
+     *
+     * Also configures the mobile number masks from `InputMaskPatterns`, a paste
+     * handler, and a `val.override` event handler that temporarily removes the
+     * mask so a value can be set programmatically (used by tests and automation).
+     */
     initializeInputMasks(){
         // Set up number input mask with correct length from API
         let timeoutNumberId;

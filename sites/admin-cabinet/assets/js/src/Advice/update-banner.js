@@ -23,8 +23,9 @@
  *
  * Subscribes to the existing 'advice' EventBus channel (populated by
  * WorkerPrepareAdvice). Picks the single most-important advice item from
- * the `warning` (red) and `info` (blue) buckets whose messageTpl matches
- * one of the recognised banner templates. User can "Install now",
+ * the `warning` (red) bucket only (info-bucket items are intentionally
+ * skipped — see pickBannerItem) whose messageTpl matches one of the
+ * recognised banner templates. User can "Install now",
  * "Remind me in 3 days" or dismiss — state lives in localStorage so new
  * versions automatically re-show the banner.
  */

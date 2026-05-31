@@ -85,11 +85,11 @@ peers and providers, per-peer codec config, NAT traversal via OPTIONS keepalive.
 Dual-stack IPv6 with bracket notation `[2001:db8::1]:5060`.
 
 ```php
-const int QUALIFY_FREQUENCY = 60;
-const int MAX_CONTACTS_PEER = 5;
-const int MAX_CONTACTS_PROVIDER = 1;
-const int RTP_TIMEOUT = 120;        // peer;     PROVIDER_RTP_TIMEOUT = 60
-const int RTP_TIMEOUT_HOLD = 600;   // peer;     PROVIDER_RTP_TIMEOUT_HOLD = 300
+private const int QUALIFY_FREQUENCY = 60;
+private const int MAX_CONTACTS_PEER = 5;
+private const int MAX_CONTACTS_PROVIDER = 1;
+private const int RTP_TIMEOUT = 120;        // peer;     PROVIDER_RTP_TIMEOUT = 60
+private const int RTP_TIMEOUT_HOLD = 600;   // peer;     PROVIDER_RTP_TIMEOUT_HOLD = 300
 
 private function isDualStackInterface(array $if_data): bool
 public function needAsteriskRestart(): bool   // topology hash comparison
@@ -98,8 +98,9 @@ public function needAsteriskRestart(): bool   // topology hash comparison
 ## CallerIdDidProcessor
 
 Generates dialplan for CallerID/DID extraction from SIP headers. Sources:
-`Sip::CALLERID_SOURCE_FROM`, `_RPID` (Remote-Party-ID), `_PAI` (P-Asserted-Identity),
-`_CUSTOM`, `_DEFAULT`. Debug via `cid_did_debug` setting.
+`Sip::CALLERID_SOURCE_FROM`, `Sip::CALLERID_SOURCE_RPID` (Remote-Party-ID),
+`Sip::CALLERID_SOURCE_PAI` (P-Asserted-Identity), `Sip::CALLERID_SOURCE_CUSTOM`,
+`Sip::CALLERID_SOURCE_DEFAULT`. Debug via `cid_did_debug` setting.
 
 ## CodecSync
 
@@ -134,7 +135,9 @@ QueueStatus(): array
 // Recording
 MixMonitor(string $channel, string $file, string $options): array
 StopMixMonitor(string $channel): array
-Monitor(string $channel, ?string $file): array
+Monitor(string $channel, ?string $file, ?string $format, ?bool $mix): array
+ChangeMonitor(string $channel, string $file): array
+StopMonitor(string $channel): array
 // Events
 add_event_handler(string $event, callable $handler): void
 waitResponse(bool $allow_timeout): array
@@ -196,3 +199,7 @@ CLI> dialplan show internal
 CLI> dialplan show 200@internal
 CLI> pjsip show endpoints
 ```
+
+Skills: use **`asterisk-validator`** to validate config files and analyze logs after a
+generator runs, and **`asterisk-tester`** to test dialplan/call-flow scenarios via Local
+channels.

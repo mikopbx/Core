@@ -12,8 +12,8 @@ Modules/
 ├── Logger.php                         # Module-specific file logger
 │
 ├── Config/
-│   ├── ConfigClass.php                # Abstract base - implements ALL 4 interfaces + AsteriskConfigInterface
-│   ├── SystemConfigInterface.php      # 14 constants - workers, cron, nginx, fail2ban, firewall
+│   ├── ConfigClass.php                # Abstract base - implements System/RestAPI/WebUI + AsteriskConfigInterface
+│   ├── SystemConfigInterface.php      # 16 constants - workers, cron, nginx, fail2ban, firewall, network
 │   ├── RestAPIConfigInterface.php     # 4 constants - routes, callbacks, request hooks
 │   ├── WebUIConfigInterface.php       # 11 constants - auth, ACL, menu, routes, assets, forms
 │   └── CDRConfigInterface.php         # 1 constant - CDR query filtering
@@ -32,7 +32,7 @@ Modules/
 
 ## Config Interfaces
 
-### SystemConfigInterface (14 constants)
+### SystemConfigInterface (16 constants)
 ```php
 MODELS_EVENT_NEED_RELOAD = 'modelsEventNeedReload'
 MODELS_EVENT_CHANGE_DATA = 'modelsEventChangeData'
@@ -48,7 +48,13 @@ GET_DEFAULT_FIREWALL_RULES = 'getDefaultFirewallRules'
 ON_AFTER_PBX_STARTED = 'onAfterPbxStarted'
 ON_BEFORE_MODULE_DISABLE = 'onBeforeModuleDisable'
 ON_BEFORE_MODULE_ENABLE = 'onBeforeModuleEnable'
+ON_AFTER_IPTABLES_RELOAD = 'onAfterIptablesReload'
+ON_AFTER_NETWORK_CONFIGURED = 'onAfterNetworkConfigured'
 ```
+- `onAfterIptablesReload()` — called after iptables rules are applied but before the final DROP; inject custom iptables rules (e.g. ipset-based filtering).
+- `onAfterNetworkConfigured()` — called from `Network::lanConfigure()` after interfaces, routes and DNS are set up; start VPN tunnels / overlay networks.
+- `GENERATE_FAIL2BAN_FILTERS` is declared as a constant but has **no** stub method in `ConfigClass` (unlike `generateFail2BanJails()`).
+- `getWafExemptions(): array` — not an interface constant; defined directly on `ConfigClass`. Returns module-declared WAF exemptions (URI => scope list or `['scopes' => [...], 'prefix' => bool]`) published by `WafRegistry`. Consumed via `PbxExtensionState::syncWafExemptions()`.
 
 ### RestAPIConfigInterface (4 constants)
 ```php
@@ -81,14 +87,15 @@ Called from AdminCabinet (empty `$sessionContext`) and REST API (with JWT contex
 
 ## ConfigClass (Abstract Base)
 
-Implements all 4 interfaces + `AsteriskConfigInterface`. All methods have default stubs (empty string/array/void/true).
+Extends `AsteriskConfigClass` and implements `SystemConfigInterface`, `RestAPIConfigInterface`, `WebUIConfigInterface`, and `AsteriskConfigInterface`. (`applyACLFiltersToCDRQuery` from `CDRConfigInterface` is provided as a stub method but the interface is not in the `implements` list.) All methods have default stubs (empty string/array/void/true).
 
 ```php
-abstract class ConfigClass extends PbxExtensionBase
+abstract class ConfigClass extends AsteriskConfigClass implements
+    SystemConfigInterface, RestAPIConfigInterface, WebUIConfigInterface, AsteriskConfigInterface
 {
-    public int $priority = 10000;     // Lower = higher priority
+    protected int $priority = 10000;  // Lower = higher priority
     public string $moduleUniqueId;
-    public string $moduleDir;
+    protected string $moduleDir;
 
     // All interface methods are implemented with safe defaults
     // Modules override only the methods they need
@@ -124,8 +131,10 @@ public function disableModule(string $reason, string $reasonText): bool
 Static utilities for module management:
 
 ```php
-static forceDisableModule(string $moduleUniqueId, string $reason, string $reasonText): bool // true only when confirmed disabled (or module absent)
+static forceDisableModule(string $moduleUniqueId, string $reason, string $reasonText): void
+static disableBadModule(string $moduleFile, string $exceptionMessage = ''): void // Disable by file path (custom_modules)
 static isEnabled(string $moduleUniqueID): bool           // Redis-cached
+static getModuleDir(string $moduleUniqueID): string      // Resolve module directory path by UniqueID
 static createAssetsSymlinks(string $moduleUniqueID): void // JS/CSS/IMG symlinks
 static createAgiBinSymlinks(string $moduleUniqueID): void // AGI script symlinks
 static createViewSymlinks(string $moduleUniqueID): void   // Volt template symlinks
@@ -136,6 +145,7 @@ static validateEnabledModules(): void                     // Separate process (c
 static isLanguagePackModule(string $moduleUniqueID): bool
 static getLanguagePackCode(string $moduleUniqueID): ?string
 static checkLanguagePackConflict(string $moduleUniqueID, string $languageCode): ?string
+static getAllLanguagePackModules(): array                 // [languageCode => moduleUniqueID]
 ```
 
 ## ModulesModelsBase

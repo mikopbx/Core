@@ -28,6 +28,17 @@ use ReflectionClass as ReflectionClassAlias;
  * Class PbxExtensionBase
  * Common methods for all modules.
  *
+ * Extends Phalcon's Injectable, so a DI container with a `config` service must be
+ * available when an instance is constructed — the constructor reads
+ * `core.modulesDir` from it.
+ *
+ * If $moduleUniqueId is not set by the subclass, the constructor auto-detects it
+ * from the class namespace: for a class in `Modules\{ModuleUniqueID}\...` (exactly
+ * three namespace segments with the first being `Modules`), $moduleUniqueId becomes
+ * the second segment and $moduleDir becomes `{modulesDir}/{moduleUniqueId}`. When
+ * $moduleUniqueId is provided explicitly, $moduleDir is built by concatenating it
+ * onto $modulesDir instead.
+ *
  * @package MikoPBX\Modules
  */
 abstract class PbxExtensionBase extends Injectable
@@ -58,6 +69,10 @@ abstract class PbxExtensionBase extends Injectable
     /**
      * PbxExtensionBase constructor.
      *
+     * Resolves the `config` service from the DI container, derives $moduleDir and
+     * $moduleUniqueId (see the class docblock), and creates the module Logger.
+     *
+     * @throws \Phalcon\Di\Exception If no DI container is set or it has no `config` service.
      */
     public function __construct()
     {
