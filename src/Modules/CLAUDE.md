@@ -131,7 +131,7 @@ public function disableModule(string $reason, string $reasonText): bool
 Static utilities for module management:
 
 ```php
-static forceDisableModule(string $moduleUniqueId, string $reason, string $reasonText): void
+static forceDisableModule(string $moduleUniqueId, string $reason, string $reasonText): bool // true only when confirmed disabled (or module absent)
 static disableBadModule(string $moduleFile, string $exceptionMessage = ''): void // Disable by file path (custom_modules)
 static isEnabled(string $moduleUniqueID): bool           // Redis-cached
 static getModuleDir(string $moduleUniqueID): string      // Resolve module directory path by UniqueID
