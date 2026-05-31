@@ -10,6 +10,11 @@
 >   очистка temp + strict/close ZIP, sweep response-файлов, атомарный crash-counter
 > - `e077ca187` — supervisor-merge: try/catch вокруг `GET_MODULE_WORKERS`
 > - `a92b793c0` — PHP 8.4 safe-subset: first-class callables, `parseMemoryLimit` switch→match
+> - `d1481606c` — zip-slip pre-guard (абс./backslash/false-entry), детерминированный install-status
+>   (непустой fallback-error), удаление мёртвого кода (`handleSignals`/`setProcessType`/`processType`/`PROCESS_TYPES`)
+> - `4a38c0ac7` — устранение находок branch-review: `persistState(): bool` (enable/disable падают до
+>   side-effects при провале записи), firewall-транзакции в try/catch(Throwable), очистка post-install
+>   Redis-маркера и в batch-контексте, symlink-entry в ZIP через Unix external attributes, проверка `flock()`
 >
 > Каждое изменение прошло code-review (codex). Установочный мьютекс (#2) был реализован,
 > но **откачен** — он создавал детерминированный deadlock против оркестратора, держащего
@@ -19,7 +24,7 @@
 
 Подсистемы воркеров и модулей в целом зрелые: установка модулей, регенерация конфигов и супервизия покрыты явным кодом, с продуманными деталями — крэш-луп watchdog (порог 100 крэшей/30 мин), атомарный батч-лок на `SET NX EX`, Lua compare-and-delete для освобождения лока, нульсейф-оператор в `syncWafExemptions`, само-восстанавливающаяся WAF-сверка при загрузке. Основной класс находок — **неатомарность многошаговых переходов состояния модуля** (enable/disable/force-disable не сериализованы между собой и с watchdog'ом) и **отсутствие отката/очистки на путях ошибок** (временные каталоги установки, открытые транзакции, открытые ZIP-хендлы, утечка распределённого лока). Ни одна находка после проверки не дотянула до уровня «critical»: все верифицированные дефекты имеют ограниченный радиус поражения и/или само-восстановление (TTL, реконсиляция при ребуте, single-row last-writer-wins). Серьёзных дыр безопасности (RCE через zip-slip и т.п.) не подтверждено — базовая защита от path traversal на месте, хотя и не покрывает абсолютные пути/симлинки. Самый крупный архитектурный долг — god-класс `WorkerSafeScriptsCore` (1704 строки, шесть несвязанных обязанностей) и устаревшие строковые switch/константы, которые `PBXCoreREST` уже заменил на backed enum + match.
 
-После реализации (см. шапку) **открытыми остаются**: редизайн установочного мьютекса (#2, откачен), остаточный zip-slip (абсолютные пути/симлинки), маскировка ошибки `installModule()` под `INSTALLATION_COMPLETE`, инвалидация `isEnabled()`-кэша, TOCTOU в uninstall, декомпозиция god-класса, reliable-queue в `WorkerApiCommands`, и enum/DTO-часть PHP 8.4-модернизации (отложена сознательно как более рискованная).
+После реализации (см. шапку) **открытыми остаются**: редизайн установочного мьютекса (#2, откачен), TOCTOU в uninstall, полный side-effect teardown на force-direct-update путях, декомпозиция god-класса, reliable-queue в `WorkerApiCommands`, и enum/DTO-часть PHP 8.4-модернизации (отложена сознательно как более рискованная). **Закрыты** (в `d1481606c`/`4a38c0ac7`): остаточный zip-slip (абс./backslash/symlink-entries), маскировка ошибки `installModule()` под `INSTALLATION_COMPLETE`, неатомарность `persistState`, firewall-транзакции на исключениях, batch-retry противоречие, результат `flock()`. Находка про инвалидацию `isEnabled()`-кэша **отклонена** — кэш уже сбрасывается glob-ом `PbxExtensionModules*` в `ModelsBase::clearCache()` на каждом `afterSave`/`afterDelete` (см. §8).
 
 Все ссылки `path:line` приведены по реальному прочитанному коду на момент аудита; severity указан скорректированный после верификации. Номера строк относятся к до-фиксовому состоянию.
 
@@ -56,12 +61,12 @@
 1. ↩️ **Лок отпускается до тяжёлой работы установщика** (`ModuleInstallationBase.php:255-257`, `WorkerModuleInstaller.php:97-263`). Фикс (мьютекс в дочернем воркере) **откачен** — deadlock против оркестратора. **Остаётся открытым**, нужен редизайн (лок в оркестраторе вокруг extract, без поллинга под ним).
 2. ✅ **Нет отката/очистки на путях ошибки** (`a757f6eca`) — отложенный `rm -rf temp_dir` + удаление `$currentModuleDir` на провале.
 3. ✅ **Провальный enable в пост-установке стирает Redis-state безусловно** (`a757f6eca`) — `del()` гейтится по успеху enable.
-4. ⏳ **`installModule()` failure может маскироваться под `INSTALLATION_COMPLETE`** (`WorkerModuleInstaller.php:207-261`, reader `StatusOfModuleInstallationAction.php:62-84`). Все failure-ветки пишут `progress='100'`; reader решает COMPLETE/ERROR по непустоте error-файла — гонка. Если `getMessages()` пуст, провал репортится как COMPLETE. **Открыто. Фикс:** писать error-файл до progress; на провале sentinel ≠ `'100'`; гарантировать непустое сообщение при `installModule()===false`.
+4. ✅ **`installModule()` failure больше не маскируется под `INSTALLATION_COMPLETE`** (`d1481606c`). Reader (`StatusOfModuleInstallationAction`) решает COMPLETE/ERROR по непустоте error-файла; при `installModule()===false` с пустым `getMessages()` теперь пишется непустой fallback-error с id модуля → молчаливый провал репортится как ERROR. (Более глубокий редизайн «`progress` всегда `100` на всех терминальных путях» сознательно не делался — остальные failure-ветки уже пишут непустой error.)
 5. ✅ **Утечка ZIP-хендла на exception-пути** (`a757f6eca`) — `$zip->close()` перенесён в `finally{}` под флаг открытия.
 
 **Безопасность распаковки ZIP — вердикт:**
 - Заявленная **«zip-slip с произвольной записью через per-entry extractTo loop»** — **ОТКЛОНЕНА**: процитированный код не соответствует описанию. Базовая защита от `..` и confinement через `realpath()` присутствует.
-- ⏳ Остаточный риск (**low/medium, открыто**): guard ловит только литерал `..`, но **не** отклоняет абсолютные пути (`/etc/...`), backslash-пути и symlink-entries; `realpath()===false` трактуется как «ОК». **Рекомендация:** отклонять `str_starts_with($name,'/')`, `str_contains($name,'\\')`, трактовать `realpath()===false` как провал, отклонять `is_link()`-entries.
+- ✅ **Усилено** (`d1481606c` pre-guard + `4a38c0ac7` symlink): pre-extraction guard теперь отклоняет `false` от `getNameIndex()`, литерал `..`, абсолютные пути (`str_starts_with($name,'/')`) и backslash (`str_contains($name,'\\')`); symlink-entries отклоняются **до** распаковки через Unix external attributes ZIP (`getExternalAttributesIndex`, `S_IFLNK 0xA000`) — `is_link()` после `extractTo()` не работает, т.к. symlink-entry пишется обычным файлом. Post-extraction `realpath()`-confinement сохранён как вторая линия (`realpath()===false` оставлен как pass: легитимные dir/fresh-пути; реальные векторы покрыты pre-guard'ом).
 - `GetMetadataFromModulePackageAction.php:41-111` — **образец**: ZIP безусловно закрывается до всех early-return. Использован как модель для фикса установщика.
 
 ✅ **Строгая проверка `$zip->open()`** (`a757f6eca`): `=== true` + guard `$totalFiles === 0` → битый/пустой ZIP уходит в error-ветку.
@@ -72,15 +77,15 @@
 
 **Состояние проблем (полные решения — в таблице раздела 2):**
 
-1. ✅ **Взаимное исключение** operator enable/disable ↔ watchdog force-disable (`a757f6eca`).
-2. ✅ смягчено **флаг↔side-effects** — try/catch вместо фатала, флаг не откатывается (`a757f6eca`).
+1. ✅ **Взаимное исключение** operator enable/disable ↔ watchdog force-disable (`a757f6eca`); результат `flock()` теперь проверяется — при провале лок не регистрируется, вызывающий не считает себя сериализованным (`4a38c0ac7`).
+2. ✅ смягчено **флаг↔side-effects** — try/catch вместо фатала, флаг не откатывается (`a757f6eca`). Сверх того, `persistState()` теперь `bool`: при провале записи флага (locked DB) enable/disable **возвращают false до** side-effects, а не молчаливый успех (`4a38c0ac7`).
 3. ✅ **Probe-методы exception-safe** — try/finally (`a757f6eca`).
-4. ✅ **`disableFirewallSettings` rollback** на delete-fail (`a757f6eca`).
-5. ✅ **`persistState` + stale-reason** (`a757f6eca`).
+4. ✅ **`disableFirewallSettings` rollback** на delete-fail (`a757f6eca`); обе firewall-операции дополнительно обёрнуты в try/catch(Throwable) с rollback+rethrow — исключение из `delete()`/`save()`/`commit()`/hook не оставит DI-соединение в открытой транзакции (`4a38c0ac7`).
+5. ✅ **`persistState` + stale-reason** (`a757f6eca`), теперь возвращает `bool` (`4a38c0ac7`).
 6. ✅ частично **Watchdog/force-путь через тот же мьютекс** (`a757f6eca`) — `forceDisableModule` проведён через `withModuleStateLock`. ⏳ Полный side-effect teardown (sounds/workers/WAF) на force-direct-update путях (`validateEnabledModules`/`disableOldModules`) — остаётся открытым.
 
-**To confirm (открыто):**
-- ⏳ `isEnabled()` Redis-кэш (3600s) без наблюдаемой инвалидации на enable/disable (`PbxExtensionUtils.php:51-71`) — только что выключенный модуль может час читаться как enabled. **Фикс:** удалять ключ в конце enable/disable + force-путях (проверить взаимодействие с `ModulesStateCache`).
+**Закрыто / открыто:**
+- ✅ **`isEnabled()` Redis-кэш — находка ОТКЛОНЕНА** (`PbxExtensionUtils.php:51-71`): ключ `PbxExtensionModules:isEnabled<uniqid>` уже сбрасывается glob-ом `PbxExtensionModules*` в `ModelsBase::clearCache()` на каждом `afterSave`/`afterDelete`; все enable/disable/forceDisable идут через model save/update. Фикс не нужен (детали в §8).
 - ⏳ Uninstall убивает PID'ы по `lsof`+SIGKILL без верификации завершения и с TOCTOU перед `rm -rf` (`UninstallModuleAction.php`). **Фикс:** disabled → kill → bounded re-probe `lsof` → `rm -rf`.
 
 **Что хорошо:** firewall enable/disable уже транзакционны; `syncWafExemptions` обёрнут в try/catch и реконсилируется при ребуте (`WafRegistry::rebuildAll`); пост-установочный drain корректно под мьютексом; очередь ретраит на not-yet-installed и catch-ветках.
@@ -92,7 +97,7 @@
 **Состояние:**
 
 1. ⏳ **`WorkerSafeScriptsCore` — god-класс, 1704 строки** (`WorkerSafeScriptsCore.php:68-1676`). Шесть несвязанных обязанностей: discovery, 4 transport-пробы, Fiber-планировщик, memory/disk watchdog, restart-throttle + crash-loop + pool. Respawn-guard дублируется в 5 местах. **Открыто. Фикс:** извлечь `MemoryWatchdog`/`DiskWatchdog`/`RestartPolicy` (композиция, без framework-слоёв). **Effort: large.**
-2. ⏳ **Три независимых пути установки сигналов** (`WorkerRedisBase.php:121-168`). `WorkerRedisBase::handleSignals` нигде не вызывается; живые хендлеры ставит `WorkerBase`, третий набор — `WorkerModelsEvents`. **Severity: low**, мёртвый код. **Открыто** (модернизатор не стал удалять — вне safe-subset). **Фикс:** удалить `handleSignals`.
+2. ✅ **Мёртвый сигнальный путь удалён** (`d1481606c`). `WorkerRedisBase::handleSignals` (никогда не вызывался; живые хендлеры ставит `WorkerBase`) удалён вместе с осиротевшими `setProcessType()`/`$processType`/`PROCESS_TYPES`. `$isShuttingDown` и `cleanupRedisKeys()` сохранены (используются).
 
 **Состояние robustness:**
 - ✅ `prepareWorkersList` try/catch вокруг `GET_MODULE_WORKERS` merge (`e077ca187`) — один битый module-hook больше не валит супервизию всех воркеров.
@@ -148,8 +153,13 @@
 | ✅ `e077ca187` | `WorkerSafeScriptsCore` (prepareWorkersList) | try/catch вокруг `GET_MODULE_WORKERS` merge |
 | ✅ уже было | `UpdateAllModulesAction` | try/catch + `releaseBatchLock()` на throw |
 | ✅ `a92b793c0` | `WorkerRedisBase::parseMemoryLimit` | `switch`→`match` |
-| ⏳ открыто | `WorkerRedisBase.php:121-168` | Удалить мёртвый `handleSignals` (low) |
-| ⏳ открыто | `WorkerModuleInstaller` (install-status) | error-файл до progress; sentinel ≠ '100' на провале |
+| ✅ `d1481606c` | `WorkerRedisBase` | Удалён мёртвый `handleSignals` + `setProcessType`/`processType`/`PROCESS_TYPES` |
+| ✅ `d1481606c` | `WorkerModuleInstaller` (install-status) | Непустой fallback-error при `installModule()===false` с пустым `getMessages()` |
+| ✅ `d1481606c`/`4a38c0ac7` | `WorkerModuleInstaller` (zip-slip) | pre-guard: `..`/абс./backslash/false; symlink-entry через Unix external attributes |
+| ✅ `4a38c0ac7` | `PbxExtensionState` (persistState) | `: bool`; enable/disable падают до side-effects при провале записи |
+| ✅ `4a38c0ac7` | `PbxExtensionState` (firewall ×2) | try/catch(Throwable) + rollback+rethrow вокруг тела транзакции |
+| ✅ `4a38c0ac7` | `ModuleInstallationBase` (postInstall) | Очистка Redis-маркера и в batch-контексте (нет фантомного retry) |
+| ✅ `4a38c0ac7` | `PbxExtensionState` (acquireModuleStateLock) | Проверка результата `flock()`; на провале — `fclose`+`null` без регистрации |
 
 ---
 
@@ -160,14 +170,16 @@
 - **«Zip-slip arbitrary-file-write через per-entry extractTo loop»** — **отклонено как процитировано**. Остаточные мелкие риски (абсолютные пути/симлинки) — в §3 как low «открыто».
 - **«disableFirewallSettings утечка транзакции отравляет следующий ORM save»** — **отклонено в части харм-модели**: единственный вызыватель уже делает внешний `begin` и на firewall-fail немедленно `rollback(true)`. Defensive-фикс (rollback) всё равно сделан (§2).
 - **«getEnabledModulesArray Redis-кэш НИКОГДА не чистится»** — **отклонено**: чистится базовым ORM-event хуком `ModelsBase::initialize()` → `self::clearCache(...)`, glob `PbxExtensionModules*` покрывает оба ключа.
+- **«`isEnabled()` Redis-кэш (3600s) не инвалидируется на enable/disable»** — **отклонено** (детально проверено): `makeCacheKey(PbxExtensionModules::class, 'isEnabled'.$uniqid)` строит ключ `PbxExtensionModules:isEnabled<uniqid>`; `ModelsBase::clearCache()` глобит `PbxExtensionModules*` и вызывается из events-manager на `afterSave`/`afterDelete` (`ModelsBase.php:119`). `persistState()`→`save()`, force-fallback→`update()` и `validateEnabledModules()`→`save()` — все фиксируют `afterSave` → ключ стирается. Единственное окно (`System::isBooting()` пропускает events-manager) безвредно: операторские enable/disable идут пост-бут. Фикс не требуется.
+- **«ZIP-symlink ловится через `is_link()` после распаковки»** — **скорректировано**: `ZipArchive::extractTo()` пишет symlink-entry обычным файлом, поэтому `is_link()` всегда false. Реальная проверка — Unix external attributes ZIP-записи (`S_IFLNK 0xA000`) **до** распаковки (`4a38c0ac7`).
 
 ---
 
 ## 9. Дорожная карта (оставшееся)
 
-**✅ Фаза 1 — Быстрые победы корректности.** Выполнено в `b8ef803e4`/`a757f6eca`/`e077ca187` (см. §7). Открыт лишь мёртвый `handleSignals` (low) и детерминированный install-status.
+**✅ Фаза 1 — Быстрые победы корректности.** Выполнено полностью (`b8ef803e4`/`a757f6eca`/`e077ca187`/`d1481606c`, см. §7) — включая мёртвый `handleSignals` и детерминированный install-status.
 
-**✅/⏳ Фаза 2 — Атомарность и очистка ресурсов.** Бо́льшая часть выполнена (`a757f6eca`). **Открыто:** редизайн установочного мьютекса (#2, откачен); инвалидация `isEnabled()`-кэша; bounded re-probe в uninstall; полный side-effect teardown на force-direct-update путях.
+**✅/⏳ Фаза 2 — Атомарность и очистка ресурсов.** Бо́льшая часть выполнена (`a757f6eca`/`d1481606c`/`4a38c0ac7`): транзакции firewall, `persistState(): bool`, batch-retry, zip-slip+symlink, `flock()`-результат. `isEnabled()`-кэш — отклонён как уже покрытый. **Открыто:** редизайн установочного мьютекса (#2, откачен); bounded re-probe в uninstall; полный side-effect teardown на force-direct-update путях.
 
 **⏳ Фаза 3 — PHP 8.4-модернизация.** Safe-subset выполнен (`a92b793c0`). **Открыто:** backed enum'ы (§6.1, начать с `ModuleDisabledState`/`ModuleDisableReason`), readonly DTO (§6.3), точечный nullsafe, typed FSM (§6.6) — отдельным заходом с тщательным ревью (меняет формат не должно, но меняет обработку хранимых значений).
 
@@ -175,4 +187,4 @@
 
 ---
 
-*Сгенерировано: аудит через dynamic workflow (4 кластера × 4 линзы → adversarial-верификация → синтез). Статус-колонки обновлены под реализацию в ветке `worktree-audit-report` (4 коммита, каждый code-reviewed). Все находки заземлены на реальный код; severity скорректирован после верификации; номера строк — до-фиксовые.*
+*Сгенерировано: аудит через dynamic workflow (4 кластера × 4 линзы → adversarial-верификация → синтез). Статус-колонки обновлены под реализацию в ветке `worktree-audit-report` (6 коммитов, каждый code-reviewed; 5 находок branch-review codex также устранены). Все находки заземлены на реальный код; severity скорректирован после верификации; номера строк — до-фиксовые.*
