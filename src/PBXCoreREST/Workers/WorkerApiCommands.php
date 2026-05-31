@@ -665,33 +665,64 @@ class WorkerApiCommands extends WorkerRedisBase
      */
     private function handleLargeResponseWithFile(string $compressedData): string
     {
+        $downloadCacheDir = (string)$this->di->getShared('config')->path('www.downloadCacheDir');
+
+        // Opportunistically remove orphaned response files left behind by clients
+        // that timed out (or by a Redis error after a previous write). This path is
+        // rare, so doing the age-based sweep here keeps cleanup self-contained.
+        $this->sweepOrphanedResponseFiles($downloadCacheDir);
+
         $tempFile = sprintf(
             '%s/response_%s_%s.data',
-            $this->di->getShared('config')->path('www.downloadCacheDir'),
+            $downloadCacheDir,
             uniqid('', true),
             microtime(true)
         );
 
-        if (!file_put_contents($tempFile, $compressedData)) {
-            throw new RuntimeException('Failed to write response to temporary file');
-        }
+        try {
+            if (!file_put_contents($tempFile, $compressedData)) {
+                throw new RuntimeException('Failed to write response to temporary file');
+            }
 
-        $this->registerTempFile($tempFile);
-        return json_encode([
-            self::REDIS_RESPONSE_IN_FILE => $tempFile,
-            'compressed' => true
-        ], JSON_THROW_ON_ERROR);
+            return json_encode([
+                self::REDIS_RESPONSE_IN_FILE => $tempFile,
+                'compressed' => true
+            ], JSON_THROW_ON_ERROR);
+        } catch (Throwable $e) {
+            // Never leak the just-written temp file if anything after the write fails.
+            @unlink($tempFile);
+            throw $e;
+        }
     }
 
     /**
-     * Register temporary file for cleanup
+     * Remove orphaned large-response data files older than the response TTL.
      *
-     * @param string $filepath Path to temporary file
+     * Large responses are normally deleted when the client fetches them. When the
+     * client times out (or a Redis error follows the write) the file is orphaned.
+     * Files are short-lived (consumed within REDIS_RESPONSE_TTL seconds), so any
+     * file older than that TTL is guaranteed to be unreferenced and safe to delete.
+     *
+     * @param string $downloadCacheDir Directory holding response_*.data files
      */
-    private function registerTempFile(string $filepath): void
+    private function sweepOrphanedResponseFiles(string $downloadCacheDir): void
     {
-        $this->redis->rPush('temp_files', $filepath);
-        $this->redis->expire('temp_files', self::REDIS_RESPONSE_TTL);
+        try {
+            $cutoff = time() - self::REDIS_RESPONSE_TTL;
+            foreach (glob($downloadCacheDir . '/response_*.data') ?: [] as $file) {
+                $mtime = @filemtime($file);
+                if ($mtime !== false && $mtime < $cutoff) {
+                    @unlink($file);
+                }
+            }
+        } catch (Throwable $e) {
+            // Cleanup is best-effort; never let it break response delivery.
+            SystemMessages::sysLogMsg(
+                static::class,
+                'Failed to sweep orphaned response files: ' . $e->getMessage(),
+                LOG_WARNING
+            );
+        }
     }
 
     /**

@@ -230,31 +230,58 @@ class PbxExtensionUtils
      * @param string $moduleUniqueId The unique ID of the module to be disabled.
      * @param string $reason The disable reason constant (default: DISABLED_BY_EXCEPTION).
      * @param string $reasonText The human-readable exception/error message.
+     *
+     * @return bool True only when the module is confirmed disabled (row persisted as
+     *              disabled='1', or the module no longer exists). False when the disable
+     *              could not be persisted (e.g. locked DB) — the caller must NOT treat the
+     *              module as disabled (e.g. must keep the crash-loop counter for a retry).
      */
     public static function forceDisableModule(
         string $moduleUniqueId,
         string $reason = PbxExtensionState::DISABLED_BY_EXCEPTION,
         string $reasonText = ''
-    ): void
+    ): bool
     {
-        try {
-            // Disable the module using the PbxExtensionState class
-            $moduleStateProcessor = new PbxExtensionState($moduleUniqueId);
-            $moduleStateProcessor->disableModule($reason, $reasonText);
-        } catch (Throwable $exception) {
-            // Log an error message if module disabling fails
-            SystemMessages::sysLogMsg(__CLASS__, "Can not disable module $moduleUniqueId Message: $exception", LOG_ERR);
-        } finally {
-            // Update module status to disabled if it was not already disabled
-            $currentModule = PbxExtensionModules::findFirstByUniqid($moduleUniqueId);
-            if ($currentModule !== null && $currentModule->disabled === '0') {
+        // Serialize the whole watchdog disable (including the fallback UPDATE below)
+        // against operator enable/disable using the SAME per-module advisory lock.
+        // The nested disableModule() reentrantly no-ops the lock, so there is no
+        // self-deadlock and the fallback UPDATE still runs under the lock.
+        return PbxExtensionState::withModuleStateLock(
+            $moduleUniqueId,
+            static function () use ($moduleUniqueId, $reason, $reasonText): bool {
+                try {
+                    // Run the regular disable workflow (firewall, hooks, sounds, workers, WAF).
+                    $moduleStateProcessor = new PbxExtensionState($moduleUniqueId);
+                    $moduleStateProcessor->disableModule($reason, $reasonText);
+                } catch (Throwable $exception) {
+                    // Log an error message if module disabling fails
+                    SystemMessages::sysLogMsg(__CLASS__, "Can not disable module $moduleUniqueId Message: $exception", LOG_ERR);
+                }
+
+                // Authoritatively confirm the flag is persisted by re-reading the row.
+                // disableModule() returns true even when its internal save() silently fails
+                // (e.g. locked DB), so its result cannot be trusted here.
+                $currentModule = PbxExtensionModules::findFirstByUniqid($moduleUniqueId);
+                if ($currentModule === null) {
+                    // Nothing to disable (and nothing to respawn) — treat as success.
+                    return true;
+                }
+                if ($currentModule->disabled === '1') {
+                    // Confirmed disabled (by disableModule() or an earlier call).
+                    return true;
+                }
+
+                // disableModule() did not persist the flag — try once more directly.
                 SystemMessages::sysLogMsg(__CLASS__, "Force disable module $moduleUniqueId on the PbxExtensionModules table", LOG_ERR);
                 $currentModule->disabled = '1';
                 $currentModule->disableReason = $reason;
                 $currentModule->disableReasonText = $reasonText;
-                $currentModule->update();
+
+                // The result MUST be honoured: a failed update (e.g. locked DB) means the module
+                // is still enabled, so the caller must not assume it was disabled.
+                return (bool)$currentModule->update();
             }
-        }
+        );
     }
 
     /**

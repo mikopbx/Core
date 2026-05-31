@@ -376,9 +376,9 @@ class WorkerModelsEvents extends WorkerBase
     private function registerSignalHandlers(): void
     {
         // Handle termination signals
-        pcntl_signal(SIGTERM, [$this, 'handleShutdownSignal']);
-        pcntl_signal(SIGINT, [$this, 'handleShutdownSignal']);
-        pcntl_signal(SIGHUP, [$this, 'handleShutdownSignal']);
+        pcntl_signal(SIGTERM, $this->handleShutdownSignal(...));
+        pcntl_signal(SIGINT, $this->handleShutdownSignal(...));
+        pcntl_signal(SIGHUP, $this->handleShutdownSignal(...));
     }
     
     /**

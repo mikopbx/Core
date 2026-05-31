@@ -130,8 +130,11 @@ for monit to restart it.
 - `CRASH_LOOP_THRESHOLD = 100` — max crashes in the 30-minute window (window enforced by
   the Redis EXPIRE set in `recordModuleCrash()`).
 - Reads the counter from `module:crashes:{ModuleUniqueID}`. When exceeded: disables the
-  module via `PbxExtensionUtils::forceDisableModule()` with reason `DISABLED_BY_CRASH_LOOP`,
-  logs the last error, and cleans up the Redis crash data.
+  module via `PbxExtensionUtils::forceDisableModule()` (returns `bool`) with reason
+  `DISABLED_BY_CRASH_LOOP`, logs the last error, and cleans up the Redis crash data
+  **only when the disable is confirmed persisted** (the call returns `true`). If the
+  disable could not be persisted (e.g. locked DB) the crash counters are kept so the
+  next tick retries; the worker is not respawned this cycle either way.
 - Core (non-module) workers are unaffected by *this* path — `getModuleIdFromClassName()`
   returns null for them — but the supervisor also runs `isCoreWorkerInCrashLoop()` for them:
   `CORE_CRASH_LOOP_THRESHOLD = 50` crashes (counter `core:crashes:{FQCN}`, 30-min window).

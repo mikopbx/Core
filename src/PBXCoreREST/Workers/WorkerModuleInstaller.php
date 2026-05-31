@@ -26,6 +26,7 @@ use MikoPBX\Common\Providers\LanguageProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
@@ -40,7 +41,6 @@ use ZipArchive;
  */
 class WorkerModuleInstaller extends WorkerBase
 {
-
     private string $progress_file = '';
     private string $error_file = '';
     private ?string $asyncChannelId = null;
@@ -66,7 +66,7 @@ class WorkerModuleInstaller extends WorkerBase
         $this->moduleUniqueId = $settings['uniqid'];
         $this->asyncChannelId = $settings['asyncChannelId'] ?? null;
         $this->moduleWasEnabled = $settings['moduleWasEnabled'] ?? false;
-        
+
         cli_set_process_title(__CLASS__.'-'.$this->moduleUniqueId);
 
         // Initialize Redis connection explicitly — WorkerBase declares
@@ -79,6 +79,11 @@ class WorkerModuleInstaller extends WorkerBase
         $this->error_file    = $temp_dir . '/installation_error';
         file_put_contents( $this->progress_file, '0');
         file_put_contents( $this->error_file, '');
+
+        // Extraction + installModule run directly here. The manipulation mutex is
+        // held by the orchestrator (InstallFromRepoAction/InstallFromPackageAction)
+        // across the spawn+poll, so this child must NOT re-acquire the same key —
+        // doing so deadlocks against the parent that is waiting on our progress.
         $this->installNewModuleFromFile(
             $settings['currentModuleDir'],
             $settings['filePath'],
@@ -102,50 +107,75 @@ class WorkerModuleInstaller extends WorkerBase
         try {
             // Start extraction phase
             file_put_contents($this->progress_file, '25');
-            
+
             // Unzip module folder
             $zip = new ZipArchive();
-            if($zip->open($filePath)) {
-                // Get total number of files
-                $totalFiles = $zip->numFiles;
-                
-                // Extract files one by one to track progress
-                $result = true;
+            $zipOpened = false;
+            $result = true;
+            try {
+                // Strict open check: ZipArchive::open() returns truthy int error codes
+                // (ER_NOZIP=19, …) that would pass a loose truthy test, so a corrupt
+                // archive must be rejected with === true.
+                if ($zip->open($filePath) === true) {
+                    $zipOpened = true;
 
-                // Ensure module directory exists before resolving its real path
-                if (!is_dir($currentModuleDir)) {
-                    mkdir($currentModuleDir, 0755, true);
-                }
-                $realModuleDir = realpath($currentModuleDir);
-                if ($realModuleDir === false) {
-                    $result = false;
-                }
-                for ($i = 0; $i < $totalFiles && $result; $i++) {
-                    $entryName = $zip->getNameIndex($i);
+                    // Get total number of files
+                    $totalFiles = $zip->numFiles;
 
-                    // Zip Slip protection: reject entries with path traversal sequences
-                    if (str_contains($entryName, '..')) {
-                        $message = TranslationProvider::translate(
-                            'rest_err_module_path_traversal',
-                            ['entryName' => $entryName]
+                    // An archive that opened but contains no entries is not a valid
+                    // module package — treat it as a failure instead of "success".
+                    if ($totalFiles === 0) {
+                        file_put_contents(
+                            $this->error_file,
+                            TranslationProvider::translate('rest_err_module_extraction_failed'),
+                            FILE_APPEND
                         );
-                        file_put_contents($this->error_file, $message, FILE_APPEND);
                         $result = false;
-                        break;
                     }
 
-                    $result = $zip->extractTo($currentModuleDir, [$entryName]);
+                    // Ensure module directory exists before resolving its real path
+                    if ($result && !is_dir($currentModuleDir)) {
+                        mkdir($currentModuleDir, 0755, true);
+                    }
+                    $realModuleDir = $result ? realpath($currentModuleDir) : false;
+                    if ($result && $realModuleDir === false) {
+                        $result = false;
+                    }
+                    for ($i = 0; $i < $totalFiles && $result; $i++) {
+                        $entryName = $zip->getNameIndex($i);
 
-                    // Post-extraction confinement: verify extracted path stays within module dir
-                    if ($result) {
-                        $extractedPath = realpath($currentModuleDir . '/' . $entryName);
+                        // Zip Slip protection: reject path traversal sequences, absolute
+                        // paths and backslash separators before extracting. The
+                        // post-extraction confinement check below is the second line of
+                        // defence. (getNameIndex() returns false on a bad index.)
                         if (
-                            $extractedPath !== false
-                            && !str_starts_with($extractedPath, $realModuleDir . '/')
-                            && $extractedPath !== $realModuleDir
+                            $entryName === false
+                            || str_contains($entryName, '..')
+                            || str_starts_with($entryName, '/')
+                            || str_contains($entryName, '\\')
                         ) {
-                            // File escaped module directory — remove it and abort
-                            @unlink($extractedPath);
+                            $message = TranslationProvider::translate(
+                                'rest_err_module_path_traversal',
+                                ['entryName' => (string)$entryName]
+                            );
+                            file_put_contents($this->error_file, $message, FILE_APPEND);
+                            $result = false;
+                            break;
+                        }
+
+                        // Reject symlink entries BEFORE extracting. ZipArchive::extractTo()
+                        // writes a symlink entry as a regular file, so is_link() on the
+                        // result would never catch it — the symlink bit lives in the ZIP
+                        // entry's Unix external attributes (high 16 bits of the mode;
+                        // S_IFLNK == 0120000). A symlink is never a legitimate module file
+                        // and can point outside the module dir, so drop the whole package.
+                        $opsys = 0;
+                        $attr  = 0;
+                        if (
+                            $zip->getExternalAttributesIndex($i, $opsys, $attr)
+                            && $opsys === ZipArchive::OPSYS_UNIX
+                            && (($attr >> 16) & 0xF000) === 0xA000
+                        ) {
                             $message = TranslationProvider::translate(
                                 'rest_err_module_path_escape',
                                 ['entryName' => $entryName]
@@ -154,18 +184,51 @@ class WorkerModuleInstaller extends WorkerBase
                             $result = false;
                             break;
                         }
-                    }
 
-                    // Calculate and update progress (25% to 50% range)
-                    $extractionProgress = 25 + round(($i / $totalFiles) * 25);
-                    file_put_contents($this->progress_file, (string)$extractionProgress);
+                        $result = $zip->extractTo($currentModuleDir, [$entryName]);
+
+                        if ($result) {
+                            $localPath = $currentModuleDir . '/' . $entryName;
+
+                            // Post-extraction confinement: verify the extracted path
+                            // stays within the module dir. realpath() === false is left
+                            // as a pass: directory entries and freshly-created paths can
+                            // legitimately fail to resolve, and the pre-extraction guards
+                            // (traversal/absolute/backslash + symlink) already cover the
+                            // real traversal vectors.
+                            $extractedPath = realpath($localPath);
+                            if (
+                                $extractedPath !== false
+                                && !str_starts_with($extractedPath, $realModuleDir . '/')
+                                && $extractedPath !== $realModuleDir
+                            ) {
+                                // File escaped module directory — remove it and abort
+                                @unlink($extractedPath);
+                                $message = TranslationProvider::translate(
+                                    'rest_err_module_path_escape',
+                                    ['entryName' => $entryName]
+                                );
+                                file_put_contents($this->error_file, $message, FILE_APPEND);
+                                $result = false;
+                                break;
+                            }
+                        }
+
+                        // Calculate and update progress (25% to 50% range)
+                        $extractionProgress = 25 + round(($i / $totalFiles) * 25);
+                        file_put_contents($this->progress_file, (string)$extractionProgress);
+                    }
+                } else {
+                    $result = false;
                 }
-                
-                $zip->close();
-            } else {
-                $result = false;
+            } finally {
+                // Close the archive on every path, including a throw mid-extraction;
+                // guarded by $zipOpened so we never close an unopened handle.
+                if ($zipOpened) {
+                    $zip->close();
+                }
             }
-            
+
             if ($result === false) {
                 file_put_contents(
                     $this->error_file,
@@ -173,16 +236,20 @@ class WorkerModuleInstaller extends WorkerBase
                     FILE_APPEND
                 );
                 file_put_contents($this->progress_file, '0');
+
+                // Remove the freshly-extracted (now half-extracted) module dir so a
+                // failed install does not leave a broken module on disk.
+                $this->cleanupAfterFailure($currentModuleDir, $filePath);
                 return;
             }
-            
+
             // Report extraction phase complete
             file_put_contents($this->progress_file, '50');
-            
+
             // Prepare for installation phase
             ModulesDBConnectionsProvider::recreateModulesDBConnections();
             Util::addRegularWWWRights($currentModuleDir);
-            
+
             // Run the module setup
             $pbxExtensionSetupClass = "Modules\\$moduleUniqueID\\Setup\\PbxExtensionSetup";
             if (class_exists($pbxExtensionSetupClass)
@@ -200,17 +267,29 @@ class WorkerModuleInstaller extends WorkerBase
 
                     // Run installation
                     $installResult = $setup->installModule();
-                    
+
                     // Update progress after installation
                     file_put_contents($this->progress_file, '90');
-                    
+
                     if (!$installResult) {
                         $errorMessage = implode(" ", $setup->getMessages());
+                        if (trim($errorMessage) === '') {
+                            // installModule() returned false but reported no message.
+                            // The status reader decides COMPLETE vs ERROR purely by
+                            // whether the error file is non-empty, so a silent failure
+                            // would otherwise be reported as success. Guarantee a
+                            // non-empty error.
+                            $errorMessage = "Module $moduleUniqueID installation failed without a specific error message.";
+                        }
                         file_put_contents($this->error_file, $errorMessage, FILE_APPEND);
                         SystemMessages::sysLogMsg(__CLASS__, "Installation error: {$errorMessage}", LOG_ERR);
+
+                        // installModule() failed after the dir was extracted — remove
+                        // the half-installed module dir so it is not left behind.
+                        $this->cleanupAfterFailure($currentModuleDir, $filePath);
                     } else {
                         // Installation succeeded
-                        
+
                         // Update module installation status in Redis
                         $installationKey = ModuleInstallationBase::REDIS_MODULE_INSTALLATION_KEY . $moduleUniqueID;
                         $installData = json_decode($this->redis->get($installationKey) ?? '{}', true);
@@ -221,44 +300,79 @@ class WorkerModuleInstaller extends WorkerBase
                             ModuleInstallationBase::REDIS_MODULE_INSTALL_TTL,
                             json_encode($installData)
                         );
-                        
+
                         SystemMessages::sysLogMsg(
                             __CLASS__,
                             "Module $moduleUniqueID installed successfully, updated Redis state.",
                             LOG_NOTICE
                         );
-                        
+
                     }
                 } catch (Throwable $e) {
                     $errorMessage = 'Exception on installNewModuleFromFile: ' . $e->getMessage();
                     file_put_contents($this->error_file, $errorMessage, FILE_APPEND);
                     SystemMessages::sysLogMsg(__CLASS__, $errorMessage, LOG_ERR);
+
+                    // Setup threw after extraction — remove the half-installed dir.
+                    $this->cleanupAfterFailure($currentModuleDir, $filePath);
                 }
             } else {
                 $errorMessage = "Install error: the class $pbxExtensionSetupClass does not exists";
                 file_put_contents($this->error_file, $errorMessage, FILE_APPEND);
                 SystemMessages::sysLogMsg(__CLASS__, $errorMessage, LOG_ERR);
+
+                // The extracted package has no usable setup class — clean it up.
+                $this->cleanupAfterFailure($currentModuleDir, $filePath);
             }
-            
+
             // Always mark as 100% complete, even if there was an error
             // The frontend will read the error file to see if there was a problem
             file_put_contents($this->progress_file, '100');
-            
+
             // Log completion
             SystemMessages::sysLogMsg(
-                __CLASS__, 
-                "Module installation completed for $moduleUniqueID", 
+                __CLASS__,
+                "Module installation completed for $moduleUniqueID",
                 LOG_NOTICE
             );
-            
+
         } catch (Throwable $e) {
             // Catch any unexpected exceptions
             $errorMessage = 'Fatal error during module installation: ' . $e->getMessage();
             file_put_contents($this->error_file, $errorMessage, FILE_APPEND);
             SystemMessages::sysLogMsg(__CLASS__, $errorMessage, LOG_ERR);
-            
+
+            // Best-effort cleanup of the half-installed module dir on a fatal error.
+            $this->cleanupAfterFailure($currentModuleDir, $filePath);
+
             // Ensure progress is updated
             file_put_contents($this->progress_file, '100');
+        }
+    }
+
+    /**
+     * Cleans up after a failed installation.
+     *
+     * Removes the freshly-extracted module directory immediately, then schedules a
+     * deferred removal of the upload temp directory (modulefile.zip,
+     * install_settings.json, install temp dir). The temp dir removal is deferred so
+     * the status poller can still read installation_error / installation_progress
+     * first — contrast WorkerMergeUploadedFile, which rm -rf's its temp dir on error.
+     *
+     * @param string $currentModuleDir The freshly-extracted module directory.
+     * @param string $filePath The path to the uploaded module zip (its dir is the temp dir).
+     * @return void
+     */
+    private function cleanupAfterFailure(string $currentModuleDir, string $filePath): void
+    {
+        if ($currentModuleDir !== '' && is_dir($currentModuleDir)) {
+            Processes::mwExecBg('rm -rf ' . escapeshellarg($currentModuleDir));
+        }
+
+        $temp_dir = dirname($filePath);
+        if ($temp_dir !== '' && $temp_dir !== '.' && $temp_dir !== '/' && is_dir($temp_dir)) {
+            // Deferred so the poller reads installation_error before the dir vanishes.
+            Processes::mwExecBg('rm -rf ' . escapeshellarg($temp_dir), '/dev/null', 600);
         }
     }
 }

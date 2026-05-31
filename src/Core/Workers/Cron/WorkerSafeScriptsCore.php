@@ -565,10 +565,24 @@ class WorkerSafeScriptsCore extends WorkerBase
             $arrWorkers[self::CHECK_BY_PID_NOT_ALERT][] = WorkerS3CacheCleaner::class;
         }
 
-        // Get the list of module workers.
-        $arrModulesWorkers = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GET_MODULE_WORKERS);
-        $arrModulesWorkers = array_values($arrModulesWorkers);
-        $arrModulesWorkers = array_merge(...$arrModulesWorkers);
+        // Get the list of module workers. A broken module hook must not break the
+        // whole worker list — otherwise one faulty module would drop ALL module
+        // workers (and the core list) from supervision. Degrade to no module
+        // workers on failure and keep supervising the core workers.
+        $arrModulesWorkers = [];
+        try {
+            $hookedWorkers = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GET_MODULE_WORKERS);
+            $hookedWorkers = array_values($hookedWorkers);
+            if (!empty($hookedWorkers)) {
+                $arrModulesWorkers = array_merge(...$hookedWorkers);
+            }
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                'Failed to collect module workers (GET_MODULE_WORKERS hook): ' . $e->getMessage(),
+                LOG_ERR
+            );
+        }
 
         // If there are module workers, add them to the workers' list.
         if (!empty($arrModulesWorkers)) {
@@ -1001,14 +1015,21 @@ class WorkerSafeScriptsCore extends WorkerBase
                     "Module {$moduleId} disabled: {$reasonText}",
                     LOG_ERR
                 );
-                PbxExtensionUtils::forceDisableModule(
+                $disabled = PbxExtensionUtils::forceDisableModule(
                     $moduleId,
                     PbxExtensionState::DISABLED_BY_CRASH_LOOP,
                     $reasonText
                 );
 
-                // Clean up crash data after disabling
-                $this->redis->del([$key, $key . ':last_error']);
+                // Clean up crash data only when the module is confirmed disabled.
+                // If the disable could not be persisted (e.g. locked DB), keep the
+                // counters so the next tick retries instead of restarting the count
+                // from zero (which would let the crashing worker loop indefinitely).
+                if ($disabled) {
+                    $this->redis->del([$key, $key . ':last_error']);
+                }
+
+                // Either way, do not respawn the crashing worker in this cycle.
                 return true;
             }
         } catch (Throwable $e) {

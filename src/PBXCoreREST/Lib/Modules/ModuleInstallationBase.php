@@ -269,9 +269,10 @@ class ModuleInstallationBase extends Injectable
      *
      * @param string $moduleUniqueId The unique ID of the module
      * @param array $installData Installation data from Redis
-     * @return void
+     * @return bool True when post-installation succeeded (module enabled or no enable was required);
+     *              false when a previously-enabled module failed to re-enable.
      */
-    public function postInstallModule(string $moduleUniqueId, array $installData): void
+    public function postInstallModule(string $moduleUniqueId, array $installData): bool
     {
         SystemMessages::sysLogMsg(
             __CLASS__,
@@ -308,9 +309,20 @@ class ModuleInstallationBase extends Injectable
             }
         }
 
-        // Clean up Redis key
-        $redis = Di::getDefault()->get(RedisClientProvider::SERVICE_NAME);
-        $redis->del(self::REDIS_MODULE_INSTALLATION_KEY . $moduleUniqueId);
+        // Clean up the Redis key when post-installation succeeded (or none was
+        // needed). On a STANDALONE soft re-enable failure the key (and, via the
+        // false return below, the queue entry) is left in place so the next
+        // watchdog pass can retry — otherwise a module that was enabled before a
+        // reinstall would stay permanently disabled.
+        //
+        // In a BATCH run, failModule() above is the authoritative status record and
+        // the batch advances immediately (UpdateAllModulesAction has no mechanism to
+        // re-observe this Redis marker), so keeping it would create a phantom retry
+        // that contradicts the recorded failure — clear it in batch context too.
+        if ($enableResult[1] || $this->batchId !== '') {
+            $redis = Di::getDefault()->get(RedisClientProvider::SERVICE_NAME);
+            $redis->del(self::REDIS_MODULE_INSTALLATION_KEY . $moduleUniqueId);
+        }
 
         SystemMessages::sysLogMsg(
             __CLASS__,
@@ -318,6 +330,8 @@ class ModuleInstallationBase extends Injectable
                 ($enableResult[1] ? 'success' : 'failure'),
             LOG_NOTICE
         );
+
+        return $enableResult[1];
     }
 
     /**
@@ -427,14 +441,18 @@ class ModuleInstallationBase extends Injectable
 
             // Create instance of ModuleInstallationBase to handle post-installation
             $installer = new self($installData['asyncChannelId'], $moduleId, $installData['batchId'] ?? '');
-            $installer->postInstallModule($moduleId, $installData);
+            $postInstallSucceeded = $installer->postInstallModule($moduleId, $installData);
 
             SystemMessages::sysLogMsg(
                 self::class,
-                "Post-installation process completed for module $moduleId",
+                "Post-installation process completed for module $moduleId with result: " .
+                    ($postInstallSucceeded ? 'success' : 'failure'),
                 LOG_NOTICE
             );
-            return true;
+
+            // Returning false keeps the module on the post-install queue (and its
+            // Redis install key) so a subsequent watchdog run retries the enable.
+            return $postInstallSucceeded;
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(
                 self::class,
