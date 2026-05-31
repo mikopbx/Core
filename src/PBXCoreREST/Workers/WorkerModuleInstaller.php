@@ -163,15 +163,40 @@ class WorkerModuleInstaller extends WorkerBase
                             break;
                         }
 
+                        // Reject symlink entries BEFORE extracting. ZipArchive::extractTo()
+                        // writes a symlink entry as a regular file, so is_link() on the
+                        // result would never catch it — the symlink bit lives in the ZIP
+                        // entry's Unix external attributes (high 16 bits of the mode;
+                        // S_IFLNK == 0120000). A symlink is never a legitimate module file
+                        // and can point outside the module dir, so drop the whole package.
+                        $opsys = 0;
+                        $attr  = 0;
+                        if (
+                            $zip->getExternalAttributesIndex($i, $opsys, $attr)
+                            && $opsys === ZipArchive::OPSYS_UNIX
+                            && (($attr >> 16) & 0xF000) === 0xA000
+                        ) {
+                            $message = TranslationProvider::translate(
+                                'rest_err_module_path_escape',
+                                ['entryName' => $entryName]
+                            );
+                            file_put_contents($this->error_file, $message, FILE_APPEND);
+                            $result = false;
+                            break;
+                        }
+
                         $result = $zip->extractTo($currentModuleDir, [$entryName]);
 
-                        // Post-extraction confinement: verify extracted path stays within module dir.
-                        // realpath() === false is left as a pass: directory entries and
-                        // freshly-created paths can legitimately fail to resolve, and the
-                        // pre-extraction guard above already rejects '..', absolute and
-                        // backslash entry names — the actual traversal vectors.
                         if ($result) {
-                            $extractedPath = realpath($currentModuleDir . '/' . $entryName);
+                            $localPath = $currentModuleDir . '/' . $entryName;
+
+                            // Post-extraction confinement: verify the extracted path
+                            // stays within the module dir. realpath() === false is left
+                            // as a pass: directory entries and freshly-created paths can
+                            // legitimately fail to resolve, and the pre-extraction guards
+                            // (traversal/absolute/backslash + symlink) already cover the
+                            // real traversal vectors.
+                            $extractedPath = realpath($localPath);
                             if (
                                 $extractedPath !== false
                                 && !str_starts_with($extractedPath, $realModuleDir . '/')

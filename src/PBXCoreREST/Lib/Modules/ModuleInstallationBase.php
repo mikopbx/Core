@@ -309,12 +309,17 @@ class ModuleInstallationBase extends Injectable
             }
         }
 
-        // Clean up the Redis key only when post-installation succeeded. On a soft
-        // re-enable failure the key (and, via the false return below, the queue
-        // entry) is left in place so the next watchdog pass can retry — otherwise
-        // a module that was enabled before a reinstall would stay permanently
-        // disabled.
-        if ($enableResult[1]) {
+        // Clean up the Redis key when post-installation succeeded (or none was
+        // needed). On a STANDALONE soft re-enable failure the key (and, via the
+        // false return below, the queue entry) is left in place so the next
+        // watchdog pass can retry — otherwise a module that was enabled before a
+        // reinstall would stay permanently disabled.
+        //
+        // In a BATCH run, failModule() above is the authoritative status record and
+        // the batch advances immediately (UpdateAllModulesAction has no mechanism to
+        // re-observe this Redis marker), so keeping it would create a phantom retry
+        // that contradicts the recorded failure — clear it in batch context too.
+        if ($enableResult[1] || $this->batchId !== '') {
             $redis = Di::getDefault()->get(RedisClientProvider::SERVICE_NAME);
             $redis->del(self::REDIS_MODULE_INSTALLATION_KEY . $moduleUniqueId);
         }

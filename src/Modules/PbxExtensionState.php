@@ -186,7 +186,13 @@ class PbxExtensionState extends Injectable
 
         // Mark the module enabled and clear any stale disable reason/text.
         // The firewall is already enabled and committed above; the flag now matches.
-        $this->persistState('0');
+        // If the flag could not be persisted (e.g. locked DB) the module is NOT
+        // actually enabled, so fail before running the side-effects and report it.
+        if ( ! $this->persistState('0')) {
+            $this->messages['error'][] = "Could not persist enabled state for {$this->moduleUniqueID}.";
+
+            return false;
+        }
 
         try {
             // Install module sound files
@@ -239,56 +245,62 @@ class PbxExtensionState extends Injectable
         }
 
         $this->db->begin(true);
-        $defaultRules         = call_user_func([$this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES]);
+        try {
+            $defaultRules         = call_user_func([$this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES]);
 
-        // Retrieve previous rule settings
-        $previousRuleSettings = PbxSettings::findFirstByKey("{$this->moduleUniqueID}FirewallSettings");
-        $previousRules        = [];
-        if ($previousRuleSettings !== null) {
-            $previousRules = json_decode($previousRuleSettings->value, true);
-            $previousRuleSettings->delete();
-        }
-        $errors   = [];
-        $networks = NetworkFilters::find();
-        $key      = strtoupper(key($defaultRules));
-        $record   = $defaultRules[key($defaultRules)];
+            // Retrieve previous rule settings
+            $previousRuleSettings = PbxSettings::findFirstByKey("{$this->moduleUniqueID}FirewallSettings");
+            $previousRules        = [];
+            if ($previousRuleSettings !== null) {
+                $previousRules = json_decode($previousRuleSettings->value, true);
+                $previousRuleSettings->delete();
+            }
+            $errors   = [];
+            $networks = NetworkFilters::find();
+            $key      = strtoupper(key($defaultRules));
+            $record   = $defaultRules[key($defaultRules)];
 
-        $oldRules = FirewallRules::findByCategory($key);
-        if ($oldRules->count() > 0) {
-            $oldRules->delete();
-        }
+            $oldRules = FirewallRules::findByCategory($key);
+            if ($oldRules->count() > 0) {
+                $oldRules->delete();
+            }
 
-        foreach ($networks as $network) {
-            foreach ($record['rules'] as $detailRule) {
-                $newRule                  = new FirewallRules();
-                $newRule->networkfilterid = $network->id;
-                $newRule->protocol        = $detailRule['protocol'];
-                $newRule->portfrom        = $detailRule['portfrom'];
-                $newRule->portto          = $detailRule['portto'];
-                $newRule->category        = $key;
-                $newRule->action          = $record['action'];
-                $newRule->portFromKey     = $detailRule['portFromKey']??$detailRule['name'];
-                $newRule->portToKey       = $detailRule['portToKey']??$detailRule['name'];
-                $newRule->description     = $detailRule['name'];
+            foreach ($networks as $network) {
+                foreach ($record['rules'] as $detailRule) {
+                    $newRule                  = new FirewallRules();
+                    $newRule->networkfilterid = $network->id;
+                    $newRule->protocol        = $detailRule['protocol'];
+                    $newRule->portfrom        = $detailRule['portfrom'];
+                    $newRule->portto          = $detailRule['portto'];
+                    $newRule->category        = $key;
+                    $newRule->action          = $record['action'];
+                    $newRule->portFromKey     = $detailRule['portFromKey']??$detailRule['name'];
+                    $newRule->portToKey       = $detailRule['portToKey']??$detailRule['name'];
+                    $newRule->description     = $detailRule['name'];
 
-                if (array_key_exists($network->id, $previousRules)) {
-                    $newRule->action = $previousRules[$network->id];
-                }
-                if ( ! $newRule->save()) {
-                    $errors[] = $newRule->getMessages();
+                    if (array_key_exists($network->id, $previousRules)) {
+                        $newRule->action = $previousRules[$network->id];
+                    }
+                    if ( ! $newRule->save()) {
+                        $errors[] = $newRule->getMessages();
+                    }
                 }
             }
-        }
-        if (count($errors) > 0) {
-            $this->messages[] = array_merge($this->messages, $errors);
+            if (count($errors) > 0) {
+                $this->messages[] = array_merge($this->messages, $errors);
+                $this->db->rollback(true);
+
+                return false;
+            }
+
+            $this->db->commit(true);
+
+            return true;
+        } catch (Throwable $exception) {
+            // Never leave the DI DB connection inside an open transaction.
             $this->db->rollback(true);
-
-            return false;
+            throw $exception;
         }
-
-        $this->db->commit(true);
-
-        return true;
     }
 
     /**
@@ -342,7 +354,13 @@ class PbxExtensionState extends Injectable
 
         // Find and update the module's disabled flag in the database. The firewall
         // is already disabled and committed above; the flag now matches.
-        $this->persistState('1', $reason, $reasonText);
+        // If the flag could not be persisted (e.g. locked DB) the module is NOT
+        // actually disabled, so fail before running the side-effects and report it.
+        if ( ! $this->persistState('1', $reason, $reasonText)) {
+            $this->messages['error'][] = "Could not persist disabled state for {$this->moduleUniqueID}.";
+
+            return false;
+        }
 
         try {
             // Remove module sound files
@@ -531,37 +549,42 @@ class PbxExtensionState extends Injectable
             $savedState[$detailRule->networkfilterid] = $detailRule->action;
         }
         $this->db->begin(true);
+        try {
+            // Delete the current firewall rules
+            if ( ! $currentRules->delete()) {
+                $this->messages['error'][] = $currentRules->getMessages();
+                $this->db->rollback(true);
 
-        // Delete the current firewall rules
-        if ( ! $currentRules->delete()) {
-            $this->messages['error'][] = $currentRules->getMessages();
+                return false;
+            }
+
+            // Save the previous firewall settings
+            $previousRuleSettings = PbxSettings::findFirstByKey("{$this->moduleUniqueID}FirewallSettings");
+            if ($previousRuleSettings === null) {
+                $previousRuleSettings      = new PbxSettings();
+                $previousRuleSettings->key = "{$this->moduleUniqueID}FirewallSettings";
+            }
+            $previousRuleSettings->value = json_encode($savedState);
+            if ( ! $previousRuleSettings->save()) {
+                $errors[] = $previousRuleSettings->getMessages();
+            }
+
+            // Rollback and return false if there are any errors
+            if (count($errors) > 0) {
+                $this->messages['error'][] = array_merge($this->messages, $errors);
+                $this->db->rollback(true);
+
+                return false;
+            }
+
+            $this->db->commit(true);
+
+            return true;
+        } catch (Throwable $exception) {
+            // Never leave the DI DB connection inside an open transaction.
             $this->db->rollback(true);
-
-            return false;
+            throw $exception;
         }
-
-        // Save the previous firewall settings
-        $previousRuleSettings = PbxSettings::findFirstByKey("{$this->moduleUniqueID}FirewallSettings");
-        if ($previousRuleSettings === null) {
-            $previousRuleSettings      = new PbxSettings();
-            $previousRuleSettings->key = "{$this->moduleUniqueID}FirewallSettings";
-        }
-        $previousRuleSettings->value = json_encode($savedState);
-        if ( ! $previousRuleSettings->save()) {
-            $errors[] = $previousRuleSettings->getMessages();
-        }
-
-        // Rollback and return false if there are any errors
-        if (count($errors) > 0) {
-            $this->messages['error'][] = array_merge($this->messages, $errors);
-            $this->db->rollback(true);
-
-            return false;
-        }
-
-        $this->db->commit(true);
-
-        return true;
     }
 
     /**
@@ -585,18 +608,22 @@ class PbxExtensionState extends Injectable
      * @param string $reason Disable reason flag (one of the DISABLED_BY_* constants), empty when enabling.
      * @param string $reasonText Human-readable disable reason, empty when enabling.
      *
-     * @return void
+     * @return bool True if the row was persisted; false if the module is missing
+     *              or the save failed (e.g. locked DB).
      */
-    private function persistState(string $disabled, string $reason = '', string $reasonText = ''): void
+    private function persistState(string $disabled, string $reason = '', string $reasonText = ''): bool
     {
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ($module === null) {
-            return;
+            return false;
         }
         $module->disabled = $disabled;
         $module->disableReason = $reason;
         $module->disableReasonText = $reasonText;
-        $module->save();
+
+        // The result MUST be honoured: a failed save (e.g. locked DB) means the
+        // flag was not persisted, so callers must not report success.
+        return (bool)$module->save();
     }
 
     /**
@@ -669,7 +696,12 @@ class PbxExtensionState extends Injectable
             return null;
         }
 
-        flock($handle, LOCK_EX);
+        if ( ! flock($handle, LOCK_EX)) {
+            // Could not acquire the lock — do NOT register it, otherwise the caller
+            // would proceed believing it is serialized. Degrade gracefully.
+            fclose($handle);
+            return null;
+        }
         self::$heldStateLocks[$path] = true;
 
         return $handle;
