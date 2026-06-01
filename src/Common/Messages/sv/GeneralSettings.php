@@ -961,6 +961,7 @@ return [
     'gs_MainTab' => 'Allmänt',
     'gs_SkippedDuplicates' => 'Dubbletter hoppade över',
     'api_UnknownAction' => 'Okänd åtgärd',
+    'api_ProviderNotFound' => 'Leverantören hittades inte',
     'gs_SIPExpiryRangeTooltip_how_it_works' => 'Funktionsprincip:',
     'gs_SSHAuthorizedKeysTooltip_format_desc' => 'ssh-rsa AAAAB3NzaC1... användare@värdnamn (en nyckel per rad)',
     'gs_SSHAuthorizedKeysTooltip_how_to_add' => 'Så här lägger du till en nyckel:',

@@ -90,6 +90,7 @@ return [
     'gs_PasswordTooShort' => 'Parola este prea scurtă (minim %min% caractere)',
     'gs_InvalidPasswordsFormat' => 'Format nevalid al parolelor',
     'api_UnknownAction' => 'Acțiune necunoscută',
+    'api_ProviderNotFound' => 'Furnizorul nu a fost găsit',
     'gs_WebPort' => 'Portul HTTP',
     'gs_WebHTTPSPort' => 'Portul HTTPS',
     'gs_WEBHTTPSPrivateKey' => 'Cheia privată HTTPS',

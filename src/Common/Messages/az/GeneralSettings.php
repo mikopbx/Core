@@ -92,6 +92,7 @@ return [
     // Password strength and validation keys moved to Passwords.php - use psw_ prefix instead
     'gs_InvalidPasswordsFormat' => 'Parolların formatı düzgün deyil',
     'api_UnknownAction' => 'Naməlum hərəkət',
+    'api_ProviderNotFound' => 'Provayder tapılmadı',
     'gs_WebPort' => 'HTTP portu',
     'gs_WebHTTPSPort' => 'HTTPS portu',
     'gs_WEBHTTPSPrivateKey' => 'HTTPS şəxsi açarı',

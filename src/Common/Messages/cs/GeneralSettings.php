@@ -92,6 +92,7 @@ return [
     // Password strength and validation keys moved to Passwords.php - use psw_ prefix instead
     'gs_InvalidPasswordsFormat' => 'Neplatný formát hesel',
     'api_UnknownAction' => 'Neznámá akce',
+    'api_ProviderNotFound' => 'Poskytovatel nenalezen',
     'gs_WebPort' => 'HTTP port',
     'gs_WebHTTPSPort' => 'HTTPS port',
     'gs_WEBHTTPSPrivateKey' => 'HTTPS privátní klíč',

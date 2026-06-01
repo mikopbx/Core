@@ -92,6 +92,7 @@ return [
     // Password strength and validation keys moved to Passwords.php - use psw_ prefix instead
     'gs_InvalidPasswordsFormat' => 'Virheellinen salasanojen muoto',
     'api_UnknownAction' => 'Tuntematon toiminto',
+    'api_ProviderNotFound' => 'Palveluntarjoajaa ei löytynyt',
     'gs_WebPort' => 'HTTP-portti',
     'gs_WebHTTPSPort' => 'HTTPS-portti',
     'gs_WEBHTTPSPrivateKey' => 'HTTPS yksityinen avain',

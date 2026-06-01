@@ -891,6 +891,7 @@ return [
     'gs_MainTab' => 'ทั่วไป',
     'gs_SSHKeyColumn' => 'คีย์ SSH',
     'api_UnknownAction' => 'การกระทำที่ไม่ทราบสาเหตุ',
+    'api_ProviderNotFound' => 'ไม่พบผู้ให้บริการ',
     'gs_WebAdminLogin' => 'เข้าสู่ระบบ',
     'gs_SIPAuthPrefix' => 'คำนำหน้าชื่อผู้ใช้สำหรับการตรวจสอบสิทธิ์ คำนำหน้านี้จะถูกเพิ่มต่อท้ายชื่อผู้ใช้',
     'gs_DisableAllModules' => 'ปิดใช้งานตลาดซื้อขาย',

@@ -90,6 +90,7 @@ return [
     'gs_PasswordTooShort' => 'პაროლი ძალიან მოკლეა (მინიმუმ %min% სიმბოლო)',
     'gs_InvalidPasswordsFormat' => 'პაროლების არასწორი ფორმატი',
     'api_UnknownAction' => 'უცნობი მოქმედება',
+    'api_ProviderNotFound' => 'პროვაიდერი ვერ მოიძებნა',
     'gs_WebPort' => 'HTTP პორტი',
     'gs_WebHTTPSPort' => 'HTTPS პორტი',
     'gs_WEBHTTPSPrivateKey' => 'HTTPS პრივატული გასაღები',

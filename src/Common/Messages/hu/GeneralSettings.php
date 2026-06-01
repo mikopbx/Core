@@ -49,6 +49,7 @@ return [
     // Password strength and validation keys moved to Passwords.php - use psw_ prefix instead
     'gs_InvalidPasswordsFormat' => 'Helytelen jelszóformátum',
     'api_UnknownAction' => 'Ismeretlen művelet',
+    'api_ProviderNotFound' => 'Szolgáltató nem található',
     'gs_WebPort' => 'HTTP port',
     'gs_WebHTTPSPort' => 'HTTPS port',
     'gs_WEBHTTPSPrivateKey' => 'HTTPS privát kulcs',

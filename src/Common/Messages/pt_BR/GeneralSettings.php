@@ -90,6 +90,7 @@ return [
     'gs_PasswordTooShort' => 'Senha muito curta (mínimo %min% caracteres)',
     'gs_InvalidPasswordsFormat' => 'Formato de senha inválido',
     'api_UnknownAction' => 'Ação desconhecida',
+    'api_ProviderNotFound' => 'Provedor não encontrado',
     'gs_WebPort' => 'Porta HTTP',
     'gs_WebHTTPSPort' => 'Porta HTTPS',
     'gs_WEBHTTPSPrivateKey' => 'Chave privada HTTPS',

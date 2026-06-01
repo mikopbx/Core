@@ -90,6 +90,7 @@ return [
     'gs_PasswordTooShort' => 'Wachtwoord te kort (minimaal %min% tekens)',
     'gs_InvalidPasswordsFormat' => 'Ongeldig wachtwoord formaat',
     'api_UnknownAction' => 'Onbekende actie',
+    'api_ProviderNotFound' => 'Provider niet gevonden',
     'gs_WebPort' => 'HTTP poort',
     'gs_WebHTTPSPort' => 'HTTPS poort',
     'gs_WEBHTTPSPrivateKey' => 'HTTPS privé sleutel',
