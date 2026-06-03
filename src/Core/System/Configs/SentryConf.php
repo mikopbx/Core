@@ -50,8 +50,8 @@ class SentryConf extends Injectable
             // Set up options for the Sentry client
             $options = [
                 'dsn'         => $sentryConfig->dsn,
-                'environment' => $sentryConfig->enviroment??'development',
-                'traces_sample_rate' =>($sentryConfig->enviroment !== 'development') ? 0.05: 1.0,
+                'environment' => $sentryConfig->environment??'development',
+                'traces_sample_rate' =>($sentryConfig->environment !== 'development') ? 0.05: 1.0,
             ];
 
             // Set 'release' option if /etc/version file exists
