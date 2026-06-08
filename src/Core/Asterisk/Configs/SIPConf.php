@@ -183,7 +183,10 @@ class SIPConf extends AsteriskConfigClass
      * and the topology hash at the same wall-clock moment, leaving Asterisk
      * to module-reload a half-flushed config. See code-review item Critical-1.
      */
-    public const string MUTEX_CONF_WRITE = 'pjsip-conf-write';
+    // Shared mutex serializing ALL Asterisk config reloads (pjsip 'core reload',
+    // dialplan reload, pjsip-identify) so they never overlap. The Redis key value
+    // is kept as the legacy 'pjsip-conf-write' string for lock-key stability.
+    public const string MUTEX_ASTERISK_RELOAD = 'pjsip-conf-write';
 
     /**
      * Provider → {ips: [], hostnames: []} map of admin-controlled additional
@@ -3323,7 +3326,7 @@ class SIPConf extends AsteriskConfigClass
      * Refreshes the SIP configurations and reloads the PJSIP module.
      * Synchronizes codec database with Asterisk before regenerating config.
      *
-     * Serialized through MUTEX_CONF_WRITE so it cannot race with the narrow
+     * Serialized through MUTEX_ASTERISK_RELOAD so it cannot race with the narrow
      * ReloadPJSIPIdentifyAction (which also regenerates pjsip.conf). Both
      * paths writing the same file at the same wall-clock moment would let
      * Asterisk module-reload a half-flushed config — see code-review
@@ -3338,7 +3341,7 @@ class SIPConf extends AsteriskConfigClass
 
         try {
             $di->get(MutexProvider::SERVICE_NAME)->synchronized(
-                self::MUTEX_CONF_WRITE,
+                self::MUTEX_ASTERISK_RELOAD,
                 static fn() => self::reloadUnderLock(),
                 timeout: 10,
                 ttl: 30
@@ -3356,7 +3359,7 @@ class SIPConf extends AsteriskConfigClass
      * Body of {@see self::reload()}, separated to keep the mutex-acquisition
      * and the configuration-regeneration paths visually distinct.
      *
-     * Callers MUST hold MUTEX_CONF_WRITE for the duration of this call. The
+     * Callers MUST hold MUTEX_ASTERISK_RELOAD for the duration of this call. The
      * single caller is the closure inside {@see self::reload()} itself —
      * external callers go through `reload()` to acquire the lock first.
      */

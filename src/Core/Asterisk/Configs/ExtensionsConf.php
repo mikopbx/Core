@@ -20,9 +20,11 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\IncomingRoutingTable;
+use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\{IncomingContexts, InternalContexts, OutgoingContext};
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\{Directories, Processes, System, Util};
+use MikoPBX\Core\System\{Directories, Processes, System, SystemMessages, Util};
+use Phalcon\Di\Di;
 
 /**
  * Represents the Asterisk configuration class for handling extensions.conf and 99-extensions-override.lua
@@ -310,9 +312,51 @@ class ExtensionsConf extends AsteriskConfigClass
 
     /**
      * Reloads the Asterisk dialplan and Lua module.
-     * Only applies reload if not during system boot.
+     *
+     * Acquires SIPConf::MUTEX_ASTERISK_RELOAD so the dialplan reload can never
+     * overlap a PJSIP 'core reload' or another dialplan reload — overlapping
+     * Asterisk reloads can deadlock the PBX (empty hints, stuck PJSIP/AMI, #1076).
+     * Burst coalescing is handled upstream (WorkerModelsEvents 5s debounce + one
+     * consolidated change event per bulk operation), so this method only needs to
+     * serialize. If the mutex cannot be acquired the reload is skipped and the next
+     * change re-triggers it (generateConfig always reads the current DB state).
      */
     public static function reload(): void
+    {
+        $di = Di::getDefault();
+        if ($di === null) {
+            self::reloadUnderLock();
+            return;
+        }
+
+        try {
+            $di->get(MutexProvider::SERVICE_NAME)->synchronized(
+                SIPConf::MUTEX_ASTERISK_RELOAD,
+                static fn() => self::reloadUnderLock(),
+                timeout: 10,
+                ttl: 30
+            );
+        } catch (\Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                'dialplan reload skipped: could not acquire mutex (' . $e->getMessage() . ')',
+                LOG_WARNING
+            );
+        }
+    }
+
+    /**
+     * Body of {@see self::reload()}: regenerate extensions.conf and issue the
+     * Asterisk dialplan/Lua reload. Only reloads when not booting.
+     *
+     * Callers MUST already hold SIPConf::MUTEX_ASTERISK_RELOAD. The only external
+     * caller is {@see \MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPIdentifyAction},
+     * which reloads the dialplan from inside the same mutex after a canonical-IP
+     * change; every other caller goes through reload() to acquire the lock first.
+     *
+     * @return void
+     */
+    public static function reloadUnderLock(): void
     {
         // The off-work-times generator inside generateConfig() calls
         // SIPConf::getIncomingContextId() which consults a process-local memo
@@ -322,8 +366,7 @@ class ExtensionsConf extends AsteriskConfigClass
         // Drop it before regenerating to guarantee context-name freshness.
         SIPConf::resetResolvedIpsMemo();
 
-        $conf = new self();
-        $conf->generateConfig();
+        (new self())->generateConfig();
 
         // Only reload if not during system boot
         if (!System::isBooting()) {

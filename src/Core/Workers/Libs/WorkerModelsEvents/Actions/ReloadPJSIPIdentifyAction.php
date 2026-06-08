@@ -41,7 +41,7 @@ use Throwable;
  *     stay in lock-step; a brief Redis blip between two unsynchronised
  *     writes could otherwise leave them out of sync.
  *
- * Serialized with {@see SIPConf::reload} via the {@see SIPConf::MUTEX_CONF_WRITE}
+ * Serialized with {@see SIPConf::reload} via the {@see SIPConf::MUTEX_ASTERISK_RELOAD}
  * mutex.
  */
 class ReloadPJSIPIdentifyAction implements ReloadActionInterface
@@ -55,7 +55,7 @@ class ReloadPJSIPIdentifyAction implements ReloadActionInterface
 
         try {
             $di->get(MutexProvider::SERVICE_NAME)->synchronized(
-                SIPConf::MUTEX_CONF_WRITE,
+                SIPConf::MUTEX_ASTERISK_RELOAD,
                 static fn() => self::regenerateAndReload($parameters),
                 timeout: 10,
                 ttl: 30
@@ -74,11 +74,11 @@ class ReloadPJSIPIdentifyAction implements ReloadActionInterface
     }
 
     /**
-     * Body of the action, executed under MUTEX_CONF_WRITE.
+     * Body of the action, executed under MUTEX_ASTERISK_RELOAD.
      *
      * Always non-destructive: regenerate pjsip.conf → `module reload
      * res_pjsip_endpoint_identifier_ip.so`, plus optional `dialplan reload`
-     * via ExtensionsConf::reload() when the canonical IP shifted. Neither
+     * via ExtensionsConf::reloadUnderLock() when the canonical IP shifted. Neither
      * command hangs up live channels. We deliberately do NOT call
      * `safeRestart()` here even if topology is dirty — see class docblock.
      */
@@ -134,13 +134,16 @@ class ReloadPJSIPIdentifyAction implements ReloadActionInterface
         // just rewritten with the new name; extensions.conf must be brought
         // along under the same lock so a concurrent Redis blip cannot leave
         // the two referencing different section names. Asterisk's
-        // `dialplan reload` (issued inside ExtensionsConf::reload) is
+        // `dialplan reload` (issued inside ExtensionsConf::reloadUnderLock) is
         // non-destructive on live channels — established calls finish in
         // the old context section, new INVITEs land in the new one.
         $canonicalChanged = !empty($parameters['canonicalChanged']);
         if ($canonicalChanged) {
             try {
-                ExtensionsConf::reload();
+                // We already hold MUTEX_ASTERISK_RELOAD here, so call the
+                // under-lock body directly — reload() would try to re-acquire the
+                // same (non-reentrant) mutex and time out, skipping the reload.
+                ExtensionsConf::reloadUnderLock();
                 SystemMessages::sysLogMsg(
                     __METHOD__,
                     'Reloaded dialplan after canonical IP change',

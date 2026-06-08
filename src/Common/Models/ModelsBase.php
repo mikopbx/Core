@@ -164,12 +164,91 @@ class ModelsBase extends Model
     }
 
     /**
+     * Nesting depth of bulk-change sections. While > 0, per-record model change
+     * events (backend reload jobs and frontend notifications) are suppressed and
+     * a single consolidated event is emitted after the transaction instead of one
+     * per row — e.g. drag-and-drop priority reordering (#1076), which would
+     * otherwise fire one dialplan-reload request per changed row.
+     *
+     * A depth counter (rather than a bool) keeps nested begin/end pairs safe: an
+     * inner endDeferModelEvents() must not prematurely re-enable events for an
+     * outer section.
+     */
+    private static int $deferModelEventsDepth = 0;
+
+    /**
+     * Begins a bulk-change section: per-row model change events are suppressed
+     * until the matching endDeferModelEvents(). Always pair with a finally block.
+     *
+     * @return void
+     */
+    public static function beginDeferModelEvents(): void
+    {
+        self::$deferModelEventsDepth++;
+    }
+
+    /**
+     * Ends a bulk-change section started by beginDeferModelEvents(). Clamped at
+     * zero so an unbalanced extra call cannot drive the depth negative.
+     *
+     * @return void
+     */
+    public static function endDeferModelEvents(): void
+    {
+        if (self::$deferModelEventsDepth > 0) {
+            self::$deferModelEventsDepth--;
+        }
+    }
+
+    /**
+     * Publishes a single "model changed" event to WorkerModelsEvents, used to
+     * trigger one consolidated reload after a bulk operation that ran with
+     * deferred per-row events.
+     *
+     * @param string $modelClass    Fully qualified model class name.
+     * @param array  $changedFields Changed field names (for reload mapping).
+     * @param string $recordId      Optional representative record id.
+     * @return void
+     */
+    public static function enqueueModelChangedEvent(
+        string $modelClass,
+        array $changedFields = [],
+        string $recordId = ''
+    ): void {
+        $di = Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+        $queue = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
+        if ($queue === null) {
+            return;
+        }
+        $queue->publish(
+            json_encode(
+                [
+                    'source' => BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED,
+                    'model' => $modelClass,
+                    'recordId' => $recordId,
+                    'action' => 'afterSave',
+                    'changedFields' => $changedFields,
+                ]
+            )
+        );
+    }
+
+    /**
      * Sends changed fields and settings to backend worker WorkerModelsEvents
      *
      * @param $action string may be afterSave or afterDelete
      */
     private function processSettingsChanges(string $action): void
     {
+        // Bulk operations defer per-row events and emit one consolidated event
+        // after the transaction (see beginDeferModelEvents()). Skip here (#1076).
+        if (self::$deferModelEventsDepth > 0) {
+            return;
+        }
+
         $doNotTrackThisDB = [
             CDRDatabaseProvider::SERVICE_NAME,
         ];

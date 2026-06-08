@@ -61,9 +61,9 @@ class GetDefaultAction
             $model->prepend = '';
             $model->note = '';
             
-            // Set priority to max+1
-            $maxPriority = OutgoingRoutingTable::maximum(['column' => 'priority']);
-            $model->priority = (string)((int)$maxPriority + 1);
+            // Set priority to the next free value, computed numerically
+            // (priority is TEXT, so MAX() compares lexicographically, #1076).
+            $model->priority = (string)OutgoingRoutingTable::getNextPriority();
             
             // Convert to data structure
             $res->data = DataStructure::createFromModel($model);

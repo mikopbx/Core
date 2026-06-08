@@ -24,6 +24,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Common;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Models\ModelsBase;
 
 /**
  * Abstract base class for REST API priority change actions
@@ -122,39 +123,53 @@ abstract class AbstractChangePriorityAction
         ?string $nameField = null
     ): array {
         try {
-            $result = BaseActionHelper::executeInTransaction(function() use (
-                $priorities,
-                $modelClass,
-                $entityType,
-                $priorityField,
-                $nameField
-            ) {
-                $updatedCount = 0;
-                $errors = [];
+            // Suppress per-row model events during the bulk update; a single
+            // consolidated event is emitted after the transaction so the backend
+            // runs one reload instead of one per changed row (#1076).
+            ModelsBase::beginDeferModelEvents();
+            try {
+                $result = BaseActionHelper::executeInTransaction(function() use (
+                    $priorities,
+                    $modelClass,
+                    $entityType,
+                    $priorityField,
+                    $nameField
+                ) {
+                    $updatedCount = 0;
+                    $errors = [];
 
-                foreach ($priorities as $entityId => $newPriority) {
-                    $updateResult = self::updateSingleEntityPriority(
-                        (string)$entityId,
-                        (int)$newPriority,
-                        $modelClass,
-                        $entityType,
-                        $priorityField,
-                        $nameField
-                    );
+                    foreach ($priorities as $entityId => $newPriority) {
+                        $updateResult = self::updateSingleEntityPriority(
+                            (string)$entityId,
+                            (int)$newPriority,
+                            $modelClass,
+                            $entityType,
+                            $priorityField,
+                            $nameField
+                        );
 
-                    if ($updateResult['success']) {
-                        $updatedCount++;
-                    } elseif ($updateResult['error']) {
-                        $errors[] = $updateResult['error'];
+                        if ($updateResult['success']) {
+                            $updatedCount++;
+                        } elseif ($updateResult['error']) {
+                            $errors[] = $updateResult['error'];
+                        }
                     }
-                }
 
-                if (!empty($errors)) {
-                    throw new \Exception(implode('; ', $errors));
-                }
+                    if (!empty($errors)) {
+                        throw new \Exception(implode('; ', $errors));
+                    }
 
-                return $updatedCount;
-            });
+                    return $updatedCount;
+                });
+            } finally {
+                ModelsBase::endDeferModelEvents();
+            }
+
+            // Emit one consolidated change event for the whole bulk update so
+            // WorkerModelsEvents runs a single reload instead of one per row (#1076).
+            if (is_int($result) && $result > 0) {
+                ModelsBase::enqueueModelChangedEvent($modelClass, [$priorityField]);
+            }
 
             return ['success' => true, 'count' => $result];
 
