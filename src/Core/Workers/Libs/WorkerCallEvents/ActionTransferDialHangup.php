@@ -126,15 +126,29 @@ class ActionTransferDialHangup
      */
     private static function fillNotAnsweredCdr(WorkerCallEvents $worker, array $data): void
     {
-        // Close the transfer-attempt CDR. When the transfer target never picked up
-        // (e.g. CHANUNAVAIL / NO_CONTACTS), the row has transfer=1 and an empty dst_chan —
-        // matching on src_chan=TRANSFERERNAME is enough to identify it.
+        // Close the transfer-attempt CDR.
+        // When the hung-up leg has a concrete destination channel (a reachable agent that
+        // rejected the call, or the queue management channel), match it exactly so parallel
+        // sibling legs — including one that has JUST been answered — are not closed by
+        // mistake. All parallel legs of one transferer share src_chan=TRANSFERERNAME, so
+        // matching on src_chan alone would wrongly close the answered leg and lose the final
+        // bridge recording (#1084).
+        // When the transfer target never picked up (e.g. CHANUNAVAIL / NO_CONTACTS), the
+        // event carries an empty dst_chan; src_chan + answer="" still uniquely identifies the
+        // attempt row (preserves the resume-recording fix from 88c0574dc).
+        $conditions = 'linkedid = :linkedid: AND endtime = "" AND transfer = "1" '
+            . 'AND src_chan = :src_chan: AND answer = ""';
+        $bind = [
+            'linkedid' => $data['linkedid'],
+            'src_chan' => $data['TRANSFERERNAME'],
+        ];
+        if (!empty($data['dst_chan'])) {
+            $conditions .= ' AND dst_chan = :dst_chan:';
+            $bind['dst_chan'] = $data['dst_chan'];
+        }
         $filter = [
-            'linkedid=:linkedid: AND endtime = "" AND transfer = "1" AND src_chan = :src_chan:',
-            'bind' => [
-                'linkedid' => $data['linkedid'],
-                'src_chan' => $data['TRANSFERERNAME'],
-            ],
+            $conditions,
+            'bind' => $bind,
         ];
         /** @var CallDetailRecordsTmp $m_data */
         /** @var CallDetailRecordsTmp $row */
