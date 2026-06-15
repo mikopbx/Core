@@ -191,7 +191,10 @@ class WorkerCallEvents extends WorkerBase
         $file_name = str_replace('/', '_', $file_name);
         if ($this->record_calls) {
             $fileExt = $this->getRecordingFileExtension($channel);
-            [$f, $options] = $this->setMonitorFilenameOptions($full_name, $sub_dir, $file_name, $fileExt);
+            // $fileExt is reassigned to the EFFECTIVE extension: on resume it follows the
+            // already-existing _in/_out tracks so the mono mix ($srcFile) stays consistent
+            // with them and WorkerWav2Webm picks the right tracks to merge.
+            [$f, $options, $fileExt] = $this->setMonitorFilenameOptions($full_name, $sub_dir, $file_name, $fileExt);
             $arr = $this->am->GetChannels(false);
             if (!in_array($channel, $arr, true)) {
                 return '';
@@ -222,9 +225,12 @@ class WorkerCallEvents extends WorkerBase
      * @param string $file_name The name of the file.
      * @param string $fileExt The recording file extension (wav48, wav16, or wav).
      *
-     * @return array An array containing the full file path and the options for the recording.
-     *               If $this->split_audio_thread is true, options will be set to split audio in two separate files (in/out).
-     *               Otherwise, 'ab' will be returned as options.
+     * @return array [string $basePath, string $options, string $effectiveExt]. If stereo split
+     *               tracks (_in/_out) already exist for this base path, append into them (resume
+     *               case) and return their extension as $effectiveExt. Otherwise, if
+     *               $this->split_audio_thread is true, options split audio into two separate files
+     *               (in/out); else 'ab'. $effectiveExt lets the caller keep the mono mix filename
+     *               consistent with the tracks WorkerWav2Webm will merge.
      */
     public function setMonitorFilenameOptions(string $full_name, string $sub_dir, string $file_name, string $fileExt = 'wav'): array
     {
@@ -238,12 +244,25 @@ class WorkerCallEvents extends WorkerBase
         } else {
             $f = Util::trimExtensionForFile($full_name);
         }
+
+        // When resuming an interrupted recording (e.g. after a failed attended transfer)
+        // the stereo split tracks may already exist on disk. WorkerWav2Webm always merges
+        // _in/_out when both are present and ignores the mono mix, so the resumed audio MUST
+        // be appended to those same tracks — regardless of the current split_audio_thread
+        // value — otherwise it lands only in the mono mix and is silently dropped from the
+        // final .webm. Extension priority mirrors WorkerWav2Webm::detectSourceFileExtension().
+        foreach (['wav48', 'wav16', 'wav'] as $existingExt) {
+            if (file_exists("{$f}_in.$existingExt") && file_exists("{$f}_out.$existingExt")) {
+                return [$f, "abr({$f}_in.$existingExt)t({$f}_out.$existingExt)", $existingExt];
+            }
+        }
+
         if ($this->split_audio_thread) {
             $options = "abr({$f}_in.$fileExt)t({$f}_out.$fileExt)";
         } else {
             $options = 'ab';
         }
-        return array($f, $options);
+        return array($f, $options, $fileExt);
     }
 
     /**
