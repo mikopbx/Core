@@ -419,14 +419,18 @@ class SIPConf extends AsteriskConfigClass
                 $conf      .= IncomingContexts::generate($contextsData, '', $context_id);
                 $contexts[] = $provider['context_id'];
 
-                // Generate CallerID/DID processing contexts for all providers in this context
+                // Generate the CallerID/DID processing context for this shared incoming
+                // context. The cid-did subroutine is entered via Gosub(${CONTEXT}-cid-did,..)
+                // where CONTEXT is "{context_id}-incoming", so it must be named after
+                // $context_id (not a provider uniqid) to be reachable, and its redirect Goto
+                // must return to "{context_id}-incoming". A shared context therefore supports
+                // a single DID-parsing config: the first provider in the group that needs it.
                 foreach ($this->data_providers as $contextProvider) {
                     if ($contextProvider['context_id'] === $provider['context_id']
-                        && $this->needsCallerIdDidProcessing($contextProvider)
-                        && !in_array($contextProvider['uniqid'], $processedProviders, true)) {
-                        $processor = new CallerIdDidProcessor($contextProvider['uniqid'], $contextProvider);
+                        && $this->needsCallerIdDidProcessing($contextProvider)) {
+                        $processor = new CallerIdDidProcessor($context_id, $contextProvider);
                         $conf .= $processor->generateIncomingProcessingContext();
-                        $processedProviders[] = $contextProvider['uniqid'];
+                        break;
                     }
                 }
             }
