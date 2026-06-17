@@ -347,9 +347,11 @@ const extension = {
         // Dynamic check to see if the selected mobile number is available
         ExtensionsAPI.checkAvailability(extension.defaultMobileNumber, newMobileNumber, 'mobile-number', userId);
 
-        // Refill the mobile dialstring if the new mobile number is different than the default or if the mobile dialstring is empty
-        if (newMobileNumber !== extension.defaultMobileNumber
-            || (extension.$formObj.form('get value', 'mobile_dialstring').length === 0)
+        // Refill the mobile dialstring only when it was left at its default (equal to the old mobile number)
+        // or empty. A user-defined dial string override must survive a mobile number change (issue #1081).
+        const currentDialstring = extension.$formObj.form('get value', 'mobile_dialstring');
+        if (currentDialstring === extension.defaultMobileNumber
+            || currentDialstring.length === 0
         ) {
             extension.$formObj.form('set value', 'mobile_dialstring', newMobileNumber);
         }
