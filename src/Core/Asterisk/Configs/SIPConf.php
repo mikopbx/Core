@@ -575,7 +575,9 @@ class SIPConf extends AsteriskConfigClass
 
             // Retrieve used codecs.
             $arr_data['codecs'] = $this->getCodecs();
-            $arr_data['enableRecording'] = $arr_data['enableRecording'] !== '0';
+            // enableRecording is an INTEGER column; on PHP 8.1+ PDO_SQLITE returns it as
+            // native int via resultset hydration, so compare numerically (0 = disabled).
+            $arr_data['enableRecording'] = (int)($arr_data['enableRecording'] ?? 1) !== 0;
             $arr_data['accept_multiple_calls'] = ($arr_data['accept_multiple_calls'] ?? '0') === '1';
 
             // Retrieve employee name.

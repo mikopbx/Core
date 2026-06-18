@@ -476,8 +476,10 @@ class WorkerCallEvents extends WorkerBase
                 // Store the number
                 $this->innerNumbers[] = $num;
 
-                // If recording is not enabled for this peer, store it as an exception
-                if ($peer->enableRecording === '0') {
+                // If recording is not enabled for this peer, store it as an exception.
+                // enableRecording is an INTEGER column; on PHP 8.1+ PDO_SQLITE returns it
+                // as native int via partial-column hydration, so compare numerically.
+                if ((int)($peer->enableRecording ?? 1) === 0) {
                     $this->exceptionsNumbers[] = $num;
                 }
             }
