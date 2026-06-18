@@ -69,9 +69,12 @@ class PbxConf extends SystemConfigClass
             Util::mwMkdir($this->runDirPath);
         }
         chmod($this->runDirPath, 0770);
-        $binPath = Util::which(self::PROC_NAME);
-        // Raise FD limit for high call volume (default 1024 limits ~160 concurrent calls)
-        $this->startCommand = "ulimit -n 65535; $binPath -F";
+        // Boot start goes through the same wrapper monit uses (safe_asterisk_start):
+        // it raises the FD limit, preloads jemalloc to bound RSS (with a glibc
+        // arena-cap fallback), guards against duplicate instances, and exec's
+        // Asterisk. Keeping a single start path avoids drift between the boot
+        // command and the monit start program.
+        $this->startCommand = Util::which('safe_asterisk_start');
     }
 
     public function generateMonitConf(): bool
