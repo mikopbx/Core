@@ -194,6 +194,7 @@ const extension = {
         extension.$number = $('#number');
         extension.$sip_secret = $('#sip_secret');
         extension.$mobile_number = $('#mobile_number');
+        extension.$mobile_dialstring = $('#mobile_dialstring');
         extension.$fwd_forwarding = $('#fwd_forwarding');
         extension.$fwd_forwardingonbusy = $('#fwd_forwardingonbusy');
         extension.$fwd_forwardingonunavailable = $('#fwd_forwardingonunavailable');
@@ -476,26 +477,43 @@ const extension = {
             extension.cbOnCompleteNumber();
         });
 
-        // Set up the input masks for the mobile number input
-        const maskList = $.masksSort(InputMaskPatterns, ['#'], /[0-9]|#/, 'mask');
-        extension.$mobile_number.inputmasks({
-            inputmask: {
-                definitions: {
-                    '#': {
-                        validator: '[0-9]',
-                        cardinality: 1,
+        // Set up the input masks for the mobile number input.
+        //
+        // The mask list is partitioned so that masks WITHOUT a leading "+" (plain national
+        // and short-number formats) are matched before the per-country "+" masks. Combined
+        // with the plain 7-digit formats in InputMaskPatterns, this lets short internal
+        // numbers (5/6/7 digits) keep a plain format and complete/save instead of being
+        // hijacked by a country-code mask (e.g. "+211-11-___-____") that never completes
+        // and blocks the save (issue #1081 follow-up). Numbers longer than 7 digits, or any
+        // value starting with "+", have no plain match left and fall through to the full
+        // per-country international formatting automatically.
+        const sortedMaskList = $.masksSort(InputMaskPatterns, ['#'], /[0-9]|#/, 'mask');
+        const mobileMaskList = sortedMaskList
+            .filter(item => item.mask.charAt(0) !== '+')
+            .concat(sortedMaskList.filter(item => item.mask.charAt(0) === '+'));
+
+        // Reusable (re)initialiser so the dial-string auto-fill below can re-apply the mask
+        // to a freshly injected raw value without it being truncated by the previous mask.
+        extension.initMobileMask = function () {
+            extension.$mobile_number.inputmasks({
+                inputmask: {
+                    definitions: {
+                        '#': {
+                            validator: '[0-9]',
+                            cardinality: 1,
+                        },
                     },
+                    oncleared: extension.cbOnClearedMobileNumber,
+                    oncomplete: extension.cbOnCompleteMobileNumber,
+                    showMaskOnHover: false,
                 },
-                oncleared: extension.cbOnClearedMobileNumber,
-                oncomplete: extension.cbOnCompleteMobileNumber,
-                showMaskOnHover: false,
-                // Remove onBeforePaste to prevent conflicts with our custom handler
-            },
-            match: /[0-9]/,
-            replace: '9',
-            list: maskList,
-            listKey: 'mask',
-        });
+                match: /[0-9]/,
+                replace: '9',
+                list: mobileMaskList,
+                listKey: 'mask',
+            });
+        };
+        extension.initMobileMask();
 
         // Add handler for programmatic value changes (for tests and automation)
         const originalVal = $.fn.val;
@@ -595,6 +613,31 @@ const extension = {
             let phone = $(e.target).val().replace(/[^0-9]/g, "");
             if (phone === '') {
                 $(e.target).val('');
+            }
+        });
+
+        // When the dial string override is filled while the mobile number is still empty,
+        // copy it into the (empty) mobile number and let the mask engage. Without a mobile
+        // number the backend drops the whole ExternalPhones row on save, silently clearing
+        // the dial string the user just typed (issue #1081 follow-up).
+        extension.$mobile_dialstring.on('change', function () {
+            const dialstring = (this.value || '').trim();
+            const currentMobile = extension.$mobile_number.data('inputmask')
+                ? extension.$mobile_number.inputmask('unmaskedvalue')
+                : (extension.$mobile_number.val() || '');
+            // Only auto-fill from a plain phone-number dial string (optional leading "+").
+            // A non-numeric dial string (e.g. "SIP/trunk/123") would be mangled by the
+            // digit-only mask, so it is left untouched.
+            if (/^\+?\d+$/.test(dialstring) && currentMobile === '') {
+                // Remove the current mask, inject the raw value (so it is not truncated by a
+                // shorter active mask), then re-initialise so the right mask is chosen and
+                // formatting applied. 'change' keeps dependent handlers (availability) in sync.
+                // NOTE: inputmasks('remove') nulls the `.inputmasks` method on the jQuery
+                // object it is called on, so call it on a throwaway wrapper, not the cached one.
+                $('#mobile_number').inputmasks('remove');
+                extension.$mobile_number.val(dialstring);
+                extension.initMobileMask();
+                extension.$mobile_number.trigger('change');
             }
         });
     },

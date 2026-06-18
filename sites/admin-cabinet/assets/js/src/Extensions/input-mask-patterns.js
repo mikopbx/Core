@@ -68,6 +68,17 @@ const InputMaskPatterns = [
     {mask: '8##-###', cc: '', name_en: '', desc_en: '', name_ru: '', desc_ru: '',},
     {mask: '9##-###', cc: '', name_en: '', desc_en: '', name_ru: '', desc_ru: '',},
 
+    {mask: '0##-####', cc: '', name_en: '', desc_en: '', name_ru: '', desc_ru: '',},
+    {mask: '1##-####', cc: '', name_en: '', desc_en: '', name_ru: '', desc_ru: '',},
+    {mask: '2##-####', cc: '', name_en: '', desc_en: '', name_ru: '', desc_ru: '',},
+    {mask: '3##-####', cc: '', name_en: '', desc_en: '', name_ru: '', desc_ru: '',},
+    {mask: '4##-####', cc: '', name_en: '', desc_en: '', name_ru: '', desc_ru: '',},
+    {mask: '5##-####', cc: '', name_en: '', desc_en: '', name_ru: '', desc_ru: '',},
+    {mask: '6##-####', cc: '', name_en: '', desc_en: '', name_ru: '', desc_ru: '',},
+    {mask: '7##-####', cc: '', name_en: '', desc_en: '', name_ru: '', desc_ru: '',},
+    {mask: '8##-####', cc: '', name_en: '', desc_en: '', name_ru: '', desc_ru: '',},
+    {mask: '9##-####', cc: '', name_en: '', desc_en: '', name_ru: '', desc_ru: '',},
+
     {
         mask: '+8#(###)####-####', cc: 'AC', name_en: 'Ascension', desc_en: '', name_ru: 'Южная Корея', desc_ru: '',
     },
