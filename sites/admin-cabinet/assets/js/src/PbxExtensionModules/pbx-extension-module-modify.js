@@ -64,7 +64,7 @@ const pbxExtensionModuleModify = {
     initialize() {
         pbxExtensionModuleModify.$formObj = $('#pbx-extension-modify-form');
         pbxExtensionModuleModify.$backButton = $('#back-to-list-button');
-        pbxExtensionModuleModify.$dropdownMenuGroups = $('#menu-group');
+        pbxExtensionModuleModify.$dropdownMenuGroups = $('#menu-group-dropdown');
 
         pbxExtensionModuleModify.$dropdownMenuGroups.dropdown();
         pbxExtensionModuleModify.initializeForm();
