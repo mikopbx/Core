@@ -378,7 +378,11 @@ class PbxExtensionState extends Injectable
                 $this->messages = array_merge($this->messages, $this->configClass->getMessages());
             }
 
-            // Kill module workers if specified in the configClass
+            // Kill module workers if specified in the configClass. Kept after the
+            // hooks above so a module's onAfterModuleDisable() still runs with its
+            // workers alive (preserves the original disable contract). If a hook
+            // above throws and skips this kill, WorkerSafeScriptsCore reaps the
+            // now-orphaned workers on its next cycle (isDisabledModuleWorker guard).
             if ($this->configClass !== null
                 && method_exists($this->configClass, SystemConfigInterface::GET_MODULE_WORKERS)) {
                 $workersToKill = call_user_func([$this->configClass, SystemConfigInterface::GET_MODULE_WORKERS]);

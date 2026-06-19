@@ -420,6 +420,36 @@ class WorkerSafeScriptsCore extends WorkerBase
     }
 
     /**
+     * Returns true when the worker belongs to a module that is currently disabled.
+     *
+     * Core (MikoPBX\*) workers always return false — getModuleIdFromClassName()
+     * yields null for them. For module workers the current state is read through
+     * PbxExtensionUtils::isEnabled(), which is backed by the shared Redis cache
+     * (DB4); disableModule() invalidates that cache on save (afterSave →
+     * ModelsBase::clearCache(PbxExtensionModules)), so the supervisor observes
+     * the disabled state on its very next monitoring cycle.
+     *
+     * @param string $workerClass Fully-qualified worker class name.
+     * @return bool
+     */
+    private function isDisabledModuleWorker(string $workerClass): bool
+    {
+        $moduleId = self::getModuleIdFromClassName($workerClass);
+        if ($moduleId === null) {
+            return false;
+        }
+        try {
+            return !PbxExtensionUtils::isEnabled($moduleId);
+        } catch (Throwable $e) {
+            // A Redis/cache hiccup must not crash the supervisor's main loop
+            // (which is not wrapped in try/catch). Degrade to "enabled" so the
+            // worker is monitored normally — the worst case is one extra cycle
+            // before a disabled module's worker is reaped on the next pass.
+            return false;
+        }
+    }
+
+    /**
      * Executes tasks in parallel using PHP Fibers
      *
      * @param array<callable> $tasks Array of callables to execute
@@ -657,6 +687,29 @@ class WorkerSafeScriptsCore extends WorkerBase
             $tasks = [];
             foreach ($arrWorkers as $workerType => $workersWithCurrentType) {
                 foreach ($workersWithCurrentType as $worker) {
+                    // A module worker whose module was disabled must never be
+                    // monitored or respawned. The pbxConfModules provider is a
+                    // per-process shared singleton built at supervisor startup,
+                    // so prepareWorkersList() keeps listing a just-disabled
+                    // module's workers until this process restarts. Without this
+                    // guard the supervisor respawns the workers that
+                    // disableModule()'s killByName() just killed, leaving them as
+                    // orphans (PPID=1) once the supervisor finally restarts with
+                    // a fresh list — reproducibly so when several modules are
+                    // disabled in quick succession. Also reap any orphan still
+                    // running, so the supervisor self-heals regardless of cause.
+                    if ($this->isDisabledModuleWorker($worker)) {
+                        if (Processes::getPidOfProcess($worker) !== '') {
+                            Processes::killByName($worker);
+                            SystemMessages::sysLogMsg(
+                                __CLASS__,
+                                "Reaped orphaned worker of disabled module: {$worker}",
+                                LOG_WARNING
+                            );
+                        }
+                        continue;
+                    }
+
                     if ($this->shouldCheckWorker($worker)) {
                         $tasks[] = match($workerType) {
                             self::CHECK_BY_BEANSTALK => fn() => $this->checkWorkerBeanstalk($worker),
