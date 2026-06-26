@@ -81,7 +81,10 @@ class AclProvider implements ServiceProviderInterface
                     $acl->deny(AclProvider::ROLE_GUESTS, '*', '*');
 
                     // Modules HOOK
-                    PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_ACL_LIST_PREPARED, [&$acl]);
+                    PBXConfModulesProvider::hookModulesMethod(
+                        WebUIConfigInterface::ON_AFTER_ACL_LIST_PREPARED,
+                        [&$acl]
+                    );
 
                     // Allow showing ERROR controllers to everybody
                     $acl->addComponent(new Component('Errors'), ['show401', 'show404', 'show500']);
@@ -90,6 +93,27 @@ class AclProvider implements ServiceProviderInterface
                     // Allow to show session controllers actions to everybody
                     $acl->addComponent(new Component('Session'), ['index', 'start', 'changeLanguage', 'end']);
                     $acl->allow('*', 'Session', ['index', 'start', 'changeLanguage', 'end']);
+
+                    // Allow the stateless password helper endpoints to every authenticated role.
+                    // These REST methods are UI helpers used by every form with a password field
+                    // (e.g. creating an employee). They require a bearer token, expose no record
+                    // data, and must not be gated behind per-group resource permissions — otherwise
+                    // restricted ModuleUsersUI groups get a 403 and the form rejects any password as
+                    // "too weak" because the strength score never returns from the server.
+                    //
+                    // Only the single-password methods the form widget actually calls are granted.
+                    // The batch methods (batchValidate/batchCheckDictionary) are intentionally NOT
+                    // listed: no UI uses them and they loop over an unbounded caller-supplied array,
+                    // so granting them to every role would widen the DoS surface for no benefit.
+                    //
+                    // Canonical method set lives in the controller's #[HttpMapping(customMethods:…)]
+                    // and path in #[ApiResource(path:…)] — see
+                    // src/PBXCoreREST/Controllers/Passwords/RestController.php. Keep this list in
+                    // sync when password helper methods are added or renamed there.
+                    $passwordsComponent = '/pbxcore/api/v3/passwords';
+                    $passwordsActions = ['generate', 'validate', 'checkDictionary'];
+                    $acl->addComponent(new Component($passwordsComponent), $passwordsActions);
+                    $acl->allow('*', $passwordsComponent, $passwordsActions);
 
                     $cache->set(self::CACHE_KEY, $acl, 86400);
                 }

@@ -1042,12 +1042,24 @@ $.fn.form.settings.rules.existRule = (value, parameter) => $(`#${parameter}`).ha
 
 
 $.fn.form.settings.rules.passwordStrength = () => {
-    // Check if password widget exists and password meets minimum score
-    if (extension.passwordWidget) {
-        const state = PasswordWidget.getState(extension.passwordWidget);
-        return state && state.score >= 30; // Minimum score for extensions
+    if (!extension.passwordWidget) {
+        return true; // Pass validation if widget not initialized
     }
-    return true; // Pass validation if widget not initialized
+
+    const value = extension.$sip_secret.val();
+
+    // An empty or masked (unchanged) existing password is not re-gated.
+    if (!value || PasswordWidget.isMaskedPassword(value)) {
+        return true;
+    }
+
+    // Gate on a synchronous local score of the CURRENT field value rather than the
+    // async state.score. state.score is only written when the debounced/in-flight
+    // validation callback completes, so reading it at submit time can see either a
+    // not-yet-computed 0 (false reject) or a stale high score from a previously
+    // validated stronger value (false accept). Scoring the current value here is
+    // race-free; the server result still drives the live progress bar and warnings.
+    return PasswordWidget.scorePasswordLocal(value) >= 30; // Minimum score for extensions
 };
 
 /**
