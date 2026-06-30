@@ -180,13 +180,25 @@ class GetAllStatusesAction extends AbstractProviderStatusAction
             
             foreach ($currentType as $providerId => $status) {
                 $lastStatus = $lastType[$providerId] ?? null;
-                
-                if (!$lastStatus || $lastStatus['state'] !== $status['state']) {
+                $oldState = $lastStatus['state'] ?? 'UNKNOWN';
+                $newState = $status['state'];
+
+                // Skip UNKNOWN on either side: it marks an initial seed (empty cache
+                // after a worker/Redis restart) or a transient indeterminate read,
+                // not a real transition. Recording it produces spurious "registration
+                // lost" events (see issue #1085). The state is still cached below for
+                // the next cycle's comparison — we just don't write it to history.
+                if ($oldState === 'UNKNOWN' || $newState === 'UNKNOWN') {
+                    continue;
+                }
+
+                if ($oldState !== $newState) {
                     $changes[] = [
                         'provider_id' => $providerId,
                         'type' => $type,
-                        'old_state' => $lastStatus ? $lastStatus['state'] : 'UNKNOWN',
-                        'new_state' => $status['state'],
+                        'old_state' => $oldState,
+                        'new_state' => $newState,
+                        'state_color' => $status['stateColor'] ?? null,
                         'username' => $status['username'] ?? '',
                         'host' => $status['host'] ?? '',
                         'timestamp' => time(),
@@ -354,7 +366,10 @@ class GetAllStatusesAction extends AbstractProviderStatusAction
                 'event' => self::getEventDescription($change),
                 'details' => $change['details'] ?? '',
                 'state' => $change['new_state'],
-                'previousState' => $change['old_state']
+                'previousState' => $change['old_state'],
+                // Persist the resolved colour so the timeline renders from a single
+                // source of truth instead of recomputing it with a diverging JS map.
+                'stateColor' => $change['state_color'] ?? null
             ];
             
             $eventJson = json_encode($event);
