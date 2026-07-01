@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\Providers;
 
 use MikoPBX\Common\Models\Providers;
+use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
@@ -71,19 +72,34 @@ class UpdateStatusAction
             $providerId = trim($data['id']);
             $providerType = strtoupper(trim($data['type']));
             $disabled = filter_var($data['disabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
-            
+
+            // Capture the pre-change outbound-registration state (SIP only) so a provider
+            // switched OFF can be de-registered upstream immediately instead of lingering
+            // at the provider until the binding expires.
+            $sipToUnregister = self::captureOutboundRegistration($providerId, $providerType, $disabled);
+
             // Execute status update in transaction
             $result = BaseActionHelper::executeInTransaction(function() use ($providerId, $providerType, $disabled) {
                 return self::updateProviderStatusInTransaction($providerId, $providerType, $disabled);
             });
-            
+
             $res->data = $result;
             $res->success = true;
-            
+
             // Log the status change
             $status = $disabled ? 'disabled' : 'enabled';
             $description = $result['description'];
             SystemMessages::sysLogMsg(__CLASS__, "Provider '{$description}' ({$providerType}) has been {$status} via API", LOG_INFO);
+
+            // Cancel the upstream registration now that the disable has committed, before
+            // the async PJSIP reload removes the registration object from Asterisk.
+            if ($sipToUnregister !== null) {
+                ProviderRegistrationHelper::sendUnregister(
+                    $sipToUnregister['uniqid'],
+                    $sipToUnregister['registration_type'],
+                    $sipToUnregister['description']
+                );
+            }
             
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
@@ -94,8 +110,51 @@ class UpdateStatusAction
     }
     
     /**
+     * Capture the outbound SIP registration identity of a provider about to be disabled.
+     *
+     * Returns null unless the provider is a SIP trunk with a currently-live outbound
+     * registration (registration_type = outbound, not already disabled) that is being
+     * switched OFF — those are the only cases that need an explicit upstream unregister.
+     *
+     * @param string $providerId   Provider uniqid.
+     * @param string $providerType Provider type (SIP/IAX), already uppercased.
+     * @param bool   $disabled     Target disabled state; capture only when switching OFF.
+     * @return array{uniqid: string, registration_type: string, description: string}|null
+     */
+    private static function captureOutboundRegistration(
+        string $providerId,
+        string $providerType,
+        bool $disabled
+    ): ?array {
+        if ($providerType !== 'SIP' || !$disabled) {
+            return null;
+        }
+
+        $provider = Providers::findFirst([
+            'conditions' => 'uniqid = :id: AND type = :type:',
+            'bind' => [
+                'id' => $providerId,
+                'type' => $providerType
+            ]
+        ]);
+
+        if (!$provider
+            || !$provider->Sip
+            || $provider->Sip->registration_type !== Sip::REG_TYPE_OUTBOUND
+            || $provider->Sip->disabled === '1') {
+            return null;
+        }
+
+        return [
+            'uniqid' => $provider->Sip->uniqid,
+            'registration_type' => $provider->Sip->registration_type,
+            'description' => $provider->Sip->description ?: $provider->note,
+        ];
+    }
+
+    /**
      * Update provider status in transaction
-     * 
+     *
      * @param string $providerId Provider unique ID
      * @param string $providerType Provider type (SIP/IAX)
      * @param bool $disabled Disabled status
