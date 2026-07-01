@@ -37,33 +37,36 @@ class CodecSync
 {
     /**
      * Default codec priorities for audio codecs.
-     * Used when adding new codecs to database.
+     * Used only by addCodecToDatabase() when syncCodecsWithAsterisk() discovers a
+     * codec that is not yet in the database. The authoritative fresh-install layout
+     * (including enabled/disabled flags and gsm at the bottom) lives in
+     * DEFAULT_CODEC_SET; the gsm priority intentionally differs between the two.
      */
     private const array DEFAULT_AUDIO_PRIORITIES = [
-        'alaw' => 1,
-        'ulaw' => 2,
-        'opus' => 3,
-        'g722' => 4,
+        'opus' => 1,
+        'g722' => 2,
+        'alaw' => 3,
+        'ulaw' => 4,
         'g729' => 5,
         'ilbc' => 6,
         'g726' => 7,
         'g726aal2' => 8,
         'gsm' => 9,
-        'adpcm' => 10,
-        'lpc10' => 11,
-        'speex' => 12,
-        'speex16' => 13,
-        'speex32' => 14,
-        'slin' => 15,
-        'slin12' => 16,
-        'slin16' => 17,
-        'slin24' => 18,
-        'slin32' => 19,
-        'slin44' => 20,
-        'slin48' => 21,
-        'slin96' => 22,
-        'slin192' => 23,
-        'g719' => 24,
+        'speex' => 10,
+        'g719' => 11,
+        'adpcm' => 12,
+        'lpc10' => 13,
+        'speex16' => 14,
+        'speex32' => 15,
+        'slin' => 16,
+        'slin12' => 17,
+        'slin16' => 18,
+        'slin24' => 19,
+        'slin32' => 20,
+        'slin44' => 21,
+        'slin48' => 22,
+        'slin96' => 23,
+        'slin192' => 24,
         'silk' => 25,
         'silk8' => 26,
         'silk12' => 27,
@@ -80,14 +83,44 @@ class CodecSync
      * Used when adding new codecs to database.
      */
     private const array DEFAULT_VIDEO_PRIORITIES = [
-        'h264' => 1,
-        'h263' => 2,
-        'h263p' => 3,
+        'h265' => 1,
+        'h264' => 2,
+        'vp9' => 3,
         'vp8' => 4,
-        'vp9' => 5,
-        'h261' => 6,
-        'h265' => 7,
+        'h263' => 5,
+        'h263p' => 6,
+        'h261' => 7,
         'mpeg4' => 8,
+    ];
+
+    /**
+     * Canonical default codec set for a fresh installation.
+     *
+     * Format: name => [type, priority, disabled ('0' = enabled, '1' = disabled)].
+     * Descriptions are taken from CODEC_DESCRIPTIONS.
+     *
+     * Enabled by default: opus, g722, alaw, ulaw, g729 (audio) and
+     * h265, h264, vp9, vp8 (video). gsm stays enabled (system sound files use
+     * GSM format) and is placed last. ilbc, g726, g726aal2, speex and g719 are
+     * shipped available-but-off. Codecs the running build does not provide are
+     * removed later by syncCodecsWithAsterisk().
+     */
+    private const array DEFAULT_CODEC_SET = [
+        'opus'     => ['audio', 1,  '0'],
+        'g722'     => ['audio', 2,  '0'],
+        'alaw'     => ['audio', 3,  '0'],
+        'ulaw'     => ['audio', 4,  '0'],
+        'g729'     => ['audio', 5,  '0'],
+        'ilbc'     => ['audio', 6,  '1'],
+        'g726'     => ['audio', 7,  '1'],
+        'g726aal2' => ['audio', 8,  '1'],
+        'speex'    => ['audio', 9,  '1'],
+        'g719'     => ['audio', 10, '1'],
+        'gsm'      => ['audio', 11, '0'],
+        'h265'     => ['video', 1,  '0'],
+        'h264'     => ['video', 2,  '0'],
+        'vp9'      => ['video', 3,  '0'],
+        'vp8'      => ['video', 4,  '0'],
     ];
 
     /**
@@ -408,6 +441,58 @@ class CodecSync
         }
 
         return $result;
+    }
+
+    /**
+     * Apply the canonical default codec set (DEFAULT_CODEC_SET) to the database.
+     *
+     * Removes all existing codec rows and re-creates the default set, so the
+     * result is deterministic regardless of prior state. This is required on a
+     * fresh install because the legacy upgrade release scripts (e.g.
+     * UpdateConfigsUpToVer20202754) run first from the 0.0.2 seed baseline and
+     * reshape m_Codecs with their own obsolete lists.
+     *
+     * Callers: the fresh-install upgrade step and "restore default settings".
+     * A subsequent syncCodecsWithAsterisk() run refines the list against the
+     * capabilities of the actual Asterisk build.
+     *
+     * @return void
+     */
+    public static function applyDefaultCodecSet(): void
+    {
+        // Remove all existing codecs to guarantee a clean, deterministic set.
+        foreach (Codecs::find() as $codec) {
+            if (!$codec->delete()) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    'Failed to delete codec ' . $codec->name . ': ' . implode(', ', $codec->getMessages()),
+                    LOG_WARNING
+                );
+            }
+        }
+
+        foreach (self::DEFAULT_CODEC_SET as $name => [$type, $priority, $disabled]) {
+            $codec = new Codecs();
+            $codec->name = $name;
+            $codec->type = $type;
+            $codec->priority = (string)$priority;
+            $codec->disabled = $disabled;
+            $codec->description = self::CODEC_DESCRIPTIONS[$name] ?? ucfirst($name);
+
+            if (!$codec->save()) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    'Failed to create codec ' . $name . ': ' . implode(', ', $codec->getMessages()),
+                    LOG_WARNING
+                );
+            }
+        }
+
+        SystemMessages::sysLogMsg(
+            __CLASS__,
+            'Applied default codec set (' . count(self::DEFAULT_CODEC_SET) . ' codecs).',
+            LOG_INFO
+        );
     }
 
     /**

@@ -105,8 +105,9 @@ Generates dialplan for CallerID/DID extraction from SIP headers. Sources:
 ## CodecSync
 
 Syncs the codec DB with Asterisk's available codecs. Default audio priorities:
-alaw(1), ulaw(2), opus(3), g722(4), g729(5). Video: h264(1), h263(2), h263p(3),
-vp8(4), vp9(5).
+opus(1), g722(2), alaw(3), ulaw(4), g729(5). Video: h265(1), h264(2), vp9(3),
+vp8(4). New codecs are added enabled; IGNORED_CODECS/unsupported are deleted;
+existing enable/disable flags are preserved; gsm is force-enabled.
 
 ## AsteriskManager — AMI client
 

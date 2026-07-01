@@ -25,7 +25,6 @@ use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\AsteriskRestUsers;
 use MikoPBX\Common\Models\CallQueueMembers;
 use MikoPBX\Common\Models\CallQueues;
-use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\ExtensionForwardingRights;
 use MikoPBX\Common\Models\Extensions;
@@ -43,6 +42,7 @@ use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Models\UserPasskeys;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Core\Asterisk\CdrDb;
+use MikoPBX\Core\Asterisk\Configs\Generators\CodecSync;
 use MikoPBX\Core\Asterisk\Configs\MusicOnHoldConf;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
@@ -100,13 +100,13 @@ class RestoreDefaultSettingsAction extends Injectable
         }
 
         $rm     = Util::which('rm');
-        
+
         // Stage: Prepare
         self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_PREPARE, [
             'messageKey' => 'gs_DeleteAllStageStarting',
             'progress' => 0
         ]);
-        
+
         // Stop monit to prevent service restarts during cleanup
         self::stopMonit();
 
@@ -142,7 +142,7 @@ class RestoreDefaultSettingsAction extends Injectable
 
         self::cleaningBackups();
         self::cleaningFail2Ban();
-        
+
         // Stage: Clean logs
         self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_CLEAN_LOGS, [
             'messageKey' => 'gs_DeleteAllStageCleaningLogs',
@@ -155,7 +155,7 @@ class RestoreDefaultSettingsAction extends Injectable
             'messageKey' => 'gs_DeleteAllStageRemovingModules',
             'progress' => 60
         ]);
-        
+
         // Delete module records from database
         $records = PbxExtensionModules::find();
         foreach ($records as $record) {
@@ -164,15 +164,15 @@ class RestoreDefaultSettingsAction extends Injectable
                 $res->success    = false;
             }
         }
-        
+
         // Delete ALL content in custom_modules directory
         $mediaMountPoint = Directories::getDir(Directories::CORE_MEDIA_MOUNT_POINT_DIR);
         $customModulesDir = $mediaMountPoint . '/mikopbx/custom_modules/';
-        
+
         if (file_exists($customModulesDir)) {
             // Get all items in the directory
             $items = glob($customModulesDir . '*');
-            
+
             foreach ($items as $item) {
                 // Remove everything - files and directories
                 if (is_dir($item)) {
@@ -188,7 +188,7 @@ class RestoreDefaultSettingsAction extends Injectable
             'messageKey' => 'gs_DeleteAllStageResettingSettings',
             'progress' => 80
         ]);
-        
+
         // Reset PBXSettings
         $defaultValues = PbxSettings::getDefaultArrayValues();
         $fixedKeys = [
@@ -228,8 +228,8 @@ class RestoreDefaultSettingsAction extends Injectable
             $record->save();
         }
 
-        // Reset codecs to default values
-        self::resetCodecsToDefaults();
+        // Reset codecs to the canonical default set (single source of truth in CodecSync)
+        CodecSync::applyDefaultCodecSet();
 
         // Delete CallRecords from database
         $cdr = CdrDb::getPathToDB();
@@ -246,7 +246,7 @@ class RestoreDefaultSettingsAction extends Injectable
 
         // Synchronize parking slots (smart sync - no mass delete/recreate)
         self::createParkingSlots();
-        
+
         // Stage: Finalizing
         self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_FINAL, [
             'messageKey' => 'gs_DeleteAllStageFinalizing',
@@ -257,7 +257,7 @@ class RestoreDefaultSettingsAction extends Injectable
         if (!$res->success && !empty($res->messages)) {
             // Log errors but continue with restart
             SystemMessages::sysLogMsg(__METHOD__, 'Some errors occurred during reset: ' . json_encode($res->messages), LOG_WARNING);
-            
+
             // Reset was mostly successful, continue with restart
             $res->success = true;
         }
@@ -268,31 +268,31 @@ class RestoreDefaultSettingsAction extends Injectable
             'progress' => 100,
             'result' => true
         ]);
-        
+
         // Mark operation as successful (redundant but clear)
         $res->success = true;
-        
+
         // Send restart notification if async
         if (!empty($asyncChannelId)) {
             // Give time for completion message to be sent
             sleep(1);
-            
+
             self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_RESTART, [
                 'messageKey' => 'gs_DeleteAllStageRestarting',
                 'progress' => 100,
                 'restart' => true
             ]);
-            
+
             // Give more time for the restart message to be sent and processed
             sleep(3);
         }
-        
+
         // Initiate system restart using unified method
         System::reboot();
 
         return $res;
     }
-    
+
     /**
      * Publish event to WebSocket if event publisher is initialized
      */
@@ -302,7 +302,7 @@ class RestoreDefaultSettingsAction extends Injectable
             self::$eventPublisher->pushMessageToBrowser($stage, $data);
         }
     }
-    
+
     /**
      * Cleans fail2ban database
      */
@@ -314,7 +314,7 @@ class RestoreDefaultSettingsAction extends Injectable
             unlink($fail2banDb);
         }
     }
-    
+
     /**
      * Cleans all system and module logs
      */
@@ -322,20 +322,20 @@ class RestoreDefaultSettingsAction extends Injectable
     {
         $rm = Util::which('rm');
         $mediaMountPoint = Directories::getDir(Directories::CORE_MEDIA_MOUNT_POINT_DIR);
-        
+
         // Base log directory
         $logBaseDir = $mediaMountPoint . '/mikopbx/log/';
-        
+
         // System log directories
         $systemLogDirs = ['system', 'php', 'nginx', 'asterisk', 'nats', 'fail2ban'];
-        
+
         foreach ($systemLogDirs as $dir) {
             $logDir = $logBaseDir . $dir;
             if (file_exists($logDir)) {
                 Processes::mwExec("$rm -rf {$logDir}/*");
             }
         }
-        
+
         // Clean all module logs dynamically
         if (file_exists($logBaseDir)) {
             // Find all directories in log folder that are not system directories
@@ -349,7 +349,7 @@ class RestoreDefaultSettingsAction extends Injectable
                 }
             }
         }
-        
+
         // Clean debug log files in root log directory
         if (file_exists($logBaseDir)) {
             $debugLogs = glob($logBaseDir . '*.log');
@@ -471,7 +471,7 @@ class RestoreDefaultSettingsAction extends Injectable
             }
         }
         // FirewallRules will be automatically deleted due to CASCADE relation with NetworkFilters
-        
+
         // Clear Bearer tokens cache after deleting all tokens
         TokenValidationService::clearCache();
     }
@@ -697,7 +697,7 @@ class RestoreDefaultSettingsAction extends Injectable
             LOG_INFO
         );
     }
-    
+
     /**
      * Stop critical services to prevent interference during cleanup
      */
@@ -708,74 +708,12 @@ class RestoreDefaultSettingsAction extends Injectable
             'messageKey' => 'gs_DeleteAllStageStoppingServices',
             'progress' => 5
         ]);
-        
+
         // Stop cron first (while monit is still running)
         $cronConf = new CronConf();
         $cronConf->stop();
-        
+
         // Now stop monit itself to prevent it from restarting services
         MonitConf::stopMonit();
-    }
-
-    /**
-     * Reset codecs to default values with proper priorities
-     * All codecs will be enabled after reset
-     */
-    private static function resetCodecsToDefaults(): void
-    {
-        // First, clean up any duplicate lowercase video codecs that may exist
-        // These could have been created by previous versions of this code
-        $duplicateCodecs = ['jpeg', 'h261', 'vp8', 'vp9'];
-        foreach ($duplicateCodecs as $codecName) {
-            $codec = Codecs::findFirst("name = '$codecName'");
-            if ($codec !== null) {
-                $codec->delete();
-                SystemMessages::sysLogMsg(
-                    __CLASS__,
-                    "Removed duplicate lowercase codec: $codecName",
-                    LOG_INFO
-                );
-            }
-        }
-
-        // Initialize default codec set
-        // CodecSync will later update this list based on actual Asterisk capabilities
-        // This ensures codecs exist before Asterisk starts
-        $defaultCodecs = [
-            // Audio codecs (most common, will be refined by CodecSync)
-            'alaw' => ['type' => 'audio', 'priority' => 1, 'description' => 'G.711 A-law'],
-            'ulaw' => ['type' => 'audio', 'priority' => 2, 'description' => 'G.711 μ-law'],
-            'opus' => ['type' => 'audio', 'priority' => 3, 'description' => 'Opus'],
-            'g722' => ['type' => 'audio', 'priority' => 4, 'description' => 'G.722'],
-            // Video codecs (most common, will be refined by CodecSync)
-            'h264' => ['type' => 'video', 'priority' => 1, 'description' => 'H.264'],
-            'h263' => ['type' => 'video', 'priority' => 2, 'description' => 'H.263'],
-        ];
-
-        foreach ($defaultCodecs as $codecName => $codecData) {
-            $codec = Codecs::findFirst("name = '$codecName'");
-            if ($codec === null) {
-                $codec = new Codecs();
-                $codec->name = $codecName;
-                $codec->type = $codecData['type'];
-                $codec->priority = (string)$codecData['priority'];
-                $codec->disabled = '0'; // Enable by default
-                $codec->description = $codecData['description'];
-
-                if (!$codec->save()) {
-                    SystemMessages::sysLogMsg(
-                        __CLASS__,
-                        'Failed to create codec ' . $codecName . ': ' . implode(', ', $codec->getMessages()),
-                        LOG_WARNING
-                    );
-                }
-            }
-        }
-
-        SystemMessages::sysLogMsg(
-            __CLASS__,
-            'Default codecs initialized. Full codec sync will occur when Asterisk starts.',
-            LOG_INFO
-        );
     }
 }
