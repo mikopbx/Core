@@ -39,12 +39,23 @@ class SSHConf extends SystemConfigClass
 {
     public const string PROC_NAME = 'dropbear';
 
+    // Dropbear pidfile, shared by the Monit config and the restart verification
+    private const string PID_FILE = '/var/run/dropbear.pid';
 
     // Client keep-alive interval in seconds
     private const int CLIENT_KEEP_ALIVE_INTERVAL = 60;
 
     // Client idle timeout in seconds
     private const int CLIENT_IDLE_TIMEOUT = 1800;
+
+    // How many times to retry the Monit restart until Dropbear actually cycles
+    private const int RESTART_MAX_ATTEMPTS = 3;
+
+    // Poll ticks per restart attempt while waiting for the pidfile to change
+    private const int RESTART_POLL_TICKS = 10;
+
+    // Poll interval in microseconds (0.5s) between pidfile checks
+    private const int RESTART_POLL_INTERVAL_US = 500000;
 
     /**
      * Generates the Monit configuration file for monitoring the current service.
@@ -66,7 +77,7 @@ class SSHConf extends SystemConfigClass
         $port = PbxSettings::getValueByKey(PbxSettings::SSH_PORT);
         $busyboxPath = Util::which('busybox');
         $confPath = $this->getMainMonitConfFile();
-        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
+        $conf = 'check process '.self::PROC_NAME.' with pidfile '.self::PID_FILE.PHP_EOL.
             '    depends on loopback'.PHP_EOL.
             '    start program = "'.$this->startCommand.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
@@ -101,8 +112,41 @@ class SSHConf extends SystemConfigClass
     public function reStart(): bool
     {
         $this->generateMonitConf();
+        // Reload Monit so it re-reads the freshly written start command.
+        // Without this, "monit restart" relaunches Dropbear with the previous
+        // in-memory command line, so changes to the -s flag (SSHDisablePasswordLogins)
+        // or the SSH port would not take effect until a full reboot.
+        $this->monitReload();
         $this->configure();
-        return $this->monitRestart();
+        return $this->restartUntilPidChanges();
+    }
+
+    /**
+     * Restarts Dropbear via Monit and confirms the process was actually replaced.
+     *
+     * "monit reload" reinitializes the daemon; a "monit restart" issued during
+     * that window is silently dropped, and monitWaitStart() would still report
+     * success because the previous Dropbear process keeps listening. This retries
+     * the restart until the pidfile changes, guaranteeing the process is relaunched
+     * with the reloaded start command (e.g. the -s password-login flag or a new port).
+     *
+     * @return bool True if Dropbear was restarted and is running.
+     */
+    private function restartUntilPidChanges(): bool
+    {
+        $oldPid = trim((string)@file_get_contents(self::PID_FILE));
+
+        for ($attempt = 0; $attempt < self::RESTART_MAX_ATTEMPTS; $attempt++) {
+            $this->monitRestart(false);
+            for ($tick = 0; $tick < self::RESTART_POLL_TICKS; $tick++) {
+                usleep(self::RESTART_POLL_INTERVAL_US);
+                $newPid = trim((string)@file_get_contents(self::PID_FILE));
+                if ($newPid !== '' && $newPid !== $oldPid) {
+                    return $this->monitWaitStart();
+                }
+            }
+        }
+        return $this->monitWaitStart();
     }
 
     /**
@@ -195,6 +239,11 @@ class SSHConf extends SystemConfigClass
             }
         }
         $rsaPath = '/root/.ssh/id_rsa';
+        // Ensure /root/.ssh exists before writing id_rsa. When the SSH login is not
+        // "root" nothing else creates this directory, so ssh-keygen and the
+        // file_put_contents below would fail; in the worker the promoted warning
+        // becomes an exception that aborts configure() before the password is applied.
+        Util::mwMkdir(dirname($rsaPath));
         $sshGenPath = Util::which('ssh-keygen');
         $keyCmd = [
             [PbxSettings::SSH_ID_RSA, $rsaPath, $sshGenPath.' -t rsa -b 4096 -f '.$rsaPath.' -N "" -q'],
@@ -216,6 +265,12 @@ class SSHConf extends SystemConfigClass
                 PbxSettings::setValueByKey($keySetting, $keyValue);
             }
             file_put_contents($path, base64_decode($keyValue));
+        }
+        // id_rsa is a private key: keep its directory and the key owner-only,
+        // otherwise strict SSH clients refuse to use it (mwMkdir creates 0755).
+        chmod(dirname($rsaPath), 0700);
+        if (file_exists($rsaPath)) {
+            chmod($rsaPath, 0600);
         }
     }
 
