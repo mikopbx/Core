@@ -166,8 +166,12 @@ const keyCheck = {
 
         keyCheck.$email.inputmask('email');
 
-        // Handle save key button click
-        keyCheck.$saveKeyButton.on('click', () => {
+        // Handle save key button click.
+        // Bind with a namespaced .off().on() so initialize() is idempotent: if it
+        // is ever called more than once the handler is replaced, not stacked.
+        // Stacked handlers would fire the request N times per click — the root of
+        // the duplicate coupon activation that produced a false 2041 (issue #1089).
+        keyCheck.$saveKeyButton.off('click.keyCheck').on('click.keyCheck', () => {
             if (keyCheck.$licKey.inputmask('unmaskedvalue').length===20){
                 keyCheck.$formObj.addClass('loading disabled');
                 keyCheck.$saveKeyButton.addClass('loading disabled');
@@ -178,12 +182,12 @@ const keyCheck = {
         });
 
         // Update reset button click handler
-        keyCheck.$resetButton.on('click', () => {
+        keyCheck.$resetButton.off('click.keyCheck').on('click.keyCheck', () => {
             keyCheck.$resetConfirmModal.modal('show');
         });
 
         // Handle confirm reset button click
-        keyCheck.$confirmResetButton.on('click', () => {
+        keyCheck.$confirmResetButton.off('click.keyCheck').on('click.keyCheck', () => {
             keyCheck.$formObj.addClass('loading disabled');
             keyCheck.$confirmResetButton.addClass('loading disabled');
             LicenseAPI.resetKey(keyCheck.cbAfterResetLicenseKey);
@@ -191,7 +195,7 @@ const keyCheck = {
         });
 
         // Handle activate coupon button click
-        keyCheck.$activateCouponButton.on('click', () => {
+        keyCheck.$activateCouponButton.off('click.keyCheck').on('click.keyCheck', () => {
             if (keyCheck.$coupon.inputmask('unmaskedvalue').length===20 &&keyCheck.$licKey.inputmask('unmaskedvalue').length===20){
                 keyCheck.$formObj.addClass('loading disabled');
                 keyCheck.$activateCouponButton.addClass('loading disabled');
@@ -205,7 +209,17 @@ const keyCheck = {
 
         keyCheck.initializeForm();
 
-        // Check if a license key is present
+        keyCheck.refreshLicenseKeyView();
+    },
+
+    /**
+     * Refresh the "license key present / absent" block from globalPBXLicense.
+     * Split out of initialize() so cbAfterSendForm can refresh the view after a
+     * successful submit WITHOUT re-running initialize() — the latter re-binds
+     * click handlers (here and in the shared Form.initialize() for #submitbutton)
+     * and would stack them, firing the request N times per click (issue #1089).
+     */
+    refreshLicenseKeyView() {
         if (globalPBXLicense.length === 28) {
             keyCheck.$filledLicenseKeyPlaceholder.html(globalPBXLicense);
             keyCheck.$filledLicenseKeyHeader.show();
@@ -386,7 +400,11 @@ const keyCheck = {
 
             keyCheck.$formObj.form('set value', 'coupon', '');
 
-            keyCheck.initialize();
+            // Refresh the view only — do NOT re-run initialize() here, or its
+            // click bindings (and Form.initialize()'s #submitbutton binding)
+            // would stack and duplicate the request on the next click (#1089).
+            keyCheck.refreshLicenseKeyView();
+            keyCheck.cbOnLicenceKeyInputChange();
             if (response.messages && response.messages.length !== 0) {
                 UserMessage.showMultiString(response.messages);
             }
