@@ -269,19 +269,42 @@ detect_serial_ports() {
         return
     fi
     
-    # Check for serial ports (x86 ttyS and ARM ttyAMA)
-    for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
-               /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
-        # Check if device exists and is character device
-        if [ -c "$DEV" ] && [ -w "$DEV" ]; then
-            # Write actual data to verify the port is functional (empty writes always succeed)
-            if printf '\0' > "$DEV" 2>/dev/null; then
-                if [ -z "$SERIAL_PORTS" ]; then
-                    SERIAL_PORTS="$DEV"
-                else
-                    SERIAL_PORTS="$SERIAL_PORTS $DEV"
-                fi
-            fi
+    # Detect x86 (ttyS*) ports via setserial. NEVER open the device directly
+    # (e.g. `printf > /dev/ttyS0`): a blocking open() hangs FOREVER waiting for
+    # carrier (DCD) when CLOCAL is unset — common on VPS/QEMU where /dev/ttyS0
+    # exists and is writable but has no live UART. Such hung opens pile up as
+    # unkillable processes and starve the scheduler. busybox setserial opens with
+    # O_NONBLOCK, so it never blocks; this mirrors the boot-time scan in /init.
+    SETSERIAL="setserial"
+    command -v setserial >/dev/null 2>&1 || SETSERIAL="busybox setserial"
+    for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5; do
+        [ -c "$DEV" ] || continue
+        serialInfo=$($SETSERIAL -g "$DEV" 2>/dev/null)
+        # Skip absent ports (empty output) and phantom ones (uart:unknown)
+        [ -z "$serialInfo" ] && continue
+        case "$serialInfo" in
+            *unknown*) continue ;;
+        esac
+        if [ -z "$SERIAL_PORTS" ]; then
+            SERIAL_PORTS="$DEV"
+        else
+            SERIAL_PORTS="$SERIAL_PORTS $DEV"
+        fi
+    done
+
+    # ARM (ttyAMA*) ports: setserial does not apply (PL011 is not an 8250 UART).
+    # Still filter phantom/unbound ports — the write-probe added in 54eec5ef0
+    # (fix false-positive serial detection) was intentional — but do it WITHOUT
+    # opening the device, since a blocking open() can hang exactly like ttyS.
+    # A real PL011 is bound to a hardware device exposed at
+    # /sys/class/tty/<name>/device; absent/phantom ports lack it.
+    for DEV in /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
+        [ -c "$DEV" ] || continue
+        [ -e "/sys/class/tty/${DEV#/dev/}/device" ] || continue
+        if [ -z "$SERIAL_PORTS" ]; then
+            SERIAL_PORTS="$DEV"
+        else
+            SERIAL_PORTS="$SERIAL_PORTS $DEV"
         fi
     done
     
