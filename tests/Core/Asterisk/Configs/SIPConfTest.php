@@ -393,6 +393,256 @@ class SIPConfTest extends AbstractUnitTest
     }
 
     // -----------------------------------------------------------------------
+    // getRawIncomingContextId — issue #1091 alias safety net.
+    //
+    // getRawIncomingContextId() is the cache-INDEPENDENT twin of
+    // getIncomingContextId(): it always yields the cold, hostname-derived name
+    // that a freshly-booted pjsip.conf bakes into endpoint.context. The alias
+    // context in extensionGenContexts() is emitted under this name so a stranded
+    // pjsip.conf still lands somewhere live. The key property is that it NEVER
+    // consults the resolved-IP cache — even when the cache is warm.
+    // -----------------------------------------------------------------------
+
+    public function testGetRawIncomingContextIdIgnoresWarmCache(): void
+    {
+        // Warm cache present, but getRawIncomingContextId must return the
+        // hostname-derived name, NOT the canonical-IP one that
+        // getIncomingContextId would return for the same inputs.
+        $this->stubResolvedCache([
+            'sip.novofon.ru' => ['37.139.38.236', '37.139.38.131', '37.139.38.237'],
+        ]);
+        $this->assertSame(
+            'sipnovofonrusrv-incoming',
+            SIPConf::getRawIncomingContextId('sip.novofon.ru', '0')
+        );
+        // Sanity: the warm getIncomingContextId genuinely diverges here.
+        $this->assertSame(
+            '3713938131srv-incoming',
+            SIPConf::getIncomingContextId('sip.novofon.ru', '0')
+        );
+    }
+
+    public function testGetRawIncomingContextIdEqualsColdGetIncomingContextId(): void
+    {
+        // With a cold cache the two must agree — that equality is exactly the
+        // condition extensionGenContexts() uses to decide NOT to emit an alias.
+        $this->stubResolvedCache([]);
+        $this->assertSame(
+            SIPConf::getIncomingContextId('example.com', '0'),
+            SIPConf::getRawIncomingContextId('example.com', '0')
+        );
+    }
+
+    public function testGetRawIncomingContextIdIpLiteralPassthrough(): void
+    {
+        // IP-literal providers never have an alias — raw == canonical always.
+        $this->stubResolvedCache([]);
+        // 193.201.230.178 + port 5060, dots stripped → the exact section name
+        // from issue #1091's extensions.conf.
+        $this->assertSame(
+            '1932012301785060-incoming',
+            SIPConf::getRawIncomingContextId('193.201.230.178', '5060')
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // computeResolvedCanonicalSignature — issue #1091 level trigger.
+    //
+    // WorkerSipDnsResolver compares this signature against the applied-signature
+    // marker to keep re-triggering the reload until the on-disk configs match
+    // DNS, surviving a reload that bailed or lost its mutex. The signature MUST
+    // change when any hostname's canonical (smallest) IP first appears or shifts,
+    // and stay stable otherwise.
+    // -----------------------------------------------------------------------
+
+    /**
+     * Stub the `redis` service so it serves BOTH the pending-hosts list and the
+     * per-host resolved-IP payloads, as computeResolvedCanonicalSignature reads.
+     *
+     * @param array<int,string> $pending raw pending hostnames
+     * @param array<string,array<int,string>> $resolved keyed by normalized hostname
+     */
+    private function stubPendingAndResolved(array $pending, array $resolved): void
+    {
+        $payloadByKey = [
+            SIPConf::CACHE_KEY_PENDING_HOSTS => json_encode(array_values($pending)),
+        ];
+        foreach ($resolved as $hostKey => $ips) {
+            $payloadByKey[SIPConf::CACHE_KEY_RESOLVED_PREFIX . $hostKey] = json_encode([
+                'ips' => $ips,
+                'at'  => 1700000000,
+                'src' => 'SRV',
+            ]);
+        }
+
+        $fake = new class($payloadByKey) {
+            /** @param array<string,string> $payloads keyed by full Redis key */
+            public function __construct(private array $payloads) {}
+            public function get(string $key): string|false
+            {
+                return $this->payloads[$key] ?? false;
+            }
+            public function setex(string $key, int $ttl, string $value): bool { return true; }
+            public function set(string $key, mixed $value, mixed $ttl = null): bool { return true; }
+        };
+
+        $di = \Phalcon\Di\Di::getDefault();
+        $di->setShared(RedisClientProvider::SERVICE_NAME, static fn() => $fake);
+        SIPConf::resetResolvedIpsMemo();
+    }
+
+    public function testComputeResolvedCanonicalSignatureEmptyWhenNoPending(): void
+    {
+        $this->stubPendingAndResolved([], []);
+        $this->assertSame('', SIPConf::computeResolvedCanonicalSignature());
+    }
+
+    public function testComputeResolvedCanonicalSignatureDiffersColdVsWarm(): void
+    {
+        // Cold: host present in pending list but unresolved → contributes ''.
+        $this->stubPendingAndResolved(['vats.megapbx.ru'], []);
+        $cold = SIPConf::computeResolvedCanonicalSignature();
+        $this->assertNotSame('', $cold);
+
+        // Warm: same host now resolved → canonical IP flips the signature. This
+        // is precisely the transition that must NOT be lost when a reload bails.
+        $this->stubPendingAndResolved(
+            ['vats.megapbx.ru'],
+            ['vats.megapbx.ru' => ['193.201.230.178']]
+        );
+        $warm = SIPConf::computeResolvedCanonicalSignature();
+        $this->assertNotSame('', $warm);
+        $this->assertNotSame($cold, $warm);
+    }
+
+    public function testComputeResolvedCanonicalSignatureStableWhenCanonicalUnchanged(): void
+    {
+        // Same canonical (smallest) IP, different non-canonical member → the
+        // context name is unchanged, so the signature must be identical and the
+        // worker must NOT churn a needless dialplan reload.
+        $this->stubPendingAndResolved(
+            ['vats.megapbx.ru'],
+            ['vats.megapbx.ru' => ['193.201.230.178', '193.201.230.200']]
+        );
+        $a = SIPConf::computeResolvedCanonicalSignature();
+        $this->stubPendingAndResolved(
+            ['vats.megapbx.ru'],
+            ['vats.megapbx.ru' => ['193.201.230.178', '193.201.230.250']]
+        );
+        $b = SIPConf::computeResolvedCanonicalSignature();
+        $this->assertSame($a, $b);
+    }
+
+    // -----------------------------------------------------------------------
+    // generateIncomingContextHostnameAliases — issue #1091 alias emission.
+    //
+    // Private instance method; exercised via reflection with a hand-built
+    // data_providers array so we can assert the emitted dialplan without a DB.
+    // -----------------------------------------------------------------------
+
+    /**
+     * Invoke the private alias generator with a stubbed data_providers set, the
+     * list of shared canonical context ids, and a pass-wide emitted-names set
+     * (by reference, as the real caller threads it).
+     *
+     * @param array<int,array<string,string>> $providers
+     * @param array<int,string> $sharedContextIds
+     * @param array<string,true> $emitted
+     */
+    private function invokeAliasGenerator(
+        SIPConf $conf,
+        array $providers,
+        array $sharedContextIds,
+        array &$emitted
+    ): string {
+        $rp = new \ReflectionProperty(SIPConf::class, 'data_providers');
+        $rp->setAccessible(true);
+        $rp->setValue($conf, $providers);
+
+        $rm = new \ReflectionMethod(SIPConf::class, 'generateIncomingContextHostnameAliases');
+        $rm->setAccessible(true);
+
+        return $rm->invokeArgs($conf, [$sharedContextIds, &$emitted]);
+    }
+
+    public function testGenerateHostnameAliasEmitsGotoAndHitGuard(): void
+    {
+        // Warm shared group: 4 providers on vats.megapbx.ru:5060 → canonical
+        // named after the resolved IP, endpoint.context may still hold the cold
+        // hostname name (the exact #1091 report).
+        $conf = new SIPConf();
+        $providers = [
+            ['context_id' => '1932012301785060-incoming', 'host' => 'vats.megapbx.ru', 'port' => '5060'],
+        ];
+        $emitted = ['1932012301785060-incoming' => true]; // canonical registered by the caller
+        $out = $this->invokeAliasGenerator($conf, $providers, ['1932012301785060-incoming'], $emitted);
+
+        $this->assertStringContainsString('[vatsmegapbxru5060-incoming]', $out);
+        $this->assertStringContainsString(
+            'exten => _.!,1,Goto(1932012301785060-incoming,${EXTEN},1)',
+            $out
+        );
+        // House-idiom guard: h/i/t hung up, s deliberately falls through to _.!.
+        $this->assertStringContainsString('exten => _[hit],1,Hangup()', $out);
+        // Alias name registered in the pass-wide dedup set.
+        $this->assertArrayHasKey('vatsmegapbxru5060-incoming', $emitted);
+    }
+
+    public function testGenerateHostnameAliasColdGroupEmitsNothing(): void
+    {
+        // Cold cache: canonical name IS the hostname-derived name → raw ==
+        // canonical → no alias needed (pjsip.conf holds the same cold name).
+        $conf = new SIPConf();
+        $providers = [
+            ['context_id' => 'vatsmegapbxru5060-incoming', 'host' => 'vats.megapbx.ru', 'port' => '5060'],
+        ];
+        $emitted = ['vatsmegapbxru5060-incoming' => true];
+        $out = $this->invokeAliasGenerator($conf, $providers, ['vatsmegapbxru5060-incoming'], $emitted);
+        $this->assertSame('', $out);
+    }
+
+    public function testGenerateHostnameAliasDedupAcrossGroups(): void
+    {
+        // Two hosts differing only by punctuation ("sip.a.com" vs "sip-a.com")
+        // resolve to DIFFERENT IPs → different canonical groups → but sanitise
+        // to the SAME alias id "sipacom5060-incoming". A single pass must emit it
+        // once and skip the collision; a duplicate [section] makes Asterisk
+        // res_config reject the whole extensions.conf (issue #1045 blast radius).
+        // Review Warning #1 (alias-vs-alias) regression guard.
+        $conf = new SIPConf();
+        $providers = [
+            ['context_id' => 'groupA-incoming', 'host' => 'sip.a.com', 'port' => '5060'],
+            ['context_id' => 'groupB-incoming', 'host' => 'sip-a.com', 'port' => '5060'],
+        ];
+        $emitted = ['groupA-incoming' => true, 'groupB-incoming' => true];
+        $out = $this->invokeAliasGenerator(
+            $conf,
+            $providers,
+            ['groupA-incoming', 'groupB-incoming'],
+            $emitted
+        );
+        // Exactly one [sipacom5060-incoming] section, not two.
+        $this->assertSame(1, substr_count($out, '[sipacom5060-incoming]'));
+    }
+
+    public function testGenerateHostnameAliasYieldsToCanonicalSection(): void
+    {
+        // Review Warning #2 (second pass): an alias must never shadow a REAL
+        // (canonical) section. A cold punctuation-twin group already emitted its
+        // canonical "[sipacom5060-incoming]"; a warm group whose alias would reuse
+        // that exact name must be SKIPPED, since aliases run after all canonicals
+        // are registered. Otherwise a duplicate [section] rejects extensions.conf.
+        $conf = new SIPConf();
+        $providers = [
+            ['context_id' => 'ipwarm-incoming', 'host' => 'sip.a.com', 'port' => '5060'],
+        ];
+        // Pre-seed the set as if a cold sibling already emitted this canonical name.
+        $emitted = ['ipwarm-incoming' => true, 'sipacom5060-incoming' => true];
+        $out = $this->invokeAliasGenerator($conf, $providers, ['ipwarm-incoming'], $emitted);
+        $this->assertSame('', $out);
+    }
+
+    // -----------------------------------------------------------------------
     // isValidHostname — used by m_SipHosts ingest and warmup so admin-added
     // hostnames flow through the same Redis-cache pipeline as provider.host.
     // The whitelist intentionally permits SRV labels (`_sip._tcp.example.com`),

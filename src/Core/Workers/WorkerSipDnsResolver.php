@@ -234,7 +234,43 @@ class WorkerSipDnsResolver extends WorkerBase
             }
         }
 
-        if ($identifySetChanged) {
+        // NOTE: while the topology hash stays dirty, ReloadPJSIPIdentifyAction bails
+        // before generateConfig() and never stamps the applied signature, so this
+        // level check re-enqueues canonicalChanged every tick until an external full
+        // ReloadPJSIPAction reconciles the topology and a stamp finally lands. That
+        // repeated enqueue is intended (each retry bails cheaply), not churn.
+        //
+        // Level trigger (issue #1091): edge detection above only fires on the
+        // single tick that observes a hostname's resolved IP change. If the
+        // reload that tick spawned bailed (dirty topology hash) or lost the
+        // mutex to a dialplan-only writer, pjsip.conf endpoint.context is left
+        // stranded on the cold hostname name while extensions.conf later moves
+        // to the resolved-IP name — and no future tick sees a diff because the
+        // cache is already warm. Compare the live canonical signature against
+        // the one the LAST SUCCESSFUL reload stamped; a mismatch means the
+        // on-disk configs are stale regardless of per-tick DNS movement, so we
+        // must regenerate both files until they converge.
+        $liveSignature = SIPConf::computeResolvedCanonicalSignature();
+        if ($liveSignature !== '') {
+            $appliedSignature = $cache->get(SIPConf::CACHE_KEY_APPLIED_SIGNATURE);
+            $appliedSignature = is_string($appliedSignature) ? $appliedSignature : '';
+            if ($liveSignature !== $appliedSignature) {
+                $canonicalChanged = true;
+            } else {
+                // Already consistent — refresh the marker's TTL so a steady state
+                // with no DNS movement (no reload to re-stamp it) does not let it
+                // expire after CACHE_TTL_RESOLVED and then read back as '', which
+                // would fire one pointless full reload per TTL window. Re-writing
+                // the same value is safe and keeps the "applied" invariant intact.
+                $cache->setex(
+                    SIPConf::CACHE_KEY_APPLIED_SIGNATURE,
+                    SIPConf::CACHE_TTL_RESOLVED,
+                    $appliedSignature
+                );
+            }
+        }
+
+        if ($identifySetChanged || $canonicalChanged) {
             $this->triggerReloads($canonicalChanged);
         }
     }

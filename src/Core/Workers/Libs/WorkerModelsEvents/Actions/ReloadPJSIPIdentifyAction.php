@@ -3,6 +3,7 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions;
 
 use MikoPBX\Common\Providers\MutexProvider;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Processes;
@@ -138,6 +139,7 @@ class ReloadPJSIPIdentifyAction implements ReloadActionInterface
         // non-destructive on live channels — established calls finish in
         // the old context section, new INVITEs land in the new one.
         $canonicalChanged = !empty($parameters['canonicalChanged']);
+        $configsConsistent = true;
         if ($canonicalChanged) {
             try {
                 // We already hold MUTEX_ASTERISK_RELOAD here, so call the
@@ -150,6 +152,11 @@ class ReloadPJSIPIdentifyAction implements ReloadActionInterface
                     LOG_INFO
                 );
             } catch (Throwable $e) {
+                // Dialplan not reloaded — pjsip.conf endpoint.context and the
+                // extensions.conf section name may now disagree. Do NOT stamp the
+                // applied signature so WorkerSipDnsResolver re-triggers us next
+                // tick (issue #1091 level trigger).
+                $configsConsistent = false;
                 SystemMessages::sysLogMsg(
                     __METHOD__,
                     'Dialplan reload after canonical change failed: ' . $e->getMessage(),
@@ -158,10 +165,53 @@ class ReloadPJSIPIdentifyAction implements ReloadActionInterface
             }
         }
 
+        // Stamp the canonical signature ONLY after the whole regenerate-and-reload
+        // succeeded (pjsip.conf regenerated + identify reloaded + — when the
+        // canonical shifted — extensions.conf reloaded). WorkerSipDnsResolver
+        // compares this marker on every tick and keeps re-triggering while it
+        // does not match the live signature, so a run that bailed on dirty
+        // topology or failed the dialplan reload is retried instead of being
+        // silently lost (issue #1091).
+        if ($configsConsistent) {
+            self::stampAppliedSignature();
+        }
+
         SystemMessages::sysLogMsg(
             __METHOD__,
             'Reloaded res_pjsip_endpoint_identifier_ip after DNS-driven identify update',
             LOG_INFO
         );
+    }
+
+    /**
+     * Persist the canonical signature that this reload just realized on disk so
+     * the DNS worker's level trigger knows the configs are consistent with the
+     * resolved-IP cache. Best-effort: a Redis blip here simply means the next
+     * worker tick re-runs this idempotent action.
+     */
+    private static function stampAppliedSignature(): void
+    {
+        $di = \Phalcon\Di\Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+        try {
+            $signature = SIPConf::computeResolvedCanonicalSignature();
+            if ($signature === '') {
+                return;
+            }
+            $cache = $di->get(RedisClientProvider::SERVICE_NAME);
+            $cache->setex(
+                SIPConf::CACHE_KEY_APPLIED_SIGNATURE,
+                SIPConf::CACHE_TTL_RESOLVED,
+                $signature
+            );
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                'Failed to stamp applied canonical signature: ' . $e->getMessage(),
+                LOG_WARNING
+            );
+        }
     }
 }
