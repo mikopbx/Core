@@ -42,7 +42,11 @@ use Phalcon\Di\Injectable;
 class DockerNetworkFilterService extends Injectable
 {
     private const string ASTERISK_ACL_FILE = '/etc/asterisk/network_filters_deny_acl.conf';
-    
+    // AMI deny rules — inlined into manager.conf by ManagerConf and included here for cleanup.
+    private const string MANAGER_ACL_FILE = '/etc/asterisk/manager_network_filters_deny.conf';
+    // IAX deny rules — included by iax.conf via #tryinclude.
+    private const string IAX_ACL_FILE = '/etc/asterisk/network_filters_deny_iax_acl.conf';
+
     // Redis key prefixes and categories
     private const string REDIS_PREFIX = 'firewall:';
     private const string CATEGORY_HTTP = 'http';
@@ -261,13 +265,14 @@ class DockerNetworkFilterService extends Injectable
         // Check if firewall is enabled
         $firewallEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
         if ($firewallEnabled !== '1') {
-            // Remove ACL file if firewall is disabled
-            if (file_exists(self::ASTERISK_ACL_FILE)) {
-                unlink(self::ASTERISK_ACL_FILE);
-            }
-            $managerDenyFile = dirname(self::ASTERISK_ACL_FILE) . '/manager_network_filters_deny.conf';
-            if (file_exists($managerDenyFile)) {
-                unlink($managerDenyFile);
+            // Remove every deny file when the firewall is disabled. Leaving any of them
+            // behind keeps the corresponding protocol blocked (SIP via acl.conf, AMI via
+            // manager.conf, IAX via iax.conf #tryinclude) after the firewall is off —
+            // GitHub #1080.
+            foreach ([self::ASTERISK_ACL_FILE, self::MANAGER_ACL_FILE, self::IAX_ACL_FILE] as $denyFile) {
+                if (file_exists($denyFile)) {
+                    unlink($denyFile);
+                }
             }
             return;
         }
@@ -284,8 +289,13 @@ class DockerNetworkFilterService extends Injectable
         $content .= "permit=127.0.0.1/255.255.255.255\n";
         $content .= "permit=::1\n\n";
         
-        // Get deny list from database for SIP and AMI categories
-        $denyList = self::getNetworkFiltersDenyList(['SIP', 'AMI']);
+        // Get deny list from database for the SIP category only.
+        // AMI has its own deny file (manager_network_filters_deny.conf, generated
+        // below) and its own ACL. Mixing AMI blocks into this SIP ACL rejected SIP
+        // registration from hosts that were merely blocked for AMI — a very common
+        // config after restoring pre-2026 backups, where any unchecked category was
+        // stored as action='block' (GitHub #1080).
+        $denyList = self::getNetworkFiltersDenyList(['SIP']);
         
         if (!empty($denyList)) {
             $content .= "; Deny rules from database\n";
@@ -341,8 +351,7 @@ class DockerNetworkFilterService extends Injectable
             }
         }
         
-        $managerDenyFile = $dir . '/manager_network_filters_deny.conf';
-        file_put_contents($managerDenyFile, $managerContent);
+        file_put_contents(self::MANAGER_ACL_FILE, $managerContent);
         
         // Also generate deny rules for iax.conf
         $iaxContent = "; NetworkFilters deny rules for iax.conf - DO NOT EDIT MANUALLY\n";
@@ -377,8 +386,7 @@ class DockerNetworkFilterService extends Injectable
             $iaxContent .= "; No deny rules configured\n";
         }
         
-        $iaxDenyFile = $dir . '/network_filters_deny_iax_acl.conf';
-        file_put_contents($iaxDenyFile, $iaxContent);
+        file_put_contents(self::IAX_ACL_FILE, $iaxContent);
     }
     
     

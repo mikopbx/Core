@@ -26,6 +26,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudDescriptionA
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFeaturesAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAclAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadLicenseAction;
@@ -231,6 +232,25 @@ class ProcessPBXSettings extends Injectable
                 ReloadFirewallAction::class,
             ],
             'strPosKey' => 'FirewallSettings',
+        ];
+
+        // In no-iptables environments (Docker, LXC without CAP_NET_ADMIN) IP blocking is
+        // enforced through Asterisk ACLs, which ReloadFirewallAction does not touch.
+        // Toggling the firewall/fail2ban must therefore regenerate those ACL files and
+        // reload the acl module, otherwise disabling the firewall/fail2ban leaves stale
+        // deny rules loaded and previously-blocked hosts stay rejected (GitHub #1080).
+        // ReloadFirewallAclAction uses the restart-safe 'module reload acl' primitive and
+        // is a no-op where iptables is available. Scoped to the enable toggles only — the
+        // port/max-req changes above do not affect the IP deny ACLs.
+        $tables[] = [
+            'keys' => [
+                PbxSettings::PBX_FIREWALL_ENABLED,
+                PbxSettings::PBX_FAIL2BAN_ENABLED,
+            ],
+            'actions' => [
+                ReloadFirewallAclAction::class,
+            ],
+            'strPosKey' => 'DockerFirewallAcl',
         ];
 
         // FirewallParameters

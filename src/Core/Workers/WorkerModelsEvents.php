@@ -39,6 +39,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFail2BanConfAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFeaturesAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAclAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\RemoveCustomFilesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadH323Action;
@@ -302,6 +303,7 @@ class WorkerModelsEvents extends WorkerBase
             ReloadNetworkAction::class,
             ReloadFirewallAction::class,
             ReloadFail2BanConfAction::class,
+            ReloadFirewallAclAction::class,
             ReloadSSHAction::class,
             ReloadLicenseAction::class,
             ReloadSentryAction::class,
