@@ -732,6 +732,7 @@ return [
     'rest_schema_s3_region' => 'AWS régió vagy azzal egyenértékű S3 szolgáltatási régió azonosítója',
     'rest_System_UpgradeLoopDeviceFailed' => 'Nem sikerült létrehozni a hurokeszközt.',
     'rest_System_UpgradeMountFailed' => 'Nem sikerült csatolni a partíciót. Ellenőrizze a fájlrendszert.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Figyelem: az adat (Storage) partíció ugyanazon a lemezen van, mint a rendszer. A lemezképes frissítés újraparticionálja az egyetlen lemezt; a felvételeket, hívásnaplót és modulokat tartalmazó partíció automatikusan megmarad, de erősen ajánlott előbb biztonsági mentést készíteni.',
     // ============================================================================
     // MISC
     // ============================================================================

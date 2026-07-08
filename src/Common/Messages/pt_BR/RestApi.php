@@ -1800,6 +1800,7 @@ return [
     'rest_System_UpgradeFailedToDetectOffset' => 'Não foi possível determinar o deslocamento da partição de inicialização.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Falha ao criar o dispositivo de loop.',
     'rest_System_UpgradeMountFailed' => 'Falha ao montar a partição. Verifique o sistema de arquivos.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Atenção: a partição de dados (Storage) está no mesmo disco que o sistema. A atualização por imagem reparticiona o único disco; a partição com gravações, histórico de chamadas e módulos é preservada automaticamente, mas é altamente recomendável fazer um backup antes.',
     // ============================================================================
     // MISC
     // ============================================================================

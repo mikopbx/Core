@@ -2292,6 +2292,7 @@ return [
     'rest_schema_s3_use_path_style' => 'Flagga för path-style-URL (1=path-style för MinIO/Garage/Ceph, 0=virtual-hosted för AWS S3 och de flesta SaaS-leverantörer).',
     'rest_schema_s3_available_presets' => 'Katalog över kända S3-leverantörer med slutpunktsplaceholder, standardregion, path-style-flagga och dokumentationslänk. Skrivskyddad — genereras från registret S3ProviderPresets.',
     'rest_System_UpgradeMountFailed' => 'Misslyckades med att montera partitionen. Kontrollera filsystemet.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Varning: datapartitionen (Storage) finns på samma disk som systemet. Image-uppdateringen ompartitionerar den enda disken; partitionen med inspelningar, samtalshistorik och moduler bevaras automatiskt, men det rekommenderas starkt att ta en säkerhetskopia först.',
     // ============================================================================
     // MISC
     // ============================================================================

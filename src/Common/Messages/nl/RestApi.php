@@ -2348,6 +2348,7 @@ return [
     'rest_System_UpgradeFailedToDetectOffset' => 'De offset van de opstartpartitie kan niet worden vastgesteld.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Het is niet gelukt om een lusapparaat aan te maken.',
     'rest_System_UpgradeMountFailed' => 'Partitie kon niet worden gekoppeld. Controleer het bestandssysteem.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Let op: de datapartitie (Storage) staat op dezelfde schijf als het systeem. De image-update herpartitioneert de enige schijf; de partitie met opnames, oproepgeschiedenis en modules blijft automatisch behouden, maar het wordt sterk aanbevolen om vooraf een back-up te maken.',
 
     // Syslog: packet capture and log retrieval
     'rest_syslog_GetCaptureStatus' => 'Pakketopnamestatus ophalen',

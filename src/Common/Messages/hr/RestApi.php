@@ -2059,6 +2059,7 @@ return [
     'rest_System_UpgradeFailedToDetectOffset' => 'Nije moguće odrediti pomak particije za pokretanje.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Nije uspjelo stvaranje uređaja petlje.',
     'rest_System_UpgradeMountFailed' => 'Montiranje particije nije uspjelo. Provjerite datotečni sustav.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Pozor: podatkovna particija (Storage) nalazi se na istom disku kao i sustav. Ažuriranje slikom ponovno particionira jedini disk; particija sa snimkama, poviješću poziva i modulima automatski se čuva, ali se snažno preporučuje prethodno izraditi sigurnosnu kopiju.',
     // ============================================================================
     // MISC
     // ============================================================================

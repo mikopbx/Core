@@ -1445,6 +1445,7 @@ return [
     // ============================================================================
     'rest_System_UpgradeFailedToDetectOffset' => 'Impossible de déterminer le décalage de la partition de démarrage.',
     'rest_System_UpgradeMountFailed' => 'Impossible de monter la partition. Vérifiez le système de fichiers.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Attention : la partition de données (Storage) se trouve sur le même disque que le système. La mise à jour par image repartitionne l\'unique disque ; la partition contenant les enregistrements, l\'historique des appels et les modules est conservée automatiquement, mais il est fortement recommandé de faire une sauvegarde au préalable.',
     // ============================================================================
     // MISC
     // ============================================================================

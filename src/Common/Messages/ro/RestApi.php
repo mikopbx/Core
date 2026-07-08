@@ -139,6 +139,7 @@ return [
     'rest_System_UpgradeFailedToDetectOffset' => 'Nu se poate determina offset-ul partiției de boot.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Nu s-a putut crea dispozitivul de buclă.',
     'rest_System_UpgradeMountFailed' => 'Montarea partiției a eșuat. Verificați sistemul de fișiere.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Atenție: partiția de date (Storage) se află pe același disc ca sistemul. Actualizarea prin imagine repartiționează singurul disc; partiția cu înregistrări, istoricul apelurilor și module este păstrată automat, dar se recomandă insistent să faceți o copie de rezervă în prealabil.',
     'rest_schema_net_config_is_docker' => 'Funcționează într-un container Docker?',
     // Network REST API - NAT Settings
     'rest_schema_net_nat_usenat' => 'Folosește NAT',

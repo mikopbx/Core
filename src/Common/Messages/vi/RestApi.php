@@ -99,6 +99,7 @@ return [
     'rest_System_UpgradeFailedToDetectOffset' => 'Không thể xác định độ lệch của phân vùng khởi động.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Không thể tạo thiết bị vòng lặp.',
     'rest_System_UpgradeMountFailed' => 'Không thể gắn kết phân vùng. Kiểm tra hệ thống tập tin.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Cảnh báo: phân vùng dữ liệu (Storage) nằm trên cùng ổ đĩa với hệ thống. Cập nhật bằng image sẽ phân vùng lại ổ đĩa duy nhất; phân vùng chứa bản ghi âm, lịch sử cuộc gọi và các module được giữ lại tự động, nhưng rất khuyến nghị sao lưu trước.',
     'rest_cr_GetRecordDesc' => 'Nhận thông tin chi tiết về một phòng hội nghị cụ thể.',
     'rest_cr_Create' => 'Tạo phòng họp',
     'rest_cr_Update' => 'Nâng cấp phòng hội nghị của bạn',

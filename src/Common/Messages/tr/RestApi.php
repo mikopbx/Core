@@ -1108,6 +1108,7 @@ return [
     'rest_schema_s3_use_path_style' => 'Path-style URL bayrağı (1=path-style MinIO/Garage/Ceph için, 0=virtual-hosted AWS S3 ve çoğu SaaS sağlayıcısı için).',
     'rest_schema_s3_available_presets' => 'Bilinen S3 sağlayıcılarının kataloğu: endpoint placeholder, varsayılan bölge, path-style bayrağı ve dokümantasyon bağlantısı. Yalnızca okunur — S3ProviderPresets kayıt defterinden oluşturulur.',
     'rest_System_UpgradeMountFailed' => 'Bölüm bağlanamadı. Dosya sistemini kontrol edin.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Dikkat: veri (Storage) bölümü sistemle aynı diskte bulunuyor. İmaj güncellemesi tek diski yeniden bölümler; kayıtları, çağrı geçmişini ve modülleri barındıran bölüm otomatik olarak korunur, ancak önceden yedek almanız kesinlikle önerilir.',
     // ============================================================================
     // MISC
     // ============================================================================

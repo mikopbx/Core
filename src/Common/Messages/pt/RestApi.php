@@ -499,6 +499,7 @@ return [
     // ============================================================================
     'rest_System_UpgradeFailedToDetectOffset' => 'Não foi possível determinar o deslocamento da partição de inicialização.',
     'rest_System_UpgradeMountFailed' => 'Falha ao montar a partição. Verifique o sistema de arquivos.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Atenção: a partição de dados (Storage) está no mesmo disco que o sistema. A atualização por imagem reparticiona o único disco; a partição com gravações, histórico de chamadas e módulos é preservada automaticamente, mas recomenda-se vivamente fazer uma cópia de segurança antes.',
     'rest_da_GetRecord' => 'Obtenha o aplicativo de plano de discagem pelo ID',
     'rest_schema_ts_ntp_server' => 'Endereço do servidor NTP para sincronização de tempo',
     'rest_schema_ts_manual_time' => 'Modo de ajuste manual de hora (verdadeiro - manualmente, falso - via NTP)',

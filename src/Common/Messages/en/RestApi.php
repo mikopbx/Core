@@ -2061,6 +2061,7 @@ return [
     'rest_System_UpgradeFailedToDetectOffset' => 'Failed to determine boot partition offset.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Failed to set up the loop device.',
     'rest_System_UpgradeMountFailed' => 'Failed to mount the first partition. Check filesystem and options.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Warning: the data (Storage) partition is on the same disk as the system. The image update repartitions the only disk; the partition holding recordings, call history and modules is preserved automatically, but making a backup beforehand is strongly recommended.',
     'rest_system_ExecuteSqlRequestDesc' => 'Executes a custom SQL query against the main database, CDR database, or user database at the specified path. Returns the resulting rows and metadata.',
     'rest_param_system_command' => 'Bash command to execute',
     'rest_param_system_timeout' => 'Command execution timeout in seconds (1-300, default 30)',

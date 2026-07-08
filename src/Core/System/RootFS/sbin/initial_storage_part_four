@@ -27,6 +27,13 @@ if [ "$action" != "create" ] && [ "$action" != "update" ]; then
     exit 6
 fi
 
+# Single-disk Storage preservation (GitHub #1077). When pbx_firmware exports these,
+# partition 4 must be recreated at its ORIGINAL start sector and its existing ext4
+# data re-adopted — never reformatted. Unset => legacy behaviour (fresh install,
+# two-disk, boot-time provisioning) is preserved byte-for-byte.
+PART4_PRESERVE="${PART4_PRESERVE:-0}"
+PART4_START="${PART4_START:-}"
+
 logFile=/tmp/initial_storage;
 # If the second argument is not given, we'll use the device specified in the file /var/etc/cfdevice
 # Otherwise, we use the device specified as the second argument
@@ -69,7 +76,72 @@ dd if="${dev}" of="$mbrBackupFile" bs=512 count=1 > /dev/null 2>&1;
 
 # Get partition info for the device
 count=$(/sbin/sfdisk -l "${dev}" 2>/dev/null | /bin/busybox grep -c "^/dev");
-if [ -n "$partitionFour" ]; then
+if [ "$PART4_PRESERVE" = "1" ] && [ -n "$PART4_START" ]; then
+    # Single-disk update: recreate partition 4 at the captured ORIGINAL offset.
+    # The firmware image is 601 MiB and lays down partitions 1,2,3,5 (a 1 MiB
+    # BIOS-boot part 5 at 599-600 MiB); partition slot 4 is left free for Storage,
+    # which starts at 600 MiB. The image's trailing MiB (600-601 MiB) overwrites
+    # ONLY the first MiB of Storage (the ext4 superblock, restored below) — all
+    # data beyond 601 MiB survives the dd untouched. So recreate part 4 at its
+    # real start so the existing ext4 filesystem lines up exactly. --align none is
+    # mandatory: --align optimal would snap the start to a different sector and
+    # corrupt the mapping. The rm below is defensive — should the image ever ship
+    # an actual partition 4, drop it before recreating at the real data offset.
+
+    # Sanity guard: Storage must start at/after the image footprint (600 MiB),
+    # otherwise the image dd already overwrote that region with system data and
+    # recreating part 4 there would re-adopt a superblock over garbage. Reject a
+    # non-numeric or too-small start rather than mkpart at a corrupting offset.
+    sectorSize=$(/sbin/blockdev --getss "${dev}" 2>/dev/null);
+    [ -z "$sectorSize" ] && sectorSize=512;
+    minStart=$(( 600 * 1024 * 1024 / sectorSize ));
+    case "$PART4_START" in
+      ''|*[!0-9]*)
+        echo_error "Preserve mode: captured PART4_START='$PART4_START' is not a sector number. Aborting before any format.";
+        exit 10;
+        ;;
+    esac
+    if [ "$PART4_START" -lt "$minStart" ]; then
+        echo_error "Preserve mode: PART4_START=$PART4_START < image footprint ($minStart sectors / 600 MiB). Aborting before any format.";
+        exit 10;
+    fi
+
+    if [ -n "$partitionFour" ]; then
+        echo_info "Preserve mode: removing image-provided partition 4 before recreating at original offset...";
+        /sbin/parted --script "${dev}" rm 4 2>/dev/null;
+    fi
+    echo_info "Preserve mode: creating partition 4 at original start ${PART4_START}s (align none)...";
+    /sbin/parted --script --align none "${dev}" "mkpart primary ext4 ${PART4_START}s 100%";
+    resultParted=$?;
+    # Re-adopt the ext4 superblock captured by pbx_firmware. The image's trailing
+    # MiB clobbered the on-disk superblock, so this restore is LOAD-BEARING. Wait
+    # for the recreated partition node to publish BEFORE writing, and keep the only
+    # backup copy until the restore has demonstrably hit a real block device — a
+    # premature dd to a not-yet-ready node followed by rm would destroy the sole
+    # means of recovery.
+    if [ -f "$FS_BACKUP_PART4" ]; then
+      partitionFour='';
+      restoreTry=1;
+      while [ "$restoreTry" -le 15 ]; do
+        /sbin/blockdev --rereadpt "${dev}" > /dev/null 2>&1;
+        partitionFour=$(/bin/lsblk -r "$dev" -p -o NAME,TYPE | /bin/busybox grep "part$" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/busybox sort -u);
+        [ -b "$partitionFour" ] && break;
+        restoreTry=$((restoreTry + 1));
+        sleep 1;
+      done
+      if [ -b "$partitionFour" ]; then
+        if dd if="$FS_BACKUP_PART4" of="$partitionFour" bs=1M count=1 >/dev/null 2>&1; then
+          rm -rf "$FS_BACKUP_PART4";
+        else
+          echo_error "Preserve mode: superblock restore dd to $partitionFour failed; keeping $FS_BACKUP_PART4 for recovery.";
+        fi
+      else
+        echo_error "Preserve mode: partition 4 node did not appear after mkpart; superblock NOT restored, keeping $FS_BACKUP_PART4.";
+      fi
+    fi;
+    echo_info "Fix the partition table and use all the space (preserve)";
+    echo "fix" | /sbin/parted "$dev" print free ---pretend-input-tty >> "$logFile" 2>&1;
+elif [ -n "$partitionFour" ]; then
     # The fourth partition already exists, format it and resize
     echo_info "Formatting and resizing the existing fourth partition ${partitionFour}..."
     /sbin/parted --script "${dev}" resizepart 4 100% 2>/dev/null;
@@ -136,7 +208,43 @@ done
 # If the partition was successfully created
 if [ "$resultParted" = "0" ];then
     fsType="$(/bin/lsblk -o FSTYPE -n "$partitionFour")";
-    if [ "$action" = "create" ] || { [ "$fsType" != "ext2" ] && [ "$fsType" != "ext4" ]; }; then
+    if [ "$PART4_PRESERVE" = "1" ]; then
+        # Preserve mode: NEVER mkfs — that would wipe the very Storage data we are
+        # protecting (GitHub #1077). If the filesystem didn't survive the recreate,
+        # fail LOUD and leave the raw partition untouched for manual recovery.
+        #
+        # Read the type/UUID with blkid (direct on-disk superblock read) rather
+        # than lsblk's udev cache, which lags right after rm/mkpart + superblock
+        # restore. Retry briefly so a transient empty read does not abort a
+        # perfectly recoverable update.
+        fsType=""; actualUuid="";
+        preserveTry=1;
+        while [ "$preserveTry" -le 5 ]; do
+            fsType=$(/sbin/blkid -o value -s TYPE "$partitionFour" 2>/dev/null);
+            actualUuid=$(/sbin/blkid -o value -s UUID "$partitionFour" 2>/dev/null);
+            if [ "$fsType" = "ext2" ] || [ "$fsType" = "ext4" ]; then
+                break;
+            fi
+            /sbin/blockdev --rereadpt "${dev}" > /dev/null 2>&1;
+            preserveTry=$((preserveTry + 1));
+            sleep 2;
+        done
+        if [ "$fsType" != "ext2" ] && [ "$fsType" != "ext4" ]; then
+            echo_error "Preserve mode: partition 4 filesystem is '$fsType' (expected ext2/ext4) after retries.";
+            echo_error "Refusing to reformat — Storage data may be recoverable. Aborting part4 setup.";
+            exit 7;
+        fi
+        # Verify the re-adopted filesystem is the ORIGINAL Storage (UUID from the
+        # restored superblock must match the pre-update Storage UUID). A mismatch
+        # means preservation failed silently — abort before anything formats it.
+        if [ -n "$STORAGE_UUID" ] && [ -n "$actualUuid" ] && [ "$actualUuid" != "$STORAGE_UUID" ]; then
+            echo_error "Preserve mode: partition 4 UUID '$actualUuid' != expected Storage UUID '$STORAGE_UUID'.";
+            echo_error "Original Storage filesystem was NOT preserved. Aborting before any format.";
+            exit 9;
+        fi
+        [ -n "$actualUuid" ] && echo_info "Preserve mode: Storage UUID verified ($actualUuid).";
+        echo_info "Preserve mode: existing ext4 detected on $partitionFour — skipping mkfs.";
+    elif [ "$action" = "create" ] || { [ "$fsType" != "ext2" ] && [ "$fsType" != "ext4" ]; }; then
         echo_info "start mkfs.ext4 $partitionFour...";
         /sbin/mkfs.ext4 -qF "$partitionFour"
         echo_info "result $?...";
@@ -164,6 +272,15 @@ if [ "$resultParted" = "0" ];then
         echo_info "result $?...";
         mount -t "$type" "${partitionFour}" "$tmp_dir" 2> /dev/null > /dev/null;
         mountResult=$?;
+    fi;
+
+    # Preserve mode: if the original Storage still won't mount after fsck, do NOT
+    # reformat it (GitHub #1077). Fail loud and leave the data for manual recovery.
+    if [ "$mountResult" != "0" ] && [ "$PART4_PRESERVE" = "1" ]; then
+        echo_error "Preserve mode: partition 4 ($partitionFour) could not be mounted after recreate+fsck.";
+        echo_error "Refusing to reformat — Storage data left intact for manual recovery. Aborting.";
+        rm -rf "$tmp_dir";
+        exit 8;
     fi;
 
     if [ "$mountResult" != "0" ]; then

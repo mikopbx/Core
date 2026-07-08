@@ -2151,6 +2151,7 @@ return [
     // ============================================================================
     'rest_System_UpgradeFailedToDetectOffset' => 'Nelze určit posun bootovacího oddílu.',
     'rest_System_UpgradeMountFailed' => 'Nepodařilo se připojit oddíl. Zkontrolujte souborový systém.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Upozornění: datový oddíl (Storage) je na stejném disku jako systém. Aktualizace obrazem znovu rozdělí jediný disk; oddíl s nahrávkami, historií hovorů a moduly bude automaticky zachován, ale důrazně doporučujeme předem vytvořit zálohu.',
     // ============================================================================
     // Dialplan Applications REST API
     // ============================================================================

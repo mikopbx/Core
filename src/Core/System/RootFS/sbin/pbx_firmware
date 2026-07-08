@@ -139,14 +139,22 @@ else
   echo_info "Backup the system settings to temporary directory...";
   /bin/busybox cp -Rv /cf/conf/* /tmp/configbak | /bin/busybox awk '{print "\t" $0}'
 
-  mounted_storage=$(mount | /bin/busybox grep storage | /bin/busybox awk '{ print $1}');
+  # Match the exact Storage mountpoint (not any line containing "storage") so a
+  # stray mount can't produce a multi-line value and break the single-disk test.
+  mounted_storage=$(mount | /bin/busybox grep ' /storage/usbdisk1 ' | /bin/busybox awk '{ print $1}');
 
   # Get the name of the mounted storage and the 4th partition (if it exists)
   partition4Name=$(/bin/lsblk -r | /bin/busybox grep "${systemDevice}" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/busybox sort -u)
 
+  # Whether the Storage partition lives on the SAME physical disk as the system
+  # (single-disk layout). When set, partition 4 must be preserved losslessly
+  # during the repartition below instead of being recreated blindly (GitHub #1077).
+  SINGLE_DISK_STORAGE=0
+
   # If the 4th partition is not the same as the mounted storage
   if [ "/dev/${partition4Name}" != "${mounted_storage}" ]; then
     # Storage is on a separate disk. Proceed with the freeup, backup and update procedures
+    SINGLE_DISK_STORAGE=0
     /sbin/freestorage "doNotUnMount";
 
     # Define the backup directory and image path
@@ -165,6 +173,7 @@ else
     rm -f /tmp/dd_backup_stats
   else
     # Storage is on the main disk which needs to be unmounted, so move the image to RAM
+    SINGLE_DISK_STORAGE=1
     echo_info "Moving the update img to RAM before storage will be unmounted ..."
     tmp_img=$(/bin/busybox basename "$1");
     img_file="/tmp/${tmp_img}";
@@ -233,11 +242,32 @@ if [ -r "${img_file}" ]; then
   fi
 
   part4Action='create';
+  # Preserve-mode signalling for initial_storage_part_four (GitHub #1077).
+  # Defaults keep the legacy behaviour for two-disk / fresh-install paths.
+  export PART4_PRESERVE=0
+  export PART4_START=''
   if [ -n "$partitionFour" ]; then
     export FS_BACKUP_PART4=fs-backup-part4.img;
     echo_info "Start backup fs $FS_BACKUP_PART4 super block for part4 ($partitionFour)"
     dd if="$partitionFour" of="$FS_BACKUP_PART4" bs=1M count=1 >/dev/null 2>&1;
     part4Action='update';
+
+    # Single-disk layout: partition 4 IS the Storage partition and is about to
+    # lose its GPT entry (sgdisk -Z below). Capture its exact start sector NOW,
+    # from the live table (after any msdos->GPT conversion above), so it can be
+    # recreated losslessly at the same offset instead of a hardcoded 600MiB.
+    # /sbin/parted is always present here; do NOT depend on offload binaries —
+    # /offload is already unmounted (freeupoffload) at this point.
+    if [ "$SINGLE_DISK_STORAGE" = "1" ]; then
+      PART4_START=$(/sbin/parted -s "$DISK" unit s print 2>/dev/null | /bin/busybox awk '$1=="4"{gsub(/s/,"",$2); print $2; exit}')
+      if [ -n "$PART4_START" ]; then
+        export PART4_PRESERVE=1
+        export PART4_START
+        echo_info "Single-disk storage: partition 4 start sector captured = ${PART4_START}s (preserve mode ON)"
+      else
+        echo_error "Single-disk storage: FAILED to capture partition 4 start sector; legacy recreate will run (data-loss risk)"
+      fi
+    fi
   fi
 
   echo_info "Installing new image on $DISK"
@@ -347,7 +377,22 @@ if [ -r "${img_file}" ]; then
 
   # Update the partition table
   /sbin/initial_storage_part_four "$part4Action" "$DISK";
-  echo_info "Check if it necessary to $part4Action 4-th storage partition. The result is ${?}...";
+  part4Result=$?;
+  echo_info "Check if it necessary to $part4Action 4-th storage partition. The result is ${part4Result}...";
+
+  # Single-disk preserve-mode failure (exit 7/8/9/10 from initial_storage_part_four):
+  # the Storage filesystem was NOT verified/re-adopted. Do not let the box silently
+  # reboot into the boot-time provisioner (Storage::selectAndConfigureStorageDisk),
+  # which would take the legacy path and reformat partition 4. Alert loudly and give
+  # the operator a recovery shell while the 1 MiB superblock backup is still in RAM.
+  case "$part4Result" in
+    7|8|9|10)
+      echo_error "STORAGE PRESERVATION FAILED (code $part4Result) on single-disk update."
+      echo_error "Partition 4 was NOT verified as the original Storage; a normal reboot may reformat it."
+      echo_error "The superblock backup (if retained) is in the initramfs working dir: fs-backup-part4.img"
+      wait_for_user_input "Storage preservation failed — press 'm' for a recovery shell BEFORE reboot"
+      ;;
+  esac
 fi
 
 # Reread the partition table of the system device

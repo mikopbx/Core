@@ -2099,6 +2099,7 @@ return [
     'rest_schema_s3_use_path_style' => 'Path-style URL bayrağı (1=path-style MinIO/Garage/Ceph üçün, 0=virtual-hosted AWS S3 və əksər SaaS provayderləri üçün).',
     'rest_schema_s3_available_presets' => 'Tanınan S3 provayderlərinin kataloqu: endpoint placeholder, standart region, path-style bayrağı və sənədlərə keçid. Yalnız oxumaq üçün — S3ProviderPresets reyestrindən yaradılır.',
     'rest_System_UpgradeMountFailed' => 'Bölməni quraşdırmaq mümkün olmadı. Fayl sistemini yoxlayın.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Diqqət: məlumat (Storage) bölməsi sistemlə eyni diskdədir. İmic yeniləməsi yeganə diski yenidən bölür; qeydlər, zəng tarixçəsi və modulları saxlayan bölmə avtomatik qorunur, lakin əvvəlcədən ehtiyat nüsxəsi çıxarmaq şiddətlə tövsiyə olunur.',
     // ============================================================================
     // MISC
     // ============================================================================

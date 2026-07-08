@@ -1323,6 +1323,7 @@ return [
     'rest_schema_s3_available_presets' => 'Katalog bekannter S3-Anbieter mit Endpoint-Platzhalter, Standardregion, Path-Style-Flag und Dokumentationslink. Schreibgeschützt — wird aus der S3ProviderPresets-Registry generiert.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Fehler beim Erstellen des Loop-Geräts.',
     'rest_System_UpgradeMountFailed' => 'Die Partition konnte nicht eingebunden werden. Überprüfen Sie das Dateisystem.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Achtung: Die Datenpartition (Storage) befindet sich auf derselben Festplatte wie das System. Das Image-Update partitioniert die einzige Festplatte neu; die Partition mit Aufzeichnungen, Anrufverlauf und Modulen bleibt automatisch erhalten, es wird jedoch dringend empfohlen, vorher ein Backup zu erstellen.',
     // ============================================================================
     // MISC
     // ============================================================================

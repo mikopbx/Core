@@ -806,6 +806,7 @@ return [
     'rest_schema_s3_bucket' => 'S3-säiliön nimi, johon tietueet tallennetaan',
     'rest_System_UpgradeLoopDeviceFailed' => 'Silmukkalaitteen luominen epäonnistui.',
     'rest_System_UpgradeMountFailed' => 'Osion liittäminen epäonnistui. Tarkista tiedostojärjestelmä.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Huomio: data (Storage) -osio on samalla levyllä kuin järjestelmä. Levykuvan päivitys osioi ainoan levyn uudelleen; tallenteita, puheluhistoriaa ja moduuleja sisältävä osio säilytetään automaattisesti, mutta varmuuskopion ottamista etukäteen suositellaan vahvasti.',
     // ============================================================================
     // MISC
     // ============================================================================

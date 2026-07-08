@@ -1404,6 +1404,7 @@ return [
     'rest_System_UpgradeFailedToDetectOffset' => 'Impossibile determinare l\'offset della partizione di avvio.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Impossibile creare il dispositivo loop.',
     'rest_System_UpgradeMountFailed' => 'Impossibile montare la partizione. Controllare il file system.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Attenzione: la partizione dati (Storage) si trova sullo stesso disco del sistema. L\'aggiornamento tramite immagine ripartiziona l\'unico disco; la partizione con registrazioni, cronologia chiamate e moduli viene conservata automaticamente, ma si consiglia vivamente di eseguire prima un backup.',
     // ============================================================================
     // MISC
     // ============================================================================
