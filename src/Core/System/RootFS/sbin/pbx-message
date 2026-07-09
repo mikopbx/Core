@@ -118,7 +118,7 @@ get_serial_ports() {
 
     # Skip serial port detection in Docker (runtime manages output)
     if is_docker; then
-        echo "" > "$SERIAL_CACHE"
+        { echo "" > "$SERIAL_CACHE"; } 2>/dev/null || true
         return
     fi
 
@@ -126,7 +126,7 @@ get_serial_ports() {
     # Writing to /dev/tty1 separately would cause duplicate output
     # So for LXC we return empty - stdout handles console output
     if is_lxc; then
-        echo "" > "$SERIAL_CACHE"
+        { echo "" > "$SERIAL_CACHE"; } 2>/dev/null || true
         return
     fi
 
@@ -138,14 +138,14 @@ get_serial_ports() {
         # Simply check if device exists and is writable
         if [ -c "$DEV" ] && [ -w "$DEV" ]; then
             # Write actual data to verify the port is functional (empty writes always succeed)
-            if printf '\0' > "$DEV" 2>/dev/null; then
+            if { printf '\0' > "$DEV"; } 2>/dev/null; then
                 SERIAL_PORTS="$SERIAL_PORTS $DEV"
             fi
         fi
     done
 
     # Cache the results
-    echo "$SERIAL_PORTS" > "$SERIAL_CACHE"
+    { echo "$SERIAL_PORTS" > "$SERIAL_CACHE"; } 2>/dev/null || true
     echo "$SERIAL_PORTS"
 }
 
@@ -155,9 +155,9 @@ output_console() {
     local newline="$2"
     
     if [ "$newline" = "1" ]; then
-        echo "$msg"
+        echo "$msg" 2>/dev/null || true
     else
-        echo -n "$msg"
+        echo -n "$msg" 2>/dev/null || true
     fi
 }
 
@@ -186,9 +186,9 @@ output_serial() {
     for port in $SERIAL_PORTS; do
         [ "$port" = "$skip_port" ] && continue
         if [ "$newline" = "1" ]; then
-            echo "$clean_msg" >> "$port" 2>/dev/null
+            { echo "$clean_msg" >> "$port"; } 2>/dev/null || true
         else
-            echo -n "$clean_msg" >> "$port" 2>/dev/null
+            { echo -n "$clean_msg" >> "$port"; } 2>/dev/null || true
         fi
     done
 }

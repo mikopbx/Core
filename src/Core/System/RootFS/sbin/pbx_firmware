@@ -205,7 +205,7 @@ if [ -r "${img_file}" ]; then
   # Allow user to enter manual shell before critical partition operations
   wait_for_user_input "About to start partition operations on $DISK"
 
-  if command -v gdisk >/dev/null 2>&1 && [ -n "$partitionFour" ]; then
+  if /sbin/gdisk --version >/dev/null 2>&1 && [ -n "$partitionFour" ]; then
     # If the 4th section is missing,
     # then markup conversion is not required,
     # there is no risk of data loss.
