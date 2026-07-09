@@ -123,6 +123,51 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         $this->assertStringNotContainsString('printf "%s\n" "$msg" > "$SERIAL_PORT" 2>/dev/null', $script);
     }
 
+    public function testFirmwareUpgradeConsoleOutputIsCompactAndQuiet(): void
+    {
+        $firmware = file_get_contents(self::ROOTFS_SBIN . '/pbx_firmware');
+        $upgrade = file_get_contents(self::ROOTFS_SBIN . '/firmware_upgrade.sh');
+        $part4 = file_get_contents(self::ROOTFS_SBIN . '/initial_storage_part_four');
+        $message = file_get_contents(self::ROOTFS_SBIN . '/pbx-message');
+        $boot = file_get_contents(self::ROOTFS_SBIN . '/pbx_boot_init');
+
+        $this->assertIsString($firmware);
+        $this->assertIsString($upgrade);
+        $this->assertIsString($part4);
+        $this->assertIsString($message);
+        $this->assertIsString($boot);
+
+        $this->assertStringContainsString('PREFIX="  - "', $message);
+        $this->assertStringContainsString('local msg="  - $1"', $firmware);
+        $this->assertStringContainsString('_echo "Starting upgrade to version $versionNumber..."', $upgrade);
+        $this->assertStringNotContainsString('_echo " - Starting upgrade', $upgrade);
+
+        $this->assertStringContainsString('/sbin/e2fsck -f -y "$partition" > /dev/null 2>&1', $firmware);
+        $this->assertStringNotContainsString('/sbin/e2fsck -f -y "$partition";', $firmware);
+        $this->assertStringContainsString('detailVerbose=$("$mdadmPath" --detail --scan --verbose 2>/dev/null)', $boot);
+        $this->assertStringContainsString('arrList=$("$mdadmPath" --detail --scan 2>/dev/null | /bin/busybox cut -d \' \' -f 2)', $boot);
+
+        $this->assertStringContainsString('Reserve 1 MiB for GPT backup on $partition...', $firmware);
+        $this->assertStringContainsString('Skipping GPT conversion: gdisk unavailable.', $firmware);
+        $this->assertStringContainsString('Backup part4 superblock: $FS_BACKUP_PART4 ($partitionFour)', $firmware);
+        $this->assertStringContainsString('Part4 start saved: ${PART4_START}s (preserve ON)', $firmware);
+        $this->assertStringNotContainsString('At the end of the 4th partition', $firmware);
+        $this->assertStringNotContainsString('firmware image write will replace the partition table', $firmware);
+        $this->assertStringNotContainsString('Single-disk storage: partition 4 start sector captured', $firmware);
+
+        $this->assertStringContainsString('Preserve: create part4 at ${PART4_START}s...', $part4);
+        $this->assertStringContainsString('Preserve: grow partition table to disk size', $part4);
+        $this->assertStringContainsString('parted result ${resultParted}...', $part4);
+        $this->assertStringContainsString('Preserve: Storage UUID verified.', $part4);
+        $this->assertStringContainsString('Preserve: ext4 on $partitionFour, skip mkfs.', $part4);
+        $this->assertStringContainsString('Check filesystem on ${partitionFour}', $part4);
+        $this->assertStringNotContainsString('creating partition 4 at original start', $part4);
+        $this->assertStringNotContainsString('Fix the partition table and use all the space (preserve)', $part4);
+        $this->assertStringNotContainsString('Storage UUID verified ($actualUuid)', $part4);
+        $this->assertStringNotContainsString('existing ext4 detected on $partitionFour', $part4);
+        $this->assertStringNotContainsString('check filesystem on ${partitionFour}', $part4);
+    }
+
     public function testFirmwareUpgradeDoesNotProbeSerialPortsByWritingToThem(): void
     {
         $script = file_get_contents(self::ROOTFS_SBIN . '/firmware_upgrade.sh');

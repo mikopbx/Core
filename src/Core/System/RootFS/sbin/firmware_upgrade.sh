@@ -67,8 +67,9 @@ _SERIAL=$(detect_upgrade_serial_port)
 
 # Echo to both console (stdout) and serial port
 _echo() {
-    echo "$@" 2>/dev/null || true
-    [ -n "$_SERIAL" ] && { printf "%s\n" "$*" > "$_SERIAL"; } 2>/dev/null || true
+    local _msg="  - $*"
+    echo "$_msg" 2>/dev/null || true
+    [ -n "$_SERIAL" ] && { printf "%s\n" "$_msg" > "$_SERIAL"; } 2>/dev/null || true
 }
 
 # Global variables
@@ -133,9 +134,9 @@ startUpgrade() {
     fi
 
     if [ -n "$versionNumber" ]; then
-      _echo " - Starting upgrade to the version: $versionNumber..."
+      _echo "Starting upgrade to version $versionNumber..."
     else
-      _echo " - Starting upgrade..."
+      _echo "Starting upgrade..."
     fi
 
     mountPartitions && executeFirmwareUpdate

@@ -60,7 +60,7 @@ if [ -n "$SERIAL_PORT" ]; then
 fi
 
 echo_info() {
-    local msg=" - $1"
+    local msg="  - $1"
     echo "$msg" 2>/dev/null || true
     if [ -n "$SERIAL_PORT" ]; then
         # Use printf for atomic write, stty to drain buffer
@@ -121,7 +121,7 @@ shrink_msdos_part4_for_gpt_backup() {
 
     [ -z "$partition" ] && return 0
 
-    echo_info "At the end of the 4th partition ($partition), 1 Mb of free space will be required...";
+    echo_info "Reserve 1 MiB for GPT backup on $partition...";
     sector_size=$(/sbin/blockdev --getss "$disk")
     sectors_in_mib=$((1024 * 1024 / sector_size))
     disk_sectors=$(/sbin/blockdev --getsz "$disk")
@@ -139,7 +139,7 @@ shrink_msdos_part4_for_gpt_backup() {
       return 0
     fi
 
-    /sbin/e2fsck -f -y "$partition";
+    /sbin/e2fsck -f -y "$partition" > /dev/null 2>&1;
     e2fsck_result=$?
     if [ "$e2fsck_result" -gt 1 ]; then
       echo_error "Pre-shrink filesystem check on $partition failed with code $e2fsck_result."
@@ -343,7 +343,7 @@ if [ -r "${img_file}" ]; then
           echo_error "Converting to GPT."
         fi
       else
-        echo_info "Skipping GPT conversion: gdisk is not runnable; firmware image write will replace the partition table."
+        echo_info "Skipping GPT conversion: gdisk unavailable."
       fi
     fi
   fi
@@ -355,7 +355,7 @@ if [ -r "${img_file}" ]; then
   export PART4_START=''
   if [ -n "$partitionFour" ]; then
     export FS_BACKUP_PART4=fs-backup-part4.img;
-    echo_info "Start backup fs $FS_BACKUP_PART4 super block for part4 ($partitionFour)"
+    echo_info "Backup part4 superblock: $FS_BACKUP_PART4 ($partitionFour)"
     dd if="$partitionFour" of="$FS_BACKUP_PART4" bs=1M count=1 >/dev/null 2>&1;
     part4Action='update';
 
@@ -370,7 +370,7 @@ if [ -r "${img_file}" ]; then
       if [ -n "$PART4_START" ]; then
         export PART4_PRESERVE=1
         export PART4_START
-        echo_info "Single-disk storage: partition 4 start sector captured = ${PART4_START}s (preserve mode ON)"
+        echo_info "Part4 start saved: ${PART4_START}s (preserve ON)"
       else
         echo_error "Single-disk storage: FAILED to capture partition 4 start sector; legacy recreate will run (data-loss risk)"
       fi

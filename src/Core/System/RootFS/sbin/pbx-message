@@ -23,7 +23,7 @@
 #   -t TYPE     Message type: info, error, start, result, done, fail, skip
 #   -s          Log to syslog
 #   -n          No newline at end
-#   -p PREFIX   Prefix for message (default: " - ")
+#   -p PREFIX   Prefix for message (default: "  - ")
 #   -l LEVEL    Syslog level (default: info)
 #   -i IDENT    Syslog identifier (default: pbx-message)
 
@@ -31,7 +31,7 @@
 MESSAGE_TYPE="info"
 LOG_TO_SYSLOG=""
 NO_NEWLINE=""
-PREFIX=" - "
+PREFIX="  - "
 SYSLOG_LEVEL="info"
 SYSLOG_IDENT="pbx-message"
 MESSAGE=""
