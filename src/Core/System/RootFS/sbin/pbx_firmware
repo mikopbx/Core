@@ -92,6 +92,99 @@ wait_for_user_input() {
     echo ""
 }
 
+shrink_msdos_part4_for_gpt_backup() {
+    local disk="$1"
+    local partition="$2"
+    local reduce_by=1
+    local sector_size sectors_in_mib disk_sectors disk_end_sector part4_end_sector tail_free_sectors
+    local current_size new_size new_size_mib layout_file
+    local e2fsck_result resize_result awk_result sfdisk_result post_e2fsck_result
+
+    [ -z "$partition" ] && return 0
+
+    echo_info "At the end of the 4th partition ($partition), 1 Mb of free space will be required...";
+    sector_size=$(/sbin/blockdev --getss "$disk")
+    sectors_in_mib=$((1024 * 1024 / sector_size))
+    disk_sectors=$(/sbin/blockdev --getsz "$disk")
+    disk_end_sector=$((disk_sectors - 1))
+    part4_end_sector=$(/sbin/parted -s "$disk" unit s print 2>/dev/null | /bin/busybox awk '$1=="4"{gsub(/s/,"",$3); print $3; exit}')
+    case "$part4_end_sector" in
+      ''|*[!0-9]*)
+        echo_error "Unable to read partition 4 end sector for $partition."
+        return 12
+        ;;
+    esac
+
+    tail_free_sectors=$((disk_end_sector - part4_end_sector))
+    if [ "$tail_free_sectors" -ge "$sectors_in_mib" ]; then
+      return 0
+    fi
+
+    /sbin/e2fsck -f -y "$partition";
+    e2fsck_result=$?
+    if [ "$e2fsck_result" -gt 1 ]; then
+      echo_error "Pre-shrink filesystem check on $partition failed with code $e2fsck_result."
+      return 12
+    fi
+
+    echo_info "Reducing the 4th section...";
+    layout_file="/tmp/disk_layout_part4_$$.txt"
+    /sbin/sfdisk -d "$disk" 2> /dev/null > "$layout_file"
+    current_size=$(/bin/busybox grep "^$partition" "$layout_file" | /bin/busybox grep -o 'size=[ ]*[0-9]*' | /bin/busybox tr -d ' ' | /bin/busybox cut -d= -f2)
+    if [ -z "$current_size" ]; then
+      rm -f "$layout_file"
+      echo_error "Unable to read current partition size for $partition."
+      return 12
+    fi
+
+    new_size=$((current_size - reduce_by * sectors_in_mib))
+    new_size_mib=$((current_size / sectors_in_mib - reduce_by))
+    if [ "$new_size" -le 0 ] || [ "$new_size_mib" -le 0 ]; then
+      rm -f "$layout_file"
+      echo_error "Calculated invalid reduced size for $partition."
+      return 12
+    fi
+
+    /sbin/resize2fs "$partition" "$new_size_mib"M > /dev/null 2>&1
+    resize_result=$?
+    if [ "$resize_result" -ne 0 ]; then
+      rm -f "$layout_file"
+      echo_error "resize2fs on $partition failed with code $resize_result."
+      return 12
+    fi
+
+    /bin/busybox awk -v partition="$partition" -v new_size="$new_size" '
+      $1 == partition {
+        sub(/size=[[:space:]]*[0-9]+/, "size=" new_size)
+      }
+      { print }
+    ' "$layout_file" > "${layout_file}.new"
+    awk_result=$?
+    if [ "$awk_result" -ne 0 ]; then
+      rm -f "$layout_file" "${layout_file}.new"
+      echo_error "Unable to rewrite sfdisk layout for $partition."
+      return 12
+    fi
+    mv "${layout_file}.new" "$layout_file"
+
+    /sbin/sfdisk "$disk" > /dev/null 2>&1 < "$layout_file"
+    sfdisk_result=$?
+    rm -f "$layout_file"
+    if [ "$sfdisk_result" -ne 0 ]; then
+      echo_error "sfdisk resize of $partition failed with code $sfdisk_result."
+      return 12
+    fi
+
+    /sbin/blockdev --rereadpt "$disk" > /dev/null 2>&1
+    /sbin/e2fsck -f -y "$partition" > /dev/null 2>&1
+    post_e2fsck_result=$?
+    if [ "$post_e2fsck_result" -gt 1 ]; then
+      echo_error "Post-shrink filesystem check on $partition failed with code $post_e2fsck_result."
+      return 12
+    fi
+    return 0
+}
+
 # Assign input arguments to variables
 img_file="$1";
 systemDevice="$2"
@@ -205,38 +298,33 @@ if [ -r "${img_file}" ]; then
   # Allow user to enter manual shell before critical partition operations
   wait_for_user_input "About to start partition operations on $DISK"
 
-  if /sbin/gdisk --version >/dev/null 2>&1 && [ -n "$partitionFour" ]; then
+  if [ -n "$partitionFour" ]; then
     # If the 4th section is missing,
     # then markup conversion is not required,
     # there is no risk of data loss.
     PARTITION_TYPE=$(/sbin/parted --script "$DISK" print 2>/dev/null | /bin/busybox grep "Partition Table" | /bin/busybox awk '{print $3}');
     echo_info "Performing an action for the $PARTITION_TYPE section";
     if [ "$PARTITION_TYPE" == "msdos" ]; then
-      echo_info "At the end of the 4th partition ($partitionFour), 1 Mb of free space will be required...";
-      REDUCE_BY=1
-      LAST_ENTRY=$(parted -s "$DISK" unit MiB print free 2>/dev/null | tail -n 1)
-      FREE_SPACE=$(echo "$LAST_ENTRY" | /bin/busybox awk '{print $3}' | /bin/busybox grep -o '[0-9]*')
-      if [[ (-z "$FREE_SPACE" || "$FREE_SPACE" -lt "$REDUCE_BY") && -n "$partitionFour" ]]; then
-      	e2fsck -f -y "$partitionFour";
-        echo_info "Reducing the 4th section...";
-        SECTOR_SIZE=$(blockdev --getss "$DISK")
-      	SECTORS_IN_MIB=$((1024 * 1024 / SECTOR_SIZE))
-      	sfdisk -d "$DISK" 2> /dev/null > disk_layout.txt
-      	CURRENT_SIZE=$(/bin/busybox grep "^$partitionFour" disk_layout.txt | /bin/busybox grep -o 'size=[ ]*[0-9]*' | /bin/busybox tr -d ' ' | cut -d= -f2)
-      	NEW_SIZE=$((CURRENT_SIZE - REDUCE_BY * SECTORS_IN_MIB))
-      	NEW_SIZE_MIB=$((CURRENT_SIZE / SECTORS_IN_MIB - 1))
-        sed -i "s|^\($partitionFour.*size=\s*\)[0-9]*\(.*\)$|\1$NEW_SIZE\2|" disk_layout.txt
-      	sfdisk "$DISK"  > /dev/null 2>&1 < disk_layout.txt
-      	rm disk_layout.txt;
-      	/sbin/resize2fs "$partitionFour" "$NEW_SIZE_MIB"M 2> /dev/null > /dev/null;
+      if [ "$SINGLE_DISK_STORAGE" = "1" ]; then
+        shrink_msdos_part4_for_gpt_backup "$DISK" "$partitionFour"
+        shrinkResult=$?
+        if [ "$shrinkResult" -ne 0 ]; then
+          echo_error "Unable to reserve GPT backup space before firmware image write."
+          exit "$shrinkResult"
+        fi
       fi
-      echo_info "Converting markup to GPT."
-      echo -e "w\nY\n" | /sbin/gdisk "$DISK" > /dev/null;
-      resultGDisk="$?";
-      if [ "$resultGDisk" -eq 0 ]; then
-        echo_info "The conversion to GPT has been completed successfully."
+
+      if /sbin/gdisk --version >/dev/null 2>&1; then
+        echo_info "Converting markup to GPT."
+        echo -e "w\nY\n" | /sbin/gdisk "$DISK" > /dev/null;
+        resultGDisk="$?";
+        if [ "$resultGDisk" -eq 0 ]; then
+          echo_info "The conversion to GPT has been completed successfully."
+        else
+          echo_error "Converting to GPT."
+        fi
       else
-        echo_error "Converting to GPT."
+        echo_info "Skipping GPT conversion: gdisk is not runnable; firmware image write will replace the partition table."
       fi
     fi
   fi
@@ -390,7 +478,9 @@ if [ -r "${img_file}" ]; then
       echo_error "STORAGE PRESERVATION FAILED (code $part4Result) on single-disk update."
       echo_error "Partition 4 was NOT verified as the original Storage; a normal reboot may reformat it."
       echo_error "The superblock backup (if retained) is in the initramfs working dir: fs-backup-part4.img"
-      wait_for_user_input "Storage preservation failed — press 'm' for a recovery shell BEFORE reboot"
+      echo_error "Entering recovery shell. Type 'exit' to abort firmware upgrade without continuing."
+      PS1='[recovery]# ' /bin/sh -i
+      exit "$part4Result"
       ;;
   esac
 fi
