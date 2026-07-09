@@ -30,25 +30,45 @@
 # Setup console output - redirect to /dev/console only if accessible
 # Serial output is handled independently by pbx_firmware and pbx-message
 # Write actual content to test console (empty writes may succeed on broken devices)
-if [ -w /dev/console ] && echo "MikoPBX firmware upgrade" > /dev/console 2>/dev/null; then
+if [ -w /dev/console ] && { echo "MikoPBX firmware upgrade" > /dev/console; } 2>/dev/null; then
     exec </dev/console >/dev/console 2>/dev/console
 fi
 
+detect_upgrade_serial_port() {
+    local _DEV _serialInfo _SETSERIAL
+
+    # Match pbx-env-detect: never open ttyS* directly. Phantom serial devices can
+    # be writable but fail or block on write/open in VMs and VPS environments.
+    _SETSERIAL="setserial"
+    command -v setserial >/dev/null 2>&1 || _SETSERIAL="busybox setserial"
+    for _DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5; do
+        [ -c "$_DEV" ] || continue
+        _serialInfo=$($_SETSERIAL -g "$_DEV" 2>/dev/null)
+        [ -z "$_serialInfo" ] && continue
+        case "$_serialInfo" in
+            *unknown*) continue ;;
+        esac
+        echo "$_DEV"
+        return 0
+    done
+
+    for _DEV in /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
+        [ -c "$_DEV" ] || continue
+        [ -e "/sys/class/tty/${_DEV#/dev/}/device" ] || continue
+        echo "$_DEV"
+        return 0
+    done
+
+    return 0
+}
+
 # Detect serial port for this script's own messages (self-contained, no external deps)
-# Scan both x86 (ttyS) and ARM (ttyAMA) serial ports
-_SERIAL=""
-for _DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
-            /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
-    if [ -c "$_DEV" ] && [ -w "$_DEV" ] && echo -n "" > "$_DEV" 2>/dev/null; then
-        _SERIAL="$_DEV"
-        break
-    fi
-done
+_SERIAL=$(detect_upgrade_serial_port)
 
 # Echo to both console (stdout) and serial port
 _echo() {
-    echo "$@"
-    [ -n "$_SERIAL" ] && printf "%s\n" "$*" > "$_SERIAL" 2>/dev/null
+    echo "$@" 2>/dev/null || true
+    [ -n "$_SERIAL" ] && { printf "%s\n" "$*" > "$_SERIAL"; } 2>/dev/null || true
 }
 
 # Global variables

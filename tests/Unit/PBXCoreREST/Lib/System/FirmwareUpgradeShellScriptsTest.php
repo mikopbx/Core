@@ -82,4 +82,39 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         $this->assertStringContainsString('{ echo "$clean_msg" >> "$port"; } 2>/dev/null || true', $script);
         $this->assertStringContainsString('{ echo -n "$clean_msg" >> "$port"; } 2>/dev/null || true', $script);
     }
+
+    public function testPbxFirmwareDoesNotProbeSerialPortsByWritingToThem(): void
+    {
+        $script = file_get_contents(self::ROOTFS_SBIN . '/pbx_firmware');
+
+        $this->assertIsString($script);
+        $this->assertStringContainsString('SETSERIAL="setserial"', $script);
+        $this->assertStringContainsString('busybox setserial', $script);
+        $this->assertStringContainsString('serialInfo=$($SETSERIAL -g "$DEV" 2>/dev/null)', $script);
+        $this->assertStringContainsString('*unknown*) continue ;;', $script);
+        $this->assertStringContainsString('[ -e "/sys/class/tty/${DEV#/dev/}/device" ] || continue', $script);
+        $this->assertStringContainsString('echo "$msg" 2>/dev/null || true', $script);
+        $this->assertStringContainsString('{ printf "%s\n" "$msg" > "$SERIAL_PORT"; } 2>/dev/null || true', $script);
+        $this->assertSame(0, preg_match('/[<>]{1,2}\s*"\$DEV"/', $script));
+        $this->assertStringNotContainsString('echo -n "" > "$DEV" 2>/dev/null', $script);
+        $this->assertStringNotContainsString('printf "%s\n" "$msg" > "$SERIAL_PORT" 2>/dev/null', $script);
+    }
+
+    public function testFirmwareUpgradeDoesNotProbeSerialPortsByWritingToThem(): void
+    {
+        $script = file_get_contents(self::ROOTFS_SBIN . '/firmware_upgrade.sh');
+
+        $this->assertIsString($script);
+        $this->assertStringContainsString('_SETSERIAL="setserial"', $script);
+        $this->assertStringContainsString('busybox setserial', $script);
+        $this->assertStringContainsString('_serialInfo=$($_SETSERIAL -g "$_DEV" 2>/dev/null)', $script);
+        $this->assertStringContainsString('*unknown*) continue ;;', $script);
+        $this->assertStringContainsString('[ -e "/sys/class/tty/${_DEV#/dev/}/device" ] || continue', $script);
+        $this->assertStringContainsString('{ echo "MikoPBX firmware upgrade" > /dev/console; } 2>/dev/null', $script);
+        $this->assertStringContainsString('echo "$@" 2>/dev/null || true', $script);
+        $this->assertStringContainsString('{ printf "%s\n" "$*" > "$_SERIAL"; } 2>/dev/null || true', $script);
+        $this->assertSame(0, preg_match('/[<>]{1,2}\s*"\$_DEV"/', $script));
+        $this->assertStringNotContainsString('echo -n "" > "$_DEV" 2>/dev/null', $script);
+        $this->assertStringNotContainsString('printf "%s\n" "$*" > "$_SERIAL" 2>/dev/null', $script);
+    }
 }

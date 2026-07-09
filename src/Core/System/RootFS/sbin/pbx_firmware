@@ -20,17 +20,36 @@
 # Inline output functions - no external dependencies for maximum compatibility
 # This script must work when updating FROM any old MikoPBX version
 
-# Serial port for headless output (scan x86 ttyS0-5 and ARM ttyAMA0-3, take first available)
-# Cached once at script start to avoid repeated checks
-SERIAL_PORT=""
-for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
-           /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
-    # Check if device exists, is writable, and accepts test write
-    if [ -c "$DEV" ] && [ -w "$DEV" ] && echo -n "" > "$DEV" 2>/dev/null; then
-        SERIAL_PORT="$DEV"
-        break
-    fi
-done
+detect_upgrade_serial_port() {
+    local DEV serialInfo SETSERIAL
+
+    # Match pbx-env-detect: never open ttyS* directly. Phantom serial devices can
+    # be writable but fail or block on write/open in VMs and VPS environments.
+    SETSERIAL="setserial"
+    command -v setserial >/dev/null 2>&1 || SETSERIAL="busybox setserial"
+    for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5; do
+        [ -c "$DEV" ] || continue
+        serialInfo=$($SETSERIAL -g "$DEV" 2>/dev/null)
+        [ -z "$serialInfo" ] && continue
+        case "$serialInfo" in
+            *unknown*) continue ;;
+        esac
+        echo "$DEV"
+        return 0
+    done
+
+    for DEV in /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
+        [ -c "$DEV" ] || continue
+        [ -e "/sys/class/tty/${DEV#/dev/}/device" ] || continue
+        echo "$DEV"
+        return 0
+    done
+
+    return 0
+}
+
+# Serial port for headless output, cached once at script start to avoid repeated checks
+SERIAL_PORT=$(detect_upgrade_serial_port)
 
 # Prevent duplicate output when stdout is directly connected to the serial port
 if [ -n "$SERIAL_PORT" ]; then
@@ -42,10 +61,10 @@ fi
 
 echo_info() {
     local msg=" - $1"
-    echo "$msg"
+    echo "$msg" 2>/dev/null || true
     if [ -n "$SERIAL_PORT" ]; then
         # Use printf for atomic write, stty to drain buffer
-        printf "%s\n" "$msg" > "$SERIAL_PORT" 2>/dev/null
+        { printf "%s\n" "$msg" > "$SERIAL_PORT"; } 2>/dev/null || true
         stty -F "$SERIAL_PORT" drain >/dev/null 2>&1 || sleep 0.05 2>/dev/null || true
     fi
     return 0
@@ -53,9 +72,9 @@ echo_info() {
 
 echo_error() {
     local msg="ERROR: $1"
-    echo "$msg"
+    echo "$msg" 2>/dev/null || true
     if [ -n "$SERIAL_PORT" ]; then
-        printf "%s\n" "$msg" > "$SERIAL_PORT" 2>/dev/null
+        { printf "%s\n" "$msg" > "$SERIAL_PORT"; } 2>/dev/null || true
         stty -F "$SERIAL_PORT" drain >/dev/null 2>&1 || sleep 0.05 2>/dev/null || true
     fi
     return 0
