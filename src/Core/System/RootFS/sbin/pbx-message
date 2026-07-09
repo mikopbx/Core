@@ -130,17 +130,28 @@ get_serial_ports() {
         return
     fi
 
-    # Bare-metal: find available serial ports without using setserial
-    # Scan both x86 (ttyS) and ARM (ttyAMA) serial ports
+    # Bare-metal: find available serial ports without opening them for write.
+    # Phantom ttyS devices can be writable but fail or block on write/open.
     SERIAL_PORTS=""
-    for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
-               /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
-        # Simply check if device exists and is writable
-        if [ -c "$DEV" ] && [ -w "$DEV" ]; then
-            # Write actual data to verify the port is functional (empty writes always succeed)
-            if { printf '\0' > "$DEV"; } 2>/dev/null; then
-                SERIAL_PORTS="$SERIAL_PORTS $DEV"
-            fi
+    SETSERIAL="setserial"
+    command -v setserial >/dev/null 2>&1 || SETSERIAL="busybox setserial"
+    for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5; do
+        [ -c "$DEV" ] || continue
+        serialInfo=$($SETSERIAL -g "$DEV" 2>/dev/null)
+        [ -z "$serialInfo" ] && continue
+        case "$serialInfo" in
+            *unknown*) continue ;;
+        esac
+        SERIAL_PORTS="$SERIAL_PORTS $DEV"
+    done
+
+    for DEV in /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
+        [ -c "$DEV" ] || continue
+        [ -e "/sys/class/tty/${DEV#/dev/}/device" ] || continue
+        if [ -z "$SERIAL_PORTS" ]; then
+            SERIAL_PORTS="$DEV"
+        else
+            SERIAL_PORTS="$SERIAL_PORTS $DEV"
         fi
     done
 

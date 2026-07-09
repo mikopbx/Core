@@ -80,14 +80,25 @@ echoToTeletype()
     /sbin/pbx-message -t info "$message"
   else
     # Fallback to old implementation if pbx-message is not available
-    echo "$message";
-    local dev
-    for dev in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
-               /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
-      if [ -c "$dev" ] && [ -w "$dev" ] && echo -n "" > "$dev" 2>/dev/null; then
-        echo "$1" >> "$dev"
-        break
-      fi
+    echo "$message" 2>/dev/null || true;
+    local dev serialInfo SETSERIAL
+    SETSERIAL="setserial"
+    command -v setserial >/dev/null 2>&1 || SETSERIAL="busybox setserial"
+    for dev in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5; do
+      [ -c "$dev" ] || continue
+      serialInfo=$($SETSERIAL -g "$dev" 2>/dev/null)
+      [ -z "$serialInfo" ] && continue
+      case "$serialInfo" in
+        *unknown*) continue ;;
+      esac
+      { echo "$message" >> "$dev"; } 2>/dev/null || true
+      break
+    done
+    for dev in /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
+      [ -c "$dev" ] || continue
+      [ -e "/sys/class/tty/${dev#/dev/}/device" ] || continue
+      { echo "$message" >> "$dev"; } 2>/dev/null || true
+      break
     done
   fi
 }

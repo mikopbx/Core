@@ -77,10 +77,33 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         $script = file_get_contents(self::ROOTFS_SBIN . '/pbx-message');
 
         $this->assertIsString($script);
+        $this->assertStringContainsString('SETSERIAL="setserial"', $script);
+        $this->assertStringContainsString('busybox setserial', $script);
+        $this->assertStringContainsString('serialInfo=$($SETSERIAL -g "$DEV" 2>/dev/null)', $script);
+        $this->assertStringContainsString('*unknown*) continue ;;', $script);
+        $this->assertStringContainsString('[ -e "/sys/class/tty/${DEV#/dev/}/device" ] || continue', $script);
+        $this->assertSame(0, preg_match('/[<>]{1,2}\s*"\$DEV"/', $script));
         $this->assertStringContainsString('echo "$msg" 2>/dev/null || true', $script);
         $this->assertStringContainsString('echo -n "$msg" 2>/dev/null || true', $script);
         $this->assertStringContainsString('{ echo "$clean_msg" >> "$port"; } 2>/dev/null || true', $script);
         $this->assertStringContainsString('{ echo -n "$clean_msg" >> "$port"; } 2>/dev/null || true', $script);
+    }
+
+    public function testShellFunctionsFallbackDoesNotProbeSerialPortsByWritingToThem(): void
+    {
+        $script = file_get_contents(self::ROOTFS_SBIN . '/shell_functions.sh');
+
+        $this->assertIsString($script);
+        $this->assertStringContainsString('SETSERIAL="setserial"', $script);
+        $this->assertStringContainsString('busybox setserial', $script);
+        $this->assertStringContainsString('serialInfo=$($SETSERIAL -g "$dev" 2>/dev/null)', $script);
+        $this->assertStringContainsString('*unknown*) continue ;;', $script);
+        $this->assertStringContainsString('[ -e "/sys/class/tty/${dev#/dev/}/device" ] || continue', $script);
+        $this->assertStringContainsString('echo "$message" 2>/dev/null || true', $script);
+        $this->assertStringContainsString('{ echo "$message" >> "$dev"; } 2>/dev/null || true', $script);
+        $this->assertStringNotContainsString('echo -n "" > "$dev" 2>/dev/null', $script);
+        $this->assertStringNotContainsString('[ -w "$dev" ] &&', $script);
+        $this->assertStringNotContainsString('echo "$1" >> "$dev"', $script);
     }
 
     public function testPbxFirmwareDoesNotProbeSerialPortsByWritingToThem(): void
