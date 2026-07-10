@@ -116,7 +116,7 @@ class ModelsBase extends Model
                     case 'afterSave':
                     case 'afterDelete':
                         $record->processSettingsChanges($type);
-                        self::clearCache(get_class($record));
+                        $record::clearCache(get_class($record));
                         break;
                     default:
                 }

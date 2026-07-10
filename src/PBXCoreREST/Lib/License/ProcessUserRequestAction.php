@@ -20,7 +20,6 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\License;
 
-use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
@@ -55,7 +54,7 @@ class ProcessUserRequestAction extends Injectable
         $translation = $di->get(TranslationProvider::SERVICE_NAME);
         $license = $di->get(MarketPlaceProvider::SERVICE_NAME);
         if (strlen($data['licKey']) === 28 && Text::startsWith($data['licKey'], 'MIKO-')) {
-            ModelsBase::clearCache(PbxSettings::class);
+            PbxSettings::clearCache(PbxSettings::class);
             $oldLicKey =  PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
 
             // Check if key has changed or if we need to validate existing key

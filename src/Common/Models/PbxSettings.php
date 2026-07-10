@@ -163,6 +163,26 @@ class PbxSettings extends ModelsBase
     }
 
     /**
+     * Clears both generic model cache entries and the dedicated settings hash.
+     *
+     * PbxSettings stores values in a Redis hash named self::CACHE_KEY rather
+     * than only in Phalcon managed-cache keys. Generic ModelsBase::clearCache()
+     * does not touch that hash, so callers that clear PbxSettings after model
+     * changes must rebuild it explicitly.
+     *
+     * @param string $calledClass Full model class name
+     * @return void
+     */
+    public static function clearCache(string $calledClass): void
+    {
+        parent::clearCache($calledClass);
+
+        if ($calledClass === self::class) {
+            self::rebuildCache();
+        }
+    }
+
+    /**
      * Returns default or saved value for key if it exists on DB
      *
      * @param $key string value key
