@@ -27,7 +27,7 @@ export MAIN_PID="$$";
 mdadmPath=$(/sbin/which mdadm)
 if [ -n "$mdadmPath" ]; then
   # Stop any running RAID arrays
-  "$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop >/dev/null 2>/dev/null
+  "$mdadmPath" --detail --scan 2>/dev/null | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop >/dev/null 2>/dev/null
 fi
 # RAID END
 

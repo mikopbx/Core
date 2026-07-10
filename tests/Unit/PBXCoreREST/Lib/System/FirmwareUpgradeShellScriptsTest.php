@@ -99,8 +99,9 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         $this->assertStringContainsString('serialInfo=$($SETSERIAL -g "$dev" 2>/dev/null)', $script);
         $this->assertStringContainsString('*unknown*) continue ;;', $script);
         $this->assertStringContainsString('[ -e "/sys/class/tty/${dev#/dev/}/device" ] || continue', $script);
-        $this->assertStringContainsString('echo "$message" 2>/dev/null || true', $script);
-        $this->assertStringContainsString('{ echo "$message" >> "$dev"; } 2>/dev/null || true', $script);
+        $this->assertStringContainsString('local prefixed_message="  - $message"', $script);
+        $this->assertStringContainsString('echo "$prefixed_message" 2>/dev/null || true', $script);
+        $this->assertStringContainsString('{ echo "$prefixed_message" >> "$dev"; } 2>/dev/null || true', $script);
         $this->assertStringNotContainsString('echo -n "" > "$dev" 2>/dev/null', $script);
         $this->assertStringNotContainsString('[ -w "$dev" ] &&', $script);
         $this->assertStringNotContainsString('echo "$1" >> "$dev"', $script);
@@ -139,8 +140,11 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
 
         $this->assertStringContainsString('PREFIX="  - "', $message);
         $this->assertStringContainsString('local msg="  - $1"', $firmware);
+        $this->assertStringContainsString('local _msg="  - $*"', $upgrade);
+        $this->assertStringContainsString('{ echo "  - MikoPBX firmware upgrade" > /dev/console; } 2>/dev/null', $upgrade);
         $this->assertStringContainsString('_echo "Starting upgrade to version $versionNumber..."', $upgrade);
         $this->assertStringNotContainsString('_echo " - Starting upgrade', $upgrade);
+        $this->assertStringNotContainsString('{ echo "MikoPBX firmware upgrade" > /dev/console; }', $upgrade);
 
         $this->assertStringContainsString('/sbin/e2fsck -f -y "$partition" > /dev/null 2>&1', $firmware);
         $this->assertStringNotContainsString('/sbin/e2fsck -f -y "$partition";', $firmware);
@@ -168,6 +172,19 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         $this->assertStringNotContainsString('check filesystem on ${partitionFour}', $part4);
     }
 
+    public function testRaidShutdownScansSuppressMdadmNoArraysNoise(): void
+    {
+        $reboot = file_get_contents(self::ROOTFS_SBIN . '/pbx_reboot');
+        $shutdown = file_get_contents(self::ROOTFS_SBIN . '/shutdown');
+
+        $this->assertIsString($reboot);
+        $this->assertIsString($shutdown);
+        $this->assertStringContainsString('"$mdadmPath" --detail --scan 2>/dev/null |', $reboot);
+        $this->assertStringContainsString('"$mdadmPath" --detail   --scan 2>/dev/null |', $shutdown);
+        $this->assertStringNotContainsString('"$mdadmPath" --detail --scan |', $reboot);
+        $this->assertStringNotContainsString('"$mdadmPath" --detail   --scan |', $shutdown);
+    }
+
     public function testFirmwareUpgradeDoesNotProbeSerialPortsByWritingToThem(): void
     {
         $script = file_get_contents(self::ROOTFS_SBIN . '/firmware_upgrade.sh');
@@ -178,7 +195,7 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         $this->assertStringContainsString('_serialInfo=$($_SETSERIAL -g "$_DEV" 2>/dev/null)', $script);
         $this->assertStringContainsString('*unknown*) continue ;;', $script);
         $this->assertStringContainsString('[ -e "/sys/class/tty/${_DEV#/dev/}/device" ] || continue', $script);
-        $this->assertStringContainsString('{ echo "MikoPBX firmware upgrade" > /dev/console; } 2>/dev/null', $script);
+        $this->assertStringContainsString('{ echo "  - MikoPBX firmware upgrade" > /dev/console; } 2>/dev/null', $script);
         $this->assertStringContainsString('echo "$@" 2>/dev/null || true', $script);
         $this->assertStringContainsString('{ printf "%s\n" "$*" > "$_SERIAL"; } 2>/dev/null || true', $script);
         $this->assertSame(0, preg_match('/[<>]{1,2}\s*"\$_DEV"/', $script));

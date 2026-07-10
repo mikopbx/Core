@@ -80,7 +80,8 @@ echoToTeletype()
     /sbin/pbx-message -t info "$message"
   else
     # Fallback to old implementation if pbx-message is not available
-    echo "$message" 2>/dev/null || true;
+    local prefixed_message="  - $message"
+    echo "$prefixed_message" 2>/dev/null || true;
     local dev serialInfo SETSERIAL
     SETSERIAL="setserial"
     command -v setserial >/dev/null 2>&1 || SETSERIAL="busybox setserial"
@@ -91,13 +92,13 @@ echoToTeletype()
       case "$serialInfo" in
         *unknown*) continue ;;
       esac
-      { echo "$message" >> "$dev"; } 2>/dev/null || true
+      { echo "$prefixed_message" >> "$dev"; } 2>/dev/null || true
       break
     done
     for dev in /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
       [ -c "$dev" ] || continue
       [ -e "/sys/class/tty/${dev#/dev/}/device" ] || continue
-      { echo "$message" >> "$dev"; } 2>/dev/null || true
+      { echo "$prefixed_message" >> "$dev"; } 2>/dev/null || true
       break
     done
   fi
