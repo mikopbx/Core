@@ -235,6 +235,7 @@ else
 fi
 
 # Check if the livecd file exists, and proceed with different operations depending on its existence
+SKIP_SYSTEM_PART4_SETUP=0
 if [ -f /offload/livecd ]; then
   # Copy the configuration to the backup directory and unmount /conf.recover
   /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak | /bin/busybox awk '{print "\t" $0}'
@@ -267,6 +268,9 @@ else
   if [ "/dev/${partition4Name}" != "${mounted_storage}" ]; then
     # Storage is on a separate disk. Proceed with the freeup, backup and update procedures
     SINGLE_DISK_STORAGE=0
+    if [ -n "$mounted_storage" ]; then
+      SKIP_SYSTEM_PART4_SETUP=1
+    fi
     /sbin/freestorage "doNotUnMount";
 
     # Define the backup directory and image path
@@ -482,10 +486,16 @@ if [ -r "${img_file}" ]; then
   rm -rf "$backupImg";
   echo_info "The execution of the dd command was finished...";
 
-  # Update the partition table
-  /sbin/initial_storage_part_four "$part4Action" "$DISK";
-  part4Result=$?;
-  echo_info "Check if it necessary to $part4Action 4-th storage partition. The result is ${part4Result}...";
+  # Two-disk installations keep Storage on a separate disk, so creating /dev/sda4
+  # after the system image write is unnecessary and can break the upgrade.
+  if [ "$SKIP_SYSTEM_PART4_SETUP" = "1" ]; then
+    part4Result=0
+    echo_info "Skip system disk part4 setup: Storage is on a separate disk."
+  else
+    /sbin/initial_storage_part_four "$part4Action" "$DISK";
+    part4Result=$?;
+    echo_info "Check if it necessary to $part4Action 4-th storage partition. The result is ${part4Result}...";
+  fi
 
   # Single-disk preserve-mode failure (exit 7/8/9/10 from initial_storage_part_four):
   # the Storage filesystem was NOT verified/re-adopted. Do not let the box silently

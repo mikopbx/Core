@@ -72,6 +72,22 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         );
     }
 
+    public function testFirmwareUpgradeSkipsSystemDiskPart4SetupForSeparateStorageDisk(): void
+    {
+        $script = file_get_contents(self::ROOTFS_SBIN . '/pbx_firmware');
+
+        $this->assertIsString($script);
+        $this->assertStringContainsString('SKIP_SYSTEM_PART4_SETUP=0', $script);
+        $this->assertStringContainsString('SKIP_SYSTEM_PART4_SETUP=1', $script);
+        $this->assertStringContainsString('if [ "$SKIP_SYSTEM_PART4_SETUP" = "1" ]; then', $script);
+        $this->assertStringContainsString('/sbin/initial_storage_part_four "$part4Action" "$DISK";', $script);
+        $this->assertStringContainsString('else', $script);
+        $this->assertStringContainsString('part4Result=0', $script);
+        $this->assertStringContainsString('Skip system disk part4 setup: Storage is on a separate disk.', $script);
+        $this->assertStringNotContainsString('if [ "$SINGLE_DISK_STORAGE" = "1" ]; then' . PHP_EOL
+            . '    /sbin/initial_storage_part_four "$part4Action" "$DISK";', $script);
+    }
+
     public function testPbxMessageSuppressesBrokenConsoleAndSerialWriteErrors(): void
     {
         $script = file_get_contents(self::ROOTFS_SBIN . '/pbx-message');
