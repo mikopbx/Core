@@ -456,7 +456,9 @@ if [ -r "${img_file}" ]; then
     partedOutput=$(echo "Fix" | /sbin/parted "$DISK" print ---pretend-input-tty 2>&1)
     partedResult=$?
     echo_info "parted exit code: $partedResult"
-    if [ -n "$partedOutput" ]; then echo "$partedOutput" | while IFS= read -r line; do echo_info "parted: $line"; done; fi
+    if [ "$partedResult" -ne 0 ] && [ -n "$partedOutput" ]; then
+      echo "$partedOutput" | while IFS= read -r line; do echo_info "parted: $line"; done
+    fi
   else
     echo_error "No GPT utility available to fix backup header!"
   fi

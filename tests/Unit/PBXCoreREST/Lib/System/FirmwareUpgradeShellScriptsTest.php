@@ -164,6 +164,8 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
 
         $this->assertStringContainsString('/sbin/e2fsck -f -y "$partition" > /dev/null 2>&1', $firmware);
         $this->assertStringNotContainsString('/sbin/e2fsck -f -y "$partition";', $firmware);
+        $this->assertStringContainsString('if [ "$partedResult" -ne 0 ] && [ -n "$partedOutput" ]; then', $firmware);
+        $this->assertStringNotContainsString('if [ -n "$partedOutput" ]; then echo "$partedOutput"', $firmware);
         $this->assertStringContainsString('detailVerbose=$("$mdadmPath" --detail --scan --verbose 2>/dev/null)', $boot);
         $this->assertStringContainsString('arrList=$("$mdadmPath" --detail --scan 2>/dev/null | /bin/busybox cut -d \' \' -f 2)', $boot);
 
