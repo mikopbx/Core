@@ -79,19 +79,6 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 $sanitizedData['id'] = $recordId;
             }
 
-            // API field mapping: providerid (API) → provider (database)
-            // WHY: Frontend uses 'providerid' for consistency, DB uses 'provider'
-            if (isset($sanitizedData['providerid'])) {
-                if (empty($sanitizedData['providerid']) || $sanitizedData['providerid'] === 'none') {
-                    $sanitizedData['provider'] = null;  // "Any Provider" route
-                } else {
-                    $sanitizedData['provider'] = $sanitizedData['providerid'];
-                }
-                unset($sanitizedData['providerid']);  // Remove API field name
-            } else {
-                $sanitizedData['provider'] = null;  // Default to "Any Provider"
-            }
-
             // Handle 'none' value for audio_message_id
             if (isset($sanitizedData['audio_message_id']) && $sanitizedData['audio_message_id'] === 'none') {
                 $sanitizedData['audio_message_id'] = null;
@@ -188,6 +175,16 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $res->messages['error'] = $schemaErrors;
             $res->httpCode = 422; // Unprocessable Entity
             return $res;
+        }
+
+        // Map API field providerid to database field provider only when supplied.
+        // POST defaults providerid to "none"; PUT/PATCH omission preserves the binding.
+        if (array_key_exists('providerid', $sanitizedData)) {
+            $providerId = $sanitizedData['providerid'];
+            $sanitizedData['provider'] = empty($providerId) || $providerId === 'none'
+                ? null
+                : $providerId;
+            unset($sanitizedData['providerid']);
         }
 
         // ============================================================
