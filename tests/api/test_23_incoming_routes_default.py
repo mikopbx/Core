@@ -21,6 +21,8 @@ class TestIncomingRoutes:
 
     created_ids = []
     created_provider_ids = []  # Track providers to cleanup at the end
+    provider_route_id = None
+    provider_id = None
 
     def test_01_get_default_template(self, api_client):
         """Test GET /incoming-routes:getDefault - Get default route template"""
@@ -142,6 +144,7 @@ class TestIncomingRoutes:
 
         response = api_client.post('incoming-routes', route_data)
         assert_api_success(response, "Failed to create basic incoming route")
+        assert response['data']['providerid'] == 'none'
 
         assert 'id' in response['data']
         route_id = response['data']['id']
@@ -189,6 +192,8 @@ class TestIncomingRoutes:
         route_id = response['data']['id']
         self.created_ids.append(route_id)
         self.created_provider_ids.append(provider_id)  # Track for cleanup at the end
+        self.__class__.provider_route_id = route_id
+        self.__class__.provider_id = provider_id
 
         print(f"✓ Created provider incoming route: {route_id}")
         print(f"  Provider: {provider_id}")
@@ -296,6 +301,48 @@ class TestIncomingRoutes:
         assert int(updated['timeout']) == 25
 
         print(f"✓ Patched incoming route")
+
+    def test_11_provider_binding_update_semantics(self, api_client):
+        """Provider binding changes only when providerid is explicitly supplied."""
+        if self.provider_route_id is None or self.provider_id is None:
+            pytest.skip("Provider-bound route was not created")
+
+        route_id = self.provider_route_id
+        provider_id = self.provider_id
+
+        patch_response = api_client.patch(
+            f'incoming-routes/{route_id}',
+            {'timeout': 17}
+        )
+        assert_api_success(patch_response, "PATCH without providerid failed")
+        patched = assert_record_exists(api_client, 'incoming-routes', route_id)
+        assert patched['providerid'] == provider_id
+        assert int(patched['timeout']) == 17
+
+        put_data = patched.copy()
+        put_data.pop('providerid', None)
+        put_data['timeout'] = 18
+        put_response = api_client.put(f'incoming-routes/{route_id}', put_data)
+        assert_api_success(put_response, "PUT without providerid failed")
+        put_updated = assert_record_exists(api_client, 'incoming-routes', route_id)
+        assert put_updated['providerid'] == provider_id
+        assert int(put_updated['timeout']) == 18
+
+        clear_response = api_client.patch(
+            f'incoming-routes/{route_id}',
+            {'providerid': 'none'}
+        )
+        assert_api_success(clear_response, "Explicit provider clear failed")
+        cleared = assert_record_exists(api_client, 'incoming-routes', route_id)
+        assert cleared['providerid'] == 'none'
+
+        restore_response = api_client.patch(
+            f'incoming-routes/{route_id}',
+            {'providerid': provider_id}
+        )
+        assert_api_success(restore_response, "Provider restore failed")
+        restored = assert_record_exists(api_client, 'incoming-routes', route_id)
+        assert restored['providerid'] == provider_id
 
     def test_11_copy_route(self, api_client):
         """Test POST /incoming-routes/{id}:copy - Copy route"""
