@@ -181,7 +181,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // POST defaults providerid to "none"; PUT/PATCH omission preserves the binding.
         if (array_key_exists('providerid', $sanitizedData)) {
             $providerId = $sanitizedData['providerid'];
-            $sanitizedData['provider'] = empty($providerId) || $providerId === 'none'
+            $sanitizedData['provider'] = $providerId === '' || $providerId === 'none'
                 ? null
                 : $providerId;
             unset($sanitizedData['providerid']);
