@@ -191,17 +191,8 @@ class ReloadModuleStateAction implements ReloadActionInterface
             WorkerModelsEvents::invokeAction(ReloadManagerAction::class, [], 50);
         }
 
-        // Hook modules AFTER_ methods
-        if (
-            $moduleRecord['disabled'] === '1'
-            && method_exists($configClassObj, SystemConfigInterface::ON_AFTER_MODULE_DISABLE)
-        ) {
-            call_user_func([$configClassObj, SystemConfigInterface::ON_AFTER_MODULE_DISABLE]);
-        } elseif (
-            $moduleRecord['disabled'] === '0'
-            && method_exists($configClassObj, SystemConfigInterface::ON_AFTER_MODULE_ENABLE)
-        ) {
-            call_user_func([$configClassObj, SystemConfigInterface::ON_AFTER_MODULE_ENABLE]);
-        }
+        // Lifecycle hooks are owned by PbxExtensionState. The model event that
+        // reaches this action is a consequence of that state transition, so
+        // invoking AFTER hooks here would repeat module side effects.
     }
 }
