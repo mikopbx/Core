@@ -22,9 +22,12 @@ namespace MikoPBX\PBXCoreREST\Lib\Modules\Supervision;
 
 use MikoPBX\Common\Models\ModuleOperations;
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\Modules\Journal\ModuleOperationsRepository;
 use MikoPBX\PBXCoreREST\Lib\Modules\ModuleInstallationBase;
+use MikoPBX\PBXCoreREST\Lib\Modules\Pipeline\RollbackService;
 use MikoPBX\PBXCoreREST\Lib\Modules\UnifiedModulesEvents;
 use MikoPBX\PBXCoreREST\Lib\Modules\UpdateAllModulesAction;
 use MikoPBX\PBXCoreREST\Workers\WorkerModuleOperations;
@@ -131,12 +134,57 @@ class StaleOperationReaper
         );
 
         $errorMessage = TranslationProvider::translate('ext_OperationStalledError');
+        $errorData = json_encode(['error' => [$errorMessage]], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        // Install operations that touched the filesystem need a real rollback,
+        // executed by a dedicated process so this supervisor loop stays fast.
+        $isInstall = in_array($row['operation'], [
+            ModuleOperations::OPERATION_INSTALL_REPO,
+            ModuleOperations::OPERATION_INSTALL_PACKAGE,
+        ], true);
+        $needsRollback = $isInstall
+            && ((string)($row['swapDone'] ?? '0') === '1' || (string)($row['stagingPath'] ?? '') !== '');
+
+        if ($needsRollback && $row['state'] !== ModuleOperations::STATE_ROLLING_BACK) {
+            $repository->transition(
+                $uid,
+                $newToken,
+                ModuleOperations::ACTIVE_STATES,
+                ModuleOperations::STATE_ROLLING_BACK,
+                // Fresh heartbeat: the rollback process gets the full grace
+                // period to boot and adopt the row before the next reap pass
+                ['errorData' => $errorData, 'heartbeatAt' => time()]
+            );
+            $php = Util::which('php');
+            $workerPath = Util::getFilePathByClassName(WorkerModuleOperations::class);
+            Processes::mwExecBg("$php -f $workerPath start " . escapeshellarg($uid) . ' rollback');
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Reaped stale install operation $uid, rollback process spawned",
+                LOG_WARNING
+            );
+            return true; // the rollback process finalizes and notifies
+        }
+
+        if ($needsRollback) {
+            // Second strike: the rollback process itself died. Restore inline
+            // (idempotent) and finalize — no more retries.
+            $problems = (new RollbackService())->rollback($row, null);
+            if ($problems !== []) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    "Inline rollback problems for $uid: " . json_encode($problems),
+                    LOG_ERR
+                );
+            }
+        }
+
         $repository->transition(
             $uid,
             $newToken,
             ModuleOperations::ACTIVE_STATES,
             ModuleOperations::STATE_FAILED,
-            ['errorData' => json_encode(['error' => [$errorMessage]], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)]
+            ['errorData' => $errorData]
         );
 
         SystemMessages::sysLogMsg(

@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Models\ModuleOperations;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -33,6 +34,7 @@ use MikoPBX\PBXCoreREST\Lib\Modules\InstallFromRepoAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\Journal\GetOperationsAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\Journal\GetOperationStatusAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\Journal\ModuleOperationsRepository;
+use MikoPBX\PBXCoreREST\Lib\Modules\ModuleInstallationBase;
 use MikoPBX\PBXCoreREST\Lib\Modules\StartDownloadAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\StatusOfModuleInstallationAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\UnifiedModulesEvents;
@@ -82,9 +84,19 @@ class ModulesManagementProcessor extends Injectable
                     $filePath = $data['filePath'];
                     $fileId = $data['fileId'];
                     $asyncChannelId = $request['asyncChannelId'];
-                    $installer = new InstallFromPackageAction($asyncChannelId, $filePath, $fileId);
-                    $installer->start();
-                    $res->success = true;
+                    if (self::useLegacyInstallPipeline()) {
+                        $installer = new InstallFromPackageAction($asyncChannelId, $filePath, $fileId);
+                        $installer->start();
+                        $res->success = true;
+                    } else {
+                        // The real uniqid is read from the package metadata later
+                        $res = self::startModuleOperation(
+                            ModuleOperations::OPERATION_INSTALL_PACKAGE,
+                            $fileId,
+                            ['filePath' => $filePath, 'fileId' => $fileId],
+                            $asyncChannelId
+                        );
+                    }
                     break;
                 case 'getMetadataFromPackage':
                     $filePath = $data['filePath'];
@@ -95,9 +107,19 @@ class ModulesManagementProcessor extends Injectable
                     $moduleUniqueID = $data['uniqid'] ?? $data['id'];
                     $releaseId = intval($data['releaseId']??0);
                     $batchId = $data['batchId'] ?? '';
-                    $installer = new InstallFromRepoAction($asyncChannelId, $moduleUniqueID, $releaseId, $batchId);
-                    $installer->start();
-                    $res->success = true;
+                    if (self::useLegacyInstallPipeline()) {
+                        $installer = new InstallFromRepoAction($asyncChannelId, $moduleUniqueID, $releaseId, $batchId);
+                        $installer->start();
+                        $res->success = true;
+                    } else {
+                        $res = self::startModuleOperation(
+                            ModuleOperations::OPERATION_INSTALL_REPO,
+                            $moduleUniqueID,
+                            ['releaseId' => $releaseId],
+                            $asyncChannelId,
+                            $batchId
+                        );
+                    }
                     break;
                 case 'updateAll':
                     $asyncChannelId = $request['asyncChannelId'];
@@ -183,19 +205,23 @@ class ModulesManagementProcessor extends Injectable
         string $operation,
         string $moduleUniqueId,
         array $params,
-        string $asyncChannelId
+        string $asyncChannelId,
+        string $batchId = ''
     ): PBXApiResult {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        // Legacy stage names keep the toggle UI contract intact
-        $failStage = $operation === ModuleOperations::OPERATION_ENABLE
-            ? 'Stage_I_ModuleEnable'
-            : 'Stage_I_ModuleDisable';
+        // Legacy stage names keep the browser UI contract intact: toggles
+        // listen for Stage_I_Module*, install flows for Stage_VII
+        $failStage = match ($operation) {
+            ModuleOperations::OPERATION_ENABLE => 'Stage_I_ModuleEnable',
+            ModuleOperations::OPERATION_DISABLE => 'Stage_I_ModuleDisable',
+            default => ModuleInstallationBase::STAGE_VII_FINAL_STATUS,
+        };
 
         try {
             $repository = new ModuleOperationsRepository();
-            $claim = $repository->claim($moduleUniqueId, $operation, $params, $asyncChannelId);
+            $claim = $repository->claim($moduleUniqueId, $operation, $params, $asyncChannelId, $batchId);
 
             if (!$claim['claimed']) {
                 $res->success = false;
@@ -205,6 +231,9 @@ class ModulesManagementProcessor extends Injectable
                 // Async requests already got HTTP 200 — unfreeze the browser
                 // through the notification channel as well.
                 self::pushOperationRejection($asyncChannelId, $moduleUniqueId, $failStage, $res->messages);
+                if ($batchId !== '') {
+                    UpdateAllModulesAction::failModule($batchId, $moduleUniqueId, $res->messages);
+                }
                 return $res;
             }
 
@@ -218,9 +247,21 @@ class ModulesManagementProcessor extends Injectable
             $res->success = false;
             $res->messages['error'][] = $e->getMessage();
             self::pushOperationRejection($asyncChannelId, $moduleUniqueId, $failStage, $res->messages);
+            if ($batchId !== '') {
+                UpdateAllModulesAction::failModule($batchId, $moduleUniqueId, $res->messages);
+            }
         }
 
         return $res;
+    }
+
+    /**
+     * Emergency switch: '1' routes install/update back to the legacy
+     * mutex-driven pipeline for one release cycle.
+     */
+    private static function useLegacyInstallPipeline(): bool
+    {
+        return PbxSettings::getValueByKey(PbxSettings::MODULES_LEGACY_INSTALL_PIPELINE) === '1';
     }
 
     /**

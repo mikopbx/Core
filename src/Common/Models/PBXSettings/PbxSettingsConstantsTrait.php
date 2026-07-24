@@ -284,6 +284,7 @@ trait PbxSettingsConstantsTrait
     public const string SEND_METRICS = 'SendMetrics';
     /** @FieldType('boolean') */
     public const string DISABLE_ALL_MODULES = 'DisableAllModules'; // Disable all modules if it set to '1'
+    public const string MODULES_LEGACY_INSTALL_PIPELINE = 'ModulesLegacyInstallPipeline'; // Emergency switch back to the pre-journal install pipeline if set to '1'
 
     // Email notification toggles
     /** @FieldType('boolean') */

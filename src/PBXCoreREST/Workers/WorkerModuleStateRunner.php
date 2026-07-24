@@ -22,9 +22,14 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 require_once 'Globals.php';
 
+use MikoPBX\Common\Providers\LanguageProvider;
+use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerBase;
+use MikoPBX\Modules\PbxExtensionUtils;
+use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\Modules\DisableModuleAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\EnableModuleAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\ModuleInstallationBase;
@@ -43,6 +48,8 @@ use Throwable;
  * Usage:
  *   php -f WorkerModuleStateRunner.php start enable  <moduleUniqueId> <resultFile>
  *   php -f WorkerModuleStateRunner.php start disable <moduleUniqueId> <resultFile> [reason] [reasonText]
+ *   php -f WorkerModuleStateRunner.php start install <moduleUniqueId> <resultFile>
+ *   php -f WorkerModuleStateRunner.php start captureFeature <moduleUniqueId> <resultFile> <releaseInfoJson>
  *
  * The PBXApiResult::getResult() array is written to resultFile as JSON.
  * Exit code 0 means the result file is valid, regardless of the operation
@@ -63,7 +70,8 @@ class WorkerModuleStateRunner extends WorkerBase
         $moduleUniqueId = $argv[3] ?? '';
         $resultFile = $argv[4] ?? '';
 
-        if ($moduleUniqueId === '' || $resultFile === '' || !in_array($command, ['enable', 'disable'], true)) {
+        $knownCommands = ['enable', 'disable', 'install', 'captureFeature'];
+        if ($moduleUniqueId === '' || $resultFile === '' || !in_array($command, $knownCommands, true)) {
             SystemMessages::sysLogMsg(__CLASS__, 'Invalid arguments: ' . implode(' ', $argv), LOG_ERR);
             exit(1);
         }
@@ -78,24 +86,33 @@ class WorkerModuleStateRunner extends WorkerBase
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         try {
-            // Transitional guard: the legacy install pipeline still serializes
-            // on this mutex; holding it here prevents module hooks from ever
-            // running concurrently with a legacy install/uninstall phase.
-            $mutex = $this->di->get(MutexProvider::SERVICE_NAME);
-            $res = $mutex->synchronized(
-                ModuleInstallationBase::MODULE_MANIPULATION_MUTEX_KEY,
-                function () use ($command, $moduleUniqueId, $argv): PBXApiResult {
-                    if ($command === 'enable') {
-                        // No async channel: browser notifications are the orchestrator's job
-                        return EnableModuleAction::enableModule($moduleUniqueId);
-                    }
-                    $reason = $argv[5] ?? '';
-                    $reasonText = $argv[6] ?? '';
-                    return DisableModuleAction::disableModule($moduleUniqueId, $reason, $reasonText);
-                },
-                10,
-                150
-            );
+            if ($command === 'captureFeature') {
+                // License capture: no module code, no mutex needed
+                $res = $this->captureFeature((string)($argv[5] ?? ''));
+            } else {
+                // Transitional guard: the legacy install pipeline still
+                // serializes on this mutex; holding it here prevents module
+                // hooks from ever running concurrently with a legacy phase.
+                $mutex = $this->di->get(MutexProvider::SERVICE_NAME);
+                $res = $mutex->synchronized(
+                    ModuleInstallationBase::MODULE_MANIPULATION_MUTEX_KEY,
+                    function () use ($command, $moduleUniqueId, $argv): PBXApiResult {
+                        switch ($command) {
+                            case 'enable':
+                                // No async channel: browser notifications are the orchestrator's job
+                                return EnableModuleAction::enableModule($moduleUniqueId);
+                            case 'install':
+                                return $this->installModule($moduleUniqueId);
+                            default:
+                                $reason = $argv[5] ?? '';
+                                $reasonText = $argv[6] ?? '';
+                                return DisableModuleAction::disableModule($moduleUniqueId, $reason, $reasonText);
+                        }
+                    },
+                    10,
+                    150
+                );
+            }
         } catch (Throwable $e) {
             $res->success = false;
             $res->messages['error'][] = $e->getMessage();
@@ -105,6 +122,62 @@ class WorkerModuleStateRunner extends WorkerBase
             $resultFile,
             json_encode($res->getResult(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
         );
+    }
+
+    /**
+     * Captures the license feature for a module release. The license client
+     * is compiled code with unmanaged timeouts — that is exactly why it runs
+     * here, under the orchestrator's child timeout.
+     */
+    private function captureFeature(string $releaseInfoJson): PBXApiResult
+    {
+        $releaseInfo = json_decode($releaseInfoJson, true);
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        if (!is_array($releaseInfo)) {
+            $res->success = false;
+            $res->messages['error'][] = 'Invalid release info for license capture';
+            return $res;
+        }
+        return LicenseManagementProcessor::callBack([
+            'action' => 'captureFeatureForProductId',
+            'data' => $releaseInfo,
+        ]);
+    }
+
+    /**
+     * Runs Setup::installModule() of the NEW module code already swapped into
+     * the live directory. Mirrors the legacy WorkerModuleInstaller setup phase.
+     */
+    private function installModule(string $moduleUniqueId): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+
+        $moduleDir = PbxExtensionUtils::getModuleDir($moduleUniqueId);
+        ModulesDBConnectionsProvider::recreateModulesDBConnections();
+        Util::addRegularWWWRights($moduleDir);
+
+        $setupClass = "Modules\\$moduleUniqueId\\Setup\\PbxExtensionSetup";
+        if (!class_exists($setupClass) || !method_exists($setupClass, 'installModule')) {
+            $res->success = false;
+            $res->messages['error'][] = "Install error: the class $setupClass does not exist";
+            return $res;
+        }
+
+        // Use the web admin language so installation errors are localized
+        $this->di->set(LanguageProvider::PREFERRED_LANG_WEB, true);
+
+        $setup = new $setupClass($moduleUniqueId);
+        $res->success = (bool)$setup->installModule();
+        if (!$res->success) {
+            $errorMessage = trim(implode(' ', $setup->getMessages()));
+            if ($errorMessage === '') {
+                $errorMessage = "Module $moduleUniqueId installation failed without a specific error message.";
+            }
+            $res->messages['error'][] = $errorMessage;
+        }
+        return $res;
     }
 }
 

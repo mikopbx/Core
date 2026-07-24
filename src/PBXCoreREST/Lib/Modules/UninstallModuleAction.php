@@ -151,37 +151,11 @@ class UninstallModuleAction extends Injectable
             }
         }
 
-        // Kill all module processes.
-        //
-        // The previous implementation used a nested $() subshell —
-        //     "$kill -9 $($lsof $currentModuleDir/bin/* | $grep -v COMMAND | $awk '{print $2}' | $uniq)"
-        // which is an arbitrary command injection sink the moment
-        // $currentModuleDir contains a shell meta-character. Even though the
-        // module id is now validated above, we avoid the nested shell
-        // altogether: lsof output is captured into a PHP array and PIDs are
-        // sent via posix_kill(), so no shell interpolation of a path happens.
+        // Kill all module processes holding files under bin/ (shared helper,
+        // no shell interpolation of the path — see killModuleBinProcesses).
         if (is_dir("$currentModuleDir/bin")) {
             $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_II_STOP_PROCESSES, $res->getResult());
-
-            $lsof = Util::which('lsof');
-            $lsofCmd = $lsof . ' ' . escapeshellarg("$currentModuleDir/bin") . '/*';
-            $lsofOutput = [];
-            Processes::mwExec($lsofCmd, $lsofOutput);
-
-            $pids = [];
-            foreach ($lsofOutput as $line) {
-                if (str_starts_with($line, 'COMMAND')) {
-                    continue;
-                }
-                $fields = preg_split('/\s+/', trim($line));
-                if (isset($fields[1]) && ctype_digit($fields[1])) {
-                    $pids[(int)$fields[1]] = true;
-                }
-            }
-            foreach (array_keys($pids) as $pid) {
-                // SIGKILL each open file-holding process, mirroring the old kill -9 loop.
-                @posix_kill($pid, SIGKILL);
-            }
+            PbxExtensionUtils::killModuleBinProcesses($currentModuleDir);
         }
 
         // Uninstall module with keep settings and backup db

@@ -55,6 +55,17 @@ class UnifiedModulesEvents extends Injectable
     }
 
     /**
+     * Fixes up the module id when it becomes known mid-flow (package install
+     * starts with only the upload fileId until the metadata is read).
+     */
+    public function updateModuleUniqueId(string $moduleUniqueId): void
+    {
+        if ($moduleUniqueId !== '') {
+            $this->moduleUniqueId = $moduleUniqueId;
+        }
+    }
+
+    /**
      * Pushes messages to browser
      * @param string $stage module event stage name
      * @param array $data pushing data

@@ -115,6 +115,41 @@ class PbxExtensionUtils
     }
 
     /**
+     * SIGKILLs every process holding files under the module's bin directory.
+     *
+     * lsof output is captured into a PHP array and PIDs are sent via
+     * posix_kill(), so no shell interpolation of a path ever happens (the
+     * previous nested-subshell implementation was an injection sink).
+     *
+     * @param string $moduleDir The module directory.
+     */
+    public static function killModuleBinProcesses(string $moduleDir): void
+    {
+        if (!is_dir("$moduleDir/bin")) {
+            return;
+        }
+        $lsof = Util::which('lsof');
+        $lsofCmd = $lsof . ' ' . escapeshellarg("$moduleDir/bin") . '/*';
+        $lsofOutput = [];
+        Processes::mwExec($lsofCmd, $lsofOutput);
+
+        $pids = [];
+        foreach ($lsofOutput as $line) {
+            if (str_starts_with($line, 'COMMAND')) {
+                continue;
+            }
+            $fields = preg_split('/\s+/', trim($line));
+            if (isset($fields[1]) && ctype_digit($fields[1])) {
+                $pids[(int)$fields[1]] = true;
+            }
+        }
+        foreach (array_keys($pids) as $pid) {
+            // SIGKILL each open file-holding process
+            @posix_kill($pid, SIGKILL);
+        }
+    }
+
+    /**
      * Retrieves the directory path of a module by UniqueID.
      *
      * @param string $moduleUniqueID The UniqueID of the module.

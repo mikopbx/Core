@@ -30,7 +30,10 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\Modules\Journal\ModuleOperationsRepository;
 use MikoPBX\PBXCoreREST\Lib\Modules\ModuleInstallationBase;
+use MikoPBX\PBXCoreREST\Lib\Modules\Pipeline\InstallPipeline;
+use MikoPBX\PBXCoreREST\Lib\Modules\Pipeline\RollbackService;
 use MikoPBX\PBXCoreREST\Lib\Modules\UnifiedModulesEvents;
+use MikoPBX\PBXCoreREST\Lib\Modules\UpdateAllModulesAction;
 use Throwable;
 
 /**
@@ -78,6 +81,7 @@ class WorkerModuleOperations extends WorkerBase
     public function start(array $argv): void
     {
         $this->operationUid = $argv[2] ?? '';
+        $mode = $argv[3] ?? '';
         if ($this->operationUid === '') {
             SystemMessages::sysLogMsg(__CLASS__, 'Started without an operationUid', LOG_ERR);
             exit(1);
@@ -95,10 +99,14 @@ class WorkerModuleOperations extends WorkerBase
             SystemMessages::sysLogMsg(__CLASS__, "Operation {$this->operationUid} not found", LOG_ERR);
             exit(1);
         }
-        if ($row['state'] !== ModuleOperations::STATE_PENDING) {
+
+        $expectedState = $mode === 'rollback'
+            ? ModuleOperations::STATE_ROLLING_BACK
+            : ModuleOperations::STATE_PENDING;
+        if ($row['state'] !== $expectedState) {
             SystemMessages::sysLogMsg(
                 __CLASS__,
-                "Operation {$this->operationUid} is not pending ({$row['state']}), refusing to start",
+                "Operation {$this->operationUid} is not $expectedState ({$row['state']}), refusing to start",
                 LOG_WARNING
             );
             exit(1);
@@ -106,7 +114,15 @@ class WorkerModuleOperations extends WorkerBase
 
         $this->fencingToken = (string)$row['fencingToken'];
         $pid = getmypid();
-        if (!$this->repository->startRunning($this->operationUid, $this->fencingToken, $pid, $pid)) {
+        if ($mode === 'rollback') {
+            // The reaper handed the operation over with a fresh token; adopt
+            // the row by recording our pid/pgid and reviving the heartbeat.
+            if (!$this->repository->setFields($this->operationUid, $this->fencingToken, ['pid' => $pid, 'pgid' => $pid])
+                || !$this->repository->heartbeat($this->operationUid, $this->fencingToken)) {
+                SystemMessages::sysLogMsg(__CLASS__, "Rollback of {$this->operationUid} was fenced", LOG_WARNING);
+                exit(1);
+            }
+        } elseif (!$this->repository->startRunning($this->operationUid, $this->fencingToken, $pid, $pid)) {
             SystemMessages::sysLogMsg(
                 __CLASS__,
                 "Operation {$this->operationUid} was fenced before start",
@@ -123,6 +139,10 @@ class WorkerModuleOperations extends WorkerBase
         $this->events->setJournalContext([$this->operationUid, $this->fencingToken]);
 
         try {
+            if ($mode === 'rollback') {
+                $this->runRollback($row);
+                return;
+            }
             switch ($row['operation']) {
                 case ModuleOperations::OPERATION_ENABLE:
                     $this->runStateChange('enable', $row);
@@ -130,13 +150,81 @@ class WorkerModuleOperations extends WorkerBase
                 case ModuleOperations::OPERATION_DISABLE:
                     $this->runStateChange('disable', $row);
                     break;
+                case ModuleOperations::OPERATION_INSTALL_REPO:
+                case ModuleOperations::OPERATION_INSTALL_PACKAGE:
+                    $pipeline = new InstallPipeline(
+                        $this->repository,
+                        $this->operationUid,
+                        $this->fencingToken,
+                        $this->events,
+                        fn(string $command, string $moduleUniqueId, array $extraArgs, int $timeout): array =>
+                            $this->runChildStep($command, $moduleUniqueId, $extraArgs, $timeout)
+                    );
+                    $pipeline->run($row);
+                    break;
                 default:
                     $this->pushFinalStatus(false, ['error' => ["Unsupported operation: {$row['operation']}"]]);
             }
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            $this->pushFinalStatus(false, ['error' => [$e->getMessage()]]);
+            $messages = ['error' => [$e->getMessage()]];
+            // A batch member must advance its batch on ANY failure path
+            $batchId = (string)($row['batchId'] ?? '');
+            if ($batchId !== '') {
+                try {
+                    UpdateAllModulesAction::failModule($batchId, (string)$row['moduleUniqueId'], $messages);
+                } catch (Throwable $batchError) {
+                    SystemMessages::sysLogMsg(
+                        __CLASS__,
+                        'Batch advancement failed: ' . $batchError->getMessage(),
+                        LOG_ERR
+                    );
+                }
+            }
+            $this->pushFinalStatus(false, $messages);
         }
+    }
+
+    /**
+     * Rollback mode: restores the system state of a reaped install operation.
+     * The row is in rolling_back state with a token handed over by the reaper.
+     *
+     * @param array $row The journal row
+     */
+    private function runRollback(array $row): void
+    {
+        $rollback = new RollbackService();
+        $problems = $rollback->rollback(
+            $row,
+            fn(string $moduleUniqueId): bool =>
+                ($this->runChildStep('enable', $moduleUniqueId, [], 120)['result'] ?? false) === true
+        );
+
+        $messages = ['error' => [TranslationProvider::translate('ext_OperationStalledError')]];
+        foreach ($problems as $severity => $texts) {
+            foreach ((array)$texts as $text) {
+                $messages[$severity][] = $text;
+            }
+        }
+
+        $this->repository->transition(
+            $this->operationUid,
+            $this->fencingToken,
+            [ModuleOperations::STATE_ROLLING_BACK],
+            ModuleOperations::STATE_FAILED,
+            ['errorData' => json_encode($messages, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)]
+        );
+
+        $batchId = (string)($row['batchId'] ?? '');
+        if ($batchId !== '') {
+            UpdateAllModulesAction::failModule($batchId, (string)$row['moduleUniqueId'], $messages);
+        }
+        // Journal already finalized above: this push only unfreezes browsers
+        $this->events->setJournalContext(null);
+        $this->events->pushMessageToBrowser(
+            ModuleInstallationBase::STAGE_VII_FINAL_STATUS,
+            ['result' => false, 'messages' => $messages]
+        );
     }
 
     /**
@@ -152,37 +240,11 @@ class WorkerModuleOperations extends WorkerBase
         $params = json_decode((string)$row['params'], true) ?: [];
         $moduleUniqueId = (string)$row['moduleUniqueId'];
 
-        $tempDir = $this->di->getShared('config')->path('core.tempDir');
-        $resultFile = "$tempDir/module-operation-{$this->operationUid}.json";
-
-        $php = Util::which('php');
-        $runnerPath = Util::getFilePathByClassName(WorkerModuleStateRunner::class);
-        // argv array form: no shell wrapper, proc signals reach the runner
-        $cmd = [$php, '-f', $runnerPath, 'start', $command, $moduleUniqueId, $resultFile];
+        $extraArgs = [];
         if ($command === 'disable') {
-            $cmd[] = (string)($params['reason'] ?? '');
-            $cmd[] = (string)($params['reasonText'] ?? '');
+            $extraArgs = [(string)($params['reason'] ?? ''), (string)($params['reasonText'] ?? '')];
         }
-
-        [$finished, $timedOut] = $this->runChildWithHeartbeat($cmd, self::CHILD_STEP_TIMEOUT);
-
-        $result = [];
-        if (is_file($resultFile)) {
-            $result = json_decode((string)file_get_contents($resultFile), true) ?: [];
-            unlink($resultFile);
-        }
-
-        if ($timedOut) {
-            $result = [
-                'result' => false,
-                'messages' => ['error' => [TranslationProvider::translate('ext_OperationStalledError')]],
-            ];
-        } elseif (!$finished || $result === []) {
-            $result = [
-                'result' => false,
-                'messages' => ['error' => [TranslationProvider::translate('ext_ModuleChangeStatusError')]],
-            ];
-        }
+        $result = $this->runChildStep($command, $moduleUniqueId, $extraArgs, self::CHILD_STEP_TIMEOUT);
 
         // A fenced-out orchestrator must not talk to the browser either: the
         // reaper already pushed its own terminal status.
@@ -205,6 +267,51 @@ class WorkerModuleOperations extends WorkerBase
             ModuleInstallationBase::STAGE_VII_FINAL_STATUS,
             $result
         );
+    }
+
+    /**
+     * Runs a WorkerModuleStateRunner child step and returns its result array.
+     * Timeouts and missing results are converted into failure payloads.
+     *
+     * @param string $command Runner command (enable/disable/install/captureFeature)
+     * @param string $moduleUniqueId Module the step works on
+     * @param array $extraArgs Extra argv passed to the runner after resultFile
+     * @param int $timeout Hard timeout of the step in seconds
+     * @return array PBXApiResult::getResult()-shaped array
+     */
+    private function runChildStep(string $command, string $moduleUniqueId, array $extraArgs, int $timeout): array
+    {
+        $tempDir = $this->di->getShared('config')->path('core.tempDir');
+        $resultFile = "$tempDir/module-operation-{$this->operationUid}-" . uniqid('', false) . '.json';
+
+        $php = Util::which('php');
+        $runnerPath = Util::getFilePathByClassName(WorkerModuleStateRunner::class);
+        // argv array form: no shell wrapper, proc signals reach the runner
+        $cmd = array_merge(
+            [$php, '-f', $runnerPath, 'start', $command, $moduleUniqueId, $resultFile],
+            array_map('strval', $extraArgs)
+        );
+
+        [$finished, $timedOut] = $this->runChildWithHeartbeat($cmd, $timeout);
+
+        $result = [];
+        if (is_file($resultFile)) {
+            $result = json_decode((string)file_get_contents($resultFile), true) ?: [];
+            unlink($resultFile);
+        }
+
+        if ($timedOut) {
+            $result = [
+                'result' => false,
+                'messages' => ['error' => [TranslationProvider::translate('ext_OperationStalledError')]],
+            ];
+        } elseif (!$finished || $result === []) {
+            $result = [
+                'result' => false,
+                'messages' => ['error' => [TranslationProvider::translate('ext_ModuleChangeStatusError')]],
+            ];
+        }
+        return $result;
     }
 
     /**

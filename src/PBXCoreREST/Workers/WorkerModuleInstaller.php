@@ -25,14 +25,13 @@ require_once 'Globals.php';
 use MikoPBX\Common\Providers\LanguageProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
-use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\Modules\ModuleInstallationBase;
+use MikoPBX\PBXCoreREST\Lib\Modules\Pipeline\ModuleArchiveExtractor;
 use Throwable;
-use ZipArchive;
 
 /**
  * The WorkerModuleInstaller class is responsible for handling the installation of a module from a file
@@ -108,133 +107,19 @@ class WorkerModuleInstaller extends WorkerBase
             // Start extraction phase
             file_put_contents($this->progress_file, '25');
 
-            // Unzip module folder
-            $zip = new ZipArchive();
-            $zipOpened = false;
-            $result = true;
-            try {
-                // Strict open check: ZipArchive::open() returns truthy int error codes
-                // (ER_NOZIP=19, …) that would pass a loose truthy test, so a corrupt
-                // archive must be rejected with === true.
-                if ($zip->open($filePath) === true) {
-                    $zipOpened = true;
-
-                    // Get total number of files
-                    $totalFiles = $zip->numFiles;
-
-                    // An archive that opened but contains no entries is not a valid
-                    // module package — treat it as a failure instead of "success".
-                    if ($totalFiles === 0) {
-                        file_put_contents(
-                            $this->error_file,
-                            TranslationProvider::translate('rest_err_module_extraction_failed'),
-                            FILE_APPEND
-                        );
-                        $result = false;
-                    }
-
-                    // Ensure module directory exists before resolving its real path
-                    if ($result && !is_dir($currentModuleDir)) {
-                        mkdir($currentModuleDir, 0755, true);
-                    }
-                    $realModuleDir = $result ? realpath($currentModuleDir) : false;
-                    if ($result && $realModuleDir === false) {
-                        $result = false;
-                    }
-                    for ($i = 0; $i < $totalFiles && $result; $i++) {
-                        $entryName = $zip->getNameIndex($i);
-
-                        // Zip Slip protection: reject path traversal sequences, absolute
-                        // paths and backslash separators before extracting. The
-                        // post-extraction confinement check below is the second line of
-                        // defence. (getNameIndex() returns false on a bad index.)
-                        if (
-                            $entryName === false
-                            || str_contains($entryName, '..')
-                            || str_starts_with($entryName, '/')
-                            || str_contains($entryName, '\\')
-                        ) {
-                            $message = TranslationProvider::translate(
-                                'rest_err_module_path_traversal',
-                                ['entryName' => (string)$entryName]
-                            );
-                            file_put_contents($this->error_file, $message, FILE_APPEND);
-                            $result = false;
-                            break;
-                        }
-
-                        // Reject symlink entries BEFORE extracting. ZipArchive::extractTo()
-                        // writes a symlink entry as a regular file, so is_link() on the
-                        // result would never catch it — the symlink bit lives in the ZIP
-                        // entry's Unix external attributes (high 16 bits of the mode;
-                        // S_IFLNK == 0120000). A symlink is never a legitimate module file
-                        // and can point outside the module dir, so drop the whole package.
-                        $opsys = 0;
-                        $attr  = 0;
-                        if (
-                            $zip->getExternalAttributesIndex($i, $opsys, $attr)
-                            && $opsys === ZipArchive::OPSYS_UNIX
-                            && (($attr >> 16) & 0xF000) === 0xA000
-                        ) {
-                            $message = TranslationProvider::translate(
-                                'rest_err_module_path_escape',
-                                ['entryName' => $entryName]
-                            );
-                            file_put_contents($this->error_file, $message, FILE_APPEND);
-                            $result = false;
-                            break;
-                        }
-
-                        $result = $zip->extractTo($currentModuleDir, [$entryName]);
-
-                        if ($result) {
-                            $localPath = $currentModuleDir . '/' . $entryName;
-
-                            // Post-extraction confinement: verify the extracted path
-                            // stays within the module dir. realpath() === false is left
-                            // as a pass: directory entries and freshly-created paths can
-                            // legitimately fail to resolve, and the pre-extraction guards
-                            // (traversal/absolute/backslash + symlink) already cover the
-                            // real traversal vectors.
-                            $extractedPath = realpath($localPath);
-                            if (
-                                $extractedPath !== false
-                                && !str_starts_with($extractedPath, $realModuleDir . '/')
-                                && $extractedPath !== $realModuleDir
-                            ) {
-                                // File escaped module directory — remove it and abort
-                                @unlink($extractedPath);
-                                $message = TranslationProvider::translate(
-                                    'rest_err_module_path_escape',
-                                    ['entryName' => $entryName]
-                                );
-                                file_put_contents($this->error_file, $message, FILE_APPEND);
-                                $result = false;
-                                break;
-                            }
-                        }
-
-                        // Calculate and update progress (25% to 50% range)
-                        $extractionProgress = 25 + round(($i / $totalFiles) * 25);
-                        file_put_contents($this->progress_file, (string)$extractionProgress);
-                    }
-                } else {
-                    $result = false;
+            // Unzip module folder through the shared hardened extractor
+            // (Zip Slip / symlink / confinement protection lives there)
+            $extractionError = ModuleArchiveExtractor::extract(
+                $filePath,
+                $currentModuleDir,
+                function (int $percent): void {
+                    // Map extraction to the legacy 25%..50% progress range
+                    file_put_contents($this->progress_file, (string)(25 + intdiv($percent, 4)));
                 }
-            } finally {
-                // Close the archive on every path, including a throw mid-extraction;
-                // guarded by $zipOpened so we never close an unopened handle.
-                if ($zipOpened) {
-                    $zip->close();
-                }
-            }
+            );
 
-            if ($result === false) {
-                file_put_contents(
-                    $this->error_file,
-                    TranslationProvider::translate('rest_err_module_extraction_failed'),
-                    FILE_APPEND
-                );
+            if ($extractionError !== '') {
+                file_put_contents($this->error_file, $extractionError, FILE_APPEND);
                 file_put_contents($this->progress_file, '0');
 
                 // Remove the freshly-extracted (now half-extracted) module dir so a
