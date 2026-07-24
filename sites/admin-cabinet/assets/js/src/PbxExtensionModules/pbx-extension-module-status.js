@@ -56,6 +56,14 @@ class PbxExtensionStatus {
             onUnchecked: cbOnUnchecked,
         });
 
+        // Fallback for lost nchan messages: polls the operations journal and
+        // unfreezes the toggle when the backend reached a terminal state the
+        // browser never heard about.
+        this.watchdog = ModulesAPI.createOperationWatchdog({
+            onTerminal: data => this.cbWatchdogTerminal(data),
+            onStalled: () => this.cbWatchdogStalled(),
+        });
+
         EventBus.subscribe(this.channelId, data => {
             this.cbAfterChangeModuleStatus(data);
         });
@@ -83,7 +91,10 @@ class PbxExtensionStatus {
             uniqid: this.uniqid,
             channelId: this.channelId,
         };
-        ModulesAPI.enableModule(params);
+        this.watchdog.start(this.uniqid);
+        ModulesAPI.enableModule(params, (response) => {
+            this.cbAfterCommandAccepted(response, true);
+        });
     }
 
     /**
@@ -98,7 +109,25 @@ class PbxExtensionStatus {
             uniqid: this.uniqid,
             channelId: this.channelId,
         };
-        ModulesAPI.disableModule(params);
+        this.watchdog.start(this.uniqid);
+        ModulesAPI.disableModule(params, (response) => {
+            this.cbAfterCommandAccepted(response, false);
+        });
+    }
+
+    /**
+     * Fail-fast on an immediately rejected command (HTTP error, full queue):
+     * without this the user would wait the full watchdog stall timeout.
+     * @param {object} response - The HTTP-level API response.
+     * @param {boolean} wasEnable - true when the rejected command was enable.
+     */
+    cbAfterCommandAccepted(response, wasEnable) {
+        if (response && response.result === false) {
+            this.watchdog.stop();
+            this.unfreezeToggle(wasEnable);
+            const $row = $(`tr[data-id=${this.uniqid}]`);
+            this.showModuleError($row, globalTranslate.ext_ModuleChangeStatusError, response.messages);
+        }
     }
 
     /**
@@ -109,14 +138,62 @@ class PbxExtensionStatus {
         if (response.moduleUniqueId !== this.uniqid) {
             return;
         }
+        this.watchdog.notifyEvent(response);
         const stageDetails = response.stageDetails;
         if (response.stage === 'Stage_I_ModuleDisable'){
+            this.watchdog.stop();
             const cbAfterModuleDisable = $.proxy(this.cbAfterModuleDisable, this);
             cbAfterModuleDisable(stageDetails);
         } else if (response.stage === 'Stage_I_ModuleEnable'){
+            this.watchdog.stop();
             const cbAfterModuleEnable = $.proxy(this.cbAfterModuleEnable, this);
             cbAfterModuleEnable(stageDetails);
         }
+    }
+
+    /**
+     * Handles a terminal journal state discovered by polling: the nchan
+     * message was lost, but the backend finished the operation.
+     * @param {object} data - The journal record from getOperationStatus.
+     */
+    cbWatchdogTerminal(data) {
+        if (data.state === 'completed') {
+            window.location.reload();
+            return;
+        }
+        this.unfreezeToggle(data.operation === 'enable');
+        $('tr.table-error-messages').remove();
+        const $row = $(`tr[data-id=${this.uniqid}]`);
+        this.showModuleError($row, globalTranslate.ext_ModuleChangeStatusError, data.errorMessages);
+    }
+
+    /**
+     * Handles a stalled operation: no nchan events and no journal progress.
+     */
+    cbWatchdogStalled() {
+        this.unfreezeToggle(this.$toggle.checkbox('is checked'));
+        const $row = $(`tr[data-id=${this.uniqid}]`);
+        this.showModuleError($row, globalTranslate.ext_ModuleChangeStatusError,
+            {error: [globalTranslate.ext_OperationStalledError || globalTranslate.ext_ModuleChangeStatusError]});
+    }
+
+    /**
+     * Returns the toggle and the surrounding controls to an interactive state.
+     * @param {boolean} enableFailed - true when a failed enable should revert to unchecked.
+     */
+    unfreezeToggle(enableFailed) {
+        if (enableFailed) {
+            this.$toggle.checkbox('set unchecked');
+            this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
+            this.$disabilityFields.addClass('disabled');
+        } else {
+            this.$toggle.checkbox('set checked');
+            this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
+            this.$disabilityFields.removeClass('disabled');
+        }
+        this.$allToggles.removeClass('disabled');
+        this.$statusIcon.removeClass('spinner loading icon');
+        $('a.button').removeClass('disabled');
     }
 
     /**

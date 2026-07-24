@@ -243,5 +243,241 @@ ModulesAPI.getOperationStatus = function(params, callback) {
     }, 'GET', params.uniqid);
 };
 
+/**
+ * Creates a watchdog for a long-running module operation.
+ *
+ * Primary progress transport is nchan (EventBus); the watchdog is the fallback:
+ * while events keep arriving it stays silent, but after `silenceMs` without a
+ * single event it starts polling the operations journal every `pollIntervalMs`
+ * and fires `onTerminal` when the journal reaches a terminal state — so a lost
+ * WebSocket message can no longer freeze the UI forever. `onStalled` fires
+ * when there is no activity from any source for `maxStallMs`.
+ *
+ * The baseline trick: right after start() the current journal record is read;
+ * a terminal record seen at that moment belongs to a PREVIOUS operation and
+ * its operationId becomes the baseline. Only a terminal record with a
+ * different operationId is treated as the result of the new operation.
+ *
+ * @param {object} options
+ * @param {function} options.onTerminal - Called once with the journal record when the operation finishes
+ * @param {function} options.onStalled - Called once when no activity happens for maxStallMs
+ * @param {number} [options.silenceMs=15000] - Event silence before polling starts
+ * @param {number} [options.pollIntervalMs=5000] - Poll period
+ * @param {number} [options.maxStallMs=180000] - No-activity limit before onStalled
+ * @returns {{start: function, notifyEvent: function, stop: function, isRunning: function}}
+ */
+ModulesAPI.createOperationWatchdog = function(options) {
+    const settings = {
+        silenceMs: 15000,
+        pollIntervalMs: 5000,
+        maxStallMs: 180000,
+        onTerminal: () => {},
+        onStalled: () => {},
+        ...options,
+    };
+
+    // Mirrors idPattern of the modules REST route: tracking ids that do not
+    // match it (upload fileIds) cannot be used as a resource id in the URL.
+    const RESOURCE_ID_PATTERN = /^[A-Za-z][A-Za-z0-9]*$/;
+
+    // A terminal record younger than this at baseline time may already be the
+    // result of the operation being started — do not use it as the baseline.
+    const FRESH_TERMINAL_SEC = 10;
+
+    const state = {
+        timer: null,
+        epoch: 0,
+        uniqid: '',
+        operationId: '',
+        baselineOperationId: '',
+        baselineResolved: false,
+        lastActivityAt: 0,
+        lastProgress: -1,
+        lastHeartbeatAt: 0,
+        pollBusy: false,
+    };
+
+    const stop = () => {
+        if (state.timer !== null) {
+            clearInterval(state.timer);
+            state.timer = null;
+        }
+        state.epoch += 1; // invalidate every in-flight callback
+    };
+
+    const finishTerminal = (data) => {
+        stop();
+        settings.onTerminal(data);
+    };
+
+    const checkStall = () => {
+        if (Date.now() - state.lastActivityAt > settings.maxStallMs) {
+            stop();
+            settings.onStalled();
+        }
+    };
+
+    /**
+     * Decides whether a terminal journal record is the result of OUR operation.
+     * Accepted when its operationId was captured from nchan messages, or when
+     * the baseline is resolved and the record differs from it.
+     */
+    const isOurTerminal = (data) => {
+        if (data.operationId && data.operationId === state.operationId) {
+            return true;
+        }
+        return state.baselineResolved && data.operationId !== state.baselineOperationId;
+    };
+
+    const handleStatus = (epoch, data, success) => {
+        if (epoch !== state.epoch) {
+            return; // response of a previous watch or arrived after stop()
+        }
+        state.pollBusy = false;
+        if (!success || !data || !data.state || data.state === 'none') {
+            checkStall();
+            return;
+        }
+        if (data.terminal === true) {
+            if (isOurTerminal(data)) {
+                finishTerminal(data);
+            } else {
+                // Previous operation's record — ours is not visible yet
+                checkStall();
+            }
+            return;
+        }
+        // Active operation
+        if (data.operationId && data.operationId !== state.baselineOperationId) {
+            state.operationId = data.operationId;
+        }
+        // Server-side liveness: a moving heartbeat or progress counts as
+        // activity; a record flagged stale is presumed dead and must NOT
+        // postpone the stall verdict.
+        const moved = data.heartbeatAt !== state.lastHeartbeatAt || data.progress !== state.lastProgress;
+        state.lastHeartbeatAt = data.heartbeatAt;
+        state.lastProgress = data.progress;
+        if (moved && data.stale !== true) {
+            state.lastActivityAt = Date.now();
+        }
+        checkStall();
+    };
+
+    const resolveBaseline = () => {
+        if (!RESOURCE_ID_PATTERN.test(state.uniqid)) {
+            // No resource id to query: rely on operationId capture from nchan
+            state.baselineResolved = true;
+            return;
+        }
+        const epoch = state.epoch;
+        ModulesAPI.getOperationStatus({ uniqid: state.uniqid }, (data, success) => {
+            if (epoch !== state.epoch || state.baselineResolved) {
+                return;
+            }
+            if (!success || !data) {
+                return; // retried from tick() until it succeeds
+            }
+            if (data.terminal === true && data.operationId) {
+                const ageSec = Math.floor(Date.now() / 1000) - (data.finishedAt || 0);
+                // A just-finished record may already be our own result (fast
+                // enable completed before this request landed) — leave the
+                // baseline empty so such a record is accepted as ours.
+                state.baselineOperationId = ageSec > FRESH_TERMINAL_SEC ? data.operationId : '';
+            }
+            state.baselineResolved = true;
+        });
+    };
+
+    const poll = () => {
+        if (state.pollBusy) {
+            return;
+        }
+        state.pollBusy = true;
+        const epoch = state.epoch;
+        if (RESOURCE_ID_PATTERN.test(state.uniqid)) {
+            ModulesAPI.getOperationStatus(
+                { uniqid: state.uniqid, operationId: state.operationId },
+                (data, success) => handleStatus(epoch, data, success)
+            );
+        } else {
+            // Upload fileId flow: query the collection and match by the
+            // operationId captured from nchan messages.
+            ModulesAPI.getOperations({}, (data, success) => {
+                if (!success || !data) {
+                    handleStatus(epoch, null, false);
+                    return;
+                }
+                const all = (data.active || []).concat(data.recent || []);
+                let match = null;
+                if (state.operationId) {
+                    match = all.find(op => op.operationId === state.operationId) || null;
+                } else {
+                    match = (data.active || []).find(op => op.stale !== true) || null;
+                }
+                handleStatus(epoch, match || { state: 'none' }, true);
+            });
+        }
+    };
+
+    const tick = () => {
+        if (!state.baselineResolved) {
+            resolveBaseline(); // keep retrying after a failed first attempt
+        }
+        if (Date.now() - state.lastActivityAt < settings.silenceMs) {
+            return; // events are flowing, no need to poll
+        }
+        poll();
+    };
+
+    return {
+        /**
+         * Starts watching an operation for the given module (or upload fileId).
+         * @param {string} uniqid
+         */
+        start(uniqid) {
+            stop();
+            state.uniqid = uniqid || '';
+            state.operationId = '';
+            state.baselineOperationId = '';
+            state.baselineResolved = false;
+            state.lastActivityAt = Date.now();
+            state.lastProgress = -1;
+            state.lastHeartbeatAt = 0;
+            state.pollBusy = false;
+            resolveBaseline();
+            state.timer = setInterval(tick, settings.pollIntervalMs);
+        },
+
+        /**
+         * Marks nchan activity and captures the operationId of OUR operation.
+         * Events of other operations flowing through the shared channel are
+         * ignored: they must neither postpone polling nor re-key the watch.
+         * @param {object} response - The EventBus message
+         */
+        notifyEvent(response) {
+            if (!response) {
+                return;
+            }
+            const sameOperation = response.operationId !== undefined
+                && response.operationId === state.operationId;
+            const sameModule = response.moduleUniqueId !== undefined
+                && response.moduleUniqueId === state.uniqid;
+            if (!sameOperation && !sameModule) {
+                return;
+            }
+            state.lastActivityAt = Date.now();
+            if (state.operationId === '' && response.operationId) {
+                state.operationId = response.operationId;
+            }
+        },
+
+        stop,
+
+        isRunning() {
+            return state.timer !== null;
+        },
+    };
+};
+
 // Export for use in other modules
 window.ModulesAPI = ModulesAPI;

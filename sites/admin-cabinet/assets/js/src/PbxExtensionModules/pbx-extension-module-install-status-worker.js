@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi, globalTranslate, UserMessage, EventBus */
+/* global globalRootUrl, PbxApi, ModulesAPI, globalTranslate, UserMessage, EventBus */
 
 /**
  * Handles real-time monitoring and updates of module installation statuses.
@@ -71,6 +71,24 @@ const installStatusLoopWorker = {
     },
 
     /**
+     * Watchdog for a single install/update operation: polls the operations
+     * journal when nchan goes silent, so a lost message can no longer freeze
+     * the progress bar forever. Created in initialize().
+     */
+    watchdog: null,
+
+    /**
+     * Timestamp of the last batch-related nchan event, driving the batch stall
+     * detection in checkBatchAlive().
+     */
+    batchLastEventAt: 0,
+
+    /**
+     * Timer handle of the periodic batch liveness check.
+     */
+    batchWatchTimer: null,
+
+    /**
      * Initializes the installStatusLoopWorker module by setting up the connection to receive server-sent events.
      */
     initialize(){
@@ -78,8 +96,181 @@ const installStatusLoopWorker = {
         installStatusLoopWorker.$progressBarBlock = $('#upload-progress-bar-block');
         installStatusLoopWorker.$progressBarLabel = $('#upload-progress-bar-label');
 
+        installStatusLoopWorker.watchdog = ModulesAPI.createOperationWatchdog({
+            onTerminal: data => installStatusLoopWorker.cbWatchdogTerminal(data),
+            onStalled: () => installStatusLoopWorker.cbWatchdogStalled(),
+        });
+
         EventBus.subscribe(this.channelId, data => {
            installStatusLoopWorker.processModuleInstallation(data);
+        });
+
+        installStatusLoopWorker.restoreActiveOperations();
+    },
+
+    /**
+     * Starts the polling fallback for a just-launched install/update.
+     * Called by the flows that initiate an operation (repo install, zip upload).
+     *
+     * @param {string} trackingId - Module unique id (or upload fileId).
+     */
+    startWatch(trackingId) {
+        installStatusLoopWorker.watchdog.start(trackingId);
+    },
+
+    /**
+     * Restores UI state for operations that are still running on the backend
+     * after a page reload: shows the progress bar, locks the action buttons and
+     * arms the polling fallback.
+     */
+    restoreActiveOperations() {
+        ModulesAPI.getOperations({}, (data, success) => {
+            if (!success || !data || !Array.isArray(data.active)) {
+                return;
+            }
+            // Stale rows belong to crashed operations nobody supervises yet:
+            // restoring them would lock the UI with no recovery path. Quick
+            // toggle operations (enable/disable) are not worth restoring
+            // either — their own watchdog handles the click flow.
+            const restorable = data.active.filter(
+                op => op.stale !== true
+                    && (op.batchId !== '' || ['install_repo', 'install_package', 'uninstall'].includes(op.operation))
+            );
+            if (restorable.length === 0) {
+                return;
+            }
+            const op = restorable[0];
+            $('a.button').addClass('disabled');
+            if (op.batchId) {
+                installStatusLoopWorker.batchUpdate.active = true;
+                installStatusLoopWorker.batchUpdate.batchId = op.batchId;
+                installStatusLoopWorker.batchLastEventAt = Date.now();
+                installStatusLoopWorker.armBatchWatch();
+                installStatusLoopWorker.updateBatchProgress(Math.max(op.progress, 1));
+            } else {
+                installStatusLoopWorker.updateProgressBar(
+                    op.moduleUniqueId,
+                    globalTranslate.ext_InstallationInProgress,
+                    Math.max(op.progress, 1)
+                );
+                installStatusLoopWorker.startWatch(op.moduleUniqueId);
+            }
+        });
+    },
+
+    /**
+     * Handles a terminal journal state discovered by polling: the nchan
+     * message was lost, but the backend finished the operation.
+     *
+     * @param {object} data - The journal record from the operations API.
+     */
+    cbWatchdogTerminal(data) {
+        if (data.state === 'completed') {
+            window.location = `${globalRootUrl}pbx-extension-modules/index/`;
+            return;
+        }
+        installStatusLoopWorker.$progressBarBlock.hide();
+        $('tr.table-error-messages').remove();
+        $('a.button').removeClass('disabled');
+        $('#add-new-button').removeClass('loading');
+        const $row = $(`tr[data-id=${data.moduleUniqueId}]`);
+        installStatusLoopWorker.showModuleInstallationError(
+            $row,
+            globalTranslate.ext_InstallationError,
+            data.errorMessages
+        );
+    },
+
+    /**
+     * Handles a stalled operation: no nchan events and no journal progress
+     * for several minutes.
+     */
+    cbWatchdogStalled() {
+        installStatusLoopWorker.$progressBarBlock.hide();
+        $('a.button').removeClass('disabled');
+        $('#add-new-button').removeClass('loading');
+        UserMessage.showMultiString(
+            globalTranslate.ext_OperationStalledError || globalTranslate.ext_InstallationError,
+            globalTranslate.ext_InstallationError
+        );
+    },
+
+    /**
+     * Arms the periodic liveness check of a batch update.
+     */
+    armBatchWatch() {
+        if (installStatusLoopWorker.batchWatchTimer !== null) {
+            return;
+        }
+        installStatusLoopWorker.batchWatchTimer = setInterval(
+            installStatusLoopWorker.checkBatchAlive,
+            15000
+        );
+    },
+
+    /**
+     * Disarms the batch liveness check.
+     */
+    disarmBatchWatch() {
+        if (installStatusLoopWorker.batchWatchTimer !== null) {
+            clearInterval(installStatusLoopWorker.batchWatchTimer);
+            installStatusLoopWorker.batchWatchTimer = null;
+        }
+    },
+
+    /**
+     * Checks whether a batch update is still alive: after a minute of nchan
+     * silence asks the operations journal, and when no active operation is
+     * left the batch is declared dead — the UI is unlocked instead of
+     * spinning forever.
+     */
+    checkBatchAlive() {
+        if (!installStatusLoopWorker.batchUpdate.active) {
+            installStatusLoopWorker.disarmBatchWatch();
+            return;
+        }
+        if (Date.now() - installStatusLoopWorker.batchLastEventAt < 60000) {
+            return;
+        }
+        ModulesAPI.getOperations({}, (data, success) => {
+            if (!success || !data || !installStatusLoopWorker.batchUpdate.active) {
+                return;
+            }
+            // With nchan dead from the very start the batchId was never
+            // learned from events — pick it up from the journal so the
+            // completion check below can match history records.
+            if (installStatusLoopWorker.batchUpdate.batchId === '') {
+                const seen = (data.active || []).find(op => op.batchId !== '');
+                if (seen !== undefined) {
+                    installStatusLoopWorker.batchUpdate.batchId = seen.batchId;
+                }
+            }
+            // A stale active row is a crashed operation, not a live one
+            const alive = (data.active || []).some(op => op.stale !== true);
+            if (alive) {
+                return; // something is genuinely running server-side
+            }
+            installStatusLoopWorker.disarmBatchWatch();
+            const trackedBatchId = installStatusLoopWorker.batchUpdate.batchId;
+            installStatusLoopWorker.resetBatchUpdate();
+            installStatusLoopWorker.$progressBarBlock.hide();
+            $('a.button').removeClass('disabled');
+            // The BatchFinished nchan message may simply have been lost while
+            // every module finished fine — check the journal history before
+            // declaring the batch dead.
+            const batchOps = (data.recent || []).filter(
+                op => trackedBatchId !== '' && op.batchId === trackedBatchId
+            );
+            const allCompleted = batchOps.length > 0
+                && batchOps.every(op => op.state === 'completed');
+            if (allCompleted) {
+                window.location = `${globalRootUrl}pbx-extension-modules/index/`;
+                return;
+            }
+            UserMessage.showMultiString(
+                globalTranslate.ext_OperationStalledError || globalTranslate.ext_InstallationError,
+                globalTranslate.ext_InstallationError
+            );
         });
     },
 
@@ -91,6 +282,7 @@ const installStatusLoopWorker = {
      */
     processModuleInstallation(response){
         installStatusLoopWorker.saveMessage(response);
+        installStatusLoopWorker.watchdog.notifyEvent(response);
         if (installStatusLoopWorker.processBatchEvent(response)) {
             return;
         }
@@ -116,6 +308,7 @@ const installStatusLoopWorker = {
             if (response.batchMode === true || response.batchId !== undefined) {
                 return;
             }
+            installStatusLoopWorker.watchdog.stop();
             if (stageDetails.result===false){
                 installStatusLoopWorker.$progressBarBlock.hide();
                 if (stageDetails.messages !== undefined) {
@@ -160,6 +353,8 @@ const installStatusLoopWorker = {
             completed: new Set(),
             failed: new Set(),
         };
+        installStatusLoopWorker.batchLastEventAt = Date.now();
+        installStatusLoopWorker.armBatchWatch();
         installStatusLoopWorker.$progressBarBlock.show();
         installStatusLoopWorker.$progressBar.show();
         installStatusLoopWorker.$progressBarLabel.text(globalTranslate.ext_UpdateAllModulesTitle);
@@ -190,6 +385,8 @@ const installStatusLoopWorker = {
         if (response.batchMode !== true && response.batchId === undefined) {
             return false;
         }
+
+        installStatusLoopWorker.batchLastEventAt = Date.now();
 
         const stage = response.stage;
         const stageDetails = response.stageDetails || {};
@@ -239,6 +436,7 @@ const installStatusLoopWorker = {
             if (batch.batchId !== '' && response.batchId && response.batchId !== batch.batchId) {
                 return true;
             }
+            installStatusLoopWorker.disarmBatchWatch();
             installStatusLoopWorker.updateBatchProgress(100);
             installStatusLoopWorker.resetBatchUpdate();
             if (stageDetails.result === false) {
