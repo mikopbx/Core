@@ -96,6 +96,12 @@ class UnifiedModulesEvents extends Injectable
             json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT),
             LOG_DEBUG
         );
+        // Headless flows (runner children, internal calls) carry no channel:
+        // skip the empty publish. Whether anything was journaled above depends
+        // on the caller having set a journal context — runner children do not.
+        if ($this->asyncChannelId === '' || $this->asyncChannelId === 'internal-request') {
+            return;
+        }
         $this->di->get(EventBusProvider::SERVICE_NAME)->publish($this->asyncChannelId, $message);
     }
 }

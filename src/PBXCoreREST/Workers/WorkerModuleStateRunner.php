@@ -33,6 +33,7 @@ use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\Modules\DisableModuleAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\EnableModuleAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\ModuleInstallationBase;
+use MikoPBX\PBXCoreREST\Lib\Modules\UninstallModuleAction;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Throwable;
 
@@ -49,6 +50,7 @@ use Throwable;
  *   php -f WorkerModuleStateRunner.php start enable  <moduleUniqueId> <resultFile>
  *   php -f WorkerModuleStateRunner.php start disable <moduleUniqueId> <resultFile> [reason] [reasonText]
  *   php -f WorkerModuleStateRunner.php start install <moduleUniqueId> <resultFile>
+ *   php -f WorkerModuleStateRunner.php start uninstall <moduleUniqueId> <resultFile> <keepSettings 0|1>
  *   php -f WorkerModuleStateRunner.php start captureFeature <moduleUniqueId> <resultFile> <releaseInfoJson>
  *
  * The PBXApiResult::getResult() array is written to resultFile as JSON.
@@ -60,6 +62,15 @@ use Throwable;
 class WorkerModuleStateRunner extends WorkerBase
 {
     /**
+     * Redis TTL of the manipulation mutex held around module code.
+     * INVARIANT: must exceed the longest orchestrator child-step timeout
+     * (WorkerModuleOperations::CHILD_STEP_TIMEOUT / UNINSTALL_STEP_TIMEOUT)
+     * plus the acquire wait — otherwise the lock expires mid-execution and
+     * reopens the concurrency hole it exists to close.
+     */
+    public const int MUTEX_TTL_SEC = 220;
+
+    /**
      * Runs the requested module state change and stores the result as JSON.
      *
      * @param array $argv The command-line arguments passed to the worker.
@@ -70,7 +81,7 @@ class WorkerModuleStateRunner extends WorkerBase
         $moduleUniqueId = $argv[3] ?? '';
         $resultFile = $argv[4] ?? '';
 
-        $knownCommands = ['enable', 'disable', 'install', 'captureFeature'];
+        $knownCommands = ['enable', 'disable', 'install', 'uninstall', 'captureFeature'];
         if ($moduleUniqueId === '' || $resultFile === '' || !in_array($command, $knownCommands, true)) {
             SystemMessages::sysLogMsg(__CLASS__, 'Invalid arguments: ' . implode(' ', $argv), LOG_ERR);
             exit(1);
@@ -103,6 +114,14 @@ class WorkerModuleStateRunner extends WorkerBase
                                 return EnableModuleAction::enableModule($moduleUniqueId);
                             case 'install':
                                 return $this->installModule($moduleUniqueId);
+                            case 'uninstall':
+                                // Includes disable of an enabled module. Its
+                                // intermediate stage pushes go nowhere (empty
+                                // channel, no journal context) — only syslog;
+                                // the orchestrator's Stage_VII carries the result
+                                $keepSettings = ($argv[5] ?? '0') === '1';
+                                $uninstaller = new UninstallModuleAction('', $moduleUniqueId, $keepSettings);
+                                return $uninstaller->uninstallModule();
                             default:
                                 $reason = $argv[5] ?? '';
                                 $reasonText = $argv[6] ?? '';
@@ -110,7 +129,7 @@ class WorkerModuleStateRunner extends WorkerBase
                         }
                     },
                     10,
-                    150
+                    self::MUTEX_TTL_SEC
                 );
             }
         } catch (Throwable $e) {

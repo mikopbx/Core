@@ -160,9 +160,18 @@ class ModulesManagementProcessor extends Injectable
                     $asyncChannelId = $request['asyncChannelId'];
                     $moduleUniqueID = $data['uniqid'] ?? $data['id'];
                     $keepSettings = $data['keepSettings'] === 'true';
-                    $uninstaller = new UninstallModuleAction( $asyncChannelId, $moduleUniqueID, $keepSettings);
-                    $uninstaller->start();
-                    $res->success=true;
+                    if (self::useLegacyInstallPipeline()) {
+                        $uninstaller = new UninstallModuleAction( $asyncChannelId, $moduleUniqueID, $keepSettings);
+                        $uninstaller->start();
+                        $res->success=true;
+                    } else {
+                        $res = self::startModuleOperation(
+                            ModuleOperations::OPERATION_UNINSTALL,
+                            $moduleUniqueID,
+                            ['keepSettings' => $keepSettings],
+                            $asyncChannelId
+                        );
+                    }
                     break;
                 case 'getAvailableModules':
                     $res = GetAvailableModulesAction::main();
@@ -256,8 +265,8 @@ class ModulesManagementProcessor extends Injectable
     }
 
     /**
-     * Emergency switch: '1' routes install/update back to the legacy
-     * mutex-driven pipeline for one release cycle.
+     * Emergency switch: '1' routes install/update/uninstall back to the
+     * legacy mutex-driven pipeline for one release cycle.
      */
     private static function useLegacyInstallPipeline(): bool
     {

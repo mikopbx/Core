@@ -65,8 +65,13 @@ use Throwable;
  */
 class WorkerModuleOperations extends WorkerBase
 {
-    // Hard timeout for a single child step running module code
+    // Hard timeout for a single child step running module code.
+    // INVARIANT: every step timeout stays below
+    // WorkerModuleStateRunner::MUTEX_TTL_SEC minus the acquire wait.
     public const int CHILD_STEP_TIMEOUT = 120;
+
+    // Uninstall gets a larger budget: inner uninstaller + dir removal
+    public const int UNINSTALL_STEP_TIMEOUT = 180;
 
     private ModuleOperationsRepository $repository;
     private string $operationUid = '';
@@ -150,6 +155,9 @@ class WorkerModuleOperations extends WorkerBase
                 case ModuleOperations::OPERATION_DISABLE:
                     $this->runStateChange('disable', $row);
                     break;
+                case ModuleOperations::OPERATION_UNINSTALL:
+                    $this->runUninstall($row);
+                    break;
                 case ModuleOperations::OPERATION_INSTALL_REPO:
                 case ModuleOperations::OPERATION_INSTALL_PACKAGE:
                     $pipeline = new InstallPipeline(
@@ -183,6 +191,42 @@ class WorkerModuleOperations extends WorkerBase
             }
             $this->pushFinalStatus(false, $messages);
         }
+    }
+
+    /**
+     * Uninstall: the whole legacy teardown (disable, process kill, inner or
+     * failover uninstaller, dir removal, unregister) runs in a runner child
+     * under the manipulation mutex and a hard timeout.
+     *
+     * @param array $row The journal row
+     */
+    private function runUninstall(array $row): void
+    {
+        $params = json_decode((string)$row['params'], true) ?: [];
+        $keepSettings = !empty($params['keepSettings']);
+
+        $result = $this->runChildStep(
+            'uninstall',
+            (string)$row['moduleUniqueId'],
+            [$keepSettings ? '1' : '0'],
+            self::UNINSTALL_STEP_TIMEOUT
+        );
+
+        // A fenced-out orchestrator must not talk to the browser either: the
+        // reaper already pushed its own terminal status.
+        if (!$this->repository->heartbeat($this->operationUid, $this->fencingToken)) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Operation {$this->operationUid} was fenced before finalization, discarding result",
+                LOG_WARNING
+            );
+            exit(1);
+        }
+
+        $this->events->pushMessageToBrowser(
+            ModuleInstallationBase::STAGE_VII_FINAL_STATUS,
+            $result
+        );
     }
 
     /**
