@@ -1393,6 +1393,10 @@ return [
     'rest_mod_InstallFromRepo' => 'Installeer de module vanuit de repository',
     'rest_mod_InstallationStatus' => 'Installatiestatus ophalen',
     'rest_mod_InstallationStatusDesc' => 'De huidige status van het module-installatieproces opvragen',
+    'rest_mod_GetOperations' => 'Logboek met modulebewerkingen ophalen',
+    'rest_mod_GetOperationsDesc' => 'Retourneert actieve modulebewerkingen en de geschiedenis van recente bewerkingen uit het logboek',
+    'rest_mod_GetOperationStatus' => 'Status van de modulebewerking ophalen',
+    'rest_mod_GetOperationStatusDesc' => 'Retourneert de status van de huidige of laatste bewerking voor de opgegeven module',
     // ============================================================================
     // System REST API
     // ============================================================================

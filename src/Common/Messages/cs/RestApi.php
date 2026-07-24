@@ -318,6 +318,10 @@ return [
     'rest_mod_DownloadStatusDesc' => 'Získání aktuálního stavu probíhajícího stahování modulu',
     'rest_mod_GetMetadataFromPackage' => 'Získání metadat z balíčku',
     'rest_mod_InstallationStatusDesc' => 'Získání aktuálního stavu procesu instalace modulu',
+    'rest_mod_GetOperations' => 'Získejte protokol operací s moduly',
+    'rest_mod_GetOperationsDesc' => 'Vrací aktivní operace s moduly a historii posledních operací z protokolu',
+    'rest_mod_GetOperationStatus' => 'Získejte stav operace modulu',
+    'rest_mod_GetOperationStatusDesc' => 'Vrací stav aktuální nebo poslední operace pro zadaný modul',
     // ============================================================================
     // System REST API
     // ============================================================================

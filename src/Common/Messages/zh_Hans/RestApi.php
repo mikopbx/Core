@@ -1932,6 +1932,10 @@ return [
     'rest_mod_GetMetadataFromPackageDesc' => '从模块包文件中提取并返回元数据',
     'rest_mod_InstallationStatus' => '获取安装状态',
     'rest_mod_InstallationStatusDesc' => '获取模块安装过程的当前状态',
+    'rest_mod_GetOperations' => '获取模块操作日志',
+    'rest_mod_GetOperationsDesc' => '返回活动的模块操作以及日志中最近操作的历史记录',
+    'rest_mod_GetOperationStatus' => '获取模块操作状态',
+    'rest_mod_GetOperationStatusDesc' => '返回指定模块当前或最后一次操作的状态',
     // ============================================================================
     // System REST API
     // ============================================================================

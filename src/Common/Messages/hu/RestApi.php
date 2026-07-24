@@ -1112,6 +1112,10 @@ return [
     'rest_mod_GetMetadataFromPackageDesc' => 'Metaadatok kinyerése és visszaadása egy modulcsomag-fájlból',
     'rest_mod_InstallationStatus' => 'Telepítési állapot lekérése',
     'rest_mod_InstallationStatusDesc' => 'A modultelepítési folyamat aktuális állapotának lekérése',
+    'rest_mod_GetOperations' => 'Modulműveletek naplójának lekérése',
+    'rest_mod_GetOperationsDesc' => 'Visszaadja az aktív modulműveleteket és a legutóbbi műveletek előzményeit a naplóból',
+    'rest_mod_GetOperationStatus' => 'Modulművelet állapotának lekérése',
+    'rest_mod_GetOperationStatusDesc' => 'Visszaadja a megadott modul aktuális vagy utolsó műveletének állapotát',
     // ============================================================================
     // System REST API
     // ============================================================================

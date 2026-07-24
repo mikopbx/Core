@@ -1078,6 +1078,10 @@ return [
     'rest_mod_GetMetadataFromPackageDesc' => 'Wyodrębnianie i zwracanie metadanych z pliku pakietu modułu',
     'rest_mod_InstallationStatus' => 'Uzyskaj status instalacji',
     'rest_mod_InstallationStatusDesc' => 'Uzyskiwanie aktualnego stanu procesu instalacji modułu',
+    'rest_mod_GetOperations' => 'Pobierz dziennik operacji na modułach',
+    'rest_mod_GetOperationsDesc' => 'Zwraca aktywne operacje na modułach oraz historię ostatnich operacji z dziennika',
+    'rest_mod_GetOperationStatus' => 'Pobierz status operacji modułu',
+    'rest_mod_GetOperationStatusDesc' => 'Zwraca stan bieżącej lub ostatniej operacji dla wskazanego modułu',
     // ============================================================================
     // System REST API
     // ============================================================================

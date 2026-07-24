@@ -1084,6 +1084,10 @@ return [
     'rest_resource_incomingroute' => 'Daxil olan marşrut',
     'rest_resource_extension' => 'Genişləndirmə',
     'rest_mod_InstallationStatusDesc' => 'Modul quraşdırma prosesinin cari statusunun əldə edilməsi',
+    'rest_mod_GetOperations' => 'Modul əməliyyatları jurnalını əldə edin',
+    'rest_mod_GetOperationsDesc' => 'Modullarla aktiv əməliyyatları və jurnaldan son əməliyyatların tarixçəsini qaytarır',
+    'rest_mod_GetOperationStatus' => 'Modul əməliyyatının statusunu əldə edin',
+    'rest_mod_GetOperationStatusDesc' => 'Göstərilən modul üçün cari və ya son əməliyyatın vəziyyətini qaytarır',
     // ============================================================================
     // System REST API
     // ============================================================================

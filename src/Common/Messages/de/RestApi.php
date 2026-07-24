@@ -1001,6 +1001,10 @@ return [
     'rest_mod_GetMetadataFromPackageDesc' => 'Extrahieren und Zurückgeben von Metadaten aus einer Modulpaketdatei',
     'rest_mod_InstallationStatus' => 'Installationsstatus abrufen',
     'rest_mod_InstallationStatusDesc' => 'Abrufen des aktuellen Status des Modulinstallationsprozesses',
+    'rest_mod_GetOperations' => 'Protokoll der Modulvorgänge abrufen',
+    'rest_mod_GetOperationsDesc' => 'Gibt die aktiven Modulvorgänge und den Verlauf der letzten Vorgänge aus dem Protokoll zurück',
+    'rest_mod_GetOperationStatus' => 'Status des Modulvorgangs abrufen',
+    'rest_mod_GetOperationStatusDesc' => 'Gibt den Status des aktuellen oder letzten Vorgangs für das angegebene Modul zurück',
     // ============================================================================
     // System REST API
     // ============================================================================

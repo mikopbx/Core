@@ -1091,6 +1091,10 @@ return [
     'rest_mod_GetMetadataFromPackage' => 'Obtener metadatos de un paquete',
     'rest_mod_InstallationStatus' => 'Obtener el estado de la instalación',
     'rest_mod_InstallationStatusDesc' => 'Obtener el estado actual del proceso de instalación del módulo',
+    'rest_mod_GetOperations' => 'Obtenga el registro de operaciones de módulos',
+    'rest_mod_GetOperationsDesc' => 'Devuelve las operaciones activas de módulos y el historial de las operaciones recientes del registro',
+    'rest_mod_GetOperationStatus' => 'Obtenga el estado de la operación del módulo',
+    'rest_mod_GetOperationStatusDesc' => 'Devuelve el estado de la operación actual o la última para el módulo especificado',
     // ============================================================================
     // System REST API
     // ============================================================================

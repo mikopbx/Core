@@ -151,6 +151,10 @@ return [
     'rest_mod_Create' => 'Skapa en modul',
     'rest_mod_GetMetadataFromPackage' => 'Hämta metadata från ett paket',
     'rest_mod_InstallationStatusDesc' => 'Hämta aktuell status för modulinstallationsprocessen',
+    'rest_mod_GetOperations' => 'Hämta loggen över modulåtgärder',
+    'rest_mod_GetOperationsDesc' => 'Returnerar aktiva modulåtgärder och historiken för de senaste åtgärderna från loggen',
+    'rest_mod_GetOperationStatus' => 'Hämta status för modulåtgärden',
+    'rest_mod_GetOperationStatusDesc' => 'Returnerar status för den aktuella eller senaste åtgärden för den angivna modulen',
     // ============================================================================
     // System REST API
     // ============================================================================

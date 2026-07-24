@@ -996,6 +996,10 @@ return [
     'rest_mod_StartDownloadDesc' => 'Bắt đầu quá trình tải xuống một mô-đun từ kho lưu trữ.',
     'rest_mod_DownloadStatus' => 'Nhận trạng thái tải xuống',
     'rest_mod_InstallationStatusDesc' => 'Lấy trạng thái hiện tại của quá trình cài đặt mô-đun.',
+    'rest_mod_GetOperations' => 'Lấy nhật ký thao tác với mô-đun',
+    'rest_mod_GetOperationsDesc' => 'Trả về các thao tác đang hoạt động với mô-đun và lịch sử các thao tác gần đây từ nhật ký',
+    'rest_mod_GetOperationStatus' => 'Lấy trạng thái thao tác của mô-đun',
+    'rest_mod_GetOperationStatusDesc' => 'Trả về trạng thái của thao tác hiện tại hoặc gần nhất đối với mô-đun được chỉ định',
     // ============================================================================
     // System REST API
     // ============================================================================

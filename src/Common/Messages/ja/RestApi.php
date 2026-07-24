@@ -851,6 +851,10 @@ return [
     'rest_mod_GetMetadataFromPackage' => 'パッケージからメタデータを取得する',
     'rest_mod_GetMetadataFromPackageDesc' => 'モジュール パッケージ ファイルからメタデータを抽出して返す',
     'rest_mod_InstallationStatusDesc' => 'モジュールのインストールプロセスの現在のステータスを取得する',
+    'rest_mod_GetOperations' => 'モジュール操作のログを取得する',
+    'rest_mod_GetOperationsDesc' => 'モジュールの実行中の操作と、ログから直近の操作履歴を返します',
+    'rest_mod_GetOperationStatus' => 'モジュール操作のステータスを取得する',
+    'rest_mod_GetOperationStatusDesc' => '指定したモジュールの現在または最後の操作の状態を返します',
     // ============================================================================
     // System REST API
     // ============================================================================

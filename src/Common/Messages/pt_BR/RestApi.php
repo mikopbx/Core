@@ -178,6 +178,10 @@ return [
     'rest_mod_GetMetadataFromPackage' => 'Obter metadados de um pacote',
     'rest_mod_GetMetadataFromPackageDesc' => 'Extraindo e retornando metadados de um arquivo de pacote de módulo',
     'rest_mod_InstallationStatusDesc' => 'Obtendo o status atual do processo de instalação do módulo.',
+    'rest_mod_GetOperations' => 'Obtenha o log de operações com módulos',
+    'rest_mod_GetOperationsDesc' => 'Retorna as operações ativas com módulos e o histórico das operações recentes do log',
+    'rest_mod_GetOperationStatus' => 'Obtenha o status da operação do módulo',
+    'rest_mod_GetOperationStatusDesc' => 'Retorna o status da operação atual ou da última operação para o módulo especificado',
     // ============================================================================
     // System REST API
     // ============================================================================
