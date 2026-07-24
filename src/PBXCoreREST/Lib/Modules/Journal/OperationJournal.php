@@ -154,6 +154,28 @@ class OperationJournal
         }
     }
 
+    /**
+     * Checks whether a live (non-stale) module operation is in progress.
+     * Used by the legacy pipeline as a guard against running concurrently
+     * with an orchestrator-driven operation. Fails open: journal problems
+     * must not block the legacy flow.
+     */
+    public static function hasAliveOperation(): bool
+    {
+        try {
+            $repository = new ModuleOperationsRepository();
+            $threshold = time() - ModuleOperationsRepository::HEARTBEAT_STALE_AFTER;
+            foreach ($repository->getAllActive() as $row) {
+                if ((int)($row['heartbeatAt'] ?? 0) >= $threshold) {
+                    return true;
+                }
+            }
+        } catch (Throwable $e) {
+            self::logFailure(__FUNCTION__, $e);
+        }
+        return false;
+    }
+
     private static function logFailure(string $method, Throwable $e): void
     {
         SystemMessages::sysLogMsg(

@@ -53,6 +53,7 @@ use MikoPBX\Common\Models\StorageSettings;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\Modules\PbxExtensionState;
 use MikoPBX\Modules\PbxExtensionUtils;
+use MikoPBX\PBXCoreREST\Lib\Modules\Supervision\StaleOperationReaper;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use RuntimeException;
 use Throwable;
@@ -305,6 +306,16 @@ class WorkerSafeScriptsCore extends WorkerBase
      * Interval between S3 configuration checks (seconds).
      */
     private const int S3_CHECK_INTERVAL = 300; // 5 minutes
+
+    /**
+     * Interval between stale module-operation reaping passes.
+     */
+    private const int MODULE_OPERATIONS_REAP_INTERVAL_SEC = 15;
+
+    /**
+     * Timestamp of the last stale module-operation reaping pass.
+     */
+    private int $lastModuleOperationsReapTime = 0;
 
     // Redis handle inherited from WorkerBase::$redis (protected mixed, default null).
     // A local override here would break PHP 8.2+ property type covariance —
@@ -681,6 +692,11 @@ class WorkerSafeScriptsCore extends WorkerBase
             // Periodic memory report (every 5 minutes)
             $this->logMemoryReport();
 
+            // Finalize module operations whose orchestrator died (heartbeat
+            // stale): fences the zombie out, kills its process group and
+            // unfreezes any browser still watching the operation.
+            $this->maybeReapModuleOperations();
+
             // Prepare the list of workers to be started.
             $arrWorkers = $this->prepareWorkersList();
 
@@ -731,6 +747,23 @@ class WorkerSafeScriptsCore extends WorkerBase
 
             // Sleep for a short interval before next check
             sleep(5);
+        }
+    }
+
+    /**
+     * Runs the stale module-operation reaper, rate limited to one pass per
+     * MODULE_OPERATIONS_REAP_INTERVAL_SEC.
+     */
+    private function maybeReapModuleOperations(): void
+    {
+        if (time() - $this->lastModuleOperationsReapTime < self::MODULE_OPERATIONS_REAP_INTERVAL_SEC) {
+            return;
+        }
+        $this->lastModuleOperationsReapTime = time();
+        try {
+            (new StaleOperationReaper())->reap();
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(__CLASS__, 'Module operations reaping failed: ' . $e->getMessage(), LOG_ERR);
         }
     }
 

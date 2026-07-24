@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Modules;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\ModuleOperations;
 use MikoPBX\Common\Providers\MutexProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
@@ -86,6 +87,15 @@ class UninstallModuleAction extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
+
+        // An orchestrator-driven operation (enable/disable) no longer holds
+        // the legacy mutex — refuse to run concurrently with a live one.
+        if (OperationJournal::hasAliveOperation()) {
+            $res->success = false;
+            $res->messages['error'][] = TranslationProvider::translate('ext_ErrAnotherOperationInProgress');
+            $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_VII_FINAL_STATUS, $res->getResult());
+            return $res;
+        }
 
         // Journal dual-write: the Stage_VII push below finalizes the row
         $this->unifiedModulesEvents->setJournalContext(OperationJournal::begin(

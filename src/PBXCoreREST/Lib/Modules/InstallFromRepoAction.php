@@ -67,6 +67,21 @@ class InstallFromRepoAction extends ModuleInstallationBase
      */
     public function start(): void
     {
+        // An orchestrator-driven operation (enable/disable) no longer holds
+        // the legacy mutex — refuse to run concurrently with a live one.
+        if (OperationJournal::hasAliveOperation()) {
+            $messages = ['error' => [TranslationProvider::translate('ext_ErrAnotherOperationInProgress')]];
+            $this->unifiedModulesEvents->pushMessageToBrowser(
+                self::STAGE_VII_FINAL_STATUS,
+                ['result' => false, 'messages' => $messages]
+            );
+            // A rejected batch member must still advance its batch
+            if ($this->batchId !== '') {
+                UpdateAllModulesAction::failModule($this->batchId, $this->moduleUniqueId, $messages);
+            }
+            return;
+        }
+
         // Journal dual-write: the Stage_VII push in finally finalizes the row
         $this->setJournalContext(OperationJournal::begin(
             $this->moduleUniqueId,

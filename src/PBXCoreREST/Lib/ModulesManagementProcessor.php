@@ -19,8 +19,10 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\Modules\DisableModuleAction;
-use MikoPBX\PBXCoreREST\Lib\Modules\EnableModuleAction;
+use MikoPBX\Common\Models\ModuleOperations;
+use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\Modules\GetAvailableModulesAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\GetMetadataFromModulePackageAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\GetModuleInfoAction;
@@ -30,12 +32,16 @@ use MikoPBX\PBXCoreREST\Lib\Modules\DownloadStatusAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\InstallFromRepoAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\Journal\GetOperationsAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\Journal\GetOperationStatusAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\Journal\ModuleOperationsRepository;
 use MikoPBX\PBXCoreREST\Lib\Modules\StartDownloadAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\StatusOfModuleInstallationAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\UnifiedModulesEvents;
 use MikoPBX\PBXCoreREST\Lib\Modules\UninstallModuleAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\UpdateAllModulesAction;
+use MikoPBX\PBXCoreREST\Workers\WorkerModuleOperations;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
+use Throwable;
 
 /**
  * Class ModulesManagementProcessor
@@ -109,14 +115,24 @@ class ModulesManagementProcessor extends Injectable
                 case 'enable':
                     $asyncChannelId = $request['asyncChannelId'];
                     $moduleUniqueID = $data['uniqid'] ?? $data['id'];
-                    $res = EnableModuleAction::main($moduleUniqueID, $asyncChannelId);
+                    $res = self::startModuleOperation(
+                        ModuleOperations::OPERATION_ENABLE,
+                        $moduleUniqueID,
+                        [],
+                        $asyncChannelId
+                    );
                     break;
                 case 'disable':
                     $asyncChannelId = $request['asyncChannelId']??'internal-request';
                     $moduleUniqueID = $data['uniqid'] ?? $data['id'];
                     $reason = $data['reason']??'';
                     $reasonText = $data['reasonText']??'';
-                    $res = DisableModuleAction::main($moduleUniqueID, $reason, $reasonText, $asyncChannelId);
+                    $res = self::startModuleOperation(
+                        ModuleOperations::OPERATION_DISABLE,
+                        $moduleUniqueID,
+                        ['reason' => $reason, 'reasonText' => $reasonText],
+                        $asyncChannelId
+                    );
                     break;
                 case 'uninstall':
                     $asyncChannelId = $request['asyncChannelId'];
@@ -147,5 +163,84 @@ class ModulesManagementProcessor extends Injectable
         $res->function = $action;
 
         return $res;
+    }
+
+    /**
+     * Claims a module operation in the journal and spawns the detached
+     * orchestrator (WorkerModuleOperations) that executes it. Returns
+     * immediately: progress and the final result are delivered via nchan
+     * and the operations journal, the WorkerApiCommands slot is never
+     * blocked for the duration of the operation.
+     *
+     * @param string $operation One of ModuleOperations::OPERATION_*
+     * @param string $moduleUniqueId Module unique id
+     * @param array $params Operation parameters stored in the journal
+     * @param string $asyncChannelId nchan channel id for browser notifications
+     *
+     * @return PBXApiResult 409 with the active operation on claim conflict
+     */
+    private static function startModuleOperation(
+        string $operation,
+        string $moduleUniqueId,
+        array $params,
+        string $asyncChannelId
+    ): PBXApiResult {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+
+        // Legacy stage names keep the toggle UI contract intact
+        $failStage = $operation === ModuleOperations::OPERATION_ENABLE
+            ? 'Stage_I_ModuleEnable'
+            : 'Stage_I_ModuleDisable';
+
+        try {
+            $repository = new ModuleOperationsRepository();
+            $claim = $repository->claim($moduleUniqueId, $operation, $params, $asyncChannelId);
+
+            if (!$claim['claimed']) {
+                $res->success = false;
+                $res->messages['error'][] = TranslationProvider::translate('ext_ErrAnotherOperationInProgress');
+                $res->data['activeOperation'] = $claim['activeOperation'];
+                $res->httpCode = 409;
+                // Async requests already got HTTP 200 — unfreeze the browser
+                // through the notification channel as well.
+                self::pushOperationRejection($asyncChannelId, $moduleUniqueId, $failStage, $res->messages);
+                return $res;
+            }
+
+            $php = Util::which('php');
+            $workerPath = Util::getFilePathByClassName(WorkerModuleOperations::class);
+            Processes::mwExecBg("$php -f $workerPath start " . escapeshellarg($claim['operationUid']));
+
+            $res->success = true;
+            $res->data['operationId'] = $claim['operationUid'];
+        } catch (Throwable $e) {
+            $res->success = false;
+            $res->messages['error'][] = $e->getMessage();
+            self::pushOperationRejection($asyncChannelId, $moduleUniqueId, $failStage, $res->messages);
+        }
+
+        return $res;
+    }
+
+    /**
+     * Notifies the browser about a rejected operation start on the legacy
+     * stage name, so the toggle UI unfreezes without waiting for its watchdog.
+     */
+    private static function pushOperationRejection(
+        string $asyncChannelId,
+        string $moduleUniqueId,
+        string $failStage,
+        array $messages
+    ): void {
+        if ($asyncChannelId === '' || $asyncChannelId === 'internal-request') {
+            return;
+        }
+        try {
+            $events = new UnifiedModulesEvents($asyncChannelId, $moduleUniqueId);
+            $events->pushMessageToBrowser($failStage, ['result' => false, 'messages' => $messages]);
+        } catch (Throwable $e) {
+            // Notification failure must not mask the original error
+        }
     }
 }

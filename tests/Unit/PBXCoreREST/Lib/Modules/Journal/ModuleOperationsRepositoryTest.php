@@ -72,6 +72,7 @@ final class ModuleOperationsRepositoryTest extends TestCase
                 fencingToken VARCHAR NOT NULL,
                 pid INTEGER,
                 pgid INTEGER,
+                childPgid INTEGER,
                 heartbeatAt INTEGER,
                 startedAt INTEGER,
                 finishedAt INTEGER,

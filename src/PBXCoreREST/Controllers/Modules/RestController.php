@@ -402,14 +402,16 @@ class RestController extends BaseRestController
     )]
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z][A-Za-z0-9]*$', example: 'ModuleTemplate')]
     #[ApiParameterRef('asyncChannelId')]
-    #[ApiResponse(200, 'rest_response_200_enabled')]
+    #[ApiResponse(200, 'rest_response_200_async_started')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
     public function enable(string $id): void
     {
-        // Implementation handled by BaseRestController via handleCustomRequest
+        // The operation is claimed in the journal and executed by a detached
+        // orchestrator; poll GET /modules/{id}:getOperationStatus for the result
     }
 
     /**
@@ -426,14 +428,16 @@ class RestController extends BaseRestController
     #[ApiParameterRef('reason')]
     #[ApiParameterRef('reasonText')]
     #[ApiParameterRef('asyncChannelId')]
-    #[ApiResponse(200, 'rest_response_200_disabled')]
+    #[ApiResponse(200, 'rest_response_200_async_started')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
     public function disable(string $id): void
     {
-        // Implementation handled by BaseRestController via handleCustomRequest
+        // The operation is claimed in the journal and executed by a detached
+        // orchestrator; poll GET /modules/{id}:getOperationStatus for the result
     }
 
     /**

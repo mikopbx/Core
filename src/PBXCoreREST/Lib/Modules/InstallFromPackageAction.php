@@ -64,6 +64,19 @@ class InstallFromPackageAction extends ModuleInstallationBase
      */
     public function start(): void
     {
+        // An orchestrator-driven operation (enable/disable) no longer holds
+        // the legacy mutex — refuse to run concurrently with a live one.
+        if (OperationJournal::hasAliveOperation()) {
+            $this->unifiedModulesEvents->pushMessageToBrowser(
+                self::STAGE_VII_FINAL_STATUS,
+                [
+                    'result' => false,
+                    'messages' => ['error' => [TranslationProvider::translate('ext_ErrAnotherOperationInProgress')]],
+                ]
+            );
+            return;
+        }
+
         // Journal dual-write: opened with the upload fileId as module id, the
         // real uniqid is fixed up in startModuleInstallation() from metadata.
         // The Stage_VII push in finally finalizes the row.

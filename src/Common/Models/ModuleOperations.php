@@ -228,6 +228,14 @@ class ModuleOperations extends ModelsBase
     public $pgid;
 
     /**
+     * Process group id of the currently running child step (the runner makes
+     * its own session, so the supervisor must kill this group separately)
+     *
+     * @Column(type="integer", nullable=true)
+     */
+    public $childPgid;
+
+    /**
      * Unix time of the last orchestrator heartbeat
      *
      * @Column(type="integer", nullable=true)

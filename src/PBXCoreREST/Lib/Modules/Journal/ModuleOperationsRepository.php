@@ -75,6 +75,7 @@ class ModuleOperationsRepository
         'swapDone',
         'pid',
         'pgid',
+        'childPgid',
     ];
 
     private PDO $db;
