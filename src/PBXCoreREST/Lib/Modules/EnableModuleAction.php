@@ -20,12 +20,15 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
+use MikoPBX\Common\Models\ModuleOperations;
 use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\PbxExtensionState;
+use MikoPBX\PBXCoreREST\Lib\Modules\Journal\OperationJournal;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
+use Throwable;
 
 /**
  *  Class EnableModule
@@ -45,29 +48,45 @@ class EnableModuleAction extends Injectable
      */
     public static function main(string $moduleUniqueID, string $asyncChannelId=''): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        // Journal dual-write: the toggle flow has no Stage_VII push, the row
+        // is finalized here explicitly (mutex failures included).
+        $journalContext = OperationJournal::begin(
+            $moduleUniqueID,
+            ModuleOperations::OPERATION_ENABLE,
+            [],
+            $asyncChannelId
+        );
 
-        return Di::getDefault()->get(MutexProvider::SERVICE_NAME)
-            ->synchronized(
-                ModuleInstallationBase::MODULE_MANIPULATION_MUTEX_KEY,
-                function () use ($moduleUniqueID, $asyncChannelId) {
-                    return self::enableModule($moduleUniqueID, $asyncChannelId);
-                },
-                10,
-                30
-            );
+        try {
+            $res = Di::getDefault()->get(MutexProvider::SERVICE_NAME)
+                ->synchronized(
+                    ModuleInstallationBase::MODULE_MANIPULATION_MUTEX_KEY,
+                    function () use ($moduleUniqueID, $asyncChannelId, $journalContext) {
+                        return self::enableModule($moduleUniqueID, $asyncChannelId, $journalContext);
+                    },
+                    10,
+                    30
+                );
+        } catch (Throwable $e) {
+            OperationJournal::finish($journalContext, false, ['error' => [$e->getMessage()]]);
+            throw $e;
+        }
+
+        OperationJournal::finish($journalContext, $res->success, $res->messages);
+        return $res;
     }
 
     /**
      * Enables extension module.
      *
      * @param string $moduleUniqueID
+     * @param string $asyncChannelId Pub/sub nchan channel id for browser notifications
+     * @param array|null $journalContext Operations journal context [operationUid, fencingToken]
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function enableModule(string $moduleUniqueID, string $asyncChannelId=''): PBXApiResult
-    {    
+    public static function enableModule(string $moduleUniqueID, string $asyncChannelId='', ?array $journalContext = null): PBXApiResult
+    {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
@@ -82,6 +101,7 @@ class EnableModuleAction extends Injectable
         }
         if (!empty($asyncChannelId)) {
             $unifiedModulesEvents = new UnifiedModulesEvents($asyncChannelId, $moduleUniqueID);
+            $unifiedModulesEvents->setJournalContext($journalContext);
             $unifiedModulesEvents->pushMessageToBrowser('Stage_I_ModuleEnable', $res->getResult());
         }
 

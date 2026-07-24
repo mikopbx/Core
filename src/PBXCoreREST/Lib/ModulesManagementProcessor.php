@@ -28,6 +28,8 @@ use MikoPBX\PBXCoreREST\Lib\Modules\GetModuleLinkAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\InstallFromPackageAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\DownloadStatusAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\InstallFromRepoAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\Journal\GetOperationsAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\Journal\GetOperationStatusAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\StartDownloadAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\StatusOfModuleInstallationAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\UninstallModuleAction;
@@ -126,6 +128,14 @@ class ModulesManagementProcessor extends Injectable
                     break;
                 case 'getAvailableModules':
                     $res = GetAvailableModulesAction::main();
+                    break;
+                case 'getOperations':
+                    $res = GetOperationsAction::main(is_array($data) ? $data : []);
+                    break;
+                case 'getOperationStatus':
+                    $moduleUniqueID = $data['uniqid'] ?? $data['id'] ?? '';
+                    $operationUid = $data['operationId'] ?? '';
+                    $res = GetOperationStatusAction::main($moduleUniqueID, $operationUid);
                     break;
                 case 'getModuleLink':
                     $moduleReleaseId = $data['releaseId'];

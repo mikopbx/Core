@@ -20,11 +20,13 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Models\ModuleOperations;
 use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
+use MikoPBX\PBXCoreREST\Lib\Modules\Journal\OperationJournal;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
 
@@ -56,6 +58,8 @@ class UninstallModuleAction extends Injectable
 
     private string $moduleUniqueId;
 
+    private string $asyncChannelId;
+
     /**
      * Class constructor
      *
@@ -66,6 +70,7 @@ class UninstallModuleAction extends Injectable
     {
         $this->moduleUniqueId = $moduleUniqueId;
         $this->keepSettings = $keepSettings;
+        $this->asyncChannelId = $asyncChannelId;
         $this->unifiedModulesEvents = new UnifiedModulesEvents($asyncChannelId, $moduleUniqueId);
     }
 
@@ -81,6 +86,14 @@ class UninstallModuleAction extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
+
+        // Journal dual-write: the Stage_VII push below finalizes the row
+        $this->unifiedModulesEvents->setJournalContext(OperationJournal::begin(
+            $this->moduleUniqueId,
+            ModuleOperations::OPERATION_UNINSTALL,
+            ['keepSettings' => $this->keepSettings],
+            $this->asyncChannelId
+        ));
 
         // Create a mutex to ensure synchronized access
         $mutex = $this->di->get(MutexProvider::SERVICE_NAME);

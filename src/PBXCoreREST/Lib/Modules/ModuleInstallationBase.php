@@ -28,6 +28,7 @@ use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
+use MikoPBX\PBXCoreREST\Lib\Modules\Journal\OperationJournal;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Workers\WorkerModuleInstaller;
 use Phalcon\Di\Di;
@@ -85,6 +86,11 @@ class ModuleInstallationBase extends Injectable
     protected UnifiedModulesEvents $unifiedModulesEvents;
 
     /**
+     * Operations journal dual-write context: [operationUid, fencingToken] or null
+     */
+    protected ?array $journalContext = null;
+
+    /**
      * Class constructor
      *
      * @param string $asyncChannelId Pub/sub nchan channel id to send response to frontend
@@ -97,7 +103,18 @@ class ModuleInstallationBase extends Injectable
         $this->batchId = $batchId;
         $this->unifiedModulesEvents = new UnifiedModulesEvents($asyncChannelId, $moduleUniqueId, $batchId);
     }
-    
+
+    /**
+     * Sets the operations journal context and propagates it to the events pusher.
+     *
+     * @param array|null $journalContext [operationUid, fencingToken] or null
+     */
+    protected function setJournalContext(?array $journalContext): void
+    {
+        $this->journalContext = $journalContext;
+        $this->unifiedModulesEvents->setJournalContext($journalContext);
+    }
+
     /**
      * Installs the module from the specified file path.
      * This function manages the module installation process, ensuring completion within the defined timeout.
@@ -178,6 +195,10 @@ class ModuleInstallationBase extends Injectable
 
         // Reset module unique id from package json data
         $this->moduleUniqueId = $resModuleMetadata->data['uniqid'];
+
+        // Install-from-package journal rows are opened before the real module
+        // id is known (only the upload fileId exists) — fix it up here.
+        OperationJournal::updateModuleUniqueId($this->journalContext, $this->moduleUniqueId);
 
         // Disable the module if it's enabled
         $moduleWasEnabled = false;

@@ -55,15 +55,15 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('modules', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getList', 'getRecord', 'getDefault', 'getAvailableModules', 'getModuleInfo', 'getModuleLink', 'getDownloadStatus', 'getInstallationStatus'],
+        'GET' => ['getList', 'getRecord', 'getDefault', 'getAvailableModules', 'getModuleInfo', 'getModuleLink', 'getDownloadStatus', 'getInstallationStatus', 'getOperations', 'getOperationStatus'],
         'POST' => ['create', 'installFromRepo', 'installFromPackage', 'enable', 'disable', 'uninstall', 'updateAll', 'startDownload', 'getMetadataFromPackage'],
         'PUT' => ['update'],
         'PATCH' => ['patch'],
         'DELETE' => ['delete']
     ],
-    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete', 'getModuleInfo', 'getModuleLink', 'installFromRepo', 'enable', 'disable', 'uninstall', 'startDownload', 'getDownloadStatus'],
-    collectionLevelMethods: ['getList', 'create', 'getDefault', 'getAvailableModules', 'installFromPackage', 'updateAll', 'getMetadataFromPackage', 'getInstallationStatus'],
-    customMethods: ['getDefault', 'getAvailableModules', 'getModuleInfo', 'getModuleLink', 'installFromRepo', 'installFromPackage', 'enable', 'disable', 'uninstall', 'updateAll', 'startDownload', 'getDownloadStatus', 'getMetadataFromPackage', 'getInstallationStatus'],
+    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete', 'getModuleInfo', 'getModuleLink', 'installFromRepo', 'enable', 'disable', 'uninstall', 'startDownload', 'getDownloadStatus', 'getOperationStatus'],
+    collectionLevelMethods: ['getList', 'create', 'getDefault', 'getAvailableModules', 'installFromPackage', 'updateAll', 'getMetadataFromPackage', 'getInstallationStatus', 'getOperations'],
+    customMethods: ['getDefault', 'getAvailableModules', 'getModuleInfo', 'getModuleLink', 'installFromRepo', 'installFromPackage', 'enable', 'disable', 'uninstall', 'updateAll', 'startDownload', 'getDownloadStatus', 'getMetadataFromPackage', 'getInstallationStatus', 'getOperations', 'getOperationStatus'],
     idPattern: '[A-Za-z][A-Za-z0-9]*'
 )]
 class RestController extends BaseRestController
@@ -538,6 +538,46 @@ class RestController extends BaseRestController
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
     public function getDownloadStatus(string $id): void
+    {
+        // Implementation handled by BaseRestController via handleCustomRequest
+    }
+
+    /**
+     * Get module operations journal: active operations plus recent history.
+     * Used by the UI to restore progress after page reload.
+     *
+     * @route GET /pbxcore/api/v3/modules:getOperations
+     */
+    #[ApiOperation(
+        summary: 'rest_mod_GetOperations',
+        description: 'rest_mod_GetOperationsDesc',
+        operationId: 'getModuleOperations'
+    )]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getOperations(): void
+    {
+        // Implementation handled by BaseRestController via handleCustomRequest
+    }
+
+    /**
+     * Get status of the current or last operation for a module.
+     * Polling fallback for the UI when nchan messages are lost.
+     *
+     * @route GET /pbxcore/api/v3/modules/{id}:getOperationStatus
+     */
+    #[ApiOperation(
+        summary: 'rest_mod_GetOperationStatus',
+        description: 'rest_mod_GetOperationStatusDesc',
+        operationId: 'getModuleOperationStatus'
+    )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z][A-Za-z0-9]*$', example: 'ModuleTemplate')]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getOperationStatus(string $id): void
     {
         // Implementation handled by BaseRestController via handleCustomRequest
     }

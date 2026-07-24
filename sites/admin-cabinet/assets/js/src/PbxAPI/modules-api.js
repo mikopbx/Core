@@ -58,7 +58,9 @@ const ModulesAPI = new PbxApiClient({
         startDownload: ':startDownload',
         getDownloadStatus: ':getDownloadStatus',
         getMetadataFromPackage: ':getMetadataFromPackage',
-        getInstallationStatus: ':getInstallationStatus'
+        getInstallationStatus: ':getInstallationStatus',
+        getOperations: ':getOperations',
+        getOperationStatus: ':getOperationStatus'
     }
 });
 
@@ -192,6 +194,53 @@ ModulesAPI.updateAll = function(params, callback) {
     };
 
     this.callCustomMethod('updateAll', requestData, callback, 'POST');
+};
+
+/**
+ * Retrieves module operations journal: active operations plus recent history.
+ * Used to restore progress bars and button locks after a page reload.
+ * @param {object} params - Query parameters
+ * @param {string} [params.moduleUniqueId] - Filter by module unique ID
+ * @param {number} [params.limit] - History size limit
+ * @param {function} callback - Callback function (data, success)
+ */
+ModulesAPI.getOperations = function(params, callback) {
+    const requestData = {};
+    if (params.moduleUniqueId) {
+        requestData.moduleUniqueId = params.moduleUniqueId;
+    }
+    if (params.limit) {
+        requestData.limit = params.limit;
+    }
+    this.callCustomMethod('getOperations', requestData, (response, success) => {
+        if (success && response.data) {
+            callback(response.data, true);
+        } else {
+            callback(response, false);
+        }
+    }, 'GET');
+};
+
+/**
+ * Retrieves the status of the current or last operation for a module.
+ * Polling fallback when nchan progress messages are lost.
+ * @param {object} params - Query parameters
+ * @param {string} params.uniqid - Module unique ID
+ * @param {string} [params.operationId] - Specific operation ID
+ * @param {function} callback - Callback function (data, success)
+ */
+ModulesAPI.getOperationStatus = function(params, callback) {
+    const requestData = {};
+    if (params.operationId) {
+        requestData.operationId = params.operationId;
+    }
+    this.callCustomMethod('getOperationStatus', requestData, (response, success) => {
+        if (success && response.data) {
+            callback(response.data, true);
+        } else {
+            callback(response, false);
+        }
+    }, 'GET', params.uniqid);
 };
 
 // Export for use in other modules

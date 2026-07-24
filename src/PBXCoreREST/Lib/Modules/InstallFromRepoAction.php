@@ -21,10 +21,12 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Models\ModuleOperations;
 use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\Modules\Journal\OperationJournal;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
@@ -65,6 +67,15 @@ class InstallFromRepoAction extends ModuleInstallationBase
      */
     public function start(): void
     {
+        // Journal dual-write: the Stage_VII push in finally finalizes the row
+        $this->setJournalContext(OperationJournal::begin(
+            $this->moduleUniqueId,
+            ModuleOperations::OPERATION_INSTALL_REPO,
+            ['releaseId' => $this->moduleReleaseId],
+            $this->asyncChannelId,
+            $this->batchId
+        ));
+
         // Calculate total mutex timeout and extra 5 seconds to prevent installing the same module in the second thread
         $mutexTimeout = self::INSTALLATION_TIMEOUT + self::DOWNLOAD_TIMEOUT + 5;
 
