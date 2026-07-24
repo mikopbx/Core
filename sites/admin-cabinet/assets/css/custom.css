@@ -713,3 +713,24 @@ a.ui.button.pbx-extensions-settings {
     opacity: 1;
 }
 
+/* Module state-change in progress: while pbx-extension-module-status.js keeps
+   the toggle in the Fomantic indeterminate state, the knob parks mid-lane on
+   an amber track and spins like a loader ring until the operation reaches a
+   terminal state. Fomantic itself has no visual for indeterminate toggles. */
+.ui.toggle.checkbox input:indeterminate ~ label::before {
+    background-color: rgba(251, 189, 8, 0.45) !important;
+}
+
+.ui.toggle.checkbox input:indeterminate ~ label::after {
+    left: 1.05rem !important;
+    box-sizing: border-box;
+    border: 0.18em solid rgba(0, 0, 0, 0.1);
+    border-top-color: rgba(0, 0, 0, 0.45);
+    animation: toggle-knob-spin 0.7s linear infinite;
+}
+
+@keyframes toggle-knob-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+

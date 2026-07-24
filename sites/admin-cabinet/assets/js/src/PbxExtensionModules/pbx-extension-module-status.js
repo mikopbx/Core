@@ -40,7 +40,7 @@ class PbxExtensionStatus {
         this.$toggle = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`);
         this.$toggleSegment = $('#module-status-toggle-segment');
         this.$allToggles = $(`.ui.toggle.checkbox`);
-        this.$statusIcon = $(`tr#${uniqid} i.status-icon`);
+        this.$statusIcon = $(`tr[data-id="${uniqid}"] i.status-icon`);
         this.$toggleSegment.show();
         if (changeLabel) {
             this.$label = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`).find('label');
@@ -48,7 +48,7 @@ class PbxExtensionStatus {
             this.$label = false;
         }
         this.uniqid = uniqid;
-        this.$disabilityFields = $(`tr#${uniqid} .disability`);
+        this.$disabilityFields = $(`tr[data-id="${uniqid}"] .disability`);
         const cbOnChecked = $.proxy(this.cbOnChecked, this);
         const cbOnUnchecked = $.proxy(this.cbOnUnchecked, this);
         this.$toggle.checkbox({
@@ -80,13 +80,23 @@ class PbxExtensionStatus {
     }
 
     /**
-     * Callback function when the module is checked.
+     * Freezes the UI for the duration of a state change: the toggle parks
+     * mid-lane in the Fomantic indeterminate state (custom.css renders the
+     * knob as a spinner ring) and the surrounding controls are locked.
      */
-    cbOnChecked() {
+    freezeToggle() {
+        this.$toggle.checkbox('set indeterminate');
         this.$statusIcon.addClass('spinner loading icon');
         this.$allToggles.addClass('disabled');
         $('a.button').addClass('disabled');
         this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
+    }
+
+    /**
+     * Callback function when the module is checked.
+     */
+    cbOnChecked() {
+        this.freezeToggle();
         const params = {
             uniqid: this.uniqid,
             channelId: this.channelId,
@@ -101,10 +111,7 @@ class PbxExtensionStatus {
      * Callback function when the module is unchecked.
      */
     cbOnUnchecked() {
-        this.$statusIcon.addClass('spinner loading icon');
-        this.$allToggles.addClass('disabled');
-        $('a.button').addClass('disabled');
-        this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
+        this.freezeToggle();
         const params = {
             uniqid: this.uniqid,
             channelId: this.channelId,
@@ -182,6 +189,7 @@ class PbxExtensionStatus {
      * @param {boolean} enableFailed - true when a failed enable should revert to unchecked.
      */
     unfreezeToggle(enableFailed) {
+        this.$toggle.checkbox('set determinate');
         if (enableFailed) {
             this.$toggle.checkbox('set unchecked');
             this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
@@ -201,6 +209,7 @@ class PbxExtensionStatus {
      * @param {object} response - The response from the server.
      */
     cbAfterModuleDisable(response) {
+        this.$toggle.checkbox('set determinate');
         if (response.result) {
             // Update UI to show module is disabled
             this.$toggle.checkbox('set unchecked');
@@ -239,6 +248,7 @@ class PbxExtensionStatus {
      * @param {object} response - The response from the server.
      */
     cbAfterModuleEnable(response) {
+        this.$toggle.checkbox('set determinate');
         if (response.result) {
             $('.ui.message.ajax').remove();
             // Update UI to show module is enabled
