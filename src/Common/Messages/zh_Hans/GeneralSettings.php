@@ -1035,6 +1035,7 @@ return [
     'gs_InvalidKeyFormat' => '无效的 SSH 密钥格式',
     'gs_KeyAlreadyExists' => '此SSH密钥已存在。',
     'api_UnknownAction' => '未知操作',
+    'api_ProviderNotFound' => '未找到提供商',
     'gs_Cancel' => '取消',
     'gs_ARIEnabledTooltip_usage' => '用途',
     'gs_ARIEnabledTooltip_usage_webrtc' => '创建 WebRTC 应用程序和软电话',

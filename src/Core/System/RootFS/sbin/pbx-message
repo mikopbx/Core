@@ -23,7 +23,7 @@
 #   -t TYPE     Message type: info, error, start, result, done, fail, skip
 #   -s          Log to syslog
 #   -n          No newline at end
-#   -p PREFIX   Prefix for message (default: " - ")
+#   -p PREFIX   Prefix for message (default: "  - ")
 #   -l LEVEL    Syslog level (default: info)
 #   -i IDENT    Syslog identifier (default: pbx-message)
 
@@ -31,7 +31,7 @@
 MESSAGE_TYPE="info"
 LOG_TO_SYSLOG=""
 NO_NEWLINE=""
-PREFIX=" - "
+PREFIX="  - "
 SYSLOG_LEVEL="info"
 SYSLOG_IDENT="pbx-message"
 MESSAGE=""
@@ -118,7 +118,7 @@ get_serial_ports() {
 
     # Skip serial port detection in Docker (runtime manages output)
     if is_docker; then
-        echo "" > "$SERIAL_CACHE"
+        { echo "" > "$SERIAL_CACHE"; } 2>/dev/null || true
         return
     fi
 
@@ -126,26 +126,37 @@ get_serial_ports() {
     # Writing to /dev/tty1 separately would cause duplicate output
     # So for LXC we return empty - stdout handles console output
     if is_lxc; then
-        echo "" > "$SERIAL_CACHE"
+        { echo "" > "$SERIAL_CACHE"; } 2>/dev/null || true
         return
     fi
 
-    # Bare-metal: find available serial ports without using setserial
-    # Scan both x86 (ttyS) and ARM (ttyAMA) serial ports
+    # Bare-metal: find available serial ports without opening them for write.
+    # Phantom ttyS devices can be writable but fail or block on write/open.
     SERIAL_PORTS=""
-    for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
-               /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
-        # Simply check if device exists and is writable
-        if [ -c "$DEV" ] && [ -w "$DEV" ]; then
-            # Write actual data to verify the port is functional (empty writes always succeed)
-            if printf '\0' > "$DEV" 2>/dev/null; then
-                SERIAL_PORTS="$SERIAL_PORTS $DEV"
-            fi
+    SETSERIAL="setserial"
+    command -v setserial >/dev/null 2>&1 || SETSERIAL="busybox setserial"
+    for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5; do
+        [ -c "$DEV" ] || continue
+        serialInfo=$($SETSERIAL -g "$DEV" 2>/dev/null)
+        [ -z "$serialInfo" ] && continue
+        case "$serialInfo" in
+            *unknown*) continue ;;
+        esac
+        SERIAL_PORTS="$SERIAL_PORTS $DEV"
+    done
+
+    for DEV in /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
+        [ -c "$DEV" ] || continue
+        [ -e "/sys/class/tty/${DEV#/dev/}/device" ] || continue
+        if [ -z "$SERIAL_PORTS" ]; then
+            SERIAL_PORTS="$DEV"
+        else
+            SERIAL_PORTS="$SERIAL_PORTS $DEV"
         fi
     done
 
     # Cache the results
-    echo "$SERIAL_PORTS" > "$SERIAL_CACHE"
+    { echo "$SERIAL_PORTS" > "$SERIAL_CACHE"; } 2>/dev/null || true
     echo "$SERIAL_PORTS"
 }
 
@@ -155,9 +166,9 @@ output_console() {
     local newline="$2"
     
     if [ "$newline" = "1" ]; then
-        echo "$msg"
+        echo "$msg" 2>/dev/null || true
     else
-        echo -n "$msg"
+        echo -n "$msg" 2>/dev/null || true
     fi
 }
 
@@ -186,9 +197,9 @@ output_serial() {
     for port in $SERIAL_PORTS; do
         [ "$port" = "$skip_port" ] && continue
         if [ "$newline" = "1" ]; then
-            echo "$clean_msg" >> "$port" 2>/dev/null
+            { echo "$clean_msg" >> "$port"; } 2>/dev/null || true
         else
-            echo -n "$clean_msg" >> "$port" 2>/dev/null
+            { echo -n "$clean_msg" >> "$port"; } 2>/dev/null || true
         fi
     done
 }

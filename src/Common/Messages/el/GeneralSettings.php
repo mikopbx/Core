@@ -92,6 +92,7 @@ return [
     // Password strength and validation keys moved to Passwords.php - use psw_ prefix instead
     'gs_InvalidPasswordsFormat' => 'Μη έγκυρη μορφή κωδικών',
     'api_UnknownAction' => 'Άγνωστη ενέργεια',
+    'api_ProviderNotFound' => 'Ο πάροχος δε βρέθηκε',
     'gs_WebPort' => 'Πόρτα HTTP',
     'gs_WebHTTPSPort' => 'Πόρτα HTTPS',
     'gs_WEBHTTPSPrivateKey' => 'Ιδιωτικό κλειδί HTTPS',

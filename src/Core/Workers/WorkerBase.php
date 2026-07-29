@@ -239,7 +239,7 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
             // Set up basic environment
             $this->setResourceLimits();
             $this->initializeSignalHandlers();
-            register_shutdown_function([$this, 'shutdownHandler']);
+            register_shutdown_function($this->shutdownHandler(...));
 
             // Save PID and update status
             $this->savePidFile();
@@ -447,7 +447,7 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
 
         pcntl_async_signals(true);
         foreach (self::MANAGED_SIGNALS as $signal) {
-            pcntl_signal($signal, [$this, 'signalHandler'], true);
+            pcntl_signal($signal, $this->signalHandler(...), true);
         }
     }
 
@@ -994,9 +994,15 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
             $redis = $di->getShared(RedisClientProvider::SERVICE_NAME);
             $key = self::REDIS_CRASH_KEY_PREFIX . $moduleId;
 
-            // Increment crash counter; EXPIRE resets the 30-minute window on each crash
-            $redis->incr($key);
-            $redis->expire($key, 1800);
+            // Increment crash counter; EXPIRE resets the 30-minute window on each crash.
+            // INCR + EXPIRE are combined into a single atomic Lua script so a process
+            // death between the two commands cannot leave the counter without a TTL —
+            // which would let a long-recovered module be auto-disabled later.
+            $redis->eval(
+                'local c = redis.call("INCR", KEYS[1]); redis.call("EXPIRE", KEYS[1], ARGV[1]); return c',
+                [$key, 1800],
+                1
+            );
 
             // Store last error message for diagnostics (separate key, same TTL)
             $msgKey = $key . ':last_error';
@@ -1038,8 +1044,13 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
             $redis = $di->getShared(RedisClientProvider::SERVICE_NAME);
             $key = self::REDIS_CORE_CRASH_KEY_PREFIX . $workerClassName;
 
-            $redis->incr($key);
-            $redis->expire($key, 1800);
+            // INCR + EXPIRE in a single atomic Lua script: a process death between the
+            // two commands cannot leave the counter without a TTL (see recordModuleCrash).
+            $redis->eval(
+                'local c = redis.call("INCR", KEYS[1]); redis.call("EXPIRE", KEYS[1], ARGV[1]); return c',
+                [$key, 1800],
+                1
+            );
 
             $msgKey = $key . ':last_error';
             $redis->set($msgKey, mb_substr($errorMessage, 0, 500), ['ex' => 1800]);

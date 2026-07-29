@@ -105,6 +105,7 @@ class WorkerLogRotate extends WorkerBase
     daily
     missingok
     notifempty
+    copytruncate
     compress
     delaycompress
     compresscmd /bin/gzip

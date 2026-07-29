@@ -28,8 +28,6 @@ use MikoPBX\Core\System\Configs;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\Core\Utilities\SubnetCalculator;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
-use MikoPBX\Core\Workers\WorkerModelsEvents;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
@@ -42,7 +40,11 @@ use Phalcon\Di\Injectable;
 class DockerNetworkFilterService extends Injectable
 {
     private const string ASTERISK_ACL_FILE = '/etc/asterisk/network_filters_deny_acl.conf';
-    
+    // AMI deny rules — inlined into manager.conf by ManagerConf and included here for cleanup.
+    private const string MANAGER_ACL_FILE = '/etc/asterisk/manager_network_filters_deny.conf';
+    // IAX deny rules — included by iax.conf via #tryinclude.
+    private const string IAX_ACL_FILE = '/etc/asterisk/network_filters_deny_iax_acl.conf';
+
     // Redis key prefixes and categories
     private const string REDIS_PREFIX = 'firewall:';
     private const string CATEGORY_HTTP = 'http';
@@ -261,13 +263,14 @@ class DockerNetworkFilterService extends Injectable
         // Check if firewall is enabled
         $firewallEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
         if ($firewallEnabled !== '1') {
-            // Remove ACL file if firewall is disabled
-            if (file_exists(self::ASTERISK_ACL_FILE)) {
-                unlink(self::ASTERISK_ACL_FILE);
-            }
-            $managerDenyFile = dirname(self::ASTERISK_ACL_FILE) . '/manager_network_filters_deny.conf';
-            if (file_exists($managerDenyFile)) {
-                unlink($managerDenyFile);
+            // Remove every deny file when the firewall is disabled. Leaving any of them
+            // behind keeps the corresponding protocol blocked (SIP via acl.conf, AMI via
+            // manager.conf, IAX via iax.conf #tryinclude) after the firewall is off —
+            // GitHub #1080.
+            foreach ([self::ASTERISK_ACL_FILE, self::MANAGER_ACL_FILE, self::IAX_ACL_FILE] as $denyFile) {
+                if (file_exists($denyFile)) {
+                    unlink($denyFile);
+                }
             }
             return;
         }
@@ -284,8 +287,13 @@ class DockerNetworkFilterService extends Injectable
         $content .= "permit=127.0.0.1/255.255.255.255\n";
         $content .= "permit=::1\n\n";
         
-        // Get deny list from database for SIP and AMI categories
-        $denyList = self::getNetworkFiltersDenyList(['SIP', 'AMI']);
+        // Get deny list from database for the SIP category only.
+        // AMI has its own deny file (manager_network_filters_deny.conf, generated
+        // below) and its own ACL. Mixing AMI blocks into this SIP ACL rejected SIP
+        // registration from hosts that were merely blocked for AMI — a very common
+        // config after restoring pre-2026 backups, where any unchecked category was
+        // stored as action='block' (GitHub #1080).
+        $denyList = self::getNetworkFiltersDenyList(['SIP']);
         
         if (!empty($denyList)) {
             $content .= "; Deny rules from database\n";
@@ -341,8 +349,7 @@ class DockerNetworkFilterService extends Injectable
             }
         }
         
-        $managerDenyFile = $dir . '/manager_network_filters_deny.conf';
-        file_put_contents($managerDenyFile, $managerContent);
+        file_put_contents(self::MANAGER_ACL_FILE, $managerContent);
         
         // Also generate deny rules for iax.conf
         $iaxContent = "; NetworkFilters deny rules for iax.conf - DO NOT EDIT MANUALLY\n";
@@ -377,8 +384,7 @@ class DockerNetworkFilterService extends Injectable
             $iaxContent .= "; No deny rules configured\n";
         }
         
-        $iaxDenyFile = $dir . '/network_filters_deny_iax_acl.conf';
-        file_put_contents($iaxDenyFile, $iaxContent);
+        file_put_contents(self::IAX_ACL_FILE, $iaxContent);
     }
     
     
@@ -410,13 +416,64 @@ class DockerNetworkFilterService extends Injectable
         
         // Generate unified fail2ban ACL for all protocols
         Configs\Fail2BanConf::generateUnifiedFail2BanAcl();
-        
-        if (!System::isBooting()) {
-            // Reload Asterisk PJSIP to apply new ACL rules
-            WorkerModelsEvents::invokeAction(ReloadPJSIPAction::class);
-        }
+
+        // No PJSIP reload is triggered here on purpose. Both callers already cover it:
+        //  - boot (SystemLoader) brings Asterisk up fresh afterwards;
+        //  - a NetworkFilters change queues ReloadDockerNetworkFiltersAction alongside
+        //    ReloadPJSIPAction in the SAME reload pass (ProcessOtherModels dependency table),
+        //    and ReloadPJSIPAction regenerates the ACL and reloads.
+        // Re-invoking ReloadPJSIPAction from here would enqueue a second, redundant reload.
     }
     
+    /**
+     * Delete every Redis key matching a pattern, compensating for the client key prefix.
+     *
+     * phpredis KEYS returns fully-prefixed keys (see {@see RedisClientProvider::CACHE_PREFIX}),
+     * whereas del() re-applies that prefix. Passing the raw KEYS result straight to del()
+     * therefore double-prefixes the key and deletes nothing, leaving stale firewall:* bans
+     * behind on every re-sync. Stripping the prefix first mirrors what getBlockedIps() already
+     * does on read.
+     *
+     * @param mixed  $redis   Redis client from RedisClientProvider
+     * @param string $pattern Key pattern without the client prefix (e.g. "firewall:http:*")
+     * @return void
+     */
+    private static function deleteRedisKeysByPattern($redis, string $pattern): void
+    {
+        $keys = $redis->keys($pattern);
+        if (!is_array($keys)) {
+            return;
+        }
+        foreach ($keys as $key) {
+            $redis->del(str_replace(RedisClientProvider::CACHE_PREFIX, '', (string)$key));
+        }
+    }
+
+    /**
+     * Reduce a single-host NetworkFilters entry to the bare IP the nginx blacklist expects.
+     *
+     * The nginx blacklist (unified-security.lua check_blacklist) matches HTTP bans with an exact
+     * Redis-key lookup on the bare client IP — it performs no CIDR arithmetic. A single host stored
+     * with its mask ("203.0.113.5/32", "2001:db8::1/128") would never match, so the mask is stripped
+     * for true single hosts. Genuine ranges are returned unchanged; the blacklist cannot match ranges
+     * regardless, which is a separate, pre-existing limitation of the lua exact-match design.
+     *
+     * @param string $ip IP address or CIDR from NetworkFilters
+     * @return string Bare IP for single hosts, original value otherwise
+     */
+    private static function normalizeDenyKeyHost(string $ip): string
+    {
+        if (strpos($ip, '/') === false) {
+            return $ip;
+        }
+        [$addr, $mask] = explode('/', $ip, 2);
+        $isIpv6 = filter_var($addr, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
+        if (($isIpv6 && $mask === '128') || (!$isIpv6 && $mask === '32')) {
+            return $addr;
+        }
+        return $ip;
+    }
+
     /**
      * Sync NetworkFilters deny rules to Redis
      *
@@ -446,15 +503,17 @@ class DockerNetworkFilterService extends Injectable
                 $denyList = self::getNetworkFiltersDenyList([$dbCategory]);
                 
                 // Clear existing entries for this category
-                $pattern = self::REDIS_PREFIX . $redisCategory . ':*';
-                $keys = $redis->keys($pattern);
-                foreach ($keys as $key) {
-                    $redis->del($key);
-                }
-                
-                // Add new entries
+                self::deleteRedisKeysByPattern($redis, self::REDIS_PREFIX . $redisCategory . ':*');
+
+                // Add new entries. Only the HTTP category is normalised to a bare IP: the nginx
+                // blacklist (unified-security.lua check_blacklist) does an exact-match lookup on the
+                // bare client IP, so a masked single-host key would never match. The other categories
+                // keep their DB form on purpose — normalising them too would collide single-host denies
+                // with fail2ban's TTL-bearing addBlockedIp() keys for the same IP (same key, last write
+                // wins the expiry), and nothing consumes those categories via exact match anyway.
                 foreach ($denyList as $ip) {
-                    $key = self::REDIS_PREFIX . $redisCategory . ':' . $ip;
+                    $host = $redisCategory === self::CATEGORY_HTTP ? self::normalizeDenyKeyHost($ip) : $ip;
+                    $key  = self::REDIS_PREFIX . $redisCategory . ':' . $host;
                     $redis->set($key, '1');
                 }
                 
@@ -485,12 +544,8 @@ class DockerNetworkFilterService extends Injectable
             $permitList = self::getNetworkFiltersPermitList(['WEB']);
             
             // Clear existing permit entries for HTTP
-            $pattern = self::REDIS_PREFIX . 'permit:http:*';
-            $keys = $redis->keys($pattern);
-            foreach ($keys as $key) {
-                $redis->del($key);
-            }
-            
+            self::deleteRedisKeysByPattern($redis, self::REDIS_PREFIX . 'permit:http:*');
+
             // Add new permit entries
             foreach ($permitList as $network) {
                 $key = self::REDIS_PREFIX . 'permit:http:' . $network;

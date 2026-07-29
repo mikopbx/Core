@@ -894,20 +894,8 @@ class Fail2BanConf extends SystemConfigClass
         // Log the ban
         SystemMessages::sysLogMsg('fail2ban-asterisk', "Banned IP: $ip", LOG_WARNING);
 
-        // Regenerate ACL files from current Redis state
-        self::generateUnifiedFail2BanAcl();
-        DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
-
-        // Reload only the ACL-related modules — no need to regenerate pjsip.conf/iax.conf.
-        // PJSIP: global 'type = acl' sections in pjsip.conf reference named ACLs from acl.conf,
-        //   which includes fail2ban_sip_acl.conf via #tryinclude. Reloading the acl module
-        //   re-reads the named ACL and res_pjsip_acl picks up changes via stasis subscription.
-        // IAX: iax.conf includes fail2ban_iax_deny.conf via #tryinclude, reloaded by chan_iax2.
-        // Manager: uses inline deny= rules read at config generation time, needs full regeneration.
-        self::reloadAsteriskAclModules();
-
-        // Manager requires config regeneration because deny rules are inlined in manager.conf
-        WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
+        // Regenerate the ACL files from current Redis/DB state and reload consumers
+        self::regenerateAsteriskAclsAndReload();
     }
 
     /**
@@ -926,14 +914,49 @@ class Fail2BanConf extends SystemConfigClass
         // Log the unban
         SystemMessages::sysLogMsg('fail2ban-asterisk', "Unbanned IP: $ip", LOG_INFO);
 
-        // Regenerate ACL files from current Redis state
+        // Regenerate the ACL files from current Redis/DB state and reload consumers
+        self::regenerateAsteriskAclsAndReload();
+    }
+
+    /**
+     * Regenerate every no-iptables Asterisk ACL file from the current DB/Redis state
+     * and reload the Asterisk modules that consume them, without a full pjsip reload.
+     *
+     * Applies to Docker and LXC-without-CAP_NET_ADMIN, where blocking is enforced through
+     * Asterisk ACLs instead of netfilter. Covers fail2ban dynamic bans (fail2ban_*_acl.conf)
+     * and static NetworkFilters deny rules (network_filters_deny_*.conf). Each generator
+     * deletes its files when the corresponding feature is disabled, so this both applies
+     * and lifts blocks depending on the current PBX_FIREWALL_ENABLED / PBX_FAIL2BAN_ENABLED
+     * settings — which is what makes toggling the firewall/fail2ban take effect at runtime
+     * (GitHub #1080).
+     *
+     * Deliberately uses 'module reload acl' + 'iax2 reload' (see reloadAsteriskAclModules)
+     * instead of SIPConf::reload(): res_pjsip_acl re-reads the named ACLs on an acl reload,
+     * so there is no need to regenerate pjsip.conf and — crucially — no risk of escalating
+     * to a full Asterisk restart that would hang up active calls.
+     *
+     * The reload is unconditional: the fail2ban ban/unban callers run at runtime and must
+     * apply immediately. Callers that may fire before Asterisk is up (e.g. the settings
+     * ReloadFirewallAclAction during boot) guard the call with System::isBooting() themselves.
+     *
+     * @return void
+     */
+    public static function regenerateAsteriskAclsAndReload(): void
+    {
+        // iptables environments block via netfilter, not ACL files — nothing to do.
+        if (System::canManageFirewall()) {
+            return;
+        }
+
+        // Regenerate (or delete, when the feature is off) the ACL files from current state.
         self::generateUnifiedFail2BanAcl();
         DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
 
-        // Reload only ACL-related modules (see banIpAsterisk for rationale)
+        // Re-read the named ACLs / IAX include without touching pjsip.conf (restart-safe).
         self::reloadAsteriskAclModules();
 
-        // Manager requires config regeneration (inline deny rules)
+        // manager.conf inlines the AMI deny rules (not #tryinclude'd), so it needs a full
+        // regeneration to pick up the change.
         WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
     }
 

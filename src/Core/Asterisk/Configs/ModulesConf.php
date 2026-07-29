@@ -218,6 +218,18 @@ class ModulesConf extends AsteriskConfigClass
             static fn(string $module): bool => file_exists("$astModDir/$module")
         );
 
+        // PJSIP DNS resolver backend (libunbound): non-blocking, SRV/NAPTR-
+        // aware, TTL-cached lookups via /etc/resolv.conf (the local dnsmasq
+        // cache on 127.0.0.1 is queried first — see DnsConf). Without it PJSIP
+        // falls back to pjproject's blocking getaddrinfo() path: A/AAAA only,
+        // no SRV, re-resolved on every OPTIONS qualify / outbound INVITE (#1078).
+        // In Asterisk 22 the PJSIP<->DNS bridge is in the core (ast_dns_*); the
+        // standalone res_pjsip_resolver.so was merged away in 13.x, so only the
+        // unbound backend is loaded. Appended after the file_exists() filter
+        // intentionally — on a build without libunbound the module is absent and
+        // Asterisk logs a load error then continues on getaddrinfo.
+        $modules[] = 'res_resolver_unbound.so';
+
         foreach ($modules as $value) {
             $conf .= "load => $value\n";
         }

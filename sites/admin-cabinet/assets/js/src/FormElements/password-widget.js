@@ -695,22 +695,40 @@ const PasswordWidget = {
         const localScore = this.scorePasswordLocal(password);
         this.updateProgressBar(instance, localScore);
 
+        // Build a local-scoring result used when server validation is unavailable.
+        // messages carries a generic weak-password hint when the local score is below
+        // the minimum, so HARD validation still shows an actionable prompt instead of a
+        // bare "Invalid password" (the per-rule server guidance cannot be reproduced
+        // client-side, but a weak-password notice is better than nothing).
+        const localResult = {
+            score: localScore,
+            isValid: localScore >= options.minScore,
+            strength: this.getStrengthLabel(localScore),
+            messages: localScore >= options.minScore
+                ? []
+                : [globalTranslate.psw_WeakPassword]
+        };
+
         // Use API if available
         if (typeof PasswordsAPI !== 'undefined') {
             PasswordsAPI.validatePassword(password, instance.fieldId, (result) => {
-                if (result) {
-                    this.handleValidationResult(instance, result);
+                // Only act while the field still holds the same password — a late
+                // response for a stale value must not overwrite current state.
+                if (instance.$field.val() !== password) {
+                    return;
                 }
+                // Prefer the authoritative server verdict (it includes the dictionary
+                // check). On ANY failure — a 403 for a restricted ModuleUsersUI role, or
+                // a transient 5xx/network error — fall back to local scoring. This is
+                // important: state.score MUST reflect the password currently in the
+                // field. Leaving the previous server verdict in place would let a strong
+                // password's stale high score pass the submit gate after the user edits
+                // it down to a weak one and the re-validation request fails.
+                this.handleValidationResult(instance, result || localResult);
             });
         } else {
-            // Use local validation
-            const result = {
-                score: localScore,
-                isValid: localScore >= options.minScore,
-                strength: this.getStrengthLabel(localScore),
-                messages: []
-            };
-            this.handleValidationResult(instance, result);
+            // PasswordsAPI not loaded at all — local scoring is the only option.
+            this.handleValidationResult(instance, localResult);
         }
     },
     
@@ -832,7 +850,12 @@ const PasswordWidget = {
         // Always clear warnings first to ensure clean state
         this.hideWarnings(instance);
 
-        // Update state
+        // Update state.
+        // A high score rescues isValid: the extension submit gate (and the widget's own
+        // HARD rule) judge strength by score, so a password the server flags (e.g. a
+        // dictionary hit) but that still scores >= minScore is treated as acceptable.
+        // This keeps the warning/validity in step with the score-based submit gate —
+        // showing a blocking error the form then ignores would only confuse the user.
         instance.state = {
             isValid: result.isValid || result.score >= options.minScore,
             score: result.score,
@@ -867,6 +890,31 @@ const PasswordWidget = {
     },
     
     /**
+     * Generate a password locally (fallback when the API is unavailable or fails).
+     * @param {object} options - Widget options (generateLength, includeSpecial)
+     * @returns {string} Generated password
+     */
+    generateLocalPassword(options) {
+        let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        if (options.includeSpecial) {
+            chars += '!@#$%^&*';
+        }
+
+        // Use the cryptographically secure RNG: this fallback produces real account
+        // credentials (SIP/AMI/SSH) when the server generator is unreachable, so
+        // Math.random() — predictable and not crypto-grade — must not be used.
+        const length = options.generateLength;
+        const randomValues = new Uint32Array(length);
+        window.crypto.getRandomValues(randomValues);
+
+        let password = '';
+        for (let i = 0; i < length; i++) {
+            password += chars.charAt(randomValues[i] % chars.length);
+        }
+        return password;
+    },
+
+    /**
      * Generate password
      * @param {object} instance - Widget instance
      */
@@ -880,7 +928,14 @@ const PasswordWidget = {
 
         // Generate password
         const generateCallback = (result) => {
-            const password = typeof result === 'string' ? result : result.password;
+            let password = typeof result === 'string' ? result : (result && result.password);
+
+            // If the API call failed (result is false/empty), fall back to local
+            // generation so the button always yields a usable password instead of
+            // silently blanking the field with `undefined`.
+            if (!password) {
+                password = this.generateLocalPassword(options);
+            }
 
             // Set password
             this.setGeneratedPassword(instance, password);
@@ -900,16 +955,7 @@ const PasswordWidget = {
         if (typeof PasswordsAPI !== 'undefined') {
             PasswordsAPI.generatePassword(options.generateLength, generateCallback);
         } else {
-            // Simple local generator with configurable special characters
-            let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            if (options.includeSpecial) {
-                chars += '!@#$%^&*';
-            }
-            let password = '';
-            for (let i = 0; i < options.generateLength; i++) {
-                password += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            generateCallback(password);
+            generateCallback(this.generateLocalPassword(options));
         }
     },
     

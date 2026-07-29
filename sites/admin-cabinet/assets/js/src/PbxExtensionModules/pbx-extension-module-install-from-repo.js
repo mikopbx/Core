@@ -235,7 +235,7 @@ const installationFromRepo = {
         };
 
         $(`#modal-${params.uniqid}`).modal('hide');
-        const $moduleButtons = $(`a[data-uniqid=${params.uniqid}`);
+        const $moduleButtons = $(`a[data-uniqid=${params.uniqid}]`);
 
         $moduleButtons.removeClass('disabled');
         $moduleButtons.find('i')
@@ -246,12 +246,18 @@ const installationFromRepo = {
         $('tr.table-error-messages').remove();
         $('tr.error').removeClass('error');
 
+        installStatusLoopWorker.startWatch(params.uniqid);
         ModulesAPI.installFromRepo(params, (response) => {
             console.debug(response);
             if (response.result === true) {
                 $('html, body').animate({
                     scrollTop: installationFromRepo.$progressBarBlock.offset().top - 50,
                 }, 2000);
+            } else {
+                // Command rejected outright — no point waiting for the watchdog
+                installStatusLoopWorker.watchdog.stop();
+                installStatusLoopWorker.resetButtonView($moduleButtons.closest('tr'));
+                UserMessage.showMultiString(response.messages, globalTranslate.ext_InstallationError);
             }
         });
     },

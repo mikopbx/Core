@@ -27,6 +27,15 @@ if [ -z "$PID" ] || ! kill -0 "$PID" 2>/dev/null; then
     exit 0
 fi
 
-# Check if Asterisk CLI responds within 5 seconds
-timeout 5 /usr/sbin/asterisk -rx 'core waitfullybooted' > /dev/null 2>&1
+# Stage 1: verify the CLI socket responds and Asterisk finished booting.
+if ! timeout 5 /usr/sbin/asterisk -rx 'core waitfullybooted' > /dev/null 2>&1; then
+    exit 1
+fi
+
+# Stage 2: deep probe. 'core show hints' acquires the contexts lock (conlock) —
+# the same lock held by 'dialplan reload' / 'module reload pbx_lua.so'. A stuck
+# reload (the #1076 deadlock: empty hints, frozen PJSIP/AMI) blocks this command,
+# whereas the shallow 'core waitfullybooted' returns instantly post-boot and
+# misses the deadlock. A timeout here => unhealthy => monit restarts Asterisk.
+timeout 5 /usr/sbin/asterisk -rx 'core show hints' > /dev/null 2>&1
 exit $?

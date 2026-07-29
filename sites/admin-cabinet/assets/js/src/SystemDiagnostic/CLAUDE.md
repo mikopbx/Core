@@ -67,9 +67,10 @@ SystemDiagnostic/
 ├─────────────────────────────────────────────────────────────────────────┤
 │ GetLogFromFileAction   - Time filtering, pagination, latest            │
 │ LogTimestampParser     - Multi-format timestamp parsing                │
-│ StartCaptureAction     - Start tcpdump packet capture                  │
-│ StopCaptureAction      - Stop tcpdump packet capture                   │
-│ DownloadArchiveAction  - Pack and download capture archive             │
+│ StartLogAction         - Start tcpdump packet capture (START_CAPTURE)  │
+│ PrepareLogAction       - Stop capture (main(true), STOP_CAPTURE) /      │
+│                          prepare archive (main(false), PREPARE_ARCHIVE) │
+│ DownloadLogsArchiveAction - Download packed capture archive            │
 │ GetCaptureStatusAction - Server-side capture state management          │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -134,11 +135,17 @@ If `latest=false` were used when dragging the left handle leftward, the API read
 ```
 
 ## Babel Compilation
+
+Run from the repo root (`Core/`). The `core` target is required — it mirrors the
+source tree into the `pbx/` output directory (see babel-compiler skill).
 ```bash
-docker run --rm -v "$(pwd):/workspace" -w /app \
+docker run --rm -v "$(pwd):/workspace" \
   ghcr.io/mikopbx/babel-compiler:latest \
-  "/workspace/sites/admin-cabinet/assets/js/src/SystemDiagnostic/FILE.js"
+  "/workspace/sites/admin-cabinet/assets/js/src/SystemDiagnostic/FILE.js" \
+  core
 ```
+Compiled output lands at
+`sites/admin-cabinet/assets/js/pbx/SystemDiagnostic/FILE.js`.
 
 ## SVG Timeline Dynamic Elements
 
@@ -164,11 +171,3 @@ Handle drag → onRangeChange(start, end, 'left'|'right')
         → preserves visibleRange if extended beyond data
         → render()
 ```
-
-## Debugging
-Console logs available:
-- `[onTruncatedZoneClick]` - Truncated zone click params
-- `[loadLogByTimeRange]` - Request/response details
-- `[updateFromServerResponse]` - Timeline state updates
-- `[updateDynamicElements]` - noDataRight visibility checks
-- `[updateDataBoundary]` - actual data end boundary updates

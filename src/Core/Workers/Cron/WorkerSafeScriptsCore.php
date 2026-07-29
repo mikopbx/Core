@@ -53,6 +53,7 @@ use MikoPBX\Common\Models\StorageSettings;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\Modules\PbxExtensionState;
 use MikoPBX\Modules\PbxExtensionUtils;
+use MikoPBX\PBXCoreREST\Lib\Modules\Supervision\StaleOperationReaper;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use RuntimeException;
 use Throwable;
@@ -306,6 +307,16 @@ class WorkerSafeScriptsCore extends WorkerBase
      */
     private const int S3_CHECK_INTERVAL = 300; // 5 minutes
 
+    /**
+     * Interval between stale module-operation reaping passes.
+     */
+    private const int MODULE_OPERATIONS_REAP_INTERVAL_SEC = 15;
+
+    /**
+     * Timestamp of the last stale module-operation reaping pass.
+     */
+    private int $lastModuleOperationsReapTime = 0;
+
     // Redis handle inherited from WorkerBase::$redis (protected mixed, default null).
     // A local override here would break PHP 8.2+ property type covariance —
     // see hotfix for issue #1022 WorkerSafeScriptsCore::$redis regression.
@@ -417,6 +428,36 @@ class WorkerSafeScriptsCore extends WorkerBase
     private function updateLastCheckTime(string $workerClass): void
     {
         $this->lastCheckTimes[$workerClass] = time();
+    }
+
+    /**
+     * Returns true when the worker belongs to a module that is currently disabled.
+     *
+     * Core (MikoPBX\*) workers always return false — getModuleIdFromClassName()
+     * yields null for them. For module workers the current state is read through
+     * PbxExtensionUtils::isEnabled(), which is backed by the shared Redis cache
+     * (DB4); disableModule() invalidates that cache on save (afterSave →
+     * ModelsBase::clearCache(PbxExtensionModules)), so the supervisor observes
+     * the disabled state on its very next monitoring cycle.
+     *
+     * @param string $workerClass Fully-qualified worker class name.
+     * @return bool
+     */
+    private function isDisabledModuleWorker(string $workerClass): bool
+    {
+        $moduleId = self::getModuleIdFromClassName($workerClass);
+        if ($moduleId === null) {
+            return false;
+        }
+        try {
+            return !PbxExtensionUtils::isEnabled($moduleId);
+        } catch (Throwable $e) {
+            // A Redis/cache hiccup must not crash the supervisor's main loop
+            // (which is not wrapped in try/catch). Degrade to "enabled" so the
+            // worker is monitored normally — the worst case is one extra cycle
+            // before a disabled module's worker is reaped on the next pass.
+            return false;
+        }
     }
 
     /**
@@ -565,10 +606,24 @@ class WorkerSafeScriptsCore extends WorkerBase
             $arrWorkers[self::CHECK_BY_PID_NOT_ALERT][] = WorkerS3CacheCleaner::class;
         }
 
-        // Get the list of module workers.
-        $arrModulesWorkers = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GET_MODULE_WORKERS);
-        $arrModulesWorkers = array_values($arrModulesWorkers);
-        $arrModulesWorkers = array_merge(...$arrModulesWorkers);
+        // Get the list of module workers. A broken module hook must not break the
+        // whole worker list — otherwise one faulty module would drop ALL module
+        // workers (and the core list) from supervision. Degrade to no module
+        // workers on failure and keep supervising the core workers.
+        $arrModulesWorkers = [];
+        try {
+            $hookedWorkers = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GET_MODULE_WORKERS);
+            $hookedWorkers = array_values($hookedWorkers);
+            if (!empty($hookedWorkers)) {
+                $arrModulesWorkers = array_merge(...$hookedWorkers);
+            }
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                'Failed to collect module workers (GET_MODULE_WORKERS hook): ' . $e->getMessage(),
+                LOG_ERR
+            );
+        }
 
         // If there are module workers, add them to the workers' list.
         if (!empty($arrModulesWorkers)) {
@@ -637,12 +692,40 @@ class WorkerSafeScriptsCore extends WorkerBase
             // Periodic memory report (every 5 minutes)
             $this->logMemoryReport();
 
+            // Finalize module operations whose orchestrator died (heartbeat
+            // stale): fences the zombie out, kills its process group and
+            // unfreezes any browser still watching the operation.
+            $this->maybeReapModuleOperations();
+
             // Prepare the list of workers to be started.
             $arrWorkers = $this->prepareWorkersList();
 
             $tasks = [];
             foreach ($arrWorkers as $workerType => $workersWithCurrentType) {
                 foreach ($workersWithCurrentType as $worker) {
+                    // A module worker whose module was disabled must never be
+                    // monitored or respawned. The pbxConfModules provider is a
+                    // per-process shared singleton built at supervisor startup,
+                    // so prepareWorkersList() keeps listing a just-disabled
+                    // module's workers until this process restarts. Without this
+                    // guard the supervisor respawns the workers that
+                    // disableModule()'s killByName() just killed, leaving them as
+                    // orphans (PPID=1) once the supervisor finally restarts with
+                    // a fresh list — reproducibly so when several modules are
+                    // disabled in quick succession. Also reap any orphan still
+                    // running, so the supervisor self-heals regardless of cause.
+                    if ($this->isDisabledModuleWorker($worker)) {
+                        if (Processes::getPidOfProcess($worker) !== '') {
+                            Processes::killByName($worker);
+                            SystemMessages::sysLogMsg(
+                                __CLASS__,
+                                "Reaped orphaned worker of disabled module: {$worker}",
+                                LOG_WARNING
+                            );
+                        }
+                        continue;
+                    }
+
                     if ($this->shouldCheckWorker($worker)) {
                         $tasks[] = match($workerType) {
                             self::CHECK_BY_BEANSTALK => fn() => $this->checkWorkerBeanstalk($worker),
@@ -664,6 +747,23 @@ class WorkerSafeScriptsCore extends WorkerBase
 
             // Sleep for a short interval before next check
             sleep(5);
+        }
+    }
+
+    /**
+     * Runs the stale module-operation reaper, rate limited to one pass per
+     * MODULE_OPERATIONS_REAP_INTERVAL_SEC.
+     */
+    private function maybeReapModuleOperations(): void
+    {
+        if (time() - $this->lastModuleOperationsReapTime < self::MODULE_OPERATIONS_REAP_INTERVAL_SEC) {
+            return;
+        }
+        $this->lastModuleOperationsReapTime = time();
+        try {
+            (new StaleOperationReaper())->reap();
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(__CLASS__, 'Module operations reaping failed: ' . $e->getMessage(), LOG_ERR);
         }
     }
 
@@ -1001,14 +1101,21 @@ class WorkerSafeScriptsCore extends WorkerBase
                     "Module {$moduleId} disabled: {$reasonText}",
                     LOG_ERR
                 );
-                PbxExtensionUtils::forceDisableModule(
+                $disabled = PbxExtensionUtils::forceDisableModule(
                     $moduleId,
                     PbxExtensionState::DISABLED_BY_CRASH_LOOP,
                     $reasonText
                 );
 
-                // Clean up crash data after disabling
-                $this->redis->del([$key, $key . ':last_error']);
+                // Clean up crash data only when the module is confirmed disabled.
+                // If the disable could not be persisted (e.g. locked DB), keep the
+                // counters so the next tick retries instead of restarting the count
+                // from zero (which would let the crashing worker loop indefinitely).
+                if ($disabled) {
+                    $this->redis->del([$key, $key . ':last_error']);
+                }
+
+                // Either way, do not respawn the crashing worker in this cycle.
                 return true;
             }
         } catch (Throwable $e) {

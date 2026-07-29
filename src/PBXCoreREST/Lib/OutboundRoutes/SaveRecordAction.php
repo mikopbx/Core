@@ -174,8 +174,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
             // Special logic: Auto-assign priority if still empty or default
             // WHY: Priority should be unique and sequential
             if (empty($sanitizedData['priority']) || $sanitizedData['priority'] === 0) {
-                $maxPriority = OutgoingRoutingTable::maximum(['column' => 'priority']);
-                $sanitizedData['priority'] = ($maxPriority ?: 0) + 1;
+                // Numeric next priority: priority is TEXT, so MAX() compares
+                // lexicographically ("9" > "10") and would duplicate values (#1076).
+                $sanitizedData['priority'] = OutgoingRoutingTable::getNextPriority();
             }
         }
         // ❌ UPDATE/PATCH: Do NOT apply defaults (would overwrite existing values!)

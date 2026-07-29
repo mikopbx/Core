@@ -158,6 +158,25 @@ class SIPConf extends AsteriskConfigClass
     public const string CACHE_KEY_RESOLVED_PREFIX = 'pjsip:identify:resolved:';
 
     /**
+     * Cache key holding the canonical-IP signature that the LAST SUCCESSFUL
+     * config reload actually baked into pjsip.conf `endpoint.context` and the
+     * matching extensions.conf dialplan sections.
+     *
+     * WorkerSipDnsResolver compares the live signature ({@see self::computeResolvedCanonicalSignature()})
+     * against this marker on every tick and re-triggers the reload while they
+     * differ — a LEVEL trigger, not an edge one. Without it, the one tick that
+     * observed the empty→resolved transition (canonicalChanged) also had to be
+     * the tick that successfully applied it; if that reload bailed (dirty
+     * topology hash) or lost the mutex to a dialplan-only writer, the change was
+     * lost forever because the resolved cache was already warm and no later tick
+     * saw a diff (issue #1091). The marker is written by
+     * {@see \MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPIdentifyAction}
+     * only after the whole regenerate-and-reload succeeded. Lives on
+     * RedisClientProvider (DB1) alongside the resolved-IP records.
+     */
+    public const string CACHE_KEY_APPLIED_SIGNATURE = 'pjsip:identify:applied-signature';
+
+    /**
      * Resolved-IP records live 7 days. Long TTL is deliberate: it lets the
      * last known-good identify match= survive transient DNS outages spanning
      * reboots, while {@see \MikoPBX\Core\Workers\WorkerSipDnsResolver} refreshes
@@ -183,7 +202,10 @@ class SIPConf extends AsteriskConfigClass
      * and the topology hash at the same wall-clock moment, leaving Asterisk
      * to module-reload a half-flushed config. See code-review item Critical-1.
      */
-    public const string MUTEX_CONF_WRITE = 'pjsip-conf-write';
+    // Shared mutex serializing ALL Asterisk config reloads (pjsip 'core reload',
+    // dialplan reload, pjsip-identify) so they never overlap. The Redis key value
+    // is kept as the legacy 'pjsip-conf-write' string for lock-key stability.
+    public const string MUTEX_ASTERISK_RELOAD = 'pjsip-conf-write';
 
     /**
      * Provider → {ips: [], hostnames: []} map of admin-controlled additional
@@ -392,7 +414,15 @@ class SIPConf extends AsteriskConfigClass
 
         $contexts = [];
         $processedProviders = []; // Track processed providers for CallerID/DID contexts
-        
+        // Every incoming-context section name emitted in this pass — canonical
+        // sections AND #1091 hostname aliases. Threaded through the whole loop
+        // (not reset per group) so an alias can never collide with another alias
+        // from a different canonical group or with an already-emitted canonical
+        // name: buildIncomingContextName() strips punctuation, so distinct hosts
+        // like "sip.a.com" and "sip-a.com" sanitise to one id, and a duplicate
+        // [section] makes Asterisk res_config reject the ENTIRE extensions.conf.
+        $emittedContextNames = [];
+
         // Process incoming contexts.
         foreach ($this->data_providers as $provider) {
             $contextsData = $this->contexts_data[$provider['context_id']];
@@ -403,7 +433,8 @@ class SIPConf extends AsteriskConfigClass
                     ? $provider['username']
                     : $provider['uniqid'];
                 $conf .= IncomingContexts::generate($providerId, $provider['username'], $provider['uniqid']);
-                
+                $emittedContextNames[$providerId . '-incoming'] = true;
+
                 // Generate CallerID/DID processing context if configured
                 if ($this->needsCallerIdDidProcessing($provider) && !in_array($provider['uniqid'], $processedProviders, true)) {
                     // Use the same providerId as for main incoming context
@@ -415,19 +446,34 @@ class SIPConf extends AsteriskConfigClass
                 $context_id = str_replace('-incoming', '', $provider['context_id']);
                 $conf      .= IncomingContexts::generate($contextsData, '', $context_id);
                 $contexts[] = $provider['context_id'];
+                $emittedContextNames[$provider['context_id']] = true;
 
-                // Generate CallerID/DID processing contexts for all providers in this context
+                // Generate the CallerID/DID processing context for this shared incoming
+                // context. The cid-did subroutine is entered via Gosub(${CONTEXT}-cid-did,..)
+                // where CONTEXT is "{context_id}-incoming", so it must be named after
+                // $context_id (not a provider uniqid) to be reachable, and its redirect Goto
+                // must return to "{context_id}-incoming". A shared context therefore supports
+                // a single DID-parsing config: the first provider in the group that needs it.
                 foreach ($this->data_providers as $contextProvider) {
                     if ($contextProvider['context_id'] === $provider['context_id']
-                        && $this->needsCallerIdDidProcessing($contextProvider)
-                        && !in_array($contextProvider['uniqid'], $processedProviders, true)) {
-                        $processor = new CallerIdDidProcessor($contextProvider['uniqid'], $contextProvider);
+                        && $this->needsCallerIdDidProcessing($contextProvider)) {
+                        $processor = new CallerIdDidProcessor($context_id, $contextProvider);
                         $conf .= $processor->generateIncomingProcessingContext();
-                        $processedProviders[] = $contextProvider['uniqid'];
+                        break;
                     }
                 }
             }
         }
+
+        // Issue #1091: emit the hostname aliases AFTER every canonical section is
+        // generated and registered in $emittedContextNames. Aliases are only a
+        // safety net for a stranded pjsip.conf, so they must always YIELD to a
+        // real (canonical) section — deferring their emission guarantees an alias
+        // can never duplicate a canonical name emitted later in the loop (e.g. a
+        // still-cold punctuation-twin host), which would make Asterisk reject the
+        // whole extensions.conf. Only the shared/multi-provider context ids in
+        // $contexts can diverge from their hostname name and need an alias.
+        $conf .= $this->generateIncomingContextHostnameAliases($contexts, $emittedContextNames);
 
         $usersNumbers = [];
         $extensionsData = Extensions::find([ 'conditions' => 'userid <> "" and userid>0 ', 'columns' => 'userid,number']);
@@ -488,8 +534,87 @@ class SIPConf extends AsteriskConfigClass
         if (($provider['cid_did_debug'] ?? '0') === '1') {
             return true;
         }
-        
+
         return false;
+    }
+
+    /**
+     * Emit permanent alias contexts that forward the cold/hostname-derived
+     * incoming-context name(s) of every shared host to its canonical (resolved-IP)
+     * section — the issue #1091 safety net.
+     *
+     * Called ONCE after the whole provider loop, so $emittedContextNames already
+     * holds every canonical section name. For every provider belonging to a shared
+     * (multi-provider) context whose literal host yields a DIFFERENT cold name than
+     * its canonical one — and whose cold name is not already a real section — we emit:
+     *
+     *   [<rawHostnameContextId>]
+     *   exten => _.!,1,Goto(<canonicalContextId>,${EXTEN},1)
+     *   exten => _[hit],1,Hangup()
+     *
+     * Why an explicit Goto rather than `include => <canonicalContextId>`:
+     * Asterisk keeps the channel's context unchanged when an extension is
+     * matched through an include, so ${CONTEXT} inside the canonical section
+     * would resolve to the ALIAS name and its ${CONTEXT}-cid-did / ${CONTEXT}-custom
+     * / ${CONTEXT}-after-dial-custom GosubIf lookups (see IncomingContexts) would
+     * miss. Goto rewrites the channel context to the canonical id, so those
+     * subroutines stay reachable and CallerID/DID processing is preserved.
+     *
+     * `_.!` forwards ANY dialed extension — not just digit-leading DIDs: an
+     * incoming route number stored with a leading `+`, `*` or `#` (or any value
+     * the IncomingContexts prefix regex leaves as a literal) lives verbatim in
+     * the canonical section, and `_X!` would silently drop it here. The `_[hit]`
+     * literal intercepts the special h/i/t (hangup/invalid/timeout) extensions
+     * so they are never Goto-forwarded — the exact catch-all + guard idiom used
+     * throughout this codebase (InternalContexts, ExtensionsConf, ...). `s`
+     * deliberately falls through to `_.!` (a legitimate start extension is
+     * forwarded, not hung up); a character class ranks above `.` so `_[hit]`
+     * wins over `_.!` for h/i/t.
+     *
+     * De-duplicated against $emittedContextNames — the set of ALL context section
+     * names already written in this pass (every canonical section, then earlier
+     * aliases). buildIncomingContextName() strips punctuation, so two hosts that
+     * differ only by punctuation ("sip.a.com" vs "sip-a.com") but resolve to
+     * DIFFERENT IPs sanitise to one id. A duplicate `[section]` makes Asterisk
+     * res_config reject the entire extensions.conf (cf. the #1045 duplicate-object
+     * handling). Because this runs after all canonicals are registered, an alias
+     * never shadows a real section and alias-vs-alias collisions yield first-wins.
+     *
+     * @param array<int,string> $sharedContextIds Canonical context ids of the
+     *                                    multi-provider shared groups (from $contexts);
+     *                                    only these can diverge from their host name.
+     * @param array<string,true> $emittedContextNames Pass-wide set of already-emitted
+     *                                    section names; updated by reference.
+     * @return string Alias context blocks, or '' when nothing needs aliasing (all
+     *                groups cold, or every raw name already backs a real section).
+     */
+    private function generateIncomingContextHostnameAliases(
+        array $sharedContextIds,
+        array &$emittedContextNames
+    ): string {
+        $conf = '';
+        foreach ($this->data_providers as $groupProvider) {
+            $canonicalContextId = $groupProvider['context_id'];
+            if (!in_array($canonicalContextId, $sharedContextIds, true)) {
+                continue;
+            }
+            $rawContextId = self::getRawIncomingContextId(
+                (string)$groupProvider['host'],
+                (string)$groupProvider['port']
+            );
+            // Cold group → raw == canonical, nothing to alias. Skip when this exact
+            // name is already a real section or an earlier alias, to avoid a
+            // file-rejecting duplicate context.
+            if ($rawContextId === $canonicalContextId || isset($emittedContextNames[$rawContextId])) {
+                continue;
+            }
+            $emittedContextNames[$rawContextId] = true;
+            $conf .= "\n[$rawContextId]\n"
+                . "exten => _.!,1,Goto($canonicalContextId,\${EXTEN},1)\n"
+                . "exten => _[hit],1,Hangup()\n";
+        }
+
+        return $conf;
     }
 
     /**
@@ -568,7 +693,9 @@ class SIPConf extends AsteriskConfigClass
 
             // Retrieve used codecs.
             $arr_data['codecs'] = $this->getCodecs();
-            $arr_data['enableRecording'] = $arr_data['enableRecording'] !== '0';
+            // enableRecording is an INTEGER column; on PHP 8.1+ PDO_SQLITE returns it as
+            // native int via resultset hydration, so compare numerically (0 = disabled).
+            $arr_data['enableRecording'] = (int)($arr_data['enableRecording'] ?? 1) !== 0;
             $arr_data['accept_multiple_calls'] = ($arr_data['accept_multiple_calls'] ?? '0') === '1';
 
             // Retrieve employee name.
@@ -2651,6 +2778,67 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
+     * Stable signature of the canonical incoming-context names currently derivable
+     * from the resolved-IP cache for every pending hostname.
+     *
+     * The canonical name only shifts when a hostname's SMALLEST resolved IP changes
+     * (or first appears), which is exactly when pjsip.conf `endpoint.context` and the
+     * extensions.conf section name must be regenerated in lock-step. WorkerSipDnsResolver
+     * compares this signature against {@see self::CACHE_KEY_APPLIED_SIGNATURE} to decide,
+     * on a LEVEL basis, whether the on-disk configs are still consistent with DNS —
+     * surviving a reload that previously bailed or lost its mutex (issue #1091).
+     *
+     * Shared by the worker (to decide) and ReloadPJSIPIdentifyAction (to stamp on
+     * success) so both read the SAME source of truth and cannot drift.
+     *
+     * @return string A short hex digest; '' when there are no pending hostnames.
+     */
+    public static function computeResolvedCanonicalSignature(): string
+    {
+        $di = \Phalcon\Di\Di::getDefault();
+        if ($di === null) {
+            return '';
+        }
+        try {
+            $cache = $di->get(RedisClientProvider::SERVICE_NAME);
+            $rawPending = $cache->get(self::CACHE_KEY_PENDING_HOSTS);
+        } catch (Throwable) {
+            return '';
+        }
+        if (!is_string($rawPending) || $rawPending === '') {
+            return '';
+        }
+        $pending = json_decode($rawPending, true);
+        if (!is_array($pending) || empty($pending)) {
+            return '';
+        }
+
+        // Build a normalized host => canonicalIp map. Empty string marks a
+        // still-unresolved host, so the signature also changes the moment a
+        // cold host first resolves (canonical name flips hostname → IP).
+        $map = [];
+        foreach ($pending as $rawHost) {
+            $hostKey = self::normalizeHostnameKey((string)$rawHost);
+            if ($hostKey === '') {
+                continue;
+            }
+            $ips = self::readResolvedIps($hostKey);
+            if (!empty($ips)) {
+                sort($ips);
+                $map[$hostKey] = $ips[0];
+            } else {
+                $map[$hostKey] = '';
+            }
+        }
+        if (empty($map)) {
+            return '';
+        }
+        ksort($map);
+
+        return md5((string)json_encode($map));
+    }
+
+    /**
      * Persist the list of hostnames encountered during this generation pass
      * so WorkerSipDnsResolver can iterate them on its next tick.
      * Single overwrite — old entries removed implicitly when no provider
@@ -2702,11 +2890,6 @@ class SIPConf extends AsteriskConfigClass
      */
     public static function getIncomingContextId(string $name, string $port): string
     {
-        // Empty port = SRV-based discovery (RFC 3263). Use 'srv' marker so context names are
-        // self-documenting (e.g. "example.com-srv-incoming") and SRV providers do not silently
-        // merge with legacy records that happen to have an empty port column from older versions.
-        $portMarker = (trim($port) === '' || (int)$port === 0) ? 'srv' : $port;
-
         // Two providers whose distinct hostnames resolve to the same backing IP must share
         // one incoming dialplan context (issue #1066). Pre-6e4d8bbb0c achieved this by calling
         // `gethostbyname()` here synchronously — which we will not re-introduce: that path
@@ -2724,7 +2907,9 @@ class SIPConf extends AsteriskConfigClass
         // Cache miss (worker never ran, Redis down, brand-new hostname) → fall back to
         // hostname-as-string, matching post-6e4d8bbb0c behaviour. WorkerSipDnsResolver
         // will populate the cache within one tick and trigger a regeneration that picks
-        // up the IP-based name.
+        // up the IP-based name. To keep a pjsip.conf still holding that cold hostname name
+        // routable, extensionGenContexts() emits a permanent alias under the raw hostname
+        // name — see self::getRawIncomingContextId() and issue #1091.
         if (!self::isIpOrCidr($name)) {
             $cachedIps = self::readResolvedIps(self::normalizeHostnameKey($name));
             if (!empty($cachedIps)) {
@@ -2732,6 +2917,53 @@ class SIPConf extends AsteriskConfigClass
                 $name = $cachedIps[0];
             }
         }
+
+        return self::buildIncomingContextName($name, $port);
+    }
+
+    /**
+     * Cache-independent incoming-context id built from the literal host/IP as
+     * configured, WITHOUT consulting the resolved-IP cache.
+     *
+     * This is exactly what {@see self::getIncomingContextId()} returns on a COLD
+     * resolver cache — i.e. the name a freshly-booted pjsip.conf bakes into
+     * `endpoint.context` before WorkerSipDnsResolver has populated Redis. Once
+     * the cache warms up, getIncomingContextId() switches to the resolved-IP
+     * name and a later dialplan regeneration renames the section accordingly;
+     * if pjsip.conf is not regenerated in lock-step (the DNS worker's
+     * canonical-change reload bailed on a dirty topology hash, or lost the mutex
+     * to a dialplan-only writer), its endpoint.context is stranded on this cold
+     * name. {@see self::extensionGenContexts()} emits a permanent alias context
+     * under this name so such a stranded pjsip.conf always lands somewhere live
+     * (issue #1091).
+     *
+     * @param string $name The hostname or IP address (as stored on the provider)
+     * @param string $port The port number ('' / '0' → SRV marker)
+     * @return string The cold, hostname-derived incoming context id
+     */
+    public static function getRawIncomingContextId(string $name, string $port): string
+    {
+        return self::buildIncomingContextName($name, $port);
+    }
+
+    /**
+     * Final name-building step shared by getIncomingContextId() (warm/cold) and
+     * getRawIncomingContextId() (always cold) so both derive the section name via
+     * the SAME sanitisation and port-marker rules — a divergence here would
+     * defeat the alias mechanism.
+     *
+     * Empty port = SRV-based discovery (RFC 3263). Use the 'srv' marker so context
+     * names are self-documenting (e.g. "example.com-srv-incoming") and SRV
+     * providers do not silently merge with legacy records that happen to have an
+     * empty port column from older versions.
+     *
+     * @param string $name Hostname or IP literal
+     * @param string $port Port number ('' / '0' → 'srv' marker)
+     * @return string Sanitised "<name><portMarker>-incoming" id
+     */
+    private static function buildIncomingContextName(string $name, string $port): string
+    {
+        $portMarker = (trim($port) === '' || (int)$port === 0) ? 'srv' : $port;
 
         return preg_replace("/[^a-z\d]/iu", '', $name . $portMarker) . '-incoming';
     }
@@ -3323,7 +3555,7 @@ class SIPConf extends AsteriskConfigClass
      * Refreshes the SIP configurations and reloads the PJSIP module.
      * Synchronizes codec database with Asterisk before regenerating config.
      *
-     * Serialized through MUTEX_CONF_WRITE so it cannot race with the narrow
+     * Serialized through MUTEX_ASTERISK_RELOAD so it cannot race with the narrow
      * ReloadPJSIPIdentifyAction (which also regenerates pjsip.conf). Both
      * paths writing the same file at the same wall-clock moment would let
      * Asterisk module-reload a half-flushed config — see code-review
@@ -3338,7 +3570,7 @@ class SIPConf extends AsteriskConfigClass
 
         try {
             $di->get(MutexProvider::SERVICE_NAME)->synchronized(
-                self::MUTEX_CONF_WRITE,
+                self::MUTEX_ASTERISK_RELOAD,
                 static fn() => self::reloadUnderLock(),
                 timeout: 10,
                 ttl: 30
@@ -3356,7 +3588,7 @@ class SIPConf extends AsteriskConfigClass
      * Body of {@see self::reload()}, separated to keep the mutex-acquisition
      * and the configuration-regeneration paths visually distinct.
      *
-     * Callers MUST hold MUTEX_CONF_WRITE for the duration of this call. The
+     * Callers MUST hold MUTEX_ASTERISK_RELOAD for the duration of this call. The
      * single caller is the closure inside {@see self::reload()} itself —
      * external callers go through `reload()` to acquire the lock first.
      */

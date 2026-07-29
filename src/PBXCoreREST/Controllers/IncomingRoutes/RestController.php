@@ -209,6 +209,7 @@ class RestController extends BaseRestController
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '42')]
     #[ApiParameterRef('rulename')]
     #[ApiParameterRef('number')]
+    #[ApiParameterRef('providerid')]
     #[ApiParameterRef('priority')]
     #[ApiParameterRef('timeout')]
     #[ApiParameterRef('extension')]

@@ -1190,6 +1190,10 @@ return [
     'rest_schema_net_interface_list_item' => 'Element i netværksgrænsefladelisten',
     'rest_am_GetDefault' => 'Hent standardværdier',
     'rest_mod_InstallationStatusDesc' => 'Hentning af den aktuelle status for modulinstallationsprocessen',
+    'rest_mod_GetOperations' => 'Få loggen over modulhandlinger',
+    'rest_mod_GetOperationsDesc' => 'Returnerer aktive modulhandlinger og historikken for de seneste handlinger fra loggen',
+    'rest_mod_GetOperationStatus' => 'Få status for modulhandlingen',
+    'rest_mod_GetOperationStatusDesc' => 'Returnerer status for den aktuelle eller seneste handling for det angivne modul',
     'rest_schema_pbx_status_call_answer' => 'Svartid på opkald',
     'rest_schema_gs_ssh_disable_password' => 'Deaktiver login med SSH-adgangskode (kun nøgler)',
     'rest_cr_GetListDesc' => 'Få en liste over alle konferencerum side for side med filtrerings- og sorteringsmuligheder',
@@ -2341,6 +2345,7 @@ return [
     // ============================================================================
     'rest_System_UpgradeFailedToDetectOffset' => 'Kan ikke bestemme boot-partitionens offset.',
     'rest_System_UpgradeMountFailed' => 'Kunne ikke montere partitionen. Kontroller filsystemet.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Advarsel: datapartitionen (Storage) er på samme disk som systemet. Image-opdateringen ompartitionerer den eneste disk; partitionen med optagelser, opkaldshistorik og moduler bevares automatisk, men det anbefales stærkt at tage en sikkerhedskopi først.',
     'rest_openapi_GetDetailedPerms' => 'Få en detaljeret liste over tilladelser',
     'rest_param_s3_endpoint' => 'S3-kompatibel endpoint-URL (f.eks. https://s3.amazonaws.com for AWS S3)',
     'rest_param_s3_region' => 'AWS-region eller tilsvarende for S3-tjeneste (f.eks. us-east-1)',

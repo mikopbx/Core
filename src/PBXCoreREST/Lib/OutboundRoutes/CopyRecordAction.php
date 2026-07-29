@@ -102,9 +102,9 @@ class CopyRecordAction
         // Clear ID for new record (auto-increment)
         $newRoute->id = '';
 
-        // Get new priority (last position)
-        $maxPriority = OutgoingRoutingTable::maximum(['column' => 'priority']);
-        $newRoute->priority = (string)((int)$maxPriority + 1);
+        // Get new priority (last position). priority is TEXT, so MAX() compares
+        // lexicographically ("9" > "10"); compute the next value numerically (#1076).
+        $newRoute->priority = (string)OutgoingRoutingTable::getNextPriority();
 
         // Copy all other fields
         $newRoute->rulename = $sourceRoute->rulename . ' - Copy';

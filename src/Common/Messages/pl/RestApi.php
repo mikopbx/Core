@@ -1078,6 +1078,10 @@ return [
     'rest_mod_GetMetadataFromPackageDesc' => 'Wyodrębnianie i zwracanie metadanych z pliku pakietu modułu',
     'rest_mod_InstallationStatus' => 'Uzyskaj status instalacji',
     'rest_mod_InstallationStatusDesc' => 'Uzyskiwanie aktualnego stanu procesu instalacji modułu',
+    'rest_mod_GetOperations' => 'Pobierz dziennik operacji na modułach',
+    'rest_mod_GetOperationsDesc' => 'Zwraca aktywne operacje na modułach oraz historię ostatnich operacji z dziennika',
+    'rest_mod_GetOperationStatus' => 'Pobierz status operacji modułu',
+    'rest_mod_GetOperationStatusDesc' => 'Zwraca stan bieżącej lub ostatniej operacji dla wskazanego modułu',
     // ============================================================================
     // System REST API
     // ============================================================================
@@ -1352,6 +1356,7 @@ return [
     'rest_schema_s3_region' => 'Region AWS lub równoważny identyfikator regionu usługi S3',
     'rest_schema_s3_bucket' => 'Nazwa kontenera S3, w którym przechowywane są rekordy',
     'rest_System_UpgradeMountFailed' => 'Nie udało się zamontować partycji. Sprawdź system plików.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Uwaga: partycja danych (Storage) znajduje się na tym samym dysku co system. Aktualizacja z obrazu ponownie partycjonuje jedyny dysk; partycja z nagraniami, historią połączeń i modułami zostanie zachowana automatycznie, ale zdecydowanie zaleca się wcześniejsze wykonanie kopii zapasowej.',
     'rest_AsteriskManagers_ApiDescription' => 'Zarządzanie użytkownikami interfejsu Asterisk Manager Interface (AMI) do administrowania centralami PBX. Użytkownicy AMI zapewniają programowy dostęp do Asterisk w celu monitorowania, zarządzania i integracji. Obejmuje zarządzanie uprawnieniami, bezpieczne uwierzytelnianie i kontrolę dostępu administracyjnego.',
     'rest_AsteriskRestUsers_ApiDescription' => 'Kompleksowe zarządzanie użytkownikami dzięki interfejsowi Asterisk REST (ARI) do zarządzania połączeniami w czasie rzeczywistym. ARI udostępnia interfejsy API oparte na protokole WebSocket do tworzenia niestandardowych aplikacji telefonicznych z pełną kontrolą połączeń. Obejmuje to uwierzytelnianie użytkowników, powiązanie aplikacji i zarządzanie uprawnieniami dla aplikacji ARI.',
     'rest_Auth_ApiDescription' => 'System uwierzytelniania oparty na JWT z tokenami odświeżania dla klientów REST API i aplikacji SPA. Obsługuje uwierzytelnianie hasłem i kluczem dostępu (WebAuthn). Zwraca krótkotrwałe tokeny dostępu (JWT, 15 minut) i długotrwałe tokeny odświeżania (plik cookie httpOnly, 30 dni). Implementuje automatyczną rotację tokenów i śledzenie urządzeń dla zwiększenia bezpieczeństwa.',

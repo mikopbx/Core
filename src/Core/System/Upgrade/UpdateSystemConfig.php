@@ -23,6 +23,7 @@ namespace MikoPBX\Core\System\Upgrade;
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\SystemMessages;
@@ -50,6 +51,13 @@ class UpdateSystemConfig extends Injectable
         $this->deleteLostModules();
         // Clear all caches on any changed models
         ModelsBase::clearCache(PbxSettings::class);
+        // Drop the cached ACL (Redis DB4, 24h TTL) so it is rebuilt from the current
+        // AclProvider code. Unconditional (not gated on the version-change branch below)
+        // because dev redeploys keep the same base version after '-dev' is stripped, yet
+        // still ship ACL changes that must take effect; otherwise newly-allowed endpoints
+        // keep returning 403 to restricted roles until the stale entry expires. The cost
+        // is a single ACL rebuild on the first request after boot.
+        AclProvider::clearCache();
         $previous_version = (string)str_ireplace('-dev', '',  PbxSettings::getValueByKey(PbxSettings::PBX_VERSION));
         $current_version  = (string)str_ireplace('-dev', '', trim(file_get_contents('/etc/version')));
         if ($previous_version !== $current_version) {

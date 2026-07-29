@@ -92,6 +92,7 @@ return [
     // Password strength and validation keys moved to Passwords.php - use psw_ prefix instead
     'gs_InvalidPasswordsFormat' => 'Ugyldigt adgangskode format',
     'api_UnknownAction' => 'Ukendt handling',
+    'api_ProviderNotFound' => 'Udbyder ikke fundet',
     'gs_WebPort' => 'HTTP port',
     'gs_WebHTTPSPort' => 'HTTPS port',
     'gs_WEBHTTPSPrivateKey' => 'HTTPS privat nøgle',

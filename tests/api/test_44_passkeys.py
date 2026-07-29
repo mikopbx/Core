@@ -78,44 +78,67 @@ class TestPasskeys:
             'name': 'Test Passkey Device'
         }
 
+        # NOTE: the HTTP call is wrapped separately from the response assertions.
+        # The residentKey regression check below MUST be a hard assertion that is
+        # NOT swallowed by this broad except (otherwise a reverted fix would still
+        # let the test pass — a cheater test).
         try:
             response = api_client.post('passkeys:registrationStart', register_data)
-
-            if response.get('result') is True:
-                data = response.get('data', {})
-
-                # WebAuthn registration should return options
-                if isinstance(data, dict):
-                    # Expected fields per WebAuthn spec
-                    expected_fields = ['challenge', 'rp', 'user', 'pubKeyCredParams', 'timeout']
-
-                    found_fields = [f for f in expected_fields if f in data]
-
-                    if len(found_fields) > 0:
-                        print(f"✓ Passkey registration initiated successfully")
-                        print(f"  WebAuthn fields present: {found_fields}")
-
-                        # Show challenge info (partial)
-                        if 'challenge' in data:
-                            challenge = str(data['challenge'])
-                            print(f"  Challenge: {challenge[:20]}...")
-                    else:
-                        print(f"✓ Registration started (custom format)")
-                        print(f"  Response keys: {list(data.keys())[:5]}")
-                else:
-                    print(f"✓ Registration endpoint works")
-            else:
-                messages = response.get('messages', {})
-                print(f"⚠ Registration initiation failed: {messages}")
-
         except Exception as e:
             if '501' in str(e) or '404' in str(e) or '405' in str(e):
                 print(f"⚠ Passkeys registration not available yet")
                 pytest.skip("Passkeys registration not implemented")
             elif '422' in str(e):
                 print(f"✓ Registration validation works")
+                return
             else:
                 print(f"⚠ Error: {str(e)[:80]}")
+                return
+
+        if response.get('result') is not True:
+            messages = response.get('messages', {})
+            print(f"⚠ Registration initiation failed: {messages}")
+            return
+
+        data = response.get('data', {})
+        if not isinstance(data, dict):
+            print(f"✓ Registration endpoint works")
+            return
+
+        # WebAuthn registration should return options
+        expected_fields = ['challenge', 'rp', 'user', 'pubKeyCredParams', 'timeout']
+        found_fields = [f for f in expected_fields if f in data]
+
+        if len(found_fields) == 0:
+            print(f"✓ Registration started (custom format)")
+            print(f"  Response keys: {list(data.keys())[:5]}")
+            return
+
+        print(f"✓ Passkey registration initiated successfully")
+        print(f"  WebAuthn fields present: {found_fields}")
+
+        # Show challenge info (partial)
+        if 'challenge' in data:
+            challenge = str(data['challenge'])
+            print(f"  Challenge: {challenge[:20]}...")
+
+        # Regression guard for issue #1074 (hardware-key / YubiKey login):
+        # The login flow is usernameless (AuthenticationStartAction sends an empty
+        # allowCredentials), and a usernameless login can ONLY use discoverable
+        # (resident) credentials. Registration must therefore request resident keys so
+        # roaming authenticators (YubiKey) create a discoverable credential instead of a
+        # non-discoverable one that can never be offered at login. Relaxing this
+        # re-introduces the "registers but cannot log in" bug.
+        auth_sel = data.get('authenticatorSelection', {})
+        assert auth_sel.get('residentKey') == 'required', (
+            "authenticatorSelection.residentKey must be 'required' for usernameless "
+            f"YubiKey login; got: {auth_sel!r}"
+        )
+        assert auth_sel.get('requireResidentKey') is True, (
+            "requireResidentKey must be True (WebAuthn L1 parity with "
+            f"residentKey:'required'); got: {auth_sel!r}"
+        )
+        print(f"  ✓ authenticatorSelection requires a resident (discoverable) credential")
 
     def test_03_registration_finish(self, api_client):
         """Test POST /passkeys:registrationFinish - Complete passkey registration

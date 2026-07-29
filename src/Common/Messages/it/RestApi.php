@@ -453,6 +453,10 @@ return [
     'rest_mod_UpdateAll' => 'Aggiorna tutti i moduli',
     'rest_mod_DownloadStatus' => 'Ottieni lo stato del download',
     'rest_mod_InstallationStatusDesc' => 'Ottenere lo stato attuale del processo di installazione del modulo',
+    'rest_mod_GetOperations' => 'Ottieni il registro delle operazioni sui moduli',
+    'rest_mod_GetOperationsDesc' => 'Restituisce le operazioni attive sui moduli e la cronologia delle operazioni recenti dal registro',
+    'rest_mod_GetOperationStatus' => 'Ottieni lo stato dell\'operazione del modulo',
+    'rest_mod_GetOperationStatusDesc' => 'Restituisce lo stato dell\'operazione corrente o dell\'ultima operazione per il modulo specificato',
     'rest_system_GetDatetime' => 'Ottieni l\'ora del sistema',
     'rest_system_GetDatetimeDesc' => 'Ottenere l\'ora e la data correnti dal server',
     'rest_system_GetAvailableLanguages' => 'Ottieni le lingue disponibili',
@@ -1404,6 +1408,7 @@ return [
     'rest_System_UpgradeFailedToDetectOffset' => 'Impossibile determinare l\'offset della partizione di avvio.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Impossibile creare il dispositivo loop.',
     'rest_System_UpgradeMountFailed' => 'Impossibile montare la partizione. Controllare il file system.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Attenzione: la partizione dati (Storage) si trova sullo stesso disco del sistema. L\'aggiornamento tramite immagine ripartiziona l\'unico disco; la partizione con registrazioni, cronologia chiamate e moduli viene conservata automaticamente, ma si consiglia vivamente di eseguire prima un backup.',
     // ============================================================================
     // MISC
     // ============================================================================

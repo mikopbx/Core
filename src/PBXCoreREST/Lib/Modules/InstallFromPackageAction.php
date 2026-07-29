@@ -20,10 +20,12 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Models\ModuleOperations;
 use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\Files\StatusUploadFileAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\Journal\OperationJournal;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
@@ -62,6 +64,29 @@ class InstallFromPackageAction extends ModuleInstallationBase
      */
     public function start(): void
     {
+        // An orchestrator-driven operation (enable/disable) no longer holds
+        // the legacy mutex — refuse to run concurrently with a live one.
+        if (OperationJournal::hasAliveOperation()) {
+            $this->unifiedModulesEvents->pushMessageToBrowser(
+                self::STAGE_VII_FINAL_STATUS,
+                [
+                    'result' => false,
+                    'messages' => ['error' => [TranslationProvider::translate('ext_ErrAnotherOperationInProgress')]],
+                ]
+            );
+            return;
+        }
+
+        // Journal dual-write: opened with the upload fileId as module id, the
+        // real uniqid is fixed up in startModuleInstallation() from metadata.
+        // The Stage_VII push in finally finalizes the row.
+        $this->setJournalContext(OperationJournal::begin(
+            $this->moduleUniqueId,
+            ModuleOperations::OPERATION_INSTALL_PACKAGE,
+            ['filePath' => $this->filePath, 'fileId' => $this->fileId],
+            $this->asyncChannelId
+        ));
+
         // Calculate total mutex timeout and extra 5 seconds to prevent installing the same module in the second thread
         $mutexTimeout = self::INSTALLATION_TIMEOUT+self::UPLOAD_TIMEOUT+5;
 

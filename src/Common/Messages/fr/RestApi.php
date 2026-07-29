@@ -1153,6 +1153,10 @@ return [
     'rest_mod_GetMetadataFromPackageDesc' => 'Extraction et renvoi des métadonnées d\'un fichier de package de module',
     'rest_mod_InstallationStatus' => 'Obtenir l\'état de l\'installation',
     'rest_mod_InstallationStatusDesc' => 'Obtention de l\'état actuel du processus d\'installation du module',
+    'rest_mod_GetOperations' => 'Obtenir le journal des opérations sur les modules',
+    'rest_mod_GetOperationsDesc' => 'Renvoie les opérations actives sur les modules et l\'historique des dernières opérations du journal',
+    'rest_mod_GetOperationStatus' => 'Obtenir le statut de l\'opération du module',
+    'rest_mod_GetOperationStatusDesc' => 'Renvoie l\'état de l\'opération en cours ou de la dernière opération pour le module spécifié',
     // ============================================================================
     // System REST API
     // ============================================================================
@@ -1445,6 +1449,7 @@ return [
     // ============================================================================
     'rest_System_UpgradeFailedToDetectOffset' => 'Impossible de déterminer le décalage de la partition de démarrage.',
     'rest_System_UpgradeMountFailed' => 'Impossible de monter la partition. Vérifiez le système de fichiers.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Attention : la partition de données (Storage) se trouve sur le même disque que le système. La mise à jour par image repartitionne l\'unique disque ; la partition contenant les enregistrements, l\'historique des appels et les modules est conservée automatiquement, mais il est fortement recommandé de faire une sauvegarde au préalable.',
     // ============================================================================
     // MISC
     // ============================================================================

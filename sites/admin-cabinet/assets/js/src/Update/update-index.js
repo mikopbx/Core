@@ -162,7 +162,11 @@ const updatePBX = {
         // Use unified SystemAPI to check for firmware updates
         SystemAPI.checkForUpdates((response) => {
             // Check if request was successful
-            if (!response || !response.success || !response.data) {
+            // NOTE: the v3 envelope (PBXApiResult::getResult) exposes the success
+            // flag as `result`, not `success`. Using `success` here silently
+            // early-returned and left the updates table empty (regression from
+            // d16031e3d). Keep this aligned with PbxApiClient.successTest().
+            if (!response || !response.result || !response.data) {
                 return;
             }
 

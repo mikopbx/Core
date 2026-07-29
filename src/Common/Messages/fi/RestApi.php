@@ -806,6 +806,7 @@ return [
     'rest_schema_s3_bucket' => 'S3-säiliön nimi, johon tietueet tallennetaan',
     'rest_System_UpgradeLoopDeviceFailed' => 'Silmukkalaitteen luominen epäonnistui.',
     'rest_System_UpgradeMountFailed' => 'Osion liittäminen epäonnistui. Tarkista tiedostojärjestelmä.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Huomio: data (Storage) -osio on samalla levyllä kuin järjestelmä. Levykuvan päivitys osioi ainoan levyn uudelleen; tallenteita, puheluhistoriaa ja moduuleja sisältävä osio säilytetään automaattisesti, mutta varmuuskopion ottamista etukäteen suositellaan vahvasti.',
     // ============================================================================
     // MISC
     // ============================================================================
@@ -1921,6 +1922,10 @@ return [
     'rest_mod_GetMetadataFromPackageDesc' => 'Metadatan poimiminen ja palauttaminen moduulipakettitiedostosta',
     'rest_mod_InstallationStatus' => 'Asennuksen tilan tarkistaminen',
     'rest_mod_InstallationStatusDesc' => 'Moduulin asennusprosessin nykyisen tilan selvittäminen',
+    'rest_mod_GetOperations' => 'Hanki moduulien toimintojen loki',
+    'rest_mod_GetOperationsDesc' => 'Palauttaa moduulien aktiiviset toiminnot ja viimeisimpien toimintojen historian lokista',
+    'rest_mod_GetOperationStatus' => 'Hanki moduulin toiminnon tila',
+    'rest_mod_GetOperationStatusDesc' => 'Palauttaa määritetyn moduulin nykyisen tai viimeisimmän toiminnon tilan',
     // ============================================================================
     // System REST API
     // ============================================================================

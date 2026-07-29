@@ -20,17 +20,36 @@
 # Inline output functions - no external dependencies for maximum compatibility
 # This script must work when updating FROM any old MikoPBX version
 
-# Serial port for headless output (scan x86 ttyS0-5 and ARM ttyAMA0-3, take first available)
-# Cached once at script start to avoid repeated checks
-SERIAL_PORT=""
-for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5 \
-           /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
-    # Check if device exists, is writable, and accepts test write
-    if [ -c "$DEV" ] && [ -w "$DEV" ] && echo -n "" > "$DEV" 2>/dev/null; then
-        SERIAL_PORT="$DEV"
-        break
-    fi
-done
+detect_upgrade_serial_port() {
+    local DEV serialInfo SETSERIAL
+
+    # Match pbx-env-detect: never open ttyS* directly. Phantom serial devices can
+    # be writable but fail or block on write/open in VMs and VPS environments.
+    SETSERIAL="setserial"
+    command -v setserial >/dev/null 2>&1 || SETSERIAL="busybox setserial"
+    for DEV in /dev/ttyS0 /dev/ttyS1 /dev/ttyS2 /dev/ttyS3 /dev/ttyS4 /dev/ttyS5; do
+        [ -c "$DEV" ] || continue
+        serialInfo=$($SETSERIAL -g "$DEV" 2>/dev/null)
+        [ -z "$serialInfo" ] && continue
+        case "$serialInfo" in
+            *unknown*) continue ;;
+        esac
+        echo "$DEV"
+        return 0
+    done
+
+    for DEV in /dev/ttyAMA0 /dev/ttyAMA1 /dev/ttyAMA2 /dev/ttyAMA3; do
+        [ -c "$DEV" ] || continue
+        [ -e "/sys/class/tty/${DEV#/dev/}/device" ] || continue
+        echo "$DEV"
+        return 0
+    done
+
+    return 0
+}
+
+# Serial port for headless output, cached once at script start to avoid repeated checks
+SERIAL_PORT=$(detect_upgrade_serial_port)
 
 # Prevent duplicate output when stdout is directly connected to the serial port
 if [ -n "$SERIAL_PORT" ]; then
@@ -41,11 +60,11 @@ if [ -n "$SERIAL_PORT" ]; then
 fi
 
 echo_info() {
-    local msg=" - $1"
-    echo "$msg"
+    local msg="  - $1"
+    echo "$msg" 2>/dev/null || true
     if [ -n "$SERIAL_PORT" ]; then
         # Use printf for atomic write, stty to drain buffer
-        printf "%s\n" "$msg" > "$SERIAL_PORT" 2>/dev/null
+        { printf "%s\n" "$msg" > "$SERIAL_PORT"; } 2>/dev/null || true
         stty -F "$SERIAL_PORT" drain >/dev/null 2>&1 || sleep 0.05 2>/dev/null || true
     fi
     return 0
@@ -53,9 +72,9 @@ echo_info() {
 
 echo_error() {
     local msg="ERROR: $1"
-    echo "$msg"
+    echo "$msg" 2>/dev/null || true
     if [ -n "$SERIAL_PORT" ]; then
-        printf "%s\n" "$msg" > "$SERIAL_PORT" 2>/dev/null
+        { printf "%s\n" "$msg" > "$SERIAL_PORT"; } 2>/dev/null || true
         stty -F "$SERIAL_PORT" drain >/dev/null 2>&1 || sleep 0.05 2>/dev/null || true
     fi
     return 0
@@ -92,6 +111,99 @@ wait_for_user_input() {
     echo ""
 }
 
+shrink_msdos_part4_for_gpt_backup() {
+    local disk="$1"
+    local partition="$2"
+    local reduce_by=1
+    local sector_size sectors_in_mib disk_sectors disk_end_sector part4_end_sector tail_free_sectors
+    local current_size new_size new_size_mib layout_file
+    local e2fsck_result resize_result awk_result sfdisk_result post_e2fsck_result
+
+    [ -z "$partition" ] && return 0
+
+    echo_info "Reserve 1 MiB for GPT backup on $partition...";
+    sector_size=$(/sbin/blockdev --getss "$disk")
+    sectors_in_mib=$((1024 * 1024 / sector_size))
+    disk_sectors=$(/sbin/blockdev --getsz "$disk")
+    disk_end_sector=$((disk_sectors - 1))
+    part4_end_sector=$(/sbin/parted -s "$disk" unit s print 2>/dev/null | /bin/busybox awk '$1=="4"{gsub(/s/,"",$3); print $3; exit}')
+    case "$part4_end_sector" in
+      ''|*[!0-9]*)
+        echo_error "Unable to read partition 4 end sector for $partition."
+        return 12
+        ;;
+    esac
+
+    tail_free_sectors=$((disk_end_sector - part4_end_sector))
+    if [ "$tail_free_sectors" -ge "$sectors_in_mib" ]; then
+      return 0
+    fi
+
+    /sbin/e2fsck -f -y "$partition" > /dev/null 2>&1;
+    e2fsck_result=$?
+    if [ "$e2fsck_result" -gt 1 ]; then
+      echo_error "Pre-shrink filesystem check on $partition failed with code $e2fsck_result."
+      return 12
+    fi
+
+    echo_info "Reducing the 4th section...";
+    layout_file="/tmp/disk_layout_part4_$$.txt"
+    /sbin/sfdisk -d "$disk" 2> /dev/null > "$layout_file"
+    current_size=$(/bin/busybox grep "^$partition" "$layout_file" | /bin/busybox grep -o 'size=[ ]*[0-9]*' | /bin/busybox tr -d ' ' | /bin/busybox cut -d= -f2)
+    if [ -z "$current_size" ]; then
+      rm -f "$layout_file"
+      echo_error "Unable to read current partition size for $partition."
+      return 12
+    fi
+
+    new_size=$((current_size - reduce_by * sectors_in_mib))
+    new_size_mib=$((current_size / sectors_in_mib - reduce_by))
+    if [ "$new_size" -le 0 ] || [ "$new_size_mib" -le 0 ]; then
+      rm -f "$layout_file"
+      echo_error "Calculated invalid reduced size for $partition."
+      return 12
+    fi
+
+    /sbin/resize2fs "$partition" "$new_size_mib"M > /dev/null 2>&1
+    resize_result=$?
+    if [ "$resize_result" -ne 0 ]; then
+      rm -f "$layout_file"
+      echo_error "resize2fs on $partition failed with code $resize_result."
+      return 12
+    fi
+
+    /bin/busybox awk -v partition="$partition" -v new_size="$new_size" '
+      $1 == partition {
+        sub(/size=[[:space:]]*[0-9]+/, "size=" new_size)
+      }
+      { print }
+    ' "$layout_file" > "${layout_file}.new"
+    awk_result=$?
+    if [ "$awk_result" -ne 0 ]; then
+      rm -f "$layout_file" "${layout_file}.new"
+      echo_error "Unable to rewrite sfdisk layout for $partition."
+      return 12
+    fi
+    mv "${layout_file}.new" "$layout_file"
+
+    /sbin/sfdisk "$disk" > /dev/null 2>&1 < "$layout_file"
+    sfdisk_result=$?
+    rm -f "$layout_file"
+    if [ "$sfdisk_result" -ne 0 ]; then
+      echo_error "sfdisk resize of $partition failed with code $sfdisk_result."
+      return 12
+    fi
+
+    /sbin/blockdev --rereadpt "$disk" > /dev/null 2>&1
+    /sbin/e2fsck -f -y "$partition" > /dev/null 2>&1
+    post_e2fsck_result=$?
+    if [ "$post_e2fsck_result" -gt 1 ]; then
+      echo_error "Post-shrink filesystem check on $partition failed with code $post_e2fsck_result."
+      return 12
+    fi
+    return 0
+}
+
 # Assign input arguments to variables
 img_file="$1";
 systemDevice="$2"
@@ -123,6 +235,7 @@ else
 fi
 
 # Check if the livecd file exists, and proceed with different operations depending on its existence
+SKIP_SYSTEM_PART4_SETUP=0
 if [ -f /offload/livecd ]; then
   # Copy the configuration to the backup directory and unmount /conf.recover
   /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak | /bin/busybox awk '{print "\t" $0}'
@@ -139,14 +252,25 @@ else
   echo_info "Backup the system settings to temporary directory...";
   /bin/busybox cp -Rv /cf/conf/* /tmp/configbak | /bin/busybox awk '{print "\t" $0}'
 
-  mounted_storage=$(mount | /bin/busybox grep storage | /bin/busybox awk '{ print $1}');
+  # Match the exact Storage mountpoint (not any line containing "storage") so a
+  # stray mount can't produce a multi-line value and break the single-disk test.
+  mounted_storage=$(mount | /bin/busybox grep ' /storage/usbdisk1 ' | /bin/busybox awk '{ print $1}');
 
   # Get the name of the mounted storage and the 4th partition (if it exists)
   partition4Name=$(/bin/lsblk -r | /bin/busybox grep "${systemDevice}" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/busybox sort -u)
 
+  # Whether the Storage partition lives on the SAME physical disk as the system
+  # (single-disk layout). When set, partition 4 must be preserved losslessly
+  # during the repartition below instead of being recreated blindly (GitHub #1077).
+  SINGLE_DISK_STORAGE=0
+
   # If the 4th partition is not the same as the mounted storage
   if [ "/dev/${partition4Name}" != "${mounted_storage}" ]; then
     # Storage is on a separate disk. Proceed with the freeup, backup and update procedures
+    SINGLE_DISK_STORAGE=0
+    if [ -n "$mounted_storage" ]; then
+      SKIP_SYSTEM_PART4_SETUP=1
+    fi
     /sbin/freestorage "doNotUnMount";
 
     # Define the backup directory and image path
@@ -165,6 +289,7 @@ else
     rm -f /tmp/dd_backup_stats
   else
     # Storage is on the main disk which needs to be unmounted, so move the image to RAM
+    SINGLE_DISK_STORAGE=1
     echo_info "Moving the update img to RAM before storage will be unmounted ..."
     tmp_img=$(/bin/busybox basename "$1");
     img_file="/tmp/${tmp_img}";
@@ -196,48 +321,64 @@ if [ -r "${img_file}" ]; then
   # Allow user to enter manual shell before critical partition operations
   wait_for_user_input "About to start partition operations on $DISK"
 
-  if command -v gdisk >/dev/null 2>&1 && [ -n "$partitionFour" ]; then
+  if [ -n "$partitionFour" ]; then
     # If the 4th section is missing,
     # then markup conversion is not required,
     # there is no risk of data loss.
     PARTITION_TYPE=$(/sbin/parted --script "$DISK" print 2>/dev/null | /bin/busybox grep "Partition Table" | /bin/busybox awk '{print $3}');
     echo_info "Performing an action for the $PARTITION_TYPE section";
     if [ "$PARTITION_TYPE" == "msdos" ]; then
-      echo_info "At the end of the 4th partition ($partitionFour), 1 Mb of free space will be required...";
-      REDUCE_BY=1
-      LAST_ENTRY=$(parted -s "$DISK" unit MiB print free 2>/dev/null | tail -n 1)
-      FREE_SPACE=$(echo "$LAST_ENTRY" | /bin/busybox awk '{print $3}' | /bin/busybox grep -o '[0-9]*')
-      if [[ (-z "$FREE_SPACE" || "$FREE_SPACE" -lt "$REDUCE_BY") && -n "$partitionFour" ]]; then
-      	e2fsck -f -y "$partitionFour";
-        echo_info "Reducing the 4th section...";
-        SECTOR_SIZE=$(blockdev --getss "$DISK")
-      	SECTORS_IN_MIB=$((1024 * 1024 / SECTOR_SIZE))
-      	sfdisk -d "$DISK" 2> /dev/null > disk_layout.txt
-      	CURRENT_SIZE=$(/bin/busybox grep "^$partitionFour" disk_layout.txt | /bin/busybox grep -o 'size=[ ]*[0-9]*' | /bin/busybox tr -d ' ' | cut -d= -f2)
-      	NEW_SIZE=$((CURRENT_SIZE - REDUCE_BY * SECTORS_IN_MIB))
-      	NEW_SIZE_MIB=$((CURRENT_SIZE / SECTORS_IN_MIB - 1))
-        sed -i "s|^\($partitionFour.*size=\s*\)[0-9]*\(.*\)$|\1$NEW_SIZE\2|" disk_layout.txt
-      	sfdisk "$DISK"  > /dev/null 2>&1 < disk_layout.txt
-      	rm disk_layout.txt;
-      	/sbin/resize2fs "$partitionFour" "$NEW_SIZE_MIB"M 2> /dev/null > /dev/null;
+      if [ "$SINGLE_DISK_STORAGE" = "1" ]; then
+        shrink_msdos_part4_for_gpt_backup "$DISK" "$partitionFour"
+        shrinkResult=$?
+        if [ "$shrinkResult" -ne 0 ]; then
+          echo_error "Unable to reserve GPT backup space before firmware image write."
+          exit "$shrinkResult"
+        fi
       fi
-      echo_info "Converting markup to GPT."
-      echo -e "w\nY\n" | /sbin/gdisk "$DISK" > /dev/null;
-      resultGDisk="$?";
-      if [ "$resultGDisk" -eq 0 ]; then
-        echo_info "The conversion to GPT has been completed successfully."
+
+      if /sbin/gdisk --version >/dev/null 2>&1; then
+        echo_info "Converting markup to GPT."
+        echo -e "w\nY\n" | /sbin/gdisk "$DISK" > /dev/null;
+        resultGDisk="$?";
+        if [ "$resultGDisk" -eq 0 ]; then
+          echo_info "The conversion to GPT has been completed successfully."
+        else
+          echo_error "Converting to GPT."
+        fi
       else
-        echo_error "Converting to GPT."
+        echo_info "Skipping GPT conversion: gdisk unavailable."
       fi
     fi
   fi
 
   part4Action='create';
+  # Preserve-mode signalling for initial_storage_part_four (GitHub #1077).
+  # Defaults keep the legacy behaviour for two-disk / fresh-install paths.
+  export PART4_PRESERVE=0
+  export PART4_START=''
   if [ -n "$partitionFour" ]; then
     export FS_BACKUP_PART4=fs-backup-part4.img;
-    echo_info "Start backup fs $FS_BACKUP_PART4 super block for part4 ($partitionFour)"
+    echo_info "Backup part4 superblock: $FS_BACKUP_PART4 ($partitionFour)"
     dd if="$partitionFour" of="$FS_BACKUP_PART4" bs=1M count=1 >/dev/null 2>&1;
     part4Action='update';
+
+    # Single-disk layout: partition 4 IS the Storage partition and is about to
+    # lose its GPT entry (sgdisk -Z below). Capture its exact start sector NOW,
+    # from the live table (after any msdos->GPT conversion above), so it can be
+    # recreated losslessly at the same offset instead of a hardcoded 600MiB.
+    # /sbin/parted is always present here; do NOT depend on offload binaries —
+    # /offload is already unmounted (freeupoffload) at this point.
+    if [ "$SINGLE_DISK_STORAGE" = "1" ]; then
+      PART4_START=$(/sbin/parted -s "$DISK" unit s print 2>/dev/null | /bin/busybox awk '$1=="4"{gsub(/s/,"",$2); print $2; exit}')
+      if [ -n "$PART4_START" ]; then
+        export PART4_PRESERVE=1
+        export PART4_START
+        echo_info "Part4 start saved: ${PART4_START}s (preserve ON)"
+      else
+        echo_error "Single-disk storage: FAILED to capture partition 4 start sector; legacy recreate will run (data-loss risk)"
+      fi
+    fi
   fi
 
   echo_info "Installing new image on $DISK"
@@ -315,7 +456,9 @@ if [ -r "${img_file}" ]; then
     partedOutput=$(echo "Fix" | /sbin/parted "$DISK" print ---pretend-input-tty 2>&1)
     partedResult=$?
     echo_info "parted exit code: $partedResult"
-    if [ -n "$partedOutput" ]; then echo "$partedOutput" | while IFS= read -r line; do echo_info "parted: $line"; done; fi
+    if [ "$partedResult" -ne 0 ] && [ -n "$partedOutput" ]; then
+      echo "$partedOutput" | while IFS= read -r line; do echo_info "parted: $line"; done
+    fi
   else
     echo_error "No GPT utility available to fix backup header!"
   fi
@@ -345,9 +488,32 @@ if [ -r "${img_file}" ]; then
   rm -rf "$backupImg";
   echo_info "The execution of the dd command was finished...";
 
-  # Update the partition table
-  /sbin/initial_storage_part_four "$part4Action" "$DISK";
-  echo_info "Check if it necessary to $part4Action 4-th storage partition. The result is ${?}...";
+  # Two-disk installations keep Storage on a separate disk, so creating /dev/sda4
+  # after the system image write is unnecessary and can break the upgrade.
+  if [ "$SKIP_SYSTEM_PART4_SETUP" = "1" ]; then
+    part4Result=0
+    echo_info "Skip system disk part4 setup: Storage is on a separate disk."
+  else
+    /sbin/initial_storage_part_four "$part4Action" "$DISK";
+    part4Result=$?;
+    echo_info "Check if it necessary to $part4Action 4-th storage partition. The result is ${part4Result}...";
+  fi
+
+  # Single-disk preserve-mode failure (exit 7/8/9/10 from initial_storage_part_four):
+  # the Storage filesystem was NOT verified/re-adopted. Do not let the box silently
+  # reboot into the boot-time provisioner (Storage::selectAndConfigureStorageDisk),
+  # which would take the legacy path and reformat partition 4. Alert loudly and give
+  # the operator a recovery shell while the 1 MiB superblock backup is still in RAM.
+  case "$part4Result" in
+    7|8|9|10)
+      echo_error "STORAGE PRESERVATION FAILED (code $part4Result) on single-disk update."
+      echo_error "Partition 4 was NOT verified as the original Storage; a normal reboot may reformat it."
+      echo_error "The superblock backup (if retained) is in the initramfs working dir: fs-backup-part4.img"
+      echo_error "Entering recovery shell. Type 'exit' to abort firmware upgrade without continuing."
+      PS1='[recovery]# ' /bin/sh -i
+      exit "$part4Result"
+      ;;
+  esac
 fi
 
 # Reread the partition table of the system device

@@ -93,6 +93,7 @@ return [
     // Password strength and validation keys moved to Passwords.php - use psw_ prefix instead
     'gs_InvalidPasswordsFormat' => 'パスワードの形式が無効です',
     'api_UnknownAction' => '不明なアクション',
+    'api_ProviderNotFound' => 'プロバイダーが見つかりません',
     'gs_WebPort' => 'HTTPポート',
     'gs_WebHTTPSPort' => 'HTTPSポート',
     'gs_WEBHTTPSPrivateKey' => 'HTTPS秘密キー',

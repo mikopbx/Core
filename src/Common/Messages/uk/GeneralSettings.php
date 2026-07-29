@@ -479,6 +479,7 @@ return [
     // Password strength and validation keys moved to Passwords.php - use psw_ prefix instead
     'gs_InvalidPasswordsFormat' => 'Неправильний формат паролів',
     'api_UnknownAction' => 'Невідома дія',
+    'api_ProviderNotFound' => 'Провайдер не знайдений',
     'gs_WebHTTPSPort' => 'HTTPS порт',
     'gs_NoSSHPublicKey' => 'SSH публічний ключ не згенеровано',
     'gs_StatDialplanApplications' => 'Застосунки діалпланів',

@@ -134,6 +134,55 @@ class PbxSettings extends ModelsBase
     }
 
     /**
+     * Eagerly rebuilds the whole settings cache hash from the database.
+     *
+     * The cache hash has no TTL and, although Redis itself is not persisted, its
+     * process outlives Asterisk/PHP/worker restarts — so a value written outside
+     * the normal helpers (or before the Redis-DB-index desync fix) can stick across
+     * service "reboots" and getValueByKey() keeps returning it. Called once at the
+     * end of boot (SystemLoader) to guarantee the cache matches the DB. Failures are
+     * non-fatal: the cache repopulates lazily on the next read miss.
+     *
+     * @return void
+     */
+    public static function rebuildCache(): void
+    {
+        try {
+            $redis = self::getRedisAdapter();
+            $fresh = [];
+            foreach (PbxSettings::find()->toArray() as $record) {
+                $fresh[$record['key']] = (string)$record['value'];
+            }
+            $redis->del(self::CACHE_KEY);
+            if ($fresh !== []) {
+                $redis->hMSet(self::CACHE_KEY, $fresh);
+            }
+        } catch (\Throwable $e) {
+            CriticalErrorsHandler::handleException($e);
+        }
+    }
+
+    /**
+     * Clears both generic model cache entries and the dedicated settings hash.
+     *
+     * PbxSettings stores values in a Redis hash named self::CACHE_KEY rather
+     * than only in Phalcon managed-cache keys. Generic ModelsBase::clearCache()
+     * does not touch that hash, so callers that clear PbxSettings after model
+     * changes must rebuild it explicitly.
+     *
+     * @param string $calledClass Full model class name
+     * @return void
+     */
+    public static function clearCache(string $calledClass): void
+    {
+        parent::clearCache($calledClass);
+
+        if ($calledClass === self::class) {
+            self::rebuildCache();
+        }
+    }
+
+    /**
      * Returns default or saved value for key if it exists on DB
      *
      * @param $key string value key

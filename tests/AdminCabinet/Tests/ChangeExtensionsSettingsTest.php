@@ -116,6 +116,67 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     }
 
     /**
+     * Test that a user-defined dial string override is preserved when the mobile number changes.
+     *
+     * Regression for issue #1081: cbOnCompleteMobileNumber used to unconditionally overwrite
+     * mobile_dialstring with the new mobile number, destroying any custom override the user typed.
+     * The override must only be auto-refilled when it is still at its default (equal to the old
+     * mobile number) or empty.
+     *
+     * @depends testChangeMobile
+     *
+     */
+    public function testDialStringOverridePreservedOnMobileChange(): void
+    {
+        $customDialstring = 'SIP/custom-trunk/' . $this->employeeData['mobile'];
+        $temporaryMobile = '89260009999';
+
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $this->employeeData['username']);
+
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
+
+        // Reveal the advanced options that hold the dial string override
+        $this->changeTabOnCurrentPage('general');
+        $this->openAccordionOnThePage();
+
+        // Type a custom override that differs from the current mobile number
+        $this->changeInputField('mobile_dialstring', $customDialstring);
+
+        // Change the mobile number and fire the same callback the input mask triggers on completion
+        $this->changeInputField('mobile_number', $temporaryMobile);
+        self::$driver->executeScript('$("#mobile_number").trigger("change")');
+        self::$driver->executeScript('extension.cbOnCompleteMobileNumber()');
+
+        // FIX: the custom override must survive the mobile number change
+        $this->assertInputFieldValueEqual('mobile_dialstring', $customDialstring);
+
+        // Sanity check of the auto-fill branch: an empty override is still populated from the number.
+        // Read the unmasked number back instead of hard-coding it, to avoid an input-mask timing dependency.
+        $this->changeInputField('mobile_dialstring', '');
+        self::$driver->executeScript('extension.cbOnCompleteMobileNumber()');
+        $unmaskedMobile = self::$driver->executeScript(
+            'return extension.$mobile_number.inputmask("unmaskedvalue");'
+        );
+        $this->assertInputFieldValueEqual('mobile_dialstring', $unmaskedMobile);
+
+        // Restore the default state so the dependent testClearMobile sees the expected values
+        $this->changeInputField('mobile_number', $this->employeeData['mobile']);
+        self::$driver->executeScript('$("#mobile_number").trigger("change")');
+        self::$driver->executeScript('extension.cbOnCompleteMobileNumber()');
+        $this->changeInputField('mobile_dialstring', $this->employeeData['mobile']);
+        $this->submitForm('extensions-form');
+
+        // Verify persistence after reload
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
+        $this->changeTabOnCurrentPage('general');
+        $this->openAccordionOnThePage();
+        $this->assertInputFieldValueEqual('mobile_dialstring', $this->employeeData['mobile']);
+    }
+
+    /**
      * Test clearing mobile settings for an extension.
      *
      * @depends testChangeMobile

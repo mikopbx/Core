@@ -262,6 +262,19 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // WHY: All-or-nothing - either complete save or complete rollback
         // ============================================================
 
+        // Capture the pre-save outbound-registration state so we can cancel a live
+        // upstream registration if this update disables the provider or leaves outbound mode.
+        // Must be read BEFORE the transaction, which mutates $provider->Sip in place.
+        $oldSipRegState = null;
+        if (!$isNewRecord && ($sanitizedData['type'] ?? '') === 'SIP' && $provider->Sip) {
+            $oldSipRegState = [
+                'uniqid' => $provider->Sip->uniqid,
+                'disabled' => $provider->Sip->disabled,
+                'registration_type' => $provider->Sip->registration_type,
+                'description' => $provider->Sip->description ?: $provider->note,
+            ];
+        }
+
         try {
             $savedProvider = self::executeInTransaction(function() use ($provider, $sanitizedData, $isNewRecord) {
 
@@ -304,6 +317,25 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $config = $savedProvider->$configType;
             $description = $config ? $config->description : $savedProvider->note;
             self::logSuccessfulSave('Provider', $description, $savedProvider->type, __METHOD__);
+
+            // If this update cancelled a previously-live outbound registration (provider
+            // disabled or switched away from outbound), de-register it upstream now — before
+            // the async PJSIP reload drops the registration object from the running Asterisk.
+            if ($oldSipRegState !== null) {
+                $wasLiveOutbound = $oldSipRegState['registration_type'] === Sip::REG_TYPE_OUTBOUND
+                    && $oldSipRegState['disabled'] !== '1';
+                $newSip = $savedProvider->Sip;
+                $stillLiveOutbound = $newSip
+                    && $newSip->disabled !== '1'
+                    && $newSip->registration_type === Sip::REG_TYPE_OUTBOUND;
+                if ($wasLiveOutbound && !$stillLiveOutbound) {
+                    ProviderRegistrationHelper::sendUnregister(
+                        $oldSipRegState['uniqid'],
+                        $oldSipRegState['registration_type'],
+                        $oldSipRegState['description']
+                    );
+                }
+            }
 
         } catch (\Exception $e) {
             return self::handleError($e, $res);
@@ -1417,6 +1449,11 @@ class SaveRecordAction extends AbstractSaveRecordAction
     /**
      * Update provider status only (lightweight operation)
      *
+     * Reached from main() ONLY when $data holds exactly {id, type, disabled} (see the
+     * $isStatusUpdate guard). Any other field — including registration_type — routes to
+     * main() instead, so a registration_type change is always handled there. This method
+     * therefore only needs to cancel the upstream registration on the disable transition.
+     *
      * @param array $data Data containing id, type, disabled
      * @param PBXApiResult $res Result object
      * @return PBXApiResult
@@ -1457,11 +1494,22 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 return $res;
             }
 
+            $wasDisabled = $config->disabled === '1';
             $config->disabled = $disabled ? '1' : '0';
 
             if (!$config->save()) {
                 $res->messages['error'] = $config->getMessages();
                 return $res;
+            }
+
+            // A SIP provider switched OFF must be de-registered upstream immediately,
+            // otherwise the provider keeps routing inbound calls until the binding expires.
+            if ($providerType === 'SIP' && $disabled && !$wasDisabled) {
+                ProviderRegistrationHelper::sendUnregister(
+                    $config->uniqid,
+                    $config->registration_type,
+                    $config->description ?: $provider->note
+                );
             }
 
             // Return updated data

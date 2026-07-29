@@ -810,6 +810,10 @@ return [
     'rest_mod_GetMetadataFromPackageDesc' => 'Bir modül paket dosyasından meta verileri ayıklama ve döndürme',
     'rest_mod_InstallationStatus' => 'Kurulum durumunu alın',
     'rest_mod_InstallationStatusDesc' => 'Modül kurulum sürecinin mevcut durumunu öğrenme',
+    'rest_mod_GetOperations' => 'Modül işlemleri günlüğünü alın',
+    'rest_mod_GetOperationsDesc' => 'Modüllerle ilgili aktif işlemleri ve günlükten son işlemlerin geçmişini döndürür',
+    'rest_mod_GetOperationStatus' => 'Modül işleminin durumunu alın',
+    'rest_mod_GetOperationStatusDesc' => 'Belirtilen modül için mevcut veya son işlemin durumunu döndürür',
     'rest_system_GetDatetime' => 'Sistem saatini alın',
     'rest_system_GetDeleteStatisticsDesc' => 'Belirtilen nesneyle birlikte silinecek nesneler hakkında bilgi edinme',
     'rest_system_Reboot' => 'Sistemi yeniden başlatın.',
@@ -1108,6 +1112,7 @@ return [
     'rest_schema_s3_use_path_style' => 'Path-style URL bayrağı (1=path-style MinIO/Garage/Ceph için, 0=virtual-hosted AWS S3 ve çoğu SaaS sağlayıcısı için).',
     'rest_schema_s3_available_presets' => 'Bilinen S3 sağlayıcılarının kataloğu: endpoint placeholder, varsayılan bölge, path-style bayrağı ve dokümantasyon bağlantısı. Yalnızca okunur — S3ProviderPresets kayıt defterinden oluşturulur.',
     'rest_System_UpgradeMountFailed' => 'Bölüm bağlanamadı. Dosya sistemini kontrol edin.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Dikkat: veri (Storage) bölümü sistemle aynı diskte bulunuyor. İmaj güncellemesi tek diski yeniden bölümler; kayıtları, çağrı geçmişini ve modülleri barındıran bölüm otomatik olarak korunur, ancak önceden yedek almanız kesinlikle önerilir.',
     // ============================================================================
     // MISC
     // ============================================================================

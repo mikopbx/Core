@@ -1925,6 +1925,10 @@ return [
     'rest_mod_GetMetadataFromPackageDesc' => 'Izdvajanje i vraćanje metapodataka iz datoteke paketa modula',
     'rest_mod_InstallationStatus' => 'Dobij status instalacije',
     'rest_mod_InstallationStatusDesc' => 'Dobivanje trenutnog statusa procesa instalacije modula',
+    'rest_mod_GetOperations' => 'Dobijte dnevnik operacija s modulima',
+    'rest_mod_GetOperationsDesc' => 'Vraća aktivne operacije s modulima i povijest posljednjih operacija iz dnevnika',
+    'rest_mod_GetOperationStatus' => 'Dobijte status operacije modula',
+    'rest_mod_GetOperationStatusDesc' => 'Vraća stanje trenutne ili posljednje operacije za navedeni modul',
     'rest_system_CheckForUpdatesDesc' => 'Dobijte potpune informacije o izdanju firmvera, uključujući verziju, opis, poveznice za preuzimanje, veličine datoteka i MD5 kontrolne zbrojeve. Koristite ovo za prikaz informacija o ažuriranju korisnicima.',
     'rest_system_ExecuteBashCommand' => 'Pokreni bash naredbu',
     'rest_system_ExecuteSqlRequest' => 'Izvrši SQL upit',
@@ -2059,6 +2063,7 @@ return [
     'rest_System_UpgradeFailedToDetectOffset' => 'Nije moguće odrediti pomak particije za pokretanje.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Nije uspjelo stvaranje uređaja petlje.',
     'rest_System_UpgradeMountFailed' => 'Montiranje particije nije uspjelo. Provjerite datotečni sustav.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Pozor: podatkovna particija (Storage) nalazi se na istom disku kao i sustav. Ažuriranje slikom ponovno particionira jedini disk; particija sa snimkama, poviješću poziva i modulima automatski se čuva, ali se snažno preporučuje prethodno izraditi sigurnosnu kopiju.',
     // ============================================================================
     // MISC
     // ============================================================================

@@ -47,4 +47,45 @@ rm -f "$PIDFILE"
 # Each call uses ~4-8 FDs (SIP sockets + RTP ports)
 ulimit -n 65535
 
+# Keep Asterisk RSS bounded by replacing glibc malloc with jemalloc.
+# glibc fragments freed memory across up-to-8*CPU arenas and never returns it to
+# the OS, so RSS climbs from ~64MB to 350MB+ over a day even at zero active calls
+# under the steady REGISTER/security/AMI event stream. jemalloc uses per-thread
+# caches plus decay-based purging that releases freed memory back to the OS;
+# background_thread:true performs that purge asynchronously, so memory is
+# reclaimed even while Asterisk is idle. This scales to both small VPS boxes and
+# large multi-core installations, unlike capping glibc arenas (which trades RSS
+# for allocator lock contention). Inherited across 'core restart now' re-exec.
+#
+# This script is the single Asterisk start path — monit's start program and the
+# boot-time PbxConf::$startCommand both invoke it — so the tuning lives here only.
+# Probe candidate paths (lib64 on x86-64, lib on ARM and others) and verify the
+# library actually loads — 'asterisk -V' does a full dynamic link, so a corrupt
+# or ABI-mismatched libjemalloc fails the preflight and we fall through to glibc
+# instead of bricking startup into a monit restart loop.
+JEMALLOC=""
+for cand in /usr/lib64/libjemalloc.so.2 /usr/lib/libjemalloc.so.2; do
+    if [ -f "$cand" ] && LD_PRELOAD="$cand" /usr/sbin/asterisk -V >/dev/null 2>&1; then
+        JEMALLOC="$cand"
+        break
+    fi
+done
+if [ -n "$JEMALLOC" ]; then
+    export LD_PRELOAD="$JEMALLOC"
+    export MALLOC_CONF="background_thread:true,dirty_decay_ms:10000,muzzy_decay_ms:10000"
+    logger -t safe_asterisk_start "jemalloc active: $JEMALLOC"
+else
+    # Fallback when jemalloc is missing or incompatible (older/other-arch rootfs):
+    # cap glibc arenas on small-RAM systems only (2 GiB in KiB = 2097152). Large
+    # systems keep glibc defaults to avoid arena-lock contention under high CPS.
+    MEM_TOTAL_KB=$(awk '/^MemTotal:/{print $2}' /proc/meminfo 2>/dev/null)
+    if [ -n "$MEM_TOTAL_KB" ] && [ "$MEM_TOTAL_KB" -lt 2097152 ]; then
+        export MALLOC_ARENA_MAX=2
+        export MALLOC_TRIM_THRESHOLD_=131072
+        logger -t safe_asterisk_start "jemalloc unavailable; glibc arena cap (small-RAM)"
+    else
+        logger -t safe_asterisk_start "jemalloc unavailable; glibc defaults"
+    fi
+fi
+
 exec /usr/sbin/asterisk -F

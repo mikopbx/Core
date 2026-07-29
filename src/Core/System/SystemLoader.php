@@ -308,6 +308,15 @@ class SystemLoader extends Injectable
             $this->echoResultMsg();
         }
 
+        // Rebuild the PbxSettings value cache from the DB. Redis is not persisted but its
+        // process outlives service restarts, so a stale cached value (e.g. from a write to
+        // the wrong Redis DB before the index-desync fix) would otherwise survive reboots
+        // and be served indefinitely by getValueByKey(). Eager full rebuild now that the
+        // DB schema is current and Redis is running.
+        $this->echoStartMsg(' - Rebuilding settings cache...');
+        PbxSettings::rebuildCache();
+        $this->echoResultMsg();
+
         // Create directories required by modules after DB upgrade
         $this->echoStartMsg(' - Creating modules links and folders...');
         $storage->createWorkDirsAfterDBUpgrade();

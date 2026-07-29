@@ -1393,6 +1393,10 @@ return [
     'rest_mod_InstallFromRepo' => 'Installeer de module vanuit de repository',
     'rest_mod_InstallationStatus' => 'Installatiestatus ophalen',
     'rest_mod_InstallationStatusDesc' => 'De huidige status van het module-installatieproces opvragen',
+    'rest_mod_GetOperations' => 'Logboek met modulebewerkingen ophalen',
+    'rest_mod_GetOperationsDesc' => 'Retourneert actieve modulebewerkingen en de geschiedenis van recente bewerkingen uit het logboek',
+    'rest_mod_GetOperationStatus' => 'Status van de modulebewerking ophalen',
+    'rest_mod_GetOperationStatusDesc' => 'Retourneert de status van de huidige of laatste bewerking voor de opgegeven module',
     // ============================================================================
     // System REST API
     // ============================================================================
@@ -2348,6 +2352,7 @@ return [
     'rest_System_UpgradeFailedToDetectOffset' => 'De offset van de opstartpartitie kan niet worden vastgesteld.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Het is niet gelukt om een lusapparaat aan te maken.',
     'rest_System_UpgradeMountFailed' => 'Partitie kon niet worden gekoppeld. Controleer het bestandssysteem.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Let op: de datapartitie (Storage) staat op dezelfde schijf als het systeem. De image-update herpartitioneert de enige schijf; de partitie met opnames, oproepgeschiedenis en modules blijft automatisch behouden, maar het wordt sterk aanbevolen om vooraf een back-up te maken.',
 
     // Syslog: packet capture and log retrieval
     'rest_syslog_GetCaptureStatus' => 'Pakketopnamestatus ophalen',

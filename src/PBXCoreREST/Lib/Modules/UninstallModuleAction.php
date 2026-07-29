@@ -20,11 +20,14 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Models\ModuleOperations;
 use MikoPBX\Common\Providers\MutexProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
+use MikoPBX\PBXCoreREST\Lib\Modules\Journal\OperationJournal;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
 
@@ -56,6 +59,8 @@ class UninstallModuleAction extends Injectable
 
     private string $moduleUniqueId;
 
+    private string $asyncChannelId;
+
     /**
      * Class constructor
      *
@@ -66,6 +71,7 @@ class UninstallModuleAction extends Injectable
     {
         $this->moduleUniqueId = $moduleUniqueId;
         $this->keepSettings = $keepSettings;
+        $this->asyncChannelId = $asyncChannelId;
         $this->unifiedModulesEvents = new UnifiedModulesEvents($asyncChannelId, $moduleUniqueId);
     }
 
@@ -81,6 +87,23 @@ class UninstallModuleAction extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
+
+        // An orchestrator-driven operation (enable/disable) no longer holds
+        // the legacy mutex — refuse to run concurrently with a live one.
+        if (OperationJournal::hasAliveOperation()) {
+            $res->success = false;
+            $res->messages['error'][] = TranslationProvider::translate('ext_ErrAnotherOperationInProgress');
+            $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_VII_FINAL_STATUS, $res->getResult());
+            return $res;
+        }
+
+        // Journal dual-write: the Stage_VII push below finalizes the row
+        $this->unifiedModulesEvents->setJournalContext(OperationJournal::begin(
+            $this->moduleUniqueId,
+            ModuleOperations::OPERATION_UNINSTALL,
+            ['keepSettings' => $this->keepSettings],
+            $this->asyncChannelId
+        ));
 
         // Create a mutex to ensure synchronized access
         $mutex = $this->di->get(MutexProvider::SERVICE_NAME);
@@ -128,37 +151,11 @@ class UninstallModuleAction extends Injectable
             }
         }
 
-        // Kill all module processes.
-        //
-        // The previous implementation used a nested $() subshell —
-        //     "$kill -9 $($lsof $currentModuleDir/bin/* | $grep -v COMMAND | $awk '{print $2}' | $uniq)"
-        // which is an arbitrary command injection sink the moment
-        // $currentModuleDir contains a shell meta-character. Even though the
-        // module id is now validated above, we avoid the nested shell
-        // altogether: lsof output is captured into a PHP array and PIDs are
-        // sent via posix_kill(), so no shell interpolation of a path happens.
+        // Kill all module processes holding files under bin/ (shared helper,
+        // no shell interpolation of the path — see killModuleBinProcesses).
         if (is_dir("$currentModuleDir/bin")) {
             $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_II_STOP_PROCESSES, $res->getResult());
-
-            $lsof = Util::which('lsof');
-            $lsofCmd = $lsof . ' ' . escapeshellarg("$currentModuleDir/bin") . '/*';
-            $lsofOutput = [];
-            Processes::mwExec($lsofCmd, $lsofOutput);
-
-            $pids = [];
-            foreach ($lsofOutput as $line) {
-                if (str_starts_with($line, 'COMMAND')) {
-                    continue;
-                }
-                $fields = preg_split('/\s+/', trim($line));
-                if (isset($fields[1]) && ctype_digit($fields[1])) {
-                    $pids[(int)$fields[1]] = true;
-                }
-            }
-            foreach (array_keys($pids) as $pid) {
-                // SIGKILL each open file-holding process, mirroring the old kill -9 loop.
-                @posix_kill($pid, SIGKILL);
-            }
+            PbxExtensionUtils::killModuleBinProcesses($currentModuleDir);
         }
 
         // Uninstall module with keep settings and backup db

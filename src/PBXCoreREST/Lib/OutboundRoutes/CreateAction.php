@@ -81,8 +81,9 @@ class CreateAction
             if (!empty($data['priority'])) {
                 $model->priority = (string)$data['priority'];
             } else {
-                $maxPriority = OutgoingRoutingTable::maximum(['column' => 'priority']);
-                $model->priority = (string)((int)$maxPriority + 1);
+                // Numeric next priority: priority is TEXT, so MAX() compares
+                // lexicographically ("9" > "10") and would duplicate values (#1076).
+                $model->priority = (string)OutgoingRoutingTable::getNextPriority();
             }
             
             // Save model

@@ -139,12 +139,23 @@ const installationFromZip = {
             filePath: json.data.filename,
             channelId: installationFromZip.channelId
         };
+        // The real module uniqid is unknown until the package metadata is read:
+        // track by the upload fileId, the watchdog falls back to the
+        // collection endpoint and re-keys by operationId from nchan messages.
+        installStatusLoopWorker.startWatch(params.fileId);
         ModulesAPI.installFromPackage(params,  (response) => {
             console.debug(response);
             if (response.result === true) {
                 $('html, body').animate({
                     scrollTop: installationFromZip.$progressBarBlock.offset().top-50,
                 }, 2000);
+            } else {
+                // Command rejected outright — no point waiting for the watchdog
+                installStatusLoopWorker.watchdog.stop();
+                installStatusLoopWorker.$progressBarBlock.hide();
+                $('a.button').removeClass('disabled');
+                $('#add-new-button').removeClass('loading');
+                UserMessage.showMultiString(response.messages, globalTranslate.ext_InstallationError);
             }
         });
     },

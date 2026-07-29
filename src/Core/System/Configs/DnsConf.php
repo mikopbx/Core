@@ -59,6 +59,11 @@ class DnsConf extends SystemConfigClass
 
     /**
      * Generates the resolv.conf file based on system configuration.
+     *
+     * @param array<string> $dns Optional list of IPv4 nameserver addresses. When
+     *                           empty, IPv4 DNS is read from the host config via
+     *                           Network::getHostDNS(). IPv6 nameservers are always
+     *                           retrieved separately via Network::getHostDNS6().
      */
     public function resolveConfGenerate(array $dns = []): void
     {

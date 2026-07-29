@@ -732,6 +732,7 @@ return [
     'rest_schema_s3_region' => 'AWS régió vagy azzal egyenértékű S3 szolgáltatási régió azonosítója',
     'rest_System_UpgradeLoopDeviceFailed' => 'Nem sikerült létrehozni a hurokeszközt.',
     'rest_System_UpgradeMountFailed' => 'Nem sikerült csatolni a partíciót. Ellenőrizze a fájlrendszert.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Figyelem: az adat (Storage) partíció ugyanazon a lemezen van, mint a rendszer. A lemezképes frissítés újraparticionálja az egyetlen lemezt; a felvételeket, hívásnaplót és modulokat tartalmazó partíció automatikusan megmarad, de erősen ajánlott előbb biztonsági mentést készíteni.',
     // ============================================================================
     // MISC
     // ============================================================================
@@ -1111,6 +1112,10 @@ return [
     'rest_mod_GetMetadataFromPackageDesc' => 'Metaadatok kinyerése és visszaadása egy modulcsomag-fájlból',
     'rest_mod_InstallationStatus' => 'Telepítési állapot lekérése',
     'rest_mod_InstallationStatusDesc' => 'A modultelepítési folyamat aktuális állapotának lekérése',
+    'rest_mod_GetOperations' => 'Modulműveletek naplójának lekérése',
+    'rest_mod_GetOperationsDesc' => 'Visszaadja az aktív modulműveleteket és a legutóbbi műveletek előzményeit a naplóból',
+    'rest_mod_GetOperationStatus' => 'Modulművelet állapotának lekérése',
+    'rest_mod_GetOperationStatusDesc' => 'Visszaadja a megadott modul aktuális vagy utolsó műveletének állapotát',
     // ============================================================================
     // System REST API
     // ============================================================================

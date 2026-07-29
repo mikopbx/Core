@@ -37,8 +37,10 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudParametersAc
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadConferenceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDockerNetworkFiltersAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFail2BanConfAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFeaturesAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAclAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\RemoveCustomFilesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadH323Action;
@@ -302,6 +304,11 @@ class WorkerModelsEvents extends WorkerBase
             ReloadNetworkAction::class,
             ReloadFirewallAction::class,
             ReloadFail2BanConfAction::class,
+            ReloadFirewallAclAction::class,
+            // Docker/no-iptables IP filtering: syncs firewall:* Redis keys (consumed by the
+            // nginx unified-security.lua WEB-deny) and regenerates the Asterisk deny ACLs.
+            // Runs on any NetworkFilters change; a no-op on hosts that manage iptables.
+            ReloadDockerNetworkFiltersAction::class,
             ReloadSSHAction::class,
             ReloadLicenseAction::class,
             ReloadSentryAction::class,
@@ -376,9 +383,9 @@ class WorkerModelsEvents extends WorkerBase
     private function registerSignalHandlers(): void
     {
         // Handle termination signals
-        pcntl_signal(SIGTERM, [$this, 'handleShutdownSignal']);
-        pcntl_signal(SIGINT, [$this, 'handleShutdownSignal']);
-        pcntl_signal(SIGHUP, [$this, 'handleShutdownSignal']);
+        pcntl_signal(SIGTERM, $this->handleShutdownSignal(...));
+        pcntl_signal(SIGINT, $this->handleShutdownSignal(...));
+        pcntl_signal(SIGHUP, $this->handleShutdownSignal(...));
     }
     
     /**

@@ -426,6 +426,7 @@ return [
     // Password strength and validation keys moved to Passwords.php - use psw_ prefix instead
     'gs_InvalidPasswordsFormat' => 'Neispravan format lozinke',
     'api_UnknownAction' => 'Nepoznata radnja',
+    'api_ProviderNotFound' => 'Davatelj usluga nije pronađen',
     'gs_WebPort' => 'HTTP port',
     'gs_WebHTTPSPort' => 'HTTPS port',
     'gs_WEBHTTPSPrivateKey' => 'HTTPS privatni ključ',

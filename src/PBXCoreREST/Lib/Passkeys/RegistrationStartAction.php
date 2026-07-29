@@ -102,8 +102,17 @@ class RegistrationStartAction
             'attestation' => 'none',
             'authenticatorSelection' => [
                 // Don't specify authenticatorAttachment to allow both platform (Touch ID/Face ID)
-                // and cross-platform (YubiKey) authenticators
-                'requireResidentKey' => false,
+                // and cross-platform (YubiKey) authenticators.
+                //
+                // residentKey:'required' is mandatory here because the login flow is
+                // usernameless (AuthenticationStartAction sends an empty allowCredentials),
+                // and a usernameless login can only use discoverable (resident) credentials.
+                // Platform authenticators already mint resident credentials, so this is a
+                // no-op for them; roaming keys (YubiKey) honor the hint and would otherwise
+                // create a non-discoverable credential that can never be used at login.
+                // requireResidentKey mirrors residentKey for WebAuthn L1 backward compatibility.
+                'residentKey' => 'required',
+                'requireResidentKey' => true,
                 'userVerification' => 'preferred'
             ]
         ];

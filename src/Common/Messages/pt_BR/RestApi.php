@@ -178,6 +178,10 @@ return [
     'rest_mod_GetMetadataFromPackage' => 'Obter metadados de um pacote',
     'rest_mod_GetMetadataFromPackageDesc' => 'Extraindo e retornando metadados de um arquivo de pacote de módulo',
     'rest_mod_InstallationStatusDesc' => 'Obtendo o status atual do processo de instalação do módulo.',
+    'rest_mod_GetOperations' => 'Obtenha o log de operações com módulos',
+    'rest_mod_GetOperationsDesc' => 'Retorna as operações ativas com módulos e o histórico das operações recentes do log',
+    'rest_mod_GetOperationStatus' => 'Obtenha o status da operação do módulo',
+    'rest_mod_GetOperationStatusDesc' => 'Retorna o status da operação atual ou da última operação para o módulo especificado',
     // ============================================================================
     // System REST API
     // ============================================================================
@@ -1800,6 +1804,7 @@ return [
     'rest_System_UpgradeFailedToDetectOffset' => 'Não foi possível determinar o deslocamento da partição de inicialização.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Falha ao criar o dispositivo de loop.',
     'rest_System_UpgradeMountFailed' => 'Falha ao montar a partição. Verifique o sistema de arquivos.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Atenção: a partição de dados (Storage) está no mesmo disco que o sistema. A atualização por imagem reparticiona o único disco; a partição com gravações, histórico de chamadas e módulos é preservada automaticamente, mas é altamente recomendável fazer um backup antes.',
     // ============================================================================
     // MISC
     // ============================================================================

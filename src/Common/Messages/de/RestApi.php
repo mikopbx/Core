@@ -1001,6 +1001,10 @@ return [
     'rest_mod_GetMetadataFromPackageDesc' => 'Extrahieren und Zurückgeben von Metadaten aus einer Modulpaketdatei',
     'rest_mod_InstallationStatus' => 'Installationsstatus abrufen',
     'rest_mod_InstallationStatusDesc' => 'Abrufen des aktuellen Status des Modulinstallationsprozesses',
+    'rest_mod_GetOperations' => 'Protokoll der Modulvorgänge abrufen',
+    'rest_mod_GetOperationsDesc' => 'Gibt die aktiven Modulvorgänge und den Verlauf der letzten Vorgänge aus dem Protokoll zurück',
+    'rest_mod_GetOperationStatus' => 'Status des Modulvorgangs abrufen',
+    'rest_mod_GetOperationStatusDesc' => 'Gibt den Status des aktuellen oder letzten Vorgangs für das angegebene Modul zurück',
     // ============================================================================
     // System REST API
     // ============================================================================
@@ -1323,6 +1327,7 @@ return [
     'rest_schema_s3_available_presets' => 'Katalog bekannter S3-Anbieter mit Endpoint-Platzhalter, Standardregion, Path-Style-Flag und Dokumentationslink. Schreibgeschützt — wird aus der S3ProviderPresets-Registry generiert.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Fehler beim Erstellen des Loop-Geräts.',
     'rest_System_UpgradeMountFailed' => 'Die Partition konnte nicht eingebunden werden. Überprüfen Sie das Dateisystem.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Achtung: Die Datenpartition (Storage) befindet sich auf derselben Festplatte wie das System. Das Image-Update partitioniert die einzige Festplatte neu; die Partition mit Aufzeichnungen, Anrufverlauf und Modulen bleibt automatisch erhalten, es wird jedoch dringend empfohlen, vorher ein Backup zu erstellen.',
     // ============================================================================
     // MISC
     // ============================================================================

@@ -71,9 +71,9 @@ class GetRecordAction extends AbstractGetRecordAction
             'Outbound route not found',      // Not found message
             false,                           // Doesn't need extension for new records
             function($model) {               // New record callback
-                // Set priority for new records
-                $maxPriority = OutgoingRoutingTable::maximum(['column' => 'priority']);
-                $model->priority = (string)((int)$maxPriority + 1);
+                // Set priority for new records, computed numerically
+                // (priority is TEXT, so MAX() compares lexicographically, #1076).
+                $model->priority = (string)OutgoingRoutingTable::getNextPriority();
                 return $model;
             }
         );
@@ -107,8 +107,8 @@ class GetRecordAction extends AbstractGetRecordAction
             
             // Update specific fields for copy
             $newRoute->id = '';
-            $maxPriority = OutgoingRoutingTable::maximum(['column' => 'priority']);
-            $newRoute->priority = (string)((int)$maxPriority + 1);
+            // Numeric next priority (priority is TEXT; MAX() is lexicographic, #1076).
+            $newRoute->priority = (string)OutgoingRoutingTable::getNextPriority();
             $newRoute->rulename = $sourceRoute->rulename . ' - Copy';
             $newRoute->note = '';
             

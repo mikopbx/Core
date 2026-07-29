@@ -1932,6 +1932,10 @@ return [
     'rest_mod_GetMetadataFromPackageDesc' => '从模块包文件中提取并返回元数据',
     'rest_mod_InstallationStatus' => '获取安装状态',
     'rest_mod_InstallationStatusDesc' => '获取模块安装过程的当前状态',
+    'rest_mod_GetOperations' => '获取模块操作日志',
+    'rest_mod_GetOperationsDesc' => '返回活动的模块操作以及日志中最近操作的历史记录',
+    'rest_mod_GetOperationStatus' => '获取模块操作状态',
+    'rest_mod_GetOperationStatusDesc' => '返回指定模块当前或最后一次操作的状态',
     // ============================================================================
     // System REST API
     // ============================================================================
@@ -2342,6 +2346,7 @@ return [
     // ============================================================================
     'rest_System_UpgradeFailedToDetectOffset' => '无法确定启动分区偏移量。',
     'rest_System_UpgradeMountFailed' => '分区挂载失败。请检查文件系统。',
+    'rest_System_UpgradeSingleDiskWarning' => '警告：数据（Storage）分区与系统位于同一磁盘上。镜像更新会对唯一的磁盘重新分区；保存录音、通话记录和模块的分区将自动保留，但强烈建议事先备份。',
     // ============================================================================
     // MISC
     // ============================================================================

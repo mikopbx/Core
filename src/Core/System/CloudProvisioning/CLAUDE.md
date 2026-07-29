@@ -2,14 +2,14 @@
 
 Unified system for automatic MikoPBX configuration during initial boot across all deployment environments.
 
-## File Inventory (14 files)
+## File Inventory
 
 ```
 CloudProvisioning/
-├── CloudProvider.php          # Abstract base class (888 lines) - SQLite direct access, user-data parsing
-├── ProvisioningConfig.php     # DTO (667 lines) - validation, sanitization, factory methods
+├── CloudProvider.php          # Abstract base class - SQLite direct access, user-data parsing
+├── ProvisioningConfig.php     # DTO - validation, sanitization, factory methods
 ├── DockerCloud.php            # Docker containers - ENV variables, every-start overrides
-├── LxcCloud.php               # LXC containers (602 lines) - Proxmox files, network parsing
+├── LxcCloud.php               # LXC containers - Proxmox files, network parsing
 ├── AWSCloud.php               # Amazon EC2 - IMDS at 169.254.169.254
 ├── GoogleCloud.php            # Google Cloud - Metadata-Flavor: Google header
 ├── AzureCloud.php             # Microsoft Azure - Metadata: true header
@@ -19,17 +19,34 @@ CloudProvisioning/
 ├── SelectelCloud.php          # Selectel - DMI sys_vendor + OpenStack x_sel_ metadata keys
 ├── VKCloud.php                # VK Cloud - OpenStack vkcloud_project_id detection
 ├── AlibabaCloud.php           # Alibaba Cloud - IMDS at 100.100.100.200
-└── NoCloud.php                # On-premise (545 lines) - ISO/seed/HTTP/cmdline datasources
+└── NoCloud.php                # On-premise - ISO/seed/HTTP/cmdline datasources
 ```
 
-## Two-Phase Boot Architecture
+## Three-Phase Boot Architecture
+
+The orchestrator class `CloudProvisioning` lives ONE level up, in
+`src/Core/System/CloudProvisioning.php` (not in this directory).
+
+### Phase 0: Early Port Overrides (Before Redis/Beanstalkd Start)
+`CloudProvisioning::applyEarlyOverrides()` — invoked from `SystemLoader` before the
+Redis daemon starts (only outside recovery mode). No ORM/Redis dependency.
+
+```
+CloudProvisioning::applyEarlyOverrides()
+  → if Docker: DockerCloud::applyPortOverrides()
+      → writes REDIS_PORT/BEANSTALK_PORT/GNATS_PORT/GNATS_HTTP_PORT from ENV
+        directly into /etc/inc/mikopbx-settings.json (reads ENV, writes JSON only)
+```
 
 ### Phase 1: Environment Overrides (Every Container Start)
-Called before one-time provisioning check. Uses ORM (Redis already running).
+Called from `CloudProvisioning::start()` (Step 1), before the one-time provisioning
+check. Uses ORM (Redis already running). Port settings are NOT reapplied here —
+they were handled in Phase 0.
 
 ```
 DockerCloud::applyEnvironmentOverrides()
-  → Reads ENV variables, applies port settings to JSON, resets LAN to eth0
+  → Builds ProvisioningConfig from ENV, resets LAN to eth0, applies config via ORM
+  → (port settings already handled in Phase 0, not reapplied here)
 
 LxcCloud::applyProxmoxOverrides()
   → Reads Proxmox files (/etc/hostname, /etc/network/interfaces, /etc/shadow)
@@ -52,7 +69,7 @@ CloudProvisioning::start()
   → Mark complete: CLOUD_PROVISIONING=1, enable firewall/fail2ban
 ```
 
-## Provider Priority Order (12 providers)
+## Provider Priority Order
 
 1. **DockerCloud** - `/.dockerenv` exists
 2. **LxcCloud** - `container=lxc` ENV
@@ -84,6 +101,7 @@ markProvisioningCompleteDirect(string $cloudName): void
 ```
 
 ### Direct SQLite Methods (Early Boot, No Redis)
+All `protected` — invoked by subclasses during provisioning (e.g. `provision()`, and `LxcCloud::applyProxmoxOverrides()` in phase 1), not part of the public API.
 ```php
 loadPbxSettingsDirectly(): array
 getPbxSettingDirect(string $key): ?string
@@ -97,6 +115,7 @@ applyExternalIpDirect(string $extipaddr): void
 ```
 
 ### ORM Methods (When Redis Available)
+All `protected` except `updatePbxSettings()` (public).
 ```php
 updatePbxSettings(string $key, string|int|null $data): void
 updateSSHKeys(string $data): void
@@ -109,6 +128,7 @@ applyConfig(ProvisioningConfig $config): bool
 ```
 
 ### User-Data Processing
+All `protected` — overridden/called within providers, not public.
 ```php
 fetchUserData(): ?string                           // Override in providers
 parseUserData(string $userData): ?ProvisioningConfig  // Auto-detects YAML/JSON
@@ -189,3 +209,10 @@ mikopbx:
 - **SSRF (NoCloud)**: Private IP blocked by default, override: `NOCLOUD_ALLOW_PRIVATE_IPS=1`
 - **XSS**: Control character removal, length limits, hostname/IP validation
 - **Passwords**: SHA-512 hashed via `PasswordService::generateSha512Hash()`
+
+## Tests
+
+`tests/Core/System/CloudProvisioning/`:
+- `ProvisioningConfigTest.php` — DTO validation, sanitization, factory/merge logic
+- `DockerCloudTest.php` — Docker ENV overrides
+- `NoCloudTest.php` — NoCloud datasource handling

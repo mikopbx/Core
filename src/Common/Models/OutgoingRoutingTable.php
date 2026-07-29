@@ -118,5 +118,24 @@ class OutgoingRoutingTable extends ModelsBase
             ]
         );
     }
+
+    /**
+     * Returns the next free priority value, computed as an integer.
+     *
+     * The priority column has TEXT affinity, so SQL MAX() and ORDER BY compare
+     * lexicographically ("9" > "10"). Computing the maximum numerically avoids
+     * duplicate or out-of-order priorities once values reach two digits (#1076).
+     *
+     * @return int The next priority (current numeric maximum + 1).
+     */
+    public static function getNextPriority(): int
+    {
+        $maxPriority = 0;
+        foreach (self::find(['columns' => 'priority']) as $row) {
+            $maxPriority = max($maxPriority, (int)$row->priority);
+        }
+
+        return $maxPriority + 1;
+    }
 }
 

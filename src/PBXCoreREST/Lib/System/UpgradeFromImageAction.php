@@ -24,6 +24,7 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
@@ -73,6 +74,20 @@ class UpgradeFromImageAction extends Injectable
         list($res->success, $res->messages) = self::calculateFreeSpace();
         if (!$res->success) {
             return $res;
+        }
+
+        // Warn (non-blocking) when Storage shares the system disk. A single-disk
+        // .img update repartitions the only physical disk; historically that could
+        // wipe /storage/usbdisk1 (GitHub #1077). Partition 4 is now preserved
+        // post-reboot by pbx_firmware/initial_storage_part_four, but the operator
+        // must be told the risk — and it is recorded to syslog for audit.
+        if (self::isSingleDiskLayout(self::getStoragePhysicalDisk(), self::getSystemPhysicalDisk())) {
+            $res->messages[] = TranslationProvider::translate('rest_System_UpgradeSingleDiskWarning');
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                'Single-disk layout detected before .img upgrade; Storage is on the system disk (GitHub #1077)',
+                LOG_WARNING
+            );
         }
 
         $res->data['imageFileLocation'] = $imageFileLocation;
@@ -162,6 +177,64 @@ class UpgradeFromImageAction extends Injectable
         }
 
         return [$success, $messages];
+    }
+
+    /**
+     * Pure single-disk decision: Storage and system live on one physical disk
+     * when the disk hosting the mounted Storage partition equals the system disk.
+     * Mirrors the shell test in pbx_firmware (mounted_storage vs partition4) and
+     * the sys_disk computation in Storage::getAllHdd() (Storage.php:1524).
+     *
+     * Kept as a pure function of two disk names so it is unit-testable without a
+     * live disk layout — the impure collectors below feed it.
+     *
+     * @param string $storageDisk Physical disk that carries the Storage partition (e.g. 'sda').
+     * @param string $systemDisk  Physical disk that carries the system/CF partitions (e.g. 'sda').
+     * @return bool True when both are the same non-empty disk (single-disk layout).
+     */
+    public static function isSingleDiskLayout(string $storageDisk, string $systemDisk): bool
+    {
+        return $storageDisk !== '' && $storageDisk === $systemDisk;
+    }
+
+    /**
+     * Resolve the physical disk that currently carries the mounted Storage
+     * partition (/storage/usbdisk1). Reads /proc/mounts directly (no external
+     * binary for the source lookup) and resolves the parent disk via lsblk.
+     *
+     * @return string Physical disk name (e.g. 'sda'), or '' when it cannot be resolved.
+     */
+    private static function getStoragePhysicalDisk(): string
+    {
+        $source = '';
+        foreach (@file('/proc/mounts', FILE_IGNORE_NEW_LINES) ?: [] as $line) {
+            $cols = preg_split('/\s+/', $line);
+            if (($cols[1] ?? '') === '/storage/usbdisk1') {
+                $source = $cols[0] ?? '';
+                break;
+            }
+        }
+        if ($source === '') {
+            return '';
+        }
+        $lsblk = Util::which('lsblk');
+        $disk = trim((string)shell_exec("$lsblk -no PKNAME " . escapeshellarg($source) . ' 2>/dev/null'));
+        // Stacked devices may print several lines; take the first non-empty one.
+        return trim((string)strtok($disk, "\n"));
+    }
+
+    /**
+     * Resolve the physical system disk from the CF device marker written at setup
+     * (and refreshed by firmware_upgrade.sh). The file holds a bare disk name.
+     *
+     * @return string Physical disk name (e.g. 'sda'), or '' when unavailable.
+     */
+    private static function getSystemPhysicalDisk(): string
+    {
+        if (!file_exists(self::CF_DEVICE)) {
+            return '';
+        }
+        return trim((string)file_get_contents(self::CF_DEVICE));
     }
 
     /*
@@ -310,8 +383,9 @@ class UpgradeFromImageAction extends Injectable
         // Setup loop device with the correct offset
         $parted  = Util::which('parted');
         $busybox = Util::which('busybox');
+        $awkOffset = "$busybox awk 'NR>3 && /boot/ {gsub(/B/,\"\",\$2); print \$2+0; exit}'";
         $cmdOffset = "$parted " . escapeshellarg($decompressedImg)
-            . " unit B print | $busybox awk 'NR>3 && /boot/ {gsub(/B/,\"\",$2); print $2+0; exit}' | $busybox head -n 1";
+            . " unit B print | $awkOffset | $busybox head -n 1";
         $offset = trim(shell_exec($cmdOffset) ?? '');
 
         // Validate offset before proceeding
@@ -350,7 +424,11 @@ class UpgradeFromImageAction extends Injectable
 
         // Extract files from initramfs.igz
         $initramfsPath = "$mountPoint/boot/initramfs.igz";
-        self::extractFileFromInitramfs($initramfsPath, 'sbin/firmware_upgrade.sh', "$desiredLocation/firmware_upgrade.sh");
+        self::extractFileFromInitramfs(
+            $initramfsPath,
+            'sbin/firmware_upgrade.sh',
+            "$desiredLocation/firmware_upgrade.sh"
+        );
         self::extractFileFromInitramfs($initramfsPath, 'sbin/pbx_firmware', "$desiredLocation/pbx_firmware");
         self::extractFileFromInitramfs($initramfsPath, 'etc/version', "$desiredLocation/version");
 

@@ -6,144 +6,70 @@ REST API v3 with PHP 8.3 attributes, async Redis queue processing, and OpenAPI a
 
 ```
 PBXCoreREST/
-├── Controllers/                     # 43 resource controllers + 2 base classes
+├── Controllers/                     # Resource controllers + 2 base classes
 │   ├── BaseController.php           # Request/response handling, worker queueing
 │   ├── BaseRestController.php       # CRUD/Custom method routing
-│   ├── Advice/RestController.php
-│   ├── ApiKeys/RestController.php
-│   ├── AsteriskManagers/RestController.php
-│   ├── AsteriskRestUsers/RestController.php
-│   ├── Auth/RestController.php
-│   ├── CallQueues/RestController.php
-│   ├── Cdr/RestController.php
-│   ├── ConferenceRooms/RestController.php
-│   ├── CustomFiles/RestController.php
-│   ├── DialplanApplications/RestController.php
-│   ├── Employees/RestController.php
-│   ├── Extensions/RestController.php
-│   ├── Fail2Ban/RestController.php
-│   ├── Files/RestController.php
-│   ├── Firewall/RestController.php
-│   ├── GeneralSettings/RestController.php
-│   ├── Iax/RestController.php
-│   ├── IaxProviders/RestController.php
-│   ├── IncomingRoutes/RestController.php
-│   ├── IvrMenu/RestController.php
-│   ├── License/RestController.php
-│   ├── MailSettings/RestController.php
-│   ├── MailSettings/OAuth2CallbackController.php
-│   ├── Modules/RestController.php
-│   ├── Modules/ModulesControllerBase.php
-│   ├── Network/RestController.php
-│   ├── NetworkFilters/RestController.php
-│   ├── OffWorkTimes/RestController.php
-│   ├── OpenAPI/RestController.php
-│   ├── OutboundRoutes/RestController.php
-│   ├── Passkeys/RestController.php
-│   ├── Passwords/RestController.php
-│   ├── PbxStatus/RestController.php
-│   ├── Providers/RestController.php
-│   ├── S3Storage/RestController.php
-│   ├── Search/RestController.php
-│   ├── Sip/RestController.php
-│   ├── SipProviders/RestController.php
-│   ├── SoundFiles/RestController.php
-│   ├── Storage/RestController.php
-│   ├── Sysinfo/RestController.php
-│   ├── Syslog/RestController.php
-│   ├── System/RestController.php
-│   ├── TimeSettings/RestController.php
-│   ├── UserPageTracker/RestController.php
-│   ├── Users/RestController.php
-│   └── WikiLinks/RestController.php
+│   └── {Resource}/RestController.php # One per resource (Advice, ApiKeys, Auth,
+│                                    #   CallQueues, Cdr, Extensions, Firewall,
+│                                    #   Modules, Network, Sip, SipProviders, Iax,
+│                                    #   IaxProviders, OffWorkTimes, Storage, System, …)
+│                                    #   Some resource dirs add extra controllers:
+│                                    #   Modules/ModulesControllerBase.php,
+│                                    #   MailSettings/OAuth2CallbackController.php
 │
-├── Lib/                             # 488 PHP files across 46 subdirectories
-│   ├── Common/                      # 21 abstract/utility classes
-│   │   ├── AbstractSaveRecordAction.php     # Base create/update/patch (7-phase)
-│   │   ├── AbstractGetListAction.php        # List with pagination/filtering
-│   │   ├── AbstractGetRecordAction.php      # Get single record by ID
-│   │   ├── AbstractCreateAction.php         # POST create
-│   │   ├── AbstractUpdateAction.php         # PUT full update
-│   │   ├── AbstractPatchAction.php          # PATCH partial update
-│   │   ├── AbstractDeleteAction.php         # DELETE
-│   │   ├── AbstractChangePriorityAction.php # Priority reordering
-│   │   ├── AbstractCopyRecordAction.php     # Record duplication
-│   │   ├── AbstractGetForSelectAction.php   # Dropdown select data
-│   │   ├── AbstractDataStructure.php        # Parameter definitions & validation
-│   │   ├── CommonDataStructure.php          # Shared fields (pagination, sorting)
-│   │   ├── BaseActionHelper.php             # Sanitization, validation, transactions
-│   │   ├── SchemaValidator.php              # JSON schema validation
-│   │   ├── SchemaFormatter.php              # Data normalization
-│   │   ├── TextFieldProcessor.php           # Text sanitization, HTML escaping
-│   │   ├── SystemSanitizer.php              # System-level input sanitization
-│   │   ├── CodeSecurityValidator.php        # Dangerous content validation
-│   │   ├── AvatarHelper.php                 # Avatar image handling
-│   │   ├── SearchIndexTrait.php             # Full-text search index
-│   │   └── OpenApiSchemaProvider.php        # Schema from attributes
+├── Lib/                             # Action/processor implementations per resource
+│   ├── Common/                      # Abstract/utility base classes:
+│   │   #  Abstract{SaveRecord(7-phase create/update/patch),GetList(paginate/filter),
+│   │   #    GetRecord,Create,Update,Patch,Delete,ChangePriority,CopyRecord,
+│   │   #    GetForSelect,DataStructure}Action.php
+│   │   #  CommonDataStructure (shared pagination/sorting fields)
+│   │   #  BaseActionHelper (sanitize/validate/transactions)
+│   │   #  SchemaValidator, SchemaFormatter, TextFieldProcessor (HTML escaping),
+│   │   #  SystemSanitizer, CodeSecurityValidator (dangerous content),
+│   │   #  AvatarHelper, SearchIndexTrait (full-text index),
+│   │   #  OpenApiSchemaProvider (schema from attributes)
 │   │
-│   ├── {Resource}/                  # Per-resource: DataStructure, Actions, Processor
+│   ├── {Resource}/                  # Per-resource subdir: DataStructure + Action classes
 │   │   ├── DataStructure.php        # Parameter definitions (single source of truth)
 │   │   ├── SaveRecordAction.php     # Create/Update/Patch logic
-│   │   ├── GetListAction.php        # List records
-│   │   ├── GetRecordAction.php      # Get single record
-│   │   ├── DeleteAction.php         # Delete record
-│   │   └── {Resource}ManagementProcessor.php  # Enum-based action routing
+│   │   └── GetListAction.php / GetRecordAction.php / DeleteAction.php
+│   │   #  Extra resource subdirs: CdrDB, Waf (note naming split — the
+│   │   #  OffWorkTimes controller maps to Lib/OutWorkTimes)
 │   │
+│   ├── {Resource}ManagementProcessor.php  # FLAT at Lib/ top-level (NOT inside the
+│   │                                #   subdir): enum-based action routing. ~45 of
+│   │                                #   them (also *Processor.php variants, e.g.
+│   │                                #   SIPStackProcessor, SearchProcessor)
+│   ├── ResponseSchemaValidator.php  # Response schema validation (flat in Lib/)
 │   ├── PBXApiResult.php             # API result container
 │   └── PerformanceMetrics.php       # Performance tracking
 │
-├── Attributes/                      # PHP 8.3 attributes for OpenAPI + RBAC
-│   ├── ApiResource.php              # Resource metadata (path, tags, security)
-│   ├── HttpMapping.php              # HTTP method → operation mapping
-│   ├── ResourceSecurity.php         # Resource:Action RBAC
-│   ├── ActionType.php               # enum: READ, WRITE, ADMIN, SENSITIVE
-│   ├── SecurityType.php             # enum: LOCALHOST, BEARER_TOKEN, PUBLIC
-│   ├── ApiOperation.php             # Operation metadata
-│   ├── ApiParameterRef.php          # Reference to DataStructure parameter
-│   ├── ApiDataSchema.php            # Data schema definition
-│   ├── ApiResponse.php              # Response metadata
-│   └── ParameterLocation.php        # enum: query, path, header, body
+├── Attributes/                      # PHP 8.3 attributes for OpenAPI + RBAC:
+│   #  ApiResource (path/tags/security), HttpMapping (method→operation),
+│   #  ResourceSecurity (Resource:Action RBAC), ApiOperation, ApiParameterRef
+│   #  (ref to DataStructure param), ApiDataSchema, ApiResponse
+│   #  enums: ActionType (READ/WRITE/ADMIN/SENSITIVE),
+│   #         SecurityType (LOCALHOST/BEARER_TOKEN/PUBLIC),
+│   #         ParameterLocation (query/path/header/body)
 │
-├── Http/
-│   ├── Request.php                  # Extended Phalcon Request
-│   └── Response.php                 # Extended Phalcon Response
-│
-├── Middleware/
-│   ├── BaseMiddleware.php           # Base class with DI
-│   ├── AuthenticationMiddleware.php # JWT + API Key auth, ACL authorization
-│   ├── UnifiedSecurityMiddleware.php # Security headers
-│   └── ResponseMiddleware.php       # JSON response formatting
-│
-├── Services/
-│   ├── SecurityResolver.php         # ActionType + ResourceSecurity extraction
-│   ├── TokenValidationService.php   # API Key validation
-│   ├── PublicEndpointsRegistry.php  # 2-priority public endpoint detection
-│   ├── ApiMetadataRegistry.php      # Controller metadata caching
-│   ├── ApiKeyPermissionChecker.php  # API Key permission checking
-│   └── ServiceRegistry.php         # Service registration
-│
-├── Providers/
-│   ├── RequestProvider.php
-│   ├── ResponseProvider.php
-│   ├── DispatcherProvider.php
-│   ├── RouterProvider.php           # Universal route auto-discovery from attributes
-│   └── PublicEndpointsRegistryProvider.php
-│
-├── Workers/
-│   ├── WorkerApiCommands.php        # Main API processor (Redis, maxProc=3)
-│   ├── WorkerBulkEmployees.php      # Bulk employee operations
-│   ├── WorkerCurrentPageEvents.php  # Page activity tracking
-│   ├── WorkerDownloader.php         # File download processor
-│   ├── WorkerLongPoolAPI.php        # Long polling
-│   ├── WorkerMakeLogFilesArchive.php # Log archiving
-│   ├── WorkerMergeUploadedFile.php  # Multipart file reassembly
-│   └── WorkerModuleInstaller.php    # Module installation
-│
-├── Traits/
-│   └── ResponseTrait.php
-│
-└── Config/
-    └── RegisterDIServices.php       # DI container configuration
+├── Http/                           # Request.php, Response.php (extended Phalcon),
+│                                   #   ForwardedHeaderFilter.php (see below)
+├── Middleware/                     # BaseMiddleware, AuthenticationMiddleware
+│                                   #   (JWT + API Key + ACL), UnifiedSecurityMiddleware
+│                                   #   (security headers), ResponseMiddleware (JSON)
+├── Services/                       # SecurityResolver, TokenValidationService,
+│                                   #   PublicEndpointsRegistry, ApiMetadataRegistry,
+│                                   #   ApiKeyPermissionChecker
+├── Providers/                      # Request/Response/Dispatcher providers,
+│                                   #   RouterProvider (route auto-discovery from
+│                                   #   attributes), PublicEndpointsRegistryProvider
+├── Workers/                        # WorkerApiCommands (main, Redis, maxProc=3),
+│                                   #   WorkerBulkEmployees, WorkerCurrentPageEvents,
+│                                   #   WorkerDownloader, WorkerLongPoolAPI,
+│                                   #   WorkerMakeLogFilesArchive, WorkerMergeUploadedFile,
+│                                   #   WorkerModuleInstaller
+├── Traits/ResponseTrait.php
+└── Config/RegisterDIServices.php   # DI container configuration
 ```
 
 ## Request Flow
@@ -167,14 +93,14 @@ HTTP Request → RouterProvider (auto-discovery from attributes)
 
 ## Queue Backpressure Protection
 
-Prevents system deadlock when API queue grows uncontrollably (e.g., thundering herd from modules/polling).
+Prevents system deadlock when the API queue grows uncontrollably (e.g. thundering herd from modules/polling).
 
-- **Fast-fail (Mechanism A)**: BaseController checks queue length before `rpush`. If > `API_QUEUE_MAX_LENGTH` (default 50), returns HTTP 503 immediately — php-fpm worker freed instantly instead of blocking 30s
-- **Stale request drop (Mechanism B)**: WorkerApiCommands checks `created_at` age before processing. Requests older than `API_REQUEST_TTL` (default 35s) are dropped — client already timed out
-- **Frontend retry**: `PbxApiClient.callApi()` retries 503 with exponential backoff (3 attempts: 1s/2s/4s)
-- **Response TTL**: Reduced to 120s (orphaned response keys cleaned up faster)
-- **Configuration**: Thresholds via PbxSettings (`API_QUEUE_MAX_LENGTH`, `API_REQUEST_TTL`)
-- **Bypasses**: Debug requests and async requests skip TTL check. Legacy requests without `created_at` processed normally
+- **Fast-fail (Mechanism A)**: BaseController checks queue length before `rpush`. If > `API_QUEUE_MAX_LENGTH` (default 50), returns HTTP 503 immediately — php-fpm worker freed instantly instead of blocking 30s.
+- **Stale request drop (Mechanism B)**: WorkerApiCommands checks `created_at` age before processing. Requests older than `API_REQUEST_TTL` (default 35s) are dropped — client already timed out.
+- **Frontend retry**: `PbxApiClient.callApi()` retries 503 with exponential backoff (3 attempts: 1s/2s/4s).
+- **Response TTL**: 120s (orphaned response keys cleaned up faster).
+- **Configuration**: Thresholds via PbxSettings (`API_QUEUE_MAX_LENGTH`, `API_REQUEST_TTL`).
+- **Bypasses**: Debug and async requests skip the TTL check. Legacy requests without `created_at` are processed normally.
 
 ## DataStructure Pattern (Single Source of Truth)
 
@@ -219,7 +145,7 @@ Phase 7: RESPONSE — DataStructure::createFromModel(), 201/200
 ## Processor Pattern (Enum-Based)
 
 ```php
-enum CallQueuesAction: string {
+enum CallQueueAction: string {
     case GET_LIST = 'getList';
     case CREATE = 'create';
     case UPDATE = 'update';
@@ -229,9 +155,9 @@ enum CallQueuesAction: string {
 
 class CallQueuesManagementProcessor extends Injectable {
     public static function callBack(array $request): PBXApiResult {
-        $action = CallQueuesAction::tryFrom($request['action']);
+        $action = CallQueueAction::tryFrom($request['action']);
         return match($action) {
-            CallQueuesAction::GET_LIST => GetListAction::main($request['data']),
+            CallQueueAction::GET_LIST => GetListAction::main($request['data']),
             // ...
         };
     }
@@ -240,34 +166,21 @@ class CallQueuesManagementProcessor extends Injectable {
 
 ## Authentication
 
-- **Public endpoints**: Detected via `#[ResourceSecurity]` attribute or module routes
-- **Localhost**: 127.0.0.1/::1 bypass authentication
-- **JWT**: Bearer token with HMAC-SHA256, 15-min access + 30-day refresh
-- **API Keys**: 64-char hex tokens, bcrypt hashed, optional path restrictions
-- **ACL**: Resource:Action RBAC after authentication
+- **Public endpoints**: Detected via `#[ResourceSecurity]` attribute or module routes.
+- **Localhost**: 127.0.0.1/::1 bypass authentication.
+- **JWT**: Bearer token with HMAC-SHA256, 15-min access + 30-day refresh.
+- **API Keys**: 64-char hex tokens, bcrypt hashed, optional path restrictions.
+- **ACL**: Resource:Action RBAC after authentication.
 
 ## Forwarded HTTP Headers (worker envelope)
 
-Worker actions run in a separate process and cannot reach Phalcon's
-`Request`. `BaseController::prepareRequestMessage()` therefore pre-extracts
-a **filtered** subset of incoming HTTP headers into the message envelope
-under the key `httpHeaders` (lowercased keys, single string values).
+Worker actions run in a separate process and cannot reach Phalcon's `Request`. `BaseController::prepareRequestMessage()` pre-extracts a **filtered** subset of incoming HTTP headers into the message envelope under `httpHeaders` (lowercased keys, single string values). Policy lives in `src/PBXCoreREST/Http/ForwardedHeaderFilter.php`:
 
-Policy lives in `src/PBXCoreREST/Http/ForwardedHeaderFilter.php`:
+* **Deny-list (final word)** — `Authorization`, `Cookie`, `Set-Cookie`, `Proxy-Authorization`, and the `Authentication-*` family are stripped unconditionally. They must never reach an action, even by accident.
+* **Allow-list** — public-safe proxy/client metadata (`X-Forwarded-*`, `X-Real-IP`, `User-Agent`, `Referer`, `Origin`, `Host`, `Accept-Language`).
+* **Allow-prefixes** — reserved namespaces: `X-Mikopbx-*` (core features: debug toggles, async hints, …) and `X-Module-*` (extension modules, per-module conventions).
 
-* **Deny-list (final word)** — `Authorization`, `Cookie`, `Set-Cookie`,
-  `Proxy-Authorization`, and the `Authentication-*` family are stripped
-  unconditionally. They must never reach an action, even via accident.
-* **Allow-list** — public-safe proxy / client metadata
-  (`X-Forwarded-*`, `X-Real-IP`, `User-Agent`, `Referer`, `Origin`,
-  `Host`, `Accept-Language`).
-* **Allow-prefixes** — reserved namespaces:
-  * `X-Mikopbx-*` — core features (debug toggles, async hints, …)
-  * `X-Module-*` — extension modules (per-module conventions)
-
-Each header value is capped at `ForwardedHeaderFilter::MAX_VALUE_LENGTH`
-(1024 bytes) to bound the queue payload. Array-typed values from
-Phalcon are joined with `, ` per RFC 7230 §3.2.2.
+Each header value is capped at `ForwardedHeaderFilter::MAX_VALUE_LENGTH` (1024 bytes) to bound the queue payload. Array-typed values from Phalcon are joined with `, ` per RFC 7230 §3.2.2.
 
 ### Reading headers in an action
 
@@ -291,20 +204,13 @@ SystemAction::CHECK_CLIENT_IP_VISIBILITY => CheckClientIpVisibilityAction::main(
 
 ### Adding a new module header
 
-Pick a name under `X-Module-<YourModule>-` — no edits to `BaseController`
-or `ForwardedHeaderFilter` are required. The filter's allow-prefix list
-already lets it through. Document the header's contract in your module's
-`CLAUDE.md`.
+Pick a name under `X-Module-<YourModule>-` — no edits to `BaseController` or `ForwardedHeaderFilter` required; the allow-prefix list already lets it through. Document the header's contract in your module's `CLAUDE.md`.
 
 ## Session Context (worker envelope)
 
-Alongside `httpHeaders`, `BaseController::prepareRequestMessage()`
-populates a `sessionContext` envelope key whenever the request carries a
-Bearer token (JWT or API Key). Workers receive it under
-`$request['sessionContext']`; localhost / public-endpoint requests
-arrive with the key absent (treat as `[]`).
+Alongside `httpHeaders`, `BaseController::prepareRequestMessage()` populates a `sessionContext` envelope key whenever the request carries a Bearer token (JWT or API Key). Workers receive it under `$request['sessionContext']`; localhost/public-endpoint requests arrive with the key absent (treat as `[]`).
 
-Populated fields (see `BaseController` lines 360–388):
+Populated fields:
 
 * `auth_type`     — currently always `bearer_token`
 * `token_id`      — `m_ApiKeys.id` of the row that validated the request
@@ -314,9 +220,7 @@ Populated fields (see `BaseController` lines 360–388):
 * `role`          — JWT role claim (absent for raw API-Key callers)
 * `session_id`    — JWT `userId`, reused as the WebAuthn challenge slot
 
-Processors that consume any of these MUST forward the bag explicitly to
-their action — actions are not Injectable across the queue boundary.
-The pattern is identical to `httpHeaders`:
+Processors that consume any of these MUST forward the bag explicitly to their action — actions are not Injectable across the queue boundary. The pattern is identical to `httpHeaders`:
 
 ```php
 FirewallBouncerAction::EXPORT_DECISIONS => ExportDecisionsAction::main(
@@ -327,26 +231,13 @@ FirewallBouncerAction::EXPORT_DECISIONS => ExportDecisionsAction::main(
 
 ### Per-token state via `token_id`
 
-`token_id` is the canonical key for per-bouncer / per-client state
-that must survive across queue invocations. Current consumers:
+`token_id` is the canonical key for per-bouncer/per-client state that must survive across queue invocations. Current consumers:
 
-* **WebAuthn challenge storage** — Passkeys actions key challenges by
-  `session_id` (JWT userId) plus `origin`.
-* **Firewall-bouncer snapshot cursor** —
-  `ExportDecisionsAction` stores the previous snapshot at
-  `_PH_REDIS_CLIENT:fwbouncer:cursor:<token_id>` (TTL 1 h, refreshed
-  every poll, falls back to `…:anon` when `token_id` is missing) so
-  the next poll can emit `deleted[]` decisions within one cycle
-  instead of waiting for natural TTL decay. See
-  `Lib/FirewallBouncer/ExportDecisionsAction.php` (`CURSOR_KEY_PREFIX`,
-  `CURSOR_TTL`) for cursor semantics and the `?startup=true` reset.
-* **CDR ACL filtering** — `CdrManagementProcessor` forwards
-  `sessionContext` so `GetListAction` can scope rows by `role`.
+* **WebAuthn challenge storage** — Passkeys actions key challenges by `session_id` (JWT userId) plus `origin`.
+* **Firewall-bouncer snapshot cursor** — `ExportDecisionsAction` stores the previous snapshot at `_PH_REDIS_CLIENT:fwbouncer:cursor:<token_id>` (TTL 1 h, refreshed every poll, falls back to `…:anon` when `token_id` is missing) so the next poll can emit `deleted[]` decisions within one cycle instead of waiting for natural TTL decay. See `Lib/FirewallBouncer/ExportDecisionsAction.php` (`CURSOR_KEY_PREFIX`, `CURSOR_TTL`) for cursor semantics and the `?startup=true` reset.
+* **CDR ACL filtering** — `CdrManagementProcessor` forwards `sessionContext` so `GetListAction` can scope rows by `role`.
 
-Redis exceptions in cursor-style helpers should be caught and
-degraded to first-poll behaviour (logged via
-`SystemMessages::sysLogMsg`) — mirrors
-`DockerNetworkFilterService::getRedisBouncerDecisions()`.
+Redis exceptions in cursor-style helpers should be caught and degraded to first-poll behaviour (logged via `SystemMessages::sysLogMsg`) — mirrors `DockerNetworkFilterService::getRedisBouncerDecisions()`.
 
 ## URL Routing
 
@@ -361,6 +252,23 @@ GET    /pbxcore/api/v3/{resource}:custom    → custom method
 POST   /pbxcore/api/v3/{resource}/{id}:copy → custom with ID
 ```
 
+## Unit Tests
+
+PBXCoreREST unit tests live under `tests/Unit/PBXCoreREST` (Services, Http, Lib).
+`tests/Unit/phpunit.xml` defines no `<testsuites>`, so pass the path explicitly:
+
+```bash
+# whole PBXCoreREST unit slice
+vendor/bin/phpunit -c tests/Unit/phpunit.xml tests/Unit/PBXCoreREST
+
+# one file
+vendor/bin/phpunit -c tests/Unit/phpunit.xml tests/Unit/PBXCoreREST/Http/ForwardedHeaderFilterTest.php
+```
+
+Run inside the PHP container so the `vendor/` autoloader matches production. Older
+integration-style tests also live under `tests/PBXCoreREST` (Middleware, Workers,
+Lib/Waf). See `tests/Unit/CLAUDE.md` for the full unit-test workflow.
+
 ## PBXApiResult
 
 ```php
@@ -372,3 +280,5 @@ class PBXApiResult {
     public ?array $pagination = null;
 }
 ```
+</content>
+</invoke>

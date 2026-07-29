@@ -659,6 +659,7 @@ return [
     // Password strength and validation keys moved to Passwords.php - use psw_ prefix instead
     'gs_InvalidPasswordsFormat' => 'Yanlış parola formatı',
     'api_UnknownAction' => 'Bilinmeyen eylem',
+    'api_ProviderNotFound' => 'Sağlayıcı bulunamadı',
     'gs_WebHTTPSPort' => 'HTTPS bağlantı noktası',
     'gs_ValidateEmptyPBXName' => 'İstasyon adı belirtilmemiştir.',
     'gs_TwoDigthts' => '2 rakam',

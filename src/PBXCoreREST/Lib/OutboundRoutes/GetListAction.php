@@ -44,20 +44,35 @@ class GetListAction extends AbstractGetListAction
      */
     public static function main(array $data = []): PBXApiResult
     {
-        // Override default ordering to use priority
-        if (!isset($data['order'])) {
-            $data['order'] = 'priority';
-            $data['orderWay'] = 'asc';
+        // priority has TEXT affinity, so a plain "ORDER BY priority" sorts
+        // lexicographically ("10" before "2") and scrambles 10+ routes (#1076).
+        // Map any priority sort (the default, or an explicit request) to a numeric
+        // CAST while still honouring the requested direction.
+        // Capture order_by/direction BEFORE the unset() below — they must be read
+        // first so an explicit priority sort with order_direction=DESC is honoured.
+        $orderBy = $data['order_by'] ?? $data['order'] ?? 'priority';
+        $direction = strtoupper((string)($data['order_direction'] ?? $data['orderWay'] ?? 'ASC')) === 'DESC'
+            ? 'DESC'
+            : 'ASC';
+
+        $defaultOrder = 'CAST(priority AS INTEGER) ASC';
+        if ($orderBy === '' || $orderBy === 'priority') {
+            // Numeric priority sort honouring the requested direction. Drop the raw
+            // order keys so applyOrdering falls through to this numeric default.
+            $defaultOrder = 'CAST(priority AS INTEGER) ' . $direction;
+            unset($data['order'], $data['order_by'], $data['orderWay'], $data['order_direction']);
         }
-        
+
         return self::executeStandardList(
             OutgoingRoutingTable::class,       // Model class
             DataStructure::class,              // DataStructure class
             $data,                             // Request parameters
             [],                                // Base query options - no exclusions
             false,                             // Use createForList() for better performance
-            ['priority', 'rulename', 'numberbeginswith'], // Allowed order fields
-            ['rulename', 'numberbeginswith', 'note', 'prepend'] // Searchable fields
+            ['rulename', 'numberbeginswith'],  // Allowed order fields (priority handled numerically)
+            ['rulename', 'numberbeginswith', 'note', 'prepend'], // Searchable fields
+            null,                              // No record filter
+            $defaultOrder                      // Numeric priority sort (CAST), honours direction
         );
     }
 }

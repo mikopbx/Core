@@ -99,6 +99,7 @@ return [
     'rest_System_UpgradeFailedToDetectOffset' => 'Không thể xác định độ lệch của phân vùng khởi động.',
     'rest_System_UpgradeLoopDeviceFailed' => 'Không thể tạo thiết bị vòng lặp.',
     'rest_System_UpgradeMountFailed' => 'Không thể gắn kết phân vùng. Kiểm tra hệ thống tập tin.',
+    'rest_System_UpgradeSingleDiskWarning' => 'Cảnh báo: phân vùng dữ liệu (Storage) nằm trên cùng ổ đĩa với hệ thống. Cập nhật bằng image sẽ phân vùng lại ổ đĩa duy nhất; phân vùng chứa bản ghi âm, lịch sử cuộc gọi và các module được giữ lại tự động, nhưng rất khuyến nghị sao lưu trước.',
     'rest_cr_GetRecordDesc' => 'Nhận thông tin chi tiết về một phòng hội nghị cụ thể.',
     'rest_cr_Create' => 'Tạo phòng họp',
     'rest_cr_Update' => 'Nâng cấp phòng hội nghị của bạn',
@@ -995,6 +996,10 @@ return [
     'rest_mod_StartDownloadDesc' => 'Bắt đầu quá trình tải xuống một mô-đun từ kho lưu trữ.',
     'rest_mod_DownloadStatus' => 'Nhận trạng thái tải xuống',
     'rest_mod_InstallationStatusDesc' => 'Lấy trạng thái hiện tại của quá trình cài đặt mô-đun.',
+    'rest_mod_GetOperations' => 'Lấy nhật ký thao tác với mô-đun',
+    'rest_mod_GetOperationsDesc' => 'Trả về các thao tác đang hoạt động với mô-đun và lịch sử các thao tác gần đây từ nhật ký',
+    'rest_mod_GetOperationStatus' => 'Lấy trạng thái thao tác của mô-đun',
+    'rest_mod_GetOperationStatusDesc' => 'Trả về trạng thái của thao tác hiện tại hoặc gần nhất đối với mô-đun được chỉ định',
     // ============================================================================
     // System REST API
     // ============================================================================

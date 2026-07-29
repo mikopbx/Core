@@ -648,6 +648,7 @@ return [
     // Password strength and validation keys moved to Passwords.php - use psw_ prefix instead
     'gs_InvalidPasswordsFormat' => 'Định dạng mật khẩu không chính xác',
     'api_UnknownAction' => 'Hành động không xác định',
+    'api_ProviderNotFound' => 'Không tìm thấy nhà cung cấp',
     'gs_WebHTTPSPort' => 'Cổng HTTPS',
     'gs_ValidateEmptyPBXName' => 'Tên nhà ga không được chỉ định.',
     'gs_TwoDigthts' => '2 chữ số',

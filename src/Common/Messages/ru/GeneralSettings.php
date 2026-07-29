@@ -103,6 +103,7 @@ return [
     // Password strength and validation keys moved to Passwords.php - use psw_ prefix instead
     'gs_InvalidPasswordsFormat' => 'Неверный формат паролей',
     'api_UnknownAction' => 'Неизвестное действие',
+    'api_ProviderNotFound' => 'Провайдер не найден',
     'gs_WebPort' => 'HTTP порт',
     'gs_WebHTTPSPort' => 'HTTPS порт',
     'gs_WEBHTTPSPrivateKey' => 'Приватный ключ HTTPS',

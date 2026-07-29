@@ -650,7 +650,8 @@ const ProviderStatusMonitor = {
             case 'REJECTED':
             case 'UNREGISTERED':
             case 'FAILED':
-                $statusCell.html(grey);
+                // Genuine incident — red, consistent with the badge and the 24h bar (#1085).
+                $statusCell.html(red);
                 $row.find('.failure').text(new_state);
                 break;
             default:

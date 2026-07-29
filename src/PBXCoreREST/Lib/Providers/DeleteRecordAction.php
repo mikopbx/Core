@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Providers;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
+use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SipHosts;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -73,21 +74,44 @@ class DeleteRecordAction extends AbstractDeleteAction
                 $res->messages['error'][] = 'api_ProviderNotFound';
                 return $res;
             }
-            
+
+            // Capture the outbound SIP registration identity before deletion so we can cancel
+            // it upstream once the delete commits (a disabled trunk has no live binding to cancel).
+            $sipToUnregister = null;
+            if ($provider->Sip
+                && $provider->Sip->registration_type === Sip::REG_TYPE_OUTBOUND
+                && $provider->Sip->disabled !== '1') {
+                $sipToUnregister = [
+                    'uniqid' => $provider->Sip->uniqid,
+                    'registration_type' => $provider->Sip->registration_type,
+                    'description' => $provider->Sip->description ?: $provider->note,
+                ];
+            }
+
             // Delete provider - the model will check dependencies automatically
             $deleted = BaseActionHelper::executeInTransaction(function() use ($provider) {
                 return self::deleteProviderInTransaction($provider);
             });
-            
+
             if ($deleted) {
                 $res->success = true;
                 $res->messages['info'][] = 'api_ProviderDeleted';
-                
+
                 // Log successful deletion
                 $configType = ucfirst(strtolower($provider->type));
                 $config = $provider->$configType;
                 $description = $config ? $config->description : $provider->note;
                 SystemMessages::sysLogMsg(__METHOD__, "Provider '$description' ($provider->type) deleted successfully");
+
+                // De-register the deleted trunk upstream before the async PJSIP reload
+                // removes its registration object from the running Asterisk.
+                if ($sipToUnregister !== null) {
+                    ProviderRegistrationHelper::sendUnregister(
+                        $sipToUnregister['uniqid'],
+                        $sipToUnregister['registration_type'],
+                        $sipToUnregister['description']
+                    );
+                }
             } else {
                 // Get error messages from the model
                 foreach ($provider->getMessages() as $message) {

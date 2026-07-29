@@ -90,6 +90,7 @@ return [
     'gs_PasswordTooShort' => 'Hasło zbyt krótkie (minimum %min% znaków)',
     'gs_InvalidPasswordsFormat' => 'Nieprawidłowy format haseł',
     'api_UnknownAction' => 'Nieznane działanie',
+    'api_ProviderNotFound' => 'Dostawca nie znaleziony',
     'gs_WebPort' => 'Port HTTP',
     'gs_WebHTTPSPort' => 'Port HTTPS',
     'gs_WEBHTTPSPrivateKey' => 'Klucz prywatny HTTPS',

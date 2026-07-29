@@ -231,7 +231,22 @@ abstract class AbstractProviderStatusAction extends Injectable
                     // Get RTT from contacts map if available
                     if (isset($contactsMap[$provider->uniqid])) {
                         $rtt = $contactsMap[$provider->uniqid]['rtt'];
-                        $additionalDetails['contactStatus'] = $contactsMap[$provider->uniqid]['status'] ?? '';
+                        $contactStatus = $contactsMap[$provider->uniqid]['status'] ?? '';
+                        $additionalDetails['contactStatus'] = $contactStatus;
+
+                        // A trunk can hold its outbound REGISTER while its contact
+                        // stops answering qualify OPTIONS: no RTT, and outbound calls
+                        // fail because Asterisk has no reachable contact to route to.
+                        // Registration state alone would keep showing green and hide
+                        // this, so degrade "registered but unreachable" to 'unreachable'
+                        // (yellow) — but only when qualify is actually enabled, else the
+                        // missing contact status is expected and not a fault. (#1085)
+                        if ($state === 'registered'
+                            && self::isQualifyEnabled($provider)
+                            && self::isContactUnreachable($contactStatus)) {
+                            $state = 'unreachable';
+                            $additionalDetails['degradedReason'] = 'registered_but_unreachable';
+                        }
                     }
                 }
                 // For NONE (no registration) - use peer state
@@ -609,11 +624,14 @@ abstract class AbstractProviderStatusAction extends Injectable
             return 'rejected';
         } elseif ($state === 'OK') {
             return 'OK';
-        } elseif ($state === 'UNKNOWN') {
-            // Explicitly handle UNKNOWN state - provider status is not determined yet
+        } elseif (in_array($state, ['UNKNOWN', 'REGISTERING', 'REREGISTERING', 'STOPPED', 'NONE', ''], true)) {
+            // Transient / not-yet-determined registration statuses. Must NOT collapse
+            // to 'unregistered' — that turned ordinary re-registration refreshes and
+            // post-restart seeds into spurious red "registration lost" events (#1085).
             return 'UNKNOWN';
         } else {
-            return 'unregistered';
+            // Any other unrecognised status is treated as indeterminate, not a failure.
+            return 'UNKNOWN';
         }
     }
     
@@ -708,8 +726,16 @@ abstract class AbstractProviderStatusAction extends Injectable
         // Normalize state to lowercase for consistent comparison
         $state = strtolower($state);
 
-        if (in_array($state, ['unregistered', 'rejected', 'off'])) {
+        // Disabled provider is neutral, not a fault.
+        if ($state === 'off') {
             return 'grey';
+        }
+
+        // Not registered / rejected is a genuine incident (counted by isFailureState).
+        // Kept in sync with the frontend timeline map so the badge, the list dot and
+        // the 24h bar agree on colour (#1085).
+        if (in_array($state, ['unregistered', 'rejected'])) {
+            return 'red';
         }
 
         if ($state === 'registered' || $state === 'ok') {
@@ -782,6 +808,32 @@ abstract class AbstractProviderStatusAction extends Injectable
     protected static function isFailureState(string $state): bool
     {
         return in_array(strtolower($state), ['rejected', 'unreachable', 'lagged', 'unregistered', 'unknown'], true);
+    }
+
+    /**
+     * Whether qualify (SIP OPTIONS keepalive) is enabled for this provider.
+     *
+     * When qualify is off, the absence of contact/RTT data is expected and must
+     * not be read as unreachability — see the reachability degradation in
+     * getSipProviderStatuses().
+     */
+    protected static function isQualifyEnabled(Sip $provider): bool
+    {
+        return (string)($provider->qualify ?? '1') === '1';
+    }
+
+    /**
+     * Map a PJSIP contact Status string to a hard "unreachable" verdict.
+     *
+     * Handles the PJSIPShowContacts vocabulary (Reachable/Unreachable/Unknown/
+     * NonQualified) and the contact-status-detail vocabulary (Avail/Unavail/
+     * NonQual). "NonQualified"/"Unknown" mean "not actively monitored", i.e. NOT
+     * a failure, so they are deliberately excluded.
+     */
+    protected static function isContactUnreachable(string $contactStatus): bool
+    {
+        $normalized = strtolower(trim($contactStatus));
+        return in_array($normalized, ['unreachable', 'unavail', 'unavailable'], true);
     }
 
     // History and tracking methods

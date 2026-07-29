@@ -335,9 +335,10 @@ const providerModifyStatusWorker = {
             case 'REJECTED':
             case 'UNREGISTERED':
             case 'FAILED':
+                // Genuine incident — red, consistent with getStateColor()/the badge (#1085).
                 this.$status
-                    .removeClass('green yellow red')
-                    .addClass('grey')
+                    .removeClass('green yellow grey')
+                    .addClass('red')
                     .html(`<i class="times icon"></i> ${globalTranslate.pr_Offline}`);
                 break;
                 
@@ -514,19 +515,27 @@ const providerModifyStatusWorker = {
         const segments = Math.ceil(timeRange / segmentDuration);
         const segmentData = new Array(segments).fill(null);
         const segmentEvents = new Array(segments).fill(null).map(() => []);
+        // Chronologically-last event per segment — used to propagate the *actual*
+        // recovered state forward instead of the worst colour of the slot (#1085).
+        const segmentLastEvent = new Array(segments).fill(null);
 
         // Process events and store them in segments if we have any
         if (events && events.length > 0) {
-            events.forEach(event => {
+            // History arrives newest-first (Redis LIFO); sort ascending so the
+            // "last event in a segment" is genuinely the latest by time.
+            const sortedEvents = events.slice().sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+            sortedEvents.forEach(event => {
                 if (event.timestamp && event.timestamp >= dayAgo) {
                     const segmentIndex = Math.floor((event.timestamp - dayAgo) / segmentDuration);
                     if (segmentIndex >= 0 && segmentIndex < segments) {
                         // Store event in segment
                         segmentEvents[segmentIndex].push(event);
+                        segmentLastEvent[segmentIndex] = event;
 
-                        // Prioritize worse states
+                        // The slot's own colour keeps "worst wins" so a short blip is
+                        // not hidden. Prefer the colour already resolved by the backend.
                         const currentState = segmentData[segmentIndex];
-                        const newState = this.getStateColor(event.state || event.new_state);
+                        const newState = event.stateColor || this.getStateColor(event.state || event.new_state);
 
                         if (!currentState || this.getStatePriority(newState) > this.getStatePriority(currentState)) {
                             segmentData[segmentIndex] = newState;
@@ -567,9 +576,15 @@ const providerModifyStatusWorker = {
         for (let i = 0; i < segments; i++) {
             if (segmentData[i]) {
                 hasRealEvent = true;
-                lastKnownState = segmentData[i];
-                if (segmentEvents[i].length > 0) {
-                    lastKnownEvent = segmentEvents[i][segmentEvents[i].length - 1];
+                // Inherit the *last actual* state by timestamp, not the worst colour
+                // of the slot — otherwise one recovered blip paints the whole forward
+                // span red until the next change event (#1085).
+                if (segmentLastEvent[i]) {
+                    lastKnownEvent = segmentLastEvent[i];
+                    lastKnownState = lastKnownEvent.stateColor
+                        || this.getStateColor(lastKnownEvent.state || lastKnownEvent.new_state);
+                } else {
+                    lastKnownState = segmentData[i];
                 }
             } else if (hasRealEvent) {
                 // After a real event — inherit last known state
@@ -580,7 +595,6 @@ const providerModifyStatusWorker = {
             } else {
                 // Before any real event — no data, grey
                 segmentData[i] = 'grey';
-
             }
         }
         
@@ -636,7 +650,11 @@ const providerModifyStatusWorker = {
             case 'UNREACHABLE':
             case 'LAGGED':
                 return 'yellow';
+            // OFF (disabled) and UNMONITORED are neutral, not faults — keep grey to
+            // match the backend getStateColor() so badge/list/timeline agree (#1085).
             case 'OFF':
+            case 'UNMONITORED':
+                return 'grey';
             case 'REJECTED':
             case 'UNREGISTERED':
             case 'FAILED':
