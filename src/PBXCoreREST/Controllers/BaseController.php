@@ -464,7 +464,14 @@ class BaseController extends Controller
         }
 
         // Type 3: File streaming (audio, downloads)
-        if (isset($response['data']['fpassthru'])) {
+        // WHY is_array: core actions put the descriptor inside `fpassthru`
+        // (['filename' => …, …]), while legacy module actions keep the flat 2017
+        // layout, where `fpassthru` is just the `true` flag and the descriptor keys
+        // sit on `data` itself. The flat shape must fall through to the normal
+        // payload path so that ModulesControllerBase::handleFilePassThrough() —
+        // which knows its headers (Content-Disposition, text/plain fallback) —
+        // still receives it. Passing `true` here raised a TypeError.
+        if (isset($response['data']['fpassthru']) && is_array($response['data']['fpassthru'])) {
             return $this->handleFileStreaming($response['data']['fpassthru']);
         }
 

@@ -37,7 +37,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetListAction;
  * @apiGroup OutWorkTimes
  * 
  * @apiParam {String} [search] Search term for filtering
- * @apiParam {String} [order_by] Field to order by (name, priority)
+ * @apiParam {String} [order_by] Field to order by (description, priority, id)
  * @apiParam {String} [order_direction] Order direction (ASC, DESC)
  * @apiParam {Number} [limit] Number of records to return
  * @apiParam {Number} [offset] Number of records to skip
@@ -69,8 +69,12 @@ class GetListAction extends AbstractGetListAction
             requestParams: $data,
             baseQueryOptions: [],
             useFullData: false, // Use createForList for performance
-            allowedOrderFields: ['name', 'priority', 'id'],
-            searchableFields: ['name', 'description'],
+            // WHY: OutWorkTimes has no `name` column — the `name` field in the
+            // response is an alias for `description` (see DataStructure::createForList).
+            // Passing it to the ORM raises "Column 'name' doesn't belong to any of
+            // the selected models" → HTTP 500 on search/ordering.
+            allowedOrderFields: ['description', 'priority', 'id'],
+            searchableFields: ['description'],
             recordFilter: null,
             defaultOrder: 'priority ASC'
         );
