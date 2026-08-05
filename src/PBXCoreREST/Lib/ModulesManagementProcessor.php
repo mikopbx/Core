@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\ModuleOperations;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\Modules\GetAvailableModulesAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\GetMetadataFromModulePackageAction;
@@ -67,6 +68,9 @@ class ModulesManagementProcessor extends Injectable
     {
         $action = $request['action'];
         $data = $request['data'];
+        // Who asked for it: JWT user name and client IP, empty for localhost
+        // and internal calls. Used for the audit line in startModuleOperation().
+        $sessionContext = $request['sessionContext'] ?? [];
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
             switch ($action) {
@@ -94,7 +98,9 @@ class ModulesManagementProcessor extends Injectable
                             ModuleOperations::OPERATION_INSTALL_PACKAGE,
                             $fileId,
                             ['filePath' => $filePath, 'fileId' => $fileId],
-                            $asyncChannelId
+                            $asyncChannelId,
+                            '',
+                            $sessionContext
                         );
                     }
                     break;
@@ -117,14 +123,19 @@ class ModulesManagementProcessor extends Injectable
                             $moduleUniqueID,
                             ['releaseId' => $releaseId],
                             $asyncChannelId,
-                            $batchId
+                            $batchId,
+                            $sessionContext
                         );
                     }
                     break;
                 case 'updateAll':
                     $asyncChannelId = $request['asyncChannelId'];
                     $modulesForUpdate = $data['modulesForUpdate'] ?? [];
-                    $res = UpdateAllModulesAction::main($asyncChannelId, is_array($modulesForUpdate) ? $modulesForUpdate : []);
+                    $res = UpdateAllModulesAction::main(
+                        $asyncChannelId,
+                        is_array($modulesForUpdate) ? $modulesForUpdate : [],
+                        $sessionContext
+                    );
                     break;
                 case 'getModuleInfo':
                     $moduleUniqueID = $data['uniqid'] ?? $data['id'] ?? '';
@@ -141,7 +152,9 @@ class ModulesManagementProcessor extends Injectable
                         ModuleOperations::OPERATION_ENABLE,
                         $moduleUniqueID,
                         [],
-                        $asyncChannelId
+                        $asyncChannelId,
+                        '',
+                        $sessionContext
                     );
                     break;
                 case 'disable':
@@ -153,7 +166,9 @@ class ModulesManagementProcessor extends Injectable
                         ModuleOperations::OPERATION_DISABLE,
                         $moduleUniqueID,
                         ['reason' => $reason, 'reasonText' => $reasonText],
-                        $asyncChannelId
+                        $asyncChannelId,
+                        '',
+                        $sessionContext
                     );
                     break;
                 case 'uninstall':
@@ -169,7 +184,9 @@ class ModulesManagementProcessor extends Injectable
                             ModuleOperations::OPERATION_UNINSTALL,
                             $moduleUniqueID,
                             ['keepSettings' => $keepSettings],
-                            $asyncChannelId
+                            $asyncChannelId,
+                            '',
+                            $sessionContext
                         );
                     }
                     break;
@@ -207,6 +224,8 @@ class ModulesManagementProcessor extends Injectable
      * @param string $moduleUniqueId Module unique id
      * @param array $params Operation parameters stored in the journal
      * @param string $asyncChannelId nchan channel id for browser notifications
+     * @param string $batchId Batch id for bulk update flows
+     * @param array $sessionContext REST session context {user_name, remote_addr}
      *
      * @return PBXApiResult 409 with the active operation on claim conflict
      */
@@ -215,7 +234,8 @@ class ModulesManagementProcessor extends Injectable
         string $moduleUniqueId,
         array $params,
         string $asyncChannelId,
-        string $batchId = ''
+        string $batchId = '',
+        array $sessionContext = []
     ): PBXApiResult {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -246,6 +266,8 @@ class ModulesManagementProcessor extends Injectable
                 return $res;
             }
 
+            self::logOperationInitiator($operation, $moduleUniqueId, $params, $claim['operationUid'], $sessionContext);
+
             $php = Util::which('php');
             $workerPath = Util::getFilePathByClassName(WorkerModuleOperations::class);
             Processes::mwExecBg("$php -f $workerPath start " . escapeshellarg($claim['operationUid']));
@@ -262,6 +284,61 @@ class ModulesManagementProcessor extends Injectable
         }
 
         return $res;
+    }
+
+    /**
+     * Writes an audit line about who started a module operation.
+     *
+     * WHY: enable/disable left no trace in system/messages, so answering
+     * "who turned this module off" meant digging through nginx/access.log.
+     * The line is written once the journal claim succeeded, so rejected (409)
+     * attempts are not recorded as operations that ran.
+     *
+     * @param string $operation One of ModuleOperations::OPERATION_*
+     * @param string $moduleUniqueId Module unique id
+     * @param array $params Operation parameters (the disable reason lives here)
+     * @param string $operationUid Journal operation uid, links the line to the row
+     * @param array $sessionContext REST session context {user_name, remote_addr}
+     */
+    private static function logOperationInitiator(
+        string $operation,
+        string $moduleUniqueId,
+        array $params,
+        string $operationUid,
+        array $sessionContext
+    ): void {
+        // Three cases: a JWT caller has user_name; a raw API-Key caller has a
+        // session but no user_name (traceable through token_id instead);
+        // localhost and internal calls carry no session context at all.
+        $hasSession = $sessionContext !== [];
+        $context = [
+            'operation' => $operation,
+            'module' => $moduleUniqueId,
+            'user' => (string)($sessionContext['user_name'] ?? ($hasSession ? 'api' : 'system')),
+            'ip' => (string)($sessionContext['remote_addr'] ?? 'local'),
+            'operationId' => $operationUid,
+        ];
+
+        if (empty($sessionContext['user_name']) && !empty($sessionContext['token_id'])) {
+            $context['tokenId'] = (string)$sessionContext['token_id'];
+        }
+
+        // Tells an admin-initiated disable apart from DISABLED_BY_LICENSE and
+        // the crash-loop watchdog, which use the same REST action.
+        if ($operation === ModuleOperations::OPERATION_DISABLE && !empty($params['reason'])) {
+            $context['reason'] = (string)$params['reason'];
+        }
+
+        // Encode as JSON to prevent log injection via crafted user names
+        // (e.g. "admin, ip=1.2.3.4" forging fields in the audit string).
+        $encoded = json_encode($context, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+        if (!is_string($encoded)) {
+            $encoded = '{}';
+        }
+
+        // LOG_WARNING, not LOG_NOTICE: the logger threshold is core.logsLevel
+        // (4 by default), and anything less severe never reaches system/messages.
+        SystemMessages::sysLogMsg(__CLASS__, 'Module operation started: ' . $encoded, LOG_WARNING);
     }
 
     /**
