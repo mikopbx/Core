@@ -288,7 +288,7 @@ const installStatusLoopWorker = {
         }
         const moduleUniqueId = response.moduleUniqueId;
         const stage = response.stage;
-        const stageDetails = response.stageDetails;
+        const stageDetails = response.stageDetails || {};
         const $row = $(`tr[data-id=${moduleUniqueId}]`);
         if (stage ==='Stage_I_GetRelease'){
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_GetReleaseInProgress, 1);
@@ -486,13 +486,15 @@ const installStatusLoopWorker = {
      * @param {jQuery} $row - The jQuery object representing the row in the UI associated with the module.
      */
     cbAfterReceiveNewDownloadStatus(moduleUniqueId, stageDetails, $row) {
+        // Some events (e.g. an error raised before the download started) arrive without `data`
+        const data = stageDetails.data || {};
         // Check module download status
-        if (stageDetails.data.d_status === 'DOWNLOAD_IN_PROGRESS') {
-            const downloadProgress = Math.max(Math.round(parseInt(stageDetails.data.d_status_progress, 10)/2)-1, 3);
+        if (data.d_status === 'DOWNLOAD_IN_PROGRESS') {
+            const downloadProgress = Math.max(Math.round(parseInt(data.d_status_progress, 10)/2)-1, 3);
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_DownloadInProgress, downloadProgress);
-        } else if (stageDetails.data.d_status === 'DOWNLOAD_COMPLETE') {
+        } else if (data.d_status === 'DOWNLOAD_COMPLETE') {
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_DownloadInProgress, 50);
-        } else if (stageDetails.data.d_status === 'DOWNLOAD_ERROR') {
+        } else if (data.d_status === 'DOWNLOAD_ERROR') {
             installStatusLoopWorker.$progressBarBlock.hide();
             if (stageDetails.messages !== undefined) {
                 installStatusLoopWorker.showModuleInstallationError($row, globalTranslate.ext_InstallationError, stageDetails.messages);
@@ -510,10 +512,12 @@ const installStatusLoopWorker = {
      * @param {Object} stageDetails - Detailed information about the upload progress.
      */
     cbAfterReceiveNewUploadStatus(moduleUniqueId, stageDetails) {
+        // Some events (e.g. an error raised before the upload started) arrive without `data`
+        const data = stageDetails.data || {};
         // Check module upload status
-        if (stageDetails.data.d_status === 'UPLOAD_IN_PROGRESS') {
+        if (data.d_status === 'UPLOAD_IN_PROGRESS') {
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_UploadInProgress, 49);
-        } else if (stageDetails.data.d_status === 'UPLOAD_COMPLETE') {
+        } else if (data.d_status === 'UPLOAD_COMPLETE') {
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_UploadInProgress, 50);
         }
     },
@@ -526,11 +530,13 @@ const installStatusLoopWorker = {
      * @param {Object} stageDetails - Detailed information about the installation progress.
      */
     cbAfterReceiveNewInstallationStatus(moduleUniqueId, stageDetails) {
+        // Some events (e.g. an error raised before the installation started) arrive without `data`
+        const data = stageDetails.data || {};
         // Check module installation status
-        if (stageDetails.data.i_status === 'INSTALLATION_IN_PROGRESS') {
-            const installationProgress = Math.round(parseInt(stageDetails.data.i_status_progress, 10)/2+50);
+        if (data.i_status === 'INSTALLATION_IN_PROGRESS') {
+            const installationProgress = Math.round(parseInt(data.i_status_progress, 10)/2+50);
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_InstallationInProgress, installationProgress);
-        } else if (stageDetails.data.i_status === 'INSTALLATION_COMPLETE') {
+        } else if (data.i_status === 'INSTALLATION_COMPLETE') {
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_InstallationInProgress, 98);
         }
     },
