@@ -26,9 +26,9 @@ allowed-tools: Bash, Read, Write, Edit, Grep, Glob, Agent
 ## Target Platform
 
 ```
-PHP: 8.3
+PHP: 8.4
 min_pbx_version: 2025.1.1
-Framework: Phalcon 5.8
+Framework: Phalcon 5.9.3
 NO legacy compatibility (no MikoPBXVersion.php)
 ```
 
@@ -74,20 +74,27 @@ Generate files using reference templates in `templates/` directory. For each rec
 **File generation order:**
 
 1. `module.json` — module metadata
-2. `Setup/PbxExtensionSetup.php` — installer
-3. `Models/*.php` — database models
-4. `Lib/{Name}Conf.php` — configuration class with hooks
-5. `Lib/{Name}Main.php` — business logic (if needed)
-6. `App/Controllers/` — web controllers (if ui recipe)
-7. `App/Forms/` — Phalcon forms (if ui recipe)
-8. `App/Views/` — Volt templates (if ui recipe)
-9. `App/Providers/` — Asset and Menu providers (if ui recipe)
-10. `public/assets/js/src/` — ES6+ JavaScript (if ui recipe)
-11. `public/assets/css/` — CSS styles (if ui recipe)
-12. `Lib/RestAPI/` — REST API controllers and actions (if rest-api recipe)
-13. `bin/` — Worker scripts (if workers recipe)
-14. `agi-bin/` — AGI scripts (if agi recipe)
-15. `Messages/` — Translation files (call `/translations` skill)
+2. `README.md` and `README.ru.md` — equivalent administrator documentation
+   (the pair is a production-target requirement; example modules carry at most
+   one readme, so do not generate both for them)
+3. `.github/workflows/build.yml` — production build and publish automation
+   (production target only — modules under `Extensions/EXAMPLES/` are built by
+   the shared `EXAMPLES/.github/workflows/build-modules.yml` and must not get
+   their own publish workflow)
+4. `Setup/PbxExtensionSetup.php` — installer
+5. `Models/*.php` — database models
+6. `Lib/{Name}Conf.php` — configuration class with hooks
+7. `Lib/{Name}Main.php` — business logic (if needed)
+8. `App/Controllers/` — web controllers (if ui recipe)
+9. `App/Forms/` — Phalcon forms (if ui recipe)
+10. `App/Views/` — Volt templates (if ui recipe)
+11. `App/Providers/` — optional per-module Asset/Menu provider helpers (multi-page ui modules only; single-page modules register assets in the controller)
+12. `public/assets/js/src/` — ES6+ JavaScript, one file per action (if ui recipe)
+13. `public/assets/css/` — CSS styles (if ui recipe)
+14. `Lib/RestAPI/` — REST API controllers and actions (if rest-api recipe)
+15. `bin/` — Worker scripts (if workers recipe)
+16. `agi-bin/` — AGI scripts (if agi recipe)
+17. `Messages/` — Translation files (call `/translations` skill)
 
 **Code references:** When generating code, study existing EXAMPLES for patterns:
 - REST API v3: `Extensions/EXAMPLES/REST-API/ModuleExampleRestAPIv3/`
@@ -110,6 +117,20 @@ find {module_dir} -name "*.php" -exec php -l {} \;
 
 # 3. module.json validation
 php -r "json_decode(file_get_contents('{module_dir}/module.json'), true) ?: exit(1);"
+
+# 4. Standalone module translation catalogs
+! grep -RE '\b(require|include|array_keys|array_combine)\b' \
+  {module_dir}/Messages/*.php
+
+# 5. Production repository files — production target ONLY. Several example
+#    modules ship no ru readme (and ModuleExampleForm names it readme.ru.md),
+#    so running this on them only produces false failures.
+test -f {module_dir}/README.md
+test -f {module_dir}/README.ru.md
+
+# 6. Publish workflow — production target ONLY. Example modules have no
+#    per-module workflow, so this check must be skipped for them.
+test -f {module_dir}/.github/workflows/build.yml
 ```
 
 Report results and suggest fixes for any issues found.
@@ -129,10 +150,8 @@ Files created:
   App/Controllers/ModuleBlackListController.php
   App/Forms/ModuleBlackListForm.php
   App/Views/ModuleBlackList/index.volt
-  App/Providers/AssetProvider.php
-  App/Providers/MenuProvider.php
-  public/assets/js/src/module-black-list.js
-  public/assets/css/module-black-list.css
+  public/assets/js/src/module-black-list-index.js
+  public/assets/css/module-black-list-index.css
   Lib/RestAPI/Numbers/Controller.php
   Lib/RestAPI/Numbers/Processor.php
   Lib/RestAPI/Numbers/DataStructure.php
@@ -193,7 +212,7 @@ Analyze module code against best practices:
 
 ## Code Standards
 
-### PHP 8.3 Features to Use
+### PHP 8.4 Features to Use
 
 ```php
 // Typed properties (for non-model classes: Conf, Main, Worker, etc.)
@@ -224,7 +243,7 @@ enum CallDirection: string {
 
 ### Phalcon ORM Model Properties (IMPORTANT)
 
-Model column properties follow Phalcon/SQLite conventions — do NOT apply PHP 8.3 typed properties rules here:
+Model column properties follow Phalcon/SQLite conventions — do NOT apply PHP 8.4 typed properties rules here:
 
 ```php
 // Primary key — ALWAYS untyped
@@ -264,8 +283,8 @@ use Phalcon\Di;
 | DB table | `m_{Entity}` | `m_BlackListNumbers` |
 | Controller | `Module{Feature}Controller` | `ModuleBlackListController` |
 | Worker | `Worker{Feature}{Type}` | `WorkerBlackListAMI` |
-| JS file | `module-{kebab-case}` | `module-black-list.js` |
-| CSS file | `module-{kebab-case}` | `module-black-list.css` |
+| JS file | `module-{kebab-case}-{action}` | `module-black-list-index.js` |
+| CSS file | `module-{kebab-case}-{action}` | `module-black-list-index.css` |
 | Translation prefix | `module_{feature}_` | `module_black_list_` |
 | Sidebar group | `modules` or `integrations` | — |
 
@@ -286,7 +305,7 @@ See [recipes.md](reference/recipes.md) for detailed recipe specifications.
 
 ## Hook Reference
 
-See [hook-reference.md](reference/hook-reference.md) for complete list of 60+ hooks with signatures and examples.
+See [hook-reference.md](reference/hook-reference.md) for complete list of hooks with signatures and examples.
 
 ## Anti-Patterns
 
@@ -305,12 +324,45 @@ Workflow:
 2. Create Russian translations first (`Messages/ru.php`)
 3. Call `/translations` skill to translate to remaining 28 languages
 
+Every module catalog MUST also contain the three registration keys consumed by
+MikoPBX Core, even though module-owned PHP, JavaScript, and views do not
+reference them:
+
+- `AdditionalMenuItem<ModuleUniqueID>` — sidebar label
+- `Breadcrumb<ModuleUniqueID>` — module title and breadcrumb label
+- `SubHeader<ModuleUniqueID>` — module description
+
+Validate these keys in all 29 locales. Missing registration keys are rendered
+as raw key names in module-management pages.
+
+Every `Messages/<locale>.php` file MUST directly return a standalone literal
+array. Never use `require`, `include`, variables, `array_keys`,
+`array_combine`, merges, or runtime catalog composition. MikoPBX loads and
+processes each catalog itself.
+
+## Production Repository Contract
+
+For production modules:
+
+1. Create equivalent `README.md` (English default) and `README.ru.md` files for
+   administrators. Lead with purpose, installation/use, security, privacy,
+   troubleshooting, and support; keep contributor commands secondary.
+2. Inspect a current maintained production module such as
+   `ModuleZabbixAgent5` before adding automation.
+3. Add `.github/workflows/build.yml` using
+   `mikopbx/.github-workflows/.github/workflows/extension-publish.yml@master`
+   for `develop`, `master`, and `workflow_dispatch`.
+4. Add `release_settings.publish_release`, `changelog_enabled`, and
+   `create_github_release` to `module.json`.
+5. Verify develop creates a prerelease and master performs production
+   publication before pushing either branch.
+
 ## Important Directories
 
-- **Production modules**: `/Users/nb/PhpstormProjects/mikopbx/Extensions/`
-- **Example modules**: `/Users/nb/PhpstormProjects/mikopbx/Extensions/EXAMPLES/`
-- **Core module system**: `/Users/nb/PhpstormProjects/mikopbx/Core/src/Modules/`
-- **Core configs**: `/Users/nb/PhpstormProjects/mikopbx/Core/src/Core/Asterisk/Configs/`
+- **Production modules**: `/Volumes/DevDisk/Developement/mikopbx/Extensions/`
+- **Example modules**: `/Volumes/DevDisk/Developement/mikopbx/Extensions/EXAMPLES/`
+- **Core module system**: `/Volumes/DevDisk/Developement/mikopbx/Core/src/Modules/`
+- **Core configs**: `/Volumes/DevDisk/Developement/mikopbx/Core/src/Core/Asterisk/Configs/`
 
 ## Task Activation Patterns
 

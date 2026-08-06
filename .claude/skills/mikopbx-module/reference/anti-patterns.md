@@ -233,12 +233,13 @@ grep -n "function [a-z].*)" Lib/*.php | grep -v ": "
 
 **Problem:** No return type or parameter type hints on methods.
 
-**Fix:** Add PHP 8.3 type declarations on all method parameters and return types.
+**Fix:** Add PHP 8.4 type declarations on all method parameters and return types.
 
 **Exception — Phalcon ORM model properties:** Model column properties follow Phalcon conventions and MUST NOT be flagged:
 - Primary key is always untyped: `public $id;`
 - Other column properties use nullable types: `public ?string $name = '';`
 - This is NOT an anti-pattern — it is the standard MikoPBX/Phalcon model pattern. See core models in `src/Common/Models/`.
+- Conversely, *adding* types here IS an anti-pattern — see **#25**, a typed `int $id` fatals on `save()`.
 
 ---
 
@@ -332,6 +333,227 @@ grep -rn 'function addCheckBox' App/Forms/*.php
 ```
 
 **Fix:** Extend `MikoPBX\AdminCabinet\Forms\BaseForm` instead of `Phalcon\Forms\Form`.
+
+---
+
+## 25. [CRITICAL] Typed `int $id` on a Phalcon model primary key
+
+**Detection:**
+```bash
+grep -rn 'public int \$id\|public ?int \$id' Models/*.php
+```
+
+**Problem:** A typed `int` primary key **fatals on the first `save()`**. Phalcon
+reads the property before assigning the generated key, and an uninitialized typed
+property throws `Error: Typed property ...::$id must not be accessed before
+initialization`. The record is never written. The same applies to NOT NULL string
+columns: a bare `public string $x;` fatals the moment Phalcon hydrates a row where
+that column is absent from the SELECT.
+
+```php
+// BEFORE — fatal on save()
+public int $id;
+public string $number;
+
+// AFTER — untyped PK, nullable string columns with a string default
+public $id;                          // ALWAYS untyped
+public ?string $number = '';         // NOT NULL string column
+public ?string $enabled = '0';       // integer stored as string in SQLite
+public ?int $userid = null;          // nullable integer foreign key
+```
+
+This is the **only** place where the PHP 8.4 typed-property rules do not apply.
+Compare the core models in `src/Common/Models/`: `Extensions.php`, `Sip.php`,
+`CallQueues.php` — every one of them declares `public $id;`.
+
+---
+
+## 26. [CRITICAL] Unconditional required-field validation in a save action
+
+**Detection:**
+```bash
+# A required-field loop that runs before the HTTP verb is known
+grep -n 'required' Lib/RestAPI/*/Actions/*.php App/Controllers/*.php
+```
+
+**Problem:** Validating required fields on every request makes **every `PATCH`
+return 422**. A PATCH is a partial update and legitimately omits fields the
+resource already has; only `POST` and `PUT` carry a complete representation.
+Verified live — a module with this bug could create and replace records but no
+client could ever patch one.
+
+The save action must run its phases in this exact order:
+
+```
+1. sanitize input
+2. determine the operation (including the HTTP verb)
+3. validate required fields   — POST and PUT ONLY; PATCH is exempt
+4. apply defaults             — on CREATE only, never on update
+5. schema validation
+6. save
+7. respond
+```
+
+```php
+// BEFORE — 422 on every PATCH
+foreach (self::REQUIRED as $field) {
+    if (!isset($data[$field])) {
+        $res->messages['error'][] = "Missing $field";
+        $res->httpCode = 422;
+        return $res;
+    }
+}
+
+// AFTER — required check is scoped to the verbs that carry a full payload
+// A REST action runs as `public static function main(array $data)`, so `$this`
+// does not exist there — the verb travels inside the payload. Compare the
+// canonical ModuleExampleRestAPIv3/Lib/RestAPI/Tasks/Actions/SaveRecordAction.
+$res = self::createApiResult(__METHOD__);   // base-class helper: tags $res->processor,
+                                            // which `new PBXApiResult()` would leave unset
+$method = strtoupper((string)($data['httpMethod'] ?? 'POST'));
+// In App/Controllers/*.php the save is an instance method, so there — and only
+// there — the verb comes from the request: $this->request->getMethod().
+if (in_array($method, ['POST', 'PUT'], true)) {
+    foreach (self::REQUIRED as $field) {
+        if (!isset($data[$field])) {
+            $res->messages['error'][] = "Missing $field";
+            $res->httpCode = 422;
+            return $res;
+        }
+    }
+}
+if ($method === 'POST') {
+    $data = array_merge(self::DEFAULTS, $data);   // defaults on create only
+}
+```
+
+Applying defaults on update is the mirror-image bug: it silently resets fields the
+caller never mentioned.
+
+---
+
+## 27. [HIGH] `messages[]` instead of `messages['error'][]`
+
+**Detection:**
+```bash
+grep -rn '\->messages\[\]' Lib/ App/
+```
+
+**Problem:** `PBXApiResult::$messages` is a **keyed** array (`src/PBXCoreREST/Lib/PBXApiResult.php`).
+Appending with a bare `[]` produces a list where the consumer expects a map, so the
+error envelope is malformed and clients reading `messages.error` see nothing — the
+request fails silently from the caller's point of view.
+
+```php
+// BEFORE — malformed envelope
+$res->messages[] = 'Number already exists';
+
+// AFTER
+$res->messages['error'][] = 'Number already exists';
+```
+
+Every Core processor uses the keyed form — see
+`src/PBXCoreREST/Workers/WorkerApiCommands.php:405` and any
+`*ManagementProcessor.php`.
+
+---
+
+## 28. [HIGH] BaseForm subclass that does not call `parent::initialize()` first
+
+**Detection:**
+```bash
+grep -A3 -n 'function initialize' App/Forms/*.php | grep -L 'parent::initialize'
+```
+
+**Problem:** `BaseForm::initialize()` is the **only** thing that fires
+`WebUIConfigInterface::ON_BEFORE_FORM_INITIALIZE`
+(`src/AdminCabinet/Forms/BaseForm.php:37-46`). Skip it and no other module can ever
+inject a field into your form — silently. Nothing errors; the extension points just
+never run.
+
+```php
+// BEFORE — breaks field injection by other modules
+public function initialize($entity = null, $options = null): void
+{
+    $this->add(new Text('number'));
+}
+
+// AFTER — parent FIRST, then your own fields
+public function initialize($entity = null, $options = null): void
+{
+    parent::initialize($entity, $options);
+    $this->add(new Text('number'));
+}
+```
+
+NOTE: the shipped `Extensions/ModuleTemplate/` scaffold currently has this bug. Do
+not copy its form verbatim.
+
+---
+
+## 29. [HIGH] Closure passed to AMI `addEventHandler()`
+
+**Detection:**
+```bash
+grep -n 'addEventHandler' Lib/*.php bin/*.php
+```
+
+**Problem:** `AsteriskManager::addEventHandler(string $event, array|string $callback)`
+(`src/Core/Asterisk/AsteriskManager.php:1751`) does not accept a `Closure` — passing
+one raises a `TypeError` against the `array|string` parameter type. Dispatch in
+`processEvent()` is also **arity-dependent**, which is easy to get wrong:
+
+* an **array** callable `[$this, 'method']` is invoked via `call_user_func($handler, $parameters)` — it receives **one** argument, the parameters array;
+* a **string** function name is invoked as `$handler($e, $parameters, $server, $port)` — **four** arguments.
+
+```php
+// BEFORE — TypeError
+$this->am->addEventHandler('Newchannel', function (array $params) { ... });
+
+// AFTER — array callable, one parameter
+$this->am->addEventHandler('Newchannel', [$this, 'onNewChannel']);
+
+public function onNewChannel(array $parameters): void
+{
+    // single argument — do NOT declare ($event, $parameters, $server, $port)
+}
+```
+
+---
+
+## 30. [CRITICAL] Dialplan context with bare-digit extensions included into `[internal]`
+
+**Detection:**
+```bash
+# extensionGenContexts() output that emits bare digits, combined with an
+# include into the internal context
+grep -n 'exten =>' Lib/*Conf.php
+```
+
+**Problem:** Including a context whose extensions are bare digits into the internal
+context makes those digits compete with real dialable objects. Verified live: a
+module context exposing `1` as a menu key was included into `[internal]`, digit `1`
+collided with an existing queue number, and **calls to that queue were swallowed**
+by the module — no error anywhere, just lost calls.
+
+```php
+// BEFORE — bare digits leak into the internal dial scope
+$conf  = "[module-blacklist-menu]\n";
+$conf .= "exten => 1,1,Goto(block)\n";
+$conf .= "exten => 2,1,Goto(allow)\n";
+// ... and elsewhere:
+// return "include => module-blacklist-menu\n";   // into [internal] — WRONG
+
+// AFTER — keep bare-digit menus in their own context, reachable only by a
+// feature code or an explicit Goto from your own dialplan
+$conf  = "[module-blacklist-menu]\n";     // NOT included into [internal]
+$conf .= "exten => 1,1,Goto(block)\n";
+$conf .= "exten => 2,1,Goto(allow)\n";
+```
+
+Only include a context into `[internal]` when every extension in it is a namespaced
+feature code (`*761`, `*762`, …) that cannot collide with an extension, queue,
+conference or IVR number.
 
 ---
 

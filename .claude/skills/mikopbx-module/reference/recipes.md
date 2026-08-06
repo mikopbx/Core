@@ -31,28 +31,24 @@ Each recipe adds a set of files and integration points to a module.
 - `App/Controllers/{Feature}BaseController.php` — base controller with shared logic
 - `App/Forms/Module{Feature}Form.php` — Phalcon form
 - `App/Views/Module{Feature}/index.volt` — main view template
-- `App/Providers/AssetProvider.php` — JS/CSS registration
-- `App/Providers/MenuProvider.php` — sidebar menu item
-- `public/assets/js/src/module-{kebab}.js` — ES6+ JavaScript
-- `public/assets/css/module-{kebab}.css` — CSS styles
+- `public/assets/js/src/module-{kebab}-{action}.js` — ES6+ JavaScript, one per action
+- `public/assets/css/module-{kebab}-{action}.css` — CSS styles
+- OPTIONAL (multi-page modules only): `App/Providers/AssetProvider.php` and
+  `App/Providers/MenuProvider.php`. Single-page modules register assets inline in the
+  controller via the core `MikoPBX\AdminCabinet\Providers\AssetProvider` constants.
 
 **Hooks added to Conf.php:**
 - None directly — menu integration is via Setup class sidebar registration
 
 **Template references:**
-- `templates/controller.md`
-- `templates/volt-view.md`
-- `templates/form.md`
-- `templates/asset-provider.md`
-- `templates/menu-provider.md`
-- `templates/javascript-module.md`
+- `templates/ui-recipe.md`
 
 **Code examples to read:**
 - `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/App/Controllers/ModuleExampleFormController.php`
 - `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/App/Views/ModuleExampleForm/index.volt`
 - `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/App/Forms/ModuleExampleFormForm.php`
-- `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/App/Providers/AssetProvider.php`
-- `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/public/assets/js/src/module-example-form.js`
+- `Extensions/ModuleLocalSpeechToText/App/Providers/AssetProvider.php` (optional pattern)
+- `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/public/assets/js/src/module-example-form-index.js`
 
 **Post-generation:**
 - Run babel transpilation via `/babel-compiler` skill
@@ -153,14 +149,14 @@ declare(strict_types=1);
 
 require_once 'Globals.php';
 
-use AGI\AgiClient;
+use MikoPBX\Core\Asterisk\AGI;
 use Phalcon\Di\Di;
 
-$agi = new AgiClient();
-// Read channel variables
-$callerID = $agi->getVariable('CALLERID(num)', true);
+$agi = new AGI();
+// Read channel variables (accessors are snake_case)
+$callerID = $agi->get_variable('CALLERID(num)', true);
 // Set channel variables
-$agi->setVariable('MY_RESULT', $value);
+$agi->set_variable('MY_RESULT', $value);
 // Execute dialplan applications
 $agi->exec('Playback', 'silence/1');
 ```

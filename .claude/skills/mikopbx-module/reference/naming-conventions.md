@@ -48,9 +48,9 @@ Modules\{ModuleID}\App\Forms    → App/Forms/
 
 | Type | Pattern | Example |
 |------|---------|---------|
-| JS source | `public/assets/js/src/module-{kebab}.js` | `module-black-list.js` |
-| JS compiled | `public/assets/js/module-{kebab}.js` | `module-black-list.js` |
-| CSS | `public/assets/css/module-{kebab}.css` | `module-black-list.css` |
+| JS source | `public/assets/js/src/module-{kebab}-{action}.js` | `module-black-list-index.js` |
+| JS compiled | `public/assets/js/module-{kebab}-{action}.js` | `module-black-list-index.js` |
+| CSS | `public/assets/css/module-{kebab}-{action}.css` | `module-black-list-index.css` |
 | AGI script | `agi-bin/{descriptive-name}.php` | `agi-bin/check-blacklist.php` |
 | Worker binary | `bin/Worker{Feature}{Type}.php` | `bin/WorkerBlackListAMI.php` |
 | Translation | `Messages/{lang}.php` | `Messages/ru.php` |

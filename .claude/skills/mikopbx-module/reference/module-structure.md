@@ -28,7 +28,7 @@ Module{Feature}/
 │   │   └── Module{Feature}Controller.php
 │   ├── Forms/
 │   │   └── Module{Feature}Form.php
-│   ├── Providers/
+│   ├── Providers/                        # optional, multi-page modules only
 │   │   ├── AssetProvider.php
 │   │   └── MenuProvider.php
 │   └── Views/
@@ -42,9 +42,9 @@ Module{Feature}/
 │   └── assets/
 │       ├── js/
 │       │   └── src/
-│       │       └── module-{kebab}.js     # ES6+ source
+│       │       └── module-{kebab}-{action}.js  # ES6+ source, one per action
 │       ├── css/
-│       │   └── module-{kebab}.css
+│       │   └── module-{kebab}-{action}.css
 │       └── img/
 │           └── logo.svg
 ├── Messages/                             # Translations (required)
