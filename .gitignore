@@ -73,6 +73,13 @@ tests/api/.tmp-*
 .claude/missing_*.json
 .claude/translation_analysis_report.json
 .claude/*.tar.gz
+
+# Snapshots written on skill install, migration and uninstall — a fresh ~3 MB
+# copy per cycle, so they must never reach the index.
+.claude/.backup-*/
+
+# Selenium/PHPUnit run artefacts (JUnit XML, screenshots)
+tests/AdminCabinet/reports/
 run-test-from-host.sh
 node_modules/
 seed.spec.ts

@@ -99,6 +99,11 @@ class SecurityPlugin extends Injectable
                     // and treat as "login page": access token is never loaded,
                     // every API call returns 401, PbxApiClient.handleAuthError
                     // bounces back to /session/index → infinite refresh loop.
+                    // A halted dispatch leaves the view content null, which
+                    // Phalcon then copies into the response and PHP 8.4 reports
+                    // as a setContent(null) deprecation. The redirect carries no
+                    // body, so an empty string is the honest value to hand over.
+                    $this->view->setContent('');
                     $this->response->redirect('extensions/index')->send();
                     return false;
                 }
@@ -336,7 +341,16 @@ class SecurityPlugin extends Injectable
 
         // AJAX requests receive a 403 response
         if ($this->request->isAjax()) {
-            $this->response->setStatusCode(403, 'Forbidden')->setContent('This user is not authorized')->send();
+            // Do NOT send() from here. View::start() has already opened an
+            // output buffer and left the view content null; on a halted
+            // dispatch Phalcon skips render() and copies that null straight
+            // into the response. The payload sent from the plugin was dropped
+            // with the buffer, and the resulting setContent(null) notice
+            // became the entire 403 body. Seeding the view content is what
+            // gives Phalcon something real to carry into the response —
+            // disabling the view would only put the empty string back.
+            $this->view->setContent('This user is not authorized');
+            $this->response->setStatusCode(403, 'Forbidden');
         } else {
             // Standard requests are redirected to the login page
             $this->forwardToLoginPage($dispatcher);
