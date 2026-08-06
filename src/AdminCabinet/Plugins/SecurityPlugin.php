@@ -73,18 +73,7 @@ class SecurityPlugin extends Injectable
 
         // Handle unauthenticated access to non-public controllers
         if (!$isAuthenticated && !in_array($controllerClass, $publicControllers)) {
-            // Clear any stale cookies before redirect to prevent loops
-            $this->clearAuthCookies();
-
-            // AJAX requests receive a 403 response
-            if ($this->request->isAjax()) {
-                $this->response->setStatusCode(403, 'Forbidden')->setContent('This user is not authorized')->send();
-            } else {
-                // Standard requests are redirected to the login page
-                $this->forwardToLoginPage($dispatcher);
-            }
-
-            return false;
+            return $this->denyAsLoggedOut($dispatcher);
         }
 
         // Authenticated users: validate access to the requested resource
@@ -103,7 +92,7 @@ class SecurityPlugin extends Injectable
                 // cookie (issue #1065 regression from commit 0313611cc). Only a
                 // genuinely stale cookie — present but with no Redis session —
                 // gets cleared, so the login form stays usable without a loop.
-                if ($this->refreshTokenHasLiveSession()) {
+                if ($this->refreshTokenHasLiveSession() === true) {
                     // HTTP 302 — must actually change the URL in the browser.
                     // $dispatcher->forward() keeps the URL at /session/index,
                     // which token-manager.js and PbxApiClient detect by pathname
@@ -129,6 +118,27 @@ class SecurityPlugin extends Injectable
                 && !$this->isAllowedAction($controllerClass, $action)
                 && !in_array($controllerClass, $publicControllers)
             ) {
+                // A denial here has two very different causes, and they must not
+                // share the same answer. isAuthenticated() only proves the
+                // refreshToken cookie is present, so a cookie whose Redis session
+                // is gone (expired TTL, Redis restart) reaches this point with no
+                // role at all, falls back to GUESTS and gets the 401 page — while
+                // the dead cookie survives, so every next page load repeats it.
+                // No role AND a proven-absent session means "logged out", not
+                // "forbidden": drop the cookie and send the user to the login
+                // form instead. A strict === false is required — an unreachable
+                // Redis answers null, and wiping the cookie on that would turn a
+                // transient outage into a permanent logout for every user.
+                if (
+                    $this->extractRoleFromJwt() === null
+                    && $this->refreshTokenHasLiveSession() === false
+                ) {
+                    return $this->denyAsLoggedOut($dispatcher);
+                }
+
+                // Role resolved (valid Bearer/session), the session is alive but
+                // carries no usable role, or the session store is unreachable —
+                // all handled as a permission problem, leaving the cookie intact.
                 $this->forwardTo401Error($dispatcher);
                 return true;
             }
@@ -271,9 +281,14 @@ class SecurityPlugin extends Injectable
      * against the Redis session store so beforeDispatch() can redirect a
      * logged-in user home instead of wiping a valid cookie.
      *
-     * @return bool true if the cookie carries a token with a live Redis session
+     * The answer is deliberately three-valued: null means the store could not
+     * be reached (Redis down, cookie undecryptable), which is NOT the same as
+     * a proven absent session. Callers that destroy the cookie must act only
+     * on a definite false, otherwise a Redis hiccup logs everyone out for good.
+     *
+     * @return bool|null true — live session; false — no session; null — unknown
      */
-    private function refreshTokenHasLiveSession(): bool
+    private function refreshTokenHasLiveSession(): ?bool
     {
         if (!$this->cookies->has('refreshToken')) {
             return false;
@@ -288,8 +303,9 @@ class SecurityPlugin extends Injectable
         } catch (\Throwable $e) {
             // A cookie that fails to decrypt / a Redis hiccup is not a
             // critical error — must not route through CriticalErrorsHandler
-            // (it renders via Whoops and forces HTTP 500). Treat as "no live
-            // session" so the caller falls back to clearing the stale cookie.
+            // (it renders via Whoops and forces HTTP 500). Report it as
+            // "unknown" so callers keep the cookie instead of forcing a logout
+            // on what may be a transient outage.
             if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
                 \MikoPBX\Core\System\SystemMessages::sysLogMsg(
                     __METHOD__,
@@ -297,8 +313,36 @@ class SecurityPlugin extends Injectable
                     LOG_DEBUG
                 );
             }
-            return false;
+            return null;
         }
+    }
+
+    /**
+     * Denies the request the way a logged-out user is denied: the stale cookie
+     * is dropped and the user lands on the login form (403 for AJAX callers).
+     *
+     * Shared by the unauthenticated branch and by the ACL branch, where a
+     * cookie without a live session produces a denial that is a missing login,
+     * not a missing permission. Both must answer identically — a divergence
+     * between the two is what produced the redirect loops of #1054 / #1065.
+     *
+     * @param Dispatcher $dispatcher Dispatcher used to forward to the login page.
+     * @return bool always false — the caller must halt the current dispatch.
+     */
+    private function denyAsLoggedOut(Dispatcher $dispatcher): bool
+    {
+        // Clear any stale cookies before redirect to prevent loops
+        $this->clearAuthCookies();
+
+        // AJAX requests receive a 403 response
+        if ($this->request->isAjax()) {
+            $this->response->setStatusCode(403, 'Forbidden')->setContent('This user is not authorized')->send();
+        } else {
+            // Standard requests are redirected to the login page
+            $this->forwardToLoginPage($dispatcher);
+        }
+
+        return false;
     }
 
     /**
