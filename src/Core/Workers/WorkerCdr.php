@@ -39,10 +39,13 @@ use Phalcon\Di\Di;
  */
 class WorkerCdr extends WorkerBase
 {
+    private const int COMPLETION_GUARD_TTL_SECONDS = 30;
+
     // Tube names for Beanstalk queues.
     public const string SELECT_CDR_TUBE = 'select_cdr_tube';
     public const string UPDATE_CDR_TUBE = 'update_cdr_tube';
     public const string DELETE_CDR_TUBE = 'delete_cdr_tube';
+    public const string FINALIZE_CDR_TUBE = 'finalize_cdr_tube';
 
     // Define properties
     private BeanstalkClient $clientQueue;
@@ -50,6 +53,9 @@ class WorkerCdr extends WorkerBase
     private array $no_answered_calls = [];
     private string $emailForMissed = '';
     private int $lastCheckCdr = 0;
+
+    /** @var array<string, int> UNIQUEID => expiration timestamp */
+    private array $completionGuard = [];
 
     /**
      * The main entry point for the worker.
@@ -64,6 +70,7 @@ class WorkerCdr extends WorkerBase
         // Establish connection with Beanstalk queue
         $this->clientQueue = new BeanstalkClient(self::SELECT_CDR_TUBE);
         $this->clientQueue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
+        $this->clientQueue->subscribe(self::FINALIZE_CDR_TUBE, [$this, 'finalizeLinkedIdWorker']);
 
         // Initialize system settings
         $this->initSettings();
@@ -136,16 +143,12 @@ class WorkerCdr extends WorkerBase
      * @param array $result CDR data
      * @throws \Exception
      */
-    private function updateCdr(array $result): void
+    protected function updateCdr(array $result): void
     {
-        // Re-initialize system settings for each call to this function
-        // to ensure we have the most up-to-date settings.
-        $this->initSettings();
-        $arr_update_cdr = [];
-
         // Fetch identifiers for all currently active channels.
         // Active channels are those that are involved in ongoing calls.
         $channels_id = $this->getActiveIdChannels();
+        $completedRows = [];
 
         // Process each Call Detail Record (CDR) from the result set.
         foreach ($result as $row) {
@@ -157,6 +160,119 @@ class WorkerCdr extends WorkerBase
             if (array_key_exists($row['linkedid'], $channels_id)) {
                 continue;
             }
+            $completedRows[] = $row;
+        }
+
+        $this->processCompletedRows($this->claimRowsForCompletion($completedRows));
+    }
+
+    /**
+     * Processes a terminal LINKEDID_END notification without querying AMI.
+     */
+    public function finalizeLinkedIdWorker(BeanstalkClient $tube): void
+    {
+        $data = json_decode($tube->getBody(), true);
+        $success = is_array($data) && $this->processLinkedIdFinalizationMessage($data);
+        $tube->reply(json_encode($success));
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    protected function processLinkedIdFinalizationMessage(array $data): bool
+    {
+        $linkedId = trim((string)($data['linkedid'] ?? ''));
+        $eventTime = trim((string)($data['eventTime'] ?? ''));
+        if ($linkedId === '' || $eventTime === '') {
+            $this->logTerminalFinalization('Ignoring invalid WorkerCdr LINKEDID_END notification', LOG_WARNING);
+            return false;
+        }
+
+        $validatedRows = [];
+        $seenUniqueIds = [];
+        foreach ($this->loadCompletedRowsForLinkedId($linkedId) as $row) {
+            if (!hash_equals($linkedId, (string)($row['linkedid'] ?? ''))) {
+                $this->logTerminalFinalization(
+                    sprintf('Ignoring mismatched terminal CDR row linkedid=%s expected=%s', $row['linkedid'] ?? '', $linkedId),
+                    LOG_WARNING
+                );
+                continue;
+            }
+            $uniqueId = (string)($row['UNIQUEID'] ?? '');
+            if ($uniqueId === '' || isset($seenUniqueIds[$uniqueId])) {
+                continue;
+            }
+            $seenUniqueIds[$uniqueId] = true;
+            $validatedRows[] = $row;
+        }
+
+        $validatedRows = $this->claimRowsForCompletion($validatedRows);
+        if ($validatedRows !== []) {
+            $this->processCompletedRows($validatedRows);
+        }
+
+        return true;
+    }
+
+    protected function logTerminalFinalization(string $message, int $level): void
+    {
+        SystemMessages::sysLogMsg(__CLASS__, $message, $level);
+    }
+
+    /**
+     * Prevents duplicate conversion/update tasks while the single DB writer consumes
+     * the previously published update. Expired claims allow retry after queue loss.
+     *
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, array<string, mixed>>
+     */
+    protected function claimRowsForCompletion(array $rows): array
+    {
+        $now = time();
+        foreach ($this->completionGuard as $uniqueId => $expiresAt) {
+            if ($expiresAt <= $now) {
+                unset($this->completionGuard[$uniqueId]);
+            }
+        }
+
+        $claimed = [];
+        foreach ($rows as $row) {
+            $uniqueId = (string)($row['UNIQUEID'] ?? '');
+            if ($uniqueId === '' || isset($this->completionGuard[$uniqueId])) {
+                continue;
+            }
+            $this->completionGuard[$uniqueId] = $now + self::COMPLETION_GUARD_TTL_SECONDS;
+            $claimed[] = $row;
+        }
+
+        return $claimed;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function loadCompletedRowsForLinkedId(string $linkedId): array
+    {
+        return CDRDatabaseProvider::getCdr([
+            'work_completed<>1 AND endtime<>"" AND linkedid=:linkedid:',
+            'bind' => ['linkedid' => $linkedId],
+            'miko_tmp_db' => true,
+            'limit' => 2000,
+        ]);
+    }
+
+    /**
+     * Calculates and publishes rows already known to belong to completed calls.
+     *
+     * @param array<int, array<string, mixed>> $result
+     */
+    protected function processCompletedRows(array $result): void
+    {
+        // Re-initialize system settings for each batch to use current notification settings.
+        $this->initSettings();
+        $arr_update_cdr = [];
+
+        foreach ($result as $row) {
 
             // Calculate timestamps and durations
             $start = strtotime($row['start']);
@@ -207,7 +323,7 @@ class WorkerCdr extends WorkerBase
      * The array key is the Linkedid of the channel, and the value is an array of channel details.
      * @throws \Exception
      */
-    private function getActiveIdChannels(): array
+    protected function getActiveIdChannels(): array
     {
         // The getAstManager method from the Util class is used to obtain an instance of the Asterisk Manager Interface (AMI).
         // The 'off' argument specifies that we want the AMI instance with events turned off.

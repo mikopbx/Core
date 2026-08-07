@@ -1361,6 +1361,7 @@ end
             - action (string): The action type, which is "transfer_dial_hangup".
             - end (string): The date and time when the call was hung up.
             - linkedid (string): The linked ID of the channel.
+            - transfer_UNIQUEID (string): The inherited ID of this transfer attempt.
             - did (string): The DID of the call.
             - agi_channel (string): The AGI channel of the call.
             - agi_threadid (string): The thread ID of the AGI channel.
@@ -1382,6 +1383,7 @@ function event_transfer_dial_hangup()
 
     -- Retrieve the linked ID and DID of the call
     data['linkedid']  	= get_variable("CHANNEL(linkedid)");
+    data['transfer_UNIQUEID'] = get_variable("transfer_UNIQUEID");
     data['did']		    = get_variable("FROM_DID");
 
     -- Retrieve the AGI channel and thread ID

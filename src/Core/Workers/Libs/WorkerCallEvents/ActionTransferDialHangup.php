@@ -126,26 +126,31 @@ class ActionTransferDialHangup
      */
     private static function fillNotAnsweredCdr(WorkerCallEvents $worker, array $data): void
     {
-        // Close the transfer-attempt CDR.
-        // When the hung-up leg has a concrete destination channel (a reachable agent that
-        // rejected the call, or the queue management channel), match it exactly so parallel
-        // sibling legs — including one that has JUST been answered — are not closed by
-        // mistake. All parallel legs of one transferer share src_chan=TRANSFERERNAME, so
-        // matching on src_chan alone would wrongly close the answered leg and lose the final
-        // bridge recording (#1084).
-        // When the transfer target never picked up (e.g. CHANUNAVAIL / NO_CONTACTS), the
-        // event carries an empty dst_chan; src_chan + answer="" still uniquely identifies the
-        // attempt row (preserves the resume-recording fix from 88c0574dc).
+        $transferUniqueId = trim((string)($data['transfer_UNIQUEID'] ?? ''));
+        $destinationChannel = trim((string)($data['dst_chan'] ?? ''));
+        if ($transferUniqueId === '' && $destinationChannel === '') {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                sprintf(
+                    'Ignoring uncorrelated transfer_dial_hangup linkedid=%s channel=%s transferer=%s end=%s',
+                    $data['linkedid'] ?? '',
+                    $data['agi_channel'] ?? '',
+                    $data['TRANSFERERNAME'] ?? '',
+                    $data['end'] ?? ''
+                ),
+                LOG_WARNING
+            );
+            return;
+        }
+
+        // All parallel queue legs share linkedid and src_chan. Select the small candidate
+        // set first, then match UNIQUEID in PHP so underscores are not SQL LIKE wildcards.
         $conditions = 'linkedid = :linkedid: AND endtime = "" AND transfer = "1" '
             . 'AND src_chan = :src_chan: AND answer = ""';
         $bind = [
-            'linkedid' => $data['linkedid'],
-            'src_chan' => $data['TRANSFERERNAME'],
+            'linkedid' => $data['linkedid'] ?? '',
+            'src_chan' => $data['TRANSFERERNAME'] ?? '',
         ];
-        if (!empty($data['dst_chan'])) {
-            $conditions .= ' AND dst_chan = :dst_chan:';
-            $bind['dst_chan'] = $data['dst_chan'];
-        }
         $filter = [
             $conditions,
             'bind' => $bind,
@@ -153,13 +158,35 @@ class ActionTransferDialHangup
         /** @var CallDetailRecordsTmp $m_data */
         /** @var CallDetailRecordsTmp $row */
         $m_data = CallDetailRecordsTmp::find($filter);
+        $matched = 0;
         foreach ($m_data as $row) {
+            $isMatched = $transferUniqueId !== ''
+                ? TransferCdrLegMatcher::matches((string)$row->UNIQUEID, $transferUniqueId)
+                : (string)$row->dst_chan === $destinationChannel;
+            if (!$isMatched) {
+                continue;
+            }
+
             // There was no answer. The transfer was canceled.
-            $row->writeAttribute('endtime', $data['end']);
+            $row->writeAttribute('endtime', $data['end'] ?? '');
             $row->writeAttribute('transfer', 0);
             if (!$row->save()) {
                 SystemMessages::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
+                continue;
             }
+            ++$matched;
+        }
+        if ($matched === 0 || $matched > 1) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                sprintf(
+                    'transfer_dial_hangup matched rows=%d linkedid=%s transfer_UNIQUEID=%s',
+                    $matched,
+                    $data['linkedid'] ?? '',
+                    $transferUniqueId
+                ),
+                LOG_DEBUG
+            );
         }
         $filter = [
             'linkedid=:linkedid: AND endtime = ""',
