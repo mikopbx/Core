@@ -109,6 +109,41 @@ existing path.
 
 No AMI request is involved in either scheduling or finalization.
 
+### Immediate WorkerCdr notification
+
+After `ActionCelLinkedIdEnd` has closed the remaining rows, `WorkerCallEvents`
+will publish one message to a dedicated `WorkerCdr::FINALIZE_CDR_TUBE`:
+
+```json
+{
+  "linkedid": "mikopbx-1786037174.23581",
+  "eventTime": "2026-08-06 14:46:40"
+}
+```
+
+`WorkerCdr` will subscribe to this tube and immediately select completed,
+unprocessed rows for exactly that linked ID. This terminal path will not call
+`GetChannels()`: the system-generated `LINKEDID_END` event is the authority
+that the linked ID is no longer active.
+
+The existing `updateCdr()` implementation will be split so both paths reuse
+one calculation method:
+
+- polling obtains active linked IDs through the existing AMI call, excludes
+  them, and passes the remaining rows to the shared processor;
+- terminal notification validates that every selected row belongs to the
+  notified linked ID and passes those rows directly to the shared processor.
+
+The bypass will be exposed only through the dedicated terminal callback. No
+general-purpose `skipActiveCheck` boolean will be added.
+
+Duplicate notifications are safe because the first successful pass marks and
+removes processed temporary rows. The normal five-second poll remains enabled
+as a fallback for lost notifications and mixed-version operation.
+
+This removes up to five seconds of WorkerCdr polling latency. The independent
+`WorkerWav2Webm` scan interval remains unchanged and is outside this change.
+
 ### Restart and event-loss behavior
 
 The per-leg events remain the primary closure mechanism. `LINKEDID_END` is a
@@ -167,6 +202,12 @@ CEL records to the `asterisk-cel` tube.
 - A terminal event never overwrites an existing `endtime`.
 - Pending finalization does not run before its two-second deadline and runs from
   both message processing and the worker ping callback.
+- Terminal notification makes WorkerCdr process only the notified linked ID
+  without calling AMI.
+- Duplicate terminal notifications do not create duplicate permanent CDRs or
+  conversion tasks.
+- Polling continues to exclude active linked IDs through the existing AMI
+  guard and remains a fallback when no terminal notification is delivered.
 
 ### Calls integration scenario
 
@@ -200,8 +241,9 @@ cover successful, unreachable, and cancelled attended transfers.
   its transfer ID or exact destination channel.
 - `LINKEDID_END` finalization makes all remaining rows eligible for normal
   WorkerCdr migration without querying AMI.
+- WorkerCdr is notified immediately after terminal finalization and schedules
+  recording conversion without waiting for its next five-second poll.
 - No completed test call leaves `endtime=""` rows in the temporary table.
 - No active call is finalized by a sibling hangup.
 - Existing attended-transfer tests pass without changing their expected call
   semantics.
-
