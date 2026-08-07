@@ -12,7 +12,6 @@ CLAUDE.local.md
 build
 .config.json
 docs
-.worktrees/
 .playwright-mcp
 
 # Python cache directories
