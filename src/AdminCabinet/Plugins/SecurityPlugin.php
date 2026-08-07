@@ -150,9 +150,10 @@ class SecurityPlugin extends Injectable
                 // PbxApiClient read as "session lost" — forwarding there would
                 // log out a perfectly live session on every permission error.
                 if ($this->request->isAjax()) {
-                    // A store-unreachable answer (null) lands here too, and 403
-                    // is deliberately ignored by both frontend handlers, so the
-                    // page would just go quiet. Leave a server-side trace.
+                    // A store-unreachable answer (null) lands here too, and the
+                    // caller cannot tell that apart from a real ACL denial —
+                    // both read as "no permission". Leave a server-side trace so
+                    // a Redis outage is diagnosable from the log.
                     $this->logAjaxDenial($controllerClass, $action);
                     return $this->denyAjax(403, 'Forbidden', 'This user is not authorized');
                 }
@@ -355,8 +356,9 @@ class SecurityPlugin extends Injectable
         // AJAX requests receive a 401: the session is gone, not the permission.
         // token-manager.js (ajaxError) and PbxApiClient.handleAuthError treat
         // 401 — and only 401 — as session loss and send the user to the login
-        // form. The 403 this used to answer with was ignored by both, so a tab
-        // left open past session expiry kept collecting errors until reload.
+        // form. No global handler acts on the 403 this used to answer with, so
+        // a tab left open past session expiry never returned to the login form;
+        // what the user saw instead was up to each individual caller.
         if ($this->request->isAjax()) {
             return $this->denyAjax(401, 'Unauthorized', 'Authentication required');
         }
@@ -383,12 +385,24 @@ class SecurityPlugin extends Injectable
      *                    load-bearing — token-manager.js and PbxApiClient log
      *                    the user out on 401 and only on 401.
      * @param string $reasonPhrase HTTP reason phrase matching the status.
-     * @param string $body Plain-text body for the caller / the browser console.
+     * @param string $message Human-readable reason for the caller.
      * @return bool always false — the caller must halt the current dispatch.
      */
-    private function denyAjax(int $status, string $reasonPhrase, string $body): bool
+    private function denyAjax(int $status, string $reasonPhrase, string $message): bool
     {
-        $this->view->setContent($body);
+        // JSON, in the shape BaseController::afterExecuteRoute() gives every
+        // other AJAX answer — including the flash map under 'message', which is
+        // what Form.handleSubmitResponse() iterates looking for the 'error' key
+        // (form.js). A bare string never matches that key and renders nothing,
+        // and a plain-text body cannot even be parsed, so a caller inspecting
+        // responseJSON gets null. afterExecuteRoute() never runs on a halted
+        // dispatch, so the content type has to be set here too.
+        $this->response->setContentType('application/json', 'UTF-8');
+        $this->view->setContent(json_encode([
+            'success' => false,
+            'reload' => false,
+            'message' => ['error' => $message],
+        ]));
         $this->response->setStatusCode($status, $reasonPhrase);
 
         return false;
@@ -397,10 +411,12 @@ class SecurityPlugin extends Injectable
     /**
      * Records an AJAX permission denial in the system log.
      *
-     * The 403 these denials carry is deliberately ignored by both frontend
-     * handlers, so the page simply goes quiet. When the cause is an unreachable
-     * session store rather than a real permission problem, this line is the
-     * only place the outage is visible from the server side.
+     * No global frontend handler acts on the 403 these denials carry, and the
+     * client cannot tell a genuine permission problem from an unreachable
+     * session store anyway — refreshTokenHasLiveSession() answering null
+     * produces the same 403. This line is where that difference stays visible.
+     * Note the level: LOG_DEBUG matches the rest of this file, so the line only
+     * lands in the system log once debug logging is enabled.
      *
      * @param string $controllerClass Controller the caller was denied.
      * @param string $action Action the caller was denied.
