@@ -49,6 +49,21 @@ const TokenManager = {
     isRefreshing: false,
 
     /**
+     * Flag to prevent multiple simultaneous logouts.
+     *
+     * A page with several pollers (advice worker, event bus, DataTable refresh)
+     * gets one 401 per in-flight request when the session dies, and the global
+     * ajaxError handler calls logout() for every one of them. Without this flag
+     * that means N parallel auth:logout calls, N synchronous session/end calls,
+     * and a race over the landing page: the first call ends at session/end
+     * while a later one, seeing accessToken already nulled, sets session/index.
+     * Never reset: every path guarded by it navigates away from the page. The
+     * login-page branch, which returns without navigating, is left unguarded.
+     * @type {boolean}
+     */
+    isLoggingOut: false,
+
+    /**
      * Flag to prevent multiple initializations
      * @type {boolean}
      */
@@ -385,7 +400,6 @@ const TokenManager = {
      * - Redirects to login page
      */
     async logout() {
-
         // Check if already on login page - prevent redirect loop
         const isLoginPage = window.location.pathname.includes('/session/index') ||
                            window.location.pathname.includes('/session/');
@@ -411,6 +425,14 @@ const TokenManager = {
             });
             return;
         }
+
+        // A burst of 401s must produce exactly one logout, not one per request.
+        // Latched below the login-page branch above: that branch returns without
+        // navigating, so latching there would swallow its cookie cleanup later.
+        if (this.isLoggingOut) {
+            return;
+        }
+        this.isLoggingOut = true;
 
         // Prevent multiple logout calls
         if (!this.accessToken) {
