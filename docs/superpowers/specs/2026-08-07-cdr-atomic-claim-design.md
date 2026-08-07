@@ -1,58 +1,58 @@
-# CDR Atomic Claim Design
+# Проект атомарного захвата CDR
 
-## Purpose
+## Назначение
 
-This design replaces the in-memory `WorkerCdr` completion guard with an
-atomic, lease-based claim stored in the temporary `cdr` table. It prevents
-duplicate CDR processing and conversion tasks while allowing processing to
-recover safely after a worker crash, delayed Beanstalk messages, or lease
-expiration.
+Этот проект заменяет локальную защиту `WorkerCdr` от повторной обработки на
+атомарный захват с арендой, хранящийся во временной таблице `cdr`. Решение
+предотвращает повторную обработку CDR и создание дубликатов задач конвертации,
+но позволяет безопасно восстановить обработку после падения worker, задержки
+сообщений Beanstalk или истечения аренды.
 
-The existing rule remains unchanged: `WorkerCallEvents` is the single writer
-for CDR database mutations. `WorkerCdr` requests claims and performs CDR
-calculations, but does not update the temporary table directly.
+Сохраняется существующее правило: `WorkerCallEvents` является единственным
+процессом, изменяющим CDR в базе данных. `WorkerCdr` запрашивает захват и
+рассчитывает значения CDR, но не обновляет временную таблицу напрямую.
 
-## Temporary CDR State
+## Состояния временной CDR
 
-Add two service columns to `CallDetailRecordsTmp` and the temporary `cdr`
-table:
+В модель `CallDetailRecordsTmp` и таблицу `cdr` добавляются два служебных поля:
 
 ```sql
 processing_token      VARCHAR(64) NOT NULL DEFAULT ''
 processing_started_at INTEGER     NOT NULL DEFAULT 0
 ```
 
-`processing_started_at` contains a Unix timestamp in seconds.
+`processing_started_at` содержит Unix timestamp в секундах.
 
-The row states are:
+Состояния строки:
 
-| State | `work_completed` | `processing_token` |
+| Состояние | `work_completed` | `processing_token` |
 |---|---:|---|
-| Active call | `0` | empty |
-| Completed and waiting | `0` | empty |
-| Claimed by WorkerCdr | `0` | claim UUID |
-| Processed | `1` | claim UUID |
-| Migrated | temporary row deleted | — |
+| Активный звонок | `0` | пусто |
+| Звонок завершён и ожидает обработки | `0` | пусто |
+| Строка захвачена WorkerCdr | `0` | UUID захвата |
+| Строка обработана | `1` | UUID захвата |
+| Строка перенесена | временная строка удалена | — |
 
-`work_completed` continues to describe final completion only. The processing
-state must not overload it with a value such as `2`, because existing queries
-use `work_completed<>1` and would ambiguously treat such rows as pending.
+`work_completed` продолжает обозначать только окончательное завершение.
+Нельзя использовать значение `2` как признак обработки: существующие запросы
+используют условие `work_completed<>1` и будут неоднозначно считать такие
+строки ожидающими обработки.
 
-## Claim Ownership
+## Владелец операции захвата
 
-Add a request/reply tube:
+Добавляется request/reply tube:
 
 ```php
 WorkerCdr::CLAIM_CDR_TUBE = 'claim_cdr_tube';
 ```
 
-`WorkerCallEvents` subscribes to the tube and executes the database claim as
-the single writer.
+`WorkerCallEvents` подписывается на tube и выполняет изменение базы данных как
+единственный writer.
 
-### Terminal request
+### Терминальный запрос
 
-After `LINKEDID_END`, WorkerCdr requests completed rows for one exact linked
-ID without querying AMI:
+После `LINKEDID_END` WorkerCdr без обращения к AMI запрашивает завершённые
+строки одного точного linked ID:
 
 ```json
 {
@@ -63,11 +63,10 @@ ID without querying AMI:
 }
 ```
 
-### Polling request
+### Запрос обычного polling
 
-The ordinary polling path first obtains active linked IDs through the existing
-AMI call. It removes active calls and requests claims for the remaining exact
-CDR identifiers:
+Обычный polling сначала получает через существующий AMI-вызов активные linked
+ID, исключает их и запрашивает захват оставшихся точных идентификаторов CDR:
 
 ```json
 {
@@ -81,19 +80,19 @@ CDR identifiers:
 }
 ```
 
-The terminal path must never invoke `GetChannels()`. The polling path retains
-the AMI check as a fallback for calls that did not produce or deliver a
-terminal notification.
+Терминальный путь никогда не вызывает `GetChannels()`. Polling сохраняет
+проверку AMI как резерв для звонков, по которым терминальное событие не было
+создано или доставлено.
 
-## Atomic Claim Transaction
+## Атомарная транзакция захвата
 
-`WorkerCallEvents` performs the claim in one short SQLite transaction:
+`WorkerCallEvents` выполняет захват в одной короткой SQLite-транзакции:
 
 ```sql
 BEGIN IMMEDIATE;
 ```
 
-Eligible rows satisfy:
+Условия выбора доступных строк:
 
 ```sql
 work_completed <> 1
@@ -104,15 +103,15 @@ AND (
 )
 ```
 
-The terminal mode additionally requires:
+В терминальном режиме дополнительно требуется:
 
 ```sql
 linkedid = :linkedid
 ```
 
-The polling mode limits selection to the supplied exact `UNIQUEID` values.
+В режиме polling выбор ограничивается переданным списком точных `UNIQUEID`.
 
-Selected rows are claimed conditionally:
+Выбранные строки условно захватываются:
 
 ```sql
 UPDATE cdr
@@ -127,7 +126,7 @@ WHERE id IN (:selected_ids)
   );
 ```
 
-Rows are then read back by the new token:
+После обновления строки читаются строго по новому token:
 
 ```sql
 SELECT *
@@ -137,28 +136,27 @@ ORDER BY answer
 LIMIT 200;
 ```
 
-The transaction ends with `COMMIT`. File operations, email publication,
-duration calculation, and recording conversion do not run inside the
-transaction.
+Транзакция завершается `COMMIT`. Файловые операции, отправка email, расчёт
+длительности и конвертация записи внутри транзакции не выполняются.
 
-`BEGIN IMMEDIATE` is acceptable because the transaction contains only a
-bounded SELECT, UPDATE, and SELECT. It is executed by the existing single
-writer and does not hold the SQLite lock while WorkerCdr processes the rows.
+`BEGIN IMMEDIATE` здесь допустим: транзакция содержит только ограниченные по
+размеру SELECT, UPDATE и SELECT. Она выполняется существующим single-writer и
+не удерживает блокировку SQLite во время обработки строк в WorkerCdr.
 
-## Lease Parameters
+## Параметры аренды
 
-Use explicit constants:
+Используются явные константы:
 
 ```php
 private const int CDR_CLAIM_LEASE_SECONDS = 120;
 private const int CDR_CLAIM_BATCH_SIZE = 200;
 ```
 
-A batch of 200 rows must finish its calculations and JSON task creation well
-inside two minutes. WAV/WebM conversion is not part of the lease because it is
-performed asynchronously by `WorkerWav2Webm`.
+Пакет из 200 строк должен завершить расчёты и создание JSON-задач значительно
+быстрее двух минут. Конвертация WAV/WebM в аренду не входит, потому что
+асинхронно выполняется `WorkerWav2Webm`.
 
-If processing approaches the deadline, WorkerCdr may renew the lease:
+Если обработка приближается к пределу, WorkerCdr может продлить аренду:
 
 ```json
 {
@@ -167,13 +165,13 @@ If processing approaches the deadline, WorkerCdr may renew the lease:
 }
 ```
 
-Renewal updates `processing_started_at` only for rows whose token still
-matches. With the chosen batch size, renewal is an emergency mechanism rather
-than the normal execution path.
+Продление обновляет `processing_started_at` только у строк, текущий token
+которых совпадает с переданным. При размере пакета 200 это аварийный механизм,
+а не нормальный путь.
 
-## Token-Aware Completion
+## Завершение с проверкой token
 
-WorkerCdr includes the claim token in every update:
+WorkerCdr включает token захвата в каждое обновление:
 
 ```json
 {
@@ -187,7 +185,7 @@ WorkerCdr includes the claim token in every update:
 }
 ```
 
-`UpdateDataInDB` performs a compare-and-set lookup:
+`UpdateDataInDB` выполняет compare-and-set поиск:
 
 ```sql
 UNIQUEID = :uniqueid
@@ -195,49 +193,49 @@ AND processing_token = :token
 AND work_completed <> 1
 ```
 
-When the token matches:
+Если token совпадает:
 
-1. Calculated CDR fields are saved.
-2. `work_completed` becomes `1`.
-3. The existing `afterSave()` path copies the row to `cdr_general`.
-4. The temporary row is deleted.
+1. Сохраняются рассчитанные поля CDR.
+2. `work_completed` устанавливается в `1`.
+3. Существующий обработчик `afterSave()` копирует строку в `cdr_general`.
+4. Временная строка удаляется.
 
-When the token does not match, the update belongs to an expired owner and is
-ignored. A delayed update from an old WorkerCdr can therefore never complete a
-row that has been reclaimed by a newer worker.
+Если token не совпадает, обновление принадлежит владельцу с истёкшей арендой и
+игнорируется. Запоздавшее обновление старого WorkerCdr не сможет завершить
+строку, уже перехваченную новым worker.
 
-## Crash Recovery
+## Восстановление после падения
 
-Recovery requires no unconditional claim reset at startup.
+Для восстановления не требуется безусловно сбрасывать все захваты при запуске.
 
-Example:
+Пример:
 
-1. Worker A claims rows with token `A`.
-2. Worker A creates some tasks and terminates unexpectedly.
-3. The rows remain leased by token `A`.
-4. Other workers leave them untouched for 120 seconds.
-5. After expiration, Worker B atomically replaces token `A` with token `B`.
-6. A delayed update from Worker A fails the token comparison.
-7. Worker B completes the row with token `B`.
+1. Worker A захватывает строки с token `A`.
+2. Worker A создаёт часть задач и аварийно завершается.
+3. Строки остаются арендованы token `A`.
+4. В течение 120 секунд другие worker их не трогают.
+5. После истечения аренды Worker B атомарно заменяет token `A` на token `B`.
+6. Запоздавшее обновление Worker A не проходит проверку token.
+7. Worker B завершает строку с token `B`.
 
-Avoid resetting all tokens during startup. An unconditional reset creates a
-race with update messages that Worker A published before it terminated.
+Нельзя сбрасывать все token при запуске. Безусловный сброс создаст гонку с
+сообщениями update, которые Worker A опубликовал перед завершением.
 
-## Deterministic Recording Conversion Tasks
+## Детерминированные задачи конвертации
 
-A claim alone does not prevent this failure sequence:
+Один захват не предотвращает следующую последовательность:
 
-1. WorkerCdr creates a conversion JSON file.
-2. WorkerCdr terminates before publishing or completing the CDR update.
-3. The lease expires and another worker processes the row again.
+1. WorkerCdr создаёт JSON-файл конвертации.
+2. WorkerCdr завершается до публикации или завершения CDR update.
+3. Аренда истекает, и другой worker повторно обрабатывает строку.
 
-Conversion task names must therefore be deterministic:
+Поэтому имя задачи конвертации должно быть детерминированным:
 
 ```text
 conversion-tasks/<sha256(UNIQUEID)>.json
 ```
 
-Write the task atomically:
+Задача записывается атомарно:
 
 ```text
 <hash>.json.tmp.<processing_token>
@@ -245,21 +243,21 @@ Write the task atomically:
 <hash>.json
 ```
 
-A retry replaces the same logical task rather than creating a second task.
-The JSON retains the original `UNIQUEID`; `processing_token` may be included
-for diagnostics. The current random `uniqid()` suffix must be removed.
+Повторная попытка заменяет ту же логическую задачу, а не создаёт вторую. В JSON
+сохраняется исходный `UNIQUEID`; `processing_token` можно добавить для
+диагностики. Текущий случайный суффикс `uniqid()` необходимо удалить.
 
-## Error Handling
+## Обработка ошибок
 
-### Claim failure
+### Ошибка захвата
 
-Roll back the transaction. WorkerCdr receives no rows and retries through a
-later terminal notification or polling iteration.
+Транзакция откатывается. WorkerCdr не получает строки и повторяет запрос после
+следующего терминального уведомления или прохода polling.
 
-### CDR processing failure
+### Ошибка обработки CDR
 
-The row remains leased. It automatically becomes eligible after 120 seconds.
-For faster retry, WorkerCdr can request a conditional release:
+Строка остаётся арендованной и автоматически становится доступна через 120
+секунд. Для более быстрого повтора WorkerCdr может запросить условный release:
 
 ```json
 {
@@ -269,95 +267,96 @@ For faster retry, WorkerCdr can request a conditional release:
 }
 ```
 
-Release clears the token only when the supplied token matches the current
-owner.
+Release очищает token только при совпадении с текущим владельцем.
 
-### Update publication failure
+### Ошибка публикации update
 
-The lease expires and the row is retried. Its deterministic conversion task is
-replaced instead of duplicated.
+Аренда истекает, и строка обрабатывается повторно. Детерминированная задача
+конвертации заменяется, а не дублируется.
 
-### Delayed update
+### Запоздавший update
 
-The compare-and-set token no longer matches after reclamation, so the stale
-update is ignored.
+Compare-and-set token уже не совпадает после повторного захвата, поэтому
+устаревшее обновление игнорируется.
 
-## LINKEDID_END Data Flow
+## Поток LINKEDID_END
 
-The complete terminal flow is:
+Полный терминальный поток:
 
 ```text
 LINKEDID_END
-  -> delayed terminal finalization
-  -> close residual endtime fields
-  -> notify WorkerCdr(linkedid)
-  -> atomically claim completed rows for linkedid
-  -> calculate CDR fields
-  -> create deterministic conversion tasks
-  -> token-aware UpdateDataInDB
-  -> migrate to cdr_general
-  -> delete temporary CDR rows
+  -> отложенная терминальная финализация
+  -> закрытие endtime остаточных строк
+  -> уведомление WorkerCdr(linkedid)
+  -> атомарный захват завершённых строк linkedid
+  -> расчёт полей CDR
+  -> создание детерминированных задач конвертации
+  -> UpdateDataInDB с проверкой token
+  -> перенос в cdr_general
+  -> удаление временных строк CDR
 ```
 
-The notification is a trigger, not proof of ownership. Only a successful
-database claim gives WorkerCdr permission to process a row. Duplicate terminal
-notifications therefore return no additional rows while a valid lease exists.
+Уведомление является только триггером, а не подтверждением права обработки.
+Право обработать строку выдаёт только успешный захват в базе данных. Поэтому
+повторные терминальные уведомления не возвращают дополнительные строки, пока
+действует аренда.
 
-## Email Notifications
+## Email-уведомления
 
-The claim prevents concurrent processing but does not provide exactly-once
-email delivery if WorkerCdr terminates after publishing email and before CDR
-completion.
+Захват предотвращает конкурентную обработку, но не обеспечивает exactly-once
+для email, если WorkerCdr завершается после публикации email, но до завершения
+CDR.
 
-The minimum safer design is:
+Минимально безопасная схема:
 
-1. WorkerCdr includes the prepared notification data in its token-aware update.
-2. The single writer publishes the email only after a successful token-matched
-   transition from `work_completed=0` to `work_completed=1`.
+1. WorkerCdr включает подготовленные данные уведомления в update с token.
+2. Single-writer публикует email только после успешного перехода
+   `work_completed=0` в `work_completed=1` с совпавшим token.
 
-Strict exactly-once email delivery requires a transactional outbox. That is
-outside this change unless exactly-once email is made an explicit requirement.
-The current scope may retain best-effort email semantics, but it must not claim
-exactly-once delivery.
+Строгая exactly-once доставка email требует transactional outbox. Она не входит
+в эту доработку, если exactly-once для email не станет отдельным требованием.
+В текущем объёме допустима best-effort семантика, но её нельзя описывать как
+exactly-once.
 
-## Required Tests
+## Обязательные тесты
 
-### Atomic claim
+### Атомарный захват
 
-- Two claims for the same row return it only to the first token.
-- An unexpired token cannot be replaced.
-- An expired token can be replaced.
-- A terminal claim returns only the exact linked ID.
-- A polling claim returns only the supplied exact unique IDs.
-- Active or open rows with `endtime=''` cannot be claimed.
+- Два запроса одной строки возвращают её только первому token.
+- Неистёкший token нельзя заменить.
+- Истёкший token можно заменить.
+- Терминальный запрос возвращает только точный linked ID.
+- Polling-запрос возвращает только переданные точные unique ID.
+- Активную или открытую строку с `endtime=''` нельзя захватить.
 
-### Completion
+### Завершение
 
-- An update with the current token completes and deletes the temporary row.
-- An update with an expired token is ignored.
-- A delayed old update cannot overwrite a reclaimed row.
-- A failed worker permits processing after lease expiration.
+- Обновление с текущим token завершает CDR и удаляет временную строку.
+- Обновление с истёкшим token игнорируется.
+- Старое запоздавшее обновление не изменяет повторно захваченную строку.
+- После падения worker строка снова обрабатывается по истечении аренды.
 
-### Side effects
+### Побочные эффекты
 
-- Reprocessing the same `UNIQUEID` produces one deterministic conversion task.
-- A failed update followed by retry does not create a second task.
-- Duplicate terminal notification does not produce duplicate CDR rows.
+- Повторная обработка одного `UNIQUEID` создаёт одну детерминированную задачу.
+- Ошибка update и последующий retry не создают вторую задачу.
+- Повторное терминальное уведомление не создаёт дубликат CDR.
 
-### Call integration
+### Интеграционный звонок
 
-- Reproduce the attended-transfer-to-ringall retry from issue #1100.
-- One early queue leg must not alter the still-ringing sibling.
-- The answered leg must retain answer time, billable seconds, and recording.
-- After `LINKEDID_END`, no row for the linked ID remains in temporary `cdr`.
+- Воспроизводится attended transfer в `ringall` с повторным раундом из issue
+  #1100.
+- Раннее завершение одной ноги не меняет ещё звонящего соседа.
+- Отвеченная нога сохраняет answer time, billable seconds и recording.
+- После `LINKEDID_END` во временной `cdr` не остаётся строк этого linked ID.
 
-## Acceptance Criteria
+## Критерии приёмки
 
-- No CDR is processed without owning its current database claim token.
-- Duplicate terminal notifications do not create duplicate conversion tasks.
-- A WorkerCdr crash cannot leave a row permanently claimed.
-- A delayed update from an expired owner cannot complete or overwrite a row.
-- The terminal path remains independent of AMI.
-- The polling path retains its active-channel AMI guard.
-- Conversion tasks are idempotent by `UNIQUEID`.
-- Temporary CDR rows are removed after successful token-aware completion.
+- CDR не обрабатывается без владения актуальным token из базы данных.
+- Повторные терминальные уведомления не создают дубликаты задач конвертации.
+- Падение WorkerCdr не может навсегда оставить строку захваченной.
+- Запоздавший update прежнего владельца не завершает и не перезаписывает строку.
+- Терминальный путь остаётся независимым от AMI.
+- Polling сохраняет AMI-проверку активных каналов.
+- Задачи конвертации идемпотентны по `UNIQUEID`.
+- Временные строки CDR удаляются после успешного token-aware завершения.
