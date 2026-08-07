@@ -46,8 +46,8 @@ class SecurityPlugin extends Injectable
     /**
      * Executes before every request is dispatched.
      * Verifies user authentication and authorization for the requested resource.
-     * Unauthenticated users are redirected to the login page or shown a 403 error for AJAX requests.
-     * Unauthorized access attempts lead to a 401 error page.
+     * Unauthenticated users are redirected to the login page (401 for AJAX requests).
+     * Authenticated users lacking a permission get the 401 error page (403 for AJAX requests).
      *
      * @param Event $event The current event instance.
      * @param Dispatcher $dispatcher The dispatcher instance.
@@ -144,6 +144,19 @@ class SecurityPlugin extends Injectable
                 // Role resolved (valid Bearer/session), the session is alive but
                 // carries no usable role, or the session store is unreachable —
                 // all handled as a permission problem, leaving the cookie intact.
+                //
+                // For an AJAX caller that must be a 403: show401Action() sets
+                // HTTP 401, and 401 is the one status token-manager.js and
+                // PbxApiClient read as "session lost" — forwarding there would
+                // log out a perfectly live session on every permission error.
+                if ($this->request->isAjax()) {
+                    // A store-unreachable answer (null) lands here too, and 403
+                    // is deliberately ignored by both frontend handlers, so the
+                    // page would just go quiet. Leave a server-side trace.
+                    $this->logAjaxDenial($controllerClass, $action);
+                    return $this->denyAjax(403, 'Forbidden', 'This user is not authorized');
+                }
+
                 $this->forwardTo401Error($dispatcher);
                 return true;
             }
@@ -324,7 +337,7 @@ class SecurityPlugin extends Injectable
 
     /**
      * Denies the request the way a logged-out user is denied: the stale cookie
-     * is dropped and the user lands on the login form (403 for AJAX callers).
+     * is dropped and the user lands on the login form (401 for AJAX callers).
      *
      * Shared by the unauthenticated branch and by the ACL branch, where a
      * cookie without a live session produces a denial that is a missing login,
@@ -339,24 +352,68 @@ class SecurityPlugin extends Injectable
         // Clear any stale cookies before redirect to prevent loops
         $this->clearAuthCookies();
 
-        // AJAX requests receive a 403 response
+        // AJAX requests receive a 401: the session is gone, not the permission.
+        // token-manager.js (ajaxError) and PbxApiClient.handleAuthError treat
+        // 401 — and only 401 — as session loss and send the user to the login
+        // form. The 403 this used to answer with was ignored by both, so a tab
+        // left open past session expiry kept collecting errors until reload.
         if ($this->request->isAjax()) {
-            // Do NOT send() from here. View::start() has already opened an
-            // output buffer and left the view content null; on a halted
-            // dispatch Phalcon skips render() and copies that null straight
-            // into the response. The payload sent from the plugin was dropped
-            // with the buffer, and the resulting setContent(null) notice
-            // became the entire 403 body. Seeding the view content is what
-            // gives Phalcon something real to carry into the response —
-            // disabling the view would only put the empty string back.
-            $this->view->setContent('This user is not authorized');
-            $this->response->setStatusCode(403, 'Forbidden');
-        } else {
-            // Standard requests are redirected to the login page
-            $this->forwardToLoginPage($dispatcher);
+            return $this->denyAjax(401, 'Unauthorized', 'Authentication required');
         }
 
+        // Standard requests are redirected to the login page
+        $this->forwardToLoginPage($dispatcher);
+
         return false;
+    }
+
+    /**
+     * Answers an AJAX caller with a status and a body, halting the dispatch.
+     *
+     * Do NOT send() the response from a plugin. View::start() has already
+     * opened an output buffer and left the view content null; on a halted
+     * dispatch Phalcon skips render() and copies that null straight into the
+     * response. A payload sent from the plugin is dropped with the buffer, and
+     * the resulting setContent(null) notice becomes the entire body (see commit
+     * 34b4a8b7c). Seeding the view content is what gives Phalcon something real
+     * to carry over — disabling the view would only put the empty string back.
+     *
+     * @param int $status HTTP status: 401 when the session is gone, 403 when it
+     *                    is alive but lacks the permission. The distinction is
+     *                    load-bearing — token-manager.js and PbxApiClient log
+     *                    the user out on 401 and only on 401.
+     * @param string $reasonPhrase HTTP reason phrase matching the status.
+     * @param string $body Plain-text body for the caller / the browser console.
+     * @return bool always false — the caller must halt the current dispatch.
+     */
+    private function denyAjax(int $status, string $reasonPhrase, string $body): bool
+    {
+        $this->view->setContent($body);
+        $this->response->setStatusCode($status, $reasonPhrase);
+
+        return false;
+    }
+
+    /**
+     * Records an AJAX permission denial in the system log.
+     *
+     * The 403 these denials carry is deliberately ignored by both frontend
+     * handlers, so the page simply goes quiet. When the cause is an unreachable
+     * session store rather than a real permission problem, this line is the
+     * only place the outage is visible from the server side.
+     *
+     * @param string $controllerClass Controller the caller was denied.
+     * @param string $action Action the caller was denied.
+     */
+    private function logAjaxDenial(string $controllerClass, string $action): void
+    {
+        if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+            \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                __METHOD__,
+                "AJAX access denied (403) to $controllerClass::$action",
+                LOG_DEBUG
+            );
+        }
     }
 
     /**

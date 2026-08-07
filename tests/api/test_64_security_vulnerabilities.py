@@ -66,7 +66,10 @@ class TestAdminUIAuthBypass:
         }
 
     Expected after fix: fake Bearer tokens must be REJECTED (redirect to login
-    or return 403 for AJAX requests).
+    for browser requests, 401 Unauthorized for AJAX ones). 401 — not 403 — is
+    what the cabinet answers an unauthenticated AJAX caller with: it is the only
+    status token-manager.js and PbxApiClient read as session loss. A 403 there
+    means the opposite — the session is alive but lacks the permission.
     """
 
     FAKE_BEARER = 'Bearer this_is_a_completely_fake_token'
@@ -77,7 +80,7 @@ class TestAdminUIAuthBypass:
         must NOT return the authenticated page content.
 
         Current (vulnerable): returns full HTML with employee data.
-        Expected (fixed): redirect to login or 403.
+        Expected (fixed): redirect to login (401 for an AJAX caller).
         """
         session = _anon_session()
         resp = session.get(
@@ -167,7 +170,7 @@ class TestAdminUIAuthBypass:
         iconClass that renders unsanitized in the sidebar on every page load.
 
         Current (vulnerable): POST succeeds, iconClass stored in DB.
-        Expected (fixed): POST rejected (403 or redirect to login).
+        Expected (fixed): POST rejected (redirect to login, or 401 for AJAX).
         """
         session = _anon_session()
         resp = session.post(
