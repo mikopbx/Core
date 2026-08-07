@@ -462,7 +462,11 @@ Every Core processor uses the keyed form — see
 
 **Detection:**
 ```bash
-grep -A3 -n 'function initialize' App/Forms/*.php | grep -L 'parent::initialize'
+# one grep per file — a piped `grep -L` is silenced by the first clean form
+find App/Forms -maxdepth 1 -name '*.php' 2>/dev/null | while read -r f; do
+  grep -q 'function initialize' "$f" || continue   # no override — inherits BaseForm
+  grep -q 'parent::initialize' "$f" || echo "$f"
+done
 ```
 
 **Problem:** `BaseForm::initialize()` is the **only** thing that fires

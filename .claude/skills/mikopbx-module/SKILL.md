@@ -118,8 +118,10 @@ find {module_dir} -name "*.php" -exec php -l {} \;
 # 3. module.json validation
 php -r "json_decode(file_get_contents('{module_dir}/module.json'), true) ?: exit(1);"
 
-# 4. Standalone module translation catalogs
-! grep -RE '\b(require|include|array_keys|array_combine)\b' \
+# 4. Standalone module translation catalogs — matched on the argument, so a
+#    `require`/`include` inside a translated value ('Include only internal
+#    calls') is ignored while `array_merge(include 'base.php', …)` is caught.
+! grep -RE '(require|include)(_once)?[[:space:]]*\(?[[:space:]]*(__DIR__|__FILE__|\$[A-Za-z_]|['"'"'"][^'"'"'"]*\.php)|\b(array_keys|array_combine)[[:space:]]*\(' \
   {module_dir}/Messages/*.php
 
 # 5. Production repository files — production target ONLY. Several example

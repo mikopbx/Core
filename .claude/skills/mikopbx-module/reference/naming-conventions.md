@@ -27,7 +27,7 @@ Modules\{ModuleID}\App\Forms    → App/Forms/
 | Setup class | `PbxExtensionSetup` (always) | `PbxExtensionSetup` |
 | Model | `{Entity}` (singular or descriptive) | `BlackListNumbers` |
 | Main controller | `Module{Feature}Controller` | `ModuleBlackListController` |
-| Base controller | `{Feature}BaseController` | `BlackListBaseController` |
+| Base controller (optional) | `{Feature}BaseController` | `BlackListBaseController` |
 | Extra controller | `{Page}Controller` | `StatisticsController` |
 | Form | `Module{Feature}Form` | `ModuleBlackListForm` |
 | Worker | `Worker{Feature}{Type}` | `WorkerBlackListAMI` |

@@ -3,7 +3,7 @@
 ## Before generating, READ these canonical examples:
 
 - Controller: `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/App/Controllers/ModuleExampleFormController.php`
-- Base Controller: `Extensions/ModuleLocalSpeechToText/App/Controllers/LocalSpeechToTextBaseController.php`
+- Base Controller (only when shared controller logic exists): `Extensions/ModuleLocalSpeechToText/App/Controllers/LocalSpeechToTextBaseController.php`
 - Form: `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/App/Forms/ModuleExampleFormForm.php`
 - View: `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/App/Views/ModuleExampleForm/index.volt`
 - AssetProvider (optional pattern): `Extensions/ModuleLocalSpeechToText/App/Providers/AssetProvider.php`
@@ -21,8 +21,9 @@ and `ModuleAiSupervisor`.
 
 When `ui` recipe is selected, generate these files:
 
-1. `App/Controllers/{Feature}BaseController.php` (when the module has more than one page)
-2. `App/Controllers/Module{Feature}Controller.php`
+1. `App/Controllers/Module{Feature}Controller.php`
+2. `App/Controllers/{Feature}BaseController.php` — only when there is shared
+   controller logic to hold (see "Base controller" below); skip it otherwise
 3. `App/Forms/Module{Feature}Form.php`
 4. `App/Views/Module{Feature}/index.volt`
 5. `public/assets/js/src/module-{kebab}-{action}.js` (one file per controller action)
@@ -44,7 +45,9 @@ exactly as `ModuleExampleFormController` does.
 
 ```php
 // Namespace: Modules\Module{Feature}\App\Controllers
-// Extends: {Feature}BaseController (which extends AdminCabinet\Controllers\BaseController)
+// Extends (default): MikoPBX\AdminCabinet\Controllers\BaseController
+// Extends (only if the module has one): {Feature}BaseController,
+//         which itself extends MikoPBX\AdminCabinet\Controllers\BaseController
 // Standard actions: indexAction(), saveAction(), deleteAction()
 ```
 
@@ -58,6 +61,23 @@ When an explicit template override is required, use the complete module cache
 path beginning with `Modules/Module{Feature}/`. A relative call such as
 `$this->view->pick('Module{Feature}/index')` searches the core AdminCabinet
 view root and renders an empty module body.
+
+### Base controller — when to generate one
+
+Default: every module controller extends the core
+`MikoPBX\AdminCabinet\Controllers\BaseController` directly. Page count is not
+the criterion — `ModuleExampleForm`, `ModuleTemplate`, `ModuleAutoDialer` and
+`ModuleQualityAssessment` each ship two controllers and still extend the core
+class directly.
+
+Generate `{Feature}BaseController` only when there is shared controller logic to
+put in it: a common `initialize()` (logo path, `submitMode`, `moduleDir`) plus
+shared helpers such as `addModuleAssets()`, form building or data lookups. That
+happens either because several controllers reuse it (`ModuleUsersUI` — seven
+controllers extend `ModuleUsersUIBaseController`) or to keep that boilerplate
+out of one large controller (`ModuleLocalSpeechToText`, `ModuleRemoteSupport`,
+`ModuleAiSupervisor`, `ModuleRoutingMap`). Such a base controller always extends
+`MikoPBX\AdminCabinet\Controllers\BaseController`.
 
 ### View (Volt)
 

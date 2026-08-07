@@ -24,8 +24,8 @@ Module{Feature}/
 │   └── {Entity}.php                      # Phalcon model(s)
 ├── App/                                  # Admin UI (optional)
 │   ├── Controllers/
-│   │   ├── {Feature}BaseController.php
-│   │   └── Module{Feature}Controller.php
+│   │   ├── {Feature}BaseController.php   # optional, only for shared controller logic
+│   │   └── Module{Feature}Controller.php # extends the core BaseController by default
 │   ├── Forms/
 │   │   └── Module{Feature}Form.php
 │   ├── Providers/                        # optional, multi-page modules only

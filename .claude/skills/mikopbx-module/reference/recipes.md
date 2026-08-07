@@ -28,7 +28,10 @@ Each recipe adds a set of files and integration points to a module.
 
 **Files generated:**
 - `App/Controllers/Module{Feature}Controller.php` — main controller
-- `App/Controllers/{Feature}BaseController.php` — base controller with shared logic
+- OPTIONAL: `App/Controllers/{Feature}BaseController.php` — only when there is shared
+  controller logic (common `initialize()`, asset registration, helpers) to hold; otherwise
+  the controller extends `MikoPBX\AdminCabinet\Controllers\BaseController` directly.
+  See `templates/ui-recipe.md`.
 - `App/Forms/Module{Feature}Form.php` — Phalcon form
 - `App/Views/Module{Feature}/index.volt` — main view template
 - `public/assets/js/src/module-{kebab}-{action}.js` — ES6+ JavaScript, one per action
