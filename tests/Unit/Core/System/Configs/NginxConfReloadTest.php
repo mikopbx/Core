@@ -35,7 +35,7 @@ final class NginxConfReloadTest extends TestCase
 
         self::assertTrue($nginx->reload());
         self::assertSame(0, $nginx->reloadCalls);
-        self::assertSame(1, $nginx->restartCalls);
+        self::assertSame(1, $nginx->fullRestartCalls);
     }
 }
 
@@ -45,6 +45,7 @@ final class TestableNginxConf extends NginxConf
     public bool $running = true;
     public int $reloadCalls = 0;
     public int $restartCalls = 0;
+    public int $fullRestartCalls = 0;
 
     public function __construct()
     {
@@ -58,6 +59,12 @@ final class TestableNginxConf extends NginxConf
     public function monitRestart(bool $waitStart = true): bool
     {
         ++$this->restartCalls;
+        return true;
+    }
+
+    public function reStart(): bool
+    {
+        ++$this->fullRestartCalls;
         return true;
     }
 

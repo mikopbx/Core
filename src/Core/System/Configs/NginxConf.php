@@ -119,7 +119,7 @@ class NginxConf extends SystemConfigClass
         }
 
         if (!$this->isRunning(true)) {
-            return $this->monitRestart();
+            return $this->reStart();
         }
 
         return $this->reloadRunningProcess();
