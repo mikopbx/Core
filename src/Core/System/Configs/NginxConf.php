@@ -106,6 +106,48 @@ class NginxConf extends SystemConfigClass
     }
 
     /**
+     * Applies the current configuration without restarting a running nginx master.
+     *
+     * Existing connections continue to be served by the old nginx workers while
+     * newly spawned workers use the validated configuration. If nginx is stopped,
+     * Monit is used only as a recovery path to start it.
+     */
+    public function reload(): bool
+    {
+        if (!$this->testCurrentNginxConfig()) {
+            return false;
+        }
+
+        if (!$this->isRunning(true)) {
+            return $this->monitRestart();
+        }
+
+        return $this->reloadRunningProcess();
+    }
+
+    /**
+     * Sends nginx the native graceful reload signal.
+     */
+    protected function reloadRunningProcess(): bool
+    {
+        $nginx = Util::which(self::PROC_NAME);
+        $out = [];
+        $resultCode = 0;
+        Processes::mwExec("$nginx -s reload 2>&1", $out, $resultCode);
+
+        if ($resultCode === 0) {
+            return true;
+        }
+
+        SystemMessages::sysLogMsg(
+            self::PROC_NAME,
+            'Nginx graceful reload failed: ' . implode(' ', $out),
+            LOG_ERR
+        );
+        return false;
+    }
+
+    /**
      * Waits for the service to start within a timeout period.
      *
      * @param int $timeout Maximum number of seconds to wait.
@@ -444,7 +486,7 @@ class NginxConf extends SystemConfigClass
      *
      * @return bool Whether the config is valid or not.
      */
-    private function testCurrentNginxConfig(): bool
+    protected function testCurrentNginxConfig(): bool
     {
         $nginx = Util::which(self::PROC_NAME);
         $out = [];
