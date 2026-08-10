@@ -31,6 +31,7 @@ final class ActionCelLinkedIdEnd
     private static function closeRows(iterable $rows, string $eventTime): int
     {
         $updated = 0;
+        $failed = false;
         /** @var CallDetailRecordsTmp $row */
         foreach ($rows as $row) {
             $row->writeAttribute('endtime', $eventTime);
@@ -39,9 +40,10 @@ final class ActionCelLinkedIdEnd
                 ++$updated;
                 continue;
             }
+            $failed = true;
             SystemMessages::sysLogMsg(__CLASS__, implode(' ', $row->getMessages()), LOG_WARNING);
         }
 
-        return $updated;
+        return $failed ? -1 : $updated;
     }
 }

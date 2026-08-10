@@ -26,6 +26,7 @@ use MikoPBX\Core\System\{BeanstalkClient, Directories, SystemMessages, Util};
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\DatabaseProviderBase;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\Workers\Libs\WorkerCdr\ConversionTaskWriter;
 use Phalcon\Di\Di;
 
 /**
@@ -39,13 +40,13 @@ use Phalcon\Di\Di;
  */
 class WorkerCdr extends WorkerBase
 {
-    private const int COMPLETION_GUARD_TTL_SECONDS = 30;
-
     // Tube names for Beanstalk queues.
     public const string SELECT_CDR_TUBE = 'select_cdr_tube';
     public const string UPDATE_CDR_TUBE = 'update_cdr_tube';
     public const string DELETE_CDR_TUBE = 'delete_cdr_tube';
     public const string FINALIZE_CDR_TUBE = 'finalize_cdr_tube';
+    public const string CLAIM_CDR_TUBE = 'claim_cdr_tube';
+    public const string RELEASE_CDR_CLAIM_TUBE = 'release_cdr_claim_tube';
 
     // Define properties
     private BeanstalkClient $clientQueue;
@@ -53,9 +54,6 @@ class WorkerCdr extends WorkerBase
     private array $no_answered_calls = [];
     private string $emailForMissed = '';
     private int $lastCheckCdr = 0;
-
-    /** @var array<string, int> UNIQUEID => expiration timestamp */
-    private array $completionGuard = [];
 
     /**
      * The main entry point for the worker.
@@ -163,7 +161,11 @@ class WorkerCdr extends WorkerBase
             $completedRows[] = $row;
         }
 
-        $this->processCompletedRows($this->claimRowsForCompletion($completedRows));
+        $uniqueIds = array_values(array_filter(array_column($completedRows, 'UNIQUEID')));
+        $this->processClaimedRows($this->claimCompletedRows([
+            'mode' => 'uniqueids',
+            'uniqueids' => $uniqueIds,
+        ]));
     }
 
     /**
@@ -189,8 +191,7 @@ class WorkerCdr extends WorkerBase
         }
 
         $validatedRows = [];
-        $seenUniqueIds = [];
-        foreach ($this->loadCompletedRowsForLinkedId($linkedId) as $row) {
+        foreach ($this->claimCompletedRows(['mode' => 'linkedid', 'linkedid' => $linkedId]) as $row) {
             if (!hash_equals($linkedId, (string)($row['linkedid'] ?? ''))) {
                 $this->logTerminalFinalization(
                     sprintf('Ignoring mismatched terminal CDR row linkedid=%s expected=%s', $row['linkedid'] ?? '', $linkedId),
@@ -198,54 +199,38 @@ class WorkerCdr extends WorkerBase
                 );
                 continue;
             }
-            $uniqueId = (string)($row['UNIQUEID'] ?? '');
-            if ($uniqueId === '' || isset($seenUniqueIds[$uniqueId])) {
-                continue;
-            }
-            $seenUniqueIds[$uniqueId] = true;
             $validatedRows[] = $row;
         }
 
-        $validatedRows = $this->claimRowsForCompletion($validatedRows);
         if ($validatedRows !== []) {
-            $this->processCompletedRows($validatedRows);
+            $this->processClaimedRows($validatedRows);
         }
 
         return true;
     }
 
+    protected function claimCompletedRows(array $request): array
+    {
+        return CDRDatabaseProvider::claimCdr($request);
+    }
+
+    protected function processClaimedRows(array $rows): void
+    {
+        if ($rows === []) {
+            return;
+        }
+        $token = trim((string)($rows[0]['processing_token'] ?? ''));
+        try {
+            $this->processCompletedRows($rows);
+        } catch (\Throwable $e) {
+            CDRDatabaseProvider::releaseCdrClaim($token);
+            throw $e;
+        }
+    }
+
     protected function logTerminalFinalization(string $message, int $level): void
     {
         SystemMessages::sysLogMsg(__CLASS__, $message, $level);
-    }
-
-    /**
-     * Prevents duplicate conversion/update tasks while the single DB writer consumes
-     * the previously published update. Expired claims allow retry after queue loss.
-     *
-     * @param array<int, array<string, mixed>> $rows
-     * @return array<int, array<string, mixed>>
-     */
-    protected function claimRowsForCompletion(array $rows): array
-    {
-        $now = time();
-        foreach ($this->completionGuard as $uniqueId => $expiresAt) {
-            if ($expiresAt <= $now) {
-                unset($this->completionGuard[$uniqueId]);
-            }
-        }
-
-        $claimed = [];
-        foreach ($rows as $row) {
-            $uniqueId = (string)($row['UNIQUEID'] ?? '');
-            if ($uniqueId === '' || isset($this->completionGuard[$uniqueId])) {
-                continue;
-            }
-            $this->completionGuard[$uniqueId] = $now + self::COMPLETION_GUARD_TTL_SECONDS;
-            $claimed[] = $row;
-        }
-
-        return $claimed;
     }
 
     /**
@@ -298,6 +283,7 @@ class WorkerCdr extends WorkerBase
                 'UNIQUEID' => $row['UNIQUEID'],
                 'recordingfile' => $row['recordingfile'],
                 'tmp_linked_id' => $row['linkedid'],
+                'processing_token' => $row['processing_token'] ?? '',
             ];
 
             // Add the updated data to the array that will be used to update all CDRs
@@ -438,32 +424,12 @@ class WorkerCdr extends WorkerBase
                 'attempts' => 0
             ];
 
-            $jsonData = json_encode($taskData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-            if ($jsonData === false) {
+            try {
+                ConversionTaskWriter::write($tasksDir, (string)($row['UNIQUEID'] ?? ''), $taskData);
+            } catch (\Throwable $e) {
                 SystemMessages::sysLogMsg(
                     __CLASS__,
-                    sprintf(
-                        'Failed to encode conversion task JSON for linkedid=%s: %s',
-                        $row['linkedid'] ?? 'unknown',
-                        json_last_error_msg()
-                    ),
-                    LOG_ERR
-                );
-                $row['recordingfile'] = preg_replace('/\.(wav|wav16|wav48)$/i', '.webm', $row['recordingfile']);
-                return [$row, $billsec];
-            }
-
-            $taskFile = $tasksDir . '/' . ($row['linkedid'] ?? 'unknown') . '_' . uniqid() . '.json';
-            $written = file_put_contents($taskFile, $jsonData);
-
-            if ($written === false) {
-                SystemMessages::sysLogMsg(
-                    __CLASS__,
-                    sprintf(
-                        'Failed to write conversion task file %s for linkedid=%s',
-                        basename($taskFile),
-                        $row['linkedid'] ?? 'unknown'
-                    ),
+                    'Failed to publish conversion task: ' . $e->getMessage(),
                     LOG_ERR
                 );
                 // Don't update recordingfile to .webm — the conversion task was not created,

@@ -33,8 +33,10 @@ use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAnswer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAttendedTransfer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelLinkedIdEnd;
+use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ClaimCdrRows;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\DeleteCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\LinkedIdFinalizationQueue;
+use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ReleaseCdrClaim;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
 use MikoPBX\Core\Asterisk\AsteriskManager;
@@ -42,6 +44,7 @@ use Phalcon\Db\Adapter\Pdo\Sqlite as PdoSqliteAdapter;
 use Phalcon\Di\Di;
 use MikoPBX\Common\Library\Text;
 use Throwable;
+use RuntimeException;
 use DateTime;
 use MikoPBX\Core\Asterisk\Configs\CelBeanstalkdConf;
 
@@ -405,6 +408,8 @@ class WorkerCallEvents extends WorkerBase
         $this->clientQueue->subscribe(CelBeanstalkdConf::BEANSTALK_TUBE, [$this, 'callEventsWorker']);
         $this->clientQueue->subscribe(self::class, [$this, 'otherEvents']);
         $this->clientQueue->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
+        $this->clientQueue->subscribe(WorkerCdr::CLAIM_CDR_TUBE, [$this, 'claimCDRWorker']);
+        $this->clientQueue->subscribe(WorkerCdr::RELEASE_CDR_CLAIM_TUBE, [$this, 'releaseCDRClaimWorker']);
         $this->clientQueue->subscribe(WorkerCdr::UPDATE_CDR_TUBE, [$this, 'updateCDRWorker']);
         $this->clientQueue->subscribe(WorkerCdr::DELETE_CDR_TUBE, [$this, 'deleteCDRWorker']);
 
@@ -600,13 +605,30 @@ class WorkerCallEvents extends WorkerBase
         if (!isset($this->linkedIdFinalizations)) {
             return;
         }
-        foreach ($this->linkedIdFinalizations->takeDue($this->monotonicNow()) as $linkedId => $eventTime) {
-            $updated = $this->finalizeLinkedId($linkedId, $eventTime);
-            $this->publishLinkedIdFinalized($linkedId, $eventTime);
-            $this->logLinkedIdFinalization(
-                sprintf('LINKEDID_END finalized linkedid=%s rows=%d end=%s', $linkedId, $updated, $eventTime),
-                LOG_DEBUG
-            );
+        foreach ($this->linkedIdFinalizations->due($this->monotonicNow()) as $linkedId => $eventTime) {
+            try {
+                $updated = $this->finalizeLinkedId($linkedId, $eventTime);
+                if ($updated < 0) {
+                    throw new RuntimeException('Failed to save one or more CDR rows');
+                }
+                $this->publishLinkedIdFinalized($linkedId, $eventTime);
+                $this->linkedIdFinalizations->acknowledge($linkedId, $eventTime);
+                $this->logLinkedIdFinalization(
+                    sprintf('LINKEDID_END finalized linkedid=%s rows=%d end=%s', $linkedId, $updated, $eventTime),
+                    LOG_DEBUG
+                );
+            } catch (Throwable $e) {
+                $this->linkedIdFinalizations->retry(
+                    $linkedId,
+                    $eventTime,
+                    $this->monotonicNow(),
+                    5.0
+                );
+                $this->logLinkedIdFinalization(
+                    sprintf('LINKEDID_END retry linkedid=%s: %s', $linkedId, $e->getMessage()),
+                    LOG_WARNING
+                );
+            }
         }
     }
 
@@ -704,6 +726,19 @@ class WorkerCallEvents extends WorkerBase
 
         // Reply with the result data
         $tube->reply($res_data);
+    }
+
+    public function claimCDRWorker(BeanstalkClient $tube): void
+    {
+        $request = json_decode($tube->getBody(), true);
+        $tube->reply(ClaimCdrRows::execute(is_array($request) ? $request : []));
+    }
+
+    public function releaseCDRClaimWorker(BeanstalkClient $tube): void
+    {
+        $request = json_decode($tube->getBody(), true);
+        $released = ReleaseCdrClaim::execute(trim((string)($request['token'] ?? '')));
+        $tube->reply(json_encode(['released' => $released], JSON_THROW_ON_ERROR));
     }
 
     /**

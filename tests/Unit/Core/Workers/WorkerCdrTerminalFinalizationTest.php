@@ -82,10 +82,27 @@ final class TestableWorkerCdr extends WorkerCdr
         $this->updateCdr($rows);
     }
 
-    protected function loadCompletedRowsForLinkedId(string $linkedId): array
+    protected function claimCompletedRows(array $request): array
     {
-        $this->loadedLinkedId = $linkedId;
-        return $this->rows;
+        if (($request['mode'] ?? '') === 'linkedid') {
+            $this->loadedLinkedId = (string)$request['linkedid'];
+            $result = [];
+            $seen = [];
+            foreach ($this->rows as $row) {
+                if (($row['linkedid'] ?? '') !== $this->loadedLinkedId || isset($seen[$row['UNIQUEID']])) {
+                    continue;
+                }
+                $seen[$row['UNIQUEID']] = true;
+                $result[] = $row;
+            }
+            $this->rows = [];
+            return $result;
+        }
+        $ids = array_flip($request['uniqueids'] ?? []);
+        return array_values(array_filter($this->rows ?: [
+            ['linkedid' => 'call-a', 'UNIQUEID' => 'a-1'],
+            ['linkedid' => 'call-b', 'UNIQUEID' => 'b-1'],
+        ], static fn(array $row): bool => isset($ids[$row['UNIQUEID']])));
     }
 
     protected function processCompletedRows(array $result): void

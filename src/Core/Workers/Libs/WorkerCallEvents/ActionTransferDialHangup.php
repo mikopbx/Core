@@ -188,21 +188,24 @@ class ActionTransferDialHangup
                 LOG_DEBUG
             );
         }
+        if ($matched !== 1) {
+            return;
+        }
         $filter = [
-            'linkedid=:linkedid: AND endtime = ""',
+            'linkedid=:linkedid: AND endtime = "" AND answer <> ""',
             'bind' => [
                 'linkedid' => $data['linkedid'],
             ],
         ];
         $m_data = CallDetailRecordsTmp::find($filter);
-        // Phalcon Resultset::count() returns int — compare as int, not against string '1'.
-        if ($m_data->count() !== 1) {
+        $row = TransferCdrResumeSelector::select($matched, $m_data);
+        if ($row === null) {
             // The transfer is not completed or channels no longer exist.
             return;
         }
 
         // Try to resume conversation recording.
-        foreach ($m_data as $row) {
+        foreach ([$row] as $row) {
             $info = pathinfo($row->recordingfile);
             $data_time = ($row->answer === '') ? $row->start : $row->answer;
             $subDir = date('Y/m/d/H/', strtotime($data_time));

@@ -104,6 +104,40 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
         return $result_data;
     }
 
+    public static function claimCdr(array $request): array
+    {
+        $request['token'] = bin2hex(random_bytes(16));
+        $request['limit'] = min(200, max(1, (int)($request['limit'] ?? 200)));
+        $client = new BeanstalkClient(WorkerCdr::CLAIM_CDR_TUBE);
+        $filename = '';
+        try {
+            [$ok, $message] = $client->sendRequest(json_encode($request, JSON_THROW_ON_ERROR), 15);
+            if ($ok !== false) {
+                $filename = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
+            }
+            if (!is_string($filename) || !is_file($filename)) {
+                return [];
+            }
+            return json_decode((string)file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\Throwable $e) {
+            SystemMessages::sysLogMsg(self::class, 'CDR claim failed: ' . $e->getMessage(), LOG_ERR);
+            return [];
+        } finally {
+            if (is_string($filename) && is_file($filename)) {
+                unlink($filename);
+            }
+        }
+    }
+
+    public static function releaseCdrClaim(string $token): void
+    {
+        if ($token === '') {
+            return;
+        }
+        $client = new BeanstalkClient(WorkerCdr::RELEASE_CDR_CLAIM_TUBE);
+        $client->sendRequest(json_encode(['token' => $token], JSON_THROW_ON_ERROR), 15);
+    }
+
     /**
      * Retrieves all incomplete CDRs from the cache.
      * @return array  An array of CDR data.

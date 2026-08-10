@@ -22,8 +22,9 @@ final class LinkedIdFinalizationQueue
             return;
         }
 
+        $currentEnd = $this->pending[$linkedId]['end'] ?? '';
         $this->pending[$linkedId] = [
-            'end' => $eventTime,
+            'end' => $currentEnd === '' || strcmp($eventTime, $currentEnd) > 0 ? $eventTime : $currentEnd,
             'dueAt' => $now + $this->delaySeconds,
         ];
     }
@@ -31,7 +32,7 @@ final class LinkedIdFinalizationQueue
     /**
      * @return array<string, string>
      */
-    public function takeDue(float $now): array
+    public function due(float $now): array
     {
         $due = [];
         foreach ($this->pending as $linkedId => $entry) {
@@ -39,9 +40,23 @@ final class LinkedIdFinalizationQueue
                 continue;
             }
             $due[$linkedId] = $entry['end'];
-            unset($this->pending[$linkedId]);
         }
 
         return $due;
+    }
+
+    public function acknowledge(string $linkedId, string $eventTime): void
+    {
+        if (($this->pending[$linkedId]['end'] ?? null) === $eventTime) {
+            unset($this->pending[$linkedId]);
+        }
+    }
+
+    public function retry(string $linkedId, string $eventTime, float $now, float $delaySeconds): void
+    {
+        if (($this->pending[$linkedId]['end'] ?? null) !== $eventTime) {
+            return;
+        }
+        $this->pending[$linkedId]['dueAt'] = $now + $delaySeconds;
     }
 }

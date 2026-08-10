@@ -44,6 +44,14 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
 {
     public const string CACHE_KEY = 'Workers:Cdr';
 
+    /** @Column(type="string", length=64, nullable=false, default="") */
+    public string $processing_token = '';
+
+    /** @Column(type="integer", nullable=false, default="0") */
+    public int $processing_started_at = 0;
+
+    private bool $moveToGeneralSucceeded = true;
+
     /**
      * Initialize the model.
      */
@@ -98,14 +106,23 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
                         $newCdr->writeAttribute($key, $value);
                     }
                 }
-                $newCdr->save();
+                if (!$newCdr->save()) {
+                    $this->moveToGeneralSucceeded = false;
+                    SystemMessages::sysLogMsg(__CLASS__, implode(' ', $newCdr->getMessages()), LOG_ERR);
+                }
             } catch (Throwable $e) {
                 // Prevent crash loop when cdr_general table is missing (issue #1000).
                 // The temporary record remains in `cdr` and will be retried by WorkerCdr.
                 CriticalErrorsHandler::handleExceptionWithSyslog($e);
+                $this->moveToGeneralSucceeded = false;
             }
         }
         $this->saveCdrCache();
+    }
+
+    public function wasMovedToGeneral(): bool
+    {
+        return $this->moveToGeneralSucceeded;
     }
 
     /**

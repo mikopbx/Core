@@ -43,6 +43,27 @@ final class WorkerCallEventsLinkedIdEndTest extends TestCase
         self::assertSame([['call-a', '2026-08-06 14:46:41']], $worker->finalized);
         self::assertSame([['call-a', '2026-08-06 14:46:41']], $worker->published);
     }
+
+    public function testPublishFailureRetriesSameTerminalEvent(): void
+    {
+        $worker = (new ReflectionClass(TestableWorkerCallEvents::class))->newInstanceWithoutConstructor();
+        $worker->initializeFinalizations();
+        $worker->now = 100.0;
+        $worker->schedule(['LinkedID' => 'call-a', 'EventTime' => '2026-08-06 14:46:40']);
+        $worker->failPublish = true;
+
+        $worker->now = 102.0;
+        $worker->drain();
+        $worker->failPublish = false;
+        $worker->now = 106.999;
+        $worker->drain();
+        self::assertCount(1, $worker->finalized);
+
+        $worker->now = 107.0;
+        $worker->drain();
+        self::assertCount(2, $worker->finalized);
+        self::assertSame([['call-a', '2026-08-06 14:46:40']], $worker->published);
+    }
 }
 
 final class TestableWorkerCallEvents extends WorkerCallEvents
@@ -50,6 +71,7 @@ final class TestableWorkerCallEvents extends WorkerCallEvents
     public float $now = 0.0;
     public array $finalized = [];
     public array $published = [];
+    public bool $failPublish = false;
 
     public function initializeFinalizations(): void
     {
@@ -79,6 +101,9 @@ final class TestableWorkerCallEvents extends WorkerCallEvents
 
     protected function publishLinkedIdFinalized(string $linkedId, string $eventTime): void
     {
+        if ($this->failPublish) {
+            throw new \RuntimeException('publish failed');
+        }
         $this->published[] = [$linkedId, $eventTime];
     }
 
