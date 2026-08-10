@@ -76,9 +76,16 @@ class UpdateDataInDB
                 SystemMessages::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
             }
 
-            self::sendUserEventData($m_data, $data);
+            if ($res && $m_data->work_completed === "1" && !$m_data->wasMovedToGeneral()) {
+                $m_data->writeAttribute('work_completed', 0);
+                $m_data->writeAttribute('processing_token', '');
+                $m_data->writeAttribute('processing_started_at', 0);
+                $m_data->save();
+                return;
+            }
 
-            if ($res && $m_data->work_completed === "1" && $m_data->wasMovedToGeneral()) {
+            if ($res && $m_data->work_completed === "1") {
+                self::sendUserEventData($m_data, $data);
                 // Delete data from the temporary table, as they have already been moved to the permanent one.
                 $m_data->delete();
             }
