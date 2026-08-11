@@ -425,13 +425,13 @@ class SIPConf extends AsteriskConfigClass
 
         // Process incoming contexts.
         foreach ($this->data_providers as $provider) {
-            $contextsData = $this->contexts_data[$provider['context_id']];
-            if (count($contextsData) === 1) {
-                // For inbound providers, use username as provider ID to match endpoint name
-                // Fallback to uniqid if username is empty
-                $providerId = ($provider['registration_type'] === Sip::REG_TYPE_INBOUND && !empty($provider['username']))
-                    ? $provider['username']
-                    : $provider['uniqid'];
+            $contextsData = ProviderIncomingContextResolver::sharedGroupMembers(
+                $this->data_providers,
+                $provider['context_id']
+            );
+            $groupSize = count($contextsData);
+            if (ProviderIncomingContextResolver::usesDedicatedContext($provider, $groupSize)) {
+                $providerId = ProviderIncomingContextResolver::resolveId($provider, $groupSize);
                 $conf .= IncomingContexts::generate($providerId, $provider['username'], $provider['uniqid']);
                 $emittedContextNames[$providerId . '-incoming'] = true;
 
@@ -456,6 +456,7 @@ class SIPConf extends AsteriskConfigClass
                 // a single DID-parsing config: the first provider in the group that needs it.
                 foreach ($this->data_providers as $contextProvider) {
                     if ($contextProvider['context_id'] === $provider['context_id']
+                        && isset($contextsData[$contextProvider['uniqid']])
                         && $this->needsCallerIdDidProcessing($contextProvider)) {
                         $processor = new CallerIdDidProcessor($context_id, $contextProvider);
                         $conf .= $processor->generateIncomingProcessingContext();
@@ -2326,18 +2327,12 @@ class SIPConf extends AsteriskConfigClass
             $contactUser = $fromuser;
         }
         $language   = PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
-        if ($provider['registration_type'] === Sip::REG_TYPE_INBOUND) {
-            // For inbound providers, use username to match the endpoint/AOR name
-            // Fallback to uniqid if username is empty
-            $context_id = !empty($provider['username']) ? $provider['username'] : $provider['uniqid'];
-            $context = "$context_id-incoming";
-        } elseif (count($this->contexts_data[$provider['context_id']]) === 1) {
-            $context_id = $provider['uniqid'];
-            $context = "$context_id-incoming";
-        } else {
-            $context_id = str_replace('-incoming', '', $provider['context_id']);
-            $context = "$context_id-incoming";
-        }
+        $groupSize = count(ProviderIncomingContextResolver::sharedGroupMembers(
+            $this->data_providers,
+            $provider['context_id']
+        ));
+        $contextId = ProviderIncomingContextResolver::resolveId($provider, $groupSize);
+        $context = "$contextId-incoming";
         $dtmfmode = ($provider['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $provider['dtmfmode'];
 
         // Get tone zone for this language
