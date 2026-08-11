@@ -561,6 +561,36 @@ conference or IVR number.
 
 ---
 
+## 31. [HIGH] RPC-style catch-all REST controller
+
+**Detection:**
+```bash
+for f in Lib/RestAPI/*/Controller.php; do
+  printf '%s: ' "$f"
+  grep -c '#\[ApiOperation' "$f"
+done
+```
+
+**Problem:** A controller that mixes unrelated settings, jobs, files, status, and
+business records has no coherent resource contract. It accumulates verb-based
+routes, inconsistent permissions, unrelated schemas, and an OpenAPI tag that says
+nothing about ownership.
+
+**Fix:** Before adding endpoints, enumerate business resources. Give each cohesive
+resource its own `Lib/RestAPI/{Resource}/` directory, plural noun path, schema,
+lifecycle, and permission boundary. Map CRUD to standard HTTP methods. Keep a
+custom `:action` only when it represents a state transition owned by that resource.
+
+Also run the OpenAPI catalog validator. Missing generated `rest_tag_*`, operation,
+parameter, schema, or module response keys in `Messages/en.php` or
+`Messages/ru.php` are a release-blocking validation failure:
+
+```bash
+php .claude/skills/mikopbx-module/scripts/validate-rest-api-translations.php {module_dir}
+```
+
+---
+
 # PART 2: SECURITY ANTI-PATTERNS
 
 These patterns can lead to system compromise through installed modules.

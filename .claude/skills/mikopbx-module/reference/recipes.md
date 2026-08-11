@@ -77,12 +77,25 @@ Each recipe adds a set of files and integration points to a module.
 - 7-phase request processing in Action classes
 - DataStructure implements `OpenApiSchemaProvider`
 - JWT Bearer token authentication
+- RESTful resource boundaries: one cohesive business resource per
+  `Lib/RestAPI/{Resource}/`, plural noun paths, standard HTTP verbs for CRUD
+- Custom `:action` routes only for state transitions owned by that resource;
+  never aggregate unrelated module operations into one controller
+- Complete OpenAPI localization in `Messages/en.php` and `Messages/ru.php`:
+  generated `rest_tag_*` keys plus operation, parameter, schema, resource, and
+  module-specific response keys
 
 **Code examples to read:**
 - `Extensions/EXAMPLES/REST-API/ModuleExampleRestAPIv3/Lib/RestAPI/Tasks/Controller.php`
 - `Extensions/EXAMPLES/REST-API/ModuleExampleRestAPIv3/Lib/RestAPI/Tasks/Processor.php`
 - `Extensions/EXAMPLES/REST-API/ModuleExampleRestAPIv3/Lib/RestAPI/Tasks/DataStructure.php`
 - `Extensions/EXAMPLES/REST-API/ModuleExampleRestAPIv3/Lib/RestAPI/Tasks/Actions/SaveRecordAction.php`
+
+**Post-generation:**
+
+```bash
+php .claude/skills/mikopbx-module/scripts/validate-rest-api-translations.php {module_dir}
+```
 
 ---
 

@@ -59,7 +59,13 @@ Parse user's natural language description and determine:
 | acl | "доступ", "права", "роли", "ACL", "permissions", "roles" |
 | system | "cron", "nginx", "периодический", "запуск", "scheduled" |
 
-5. **Confirm plan** — present proposed structure and get user approval before generating
+5. **RESTful design gate** — when the `rest-api` recipe is selected, list business
+   resources before endpoints. Give each resource its own
+   `Lib/RestAPI/{Resource}/` boundary, noun-based path, schema, lifecycle, and
+   permissions. Map CRUD to standard HTTP methods. Use `:action` only for a
+   domain state transition that cannot be represented as CRUD. Never collect
+   unrelated module operations in one controller.
+6. **Confirm plan** — present proposed structure and get user approval before generating
 
 **Ask many questions!** It's better to clarify intent than to guess wrong. Examples:
 - "Модуль будет иметь свою страницу настроек в админке?"
@@ -133,6 +139,11 @@ test -f {module_dir}/README.ru.md
 # 6. Publish workflow — production target ONLY. Example modules have no
 #    per-module workflow, so this check must be skipped for them.
 test -f {module_dir}/.github/workflows/build.yml
+
+# 7. REST/OpenAPI translations — run from the Core repository root when the
+#    rest-api recipe is present. Checks module-owned keys and generated tag
+#    keys in both English and Russian catalogs.
+php .claude/skills/mikopbx-module/scripts/validate-rest-api-translations.php {module_dir}
 ```
 
 Report results and suggest fixes for any issues found.
@@ -325,6 +336,21 @@ Workflow:
 1. Collect all translation keys used in generated code (controllers, views, forms)
 2. Create Russian translations first (`Messages/ru.php`)
 3. Call `/translations` skill to translate to remaining 28 languages
+
+For every REST API resource, also collect the complete OpenAPI contract:
+
+- tag keys generated from `ApiResource::tags`, for example
+  `Module Phrase Studio - Voices` → `rest_tag_ModulePhraseStudioVoices`;
+- every `ApiOperation` summary and description key;
+- every parameter description key;
+- every request/response schema field description key;
+- module-specific `ApiResponse` keys.
+
+Define every collected key in both `Messages/en.php` and `Messages/ru.php`
+before generation is complete. A visible raw identifier such as
+`rest_tasks_GetList` or `rest_tag_ModuleExampleTasks` is a validation failure,
+not an acceptable fallback. Run
+`scripts/validate-rest-api-translations.php` through the post-generation check.
 
 Every module catalog MUST also contain the three registration keys consumed by
 MikoPBX Core, even though module-owned PHP, JavaScript, and views do not
