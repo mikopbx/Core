@@ -43,6 +43,8 @@ use Phalcon\Mvc\Dispatcher;
  */
 class SecurityPlugin extends Injectable
 {
+    private const string DEFAULT_HOME_PAGE = '/admin-cabinet/extensions/index';
+
     /**
      * Executes before every request is dispatched.
      * Verifies user authentication and authorization for the requested resource.
@@ -104,7 +106,7 @@ class SecurityPlugin extends Injectable
                     // as a setContent(null) deprecation. The redirect carries no
                     // body, so an empty string is the honest value to hand over.
                     $this->view->setContent('');
-                    $this->response->redirect('extensions/index')->send();
+                    $this->response->redirect($this->getAuthenticatedHomePage())->send();
                     return false;
                 }
                 $this->clearAuthCookies();
@@ -447,18 +449,55 @@ class SecurityPlugin extends Injectable
     }
 
     /**
-     * Redirects to the user's home page or a default page if the home page is not set.
+     * Returns the home page stored for the current refresh-token session.
      *
-     * For JWT authentication: home page path should be stored in JWT claims or module config.
-     * For now, defaults to '/admin-cabinet/extensions/index'.
+     * The path comes from the authentication provider (Core or an optional
+     * module), so Core does not need to know which component supplied it.
+     * Only local absolute paths are accepted to avoid turning the login route
+     * into an external redirect.
+     */
+    private function getAuthenticatedHomePage(): string
+    {
+        if (!$this->cookies->has('refreshToken')) {
+            return self::DEFAULT_HOME_PAGE;
+        }
+
+        try {
+            $refreshToken = $this->cookies->get('refreshToken')->getValue();
+            if (!is_string($refreshToken) || $refreshToken === '') {
+                return self::DEFAULT_HOME_PAGE;
+            }
+
+            $jwt = $this->di->getShared(JwtProvider::SERVICE_NAME);
+            $homePage = $jwt->extractHomePageFromRefreshToken($refreshToken);
+            if (
+                is_string($homePage)
+                && str_starts_with($homePage, '/')
+                && !str_starts_with($homePage, '//')
+            ) {
+                return $homePage;
+            }
+        } catch (\Throwable $e) {
+            if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+                \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    'Could not resolve authenticated home page: ' . $e->getMessage(),
+                    LOG_DEBUG
+                );
+            }
+        }
+
+        return self::DEFAULT_HOME_PAGE;
+    }
+
+    /**
+     * Redirects to the user's home page or a default page if the home page is not set.
      *
      * @param Dispatcher $dispatcher The dispatcher object used to forward the request.
      */
     private function redirectToHome(Dispatcher $dispatcher): void
     {
-        // TODO: get home page from JWT claims when token validation is implemented
-        // For now, use default home page
-        $homePath = '/admin-cabinet/extensions/index';
+        $homePath = $this->getAuthenticatedHomePage();
 
         $redis = $this->di->getShared(ManagedCacheProvider::SERVICE_NAME);
 
@@ -475,9 +514,16 @@ class SecurityPlugin extends Injectable
         }
 
         // Extract the module, controller, and action from the home page path
-        $module = explode('/', $homePath)[1];
-        $controller = explode('/', $homePath)[2];
-        $action = explode('/', $homePath)[3];
+        $routeParts = explode('/', trim($homePath, '/'));
+        if (
+            ($routeParts[0] ?? '') === 'admin-cabinet'
+            && str_starts_with($routeParts[1] ?? '', 'module-')
+        ) {
+            array_shift($routeParts);
+        }
+        $module = $routeParts[0];
+        $controller = $routeParts[1] ?? 'index';
+        $action = $routeParts[2] ?? 'index';
 
         if (str_starts_with($module, 'module-')) {
             $camelizedNameSpace = Text::camelize($module);
