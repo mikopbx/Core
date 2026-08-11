@@ -118,6 +118,25 @@ All languages MUST have:
 
 **Example:** If Russian has 157 keys in `ApiKeys.php`, ALL 28 other languages must have exactly 157 keys in `ApiKeys.php`.
 
+### 5. Standalone Module Catalogs
+
+For external modules, every `Messages/<locale>.php` file MUST directly return
+a standalone literal array:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+return [
+    'module_example_Title' => 'Example',
+];
+```
+
+Do not use `require`, `include`, variables, function calls, `array_keys`,
+`array_combine`, merges, or any other runtime composition. MikoPBX loads and
+processes each locale catalog itself.
+
 ## Working with Large Files (Batch Processing)
 
 ### When to Use Batch Mode
@@ -571,6 +590,7 @@ Before finishing translation work:
 - [ ] Quotes properly escaped
 - [ ] No PHP syntax errors (run `php -l`)
 - [ ] Files have proper headers
+- [ ] External module catalogs are standalone literal arrays
 - [ ] Keys follow naming conventions
 - [ ] Translation cache cleared
 - [ ] Tested in UI

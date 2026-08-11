@@ -19,15 +19,17 @@ declare(strict_types=1);
 
 require_once 'Globals.php';
 
-use AGI\AgiClient;
+use MikoPBX\Core\Asterisk\AGI;
 use Phalcon\Di\Di;
 
-$agi = new AgiClient();
+// The AGI client is MikoPBX\Core\Asterisk\AGI (Core/src/Core/Asterisk/AGI.php).
+// Its accessors are snake_case: get_variable() / set_variable().
+$agi = new AGI();
 
-// Read channel variables
-$callerID = $agi->getVariable('CALLERID(num)', true);
-$exten    = $agi->getVariable('EXTEN', true);
-$linkedId = $agi->getVariable('CHANNEL(linkedid)', true);
+// Read channel variables (second arg true returns the bare value)
+$callerID = $agi->get_variable('CALLERID(num)', true);
+$exten    = $agi->get_variable('EXTEN', true);
+$linkedId = $agi->get_variable('CHANNEL(linkedid)', true);
 
 // Your business logic here
 // Example: lookup in module database
@@ -35,7 +37,7 @@ $di = Di::getDefault();
 // $record = MyModel::findFirst(["conditions" => "phone = :phone:", "bind" => ["phone" => $callerID]]);
 
 // Set result variable for dialplan
-$agi->setVariable('MY_RESULT', $result);
+$agi->set_variable('MY_RESULT', $result);
 
 // Optional: execute dialplan application
 // $agi->exec('Playback', 'silence/1');

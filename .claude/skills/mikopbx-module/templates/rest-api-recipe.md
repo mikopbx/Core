@@ -10,6 +10,21 @@
 - SaveRecordAction: `Extensions/EXAMPLES/REST-API/ModuleExampleRestAPIv3/Lib/RestAPI/Tasks/Actions/SaveRecordAction.php`
 - DeleteRecordAction: `Extensions/EXAMPLES/REST-API/ModuleExampleRestAPIv3/Lib/RestAPI/Tasks/Actions/DeleteRecordAction.php`
 
+## RESTful Design Gate
+
+Before creating files, write a resource table with: resource noun, collection
+path, identifier, allowed HTTP methods, schema, permissions, and exceptional
+state transitions. Create one `Lib/RestAPI/{Resource}/` boundary per cohesive
+business resource.
+
+- Use plural noun paths: `/voices`, `/phrases`, `/tasks`.
+- Use `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` for CRUD semantics.
+- Use `:action` only for a resource state transition such as
+  `/voices/{id}:install`; keep it on the owning resource.
+- Split resources when they have independent lifecycle, schema, permissions, or
+  persistence. Do not create one module controller containing unrelated settings,
+  jobs, files, status, and business records.
+
 ## File Inventory
 
 Per resource (e.g., "Numbers" for a blacklist module):
@@ -39,23 +54,42 @@ No manual route registration needed. The system auto-discovers controllers via:
 
 ```php
 #[ApiResource(
-    module: 'Module{Feature}',
-    resource: '{resource}',
-    description: 'Resource description'
+    path: '/pbxcore/api/v3/module-{feature-kebab}/{resources}',
+    tags: ['Module {Feature} - {Resources}'],
+    description: 'module_{feature}_ApiResource{Resources}',
+    processor: Processor::class
 )]
-class Controller extends BaseController
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getList', 'getRecord'],
+        'POST' => ['create'],
+        'PUT' => ['update'],
+        'PATCH' => ['patch'],
+        'DELETE' => ['delete'],
+    ],
+    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete'],
+    collectionLevelMethods: ['getList', 'create'],
+    customMethods: [],
+    idPattern: '[^/:]+'
+)]
+#[ResourceSecurity('module-{feature-kebab}-{resources}', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+class Controller extends BaseRestController
 {
-    #[HttpMapping(method: 'GET', path: '')]
-    #[ApiOperation(summary: 'Get list of records')]
-    public function getList(): void { /* ... */ }
+    protected string $processorClass = Processor::class;
 
-    #[HttpMapping(method: 'GET', path: '/{id}')]
-    #[ApiOperation(summary: 'Get record by ID')]
-    public function getRecord(string $id): void { /* ... */ }
+    #[ApiOperation(
+        summary: 'module_{feature}_ApiOperationGet{Resources}',
+        description: 'module_{feature}_ApiOperationGet{Resources}Description',
+        operationId: 'get{Feature}{Resources}'
+    )]
+    public function getList(): void {}
 
-    #[HttpMapping(method: 'POST', path: '')]
-    #[ApiOperation(summary: 'Create record')]
-    public function create(): void { /* ... */ }
+    #[ApiOperation(
+        summary: 'module_{feature}_ApiOperationGet{Resource}',
+        description: 'module_{feature}_ApiOperationGet{Resource}Description',
+        operationId: 'get{Feature}{Resource}'
+    )]
+    public function getRecord(): void {}
 
     // ... PUT, PATCH, DELETE
 }
@@ -86,7 +120,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'request' => [
                 'field_name' => [
                     'type' => 'string',
-                    'description' => 'Field description',
+                    'description' => 'module_{feature}_ApiParameterFieldName',
                     'example' => 'example_value',
                     'required' => true,
                     'maxLength' => 255,
@@ -99,6 +133,26 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 }
 ```
+
+## OpenAPI Localization Contract
+
+Keep `ApiResource::tags` as a canonical English label. Core removes punctuation
+and spaces and prepends `rest_tag_`; therefore `Module Example - Tasks` requires
+`rest_tag_ModuleExampleTasks`.
+
+Use translation keys for every `ApiResource` description, `ApiOperation` summary
+and description, parameter description, schema field description, and
+module-specific response. Define all keys plus generated tag keys in both
+`Messages/en.php` and `Messages/ru.php`.
+
+Run from the Core repository root:
+
+```bash
+php .claude/skills/mikopbx-module/scripts/validate-rest-api-translations.php {module_dir}
+```
+
+The recipe is incomplete if the validator reports a missing key or the RestAPI
+constructor displays a raw `rest_*` identifier.
 
 ## Config Class
 

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
@@ -24,7 +25,9 @@ namespace MikoPBX\PBXCoreREST\Lib\OpenAPI;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
 use MikoPBX\PBXCoreREST\Attributes\ApiResource;
 use MikoPBX\PBXCoreREST\Attributes\HttpMapping;
@@ -33,6 +36,7 @@ use MikoPBX\PBXCoreREST\Services\ApiMetadataRegistry;
 use Phalcon\Di\Di;
 use MikoPBX\Common\Library\Text;
 use ReflectionClass;
+use ReflectionMethod;
 use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
@@ -151,7 +155,6 @@ class GetDetailedPermissionsAction
             ];
 
             $res->success = true;
-
         } catch (Throwable $e) {
             $res->messages['error'][] = 'Failed to generate detailed permissions: ' . $e->getMessage();
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
@@ -258,6 +261,7 @@ class GetDetailedPermissionsAction
             // Extract label from first tag
             $tags = $resourceData['tags'] ?? [];
             $label = !empty($tags) ? $tags[0] : '';
+            $description = self::translateText((string)($resourceData['description'] ?? ''));
 
             // Extract resource name from path
             // /pbxcore/api/v3/extensions -> extensions
@@ -282,10 +286,26 @@ class GetDetailedPermissionsAction
 
             $actions = array_unique($actions);
 
+            // Keep stable method names for ACL storage and expose localized
+            // OpenAPI summaries as optional presentation metadata.
+            $actionLabels = [];
+            foreach ($resource['operations'] ?? [] as $actionName => $operationData) {
+                if (!in_array($actionName, $actions, true)) {
+                    continue;
+                }
+
+                $summary = (string)($operationData['operations'][0]['summary'] ?? '');
+                if ($summary !== '') {
+                    $actionLabels[$actionName] = self::translateText($summary);
+                }
+            }
+
             if (!empty($actions)) {
                 $controllerData = [
                     'name' => $resourceName,
                     'label' => $label,
+                    'description' => $description,
+                    'actionLabels' => $actionLabels,
                     'actions' => array_values($actions)
                 ];
 
@@ -417,7 +437,16 @@ class GetDetailedPermissionsAction
             $controllers = [];
 
             // Pattern 2: moduleRestAPICallback
+            $callbackImplemented = false;
             if (method_exists($configObject, RestAPIConfigInterface::MODULE_RESTAPI_CALLBACK)) {
+                $callbackMethod = new ReflectionMethod(
+                    $configObject,
+                    RestAPIConfigInterface::MODULE_RESTAPI_CALLBACK
+                );
+                $callbackImplemented = $callbackMethod->getDeclaringClass()->getName() !== ConfigClass::class;
+            }
+
+            if ($callbackImplemented) {
                 // Build endpoint path using kebab-case module name
                 $controllerName = '/pbxcore/api/modules/' . Text::uncamelize($moduleId, '-');
 
@@ -524,6 +553,25 @@ class GetDetailedPermissionsAction
 
         // Core controllers (MikoPBX\...) return null
         return null;
+    }
+
+    /**
+     * Translate text when it looks like a translation key.
+     *
+     * @param string $text Text or translation key to translate.
+     * @return string Translated text or original literal text.
+     */
+    private static function translateText(string $text): string
+    {
+        if ($text === '') {
+            return $text;
+        }
+
+        if (!str_contains($text, ' ') && preg_match('/^[a-z0-9_]+$/i', $text)) {
+            return TranslationProvider::translate($text);
+        }
+
+        return $text;
     }
 
     /**

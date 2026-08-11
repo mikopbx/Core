@@ -19,6 +19,7 @@
  */
 
 namespace MikoPBX\AdminCabinet\Controllers;
+
 use Phalcon\Tag;
 
 class ErrorsController extends BaseController
@@ -41,8 +42,6 @@ class ErrorsController extends BaseController
         $this->response->setStatusCode(401, 'Unauthorized');
         $this->view->success = false;
         $this->view->message = 'Unauthorized - 401';
-        // Always show login link for 401 — user is not authenticated by definition
-        $this->view->isUserAuthenticated = false;
     }
 
     public function show500Action(): void

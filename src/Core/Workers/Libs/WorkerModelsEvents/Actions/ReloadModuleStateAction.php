@@ -7,6 +7,7 @@ use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Modules\Cache\ModulesStateCache;
 use MikoPBX\Modules\Config\ConfigClass;
@@ -62,7 +63,7 @@ class ReloadModuleStateAction implements ReloadActionInterface
             }
         }
 
-        // Check if modules state has changed before restarting workers
+        // Check if modules state has changed before refreshing worker supervision
         $modulesStateCache = new ModulesStateCache();
         
         // Get current and cached hashes for comparison
@@ -86,7 +87,7 @@ class ReloadModuleStateAction implements ReloadActionInterface
         if ($cachedHash !== $currentHash) {
             SystemMessages::sysLogMsg(
                 __CLASS__,
-                sprintf('Modules state has changed (old: %s, new: %s), restarting all workers', 
+                sprintf('Modules state has changed (old: %s, new: %s), refreshing worker supervisor',
                     $cachedHash, 
                     $currentHash
                 ),
@@ -96,12 +97,19 @@ class ReloadModuleStateAction implements ReloadActionInterface
             // Update cache with new state
             $modulesStateCache->updateCachedState();
             
-            // Restart workers
-            Processes::restartAllWorkers(true);
+            // Only the supervisor caches the module worker registry. Refreshing
+            // it is sufficient: disabled module workers were already stopped by
+            // PbxExtensionState, and the fresh supervisor starts newly registered
+            // workers on its next cycle. Unrelated Core and module workers stay up.
+            Processes::processPHPWorker(
+                WorkerSafeScriptsCore::class,
+                'start',
+                'soft-restart'
+            );
         } else {
             SystemMessages::sysLogMsg(
                 __CLASS__,
-                'Modules state has not changed, skipping workers restart',
+                'Modules state has not changed, skipping worker supervisor refresh',
                 LOG_DEBUG
             );
         }

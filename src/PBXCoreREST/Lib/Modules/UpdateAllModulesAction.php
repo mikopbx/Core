@@ -52,11 +52,17 @@ class UpdateAllModulesAction extends Injectable
      *
      * @param string $asyncChannelId Browser EventBus channel.
      * @param array $modulesForUpdate Requested module uniqids.
+     * @param array $sessionContext REST session context of the initiator, stored
+     *                              in the batch state so every enqueued module
+     *                              keeps the audit attribution.
      *
      * @return PBXApiResult
      */
-    public static function main(string $asyncChannelId, array $modulesForUpdate): PBXApiResult
-    {
+    public static function main(
+        string $asyncChannelId,
+        array $modulesForUpdate,
+        array $sessionContext = []
+    ): PBXApiResult {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
@@ -87,6 +93,7 @@ class UpdateAllModulesAction extends Injectable
         $state = [
             'batchId' => $batchId,
             'asyncChannelId' => $asyncChannelId,
+            'sessionContext' => $sessionContext,
             'status' => 'running',
             'total' => count($modules),
             'current' => 0,
@@ -276,14 +283,28 @@ class UpdateAllModulesAction extends Injectable
             'current' => $state['current'],
             'total' => $state['total'],
         ], $nextModule);
-        self::enqueueInstallFromRepo($asyncChannelId, $nextModule, $batchId);
+        $sessionContext = $state['sessionContext'] ?? [];
+        self::enqueueInstallFromRepo(
+            $asyncChannelId,
+            $nextModule,
+            $batchId,
+            is_array($sessionContext) ? $sessionContext : []
+        );
     }
 
     /**
      * Enqueue one regular installFromRepo action for WorkerApiCommands.
+     *
+     * @param array $sessionContext Initiator context, forwarded so the audit
+     *                              line of every batch member names the admin
+     *                              who started the update instead of 'system'.
      */
-    private static function enqueueInstallFromRepo(string $asyncChannelId, string $moduleUniqueId, string $batchId): void
-    {
+    private static function enqueueInstallFromRepo(
+        string $asyncChannelId,
+        string $moduleUniqueId,
+        string $batchId,
+        array $sessionContext = []
+    ): void {
         try {
             $redis = Di::getDefault()->get(RedisClientProvider::SERVICE_NAME);
             $requestMessage = [
@@ -301,6 +322,10 @@ class UpdateAllModulesAction extends Injectable
                 'debug' => false,
                 'httpMethod' => 'POST',
             ];
+
+            if ($sessionContext !== []) {
+                $requestMessage['sessionContext'] = $sessionContext;
+            }
 
             $redis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage, JSON_UNESCAPED_SLASHES));
         } catch (Throwable $e) {

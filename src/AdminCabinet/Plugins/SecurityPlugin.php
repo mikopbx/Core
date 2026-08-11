@@ -43,11 +43,13 @@ use Phalcon\Mvc\Dispatcher;
  */
 class SecurityPlugin extends Injectable
 {
+    private const string DEFAULT_HOME_PAGE = '/admin-cabinet/extensions/index';
+
     /**
      * Executes before every request is dispatched.
      * Verifies user authentication and authorization for the requested resource.
-     * Unauthenticated users are redirected to the login page or shown a 403 error for AJAX requests.
-     * Unauthorized access attempts lead to a 401 error page.
+     * Unauthenticated users are redirected to the login page (401 for AJAX requests).
+     * Authenticated users lacking a permission get the 401 error page (403 for AJAX requests).
      *
      * @param Event $event The current event instance.
      * @param Dispatcher $dispatcher The dispatcher instance.
@@ -73,18 +75,7 @@ class SecurityPlugin extends Injectable
 
         // Handle unauthenticated access to non-public controllers
         if (!$isAuthenticated && !in_array($controllerClass, $publicControllers)) {
-            // Clear any stale cookies before redirect to prevent loops
-            $this->clearAuthCookies();
-
-            // AJAX requests receive a 403 response
-            if ($this->request->isAjax()) {
-                $this->response->setStatusCode(403, 'Forbidden')->setContent('This user is not authorized')->send();
-            } else {
-                // Standard requests are redirected to the login page
-                $this->forwardToLoginPage($dispatcher);
-            }
-
-            return false;
+            return $this->denyAsLoggedOut($dispatcher);
         }
 
         // Authenticated users: validate access to the requested resource
@@ -103,14 +94,19 @@ class SecurityPlugin extends Injectable
                 // cookie (issue #1065 regression from commit 0313611cc). Only a
                 // genuinely stale cookie — present but with no Redis session —
                 // gets cleared, so the login form stays usable without a loop.
-                if ($this->refreshTokenHasLiveSession()) {
+                if ($this->refreshTokenHasLiveSession() === true) {
                     // HTTP 302 — must actually change the URL in the browser.
                     // $dispatcher->forward() keeps the URL at /session/index,
                     // which token-manager.js and PbxApiClient detect by pathname
                     // and treat as "login page": access token is never loaded,
                     // every API call returns 401, PbxApiClient.handleAuthError
                     // bounces back to /session/index → infinite refresh loop.
-                    $this->response->redirect('extensions/index')->send();
+                    // A halted dispatch leaves the view content null, which
+                    // Phalcon then copies into the response and PHP 8.4 reports
+                    // as a setContent(null) deprecation. The redirect carries no
+                    // body, so an empty string is the honest value to hand over.
+                    $this->view->setContent('');
+                    $this->response->redirect($this->getAuthenticatedHomePage())->send();
                     return false;
                 }
                 $this->clearAuthCookies();
@@ -129,6 +125,41 @@ class SecurityPlugin extends Injectable
                 && !$this->isAllowedAction($controllerClass, $action)
                 && !in_array($controllerClass, $publicControllers)
             ) {
+                // A denial here has two very different causes, and they must not
+                // share the same answer. isAuthenticated() only proves the
+                // refreshToken cookie is present, so a cookie whose Redis session
+                // is gone (expired TTL, Redis restart) reaches this point with no
+                // role at all, falls back to GUESTS and gets the 401 page — while
+                // the dead cookie survives, so every next page load repeats it.
+                // No role AND a proven-absent session means "logged out", not
+                // "forbidden": drop the cookie and send the user to the login
+                // form instead. A strict === false is required — an unreachable
+                // Redis answers null, and wiping the cookie on that would turn a
+                // transient outage into a permanent logout for every user.
+                if (
+                    $this->extractRoleFromJwt() === null
+                    && $this->refreshTokenHasLiveSession() === false
+                ) {
+                    return $this->denyAsLoggedOut($dispatcher);
+                }
+
+                // Role resolved (valid Bearer/session), the session is alive but
+                // carries no usable role, or the session store is unreachable —
+                // all handled as a permission problem, leaving the cookie intact.
+                //
+                // For an AJAX caller that must be a 403: show401Action() sets
+                // HTTP 401, and 401 is the one status token-manager.js and
+                // PbxApiClient read as "session lost" — forwarding there would
+                // log out a perfectly live session on every permission error.
+                if ($this->request->isAjax()) {
+                    // A store-unreachable answer (null) lands here too, and the
+                    // caller cannot tell that apart from a real ACL denial —
+                    // both read as "no permission". Leave a server-side trace so
+                    // a Redis outage is diagnosable from the log.
+                    $this->logAjaxDenial($controllerClass, $action);
+                    return $this->denyAjax(403, 'Forbidden', 'This user is not authorized');
+                }
+
                 $this->forwardTo401Error($dispatcher);
                 return true;
             }
@@ -271,9 +302,14 @@ class SecurityPlugin extends Injectable
      * against the Redis session store so beforeDispatch() can redirect a
      * logged-in user home instead of wiping a valid cookie.
      *
-     * @return bool true if the cookie carries a token with a live Redis session
+     * The answer is deliberately three-valued: null means the store could not
+     * be reached (Redis down, cookie undecryptable), which is NOT the same as
+     * a proven absent session. Callers that destroy the cookie must act only
+     * on a definite false, otherwise a Redis hiccup logs everyone out for good.
+     *
+     * @return bool|null true — live session; false — no session; null — unknown
      */
-    private function refreshTokenHasLiveSession(): bool
+    private function refreshTokenHasLiveSession(): ?bool
     {
         if (!$this->cookies->has('refreshToken')) {
             return false;
@@ -288,8 +324,9 @@ class SecurityPlugin extends Injectable
         } catch (\Throwable $e) {
             // A cookie that fails to decrypt / a Redis hiccup is not a
             // critical error — must not route through CriticalErrorsHandler
-            // (it renders via Whoops and forces HTTP 500). Treat as "no live
-            // session" so the caller falls back to clearing the stale cookie.
+            // (it renders via Whoops and forces HTTP 500). Report it as
+            // "unknown" so callers keep the cookie instead of forcing a logout
+            // on what may be a transient outage.
             if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
                 \MikoPBX\Core\System\SystemMessages::sysLogMsg(
                     __METHOD__,
@@ -297,7 +334,103 @@ class SecurityPlugin extends Injectable
                     LOG_DEBUG
                 );
             }
-            return false;
+            return null;
+        }
+    }
+
+    /**
+     * Denies the request the way a logged-out user is denied: the stale cookie
+     * is dropped and the user lands on the login form (401 for AJAX callers).
+     *
+     * Shared by the unauthenticated branch and by the ACL branch, where a
+     * cookie without a live session produces a denial that is a missing login,
+     * not a missing permission. Both must answer identically — a divergence
+     * between the two is what produced the redirect loops of #1054 / #1065.
+     *
+     * @param Dispatcher $dispatcher Dispatcher used to forward to the login page.
+     * @return bool always false — the caller must halt the current dispatch.
+     */
+    private function denyAsLoggedOut(Dispatcher $dispatcher): bool
+    {
+        // Clear any stale cookies before redirect to prevent loops
+        $this->clearAuthCookies();
+
+        // AJAX requests receive a 401: the session is gone, not the permission.
+        // token-manager.js (ajaxError) and PbxApiClient.handleAuthError treat
+        // 401 — and only 401 — as session loss and send the user to the login
+        // form. No global handler acts on the 403 this used to answer with, so
+        // a tab left open past session expiry never returned to the login form;
+        // what the user saw instead was up to each individual caller.
+        if ($this->request->isAjax()) {
+            return $this->denyAjax(401, 'Unauthorized', 'Authentication required');
+        }
+
+        // Standard requests are redirected to the login page
+        $this->forwardToLoginPage($dispatcher);
+
+        return false;
+    }
+
+    /**
+     * Answers an AJAX caller with a status and a body, halting the dispatch.
+     *
+     * Do NOT send() the response from a plugin. View::start() has already
+     * opened an output buffer and left the view content null; on a halted
+     * dispatch Phalcon skips render() and copies that null straight into the
+     * response. A payload sent from the plugin is dropped with the buffer, and
+     * the resulting setContent(null) notice becomes the entire body (see commit
+     * 34b4a8b7c). Seeding the view content is what gives Phalcon something real
+     * to carry over — disabling the view would only put the empty string back.
+     *
+     * @param int $status HTTP status: 401 when the session is gone, 403 when it
+     *                    is alive but lacks the permission. The distinction is
+     *                    load-bearing — token-manager.js and PbxApiClient log
+     *                    the user out on 401 and only on 401.
+     * @param string $reasonPhrase HTTP reason phrase matching the status.
+     * @param string $message Human-readable reason for the caller.
+     * @return bool always false — the caller must halt the current dispatch.
+     */
+    private function denyAjax(int $status, string $reasonPhrase, string $message): bool
+    {
+        // JSON, in the shape BaseController::afterExecuteRoute() gives every
+        // other AJAX answer — including the flash map under 'message', which is
+        // what Form.handleSubmitResponse() iterates looking for the 'error' key
+        // (form.js). A bare string never matches that key and renders nothing,
+        // and a plain-text body cannot even be parsed, so a caller inspecting
+        // responseJSON gets null. afterExecuteRoute() never runs on a halted
+        // dispatch, so the content type has to be set here too.
+        $this->response->setContentType('application/json', 'UTF-8');
+        $this->view->setContent(json_encode([
+            'success' => false,
+            'reload' => false,
+            'message' => ['error' => $message],
+        ]));
+        $this->response->setStatusCode($status, $reasonPhrase);
+
+        return false;
+    }
+
+    /**
+     * Records an AJAX permission denial in the system log.
+     *
+     * No global frontend handler acts on the 403 these denials carry, and the
+     * client cannot tell a genuine permission problem from an unreachable
+     * session store anyway — refreshTokenHasLiveSession() answering null
+     * produces the same 403. This line is where that difference stays visible.
+     * Note the level: LOG_DEBUG matches the rest of this file, so the line only
+     * lands in the system log once debug logging is enabled.
+     *
+     * @param string $controllerClass Controller the caller was denied.
+     * @param string $action Action the caller was denied.
+     */
+    private function logAjaxDenial(string $controllerClass, string $action): void
+    {
+        if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+            \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                __METHOD__,
+                "AJAX access denied (403) to $controllerClass::$action",
+                LOG_DEBUG
+            );
         }
     }
 
@@ -316,18 +449,55 @@ class SecurityPlugin extends Injectable
     }
 
     /**
-     * Redirects to the user's home page or a default page if the home page is not set.
+     * Returns the home page stored for the current refresh-token session.
      *
-     * For JWT authentication: home page path should be stored in JWT claims or module config.
-     * For now, defaults to '/admin-cabinet/extensions/index'.
+     * The path comes from the authentication provider (Core or an optional
+     * module), so Core does not need to know which component supplied it.
+     * Only local absolute paths are accepted to avoid turning the login route
+     * into an external redirect.
+     */
+    private function getAuthenticatedHomePage(): string
+    {
+        if (!$this->cookies->has('refreshToken')) {
+            return self::DEFAULT_HOME_PAGE;
+        }
+
+        try {
+            $refreshToken = $this->cookies->get('refreshToken')->getValue();
+            if (!is_string($refreshToken) || $refreshToken === '') {
+                return self::DEFAULT_HOME_PAGE;
+            }
+
+            $jwt = $this->di->getShared(JwtProvider::SERVICE_NAME);
+            $homePage = $jwt->extractHomePageFromRefreshToken($refreshToken);
+            if (
+                is_string($homePage)
+                && str_starts_with($homePage, '/')
+                && !str_starts_with($homePage, '//')
+            ) {
+                return $homePage;
+            }
+        } catch (\Throwable $e) {
+            if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+                \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    'Could not resolve authenticated home page: ' . $e->getMessage(),
+                    LOG_DEBUG
+                );
+            }
+        }
+
+        return self::DEFAULT_HOME_PAGE;
+    }
+
+    /**
+     * Redirects to the user's home page or a default page if the home page is not set.
      *
      * @param Dispatcher $dispatcher The dispatcher object used to forward the request.
      */
     private function redirectToHome(Dispatcher $dispatcher): void
     {
-        // TODO: get home page from JWT claims when token validation is implemented
-        // For now, use default home page
-        $homePath = '/admin-cabinet/extensions/index';
+        $homePath = $this->getAuthenticatedHomePage();
 
         $redis = $this->di->getShared(ManagedCacheProvider::SERVICE_NAME);
 
@@ -344,9 +514,16 @@ class SecurityPlugin extends Injectable
         }
 
         // Extract the module, controller, and action from the home page path
-        $module = explode('/', $homePath)[1];
-        $controller = explode('/', $homePath)[2];
-        $action = explode('/', $homePath)[3];
+        $routeParts = explode('/', trim($homePath, '/'));
+        if (
+            ($routeParts[0] ?? '') === 'admin-cabinet'
+            && str_starts_with($routeParts[1] ?? '', 'module-')
+        ) {
+            array_shift($routeParts);
+        }
+        $module = $routeParts[0];
+        $controller = $routeParts[1] ?? 'index';
+        $action = $routeParts[2] ?? 'index';
 
         if (str_starts_with($module, 'module-')) {
             $camelizedNameSpace = Text::camelize($module);

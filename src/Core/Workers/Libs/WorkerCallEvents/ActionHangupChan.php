@@ -111,6 +111,11 @@ class ActionHangupChan
                 // This call will be ended by the voicemail_end event.
                 continue;
             }
+            if (AnsweredTransferLegPolicy::keepOpen($row, $data['agi_channel'])) {
+                // The transferer has left the bridge, but the destination keeps
+                // talking to the transferee. Its own hangup must close this row.
+                continue;
+            }
             if ($row->transfer === '1' && !empty($row->dst_chan)) {
                 // Make sure the destination channel is not empty.
                 // Otherwise, it's not a transfer.
@@ -125,6 +130,13 @@ class ActionHangupChan
             $vmState = $data['VMSTATUS'] ?? '';
             if ($row->dst_num === VoiceMailConf::VOICE_MAIL_EXT && $vmState !== 'FAILED') {
                 // This call will be ended by the voicemail_end event.
+                continue;
+            }
+            if (AnsweredTransferLegPolicy::keepOpen($row, $data['agi_channel'])) {
+                $row->writeAttribute('transfer', 0);
+                if (!$row->update()) {
+                    SystemMessages::sysLogMsg('Action_hangup_chan', implode(' ', $row->getMessages()), LOG_DEBUG);
+                }
                 continue;
             }
             if ($row->dialstatus === 'ORIGINATE') {

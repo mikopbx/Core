@@ -25,6 +25,8 @@
         #error-page .icon.header .icon { font-size: 3em; }
         #error-page .sub.header { margin-top: .6em; color: #888; font-weight: normal; }
         #error-page .ui.primary.button { margin-top: 1.6em; }
+        #error-page .error-actions { margin-top: 1.6em; }
+        #error-page .error-actions .ui.button { margin-top: 0; }
         #pbx-version { text-align: center; color: #aaa; margin-top: 1em; font-size: .85em; }
     </style>
 </head>
@@ -41,9 +43,14 @@
             {{ content() }}
 
             {% if isUserAuthenticated %}
-                <a href="{{ url('extensions/index') }}" class="ui primary button">
-                    <i class="home icon"></i>{{ t._('er_Home') }}
-                </a>
+                <div class="error-actions">
+                    <a href="{{ logoHref }}" class="ui primary button">
+                        <i class="home icon"></i>{{ t._('er_Home') }}
+                    </a>
+                    <a href="{{ url('session/end') }}" class="ui button">
+                        <i class="sign out icon"></i>{{ t._('mm_Logout') }}
+                    </a>
+                </div>
             {% else %}
                 <a href="{{ url('session/index') }}" class="ui primary button">
                     <i class="sign in icon"></i>{{ t._('er_Home') }}

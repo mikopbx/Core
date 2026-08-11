@@ -32,7 +32,11 @@ use MikoPBX\Common\Providers\DatabaseProviderBase;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAnswer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAttendedTransfer;
+use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelLinkedIdEnd;
+use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ClaimCdrRows;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\DeleteCDR;
+use MikoPBX\Core\Workers\Libs\WorkerCallEvents\LinkedIdFinalizationQueue;
+use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ReleaseCdrClaim;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
 use MikoPBX\Core\Asterisk\AsteriskManager;
@@ -40,6 +44,7 @@ use Phalcon\Db\Adapter\Pdo\Sqlite as PdoSqliteAdapter;
 use Phalcon\Di\Di;
 use MikoPBX\Common\Library\Text;
 use Throwable;
+use RuntimeException;
 use DateTime;
 use MikoPBX\Core\Asterisk\Configs\CelBeanstalkdConf;
 
@@ -55,6 +60,12 @@ use MikoPBX\Core\Asterisk\Configs\CelBeanstalkdConf;
 class WorkerCallEvents extends WorkerBase
 {
     public const string CACHE_KEY_RECORDINGS = 'Workers:WorkerCallEvents:RecordingsSettingsSynced';
+
+    private const float LINKED_ID_FINALIZATION_DELAY_SECONDS = 2.0;
+
+    private BeanstalkClient $clientQueue;
+
+    protected LinkedIdFinalizationQueue $linkedIdFinalizations;
 
     /**
      * Maximum rows deleted in a single SQLite statement. The writer lock
@@ -382,8 +393,8 @@ class WorkerCallEvents extends WorkerBase
         $this->am = Util::getAstManager('off');
 
         // Create a new Beanstalk client
-        $client = new BeanstalkClient(self::class);
-        if ($client->isConnected() === false) {
+        $this->clientQueue = new BeanstalkClient(self::class);
+        if ($this->clientQueue->isConnected() === false) {
             // Log the failed connection and pause for 2 seconds before returning
             SystemMessages::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
             sleep(2);
@@ -391,21 +402,29 @@ class WorkerCallEvents extends WorkerBase
         }
 
         // Subscribe to different tubes for different worker tasks
-        $client->subscribe(CelBeanstalkdConf::BEANSTALK_TUBE, [$this, 'callEventsWorker']);
-        $client->subscribe(self::class, [$this, 'otherEvents']);
-        $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
-        $client->subscribe(WorkerCdr::UPDATE_CDR_TUBE, [$this, 'updateCDRWorker']);
-        $client->subscribe(WorkerCdr::DELETE_CDR_TUBE, [$this, 'deleteCDRWorker']);
+        $this->linkedIdFinalizations = new LinkedIdFinalizationQueue(
+            self::LINKED_ID_FINALIZATION_DELAY_SECONDS
+        );
+        $this->clientQueue->subscribe(CelBeanstalkdConf::BEANSTALK_TUBE, [$this, 'callEventsWorker']);
+        $this->clientQueue->subscribe(self::class, [$this, 'otherEvents']);
+        $this->clientQueue->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
+        $this->clientQueue->subscribe(WorkerCdr::CLAIM_CDR_TUBE, [$this, 'claimCDRWorker']);
+        $this->clientQueue->subscribe(WorkerCdr::RELEASE_CDR_CLAIM_TUBE, [$this, 'releaseCDRClaimWorker']);
+        $this->clientQueue->subscribe(WorkerCdr::UPDATE_CDR_TUBE, [$this, 'updateCDRWorker']);
+        $this->clientQueue->subscribe(WorkerCdr::DELETE_CDR_TUBE, [$this, 'deleteCDRWorker']);
 
         // Subscribe to ping tube for keep alive checks
-        $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
+        $this->clientQueue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 
         // Set the error handler for the client
-        $client->setErrorHandler([$this, 'errorHandler']);
+        $this->clientQueue->setErrorHandler([$this, 'errorHandler']);
+        $this->clientQueue->setTimeoutHandler([$this, 'processPendingLinkedIdFinalizations']);
 
         // Keep the worker process running as long as a restart is not required
         while ($this->needRestart === false) {
-            $client->wait();
+            // One-second queue timeout keeps the two-second LINKEDID_END debounce precise
+            // even when the terminal CEL record is the last event of a quiet call.
+            $this->clientQueue->wait(1);
         }
     }
 
@@ -514,6 +533,7 @@ class WorkerCallEvents extends WorkerBase
     public function pingCallBack(BeanstalkClient $message): void
     {
         parent::pingCallBack($message);
+        $this->processPendingLinkedIdFinalizations();
         $this->updateRecordingOptions();
         $this->deleteOldRecords();
     }
@@ -530,38 +550,109 @@ class WorkerCallEvents extends WorkerBase
     {
         // Decode the body of the tube object
         $data = json_decode($tube->getBody(), true);
+        try {
+            if (!is_array($data)) {
+                return;
+            }
 
-        // Get the event name from the data array
-        $event = $data['EventName'] ?? '';
+            $event = $data['EventName'] ?? '';
+            if ('ANSWER' === $event) {
+                ActionCelAnswer::execute($this, $data);
+            }
+            if ('ATTENDEDTRANSFER' === $event) {
+                ActionCelAttendedTransfer::execute($this, $data);
+            }
+            if ('LINKEDID_END' === $event) {
+                $this->scheduleLinkedIdFinalization($data);
+            }
+            if ('USER_DEFINED' !== $event) {
+                return;
+            }
 
-        // If event is 'ANSWER', call ActionCelAnswer::execute and return
-        if ('ANSWER' === $event) {
-            ActionCelAnswer::execute($this, $data);
+            // Supports both plain base64 and GZ:-prefixed gzip-compressed payloads.
+            try {
+                $data = json_decode(
+                    AsteriskManager::decodeCdrData($data['AppData'] ?? ''),
+                    true,
+                    512,
+                    JSON_THROW_ON_ERROR
+                );
+            } catch (Throwable $e) {
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
+                $data = [];
+            }
+
+            $this->otherEvents($tube, $data);
+        } finally {
+            $this->processPendingLinkedIdFinalizations();
         }
-        if ('ATTENDEDTRANSFER' === $event) {
-            ActionCelAttendedTransfer::execute($this, $data);
-        }
-        // If event is not 'USER_DEFINED', return
-        if ('USER_DEFINED' !== $event) {
+    }
+
+    protected function scheduleLinkedIdFinalization(array $data): void
+    {
+        $linkedId = trim((string)($data['LinkedID'] ?? ''));
+        $eventTime = trim((string)($data['EventTime'] ?? ''));
+        if ($linkedId === '' || $eventTime === '') {
+            $this->logLinkedIdFinalization('Ignoring invalid LINKEDID_END', LOG_WARNING);
             return;
         }
 
-        // Try to decode the 'AppData' field and handle any errors.
-        // Supports both plain base64 and GZ:-prefixed gzip-compressed payloads.
-        try {
-            $data = json_decode(
-                AsteriskManager::decodeCdrData($data['AppData'] ?? ''),
-                true,
-                512,
-                JSON_THROW_ON_ERROR
-            );
-        } catch (Throwable $e) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            $data = [];
-        }
+        $this->linkedIdFinalizations->schedule($linkedId, $eventTime, $this->monotonicNow());
+    }
 
-        // Call the 'otherEvents' method with the updated data
-        $this->otherEvents($tube, $data);
+    public function processPendingLinkedIdFinalizations(): void
+    {
+        if (!isset($this->linkedIdFinalizations)) {
+            return;
+        }
+        foreach ($this->linkedIdFinalizations->due($this->monotonicNow()) as $linkedId => $eventTime) {
+            try {
+                $updated = $this->finalizeLinkedId($linkedId, $eventTime);
+                if ($updated < 0) {
+                    throw new RuntimeException('Failed to save one or more CDR rows');
+                }
+                $this->publishLinkedIdFinalized($linkedId, $eventTime);
+                $this->linkedIdFinalizations->acknowledge($linkedId, $eventTime);
+                $this->logLinkedIdFinalization(
+                    sprintf('LINKEDID_END finalized linkedid=%s rows=%d end=%s', $linkedId, $updated, $eventTime),
+                    LOG_DEBUG
+                );
+            } catch (Throwable $e) {
+                $this->linkedIdFinalizations->retry(
+                    $linkedId,
+                    $eventTime,
+                    $this->monotonicNow(),
+                    5.0
+                );
+                $this->logLinkedIdFinalization(
+                    sprintf('LINKEDID_END retry linkedid=%s: %s', $linkedId, $e->getMessage()),
+                    LOG_WARNING
+                );
+            }
+        }
+    }
+
+    protected function monotonicNow(): float
+    {
+        return hrtime(true) / 1_000_000_000;
+    }
+
+    protected function finalizeLinkedId(string $linkedId, string $eventTime): int
+    {
+        return ActionCelLinkedIdEnd::execute($linkedId, $eventTime);
+    }
+
+    protected function publishLinkedIdFinalized(string $linkedId, string $eventTime): void
+    {
+        $this->clientQueue->publish(
+            json_encode(['linkedid' => $linkedId, 'eventTime' => $eventTime], JSON_THROW_ON_ERROR),
+            WorkerCdr::FINALIZE_CDR_TUBE
+        );
+    }
+
+    protected function logLinkedIdFinalization(string $message, int $level): void
+    {
+        SystemMessages::sysLogMsg(__CLASS__, $message, $level);
     }
 
     /**
@@ -635,6 +726,19 @@ class WorkerCallEvents extends WorkerBase
 
         // Reply with the result data
         $tube->reply($res_data);
+    }
+
+    public function claimCDRWorker(BeanstalkClient $tube): void
+    {
+        $request = json_decode($tube->getBody(), true);
+        $tube->reply(ClaimCdrRows::execute(is_array($request) ? $request : []));
+    }
+
+    public function releaseCDRClaimWorker(BeanstalkClient $tube): void
+    {
+        $request = json_decode($tube->getBody(), true);
+        $released = ReleaseCdrClaim::execute(trim((string)($request['token'] ?? '')));
+        $tube->reply(json_encode(['released' => $released], JSON_THROW_ON_ERROR));
     }
 
     /**

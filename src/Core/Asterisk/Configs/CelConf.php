@@ -37,14 +37,19 @@ class CelConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $conf = "[general]\n" .
+        $this->saveConfig($this->buildConfig(), $this->description);
+    }
+
+    /**
+     * Builds cel.conf content.
+     */
+    protected function buildConfig(): string
+    {
+        return "[general]\n" .
             "enable=yes\n" .
-            "events=USER_DEFINED,ANSWER,ATTENDEDTRANSFER\n" .
+            "events=USER_DEFINED,ANSWER,ATTENDEDTRANSFER,LINKEDID_END\n" .
             "dateformat = %F %T\n\n" .
             "[manager]\n" .
             "enabled = yes\n\n";
-
-        // Write the configuration content to the file
-        $this->saveConfig($conf, $this->description);
     }
 }

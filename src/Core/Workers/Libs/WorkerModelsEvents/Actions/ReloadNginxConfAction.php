@@ -3,6 +3,7 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions;
 
 use MikoPBX\Core\System\Configs\NginxConf;
+use RuntimeException;
 
 class ReloadNginxConfAction implements ReloadActionInterface
 {
@@ -17,6 +18,8 @@ class ReloadNginxConfAction implements ReloadActionInterface
         $nginxConf = new NginxConf();
         $nginxConf->generateModulesConfigs();
         $nginxConf->generateModulesServerConfigs();
-        $nginxConf->reStart();
+        if (!$nginxConf->reload()) {
+            throw new RuntimeException('Unable to apply the generated nginx module configuration');
+        }
     }
 }

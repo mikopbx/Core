@@ -28,31 +28,30 @@ Each recipe adds a set of files and integration points to a module.
 
 **Files generated:**
 - `App/Controllers/Module{Feature}Controller.php` — main controller
-- `App/Controllers/{Feature}BaseController.php` — base controller with shared logic
+- OPTIONAL: `App/Controllers/{Feature}BaseController.php` — only when there is shared
+  controller logic (common `initialize()`, asset registration, helpers) to hold; otherwise
+  the controller extends `MikoPBX\AdminCabinet\Controllers\BaseController` directly.
+  See `templates/ui-recipe.md`.
 - `App/Forms/Module{Feature}Form.php` — Phalcon form
 - `App/Views/Module{Feature}/index.volt` — main view template
-- `App/Providers/AssetProvider.php` — JS/CSS registration
-- `App/Providers/MenuProvider.php` — sidebar menu item
-- `public/assets/js/src/module-{kebab}.js` — ES6+ JavaScript
-- `public/assets/css/module-{kebab}.css` — CSS styles
+- `public/assets/js/src/module-{kebab}-{action}.js` — ES6+ JavaScript, one per action
+- `public/assets/css/module-{kebab}-{action}.css` — CSS styles
+- OPTIONAL (multi-page modules only): `App/Providers/AssetProvider.php` and
+  `App/Providers/MenuProvider.php`. Single-page modules register assets inline in the
+  controller via the core `MikoPBX\AdminCabinet\Providers\AssetProvider` constants.
 
 **Hooks added to Conf.php:**
 - None directly — menu integration is via Setup class sidebar registration
 
 **Template references:**
-- `templates/controller.md`
-- `templates/volt-view.md`
-- `templates/form.md`
-- `templates/asset-provider.md`
-- `templates/menu-provider.md`
-- `templates/javascript-module.md`
+- `templates/ui-recipe.md`
 
 **Code examples to read:**
 - `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/App/Controllers/ModuleExampleFormController.php`
 - `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/App/Views/ModuleExampleForm/index.volt`
 - `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/App/Forms/ModuleExampleFormForm.php`
-- `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/App/Providers/AssetProvider.php`
-- `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/public/assets/js/src/module-example-form.js`
+- `Extensions/ModuleLocalSpeechToText/App/Providers/AssetProvider.php` (optional pattern)
+- `Extensions/EXAMPLES/WebInterface/ModuleExampleForm/public/assets/js/src/module-example-form-index.js`
 
 **Post-generation:**
 - Run babel transpilation via `/babel-compiler` skill
@@ -78,12 +77,25 @@ Each recipe adds a set of files and integration points to a module.
 - 7-phase request processing in Action classes
 - DataStructure implements `OpenApiSchemaProvider`
 - JWT Bearer token authentication
+- RESTful resource boundaries: one cohesive business resource per
+  `Lib/RestAPI/{Resource}/`, plural noun paths, standard HTTP verbs for CRUD
+- Custom `:action` routes only for state transitions owned by that resource;
+  never aggregate unrelated module operations into one controller
+- Complete OpenAPI localization in `Messages/en.php` and `Messages/ru.php`:
+  generated `rest_tag_*` keys plus operation, parameter, schema, resource, and
+  module-specific response keys
 
 **Code examples to read:**
 - `Extensions/EXAMPLES/REST-API/ModuleExampleRestAPIv3/Lib/RestAPI/Tasks/Controller.php`
 - `Extensions/EXAMPLES/REST-API/ModuleExampleRestAPIv3/Lib/RestAPI/Tasks/Processor.php`
 - `Extensions/EXAMPLES/REST-API/ModuleExampleRestAPIv3/Lib/RestAPI/Tasks/DataStructure.php`
 - `Extensions/EXAMPLES/REST-API/ModuleExampleRestAPIv3/Lib/RestAPI/Tasks/Actions/SaveRecordAction.php`
+
+**Post-generation:**
+
+```bash
+php .claude/skills/mikopbx-module/scripts/validate-rest-api-translations.php {module_dir}
+```
 
 ---
 
@@ -153,14 +165,14 @@ declare(strict_types=1);
 
 require_once 'Globals.php';
 
-use AGI\AgiClient;
+use MikoPBX\Core\Asterisk\AGI;
 use Phalcon\Di\Di;
 
-$agi = new AgiClient();
-// Read channel variables
-$callerID = $agi->getVariable('CALLERID(num)', true);
+$agi = new AGI();
+// Read channel variables (accessors are snake_case)
+$callerID = $agi->get_variable('CALLERID(num)', true);
 // Set channel variables
-$agi->setVariable('MY_RESULT', $value);
+$agi->set_variable('MY_RESULT', $value);
 // Execute dialplan applications
 $agi->exec('Playback', 'silence/1');
 ```

@@ -51,9 +51,10 @@ class UpdateDataInDB
             return;
         }
         try {
+            $token = trim((string)($data['processing_token'] ?? ''));
             $filter = [
-                "UNIQUEID=:id:",
-                'bind' => ['id' => $data['UNIQUEID'],],
+                'UNIQUEID=:id: AND processing_token=:token: AND work_completed<>1',
+                'bind' => ['id' => $data['UNIQUEID'], 'token' => $token],
             ];
             /** @var CallDetailRecordsTmp $m_data */
             $m_data = CallDetailRecordsTmp::findFirst($filter);
@@ -75,9 +76,16 @@ class UpdateDataInDB
                 SystemMessages::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
             }
 
-            self::sendUserEventData($m_data, $data);
+            if ($res && $m_data->work_completed === "1" && !$m_data->wasMovedToGeneral()) {
+                $m_data->writeAttribute('work_completed', 0);
+                $m_data->writeAttribute('processing_token', '');
+                $m_data->writeAttribute('processing_started_at', 0);
+                $m_data->save();
+                return;
+            }
 
             if ($res && $m_data->work_completed === "1") {
+                self::sendUserEventData($m_data, $data);
                 // Delete data from the temporary table, as they have already been moved to the permanent one.
                 $m_data->delete();
             }
@@ -110,7 +118,9 @@ class UpdateDataInDB
                 $insert_data['to_account'],
                 $insert_data['appname'],
                 $insert_data['is_app'],
-                $insert_data['transfer']
+                $insert_data['transfer'],
+                $insert_data['processing_token'],
+                $insert_data['processing_started_at']
             );
             $am = Util::getAstManager('off');
             $am->UserEvent('CdrConnector', ['AgiData' => AsteriskManager::encodeCdrData($insert_data)]);

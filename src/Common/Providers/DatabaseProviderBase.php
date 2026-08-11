@@ -270,21 +270,24 @@ abstract class DatabaseProviderBase
             $recovery = static function () use ($di): void {
                 /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
                 $connection = $di->get(CDRDatabaseProvider::SERVICE_NAME);
-                if ($connection->tableExists('cdr') && $connection->tableExists('cdr_general')) {
-                    return;
+                $tablesMissing = !$connection->tableExists('cdr') || !$connection->tableExists('cdr_general');
+                if ($tablesMissing) {
+                    SystemMessages::sysLogMsg(
+                        self::class,
+                        'CDR tables missing, recreating from model annotations',
+                        LOG_WARNING
+                    );
                 }
 
-                SystemMessages::sysLogMsg(
-                    self::class,
-                    'CDR tables missing, recreating from model annotations',
-                    LOG_WARNING
-                );
-
                 $dbUpdater = new UpdateDatabase();
+                // Also reconcile additive columns on an existing CDR database.
+                // WorkerCdr may start before the general update workflow has run.
                 $dbUpdater->createUpdateDbTableByAnnotations(CallDetailRecordsTmp::class);
                 $dbUpdater->createUpdateDbTableByAnnotations(CallDetailRecords::class);
 
-                self::recreateDBConnections();
+                if ($tablesMissing) {
+                    self::recreateDBConnections();
+                }
             };
 
             try {
