@@ -27,6 +27,7 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
 use MikoPBX\PBXCoreREST\Attributes\ApiResource;
 use MikoPBX\PBXCoreREST\Attributes\HttpMapping;
@@ -35,6 +36,7 @@ use MikoPBX\PBXCoreREST\Services\ApiMetadataRegistry;
 use Phalcon\Di\Di;
 use MikoPBX\Common\Library\Text;
 use ReflectionClass;
+use ReflectionMethod;
 use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
@@ -435,7 +437,16 @@ class GetDetailedPermissionsAction
             $controllers = [];
 
             // Pattern 2: moduleRestAPICallback
+            $callbackImplemented = false;
             if (method_exists($configObject, RestAPIConfigInterface::MODULE_RESTAPI_CALLBACK)) {
+                $callbackMethod = new ReflectionMethod(
+                    $configObject,
+                    RestAPIConfigInterface::MODULE_RESTAPI_CALLBACK
+                );
+                $callbackImplemented = $callbackMethod->getDeclaringClass()->getName() !== ConfigClass::class;
+            }
+
+            if ($callbackImplemented) {
                 // Build endpoint path using kebab-case module name
                 $controllerName = '/pbxcore/api/modules/' . Text::uncamelize($moduleId, '-');
 
