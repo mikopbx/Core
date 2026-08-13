@@ -211,31 +211,20 @@ class DropdownsAction extends Injectable
      */
     private static function findModuleByExtensionNumber(string $number): mixed
     {
-        $result = null;
         $extension = Extensions::findFirst("number ='$number'");
-        $relatedLinks = $extension->getRelatedLinks();
-        $moduleUniqueID = false;
-
-        // Iterate through the related links to find the module
-        foreach ($relatedLinks as $relation) {
-            $obj = $relation['object'];
-
-            // Check if the related object belongs to a module
-            $className = get_class($obj);
-            [$param1,$moduleUniqueID,$param2] = explode('\\', $className);
-            $idFound = ('Modules' === $param1 && $param2 === 'Models');
-
-            if ( !$idFound && strpos($className, 'Modules\\') === 0) {
-                $moduleUniqueID = explode('Models\\', $className)[1];
-            }
+        if ($extension === null) {
+            return null;
         }
 
-        // If a module unique ID is found, retrieve the corresponding module object
-        if ($moduleUniqueID) {
-            $result = PbxExtensionModules::findFirstByUniqid($moduleUniqueID);
-        }
+        $relatedModelClasses = array_map(
+            static fn(array $relation): string => get_class($relation['object']),
+            $extension->getRelatedLinks()
+        );
+        $moduleUniqueID = ModuleExtensionOwnerResolver::resolve($relatedModelClasses);
 
-        return $result;
+        return $moduleUniqueID === null
+            ? null
+            : PbxExtensionModules::findFirstByUniqid($moduleUniqueID);
     }
 
     /**
