@@ -36,6 +36,7 @@ use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelLinkedIdEnd;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ClaimCdrRows;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\DeleteCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\LinkedIdFinalizationQueue;
+use MikoPBX\Core\Workers\Libs\WorkerCallEvents\MonitorFilenameOptionsResolver;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ReleaseCdrClaim;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
@@ -206,6 +207,18 @@ class WorkerCallEvents extends WorkerBase
             // already-existing _in/_out tracks so the mono mix ($srcFile) stays consistent
             // with them and WorkerWav2Webm picks the right tracks to merge.
             [$f, $options, $fileExt] = $this->setMonitorFilenameOptions($full_name, $sub_dir, $file_name, $fileExt);
+            if ($f === '') {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf(
+                        'MixMonitor was not started: empty recording target for channel=%s action=%s',
+                        $channel,
+                        $actionID
+                    ),
+                    LOG_WARNING
+                );
+                return '';
+            }
             $arr = $this->am->GetChannels(false);
             if (!in_array($channel, $arr, true)) {
                 return '';
@@ -231,49 +244,39 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Sets the file name options for the monitor.
      *
-     * @param string $full_name The full name of the file. If it exists, it will be used as is.
+     * @param string $full_name The full name of the recording. A non-empty value is authoritative.
      * @param string $sub_dir The subdirectory where the file will be stored.
      * @param string $file_name The name of the file.
      * @param string $fileExt The recording file extension (wav48, wav16, or wav).
      *
      * @return array [string $basePath, string $options, string $effectiveExt]. If stereo split
      *               tracks (_in/_out) already exist for this base path, append into them (resume
-     *               case) and return their extension as $effectiveExt. Otherwise, if
+     *               case) and return their extension as $effectiveExt. Empty full and generated
+     *               names return an empty base so MixMonitor can reject the request. Otherwise, if
      *               $this->split_audio_thread is true, options split audio into two separate files
      *               (in/out); else 'ab'. $effectiveExt lets the caller keep the mono mix filename
      *               consistent with the tracks WorkerWav2Webm will merge.
      */
     public function setMonitorFilenameOptions(string $full_name, string $sub_dir, string $file_name, string $fileExt = 'wav'): array
     {
-        $full_name = Util::trimExtensionForFile($full_name) . ".$fileExt";
-        if (!file_exists($full_name)) {
+        $fullNameBase = trim($full_name) === ''
+            ? ''
+            : Util::trimExtensionForFile($full_name);
+        $generatedBase = '';
+        if ($fullNameBase === '' && $file_name !== '') {
             $monitor_dir = Directories::getDir(Directories::AST_MONITOR_DIR);
             if (empty($sub_dir)) {
                 $sub_dir = date('Y/m/d/H/');
             }
-            $f = "$monitor_dir/$sub_dir$file_name";
-        } else {
-            $f = Util::trimExtensionForFile($full_name);
+            $generatedBase = "$monitor_dir/$sub_dir$file_name";
         }
 
-        // When resuming an interrupted recording (e.g. after a failed attended transfer)
-        // the stereo split tracks may already exist on disk. WorkerWav2Webm always merges
-        // _in/_out when both are present and ignores the mono mix, so the resumed audio MUST
-        // be appended to those same tracks — regardless of the current split_audio_thread
-        // value — otherwise it lands only in the mono mix and is silently dropped from the
-        // final .webm. Extension priority mirrors WorkerWav2Webm::detectSourceFileExtension().
-        foreach (['wav48', 'wav16', 'wav'] as $existingExt) {
-            if (file_exists("{$f}_in.$existingExt") && file_exists("{$f}_out.$existingExt")) {
-                return [$f, "abr({$f}_in.$existingExt)t({$f}_out.$existingExt)", $existingExt];
-            }
-        }
-
-        if ($this->split_audio_thread) {
-            $options = "abr({$f}_in.$fileExt)t({$f}_out.$fileExt)";
-        } else {
-            $options = 'ab';
-        }
-        return array($f, $options, $fileExt);
+        return MonitorFilenameOptionsResolver::resolve(
+            $fullNameBase,
+            $generatedBase,
+            $fileExt,
+            $this->split_audio_thread
+        ) ?? ['', '', $fileExt];
     }
 
     /**

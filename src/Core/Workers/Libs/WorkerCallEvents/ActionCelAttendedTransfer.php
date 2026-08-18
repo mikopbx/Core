@@ -22,6 +22,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\Asterisk\AsteriskManager;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
@@ -53,6 +54,18 @@ class ActionCelAttendedTransfer
         $chanId1 = $worker->getActiveChanId($extra['channel2_name']);
         $chanId2 = $worker->getActiveChanId($chanTarget);
         if(empty($chanId1) || empty($chanId2)){
+            return;
+        }
+
+        if ($chanId1 === $chanId2) {
+            self::handleSameLinkedIdTransfer(
+                $worker,
+                $data,
+                $extra,
+                $am,
+                $chanId1,
+                $chanTarget
+            );
             return;
         }
 
@@ -115,5 +128,108 @@ class ActionCelAttendedTransfer
                 $am->UserEvent('CdrConnector', ['AgiData' => AsteriskManager::encodeCdrData($n_data)]);
             }
         }
+    }
+
+    /**
+     * Handles queue attended transfers where Asterisk already assigned one linkedid
+     * to the original and consultation bridges before emitting ATTENDEDTRANSFER.
+     */
+    private static function handleSameLinkedIdTransfer(
+        WorkerCallEvents $worker,
+        array $data,
+        array $extra,
+        AsteriskManager $am,
+        string $linkedId,
+        string $transfereeChannel
+    ): void {
+        $filter = [
+            'linkedid=:linkedid:',
+            'bind' => ['linkedid' => $linkedId],
+        ];
+        $rows = CallDetailRecordsTmp::find($filter);
+        $participants = AttendedTransferParticipantsResolver::resolve(
+            $rows,
+            [
+                (string)($data['Channel'] ?? ''),
+                (string)($extra['channel2_name'] ?? ''),
+            ],
+            [
+                $transfereeChannel,
+                (string)($extra['transferee_channel_name'] ?? ''),
+            ],
+            [
+                (string)($extra['transfer_target_channel_name'] ?? ''),
+            ]
+        );
+        if ($participants === null) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                sprintf(
+                    'Unable to resolve same-linkedid attended transfer: linkedid=%s channel=%s channel2=%s transferee=%s target=%s',
+                    $linkedId,
+                    (string)($data['Channel'] ?? ''),
+                    (string)($extra['channel2_name'] ?? ''),
+                    (string)($extra['transferee_channel_name'] ?? ''),
+                    (string)($extra['transfer_target_channel_name'] ?? '')
+                ),
+                LOG_WARNING
+            );
+            return;
+        }
+
+        $selectedUniqueIds = array_fill_keys($participants['selected_uniqueids'], true);
+        $eventTime = trim((string)($data['EventTime'] ?? ''));
+        if ($eventTime === '') {
+            $eventTime = date('Y-m-d H:i:s.v');
+        }
+
+        $worker->StopMixMonitor(
+            $participants['src_chan'],
+            'handleSameLinkedIdTransfer'
+        );
+        $worker->StopMixMonitor(
+            $participants['dst_chan'],
+            'handleSameLinkedIdTransfer'
+        );
+
+        foreach (CallDetailRecordsTmp::find($filter) as $row) {
+            if (!isset($selectedUniqueIds[(string)$row->UNIQUEID])) {
+                continue;
+            }
+
+            if (empty($row->endtime)) {
+                $row->writeAttribute('endtime', $eventTime);
+            }
+            $row->writeAttribute('transfer', 0);
+            $row->save();
+        }
+
+        unset($participants['selected_uniqueids']);
+        $participants['action'] = 'sip_transfer';
+        $participants['start'] = $eventTime;
+        $participants['answer'] = $eventTime;
+        $participants['linkedid'] = $linkedId;
+        $participants['UNIQUEID'] = $linkedId . '_' . Util::generateRandomString();
+        $participants['transfer'] = '0';
+        if ($worker->enableMonitor($participants['src_num'], $participants['dst_num'])) {
+            $participants['recordingfile'] = $worker->MixMonitor(
+                $participants['dst_chan'],
+                $participants['UNIQUEID'],
+                '',
+                '',
+                'handleSameLinkedIdTransfer'
+            );
+            $participants['rec_src_channel'] = $worker->getRecSrcChannel(
+                $participants['dst_chan'],
+                $participants['src_chan'],
+                $participants['dst_chan']
+            );
+        }
+
+        InsertDataToDB::execute($participants);
+        $am->UserEvent(
+            'CdrConnector',
+            ['AgiData' => AsteriskManager::encodeCdrData($participants)]
+        );
     }
 }

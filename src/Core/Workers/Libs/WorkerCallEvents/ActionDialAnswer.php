@@ -127,10 +127,25 @@ class ActionDialAnswer
             $new_data['dst_num']  = $data['dst_num'];
             $new_data['UNIQUEID'] = $data['id'];
 
-            // Check if call recording is enabled for this source and destination numbers.
-            if ($worker->enableMonitor($new_data['src_num'] ?? '', $new_data['dst_num'] ?? '')) {
-                // If it is, start recording the call.
-                $new_data['recordingfile'] = $worker->MixMonitor($new_data['dst_chan'], 'pickup_' . $new_data['UNIQUEID'], '', '', 'fillPickUpCdr');
+            $recordingFile = PickupRecordingResolver::resolve(
+                $data,
+                static function () use ($worker, $new_data): string {
+                    if (!$worker->enableMonitor($new_data['src_num'] ?? '', $new_data['dst_num'] ?? '')) {
+                        return '';
+                    }
+
+                    return $worker->MixMonitor(
+                        $new_data['dst_chan'],
+                        'pickup_' . $new_data['UNIQUEID'],
+                        '',
+                        '',
+                        'fillPickUpCdr'
+                    );
+                }
+            );
+            if ($recordingFile !== '') {
+                $worker->mixMonitorChannels[$data['agi_channel']] = $recordingFile;
+                $new_data['recordingfile'] = $recordingFile;
                 $new_data['rec_src_channel'] = $worker->getRecSrcChannel($new_data['dst_chan'], $new_data['src_chan'] ?? '', $new_data['dst_chan']);
             }
 
