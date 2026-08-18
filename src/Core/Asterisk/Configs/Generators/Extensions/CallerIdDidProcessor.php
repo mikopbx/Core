@@ -211,9 +211,8 @@ class CallerIdDidProcessor
             $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpCidHeader}\" != \"x\"]?Set(fromCid=\${tmpCidHeader}))\n";
         }
 
-        // Set CallerID if extracted
+        // Set numeric CallerID if extracted, preserving the display name from the provider
         $dialplan .= "\tsame => n,ExecIf(\$[\"x\${fromCid}\" != \"x\"]?Set(CALLERID(num)=\${fromCid}))\n";
-        $dialplan .= "\tsame => n,ExecIf(\$[\"x\${fromCid}\" != \"x\"]?Set(CALLERID(name)=\${fromCid}))\n";
 
         return $dialplan;
     }
@@ -410,9 +409,8 @@ class CallerIdDidProcessor
         // Clean up extracted number (remove < > characters if present)
         $dialplan .= "\tsame => n,Set(fromCid=\${FILTER(+0123456789,\${fromCid})})\n";
 
-        // Set CallerID if successfully extracted
+        // Set numeric CallerID if extracted, preserving the display name from the provider
         $dialplan .= "\tsame => n,ExecIf(\$[\"x\${fromCid}\" != \"x\"]?Set(CALLERID(num)=\${fromCid}))\n";
-        $dialplan .= "\tsame => n,ExecIf(\$[\"x\${fromCid}\" != \"x\"]?Set(CALLERID(name)=\${fromCid}))\n";
         $dialplan .= "\tsame => n,Return()\n\n";
 
         return $dialplan;

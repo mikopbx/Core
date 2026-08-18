@@ -175,6 +175,35 @@ class CallerIdDidProcessorRegexTest extends TestCase
     }
 
     /**
+     * Custom CallerID extraction must replace only the numeric CallerID and preserve
+     * the display name received from the provider.
+     */
+    public function testCustomCallerIdSourceDoesNotOverwriteCallerIdName(): void
+    {
+        $processor = new CallerIdDidProcessor('SIP-TRUNK-TEST', [
+            'cid_source'        => Sip::CALLERID_SOURCE_CUSTOM,
+            'cid_custom_header' => 'X-Caller-ID',
+        ]);
+
+        $dialplan = $processor->generateIncomingProcessingContext();
+
+        $this->assertStringContainsString('Set(CALLERID(num)=${fromCid})', $dialplan);
+        $this->assertStringNotContainsString('Set(CALLERID(name)=', $dialplan);
+    }
+
+    /**
+     * Standard SIP-header extraction shares one subroutine. It must update the
+     * numeric CallerID without replacing an existing display name.
+     */
+    public function testStandardCallerIdSourceDoesNotOverwriteCallerIdName(): void
+    {
+        $dialplan = CallerIdDidProcessor::generateCallerIdExtractionSubroutine();
+
+        $this->assertStringContainsString('Set(CALLERID(num)=${fromCid})', $dialplan);
+        $this->assertStringNotContainsString('Set(CALLERID(name)=', $dialplan);
+    }
+
+    /**
      * Sanity check that the PCRE pattern the AGI builds extracts the expected DID from a
      * realistic X-ES-R header value, and that an optional non-participating capture group
      * falls back to the whole match rather than yielding an empty string. Mirrors the
