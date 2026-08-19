@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
+use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
 /**
@@ -39,6 +40,17 @@ class ActionDial
      */
     public static function execute(WorkerCallEvents $worker, array $data): void
     {
+        if (($data['action_extra'] ?? '') === 'interception_bridge') {
+            $sourceRows = CallDetailRecordsTmp::find([
+                'linkedid=:linkedid: AND src_chan=:src_chan: AND src_call_id<>""',
+                'bind' => [
+                    'linkedid' => $data['linkedid'],
+                    'src_chan' => $data['src_chan'],
+                ],
+            ]);
+            $data = InterceptionCallIdResolver::resolve($data, $sourceRows);
+        }
+
         // Retrieve source channel from the data
         $chan = $data['src_chan'] ?? '';
 
