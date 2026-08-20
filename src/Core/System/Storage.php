@@ -1569,9 +1569,10 @@ class Storage extends Injectable
     /**
      * Get storage usage breakdown by categories.
      *
+     * @param callable(): void|null $progressCallback Invoked while slow disk scans are running.
      * @return array An array with storage usage information by category.
      */
-    public function getStorageUsageByCategory(): array
+    public function getStorageUsageByCategory(?callable $progressCallback = null): array
     {
         $result = [
             'total_size' => 0,
@@ -1658,7 +1659,7 @@ class Storage extends Injectable
         }
 
         // Run all du commands in parallel via a single shell invocation
-        $pathSizes = $this->getDirectorySizesBatchMb($pathToCategory, $tempDir);
+        $pathSizes = $this->getDirectorySizesBatchMb($pathToCategory, $tempDir, $progressCallback);
 
         // Aggregate sizes by category
         foreach ($categoryPaths as $category => $paths) {
@@ -1879,9 +1880,14 @@ class Storage extends Injectable
      *
      * @param array<string, string> $pathToCategory Map of path => category name
      * @param string $tempDir Path to temp directory (swapfile excluded here)
+     * @param callable(): void|null $progressCallback Invoked while du processes are running.
      * @return array<string, float> Map of path => size in MB
      */
-    private function getDirectorySizesBatchMb(array $pathToCategory, string $tempDir): array
+    private function getDirectorySizesBatchMb(
+        array $pathToCategory,
+        string $tempDir,
+        ?callable $progressCallback = null
+    ): array
     {
         if (empty($pathToCategory)) {
             return [];
@@ -1911,7 +1917,11 @@ class Storage extends Injectable
 
         // Execute all du commands in parallel
         $shellScript = implode("\n", $commands);
-        Processes::mwExec($shellScript);
+        if ($progressCallback === null) {
+            Processes::mwExec($shellScript);
+        } else {
+            (new HeartbeatProcessRunner())->run($shellScript, $progressCallback);
+        }
 
         // Collect results
         $index = 0;
