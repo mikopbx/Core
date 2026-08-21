@@ -1,0 +1,5 @@
+  Username         IP Address                                               Start       Elapsed     FileDes   HttpCnt   ReadPerms   WritePerms
+  phpagi           127.0.0.1                                                1787129757  107544      14        0         2147483647  2147483647
+  monitor-active-  ::1                                                      1787237046  255         39        0         0000001123  0000004131
+  external-client  192.0.2.10                                               1787238000  120         40        0         0000001123  0000004131
+3 users connected.
