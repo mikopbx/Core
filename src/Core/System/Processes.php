@@ -589,9 +589,34 @@ class Processes
         if ($di !== null && $di->getShared('config')->path('core.debugMode')) {
             echo "mwExec(): $command\n";
         } else {
-            exec("$command 2>&1", $outArr, $retVal);
+            $safeCommand = self::wrapCommandWithClosedDescriptors($command);
+            exec("$safeCommand 2>&1", $outArr, $retVal);
         }
         return $retVal;
+    }
+
+    /**
+     * Closes descriptors inherited from the PHP worker before starting a child.
+     */
+    private static function wrapCommandWithClosedDescriptors(string $command): string
+    {
+        if (!is_dir('/proc/self/fd') || !is_executable('/bin/sh')) {
+            return $command;
+        }
+
+        $closeDescriptors = <<<'SH'
+for fd_path in /proc/self/fd/[3-9] /proc/self/fd/[1-9][0-9]*; do
+    [ -e "$fd_path" ] || continue
+    fd=${fd_path##*/}
+    eval "exec ${fd}>&-"
+done
+exec "$1" -c "$2"
+SH;
+
+        return escapeshellarg('/bin/sh')
+            . ' -c ' . escapeshellarg($closeDescriptors)
+            . ' -- ' . escapeshellarg('/bin/sh')
+            . ' ' . escapeshellarg($command);
     }
 
     /**
@@ -615,7 +640,8 @@ class Processes
 
         $nohup = Util::which('nohup');
         $timeoutBin = Util::which('timeout');
-        exec("$nohup $timeoutBin $timeout $command > $logName 2>&1 &");
+        $backgroundCommand = "$nohup $timeoutBin $timeout $command > $logName 2>&1 &";
+        exec(self::wrapCommandWithClosedDescriptors($backgroundCommand));
     }
 
     /**
@@ -1142,7 +1168,7 @@ class Processes
         } else {
             $noopCommand = "$nohup $command > $outFile 2>&1 &";
         }
-        exec($noopCommand);
+        exec(self::wrapCommandWithClosedDescriptors($noopCommand));
     }
 
     /**
