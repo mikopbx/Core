@@ -44,15 +44,15 @@ class AsteriskManager
     public array $config;
 
     /** @var string  */
-    private string $listenEvents;
+    private string $listenEvents = 'on';
 
     /**
      * Socket
      *
-     * @var resource|false $socket
+     * @var resource|null $socket
      * @access public
      */
-    public $socket = false;
+    public $socket = null;
 
     /**
      * Server we are connected to
@@ -93,6 +93,12 @@ class AsteriskManager
      * @var bool
      */
     private bool $_loggedIn = false;
+
+    private ?string $connectionServer = null;
+
+    private ?string $connectionUsername = null;
+
+    private ?string $connectionSecret = null;
 
     /** @var callable|null Callback invoked periodically when AMI connection is alive and idle */
     private $onIdleCallback = null;
@@ -135,6 +141,41 @@ class AsteriskManager
         if (! isset($this->config['asmanager']['secret'])) {
             $this->config['asmanager']['secret'] = 'phpagi';
         }
+    }
+
+    public function __destruct()
+    {
+        $this->closeSocket();
+    }
+
+    /**
+     * Returns true only while the authenticated stream is still usable.
+     */
+    public function isConnected(): bool
+    {
+        if (!is_resource($this->socket) || !$this->_loggedIn) {
+            return false;
+        }
+
+        $metadata = stream_get_meta_data($this->socket);
+        if (feof($this->socket) || ($metadata['eof'] ?? false)) {
+            $this->closeSocket();
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Closes the current stream without performing network operations.
+     */
+    private function closeSocket(): void
+    {
+        if (is_resource($this->socket)) {
+            fclose($this->socket);
+        }
+        $this->socket = null;
+        $this->_loggedIn = false;
     }
 
     /**
@@ -217,10 +258,6 @@ class AsteriskManager
      */
     public function sendRequestTimeout(string $action, array $parameters = []): array
     {
-        if (! is_resource($this->socket) && !$this->connectDefault()) {
-            return [];
-        }
-        // Set the mandatory fields.
         $parameters['Action']   = $action;
         $parameters['ActionID'] = $parameters['ActionID'] ?? "{$action}_" . getmypid();
         $req = "";
@@ -229,19 +266,22 @@ class AsteriskManager
         }
         $req .= "\r\n";
 
-        $result = $this->sendDataToSocket($req);
-        if (!$result) {
-            usleep(500000);
-            if ($this->connectDefault()) {
-                $result = $this->sendDataToSocket($req);
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            if (!$this->isConnected() && !$this->connectDefault()) {
+                return [];
+            }
+
+            if (!$this->sendDataToSocket($req)) {
+                continue;
+            }
+
+            $response = $this->waitResponse(true);
+            if ($response !== [] || $this->isConnected()) {
+                return $response;
             }
         }
 
-        $response = [];
-        if ($result) {
-            $response = $this->waitResponse(true);
-        }
-        return $response;
+        return [];
     }
 
     /**
@@ -251,7 +291,12 @@ class AsteriskManager
      */
     private function connectDefault(): bool
     {
-        $this->connect(null, null, null, $this->listenEvents);
+        $this->connect(
+            $this->connectionServer,
+            $this->connectionUsername,
+            $this->connectionSecret,
+            $this->listenEvents
+        );
         return $this->loggedIn();
     }
 
@@ -304,21 +349,11 @@ class AsteriskManager
      */
     private function waitResponseGetInitialData(array &$response): bool
     {
-        if (!is_resource($this->socket) && !$this->connectDefault()) {
+        if (!is_resource($this->socket)) {
             return false;
         }
-        $result = true;
         $response = $this->getDataFromSocket();
-        if (isset($response['error'])) {
-            usleep(500000);
-            if ($this->connectDefault()) {
-                $response = $this->getDataFromSocket();
-            }
-        }
-        if (isset($response['error'])) {
-            $result = false;
-        }
-        return $result;
+        return !isset($response['error']) && !isset($response['timeout']);
     }
 
     /**
@@ -387,6 +422,9 @@ class AsteriskManager
                 $parameters[$followsKey] = '';
                 $buff = $this->getStringDataFromSocket();
                 while (strpos($buff, '--END ') !== 0) {
+                    if ($buff === '') {
+                        break;
+                    }
                     $parameters[$followsKey] .= $buff;
                     $buff = $this->getStringDataFromSocket();
                 }
@@ -443,10 +481,17 @@ class AsteriskManager
                 $buffer = trim($resultFgets);
                 $response['data']  = $buffer;
             } else {
-                $response['error'] = 'Read data error.';
+                $metadata = stream_get_meta_data($this->socket);
+                if (($metadata['timed_out'] ?? false) && !feof($this->socket)) {
+                    $response['timeout'] = true;
+                } else {
+                    $response['error'] = 'Read data error.';
+                    $this->closeSocket();
+                }
             }
         } catch (Throwable $e) {
             $response['error'] = $e->getMessage();
+            $this->closeSocket();
         }
 
         return $response;
@@ -474,16 +519,23 @@ class AsteriskManager
         if (!is_resource($this->socket)) {
             return false;
         }
-        $result = true;
+
+        $length = strlen($req);
+        $written = 0;
         try {
-            $resultWrite = fwrite($this->socket, $req);
-            if ($resultWrite === false) {
-                $result = false;
+            while ($written < $length) {
+                $resultWrite = fwrite($this->socket, substr($req, $written));
+                if ($resultWrite === false || $resultWrite === 0) {
+                    $this->closeSocket();
+                    return false;
+                }
+                $written += $resultWrite;
             }
         } catch (Throwable $e) {
-            $result = false;
+            $this->closeSocket();
+            return false;
         }
-        return $result;
+        return true;
     }
 
     /**
@@ -503,6 +555,9 @@ class AsteriskManager
         do {
             $value = '';
             $buff  = $this->getStringDataFromSocket() . $value;
+            if ($buff === '') {
+                break;
+            }
             $a_pos = strpos($buff, ':');
             if (!$a_pos) {
                 if (empty($m)) {
@@ -679,6 +734,10 @@ class AsteriskManager
         if (is_null($secret)) {
             $secret = $this->config['asmanager']['secret'];
         }
+        $this->connectionServer = $server;
+        $this->connectionUsername = $username;
+        $this->connectionSecret = $secret;
+        $this->closeSocket();
 
         // get port from server if specified
         if (strpos($server, ':') !== false) {
@@ -694,19 +753,19 @@ class AsteriskManager
         $errno   = $errStr = null;
         $timeout = 2;
 
-        $busyBoxPath = Util::which('busybox');
-        $chkCommand = "$busyBoxPath netstat -ntap | $busyBoxPath grep '0.0.0.0:$this->port ' | $busyBoxPath grep LISTEN | $busyBoxPath grep asterisk";
-        if (Processes::mwExec($chkCommand) === 1) {
+        if (!$this->isAsteriskListening()) {
             SystemMessages::sysLogMsg('AMI', "Exceptions, Unable to connect to $server: the asterisk process is not running", LOG_ERR);
             return false;
         }
         try {
             $this->socket = fsockopen($this->server, $this->port, $errno, $errStr, $timeout);
         } catch (Throwable $e) {
+            $this->closeSocket();
             SystemMessages::sysLogMsg('AMI', "Exceptions, Unable to connect to manager $server ($errno): $errStr", LOG_ERR);
             return false;
         }
         if ($this->socket === false) {
+            $this->closeSocket();
             SystemMessages::sysLogMsg('AMI', "Unable to connect to manager $server ($errno): $errStr", LOG_ERR);
             return false;
         }
@@ -717,20 +776,30 @@ class AsteriskManager
         if ($str === '') {
             // a problem.
             SystemMessages::sysLogMsg('AMI', "Asterisk Manager header not received.", LOG_ERR);
+            $this->closeSocket();
             return false;
         }
 
         // login
         $res = $this->sendRequest('login', ['Username' => $username, 'Secret' => $secret, 'Events' => $events]);
-        if ($res['Response'] !== 'Success') {
-            $this->_loggedIn = false;
+        if (($res['Response'] ?? '') !== 'Success') {
             SystemMessages::sysLogMsg('AMI', "Failed to login.", LOG_ERR);
-            $this->disconnect();
+            $this->closeSocket();
             return false;
         }
         $this->_loggedIn = true;
 
         return true;
+    }
+
+    /**
+     * Allows tests and alternative runtimes to provide their own readiness check.
+     */
+    protected function isAsteriskListening(): bool
+    {
+        $busyBoxPath = Util::which('busybox');
+        $chkCommand = "$busyBoxPath netstat -ntap | $busyBoxPath grep '0.0.0.0:$this->port ' | $busyBoxPath grep LISTEN | $busyBoxPath grep asterisk";
+        return Processes::mwExec($chkCommand) !== 1;
     }
 
     /**
@@ -751,7 +820,9 @@ class AsteriskManager
         if (! is_resource($this->socket)) {
             return [];
         }
-        $this->sendDataToSocket($req);
+        if (!$this->sendDataToSocket($req)) {
+            return [];
+        }
 
         return $this->waitResponse();
     }
@@ -763,27 +834,15 @@ class AsteriskManager
      */
     public function disconnect(): void
     {
-        if ($this->_loggedIn === true) {
-            $this->logoff();
+        if ($this->isConnected()) {
+            $this->sendDataToSocket("Action: Logoff\r\n\r\n");
         }
-        if (is_resource($this->socket)) {
-            fclose($this->socket);
-        }
-    }
-
-    /**
-     * Logoff Manager
-     *
-     * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Logoff
-     */
-    private function logoff(): void
-    {
-        $this->sendRequestTimeout('Logoff');
+        $this->closeSocket();
     }
 
     public function loggedIn(): bool
     {
-        return $this->_loggedIn;
+        return $this->isConnected();
     }
 
     /**

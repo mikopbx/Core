@@ -346,7 +346,7 @@ class WorkerSafeScriptsCore extends WorkerBase
      */
     private function getAmiForPing(): AsteriskManager
     {
-        if ($this->amiPing !== null && is_resource($this->amiPing->socket)) {
+        if ($this->amiPing !== null && $this->amiPing->isConnected()) {
             return $this->amiPing;
         }
         $port = PbxSettings::getValueByKey(PbxSettings::AMI_PORT);
