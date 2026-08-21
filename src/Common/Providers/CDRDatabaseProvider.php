@@ -21,10 +21,10 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
+use MikoPBX\Common\Library\CdrResponseCacheLink;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCdr;
 use Phalcon\Di\Di;
 use Phalcon\Di\DiInterface;
@@ -93,10 +93,9 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
             }
 
             $di = Di::getDefault();
-            if($di !== null){
-                $findPath = Util::which('find');
+            if ($di !== null) {
                 $downloadCacheDir = $di->getShared('config')->path('www.downloadCacheDir');
-                shell_exec("$findPath -L $downloadCacheDir -samefile  $filename -delete");
+                CdrResponseCacheLink::remove($downloadCacheDir, $filename);
             }
             unlink($filename);
         }

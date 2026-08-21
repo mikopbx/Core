@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # MikoPBX - free phone system for small business
-# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+# Copyright © 2017-2026 Alexey Portnov and Nikolay Beketov
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,69 +22,121 @@
 # Example:
 #   Let's create a file and a symlink to it in $root_dir;
 #   echo privet > /tmp/test.txt; ln -s /tmp/test.txt /usr/www/sites/pbxcore/files/cache/test.txt;
-#   The symlink will be destroyed after 5 minutes.
+#   The symlink will be destroyed when it is older than two minutes.
 #
 # Example 2:
 #   Let's create a file and a symlink to it in $root_dir;
 #   echo privet > /tmp/temp-test.txt; ln -s /tmp/temp-test.txt /usr/www/sites/pbxcore/files/cache/test.txt;
-#   Both the symlink and the file will be destroyed after 5 minutes.
-#   If the file name contains "/temp-", it will also be removed.
+#   Both the symlink and the file will be destroyed when the link is older than two minutes.
+#   Temporary targets are removed only from core.tempDir or /tmp and must be named temp-*.
 
+PID_DIR="${CLEANUP_STALE_PID_DIR:-/var/run/}"
+LOCK_FILE="${CLEANUP_STALE_LOCK_FILE:-/var/run/cleanup-stale.lock}"
+FIND_BIN="${CLEANUP_STALE_FIND_BIN:-/bin/find}"
+READLINK_BIN="${CLEANUP_STALE_READLINK_BIN:-/bin/readlink}"
+LSOF_BIN="${CLEANUP_STALE_LSOF_BIN:-/usr/bin/lsof}"
+FLOCK_BIN="${CLEANUP_STALE_FLOCK_BIN:-/usr/bin/flock}"
+RM_BIN="${CLEANUP_STALE_RM_BIN:-/bin/rm}"
+RMDIR_BIN="${CLEANUP_STALE_RMDIR_BIN:-/bin/rmdir}"
+DIRNAME_BIN="${CLEANUP_STALE_DIRNAME_BIN:-/usr/bin/dirname}"
+MAX_LINKS="${CLEANUP_STALE_MAX_LINKS:-3000}"
+SYSTEM_TEMP_DIR="${CLEANUP_STALE_SYSTEM_TEMP_DIR:-/tmp}"
 
-PID_DIR="/var/run/";
-find "$PID_DIR" -type f \( -name "*.pid.*" -o -name "*.pid" \) | while read pid_file; do
+case "$MAX_LINKS" in
+    ''|*[!0-9]*|0)
+        MAX_LINKS=3000
+        ;;
+esac
+if [ "$MAX_LINKS" -eq 0 ]; then
+    MAX_LINKS=3000
+fi
+
+# Do not let cron start another full cache scan while the previous one is still running.
+exec 9>"$LOCK_FILE" || exit 2
+if ! "$FLOCK_BIN" -n 9; then
+    exit 0
+fi
+
+"$FIND_BIN" "$PID_DIR" -type f \( -name "*.pid.*" -o -name "*.pid" \) 2>/dev/null |
+while IFS= read -r pid_file; do
     # Search for pid files and delete non-relevant ones
     if [ -f "$pid_file" ]; then
         pid=$(/bin/busybox cat "$pid_file" 2>/dev/null)
         /bin/busybox ps -o pid | /bin/busybox grep -w "$pid" > /dev/null 2>&1
-        resultPs="$?";
+        resultPs="$?"
         if [ "$resultPs" = '1' ]; then
-            echo "Process with PID $pid is not running. Removing file: $pid_file";
-            /usr/sbin/rm -f "$pid_file";
+            echo "Process with PID $pid is not running. Removing file: $pid_file"
+            "$RM_BIN" -f "$pid_file"
         fi
     fi
 done
 
-root_dir=$(grep -rn 'downloadCacheDir' /etc/inc/mikopbx-settings.json | cut -d'"' -f4);
-if [ ! -d "${root_dir}" ]; then
-    exit 2;
+root_dir="${CLEANUP_STALE_ROOT_DIR:-}"
+if [ -z "$root_dir" ]; then
+    root_dir=$(/bin/busybox grep -m 1 'downloadCacheDir' /etc/inc/mikopbx-settings.json |
+        /bin/busybox cut -d'"' -f4)
 fi
 
-# Get all symbolic links.
-links=$(/bin/find "${root_dir}" -mmin +2 -type l 2> /dev/null| head -n 1000);
+if [ ! -d "$root_dir" ]; then
+    exit 2
+fi
 
-if [ ! "${links}x" = "x" ]; then
-  filesForRemove=$(readlink "$links" | grep '/temp-');
-  # Get all temporary files.
-  for file in $filesForRemove
-  do
-    # Check if the file is free.
-    /usr/bin/lsof "$file"  > /dev/null 2> /dev/null;
-    # The file must exist.
-    # It should be freed by all processes.
-    # It should not be the root directory $root_dir.
-    if  [ $? -eq 1 ] && [ ! "${file}" = "${root_dir}" ] && [ -f "${file}" ]; then
-      /usr/sbin/rm -rf "$file";
+temp_dir="${CLEANUP_STALE_TEMP_DIR:-}"
+if [ -z "$temp_dir" ]; then
+    temp_dir=$(/bin/busybox grep -m 1 '"tempDir"' /etc/inc/mikopbx-settings.json |
+        /bin/busybox cut -d'"' -f4)
+fi
+
+canonical_temp_dir=$("$READLINK_BIN" -f "$temp_dir" 2>/dev/null)
+canonical_system_temp=$("$READLINK_BIN" -f "$SYSTEM_TEMP_DIR" 2>/dev/null)
+
+is_temporary_target()
+{
+    target="$1"
+
+    if [ -n "$canonical_temp_dir" ]; then
+        case "$target" in
+            "$canonical_temp_dir"/temp-*|"$canonical_temp_dir"/*/temp-*)
+                return 0
+                ;;
+        esac
     fi
-  done
-fi
 
-# Clean directories that contain symlinks.
-for file in $links
-do
-  # Check if the file is free.
-  /usr/bin/lsof "$file"  > /dev/null 2> /dev/null;
-  if  [ $? -eq 1 ]; then
-      dir=$(/usr/bin/dirname "$file");
-      # If the file is not the root directory, remove it.
-      if [ ! "${file}" = "${root_dir}" ]; then
-        /usr/sbin/rm -rf "${file}";
-      fi
-      #  If the directory is not the root directory, remove it.
-      if [ ! "${dir}" = "${root_dir}" ]; then
-        /usr/sbin/rm -rf "$dir";
-      fi
-  fi
+    if [ -n "$canonical_system_temp" ]; then
+        case "$target" in
+            "$canonical_system_temp"/temp-*|"$canonical_system_temp"/*/temp-*)
+                return 0
+                ;;
+        esac
+    fi
+
+    return 1
+}
+
+link_count=0
+"$FIND_BIN" "$root_dir" -xdev -mmin +2 -type l -print 2>/dev/null |
+while IFS= read -r link; do
+    if [ "$link_count" -ge "$MAX_LINKS" ]; then
+        break
+    fi
+    link_count=$((link_count + 1))
+
+    # An lsof error is treated as "busy" so cleanup fails closed.
+    "$LSOF_BIN" "$link" >/dev/null 2>&1
+    if [ "$?" -ne 1 ]; then
+        continue
+    fi
+
+    target=$("$READLINK_BIN" -f "$link" 2>/dev/null)
+    if [ -f "$target" ] && is_temporary_target "$target"; then
+        "$RM_BIN" -f "$target"
+    fi
+
+    "$RM_BIN" -f "$link"
+
+    link_dir=$("$DIRNAME_BIN" "$link")
+    if [ "$link_dir" != "$root_dir" ]; then
+        # Remove only an empty cache directory; unrelated files must be preserved.
+        "$RMDIR_BIN" "$link_dir" 2>/dev/null || true
+    fi
 done
-
-/bin/find "${root_dir}" -type l ! -exec test -e {} \; -delete
