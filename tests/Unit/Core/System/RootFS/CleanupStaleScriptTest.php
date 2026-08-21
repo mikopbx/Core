@@ -120,7 +120,7 @@ final class CleanupStaleScriptTest extends TestCase
         self::assertFileExists($target, 'A temp-* target outside the allowed temporary directories must be preserved');
     }
 
-    public function testPreservesFreshAndOpenLinks(): void
+    public function testPreservesFreshButRemovesExpiredLinkWithoutPerLinkLsof(): void
     {
         $freshTarget = $this->tempDir . '/temp-fresh';
         $freshLink = $this->cacheDir . '/fresh-link';
@@ -138,8 +138,14 @@ final class CleanupStaleScriptTest extends TestCase
         self::assertSame(0, $exitCode, $output);
         self::assertTrue(is_link($freshLink), 'Links younger than two minutes must be preserved');
         self::assertFileExists($freshTarget);
-        self::assertTrue(is_link($busyLink), 'Open links must be preserved');
-        self::assertFileExists($busyTarget);
+        self::assertFalse(
+            is_link($busyLink),
+            'An expired link must be removed even when lsof reports its target open; Unix keeps an open file descriptor valid'
+        );
+        self::assertFileDoesNotExist(
+            $busyTarget,
+            'The expired temporary target can be unlinked safely while an existing descriptor remains open'
+        );
     }
 
     public function testRemovesOnlyEmptyCacheSubdirectories(): void

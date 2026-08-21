@@ -34,7 +34,6 @@ PID_DIR="${CLEANUP_STALE_PID_DIR:-/var/run/}"
 LOCK_FILE="${CLEANUP_STALE_LOCK_FILE:-/var/run/cleanup-stale.lock}"
 FIND_BIN="${CLEANUP_STALE_FIND_BIN:-/bin/find}"
 READLINK_BIN="${CLEANUP_STALE_READLINK_BIN:-/bin/readlink}"
-LSOF_BIN="${CLEANUP_STALE_LSOF_BIN:-/usr/bin/lsof}"
 FLOCK_BIN="${CLEANUP_STALE_FLOCK_BIN:-/usr/bin/flock}"
 RM_BIN="${CLEANUP_STALE_RM_BIN:-/bin/rm}"
 RMDIR_BIN="${CLEANUP_STALE_RMDIR_BIN:-/bin/rmdir}"
@@ -120,12 +119,6 @@ while IFS= read -r link; do
         break
     fi
     link_count=$((link_count + 1))
-
-    # An lsof error is treated as "busy" so cleanup fails closed.
-    "$LSOF_BIN" "$link" >/dev/null 2>&1
-    if [ "$?" -ne 1 ]; then
-        continue
-    fi
 
     target=$("$READLINK_BIN" -f "$link" 2>/dev/null)
     if [ -f "$target" ] && is_temporary_target "$target"; then
