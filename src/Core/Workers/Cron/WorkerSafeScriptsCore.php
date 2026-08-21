@@ -27,6 +27,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\System;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\Asterisk\AmiSessionWatchdog;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, SystemMessages, Util};
 use MikoPBX\Core\Workers\Pool\WorkerPoolManager;
@@ -312,6 +313,8 @@ class WorkerSafeScriptsCore extends WorkerBase
      */
     private const int MODULE_OPERATIONS_REAP_INTERVAL_SEC = 15;
 
+    private const int AMI_SESSION_WATCHDOG_INTERVAL_SEC = 15;
+
     /**
      * Timestamp of the last stale module-operation reaping pass.
      */
@@ -327,6 +330,10 @@ class WorkerSafeScriptsCore extends WorkerBase
      * of high-volume call/system/RTCP events in the socket buffer.
      */
     private ?AsteriskManager $amiPing = null;
+
+    private ?AmiSessionWatchdog $amiSessionWatchdog = null;
+
+    private int $lastAmiSessionWatchdogTime = 0;
 
     /**
      * Initialize the singleton instance
@@ -697,6 +704,10 @@ class WorkerSafeScriptsCore extends WorkerBase
             // unfreezes any browser still watching the operation.
             $this->maybeReapModuleOperations();
 
+            // Inspect server-side AMI queues outside the worker Fiber pool so
+            // failures cannot stall worker supervision.
+            $this->maybeCheckAmiSessions();
+
             // Prepare the list of workers to be started.
             $arrWorkers = $this->prepareWorkersList();
 
@@ -765,6 +776,48 @@ class WorkerSafeScriptsCore extends WorkerBase
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(__CLASS__, 'Module operations reaping failed: ' . $e->getMessage(), LOG_ERR);
         }
+    }
+
+    private function maybeCheckAmiSessions(): void
+    {
+        $now = $this->amiWatchdogNow();
+        if ($now - $this->lastAmiSessionWatchdogTime < self::AMI_SESSION_WATCHDOG_INTERVAL_SEC) {
+            return;
+        }
+        $this->lastAmiSessionWatchdogTime = $now;
+
+        try {
+            $this->amiSessionWatchdog ??= $this->createAmiSessionWatchdog();
+            $this->amiSessionWatchdog->check($this->isAmiSessionAutoKickEnabled());
+        } catch (Throwable $throwable) {
+            $this->logAmiWatchdogFailure($throwable->getMessage());
+        }
+    }
+
+    protected function isAmiSessionAutoKickEnabled(): bool
+    {
+        return $this->getAmiSessionAutoKickSetting() === '1';
+    }
+
+    protected function getAmiSessionAutoKickSetting(): string
+    {
+        return (string)PbxSettings::getValueByKey(PbxSettings::AMI_STALLED_SESSION_AUTO_KICK);
+    }
+
+    protected function createAmiSessionWatchdog(): AmiSessionWatchdog
+    {
+        $amiPort = (int)PbxSettings::getValueByKey(PbxSettings::AMI_PORT);
+        return new AmiSessionWatchdog(amiPort: $amiPort > 0 ? $amiPort : 5038);
+    }
+
+    protected function amiWatchdogNow(): int
+    {
+        return time();
+    }
+
+    protected function logAmiWatchdogFailure(string $message): void
+    {
+        SystemMessages::sysLogMsg(__CLASS__, 'AMI session watchdog failed: ' . $message, LOG_ERR);
     }
 
     /**
