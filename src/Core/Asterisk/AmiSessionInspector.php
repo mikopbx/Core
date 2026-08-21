@@ -37,6 +37,27 @@ final class AmiSessionInspector
         return null;
     }
 
+    public function hasQueuedAmiSockets(int $asteriskPid, int $amiPort): bool
+    {
+        $asteriskInodes = array_values($this->socketDescriptorsForPid($asteriskPid));
+        if ($asteriskInodes === []) {
+            return false;
+        }
+        $tcpEntries = array_merge(
+            $this->parseTcpTable($this->procRoot . '/net/tcp', false),
+            $this->parseTcpTable($this->procRoot . '/net/tcp6', true)
+        );
+        foreach ($tcpEntries as $entry) {
+            if ($entry['localPort'] === $amiPort
+                && $entry['txQueue'] > 0
+                && in_array($entry['inode'], $asteriskInodes, true)
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * @return list<AmiSessionSnapshot>
      */

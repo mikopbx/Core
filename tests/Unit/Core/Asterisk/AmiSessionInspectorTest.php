@@ -56,6 +56,7 @@ final class AmiSessionInspectorTest extends TestCase
         $managerOutput = (string)file_get_contents(__DIR__ . '/Fixtures/AmiProcfs/manager-show-connected.txt');
 
         self::assertSame(23932, $inspector->findAsteriskPid());
+        self::assertTrue($inspector->hasQueuedAmiSockets(23932, 5038));
         $snapshots = $inspector->inspect(23932, 5038, $managerOutput);
 
         self::assertCount(3, $snapshots);
