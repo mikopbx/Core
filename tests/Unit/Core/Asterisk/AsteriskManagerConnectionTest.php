@@ -248,13 +248,18 @@ final class AsteriskManagerConnectionTest extends TestCase
         return implode("\r\n", $lines) . "\r\n\r\n";
     }
 
-    private function newManager(int $port): TestableAsteriskManager
+    private function newManager(int $port): AsteriskManager
     {
-        return new TestableAsteriskManager(null, [
+        return new class (null, [
             'server' => "127.0.0.1:$port",
             'username' => 'fixture',
             'secret' => 'fixture-secret',
-        ]);
+        ]) extends AsteriskManager {
+            protected function isAsteriskListening(): bool
+            {
+                return true;
+            }
+        };
     }
 
     private function waitForServer(): void
@@ -300,13 +305,5 @@ final class AsteriskManagerConnectionTest extends TestCase
             }
         }
         return $modes;
-    }
-}
-
-final class TestableAsteriskManager extends AsteriskManager
-{
-    protected function isAsteriskListening(): bool
-    {
-        return true;
     }
 }

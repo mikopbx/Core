@@ -4,6 +4,18 @@ declare(strict_types=1);
 
 namespace MikoPBX\Core\Asterisk;
 
+/**
+ * @phpstan-type TcpEntry array{
+ *     localAddress: string,
+ *     localPort: int,
+ *     remoteAddress: string,
+ *     remotePort: int,
+ *     state: string,
+ *     txQueue: int,
+ *     rxQueue: int,
+ *     inode: int
+ * }
+ */
 final class AmiSessionInspector
 {
     private const TCP_STATES = [
@@ -48,7 +60,8 @@ final class AmiSessionInspector
             $this->parseTcpTable($this->procRoot . '/net/tcp6', true)
         );
         foreach ($tcpEntries as $entry) {
-            if ($entry['localPort'] === $amiPort
+            if (
+                $entry['localPort'] === $amiPort
                 && $entry['txQueue'] > 0
                 && in_array($entry['inode'], $asteriskInodes, true)
             ) {
@@ -111,7 +124,10 @@ final class AmiSessionInspector
             );
         }
 
-        usort($snapshots, static fn(AmiSessionSnapshot $left, AmiSessionSnapshot $right): int => $left->fd <=> $right->fd);
+        usort(
+            $snapshots,
+            static fn(AmiSessionSnapshot $left, AmiSessionSnapshot $right): int => $left->fd <=> $right->fd
+        );
         return $snapshots;
     }
 
@@ -145,7 +161,7 @@ final class AmiSessionInspector
     }
 
     /**
-     * @return list<array{localAddress: string, localPort: int, remoteAddress: string, remotePort: int, state: string, txQueue: int, rxQueue: int, inode: int}>
+     * @return list<TcpEntry>
      */
     private function parseTcpTable(string $path, bool $ipv6): array
     {
@@ -188,14 +204,15 @@ final class AmiSessionInspector
     }
 
     /**
-     * @param list<array{localAddress: string, localPort: int, remoteAddress: string, remotePort: int, state: string, txQueue: int, rxQueue: int, inode: int}> $entries
-     * @param array{localAddress: string, localPort: int, remoteAddress: string, remotePort: int, state: string, txQueue: int, rxQueue: int, inode: int} $serverEntry
-     * @return array{localAddress: string, localPort: int, remoteAddress: string, remotePort: int, state: string, txQueue: int, rxQueue: int, inode: int}|null
+     * @param list<TcpEntry> $entries
+     * @param TcpEntry $serverEntry
+     * @return TcpEntry|null
      */
     private function findReverseEntry(array $entries, array $serverEntry): ?array
     {
         foreach ($entries as $entry) {
-            if ($entry['localAddress'] === $serverEntry['remoteAddress']
+            if (
+                $entry['localAddress'] === $serverEntry['remoteAddress']
                 && $entry['localPort'] === $serverEntry['remotePort']
                 && $entry['remoteAddress'] === $serverEntry['localAddress']
                 && $entry['remotePort'] === $serverEntry['localPort']

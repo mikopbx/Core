@@ -150,7 +150,11 @@ final class AmiSessionWatchdog
         }
         if ($state['warningLogged'] === false && $now - $state['warningSince'] >= 30) {
             $state['warningLogged'] = true;
-            ($this->logger)('warning', 'ami_backlog_warning', $this->context($snapshot, $now - $state['warningSince'], 'observe'));
+            ($this->logger)(
+                'warning',
+                'ami_backlog_warning',
+                $this->context($snapshot, $now - $state['warningSince'], 'observe')
+            );
         }
     }
 
@@ -200,7 +204,8 @@ final class AmiSessionWatchdog
         }
 
         $cooldownKey = $candidate->username . '|' . $candidate->endpoint();
-        if (isset($this->cooldowns[$cooldownKey])
+        if (
+            isset($this->cooldowns[$cooldownKey])
             && $now - $this->cooldowns[$cooldownKey] < self::USER_COOLDOWN_SEC
         ) {
             $this->logCandidate($candidate, 'endpoint_cooldown', $now);
@@ -221,7 +226,8 @@ final class AmiSessionWatchdog
             $this->logCandidate($candidate, 'identity_changed', $now);
             return false;
         }
-        if ($revalidated->sendQueueBytes < self::CANDIDATE_BYTES
+        if (
+            $revalidated->sendQueueBytes < self::CANDIDATE_BYTES
             || !$revalidated->isLocalhost()
             || !$revalidated->hasStrongStaleDescriptorEvidence()
         ) {
