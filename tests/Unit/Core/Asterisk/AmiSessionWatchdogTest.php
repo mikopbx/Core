@@ -22,6 +22,12 @@ final class AmiSessionWatchdogTest extends TestCase
     /** @var list<array{level: string, event: string, context: array}> */
     private array $logs = [];
 
+    /** @var list<array{name: string, headers: array}> */
+    private array $disconnectEvents = [];
+
+    /** @var list<string> */
+    private array $actionOrder = [];
+
     public function testHiddenAutoKickSettingIsDisabledByDefault(): void
     {
         self::assertSame('AMIStalledSessionAutoKick', PbxSettings::AMI_STALLED_SESSION_AUTO_KICK);
@@ -82,6 +88,39 @@ final class AmiSessionWatchdogTest extends TestCase
         $this->driveCandidate($kickWatchdog, $this->snapshot(98_304, [101, 202]), true);
         self::assertSame([14], $this->kicks);
         self::assertCount(1, $this->logsFor('ami_session_kick'));
+    }
+
+    public function testKickPublishesDiagnosticUserEventBeforeDisconnect(): void
+    {
+        $watchdog = $this->newWatchdog();
+        $this->driveCandidate($watchdog, $this->snapshot(120_000, [101, 202]), true);
+
+        self::assertSame(['event', 'kick'], $this->actionOrder);
+        self::assertCount(1, $this->disconnectEvents);
+        self::assertSame('AmiSessionWatchdogDisconnect', $this->disconnectEvents[0]['name']);
+        self::assertSame([
+            'Username' => 'phpagi',
+            'SessionFd' => '14',
+            'Endpoint' => '127.0.0.1:55302',
+            'SendQueueBytes' => '120000',
+            'Reason' => 'multiple_socket_owners',
+            'OwnerPids' => '101,202',
+        ], $this->disconnectEvents[0]['headers']);
+        $kickLogs = $this->logsFor('ami_session_kick');
+        self::assertTrue($kickLogs[0]['context']['eventPublished']);
+        self::assertSame('multiple_socket_owners', $kickLogs[0]['context']['disconnectReason']);
+    }
+
+    public function testDiagnosticEventFailureDoesNotPreventRevalidatedKick(): void
+    {
+        $watchdog = $this->newWatchdog(
+            eventEmitter: static fn(): never => throw new \RuntimeException('AMI notification unavailable')
+        );
+        $this->driveCandidate($watchdog, $this->snapshot(120_000, [101, 202]), true);
+
+        self::assertSame([14], $this->kicks);
+        self::assertCount(1, $this->logsFor('ami_disconnect_event_error'));
+        self::assertFalse($this->logsFor('ami_session_kick')[0]['context']['eventPublished']);
     }
 
     public function testLargeQueueProgressRestartsCandidateWindow(): void
@@ -173,17 +212,23 @@ final class AmiSessionWatchdogTest extends TestCase
         self::assertSame('endpoint_cooldown', $this->lastCandidateReason());
     }
 
-    private function newWatchdog(?callable $snapshotProvider = null): AmiSessionWatchdog
+    private function newWatchdog(?callable $snapshotProvider = null, ?callable $eventEmitter = null): AmiSessionWatchdog
     {
         return new AmiSessionWatchdog(
             snapshotProvider: $snapshotProvider ?? fn(): array => $this->snapshots,
             clock: fn(): int => $this->now,
             kickRunner: function (int $fd): array {
+                $this->actionOrder[] = 'kick';
                 $this->kicks[] = $fd;
                 return ['exitCode' => 0, 'output' => 'Manager session kicked'];
             },
             logger: function (string $level, string $event, array $context): void {
                 $this->logs[] = compact('level', 'event', 'context');
+            },
+            eventEmitter: $eventEmitter ?? function (string $name, array $headers): array {
+                $this->actionOrder[] = 'event';
+                $this->disconnectEvents[] = compact('name', 'headers');
+                return ['Response' => 'Success'];
             },
         );
     }
@@ -258,5 +303,7 @@ final class AmiSessionWatchdogTest extends TestCase
         $this->snapshots = [];
         $this->kicks = [];
         $this->logs = [];
+        $this->disconnectEvents = [];
+        $this->actionOrder = [];
     }
 }

@@ -41,12 +41,30 @@ final class AmiSessionInspector
         foreach (glob(rtrim($this->procRoot, '/') . '/[0-9]*', GLOB_ONLYDIR) ?: [] as $processDir) {
             $comm = trim((string)@file_get_contents($processDir . '/comm'));
             $cmdline = (string)@file_get_contents($processDir . '/cmdline');
-            $argv0 = explode("\0", $cmdline, 2)[0];
-            if ($comm === 'asterisk' || basename($argv0) === 'asterisk') {
+            $arguments = array_values(array_filter(
+                explode("\0", $cmdline),
+                static fn(string $argument): bool => $argument !== ''
+            ));
+            $argv0 = $arguments[0] ?? '';
+            if (
+                ($comm === 'asterisk' || basename($argv0) === 'asterisk')
+                && !$this->isRemoteConsoleClient($arguments)
+            ) {
                 return (int)basename($processDir);
             }
         }
         return null;
+    }
+
+    /** @param list<string> $arguments */
+    private function isRemoteConsoleClient(array $arguments): bool
+    {
+        foreach (array_slice($arguments, 1) as $argument) {
+            if (preg_match('/^-[^-]*[rRx]/', $argument) === 1) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function hasQueuedAmiSockets(int $asteriskPid, int $amiPort): bool

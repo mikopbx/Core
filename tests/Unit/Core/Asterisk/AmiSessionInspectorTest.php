@@ -85,6 +85,18 @@ final class AmiSessionInspectorTest extends TestCase
         self::assertTrue($ipv6->hasStrongStaleDescriptorEvidence());
     }
 
+    public function testFindAsteriskPidIgnoresTransientRemoteConsoleClient(): void
+    {
+        $this->makeProcess(
+            1000,
+            'asterisk',
+            [],
+            "/usr/sbin/asterisk\0-rx\0manager show connected"
+        );
+
+        self::assertSame(23932, (new AmiSessionInspector($this->procRoot))->findAsteriskPid());
+    }
+
     public function testExternalAndOwnerlessSessionIsNeverMistakenForLocalhost(): void
     {
         $inspector = new AmiSessionInspector($this->procRoot);

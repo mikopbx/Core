@@ -21,6 +21,7 @@ final class AmiSessionWatchdog
     private const USER_COOLDOWN_SEC = 300;
     private const GLOBAL_LIMIT_WINDOW_SEC = 600;
     private const GLOBAL_LIMIT_COUNT = 3;
+    private const DISCONNECT_EVENT = 'AmiSessionWatchdogDisconnect';
 
     private AmiSessionInspector $inspector;
 
@@ -33,6 +34,8 @@ final class AmiSessionWatchdog
     private Closure $kickRunner;
 
     private Closure $logger;
+
+    private Closure $eventEmitter;
 
     /** @var array<string, array<string, int|bool|null>> */
     private array $observations = [];
@@ -50,6 +53,7 @@ final class AmiSessionWatchdog
         ?callable $clock = null,
         ?callable $kickRunner = null,
         ?callable $logger = null,
+        ?callable $eventEmitter = null,
         private readonly int $amiPort = 5038,
     ) {
         $this->inspector = $inspector ?? new AmiSessionInspector();
@@ -72,6 +76,9 @@ final class AmiSessionWatchdog
                     $priority
                 );
             }
+        );
+        $this->eventEmitter = Closure::fromCallable(
+            $eventEmitter ?? fn(string $name, array $headers): array => $this->emitUserEvent($name, $headers)
         );
     }
 
@@ -239,6 +246,26 @@ final class AmiSessionWatchdog
             return false;
         }
 
+        $disconnectReason = $this->disconnectReason($revalidated);
+        $eventPublished = false;
+        try {
+            $eventResult = ($this->eventEmitter)(
+                self::DISCONNECT_EVENT,
+                $this->disconnectEventHeaders($revalidated, $disconnectReason)
+            );
+            $eventPublished = $eventResult === true
+                || (is_array($eventResult) && ($eventResult['Response'] ?? '') === 'Success');
+        } catch (Throwable $throwable) {
+            ($this->logger)(
+                'warning',
+                'ami_disconnect_event_error',
+                $this->context($revalidated, 0, 'notify') + [
+                    'disconnectReason' => $disconnectReason,
+                    'message' => $throwable->getMessage(),
+                ]
+            );
+        }
+
         $result = ($this->kickRunner)((int)$revalidated->fd);
         $this->kickTimestamps[] = $now;
         $this->cooldowns[$cooldownKey] = $now;
@@ -254,6 +281,8 @@ final class AmiSessionWatchdog
                 'exitCode' => (int)($result['exitCode'] ?? 1),
                 'result' => (string)($result['output'] ?? ''),
                 'sessionStillConnected' => $stillConnected,
+                'disconnectReason' => $disconnectReason,
+                'eventPublished' => $eventPublished,
             ]
         );
         return true;
@@ -332,6 +361,44 @@ final class AmiSessionWatchdog
         $output = [];
         Processes::mwExec($asterisk . ' -rx ' . escapeshellarg('manager show connected'), $output);
         return implode("\n", $output);
+    }
+
+    private function disconnectReason(AmiSessionSnapshot $snapshot): string
+    {
+        if ($snapshot->clientState === 'CLOSE_WAIT') {
+            return 'client_close_wait';
+        }
+        if ($snapshot->ownerPids === []) {
+            return 'client_socket_owner_missing';
+        }
+        return 'multiple_socket_owners';
+    }
+
+    /** @return array<string, string> */
+    private function disconnectEventHeaders(AmiSessionSnapshot $snapshot, string $reason): array
+    {
+        return [
+            'Username' => $snapshot->username,
+            'SessionFd' => (string)$snapshot->fd,
+            'Endpoint' => $snapshot->endpoint(),
+            'SendQueueBytes' => (string)$snapshot->sendQueueBytes,
+            'Reason' => $reason,
+            'OwnerPids' => implode(',', $snapshot->ownerPids),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function emitUserEvent(string $name, array $headers): array
+    {
+        $manager = new AsteriskManager();
+        if (!$manager->connect("127.0.0.1:{$this->amiPort}", null, null, 'off')) {
+            return ['Response' => 'Error', 'Message' => 'Unable to connect to AMI'];
+        }
+        try {
+            return $manager->UserEvent($name, $headers);
+        } finally {
+            $manager->disconnect();
+        }
     }
 
     /** @return array{exitCode: int, output: string} */

@@ -154,6 +154,14 @@ the procfs and manager-session lookup. The action proceeds only if descriptor,
 socket inode, endpoint, username, and session start still match the original
 observation.
 
+Before the kick, the watchdog publishes
+`UserEvent: AmiSessionWatchdogDisconnect` with the username, fd, endpoint,
+queue size, descriptor-owner PIDs, and the evidence that authorized the action.
+AMI UserEvents are broadcast rather than addressed to one manager connection,
+so this is a diagnostic signal for healthy integrations; the stalled session
+is not expected to consume it. Failure to publish the event is logged but does
+not prevent removal of an already revalidated stalled session.
+
 Rate limits:
 
 - at most one session per inspection pass;
@@ -213,6 +221,8 @@ Automated coverage must prove:
 - external sessions are never kicked;
 - descriptor reuse cancels a pending action;
 - kick and warning rate limits are enforced.
+- an automatic kick publishes its diagnostic UserEvent before disconnecting
+  the session.
 
 The boffart load test records Asterisk RSS, AMI session count, server-side
 `Send-Q`, client-side `Recv-Q`, and reconnection behavior before, during, and
