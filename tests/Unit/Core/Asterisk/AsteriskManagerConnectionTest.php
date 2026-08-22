@@ -119,6 +119,51 @@ final class AsteriskManagerConnectionTest extends TestCase
         self::assertSame(['off', 'off'], $this->loginEventModes());
     }
 
+    public function testListResponseKeepsEventsSeparatedByBlankLines(): void
+    {
+        $actionId = 'contacts-fixture';
+        $response = implode("\r\n", [
+            'Response: Success',
+            "ActionID: $actionId",
+            'Message: A listing of Contacts follows, presented as ContactList events',
+            '',
+            'Event: ContactList',
+            "ActionID: $actionId",
+            'ObjectName: SIP-TRUNK-FIRST',
+            'Status: Reachable',
+            '',
+            'Event: ContactList',
+            "ActionID: $actionId",
+            'ObjectName: SIP-TRUNK-SECOND',
+            'Status: Reachable',
+            '',
+            'Event: ContactListComplete',
+            "ActionID: $actionId",
+            'EventList: Complete',
+            'ListItems: 2',
+            '',
+            '',
+        ]);
+        [$port] = $this->startServer([
+            [
+                ['action' => 'login', 'response' => $this->successResponse()],
+                ['action' => 'PJSIPShowContacts', 'response' => $response],
+                ['action' => 'Logoff', 'close' => true],
+            ],
+        ]);
+        $manager = $this->newManager($port);
+        self::assertTrue($manager->connect(null, null, null, 'off'));
+
+        $result = $manager->sendRequestTimeout('PJSIPShowContacts', ['ActionID' => $actionId]);
+
+        self::assertSame(
+            ['SIP-TRUNK-FIRST', 'SIP-TRUNK-SECOND'],
+            array_column($result['data']['ContactList'] ?? [], 'ObjectName')
+        );
+        $manager->disconnect();
+        $this->waitForServer();
+    }
+
     public function testSecondBrokenConnectionDoesNotTriggerThirdLogin(): void
     {
         [$port] = $this->startServer([

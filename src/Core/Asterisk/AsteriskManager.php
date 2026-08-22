@@ -554,10 +554,11 @@ class AsteriskManager
         $m                  = [];
         do {
             $value = '';
-            $buff  = $this->getStringDataFromSocket() . $value;
-            if ($buff === '') {
+            $response = $this->getDataFromSocket();
+            if (isset($response['error']) || isset($response['timeout'])) {
                 break;
             }
+            $buff = $response['data'] ?? '';
             $a_pos = strpos($buff, ':');
             if (!$a_pos) {
                 if (empty($m)) {
