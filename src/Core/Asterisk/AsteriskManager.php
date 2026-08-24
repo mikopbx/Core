@@ -44,7 +44,7 @@ class AsteriskManager
     public array $config;
 
     /** @var string  */
-    private string $listenEvents = 'on';
+    protected string $listenEvents = 'on';
 
     /**
      * Socket
@@ -89,10 +89,10 @@ class AsteriskManager
     /**
      * Whether we're successfully logged in
      *
-     * @access private
+     * @access protected
      * @var bool
      */
-    private bool $_loggedIn = false;
+    protected bool $_loggedIn = false;
 
     private ?string $connectionServer = null;
 
@@ -813,6 +813,11 @@ class AsteriskManager
      */
     public function sendRequest(string $action, array $parameters = []): array
     {
+        $isLoginRequest = strcasecmp($action, 'login') === 0;
+        if ($isLoginRequest) {
+            $this->rememberLoginRequest($parameters);
+        }
+
         $req = "Action: $action\r\n";
         foreach ($parameters as $var => $val) {
             $req .= "$var: $val\r\n";
@@ -825,7 +830,31 @@ class AsteriskManager
             return [];
         }
 
-        return $this->waitResponse();
+        $response = $this->waitResponse();
+        if ($isLoginRequest) {
+            $this->_loggedIn = ($response['Response'] ?? '') === 'Success';
+        }
+
+        return $response;
+    }
+
+    /**
+     * Synchronizes connection details for subclasses that implement their own connect().
+     */
+    private function rememberLoginRequest(array $parameters): void
+    {
+        if (isset($this->server, $this->port)) {
+            $this->connectionServer = "$this->server:$this->port";
+        }
+        if (isset($parameters['Username'])) {
+            $this->connectionUsername = (string)$parameters['Username'];
+        }
+        if (isset($parameters['Secret'])) {
+            $this->connectionSecret = (string)$parameters['Secret'];
+        }
+        if (isset($parameters['Events'])) {
+            $this->listenEvents = (string)$parameters['Events'];
+        }
     }
 
     /**

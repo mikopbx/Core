@@ -119,6 +119,64 @@ final class AsteriskManagerConnectionTest extends TestCase
         self::assertSame(['off', 'off'], $this->loginEventModes());
     }
 
+    public function testLegacyConnectOverrideSynchronizesCoreLoginAndReconnectState(): void
+    {
+        [$port] = $this->startServer([
+            [
+                ['action' => 'login', 'response' => $this->successResponse()],
+                ['action' => 'Ping', 'close' => true],
+            ],
+            [
+                ['action' => 'login', 'response' => $this->successResponse()],
+                ['action' => 'Ping', 'response' => $this->successResponse(['Ping' => 'Pong'])],
+                ['action' => 'Logoff', 'close' => true],
+            ],
+        ]);
+        $manager = $this->newLegacyConnectManager();
+
+        self::assertTrue($manager->connect("127.0.0.1:$port", 'fixture', 'fixture-secret', 'off'));
+        self::assertTrue($manager->loggedIn());
+
+        $response = $manager->sendRequestTimeout('Ping');
+
+        self::assertSame('Success', $response['Response'] ?? null);
+        self::assertSame('Pong', $response['Ping'] ?? null);
+        $manager->disconnect();
+        $this->waitForServer();
+        self::assertSame(['login', 'Ping', 'login', 'Ping', 'Logoff'], $this->actions());
+        self::assertSame(['off', 'off'], $this->loginEventModes());
+    }
+
+    public function testLegacyConnectOverrideDoesNotCreateDynamicStateProperties(): void
+    {
+        [$port] = $this->startServer([
+            [
+                ['action' => 'login', 'response' => $this->successResponse()],
+                ['action' => 'Logoff', 'close' => true],
+            ],
+        ]);
+        $manager = $this->newLegacyConnectManager();
+        $dynamicPropertyWarnings = [];
+        set_error_handler(
+            static function (int $severity, string $message) use (&$dynamicPropertyWarnings): bool {
+                if ($severity === E_DEPRECATED && str_contains($message, 'dynamic property')) {
+                    $dynamicPropertyWarnings[] = $message;
+                    return true;
+                }
+                return false;
+            }
+        );
+        try {
+            self::assertTrue($manager->connect("127.0.0.1:$port", 'fixture', 'fixture-secret', 'off'));
+        } finally {
+            restore_error_handler();
+        }
+        $manager->disconnect();
+        $this->waitForServer();
+
+        self::assertSame([], $dynamicPropertyWarnings);
+    }
+
     public function testListResponseKeepsEventsSeparatedByBlankLines(): void
     {
         $actionId = 'contacts-fixture';
@@ -303,6 +361,48 @@ final class AsteriskManagerConnectionTest extends TestCase
             protected function isAsteriskListening(): bool
             {
                 return true;
+            }
+        };
+    }
+
+    private function newLegacyConnectManager(): AsteriskManager
+    {
+        return new class (null, [
+            'server' => '127.0.0.1:1',
+            'username' => 'wrong-default-user',
+            'secret' => 'wrong-default-secret',
+        ]) extends AsteriskManager {
+            public function connect(
+                ?string $server = null,
+                ?string $username = null,
+                ?string $secret = null,
+                string $events = 'on'
+            ): bool {
+                $this->listenEvents = $events;
+                $server = $server ?? $this->config['asmanager']['server'];
+                $username = $username ?? $this->config['asmanager']['username'];
+                $secret = $secret ?? $this->config['asmanager']['secret'];
+                [$this->server, $port] = explode(':', $server, 2);
+                $this->port = (int)$port;
+                $errorCode = 0;
+                $errorMessage = '';
+                $this->socket = fsockopen($this->server, $this->port, $errorCode, $errorMessage, 2);
+                if (!is_resource($this->socket)) {
+                    return false;
+                }
+                stream_set_timeout($this->socket, 1);
+                if (fgets($this->socket) === false) {
+                    return false;
+                }
+
+                $response = $this->sendRequest('login', [
+                    'Username' => $username,
+                    'Secret' => $secret,
+                    'Events' => $events,
+                ]);
+
+                $this->_loggedIn = ($response['Response'] ?? '') === 'Success';
+                return $this->_loggedIn;
             }
         };
     }
