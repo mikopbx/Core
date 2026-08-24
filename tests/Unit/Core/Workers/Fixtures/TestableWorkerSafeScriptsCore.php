@@ -21,6 +21,11 @@ final class TestableWorkerSafeScriptsCore extends WorkerSafeScriptsCore
         return $this->isAmiSessionAutoKickEnabled();
     }
 
+    public function spawnPoolWorker(string $workerPath, int $instanceId): void
+    {
+        $this->spawnPoolWorkerInstance($workerPath, $instanceId);
+    }
+
     protected function amiWatchdogNow(): int
     {
         return $this->now;

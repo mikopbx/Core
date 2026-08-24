@@ -56,6 +56,51 @@ final class WorkerSafeScriptsAmiWatchdogTest extends TestCase
         self::assertSame(1, $worker->loggedFailures);
     }
 
+    public function testPoolWorkerDoesNotInheritSupervisorSocket(): void
+    {
+        if (PHP_OS_FAMILY !== 'Linux' || !is_dir('/proc/self/fd')) {
+            self::markTestSkipped('Linux /proc/self/fd is required for descriptor inheritance coverage');
+        }
+
+        $server = stream_socket_server('tcp://127.0.0.1:0', $errorCode, $errorMessage);
+        self::assertIsResource($server, $errorMessage);
+        $inode = (int)(fstat($server)['ino'] ?? 0);
+        self::assertGreaterThan(0, $inode);
+
+        $prefix = sys_get_temp_dir() . '/mikopbx-pool-fd-' . getmypid() . '-' . uniqid('', true);
+        $workerPath = $prefix . '.php';
+        $outputPath = $prefix . '.txt';
+        $workerCode = '<?php ' . <<<'PHP'
+$links = [];
+foreach (glob('/proc/self/fd/*') ?: [] as $fdPath) {
+    $target = @readlink($fdPath);
+    if ($target !== false) {
+        $links[] = $target;
+    }
+}
+file_put_contents(__OUTPUT_PATH__, json_encode(['argv' => $argv, 'links' => $links]));
+PHP;
+        $workerCode = str_replace('__OUTPUT_PATH__', var_export($outputPath, true), $workerCode);
+        self::assertNotFalse(file_put_contents($workerPath, $workerCode));
+
+        try {
+            $this->newWorker()->spawnPoolWorker($workerPath, 7);
+            $deadline = microtime(true) + 3.0;
+            while (!is_file($outputPath) && microtime(true) < $deadline) {
+                usleep(20_000);
+            }
+
+            self::assertFileExists($outputPath);
+            $result = json_decode((string)file_get_contents($outputPath), true, 512, JSON_THROW_ON_ERROR);
+            self::assertContains('--instance-id=7', $result['argv']);
+            self::assertNotContains("socket:[$inode]", $result['links']);
+        } finally {
+            fclose($server);
+            @unlink($workerPath);
+            @unlink($outputPath);
+        }
+    }
+
     private function newWorker(): TestableWorkerSafeScriptsCore
     {
         $reflection = new ReflectionClass(TestableWorkerSafeScriptsCore::class);

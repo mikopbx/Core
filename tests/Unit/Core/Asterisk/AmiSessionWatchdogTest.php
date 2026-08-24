@@ -28,11 +28,11 @@ final class AmiSessionWatchdogTest extends TestCase
     /** @var list<string> */
     private array $actionOrder = [];
 
-    public function testHiddenAutoKickSettingIsDisabledByDefault(): void
+    public function testHiddenAutoKickSettingIsEnabledByDefault(): void
     {
         self::assertSame('AMIStalledSessionAutoKick', PbxSettings::AMI_STALLED_SESSION_AUTO_KICK);
         $defaults = PbxSettings::getDefaultArrayValues();
-        self::assertSame('0', $defaults[PbxSettings::AMI_STALLED_SESSION_AUTO_KICK]);
+        self::assertSame('1', $defaults[PbxSettings::AMI_STALLED_SESSION_AUTO_KICK]);
     }
 
     public function testSustainedWarningIsLoggedOnceAndRecoveryClearsHistory(): void

@@ -1809,9 +1809,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     );
 
                     $workerPath = Util::getFilePathByClassName($workerClassName);
-                    $php = Util::which('php');
-                    $command = "$php -f $workerPath start --instance-id=$instanceId > /dev/null 2>&1 &";
-                    shell_exec($command);
+                    $this->spawnPoolWorkerInstance($workerPath, $instanceId);
                 }
             }
 
@@ -1832,6 +1830,15 @@ class WorkerSafeScriptsCore extends WorkerBase
                 LOG_WARNING
             );
         }
+    }
+
+    protected function spawnPoolWorkerInstance(string $workerPath, int $instanceId): void
+    {
+        $php = Util::which('php');
+        $command = escapeshellarg($php)
+            . ' -f ' . escapeshellarg($workerPath)
+            . ' start --instance-id=' . $instanceId;
+        Processes::mwExecBg($command);
     }
 }
 

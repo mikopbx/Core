@@ -51,7 +51,7 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::IAX_PORT => '4569',
             PbxSettings::AMI_ENABLED => '1',
             PbxSettings::AMI_PORT => '5038',
-            PbxSettings::AMI_STALLED_SESSION_AUTO_KICK => '0',
+            PbxSettings::AMI_STALLED_SESSION_AUTO_KICK => '1',
             PbxSettings::AJAM_ENABLED => '1',
             PbxSettings::AJAM_PORT => '8088',
             PbxSettings::AJAM_PORT_TLS => '8089',

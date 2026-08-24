@@ -78,6 +78,71 @@ PHP;
         self::assertStringNotContainsString("socket:[$inode]", (string)file_get_contents($outputFile));
     }
 
+    public function testOpenProcessDoesNotExposeParentSocketToArgvChild(): void
+    {
+        $this->requireLinuxProcfs();
+        $server = stream_socket_server('tcp://127.0.0.1:0', $errorCode, $errorMessage);
+        self::assertIsResource($server, $errorMessage);
+        $inode = (int)(fstat($server)['ino'] ?? 0);
+        self::assertGreaterThan(0, $inode);
+
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+        $pipes = [];
+        $process = Processes::openProcess(
+            [PHP_BINARY, '-r', $this->fdListingPhpCode()],
+            $descriptors,
+            $pipes
+        );
+        self::assertIsResource($process);
+
+        fclose($pipes[0]);
+        $output = stream_get_contents($pipes[1]);
+        $errorOutput = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $exitCode = proc_close($process);
+        fclose($server);
+
+        self::assertSame('', $errorOutput);
+        self::assertSame(0, $exitCode);
+        self::assertStringNotContainsString("socket:[$inode]", $output);
+    }
+
+    public function testOpenProcessDoesNotExposeParentSocketToShellChild(): void
+    {
+        $this->requireLinuxProcfs();
+        $server = stream_socket_server('tcp://127.0.0.1:0', $errorCode, $errorMessage);
+        self::assertIsResource($server, $errorMessage);
+        $inode = (int)(fstat($server)['ino'] ?? 0);
+        self::assertGreaterThan(0, $inode);
+
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+        $pipes = [];
+        $command = escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg($this->fdListingPhpCode());
+        $process = Processes::openProcess($command, $descriptors, $pipes);
+        self::assertIsResource($process);
+
+        fclose($pipes[0]);
+        $output = stream_get_contents($pipes[1]);
+        $errorOutput = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $exitCode = proc_close($process);
+        fclose($server);
+
+        self::assertSame('', $errorOutput);
+        self::assertSame(0, $exitCode);
+        self::assertStringNotContainsString("socket:[$inode]", $output);
+    }
+
     public function testMwExecPreservesShellPipelineOutputAndExitStatus(): void
     {
         $output = [];
@@ -103,7 +168,12 @@ PHP;
 
     private function fdListingCommand(): string
     {
-        $phpCode = <<<'PHP'
+        return escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg($this->fdListingPhpCode());
+    }
+
+    private function fdListingPhpCode(): string
+    {
+        return <<<'PHP'
 foreach (glob('/proc/self/fd/*') ?: [] as $fdPath) {
     $target = @readlink($fdPath);
     if ($target !== false) {
@@ -111,6 +181,5 @@ foreach (glob('/proc/self/fd/*') ?: [] as $fdPath) {
     }
 }
 PHP;
-        return escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg($phpCode);
     }
 }

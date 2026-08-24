@@ -51,7 +51,7 @@ final class HeartbeatProcessRunner
             2 => ['pipe', 'w'],
         ];
         $pipes = [];
-        $process = proc_open($command, $descriptors, $pipes);
+        $process = Processes::openProcess($command, $descriptors, $pipes);
         if (!is_resource($process)) {
             throw new RuntimeException('Unable to start heartbeat-aware process');
         }

@@ -25,6 +25,7 @@ require_once 'Globals.php';
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\ModuleOperations;
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerBase;
@@ -394,7 +395,8 @@ class WorkerModuleOperations extends WorkerBase
             1 => ['file', '/dev/null', 'w'],
             2 => ['file', '/dev/null', 'w'],
         ];
-        $process = proc_open($command, $descriptors, $pipes);
+        $pipes = [];
+        $process = Processes::openProcess($command, $descriptors, $pipes);
         if (!is_resource($process)) {
             return [false, false];
         }
