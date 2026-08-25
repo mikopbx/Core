@@ -580,6 +580,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'type' => 'string',
                     'description' => 'rest_param_emp_upload_id',
                     'required' => true,
+                    'pattern' => '\A(?!\.{1,2}\z)(?!.*\.\.)[A-Za-z0-9._-]{1,255}\z',
                     'sanitize' => 'string',
                     'example' => 'upload_abc123'
                 ],

@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Employees;
 
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\Core\System\PasswordService;
@@ -37,6 +38,8 @@ class ImportCSVAction
 {
     private const int MAX_IMPORT_SIZE = 1000;
     private const int MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+    private const string UPLOAD_ID_PATTERN = '/\A(?!\.{1,2}\z)(?!.*\.\.)[A-Za-z0-9._-]{1,255}\z/D';
+    private const string IMPORT_ID_PATTERN = '/\A[a-f0-9]{32}\z/D';
     
     // Supported CSV columns
     private const array SUPPORTED_COLUMNS = [
@@ -86,6 +89,11 @@ class ImportCSVAction
         // Check if we're in import mode with saved data (support both uploadId and upload_id)
         $uploadId = $data['uploadId'] ?? $data['upload_id'] ?? null;
         if ($mode === 'import' && !empty($uploadId)) {
+            if (!is_string($uploadId) || preg_match(self::IMPORT_ID_PATTERN, $uploadId) !== 1) {
+                $res->messages['error'][] = TranslationProvider::translate('ex_ImportFileNotFound');
+                return $res;
+            }
+
             // Load saved preview data
             $dataFile = "/tmp/employee_import/{$uploadId}.json";
             if (!file_exists($dataFile)) {
@@ -122,26 +130,17 @@ class ImportCSVAction
         
         // Handle upload_id parameter from web interface
         if (!empty($data['upload_id'])) {
-            // Construct filepath from upload_id
-            $uploadCacheDir = '/storage/usbdisk1/mikopbx/tmp/www_cache/upload_cache/';
             $uploadId = $data['upload_id'];
-            
-            // Find the CSV file in the upload directory
-            $uploadDir = $uploadCacheDir . $uploadId;
-            if (is_dir($uploadDir)) {
-                $files = glob($uploadDir . '/*.csv');
-                if (!empty($files)) {
-                    $filepath = $files[0]; // Take the first CSV file
-                } else {
-                    $res->messages['error'][] = TranslationProvider::translate('ex_ImportFileNotFound');
-                    return $res;
-                }
-            } else {
+            if (!is_string($uploadId) || preg_match(self::UPLOAD_ID_PATTERN, $uploadId) !== 1) {
                 $res->messages['error'][] = TranslationProvider::translate('ex_ImportFileNotFound');
                 return $res;
             }
-        } elseif (!empty($data['filepath'])) {
-            $filepath = $data['filepath'];
+
+            $filepath = self::findUploadedCsv($uploadId);
+            if ($filepath === null) {
+                $res->messages['error'][] = TranslationProvider::translate('ex_ImportFileNotFound');
+                return $res;
+            }
         } else {
             $res->messages['error'][] = TranslationProvider::translate('ex_ImportFileNotFound');
             return $res;
@@ -224,6 +223,40 @@ class ImportCSVAction
         
         return $res;
     }
+
+    /**
+     * Resolve a CSV uploaded by the file API and confine it to that upload's directory.
+     */
+    private static function findUploadedCsv(string $uploadId): ?string
+    {
+        $uploadRoot = realpath(Directories::getDir(Directories::WWW_UPLOAD_DIR));
+        if ($uploadRoot === false) {
+            return null;
+        }
+
+        $uploadDir = realpath($uploadRoot . DIRECTORY_SEPARATOR . $uploadId);
+        if ($uploadDir === false || !self::isPathInside($uploadDir, $uploadRoot) || !is_dir($uploadDir)) {
+            return null;
+        }
+
+        foreach (glob($uploadDir . DIRECTORY_SEPARATOR . '*.csv') ?: [] as $candidate) {
+            $realFile = realpath($candidate);
+            if (
+                $realFile !== false
+                && is_file($realFile)
+                && self::isPathInside($realFile, $uploadDir)
+            ) {
+                return $realFile;
+            }
+        }
+
+        return null;
+    }
+
+    private static function isPathInside(string $path, string $directory): bool
+    {
+        return str_starts_with($path, rtrim($directory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
+    }
     
     /**
      * Parse CSV file
@@ -243,9 +276,13 @@ class ImportCSVAction
 
         // Detect encoding and convert to UTF-8 if needed
         $content = file_get_contents($filepath);
+        if ($content === false) {
+            $result['errors'][] = TranslationProvider::translate('ex_ImportCannotReadFile');
+            return $result;
+        }
         $encoding = mb_detect_encoding($content, ['UTF-8', 'Windows-1251', 'CP1251', 'KOI8-R'], true);
 
-        if ($encoding !== 'UTF-8') {
+        if ($encoding !== false && $encoding !== 'UTF-8') {
             $content = mb_convert_encoding($content, 'UTF-8', $encoding);
         }
 
@@ -254,18 +291,22 @@ class ImportCSVAction
             $content = substr($content, 3);
         }
 
-        // Write cleaned content back for fgetcsv
-        file_put_contents($filepath, $content);
-
         // Auto-detect delimiter (comma, semicolon, or tab)
         $delimiter = self::detectDelimiter($content);
 
-        // Open CSV file
-        $handle = fopen($filepath, 'r');
+        // Parse normalized content from an isolated in-memory stream. Preview
+        // must never rewrite the uploaded source file.
+        $handle = fopen('php://temp', 'w+b');
         if (!$handle) {
             $result['errors'][] = TranslationProvider::translate('ex_ImportCannotReadFile');
             return $result;
         }
+        if (fwrite($handle, $content) === false) {
+            fclose($handle);
+            $result['errors'][] = TranslationProvider::translate('ex_ImportCannotReadFile');
+            return $result;
+        }
+        rewind($handle);
 
         // Read headers with RFC 4180 compliant parsing (empty escape = "" doubling for literal quotes)
         $headers = fgetcsv($handle, 0, $delimiter, '"', '');
