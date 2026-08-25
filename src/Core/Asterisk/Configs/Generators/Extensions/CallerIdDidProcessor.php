@@ -19,8 +19,10 @@
 
 namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
+use MikoPBX\Common\Library\ProviderDialplanFieldValidator;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\SystemMessages;
+use Phalcon\Di\Di;
 
 /**
  * Class CallerIdDidProcessor
@@ -174,6 +176,10 @@ class CallerIdDidProcessor
             SystemMessages::sysLogMsg(__CLASS__, "Custom CallerID header not configured for provider {$this->providerId}", LOG_WARNING);
             return $dialplan;
         }
+        if (!ProviderDialplanFieldValidator::isValidHeaderName((string)$customHeader)) {
+            $this->logUnsafeSetting('custom CallerID header');
+            return $dialplan;
+        }
 
         if ($this->debugMode) {
             $dialplan .= "\tsame => n,NoOp(CallerID source: CUSTOM header {$customHeader})\n";
@@ -186,6 +192,16 @@ class CallerIdDidProcessor
             $dialplan .= "\tsame => n,NoOp(Custom header value: \${tmpCidHeader})\n";
         }
 
+        $start = $this->providerSettings['cid_parser_start'] ?? '';
+        $end = $this->providerSettings['cid_parser_end'] ?? '';
+        if (
+            !ProviderDialplanFieldValidator::isValidDelimiter((string)$start)
+            || !ProviderDialplanFieldValidator::isValidDelimiter((string)$end)
+        ) {
+            $this->logUnsafeSetting('CallerID parser delimiter');
+            return $dialplan;
+        }
+
         // Parse using configured delimiters or regex
         if (!empty($this->providerSettings['cid_parser_regex'])) {
             // Use regex parser. Asterisk's REGEX() only tests for a match and cannot extract
@@ -196,9 +212,6 @@ class CallerIdDidProcessor
             $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpCidHeader}\" != \"x\"]?AGI(extract_did_cid.php,{$encodedRegex},tmpCidHeader,fromCid))\n";
         } elseif (!empty($this->providerSettings['cid_parser_start']) || !empty($this->providerSettings['cid_parser_end'])) {
             // Use delimiter parser
-            $start = $this->providerSettings['cid_parser_start'] ?? '';
-            $end = $this->providerSettings['cid_parser_end'] ?? '';
-
             if (!empty($start) && !empty($end)) {
                 $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpCidHeader}\" != \"x\"]?Set(fromCid=\${CUT(CUT(tmpCidHeader,{$start},2),{$end},1)}))\n";
             } elseif (!empty($start)) {
@@ -335,6 +348,10 @@ class CallerIdDidProcessor
             SystemMessages::sysLogMsg(__CLASS__, "Custom DID header not configured for provider {$this->providerId}", LOG_WARNING);
             return $dialplan;
         }
+        if (!ProviderDialplanFieldValidator::isValidHeaderName((string)$customHeader)) {
+            $this->logUnsafeSetting('custom DID header');
+            return $dialplan;
+        }
 
         if ($this->debugMode) {
             $dialplan .= "\tsame => n,NoOp(DID source: CUSTOM header {$customHeader})\n";
@@ -345,6 +362,16 @@ class CallerIdDidProcessor
 
         if ($this->debugMode) {
             $dialplan .= "\tsame => n,NoOp(Custom DID header value: \${tmpDidHeader})\n";
+        }
+
+        $start = $this->providerSettings['did_parser_start'] ?? '';
+        $end = $this->providerSettings['did_parser_end'] ?? '';
+        if (
+            !ProviderDialplanFieldValidator::isValidDelimiter((string)$start)
+            || !ProviderDialplanFieldValidator::isValidDelimiter((string)$end)
+        ) {
+            $this->logUnsafeSetting('DID parser delimiter');
+            return $dialplan;
         }
 
         // Parse using configured delimiters or regex
@@ -358,9 +385,6 @@ class CallerIdDidProcessor
             $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpDidHeader}\" != \"x\"]?AGI(extract_did_cid.php,{$encodedRegex},tmpDidHeader,didNum))\n";
         } elseif (!empty($this->providerSettings['did_parser_start']) || !empty($this->providerSettings['did_parser_end'])) {
             // Use delimiter parser
-            $start = $this->providerSettings['did_parser_start'] ?? '';
-            $end = $this->providerSettings['did_parser_end'] ?? '';
-
             if (!empty($start) && !empty($end)) {
                 $dialplan .= "\tsame => n,ExecIf(\$[\"x\${tmpDidHeader}\" != \"x\"]?Set(didNum=\${CUT(CUT(tmpDidHeader,{$start},2),{$end},1)}))\n";
             } elseif (!empty($start)) {
@@ -384,6 +408,20 @@ class CallerIdDidProcessor
         $dialplan .= "\tsame => n,ExecIf(\$[\"x\${didNum}\" != \"x\" && \"\${didNum}\" != \"\${EXTEN}\" && \"\${FILTER(0-9a-zA-Z*#+,\${didNum})}\" == \"\${didNum}\"]?Goto({$this->providerId}-incoming,\${didNum},1))\n";
 
         return $dialplan;
+    }
+
+    /**
+     * Record rejected stored settings when runtime services are available.
+     */
+    private function logUnsafeSetting(string $setting): void
+    {
+        if (Di::getDefault() !== null) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Unsafe {$setting} rejected for provider {$this->providerId}",
+                LOG_WARNING
+            );
+        }
     }
 
     /**

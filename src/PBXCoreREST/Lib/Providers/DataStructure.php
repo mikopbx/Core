@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\Providers;
 
+use MikoPBX\Common\Library\ProviderDialplanFieldValidator;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Iax;
@@ -627,6 +628,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'string',
                 'description' => 'rest_schema_provider_cid_custom_header',
                 'maxLength' => 100,
+                'pattern' => ProviderDialplanFieldValidator::HEADER_NAME_PATTERN,
                 'sanitize' => 'string',
                 'default' => '',
                 'example' => 'X-CallerID'
@@ -634,7 +636,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'cid_parser_start' => [
                 'type' => 'string',
                 'description' => 'rest_schema_provider_cid_parser_start',
-                'maxLength' => 50,
+                'maxLength' => 1,
+                'pattern' => ProviderDialplanFieldValidator::DELIMITER_PATTERN,
                 'sanitize' => 'string',
                 'default' => '',
                 'example' => '<'
@@ -642,7 +645,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'cid_parser_end' => [
                 'type' => 'string',
                 'description' => 'rest_schema_provider_cid_parser_end',
-                'maxLength' => 50,
+                'maxLength' => 1,
+                'pattern' => ProviderDialplanFieldValidator::DELIMITER_PATTERN,
                 'sanitize' => 'string',
                 'default' => '',
                 'example' => '>'
@@ -666,6 +670,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'string',
                 'description' => 'rest_schema_provider_did_custom_header',
                 'maxLength' => 100,
+                'pattern' => ProviderDialplanFieldValidator::HEADER_NAME_PATTERN,
                 'sanitize' => 'string',
                 'default' => '',
                 'example' => 'X-DID'
@@ -673,7 +678,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'did_parser_start' => [
                 'type' => 'string',
                 'description' => 'rest_schema_provider_did_parser_start',
-                'maxLength' => 50,
+                'maxLength' => 1,
+                'pattern' => ProviderDialplanFieldValidator::DELIMITER_PATTERN,
                 'sanitize' => 'string',
                 'default' => '',
                 'example' => '<'
@@ -681,7 +687,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'did_parser_end' => [
                 'type' => 'string',
                 'description' => 'rest_schema_provider_did_parser_end',
-                'maxLength' => 50,
+                'maxLength' => 1,
+                'pattern' => ProviderDialplanFieldValidator::DELIMITER_PATTERN,
                 'sanitize' => 'string',
                 'default' => '',
                 'example' => '>'

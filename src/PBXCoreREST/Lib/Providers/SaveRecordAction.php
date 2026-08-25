@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Providers;
 
+use MikoPBX\Common\Library\ProviderDialplanFieldValidator;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\Sip;
@@ -77,6 +78,15 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         if ($isStatusUpdate) {
             return self::updateStatusOnly($data, $res);
+        }
+
+        // Validate dialplan-sensitive values before sanitization. Sanitizers are
+        // allowed to normalize input, but these fields must be rejected instead
+        // of silently trimming CR/LF or replacing unsupported characters.
+        $dialplanFieldErrors = self::validateDialplanFields($data);
+        if ($dialplanFieldErrors !== []) {
+            $res->messages['error'] = $dialplanFieldErrors;
+            return $res;
         }
 
         // ============================================================
@@ -178,6 +188,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
+
         if (!empty($validationErrors)) {
             $res->messages['error'] = $validationErrors;
             return $res;
@@ -342,6 +353,37 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         return $res;
+    }
+
+    /**
+     * Validate raw fields that are interpolated into generated Asterisk dialplan.
+     *
+     * @param array<string, mixed> $data Raw API request data
+     * @return array<string, string>
+     */
+    public static function validateDialplanFields(array $data): array
+    {
+        $errors = [];
+
+        foreach (['cid_custom_header', 'did_custom_header'] as $field) {
+            if (
+                isset($data[$field])
+                && (!is_string($data[$field]) || !ProviderDialplanFieldValidator::isValidHeaderName($data[$field]))
+            ) {
+                $errors[$field] = 'SIP header name contains unsupported characters';
+            }
+        }
+
+        foreach (['cid_parser_start', 'cid_parser_end', 'did_parser_start', 'did_parser_end'] as $field) {
+            if (
+                isset($data[$field])
+                && (!is_string($data[$field]) || !ProviderDialplanFieldValidator::isValidDelimiter($data[$field]))
+            ) {
+                $errors[$field] = 'Parser delimiter must be one supported character';
+            }
+        }
+
+        return $errors;
     }
 
     /**

@@ -20,10 +20,11 @@
 
 namespace MikoPBX\Tests\Unit\Core\Asterisk\Configs\Generators\Extensions;
 
-require_once 'Globals.php';
-
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\CallerIdDidProcessor;
+use MikoPBX\PBXCoreREST\Lib\Common\SchemaValidator;
+use MikoPBX\PBXCoreREST\Lib\Providers\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Providers\SaveRecordAction;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -39,6 +40,165 @@ use PHPUnit\Framework\TestCase;
  */
 class CallerIdDidProcessorRegexTest extends TestCase
 {
+    /**
+     * Provider writes must reject values that can split an Asterisk dialplan line.
+     */
+    public function testProviderSchemaRejectsDialplanInjectionCharacters(): void
+    {
+        $requestDefinitions = DataStructure::getParameterDefinitions()['request'];
+        $schema = [
+            'type' => 'object',
+            'properties' => $requestDefinitions,
+        ];
+
+        $unsafePayloads = [
+            ['cid_custom_header' => "X-Caller-ID\nInjected"],
+            ['cid_custom_header' => "X-Caller-ID\n"],
+            ['did_custom_header' => 'X-DID;Injected'],
+            ['cid_parser_start' => "<\r\nInjected"],
+            ['cid_parser_start' => "<\n"],
+            ['cid_parser_end' => ';'],
+            ['did_parser_start' => ','],
+            ['did_parser_end' => '${Injected}'],
+        ];
+
+        foreach ($unsafePayloads as $payload) {
+            $this->assertNotEmpty(
+                SchemaValidator::validate($payload, $schema),
+                'Unsafe provider dialplan fields must be rejected: ' . json_encode($payload)
+            );
+        }
+    }
+
+    /**
+     * Existing providers using documented single-character delimiters must remain valid.
+     */
+    public function testProviderSchemaAcceptsSafeHeaderNamesAndDelimiters(): void
+    {
+        $requestDefinitions = DataStructure::getParameterDefinitions()['request'];
+        $schema = [
+            'type' => 'object',
+            'properties' => $requestDefinitions,
+        ];
+
+        $this->assertSame([], SchemaValidator::validate([
+            'cid_custom_header' => 'P-Asserted-Identity',
+            'did_custom_header' => 'X-DID',
+            'cid_parser_start' => '<',
+            'cid_parser_end' => '>',
+            'did_parser_start' => '[',
+            'did_parser_end' => ']',
+        ], $schema));
+    }
+
+    /**
+     * Raw API values must be rejected before the sanitizer can normalize them.
+     */
+    public function testProviderSaveBoundaryRejectsEveryUnsafeDialplanField(): void
+    {
+        $unsafeValues = [
+            'cid_custom_header' => ["X-CID\r", "X-CID\r\nInjected", "X-CID\n"],
+            'did_custom_header' => ["X-DID\r", "X-DID\r\nInjected", "X-DID\n"],
+            'cid_parser_start' => ["<\r", "<\r\n", "<\n"],
+            'cid_parser_end' => [">\r", ">\r\n", ">\n"],
+            'did_parser_start' => ["[\r", "[\r\n", "[\n"],
+            'did_parser_end' => ["]\r", "]\r\n", "]\n"],
+        ];
+
+        foreach ($unsafeValues as $field => $values) {
+            foreach ($values as $value) {
+                $errors = SaveRecordAction::validateDialplanFields([$field => $value]);
+                $this->assertArrayHasKey($field, $errors, "Raw {$field} value must be rejected");
+            }
+        }
+    }
+
+    /**
+     * The public save action must fail before sanitization and database access.
+     */
+    public function testProviderSaveActionRejectsRawTrailingNewline(): void
+    {
+        $result = SaveRecordAction::main([
+            'type' => 'SIP',
+            'cid_custom_header' => "X-Caller-ID\n",
+        ]);
+
+        $this->assertArrayHasKey('cid_custom_header', $result->messages['error']);
+    }
+
+    /**
+     * Non-string JSON values must produce validation errors, not runtime type errors.
+     */
+    public function testProviderSaveBoundaryRejectsNonStringValues(): void
+    {
+        foreach ([['unexpected'], (object)['unexpected' => true]] as $value) {
+            $headerErrors = SaveRecordAction::validateDialplanFields(['cid_custom_header' => $value]);
+            $delimiterErrors = SaveRecordAction::validateDialplanFields(['did_parser_end' => $value]);
+
+            $this->assertArrayHasKey('cid_custom_header', $headerErrors);
+            $this->assertArrayHasKey('did_parser_end', $delimiterErrors);
+        }
+    }
+
+    /**
+     * The generator is a defense-in-depth boundary for unsafe values already stored in the DB.
+     */
+    public function testGeneratorNeutralizesUnsafeCustomHeaderFromStoredProvider(): void
+    {
+        $processor = new CallerIdDidProcessor('SIP-TRUNK-TEST', [
+            'did_source' => Sip::DID_SOURCE_CUSTOM,
+            'did_custom_header' => "X-DID\n\tsame => n,NoOp(InjectedHeader)",
+        ]);
+
+        $dialplan = $processor->generateIncomingProcessingContext();
+
+        $this->assertStringNotContainsString('InjectedHeader', $dialplan);
+    }
+
+    /**
+     * Stored parser delimiters must never be able to create another dialplan priority.
+     */
+    public function testGeneratorNeutralizesUnsafeDelimiterFromStoredProvider(): void
+    {
+        $processor = new CallerIdDidProcessor('SIP-TRUNK-TEST', [
+            'did_source' => Sip::DID_SOURCE_CUSTOM,
+            'did_custom_header' => 'X-DID',
+            'did_parser_start' => "<\n\tsame => n,NoOp(InjectedDelimiter);",
+            'did_parser_end' => '>',
+        ]);
+
+        $dialplan = $processor->generateIncomingProcessingContext();
+
+        $this->assertStringNotContainsString('InjectedDelimiter', $dialplan);
+        $this->assertStringContainsString('PJSIP_HEADER(read,X-DID)', $dialplan);
+    }
+
+    /**
+     * CallerID generation must enforce the same stored-value boundary as DID generation.
+     */
+    public function testGeneratorNeutralizesUnsafeStoredCallerIdFields(): void
+    {
+        $unsafeHeader = new CallerIdDidProcessor('SIP-TRUNK-TEST', [
+            'cid_source' => Sip::CALLERID_SOURCE_CUSTOM,
+            'cid_custom_header' => "X-Caller-ID\nInjectedCallerIdHeader",
+        ]);
+        $unsafeDelimiter = new CallerIdDidProcessor('SIP-TRUNK-TEST', [
+            'cid_source' => Sip::CALLERID_SOURCE_CUSTOM,
+            'cid_custom_header' => 'X-Caller-ID',
+            'cid_parser_start' => "<\nInjectedCallerIdDelimiter;",
+            'cid_parser_end' => '>',
+        ]);
+
+        $this->assertStringNotContainsString(
+            'InjectedCallerIdHeader',
+            $unsafeHeader->generateIncomingProcessingContext()
+        );
+        $this->assertStringNotContainsString(
+            'InjectedCallerIdDelimiter',
+            $unsafeDelimiter->generateIncomingProcessingContext()
+        );
+    }
+
     /**
      * Build a processor configured for custom-header DID extraction via regex.
      *
