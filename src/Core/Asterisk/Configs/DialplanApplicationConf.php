@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Library\DialplanApplicationSecurity;
 use MikoPBX\Common\Models\DialplanApplications;
 
 /**
@@ -100,12 +101,17 @@ class DialplanApplicationConf extends AsteriskConfigClass
     private function generatePhpApp(array $app): string
     {
         $agiBinDir = $this->config->path('asterisk.astagidir');
-
         // Create PHP script file for the application
         $text_app     = "#!/usr/bin/php\n";
         $text_app     .= base64_decode($app['applicationlogic']);
-        file_put_contents("$agiBinDir/{$app['uniqid']}.php", $text_app);
-        chmod("$agiBinDir/{$app['uniqid']}.php", 0755);
+        $scriptWritten = DialplanApplicationSecurity::writeScript(
+            $agiBinDir,
+            $app['uniqid'] ?? null,
+            $text_app
+        );
+        if (!$scriptWritten) {
+            return '';
+        }
 
         // Generate the dialplan configuration for the PHP application
         $result = 'exten => _' . $app['extension'] . ',1,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";

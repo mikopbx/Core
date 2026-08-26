@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\DialplanApplications;
 
+use MikoPBX\Common\Library\DialplanApplicationSecurity;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\SearchIndexTrait;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
@@ -210,7 +211,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'id' => [
                 'type' => 'string',
                 'description' => 'rest_schema_da_id',
-                'pattern' => '^DIALPLAN-[A-Z0-9]{8,32}$',
+                'pattern' => DialplanApplicationSecurity::ID_SCHEMA_PATTERN,
                 'readOnly' => true,
                 'example' => 'DIALPLAN-ABCD1234'
             ],
