@@ -100,6 +100,9 @@ class AsteriskManager
 
     private ?string $connectionSecret = null;
 
+    /** @var array<string, true> Filters installed for the current AMI session. */
+    private array $installedEventFilters = [];
+
     /** @var callable|null Callback invoked periodically when AMI connection is alive and idle */
     private $onIdleCallback = null;
 
@@ -176,6 +179,7 @@ class AsteriskManager
         }
         $this->socket = null;
         $this->_loggedIn = false;
+        $this->installedEventFilters = [];
     }
 
     /**
@@ -186,10 +190,16 @@ class AsteriskManager
      */
     public function pingAMIListener(string $pingTube = 'CdrConnector'): bool
     {
-        $pingTubePong = $pingTube."Pong";
+        $pingTubePong = $pingTube . "Pong";
         // Set event filter.
-        $params = ['Operation' => 'Add', 'Filter' => "UserEvent: $pingTubePong"];
-        $this->sendRequestTimeout('Filter', $params);
+        $filter = "UserEvent: $pingTubePong";
+        if (!isset($this->installedEventFilters[$filter])) {
+            $params = ['Operation' => 'Add', 'Filter' => $filter];
+            $response = $this->sendRequestTimeout('Filter', $params);
+            if (strcasecmp((string)($response['Response'] ?? ''), 'Success') === 0) {
+                $this->installedEventFilters[$filter] = true;
+            }
+        }
         // Send the ping.
         $req        = '';
         $parameters = [

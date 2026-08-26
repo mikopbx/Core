@@ -6,6 +6,8 @@ namespace MikoPBX\Tests\Unit\Core\Asterisk;
 
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use Throwable;
 
 final class AsteriskManagerConnectionTest extends TestCase
 {
@@ -265,6 +267,158 @@ final class AsteriskManagerConnectionTest extends TestCase
         self::assertNull($manager->socket);
     }
 
+    public function testRepeatedWorkerPingAddsItsFilterOnlyOnce(): void
+    {
+        $port = $this->startPingServer();
+        $manager = $this->newManager($port);
+        self::assertTrue($manager->connect(null, null, null, 'user'));
+
+        self::assertTrue($manager->pingAMIListener('WorkerOne'));
+        self::assertTrue($manager->pingAMIListener('WorkerOne'));
+
+        $manager->disconnect();
+        $this->waitForServer();
+        self::assertSame(['login', 'Filter', 'UserEvent', 'UserEvent', 'Logoff'], $this->actions());
+    }
+
+    public function testDifferentWorkerPingsAddUniqueFilters(): void
+    {
+        $port = $this->startPingServer();
+        $manager = $this->newManager($port);
+        self::assertTrue($manager->connect(null, null, null, 'user'));
+
+        self::assertTrue($manager->pingAMIListener('WorkerOne'));
+        self::assertTrue($manager->pingAMIListener('WorkerTwo'));
+
+        $manager->disconnect();
+        $this->waitForServer();
+        self::assertSame(
+            ['UserEvent: WorkerOnePong', 'UserEvent: WorkerTwoPong'],
+            $this->filterExpressions()
+        );
+    }
+
+    public function testReconnectAddsTheWorkerFilterToTheNewSession(): void
+    {
+        $port = $this->startPingServer(2);
+        $manager = $this->newManager($port);
+        self::assertTrue($manager->connect(null, null, null, 'user'));
+        self::assertTrue($manager->pingAMIListener('WorkerOne'));
+        $manager->disconnect();
+
+        self::assertTrue($manager->connect(null, null, null, 'user'));
+        self::assertTrue($manager->pingAMIListener('WorkerOne'));
+        $manager->disconnect();
+
+        $this->waitForServer();
+        self::assertSame(2, count($this->filterExpressions()));
+    }
+
+    public function testFilterAddErrorIsRetriedAndPongStillRecognized(): void
+    {
+        $errorResponse = "Response: Error\r\nMessage: Filter failed\r\n\r\n";
+        $port = $this->startPingServer(1, [$errorResponse, $this->successResponse()]);
+        $manager = $this->newManager($port);
+        self::assertTrue($manager->connect(null, null, null, 'user'));
+
+        self::assertTrue($manager->pingAMIListener('WorkerOne'));
+        self::assertTrue($manager->pingAMIListener('WorkerOne'));
+
+        $manager->disconnect();
+        $this->waitForServer();
+        self::assertSame(2, count($this->filterExpressions()));
+    }
+
+    public function testFilterAddTimeoutIsNotCached(): void
+    {
+        $port = $this->startPingServer();
+        $manager = $this->newFilterOutcomeManager($port, [[]]);
+        self::assertTrue($manager->connect(null, null, null, 'user'));
+
+        self::assertTrue($manager->pingAMIListener('WorkerOne'));
+        self::assertTrue($manager->pingAMIListener('WorkerOne'));
+
+        $manager->disconnect();
+        $this->waitForServer();
+        self::assertSame(['UserEvent: WorkerOnePong'], $this->filterExpressions());
+    }
+
+    public function testFilterAddExceptionIsNotCached(): void
+    {
+        $port = $this->startPingServer();
+        $manager = $this->newFilterOutcomeManager($port, [new RuntimeException('AMI fixture failure')]);
+        self::assertTrue($manager->connect(null, null, null, 'user'));
+
+        try {
+            $manager->pingAMIListener('WorkerOne');
+            self::fail('The injected AMI exception must be observable');
+        } catch (RuntimeException $exception) {
+            self::assertSame('AMI fixture failure', $exception->getMessage());
+        }
+        self::assertTrue($manager->pingAMIListener('WorkerOne'));
+
+        $manager->disconnect();
+        $this->waitForServer();
+        self::assertSame(['UserEvent: WorkerOnePong'], $this->filterExpressions());
+    }
+
+    /**
+     * Start a permissive AMI fixture that records real requests and produces
+     * the matching Pong event for every UserEvent ping.
+     *
+     * @param list<string> $filterResponses
+     */
+    private function startPingServer(int $connectionCount = 1, array $filterResponses = []): int
+    {
+        $server = stream_socket_server('tcp://127.0.0.1:0', $errorCode, $errorMessage);
+        self::assertIsResource($server, $errorMessage);
+        $address = (string)stream_socket_get_name($server, false);
+        $port = (int)substr(strrchr($address, ':'), 1);
+        $transcriptFile = $this->transcriptFile;
+
+        $pid = pcntl_fork();
+        self::assertGreaterThanOrEqual(0, $pid);
+        if ($pid === 0) {
+            pcntl_async_signals(true);
+            pcntl_signal(SIGTERM, static fn() => exit(0));
+            foreach (range(1, $connectionCount) as $_) {
+                $client = @stream_socket_accept($server, 5);
+                if (!is_resource($client)) {
+                    exit(3);
+                }
+                stream_set_timeout($client, 2);
+                fwrite($client, "Asterisk Call Manager/5.0\r\n");
+                while (is_resource($client)) {
+                    $request = $this->readRequest($client);
+                    if ($request === []) {
+                        break;
+                    }
+                    file_put_contents($transcriptFile, json_encode($request) . "\n", FILE_APPEND);
+                    $action = $request['Action'] ?? '';
+                    if ($action === 'Logoff') {
+                        fclose($client);
+                        break;
+                    }
+                    if ($action === 'Filter') {
+                        fwrite($client, array_shift($filterResponses) ?? $this->successResponse());
+                        continue;
+                    }
+                    if ($action === 'UserEvent') {
+                        fwrite($client, $this->userEventResponse(($request['UserEvent'] ?? '') . 'Pong'));
+                        continue;
+                    }
+                    fwrite($client, $this->successResponse());
+                }
+            }
+            fclose($server);
+            exit(0);
+        }
+
+        fclose($server);
+        $this->serverPids[] = $pid;
+        return $port;
+    }
+
     /**
      * @param list<list<array{action?: string, response?: string, close?: bool, sleep?: int}>> $connections
      * @return array{int, int}
@@ -351,6 +505,11 @@ final class AsteriskManagerConnectionTest extends TestCase
         return implode("\r\n", $lines) . "\r\n\r\n";
     }
 
+    private function userEventResponse(string $userEvent): string
+    {
+        return "Event: UserEvent\r\nUserEvent: $userEvent\r\n\r\n";
+    }
+
     private function newManager(int $port): AsteriskManager
     {
         return new class (null, [
@@ -358,6 +517,39 @@ final class AsteriskManagerConnectionTest extends TestCase
             'username' => 'fixture',
             'secret' => 'fixture-secret',
         ]) extends AsteriskManager {
+            protected function isAsteriskListening(): bool
+            {
+                return true;
+            }
+        };
+    }
+
+    /** @param list<array<string, string>|Throwable> $filterOutcomes */
+    private function newFilterOutcomeManager(int $port, array $filterOutcomes): AsteriskManager
+    {
+        return new class (null, [
+            'server' => "127.0.0.1:$port",
+            'username' => 'fixture',
+            'secret' => 'fixture-secret',
+        ], $filterOutcomes) extends AsteriskManager {
+            /** @param list<array<string, string>|Throwable> $filterOutcomes */
+            public function __construct(?string $config, array $optconfig, private array $filterOutcomes)
+            {
+                parent::__construct($config, $optconfig);
+            }
+
+            public function sendRequestTimeout(string $action, array $parameters = []): array
+            {
+                if ($action === 'Filter' && $this->filterOutcomes !== []) {
+                    $outcome = array_shift($this->filterOutcomes);
+                    if ($outcome instanceof Throwable) {
+                        throw $outcome;
+                    }
+                    return $outcome;
+                }
+                return parent::sendRequestTimeout($action, $parameters);
+            }
+
             protected function isAsteriskListening(): bool
             {
                 return true;
@@ -450,5 +642,17 @@ final class AsteriskManagerConnectionTest extends TestCase
             }
         }
         return $modes;
+    }
+
+    /** @return list<string> */
+    private function filterExpressions(): array
+    {
+        $filters = [];
+        foreach ($this->transcript() as $entry) {
+            if (($entry['Action'] ?? '') === 'Filter') {
+                $filters[] = $entry['Filter'] ?? '';
+            }
+        }
+        return $filters;
     }
 }
