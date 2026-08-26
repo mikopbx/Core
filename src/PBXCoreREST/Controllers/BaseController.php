@@ -422,6 +422,14 @@ class BaseController extends Controller
                 // Recursively sanitize array values
                 $data[$key] = self::sanitizeData($value, $filter);
             } elseif (is_string($value)) {
+                // Identifiers are security-sensitive filename/path inputs in some
+                // resources. Preserve them verbatim so resource validation can
+                // reject whitespace and control characters instead of accepting
+                // a value normalized by FILTER_TRIM.
+                if ($key === 'id' || $key === 'uniqid') {
+                    continue;
+                }
+
                 // Check if the string starts with 'http'
                 if (stripos($value, 'http') === 0) {
                     // If the string starts with 'http', sanitize it as a URL
