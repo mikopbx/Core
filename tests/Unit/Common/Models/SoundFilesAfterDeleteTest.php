@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MikoPBX\Tests\Unit\Common\Models;
 
 use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Tests\Unit\AbstractUnitTest;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Unit tests for the file-cleanup side of {@see SoundFiles::afterDelete()}.
@@ -16,7 +16,7 @@ use MikoPBX\Tests\Unit\AbstractUnitTest;
  *  - any leftover *.converting tempfiles from an interrupted atomic-rename
  *    must also be swept so they do not pile up under /storage on retry loops.
  */
-class SoundFilesAfterDeleteTest extends AbstractUnitTest
+class SoundFilesAfterDeleteTest extends TestCase
 {
     private string $tmpDir = '';
 
@@ -153,6 +153,46 @@ class SoundFilesAfterDeleteTest extends AbstractUnitTest
         $this->assertFileExists($sentinel, 'Empty path must not trigger any deletion');
     }
 
+    public function testAfterDeleteDoesNotRemoveFileOutsideManagedSoundDirectories(): void
+    {
+        $sentinel = $this->tmpDir . '/outside.webm';
+        file_put_contents($sentinel, 'must survive');
+
+        $soundFile = $this->makeSoundFileWithPath($sentinel);
+        $soundFile->category = SoundFiles::CATEGORY_CUSTOM;
+        self::assertInstanceOf(TestableSoundFiles::class, $soundFile);
+        $soundFile->testRoot = $this->tmpDir . '/managed';
+        $soundFile->afterDelete();
+
+        $this->assertFileExists($sentinel);
+    }
+
+    public function testAfterDeleteDoesNotFollowSymlink(): void
+    {
+        $target = $this->tmpDir . '/target.webm';
+        $link = $this->tmpDir . '/linked.webm';
+        file_put_contents($target, 'must survive');
+        symlink($target, $link);
+
+        $soundFile = $this->makeSoundFileWithPath($link);
+        $soundFile->afterDelete();
+
+        $this->assertFileExists($target);
+        $this->assertTrue(is_link($link));
+    }
+
+    public function testAfterDeleteDoesNotRemoveSystemSound(): void
+    {
+        $systemFile = $this->tmpDir . '/system.webm';
+        file_put_contents($systemFile, 'must survive');
+
+        $soundFile = $this->makeSoundFileWithPath($systemFile);
+        $soundFile->category = 'system';
+        $soundFile->afterDelete();
+
+        $this->assertFileExists($systemFile);
+    }
+
     /**
      * Build a SoundFiles instance without invoking the Phalcon Mvc\Model constructor.
      *
@@ -163,10 +203,26 @@ class SoundFilesAfterDeleteTest extends AbstractUnitTest
      */
     private function makeSoundFileWithPath(string $path): SoundFiles
     {
-        $reflection = new \ReflectionClass(SoundFiles::class);
+        $reflection = new \ReflectionClass(TestableSoundFiles::class);
         /** @var SoundFiles $instance */
         $instance = $reflection->newInstanceWithoutConstructor();
         $instance->path = $path;
+        $instance->category = SoundFiles::CATEGORY_CUSTOM;
+        $instance->testRoot = $this->tmpDir;
         return $instance;
+    }
+}
+
+final class TestableSoundFiles extends SoundFiles
+{
+    public string $testRoot = '';
+
+    protected function getManagedSoundRoots(): array
+    {
+        return [
+            'custom' => $this->testRoot,
+            'moh' => $this->testRoot,
+            'media' => $this->testRoot,
+        ];
     }
 }

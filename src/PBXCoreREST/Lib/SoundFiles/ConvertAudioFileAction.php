@@ -21,6 +21,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
 
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\Configs\SoundFilesConf;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
@@ -29,6 +30,7 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Files\UploadFileAction;
 use Phalcon\Di\Injectable;
+use Phalcon\Di\Di;
 
 /**
  * Action for converting audio files using Asterisk
@@ -102,6 +104,23 @@ class ConvertAudioFileAction extends Injectable
 
         $res->success = true;
         $res->data = $convertResult->data;
+        $canonicalPath = (string)($convertResult->data[0] ?? '');
+        $redis = Di::getDefault()?->getShared(RedisClientProvider::SERVICE_NAME);
+        if ($canonicalPath === '' || $redis === null) {
+            $res->success = false;
+            $res->messages['error'][] = 'Unable to create sound-file conversion ticket';
+            return $res;
+        }
+        $tickets = new SoundFileConversionTicket(
+            static fn(string $key, string $value, int $ttl) => $redis->set($key, $value, $ttl),
+            static fn(string $key) => $redis->get($key),
+            static fn(string $key) => $redis->delete($key)
+        );
+        $res->data = [
+            0 => $canonicalPath, // Backward-compatible response for older API clients.
+            'path' => $canonicalPath,
+            'conversion_id' => $tickets->issue($canonicalPath, $category),
+        ];
 
         return $res;
     }

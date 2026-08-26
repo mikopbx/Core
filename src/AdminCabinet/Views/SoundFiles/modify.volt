@@ -74,6 +74,7 @@
     <div class="field disabled">
         <label>{{ t._('cf_Path') }}</label>
         <input type="text" name="path" id="path" readonly />
+        <input type="hidden" name="conversion_id" id="conversion_id" />
     </div>
 
     <div class="field">
@@ -88,4 +89,3 @@
     'indexurl':'sound-files/index#'~category
 ]) }}
 </form>
-

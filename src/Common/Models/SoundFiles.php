@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Core\System\Directories;
 use Phalcon\Mvc\Model\Relation;
 
 /**
@@ -198,10 +199,13 @@ class SoundFiles extends ModelsBase
             return;
         }
 
-        // Delete the main file
-        if (file_exists($this->path)) {
-            unlink($this->path);
-        }
+        $deleteFile = function (string $candidate): void {
+            if ($this->isManagedDeletionCandidate($candidate)) {
+                @unlink($candidate);
+            }
+        };
+
+        $deleteFile($this->path);
 
         // Remove extension to get base filename
         $pathinfo = pathinfo($this->path);
@@ -213,8 +217,8 @@ class SoundFiles extends ModelsBase
         $extensions = ['wav', 'wav16', 'wav48', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln', 'opus', 'webm'];
         foreach ($extensions as $ext) {
             $convertedFile = "$baseFilename.$ext";
-            if ($convertedFile !== $this->path && file_exists($convertedFile)) {
-                unlink($convertedFile);
+            if ($convertedFile !== $this->path) {
+                $deleteFile($convertedFile);
             }
         }
 
@@ -222,9 +226,7 @@ class SoundFiles extends ModelsBase
         $tempSuffixes = ['.tmp.wav', '.normalized.wav'];
         foreach ($tempSuffixes as $suffix) {
             $tempFile = "$baseFilename$suffix";
-            if (file_exists($tempFile)) {
-                unlink($tempFile);
-            }
+            $deleteFile($tempFile);
         }
 
         // Sweep self-overwrite snapshot files left by SoundFilesConf::convertAudioFile().
@@ -232,24 +234,59 @@ class SoundFiles extends ModelsBase
         // collides with a target format and ffmpeg was killed before the cleanup loop ran.
         $snapshotFiles = glob("$baseFilename.source-snapshot.*") ?: [];
         foreach ($snapshotFiles as $snapshotFile) {
-            if (is_file($snapshotFile)) {
-                @unlink($snapshotFile);
-            }
+            $deleteFile($snapshotFile);
         }
 
         // Sweep any stray atomic-rename tempfiles left by SoundFilesConf::convertAudioFile()
         // if the worker was killed mid-conversion (e.g. "$baseFilename.mp3.converting").
         $strayTmpFiles = glob("$baseFilename.*.converting") ?: [];
         foreach ($strayTmpFiles as $strayTmpFile) {
-            if (is_file($strayTmpFile)) {
-                @unlink($strayTmpFile);
-            }
+            $deleteFile($strayTmpFile);
         }
 
         // Delete sound conversion metadata cache file
         $metadataFile = $pathinfo['dirname'] . '/.' . $pathinfo['filename'] . '.sound-meta';
-        if (file_exists($metadataFile)) {
-            unlink($metadataFile);
+        $deleteFile($metadataFile);
+    }
+
+    /** @return array{custom:string,moh:string,media:string} */
+    protected function getManagedSoundRoots(): array
+    {
+        return [
+            'custom' => Directories::getDir(Directories::AST_CUSTOM_SOUND_DIR),
+            'moh' => Directories::getDir(Directories::AST_MOH_DIR),
+            'media' => Directories::getDir(Directories::AST_MEDIA_DIR),
+        ];
+    }
+
+    protected function isManagedDeletionCandidate(string $candidate): bool
+    {
+        if ($candidate === '' || is_link($candidate) || !is_file($candidate)) {
+            return false;
         }
+        $realCandidate = realpath($candidate);
+        if ($realCandidate === false) {
+            return false;
+        }
+        $category = $this->category ?? self::CATEGORY_CUSTOM;
+        if (!in_array($category, [self::CATEGORY_CUSTOM, self::CATEGORY_MOH], true)) {
+            return false;
+        }
+        $roots = $this->getManagedSoundRoots();
+        $categoryRoot = $category === self::CATEGORY_MOH
+            ? $roots['moh']
+            : $roots['custom'];
+        $realCategoryRoot = realpath($categoryRoot);
+        if ($realCategoryRoot !== false
+            && str_starts_with($realCandidate, rtrim($realCategoryRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) {
+            return true;
+        }
+
+        // Compatibility with legacy installations that stored sounds directly in media/.
+        $realMediaRoot = realpath($roots['media']);
+        $legacyAudioExtensions = ['wav', 'wav16', 'wav48', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln', 'opus', 'webm'];
+        return $realMediaRoot !== false
+            && dirname($realCandidate) === rtrim($realMediaRoot, DIRECTORY_SEPARATOR)
+            && in_array(strtolower(pathinfo($realCandidate, PATHINFO_EXTENSION)), $legacyAudioExtensions, true);
     }
 }

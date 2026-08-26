@@ -141,7 +141,7 @@ class RestController extends BaseRestController
     )]
     #[ApiParameterRef('name', required: true)]
     #[ApiParameterRef('category')]
-    #[ApiParameterRef('path')]
+    #[ApiParameterRef('conversion_id')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

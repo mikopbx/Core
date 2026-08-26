@@ -20,8 +20,10 @@
 namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
 
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
+use Phalcon\Di\Di;
 
 /**
  * ✨ REFERENCE IMPLEMENTATION: SoundFiles Save Action
@@ -58,6 +60,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
     public static function main(array $data): PBXApiResult
     {
         $res = self::createApiResult(__METHOD__);
+
+        // Filesystem paths are server-owned. Silently discard legacy client input.
+        unset($data['path']);
 
         // ============================================================
         // PHASE 1: DATA SANITIZATION
@@ -152,6 +157,31 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         if ($isNewRecord) {
             $sanitizedData = DataStructure::applyDefaults($sanitizedData);
+        }
+
+        if (!empty($sanitizedData['conversion_id'])) {
+            $redis = Di::getDefault()?->getShared(RedisClientProvider::SERVICE_NAME);
+            if ($redis === null) {
+                $res->messages['error'][] = 'Unable to validate sound-file conversion';
+                $res->httpCode = 422;
+                return $res;
+            }
+            $tickets = new SoundFileConversionTicket(
+                static fn(string $key, string $value, int $ttl) => $redis->set($key, $value, $ttl),
+                static fn(string $key) => $redis->get($key),
+                static fn(string $key) => $redis->delete($key)
+            );
+            $serverPath = $tickets->consume(
+                (string)$sanitizedData['conversion_id'],
+                (string)($sanitizedData['category'] ?? $soundFile->category ?? SoundFiles::CATEGORY_CUSTOM)
+            );
+            if ($serverPath === null) {
+                $res->messages['error'][] = 'Invalid or expired sound-file conversion';
+                $res->httpCode = 422;
+                return $res;
+            }
+            $sanitizedData['path'] = $serverPath;
+            unset($sanitizedData['conversion_id']);
         }
 
         // ============================================================

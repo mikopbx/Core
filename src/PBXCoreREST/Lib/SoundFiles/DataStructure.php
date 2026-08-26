@@ -208,8 +208,16 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'string',
                 'description' => 'rest_schema_sf_path',
                 'maxLength' => 500,
-                'sanitize' => 'string',
+                'readOnly' => true,
                 'example' => '/tmp/upload/audio.wav'
+            ],
+            'conversion_id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sf_conversion_id',
+                'pattern' => '^[a-f0-9]{64}$',
+                'sanitize' => 'string',
+                'writeOnly' => true,
+                'example' => '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
             ],
             'category' => [
                 'type' => 'string',
