@@ -79,7 +79,7 @@ var installationFromZip = {
     installationFromZip.$progressBar = $('#upload-progress-bar');
     installationFromZip.$progressBarLabel = $('#upload-progress-bar-label');
     installationFromZip.$progressBar.hide();
-    FilesAPI.attachToBtn('add-new-button', ['zip'], installationFromZip.cbResumableUploadFile);
+    FilesAPI.attachToBtn('add-new-button', ['zip'], installationFromZip.cbResumableUploadFile, null, 'archive');
   },
 
   /**

@@ -175,6 +175,7 @@ FilesAPI.configureResumable = function(resumableConfig = {}) {
         simultaneousUploads: 1,
         maxFiles: 1,
         fileType: [],
+        permanentErrors: [400, 401, 403, 404, 409, 415, 422, 429, 500, 501],
         headers: headersFunction
     }, resumableConfig);
 };
@@ -320,7 +321,7 @@ FilesAPI.removeAudioFile = function(filePath, fileId = null, callback = null) {
  * @param {function} callback - Callback function
  * @param {string|null} inputName - Optional name attribute for the file input (for test compatibility)
  */
-FilesAPI.attachToBtn = function(buttonId, fileTypes, callback, inputName = null) {
+FilesAPI.attachToBtn = function(buttonId, fileTypes, callback, inputName = null, category = null) {
     const buttonElement = document.getElementById(buttonId);
     if (!buttonElement) {
         return;
@@ -335,7 +336,8 @@ FilesAPI.attachToBtn = function(buttonId, fileTypes, callback, inputName = null)
             const finalFilename = nameWithoutExt + '.' + extension;
 
             return {
-                resumableFilename: finalFilename
+                resumableFilename: finalFilename,
+                category: category
             };
         }
     });

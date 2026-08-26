@@ -26,6 +26,16 @@ class UploadFileActionSecurityTest extends TestCase
         $this->assertFalse($this->validate('payload.bin', 'application/octet-stream', 'unknown')['valid']);
     }
 
+    public function testResumableBrowserMimeTypeIsRecognized(): void
+    {
+        $method = new ReflectionMethod(UploadFileAction::class, 'resolveMimeType');
+        $method->setAccessible(true);
+
+        $this->assertSame('audio/mpeg', $method->invoke(null, [
+            'resumableType' => 'audio/mpeg',
+        ]));
+    }
+
     /**
      * @dataProvider validSoundCategoriesProvider
      */

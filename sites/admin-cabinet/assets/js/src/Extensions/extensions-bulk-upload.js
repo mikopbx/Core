@@ -174,7 +174,7 @@ const extensionsBulkUpload = {
 
         // Use FilesAPI.attachToBtn for unified file upload handling
         // This attaches directly to the button and handles file selection internally
-        FilesAPI.attachToBtn('upload-button', ['csv'], extensionsBulkUpload.cbUploadResumable);
+        FilesAPI.attachToBtn('upload-button', ['csv'], extensionsBulkUpload.cbUploadResumable, null, 'csv');
 
         console.log('✅ [BulkUpload] File upload attached to button "upload-button" with CSV filter');
     },

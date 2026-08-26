@@ -72,7 +72,7 @@ var avatar = {
           extension.$sip_secret.trigger('change');
         };
       }
-    }, 'file-select');
+    }, 'file-select', 'image');
   },
   // Resize and crop the image
   resizeCrop: function resizeCrop(_ref) {

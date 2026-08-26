@@ -156,7 +156,7 @@ class UploadFileAction extends Injectable
 
         // Validate file type and security
         $category = $parameters['category'] ?? 'unknown';
-        $mimeType = $parameters['file_mime_type'] ?? '';
+        $mimeType = self::resolveMimeType($parameters);
 
         $validationResult = self::validateFileType(
             $parameters['resumableFilename'],
@@ -390,6 +390,11 @@ class UploadFileAction extends Injectable
      *
      * @return array Validation result with 'valid' boolean and 'error' message
      */
+    private static function resolveMimeType(array $parameters): string
+    {
+        return (string)($parameters['file_mime_type'] ?? $parameters['resumableType'] ?? '');
+    }
+
     private static function validateFileType(string $filename, string $mimeType, string $category): array
     {
         $validationCategory = self::normalizeCategory($category);
