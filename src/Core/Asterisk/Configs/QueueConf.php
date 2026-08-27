@@ -315,7 +315,10 @@ class QueueConf extends AsteriskConfigClass
             $strategy = $isProgressive ? 'ringall' : $queue_data['strategy'];
 
             // Build the queue configuration string
-            $q_conf .= "[{$queue_data['uniqid']}]; {$queue_data['name']}\n";
+            // Queue names are comments in queues.conf. Keep legacy database values
+            // on one line so a stored CR/LF cannot open another Asterisk section.
+            $queueName = trim((string)preg_replace('/[\\x00-\\x1F\\x7F]+/', ' ', (string)$queue_data['name']));
+            $q_conf .= "[{$queue_data['uniqid']}]; $queueName\n";
             $q_conf .= "musicclass=$mohClass \n";
             $q_conf .= "strategy=$strategy \n";
             // No defaultrule for linear_progressive — penaltychange is unusable

@@ -35,6 +35,26 @@ use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
  */
 class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
+    /**
+     * Validate queue-specific constraints in addition to shared schema rules.
+     *
+     * Queue names are written into queues.conf, so control characters must be
+     * rejected here even though OpenAPI patterns are not enforced globally.
+     */
+    public static function validateInputData(array $data): array
+    {
+        $errors = parent::validateInputData($data);
+
+        if (isset($data['name'])
+            && is_string($data['name'])
+            && preg_match('/[\x00-\x1F\x7F]/u', $data['name']) === 1
+        ) {
+            $errors[] = "Field 'name' contains forbidden control characters";
+        }
+
+        return $errors;
+    }
+
     use SearchIndexTrait;
     /**
      * Create data array from CallQueues model with representation fields
@@ -307,6 +327,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'string',
                 'description' => 'rest_schema_cq_name',
                 'maxLength' => 100,
+                'pattern' => '^[^\\x00-\\x1F\\x7F]+$',
                 'sanitize' => 'text',
                 'required' => true,
                 'example' => 'Sales Queue'
@@ -314,7 +335,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'extension' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cq_extension',
-                'pattern' => '^[0-9]{2,8}$',
+                'pattern' => '^[0-9]{1,8}$',
                 'sanitize' => 'string',
                 'required' => true,
                 'example' => '2200100'
@@ -405,21 +426,21 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'timeout_extension' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cq_timeout_extension',
-                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_SHORT,  // Allow system extensions (hangup, busy, did2user, voicemail)
+                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_OR_EMPTY,
                 'sanitize' => 'routing',  // Changed from 'string' to handle system extensions
                 'example' => '201'
             ],
             'redirect_to_extension_if_empty' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cq_redirect_to_extension_if_empty',
-                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_SHORT,  // Allow system extensions (hangup, busy, did2user, voicemail)
+                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_OR_EMPTY,
                 'sanitize' => 'routing',  // Changed from 'string' to handle system extensions
                 'example' => '202'
             ],
             'redirect_to_extension_if_unanswered' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cq_redirect_to_extension_if_unanswered',
-                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_SHORT,  // Allow system extensions (hangup, busy, did2user, voicemail)
+                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_OR_EMPTY,
                 'sanitize' => 'routing',  // Changed from 'string' to handle system extensions
                 'example' => '203'
             ],
@@ -435,7 +456,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'redirect_to_extension_if_repeat_exceeded' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cq_redirect_to_extension_if_repeat_exceeded',
-                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_SHORT,  // Allow system extensions (hangup, busy, did2user, voicemail)
+                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_OR_EMPTY,
                 'sanitize' => 'routing',  // Changed from 'string' to handle system extensions
                 'example' => '204'
             ],
