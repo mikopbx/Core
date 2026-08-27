@@ -89,6 +89,7 @@ class UploadFileAction extends Injectable
         'firmware' => [
             '',  // Empty MIME type when browser can't detect type for .img files
             'application/octet-stream',
+            'application/x-apple-diskimage',
             'application/x-disk-image',
             'application/x-raw-disk-image'
         ]
@@ -392,7 +393,7 @@ class UploadFileAction extends Injectable
      */
     private static function resolveMimeType(array $parameters): string
     {
-        return (string)($parameters['file_mime_type'] ?? $parameters['resumableType'] ?? '');
+        return (string)($parameters['resumableType'] ?? $parameters['file_mime_type'] ?? '');
     }
 
     private static function validateFileType(string $filename, string $mimeType, string $category): array
@@ -425,16 +426,20 @@ class UploadFileAction extends Injectable
         // 2. Check MIME type for category
         if (isset(self::ALLOWED_MIME_TYPES[$validationCategory])) {
             if (!in_array($mimeType, self::ALLOWED_MIME_TYPES[$validationCategory], true)) {
+                $error = Util::translate(
+                    'sf_UploadInvalidMimeType',
+                    false,
+                    [
+                        'mimetype' => $mimeType,
+                        'category' => $category
+                    ]
+                );
                 return [
                     'valid' => false,
-                    'error' => Util::translate(
-                        'sf_UploadInvalidMimeType',
-                        false,
-                        [
-                            'mimetype' => $mimeType,
-                            'category' => $category
-                        ]
-                    )
+                    'error' => strtr($error, [
+                        '{mimetype}' => $mimeType,
+                        '{category}' => $category,
+                    ])
                 ];
             }
         }
