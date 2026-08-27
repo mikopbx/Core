@@ -1019,7 +1019,11 @@ class Network extends Injectable
                 // Override the interface name for VLAN interfaces
                 $arr_commands[] = "$vconfig set_name_type VLAN_PLUS_VID_NO_PAD";
                 // Add the new VLAN interface
-                $arr_commands[] = "$vconfig add {$if_data['interface_orign']} {$if_data['vlanid']}";
+                $arr_commands[] = self::buildVlanAddCommand(
+                    $vconfig,
+                    (string)$if_data['interface_orign'],
+                    (string)$if_data['vlanid']
+                );
             }
             // Disable and reset the interface
             $arr_commands[] = "$ifconfig $if_name down";
@@ -1368,6 +1372,24 @@ class Network extends Injectable
     }
 
     /**
+     * Build a shell-safe command for reading one network interface.
+     */
+    protected static function buildGetInterfaceCommand(string $ifconfig, string $name): string
+    {
+        return escapeshellarg($ifconfig) . ' ' . escapeshellarg($name) . ' 2>/dev/null';
+    }
+
+    /**
+     * Build a shell-safe command for creating one VLAN interface.
+     */
+    protected static function buildVlanAddCommand(string $vconfig, string $interface, string $vlanId): string
+    {
+        return escapeshellarg($vconfig)
+            . ' add ' . escapeshellarg($interface)
+            . ' ' . escapeshellarg($vlanId);
+    }
+
+    /**
      * Retrieves information about a specific network interface.
      * @param string $name The name of the network interface.
      * @return array<string, mixed> An array containing the interface information.
@@ -1378,7 +1400,7 @@ class Network extends Injectable
 
         // Get ifconfig's output for the specified interface.
         $ifconfig = Util::which('ifconfig');
-        Processes::mwExec("$ifconfig $name 2>/dev/null", $output);
+        Processes::mwExec(self::buildGetInterfaceCommand($ifconfig, $name), $output);
         $outputStr = implode(" ", $output ?? []);
 
         // Parse MAC address.
