@@ -760,11 +760,11 @@ var callQueueModifyRest = {
           priority: index + 1
         });
       }
-    }); // Validate that members exist
+    }); // An empty queue is safe only when calls have an explicit fallback route.
 
-    if (members.length === 0) {
+    if (members.length === 0 && !result.data.redirect_to_extension_if_empty) {
       result = false;
-      callQueueModifyRest.$errorMessages.html(globalTranslate.cq_ValidateNoExtensions);
+      callQueueModifyRest.$errorMessages.html("".concat(globalTranslate.cq_ValidateNoExtensions, ". ").concat(globalTranslate.cq_RedirectToExtensionIfEmtyQueue));
       callQueueModifyRest.$formObj.addClass('error');
       return result;
     } // Add members to form data
