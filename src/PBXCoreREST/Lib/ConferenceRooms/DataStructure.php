@@ -34,6 +34,26 @@ use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     /**
+     * Validate conference-specific constraints in addition to shared schema rules.
+     *
+     * Conference PINs are embedded into extensions.conf. Restricting the value
+     * here prevents REST clients from injecting additional dialplan lines.
+     */
+    public static function validateInputData(array $data): array
+    {
+        $errors = parent::validateInputData($data);
+
+        if (array_key_exists('pinCode', $data)
+            && (!is_string($data['pinCode'])
+                || ($data['pinCode'] !== '' && preg_match('/^[0-9]+$/D', $data['pinCode']) !== 1))
+        ) {
+            $errors[] = "Field 'pinCode' must contain digits only";
+        }
+
+        return $errors;
+    }
+
+    /**
      * Create full data array from ConferenceRooms model
      *
      * Following "Store Clean, Escape at Edge" principle:

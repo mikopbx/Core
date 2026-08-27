@@ -131,10 +131,8 @@ class ConferenceConf extends AsteriskConfigClass
             $conf .= 'same => n,Set(CONFBRIDGE(user,talk_detection_events)=yes)' . "\n\t";
             $conf .= 'same => n,Set(CONFBRIDGE(user,quiet)=yes)' . "\n\t";
 
-            // Set PIN if available
-            if(!empty($pin)){
-                $conf .= "same => n,Set(CONFBRIDGE(user,pin)=$pin)" . "\n\t";
-            }
+            // Set PIN if available. Sanitize stored legacy data at the config boundary.
+            $conf .= $this->buildPinCodeDialplan((string)$pin);
             $conf .= 'same => n,Set(CONFBRIDGE(user,music_on_hold_when_empty)=yes)' . "\n\t";
             $conf .= 'same => n,ConfBridge(${EXTEN})' . "\n\t";
             $conf .= 'same => n,Hangup()' . "\n\n";
@@ -142,6 +140,23 @@ class ConferenceConf extends AsteriskConfigClass
 
         // Return the assembled dialplan configuration.
         return $conf;
+    }
+
+    /**
+     * Build a safe dialplan line for a conference PIN.
+     *
+     * New values are rejected by the REST validation unless they contain only
+     * digits. Filtering here also protects config generation from malformed
+     * values already present in the database.
+     */
+    protected function buildPinCodeDialplan(string $pinCode): string
+    {
+        $safePinCode = preg_replace('/[^0-9]/', '', $pinCode) ?? '';
+        if ($safePinCode === '') {
+            return '';
+        }
+
+        return "same => n,Set(CONFBRIDGE(user,pin)=$safePinCode)\n\t";
     }
 
     /**
