@@ -52,15 +52,13 @@ var topMenuSearch = {
         window.location.href = value;
       },
       ignoreCase: true,
-      showOnFocus: true,
-      // Show main menu sections on focus (when query is empty)
+      showOnFocus: false,
       fullTextSearch: true,
       filterRemoteData: true,
       // Server-side filtering
       saveRemoteData: false,
       allowCategorySelection: true,
-      minCharacters: 0,
-      // Show menu sections immediately, start searching from first character
+      minCharacters: 1,
       // Whether search selection will force currently selected choice when element is blurred.
       forceSelection: false,
       hideDividers: 'empty',
