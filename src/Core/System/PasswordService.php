@@ -525,8 +525,14 @@ class PasswordService
         // Penalties for bad patterns
         $penalties = 0;
         
-        // Repeating characters (aaa, 111)
-        if (preg_match('/(.)\1{2,}/', $password)) {
+        // Repeating characters (aaa, 111). A single three-character run is
+        // reasonably likely inside a long machine-generated token and does
+        // not materially reduce its entropy when the token remains diverse.
+        $looksLikeDiverseMachineToken = $length >= 20 && $uniqueRatio > 0.3;
+        $hasLongRepeatedRun = preg_match('/(.)\1{3,}/', $password) === 1;
+        if (preg_match('/(.)\1{2,}/', $password)
+            && (!$looksLikeDiverseMachineToken || $hasLongRepeatedRun)
+        ) {
             $penalties += 10;
         }
         

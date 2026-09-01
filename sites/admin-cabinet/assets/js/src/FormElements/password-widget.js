@@ -752,15 +752,22 @@ const PasswordWidget = {
             score += 20;
         } else if (length >= 8) {
             score += 10;
-        } else if (length >= 6) {
-            score += 5;
+        } else {
+            score += Math.max(0, length);
         }
         
         // Character diversity (up to 40 points)
         if (/[a-z]/.test(password)) score += 10; // Lowercase
         if (/[A-Z]/.test(password)) score += 10; // Uppercase
         if (/\d/.test(password)) score += 10;     // Digits
-        if (/\W/.test(password)) score += 10;     // Special characters
+        let diversity = 0;
+        if (/[a-z]/.test(password)) diversity += 1;
+        if (/[A-Z]/.test(password)) diversity += 1;
+        if (/\d/.test(password)) diversity += 1;
+        if (/[^a-zA-Z0-9]/.test(password)) {
+            score += 10; // Special characters
+            diversity += 1;
+        }
         
         // Pattern complexity (up to 30 points)
         const uniqueChars = new Set(password).size;
@@ -776,12 +783,35 @@ const PasswordWidget = {
             score += 5;
         }
         
-        // Penalties for common patterns
-        if (/(.)\1{2,}/.test(password)) {
+        // Bonus for mixing at least three character classes in a long password.
+        if (diversity >= 3 && length >= 12) {
+            score += 10;
+        }
+
+        // A three-character run in a long, diverse machine-generated token does
+        // not materially reduce its entropy. Keep penalizing low-diversity input.
+        const looksLikeDiverseMachineToken = length >= 20 && uniqueRatio > 0.3;
+        const hasLongRepeatedRun = /(.)\1{3,}/.test(password);
+        if (/(.)\1{2,}/.test(password)
+            && (!looksLikeDiverseMachineToken || hasLongRepeatedRun)) {
             score -= 10; // Repeating characters
         }
-        if (/(012|123|234|345|456|567|678|789|890|abc|bcd|cde|def)/i.test(password)) {
-            score -= 10; // Sequential patterns
+
+        const sequentialPatterns = [
+            'qwerty', 'asdfgh', 'zxcvbn',
+            '12345', '23456', '34567', '45678', '56789',
+            'abcde', 'bcdef', 'cdefg', 'defgh'
+        ];
+        const lowerPassword = password.toLowerCase();
+        if (sequentialPatterns.some((pattern) => (
+            lowerPassword.includes(pattern)
+            || lowerPassword.includes(pattern.split('').reverse().join(''))
+        ))) {
+            score -= 10;
+        }
+
+        if (/^[a-z]+$/i.test(password) && length < 10) {
+            score -= 15;
         }
         
         return Math.max(0, Math.min(100, score));
