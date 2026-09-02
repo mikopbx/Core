@@ -38,6 +38,7 @@ class SyslogConf extends SystemConfigClass
     public const string CONF_FILE   = '/etc/rsyslog.conf';
     public const string PROC_NAME   = 'rsyslogd';
     public const string SYS_LOG_LINK = '/var/log/messages';
+    private const string DROPBEAR_MONIT_FILTER_PATH = '/etc/rsyslog.d/dropbear-monit-noise.conf';
 
     /**
      * Priority level used to sort configuration objects when generating configs.
@@ -120,6 +121,8 @@ class SyslogConf extends SystemConfigClass
         $pathScriptMessages = self::createRotateScript(basename(self::SYS_LOG_LINK));
         $log_fileMessages   = self::getSyslogFile();
 
+        Util::mwMkdir('/etc/rsyslog.d');
+        file_put_contents(self::DROPBEAR_MONIT_FILTER_PATH, self::buildDropbearMonitNoiseFilter());
         file_put_contents($log_fileMessages, '', FILE_APPEND);
         $conf = PHP_EOL .
                 '$ModLoad imuxsock' . PHP_EOL .
@@ -134,7 +137,26 @@ class SyslogConf extends SystemConfigClass
                 . '*.* :omfile:$log_rotation' . PHP_EOL;
         Util::fileWriteContent(self::CONF_FILE, $conf);
         Util::createUpdateSymlink($log_fileMessages, self::SYS_LOG_LINK);
-        Util::mwMkdir('/etc/rsyslog.d');
+    }
+
+    /**
+     * Discards messages produced by Monit's SSH health check.
+     *
+     * Monit connects from loopback every five seconds and completes enough of
+     * the SSH handshake for Dropbear to log a normal pre-authentication exit.
+     * Keep the protocol-level health check while preventing these known-safe
+     * messages from reaching the general system log and Fail2Ban.
+     */
+    private static function buildDropbearMonitNoiseFilter(): string
+    {
+        return <<<'RSYSLOG'
+if $programname == "dropbear" and (
+    $msg contains "Child connection from 127.0.0.1:" or
+    $msg contains "Exit before auth from <127.0.0.1:" or
+    $msg contains "Forced command set to '/etc/rc/hello'"
+) then stop
+
+RSYSLOG;
     }
 
     /**
