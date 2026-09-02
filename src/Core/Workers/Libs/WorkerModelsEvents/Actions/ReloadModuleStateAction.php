@@ -9,6 +9,7 @@ use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
+use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use MikoPBX\Modules\Cache\ModulesStateCache;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Modules\Config\SystemConfigInterface;
@@ -65,11 +66,11 @@ class ReloadModuleStateAction implements ReloadActionInterface
 
         // Check if modules state has changed before refreshing worker supervision
         $modulesStateCache = new ModulesStateCache();
-        
+
         // Get current and cached hashes for comparison
         $cachedHash = $modulesStateCache->getCachedStateHash();
         $currentHash = $modulesStateCache->calculateCurrentStateHash();
-        
+
         // If cache is empty (null), this is initialization, not a change
         if ($cachedHash === null) {
             SystemMessages::sysLogMsg(
@@ -78,29 +79,34 @@ class ReloadModuleStateAction implements ReloadActionInterface
                 LOG_INFO
             );
             $modulesStateCache->updateCachedState();
-            
+
             // Don't restart workers on initialization
             return;
         }
-        
+
         // Check if state actually changed
         if ($cachedHash !== $currentHash) {
             SystemMessages::sysLogMsg(
                 __CLASS__,
-                sprintf('Modules state has changed (old: %s, new: %s), refreshing worker supervisor',
-                    $cachedHash, 
+                sprintf(
+                    'Modules state has changed (old: %s, new: %s), refreshing worker supervisor',
+                    $cachedHash,
                     $currentHash
                 ),
                 LOG_INFO
             );
-            
+
             // Update cache with new state
             $modulesStateCache->updateCachedState();
-            
-            // Only the supervisor caches the module worker registry. Refreshing
-            // it is sufficient: disabled module workers were already stopped by
-            // PbxExtensionState, and the fresh supervisor starts newly registered
-            // workers on its next cycle. Unrelated Core and module workers stay up.
+
+            // API workers keep PBXConfModulesProvider in memory, so refresh them
+            // when the enabled module set changes. The supervisor also needs a
+            // refresh to start workers registered by newly enabled modules.
+            Processes::processPHPWorker(
+                WorkerApiCommands::class,
+                'start',
+                'soft-restart'
+            );
             Processes::processPHPWorker(
                 WorkerSafeScriptsCore::class,
                 'start',
@@ -134,14 +140,14 @@ class ReloadModuleStateAction implements ReloadActionInterface
             // Invoke the action for the PBX module state with the module settings data
             $moduleRecord[self::MODULE_SETTINGS_KEY] = $moduleSettings->toArray();
             WorkerModelsEvents::invokeAction(ReloadModuleStateAction::class, $moduleRecord, 50);
-        } else if ($moduleRecord['action'] === 'afterDelete') {
+        } elseif ($moduleRecord['action'] === 'afterDelete') {
             // Module was deleted, we need to check if state changed and restart workers
             SystemMessages::sysLogMsg(
                 __CLASS__,
                 "Module with ID {$moduleRecord['recordId']} was deleted, checking state change",
                 LOG_INFO
             );
-            
+
             // Execute reload directly without module data
             $this->executeReloder([]);
         }
