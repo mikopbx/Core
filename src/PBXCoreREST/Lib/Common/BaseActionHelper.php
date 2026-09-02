@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Common;
 
+use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\MutexProvider;
 use Phalcon\Di\Di;
@@ -75,6 +76,7 @@ class BaseActionHelper
             // Only begin if not already in transaction
             if (!$alreadyInTransaction) {
                 $db->begin();
+                ModelsBase::beginDeferTransactionEvents();
             }
 
             try {
@@ -84,15 +86,27 @@ class BaseActionHelper
                 if (!$alreadyInTransaction) {
                     $db->commit();
                 }
-
-                return $result;
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 // Only rollback if we started the transaction
                 if (!$alreadyInTransaction) {
-                    $db->rollback();
+                    try {
+                        if ($db->isUnderTransaction()) {
+                            $db->rollback();
+                        }
+                    } finally {
+                        ModelsBase::discardPendingModelEvents();
+                        ModelsBase::endDeferTransactionEvents();
+                    }
                 }
                 throw $e;
             }
+
+            if (!$alreadyInTransaction) {
+                ModelsBase::endDeferTransactionEvents();
+                ModelsBase::flushPendingModelEvents();
+            }
+
+            return $result;
         }, timeout: 15, ttl: 30);
     }
     
