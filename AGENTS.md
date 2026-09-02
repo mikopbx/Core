@@ -18,7 +18,7 @@ for the subtree you touch. Keep this file repo-wide only.
 - Register new JS/CSS via `AssetProvider`; never edit `sites/admin-cabinet/assets/js/pbx/**`
   (Babel output of `assets/js/src/**`). Use the `babel-compiler` skill to transpile.
 - UI strings live in `src/Common/Messages/<lang>/*.php`, Russian is the source language;
-  use the `translations` skill (`restapi-translations` for `rest_*` API keys).
+  use the `translations` skill.
 - Reuse existing helpers and naming; no dead code, no stubbed "simplified" implementations,
   no mock services in tests.
 
@@ -45,12 +45,11 @@ for the subtree you touch. Keep this file repo-wide only.
 - Module workers crashing 100+ times in 30 min are auto-disabled (`DISABLED_BY_CRASH_LOOP`).
 
 ## Skills
-`.claude/skills/` holds project skills (Agent Skills standard): `api-client`,
-`auth-token-manager`, `openapi-analyzer`, `endpoint-validator`, `api-test-generator`,
-`sqlite-inspector`, `restapi-translations`, `translations`, `babel-compiler`,
-`log-analyzer`, `asterisk-validator`, `asterisk-tester`, `teamcity-monitor`,
-`browserstack-tester`, `sentry-analyzer`, `mikopbx-module`, `tts-generator`.
-`.claude/agents/` holds task agents (e.g. `test-fix-loop-agent`, `rest-api-docker-tester`).
+Project skills (Agent Skills standard) are published separately at
+https://github.com/mikopbx/agent-skills and are not part of this repository. Install them
+into your agent with `npx skills add mikopbx/agent-skills` (works for Claude Code, Codex,
+Cursor, Gemini CLI and others). Skills referenced elsewhere in these guides (`babel-compiler`,
+`translations`, `api-client`, ...) come from that repository.
 
 ## Do not
 - Commit or stage without being asked. Do not read `vendor/`, `node_modules/`, `build/`,
