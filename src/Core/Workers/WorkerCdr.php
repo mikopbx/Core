@@ -417,6 +417,7 @@ class WorkerCdr extends WorkerBase
                 'duration' => $row['duration'] ?? '',
                 'billsec' => $billsec,
                 'disposition' => $row['disposition'] ?? '',
+                'rec_src_channel' => $row['rec_src_channel'] ?? '',
                 'uniqueid' => $row['UNIQUEID'] ?? '',
                 'input_path' => $p_info['dirname'] . '/' . $p_info['filename'],
                 'delete_source' => $deleteSourceFiles,
