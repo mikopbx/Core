@@ -131,6 +131,19 @@ MikoPBX usually loads from a read-only *offload* partition. If you want to chang
 
 If you want to add new functionality, we strongly advise you look at the [ModuleTemplate](https://github.com/mikopbx/ModuleTemplate) repository.
 
+## Developing with AI Coding Agents
+
+MikoPBX is built to be worked on with AI coding agents such as Claude Code, OpenAI Codex, Cursor or Gemini CLI:
+
+- Every directory of this repository carries an `AGENTS.md` with the conventions and pitfalls an agent cannot infer from the code alone.
+- [mikopbx/agent-skills](https://github.com/mikopbx/agent-skills) publishes ready-made skills for module development, REST API work, log analysis, Asterisk validation and translations. Install them into any agent that supports the [Agent Skills](https://agentskills.io) standard:
+
+  ```bash
+  npx skills add mikopbx/agent-skills
+  ```
+
+- The [developer documentation](https://docs.mikopbx.com/mikopbx-development) describes the module system, hooks, REST API and the AI-assisted workflow in detail.
+
 ## Architecture
 
 MikoPBX is a self-contained Linux distribution built on [T2 SDE](https://t2sde.org/). Key components:
