@@ -342,9 +342,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'number' => [
                 'type' => 'string',
                 'description' => 'rest_schema_emp_number',
-                'pattern' => '^[0-9]{2,8}$',
+                'pattern' => '^[0-9]{2,11}$',
                 'minLength' => 2,
-                'maxLength' => 8,
+                'maxLength' => 11,
                 'sanitize' => 'string',
                 'required' => true,
                 'example' => '200'
@@ -473,7 +473,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'integer',
                 'description' => 'rest_schema_emp_extensions_length',
                 'minimum' => 2,
-                'maximum' => 8,
+                'maximum' => 11,
                 'readOnly' => true,
                 'example' => 3
             ],

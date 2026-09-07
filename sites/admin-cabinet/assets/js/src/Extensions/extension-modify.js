@@ -438,7 +438,7 @@ const extension = {
      *
      * The extension number mask length is driven by the API: it uses
      * `extension.extensionsLength` (populated from the server, no JavaScript default)
-     * to build a `9{2,N}` digit mask, applied only when N is between 2 and 10.
+     * to build a `9{2,N}` digit mask, applied only when N is between 2 and 11.
      * Its `oncomplete` handler is debounced with a 500ms setTimeout (clearing any
      * pending timer) before invoking `cbOnCompleteNumber()`.
      *
@@ -454,7 +454,7 @@ const extension = {
         // No defaults in JavaScript - value must come from API
         if (extension.extensionsLength) {
             const extensionsLength = parseInt(extension.extensionsLength, 10);
-            if (extensionsLength >= 2 && extensionsLength <= 10) {
+            if (extensionsLength >= 2 && extensionsLength <= 11) {
                 // Initialize mask with correct length and oncomplete handler
                 extension.$number.inputmask({
                     mask: `9{2,${extensionsLength}}`,
