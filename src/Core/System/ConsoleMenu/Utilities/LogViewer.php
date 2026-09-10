@@ -41,7 +41,7 @@ class LogViewer
         'asterisk_verbose' => 'asterisk/verbose',
         'asterisk_error' => 'asterisk/error',
         'asterisk_security' => 'asterisk/security_log',
-        'php' => 'php/error.log',
+        'php' => 'php/php-error.log',
         'nginx' => 'nginx/error.log',
         'fail2ban' => 'fail2ban/fail2ban.log',
     ];
