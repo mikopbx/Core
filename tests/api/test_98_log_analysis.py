@@ -34,7 +34,7 @@ CONVERSION_TASKS_DIR = '/storage/usbdisk1/mikopbx/astspool/monitor/conversion-ta
 # Log files to analyze
 LOG_FILES = {
     'system': '/storage/usbdisk1/mikopbx/log/system/messages',
-    'php_error': '/storage/usbdisk1/mikopbx/log/php/error.log',
+    'php_error': '/storage/usbdisk1/mikopbx/log/php/php-error.log',
 }
 
 # Error patterns categorized by severity
@@ -78,7 +78,9 @@ def exec_bash(api_client, command: str, timeout: int = 30) -> dict:
 
 def get_log_line_count(api_client, log_path: str) -> int:
     """Get current line count of a log file."""
-    result = exec_bash(api_client, f'wc -l < "{log_path}" 2>/dev/null || echo 0')
+    # `wc -l < missing` fails in the shell itself, so its "can't open" message
+    # lands in stdout ahead of the fallback 0. Pipe instead of redirect.
+    result = exec_bash(api_client, f'cat "{log_path}" 2>/dev/null | wc -l')
     return int(result['output'].strip())
 
 

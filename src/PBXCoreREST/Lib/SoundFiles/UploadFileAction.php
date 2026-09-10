@@ -54,8 +54,10 @@ class UploadFileAction
         // Use the existing Files upload mechanism
         $category = $data['category'] ?? SoundFiles::CATEGORY_CUSTOM;
         
-        // Call the existing upload action
-        $uploadResult = FilesUploadFileAction::main($data);
+        // Call the existing upload action. The route already states the category,
+        // so clients need not repeat it in the body: pass the resolved one down
+        // rather than letting the shared action fall back to 'unknown'.
+        $uploadResult = FilesUploadFileAction::main($data + ['category' => $category]);
         
         if ($uploadResult->success && !empty($uploadResult->data['upload_file_path'])) {
             // Create or update sound file record

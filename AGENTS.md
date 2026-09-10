@@ -41,7 +41,7 @@ for the subtree you touch. Keep this file repo-wide only.
   on the host; `AssetProvider::makeLocalizationAssets()` only regenerates a missing file and
   the version hash ignores translation content.
 - Live paths: DB `/cf/conf/mikopbx.db`; logs under `/storage/usbdisk1/mikopbx/log/`
-  (`system/messages`, `php/error.log`, `nginx/error.log`, `asterisk/`, `fail2ban/`).
+  (`system/messages`, `php/php-error.log`, `nginx/error.log`, `asterisk/`, `fail2ban/`).
 - Module workers crashing 100+ times in 30 min are auto-disabled (`DISABLED_BY_CRASH_LOOP`).
 
 ## Skills

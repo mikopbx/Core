@@ -23,9 +23,63 @@ class UploadFileActionSecurityTest extends TestCase
         return $method->invoke(null, $filename, $mimeType, $category);
     }
 
-    public function testUnknownUploadCategoryIsRejected(): void
+    /**
+     * @dataProvider unspecifiedCategoryProvider
+     */
+    public function testUnspecifiedCategorySkipsCategoryChecks(string $category): void
     {
-        $this->assertFalse($this->validate('payload.bin', 'application/octet-stream', 'unknown')['valid']);
+        $this->assertTrue($this->validate('payload.bin', 'application/octet-stream', $category)['valid']);
+    }
+
+    /**
+     * The forbidden-extension list does not depend on the category, so a
+     * client that sends none still cannot upload executable content.
+     *
+     * @dataProvider unspecifiedCategoryProvider
+     */
+    public function testUnspecifiedCategoryStillBlocksForbiddenExtensions(string $category): void
+    {
+        $this->assertFalse($this->validate('shell.php', 'application/octet-stream', $category)['valid']);
+        $this->assertFalse($this->validate('mikopbx.img', 'application/octet-stream', $category)['valid']);
+    }
+
+    public static function unspecifiedCategoryProvider(): array
+    {
+        return [['unknown'], ['']];
+    }
+
+    public function testNamedUnrecognizedCategoryIsRejected(): void
+    {
+        $result = $this->validate('payload.bin', 'application/octet-stream', 'temp');
+        $this->assertFalse($result['valid']);
+        $this->assertSame('Unknown upload category: temp', $result['error']);
+    }
+
+    public function testMagicBytesValidationSkipsUnspecifiedCategory(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'upload-test-');
+        file_put_contents($file, "not audio at all\n");
+
+        try {
+            $this->assertTrue(UploadFileAction::validateMagicBytes($file, 'unknown')['valid']);
+            $this->assertFalse(UploadFileAction::validateMagicBytes($file, 'temp')['valid']);
+            // A named category is still content-checked - this is what proves
+            // the permissive branch above did not leak into the general case.
+            $this->assertFalse(UploadFileAction::validateMagicBytes($file, 'sound')['valid']);
+        } finally {
+            unlink($file);
+        }
+    }
+
+    /**
+     * A client posting a plain multipart body sends no MIME type; the sound
+     * route supplies the category itself, so such an upload must not 422.
+     */
+    public function testSoundAcceptsUploadWithoutMimeType(): void
+    {
+        $this->assertTrue($this->validate('prompt.wav', '', 'sound')['valid']);
+        $this->assertTrue($this->validate('prompt.wav', '', 'custom')['valid']);
+        $this->assertFalse($this->validate('prompt.exe', '', 'sound')['valid']);
     }
 
     public function testResumableBrowserMimeTypeIsRecognized(): void

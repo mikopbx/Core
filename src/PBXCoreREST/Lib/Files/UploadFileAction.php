@@ -53,6 +53,10 @@ class UploadFileAction extends Injectable
     // MIME types allowed for different categories
     private const ALLOWED_MIME_TYPES = [
         'sound' => [
+            // A plain multipart POST (curl, a module) carries no type at all;
+            // the audio extension whitelist and the post-merge magic-byte check
+            // still apply, and the declared MIME is client-supplied regardless.
+            '',
             'audio/mpeg',
             'audio/wav',
             'audio/ogg',
@@ -399,7 +403,7 @@ class UploadFileAction extends Injectable
     private static function validateFileType(string $filename, string $mimeType, string $category): array
     {
         $validationCategory = self::normalizeCategory($category);
-        if ($validationCategory === null) {
+        if ($validationCategory === null && !self::isUnspecifiedCategory($category)) {
             return ['valid' => false, 'error' => "Unknown upload category: $category"];
         }
 
@@ -424,7 +428,7 @@ class UploadFileAction extends Injectable
         }
 
         // 2. Check MIME type for category
-        if (isset(self::ALLOWED_MIME_TYPES[$validationCategory])) {
+        if ($validationCategory !== null && isset(self::ALLOWED_MIME_TYPES[$validationCategory])) {
             if (!in_array($mimeType, self::ALLOWED_MIME_TYPES[$validationCategory], true)) {
                 $error = Util::translate(
                     'sf_UploadInvalidMimeType',
@@ -493,7 +497,9 @@ class UploadFileAction extends Injectable
     {
         $validationCategory = self::normalizeCategory($category);
         if ($validationCategory === null) {
-            return ['valid' => false, 'error' => "Unknown upload category: $category"];
+            return self::isUnspecifiedCategory($category)
+                ? ['valid' => true]
+                : ['valid' => false, 'error' => "Unknown upload category: $category"];
         }
 
         // Firmware and CSV content cannot be identified reliably by a short
@@ -559,6 +565,21 @@ class UploadFileAction extends Injectable
     private static function isAllowedAudioExtension(string $extension): bool
     {
         return in_array(strtolower($extension), self::AUDIO_EXTENSIONS, true);
+    }
+
+    /**
+     * A client that sends no category at all gets the category-specific checks
+     * skipped, not a hard refusal: `category` is declared neither in the
+     * endpoint's OpenAPI parameters nor on the sound-files upload route, so
+     * requiring it would break every pre-existing API client and module.
+     * The controls the security audit relies on do not depend on it: the
+     * forbidden extension list and the .img guard still run, the file always
+     * lands in upload-cache, and ConvertAudioFileAction re-validates path,
+     * category and audio content before mv/FFmpeg ever see it.
+     */
+    private static function isUnspecifiedCategory(string $category): bool
+    {
+        return $category === '' || $category === 'unknown';
     }
 
     private static function normalizeCategory(string $category): ?string
