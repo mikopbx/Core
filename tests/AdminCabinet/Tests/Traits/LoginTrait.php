@@ -69,6 +69,11 @@ trait LoginTrait
             usleep(500000); // 500ms
 
             if (!$this->isLoginFormPresent()) {
+                // A live session is redirected from /session/index to the home page
+                if ($this->isUserLoggedIn()) {
+                    $this->assertTrue(true);
+                    return;
+                }
                 throw new RuntimeException('Login form not found after page refresh');
             }
         }
