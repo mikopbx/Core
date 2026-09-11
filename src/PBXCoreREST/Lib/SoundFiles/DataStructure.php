@@ -150,7 +150,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         }
 
         // ✨ Inherit response-only fields for list (NO duplication!)
-        $listResponseFields = ['id', 'fileSize', 'duration'];
+        $listResponseFields = ['id', 'path', 'fileSize', 'duration'];
         foreach ($listResponseFields as $field) {
             if (isset($responseFields[$field])) {
                 $properties[$field] = $responseFields[$field];

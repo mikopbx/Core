@@ -17,4 +17,11 @@ final class DataStructureSecurityTest extends TestCase
         self::assertTrue($definitions['response']['path']['readOnly']);
         self::assertArrayHasKey('conversion_id', $definitions['request']);
     }
+
+    public function testReadOnlyPathStaysInResponseSchemas(): void
+    {
+        // Responses still carry path; strict schema validation turns its absence into 422
+        self::assertArrayHasKey('path', DataStructure::getListItemSchema()['properties']);
+        self::assertArrayHasKey('path', DataStructure::getDetailSchema()['properties']);
+    }
 }
