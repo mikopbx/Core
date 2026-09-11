@@ -58,6 +58,12 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         $this->waitForAjax();
         sleep(2);
 
+        // The PBX parses ManualDateTime in its own timezone, so take the base time from the
+        // PBX clock on the page, not from the test runner (UTC in CI shifted the PBX by hours)
+        if ($params[PbxSettings::PBX_MANUAL_TIME_SETTINGS]) {
+            $params['ManualDateTime'] = $this->getPbxTimeWithOffset($params['ManualDateTime']);
+        }
+
         // Set timezone and other settings
         $this->selectDropdownItem(PbxSettings::PBX_TIMEZONE, $params[PbxSettings::PBX_TIMEZONE]);
         $this->changeCheckBoxState(PbxSettings::PBX_MANUAL_TIME_SETTINGS, $params[PbxSettings::PBX_MANUAL_TIME_SETTINGS]);
@@ -172,6 +178,29 @@ JS
         );
     }
 
+    /**
+     * Returns the PBX time shown on the page shifted by a strtotime() offset, e.g. '+5 minutes'
+     */
+    protected function getPbxTimeWithOffset(string $offset): string
+    {
+        // Until the timezone is loaded the clock worker formats time in the browser's zone;
+        // the caller's waitForAjax() + sleep(2) lets at least one tick run after that
+        $pbxNow = self::$driver->wait(30, 500)->until(
+            static fn() => self::$driver->executeScript(
+                "return document.querySelector('#PBXTimezone').value
+                    && document.querySelector('#CurrentSystemTime').value;"
+            )
+        );
+
+        // UTC is only a neutral zone for the arithmetic, so DST cannot skew the offset
+        $time = \DateTime::createFromFormat('Y-m-d H:i:s', $pbxNow, new \DateTimeZone('UTC'));
+        if ($time === false) {
+            self::fail("Unexpected PBX time format: {$pbxNow}");
+        }
+
+        return $time->modify($offset)->format('Y-m-d H:i:s');
+    }
+
     protected function isLoginPageDisplayed(): bool
     {
         return (bool) self::$driver->executeScript(
@@ -247,7 +276,7 @@ JS
         }
 
         // Manual mode - check the time difference
-        // Format is now 'Y-m-d H:i:s' (e.g., '2025-10-15 14:30:00')
+        // Provider holds a strtotime() offset (e.g., '+5 minutes')
         $manualDateTime = $params['ManualDateTime'];
         $targetTime = strtotime($manualDateTime);
         $currentTime = time();
@@ -416,13 +445,13 @@ JS
         // Changes time by +5 minutes - should NOT require re-login
         // JWT access tokens remain valid (exp + 600 > current_time)
         // Redis refresh tokens unaffected (TTL is time-independent)
-        // Format MUST match time-settings-worker.js:117 -> 'YYYY-MM-DD HH:mm:ss'
+        // ManualDateTime is an offset from the PBX clock, resolved by getPbxTimeWithOffset()
         $params[] = [
             [
                 PbxSettings::PBX_TIMEZONE => 'Europe/Riga',
                 'PBXTimezone' => 'Europe/Riga', // Ensure we have the same value for verification
                 PbxSettings::PBX_MANUAL_TIME_SETTINGS => true,
-                'ManualDateTime' => date('Y-m-d H:i:s', strtotime('+5 minutes')),
+                'ManualDateTime' => '+5 minutes',
                 PbxSettings::NTP_SERVER => '',
             ],
         ];
