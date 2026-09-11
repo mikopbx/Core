@@ -247,9 +247,10 @@ const installationFromRepo = {
         $('tr.error').removeClass('error');
 
         installStatusLoopWorker.startWatch(params.uniqid);
-        ModulesAPI.installFromRepo(params, (response) => {
+        ModulesAPI.installFromRepo(params, (response, success) => {
             console.debug(response);
-            if (response.result === true) {
+            // The async ack carries no `result` field — only an explicit rejection stops the watch
+            if (success !== false && response.result !== false) {
                 $('html, body').animate({
                     scrollTop: installationFromRepo.$progressBarBlock.offset().top - 50,
                 }, 2000);
