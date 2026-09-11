@@ -143,9 +143,10 @@ const installationFromZip = {
         // track by the upload fileId, the watchdog falls back to the
         // collection endpoint and re-keys by operationId from nchan messages.
         installStatusLoopWorker.startWatch(params.fileId);
-        ModulesAPI.installFromPackage(params,  (response) => {
+        ModulesAPI.installFromPackage(params,  (response, success) => {
             console.debug(response);
-            if (response.result === true) {
+            // The async ack carries no `result` field — only an explicit rejection stops the watch
+            if (success !== false && response.result !== false) {
                 $('html, body').animate({
                     scrollTop: installationFromZip.$progressBarBlock.offset().top-50,
                 }, 2000);
