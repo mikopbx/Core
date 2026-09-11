@@ -99,6 +99,7 @@ const installStatusLoopWorker = {
         installStatusLoopWorker.watchdog = ModulesAPI.createOperationWatchdog({
             onTerminal: data => installStatusLoopWorker.cbWatchdogTerminal(data),
             onStalled: () => installStatusLoopWorker.cbWatchdogStalled(),
+            onProgress: data => installStatusLoopWorker.cbWatchdogProgress(data),
         });
 
         EventBus.subscribe(this.channelId, data => {
@@ -179,6 +180,26 @@ const installStatusLoopWorker = {
             globalTranslate.ext_InstallationError,
             data.errorMessages
         );
+    },
+
+    /**
+     * Moves the progress bar by the journal progress: the install pipeline
+     * notifies the browser only at stage boundaries. Never moves the bar back —
+     * the zip upload already drew its own percent before the pipeline started.
+     *
+     * @param {object} data - The active journal record from the operations API.
+     */
+    cbWatchdogProgress(data) {
+        const current = installStatusLoopWorker.$progressBar.progress('get percent') || 0;
+        if (data.progress <= current) {
+            return;
+        }
+        const headers = {
+            Stage_I_UploadModule: globalTranslate.ext_UploadInProgress,
+            Stage_IV_DownloadModule: globalTranslate.ext_DownloadInProgress,
+            Stage_V_InstallModule: globalTranslate.ext_InstallationInProgress,
+        };
+        installStatusLoopWorker.updateProgressBar(data.moduleUniqueId, headers[data.stage], data.progress);
     },
 
     /**
@@ -494,6 +515,9 @@ const installStatusLoopWorker = {
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_DownloadInProgress, downloadProgress);
         } else if (data.d_status === 'DOWNLOAD_COMPLETE') {
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_DownloadInProgress, 50);
+        } else if (stageDetails.result === true && stageDetails.data === undefined) {
+            // Install pipeline: bare stage boundary without download details
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_InstallationInProgress, 50);
         } else if (data.d_status === 'DOWNLOAD_ERROR') {
             installStatusLoopWorker.$progressBarBlock.hide();
             if (stageDetails.messages !== undefined) {
@@ -519,6 +543,9 @@ const installStatusLoopWorker = {
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_UploadInProgress, 49);
         } else if (data.d_status === 'UPLOAD_COMPLETE') {
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_UploadInProgress, 50);
+        } else if (stageDetails.result === true && stageDetails.data === undefined) {
+            // Install pipeline: bare stage boundary without upload details
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_InstallationInProgress, 50);
         }
     },
 
@@ -537,6 +564,10 @@ const installStatusLoopWorker = {
             const installationProgress = Math.round(parseInt(data.i_status_progress, 10)/2+50);
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_InstallationInProgress, installationProgress);
         } else if (data.i_status === 'INSTALLATION_COMPLETE') {
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_InstallationInProgress, 98);
+        } else if (stageDetails.result === true && stageDetails.data === undefined) {
+            // Install pipeline: bare stage boundary without installation details;
+            // the legacy flow sends result:true with data at the START of this stage
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_InstallationInProgress, 98);
         }
     },
