@@ -403,19 +403,36 @@ local function ip_in_network(ip, network)
 end
 
 -- Function to connect to Redis
+--
+-- Circuit breaker + fail-open. Redis being unreachable is an infrastructure
+-- problem, not a client/security event, so we must not:
+--   (a) retry a 1s-timeout connect on every request (that stalls every
+--       request for a full second during an outage), nor
+--   (b) log at ERROR level per attempt — the mikopbx-nginx-errors fail2ban
+--       jail bans the visitor on those "client: <HOST>" error lines, locking
+--       out legitimate admins/softphones on a transient Redis hiccup.
+-- Instead: remember the "down" state for a few seconds, fail fast, log once at
+-- WARN, and let callers degrade to fail-open (the firewall/WAF gates already
+-- treat a nil connection as "disabled").
 local function connect_to_redis()
+    if firewall_state_cache:get("redis_down") then
+        return nil
+    end
+
     local red = redis:new()
     red:set_timeout(1000)
 
     local ok, err = red:connect(redis_host, redis_port)
     if not ok then
-        ngx.log(ngx.ERR, "Failed to connect to Redis: ", err)
+        firewall_state_cache:set("redis_down", true, 5)
+        ngx.log(ngx.WARN, "Redis unavailable, WAF checks bypassed (fail-open): ", err)
         return nil
     end
 
     local ok, err = red:select(redis_db)
     if not ok then
-        ngx.log(ngx.ERR, "Failed to select Redis database: ", err)
+        firewall_state_cache:set("redis_down", true, 5)
+        ngx.log(ngx.WARN, "Redis select failed, WAF checks bypassed (fail-open): ", err)
         return nil
     end
 
@@ -503,7 +520,7 @@ local function is_scope_exempt(uri, scope)
         return true
     end
     if perr then
-        ngx.log(ngx.ERR, "WAF SISMEMBER pipeline failed: ", perr)
+        ngx.log(ngx.WARN, "WAF SISMEMBER pipeline failed (fail-open): ", perr)
         red:close()
         return false
     end
@@ -517,7 +534,7 @@ local function is_scope_exempt(uri, scope)
         end
         local pval, serr = red:sismember(prefix_key, u)
         if serr then
-            ngx.log(ngx.ERR, "WAF SISMEMBER failed: ", serr)
+            ngx.log(ngx.WARN, "WAF SISMEMBER failed (fail-open): ", serr)
             break
         end
         if pval == 1 then
@@ -880,7 +897,7 @@ local function is_firewall_enabled()
 
     local keys, err = red:keys(REDIS_PREFIX .. "*")
     if err then
-        ngx.log(ngx.ERR, "Failed to check firewall status: ", err)
+        ngx.log(ngx.WARN, "Failed to check firewall status (fail-open): ", err)
         firewall_state_cache:set("enabled", "0", 30)
         red:set_keepalive(10000, 100)
         return false
@@ -905,7 +922,7 @@ local function check_whitelist()
 
         local res, err = red:smembers(REDIS_PREFIX .. CATEGORY_WHITELIST)
         if err then
-            ngx.log(ngx.ERR, "Failed to get whitelist: ", err)
+            ngx.log(ngx.WARN, "Failed to get whitelist (fail-open): ", err)
             red:set_keepalive(10000, 100)
             return false
         end
@@ -941,7 +958,7 @@ local function check_blacklist()
         local res, err = red:exists(key)
 
         if err then
-            ngx.log(ngx.ERR, "Failed to check blocked IP: ", err)
+            ngx.log(ngx.WARN, "Failed to check blocked IP (fail-open): ", err)
             red:set_keepalive(10000, 100)
             return false
         end
