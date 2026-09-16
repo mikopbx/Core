@@ -13,15 +13,22 @@ use Phalcon\Di\Injectable;
 class ModulesStateCache extends Injectable
 {
     private const string CACHE_KEY = 'modules:state:hash';
-    private const int CACHE_TTL = 86400; // 24 hours
-    
+
+    // Long-lived baseline. This is only an optimisation to avoid a spurious
+    // one-off worker refresh: when the key is absent at runtime,
+    // ReloadModuleStateAction can no longer prove the module set is unchanged
+    // and refreshes the workers to be safe. A short TTL made that "unknown"
+    // state (and the extra restart) a daily occurrence, so keep the baseline
+    // for a month; it is rewritten on every real module-state change anyway.
+    private const int CACHE_TTL = 2592000; // 30 days
+
     private Redis $cache;
-    
+
     public function __construct()
     {
         $this->cache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
     }
-    
+
     /**
      * Calculate current modules state hash
      *
@@ -31,7 +38,7 @@ class ModulesStateCache extends Injectable
     {
         $modules = PbxExtensionModules::find();
         $stateData = [];
-        
+
         foreach ($modules as $module) {
             $stateData[] = [
                 'uniqid' => $module->uniqid,
@@ -40,15 +47,15 @@ class ModulesStateCache extends Injectable
                 'developer' => $module->developer,
             ];
         }
-        
+
         // Sort by uniqid to ensure consistent hash
-        usort($stateData, function($a, $b) {
+        usort($stateData, function ($a, $b) {
             return strcmp($a['uniqid'], $b['uniqid']);
         });
-        
+
         return md5(json_encode($stateData));
     }
-    
+
     /**
      * Get cached modules state hash
      *
@@ -58,7 +65,7 @@ class ModulesStateCache extends Injectable
     {
         return $this->cache->get(self::CACHE_KEY);
     }
-    
+
     /**
      * Update cached state with current state
      *

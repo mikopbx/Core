@@ -7,6 +7,7 @@ use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
@@ -71,16 +72,38 @@ class ReloadModuleStateAction implements ReloadActionInterface
         $cachedHash = $modulesStateCache->getCachedStateHash();
         $currentHash = $modulesStateCache->calculateCurrentStateHash();
 
-        // If cache is empty (null), this is initialization, not a change
+        // A missing baseline (null) is ambiguous and must NOT be treated as
+        // "no change". The baseline lives in the volatile ManagedCache (Redis
+        // DB 4: 24h TTL, wiped by any cache-clear/FLUSHDB or a Redis restart),
+        // so it is absent far more often than just on first boot. Two cases:
+        //   - genuine first-boot initialization: the system is still coming up
+        //     and the workers are (re)spawned by the boot sequence anyway, so a
+        //     restart here would only add a needless storm — seed and return.
+        //   - baseline lost at runtime: a real module install/enable/disable is
+        //     in flight. We cannot prove the module set is unchanged, so the API
+        //     workers (which cache PBXConfModulesProvider) and the supervisor
+        //     MUST be refreshed. Skipping it is the bug where a freshly installed
+        //     module's API classes / post-installation are never picked up until
+        //     some later unrelated state change happens to hit a populated cache.
         if ($cachedHash === null) {
-            SystemMessages::sysLogMsg(
-                __CLASS__,
-                'Initializing modules state cache',
-                LOG_INFO
-            );
             $modulesStateCache->updateCachedState();
 
-            // Don't restart workers on initialization
+            if (System::isBooting()) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    'Initializing modules state cache during boot, skipping worker supervisor refresh',
+                    LOG_INFO
+                );
+                return;
+            }
+
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                'Modules state cache was empty at runtime (previous state unknown), '
+                . 'refreshing worker supervisor to avoid serving a stale module set',
+                LOG_INFO
+            );
+            $this->restartModuleAwareWorkers();
             return;
         }
 
@@ -98,20 +121,7 @@ class ReloadModuleStateAction implements ReloadActionInterface
 
             // Update cache with new state
             $modulesStateCache->updateCachedState();
-
-            // API workers keep PBXConfModulesProvider in memory, so refresh them
-            // when the enabled module set changes. The supervisor also needs a
-            // refresh to start workers registered by newly enabled modules.
-            Processes::processPHPWorker(
-                WorkerApiCommands::class,
-                'start',
-                'soft-restart'
-            );
-            Processes::processPHPWorker(
-                WorkerSafeScriptsCore::class,
-                'start',
-                'soft-restart'
-            );
+            $this->restartModuleAwareWorkers();
         } else {
             SystemMessages::sysLogMsg(
                 __CLASS__,
@@ -119,6 +129,30 @@ class ReloadModuleStateAction implements ReloadActionInterface
                 LOG_DEBUG
             );
         }
+    }
+
+    /**
+     * Soft-restarts the workers that keep the enabled-module set in memory.
+     *
+     * API workers hold PBXConfModulesProvider for their whole lifetime, so they
+     * must be refreshed when the enabled module set changes. The supervisor also
+     * needs a refresh to start/stop workers registered by newly enabled/disabled
+     * modules. A soft restart lets each worker finish its current job first.
+     *
+     * @return void
+     */
+    private function restartModuleAwareWorkers(): void
+    {
+        Processes::processPHPWorker(
+            WorkerApiCommands::class,
+            'start',
+            'soft-restart'
+        );
+        Processes::processPHPWorker(
+            WorkerSafeScriptsCore::class,
+            'start',
+            'soft-restart'
+        );
     }
 
     /**
