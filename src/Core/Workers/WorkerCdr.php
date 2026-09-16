@@ -344,25 +344,68 @@ class WorkerCdr extends WorkerBase
         }
 
         // If recordingfile is set but neither the converted .webm nor any source format exists,
-        // try to retrieve the recording path from another CDR row for this call leg
+        // try to retrieve the recording path from another CDR row for this call leg.
         $basePath = Util::trimExtensionForFile($row['recordingfile']);
         $sourceExists = file_exists($basePath . '.wav48')
             || file_exists($basePath . '.wav16')
             || file_exists($basePath . '.wav');
-        if (!empty($row['recordingfile']) &&
-            !file_exists($row['recordingfile']) &&
-            !$sourceExists) {
-
-            // If the disposition is 'ANSWERED' and the recording file doesn't exist, retrieve it from the database
-            $filter = [
-                "linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'",
-                'limit' => 1,
-                'miko_tmp_db' => true
-            ];
-            $data = CDRDatabaseProvider::getCdr($filter);
-            $recordingfile = $data[0]['recordingfile'] ?? '';
-            if (!empty($recordingfile)) {
-                $row['recordingfile'] = $recordingfile;
+        if (
+            !empty($row['recordingfile'])
+            && !file_exists($row['recordingfile'])
+            && !$sourceExists
+        ) {
+            if (strpos((string)$row['dst_chan'], 'MeetMe:') === 0) {
+                // Conference leg: every participant is named after its own UNIQUEID, but only
+                // one file is actually written to disk. Pick the sibling whose file really
+                // exists (preferring the conference master leg, UNIQUEID rooted at linkedid)
+                // so every leg points at that one file instead of a dangling per-leg name the
+                // web CDR then hides. Scoped to MeetMe rows so non-conference calls are
+                // untouched by this scan.
+                $siblings = CDRDatabaseProvider::getCdr([
+                    "linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'",
+                    'miko_tmp_db' => true
+                ]);
+                $recordingfile = '';
+                foreach ($siblings as $sibling) {
+                    $candidate = trim((string)($sibling['recordingfile'] ?? ''));
+                    if ($candidate === '') {
+                        continue;
+                    }
+                    $candBase = Util::trimExtensionForFile($candidate);
+                    $candExists = file_exists($candidate)
+                        || file_exists($candBase . '.wav48')
+                        || file_exists($candBase . '.wav16')
+                        || file_exists($candBase . '.wav');
+                    if (!$candExists) {
+                        continue;
+                    }
+                    // First existing candidate is a valid fallback; prefer the conference master leg.
+                    if ($recordingfile === '') {
+                        $recordingfile = $candidate;
+                    }
+                    $uniqueId = (string)($sibling['UNIQUEID'] ?? '');
+                    if ($uniqueId === $row['linkedid'] || strpos($uniqueId, $row['linkedid'] . '_') === 0) {
+                        $recordingfile = $candidate;
+                        break;
+                    }
+                }
+                if (!empty($recordingfile)) {
+                    $row['recordingfile'] = $recordingfile;
+                }
+            } else {
+                // Non-conference leg: keep the original single-row recovery verbatim.
+                // If the disposition is 'ANSWERED' and the recording file doesn't exist,
+                // retrieve it from the database.
+                $filter = [
+                    "linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'",
+                    'limit' => 1,
+                    'miko_tmp_db' => true
+                ];
+                $data = CDRDatabaseProvider::getCdr($filter);
+                $recordingfile = $data[0]['recordingfile'] ?? '';
+                if (!empty($recordingfile)) {
+                    $row['recordingfile'] = $recordingfile;
+                }
             }
         }
 
