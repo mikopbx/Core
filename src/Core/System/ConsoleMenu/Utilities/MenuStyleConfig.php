@@ -295,6 +295,26 @@ class MenuStyleConfig
     }
 
     /**
+     * Print prompt and block until the user presses Enter
+     *
+     * Enter received sooner than the user could read the screen is ignored: it was typed
+     * before the prompt appeared (a digit shortcut followed by a habitual Enter) and would
+     * otherwise close the screen immediately.
+     *
+     * @param string $prompt Prompt text
+     * @return void
+     */
+    public static function waitForEnter(string $prompt): void
+    {
+        echo $prompt;
+        $shownAt = hrtime(true);
+        // Fixed 0.5 s window: an Enter typed later than that after a fast action still closes the screen
+        do {
+            $line = fgets(STDIN);
+        } while ($line !== false && hrtime(true) - $shownAt < 500_000_000);
+    }
+
+    /**
      * Fill entire screen with background color
      *
      * @param string $bgColor Background color constant

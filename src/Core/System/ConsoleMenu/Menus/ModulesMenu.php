@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\ConsoleMenu\Menus;
 
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\System\ConsoleMenu\Actions\ModulesActions;
+use MikoPBX\Core\System\ConsoleMenu\Utilities\MenuStyleConfig;
 use PhpSchool\CliMenu\CliMenu;
 
 /**
@@ -97,8 +98,7 @@ class ModulesMenu extends AbstractMenu
         echo "\n";
         echo $this->translation->_('cm_NoModulesInstalled');
         echo "\n\n";
-        echo $this->translation->_('cm_PressEnterToContinue');
-        fgets(STDIN);
+        MenuStyleConfig::waitForEnter($this->translation->_('cm_PressEnterToContinue'));
 
         if ($parentMenu !== null) {
             $parentMenu->open();

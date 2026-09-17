@@ -21,6 +21,7 @@
 namespace MikoPBX\Core\System\ConsoleMenu\Menus;
 
 use MikoPBX\Core\System\ConsoleMenu\Utilities\LogViewer;
+use MikoPBX\Core\System\ConsoleMenu\Utilities\MenuStyleConfig;
 use PhpSchool\CliMenu\CliMenu;
 
 /**
@@ -89,8 +90,7 @@ class LogsMenu extends AbstractMenu
 
                     if (!$success) {
                         echo "\n" . $this->translation->_('cm_LogFileNotFound') . "\n";
-                        echo $this->translation->_('cm_PressEnterToContinue') . "\n";
-                        fgets(STDIN);
+                        MenuStyleConfig::waitForEnter($this->translation->_('cm_PressEnterToContinue') . "\n");
                     }
 
                     echo "\033[2J\033[H";
