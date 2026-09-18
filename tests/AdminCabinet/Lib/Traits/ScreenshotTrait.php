@@ -14,7 +14,7 @@ trait ScreenshotTrait
      * Take screenshot of current page state
      *
      * @param string $name Screenshot name
-     * @return string Path to saved screenshot, or empty string if directory creation fails
+     * @return string Path to saved screenshot, or empty string if the screenshot could not be saved
      */
     protected function takeScreenshot(string $name): string
     {
@@ -42,7 +42,13 @@ trait ScreenshotTrait
             preg_replace('/[^a-zA-Z0-9_-]/', '_', $name)
         );
 
-        self::$driver->takeScreenshot($filename);
+        // A failed screenshot must not replace the test failure that triggered it
+        try {
+            self::$driver->takeScreenshot($filename);
+        } catch (\Throwable $e) {
+            self::annotate("Warning: Cannot take screenshot: " . $e->getMessage(), 'warning');
+            return '';
+        }
         self::annotate("Screenshot saved: $filename");
 
         return $filename;
