@@ -140,6 +140,10 @@ class ActionTransferDialHangup
                 ),
                 LOG_WARNING
             );
+            // The queue/ring-group management leg of an attended transfer collapses with an
+            // empty dst_chan and no transfer_UNIQUEID, i.e. it lands here. That is exactly the
+            // moment the operator is handed back to the caller, so still try to resume.
+            self::resumeOperatorRecording($worker, $data);
             return;
         }
 
@@ -188,40 +192,80 @@ class ActionTransferDialHangup
                 LOG_DEBUG
             );
         }
-        if ($matched !== 1) {
+        // Resume the operator's recording once the consultation is gone (see method doc).
+        self::resumeOperatorRecording($worker, $data);
+    }
+
+    /**
+     * Resumes the operator's own recording after a failed/cancelled attended transfer.
+     *
+     * ActionTransferCheck stops MixMonitor when the transfer starts and never restarts it.
+     * The former "resume only when the linkedid has exactly one open row" rule never held
+     * for a transfer to a queue/ring group (which always leaves several open rows — the
+     * queue app row plus the parallel agent legs), so the recording stayed off for the rest
+     * of the conversation.
+     *
+     * The decision is keyed on the operator channel (TRANSFERERNAME): the operator's answered
+     * conversation row is resumed only once Asterisk reports the operator bridged back to
+     * that conversation's caller (BRIDGEPEER equals the caller channel). While the operator
+     * is still consulting BRIDGEPEER names another channel, and once a transfer completes the
+     * operator has left (empty/other BRIDGEPEER); in both cases nothing is resumed and the
+     * transfer marker is left intact, so a completed transfer is never mistaken for a return.
+     *
+     * @param WorkerCallEvents $worker The worker object.
+     * @param array $data The data array.
+     *
+     * @return void
+     */
+    private static function resumeOperatorRecording(WorkerCallEvents $worker, array $data): void
+    {
+        $transferer = (string)($data['TRANSFERERNAME'] ?? '');
+        if ($transferer === '') {
             return;
         }
-        $filter = [
-            'linkedid=:linkedid: AND endtime = "" AND answer <> ""',
+
+        // The operator's answered conversation row was flagged transfer=1 and had its
+        // recording stopped by ActionTransferCheck. Once it is resumed the flag is cleared,
+        // so an empty result means there is nothing to resume — skip the AMI probe entirely.
+        // (A pending-leg count cannot gate this: the uncorrelated queue/ring-group legs stay
+        // open with transfer=1 until the final hangup, so they never clear.)
+        $answeredConversations = CallDetailRecordsTmp::find([
+            'linkedid = :linkedid: AND endtime = "" AND transfer = "1" AND answer <> "" '
+            . 'AND (src_chan = :chan: OR dst_chan = :chan:)',
             'bind' => [
-                'linkedid' => $data['linkedid'],
+                'linkedid' => $data['linkedid'] ?? '',
+                'chan' => $transferer,
             ],
-        ];
-        $m_data = CallDetailRecordsTmp::find($filter);
-        $row = TransferCdrResumeSelector::select($matched, $m_data);
-        if ($row === null) {
-            // The transfer is not completed or channels no longer exist.
+        ]);
+        if ($answeredConversations->count() === 0) {
             return;
         }
 
-        // Try to resume conversation recording.
-        foreach ([$row] as $row) {
-            $info = pathinfo($row->recordingfile);
-            $data_time = ($row->answer === '') ? $row->start : $row->answer;
-            $subDir = date('Y/m/d/H/', strtotime($data_time));
+        // Resume only once Asterisk reports the operator bridged back to this conversation's
+        // caller. An empty/other BRIDGEPEER (still consulting, or the transfer completed and
+        // the operator left) yields no match, so nothing is resumed and the transfer marker
+        // is left intact for a later, correct attempt.
+        $bridgePeer = $worker->getChannelVariable($transferer, 'BRIDGEPEER');
+        $row = FailedTransferResumeSelector::select($answeredConversations, $transferer, $bridgePeer);
+        if ($row === null) {
+            return;
+        }
 
-            // Resume recording if monitoring is enabled.
-            if ($worker->enableMonitor($row->src_num, $row->dst_num)) {
-                $worker->MixMonitor($row->dst_chan, $info['filename'], $subDir, '', 'fillNotAnsweredCdr');
-                $recSrcCh = $worker->getRecSrcChannel($row->dst_chan, $row->src_chan, $row->dst_chan);
-                $row->writeAttribute('rec_src_channel', $recSrcCh);
-            }
+        // Resume conversation recording on the operator's own row.
+        $info = pathinfo((string)$row->recordingfile);
+        $data_time = ($row->answer === '' || $row->answer === null) ? $row->start : $row->answer;
+        $subDir = date('Y/m/d/H/', strtotime((string)$data_time));
+        if (!empty($row->dst_chan) && $worker->enableMonitor((string)$row->src_num, (string)$row->dst_num)) {
+            $worker->MixMonitor($row->dst_chan, $info['filename'], $subDir, '', 'fillNotAnsweredCdr');
+            $recSrcCh = $worker->getRecSrcChannel($row->dst_chan, $row->src_chan, $row->dst_chan);
+            $row->writeAttribute('rec_src_channel', $recSrcCh);
+        }
 
-            // Remove the transfer flag from the rows.
-            $row->writeAttribute('transfer', 0);
-            if (!$row->save()) {
-                SystemMessages::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
-            }
+        // Clear the transfer flag so the recording is resumed once and the row closes
+        // normally on the final hangup.
+        $row->writeAttribute('transfer', 0);
+        if (!$row->save()) {
+            SystemMessages::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
         }
     }
 

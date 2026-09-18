@@ -342,6 +342,27 @@ class WorkerCallEvents extends WorkerBase
     }
 
     /**
+     * Reads a channel variable over AMI, returning '' when the channel or AMI is unavailable.
+     *
+     * @param string $channel The channel name.
+     * @param string $variable The variable to read.
+     *
+     * @return string The value, or '' when it cannot be read.
+     */
+    public function getChannelVariable(string $channel, string $variable): string
+    {
+        if ($channel === '') {
+            return '';
+        }
+        try {
+            $value = Util::getAstManager('off')->GetVar($channel, $variable, null, false);
+        } catch (\Throwable $e) {
+            return '';
+        }
+        return is_string($value) ? $value : '';
+    }
+
+    /**
      * Determines which stereo channel contains src_num audio.
      *
      * In stereo recording mode, MixMonitor splits audio into two files:
