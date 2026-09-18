@@ -58,10 +58,12 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         $this->waitForAjax();
         sleep(2);
 
-        // The PBX parses ManualDateTime in its own timezone, so take the base time from the
-        // PBX clock on the page, not from the test runner (UTC in CI shifted the PBX by hours)
+        // The PBX parses ManualDateTime in its own timezone, so take the time from the PBX clock
+        // on the page before the timezone dropdown changes, not from the test runner (UTC in CI
+        // shifted the PBX by hours)
         if ($params[PbxSettings::PBX_MANUAL_TIME_SETTINGS]) {
-            $params['ManualDateTime'] = $this->getPbxTimeWithOffset($params['ManualDateTime']);
+            $pbxTime = $this->getPbxTime();
+            $pbxTimeReadAt = time();
         }
 
         // Set timezone and other settings
@@ -71,7 +73,10 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         
         // Configure time settings based on mode
         if ($params[PbxSettings::PBX_MANUAL_TIME_SETTINGS]) {
-            $this->changeInputField('ManualDateTime', $params['ManualDateTime']);
+            // Submit the current PBX time: any offset steps the PBX clock, and a clock step
+            // stretches the nginx rate-limit window, so the test browser gets 429 for minutes
+            $pbxTime->modify('+' . (time() - $pbxTimeReadAt) . ' seconds');
+            $this->changeInputField('ManualDateTime', $pbxTime->format('Y-m-d H:i:s'));
         } else {
             $this->changeTextAreaValue(PbxSettings::NTP_SERVER, $params['NTPServer']);
         }
@@ -179,9 +184,9 @@ JS
     }
 
     /**
-     * Returns the PBX time shown on the page shifted by a strtotime() offset, e.g. '+5 minutes'
+     * Returns the PBX time shown on the page
      */
-    protected function getPbxTimeWithOffset(string $offset): string
+    protected function getPbxTime(): \DateTime
     {
         // Until the timezone is loaded the clock worker formats time in the browser's zone;
         // the caller's waitForAjax() + sleep(2) lets at least one tick run after that
@@ -192,13 +197,13 @@ JS
             )
         );
 
-        // UTC is only a neutral zone for the arithmetic, so DST cannot skew the offset
+        // UTC is only a neutral zone for the caller's arithmetic, so DST cannot skew it
         $time = \DateTime::createFromFormat('Y-m-d H:i:s', $pbxNow, new \DateTimeZone('UTC'));
         if ($time === false) {
             self::fail("Unexpected PBX time format: {$pbxNow}");
         }
 
-        return $time->modify($offset)->format('Y-m-d H:i:s');
+        return $time;
     }
 
     protected function isLoginPageDisplayed(): bool
@@ -256,35 +261,6 @@ JS
         if (!$success) {
             self::fail("Failed to verify time settings after multiple attempts. Last error: {$lastError}");
         }
-    }
-
-    /**
-     * Check if time change is beyond JWT leeway tolerance
-     * JWT tokens have ±10 minutes leeway for clock skew and time changes
-     *
-     * NOTE: This method is kept for documentation purposes but is not currently used
-     * in the main test flow. The test now uses automatic session verification instead.
-     *
-     * @param array $params Test parameters
-     * @return bool True if time change exceeds leeway
-     */
-    protected function isTimeChangeBeyondLeeway(array $params): bool
-    {
-        if (!$params[PbxSettings::PBX_MANUAL_TIME_SETTINGS]) {
-            // NTP mode - time changes gradually, never beyond leeway
-            return false;
-        }
-
-        // Manual mode - check the time difference
-        // Provider holds a strtotime() offset (e.g., '+5 minutes')
-        $manualDateTime = $params['ManualDateTime'];
-        $targetTime = strtotime($manualDateTime);
-        $currentTime = time();
-        $differenceMinutes = abs($targetTime - $currentTime) / 60;
-
-        // JWT leeway is 10 minutes (600 seconds)
-        // If time change is > 10 minutes, re-login is required
-        return $differenceMinutes > 10;
     }
 
     /**
@@ -441,17 +417,13 @@ JS
     {
         $params = [];
 
-        // Test 1: Manual time change within JWT leeway (±10 minutes)
-        // Changes time by +5 minutes - should NOT require re-login
-        // JWT access tokens remain valid (exp + 600 > current_time)
-        // Redis refresh tokens unaffected (TTL is time-independent)
-        // ManualDateTime is an offset from the PBX clock, resolved by getPbxTimeWithOffset()
+        // Test 1: Manual time mode
+        // ManualDateTime is taken from the PBX clock at run time, so the PBX time does not jump
         $params[] = [
             [
                 PbxSettings::PBX_TIMEZONE => 'Europe/Riga',
                 'PBXTimezone' => 'Europe/Riga', // Ensure we have the same value for verification
                 PbxSettings::PBX_MANUAL_TIME_SETTINGS => true,
-                'ManualDateTime' => '+5 minutes',
                 PbxSettings::NTP_SERVER => '',
             ],
         ];
@@ -464,7 +436,6 @@ JS
                 PbxSettings::PBX_TIMEZONE => 'Europe/Riga',
                 'PBXTimezone' => 'Europe/Riga', // Ensure we have the same value for verification
                 PbxSettings::PBX_MANUAL_TIME_SETTINGS => false,
-                'ManualDateTime' => '',
                 PbxSettings::NTP_SERVER => '0.pool.ntp.org',
             ],
         ];
