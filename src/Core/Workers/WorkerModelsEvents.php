@@ -187,7 +187,11 @@ class WorkerModelsEvents extends WorkerBase
                 $this->plannedReloadActions = $state['plannedReloadActions'] ?? [];
                 $this->modifiedModels = $state['modifiedModels'] ?? [];
                 $this->last_change = $state['last_change'] ?? time() - $this->timeout;
-                // Delete old keys since we've loaded the state
+                // Delete old keys since we've loaded the state. The just-loaded
+                // $latestKey is intentionally kept as a crash-recovery fallback:
+                // if this process is killed before it re-persists the backlog,
+                // the next instance can still restore it. It is overwritten by a
+                // fresh (usually empty) state on the next graceful shutdown.
                 foreach ($keys as $key) {
                     if ($key !== $latestKey) {
                         $this->managedCache->delete($key);
@@ -394,13 +398,13 @@ class WorkerModelsEvents extends WorkerBase
     public function handleShutdownSignal(int $signo): void
     {
         SystemMessages::sysLogMsg(__METHOD__, "Received signal $signo. Saving state and exiting...", LOG_NOTICE);
-        
+
         // Process any pending reload actions before exit
         $this->startReload();
-        
+
         // Save state to Redis
         $this->saveStateToRedis();
-        
+
         // Exit gracefully
         exit(0);
     }
@@ -424,10 +428,10 @@ class WorkerModelsEvents extends WorkerBase
 
             $this->startReload();
         }
-        
+
         // Save state before exit
         $this->saveStateToRedis();
-        
+
         // Execute all collected changes before exit
         $this->timeoutHandler();
     }

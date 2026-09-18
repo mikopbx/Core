@@ -89,6 +89,17 @@ class WorkerSafeScriptsCore extends WorkerBase
     private const int MAX_PING_FAILURES = 12;
 
     /**
+     * Consecutive missed Beanstalk pings tolerated before restarting a worker
+     * whose process is still alive. A worker busy in a long reload batch
+     * (WorkerModelsEvents replaying queued reload actions during a module
+     * install) can miss the 5s ping without being dead; force-restarting it
+     * mid-batch orphans its in-flight Beanstalk job. ~3 * 5s monitoring cycle =
+     * ~15s grace, well under the WATCHDOG_TIMEOUT_SEC of 120s. A missing PID
+     * means the worker really died and bypasses this grace (immediate respawn).
+     */
+    private const int MIN_BEANSTALK_PING_FAILURES = 3;
+
+    /**
      * Crash count threshold for auto-disabling a module.
      * If a module worker crashes this many times within 30 minutes, the module is disabled.
      * The 30-minute window is enforced by Redis EXPIRE in WorkerBase::recordModuleCrash().
@@ -847,18 +858,53 @@ class WorkerSafeScriptsCore extends WorkerBase
                 // Check service with higher priority
                 [$result] = $queue->sendRequest('ping', 5, 1);
             }
-            if (false === $result
-                && !$this->isModuleInCrashLoop($workerClassName)
-                && !$this->isCoreWorkerInCrashLoop($workerClassName)
-                && $this->memoryState === 'normal'
-                && $this->diskState === 'normal'
-                && !$this->shouldThrottleRestart($workerClassName)
-            ) {
-                $this->logWorkerRssBeforeRestart($workerClassName, $WorkerPID);
-                $this->recordRestart($workerClassName);
-                Processes::processPHPWorker($workerClassName);
-                SystemMessages::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
+
+            if ($result) {
+                // Worker is alive and responsive, reset the miss counter
+                $this->pingFailureCounts[$workerClassName] = 0;
+            } else {
+                // Missed ping. A live-but-busy worker (e.g. WorkerModelsEvents
+                // replaying a long reload batch) can miss the 5s ping without
+                // being dead; killing it mid-batch orphans its in-flight job.
+                // Tolerate a few consecutive misses before restarting a worker
+                // whose process still exists. A missing PID means the worker
+                // really died, so it is respawned immediately (no grace).
+                //
+                // The counter only gates this initial grace window: once it is
+                // passed the worker is retried on every cycle (as before this
+                // change), with shouldThrottleRestart()/crash-loop guards
+                // providing back-off. There is deliberately NO give-up cap —
+                // capping restarts here could permanently abandon a core worker
+                // after a transient pressure/throttle window.
+                $noProcess = ($WorkerPID === '');
+                $failures = ($this->pingFailureCounts[$workerClassName] ?? 0) + 1;
+                $this->pingFailureCounts[$workerClassName] = $failures;
+
+                if (!$noProcess && $failures < self::MIN_BEANSTALK_PING_FAILURES) {
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "Service {$workerClassName} missed ping ({$failures}/"
+                        . self::MIN_BEANSTALK_PING_FAILURES . "), waiting before restart.",
+                        LOG_DEBUG
+                    );
+                } elseif ($this->isModuleInCrashLoop($workerClassName)) {
+                    // Module disabled by crash-loop watchdog — logged inside isModuleInCrashLoop()
+                } elseif ($this->isCoreWorkerInCrashLoop($workerClassName)) {
+                    // Core worker crash-loop — logged inside isCoreWorkerInCrashLoop() (#1051)
+                } elseif ($this->memoryState !== 'normal') {
+                    // Skip restart during memory pressure (warning or emergency)
+                } elseif ($this->diskState !== 'normal') {
+                    // Skip restart during disk pressure — logged inside getDiskState() (#1051)
+                } elseif ($this->shouldThrottleRestart($workerClassName)) {
+                    // Skip restart due to throttling — logged inside shouldThrottleRestart()
+                } else {
+                    $this->logWorkerRssBeforeRestart($workerClassName, $WorkerPID);
+                    $this->recordRestart($workerClassName);
+                    Processes::processPHPWorker($workerClassName);
+                    SystemMessages::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
+                }
             }
+
             $timeElapsedSecs = round(microtime(true) - $start, 2);
             if ($timeElapsedSecs > 10) {
                 SystemMessages::sysLogMsg(
