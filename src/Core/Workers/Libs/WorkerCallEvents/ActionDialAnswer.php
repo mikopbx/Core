@@ -312,6 +312,36 @@ class ActionDialAnswer
             $row->writeAttribute('recordingfile', $recFile);
             $recSrcCh = $worker->getRecSrcChannel($data['agi_channel'], $row->src_chan, $row->dst_chan);
             $row->writeAttribute('rec_src_channel', $recSrcCh);
+        } else {
+            // Answered call-interception / Smart-IVR originate leg: the conversation is carried
+            // by a Local/<ext>@internal-originate channel, which lua event_dial_answer() skips for
+            // recording, while the real endpoint is reached via originate-create-channel (never
+            // dial_create_chan) - so no leg ever starts MixMonitor. Derive the real destination
+            // endpoint (PJSIP/<ext>) from the Local leg and record there (the endpoint outlives
+            // the Local channel that Asterisk optimizes out ~0.2s after answer).
+            $am = Util::getAstManager('off');
+            $getVar = static function (string $channel, string $variable) use ($am): string {
+                $value = $am->GetVar($channel, $variable, null, false);
+                return is_string($value) ? $value : '';
+            };
+            $recChan = InterceptionRecordingResolver::resolveDestinationChannel($data, $row, $getVar);
+            if ($recChan !== '' && $worker->enableMonitor((string)$row->src_num, (string)$row->dst_num)) {
+                $recordingFile = $worker->MixMonitor(
+                    $recChan,
+                    (string)$row->UNIQUEID,
+                    '',
+                    '',
+                    'fillAnsweredCdrInterception'
+                );
+                if ($recordingFile !== '') {
+                    // MixMonitor() already registered $recChan in mixMonitorChannels.
+                    $row->writeAttribute('recordingfile', $recordingFile);
+                    // Recording runs on the destination endpoint, so src_num is on LEFT (0),
+                    // matching how ordinary calls record on dst_chan.
+                    $recSrcCh = $worker->getRecSrcChannel($recChan, (string)$row->src_chan, $recChan);
+                    $row->writeAttribute('rec_src_channel', $recSrcCh);
+                }
+            }
         }
 
         // Capture display names via AMI from the A-leg (src_chan) channel.
