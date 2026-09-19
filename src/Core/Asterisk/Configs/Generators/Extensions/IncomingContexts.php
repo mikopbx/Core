@@ -247,14 +247,18 @@ class IncomingContexts extends AsteriskConfigClass
         $rout_data .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Set(__FROM_PEER=${CALLERID(num)}))' . "\n\t";
         $rout_data .= 'same => n,Gosub(add-trim-prefix-clid,${EXTEN},1)' . "\n\t";
 
+        // Process CallerID/DID (e.g. the real caller number from a provider header) before the
+        // work-time gate and the module hooks. An out-of-hours rule in check-out-work-time jumps
+        // straight to the announcement and hangs up without returning, so running this later left
+        // out-of-hours calls - and every downstream consumer (announcement/CDR, CRM and phonebook
+        // lookups, interception events) - with the raw provider CALLERID instead of the resolved one.
+        $rout_data .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-cid-did,${EXTEN},1)}" == "1"]?${CONTEXT}-cid-did,${EXTEN},1)' . "\n\t";
+
         // Prohibit caller redirection.
         $rout_data .= 'same => n,Set(__TRANSFER_OPTIONS=t)' . "\n";
         $rout_data .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_INCOMING_ROUT_BEFORE_DIAL_PRE_SYSTEM, [$rout_number]);
         $rout_data .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_INCOMING_ROUT_BEFORE_DIAL_SYSTEM, [$rout_number]);
         $rout_data .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_INCOMING_ROUT_BEFORE_DIAL, [$rout_number]);
-
-        // Process CallerID/DID if system context exists
-        $rout_data .= " \n\t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-cid-did,${EXTEN},1)}" == "1"]?${CONTEXT}-cid-did,${EXTEN},1)';
 
         // Describe the ability to jump into the custom sub context.
         $rout_data .= " \n\t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)';
