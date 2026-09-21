@@ -345,8 +345,17 @@ div#pbx-version {
 }
 
 /* CDR caller name from provider/phonebook */
+/* Cap the width and ellipsize: the CDR table is "single line" (white-space:
+   nowrap), so a long provider caller name would otherwise stretch the table
+   past the viewport and push the action buttons off screen. */
 .cdr-caller-name {
     font-style: italic;
+    display: inline-block;
+    max-width: 22em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
 }
 
 /* Mute the number when caller name is displayed next to it */
