@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\LicenseV2\LicenseV2;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Service\License;
 use Phalcon\Di\DiInterface;
@@ -67,6 +69,15 @@ class MarketPlaceProvider implements ServiceProviderInterface
             self::SERVICE_NAME,
             function () {
                 try {
+                    if (PbxSettings::getValueByKey(PbxSettings::LICENSE_V2_ENABLED) === '1') {
+                        try {
+                            return new LicenseV2();
+                        } catch (Throwable $e) {
+                            // The installation key pair is created by root workers; until then
+                            // other users keep working through the legacy service.
+                            SystemMessages::sysLogMsg(__CLASS__, 'LicenseV2 is unavailable: ' . $e->getMessage());
+                        }
+                    }
                     return new License();
                 } catch (Throwable $e) {
                     SystemMessages::sysLogMsg(__CLASS__, $e->getMessage());

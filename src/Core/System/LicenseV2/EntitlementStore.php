@@ -1,0 +1,209 @@
+<?php
+
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2026 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+declare(strict_types=1);
+
+namespace MikoPBX\Core\System\LicenseV2;
+
+use Closure;
+use RuntimeException;
+
+/**
+ * Keeps the entitlement token of this installation: builds signed requests (online and
+ * file-based offline exchange use the same request), accepts server answers, and answers
+ * "what is licensed right now" with a clock that never goes backwards.
+ */
+class EntitlementStore
+{
+    private const string TOKEN_FILE = 'entitlement.token';
+    private const string STATE_FILE = 'state.json';
+    private const string NONCE_ONLINE = 'nonceOnline';
+    private const string NONCE_OFFLINE = 'nonceOffline';
+
+    /** Do not rewrite the state file more often than this, seconds. */
+    private const int CLOCK_PERSIST_STEP = 60;
+
+    private Closure $clock;
+
+    public function __construct(
+        private readonly string $dir,
+        private readonly InstallationIdentity $identity,
+        private readonly string $serverPublicKeyPem,
+        ?Closure $clock = null
+    ) {
+        $this->clock = $clock ?? time(...);
+    }
+
+    /**
+     * Builds a request signed by the installation key. The nonce is remembered:
+     * only an answer to this very request will be accepted.
+     *
+     * Online refresh and the file-based offline exchange keep separate nonces, so the hourly
+     * refresh does not invalidate a request file the administrator has already exported.
+     *
+     * @return array{request: string, sig: string}
+     */
+    public function buildRequest(string $licenseKey, string $pbxVersion, bool $offline = false): array
+    {
+        $nonce = bin2hex(random_bytes(16));
+        $request = EntitlementToken::base64UrlEncode((string)json_encode([
+            'v' => EntitlementToken::VERSION,
+            'install' => $this->identity->getInstallId(),
+            'pubkey' => $this->identity->getPublicKeyPem(),
+            'key' => $licenseKey,
+            'nonce' => $nonce,
+            'ts' => $this->now(),
+            'pbx' => $pbxVersion,
+        ]));
+        $this->saveState([$offline ? self::NONCE_OFFLINE : self::NONCE_ONLINE => $nonce]);
+        return [
+            'request' => $request,
+            'sig' => EntitlementToken::base64UrlEncode($this->identity->sign($request)),
+        ];
+    }
+
+    /**
+     * Accepts the server answer to the pending request.
+     *
+     * @return array<string, mixed> Accepted payload.
+     * @throws RuntimeException When the token is forged, replayed, stale or foreign.
+     */
+    public function acceptToken(string $token): array
+    {
+        $payload = EntitlementToken::decodeVerified($token, $this->serverPublicKeyPem, $this->identity->getInstallId());
+        $state = $this->loadState();
+        $answeredSlot = '';
+        foreach ([self::NONCE_ONLINE, self::NONCE_OFFLINE] as $slot) {
+            $pendingNonce = (string)($state[$slot] ?? '');
+            if ($pendingNonce !== '' && hash_equals($pendingNonce, (string)($payload['nonce'] ?? ''))) {
+                $answeredSlot = $slot;
+            }
+        }
+        if ($answeredSlot === '') {
+            throw new RuntimeException('Entitlement token does not answer the pending request');
+        }
+        // Freshness is judged by the clock as it was before this token: a token dated in the
+        // future must be refused, not allowed to drag the clock anchor after itself.
+        $now = $this->now();
+        if (!EntitlementToken::isFresh($payload, $now)) {
+            throw new RuntimeException('Entitlement token is expired or the PBX clock is wrong');
+        }
+        $this->writeAtomically(self::TOKEN_FILE, trim($token));
+        // The nonce is spent only by an accepted token, a refused one leaves the request pending.
+        $this->saveState([$answeredSlot => '', 'lastSeen' => max($now, (int)$payload['iat'])]);
+        return $payload;
+    }
+
+    /**
+     * Payload with a valid signature, possibly expired; null when there is no trustworthy token.
+     * An expired payload still tells which modules are paid.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function lastVerifiedPayload(): ?array
+    {
+        $token = @file_get_contents("$this->dir/" . self::TOKEN_FILE);
+        if ($token === false) {
+            return null;
+        }
+        try {
+            return EntitlementToken::decodeVerified($token, $this->serverPublicKeyPem, $this->identity->getInstallId());
+        } catch (RuntimeException) {
+            return null;
+        }
+    }
+
+    /**
+     * @param string|null $licenseKey Current license key of the PBX; a token issued for another key
+     *                                licenses nothing, so a key reset or transfer takes effect at once.
+     */
+    public function featureAvailable(string $featureId, ?string $licenseKey = null): bool
+    {
+        $payload = $this->lastVerifiedPayload();
+        $now = $this->now();
+        return $payload !== null
+            && ($licenseKey === null || hash_equals($licenseKey, (string)($payload['key'] ?? '')))
+            && EntitlementToken::isFresh($payload, $now)
+            && EntitlementToken::featureValid($payload, $featureId, $now);
+    }
+
+    /**
+     * Wall clock that never goes backwards between calls and reboots.
+     *
+     * ponytail: root can edit state.json and rewind the anchor; the online path re-anchors
+     * on every server answer, a closed contour relies on the token lifetime only.
+     */
+    public function now(): int
+    {
+        $wallClock = ($this->clock)();
+        $lastSeen = (int)($this->loadState()['lastSeen'] ?? 0);
+        // Only root workers own the state; the web server user reads the anchor they keep.
+        if ($wallClock > $lastSeen + self::CLOCK_PERSIST_STEP && is_writable($this->dir)) {
+            $this->saveState(['lastSeen' => $wallClock]);
+        }
+        return max($wallClock, $lastSeen);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function loadState(): array
+    {
+        $state = json_decode((string)@file_get_contents("$this->dir/" . self::STATE_FILE), true);
+        return is_array($state) ? $state : [];
+    }
+
+    /**
+     * Read-modify-write under a lock, so concurrent workers do not lose each other's changes.
+     *
+     * @param array<string, mixed> $changes
+     * @throws RuntimeException
+     */
+    private function saveState(array $changes): void
+    {
+        $lock = fopen("$this->dir/" . self::STATE_FILE . '.lock', 'c');
+        if ($lock === false || !flock($lock, LOCK_EX)) {
+            throw new RuntimeException("Can not lock the license state in $this->dir");
+        }
+        try {
+            $this->writeAtomically(self::STATE_FILE, (string)json_encode(array_merge($this->loadState(), $changes)));
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
+    /**
+     * Readers take no locks: rename() shows them either the old or the new content, never a torn one.
+     *
+     * @throws RuntimeException
+     */
+    private function writeAtomically(string $fileName, string $content): void
+    {
+        $temporaryFile = "$this->dir/$fileName." . bin2hex(random_bytes(4)) . '.tmp';
+        if (
+            file_put_contents($temporaryFile, $content) !== strlen($content)
+            || !rename($temporaryFile, "$this->dir/$fileName")
+        ) {
+            @unlink($temporaryFile);
+            throw new RuntimeException("Can not write $fileName to $this->dir");
+        }
+    }
+}
