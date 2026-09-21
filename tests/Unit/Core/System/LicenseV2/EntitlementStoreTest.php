@@ -130,6 +130,78 @@ class EntitlementStoreTest extends TestCase
         $this->assertSame(['ModuleLdapSync' => '54'], $store->lastVerifiedPayload()['modules']);
     }
 
+    public function testGracePeriodKeepsLicenseWhileServersAreUnreachable(): void
+    {
+        $store = $this->newStore();
+        $store->acceptToken($this->issueFor($store, overrides: ['offlineUntil' => self::NOW + 30 * self::DAY]));
+
+        $this->wallClock = self::NOW + 10 * self::DAY;
+        $this->assertTrue($store->featureAvailable('54'));
+
+        $this->wallClock = self::NOW + 31 * self::DAY;
+        $this->assertFalse($store->featureAvailable('54'));
+    }
+
+    public function testSignedRefusalCancelsGracePeriodUntilNextAcceptedToken(): void
+    {
+        $store = $this->newStore();
+        $store->acceptToken($this->issueFor($store, overrides: ['offlineUntil' => self::NOW + 30 * self::DAY]));
+        $this->wallClock = self::NOW + 10 * self::DAY;
+        $this->assertTrue($store->featureAvailable('54'));
+
+        $refusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'Unknown license key');
+        $this->assertSame('"Unknown license key"', $store->acceptRefusal($refusal));
+        $this->assertFalse($store->featureAvailable('54'));
+
+        $store->acceptToken($this->issueFor($store, overrides: [
+            'iat' => $this->wallClock,
+            'exp' => $this->wallClock + 3 * self::DAY,
+            'offlineUntil' => $this->wallClock + 30 * self::DAY,
+        ]));
+        // Past exp, inside the grace period: licensed only if the accepted token has cleared the refusal.
+        $this->wallClock += 10 * self::DAY;
+        $this->assertTrue($store->featureAvailable('54'));
+    }
+
+    public function testRefusalSignedByAnotherKeyKeepsGracePeriod(): void
+    {
+        $store = $this->newStore();
+        $store->acceptToken($this->issueFor($store, overrides: ['offlineUntil' => self::NOW + 30 * self::DAY]));
+        $this->wallClock = self::NOW + 10 * self::DAY;
+        [$foreignPrivateKeyPem] = self::newKeyPair();
+        $forged = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), [], $foreignPrivateKeyPem, 'Go away');
+
+        try {
+            $store->acceptRefusal($forged);
+            $this->fail('A refusal signed by a foreign key must be rejected');
+        } catch (RuntimeException) {
+        }
+        $this->assertTrue($store->featureAvailable('54'));
+    }
+
+    public function testReplayedRefusalIsRejected(): void
+    {
+        $store = $this->newStore();
+        $store->acceptToken($this->issueFor($store, overrides: ['offlineUntil' => self::NOW + 30 * self::DAY]));
+        $oldRefusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'Unknown license key');
+        $store->buildRequest('MIKO-TEST', '2026.3.1');
+
+        $this->expectExceptionMessage('does not answer the pending request');
+        $store->acceptRefusal($oldRefusal);
+    }
+
+    public function testGracePeriodDoesNotExtendAnExpiredFeature(): void
+    {
+        $store = $this->newStore();
+        $store->acceptToken($this->issueFor($store, overrides: [
+            'offlineUntil' => self::NOW + 30 * self::DAY,
+            'features' => ['54' => self::NOW + 5 * self::DAY],
+        ]));
+        $this->wallClock = self::NOW + 10 * self::DAY;
+
+        $this->assertFalse($store->featureAvailable('54'));
+    }
+
     public function testClockRollbackDoesNotReviveExpiredToken(): void
     {
         $store = $this->newStore();
@@ -251,9 +323,16 @@ class EntitlementStoreTest extends TestCase
      * @param array{request: string, sig: string} $signed
      * @param array<string, mixed> $overrides
      */
-    private function sign(array $signed, array $overrides = [], ?string $signingKeyPem = null): string
-    {
+    private function sign(
+        array $signed,
+        array $overrides = [],
+        ?string $signingKeyPem = null,
+        ?string $refusal = null
+    ): string {
         $request = json_decode(EntitlementToken::base64UrlDecode($signed['request']), true);
+        if ($refusal !== null) {
+            $overrides += ['refused' => true, 'error' => $refusal];
+        }
         $payloadPart = EntitlementToken::base64UrlEncode((string)json_encode($overrides + [
             'v' => EntitlementToken::VERSION,
             'install' => $request['install'],

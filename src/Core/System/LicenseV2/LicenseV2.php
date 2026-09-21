@@ -184,13 +184,17 @@ class LicenseV2
     }
 
     /**
-     * Online exchange with the licensing server. A failure is not fatal: the stored token keeps
-     * working until it expires, then the enforcer fails closed.
+     * Online exchange with the licensing servers, tried in the configured order. An unreachable or
+     * failing server passes the turn to the next one; when none answers the stored token keeps
+     * working through its grace period, then the enforcer fails closed. A signed "no" is final:
+     * the others are not asked and the grace period is cancelled. An unsigned error is what any
+     * proxy or captive portal can produce, so it only passes the turn.
      */
     public function refresh(bool $force = false): bool
     {
-        $serverUrl = rtrim(PbxSettings::getValueByKey(PbxSettings::LICENSE_V2_SERVER_URL), '/');
-        if ($serverUrl === '') {
+        $configuredUrls = PbxSettings::getValueByKey(PbxSettings::LICENSE_V2_SERVER_URL);
+        $serverUrls = preg_split('/[\s,]+/', $configuredUrls, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if ($serverUrls === []) {
             // Closed contour: tokens arrive by the file exchange only.
             return false;
         }
@@ -200,18 +204,33 @@ class LicenseV2
         if (!$force && $sameKey && $this->store->now() < $halfLife) {
             return false;
         }
-        try {
-            $response = (new GuzzleHttp\Client())->request('POST', "$serverUrl/entitlement", [
-                'json' => $this->buildRequest(false),
-                'timeout' => 15,
-            ]);
-            $answer = json_decode($response->getBody()->getContents(), true);
-            $this->store->acceptToken((string)($answer['token'] ?? ''));
-            return true;
-        } catch (Throwable $e) {
-            $this->log('Entitlement refresh failed: ' . $e->getMessage());
-            return false;
+        foreach ($serverUrls as $serverUrl) {
+            try {
+                $response = (new GuzzleHttp\Client())->request('POST', rtrim($serverUrl, '/') . '/entitlement', [
+                    'json' => $this->buildRequest(false),
+                    'timeout' => 15,
+                    'http_errors' => false,
+                ]);
+                $answer = (array)json_decode($response->getBody()->getContents(), true);
+            } catch (Throwable $e) {
+                $this->log("Entitlement server $serverUrl is unavailable: " . $e->getMessage());
+                continue;
+            }
+            try {
+                if (is_string($answer['refusal'] ?? null)) {
+                    $this->log("Refused by $serverUrl: " . $this->store->acceptRefusal($answer['refusal']));
+                    return false;
+                }
+                if ($response->getStatusCode() === 200) {
+                    $this->store->acceptToken((string)($answer['token'] ?? ''));
+                    return true;
+                }
+                $this->log("Entitlement server $serverUrl failed: HTTP " . $response->getStatusCode());
+            } catch (Throwable $e) {
+                $this->log("Answer of $serverUrl is rejected: " . $e->getMessage());
+            }
         }
+        return false;
     }
 
     /**
@@ -261,10 +280,8 @@ class LicenseV2
 
     private function moduleJsonFeature(string $moduleUniqueId): string
     {
-        $moduleJson = json_decode(
-            (string)@file_get_contents(PbxExtensionUtils::getModuleDir($moduleUniqueId) . '/module.json'),
-            true
-        );
+        $moduleJsonFile = PbxExtensionUtils::getModuleDir($moduleUniqueId) . '/module.json';
+        $moduleJson = is_file($moduleJsonFile) ? json_decode((string)file_get_contents($moduleJsonFile), true) : null;
         $featureId = (int)($moduleJson['lic_feature_id'] ?? 0);
         return $featureId > 0 ? (string)$featureId : '';
     }

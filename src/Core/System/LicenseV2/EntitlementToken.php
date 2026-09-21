@@ -30,8 +30,15 @@ use RuntimeException;
  * Wire format: base64url(payloadJson) . '.' . base64url(signature).
  * The signature covers the base64url payload string, so no JSON canonicalization is needed.
  *
- * Payload: v, install, key, nonce, iat, exp,
+ * Payload: v, install, key, nonce, iat, exp, offlineUntil,
  *          features {featureId: expireTimestamp}, modules {moduleUniqueID: featureId}.
+ *
+ * exp is when the PBX must have a newer token; offlineUntil is how long the server lets the last
+ * token live while the licensing servers can not be reached (the grace period). Grace extends the
+ * token only, never a feature: the issuer must set features[*] >= offlineUntil for it to matter.
+ *
+ * A refusal uses the same wire format with payload: v, install, nonce, refused = true, error.
+ * It is signed as well, so only the licensing server can take the grace period away.
  */
 class EntitlementToken
 {
@@ -49,6 +56,22 @@ class EntitlementToken
      */
     public static function decodeVerified(string $token, string $serverPublicKeyPem, string $installId): array
     {
+        $payload = self::decodeSigned($token, $serverPublicKeyPem, $installId);
+        if (!is_array($payload['modules'] ?? null) || $payload['modules'] === []) {
+            // An empty map must never mean "nothing to check".
+            throw new RuntimeException('Entitlement token has no module map');
+        }
+        return $payload;
+    }
+
+    /**
+     * Signature, version and installation binding of any server-signed message.
+     *
+     * @return array<string, mixed>
+     * @throws RuntimeException
+     */
+    public static function decodeSigned(string $token, string $serverPublicKeyPem, string $installId): array
+    {
         $parts = explode('.', trim($token));
         if (count($parts) !== 2) {
             throw new RuntimeException('Malformed entitlement token');
@@ -62,10 +85,6 @@ class EntitlementToken
         if (!is_array($payload) || ($payload['v'] ?? null) !== self::VERSION) {
             throw new RuntimeException('Unsupported entitlement token version');
         }
-        if (!is_array($payload['modules'] ?? null) || $payload['modules'] === []) {
-            // An empty map must never mean "nothing to check".
-            throw new RuntimeException('Entitlement token has no module map');
-        }
         if (!hash_equals($installId, (string)($payload['install'] ?? ''))) {
             throw new RuntimeException('Entitlement token belongs to another installation');
         }
@@ -74,11 +93,15 @@ class EntitlementToken
 
     /**
      * @param array<string, mixed> $payload
+     * @param bool $withGrace Count the server-granted offline grace period as lifetime.
      */
-    public static function isFresh(array $payload, int $now): bool
+    public static function isFresh(array $payload, int $now, bool $withGrace = false): bool
     {
-        return (int)($payload['iat'] ?? PHP_INT_MAX) <= $now + self::CLOCK_SKEW
-            && (int)($payload['exp'] ?? 0) > $now;
+        $validUntil = (int)($payload['exp'] ?? 0);
+        if ($withGrace) {
+            $validUntil = max($validUntil, (int)($payload['offlineUntil'] ?? 0));
+        }
+        return (int)($payload['iat'] ?? PHP_INT_MAX) <= $now + self::CLOCK_SKEW && $validUntil > $now;
     }
 
     /**

@@ -288,7 +288,7 @@ trait PbxSettingsConstantsTrait
     public const string DISABLE_ALL_MODULES = 'DisableAllModules'; // Disable all modules if it set to '1'
     public const string MODULES_LEGACY_INSTALL_PIPELINE = 'ModulesLegacyInstallPipeline'; // Emergency switch back to the pre-journal install pipeline if set to '1'
     public const string LICENSE_V2_ENABLED = 'LicenseV2Enabled'; // Feature checks by the server-signed entitlement token instead of gnatsd if set to '1'
-    public const string LICENSE_V2_SERVER_URL = 'LicenseV2ServerUrl'; // Base URL of the /protect/v2 API (https in production); empty = closed contour, file exchange only
+    public const string LICENSE_V2_SERVER_URL = 'LicenseV2ServerUrl'; // Base URLs of the /protect/v2 API, space or comma separated, tried in order (https in production); empty = closed contour, file exchange only
 
     // Email notification toggles
     /** @FieldType('boolean') */

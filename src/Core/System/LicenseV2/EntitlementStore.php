@@ -107,7 +107,7 @@ class EntitlementStore
         }
         $this->writeAtomically(self::TOKEN_FILE, trim($token));
         // The nonce is spent only by an accepted token, a refused one leaves the request pending.
-        $this->saveState([$answeredSlot => '', 'lastSeen' => max($now, (int)$payload['iat'])]);
+        $this->saveState([$answeredSlot => '', 'refused' => false, 'lastSeen' => max($now, (int)$payload['iat'])]);
         return $payload;
     }
 
@@ -119,12 +119,17 @@ class EntitlementStore
      */
     public function lastVerifiedPayload(): ?array
     {
-        $token = @file_get_contents("$this->dir/" . self::TOKEN_FILE);
-        if ($token === false) {
+        // No "@": workers report a suppressed warning as a shutdown error, so a missing file is asked about.
+        $tokenFile = "$this->dir/" . self::TOKEN_FILE;
+        if (!is_file($tokenFile)) {
             return null;
         }
         try {
-            return EntitlementToken::decodeVerified($token, $this->serverPublicKeyPem, $this->identity->getInstallId());
+            return EntitlementToken::decodeVerified(
+                (string)file_get_contents($tokenFile),
+                $this->serverPublicKeyPem,
+                $this->identity->getInstallId()
+            );
         } catch (RuntimeException) {
             return null;
         }
@@ -138,10 +143,36 @@ class EntitlementStore
     {
         $payload = $this->lastVerifiedPayload();
         $now = $this->now();
+        // Grace covers unreachable servers only; after an explicit refusal the token lives till exp.
+        $withGrace = ($this->loadState()['refused'] ?? false) !== true;
         return $payload !== null
             && ($licenseKey === null || hash_equals($licenseKey, (string)($payload['key'] ?? '')))
-            && EntitlementToken::isFresh($payload, $now)
+            && EntitlementToken::isFresh($payload, $now, $withGrace)
             && EntitlementToken::featureValid($payload, $featureId, $now);
+    }
+
+    /**
+     * The licensing server has answered the pending online request and said no: the offline grace
+     * period no longer applies. The refusal must be signed; a bare HTTP error may come from any
+     * proxy on the way and is not a refusal.
+     *
+     * @return string Reason given by the server.
+     * @throws RuntimeException When the refusal is not authentic or answers another request.
+     */
+    public function acceptRefusal(string $signedRefusal): string
+    {
+        $installId = $this->identity->getInstallId();
+        $payload = EntitlementToken::decodeSigned($signedRefusal, $this->serverPublicKeyPem, $installId);
+        $pendingNonce = (string)($this->loadState()[self::NONCE_ONLINE] ?? '');
+        if (
+            ($payload['refused'] ?? false) !== true
+            || $pendingNonce === ''
+            || !hash_equals($pendingNonce, (string)($payload['nonce'] ?? ''))
+        ) {
+            throw new RuntimeException('Refusal does not answer the pending request');
+        }
+        $this->saveState([self::NONCE_ONLINE => '', 'refused' => true]);
+        return (string)json_encode($payload['error'] ?? '');
     }
 
     /**
@@ -166,7 +197,8 @@ class EntitlementStore
      */
     private function loadState(): array
     {
-        $state = json_decode((string)@file_get_contents("$this->dir/" . self::STATE_FILE), true);
+        $stateFile = "$this->dir/" . self::STATE_FILE;
+        $state = is_file($stateFile) ? json_decode((string)file_get_contents($stateFile), true) : null;
         return is_array($state) ? $state : [];
     }
 
@@ -178,6 +210,9 @@ class EntitlementStore
      */
     private function saveState(array $changes): void
     {
+        if (!is_writable($this->dir)) {
+            throw new RuntimeException("License state in $this->dir is written by root workers only");
+        }
         $lock = fopen("$this->dir/" . self::STATE_FILE . '.lock', 'c');
         if ($lock === false || !flock($lock, LOCK_EX)) {
             throw new RuntimeException("Can not lock the license state in $this->dir");
@@ -202,7 +237,9 @@ class EntitlementStore
             file_put_contents($temporaryFile, $content) !== strlen($content)
             || !rename($temporaryFile, "$this->dir/$fileName")
         ) {
-            @unlink($temporaryFile);
+            if (is_file($temporaryFile)) {
+                unlink($temporaryFile);
+            }
             throw new RuntimeException("Can not write $fileName to $this->dir");
         }
     }
