@@ -43,6 +43,46 @@ class EntitlementStoreTest extends TestCase
         $this->assertFalse($store->featureAvailable('41'));
     }
 
+    public function testTokenWithSeatsExposesLimits(): void
+    {
+        $store = $this->newStore();
+        $payload = $store->acceptToken($this->issueFor($store, ['seats' => ['54' => 2]]));
+        $this->assertSame(2, EntitlementToken::seatLimit($payload, '54'));
+        $this->assertNull(EntitlementToken::seatLimit($payload, '55'));
+    }
+
+    /** @dataProvider malformedSeats */
+    public function testMalformedSeatsRejectsTokenAndKeepsPreviousOne(mixed $seats): void
+    {
+        $store = $this->newStore();
+        $store->acceptToken($this->issueFor($store));
+        $rejected = false;
+        try {
+            $store->acceptToken($this->issueFor($store, ['seats' => $seats]));
+        } catch (RuntimeException $e) {
+            // Not caught inside the try above: PHPUnit's AssertionFailedError (what $this->fail()
+            // throws) extends RuntimeException, so a fail() call inside the try would be
+            // silently swallowed by this very catch instead of failing the test.
+            $rejected = true;
+            $this->assertStringContainsString('seats', $e->getMessage());
+        }
+        $this->assertTrue($rejected, 'malformed seats accepted');
+        $this->assertTrue($store->featureAvailable('54'));
+    }
+
+    public static function malformedSeats(): array
+    {
+        return [
+            'string' => [['54' => '2']],
+            'zero' => [['54' => 0]],
+            'float' => [['54' => 1.5]],
+            'null' => [['54' => null]],
+            'unknown feature' => [['99' => 2]],
+            'not a map' => [[2]],
+            'scalar' => ['2'],
+        ];
+    }
+
     public function testPrivateKeyIsCreatedOwnerOnlyAndReused(): void
     {
         $first = new InstallationIdentity($this->dir);

@@ -31,7 +31,8 @@ use RuntimeException;
  * The signature covers the base64url payload string, so no JSON canonicalization is needed.
  *
  * Payload: v, install, key, nonce, iat, exp, offlineUntil,
- *          features {featureId: expireTimestamp}, modules {moduleUniqueID: featureId}.
+ *          features {featureId: expireTimestamp}, modules {moduleUniqueID: featureId},
+ *          seats {featureId: limit} (optional).
  *
  * exp is when the PBX must have a newer token; offlineUntil is how long the server lets the last
  * token live while the licensing servers can not be reached (the grace period). Grace extends the
@@ -60,6 +61,9 @@ class EntitlementToken
         if (!is_array($payload['modules'] ?? null) || $payload['modules'] === []) {
             // An empty map must never mean "nothing to check".
             throw new RuntimeException('Entitlement token has no module map');
+        }
+        if (array_key_exists('seats', $payload)) {
+            self::assertSeatsMap($payload['seats'], array_keys((array)($payload['features'] ?? [])));
         }
         return $payload;
     }
@@ -110,6 +114,37 @@ class EntitlementToken
     public static function featureValid(array $payload, string $featureId, int $now): bool
     {
         return (int)($payload['features'][$featureId] ?? 0) > $now;
+    }
+
+    /**
+     * Seat limit of a feature; null when the feature is licensed per installation (no seats to count).
+     *
+     * @param array<string, mixed> $payload
+     */
+    public static function seatLimit(array $payload, string $featureId): ?int
+    {
+        $limit = $payload['seats'][$featureId] ?? null;
+        return is_int($limit) ? $limit : null;
+    }
+
+    /**
+     * A signature does not make the map well-formed: every value must be an int >= 1 keyed by a licensed feature.
+     *
+     * @param array<int|string> $licensedFeatures
+     * @throws RuntimeException
+     */
+    private static function assertSeatsMap(mixed $seats, array $licensedFeatures): void
+    {
+        if (!is_array($seats)) {
+            throw new RuntimeException('Entitlement token has a malformed seats map');
+        }
+        $licensedFeatureIds = array_map('strval', $licensedFeatures);
+        foreach ($seats as $featureId => $limit) {
+            $isLicensed = in_array((string)$featureId, $licensedFeatureIds, true);
+            if (!is_int($limit) || $limit < 1 || !$isLicensed) {
+                throw new RuntimeException('Entitlement token has a malformed seats map');
+            }
+        }
     }
 
     public static function base64UrlEncode(string $data): string
