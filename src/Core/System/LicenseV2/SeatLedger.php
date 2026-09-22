@@ -56,7 +56,8 @@ class SeatLedger
     /**
      * @param array<string, mixed> $holder Who holds the session (hostname, username, process...), report only.
      * @return string Session id.
-     * @throws RuntimeException When the ttl, the holder or the number of sessions is out of bounds.
+     * @throws RuntimeException When the ttl or the holder is out of bounds.
+     * @throws SessionCeilingException When the ledger already holds as many sessions as it may.
      */
     public function startSession(array $holder, int $ttl, int $maxSessions): string
     {
@@ -69,7 +70,7 @@ class SeatLedger
         }
         return $this->transaction(function (array &$ledger, int $now) use ($holder, $ttl, $maxSessions): string {
             if (count($ledger['sessions']) >= $maxSessions) {
-                throw new RuntimeException('Too many license sessions');
+                throw new SessionCeilingException('Too many license sessions');
             }
             $id = bin2hex(random_bytes(16));
             $ledger['sessions'][$id] = ['holder' => $holder, 'ttl' => $ttl, 'expires' => $now + $ttl, 'features' => []];
@@ -78,15 +79,20 @@ class SeatLedger
     }
 
     /**
+     * Takes a seat of the feature, or, with $limit null (a feature licensed per installation),
+     * only checks that the session is alive. Never renews the lease: keepalive() is the single
+     * door that re-checks the rights, and nothing may stay alive without passing through it.
+     *
+     * @param int|null $limit Seats the feature is licensed for; null counts no seats.
      * @return int Seconds left on the lease.
      * @throws SeatException 1021 unknown or expired session, 1051 no free seat.
      */
-    public function capture(string $sessionId, string $featureId, int $limit): int
+    public function capture(string $sessionId, string $featureId, ?int $limit): int
     {
         return $this->transaction(function (array &$ledger, int $now) use ($sessionId, $featureId, $limit): int {
             $this->liveSession($ledger, $sessionId);
             $features = $ledger['sessions'][$sessionId]['features'];
-            if (!in_array($featureId, $features, true)) {
+            if ($limit !== null && !in_array($featureId, $features, true)) {
                 if ($this->countSeats($ledger, $featureId) >= $limit) {
                     throw new SeatException('No free seats for the feature', SeatException::NO_SEATS);
                 }
@@ -165,32 +171,36 @@ class SeatLedger
     }
 
     /**
-     * Whether this session took the feature later than every other session still holding it:
-     * the one to give it back first when the limit is cut.
+     * Whether this session is beyond the new limit and must give the feature back: true when at
+     * least $limit other live sessions took it no later than this one. Asking by rank instead of
+     * "am I the very latest" is what lets one keepalive round shed the whole excess: with a limit
+     * cut to one, every holder but the oldest answers true at once.
      *
-     * Equal capture times make both sessions "latest", so a cut by one seat may free two.
+     * The comparison is "no later" and not "earlier" on purpose: capture times have a granularity
+     * of one second, and holders of the same second must all give the seat back rather than all
+     * keep it — a cut by one seat may then free two, but the excess never outlives its TTL.
      */
-    public function isLatestHolder(string $sessionId, string $featureId): bool
+    public function isOverLimit(string $sessionId, string $featureId, int $limit): bool
     {
-        return $this->transaction(function (array &$ledger) use ($sessionId, $featureId): bool {
+        return $this->transaction(function (array &$ledger) use ($sessionId, $featureId, $limit): bool {
             $mine = $this->capturedAt($ledger['sessions'][$sessionId] ?? [], $featureId);
             if ($mine === null) {
                 return false;
             }
+            $olderHolders = 0;
             foreach ($ledger['sessions'] as $id => $session) {
-                // ponytail: seconds-granularity order, ties broken in favour of releasing both;
-                // a monotonic capture counter if freeing one seat too many ever matters.
-                if ($id !== $sessionId && ($this->capturedAt($session, $featureId) ?? -1) > $mine) {
-                    return false;
-                }
+                $theirs = $id === $sessionId ? null : $this->capturedAt($session, $featureId);
+                // ponytail: seconds-granularity rank; a monotonic capture counter if freeing
+                // one seat too many on a tie ever matters.
+                $olderHolders += ($theirs !== null && $theirs <= $mine) ? 1 : 0;
             }
-            return true;
+            return $olderHolders >= $limit;
         });
     }
 
     /**
      * When the session took a feature it still holds; null when it does not hold it. A session
-     * written before 'captured' existed counts as the oldest holder, never as the latest.
+     * written before 'captured' existed counts as the oldest holder, so it is shed last.
      *
      * @param array<string, mixed> $session
      */

@@ -90,7 +90,8 @@ class EntitlementStore
      * Accepts the server answer to the pending request.
      *
      * @return array<string, mixed> Accepted payload.
-     * @throws RuntimeException When the token is forged, replayed, stale or foreign.
+     * @throws TokenRejectedException When the token is forged, replayed, stale or foreign.
+     * @throws RuntimeException When the state can not be locked or written.
      */
     public function acceptToken(string $token): array
     {
@@ -110,10 +111,10 @@ class EntitlementStore
                 }
             }
             if ($answeredSlot === '') {
-                throw new RuntimeException('Entitlement token does not answer the pending request');
+                throw new TokenRejectedException('Entitlement token does not answer the pending request');
             }
             if (!EntitlementToken::isFresh($payload, $now)) {
-                throw new RuntimeException('Entitlement token is expired or the PBX clock is wrong');
+                throw new TokenRejectedException('Entitlement token is expired or the PBX clock is wrong');
             }
             $this->writeAtomically(self::TOKEN_FILE, trim($token));
             // The nonce is spent only by an accepted token, a refused one leaves the request pending.
@@ -210,6 +211,9 @@ class EntitlementStore
      */
     public function noteFailure(): int
     {
+        // ponytail: the read and the write are not one transaction, so two workers failing at the
+        // same moment may both read the same backoff and one doubling is lost — the fleet then
+        // waits half as long once. Take the state lock around the whole method if it ever matters.
         $previous = (int)($this->loadState()[self::BACKOFF] ?? 0);
         $backoff = min(self::BACKOFF_MAX, max(self::BACKOFF_MIN, $previous * 2));
         $delay = (int)round($backoff * random_int(75, 125) / 100);

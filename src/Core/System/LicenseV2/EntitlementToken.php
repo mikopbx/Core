@@ -22,8 +22,6 @@ declare(strict_types=1);
 
 namespace MikoPBX\Core\System\LicenseV2;
 
-use RuntimeException;
-
 /**
  * Entitlement token signed by the licensing server (Ed25519).
  *
@@ -53,14 +51,14 @@ class EntitlementToken
      * so the module-to-feature map of an expired token stays trustworthy.
      *
      * @return array<string, mixed> Decoded payload.
-     * @throws RuntimeException When the token is malformed, forged or issued for another installation.
+     * @throws TokenRejectedException When the token is malformed, forged or issued for another installation.
      */
     public static function decodeVerified(string $token, string $serverPublicKeyPem, string $installId): array
     {
         $payload = self::decodeSigned($token, $serverPublicKeyPem, $installId);
         if (!is_array($payload['modules'] ?? null) || $payload['modules'] === []) {
             // An empty map must never mean "nothing to check".
-            throw new RuntimeException('Entitlement token has no module map');
+            throw new TokenRejectedException('Entitlement token has no module map');
         }
         if (array_key_exists('seats', $payload)) {
             self::assertSeatsMap($payload['seats'], array_keys((array)($payload['features'] ?? [])));
@@ -72,25 +70,25 @@ class EntitlementToken
      * Signature, version and installation binding of any server-signed message.
      *
      * @return array<string, mixed>
-     * @throws RuntimeException
+     * @throws TokenRejectedException
      */
     public static function decodeSigned(string $token, string $serverPublicKeyPem, string $installId): array
     {
         $parts = explode('.', trim($token));
         if (count($parts) !== 2) {
-            throw new RuntimeException('Malformed entitlement token');
+            throw new TokenRejectedException('Malformed entitlement token');
         }
         [$payloadPart, $signaturePart] = $parts;
         $signature = self::base64UrlDecode($signaturePart);
         if (openssl_verify($payloadPart, $signature, $serverPublicKeyPem, 0) !== 1) {
-            throw new RuntimeException('Entitlement token signature is invalid');
+            throw new TokenRejectedException('Entitlement token signature is invalid');
         }
         $payload = json_decode(self::base64UrlDecode($payloadPart), true);
         if (!is_array($payload) || ($payload['v'] ?? null) !== self::VERSION) {
-            throw new RuntimeException('Unsupported entitlement token version');
+            throw new TokenRejectedException('Unsupported entitlement token version');
         }
         if (!hash_equals($installId, (string)($payload['install'] ?? ''))) {
-            throw new RuntimeException('Entitlement token belongs to another installation');
+            throw new TokenRejectedException('Entitlement token belongs to another installation');
         }
         return $payload;
     }
@@ -131,18 +129,18 @@ class EntitlementToken
      * A signature does not make the map well-formed: every value must be an int >= 1 keyed by a licensed feature.
      *
      * @param array<int|string> $licensedFeatures
-     * @throws RuntimeException
+     * @throws TokenRejectedException
      */
     private static function assertSeatsMap(mixed $seats, array $licensedFeatures): void
     {
         if (!is_array($seats)) {
-            throw new RuntimeException('Entitlement token has a malformed seats map');
+            throw new TokenRejectedException('Entitlement token has a malformed seats map');
         }
         $licensedFeatureIds = array_map('strval', $licensedFeatures);
         foreach ($seats as $featureId => $limit) {
             $isLicensed = in_array((string)$featureId, $licensedFeatureIds, true);
             if (!is_int($limit) || $limit < 1 || !$isLicensed) {
-                throw new RuntimeException('Entitlement token has a malformed seats map');
+                throw new TokenRejectedException('Entitlement token has a malformed seats map');
             }
         }
     }

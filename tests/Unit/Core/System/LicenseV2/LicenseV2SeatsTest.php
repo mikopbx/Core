@@ -77,6 +77,45 @@ class LicenseV2SeatsTest extends TestCase
         $this->assertSame([], $license->usageGet()['usage']);
     }
 
+    /**
+     * Only sessionKeepalive() re-checks the rights, so only it may renew the lease. A client
+     * polling captureFeature on a feature without a seat limit must not keep the session — and
+     * with it every seat it holds — alive without ever passing that check.
+     */
+    public function testCaptureOfAFeatureWithoutSeatsDoesNotRenewTheLease(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400, '55' => self::NOW + 86400], ['54' => 1]);
+        $s = $license->sessionStart([], 60)['session_id'];
+        $this->assertTrue($license->captureFeature('54', $s)['success']);
+        $this->wallClock += 50;
+        $granted = $license->captureFeature('55', $s);
+        $this->assertTrue($granted['success'], 'a feature without a seat limit is still granted');
+        $this->assertSame(10, $granted['validttl'], 'validttl is what is left of the lease, not a full ttl');
+        $this->wallClock += 15;
+        $this->assertSame(1021, $license->sessionKeepalive($s)['extcode'] ?? null, 'the lease was renewed');
+    }
+
+    /**
+     * The excess must not outlive one TTL: every session over the new limit gives the feature
+     * back in the same keepalive round, not one holder per round.
+     */
+    public function testCutLimitShedsTheWholeExcessInOneKeepaliveRound(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 3]);
+        $sessions = [];
+        foreach (['a', 'b', 'c'] as $name) {
+            $sessions[$name] = $license->sessionStart(['username' => $name], 60)['session_id'];
+            $license->captureFeature('54', $sessions[$name]);
+            $this->wallClock += 1;
+        }
+        $this->issue($license, ['54' => self::NOW + 86400], ['54' => 1]);
+
+        $this->assertSame([], $license->sessionKeepalive($sessions['a'])['dropped_features'], 'the oldest keeps it');
+        $this->assertSame(['54'], $license->sessionKeepalive($sessions['b'])['dropped_features']);
+        $this->assertSame(['54'], $license->sessionKeepalive($sessions['c'])['dropped_features']);
+        $this->assertSame(['54' => ['used' => 1, 'limit' => 1]], $license->usageGet()['usage']);
+    }
+
     public function testValidTtlIsCappedByFeatureAndTokenLifetime(): void
     {
         $license = $this->licensed(

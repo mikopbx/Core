@@ -71,12 +71,22 @@ class SeatSessionAction extends Injectable
         $sessionId = (string)($data['sessionId'] ?? '');
         $featureId = (string)($data['featureId'] ?? '');
         $ttl = (int)($data['ttl'] ?? SeatLedger::TTL_DEFAULT);
-        $badTtl = 'ttl must be between ' . SeatLedger::TTL_MIN . ' and ' . SeatLedger::TTL_MAX;
+        $holder = $data['holder'] ?? [];
+        // json_encode() is what the ledger measures, and what it refuses it refuses as a plain
+        // RuntimeException; both bounds are the caller's business, so both are judged here as 400.
+        $holderJson = is_array($holder) ? json_encode($holder) : false;
+        $badRequest = match (true) {
+            $ttl < SeatLedger::TTL_MIN || $ttl > SeatLedger::TTL_MAX =>
+                'ttl must be between ' . SeatLedger::TTL_MIN . ' and ' . SeatLedger::TTL_MAX,
+            $holderJson === false || strlen($holderJson) > SeatLedger::HOLDER_MAX_BYTES =>
+                'holder must be an object of at most ' . SeatLedger::HOLDER_MAX_BYTES . ' bytes',
+            default => '',
+        };
 
         $result = match ($action) {
-            'sessionStart' => $ttl < SeatLedger::TTL_MIN || $ttl > SeatLedger::TTL_MAX
-                ? ['success' => false, 'error' => $badTtl, 'httpCode' => 400]
-                : $license->sessionStart(is_array($data['holder'] ?? null) ? $data['holder'] : [], $ttl),
+            'sessionStart' => $badRequest !== ''
+                ? ['success' => false, 'error' => $badRequest, 'httpCode' => 400]
+                : $license->sessionStart(is_array($holder) ? $holder : [], $ttl),
             'captureFeature' => $sessionId === '' || $featureId === ''
                 ? ['success' => false, 'error' => 'sessionId and featureId are required', 'httpCode' => 400]
                 : $license->captureFeature($featureId, $sessionId),

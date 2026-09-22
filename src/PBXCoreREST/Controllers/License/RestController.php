@@ -222,10 +222,11 @@ class RestController extends BaseRestController
     // ✨ Lightweight references to DataStructure::getParameterDefinitions()['request']
     #[ApiParameterRef('holder')]
     #[ApiParameterRef('ttl')]
-    #[ApiResponse(200, 'rest_response_200_created')]
+    #[ApiResponse(200, 'rest_response_200_generated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(429, 'rest_response_429_too_many', 'PBXApiResult')]
     #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     #[ApiResponse(501, 'rest_response_501_not_implemented', 'PBXApiResult')]
     public function sessionStart(): void
@@ -409,9 +410,9 @@ class RestController extends BaseRestController
         operationId: 'licenseEntitlementExport'
     )]
     #[ApiResponse(200, 'rest_response_200_get')]
-    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     #[ApiResponse(501, 'rest_response_501_not_implemented', 'PBXApiResult')]
     public function entitlementExport(): void
     {
@@ -438,6 +439,7 @@ class RestController extends BaseRestController
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     #[ApiResponse(501, 'rest_response_501_not_implemented', 'PBXApiResult')]
     public function entitlementImport(): void
     {

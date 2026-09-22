@@ -24,10 +24,11 @@ namespace MikoPBX\PBXCoreREST\Lib\License;
 
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Core\System\LicenseV2\LicenseV2;
+use MikoPBX\Core\System\LicenseV2\TokenRejectedException;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
-use RuntimeException;
+use Throwable;
 
 /**
  * Closed contour: the request file the administrator carries to the licensing cabinet and the
@@ -64,8 +65,11 @@ class EntitlementExchangeAction extends Injectable
                 $res->data = [];
             }
             $res->success = true;
-        } catch (RuntimeException $e) {
-            $res->httpCode = 400;
+        } catch (Throwable $e) {
+            // 400 is reserved for the one thing the caller can fix: the document it offered.
+            // Everything else — an unwritable /cf, a lock we can not take, a key we can not read —
+            // is this PBX failing, and export can fail in no other way.
+            $res->httpCode = $e instanceof TokenRejectedException ? 400 : 500;
             $res->messages['error'][] = $e->getMessage();
         }
 

@@ -132,7 +132,8 @@ class LicenseV2
      * flood of sessions can not exhaust the ledger while leaving room for churn and retries.
      *
      * @param array<string, mixed> $holder Who holds the session (hostname, username, process...).
-     * @return array{success: bool, session_id?: string, validttl?: int, error?: string, extcode?: int}
+     * @return array{success: bool, session_id?: string, validttl?: int, error?: string,
+     *     extcode?: int, httpCode?: int}
      */
     public function sessionStart(array $holder, int $ttl = SeatLedger::TTL_DEFAULT): array
     {
@@ -162,10 +163,13 @@ class LicenseV2
         try {
             $licenseKey = $this->licenseKey();
             $payload = $this->entitledPayload($featureId, $licenseKey);
-            $limit = EntitlementToken::seatLimit($payload, $featureId);
-            $leaseLeft = $limit === null
-                ? $this->ledger->keepalive($sessionId)
-                : $this->ledger->capture($sessionId, $featureId, $limit);
+            // A feature without a seat limit takes no seat, and neither case renews the lease:
+            // only sessionKeepalive() re-checks the rights, so only it may keep a session alive.
+            $leaseLeft = $this->ledger->capture(
+                $sessionId,
+                $featureId,
+                EntitlementToken::seatLimit($payload, $featureId)
+            );
             return ['success' => true, 'validttl' => $this->validTtl($payload, $featureId, $leaseLeft, $licenseKey)];
         } catch (RuntimeException $e) {
             return $this->failure($e);
@@ -190,9 +194,10 @@ class LicenseV2
             $dropped = [];
             foreach ($held as $featureId) {
                 $limit = $payload === null ? null : EntitlementToken::seatLimit($payload, $featureId);
-                // A cut limit takes the feature from the latest holder first, one keepalive at a time.
+                // A cut limit takes the feature from everyone who captured it after the first
+                // $limit holders, so the whole excess is gone within one keepalive round.
                 $overLimit = $limit !== null && ($usage[$featureId] ?? 0) > $limit
-                    && $this->ledger->isLatestHolder($sessionId, $featureId);
+                    && $this->ledger->isOverLimit($sessionId, $featureId, $limit);
                 if (
                     $payload === null || $overLimit
                     || !$this->store->featureAvailable($featureId, $licenseKey, $payload)
@@ -297,12 +302,16 @@ class LicenseV2
     }
 
     /**
-     * @return array{success: false, error: string, extcode?: int}
+     * @return array{success: false, error: string, extcode?: int, httpCode?: int}
      */
     private function failure(RuntimeException $e): array
     {
         if ($e instanceof SeatException) {
             return ['success' => false, 'error' => $e->getMessage(), 'extcode' => $e->extcode];
+        }
+        if ($e instanceof SessionCeilingException) {
+            // Our own protective cap, not a licensing refusal: no server code, ask again later.
+            return ['success' => false, 'error' => $e->getMessage(), 'httpCode' => 429];
         }
         $this->log('Seat ledger failure: ' . $e->getMessage());
         return ['success' => false, 'error' => $e->getMessage()];

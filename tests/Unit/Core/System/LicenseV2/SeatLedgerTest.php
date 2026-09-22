@@ -6,6 +6,7 @@ namespace MikoPBX\Tests\Unit\Core\System\LicenseV2;
 
 use MikoPBX\Core\System\LicenseV2\SeatException;
 use MikoPBX\Core\System\LicenseV2\SeatLedger;
+use MikoPBX\Core\System\LicenseV2\SessionCeilingException;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -83,7 +84,8 @@ class SeatLedgerTest extends TestCase
         $ledger = $this->newLedger();
         $ledger->startSession([], 60, 2);
         $ledger->startSession([], 60, 2);
-        $this->expectException(RuntimeException::class);
+        // Its own type, so the REST layer can tell the protective cap from a storage failure.
+        $this->expectException(SessionCeilingException::class);
         $ledger->startSession([], 60, 2);
     }
 
@@ -160,35 +162,58 @@ class SeatLedgerTest extends TestCase
         $this->assertSame([], $ledger->usage());
     }
 
-    public function testLatestHolderIsTheMostRecentCaptureAmongCurrentHolders(): void
+    public function testOverLimitIsAskedByRankSoOneRoundShedsTheWholeExcess(): void
     {
         $ledger = $this->newLedger();
-        $a = $ledger->startSession([], 60, 100);
-        $b = $ledger->startSession([], 60, 100);
-        $ledger->capture($a, '54', 3);
-        $this->wallClock += 1;
-        $ledger->capture($b, '54', 3);
+        $sessions = [];
+        foreach (['a', 'b', 'c'] as $name) {
+            $sessions[$name] = $ledger->startSession(['username' => $name], 60, 100);
+            $ledger->capture($sessions[$name], '54', 3);
+            $this->wallClock += 1;
+        }
 
-        $this->assertTrue($ledger->isLatestHolder($b, '54'));
-        $this->assertFalse($ledger->isLatestHolder($a, '54'));
-        $this->assertFalse($ledger->isLatestHolder($a, '55'), 'a feature this session never took');
-        $this->assertFalse($ledger->isLatestHolder('0000000000000000000000000000dead', '54'));
+        // Limit cut to one: both later holders answer "over limit" in the same round, not one per round.
+        $this->assertFalse($ledger->isOverLimit($sessions['a'], '54', 1), 'the oldest holder keeps it');
+        $this->assertTrue($ledger->isOverLimit($sessions['b'], '54', 1));
+        $this->assertTrue($ledger->isOverLimit($sessions['c'], '54', 1));
+        // Cut to two: only the newest is over.
+        $this->assertFalse($ledger->isOverLimit($sessions['b'], '54', 2));
+        $this->assertTrue($ledger->isOverLimit($sessions['c'], '54', 2));
 
-        // The seat is given back: the one left behind becomes the latest holder.
-        $ledger->release($b, '54');
-        $this->assertTrue($ledger->isLatestHolder($a, '54'));
+        $this->assertFalse($ledger->isOverLimit($sessions['a'], '55', 1), 'a feature this session never took');
+        $this->assertFalse($ledger->isOverLimit('0000000000000000000000000000dead', '54', 1));
+
+        // The seats are given back: the one left behind is within any limit again.
+        $ledger->release($sessions['b'], '54');
+        $ledger->release($sessions['c'], '54');
+        $this->assertFalse($ledger->isOverLimit($sessions['a'], '54', 1));
     }
 
-    public function testSimultaneousCapturesMakeBothHoldersLatest(): void
+    public function testSimultaneousCapturesMakeBothHoldersDroppable(): void
     {
         $ledger = $this->newLedger();
         $a = $ledger->startSession([], 60, 100);
         $b = $ledger->startSession([], 60, 100);
         $ledger->capture($a, '54', 3);
         $ledger->capture($b, '54', 3);
-        // Known simplification: a cut to one seat may then free two.
-        $this->assertTrue($ledger->isLatestHolder($a, '54'));
-        $this->assertTrue($ledger->isLatestHolder($b, '54'));
+        // Known simplification: capture times have a granularity of one second, so a cut to one
+        // seat frees two rather than leaving both holders convinced they are within the limit.
+        $this->assertTrue($ledger->isOverLimit($a, '54', 1));
+        $this->assertTrue($ledger->isOverLimit($b, '54', 1));
+        $this->assertFalse($ledger->isOverLimit($a, '54', 2), 'within the limit nobody is over it');
+    }
+
+    public function testCaptureWithoutLimitTakesNoSeatAndDoesNotRenewTheLease(): void
+    {
+        $ledger = $this->newLedger();
+        $a = $ledger->startSession([], 60, 100);
+        $ledger->capture($a, '54', 1);
+        $this->wallClock += 50;
+        $this->assertSame(10, $ledger->capture($a, '55', null), 'what is left of the lease, not a full ttl');
+        $this->assertSame(['54' => 1], $ledger->usage(), 'a feature without a limit takes no seat');
+        $this->wallClock += 15;
+        $this->expectException(SeatException::class);
+        $ledger->keepalive($a);
     }
 
     public function testClockRollbackDoesNotExtendLeasesBeyondTheirTtl(): void
