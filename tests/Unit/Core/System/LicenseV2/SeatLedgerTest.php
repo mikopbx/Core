@@ -172,6 +172,23 @@ class SeatLedgerTest extends TestCase
         $ledger->keepalive($a);
     }
 
+    /**
+     * keepalive() overwrites expires itself, so it can't tell us whether the rollback clamp in
+     * transaction() actually fired. Use a read-only observer (usage/sessionFeatures) instead: the
+     * clamp is the only thing that can shorten expires here.
+     */
+    public function testClockRollbackClampIsPersistedEvenWithoutKeepalive(): void
+    {
+        $ledger = $this->newLedger();
+        $a = $ledger->startSession([], 60, 100);
+        $ledger->capture($a, '54', 1);
+        $this->wallClock -= 3600; // system clock jumped back an hour
+        $ledger->usage(); // clamp fires and is persisted: expires = now + 60
+        $this->wallClock += 60;
+        $this->expectException(SeatException::class);
+        $ledger->sessionFeatures($a); // without the clamp this would still return ['54']
+    }
+
     public function testCorruptFileFailsClosedAndIsSetAside(): void
     {
         $ledger = $this->newLedger();
@@ -211,6 +228,11 @@ class SeatLedgerTest extends TestCase
                     exit(0);
                 } catch (SeatException) {
                     exit(51);
+                } catch (\Throwable) {
+                    // Anything else (lock failure, JsonException, disk full...) must not escape:
+                    // an uncaught exception here lets PHPUnit run tearDown() in the child, which
+                    // deletes the ledger directory the parent still owns.
+                    exit(52);
                 }
             }
             $results[$pid] = null;

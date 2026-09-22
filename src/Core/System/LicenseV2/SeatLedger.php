@@ -221,6 +221,8 @@ class SeatLedger
             }
             $this->expire($ledger, $now);
             $result = $body($ledger, $now);
+            // Written back even for read-only calls (usage/sessionFeatures): this is what keeps
+            // 'wall' fresh so the rollback clamp above has a recent timestamp to compare against.
             $ledger['wall'] = $now;
             $this->write($ledger);
             return $result;
@@ -261,7 +263,9 @@ class SeatLedger
             if (rename($file, "$file.corrupt")) {
                 throw new RuntimeException('Seat ledger is corrupt, set aside as ' . self::FILE . '.corrupt');
             }
-            unlink($file);
+            if (!unlink($file)) {
+                throw new RuntimeException('Seat ledger is corrupt and could not be set aside or removed');
+            }
             throw new RuntimeException('Seat ledger is corrupt and could not be set aside; removed instead');
         }
         return $ledger;
