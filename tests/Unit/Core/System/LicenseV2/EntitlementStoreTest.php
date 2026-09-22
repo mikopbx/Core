@@ -9,6 +9,7 @@ use MikoPBX\Core\System\LicenseV2\EntitlementToken;
 use MikoPBX\Core\System\LicenseV2\InstallationIdentity;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Throwable;
 
 class EntitlementStoreTest extends TestCase
 {
@@ -377,15 +378,28 @@ class EntitlementStoreTest extends TestCase
         // fake $wallClock closure), so the token must be dated around the real "now" rather than
         // the fixed self::NOW used everywhere else in this file.
         $token = $this->issueFor($store, ['iat' => time(), 'exp' => time() + 3 * self::DAY], null, true);
+        // Both children race for the same nonce instead of serializing one after the other:
+        // without this barrier, fork() + a few lines of setup usually spaces them out enough
+        // that a lock-less implementation would pass too.
+        $go = microtime(true) + 0.05;
         $results = [];
         for ($i = 0; $i < 2; $i++) {
             $pid = pcntl_fork();
             if ($pid === 0) {
+                time_sleep_until($go);
                 try {
-                    (new EntitlementStore($this->dir, new InstallationIdentity($this->dir), $this->serverPublicKeyPem))->acceptToken($token);
+                    $identity = new InstallationIdentity($this->dir);
+                    $child = new EntitlementStore($this->dir, $identity, $this->serverPublicKeyPem);
+                    $child->acceptToken($token);
                     exit(0);
-                } catch (RuntimeException) {
-                    exit(1);
+                } catch (RuntimeException $e) {
+                    // The expected loser: the other child spent the nonce first. Any other
+                    // RuntimeException (e.g. a lock/write failure) is a real bug, not a race loss.
+                    exit(str_contains($e->getMessage(), 'does not answer') ? 1 : 2);
+                } catch (Throwable) {
+                    // Never let an unexpected error fall through to the child running the
+                    // parent's tearDown() against a torn-down or partly-shared fixture.
+                    exit(3);
                 }
             }
             $results[$pid] = null;

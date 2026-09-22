@@ -203,6 +203,7 @@ class EntitlementStore
      * so a fleet restarting behind a dead server does not hammer it in lockstep.
      *
      * @return int Seconds until the next attempt.
+     * @throws RuntimeException
      */
     public function noteFailure(): int
     {
