@@ -92,6 +92,12 @@ class SeatSessionAction extends Injectable
             default => ['success' => false, 'error' => "Unknown action $action", 'httpCode' => 400],
         };
 
+        // featureAvailable refuses without a code, while captureFeature raises 2011 for the very
+        // same condition. The REST answer must not differ: both are 403, not a server failure.
+        if ($action === 'featureAvailable' && !$result['success'] && !isset($result['httpCode'])) {
+            $result['extcode'] ??= SeatException::NOT_LICENSED;
+        }
+
         $res->success = (bool)$result['success'];
         if ($res->success) {
             unset($result['success']);

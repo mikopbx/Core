@@ -226,7 +226,7 @@ class RestController extends BaseRestController
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
-    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     #[ApiResponse(501, 'rest_response_501_not_implemented', 'PBXApiResult')]
     public function sessionStart(): void
     {
