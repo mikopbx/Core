@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -20,10 +21,12 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\PBXCoreREST\Lib\License\CaptureFeatureForProductIdAction;
+use MikoPBX\PBXCoreREST\Lib\License\EntitlementExchangeAction;
 use MikoPBX\PBXCoreREST\Lib\License\GetLicenseInfoAction;
 use MikoPBX\PBXCoreREST\Lib\License\PingAction;
 use MikoPBX\PBXCoreREST\Lib\License\ProcessUserRequestAction;
 use MikoPBX\PBXCoreREST\Lib\License\ResetLicenseAction;
+use MikoPBX\PBXCoreREST\Lib\License\SeatSessionAction;
 use MikoPBX\PBXCoreREST\Lib\License\SendMetricsAction;
 use Phalcon\Di\Injectable;
 
@@ -35,7 +38,6 @@ use Phalcon\Di\Injectable;
  */
 class LicenseManagementProcessor extends Injectable
 {
-
     /**
      * Process the license callback.
      *
@@ -67,6 +69,19 @@ class LicenseManagementProcessor extends Injectable
                 break;
             case 'ping':
                 $res = PingAction::main();
+                break;
+            case 'sessionStart':
+            case 'captureFeature':
+            case 'sessionKeepalive':
+            case 'releaseFeature':
+            case 'sessionEnd':
+            case 'featureAvailable':
+            case 'usageGet':
+                $res = SeatSessionAction::main($action, $data);
+                break;
+            case 'entitlementExport':
+            case 'entitlementImport':
+                $res = EntitlementExchangeAction::main($action, $data);
                 break;
             default:
                 $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;

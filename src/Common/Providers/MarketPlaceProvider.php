@@ -44,11 +44,19 @@ use Throwable;
  * @method  array activateCoupon(string $coupon)
  * @method  void changeLicenseKey(string $newKey)
  * @method  void sendLicenseMetrics(string $key, array $params)
- * @method  array captureFeature(string $featureId)
- * @method  array featureAvailable(string $featureId)
- * @method  array releaseFeature(string $featureId)
+ * @method  array captureFeature(mixed $featureId, ?string $sessionId = null)
+ * @method  array featureAvailable(mixed $featureId)
+ * @method  array releaseFeature(mixed $featureId, ?string $sessionId = null)
  * @method  string translateLicenseErrorMessage(string $message)
  * @method  array ping()
+ *
+ * LicenseV2 only (seat sessions and the closed-contour file exchange):
+ * @method  array sessionStart(array $holder, int $ttl = 300)
+ * @method  array sessionKeepalive(string $sessionId)
+ * @method  array sessionEnd(string $sessionId)
+ * @method  array usageGet()
+ * @method  string exportOfflineRequest()
+ * @method  void importOfflineToken(string $token)
  *
  * @package MikoPBX\Common\Providers
  */
