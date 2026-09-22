@@ -32,10 +32,17 @@ use RuntimeException;
  */
 class EntitlementStore
 {
+    /** Wait at least this long before the next retry after a failure, seconds. */
+    public const int BACKOFF_MIN = 300;
+    /** Never wait longer than this between retries, seconds. */
+    public const int BACKOFF_MAX = 21600;
+
     private const string TOKEN_FILE = 'entitlement.token';
     private const string STATE_FILE = 'state.json';
     private const string NONCE_ONLINE = 'nonceOnline';
     private const string NONCE_OFFLINE = 'nonceOffline';
+    private const string NEXT_RETRY = 'nextRetry';
+    private const string BACKOFF = 'backoff';
 
     /** Do not rewrite the state file more often than this, seconds. */
     private const int CLOCK_PERSIST_STEP = 60;
@@ -88,27 +95,37 @@ class EntitlementStore
     public function acceptToken(string $token): array
     {
         $payload = EntitlementToken::decodeVerified($token, $this->serverPublicKeyPem, $this->identity->getInstallId());
-        $state = $this->loadState();
-        $answeredSlot = '';
-        foreach ([self::NONCE_ONLINE, self::NONCE_OFFLINE] as $slot) {
-            $pendingNonce = (string)($state[$slot] ?? '');
-            if ($pendingNonce !== '' && hash_equals($pendingNonce, (string)($payload['nonce'] ?? ''))) {
-                $answeredSlot = $slot;
-            }
-        }
-        if ($answeredSlot === '') {
-            throw new RuntimeException('Entitlement token does not answer the pending request');
-        }
         // Freshness is judged by the clock as it was before this token: a token dated in the
-        // future must be refused, not allowed to drag the clock anchor after itself.
+        // future must be refused, not allowed to drag the clock anchor after itself. Read before
+        // the lock below: now() may itself persist the clock anchor via saveState(), and a second
+        // flock() on the same file within this process would deadlock against our own lock.
         $now = $this->now();
-        if (!EntitlementToken::isFresh($payload, $now)) {
-            throw new RuntimeException('Entitlement token is expired or the PBX clock is wrong');
-        }
-        $this->writeAtomically(self::TOKEN_FILE, trim($token));
-        // The nonce is spent only by an accepted token, a refused one leaves the request pending.
-        $this->saveState([$answeredSlot => '', 'refused' => false, 'lastSeen' => max($now, (int)$payload['iat'])]);
-        return $payload;
+        return $this->withLock(function () use ($token, $payload, $now): array {
+            $state = $this->loadState();
+            $answeredSlot = '';
+            foreach ([self::NONCE_ONLINE, self::NONCE_OFFLINE] as $slot) {
+                $pendingNonce = (string)($state[$slot] ?? '');
+                if ($pendingNonce !== '' && hash_equals($pendingNonce, (string)($payload['nonce'] ?? ''))) {
+                    $answeredSlot = $slot;
+                }
+            }
+            if ($answeredSlot === '') {
+                throw new RuntimeException('Entitlement token does not answer the pending request');
+            }
+            if (!EntitlementToken::isFresh($payload, $now)) {
+                throw new RuntimeException('Entitlement token is expired or the PBX clock is wrong');
+            }
+            $this->writeAtomically(self::TOKEN_FILE, trim($token));
+            // The nonce is spent only by an accepted token, a refused one leaves the request pending.
+            $this->saveState([
+                $answeredSlot => '',
+                'refused' => false,
+                'lastSeen' => max($now, (int)$payload['iat']),
+                self::BACKOFF => 0,
+                self::NEXT_RETRY => 0,
+            ], true);
+            return $payload;
+        });
     }
 
     /**
@@ -171,8 +188,44 @@ class EntitlementStore
         ) {
             throw new RuntimeException('Refusal does not answer the pending request');
         }
-        $this->saveState([self::NONCE_ONLINE => '', 'refused' => true]);
+        $this->saveState([self::NONCE_ONLINE => '', 'refused' => true, self::BACKOFF => 0, self::NEXT_RETRY => 0]);
         return (string)json_encode($payload['error'] ?? '');
+    }
+
+    /** Whether the licensing servers may be asked now (the backoff after failures has passed). */
+    public function retryAllowed(): bool
+    {
+        return $this->now() >= (int)($this->loadState()[self::NEXT_RETRY] ?? 0);
+    }
+
+    /**
+     * All servers failed: wait longer before the next round (5 min, doubling to 6 h, +-25 % jitter),
+     * so a fleet restarting behind a dead server does not hammer it in lockstep.
+     *
+     * @return int Seconds until the next attempt.
+     */
+    public function noteFailure(): int
+    {
+        $previous = (int)($this->loadState()[self::BACKOFF] ?? 0);
+        $backoff = min(self::BACKOFF_MAX, max(self::BACKOFF_MIN, $previous * 2));
+        $delay = (int)round($backoff * random_int(75, 125) / 100);
+        $this->saveState([self::BACKOFF => $backoff, self::NEXT_RETRY => $this->now() + $delay]);
+        return $delay;
+    }
+
+    /**
+     * Until when the stored token licenses anything: exp, or offlineUntil while the servers are
+     * unreachable and no signed refusal has arrived. 0 without a usable token or on key mismatch.
+     */
+    public function effectiveExpiry(?string $licenseKey = null): int
+    {
+        $payload = $this->lastVerifiedPayload();
+        if ($payload === null || ($licenseKey !== null && !hash_equals($licenseKey, (string)($payload['key'] ?? '')))) {
+            return 0;
+        }
+        $withGrace = ($this->loadState()['refused'] ?? false) !== true;
+        $until = (int)($payload['exp'] ?? 0);
+        return $withGrace ? max($until, (int)($payload['offlineUntil'] ?? 0)) : $until;
     }
 
     /**
@@ -206,9 +259,27 @@ class EntitlementStore
      * Read-modify-write under a lock, so concurrent workers do not lose each other's changes.
      *
      * @param array<string, mixed> $changes
+     * @param bool $locked The caller already holds the state lock (via withLock()) — write
+     *                      directly instead of taking it again, which would deadlock: flock()
+     *                      on a second descriptor of the same file blocks against itself within
+     *                      one process.
      * @throws RuntimeException
      */
-    private function saveState(array $changes): void
+    private function saveState(array $changes, bool $locked = false): void
+    {
+        $write = function () use ($changes): void {
+            $this->writeAtomically(self::STATE_FILE, (string)json_encode(array_merge($this->loadState(), $changes)));
+        };
+        $locked ? $write() : $this->withLock($write);
+    }
+
+    /**
+     * Runs $body with the state file locked, so a multi-step read-check-write (e.g. importing a
+     * token: nonce check, token write, nonce spend) is atomic against concurrent importers.
+     *
+     * @throws RuntimeException
+     */
+    private function withLock(Closure $body): mixed
     {
         if (!is_writable($this->dir)) {
             throw new RuntimeException("License state in $this->dir is written by root workers only");
@@ -218,7 +289,7 @@ class EntitlementStore
             throw new RuntimeException("Can not lock the license state in $this->dir");
         }
         try {
-            $this->writeAtomically(self::STATE_FILE, (string)json_encode(array_merge($this->loadState(), $changes)));
+            return $body();
         } finally {
             flock($lock, LOCK_UN);
             fclose($lock);

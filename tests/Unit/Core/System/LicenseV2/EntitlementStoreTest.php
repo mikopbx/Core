@@ -335,6 +335,69 @@ class EntitlementStoreTest extends TestCase
         ));
     }
 
+    public function testBackoffDoublesWithJitterAndResetsOnSuccess(): void
+    {
+        $store = $this->newStore();
+        $this->assertTrue($store->retryAllowed());
+        $first = $store->noteFailure();
+        $this->assertGreaterThanOrEqual(225, $first);   // 300 - 25 %
+        $this->assertLessThanOrEqual(375, $first);      // 300 + 25 %
+        $this->assertFalse($store->retryAllowed());
+        $this->wallClock += 400;
+        $this->assertTrue($store->retryAllowed());
+        $second = $store->noteFailure();
+        $this->assertGreaterThanOrEqual(450, $second);
+        $this->assertLessThanOrEqual(750, $second);
+        for ($i = 0; $i < 10; $i++) {
+            $delay = $store->noteFailure();
+        }
+        $this->assertLessThanOrEqual(EntitlementStore::BACKOFF_MAX * 1.25, $delay);
+        $store->acceptToken($this->issueFor($store));
+        $this->assertTrue($store->retryAllowed());
+    }
+
+    public function testEffectiveExpiryCoversGraceUntilRefusal(): void
+    {
+        $store = $this->newStore();
+        $store->acceptToken($this->issueFor($store, ['exp' => self::NOW + 100, 'offlineUntil' => self::NOW + 1000]));
+        $this->assertSame(self::NOW + 1000, $store->effectiveExpiry('MIKO-TEST'));
+        $this->assertSame(0, $store->effectiveExpiry('MIKO-OTHER'));
+        $refusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'Unknown license key');
+        $store->acceptRefusal($refusal);
+        $this->assertSame(self::NOW + 100, $store->effectiveExpiry('MIKO-TEST'));
+    }
+
+    public function testConcurrentImportOfTheSameTokenIsAcceptedOnce(): void
+    {
+        if (!function_exists('pcntl_fork')) {
+            $this->markTestSkipped('pcntl is not available');
+        }
+        $store = new EntitlementStore($this->dir, new InstallationIdentity($this->dir), $this->serverPublicKeyPem);
+        // This store runs on the real wall clock (forked children need a real process, not the
+        // fake $wallClock closure), so the token must be dated around the real "now" rather than
+        // the fixed self::NOW used everywhere else in this file.
+        $token = $this->issueFor($store, ['iat' => time(), 'exp' => time() + 3 * self::DAY], null, true);
+        $results = [];
+        for ($i = 0; $i < 2; $i++) {
+            $pid = pcntl_fork();
+            if ($pid === 0) {
+                try {
+                    (new EntitlementStore($this->dir, new InstallationIdentity($this->dir), $this->serverPublicKeyPem))->acceptToken($token);
+                    exit(0);
+                } catch (RuntimeException) {
+                    exit(1);
+                }
+            }
+            $results[$pid] = null;
+        }
+        foreach (array_keys($results) as $pid) {
+            pcntl_waitpid($pid, $status);
+            $results[$pid] = pcntl_wexitstatus($status);
+        }
+        sort($results);
+        $this->assertSame([0, 1], array_values($results));
+    }
+
     private function newStore(): EntitlementStore
     {
         return new EntitlementStore(
