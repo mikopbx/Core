@@ -160,12 +160,13 @@ class LicenseV2
             return $this->featureAvailable($featureId);
         }
         try {
-            $payload = $this->entitledPayload($featureId);
+            $licenseKey = $this->licenseKey();
+            $payload = $this->entitledPayload($featureId, $licenseKey);
             $limit = EntitlementToken::seatLimit($payload, $featureId);
             $leaseLeft = $limit === null
                 ? $this->ledger->keepalive($sessionId)
                 : $this->ledger->capture($sessionId, $featureId, $limit);
-            return ['success' => true, 'validttl' => $this->validTtl($payload, $featureId, $leaseLeft)];
+            return ['success' => true, 'validttl' => $this->validTtl($payload, $featureId, $leaseLeft, $licenseKey)];
         } catch (RuntimeException $e) {
             return $this->failure($e);
         }
@@ -182,7 +183,9 @@ class LicenseV2
     {
         try {
             $held = $this->ledger->sessionFeatures($sessionId);
+            // One token and one key for the whole call: every feature is judged by the same document.
             $payload = $this->store->lastVerifiedPayload();
+            $licenseKey = $this->licenseKey();
             $usage = $this->ledger->usage();
             $dropped = [];
             foreach ($held as $featureId) {
@@ -190,7 +193,10 @@ class LicenseV2
                 // A cut limit takes the feature from the latest holder first, one keepalive at a time.
                 $overLimit = $limit !== null && ($usage[$featureId] ?? 0) > $limit
                     && $this->ledger->isLatestHolder($sessionId, $featureId);
-                if (!$this->featureAvailable($featureId)['success'] || $overLimit) {
+                if (
+                    $payload === null || $overLimit
+                    || !$this->store->featureAvailable($featureId, $licenseKey, $payload)
+                ) {
                     $dropped[] = $featureId;
                 }
             }
@@ -198,7 +204,7 @@ class LicenseV2
             $validTtl = $leaseLeft;
             if ($payload !== null) {
                 foreach (array_diff($held, $dropped) as $featureId) {
-                    $validTtl = min($validTtl, $this->validTtl($payload, $featureId, $leaseLeft));
+                    $validTtl = min($validTtl, $this->validTtl($payload, $featureId, $leaseLeft, $licenseKey));
                 }
             }
             return ['success' => true, 'validttl' => $validTtl, 'dropped_features' => $dropped];
@@ -260,15 +266,16 @@ class LicenseV2
     }
 
     /**
-     * One snapshot of the token for the whole call: the right and the limit come from the same document.
+     * Reads the token once and answers with it, so the caller can judge the right, the limit and the
+     * lifetime by the same document: a token replaced mid-call must not mix old and new terms.
      *
      * @return array<string, mixed>
      * @throws SeatException 2011
      */
-    private function entitledPayload(string $featureId): array
+    private function entitledPayload(string $featureId, string $licenseKey): array
     {
         $payload = $this->store->lastVerifiedPayload();
-        if ($payload === null || !$this->featureAvailable($featureId)['success']) {
+        if ($payload === null || !$this->store->featureAvailable($featureId, $licenseKey, $payload)) {
             throw new SeatException('Feature is expired or not licensed', SeatException::NOT_LICENSED);
         }
         return $payload;
@@ -279,13 +286,13 @@ class LicenseV2
      *
      * @param array<string, mixed> $payload
      */
-    private function validTtl(array $payload, string $featureId, int $leaseLeft): int
+    private function validTtl(array $payload, string $featureId, int $leaseLeft, string $licenseKey): int
     {
         $now = $this->store->now();
         return max(0, min(
             $leaseLeft,
             (int)($payload['features'][$featureId] ?? 0) - $now,
-            $this->store->effectiveExpiry($this->licenseKey()) - $now
+            $this->store->effectiveExpiry($licenseKey, $payload) - $now
         ));
     }
 

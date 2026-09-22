@@ -119,6 +119,42 @@ class LicenseV2SeatsTest extends TestCase
     }
 
     /**
+     * The right, the seat limit and the ttl of one call must come from one token: a token replaced
+     * by the refresh worker between two reads would otherwise pair an old limit with a new right.
+     */
+    public function testOneTokenIsReadPerCall(): void
+    {
+        $store = new class (
+            "$this->dir/cf",
+            new InstallationIdentity("$this->dir/cf"),
+            $this->serverPublicKeyPem,
+            fn(): int => $this->wallClock
+        ) extends EntitlementStore {
+            public int $reads = 0;
+
+            public function lastVerifiedPayload(): ?array
+            {
+                $this->reads++;
+                return parent::lastVerifiedPayload();
+            }
+        };
+        $ledger = new SeatLedger("$this->dir/tmp", fn(): int => $this->wallClock);
+        $license = new LicenseV2($store, $ledger, fn(): string => $this->licenseKey);
+        $features = ['54' => self::NOW + 86400, '55' => self::NOW + 86400];
+        $this->issue($license, $features, ['54' => 1, '55' => 1]);
+        $s = $license->sessionStart([], 60)['session_id'];
+        $license->captureFeature('55', $s);
+
+        $store->reads = 0;
+        $this->assertTrue($license->captureFeature('54', $s)['success']);
+        $this->assertSame(1, $store->reads, 'capture judges right, limit and ttl on one token');
+
+        $store->reads = 0;
+        $this->assertSame([], $license->sessionKeepalive($s)['dropped_features']);
+        $this->assertSame(1, $store->reads, 'keepalive of two held features still reads one token');
+    }
+
+    /**
      * @param array<string, int> $features
      * @param array<string, int> $seats
      */

@@ -155,10 +155,13 @@ class EntitlementStore
     /**
      * @param string|null $licenseKey Current license key of the PBX; a token issued for another key
      *                                licenses nothing, so a key reset or transfer takes effect at once.
+     * @param array<string, mixed>|null $payload Token to judge against, so a caller asking several
+     *                                questions has them all answered by one document. Null reads and
+     *                                verifies the stored token again.
      */
-    public function featureAvailable(string $featureId, ?string $licenseKey = null): bool
+    public function featureAvailable(string $featureId, ?string $licenseKey = null, ?array $payload = null): bool
     {
-        $payload = $this->lastVerifiedPayload();
+        $payload ??= $this->lastVerifiedPayload();
         $now = $this->now();
         // Grace covers unreachable servers only; after an explicit refusal the token lives till exp.
         $withGrace = ($this->loadState()['refused'] ?? false) !== true;
@@ -217,10 +220,12 @@ class EntitlementStore
     /**
      * Until when the stored token licenses anything: exp, or offlineUntil while the servers are
      * unreachable and no signed refusal has arrived. 0 without a usable token or on key mismatch.
+     *
+     * @param array<string, mixed>|null $payload Token to judge against; null reads the stored one.
      */
-    public function effectiveExpiry(?string $licenseKey = null): int
+    public function effectiveExpiry(?string $licenseKey = null, ?array $payload = null): int
     {
-        $payload = $this->lastVerifiedPayload();
+        $payload ??= $this->lastVerifiedPayload();
         if ($payload === null || ($licenseKey !== null && !hash_equals($licenseKey, (string)($payload['key'] ?? '')))) {
             return 0;
         }
