@@ -63,9 +63,9 @@ class SeatLedger
         if ($ttl < self::TTL_MIN || $ttl > self::TTL_MAX) {
             throw new RuntimeException('Session ttl must be between ' . self::TTL_MIN . ' and ' . self::TTL_MAX);
         }
-        $holderJson = (string)json_encode($holder);
-        if (strlen($holderJson) > self::HOLDER_MAX_BYTES) {
-            throw new RuntimeException('Session holder is too large');
+        $holderJson = json_encode($holder);
+        if ($holderJson === false || strlen($holderJson) > self::HOLDER_MAX_BYTES) {
+            throw new RuntimeException('Session holder is too large or not encodable');
         }
         return $this->transaction(function (array &$ledger, int $now) use ($holder, $ttl, $maxSessions): string {
             if (count($ledger['sessions']) >= $maxSessions) {
@@ -224,12 +224,13 @@ class SeatLedger
     /**
      * @param array<string, mixed> $ledger
      * @throws RuntimeException
+     * @throws \JsonException When the ledger can not be encoded (nothing is written).
      */
     private function write(array $ledger): void
     {
         $file = "$this->dir/" . self::FILE;
+        $content = json_encode($ledger, JSON_THROW_ON_ERROR);
         $temporary = "$file." . bin2hex(random_bytes(4)) . '.tmp';
-        $content = (string)json_encode($ledger);
         if (
             file_put_contents($temporary, $content) !== strlen($content)
             || !chmod($temporary, 0600)

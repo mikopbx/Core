@@ -80,6 +80,24 @@ class SeatLedgerTest extends TestCase
         $ledger->startSession([], 60, 2);
     }
 
+    public function testUnencodableHolderIsRejectedWithoutLosingEarlierSessions(): void
+    {
+        $ledger = $this->newLedger();
+        $a = $ledger->startSession(['username' => 'a'], 60, 100);
+        $ledger->capture($a, '54', 2);
+
+        try {
+            $ledger->startSession(['name' => "\xB1\x31"], 60, 100);
+            $this->fail('a holder that json_encode can not represent was accepted');
+        } catch (RuntimeException $e) {
+            $this->assertNotInstanceOf(SeatException::class, $e);
+        }
+
+        // The earlier session and its seat must still be intact: nothing was wiped.
+        $this->assertSame(['54' => 1], $ledger->usage());
+        $this->assertGreaterThan(0, filesize("$this->dir/seats.json"));
+    }
+
     private function newLedger(): SeatLedger
     {
         return new SeatLedger($this->dir, fn(): int => $this->wallClock);
