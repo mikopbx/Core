@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace MikoPBX\Core\System\LicenseV2;
 
 use BadMethodCallException;
+use Closure;
 use GuzzleHttp;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
@@ -61,13 +62,41 @@ class LicenseV2
     private const array ENTITLEMENT_CHANGING_CALLS = ['addtrial', 'activatecoupon', 'changelicensekey'];
 
     private EntitlementStore $store;
-    private ?License $legacy;
+    private SeatLedger $ledger;
+    private Closure $licenseKey;
+    private ?License $legacy = null;
 
-    public function __construct()
+    /**
+     * The arguments exist for tests and callers that own the storage; production builds the
+     * defaults from the settings, so `new LicenseV2()` keeps working unchanged.
+     */
+    public function __construct(
+        ?EntitlementStore $store = null,
+        ?SeatLedger $ledger = null,
+        ?Closure $licenseKey = null
+    ) {
+        $cfDir = Directories::getDir(Directories::CORE_CF_DIR) . '/conf/license-v2';
+        $this->store = $store
+            ?? new EntitlementStore($cfDir, new InstallationIdentity($cfDir), self::SERVER_PUBLIC_KEY_PEM);
+        // Leases are rewritten on every keepalive: they live on the storage disk, not on the /cf settings partition.
+        $this->ledger = $ledger ?? new SeatLedger(Directories::getDir(Directories::CORE_TEMP_DIR) . '/license-v2');
+        $this->licenseKey = $licenseKey ?? static fn(): string => PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
+    }
+
+    public function store(): EntitlementStore
     {
-        $dir = Directories::getDir(Directories::CORE_CF_DIR) . '/conf/license-v2';
-        $this->store = new EntitlementStore($dir, new InstallationIdentity($dir), self::SERVER_PUBLIC_KEY_PEM);
-        $this->legacy = extension_loaded('mikopbx') ? new License() : null;
+        return $this->store;
+    }
+
+    /**
+     * Built on demand: the compiled class needs the DI container, which feature checks do not.
+     */
+    private function legacy(): ?License
+    {
+        if ($this->legacy === null && extension_loaded('mikopbx')) {
+            $this->legacy = new License();
+        }
+        return $this->legacy;
     }
 
     /**
@@ -77,10 +106,11 @@ class LicenseV2
      */
     public function __call(string $name, array $arguments): mixed
     {
-        if ($this->legacy === null) {
+        $legacy = $this->legacy();
+        if ($legacy === null) {
             throw new BadMethodCallException("License method $name needs the legacy license service");
         }
-        $result = $this->legacy->$name(...$arguments);
+        $result = $legacy->$name(...$arguments);
         if (in_array(strtolower($name), self::ENTITLEMENT_CHANGING_CALLS, true)) {
             $this->refresh(true);
         }
@@ -98,21 +128,177 @@ class LicenseV2
     }
 
     /**
-     * PBX modules are licensed per installation, there are no seats to capture.
+     * Opens a seat session for one device. The ceiling is derived from the licensed seats, so a
+     * flood of sessions can not exhaust the ledger while leaving room for churn and retries.
      *
-     * @return array{success: bool, error?: string}
+     * @param array<string, mixed> $holder Who holds the session (hostname, username, process...).
+     * @return array{success: bool, session_id?: string, validttl?: int, error?: string, extcode?: int}
      */
-    public function captureFeature(mixed $featureId): array
+    public function sessionStart(array $holder, int $ttl = SeatLedger::TTL_DEFAULT): array
     {
-        return $this->featureAvailable($featureId);
+        try {
+            $payload = $this->store->lastVerifiedPayload();
+            $limits = array_filter((array)($payload['seats'] ?? []), 'is_int');
+            $sessionId = $this->ledger->startSession($holder, $ttl, ($limits === [] ? 0 : max($limits)) * 4 + 16);
+            return ['success' => true, 'session_id' => $sessionId, 'validttl' => $ttl];
+        } catch (RuntimeException $e) {
+            return $this->failure($e);
+        }
     }
 
     /**
-     * @return array{success: bool}
+     * Without a session: the installation-level check the core makes (module install, hourly enforcer).
+     * With a session: a seat for one device; features without a seat limit are granted uncounted.
+     * A success without a session is NOT a permission to serve a device of a seat-limited feature.
+     *
+     * @return array{success: bool, validttl?: int, error?: string, extcode?: int}
      */
-    public function releaseFeature(mixed $featureId): array
+    public function captureFeature(mixed $featureId, ?string $sessionId = null): array
     {
-        return ['success' => true];
+        $featureId = (string)$featureId;
+        if ($sessionId === null) {
+            return $this->featureAvailable($featureId);
+        }
+        try {
+            $payload = $this->entitledPayload($featureId);
+            $limit = EntitlementToken::seatLimit($payload, $featureId);
+            $leaseLeft = $limit === null
+                ? $this->ledger->keepalive($sessionId)
+                : $this->ledger->capture($sessionId, $featureId, $limit);
+            return ['success' => true, 'validttl' => $this->validTtl($payload, $featureId, $leaseLeft)];
+        } catch (RuntimeException $e) {
+            return $this->failure($e);
+        }
+    }
+
+    /**
+     * Renews the lease and re-checks every held feature: a changed key, an expired feature, a signed
+     * refusal past exp or a lowered limit takes the feature away here, so nothing is held for ever.
+     *
+     * @return array{success: bool, validttl?: int, dropped_features?: array<int, string>,
+     *     error?: string, extcode?: int}
+     */
+    public function sessionKeepalive(string $sessionId): array
+    {
+        try {
+            $held = $this->ledger->sessionFeatures($sessionId);
+            $payload = $this->store->lastVerifiedPayload();
+            $usage = $this->ledger->usage();
+            $dropped = [];
+            foreach ($held as $featureId) {
+                $limit = $payload === null ? null : EntitlementToken::seatLimit($payload, $featureId);
+                // A cut limit takes the feature from the latest holder first, one keepalive at a time.
+                $overLimit = $limit !== null && ($usage[$featureId] ?? 0) > $limit
+                    && $this->ledger->isLatestHolder($sessionId, $featureId);
+                if (!$this->featureAvailable($featureId)['success'] || $overLimit) {
+                    $dropped[] = $featureId;
+                }
+            }
+            $leaseLeft = $this->ledger->keepalive($sessionId, $dropped);
+            $validTtl = $leaseLeft;
+            if ($payload !== null) {
+                foreach (array_diff($held, $dropped) as $featureId) {
+                    $validTtl = min($validTtl, $this->validTtl($payload, $featureId, $leaseLeft));
+                }
+            }
+            return ['success' => true, 'validttl' => $validTtl, 'dropped_features' => $dropped];
+        } catch (RuntimeException $e) {
+            return $this->failure($e);
+        }
+    }
+
+    /**
+     * @return array{success: bool, error?: string, extcode?: int}
+     */
+    public function releaseFeature(mixed $featureId, ?string $sessionId = null): array
+    {
+        if ($sessionId === null) {
+            return ['success' => true];
+        }
+        try {
+            $this->ledger->release($sessionId, (string)$featureId);
+            return ['success' => true];
+        } catch (RuntimeException $e) {
+            return $this->failure($e);
+        }
+    }
+
+    /**
+     * @return array{success: bool, error?: string, extcode?: int}
+     */
+    public function sessionEnd(string $sessionId): array
+    {
+        try {
+            $this->ledger->endSession($sessionId);
+            return ['success' => true];
+        } catch (RuntimeException $e) {
+            return $this->failure($e);
+        }
+    }
+
+    /**
+     * @return array{success: bool, usage?: array<string, array{used: int, limit: int|null}>,
+     *     error?: string, extcode?: int}
+     */
+    public function usageGet(): array
+    {
+        try {
+            $payload = $this->store->lastVerifiedPayload();
+            $usage = [];
+            foreach ($this->ledger->usage() as $featureId => $used) {
+                // JSON turns a numeric feature id back into an int key on the way out of the ledger.
+                $featureId = (string)$featureId;
+                $usage[$featureId] = [
+                    'used' => $used,
+                    'limit' => $payload === null ? null : EntitlementToken::seatLimit($payload, $featureId),
+                ];
+            }
+            return ['success' => true, 'usage' => $usage];
+        } catch (RuntimeException $e) {
+            return $this->failure($e);
+        }
+    }
+
+    /**
+     * One snapshot of the token for the whole call: the right and the limit come from the same document.
+     *
+     * @return array<string, mixed>
+     * @throws SeatException 2011
+     */
+    private function entitledPayload(string $featureId): array
+    {
+        $payload = $this->store->lastVerifiedPayload();
+        if ($payload === null || !$this->featureAvailable($featureId)['success']) {
+            throw new SeatException('Feature is expired or not licensed', SeatException::NOT_LICENSED);
+        }
+        return $payload;
+    }
+
+    /**
+     * How long the answer may be trusted: the shortest of the lease, the feature and the token.
+     *
+     * @param array<string, mixed> $payload
+     */
+    private function validTtl(array $payload, string $featureId, int $leaseLeft): int
+    {
+        $now = $this->store->now();
+        return max(0, min(
+            $leaseLeft,
+            (int)($payload['features'][$featureId] ?? 0) - $now,
+            $this->store->effectiveExpiry($this->licenseKey()) - $now
+        ));
+    }
+
+    /**
+     * @return array{success: false, error: string, extcode?: int}
+     */
+    private function failure(RuntimeException $e): array
+    {
+        if ($e instanceof SeatException) {
+            return ['success' => false, 'error' => $e->getMessage(), 'extcode' => $e->extcode];
+        }
+        $this->log('Seat ledger failure: ' . $e->getMessage());
+        return ['success' => false, 'error' => $e->getMessage()];
     }
 
     public function checkPBX(): void
@@ -122,7 +308,7 @@ class LicenseV2
 
     public function translateLicenseErrorMessage(string $message): string
     {
-        return $this->legacy?->translateLicenseErrorMessage($message) ?? $message;
+        return $this->legacy()?->translateLicenseErrorMessage($message) ?? $message;
     }
 
     /**
@@ -180,7 +366,7 @@ class LicenseV2
 
     private function licenseKey(): string
     {
-        return PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
+        return ($this->licenseKey)();
     }
 
     /**
@@ -202,6 +388,9 @@ class LicenseV2
         $halfLife = ((int)($payload['iat'] ?? 0) + (int)($payload['exp'] ?? 0)) / 2;
         $sameKey = hash_equals($this->licenseKey(), (string)($payload['key'] ?? ''));
         if (!$force && $sameKey && $this->store->now() < $halfLife) {
+            return false;
+        }
+        if (!$force && !$this->store->retryAllowed()) {
             return false;
         }
         foreach ($serverUrls as $serverUrl) {
@@ -229,6 +418,12 @@ class LicenseV2
             } catch (Throwable $e) {
                 $this->log("Answer of $serverUrl is rejected: " . $e->getMessage());
             }
+        }
+        try {
+            $this->log('All entitlement servers failed, next attempt in ' . $this->store->noteFailure() . ' s');
+        } catch (RuntimeException $e) {
+            // Only root workers may write the backoff; a refresh forced from the web just reports.
+            $this->log('All entitlement servers failed: ' . $e->getMessage());
         }
         return false;
     }

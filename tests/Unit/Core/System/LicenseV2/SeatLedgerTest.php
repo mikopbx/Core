@@ -160,6 +160,37 @@ class SeatLedgerTest extends TestCase
         $this->assertSame([], $ledger->usage());
     }
 
+    public function testLatestHolderIsTheMostRecentCaptureAmongCurrentHolders(): void
+    {
+        $ledger = $this->newLedger();
+        $a = $ledger->startSession([], 60, 100);
+        $b = $ledger->startSession([], 60, 100);
+        $ledger->capture($a, '54', 3);
+        $this->wallClock += 1;
+        $ledger->capture($b, '54', 3);
+
+        $this->assertTrue($ledger->isLatestHolder($b, '54'));
+        $this->assertFalse($ledger->isLatestHolder($a, '54'));
+        $this->assertFalse($ledger->isLatestHolder($a, '55'), 'a feature this session never took');
+        $this->assertFalse($ledger->isLatestHolder('0000000000000000000000000000dead', '54'));
+
+        // The seat is given back: the one left behind becomes the latest holder.
+        $ledger->release($b, '54');
+        $this->assertTrue($ledger->isLatestHolder($a, '54'));
+    }
+
+    public function testSimultaneousCapturesMakeBothHoldersLatest(): void
+    {
+        $ledger = $this->newLedger();
+        $a = $ledger->startSession([], 60, 100);
+        $b = $ledger->startSession([], 60, 100);
+        $ledger->capture($a, '54', 3);
+        $ledger->capture($b, '54', 3);
+        // Known simplification: a cut to one seat may then free two.
+        $this->assertTrue($ledger->isLatestHolder($a, '54'));
+        $this->assertTrue($ledger->isLatestHolder($b, '54'));
+    }
+
     public function testClockRollbackDoesNotExtendLeasesBeyondTheirTtl(): void
     {
         $ledger = $this->newLedger();

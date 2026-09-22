@@ -91,6 +91,7 @@ class SeatLedger
                     throw new SeatException('No free seats for the feature', SeatException::NO_SEATS);
                 }
                 $ledger['sessions'][$sessionId]['features'][] = $featureId;
+                $ledger['sessions'][$sessionId]['captured'][$featureId] = $now;
             }
             return $ledger['sessions'][$sessionId]['expires'] - $now;
         });
@@ -161,6 +162,43 @@ class SeatLedger
             $this->liveSession($ledger, $sessionId);
             return $ledger['sessions'][$sessionId]['features'];
         });
+    }
+
+    /**
+     * Whether this session took the feature later than every other session still holding it:
+     * the one to give it back first when the limit is cut.
+     *
+     * Equal capture times make both sessions "latest", so a cut by one seat may free two.
+     */
+    public function isLatestHolder(string $sessionId, string $featureId): bool
+    {
+        return $this->transaction(function (array &$ledger) use ($sessionId, $featureId): bool {
+            $mine = $this->capturedAt($ledger['sessions'][$sessionId] ?? [], $featureId);
+            if ($mine === null) {
+                return false;
+            }
+            foreach ($ledger['sessions'] as $id => $session) {
+                // ponytail: seconds-granularity order, ties broken in favour of releasing both;
+                // a monotonic capture counter if freeing one seat too many ever matters.
+                if ($id !== $sessionId && ($this->capturedAt($session, $featureId) ?? -1) > $mine) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
+
+    /**
+     * When the session took a feature it still holds; null when it does not hold it. A session
+     * written before 'captured' existed counts as the oldest holder, never as the latest.
+     *
+     * @param array<string, mixed> $session
+     */
+    private function capturedAt(array $session, string $featureId): ?int
+    {
+        return in_array($featureId, (array)($session['features'] ?? []), true)
+            ? (int)($session['captured'][$featureId] ?? 0)
+            : null;
     }
 
     /**
@@ -248,7 +286,8 @@ class SeatLedger
      * A missing file is a fresh start; an unreadable or malformed one is set aside and refused.
      *
      * @return array{v: int, wall: int, sessions: array<string, array{
-     *     holder: array<string, mixed>, ttl: int, expires: int, features: array<int, string>
+     *     holder: array<string, mixed>, ttl: int, expires: int, features: array<int, string>,
+     *     captured?: array<string, int>
      * }>}
      * @throws RuntimeException
      */
@@ -284,6 +323,8 @@ class SeatLedger
                 !is_string($id) || !is_array($session)
                 || !is_array($session['holder'] ?? null) || !is_int($session['ttl'] ?? null)
                 || !is_int($session['expires'] ?? null) || !is_array($session['features'] ?? null)
+                // 'captured' is younger than the file format: absent is fine, malformed is not.
+                || !is_array($session['captured'] ?? [])
             ) {
                 return false;
             }
