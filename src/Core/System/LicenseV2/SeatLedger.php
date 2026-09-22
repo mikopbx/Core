@@ -113,6 +113,57 @@ class SeatLedger
     }
 
     /**
+     * Renews the lease: expires = now + ttl (frequent calls do not stack), drops the listed features.
+     *
+     * @param array<int, string> $droppedFeatures
+     * @return int Seconds left on the lease.
+     * @throws SeatException 1021 unknown or expired session.
+     */
+    public function keepalive(string $sessionId, array $droppedFeatures = []): int
+    {
+        return $this->transaction(function (array &$ledger, int $now) use ($sessionId, $droppedFeatures): int {
+            $this->liveSession($ledger, $sessionId);
+            $ledger['sessions'][$sessionId]['features'] = array_values(
+                array_diff($ledger['sessions'][$sessionId]['features'], $droppedFeatures)
+            );
+            $ledger['sessions'][$sessionId]['expires'] = $now + $ledger['sessions'][$sessionId]['ttl'];
+            return $ledger['sessions'][$sessionId]['ttl'];
+        });
+    }
+
+    /** Idempotent: an unknown session or a feature it never held is not an error. */
+    public function release(string $sessionId, string $featureId): void
+    {
+        $this->transaction(function (array &$ledger) use ($sessionId, $featureId): void {
+            if (isset($ledger['sessions'][$sessionId])) {
+                $ledger['sessions'][$sessionId]['features'] = array_values(
+                    array_diff($ledger['sessions'][$sessionId]['features'], [$featureId])
+                );
+            }
+        });
+    }
+
+    /** Idempotent. */
+    public function endSession(string $sessionId): void
+    {
+        $this->transaction(function (array &$ledger) use ($sessionId): void {
+            unset($ledger['sessions'][$sessionId]);
+        });
+    }
+
+    /**
+     * @return array<int, string>
+     * @throws SeatException 1021
+     */
+    public function sessionFeatures(string $sessionId): array
+    {
+        return $this->transaction(function (array &$ledger) use ($sessionId): array {
+            $this->liveSession($ledger, $sessionId);
+            return $ledger['sessions'][$sessionId]['features'];
+        });
+    }
+
+    /**
      * @param array<string, mixed> $ledger
      * @throws SeatException When the session is unknown or expired.
      */
@@ -150,12 +201,24 @@ class SeatLedger
             throw new RuntimeException("Can not create $this->dir");
         }
         $lock = fopen("$this->dir/" . self::FILE . '.lock', 'c');
-        if ($lock === false || !flock($lock, LOCK_EX)) {
+        if ($lock === false) {
+            throw new RuntimeException("Can not lock the seat ledger in $this->dir");
+        }
+        if (!flock($lock, LOCK_EX)) {
+            fclose($lock);
             throw new RuntimeException("Can not lock the seat ledger in $this->dir");
         }
         try {
             $ledger = $this->load();
             $now = ($this->clock)();
+            // The clock went backwards (rollback, reboot with a wrong clock): no lease may outlive
+            // its own ttl measured from this moment, so a rollback extends nothing beyond one ttl.
+            if ($now < $ledger['wall']) {
+                foreach ($ledger['sessions'] as &$session) {
+                    $session['expires'] = min($session['expires'], $now + $session['ttl']);
+                }
+                unset($session);
+            }
             $this->expire($ledger, $now);
             $result = $body($ledger, $now);
             $ledger['wall'] = $now;
@@ -195,8 +258,11 @@ class SeatLedger
         }
         $ledger = json_decode((string)file_get_contents($file), true);
         if (!$this->isWellFormed($ledger)) {
-            rename($file, "$file.corrupt");
-            throw new RuntimeException('Seat ledger is corrupt, set aside as ' . self::FILE . '.corrupt');
+            if (rename($file, "$file.corrupt")) {
+                throw new RuntimeException('Seat ledger is corrupt, set aside as ' . self::FILE . '.corrupt');
+            }
+            unlink($file);
+            throw new RuntimeException('Seat ledger is corrupt and could not be set aside; removed instead');
         }
         return $ledger;
     }

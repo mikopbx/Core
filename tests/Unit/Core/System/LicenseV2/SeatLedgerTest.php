@@ -57,11 +57,18 @@ class SeatLedgerTest extends TestCase
         $this->assertSame(0600, fileperms("$this->dir/seats.json") & 0777);
     }
 
-    public function testTtlBoundsHolderSizeAndSessionCeiling(): void
+    public function testTtlBelowMinimumIsRefused(): void
     {
         $ledger = $this->newLedger();
         $this->expectException(RuntimeException::class);
         $ledger->startSession([], 10, 100);
+    }
+
+    public function testTtlAboveMaximumIsRefused(): void
+    {
+        $ledger = $this->newLedger();
+        $this->expectException(RuntimeException::class);
+        $ledger->startSession([], 3601, 100);
     }
 
     public function testHolderTooLargeIsRefused(): void
@@ -96,6 +103,125 @@ class SeatLedgerTest extends TestCase
         // The earlier session and its seat must still be intact: nothing was wiped.
         $this->assertSame(['54' => 1], $ledger->usage());
         $this->assertGreaterThan(0, filesize("$this->dir/seats.json"));
+    }
+
+    public function testExpiredSessionFreesTheSeatAndAnswers1021(): void
+    {
+        $ledger = $this->newLedger();
+        $a = $ledger->startSession([], 60, 100);
+        $ledger->capture($a, '54', 1);
+        $this->wallClock += 60; // expires <= now: expired
+        $b = $ledger->startSession([], 60, 100);
+        $this->assertSame(60, $ledger->capture($b, '54', 1));
+        try {
+            $ledger->capture($a, '54', 1);
+            $this->fail('expired session captured');
+        } catch (SeatException $e) {
+            $this->assertSame(SeatException::NO_SESSION, $e->extcode);
+        }
+    }
+
+    public function testKeepaliveRenewsWithoutAccumulatingAndDoesNotResurrect(): void
+    {
+        $ledger = $this->newLedger();
+        $a = $ledger->startSession([], 60, 100);
+        $ledger->capture($a, '54', 1);
+        $this->wallClock += 30;
+        $this->assertSame(60, $ledger->keepalive($a));
+        $this->assertSame(60, $ledger->keepalive($a), 'expires = now + ttl, not += ttl');
+        $this->wallClock += 60;
+        $this->expectException(SeatException::class);
+        $ledger->keepalive($a);
+    }
+
+    public function testKeepaliveDropsFeatures(): void
+    {
+        $ledger = $this->newLedger();
+        $a = $ledger->startSession([], 60, 100);
+        $ledger->capture($a, '54', 1);
+        $ledger->capture($a, '55', 1);
+        $ledger->keepalive($a, ['54']);
+        $this->assertSame(['55'], $ledger->sessionFeatures($a));
+        $this->assertSame(['55' => 1], $ledger->usage());
+    }
+
+    public function testReleaseKeepsOtherFeaturesAndEndFreesAll(): void
+    {
+        $ledger = $this->newLedger();
+        $a = $ledger->startSession([], 60, 100);
+        $ledger->capture($a, '54', 1);
+        $ledger->capture($a, '55', 1);
+        $ledger->release($a, '54');
+        $this->assertSame(['55' => 1], $ledger->usage());
+        $ledger->release($a, '54'); // idempotent
+        $ledger->endSession($a);
+        $ledger->endSession($a); // idempotent
+        $ledger->endSession('0000000000000000000000000000dead'); // unknown: no error
+        $this->assertSame([], $ledger->usage());
+    }
+
+    public function testClockRollbackDoesNotExtendLeasesBeyondTheirTtl(): void
+    {
+        $ledger = $this->newLedger();
+        $a = $ledger->startSession([], 60, 100);
+        $ledger->capture($a, '54', 1);
+        $this->wallClock -= 3600; // system clock jumped back an hour
+        $this->assertSame(60, $ledger->keepalive($a), 'lease is clamped to now + ttl');
+        $this->wallClock += 60;
+        $this->expectException(SeatException::class);
+        $ledger->keepalive($a);
+    }
+
+    public function testCorruptFileFailsClosedAndIsSetAside(): void
+    {
+        $ledger = $this->newLedger();
+        $ledger->startSession([], 60, 100);
+        file_put_contents("$this->dir/seats.json", '{"v":1,"wall":1,"sessions":"nope"}');
+        try {
+            $ledger->startSession([], 60, 100);
+            $this->fail('corrupt ledger accepted');
+        } catch (RuntimeException $e) {
+            $this->assertFileExists("$this->dir/seats.json.corrupt");
+        }
+        $this->assertSame([], $ledger->usage(), 'next call starts clean');
+    }
+
+    public function testEmptyFileIsCorruptToo(): void
+    {
+        $ledger = $this->newLedger();
+        file_put_contents("$this->dir/seats.json", '');
+        $this->expectException(RuntimeException::class);
+        $ledger->usage();
+    }
+
+    public function testTwoProcessesRaceForTheLastSeatExactlyOneWins(): void
+    {
+        if (!function_exists('pcntl_fork')) {
+            $this->markTestSkipped('pcntl is not available');
+        }
+        $ledger = new SeatLedger($this->dir);
+        $a = $ledger->startSession([], 60, 100);
+        $b = $ledger->startSession([], 60, 100);
+        $results = [];
+        foreach ([$a, $b] as $sessionId) {
+            $pid = pcntl_fork();
+            if ($pid === 0) {
+                try {
+                    (new SeatLedger($this->dir))->capture($sessionId, '54', 1);
+                    exit(0);
+                } catch (SeatException) {
+                    exit(51);
+                }
+            }
+            $results[$pid] = null;
+        }
+        foreach (array_keys($results) as $pid) {
+            pcntl_waitpid($pid, $status);
+            $results[$pid] = pcntl_wexitstatus($status);
+        }
+        sort($results);
+        $this->assertSame([0, 51], array_values($results));
+        $this->assertSame(['54' => 1], $ledger->usage());
     }
 
     private function newLedger(): SeatLedger
