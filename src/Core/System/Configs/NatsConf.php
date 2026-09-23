@@ -127,8 +127,12 @@ class NatsConf extends SystemConfigClass
 
         $pid_file = '/var/run/'.self::PROC_NAME.'.pid';
         $settings = [
+            // Bind both listeners to the address the core clients use (loopback by default): nothing
+            // outside the box talks to gnatsd, and /license.api on the HTTP port has no authentication,
+            // while the firewall does not cover Docker, LXC without CAP_NET_ADMIN or a disabled firewall.
+            'host'             => $config->host,
             'port'             => $config->port,
-            'http_port'        => $config->httpPort,
+            'http'             => "$config->host:$config->httpPort",
             'debug'            => $config->debug?'true':'false',
             'trace'            => $config->debug?'true':'false',
             'logtime'          => 'true',
