@@ -34,6 +34,7 @@ use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Configs\PbxConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
+use MikoPBX\Core\System\ConsoleMenu\Utilities\MenuStyleConfig;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\PBXCoreREST\Lib\SoundFiles\ConvertAudioFileAction;
@@ -448,8 +449,8 @@ class Storage extends Injectable
             }
             // Otherwise, prompt the user to enter a disk
             do {
-                echo PHP_EOL . Util::translate('Enter the device name:') . Util::translate('(default value = ') . $selected_disk['id'] . ') :';
-                $target_disk_storage = trim(fgets($fp));
+                $prompt = PHP_EOL . Util::translate('Enter the device name:') . Util::translate('(default value = ') . $selected_disk['id'] . ') :';
+                $target_disk_storage = trim(MenuStyleConfig::readLine($prompt, $fp));
                 if ($target_disk_storage === '') {
                     $target_disk_storage = $selected_disk['id'];
                 }
