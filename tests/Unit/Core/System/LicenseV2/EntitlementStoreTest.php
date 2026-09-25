@@ -407,7 +407,7 @@ class EntitlementStoreTest extends TestCase
         $this->assertTrue($store->retryAllowed());
     }
 
-    public function testEffectiveExpiryCoversGraceUntilRefusal(): void
+    public function testEffectiveExpiryCoversGraceAndEndsAtRefusal(): void
     {
         $store = $this->newStore();
         $store->acceptToken($this->issueFor($store, ['exp' => self::NOW + 100, 'offlineUntil' => self::NOW + 1000]));
@@ -415,7 +415,111 @@ class EntitlementStoreTest extends TestCase
         $this->assertSame(0, $store->effectiveExpiry('MIKO-OTHER'));
         $refusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'Unknown license key');
         $store->acceptRefusal($refusal);
-        $this->assertSame(self::NOW + 100, $store->effectiveExpiry('MIKO-TEST'));
+        // Revoked at once: neither the grace period nor the rest of exp is left.
+        $this->assertSame(0, $store->effectiveExpiry('MIKO-TEST'));
+    }
+
+    public function testSignedRefusalRevokesTheTokenAtOnce(): void
+    {
+        $store = $this->newStore();
+        $store->acceptToken($this->issueFor($store));
+        $this->assertTrue($store->featureAvailable('54'));
+
+        $store->acceptRefusal($this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'License key is revoked'));
+
+        // Well before exp: a signed "no" takes the license away now, not when the token runs out.
+        $this->assertFalse($store->featureAvailable('54'));
+        $this->assertSame(0, $store->effectiveExpiry());
+
+        $store->acceptToken($this->issueFor($store));
+        $this->assertTrue($store->featureAvailable('54'));
+    }
+
+    /**
+     * Sequential stand-in for the race the lock closes: a refusal answering a request that a newer
+     * accepted token has already superseded must not revoke that token.
+     */
+    public function testStaleRefusalCanNotRevokeANewerToken(): void
+    {
+        $store = $this->newStore();
+        $staleRefusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'Unknown license key');
+        $store->acceptToken($this->issueFor($store));
+        $rejected = false;
+        try {
+            $store->acceptRefusal($staleRefusal);
+        } catch (RuntimeException) {
+            $rejected = true;
+        }
+        $this->assertTrue($rejected, 'stale refusal accepted');
+        $this->assertTrue($store->featureAvailable('54'));
+    }
+
+    public function testSecondRoundIsSkippedWhileOneRuns(): void
+    {
+        $store = $this->newStore();
+        // flock() on a second descriptor conflicts even within one process, so this is the two-worker case.
+        $inner = $store->exclusiveRound(fn(): mixed => $store->exclusiveRound(fn(): string => 'second'));
+        $this->assertNull($inner);
+        $this->assertSame('free again', $store->exclusiveRound(fn(): string => 'free again'));
+    }
+
+    public function testReportTravelsInsideTheSignedRequest(): void
+    {
+        $store = $this->newStore();
+        $report = [
+            'usage' => ['54' => ['used' => 1, 'peak' => 2, 'denied' => 3]],
+            'holders' => [['ref' => '0123456789abcdef', 'features' => ['54'], 'since' => self::NOW]],
+            'metrics' => ['PBXname' => 'MikoPBX@test'],
+        ];
+        $signed = $store->buildRequest('MIKO-TEST', '2026.3.1', false, $report, ['54' => 3]);
+        $request = json_decode(EntitlementToken::base64UrlDecode($signed['request']), true);
+
+        $this->assertSame($report['usage'], $request['usage']);
+        $this->assertSame($report['holders'], $request['holders']);
+        $this->assertSame($report['metrics'], $request['metrics']);
+        $this->assertArrayNotHasKey('marks', $request, 'marks stay on the PBX');
+        $publicKey = (new InstallationIdentity($this->dir))->getPublicKeyPem();
+        $this->assertSame(1, openssl_verify($signed['request'], EntitlementToken::base64UrlDecode($signed['sig']), $publicKey, 0));
+
+        // A snapshot that was read and is empty says "nothing held"; a missing one says "unknown" — the
+        // server must keep what it knew. So an empty usage travels as {} and empty holders as [].
+        $empty = $store->buildRequest('MIKO-TEST', '2026.3.1', false, ['usage' => [], 'holders' => []]);
+        $emptyJson = EntitlementToken::base64UrlDecode($empty['request']);
+        $this->assertStringContainsString('"usage":{}', $emptyJson);
+        $this->assertStringContainsString('"holders":[]', $emptyJson);
+        $unknown = $store->buildRequest('MIKO-TEST', '2026.3.1');
+        $this->assertArrayNotHasKey('usage', json_decode(EntitlementToken::base64UrlDecode($unknown['request']), true));
+
+        // A feature id that looks like a list index must still travel as an object key.
+        $zero = $store->buildRequest('MIKO-TEST', '2026.3.1', false, ['usage' => ['0' => ['used' => 1, 'peak' => 1, 'denied' => 0]]]);
+        $this->assertStringContainsString('"usage":{"0":', EntitlementToken::base64UrlDecode($zero['request']));
+    }
+
+    public function testAcceptedAnswerReturnsTheMarksOfItsOwnRequest(): void
+    {
+        $store = $this->newStore();
+        $offlineAnswer = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1', true, [], ['54' => 1]));
+        $onlineAnswer = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1', false, [], ['54' => 4]));
+
+        $this->assertSame(['54' => 4], $store->acceptAnswer($onlineAnswer)['marks']);
+        $this->assertSame(['54' => 1], $store->acceptAnswer($offlineAnswer)['marks']);
+    }
+
+    public function testMetricsAreDueDailyAndOnlyAnAcceptedAnswerSettlesThem(): void
+    {
+        $store = $this->newStore();
+        $this->assertTrue($store->metricsDue());
+        $unanswered = $store->buildRequest('MIKO-TEST', '2026.3.1', false, ['metrics' => ['PBXname' => 'x']]);
+        $this->assertTrue($store->metricsDue(), 'a request alone settles nothing');
+
+        $store->acceptAnswer($this->sign($unanswered));
+        $this->assertFalse($store->metricsDue());
+
+        $store->acceptToken($this->issueFor($store));
+        $this->wallClock += self::DAY - 1;
+        $this->assertFalse($store->metricsDue(), 'an answer to a request without metrics moves nothing');
+        $this->wallClock += 1;
+        $this->assertTrue($store->metricsDue());
     }
 
     public function testConcurrentImportOfTheSameTokenIsAcceptedOnce(): void

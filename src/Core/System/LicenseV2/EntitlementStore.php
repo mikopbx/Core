@@ -36,6 +36,8 @@ class EntitlementStore
     public const int BACKOFF_MIN = 300;
     /** Never wait longer than this between retries, seconds. */
     public const int BACKOFF_MAX = 21600;
+    /** Metrics ride along with a request at most once in this many seconds. */
+    public const int METRICS_INTERVAL = 86400;
 
     private const string TOKEN_FILE = 'entitlement.token';
     private const string STATE_FILE = 'state.json';
@@ -43,6 +45,10 @@ class EntitlementStore
     private const string NONCE_OFFLINE = 'nonceOffline';
     private const string NEXT_RETRY = 'nextRetry';
     private const string BACKOFF = 'backoff';
+    /** State key suffix: what the request of a nonce slot reported, settled by its answer. */
+    private const string REPORT_SUFFIX = 'Report';
+    private const string METRICS_SENT_AT = 'metricsSentAt';
+    private const string ROUND_LOCK_FILE = 'refresh.lock';
 
     /** Do not rewrite the state file more often than this, seconds. */
     private const int CLOCK_PERSIST_STEP = 60;
@@ -65,11 +71,26 @@ class EntitlementStore
      * Online refresh and the file-based offline exchange keep separate nonces, so the hourly
      * refresh does not invalidate a request file the administrator has already exported.
      *
+     * @param array{usage?: array<string, array<string, int>>, holders?: array<int, array<string, mixed>>,
+     *     metrics?: array<string, mixed>} $report Signed along with the request. A part given empty is sent
+     *     empty ("nothing held"); a part left out is unknown to the PBX and the server keeps what it had.
+     * @param array<string, mixed> $marks Opaque, kept with the nonce and handed back by acceptAnswer() (SeatLedger::report()).
      * @return array{request: string, sig: string}
      */
-    public function buildRequest(string $licenseKey, string $pbxVersion, bool $offline = false): array
-    {
+    public function buildRequest(
+        string $licenseKey,
+        string $pbxVersion,
+        bool $offline = false,
+        array $report = [],
+        array $marks = []
+    ): array {
         $nonce = bin2hex(random_bytes(16));
+        $slot = $offline ? self::NONCE_OFFLINE : self::NONCE_ONLINE;
+        $parts = $report;
+        if (isset($parts['usage'])) {
+            // Feature ids stay JSON object keys even when one of them looks like a list index.
+            $parts['usage'] = (object)$parts['usage'];
+        }
         $request = EntitlementToken::base64UrlEncode((string)json_encode([
             'v' => EntitlementToken::VERSION,
             'install' => $this->identity->getInstallId(),
@@ -78,8 +99,12 @@ class EntitlementStore
             'nonce' => $nonce,
             'ts' => $this->now(),
             'pbx' => $pbxVersion,
-        ]));
-        $this->saveState([$offline ? self::NONCE_OFFLINE : self::NONCE_ONLINE => $nonce]);
+        ] + $parts));
+        $this->saveState([
+            $slot => $nonce,
+            // Counters only, never holders: this file lives on the /cf flash.
+            $slot . self::REPORT_SUFFIX => ['marks' => $marks, 'metrics' => isset($report['metrics'])],
+        ]);
         return [
             'request' => $request,
             'sig' => EntitlementToken::base64UrlEncode($this->identity->sign($request)),
@@ -89,11 +114,12 @@ class EntitlementStore
     /**
      * Accepts the server answer to the pending request.
      *
-     * @return array<string, mixed> Accepted payload.
+     * @return array{payload: array<string, mixed>, marks: array<string, mixed>}
+     *     The accepted payload and the marks its request was built with, for SeatLedger::reportAccepted().
      * @throws TokenRejectedException When the token is forged, replayed, stale or foreign.
      * @throws RuntimeException When the state can not be locked or written.
      */
-    public function acceptToken(string $token): array
+    public function acceptAnswer(string $token): array
     {
         $payload = EntitlementToken::decodeVerified($token, $this->serverPublicKeyPem, $this->identity->getInstallId());
         // Freshness is judged by the clock as it was before this token: a token dated in the
@@ -117,16 +143,65 @@ class EntitlementStore
                 throw new TokenRejectedException('Entitlement token is expired or the PBX clock is wrong');
             }
             $this->writeAtomically(self::TOKEN_FILE, trim($token));
-            // The nonce is spent only by an accepted token, a refused one leaves the request pending.
-            $this->saveState([
+            $sent = (array)($state[$answeredSlot . self::REPORT_SUFFIX] ?? []);
+            $changes = [
                 $answeredSlot => '',
+                $answeredSlot . self::REPORT_SUFFIX => [],
                 'refused' => false,
                 'lastSeen' => max($now, (int)$payload['iat']),
                 self::BACKOFF => 0,
                 self::NEXT_RETRY => 0,
-            ], true);
-            return $payload;
+            ];
+            if (($sent['metrics'] ?? false) === true) {
+                $changes[self::METRICS_SENT_AT] = $now;
+            }
+            // The nonce is spent only by an accepted token, a refused one leaves the request pending.
+            $this->saveState($changes, true);
+            return ['payload' => $payload, 'marks' => (array)($sent['marks'] ?? [])];
         });
+    }
+
+    /**
+     * @return array<string, mixed> Accepted payload.
+     * @throws TokenRejectedException
+     * @throws RuntimeException
+     */
+    public function acceptToken(string $token): array
+    {
+        return $this->acceptAnswer($token)['payload'];
+    }
+
+    /** Whether the next request should carry the daily metrics. */
+    public function metricsDue(): bool
+    {
+        return $this->now() >= (int)($this->loadState()[self::METRICS_SENT_AT] ?? 0) + self::METRICS_INTERVAL;
+    }
+
+    /**
+     * Runs one online round alone. A second process finding the round taken skips it (null) instead of
+     * replacing the nonce the first one waits an answer for, or noting a failure after its success.
+     * Its own lock file: the round calls now() and buildRequest(), which take the state lock themselves.
+     */
+    public function exclusiveRound(Closure $round): mixed
+    {
+        // Only root workers keep the state; a round from the web user could not store its nonce anyway.
+        if (!is_writable($this->dir)) {
+            return null;
+        }
+        $lock = fopen("$this->dir/" . self::ROUND_LOCK_FILE, 'c');
+        if ($lock === false) {
+            return null;
+        }
+        if (!flock($lock, LOCK_EX | LOCK_NB)) {
+            fclose($lock);
+            return null;
+        }
+        try {
+            return $round();
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
     }
 
     /**
@@ -162,38 +237,42 @@ class EntitlementStore
      */
     public function featureAvailable(string $featureId, ?string $licenseKey = null, ?array $payload = null): bool
     {
+        // A signed refusal revokes the stored token at once; only the next accepted token licenses again.
+        if (($this->loadState()['refused'] ?? false) === true) {
+            return false;
+        }
         $payload ??= $this->lastVerifiedPayload();
         $now = $this->now();
-        // Grace covers unreachable servers only; after an explicit refusal the token lives till exp.
-        $withGrace = ($this->loadState()['refused'] ?? false) !== true;
         return $payload !== null
             && ($licenseKey === null || hash_equals($licenseKey, (string)($payload['key'] ?? '')))
-            && EntitlementToken::isFresh($payload, $now, $withGrace)
+            && EntitlementToken::isFresh($payload, $now, true)
             && EntitlementToken::featureValid($payload, $featureId, $now);
     }
 
     /**
-     * The licensing server has answered the pending online request and said no: the offline grace
-     * period no longer applies. The refusal must be signed; a bare HTTP error may come from any
-     * proxy on the way and is not a refusal.
+     * The licensing server has answered the pending online request and said no: nothing is licensed
+     * from now on, grace included, until a token is accepted again. The refusal must be signed; a bare
+     * HTTP error may come from any proxy on the way and is not a refusal. The nonce is checked and the
+     * refusal stored under one lock, so a refusal to a request a newer token has superseded revokes nothing.
      *
      * @return string Reason given by the server.
      * @throws RuntimeException When the refusal is not authentic or answers another request.
      */
     public function acceptRefusal(string $signedRefusal): string
     {
-        $installId = $this->identity->getInstallId();
-        $payload = EntitlementToken::decodeSigned($signedRefusal, $this->serverPublicKeyPem, $installId);
-        $pendingNonce = (string)($this->loadState()[self::NONCE_ONLINE] ?? '');
-        if (
-            ($payload['refused'] ?? false) !== true
-            || $pendingNonce === ''
-            || !hash_equals($pendingNonce, (string)($payload['nonce'] ?? ''))
-        ) {
-            throw new RuntimeException('Refusal does not answer the pending request');
-        }
-        $this->saveState([self::NONCE_ONLINE => '', 'refused' => true, self::BACKOFF => 0, self::NEXT_RETRY => 0]);
-        return (string)json_encode($payload['error'] ?? '');
+        $payload = EntitlementToken::decodeSigned($signedRefusal, $this->serverPublicKeyPem, $this->identity->getInstallId());
+        return $this->withLock(function () use ($payload): string {
+            $pendingNonce = (string)($this->loadState()[self::NONCE_ONLINE] ?? '');
+            if (
+                ($payload['refused'] ?? false) !== true
+                || $pendingNonce === ''
+                || !hash_equals($pendingNonce, (string)($payload['nonce'] ?? ''))
+            ) {
+                throw new RuntimeException('Refusal does not answer the pending request');
+            }
+            $this->saveState([self::NONCE_ONLINE => '', 'refused' => true, self::BACKOFF => 0, self::NEXT_RETRY => 0], true);
+            return (string)json_encode($payload['error'] ?? '');
+        });
     }
 
     /** Whether the licensing servers may be asked now (the backoff after failures has passed). */
@@ -223,19 +302,20 @@ class EntitlementStore
 
     /**
      * Until when the stored token licenses anything: exp, or offlineUntil while the servers are
-     * unreachable and no signed refusal has arrived. 0 without a usable token or on key mismatch.
+     * unreachable; 0 after a signed refusal, without a usable token or on key mismatch.
      *
      * @param array<string, mixed>|null $payload Token to judge against; null reads the stored one.
      */
     public function effectiveExpiry(?string $licenseKey = null, ?array $payload = null): int
     {
+        if (($this->loadState()['refused'] ?? false) === true) {
+            return 0;
+        }
         $payload ??= $this->lastVerifiedPayload();
         if ($payload === null || ($licenseKey !== null && !hash_equals($licenseKey, (string)($payload['key'] ?? '')))) {
             return 0;
         }
-        $withGrace = ($this->loadState()['refused'] ?? false) !== true;
-        $until = (int)($payload['exp'] ?? 0);
-        return $withGrace ? max($until, (int)($payload['offlineUntil'] ?? 0)) : $until;
+        return max((int)($payload['exp'] ?? 0), (int)($payload['offlineUntil'] ?? 0));
     }
 
     /**
