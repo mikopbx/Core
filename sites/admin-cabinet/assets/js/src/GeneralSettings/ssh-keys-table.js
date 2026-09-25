@@ -418,7 +418,7 @@ const sshKeysTable = {
      * @return {boolean} True if valid
      */
     isValidSSHKey(key) {
-        const sshKeyRegex = /^(ssh-rsa|ssh-dss|ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521)\s+[A-Za-z0-9+/]+[=]{0,2}(\s+.+)?$/;
+        const sshKeyRegex = /^(ssh-rsa|ssh-dss|ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521|sk-ssh-ed25519@openssh\.com|sk-ecdsa-sha2-nistp256@openssh\.com)\s+[A-Za-z0-9+/]+[=]{0,2}(\s+.+)?$/;
         return sshKeyRegex.test(key.trim());
     },
     
