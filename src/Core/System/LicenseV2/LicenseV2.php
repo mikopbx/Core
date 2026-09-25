@@ -31,6 +31,7 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Modules\PbxExtensionState;
 use MikoPBX\Modules\PbxExtensionUtils;
+use MikoPBX\PBXCoreREST\Lib\License\SendMetricsAction;
 use MikoPBX\Service\License;
 use RuntimeException;
 use Throwable;
@@ -38,8 +39,9 @@ use Throwable;
 /**
  * Drop-in replacement of the compiled 'license' service for feature checks: entitlements come
  * from a server-signed token instead of the local gnatsd answer. Enabled by
- * PbxSettings::LICENSE_V2_ENABLED; key management (trial, coupon, metrics, license info)
- * is still served by the legacy compiled class.
+ * PbxSettings::LICENSE_V2_ENABLED; key management (trial, coupon, license info)
+ * is still served by the legacy compiled class. Every request reports seat usage, holders and,
+ * once a day, the metrics; the answer carries the seat share of this PBX and the holders to drop.
  */
 class LicenseV2
 {
@@ -64,16 +66,23 @@ class LicenseV2
     private EntitlementStore $store;
     private SeatLedger $ledger;
     private Closure $licenseKey;
+    private Closure $metrics;
+    private Closure $pbxVersion;
+    private Closure $logger;
     private ?License $legacy = null;
 
     /**
      * The arguments exist for tests and callers that own the storage; production builds the
-     * defaults from the settings, so `new LicenseV2()` keeps working unchanged.
+     * defaults from the settings, so `new LicenseV2()` keeps working unchanged. metrics,
+     * pbxVersion and logger exist for the same reason as licenseKey: tests run without the DI container.
      */
     public function __construct(
         ?EntitlementStore $store = null,
         ?SeatLedger $ledger = null,
-        ?Closure $licenseKey = null
+        ?Closure $licenseKey = null,
+        ?Closure $metrics = null,
+        ?Closure $pbxVersion = null,
+        ?Closure $logger = null
     ) {
         $cfDir = Directories::getDir(Directories::CORE_CF_DIR) . '/conf/license-v2';
         $this->store = $store
@@ -81,6 +90,10 @@ class LicenseV2
         // Leases are rewritten on every keepalive: they live on the storage disk, not on the /cf settings partition.
         $this->ledger = $ledger ?? new SeatLedger(Directories::getDir(Directories::CORE_TEMP_DIR) . '/license-v2');
         $this->licenseKey = $licenseKey ?? static fn(): string => PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
+        $this->metrics = $metrics ?? static fn(): array => SendMetricsAction::collect();
+        $this->pbxVersion = $pbxVersion ?? static fn(): string => PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
+        $this->logger = $logger
+            ?? static fn(string $message) => SystemMessages::sysLogMsg(self::class, $message, LOG_WARNING);
     }
 
     public function store(): EntitlementStore
@@ -178,7 +191,8 @@ class LicenseV2
 
     /**
      * Renews the lease and re-checks every held feature: a changed key, an expired feature, a signed
-     * refusal past exp or a lowered limit takes the feature away here, so nothing is held for ever.
+     * refusal taking the feature away at once, or a lowered limit takes the feature away here, so
+     * nothing is held for ever.
      *
      * @return array{success: bool, validttl?: int, dropped_features?: array<int, string>,
      *     error?: string, extcode?: int}
@@ -377,7 +391,7 @@ class LicenseV2
 
     private function log(string $message): void
     {
-        SystemMessages::sysLogMsg(static::class, $message, LOG_WARNING);
+        ($this->logger)($message);
     }
 
     private function licenseKey(): string
@@ -386,11 +400,9 @@ class LicenseV2
     }
 
     /**
-     * Online exchange with the licensing servers, tried in the configured order. An unreachable or
-     * failing server passes the turn to the next one; when none answers the stored token keeps
-     * working through its grace period, then the enforcer fails closed. A signed "no" is final:
-     * the others are not asked and the grace period is cancelled. An unsigned error is what any
-     * proxy or captive portal can produce, so it only passes the turn.
+     * One online round at a time: a second caller (the worker and a forced refresh after a coupon)
+     * finding the round taken returns false; the running round already asks the server, and the next
+     * poll brings whatever it missed.
      */
     public function refresh(bool $force = false): bool
     {
@@ -400,19 +412,35 @@ class LicenseV2
             // Closed contour: tokens arrive by the file exchange only.
             return false;
         }
+        return $this->store->exclusiveRound(fn(): bool => $this->refreshRound($serverUrls, $force)) === true;
+    }
+
+    /**
+     * Online exchange with the licensing servers, tried in the configured order. An unreachable or
+     * failing server passes the turn to the next one; when none answers the stored token keeps
+     * working through its grace period, then the enforcer fails closed. A signed "no" is final:
+     * the others are not asked and nothing is licensed until a token is accepted again. An unsigned
+     * error is what any proxy or captive portal can produce, so it only passes the turn.
+     *
+     * @param array<int, string> $serverUrls
+     */
+    private function refreshRound(array $serverUrls, bool $force): bool
+    {
+        // Judged inside the round: the process that held it a moment ago may have refreshed already.
         $payload = $this->store->lastVerifiedPayload();
-        $halfLife = ((int)($payload['iat'] ?? 0) + (int)($payload['exp'] ?? 0)) / 2;
         $sameKey = hash_equals($this->licenseKey(), (string)($payload['key'] ?? ''));
-        if (!$force && $sameKey && $this->store->now() < $halfLife) {
+        if (!$force && $sameKey && !$this->refreshDue($payload)) {
             return false;
         }
         if (!$force && !$this->store->retryAllowed()) {
             return false;
         }
+        // One report per round: every server of the list is told the same, metrics are collected once.
+        $report = $this->report();
         foreach ($serverUrls as $serverUrl) {
             try {
                 $response = (new GuzzleHttp\Client())->request('POST', rtrim($serverUrl, '/') . '/entitlement', [
-                    'json' => $this->buildRequest(false),
+                    'json' => $this->buildRequest(false, $report),
                     'timeout' => 15,
                     'http_errors' => false,
                 ]);
@@ -427,7 +455,7 @@ class LicenseV2
                     return false;
                 }
                 if ($response->getStatusCode() === 200) {
-                    $this->store->acceptToken((string)($answer['token'] ?? ''));
+                    $this->applyAnswer($this->store->acceptAnswer((string)($answer['token'] ?? '')));
                     return true;
                 }
                 $this->log("Entitlement server $serverUrl failed: HTTP " . $response->getStatusCode());
@@ -445,12 +473,34 @@ class LicenseV2
     }
 
     /**
+     * The server sets the pace: a new round once poll seconds have passed since the token was
+     * issued, so an upgrade, a cut, a drop or a revocation reaches an online PBX within one poll.
+     *
+     * @param array<string, mixed>|null $payload
+     */
+    public function refreshDue(?array $payload): bool
+    {
+        return $payload === null
+            || $this->store->now() >= (int)($payload['iat'] ?? 0) + EntitlementToken::poll($payload);
+    }
+
+    /**
+     * The daily metrics ride inside the signed request (see report()); a module calling the legacy
+     * method must not reach send.metrika through __call().
+     *
+     * @param array<string, mixed> $params
+     */
+    public function sendLicenseMetrics(string $licenseKey, array $params): void
+    {
+    }
+
+    /**
      * Request file for a closed contour: the administrator carries it to the licensing cabinet
      * and brings back a token for importOfflineToken().
      */
     public function exportOfflineRequest(): string
     {
-        return (string)json_encode($this->buildRequest(true));
+        return (string)json_encode($this->buildRequest(true, $this->report()));
     }
 
     /**
@@ -458,19 +508,63 @@ class LicenseV2
      */
     public function importOfflineToken(string $token): void
     {
-        $this->store->acceptToken($token);
+        $this->applyAnswer($this->store->acceptAnswer($token));
     }
 
     /**
+     * @param array{0: array<string, mixed>, 1: array<string, mixed>} $report What report() returned.
      * @return array{request: string, sig: string}
      */
-    private function buildRequest(bool $offline): array
+    private function buildRequest(bool $offline, array $report): array
     {
-        return $this->store->buildRequest(
-            $this->licenseKey(),
-            PbxSettings::getValueByKey(PbxSettings::PBX_VERSION),
-            $offline
-        );
+        [$signed, $marks] = $report;
+        return $this->store->buildRequest($this->licenseKey(), ($this->pbxVersion)(), $offline, $signed, $marks);
+    }
+
+    /**
+     * What the server learns with every request: seat usage for its shortage reports and the shares
+     * of several PBXs on one key, holders for the cabinet monitor, metrics once a day. A broken
+     * ledger or a failing metrics probe must not cost the PBX its token: that part is left out.
+     *
+     * @return array{0: array<string, mixed>, 1: array<string, mixed>} The part to sign and the (opaque) ledger marks.
+     */
+    private function report(): array
+    {
+        $signed = [];
+        $marks = [];
+        try {
+            $seats = $this->ledger->report();
+            $signed['usage'] = $seats['usage'];
+            $marks = $seats['marks'];
+            $signed['holders'] = $this->ledger->holders();
+        } catch (RuntimeException $e) {
+            $this->log('Seat report left out of the request: ' . $e->getMessage());
+        }
+        if ($this->store->metricsDue()) {
+            try {
+                $signed['metrics'] = ($this->metrics)();
+            } catch (Throwable $e) {
+                $this->log('Metrics left out of the request: ' . $e->getMessage());
+            }
+        }
+        return [$signed, $marks];
+    }
+
+    /**
+     * Applies the accepted answer to the seats: frees the holders the server asked for and confirms
+     * the refusals it received. The token is stored already; when the ledger fails here, the next
+     * report repeats the counters and the server repeats the drop while it still sees the holder.
+     *
+     * @param array{payload: array<string, mixed>, marks: array<string, mixed>} $answer
+     */
+    private function applyAnswer(array $answer): void
+    {
+        try {
+            $this->ledger->drop(EntitlementToken::dropRefs($answer['payload']));
+            $this->ledger->reportAccepted($answer['marks']);
+        } catch (RuntimeException $e) {
+            $this->log('Seat ledger could not apply the server answer: ' . $e->getMessage());
+        }
     }
 
     /**
