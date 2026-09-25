@@ -270,6 +270,19 @@ class EntitlementStoreTest extends TestCase
         $this->assertTrue($store->featureAvailable('54'));
     }
 
+    public function testRefusalPausesRetriesForOnePollInsteadOfHammeringTheServer(): void
+    {
+        $store = $this->newStore();
+        $store->acceptToken($this->issueFor($store));
+        $refusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'Unknown license key');
+        $store->acceptRefusal($refusal);
+
+        $this->assertFalse($store->retryAllowed(), 'a refused PBX must not retry immediately');
+
+        $this->wallClock += EntitlementToken::POLL_DEFAULT;
+        $this->assertTrue($store->retryAllowed());
+    }
+
     public function testReplayedRefusalIsRejected(): void
     {
         $store = $this->newStore();

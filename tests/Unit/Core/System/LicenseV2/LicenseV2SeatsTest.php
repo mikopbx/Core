@@ -295,6 +295,7 @@ class LicenseV2SeatsTest extends TestCase
         $answer = $this->answerOffline($license);
 
         $this->assertArrayNotHasKey('usage', $answer['request']);
+        $this->assertArrayNotHasKey('holders', $answer['request']);
         $this->assertArrayNotHasKey('metrics', $answer['request']);
         $this->assertStringContainsString('Seat report left out', implode("\n", $this->logged));
         $this->assertStringContainsString('Metrics left out', implode("\n", $this->logged));

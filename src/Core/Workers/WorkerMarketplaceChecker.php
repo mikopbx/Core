@@ -69,7 +69,9 @@ class WorkerMarketplaceChecker extends WorkerBase
             $lic->checkModules();
 
             // Store the current timestamp in the cache to track the last repository check
-            $managedCache->set(self::CACHE_KEY, time(), 3600 + $randomTTLShift); // Check every hour
+            // Paces the legacy service only; under v2 refresh() itself decides whether a round is
+            // due, and checkPBX()/checkModules() above already ran this worker start regardless.
+            $managedCache->set(self::CACHE_KEY, time(), 3600 + $randomTTLShift);
         }
 
         // Retrieve the last get license request from the cache

@@ -161,7 +161,7 @@ class LicenseV2
     }
 
     /**
-     * Without a session: the installation-level check the core makes (module install, hourly enforcer).
+     * Without a session: the installation-level check the core makes (module install, every worker run).
      * With a session: a seat for one device; features without a seat limit are granted uncounted.
      * A success without a session is NOT a permission to serve a device of a seat-limited feature.
      *
@@ -191,8 +191,8 @@ class LicenseV2
 
     /**
      * Renews the lease and re-checks every held feature: a changed key, an expired feature, a signed
-     * refusal taking the feature away at once, or a lowered limit takes the feature away here, so
-     * nothing is held for ever.
+     * refusal (effective at once) or a lowered limit takes the feature away here, so nothing is held
+     * for ever.
      *
      * @return array{success: bool, validttl?: int, dropped_features?: array<int, string>,
      *     error?: string, extcode?: int}
@@ -373,7 +373,8 @@ class LicenseV2
 
     /**
      * PbxExtensionState checks the feature named in module.json. When it disagrees with the signed
-     * map the enable attempt is doomed, so it is skipped instead of being repeated every hour.
+     * map the enable attempt is doomed, so it is skipped instead of being repeated every worker run
+     * (about a minute).
      */
     private function reEnable(string $uniqid, string $featureId): void
     {
@@ -402,7 +403,8 @@ class LicenseV2
     /**
      * One online round at a time: a second caller (the worker and a forced refresh after a coupon)
      * finding the round taken returns false; the running round already asks the server, and the next
-     * poll brings whatever it missed.
+     * poll brings whatever it missed. Also false when the state dir is not writable (the web user:
+     * exclusiveRound() returns null before a round is even taken).
      */
     public function refresh(bool $force = false): bool
     {
@@ -466,7 +468,9 @@ class LicenseV2
         try {
             $this->log('All entitlement servers failed, next attempt in ' . $this->store->noteFailure() . ' s');
         } catch (RuntimeException $e) {
-            // Only root workers may write the backoff; a refresh forced from the web just reports.
+            // Only root workers may write the backoff; the web user never enters a round
+            // (exclusiveRound() returns null when the state dir is not writable), so this path is
+            // defensive only.
             $this->log('All entitlement servers failed: ' . $e->getMessage());
         }
         return false;
@@ -534,10 +538,11 @@ class LicenseV2
         $marks = [];
         try {
             $seats = $this->ledger->report();
+            $holders = $this->ledger->holders();
             $signed['usage'] = $seats['usage'];
+            $signed['holders'] = $holders;
             $marks = $seats['marks'];
-            $signed['holders'] = $this->ledger->holders();
-        } catch (RuntimeException $e) {
+        } catch (Throwable $e) {
             $this->log('Seat report left out of the request: ' . $e->getMessage());
         }
         if ($this->store->metricsDue()) {
@@ -562,7 +567,7 @@ class LicenseV2
         try {
             $this->ledger->drop(EntitlementToken::dropRefs($answer['payload']));
             $this->ledger->reportAccepted($answer['marks']);
-        } catch (RuntimeException $e) {
+        } catch (Throwable $e) {
             $this->log('Seat ledger could not apply the server answer: ' . $e->getMessage());
         }
     }

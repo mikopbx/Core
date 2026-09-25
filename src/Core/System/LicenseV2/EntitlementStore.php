@@ -68,7 +68,7 @@ class EntitlementStore
      * Builds a request signed by the installation key. The nonce is remembered:
      * only an answer to this very request will be accepted.
      *
-     * Online refresh and the file-based offline exchange keep separate nonces, so the hourly
+     * Online refresh and the file-based offline exchange keep separate nonces, so the periodic (poll)
      * refresh does not invalidate a request file the administrator has already exported.
      *
      * @param array{usage?: array<string, array<string, int>>, holders?: array<int, array<string, mixed>>,
@@ -254,6 +254,8 @@ class EntitlementStore
      * from now on, grace included, until a token is accepted again. The refusal must be signed; a bare
      * HTTP error may come from any proxy on the way and is not a refusal. The nonce is checked and the
      * refusal stored under one lock, so a refusal to a request a newer token has superseded revokes nothing.
+     * Revocation acts at once; the next round is not before one default poll, so a lifted revocation
+     * arrives within one poll and a revoked PBX does not hammer the server every worker run.
      *
      * @return string Reason given by the server.
      * @throws RuntimeException When the refusal is not authentic or answers another request.
@@ -261,7 +263,10 @@ class EntitlementStore
     public function acceptRefusal(string $signedRefusal): string
     {
         $payload = EntitlementToken::decodeSigned($signedRefusal, $this->serverPublicKeyPem, $this->identity->getInstallId());
-        return $this->withLock(function () use ($payload): string {
+        // Read before the lock below: now() may itself persist the clock anchor via saveState(), and a
+        // second flock() on the same file within this process would deadlock against our own lock.
+        $now = $this->now();
+        return $this->withLock(function () use ($payload, $now): string {
             $pendingNonce = (string)($this->loadState()[self::NONCE_ONLINE] ?? '');
             if (
                 ($payload['refused'] ?? false) !== true
@@ -270,7 +275,12 @@ class EntitlementStore
             ) {
                 throw new RuntimeException('Refusal does not answer the pending request');
             }
-            $this->saveState([self::NONCE_ONLINE => '', 'refused' => true, self::BACKOFF => 0, self::NEXT_RETRY => 0], true);
+            $this->saveState([
+                self::NONCE_ONLINE => '',
+                'refused' => true,
+                self::BACKOFF => 0,
+                self::NEXT_RETRY => $now + EntitlementToken::POLL_DEFAULT,
+            ], true);
             return (string)json_encode($payload['error'] ?? '');
         });
     }
