@@ -55,7 +55,10 @@ class WorkerMarketplaceChecker extends WorkerBase
 
         // Retrieve the last license check timestamp from the cache
         $lastCheck = $managedCache->get(self::CACHE_KEY);
-        if ($lastCheck === null) {
+        // LicenseV2 lets the licensing server set the pace (poll): refresh() itself decides whether a
+        // round is due, and the enforcer must act on the answer within the minute, not the hour.
+        $licenseV2 = PbxSettings::getValueByKey(PbxSettings::LICENSE_V2_ENABLED) === '1';
+        if ($lastCheck === null || $licenseV2) {
             // Perform PBX registration check
             $lic->checkPBX();
 

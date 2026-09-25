@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -23,11 +24,14 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
-use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetDMIInfoAction;
+use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetHypervisorInfoAction;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
+use Throwable;
 
 /**
  * Class SendMetricsAction
@@ -46,69 +50,71 @@ class SendMetricsAction extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         $res->success = true;
+        // LicenseV2 carries the metrics inside its signed request once a day.
+        if (PbxSettings::getValueByKey(PbxSettings::LICENSE_V2_ENABLED) === '1') {
+            return $res;
+        }
         $di = Di::getDefault();
-
         $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
         $cacheKey = 'PBXCoreREST:LicenseManagementProcessor:sendMetricsAction';
 
         // Retrieve the last sent metrics timestamp from the cache
         $lastSend = $managedCache->get($cacheKey);
         if ($lastSend === null) {
-
-            // License Key
             $licenseKey = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
-            if (empty($licenseKey)){
+            if (empty($licenseKey)) {
                 return $res;
             }
-
-            // Store the current timestamp in the cache to track the last repository check
             $managedCache->set($cacheKey, time(), 86400); // Not often than once a day
-
-            $dataMetrics = [];
-
-            // PBXVersion
-            $dataMetrics['PBXname'] = 'MikoPBX@' . PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
-
-            // SIP Extensions count
-            $extensions = Extensions::find('type="' . Extensions::TYPE_SIP . '"');
-            $dataMetrics['CountSipExtensions'] = $extensions->count();
-
-            // Interface language
-            $dataMetrics['WebAdminLanguage'] = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
-
-            // PBX language
-            $dataMetrics['PBXLanguage'] = PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
-
-            // Virtual Hardware Type
-            $dataMetrics['VirtualHardwareType'] = PbxSettings::getValueByKey(PbxSettings::VIRTUAL_HARDWARE_TYPE);
-
-            // Platform identification
-            $dataMetrics['Architecture'] = System::getArchitecture();
-            $dataMetrics['BoardType'] = System::getBoardType();
-            $dataMetrics['EnvironmentType'] = System::getEnvironmentType();
-
-            // Hypervisor
-            $restAnswer = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-                '/pbxcore/api/v3/sysinfo:getHypervisorInfo',
-                PBXCoreRESTClientProvider::HTTP_METHOD_GET
-            ]);
-            if ($restAnswer->success){
-                $dataMetrics['Hypervisor'] = $restAnswer->data['Hypervisor'];
-            }
-
-            // DMI
-            $restAnswer = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-                '/pbxcore/api/v3/sysinfo:getDMIInfo',
-                PBXCoreRESTClientProvider::HTTP_METHOD_GET
-            ]);
-            if ($restAnswer->success){
-                $dataMetrics['DMI'] = $restAnswer->data['DMI'];
-            }
-
             $license = $di->get(MarketPlaceProvider::SERVICE_NAME);
-            $license->sendLicenseMetrics($licenseKey, $dataMetrics);
+            $license->sendLicenseMetrics($licenseKey, self::collect());
         }
 
         return $res;
+    }
+
+    /**
+     * Daily metrics of this PBX, shared by the legacy send.metrika path and the LicenseV2 request.
+     * Root workers call it at boot, before the local REST is up, so the platform facts are read
+     * directly instead of through the REST client. Each field is probed on its own: one that fails
+     * is left out and logged, the rest still go.
+     *
+     * @return array<string, mixed>
+     */
+    public static function collect(): array
+    {
+        $probes = [
+            'PBXname' => static fn(): string => 'MikoPBX@' . PbxSettings::getValueByKey(PbxSettings::PBX_VERSION),
+            'CountSipExtensions' => static fn(): int =>
+                Extensions::find('type="' . Extensions::TYPE_SIP . '"')->count(),
+            'WebAdminLanguage' => static fn(): string => PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE),
+            'PBXLanguage' => static fn(): string => PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE),
+            'VirtualHardwareType' => static fn(): string =>
+                PbxSettings::getValueByKey(PbxSettings::VIRTUAL_HARDWARE_TYPE),
+            'Architecture' => static fn(): mixed => System::getArchitecture(),
+            'BoardType' => static fn(): mixed => System::getBoardType(),
+            'EnvironmentType' => static fn(): mixed => System::getEnvironmentType(),
+            'Hypervisor' => static function (): mixed {
+                $result = GetHypervisorInfoAction::main();
+                return $result->success ? $result->data['Hypervisor'] : null;
+            },
+            'DMI' => static function (): mixed {
+                $result = GetDMIInfoAction::main();
+                return $result->success ? $result->data['DMI'] : null;
+            },
+        ];
+        $metrics = [];
+        foreach ($probes as $field => $probe) {
+            try {
+                $value = $probe();
+            } catch (Throwable $e) {
+                SystemMessages::sysLogMsg(__METHOD__, "Metric $field left out: " . $e->getMessage(), LOG_WARNING);
+                continue;
+            }
+            if ($value !== null) {
+                $metrics[$field] = $value;
+            }
+        }
+        return $metrics;
     }
 }
