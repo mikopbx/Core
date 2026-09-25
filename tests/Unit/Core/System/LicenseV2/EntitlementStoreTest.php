@@ -71,11 +71,61 @@ class EntitlementStoreTest extends TestCase
         $this->assertTrue($store->featureAvailable('54'));
     }
 
+    public function testZeroSeatShareIsALimitNotAnAbsence(): void
+    {
+        $store = $this->newStore();
+        $payload = $store->acceptToken($this->issueFor($store, ['seats' => ['54' => 0]]));
+        $this->assertSame(0, EntitlementToken::seatLimit($payload, '54'));
+    }
+
+    public function testPollDefaultsAndDropIsOptional(): void
+    {
+        $store = $this->newStore();
+        $plain = $store->acceptToken($this->issueFor($store));
+        $this->assertSame(EntitlementToken::POLL_DEFAULT, EntitlementToken::poll($plain));
+        $this->assertSame([], EntitlementToken::dropRefs($plain));
+
+        $commanded = $store->acceptToken($this->issueFor($store, ['poll' => 900, 'drop' => ['0123456789abcdef']]));
+        $this->assertSame(900, EntitlementToken::poll($commanded));
+        $this->assertSame(['0123456789abcdef'], EntitlementToken::dropRefs($commanded));
+    }
+
+    /** @dataProvider malformedCommands */
+    public function testMalformedPollOrDropRejectsTokenAndKeepsPreviousOne(array $overrides, string $field): void
+    {
+        $store = $this->newStore();
+        $store->acceptToken($this->issueFor($store));
+        $rejected = false;
+        try {
+            $store->acceptToken($this->issueFor($store, $overrides));
+        } catch (RuntimeException $e) {
+            // See testMalformedSeatsRejectsTokenAndKeepsPreviousOne: no fail() inside this try.
+            $rejected = true;
+            $this->assertStringContainsString($field, $e->getMessage());
+        }
+        $this->assertTrue($rejected, "malformed $field accepted");
+        $this->assertTrue($store->featureAvailable('54'));
+    }
+
+    public static function malformedCommands(): array
+    {
+        return [
+            'poll too short' => [['poll' => 299], 'poll'],
+            'poll too long' => [['poll' => 901], 'poll'],
+            'poll as string' => [['poll' => '600'], 'poll'],
+            'drop is a map' => [['drop' => ['a' => '0123456789abcdef']], 'drop'],
+            'drop ref too short' => [['drop' => ['0123']], 'drop'],
+            'drop ref upper case' => [['drop' => ['0123456789ABCDEF']], 'drop'],
+            'drop ref not a string' => [['drop' => [123]], 'drop'],
+            'drop is a scalar' => [['drop' => '0123456789abcdef'], 'drop'],
+        ];
+    }
+
     public static function malformedSeats(): array
     {
         return [
             'string' => [['54' => '2']],
-            'zero' => [['54' => 0]],
+            'negative' => [['54' => -1]],
             'float' => [['54' => 1.5]],
             'null' => [['54' => null]],
             'unknown feature' => [['99' => 2]],

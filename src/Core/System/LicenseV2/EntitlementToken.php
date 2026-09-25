@@ -30,14 +30,15 @@ namespace MikoPBX\Core\System\LicenseV2;
  *
  * Payload: v, install, key, nonce, iat, exp, offlineUntil,
  *          features {featureId: expireTimestamp}, modules {moduleUniqueID: featureId},
- *          seats {featureId: limit} (optional).
+ *          seats {featureId: limit >= 0} (optional), poll (optional, 300..900 s),
+ *          drop [ref, ...] (optional).
  *
  * exp is when the PBX must have a newer token; offlineUntil is how long the server lets the last
  * token live while the licensing servers can not be reached (the grace period). Grace extends the
  * token only, never a feature: the issuer must set features[*] >= offlineUntil for it to matter.
  *
  * A refusal uses the same wire format with payload: v, install, nonce, refused = true, error.
- * It is signed as well, so only the licensing server can take the grace period away.
+ * It is signed as well, so only the licensing server can take the license away.
  */
 class EntitlementToken
 {
@@ -45,6 +46,11 @@ class EntitlementToken
 
     /** Tolerated difference between the server clock and the PBX clock, seconds. */
     public const int CLOCK_SKEW = 300;
+
+    /** How often the PBX reports to the server when the token does not say, seconds. */
+    public const int POLL_DEFAULT = 600;
+    public const int POLL_MIN = 300;
+    public const int POLL_MAX = 900;
 
     /**
      * Checks the signature and the installation binding. Does not check the lifetime,
@@ -62,6 +68,15 @@ class EntitlementToken
         }
         if (array_key_exists('seats', $payload)) {
             self::assertSeatsMap($payload['seats'], array_keys((array)($payload['features'] ?? [])));
+        }
+        if (array_key_exists('poll', $payload)) {
+            $poll = $payload['poll'];
+            if (!is_int($poll) || $poll < self::POLL_MIN || $poll > self::POLL_MAX) {
+                throw new TokenRejectedException('Entitlement token has a malformed poll interval');
+            }
+        }
+        if (array_key_exists('drop', $payload)) {
+            self::assertDropList($payload['drop']);
         }
         return $payload;
     }
@@ -126,7 +141,29 @@ class EntitlementToken
     }
 
     /**
-     * A signature does not make the map well-formed: every value must be an int >= 1 keyed by a licensed feature.
+     * Seconds between two reports to the server; the server sets the pace.
+     *
+     * @param array<string, mixed> $payload
+     */
+    public static function poll(array $payload): int
+    {
+        return (int)($payload['poll'] ?? self::POLL_DEFAULT);
+    }
+
+    /**
+     * Holders the server asks to free, by ref (see SeatLedger::ref()).
+     *
+     * @param array<string, mixed> $payload
+     * @return array<int, string>
+     */
+    public static function dropRefs(array $payload): array
+    {
+        return array_values((array)($payload['drop'] ?? []));
+    }
+
+    /**
+     * A signature does not make the map well-formed: every value must be an int >= 0 keyed by a licensed feature.
+     * 0 is a share of a key whose other PBXs took every seat: no seat, not "uncounted".
      *
      * @param array<int|string> $licensedFeatures
      * @throws TokenRejectedException
@@ -139,8 +176,23 @@ class EntitlementToken
         $licensedFeatureIds = array_map('strval', $licensedFeatures);
         foreach ($seats as $featureId => $limit) {
             $isLicensed = in_array((string)$featureId, $licensedFeatureIds, true);
-            if (!is_int($limit) || $limit < 1 || !$isLicensed) {
+            if (!is_int($limit) || $limit < 0 || !$isLicensed) {
                 throw new TokenRejectedException('Entitlement token has a malformed seats map');
+            }
+        }
+    }
+
+    /**
+     * @throws TokenRejectedException
+     */
+    private static function assertDropList(mixed $drop): void
+    {
+        if (!is_array($drop) || !array_is_list($drop)) {
+            throw new TokenRejectedException('Entitlement token has a malformed drop list');
+        }
+        foreach ($drop as $ref) {
+            if (!is_string($ref) || preg_match('/^[0-9a-f]{16}$/', $ref) !== 1) {
+                throw new TokenRejectedException('Entitlement token has a malformed drop list');
             }
         }
     }
