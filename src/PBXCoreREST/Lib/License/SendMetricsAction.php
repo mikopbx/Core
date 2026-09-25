@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
+use MikoPBX\Core\System\LicenseV2\LicenseV2;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -50,11 +51,14 @@ class SendMetricsAction extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         $res->success = true;
-        // LicenseV2 carries the metrics inside its signed request once a day.
-        if (PbxSettings::getValueByKey(PbxSettings::LICENSE_V2_ENABLED) === '1') {
+        $di = Di::getDefault();
+        $license = $di->get(MarketPlaceProvider::SERVICE_NAME);
+        // LicenseV2 carries the metrics inside its signed request once a day. Follow the service the
+        // provider actually registered (it falls back to the legacy class when LicenseV2 can not be
+        // built), not the setting alone.
+        if ($license instanceof LicenseV2) {
             return $res;
         }
-        $di = Di::getDefault();
         $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
         $cacheKey = 'PBXCoreREST:LicenseManagementProcessor:sendMetricsAction';
 
@@ -66,7 +70,6 @@ class SendMetricsAction extends Injectable
                 return $res;
             }
             $managedCache->set($cacheKey, time(), 86400); // Not often than once a day
-            $license = $di->get(MarketPlaceProvider::SERVICE_NAME);
             $license->sendLicenseMetrics($licenseKey, self::collect());
         }
 
