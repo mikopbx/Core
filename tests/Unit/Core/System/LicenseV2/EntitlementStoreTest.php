@@ -39,7 +39,7 @@ class EntitlementStoreTest extends TestCase
     public function testValidTokenLicensesOnlyListedFeatures(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store));
+        $store->acceptAnswer($this->issueFor($store));
 
         $this->assertTrue($store->featureAvailable('54'));
         $this->assertFalse($store->featureAvailable('41'));
@@ -48,7 +48,7 @@ class EntitlementStoreTest extends TestCase
     public function testTokenWithSeatsExposesLimits(): void
     {
         $store = $this->newStore();
-        $payload = $store->acceptToken($this->issueFor($store, ['seats' => ['54' => 2]]));
+        $payload = $store->acceptAnswer($this->issueFor($store, ['seats' => ['54' => 2]]));
         $this->assertSame(2, EntitlementToken::seatLimit($payload, '54'));
         $this->assertNull(EntitlementToken::seatLimit($payload, '55'));
     }
@@ -57,10 +57,10 @@ class EntitlementStoreTest extends TestCase
     public function testMalformedSeatsRejectsTokenAndKeepsPreviousOne(mixed $seats): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store));
+        $store->acceptAnswer($this->issueFor($store));
         $rejected = false;
         try {
-            $store->acceptToken($this->issueFor($store, ['seats' => $seats]));
+            $store->acceptAnswer($this->issueFor($store, ['seats' => $seats]));
         } catch (RuntimeException $e) {
             // Not caught inside the try above: PHPUnit's AssertionFailedError (what $this->fail()
             // throws) extends RuntimeException, so a fail() call inside the try would be
@@ -75,18 +75,18 @@ class EntitlementStoreTest extends TestCase
     public function testZeroSeatShareIsALimitNotAnAbsence(): void
     {
         $store = $this->newStore();
-        $payload = $store->acceptToken($this->issueFor($store, ['seats' => ['54' => 0]]));
+        $payload = $store->acceptAnswer($this->issueFor($store, ['seats' => ['54' => 0]]));
         $this->assertSame(0, EntitlementToken::seatLimit($payload, '54'));
     }
 
     public function testPollDefaultsAndDropIsOptional(): void
     {
         $store = $this->newStore();
-        $plain = $store->acceptToken($this->issueFor($store));
+        $plain = $store->acceptAnswer($this->issueFor($store));
         $this->assertSame(EntitlementToken::POLL_DEFAULT, EntitlementToken::poll($plain));
         $this->assertSame([], EntitlementToken::dropRefs($plain));
 
-        $commanded = $store->acceptToken($this->issueFor($store, ['poll' => 900, 'drop' => ['0123456789abcdef']]));
+        $commanded = $store->acceptAnswer($this->issueFor($store, ['poll' => 900, 'drop' => ['0123456789abcdef']]));
         $this->assertSame(900, EntitlementToken::poll($commanded));
         $this->assertSame(['0123456789abcdef'], EntitlementToken::dropRefs($commanded));
     }
@@ -95,10 +95,10 @@ class EntitlementStoreTest extends TestCase
     public function testMalformedPollOrDropRejectsTokenAndKeepsPreviousOne(array $overrides, string $field): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store));
+        $store->acceptAnswer($this->issueFor($store));
         $rejected = false;
         try {
-            $store->acceptToken($this->issueFor($store, $overrides));
+            $store->acceptAnswer($this->issueFor($store, $overrides));
         } catch (RuntimeException $e) {
             // See testMalformedSeatsRejectsTokenAndKeepsPreviousOne: no fail() inside this try.
             $rejected = true;
@@ -150,7 +150,7 @@ class EntitlementStoreTest extends TestCase
         [$foreignPrivateKeyPem] = self::newKeyPair();
 
         $this->expectExceptionMessage('signature is invalid');
-        $store->acceptToken($this->issueFor($store, signingKeyPem: $foreignPrivateKeyPem));
+        $store->acceptAnswer($this->issueFor($store, signingKeyPem: $foreignPrivateKeyPem));
     }
 
     public function testTamperedPayloadIsRejected(): void
@@ -162,7 +162,7 @@ class EntitlementStoreTest extends TestCase
         $forged = EntitlementToken::base64UrlEncode((string)json_encode($payload)) . '.' . $signaturePart;
 
         $this->expectExceptionMessage('signature is invalid');
-        $store->acceptToken($forged);
+        $store->acceptAnswer($forged);
     }
 
     public function testTokenOfAnotherInstallationIsRejected(): void
@@ -170,28 +170,28 @@ class EntitlementStoreTest extends TestCase
         $store = $this->newStore();
 
         $this->expectExceptionMessage('another installation');
-        $store->acceptToken($this->issueFor($store, overrides: ['install' => str_repeat('0', 32)]));
+        $store->acceptAnswer($this->issueFor($store, overrides: ['install' => str_repeat('0', 32)]));
     }
 
     public function testReplayedAnswerIsRejected(): void
     {
         $store = $this->newStore();
         $oldAnswer = $this->issueFor($store);
-        $store->acceptToken($oldAnswer);
+        $store->acceptAnswer($oldAnswer);
         $store->buildRequest('MIKO-TEST', '2026.3.1');
 
         $this->expectExceptionMessage('does not answer the pending request');
-        $store->acceptToken($oldAnswer);
+        $store->acceptAnswer($oldAnswer);
     }
 
     public function testAnswerWithoutPendingRequestIsRejected(): void
     {
         $store = $this->newStore();
         $answer = $this->issueFor($store);
-        $store->acceptToken($answer);
+        $store->acceptAnswer($answer);
 
         $this->expectExceptionMessage('does not answer the pending request');
-        $store->acceptToken($answer);
+        $store->acceptAnswer($answer);
     }
 
     public function testOnlineRefreshKeepsExportedOfflineRequestValid(): void
@@ -200,7 +200,7 @@ class EntitlementStoreTest extends TestCase
         $offlineAnswer = $this->issueFor($store, offline: true);
         $store->buildRequest('MIKO-TEST', '2026.3.1');
 
-        $store->acceptToken($offlineAnswer);
+        $store->acceptAnswer($offlineAnswer);
         $this->assertTrue($store->featureAvailable('54'));
     }
 
@@ -209,13 +209,13 @@ class EntitlementStoreTest extends TestCase
         $store = $this->newStore();
 
         $this->expectExceptionMessage('no module map');
-        $store->acceptToken($this->issueFor($store, overrides: ['modules' => []]));
+        $store->acceptAnswer($this->issueFor($store, overrides: ['modules' => []]));
     }
 
     public function testExpiredTokenStopsLicensingButKeepsModuleMap(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store));
+        $store->acceptAnswer($this->issueFor($store));
         $this->wallClock = self::NOW + 4 * self::DAY;
 
         $this->assertFalse($store->featureAvailable('54'));
@@ -225,7 +225,7 @@ class EntitlementStoreTest extends TestCase
     public function testGracePeriodKeepsLicenseWhileServersAreUnreachable(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store, overrides: ['offlineUntil' => self::NOW + 30 * self::DAY]));
+        $store->acceptAnswer($this->issueFor($store, overrides: ['offlineUntil' => self::NOW + 30 * self::DAY]));
 
         $this->wallClock = self::NOW + 10 * self::DAY;
         $this->assertTrue($store->featureAvailable('54'));
@@ -237,7 +237,7 @@ class EntitlementStoreTest extends TestCase
     public function testSignedRefusalCancelsGracePeriodUntilNextAcceptedToken(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store, overrides: ['offlineUntil' => self::NOW + 30 * self::DAY]));
+        $store->acceptAnswer($this->issueFor($store, overrides: ['offlineUntil' => self::NOW + 30 * self::DAY]));
         $this->wallClock = self::NOW + 10 * self::DAY;
         $this->assertTrue($store->featureAvailable('54'));
 
@@ -245,7 +245,7 @@ class EntitlementStoreTest extends TestCase
         $this->assertSame('"Unknown license key"', $store->acceptRefusal($refusal));
         $this->assertFalse($store->featureAvailable('54'));
 
-        $store->acceptToken($this->issueFor($store, overrides: [
+        $store->acceptAnswer($this->issueFor($store, overrides: [
             'iat' => $this->wallClock,
             'exp' => $this->wallClock + 3 * self::DAY,
             'offlineUntil' => $this->wallClock + 30 * self::DAY,
@@ -258,7 +258,7 @@ class EntitlementStoreTest extends TestCase
     public function testRefusalSignedByAnotherKeyKeepsGracePeriod(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store, overrides: ['offlineUntil' => self::NOW + 30 * self::DAY]));
+        $store->acceptAnswer($this->issueFor($store, overrides: ['offlineUntil' => self::NOW + 30 * self::DAY]));
         $this->wallClock = self::NOW + 10 * self::DAY;
         [$foreignPrivateKeyPem] = self::newKeyPair();
         $forged = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), [], $foreignPrivateKeyPem, 'Go away');
@@ -274,7 +274,7 @@ class EntitlementStoreTest extends TestCase
     public function testRefusalPausesRetriesForOnePollInsteadOfHammeringTheServer(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store));
+        $store->acceptAnswer($this->issueFor($store));
         $refusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'Unknown license key');
         $store->acceptRefusal($refusal);
 
@@ -287,7 +287,7 @@ class EntitlementStoreTest extends TestCase
     public function testReplayedRefusalIsRejected(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store, overrides: ['offlineUntil' => self::NOW + 30 * self::DAY]));
+        $store->acceptAnswer($this->issueFor($store, overrides: ['offlineUntil' => self::NOW + 30 * self::DAY]));
         $oldRefusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'Unknown license key');
         $store->buildRequest('MIKO-TEST', '2026.3.1');
 
@@ -298,7 +298,7 @@ class EntitlementStoreTest extends TestCase
     public function testGracePeriodDoesNotExtendAnExpiredFeature(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store, overrides: [
+        $store->acceptAnswer($this->issueFor($store, overrides: [
             'offlineUntil' => self::NOW + 30 * self::DAY,
             'features' => ['54' => self::NOW + 5 * self::DAY],
         ]));
@@ -310,7 +310,7 @@ class EntitlementStoreTest extends TestCase
     public function testClockRollbackDoesNotReviveExpiredToken(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store));
+        $store->acceptAnswer($this->issueFor($store));
         $this->wallClock = self::NOW + 4 * self::DAY;
         $this->assertFalse($store->featureAvailable('54'));
 
@@ -323,7 +323,7 @@ class EntitlementStoreTest extends TestCase
     {
         $store = $this->newStore();
         $this->wallClock = self::NOW - 120;
-        $store->acceptToken($this->issueFor($store));
+        $store->acceptAnswer($this->issueFor($store));
 
         $this->assertSame(self::NOW, $store->now());
     }
@@ -337,7 +337,7 @@ class EntitlementStoreTest extends TestCase
         ]);
 
         try {
-            $store->acceptToken($futureToken);
+            $store->acceptAnswer($futureToken);
             $this->fail('A token dated a year ahead must be rejected');
         } catch (RuntimeException $e) {
             $this->assertStringContainsString('clock is wrong', $e->getMessage());
@@ -354,18 +354,18 @@ class EntitlementStoreTest extends TestCase
         $reissued = $this->sign($signed);
 
         try {
-            $store->acceptToken($expired);
+            $store->acceptAnswer($expired);
             $this->fail('An expired token must be rejected');
         } catch (RuntimeException) {
         }
-        $store->acceptToken($reissued);
+        $store->acceptAnswer($reissued);
         $this->assertTrue($store->featureAvailable('54'));
     }
 
     public function testTokenOfAnotherLicenseKeyLicensesNothing(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store));
+        $store->acceptAnswer($this->issueFor($store));
 
         $this->assertTrue($store->featureAvailable('54', 'MIKO-TEST'));
         $this->assertFalse($store->featureAvailable('54', 'MIKO-OTHER'));
@@ -375,7 +375,7 @@ class EntitlementStoreTest extends TestCase
     public function testFeatureExpiresIndependentlyOfToken(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store, overrides: [
+        $store->acceptAnswer($this->issueFor($store, overrides: [
             'exp' => self::NOW + 90 * self::DAY,
             'features' => ['54' => self::NOW + self::DAY],
         ]));
@@ -417,14 +417,14 @@ class EntitlementStoreTest extends TestCase
             $delay = $store->noteFailure();
         }
         $this->assertLessThanOrEqual(EntitlementStore::BACKOFF_MAX * 1.25, $delay);
-        $store->acceptToken($this->issueFor($store));
+        $store->acceptAnswer($this->issueFor($store));
         $this->assertTrue($store->retryAllowed());
     }
 
     public function testEffectiveExpiryCoversGraceAndEndsAtRefusal(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store, ['exp' => self::NOW + 100, 'offlineUntil' => self::NOW + 1000]));
+        $store->acceptAnswer($this->issueFor($store, ['exp' => self::NOW + 100, 'offlineUntil' => self::NOW + 1000]));
         $this->assertSame(self::NOW + 1000, $store->effectiveExpiry('MIKO-TEST'));
         $this->assertSame(0, $store->effectiveExpiry('MIKO-OTHER'));
         $refusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'Unknown license key');
@@ -436,7 +436,7 @@ class EntitlementStoreTest extends TestCase
     public function testSignedRefusalRevokesTheTokenAtOnce(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store));
+        $store->acceptAnswer($this->issueFor($store));
         $this->assertTrue($store->featureAvailable('54'));
 
         $store->acceptRefusal($this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'License key is revoked'));
@@ -445,7 +445,7 @@ class EntitlementStoreTest extends TestCase
         $this->assertFalse($store->featureAvailable('54'));
         $this->assertSame(0, $store->effectiveExpiry());
 
-        $store->acceptToken($this->issueFor($store));
+        $store->acceptAnswer($this->issueFor($store));
         $this->assertTrue($store->featureAvailable('54'));
     }
 
@@ -457,7 +457,7 @@ class EntitlementStoreTest extends TestCase
     {
         $store = $this->newStore();
         $staleRefusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'Unknown license key');
-        $store->acceptToken($this->issueFor($store));
+        $store->acceptAnswer($this->issueFor($store));
         $rejected = false;
         try {
             $store->acceptRefusal($staleRefusal);
@@ -485,13 +485,12 @@ class EntitlementStoreTest extends TestCase
             'holders' => [['ref' => '0123456789abcdef', 'features' => ['54'], 'since' => self::NOW]],
             'metrics' => ['PBXname' => 'MikoPBX@test'],
         ];
-        $signed = $store->buildRequest('MIKO-TEST', '2026.3.1', false, $report, ['54' => 3]);
+        $signed = $store->buildRequest('MIKO-TEST', '2026.3.1', false, $report);
         $request = json_decode(EntitlementToken::base64UrlDecode($signed['request']), true);
 
         $this->assertSame($report['usage'], $request['usage']);
         $this->assertSame($report['holders'], $request['holders']);
         $this->assertSame($report['metrics'], $request['metrics']);
-        $this->assertArrayNotHasKey('marks', $request, 'marks stay on the PBX');
         $publicKey = (new InstallationIdentity($this->dir))->getPublicKeyPem();
         $this->assertSame(1, openssl_verify($signed['request'], EntitlementToken::base64UrlDecode($signed['sig']), $publicKey, 0));
 
@@ -509,16 +508,6 @@ class EntitlementStoreTest extends TestCase
         $this->assertStringContainsString('"usage":{"0":', EntitlementToken::base64UrlDecode($zero['request']));
     }
 
-    public function testAcceptedAnswerReturnsTheMarksOfItsOwnRequest(): void
-    {
-        $store = $this->newStore();
-        $offlineAnswer = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1', true, [], ['54' => 1]));
-        $onlineAnswer = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1', false, [], ['54' => 4]));
-
-        $this->assertSame(['54' => 4], $store->acceptAnswer($onlineAnswer)['marks']);
-        $this->assertSame(['54' => 1], $store->acceptAnswer($offlineAnswer)['marks']);
-    }
-
     public function testMetricsAreDueDailyAndOnlyAnAcceptedAnswerSettlesThem(): void
     {
         $store = $this->newStore();
@@ -529,7 +518,7 @@ class EntitlementStoreTest extends TestCase
         $store->acceptAnswer($this->sign($unanswered));
         $this->assertFalse($store->metricsDue());
 
-        $store->acceptToken($this->issueFor($store));
+        $store->acceptAnswer($this->issueFor($store));
         $this->wallClock += self::DAY - 1;
         $this->assertFalse($store->metricsDue(), 'an answer to a request without metrics moves nothing');
         $this->wallClock += 1;
@@ -558,7 +547,7 @@ class EntitlementStoreTest extends TestCase
                 try {
                     $identity = new InstallationIdentity($this->dir);
                     $child = new EntitlementStore($this->dir, $identity, [self::KID => $this->serverPublicKeyPem]);
-                    $child->acceptToken($token);
+                    $child->acceptAnswer($token);
                     exit(0);
                 } catch (RuntimeException $e) {
                     // The expected loser: the other child spent the nonce first. Any other
@@ -585,7 +574,7 @@ class EntitlementStoreTest extends TestCase
         $store = $this->newStore();
         foreach (['otherkid', null] as $kid) {
             try {
-                $store->acceptToken($this->issueFor($store, ['kid' => $kid]));
+                $store->acceptAnswer($this->issueFor($store, ['kid' => $kid]));
                 $this->fail('a document without a trusted kid was accepted');
             } catch (RuntimeException $e) {
                 $this->assertStringContainsString('unknown key', $e->getMessage());
@@ -600,19 +589,19 @@ class EntitlementStoreTest extends TestCase
         $store = $this->newStore(['testkid2' => $newPublicKeyPem]);
         try {
             // Signed by the new key but naming the old kid: checked against the old key.
-            $store->acceptToken($this->issueFor($store, ['kid' => self::KID], $newPrivateKeyPem));
+            $store->acceptAnswer($this->issueFor($store, ['kid' => self::KID], $newPrivateKeyPem));
             $this->fail('a document verified with the key of another kid');
         } catch (RuntimeException $e) {
             $this->assertStringContainsString('signature is invalid', $e->getMessage());
         }
-        $store->acceptToken($this->issueFor($store, ['kid' => 'testkid2'], $newPrivateKeyPem));
+        $store->acceptAnswer($this->issueFor($store, ['kid' => 'testkid2'], $newPrivateKeyPem));
         $this->assertTrue($store->featureAvailable('54'));
     }
 
     public function testRefusalOfUnknownKidRevokesNothing(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store));
+        $store->acceptAnswer($this->issueFor($store));
         $refusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), ['kid' => 'otherkid'], null, 'Go away');
         try {
             $store->acceptRefusal($refusal);
@@ -627,7 +616,7 @@ class EntitlementStoreTest extends TestCase
         $store = $this->newStore();
         $token = $this->issueFor($store);
         // Drop the modules key from the default payload: sign() fills defaults with +, so rebuild the payload.
-        $store->acceptToken($this->withoutField($token, 'modules'));
+        $store->acceptAnswer($this->withoutField($token, 'modules'));
         $payload = $store->lastVerifiedPayload();
         $this->assertArrayNotHasKey('modules', $payload);
         $this->assertNull(EntitlementToken::moduleFeature($payload, 'ModuleLdapSync'));
@@ -645,7 +634,7 @@ class EntitlementStoreTest extends TestCase
     public function testEmptyFeaturesLicenseNothingButAreAccepted(): void
     {
         $store = $this->newStore();
-        $store->acceptToken($this->issueFor($store, ['features' => []]));
+        $store->acceptAnswer($this->issueFor($store, ['features' => []]));
         $this->assertNotNull($store->lastVerifiedPayload());
         $this->assertFalse($store->featureAvailable('54'));
     }
@@ -658,7 +647,7 @@ class EntitlementStoreTest extends TestCase
         $store = $this->newStore();
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('malformed fingerprint');
-        $store->acceptToken($this->issueFor($store, ['fingerprint' => $fingerprint]));
+        $store->acceptAnswer($this->issueFor($store, ['fingerprint' => $fingerprint]));
     }
 
     public static function malformedFingerprints(): array
@@ -680,7 +669,7 @@ class EntitlementStoreTest extends TestCase
         $store = $this->newStore();
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('malformed feature map');
-        $store->acceptToken($this->issueFor($store, ['features' => 'all']));
+        $store->acceptAnswer($this->issueFor($store, ['features' => 'all']));
     }
 
     /**

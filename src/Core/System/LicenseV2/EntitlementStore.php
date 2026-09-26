@@ -74,18 +74,17 @@ class EntitlementStore
      * Online refresh and the file-based offline exchange keep separate nonces, so the periodic (poll)
      * refresh does not invalidate a request file the administrator has already exported.
      *
-     * @param array{usage?: array<string, array<string, int>>, holders?: array<int, array<string, mixed>>,
-     *     metrics?: array<string, mixed>} $report Signed along with the request. A part given empty is sent
-     *     empty ("nothing held"); a part left out is unknown to the PBX and the server keeps what it had.
-     * @param array<string, mixed> $marks Opaque, kept with the nonce and handed back by acceptAnswer() (SeatLedger::report()).
+     * @param array{usage?: array<string, array<string, int>>, usageGen?: string,
+     *     holders?: array<int, array<string, mixed>>, metrics?: array<string, mixed>} $report Signed along
+     *     with the request. A part given empty is sent empty ("nothing held"); a part left out is unknown
+     *     to the PBX and the server keeps what it had.
      * @return array{request: string, sig: string}
      */
     public function buildRequest(
         string $licenseKey,
         string $pbxVersion,
         bool $offline = false,
-        array $report = [],
-        array $marks = []
+        array $report = []
     ): array {
         $nonce = bin2hex(random_bytes(16));
         $slot = $offline ? self::NONCE_OFFLINE : self::NONCE_ONLINE;
@@ -106,7 +105,7 @@ class EntitlementStore
         $this->saveState([
             $slot => $nonce,
             // Counters only, never holders: this file lives on the /cf flash.
-            $slot . self::REPORT_SUFFIX => ['marks' => $marks, 'metrics' => isset($report['metrics'])],
+            $slot . self::REPORT_SUFFIX => ['metrics' => isset($report['metrics'])],
         ]);
         return [
             'request' => $request,
@@ -117,8 +116,7 @@ class EntitlementStore
     /**
      * Accepts the server answer to the pending request.
      *
-     * @return array{payload: array<string, mixed>, marks: array<string, mixed>}
-     *     The accepted payload and the marks its request was built with, for SeatLedger::reportAccepted().
+     * @return array<string, mixed> The accepted payload.
      * @throws TokenRejectedException When the token is forged, replayed, stale or foreign.
      * @throws RuntimeException When the state can not be locked or written.
      */
@@ -160,18 +158,8 @@ class EntitlementStore
             }
             // The nonce is spent only by an accepted token, a refused one leaves the request pending.
             $this->saveState($changes, true);
-            return ['payload' => $payload, 'marks' => (array)($sent['marks'] ?? [])];
+            return $payload;
         });
-    }
-
-    /**
-     * @return array<string, mixed> Accepted payload.
-     * @throws TokenRejectedException
-     * @throws RuntimeException
-     */
-    public function acceptToken(string $token): array
-    {
-        return $this->acceptAnswer($token)['payload'];
     }
 
     /** Whether the next request should carry the daily metrics. */

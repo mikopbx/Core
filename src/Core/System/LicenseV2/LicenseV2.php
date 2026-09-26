@@ -519,13 +519,12 @@ class LicenseV2
     }
 
     /**
-     * @param array{0: array<string, mixed>, 1: array<string, mixed>} $report What report() returned.
+     * @param array<string, mixed> $report What report() returned.
      * @return array{request: string, sig: string}
      */
     private function buildRequest(bool $offline, array $report): array
     {
-        [$signed, $marks] = $report;
-        return $this->store->buildRequest($this->licenseKey(), ($this->pbxVersion)(), $offline, $signed, $marks);
+        return $this->store->buildRequest($this->licenseKey(), ($this->pbxVersion)(), $offline, $report);
     }
 
     /**
@@ -533,18 +532,17 @@ class LicenseV2
      * of several PBXs on one key, holders for the cabinet monitor, metrics once a day. A broken
      * ledger or a failing metrics probe must not cost the PBX its token: that part is left out.
      *
-     * @return array{0: array<string, mixed>, 1: array<string, mixed>} The part to sign and the (opaque) ledger marks.
+     * @return array<string, mixed> The part to sign.
      */
     private function report(): array
     {
         $signed = [];
-        $marks = [];
         try {
             $seats = $this->ledger->report();
             $holders = $this->ledger->holders();
             $signed['usage'] = $seats['usage'];
+            $signed['usageGen'] = $seats['gen'];
             $signed['holders'] = $holders;
-            $marks = $seats['marks'];
         } catch (Throwable $e) {
             $this->log('Seat report left out of the request: ' . $e->getMessage());
         }
@@ -555,21 +553,21 @@ class LicenseV2
                 $this->log('Metrics left out of the request: ' . $e->getMessage());
             }
         }
-        return [$signed, $marks];
+        return $signed;
     }
 
     /**
-     * Applies the accepted answer to the seats: frees the holders the server asked for and confirms
-     * the refusals it received. The token is stored already; when the ledger fails here, the next
-     * report repeats the counters and the server repeats the drop while it still sees the holder.
+     * Applies the accepted answer to the seats: frees the holders the server asked for and starts the peak
+     * again. The token is stored already; when the ledger fails here, the next report repeats the peak and
+     * the server repeats the drop while it still sees the holder.
      *
-     * @param array{payload: array<string, mixed>, marks: array<string, mixed>} $answer
+     * @param array<string, mixed> $payload
      */
-    private function applyAnswer(array $answer): void
+    private function applyAnswer(array $payload): void
     {
         try {
-            $this->ledger->drop(EntitlementToken::dropRefs($answer['payload']));
-            $this->ledger->reportAccepted($answer['marks']);
+            $this->ledger->drop(EntitlementToken::dropRefs($payload));
+            $this->ledger->reportAccepted();
         } catch (Throwable $e) {
             $this->log('Seat ledger could not apply the server answer: ' . $e->getMessage());
         }

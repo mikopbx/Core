@@ -218,6 +218,7 @@ class LicenseV2SeatsTest extends TestCase
             $first['request']['holders']
         );
         $this->assertSame(['PBXname' => 'MikoPBX@test'], $first['request']['metrics']);
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{16}$/', $first['request']['usageGen']);
 
         $license->importOfflineToken($first['token']);
         $this->assertArrayNotHasKey('metrics', $this->answerOffline($license)['request']);
@@ -225,7 +226,7 @@ class LicenseV2SeatsTest extends TestCase
         $this->assertArrayHasKey('metrics', $this->answerOffline($license)['request']);
     }
 
-    public function testAcceptedAnswerDropsHoldersAndSettlesTheReport(): void
+    public function testAcceptedAnswerDropsHoldersAndResetsThePeak(): void
     {
         $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
         $a = $license->sessionStart(['username' => 'a'], 300)['session_id'];
@@ -242,7 +243,7 @@ class LicenseV2SeatsTest extends TestCase
         $this->assertSame(1021, $license->sessionKeepalive($a)['extcode']);
         $this->assertTrue($license->sessionKeepalive($b)['success']);
         $this->assertSame(
-            ['54' => ['used' => 1, 'peak' => 1, 'denied' => 0]],
+            ['54' => ['used' => 1, 'peak' => 1, 'denied' => 1]],
             $this->answerOffline($license)['request']['usage']
         );
     }
@@ -296,6 +297,7 @@ class LicenseV2SeatsTest extends TestCase
         $answer = $this->answerOffline($license);
 
         $this->assertArrayNotHasKey('usage', $answer['request']);
+        $this->assertArrayNotHasKey('usageGen', $answer['request']);
         $this->assertArrayNotHasKey('holders', $answer['request']);
         $this->assertArrayNotHasKey('metrics', $answer['request']);
         $this->assertStringContainsString('Seat report left out', implode("\n", $this->logged));
@@ -397,6 +399,6 @@ class LicenseV2SeatsTest extends TestCase
         }
         $payload = EntitlementToken::base64UrlEncode((string)json_encode($fields));
         openssl_sign($payload, $signature, $this->serverPrivateKeyPem, 0);
-        $store->acceptToken($payload . '.' . EntitlementToken::base64UrlEncode($signature));
+        $store->acceptAnswer($payload . '.' . EntitlementToken::base64UrlEncode($signature));
     }
 }

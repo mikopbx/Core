@@ -29,8 +29,8 @@ use RuntimeException;
  * Seat leases of this PBX: a session per device, a lease per feature, renewed by keepalive.
  * Knows nothing about tokens or servers; the caller passes the limit it read from the signed token.
  * It also keeps what the licensing server is told on the next report: per feature the peak of seats
- * since the last accepted answer and a running count of refusals with the boundary the server has
- * confirmed (see report(), reportAccepted()).
+ * since the last accepted answer and a running count of refusals for this ledger file (its generation);
+ * the server keeps the boundary of what it has counted (see report(), reportAccepted()).
  *
  * Every public method is one transaction under a lock on a stable lock file:
  * lock -> read and validate -> expire -> check -> mutate -> write -> unlock.
@@ -98,7 +98,7 @@ class SeatLedger
             $this->liveSession($ledger, $sessionId);
             $features = $ledger['sessions'][$sessionId]['features'];
             if ($limit !== null && !in_array($featureId, $features, true)) {
-                $ledger['report'][$featureId] ??= ['peak' => 0, 'denied' => 0, 'acked' => 0];
+                $ledger['report'][$featureId] ??= ['peak' => 0, 'denied' => 0];
                 $used = $this->countSeats($ledger, $featureId);
                 if ($used >= $limit) {
                     // Counted for the server's shortage report. The transaction writes the ledger only
@@ -135,28 +135,19 @@ class SeatLedger
     }
 
     /**
-     * What the next request tells the server, and the marks to settle it with.
-     * usage: per feature, seats in use now, the most held at once since the last accepted answer and
-     * the refusals the server has not confirmed yet; features with nothing to say are left out.
-     * marks: the generation of this ledger file and the running refusal count per feature at this moment,
-     * handed back to reportAccepted().
+     * What the next request tells the server: per feature seats in use now, the most held at once since the
+     * last accepted answer and every refusal of this ledger file; features with nothing to say are left out.
+     * gen names the ledger file: a file set aside as corrupt starts a new generation counting from zero, so
+     * the server can tell a restart from a lost answer.
      *
-     * @return array{usage: array<string, array{used: int, peak: int, denied: int}>,
-     *     marks: array{gen: string, denied: array<string, int>}}
+     * @return array{usage: array<string, array{used: int, peak: int, denied: int}>, gen: string}
      */
     public function report(): array
     {
         return $this->transaction(function (array &$ledger): array {
             $usage = [];
-            $marks = ['gen' => $ledger['gen'], 'denied' => []];
             foreach ($ledger['report'] as $featureId => $counters) {
-                $featureId = (string)$featureId;
-                $usage[$featureId] = [
-                    'used' => 0,
-                    'peak' => $counters['peak'],
-                    'denied' => $counters['denied'] - $counters['acked'],
-                ];
-                $marks['denied'][$featureId] = $counters['denied'];
+                $usage[(string)$featureId] = ['used' => 0, 'peak' => $counters['peak'], 'denied' => $counters['denied']];
             }
             foreach ($ledger['sessions'] as $session) {
                 foreach ($session['features'] as $featureId) {
@@ -169,7 +160,7 @@ class SeatLedger
             }
             return [
                 'usage' => array_filter($usage, static fn(array $c): bool => $c['used'] + $c['peak'] + $c['denied'] > 0),
-                'marks' => $marks,
+                'gen' => $ledger['gen'],
             ];
         });
     }
@@ -219,30 +210,17 @@ class SeatLedger
     }
 
     /**
-     * The server accepted a report: refusals up to its marks are confirmed and the peak starts again
-     * from the seats in use now. The boundary only moves forward and never past what happened, so an
-     * online answer and a file answer covering the same refusals neither repeat nor lose any.
-     * Entries are kept once a feature was limited: one per feature, and dropping one would let an old
-     * mark confirm refusals of its successor. Marks of another generation — taken before the file was
-     * set aside as corrupt and started again — confirm nothing: those counts belong to a file that is gone.
+     * The server accepted a report: the peak starts again from the seats in use now. Refusals are not
+     * touched: the server adds only what grew over the count it has already seen in this generation.
      *
      * ponytail: the peak is reset by any accepted answer; with online and file answers interleaving, a peak
      * between them may go unreported. Per-nonce peaks if closed contours ever mix with online for real.
-     *
-     * @param array{gen?: string, denied?: array<string, int>} $marks What report() returned for the answered request.
      */
-    public function reportAccepted(array $marks): void
+    public function reportAccepted(): void
     {
-        $this->transaction(function (array &$ledger) use ($marks): void {
-            $sameGeneration = hash_equals($ledger['gen'], (string)($marks['gen'] ?? ''));
+        $this->transaction(function (array &$ledger): void {
             foreach ($ledger['report'] as $featureId => $counters) {
-                $featureId = (string)$featureId;
-                $mark = $sameGeneration ? (int)($marks['denied'][$featureId] ?? 0) : 0;
-                $ledger['report'][$featureId] = [
-                    'peak' => $this->countSeats($ledger, $featureId),
-                    'denied' => $counters['denied'],
-                    'acked' => min($counters['denied'], max($counters['acked'], $mark)),
-                ];
+                $ledger['report'][$featureId]['peak'] = $this->countSeats($ledger, (string)$featureId);
             }
         });
     }
@@ -432,7 +410,7 @@ class SeatLedger
      * @return array{v: int, wall: int, sessions: array<string, array{
      *     holder: array<string, mixed>, ttl: int, expires: int, features: array<int, string>,
      *     captured?: array<string, int>, started?: int
-     * }>, report: array<string, array{peak: int, denied: int, acked: int}>, gen: string}
+     * }>, report: array<string, array{peak: int, denied: int}>, gen: string}
      * @throws RuntimeException
      */
     private function load(): array
@@ -455,6 +433,10 @@ class SeatLedger
         // with no counters and a generation of its own (written back by the transaction).
         $ledger['report'] ??= [];
         $ledger['gen'] ??= bin2hex(random_bytes(8));
+        // 'acked' was the refusal boundary kept here before the server kept it: ignored, dropped on the next write.
+        foreach ($ledger['report'] as $featureId => $counters) {
+            unset($ledger['report'][$featureId]['acked']);
+        }
         return $ledger;
     }
 
@@ -485,7 +467,7 @@ class SeatLedger
         foreach ($ledger['report'] ?? [] as $counters) {
             if (
                 !is_array($counters) || !is_int($counters['peak'] ?? null)
-                || !is_int($counters['denied'] ?? null) || !is_int($counters['acked'] ?? null)
+                || !is_int($counters['denied'] ?? null)
             ) {
                 return false;
             }

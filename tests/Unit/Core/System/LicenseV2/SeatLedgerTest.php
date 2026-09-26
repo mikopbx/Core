@@ -302,7 +302,7 @@ class SeatLedgerTest extends TestCase
         $this->assertSame(['54' => 1], $ledger->usage());
     }
 
-    public function testReportTracksPeakAndDeniedUntilAccepted(): void
+    public function testDeniedIsCumulativeAndAnAcceptedAnswerResetsOnlyThePeak(): void
     {
         $ledger = $this->newLedger();
         $a = $ledger->startSession(['username' => 'a'], 300, 100);
@@ -310,97 +310,56 @@ class SeatLedgerTest extends TestCase
         $c = $ledger->startSession(['username' => 'c'], 300, 100);
         $ledger->capture($a, '54', 2);
         $ledger->capture($b, '54', 2);
-        try {
-            $ledger->capture($c, '54', 2);
-            $this->fail('third seat granted');
-        } catch (SeatException $e) {
-            $this->assertSame(SeatException::NO_SEATS, $e->extcode);
-        }
-        $this->assertSame(1, $this->newLedger()->report()['usage']['54']['denied'], 'the refusal is on disk');
-        $ledger->release($a, '54');
-
-        $sent = $ledger->report();
-        $this->assertSame(['54' => ['used' => 1, 'peak' => 2, 'denied' => 1]], $sent['usage']);
-        $this->assertSame(['54' => 1], $sent['marks']['denied']);
-
-        // Refused while the answer to $sent is on its way: must survive that answer.
-        try {
-            $ledger->capture($c, '54', 1);
-        } catch (SeatException) {
-        }
-        $ledger->reportAccepted($sent['marks']);
-        $this->assertSame(['54' => ['used' => 1, 'peak' => 1, 'denied' => 1]], $ledger->report()['usage']);
-
-        $ledger->reportAccepted($ledger->report()['marks']);
-        $ledger->endSession($b);
-        $this->assertSame(['54' => ['used' => 0, 'peak' => 1, 'denied' => 0]], $ledger->report()['usage']);
-        $ledger->reportAccepted($ledger->report()['marks']);
-        $this->assertSame([], $ledger->report()['usage']);
-    }
-
-    public function testOverlappingAnswersNeitherRepeatNorLoseRefusals(): void
-    {
-        $ledger = $this->newLedger();
-        $a = $ledger->startSession([], 300, 100);
-        $b = $ledger->startSession([], 300, 100);
-        $ledger->capture($a, '54', 1);
-        $refuse = static function (int $times) use ($ledger, $b): void {
+        $refuse = function (int $times) use ($ledger, $c): void {
             for ($i = 0; $i < $times; $i++) {
                 try {
-                    $ledger->capture($b, '54', 1);
-                } catch (SeatException) {
+                    $ledger->capture($c, '54', 2);
+                    $this->fail('third seat granted');
+                } catch (SeatException $e) {
+                    $this->assertSame(SeatException::NO_SEATS, $e->extcode);
                 }
             }
         };
-        $refuse(5);
-        $online = $ledger->report();
-        $offline = $ledger->report();
-
-        $ledger->reportAccepted($online['marks']);
-        $this->assertSame(0, $ledger->report()['usage']['54']['denied']);
-        $refuse(2);
-        // The file answer covers the same five refusals: it must neither subtract them again nor eat the new two.
-        $ledger->reportAccepted($offline['marks']);
-        $this->assertSame(2, $ledger->report()['usage']['54']['denied']);
-
-        // A mark beyond what happened confirms no future refusals.
-        $ledger->reportAccepted(['gen' => $online['marks']['gen'], 'denied' => ['54' => 999]]);
         $refuse(1);
-        $this->assertSame(1, $ledger->report()['usage']['54']['denied']);
+        $this->assertSame(1, $this->newLedger()->report()['usage']['54']['denied'], 'the refusal is on disk');
+        $ledger->release($a, '54');
+        $this->assertSame(['54' => ['used' => 1, 'peak' => 2, 'denied' => 1]], $ledger->report()['usage']);
+
+        // The server keeps the boundary: the count never goes back, only the peak starts again.
+        $ledger->reportAccepted();
+        $this->assertSame(['54' => ['used' => 1, 'peak' => 1, 'denied' => 1]], $ledger->report()['usage']);
+        $ledger->capture($a, '54', 2); // both seats taken again, so $c is refused
+        $refuse(2);
+        $ledger->reportAccepted();
+        $this->assertSame(3, $ledger->report()['usage']['54']['denied']);
     }
 
-    public function testMarksOfAnEarlierLedgerConfirmNothing(): void
+    public function testGenerationIsStableUntilTheLedgerIsSetAside(): void
     {
         $ledger = $this->newLedger();
-        $a = $ledger->startSession([], 300, 100);
-        $b = $ledger->startSession([], 300, 100);
-        $ledger->capture($a, '54', 1);
-        for ($i = 0; $i < 5; $i++) {
-            try {
-                $ledger->capture($b, '54', 1);
-            } catch (SeatException) {
-            }
-        }
-        $exported = $ledger->report();
+        $gen = $ledger->report()['gen'];
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{16}$/', $gen);
+        $this->assertSame($gen, $this->newLedger()->report()['gen']);
 
-        // The ledger is set aside as corrupt and starts again; two refusals happen in the new one.
         file_put_contents("$this->dir/seats.json", 'not json');
         try {
             $ledger->report();
         } catch (RuntimeException) {
         }
-        $c = $ledger->startSession([], 300, 100);
-        $d = $ledger->startSession([], 300, 100);
-        $ledger->capture($c, '54', 1);
-        for ($i = 0; $i < 2; $i++) {
-            try {
-                $ledger->capture($d, '54', 1);
-            } catch (SeatException) {
-            }
-        }
+        $this->assertNotSame($gen, $ledger->report()['gen'], 'a fresh ledger counts refusals from zero');
+    }
 
-        $ledger->reportAccepted($exported['marks']);
-        $this->assertSame(2, $ledger->report()['usage']['54']['denied']);
+    public function testLedgerWrittenWithAckedIsNotCorrupt(): void
+    {
+        file_put_contents("$this->dir/seats.json", json_encode([
+            'v' => 1, 'wall' => 0, 'gen' => '0123456789abcdef',
+            'sessions' => ['s1' => ['holder' => [], 'ttl' => 300, 'expires' => PHP_INT_MAX, 'features' => ['54']]],
+            'report' => ['54' => ['peak' => 1, 'denied' => 4, 'acked' => 3]],
+        ]));
+        $ledger = $this->newLedger();
+        $this->assertSame(['54' => ['used' => 1, 'peak' => 1, 'denied' => 4]], $ledger->report()['usage']);
+        $this->assertSame(['54' => 1], $ledger->usage(), 'the sessions survived');
+        $this->assertFileDoesNotExist("$this->dir/seats.json.corrupt");
     }
 
     public function testCaptureWithoutLimitIsNotReported(): void
@@ -460,7 +419,7 @@ class SeatLedgerTest extends TestCase
     {
         file_put_contents("$this->dir/seats.json", json_encode([
             'v' => 1, 'wall' => self::NOW, 'sessions' => [],
-            'report' => ['54' => ['peak' => 'x', 'denied' => 0, 'acked' => 0]],
+            'report' => ['54' => ['peak' => 'x', 'denied' => 0]],
         ]));
         $this->expectException(RuntimeException::class);
         $this->newLedger()->report();
