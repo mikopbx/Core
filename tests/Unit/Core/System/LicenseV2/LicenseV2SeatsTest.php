@@ -11,7 +11,12 @@ use MikoPBX\Core\System\LicenseV2\InstallationIdentity;
 use MikoPBX\Core\System\LicenseV2\LicenseV2;
 use MikoPBX\Core\System\LicenseV2\SeatLedger;
 use MikoPBX\Core\System\LicenseV2\TokenRejectedException;
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 
 class LicenseV2SeatsTest extends TestCase
 {
@@ -25,6 +30,8 @@ class LicenseV2SeatsTest extends TestCase
     private string $licenseKey = 'MIKO-TEST';
     private ?\Closure $metrics = null;
     private array $logged = [];
+    /** @var array<int, callable> What the licensing server answers, one entry per request. */
+    private array $serverAnswers = [];
 
     protected function setUp(): void
     {
@@ -317,6 +324,53 @@ class LicenseV2SeatsTest extends TestCase
         $this->assertFalse($license->refresh(true));
     }
 
+    public function testNoRequestFileWithoutALicenseKey(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+        $this->licenseKey = '';
+        $this->expectException(TokenRejectedException::class);
+        $this->expectExceptionMessage('Set the license key');
+        $license->exportOfflineRequest();
+    }
+
+    public function testReplayReanchorsTheSeqAndAsksTheSameServerOnceMore(): void
+    {
+        $sent = [];
+        $this->serverAnswers = [
+            function (RequestInterface $request) use (&$sent): Response {
+                return $this->replay($request, $sent);
+            },
+            function (RequestInterface $request) use (&$sent): Response {
+                $sent[] = $fields = self::requestFields($request);
+                return new Response(200, [], (string)json_encode(['token' => $this->signed([
+                    'v' => EntitlementToken::VERSION, 'kid' => self::KID, 'install' => $fields['install'],
+                    'key' => $this->licenseKey, 'nonce' => $fields['nonce'], 'iat' => $this->wallClock,
+                    'exp' => $this->wallClock + 7 * 86400, 'features' => ['54' => $this->wallClock + 86400],
+                ])]));
+            },
+        ];
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+
+        $this->assertTrue($license->refresh(true), 'a single server must not leave the PBX in the backoff');
+        $this->assertCount(2, $sent);
+        $this->assertGreaterThan(self::NOW, $sent[1]['seq'], 'the retry goes above the re-anchored seq');
+        $this->assertStringContainsString('failed: HTTP 409', implode("\n", $this->logged));
+        $this->assertTrue($license->store()->retryAllowed());
+    }
+
+    public function testReplayIsRetriedOnlyOnce(): void
+    {
+        $sent = [];
+        $this->serverAnswers = array_fill(0, 3, function (RequestInterface $request) use (&$sent): Response {
+            return $this->replay($request, $sent);
+        });
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+
+        $this->assertFalse($license->refresh(true));
+        $this->assertCount(2, $sent);
+        $this->assertFalse($license->store()->retryAllowed(), 'the round failed: backoff');
+    }
+
     public function testLegacyMetricsCallSendsNothing(): void
     {
         $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
@@ -376,6 +430,34 @@ class LicenseV2SeatsTest extends TestCase
     }
 
     /**
+     * @param array<int, array<string, mixed>> $sent
+     */
+    private function replay(RequestInterface $request, array &$sent): Response
+    {
+        $sent[] = self::requestFields($request);
+        return new Response(409, [], '{"code":"replay"}');
+    }
+
+    /**
+     * @return array<string, mixed> What the PBX signed.
+     */
+    private static function requestFields(RequestInterface $request): array
+    {
+        $body = json_decode((string)$request->getBody(), true);
+        return json_decode(EntitlementToken::base64UrlDecode($body['request']), true);
+    }
+
+    /**
+     * @param array<string, mixed> $fields
+     */
+    private function signed(array $fields): string
+    {
+        $payload = EntitlementToken::base64UrlEncode((string)json_encode($fields));
+        openssl_sign($payload, $signature, $this->serverPrivateKeyPem, 0);
+        return $payload . '.' . EntitlementToken::base64UrlEncode($signature);
+    }
+
+    /**
      * Plays the licensing cabinet for the closed contour: signs an answer to the exported request.
      *
      * @param array<string, mixed> $extra Answer fields (poll, drop, seats...) over the defaults.
@@ -424,7 +506,9 @@ class LicenseV2SeatsTest extends TestCase
             fn(): string => '2026.3.1',
             function (string $message): void {
                 $this->logged[] = $message;
-            }
+            },
+            new Client(['handler' => HandlerStack::create(new MockHandler($this->serverAnswers))]),
+            static fn(): array => ['http://issuer.test']
         );
         $this->issue($license, $features, $seats, $exp, $offlineUntil);
         return $license;

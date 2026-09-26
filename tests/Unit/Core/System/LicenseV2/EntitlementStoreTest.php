@@ -256,7 +256,7 @@ class EntitlementStoreTest extends TestCase
         $this->assertTrue($store->featureAvailable('54'));
 
         $refusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'Unknown license key');
-        $this->assertSame('"Unknown license key"', $store->acceptRefusal($refusal));
+        $this->assertSame('Unknown license key', $store->acceptRefusal($refusal));
         $this->assertFalse($store->featureAvailable('54'));
 
         $store->acceptAnswer($this->issueFor($store, overrides: [
@@ -711,6 +711,63 @@ class EntitlementStoreTest extends TestCase
             $this->assertStringContainsString('other hardware', $e->getMessage());
         }
         $this->assertNull($replaced->lastVerifiedPayload());
+        // The rejected document did not spend the nonce: a document for this hardware still answers it.
+        $replaced->acceptAnswer($this->sign($signed));
+        $this->assertTrue($replaced->featureAvailable('54'));
+    }
+
+    public function testStaleDocumentOfOtherHardwareDoesNotAnswerThePendingRequest(): void
+    {
+        $store = $this->newStore();
+        $signed = $store->buildRequest('MIKO-TEST', '2026.3.1', true);
+        $store->acceptAnswer($this->sign($signed));
+        $foreign = ['k' => 3, 'h' => ['0123456789abcdef', '1123456789abcdef', '2123456789abcdef']];
+
+        $this->expectExceptionMessage('does not answer the pending request');
+        $store->acceptAnswer($this->sign($signed, ['fingerprint' => $foreign]));
+    }
+
+    public function testBoundFileDocumentLicensesOnlyWhileTheHardwareMatches(): void
+    {
+        $store = $this->newStore();
+        $this->acceptBoundFileDocument($store);
+        $this->assertTrue($store->recheckHardware());
+        $this->assertTrue($store->featureAvailable('54'));
+
+        // The disk was cloned to other hardware after the import: two of four sources changed, k = 3.
+        $original = $this->hardware;
+        $this->hardware['board_serial'] = 'NEWBOARD01';
+        $this->hardware['disk_serial'] = 'NEWDISK001';
+        $moved = $this->newStore();
+        $this->assertFalse($moved->recheckHardware());
+        $this->assertFalse($moved->featureAvailable('54'));
+        $this->assertSame(0, $moved->effectiveExpiry());
+
+        $this->hardware = $original;
+        $back = $this->newStore();
+        $this->assertTrue($back->recheckHardware());
+        $this->assertTrue($back->featureAvailable('54'));
+        $this->assertGreaterThan(self::NOW, $back->effectiveExpiry());
+    }
+
+    public function testNewDocumentIsNotBlockedByTheHardwareFlagOfAnOlderOne(): void
+    {
+        $store = $this->newStore();
+        $bound = $this->acceptBoundFileDocument($store);
+        $this->hardware['board_serial'] = 'NEWBOARD01';
+        $this->hardware['disk_serial'] = 'NEWDISK001';
+        $moved = $this->newStore();
+        $this->assertFalse($moved->recheckHardware());
+
+        // An online document carries no fingerprint: licensed at once, no recheck needed.
+        $moved->acceptAnswer($this->issueFor($moved));
+        $this->assertTrue($moved->featureAvailable('54'));
+        $this->assertGreaterThan(self::NOW, $moved->effectiveExpiry());
+
+        // Even a flag left behind for the older document blocks nothing but that document.
+        $state = json_decode((string)file_get_contents("$this->dir/state.json"), true);
+        file_put_contents("$this->dir/state.json", json_encode(['foreignHardware' => $bound['nonce']] + $state));
+        $this->assertTrue($moved->featureAvailable('54'));
     }
 
     public function testFileDocumentWithoutFingerprintIsNotChecked(): void
@@ -728,7 +785,7 @@ class EntitlementStoreTest extends TestCase
         $store->acceptAnswer($this->issueFor($store));
         $refusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1', true), [], null, 'Offline mode is not allowed');
         $this->assertTrue(EntitlementToken::isRefusal($refusal));
-        $this->assertSame('"Offline mode is not allowed"', $store->acceptRefusal($refusal));
+        $this->assertSame('Offline mode is not allowed', $store->acceptRefusal($refusal));
         $this->assertFalse($store->featureAvailable('54'));
         $this->assertFalse(EntitlementToken::isRefusal($this->issueFor($store)));
     }
@@ -758,7 +815,7 @@ class EntitlementStoreTest extends TestCase
         $offlineRequest = $store->buildRequest('MIKO-TEST', '2026.3.1', true);
         $refusal = $this->sign($offlineRequest, [], null, 'Offline mode is not allowed');
 
-        $this->assertSame('"Offline mode is not allowed"', $store->acceptRefusal($refusal));
+        $this->assertSame('Offline mode is not allowed', $store->acceptRefusal($refusal));
         $this->assertFalse($store->featureAvailable('54'));
         $this->assertTrue($store->retryAllowed(), 'an offline-slot refusal must not arm the online backoff');
     }
@@ -864,6 +921,18 @@ class EntitlementStoreTest extends TestCase
             fn(): int => $this->wallClock,
             $this->host()
         );
+    }
+
+    /**
+     * Plays the licensing cabinet: a file document bound to the hardware the request was built on.
+     *
+     * @return array<string, mixed> The accepted payload.
+     */
+    private function acceptBoundFileDocument(EntitlementStore $store): array
+    {
+        $signed = $store->buildRequest('MIKO-TEST', '2026.3.1', true);
+        $hashes = json_decode(EntitlementToken::base64UrlDecode($signed['request']), true)['fingerprint'];
+        return $store->acceptAnswer($this->sign($signed, ['fingerprint' => ['k' => 3, 'h' => $hashes]]));
     }
 
     /**

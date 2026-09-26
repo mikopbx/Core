@@ -25,7 +25,6 @@ namespace MikoPBX\Core\System\LicenseV2;
 use Closure;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Network;
-use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
@@ -102,6 +101,8 @@ class HostFacts
     /**
      * Reads the machine. DMI serials are root-only: requests are built by root workers, the web user never
      * builds one, so an empty value there is a missing source, not an error.
+     * Plain exec(): Processes::mwExec() only echoes the command in debug mode, losing the environment
+     * and the disk serial.
      *
      * @return array{environment: string, sources: array<string, string>}
      */
@@ -110,7 +111,7 @@ class HostFacts
         $read = static fn(string $file): string => is_readable($file) ? trim((string)file_get_contents($file)) : '';
         $detected = '';
         if (!System::isContainer() && is_executable('/sbin/pbx-env-detect')) {
-            Processes::mwExec('/sbin/pbx-env-detect --type 2>/dev/null', $output);
+            exec('/sbin/pbx-env-detect --type 2>/dev/null', $output);
             $detected = strtolower(trim(implode('', $output ?? [])));
         }
         $environment = match (true) {
@@ -122,7 +123,7 @@ class HostFacts
         $diskSerial = '';
         $systemDisk = $read(Directories::getDir(Directories::CORE_VAR_ETC_DIR) . '/cfdevice');
         if (preg_match('/^[a-z0-9]+$/', $systemDisk) === 1) {
-            Processes::mwExec(Util::which('lsblk') . " -dno SERIAL /dev/$systemDisk 2>/dev/null", $serial);
+            exec(Util::which('lsblk') . " -dno SERIAL /dev/$systemDisk 2>/dev/null", $serial);
             $diskSerial = trim(implode('', $serial ?? []));
         }
         // "First" must not depend on the order the kernel happened to list the NICs in.

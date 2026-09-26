@@ -52,6 +52,8 @@ class EntitlementStore
     private const string METRICS_SENT_AT = 'metricsSentAt';
     private const string ROUND_LOCK_FILE = 'refresh.lock';
     private const string SEQ = 'seq';
+    /** State key: nonce of the stored file document while this machine is not the hardware it is bound to. */
+    private const string FOREIGN_HARDWARE = 'foreignHardware';
 
     /** Do not rewrite the state file more often than this, seconds. */
     private const int CLOCK_PERSIST_STEP = 60;
@@ -192,16 +194,6 @@ class EntitlementStore
     public function acceptAnswer(string $token): array
     {
         $payload = EntitlementToken::decodeVerified($token, $this->trustedKeys, $this->identity->getInstallId());
-        // Only a file document carries a fingerprint: it may outlive any contact with the server, so it
-        // must stay on the hardware it was issued for.
-        if (
-            isset($payload['fingerprint'])
-            && !HostFacts::matches($payload['fingerprint'], $this->host->fingerprint($this->identity->getInstallId()))
-        ) {
-            throw new TokenRejectedException(
-                'Entitlement document is issued for other hardware, exchange the license file again'
-            );
-        }
         // Freshness is judged by the clock as it was before this token: a token dated in the
         // future must be refused, not allowed to drag the clock anchor after itself. Read before
         // the lock below: now() may itself persist the clock anchor via saveState(), and a second
@@ -222,12 +214,21 @@ class EntitlementStore
             if (!EntitlementToken::isFresh($payload, $now)) {
                 throw new TokenRejectedException('Entitlement token is expired or the PBX clock is wrong');
             }
+            // Only a file document carries a fingerprint: it may outlive any contact with the server, so it
+            // must stay on the hardware it was issued for. Judged after the nonce: a stale or foreign
+            // document is told it answers nothing, not sent to exchange the file again.
+            if (!$this->hardwareMatches($payload)) {
+                throw new TokenRejectedException(
+                    'Entitlement document is issued for other hardware, exchange the license file again'
+                );
+            }
             $this->writeAtomically(self::TOKEN_FILE, trim($token));
             $sent = (array)($state[$answeredSlot . self::REPORT_SUFFIX] ?? []);
             $changes = [
                 $answeredSlot => '',
                 $answeredSlot . self::REPORT_SUFFIX => [],
                 'refused' => false,
+                self::FOREIGN_HARDWARE => '',
                 'lastSeen' => max($now, (int)$payload['iat']),
                 self::BACKOFF => 0,
                 self::NEXT_RETRY => 0,
@@ -307,14 +308,12 @@ class EntitlementStore
      */
     public function featureAvailable(string $featureId, ?string $licenseKey = null, ?array $payload = null): bool
     {
-        // A signed refusal revokes the stored token at once; only the next accepted token licenses again.
-        if (($this->loadState()['refused'] ?? false) === true) {
+        $payload ??= $this->lastVerifiedPayload();
+        if ($payload === null || $this->revoked($payload)) {
             return false;
         }
-        $payload ??= $this->lastVerifiedPayload();
         $now = $this->now();
-        return $payload !== null
-            && ($licenseKey === null || hash_equals($licenseKey, (string)($payload['key'] ?? '')))
+        return ($licenseKey === null || hash_equals($licenseKey, (string)($payload['key'] ?? '')))
             && EntitlementToken::isFresh($payload, $now, true)
             && EntitlementToken::featureValid($payload, $featureId, $now);
     }
@@ -361,7 +360,8 @@ class EntitlementStore
                 $changes[self::NEXT_RETRY] = $now + EntitlementToken::POLL_DEFAULT;
             }
             $this->saveState($changes, true);
-            return (string)json_encode($payload['error'] ?? '');
+            $error = $payload['error'] ?? '';
+            return is_string($error) ? $error : (string)json_encode($error, JSON_UNESCAPED_UNICODE);
         });
     }
 
@@ -398,14 +398,58 @@ class EntitlementStore
      */
     public function effectiveExpiry(?string $licenseKey = null, ?array $payload = null): int
     {
-        if (($this->loadState()['refused'] ?? false) === true) {
-            return 0;
-        }
         $payload ??= $this->lastVerifiedPayload();
-        if ($payload === null || ($licenseKey !== null && !hash_equals($licenseKey, (string)($payload['key'] ?? '')))) {
+        if (
+            $payload === null
+            || $this->revoked($payload)
+            || ($licenseKey !== null && !hash_equals($licenseKey, (string)($payload['key'] ?? '')))
+        ) {
             return 0;
         }
         return max((int)($payload['exp'] ?? 0), (int)($payload['offlineUntil'] ?? 0));
+    }
+
+    /**
+     * Re-judges the stored file document against the hardware it runs on now: a disk or /cf cloned to
+     * other hardware after the import must not carry a (possibly perpetual) document along. Root workers
+     * only: DMI serials are root-only, the web user would see missing sources, not other hardware. The
+     * state is written only when the flag changes, it lives on the /cf flash and this runs every worker pass.
+     *
+     * @return bool Whether this machine is the hardware of the stored document (true when none is bound).
+     * @throws RuntimeException When the flag can not be written.
+     */
+    public function recheckHardware(): bool
+    {
+        $payload = $this->lastVerifiedPayload();
+        $matches = $payload === null || $this->hardwareMatches($payload);
+        $flag = $matches ? '' : (string)($payload['nonce'] ?? '');
+        if ((string)($this->loadState()[self::FOREIGN_HARDWARE] ?? '') !== $flag) {
+            $this->saveState([self::FOREIGN_HARDWARE => $flag]);
+        }
+        return $matches;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function hardwareMatches(array $payload): bool
+    {
+        return !isset($payload['fingerprint'])
+            || HostFacts::matches($payload['fingerprint'], $this->host->fingerprint($this->identity->getInstallId()));
+    }
+
+    /**
+     * A signed refusal revokes the stored token until the next accepted one. Other hardware stops only the
+     * document it was found for: the flag names its nonce, so a newer accepted document is never blocked.
+     *
+     * @param array<string, mixed> $payload
+     */
+    private function revoked(array $payload): bool
+    {
+        $state = $this->loadState();
+        $foreignNonce = (string)($state[self::FOREIGN_HARDWARE] ?? '');
+        return ($state['refused'] ?? false) === true
+            || ($foreignNonce !== '' && hash_equals($foreignNonce, (string)($payload['nonce'] ?? '')));
     }
 
     /**

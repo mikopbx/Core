@@ -72,12 +72,15 @@ class LicenseV2
     private Closure $metrics;
     private Closure $pbxVersion;
     private Closure $logger;
+    private ?GuzzleHttp\Client $http;
+    private Closure $serverUrls;
     private ?License $legacy = null;
 
     /**
      * The arguments exist for tests and callers that own the storage; production builds the
-     * defaults from the settings, so `new LicenseV2()` keeps working unchanged. metrics,
-     * pbxVersion and logger exist for the same reason as licenseKey: tests run without the DI container.
+     * defaults from the settings, so `new LicenseV2()` keeps working unchanged. metrics, pbxVersion,
+     * logger and serverUrls exist for the same reason as licenseKey: tests run without the DI container;
+     * http lets them play the licensing server.
      */
     public function __construct(
         ?EntitlementStore $store = null,
@@ -85,7 +88,9 @@ class LicenseV2
         ?Closure $licenseKey = null,
         ?Closure $metrics = null,
         ?Closure $pbxVersion = null,
-        ?Closure $logger = null
+        ?Closure $logger = null,
+        ?GuzzleHttp\Client $http = null,
+        ?Closure $serverUrls = null
     ) {
         $cfDir = Directories::getDir(Directories::CORE_CF_DIR) . '/conf/license-v2';
         $this->store = $store
@@ -97,6 +102,13 @@ class LicenseV2
         $this->pbxVersion = $pbxVersion ?? static fn(): string => PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
         $this->logger = $logger
             ?? static fn(string $message) => SystemMessages::sysLogMsg(self::class, $message, LOG_WARNING);
+        $this->http = $http;
+        $this->serverUrls = $serverUrls ?? static fn(): array => preg_split(
+            '/[\s,]+/',
+            PbxSettings::getValueByKey(PbxSettings::LICENSE_V2_SERVER_URL),
+            -1,
+            PREG_SPLIT_NO_EMPTY
+        ) ?: [];
     }
 
     public function store(): EntitlementStore
@@ -351,6 +363,14 @@ class LicenseV2
     public function checkModules(): void
     {
         $this->refresh();
+        // Root only (DMI serials): the flag it keeps is what featureAvailable() of every user reads.
+        try {
+            if (!$this->store->recheckHardware()) {
+                $this->log('The license file is issued for other hardware: exchange the license file again');
+            }
+        } catch (RuntimeException $e) {
+            $this->log('Hardware check of the license file failed: ' . $e->getMessage());
+        }
         $payload = $this->store->lastVerifiedPayload();
         // toArray(): the loop updates the same table, no open cursor must be held over it.
         foreach (PbxExtensionModules::find()->toArray() as $module) {
@@ -415,8 +435,7 @@ class LicenseV2
         if ($this->licenseKey() === '') {
             return false;
         }
-        $configuredUrls = PbxSettings::getValueByKey(PbxSettings::LICENSE_V2_SERVER_URL);
-        $serverUrls = preg_split('/[\s,]+/', $configuredUrls, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $serverUrls = ($this->serverUrls)();
         if ($serverUrls === []) {
             // Closed contour: tokens arrive by the file exchange only.
             return false;
@@ -446,34 +465,41 @@ class LicenseV2
         }
         // One report per round: every server of the list is told the same, metrics are collected once.
         $report = $this->report();
+        $http = $this->http ??= new GuzzleHttp\Client();
         foreach ($serverUrls as $serverUrl) {
-            try {
-                $response = (new GuzzleHttp\Client())->request('POST', rtrim($serverUrl, '/') . '/entitlement', [
-                    'json' => $this->buildRequest(false, $report),
-                    'timeout' => 15,
-                    'http_errors' => false,
-                ]);
-                $answer = (array)json_decode($response->getBody()->getContents(), true);
-            } catch (Throwable $e) {
-                $this->log("Entitlement server $serverUrl is unavailable: " . $e->getMessage());
-                continue;
-            }
-            try {
-                if (is_string($answer['refusal'] ?? null)) {
-                    $this->log("Refused by $serverUrl: " . $this->store->acceptRefusal($answer['refusal']));
-                    return false;
+            // Two attempts: a 409 replay re-anchors the seq and asks the same server once more, so a PBX
+            // with a single server does not wait out the backoff after a lost state.
+            for ($attempt = 1; $attempt <= 2; $attempt++) {
+                try {
+                    $response = $http->request('POST', rtrim($serverUrl, '/') . '/entitlement', [
+                        'json' => $this->buildRequest(false, $report),
+                        'timeout' => 15,
+                        'http_errors' => false,
+                    ]);
+                    $answer = (array)json_decode($response->getBody()->getContents(), true);
+                } catch (Throwable $e) {
+                    $this->log("Entitlement server $serverUrl is unavailable: " . $e->getMessage());
+                    continue 2;
                 }
-                if ($response->getStatusCode() === 200) {
-                    $this->applyAnswer($this->store->acceptAnswer((string)($answer['token'] ?? '')));
-                    return true;
+                try {
+                    if (is_string($answer['refusal'] ?? null)) {
+                        $this->log("Refused by $serverUrl: " . $this->store->acceptRefusal($answer['refusal']));
+                        return false;
+                    }
+                    if ($response->getStatusCode() === 200) {
+                        $this->applyAnswer($this->store->acceptAnswer((string)($answer['token'] ?? '')));
+                        return true;
+                    }
+                    $this->log("Entitlement server $serverUrl failed: HTTP " . $response->getStatusCode());
+                    if ($response->getStatusCode() === 409 && ($answer['code'] ?? '') === 'replay') {
+                        // Our seq is behind what the server has seen (state lost): the next request goes above it.
+                        $this->store->reanchorSeq();
+                        continue;
+                    }
+                } catch (Throwable $e) {
+                    $this->log("Answer of $serverUrl is rejected: " . $e->getMessage());
                 }
-                if ($response->getStatusCode() === 409 && ($answer['code'] ?? '') === 'replay') {
-                    // Our seq is behind what the server has seen (state lost): the next request goes above it.
-                    $this->store->reanchorSeq();
-                }
-                $this->log("Entitlement server $serverUrl failed: HTTP " . $response->getStatusCode());
-            } catch (Throwable $e) {
-                $this->log("Answer of $serverUrl is rejected: " . $e->getMessage());
+                continue 2;
             }
         }
         try {
@@ -512,9 +538,14 @@ class LicenseV2
     /**
      * Request file for a closed contour: the administrator carries it to the licensing cabinet
      * and brings back a token for importOfflineToken().
+     *
+     * @throws TokenRejectedException Without a license key: the server would refuse the request.
      */
     public function exportOfflineRequest(): string
     {
+        if ($this->licenseKey() === '') {
+            throw new TokenRejectedException('Set the license key before exporting a request file');
+        }
         return (string)json_encode($this->buildRequest(true, $this->report()));
     }
 
