@@ -147,7 +147,11 @@ class SeatLedger
         return $this->transaction(function (array &$ledger): array {
             $usage = [];
             foreach ($ledger['report'] as $featureId => $counters) {
-                $usage[(string)$featureId] = ['used' => 0, 'peak' => $counters['peak'], 'denied' => $counters['denied']];
+                $usage[(string)$featureId] = [
+                    'used' => 0,
+                    'peak' => $counters['peak'],
+                    'denied' => $counters['denied'],
+                ];
             }
             foreach ($ledger['sessions'] as $session) {
                 foreach ($session['features'] as $featureId) {
@@ -159,7 +163,10 @@ class SeatLedger
                 $usage[$featureId]['peak'] = max($counters['peak'], $counters['used']);
             }
             return [
-                'usage' => array_filter($usage, static fn(array $c): bool => $c['used'] + $c['peak'] + $c['denied'] > 0),
+                'usage' => array_filter(
+                    $usage,
+                    static fn(array $c): bool => $c['used'] + $c['peak'] + $c['denied'] > 0
+                ),
                 'gen' => $ledger['gen'],
             ];
         });
@@ -417,7 +424,13 @@ class SeatLedger
     {
         $file = "$this->dir/" . self::FILE;
         if (!is_file($file)) {
-            return ['v' => self::FILE_VERSION, 'wall' => 0, 'sessions' => [], 'report' => [], 'gen' => bin2hex(random_bytes(8))];
+            return [
+                'v' => self::FILE_VERSION,
+                'wall' => 0,
+                'sessions' => [],
+                'report' => [],
+                'gen' => bin2hex(random_bytes(8)),
+            ];
         }
         $ledger = json_decode((string)file_get_contents($file), true);
         if (!$this->isWellFormed($ledger)) {

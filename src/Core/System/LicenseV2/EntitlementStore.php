@@ -88,8 +88,12 @@ class EntitlementStore
      * @return array{request: string, sig: string}
      * @throws RuntimeException
      */
-    public function buildRequest(string $licenseKey, string $appVersion, bool $offline = false, array $report = []): array
-    {
+    public function buildRequest(
+        string $licenseKey,
+        string $appVersion,
+        bool $offline = false,
+        array $report = []
+    ): array {
         $nonce = bin2hex(random_bytes(16));
         $slot = $offline ? self::NONCE_OFFLINE : self::NONCE_ONLINE;
         // Read before the lock below: now() may persist the clock anchor itself, and a second flock() on
