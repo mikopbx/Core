@@ -55,10 +55,13 @@ class EntitlementStore
 
     private Closure $clock;
 
+    /**
+     * @param array<string, string> $trustedKeys Server public keys (PEM) by kid.
+     */
     public function __construct(
         private readonly string $dir,
         private readonly InstallationIdentity $identity,
-        private readonly string $serverPublicKeyPem,
+        private readonly array $trustedKeys,
         ?Closure $clock = null
     ) {
         $this->clock = $clock ?? time(...);
@@ -121,7 +124,7 @@ class EntitlementStore
      */
     public function acceptAnswer(string $token): array
     {
-        $payload = EntitlementToken::decodeVerified($token, $this->serverPublicKeyPem, $this->identity->getInstallId());
+        $payload = EntitlementToken::decodeVerified($token, $this->trustedKeys, $this->identity->getInstallId());
         // Freshness is judged by the clock as it was before this token: a token dated in the
         // future must be refused, not allowed to drag the clock anchor after itself. Read before
         // the lock below: now() may itself persist the clock anchor via saveState(), and a second
@@ -220,7 +223,7 @@ class EntitlementStore
         try {
             return EntitlementToken::decodeVerified(
                 (string)file_get_contents($tokenFile),
-                $this->serverPublicKeyPem,
+                $this->trustedKeys,
                 $this->identity->getInstallId()
             );
         } catch (RuntimeException) {
@@ -262,7 +265,7 @@ class EntitlementStore
      */
     public function acceptRefusal(string $signedRefusal): string
     {
-        $payload = EntitlementToken::decodeSigned($signedRefusal, $this->serverPublicKeyPem, $this->identity->getInstallId());
+        $payload = EntitlementToken::decodeSigned($signedRefusal, $this->trustedKeys, $this->identity->getInstallId());
         // Read before the lock below: now() may itself persist the clock anchor via saveState(), and a
         // second flock() on the same file within this process would deadlock against our own lock.
         $now = $this->now();

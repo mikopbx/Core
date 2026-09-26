@@ -15,6 +15,7 @@ class EntitlementStoreTest extends TestCase
 {
     private const int NOW = 1_800_000_000;
     private const int DAY = 86400;
+    private const string KID = 'testkid1';
 
     private string $dir;
     private string $serverPrivateKeyPem;
@@ -540,7 +541,7 @@ class EntitlementStoreTest extends TestCase
         if (!function_exists('pcntl_fork')) {
             $this->markTestSkipped('pcntl is not available');
         }
-        $store = new EntitlementStore($this->dir, new InstallationIdentity($this->dir), $this->serverPublicKeyPem);
+        $store = new EntitlementStore($this->dir, new InstallationIdentity($this->dir), [self::KID => $this->serverPublicKeyPem]);
         // This store runs on the real wall clock (forked children need a real process, not the
         // fake $wallClock closure), so the token must be dated around the real "now" rather than
         // the fixed self::NOW used everywhere else in this file.
@@ -556,7 +557,7 @@ class EntitlementStoreTest extends TestCase
                 time_sleep_until($go);
                 try {
                     $identity = new InstallationIdentity($this->dir);
-                    $child = new EntitlementStore($this->dir, $identity, $this->serverPublicKeyPem);
+                    $child = new EntitlementStore($this->dir, $identity, [self::KID => $this->serverPublicKeyPem]);
                     $child->acceptToken($token);
                     exit(0);
                 } catch (RuntimeException $e) {
@@ -579,12 +580,57 @@ class EntitlementStoreTest extends TestCase
         $this->assertSame([0, 1], array_values($results));
     }
 
-    private function newStore(): EntitlementStore
+    public function testDocumentOfUnknownOrMissingKidIsRejected(): void
+    {
+        $store = $this->newStore();
+        foreach (['otherkid', null] as $kid) {
+            try {
+                $store->acceptToken($this->issueFor($store, ['kid' => $kid]));
+                $this->fail('a document without a trusted kid was accepted');
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('unknown key', $e->getMessage());
+            }
+        }
+        $this->assertNull($store->lastVerifiedPayload());
+    }
+
+    public function testRotatedKeyIsTrustedByItsOwnKidOnly(): void
+    {
+        [$newPrivateKeyPem, $newPublicKeyPem] = self::newKeyPair();
+        $store = $this->newStore(['testkid2' => $newPublicKeyPem]);
+        try {
+            // Signed by the new key but naming the old kid: checked against the old key.
+            $store->acceptToken($this->issueFor($store, ['kid' => self::KID], $newPrivateKeyPem));
+            $this->fail('a document verified with the key of another kid');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('signature is invalid', $e->getMessage());
+        }
+        $store->acceptToken($this->issueFor($store, ['kid' => 'testkid2'], $newPrivateKeyPem));
+        $this->assertTrue($store->featureAvailable('54'));
+    }
+
+    public function testRefusalOfUnknownKidRevokesNothing(): void
+    {
+        $store = $this->newStore();
+        $store->acceptToken($this->issueFor($store));
+        $refusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), ['kid' => 'otherkid'], null, 'Go away');
+        try {
+            $store->acceptRefusal($refusal);
+            $this->fail('a refusal without a trusted kid was accepted');
+        } catch (RuntimeException) {
+        }
+        $this->assertTrue($store->featureAvailable('54'));
+    }
+
+    /**
+     * @param array<string, string> $extraKeys More trusted server keys by kid (key rotation).
+     */
+    private function newStore(array $extraKeys = []): EntitlementStore
     {
         return new EntitlementStore(
             $this->dir,
             new InstallationIdentity($this->dir),
-            $this->serverPublicKeyPem,
+            [self::KID => $this->serverPublicKeyPem] + $extraKeys,
             fn(): int => $this->wallClock
         );
     }
@@ -619,6 +665,7 @@ class EntitlementStoreTest extends TestCase
         }
         $payloadPart = EntitlementToken::base64UrlEncode((string)json_encode($overrides + [
             'v' => EntitlementToken::VERSION,
+            'kid' => self::KID,
             'install' => $request['install'],
             'key' => $request['key'],
             'nonce' => $request['nonce'],

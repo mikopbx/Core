@@ -14,6 +14,7 @@ use PHPUnit\Framework\TestCase;
 class LicenseV2SeatsTest extends TestCase
 {
     private const int NOW = 1_800_000_000;
+    private const string KID = 'testkid1';
 
     private string $dir;
     private int $wallClock = self::NOW;
@@ -168,7 +169,7 @@ class LicenseV2SeatsTest extends TestCase
         $store = new class (
             "$this->dir/cf",
             new InstallationIdentity("$this->dir/cf"),
-            $this->serverPublicKeyPem,
+            [self::KID => $this->serverPublicKeyPem],
             fn(): int => $this->wallClock
         ) extends EntitlementStore {
             public int $reads = 0;
@@ -323,6 +324,7 @@ class LicenseV2SeatsTest extends TestCase
         $request = json_decode(EntitlementToken::base64UrlDecode($signed['request']), true);
         $payload = EntitlementToken::base64UrlEncode((string)json_encode($extra + [
             'v' => EntitlementToken::VERSION,
+            'kid' => self::KID,
             'install' => $request['install'],
             'key' => $this->licenseKey,
             'nonce' => $request['nonce'],
@@ -346,7 +348,7 @@ class LicenseV2SeatsTest extends TestCase
         $store = new EntitlementStore(
             "$this->dir/cf",
             new InstallationIdentity("$this->dir/cf"),
-            $this->serverPublicKeyPem,
+            [self::KID => $this->serverPublicKeyPem],
             fn(): int => $this->wallClock
         );
         $ledger = new SeatLedger("$this->dir/tmp", fn(): int => $this->wallClock);
@@ -380,6 +382,7 @@ class LicenseV2SeatsTest extends TestCase
         $requestPayload = json_decode(EntitlementToken::base64UrlDecode($request['request']), true);
         $fields = [
             'v' => EntitlementToken::VERSION,
+            'kid' => self::KID,
             'install' => $requestPayload['install'],
             'key' => $this->licenseKey,
             'nonce' => $requestPayload['nonce'],

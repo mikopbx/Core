@@ -28,17 +28,21 @@ namespace MikoPBX\Core\System\LicenseV2;
  * Wire format: base64url(payloadJson) . '.' . base64url(signature).
  * The signature covers the base64url payload string, so no JSON canonicalization is needed.
  *
- * Payload: v, install, key, nonce, iat, exp, offlineUntil,
- *          features {featureId: expireTimestamp}, modules {moduleUniqueID: featureId},
+ * Payload: v, kid, install, key, nonce, iat, exp, offlineUntil,
+ *          features {featureId: expireTimestamp} (may be empty), modules {moduleUniqueID: featureId} (optional:
+ *          absent when the server has no map for the application, module.json decides then),
  *          seats {featureId: limit >= 0} (optional), poll (optional, 300..900 s),
- *          drop [ref, ...] (optional).
+ *          drop [ref, ...] (optional), fingerprint {k, h: [hash, ...]} (file documents bound to the hardware only).
  *
  * exp is when the PBX must have a newer token; offlineUntil is how long the server lets the last
  * token live while the licensing servers can not be reached (the grace period). Grace extends the
  * token only, never a feature: the issuer must set features[*] >= offlineUntil for it to matter.
  *
- * A refusal uses the same wire format with payload: v, install, nonce, refused = true, error.
+ * A refusal uses the same wire format with payload: v, kid, install, nonce, refused = true, error, code, intcode.
  * It is signed as well, so only the licensing server can take the license away.
+ *
+ * kid names the server key the message is signed with; a kid this firmware does not know is not trusted,
+ * so a rotated key reaches the PBX with the firmware before the server starts signing with it.
  */
 class EntitlementToken
 {
@@ -56,12 +60,13 @@ class EntitlementToken
      * Checks the signature and the installation binding. Does not check the lifetime,
      * so the module-to-feature map of an expired token stays trustworthy.
      *
+     * @param array<string, string> $trustedKeys Server public keys (PEM) by kid.
      * @return array<string, mixed> Decoded payload.
      * @throws TokenRejectedException When the token is malformed, forged or issued for another installation.
      */
-    public static function decodeVerified(string $token, string $serverPublicKeyPem, string $installId): array
+    public static function decodeVerified(string $token, array $trustedKeys, string $installId): array
     {
-        $payload = self::decodeSigned($token, $serverPublicKeyPem, $installId);
+        $payload = self::decodeSigned($token, $trustedKeys, $installId);
         if (!is_array($payload['modules'] ?? null) || $payload['modules'] === []) {
             // An empty map must never mean "nothing to check".
             throw new TokenRejectedException('Entitlement token has no module map');
@@ -84,22 +89,27 @@ class EntitlementToken
     /**
      * Signature, version and installation binding of any server-signed message.
      *
+     * @param array<string, string> $trustedKeys Server public keys (PEM) by kid.
      * @return array<string, mixed>
      * @throws TokenRejectedException
      */
-    public static function decodeSigned(string $token, string $serverPublicKeyPem, string $installId): array
+    public static function decodeSigned(string $token, array $trustedKeys, string $installId): array
     {
         $parts = explode('.', trim($token));
         if (count($parts) !== 2) {
             throw new TokenRejectedException('Malformed entitlement token');
         }
         [$payloadPart, $signaturePart] = $parts;
-        $signature = self::base64UrlDecode($signaturePart);
-        if (openssl_verify($payloadPart, $signature, $serverPublicKeyPem, 0) !== 1) {
+        // Read before the signature only to pick the key it must verify with; nothing else is trusted yet.
+        $payload = json_decode(self::base64UrlDecode($payloadPart), true);
+        $kid = is_array($payload) ? ($payload['kid'] ?? null) : null;
+        if (!is_string($kid) || !isset($trustedKeys[$kid])) {
+            throw new TokenRejectedException('Entitlement token is signed by an unknown key');
+        }
+        if (openssl_verify($payloadPart, self::base64UrlDecode($signaturePart), $trustedKeys[$kid], 0) !== 1) {
             throw new TokenRejectedException('Entitlement token signature is invalid');
         }
-        $payload = json_decode(self::base64UrlDecode($payloadPart), true);
-        if (!is_array($payload) || ($payload['v'] ?? null) !== self::VERSION) {
+        if (($payload['v'] ?? null) !== self::VERSION) {
             throw new TokenRejectedException('Unsupported entitlement token version');
         }
         if (!hash_equals($installId, (string)($payload['install'] ?? ''))) {

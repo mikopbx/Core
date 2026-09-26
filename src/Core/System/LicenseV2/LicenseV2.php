@@ -46,16 +46,19 @@ use Throwable;
 class LicenseV2
 {
     /**
-     * Public key of the licensing server, pinned in the read-only rootfs.
+     * Keys the licensing server signs with, by kid, pinned in the read-only rootfs. A rotated key is added
+     * here one firmware ahead of its use; a document or a refusal naming an unknown kid is not trusted.
      *
-     * ponytail: MVP test key (issuer script in _temp); replace with the production key
-     * of /protect/v2 before this leaves the MVP branch.
+     * ponytail: MVP test key only (issuer script in _temp); the MIKO key of /protect/v2 with its kid
+     * replaces it before this leaves the MVP branch.
      */
-    private const string SERVER_PUBLIC_KEY_PEM = <<<'PEM'
-        -----BEGIN PUBLIC KEY-----
-        MCowBQYDK2VwAyEACbfQOaxyRmg5MXtGAEI/ZEtIKfV1fmPTl565zNIsthU=
-        -----END PUBLIC KEY-----
-        PEM;
+    private const array TRUSTED_KEYS = [
+        'mvptest1' => <<<'PEM'
+            -----BEGIN PUBLIC KEY-----
+            MCowBQYDK2VwAyEACbfQOaxyRmg5MXtGAEI/ZEtIKfV1fmPTl565zNIsthU=
+            -----END PUBLIC KEY-----
+            PEM,
+    ];
 
     /** The same text the legacy service produces, so translateLicenseErrorMessage() keeps working. */
     private const string ERROR_NOT_LICENSED = 'Feature is expired or not licensed (2011)';
@@ -86,7 +89,7 @@ class LicenseV2
     ) {
         $cfDir = Directories::getDir(Directories::CORE_CF_DIR) . '/conf/license-v2';
         $this->store = $store
-            ?? new EntitlementStore($cfDir, new InstallationIdentity($cfDir), self::SERVER_PUBLIC_KEY_PEM);
+            ?? new EntitlementStore($cfDir, new InstallationIdentity($cfDir), self::TRUSTED_KEYS);
         // Leases are rewritten on every keepalive: they live on the storage disk, not on the /cf settings partition.
         $this->ledger = $ledger ?? new SeatLedger(Directories::getDir(Directories::CORE_TEMP_DIR) . '/license-v2');
         $this->licenseKey = $licenseKey ?? static fn(): string => PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
