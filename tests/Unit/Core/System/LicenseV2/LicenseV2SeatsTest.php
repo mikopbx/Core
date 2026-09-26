@@ -6,6 +6,7 @@ namespace MikoPBX\Tests\Unit\Core\System\LicenseV2;
 
 use MikoPBX\Core\System\LicenseV2\EntitlementStore;
 use MikoPBX\Core\System\LicenseV2\EntitlementToken;
+use MikoPBX\Core\System\LicenseV2\HostFacts;
 use MikoPBX\Core\System\LicenseV2\InstallationIdentity;
 use MikoPBX\Core\System\LicenseV2\LicenseV2;
 use MikoPBX\Core\System\LicenseV2\SeatLedger;
@@ -170,7 +171,8 @@ class LicenseV2SeatsTest extends TestCase
             "$this->dir/cf",
             new InstallationIdentity("$this->dir/cf"),
             [self::KID => $this->serverPublicKeyPem],
-            fn(): int => $this->wallClock
+            fn(): int => $this->wallClock,
+            new HostFacts(fn(): array => ['environment' => 'vm', 'sources' => []])
         ) extends EntitlementStore {
             public int $reads = 0;
 
@@ -306,6 +308,14 @@ class LicenseV2SeatsTest extends TestCase
         $this->assertTrue($license->store()->metricsDue(), 'metrics that never left are still due');
     }
 
+    public function testNoRoundWithoutALicenseKey(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+        $this->licenseKey = '';
+        // Returns before the server list is read from PbxSettings: no settings are needed here.
+        $this->assertFalse($license->refresh(true));
+    }
+
     public function testLegacyMetricsCallSendsNothing(): void
     {
         $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
@@ -351,7 +361,8 @@ class LicenseV2SeatsTest extends TestCase
             "$this->dir/cf",
             new InstallationIdentity("$this->dir/cf"),
             [self::KID => $this->serverPublicKeyPem],
-            fn(): int => $this->wallClock
+            fn(): int => $this->wallClock,
+            new HostFacts(fn(): array => ['environment' => 'vm', 'sources' => []])
         );
         $ledger = new SeatLedger("$this->dir/tmp", fn(): int => $this->wallClock);
         $license = new LicenseV2(

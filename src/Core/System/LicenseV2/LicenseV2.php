@@ -411,6 +411,10 @@ class LicenseV2
      */
     public function refresh(bool $force = false): bool
     {
+        // The server refuses a request without a key (unsigned 403) and the round would only back off.
+        if ($this->licenseKey() === '') {
+            return false;
+        }
         $configuredUrls = PbxSettings::getValueByKey(PbxSettings::LICENSE_V2_SERVER_URL);
         $serverUrls = preg_split('/[\s,]+/', $configuredUrls, -1, PREG_SPLIT_NO_EMPTY) ?: [];
         if ($serverUrls === []) {
@@ -462,6 +466,10 @@ class LicenseV2
                 if ($response->getStatusCode() === 200) {
                     $this->applyAnswer($this->store->acceptAnswer((string)($answer['token'] ?? '')));
                     return true;
+                }
+                if ($response->getStatusCode() === 409 && ($answer['code'] ?? '') === 'replay') {
+                    // Our seq is behind what the server has seen (state lost): the next request goes above it.
+                    $this->store->reanchorSeq();
                 }
                 $this->log("Entitlement server $serverUrl failed: HTTP " . $response->getStatusCode());
             } catch (Throwable $e) {

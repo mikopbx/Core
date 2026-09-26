@@ -6,6 +6,7 @@ namespace MikoPBX\Tests\Unit\Core\System\LicenseV2;
 
 use MikoPBX\Core\System\LicenseV2\EntitlementStore;
 use MikoPBX\Core\System\LicenseV2\EntitlementToken;
+use MikoPBX\Core\System\LicenseV2\HostFacts;
 use MikoPBX\Core\System\LicenseV2\InstallationIdentity;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -21,6 +22,18 @@ class EntitlementStoreTest extends TestCase
     private string $serverPrivateKeyPem;
     private string $serverPublicKeyPem;
     private int $wallClock = self::NOW;
+
+    /** @var array<string, string> What HostFacts reads on the test "machine"; a test may swap the board. */
+    private array $hardware = [
+        'product_uuid' => '4c4c4544-0032-4a10-8047-b2c04f4a4d32', 'board_serial' => 'PF2ABCDE',
+        'disk_serial' => 'S3Z9NB0K123456', 'mac' => '52:54:00:12:34:56',
+    ];
+    private string $environment = 'vm';
+
+    private function host(): HostFacts
+    {
+        return new HostFacts(fn(): array => ['environment' => $this->environment, 'sources' => $this->hardware]);
+    }
 
     protected function setUp(): void
     {
@@ -673,6 +686,95 @@ class EntitlementStoreTest extends TestCase
     }
 
     /**
+     * Mirrors SignedRequest::parse of the server (plan 1): a request it would refuse costs the PBX an
+     * unsigned 403 on every round.
+     */
+    public function testRequestMatchesTheServerContract(): void
+    {
+        $store = $this->newStore();
+        $store->acceptAnswer($this->issueFor($store));
+        foreach ([false, true] as $offline) {
+            $signed = $store->buildRequest('MIKO-TEST', '2026.3.1', $offline, ['usage' => [], 'usageGen' => '0123456789abcdef', 'holders' => []]);
+            $r = json_decode(EntitlementToken::base64UrlDecode($signed['request']), true);
+            $this->assertSame(2, $r['v']);
+            $this->assertSame($offline ? 'offline' : 'online', $r['purpose']);
+            $this->assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $r['nonce']);
+            $this->assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $r['held']);
+            $this->assertIsInt($r['ts']);
+            $this->assertSame(['id' => 'mikopbx', 'version' => '2026.3.1'], $r['app']);
+            $this->assertSame('vm', $r['environment']);
+            $this->assertCount(4, $r['fingerprint']);
+            $this->assertSame('0123456789abcdef', $r['usageGen']);
+            $this->assertArrayNotHasKey('pbx', $r);
+            $this->assertArrayNotHasKey('holdersComplete', $r, 'a complete snapshot says nothing');
+            if ($offline) {
+                $this->assertArrayNotHasKey('seq', $r);
+            } else {
+                $this->assertIsInt($r['seq']);
+                $this->assertGreaterThanOrEqual(1, $r['seq']);
+            }
+        }
+    }
+
+    public function testHeldIsTheNonceOfTheStoredDocument(): void
+    {
+        $store = $this->newStore();
+        $first = json_decode(EntitlementToken::base64UrlDecode($store->buildRequest('MIKO-TEST', '2026.3.1')['request']), true);
+        $this->assertArrayNotHasKey('held', $first, 'nothing held before the first document');
+        $store->acceptAnswer($this->issueFor($store));
+        $heldNonce = $store->lastVerifiedPayload()['nonce'];
+        $next = json_decode(EntitlementToken::base64UrlDecode($store->buildRequest('MIKO-TEST', '2026.3.1')['request']), true);
+        $this->assertSame($heldNonce, $next['held']);
+    }
+
+    public function testSeqGrowsByOneWithEveryOnlineRequestOnly(): void
+    {
+        $store = $this->newStore();
+        $seq = static fn(array $signed): ?int => json_decode(EntitlementToken::base64UrlDecode($signed['request']), true)['seq'] ?? null;
+        $this->assertSame(1, $seq($store->buildRequest('MIKO-TEST', '2026.3.1')));
+        $this->assertNull($seq($store->buildRequest('MIKO-TEST', '2026.3.1', true)));
+        $this->assertSame(2, $seq($store->buildRequest('MIKO-TEST', '2026.3.1')));
+        $this->assertSame(3, $seq($this->newStore()->buildRequest('MIKO-TEST', '2026.3.1')), 'kept across processes');
+    }
+
+    public function testSeqRecoversAfterTheStateIsLost(): void
+    {
+        $store = $this->newStore();
+        $store->buildRequest('MIKO-TEST', '2026.3.1');
+        file_put_contents("$this->dir/state.json", 'not json');
+        $seq = static fn(array $signed): int => json_decode(EntitlementToken::base64UrlDecode($signed['request']), true)['seq'];
+        $this->assertSame(1, $seq($store->buildRequest('MIKO-TEST', '2026.3.1')), 'the server answers this with 409 replay');
+        $store->reanchorSeq();
+        $this->assertGreaterThan(self::NOW, $seq($store->buildRequest('MIKO-TEST', '2026.3.1')));
+    }
+
+    public function testEmptyVersionStillSendsAVersion(): void
+    {
+        $r = json_decode(EntitlementToken::base64UrlDecode($this->newStore()->buildRequest('MIKO-TEST', '')['request']), true);
+        $this->assertSame('unknown', $r['app']['version']);
+    }
+
+    public function testHoldersAreCutToTheBodyBudget(): void
+    {
+        $holder = static fn(int $i): array => ['ref' => sprintf('%016x', $i), 'features' => ['54'], 'since' => self::NOW,
+            'hostname' => str_repeat('h', 900)];
+        $report = [
+            'usage' => [], 'usageGen' => '0123456789abcdef',
+            'holders' => array_map($holder, range(1, 1000)),
+            'metrics' => ['blob' => str_repeat('m', 900_000)],
+        ];
+        $signed = $this->newStore()->buildRequest('MIKO-TEST', '2026.3.1', false, $report);
+        $r = json_decode(EntitlementToken::base64UrlDecode($signed['request']), true);
+
+        $this->assertLessThanOrEqual(EntitlementStore::BODY_BUDGET, strlen((string)json_encode($signed)));
+        $this->assertFalse($r['holdersComplete']);
+        $this->assertNotEmpty($r['holders']);
+        $this->assertLessThan(1000, count($r['holders']));
+        $this->assertSame($report['holders'][0], $r['holders'][0], 'cut from the tail');
+        $this->assertSame($report['metrics'], $r['metrics']);
+    }
+
+    /**
      * @param array<string, string> $extraKeys More trusted server keys by kid (key rotation).
      */
     private function newStore(array $extraKeys = []): EntitlementStore
@@ -681,7 +783,8 @@ class EntitlementStoreTest extends TestCase
             $this->dir,
             new InstallationIdentity($this->dir),
             [self::KID => $this->serverPublicKeyPem] + $extraKeys,
-            fn(): int => $this->wallClock
+            fn(): int => $this->wallClock,
+            $this->host()
         );
     }
 

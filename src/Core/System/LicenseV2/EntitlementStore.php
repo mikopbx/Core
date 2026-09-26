@@ -38,6 +38,8 @@ class EntitlementStore
     public const int BACKOFF_MAX = 21600;
     /** Metrics ride along with a request at most once in this many seconds. */
     public const int METRICS_INTERVAL = 86400;
+    /** The server refuses a larger encoded body (SignedRequest::MAX_BODY). */
+    public const int BODY_BUDGET = 2097152;
 
     private const string TOKEN_FILE = 'entitlement.token';
     private const string STATE_FILE = 'state.json';
@@ -49,11 +51,13 @@ class EntitlementStore
     private const string REPORT_SUFFIX = 'Report';
     private const string METRICS_SENT_AT = 'metricsSentAt';
     private const string ROUND_LOCK_FILE = 'refresh.lock';
+    private const string SEQ = 'seq';
 
     /** Do not rewrite the state file more often than this, seconds. */
     private const int CLOCK_PERSIST_STEP = 60;
 
     private Closure $clock;
+    private HostFacts $host;
 
     /**
      * @param array<string, string> $trustedKeys Server public keys (PEM) by kid.
@@ -62,9 +66,11 @@ class EntitlementStore
         private readonly string $dir,
         private readonly InstallationIdentity $identity,
         private readonly array $trustedKeys,
-        ?Closure $clock = null
+        ?Closure $clock = null,
+        ?HostFacts $host = null
     ) {
         $this->clock = $clock ?? time(...);
+        $this->host = $host ?? new HostFacts();
     }
 
     /**
@@ -72,45 +78,103 @@ class EntitlementStore
      * only an answer to this very request will be accepted.
      *
      * Online refresh and the file-based offline exchange keep separate nonces, so the periodic (poll)
-     * refresh does not invalidate a request file the administrator has already exported.
+     * refresh does not invalidate a request file the administrator has already exported. Online requests
+     * are numbered (seq): the server orders them by it, not by ts, since the PBX clock may go back.
      *
      * @param array{usage?: array<string, array<string, int>>, usageGen?: string,
-     *     holders?: array<int, array<string, mixed>>, metrics?: array<string, mixed>} $report Signed along
-     *     with the request. A part given empty is sent empty ("nothing held"); a part left out is unknown
-     *     to the PBX and the server keeps what it had.
+     *     holders?: array<int, array<string, mixed>>, metrics?: array<string, mixed>} $report Signed along with
+     *     the request. A part given empty is sent empty ("nothing held"); a part left out is unknown to the PBX
+     *     and the server keeps what it had.
      * @return array{request: string, sig: string}
+     * @throws RuntimeException
      */
-    public function buildRequest(
-        string $licenseKey,
-        string $pbxVersion,
-        bool $offline = false,
-        array $report = []
-    ): array {
+    public function buildRequest(string $licenseKey, string $appVersion, bool $offline = false, array $report = []): array
+    {
         $nonce = bin2hex(random_bytes(16));
         $slot = $offline ? self::NONCE_OFFLINE : self::NONCE_ONLINE;
-        $parts = $report;
-        if (isset($parts['usage'])) {
-            // Feature ids stay JSON object keys even when one of them looks like a list index.
-            $parts['usage'] = (object)$parts['usage'];
-        }
-        $request = EntitlementToken::base64UrlEncode((string)json_encode([
+        // Read before the lock below: now() may persist the clock anchor itself, and a second flock() on
+        // the state file within this process would deadlock against our own lock.
+        $now = $this->now();
+        $heldNonce = $this->lastVerifiedPayload()['nonce'] ?? null;
+        $installId = $this->identity->getInstallId();
+        $fields = [
             'v' => EntitlementToken::VERSION,
-            'install' => $this->identity->getInstallId(),
+            'purpose' => $offline ? 'offline' : 'online',
+            'install' => $installId,
             'pubkey' => $this->identity->getPublicKeyPem(),
             'key' => $licenseKey,
             'nonce' => $nonce,
-            'ts' => $this->now(),
-            'pbx' => $pbxVersion,
-        ] + $parts));
-        $this->saveState([
-            $slot => $nonce,
-            // Counters only, never holders: this file lives on the /cf flash.
-            $slot . self::REPORT_SUFFIX => ['metrics' => isset($report['metrics'])],
-        ]);
+            'ts' => $now,
+            'app' => ['id' => 'mikopbx', 'version' => $appVersion === '' ? 'unknown' : substr($appVersion, 0, 64)],
+            'environment' => $this->host->environment(),
+            'fingerprint' => $this->host->fingerprint($installId),
+        ];
+        if (is_string($heldNonce) && preg_match('/^[0-9a-f]{32}$/', $heldNonce) === 1) {
+            $fields['held'] = $heldNonce;
+        }
+        $request = $this->withLock(function () use ($fields, $offline, $slot, $nonce, $report): string {
+            $state = $this->loadState();
+            $changes = [
+                $slot => $nonce,
+                // Counters only, never holders: this file lives on the /cf flash.
+                $slot . self::REPORT_SUFFIX => ['metrics' => isset($report['metrics'])],
+            ];
+            if (!$offline) {
+                // Taken and stored under one lock: two workers must never send the same number.
+                $changes[self::SEQ] = (int)($state[self::SEQ] ?? 0) + 1;
+                $fields['seq'] = $changes[self::SEQ];
+            }
+            $request = $this->encodeWithinBudget($fields, $report);
+            $this->saveState($changes, true);
+            return $request;
+        });
         return [
             'request' => $request,
             'sig' => EntitlementToken::base64UrlEncode($this->identity->sign($request)),
         ];
+    }
+
+    /**
+     * The server answered 409 replay: it has seen a larger seq than ours, the state was lost or restored
+     * from an old copy. Numbers continue above the wall clock, which no earlier request of a working state
+     * can have reached one per round. An unsigned 409 from a proxy can only push the number up: harmless.
+     *
+     * @throws RuntimeException
+     */
+    public function reanchorSeq(): void
+    {
+        $now = $this->now();
+        $this->withLock(function () use ($now): void {
+            $this->saveState([self::SEQ => max((int)($this->loadState()[self::SEQ] ?? 0), $now)], true);
+        });
+    }
+
+    /**
+     * Encodes the request so the signed body fits the server budget. Holders go last and are cut from the
+     * tail when it does not fit; the server is told the snapshot is incomplete, so it keeps pending drops.
+     *
+     * ponytail: only holders are cut; usage and metrics are small by construction (tens of features,
+     * ten metric fields). Cut them as well if a report ever outgrows 2 MB without holders.
+     *
+     * @param array<string, mixed> $fields
+     * @param array<string, mixed> $report
+     */
+    private function encodeWithinBudget(array $fields, array $report): string
+    {
+        if (isset($report['usage'])) {
+            // Feature ids stay JSON object keys even when one of them looks like a list index.
+            $report['usage'] = (object)$report['usage'];
+        }
+        // Signature (86) and the {"request":"","sig":""} wrapper (24) come on top of the request.
+        $budget = self::BODY_BUDGET - 110;
+        $encode = static fn(array $request): string => EntitlementToken::base64UrlEncode((string)json_encode($request));
+        $request = $encode($fields + $report);
+        while (strlen($request) > $budget && !empty($report['holders'])) {
+            $report['holders'] = array_slice($report['holders'], 0, intdiv(count($report['holders']), 2));
+            $report['holdersComplete'] = false;
+            $request = $encode($fields + $report);
+        }
+        return $request;
     }
 
     /**
