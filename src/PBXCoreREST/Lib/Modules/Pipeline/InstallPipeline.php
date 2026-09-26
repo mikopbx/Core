@@ -27,6 +27,8 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModuleStateAction;
+use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\Files\StatusUploadFileAction;
@@ -133,6 +135,14 @@ class InstallPipeline
                 // The new version is installed correctly — only the re-enable
                 // failed. No version rollback; report the enable problem.
                 $result = ['result' => false, 'messages' => $enableFailMessages];
+            } elseif ($this->wasEnabled) {
+                // The module code on disk was just replaced and the module is
+                // running. WorkerModelsEvents caches module classes for its whole
+                // lifetime, so it (and the config it generates) would otherwise keep
+                // serving the old code until an unrelated restart. The enabled-module
+                // hash cannot see a same-version code swap, so force a refresh that
+                // bypasses that gate.
+                $this->forceModuleAwareWorkerRefresh();
             }
         } catch (Throwable $e) {
             $messages = $e instanceof PipelineStepException
@@ -515,6 +525,26 @@ class InstallPipeline
             // Deferred: give a just-in-case manual recovery window
             Processes::mwExecBg("$rm -rf " . implode(' ', $targets), '/dev/null', 600);
         }
+    }
+
+    /**
+     * Forces WorkerModelsEvents (and the other module-aware workers) to reload the
+     * just-installed module code, and regenerates the Asterisk configs it extends.
+     *
+     * A queued {@see ReloadModuleStateAction} is normally gated by the enabled-module
+     * state hash, which is blind to a same-version code swap. This publishes that
+     * action with the FORCE_REFRESH_KEY marker so the long-lived workers restart and
+     * the dialplan/pjsip reflect the new code instead of the stale in-memory classes.
+     *
+     * @return void
+     */
+    private function forceModuleAwareWorkerRefresh(): void
+    {
+        WorkerModelsEvents::invokeAction(
+            ReloadModuleStateAction::class,
+            [ReloadModuleStateAction::FORCE_REFRESH_KEY => $this->moduleUniqueId],
+            50
+        );
     }
 
     /**
