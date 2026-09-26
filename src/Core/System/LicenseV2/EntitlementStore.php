@@ -181,7 +181,8 @@ class EntitlementStore
      * Accepts the server answer to the pending request.
      *
      * @return array<string, mixed> The accepted payload.
-     * @throws TokenRejectedException When the token is forged, replayed, stale or foreign.
+     * @throws TokenRejectedException When the token is forged, replayed, stale or foreign, or is a file
+     *     document issued for other hardware.
      * @throws RuntimeException When the state can not be locked or written.
      */
     public function acceptAnswer(string $token): array
@@ -319,12 +320,18 @@ class EntitlementStore
      * cabinet) and said no: nothing is licensed from now on, grace included, until a token is accepted
      * again. The refusal must be signed; a bare HTTP error may come from any proxy on the way and is not
      * a refusal. The nonce is checked and the refusal stored under one lock, so a refusal to a request a
-     * newer token has superseded revokes nothing. Revocation acts at once; the next round is not before
-     * one default poll, so a lifted revocation arrives within one poll and a revoked PBX does not hammer
-     * the server every worker run.
+     * newer token of the SAME slot has superseded revokes nothing — the guarantee is per slot: a refusal
+     * to a still-pending request file revokes even after a newer online token was accepted, and an online
+     * PBX so revoked regains the license at its next due round, not by re-importing the file. Revocation
+     * of the online slot also arms the retry backoff (next round is not before one default poll, so a
+     * lifted revocation arrives within one poll and a revoked PBX does not hammer the server every worker
+     * run); an offline-slot (file) refusal only spends its own nonce and revokes — it must not touch the
+     * online backoff, which belongs to the online round alone.
      *
      * @return string Reason given by the server.
-     * @throws RuntimeException When the refusal is not authentic or answers another request.
+     * @throws TokenRejectedException When the refusal is not authentic or answers no pending request
+     *     (already answered, superseded, or never sent) — the caller offered a document that no longer
+     *     applies, not a failure of this PBX.
      */
     public function acceptRefusal(string $signedRefusal): string
     {
@@ -342,14 +349,14 @@ class EntitlementStore
                 }
             }
             if (($payload['refused'] ?? false) !== true || $answeredSlot === '') {
-                throw new RuntimeException('Refusal does not answer the pending request');
+                throw new TokenRejectedException('Refusal does not answer the pending request');
             }
-            $this->saveState([
-                $answeredSlot => '',
-                'refused' => true,
-                self::BACKOFF => 0,
-                self::NEXT_RETRY => $now + EntitlementToken::POLL_DEFAULT,
-            ], true);
+            $changes = [$answeredSlot => '', 'refused' => true];
+            if ($answeredSlot === self::NONCE_ONLINE) {
+                $changes[self::BACKOFF] = 0;
+                $changes[self::NEXT_RETRY] = $now + EntitlementToken::POLL_DEFAULT;
+            }
+            $this->saveState($changes, true);
             return (string)json_encode($payload['error'] ?? '');
         });
     }

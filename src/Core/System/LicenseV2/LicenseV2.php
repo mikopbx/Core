@@ -519,8 +519,9 @@ class LicenseV2
     }
 
     /**
-     * @throws RuntimeException When the token is forged, foreign, expired or answers another request,
-     *     and when the answer is a signed refusal (then the license is revoked, and the message says why).
+     * @throws TokenRejectedException When the token is forged, foreign, expired, issued for other
+     *     hardware or answers no pending request, and when the answer is a signed refusal (then the
+     *     license is revoked, and the exception message says why).
      */
     public function importOfflineToken(string $token): void
     {

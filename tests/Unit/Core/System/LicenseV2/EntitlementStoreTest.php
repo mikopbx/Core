@@ -8,6 +8,7 @@ use MikoPBX\Core\System\LicenseV2\EntitlementStore;
 use MikoPBX\Core\System\LicenseV2\EntitlementToken;
 use MikoPBX\Core\System\LicenseV2\HostFacts;
 use MikoPBX\Core\System\LicenseV2\InstallationIdentity;
+use MikoPBX\Core\System\LicenseV2\TokenRejectedException;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Throwable;
@@ -730,6 +731,36 @@ class EntitlementStoreTest extends TestCase
         $this->assertSame('"Offline mode is not allowed"', $store->acceptRefusal($refusal));
         $this->assertFalse($store->featureAvailable('54'));
         $this->assertFalse(EntitlementToken::isRefusal($this->issueFor($store)));
+    }
+
+    public function testRefusalAnsweringNoPendingNonceIsARejectedTokenNotAServerError(): void
+    {
+        $store = $this->newStore();
+        $store->acceptAnswer($this->issueFor($store));
+        // A refusal answering a request no longer pending (already answered, or never sent): the REST
+        // route must turn this into a 400 ("your document"), not a 500 ("our failure").
+        $stale = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'Unknown license key');
+        $store->acceptAnswer($this->issueFor($store));
+
+        try {
+            $store->acceptRefusal($stale);
+            $this->fail('a refusal answering no pending nonce was accepted');
+        } catch (TokenRejectedException $e) {
+            $this->assertStringContainsString('does not answer the pending request', $e->getMessage());
+        }
+        $this->assertTrue($store->featureAvailable('54'));
+    }
+
+    public function testOfflineSlotRefusalRevokesButLeavesTheOnlineBackoffAlone(): void
+    {
+        $store = $this->newStore();
+        $store->acceptAnswer($this->issueFor($store));
+        $offlineRequest = $store->buildRequest('MIKO-TEST', '2026.3.1', true);
+        $refusal = $this->sign($offlineRequest, [], null, 'Offline mode is not allowed');
+
+        $this->assertSame('"Offline mode is not allowed"', $store->acceptRefusal($refusal));
+        $this->assertFalse($store->featureAvailable('54'));
+        $this->assertTrue($store->retryAllowed(), 'an offline-slot refusal must not arm the online backoff');
     }
 
     /**

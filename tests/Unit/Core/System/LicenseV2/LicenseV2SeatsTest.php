@@ -344,6 +344,37 @@ class LicenseV2SeatsTest extends TestCase
         $this->assertFalse($license->featureAvailable('54')['success']);
     }
 
+    public function testReimportingTheSameRefusalIsARejectedTokenNotAServerError(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+        $signed = json_decode($license->exportOfflineRequest(), true);
+        $request = json_decode(EntitlementToken::base64UrlDecode($signed['request']), true);
+        $payload = EntitlementToken::base64UrlEncode((string)json_encode([
+            'v' => EntitlementToken::VERSION, 'kid' => self::KID, 'install' => $request['install'],
+            'nonce' => $request['nonce'], 'refused' => true, 'error' => 'Installation was forgotten', 'code' => 1063,
+        ]));
+        openssl_sign($payload, $signature, $this->serverPrivateKeyPem, 0);
+        $refusalFile = $payload . '.' . EntitlementToken::base64UrlEncode($signature);
+
+        try {
+            $license->importOfflineToken($refusalFile);
+            $this->fail('a refusal was imported as a document');
+        } catch (TokenRejectedException $e) {
+            $this->assertStringContainsString('Installation was forgotten', $e->getMessage());
+        }
+        $this->assertFalse($license->featureAvailable('54')['success']);
+
+        // The same file, imported again (e.g. a double click, or a REST retry): the nonce is spent, so
+        // this must land as a 400 (TokenRejectedException), not an uncaught RuntimeException (500).
+        try {
+            $license->importOfflineToken($refusalFile);
+            $this->fail('a re-imported refusal was accepted');
+        } catch (TokenRejectedException $e) {
+            $this->assertStringContainsString('does not answer the pending request', $e->getMessage());
+        }
+        $this->assertFalse($license->featureAvailable('54')['success']);
+    }
+
     /**
      * Plays the licensing cabinet for the closed contour: signs an answer to the exported request.
      *
