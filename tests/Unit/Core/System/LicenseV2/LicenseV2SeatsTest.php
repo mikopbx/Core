@@ -10,6 +10,7 @@ use MikoPBX\Core\System\LicenseV2\HostFacts;
 use MikoPBX\Core\System\LicenseV2\InstallationIdentity;
 use MikoPBX\Core\System\LicenseV2\LicenseV2;
 use MikoPBX\Core\System\LicenseV2\SeatLedger;
+use MikoPBX\Core\System\LicenseV2\TokenRejectedException;
 use PHPUnit\Framework\TestCase;
 
 class LicenseV2SeatsTest extends TestCase
@@ -322,6 +323,25 @@ class LicenseV2SeatsTest extends TestCase
         // Without the compiled extension __call() would throw: the explicit method is what answers here.
         $license->sendLicenseMetrics($this->licenseKey, ['PBXname' => 'MikoPBX@test']);
         $this->assertSame([], $this->logged);
+    }
+
+    public function testImportedRefusalRevokesAndSaysWhy(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+        $signed = json_decode($license->exportOfflineRequest(), true);
+        $request = json_decode(EntitlementToken::base64UrlDecode($signed['request']), true);
+        $payload = EntitlementToken::base64UrlEncode((string)json_encode([
+            'v' => EntitlementToken::VERSION, 'kid' => self::KID, 'install' => $request['install'],
+            'nonce' => $request['nonce'], 'refused' => true, 'error' => 'Installation was forgotten', 'code' => 1063,
+        ]));
+        openssl_sign($payload, $signature, $this->serverPrivateKeyPem, 0);
+        try {
+            $license->importOfflineToken($payload . '.' . EntitlementToken::base64UrlEncode($signature));
+            $this->fail('a refusal was imported as a document');
+        } catch (TokenRejectedException $e) {
+            $this->assertStringContainsString('Installation was forgotten', $e->getMessage());
+        }
+        $this->assertFalse($license->featureAvailable('54')['success']);
     }
 
     /**

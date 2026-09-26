@@ -187,6 +187,16 @@ class EntitlementStore
     public function acceptAnswer(string $token): array
     {
         $payload = EntitlementToken::decodeVerified($token, $this->trustedKeys, $this->identity->getInstallId());
+        // Only a file document carries a fingerprint: it may outlive any contact with the server, so it
+        // must stay on the hardware it was issued for.
+        if (
+            isset($payload['fingerprint'])
+            && !HostFacts::matches($payload['fingerprint'], $this->host->fingerprint($this->identity->getInstallId()))
+        ) {
+            throw new TokenRejectedException(
+                'Entitlement document is issued for other hardware, exchange the license file again'
+            );
+        }
         // Freshness is judged by the clock as it was before this token: a token dated in the
         // future must be refused, not allowed to drag the clock anchor after itself. Read before
         // the lock below: now() may itself persist the clock anchor via saveState(), and a second
@@ -305,12 +315,13 @@ class EntitlementStore
     }
 
     /**
-     * The licensing server has answered the pending online request and said no: nothing is licensed
-     * from now on, grace included, until a token is accepted again. The refusal must be signed; a bare
-     * HTTP error may come from any proxy on the way and is not a refusal. The nonce is checked and the
-     * refusal stored under one lock, so a refusal to a request a newer token has superseded revokes nothing.
-     * Revocation acts at once; the next round is not before one default poll, so a lifted revocation
-     * arrives within one poll and a revoked PBX does not hammer the server every worker run.
+     * The licensing server has answered a pending request (online, or a request file carried to the
+     * cabinet) and said no: nothing is licensed from now on, grace included, until a token is accepted
+     * again. The refusal must be signed; a bare HTTP error may come from any proxy on the way and is not
+     * a refusal. The nonce is checked and the refusal stored under one lock, so a refusal to a request a
+     * newer token has superseded revokes nothing. Revocation acts at once; the next round is not before
+     * one default poll, so a lifted revocation arrives within one poll and a revoked PBX does not hammer
+     * the server every worker run.
      *
      * @return string Reason given by the server.
      * @throws RuntimeException When the refusal is not authentic or answers another request.
@@ -322,16 +333,19 @@ class EntitlementStore
         // second flock() on the same file within this process would deadlock against our own lock.
         $now = $this->now();
         return $this->withLock(function () use ($payload, $now): string {
-            $pendingNonce = (string)($this->loadState()[self::NONCE_ONLINE] ?? '');
-            if (
-                ($payload['refused'] ?? false) !== true
-                || $pendingNonce === ''
-                || !hash_equals($pendingNonce, (string)($payload['nonce'] ?? ''))
-            ) {
+            $state = $this->loadState();
+            $answeredSlot = '';
+            foreach ([self::NONCE_ONLINE, self::NONCE_OFFLINE] as $slot) {
+                $pendingNonce = (string)($state[$slot] ?? '');
+                if ($pendingNonce !== '' && hash_equals($pendingNonce, (string)($payload['nonce'] ?? ''))) {
+                    $answeredSlot = $slot;
+                }
+            }
+            if (($payload['refused'] ?? false) !== true || $answeredSlot === '') {
                 throw new RuntimeException('Refusal does not answer the pending request');
             }
             $this->saveState([
-                self::NONCE_ONLINE => '',
+                $answeredSlot => '',
                 'refused' => true,
                 self::BACKOFF => 0,
                 self::NEXT_RETRY => $now + EntitlementToken::POLL_DEFAULT,

@@ -685,6 +685,53 @@ class EntitlementStoreTest extends TestCase
         $store->acceptAnswer($this->issueFor($store, ['features' => 'all']));
     }
 
+    public function testFileDocumentBoundToThisHardwareIsAccepted(): void
+    {
+        $store = $this->newStore();
+        $signed = $store->buildRequest('MIKO-TEST', '2026.3.1', true);
+        $hashes = json_decode(EntitlementToken::base64UrlDecode($signed['request']), true)['fingerprint'];
+        $store->acceptAnswer($this->sign($signed, ['fingerprint' => ['k' => 3, 'h' => $hashes]]));
+        $this->assertTrue($store->featureAvailable('54'));
+    }
+
+    public function testFileDocumentOfOtherHardwareIsRejected(): void
+    {
+        $store = $this->newStore();
+        $signed = $store->buildRequest('MIKO-TEST', '2026.3.1', true);
+        $hashes = json_decode(EntitlementToken::base64UrlDecode($signed['request']), true)['fingerprint'];
+        // Board and disk replaced after the request: two of four still match, k = 3 needs three.
+        $this->hardware['board_serial'] = 'NEWBOARD01';
+        $this->hardware['disk_serial'] = 'NEWDISK001';
+        $replaced = $this->newStore();
+        try {
+            $replaced->acceptAnswer($this->sign($signed, ['fingerprint' => ['k' => 3, 'h' => $hashes]]));
+            $this->fail('a document of other hardware was accepted');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('other hardware', $e->getMessage());
+        }
+        $this->assertNull($replaced->lastVerifiedPayload());
+    }
+
+    public function testFileDocumentWithoutFingerprintIsNotChecked(): void
+    {
+        // A container or a VM without DMI sends fewer than three hashes: the server leaves the field out.
+        $this->hardware = [];
+        $store = $this->newStore();
+        $store->acceptAnswer($this->issueFor($store, [], null, true));
+        $this->assertTrue($store->featureAvailable('54'));
+    }
+
+    public function testSignedRefusalOfAFileRequestRevokesTheDocument(): void
+    {
+        $store = $this->newStore();
+        $store->acceptAnswer($this->issueFor($store));
+        $refusal = $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1', true), [], null, 'Offline mode is not allowed');
+        $this->assertTrue(EntitlementToken::isRefusal($refusal));
+        $this->assertSame('"Offline mode is not allowed"', $store->acceptRefusal($refusal));
+        $this->assertFalse($store->featureAvailable('54'));
+        $this->assertFalse(EntitlementToken::isRefusal($this->issueFor($store)));
+    }
+
     /**
      * Mirrors SignedRequest::parse of the server (plan 1): a request it would refuse costs the PBX an
      * unsigned 403 on every round.

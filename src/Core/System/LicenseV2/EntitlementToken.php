@@ -246,6 +246,16 @@ class EntitlementToken
         }
     }
 
+    /**
+     * Whether the message claims to be a refusal. A hint for routing only: the signature is checked by
+     * the one who accepts it (EntitlementStore::acceptRefusal()).
+     */
+    public static function isRefusal(string $token): bool
+    {
+        $payload = json_decode(self::base64UrlDecode(explode('.', trim($token))[0]), true);
+        return is_array($payload) && ($payload['refused'] ?? false) === true;
+    }
+
     public static function base64UrlEncode(string $data): string
     {
         return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
