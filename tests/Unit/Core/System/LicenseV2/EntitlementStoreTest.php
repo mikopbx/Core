@@ -622,6 +622,67 @@ class EntitlementStoreTest extends TestCase
         $this->assertTrue($store->featureAvailable('54'));
     }
 
+    public function testDocumentWithoutModuleMapLeavesTheDecisionToModuleJson(): void
+    {
+        $store = $this->newStore();
+        $token = $this->issueFor($store);
+        // Drop the modules key from the default payload: sign() fills defaults with +, so rebuild the payload.
+        $store->acceptToken($this->withoutField($token, 'modules'));
+        $payload = $store->lastVerifiedPayload();
+        $this->assertArrayNotHasKey('modules', $payload);
+        $this->assertNull(EntitlementToken::moduleFeature($payload, 'ModuleLdapSync'));
+        $this->assertTrue($store->featureAvailable('54'));
+    }
+
+    public function testModuleFeatureReadsTheSignedMap(): void
+    {
+        $payload = ['modules' => ['ModuleLdapSync' => '54', 'ModuleFree' => 0]];
+        $this->assertSame('54', EntitlementToken::moduleFeature($payload, 'ModuleLdapSync'));
+        $this->assertSame('', EntitlementToken::moduleFeature($payload, 'ModuleFree'));
+        $this->assertSame('', EntitlementToken::moduleFeature($payload, 'ModuleUnknown'), 'absent from a signed map = free');
+    }
+
+    public function testEmptyFeaturesLicenseNothingButAreAccepted(): void
+    {
+        $store = $this->newStore();
+        $store->acceptToken($this->issueFor($store, ['features' => []]));
+        $this->assertNotNull($store->lastVerifiedPayload());
+        $this->assertFalse($store->featureAvailable('54'));
+    }
+
+    /**
+     * @dataProvider malformedFingerprints
+     */
+    public function testMalformedFingerprintRejectsTheDocument(mixed $fingerprint): void
+    {
+        $store = $this->newStore();
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('malformed fingerprint');
+        $store->acceptToken($this->issueFor($store, ['fingerprint' => $fingerprint]));
+    }
+
+    public static function malformedFingerprints(): array
+    {
+        $h = ['0123456789abcdef', '1123456789abcdef', '2123456789abcdef'];
+        return [
+            'not an object' => ['abc'],
+            'k missing' => [['h' => $h]],
+            'k zero' => [['k' => 0, 'h' => $h]],
+            'k too big' => [['k' => 5, 'h' => $h]],
+            'h not a list' => [['k' => 3, 'h' => ['a' => '0123456789abcdef']]],
+            'h too long' => [['k' => 3, 'h' => array_merge($h, $h)]],
+            'bad hash' => [['k' => 3, 'h' => ['0123456789ABCDEF', '1', '2']]],
+        ];
+    }
+
+    public function testFeaturesThatAreNotAMapRejectTheDocument(): void
+    {
+        $store = $this->newStore();
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('malformed feature map');
+        $store->acceptToken($this->issueFor($store, ['features' => 'all']));
+    }
+
     /**
      * @param array<string, string> $extraKeys More trusted server keys by kid (key rotation).
      */
@@ -675,6 +736,19 @@ class EntitlementStoreTest extends TestCase
             'modules' => ['ModuleLdapSync' => '54'],
         ]));
         openssl_sign($payloadPart, $signature, $signingKeyPem ?? $this->serverPrivateKeyPem, 0);
+        return $payloadPart . '.' . EntitlementToken::base64UrlEncode($signature);
+    }
+
+    /**
+     * Re-signs a token without one payload field: sign() fills defaults with +, so a field can not be
+     * removed through its overrides.
+     */
+    private function withoutField(string $token, string $field): string
+    {
+        $payload = json_decode(EntitlementToken::base64UrlDecode(explode('.', $token)[0]), true);
+        unset($payload[$field]);
+        $payloadPart = EntitlementToken::base64UrlEncode((string)json_encode($payload));
+        openssl_sign($payloadPart, $signature, $this->serverPrivateKeyPem, 0);
         return $payloadPart . '.' . EntitlementToken::base64UrlEncode($signature);
     }
 

@@ -67,12 +67,19 @@ class EntitlementToken
     public static function decodeVerified(string $token, array $trustedKeys, string $installId): array
     {
         $payload = self::decodeSigned($token, $trustedKeys, $installId);
-        if (!is_array($payload['modules'] ?? null) || $payload['modules'] === []) {
-            // An empty map must never mean "nothing to check".
+        if (!is_array($payload['features'] ?? null)) {
+            throw new TokenRejectedException('Entitlement token has a malformed feature map');
+        }
+        // Absent: the server keeps no map for this application and module.json decides. Present but empty
+        // would read as "nothing is paid": never trusted.
+        if (array_key_exists('modules', $payload) && (!is_array($payload['modules']) || $payload['modules'] === [])) {
             throw new TokenRejectedException('Entitlement token has no module map');
         }
+        if (array_key_exists('fingerprint', $payload)) {
+            self::assertFingerprint($payload['fingerprint']);
+        }
         if (array_key_exists('seats', $payload)) {
-            self::assertSeatsMap($payload['seats'], array_keys((array)($payload['features'] ?? [])));
+            self::assertSeatsMap($payload['seats'], array_keys($payload['features']));
         }
         if (array_key_exists('poll', $payload)) {
             $poll = $payload['poll'];
@@ -169,6 +176,38 @@ class EntitlementToken
     public static function dropRefs(array $payload): array
     {
         return array_values((array)($payload['drop'] ?? []));
+    }
+
+    /**
+     * Which feature a module needs by the signed map: null when the document carries no map (module.json
+     * decides), '' for a free module or one the map does not name, otherwise the feature id.
+     *
+     * @param array<string, mixed> $payload
+     */
+    public static function moduleFeature(array $payload, string $moduleUniqueId): ?string
+    {
+        if (!is_array($payload['modules'] ?? null)) {
+            return null;
+        }
+        // 0 in the signed map means a free module, the same as in module.json.
+        $featureId = (int)($payload['modules'][$moduleUniqueId] ?? 0);
+        return $featureId > 0 ? (string)$featureId : '';
+    }
+
+    /**
+     * @throws TokenRejectedException
+     */
+    private static function assertFingerprint(mixed $fingerprint): void
+    {
+        $k = is_array($fingerprint) ? ($fingerprint['k'] ?? null) : null;
+        $h = is_array($fingerprint) ? ($fingerprint['h'] ?? null) : null;
+        $valid = is_int($k) && $k >= 1 && $k <= 4 && is_array($h) && array_is_list($h) && count($h) <= 4;
+        foreach ($valid ? $h : [] as $hash) {
+            $valid = $valid && is_string($hash) && preg_match('/^[0-9a-f]{16}$/', $hash) === 1;
+        }
+        if (!$valid) {
+            throw new TokenRejectedException('Entitlement token has a malformed fingerprint');
+        }
     }
 
     /**

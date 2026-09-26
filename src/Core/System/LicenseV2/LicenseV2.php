@@ -576,19 +576,15 @@ class LicenseV2
     }
 
     /**
-     * Which feature a module needs. The signed map wins; module.json is trusted only while
-     * the PBX has never received a signed map (first boot, closed contour before activation).
+     * Which feature a module needs. The signed map wins; module.json is trusted only while the PBX holds
+     * no signed map: first boot, closed contour before activation, or an application the server keeps no map for.
      *
      * @param array<string, mixed>|null $payload
      */
     private function paidFeatureOf(string $moduleUniqueId, ?array $payload): string
     {
-        if ($payload !== null) {
-            // 0 in the signed map means a free module, the same as in module.json.
-            $featureId = (int)($payload['modules'][$moduleUniqueId] ?? 0);
-            return $featureId > 0 ? (string)$featureId : '';
-        }
-        return $this->moduleJsonFeature($moduleUniqueId);
+        return ($payload === null ? null : EntitlementToken::moduleFeature($payload, $moduleUniqueId))
+            ?? $this->moduleJsonFeature($moduleUniqueId);
     }
 
     private function moduleJsonFeature(string $moduleUniqueId): string
