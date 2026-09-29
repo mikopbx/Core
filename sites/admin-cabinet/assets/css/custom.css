@@ -644,6 +644,31 @@ a.ui.button.pbx-extensions-settings {
     max-width: 100%;
 }
 
+/* IVR menu name in the list. Cap the width and ellipsize: the name column is
+   "collapsing" (white-space: nowrap), so a long menu name would otherwise
+   stretch the table past the viewport and push the action buttons off screen.
+   The full name is carried in a title attribute so it stays readable on hover. */
+.ivr-menu-name {
+    display: inline-block;
+    max-width: 18em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
+/* IVR list cells whose content embeds the (possibly long) menu name — the
+   "Actions" and "Timeout number" columns. Those columns are "collapsing"
+   (white-space: nowrap), so long targets would stretch the table and push the
+   action buttons off screen. Bound the width and let the text wrap instead. */
+#ivr-menu-table td .ivr-cell-wrap {
+    display: inline-block;
+    max-width: 18em;
+    white-space: normal;
+    word-break: break-word;
+    vertical-align: top;
+}
+
 /* Visual styling for disabled/inactive dropdown items (still selectable) */
 .ui.dropdown .menu > .item.inactive {
     opacity: 0.6;

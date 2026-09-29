@@ -47,8 +47,13 @@ var ivrMenuIndex = {
       render: function render(data, type, row) {
         // Create single-line represent format with icon, name, and extension in <>
         // This allows DataTable to search by extension number in brackets
-        var icon = '<i class="sitemap icon"></i>';
-        var name = row.name ? '<strong>' + window.SecurityUtils.escapeHtml(row.name) + '</strong>' : '';
+        var icon = '<i class="sitemap icon"></i>'; // Cap the name width and ellipsize it: this column is 'collapsing'
+        // (white-space: nowrap), so a long menu name would otherwise stretch
+        // the table past the viewport and push the action buttons off screen.
+        // title carries the full name so it stays readable on hover.
+
+        var safeName = row.name ? window.SecurityUtils.escapeHtml(row.name) : '';
+        var name = safeName ? '<strong class="ivr-menu-name" title="' + safeName + '">' + safeName + '</strong>' : '';
         var extension = row.extension ? ' &lt;' + window.SecurityUtils.escapeHtml(row.extension) + '&gt;' : '';
         return icon + ' ' + name + extension;
       }
@@ -66,8 +71,11 @@ var ivrMenuIndex = {
 
           var safeRepresent = window.SecurityUtils.sanitizeExtensionsApiContent(action.represent || '');
           return "".concat(safeDigits, " - ").concat(safeRepresent);
-        }).join('<br>');
-        return "<small>".concat(actionsHtml, "</small>");
+        }).join('<br>'); // Bound the width and let long targets wrap: this column is 'collapsing'
+        // (white-space: nowrap), so long action targets (which embed the menu name)
+        // would otherwise stretch the table and push the action buttons off screen.
+
+        return "<small class=\"ivr-cell-wrap\">".concat(actionsHtml, "</small>");
       }
     }, {
       data: 'timeoutExtensionRepresent',
@@ -79,8 +87,11 @@ var ivrMenuIndex = {
         } // Properly sanitize data to preserve safe HTML icons
 
 
-        var safeData = window.SecurityUtils.sanitizeExtensionsApiContent(data);
-        return "<small>".concat(safeData, "</small>");
+        var safeData = window.SecurityUtils.sanitizeExtensionsApiContent(data); // Bound the width and let it wrap: the timeout target represent embeds the
+        // menu name ("IVR menu: <name>"), so a long name would otherwise stretch this
+        // 'collapsing' (nowrap) column and push the action buttons off screen.
+
+        return "<small class=\"ivr-cell-wrap\">".concat(safeData, "</small>");
       }
     }, {
       data: 'description',
