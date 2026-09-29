@@ -69,6 +69,14 @@ var generalSettingsModify = {
   hiddenPassword: '********',
 
   /**
+   * Translation key stored verbatim in PBX_DESCRIPTION during cloud provisioning.
+   * It is a discriminator (see ReloadCloudDescriptionAction), not human text, so it is
+   * shown translated in the field and restored to the raw key on submit unless edited.
+   * @type {string}
+   */
+  cloudDefaultDescriptionKey: 'auth_DefaultCloudPasswordInstructions',
+
+  /**
    * Sound file field IDs
    * @type {object}
    */
@@ -448,7 +456,15 @@ var generalSettingsModify = {
    */
   populateSpecialFields: function populateSpecialFields(settings) {
     // Private key existence is now determined by checking if value equals HIDDEN_PASSWORD
-    // Handle certificate info
+    // Cloud provisioning stores the translation key itself in Description as a marker.
+    // Show the localized text instead of the raw key; cbBeforeSendForm restores the
+    // key on submit when the admin leaves the text untouched, so the marker survives.
+    if (settings.Description === generalSettingsModify.cloudDefaultDescriptionKey) {
+      var translated = globalTranslate[generalSettingsModify.cloudDefaultDescriptionKey] || settings.Description;
+      $('#Description').val(translated);
+    } // Handle certificate info
+
+
     if (settings.WEBHTTPSPublicKey_info) {
       $('#WEBHTTPSPublicKey').data('cert-info', settings.WEBHTTPSPublicKey_info);
     } // Handle checkboxes (API returns boolean values)
@@ -1061,7 +1077,15 @@ var generalSettingsModify = {
    * @returns {Object} - The updated settings of the form
    */
   cbBeforeSendForm: function cbBeforeSendForm(settings) {
-    var result = settings; // Handle all password/key fields that use hiddenPassword indicator
+    var result = settings; // Restore the cloud-default description marker unless the admin edited the text.
+    // Persisting the translated text would drop the discriminator and break
+    // ReloadCloudDescriptionAction's reset-on-password-change check.
+
+    var translatedCloudDescription = globalTranslate[generalSettingsModify.cloudDefaultDescriptionKey];
+
+    if (translatedCloudDescription && result.data.Description === translatedCloudDescription) {
+      result.data.Description = generalSettingsModify.cloudDefaultDescriptionKey;
+    } // Handle all password/key fields that use hiddenPassword indicator
     // Remove any field with hiddenPassword value to prevent overwriting with empty values
 
     Object.keys(result.data).forEach(function (key) {
