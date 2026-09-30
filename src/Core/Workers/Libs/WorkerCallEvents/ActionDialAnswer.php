@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,8 +20,8 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
-
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\SystemMessages;
@@ -48,7 +49,7 @@ class ActionDialAnswer
      * @return void
      * @throws \Exception
      */
-    public static function execute(WorkerCallEvents $worker, array$data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         // Retrieve the pickup extension number from the PBX settings.
         $pickupexten = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_PICKUP_EXTEN);
@@ -113,7 +114,6 @@ class ActionDialAnswer
 
         // Check if there is exactly one matching record.
         if (count($m_data->toArray()) === 1) {
-
             // If there is, retrieve the data from this record.
             /** @var CallDetailRecordsTmp $m_row_data */
             $m_row_data = $m_data[0];
@@ -126,6 +126,17 @@ class ActionDialAnswer
             $new_data['dst_chan'] = $data['agi_channel'];
             $new_data['dst_num']  = $data['dst_num'];
             $new_data['UNIQUEID'] = $data['id'];
+
+            // The row was cloned from the intercepted party's leg, so dst_name still holds
+            // that party's name. dst_num above now points to the extension that answered the
+            // pickup, so re-resolve dst_name for it - otherwise the CDR shows the intercepted
+            // party's name for the agent who picked the call up. lua event_dial_answer() already
+            // resolves the answering endpoint's name in-channel (no query) and puts it in
+            // $data['dst_name']; the DB lookup is only a fallback for events without it.
+            $new_data['dst_name'] = self::resolvePickupDestinationName(
+                (string)$new_data['dst_num'],
+                (string)($data['dst_name'] ?? '')
+            );
 
             $recordingFile = PickupRecordingResolver::resolve(
                 $data,
@@ -146,7 +157,11 @@ class ActionDialAnswer
             if ($recordingFile !== '') {
                 $worker->mixMonitorChannels[$data['agi_channel']] = $recordingFile;
                 $new_data['recordingfile'] = $recordingFile;
-                $new_data['rec_src_channel'] = $worker->getRecSrcChannel($new_data['dst_chan'], $new_data['src_chan'] ?? '', $new_data['dst_chan']);
+                $new_data['rec_src_channel'] = $worker->getRecSrcChannel(
+                    $new_data['dst_chan'],
+                    $new_data['src_chan'] ?? '',
+                    $new_data['dst_chan']
+                );
             }
 
             // Unset unnecessary fields from the new data.
@@ -159,6 +174,38 @@ class ActionDialAnswer
             $new_data['action'] = 'answer_pickup_create_cdr';
             $am = Util::getAstManager('off');
             $am->UserEvent('CdrConnector', ['AgiData' => AsteriskManager::encodeCdrData($new_data)]);
+        }
+    }
+
+    /**
+     * Resolves the display name of the extension that answered a pickup.
+     *
+     * Prefers the name lua already resolved from the answering endpoint (passed in the event as
+     * $data['dst_name'], no query), and falls back to a DB lookup
+     * ({@see Extensions::getCidByPhoneNumber()}) only when the event carried no usable name. The
+     * {@see PickupDestinationNameResolver} applies the final validation. Any failure returns ''
+     * so name resolution never blocks pickup CDR creation.
+     *
+     * @param string $dstNum          Number of the extension that answered the pickup.
+     * @param string $preResolvedName Name lua resolved in-channel, or '' when absent.
+     * @return string
+     */
+    private static function resolvePickupDestinationName(string $dstNum, string $preResolvedName): string
+    {
+        try {
+            return PickupDestinationNameResolver::resolve(
+                $dstNum,
+                static function (string $number) use ($preResolvedName): string {
+                    if ($preResolvedName !== '' && $preResolvedName !== $number) {
+                        return $preResolvedName;
+                    }
+
+                    return Extensions::getCidByPhoneNumber($number);
+                }
+            );
+        } catch (\Throwable $e) {
+            // Name resolution must never block pickup CDR creation.
+            return '';
         }
     }
 
@@ -260,7 +307,6 @@ class ActionDialAnswer
         // If the dialstatus of the call is 'ORIGINATE', special handling is needed.
         // This typically represents an outgoing call.
         if ($row->dialstatus === 'ORIGINATE') {
-
             // If the source channel (src_chan) of the call record does not match the channel from the data,
             // this isn't the call record we're looking for, so return NEED_CONTINUE to move on to the next record.
             if ($row->src_chan !== $data['agi_channel']) {
@@ -299,7 +345,8 @@ class ActionDialAnswer
             $row->writeAttribute('UNIQUEID', $data['id']);
             $row->save();
 
-            // Return NEED_BREAK to indicate that we have found and updated the correct record, and processing should stop.
+            // Return NEED_BREAK to indicate that we have found and updated the correct record,
+            // and processing should stop.
             return self::NEED_BREAK;
         }
 
