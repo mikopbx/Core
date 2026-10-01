@@ -738,6 +738,7 @@ class WelcomeBanner implements BannerInterface
 
         $lastRefresh = 0;
         $firstDraw = true;
+        $shownAt = null; // hrtime when the first draw finished
         $activityTime = time(); // Track when user became active (entering banner = activity)
 
         while (true) {
@@ -776,6 +777,7 @@ class WelcomeBanner implements BannerInterface
                 }
                 echo PHP_EOL;
                 $lastRefresh = $now;
+                $shownAt ??= hrtime(true);
             }
 
             // Check for keypress (non-blocking)
@@ -785,6 +787,11 @@ class WelcomeBanner implements BannerInterface
 
             if (stream_select($read, $write, $except, 0, 100000) > 0) {
                 $key = fread(STDIN, 1);
+
+                // Drop the Enter typed after the menu digit that opened the banner
+                if (MenuStyleConfig::isStrayInput($shownAt)) {
+                    continue;
+                }
 
                 // Restore terminal
                 system('stty sane');

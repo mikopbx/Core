@@ -66,7 +66,8 @@ Object.assign(ExtensionsAPI, {
   buildCdrNameHtml: function buildCdrNameHtml(cdrName, number) {
     var safeName = SecurityUtils.escapeHtml(cdrName);
     var safeNumber = SecurityUtils.escapeHtml(number);
-    return "<span class=\"cdr-caller-name\">".concat(safeName, "</span> <span class=\"cdr-number\">").concat(safeNumber, "</span>");
+    // title carries the full name so it stays readable when the CSS ellipsis truncates it
+    return "<span class=\"cdr-caller-name\" title=\"".concat(safeName, "\">").concat(safeName, "</span> <span class=\"cdr-number\">").concat(safeNumber, "</span>");
   },
 
   /**

@@ -169,7 +169,7 @@ var soundFileModifyRest = {
           soundFileModifyRest.cbUploadResumable(action, params);
           break;
       }
-    }, 'sound-file'); // Listen for data changes to clear cache
+    }, 'sound-file', 'sound'); // Listen for data changes to clear cache
 
     window.addEventListener('ConfigDataChanged', soundFileModifyRest.cbOnDataChanged);
   },
@@ -420,8 +420,11 @@ var soundFileModifyRest = {
     if (typeof response === 'string') {
       filename = response;
     } else if (response.result === true && response.data) {
+      if (typeof response.data === 'object' && response.data.path) {
+        filename = response.data.path;
+      }
       // API returns data as array ["/path/to/file"]
-      if (Array.isArray(response.data) && response.data.length > 0) {
+      else if (Array.isArray(response.data) && response.data.length > 0) {
         filename = response.data[0];
       } else if (typeof response.data === 'string') {
         filename = response.data;
@@ -440,6 +443,7 @@ var soundFileModifyRest = {
 
 
       soundFileModifyRest.$formObj.form('set value', 'path', filename);
+      soundFileModifyRest.$formObj.form('set value', 'conversion_id', response.data.conversion_id || '');
       soundFileModifyRest.$soundFileName.trigger('change'); // Update player with new file using sound-files endpoint
 
       sndPlayer.UpdateSource("/pbxcore/api/v3/sound-files:playback?view=".concat(filename)); // Remove loading states

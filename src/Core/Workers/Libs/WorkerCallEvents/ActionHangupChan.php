@@ -139,6 +139,13 @@ class ActionHangupChan
                 }
                 continue;
             }
+            if (InterceptionBridgeLegPolicy::keepOpen($row, $data['agi_channel'])) {
+                // The interception Local leg is optimized out of the bridge moments
+                // after answer, but the external caller keeps talking to the operator.
+                // Leave this answered row open so the real hangup closes it and its
+                // billsec reflects the whole conversation instead of ~0.2s.
+                continue;
+            }
             if ($row->dialstatus === 'ORIGINATE') {
                 $row->writeAttribute('dialstatus', '');
                 if ($row->answer === '') {

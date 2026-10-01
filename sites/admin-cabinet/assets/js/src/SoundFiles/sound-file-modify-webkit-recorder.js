@@ -178,7 +178,7 @@ const webkitRecorder = {
         const blobFile = new File(webkitRecorder.chunks, 'blob' + new Date().getTime() + '.wav', { type: 'audio/wav' });
 
         // Upload with allowed file types for sound files
-        FilesAPI.uploadFile(blobFile, soundFileModifyRest.cbUploadResumable, ['wav', 'mp3', 'ogg', 'm4a', 'aac']);
+        FilesAPI.uploadFile(blobFile, soundFileModifyRest.cbUploadResumable, ['wav', 'mp3', 'ogg', 'm4a', 'aac'], 'sound');
 
         webkitRecorder.$recordLabel.removeClass('red');
         webkitRecorder.$stopButton.addClass('disabled');

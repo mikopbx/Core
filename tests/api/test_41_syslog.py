@@ -51,7 +51,7 @@ class TestSyslog:
         test_files = [
             'asterisk/messages',
             'system/messages',
-            'php/error.log',
+            'php/php-error.log',
             'nginx/error.log'
         ]
 

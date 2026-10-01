@@ -13,7 +13,7 @@ abstract class AbstractUnitTest extends UnitTestCase
 {
     private bool $loaded = false;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $di = new FactoryDefault\Cli();

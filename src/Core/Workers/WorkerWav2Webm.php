@@ -431,10 +431,14 @@ class WorkerWav2Webm extends WorkerBase
         $tempMerged = $inputPath . '_merged_' . getmypid() . '.wav';
 
         // Step 1: Check if stereo channel files exist (_in.wav and _out.wav)
-        // When Asterisk MixMonitor records with separate channels:
-        // - _in.wav contains one party (e.g., client/external)
-        // - _out.wav contains other party (e.g., employee/internal)
+        // - _in.wav  (r option) = voice of the channel MixMonitor runs on
+        // - _out.wav (t option) = voice of the other party
         // - main .wav contains mono mix of both
+        // mergeStereoFiles() puts _out on the LEFT and _in on the RIGHT. For regular
+        // calls MixMonitor runs on the called leg, so left = src_num (caller) and
+        // right = dst_num (callee): the employee is on the right for inbound calls
+        // and on the LEFT for outbound calls. IVR recordings (event_dial_app) run on
+        // the caller leg and are inverted; CDR rec_src_channel records the actual side.
         $hasStereoFiles = file_exists($srcIn) && file_exists($srcOut);
 
         // Step 1a: Check minimum file size - files with only WAV header (44 bytes) have no audio
@@ -641,8 +645,8 @@ class WorkerWav2Webm extends WorkerBase
      * Merge stereo split files (_in.wav and _out.wav) into single file
      *
      * @param string $ffmpeg Path to ffmpeg binary
-     * @param string $srcOut External channel file
-     * @param string $srcIn Internal channel file
+     * @param string $srcOut Other party's voice (_out), becomes the LEFT channel
+     * @param string $srcIn Monitored channel's own voice (_in), becomes the RIGHT channel
      * @param string $output Output merged file
      * @param int $timeout Timeout in seconds for ffmpeg process
      * @return int Exit code (0=success, non-zero=failure)
@@ -800,7 +804,7 @@ class WorkerWav2Webm extends WorkerBase
     {
         // Base command optimized for ASR (Automatic Speech Recognition):
         // - No loudnorm: Preserves natural speech dynamics and phonetic features
-        // - Stereo output (-ac 2): Enables speaker diarization (left=external, right=internal)
+        // - Stereo output (-ac 2): Enables speaker diarization (sides in CALL_LEFT_NUM/CALL_RIGHT_NUM tags)
         // - Application voip: Optimized for speech (High Pass Filter, formant emphasis)
         // - Frame duration 20ms: Standard for VoIP, optimal latency/quality balance
         // - Adaptive bitrate (32k-64k): Based on source sample rate
@@ -851,6 +855,16 @@ class WorkerWav2Webm extends WorkerBase
         }
         if (!empty($dstNum)) {
             $command .= sprintf(' -metadata CALL_DST_NUM=%s', escapeshellarg($dstNum));
+        }
+
+        // Stereo side mapping. CDR rec_src_channel is computed by WorkerCallEvents::getRecSrcChannel()
+        // from the channel MixMonitor actually ran on: '0' = src_num on LEFT, '1' = src_num on RIGHT,
+        // '' = mono or undetermined (e.g. IVR-only rows), in which case no side tags are written.
+        $recSrcChannel = (string)($taskData['rec_src_channel'] ?? '');
+        if (!empty($srcNum) && !empty($dstNum) && ($recSrcChannel === '0' || $recSrcChannel === '1')) {
+            [$leftNum, $rightNum] = $recSrcChannel === '0' ? [$srcNum, $dstNum] : [$dstNum, $srcNum];
+            $command .= sprintf(' -metadata CALL_LEFT_NUM=%s', escapeshellarg($leftNum));
+            $command .= sprintf(' -metadata CALL_RIGHT_NUM=%s', escapeshellarg($rightNum));
         }
 
         $duration = $taskData['duration'] ?? '';

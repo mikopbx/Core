@@ -50,6 +50,20 @@ class StorageTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
     {
     }
 
+    /**
+     * #1131: the configured device became the system disk after the disks swapped names.
+     */
+    public function testPickSystemDiskFallback(): void
+    {
+        // Legacy row: a separate storage disk found elsewhere wins over system partition 4.
+        $this->assertSame('/dev/sda1', Storage::pickSystemDiskFallback('/dev/sda1', '/dev/sdb4', true));
+        // Legacy single-disk install: storage lives on system partition 4.
+        $this->assertSame('/dev/sdb4', Storage::pickSystemDiskFallback('', '/dev/sdb4', true));
+        // A real UUID that was not found must not be replaced by any name-based guess.
+        $this->assertSame('', Storage::pickSystemDiskFallback('', '/dev/sdb4', false));
+        $this->assertSame('', Storage::pickSystemDiskFallback('/dev/sda1', '/dev/sdb4', false));
+    }
+
     public function testDetermineFormatFs()
     {
     }

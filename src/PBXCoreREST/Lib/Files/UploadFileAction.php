@@ -53,13 +53,21 @@ class UploadFileAction extends Injectable
     // MIME types allowed for different categories
     private const ALLOWED_MIME_TYPES = [
         'sound' => [
+            // A plain multipart POST (curl, a module) carries no type at all;
+            // the audio extension whitelist and the post-merge magic-byte check
+            // still apply, and the declared MIME is client-supplied regardless.
+            '',
             'audio/mpeg',
             'audio/wav',
             'audio/ogg',
             'audio/mp4',
+            'audio/aac',
+            'audio/flac',
             'audio/webm',
+            'audio/x-m4a',
             'audio/x-wav',
-            'audio/wave'
+            'audio/wave',
+            'application/ogg',
         ],
         'image' => [
             'image/jpeg',
@@ -85,6 +93,7 @@ class UploadFileAction extends Injectable
         'firmware' => [
             '',  // Empty MIME type when browser can't detect type for .img files
             'application/octet-stream',
+            'application/x-apple-diskimage',
             'application/x-disk-image',
             'application/x-raw-disk-image'
         ]
@@ -98,11 +107,16 @@ class UploadFileAction extends Injectable
         'dll', 'so', 'dylib', 'msi', 'deb', 'rpm'
     ];
 
+    /** Audio containers accepted by the sound-file conversion workflow. */
+    private const AUDIO_EXTENSIONS = [
+        'wav', 'mp3', 'ogg', 'opus', 'webm', 'm4a', 'aac', 'flac',
+    ];
+
     // Expected MIME type prefixes from finfo_file() for each category.
     // Used to validate actual file content (magic bytes) after merge.
     // Categories not listed here skip magic bytes validation (too generic).
     private const MAGIC_BYTES_MIME_PREFIXES = [
-        'sound' => ['audio/', 'application/ogg', 'application/octet-stream'],
+        'sound' => ['audio/', 'application/ogg'],
         'image' => ['image/'],
         'archive' => [
             'application/zip', 'application/x-zip', 'application/gzip',
@@ -147,7 +161,7 @@ class UploadFileAction extends Injectable
 
         // Validate file type and security
         $category = $parameters['category'] ?? 'unknown';
-        $mimeType = $parameters['file_mime_type'] ?? '';
+        $mimeType = self::resolveMimeType($parameters);
 
         $validationResult = self::validateFileType(
             $parameters['resumableFilename'],
@@ -381,8 +395,18 @@ class UploadFileAction extends Injectable
      *
      * @return array Validation result with 'valid' boolean and 'error' message
      */
+    private static function resolveMimeType(array $parameters): string
+    {
+        return (string)($parameters['resumableType'] ?? $parameters['file_mime_type'] ?? '');
+    }
+
     private static function validateFileType(string $filename, string $mimeType, string $category): array
     {
+        $validationCategory = self::normalizeCategory($category);
+        if ($validationCategory === null && !self::isUnspecifiedCategory($category)) {
+            return ['valid' => false, 'error' => "Unknown upload category: $category"];
+        }
+
         // Security: pathinfo() preserves any shell meta-characters the client
         // appended to the extension ("hack.php;touch" parses as "php;touch"
         // and would slip past the blacklist below). Normalize to a plain
@@ -404,19 +428,35 @@ class UploadFileAction extends Injectable
         }
 
         // 2. Check MIME type for category
-        if (isset(self::ALLOWED_MIME_TYPES[$category])) {
-            if (!in_array($mimeType, self::ALLOWED_MIME_TYPES[$category], true)) {
+        if ($validationCategory !== null && isset(self::ALLOWED_MIME_TYPES[$validationCategory])) {
+            if (!in_array($mimeType, self::ALLOWED_MIME_TYPES[$validationCategory], true)) {
+                $error = Util::translate(
+                    'sf_UploadInvalidMimeType',
+                    false,
+                    [
+                        'mimetype' => $mimeType,
+                        'category' => $category
+                    ]
+                );
                 return [
                     'valid' => false,
-                    'error' => Util::translate(
-                        'sf_UploadInvalidMimeType', false,
-                        [
-                            'mimetype' => $mimeType,
-                            'category' => $category
-                        ]
-                    )
+                    'error' => strtr($error, [
+                        '{mimetype}' => $mimeType,
+                        '{category}' => $category,
+                    ])
                 ];
             }
+        }
+
+        if ($validationCategory === 'sound' && !self::isAllowedAudioExtension($extension)) {
+            return [
+                'valid' => false,
+                'error' => Util::translate(
+                    'sf_UploadInvalidExtensionForCategory',
+                    false,
+                    ['extension' => $extension, 'category' => $category]
+                ),
+            ];
         }
 
         // 3. Special check for .img files (only for firmware)
@@ -432,7 +472,8 @@ class UploadFileAction extends Injectable
             return [
                 'valid' => false,
                 'error' => Util::translate(
-                    'sf_UploadInvalidExtensionForCategory', false,
+                    'sf_UploadInvalidExtensionForCategory',
+                    false,
                     ['extension' => $extension, 'category' => $category]
                 )
             ];
@@ -454,8 +495,16 @@ class UploadFileAction extends Injectable
      */
     public static function validateMagicBytes(string $filePath, string $category): array
     {
-        // Skip validation for categories where finfo is unreliable
-        if (!isset(self::MAGIC_BYTES_MIME_PREFIXES[$category])) {
+        $validationCategory = self::normalizeCategory($category);
+        if ($validationCategory === null) {
+            return self::isUnspecifiedCategory($category)
+                ? ['valid' => true]
+                : ['valid' => false, 'error' => "Unknown upload category: $category"];
+        }
+
+        // Firmware and CSV content cannot be identified reliably by a short
+        // list of magic-byte prefixes, but the category itself is still known.
+        if (!isset(self::MAGIC_BYTES_MIME_PREFIXES[$validationCategory])) {
             return ['valid' => true];
         }
 
@@ -471,7 +520,7 @@ class UploadFileAction extends Injectable
         }
 
         // Check if detected MIME matches any allowed prefix for this category
-        $allowedPrefixes = self::MAGIC_BYTES_MIME_PREFIXES[$category];
+        $allowedPrefixes = self::MAGIC_BYTES_MIME_PREFIXES[$validationCategory];
         $matched = false;
         foreach ($allowedPrefixes as $prefix) {
             if (str_starts_with($detectedMime, $prefix)) {
@@ -496,6 +545,50 @@ class UploadFileAction extends Injectable
         }
 
         return ['valid' => true];
+    }
+
+    /**
+     * Validate an audio filename and its server-detected content type.
+     *
+     * @return array{valid: bool, error?: string}
+     */
+    public static function validateAudioFile(string $filePath): array
+    {
+        $extension = strtolower((string)pathinfo($filePath, PATHINFO_EXTENSION));
+        if (!self::isAllowedAudioExtension($extension)) {
+            return ['valid' => false, 'error' => "Unsupported audio extension: $extension"];
+        }
+
+        return self::validateMagicBytes($filePath, 'sound');
+    }
+
+    private static function isAllowedAudioExtension(string $extension): bool
+    {
+        return in_array(strtolower($extension), self::AUDIO_EXTENSIONS, true);
+    }
+
+    /**
+     * A client that sends no category at all gets the category-specific checks
+     * skipped, not a hard refusal: `category` is declared neither in the
+     * endpoint's OpenAPI parameters nor on the sound-files upload route, so
+     * requiring it would break every pre-existing API client and module.
+     * The controls the security audit relies on do not depend on it: the
+     * forbidden extension list and the .img guard still run, the file always
+     * lands in upload-cache, and ConvertAudioFileAction re-validates path,
+     * category and audio content before mv/FFmpeg ever see it.
+     */
+    private static function isUnspecifiedCategory(string $category): bool
+    {
+        return $category === '' || $category === 'unknown';
+    }
+
+    private static function normalizeCategory(string $category): ?string
+    {
+        if ($category === 'custom' || $category === 'moh') {
+            return 'sound';
+        }
+
+        return array_key_exists($category, self::ALLOWED_MIME_TYPES) ? $category : null;
     }
 
     /**

@@ -262,7 +262,7 @@ class TestRunner:
         # Check PHP error log
         print(f"🔍 Checking PHP error log (last {lines} lines)...")
         php_errors = self._get_log_errors(
-            '/storage/usbdisk1/mikopbx/log/php/error.log',
+            '/storage/usbdisk1/mikopbx/log/php/php-error.log',
             lines
         )
         errors['php_errors'] = php_errors

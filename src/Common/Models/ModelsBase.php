@@ -177,6 +177,11 @@ class ModelsBase extends Model
     private static int $deferModelEventsDepth = 0;
 
     /**
+     * Nesting depth of transaction-aware event deferral managed by BaseActionHelper.
+     */
+    private static int $deferTransactionEventsDepth = 0;
+
+    /**
      * Begins a bulk-change section: per-row model change events are suppressed
      * until the matching endDeferModelEvents(). Always pair with a finally block.
      *
@@ -198,6 +203,42 @@ class ModelsBase extends Model
         if (self::$deferModelEventsDepth > 0) {
             self::$deferModelEventsDepth--;
         }
+    }
+
+    /**
+     * Starts buffering model events until the outer database transaction commits.
+     */
+    public static function beginDeferTransactionEvents(): void
+    {
+        self::$deferTransactionEventsDepth++;
+    }
+
+    /**
+     * Ends transaction-aware event deferral without publishing buffered events.
+     */
+    public static function endDeferTransactionEvents(): void
+    {
+        if (self::$deferTransactionEventsDepth > 0) {
+            self::$deferTransactionEventsDepth--;
+        }
+    }
+
+    /**
+     * Publishes all events buffered by a successfully committed transaction.
+     */
+    public static function flushPendingModelEvents(): void
+    {
+        foreach (DeferredModelEvents::drain() as $event) {
+            self::publishModelChangeEvent($event);
+        }
+    }
+
+    /**
+     * Discards all events buffered by a rolled-back transaction.
+     */
+    public static function discardPendingModelEvents(): void
+    {
+        DeferredModelEvents::clear();
     }
 
     /**
@@ -319,63 +360,57 @@ class ModelsBase extends Model
             }
         }
 
-        $this->sendChangesToBackend($action, $changedFields);
-        $this->sendChangesToFrontend($action, $changedFields);
+        $idProperty = $this instanceof PbxSettings ? 'key' : 'id';
+
+        self::dispatchModelChangeEvent([
+            'model' => get_class($this),
+            'recordId' => $this->$idProperty,
+            'action' => $action,
+            'changedFields' => $changedFields,
+        ]);
     }
 
     /**
-     * Sends changed fields and class to WorkerModelsEvents
+     * Buffers a model event inside a managed transaction or publishes it immediately.
      *
-     * @param string $action
-     * @param $changedFields
+     * @param array<string, mixed> $event
      */
-    private function sendChangesToBackend(string $action, $changedFields): void
+    protected static function dispatchModelChangeEvent(array $event): void
     {
-        // Add changed fields set to Beanstalkd queue
-        $queue = $this->di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
-        if ($queue === null) {
+        if (self::$deferTransactionEventsDepth > 0) {
+            DeferredModelEvents::enqueue($event);
             return;
         }
-        if ($this instanceof PbxSettings) {
-            $idProperty = 'key';
-        } else {
-            $idProperty = 'id';
-        }
-        $id = $this->$idProperty;
-        $jobData = json_encode(
-            [
-                'source' => BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED,
-                'model' => get_class($this),
-                'recordId' => $id,
-                'action' => $action,
-                'changedFields' => $changedFields,
-            ]
-        );
-        $queue->publish($jobData);
+
+        self::publishModelChangeEvent($event);
     }
 
-
     /**
-     * Sends changed fields and class to Fronted event bus
+     * Sends one committed model event to backend and frontend consumers.
      *
-     * @param string $action
-     * @param $changedFields
+     * @param array<string, mixed> $event
      */
-    private function sendChangesToFrontend(string $action, $changedFields): void
+    private static function publishModelChangeEvent(array $event): void
     {
-        if ($this instanceof PbxSettings) {
-            $idProperty = 'key';
-        } else {
-            $idProperty = 'id';
+        $di = Di::getDefault();
+        if ($di === null) {
+            return;
         }
-        $this->di->getShared(EventBusProvider::SERVICE_NAME)->publish('models-changed',
-            [
-                'model' => get_class($this),
-                'recordId' => $this->$idProperty,
-                'action' => $action,
-                'changedFields' => $changedFields,
-            ]
-        );
+
+        $queue = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
+        if ($queue !== null) {
+            $queue->publish(
+                json_encode([
+                    'source' => BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED,
+                    'model' => $event['model'],
+                    'recordId' => $event['recordId'],
+                    'action' => $event['action'],
+                    'changedFields' => $event['changedFields'],
+                ])
+            );
+        }
+
+        $di->getShared(EventBusProvider::SERVICE_NAME)->publish('models-changed', $event);
     }
 
     /**

@@ -209,10 +209,11 @@ class TestAudioConversionPipeline:
         self.__class__.test_file_path = target_path
 
         # Upload the file using files:upload, then copy to monitor dir
+        # No category: a .wav48 fixture is not a sound-file upload, and an
+        # unrecognized category is refused outright.
         upload_response = api_client.upload_file(
             'files:upload',
-            str(SAMPLE_WAV48),
-            params={'category': 'temp'}
+            str(SAMPLE_WAV48)
         )
         assert_api_success(upload_response, "Failed to upload wav48 fixture")
 

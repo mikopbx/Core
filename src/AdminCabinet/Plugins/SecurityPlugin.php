@@ -21,13 +21,16 @@
 namespace MikoPBX\AdminCabinet\Plugins;
 
 use MikoPBX\AdminCabinet\Controllers\ErrorsController;
+use MikoPBX\AdminCabinet\Controllers\GeneralSettingsController;
 use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\Common\Library\Auth\RedisTokenStorage;
 use MikoPBX\Common\Library\Text;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\JwtProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
+use MikoPBX\Core\System\PasswordService;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
@@ -113,6 +116,25 @@ class SecurityPlugin extends Injectable
                 return true;
             }
 
+            // Force the administrator to replace the auto-provisioned cloud
+            // password (web password still equals the public CLOUD_INSTANCE_ID)
+            // before any other page is reachable — issue #1132. A cloud image
+            // ships with password == instance ID, which is not a secret; the
+            // former advisory-only banner could be ignored indefinitely.
+            // Only interactive browser navigation is gated here; REST API v3
+            // authentication is a separate layer this dispatcher plugin never sees.
+            if ($this->isForcedPasswordChangeRequired($controllerClass)) {
+                // Empty body for the halted dispatch (see the login-page branch
+                // above for why setContent('') is required under PHP 8.4), then a
+                // real 302 to the password tab of the General Settings page.
+                // Response::redirect() runs the location through url->get() itself,
+                // so the raw route is passed here — prefixing it manually would
+                // double the /admin-cabinet base path.
+                $this->view->setContent('');
+                $this->response->redirect('general-settings/modify/#/passwords')->send();
+                return false;
+            }
+
             // Redirect to home if the controller is missing
             if (!class_exists($controllerClass)) {
                 $this->redirectToHome($dispatcher);
@@ -166,6 +188,62 @@ class SecurityPlugin extends Injectable
         }
 
         return true;
+    }
+
+    /**
+     * Decides whether the current request must be diverted to the mandatory
+     * password-change page.
+     *
+     * The gate covers only interactive browser navigation to a page other than
+     * the ones needed to actually change the password (or to log in/out). AJAX
+     * and API traffic and internal localhost callers (workers, health checks)
+     * are deliberately left untouched.
+     *
+     * @param string $controllerClass Fully qualified controller class being dispatched.
+     * @return bool true if the request must be redirected to the password page.
+     */
+    private function isForcedPasswordChangeRequired(string $controllerClass): bool
+    {
+        if ($this->isLocalHostRequest() || $this->request->isAjax()) {
+            return false;
+        }
+
+        // Controllers that must stay reachable while the gate is active:
+        //  - Session:         login / logout,
+        //  - Errors:          error pages,
+        //  - GeneralSettings: hosts the web password change form (#/passwords tab).
+        $allowedControllers = [
+            SessionController::class,
+            ErrorsController::class,
+            GeneralSettingsController::class,
+        ];
+        if (in_array($controllerClass, $allowedControllers, true)) {
+            return false;
+        }
+
+        return $this->isDefaultCloudPassword();
+    }
+
+    /**
+     * Checks whether the stored web password is still the auto-provisioned cloud
+     * default (equal to the public CLOUD_INSTANCE_ID).
+     *
+     * CLOUD_INSTANCE_ID is written only by real cloud providers
+     * (CloudProvider::shouldSetCloudInstanceId() — Docker/LXC/NoCloud excluded),
+     * so it is empty on every other install and the crypt() verify is skipped.
+     *
+     * @return bool true while the web password still equals the instance ID.
+     */
+    private function isDefaultCloudPassword(): bool
+    {
+        $cloudInstanceId = PbxSettings::getValueByKey(PbxSettings::CLOUD_INSTANCE_ID);
+        if ($cloudInstanceId === '') {
+            return false;
+        }
+
+        $storedPassword = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
+
+        return PasswordService::matchesStoredPassword($cloudInstanceId, $storedPassword);
     }
 
     /**

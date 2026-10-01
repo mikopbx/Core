@@ -27,6 +27,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\System;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\Asterisk\AmiSessionWatchdog;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, SystemMessages, Util};
 use MikoPBX\Core\Workers\Pool\WorkerPoolManager;
@@ -86,6 +87,17 @@ class WorkerSafeScriptsCore extends WorkerBase
      * With 5-second monitoring cycles, 12 attempts = ~60 seconds for a worker to start.
      */
     private const int MAX_PING_FAILURES = 12;
+
+    /**
+     * Consecutive missed Beanstalk pings tolerated before restarting a worker
+     * whose process is still alive. A worker busy in a long reload batch
+     * (WorkerModelsEvents replaying queued reload actions during a module
+     * install) can miss the 5s ping without being dead; force-restarting it
+     * mid-batch orphans its in-flight Beanstalk job. ~3 * 5s monitoring cycle =
+     * ~15s grace, well under the WATCHDOG_TIMEOUT_SEC of 120s. A missing PID
+     * means the worker really died and bypasses this grace (immediate respawn).
+     */
+    private const int MIN_BEANSTALK_PING_FAILURES = 3;
 
     /**
      * Crash count threshold for auto-disabling a module.
@@ -312,6 +324,8 @@ class WorkerSafeScriptsCore extends WorkerBase
      */
     private const int MODULE_OPERATIONS_REAP_INTERVAL_SEC = 15;
 
+    private const int AMI_SESSION_WATCHDOG_INTERVAL_SEC = 15;
+
     /**
      * Timestamp of the last stale module-operation reaping pass.
      */
@@ -327,6 +341,10 @@ class WorkerSafeScriptsCore extends WorkerBase
      * of high-volume call/system/RTCP events in the socket buffer.
      */
     private ?AsteriskManager $amiPing = null;
+
+    private ?AmiSessionWatchdog $amiSessionWatchdog = null;
+
+    private int $lastAmiSessionWatchdogTime = 0;
 
     /**
      * Initialize the singleton instance
@@ -346,7 +364,7 @@ class WorkerSafeScriptsCore extends WorkerBase
      */
     private function getAmiForPing(): AsteriskManager
     {
-        if ($this->amiPing !== null && is_resource($this->amiPing->socket)) {
+        if ($this->amiPing !== null && $this->amiPing->isConnected()) {
             return $this->amiPing;
         }
         $port = PbxSettings::getValueByKey(PbxSettings::AMI_PORT);
@@ -697,6 +715,10 @@ class WorkerSafeScriptsCore extends WorkerBase
             // unfreezes any browser still watching the operation.
             $this->maybeReapModuleOperations();
 
+            // Inspect server-side AMI queues outside the worker Fiber pool so
+            // failures cannot stall worker supervision.
+            $this->maybeCheckAmiSessions();
+
             // Prepare the list of workers to be started.
             $arrWorkers = $this->prepareWorkersList();
 
@@ -767,6 +789,48 @@ class WorkerSafeScriptsCore extends WorkerBase
         }
     }
 
+    private function maybeCheckAmiSessions(): void
+    {
+        $now = $this->amiWatchdogNow();
+        if ($now - $this->lastAmiSessionWatchdogTime < self::AMI_SESSION_WATCHDOG_INTERVAL_SEC) {
+            return;
+        }
+        $this->lastAmiSessionWatchdogTime = $now;
+
+        try {
+            $this->amiSessionWatchdog ??= $this->createAmiSessionWatchdog();
+            $this->amiSessionWatchdog->check($this->isAmiSessionAutoKickEnabled());
+        } catch (Throwable $throwable) {
+            $this->logAmiWatchdogFailure($throwable->getMessage());
+        }
+    }
+
+    protected function isAmiSessionAutoKickEnabled(): bool
+    {
+        return $this->getAmiSessionAutoKickSetting() === '1';
+    }
+
+    protected function getAmiSessionAutoKickSetting(): string
+    {
+        return (string)PbxSettings::getValueByKey(PbxSettings::AMI_STALLED_SESSION_AUTO_KICK);
+    }
+
+    protected function createAmiSessionWatchdog(): AmiSessionWatchdog
+    {
+        $amiPort = (int)PbxSettings::getValueByKey(PbxSettings::AMI_PORT);
+        return new AmiSessionWatchdog(amiPort: $amiPort > 0 ? $amiPort : 5038);
+    }
+
+    protected function amiWatchdogNow(): int
+    {
+        return time();
+    }
+
+    protected function logAmiWatchdogFailure(string $message): void
+    {
+        SystemMessages::sysLogMsg(__CLASS__, 'AMI session watchdog failed: ' . $message, LOG_ERR);
+    }
+
     /**
      * Pings a worker to check if it is dead. If it is, it is killed and started again.
      * Uses Beanstalk queue to send ping and check workers.
@@ -794,18 +858,53 @@ class WorkerSafeScriptsCore extends WorkerBase
                 // Check service with higher priority
                 [$result] = $queue->sendRequest('ping', 5, 1);
             }
-            if (false === $result
-                && !$this->isModuleInCrashLoop($workerClassName)
-                && !$this->isCoreWorkerInCrashLoop($workerClassName)
-                && $this->memoryState === 'normal'
-                && $this->diskState === 'normal'
-                && !$this->shouldThrottleRestart($workerClassName)
-            ) {
-                $this->logWorkerRssBeforeRestart($workerClassName, $WorkerPID);
-                $this->recordRestart($workerClassName);
-                Processes::processPHPWorker($workerClassName);
-                SystemMessages::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
+
+            if ($result) {
+                // Worker is alive and responsive, reset the miss counter
+                $this->pingFailureCounts[$workerClassName] = 0;
+            } else {
+                // Missed ping. A live-but-busy worker (e.g. WorkerModelsEvents
+                // replaying a long reload batch) can miss the 5s ping without
+                // being dead; killing it mid-batch orphans its in-flight job.
+                // Tolerate a few consecutive misses before restarting a worker
+                // whose process still exists. A missing PID means the worker
+                // really died, so it is respawned immediately (no grace).
+                //
+                // The counter only gates this initial grace window: once it is
+                // passed the worker is retried on every cycle (as before this
+                // change), with shouldThrottleRestart()/crash-loop guards
+                // providing back-off. There is deliberately NO give-up cap —
+                // capping restarts here could permanently abandon a core worker
+                // after a transient pressure/throttle window.
+                $noProcess = ($WorkerPID === '');
+                $failures = ($this->pingFailureCounts[$workerClassName] ?? 0) + 1;
+                $this->pingFailureCounts[$workerClassName] = $failures;
+
+                if (!$noProcess && $failures < self::MIN_BEANSTALK_PING_FAILURES) {
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "Service {$workerClassName} missed ping ({$failures}/"
+                        . self::MIN_BEANSTALK_PING_FAILURES . "), waiting before restart.",
+                        LOG_DEBUG
+                    );
+                } elseif ($this->isModuleInCrashLoop($workerClassName)) {
+                    // Module disabled by crash-loop watchdog — logged inside isModuleInCrashLoop()
+                } elseif ($this->isCoreWorkerInCrashLoop($workerClassName)) {
+                    // Core worker crash-loop — logged inside isCoreWorkerInCrashLoop() (#1051)
+                } elseif ($this->memoryState !== 'normal') {
+                    // Skip restart during memory pressure (warning or emergency)
+                } elseif ($this->diskState !== 'normal') {
+                    // Skip restart during disk pressure — logged inside getDiskState() (#1051)
+                } elseif ($this->shouldThrottleRestart($workerClassName)) {
+                    // Skip restart due to throttling — logged inside shouldThrottleRestart()
+                } else {
+                    $this->logWorkerRssBeforeRestart($workerClassName, $WorkerPID);
+                    $this->recordRestart($workerClassName);
+                    Processes::processPHPWorker($workerClassName);
+                    SystemMessages::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
+                }
             }
+
             $timeElapsedSecs = round(microtime(true) - $start, 2);
             if ($timeElapsedSecs > 10) {
                 SystemMessages::sysLogMsg(
@@ -1756,9 +1855,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     );
 
                     $workerPath = Util::getFilePathByClassName($workerClassName);
-                    $php = Util::which('php');
-                    $command = "$php -f $workerPath start --instance-id=$instanceId > /dev/null 2>&1 &";
-                    shell_exec($command);
+                    $this->spawnPoolWorkerInstance($workerPath, $instanceId);
                 }
             }
 
@@ -1779,6 +1876,15 @@ class WorkerSafeScriptsCore extends WorkerBase
                 LOG_WARNING
             );
         }
+    }
+
+    protected function spawnPoolWorkerInstance(string $workerPath, int $instanceId): void
+    {
+        $php = Util::which('php');
+        $command = escapeshellarg($php)
+            . ' -f ' . escapeshellarg($workerPath)
+            . ' start --instance-id=' . $instanceId;
+        Processes::mwExecBg($command);
     }
 }
 

@@ -58,8 +58,10 @@ class IVRConf extends AsteriskConfigClass
         // Generate internal dial plan.
         $conf = '';
         foreach ($db_data as $ivr) {
-            /** @var \MikoPBX\Common\Models\SoundFiles $res */
-            $res           = SoundFiles::findFirst($ivr['audio_message_id']);
+            // An empty findFirst() condition would select an unrelated first sound file.
+            $audioMessageId = $ivr['audio_message_id'] ?? '';
+            /** @var SoundFiles|null $res */
+            $res           = $audioMessageId === '' ? null : SoundFiles::findFirst($audioMessageId);
             $storedPath    = $res === null ? '' : (string)$res->path;
 
             $timeout_wait_exten = max($ivr['timeout'], 0);

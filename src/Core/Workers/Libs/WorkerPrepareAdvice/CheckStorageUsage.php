@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
+use Closure;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\SystemMessages;
@@ -39,11 +40,21 @@ use Phalcon\Di\Injectable;
  */
 class CheckStorageUsage extends Injectable
 {
+    private ?Closure $heartbeatCallback = null;
+
     /**
      * Cache key for storage usage data.
      * Must match the key used in GetUsageAction and GetSettingsAction.
      */
     public const string CACHE_KEY = 'STORAGE:USAGE';
+
+    /**
+     * Keep WorkerPrepareAdvice healthy while the storage scan is waiting on du.
+     */
+    public function setHeartbeatCallback(callable $heartbeatCallback): void
+    {
+        $this->heartbeatCallback = Closure::fromCallable($heartbeatCallback);
+    }
 
     /**
      * Process storage usage calculation.
@@ -59,7 +70,7 @@ class CheckStorageUsage extends Injectable
 
         try {
             $storage = new Storage();
-            $usageData = $storage->getStorageUsageByCategory();
+            $usageData = $storage->getStorageUsageByCategory($this->heartbeatCallback);
 
             // Store in separate cache key for API access
             // Note: WorkerPrepareAdvice also caches the return value,

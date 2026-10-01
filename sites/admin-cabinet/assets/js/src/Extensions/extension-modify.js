@@ -438,7 +438,7 @@ const extension = {
      *
      * The extension number mask length is driven by the API: it uses
      * `extension.extensionsLength` (populated from the server, no JavaScript default)
-     * to build a `9{2,N}` digit mask, applied only when N is between 2 and 10.
+     * to build a `9{2,N}` digit mask, applied only when N is between 2 and 11.
      * Its `oncomplete` handler is debounced with a 500ms setTimeout (clearing any
      * pending timer) before invoking `cbOnCompleteNumber()`.
      *
@@ -454,7 +454,7 @@ const extension = {
         // No defaults in JavaScript - value must come from API
         if (extension.extensionsLength) {
             const extensionsLength = parseInt(extension.extensionsLength, 10);
-            if (extensionsLength >= 2 && extensionsLength <= 10) {
+            if (extensionsLength >= 2 && extensionsLength <= 11) {
                 // Initialize mask with correct length and oncomplete handler
                 extension.$number.inputmask({
                     mask: `9{2,${extensionsLength}}`,
@@ -931,7 +931,7 @@ const extension = {
             showWarnings: true,           // Show validation warnings
             validateOnInput: true,        // Validate as user types
             checkOnLoad: true, // Always validate if password field has value
-            minScore: 30,                 // SIP passwords have lower minimum score requirement
+            minScore: 60,                 // Match the authoritative SIP threshold on the server
             generateLength: 20,           // 20 chars max for Grandstream GDMS compatibility
             includeSpecial: false,        // Exclude special characters for SIP compatibility
             onGenerate: (password) => {
@@ -1059,7 +1059,7 @@ $.fn.form.settings.rules.passwordStrength = () => {
     // not-yet-computed 0 (false reject) or a stale high score from a previously
     // validated stronger value (false accept). Scoring the current value here is
     // race-free; the server result still drives the live progress bar and warnings.
-    return PasswordWidget.scorePasswordLocal(value) >= 30; // Minimum score for extensions
+    return PasswordWidget.scorePasswordLocal(value) >= 60; // Match the server's SIP threshold
 };
 
 /**

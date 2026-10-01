@@ -25,6 +25,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\AdviceTaskBatchProcessor;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAmiPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAriPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckConnection;
@@ -43,7 +44,6 @@ use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckUpdates;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckWebPasswords;
 use MikoPBX\PBXCoreREST\Lib\Advice\GetAdviceListAction;
 use Throwable;
-use RuntimeException;
 require_once 'Globals.php';
 
 /**
@@ -56,7 +56,7 @@ class WorkerPrepareAdvice extends WorkerRedisBase
     /**
      * Number of worker processes that должен запустить WorkerSafeScriptsCore
      */
-    public int $maxProc = 2;
+    public int $maxProc = 1;
 
     /**
      * Array of advice types with their cache times.
@@ -109,13 +109,16 @@ class WorkerPrepareAdvice extends WorkerRedisBase
                 pcntl_signal_dispatch();
                 
                 // Process any pending advice types
-                $this->processAdviceTypes();
+                $processedCount = $this->processAdviceTypes();
                 
                 // Send heartbeat
                 $this->checkHeartbeat();
                 
-                // Sleep to prevent CPU overuse
-                sleep(5); // Process advice every 5 seconds
+                // Sleep only when there was no work. Productive passes drain
+                // the queue and immediately check for newly expired advice.
+                if ($processedCount === 0) {
+                    sleep(5);
+                }
                 
             } catch (Throwable $e) {
                 CriticalErrorsHandler::handleExceptionWithSyslog($e);
@@ -133,53 +136,25 @@ class WorkerPrepareAdvice extends WorkerRedisBase
     /**
      * Processes advice types.
      *
-     * @return void
+     * @return int Number of advice checks completed in this batch.
      */
-    private function processAdviceTypes(): void
+    private function processAdviceTypes(): int
     {
-        $adviceTypes = self::ARR_ADVICE_TYPES;
         $managedCache = $this->getDI()->get(ManagedCacheProvider::SERVICE_NAME);
-        $filteredAdviceTypes = [];
-        
-        // Filter out advice types that don't need processing based on cache status
-        foreach ($adviceTypes as $adviceType) {
-            $currentAdviceClass = $adviceType['type'];
-            $cacheKey = self::getCacheKey($currentAdviceClass);
-            
-            // Skip if already cached with sufficient TTL
-            if ($managedCache->has($cacheKey)) {
-                // Skip - already cached
-                continue;
+        $mutex = $this->getDI()->get(MutexProvider::SERVICE_NAME);
+        $batchProcessor = new AdviceTaskBatchProcessor();
+
+        return $batchProcessor->drain(
+            self::ARR_ADVICE_TYPES,
+            static fn(string $adviceClass): bool => $managedCache->has(self::getCacheKey($adviceClass)),
+            static fn(string $lockKey, callable $callback, int $timeout, int $ttl): mixed =>
+                $mutex->synchronized($lockKey, $callback, $timeout, $ttl),
+            fn(array $adviceType): bool => $this->processAdvice($adviceType, $managedCache),
+            fn(): bool => $this->isShuttingDown,
+            static function (): void {
+                GetAdviceListAction::main();
             }
-            $filteredAdviceTypes[] = $adviceType;
-        }
-        
-        // If nothing to process, exit early
-        if (empty($filteredAdviceTypes)) {
-            return;
-        }
-        
-        // Sort advice types by priority (lower number = higher priority)
-        usort($filteredAdviceTypes, function($a, $b) {
-            return $a['priority'] <=> $b['priority'];
-        });
-        
-        // Process one advice type per call - this allows for graceful shutdown between each advice
-        $adviceType = array_shift($filteredAdviceTypes);
-        
-        // Check if shutting down before starting a task
-        if ($this->isShuttingDown) {
-            SystemMessages::sysLogMsg(
-                __METHOD__,
-                "Worker is shutting down, skipping advice processing: {$adviceType['type']}",
-                LOG_DEBUG
-            );
-            return;
-        }
-        
-        // Process the advice
-        SystemMessages::sysLogMsg(__METHOD__, "Processing advice: {$adviceType['type']}", LOG_DEBUG);
-        $this->processAdvice($adviceType);
+        );
     }
 
     /**
@@ -187,40 +162,28 @@ class WorkerPrepareAdvice extends WorkerRedisBase
      *
      * @param array $adviceType An array containing advice type and cache time.
      */
-    private function processAdvice(array $adviceType): void
+    private function processAdvice(array $adviceType, mixed $managedCache): bool
     {
         $start = microtime(true);
-        // Set a lock to prevent multiple processes from generating the same advice
-        $lockKey = $adviceType['type'] . ':lock';
-
-        if ($this->getDI()->get(MutexProvider::SERVICE_NAME)->isLocked($lockKey)) {
-            return;
-        }
+        $processed = false;
 
         try {
-            $this->getDI()->get(MutexProvider::SERVICE_NAME)->synchronized(
-                $lockKey,
-                function () use ($adviceType) {
-                    // Check if we're shutting down before starting processing
-                    if ($this->isShuttingDown) {
-                        return;
-                    }
-                    
-                    $currentAdviceClass = $adviceType['type'];
-                    $cacheKey = self::getCacheKey($currentAdviceClass);
-                    SystemMessages::sysLogMsg(__METHOD__, "Start advice processing: $cacheKey", LOG_DEBUG);
-                    $checkObj = new $currentAdviceClass();
-                    $newAdvice = $checkObj->process();
-                    $managedCache = $this->getDI()->get(ManagedCacheProvider::SERVICE_NAME);
-                    $managedCache->set($cacheKey, $newAdvice, $adviceType['cacheTime']);
-                    // Send advice to the browser
-                    GetAdviceListAction::main();
-                },
-                3,
-                30
-            );
-        } catch (RuntimeException $e) {
-           // Ignore - ensures that the lock is already acquired
+            if ($this->isShuttingDown) {
+                return false;
+            }
+
+            $currentAdviceClass = $adviceType['type'];
+            $cacheKey = self::getCacheKey($currentAdviceClass);
+            SystemMessages::sysLogMsg(__METHOD__, "Start advice processing: $cacheKey", LOG_DEBUG);
+            $checkObj = new $currentAdviceClass();
+            if ($checkObj instanceof CheckStorageUsage) {
+                $checkObj->setHeartbeatCallback(function (): void {
+                    $this->checkHeartbeat();
+                });
+            }
+            $newAdvice = $checkObj->process();
+            $managedCache->set($cacheKey, $newAdvice, $adviceType['cacheTime']);
+            $processed = true;
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
@@ -233,6 +196,8 @@ class WorkerPrepareAdvice extends WorkerRedisBase
                 LOG_WARNING
             );
         }
+
+        return $processed;
     }
 
     /**

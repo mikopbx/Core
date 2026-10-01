@@ -225,6 +225,18 @@ class LanInterfaces extends ModelsBase
             )
         );
 
+        $validation->add(
+            'vlanid',
+            new CallbackValidator(
+                [
+                    'callback' => function (): bool {
+                        return self::isValidVlanId($this->vlanid);
+                    },
+                    'message' => $this->t('nw_ValidateVlanRange'),
+                ]
+            )
+        );
+
         // Validate IP address fields
         $validation->add(
             'ipaddr',
@@ -388,6 +400,22 @@ class LanInterfaces extends ModelsBase
         );
 
         return $this->validate($validation);
+    }
+
+    /**
+     * Validate the VLAN identifier accepted by the network UI/API.
+     */
+    public static function isValidVlanId(mixed $value): bool
+    {
+        if (is_int($value)) {
+            return $value >= 0 && $value <= 4095;
+        }
+
+        if (!is_string($value) || preg_match('/^[0-9]{1,4}$/D', $value) !== 1) {
+            return false;
+        }
+
+        return (int)$value <= 4095;
     }
 
     /**

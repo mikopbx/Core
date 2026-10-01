@@ -177,20 +177,26 @@ class ConvertAudioFileActionGuardTest extends AbstractUnitTest
             $sourceFile,
             'Original .ogg must be removed once all targets are produced successfully'
         );
-        $this->assertFileExists($this->tmpDir . '/upload.mp3');
-        $this->assertGreaterThan(0, filesize($this->tmpDir . '/upload.mp3'));
+        $this->assertFileExists($this->tmpDir . '/upload.webm');
+        $this->assertGreaterThan(0, filesize($this->tmpDir . '/upload.webm'));
+        // WebM is the canonical path handed back to the caller.
+        $this->assertSame($this->tmpDir . '/upload.webm', $result->data[0]);
     }
 
     /**
      * Original file path differs only in case from the produced target path
-     * (.MP3 source vs .mp3 target on case-insensitive matching). The gate must
+     * (.WAV source vs .wav target on case-insensitive matching). The gate must
      * recognise them as the same logical file and refuse to delete the source.
+     *
+     * Needs a case-sensitive filesystem (the container) to exercise the
+     * strcasecmp branch; on a case-insensitive host the two names are one file
+     * and the realpath comparison short-circuits first.
      */
     public function testOriginalPreservedWhenOnlyExtensionCaseDiffers(): void
     {
         $this->installStubs('eval "dest=\\${$#}"; head -c 1024 /dev/zero > "$dest"; exit 0');
 
-        $sourceFile = $this->tmpDir . '/UPLOAD.MP3';
+        $sourceFile = $this->tmpDir . '/UPLOAD.WAV';
         file_put_contents($sourceFile, 'orig');
 
         $result = ConvertAudioFileAction::convertAudioFile($sourceFile);
@@ -198,10 +204,10 @@ class ConvertAudioFileActionGuardTest extends AbstractUnitTest
         $this->assertStubFired();
         $this->assertTrue($result->success);
         // The lowercase target was created…
-        $this->assertFileExists($this->tmpDir . '/UPLOAD.mp3');
+        $this->assertFileExists($this->tmpDir . '/UPLOAD.wav');
         // …but the original (case-different) file must NOT be removed by the gate
         // because it is logically the same file and removing it would orphan the
-        // SoundFiles DB row that still points to UPLOAD.MP3.
+        // SoundFiles DB row that still points to UPLOAD.WAV.
         $this->assertFileExists(
             $sourceFile,
             'Case-only mismatch between source and target must be treated as same file'

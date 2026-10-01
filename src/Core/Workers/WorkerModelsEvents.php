@@ -100,6 +100,19 @@ class WorkerModelsEvents extends WorkerBase
     // Array of planned reload actions that need to be started
     private array $plannedReloadActions = [];
 
+    // Raised by a reload action (ReloadModuleStateAction) to ask the worker to
+    // restart right after that action, before the remaining, module-code-dependent
+    // actions run. A module install/update changes the module classes on disk, but
+    // this long-lived process keeps the old classes in memory; config generation
+    // that pulls module hooks (dialplan/pjsip/...) must therefore run in a process
+    // started AFTER the new files landed. Static because actions execute as
+    // standalone objects with no reference back to the worker instance.
+    public static bool $requestSelfRestart = false;
+
+    // Instance latch: once a self-restart is scheduled, startReload() is a no-op so
+    // the not-yet-run backlog stays in Redis and is replayed by the fresh instance.
+    private bool $selfRestartPending = false;
+
     private int $timeout = 5;
 
     // Array of core conf objects
@@ -187,7 +200,11 @@ class WorkerModelsEvents extends WorkerBase
                 $this->plannedReloadActions = $state['plannedReloadActions'] ?? [];
                 $this->modifiedModels = $state['modifiedModels'] ?? [];
                 $this->last_change = $state['last_change'] ?? time() - $this->timeout;
-                // Delete old keys since we've loaded the state
+                // Delete old keys since we've loaded the state. The just-loaded
+                // $latestKey is intentionally kept as a crash-recovery fallback:
+                // if this process is killed before it re-persists the backlog,
+                // the next instance can still restore it. It is overwritten by a
+                // fresh (usually empty) state on the next graceful shutdown.
                 foreach ($keys as $key) {
                     if ($key !== $latestKey) {
                         $this->managedCache->delete($key);
@@ -394,13 +411,13 @@ class WorkerModelsEvents extends WorkerBase
     public function handleShutdownSignal(int $signo): void
     {
         SystemMessages::sysLogMsg(__METHOD__, "Received signal $signo. Saving state and exiting...", LOG_NOTICE);
-        
+
         // Process any pending reload actions before exit
         $this->startReload();
-        
+
         // Save state to Redis
         $this->saveStateToRedis();
-        
+
         // Exit gracefully
         exit(0);
     }
@@ -424,10 +441,10 @@ class WorkerModelsEvents extends WorkerBase
 
             $this->startReload();
         }
-        
+
         // Save state before exit
         $this->saveStateToRedis();
-        
+
         // Execute all collected changes before exit
         $this->timeoutHandler();
     }
@@ -448,6 +465,13 @@ class WorkerModelsEvents extends WorkerBase
      */
     private function startReload(): void
     {
+        // A self-restart is already scheduled: the module set on disk changed and
+        // this long-lived process must exit so a fresh one loads the new code. Do
+        // not run any further actions here — the not-yet-run backlog is persisted
+        // in Redis and replayed by the new instance with the updated module code.
+        if ($this->selfRestartPending) {
+            return;
+        }
         if ($this->isProcessing) {
             return;
         }
@@ -485,6 +509,10 @@ class WorkerModelsEvents extends WorkerBase
             }
             $this->modifiedModels = [];
 
+            // Cleared here so an action executed below (ReloadModuleStateAction) can
+            // raise it to request a self-restart when the module set changed on disk.
+            self::$requestSelfRestart = false;
+
             $executedActions = [];
             // Process changes for each method in priority order
             foreach ($this->reloadActions as $actionClassName) {
@@ -507,9 +535,36 @@ class WorkerModelsEvents extends WorkerBase
                 } catch (Throwable $exception) {
                     CriticalErrorsHandler::handleExceptionWithSyslog($exception);
                 }
+                // An action can request a restart before the remaining,
+                // module-code-dependent actions run this pass.
+                if (self::$requestSelfRestart) {
+                    break;
+                }
             }
             if (count($executedActions) > 0) {
                 SystemMessages::sysLogMsg(__METHOD__, "Reload actions were executed in the next order: " . PHP_EOL . json_encode($executedActions, JSON_PRETTY_PRINT), LOG_DEBUG);
+            }
+
+            // A module set change requires this worker to restart so newly installed
+            // or updated module classes are loaded from disk. Drop the actions already
+            // run this pass, keep the rest as a backlog, persist it and schedule the
+            // restart. The fresh instance restores the backlog from Redis and replays
+            // it (dialplan/pjsip/...) with the new code.
+            if (self::$requestSelfRestart) {
+                foreach ($executedActions as $doneAction) {
+                    unset($this->plannedReloadActions[$doneAction]);
+                }
+                self::$requestSelfRestart = false;
+                $this->selfRestartPending = true;
+                $this->needRestart = true;
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    'Module set changed; restarting WorkerModelsEvents and deferring '
+                    . count($this->plannedReloadActions) . ' action(s) to the fresh instance',
+                    LOG_NOTICE
+                );
+                $this->saveStateToRedis();
+                return;
             }
 
             // Send information about models changes to additional modules bulky without any details
@@ -517,7 +572,7 @@ class WorkerModelsEvents extends WorkerBase
 
             // Reset the modified tables array
             $this->plannedReloadActions = [];
-            
+
             // Save empty state to Redis
             $this->saveStateToRedis();
         } finally {

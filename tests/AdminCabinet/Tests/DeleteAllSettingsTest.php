@@ -337,9 +337,15 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
 
         self::annotate("Checking system availability...");
 
-        $maxWaitTime = 180; // 3 minutes total max wait
+        // The reset ends in a real reboot: on the test stand nginx first answered ~180 s
+        // after the reset finished, and the form itself renders only after the login page
+        // has walked its own auth:refresh -> session/end -> session/index chain.
+        // 420 s leaves room for a slow boot; a healthy run still returns as soon as it sees
+        // the form, so the extra budget is only ever spent on runs that fail anyway.
+        $maxWaitTime = 420;
         $startTime = time();
         $attempt = 0;
+        $lastError = '';
 
         while ((time() - $startTime) < $maxWaitTime) {
             $attempt++;
@@ -360,13 +366,18 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
 
 
             } catch (\Exception $e) {
+                // Keep the reason: a dead browser session looks exactly like a dead PBX here
+                $lastError = $e->getMessage();
             }
 
             // Wait 5 seconds before next attempt
             sleep(5);
         }
 
-        throw new \Exception("System did not become available within {$maxWaitTime} seconds");
+        throw new \Exception(
+            "System did not become available within the {$maxWaitTime}s budget after {$attempt} attempts"
+            . ($lastError !== '' ? ". Last error: $lastError" : '')
+        );
     }
 
     /**

@@ -63,8 +63,7 @@ class ModulesActions
         $module = PbxExtensionModules::findFirstByUniqid($moduleUniqId);
         if ($module === null) {
             echo "\n" . $this->translation->_('cm_ModuleNotFound') . "\n";
-            echo $this->translation->_('cm_PressEnterToContinue');
-            fgets(STDIN);
+            MenuStyleConfig::waitForEnter($this->translation->_('cm_PressEnterToContinue'));
             $modulesMenu->show($parentMenu);
             return;
         }
@@ -170,8 +169,7 @@ class ModulesActions
         }
 
         echo "\n\n";
-        echo $this->translation->_('cm_PressEnterToContinue');
-        fgets(STDIN);
+        MenuStyleConfig::waitForEnter($this->translation->_('cm_PressEnterToContinue'));
 
         $modulesMenu->show($parentMenu);
     }
@@ -220,8 +218,7 @@ class ModulesActions
         }
 
         echo "\n\n";
-        echo $this->translation->_('cm_PressEnterToContinue');
-        fgets(STDIN);
+        MenuStyleConfig::waitForEnter($this->translation->_('cm_PressEnterToContinue'));
 
         $modulesMenu->show($parentMenu);
     }

@@ -602,10 +602,26 @@ class Fail2BanConf extends SystemConfigClass
         // Construct the nginx error.log filter
         // Note: fail2ban strips the timestamp before applying failregex, so regex starts after date
         // Catches all client requests that generate nginx errors (file not found, permission denied, etc.)
+        //
+        // ignoreregex excludes server-side / infrastructure errors and expired-token noise. These
+        // lines carry "client: <HOST>" but are NOT the client's fault, so counting them as ban
+        // attempts locks out legitimate admins/softphones on a transient backend hiccup: a 1-2s
+        // Redis blip emits several WAF errors for one admin, and with maxretry=3 that is a ban.
+        // Only genuine client-driven errors should feed this jail.
         $conf = "[Definition]\n" .
             "datepattern = {^LN-BEG}\n" .
             'failregex = ^\s*\[error\] \d+#\d+: \*\d+ .*client: <HOST>,.*' . "\n" .
-            'ignoreregex = favicon\.ico' . "\n";
+            'ignoreregex = favicon\.ico' . "\n" .
+            // Missing static assets (icons/css/js/fonts) are benign browser 404s, not attacks.
+            // Scoped by extension so scanner probes (.env/.git/.php/...) still match and get
+            // banned here (and by the mikopbx-exploit-scanner jail on access.log).
+            '              open\(\) "[^"]*\.(png|ico|jpg|jpeg|gif|svg|webp|css|js|map|woff2?|ttf)" failed' . "\n" .
+            '              Failed to connect to Redis' . "\n" .
+            '              connect_to_redis\(\)' . "\n" .
+            '              lua tcp socket connect timed out' . "\n" .
+            '              upstream timed out' . "\n" .
+            '              NCHAN_SUB_ACCESS_DENIED' . "\n" .
+            '              \[lua\] unified-security\.lua:' . "\n";
 
         // Write the configuration to the nginx errors filter file
         file_put_contents("$filterPath/mikopbx-nginx-errors.conf", $conf);

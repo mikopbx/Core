@@ -953,6 +953,69 @@ class Network extends Injectable
     }
 
     /**
+     * Re-applies IPv6 settings on the given interfaces without touching IPv4.
+     *
+     * WHY: lanConfigure() takes every interface down and restarts udhcpc, which drops the
+     * IPv4 lease the admin session is served over. An IPv6-only change needs none of that.
+     * Toggling disable_ipv6 flushes the interface's IPv6 addresses and routes (the old mode's
+     * leftovers); re-enabling brings back link-local and sends RS. In Docker the IPv6 stack
+     * belongs to the runtime, so it is only re-applied, like configureIpv6InDocker() does.
+     *
+     * @param array<int|string> $interfaceIds LanInterfaces record ids
+     * @return void
+     */
+    public function ipv6Reconfigure(array $interfaceIds): void
+    {
+        $sysctl = Util::which('sysctl');
+        $canManageNetwork = System::canManageNetwork();
+        foreach (array_unique($interfaceIds) as $id) {
+            $lan = LanInterfaces::findFirstById($id);
+            if ($lan === null || $lan->disabled === '1') {
+                continue;
+            }
+            $ifName = ((int)$lan->vlanid > 0) ? "vlan$lan->vlanid" : trim((string)$lan->interface);
+            if ($ifName === '') {
+                continue;
+            }
+
+            // Stop DHCPv6 client of this interface (Auto mode restarts its own)
+            // Trailing space: vlan10 must not match vlan100 ("-p <pidfile> -i <if>")
+            $pid = Processes::getPidOfProcess("/var/run/udhcpc6_$ifName ");
+            if (!empty($pid)) {
+                Processes::mwExec(Util::which('kill') . " $pid");
+            }
+
+            if ($canManageNetwork) {
+                $disableKey = "net.ipv6.conf.$ifName.disable_ipv6";
+                Processes::mwExec("$sysctl -w " . escapeshellarg("$disableKey=1"));
+                if ($lan->ipv6_mode !== '0') {
+                    // Re-enable right away: an invalid Manual config must not leave the
+                    // interface without even a link-local address
+                    Processes::mwExec("$sysctl -w " . escapeshellarg("$disableKey=0"));
+                }
+            }
+
+            $commands = $this->configureIpv6Interface(
+                $ifName,
+                (string)$lan->ipv6_mode,
+                (string)$lan->ipv6addr,
+                (string)$lan->ipv6_subnet,
+                (string)$lan->ipv6_gateway
+            );
+            if (!empty($commands)) {
+                $out = [];
+                Processes::mwExecCommands($commands, $out, 'ipv6');
+            }
+            SystemMessages::sysLogMsg(__METHOD__, "IPv6 reconfigured on $ifName (mode $lan->ipv6_mode), IPv4 untouched", LOG_INFO);
+        }
+
+        // The flush above also dropped custom IPv6 routes and anything modules put on the interface
+        $this->removeCustomStaticRoutes();
+        $this->addCustomStaticRoutes();
+        PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::ON_AFTER_NETWORK_CONFIGURED);
+    }
+
+    /**
      * Configures LAN interfaces
      *
      * @param bool $skipDhcpRestart If true, preserves running DHCP clients (DHCP renewal scenario)
@@ -993,7 +1056,7 @@ class Network extends Injectable
 
         // Conditionally kill DHCP clients based on what changed
         // Skip killall during DHCP renewal (only IP/DNS changed) to prevent restart loop
-        // Always killall when DHCP mode changes (static↔DHCP, IPv6 mode changes)
+        // Always killall when DHCP mode changes (static↔DHCP); IPv6-only changes go through ipv6Reconfigure()
         if (!$skipDhcpRestart) {
             $arr_commands[] = "$killall udhcpc";
             SystemMessages::sysLogMsg(__METHOD__, 'Killing all DHCP clients (mode change detected)', LOG_INFO);
@@ -1019,7 +1082,11 @@ class Network extends Injectable
                 // Override the interface name for VLAN interfaces
                 $arr_commands[] = "$vconfig set_name_type VLAN_PLUS_VID_NO_PAD";
                 // Add the new VLAN interface
-                $arr_commands[] = "$vconfig add {$if_data['interface_orign']} {$if_data['vlanid']}";
+                $arr_commands[] = self::buildVlanAddCommand(
+                    $vconfig,
+                    (string)$if_data['interface_orign'],
+                    (string)$if_data['vlanid']
+                );
             }
             // Disable and reset the interface
             $arr_commands[] = "$ifconfig $if_name down";
@@ -1368,6 +1435,24 @@ class Network extends Injectable
     }
 
     /**
+     * Build a shell-safe command for reading one network interface.
+     */
+    protected static function buildGetInterfaceCommand(string $ifconfig, string $name): string
+    {
+        return escapeshellarg($ifconfig) . ' ' . escapeshellarg($name) . ' 2>/dev/null';
+    }
+
+    /**
+     * Build a shell-safe command for creating one VLAN interface.
+     */
+    protected static function buildVlanAddCommand(string $vconfig, string $interface, string $vlanId): string
+    {
+        return escapeshellarg($vconfig)
+            . ' add ' . escapeshellarg($interface)
+            . ' ' . escapeshellarg($vlanId);
+    }
+
+    /**
      * Retrieves information about a specific network interface.
      * @param string $name The name of the network interface.
      * @return array<string, mixed> An array containing the interface information.
@@ -1378,7 +1463,7 @@ class Network extends Injectable
 
         // Get ifconfig's output for the specified interface.
         $ifconfig = Util::which('ifconfig');
-        Processes::mwExec("$ifconfig $name 2>/dev/null", $output);
+        Processes::mwExec(self::buildGetInterfaceCommand($ifconfig, $name), $output);
         $outputStr = implode(" ", $output ?? []);
 
         // Parse MAC address.

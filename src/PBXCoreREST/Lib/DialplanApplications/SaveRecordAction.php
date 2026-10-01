@@ -17,9 +17,10 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
- namespace MikoPBX\PBXCoreREST\Lib\DialplanApplications;
+namespace MikoPBX\PBXCoreREST\Lib\DialplanApplications;
 
- use MikoPBX\Common\Models\DialplanApplications;
+use MikoPBX\Common\Library\DialplanApplicationSecurity;
+use MikoPBX\Common\Models\DialplanApplications;
  use MikoPBX\Common\Models\Extensions;
  use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
@@ -58,7 +59,30 @@
      public static function main(array $data): PBXApiResult
      {
          $res = self::createApiResult(__METHOD__);
-         
+
+        // Validate raw identifiers before the string sanitizer can trim CR/LF
+        // or whitespace into an otherwise valid filename component.
+        $httpMethod = strtoupper((string)($data['httpMethod'] ?? 'POST'));
+        foreach (['id', 'uniqid'] as $identifierField) {
+            if (!array_key_exists($identifierField, $data)) {
+                continue;
+            }
+
+            $rawId = $data[$identifierField];
+            if ($rawId === null || $rawId === '') {
+                continue;
+            }
+
+            $isLegacyNumericReference = $httpMethod !== 'POST'
+                && is_string($rawId)
+                && ctype_digit($rawId);
+            if (!$isLegacyNumericReference && !DialplanApplicationSecurity::isValidId($rawId)) {
+                $res->messages['error'][] = 'api_DialplanApplicationInvalidId';
+                $res->httpCode = 422;
+                return $res;
+            }
+        }
+
         // Define sanitization rules - use 'sanitize' for text fields to follow "Store Raw, Escape at Edge"
         $sanitizationRules = [
             'id' => 'string',  // uniqid passed as id in REST API v3
@@ -85,7 +109,11 @@
             if (isset($data['applicationlogic'])) {
                 $sanitizedData['applicationlogic'] = $data['applicationlogic'];
             }
-             
+
+            // A caller-supplied ID is supported for migrations, but it must never
+            // become a path component outside the generated AGI scripts directory.
+            $recordId = $sanitizedData['id'] ?? $sanitizedData['uniqid'] ?? null;
+
             // Validate required fields using unified approach
             $validationRules = [
                 'name' => [
@@ -123,8 +151,6 @@
              // ============ PHASE 3: DETERMINE OPERATION ============
              // WHY: Decide between CREATE (new record) vs UPDATE (existing record)
              // Support both 'id' (REST v3) and 'uniqid' (legacy) fields
-             $recordId = $sanitizedData['id'] ?? $sanitizedData['uniqid'] ?? null;
-             $httpMethod = $data['httpMethod'] ?? 'POST';
              $app = null;
              $isNewRecord = true;
 

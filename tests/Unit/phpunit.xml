@@ -17,5 +17,11 @@
           processIsolation="true"
           stopOnFailure="false" 
           >
-
+    <php>
+        <!-- LoggerProvider adds LOG_PERROR unless this is set, and syslog then
+             echoes every logged line to stderr. With processIsolation the child
+             process's stderr is treated as a test error, so any code path that
+             logs a warning fails the test that exercises it. -->
+        <env name="SUPPRESS_CONSOLE_LOGS" value="1" force="true"/>
+    </php>
 </phpunit>

@@ -34,6 +34,7 @@ use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Configs\PbxConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
+use MikoPBX\Core\System\ConsoleMenu\Utilities\MenuStyleConfig;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\PBXCoreREST\Lib\SoundFiles\ConvertAudioFileAction;
@@ -448,8 +449,8 @@ class Storage extends Injectable
             }
             // Otherwise, prompt the user to enter a disk
             do {
-                echo PHP_EOL . Util::translate('Enter the device name:') . Util::translate('(default value = ') . $selected_disk['id'] . ') :';
-                $target_disk_storage = trim(fgets($fp));
+                $prompt = PHP_EOL . Util::translate('Enter the device name:') . Util::translate('(default value = ') . $selected_disk['id'] . ') :';
+                $target_disk_storage = trim(MenuStyleConfig::readLine($prompt, $fp));
                 if ($target_disk_storage === '') {
                     $target_disk_storage = $selected_disk['id'];
                 }
@@ -771,7 +772,8 @@ class Storage extends Injectable
                 SystemMessages::sysLogMsg(__METHOD__, "The file system type has changed {$disk['filesystemtype']} -> $formatFs. The disk will not be connected.");
                 continue;
             }
-            $str_uid = 'UUID=' . self::getUuid($dev);
+            $uuid = self::getUuid($dev);
+            $str_uid = "UUID=$uuid";
             $conf .= "$str_uid /storage/usbdisk{$disk['id']} $formatFs async,rw 0 0\n";
             $mount_point = "/storage/usbdisk{$disk['id']}";
             Util::mwMkdir($mount_point);
@@ -788,6 +790,14 @@ class Storage extends Injectable
                 echo("Result mount code $resultMountCode ...") . PHP_EOL;
             }
 
+            // Pin a legacy 'STORAGE-DISK-*' row to the mounted partition, so the next boot finds it by UUID
+            // and does not depend on disk names (#1131). Only a partition that already holds MikoPBX data
+            // is pinned (createWorkDirs() has not run yet), so a wrong name-based guess stays temporary.
+            if ($resultMountCode === 0 && $uuid !== ''
+                && self::isLegacyUniqid($disk['uniqid']) && is_dir("$mount_point/mikopbx")) {
+                SystemMessages::sysLogMsg(__METHOD__, "Storage {$disk['id']}: uniqid {$disk['uniqid']} -> $uuid ($dev)", LOG_WARNING);
+                $this->saveDiskSettings(['uniqid' => $uuid], $disk['id']);
+            }
         }
 
         // Save the configuration to the fstab file
@@ -1001,7 +1011,8 @@ class Storage extends Injectable
      */
     private function getStorageDev(array $disk, string $cf_disk): string
     {
-        if (!empty($disk['uniqid']) && !str_contains($disk['uniqid'], 'STORAGE-DISK')) {
+        $legacyUniqid = self::isLegacyUniqid($disk['uniqid']);
+        if (!$legacyUniqid) {
             // Find the partition name by UID.
             $lsblk = Util::which('lsblk');
             $grep = Util::which('grep');
@@ -1016,12 +1027,69 @@ class Storage extends Injectable
         // Determine the disk by its name.
         if ($disk['device'] !== "/dev/$cf_disk") {
             // If it's a regular disk, use partition 1.
-            $part = "1";
-        } else {
-            // If it's a system disk, attempt to connect partition 4.
-            $part = "4";
+            return self::getDevPartName($disk['device'], '1');
         }
-        return  self::getDevPartName($disk['device'], $part);
+
+        // The configured device is the system disk now. Kernel disk names are not stable between boots,
+        // so it may be a separate storage disk that swapped names with the system disk (#1131).
+        $otherStorage = $legacyUniqid ? $this->findUnmountedStorageDisk() : '';
+        $dev = self::pickSystemDiskFallback($otherStorage, self::getDevPartName($disk['device'], '4'), $legacyUniqid);
+        if ($otherStorage !== '') {
+            SystemMessages::sysLogMsg(__METHOD__, "{$disk['device']} is the system disk now, using storage partition $otherStorage found on another disk", LOG_WARNING);
+        } elseif ($dev === '') {
+            SystemMessages::sysLogMsg(__METHOD__, "Storage partition UUID={$disk['uniqid']} not found, refusing to mount system partition 4 in its place", LOG_ERR);
+        }
+        return $dev;
+    }
+
+    /**
+     * Chooses the storage partition when the configured device turned out to be the system disk.
+     *
+     * Only legacy rows fall back by name: they cannot tell a single-disk install from a separate disk,
+     * so a MikoPBX storage partition on another disk wins, then system partition 4. A row with a real
+     * UUID that was not found must not be replaced by a name-based guess.
+     *
+     * @param string $otherStorage Unmounted storage partition found on a non-system disk, or ''.
+     * @param string $systemPart4 Partition 4 of the system disk.
+     * @param bool $legacyUniqid Whether the row stores a 'STORAGE-DISK-*' placeholder instead of the UUID.
+     * @return string The partition to mount, or '' to mount nothing.
+     */
+    public static function pickSystemDiskFallback(string $otherStorage, string $systemPart4, bool $legacyUniqid): string
+    {
+        if (!$legacyUniqid) {
+            return '';
+        }
+        return $otherStorage !== '' ? $otherStorage : $systemPart4;
+    }
+
+    /**
+     * Installations made before #374 store a 'STORAGE-DISK-*' placeholder instead of the partition UUID.
+     *
+     * @param string|null $uniqid The m_Storage.uniqid value.
+     * @return bool
+     */
+    public static function isLegacyUniqid(?string $uniqid): bool
+    {
+        return empty($uniqid) || str_contains($uniqid, 'STORAGE-DISK');
+    }
+
+    /**
+     * Finds partition 1 with MikoPBX storage layout on an unmounted non-system disk.
+     *
+     * @return string The partition path, or '' if there is none.
+     */
+    private function findUnmountedStorageDisk(): string
+    {
+        foreach ($this->getAllHdd() as $hdd) {
+            if ($hdd['sys_disk'] || !empty($hdd['mounted'])) {
+                continue;
+            }
+            $partition = self::getDevPartName($hdd['id'], '1');
+            if ($partition !== '' && self::isStorageDisk($partition)) {
+                return $partition;
+            }
+        }
+        return '';
     }
 
     /**
@@ -1569,9 +1637,10 @@ class Storage extends Injectable
     /**
      * Get storage usage breakdown by categories.
      *
+     * @param callable(): void|null $progressCallback Invoked while slow disk scans are running.
      * @return array An array with storage usage information by category.
      */
-    public function getStorageUsageByCategory(): array
+    public function getStorageUsageByCategory(?callable $progressCallback = null): array
     {
         $result = [
             'total_size' => 0,
@@ -1658,7 +1727,7 @@ class Storage extends Injectable
         }
 
         // Run all du commands in parallel via a single shell invocation
-        $pathSizes = $this->getDirectorySizesBatchMb($pathToCategory, $tempDir);
+        $pathSizes = $this->getDirectorySizesBatchMb($pathToCategory, $tempDir, $progressCallback);
 
         // Aggregate sizes by category
         foreach ($categoryPaths as $category => $paths) {
@@ -1879,9 +1948,14 @@ class Storage extends Injectable
      *
      * @param array<string, string> $pathToCategory Map of path => category name
      * @param string $tempDir Path to temp directory (swapfile excluded here)
+     * @param callable(): void|null $progressCallback Invoked while du processes are running.
      * @return array<string, float> Map of path => size in MB
      */
-    private function getDirectorySizesBatchMb(array $pathToCategory, string $tempDir): array
+    private function getDirectorySizesBatchMb(
+        array $pathToCategory,
+        string $tempDir,
+        ?callable $progressCallback = null
+    ): array
     {
         if (empty($pathToCategory)) {
             return [];
@@ -1911,7 +1985,11 @@ class Storage extends Injectable
 
         // Execute all du commands in parallel
         $shellScript = implode("\n", $commands);
-        Processes::mwExec($shellScript);
+        if ($progressCallback === null) {
+            Processes::mwExec($shellScript);
+        } else {
+            (new HeartbeatProcessRunner())->run($shellScript, $progressCallback);
+        }
 
         // Collect results
         $index = 0;

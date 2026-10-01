@@ -168,6 +168,7 @@ FilesAPI.configureResumable = function () {
     simultaneousUploads: 1,
     maxFiles: 1,
     fileType: [],
+    permanentErrors: [400, 401, 403, 404, 409, 415, 422, 429, 500, 501],
     headers: headersFunction
   }, resumableConfig);
 };
@@ -343,6 +344,7 @@ FilesAPI.removeAudioFile = function (filePath) {
 
 FilesAPI.attachToBtn = function (buttonId, fileTypes, callback) {
   var inputName = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+  var category = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
   var buttonElement = document.getElementById(buttonId);
 
   if (!buttonElement) {
@@ -357,7 +359,8 @@ FilesAPI.attachToBtn = function (buttonId, fileTypes, callback) {
       var extension = originalName.split('.').pop();
       var finalFilename = nameWithoutExt + '.' + extension;
       return {
-        resumableFilename: finalFilename
+        resumableFilename: finalFilename,
+        category: category
       };
     }
   });

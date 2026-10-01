@@ -64,6 +64,19 @@ class BeanstalkClient extends Injectable
      */
     private const int RECEIVE_TIMEOUT_SECONDS = 10;
 
+    /**
+     * Reserve count after which a job is taken out of rotation instead of being
+     * retried. Every reserve increments this counter, including reserves that
+     * ended because the worker was restarted (its connection dropped and
+     * beanstalkd returned the still-reserved job to ready). A single module
+     * operation can restart WorkerModelsEvents a handful of times, so the old
+     * threshold of 3 dropped perfectly good, idempotent reload jobs during a
+     * restart storm. Reload actions are idempotent and high-TTR, so a higher
+     * threshold is safe: it only bounds how many times a repeatedly-orphaned or
+     * failing job is redelivered before wait() takes it out of rotation.
+     */
+    private const int MAX_JOB_RESERVES = 15;
+
     /** @var Pheanstalk */
     private Pheanstalk $queue;
     private bool $connected = false;
@@ -445,9 +458,10 @@ class BeanstalkClient extends Injectable
             );
             return;
         }
-        if ($stats->reserves > 3) {
+        if ($stats->reserves > self::MAX_JOB_RESERVES) {
             // Probably an exception did happen during the previous job execution, force to delete it.
-            $errorMessage  = 'This job has attempted to execute more than 3 times without success.' . PHP_EOL;
+            $errorMessage  = 'This job has attempted to execute more than ' . self::MAX_JOB_RESERVES
+                . ' times without success.' . PHP_EOL;
             $errorMessage .= '  Job reserves: ' . $stats->reserves . PHP_EOL;
             $errorMessage .= '  Job tube: ' . $stats->tube->value . PHP_EOL;
             $errorMessage .= '  Message: ' . json_encode($this->message);

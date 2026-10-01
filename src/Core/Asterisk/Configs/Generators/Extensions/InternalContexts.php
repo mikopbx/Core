@@ -260,7 +260,7 @@ class InternalContexts extends AsteriskConfigClass
             $conf .= 'exten => _' . $pickupExtension . $this->extensionPattern . ',1,Set(PICKUPEER=' . $this->technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
             // For PJSIP channels: append X-CHAN-ID SIP header to PICKUPEER if present
             // This allows picking up a specific channel when multiple calls ring the same extension
-            $conf .= 'same => n,Set(X_CHAN_ID=${PJSIP_HEADER(read,X-CHAN-ID)})' . "\n\t";
+            $conf .= 'same => n,Set(X_CHAN_ID=${FILTER(A-Za-z0-9,${PJSIP_HEADER(read,X-CHAN-ID)})})' . "\n\t";
             $conf .= 'same => n,ExecIf($["${X_CHAN_ID}x" != "x"]?Set(PICKUPEER=${PICKUPEER}-${X_CHAN_ID}))' . "\n\t";
             $conf .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";
             $conf .= 'same => n,PickupChan(${PICKUPEER})' . "\n\t";

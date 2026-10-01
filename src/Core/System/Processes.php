@@ -589,9 +589,93 @@ class Processes
         if ($di !== null && $di->getShared('config')->path('core.debugMode')) {
             echo "mwExec(): $command\n";
         } else {
-            exec("$command 2>&1", $outArr, $retVal);
+            $safeCommand = self::wrapCommandWithClosedDescriptors($command);
+            exec("$safeCommand 2>&1", $outArr, $retVal);
         }
         return $retVal;
+    }
+
+    /**
+     * Closes descriptors inherited from the PHP worker before starting a child.
+     */
+    private static function wrapCommandWithClosedDescriptors(string $command): string
+    {
+        if (!is_dir('/proc/self/fd') || !is_executable('/bin/sh')) {
+            return $command;
+        }
+
+        $closeDescriptors = self::closeInheritedDescriptorsShell() . <<<'SH'
+
+exec "$1" -c "$2"
+SH;
+
+        return escapeshellarg('/bin/sh')
+            . ' -c ' . escapeshellarg($closeDescriptors)
+            . ' -- ' . escapeshellarg('/bin/sh')
+            . ' ' . escapeshellarg($command);
+    }
+
+    /**
+     * Starts a process after closing descriptors inherited from the PHP worker.
+     *
+     * @param array|string $command
+     * @param array $descriptorSpec
+     * @param array $pipes
+     * @param array|null $environment
+     * @param array $options
+     * @return resource|false
+     */
+    public static function openProcess(
+        array|string $command,
+        array $descriptorSpec,
+        array &$pipes,
+        ?string $workingDirectory = null,
+        ?array $environment = null,
+        array $options = []
+    ) {
+        return proc_open(
+            self::wrapProcOpenCommandWithClosedDescriptors($command),
+            $descriptorSpec,
+            $pipes,
+            $workingDirectory,
+            $environment,
+            $options
+        );
+    }
+
+    /**
+     * @return array|string
+     */
+    private static function wrapProcOpenCommandWithClosedDescriptors(array|string $command): array|string
+    {
+        if (!is_dir('/proc/self/fd') || !is_executable('/bin/sh')) {
+            return $command;
+        }
+
+        if (is_string($command)) {
+            return self::wrapCommandWithClosedDescriptors($command);
+        }
+
+        $closeDescriptors = self::closeInheritedDescriptorsShell() . <<<'SH'
+
+exec "$@"
+SH;
+
+        return array_merge(
+            ['/bin/sh', '-c', $closeDescriptors, '--'],
+            array_map(static fn(mixed $argument): string => (string)$argument, $command)
+        );
+    }
+
+    private static function closeInheritedDescriptorsShell(): string
+    {
+        return <<<'SH'
+for fd_path in /proc/self/fd/[3-9] /proc/self/fd/[1-9][0-9]*; do
+    [ -e "$fd_path" ] || continue
+    fd=${fd_path##*/}
+    eval "exec ${fd}>&-"
+done
+SH;
     }
 
     /**
@@ -615,7 +699,8 @@ class Processes
 
         $nohup = Util::which('nohup');
         $timeoutBin = Util::which('timeout');
-        exec("$nohup $timeoutBin $timeout $command > $logName 2>&1 &");
+        $backgroundCommand = "$nohup $timeoutBin $timeout $command > $logName 2>&1 &";
+        exec(self::wrapCommandWithClosedDescriptors($backgroundCommand));
     }
 
     /**
@@ -1142,7 +1227,7 @@ class Processes
         } else {
             $noopCommand = "$nohup $command > $outFile 2>&1 &";
         }
-        exec($noopCommand);
+        exec(self::wrapCommandWithClosedDescriptors($noopCommand));
     }
 
     /**

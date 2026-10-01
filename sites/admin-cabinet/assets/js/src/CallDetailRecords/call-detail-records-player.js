@@ -36,6 +36,69 @@ class CDRPlayer {
     }
 
     /**
+     * Read a response stream while reporting cumulative byte counts.
+     * Falls back to Response.blob() for browsers without ReadableStream support.
+     *
+     * @param {Response} response
+     * @param {Function} onProgress
+     * @returns {Promise<Blob>}
+     */
+    static readResponseBody(response, onProgress) {
+        const total = Number.parseInt(response.headers.get('Content-Length'), 10) || 0;
+        const contentType = response.headers.get('Content-Type') || 'application/octet-stream';
+
+        if (!response.body || typeof response.body.getReader !== 'function') {
+            return response.blob().then((blob) => {
+                onProgress(blob.size, total || blob.size);
+                return blob;
+            });
+        }
+
+        const reader = response.body.getReader();
+        const chunks = [];
+        let loaded = 0;
+
+        const readNextChunk = () => reader.read().then(({ done, value }) => {
+            if (done) {
+                return new Blob(chunks, { type: contentType });
+            }
+
+            chunks.push(value);
+            loaded += value.byteLength;
+            onProgress(loaded, total);
+            return readNextChunk();
+        });
+
+        return readNextChunk();
+    }
+
+    /**
+     * Build a compact, language-neutral download progress label.
+     *
+     * @param {number} loaded
+     * @param {number} total
+     * @param {number} elapsedMs
+     * @returns {string}
+     */
+    static formatDownloadProgress(loaded, total, elapsedMs) {
+        const bytesPerSecond = elapsedMs > 0 ? loaded / (elapsedMs / 1000) : 0;
+        const rate = bytesPerSecond >= 1024 * 1024
+            ? `${(bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s`
+            : `${Math.round(bytesPerSecond / 1024)} KB/s`;
+
+        if (total <= 0) {
+            return `${(loaded / (1024 * 1024)).toFixed(1)} MB · ${rate}`;
+        }
+
+        const percent = Math.min(100, Math.round((loaded / total) * 100));
+        const remainingSeconds = bytesPerSecond > 0
+            ? Math.max(0, Math.round((total - loaded) / bytesPerSecond))
+            : 0;
+
+        return `${percent}% · ${rate} · ${remainingSeconds} sec`;
+    }
+
+    /**
      * Creates an instance of CDRPlayer.
      * @param {string} id - The ID of the player.
      */
@@ -85,6 +148,10 @@ class CDRPlayer {
 
         // Initialize download format dropdown
         const $downloadDropdown = $row.find('.download-format-dropdown');
+        this.$downloadDropdown = $downloadDropdown;
+        this.$downloadProgress = $('<span class="ui tiny basic label cdr-download-progress"></span>')
+            .hide()
+            .insertAfter($downloadDropdown);
         if ($downloadDropdown.length > 0) {
             $downloadDropdown.dropdown({
                 action: 'hide',
@@ -685,6 +752,11 @@ class CDRPlayer {
                 headers['Authorization'] = `Bearer ${TokenManager.accessToken}`;
             }
 
+            const startedAt = performance.now();
+            this.$downloadDropdown.addClass('disabled');
+            this.$downloadDropdown.find('i.download').addClass('loading spinner').removeClass('download');
+            this.$downloadProgress.text('0%').show();
+
             // Fetch file with authentication
             fetch(fullUrl, { headers })
                 .then(response => {
@@ -709,7 +781,14 @@ class CDRPlayer {
                         }
                     }
 
-                    return response.blob().then(blob => ({ blob, filename }));
+                    return CDRPlayer.readResponseBody(response, (loaded, total) => {
+                        const progressText = CDRPlayer.formatDownloadProgress(
+                            loaded,
+                            total,
+                            performance.now() - startedAt
+                        );
+                        this.$downloadProgress.text(progressText);
+                    }).then(blob => ({ blob, filename }));
                 })
                 .then(({ blob, filename }) => {
                     // Create download link
@@ -722,14 +801,25 @@ class CDRPlayer {
                     a.click();
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
+                    this.resetDownloadProgress();
                 })
                 .catch(error => {
+                    this.resetDownloadProgress();
                     UserMessage.showMultiString(error.message, globalTranslate.cdr_AudioFileDownloadError);
                 });
         } else {
             // Legacy direct file URL (no auth needed)
             window.location = downloadUrl;
         }
+    }
+
+    /**
+     * Restore the download control after completion or failure.
+     */
+    resetDownloadProgress() {
+        this.$downloadDropdown.removeClass('disabled');
+        this.$downloadDropdown.find('i.spinner').removeClass('loading spinner').addClass('download');
+        this.$downloadProgress.hide().text('');
     }
 
     /**

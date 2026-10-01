@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
@@ -20,13 +21,16 @@
 namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
 
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\Configs\SoundFilesConf;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Files\UploadFileAction;
 use Phalcon\Di\Injectable;
+use Phalcon\Di\Di;
 
 /**
  * Action for converting audio files using Asterisk
@@ -69,8 +73,18 @@ class ConvertAudioFileAction extends Injectable
             return $res;
         }
 
-        $tempFilename = $data['temp_filename'];
-        $category = $data['category'];
+        $tempFilename = (string)$data['temp_filename'];
+        $category = (string)$data['category'];
+
+        // Treat the API path as untrusted even when upload validation already
+        // ran. The file must still be a real, supported audio file located in
+        // upload-cache immediately before it can be moved or passed to FFmpeg.
+        $validationResult = self::validateUploadedSource($tempFilename, $category);
+        if (!$validationResult['valid']) {
+            $res->messages['error'][] = $validationResult['error'];
+            return $res;
+        }
+        $tempFilename = $validationResult['path'];
 
         // Step 1: Move file to appropriate directory based on category
         $moveResult = self::moveSoundFileAccordingToCategory($category, $tempFilename);
@@ -90,8 +104,59 @@ class ConvertAudioFileAction extends Injectable
 
         $res->success = true;
         $res->data = $convertResult->data;
+        $canonicalPath = (string)($convertResult->data[0] ?? '');
+        $redis = Di::getDefault()?->getShared(RedisClientProvider::SERVICE_NAME);
+        if ($canonicalPath === '' || $redis === null) {
+            $res->success = false;
+            $res->messages['error'][] = 'Unable to create sound-file conversion ticket';
+            return $res;
+        }
+        $tickets = new SoundFileConversionTicket(
+            static fn(string $key, string $value, int $ttl) => $redis->set($key, $value, $ttl),
+            static fn(string $key) => $redis->get($key),
+            static fn(string $key) => $redis->delete($key)
+        );
+        $res->data = [
+            0 => $canonicalPath, // Backward-compatible response for older API clients.
+            'path' => $canonicalPath,
+            'conversion_id' => $tickets->issue($canonicalPath, $category),
+        ];
 
         return $res;
+    }
+
+    /**
+     * Confine and validate an uploaded source before moving or probing it.
+     * Invalid files are removed only after proving they are inside upload-cache.
+     * Paths outside the cache (including escaping symlinks) are never modified.
+     *
+     * @return array{valid: bool, path?: string, error: string}
+     */
+    private static function validateUploadedSource(string $filename, string $category): array
+    {
+        $uploadRoot = realpath(Directories::getDir(Directories::WWW_UPLOAD_DIR));
+        $sourcePath = realpath($filename);
+        if ($uploadRoot === false || $sourcePath === false || !is_file($sourcePath)) {
+            return ['valid' => false, 'error' => 'Uploaded audio file was not found'];
+        }
+
+        $insideUploadCache = str_starts_with($sourcePath, $uploadRoot . DIRECTORY_SEPARATOR);
+        if (!$insideUploadCache) {
+            return ['valid' => false, 'error' => 'Uploaded audio file is outside upload-cache'];
+        }
+
+        if (!in_array($category, [SoundFiles::CATEGORY_CUSTOM, SoundFiles::CATEGORY_MOH], true)) {
+            @unlink($sourcePath);
+            return ['valid' => false, 'error' => "Invalid category: $category"];
+        }
+
+        $audioValidation = UploadFileAction::validateAudioFile($sourcePath);
+        if (!$audioValidation['valid']) {
+            @unlink($sourcePath);
+            return ['valid' => false, 'error' => $audioValidation['error'] ?? 'Invalid audio file'];
+        }
+
+        return ['valid' => true, 'path' => $sourcePath, 'error' => ''];
     }
 
     /**
@@ -340,6 +405,11 @@ class ConvertAudioFileAction extends Injectable
         // Move file to target location
         $mv = Util::which('mv');
         Processes::mwExec("$mv " . escapeshellarg($uploadedFilename) . " " . escapeshellarg($targetPath));
+
+        if (!is_file($targetPath)) {
+            $res->success = false;
+            $res->messages['error'][] = 'Failed to move uploaded audio file';
+        }
 
         return $res;
     }

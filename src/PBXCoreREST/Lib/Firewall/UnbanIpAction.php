@@ -50,13 +50,15 @@ class UnbanIpAction extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         $res->success = true;
-        if ( ! Verify::isIpAddress($ip)) {
+        if (!Verify::isIpAddress($ip)) {
             $res->success = false;
-            $res->messages[]="Not valid ip '$ip'.";
+            $res->messages[] = 'Not valid IP address.';
+            return $res;
         }
         if (Fail2BanConf::fail2BanEnable()) {
             $fail2ban = Util::which(Fail2BanConf::FB_CLIENT_BIN);
-            $res->success  = (Processes::mwExec("$fail2ban unban $ip") === 0);
+            $command = self::buildFail2BanUnbanCommand($fail2ban, $ip);
+            $res->success  = (Processes::mwExec($command) === 0);
         } else {
             $res = self::fail2banUnbanDb($ip);
         }
@@ -77,33 +79,58 @@ class UnbanIpAction extends Injectable
      * @param string $jail The jail name (optional).
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function fail2banUnbanDb(string $ip, string $jail = ''): PBXApiResult
+    public static function fail2banUnbanDb(string $ip, string $jail = '', ?SQLite3 $database = null): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $jail_q  = ($jail === '') ? '' : "AND jail = '$jail'";
+        if (!Verify::isIpAddress($ip)) {
+            $res->success = false;
+            $res->messages[] = 'Not valid IP address.';
+            return $res;
+        }
+
         $path_db = Fail2BanConf::FAIL2BAN_DB_PATH;
-        if(!file_exists($path_db)){
+        if ($database === null && !file_exists($path_db)) {
             // Database table does not exist. No ban.
             $res->success    = false;
             $res->messages[] = "DB $path_db not found";
             return $res;
         }
-        $db      = new SQLite3($path_db);
+        $db = $database ?? new SQLite3($path_db);
         $db->busyTimeout(3000);
         if (false === Fail2BanConf::tableBanExists($db)) {
             // Database table does not exist. No ban.
             $res->success = true;
             return $res;
         }
-        $q = 'DELETE' . " FROM bans WHERE ip = '$ip' $jail_q";
-        $db->query($q);
+        $query = 'DELETE FROM bans WHERE ip = :ip';
+        if ($jail !== '') {
+            $query .= ' AND jail = :jail';
+        }
+
+        $statement = $db->prepare($query);
+        if ($statement === false) {
+            $res->success = false;
+            $res->messages[] = $db->lastErrorMsg();
+            return $res;
+        }
+
+        $statement->bindValue(':ip', $ip, SQLITE3_TEXT);
+        if ($jail !== '') {
+            $statement->bindValue(':jail', $jail, SQLITE3_TEXT);
+        }
+        $statement->execute();
 
         $err = $db->lastErrorMsg();
 
         $res->success = ($err === 'not an error');
         $res->messages[] = $err;
         return $res;
+    }
+
+    private static function buildFail2BanUnbanCommand(string $executable, string $ip): string
+    {
+        return escapeshellarg($executable) . ' unban ' . escapeshellarg($ip);
     }
 }

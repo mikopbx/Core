@@ -47,6 +47,7 @@ class TestCallsBase {
 
     private AsteriskManager $am;
     private int $countFiles;
+    private bool $assertNoRecordingSources = false;
 
     public function __construct(){
         $db_data = self::getIdlePeers();
@@ -231,12 +232,24 @@ class TestCallsBase {
      * @param array $sampleCDR
      * @param array|null $rules
      * @param int $countFiles
+     * @param bool $assertNoRecordingSources
      */
-    public static function executeTest(array $sampleCDR, ?array $rules = null, int $countFiles = 0): void
+    public static function executeTest(
+        array $sampleCDR,
+        ?array $rules = null,
+        int $countFiles = 0,
+        bool $assertNoRecordingSources = false
+    ): void
     {
         $testName = basename(dirname(debug_backtrace()[0]['file']));
         $test = new self();
-        $success = $test->runTest($testName, $sampleCDR, $rules, $countFiles);
+        $success = $test->runTest(
+            $testName,
+            $sampleCDR,
+            $rules,
+            $countFiles,
+            $assertNoRecordingSources
+        );
         exit($success ? 0 : 1);
     }
 
@@ -246,15 +259,23 @@ class TestCallsBase {
      * @param array  $sampleCDR
      * @param ?array  $rules
      * @param int $countFiles
+     * @param bool $assertNoRecordingSources
      * @return bool true если тест прошёл успешно
      */
-    public function runTest(string $testName, array $sampleCDR, ?array $rules=null, int $countFiles=0): bool{
+    public function runTest(
+        string $testName,
+        array $sampleCDR,
+        ?array $rules = null,
+        int $countFiles = 0,
+        bool $assertNoRecordingSources = false
+    ): bool{
 
         self::printHeader('Start test '. $testName .' ...');
         self::printInfo("aNum: $this->aNum, bNum: $this->bNum, cNum: $this->cNum, offNum: $this->offNum");
         $this->testDirName = $testName;
         $this->sampleCDR   = $sampleCDR;
         $this->countFiles  = $countFiles;
+        $this->assertNoRecordingSources = $assertNoRecordingSources;
 
         $this->cpConfig();
         $this->cleanCdr();
@@ -465,7 +486,72 @@ class TestCallsBase {
             self::printError("Recording file count mismatch: got ".count($rcFiles).", expected ".$this->countFiles);
             return false;
         }
+        if($this->assertNoRecordingSources && !$this->checkNoRecordingSourcesRemain($rows)){
+            return false;
+        }
         return $success;
+    }
+
+    /**
+     * Checks that WorkerWav2Webm removed the temporary sources for every CDR leg.
+     *
+     * This detects recordings started for a preliminary leg but never referenced
+     * by the final CDR, such as the duplicate MixMonitor previously created on pickup.
+     */
+    private function checkNoRecordingSourcesRemain(array $rows): bool
+    {
+        $monitorDir = rtrim(Directories::getDir(Directories::AST_MONITOR_DIR), '/');
+        $uniqueIdsByDirectory = [];
+
+        foreach ($rows as $row) {
+            $uniqueId = trim((string)($row['UNIQUEID'] ?? ''));
+            $startedAt = strtotime((string)($row['start'] ?? ''));
+            if ($uniqueId === '' || $startedAt === false) {
+                continue;
+            }
+
+            $directory = $monitorDir . '/' . date('Y/m/d/H', $startedAt);
+            $uniqueIdsByDirectory[$directory][] = str_replace('/', '_', $uniqueId);
+        }
+
+        $remainingSources = [];
+        for ($waited = 0; $waited < 5; $waited++) {
+            $remainingSources = [];
+            foreach ($uniqueIdsByDirectory as $directory => $uniqueIds) {
+                if (!is_dir($directory)) {
+                    continue;
+                }
+
+                $iterator = new \FilesystemIterator($directory, \FilesystemIterator::SKIP_DOTS);
+                foreach ($iterator as $fileInfo) {
+                    if (!$fileInfo->isFile()) {
+                        continue;
+                    }
+
+                    $fileName = $fileInfo->getFilename();
+                    if (!preg_match('/(?:_(?:in|out))?\.(?:wav|wav16|wav48)$/', $fileName)) {
+                        continue;
+                    }
+
+                    foreach (array_unique($uniqueIds) as $uniqueId) {
+                        if (str_starts_with($fileName, $uniqueId)) {
+                            $remainingSources[] = $fileInfo->getPathname();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($remainingSources === []) {
+                return true;
+            }
+            sleep(1);
+        }
+
+        self::printError(
+            "Temporary recording sources remain after conversion:\n" . implode("\n", $remainingSources)
+        );
+        return false;
     }
 
     protected function cpConfig(): void

@@ -306,6 +306,17 @@ class SaveConfigAction
             }
         }
 
+        // Validate dynamic VLAN fields submitted by the network form.
+        foreach ($data as $key => $value) {
+            if (!preg_match('/^vlanid_\d+$/D', $key)) {
+                continue;
+            }
+
+            if (!LanInterfaces::isValidVlanId($value)) {
+                $messages[] = 'nw_ValidateVlanRange';
+            }
+        }
+
         return [empty($messages), $messages];
     }
 

@@ -830,10 +830,12 @@ const callQueueModifyRest = {
             }
         });
 
-        // Validate that members exist
-        if (members.length === 0) {
+        // An empty queue is safe only when calls have an explicit fallback route.
+        if (members.length === 0 && !result.data.redirect_to_extension_if_empty) {
             result = false;
-            callQueueModifyRest.$errorMessages.html(globalTranslate.cq_ValidateNoExtensions);
+            callQueueModifyRest.$errorMessages.html(
+                `${globalTranslate.cq_ValidateNoExtensions}. ${globalTranslate.cq_RedirectToExtensionIfEmtyQueue}`
+            );
             callQueueModifyRest.$formObj.addClass('error');
             return result;
         }

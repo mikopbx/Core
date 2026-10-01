@@ -773,7 +773,7 @@ end
     - It retrieves the interception channel and the caller's account name.
     - It sets the action, source channel, source number, and destination number for the dial interception event.
     - It retrieves the linked ID, unique ID, and other related details of the call.
-    - If the channel is using PJSIP, it retrieves the source call ID.
+    - If the channel is using PJSIP, it retrieves the destination call ID.
     - The function sets the caller's account information.
     - It sets the unique ID as a variable for further use.
     - It sends a user event with the call information.
@@ -808,7 +808,8 @@ function event_dial_interception()
     local from_account = getAccountName(interceptionChannel);
 
     local dst_num, src_num;
-    data['action'] = "dial";
+    data['action']       = "dial";
+    data['action_extra'] = "interception_bridge";
     dst_num  	        = get_variable("CALLERID(num)")
     src_num  	        = get_variable("EXTEN")
     from_account = '';
@@ -830,10 +831,10 @@ function event_dial_interception()
         data['verbose_call_id'] = data['verbose_call_id'] .. "&".. origCallId;
     end
 
-    -- Retrieve the source call ID (from PJSIP or cached)
-    local src_call_id = getSrcCallId();
-    if(src_call_id ~= '') then
-        data['src_call_id'] = src_call_id;
+    -- The current channel is the answered interception destination.
+    local dst_call_id = getSrcCallId();
+    if(dst_call_id ~= '') then
+        data['dst_call_id'] = dst_call_id;
     end
 
     -- Set the caller's account information
@@ -1093,6 +1094,18 @@ function event_dial_answer()
         set_variable("PICKUPEER", "");
         data['old_id'] = id;
         data['id'] = get_variable('UNIQUEID')..'_'..generateRandomString(6);
+        -- The pickup CDR row is cloned by ActionDialAnswer::fillPickUpCdr from the intercepted
+        -- party's leg, so without this its dst_name would show that party instead of the agent
+        -- who picked the call up. Resolve the answering extension's own display name here, in
+        -- channel and without AMI, from its PJSIP endpoint config (same source dial_create_chan
+        -- uses). dst_num is the answering extension number, which is also the base endpoint name.
+        local pickup_cid = get_variable("PJSIP_ENDPOINT(" .. data['dst_num'] .. ",callerid)");
+        if(pickup_cid ~= '')then
+            local pickup_name = pickup_cid:match('"([^"]+)"');
+            if(pickup_name and pickup_name ~= '' and pickup_name ~= data['dst_num'])then
+                data['dst_name'] = pickup_name;
+            end
+        end
     end
 
     local masterChannel = get_variable('MASTER_CHANNEL(CHANNEL)');

@@ -273,6 +273,7 @@ ModulesAPI.createOperationWatchdog = function(options) {
         maxStallMs: 180000,
         onTerminal: () => {},
         onStalled: () => {},
+        onProgress: () => {},
         ...options,
     };
 
@@ -292,6 +293,7 @@ ModulesAPI.createOperationWatchdog = function(options) {
         baselineOperationId: '',
         baselineResolved: false,
         lastActivityAt: 0,
+        lastEventAt: 0,
         lastProgress: -1,
         lastHeartbeatAt: 0,
         pollBusy: false,
@@ -359,6 +361,7 @@ ModulesAPI.createOperationWatchdog = function(options) {
         state.lastProgress = data.progress;
         if (moved && data.stale !== true) {
             state.lastActivityAt = Date.now();
+            settings.onProgress(data);
         }
         checkStall();
     };
@@ -423,7 +426,9 @@ ModulesAPI.createOperationWatchdog = function(options) {
         if (!state.baselineResolved) {
             resolveBaseline(); // keep retrying after a failed first attempt
         }
-        if (Date.now() - state.lastActivityAt < settings.silenceMs) {
+        // Only nchan events suppress polling: journal progress must keep the
+        // polls coming, otherwise the bar freezes between stage boundaries
+        if (Date.now() - state.lastEventAt < settings.silenceMs) {
             return; // events are flowing, no need to poll
         }
         poll();
@@ -441,6 +446,7 @@ ModulesAPI.createOperationWatchdog = function(options) {
             state.baselineOperationId = '';
             state.baselineResolved = false;
             state.lastActivityAt = Date.now();
+            state.lastEventAt = Date.now();
             state.lastProgress = -1;
             state.lastHeartbeatAt = 0;
             state.pollBusy = false;
@@ -466,6 +472,7 @@ ModulesAPI.createOperationWatchdog = function(options) {
                 return;
             }
             state.lastActivityAt = Date.now();
+            state.lastEventAt = Date.now();
             if (state.operationId === '' && response.operationId) {
                 state.operationId = response.operationId;
             }

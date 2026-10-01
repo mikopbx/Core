@@ -135,6 +135,8 @@ trait PbxSettingsConstantsTrait
     /** @FieldType('integer') */
     public const string AMI_PORT = 'AMIPort';
     /** @FieldType('boolean') */
+    public const string AMI_STALLED_SESSION_AUTO_KICK = 'AMIStalledSessionAutoKick';
+    /** @FieldType('boolean') */
     public const string AJAM_ENABLED = 'AJAMEnabled';
     /** @FieldType('integer') */
     public const string AJAM_PORT = 'AJAMPort';

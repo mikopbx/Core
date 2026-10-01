@@ -78,18 +78,19 @@ class CheckWebPasswords extends Injectable
         $storedPassword = $passwords->web;
         $defaultPassword = $passwords->webByDefault;
 
-        // 1. Plain text match (legacy)
-        if ($storedPassword === $defaultPassword) {
+        // 1. Built-in default password (SHA-512 hash or legacy plain text).
+        if (PasswordService::matchesStoredPassword($defaultPassword, $storedPassword)) {
             return true;
         }
 
-        // 2. SHA-512 hash of default password
-        if (PasswordService::isSha512Hash($storedPassword)) {
-            return PasswordService::verifySha512Hash($defaultPassword, $storedPassword);
-        }
-
-        // 3. Check if password equals cloud instance ID (auto-provisioned default)
-        if (!empty($passwords->cloudInstanceId) && $storedPassword === $passwords->cloudInstanceId) {
+        // 2. Auto-provisioned cloud default: the stored password still equals the
+        // public CLOUD_INSTANCE_ID. The stored value is a SHA-512 hash, so a plain
+        // string comparison never matched (dead branch before this fix) — verify
+        // the hash against the instance ID instead.
+        if (
+            !empty($passwords->cloudInstanceId)
+            && PasswordService::matchesStoredPassword($passwords->cloudInstanceId, $storedPassword)
+        ) {
             return true;
         }
 

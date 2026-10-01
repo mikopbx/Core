@@ -20,8 +20,10 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Common\Library\DialplanApplicationSecurity;
 use Phalcon\Mvc\Model\Relation;
 use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Regex as RegexValidator;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
@@ -143,6 +145,16 @@ class DialplanApplications extends ModelsBase
     public function validation(): bool
     {
         $validation = new Validation();
+
+        $validation->add(
+            'uniqid',
+            new RegexValidator(
+                [
+                    'pattern' => DialplanApplicationSecurity::ID_PATTERN,
+                    'message' => 'Invalid dialplan application ID',
+                ]
+            )
+        );
 
         $validation->add(
             'uniqid',

@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\ConsoleMenu\Menus;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\ConsoleMenu\Actions\SystemActions;
+use MikoPBX\Core\System\ConsoleMenu\Utilities\MenuStyleConfig;
 use MikoPBX\Core\System\ConsoleMenu\Utilities\NetworkInfo;
 use MikoPBX\Core\System\ConsoleMenu\Wizards\NetworkWizard;
 use PhpSchool\CliMenu\CliMenu;
@@ -77,8 +78,7 @@ class NetworkMenu extends AbstractMenu
             $menu->close();
             $networkInfo = new NetworkInfo();
             $networkInfo->display();
-            echo "\n" . $this->translation->_('cm_PressEnterToContinue') . "\n";
-            fgets(STDIN);
+            MenuStyleConfig::waitForEnter("\n" . $this->translation->_('cm_PressEnterToContinue') . "\n");
             echo "\033[2J\033[H";
             $menu->open();
         });

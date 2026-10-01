@@ -404,8 +404,7 @@ class SystemActions
         }
 
         echo "\n";
-        echo $this->translation->_('cm_PressEnterToContinue');
-        fgets(STDIN);
+        MenuStyleConfig::waitForEnter($this->translation->_('cm_PressEnterToContinue'));
 
         // Return to main menu
         $mainMenu = new MainMenu();

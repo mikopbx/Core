@@ -28,4 +28,4 @@ $rules = [
     [TestCallsBase::ACTION_WAIT, 5],
     [TestCallsBase::ACTION_ORIGINATE, 'cNum', '8'],
 ];
-TestCallsBase::executeTest($sampleCDR, $rules);
+TestCallsBase::executeTest($sampleCDR, $rules, 1, true);
