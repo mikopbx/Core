@@ -54,6 +54,18 @@ class ActionTransferDialAnswer
         $m_data = CallDetailRecordsTmp::find($filter);
         foreach ($m_data as $row) {
             $row->writeAttribute('answer', $data['answer']);
+            // A *8 pickup answers on a brand-new channel that is not one of the dialed
+            // transfer legs (those were torn down by the pickup). Point the row at the
+            // real answering channel so it is bound to a live channel: on transfer
+            // completion CreateRowTransfer restarts MixMonitor on this row's dst_chan,
+            // and without the retarget it would target the dead intercepted leg and the
+            // conversation row would get no recording.
+            if (!empty($data['agi_channel']) && (string)$row->dst_chan !== $data['agi_channel']) {
+                $row->writeAttribute('dst_chan', $data['agi_channel']);
+                if (!empty($data['dst_call_id'])) {
+                    $row->writeAttribute('dst_call_id', $data['dst_call_id']);
+                }
+            }
             $recFile = $data['recordingfile'] ?? '';
             if (!empty($recFile)) {
                 $worker->mixMonitorChannels[$data['agi_channel']] = $recFile;
