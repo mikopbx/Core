@@ -52,19 +52,35 @@ class ActionTransferDialAnswer
         /** @var CallDetailRecordsTmp $m_data */
         /** @var CallDetailRecordsTmp $row */
         $m_data = CallDetailRecordsTmp::find($filter);
+
+        // A *8 pickup answers on a brand-new channel that is not one of the dialed
+        // transfer legs (those were torn down by the pickup), so no matched row carries
+        // it as dst_chan. A normal answer — including a multi-device ring — lands on a
+        // dialed leg, so a matched row already has dst_chan === agi_channel. Only the
+        // genuine-pickup case may retarget, otherwise a losing multi-device leg would be
+        // wrongly repointed at the answering channel.
+        $answerChannel = (string)($data['agi_channel'] ?? '');
+        $isPickup = $answerChannel !== '';
+        foreach ($m_data as $row) {
+            if ((string)$row->dst_chan === $answerChannel) {
+                $isPickup = false;
+                break;
+            }
+        }
+
+        $retargeted = false;
         foreach ($m_data as $row) {
             $row->writeAttribute('answer', $data['answer']);
-            // A *8 pickup answers on a brand-new channel that is not one of the dialed
-            // transfer legs (those were torn down by the pickup). Point the row at the
-            // real answering channel so it is bound to a live channel: on transfer
-            // completion CreateRowTransfer restarts MixMonitor on this row's dst_chan,
-            // and without the retarget it would target the dead intercepted leg and the
-            // conversation row would get no recording.
-            if (!empty($data['agi_channel']) && (string)$row->dst_chan !== $data['agi_channel']) {
-                $row->writeAttribute('dst_chan', $data['agi_channel']);
+            // Point the single stolen-leg row at the real answering channel so it is
+            // bound to a live channel: on transfer completion CreateRowTransfer restarts
+            // MixMonitor on this row's dst_chan, and without the retarget it would target
+            // the dead intercepted leg and the conversation row would get no recording.
+            if ($isPickup && !$retargeted) {
+                $row->writeAttribute('dst_chan', $answerChannel);
                 if (!empty($data['dst_call_id'])) {
                     $row->writeAttribute('dst_call_id', $data['dst_call_id']);
                 }
+                $retargeted = true;
             }
             $recFile = $data['recordingfile'] ?? '';
             if (!empty($recFile)) {
