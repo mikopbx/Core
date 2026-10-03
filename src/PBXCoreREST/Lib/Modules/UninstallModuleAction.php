@@ -135,7 +135,7 @@ class UninstallModuleAction extends Injectable
 
         // Validate module id up front: it becomes part of shell/filesystem
         // paths below. Only [A-Za-z0-9_-] is ever a legitimate module id.
-        if (!preg_match('/^[A-Za-z0-9_\-]{1,128}$/', $this->moduleUniqueId)) {
+        if (!DataStructure::isValidUniqid($this->moduleUniqueId)) {
             $res->success = false;
             $res->messages['error'] = 'Invalid module unique id';
             return $res;

@@ -110,6 +110,7 @@ return [
     'ext_Version' => 'Változat',
     'ext_WrongGetModuleLink' => 'Hiba történt a modulfájl lekérésekor a tárházból',
     'ext_MissingModuleUniqueID' => 'A %filePath% archívumban található module.json fájlból hiányzik a kötelező moduleUniqueID mező.',
+    'ext_InvalidModuleUniqueID' => 'A %filePath% archívumban található module.json fájl moduleUniqueID mezője érvénytelen: csak latin betűk, számjegyek, "_" és "-" engedélyezett, legfeljebb 128 karakter.',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'A(z) %module% modul nem kompatibilis a MikoPBX jelenlegi verziójával.',
     'ext_InvalidModuleJson' => 'A(z) %filePath% archívumban található module.json fájl érvénytelen JSON-t tartalmaz: %error%',

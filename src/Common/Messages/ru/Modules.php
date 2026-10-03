@@ -125,6 +125,7 @@ return [
     'ext_ModuleJsonNotFound' => 'В архиве модуля %filePath% не найден файл module.json',
     'ext_InvalidModuleJson' => 'Файл module.json в архиве %filePath% содержит невалидный JSON: %error%',
     'ext_MissingModuleUniqueID' => 'В файле module.json архива %filePath% отсутствует обязательное поле moduleUniqueID',
+    'ext_InvalidModuleUniqueID' => 'В файле module.json архива %filePath% поле moduleUniqueID имеет недопустимое значение: разрешены латинские буквы, цифры, «_» и «-», не длиннее 128 символов',
 
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'Модуль %module% несовместим с текущей версией MikoPBX',

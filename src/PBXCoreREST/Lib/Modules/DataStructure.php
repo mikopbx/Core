@@ -37,6 +37,21 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 {
     use SearchIndexTrait;
 
+    public const string UNIQID_SCHEMA_PATTERN = '^[A-Za-z0-9_\-]{1,128}$';
+
+    public const string UNIQID_PATTERN = '/' . self::UNIQID_SCHEMA_PATTERN . '/D';
+
+    /**
+     * Checks that a module unique id is safe to use as a directory name.
+     *
+     * @param mixed $id Value to check, e.g. moduleUniqueID read from module.json.
+     * @return bool
+     */
+    public static function isValidUniqid(mixed $id): bool
+    {
+        return is_string($id) && preg_match(self::UNIQID_PATTERN, $id) === 1;
+    }
+
     /**
      * Create data array from PbxExtensionModules model
      *
@@ -201,14 +216,16 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'id' => [
                 'type' => 'string',
                 'description' => 'rest_schema_module_id',
-                'maxLength' => 100,
+                'maxLength' => 128,
+                'pattern' => self::UNIQID_SCHEMA_PATTERN,
                 'sanitize' => 'string',
                 'example' => 'ModuleTemplate'
             ],
             'uniqid' => [
                 'type' => 'string',
                 'description' => 'rest_schema_module_uniqid',
-                'maxLength' => 100,
+                'maxLength' => 128,
+                'pattern' => self::UNIQID_SCHEMA_PATTERN,
                 'sanitize' => 'string',
                 'example' => 'ModuleTemplate'
             ],
