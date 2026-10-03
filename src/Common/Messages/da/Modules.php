@@ -110,6 +110,7 @@ return [
     'ext_Version' => 'udgave',
     'ext_WrongGetModuleLink' => 'Fejl ved hentning af modulfil fra arkivet',
     'ext_MissingModuleUniqueID' => 'module.json-filen i %filePath%-arkivet mangler det obligatoriske moduleUniqueID-felt.',
+    'ext_InvalidModuleUniqueID' => 'Feltet moduleUniqueID i module.json-filen i %filePath%-arkivet er ugyldigt: kun latinske bogstaver, cifre, "_" og "-" er tilladt, op til 128 tegn.',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'Modulet %module% er ikke kompatibelt med den nuværende version af MikoPBX',
     'ext_InvalidModuleJson' => 'Filen module.json i arkivet %filePath% indeholder ugyldig JSON: %error%',

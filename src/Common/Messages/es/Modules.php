@@ -110,6 +110,7 @@ return [
     'ext_Version' => 'Versión',
     'ext_WrongGetModuleLink' => 'Error al obtener el archivo del módulo desde el repositorio',
     'ext_MissingModuleUniqueID' => 'Al archivo module.json en el archivo %filePath% le falta el campo moduleUniqueID requerido.',
+    'ext_InvalidModuleUniqueID' => 'El campo moduleUniqueID del archivo module.json en el archivo %filePath% no es válido: solo se permiten letras latinas, dígitos, "_" y "-", hasta 128 caracteres.',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'El módulo %module% no es compatible con la versión actual de MikoPBX',
     'ext_InvalidModuleJson' => 'El archivo module.json en el archivo %filePath% contiene JSON no válido: %error%',

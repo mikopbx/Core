@@ -110,6 +110,7 @@ return [
     'ext_Version' => 'Versiya',
     'ext_WrongGetModuleLink' => 'Modul faylını depodan əldə etmək xətası',
     'ext_MissingModuleUniqueID' => '%filePath% arxivindəki module.json faylında tələb olunan moduleUniqueID sahəsi yoxdur.',
+    'ext_InvalidModuleUniqueID' => '%filePath% arxivindəki module.json faylında moduleUniqueID sahəsi yararsızdır: yalnız latın hərfləri, rəqəmlər, "_" və "-" işlədilə bilər, maksimum 128 simvol',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => '%module% modulu MikoPBX-in cari versiyası ilə uyğun deyil',
     'ext_InvalidModuleJson' => '%filePath% arxivindəki module.json faylında yanlış JSON var: %error%',

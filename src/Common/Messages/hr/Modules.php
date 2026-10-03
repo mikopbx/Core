@@ -110,6 +110,7 @@ return [
     'ext_Version' => 'Verzija',
     'ext_WrongGetModuleLink' => 'Pogreška pri preuzimanju datoteke modula iz repozitorija',
     'ext_MissingModuleUniqueID' => 'Datoteci module.json u arhivi %filePath% nedostaje obavezno polje moduleUniqueID.',
+    'ext_InvalidModuleUniqueID' => 'Polje moduleUniqueID u datoteci module.json u arhivi %filePath% nije valjano: dopuštena su samo latinična slova, znamenke, "_" i "-", najviše 128 znakova.',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'Modul %module% nije kompatibilan s trenutnom verzijom MikoPBX-a',
     'ext_InvalidModuleJson' => 'Datoteka module.json u arhivi %filePath% sadrži nevažeći JSON: %error%',

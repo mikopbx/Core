@@ -110,6 +110,7 @@ return [
     'ext_Version' => 'Версія',
     'ext_WrongGetModuleLink' => 'Помилка отримання файлу модуля з репозиторію',
     'ext_MissingModuleUniqueID' => 'У файлі module.json архіву %filePath% немає обов\'язкового поля moduleUniqueID',
+    'ext_InvalidModuleUniqueID' => 'У файлі module.json архіву %filePath% поле moduleUniqueID має недопустиме значення: дозволені лише латинські літери, цифри, «_» і «-», не довше 128 символів',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'Модуль %module% несумісний із поточною версією MikoPBX',
     'ext_InvalidModuleJson' => 'Файл module.json в архіві %filePath% містить невалідний JSON: %error%',

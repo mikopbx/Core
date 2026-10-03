@@ -110,6 +110,7 @@ return [
     'ext_Version' => 'Versiune',
     'ext_WrongGetModuleLink' => 'Eroare la preluarea fișierului modulului din repozitoriu',
     'ext_MissingModuleUniqueID' => 'Fișierului module.json din arhiva %filePath% îi lipsește câmpul obligatoriu moduleUniqueID.',
+    'ext_InvalidModuleUniqueID' => 'Câmpul moduleUniqueID din fișierul module.json din arhiva %filePath% este invalid: sunt permise doar litere latine, cifre, "_" și "-", maximum 128 de caractere.',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'Modulul %module% nu este compatibil cu versiunea curentă a MikoPBX',
     'ext_InvalidModuleJson' => 'Fișierul module.json din arhiva %filePath% conține un JSON invalid: %error%',

@@ -113,6 +113,7 @@ return [
     'ext_ModuleJsonNotFound' => 'Het bestand module.json is niet gevonden in het modulearchief %filePath%',
     'ext_InvalidModuleJson' => 'Het bestand module.json in het archief %filePath% bevat ongeldige JSON: %error%',
     'ext_MissingModuleUniqueID' => 'In het bestand module.json in het archief %filePath% ontbreekt het vereiste veld moduleUniqueID.',
+    'ext_InvalidModuleUniqueID' => 'Het veld moduleUniqueID in het bestand module.json in het archief %filePath% is ongeldig: alleen Latijnse letters, cijfers, "_" en "-" zijn toegestaan, maximaal 128 tekens.',
     // Module package validation errors
     'ext_FileNotFound' => 'Modulebestand niet gevonden: %filePath%',
     // Module compatibility validation
