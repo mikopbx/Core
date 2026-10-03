@@ -69,5 +69,21 @@ class TestModules:
             f"Expected HTTP 422 for unsafe moduleUniqueID, got {raw.status_code}: {raw.text}"
         assert raw.json().get('result') is False, f"Expected result=false, got: {raw.text}"
 
+    def test_04_get_download_status_rejects_unsafe_uniqid(self, api_client):
+        """GET /modules/{id}:getDownloadStatus must reject a uniqid that is not a safe directory name.
+
+        WHY: the uniqid is used to build the download directory path under the upload dir.
+        """
+        # Sent raw so that a non-2xx answer does not raise
+        raw = api_client.session.get(
+            f"{api_client.base_url}/modules/ModuleTemplate:getDownloadStatus",
+            params={'uniqid': '../../evil'},
+            headers=api_client._get_headers(),
+            timeout=30
+        )
+        assert raw.status_code == 400, \
+            f"Expected HTTP 400 for unsafe uniqid, got {raw.status_code}: {raw.text}"
+        assert raw.json().get('result') is False, f"Expected result=false, got: {raw.text}"
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s'])
