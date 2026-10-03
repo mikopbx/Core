@@ -2024,7 +2024,6 @@ return [
     'rest_response_200_test' => 'Test byl úspěšně dokončen.',
     'rest_schema_module_installed' => 'Modul je nainstalován',
     'rest_schema_module_limit' => 'Limit příspěvků na stránku',
-    'rest_schema_module_max_pbx_version' => 'Maximální kompatibilní verze MikoPBX',
     'rest_schema_module_min_pbx_version' => 'Minimální požadovaná verze MikoPBX',
     'rest_schema_module_offset' => 'Offset pro stránkování',
     'rest_schema_module_order' => 'Řazení výsledků',

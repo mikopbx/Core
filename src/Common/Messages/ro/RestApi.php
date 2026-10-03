@@ -1123,7 +1123,6 @@ return [
     'rest_schema_module_disabled' => 'Modulul este dezactivat',
     'rest_schema_module_file_path' => 'Calea către fișierul modulului',
     'rest_schema_module_limit' => 'Limită de postări pe pagină',
-    'rest_schema_module_max_pbx_version' => 'Versiunea maximă compatibilă a MikoPBX',
     'rest_schema_module_min_pbx_version' => 'Versiunea minimă necesară de MikoPBX',
     'rest_schema_module_name' => 'Numele modulului',
     'rest_schema_module_offset' => 'Decalaj pentru paginare',

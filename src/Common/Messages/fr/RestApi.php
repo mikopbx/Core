@@ -483,7 +483,6 @@ return [
     'rest_schema_gs_is_default_ssh_password' => 'Le mot de passe SSH standard est utilisé.',
     'rest_schema_gs_is_default_web_password' => 'Le mot de passe par défaut de l\'interface web est utilisé.',
     'rest_schema_gs_pbx_name' => 'Nom du PBX',
-    'rest_schema_module_max_pbx_version' => 'Version maximale compatible de MikoPBX',
     'rest_schema_module_min_pbx_version' => 'Version minimale requise de MikoPBX',
     'rest_schema_module_name' => 'Nom du module',
     'rest_schema_owt_calType' => 'Type de calendrier (iCal, CalDAV, Google)',

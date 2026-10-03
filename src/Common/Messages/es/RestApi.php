@@ -1298,7 +1298,6 @@ return [
     'rest_schema_module_id' => 'Identificador de módulo interno',
     'rest_schema_module_installed' => 'El módulo está instalado',
     'rest_schema_module_limit' => 'Límite de publicaciones por página',
-    'rest_schema_module_max_pbx_version' => 'Versión máxima compatible de MikoPBX',
     'rest_schema_module_min_pbx_version' => 'Versión mínima requerida de MikoPBX',
     'rest_schema_module_offset' => 'Desplazamiento para paginación',
     'rest_schema_module_order' => 'Orden de clasificación de los resultados',

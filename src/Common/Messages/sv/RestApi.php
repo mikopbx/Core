@@ -1231,7 +1231,6 @@ return [
     'rest_schema_module_id' => 'Intern modulidentifierare',
     'rest_schema_module_installed' => 'Modulen är installerad',
     'rest_schema_module_limit' => 'Begränsning av inlägg per sida',
-    'rest_schema_module_max_pbx_version' => 'Maximal kompatibel version av MikoPBX',
     'rest_schema_module_min_pbx_version' => 'Minsta nödvändiga version av MikoPBX',
     'rest_schema_module_name' => 'Modulnamn',
     'rest_schema_module_offset' => 'Förskjutning för paginering',
