@@ -1763,7 +1763,6 @@ return [
     'rest_resource_extension' => 'Forlængelse',
     'rest_param_pwd_includeNumbers' => 'Inkluder tal i adgangskoden',
     'rest_schema_ms_from_username' => 'Afsenderens viste navn i e-mails',
-    'rest_schema_module_max_pbx_version' => 'Maksimal kompatibel version af MikoPBX',
     'rest_schema_banned_ip_country' => 'ISO 3166-1 alpha-2 landekode (f.eks. USA, Rusland, Canada). Tom streng, hvis landet ikke er angivet.',
     'rest_schema_firmware_md5' => 'MD5-hash af firmwarefilen',
     'rest_da_Update' => 'Opdater opkaldsplan-appen',

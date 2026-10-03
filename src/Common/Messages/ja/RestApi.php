@@ -1078,7 +1078,6 @@ return [
     'rest_schema_module_id' => '内部モジュール識別子',
     'rest_schema_module_installed' => 'モジュールがインストールされました',
     'rest_schema_module_limit' => 'ページあたりの投稿数制限',
-    'rest_schema_module_max_pbx_version' => 'MikoPBXの最大互換バージョン',
     'rest_schema_module_min_pbx_version' => 'MikoPBXの最小必要バージョン',
     'rest_schema_module_name' => 'モジュール名',
     'rest_schema_module_offset' => 'ページ区切りのオフセット',

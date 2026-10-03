@@ -1025,7 +1025,6 @@ return [
     'rest_schema_module_id' => 'Dahili modül tanımlayıcısı',
     'rest_schema_module_installed' => 'Modül yüklendi.',
     'rest_schema_module_limit' => 'Sayfa başına gönderi sınırı',
-    'rest_schema_module_max_pbx_version' => 'MikoPBX\'in maksimum uyumlu sürümü',
     'rest_schema_module_order' => 'Sonuçların sıralama düzeni',
     'rest_schema_module_path' => 'Modül kurulum yolu',
     'rest_schema_module_release_id' => 'Modül sürüm kimliği',

@@ -1169,7 +1169,6 @@ return [
     'rest_schema_module_file_path' => 'Pad naar het modulebestand',
     'rest_schema_module_installed' => 'De module is geïnstalleerd',
     'rest_schema_module_limit' => 'Limiet van berichten per pagina',
-    'rest_schema_module_max_pbx_version' => 'Maximaal compatibele versie van MikoPBX',
     'rest_schema_module_min_pbx_version' => 'Minimaal vereiste versie van MikoPBX',
     'rest_schema_module_order' => 'Sorteervolgorde van resultaten',
     'rest_schema_module_path' => 'Module-installatiepad',

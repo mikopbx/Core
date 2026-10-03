@@ -2010,7 +2010,6 @@ return [
     'rest_schema_module_id' => 'Daxili modul identifikatoru',
     'rest_schema_module_installed' => 'Modul quraşdırılıb',
     'rest_schema_module_limit' => 'Səhifə başına yazıların limiti',
-    'rest_schema_module_max_pbx_version' => 'MikoPBX-in maksimum uyğun versiyası',
     'rest_schema_module_min_pbx_version' => 'MikoPBX-in minimum tələb olunan versiyası',
     'rest_schema_module_version' => 'Modul versiyası',
     'rest_schema_owt_action' => 'İş saatlarından kənar hərəkətlər',

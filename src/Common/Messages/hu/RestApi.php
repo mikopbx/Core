@@ -1348,7 +1348,6 @@ return [
     'rest_schema_module_disabled' => 'A modul le van tiltva',
     'rest_schema_module_installed' => 'A modul telepítve van',
     'rest_schema_module_limit' => 'Oldalankénti bejegyzések korlátja',
-    'rest_schema_module_max_pbx_version' => 'A MikoPBX maximálisan kompatibilis verziója',
     'rest_schema_module_min_pbx_version' => 'A MikoPBX minimálisan szükséges verziója',
     'rest_schema_module_name' => 'Modul neve',
     'rest_schema_module_offset' => 'Eltolás az oldalszámozáshoz',

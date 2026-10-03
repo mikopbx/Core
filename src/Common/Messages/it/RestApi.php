@@ -1277,7 +1277,6 @@ return [
     'rest_schema_module_disabled' => 'Il modulo è disabilitato',
     'rest_schema_module_file_path' => 'Percorso al file del modulo',
     'rest_schema_module_installed' => 'Il modulo è installato',
-    'rest_schema_module_max_pbx_version' => 'Versione massima compatibile di MikoPBX',
     'rest_schema_module_min_pbx_version' => 'Versione minima richiesta di MikoPBX',
     'rest_schema_module_name' => 'Nome del modulo',
     'rest_schema_module_offset' => 'Offset per la paginazione',

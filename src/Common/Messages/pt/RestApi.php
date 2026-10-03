@@ -1366,7 +1366,6 @@ return [
     'rest_schema_module_id' => 'Identificador interno do módulo',
     'rest_schema_module_installed' => 'O módulo está instalado',
     'rest_schema_module_limit' => 'Limite de publicações por página',
-    'rest_schema_module_max_pbx_version' => 'Versão máxima compatível do MikoPBX',
     'rest_schema_module_release_id' => 'ID de lançamento do módulo',
     'rest_schema_module_uniqid' => 'Identificador único do módulo',
     'rest_schema_owt_audio_message_id' => 'ID da mensagem de áudio a ser reproduzida',
