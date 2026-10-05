@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\Tests\Unit\PBXCoreREST\Controllers\Modules;
 
+use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Controllers\Modules\ModulesControllerBase;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Providers\ResponseProvider;
@@ -16,11 +17,15 @@ use stdClass;
  * Regression coverage for the module pass of {@see ModulesControllerBase::callActionForModule()}.
  *
  * Module endpoints (`/pbxcore/api/modules/{module}/{action}`) decode the response that
- * `BaseController` has already built once more, as an associative array, to route the
- * control keys (`fpassthru`, `html`, `redirect`, `echo`, `echo_file`). The default branch
- * used to re-encode that array, so empty JSON objects (`{}`) and objects with keys
- * `"0","1",…` collapsed into JSON arrays (issue #1162, follow-up to #1141). The payload
- * must stay lossless while the control branches keep reading arrays.
+ * `BaseController` has already built once more, as an associative array, to find the flat
+ * `data.fpassthru` file descriptor. The default branch used to re-encode that array, so empty
+ * JSON objects (`{}`) and objects with keys `"0","1",…` collapsed into JSON arrays (issue #1162,
+ * follow-up to #1141). The payload must stay lossless while the `fpassthru` branch keeps reading
+ * arrays.
+ *
+ * When `BaseController` has already answered itself (a core-format file streamed, the content
+ * left empty), the module pass must leave it alone: it used to throw a TypeError after the file
+ * was sent, on every ModuleAutoprovision config download (issue #1167).
  */
 class ModulesControllerBaseTest extends TestCase
 {
@@ -77,5 +82,38 @@ class ModulesControllerBaseTest extends TestCase
         ]));
 
         $this->assertFileDoesNotExist($file);
+    }
+
+    public function testStreamedCoreFormatFileIsNotRoutedAgain(): void
+    {
+        $file = (string) tempnam(sys_get_temp_dir(), 'mod1167');
+        file_put_contents($file, 'phone config');
+        $response = new Response();
+        $di = new Di();
+        $di->setShared(ResponseProvider::SERVICE_NAME, $response);
+        $controller = new ModulesControllerBase();
+        $controller->setDI($di);
+
+        // BaseController::sendRequestToBackendWorker() streams a core-format descriptor itself
+        // (handleSpecialResponse() -> handleFileStreaming()) and returns with the content empty.
+        $handleSpecialResponse = new ReflectionMethod(BaseController::class, 'handleSpecialResponse');
+        ob_start();
+        ob_start(); // handleFullFileRequest() calls ob_flush(): keep a buffer level below it
+        $handled = $handleSpecialResponse->invoke($controller, [
+            'result' => true,
+            'data' => ['fpassthru' => ['filename' => $file, 'content_type' => 'text/plain', 'need_delete' => true]],
+            'messages' => [],
+        ], null);
+        ob_end_flush();
+        $streamed = (string) ob_get_clean();
+
+        // Then the module pass, exactly as callActionForModule() runs it.
+        $handleResponse = new ReflectionMethod($controller, 'handleResponse');
+        $handleResponse->invoke($controller, json_decode((string) $response->getContent(), true));
+
+        $this->assertTrue($handled);
+        $this->assertSame('phone config', $streamed);
+        $this->assertFileDoesNotExist($file);
+        $this->assertSame('', (string) $response->getContent());
     }
 }
