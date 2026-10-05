@@ -268,14 +268,17 @@ class BaseController extends Controller
             // - 200 OK for success
             // - 422 Unprocessable Entity for validation errors
             // - 409 Conflict for constraint violations
+            // Payload is decoded without the assoc flag so nested empty objects ({})
+            // and objects with numeric keys are not turned into JSON arrays.
+            $payload = (array) json_decode($encodedResponse);
             if (isset($response['result']) && $response['result'] === false) {
                 // Business error - use appropriate HTTP code (422 for validation, 409 for conflicts)
                 $httpCode = $response['httpCode'] ?? 422;
-                $this->response->setPayloadSuccess($response, $httpCode);
+                $this->response->setPayloadSuccess($payload, $httpCode);
             } else {
                 // Success response
                 $httpCode = $response['httpCode'] ?? 200;
-                $this->response->setPayloadSuccess($response, $httpCode);
+                $this->response->setPayloadSuccess($payload, $httpCode);
             }
 
         } catch (Throwable $e) {
