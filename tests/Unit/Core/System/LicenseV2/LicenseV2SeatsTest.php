@@ -429,6 +429,79 @@ class LicenseV2SeatsTest extends TestCase
         $this->assertFalse($license->featureAvailable('54')['success']);
     }
 
+    public function testCabinetAnswerFileWithADocumentIsImported(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+        $answer = $this->answerOffline($license, ['poll' => 300]);
+        // Saved by a Windows editor: a BOM in front, CRLF at the end.
+        $license->importOfflineToken(
+            "\xEF\xBB\xBF" . json_encode(['token' => $answer['token']], JSON_UNESCAPED_SLASHES) . "\r\n"
+        );
+
+        $payload = $license->store()->lastVerifiedPayload();
+        $this->assertSame($answer['request']['nonce'], $payload['nonce']);
+        $this->assertSame(300, $payload['poll']);
+    }
+
+    public function testCabinetAnswerFileWithARefusalRevokesAndSaysWhy(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+        $signed = json_decode($license->exportOfflineRequest(), true);
+        $request = json_decode(EntitlementToken::base64UrlDecode($signed['request']), true);
+        $payload = EntitlementToken::base64UrlEncode((string)json_encode([
+            'v' => EntitlementToken::VERSION, 'kid' => self::KID, 'install' => $request['install'],
+            'nonce' => $request['nonce'], 'refused' => true, 'error' => 'Installation was forgotten', 'code' => 1063,
+        ]));
+        openssl_sign($payload, $signature, $this->serverPrivateKeyPem, 0);
+        $refusalFile = (string)json_encode([
+            'error' => 'Installation was forgotten',
+            'refusal' => $payload . '.' . EntitlementToken::base64UrlEncode($signature),
+        ], JSON_UNESCAPED_SLASHES);
+
+        try {
+            $license->importOfflineToken($refusalFile);
+            $this->fail('a refusal file was imported as a document');
+        } catch (TokenRejectedException $e) {
+            $this->assertStringContainsString(
+                'Refused by the licensing server: Installation was forgotten',
+                $e->getMessage()
+            );
+        }
+        $this->assertFalse($license->featureAvailable('54')['success']);
+    }
+
+    /**
+     * @dataProvider notALicenseFile
+     */
+    public function testAnythingElseIsRejectedAndChangesNothing(string $file): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+        $license->exportOfflineRequest();
+
+        try {
+            $license->importOfflineToken($file);
+            $this->fail('a file without a token was imported');
+        } catch (TokenRejectedException $e) {
+            $this->assertStringContainsString('Not a license file', $e->getMessage());
+        }
+        $this->assertTrue($license->featureAvailable('54')['success']);
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function notALicenseFile(): array
+    {
+        return [
+            'the request file uploaded by mistake' => ['{"request":"eyJ2IjoyfQ","sig":"AAAA"}'],
+            'a server error without a refusal' => ['{"error":"Server is busy","code":"busy"}'],
+            'a token that is not a string' => ['{"token":123}'],
+            'a broken answer file' => ['{"token":"eyJ2Ijoy'],
+            'a JSON string' => ['"eyJ2Ijoy.AAAA"'],
+            'an empty JSON array' => ['[]'],
+        ];
+    }
+
     /**
      * @param array<int, array<string, mixed>> $sent
      */
