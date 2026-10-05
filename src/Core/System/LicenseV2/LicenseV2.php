@@ -550,16 +550,42 @@ class LicenseV2
     }
 
     /**
+     * Takes the bare token or the answer file saved by the licensing cabinet as is.
+     *
      * @throws TokenRejectedException When the token is forged, foreign, expired, issued for other
-     *     hardware or answers no pending request, and when the answer is a signed refusal (then the
-     *     license is revoked, and the exception message says why).
+     *     hardware or answers no pending request, when the file is not a license file, and when the
+     *     answer is a signed refusal (then the license is revoked, and the exception message says why).
      */
     public function importOfflineToken(string $token): void
     {
+        $token = self::tokenOfAnswerFile($token);
         if (EntitlementToken::isRefusal($token)) {
             throw new TokenRejectedException('Refused by the licensing server: ' . $this->store->acceptRefusal($token));
         }
         $this->applyAnswer($this->store->acceptAnswer($token));
+    }
+
+    /**
+     * The token inside the cabinet answer file, which holds the server's answer body:
+     * {"token":"<payload>.<signature>"} for a document, {"error":"...","refusal":"<payload>.<signature>"}
+     * for a signed refusal. Anything not JSON is taken for the bare token; the signature check decides.
+     *
+     * @throws TokenRejectedException When the file is JSON without a token or a refusal.
+     */
+    private static function tokenOfAnswerFile(string $file): string
+    {
+        $text = trim($file, " \t\n\r\0\x0B\xEF\xBB\xBF");
+        $answer = json_decode($text, true);
+        if ($answer === null && !str_starts_with($text, '{')) {
+            return $text;
+        }
+        $token = is_array($answer) ? ($answer['refusal'] ?? $answer['token'] ?? null) : null;
+        if (!is_string($token)) {
+            throw new TokenRejectedException(
+                'Not a license file: expected the entitlement token or the answer file saved by the licensing cabinet'
+            );
+        }
+        return $token;
     }
 
     /**
