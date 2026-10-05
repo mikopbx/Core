@@ -150,7 +150,9 @@ class ModulesControllerBase extends BaseController
             $this->response->setFileToSend($response['echo_file']);
             $this->response->sendRaw();
         } else {
-            $this->response->setPayloadSuccess($response);
+            // Rebuild the payload without the assoc flag: nested empty objects ({}) and objects with
+            // numeric keys must not be re-encoded as JSON arrays (#1162). Status stays 200 as before.
+            $this->response->setPayloadSuccess((array) json_decode($this->response->getContent()));
         }
     }
 
