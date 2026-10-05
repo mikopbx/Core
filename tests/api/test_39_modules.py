@@ -73,11 +73,13 @@ class TestModules:
         """GET /modules/{id}:getDownloadStatus must reject a uniqid that is not a safe directory name.
 
         WHY: the uniqid is used to build the download directory path under the upload dir.
+        The id goes in a JSON body: the nginx WAF answers 403 to ".." in the query string
+        before PHP runs, but it does not scan GET bodies, and the API reads them.
         """
         # Sent raw so that a non-2xx answer does not raise
         raw = api_client.session.get(
             f"{api_client.base_url}/modules/ModuleTemplate:getDownloadStatus",
-            params={'uniqid': '../../evil'},
+            json={'uniqid': '../../evil'},
             headers=api_client._get_headers(),
             timeout=30
         )
