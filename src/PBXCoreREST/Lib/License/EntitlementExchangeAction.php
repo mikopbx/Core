@@ -61,7 +61,11 @@ class EntitlementExchangeAction extends Injectable
             if ($action === 'entitlementExport') {
                 $res->data = ['request' => $license->exportOfflineRequest()];
             } else {
-                $license->importOfflineToken((string)($data['token'] ?? ''));
+                $token = $data['token'] ?? '';
+                if (!is_string($token)) {
+                    throw new TokenRejectedException('token must be a string, not ' . get_debug_type($token));
+                }
+                $license->importOfflineToken($token);
                 $res->data = [];
             }
             $res->success = true;

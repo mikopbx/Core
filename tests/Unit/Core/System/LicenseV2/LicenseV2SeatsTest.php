@@ -502,6 +502,25 @@ class LicenseV2SeatsTest extends TestCase
         ];
     }
 
+    public function testInputOverTheSizeLimitIsRejectedBeforeAnyDecoding(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+        $answer = $this->answerOffline($license, ['poll' => 300]);
+        $file = (string)json_encode(['token' => $answer['token']], JSON_UNESCAPED_SLASHES);
+
+        try {
+            // Trailing spaces keep the answer valid: without the limit it would be imported.
+            $license->importOfflineToken(str_pad($file, LicenseV2::IMPORT_MAX_BYTES + 1));
+            $this->fail('a file over the size limit was imported');
+        } catch (TokenRejectedException $e) {
+            $this->assertStringContainsString('Not a license file: larger than', $e->getMessage());
+        }
+        $this->assertArrayNotHasKey('poll', $license->store()->lastVerifiedPayload());
+
+        $license->importOfflineToken(str_pad($file, LicenseV2::IMPORT_MAX_BYTES));
+        $this->assertSame(300, $license->store()->lastVerifiedPayload()['poll']);
+    }
+
     /**
      * @param array<int, array<string, mixed>> $sent
      */

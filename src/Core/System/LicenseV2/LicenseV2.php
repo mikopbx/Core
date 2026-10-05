@@ -66,6 +66,13 @@ class LicenseV2
     /** Legacy calls that change what the key is entitled to; the stored token is stale after them. */
     private const array ENTITLEMENT_CHANGING_CALLS = ['addtrial', 'activatecoupon', 'changelicensekey'];
 
+    /**
+     * Largest file importOfflineToken() reads. A cabinet answer file is about 1 KiB; the worst document
+     * (every module of the catalog, 1000 holders to drop) stays under 64 KiB. Checked before any decoding:
+     * a bigger input would cost the API worker its memory_limit instead of a 400.
+     */
+    public const int IMPORT_MAX_BYTES = 262144;
+
     private EntitlementStore $store;
     private SeatLedger $ledger;
     private Closure $licenseKey;
@@ -554,10 +561,14 @@ class LicenseV2
      *
      * @throws TokenRejectedException When the token is forged, foreign, expired, issued for other
      *     hardware or answers no pending request, when the file is not a license file, and when the
-     *     answer is a signed refusal (then the license is revoked, and the exception message says why).
+     *     answer is a signed refusal (then the license is revoked, and the exception message says why),
+     *     and when the input is longer than IMPORT_MAX_BYTES.
      */
     public function importOfflineToken(string $token): void
     {
+        if (strlen($token) > self::IMPORT_MAX_BYTES) {
+            throw new TokenRejectedException('Not a license file: larger than ' . self::IMPORT_MAX_BYTES . ' bytes');
+        }
         $token = self::tokenOfAnswerFile($token);
         if (EntitlementToken::isRefusal($token)) {
             throw new TokenRejectedException('Refused by the licensing server: ' . $this->store->acceptRefusal($token));
