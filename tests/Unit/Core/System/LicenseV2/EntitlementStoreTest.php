@@ -243,6 +243,66 @@ class EntitlementStoreTest extends TestCase
         $store->acceptAnswer($this->sign($carried));
     }
 
+    /**
+     * The cabinet answers a known nonce with its saved document: an answer refused for good must not be
+     * brought back by every next export of the same request.
+     *
+     * @dataProvider refusedAnswers
+     */
+    public function testRefusedAnswerDecidesWhetherTheNextExportIsANewRequest(
+        array $overrides,
+        bool $replaceBoard,
+        bool $newRequest
+    ): void {
+        $store = $this->newStore();
+        $carried = $store->buildRequest('MIKO-TEST', '2026.3.1', true);
+        $hashes = json_decode(EntitlementToken::base64UrlDecode($carried['request']), true)['fingerprint'];
+        if ($replaceBoard) {
+            $this->hardware['board_serial'] = 'NEWBOARD01';
+            $this->hardware['disk_serial'] = 'NEWDISK001';
+            $store = $this->newStore();
+        }
+        try {
+            $store->acceptAnswer($this->sign($carried, $overrides + ['fingerprint' => ['k' => 3, 'h' => $hashes]]));
+            $this->fail('an unusable answer was accepted');
+        } catch (TokenRejectedException) {
+        }
+
+        $next = self::nonceOf($store->buildRequest('MIKO-TEST', '2026.3.1', true));
+        $this->assertSame($newRequest, $next !== self::nonceOf($carried));
+    }
+
+    public static function refusedAnswers(): array
+    {
+        return [
+            'other hardware' => [[], true, true],
+            'expired' => [['iat' => self::NOW - 10 * self::DAY, 'exp' => self::NOW - self::DAY], false, true],
+            'dated in the future' => [
+                ['iat' => self::NOW + 365 * self::DAY, 'exp' => self::NOW + 368 * self::DAY],
+                false,
+                false,
+            ],
+        ];
+    }
+
+    public function testRefusedAnswerToAnotherRequestKeepsThePendingFile(): void
+    {
+        $store = $this->newStore();
+        $spent = $store->buildRequest('MIKO-TEST', '2026.3.1', true);
+        $store->acceptAnswer($this->sign($spent));
+        $pending = $store->buildRequest('MIKO-TEST', '2026.3.1', true);
+        $expired = $this->sign($spent, ['iat' => self::NOW - 10 * self::DAY, 'exp' => self::NOW - self::DAY]);
+        try {
+            $store->acceptAnswer($expired);
+            $this->fail('an answer to a spent request was accepted');
+        } catch (TokenRejectedException $e) {
+            $this->assertStringContainsString('does not answer the pending request', $e->getMessage());
+        }
+
+        $next = $store->buildRequest('MIKO-TEST', '2026.3.1', true);
+        $this->assertSame(self::nonceOf($pending), self::nonceOf($next));
+    }
+
     public function testEmptyModuleMapIsRejected(): void
     {
         $store = $this->newStore();
