@@ -183,10 +183,11 @@ class PBXInstaller extends Injectable
 
 ' . Util::translate('The PBX will reboot after installation.') . '
 
-' . Util::translate('Do you want to proceed? (y/n): ');
+';
 
         // If the user doesn't confirm, save the system disk info to a temp file and exit
-        if (strtolower(trim(fgets($this->fp))) !== 'y') {
+        $answer = MenuStyleConfig::readLine(Util::translate('Do you want to proceed? (y/n): '), $this->fp);
+        if (strtolower(trim((string)$answer)) !== 'y') {
             sleep(3);
             return false;
         }
