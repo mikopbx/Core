@@ -47,6 +47,15 @@ class DownloadStatusAction extends Injectable
         clearstatcache();
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
+
+        // The id becomes a directory name below; reject it before any filesystem access.
+        if (!DataStructure::isValidUniqid($moduleUniqueID)) {
+            $res->success = false;
+            $res->messages['error'][] = 'Invalid module unique id';
+            $res->httpCode = 400;
+            return $res;
+        }
+
         $di = Di::getDefault();
         if ($di !== null) {
             $tempDir = $di->getShared(ConfigProvider::SERVICE_NAME)->path('www.uploadDir');

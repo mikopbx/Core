@@ -862,4 +862,32 @@ class PasswordService
         // crypt() with the full hash as salt will reproduce the hash if password matches
         return hash_equals($hash, crypt($password, $hash));
     }
+
+    /**
+     * Check whether a stored password value matches a known plain-text password.
+     *
+     * Handles both storage formats transparently:
+     * - SHA-512 crypt hash (current format) — verified with {@see verifySha512Hash()};
+     * - plain text (legacy installations) — compared with a timing-safe equality.
+     *
+     * Used to detect auto-provisioned cloud defaults (stored web password still equals
+     * the public CLOUD_INSTANCE_ID) both in the advice worker and in the forced
+     * password-change gate. An empty stored value never matches.
+     *
+     * @param string $plainPassword Known plain-text password to test against.
+     * @param string $storedPassword Stored value (SHA-512 hash or legacy plain text).
+     * @return bool True if the stored value represents $plainPassword.
+     */
+    public static function matchesStoredPassword(string $plainPassword, string $storedPassword): bool
+    {
+        if ($storedPassword === '') {
+            return false;
+        }
+
+        if (self::isSha512Hash($storedPassword)) {
+            return self::verifySha512Hash($plainPassword, $storedPassword);
+        }
+
+        return hash_equals($storedPassword, $plainPassword);
+    }
 }

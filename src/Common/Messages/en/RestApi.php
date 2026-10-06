@@ -1940,7 +1940,6 @@ return [
     'rest_schema_module_id' => 'Internal module identifier',
     'rest_schema_module_installed' => 'Module is installed',
     'rest_schema_module_limit' => 'Records per page limit',
-    'rest_schema_module_max_pbx_version' => 'Maximum compatible MikoPBX version',
     'rest_schema_module_min_pbx_version' => 'Minimum required MikoPBX version',
     'rest_schema_module_name' => 'Module name',
     'rest_schema_module_offset' => 'Pagination offset',

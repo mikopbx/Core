@@ -51,7 +51,7 @@ LicenseAPI.ping = function(callback) {
  * @param {function} callback - Callback function
  */
 LicenseAPI.resetKey = function(callback) {
-    return this.callCustomMethod('resetKey', {}, callback, 'GET');
+    return this.callCustomMethod('resetKey', {}, callback, 'POST');
 };
 
 /**

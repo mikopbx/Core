@@ -1225,7 +1225,6 @@ return [
     'rest_schema_module_file_path' => 'Đường dẫn đến tệp mô-đun',
     'rest_schema_module_installed' => 'Mô-đun đã được cài đặt',
     'rest_schema_module_limit' => 'Giới hạn số bài đăng trên mỗi trang',
-    'rest_schema_module_max_pbx_version' => 'Phiên bản tương thích tối đa của MikoPBX',
     'rest_schema_module_min_pbx_version' => 'Phiên bản tối thiểu cần thiết của MikoPBX',
     'rest_schema_module_offset' => 'Vị trí bù trừ cho việc phân trang',
     'rest_schema_module_order' => 'Thứ tự sắp xếp kết quả',

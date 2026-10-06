@@ -59,7 +59,6 @@ return [
     'rest_schema_gs_web_admin_login' => 'ვებ ინტერფეისის ადმინისტრატორის შესვლა',
     'rest_schema_gs_web_https_public_key' => 'SSL სერტიფიკატის საჯარო გასაღები',
     'rest_schema_module_commercial' => 'მოდული კომერციულია.',
-    'rest_schema_module_max_pbx_version' => 'MikoPBX-ის მაქსიმალური თავსებადი ვერსია',
     'rest_schema_module_offset' => 'ოფსეტი გვერდების დახარისხებისთვის',
     'rest_schema_module_release_id' => 'მოდულის გამოშვების ID',
     'rest_schema_module_uniqid' => 'უნიკალური მოდულის იდენტიფიკატორი',

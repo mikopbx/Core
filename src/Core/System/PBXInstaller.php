@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Core\System\ConsoleMenu\Utilities\MenuStyleConfig;
 use Phalcon\Config\Config;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -156,8 +157,8 @@ class PBXInstaller extends Injectable
     {
         // Prompt the user to enter a device name until a valid device name is entered
         do {
-            echo "\n" . Util::translate('Enter the device name:') . Util::translate('(default value = ') . $this->selected_disk['id'] . ') :';
-            $this->target_disk = trim(fgets($this->fp));
+            $prompt = "\n" . Util::translate('Enter the device name:') . Util::translate('(default value = ') . $this->selected_disk['id'] . ') :';
+            $this->target_disk = trim(MenuStyleConfig::readLine($prompt, $this->fp));
             if ($this->target_disk === '') {
                 $this->target_disk = $this->selected_disk['id'];
             }
@@ -182,10 +183,11 @@ class PBXInstaller extends Injectable
 
 ' . Util::translate('The PBX will reboot after installation.') . '
 
-' . Util::translate('Do you want to proceed? (y/n): ');
+';
 
         // If the user doesn't confirm, save the system disk info to a temp file and exit
-        if (strtolower(trim(fgets($this->fp))) !== 'y') {
+        $answer = MenuStyleConfig::readLine(Util::translate('Do you want to proceed? (y/n): '), $this->fp);
+        if (strtolower(trim((string)$answer)) !== 'y') {
             sleep(3);
             return false;
         }

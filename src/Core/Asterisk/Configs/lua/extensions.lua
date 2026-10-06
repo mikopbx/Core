@@ -1094,6 +1094,18 @@ function event_dial_answer()
         set_variable("PICKUPEER", "");
         data['old_id'] = id;
         data['id'] = get_variable('UNIQUEID')..'_'..generateRandomString(6);
+        -- The pickup CDR row is cloned by ActionDialAnswer::fillPickUpCdr from the intercepted
+        -- party's leg, so without this its dst_name would show that party instead of the agent
+        -- who picked the call up. Resolve the answering extension's own display name here, in
+        -- channel and without AMI, from its PJSIP endpoint config (same source dial_create_chan
+        -- uses). dst_num is the answering extension number, which is also the base endpoint name.
+        local pickup_cid = get_variable("PJSIP_ENDPOINT(" .. data['dst_num'] .. ",callerid)");
+        if(pickup_cid ~= '')then
+            local pickup_name = pickup_cid:match('"([^"]+)"');
+            if(pickup_name and pickup_name ~= '' and pickup_name ~= data['dst_num'])then
+                data['dst_name'] = pickup_name;
+            end
+        end
     end
 
     local masterChannel = get_variable('MASTER_CHANNEL(CHANNEL)');

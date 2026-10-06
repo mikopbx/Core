@@ -61,7 +61,7 @@ class StartDownloadAction extends Injectable
         // Module ids follow a restricted charset (typically "ModuleFooBar").
         // Reject anything that would let us break out of the directory name.
         $moduleUniqueID = trim($moduleUniqueID);
-        if ($moduleUniqueID === '' || !preg_match('/^[A-Za-z0-9_\-]{1,128}$/', $moduleUniqueID)) {
+        if ($moduleUniqueID === '' || !DataStructure::isValidUniqid($moduleUniqueID)) {
             $res->success = false;
             $res->messages['error'][] = 'Invalid module unique id';
             $res->httpCode = 400;

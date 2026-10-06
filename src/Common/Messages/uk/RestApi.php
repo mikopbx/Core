@@ -1358,7 +1358,6 @@ return [
     'rest_schema_module_id' => 'Внутрішній ідентифікатор модуля',
     'rest_schema_module_installed' => 'Модуль встановлено',
     'rest_schema_module_limit' => 'Ліміт записів на сторінці',
-    'rest_schema_module_max_pbx_version' => 'Максимальна сумісна версія MikoPBX',
     'rest_schema_module_min_pbx_version' => 'Мінімальна необхідна версія MikoPBX',
     'rest_schema_module_name' => 'Назва модуля',
     'rest_schema_module_offset' => 'Зміщення для пагінації',

@@ -1229,7 +1229,6 @@ return [
     'rest_schema_module_file_path' => 'Pfad zur Moduldatei',
     'rest_schema_module_id' => 'Interne Modulkennung',
     'rest_schema_module_limit' => 'Begrenzung der Beiträge pro Seite',
-    'rest_schema_module_max_pbx_version' => 'Maximal kompatible Version von MikoPBX',
     'rest_schema_module_offset' => 'Versatz für die Seitennummerierung',
     'rest_schema_module_order' => 'Sortierung der Ergebnisse',
     'rest_schema_module_path' => 'Modulinstallationspfad',

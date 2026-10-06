@@ -181,7 +181,7 @@ class PbxExtensionModules extends ModelsBase
             $parameters = [
                 'order' => 'uniqid desc',
             ];
-            $modulesArray = PbxExtensionModules::find($parameters)->toArray();
+            $modulesArray = array_column(PbxExtensionModules::find($parameters)->toArray(), null, 'uniqid');
             if ($useCache) {
                 foreach ($modulesArray as $module) {
                     $redis->hset($cacheKey, $module['uniqid'], json_encode($module));

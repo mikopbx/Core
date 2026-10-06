@@ -1192,7 +1192,6 @@ return [
     'rest_schema_module_id' => 'Εσωτερικό αναγνωριστικό ενότητας',
     'rest_schema_module_installed' => 'Η ενότητα είναι εγκατεστημένη',
     'rest_schema_module_limit' => 'Όριο δημοσιεύσεων ανά σελίδα',
-    'rest_schema_module_max_pbx_version' => 'Μέγιστη συμβατή έκδοση του MikoPBX',
     'rest_schema_module_min_pbx_version' => 'Ελάχιστη απαιτούμενη έκδοση του MikoPBX',
     'rest_schema_module_name' => 'Όνομα ενότητας',
     'rest_schema_module_offset' => 'Μετατόπιση για σελιδοποίηση',

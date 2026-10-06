@@ -501,7 +501,6 @@ return [
     'rest_tag_TimeSettings' => '时间设置',
     'rest_tag_FilesManagement' => '文件操作',
     'rest_schema_gs_ssh_port' => 'SSH 服务器端口',
-    'rest_schema_module_max_pbx_version' => 'MikoPBX 最高兼容版本',
     'rest_schema_owt_calType' => '日历类型（iCal、CalDAV、Google）',
     'rest_schema_owt_calUrl' => '日历网址',
     'rest_schema_provider_manualattributes' => '其他配置选项',

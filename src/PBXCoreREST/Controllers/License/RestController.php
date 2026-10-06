@@ -54,8 +54,8 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('license', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getLicenseInfo', 'ping', 'sendPBXMetrics', 'resetKey', 'featureAvailable', 'usageGet'],
-        'POST' => ['processUserRequest', 'captureFeatureForProductId', 'sessionStart', 'captureFeature',
+        'GET' => ['getLicenseInfo', 'ping', 'sendPBXMetrics', 'featureAvailable', 'usageGet'],
+        'POST' => ['resetKey', 'processUserRequest', 'captureFeatureForProductId', 'sessionStart', 'captureFeature',
             'sessionKeepalive', 'releaseFeature', 'sessionEnd', 'entitlementExport', 'entitlementImport']
     ],
     resourceLevelMethods: [],
@@ -136,7 +136,7 @@ class RestController extends BaseRestController
     /**
      * Reset license key
      *
-     * @route GET /pbxcore/api/v3/license:resetKey
+     * @route POST /pbxcore/api/v3/license:resetKey
      */
     #[ApiOperation(
         summary: 'rest_lic_ResetKey',

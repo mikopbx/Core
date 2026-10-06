@@ -66,7 +66,8 @@ Object.assign(ExtensionsAPI, {
     buildCdrNameHtml(cdrName, number) {
         const safeName = SecurityUtils.escapeHtml(cdrName);
         const safeNumber = SecurityUtils.escapeHtml(number);
-        return `<span class="cdr-caller-name">${safeName}</span> <span class="cdr-number">${safeNumber}</span>`;
+        // title carries the full name so it stays readable when the CSS ellipsis truncates it
+        return `<span class="cdr-caller-name" title="${safeName}">${safeName}</span> <span class="cdr-number">${safeNumber}</span>`;
     },
 
     /**

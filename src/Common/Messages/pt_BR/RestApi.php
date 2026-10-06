@@ -2291,7 +2291,6 @@ return [
     'rest_schema_module_file_path' => 'Caminho para o arquivo do módulo',
     'rest_schema_module_id' => 'Identificador interno do módulo',
     'rest_schema_module_installed' => 'O módulo está instalado',
-    'rest_schema_module_max_pbx_version' => 'Versão máxima compatível do MikoPBX',
     'rest_schema_module_min_pbx_version' => 'Versão mínima necessária do MikoPBX',
     'rest_schema_module_offset' => 'Deslocamento para paginação',
     'rest_schema_module_order' => 'Ordem de classificação dos resultados',

@@ -182,7 +182,9 @@ class TestApiKeys:
         # Verify full_permissions in response
         assert response['data'].get('full_permissions') is True, "full_permissions should be True"
         # When full_permissions=true, allowed_paths should be empty
-        assert response['data'].get('allowed_paths', []) == [], "allowed_paths should be empty for full permissions"
+        # WHY (#1141): an empty permission map is a JSON object {}, not a list []
+        assert response['data'].get('allowed_paths') == {}, \
+            "allowed_paths must be an empty JSON object for full permissions"
 
         print(f"✓ Created full-permission API key: {key_id}")
         print(f"  Key: {generated_key[:20]}...")

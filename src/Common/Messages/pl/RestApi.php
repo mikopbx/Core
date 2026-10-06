@@ -420,7 +420,6 @@ return [
     'rest_schema_module_commercial' => 'Moduł jest komercyjny.',
     'rest_schema_module_description' => 'Opis funkcjonalności modułu',
     'rest_schema_module_limit' => 'Limit postów na stronę',
-    'rest_schema_module_max_pbx_version' => 'Maksymalna kompatybilna wersja MikoPBX',
     'rest_schema_module_min_pbx_version' => 'Minimalna wymagana wersja MikoPBX',
     'rest_schema_module_name' => 'Nazwa modułu',
     'rest_schema_owt_allowRestriction' => 'Zastosuj ograniczenia liczbowe',

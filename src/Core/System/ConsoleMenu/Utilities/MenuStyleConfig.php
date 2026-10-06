@@ -297,21 +297,51 @@ class MenuStyleConfig
     /**
      * Print prompt and block until the user presses Enter
      *
-     * Enter received sooner than the user could read the screen is ignored: it was typed
-     * before the prompt appeared (a digit shortcut followed by a habitual Enter) and would
-     * otherwise close the screen immediately.
-     *
      * @param string $prompt Prompt text
      * @return void
      */
     public static function waitForEnter(string $prompt): void
     {
+        self::readLine($prompt);
+    }
+
+    /**
+     * Print prompt and read one line of user input
+     *
+     * A line received sooner than the user could read the screen is ignored: it was typed
+     * before the prompt appeared (a digit shortcut followed by a habitual Enter) and would
+     * otherwise answer the prompt with an empty line.
+     *
+     * The stream is switched back to blocking mode first: php-school/terminal >= 0.2.2 leaves
+     * STDIN non-blocking after reading the menu key, and the flag is shared by every descriptor
+     * of the tty (including fopen('php://stdin')), so fgets() would return false at once.
+     *
+     * @param string $prompt Prompt text
+     * @param resource $fp Input stream
+     * @return string|false The line read, or false on EOF
+     */
+    public static function readLine(string $prompt, $fp = STDIN): string|false
+    {
+        stream_set_blocking($fp, true);
         echo $prompt;
         $shownAt = hrtime(true);
-        // Fixed 0.5 s window: an Enter typed later than that after a fast action still closes the screen
         do {
-            $line = fgets(STDIN);
-        } while ($line !== false && hrtime(true) - $shownAt < 500_000_000);
+            $line = fgets($fp);
+        } while ($line !== false && self::isStrayInput($shownAt));
+        return $line;
+    }
+
+    /**
+     * Check whether input arrived too soon after a screen was shown to be a reply to it
+     *
+     * Fixed 0.5 s window: a stray Enter typed later than that after a fast action is still taken as input.
+     *
+     * @param int $shownAt hrtime(true) when the screen was shown
+     * @return bool True if the input should be ignored
+     */
+    public static function isStrayInput(int $shownAt): bool
+    {
+        return hrtime(true) - $shownAt < 500_000_000;
     }
 
     /**

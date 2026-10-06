@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\Tests\Unit\Core\Workers;
 
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFeaturesAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessCustomFiles;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessOtherModels;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessPBXSettings;
@@ -28,6 +31,7 @@ use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 use ReflectionClass;
 use ReflectionMethod;
+use ReflectionProperty;
 
 /**
  * Guardrail against the "born dead reload action" class of bug.
@@ -142,6 +146,46 @@ class ReloadActionsRegistryTest extends AbstractUnitTest
     {
         foreach ($this->masterPriorityList() as $actionClass) {
             $this->assertTrue(class_exists($actionClass), "Reload action class does not exist: $actionClass");
+        }
+    }
+
+    /**
+     * The self-restart signal ReloadModuleStateAction uses to make WorkerModelsEvents
+     * reload updated module code must be a public static bool that starts cleared;
+     * otherwise the loop would either not see it or restart on every pass.
+     */
+    public function testSelfRestartFlagIsPublicStaticBoolDefaultFalse(): void
+    {
+        $this->assertTrue(
+            property_exists(WorkerModelsEvents::class, 'requestSelfRestart'),
+            'WorkerModelsEvents::$requestSelfRestart is the self-restart signal and must exist'
+        );
+
+        $property = new ReflectionProperty(WorkerModelsEvents::class, 'requestSelfRestart');
+        $this->assertTrue($property->isPublic(), '$requestSelfRestart must be public (set from action objects)');
+        $this->assertTrue($property->isStatic(), '$requestSelfRestart must be static (actions hold no worker ref)');
+        $this->assertFalse(
+            (new ReflectionClass(WorkerModelsEvents::class))->getDefaultProperties()['requestSelfRestart'],
+            '$requestSelfRestart must default to false so the worker never restarts unprompted'
+        );
+    }
+
+    /**
+     * On a module-set change ReloadModuleStateAction forces these Asterisk reloads so the
+     * fresh worker regenerates the configs a module extends with its new code. They are
+     * deferred across the restart via the master priority list, so an action missing from
+     * that list would be queued but NEVER executed — the born-dead bug this suite guards.
+     */
+    public function testModuleStateForcedReloadsAreInMasterPriorityList(): void
+    {
+        $master = $this->masterPriorityList();
+        foreach ([ReloadDialplanAction::class, ReloadPJSIPAction::class, ReloadFeaturesAction::class] as $forced) {
+            $this->assertContains(
+                $forced,
+                $master,
+                "$forced is forced by ReloadModuleStateAction on module changes but is missing from the master "
+                . 'priority list, so it would be queued but never executed'
+            );
         }
     }
 }

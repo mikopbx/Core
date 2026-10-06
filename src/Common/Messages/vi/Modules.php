@@ -110,6 +110,7 @@ return [
     'ext_Version' => 'Phiên bản',
     'ext_WrongGetModuleLink' => 'Lỗi khi lấy tệp mô-đun từ kho lưu trữ',
     'ext_MissingModuleUniqueID' => 'Tệp module.json trong kho lưu trữ %filePath% thiếu trường moduleUniqueID bắt buộc.',
+    'ext_InvalidModuleUniqueID' => 'Trường moduleUniqueID trong tệp module.json của kho lưu trữ %filePath% không hợp lệ: chỉ cho phép chữ cái Latin, chữ số, "_" và "-", tối đa 128 ký tự.',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'Mô-đun %module% không tương thích với phiên bản MikoPBX hiện tại.',
     'ext_InvalidModuleJson' => 'Tệp module.json trong kho lưu trữ %filePath% chứa JSON không hợp lệ: %error%',

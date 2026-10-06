@@ -1996,7 +1996,6 @@ return [
     'rest_schema_module_id' => 'Interni identifikator modula',
     'rest_schema_module_installed' => 'Modul je instaliran',
     'rest_schema_module_limit' => 'Ograničenje objava po stranici',
-    'rest_schema_module_max_pbx_version' => 'Maksimalno kompatibilna verzija MikoPBX-a',
     'rest_schema_module_order' => 'Redoslijed sortiranja rezultata',
     'rest_schema_module_path' => 'Put instalacije modula',
     'rest_schema_module_release_id' => 'ID izdanja modula',

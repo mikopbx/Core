@@ -3,7 +3,6 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Modules;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use Pheanstalk\Contract\PheanstalkPublisherInterface;
 
@@ -59,98 +58,27 @@ class ModulesControllerBase extends BaseController
 
         $response = json_decode($this->response->getContent(), true);
         $this->handleResponse($response);
-        
-        // list($debug, $requestMessage) = $this->prepareRequestMessage(
-        //     PbxExtensionsProcessor::class,
-        //     $payload,
-        //     $actionName,
-        //     $moduleName
-        // );
-
-        // try {
-        //     $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);
-        //     /** @var BeanstalkConnectionWorkerApiProvider $beanstalkQueue */
-        //     $beanstalkQueue = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
-        //     if ($debug) {
-        //         $maxTimeout = 9999;
-        //     }
-        //     $response = $beanstalkQueue->request($message, $maxTimeout, $priority);
-
-        //     if ($response !== false) {
-        //         $response = json_decode($response, true);
-        //         $this->handleResponse($response);
-        //     } else {
-        //         $this->sendError(Response::INTERNAL_SERVER_ERROR);
-        //     }
-        // } catch (\Throwable $e) {
-        //     CriticalErrorsHandler::handleExceptionWithSyslog($e);
-        //     $this->sendError(Response::BAD_REQUEST, $e->getMessage());
-        // }
     }
-
-    // /**
-    //  * Prepare a request message for sending to a backend worker.
-    //  *
-    //  * @param string $processor
-    //  * @param mixed $payload
-    //  * @param string $actionName
-    //  * @param string $moduleName
-    //  * @return array
-    //  */
-    // public function prepareRequestMessage(
-    //     string $processor,
-    //     mixed $payload,
-    //     string $actionName,
-    //     string $moduleName
-    // ): array {
-
-    //     $requestMessage = [
-    //         'data' => $_REQUEST,
-    //         'module' => $moduleName,
-    //         'input' => $payload,
-    //         'action' => $actionName,
-    //         'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'],
-    //         'processor' => $processor,
-    //         'async' => false,
-    //         'asyncChannelId' => ''
-    //     ];
-
-    //     if ($this->request->isAsyncRequest()) {
-    //         $requestMessage['async'] = true;
-    //         $requestMessage['asyncChannelId'] = $this->request->getAsyncRequestChannelId();
-    //     }
-
-    //     $requestMessage['debug'] = $this->request->isDebugRequest();
-    //     return [$requestMessage['debug'], $requestMessage];
-    // }
 
     /**
      * Handles the response from the backend worker.
      *
-     * @param array $response
+     * @param mixed $response The response content decoded as an associative array.
      * @return void
      */
-    private function handleResponse(array $response): void
+    private function handleResponse(mixed $response): void
     {
+        // BaseController may have answered already: a core-format file is streamed with the
+        // content left empty, a raw body may not be a JSON object. Nothing to route then (#1167).
+        if (!is_array($response)) {
+            return;
+        }
         if (isset($response['data']['fpassthru'])) {
             $this->handleFilePassThrough($response['data']);
-        } elseif (isset($response['html'])) {
-            echo $response['html'];
-            $this->response->sendRaw();
-        } elseif (isset($response['redirect'])) {
-            $this->response->redirect($response['redirect'], true);
-            $this->response->sendRaw();
-        } elseif (isset($response['echo'], $response['headers'])) {
-            foreach ($response['headers'] as $name => $value) {
-                $this->response->setHeader($name, $value);
-            }
-            $this->response->setPayloadSuccess($response['echo']);
-        } elseif (isset($response['echo_file'])) {
-            $this->response->setStatusCode(Response::OK, 'OK')->sendHeaders();
-            $this->response->setFileToSend($response['echo_file']);
-            $this->response->sendRaw();
         } else {
-            $this->response->setPayloadSuccess($response);
+            // Rebuild the payload without the assoc flag: nested empty objects ({}) and objects with
+            // numeric keys must not be re-encoded as JSON arrays (#1162). Status stays 200 as before.
+            $this->response->setPayloadSuccess((array) json_decode($this->response->getContent()));
         }
     }
 
@@ -180,12 +108,10 @@ class ModulesControllerBase extends BaseController
      *     ],
      * ]
      *
-     * MODULES USING OLD FORMAT (still supported):
-     * - ModuleAutoprovision (since 2017)
-     * - All legacy modules (before 2025)
-     *
-     * MODULES USING NEW FORMAT:
-     * - ModuleExampleRestAPIv2 (reference implementation)
+     * Both are flat: the keys sit on `data` next to the `fpassthru => true` flag, so BaseController
+     * leaves them on the normal payload path. The core format (`'fpassthru' => ['filename' => ...]`,
+     * used by ModuleAutoprovision since 2026-05) never reaches this method: BaseController streams
+     * it itself (handleFileStreaming()).
      *
      * @param array $data Response data from module
      * @return void
@@ -202,8 +128,8 @@ class ModulesControllerBase extends BaseController
             $size = filesize($filename);
 
             // WHY BACKWARD COMPATIBLE: Use download_name if provided, fallback to basename()
-            // Old modules (ModuleAutoprovision) don't set download_name
-            // New modules (ModuleExampleRestAPIv2) can specify custom filename
+            // Old modules don't set download_name
+            // New modules can specify custom filename
             $name = $data['download_name'] ?? basename($filename);
 
             // WHY BACKWARD COMPATIBLE: Use content_type if provided, fallback to text/plain

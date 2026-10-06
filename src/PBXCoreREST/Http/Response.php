@@ -94,25 +94,24 @@ class Response extends PhResponse
         $hash      = sha1($timestamp . $content);
         $eTag      = sha1($content);
 
-        $decodedContent = json_decode($content, true);
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decodedContent)) {
-            $decodedContent = [];
+        // Decode without the assoc flag so empty objects ({}) and objects with
+        // numeric keys keep their JSON object form when re-encoded.
+        $decodedContent = json_decode($content);
+        if (is_array($decodedContent)) {
+            $decodedContent = (object) $decodedContent;
+        }
+        if (!is_object($decodedContent)) {
+            $decodedContent = new \stdClass();
         }
 
-        $meta    = [
-            'meta' => [
-                'timestamp' => $timestamp,
-                'hash'      => $hash,
-            ],
+        $decodedContent->meta = [
+            'timestamp' => $timestamp,
+            'hash'      => $hash,
         ];
 
-        /**
-         * Join the array again
-         */
-        $data = array_merge($decodedContent, $meta);
         $this
             ->setHeader('E-Tag', $eTag)
-            ->setJsonContent($data);
+            ->setJsonContent($decodedContent);
 
 
         return parent::send();

@@ -739,7 +739,6 @@ return [
     'rest_schema_module_id' => 'Sisäinen moduulitunniste',
     'rest_schema_module_installed' => 'Moduuli on asennettu',
     'rest_schema_module_limit' => 'Sivulla olevien viestien rajoitus',
-    'rest_schema_module_max_pbx_version' => 'MikoPBX:n yhteensopivan version maksimi',
     'rest_schema_owt_actionDisplay' => 'Toiminnan näytetty esitys',
     'rest_schema_owt_allowRestriction' => 'Käytä numerorajoituksia',
     'rest_schema_owt_calSecret' => 'Salainen kalenteriavain',

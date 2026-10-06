@@ -1247,7 +1247,6 @@ return [
     'rest_schema_module_id' => 'ตัวระบุโมดูลภายใน',
     'rest_schema_module_installed' => 'โมดูลได้รับการติดตั้งแล้ว',
     'rest_schema_module_limit' => 'จำกัดจำนวนโพสต์ต่อหน้า',
-    'rest_schema_module_max_pbx_version' => 'เวอร์ชัน MikoPBX ที่เข้ากันได้สูงสุด',
     'rest_schema_module_min_pbx_version' => 'เวอร์ชันขั้นต่ำที่ต้องการของ MikoPBX',
     'rest_schema_module_offset' => 'ระยะห่างสำหรับการแบ่งหน้า',
     'rest_schema_module_order' => 'ลำดับการเรียงผลลัพธ์',
