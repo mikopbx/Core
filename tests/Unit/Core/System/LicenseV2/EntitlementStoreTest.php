@@ -418,6 +418,48 @@ class EntitlementStoreTest extends TestCase
         $this->assertFalse($this->newStore()->featureAvailable('54'));
     }
 
+    public function testOnlineAnswerPullsClockAnchorBackAfterForwardJump(): void
+    {
+        $store = $this->newStore();
+        $this->wallClock = self::NOW + 365 * self::DAY;
+        $store->now();
+        $this->wallClock = self::NOW;
+
+        $store->acceptAnswer($this->issueFor($store));
+
+        $this->assertTrue($store->featureAvailable('54'));
+        $this->assertSame(self::NOW, $this->newStore()->now());
+    }
+
+    public function testOnlineAnswerDoesNotPullAnchorBelowServerTimeOnRolledBackClock(): void
+    {
+        $store = $this->newStore();
+        $this->wallClock = self::NOW;
+        $store->now();
+        $this->wallClock = self::NOW - 10 * self::DAY;
+
+        try {
+            $store->acceptAnswer($this->issueFor($store));
+            $this->fail('A server answer from a clock rolled back by days must be rejected');
+        } catch (TokenRejectedException $e) {
+            $this->assertStringContainsString('clock is wrong', $e->getMessage());
+        }
+        $this->assertSame(self::NOW, $this->newStore()->now());
+    }
+
+    public function testOfflineDocumentDoesNotPullClockAnchorBack(): void
+    {
+        $store = $this->newStore();
+        $offlineAnswer = $this->issueFor($store, offline: true);
+        $this->wallClock = self::NOW + 60 * self::DAY;
+        $store->now();
+        $this->wallClock = self::NOW;
+
+        $this->expectException(TokenRejectedException::class);
+        $this->expectExceptionMessage('expired or the PBX clock is wrong');
+        $store->acceptAnswer($offlineAnswer);
+    }
+
     public function testServerTimestampPullsSlightlyLaggingClockForward(): void
     {
         $store = $this->newStore();

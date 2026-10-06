@@ -28,7 +28,7 @@ use RuntimeException;
 /**
  * Keeps the entitlement token of this installation: builds signed requests (online and
  * file-based offline exchange use the same request), accepts server answers, and answers
- * "what is licensed right now" with a clock that never goes backwards.
+ * "what is licensed right now" with a clock that goes back only to a server answer.
  */
 class EntitlementStore
 {
@@ -216,7 +216,8 @@ class EntitlementStore
         // the lock below: now() may itself persist the clock anchor via saveState(), and a second
         // flock() on the same file within this process would deadlock against our own lock.
         $now = $this->now();
-        return $this->withLock(function () use ($token, $payload, $now): array {
+        $wallClock = ($this->clock)();
+        return $this->withLock(function () use ($token, $payload, $now, $wallClock): array {
             $state = $this->loadState();
             $answeredSlot = '';
             foreach ([self::NONCE_ONLINE, self::NONCE_OFFLINE] as $slot) {
@@ -227,6 +228,12 @@ class EntitlementStore
             }
             if ($answeredSlot === '') {
                 throw new TokenRejectedException('Entitlement token does not answer the pending request');
+            }
+            // An online answer is signed by the server for a nonce made this very round, so it is judged by the
+            // wall clock: one forward jump of the clock must not leave the anchor ahead of every future answer.
+            // A file document may be old, so it keeps the anchor that never goes back.
+            if ($answeredSlot === self::NONCE_ONLINE) {
+                $now = $wallClock;
             }
             // Only a file document carries a fingerprint: it may outlive any contact with the server, so it
             // must stay on the hardware it was issued for. Judged after the nonce: a stale or foreign
@@ -475,7 +482,8 @@ class EntitlementStore
     }
 
     /**
-     * Wall clock that never goes backwards between calls and reboots.
+     * Wall clock that does not go backwards between calls and reboots; only an accepted online answer
+     * moves the anchor back, to the server time (acceptAnswer).
      *
      * ponytail: root can edit state.json and rewind the anchor; the online path re-anchors
      * on every server answer, a closed contour relies on the token lifetime only.
