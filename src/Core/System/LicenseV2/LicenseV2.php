@@ -48,14 +48,12 @@ class LicenseV2
     /**
      * Keys the licensing server signs with, by kid, pinned in the read-only rootfs. A rotated key is added
      * here one firmware ahead of its use; a document or a refusal naming an unknown kid is not trusted.
-     *
-     * ponytail: MVP test key only (issuer script in _temp); the MIKO key of /protect/v2 with its kid
-     * replaces it before this leaves the MVP branch.
      */
     private const array TRUSTED_KEYS = [
-        'mvptest1' => <<<'PEM'
+        // MIKO tenant key of /protect/v2 (lic.miko.ru, lic.mikopbx.com), active since 2026-10-01.
+        'e00668d5' => <<<'PEM'
             -----BEGIN PUBLIC KEY-----
-            MCowBQYDK2VwAyEACbfQOaxyRmg5MXtGAEI/ZEtIKfV1fmPTl565zNIsthU=
+            MCowBQYDK2VwAyEAr4Og6h+3TB9HfK4yeOuvbExJD4QtsWriu8SqW7sYrT8=
             -----END PUBLIC KEY-----
             PEM,
     ];
