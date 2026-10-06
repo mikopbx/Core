@@ -218,6 +218,31 @@ class EntitlementStoreTest extends TestCase
         $this->assertTrue($store->featureAvailable('54'));
     }
 
+    public function testRepeatedExportKeepsThePendingRequestFileValid(): void
+    {
+        $store = $this->newStore();
+        $carried = $store->buildRequest('MIKO-TEST', '2026.3.1', true);
+        $store->buildRequest('MIKO-TEST', '2026.3.1', true);
+
+        $store->acceptAnswer($this->sign($carried));
+        $this->assertTrue($store->featureAvailable('54'));
+        $this->assertNotSame(
+            self::nonceOf($carried),
+            self::nonceOf($store->buildRequest('MIKO-TEST', '2026.3.1', true)),
+            'an answered request file is spent, the next export must be a new request'
+        );
+    }
+
+    public function testExportForAnotherKeyStartsANewRequestFile(): void
+    {
+        $store = $this->newStore();
+        $carried = $store->buildRequest('MIKO-TEST', '2026.3.1', true);
+        $store->buildRequest('MIKO-OTHER', '2026.3.1', true);
+
+        $this->expectExceptionMessage('does not answer the pending request');
+        $store->acceptAnswer($this->sign($carried));
+    }
+
     public function testEmptyModuleMapIsRejected(): void
     {
         $store = $this->newStore();
@@ -947,6 +972,12 @@ class EntitlementStoreTest extends TestCase
         bool $offline = false
     ): string {
         return $this->sign($store->buildRequest('MIKO-TEST', '2026.3.1', $offline), $overrides, $signingKeyPem);
+    }
+
+    /** @param array{request: string, sig: string} $signed */
+    private static function nonceOf(array $signed): string
+    {
+        return json_decode(EntitlementToken::base64UrlDecode($signed['request']), true)['nonce'];
     }
 
     /**
