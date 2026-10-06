@@ -443,6 +443,30 @@ class LicenseV2SeatsTest extends TestCase
         $this->assertSame(300, $payload['poll']);
     }
 
+    public function testFileCanNotAnswerTheOnlineRequest(): void
+    {
+        $sent = [];
+        $this->serverAnswers = [
+            function (RequestInterface $request) use (&$sent): Response {
+                $sent[] = self::requestFields($request);
+                return new Response(503);
+            },
+        ];
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+        $this->assertFalse($license->refresh(true));
+        // A withheld online answer, imported later as a file: the online request is judged by the wall
+        // clock, so taking it from a file would let a rolled back clock accept an expired answer.
+        $onlineAnswer = $this->signed([
+            'v' => EntitlementToken::VERSION, 'kid' => self::KID, 'install' => $sent[0]['install'],
+            'key' => $this->licenseKey, 'nonce' => $sent[0]['nonce'], 'iat' => $this->wallClock,
+            'exp' => $this->wallClock + 7 * 86400, 'features' => ['54' => $this->wallClock + 86400],
+        ]);
+
+        $this->expectException(TokenRejectedException::class);
+        $this->expectExceptionMessage('does not answer the pending request');
+        $license->importOfflineToken($onlineAnswer);
+    }
+
     public function testCabinetAnswerFileWithARefusalRevokesAndSaysWhy(): void
     {
         $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);

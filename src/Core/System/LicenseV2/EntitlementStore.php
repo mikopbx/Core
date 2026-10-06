@@ -203,12 +203,14 @@ class EntitlementStore
     /**
      * Accepts the server answer to the pending request.
      *
+     * @param bool $fromFile The answer was imported from a file, not received in the online round: it may
+     *     answer only the exported request, so a withheld online answer can not be taken later.
      * @return array<string, mixed> The accepted payload.
      * @throws TokenRejectedException When the token is forged, replayed, stale or foreign, or is a file
      *     document issued for other hardware.
      * @throws RuntimeException When the state can not be locked or written.
      */
-    public function acceptAnswer(string $token): array
+    public function acceptAnswer(string $token, bool $fromFile = false): array
     {
         $payload = EntitlementToken::decodeVerified($token, $this->trustedKeys, $this->identity->getInstallId());
         // Freshness is judged by the clock as it was before this token: a token dated in the
@@ -217,10 +219,10 @@ class EntitlementStore
         // flock() on the same file within this process would deadlock against our own lock.
         $now = $this->now();
         $wallClock = ($this->clock)();
-        return $this->withLock(function () use ($token, $payload, $now, $wallClock): array {
+        return $this->withLock(function () use ($token, $payload, $now, $wallClock, $fromFile): array {
             $state = $this->loadState();
             $answeredSlot = '';
-            foreach ([self::NONCE_ONLINE, self::NONCE_OFFLINE] as $slot) {
+            foreach (($fromFile ? [self::NONCE_OFFLINE] : [self::NONCE_ONLINE, self::NONCE_OFFLINE]) as $slot) {
                 $pendingNonce = (string)($state[$slot] ?? '');
                 if ($pendingNonce !== '' && hash_equals($pendingNonce, (string)($payload['nonce'] ?? ''))) {
                     $answeredSlot = $slot;
@@ -229,8 +231,9 @@ class EntitlementStore
             if ($answeredSlot === '') {
                 throw new TokenRejectedException('Entitlement token does not answer the pending request');
             }
-            // An online answer is signed by the server for a nonce made this very round, so it is judged by the
-            // wall clock: one forward jump of the clock must not leave the anchor ahead of every future answer.
+            // An online answer is signed by the server for a nonce made this very round (a file can not
+            // answer it), so it is judged by the wall clock: one forward jump of the clock must not leave
+            // the anchor ahead of every future answer.
             // A file document may be old, so it keeps the anchor that never goes back.
             if ($answeredSlot === self::NONCE_ONLINE) {
                 $now = $wallClock;

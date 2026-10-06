@@ -571,7 +571,7 @@ class LicenseV2
         if (EntitlementToken::isRefusal($token)) {
             throw new TokenRejectedException('Refused by the licensing server: ' . $this->store->acceptRefusal($token));
         }
-        $this->applyAnswer($this->store->acceptAnswer($token));
+        $this->applyAnswer($this->store->acceptAnswer($token, true));
     }
 
     /**
