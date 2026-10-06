@@ -71,17 +71,15 @@ class HostFactsTest extends TestCase
         ];
     }
 
-    public function testProbeRunsOncePerInstance(): void
+    public function testReplacedHardwareIsSeenByTheSameInstance(): void
     {
-        $calls = 0;
-        $facts = new HostFacts(static function () use (&$calls): array {
-            $calls++;
-            return ['environment' => 'bare', 'sources' => ['mac' => '52:54:00:12:34:56']];
+        $mac = '52:54:00:12:34:56';
+        $facts = new HostFacts(static function () use (&$mac): array {
+            return ['environment' => 'bare', 'sources' => ['mac' => $mac]];
         });
-        $facts->environment();
-        $facts->fingerprint(self::INSTALL);
-        $facts->fingerprint(self::INSTALL);
-        $this->assertSame(1, $calls);
+        $before = $facts->fingerprint(self::INSTALL);
+        $mac = '52:54:00:65:43:21';
+        $this->assertNotSame($before, $facts->fingerprint(self::INSTALL), 'a long-lived worker must not keep old hardware');
     }
 
     public function testMatchesNeedsKHashesOfTheDocument(): void

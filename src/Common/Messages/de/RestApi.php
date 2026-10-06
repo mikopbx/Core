@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Priorität erfolgreich geändert',
 
     'rest_response_422_validation_error' => 'Validierungsfehler der Anfrage',
-    'rest_response_429_too_many' => 'Zu viele Anfragen oder Sitzungen',
     'rest_response_501_not_implemented' => 'Die Funktion ist auf dieser Telefonanlage deaktiviert',
 
     'rest_param_cdr_format' => 'CDR-Exportformat: csv, json oder xml',

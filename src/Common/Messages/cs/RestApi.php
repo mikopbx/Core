@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Priorita úspěšně změněna',
 
     'rest_response_422_validation_error' => 'Chyba ověření požadavku',
-    'rest_response_429_too_many' => 'Příliš mnoho požadavků nebo relací',
     'rest_response_501_not_implemented' => 'Funkce je na této ústředně vypnuta',
 
     'rest_param_cdr_format' => 'Formát exportu CDR: csv, json nebo xml',

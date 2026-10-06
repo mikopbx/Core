@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Đã thay đổi mức ưu tiên thành công',
 
     'rest_response_422_validation_error' => 'Lỗi xác thực yêu cầu',
-    'rest_response_429_too_many' => 'Quá nhiều yêu cầu hoặc phiên',
     'rest_response_501_not_implemented' => 'Tính năng bị vô hiệu hóa trên tổng đài này',
 
     'rest_param_cdr_format' => 'Định dạng xuất CDR: csv, json hoặc xml',

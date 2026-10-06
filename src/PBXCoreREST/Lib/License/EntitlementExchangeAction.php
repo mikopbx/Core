@@ -32,7 +32,7 @@ use Throwable;
 
 /**
  * Closed contour: the request file the administrator carries to the licensing cabinet and the
- * token that comes back. Export is a POST because it makes the previous request file void.
+ * token that comes back. Export is a POST because it writes the pending request to the state.
  *
  * @package MikoPBX\PBXCoreREST\Lib\License
  */

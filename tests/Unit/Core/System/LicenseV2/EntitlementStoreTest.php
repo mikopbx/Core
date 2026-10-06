@@ -947,6 +947,15 @@ class EntitlementStoreTest extends TestCase
         $this->assertSame($heldNonce, $next['held']);
     }
 
+    public function testNothingIsHeldAfterASignedRefusal(): void
+    {
+        $store = $this->newStore();
+        $store->acceptAnswer($this->issueFor($store));
+        $store->acceptRefusal($this->sign($store->buildRequest('MIKO-TEST', '2026.3.1'), refusal: 'License key is revoked'));
+        $next = json_decode(EntitlementToken::base64UrlDecode($store->buildRequest('MIKO-TEST', '2026.3.1')['request']), true);
+        $this->assertArrayNotHasKey('held', $next, 'the refused document is not held any more');
+    }
+
     public function testSeqGrowsByOneWithEveryOnlineRequestOnly(): void
     {
         $store = $this->newStore();

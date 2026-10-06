@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => '優先順位を正常に変更しました',
 
     'rest_response_422_validation_error' => 'リクエストの検証エラー',
-    'rest_response_429_too_many' => 'リクエストまたはセッションが多すぎます',
     'rest_response_501_not_implemented' => 'この電話交換機ではこの機能は無効です',
 
     'rest_param_cdr_format' => 'CDR エクスポート形式: csv、json または xml',

@@ -1946,7 +1946,6 @@ return [
     'rest_response_409_extension_conflict' => 'Конфликт номера добавочного',
     'rest_response_409_active_calls' => 'Невозможно удалить очередь с активными вызовами',
     'rest_response_422_validation' => 'Ошибка валидации данных',
-    'rest_response_429_too_many' => 'Слишком много запросов или сессий',
     'rest_response_500_error' => 'Внутренняя ошибка сервера',
     'rest_response_501_not_implemented' => 'Возможность отключена на этой АТС',
 

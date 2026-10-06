@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Prioriteit succesvol gewijzigd',
 
     'rest_response_422_validation_error' => 'Validatiefout van verzoek',
-    'rest_response_429_too_many' => 'Te veel verzoeken of sessies',
     'rest_response_501_not_implemented' => 'De functie is uitgeschakeld op deze telefooncentrale',
 
     'rest_param_cdr_format' => 'CDR-exportformaat: csv, json of xml',

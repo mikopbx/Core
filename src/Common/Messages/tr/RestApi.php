@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Öncelik başarıyla değiştirildi',
 
     'rest_response_422_validation_error' => 'İstek doğrulama hatası',
-    'rest_response_429_too_many' => 'Çok fazla istek veya oturum',
     'rest_response_501_not_implemented' => 'Özellik bu santralde devre dışı',
 
     'rest_param_cdr_format' => 'CDR dışa aktarma biçimi: csv, json veya xml',

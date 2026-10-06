@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Η προτεραιότητα άλλαξε επιτυχώς',
 
     'rest_response_422_validation_error' => 'Σφάλμα επικύρωσης αιτήματος',
-    'rest_response_429_too_many' => 'Πάρα πολλά αιτήματα ή συνεδρίες',
     'rest_response_501_not_implemented' => 'Η λειτουργία είναι απενεργοποιημένη σε αυτό το τηλεφωνικό κέντρο',
 
     'rest_param_cdr_format' => 'Μορφή εξαγωγής CDR: csv, json ή xml',

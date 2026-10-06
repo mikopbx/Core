@@ -108,7 +108,11 @@ class EntitlementStore
         // Read before the lock below: now() may persist the clock anchor itself, and a second flock() on
         // the state file within this process would deadlock against our own lock.
         $now = $this->now();
-        $heldNonce = $this->lastVerifiedPayload()['nonce'] ?? null;
+        // A document cancelled by a signed refusal is not held. A file document on other hardware still is:
+        // the server releases the online grants older than it, and this PBX uses none of them either.
+        $heldNonce = ($this->loadState()['refused'] ?? false) === true
+            ? null
+            : ($this->lastVerifiedPayload()['nonce'] ?? null);
         $installId = $this->identity->getInstallId();
         $fields = [
             'v' => EntitlementToken::VERSION,

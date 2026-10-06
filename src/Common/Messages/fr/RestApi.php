@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Priorité modifiée avec succès',
 
     'rest_response_422_validation_error' => 'Erreur de validation de la requête',
-    'rest_response_429_too_many' => 'Trop de requêtes ou de sessions',
     'rest_response_501_not_implemented' => 'La fonctionnalité est désactivée sur ce PBX',
 
     'rest_param_cdr_format' => 'Format d\'export CDR : csv, json ou xml',

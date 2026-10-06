@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Prioriteetti muutettu onnistuneesti',
 
     'rest_response_422_validation_error' => 'Pyynnön validointivirhe',
-    'rest_response_429_too_many' => 'Liikaa pyyntöjä tai istuntoja',
     'rest_response_501_not_implemented' => 'Ominaisuus on pois käytöstä tässä puhelinkeskuksessa',
 
     'rest_param_cdr_format' => 'CDR-vientimuoto: csv, json tai xml',

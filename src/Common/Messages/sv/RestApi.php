@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Prioritet ändrad',
 
     'rest_response_422_validation_error' => 'Valideringsfel för begäran',
-    'rest_response_429_too_many' => 'För många förfrågningar eller sessioner',
     'rest_response_501_not_implemented' => 'Funktionen är inaktiverad på denna växel',
 
     'rest_param_cdr_format' => 'CDR-exportformat: csv, json eller xml',

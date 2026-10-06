@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Prioritet uğurla dəyişdirildi',
 
     'rest_response_422_validation_error' => 'Sorğunun yoxlama xətası',
-    'rest_response_429_too_many' => 'Həddindən artıq sorğu və ya sessiya',
     'rest_response_501_not_implemented' => 'Funksiya bu ATS-də deaktiv edilib',
 
     'rest_param_cdr_format' => 'CDR ixrac formatı: csv, json və ya xml',

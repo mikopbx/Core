@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => '优先级修改成功',
 
     'rest_response_422_validation_error' => '请求验证错误',
-    'rest_response_429_too_many' => '请求或会话过多',
     'rest_response_501_not_implemented' => '该功能在此话机系统上已禁用',
 
     'rest_param_cdr_format' => 'CDR 导出格式：csv、json 或 xml',

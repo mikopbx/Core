@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'เปลี่ยนลำดับความสำคัญสำเร็จ',
 
     'rest_response_422_validation_error' => 'ข้อผิดพลาดในการตรวจสอบคำขอ',
-    'rest_response_429_too_many' => 'มีคำขอหรือเซสชันมากเกินไป',
     'rest_response_501_not_implemented' => 'ฟีเจอร์นี้ถูกปิดใช้งานบนตู้สาขานี้',
 
     'rest_param_cdr_format' => 'รูปแบบการส่งออก CDR: csv, json หรือ xml',

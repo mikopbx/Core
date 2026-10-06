@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Pomyślnie zmieniono priorytet',
 
     'rest_response_422_validation_error' => 'Błąd walidacji żądania',
-    'rest_response_429_too_many' => 'Zbyt wiele żądań lub sesji',
     'rest_response_501_not_implemented' => 'Funkcja jest wyłączona na tej centrali',
 
     'rest_param_cdr_format' => 'Format eksportu CDR: csv, json lub xml',

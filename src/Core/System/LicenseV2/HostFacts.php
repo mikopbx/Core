@@ -45,12 +45,11 @@ class HostFacts
     private const int MAX_HASHES = 4;
 
     private Closure $probe;
-    /** @var array{environment: string, sources: array<string, string>}|null */
-    private ?array $facts = null;
 
     /**
      * @param Closure(): array{environment: string, sources: array<string, string>}|null $probe
-     *     Tests pass fixed facts; production reads the machine once per instance.
+     *     Tests pass fixed facts; production reads the machine on every call,
+     *     so a replaced disk or NIC is seen without a worker restart.
      */
     public function __construct(?Closure $probe = null)
     {
@@ -95,7 +94,7 @@ class HostFacts
      */
     private function facts(): array
     {
-        return $this->facts ??= ($this->probe)();
+        return ($this->probe)();
     }
 
     /**

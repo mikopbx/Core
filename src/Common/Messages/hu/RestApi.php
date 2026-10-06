@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Prioritás sikeresen módosítva',
 
     'rest_response_422_validation_error' => 'Kérés érvényesítési hiba',
-    'rest_response_429_too_many' => 'Túl sok kérés vagy munkamenet',
     'rest_response_501_not_implemented' => 'A funkció le van tiltva ezen a telefonközponton',
 
     'rest_param_cdr_format' => 'CDR exportálási formátum: csv, json vagy xml',

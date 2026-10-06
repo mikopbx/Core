@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Prioridade alterada com sucesso',
 
     'rest_response_422_validation_error' => 'Erro de validação da solicitação',
-    'rest_response_429_too_many' => 'Demasiados pedidos ou sessões',
     'rest_response_501_not_implemented' => 'A funcionalidade está desativada nesta central telefónica',
 
     'rest_param_cdr_format' => 'Formato de exportação CDR: csv, json ou xml',

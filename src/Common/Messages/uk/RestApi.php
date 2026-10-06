@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Пріоритет успішно змінено',
 
     'rest_response_422_validation_error' => 'Помилка валідації запиту',
-    'rest_response_429_too_many' => 'Забагато запитів або сесій',
     'rest_response_501_not_implemented' => 'Функція вимкнена на цій АТС',
 
     'rest_param_cdr_format' => 'Формат експорту CDR: csv, json або xml',

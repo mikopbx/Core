@@ -226,7 +226,7 @@ class RestController extends BaseRestController
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
-    #[ApiResponse(429, 'rest_response_429_too_many', 'PBXApiResult')]
+    #[ApiResponse(429, 'rest_response_429_too_many_requests', 'PBXApiResult')]
     #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     #[ApiResponse(501, 'rest_response_501_not_implemented', 'PBXApiResult')]
     public function sessionStart(): void
@@ -257,6 +257,7 @@ class RestController extends BaseRestController
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
     #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     #[ApiResponse(501, 'rest_response_501_not_implemented', 'PBXApiResult')]
     public function captureFeature(): void
     {
@@ -284,6 +285,7 @@ class RestController extends BaseRestController
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     #[ApiResponse(501, 'rest_response_501_not_implemented', 'PBXApiResult')]
     public function sessionKeepalive(): void
     {
@@ -312,6 +314,7 @@ class RestController extends BaseRestController
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     #[ApiResponse(501, 'rest_response_501_not_implemented', 'PBXApiResult')]
     public function releaseFeature(): void
     {
@@ -339,6 +342,7 @@ class RestController extends BaseRestController
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     #[ApiResponse(501, 'rest_response_501_not_implemented', 'PBXApiResult')]
     public function sessionEnd(): void
     {
@@ -365,6 +369,7 @@ class RestController extends BaseRestController
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     #[ApiResponse(501, 'rest_response_501_not_implemented', 'PBXApiResult')]
     public function featureAvailable(): void
     {

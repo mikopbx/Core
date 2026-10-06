@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Prioritatea a fost modificată cu succes',
 
     'rest_response_422_validation_error' => 'Eroare de validare a cererii',
-    'rest_response_429_too_many' => 'Prea multe cereri sau sesiuni',
     'rest_response_501_not_implemented' => 'Funcția este dezactivată pe această centrală',
 
     'rest_param_cdr_format' => 'Format export CDR: csv, json sau xml',

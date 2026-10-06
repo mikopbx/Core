@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'Prioritet uspješno promijenjen',
 
     'rest_response_422_validation_error' => 'Pogreška provjere zahtjeva',
-    'rest_response_429_too_many' => 'Previše zahtjeva ili sesija',
     'rest_response_501_not_implemented' => 'Funkcija je onemogućena na ovoj centrali',
 
     'rest_param_cdr_format' => 'Format izvoza CDR: csv, json ili xml',

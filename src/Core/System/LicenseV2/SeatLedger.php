@@ -226,7 +226,7 @@ class SeatLedger
     public function reportAccepted(): void
     {
         $this->transaction(function (array &$ledger): void {
-            foreach ($ledger['report'] as $featureId => $counters) {
+            foreach (array_keys($ledger['report']) as $featureId) {
                 $ledger['report'][$featureId]['peak'] = $this->countSeats($ledger, (string)$featureId);
             }
         });
@@ -447,7 +447,7 @@ class SeatLedger
         $ledger['report'] ??= [];
         $ledger['gen'] ??= bin2hex(random_bytes(8));
         // 'acked' was the refusal boundary kept here before the server kept it: ignored, dropped on the next write.
-        foreach ($ledger['report'] as $featureId => $counters) {
+        foreach (array_keys($ledger['report']) as $featureId) {
             unset($ledger['report'][$featureId]['acked']);
         }
         return $ledger;

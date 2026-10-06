@@ -2429,7 +2429,6 @@ return [
     'rest_response_200_priority_changed' => 'პრიორიტეტი წარმატებით შეიცვალა',
 
     'rest_response_422_validation_error' => 'მოთხოვნის ვალიდაციის შეცდომა',
-    'rest_response_429_too_many' => 'ძალიან ბევრი მოთხოვნა ან სესია',
     'rest_response_501_not_implemented' => 'ფუნქცია გამორთულია ამ ATS-ზე',
 
     'rest_param_cdr_format' => 'CDR ექსპორტის ფორმატი: csv, json ან xml',

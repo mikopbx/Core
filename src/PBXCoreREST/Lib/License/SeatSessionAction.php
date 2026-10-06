@@ -86,7 +86,7 @@ class SeatSessionAction extends Injectable
         $result = match ($action) {
             'sessionStart' => $badRequest !== ''
                 ? ['success' => false, 'error' => $badRequest, 'httpCode' => 400]
-                : $license->sessionStart(is_array($holder) ? $holder : [], $ttl),
+                : $license->sessionStart($holder, $ttl),
             'captureFeature' => $sessionId === '' || $featureId === ''
                 ? ['success' => false, 'error' => 'sessionId and featureId are required', 'httpCode' => 400]
                 : $license->captureFeature($featureId, $sessionId),
