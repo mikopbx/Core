@@ -54,6 +54,8 @@ class EntitlementStore
     private const string SEQ = 'seq';
     /** State key: nonce of the stored file document while this machine is not the hardware it is bound to. */
     private const string FOREIGN_HARDWARE = 'foreignHardware';
+    /** State key: sha256 of the license key the pending request file was exported for. */
+    private const string OFFLINE_KEY = 'nonceOfflineKey';
 
     /** Do not rewrite the state file more often than this, seconds. */
     private const int CLOCK_PERSIST_STEP = 60;
@@ -82,6 +84,8 @@ class EntitlementStore
      * Online refresh and the file-based offline exchange keep separate nonces, so the periodic (poll)
      * refresh does not invalidate a request file the administrator has already exported. Online requests
      * are numbered (seq): the server orders them by it, not by ts, since the PBX clock may go back.
+     * A repeated export keeps the nonce of the pending request file for the same license key, so it can
+     * not void a file already carried to the licensing cabinet.
      *
      * @param array{usage?: array<string, array<string, int>>, usageGen?: string,
      *     holders?: array<int, array<string, mixed>>, metrics?: array<string, mixed>} $report Signed along with
@@ -118,14 +122,20 @@ class EntitlementStore
         if (is_string($heldNonce) && preg_match('/^[0-9a-f]{32}$/', $heldNonce) === 1) {
             $fields['held'] = $heldNonce;
         }
-        $request = $this->withLock(function () use ($fields, $offline, $slot, $nonce, $report): string {
+        $keyHash = hash('sha256', $licenseKey);
+        $request = $this->withLock(function () use ($fields, $offline, $slot, $nonce, $report, $keyHash): string {
             $state = $this->loadState();
+            if ($offline && ($state[$slot] ?? '') !== '' && ($state[self::OFFLINE_KEY] ?? '') === $keyHash) {
+                $nonce = $fields['nonce'] = (string)$state[$slot];
+            }
             $changes = [
                 $slot => $nonce,
                 // Counters only, never holders: this file lives on the /cf flash.
                 $slot . self::REPORT_SUFFIX => ['metrics' => isset($report['metrics'])],
             ];
-            if (!$offline) {
+            if ($offline) {
+                $changes[self::OFFLINE_KEY] = $keyHash;
+            } else {
                 // Taken and stored under one lock: two workers must never send the same number.
                 $changes[self::SEQ] = (int)($state[self::SEQ] ?? 0) + 1;
                 $fields['seq'] = $changes[self::SEQ];
