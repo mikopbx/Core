@@ -54,7 +54,10 @@ class EntitlementStore
     private const string SEQ = 'seq';
     /** State key: nonce of the stored file document while this machine is not the hardware it is bound to. */
     private const string FOREIGN_HARDWARE = 'foreignHardware';
-    /** State key: sha256 of the license key the pending request file was exported for. */
+    /**
+     * State key: sha256 of the license key the pending request file was exported for; emptied when an answer
+     * to that file is refused as expired or issued for other hardware, so the next export is a new request.
+     */
     private const string OFFLINE_KEY = 'nonceOfflineKey';
 
     /** Do not rewrite the state file more often than this, seconds. */
@@ -221,16 +224,21 @@ class EntitlementStore
             if ($answeredSlot === '') {
                 throw new TokenRejectedException('Entitlement token does not answer the pending request');
             }
-            if (!EntitlementToken::isFresh($payload, $now)) {
-                throw new TokenRejectedException('Entitlement token is expired or the PBX clock is wrong');
-            }
             // Only a file document carries a fingerprint: it may outlive any contact with the server, so it
             // must stay on the hardware it was issued for. Judged after the nonce: a stale or foreign
             // document is told it answers nothing, not sent to exchange the file again.
-            if (!$this->hardwareMatches($payload)) {
-                throw new TokenRejectedException(
-                    'Entitlement document is issued for other hardware, exchange the license file again'
-                );
+            $fresh = EntitlementToken::isFresh($payload, $now);
+            if (!$fresh || !$this->hardwareMatches($payload)) {
+                // The cabinet answers a known nonce with its saved document, so this request file will never
+                // get a usable answer: the next export must be a new request. A document dated in the future is
+                // the exception: the same answer imports once the PBX clock is set right.
+                $future = (int)($payload['iat'] ?? PHP_INT_MAX) > $now + EntitlementToken::CLOCK_SKEW;
+                if ($answeredSlot === self::NONCE_OFFLINE && !$future) {
+                    $this->saveState([self::OFFLINE_KEY => ''], true);
+                }
+                throw new TokenRejectedException($fresh
+                    ? 'Entitlement document is issued for other hardware, exchange the license file again'
+                    : 'Entitlement token is expired or the PBX clock is wrong');
             }
             $this->writeAtomically(self::TOKEN_FILE, trim($token));
             $sent = (array)($state[$answeredSlot . self::REPORT_SUFFIX] ?? []);
