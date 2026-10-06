@@ -312,12 +312,17 @@ class MenuStyleConfig
      * before the prompt appeared (a digit shortcut followed by a habitual Enter) and would
      * otherwise answer the prompt with an empty line.
      *
+     * The stream is switched back to blocking mode first: php-school/terminal >= 0.2.2 leaves
+     * STDIN non-blocking after reading the menu key, and the flag is shared by every descriptor
+     * of the tty (including fopen('php://stdin')), so fgets() would return false at once.
+     *
      * @param string $prompt Prompt text
      * @param resource $fp Input stream
      * @return string|false The line read, or false on EOF
      */
     public static function readLine(string $prompt, $fp = STDIN): string|false
     {
+        stream_set_blocking($fp, true);
         echo $prompt;
         $shownAt = hrtime(true);
         do {
