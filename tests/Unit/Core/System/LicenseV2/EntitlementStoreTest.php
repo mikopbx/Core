@@ -158,6 +158,53 @@ class EntitlementStoreTest extends TestCase
         $this->assertSame(0600, fileperms("$this->dir/installation-private.pem") & 0777);
     }
 
+    public function testRootTakesTheKeyDirectoryBackAfterABootRightsReset(): void
+    {
+        if (posix_getuid() !== 0) {
+            $this->markTestSkipped('chown needs root');
+        }
+        new InstallationIdentity($this->dir);
+        // What the T2SDE boot does to the whole /cf: 644/755 and the web server user as the owner.
+        foreach (["$this->dir/installation-private.pem", "$this->dir/installation-public.pem", $this->dir] as $path) {
+            chmod($path, is_dir($path) ? 0777 : 0644);
+            chown($path, 1);
+        }
+
+        new InstallationIdentity($this->dir);
+
+        $this->assertSame(0600, fileperms("$this->dir/installation-private.pem") & 0777);
+        foreach (["$this->dir/installation-private.pem", "$this->dir/installation-public.pem", $this->dir] as $path) {
+            clearstatcache(true, $path);
+            $this->assertSame(0, fileowner($path), $path);
+        }
+        $this->assertSame(0644, fileperms("$this->dir/installation-public.pem") & 0777, 'the web side reads it');
+        $this->assertSame(0755, fileperms($this->dir) & 0777, 'the web server user must not add or swap entries');
+    }
+
+    public function testRootDoesNotFollowALinkPlantedInTheKeyDirectory(): void
+    {
+        if (posix_getuid() !== 0) {
+            $this->markTestSkipped('chown needs root');
+        }
+        new InstallationIdentity($this->dir);
+        $target = "$this->dir.outside";
+        file_put_contents($target, '');
+        chmod($target, 0644);
+        chown($target, 1);
+        unlink("$this->dir/installation-private.pem");
+        symlink($target, "$this->dir/installation-private.pem");
+        symlink($target, "$this->dir/planted");
+
+        try {
+            new InstallationIdentity($this->dir);
+            clearstatcache();
+            $this->assertSame(1, fileowner($target));
+            $this->assertSame(0644, fileperms($target) & 0777);
+        } finally {
+            unlink($target);
+        }
+    }
+
     public function testTokenSignedByAnotherKeyIsRejected(): void
     {
         $store = $this->newStore();

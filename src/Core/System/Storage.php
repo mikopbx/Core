@@ -1193,8 +1193,8 @@ class Storage extends Injectable
         if ($resultOfMount !== 0) {
             SystemMessages::echoToTeletype(" - Error mount " . implode(' ', $out));
         }
-        // Add regular www rights to /cf directory
-        Util::addRegularWWWRights('/cf');
+        // Add regular www rights to /cf directory; the licensing keys stay root-only (InstallationIdentity)
+        Util::addRegularWWWRights('/cf', '/cf/conf/license-v2');
     }
 
     /**

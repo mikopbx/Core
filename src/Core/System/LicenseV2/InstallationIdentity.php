@@ -50,6 +50,7 @@ class InstallationIdentity
         if (!is_file($publicKeyFile)) {
             $this->generate();
         }
+        $this->reclaim();
         $this->publicKeyPem = (string)file_get_contents($publicKeyFile);
         if (openssl_pkey_get_public($this->publicKeyPem) === false) {
             throw new RuntimeException("Installation public key $publicKeyFile is unreadable or corrupted");
@@ -83,13 +84,48 @@ class InstallationIdentity
     }
 
     /**
+     * Takes the directory back for root: the private key must stay root-only, and only root workers may
+     * write the state. The web side keeps reading the public key, the token and the state.
+     * Storage::saveFstab() skips this directory when it gives /cf to the web server user; this repairs
+     * stations whose directory was handed over before that, or by any other wholesale rights change.
+     *
+     * ponytail: a directory handed over stays readable and replaceable by the web server user until
+     * a root process builds the identity.
+     */
+    private function reclaim(): void
+    {
+        if (posix_getuid() !== 0 || is_link($this->dir)) {
+            return;
+        }
+        // The directory first: once it is root's and not writable by others, its entries can not be swapped.
+        if (fileowner($this->dir) !== 0) {
+            chown($this->dir, 0);
+        }
+        if ((fileperms($this->dir) & 0022) !== 0) {
+            chmod($this->dir, 0755);
+        }
+        // Links are left alone: the web server user may have planted one while it owned the directory, and
+        // chown/chmod would follow it. Temporary files are root's own and may vanish mid-loop (writeAtomically).
+        foreach (glob("$this->dir/*") ?: [] as $path) {
+            if (!is_link($path) && !str_ends_with($path, '.tmp') && fileowner($path) !== 0) {
+                chown($path, 0);
+            }
+        }
+        $privateKeyFile = "$this->dir/" . self::PRIVATE_KEY_FILE;
+        if (!is_link($privateKeyFile) && is_file($privateKeyFile) && (fileperms($privateKeyFile) & 0777) !== 0600) {
+            chmod($privateKeyFile, 0600);
+        }
+    }
+
+    /**
      * @throws RuntimeException
      */
     private function generate(): void
     {
         // Asked beforehand instead of "@": the web server user gets here first on a fresh PBX
         // and must fail quietly, the key pair is created by the next root worker.
-        if (!is_writable(is_dir($this->dir) ? $this->dir : dirname($this->dir))) {
+        // Writable is not enough: the T2SDE boot hands /cf/conf to the web server user.
+        if (posix_getuid() !== 0 || !is_writable(is_dir($this->dir) ? $this->dir : dirname($this->dir))) {
             throw new RuntimeException("Installation key pair is not created yet and $this->dir is not writable");
         }
         if (!is_dir($this->dir) && !mkdir($this->dir, 0755, true) && !is_dir($this->dir)) {
