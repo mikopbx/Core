@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 """Test suite for License operations"""
+import base64
+import shlex
+
 import pytest
 import requests
 from conftest import assert_api_success, MikoPBXClient
@@ -48,9 +51,10 @@ class TestLicenseResetKeyPermissions:
     @staticmethod
     def _restore_license_key(api_client, value: str):
         """Put the key back the way the settings model saves it (only needed on a vulnerable build)."""
+        encoded = base64.b64encode(value.encode()).decode()
         php = ('require_once "/usr/www/src/Core/Config/Globals.php"; $m = []; '
-               f'\\MikoPBX\\Common\\Models\\PbxSettings::setValueByKey("PBXLicense", "{value}", $m);')
-        api_client.post('system:executeBashCommand', {'command': f"php -r '{php}'"})
+               f'\\MikoPBX\\Common\\Models\\PbxSettings::setValueByKey("PBXLicense", base64_decode("{encoded}"), $m);')
+        api_client.post('system:executeBashCommand', {'command': f"php -r {shlex.quote(php)}"})
 
     def test_01_read_only_key_cannot_reset_license_key(self, api_client):
         before = self._license_key(api_client)
@@ -83,8 +87,10 @@ class TestLicenseResetKeyPermissions:
         assert get_status == 405, f"GET license:resetKey must be refused with 405, got {get_status}"
         assert denied.value.response.status_code in (401, 403), \
             f"Read-only key must not POST license:resetKey, got {denied.value.response.status_code}"
-        assert after == before, "PBXLicense changed after resetKey calls with a read-only key"
-        assert self._license_key(api_client) == before, "PBXLicense was not restored"
+        unchanged = after == before
+        assert unchanged, "PBXLicense changed after resetKey calls with a read-only key"
+        restored = self._license_key(api_client) == before
+        assert restored, "PBXLicense was not restored"
         print("✓ Read-only key cannot reset the license key (GET 405, POST denied)")
 
 
