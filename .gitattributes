@@ -63,5 +63,6 @@
 /.github export-ignore
 /sessions export-ignore
 /tests export-ignore
+/tools/migration export-ignore
 /phpstan.neon export-ignore
 /phpcs.xml export-ignore
