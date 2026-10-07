@@ -90,4 +90,18 @@ class HostFactsTest extends TestCase
         $this->assertFalse(HostFacts::matches($document, ['aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa']));
         $this->assertFalse(HostFacts::matches(['k' => 3, 'h' => []], []));
     }
+
+    public function testV1MachineIsSentWholeOrNotAtAll(): void
+    {
+        $machine = [
+            'hostname' => ' mikopbx ', 'cpuid' => 'Intel(R) Xeon(R) CPU E5-2670 0 @ 2.60GHz', 'network' => '00:50:56:a0:b5:93'
+        ];
+        $facts = static fn(array $v1): HostFacts
+            => new HostFacts(static fn(): array => ['environment' => 'vm', 'sources' => [], 'v1Machine' => $v1]);
+
+        $this->assertSame(['hostname' => 'mikopbx'] + $machine, $facts($machine)->v1Machine());
+        $this->assertNull($facts(['cpuid' => ''] + $machine)->v1Machine(), 'ARM has no model name');
+        $this->assertNull($facts(['hostname' => str_repeat('a', 256)] + $machine)->v1Machine());
+        $this->assertNull($this->facts([])->v1Machine());
+    }
 }

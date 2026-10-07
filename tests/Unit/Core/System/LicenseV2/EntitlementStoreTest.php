@@ -31,10 +31,14 @@ class EntitlementStoreTest extends TestCase
         'disk_serial' => 'S3Z9NB0K123456', 'mac' => '52:54:00:12:34:56',
     ];
     private string $environment = 'vm';
+    /** @var array<string, string> */
+    private array $v1Machine = ['hostname' => 'mikopbx', 'cpuid' => 'Intel(R) Xeon(R) CPU', 'network' => '52:54:00:12:34:56'];
 
     private function host(): HostFacts
     {
-        return new HostFacts(fn(): array => ['environment' => $this->environment, 'sources' => $this->hardware]);
+        return new HostFacts(fn(): array => [
+            'environment' => $this->environment, 'sources' => $this->hardware, 'v1Machine' => $this->v1Machine,
+        ]);
     }
 
     protected function setUp(): void
@@ -269,6 +273,18 @@ class EntitlementStoreTest extends TestCase
 
         $this->expectExceptionMessage('does not answer the pending request');
         $store->acceptAnswer($oldAnswer);
+    }
+
+    public function testOnlineRequestNamesTheV1MachineAndFileRequestDoesNot(): void
+    {
+        $store = $this->newStore();
+        $decode = static fn(array $signed): array
+            => json_decode(EntitlementToken::base64UrlDecode($signed['request']), true);
+
+        $this->assertSame($this->v1Machine, $decode($store->buildRequest('MIKO-TEST', '2026.3.1'))['v1Machine']);
+        $this->assertArrayNotHasKey('v1Machine', $decode($store->buildRequest('MIKO-TEST', '2026.3.1', true)));
+        $this->v1Machine['cpuid'] = '';
+        $this->assertArrayNotHasKey('v1Machine', $decode($store->buildRequest('MIKO-TEST', '2026.3.1')));
     }
 
     public function testAnswerWithoutPendingRequestIsRejected(): void

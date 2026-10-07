@@ -44,11 +44,13 @@ class HostFacts
     private const array ENVIRONMENTS = ['bare', 'vm', 'container'];
     private const array PLACEHOLDERS = ['', 'to be filled by o.e.m.', 'default string', 'none', '0123456789'];
     private const int MAX_HASHES = 4;
+    private const int V1_FIELD_MAX = 255;
 
     private Closure $probe;
 
     /**
-     * @param Closure(): array{environment: string, sources: array<string, string>}|null $probe
+     * @param Closure(): array{environment: string, sources: array<string, string>,
+     *     v1Machine?: array<string, string>}|null $probe
      *     Tests pass fixed facts; production reads the machine on every call,
      *     so a replaced disk or NIC is seen without a worker restart.
      */
@@ -81,6 +83,27 @@ class HostFacts
     }
 
     /**
+     * The machine as the v1 component reports it in session.start, in plain text: on the first v2 round of
+     * an installation the server drops the v1 locks of the exactly matching machine (LIC-400).
+     *
+     * @return array{hostname: string, cpuid: string, network: string}|null Null when a value is missing:
+     *     the server rejects an empty or oversized field, so a partial machine is not sent at all.
+     */
+    public function v1Machine(): ?array
+    {
+        $machine = $this->facts()['v1Machine'] ?? [];
+        $fields = [];
+        foreach (['hostname', 'cpuid', 'network'] as $name) {
+            $value = trim((string)($machine[$name] ?? ''));
+            if ($value === '' || strlen($value) > self::V1_FIELD_MAX) {
+                return null;
+            }
+            $fields[$name] = $value;
+        }
+        return $fields;
+    }
+
+    /**
      * @param array{k: int, h: array<int, string>} $documentFingerprint Checked by EntitlementToken already.
      * @param array<int, string> $hashes What fingerprint() says about this machine now.
      */
@@ -91,7 +114,7 @@ class HostFacts
     }
 
     /**
-     * @return array{environment: string, sources: array<string, string>}
+     * @return array{environment: string, sources: array<string, string>, v1Machine?: array<string, string>}
      */
     private function facts(): array
     {
@@ -104,7 +127,7 @@ class HostFacts
      * Plain exec(): Processes::mwExec() only echoes the command in debug mode, losing the environment
      * and the disk serial.
      *
-     * @return array{environment: string, sources: array<string, string>}
+     * @return array{environment: string, sources: array<string, string>, v1Machine: array<string, string>}
      */
     private static function probe(): array
     {
@@ -130,6 +153,8 @@ class HostFacts
         $nics = (new Network())->getInterfacesNames();
         sort($nics);
         $mac = $nics === [] ? '' : $read("/sys/class/net/$nics[0]/address");
+        // The v1 component takes the first "model name" of /proc/cpuinfo; ARM kernels have none.
+        $cpuModel = preg_match('/^model name\s*:(.*)$/m', $read('/proc/cpuinfo'), $model) === 1 ? $model[1] : '';
 
         return [
             'environment' => $environment,
@@ -138,6 +163,11 @@ class HostFacts
                 'board_serial' => $read('/sys/class/dmi/id/board_serial'),
                 'disk_serial' => $diskSerial,
                 'mac' => $mac,
+            ],
+            'v1Machine' => [
+                'hostname' => (string)gethostname(),
+                'cpuid' => trim($cpuModel),
+                'network' => strtolower($mac),
             ],
         ];
     }

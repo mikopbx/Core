@@ -129,6 +129,12 @@ class EntitlementStore
             'environment' => $this->host->environment(),
             'fingerprint' => $this->host->fingerprint($installId),
         ];
+        // The server reads it only on the first round of an installation new to the key; sent every time so
+        // that no state decides which round that is (LIC-400). A file request never reaches that round.
+        $v1Machine = $offline ? null : $this->host->v1Machine();
+        if ($v1Machine !== null) {
+            $fields['v1Machine'] = $v1Machine;
+        }
         if (is_string($heldNonce) && preg_match('/^[0-9a-f]{32}$/', $heldNonce) === 1) {
             $fields['held'] = $heldNonce;
         }
