@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\LicenseV2\KeyPairNotReadyException;
 use MikoPBX\Core\System\LicenseV2\LicenseV2;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Service\License;
@@ -80,9 +81,11 @@ class MarketPlaceProvider implements ServiceProviderInterface
                     if (PbxSettings::getValueByKey(PbxSettings::LICENSE_V2_ENABLED) === '1') {
                         try {
                             return new LicenseV2();
-                        } catch (Throwable $e) {
+                        } catch (KeyPairNotReadyException $e) {
                             // The installation key pair is created by root workers; until then
-                            // other users keep working through the legacy service.
+                            // other users keep working through the legacy service. Any other failure
+                            // (a corrupted key, a broken state directory) falls through to the catch
+                            // below: a logged, unavailable service, not legacy posing as v2.
                             SystemMessages::sysLogMsg(__CLASS__, 'LicenseV2 is unavailable: ' . $e->getMessage());
                         }
                     }

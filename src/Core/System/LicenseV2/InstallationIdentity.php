@@ -42,7 +42,8 @@ class InstallationIdentity
     private string $publicKeyPem;
 
     /**
-     * @throws RuntimeException When the key pair is missing and can not be created by this user.
+     * @throws KeyPairNotReadyException When the key pair is missing and can not be created by this user.
+     * @throws RuntimeException When the pair exists but is unreadable or corrupted, or can not be written.
      */
     public function __construct(private readonly string $dir)
     {
@@ -126,7 +127,9 @@ class InstallationIdentity
         // and must fail quietly, the key pair is created by the next root worker.
         // Writable is not enough: the T2SDE boot hands /cf/conf to the web server user.
         if (posix_getuid() !== 0 || !is_writable(is_dir($this->dir) ? $this->dir : dirname($this->dir))) {
-            throw new RuntimeException("Installation key pair is not created yet and $this->dir is not writable");
+            throw new KeyPairNotReadyException(
+                "Installation key pair is not created yet and $this->dir is not writable"
+            );
         }
         if (!is_dir($this->dir) && !mkdir($this->dir, 0755, true) && !is_dir($this->dir)) {
             throw new RuntimeException("Can not create $this->dir");

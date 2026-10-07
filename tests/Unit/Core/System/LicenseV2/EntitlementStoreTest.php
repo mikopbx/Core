@@ -8,6 +8,7 @@ use MikoPBX\Core\System\LicenseV2\EntitlementStore;
 use MikoPBX\Core\System\LicenseV2\EntitlementToken;
 use MikoPBX\Core\System\LicenseV2\HostFacts;
 use MikoPBX\Core\System\LicenseV2\InstallationIdentity;
+use MikoPBX\Core\System\LicenseV2\KeyPairNotReadyException;
 use MikoPBX\Core\System\LicenseV2\TokenRejectedException;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -156,6 +157,31 @@ class EntitlementStoreTest extends TestCase
 
         $this->assertSame($first->getInstallId(), $second->getInstallId());
         $this->assertSame(0600, fileperms("$this->dir/installation-private.pem") & 0777);
+    }
+
+    /**
+     * The one failure MarketPlaceProvider answers with the legacy service has its own type; a corrupted
+     * pair stays a plain RuntimeException and must not pass as "not created yet" (#1180).
+     */
+    public function testMissingPairThatCanNotBeCreatedIsItsOwnFailure(): void
+    {
+        try {
+            new InstallationIdentity("$this->dir/no/such/parent");
+            $this->fail('a key pair appeared under a missing parent');
+        } catch (KeyPairNotReadyException $e) {
+            $this->assertStringContainsString('not created yet', $e->getMessage());
+        }
+
+        new InstallationIdentity($this->dir);
+        file_put_contents("$this->dir/installation-public.pem", 'not a key');
+        try {
+            new InstallationIdentity($this->dir);
+            $this->fail('a corrupted public key was accepted');
+        } catch (KeyPairNotReadyException $e) {
+            $this->fail('a corrupted pair must not look like a pair not created yet');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('corrupted', $e->getMessage());
+        }
     }
 
     public function testRootTakesTheKeyDirectoryBackAfterABootRightsReset(): void

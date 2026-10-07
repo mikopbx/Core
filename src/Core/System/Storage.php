@@ -1404,8 +1404,11 @@ class Storage extends Injectable
         $www_dirs[] = '/etc/version';
         $www_dirs[] = appPath('/');
 
-        // Add read rights to the directories
-        Util::addRegularWWWRights(implode(' ', $www_dirs));
+        // Add read rights to the directories; the seat ledger of the licensing stays root-only (SeatLedger)
+        Util::addRegularWWWRights(
+            implode(' ', $www_dirs),
+            Directories::getDir(Directories::CORE_TEMP_DIR) . '/license-v2'
+        );
 
         // Add executable rights to the directories
         $exec_dirs[] = appPath('src/Core/Asterisk/agi-bin');

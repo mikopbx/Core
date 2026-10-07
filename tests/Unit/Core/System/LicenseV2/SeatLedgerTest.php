@@ -79,14 +79,59 @@ class SeatLedgerTest extends TestCase
         $ledger->startSession(['note' => str_repeat('x', 2000)], 60, 100);
     }
 
-    public function testSessionCeilingIsRefused(): void
+    /**
+     * The seat endpoints are open to localhost: any local process can fill the ceiling with sessions
+     * that hold nothing and keep them alive. A real client captures within seconds of starting, so at the
+     * ceiling the oldest empty session gives way and a holder is never displaced (#1185).
+     */
+    public function testAtTheCeilingTheOldestEmptySessionGivesWayAndHoldersNever(): void
     {
         $ledger = $this->newLedger();
-        $ledger->startSession([], 60, 2);
-        $ledger->startSession([], 60, 2);
+        $idle = $ledger->startSession(['username' => 'flood'], 3600, 2);
+        $this->wallClock += 1;
+        $holder = $ledger->startSession(['username' => 'cti'], 60, 2);
+        $ledger->capture($holder, '54', 5);
+
+        $newcomer = $ledger->startSession(['username' => 'cti2'], 60, 2);
+        $this->assertSame(60, $ledger->keepalive($holder), 'the holder stays');
+        $this->assertSame(SeatException::NO_SESSION, $this->keepaliveCode($ledger, $idle), 'the idle one gave way');
+
+        $ledger->capture($newcomer, '54', 5);
         // Its own type, so the REST layer can tell the protective cap from a storage failure.
         $this->expectException(SessionCeilingException::class);
-        $ledger->startSession([], 60, 2);
+        $ledger->startSession(['username' => 'cti3'], 60, 2);
+    }
+
+    public function testRootTakesTheLedgerDirectoryBackAfterABootRightsReset(): void
+    {
+        if (posix_getuid() !== 0) {
+            $this->markTestSkipped('chown needs root');
+        }
+        $ledger = $this->newLedger();
+        $ledger->startSession([], 60, 10);
+        // What a boot before the skip in Storage::applyFolderRights() did to the temp dir.
+        foreach (["$this->dir/seats.json", "$this->dir/seats.json.lock", $this->dir] as $path) {
+            chmod($path, is_dir($path) ? 0777 : 0644);
+            chown($path, 1);
+        }
+
+        $ledger->usage();
+
+        foreach (["$this->dir/seats.json", "$this->dir/seats.json.lock", $this->dir] as $path) {
+            clearstatcache(true, $path);
+            $this->assertSame(0, fileowner($path), $path);
+            $this->assertSame(is_dir($path) ? 0700 : 0600, fileperms($path) & 0777, $path);
+        }
+    }
+
+    private function keepaliveCode(SeatLedger $ledger, string $sessionId): ?int
+    {
+        try {
+            $ledger->keepalive($sessionId);
+            return null;
+        } catch (SeatException $e) {
+            return $e->extcode;
+        }
     }
 
     public function testUnencodableHolderIsRejectedWithoutLosingEarlierSessions(): void

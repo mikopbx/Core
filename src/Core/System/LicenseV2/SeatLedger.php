@@ -57,10 +57,15 @@ class SeatLedger
     }
 
     /**
+     * At the ceiling the oldest session that holds no feature gives way: a real client captures within
+     * seconds of starting, so this displaces no holder, while a local flood of empty sessions kept alive
+     * by keepalive (the seat endpoints are open to localhost) can neither lock real clients out nor grow
+     * the file past the ceiling.
+     *
      * @param array<string, mixed> $holder Who holds the session (hostname, username, process...), report only.
      * @return string Session id.
      * @throws RuntimeException When the ttl or the holder is out of bounds.
-     * @throws SessionCeilingException When the ledger already holds as many sessions as it may.
+     * @throws SessionCeilingException When every session up to the ceiling holds a feature.
      */
     public function startSession(array $holder, int $ttl, int $maxSessions): string
     {
@@ -73,7 +78,17 @@ class SeatLedger
         }
         return $this->transaction(function (array &$ledger, int $now) use ($holder, $ttl, $maxSessions): string {
             if (count($ledger['sessions']) >= $maxSessions) {
-                throw new SessionCeilingException('Too many license sessions');
+                $oldestEmpty = null;
+                foreach ($ledger['sessions'] as $id => $session) {
+                    if ($session['features'] === [] && ($oldestEmpty === null
+                        || ($session['started'] ?? 0) < ($ledger['sessions'][$oldestEmpty]['started'] ?? 0))) {
+                        $oldestEmpty = $id;
+                    }
+                }
+                if ($oldestEmpty === null) {
+                    throw new SessionCeilingException('Too many license sessions');
+                }
+                unset($ledger['sessions'][$oldestEmpty]);
             }
             $id = bin2hex(random_bytes(16));
             $ledger['sessions'][$id] = [
@@ -367,6 +382,7 @@ class SeatLedger
         if (!is_dir($this->dir) && !mkdir($this->dir, 0700, true) && !is_dir($this->dir)) {
             throw new RuntimeException("Can not create $this->dir");
         }
+        $this->reclaim();
         $lock = fopen("$this->dir/" . self::FILE . '.lock', 'c');
         if ($lock === false) {
             throw new RuntimeException("Can not lock the seat ledger in $this->dir");
@@ -396,6 +412,30 @@ class SeatLedger
         } finally {
             flock($lock, LOCK_UN);
             fclose($lock);
+        }
+    }
+
+    /**
+     * Takes the directory back for root: the ledger is written by root workers only, and a process of the
+     * web server user must not rewrite it (drop other devices' seats, free seats for itself, corrupt it).
+     * Storage::applyFolderRights() skips this directory when it hands the temp dir to the web server
+     * user; this repairs stations whose directory was handed over before that. Links are left alone.
+     */
+    private function reclaim(): void
+    {
+        if (posix_getuid() !== 0 || is_link($this->dir)) {
+            return;
+        }
+        if (fileowner($this->dir) === 0 && (fileperms($this->dir) & 0077) === 0) {
+            return;
+        }
+        chown($this->dir, 0);
+        chmod($this->dir, 0700);
+        foreach (glob("$this->dir/*") ?: [] as $path) {
+            if (!is_link($path) && is_file($path)) {
+                chown($path, 0);
+                chmod($path, 0600);
+            }
         }
     }
 
