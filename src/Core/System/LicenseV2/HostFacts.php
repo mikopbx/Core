@@ -33,7 +33,8 @@ use MikoPBX\Core\System\Util;
  * perpetual in a container) and a fingerprint binding a file document to this hardware ("K of N").
  *
  * The sources are fixed: DMI product UUID, board serial, system disk serial, MAC of the first physical NIC.
- * Hashes are salted with the installation id, so the server never sees a serial number.
+ * Hashes are salted with the public installation id: the values are pseudonymised, not hidden. The server,
+ * or anyone holding a request, can brute-force low-entropy sources (MAC, many serials) back.
  *
  * ponytail: the client is open, the check can be cut out; a VM copy with its virtual hardware passes.
  * Accepted in the design: the fingerprint makes a perpetual file harder to copy, not impossible.

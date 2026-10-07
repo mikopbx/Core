@@ -60,8 +60,11 @@ class EntitlementStore
      */
     private const string OFFLINE_KEY = 'nonceOfflineKey';
 
-    /** Do not rewrite the state file more often than this, seconds. */
-    private const int CLOCK_PERSIST_STEP = 60;
+    /**
+     * Do not rewrite the state file on /cf more often than this, seconds;
+     * a reboot may roll the clock back by up to this much, the online round re-anchors at once.
+     */
+    private const int CLOCK_PERSIST_STEP = 3600;
 
     private Closure $clock;
     private HostFacts $host;
