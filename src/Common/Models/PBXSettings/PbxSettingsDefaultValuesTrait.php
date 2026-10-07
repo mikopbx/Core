@@ -140,7 +140,7 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::DISABLE_ALL_MODULES => '0',
             PbxSettings::MODULES_LEGACY_INSTALL_PIPELINE => '0',
             PbxSettings::LICENSE_V2_ENABLED => '0',
-            PbxSettings::LICENSE_V2_SERVER_URL => '',
+            PbxSettings::LICENSE_V2_SERVER_URL => 'https://lic.miko.ru/protect/v2 https://lic.mikopbx.com/protect/v2',
             PbxSettings::PBX_LICENSE => '',
             PbxSettings::ENABLE_USE_NAT => '0',
             PbxSettings::AUTO_UPDATE_EXTERNAL_IP => '0',
