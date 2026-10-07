@@ -65,9 +65,10 @@ class LicenseV2
     private const array ENTITLEMENT_CHANGING_CALLS = ['addtrial', 'activatecoupon', 'changelicensekey'];
 
     /**
-     * Largest file importOfflineToken() reads. A cabinet answer file is about 1 KiB; the worst document
-     * (every module of the catalog, 1000 holders to drop) stays under 64 KiB. Checked before any decoding:
-     * a bigger input would cost the API worker its memory_limit instead of a 400.
+     * Largest file importOfflineToken() reads and largest online answer refreshRound() accepts. A cabinet
+     * answer file is about 1 KiB; the worst document (every module of the catalog, 1000 holders to drop)
+     * stays under 64 KiB. Checked before any decoding: a bigger input would cost the API worker its
+     * memory_limit instead of a 400.
      */
     public const int IMPORT_MAX_BYTES = 262144;
 
@@ -472,6 +473,12 @@ class LicenseV2
         $report = $this->report();
         $http = $this->http ??= new GuzzleHttp\Client();
         foreach ($serverUrls as $serverUrl) {
+            // The request names the license key, the holders and the metrics: never in clear text, and a
+            // redirect (any proxy on the way can produce one) must not carry it to another host.
+            if (!str_starts_with(strtolower($serverUrl), 'https://')) {
+                $this->log("Entitlement server $serverUrl is skipped: only https:// servers are asked");
+                continue;
+            }
             // Two attempts: a 409 replay re-anchors the seq and asks the same server once more, so a PBX
             // with a single server does not wait out the backoff after a lost state.
             for ($attempt = 1; $attempt <= 2; $attempt++) {
@@ -480,12 +487,26 @@ class LicenseV2
                         'json' => $this->buildRequest(false, $report),
                         'timeout' => 15,
                         'http_errors' => false,
+                        'allow_redirects' => false,
+                        // The same cap as the imported file, applied while the body still arrives: the
+                        // exception aborts the transfer and lands in the catch below.
+                        'progress' => static function (int $downloadSize, int $downloaded): void {
+                            if ($downloaded > self::IMPORT_MAX_BYTES) {
+                                throw new RuntimeException('answer is larger than ' . self::IMPORT_MAX_BYTES . ' bytes');
+                            }
+                        },
                     ]);
-                    $answer = (array)json_decode($response->getBody()->getContents(), true);
+                    $body = $response->getBody()->getContents();
                 } catch (Throwable $e) {
                     $this->log("Entitlement server $serverUrl is unavailable: " . $e->getMessage());
                     continue 2;
                 }
+                // The contract for a handler without progress reports (tests, a future stream handler).
+                if (strlen($body) > self::IMPORT_MAX_BYTES) {
+                    $this->log("Answer of $serverUrl is larger than " . self::IMPORT_MAX_BYTES . ' bytes: dropped');
+                    continue 2;
+                }
+                $answer = (array)json_decode($body, true);
                 try {
                     if (is_string($answer['refusal'] ?? null)) {
                         $this->log("Refused by $serverUrl: " . $this->store->acceptRefusal($answer['refusal']));

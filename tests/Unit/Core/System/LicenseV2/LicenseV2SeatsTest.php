@@ -32,6 +32,8 @@ class LicenseV2SeatsTest extends TestCase
     private array $logged = [];
     /** @var array<int, callable> What the licensing server answers, one entry per request. */
     private array $serverAnswers = [];
+    /** @var array<int, string> What PbxSettings::LICENSE_V2_SERVER_URL would list. */
+    private array $serverUrls = ['https://issuer.test'];
 
     protected function setUp(): void
     {
@@ -371,6 +373,29 @@ class LicenseV2SeatsTest extends TestCase
         $this->assertFalse($license->store()->retryAllowed(), 'the round failed: backoff');
     }
 
+    /**
+     * The signed request carries the license key, the holders and the metrics: it goes to an https
+     * server only. A redirect is any proxy's trick to move it elsewhere, so it is a failed server, not a hop.
+     */
+    public function testOnlyHttpsServersAreAskedAndRedirectsAreNotFollowed(): void
+    {
+        $sent = [];
+        $this->serverUrls = ['http://issuer.test', 'https://issuer.test'];
+        $this->serverAnswers = [
+            function (RequestInterface $request) use (&$sent): Response {
+                $sent[] = (string)$request->getUri();
+                return new Response(302, ['Location' => 'https://elsewhere.test/entitlement']);
+            },
+        ];
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+
+        $this->assertFalse($license->refresh(true));
+        $this->assertSame(['https://issuer.test/entitlement'], $sent, 'http:// is never asked, 302 is not followed');
+        $log = implode("\n", $this->logged);
+        $this->assertStringContainsString('http://issuer.test is skipped', $log);
+        $this->assertStringContainsString('failed: HTTP 302', $log);
+    }
+
     public function testLegacyMetricsCallSendsNothing(): void
     {
         $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
@@ -546,6 +571,36 @@ class LicenseV2SeatsTest extends TestCase
     }
 
     /**
+     * The online answer gets the same cap as the imported file: a hostile or broken server must not
+     * make the worker decode an answer of any size. Over the cap it is a failed server, not a refusal.
+     */
+    public function testOnlineAnswerOverTheSizeLimitIsAFailedServer(): void
+    {
+        $answer = function (RequestInterface $request, int $length): Response {
+            $fields = self::requestFields($request);
+            $token = $this->signed([
+                'v' => EntitlementToken::VERSION, 'kid' => self::KID, 'install' => $fields['install'],
+                'key' => $this->licenseKey, 'nonce' => $fields['nonce'], 'iat' => $this->wallClock,
+                'exp' => $this->wallClock + 7 * 86400, 'features' => ['54' => $this->wallClock + 86400],
+                'poll' => 300,
+            ]);
+            // Trailing spaces keep the answer valid JSON: without the cap it would be accepted.
+            return new Response(200, [], str_pad((string)json_encode(['token' => $token]), $length));
+        };
+        $this->serverAnswers = [
+            fn(RequestInterface $request): Response => $answer($request, LicenseV2::IMPORT_MAX_BYTES + 1),
+            fn(RequestInterface $request): Response => $answer($request, LicenseV2::IMPORT_MAX_BYTES),
+        ];
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+
+        $this->assertFalse($license->refresh(true));
+        $this->assertStringContainsString('larger than ' . LicenseV2::IMPORT_MAX_BYTES, implode("\n", $this->logged));
+        $this->assertArrayNotHasKey('poll', $license->store()->lastVerifiedPayload());
+        $this->assertTrue($license->refresh(true), 'an answer within the cap is accepted');
+        $this->assertSame(300, $license->store()->lastVerifiedPayload()['poll']);
+    }
+
+    /**
      * @param array<int, array<string, mixed>> $sent
      */
     private function replay(RequestInterface $request, array &$sent): Response
@@ -624,7 +679,7 @@ class LicenseV2SeatsTest extends TestCase
                 $this->logged[] = $message;
             },
             new Client(['handler' => HandlerStack::create(new MockHandler($this->serverAnswers))]),
-            static fn(): array => ['http://issuer.test']
+            fn(): array => $this->serverUrls
         );
         $this->issue($license, $features, $seats, $exp, $offlineUntil);
         return $license;
