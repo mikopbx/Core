@@ -26,6 +26,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Library\Text;
+use MikoPBX\Core\System\LicenseV2\LicenseV2;
 use SimpleXMLElement;
 
 /**
@@ -55,7 +56,12 @@ class WorkerMarketplaceChecker extends WorkerBase
 
         // Retrieve the last license check timestamp from the cache
         $lastCheck = $managedCache->get(self::CACHE_KEY);
-        if ($lastCheck === null) {
+        // LicenseV2 lets the licensing server set the pace (poll): refresh() itself decides whether a
+        // round is due, and the enforcer must act on the answer within the minute, not the hour. Follow
+        // the service the provider actually registered (it falls back to the legacy class when
+        // LicenseV2 can not be built), not the setting alone.
+        $licenseV2 = $lic instanceof LicenseV2;
+        if ($lastCheck === null || $licenseV2) {
             // Perform PBX registration check
             $lic->checkPBX();
 
@@ -63,7 +69,9 @@ class WorkerMarketplaceChecker extends WorkerBase
             $lic->checkModules();
 
             // Store the current timestamp in the cache to track the last repository check
-            $managedCache->set(self::CACHE_KEY, time(), 3600 + $randomTTLShift); // Check every hour
+            // Paces the legacy service only; under v2 refresh() itself decides whether a round is
+            // due, and checkPBX()/checkModules() above already ran this worker start regardless.
+            $managedCache->set(self::CACHE_KEY, time(), 3600 + $randomTTLShift);
         }
 
         // Retrieve the last get license request from the cache

@@ -647,19 +647,21 @@ class Util
      * Apply regular rights for folders and files
      *
      * @param $folder
+     * @param string $skip A path under $folder left as it is (keeps its own owner and rights).
      */
-    public static function addRegularWWWRights($folder): void
+    public static function addRegularWWWRights($folder, string $skip = ''): void
     {
         if (posix_getuid() === 0) {
             $find = self::which('find');
             $chown = self::which('chown');
             $chmod = self::which('chmod');
             $xargs = self::which('xargs');
+            $prune = $skip === '' ? '' : '-path ' . escapeshellarg($skip) . ' -prune -o ';
             
             // Optimized: only chmod/chown files that need it (avoids redundant syscalls on thousands of files)
-            Processes::mwExec("$find $folder -type d -not -perm 755 -print0 2>/dev/null | $xargs -0 -r -P 4 -n 50 $chmod 755");
-            Processes::mwExec("$find $folder -type f -not -perm 644 -print0 2>/dev/null | $xargs -0 -r -P 4 -n 50 $chmod 644");
-            Processes::mwExec("$find $folder -not -user www -exec $chown www:www {} +");
+            Processes::mwExec("$find $folder $prune-type d -not -perm 755 -print0 2>/dev/null | $xargs -0 -r -P 4 -n 50 $chmod 755");
+            Processes::mwExec("$find $folder $prune-type f -not -perm 644 -print0 2>/dev/null | $xargs -0 -r -P 4 -n 50 $chmod 644");
+            Processes::mwExec("$find $folder $prune-not -user www -exec $chown www:www {} +");
         }
     }
 
