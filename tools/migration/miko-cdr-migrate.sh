@@ -207,7 +207,6 @@ run_freepbx() {
 	load_db_creds
 
 	MASTER="${MASTER:-$FREEPBX_WORKDIR/master.db}"
-	mkdir -p "$(dirname "$MASTER")"
 
 	# Выбор таблицы-источника: PT1C_cdr приоритетнее (есть answer/end/id),
 	# иначе родная cdr.
@@ -227,6 +226,7 @@ run_freepbx() {
 		return 0
 	fi
 
+	mkdir -p "$(dirname "$MASTER")"
 	rm -f "$MASTER"
 
 	# 1) Дамп в отдельный файл — чтобы поймать сбой mysqldump (set -e не ловит
@@ -239,8 +239,11 @@ run_freepbx() {
 		die "mysqldump завершился с ошибкой — экспорт прерван (master.db не создан)"
 	fi
 
-	# 2) Конвертация. grep -v 'CREATE INDEX' — индексы FreePBX несовместимы.
-	if ! mysql2sqlite < "$DUMP" | grep -v 'CREATE INDEX' | sqlite3 "$MASTER" >/dev/null; then
+	# 2) Конвертация. grep -v '^CREATE INDEX' — отбрасываем сгенерированные
+	#    (несовместимые) операторы индексов FreePBX. Якорь «^» обязателен:
+	#    без него потерялась бы INSERT-строка, в тексте которой (например в
+	#    userfield/clid) встретилась подстрока «CREATE INDEX».
+	if ! mysql2sqlite < "$DUMP" | grep -v '^CREATE INDEX' | sqlite3 "$MASTER" >/dev/null; then
 		rm -f "$DUMP" "$MASTER"
 		die "конвертация дампа в SQLite не удалась — экспорт прерван"
 	fi
@@ -379,11 +382,12 @@ SQL
 		''|*[!0-9]*) rm -f "$WORK"; die "рабочая копия невалидна — база не тронута" ;;
 	esac
 
+	# Старые WAL/SHM прежнего файла убираем ДО подмены: иначе в окне между mv
+	# и rm конкурентный опенер приаттачил бы устаревший cdr.db-wal к новой базе
+	# и проиграл бы его в неё, повредив свежий импорт.
+	rm -f "$MIKO_CDR_DB-wal" "$MIKO_CDR_DB-shm"
 	# Атомарная подмена на том же разделе: mv вместо cp.
 	mv "$WORK" "$MIKO_CDR_DB"
-	# Снимок .backup — отдельная БД; старые WAL/SHM от прежнего файла убираем,
-	# чтобы неконсистентный cdr.db-wal не попортил новую базу при открытии.
-	rm -f "$MIKO_CDR_DB-wal" "$MIKO_CDR_DB-shm"
 
 	log "Готово. Записей в cdr_general: $ROWS"
 	log "Откат при необходимости: cp '$BACKUP' '$MIKO_CDR_DB'"
