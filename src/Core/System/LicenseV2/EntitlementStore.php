@@ -503,13 +503,29 @@ class EntitlementStore
     }
 
     /**
+     * No file is a fresh installation. A file that does not parse has lost the refusal, the hardware flag and
+     * the clock anchor, so it is read as refused: nothing is licensed until the next accepted token (which
+     * writes refused=false), and the first write of any kind pins the refusal into the new file. Root keeps
+     * one copy of the broken file for a look (once: a copy that failed half-way still stops the retries);
+     * the web server user only reads. A closed contour so revoked needs a new file exchange: the pending
+     * nonces are lost with the state, so the old answer file does not import again.
+     *
      * @return array<string, mixed>
      */
     private function loadState(): array
     {
         $stateFile = "$this->dir/" . self::STATE_FILE;
-        $state = is_file($stateFile) ? json_decode((string)file_get_contents($stateFile), true) : null;
-        return is_array($state) ? $state : [];
+        if (!is_file($stateFile)) {
+            return [];
+        }
+        $state = json_decode((string)file_get_contents($stateFile), true);
+        if (is_array($state)) {
+            return $state;
+        }
+        if (is_writable($this->dir) && !is_file("$stateFile.corrupt")) {
+            copy($stateFile, "$stateFile.corrupt");
+        }
+        return ['refused' => true];
     }
 
     /**

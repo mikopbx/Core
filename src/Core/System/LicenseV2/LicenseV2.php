@@ -369,13 +369,17 @@ class LicenseV2
     public function checkModules(): void
     {
         $this->refresh();
-        // Root only (DMI serials): the flag it keeps is what featureAvailable() of every user reads.
+        // Root only (DMI serials): the flag it keeps is what featureAvailable() of every user reads. It throws
+        // only when a mismatch was found and the flag could not be written, so this pass judges by its own
+        // result instead of the flag: a document on foreign hardware licenses nothing even when /cf is broken.
         try {
-            if (!$this->store->recheckHardware()) {
+            $hardwareMatches = $this->store->recheckHardware();
+            if (!$hardwareMatches) {
                 $this->log('The license file is issued for other hardware: exchange the license file again');
             }
         } catch (RuntimeException $e) {
-            $this->log('Hardware check of the license file failed: ' . $e->getMessage());
+            $hardwareMatches = false;
+            $this->log('Hardware check of the license file failed, treated as other hardware: ' . $e->getMessage());
         }
         $payload = $this->store->lastVerifiedPayload();
         // toArray(): the loop updates the same table, no open cursor must be held over it.
@@ -385,7 +389,7 @@ class LicenseV2
             if ($featureId === '') {
                 continue;
             }
-            $entitled = $this->featureAvailable($featureId)['success'];
+            $entitled = $hardwareMatches && $this->featureAvailable($featureId)['success'];
             $disabled = (int)$module['disabled'] === 1;
             if (!$disabled && !$entitled) {
                 $done = PbxExtensionUtils::forceDisableModule(
@@ -674,8 +678,9 @@ class LicenseV2
     }
 
     /**
-     * Which feature a module needs. The signed map wins; module.json is trusted only while the PBX holds
-     * no signed map: first boot, closed contour before activation, or an application the server keeps no map for.
+     * Which feature a module needs. The signed map wins for the modules it names; module.json decides for a
+     * module the map does not know (installed after the document was issued, or a catalog the server keeps no
+     * map for) and while the PBX holds no signed map: first boot, closed contour before activation.
      *
      * @param array<string, mixed>|null $payload
      */

@@ -179,18 +179,20 @@ class EntitlementToken
     }
 
     /**
-     * Which feature a module needs by the signed map: null when the document carries no map (module.json
-     * decides), '' for a free module or one the map does not name, otherwise the feature id.
+     * Which feature a module needs by the signed map: null when the document carries no map or does not
+     * name the module (module.json decides: the server catalog may lag behind a module installed here),
+     * '' for a module the map names as free, otherwise the feature id.
      *
      * @param array<string, mixed> $payload
      */
     public static function moduleFeature(array $payload, string $moduleUniqueId): ?string
     {
-        if (!is_array($payload['modules'] ?? null)) {
+        $modules = $payload['modules'] ?? null;
+        if (!is_array($modules) || !array_key_exists($moduleUniqueId, $modules)) {
             return null;
         }
         // 0 in the signed map means a free module, the same as in module.json.
-        $featureId = (int)($payload['modules'][$moduleUniqueId] ?? 0);
+        $featureId = (int)$modules[$moduleUniqueId];
         return $featureId > 0 ? (string)$featureId : '';
     }
 

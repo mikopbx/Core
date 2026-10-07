@@ -453,6 +453,31 @@ class EntitlementStoreTest extends TestCase
         $this->assertFalse($store->featureAvailable('54'));
     }
 
+    /**
+     * A state file that exists but does not parse has lost the refusal, the hardware flag and the clock
+     * anchor: nothing is licensed until a token is accepted again, and the broken file is kept for a look.
+     */
+    public function testCorruptedStateFailsClosedUntilTheNextAcceptedToken(): void
+    {
+        $store = $this->newStore();
+        $store->acceptAnswer($this->issueFor($store));
+        $this->assertTrue($store->featureAvailable('54'));
+        file_put_contents("$this->dir/state.json", '{"refused":false,"lastSeen":');
+
+        $this->assertFalse($store->featureAvailable('54'));
+        $this->assertSame(0, $store->effectiveExpiry());
+        $this->assertFileExists("$this->dir/state.json.corrupt");
+        $store->now(); // any write (here the clock anchor) rewrites the file
+        $this->assertTrue(
+            json_decode((string)file_get_contents("$this->dir/state.json"), true)['refused'],
+            'the first write after the damage pins the refusal'
+        );
+        $this->assertFalse($this->newStore()->featureAvailable('54'), 'a fresh process reads the same answer');
+
+        $store->acceptAnswer($this->issueFor($store));
+        $this->assertTrue($store->featureAvailable('54'));
+    }
+
     public function testClockRollbackDoesNotReviveExpiredToken(): void
     {
         $store = $this->newStore();
@@ -816,7 +841,10 @@ class EntitlementStoreTest extends TestCase
         $payload = ['modules' => ['ModuleLdapSync' => '54', 'ModuleFree' => 0]];
         $this->assertSame('54', EntitlementToken::moduleFeature($payload, 'ModuleLdapSync'));
         $this->assertSame('', EntitlementToken::moduleFeature($payload, 'ModuleFree'));
-        $this->assertSame('', EntitlementToken::moduleFeature($payload, 'ModuleUnknown'), 'absent from a signed map = free');
+        $this->assertNull(
+            EntitlementToken::moduleFeature($payload, 'ModuleUnknown'),
+            'a module the map does not name is left to its module.json, not taken for free'
+        );
     }
 
     public function testEmptyFeaturesLicenseNothingButAreAccepted(): void
@@ -922,6 +950,29 @@ class EntitlementStoreTest extends TestCase
         $this->assertTrue($back->recheckHardware());
         $this->assertTrue($back->featureAvailable('54'));
         $this->assertGreaterThan(self::NOW, $back->effectiveExpiry());
+    }
+
+    /**
+     * The mismatch is answered by an exception, never by a stale "matches": the enforcer must not read the
+     * old empty flag and leave the document working for the pass (#1179). The write fails here because the
+     * lock file is taken by a directory: root ignores file modes, so an unwritable directory is no test.
+     */
+    public function testUnwritableFlagOnOtherHardwareThrowsInsteadOfMatching(): void
+    {
+        $this->acceptBoundFileDocument($this->newStore());
+        $this->hardware['board_serial'] = 'NEWBOARD01';
+        $this->hardware['disk_serial'] = 'NEWDISK001';
+        unlink("$this->dir/state.json.lock");
+        mkdir("$this->dir/state.json.lock");
+
+        try {
+            $this->newStore()->recheckHardware();
+            $this->fail('a mismatch that could not be written was answered as a match');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('Can not lock', $e->getMessage());
+        } finally {
+            rmdir("$this->dir/state.json.lock");
+        }
     }
 
     public function testNewDocumentIsNotBlockedByTheHardwareFlagOfAnOlderOne(): void
