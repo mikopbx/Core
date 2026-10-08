@@ -438,8 +438,11 @@ class LicenseV2
      * finding the round taken returns false; the running round already asks the server, and the next
      * poll brings whatever it missed. Also false when the state dir is not writable (the web user:
      * exclusiveRound() returns null before a round is even taken).
+     *
+     * @param bool $armBackoff false when a failure says nothing about the servers (the boot round may run
+     *     before the network is up) and must not push the worker's next round out by the backoff.
      */
-    public function refresh(bool $force = false): bool
+    public function refresh(bool $force = false, bool $armBackoff = true): bool
     {
         // The server refuses a request without a key (unsigned 403) and the round would only back off.
         if ($this->licenseKey() === '') {
@@ -450,7 +453,9 @@ class LicenseV2
             // Closed contour: tokens arrive by the file exchange only.
             return false;
         }
-        return $this->store->exclusiveRound(fn(): bool => $this->refreshRound($serverUrls, $force)) === true;
+        return $this->store->exclusiveRound(
+            fn(): bool => $this->refreshRound($serverUrls, $force, $armBackoff)
+        ) === true;
     }
 
     /**
@@ -462,7 +467,7 @@ class LicenseV2
      *
      * @param array<int, string> $serverUrls
      */
-    private function refreshRound(array $serverUrls, bool $force): bool
+    private function refreshRound(array $serverUrls, bool $force, bool $armBackoff): bool
     {
         // Judged inside the round: the process that held it a moment ago may have refreshed already.
         $payload = $this->store->lastVerifiedPayload();
@@ -531,6 +536,10 @@ class LicenseV2
                 }
                 continue 2;
             }
+        }
+        if (!$armBackoff) {
+            $this->log('All entitlement servers failed, the worker asks again');
+            return false;
         }
         try {
             $this->log('All entitlement servers failed, next attempt in ' . $this->store->noteFailure() . ' s');
