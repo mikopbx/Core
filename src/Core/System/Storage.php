@@ -1423,6 +1423,11 @@ class Storage extends Injectable
      */
     public function mountSwap(): void
     {
+        // Bring up a compressed in-RAM swap (zram) as the primary swap device so that most
+        // paging stays in RAM with zero writes to the (often flash) storage disk. No-op on
+        // kernels without zram support, where the disk swap file below is used alone.
+        $this->mountZramSwap();
+
         $tempDir = Directories::getDir(Directories::CORE_TEMP_DIR);
         $swapFile = "$tempDir/swapfile";
 
@@ -1434,8 +1439,108 @@ class Storage extends Injectable
             return;
         }
         $swapOnCmd = Util::which('swapon');
-        $result = Processes::mwExec("$swapOnCmd $swapFile");
+        // Lower priority than zram: the disk swap file is only used as overflow once zram is
+        // full. On kernels with zswap enabled it is additionally cached (compressed) in RAM.
+        $result = Processes::mwExec("$swapOnCmd -p 10 $swapFile");
         SystemMessages::sysLogMsg('Swap', 'connect swap result: ' . $result, LOG_INFO);
+    }
+
+    /**
+     * Configures /dev/zram0 as a compressed in-RAM swap device with high priority.
+     *
+     * Runs only on kernels that ship the zram device; on kernels without it the method is a
+     * no-op and the disk swap file alone is used (legacy behaviour). The device is not
+     * persisted: root is tmpfs, so this is re-applied on every boot via mountSwap().
+     */
+    private function mountZramSwap(): void
+    {
+        $zramDevice = $this->ensureZramDevice();
+        if ($zramDevice === '') {
+            // Kernel without zram support -> keep the disk-only swap behaviour.
+            return;
+        }
+        $zramSysBlock = '/sys/block/' . basename($zramDevice);
+
+        $diskSizeMb = $this->getZramDiskSizeMb();
+        if ($diskSizeMb <= 0) {
+            return;
+        }
+
+        $swapOffCmd = Util::which('swapoff');
+        $mkSwapCmd = Util::which('mkswap');
+        $swapOnCmd = Util::which('swapon');
+
+        // Reset the device first so the run is idempotent across reboots / re-invocations.
+        Processes::mwExec("$swapOffCmd $zramDevice 2> /dev/null");
+        file_put_contents("$zramSysBlock/reset", '1');
+
+        // comp_algorithm must be set BEFORE disksize; lz4 is the only compressor built in.
+        if (file_exists("$zramSysBlock/comp_algorithm")) {
+            file_put_contents("$zramSysBlock/comp_algorithm", 'lz4');
+        }
+        file_put_contents("$zramSysBlock/disksize", $diskSizeMb * 1024 * 1024);
+
+        Processes::mwExec("$mkSwapCmd $zramDevice");
+
+        // Highest priority: zram is used first, the disk swap file only as overflow.
+        $result = Processes::mwExec("$swapOnCmd -p 100 $zramDevice");
+        SystemMessages::sysLogMsg('Swap', "connect zram swap ({$diskSizeMb}MB) result: " . $result, LOG_INFO);
+    }
+
+    /**
+     * Returns a usable zram device path.
+     *
+     * The kernel auto-creates /dev/zram0 at boot with the default num_devices=1 (devtmpfs
+     * materialises the node). When that is absent but the kernel still supports zram, a device
+     * is requested through the zram-control hot_add interface. Returns '' on kernels without
+     * zram support, where the caller falls back to disk-only swap.
+     *
+     * @return string Device path (e.g. /dev/zram0), or '' if zram is unavailable.
+     */
+    private function ensureZramDevice(): string
+    {
+        if (file_exists('/dev/zram0') && is_dir('/sys/block/zram0')) {
+            return '/dev/zram0';
+        }
+
+        // Kernel supports zram but no device node yet (num_devices=0) -> hot-add one.
+        $hotAdd = '/sys/class/zram-control/hot_add';
+        if (!file_exists($hotAdd)) {
+            return '';
+        }
+        $num = trim((string)@file_get_contents($hotAdd));
+        if ($num === '' || !ctype_digit($num)) {
+            return '';
+        }
+        $device = "/dev/zram$num";
+
+        // devtmpfs usually materialises the node immediately; allow a brief settle window.
+        for ($i = 0; $i < 10 && !file_exists($device); $i++) {
+            usleep(100000);
+        }
+
+        return file_exists($device) ? $device : '';
+    }
+
+    /**
+     * Calculates the zram disk size (virtual, uncompressed) in megabytes.
+     *
+     * Sized at 50% of total RAM capped at 2048 MB. With lz4 (~2.5x) the real RAM cost at full
+     * fill is roughly a third of this, keeping memory pressure low on small appliances while
+     * still extending usable memory on larger hosts.
+     *
+     * @return int Disk size in MB, or 0 if total memory could not be determined.
+     */
+    private function getZramDiskSizeMb(): int
+    {
+        $meminfo = @file_get_contents('/proc/meminfo');
+        if ($meminfo === false || !preg_match('/^MemTotal:\s+(\d+)\s+kB$/m', $meminfo, $m)) {
+            return 0;
+        }
+        $memTotalMb = (int)((int)$m[1] / 1024);
+        $sizeMb = (int)($memTotalMb * 0.5);
+
+        return min($sizeMb, 2048);
     }
 
     /**
