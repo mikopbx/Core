@@ -21,6 +21,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\WafProvider;
 use MikoPBX\Core\Asterisk\Configs\Generators\CodecSync;
@@ -43,6 +44,7 @@ use MikoPBX\Core\System\Configs\SSHConf;
 use MikoPBX\Core\System\Configs\SentryConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Configs\VmToolsConf;
+use MikoPBX\Core\System\LicenseV2\LicenseV2;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Upgrade\UpdateSystemConfig;
 use MikoPBX\Common\Models\PbxSettings;
@@ -481,6 +483,25 @@ class SystemLoader extends Injectable
         $this->echoStartMsg(' - Starting php-fpm daemon...');
         $phpConf = new PHPConf();
         $this->echoResultMsg($phpConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
+
+        // #1191: without a stored document (the first boot after LicenseV2 was switched on) every feature is
+        // refused until the worker's first round, a minute after boot. Ask before the modules build their configs.
+        // A failure here only leaves the first round to the worker: it must never stop the PBX from starting.
+        try {
+            $license = PbxSettings::getValueByKey(PbxSettings::LICENSE_V2_ENABLED) === '1'
+                && PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE) !== ''
+                ? $this->di->getShared(MarketPlaceProvider::SERVICE_NAME)
+                : null;
+            if ($license instanceof LicenseV2 && $license->store()->lastVerifiedPayload() === null) {
+                $this->echoStartMsg(' - Requesting license document...');
+                $this->echoResultMsg(
+                    $license->refresh(true, false) ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED
+                );
+            }
+        } catch (\Throwable $e) {
+            SystemMessages::sysLogMsg(__METHOD__, 'License document request failed: ' . $e->getMessage(), LOG_WARNING);
+            $this->echoResultMsg(SystemMessages::RESULT_FAILED);
+        }
 
         // Configure Asterisk and start it
         $this->echoStartMsg(' - Initializing Asterisk configuration' . PHP_EOL);

@@ -374,6 +374,19 @@ class LicenseV2SeatsTest extends TestCase
     }
 
     /**
+     * #1191: the boot round may run before the network is up; its failure must not delay the worker's round.
+     */
+    public function testBootRoundFailureDoesNotArmTheBackoff(): void
+    {
+        $this->serverAnswers = [static fn(): Response => new Response(503)];
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+
+        $this->assertFalse($license->refresh(true, false));
+        $this->assertTrue($license->store()->retryAllowed(), 'the worker asks again without waiting out a backoff');
+        $this->assertStringContainsString('the worker asks again', implode("\n", $this->logged));
+    }
+
+    /**
      * The signed request carries the license key, the holders and the metrics: it goes to an https
      * server only. A redirect is any proxy's trick to move it elsewhere, so it is a failed server, not a hop.
      */
