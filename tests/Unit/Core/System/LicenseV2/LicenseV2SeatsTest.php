@@ -726,6 +726,74 @@ class LicenseV2SeatsTest extends TestCase
         return ['fingerprint' => ['k' => 3, 'h' => $request['fingerprint']]];
     }
 
+    public function testRoundOutcomesBeforeAnyServerIsAsked(): void
+    {
+        $this->licenseKey = '';
+        $this->assertSame('noKey', $this->license()->refreshNow());
+        $this->licenseKey = 'MIKO-TEST';
+        $this->serverUrls = [];
+        $this->assertSame('noServers', $this->license()->refreshNow());
+    }
+
+    public function testManualRoundFailureDoesNotArmTheBackoff(): void
+    {
+        $this->serverAnswers = [fn(): Response => new Response(500, [], 'boom')];
+        $license = $this->licensed(['54' => self::NOW + 86400], []);
+        $this->assertSame('failed', $license->refreshNow());
+        $this->assertSame(0, (int)($license->store()->stateSnapshot()['backoff'] ?? 0));
+        $this->assertTrue($license->store()->retryAllowed());
+    }
+
+    public function testWorkerRefreshStillAnswersBoolAndArmsTheBackoff(): void
+    {
+        $this->serverAnswers = [
+            fn(): Response => new Response(500, [], 'boom'),
+            fn(): Response => new Response(500, [], 'boom'),
+        ];
+        $license = $this->licensed(['54' => self::NOW + 86400], []);
+        $this->assertFalse($license->refresh(true));
+        $this->assertGreaterThan(0, $license->store()->stateSnapshot()['backoff']);
+        $this->assertFalse($license->store()->retryAllowed());
+        $this->assertSame('failed', $license->refreshNow(), 'the button is forced past the backoff and asks again');
+        $this->assertFalse($license->refresh(), 'the worker is not: notDue while the backoff holds');
+    }
+
+    public function testBusyWhenAnotherProcessHoldsTheRound(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], []);
+        $lock = fopen("$this->dir/cf/refresh.lock", 'c');
+        $this->assertTrue(flock($lock, LOCK_EX));
+        $this->assertSame('busy', $license->refreshNow());
+        flock($lock, LOCK_UN);
+        fclose($lock);
+        unlink("$this->dir/cf/refresh.lock");
+    }
+
+    public function testRoundOutcomeOkThenRefusedWithReason(): void
+    {
+        $tokenFor = fn(RequestInterface $r): string => $this->signed([
+            'v' => EntitlementToken::VERSION, 'kid' => self::KID, 'install' => self::requestFields($r)['install'],
+            'key' => $this->licenseKey, 'nonce' => self::requestFields($r)['nonce'], 'iat' => $this->wallClock,
+            'exp' => $this->wallClock + 7 * 86400, 'features' => ['54' => $this->wallClock + 86400],
+            'modules' => ['ModuleTest' => 54],
+        ]);
+        $refusalFor = fn(RequestInterface $r): string => $this->signed([
+            'v' => EntitlementToken::VERSION, 'kid' => self::KID, 'install' => self::requestFields($r)['install'],
+            'key' => $this->licenseKey, 'nonce' => self::requestFields($r)['nonce'], 'iat' => $this->wallClock,
+            'refused' => true, 'error' => 'key revoked',
+        ]);
+        $this->serverAnswers = [
+            fn(RequestInterface $r): Response => new Response(200, [], (string)json_encode(['token' => $tokenFor($r)])),
+            fn(RequestInterface $r): Response => new Response(403, [], (string)json_encode(['refusal' => $refusalFor($r)])),
+        ];
+        $license = $this->licensed(['54' => self::NOW + 86400], []);
+        $this->assertSame('ok', $license->refreshNow());
+        $this->assertSame('refused', $license->refreshNow());
+        $s = $license->entitlementStatus();
+        $this->assertTrue($s['refused']);
+        $this->assertSame('key revoked', $s['refusalReason']);
+    }
+
     /**
      * @param array<int, array<string, mixed>> $sent
      */

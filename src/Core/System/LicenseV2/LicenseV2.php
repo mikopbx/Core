@@ -471,28 +471,44 @@ class LicenseV2
     }
 
     /**
-     * One online round at a time: a second caller (the worker and a forced refresh after a coupon)
-     * finding the round taken returns false; the running round already asks the server, and the next
-     * poll brings whatever it missed. Also false when the state dir is not writable (the web user:
-     * exclusiveRound() returns null before a round is even taken).
+     * One online round at a time: see round(). true only when a document was accepted — the one reader of
+     * the result is SystemLoader's boot round.
      *
      * @param bool $armBackoff false when a failure says nothing about the servers (the boot round may run
      *     before the network is up) and must not push the worker's next round out by the backoff.
      */
     public function refresh(bool $force = false, bool $armBackoff = true): bool
     {
+        return $this->round($force, $armBackoff) === 'ok';
+    }
+
+    /**
+     * The "refresh now" button: forced, and a failure does not arm the backoff — a couple of clicks behind
+     * a dead link must not push the worker's next round out by hours.
+     *
+     * @return string Outcome: ok, noKey, noServers, busy, notDue, refused, failed.
+     */
+    public function refreshNow(): string
+    {
+        return $this->round(true, false);
+    }
+
+    private function round(bool $force, bool $armBackoff): string
+    {
         // The server refuses a request without a key (unsigned 403) and the round would only back off.
         if ($this->licenseKey() === '') {
-            return false;
+            return 'noKey';
         }
         $serverUrls = ($this->serverUrls)();
         if ($serverUrls === []) {
             // Closed contour: tokens arrive by the file exchange only.
-            return false;
+            return 'noServers';
         }
+        // null: another process holds the round (it already asks the server), or the state dir is not
+        // writable (the web user) — either way this caller has nothing to do.
         return $this->store->exclusiveRound(
-            fn(): bool => $this->refreshRound($serverUrls, $force, $armBackoff)
-        ) === true;
+            fn(): string => $this->refreshRound($serverUrls, $force, $armBackoff)
+        ) ?? 'busy';
     }
 
     /**
@@ -503,17 +519,19 @@ class LicenseV2
      * error is what any proxy or captive portal can produce, so it only passes the turn.
      *
      * @param array<int, string> $serverUrls
+     *
+     * @return string Outcome, see refreshNow().
      */
-    private function refreshRound(array $serverUrls, bool $force, bool $armBackoff): bool
+    private function refreshRound(array $serverUrls, bool $force, bool $armBackoff): string
     {
         // Judged inside the round: the process that held it a moment ago may have refreshed already.
         $payload = $this->store->lastVerifiedPayload();
         $sameKey = hash_equals($this->licenseKey(), (string)($payload['key'] ?? ''));
         if (!$force && $sameKey && !$this->refreshDue($payload)) {
-            return false;
+            return 'notDue';
         }
         if (!$force && !$this->store->retryAllowed()) {
-            return false;
+            return 'notDue';
         }
         // One report per round: every server of the list is told the same, metrics are collected once.
         $report = $this->report();
@@ -531,6 +549,8 @@ class LicenseV2
                 try {
                     $response = $http->request('POST', rtrim($serverUrl, '/') . '/entitlement', [
                         'json' => $this->buildRequest(false, $report),
+                        // A dead server answers the connect in 5 s, not 15: two default servers fit the REST 30 s cap.
+                        'connect_timeout' => 5,
                         'timeout' => 15,
                         'http_errors' => false,
                         'allow_redirects' => false,
@@ -556,11 +576,11 @@ class LicenseV2
                 try {
                     if (is_string($answer['refusal'] ?? null)) {
                         $this->log("Refused by $serverUrl: " . $this->store->acceptRefusal($answer['refusal']));
-                        return false;
+                        return 'refused';
                     }
                     if ($response->getStatusCode() === 200) {
                         $this->applyAnswer($this->store->acceptAnswer((string)($answer['token'] ?? '')));
-                        return true;
+                        return 'ok';
                     }
                     $this->log("Entitlement server $serverUrl failed: HTTP " . $response->getStatusCode());
                     if ($response->getStatusCode() === 409 && ($answer['code'] ?? '') === 'replay') {
@@ -576,7 +596,7 @@ class LicenseV2
         }
         if (!$armBackoff) {
             $this->log('All entitlement servers failed, the worker asks again');
-            return false;
+            return 'failed';
         }
         try {
             $this->log('All entitlement servers failed, next attempt in ' . $this->store->noteFailure() . ' s');
@@ -586,7 +606,7 @@ class LicenseV2
             // defensive only.
             $this->log('All entitlement servers failed: ' . $e->getMessage());
         }
-        return false;
+        return 'failed';
     }
 
     /**
