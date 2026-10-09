@@ -94,7 +94,7 @@ const entitlement = {
         } else {
             entitlement.$issued.hide();
         }
-        if (s.nextExchange > s.now) {
+        if (s.serversConfigured && s.hasKey && s.nextExchange > s.now) {
             entitlement.$next.text(i18n('lic_EntitlementNextExchange', {date: entitlement.date(s.nextExchange)})).show();
         } else {
             entitlement.$next.hide();
@@ -171,7 +171,7 @@ const entitlement = {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
         });
     },
 
@@ -198,6 +198,9 @@ const entitlement = {
                 // After any outcome: a refusal file is applied first and only then answered with 400.
                 entitlement.refresh();
             });
+        }).catch(() => {
+            entitlement.$importButton.removeClass('loading disabled');
+            entitlement.$error.text(globalTranslate.lic_GeneralError).show();
         });
     },
 
@@ -213,7 +216,7 @@ const entitlement = {
                 return;
             }
             const key = `lic_EntitlementRound_${response.data.outcome}`;
-            UserMessage.showInformation(globalTranslate[key] !== undefined ? globalTranslate[key] : response.data.outcome);
+            UserMessage.showInformation(globalTranslate[key] !== undefined ? globalTranslate[key] : globalTranslate.lic_GeneralError);
             entitlement.render(response.data);
         });
     },
