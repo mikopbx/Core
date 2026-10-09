@@ -269,6 +269,7 @@ class EntitlementStore
                 $answeredSlot => '',
                 $answeredSlot . self::REPORT_SUFFIX => [],
                 'refused' => false,
+                'refusalReason' => '',
                 self::FOREIGN_HARDWARE => '',
                 'lastSeen' => max($now, (int)$payload['iat']),
                 self::BACKOFF => 0,
@@ -287,6 +288,17 @@ class EntitlementStore
     public function metricsDue(): bool
     {
         return $this->now() >= (int)($this->loadState()[self::METRICS_SENT_AT] ?? 0) + self::METRICS_INTERVAL;
+    }
+
+    /**
+     * Read-only copy of the state for the administrator's view (refused, refusalReason, foreignHardware,
+     * nextRetry, backoff). A broken file reads as refused without a reason, see loadState().
+     *
+     * @return array<string, mixed>
+     */
+    public function stateSnapshot(): array
+    {
+        return $this->loadState();
     }
 
     /**
@@ -395,14 +407,16 @@ class EntitlementStore
             if (($payload['refused'] ?? false) !== true || $answeredSlot === '') {
                 throw new TokenRejectedException('Refusal does not answer the pending request');
             }
-            $changes = [$answeredSlot => '', 'refused' => true];
+            $error = $payload['error'] ?? '';
+            $reason = is_string($error) ? $error : (string)json_encode($error, JSON_UNESCAPED_UNICODE);
+            // The reason is shown to the administrator until the next accepted document clears it.
+            $changes = [$answeredSlot => '', 'refused' => true, 'refusalReason' => $reason];
             if ($answeredSlot === self::NONCE_ONLINE) {
                 $changes[self::BACKOFF] = 0;
                 $changes[self::NEXT_RETRY] = $now + EntitlementToken::POLL_DEFAULT;
             }
             $this->saveState($changes, true);
-            $error = $payload['error'] ?? '';
-            return is_string($error) ? $error : (string)json_encode($error, JSON_UNESCAPED_UNICODE);
+            return $reason;
         });
     }
 
