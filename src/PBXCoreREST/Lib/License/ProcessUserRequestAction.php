@@ -82,6 +82,8 @@ class ProcessUserRequestAction extends Injectable
                     if ($store->effectiveExpiry($oldLicKey) > $store->now()) {
                         $res->messages['license'][] = $translation->_('lic_KeyChangeNeedsConnection');
                         $res->success = false;
+                        // Offline as well: a coupon would only cost another timeout.
+                        return $res;
                     } else {
                         PbxSettings::setValueByKey(PbxSettings::PBX_LICENSE, $data['licKey']);
                         $license->changeLicenseKeyOffline($data['licKey']);
