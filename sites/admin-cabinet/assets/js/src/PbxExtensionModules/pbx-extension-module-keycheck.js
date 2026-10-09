@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, sessionStorage, globalPBXLicense, UserMessage, LicenseAPI*/
+/* global globalRootUrl, globalTranslate, Form, sessionStorage, globalPBXLicense, UserMessage, LicenseAPI, entitlement */
 
 
 /**
@@ -405,6 +405,8 @@ const keyCheck = {
             // would stack and duplicate the request on the next click (#1089).
             keyCheck.refreshLicenseKeyView();
             keyCheck.cbOnLicenceKeyInputChange();
+            // #1148: the entitlement block judges by the key — a saved key changes its lines.
+            entitlement.refresh();
             if (response.messages && response.messages.length !== 0) {
                 UserMessage.showMultiString(response.messages);
             }
