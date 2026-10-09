@@ -576,6 +576,8 @@ return [
     'lic_HostLookupFailed' => 'Нет связи с сервером лицензирования, проблема с DNS',
     'lic_Inn' => 'Уникальный идентификатор компании (ИНН, ИИН, УНП и т.д.)',
     'lic_InnExample' => '7701234567',
+    'lic_KeyChangeNeedsConnection' => 'Без связи с сервером лицензирования ключ можно сменить только после сброса текущего',
+    'lic_KeySavedWithoutCheck' => 'Ключ сохранён без проверки. Скачайте файл-запрос и обменяйте его в кабинете лицензирования',
     'lic_IntroductionTabHeader' => 'О лицензировании маркетплейса',
     'lic_InvalidLicenseKey2009' => '(2009) Ошибка лицензионного ключа',
     'lic_LastQuestionAnswer' => 'Ответы на часто задаваемые вопросы по лицензиям можно найти <a href="https://wiki.mikopbx.com/licensing#faq_chavo" target="_blank">по ссылке</a>.',

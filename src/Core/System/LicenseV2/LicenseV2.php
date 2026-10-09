@@ -152,6 +152,16 @@ class LicenseV2
     }
 
     /**
+     * Closed contour (#1148): stores the key in the compiled class without the forced online round that
+     * changeLicenseKey() through __call() starts — the servers are unreachable, the round would only cost time;
+     * the worker or the "refresh now" button makes it later.
+     */
+    public function changeLicenseKeyOffline(string $licenseKey): void
+    {
+        $this->legacy()?->changeLicenseKey($licenseKey);
+    }
+
+    /**
      * @return array{success: bool, error?: string}
      */
     public function featureAvailable(mixed $featureId): array

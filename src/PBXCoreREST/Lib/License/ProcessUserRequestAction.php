@@ -23,6 +23,7 @@ namespace MikoPBX\PBXCoreREST\Lib\License;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\LicenseV2\LicenseV2;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use MikoPBX\Common\Library\Text;
@@ -73,6 +74,23 @@ class ProcessUserRequestAction extends Injectable
                     $res->data[PbxSettings::PBX_LICENSE] = $data['licKey'];
                     $res->messages['info'][] = $translation->_('lic_SuccessfulActivation');
                     $res->success = true;
+                } elseif ($license instanceof LicenseV2 && self::v1Unreachable($licenseInfo)) {
+                    // #1148: closed contour. The cabinet checks the key through the request file, so the key is
+                    // stored unchecked — unless the current key still holds a valid document: a typo made offline
+                    // must not switch the modules off, and the key reset is the explicit way out.
+                    $store = $license->store();
+                    if ($store->effectiveExpiry($oldLicKey) > $store->now()) {
+                        $res->messages['license'][] = $translation->_('lic_KeyChangeNeedsConnection');
+                        $res->success = false;
+                    } else {
+                        PbxSettings::setValueByKey(PbxSettings::PBX_LICENSE, $data['licKey']);
+                        $license->changeLicenseKeyOffline($data['licKey']);
+                        $res->data[PbxSettings::PBX_LICENSE] = $data['licKey'];
+                        $res->messages['info'][] = $translation->_('lic_KeySavedWithoutCheck');
+                        $res->success = true;
+                        // A coupon can not be activated offline, and its forced round would only cost another timeout.
+                        return $res;
+                    }
                 } elseif (!$licenseInfo['success'] && !empty($licenseInfo['error'])) {
                     $translatedError = $license->translateLicenseErrorMessage($licenseInfo['error']);
                     $res->messages['license'][] = $translatedError;
@@ -117,5 +135,16 @@ class ProcessUserRequestAction extends Injectable
             }
         }
         return $res;
+    }
+
+    /**
+     * The compiled class answers a dead link and a wrong key with the same error text (measured on lv2e2e,
+     * #1148); only `code` tells them apart: 0 when no server answered, the HTTP status when one refused.
+     *
+     * @param array<string, mixed> $licenseInfo What getLicenseInfo() answered.
+     */
+    private static function v1Unreachable(array $licenseInfo): bool
+    {
+        return empty($licenseInfo['success']) && (int)($licenseInfo['code'] ?? 0) === 0;
     }
 }
