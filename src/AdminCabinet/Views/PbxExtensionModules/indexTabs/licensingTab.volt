@@ -1,4 +1,5 @@
-{{ form(['action' : 'licensing/modify', 'method': 'post', 'role': 'form', 'class': 'ui form large disable-if-no-internet', 'id':'licencing-modify-form']) }}
+{% set noInternetClass = licenseV2Enabled ? '' : ' disable-if-no-internet' %}
+{{ form(['action' : 'licensing/modify', 'method': 'post', 'role': 'form', 'class': 'ui form large' ~ noInternetClass, 'id':'licencing-modify-form']) }}
 
 <div id="licenseKeySection" class="disabled">
     <h2 class="ui header">{{ t._('lic_LicenseKey') }}</h2>
@@ -6,7 +7,7 @@
         <div class="field">
             <div class="ui action input">
             {{ changeLicenseKeyForm.render('licKey') }}
-            <button class="ui blue labeled icon button disable-if-no-internet" id="save-license-key-button">
+            <button class="ui blue labeled icon button{{ noInternetClass }}" id="save-license-key-button">
                 <i class="key icon"></i>
                 {{ t._('lic_SaveLicenseKeyButton') }}
             </button>
@@ -18,7 +19,7 @@
         <table class="ui very basic table">
             <tr>
                 <td>
-                    <div ><span class="confidential-field"></span><i class="times circle outline red icon disable-if-no-internet popuped" data-content=" {{ t._('lic_ResetLicenseSettings') }}" id="reset-license-button"></i></div>
+                    <div ><span class="confidential-field"></span><i class="times circle outline red icon{{ noInternetClass }} popuped" data-content=" {{ t._('lic_ResetLicenseSettings') }}" id="reset-license-button"></i></div>
                 </td>
                 <td class="right aligned">
                     <a class="ui labeled icon teal button prevent-word-wrap" href="#" target="_blank" id="manage-license-button">
@@ -85,7 +86,7 @@
         </div>
 
     </div>
-    <div id="getNewKeyLicenseSection">
+    <div id="getNewKeyLicenseSection" class="field disable-if-no-internet">
         <div class="ui header">{{ t._('lic_FirstQuestionHeader') }}</div>
         {{ t._('lic_FirstQuestionAnswer') }}
         <div class="ui header">{{ t._('lic_MarketplaceHeader') }}</div>
@@ -119,6 +120,30 @@
     </div>
     <div class="ui clearing hidden divider"></div>
 </div>
+
+{% if licenseV2Enabled %}
+<div id="entitlementSection">
+    <h2 class="ui header">{{ t._('lic_EntitlementHeader') }}</h2>
+    <div class="ui list">
+        <div class="item"><i class="file alternate outline icon"></i><span id="entitlement-status"></span></div>
+        <div class="item" id="entitlement-issued"></div>
+        <div class="item" id="entitlement-next"></div>
+    </div>
+    <div class="ui negative message" id="entitlement-error" style="display: none"></div>
+    <button type="button" class="ui labeled icon button" id="entitlement-export-button">
+        <i class="download icon"></i>{{ t._('lic_EntitlementExportButton') }}
+    </button>
+    <button type="button" class="ui labeled icon button" id="entitlement-import-button">
+        <i class="upload icon"></i>{{ t._('lic_EntitlementImportButton') }}
+    </button>
+    <input type="file" id="entitlement-import-input" style="display: none">
+    <button type="button" class="ui labeled icon button" id="entitlement-refresh-button" style="display: none">
+        <i class="sync icon"></i>{{ t._('lic_EntitlementRefreshButton') }}
+    </button>
+    <div class="ui message">{{ t._('lic_EntitlementMessage') }}</div>
+    <div class="ui hidden divider"></div>
+</div>
+{% endif %}
 
 <div class="ui small modal" id="reset-license-confirm-modal">
     <div class="header">
