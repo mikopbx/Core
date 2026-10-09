@@ -34,6 +34,11 @@ class LicenseV2SeatsTest extends TestCase
     private array $serverAnswers = [];
     /** @var array<int, string> What PbxSettings::LICENSE_V2_SERVER_URL would list. */
     private array $serverUrls = ['https://issuer.test'];
+    /** @var array<string, string> What HostFacts reads on the test machine; a test may swap the board. */
+    private array $hardware = [
+        'product_uuid' => '4c4c4544-0032-4a10-8047-b2c04f4a4d32', 'board_serial' => 'PF2ABCDE',
+        'disk_serial' => 'S3Z9NB0K123456', 'mac' => '52:54:00:12:34:56',
+    ];
 
     protected function setUp(): void
     {
@@ -613,6 +618,114 @@ class LicenseV2SeatsTest extends TestCase
         $this->assertSame(300, $license->store()->lastVerifiedPayload()['poll']);
     }
 
+    public function testStatusWithoutKeyOrDocument(): void
+    {
+        $this->licenseKey = '';
+        $this->serverUrls = [];
+        $s = $this->license()->entitlementStatus();
+        $this->assertFalse($s['hasKey']);
+        $this->assertFalse($s['serversConfigured']);
+        $this->assertFalse($s['hasDocument']);
+        $this->assertSame(0, $s['iat']);
+        $this->assertSame(0, $s['effectiveExpiry']);
+        $this->assertSame(0, $s['nextExchange'], 'nothing to show: the UI hides a next exchange that is not in the future');
+        $this->assertSame(self::NOW, $s['now']);
+    }
+
+    public function testStatusOfAnOnlineDocumentNamesTheNextPoll(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], [], self::NOW + 7 * 86400, self::NOW + 30 * 86400);
+        $s = $license->entitlementStatus();
+        $this->assertTrue($s['hasKey']);
+        $this->assertTrue($s['serversConfigured']);
+        $this->assertTrue($s['hasDocument']);
+        $this->assertFalse($s['fileDocument']);
+        $this->assertFalse($s['keyMismatch']);
+        $this->assertFalse($s['refused']);
+        $this->assertSame('', $s['refusalReason']);
+        $this->assertFalse($s['foreignHardware']);
+        $this->assertSame(self::NOW, $s['iat']);
+        $this->assertSame(self::NOW + 7 * 86400, $s['exp']);
+        $this->assertSame(self::NOW + 30 * 86400, $s['offlineUntil']);
+        $this->assertSame(self::NOW + 30 * 86400, $s['effectiveExpiry']);
+        $this->assertSame(self::NOW + EntitlementToken::POLL_DEFAULT, $s['nextExchange']);
+    }
+
+    public function testStatusPastExpButWithinOfflineUntilIsStillEffective(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], [], self::NOW + 100, self::NOW + 30 * 86400);
+        $this->wallClock = self::NOW + 200;
+        $s = $license->entitlementStatus();
+        $this->assertLessThanOrEqual($s['now'], $s['exp']);
+        $this->assertGreaterThan($s['now'], $s['effectiveExpiry'], 'UI line 8: works offline until offlineUntil');
+    }
+
+    public function testStatusOfAnExpiredDocument(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], [], self::NOW + 100, self::NOW + 200);
+        $this->wallClock = self::NOW + 300;
+        $s = $license->entitlementStatus();
+        $this->assertTrue($s['hasDocument']);
+        $this->assertLessThanOrEqual($s['now'], $s['effectiveExpiry'], 'UI line 6: expired');
+    }
+
+    public function testStatusOfAFileDocumentHasNoPollAndTellsKeyMismatch(): void
+    {
+        $license = $this->license();
+        $license->importOfflineToken($this->answerOffline($license, $this->boundFingerprint($license))['token']);
+        $s = $license->entitlementStatus();
+        $this->assertTrue($s['fileDocument']);
+        $this->assertSame(0, $s['nextExchange'], 'a file document is not polled');
+        $this->assertFalse($s['keyMismatch']);
+
+        $this->licenseKey = 'MIKO-OTHER';
+        $s = $license->entitlementStatus();
+        $this->assertTrue($s['keyMismatch']);
+        $this->assertSame(0, $s['effectiveExpiry'], 'line 5 (other key) and line 6 (expired) both match: 5 wins in the UI');
+        $this->assertGreaterThan($s['now'], $s['exp'], 'the dates themselves are untouched');
+    }
+
+    public function testStatusReportsRefusalAndForeignHardwareTogether(): void
+    {
+        $license = $this->license();
+        $license->importOfflineToken($this->answerOffline($license, $this->boundFingerprint($license))['token']);
+        $this->hardware = ['product_uuid' => 'ffffffff-0000-0000-0000-000000000000', 'board_serial' => 'OTHER',
+            'disk_serial' => 'OTHER', 'mac' => '00:00:00:00:00:01'];
+        $license = $this->license();
+        $this->assertFalse($license->store()->recheckHardware());
+        $this->assertTrue($license->entitlementStatus()['foreignHardware']);
+
+        $signed = json_decode($license->exportOfflineRequest(), true);
+        $request = json_decode(EntitlementToken::base64UrlDecode($signed['request']), true);
+        $refusal = $this->signed([
+            'v' => EntitlementToken::VERSION, 'kid' => self::KID, 'install' => $request['install'],
+            'key' => $this->licenseKey, 'nonce' => $request['nonce'], 'iat' => $this->wallClock,
+            'refused' => true, 'error' => 'key revoked',
+        ]);
+        try {
+            $license->importOfflineToken($refusal);
+            $this->fail('a refusal file is reported as rejected');
+        } catch (TokenRejectedException $e) {
+            $this->assertStringContainsString('key revoked', $e->getMessage());
+        }
+        $s = $license->entitlementStatus();
+        $this->assertTrue($s['refused']);
+        $this->assertSame('key revoked', $s['refusalReason']);
+        $this->assertTrue($s['foreignHardware'], 'both facts are reported; the UI shows the refusal first');
+    }
+
+    /**
+     * Plays the cabinet binding the document to the hardware of the exported request (a real cabinet always does).
+     *
+     * @return array{fingerprint: array{k: int, h: mixed}}
+     */
+    private function boundFingerprint(LicenseV2 $license): array
+    {
+        $signed = json_decode($license->exportOfflineRequest(), true);
+        $request = json_decode(EntitlementToken::base64UrlDecode($signed['request']), true);
+        return ['fingerprint' => ['k' => 3, 'h' => $request['fingerprint']]];
+    }
+
     /**
      * @param array<int, array<string, mixed>> $sent
      */
@@ -674,15 +787,23 @@ class LicenseV2SeatsTest extends TestCase
      */
     private function licensed(array $features, array $seats, ?int $exp = null, ?int $offlineUntil = null): LicenseV2
     {
+        $license = $this->license();
+        $this->issue($license, $features, $seats, $exp, $offlineUntil);
+        return $license;
+    }
+
+    /** A LicenseV2 over a fresh store: no document yet. */
+    private function license(): LicenseV2
+    {
         $store = new EntitlementStore(
             "$this->dir/cf",
             new InstallationIdentity("$this->dir/cf"),
             [self::KID => $this->serverPublicKeyPem],
             fn(): int => $this->wallClock,
-            new HostFacts(fn(): array => ['environment' => 'vm', 'sources' => []])
+            new HostFacts(fn(): array => ['environment' => 'vm', 'sources' => $this->hardware])
         );
         $ledger = new SeatLedger("$this->dir/tmp", fn(): int => $this->wallClock);
-        $license = new LicenseV2(
+        return new LicenseV2(
             $store,
             $ledger,
             fn(): string => $this->licenseKey,
@@ -694,8 +815,6 @@ class LicenseV2SeatsTest extends TestCase
             new Client(['handler' => HandlerStack::create(new MockHandler($this->serverAnswers))]),
             fn(): array => $this->serverUrls
         );
-        $this->issue($license, $features, $seats, $exp, $offlineUntil);
-        return $license;
     }
 
     /**

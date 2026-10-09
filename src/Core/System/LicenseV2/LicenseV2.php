@@ -306,6 +306,43 @@ class LicenseV2
     }
 
     /**
+     * What the administrator sees in the "Entitlement document" block: raw facts, no wording and no dates
+     * formatted — the browser does that. Prefixed name: the compiled class behind __call() owns "status".
+     *
+     * @return array{hasKey: bool, serversConfigured: bool, hasDocument: bool, iat: int, exp: int,
+     *     offlineUntil: int, effectiveExpiry: int, fileDocument: bool, keyMismatch: bool, refused: bool,
+     *     refusalReason: string, foreignHardware: bool, nextExchange: int, now: int}
+     */
+    public function entitlementStatus(): array
+    {
+        $licenseKey = $this->licenseKey();
+        $payload = $this->store->lastVerifiedPayload();
+        $state = $this->store->stateSnapshot();
+        $nextRetry = (int)($state['nextRetry'] ?? 0);
+        $foreignNonce = (string)($state['foreignHardware'] ?? '');
+        return [
+            'hasKey' => $licenseKey !== '',
+            'serversConfigured' => ($this->serverUrls)() !== [],
+            'hasDocument' => $payload !== null,
+            'iat' => (int)($payload['iat'] ?? 0),
+            'exp' => (int)($payload['exp'] ?? 0),
+            'offlineUntil' => (int)($payload['offlineUntil'] ?? 0),
+            'effectiveExpiry' => $payload === null ? 0 : $this->store->effectiveExpiry($licenseKey, $payload),
+            'fileDocument' => isset($payload['fingerprint']),
+            'keyMismatch' => $payload !== null && !hash_equals($licenseKey, (string)($payload['key'] ?? '')),
+            'refused' => ($state['refused'] ?? false) === true,
+            'refusalReason' => (string)($state['refusalReason'] ?? ''),
+            'foreignHardware' => $foreignNonce !== '' && hash_equals($foreignNonce, (string)($payload['nonce'] ?? '')),
+            // An online document is asked again one poll after it was issued; a file document only when the
+            // worker retries after a failure.
+            'nextExchange' => $payload !== null && !isset($payload['fingerprint'])
+                ? max($nextRetry, (int)($payload['iat'] ?? 0) + EntitlementToken::poll($payload))
+                : $nextRetry,
+            'now' => $this->store->now(),
+        ];
+    }
+
+    /**
      * Reads the token once and answers with it, so the caller can judge the right, the limit and the
      * lifetime by the same document: a token replaced mid-call must not mix old and new terms.
      *
