@@ -216,20 +216,90 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'readOnly' => true,
                 'example' => 'ok'
             ],
-            'hasKey' => ['type' => 'boolean', 'description' => 'rest_schema_lic_hasKey', 'readOnly' => true, 'example' => true],
-            'serversConfigured' => ['type' => 'boolean', 'description' => 'rest_schema_lic_serversConfigured', 'readOnly' => true, 'example' => true],
-            'hasDocument' => ['type' => 'boolean', 'description' => 'rest_schema_lic_hasDocument', 'readOnly' => true, 'example' => true],
-            'fileDocument' => ['type' => 'boolean', 'description' => 'rest_schema_lic_fileDocument', 'readOnly' => true, 'example' => false],
-            'keyMismatch' => ['type' => 'boolean', 'description' => 'rest_schema_lic_keyMismatch', 'readOnly' => true, 'example' => false],
-            'refused' => ['type' => 'boolean', 'description' => 'rest_schema_lic_refused', 'readOnly' => true, 'example' => false],
-            'refusalReason' => ['type' => 'string', 'description' => 'rest_schema_lic_refusalReason', 'readOnly' => true, 'example' => ''],
-            'foreignHardware' => ['type' => 'boolean', 'description' => 'rest_schema_lic_foreignHardware', 'readOnly' => true, 'example' => false],
-            'iat' => ['type' => 'integer', 'description' => 'rest_schema_lic_iat', 'readOnly' => true, 'example' => 1800000000],
-            'exp' => ['type' => 'integer', 'description' => 'rest_schema_lic_exp', 'readOnly' => true, 'example' => 1800604800],
-            'offlineUntil' => ['type' => 'integer', 'description' => 'rest_schema_lic_offlineUntil', 'readOnly' => true, 'example' => 1802592000],
-            'effectiveExpiry' => ['type' => 'integer', 'description' => 'rest_schema_lic_effectiveExpiry', 'readOnly' => true, 'example' => 1802592000],
-            'nextExchange' => ['type' => 'integer', 'description' => 'rest_schema_lic_nextExchange', 'readOnly' => true, 'example' => 1800000600],
-            'now' => ['type' => 'integer', 'description' => 'rest_schema_lic_now', 'readOnly' => true, 'example' => 1800000000],
+            'hasKey' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_hasKey',
+                'readOnly' => true,
+                'example' => true
+            ],
+            'serversConfigured' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_serversConfigured',
+                'readOnly' => true,
+                'example' => true
+            ],
+            'hasDocument' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_hasDocument',
+                'readOnly' => true,
+                'example' => true
+            ],
+            'fileDocument' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_fileDocument',
+                'readOnly' => true,
+                'example' => false
+            ],
+            'keyMismatch' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_keyMismatch',
+                'readOnly' => true,
+                'example' => false
+            ],
+            'refused' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_refused',
+                'readOnly' => true,
+                'example' => false
+            ],
+            'refusalReason' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_refusalReason',
+                'readOnly' => true,
+                'example' => ''
+            ],
+            'foreignHardware' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_foreignHardware',
+                'readOnly' => true,
+                'example' => false
+            ],
+            'iat' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_iat',
+                'readOnly' => true,
+                'example' => 1800000000
+            ],
+            'exp' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_exp',
+                'readOnly' => true,
+                'example' => 1800604800
+            ],
+            'offlineUntil' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_offlineUntil',
+                'readOnly' => true,
+                'example' => 1802592000
+            ],
+            'effectiveExpiry' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_effectiveExpiry',
+                'readOnly' => true,
+                'example' => 1802592000
+            ],
+            'nextExchange' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_nextExchange',
+                'readOnly' => true,
+                'example' => 1800000600
+            ],
+            'now' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_now',
+                'readOnly' => true,
+                'example' => 1800000000
+            ],
             'licenseKey' => [
                 'type' => 'string',
                 'description' => 'rest_schema_lic_licenseKey',

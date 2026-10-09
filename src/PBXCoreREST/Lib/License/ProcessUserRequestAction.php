@@ -141,12 +141,13 @@ class ProcessUserRequestAction extends Injectable
 
     /**
      * The compiled class answers a dead link and a wrong key with the same error text (measured on lv2e2e,
-     * #1148); only `code` tells them apart: 0 when no server answered, the HTTP status when one refused.
+     * #1148); only `code` tells them apart: 0 when no server answered, the HTTP status when one refused; an answer
+     * without `code` is not read as unreachable.
      *
      * @param array<string, mixed> $licenseInfo What getLicenseInfo() answered.
      */
     private static function v1Unreachable(array $licenseInfo): bool
     {
-        return empty($licenseInfo['success']) && (int)($licenseInfo['code'] ?? 0) === 0;
+        return empty($licenseInfo['success']) && isset($licenseInfo['code']) && (int)$licenseInfo['code'] === 0;
     }
 }

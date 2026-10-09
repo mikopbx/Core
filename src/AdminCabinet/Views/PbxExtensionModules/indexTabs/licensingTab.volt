@@ -86,7 +86,7 @@
         </div>
 
     </div>
-    <div id="getNewKeyLicenseSection" class="field disable-if-no-internet">
+    <div id="getNewKeyLicenseSection"{% if licenseV2Enabled %} class="field disable-if-no-internet"{% endif %}>
         <div class="ui header">{{ t._('lic_FirstQuestionHeader') }}</div>
         {{ t._('lic_FirstQuestionAnswer') }}
         <div class="ui header">{{ t._('lic_MarketplaceHeader') }}</div>

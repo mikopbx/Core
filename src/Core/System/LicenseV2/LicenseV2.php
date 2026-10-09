@@ -61,6 +61,9 @@ class LicenseV2
     /** The same text the legacy service produces, so translateLicenseErrorMessage() keeps working. */
     private const string ERROR_NOT_LICENSED = 'Feature is expired or not licensed (2011)';
 
+    /** The REST call behind the button is cut at 30 s; the round must answer before that. */
+    private const int ROUND_BUDGET = 25;
+
     /** Legacy calls that change what the key is entitled to; the stored token is stale after them. */
     private const array ENTITLEMENT_CHANGING_CALLS = ['addtrial', 'activatecoupon', 'changelicensekey'];
 
@@ -546,6 +549,7 @@ class LicenseV2
         // One report per round: every server of the list is told the same, metrics are collected once.
         $report = $this->report();
         $http = $this->http ??= new GuzzleHttp\Client();
+        $deadline = time() + self::ROUND_BUDGET;
         foreach ($serverUrls as $serverUrl) {
             // The request names the license key, the holders and the metrics: never in clear text, and a
             // redirect (any proxy on the way can produce one) must not carry it to another host.
@@ -556,12 +560,17 @@ class LicenseV2
             // Two attempts: a 409 replay re-anchors the seq and asks the same server once more, so a PBX
             // with a single server does not wait out the backoff after a lost state.
             for ($attempt = 1; $attempt <= 2; $attempt++) {
+                $remaining = $armBackoff ? 15 : $deadline - time();
+                if ($remaining < 3) {
+                    $this->log("Entitlement round budget is spent, $serverUrl is not asked");
+                    break 2;
+                }
                 try {
                     $response = $http->request('POST', rtrim($serverUrl, '/') . '/entitlement', [
                         'json' => $this->buildRequest(false, $report),
                         // A dead server answers the connect in 5 s, not 15: two default servers fit the REST 30 s cap.
                         'connect_timeout' => 5,
-                        'timeout' => 15,
+                        'timeout' => min(15, $remaining),
                         'http_errors' => false,
                         'allow_redirects' => false,
                         // The same cap as the imported file, applied while the body still arrives: the

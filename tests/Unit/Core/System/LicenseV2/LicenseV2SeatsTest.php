@@ -744,6 +744,25 @@ class LicenseV2SeatsTest extends TestCase
         $this->assertTrue($license->store()->retryAllowed());
     }
 
+    public function testManualRoundPassesTheTimeoutsToTheClient(): void
+    {
+        $seen = [];
+        $this->serverAnswers = array_fill(0, 2, function (RequestInterface $request, array $options) use (&$seen): Response {
+            $seen[] = [$options['connect_timeout'], $options['timeout']];
+            return new Response(500, [], 'boom');
+        });
+        $license = $this->licensed(['54' => self::NOW + 86400], []);
+        $this->assertSame('failed', $license->refreshNow());
+        $this->assertSame([5, 15], $seen[0], 'a fresh budget still allows the full 15 s');
+        $seen = [];
+        $this->serverAnswers = array_fill(0, 2, function (RequestInterface $request, array $options) use (&$seen): Response {
+            $seen[] = [$options['connect_timeout'], $options['timeout']];
+            return new Response(500, [], 'boom');
+        });
+        $this->assertFalse($this->licensed(['54' => self::NOW + 86400], [])->refresh(true));
+        $this->assertSame([5, 15], $seen[0]);
+    }
+
     public function testWorkerRefreshStillAnswersBoolAndArmsTheBackoff(): void
     {
         $this->serverAnswers = [
