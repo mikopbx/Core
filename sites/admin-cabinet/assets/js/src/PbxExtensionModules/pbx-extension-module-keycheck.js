@@ -221,7 +221,7 @@ const keyCheck = {
      */
     refreshLicenseKeyView() {
         if (globalPBXLicense.length === 28) {
-            keyCheck.$filledLicenseKeyPlaceholder.html(globalPBXLicense);
+            keyCheck.$filledLicenseKeyPlaceholder.text(globalPBXLicense);
             keyCheck.$filledLicenseKeyHeader.show();
             keyCheck.$manageKeyButton.attr('href',Config.keyManagementUrl);
             keyCheck.$emptyLicenseKeyInfo.hide();

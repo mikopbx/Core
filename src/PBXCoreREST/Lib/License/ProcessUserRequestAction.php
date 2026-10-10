@@ -37,6 +37,8 @@ use Phalcon\Di\Injectable;
  */
 class ProcessUserRequestAction extends Injectable
 {
+    private const string KEY_PATTERN = '/^MIKO-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$/';
+
     /**
      * Check and update a license key on a database.
      *
@@ -78,6 +80,13 @@ class ProcessUserRequestAction extends Injectable
                     // #1148: closed contour. The cabinet checks the key through the request file, so the key is
                     // stored unchecked — unless the current key still holds a valid document: a typo made offline
                     // must not switch the modules off, and the key reset is the explicit way out.
+                    // Offline nobody checks the key but this PBX: only the exact format may be stored
+                    // (it lands in every page's JS).
+                    if (preg_match(self::KEY_PATTERN, $data['licKey']) !== 1) {
+                        $res->messages['license'][] = $translation->_('lic_WrongLicenseKeyOrEmpty');
+                        $res->success = false;
+                        return $res;
+                    }
                     $store = $license->store();
                     if ($store->effectiveExpiry($oldLicKey) > $store->now()) {
                         $res->messages['license'][] = $translation->_('lic_KeyChangeNeedsConnection');
