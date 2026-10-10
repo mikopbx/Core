@@ -81,6 +81,8 @@ class LicenseManagementProcessor extends Injectable
                 break;
             case 'entitlementExport':
             case 'entitlementImport':
+            case 'entitlementStatus':
+            case 'entitlementRefresh':
                 $res = EntitlementExchangeAction::main($action, $data);
                 break;
             default:

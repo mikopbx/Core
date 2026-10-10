@@ -34,7 +34,11 @@ const LicenseAPI = new PbxApiClient({
         resetKey: ':resetKey',
         processUserRequest: ':processUserRequest',
         getLicenseInfo: ':getLicenseInfo',
-        sendPBXMetrics: ':sendPBXMetrics'
+        sendPBXMetrics: ':sendPBXMetrics',
+        entitlementStatus: ':entitlementStatus',
+        entitlementRefresh: ':entitlementRefresh',
+        entitlementExport: ':entitlementExport',
+        entitlementImport: ':entitlementImport'
     }
 });
 
@@ -77,6 +81,39 @@ LicenseAPI.getLicenseInfo = function(callback) {
  */
 LicenseAPI.sendPBXMetrics = function(callback) {
     return this.callCustomMethod('sendPBXMetrics', {}, callback, 'GET');
+};
+
+/**
+ * State of the entitlement document (LicenseV2)
+ * @param {function} callback - Callback function
+ */
+LicenseAPI.entitlementStatus = function(callback) {
+    return this.callCustomMethod('entitlementStatus', {}, callback, 'GET');
+};
+
+/**
+ * Forced exchange with the licensing servers, answers the outcome and the state
+ * @param {function} callback - Callback function
+ */
+LicenseAPI.entitlementRefresh = function(callback) {
+    return this.callCustomMethod('entitlementRefresh', {}, callback, 'POST');
+};
+
+/**
+ * Request file for the closed contour (data.request)
+ * @param {function} callback - Callback function
+ */
+LicenseAPI.entitlementExport = function(callback) {
+    return this.callCustomMethod('entitlementExport', {}, callback, 'POST');
+};
+
+/**
+ * Answer file from the licensing cabinet: a document or a refusal
+ * @param {object} data - {token: <file contents>}
+ * @param {function} callback - Callback function
+ */
+LicenseAPI.entitlementImport = function(data, callback) {
+    return this.callCustomMethod('entitlementImport', data, callback, 'POST');
 };
 
 // Export for use in other modules

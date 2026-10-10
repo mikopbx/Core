@@ -1,3 +1,4 @@
+{% set noInternetClass = licenseV2Enabled ? '' : ' disable-if-no-internet' %}
 {{ partial("PbxExtensionModules/moduleDeleteModal")}}
 {{ partial("PbxExtensionModules/moduleInstallModal")}}
 {{ partial("PbxExtensionModules/moduleUpdateChangelogModal")}}
@@ -29,7 +30,7 @@
 <div class="ui pointing menu" id="pbx-extensions-tab-menu">
     <a class="item active" data-tab="installed">{{ t._('ext_InstalledModules') }}</a>
     <a class="item disable-if-no-internet" data-tab="marketplace">{{ t._('ext_Marketplace') }}</a>
-    <a class="item disable-if-no-internet" data-tab="licensing">{{ t._('ext_Licensing') }}</a>
+    <a class="item{{ noInternetClass }}" data-tab="licensing">{{ t._('ext_Licensing') }}</a>
     {{ partial("PbxExtensionModules/hookVoltBlock",
         ['arrayOfPartials':hookVoltBlock('TabularMenu')])
     }}
@@ -43,7 +44,7 @@
 {{ partial("PbxExtensionModules/indexTabs/marketplaceTab")}}
 </div>
 
-<div class="ui tab segment disable-if-no-internet" data-tab="licensing">
+<div class="ui tab segment{{ noInternetClass }}" data-tab="licensing">
 {{ partial("PbxExtensionModules/indexTabs/licensingTab")}}
 </div>
 

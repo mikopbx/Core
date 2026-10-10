@@ -61,6 +61,9 @@ class LicenseV2
     /** The same text the legacy service produces, so translateLicenseErrorMessage() keeps working. */
     private const string ERROR_NOT_LICENSED = 'Feature is expired or not licensed (2011)';
 
+    /** The REST call behind the button is cut at 30 s; the round must answer before that. */
+    private const int ROUND_BUDGET = 25;
+
     /** Legacy calls that change what the key is entitled to; the stored token is stale after them. */
     private const array ENTITLEMENT_CHANGING_CALLS = ['addtrial', 'activatecoupon', 'changelicensekey'];
 
@@ -149,6 +152,16 @@ class LicenseV2
             $this->refresh(true);
         }
         return $result;
+    }
+
+    /**
+     * Closed contour (#1148): stores the key in the compiled class without the forced online round that
+     * changeLicenseKey() through __call() starts — the servers are unreachable, the round would only cost time;
+     * the worker or the "refresh now" button makes it later.
+     */
+    public function changeLicenseKeyOffline(string $licenseKey): void
+    {
+        $this->legacy()?->changeLicenseKey($licenseKey);
     }
 
     /**
@@ -306,6 +319,43 @@ class LicenseV2
     }
 
     /**
+     * What the administrator sees in the "Entitlement document" block: raw facts, no wording and no dates
+     * formatted — the browser does that. Prefixed name: the compiled class behind __call() owns "status".
+     *
+     * @return array{hasKey: bool, serversConfigured: bool, hasDocument: bool, iat: int, exp: int,
+     *     offlineUntil: int, effectiveExpiry: int, fileDocument: bool, keyMismatch: bool, refused: bool,
+     *     refusalReason: string, foreignHardware: bool, nextExchange: int, now: int}
+     */
+    public function entitlementStatus(): array
+    {
+        $licenseKey = $this->licenseKey();
+        $payload = $this->store->lastVerifiedPayload();
+        $state = $this->store->stateSnapshot();
+        $nextRetry = (int)($state['nextRetry'] ?? 0);
+        $foreignNonce = (string)($state['foreignHardware'] ?? '');
+        return [
+            'hasKey' => $licenseKey !== '',
+            'serversConfigured' => ($this->serverUrls)() !== [],
+            'hasDocument' => $payload !== null,
+            'iat' => (int)($payload['iat'] ?? 0),
+            'exp' => (int)($payload['exp'] ?? 0),
+            'offlineUntil' => (int)($payload['offlineUntil'] ?? 0),
+            'effectiveExpiry' => $payload === null ? 0 : $this->store->effectiveExpiry($licenseKey, $payload),
+            'fileDocument' => isset($payload['fingerprint']),
+            'keyMismatch' => $payload !== null && !hash_equals($licenseKey, (string)($payload['key'] ?? '')),
+            'refused' => ($state['refused'] ?? false) === true,
+            'refusalReason' => (string)($state['refusalReason'] ?? ''),
+            'foreignHardware' => $foreignNonce !== '' && hash_equals($foreignNonce, (string)($payload['nonce'] ?? '')),
+            // An online document is asked again one poll after it was issued; a file document only when the
+            // worker retries after a failure.
+            'nextExchange' => $payload !== null && !isset($payload['fingerprint'])
+                ? max($nextRetry, (int)($payload['iat'] ?? 0) + EntitlementToken::poll($payload))
+                : $nextRetry,
+            'now' => $this->store->now(),
+        ];
+    }
+
+    /**
      * Reads the token once and answers with it, so the caller can judge the right, the limit and the
      * lifetime by the same document: a token replaced mid-call must not mix old and new terms.
      *
@@ -434,28 +484,44 @@ class LicenseV2
     }
 
     /**
-     * One online round at a time: a second caller (the worker and a forced refresh after a coupon)
-     * finding the round taken returns false; the running round already asks the server, and the next
-     * poll brings whatever it missed. Also false when the state dir is not writable (the web user:
-     * exclusiveRound() returns null before a round is even taken).
+     * One online round at a time: see round(). true only when a document was accepted — the one reader of
+     * the result is SystemLoader's boot round.
      *
      * @param bool $armBackoff false when a failure says nothing about the servers (the boot round may run
      *     before the network is up) and must not push the worker's next round out by the backoff.
      */
     public function refresh(bool $force = false, bool $armBackoff = true): bool
     {
+        return $this->round($force, $armBackoff) === 'ok';
+    }
+
+    /**
+     * The "refresh now" button: forced, and a failure does not arm the backoff — a couple of clicks behind
+     * a dead link must not push the worker's next round out by hours.
+     *
+     * @return string Outcome: ok, noKey, noServers, busy, notDue, refused, failed.
+     */
+    public function refreshNow(): string
+    {
+        return $this->round(true, false);
+    }
+
+    private function round(bool $force, bool $armBackoff): string
+    {
         // The server refuses a request without a key (unsigned 403) and the round would only back off.
         if ($this->licenseKey() === '') {
-            return false;
+            return 'noKey';
         }
         $serverUrls = ($this->serverUrls)();
         if ($serverUrls === []) {
             // Closed contour: tokens arrive by the file exchange only.
-            return false;
+            return 'noServers';
         }
+        // null: another process holds the round (it already asks the server), or the state dir is not
+        // writable (the web user) — either way this caller has nothing to do.
         return $this->store->exclusiveRound(
-            fn(): bool => $this->refreshRound($serverUrls, $force, $armBackoff)
-        ) === true;
+            fn(): string => $this->refreshRound($serverUrls, $force, $armBackoff)
+        ) ?? 'busy';
     }
 
     /**
@@ -466,21 +532,24 @@ class LicenseV2
      * error is what any proxy or captive portal can produce, so it only passes the turn.
      *
      * @param array<int, string> $serverUrls
+     *
+     * @return string Outcome, see refreshNow().
      */
-    private function refreshRound(array $serverUrls, bool $force, bool $armBackoff): bool
+    private function refreshRound(array $serverUrls, bool $force, bool $armBackoff): string
     {
         // Judged inside the round: the process that held it a moment ago may have refreshed already.
         $payload = $this->store->lastVerifiedPayload();
         $sameKey = hash_equals($this->licenseKey(), (string)($payload['key'] ?? ''));
         if (!$force && $sameKey && !$this->refreshDue($payload)) {
-            return false;
+            return 'notDue';
         }
         if (!$force && !$this->store->retryAllowed()) {
-            return false;
+            return 'notDue';
         }
         // One report per round: every server of the list is told the same, metrics are collected once.
         $report = $this->report();
         $http = $this->http ??= new GuzzleHttp\Client();
+        $deadline = time() + self::ROUND_BUDGET;
         foreach ($serverUrls as $serverUrl) {
             // The request names the license key, the holders and the metrics: never in clear text, and a
             // redirect (any proxy on the way can produce one) must not carry it to another host.
@@ -491,10 +560,17 @@ class LicenseV2
             // Two attempts: a 409 replay re-anchors the seq and asks the same server once more, so a PBX
             // with a single server does not wait out the backoff after a lost state.
             for ($attempt = 1; $attempt <= 2; $attempt++) {
+                $remaining = $armBackoff ? 15 : $deadline - time();
+                if ($remaining < 3) {
+                    $this->log("Entitlement round budget is spent, $serverUrl is not asked");
+                    break 2;
+                }
                 try {
                     $response = $http->request('POST', rtrim($serverUrl, '/') . '/entitlement', [
                         'json' => $this->buildRequest(false, $report),
-                        'timeout' => 15,
+                        // A dead server answers the connect in 5 s, not 15: two default servers fit the REST 30 s cap.
+                        'connect_timeout' => 5,
+                        'timeout' => min(15, $remaining),
                         'http_errors' => false,
                         'allow_redirects' => false,
                         // The same cap as the imported file, applied while the body still arrives: the
@@ -519,11 +595,11 @@ class LicenseV2
                 try {
                     if (is_string($answer['refusal'] ?? null)) {
                         $this->log("Refused by $serverUrl: " . $this->store->acceptRefusal($answer['refusal']));
-                        return false;
+                        return 'refused';
                     }
                     if ($response->getStatusCode() === 200) {
                         $this->applyAnswer($this->store->acceptAnswer((string)($answer['token'] ?? '')));
-                        return true;
+                        return 'ok';
                     }
                     $this->log("Entitlement server $serverUrl failed: HTTP " . $response->getStatusCode());
                     if ($response->getStatusCode() === 409 && ($answer['code'] ?? '') === 'replay') {
@@ -539,7 +615,7 @@ class LicenseV2
         }
         if (!$armBackoff) {
             $this->log('All entitlement servers failed, the worker asks again');
-            return false;
+            return 'failed';
         }
         try {
             $this->log('All entitlement servers failed, next attempt in ' . $this->store->noteFailure() . ' s');
@@ -549,7 +625,7 @@ class LicenseV2
             // defensive only.
             $this->log('All entitlement servers failed: ' . $e->getMessage());
         }
-        return false;
+        return 'failed';
     }
 
     /**

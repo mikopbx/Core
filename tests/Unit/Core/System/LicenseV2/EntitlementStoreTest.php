@@ -1185,6 +1185,31 @@ class EntitlementStoreTest extends TestCase
         $this->assertSame($report['metrics'], $r['metrics']);
     }
 
+    public function testRefusalReasonIsKeptUntilTheNextDocument(): void
+    {
+        $store = $this->newStore();
+        $store->acceptAnswer($this->issueFor($store));
+        $pending = $store->buildRequest('MIKO-TEST', '2026.3.1');
+        $this->assertSame('key revoked', $store->acceptRefusal($this->sign($pending, refusal: 'key revoked')));
+        $state = $store->stateSnapshot();
+        $this->assertTrue($state['refused']);
+        $this->assertSame('key revoked', $state['refusalReason']);
+
+        $store->acceptAnswer($this->issueFor($store));
+        $state = $store->stateSnapshot();
+        $this->assertFalse($state['refused']);
+        $this->assertSame('', $state['refusalReason'], 'cleared, not removed: saveState() merges');
+    }
+
+    public function testBrokenStateFileReadsAsRefusedWithoutAReason(): void
+    {
+        $store = $this->newStore();
+        $store->acceptAnswer($this->issueFor($store));
+        file_put_contents("$this->dir/state.json", '{not json');
+        $this->assertSame(['refused' => true], $store->stateSnapshot());
+        $this->assertFalse($store->featureAvailable('54'));
+    }
+
     /**
      * @param array<string, string> $extraKeys More trusted server keys by kid (key rotation).
      */

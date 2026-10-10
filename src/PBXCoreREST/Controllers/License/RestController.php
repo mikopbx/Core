@@ -54,15 +54,17 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('license', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getLicenseInfo', 'ping', 'sendPBXMetrics', 'featureAvailable', 'usageGet'],
+        'GET' => ['getLicenseInfo', 'ping', 'sendPBXMetrics', 'featureAvailable', 'usageGet', 'entitlementStatus'],
         'POST' => ['resetKey', 'processUserRequest', 'captureFeatureForProductId', 'sessionStart', 'captureFeature',
-            'sessionKeepalive', 'releaseFeature', 'sessionEnd', 'entitlementExport', 'entitlementImport']
+            'sessionKeepalive', 'releaseFeature', 'sessionEnd', 'entitlementExport', 'entitlementImport',
+            'entitlementRefresh']
     ],
     resourceLevelMethods: [],
     collectionLevelMethods: [],
     customMethods: ['getLicenseInfo', 'ping', 'sendPBXMetrics', 'resetKey', 'processUserRequest',
         'captureFeatureForProductId', 'sessionStart', 'captureFeature', 'sessionKeepalive', 'releaseFeature',
-        'sessionEnd', 'featureAvailable', 'usageGet', 'entitlementExport', 'entitlementImport'],
+        'sessionEnd', 'featureAvailable', 'usageGet', 'entitlementExport', 'entitlementImport',
+        'entitlementStatus', 'entitlementRefresh'],
     idPattern: null
 )]
 class RestController extends BaseRestController
@@ -447,6 +449,54 @@ class RestController extends BaseRestController
     #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     #[ApiResponse(501, 'rest_response_501_not_implemented', 'PBXApiResult')]
     public function entitlementImport(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * State of the entitlement document for the Licensing tab (licensing server name: entitlement.status)
+     *
+     * @route GET /pbxcore/api/v3/license:entitlementStatus
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_lic_EntitlementStatus',
+        description: 'rest_lic_EntitlementStatusDesc',
+        operationId: 'licenseEntitlementStatus'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    #[ApiResponse(501, 'rest_response_501_not_implemented', 'PBXApiResult')]
+    public function entitlementStatus(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Forced exchange with the licensing servers, then the state (licensing server name: entitlement.refresh)
+     *
+     * @route POST /pbxcore/api/v3/license:entitlementRefresh
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_lic_EntitlementRefresh',
+        description: 'rest_lic_EntitlementRefreshDesc',
+        operationId: 'licenseEntitlementRefresh'
+    )]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    #[ApiResponse(501, 'rest_response_501_not_implemented', 'PBXApiResult')]
+    public function entitlementRefresh(): void
     {
         // Implementation handled by BaseRestController
     }

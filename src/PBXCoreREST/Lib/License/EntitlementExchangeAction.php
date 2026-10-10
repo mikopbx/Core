@@ -28,11 +28,13 @@ use MikoPBX\Core\System\LicenseV2\TokenRejectedException;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
+use RuntimeException;
 use Throwable;
 
 /**
  * Closed contour: the request file the administrator carries to the licensing cabinet and the
- * token that comes back. Export is a POST because it writes the pending request to the state.
+ * token that comes back, and the status/forced round behind the admin block (#1148).
+ * Export is a POST because it writes the pending request to the state.
  *
  * @package MikoPBX\PBXCoreREST\Lib\License
  */
@@ -41,7 +43,7 @@ class EntitlementExchangeAction extends Injectable
     /**
      * Exports the signed request file or imports the entitlement token answering it.
      *
-     * @param string $action One of entitlementExport, entitlementImport.
+     * @param string $action One of entitlementExport, entitlementImport, entitlementStatus, entitlementRefresh.
      * @param array<string, mixed> $data Request data.
      *
      * @return PBXApiResult An object containing the result of the API call.
@@ -58,15 +60,27 @@ class EntitlementExchangeAction extends Injectable
         }
 
         try {
-            if ($action === 'entitlementExport') {
-                $res->data = ['request' => $license->exportOfflineRequest()];
-            } else {
-                $token = $data['token'] ?? '';
-                if (!is_string($token)) {
-                    throw new TokenRejectedException('token must be a string, not ' . get_debug_type($token));
-                }
-                $license->importOfflineToken($token);
-                $res->data = [];
+            switch ($action) {
+                case 'entitlementExport':
+                    $res->data = ['request' => $license->exportOfflineRequest()];
+                    break;
+                case 'entitlementImport':
+                    $token = $data['token'] ?? '';
+                    if (!is_string($token)) {
+                        throw new TokenRejectedException('token must be a string, not ' . get_debug_type($token));
+                    }
+                    $license->importOfflineToken($token);
+                    $res->data = [];
+                    break;
+                case 'entitlementStatus':
+                    $res->data = $license->entitlementStatus();
+                    break;
+                case 'entitlementRefresh':
+                    // The outcome of the forced round, then the state it left: one answer for the button.
+                    $res->data = ['outcome' => $license->refreshNow()] + $license->entitlementStatus();
+                    break;
+                default:
+                    throw new RuntimeException("Unknown entitlement action $action");
             }
             $res->success = true;
         } catch (Throwable $e) {
