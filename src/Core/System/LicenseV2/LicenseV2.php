@@ -659,7 +659,7 @@ class LicenseV2
     public function exportOfflineRequest(): string
     {
         if ($this->licenseKey() === '') {
-            throw new TokenRejectedException('Set the license key before exporting a request file');
+            throw new TokenRejectedException('Set the license key before exporting a request file', 'lic_EntitlementNoKey');
         }
         return (string)json_encode($this->buildRequest(true, $this->report()));
     }
@@ -675,11 +675,15 @@ class LicenseV2
     public function importOfflineToken(string $token): void
     {
         if (strlen($token) > self::IMPORT_MAX_BYTES) {
-            throw new TokenRejectedException('Not a license file: larger than ' . self::IMPORT_MAX_BYTES . ' bytes');
+            throw new TokenRejectedException(
+                'Not a license file: larger than ' . self::IMPORT_MAX_BYTES . ' bytes',
+                'lic_EntitlementFileTooLarge'
+            );
         }
         $token = self::tokenOfAnswerFile($token);
         if (EntitlementToken::isRefusal($token)) {
-            throw new TokenRejectedException('Refused by the licensing server: ' . $this->store->acceptRefusal($token));
+            $reason = $this->store->acceptRefusal($token);
+            throw new TokenRejectedException('Refused by the licensing server: ' . $reason, 'lic_EntitlementRefused', $reason);
         }
         $this->applyAnswer($this->store->acceptAnswer($token, true));
     }

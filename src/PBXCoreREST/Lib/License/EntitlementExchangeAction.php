@@ -23,8 +23,10 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\License;
 
 use MikoPBX\Common\Providers\MarketPlaceProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\LicenseV2\LicenseV2;
 use MikoPBX\Core\System\LicenseV2\TokenRejectedException;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -87,8 +89,17 @@ class EntitlementExchangeAction extends Injectable
             // 400 is reserved for the one thing the caller can fix: the document it offered.
             // Everything else — an unwritable /cf, a lock we can not take, a key we can not read —
             // is this PBX failing, and export can fail in no other way.
-            $res->httpCode = $e instanceof TokenRejectedException ? 400 : 500;
-            $res->messages['error'][] = $e->getMessage();
+            if ($e instanceof TokenRejectedException) {
+                // The administrator reads the translation; the English text, which tells the cases
+                // apart (bad signature, unknown key, ...), goes to the log (#1203).
+                SystemMessages::sysLogMsg(__METHOD__, "Entitlement $action rejected: " . $e->getMessage(), LOG_WARNING);
+                $res->httpCode = 400;
+                $text = TranslationProvider::translate($e->reason);
+                $res->messages['error'][] = $e->detail === '' ? $text : "$text: $e->detail";
+            } else {
+                $res->httpCode = 500;
+                $res->messages['error'][] = $e->getMessage();
+            }
         }
 
         return $res;

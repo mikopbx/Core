@@ -550,6 +550,7 @@ class LicenseV2SeatsTest extends TestCase
             $this->fail('a file without a token was imported');
         } catch (TokenRejectedException $e) {
             $this->assertStringContainsString('Not a license file', $e->getMessage());
+            $this->assertSame('lic_EntitlementNotAnswerFile', $e->reason);
         }
         $this->assertTrue($license->featureAvailable('54')['success']);
     }
@@ -581,6 +582,7 @@ class LicenseV2SeatsTest extends TestCase
             $this->fail('a file over the size limit was imported');
         } catch (TokenRejectedException $e) {
             $this->assertStringContainsString('Not a license file: larger than', $e->getMessage());
+            $this->assertSame('lic_EntitlementFileTooLarge', $e->reason);
         }
         $this->assertArrayNotHasKey('poll', $license->store()->lastVerifiedPayload());
 
@@ -707,6 +709,9 @@ class LicenseV2SeatsTest extends TestCase
             $this->fail('a refusal file is reported as rejected');
         } catch (TokenRejectedException $e) {
             $this->assertStringContainsString('key revoked', $e->getMessage());
+            // The UI shows the translated reason with the server's words as they came.
+            $this->assertSame('lic_EntitlementRefused', $e->reason);
+            $this->assertSame('key revoked', $e->detail);
         }
         $s = $license->entitlementStatus();
         $this->assertTrue($s['refused']);

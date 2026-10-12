@@ -238,7 +238,10 @@ class EntitlementStore
                 }
             }
             if ($answeredSlot === '') {
-                throw new TokenRejectedException('Entitlement token does not answer the pending request');
+                throw new TokenRejectedException(
+                    'Entitlement token does not answer the pending request',
+                    'lic_EntitlementNotPending'
+                );
             }
             // An online answer is signed by the server for a nonce made this very round (a file can not
             // answer it), so it is judged by the wall clock: one forward jump of the clock must not leave
@@ -259,9 +262,15 @@ class EntitlementStore
                 if ($answeredSlot === self::NONCE_OFFLINE && !$future) {
                     $this->saveState([self::OFFLINE_KEY => ''], true);
                 }
-                throw new TokenRejectedException($fresh
-                    ? 'Entitlement document is issued for other hardware, exchange the license file again'
-                    : 'Entitlement token is expired or the PBX clock is wrong');
+                throw $fresh
+                    ? new TokenRejectedException(
+                        'Entitlement document is issued for other hardware, exchange the license file again',
+                        'lic_EntitlementForeignHardware'
+                    )
+                    : new TokenRejectedException(
+                        'Entitlement token is expired or the PBX clock is wrong',
+                        'lic_EntitlementExpiredOrClock'
+                    );
             }
             $this->writeAtomically(self::TOKEN_FILE, trim($token));
             $sent = (array)($state[$answeredSlot . self::REPORT_SUFFIX] ?? []);
@@ -405,7 +414,7 @@ class EntitlementStore
                 }
             }
             if (($payload['refused'] ?? false) !== true || $answeredSlot === '') {
-                throw new TokenRejectedException('Refusal does not answer the pending request');
+                throw new TokenRejectedException('Refusal does not answer the pending request', 'lic_EntitlementNotPending');
             }
             $error = $payload['error'] ?? '';
             $reason = is_string($error) ? $error : (string)json_encode($error, JSON_UNESCAPED_UNICODE);
