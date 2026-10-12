@@ -122,8 +122,10 @@ class ExtensionsConf extends AsteriskConfigClass
      * targets, replacing the former astdb (FW/FW_BUSY/FW_UNAV/FW_TIME) storage.
      *
      * [internal-fw] reads them via nested expansion ${${dstatus}_${EXTEN}} and
-     * ${FW_TIME_${EXTEN}}. Only extensions with a configured value are emitted;
-     * a missing global expands to empty, preserving the previous behaviour.
+     * ${FW_TIME_${EXTEN}}. Every row is emitted — including empty values when a
+     * forward is cleared — because Asterisk keeps globals across `dialplan
+     * reload` (clearglobalvars defaults to no); emitting the empty assignment
+     * overwrites a previously loaded target so clearing a forward takes effect.
      *
      * @return string The generated [globals] fragment.
      */
@@ -138,22 +140,11 @@ class ExtensionsConf extends AsteriskConfigClass
             if ($ext === '') {
                 continue;
             }
-            $fw     = self::sanitizeForwardingNumber($row->forwarding);
-            $fwBusy = self::sanitizeForwardingNumber($row->forwardingonbusy);
-            $fwUnav = self::sanitizeForwardingNumber($row->forwardingonunavailable);
-            $ring   = (int)$row->ringlength;
-            if ($fw !== '') {
-                $conf .= "FW_$ext=$fw" . PHP_EOL;
-            }
-            if ($fwBusy !== '') {
-                $conf .= "FW_BUSY_$ext=$fwBusy" . PHP_EOL;
-            }
-            if ($fwUnav !== '') {
-                $conf .= "FW_UNAV_$ext=$fwUnav" . PHP_EOL;
-            }
-            if ($ring > 0) {
-                $conf .= "FW_TIME_$ext=$ring" . PHP_EOL;
-            }
+            $ring = (int)$row->ringlength;
+            $conf .= "FW_$ext=" . self::sanitizeForwardingNumber($row->forwarding) . PHP_EOL;
+            $conf .= "FW_BUSY_$ext=" . self::sanitizeForwardingNumber($row->forwardingonbusy) . PHP_EOL;
+            $conf .= "FW_UNAV_$ext=" . self::sanitizeForwardingNumber($row->forwardingonunavailable) . PHP_EOL;
+            $conf .= "FW_TIME_$ext=" . ($ring > 0 ? (string)$ring : '') . PHP_EOL;
         }
 
         return $conf;
