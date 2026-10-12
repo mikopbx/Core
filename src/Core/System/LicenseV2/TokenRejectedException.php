@@ -29,7 +29,17 @@ use RuntimeException;
  * installation, answering no pending request, or past its lifetime. The offered document is at
  * fault, not this PBX, which is what tells the REST layer to answer 400 rather than 500 — the
  * distinction a message-text check could only guess at.
+ *
+ * The message is English for the log; the administrator gets the translation key $reason, plus
+ * $detail as is (the server's own words of a refusal) (#1203).
  */
 class TokenRejectedException extends RuntimeException
 {
+    public function __construct(
+        string $message,
+        public readonly string $reason = 'lic_EntitlementNotAnswerFile',
+        public readonly string $detail = ''
+    ) {
+        parent::__construct($message);
+    }
 }

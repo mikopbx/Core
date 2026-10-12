@@ -260,8 +260,13 @@ class EntitlementStoreTest extends TestCase
     {
         $store = $this->newStore();
 
-        $this->expectExceptionMessage('another installation');
-        $store->acceptAnswer($this->issueFor($store, overrides: ['install' => str_repeat('0', 32)]));
+        try {
+            $store->acceptAnswer($this->issueFor($store, overrides: ['install' => str_repeat('0', 32)]));
+            $this->fail('a token of another installation was accepted');
+        } catch (TokenRejectedException $e) {
+            $this->assertStringContainsString('another installation', $e->getMessage());
+            $this->assertSame('lic_EntitlementOtherInstallation', $e->reason);
+        }
     }
 
     public function testReplayedAnswerIsRejected(): void

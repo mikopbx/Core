@@ -111,16 +111,19 @@ class EntitlementToken
         $payload = json_decode(self::base64UrlDecode($payloadPart), true);
         $kid = is_array($payload) ? ($payload['kid'] ?? null) : null;
         if (!is_string($kid) || !isset($trustedKeys[$kid])) {
-            throw new TokenRejectedException('Entitlement token is signed by an unknown key');
+            throw new TokenRejectedException('Entitlement token is signed by an unknown key', 'lic_EntitlementBadSignature');
         }
         if (openssl_verify($payloadPart, self::base64UrlDecode($signaturePart), $trustedKeys[$kid], 0) !== 1) {
-            throw new TokenRejectedException('Entitlement token signature is invalid');
+            throw new TokenRejectedException('Entitlement token signature is invalid', 'lic_EntitlementBadSignature');
         }
         if (($payload['v'] ?? null) !== self::VERSION) {
-            throw new TokenRejectedException('Unsupported entitlement token version');
+            throw new TokenRejectedException('Unsupported entitlement token version', 'lic_EntitlementUnsupportedVersion');
         }
         if (!hash_equals($installId, (string)($payload['install'] ?? ''))) {
-            throw new TokenRejectedException('Entitlement token belongs to another installation');
+            throw new TokenRejectedException(
+                'Entitlement token belongs to another installation',
+                'lic_EntitlementOtherInstallation'
+            );
         }
         return $payload;
     }
