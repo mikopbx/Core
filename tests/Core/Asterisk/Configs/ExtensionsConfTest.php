@@ -19,8 +19,10 @@
 
 namespace MikoPBX\Tests\Core\Asterisk\Configs;
 
+use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
+use ReflectionMethod;
 
 class ExtensionsConfTest extends AbstractUnitTest
 {
@@ -31,5 +33,35 @@ class ExtensionsConfTest extends AbstractUnitTest
     {
         $conf = IncomingContexts::generate('none');
         $this->assertStringContainsStringIgnoringCase('add-trim-prefix-clid', $conf);
+    }
+
+    /**
+     * Forwarding targets are baked into the dialplan [globals] section, so the
+     * value must be reduced to the characters Asterisk accepts for a dialled
+     * number: digits and * # +. Everything else has to be stripped.
+     *
+     * @dataProvider forwardingNumberProvider
+     * @backupGlobals disabled
+     */
+    public function testSanitizeForwardingNumber(?string $raw, string $expected): void
+    {
+        $method = new ReflectionMethod(ExtensionsConf::class, 'sanitizeForwardingNumber');
+        $method->setAccessible(true);
+        $this->assertSame($expected, $method->invoke(null, $raw));
+    }
+
+    /**
+     * @return array<string, array{0: string|null, 1: string}>
+     */
+    public function forwardingNumberProvider(): array
+    {
+        return [
+            'plain number'       => ['89991234567', '89991234567'],
+            'with spaces/dashes' => ['+7 999 000-11-22', '+79990001122'],
+            'letters stripped'   => ['abc123def', '123'],
+            'dial symbols kept'  => ['*21#+100', '*21#+100'],
+            'empty'              => ['', ''],
+            'null'               => [null, ''],
+        ];
     }
 }

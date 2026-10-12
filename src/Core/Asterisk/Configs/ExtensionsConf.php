@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Models\ExtensionForwardingRights;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\{IncomingContexts, InternalContexts, OutgoingContext};
@@ -84,6 +85,7 @@ class ExtensionsConf extends AsteriskConfigClass
         $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile(PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN)).PHP_EOL;
         $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile(PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT)).PHP_EOL;
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GLOBALS);
+        $conf .= $this->generateForwardingGlobals();
         $conf .= PHP_EOL.PHP_EOL;
         $conf .= "[general]".PHP_EOL;
 
@@ -113,6 +115,60 @@ class ExtensionsConf extends AsteriskConfigClass
         // Write the configuration content to the file
         $directory = Directories::getDir(Directories::AST_LUA_DIALPLAN_DIR);
         Util::fileWriteContent($directory . '/99-extensions-override.lua', $confLua);
+    }
+
+    /**
+     * Generates the [globals] entries that hold per-extension call-forwarding
+     * targets, replacing the former astdb (FW/FW_BUSY/FW_UNAV/FW_TIME) storage.
+     *
+     * [internal-fw] reads them via nested expansion ${${dstatus}_${EXTEN}} and
+     * ${FW_TIME_${EXTEN}}. Only extensions with a configured value are emitted;
+     * a missing global expands to empty, preserving the previous behaviour.
+     *
+     * @return string The generated [globals] fragment.
+     */
+    private function generateForwardingGlobals(): string
+    {
+        $conf = '';
+        /** @var ExtensionForwardingRights $row */
+        foreach (ExtensionForwardingRights::find() as $row) {
+            // The suffix becomes a dialplan variable name and must match the
+            // runtime ${EXTEN}; internal numbers are digits, skip anything else.
+            $ext = preg_replace('/\D/', '', (string)$row->extension);
+            if ($ext === '') {
+                continue;
+            }
+            $fw     = self::sanitizeForwardingNumber($row->forwarding);
+            $fwBusy = self::sanitizeForwardingNumber($row->forwardingonbusy);
+            $fwUnav = self::sanitizeForwardingNumber($row->forwardingonunavailable);
+            $ring   = (int)$row->ringlength;
+            if ($fw !== '') {
+                $conf .= "FW_$ext=$fw" . PHP_EOL;
+            }
+            if ($fwBusy !== '') {
+                $conf .= "FW_BUSY_$ext=$fwBusy" . PHP_EOL;
+            }
+            if ($fwUnav !== '') {
+                $conf .= "FW_UNAV_$ext=$fwUnav" . PHP_EOL;
+            }
+            if ($ring > 0) {
+                $conf .= "FW_TIME_$ext=$ring" . PHP_EOL;
+            }
+        }
+
+        return $conf;
+    }
+
+    /**
+     * Strips a forwarding target down to the characters the dialplan accepts:
+     * digits and the dial symbols * # + (everything else is removed).
+     *
+     * @param string|null $value The raw forwarding target.
+     * @return string The sanitized forwarding target.
+     */
+    private static function sanitizeForwardingNumber(?string $value): string
+    {
+        return preg_replace('/[^0-9*#+]/', '', trim((string)$value));
     }
 
     /**

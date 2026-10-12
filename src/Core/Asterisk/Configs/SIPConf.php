@@ -22,7 +22,6 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Common\Models\{Codecs,
-    ExtensionForwardingRights,
     Extensions,
     LanInterfaces,
     NetworkFilters,
@@ -35,7 +34,6 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
-use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\CallerIdDidProcessor;
 use MikoPBX\Core\System\{ Network, Processes, SslCertificateService, System, SystemMessages, Util};
@@ -711,19 +709,6 @@ class SIPConf extends AsteriskConfigClass
                 $user                     = Users::findFirst($extension->userid);
                 $arr_data['user_id'] = ($user !== null) ? $user->id : 0;
             }
-            // Retrieve extension forwarding rights.
-            $extensionForwarding = ExtensionForwardingRights::findFirst("extension = '$arr_data[extension]'");
-            if (null === $extensionForwarding) {
-                $arr_data['ringlength']              = '';
-                $arr_data['forwarding']              = '';
-                $arr_data['forwardingonbusy']        = '';
-                $arr_data['forwardingonunavailable'] = '';
-            } else {
-                $arr_data['ringlength']              = $extensionForwarding->ringlength;
-                $arr_data['forwarding']              = $extensionForwarding->forwarding;
-                $arr_data['forwardingonbusy']        = $extensionForwarding->forwardingonbusy;
-                $arr_data['forwardingonunavailable'] = $extensionForwarding->forwardingonunavailable;
-            }
             $data[] = $arr_data;
         }
 
@@ -1202,36 +1187,6 @@ class SIPConf extends AsteriskConfigClass
         // whose host or outbound_proxy is a hostname (not an IP/CIDR literal).
         // Read by WorkerSipDnsResolver on its next tick.
         $this->persistPendingHostnames();
-
-        // Asterisk has to be restarted to apply the changes over ami
-        if ($this->booting !== true) {
-            $this->updateAsteriskDatabase();
-        }
-    }
-
-    /**
-     * Updates the Asterisk database with the forwarding and ring length information for each peer.
-     *
-     * @return bool True if the update was successful, false otherwise.
-     */
-    public function updateAsteriskDatabase(): bool
-    {
-        $warError = false;
-        $db = new AstDB();
-
-        do {
-            $data_peers = $this->getPeers();
-            foreach ($data_peers as $peer) {
-                // Update Asterisk database with routing information.
-                $ringLength = ((string)$peer['ringlength'] === '0') ? '' : trim($peer['ringlength']??'');
-                $warError |= !$db->databasePut('FW_TIME', $peer['extension'], $ringLength);
-                $warError |= !$db->databasePut('FW', $peer['extension'], trim($peer['forwarding']??''));
-                $warError |= !$db->databasePut('FW_BUSY', $peer['extension'], trim($peer['forwardingonbusy']??''));
-                $warError |= !$db->databasePut('FW_UNAV', $peer['extension'], trim($peer['forwardingonunavailable']??''));
-            }
-        } while (!empty($data_peers));
-
-        return !$warError;
     }
 
     /**
