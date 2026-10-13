@@ -2312,6 +2312,34 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
+     * Render manual-attribute key/value pairs as pjsip.conf lines.
+     *
+     * Util::parseIniSettings() returns 'set_var' as an array to allow several
+     * channel variables on one endpoint; every other key is a scalar. A plain
+     * array value must become one "$key = ..." line per element (PJSIP reads
+     * repeated 'set_var' lines as separate variables) rather than a single
+     * comma-joined line, which Asterisk would treat as one literal value.
+     *
+     * @param array $attributes Manual attributes for one section (e.g. 'endpoint').
+     * @param string[] $skipKeys Keys already emitted elsewhere (e.g. from templates).
+     * @return string
+     */
+    private static function renderManualAttributeLines(array $attributes, array $skipKeys = []): string
+    {
+        $conf = '';
+        foreach ($attributes as $key => $value) {
+            if (in_array($key, $skipKeys, true)) {
+                continue;
+            }
+            foreach ((array)$value as $singleValue) {
+                $conf .= "$key = $singleValue\n";
+            }
+        }
+
+        return $conf;
+    }
+
+    /**
      * Generate the Endpoint configuration for a provider.
      *
      * This method generates the Endpoint configuration for a specific provider based on the provided data and manual attributes.
@@ -2464,14 +2492,7 @@ class SIPConf extends AsteriskConfigClass
             // Apply manual attributes (highest priority)
             if (!empty($manual_attributes['endpoint'])) {
                 $conf .= "; === Manual attributes ===\n";
-                foreach ($manual_attributes['endpoint'] as $key => $value) {
-                    if ($key !== 'type') {
-                        if (is_array($value)) {
-                            $value = implode(',', $value);
-                        }
-                        $conf .= "$key = $value\n";
-                    }
-                }
+                $conf .= self::renderManualAttributeLines($manual_attributes['endpoint'], ['type']);
             }
         } else {
             // Use pure template inheritance with unique parameters only
@@ -3438,12 +3459,9 @@ class SIPConf extends AsteriskConfigClass
 
         // Apply manual attributes (highest priority, can override template and unique params)
         if (!empty($manual_attributes['endpoint'])) {
-            foreach ($manual_attributes['endpoint'] as $key => $value) {
-                // Skip if already added in unique params (will be overridden by manual)
-                if (!in_array($key, ['type'])) { // type is always from template
-                    $conf .= "$key = $value\n";
-                }
-            }
+            // 'type' is always from the template; everything else, including
+            // repeated 'set_var' entries, is emitted as-is.
+            $conf .= self::renderManualAttributeLines($manual_attributes['endpoint'], ['type']);
         }
 
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
@@ -3486,11 +3504,13 @@ class SIPConf extends AsteriskConfigClass
 
             // Apply manual attributes for WebRTC endpoint
             if (!empty($manual_attributes['endpoint'])) {
-                foreach ($manual_attributes['endpoint'] as $key => $value) {
-                    if (!in_array($key, ['type', 'callerid', 'aors', 'auth', 'outbound_auth', 'dtmf_mode', 'acl', 'language', 'tone_zone', 'allow', 'disallow', 'rtcp_mux'])) {
-                        $conf .= "$key = $value\n";
-                    }
-                }
+                $conf .= self::renderManualAttributeLines(
+                    $manual_attributes['endpoint'],
+                    [
+                        'type', 'callerid', 'aors', 'auth', 'outbound_auth', 'dtmf_mode', 'acl',
+                        'language', 'tone_zone', 'allow', 'disallow', 'rtcp_mux'
+                    ]
+                );
             }
 
             $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
@@ -3520,11 +3540,13 @@ class SIPConf extends AsteriskConfigClass
 
             // Apply manual attributes for TLS endpoint
             if (!empty($manual_attributes['endpoint'])) {
-                foreach ($manual_attributes['endpoint'] as $key => $value) {
-                    if (!in_array($key, ['type', 'callerid', 'aors', 'auth', 'outbound_auth', 'dtmf_mode', 'acl', 'transport', 'media_encryption'])) {
-                        $conf .= "$key = $value\n";
-                    }
-                }
+                $conf .= self::renderManualAttributeLines(
+                    $manual_attributes['endpoint'],
+                    [
+                        'type', 'callerid', 'aors', 'auth', 'outbound_auth', 'dtmf_mode', 'acl',
+                        'transport', 'media_encryption'
+                    ]
+                );
             }
 
             $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);

@@ -34,6 +34,65 @@ class SIPConfTest extends AbstractUnitTest
     }
 
     /**
+     * Issue #1193: a manual 'set_var' comes back from Util::parseIniSettings()
+     * as an array (to allow several channel variables); rendering it must emit
+     * one "set_var = ..." line per entry, not throw "Array to string conversion"
+     * and not collapse them into a single comma-joined line (which Asterisk
+     * would treat as one literal value, not two variables).
+     */
+    public function testRenderManualAttributeLinesExpandsSetVarArrayToSeparateLines(): void
+    {
+        $conf = new SIPConf();
+
+        $result = $this->invokeMethod(
+            $conf,
+            'renderManualAttributeLines',
+            [['set_var' => ['MIKO_CALLERID_NUM=1001', 'MIKO_TEST_VAR=hello']], []]
+        );
+
+        $this->assertSame("set_var = MIKO_CALLERID_NUM=1001\nset_var = MIKO_TEST_VAR=hello\n", $result);
+    }
+
+    public function testRenderManualAttributeLinesHandlesSingleSetVarEntry(): void
+    {
+        $conf = new SIPConf();
+
+        $result = $this->invokeMethod(
+            $conf,
+            'renderManualAttributeLines',
+            [['set_var' => ['MIKO_CALLERID_NUM=1001']], []]
+        );
+
+        $this->assertSame("set_var = MIKO_CALLERID_NUM=1001\n", $result);
+    }
+
+    public function testRenderManualAttributeLinesSkipsListedKeys(): void
+    {
+        $conf = new SIPConf();
+
+        $result = $this->invokeMethod(
+            $conf,
+            'renderManualAttributeLines',
+            [['type' => 'endpoint', 'dtmf_mode' => 'auto'], ['type']]
+        );
+
+        $this->assertSame("dtmf_mode = auto\n", $result);
+    }
+
+    public function testRenderManualAttributeLinesKeepsScalarValuesAsSingleLine(): void
+    {
+        $conf = new SIPConf();
+
+        $result = $this->invokeMethod(
+            $conf,
+            'renderManualAttributeLines',
+            [['dtmf_mode' => 'auto'], []]
+        );
+
+        $this->assertSame("dtmf_mode = auto\n", $result);
+    }
+
+    /**
      * Issue #1045: first occurrence of a section name wins, the seen-sections
      * tracker stores the winner row id, and the call returns false (do not skip).
      */

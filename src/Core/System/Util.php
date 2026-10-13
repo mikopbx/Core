@@ -746,10 +746,13 @@ class Util
                 if (($value !== '0' && empty($value)) || empty($key)) {
                     continue;
                 }
-                if( ('set_var' === $key && $section_name === 'endpoint') ||
-                    ('setvar'  === $key && $section_name === ' ')) {
+                if ($section_name === 'endpoint' && in_array($key, ['set_var', 'setvar'], true)) {
+                    // PJSIP endpoints only recognize 'set_var'; normalize the legacy
+                    // chan_sip 'setvar' spelling so both forms become repeatable lines.
+                    $manual_data[$section_name]['set_var'][] = $value;
+                } elseif ('setvar' === $key && $section_name === ' ') {
                     $manual_data[$section_name][$key][] = $value;
-                }else{
+                } else {
                     $manual_data[$section_name][$key] = $value;
                 }
             }
