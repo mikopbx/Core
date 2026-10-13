@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Providers;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use Phalcon\Di\Injectable;
 
@@ -129,8 +130,20 @@ class UpdateConfigsUpToVer20240235 extends Injectable implements UpgradeSystemCo
                 }
             }
 
-            if ($needsSave) {
-                $sipProvider->save();
+            if ($needsSave && !$sipProvider->save()) {
+                // Issue #1204: Sip::validation() now rejects some pre-existing rows (e.g. two
+                // INBOUND providers sharing a Login). Log instead of silently dropping the
+                // backfill for that row, so a missing default surfaces with a traceable cause.
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf(
+                        'Failed to backfill CallerID/DID source defaults for Sip.id=%s (uniqid=%s): %s',
+                        $sipProvider->id,
+                        $sipProvider->uniqid,
+                        implode(', ', $sipProvider->getMessages())
+                    ),
+                    LOG_WARNING
+                );
             }
         }
 

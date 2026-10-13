@@ -459,6 +459,9 @@ return [
     // MO - Models validation
     'mo_IaxUsernameInvalidCharacters' => 'Имя пользователя IAX для входящей регистрации может содержать только латинские буквы, цифры и символы: _ - .',
     'mo_SipUsernameInvalidCharacters' => 'Имя пользователя SIP для входящей регистрации может содержать только латинские буквы, цифры и символы: _ - . + *',
+    'mo_SipInboundUsernameMustBeUnique' => 'Логин входящего провайдера должен быть уникальным: у двух провайдеров с входящей регистрацией не может быть одинакового логина',
+    'mo_SipInboundUsernameClashesExtension' => 'Логин входящего провайдера не должен совпадать с номером внутреннего абонента: это приводит к конфликту настроек Asterisk',
+    'mo_SipExtensionClashesInboundUsername' => 'Номер внутреннего абонента не должен совпадать с логином входящего провайдера: это приводит к конфликту настроек Asterisk',
     'pr_ValidationProviderNameIsEmpty' => 'Введите название провайдера',
     'pr_ValidationProviderPasswordEmpty' => 'Введите пароль для авторизации',
     'pr_ValidationProviderPasswordTooShort' => 'Пароль должен содержать минимум 8 символов',
