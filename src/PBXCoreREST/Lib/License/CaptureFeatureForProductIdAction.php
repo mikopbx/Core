@@ -60,7 +60,7 @@ class CaptureFeatureForProductIdAction extends Injectable
             if ($result['success'] === false) {
                 // #1210: on the key without a seat here → the demand goes to the server in a forced round; not on the key → trial
                 if ($license instanceof LicenseV2 && $license->noteDemand((string)$licFeatureId)) {
-                    $license->refresh(true);
+                    $license->refresh(true, false); // #1220: no backoff from an installer's click, 25 s budget
                 } else {
                     $license->addTrial($licProductId);
                 }
