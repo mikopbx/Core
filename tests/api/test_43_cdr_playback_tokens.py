@@ -7,7 +7,7 @@ Tests the token-based playback feature for CDR recordings:
 - Validating recording_url format with token
 - Token-based playback access
 - Token expiration and validation
-- Backward compatibility with direct file path access
+- Direct file path access restricted to localhost
 
 IMPORTANT NOTES:
 ==============
@@ -23,8 +23,12 @@ Option 2: Make a test call with recording before running tests
 Option 3: Accept that tests will be skipped on fresh systems
 """
 
-import pytest
 import re
+from urllib.parse import urlsplit
+
+import pytest
+import requests
+
 from conftest import assert_api_success
 
 
@@ -200,12 +204,11 @@ class TestCDRPlaybackTokens:
             else:
                 print(f"⚠ Unexpected error: {str(e)[:50]}")
 
-    def test_06_playback_with_direct_path_legacy(self, api_client):
-        """Test backward compatibility with direct file path (view parameter)
+    def test_06_external_direct_path_rejected(self, api_client):
+        """Anonymous external clients cannot use direct recording paths."""
+        if urlsplit(api_client.base_url).hostname in ('localhost', '127.0.0.1', '::1'):
+            pytest.skip("External API URL required to test the localhost restriction")
 
-        WHY: Maintain backward compatibility with existing code.
-        Direct path access should still work but show deprecation warning.
-        """
         if not TestCDRPlaybackTokens.sample_cdr_id:
             pytest.skip("No CDR ID available")
 
@@ -227,32 +230,14 @@ class TestCDRPlaybackTokens:
         if not recording_file:
             pytest.skip("No recording file in CDR record")
 
-        try:
-            # Playback returns audio file (binary), not JSON - use get_raw
-            response = api_client.get_raw(f'cdr/{TestCDRPlaybackTokens.sample_cdr_id}:playback', params={
-                'view': recording_file
-            })
-
-            # Check HTTP status
-            assert response.status_code == 200, f"Expected HTTP 200, got {response.status_code}"
-
-            # Check Content-Type
-            content_type = response.headers.get('Content-Type', '')
-            assert 'audio/' in content_type, f"Expected audio/* MIME type, got {content_type}"
-
-            # Check that we got binary content
-            assert len(response.content) > 0, "Expected audio file content"
-
-            print(f"✓ Legacy direct path access works")
-            print(f"  Content-Type: {content_type}")
-            print(f"  File size: {len(response.content)} bytes")
-            print(f"  Note: Deprecation warnings for direct path access are documented in API")
-
-        except Exception as e:
-            if '404' in str(e):
-                pytest.fail("Recording file not found")
-            else:
-                raise
+        for method in ('playback', 'download'):
+            response = requests.get(
+                f'{api_client.base_url}/cdr:{method}',
+                params={'view': recording_file},
+                verify=False,
+                timeout=30,
+            )
+            assert response.status_code == 403, f"External cdr:{method}?view returned {response.status_code}"
 
     def test_07_playback_without_any_params(self, api_client):
         """Test playback without token or view parameter should fail
