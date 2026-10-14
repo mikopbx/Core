@@ -2170,6 +2170,7 @@ return [
     'rest_schema_lic_dropped_features' => 'გახანგრძლივებისას სესიიდან მოხსნილი ფუნქციები',
     'rest_schema_lic_extcode' => 'ლიცენზიის სერვერის შეცდომის კოდი',
     'rest_schema_lic_usage' => 'დაკავებული ადგილები ფუნქციების მიხედვით',
+    'rest_schema_lic_entitled' => 'გასაღების უფლებები ფუნქციების მიხედვით: ვადა და ადგილების ლიმიტი',
     'rest_schema_lic_request' => 'ხელმოწერილი მოთხოვნის ფაილი პორტალისთვის',
     'rest_param_pwd_includeNumbers' => 'პაროლში რიცხვების ჩართვა',
     'rest_param_pwd_includeUppercase' => 'პაროლში დიდი ასოების ჩართვა',

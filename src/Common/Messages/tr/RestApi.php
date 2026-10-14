@@ -2287,6 +2287,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Uzatma sırasında oturumdan düşürülen özellikler',
     'rest_schema_lic_extcode' => 'Lisans sunucusunun hata kodu',
     'rest_schema_lic_usage' => 'Özelliğe göre dolu koltuklar',
+    'rest_schema_lic_entitled' => 'Özelliğe göre anahtar hakları: son kullanma ve koltuk sınırı',
     'rest_schema_lic_request' => 'Portal için imzalanmış talep dosyası',
     'rest_schema_sf_description' => 'Ses dosyasının açıklaması',
     'rest_schema_sf_path' => 'Dosya sistemindeki ses dosyasının yolu',

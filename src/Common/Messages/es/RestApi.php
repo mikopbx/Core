@@ -1803,6 +1803,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Funciones eliminadas de la sesión al prolongarla',
     'rest_schema_lic_extcode' => 'Código de error del servidor de licencias',
     'rest_schema_lic_usage' => 'Plazas ocupadas por función',
+    'rest_schema_lic_entitled' => 'Derechos de la clave por función: vencimiento y límite de plazas',
     'rest_schema_lic_request' => 'Archivo de solicitud firmado para el portal',
     // ============================================================================
     // IncomingRoutes REST API

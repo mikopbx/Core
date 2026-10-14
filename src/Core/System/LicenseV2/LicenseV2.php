@@ -64,6 +64,9 @@ class LicenseV2
     /** The REST call behind the button is cut at 30 s; the round must answer before that. */
     private const int ROUND_BUDGET = 25;
 
+    /** Seconds to wait before asking for a refused seat again: the worker's cadence. */
+    private const int RETRY_AFTER = 60;
+
     /** Legacy calls that change what the key is entitled to; the stored token is stale after them. */
     private const array ENTITLEMENT_CHANGING_CALLS = ['addtrial', 'activatecoupon', 'changelicensekey'];
 
@@ -81,6 +84,7 @@ class LicenseV2
     private Closure $metrics;
     private Closure $pbxVersion;
     private Closure $logger;
+    private Closure $moduleDemand;
     private ?GuzzleHttp\Client $http;
     private Closure $serverUrls;
     private ?License $legacy = null;
@@ -99,7 +103,8 @@ class LicenseV2
         ?Closure $pbxVersion = null,
         ?Closure $logger = null,
         ?GuzzleHttp\Client $http = null,
-        ?Closure $serverUrls = null
+        ?Closure $serverUrls = null,
+        ?Closure $moduleDemand = null
     ) {
         $cfDir = Directories::getDir(Directories::CORE_CF_DIR) . '/conf/license-v2';
         $this->store = $store
@@ -118,6 +123,19 @@ class LicenseV2
             -1,
             PREG_SPLIT_NO_EMPTY
         ) ?: [];
+        // #1210: the HOST features this PBX asks for — those of its enabled modules (and of the ones switched off by
+        // license, which are waiting to come back). The feature comes from module.json: what doEnableModule() checks.
+        $this->moduleDemand = $moduleDemand ?? function (): array {
+            $features = [];
+            foreach (PbxExtensionModules::find()->toArray() as $module) {
+                $wanted = (int)$module['disabled'] === 0 || $module['disableReason'] === PbxExtensionState::DISABLED_BY_LICENSE;
+                $featureId = $wanted ? $this->moduleJsonFeature((string)$module['uniqid']) : '';
+                if ($featureId !== '') {
+                    $features[] = $featureId;
+                }
+            }
+            return $features;
+        };
     }
 
     public function store(): EntitlementStore
@@ -209,7 +227,16 @@ class LicenseV2
         }
         try {
             $licenseKey = $this->licenseKey();
-            $payload = $this->entitledPayload($featureId, $licenseKey);
+            $payload = $this->store->lastVerifiedPayload();
+            if (
+                $this->documentValid($payload, $licenseKey)
+                && !EntitlementToken::featureValid($payload, $featureId, $this->store->now())
+                && EntitlementToken::entitled($payload, $featureId) !== null
+            ) {
+                // #1210: on the key, no seat granted here: a shortage the next report turns into demand, not "unlicensed"
+                $this->ledger->capture($sessionId, $featureId, 0); // throws 1051 after counting the refusal
+            }
+            $payload = $this->entitledPayload($payload, $featureId, $licenseKey);
             // A feature without a seat limit takes no seat, and neither case renews the lease:
             // only sessionKeepalive() re-checks the rights, so only it may keep a session alive.
             $leaseLeft = $this->ledger->capture(
@@ -324,7 +351,8 @@ class LicenseV2
      *
      * @return array{hasKey: bool, serversConfigured: bool, hasDocument: bool, iat: int, exp: int,
      *     offlineUntil: int, effectiveExpiry: int, fileDocument: bool, keyMismatch: bool, refused: bool,
-     *     refusalReason: string, foreignHardware: bool, nextExchange: int, now: int}
+     *     refusalReason: string, foreignHardware: bool, nextExchange: int, now: int,
+     *     entitled: object}
      */
     public function entitlementStatus(): array
     {
@@ -352,19 +380,57 @@ class LicenseV2
                 ? max($nextRetry, (int)($payload['iat'] ?? 0) + EntitlementToken::poll($payload))
                 : $nextRetry,
             'now' => $this->store->now(),
+            // (object): an empty layer must stay a JSON object, the response schema says "object"
+            'entitled' => (object)array_map(
+                static fn(array $r): array => ['until' => (int)$r['until'], 'limit' => (int)$r['limit']],
+                (array)($payload['entitled'] ?? [])
+            ),
         ];
     }
 
     /**
-     * Reads the token once and answers with it, so the caller can judge the right, the limit and the
-     * lifetime by the same document: a token replaced mid-call must not mix old and new terms.
+     * The installer asked for a feature the key has but this PBX holds no seat of (#1210): counted as a refusal, so
+     * the forced round that follows carries the demand. false: not on the key — a trial, not a round, is the answer.
+     */
+    public function noteDemand(string $featureId): bool
+    {
+        // Best effort: a broken ledger must not stop the caller from recording the refusal itself.
+        try {
+            $payload = $this->store->lastVerifiedPayload();
+            if (!$this->documentValid($payload, $this->licenseKey()) || EntitlementToken::entitled($payload, $featureId) === null) {
+                return false;
+            }
+            $this->ledger->noteDenied($featureId);
+            return true;
+        } catch (Throwable $e) {
+            $this->log('Demand left out of the next round: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * The document this PBX may act on (#1210): its key, not revoked, fresh. Only such a document's `entitled`
+     * layer turns a refusal into demand.
      *
+     * @param array<string, mixed>|null $payload
+     * @phpstan-assert-if-true array<string, mixed> $payload
+     */
+    private function documentValid(?array $payload, string $licenseKey): bool
+    {
+        return $payload !== null && hash_equals($licenseKey, (string)($payload['key'] ?? ''))
+            && !$this->store->revoked($payload) && EntitlementToken::isFresh($payload, $this->store->now(), true);
+    }
+
+    /**
+     * Judges the right by the token the caller read once, so the right, the limit and the lifetime
+     * come from the same document: a token replaced mid-call must not mix old and new terms.
+     *
+     * @param array<string, mixed>|null $payload
      * @return array<string, mixed>
      * @throws SeatException 2011
      */
-    private function entitledPayload(string $featureId, string $licenseKey): array
+    private function entitledPayload(?array $payload, string $featureId, string $licenseKey): array
     {
-        $payload = $this->store->lastVerifiedPayload();
         if ($payload === null || !$this->store->featureAvailable($featureId, $licenseKey, $payload)) {
             throw new SeatException('Feature is expired or not licensed', SeatException::NOT_LICENSED);
         }
@@ -392,7 +458,8 @@ class LicenseV2
     private function failure(RuntimeException $e): array
     {
         if ($e instanceof SeatException) {
-            return ['success' => false, 'error' => $e->getMessage(), 'extcode' => $e->extcode];
+            $answer = ['success' => false, 'error' => $e->getMessage(), 'extcode' => $e->extcode];
+            return $e->extcode === SeatException::NO_SEATS ? $answer + ['retryAfter' => self::RETRY_AFTER] : $answer;
         }
         if ($e instanceof SessionCeilingException) {
             // Our own protective cap, not a licensing refusal: no server code, ask again later.
@@ -431,11 +498,12 @@ class LicenseV2
             $hardwareMatches = false;
             $this->log('Hardware check of the license file failed, treated as other hardware: ' . $e->getMessage());
         }
-        $payload = $this->store->lastVerifiedPayload();
         // toArray(): the loop updates the same table, no open cursor must be held over it.
         foreach (PbxExtensionModules::find()->toArray() as $module) {
             $uniqid = (string)$module['uniqid'];
-            $featureId = $this->paidFeatureOf($uniqid, $payload);
+            // #1210: the core enforces only what it asks for — the feature of module.json, as doEnableModule() does.
+            // 0 = the module licenses itself (ModuleCTIClient) or is free: not the core's business.
+            $featureId = $this->moduleJsonFeature($uniqid);
             if ($featureId === '') {
                 continue;
             }
@@ -454,18 +522,8 @@ class LicenseV2
         }
     }
 
-    /**
-     * PbxExtensionState checks the feature named in module.json. When it disagrees with the signed
-     * map the enable attempt is doomed, so it is skipped instead of being repeated every worker run
-     * (about a minute).
-     */
     private function reEnable(string $uniqid, string $featureId): void
     {
-        $gateFeature = $this->moduleJsonFeature($uniqid);
-        if ($gateFeature !== '' && !$this->featureAvailable($gateFeature)['success']) {
-            $this->log("$uniqid is licensed by feature $featureId, module.json asks for $gateFeature: left disabled");
-            return;
-        }
         $state = new PbxExtensionState($uniqid);
         $this->log(
             "$uniqid (feature $featureId) is licensed again: "
@@ -524,6 +582,17 @@ class LicenseV2
         ) ?? 'busy';
     }
 
+    /** A broken ledger must not stop the worker's round: no demand is assumed. */
+    private function demandPending(): bool
+    {
+        try {
+            return $this->ledger->demandPending();
+        } catch (Throwable $e) {
+            $this->log('Refusal check left out of the round: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     /**
      * Online exchange with the licensing servers, tried in the configured order. An unreachable or
      * failing server passes the turn to the next one; when none answers the stored token keeps
@@ -540,7 +609,7 @@ class LicenseV2
         // Judged inside the round: the process that held it a moment ago may have refreshed already.
         $payload = $this->store->lastVerifiedPayload();
         $sameKey = hash_equals($this->licenseKey(), (string)($payload['key'] ?? ''));
-        if (!$force && $sameKey && !$this->refreshDue($payload)) {
+        if (!$force && $sameKey && !$this->refreshDue($payload) && !$this->demandPending()) {
             return 'notDue';
         }
         if (!$force && !$this->store->retryAllowed()) {
@@ -733,7 +802,23 @@ class LicenseV2
         try {
             $seats = $this->ledger->report();
             $holders = $this->ledger->holders();
-            $signed['usage'] = $seats['usage'];
+            $usage = $seats['usage'];
+            // #1210: an enabled module holds the seat; sessions and refusals already in the ledger only add to the mark
+            try {
+                foreach (($this->moduleDemand)() as $featureId) {
+                    $row = $usage[$featureId] ?? ['used' => 0, 'peak' => 0, 'denied' => 0];
+                    $usage[$featureId] = [
+                        'used' => max($row['used'], 1),
+                        'peak' => max($row['peak'], 1),
+                        'denied' => $row['denied'],
+                    ];
+                }
+            } catch (Throwable $e) {
+                $this->log('Module demand left out of the request: ' . $e->getMessage());
+            }
+            if ($usage !== []) {
+                $signed['usage'] = $usage;
+            }
             $signed['usageGen'] = $seats['gen'];
             $signed['holders'] = $holders;
         } catch (Throwable $e) {
@@ -764,19 +849,6 @@ class LicenseV2
         } catch (Throwable $e) {
             $this->log('Seat ledger could not apply the server answer: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * Which feature a module needs. The signed map wins for the modules it names; module.json decides for a
-     * module the map does not know (installed after the document was issued, or a catalog the server keeps no
-     * map for) and while the PBX holds no signed map: first boot, closed contour before activation.
-     *
-     * @param array<string, mixed>|null $payload
-     */
-    private function paidFeatureOf(string $moduleUniqueId, ?array $payload): string
-    {
-        return ($payload === null ? null : EntitlementToken::moduleFeature($payload, $moduleUniqueId))
-            ?? $this->moduleJsonFeature($moduleUniqueId);
     }
 
     private function moduleJsonFeature(string $moduleUniqueId): string

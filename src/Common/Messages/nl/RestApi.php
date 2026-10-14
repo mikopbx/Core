@@ -2340,6 +2340,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Functies die bij verlenging uit de sessie zijn verwijderd',
     'rest_schema_lic_extcode' => 'Foutcode van de licentieserver',
     'rest_schema_lic_usage' => 'Bezette plaatsen per functie',
+    'rest_schema_lic_entitled' => 'Rechten van de sleutel per functie: vervaldatum en plaatslimiet',
     'rest_schema_lic_request' => 'Ondertekend aanvraagbestand voor het portaal',
     'rest_param_pwd_includeNumbers' => 'Gebruik cijfers in het wachtwoord',
     'rest_param_pwd_includeUppercase' => 'Gebruik hoofdletters in het wachtwoord',

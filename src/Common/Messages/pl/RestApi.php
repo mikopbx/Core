@@ -2376,6 +2376,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Funkcje usunięte z sesji podczas przedłużania',
     'rest_schema_lic_extcode' => 'Kod błędu serwera licencji',
     'rest_schema_lic_usage' => 'Zajęte miejsca według funkcji',
+    'rest_schema_lic_entitled' => 'Uprawnienia klucza według funkcji: termin ważności i limit miejsc',
     'rest_schema_lic_request' => 'Podpisany plik żądania dla portalu',
     'rest_fw_Enable' => 'Włącz zaporę sieciową',
     'rest_schema_search_result_value' => 'Adres URL/link do elementu',

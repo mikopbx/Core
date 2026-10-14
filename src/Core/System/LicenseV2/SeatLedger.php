@@ -134,6 +134,18 @@ class SeatLedger
     }
 
     /**
+     * A demand without a session (#1210): the installer of a module asked for its HOST feature and the document held no
+     * seat. Counted as a refusal, so the next report carries the demand and the server grants the seat for the retry.
+     */
+    public function noteDenied(string $featureId): void
+    {
+        $this->transaction(function (array &$ledger) use ($featureId): void {
+            $ledger['report'][$featureId] ??= ['peak' => 0, 'denied' => 0];
+            $ledger['report'][$featureId]['denied']++;
+        });
+    }
+
+    /**
      * @return array<string, int> featureId => seats in use.
      */
     public function usage(): array
@@ -243,7 +255,22 @@ class SeatLedger
         $this->transaction(function (array &$ledger): void {
             foreach (array_keys($ledger['report']) as $featureId) {
                 $ledger['report'][$featureId]['peak'] = $this->countSeats($ledger, (string)$featureId);
+                // #1210: refusals up to here are reported and answered; newer ones make the next round due
+                $ledger['report'][$featureId]['acceptedDenied'] = $ledger['report'][$featureId]['denied'];
             }
+        });
+    }
+
+    /** Refusals the server has not answered yet (#1210): the worker's next refresh() does not wait for poll. */
+    public function demandPending(): bool
+    {
+        return $this->transaction(function (array &$ledger): bool {
+            foreach ($ledger['report'] as $counters) {
+                if ($counters['denied'] > ($counters['acceptedDenied'] ?? 0)) {
+                    return true;
+                }
+            }
+            return false;
         });
     }
 
@@ -521,6 +548,8 @@ class SeatLedger
             if (
                 !is_array($counters) || !is_int($counters['peak'] ?? null)
                 || !is_int($counters['denied'] ?? null)
+                // younger than the file format: absent is fine
+                || !is_int($counters['acceptedDenied'] ?? 0)
             ) {
                 return false;
             }

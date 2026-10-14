@@ -2216,6 +2216,7 @@ return [
     'rest_schema_lic_dropped_features' => '延長時にセッションから外された機能',
     'rest_schema_lic_extcode' => 'ライセンスサーバーのエラーコード',
     'rest_schema_lic_usage' => '機能ごとの使用中シート数',
+    'rest_schema_lic_entitled' => '機能ごとのキーの権限：有効期限とシート数の上限',
     'rest_schema_lic_request' => 'ポータル向けの署名済みリクエストファイル',
     // ============================================================================
     // IncomingRoutes REST API

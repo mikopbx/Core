@@ -1727,6 +1727,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Функції, зняті з сесії під час подовження',
     'rest_schema_lic_extcode' => 'Код помилки сервера ліцензування',
     'rest_schema_lic_usage' => 'Зайняті місця за функціями',
+    'rest_schema_lic_entitled' => 'Права ключа за функціями: термін дії та ліміт місць',
     'rest_schema_lic_request' => 'Підписаний файл запиту для порталу',
     // ============================================================================
     // IncomingRoutes REST API

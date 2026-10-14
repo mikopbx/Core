@@ -2347,6 +2347,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Bei der Verlängerung aus der Sitzung entfernte Funktionen',
     'rest_schema_lic_extcode' => 'Fehlercode des Lizenzservers',
     'rest_schema_lic_usage' => 'Belegte Plätze je Funktion',
+    'rest_schema_lic_entitled' => 'Schlüsselberechtigungen je Funktion: Ablaufdatum und Platzlimit',
     'rest_schema_lic_request' => 'Signierte Anfragedatei für das Portal',
     'rest_advice_Refresh' => 'Benachrichtigungscache aktualisieren',
     'rest_emp_DeleteDesc' => 'Mitarbeiter anhand der ID löschen',

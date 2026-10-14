@@ -1873,6 +1873,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Fonctionnalités retirées de la session lors du renouvellement',
     'rest_schema_lic_extcode' => 'Code d\'erreur du serveur de licences',
     'rest_schema_lic_usage' => 'Places occupées par fonctionnalité',
+    'rest_schema_lic_entitled' => 'Droits de la clé par fonctionnalité : expiration et limite de places',
     'rest_schema_lic_request' => 'Fichier de demande signé pour le portail',
     // ============================================================================
     // IncomingRoutes REST API

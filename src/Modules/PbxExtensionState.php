@@ -27,6 +27,7 @@ use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\WafProvider;
 use MikoPBX\Core\System\Configs\SoundFilesConf;
+use MikoPBX\Core\System\LicenseV2\LicenseV2;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -156,6 +157,10 @@ class PbxExtensionState extends Injectable
             // Try to capture the feature if it is set
             $result = $this->license->featureAvailable($this->lic_feature_id);
             if ($result['success'] === false) {
+                // #1210: entitled but no seat here: record the demand, the worker's next round asks for it and re-enables the module
+                if ($this->license instanceof LicenseV2) {
+                    $this->license->noteDemand((string)$this->lic_feature_id);
+                }
                 $textError = (string)($result['error']??'');
                 $reasonText = $this->license->translateLicenseErrorMessage($textError);
                 $this->messages['license'][] = $reasonText;

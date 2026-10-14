@@ -1837,6 +1837,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Funzioni rimosse dalla sessione durante il prolungamento',
     'rest_schema_lic_extcode' => 'Codice di errore del server di licenza',
     'rest_schema_lic_usage' => 'Posti occupati per funzione',
+    'rest_schema_lic_entitled' => 'Diritti della chiave per funzione: scadenza e limite di posti',
     'rest_schema_lic_request' => 'File di richiesta firmato per il portale',
     // ============================================================================
     // IncomingRoutes REST API

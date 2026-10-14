@@ -2343,6 +2343,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Λειτουργίες που αφαιρέθηκαν από τη συνεδρία κατά την παράταση',
     'rest_schema_lic_extcode' => 'Κωδικός σφάλματος του διακομιστή αδειών',
     'rest_schema_lic_usage' => 'Κατειλημμένες θέσεις ανά λειτουργία',
+    'rest_schema_lic_entitled' => 'Δικαιώματα κλειδιού ανά λειτουργία: λήξη και όριο θέσεων',
     'rest_schema_lic_request' => 'Υπογεγραμμένο αρχείο αιτήματος για την πύλη',
     'rest_schema_pbx_status_call_endtime' => 'Ώρα λήξης κλήσης (κενό για ενεργή)',
     'rest_schema_pbx_status_src_num' => 'Αναγνώριση καλούντος',
