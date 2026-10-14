@@ -156,11 +156,17 @@ class PbxExtensionState extends Injectable
         if ($this->lic_feature_id > 0) {
             // Try to capture the feature if it is set
             $result = $this->license->featureAvailable($this->lic_feature_id);
+            // #1220: entitled but no seat here: ask the server in a forced round and check again, as the module installer
+            // does; the demand stays noted either way, so the worker's next round brings the seat when the server was silent
+            if (
+                $result['success'] === false && $this->license instanceof LicenseV2
+                && $this->license->noteDemand((string)$this->lic_feature_id)
+            ) {
+                // no backoff: a click behind a dead link must not push the worker's next round out; the 25 s budget applies
+                $this->license->refresh(true, false);
+                $result = $this->license->featureAvailable($this->lic_feature_id);
+            }
             if ($result['success'] === false) {
-                // #1210: entitled but no seat here: record the demand, the worker's next round asks for it and re-enables the module
-                if ($this->license instanceof LicenseV2) {
-                    $this->license->noteDemand((string)$this->lic_feature_id);
-                }
                 $textError = (string)($result['error']??'');
                 $reasonText = $this->license->translateLicenseErrorMessage($textError);
                 $this->messages['license'][] = $reasonText;
