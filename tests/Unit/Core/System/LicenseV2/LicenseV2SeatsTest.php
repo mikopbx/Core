@@ -30,6 +30,9 @@ class LicenseV2SeatsTest extends TestCase
     private string $licenseKey = 'MIKO-TEST';
     private ?\Closure $metrics = null;
     private array $logged = [];
+
+    /** @var array<int, string> */
+    private array $moduleDemand = [];
     /** @var array<int, callable> What the licensing server answers, one entry per request. */
     private array $serverAnswers = [];
     /** @var array<int, string> What PbxSettings::LICENSE_V2_SERVER_URL would list. */
@@ -61,6 +64,24 @@ class LicenseV2SeatsTest extends TestCase
         rmdir($this->dir);
     }
 
+    public function testEntitledWithoutSeatsIsAShortageNotUnlicensed(): void
+    {
+        $license = $this->licensed([], [], null, null, ['54' => ['until' => self::NOW + 86400, 'limit' => 2]]);
+        $s = $license->sessionStart(['username' => 'a'], 300)['session_id'];
+        $refused = $license->captureFeature('54', $s);
+        $this->assertSame(1051, $refused['extcode']);
+        $this->assertSame(60, $refused['retryAfter']);
+        $this->assertSame(['54' => ['used' => 0, 'peak' => 0, 'denied' => 1]], $this->answerOffline($license)['request']['usage']);
+    }
+
+    public function testWithoutEntitledLayerAMissingFeatureIsNotLicensed(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 1]);
+        $s = $license->sessionStart([], 60)['session_id'];
+        $this->assertSame(2011, $license->captureFeature('99', $s)['extcode']);
+        $this->assertArrayNotHasKey('retryAfter', $license->captureFeature('99', $s));
+    }
+
     public function testThirdDeviceIsRefusedWith1051AndSeatFreesAfterTtl(): void
     {
         $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
@@ -72,6 +93,7 @@ class LicenseV2SeatsTest extends TestCase
         $refused = $license->captureFeature('54', $c);
         $this->assertFalse($refused['success']);
         $this->assertSame(1051, $refused['extcode']);
+        $this->assertSame(60, $refused['retryAfter']);
         $this->wallClock += 65;
         $this->assertSame(1021, $license->captureFeature('54', $a)['extcode']);
         $this->assertTrue($license->captureFeature('54', $c)['success']);
@@ -363,6 +385,33 @@ class LicenseV2SeatsTest extends TestCase
         $this->assertGreaterThan(self::NOW, $sent[1]['seq'], 'the retry goes above the re-anchored seq');
         $this->assertStringContainsString('failed: HTTP 409', implode("\n", $this->logged));
         $this->assertTrue($license->store()->retryAllowed());
+    }
+
+    public function testRefusalForcesTheNextWorkerRoundOnce(): void
+    {
+        $requests = 0;
+        // a spare answer: a round that wrongly starts is counted instead of dying on an empty queue
+        $answer = function (RequestInterface $request) use (&$requests): Response {
+            $requests++;
+            $fields = self::requestFields($request);
+            return new Response(200, [], (string)json_encode(['token' => $this->signed([
+                'v' => EntitlementToken::VERSION, 'kid' => self::KID, 'install' => $fields['install'],
+                'key' => $this->licenseKey, 'nonce' => $fields['nonce'], 'iat' => $this->wallClock,
+                'exp' => $this->wallClock + 7 * 86400, 'features' => ['54' => $this->wallClock + 86400],
+                'seats' => ['54' => 2],
+                'entitled' => ['54' => ['until' => $this->wallClock + 86400, 'limit' => 2]],
+            ])]));
+        };
+        $this->serverAnswers = [$answer, $answer];
+        $license = $this->licensed([], [], null, null, ['54' => ['until' => self::NOW + 86400, 'limit' => 2]]);
+
+        $this->assertFalse($license->refresh(), 'nothing changed, poll not passed');
+        $s = $license->sessionStart(['username' => 'a'], 300)['session_id'];
+        $this->assertSame(1051, $license->captureFeature('54', $s)['extcode']);
+        $this->assertTrue($license->refresh(), 'the refusal made the round due');
+        $this->assertTrue($license->captureFeature('54', $s)['success']);
+        $this->assertFalse($license->refresh(), 'the accepted answer cleared the demand; the next round waits for poll');
+        $this->assertSame(1, $requests, 'the third refresh() is notDue, it sent nothing');
     }
 
     public function testReplayIsRetriedOnlyOnce(): void
@@ -846,6 +895,36 @@ class LicenseV2SeatsTest extends TestCase
         return $payload . '.' . EntitlementToken::base64UrlEncode($signature);
     }
 
+    public function testReportCountsEnabledAndLicenseDisabledModulesOnly(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], []);
+        $this->moduleDemand = ['54', '66'];
+        $request = $this->answerOffline($license)['request'];
+        $this->assertSame(['54' => ['used' => 1, 'peak' => 1, 'denied' => 0], '66' => ['used' => 1, 'peak' => 1, 'denied' => 0]], $request['usage']);
+        // nothing enabled: nothing asked
+        $this->moduleDemand = [];
+        $this->assertArrayNotHasKey('usage', $this->answerOffline($license)['request']);
+    }
+
+    public function testSessionUsageWinsOverTheModuleMark(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 2]);
+        $this->moduleDemand = ['54'];
+        foreach (['a', 'b'] as $user) {
+            $s = $license->sessionStart(['username' => $user], 300)['session_id'];
+            $license->captureFeature('54', $s);
+        }
+        $this->assertSame(['54' => ['used' => 2, 'peak' => 2, 'denied' => 0]], $this->answerOffline($license)['request']['usage']);
+    }
+
+    public function testModuleMarkSurvivesAnEarlierRefusalInTheLedger(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 1], null, null, ['54' => ['until' => self::NOW + 86400, 'limit' => 1]]);
+        $this->moduleDemand = ['54'];
+        $this->assertTrue($license->noteDemand('54'));
+        $this->assertSame(['54' => ['used' => 1, 'peak' => 1, 'denied' => 1]], $this->answerOffline($license)['request']['usage']);
+    }
+
     /**
      * Plays the licensing cabinet for the closed contour: signs an answer to the exported request.
      *
@@ -873,14 +952,30 @@ class LicenseV2SeatsTest extends TestCase
         return ['request' => $request, 'token' => $payload . '.' . EntitlementToken::base64UrlEncode($signature)];
     }
 
+    public function testEntitlementStatusCarriesTheEntitledLayer(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 1], null, null, ['54' => ['until' => self::NOW + 86400, 'limit' => 1], '7' => ['until' => self::NOW + 3600, 'limit' => 10]]);
+        $this->assertSame(['54' => ['until' => self::NOW + 86400, 'limit' => 1], '7' => ['until' => self::NOW + 3600, 'limit' => 10]], (array)$license->entitlementStatus()['entitled']);
+        $this->assertTrue($license->noteDemand('7'));
+        $this->assertFalse($license->noteDemand('99'));
+        $usage = $this->answerOffline($license)['request']['usage'];
+        $this->assertSame(['used' => 0, 'peak' => 0, 'denied' => 1], $usage['7']);
+        $this->assertArrayNotHasKey('99', $usage);
+    }
+
     /**
      * @param array<string, int> $features
      * @param array<string, int> $seats
      */
-    private function licensed(array $features, array $seats, ?int $exp = null, ?int $offlineUntil = null): LicenseV2
-    {
+    private function licensed(
+        array $features,
+        array $seats,
+        ?int $exp = null,
+        ?int $offlineUntil = null,
+        array $entitled = []
+    ): LicenseV2 {
         $license = $this->license();
-        $this->issue($license, $features, $seats, $exp, $offlineUntil);
+        $this->issue($license, $features, $seats, $exp, $offlineUntil, $entitled);
         return $license;
     }
 
@@ -905,7 +1000,8 @@ class LicenseV2SeatsTest extends TestCase
                 $this->logged[] = $message;
             },
             new Client(['handler' => HandlerStack::create(new MockHandler($this->serverAnswers))]),
-            fn(): array => $this->serverUrls
+            fn(): array => $this->serverUrls,
+            fn(): array => $this->moduleDemand
         );
     }
 
@@ -918,7 +1014,8 @@ class LicenseV2SeatsTest extends TestCase
         array $features,
         array $seats,
         ?int $exp = null,
-        ?int $offlineUntil = null
+        ?int $offlineUntil = null,
+        array $entitled = []
     ): void {
         $store = $license->store();
         $request = $store->buildRequest($this->licenseKey, '2026.3.1');
@@ -937,6 +1034,9 @@ class LicenseV2SeatsTest extends TestCase
         ];
         if ($seats !== []) {
             $fields['seats'] = $seats;
+        }
+        if ($entitled !== []) {
+            $fields['entitled'] = $entitled;
         }
         $payload = EntitlementToken::base64UrlEncode((string)json_encode($fields));
         openssl_sign($payload, $signature, $this->serverPrivateKeyPem, 0);

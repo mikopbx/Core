@@ -1834,6 +1834,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Funcionalidades removidas da sessão ao prolongar',
     'rest_schema_lic_extcode' => 'Código de erro do servidor de licenças',
     'rest_schema_lic_usage' => 'Lugares ocupados por funcionalidade',
+    'rest_schema_lic_entitled' => 'Direitos da chave por funcionalidade: validade e limite de lugares',
     'rest_schema_lic_request' => 'Ficheiro de pedido assinado para o portal',
     // ============================================================================
     // IncomingRoutes REST API

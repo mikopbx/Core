@@ -81,6 +81,9 @@ class EntitlementToken
         if (array_key_exists('seats', $payload)) {
             self::assertSeatsMap($payload['seats'], array_keys($payload['features']));
         }
+        if (array_key_exists('entitled', $payload)) {
+            self::assertEntitledMap($payload['entitled']);
+        }
         if (array_key_exists('poll', $payload)) {
             $poll = $payload['poll'];
             if (!is_int($poll) || $poll < self::POLL_MIN || $poll > self::POLL_MAX) {
@@ -161,6 +164,19 @@ class EntitlementToken
     }
 
     /**
+     * The right without the seat (#1210): what the key has for the feature — until when and how many seats the pool
+     * holds — even when this PBX was granted none. null: no layer (an older server) or not on the key.
+     *
+     * @param array<string, mixed> $payload
+     * @return array{until: int, limit: int}|null
+     */
+    public static function entitled(array $payload, string $featureId): ?array
+    {
+        $row = $payload['entitled'][$featureId] ?? null;
+        return is_array($row) ? ['until' => (int)$row['until'], 'limit' => (int)$row['limit']] : null;
+    }
+
+    /**
      * Seconds between two reports to the server; the server sets the pace.
      *
      * @param array<string, mixed> $payload
@@ -179,24 +195,6 @@ class EntitlementToken
     public static function dropRefs(array $payload): array
     {
         return array_values((array)($payload['drop'] ?? []));
-    }
-
-    /**
-     * Which feature a module needs by the signed map: null when the document carries no map or does not
-     * name the module (module.json decides: the server catalog may lag behind a module installed here),
-     * '' for a module the map names as free, otherwise the feature id.
-     *
-     * @param array<string, mixed> $payload
-     */
-    public static function moduleFeature(array $payload, string $moduleUniqueId): ?string
-    {
-        $modules = $payload['modules'] ?? null;
-        if (!is_array($modules) || !array_key_exists($moduleUniqueId, $modules)) {
-            return null;
-        }
-        // 0 in the signed map means a free module, the same as in module.json.
-        $featureId = (int)$modules[$moduleUniqueId];
-        return $featureId > 0 ? (string)$featureId : '';
     }
 
     /**
@@ -233,6 +231,21 @@ class EntitlementToken
             if (!is_int($limit) || $limit < 0 || !$isLicensed) {
                 throw new TokenRejectedException('Entitlement token has a malformed seats map');
             }
+        }
+    }
+
+    /**
+     * @throws TokenRejectedException
+     */
+    private static function assertEntitledMap(mixed $entitled): void
+    {
+        $valid = is_array($entitled);
+        foreach ($valid ? $entitled : [] as $row) {
+            $valid = $valid && is_array($row) && is_int($row['until'] ?? null) && $row['until'] >= 0
+                && is_int($row['limit'] ?? null) && $row['limit'] >= 0;
+        }
+        if (!$valid) {
+            throw new TokenRejectedException('Entitlement token has a malformed entitled map');
         }
     }
 

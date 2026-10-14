@@ -508,7 +508,7 @@ class EntitlementStore
      *
      * @param array<string, mixed> $payload
      */
-    private function revoked(array $payload): bool
+    public function revoked(array $payload): bool
     {
         $state = $this->loadState();
         $foreignNonce = (string)($state[self::FOREIGN_HARDWARE] ?? '');

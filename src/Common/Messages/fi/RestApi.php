@@ -2181,6 +2181,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Istunnosta pudotetut ominaisuudet jatkamisen yhteydessä',
     'rest_schema_lic_extcode' => 'Lisenssipalvelimen virhekoodi',
     'rest_schema_lic_usage' => 'Varatut paikat ominaisuuksittain',
+    'rest_schema_lic_entitled' => 'Avaimen oikeudet ominaisuuksittain: voimassaolo ja paikkaraja',
     'rest_schema_lic_request' => 'Allekirjoitettu pyyntötiedosto portaalille',
     // ============================================================================
     // IncomingRoutes REST API

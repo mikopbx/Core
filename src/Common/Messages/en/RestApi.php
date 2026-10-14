@@ -1320,6 +1320,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Features dropped from the session on renewal',
     'rest_schema_lic_extcode' => 'License server error code',
     'rest_schema_lic_usage' => 'Occupied seats per feature',
+    'rest_schema_lic_entitled' => 'Key entitlements per feature: expiry and seat limit',
     'rest_schema_lic_request' => 'Signed request file for the portal',
     'rest_param_nf_category' => 'Filter category (SIP, IAX, AMI, API)',
     'rest_param_nf_includeLocalhost' => 'Include localhost option (127.0.0.1) in list',

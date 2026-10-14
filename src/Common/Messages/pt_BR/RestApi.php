@@ -2140,6 +2140,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Funcionalidades removidas da sessão ao prolongar',
     'rest_schema_lic_extcode' => 'Código de erro do servidor de licenças',
     'rest_schema_lic_usage' => 'Vagas ocupadas por funcionalidade',
+    'rest_schema_lic_entitled' => 'Direitos da chave por funcionalidade: validade e limite de vagas',
     'rest_schema_lic_request' => 'Arquivo de solicitação assinado para o portal',
     // NetworkFilters specific parameters
     'rest_param_nf_category' => 'Categoria de filtragem (SIP, IAX, AMI, API)',

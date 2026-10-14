@@ -2253,6 +2253,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Uzatma zamanı sessiyadan çıxarılmış funksiyalar',
     'rest_schema_lic_extcode' => 'Lisenziya serverinin xəta kodu',
     'rest_schema_lic_usage' => 'Hər funksiya üzrə tutulmuş yerlər',
+    'rest_schema_lic_entitled' => 'Hər funksiya üzrə açarın hüquqları: müddət və yer limiti',
     'rest_schema_lic_request' => 'Portal üçün imzalanmış sorğu faylı',
     'rest_schema_ir_number' => 'Daxil olan zəng üçün DID nömrəsi',
     'rest_schema_ir_providerid' => 'Zəng filtrləməsi üçün provayder ID-si',

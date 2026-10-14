@@ -879,19 +879,34 @@ class EntitlementStoreTest extends TestCase
         $store->acceptAnswer($this->withoutField($token, 'modules'));
         $payload = $store->lastVerifiedPayload();
         $this->assertArrayNotHasKey('modules', $payload);
-        $this->assertNull(EntitlementToken::moduleFeature($payload, 'ModuleLdapSync'));
         $this->assertTrue($store->featureAvailable('54'));
     }
 
-    public function testModuleFeatureReadsTheSignedMap(): void
+    public function testEntitledLayerIsReadAndValidated(): void
     {
-        $payload = ['modules' => ['ModuleLdapSync' => '54', 'ModuleFree' => 0]];
-        $this->assertSame('54', EntitlementToken::moduleFeature($payload, 'ModuleLdapSync'));
-        $this->assertSame('', EntitlementToken::moduleFeature($payload, 'ModuleFree'));
-        $this->assertNull(
-            EntitlementToken::moduleFeature($payload, 'ModuleUnknown'),
-            'a module the map does not name is left to its module.json, not taken for free'
-        );
+        $store = $this->newStore();
+        $store->acceptAnswer($this->issueFor($store, [
+            'features' => ['54' => self::NOW + 86400],
+            'entitled' => [
+                '54' => ['until' => self::NOW + 86400, 'limit' => 1],
+                '7' => ['until' => self::NOW + 3600, 'limit' => 10],
+            ],
+        ]));
+        $payload = $store->lastVerifiedPayload();
+        $this->assertSame(['until' => self::NOW + 3600, 'limit' => 10], EntitlementToken::entitled($payload, '7'));
+        $this->assertNull(EntitlementToken::entitled($payload, '99'));
+        $this->assertNull(EntitlementToken::entitled(['features' => []], '7'), 'no layer: an older server');
+    }
+
+    public function testMalformedEntitledLayerIsRejected(): void
+    {
+        $store = $this->newStore();
+        $this->expectException(TokenRejectedException::class);
+        $this->expectExceptionMessage('malformed entitled map');
+        $store->acceptAnswer($this->issueFor($store, [
+            'features' => [],
+            'entitled' => ['7' => ['until' => 'soon', 'limit' => 10]],
+        ]));
     }
 
     public function testEmptyFeaturesLicenseNothingButAreAccepted(): void

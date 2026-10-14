@@ -2336,6 +2336,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Funktioner fjernet fra sessionen ved forlængelse',
     'rest_schema_lic_extcode' => 'Licensserverens fejlkode',
     'rest_schema_lic_usage' => 'Optagne pladser pr. funktion',
+    'rest_schema_lic_entitled' => 'Nøglens rettigheder pr. funktion: udløb og pladsgrænse',
     'rest_schema_lic_request' => 'Underskrevet anmodningsfil til portalen',
     'rest_NetworkFilters_ApiDescription' => 'Skrivebeskyttet adgang til netværksfiltre (firewallregler) for UI-rullelister. Understøtter filtrering efter kategori (SIP, IAX, AMI, API) og inkluderer en særlig localhost-mulighed. Brug Firewall API\'en til at oprette/opdatere filtre.',
     'rest_schema_ir_number' => 'DID-nummer for indgående opkald',

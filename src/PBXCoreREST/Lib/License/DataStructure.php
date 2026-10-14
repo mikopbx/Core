@@ -203,6 +203,19 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 ],
                 'example' => ['AdvancedCallRouting' => ['used' => 2, 'limit' => 10]]
             ],
+            'entitled' => [
+                'type' => 'object',
+                'description' => 'rest_schema_lic_entitled',
+                'readOnly' => true,
+                'additionalProperties' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'until' => ['type' => 'integer', 'minimum' => 0],
+                        'limit' => ['type' => 'integer', 'minimum' => 0]
+                    ]
+                ],
+                'example' => ['54' => ['until' => 1802592000, 'limit' => 1]]
+            ],
             'request' => [
                 'type' => 'string',
                 'description' => 'rest_schema_lic_request',

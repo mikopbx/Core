@@ -1587,6 +1587,7 @@ return [
     'rest_schema_lic_dropped_features' => '延长时从会话中移除的功能',
     'rest_schema_lic_extcode' => '许可服务器错误代码',
     'rest_schema_lic_usage' => '按功能划分的已占用席位',
+    'rest_schema_lic_entitled' => '按功能划分的密钥权限：有效期和席位上限',
     'rest_schema_lic_request' => '已签名的请求文件，供门户使用',
     // NetworkFilters specific parameters
     'rest_param_nf_category' => '过滤类别（SIP、IAX、AMI、API）',

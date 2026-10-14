@@ -2267,6 +2267,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Funkcije uklonjene iz sesije prilikom produljenja',
     'rest_schema_lic_extcode' => 'Kod greške poslužitelja za licenciranje',
     'rest_schema_lic_usage' => 'Zauzeta mjesta po funkciji',
+    'rest_schema_lic_entitled' => 'Prava ključa po funkciji: rok valjanosti i ograničenje mjesta',
     'rest_schema_lic_request' => 'Potpisana datoteka zahtjeva za portal',
     'rest_resource_iaxprovider' => 'Pružatelj usluga IAX-a',
     'rest_mod_Enable' => 'Omogući modul',

@@ -2386,6 +2386,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Funcții eliminate din sesiune la prelungire',
     'rest_schema_lic_extcode' => 'Codul de eroare al serverului de licențe',
     'rest_schema_lic_usage' => 'Locuri ocupate pe funcție',
+    'rest_schema_lic_entitled' => 'Drepturile cheii pe funcție: expirare și limită de locuri',
     'rest_schema_lic_request' => 'Fișier de cerere semnat pentru portal',
     'rest_schema_ir_providerid' => 'ID-ul furnizorului pentru filtrarea apelurilor',
     'rest_schema_pbx_status_src_num' => 'ID apelant',

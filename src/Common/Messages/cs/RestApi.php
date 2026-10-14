@@ -2362,6 +2362,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Funkce odebrané z relace při prodloužení',
     'rest_schema_lic_extcode' => 'Chybový kód licenčního serveru',
     'rest_schema_lic_usage' => 'Obsazená místa podle funkcí',
+    'rest_schema_lic_entitled' => 'Oprávnění klíče podle funkcí: platnost a limit míst',
     'rest_schema_lic_request' => 'Podepsaný soubor požadavku pro portál',
     'rest_schema_ak_networkfilterid' => 'ID síťového filtru',
     'rest_schema_ak_last_used_at' => 'Datum a čas posledního použití klíče',

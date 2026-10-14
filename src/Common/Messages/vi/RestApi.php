@@ -1530,6 +1530,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Các tính năng bị loại khỏi phiên khi gia hạn',
     'rest_schema_lic_extcode' => 'Mã lỗi của máy chủ giấy phép',
     'rest_schema_lic_usage' => 'Số chỗ đang chiếm theo tính năng',
+    'rest_schema_lic_entitled' => 'Quyền của khóa theo tính năng: thời hạn và giới hạn số chỗ',
     'rest_schema_lic_request' => 'Tệp yêu cầu đã ký cho cổng thông tin',
     // ============================================================================
     // IncomingRoutes REST API

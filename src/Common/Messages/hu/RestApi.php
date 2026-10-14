@@ -1844,6 +1844,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Meghosszabbításkor a munkamenetből eltávolított funkciók',
     'rest_schema_lic_extcode' => 'A licencszerver hibakódja',
     'rest_schema_lic_usage' => 'Elfoglalt helyek funkciónként',
+    'rest_schema_lic_entitled' => 'A kulcs jogosultságai funkciónként: lejárat és helykorlát',
     'rest_schema_lic_request' => 'Aláírt kérésfájl a portál számára',
     // ============================================================================
     // IncomingRoutes REST API

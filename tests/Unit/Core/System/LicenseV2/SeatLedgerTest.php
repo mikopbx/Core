@@ -30,6 +30,14 @@ class SeatLedgerTest extends TestCase
         rmdir($this->dir);
     }
 
+    public function testNoteDeniedCountsADemandWithoutASession(): void
+    {
+        $ledger = $this->newLedger();
+        $ledger->noteDenied('54');
+        $ledger->noteDenied('54');
+        $this->assertSame(['54' => ['used' => 0, 'peak' => 0, 'denied' => 2]], $ledger->report()['usage']);
+    }
+
     public function testLimitIsEnforcedAndRepeatedCaptureTakesNoSecondSeat(): void
     {
         $ledger = $this->newLedger();
@@ -468,6 +476,18 @@ class SeatLedgerTest extends TestCase
         ]));
         $this->expectException(RuntimeException::class);
         $this->newLedger()->report();
+    }
+
+    public function testDemandIsPendingUntilTheReportIsAccepted(): void
+    {
+        $ledger = $this->newLedger();
+        $this->assertFalse($ledger->demandPending());
+        $ledger->noteDenied('54');
+        $this->assertTrue($ledger->demandPending());
+        $ledger->reportAccepted();
+        $this->assertFalse($ledger->demandPending());
+        $ledger->noteDenied('54');
+        $this->assertTrue($ledger->demandPending(), 'a new refusal after the accepted one counts again');
     }
 
     private function newLedger(): SeatLedger

@@ -2325,6 +2325,7 @@ return [
     'rest_schema_lic_dropped_features' => 'Funktioner som tagits bort från sessionen vid förlängning',
     'rest_schema_lic_extcode' => 'Felkod från licensservern',
     'rest_schema_lic_usage' => 'Upptagna platser per funktion',
+    'rest_schema_lic_entitled' => 'Nyckelns rättigheter per funktion: utgångsdatum och platsgräns',
     'rest_schema_lic_request' => 'Signerad begäranfil för portalen',
     'rest_param_oauth_error' => 'OAuth2-felkod',
     'rest_schema_sip_peer_port' => 'SIP-enhetsport',
