@@ -324,6 +324,7 @@ return [
     'bt_ToolTipCopyCert' => 'Kopiera certifikat',
     'bt_ToolTipCopyKey' => 'Kopiera SSH-nyckel',
     'bt_ToolTipCopyPassword' => 'Lösenord kopieras till urklipp',
+    'bt_ToolTipPasswordCopied' => 'Lösenord kopierat till urklipp',
     'bt_ToolTipDelete' => 'Radera',
     'bt_ToolTipDeleteCert' => 'Ta bort certifikat',
     'bt_ToolTipDownload' => 'nedladdning',

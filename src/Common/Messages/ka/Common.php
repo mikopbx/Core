@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => 'სერტიფიკატის კოპირება',
     'bt_ToolTipCopyKey' => 'SSH გასაღების კოპირება',
     'bt_ToolTipCopyPassword' => 'პაროლი კოპირებულია გაცვლის ბუფერზე',
+    'bt_ToolTipPasswordCopied' => 'პაროლი კოპირებულია გაცვლის ბუფერზე',
     'bt_ToolTipDelete' => 'წაშლა',
     'bt_ToolTipDeleteCert' => 'სერტიფიკატის წაშლა',
     'bt_ToolTipDownload' => 'გადმოწერა',

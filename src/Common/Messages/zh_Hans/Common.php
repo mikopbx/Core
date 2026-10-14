@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => '复制证书',
     'bt_ToolTipCopyKey' => '复制SSH密钥',
     'bt_ToolTipCopyPassword' => '密码已复制到剪贴板',
+    'bt_ToolTipPasswordCopied' => '密码已复制到剪贴板',
     'bt_ToolTipDelete' => '删掉',
     'bt_ToolTipDeleteCert' => '删除证书',
     'bt_ToolTipDownload' => '资料下载',

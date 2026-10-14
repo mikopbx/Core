@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => 'Certificaat kopiëren',
     'bt_ToolTipCopyKey' => 'SSH-sleutel kopiëren',
     'bt_ToolTipCopyPassword' => 'Wachtwoord gekopieerd naar klembord',
+    'bt_ToolTipPasswordCopied' => 'Wachtwoord gekopieerd naar klembord',
     'bt_ToolTipDelete' => 'Verwijderen',
     'bt_ToolTipDeleteCert' => 'Certificaat verwijderen',
     'bt_ToolTipDownload' => 'Downloaden',

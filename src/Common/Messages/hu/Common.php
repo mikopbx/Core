@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => 'Tanúsítvány másolása',
     'bt_ToolTipCopyKey' => 'SSH kulcs másolása',
     'bt_ToolTipCopyPassword' => 'A jelszó a vágólapra másolva',
+    'bt_ToolTipPasswordCopied' => 'A jelszó a vágólapra másolva',
     'bt_ToolTipDeleteCert' => 'Tanúsítvány törlése',
     'bt_ToolTipEditCert' => 'Tanúsítvány szerkesztése',
     'bt_ToolTipExpand' => 'Teljes kulcs megjelenítése',

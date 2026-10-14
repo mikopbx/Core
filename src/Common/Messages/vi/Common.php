@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => 'Sao chép chứng chỉ',
     'bt_ToolTipCopyKey' => 'Sao chép khóa SSH',
     'bt_ToolTipCopyPassword' => 'Mật khẩu được sao chép vào clipboard',
+    'bt_ToolTipPasswordCopied' => 'Mật khẩu đã được sao chép vào bộ nhớ tạm',
     'bt_ToolTipDelete' => 'Xóa',
     'bt_ToolTipDeleteCert' => 'Xóa chứng chỉ',
     'bt_ToolTipDownload' => 'Tải xuống',

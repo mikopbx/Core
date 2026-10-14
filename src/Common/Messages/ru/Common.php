@@ -418,6 +418,7 @@ return [
     'bt_ToolTipCopyCert' => 'Копировать сертификат',
     'bt_ToolTipCopyKey' => 'Копировать SSH ключ',
     'bt_ToolTipCopyPassword' => 'Скопировать пароль в буфер',
+    'bt_ToolTipPasswordCopied' => 'Пароль скопирован в буфер обмена',
     'bt_ToolTipCopyRoute' => 'Скопировать маршрут',
     'bt_ToolTipDelete' => 'Удалить',
     'bt_ToolTipDeleteCert' => 'Удалить сертификат',

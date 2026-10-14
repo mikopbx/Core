@@ -365,6 +365,7 @@ return [
     'bt_ToolTipCopyCert' => 'Copiar certificado',
     'bt_ToolTipCopyKey' => 'Copiar chave SSH',
     'bt_ToolTipCopyPassword' => 'Copiar senha para a área de transferência',
+    'bt_ToolTipPasswordCopied' => 'Senha copiada para a área de transferência',
     'bt_ToolTipDelete' => 'Excluir',
     'bt_ToolTipDeleteCert' => 'Excluir certificado',
     'bt_ToolTipDownload' => 'Download',

@@ -324,6 +324,7 @@ return [
     'bt_ToolTipCopyCert' => 'คัดลอกใบรับรอง',
     'bt_ToolTipCopyKey' => 'คัดลอกคีย์ SSH',
     'bt_ToolTipCopyPassword' => 'คัดลอกรหัสผ่านไปยังคลิปบอร์ดแล้ว',
+    'bt_ToolTipPasswordCopied' => 'คัดลอกรหัสผ่านไปยังคลิปบอร์ดแล้ว',
     'bt_ToolTipDelete' => 'ลบ',
     'bt_ToolTipDeleteCert' => 'ลบใบรับรอง',
     'bt_ToolTipDownload' => 'ดาวน์โหลด',

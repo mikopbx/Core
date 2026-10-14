@@ -312,6 +312,7 @@ return [
     'bt_SaveSettingsAndExit' => 'Αποθήκευσε και κλείσε',
     'bt_ToolTipCopy' => 'αντίγραφο',
     'bt_ToolTipCopyPassword' => 'Ο κωδικός πρόσβασης αντιγράφηκε στο πρόχειρο',
+    'bt_ToolTipPasswordCopied' => 'Ο κωδικός πρόσβασης αντιγράφηκε στο πρόχειρο',
     'bt_ToolTipDelete' => 'Διαγράφω',
     'bt_ToolTipDownload' => 'Κατεβάστε',
     'bt_ToolTipEdit' => 'Αλλαγή',

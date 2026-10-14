@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => 'Kopioi varmenne',
     'bt_ToolTipCopyKey' => 'Kopioi SSH-avain',
     'bt_ToolTipCopyPassword' => 'Kopioi salasana leikepöydälle',
+    'bt_ToolTipPasswordCopied' => 'Salasana kopioitu leikepöydälle',
     'bt_ToolTipDelete' => 'Poista',
     'bt_ToolTipDeleteCert' => 'Poista varmenne',
     'bt_ToolTipDownload' => 'Lataa',

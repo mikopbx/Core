@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => 'Copiați certificatul',
     'bt_ToolTipCopyKey' => 'Copiați cheia SSH',
     'bt_ToolTipCopyPassword' => 'Parola a fost copiată în clipboard',
+    'bt_ToolTipPasswordCopied' => 'Parola a fost copiată în clipboard',
     'bt_ToolTipDelete' => 'Șterge',
     'bt_ToolTipDeleteCert' => 'Ștergeți certificatul',
     'bt_ToolTipDownload' => 'Descarca',

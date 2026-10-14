@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => 'Sertifikayı kopyala',
     'bt_ToolTipCopyKey' => 'SSH anahtarını kopyala',
     'bt_ToolTipCopyPassword' => 'Şifre panoya kopyalandı',
+    'bt_ToolTipPasswordCopied' => 'Şifre panoya kopyalandı',
     'bt_ToolTipDelete' => 'Sil',
     'bt_ToolTipDeleteCert' => 'Sertifikayı sil',
     'bt_ToolTipDownload' => 'indir',

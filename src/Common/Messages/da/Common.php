@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => 'Kopiér certifikat',
     'bt_ToolTipCopyKey' => 'Kopiér SSH nøgle',
     'bt_ToolTipCopyPassword' => 'Adgangskode kopieret til udklipsholder',
+    'bt_ToolTipPasswordCopied' => 'Adgangskoden er kopieret til udklipsholderen',
     'bt_ToolTipDelete' => 'Slet',
     'bt_ToolTipDeleteCert' => 'Slet certifikat',
     'bt_ToolTipDownload' => 'downloade',

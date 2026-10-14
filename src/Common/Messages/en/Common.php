@@ -379,6 +379,7 @@ return [
     'bt_ToolTipCopyCert' => 'Copy certificate',
     'bt_ToolTipCopyKey' => 'Copy SSH key',
     'bt_ToolTipCopyPassword' => 'Copy password to clipboard',
+    'bt_ToolTipPasswordCopied' => 'Password copied to clipboard',
     'bt_ToolTipDelete' => 'Delete',
     'bt_ToolTipDeleteCert' => 'Delete certificate',
     'bt_ToolTipDownload' => 'Download',

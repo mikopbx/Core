@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => 'Kopiuj certyfikat',
     'bt_ToolTipCopyKey' => 'Kopiuj klucz SSH',
     'bt_ToolTipCopyPassword' => 'Hasło zostało skopiowane do schowka',
+    'bt_ToolTipPasswordCopied' => 'Hasło zostało skopiowane do schowka',
     'bt_ToolTipDelete' => 'Usuń',
     'bt_ToolTipDeleteCert' => 'Usuń certyfikat',
     'bt_ToolTipDownload' => 'Pobierz',

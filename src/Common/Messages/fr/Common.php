@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => 'Copier le certificat',
     'bt_ToolTipCopyKey' => 'Copier la clé SSH',
     'bt_ToolTipCopyPassword' => 'Mot de passe copié dans le presse-papiers',
+    'bt_ToolTipPasswordCopied' => 'Mot de passe copié dans le presse-papiers',
     'bt_ToolTipDelete' => 'Effacer',
     'bt_ToolTipDeleteCert' => 'Supprimer le certificat',
     'bt_ToolTipDownload' => 'Téléchargez',

@@ -369,6 +369,7 @@ return [
     'bt_ToolTipGeneratePassword' => 'Neues Passwort generieren',
     'bt_ToolTipShowPassword' => 'Passwort anzeigen/verbergen',
     'bt_ToolTipCopyPassword' => 'Passwort in die Zwischenablage kopiert',
+    'bt_ToolTipPasswordCopied' => 'Passwort in die Zwischenablage kopiert',
     'bt_ToolTipDelete' => 'Löschen',
     'bt_ToolTipDownload' => 'Download',
     'bt_ToolTipEdit' => 'Ändern',

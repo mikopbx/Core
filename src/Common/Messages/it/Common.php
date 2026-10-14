@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => 'Copia certificato',
     'bt_ToolTipCopyKey' => 'Copia chiave SSH',
     'bt_ToolTipCopyPassword' => 'Password copiata negli appunti',
+    'bt_ToolTipPasswordCopied' => 'Password copiata negli appunti',
     'bt_ToolTipDeleteCert' => 'Elimina certificato',
     'bt_ToolTipEditCert' => 'Modifica certificato',
     'bt_ToolTipExpand' => 'Mostra chiave completa',

@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => 'Kopírovat certifikát',
     'bt_ToolTipCopyKey' => 'Kopírovat SSH klíč',
     'bt_ToolTipCopyPassword' => 'Heslo bylo zkopírováno do schránky',
+    'bt_ToolTipPasswordCopied' => 'Heslo bylo zkopírováno do schránky',
     'bt_ToolTipDelete' => 'Odstranit',
     'bt_ToolTipDeleteCert' => 'Smazat certifikát',
     'bt_ToolTipDownload' => 'Stáhnout',

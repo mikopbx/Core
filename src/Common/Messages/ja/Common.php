@@ -360,6 +360,7 @@ return [
     'bt_SelectAll' => '全て選択',
     'bt_ToolTipCopy' => 'コピー',
     'bt_ToolTipCopyPassword' => 'パスワードをクリップボードにコピーしました',
+    'bt_ToolTipPasswordCopied' => 'パスワードをクリップボードにコピーしました',
     'bt_ToolTipDelete' => '削除する',
     'bt_ToolTipDownload' => 'ダウンロードする',
     'bt_ToolTipEdit' => '編集する',

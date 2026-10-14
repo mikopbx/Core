@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => 'Kopiraj certifikat',
     'bt_ToolTipCopyKey' => 'Kopiraj SSH ključ',
     'bt_ToolTipCopyPassword' => 'Lozinka kopirana u međuspremnik',
+    'bt_ToolTipPasswordCopied' => 'Lozinka kopirana u međuspremnik',
     'bt_ToolTipDelete' => 'Izbrisati',
     'bt_ToolTipDeleteCert' => 'Obriši certifikat',
     'bt_ToolTipDownload' => 'preuzimanje',

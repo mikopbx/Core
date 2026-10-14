@@ -366,6 +366,7 @@ return [
     'bt_ToolTipCopyCert' => 'Копіювати сертифікат',
     'bt_ToolTipCopyKey' => 'Копіювати SSH ключ',
     'bt_ToolTipCopyPassword' => 'Пароль скопійований в буфер',
+    'bt_ToolTipPasswordCopied' => 'Пароль скопійовано до буфера обміну',
     'bt_ToolTipDelete' => 'Видалити',
     'bt_ToolTipDeleteCert' => 'Видалити сертифікат',
     'bt_ToolTipDownload' => 'Скачати',

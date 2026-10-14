@@ -313,6 +313,7 @@ return [
     'bt_SaveSettingsAndExit' => 'Guardar y cerrar',
     'bt_ToolTipCopy' => 'Copiar',
     'bt_ToolTipCopyPassword' => 'Contraseña copiada al portapapeles',
+    'bt_ToolTipPasswordCopied' => 'Contraseña copiada al portapapeles',
     'bt_ToolTipDelete' => 'Eliminar',
     'bt_ToolTipDownload' => 'Descargar',
     'bt_ToolTipEdit' => 'Editar',
