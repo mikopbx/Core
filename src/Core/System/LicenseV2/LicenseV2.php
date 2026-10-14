@@ -228,10 +228,9 @@ class LicenseV2
         try {
             $licenseKey = $this->licenseKey();
             $payload = $this->store->lastVerifiedPayload();
-            $documentValid = $payload !== null && hash_equals($licenseKey, (string)($payload['key'] ?? ''))
-                && !$this->store->revoked($payload) && EntitlementToken::isFresh($payload, $this->store->now(), true);
             if (
-                $documentValid && !EntitlementToken::featureValid($payload, $featureId, $this->store->now())
+                $this->documentValid($payload, $licenseKey)
+                && !EntitlementToken::featureValid($payload, $featureId, $this->store->now())
                 && EntitlementToken::entitled($payload, $featureId) !== null
             ) {
                 // #1210: on the key, no seat granted here: a shortage the next report turns into demand, not "unlicensed"
@@ -395,12 +394,31 @@ class LicenseV2
      */
     public function noteDemand(string $featureId): bool
     {
-        $payload = $this->store->lastVerifiedPayload();
-        if ($payload === null || EntitlementToken::entitled($payload, $featureId) === null) {
+        // Best effort: a broken ledger must not stop the caller from recording the refusal itself.
+        try {
+            $payload = $this->store->lastVerifiedPayload();
+            if (!$this->documentValid($payload, $this->licenseKey()) || EntitlementToken::entitled($payload, $featureId) === null) {
+                return false;
+            }
+            $this->ledger->noteDenied($featureId);
+            return true;
+        } catch (Throwable $e) {
+            $this->log('Demand left out of the next round: ' . $e->getMessage());
             return false;
         }
-        $this->ledger->noteDenied($featureId);
-        return true;
+    }
+
+    /**
+     * The document this PBX may act on (#1210): its key, not revoked, fresh. Only such a document's `entitled`
+     * layer turns a refusal into demand.
+     *
+     * @param array<string, mixed>|null $payload
+     * @phpstan-assert-if-true array<string, mixed> $payload
+     */
+    private function documentValid(?array $payload, string $licenseKey): bool
+    {
+        return $payload !== null && hash_equals($licenseKey, (string)($payload['key'] ?? ''))
+            && !$this->store->revoked($payload) && EntitlementToken::isFresh($payload, $this->store->now(), true);
     }
 
     /**

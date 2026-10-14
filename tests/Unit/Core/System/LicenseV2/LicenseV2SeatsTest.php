@@ -952,6 +952,15 @@ class LicenseV2SeatsTest extends TestCase
         return ['request' => $request, 'token' => $payload . '.' . EntitlementToken::base64UrlEncode($signature)];
     }
 
+    public function testNoteDemandIgnoresTheDocumentOfAnotherKey(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 1], null, null, ['7' => ['until' => self::NOW + 3600, 'limit' => 10]]);
+        $this->licenseKey = 'MIKO-OTHER';
+        $this->assertFalse($license->noteDemand('7'));
+        $this->licenseKey = 'MIKO-TEST';
+        $this->assertArrayNotHasKey('7', $this->answerOffline($license)['request']['usage'] ?? []);
+    }
+
     public function testEntitlementStatusCarriesTheEntitledLayer(): void
     {
         $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 1], null, null, ['54' => ['until' => self::NOW + 86400, 'limit' => 1], '7' => ['until' => self::NOW + 3600, 'limit' => 10]]);
