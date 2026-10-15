@@ -207,6 +207,37 @@ RSYSLOG;
     }
 
     /**
+     * The script rsyslog runs when the log reaches its size limit: the current file becomes .1 (kept plain for
+     * reading), older generations shift up to .9 gzipped, the tenth is dropped. #1209: the shift looks for the .gz
+     * names it produces itself (before, the chain broke after .2), and names left by earlier versions of the
+     * script (messages.gz, messages.N.gz.gz…) are removed; other files sharing the prefix are not touched.
+     */
+    private static function buildRotateScript(string $logFile, string $mvPath, string $gzipPath): string
+    {
+        return '#!/bin/sh' . PHP_EOL .
+            "logName='$logFile';" . PHP_EOL .
+            'if [ ! -f "$logName" ]; then exit; fi' . PHP_EOL .
+            'for f in "$logName".*; do' . PHP_EOL .
+            '  case "${f#"$logName"}" in' . PHP_EOL .
+            '    .[1-9]|.[1-9].gz) ;;' . PHP_EOL .
+            '    *.gz) rm -f "$f" ;;' . PHP_EOL .
+            '  esac' . PHP_EOL .
+            'done' . PHP_EOL .
+            'id=8' . PHP_EOL .
+            'while [ "$id" -ge 1 ]; do' . PHP_EOL .
+            '  next=$((id + 1))' . PHP_EOL .
+            '  if [ -f "$logName.$id.gz" ]; then' . PHP_EOL .
+            '    ' . $mvPath . ' -f "$logName.$id.gz" "$logName.$next.gz"' . PHP_EOL .
+            '  elif [ -f "$logName.$id" ]; then' . PHP_EOL .
+            '    ' . $mvPath . ' -f "$logName.$id" "$logName.$next"' . PHP_EOL .
+            '    ' . $gzipPath . ' -f "$logName.$next"' . PHP_EOL .
+            '  fi' . PHP_EOL .
+            '  id=$((id - 1))' . PHP_EOL .
+            'done' . PHP_EOL .
+            $mvPath . ' -f "$logName" "$logName.1"' . PHP_EOL;
+    }
+
+    /**
      * Creates the log rotation script.
      * @param string $serviceName
      * @param string|null $logFilePath Optional custom log file path. If not provided, uses getSyslogFile().
@@ -214,30 +245,10 @@ RSYSLOG;
      */
     public static function createRotateScript(string $serviceName, ?string $logFilePath = null): string
     {
-        $mvPath     = Util::which('mv');
         $chmodPath   = Util::which('chmod');
-        $gzipPath    = Util::which('gzip');
         $di          = Di::getDefault();
         $logFile     = $logFilePath ?? self::getSyslogFile($serviceName);
-        $textScript  =  '#!/bin/sh' . PHP_EOL .
-                        "logName='$logFile';" . PHP_EOL .
-                        'if [ ! -f "$logName" ]; then exit; fi' . PHP_EOL .
-                        'for srcId in 5 4 3 2 1 ""; do' . PHP_EOL .
-                        '  dstId=$((srcId + 1));' . PHP_EOL .
-                        '  if [ "x" != "${srcId}x" ]; then' . PHP_EOL .
-                        '    srcId=".${srcId}"' . PHP_EOL .
-                        '  fi' . PHP_EOL .
-                        '  srcFilename="${logName}${srcId}"' . PHP_EOL .
-                        '  if [ -f "$srcFilename" ];then' . PHP_EOL .
-                        '    dstFilename="${logName}.${dstId}"' . PHP_EOL .
-                        '    ' . $mvPath . ' -f "$srcFilename" "$dstFilename"' . PHP_EOL .
-                        '    # Compress all rotated logs except the most recent one' . PHP_EOL .
-                        '    if [ "$dstId" -gt 1 ]; then' . PHP_EOL .
-                        '      ' . $gzipPath . ' -f "$dstFilename"' . PHP_EOL .
-                        '    fi' . PHP_EOL .
-                        '  fi' . PHP_EOL .
-                        'done' . PHP_EOL .
-                        PHP_EOL;
+        $textScript  = self::buildRotateScript($logFile, Util::which('mv'), Util::which('gzip'));
         if ($di) {
             $varEtcDir  = $di->getShared('config')->path('core.varEtcDir');
         } else {
