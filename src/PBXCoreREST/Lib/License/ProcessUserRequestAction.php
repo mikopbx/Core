@@ -55,25 +55,32 @@ class ProcessUserRequestAction extends Injectable
         $res->httpCode = 200;
         $di = Di::getDefault();
         $translation = $di->get(TranslationProvider::SERVICE_NAME);
+        $error = self::requestError($data);
+        if ($error !== null) {
+            $res->messages['license'][] = $translation->_($error);
+            $res->success = false;
+            return $res;
+        }
         $license = $di->get(MarketPlaceProvider::SERVICE_NAME);
-        if (strlen($data['licKey']) === 28 && Text::startsWith($data['licKey'], 'MIKO-')) {
+        $licKey = trim((string)($data['licKey'] ?? ''));
+        if ($licKey !== '') {
             PbxSettings::clearCache(PbxSettings::class);
             $oldLicKey =  PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
 
             // Check if key has changed or if we need to validate existing key
-            if ($oldLicKey === $data['licKey']) {
+            if ($oldLicKey === $licKey) {
                 // Key hasn't changed - return success without re-validation
-                $res->data[PbxSettings::PBX_LICENSE] = $data['licKey'];
+                $res->data[PbxSettings::PBX_LICENSE] = $licKey;
                 $res->messages['info'][] = $translation->_('lic_SuccessfulActivation');
                 $res->success = true;
             } else {
                 // Key has changed - validate it
-                $licenseInfo = $license->getLicenseInfo($data['licKey']);
+                $licenseInfo = $license->getLicenseInfo($licKey);
                 if ($licenseInfo['success'] && $licenseInfo['result'] instanceof SimpleXMLElement) {
-                    PbxSettings::setValueByKey(PbxSettings::PBX_LICENSE, $data['licKey']);
-                    $license->changeLicenseKey($data['licKey']);
+                    PbxSettings::setValueByKey(PbxSettings::PBX_LICENSE, $licKey);
+                    $license->changeLicenseKey($licKey);
                     $license->addTrial('11'); // MikoPBX forever license
-                    $res->data[PbxSettings::PBX_LICENSE] = $data['licKey'];
+                    $res->data[PbxSettings::PBX_LICENSE] = $licKey;
                     $res->messages['info'][] = $translation->_('lic_SuccessfulActivation');
                     $res->success = true;
                 } elseif ($license instanceof LicenseV2 && self::v1Unreachable($licenseInfo)) {
@@ -82,7 +89,7 @@ class ProcessUserRequestAction extends Injectable
                     // must not switch the modules off, and the key reset is the explicit way out.
                     // Offline nobody checks the key but this PBX: only the exact format may be stored
                     // (it lands in every page's JS).
-                    if (preg_match(self::KEY_PATTERN, $data['licKey']) !== 1) {
+                    if (preg_match(self::KEY_PATTERN, $licKey) !== 1) {
                         $res->messages['license'][] = $translation->_('lic_WrongLicenseKeyOrEmpty');
                         $res->success = false;
                         return $res;
@@ -94,9 +101,9 @@ class ProcessUserRequestAction extends Injectable
                         // Offline as well: a coupon would only cost another timeout.
                         return $res;
                     } else {
-                        PbxSettings::setValueByKey(PbxSettings::PBX_LICENSE, $data['licKey']);
-                        $license->changeLicenseKeyOffline($data['licKey']);
-                        $res->data[PbxSettings::PBX_LICENSE] = $data['licKey'];
+                        PbxSettings::setValueByKey(PbxSettings::PBX_LICENSE, $licKey);
+                        $license->changeLicenseKeyOffline($licKey);
+                        $res->data[PbxSettings::PBX_LICENSE] = $licKey;
                         $res->messages['info'][] = $translation->_('lic_KeySavedWithoutCheck');
                         $res->success = true;
                         // A coupon can not be activated offline, and its forced round would only cost another timeout.
@@ -123,7 +130,8 @@ class ProcessUserRequestAction extends Injectable
                 }
             }
         } else {
-            $trialResult = $license->getTrialLicense($data);
+            // The trial form of the admin UI always sends the optional fields; a direct REST call may omit them.
+            $trialResult = $license->getTrialLicense($data + ['inn' => '', 'telefone' => '']);
             if (!empty($trialResult['success'])) {
                 $newLicenseKey = (string)($trialResult['result'] ?? '');
                 if (
@@ -146,6 +154,33 @@ class ProcessUserRequestAction extends Injectable
             }
         }
         return $res;
+    }
+
+    /**
+     * #1200: what is wrong with the request before anything is asked of the licensing server. A key decides the
+     * branch: any key must have the shape of one (the server checks the rest), only an empty key asks for a trial,
+     * and the trial form needs its three mandatory fields. The UI enforces the same; direct REST calls did not.
+     *
+     * @param array<string, mixed> $data The request.
+     * @return string|null Translation key of the error, null when the request may go on.
+     */
+    private static function requestError(array $data): ?string
+    {
+        $licKey = trim((string)($data['licKey'] ?? ''));
+        if ($licKey !== '') {
+            return strlen($licKey) === 28 && Text::startsWith($licKey, 'MIKO-') ? null : 'lic_WrongLicenseKeyOrEmpty';
+        }
+        $mandatory = [
+            'companyname' => 'lic_ValidateCompanyNameEmpty',
+            'email' => 'lic_ValidateContactEmail',
+            'contact' => 'lic_ValidateContactName',
+        ];
+        foreach ($mandatory as $field => $error) {
+            if (trim((string)($data[$field] ?? '')) === '') {
+                return $error;
+            }
+        }
+        return null;
     }
 
     /**
