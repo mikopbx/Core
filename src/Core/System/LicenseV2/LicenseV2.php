@@ -67,6 +67,12 @@ class LicenseV2
     /** Seconds to wait before asking for a refused seat again: the worker's cadence. */
     private const int RETRY_AFTER = 60;
 
+    /**
+     * #1222: "MikoPBX license", the feature v1 captured for the PBX itself. Held for the usage statistics of the
+     * licensing server only: nothing in the core checks it, a refusal of it switches nothing off.
+     */
+    private const string PBX_FEATURE = '33';
+
     /** Legacy calls that change what the key is entitled to; the stored token is stale after them. */
     private const array ENTITLEMENT_CHANGING_CALLS = ['addtrial', 'activatecoupon', 'changelicensekey'];
 
@@ -803,18 +809,22 @@ class LicenseV2
             $seats = $this->ledger->report();
             $holders = $this->ledger->holders();
             $usage = $seats['usage'];
-            // #1210: an enabled module holds the seat; sessions and refusals already in the ledger only add to the mark
+            // #1210: an enabled module holds the seat; sessions and refusals already in the ledger only add to the mark.
+            // #1222: so does the PBX itself, whatever its modules; a key without feature 33 is no error, the server
+            // drops what it has no pool of.
+            $demand = [self::PBX_FEATURE];
             try {
-                foreach (($this->moduleDemand)() as $featureId) {
-                    $row = $usage[$featureId] ?? ['used' => 0, 'peak' => 0, 'denied' => 0];
-                    $usage[$featureId] = [
-                        'used' => max($row['used'], 1),
-                        'peak' => max($row['peak'], 1),
-                        'denied' => $row['denied'],
-                    ];
-                }
+                $demand = [...($this->moduleDemand)(), ...$demand];
             } catch (Throwable $e) {
                 $this->log('Module demand left out of the request: ' . $e->getMessage());
+            }
+            foreach ($demand as $featureId) {
+                $row = $usage[$featureId] ?? ['used' => 0, 'peak' => 0, 'denied' => 0];
+                $usage[$featureId] = [
+                    'used' => max($row['used'], 1),
+                    'peak' => max($row['peak'], 1),
+                    'denied' => $row['denied'],
+                ];
             }
             if ($usage !== []) {
                 $signed['usage'] = $usage;

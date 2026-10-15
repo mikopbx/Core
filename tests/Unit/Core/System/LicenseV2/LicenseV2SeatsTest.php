@@ -31,8 +31,8 @@ class LicenseV2SeatsTest extends TestCase
     private ?\Closure $metrics = null;
     private array $logged = [];
 
-    /** @var array<int, string> */
-    private array $moduleDemand = [];
+    /** @var array<int, string>|null null: the modules can not be read */
+    private ?array $moduleDemand = [];
     /** @var array<int, callable> What the licensing server answers, one entry per request. */
     private array $serverAnswers = [];
     /** @var array<int, string> What PbxSettings::LICENSE_V2_SERVER_URL would list. */
@@ -71,7 +71,7 @@ class LicenseV2SeatsTest extends TestCase
         $refused = $license->captureFeature('54', $s);
         $this->assertSame(1051, $refused['extcode']);
         $this->assertSame(60, $refused['retryAfter']);
-        $this->assertSame(['54' => ['used' => 0, 'peak' => 0, 'denied' => 1]], $this->answerOffline($license)['request']['usage']);
+        $this->assertSame(['54' => ['used' => 0, 'peak' => 0, 'denied' => 1], '33' => ['used' => 1, 'peak' => 1, 'denied' => 0]], $this->answerOffline($license)['request']['usage']);
     }
 
     public function testWithoutEntitledLayerAMissingFeatureIsNotLicensed(): void
@@ -251,7 +251,7 @@ class LicenseV2SeatsTest extends TestCase
         $license->captureFeature('54', $a);
 
         $first = $this->answerOffline($license);
-        $this->assertSame(['54' => ['used' => 1, 'peak' => 1, 'denied' => 0]], $first['request']['usage']);
+        $this->assertSame(['54' => ['used' => 1, 'peak' => 1, 'denied' => 0], '33' => ['used' => 1, 'peak' => 1, 'denied' => 0]], $first['request']['usage']);
         $this->assertSame(
             [['ref' => SeatLedger::ref($a), 'features' => ['54'], 'since' => self::NOW, 'username' => 'a']],
             $first['request']['holders']
@@ -282,7 +282,7 @@ class LicenseV2SeatsTest extends TestCase
         $this->assertSame(1021, $license->sessionKeepalive($a)['extcode']);
         $this->assertTrue($license->sessionKeepalive($b)['success']);
         $this->assertSame(
-            ['54' => ['used' => 1, 'peak' => 1, 'denied' => 1]],
+            ['54' => ['used' => 1, 'peak' => 1, 'denied' => 1], '33' => ['used' => 1, 'peak' => 1, 'denied' => 0]],
             $this->answerOffline($license)['request']['usage']
         );
     }
@@ -297,7 +297,7 @@ class LicenseV2SeatsTest extends TestCase
 
         $this->answerOffline($license);
         $this->assertSame(
-            ['54' => ['used' => 1, 'peak' => 1, 'denied' => 1]],
+            ['54' => ['used' => 1, 'peak' => 1, 'denied' => 1], '33' => ['used' => 1, 'peak' => 1, 'denied' => 0]],
             $this->answerOffline($license)['request']['usage']
         );
     }
@@ -900,10 +900,17 @@ class LicenseV2SeatsTest extends TestCase
         $license = $this->licensed(['54' => self::NOW + 86400], []);
         $this->moduleDemand = ['54', '66'];
         $request = $this->answerOffline($license)['request'];
-        $this->assertSame(['54' => ['used' => 1, 'peak' => 1, 'denied' => 0], '66' => ['used' => 1, 'peak' => 1, 'denied' => 0]], $request['usage']);
-        // nothing enabled: nothing asked
+        $this->assertSame(['54' => ['used' => 1, 'peak' => 1, 'denied' => 0], '66' => ['used' => 1, 'peak' => 1, 'denied' => 0], '33' => ['used' => 1, 'peak' => 1, 'denied' => 0]], $request['usage']);
+        // nothing enabled: only the PBX itself (#1222)
         $this->moduleDemand = [];
-        $this->assertArrayNotHasKey('usage', $this->answerOffline($license)['request']);
+        $this->assertSame(['33' => ['used' => 1, 'peak' => 1, 'denied' => 0]], $this->answerOffline($license)['request']['usage']);
+    }
+
+    public function testThePbxKeepsItsOwnDemandWhenModulesCanNotBeRead(): void
+    {
+        $license = $this->licensed(['54' => self::NOW + 86400], []);
+        $this->moduleDemand = null;
+        $this->assertSame(['33' => ['used' => 1, 'peak' => 1, 'denied' => 0]], $this->answerOffline($license)['request']['usage']);
     }
 
     public function testSessionUsageWinsOverTheModuleMark(): void
@@ -914,7 +921,7 @@ class LicenseV2SeatsTest extends TestCase
             $s = $license->sessionStart(['username' => $user], 300)['session_id'];
             $license->captureFeature('54', $s);
         }
-        $this->assertSame(['54' => ['used' => 2, 'peak' => 2, 'denied' => 0]], $this->answerOffline($license)['request']['usage']);
+        $this->assertSame(['54' => ['used' => 2, 'peak' => 2, 'denied' => 0], '33' => ['used' => 1, 'peak' => 1, 'denied' => 0]], $this->answerOffline($license)['request']['usage']);
     }
 
     public function testModuleMarkSurvivesAnEarlierRefusalInTheLedger(): void
@@ -922,7 +929,7 @@ class LicenseV2SeatsTest extends TestCase
         $license = $this->licensed(['54' => self::NOW + 86400], ['54' => 1], null, null, ['54' => ['until' => self::NOW + 86400, 'limit' => 1]]);
         $this->moduleDemand = ['54'];
         $this->assertTrue($license->noteDemand('54'));
-        $this->assertSame(['54' => ['used' => 1, 'peak' => 1, 'denied' => 1]], $this->answerOffline($license)['request']['usage']);
+        $this->assertSame(['54' => ['used' => 1, 'peak' => 1, 'denied' => 1], '33' => ['used' => 1, 'peak' => 1, 'denied' => 0]], $this->answerOffline($license)['request']['usage']);
     }
 
     /**
@@ -1010,7 +1017,7 @@ class LicenseV2SeatsTest extends TestCase
             },
             new Client(['handler' => HandlerStack::create(new MockHandler($this->serverAnswers))]),
             fn(): array => $this->serverUrls,
-            fn(): array => $this->moduleDemand
+            fn(): array => $this->moduleDemand ?? throw new \RuntimeException('the module table is gone')
         );
     }
 
