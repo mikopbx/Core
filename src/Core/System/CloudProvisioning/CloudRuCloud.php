@@ -101,6 +101,14 @@ class CloudRuCloud extends CloudProvider
             webPassword: $instanceId
         );
 
+        $publicKeys = $metadata['public_keys'] ?? null;
+        if (is_array($publicKeys)) {
+            $keys = array_values(array_filter($publicKeys, 'is_string'));
+            if ($keys !== []) {
+                $config->sshKeys = ProvisioningConfig::fromArray(['ssh_authorized_keys' => $keys])->sshKeys;
+            }
+        }
+
         $userData = $this->fetchUserData();
         if ($userData !== null) {
             $userConfig = $this->parseUserData($userData);

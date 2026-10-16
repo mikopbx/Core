@@ -86,6 +86,43 @@ class CloudRuCloudTest extends TestCase
         self::assertNull($provider->captured->sshLogin);
     }
 
+    public function testProvisionsPublicKeysFromOpenStackMetadata(): void
+    {
+        $provider = new class extends CloudRuCloud {
+            public ?ProvisioningConfig $captured = null;
+
+            protected function applyConfigDirect(ProvisioningConfig $config): bool
+            {
+                $this->captured = $config;
+                return true;
+            }
+        };
+
+        $vendorData = json_encode(['vmmmetadata' => [
+            'token' => '', 'projectId' => '', 'instanceId' => '',
+            'monaasUrl' => '', 'logaasUrl' => '', 'collectDefaultLogs' => false,
+        ]]);
+        $metadata = json_encode([
+            'uuid' => '4c4cfe90-2e77-4b33-a891-1ff55589facc',
+            'name' => 'Vm 1bb373c4-b402-4346-b5d7-a38dde4c113b',
+            'public_keys' => [
+                'first' => 'ssh-ed25519 AAAAfirst user@host',
+                'second' => 'ssh-rsa AAAAsecond user@host',
+            ],
+        ]);
+        $responses = new MockHandler([
+            new Response(200, [], $vendorData),
+            new Response(200, [], $metadata),
+            new Response(200, [], '87.242.119.156'),
+            new Response(404),
+        ]);
+        (new \ReflectionProperty(CloudRuCloud::class, 'client'))
+            ->setValue($provider, new Client(['handler' => $responses]));
+
+        self::assertTrue($provider->provision());
+        self::assertSame("ssh-ed25519 AAAAfirst user@host\nssh-rsa AAAAsecond user@host", $provider->captured->sshKeys);
+    }
+
     private function detect(Response $response): bool
     {
         if (!class_exists(CloudRuCloud::class)) {

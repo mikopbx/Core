@@ -1,0 +1,7 @@
+#cloud-config
+{% if public_key %}
+mikopbx:
+  ssh_authorized_keys:
+    - >-
+      {{ public_key }}
+{% endif %}
