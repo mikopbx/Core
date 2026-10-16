@@ -25,6 +25,7 @@ use MikoPBX\Core\System\CloudProvisioning\AlibabaCloud;
 use MikoPBX\Core\System\CloudProvisioning\AWSCloud;
 use MikoPBX\Core\System\CloudProvisioning\AzureCloud;
 use MikoPBX\Core\System\CloudProvisioning\CloudProvider;
+use MikoPBX\Core\System\CloudProvisioning\CloudRuCloud;
 use MikoPBX\Core\System\CloudProvisioning\DigitalOceanCloud;
 use MikoPBX\Core\System\CloudProvisioning\DockerCloud;
 use MikoPBX\Core\System\CloudProvisioning\GoogleCloud;
@@ -92,6 +93,7 @@ class CloudProvisioning
             DockerCloud::CloudID => new DockerCloud(),
             LxcCloud::CloudID => new LxcCloud(),
             YandexCloud::CloudID => new YandexCloud(),
+            CloudRuCloud::CloudID => new CloudRuCloud(),
             SelectelCloud::CloudID => new SelectelCloud(),
             VKCloud::CloudID => new VKCloud(),
             GoogleCloud::CloudID => new GoogleCloud(),
