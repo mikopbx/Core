@@ -78,10 +78,18 @@ class AlibabaCloud extends CloudProvider
         }
 
         // Extract metadata
-        $hostname = $metadata['hostname'] ?? '';
         $publicIp = $metadata['eipv4'] ?? '';
         $privateIp = $metadata['private-ipv4'] ?? '';
         $instanceId = $metadata['instance-id'];
+
+        // #990: Alibaba reports the instance id as the hostname (iZ<body>Z for i-<body>).
+        // The instance id is the initial web password and the hostname is shown on the
+        // login page, so a hostname carrying the id body is dropped: PBX_NAME and the
+        // LAN hostname are left unchanged (defaults on a fresh install); user-data may override.
+        $hostname = $metadata['hostname'] ?? '';
+        if ($hostname === '' || stripos($hostname, preg_replace('/^i-/i', '', $instanceId)) !== false) {
+            $hostname = null;
+        }
         $sshKeys = $this->retrieveSSHKeys();
 
         // Use public IP if available, otherwise private IP
@@ -107,12 +115,11 @@ class AlibabaCloud extends CloudProvider
             }
         }
 
-        // Log successful provisioning with instance details
+        // Do not log the instance id: it is the initial web password (#990).
         SystemMessages::sysLogMsg(
             __CLASS__,
             sprintf(
-                "Provisioned Alibaba Cloud instance: %s, Private IP: %s, Public IP: %s",
-                $instanceId,
+                "Provisioned Alibaba Cloud instance, Private IP: %s, Public IP: %s",
                 $privateIp,
                 $publicIp
             )
