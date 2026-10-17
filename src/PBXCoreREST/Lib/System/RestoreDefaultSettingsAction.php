@@ -52,6 +52,7 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Configs\MonitConf;
 use MikoPBX\Core\System\Configs\CronConf;
+use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Services\TokenValidationService;
 use Phalcon\Di\Di;
@@ -316,46 +317,60 @@ class RestoreDefaultSettingsAction extends Injectable
     }
 
     /**
-     * Cleans all system and module logs
+     * Cleans all system and module logs.
+     *
+     * #1126: the files are truncated in place, not unlinked. rsyslogd, nginx, asterisk and php-fpm keep their
+     * log files open; after an unlink they would write into an orphaned inode and everything the reset logs
+     * after this point (the evidence needed to diagnose it) would be lost. Rotated generations are not held
+     * open and are deleted. rsyslogd gets a HUP afterwards so it reopens its files.
      */
     private static function cleaningSystemLogs(): void
     {
-        $rm = Util::which('rm');
         $mediaMountPoint = Directories::getDir(Directories::CORE_MEDIA_MOUNT_POINT_DIR);
-
-        // Base log directory
-        $logBaseDir = $mediaMountPoint . '/mikopbx/log/';
-
-        // System log directories
-        $systemLogDirs = ['system', 'php', 'nginx', 'asterisk', 'nats', 'fail2ban'];
-
-        foreach ($systemLogDirs as $dir) {
-            $logDir = $logBaseDir . $dir;
-            if (file_exists($logDir)) {
-                Processes::mwExec("$rm -rf {$logDir}/*");
+        $logBaseDir = rtrim($mediaMountPoint, '/') . '/mikopbx/log';
+        if (!is_dir($logBaseDir)) {
+            return;
+        }
+        // Require a canonical root: also rejects symlinks in any parent of the configured media path.
+        if (realpath($logBaseDir) !== $logBaseDir) {
+            SystemMessages::sysLogMsg(__METHOD__, "Logs are not cleaned: $logBaseDir is not a canonical path", LOG_WARNING);
+            return;
+        }
+        foreach (glob($logBaseDir . '/*', GLOB_ONLYDIR) ?: [] as $dir) {
+            self::purgeLogFiles($dir);
+        }
+        // Debug log files in the root log directory
+        foreach (glob($logBaseDir . '/*.log') ?: [] as $debugLog) {
+            if (!is_link($debugLog) && is_file($debugLog)) {
+                file_put_contents($debugLog, '');
             }
         }
+        $killall = Util::which('killall');
+        Processes::mwExec("$killall -HUP " . SyslogConf::PROC_NAME);
+    }
 
-        // Clean all module logs dynamically
-        if (file_exists($logBaseDir)) {
-            // Find all directories in log folder that are not system directories
-            $allDirs = glob($logBaseDir . '*', GLOB_ONLYDIR);
-            foreach ($allDirs as $dir) {
-                $dirName = basename($dir);
-                // Skip system directories
-                if (!in_array($dirName, $systemLogDirs)) {
-                    // This is a module log directory
-                    Processes::mwExec("$rm -rf {$dir}/*");
-                }
-            }
+    /**
+     * Truncates the live log files of a directory in place and deletes rotated generations
+     * (messages.1, messages.2.gz, access.log.0, ...). Subdirectories are handled the same way.
+     * Skip existing symlinks, including directory cycles. This assumes the tree is not concurrently
+     * replaced: pathname-based PHP checks cannot prevent a check/open race or detect hard links.
+     */
+    private static function purgeLogFiles(string $dir): void
+    {
+        if (is_link($dir) || !is_dir($dir)) {
+            return;
         }
-
-        // Clean debug log files in root log directory
-        if (file_exists($logBaseDir)) {
-            $debugLogs = glob($logBaseDir . '*.log');
-            foreach ($debugLogs as $debugLog) {
-                if (is_file($debugLog)) {
-                    unlink($debugLog);
+        foreach (glob($dir . '/*') ?: [] as $path) {
+            if (is_link($path)) {
+                continue;
+            }
+            if (is_dir($path)) {
+                self::purgeLogFiles($path);
+            } elseif (is_file($path)) {
+                if (preg_match('/\.(\d+|gz)$/', basename($path)) === 1) {
+                    unlink($path);
+                } else {
+                    file_put_contents($path, '');
                 }
             }
         }

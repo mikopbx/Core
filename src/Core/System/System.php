@@ -143,6 +143,7 @@ class System extends Injectable
         } else {
             // For VM/Hardware: Use standard pbx_reboot
             $pbx_reboot = Util::which('pbx_reboot');
+            SystemMessages::sysLogMsg(__METHOD__, "System reboot initiated via $pbx_reboot", LOG_INFO);
             Processes::mwExecBg("$pbx_reboot", "/dev/null", 1);
         }
     }
