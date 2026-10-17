@@ -123,16 +123,21 @@ class Request extends PhRequest
     }
 
     /**
-     * Get request data regardless of content type or HTTP method
+     * Get request data with query parameters taking precedence
      * Handles both JSON and form-encoded data, always includes query parameters
      *
-     * Query parameters take precedence over body data to allow parameter override
+     * Query parameters take precedence over body data to allow parameter override.
+     * GET and HEAD are query-only; do not read or decode their bodies (#1161).
      *
      * @return array<string, mixed> The parsed request data with query parameters merged
      */
     public function getData(): array
     {
         $queryData = $this->getQuery();
+        $method = $this->getMethod();
+        if ($method === 'GET' || $method === 'HEAD') {
+            return $queryData;
+        }
         $bodyData = [];
 
         $contentType = $this->getContentType();
@@ -148,7 +153,6 @@ class Request extends PhRequest
             }
         } else {
             // Handle form data based on HTTP method
-            $method = $this->getMethod();
             switch ($method) {
                 case 'POST':
                     $bodyData = $this->getPost();
@@ -168,10 +172,6 @@ class Request extends PhRequest
                     } else {
                         $bodyData = [];
                     }
-                    break;
-                case 'GET':
-                    // For GET, body data is empty
-                    $bodyData = [];
                     break;
                 default:
                     $bodyData = [];
