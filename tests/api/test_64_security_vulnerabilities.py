@@ -797,5 +797,83 @@ class TestIconClassXSSSanitization:
         )
 
 
+# ============================================================================
+# 6. WAF/REST body method agreement (#1161)
+# ============================================================================
+
+@pytest.mark.security
+class TestWafBodyScanMethods:
+    """Method regression only, not coverage of size/media-type/encoding bypasses.
+
+    requests uses HTTP/1.1. HTTP/2 without CL/TE needs a separate transport
+    probe; tests/Unit/Core/System/RootFS/waf-body-methods.lua also guards the
+    header-independent scan and asserts that GET/HEAD never call read_body().
+    """
+
+    @staticmethod
+    def _send(api_client, method, path, payload, form=False):
+        headers = api_client._get_headers()
+        headers['Content-Type'] = (
+            'application/x-www-form-urlencoded' if form else 'application/json'
+        )
+        return api_client.session.request(
+            method, f'{API_URL}/{path}', headers=headers, timeout=30,
+            verify=False, allow_redirects=False,
+            **({'data': payload} if form else {'json': payload}),
+        )
+
+    @pytest.mark.parametrize('method', ['POST', 'PUT', 'PATCH', 'DELETE'])
+    @pytest.mark.parametrize('form', [False, True], ids=['json', 'form'])
+    def test_consumed_body_traversal_blocked(self, api_client, method, form):
+        response = self._send(
+            api_client, method, 'system:ping', {'uniqid': '../../evil'}, form,
+        )
+        assert response.status_code == HTTP_FORBIDDEN, response.text[:200]
+        assert response.text.strip() == 'Security violation detected'
+
+    @pytest.mark.parametrize('method,status', [('GET', 200), ('HEAD', 404)])
+    @pytest.mark.parametrize('form', [False, True], ids=['json', 'form'])
+    def test_unused_body_does_not_change_route_response(self, api_client, method, status, form):
+        # Ping has a GET route, no HEAD route. This checks that WAF leaves
+        # both alone; RequestGetDataTest proves PHP does not read either body.
+        response = self._send(
+            api_client, method, 'system:ping', {'uniqid': '../../evil'}, form,
+        )
+        assert response.status_code == status, response.text[:200]
+        if method == 'GET':
+            assert response.json()['result'] is True
+        else:
+            assert response.content == b''
+
+    @pytest.mark.parametrize('form', [False, True], ids=['json', 'form'])
+    def test_clean_delete_cdr_body_preserved(self, api_client, form):
+        # A valid but absent linkedid reaches the CDR worker without deleting
+        # real data. Unit tests check deleteRecording survives both parsers.
+        response = self._send(
+            api_client, 'DELETE', 'cdr/mikopbx-waf1161-does-not-exist',
+            {'deleteRecording': 'true'} if form else {'deleteRecording': True}, form,
+        )
+        assert response.status_code == 404, response.text[:200]
+        assert 'Record not found' in response.json()['messages']['error']
+
+    @pytest.mark.parametrize('form', [False, True], ids=['json', 'form'])
+    def test_post_clean_body_unchanged(self, api_client, form):
+        try:
+            response = self._send(
+                api_client, 'POST', 'user-page-tracker:pageView',
+                {'pageName': 'waf-1161-check', 'expire': 1}, form,
+            )
+            assert response.status_code == HTTP_OK, response.text[:200]
+            assert response.json()['result'] is True
+            assert response.json()['data']['pageName'] == 'waf-1161-check'
+        finally:
+            response = self._send(
+                api_client, 'POST', 'user-page-tracker:pageLeave',
+                {'pageName': 'waf-1161-check'}, form,
+            )
+            assert response.status_code == HTTP_OK, response.text[:200]
+            assert response.json()['result'] is True
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s', '--tb=long'])

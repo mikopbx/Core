@@ -344,7 +344,10 @@ class BaseController extends Controller
 
         if ($processor === PbxExtensionsProcessor::class) {
             $requestMessage['module'] = $moduleName;
-            $requestMessage['input'] = file_get_contents('php://input');
+            // #1161: the WAF does not scan GET/HEAD bodies, so modules must not receive them
+            $requestMessage['input'] = in_array($this->request->getMethod(), ['GET', 'HEAD'], true)
+                ? ''
+                : file_get_contents('php://input');
             $requestMessage['REQUEST_METHOD'] = $_SERVER['REQUEST_METHOD'];
         }
 
