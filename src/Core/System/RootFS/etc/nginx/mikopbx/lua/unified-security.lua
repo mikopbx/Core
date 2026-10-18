@@ -570,6 +570,11 @@ local function get_request_path()
     return ngx.unescape_uri(req)
 end
 
+-- Body scan limit = the REST body limit decided in #1171; 413 has no ngx.HTTP_* constant.
+local BODY_SCAN_LIMIT = 4 * 1024 * 1024
+local HTTP_PAYLOAD_TOO_LARGE = 413
+local JSON_ESCAPES = {b = "\b", f = "\f", n = "\n", r = "\r", t = "\t", ["/"] = "/", ['"'] = '"', ["\\"] = "\\"}
+
 -- Notes on security_mode interaction with module-declared exemptions:
 --   - In `relaxed`, check_basic_security() is skipped wholesale (see the
 --     "MAIN SECURITY LOGIC" section), so exemptions are moot.
@@ -677,53 +682,77 @@ local function check_basic_security()
     if not is_scope_exempt(uri, 'body-scan') then
         local method = ngx.req.get_method()
         if method == "POST" or method == "PUT" or method == "PATCH" or method == "DELETE" then
-            local content_type = ngx.var.content_type or ""
-            local lower_content_type = string.lower(content_type)
-            -- Skip multipart (file uploads) to avoid reading large bodies into memory
-            if not string.find(lower_content_type, "multipart", 1, true) then
+            -- Base media type the way PHP SAPI cuts it (at `;`, `,` or space, not tab). Only a multipart
+            -- POST (file uploads) is skipped, and not when "json" makes Request::getData() json_decode it.
+            -- Phalcon parses multipart PUT/PATCH bodies into fields; text fields of a multipart POST are
+            -- an accepted gap (#1239).
+            local lower_content_type = string.lower(ngx.var.content_type or "")
+            local base_type = string.match(lower_content_type, "^([^;, ]*)")
+            if not (method == "POST" and base_type == "multipart/form-data"
+                    and not string.find(lower_content_type, "json", 1, true)) then
+                -- Whole bodies up to the REST limit are scanned (#1239). A larger REST body gets 413
+                -- (#1171); elsewhere (admin cabinet, modules) it passes unscanned, as 64 KiB+ did before.
+                -- Post-rewrite URI: REST is always /pbxcore/index.php, so `//pbxcore/api` cannot dodge it.
+                local is_rest = string.find(ngx.var.uri or "", "^/pbxcore/") ~= nil
+                local function over_limit()
+                    ngx.log(ngx.WARN, "WAF: ", method, " body over the scan limit from: ", client_ip, " uri: ", uri)
+                    if is_rest then
+                        return false, HTTP_PAYLOAD_TOO_LARGE
+                    end
+                    return true
+                end
+                if (tonumber(ngx.var.content_length) or 0) > BODY_SCAN_LIMIT then
+                    return over_limit()
+                end
                 ngx.req.read_body()
                 local body = ngx.req.get_body_data()
                 -- Fallback: read from temp file if body was buffered to disk
                 if not body then
                     local body_file = ngx.req.get_body_file()
                     if body_file then
-                        local f = io.open(body_file, "r")
+                        local f = io.open(body_file, "rb")
                         if f then
-                            body = f:read(65536)
+                            body = f:read(BODY_SCAN_LIMIT + 1)
                             f:close()
                         end
                     end
                 end
-                if body and #body < 65536 then
-                    local check_body
-                    -- Only URL-decode for form-urlencoded; JSON/other use raw body
-                    if string.find(lower_content_type, "x-www-form-urlencoded", 1, true) then
-                        check_body = ngx.unescape_uri(body)
-                    else
-                        check_body = body
+                if body and #body > BODY_SCAN_LIMIT then
+                    return over_limit()
+                end
+                if body then
+                    -- Scan every decoding PHP may apply whatever the Content-Type says: parse_str
+                    -- (`+` and %XX) and json_decode (\u00XX, then \t \n \" \\ ...). Over-decoding
+                    -- (`\\u002e`) can only add a false positive, never hide what PHP will see.
+                    local variants = {body}
+                    if string.find(body, "[%%+]") then
+                        variants[#variants + 1] = ngx.unescape_uri((string.gsub(body, "%+", " ")))
                     end
-                    local lower_body = string.lower(check_body)
-
-                    -- Traversal in body (require path separator after "..")
-                    if string.match(check_body, "%.%.[/\\]") then
-                        ngx.log(ngx.WARN, "WAF: path traversal in ", method, " body from: ", client_ip,
-                                " uri: ", uri)
-                        return false
+                    if string.find(body, "\\", 1, true) then
+                        variants[#variants + 1] = (string.gsub(string.gsub(body, "\\[uU]00(%x%x)", function(h)
+                            return string.char(tonumber(h, 16))
+                        end), "\\(.)", JSON_ESCAPES))
                     end
+                    for _, check_body in ipairs(variants) do
+                        -- Traversal in body (require path separator after "..")
+                        if string.find(check_body, "%.%.[/\\]") then
+                            ngx.log(ngx.WARN, "WAF: path traversal in ", method, " body from: ", client_ip,
+                                    " uri: ", uri)
+                            return false
+                        end
 
-                    -- Null bytes in body (check both raw and decoded)
-                    if string.match(body, "%z") or string.match(check_body, "%z") then
-                        ngx.log(ngx.WARN, "WAF: null byte in ", method, " body from: ", client_ip,
-                                " uri: ", uri)
-                        return false
-                    end
+                        if string.find(check_body, "%z") then
+                            ngx.log(ngx.WARN, "WAF: null byte in ", method, " body from: ", client_ip,
+                                    " uri: ", uri)
+                            return false
+                        end
 
-                    -- SQL injection in body
-                    local pattern = find_sql(lower_body)
-                    if pattern then
-                        ngx.log(ngx.WARN, "WAF: SQL injection in ", method, " body from: ", client_ip,
-                                " uri: ", uri, " pattern: ", pattern)
-                        return false
+                        local pattern = find_sql(string.lower(check_body))
+                        if pattern then
+                            ngx.log(ngx.WARN, "WAF: SQL injection in ", method, " body from: ", client_ip,
+                                    " uri: ", uri, " pattern: ", pattern)
+                            return false
+                        end
                     end
                 end
             end
@@ -995,10 +1024,12 @@ end
 
 -- 1. Basic security checks
 if security_mode ~= "relaxed" then
-    if not check_basic_security() then
-        ngx.status = ngx.HTTP_FORBIDDEN
-        ngx.say("Security violation detected")
-        return ngx.exit(ngx.HTTP_FORBIDDEN)
+    local passed, status = check_basic_security()
+    if not passed then
+        status = status or ngx.HTTP_FORBIDDEN
+        ngx.status = status
+        ngx.say(status == HTTP_PAYLOAD_TOO_LARGE and "Request body too large" or "Security violation detected")
+        return ngx.exit(status)
     end
 end
 
