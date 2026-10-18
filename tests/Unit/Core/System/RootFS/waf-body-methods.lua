@@ -44,5 +44,25 @@ for _, verb in ipairs({'GET', 'HEAD', 'OPTIONS', 'TRACE', 'CONNECT', 'PROPFIND'}
     verify(verb .. ' ignored body', verb, 'application/json', '{"uniqid":"../../evil"}', '23', nil, true, 0)
     verify(verb .. ' ignored chunked', verb, 'application/json', '{"uniqid":"../../evil"}', nil, 'chunked', true, 0)
 end
+-- #1238: `select ... from` / `update ... set` keep the old `%s+.*%s+` semantics (two whitespace chars).
+for payload, allowed in pairs({
+    ['SELECT name\nFROM t'] = false, ['select  from'] = false, ['select x fromage'] = false,
+    ['update users set a=0'] = false, ['select from'] = true, ['selectx from'] = true,
+    ['from x select y'] = true, ['update set'] = true, ['set x update y'] = true,
+}) do
+    verify('sql ' .. payload, 'POST', 'text/plain', payload, nil, nil, allowed, 1)
+end
+-- The same matcher guards the query string.
+verify('sql in query', 'GET', nil, nil, nil, nil, true, 0)
+ngx.var.args = 'q=select%20id%20from%20t'
+cases = cases + 1
+if check() ~= false then failures = failures + 1; print('FAIL sql in query') end
+-- #1238: hostile 64 KiB bodies took 2.3-4.8 s each with `.*`; linear scan takes milliseconds.
+for _, unit in ipairs({'select ', 'update ', 'select\t', 'Select  x'}) do
+    local started = os.clock()
+    verify('time ' .. unit, 'POST', 'application/json', string.rep(unit, math.floor(65000 / #unit)), nil, nil, true, 1)
+    local spent = os.clock() - started
+    if spent > 0.2 then failures = failures + 1; print('FAIL time ' .. unit .. ': ' .. spent .. ' s') end
+end
 print(cases .. ' cases, ' .. failures .. ' failures')
 assert(failures == 0)
