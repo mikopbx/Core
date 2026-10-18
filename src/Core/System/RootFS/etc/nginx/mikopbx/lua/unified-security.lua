@@ -597,14 +597,12 @@ local function check_basic_security()
     end
 
     -- SQL-injection patterns are also used by the body scan below, so the
-    -- table is declared once at function scope.
+    -- table and find_sql() are declared once at function scope.
     local sql_patterns = {
         "union%s+select",
-        "select%s+.*%s+from",
         "insert%s+into",
         "delete%s+from",
         "drop%s+table",
-        "update%s+.*%s+set",
         "';",
         '";',
         "' or ",
@@ -612,6 +610,27 @@ local function check_basic_security()
         "1=1",
         "1' or '1'='1"
     }
+    -- `select%s+.*%s+from` as two finds: `.*` backtracked to the end of the string after every
+    -- `select`, 2.3 s of CPU on a 64 KiB body before auth (#1238). A lazy `[^;]-` is quadratic too.
+    -- The tail is searched from head_end + 1: the original needs two whitespace characters.
+    local sql_pairs = {
+        {"select%s", "%sfrom"},
+        {"update%s", "%sset"}
+    }
+    local function find_sql(str)
+        for _, pattern in ipairs(sql_patterns) do
+            if string.find(str, pattern) then
+                return pattern
+            end
+        end
+        for _, pair in ipairs(sql_pairs) do
+            local _, head_end = string.find(str, pair[1])
+            if head_end and string.find(str, pair[2], head_end + 1) then
+                return pair[1] .. "..." .. pair[2]
+            end
+        end
+        return nil
+    end
 
     -- WAF scope `request-line` — covers SQL / traversal / null-byte checks
     -- against URI, query args and User-Agent. Skipped when the URI declares
@@ -622,12 +641,11 @@ local function check_basic_security()
         local check_strings = {string.lower(uri)}
         if args then check_strings[#check_strings + 1] = string.lower(args) end
         check_strings[#check_strings + 1] = string.lower(user_agent)
-        for _, pattern in ipairs(sql_patterns) do
-            for _, str in ipairs(check_strings) do
-                if str and string.match(str, pattern) then
-                    ngx.log(ngx.WARN, "SQL injection attempt from: ", client_ip, " pattern: ", pattern)
-                    return false
-                end
+        for _, str in ipairs(check_strings) do
+            local pattern = find_sql(str)
+            if pattern then
+                ngx.log(ngx.WARN, "SQL injection attempt from: ", client_ip, " pattern: ", pattern)
+                return false
             end
         end
 
@@ -701,12 +719,11 @@ local function check_basic_security()
                     end
 
                     -- SQL injection in body
-                    for _, pattern in ipairs(sql_patterns) do
-                        if string.match(lower_body, pattern) then
-                            ngx.log(ngx.WARN, "WAF: SQL injection in ", method, " body from: ", client_ip,
-                                    " uri: ", uri, " pattern: ", pattern)
-                            return false
-                        end
+                    local pattern = find_sql(lower_body)
+                    if pattern then
+                        ngx.log(ngx.WARN, "WAF: SQL injection in ", method, " body from: ", client_ip,
+                                " uri: ", uri, " pattern: ", pattern)
+                        return false
                     end
                 end
             end
