@@ -22,9 +22,14 @@ namespace MikoPBX\PBXCoreREST\Services;
 use MikoPBX\Common\Models\ApiKeys;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\PBXCoreREST\Lib\ApiKeysManagementProcessor;
+use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di\DiInterface;
+use RuntimeException;
 use stdClass;
+use Throwable;
 
 /**
  * Class TokenValidationService
@@ -52,9 +57,11 @@ class TokenValidationService
     ];
 
     private \Phalcon\Cache\Adapter\AdapterInterface $cache;
+    private DiInterface $di;
 
     public function __construct(DiInterface $di)
     {
+        $this->di = $di;
         $this->cache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
     }
     
@@ -167,41 +174,68 @@ class TokenValidationService
     
     /**
      * Update last used time in buffer (delayed write to DB)
-     * 
+     *
+     * last_used_at is informational: a failed sync is logged and never fails authentication (#1120).
+     *
      * @param int $keyId
      * @return void
      */
     private function updateLastUsedBuffer(int $keyId): void
     {
-        $bufferKey = self::LAST_USED_BUFFER_KEY . $keyId;
-        $now = time();
-        
-        // Get last sync time
-        $lastSync = $this->cache->get($bufferKey . ':sync') ?? 0;
-        
-        // Update buffer
-        $this->cache->set($bufferKey, $now, self::LAST_USED_SYNC_INTERVAL * 2);
-        
-        // Sync to DB if interval passed
-        if ($now - $lastSync > self::LAST_USED_SYNC_INTERVAL) {
-            $this->syncLastUsedToDatabase($keyId, $now);
+        try {
+            $bufferKey = self::LAST_USED_BUFFER_KEY . $keyId;
+            $now = time();
+
+            $lastSync = $this->cache->get($bufferKey . ':sync') ?? 0;
+            $this->cache->set($bufferKey, $now, self::LAST_USED_SYNC_INTERVAL * 2);
+
+            if ($now - $lastSync <= self::LAST_USED_SYNC_INTERVAL) {
+                return;
+            }
+
+            // Mark before enqueueing so a failed push is retried once per interval, not per request.
             $this->cache->set($bufferKey . ':sync', $now, self::LAST_USED_SYNC_INTERVAL * 2);
+            $this->syncLastUsedToDatabase($keyId, $now);
+        } catch (Throwable $e) {
+            try {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    "Failed to update last_used metadata for API key {$keyId}: " . $e->getMessage(),
+                    LOG_WARNING
+                );
+            } catch (Throwable) {
+                // Optional metadata must not break authentication even when its logger is unavailable.
+            }
         }
     }
-    
+
     /**
-     * Sync last used time to database
-     * 
+     * Hand the last_used write to WorkerApiCommands.
+     *
+     * php-fpm runs as www and may not write the main database (read-only on LXC installs, #1120),
+     * so the write is queued like any other REST action and executed by the worker (root).
+     *
      * @param int $keyId
      * @param int $timestamp
      * @return void
      */
     private function syncLastUsedToDatabase(int $keyId, int $timestamp): void
     {
-        $key = ApiKeys::findFirst($keyId);
-        if ($key) {
-            $key->last_used_at = date('Y-m-d H:i:s', $timestamp);
-            $key->save();
+        // Same envelope as BaseController::sendRequestToBackendWorker() (fire-and-forget)
+        $requestMessage = [
+            'processor' => ApiKeysManagementProcessor::class,
+            'data' => ['id' => $keyId, 'timestamp' => $timestamp],
+            'action' => 'touchLastUsed', // ApiKeyAction::TOUCH_LAST_USED; the enum lives in the processor file and is not autoloadable
+            'async' => false, // sync path retries "database is locked"; nobody waits for the response
+            'asyncChannelId' => '',
+            'request_id' => uniqid('req_touchLastUsed_', true),
+            'created_at' => microtime(true),
+            'debug' => false,
+            'httpMethod' => 'POST',
+        ];
+        $redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
+        if ($redis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage)) <= 0) {
+            throw new RuntimeException('rpush to ' . WorkerApiCommands::REDIS_API_QUEUE . ' failed');
         }
     }
     
