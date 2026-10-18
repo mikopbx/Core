@@ -298,7 +298,11 @@ class TestSoundFilesCommandInjection:
             verify=False,
         )
 
-        resp_data = response.json()
+        # Rejected either by the WAF (plain-text 403: it decodes %2F whatever the Content-Type, #1239)
+        # or by the API with a JSON error.
+        assert response.status_code == 403 or not response.json().get('result'), (
+            f'Traversal temp_filename was accepted: HTTP {response.status_code} {response.text[:200]}'
+        )
 
         # Should fail with error, not process /etc/passwd
         # Check that no file was moved from /etc/
