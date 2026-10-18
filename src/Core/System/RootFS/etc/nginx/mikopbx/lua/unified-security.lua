@@ -647,15 +647,18 @@ local function check_basic_security()
         end
     end
 
-    -- WAF scope `body-scan` — covers POST/PUT/PATCH body inspection (defense
-    -- in depth). Skipped when the URI declares it via
+    -- WAF scope `body-scan` — covers the body-consuming REST methods.
+    -- GET/HEAD bodies are ignored by Request::getData() and are not read here (#1161).
+    -- The four body methods are still read before blacklist/auth/rate limit (#1240). Do not gate on
+    -- Content-Length/Transfer-Encoding: HTTP/2 DATA needs neither header.
+    -- Defense in depth, skipped when the URI declares it via
     -- #[WafExempt(scopes: ['body-scan'])]. Core controllers that legitimately
     -- accept SQL / shell / dialplan code in their bodies (system:executeSqlRequest,
     -- system:executeBashCommand, dialplan-applications, custom-files) declare
     -- this scope; see src/PBXCoreREST/Controllers/.
     if not is_scope_exempt(uri, 'body-scan') then
         local method = ngx.req.get_method()
-        if method == "POST" or method == "PUT" or method == "PATCH" then
+        if method == "POST" or method == "PUT" or method == "PATCH" or method == "DELETE" then
             local content_type = ngx.var.content_type or ""
             local lower_content_type = string.lower(content_type)
             -- Skip multipart (file uploads) to avoid reading large bodies into memory
@@ -685,14 +688,14 @@ local function check_basic_security()
 
                     -- Traversal in body (require path separator after "..")
                     if string.match(check_body, "%.%.[/\\]") then
-                        ngx.log(ngx.WARN, "WAF: path traversal in POST body from: ", client_ip,
+                        ngx.log(ngx.WARN, "WAF: path traversal in ", method, " body from: ", client_ip,
                                 " uri: ", uri)
                         return false
                     end
 
                     -- Null bytes in body (check both raw and decoded)
                     if string.match(body, "%z") or string.match(check_body, "%z") then
-                        ngx.log(ngx.WARN, "WAF: null byte in POST body from: ", client_ip,
+                        ngx.log(ngx.WARN, "WAF: null byte in ", method, " body from: ", client_ip,
                                 " uri: ", uri)
                         return false
                     end
@@ -700,7 +703,7 @@ local function check_basic_security()
                     -- SQL injection in body
                     for _, pattern in ipairs(sql_patterns) do
                         if string.match(lower_body, pattern) then
-                            ngx.log(ngx.WARN, "WAF: SQL injection in POST body from: ", client_ip,
+                            ngx.log(ngx.WARN, "WAF: SQL injection in ", method, " body from: ", client_ip,
                                     " uri: ", uri, " pattern: ", pattern)
                             return false
                         end
