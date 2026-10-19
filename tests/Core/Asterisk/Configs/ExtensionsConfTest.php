@@ -36,6 +36,29 @@ class ExtensionsConfTest extends AbstractUnitTest
     }
 
     /**
+     * A custom Gosub that hangs the transfer leg up runs the subroutine's h-extension,
+     * so [hangup_handler] must emit transfer_dial_hangup for the Local transfer leg
+     * (once, before hangup_chan) or the operator's recording is never resumed.
+     *
+     * @backupGlobals disabled
+     */
+    public function testHangupHandlerEmitsTransferDialHangupFallback(): void
+    {
+        $conf = ExtensionsConf::generateHangupHandlerContext();
+
+        $this->assertStringStartsWith('[hangup_handler]', $conf);
+        $fallback = 'same => n,ExecIf($["${ISTRANSFER}x" != "x" && "${TRANSFER_DIAL_HANGUP_SENT}x" == "x"'
+            . ' && "${CUT(CHANNEL,\;,2)}" == "2"'
+            . ' && "${STRREPLACE(CHANNEL,@internal-transfer-)}" != "${CHANNEL}"]'
+            . '?Gosub(transfer_dial_hangup,${EXTEN},1(return)))';
+        $this->assertStringContainsString($fallback, $conf);
+        $this->assertLessThan(
+            strpos($conf, 'Gosub(hangup_chan,${EXTEN},1)'),
+            strpos($conf, 'Gosub(transfer_dial_hangup')
+        );
+    }
+
+    /**
      * Forwarding targets are baked into the dialplan [globals] section, so the
      * value must be reduced to the characters Asterisk accepts for a dialled
      * number: digits and * # +. Everything else has to be stripped.

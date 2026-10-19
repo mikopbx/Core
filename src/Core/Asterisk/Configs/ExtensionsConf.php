@@ -163,6 +163,31 @@ class ExtensionsConf extends AsteriskConfigClass
     }
 
     /**
+     * Generates the [hangup_handler] context.
+     *
+     * transfer_dial_hangup is normally emitted by the h-extension of the context that
+     * dialled the transfer target ([internal-users], [internal], [outgoing], ...). When a
+     * custom Gosub (e.g. [internal-users-custom] calling Busy()) hangs the channel up,
+     * Asterisk runs the h-extension of the subroutine context instead, so the event is
+     * lost and the operator's recording is never resumed after the failed transfer.
+     * Hangup handlers always run (after the h-extension), so the transfer leg
+     * (Local/...@internal-transfer-...;2) emits the event here unless it was already sent.
+     *
+     * @return string
+     */
+    public static function generateHangupHandlerContext(): string
+    {
+        return '[hangup_handler]' . "\n" .
+            'exten => s,1,NoOp(--- hangup - ${CHANNEL} ---)' . "\n\t" .
+            'same => n,ExecIf($["${ISTRANSFER}x" != "x" && "${TRANSFER_DIAL_HANGUP_SENT}x" == "x"'
+            . ' && "${CUT(CHANNEL,\;,2)}" == "2"'
+            . ' && "${STRREPLACE(CHANNEL,@internal-transfer-)}" != "${CHANNEL}"]'
+            . '?Gosub(transfer_dial_hangup,${EXTEN},1(return)))' . "\n\t" .
+            'same => n,Gosub(hangup_chan,${EXTEN},1)' . "\n\t" .
+            'same => n,return' . "\n\n";
+    }
+
+    /**
      * Generates additional contexts.
      *
      * @param string $conf The current configuration.
@@ -244,10 +269,7 @@ class ExtensionsConf extends AsteriskConfigClass
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSIONS_GEN_CREATE_CHANNEL_DIALPLAN);
         $conf .= 'same => n,return' . PHP_EOL.PHP_EOL;
 
-        $conf .= '[hangup_handler]' . "\n";
-        $conf .= 'exten => s,1,NoOp(--- hangup - ${CHANNEL} ---)' . "\n\t";
-        $conf .= 'same => n,Gosub(hangup_chan,${EXTEN},1)' . "\n\t";
-        $conf .= 'same => n,return' . "\n\n";
+        $conf .= self::generateHangupHandlerContext();
 
         $conf .= '[set_orign_chan]' . "\n";
         $conf .= 'exten => s,1,Wait(0.2)' . "\n\t";

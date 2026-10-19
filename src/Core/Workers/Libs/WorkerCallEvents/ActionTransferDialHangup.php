@@ -143,7 +143,7 @@ class ActionTransferDialHangup
             // The queue/ring-group management leg of an attended transfer collapses with an
             // empty dst_chan and no transfer_UNIQUEID, i.e. it lands here. That is exactly the
             // moment the operator is handed back to the caller, so still try to resume.
-            self::resumeOperatorRecording($worker, $data);
+            self::resumeOrDefer($worker, $data);
             return;
         }
 
@@ -193,7 +193,25 @@ class ActionTransferDialHangup
             );
         }
         // Resume the operator's recording once the consultation is gone (see method doc).
-        self::resumeOperatorRecording($worker, $data);
+        self::resumeOrDefer($worker, $data);
+    }
+
+    /**
+     * Tries to resume the operator's recording and, when the operator is not bridged back to
+     * the caller yet, schedules the same check to be repeated by the worker.
+     *
+     * @param WorkerCallEvents $worker The worker object.
+     * @param array $data The data array.
+     *
+     * @return void
+     */
+    private static function resumeOrDefer(WorkerCallEvents $worker, array $data): void
+    {
+        $linkedId = (string)($data['linkedid'] ?? '');
+        $transferer = (string)($data['TRANSFERERNAME'] ?? '');
+        if (self::resumeOperatorRecording($worker, $linkedId, $transferer)) {
+            $worker->scheduleFailedTransferResume($transferer, $linkedId);
+        }
     }
 
     /**
@@ -211,17 +229,20 @@ class ActionTransferDialHangup
      * is still consulting BRIDGEPEER names another channel, and once a transfer completes the
      * operator has left (empty/other BRIDGEPEER); in both cases nothing is resumed and the
      * transfer marker is left intact, so a completed transfer is never mistaken for a return.
+     * The event may arrive before the operator is moved back to the caller, so a true result
+     * tells the caller to repeat the check later (see WorkerCallEvents::scheduleFailedTransferResume()).
      *
      * @param WorkerCallEvents $worker The worker object.
-     * @param array $data The data array.
+     * @param string $linkedId The call's linkedid.
+     * @param string $transferer The operator channel (TRANSFERERNAME).
      *
-     * @return void
+     * @return bool true when a conversation still waits for a resume but the operator is not
+     *              bridged back to its caller yet; false when resumed or nothing to resume.
      */
-    private static function resumeOperatorRecording(WorkerCallEvents $worker, array $data): void
+    public static function resumeOperatorRecording(WorkerCallEvents $worker, string $linkedId, string $transferer): bool
     {
-        $transferer = (string)($data['TRANSFERERNAME'] ?? '');
         if ($transferer === '') {
-            return;
+            return false;
         }
 
         // The operator's answered conversation row was flagged transfer=1 and had its
@@ -233,12 +254,12 @@ class ActionTransferDialHangup
             'linkedid = :linkedid: AND endtime = "" AND transfer = "1" AND answer <> "" '
             . 'AND (src_chan = :chan: OR dst_chan = :chan:)',
             'bind' => [
-                'linkedid' => $data['linkedid'] ?? '',
+                'linkedid' => $linkedId,
                 'chan' => $transferer,
             ],
         ]);
         if ($answeredConversations->count() === 0) {
-            return;
+            return false;
         }
 
         // Resume only once Asterisk reports the operator bridged back to this conversation's
@@ -248,7 +269,7 @@ class ActionTransferDialHangup
         $bridgePeer = $worker->getChannelVariable($transferer, 'BRIDGEPEER');
         $row = FailedTransferResumeSelector::select($answeredConversations, $transferer, $bridgePeer);
         if ($row === null) {
-            return;
+            return true;
         }
 
         // Resume conversation recording on the operator's own row.
@@ -267,6 +288,7 @@ class ActionTransferDialHangup
         if (!$row->save()) {
             SystemMessages::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
         }
+        return false;
     }
 
 }

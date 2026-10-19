@@ -1391,6 +1391,10 @@ function event_transfer_dial_hangup()
     -- Set the action type to "transfer_dial_hangup"
     data['action']  	= "transfer_dial_hangup";
 
+    -- Not inherited: tells [hangup_handler] the event was already sent from an h-extension
+    -- or the post-Dial Gosub, so its fallback for custom Gosub hangups does not duplicate it.
+    set_variable("TRANSFER_DIAL_HANGUP_SENT", "1");
+
     -- Set the end timestamp of the call
     data['end']         = getNowDate()
 

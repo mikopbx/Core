@@ -35,6 +35,8 @@ use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAttendedTransfer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelLinkedIdEnd;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ClaimCdrRows;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\DeleteCDR;
+use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionTransferDialHangup;
+use MikoPBX\Core\Workers\Libs\WorkerCallEvents\FailedTransferResumeQueue;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\LinkedIdFinalizationQueue;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\MonitorFilenameOptionsResolver;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ReleaseCdrClaim;
@@ -64,9 +66,19 @@ class WorkerCallEvents extends WorkerBase
 
     private const float LINKED_ID_FINALIZATION_DELAY_SECONDS = 2.0;
 
+    /**
+     * Re-checks of the operator's BRIDGEPEER after a failed attended transfer whose
+     * transfer_dial_hangup arrived before the operator was moved back to the caller.
+     * The queue is polled on the one-second wait timeout, so this covers ~5 s.
+     */
+    private const float FAILED_TRANSFER_RESUME_INTERVAL_SECONDS = 1.0;
+    private const int FAILED_TRANSFER_RESUME_ATTEMPTS = 5;
+
     private BeanstalkClient $clientQueue;
 
     protected LinkedIdFinalizationQueue $linkedIdFinalizations;
+
+    protected FailedTransferResumeQueue $failedTransferResumes;
 
     /**
      * Maximum rows deleted in a single SQLite statement. The writer lock
@@ -429,6 +441,10 @@ class WorkerCallEvents extends WorkerBase
         $this->linkedIdFinalizations = new LinkedIdFinalizationQueue(
             self::LINKED_ID_FINALIZATION_DELAY_SECONDS
         );
+        $this->failedTransferResumes = new FailedTransferResumeQueue(
+            self::FAILED_TRANSFER_RESUME_INTERVAL_SECONDS,
+            self::FAILED_TRANSFER_RESUME_ATTEMPTS
+        );
         $this->clientQueue->subscribe(CelBeanstalkdConf::BEANSTALK_TUBE, [$this, 'callEventsWorker']);
         $this->clientQueue->subscribe(self::class, [$this, 'otherEvents']);
         $this->clientQueue->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
@@ -442,7 +458,7 @@ class WorkerCallEvents extends WorkerBase
 
         // Set the error handler for the client
         $this->clientQueue->setErrorHandler([$this, 'errorHandler']);
-        $this->clientQueue->setTimeoutHandler([$this, 'processPendingLinkedIdFinalizations']);
+        $this->clientQueue->setTimeoutHandler([$this, 'processPendingDeferredActions']);
 
         // Keep the worker process running as long as a restart is not required
         while ($this->needRestart === false) {
@@ -557,7 +573,7 @@ class WorkerCallEvents extends WorkerBase
     public function pingCallBack(BeanstalkClient $message): void
     {
         parent::pingCallBack($message);
-        $this->processPendingLinkedIdFinalizations();
+        $this->processPendingDeferredActions();
         $this->updateRecordingOptions();
         $this->deleteOldRecords();
     }
@@ -608,7 +624,61 @@ class WorkerCallEvents extends WorkerBase
 
             $this->otherEvents($tube, $data);
         } finally {
-            $this->processPendingLinkedIdFinalizations();
+            $this->processPendingDeferredActions();
+        }
+    }
+
+    /**
+     * Runs the work that waits for a delay: LINKEDID_END finalization and the repeated
+     * resume of the operator's recording after a failed attended transfer.
+     */
+    public function processPendingDeferredActions(): void
+    {
+        $this->processPendingFailedTransferResumes();
+        $this->processPendingLinkedIdFinalizations();
+    }
+
+    /**
+     * Schedules repeated attempts to resume the operator's recording after a failed
+     * attended transfer (see ActionTransferDialHangup::resumeOperatorRecording()).
+     */
+    public function scheduleFailedTransferResume(string $transferer, string $linkedId): void
+    {
+        if (!isset($this->failedTransferResumes)) {
+            return;
+        }
+        $this->failedTransferResumes->schedule($transferer, $linkedId, $this->monotonicNow());
+    }
+
+    public function processPendingFailedTransferResumes(): void
+    {
+        if (!isset($this->failedTransferResumes)) {
+            return;
+        }
+        foreach ($this->failedTransferResumes->due($this->monotonicNow()) as $transferer => $linkedId) {
+            try {
+                $needsRetry = ActionTransferDialHangup::resumeOperatorRecording($this, $linkedId, $transferer);
+            } catch (Throwable $e) {
+                // A transient failure (e.g. a locked CDR database) consumes an attempt, not the entry.
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
+                $needsRetry = true;
+            }
+            if (!$needsRetry) {
+                $this->failedTransferResumes->acknowledge($transferer);
+                continue;
+            }
+            if (!$this->failedTransferResumes->retry($transferer, $this->monotonicNow())) {
+                // Expected after a successful transfer to a queue/ring group: the operator left.
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf(
+                        'Recording not resumed after failed transfer: operator %s not back, linkedid=%s',
+                        $transferer,
+                        $linkedId
+                    ),
+                    LOG_DEBUG
+                );
+            }
         }
     }
 

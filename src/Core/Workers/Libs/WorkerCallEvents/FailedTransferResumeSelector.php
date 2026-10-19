@@ -33,9 +33,10 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
  * to a queue/ring group (which always leaves several open rows), so recording stayed off
  * for the rest of the conversation.
  *
- * The caller has already verified that no unanswered consultation leg is still open, so the
- * only remaining question is whether the operator is really back with the caller. The
- * operator's live BRIDGEPEER must name this conversation's caller channel: while the operator
+ * The caller does not check whether consultation legs are still open: it may run right on
+ * transfer_dial_hangup or later from the worker's retry queue (the event can arrive before
+ * the operator is moved back). BRIDGEPEER is therefore the only guard against a false resume:
+ * it must name this conversation's caller channel. While the operator
  * is still consulting it names another channel, and once a transfer actually completes the
  * operator has left (empty/other BRIDGEPEER). In every "not clearly back with the caller"
  * case nothing is resumed and the transfer marker is left intact, so a completed or
