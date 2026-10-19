@@ -879,5 +879,27 @@ class TestWafBodyScanMethods:
             assert response.json()['result'] is True
 
 
+# ============================================================================
+# 7. WAF SQL scan runs in linear time (#1238)
+# ============================================================================
+
+@pytest.mark.security
+class TestWafBodyScanLinear:
+    """The image's nginx, not the harness: `.*` patterns took 2.3-4.8 s per body."""
+
+    @pytest.mark.parametrize('unit', ['select ', 'update ', 'select\t', 'Select  x'])
+    def test_sql_like_body_scanned_fast(self, api_client, unit):
+        headers = api_client._get_headers()
+        headers['Content-Type'] = 'application/json'
+        started = time.monotonic()
+        response = api_client.session.post(
+            f'{API_URL}/system:ping', headers=headers, timeout=30, verify=False,
+            data=unit * (65000 // len(unit)), allow_redirects=False,
+        )
+        spent = time.monotonic() - started
+        assert response.status_code != HTTP_FORBIDDEN, response.text[:200]
+        assert spent < 2, f'{spent:.2f} s for a 64 KiB body'
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s', '--tb=long'])
