@@ -16,6 +16,7 @@ Vulnerabilities tested:
 Reference: report_verified.md (April 11, 2026)
 """
 
+import os
 import time
 
 import pytest
@@ -899,6 +900,40 @@ class TestWafBodyScanLinear:
         spent = time.monotonic() - started
         assert response.status_code != HTTP_FORBIDDEN, response.text[:200]
         assert spent < 2, f'{spent:.2f} s for a 64 KiB body'
+
+
+# 8. Request body limits (#1171)
+@pytest.mark.security
+class TestRequestBodyLimit:
+    """JSON bodies over 4 MiB get the WAF/PHP 413, anything over 32 MiB the nginx one; all in JSON."""
+    MiB = 1024 * 1024
+
+    @pytest.mark.parametrize('size', [4 * MiB + 1, 33 * MiB])
+    def test_oversized_json_body_413(self, api_client, size):
+        headers = api_client._get_headers()
+        headers['Content-Type'] = 'application/json'
+        response = api_client.session.post(
+            f'{API_URL}/system:ping', headers=headers, timeout=60, verify=False,
+            data=b'{"a":"' + b'x' * (size - 8) + b'"}', allow_redirects=False,
+        )
+        assert response.status_code == 413, response.text[:200]
+        assert response.json()['result'] is False
+
+    def test_oversized_multipart_text_field_413(self, api_client):
+        """The WAF skips multipart POST; its text fields still go to Redis, so PHP counts them."""
+        response = api_client.session.post(
+            f'{API_URL}/auth:login', timeout=60, verify=False, allow_redirects=False,
+            files={'login': (None, 'x' * (5 * self.MiB))},
+        )
+        assert response.status_code == 413, response.text[:200]
+        assert response.json()['result'] is False
+
+    def test_upload_chunk_of_20_mib_passes(self, api_client, tmp_path):
+        """An older module build sends the last Resumable chunk of up to 20 MiB."""
+        chunk = tmp_path / 'chunk-1171.bin'
+        chunk.write_bytes(os.urandom(20 * self.MiB))
+        response = api_client.upload_file('files:upload', str(chunk))
+        assert response.get('result') is True, response
 
 
 if __name__ == '__main__':

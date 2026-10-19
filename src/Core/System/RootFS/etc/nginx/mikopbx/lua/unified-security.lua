@@ -1110,7 +1110,9 @@ if security_mode ~= "relaxed" then
         status = status or ngx.HTTP_FORBIDDEN
         local text = "Security violation detected"
         if status == HTTP_PAYLOAD_TOO_LARGE then
-            text = "Request body too large"
+            -- Only REST gets 413 here: answer with its JSON error, as nginx and PHP do (#1171)
+            ngx.header.content_type = "application/json"
+            text = '{"result":false,"data":[],"messages":{"error":["Request body too large"]}}'
         elseif status == ngx.HTTP_TOO_MANY_REQUESTS then
             text = "Too many requests"
         end
