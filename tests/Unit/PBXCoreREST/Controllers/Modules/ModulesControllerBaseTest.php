@@ -26,6 +26,9 @@ use stdClass;
  * When `BaseController` has already answered itself (a core-format file streamed, the content
  * left empty), the module pass must leave it alone: it used to throw a TypeError after the file
  * was sent, on every ModuleAutoprovision config download (issue #1167).
+ *
+ * The HTTP status `BaseController` set (422/409 for a failed result, 503 for an overloaded queue)
+ * must survive the module pass: the default branch used to reset it to 200 (issue #1166).
  */
 class ModulesControllerBaseTest extends TestCase
 {
@@ -33,7 +36,7 @@ class ModulesControllerBaseTest extends TestCase
      * Put the worker answer into the response the way BaseController does, then run the
      * module pass exactly as callActionForModule() does, through the real handleResponse().
      */
-    private function passThroughModule(string $workerAnswer): Response
+    private function passThroughModule(string $workerAnswer, int $httpCode = 200): Response
     {
         $response = new Response();
         $di = new Di();
@@ -41,7 +44,7 @@ class ModulesControllerBaseTest extends TestCase
         $controller = new ModulesControllerBase();
         $controller->setDI($di);
 
-        $response->setPayloadSuccess((array) json_decode($workerAnswer));
+        $response->setPayloadSuccess((array) json_decode($workerAnswer), $httpCode);
         $handleResponse = new ReflectionMethod($controller, 'handleResponse');
         $handleResponse->invoke($controller, json_decode((string) $response->getContent(), true));
 
@@ -67,6 +70,49 @@ class ModulesControllerBaseTest extends TestCase
         $this->assertSame([], $decoded->messages);
         $this->assertStringContainsString('"settings":{}', $content);
         $this->assertSame(200, $response->getStatusCode());
+    }
+
+    public function testFailedResultKeepsTheStatusBaseControllerSet(): void
+    {
+        // BaseController::sendRequestToBackendWorker() answers a result:false with 422 (or the
+        // action's own httpCode); the module pass must not downgrade it to 200.
+        $response = $this->passThroughModule(
+            '{"result":false,"data":{"settings":{}},"messages":{"error":["LDAP bind failed"]},'
+            . '"function":"test-ldap-bind","processor":"ModuleLdapSync","pid":1}',
+            422
+        );
+        $decoded = json_decode((string) $response->getContent());
+
+        $this->assertSame(422, $response->getStatusCode());
+        $this->assertFalse($decoded->result);
+        $this->assertSame(['LDAP bind failed'], $decoded->messages->error);
+        $this->assertInstanceOf(stdClass::class, $decoded->data->settings);
+
+        $this->assertSame(409, $this->passThroughModule('{"result":false,"data":[],"messages":[]}', 409)->getStatusCode());
+        // A successful action's own 2xx (e.g. 201 Created) survives too.
+        $this->assertSame(201, $this->passThroughModule('{"result":true,"data":[],"messages":[]}', 201)->getStatusCode());
+    }
+
+    /**
+     * @testWith [503]
+     *           [504]
+     */
+    public function testWorkerErrorKeepsItsStatus(int $status): void
+    {
+        // Queue backpressure (503) and worker timeout (504, #1171) are built with
+        // setPayloadError()->setStatusCode().
+        $response = new Response();
+        $di = new Di();
+        $di->setShared(ResponseProvider::SERVICE_NAME, $response);
+        $controller = new ModulesControllerBase();
+        $controller->setDI($di);
+        $response->setPayloadError('Service temporarily unavailable, please retry later')->setStatusCode($status);
+
+        $handleResponse = new ReflectionMethod($controller, 'handleResponse');
+        $handleResponse->invoke($controller, json_decode((string) $response->getContent(), true));
+
+        $this->assertSame($status, $response->getStatusCode());
+        $this->assertFalse(json_decode((string) $response->getContent())->result);
     }
 
     public function testFlatFilePassThroughIsStillStreamed(): void
