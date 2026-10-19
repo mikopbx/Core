@@ -69,6 +69,7 @@ class BaseController extends Controller
             $maxTimeout = max($maxTimeout, 30);
         }
 
+        $queued = false;
         try {
             // Initialize Redis connection
             $redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
@@ -101,11 +102,20 @@ class BaseController extends Controller
             }
 
             // Push request to queue
-            $pushResult = $redis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage));
+            $redis->clearLastError();
+            try {
+                $pushResult = $redis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage));
+            } catch (\RedisException $e) {
+                // #1171: an error reply (OOM, READONLY) means Redis rejected the job; a lost reply
+                // (read timeout, dropped connection) may have queued it, so it must not look retryable.
+                $queued = $redis->getLastError() === null;
+                throw $e;
+            }
 
             if ($pushResult <= 0) {
                 throw new \RuntimeException("Failed to push request to Redis queue");
             }
+            $queued = true;
 
             // Monitor queue backlog only for critical situations
             if ($queueLength > 20) {
@@ -246,7 +256,7 @@ class BaseController extends Controller
                     "Request timeout for action {$actionName}: {$totalTime}s",
                     LOG_WARNING
                 );
-                $this->response->setPayloadError('Request timeout or worker not responding');
+                $this->response->setPayloadError('Request timeout or worker not responding', 504);
                 return;
             }
 
@@ -290,7 +300,8 @@ class BaseController extends Controller
             );
 
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            $this->response->setPayloadError($e->getMessage());
+            // #1171: 503 only when the job surely is not queued; the admin UI retries 503 automatically.
+            $this->response->setPayloadError($e->getMessage(), $queued ? 400 : 503);
         }
     }
 
