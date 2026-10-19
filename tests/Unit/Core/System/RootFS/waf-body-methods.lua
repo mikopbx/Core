@@ -162,6 +162,7 @@ local function run(name, opts, want_status, want_reads)
             security_mode = opts.mode or 'balanced', rate_limit_enabled = opts.rate == false and '0' or '1'},
         req = {get_method = function() return method end, read_body = function() reads = reads + 1 end,
             get_body_data = function() return body end, get_body_file = function() return nil end},
+        header = {},
         shared = shared, WARN = 1, NOTICE = 2, INFO = 3, HTTP_FORBIDDEN = 403, HTTP_TOO_MANY_REQUESTS = 429,
         log = function() end, say = function() end, null = {},
         unescape_uri = function(s) return (s:gsub('%%(%x%x)', function(h) return string.char(tonumber(h, 16)) end)) end,
@@ -185,6 +186,8 @@ run('blacklisted: no read', {firewall = true, body = clean, state = {['blocked:2
 run('rate blocked: no read', {body = clean, state = {['rate_blocked:203.0.113.7'] = {'rate_limit', '1'}}}, 429, 0)
 run('whitelisted still scanned', {firewall = true, body = evil, state = {['whitelist:203.0.113.7'] = {'blocked_ips', '1'}}}, 403, 1)
 run('relaxed: no read', {mode = 'relaxed', body = evil}, nil, 0)
+run('over limit: 413 JSON', {cl = tostring(limit + 1)}, 413, 0)
+if ngx.header.content_type ~= 'application/json' then failures = failures + 1; print('FAIL 413 content type') end
 local mib4, big = tostring(limit), string.rep('a', limit)
 run('budget: 8 x 4 MiB pass', {body = big, cl = mib4, repeats = 8}, nil, 8)
 run('budget: 9th refused before read', {body = big, cl = mib4, repeats = 9}, 429, 8)

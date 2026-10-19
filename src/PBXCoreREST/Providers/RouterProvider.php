@@ -30,6 +30,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
+use MikoPBX\PBXCoreREST\Middleware\RequestSizeMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\ResponseMiddleware;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
@@ -690,6 +691,7 @@ class RouterProvider implements ServiceProviderInterface
      *
      * Middleware execution order:
      * 1. BEFORE REQUEST:
+     *    - RequestSizeMiddleware: 413 for a non-upload body over 4 MiB, before controllers read it
      *    - AuthenticationMiddleware: Validates JWT/API Key tokens, checks public endpoints
      * 2. AFTER REQUEST:
      *    - ResponseMiddleware: Ensures response is sent
@@ -700,6 +702,7 @@ class RouterProvider implements ServiceProviderInterface
     private function attachMiddleware(Micro $application, Manager $eventsManager): void
     {
         $middleware = [
+            RequestSizeMiddleware::class => 'before',
             AuthenticationMiddleware::class => 'before',
             ResponseMiddleware::class => 'after',
         ];
