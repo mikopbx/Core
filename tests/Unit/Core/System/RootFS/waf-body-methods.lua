@@ -20,7 +20,8 @@ local check = assert(compile([[
 local client_ip = 'test'
 local function get_request_path() return '/pbxcore/api/v3/extensions' end
 local function is_scope_exempt() return false end
-]] .. checks .. '\nreturn check_basic_security'))()
+local rate_limit_enabled, rate_limit_window = false, 60
+]] .. checks .. "\nreturn function()\n    local ok, status = check_basic_security()\n    if not ok then return ok, status end\n    return check_body_scan(true)\nend"))()
 local cases, failures = 0, 0
 local function verify(name, verb, ct, payload, cl, te, allowed, expected_reads)
     method, body, reads = verb, payload, 0
@@ -118,5 +119,84 @@ do
     print(string.format('4 MiB worst-case scan: %.3f s', spent))
     if spent > 2 then failures = failures + 1; print('FAIL 4 MiB scan too slow') end
 end
+-- #1240: the whole script with Redis down (fail-open): blacklist and rate limit come before read_body,
+-- and scanned bytes per IP are budgeted.
+local now = 0
+local function dict()
+    local d, expires = {}, {}
+    local function live(k)
+        if expires[k] and expires[k] <= now then d[k], expires[k] = nil, nil end
+        return d[k]
+    end
+    return {
+        get = function(_, k) return live(k) end,
+        set = function(_, k, v, ttl) d[k], expires[k] = v, ttl and ttl > 0 and now + ttl or nil; return true end,
+        incr = function(_, k, n, init, init_ttl)
+            if live(k) == nil then
+                if init == nil then return nil, "not found" end
+                d[k], expires[k] = init, init_ttl and init_ttl > 0 and now + init_ttl or nil
+            end
+            d[k] = d[k] + n; return d[k]
+        end,
+        reset = function() d, expires = {}, {} end,
+    }
+end
+package.preload['resty.redis'] = function()
+    return {new = function()
+        return {set_timeout = function() end, connect = function() return nil, 'stub' end}
+    end}
+end
+local shared = {blocked_ips = dict(), firewall_state = dict(), access_cache = dict(), rate_limit = dict(),
+    waf_exemptions = dict()}
+local script = assert(compile(source))
+local exit_status
+local function run(name, opts, want_status, want_reads)
+    now = 0
+    for _, d in pairs(shared) do d.reset() end
+    shared.firewall_state:set('enabled', opts.firewall and '1' or '0')
+    for k, v in pairs(opts.state or {}) do shared[v[1]]:set(k, v[2]) end
+    method, body, reads, exit_status = opts.method or 'POST', opts.body, 0, nil
+    ngx = {
+        var = {remote_addr = opts.ip or '203.0.113.7', request_uri = '/pbxcore/api/v3/extensions',
+            uri = '/pbxcore/index.php', content_type = 'application/json', content_length = opts.cl,
+            security_mode = opts.mode or 'balanced', rate_limit_enabled = opts.rate == false and '0' or '1'},
+        req = {get_method = function() return method end, read_body = function() reads = reads + 1 end,
+            get_body_data = function() return body end, get_body_file = function() return nil end},
+        shared = shared, WARN = 1, NOTICE = 2, INFO = 3, HTTP_FORBIDDEN = 403, HTTP_TOO_MANY_REQUESTS = 429,
+        log = function() end, say = function() end, null = {},
+        unescape_uri = function(s) return (s:gsub('%%(%x%x)', function(h) return string.char(tonumber(h, 16)) end)) end,
+        exit = function(s) exit_status = s end,
+    }
+    for i = 1, opts.repeats or 1 do
+        if i == opts.repeats and opts.advance then now = now + opts.advance end
+        script()
+    end
+    cases = cases + 1
+    if exit_status ~= want_status or reads ~= want_reads then
+        failures = failures + 1
+        print('FAIL ' .. name .. ': status=' .. tostring(exit_status) .. ' reads=' .. reads)
+    end
+end
+local evil, clean = '{"a":"../x"}', '{"a":"ok"}'
+run('clean passes', {body = clean}, nil, 1)
+run('evil body 403', {body = evil}, 403, 1)
+run('blacklisted: no read', {firewall = true, body = clean, state = {['blocked:203.0.113.7'] = {'blocked_ips', '1'},
+    ['whitelist:203.0.113.7'] = {'blocked_ips', '0'}}}, 403, 0)
+run('rate blocked: no read', {body = clean, state = {['rate_blocked:203.0.113.7'] = {'rate_limit', '1'}}}, 429, 0)
+run('whitelisted still scanned', {firewall = true, body = evil, state = {['whitelist:203.0.113.7'] = {'blocked_ips', '1'}}}, 403, 1)
+run('relaxed: no read', {mode = 'relaxed', body = evil}, nil, 0)
+local mib4, big = tostring(limit), string.rep('a', limit)
+run('budget: 8 x 4 MiB pass', {body = big, cl = mib4, repeats = 8}, nil, 8)
+run('budget: 9th refused before read', {body = big, cl = mib4, repeats = 9}, 429, 8)
+run('budget: no CL charged after read', {body = string.rep('a', limit), repeats = 9}, 429, 8)
+run('budget: whitelist not charged', {firewall = true, body = big, cl = mib4, repeats = 9,
+    state = {['whitelist:203.0.113.7'] = {'blocked_ips', '1'}}}, nil, 9)
+run('budget: off with rate limit', {rate = false, body = big, cl = mib4, repeats = 9}, nil, 9)
+run('budget: CL without a body costs nothing', {cl = mib4, repeats = 9}, nil, 9)
+run('budget: next window passes', {body = big, cl = mib4, repeats = 9, advance = 61}, nil, 9)
+run('strict whitelist rate blocked', {firewall = true, mode = 'strict', body = clean, state = {
+    ['whitelist:203.0.113.7'] = {'blocked_ips', '1'}, ['rate_blocked:203.0.113.7'] = {'rate_limit', '1'}}}, 429, 0)
+run('balanced whitelist not rate limited', {firewall = true, body = clean, state = {
+    ['whitelist:203.0.113.7'] = {'blocked_ips', '1'}, ['rate_blocked:203.0.113.7'] = {'rate_limit', '1'}}}, nil, 1)
 print(cases .. ' cases, ' .. failures .. ' failures')
 assert(failures == 0)
