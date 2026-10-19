@@ -77,8 +77,13 @@ class ModulesControllerBase extends BaseController
             $this->handleFilePassThrough($response['data']);
         } else {
             // Rebuild the payload without the assoc flag: nested empty objects ({}) and objects with
-            // numeric keys must not be re-encoded as JSON arrays (#1162). Status stays 200 as before.
-            $this->response->setPayloadSuccess((array) json_decode($this->response->getContent()));
+            // numeric keys must not be re-encoded as JSON arrays (#1162). The HTTP status stays the
+            // one BaseController::sendRequestToBackendWorker() already set (422/409/503 for a failed
+            // result, 200 otherwise); setPayloadSuccess() would reset it to 200 (#1166).
+            $this->response->setPayloadSuccess(
+                (array) json_decode($this->response->getContent()),
+                $this->response->getStatusCode() ?? 200
+            );
         }
     }
 
