@@ -158,10 +158,6 @@ class ExtensionTooltipManager {
                     {
                         term: globalTranslate.ex_SipTransportTooltip_tcp,
                         definition: globalTranslate.ex_SipTransportTooltip_tcp_desc
-                    },
-                    {
-                        term: globalTranslate.ex_SipTransportTooltip_tls,
-                        definition: globalTranslate.ex_SipTransportTooltip_tls_desc
                     }
                 ],
                 list2: [
@@ -171,7 +167,8 @@ class ExtensionTooltipManager {
                     }
                 ],
                 list3: [
-                    globalTranslate.ex_SipTransportTooltip_rec_compatibility
+                    globalTranslate.ex_SipTransportTooltip_rec_compatibility,
+                    globalTranslate.ex_SipTransportTooltip_rec_tls
                 ]
             },
             

@@ -31,6 +31,7 @@ use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAmiPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAriPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckFirewalls;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSIPPasswords;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSIPTlsTransport;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHConfig;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckWebPasswords;
@@ -76,6 +77,7 @@ class ReloadAdviceAction implements ReloadActionInterface
                     break;
                 case Sip::class:
                     $cacheKeys[WorkerPrepareAdvice::getCacheKey(CheckSIPPasswords::class)] = true;
+                    $cacheKeys[WorkerPrepareAdvice::getCacheKey(CheckSIPTlsTransport::class)] = true;
                     break;
                 case NetworkFilters::class:
                     $cacheKeys[WorkerPrepareAdvice::getCacheKey(CheckFirewalls::class)] = true;
