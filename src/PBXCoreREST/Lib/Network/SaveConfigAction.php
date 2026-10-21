@@ -470,13 +470,12 @@ class SaveConfigAction
                     break;
 
                 case 'exthostname':
-                    if ($itIsInternetInterface) {
+                    // WHY: Never derive exthostname from the system hostname — it resolves
+                    // to 127.0.0.1 locally and breaks SIP NAT/TLS. With NAT on, an omitted key
+                    // keeps the stored value; without NAT the field is meaningless and is cleared.
+                    if ($itIsInternetInterface && ($data['usenat'] ?? false)) {
                         if (array_key_exists($name, $data)) {
-                            $eth->$name = ($data['usenat'] ?? false)
-                                ? $data[$name]
-                                : ($data['hostname'] ?? '');
-                        } else {
-                            $eth->$name = $data['hostname'] ?? '';
+                            $eth->$name = $data[$name];
                         }
                     } else {
                         $eth->$name = '';
