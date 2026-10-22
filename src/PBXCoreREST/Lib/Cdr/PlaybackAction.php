@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\Cdr;
 
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\Storage\ConvertedRecordingCache;
 use MikoPBX\Core\System\Storage\StorageAdapter;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -162,16 +163,15 @@ class PlaybackAction extends Injectable
         }
 
         $currentExtension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        $needDelete = false;
 
         // Skip conversion if 'original' or format matches current file
         if ($requestedFormat !== 'original' && $requestedFormat !== $currentExtension) {
-            $convertedFile = self::convertAudioFormat($filename, $currentExtension, $requestedFormat);
+            // WHY cache: the player issues several Range requests per recording
+            $convertedFile = (new ConvertedRecordingCache())->get($filename, $requestedFormat);
 
             if ($convertedFile !== null) {
                 // Use converted file
                 $filename = $convertedFile;
-                $needDelete = true;  // Delete temporary file after streaming
             } else {
                 // Fallback to original format if conversion fails
                 $res->messages['warning'][] = sprintf(
@@ -195,7 +195,8 @@ class PlaybackAction extends Injectable
                 'filename' => $filename,
                 'content_type' => $mimeType,
                 'download_name' => null,  // null = inline playback
-                'need_delete' => $needDelete,  // Delete temporary converted files
+                // Converted files are shared cache entries removed by ConvertedRecordingCache::cleanup()
+                'need_delete' => false,
                 'additional_headers' => []
             ]
         ];
@@ -388,206 +389,5 @@ class PlaybackAction extends Injectable
         $redis->expire($key, 3600);
 
         return (int)$cdrId;
-    }
-
-    /**
-     * Convert audio file between different formats (WebM, MP3, WAV, OGG)
-     *
-     * WHY: Users need different formats for different use cases:
-     * - MP3: Legacy compatibility (phones, car systems)
-     * - WAV: Uncompressed quality (archival, analysis)
-     * - WebM: Modern web (Opus codec in WebM container)
-     * - OGG: Open format (Opus codec in Ogg container, desktop apps, Linux)
-     *
-     * CONVERSION MATRIX:
-     * - WebM/OGG → MP3: libmp3lame encoder
-     * - WebM/OGG → WAV: pcm_s16le codec (16-bit PCM)
-     * - MP3/WAV → WebM: libopus encoder (Opus in WebM container)
-     * - MP3/WAV → OGG: libopus encoder (Opus in Ogg container)
-     * - WebM ↔ OGG: Re-encode (both use Opus, but different containers)
-     *
-     * @param string $sourceFile Path to source audio file
-     * @param string $sourceFormat Source format extension (webm, mp3, wav, ogg)
-     * @param string $targetFormat Target format extension (webm, mp3, wav, ogg)
-     * @return string|null Path to converted file, or null on failure
-     */
-    private static function convertAudioFormat(string $sourceFile, string $sourceFormat, string $targetFormat): ?string
-    {
-        // Check if ffmpeg is available
-        $ffmpeg = Util::which('ffmpeg');
-        if (empty($ffmpeg)) {
-            \MikoPBX\Core\System\SystemMessages::sysLogMsg(
-                __METHOD__,
-                'ffmpeg not found, cannot convert audio',
-                LOG_WARNING
-            );
-            return null;
-        }
-
-        // Get cache directory (same as S3 cache)
-        // WHY: Reuse existing cache management and cleanup
-        $cacheDir = \MikoPBX\Core\System\Directories::getDir(
-            \MikoPBX\Core\System\Directories::CORE_RECORDINGS_CACHE_DIR
-        );
-
-        // Create unique temporary filename
-        $basename = basename($sourceFile, '.' . $sourceFormat);
-        $tempFile = $cacheDir . '/' . $basename . '_' . uniqid($targetFormat . '_', true) . '.' . $targetFormat;
-
-        // Build FFmpeg command based on target format
-        // OPTIMIZATION: Use lossless remux for WebM ↔ OGG (both use Opus)
-        // WHY: Avoids re-encoding, preserves original quality
-        $isLosslessRemux = self::canUseLosslessRemux($sourceFormat, $targetFormat);
-
-        if ($isLosslessRemux) {
-            // Lossless remux: copy audio stream without re-encoding
-            $cmd = sprintf(
-                '%s -i %s -codec:a copy %s 2>&1',
-                $ffmpeg,
-                escapeshellarg($sourceFile),
-                escapeshellarg($tempFile)
-            );
-        } else {
-            // Standard conversion with re-encoding
-            $codecParams = self::getCodecParameters($targetFormat);
-
-            if ($codecParams === null) {
-                \MikoPBX\Core\System\SystemMessages::sysLogMsg(
-                    __METHOD__,
-                    "Unsupported target format: {$targetFormat}",
-                    LOG_WARNING
-                );
-                return null;
-            }
-
-            // -vn flag ensures no video stream is added (audio-only conversion)
-            $cmd = sprintf(
-                '%s -i %s -vn %s %s 2>&1',
-                $ffmpeg,
-                escapeshellarg($sourceFile),
-                $codecParams,
-                escapeshellarg($tempFile)
-            );
-        }
-
-        // Execute conversion
-        $output = [];
-        $returnCode = 0;
-        exec($cmd, $output, $returnCode);
-
-        // Check if conversion succeeded
-        if ($returnCode !== 0 || !file_exists($tempFile)) {
-            \MikoPBX\Core\System\SystemMessages::sysLogMsg(
-                __METHOD__,
-                sprintf(
-                    'FFmpeg conversion from %s to %s failed: %s',
-                    strtoupper($sourceFormat),
-                    strtoupper($targetFormat),
-                    implode("\n", $output)
-                ),
-                LOG_ERR
-            );
-            return null;
-        }
-
-        // Validate output file
-        $ffprobe = Util::which('ffprobe');
-        if (!empty($ffprobe)) {
-            $validateCmd = sprintf(
-                '%s -v error -show_format %s 2>&1',
-                $ffprobe,
-                escapeshellarg($tempFile)
-            );
-
-            $validateOutput = [];
-            $validateCode = 0;
-            exec($validateCmd, $validateOutput, $validateCode);
-
-            if ($validateCode !== 0) {
-                \MikoPBX\Core\System\SystemMessages::sysLogMsg(
-                    __METHOD__,
-                    sprintf(
-                        '%s validation failed, file may be corrupted',
-                        strtoupper($targetFormat)
-                    ),
-                    LOG_WARNING
-                );
-                @unlink($tempFile);
-                return null;
-            }
-        }
-
-        // Log successful conversion
-        $sourceSize = filesize($sourceFile);
-        $targetSize = filesize($tempFile);
-        \MikoPBX\Core\System\SystemMessages::sysLogMsg(
-            __METHOD__,
-            sprintf(
-                'Converted %s to %s: %s (%d bytes) -> %s (%d bytes)',
-                strtoupper($sourceFormat),
-                strtoupper($targetFormat),
-                basename($sourceFile),
-                $sourceSize,
-                basename($tempFile),
-                $targetSize
-            ),
-            LOG_INFO
-        );
-
-        return $tempFile;
-    }
-
-    /**
-     * Check if lossless remux is possible between two formats
-     *
-     * WHY: Lossless remux (stream copy) preserves quality and is much faster
-     * Possible when source and target use the same codec but different containers
-     *
-     * @param string $sourceFormat Source format extension
-     * @param string $targetFormat Target format extension
-     * @return bool True if lossless remux is possible
-     */
-    private static function canUseLosslessRemux(string $sourceFormat, string $targetFormat): bool
-    {
-        $source = strtolower($sourceFormat);
-        $target = strtolower($targetFormat);
-
-        // WebM ↔ OGG: Both use Opus codec, can remux without re-encoding
-        // WHY: Only container differs, audio stream is identical
-        if (($source === 'webm' && $target === 'ogg') || ($source === 'ogg' && $target === 'webm')) {
-            return true;
-        }
-
-        // Future optimization: Add more lossless remux pairs here
-        // Example: MP3 in different containers, etc.
-
-        return false;
-    }
-
-    /**
-     * Get FFmpeg codec parameters for target format
-     *
-     * @param string $format Target format (mp3, wav, webm, ogg)
-     * @return string|null FFmpeg codec parameters, or null if format not supported
-     */
-    private static function getCodecParameters(string $format): ?string
-    {
-        return match (strtolower($format)) {
-            // MP3: VBR quality 2 (~190kbps, good quality)
-            'mp3' => '-codec:a libmp3lame -qscale:a 2',
-
-            // WAV: 16-bit PCM, uncompressed
-            'wav' => '-codec:a pcm_s16le',
-
-            // WebM: Opus codec, 128kbps (good balance)
-            // WHY: Opus is better than Vorbis for speech, modern format
-            'webm' => '-codec:a libopus -b:a 128k',
-
-            // OGG: Opus codec, 128kbps (same quality as WebM but in Ogg container)
-            // WHY: Opus is superior to Vorbis for speech, better compression
-            'ogg' => '-codec:a libopus -b:a 128k',
-
-            default => null
-        };
     }
 }

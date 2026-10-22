@@ -101,7 +101,11 @@
     "config": {
         "sort-packages": true,
         "platform": {
-            "php": "8.4"
+            "php": "8.4.27",
+            "ext-phalcon": "5.23.0",
+            "ext-redis": "6.3.0",
+            "ext-mailparse": "3.2.0",
+            "ext-xdebug": "3.4.7"
         },
         "allow-plugins": {
             "php-http/discovery": true

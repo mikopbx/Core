@@ -22,7 +22,10 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\{Directories, Processes, RecordingDeletionLogger, Storage, SystemMessages, Util};
+use MikoPBX\Core\System\Storage\ConvertedRecordingCache;
+use Throwable;
 
 /**
  * WorkerRemoveOldRecords is a worker class responsible for cleaning monitor records.
@@ -34,6 +37,9 @@ class WorkerRemoveOldRecords extends WorkerBase
     private const int MIN_SPACE_MB = 500;
     public const int MIN_SPACE_MB_ALERT = 500;
 
+    private const int CONVERTED_CACHE_CLEANUP_INTERVAL = 600;
+    private const string CONVERTED_CACHE_CLEANUP_KEY = 'recordings:converted_cache:last_cleanup';
+
     /**
      * Starts the worker and checks disk space. Sends notifications in case of problems.
      *
@@ -42,6 +48,9 @@ class WorkerRemoveOldRecords extends WorkerBase
      */
     public function start(array $argv): void
     {
+        // WHY here: this worker runs regardless of S3, unlike WorkerS3CacheCleaner
+        $this->cleanConvertedRecordings(false);
+
         $storage = new Storage();
         $hdd = $storage->getAllHdd(true);
 
@@ -106,6 +115,14 @@ class WorkerRemoveOldRecords extends WorkerBase
         if ($free_space > self::MIN_SPACE_MB) {
             return;
         }
+
+        // Drop regenerable converted copies before deleting any call recording
+        $this->cleanConvertedRecordings(true);
+        $free_space = Storage::getFreeSpace($mount_point);
+        if ($free_space > self::MIN_SPACE_MB) {
+            return;
+        }
+
         $monitor_dir = Directories::getDir(Directories::AST_MONITOR_DIR);
         $out = [];
         $head = Util::which('head');
@@ -142,6 +159,51 @@ class WorkerRemoveOldRecords extends WorkerBase
                 }
             }
             Processes::mwExec("$rm -rf $dir_info");
+        }
+    }
+
+    /**
+     * Removes expired converted recordings (MP3/WAV/OGG made for download/playback).
+     *
+     * The regular pass is throttled through Redis because the supervisor restarts this
+     * one-shot worker much more often than the cache needs to be scanned.
+     *
+     * @param bool $purgeAll Remove all converted files (low disk space), not throttled
+     * @return void
+     */
+    private function cleanConvertedRecordings(bool $purgeAll): void
+    {
+        try {
+            if (!$purgeAll) {
+                $redis = $this->di->getShared(RedisClientProvider::SERVICE_NAME);
+                $acquired = $redis->set(
+                    self::CONVERTED_CACHE_CLEANUP_KEY,
+                    time(),
+                    ['nx', 'ex' => self::CONVERTED_CACHE_CLEANUP_INTERVAL]
+                );
+                if (!$acquired) {
+                    return;
+                }
+            }
+
+            $stats = (new ConvertedRecordingCache())->cleanup($purgeAll);
+            if ($stats['files'] > 0) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf(
+                        'Removed %d converted recording cache files (%.2f MB)',
+                        $stats['files'],
+                        $stats['bytes'] / (1024 * 1024)
+                    ),
+                    LOG_INFO
+                );
+            }
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                'Converted recordings cleanup failed: ' . $e->getMessage(),
+                LOG_WARNING
+            );
         }
     }
 }
