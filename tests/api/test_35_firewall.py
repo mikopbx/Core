@@ -16,6 +16,54 @@ import pytest
 from conftest import assert_api_success, assert_record_exists, assert_record_deleted
 
 
+def _list_rules(api_client) -> list:
+    """Stored rules only: GET firewall also returns placeholder rows with an empty id
+    (e.g. 0.0.0.0/0) that do not exist in m_NetworkFilters."""
+    response = api_client.get('firewall', params={'limit': 1000, 'offset': 0})
+    data = response.get('data', [])
+    items = data.get('items', []) if isinstance(data, dict) else data
+    return [rule for rule in items if rule.get('id')]
+
+
+@pytest.fixture(scope='module', autouse=True)
+def keep_stand_reachable(api_client):
+    """#1272: on a stand without rules the firewall accepts everything; the first
+    rule turns it into a whitelist ending in DROP, which locks the runner out.
+    Keep a 0.0.0.0/0 rule while the module runs and remove every rule it created
+    afterwards, the catch-all last, so the stand stays reachable even on failure."""
+    initial = _list_rules(api_client)
+    initial_ids = {str(rule['id']) for rule in initial}
+    catch_all_id = None
+    if not any(rule.get('permit') == '0.0.0.0/0' for rule in initial):
+        response = api_client.post('firewall', {
+            'network': '0.0.0.0',
+            'subnet': '0',
+            'description': 'REST tests: keep runner reachable (#1272)',
+            'local_network': False,
+            'newer_block_ip': False,
+            'currentRules': {'SIP': True, 'WEB': True, 'SSH': True, 'AMI': True},
+        })
+        assert_api_success(response, "Failed to create 0.0.0.0/0 rule before firewall tests")
+        catch_all_id = str(response['data']['id'])
+
+    yield
+
+    leftovers = [str(rule['id']) for rule in _list_rules(api_client)
+                 if str(rule['id']) not in initial_ids and str(rule['id']) != catch_all_id]
+    failed = False
+    for rule_id in leftovers:
+        try:
+            api_client.delete(f'firewall/{rule_id}')
+        except Exception as e:
+            failed = True
+            print(f"⚠ Could not delete firewall rule {rule_id}: {str(e)[:80]}")
+    if catch_all_id and failed:
+        # Removing it now would leave a whitelist without the runner.
+        print(f"⚠ Keeping 0.0.0.0/0 rule {catch_all_id}: other test rules remain")
+    elif catch_all_id:
+        api_client.delete(f'firewall/{catch_all_id}')
+
+
 class TestFirewall:
     """Comprehensive CRUD tests for Firewall Rules"""
 
