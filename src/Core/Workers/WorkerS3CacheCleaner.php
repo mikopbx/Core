@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Workers;
 
 use MikoPBX\Common\Models\{PbxSettings, RecordingStorage, StorageSettings};
 use MikoPBX\Core\System\{Directories, RecordingDeletionLogger, SystemMessages};
+use MikoPBX\Core\System\Storage\ConvertedRecordingCache;
 use MikoPBX\Core\System\Storage\S3Client;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -305,6 +306,8 @@ class WorkerS3CacheCleaner extends WorkerBase
     private function collectCacheFiles(): array
     {
         $files = [];
+        // Converted recordings have their own TTL/LRU policy (ConvertedRecordingCache::cleanup)
+        $convertedDir = $this->cacheDir . '/' . ConvertedRecordingCache::SUBDIR . '/';
 
         try {
             $iterator = new RecursiveIteratorIterator(
@@ -315,7 +318,7 @@ class WorkerS3CacheCleaner extends WorkerBase
             );
 
             foreach ($iterator as $file) {
-                if ($file->isFile()) {
+                if ($file->isFile() && !str_starts_with($file->getPathname(), $convertedDir)) {
                     $files[] = [
                         'path' => $file->getPathname(),
                         'size' => $file->getSize(),
