@@ -22,7 +22,7 @@
         "aego/oauth2-yandex": "^0.2",
         "aws/aws-sdk-php": "^3.359",
         "filp/whoops": "^2.15.2",
-        "geoip2/geoip2": "v3.2.0",
+        "geoip2/geoip2": "v3.4.0",
         "guzzlehttp/guzzle": "^7.5.3",
         "lbuchs/webauthn": "^2.0",
         "league/oauth2-client": "^2.7",
@@ -34,7 +34,7 @@
         "phplucidframe/console-table": "^1.2",
         "phpmailer/phpmailer": "^6.1",
         "psr/log": "^1.0.1",
-        "repejota/nats": "0.8.4",
+        "repejota/nats": "0.8.7",
         "sentry/sdk": "^4.0.0",
         "thenetworg/oauth2-azure": "^2.2"
     },
