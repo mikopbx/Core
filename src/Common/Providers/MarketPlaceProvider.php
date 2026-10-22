@@ -22,6 +22,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\LicenseV2\KeyPairNotReadyException;
+use MikoPBX\Core\System\LicenseV2\LicenseV2;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Service\License;
 use Phalcon\Di\DiInterface;
@@ -42,11 +45,19 @@ use Throwable;
  * @method  array activateCoupon(string $coupon)
  * @method  void changeLicenseKey(string $newKey)
  * @method  void sendLicenseMetrics(string $key, array $params)
- * @method  array captureFeature(string $featureId)
- * @method  array featureAvailable(string $featureId)
- * @method  array releaseFeature(string $featureId)
+ * @method  array captureFeature(mixed $featureId, ?string $sessionId = null)
+ * @method  array featureAvailable(mixed $featureId)
+ * @method  array releaseFeature(mixed $featureId, ?string $sessionId = null)
  * @method  string translateLicenseErrorMessage(string $message)
  * @method  array ping()
+ *
+ * LicenseV2 only (seat sessions and the closed-contour file exchange):
+ * @method  array sessionStart(array $holder, int $ttl = 300)
+ * @method  array sessionKeepalive(string $sessionId)
+ * @method  array sessionEnd(string $sessionId)
+ * @method  array usageGet()
+ * @method  string exportOfflineRequest()
+ * @method  void importOfflineToken(string $token)
  *
  * @package MikoPBX\Common\Providers
  */
@@ -67,6 +78,17 @@ class MarketPlaceProvider implements ServiceProviderInterface
             self::SERVICE_NAME,
             function () {
                 try {
+                    if (PbxSettings::getValueByKey(PbxSettings::LICENSE_V2_ENABLED) === '1') {
+                        try {
+                            return new LicenseV2();
+                        } catch (KeyPairNotReadyException $e) {
+                            // The installation key pair is created by root workers; until then
+                            // other users keep working through the legacy service. Any other failure
+                            // (a corrupted key, a broken state directory) falls through to the catch
+                            // below: a logged, unavailable service, not legacy posing as v2.
+                            SystemMessages::sysLogMsg(__CLASS__, 'LicenseV2 is unavailable: ' . $e->getMessage());
+                        }
+                    }
                     return new License();
                 } catch (Throwable $e) {
                     SystemMessages::sysLogMsg(__CLASS__, $e->getMessage());

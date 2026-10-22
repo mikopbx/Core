@@ -1,0 +1,28 @@
+name: Lua WAF
+
+on:
+  pull_request:
+  push:
+    branches: [develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  waf:
+    name: unified-security.lua harness
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Production runs the WAF under OpenResty's LuaJIT.
+      - name: Install LuaJIT
+        run: sudo apt-get update -q && sudo apt-get install -y --no-install-recommends luajit
+
+      - name: Run harness
+        run: >-
+          luajit tests/Unit/Core/System/RootFS/waf-body-methods.lua
+          src/Core/System/RootFS/etc/nginx/mikopbx/lua/unified-security.lua

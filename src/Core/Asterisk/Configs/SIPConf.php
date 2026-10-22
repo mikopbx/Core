@@ -22,7 +22,6 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Common\Models\{Codecs,
-    ExtensionForwardingRights,
     Extensions,
     LanInterfaces,
     NetworkFilters,
@@ -35,7 +34,6 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
-use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\CallerIdDidProcessor;
 use MikoPBX\Core\System\{ Network, Processes, SslCertificateService, System, SystemMessages, Util};
@@ -119,12 +117,14 @@ class SIPConf extends AsteriskConfigClass
     protected int $limitSelectPeers = self::PEERS_BATCH_SIZE;
 
     /**
-     * Track peer uniqids already emitted across paginated getPeers() calls.
-     * Reset on each fresh paging cycle (offsetPeers === 0). See #1045.
+     * Track peer pjsip section names already emitted across paginated getPeers()
+     * calls. For peers the section name is the extension (see generatePeerAor/
+     * Endpoint, which emit `[{extension}]`). Reset on each fresh paging cycle
+     * (offsetPeers === 0). See #1045 / #1204.
      *
      * @var array<string,string>
      */
-    protected array $seenPeerUniqids = [];
+    protected array $seenPeerSections = [];
 
     /**
      * Providers data.
@@ -650,7 +650,7 @@ class SIPConf extends AsteriskConfigClass
         // a previous one. ORDER BY id ASC keeps the smallest-id row as the
         // dedup winner across pages.
         if ($this->offsetPeers === 0) {
-            $this->seenPeerUniqids = [];
+            $this->seenPeerSections = [];
         }
 
         $filter = [
@@ -663,19 +663,22 @@ class SIPConf extends AsteriskConfigClass
         $this->offsetPeers += $this->limitSelectPeers;
         if(count($db_data)===0){
             $this->offsetPeers = 0;
-            $this->seenPeerUniqids = [];
+            $this->seenPeerSections = [];
             return $data;
         }
         // Process each SIP peer.
         foreach ($db_data as $arr_data) {
-            // Issue #1045: same dedup as for providers — duplicate uniqid in
-            // m_Sip rows of type='peer' would emit duplicate [name](aor) and
-            // [name](endpoint) sections and Asterisk 22 res_sorcery_config
-            // would reject pjsip.conf as a whole. Skip the later row.
-            if ($this->shouldSkipDuplicateUniqid(
-                (string)($arr_data['uniqid'] ?? ''),
+            // Issue #1045 / #1204: same dedup as for providers — two m_Sip rows of
+            // type='peer' with the same extension emit duplicate [{extension}](aor)
+            // and [{extension}](endpoint) sections (see generatePeerAor/Endpoint),
+            // and Asterisk 22 res_sorcery_config rejects pjsip.conf as a whole.
+            // Peer section names are the extension, so dedup by extension here —
+            // NOT by uniqid (two rows can share one extension but differ in uniqid).
+            // Skip the later row.
+            if ($this->shouldSkipDuplicateSection(
+                (string)($arr_data['extension'] ?? ''),
                 (string)($arr_data['id'] ?? ''),
-                $this->seenPeerUniqids,
+                $this->seenPeerSections,
                 'peer'
             )) {
                 continue;
@@ -711,19 +714,6 @@ class SIPConf extends AsteriskConfigClass
                 $user                     = Users::findFirst($extension->userid);
                 $arr_data['user_id'] = ($user !== null) ? $user->id : 0;
             }
-            // Retrieve extension forwarding rights.
-            $extensionForwarding = ExtensionForwardingRights::findFirst("extension = '$arr_data[extension]'");
-            if (null === $extensionForwarding) {
-                $arr_data['ringlength']              = '';
-                $arr_data['forwarding']              = '';
-                $arr_data['forwardingonbusy']        = '';
-                $arr_data['forwardingonunavailable'] = '';
-            } else {
-                $arr_data['ringlength']              = $extensionForwarding->ringlength;
-                $arr_data['forwarding']              = $extensionForwarding->forwarding;
-                $arr_data['forwardingonbusy']        = $extensionForwarding->forwardingonbusy;
-                $arr_data['forwardingonunavailable'] = $extensionForwarding->forwardingonunavailable;
-            }
             $data[] = $arr_data;
         }
 
@@ -755,47 +745,75 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Decide whether a SIP row with the given uniqid is a duplicate that
-     * must be skipped to keep pjsip.conf parseable.
+     * Decide whether a SIP row maps to a pjsip section name already emitted by
+     * an earlier row and must be skipped to keep pjsip.conf parseable.
      *
-     * Issue #1045: when two m_Sip rows share one uniqid, pjsip.conf gets
-     * duplicate `[name](aor)`/`[name](endpoint)` sections and Asterisk 22
-     * res_sorcery_config rejects the whole file. Caller iterates rows in
-     * id ASC order — the smallest-id row registers as the winner here, all
-     * later rows are reported as duplicates and skipped.
+     * Issue #1045: two m_Sip rows sharing one uniqid produce duplicate
+     * `[name](aor)`/`[name](endpoint)` sections and Asterisk 22
+     * res_sorcery_config rejects the whole file.
+     * Issue #1204: for INBOUND providers the section name is the username (Login),
+     * not the uniqid, so two INBOUND providers with the same Login collide even
+     * though their uniqids differ. Callers therefore pass the *effective section
+     * name* (username for INBOUND providers, uniqid otherwise), not the raw uniqid.
+     * Caller iterates rows in id ASC order — the smallest-id row registers as the
+     * winner here, all later rows are reported as duplicates and skipped.
      *
-     * @param string             $uniqid       Row uniqid (already cast to string).
+     * @param string             $sectionName  Effective pjsip section name (already cast to string).
      * @param string             $rowId        m_Sip.id of the current row.
-     * @param array<string,string> $seenUniqids Tracker mutated by this method:
-     *                                          uniqid → winning rowId.
+     * @param array<string,string> $seenSections Tracker mutated by this method:
+     *                                          section name → winning rowId.
      * @param string             $kind         "provider"|"peer" — used in log only.
      *
      * @return bool true if the caller must skip this row.
      */
-    protected function shouldSkipDuplicateUniqid(
-        string $uniqid,
+    protected function shouldSkipDuplicateSection(
+        string $sectionName,
         string $rowId,
-        array &$seenUniqids,
+        array &$seenSections,
         string $kind
     ): bool {
-        if (isset($seenUniqids[$uniqid])) {
+        if (isset($seenSections[$sectionName])) {
             SystemMessages::sysLogMsg(
                 __METHOD__,
                 sprintf(
-                    'Duplicate SIP %s uniqid "%s" detected (m_Sip.id=%s, kept m_Sip.id=%s). '
+                    'Duplicate SIP %s pjsip section "%s" detected (m_Sip.id=%s, kept m_Sip.id=%s). '
                     . 'Skipping duplicate to keep pjsip.conf parseable. '
-                    . 'Fix: rewrite uniqid for the offending row or delete it.',
+                    . 'Fix: change the Login (for INBOUND providers) or uniqid of the offending row, or delete it.',
                     $kind,
-                    $uniqid,
+                    $sectionName,
                     $rowId,
-                    $seenUniqids[$uniqid]
+                    $seenSections[$sectionName]
                 ),
                 LOG_WARNING
             );
             return true;
         }
-        $seenUniqids[$uniqid] = $rowId;
+        $seenSections[$sectionName] = $rowId;
         return false;
+    }
+
+    /**
+     * Resolve the pjsip aor/endpoint section name used for a provider.
+     *
+     * For INBOUND providers the section name MUST be the username (Login): an
+     * incoming REGISTER is matched against an AOR named after the username, so
+     * the aor/endpoint objects are emitted under the Login (see
+     * generateProviderAor()/generateProviderEndpoint()). For all other
+     * registration types the section name is the uniqid. This is the single
+     * source of truth for that rule — dedup and generation must agree.
+     *
+     * @param string $registrationType Sip::REG_TYPE_* value.
+     * @param string $username         Provider Login.
+     * @param string $uniqid           Provider uniqid.
+     *
+     * @return string Effective pjsip section name.
+     */
+    protected function getProviderSectionName(string $registrationType, string $username, string $uniqid): string
+    {
+        if ($registrationType === Sip::REG_TYPE_INBOUND && $username !== '') {
+            return $username;
+        }
+        return $uniqid;
     }
 
     /**
@@ -817,16 +835,23 @@ class SIPConf extends AsteriskConfigClass
             'order' => 'id ASC',
         ]);
 
-        // Issue #1045: defensive dedup against duplicate provider uniqids.
-        // Two providers sharing one uniqid produce duplicate [name](aor)/[name](endpoint)
-        // sections in pjsip.conf. Asterisk 22 res_sorcery_config rejects the WHOLE file
-        // on a duplicate object, taking down all extensions.
-        $seenUniqids = [];
+        // Issue #1045 / #1204: defensive dedup against duplicate provider pjsip sections.
+        // Two providers emitting the same section name produce duplicate
+        // [name](aor)/[name](endpoint) objects in pjsip.conf; Asterisk 22
+        // res_sorcery_config rejects the WHOLE file on a duplicate object, taking
+        // down all trunks and extensions. For INBOUND providers the section name is
+        // the username (Login), otherwise the uniqid — dedup on the effective name.
+        $seenSections = [];
         foreach ($db_data as $sip_peer) {
-            if ($this->shouldSkipDuplicateUniqid(
-                (string)$sip_peer->uniqid,
+            $sectionName = $this->getProviderSectionName(
+                (string)$sip_peer->registration_type,
+                (string)$sip_peer->username,
+                (string)$sip_peer->uniqid
+            );
+            if ($this->shouldSkipDuplicateSection(
+                $sectionName,
                 (string)$sip_peer->id,
-                $seenUniqids,
+                $seenSections,
                 'provider'
             )) {
                 continue;
@@ -1202,36 +1227,6 @@ class SIPConf extends AsteriskConfigClass
         // whose host or outbound_proxy is a hostname (not an IP/CIDR literal).
         // Read by WorkerSipDnsResolver on its next tick.
         $this->persistPendingHostnames();
-
-        // Asterisk has to be restarted to apply the changes over ami
-        if ($this->booting !== true) {
-            $this->updateAsteriskDatabase();
-        }
-    }
-
-    /**
-     * Updates the Asterisk database with the forwarding and ring length information for each peer.
-     *
-     * @return bool True if the update was successful, false otherwise.
-     */
-    public function updateAsteriskDatabase(): bool
-    {
-        $warError = false;
-        $db = new AstDB();
-
-        do {
-            $data_peers = $this->getPeers();
-            foreach ($data_peers as $peer) {
-                // Update Asterisk database with routing information.
-                $ringLength = ((string)$peer['ringlength'] === '0') ? '' : trim($peer['ringlength']??'');
-                $warError |= !$db->databasePut('FW_TIME', $peer['extension'], $ringLength);
-                $warError |= !$db->databasePut('FW', $peer['extension'], trim($peer['forwarding']??''));
-                $warError |= !$db->databasePut('FW_BUSY', $peer['extension'], trim($peer['forwardingonbusy']??''));
-                $warError |= !$db->databasePut('FW_UNAV', $peer['extension'], trim($peer['forwardingonunavailable']??''));
-            }
-        } while (!empty($data_peers));
-
-        return !$warError;
     }
 
     /**
@@ -1838,17 +1833,23 @@ class SIPConf extends AsteriskConfigClass
     private function generateProvidersPj(): string
     {
         $conf = '';
-        $seenProviderUniqids = [];
+        $seenProviderSections = [];
 
         // Iterate through each data provider
         foreach ($this->data_providers as $provider) {
-            // Defensive dedup at render stage (issue #1045):
-            // if upstream provider collection returns duplicate uniqids for any reason,
-            // skip later rows to keep pjsip.conf parseable.
-            if ($this->shouldSkipDuplicateUniqid(
-                (string)($provider['uniqid'] ?? ''),
+            // Defensive dedup at render stage (issues #1045 / #1204):
+            // if the upstream provider collection returns two rows that map to the
+            // same pjsip section name for any reason, skip later rows to keep
+            // pjsip.conf parseable. For INBOUND providers the section name is the
+            // username (Login), otherwise the uniqid.
+            if ($this->shouldSkipDuplicateSection(
+                $this->getProviderSectionName(
+                    (string)($provider['registration_type'] ?? ''),
+                    (string)($provider['username'] ?? ''),
+                    (string)($provider['uniqid'] ?? '')
+                ),
                 (string)($provider['id'] ?? ''),
-                $seenProviderUniqids,
+                $seenProviderSections,
                 'provider'
             )) {
                 continue;
@@ -2146,12 +2147,13 @@ class SIPConf extends AsteriskConfigClass
             array_merge($baseOptions, $uniqueParams)
         );
 
-        // AOR name matches provider uniqid (without suffix for simplicity and consistency)
-        // For INBOUND providers, AOR must match username for registration to work
-        // For OUTBOUND/NONE, using uniqid is fine as they don't register on our server
-        $aorName = ($provider['registration_type'] === Sip::REG_TYPE_INBOUND)
-            ? $provider['username']  // INBOUND: must match username for REGISTER
-            : $provider['uniqid'];   // OUTBOUND/NONE: use uniqid
+        // AOR name: username for INBOUND (must match REGISTER), uniqid otherwise.
+        // Kept in sync with the dedup key via getProviderSectionName().
+        $aorName = $this->getProviderSectionName(
+            (string)($provider['registration_type'] ?? ''),
+            (string)($provider['username'] ?? ''),
+            (string)($provider['uniqid'] ?? '')
+        );
 
         // Add configuration section header (no description - already in visual separator)
         if ($needsCustomization) {
@@ -2281,7 +2283,14 @@ class SIPConf extends AsteriskConfigClass
 
         $baseOptions = [
             'type'     => 'identify',
-            'endpoint' => $provider['uniqid'],
+            // #1204: the endpoint object is named by getProviderSectionName()
+            // (username for INBOUND, uniqid otherwise). Reference the same name
+            // here, or IP-based identification points at a non-existent endpoint.
+            'endpoint' => $this->getProviderSectionName(
+                (string)($provider['registration_type'] ?? ''),
+                (string)($provider['username'] ?? ''),
+                (string)($provider['uniqid'] ?? '')
+            ),
             'match'    => implode(',', array_unique($providerHosts)),
         ];
 
@@ -2300,6 +2309,34 @@ class SIPConf extends AsteriskConfigClass
             $manual_attributes,
             'identify'
         );
+    }
+
+    /**
+     * Render manual-attribute key/value pairs as pjsip.conf lines.
+     *
+     * Util::parseIniSettings() returns 'set_var' as an array to allow several
+     * channel variables on one endpoint; every other key is a scalar. A plain
+     * array value must become one "$key = ..." line per element (PJSIP reads
+     * repeated 'set_var' lines as separate variables) rather than a single
+     * comma-joined line, which Asterisk would treat as one literal value.
+     *
+     * @param array $attributes Manual attributes for one section (e.g. 'endpoint').
+     * @param string[] $skipKeys Keys already emitted elsewhere (e.g. from templates).
+     * @return string
+     */
+    private static function renderManualAttributeLines(array $attributes, array $skipKeys = []): string
+    {
+        $conf = '';
+        foreach ($attributes as $key => $value) {
+            if (in_array($key, $skipKeys, true)) {
+                continue;
+            }
+            foreach ((array)$value as $singleValue) {
+                $conf .= "$key = $singleValue\n";
+            }
+        }
+
+        return $conf;
     }
 
     /**
@@ -2359,14 +2396,14 @@ class SIPConf extends AsteriskConfigClass
             'tone_zone'       => $toneZone,
         ];
 
-        // Determine AOR name and endpoint name (for inbound use username, for others use uniqid)
-        if ($provider['registration_type'] === Sip::REG_TYPE_INBOUND) {
-            $aorName = $provider['username'];
-            $endpointName = $provider['username'];
-        } else {
-            $aorName = $provider['uniqid'];
-            $endpointName = $provider['uniqid'];
-        }
+        // AOR/endpoint name: username for INBOUND, uniqid otherwise.
+        // Kept in sync with the dedup key via getProviderSectionName().
+        $aorName = $this->getProviderSectionName(
+            (string)($provider['registration_type'] ?? ''),
+            (string)($provider['username'] ?? ''),
+            (string)($provider['uniqid'] ?? '')
+        );
+        $endpointName = $aorName;
 
         // Unique parameters not in template
         $uniqueParams = [
@@ -2455,14 +2492,7 @@ class SIPConf extends AsteriskConfigClass
             // Apply manual attributes (highest priority)
             if (!empty($manual_attributes['endpoint'])) {
                 $conf .= "; === Manual attributes ===\n";
-                foreach ($manual_attributes['endpoint'] as $key => $value) {
-                    if ($key !== 'type') {
-                        if (is_array($value)) {
-                            $value = implode(',', $value);
-                        }
-                        $conf .= "$key = $value\n";
-                    }
-                }
+                $conf .= self::renderManualAttributeLines($manual_attributes['endpoint'], ['type']);
             }
         } else {
             // Use pure template inheritance with unique parameters only
@@ -3429,12 +3459,9 @@ class SIPConf extends AsteriskConfigClass
 
         // Apply manual attributes (highest priority, can override template and unique params)
         if (!empty($manual_attributes['endpoint'])) {
-            foreach ($manual_attributes['endpoint'] as $key => $value) {
-                // Skip if already added in unique params (will be overridden by manual)
-                if (!in_array($key, ['type'])) { // type is always from template
-                    $conf .= "$key = $value\n";
-                }
-            }
+            // 'type' is always from the template; everything else, including
+            // repeated 'set_var' entries, is emitted as-is.
+            $conf .= self::renderManualAttributeLines($manual_attributes['endpoint'], ['type']);
         }
 
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
@@ -3477,11 +3504,13 @@ class SIPConf extends AsteriskConfigClass
 
             // Apply manual attributes for WebRTC endpoint
             if (!empty($manual_attributes['endpoint'])) {
-                foreach ($manual_attributes['endpoint'] as $key => $value) {
-                    if (!in_array($key, ['type', 'callerid', 'aors', 'auth', 'outbound_auth', 'dtmf_mode', 'acl', 'language', 'tone_zone', 'allow', 'disallow', 'rtcp_mux'])) {
-                        $conf .= "$key = $value\n";
-                    }
-                }
+                $conf .= self::renderManualAttributeLines(
+                    $manual_attributes['endpoint'],
+                    [
+                        'type', 'callerid', 'aors', 'auth', 'outbound_auth', 'dtmf_mode', 'acl',
+                        'language', 'tone_zone', 'allow', 'disallow', 'rtcp_mux'
+                    ]
+                );
             }
 
             $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
@@ -3511,11 +3540,13 @@ class SIPConf extends AsteriskConfigClass
 
             // Apply manual attributes for TLS endpoint
             if (!empty($manual_attributes['endpoint'])) {
-                foreach ($manual_attributes['endpoint'] as $key => $value) {
-                    if (!in_array($key, ['type', 'callerid', 'aors', 'auth', 'outbound_auth', 'dtmf_mode', 'acl', 'transport', 'media_encryption'])) {
-                        $conf .= "$key = $value\n";
-                    }
-                }
+                $conf .= self::renderManualAttributeLines(
+                    $manual_attributes['endpoint'],
+                    [
+                        'type', 'callerid', 'aors', 'auth', 'outbound_auth', 'dtmf_mode', 'acl',
+                        'transport', 'media_encryption'
+                    ]
+                );
             }
 
             $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);

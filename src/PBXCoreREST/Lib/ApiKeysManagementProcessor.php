@@ -24,7 +24,8 @@ use MikoPBX\PBXCoreREST\Lib\ApiKeys\{
     GetListAction,
     SaveRecordAction,
     DeleteRecordAction,
-    GenerateKeyAction
+    GenerateKeyAction,
+    TouchLastUsedAction
 };
 use Phalcon\Di\Injectable;
 
@@ -44,6 +45,7 @@ enum ApiKeyAction: string
 
     // Custom methods
     case GENERATE_KEY = 'generateKey';
+    case TOUCH_LAST_USED = 'touchLastUsed'; // queued by TokenValidationService, not an HTTP route (#1120)
 }
 
 /**
@@ -106,6 +108,7 @@ class ApiKeysManagementProcessor extends Injectable
 
             // Custom methods
             ApiKeyAction::GENERATE_KEY => GenerateKeyAction::main($data),
+            ApiKeyAction::TOUCH_LAST_USED => TouchLastUsedAction::main($data),
         };
 
         $res->function = $actionString;

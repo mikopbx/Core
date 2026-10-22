@@ -23,6 +23,7 @@ use MikoPBX\Core\System\PasswordService;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 use Phalcon\Filter\Validation\Validator\Regex as RegexValidator;
+use Phalcon\Filter\Validation\Validator\Callback as CallbackValidator;
 use Phalcon\Mvc\Model\Relation;
 
 /**
@@ -428,14 +429,117 @@ class Sip extends ModelsBase
             )
         );
 
-        // For inbound providers, validate username contains only allowed characters
-        if ($this->registration_type === self::REG_TYPE_INBOUND && !empty($this->username)) {
+        // For inbound providers, validate username contains only allowed characters.
+        // NOTE: use !== '' rather than empty() — empty('0') is true in PHP, and "0" is a
+        // valid Login that SIPConf::getProviderSectionName() treats as non-empty (it uses
+        // !== ''), so empty() here would silently exempt Login "0" from every guard below.
+        $inboundLogin = ($this->registration_type === self::REG_TYPE_INBOUND) ? (string)($this->username ?? '') : '';
+        if ($inboundLogin !== '') {
             $validation->add(
                 'username',
                 new RegexValidator(
                     [
                         'pattern' => '/^[a-zA-Z0-9._+*-]+$/',
                         'message' => $this->t('mo_SipUsernameInvalidCharacters'),
+                    ]
+                )
+            );
+
+            // Issue #1204: for INBOUND providers the pjsip aor/endpoint section name is the
+            // username (not the uniqid), so two INBOUND providers sharing one Login emit
+            // duplicate [username] objects. Asterisk 22 res_sorcery_config then rejects the
+            // WHOLE pjsip.conf, taking down every trunk and extension. The uniqid Uniqueness
+            // check above does not cover this (the offending rows have distinct uniqids), so
+            // enforce Login uniqueness among INBOUND providers via a custom callback (NOT
+            // Phalcon's built-in UniquenessValidator — it cannot filter by another column, and
+            // would otherwise block re-enabling THIS row against an already-disabled sibling
+            // that can never actually collide; see the disabled<>'1' filter below).
+            //
+            // Both collision checks below are skipped while this row is being saved as
+            // disabled: a disabled row never renders into pjsip.conf (SIPConf::getProviders()/
+            // getPeers() filter `disabled <> '1'`), so it cannot collide while disabled, and
+            // blocking the save would also block the admin's natural fix — disabling one of
+            // two pre-existing colliding rows via the quick status-only toggle
+            // (SaveRecordAction::updateStatusOnly(), which calls save() with no other field
+            // changed) must always succeed. The check re-applies the moment the row is
+            // re-enabled (disabled becomes '0'), which is exactly when the risk re-appears.
+            if ($this->disabled !== '1') {
+                $validation->add(
+                    'username',
+                    new CallbackValidator(
+                        [
+                            'message' => $this->t('mo_SipInboundUsernameMustBeUnique'),
+                            'callback' => function ($model) {
+                                $conditions = "username = :username: AND registration_type = :regtype: "
+                                    . "AND disabled <> '1'";
+                                $bind = [
+                                    'username' => $model->username,
+                                    'regtype' => self::REG_TYPE_INBOUND,
+                                ];
+                                if (!empty($model->id)) {
+                                    $conditions .= ' AND id <> :id:';
+                                    $bind['id'] = $model->id;
+                                }
+                                $clash = Sip::findFirst([$conditions, 'bind' => $bind]);
+                                return $clash === null;
+                            },
+                        ]
+                    )
+                );
+
+                // Issue #1204: an INBOUND Login that equals an extension number collides with
+                // that extension's pjsip objects — peers emit [{extension}](aor)/
+                // [{extension}](endpoint) (SIPConf::generatePeerAor/Endpoint) while an INBOUND
+                // provider emits [{username}] objects. Equal names in the same file => duplicate
+                // object => Asterisk 22 rejects the whole pjsip.conf. Neither the uniqid nor the
+                // Login-uniqueness check above sees this cross-namespace clash, so reject an
+                // INBOUND Login that matches any enabled SIP peer's extension.
+                $validation->add(
+                    'username',
+                    new CallbackValidator(
+                        [
+                            'message' => $this->t('mo_SipInboundUsernameClashesExtension'),
+                            'callback' => function ($model) {
+                                $clash = Sip::findFirst(
+                                    [
+                                        "type = 'peer' AND disabled <> '1' AND extension = :ext:",
+                                        'bind' => ['ext' => $model->username],
+                                    ]
+                                );
+                                return $clash === null;
+                            },
+                        ]
+                    )
+                );
+            }
+        }
+
+        // Issue #1204 (other direction): an extension number that equals an existing INBOUND
+        // provider's Login collides the same way, but from the peer/extension side. The guard
+        // above only runs when saving the PROVIDER row, so renaming/creating an extension to
+        // match an existing INBOUND Login would otherwise slip through unchecked. Same
+        // disabled-skip reasoning as above: do not block saving this peer as disabled, only
+        // when it is (re-)enabled.
+        $peerExtension = ($this->type === 'peer') ? (string)($this->extension ?? '') : '';
+        if ($peerExtension !== '' && $this->disabled !== '1') {
+            $validation->add(
+                'extension',
+                new CallbackValidator(
+                    [
+                        'message' => $this->t('mo_SipExtensionClashesInboundUsername'),
+                        'callback' => function ($model) {
+                            $clash = Sip::findFirst(
+                                [
+                                    "type = 'friend' AND registration_type = :regtype: "
+                                    . "AND disabled <> '1' AND username = :ext:",
+                                    'bind' => [
+                                        'regtype' => self::REG_TYPE_INBOUND,
+                                        'ext' => $model->extension,
+                                    ],
+                                ]
+                            );
+                            return $clash === null;
+                        },
                     ]
                 )
             );

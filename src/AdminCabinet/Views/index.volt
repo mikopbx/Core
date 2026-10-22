@@ -25,7 +25,7 @@
 		var globalPBXVersion = '{{ PBXVersion }}';
 		var globalRootUrl = '{{ url() }}';
 		var globalDebugMode = '{{ debugMode }}';
-		var globalPBXLicense = '{{ PBXLicense }}';
+		var globalPBXLicense = {{ PBXLicense | json_encode }};
     var globalModuleUniqueId = '{{ globalModuleUniqueId }}';
 		var globalLastSentryEventId = '{{ lastSentryEventId }}';
 		var globalWebAdminLanguage = '{{ WebAdminLanguage }}';

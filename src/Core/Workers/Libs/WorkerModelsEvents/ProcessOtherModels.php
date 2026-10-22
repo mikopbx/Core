@@ -140,10 +140,21 @@ class ProcessOtherModels extends Injectable
         $tables[] = [
             'modelClasses' => [
                 Users::class,
-                ExtensionForwardingRights::class,
             ],
             'actions' => [
                 ReloadPJSIPAction::class,
+                ReloadDialplanAction::class,
+            ],
+        ];
+
+        // Call-forwarding targets now live in the dialplan [globals] section
+        // (ExtensionsConf::generateForwardingGlobals), not astdb, so a change
+        // only needs a dialplan rebuild — decoupled from pjsip.conf health.
+        $tables[] = [
+            'modelClasses' => [
+                ExtensionForwardingRights::class,
+            ],
+            'actions' => [
                 ReloadDialplanAction::class,
             ],
         ];

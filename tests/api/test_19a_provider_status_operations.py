@@ -198,6 +198,26 @@ class TestUnifiedProviderStatusOperations:
         print(f"✓ Retrieved provider history via unified endpoint")
         print(f"  Events count: {data['count']}")
 
+    def test_04_provider_statuses_are_json_objects(self, api_client):
+        """Test that sip and iax statuses are always JSON objects
+
+        WHY: statuses are keyed by provider id, so an empty provider set must be
+        serialized as {} and not as []. Clients index these maps by id and break
+        when a PBX without IAX (or SIP) providers answers with a list (#1141).
+        """
+        response = api_client.get('providers:getStatuses')
+        assert_api_success(response, "Failed to get all provider statuses")
+
+        data = response['data']
+        assert isinstance(data['sip'], dict), \
+            f"'sip' statuses must be a JSON object, got {type(data['sip']).__name__}: {data['sip']!r}"
+        assert isinstance(data['iax'], dict), \
+            f"'iax' statuses must be a JSON object, got {type(data['iax']).__name__}: {data['iax']!r}"
+
+        print(f"✓ Provider statuses are JSON objects")
+        print(f"  SIP providers: {len(data['sip'])}")
+        print(f"  IAX providers: {len(data['iax'])}")
+
 
 class TestProviderStatusEdgeCases:
     """Test edge cases and error handling"""

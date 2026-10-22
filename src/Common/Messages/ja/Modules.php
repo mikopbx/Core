@@ -110,6 +110,7 @@ return [
     'ext_Version' => 'バージョン',
     'ext_WrongGetModuleLink' => 'リポジトリからモジュールファイルを取得中にエラーが発生しました',
     'ext_MissingModuleUniqueID' => '%filePath% アーカイブ内の module.json ファイルに必要な moduleUniqueID フィールドがありません。',
+    'ext_InvalidModuleUniqueID' => '%filePath% アーカイブ内の module.json ファイルの moduleUniqueID フィールドが無効です。使用できるのはラテン文字、数字、"_"、"-" のみで、128 文字以内です。',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'モジュール %module% は、MikoPBX の現在のバージョンと互換性がありません',
     'ext_InvalidModuleJson' => 'アーカイブ %filePath% 内の module.json ファイルに無効な JSON が含まれています: %error%',

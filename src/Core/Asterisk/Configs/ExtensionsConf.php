@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Models\ExtensionForwardingRights;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\{IncomingContexts, InternalContexts, OutgoingContext};
@@ -84,6 +85,7 @@ class ExtensionsConf extends AsteriskConfigClass
         $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile(PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN)).PHP_EOL;
         $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile(PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT)).PHP_EOL;
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GLOBALS);
+        $conf .= $this->generateForwardingGlobals();
         $conf .= PHP_EOL.PHP_EOL;
         $conf .= "[general]".PHP_EOL;
 
@@ -113,6 +115,76 @@ class ExtensionsConf extends AsteriskConfigClass
         // Write the configuration content to the file
         $directory = Directories::getDir(Directories::AST_LUA_DIALPLAN_DIR);
         Util::fileWriteContent($directory . '/99-extensions-override.lua', $confLua);
+    }
+
+    /**
+     * Generates the [globals] entries that hold per-extension call-forwarding
+     * targets, replacing the former astdb (FW/FW_BUSY/FW_UNAV/FW_TIME) storage.
+     *
+     * [internal-fw] reads them via nested expansion ${${dstatus}_${EXTEN}} and
+     * ${FW_TIME_${EXTEN}}. Every row is emitted — including empty values when a
+     * forward is cleared — because Asterisk keeps globals across `dialplan
+     * reload` (clearglobalvars defaults to no); emitting the empty assignment
+     * overwrites a previously loaded target so clearing a forward takes effect.
+     *
+     * @return string The generated [globals] fragment.
+     */
+    private function generateForwardingGlobals(): string
+    {
+        $conf = '';
+        /** @var ExtensionForwardingRights $row */
+        foreach (ExtensionForwardingRights::find() as $row) {
+            // The suffix becomes a dialplan variable name and must match the
+            // runtime ${EXTEN}; internal numbers are digits, skip anything else.
+            $ext = preg_replace('/\D/', '', (string)$row->extension);
+            if ($ext === '') {
+                continue;
+            }
+            $ring = (int)$row->ringlength;
+            $conf .= "FW_$ext=" . self::sanitizeForwardingNumber($row->forwarding) . PHP_EOL;
+            $conf .= "FW_BUSY_$ext=" . self::sanitizeForwardingNumber($row->forwardingonbusy) . PHP_EOL;
+            $conf .= "FW_UNAV_$ext=" . self::sanitizeForwardingNumber($row->forwardingonunavailable) . PHP_EOL;
+            $conf .= "FW_TIME_$ext=" . ($ring > 0 ? (string)$ring : '') . PHP_EOL;
+        }
+
+        return $conf;
+    }
+
+    /**
+     * Strips a forwarding target down to the characters the dialplan accepts:
+     * digits and the dial symbols * # + (everything else is removed).
+     *
+     * @param string|null $value The raw forwarding target.
+     * @return string The sanitized forwarding target.
+     */
+    private static function sanitizeForwardingNumber(?string $value): string
+    {
+        return preg_replace('/[^0-9*#+]/', '', trim((string)$value));
+    }
+
+    /**
+     * Generates the [hangup_handler] context.
+     *
+     * transfer_dial_hangup is normally emitted by the h-extension of the context that
+     * dialled the transfer target ([internal-users], [internal], [outgoing], ...). When a
+     * custom Gosub (e.g. [internal-users-custom] calling Busy()) hangs the channel up,
+     * Asterisk runs the h-extension of the subroutine context instead, so the event is
+     * lost and the operator's recording is never resumed after the failed transfer.
+     * Hangup handlers always run (after the h-extension), so the transfer leg
+     * (Local/...@internal-transfer-...;2) emits the event here unless it was already sent.
+     *
+     * @return string
+     */
+    public static function generateHangupHandlerContext(): string
+    {
+        return '[hangup_handler]' . "\n" .
+            'exten => s,1,NoOp(--- hangup - ${CHANNEL} ---)' . "\n\t" .
+            'same => n,ExecIf($["${ISTRANSFER}x" != "x" && "${TRANSFER_DIAL_HANGUP_SENT}x" == "x"'
+            . ' && "${CUT(CHANNEL,\;,2)}" == "2"'
+            . ' && "${STRREPLACE(CHANNEL,@internal-transfer-)}" != "${CHANNEL}"]'
+            . '?Gosub(transfer_dial_hangup,${EXTEN},1(return)))' . "\n\t" .
+            'same => n,Gosub(hangup_chan,${EXTEN},1)' . "\n\t" .
+            'same => n,return' . "\n\n";
     }
 
     /**
@@ -197,10 +269,7 @@ class ExtensionsConf extends AsteriskConfigClass
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSIONS_GEN_CREATE_CHANNEL_DIALPLAN);
         $conf .= 'same => n,return' . PHP_EOL.PHP_EOL;
 
-        $conf .= '[hangup_handler]' . "\n";
-        $conf .= 'exten => s,1,NoOp(--- hangup - ${CHANNEL} ---)' . "\n\t";
-        $conf .= 'same => n,Gosub(hangup_chan,${EXTEN},1)' . "\n\t";
-        $conf .= 'same => n,return' . "\n\n";
+        $conf .= self::generateHangupHandlerContext();
 
         $conf .= '[set_orign_chan]' . "\n";
         $conf .= 'exten => s,1,Wait(0.2)' . "\n\t";

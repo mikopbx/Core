@@ -117,7 +117,8 @@ class WhoopsErrorHandlerProvider implements ServiceProviderInterface
         } else {
             $whoops->pushHandler(new PlainTextHandler());
         }
-        $whoops->register();
+        // #1171: return the text only; by default Run echoes it and sends HTTP 500 into the current response.
+        $whoops->writeToOutput(false);
         $whoops->allowQuit(false);
         return $whoops->handleException($exception);
     }

@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Tests\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
@@ -33,17 +34,76 @@ class SIPConfTest extends AbstractUnitTest
     }
 
     /**
-     * Issue #1045: first occurrence of a uniqid wins, the seenUniqids tracker
-     * stores the winner row id, and the call returns false (do not skip).
+     * Issue #1193: a manual 'set_var' comes back from Util::parseIniSettings()
+     * as an array (to allow several channel variables); rendering it must emit
+     * one "set_var = ..." line per entry, not throw "Array to string conversion"
+     * and not collapse them into a single comma-joined line (which Asterisk
+     * would treat as one literal value, not two variables).
      */
-    public function testShouldSkipDuplicateUniqidFirstOccurrenceIsKept(): void
+    public function testRenderManualAttributeLinesExpandsSetVarArrayToSeparateLines(): void
+    {
+        $conf = new SIPConf();
+
+        $result = $this->invokeMethod(
+            $conf,
+            'renderManualAttributeLines',
+            [['set_var' => ['MIKO_CALLERID_NUM=1001', 'MIKO_TEST_VAR=hello']], []]
+        );
+
+        $this->assertSame("set_var = MIKO_CALLERID_NUM=1001\nset_var = MIKO_TEST_VAR=hello\n", $result);
+    }
+
+    public function testRenderManualAttributeLinesHandlesSingleSetVarEntry(): void
+    {
+        $conf = new SIPConf();
+
+        $result = $this->invokeMethod(
+            $conf,
+            'renderManualAttributeLines',
+            [['set_var' => ['MIKO_CALLERID_NUM=1001']], []]
+        );
+
+        $this->assertSame("set_var = MIKO_CALLERID_NUM=1001\n", $result);
+    }
+
+    public function testRenderManualAttributeLinesSkipsListedKeys(): void
+    {
+        $conf = new SIPConf();
+
+        $result = $this->invokeMethod(
+            $conf,
+            'renderManualAttributeLines',
+            [['type' => 'endpoint', 'dtmf_mode' => 'auto'], ['type']]
+        );
+
+        $this->assertSame("dtmf_mode = auto\n", $result);
+    }
+
+    public function testRenderManualAttributeLinesKeepsScalarValuesAsSingleLine(): void
+    {
+        $conf = new SIPConf();
+
+        $result = $this->invokeMethod(
+            $conf,
+            'renderManualAttributeLines',
+            [['dtmf_mode' => 'auto'], []]
+        );
+
+        $this->assertSame("dtmf_mode = auto\n", $result);
+    }
+
+    /**
+     * Issue #1045: first occurrence of a section name wins, the seen-sections
+     * tracker stores the winner row id, and the call returns false (do not skip).
+     */
+    public function testShouldSkipDuplicateSectionFirstOccurrenceIsKept(): void
     {
         $conf = new SIPConf();
         $seen = [];
 
         $skip = $this->invokeMethod(
             $conf,
-            'shouldSkipDuplicateUniqid',
+            'shouldSkipDuplicateSection',
             ['SIP-TRUNK-AAAA1111', '7', &$seen, 'provider']
         );
 
@@ -52,17 +112,17 @@ class SIPConfTest extends AbstractUnitTest
     }
 
     /**
-     * Issue #1045: a second row with the same uniqid is reported as duplicate
-     * and the tracker keeps pointing at the original (smaller-id) winner.
+     * Issue #1045: a second row with the same section name is reported as a
+     * duplicate and the tracker keeps pointing at the original (smaller-id) winner.
      */
-    public function testShouldSkipDuplicateUniqidSecondOccurrenceIsSkipped(): void
+    public function testShouldSkipDuplicateSectionSecondOccurrenceIsSkipped(): void
     {
         $conf = new SIPConf();
         $seen = ['SIP-TRUNK-AAAA1111' => '7'];
 
         $skip = $this->invokeMethod(
             $conf,
-            'shouldSkipDuplicateUniqid',
+            'shouldSkipDuplicateSection',
             ['SIP-TRUNK-AAAA1111', '12', &$seen, 'provider']
         );
 
@@ -71,22 +131,22 @@ class SIPConfTest extends AbstractUnitTest
     }
 
     /**
-     * Different uniqids must coexist in the tracker — the helper only blocks
-     * exact uniqid collisions.
+     * Different section names must coexist in the tracker — the helper only
+     * blocks exact section-name collisions.
      */
-    public function testShouldSkipDuplicateUniqidUnrelatedRowsCoexist(): void
+    public function testShouldSkipDuplicateSectionUnrelatedRowsCoexist(): void
     {
         $conf = new SIPConf();
         $seen = [];
 
         $skipFirst  = $this->invokeMethod(
             $conf,
-            'shouldSkipDuplicateUniqid',
+            'shouldSkipDuplicateSection',
             ['SIP-TRUNK-AAAA1111', '7', &$seen, 'provider']
         );
         $skipSecond = $this->invokeMethod(
             $conf,
-            'shouldSkipDuplicateUniqid',
+            'shouldSkipDuplicateSection',
             ['SIP-TRUNK-BBBB2222', '8', &$seen, 'provider']
         );
 
@@ -99,28 +159,107 @@ class SIPConfTest extends AbstractUnitTest
     }
 
     /**
-     * Empty/null uniqid degenerates to '' — the helper still dedups it (two
-     * rows with empty uniqid would emit `[]` sections and break pjsip.conf
-     * the same way as a real collision).
+     * Empty/null section name degenerates to '' — the helper still dedups it
+     * (two rows with an empty section name would emit `[]` sections and break
+     * pjsip.conf the same way as a real collision).
      */
-    public function testShouldSkipDuplicateUniqidEmptyUniqidIsDedupedToo(): void
+    public function testShouldSkipDuplicateSectionEmptySectionIsDedupedToo(): void
     {
         $conf = new SIPConf();
         $seen = [];
 
         $skipFirst  = $this->invokeMethod(
             $conf,
-            'shouldSkipDuplicateUniqid',
+            'shouldSkipDuplicateSection',
             ['', '3', &$seen, 'peer']
         );
         $skipSecond = $this->invokeMethod(
             $conf,
-            'shouldSkipDuplicateUniqid',
+            'shouldSkipDuplicateSection',
             ['', '5', &$seen, 'peer']
         );
 
         $this->assertFalse($skipFirst);
         $this->assertTrue($skipSecond);
+    }
+
+    /**
+     * Issue #1204: two INBOUND providers with DIFFERENT uniqids but the SAME
+     * Login (username) map to the same pjsip section name and must collide.
+     * The uniqid-keyed #1045 dedup missed this; dedup now keys on the effective
+     * section name, so the second row is skipped.
+     */
+    public function testShouldSkipDuplicateSectionInboundSameLoginCollides(): void
+    {
+        $conf = new SIPConf();
+        $seen = [];
+
+        // Both INBOUND providers resolve to section name "TESTLOGIN" (the Login).
+        $skipFirst  = $this->invokeMethod(
+            $conf,
+            'shouldSkipDuplicateSection',
+            ['TESTLOGIN', '101', &$seen, 'provider']
+        );
+        $skipSecond = $this->invokeMethod(
+            $conf,
+            'shouldSkipDuplicateSection',
+            ['TESTLOGIN', '102', &$seen, 'provider']
+        );
+
+        $this->assertFalse($skipFirst, 'First INBOUND provider must be kept');
+        $this->assertTrue($skipSecond, 'Second INBOUND provider with same Login must be skipped');
+        $this->assertSame('101', $seen['TESTLOGIN'], 'Winner (id=101) must be preserved');
+    }
+
+    /**
+     * Issue #1204: for INBOUND providers the pjsip section name is the Login
+     * (username), because an incoming REGISTER is matched against an AOR named
+     * after the username.
+     */
+    public function testGetProviderSectionNameInboundUsesUsername(): void
+    {
+        $conf = new SIPConf();
+
+        $name = $this->invokeMethod(
+            $conf,
+            'getProviderSectionName',
+            [Sip::REG_TYPE_INBOUND, 'TESTLOGIN', 'SIP-TRUNK-AAAA1111']
+        );
+
+        $this->assertSame('TESTLOGIN', $name);
+    }
+
+    /**
+     * For OUTBOUND/NONE providers the section name is the uniqid.
+     */
+    public function testGetProviderSectionNameOutboundUsesUniqid(): void
+    {
+        $conf = new SIPConf();
+
+        $name = $this->invokeMethod(
+            $conf,
+            'getProviderSectionName',
+            [Sip::REG_TYPE_OUTBOUND, 'TESTLOGIN', 'SIP-TRUNK-AAAA1111']
+        );
+
+        $this->assertSame('SIP-TRUNK-AAAA1111', $name);
+    }
+
+    /**
+     * Defensive: an INBOUND provider with an empty Login falls back to the
+     * uniqid so the section name is never the invalid empty string.
+     */
+    public function testGetProviderSectionNameInboundEmptyUsernameFallsBackToUniqid(): void
+    {
+        $conf = new SIPConf();
+
+        $name = $this->invokeMethod(
+            $conf,
+            'getProviderSectionName',
+            [Sip::REG_TYPE_INBOUND, '', 'SIP-TRUNK-AAAA1111']
+        );
+
+        $this->assertSame('SIP-TRUNK-AAAA1111', $name);
     }
 
     // -----------------------------------------------------------------------

@@ -465,6 +465,9 @@ return [
     // MO - Models validation
     'mo_IaxUsernameInvalidCharacters' => 'IAX username for inbound registration can only contain Latin letters, numbers and symbols: _ - .',
     'mo_SipUsernameInvalidCharacters' => 'SIP username for inbound registration can only contain Latin letters, numbers and symbols: _ - . + *',
+    'mo_SipInboundUsernameMustBeUnique' => 'Inbound provider Login must be unique: two providers with inbound registration cannot share the same Login',
+    'mo_SipInboundUsernameClashesExtension' => 'Inbound provider Login must not match an internal extension number: it causes an Asterisk configuration conflict',
+    'mo_SipExtensionClashesInboundUsername' => 'Internal extension number must not match an existing inbound provider Login: it causes an Asterisk configuration conflict',
     'pr_ValidationProviderNameIsEmpty' => 'Enter the provider name',
     'pr_ValidationProviderPasswordEmpty' => 'Enter password for authorization',
     'pr_ValidationProviderPasswordTooShort' => 'Password must contain at least 8 characters',

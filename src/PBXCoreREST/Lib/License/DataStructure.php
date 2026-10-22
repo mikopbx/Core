@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
@@ -130,8 +131,188 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'sanitize' => 'string',
                 'example' => 'AdvancedCallRouting'
             ],
+            'sessionId' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_sessionId',
+                'pattern' => '^[0-9a-f]{32}$',
+                'sanitize' => 'string',
+                'example' => '3f2a9c0d4e5b6a7f8091a2b3c4d5e6f7'
+            ],
+            'ttl' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_ttl',
+                'minimum' => 60,
+                'maximum' => 3600,
+                'default' => 300,
+                'sanitize' => 'int',
+                'example' => 300
+            ],
+            'holder' => [
+                'type' => 'object',
+                'description' => 'rest_schema_lic_holder',
+                'sanitize' => 'array',
+                'example' => ['hostname' => 'pc-01', 'username' => 'ivanov', 'process' => 'CTIClient']
+            ],
+            'token' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_token',
+                'sanitize' => 'string',
+                'example' => 'eyJ2IjoyLCJ...'
+            ],
 
             // ========== RESPONSE-ONLY FIELDS ==========
+            'session_id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_session_id',
+                'pattern' => '^[0-9a-f]{32}$',
+                'readOnly' => true,
+                'example' => '3f2a9c0d4e5b6a7f8091a2b3c4d5e6f7'
+            ],
+            'validttl' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_validttl',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 300
+            ],
+            'dropped_features' => [
+                'type' => 'array',
+                'description' => 'rest_schema_lic_dropped_features',
+                'readOnly' => true,
+                'items' => [
+                    'type' => 'string'
+                ],
+                'example' => ['AdvancedCallRouting']
+            ],
+            'extcode' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_extcode',
+                'readOnly' => true,
+                'example' => 1051
+            ],
+            'usage' => [
+                'type' => 'object',
+                'description' => 'rest_schema_lic_usage',
+                'readOnly' => true,
+                'additionalProperties' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'used' => ['type' => 'integer', 'minimum' => 0],
+                        'limit' => ['type' => 'integer', 'minimum' => 0, 'nullable' => true]
+                    ]
+                ],
+                'example' => ['AdvancedCallRouting' => ['used' => 2, 'limit' => 10]]
+            ],
+            'entitled' => [
+                'type' => 'object',
+                'description' => 'rest_schema_lic_entitled',
+                'readOnly' => true,
+                'additionalProperties' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'until' => ['type' => 'integer', 'minimum' => 0],
+                        'limit' => ['type' => 'integer', 'minimum' => 0]
+                    ]
+                ],
+                'example' => ['54' => ['until' => 1802592000, 'limit' => 1]]
+            ],
+            'request' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_request',
+                'readOnly' => true,
+                'example' => '{"request":"eyJ...","sig":"..."}'
+            ],
+            'outcome' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_outcome',
+                'enum' => ['ok', 'noKey', 'noServers', 'busy', 'notDue', 'refused', 'failed'],
+                'readOnly' => true,
+                'example' => 'ok'
+            ],
+            'hasKey' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_hasKey',
+                'readOnly' => true,
+                'example' => true
+            ],
+            'serversConfigured' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_serversConfigured',
+                'readOnly' => true,
+                'example' => true
+            ],
+            'hasDocument' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_hasDocument',
+                'readOnly' => true,
+                'example' => true
+            ],
+            'fileDocument' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_fileDocument',
+                'readOnly' => true,
+                'example' => false
+            ],
+            'keyMismatch' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_keyMismatch',
+                'readOnly' => true,
+                'example' => false
+            ],
+            'refused' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_refused',
+                'readOnly' => true,
+                'example' => false
+            ],
+            'refusalReason' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_refusalReason',
+                'readOnly' => true,
+                'example' => ''
+            ],
+            'foreignHardware' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_foreignHardware',
+                'readOnly' => true,
+                'example' => false
+            ],
+            'iat' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_iat',
+                'readOnly' => true,
+                'example' => 1800000000
+            ],
+            'exp' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_exp',
+                'readOnly' => true,
+                'example' => 1800604800
+            ],
+            'offlineUntil' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_offlineUntil',
+                'readOnly' => true,
+                'example' => 1802592000
+            ],
+            'effectiveExpiry' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_effectiveExpiry',
+                'readOnly' => true,
+                'example' => 1802592000
+            ],
+            'nextExchange' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_nextExchange',
+                'readOnly' => true,
+                'example' => 1800000600
+            ],
+            'now' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_now',
+                'readOnly' => true,
+                'example' => 1800000000
+            ],
             'licenseKey' => [
                 'type' => 'string',
                 'description' => 'rest_schema_lic_licenseKey',

@@ -110,6 +110,7 @@ return [
     'ext_Version' => 'Verze',
     'ext_WrongGetModuleLink' => 'Chyba při načítání souboru modulu z repozitáře',
     'ext_MissingModuleUniqueID' => 'V souboru module.json v archivu %filePath% chybí povinné pole moduleUniqueID.',
+    'ext_InvalidModuleUniqueID' => 'Pole moduleUniqueID v souboru module.json v archivu %filePath% je neplatné: povoleny jsou pouze latinská písmena, číslice, "_" a "-", nejvýše 128 znaků.',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'Modul %module% není kompatibilní s aktuální verzí MikoPBX.',
     'ext_InvalidModuleJson' => 'Soubor module.json v archivu %filePath% obsahuje neplatný JSON: %error%',

@@ -570,6 +570,48 @@ local function get_request_path()
     return ngx.unescape_uri(req)
 end
 
+-- Body scan limit = the REST body limit decided in #1171; 413 has no ngx.HTTP_* constant.
+local BODY_SCAN_LIMIT = 4 * 1024 * 1024
+local HTTP_PAYLOAD_TOO_LARGE = 413
+-- Scanned bytes per IP per rate-limit window: worst case ~5 s of CPU a minute at 150 ns/B (#1239, #1240).
+local BODY_SCAN_BUDGET = 8 * BODY_SCAN_LIMIT
+local JSON_ESCAPES = {b = "\b", f = "\f", n = "\n", r = "\r", t = "\t", ["/"] = "/", ['"'] = '"', ["\\"] = "\\"}
+
+-- SQL-injection patterns shared by the request-line and body checks.
+local sql_patterns = {
+    "union%s+select",
+    "insert%s+into",
+    "delete%s+from",
+    "drop%s+table",
+    "';",
+    '";',
+    "' or ",
+    '" or ',
+    "1=1",
+    "1' or '1'='1"
+}
+-- `select%s+.*%s+from` as two finds: `.*` backtracked to the end of the string after every
+-- `select`, 2.3 s of CPU on a 64 KiB body before auth (#1238). A lazy `[^;]-` is quadratic too.
+-- The tail is searched from head_end + 1: the original needs two whitespace characters.
+local sql_pairs = {
+    {"select%s", "%sfrom"},
+    {"update%s", "%sset"}
+}
+local function find_sql(str)
+    for _, pattern in ipairs(sql_patterns) do
+        if string.find(str, pattern) then
+            return pattern
+        end
+    end
+    for _, pair in ipairs(sql_pairs) do
+        local _, head_end = string.find(str, pair[1])
+        if head_end and string.find(str, pair[2], head_end + 1) then
+            return pair[1] .. "..." .. pair[2]
+        end
+    end
+    return nil
+end
+
 -- Notes on security_mode interaction with module-declared exemptions:
 --   - In `relaxed`, check_basic_security() is skipped wholesale (see the
 --     "MAIN SECURITY LOGIC" section), so exemptions are moot.
@@ -596,23 +638,6 @@ local function check_basic_security()
         end
     end
 
-    -- SQL-injection patterns are also used by the body scan below, so the
-    -- table is declared once at function scope.
-    local sql_patterns = {
-        "union%s+select",
-        "select%s+.*%s+from",
-        "insert%s+into",
-        "delete%s+from",
-        "drop%s+table",
-        "update%s+.*%s+set",
-        "';",
-        '";',
-        "' or ",
-        '" or ',
-        "1=1",
-        "1' or '1'='1"
-    }
-
     -- WAF scope `request-line` — covers SQL / traversal / null-byte checks
     -- against URI, query args and User-Agent. Skipped when the URI declares
     -- it via #[WafExempt(scopes: ['request-line'])].
@@ -622,12 +647,11 @@ local function check_basic_security()
         local check_strings = {string.lower(uri)}
         if args then check_strings[#check_strings + 1] = string.lower(args) end
         check_strings[#check_strings + 1] = string.lower(user_agent)
-        for _, pattern in ipairs(sql_patterns) do
-            for _, str in ipairs(check_strings) do
-                if str and string.match(str, pattern) then
-                    ngx.log(ngx.WARN, "SQL injection attempt from: ", client_ip, " pattern: ", pattern)
-                    return false
-                end
+        for _, str in ipairs(check_strings) do
+            local pattern = find_sql(str)
+            if pattern then
+                ngx.log(ngx.WARN, "SQL injection attempt from: ", client_ip, " pattern: ", pattern)
+                return false
             end
         end
 
@@ -647,60 +671,126 @@ local function check_basic_security()
         end
     end
 
-    -- WAF scope `body-scan` — covers POST/PUT/PATCH body inspection (defense
-    -- in depth). Skipped when the URI declares it via
+    return true
+end
+
+-- Scanned-body budget per IP (#1240). Before read_body it is only checked: the bytes actually received
+-- are charged after it, so a Content-Length that never arrives costs nothing and a slow body is charged
+-- in the window it is scanned in. Not counted: whitelisted IPs, rate limiting turned off (localhost
+-- skips the whole script).
+local function body_budget_spent(charge)
+    if not charge or not rate_limit_enabled then
+        return false
+    end
+    return (tonumber(rate_limit_cache:get("body_bytes:" .. client_ip)) or 0) >= BODY_SCAN_BUDGET
+end
+
+local function charge_body_budget(bytes, charge)
+    if not charge or not rate_limit_enabled then
+        return true
+    end
+    local used, err = rate_limit_cache:incr("body_bytes:" .. client_ip, bytes, 0, rate_limit_window)
+    if not used then
+        ngx.log(ngx.WARN, "WAF: body budget not counted (fail-open): ", err)
+        return true
+    end
+    return used <= BODY_SCAN_BUDGET
+end
+
+-- Runs after blacklist and rate limit: only headers are checked before it (#1240).
+-- `charge` is false for whitelisted IPs, whose bodies are still scanned.
+local function check_body_scan(charge)
+    local uri = get_request_path()
+    -- WAF scope `body-scan` — covers the body-consuming REST methods.
+    -- GET/HEAD bodies are ignored by Request::getData() and are not read here (#1161).
+    -- Do not gate on Content-Length/Transfer-Encoding: HTTP/2 DATA needs neither header.
+    -- Defense in depth, skipped when the URI declares it via
     -- #[WafExempt(scopes: ['body-scan'])]. Core controllers that legitimately
     -- accept SQL / shell / dialplan code in their bodies (system:executeSqlRequest,
     -- system:executeBashCommand, dialplan-applications, custom-files) declare
     -- this scope; see src/PBXCoreREST/Controllers/.
     if not is_scope_exempt(uri, 'body-scan') then
         local method = ngx.req.get_method()
-        if method == "POST" or method == "PUT" or method == "PATCH" then
-            local content_type = ngx.var.content_type or ""
-            local lower_content_type = string.lower(content_type)
-            -- Skip multipart (file uploads) to avoid reading large bodies into memory
-            if not string.find(lower_content_type, "multipart", 1, true) then
+        if method == "POST" or method == "PUT" or method == "PATCH" or method == "DELETE" then
+            -- Base media type the way PHP SAPI cuts it (at `;`, `,` or space, not tab). Only a multipart
+            -- POST (file uploads) is skipped, and not when "json" makes Request::getData() json_decode it.
+            -- Phalcon parses multipart PUT/PATCH bodies into fields; text fields of a multipart POST are
+            -- an accepted gap (#1239).
+            local lower_content_type = string.lower(ngx.var.content_type or "")
+            local base_type = string.match(lower_content_type, "^([^;, ]*)")
+            if not (method == "POST" and base_type == "multipart/form-data"
+                    and not string.find(lower_content_type, "json", 1, true)) then
+                -- Whole bodies up to the REST limit are scanned (#1239). A larger REST body gets 413
+                -- (#1171); elsewhere (admin cabinet, modules) it passes unscanned, as 64 KiB+ did before.
+                -- Post-rewrite URI: REST is always /pbxcore/index.php, so `//pbxcore/api` cannot dodge it.
+                local is_rest = string.find(ngx.var.uri or "", "^/pbxcore/") ~= nil
+                local function over_limit()
+                    ngx.log(ngx.WARN, "WAF: ", method, " body over the scan limit from: ", client_ip, " uri: ", uri)
+                    if is_rest then
+                        return false, HTTP_PAYLOAD_TOO_LARGE
+                    end
+                    return true
+                end
+                local function over_budget()
+                    ngx.log(ngx.WARN, "WAF: body budget spent by: ", client_ip, " uri: ", uri)
+                    return false, ngx.HTTP_TOO_MANY_REQUESTS
+                end
+                local content_length = tonumber(ngx.var.content_length)
+                if (content_length or 0) > BODY_SCAN_LIMIT then
+                    return over_limit()
+                end
+                if body_budget_spent(charge) then
+                    return over_budget()
+                end
                 ngx.req.read_body()
                 local body = ngx.req.get_body_data()
                 -- Fallback: read from temp file if body was buffered to disk
                 if not body then
                     local body_file = ngx.req.get_body_file()
                     if body_file then
-                        local f = io.open(body_file, "r")
+                        local f = io.open(body_file, "rb")
                         if f then
-                            body = f:read(65536)
+                            body = f:read(BODY_SCAN_LIMIT + 1)
                             f:close()
                         end
                     end
                 end
-                if body and #body < 65536 then
-                    local check_body
-                    -- Only URL-decode for form-urlencoded; JSON/other use raw body
-                    if string.find(lower_content_type, "x-www-form-urlencoded", 1, true) then
-                        check_body = ngx.unescape_uri(body)
-                    else
-                        check_body = body
+                if body and not charge_body_budget(#body, charge) then
+                    return over_budget()
+                end
+                if body and #body > BODY_SCAN_LIMIT then
+                    return over_limit()
+                end
+                if body then
+                    -- Scan every decoding PHP may apply whatever the Content-Type says: parse_str
+                    -- (`+` and %XX) and json_decode (\u00XX, then \t \n \" \\ ...). Over-decoding
+                    -- (`\\u002e`) can only add a false positive, never hide what PHP will see.
+                    local variants = {body}
+                    if string.find(body, "[%%+]") then
+                        variants[#variants + 1] = ngx.unescape_uri((string.gsub(body, "%+", " ")))
                     end
-                    local lower_body = string.lower(check_body)
-
-                    -- Traversal in body (require path separator after "..")
-                    if string.match(check_body, "%.%.[/\\]") then
-                        ngx.log(ngx.WARN, "WAF: path traversal in POST body from: ", client_ip,
-                                " uri: ", uri)
-                        return false
+                    if string.find(body, "\\", 1, true) then
+                        variants[#variants + 1] = (string.gsub(string.gsub(body, "\\[uU]00(%x%x)", function(h)
+                            return string.char(tonumber(h, 16))
+                        end), "\\(.)", JSON_ESCAPES))
                     end
+                    for _, check_body in ipairs(variants) do
+                        -- Traversal in body (require path separator after "..")
+                        if string.find(check_body, "%.%.[/\\]") then
+                            ngx.log(ngx.WARN, "WAF: path traversal in ", method, " body from: ", client_ip,
+                                    " uri: ", uri)
+                            return false
+                        end
 
-                    -- Null bytes in body (check both raw and decoded)
-                    if string.match(body, "%z") or string.match(check_body, "%z") then
-                        ngx.log(ngx.WARN, "WAF: null byte in POST body from: ", client_ip,
-                                " uri: ", uri)
-                        return false
-                    end
+                        if string.find(check_body, "%z") then
+                            ngx.log(ngx.WARN, "WAF: null byte in ", method, " body from: ", client_ip,
+                                    " uri: ", uri)
+                            return false
+                        end
 
-                    -- SQL injection in body
-                    for _, pattern in ipairs(sql_patterns) do
-                        if string.match(lower_body, pattern) then
-                            ngx.log(ngx.WARN, "WAF: SQL injection in POST body from: ", client_ip,
+                        local pattern = find_sql(string.lower(check_body))
+                        if pattern then
+                            ngx.log(ngx.WARN, "WAF: SQL injection in ", method, " body from: ", client_ip,
                                     " uri: ", uri, " pattern: ", pattern)
                             return false
                         end
@@ -972,68 +1062,61 @@ local function check_blacklist()
 end
 
 -- ===== MAIN SECURITY LOGIC =====
+-- Header-only checks come first; the body is read last, after blacklist and rate limit (#1240).
+-- So requests the body scan rejects are counted by the rate limit too.
 
--- 1. Basic security checks
-if security_mode ~= "relaxed" then
-    if not check_basic_security() then
-        ngx.status = ngx.HTTP_FORBIDDEN
-        ngx.say("Security violation detected")
-        return ngx.exit(ngx.HTTP_FORBIDDEN)
-    end
+local function deny(status, text)
+    ngx.status = status
+    ngx.say(text)
+    return ngx.exit(status)
 end
 
--- 2. Check if firewall is enabled
-if not is_firewall_enabled() then
-    -- Firewall disabled, only do rate limiting if enabled
-    if rate_limit_enabled then
-        if not check_rate_limit(false) then
-            ngx.status = ngx.HTTP_TOO_MANY_REQUESTS
-            ngx.say("Too many requests")
-            return ngx.exit(ngx.HTTP_TOO_MANY_REQUESTS)
-        end
-    end
-    return
+-- 1. Basic security checks on the request line
+if security_mode ~= "relaxed" and not check_basic_security() then
+    return deny(ngx.HTTP_FORBIDDEN, "Security violation detected")
 end
 
--- 3. Check whitelist
-if check_whitelist() then
-    -- Whitelisted IPs still subject to rate limiting in strict mode
-    if security_mode == "strict" and rate_limit_enabled then
-        if not check_rate_limit(true) then
-            ngx.status = ngx.HTTP_TOO_MANY_REQUESTS
-            ngx.say("Too many requests")
-            return ngx.exit(ngx.HTTP_TOO_MANY_REQUESTS)
-        end
-    end
-    return
-end
+-- 2. Firewall: whitelist skips the blacklist and authentication
+local firewall_enabled = is_firewall_enabled()
+local whitelisted = firewall_enabled and check_whitelist()
 
--- 4. Check blacklist
-if check_blacklist() then
+-- 3. Check blacklist
+if firewall_enabled and not whitelisted and check_blacklist() then
     ngx.log(ngx.WARN, "Access denied for blacklisted IP: ", client_ip)
-    ngx.status = ngx.HTTP_FORBIDDEN
-    ngx.say("Access denied")
-    return ngx.exit(ngx.HTTP_FORBIDDEN)
+    return deny(ngx.HTTP_FORBIDDEN, "Access denied")
 end
 
--- 5. Check authentication (JWT or session) if required
+-- 4. Check authentication (JWT or session) if required
 local is_authenticated = false
-if session_check_required then
+if firewall_enabled and not whitelisted and session_check_required then
     is_authenticated = check_auth()
     if not is_authenticated then
         ngx.log(ngx.WARN, "Access denied for unauthenticated request from: ", client_ip)
-        ngx.status = ngx.HTTP_FORBIDDEN
-        ngx.say("Authentication required")
-        return ngx.exit(ngx.HTTP_FORBIDDEN)
+        return deny(ngx.HTTP_FORBIDDEN, "Authentication required")
     end
 end
 
--- 6. Rate limiting
-if rate_limit_enabled then
-    if not check_rate_limit(is_authenticated) then
-        ngx.status = ngx.HTTP_TOO_MANY_REQUESTS
-        ngx.say("Too many requests")
-        return ngx.exit(ngx.HTTP_TOO_MANY_REQUESTS)
+-- 5. Rate limiting (whitelisted IPs only in strict mode)
+if rate_limit_enabled and (not whitelisted or security_mode == "strict") then
+    if not check_rate_limit(is_authenticated or whitelisted) then
+        return deny(ngx.HTTP_TOO_MANY_REQUESTS, "Too many requests")
+    end
+end
+
+-- 6. Body scan
+if security_mode ~= "relaxed" then
+    local passed, status = check_body_scan(not whitelisted)
+    if not passed then
+        status = status or ngx.HTTP_FORBIDDEN
+        local text = "Security violation detected"
+        if status == HTTP_PAYLOAD_TOO_LARGE then
+            -- Only REST gets 413 here: answer with its JSON error, as nginx and PHP do (#1171)
+            ngx.header.content_type = "application/json"
+            text = '{"result":false,"data":[],"messages":{"error":["Request body too large"]}}'
+        elseif status == ngx.HTTP_TOO_MANY_REQUESTS then
+            text = "Too many requests"
+        end
+        return deny(status, text)
     end
 end
 

@@ -16,6 +16,7 @@ Vulnerabilities tested:
 Reference: report_verified.md (April 11, 2026)
 """
 
+import os
 import time
 
 import pytest
@@ -298,7 +299,11 @@ class TestSoundFilesCommandInjection:
             verify=False,
         )
 
-        resp_data = response.json()
+        # Rejected either by the WAF (plain-text 403: it decodes %2F whatever the Content-Type, #1239)
+        # or by the API with a JSON error.
+        assert response.status_code == 403 or not response.json().get('result'), (
+            f'Traversal temp_filename was accepted: HTTP {response.status_code} {response.text[:200]}'
+        )
 
         # Should fail with error, not process /etc/passwd
         # Check that no file was moved from /etc/
@@ -795,6 +800,140 @@ class TestIconClassXSSSanitization:
             f'VULNERABILITY: Injected <img> tag in sidebar HTML!\n'
             f'Fix: use htmlspecialchars() on iconClass before rendering.'
         )
+
+
+# ============================================================================
+# 6. WAF/REST body method agreement (#1161)
+# ============================================================================
+
+@pytest.mark.security
+class TestWafBodyScanMethods:
+    """Method regression only, not coverage of size/media-type/encoding bypasses.
+
+    requests uses HTTP/1.1. HTTP/2 without CL/TE needs a separate transport
+    probe; tests/Unit/Core/System/RootFS/waf-body-methods.lua also guards the
+    header-independent scan and asserts that GET/HEAD never call read_body().
+    """
+
+    @staticmethod
+    def _send(api_client, method, path, payload, form=False):
+        headers = api_client._get_headers()
+        headers['Content-Type'] = (
+            'application/x-www-form-urlencoded' if form else 'application/json'
+        )
+        return api_client.session.request(
+            method, f'{API_URL}/{path}', headers=headers, timeout=30,
+            verify=False, allow_redirects=False,
+            **({'data': payload} if form else {'json': payload}),
+        )
+
+    @pytest.mark.parametrize('method', ['POST', 'PUT', 'PATCH', 'DELETE'])
+    @pytest.mark.parametrize('form', [False, True], ids=['json', 'form'])
+    def test_consumed_body_traversal_blocked(self, api_client, method, form):
+        response = self._send(
+            api_client, method, 'system:ping', {'uniqid': '../../evil'}, form,
+        )
+        assert response.status_code == HTTP_FORBIDDEN, response.text[:200]
+        assert response.text.strip() == 'Security violation detected'
+
+    @pytest.mark.parametrize('method,status', [('GET', 200), ('HEAD', 404)])
+    @pytest.mark.parametrize('form', [False, True], ids=['json', 'form'])
+    def test_unused_body_does_not_change_route_response(self, api_client, method, status, form):
+        # Ping has a GET route, no HEAD route. This checks that WAF leaves
+        # both alone; RequestGetDataTest proves PHP does not read either body.
+        response = self._send(
+            api_client, method, 'system:ping', {'uniqid': '../../evil'}, form,
+        )
+        assert response.status_code == status, response.text[:200]
+        if method == 'GET':
+            assert response.json()['result'] is True
+        else:
+            assert response.content == b''
+
+    @pytest.mark.parametrize('form', [False, True], ids=['json', 'form'])
+    def test_clean_delete_cdr_body_preserved(self, api_client, form):
+        # A valid but absent linkedid reaches the CDR worker without deleting
+        # real data. Unit tests check deleteRecording survives both parsers.
+        response = self._send(
+            api_client, 'DELETE', 'cdr/mikopbx-waf1161-does-not-exist',
+            {'deleteRecording': 'true'} if form else {'deleteRecording': True}, form,
+        )
+        assert response.status_code == 404, response.text[:200]
+        assert 'Record not found' in response.json()['messages']['error']
+
+    @pytest.mark.parametrize('form', [False, True], ids=['json', 'form'])
+    def test_post_clean_body_unchanged(self, api_client, form):
+        try:
+            response = self._send(
+                api_client, 'POST', 'user-page-tracker:pageView',
+                {'pageName': 'waf-1161-check', 'expire': 1}, form,
+            )
+            assert response.status_code == HTTP_OK, response.text[:200]
+            assert response.json()['result'] is True
+            assert response.json()['data']['pageName'] == 'waf-1161-check'
+        finally:
+            response = self._send(
+                api_client, 'POST', 'user-page-tracker:pageLeave',
+                {'pageName': 'waf-1161-check'}, form,
+            )
+            assert response.status_code == HTTP_OK, response.text[:200]
+            assert response.json()['result'] is True
+
+
+# ============================================================================
+# 7. WAF SQL scan runs in linear time (#1238)
+# ============================================================================
+
+@pytest.mark.security
+class TestWafBodyScanLinear:
+    """The image's nginx, not the harness: `.*` patterns took 2.3-4.8 s per body."""
+
+    @pytest.mark.parametrize('unit', ['select ', 'update ', 'select\t', 'Select  x'])
+    def test_sql_like_body_scanned_fast(self, api_client, unit):
+        headers = api_client._get_headers()
+        headers['Content-Type'] = 'application/json'
+        started = time.monotonic()
+        response = api_client.session.post(
+            f'{API_URL}/system:ping', headers=headers, timeout=30, verify=False,
+            data=unit * (65000 // len(unit)), allow_redirects=False,
+        )
+        spent = time.monotonic() - started
+        assert response.status_code != HTTP_FORBIDDEN, response.text[:200]
+        assert spent < 2, f'{spent:.2f} s for a 64 KiB body'
+
+
+# 8. Request body limits (#1171)
+@pytest.mark.security
+class TestRequestBodyLimit:
+    """JSON bodies over 4 MiB get the WAF/PHP 413, anything over 32 MiB the nginx one; all in JSON."""
+    MiB = 1024 * 1024
+
+    @pytest.mark.parametrize('size', [4 * MiB + 1, 33 * MiB])
+    def test_oversized_json_body_413(self, api_client, size):
+        headers = api_client._get_headers()
+        headers['Content-Type'] = 'application/json'
+        response = api_client.session.post(
+            f'{API_URL}/system:ping', headers=headers, timeout=60, verify=False,
+            data=b'{"a":"' + b'x' * (size - 8) + b'"}', allow_redirects=False,
+        )
+        assert response.status_code == 413, response.text[:200]
+        assert response.json()['result'] is False
+
+    def test_oversized_multipart_text_field_413(self, api_client):
+        """The WAF skips multipart POST; its text fields still go to Redis, so PHP counts them."""
+        response = api_client.session.post(
+            f'{API_URL}/auth:login', timeout=60, verify=False, allow_redirects=False,
+            files={'login': (None, 'x' * (5 * self.MiB))},
+        )
+        assert response.status_code == 413, response.text[:200]
+        assert response.json()['result'] is False
+
+    def test_upload_chunk_of_20_mib_passes(self, api_client, tmp_path):
+        """An older module build sends the last Resumable chunk of up to 20 MiB."""
+        chunk = tmp_path / 'chunk-1171.bin'
+        chunk.write_bytes(os.urandom(20 * self.MiB))
+        response = api_client.upload_file('files:upload', str(chunk))
+        assert response.get('result') is True, response
 
 
 if __name__ == '__main__':

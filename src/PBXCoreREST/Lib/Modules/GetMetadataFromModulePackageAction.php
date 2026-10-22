@@ -101,6 +101,14 @@ class GetMetadataFromModulePackageAction extends Injectable
             return $res;
         }
 
+        // The id becomes a directory name during installation, so it must match the shared pattern
+        if (!DataStructure::isValidUniqid($moduleUniqueID)) {
+            $res->messages[] = TranslationProvider::translate('ext_InvalidModuleUniqueID', [
+                'filePath' => $filePath
+            ]);
+            return $res;
+        }
+
         $res->success = true;
         $res->data = [
             'filePath' => $filePath,

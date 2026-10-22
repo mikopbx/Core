@@ -110,6 +110,7 @@ return [
     'ext_Version' => 'เวอร์ชัน',
     'ext_WrongGetModuleLink' => 'เกิดข้อผิดพลาดในการรับไฟล์โมดูลจากที่เก็บ',
     'ext_MissingModuleUniqueID' => 'ไฟล์ module.json ในไฟล์เก็บถาวร %filePath% ขาดฟิลด์ moduleUniqueID ที่จำเป็น',
+    'ext_InvalidModuleUniqueID' => 'ฟิลด์ moduleUniqueID ในไฟล์ module.json ในไฟล์เก็บถาวร %filePath% ไม่ถูกต้อง: อนุญาตเฉพาะตัวอักษรละติน ตัวเลข "_" และ "-" ยาวไม่เกิน 128 ตัวอักษร',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'โมดูล %module% ไม่สามารถใช้งานร่วมกับ MikoPBX เวอร์ชันปัจจุบันได้',
     'ext_InvalidModuleJson' => 'ไฟล์ module.json ในไฟล์เก็บถาวร %filePath% มีข้อมูล JSON ที่ไม่ถูกต้อง: %error%',

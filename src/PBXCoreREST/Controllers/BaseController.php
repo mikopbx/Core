@@ -69,6 +69,7 @@ class BaseController extends Controller
             $maxTimeout = max($maxTimeout, 30);
         }
 
+        $queued = false;
         try {
             // Initialize Redis connection
             $redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
@@ -101,11 +102,20 @@ class BaseController extends Controller
             }
 
             // Push request to queue
-            $pushResult = $redis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage));
+            $redis->clearLastError();
+            try {
+                $pushResult = $redis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage));
+            } catch (\RedisException $e) {
+                // #1171: an error reply (OOM, READONLY) means Redis rejected the job; a lost reply
+                // (read timeout, dropped connection) may have queued it, so it must not look retryable.
+                $queued = $redis->getLastError() === null;
+                throw $e;
+            }
 
             if ($pushResult <= 0) {
                 throw new \RuntimeException("Failed to push request to Redis queue");
             }
+            $queued = true;
 
             // Monitor queue backlog only for critical situations
             if ($queueLength > 20) {
@@ -246,7 +256,7 @@ class BaseController extends Controller
                     "Request timeout for action {$actionName}: {$totalTime}s",
                     LOG_WARNING
                 );
-                $this->response->setPayloadError('Request timeout or worker not responding');
+                $this->response->setPayloadError('Request timeout or worker not responding', 504);
                 return;
             }
 
@@ -268,14 +278,17 @@ class BaseController extends Controller
             // - 200 OK for success
             // - 422 Unprocessable Entity for validation errors
             // - 409 Conflict for constraint violations
+            // Payload is decoded without the assoc flag so nested empty objects ({})
+            // and objects with numeric keys are not turned into JSON arrays.
+            $payload = (array) json_decode($encodedResponse);
             if (isset($response['result']) && $response['result'] === false) {
                 // Business error - use appropriate HTTP code (422 for validation, 409 for conflicts)
                 $httpCode = $response['httpCode'] ?? 422;
-                $this->response->setPayloadSuccess($response, $httpCode);
+                $this->response->setPayloadSuccess($payload, $httpCode);
             } else {
                 // Success response
                 $httpCode = $response['httpCode'] ?? 200;
-                $this->response->setPayloadSuccess($response, $httpCode);
+                $this->response->setPayloadSuccess($payload, $httpCode);
             }
 
         } catch (Throwable $e) {
@@ -287,7 +300,8 @@ class BaseController extends Controller
             );
 
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            $this->response->setPayloadError($e->getMessage());
+            // #1171: 503 only when the job surely is not queued; the admin UI retries 503 automatically.
+            $this->response->setPayloadError($e->getMessage(), $queued ? 400 : 503);
         }
     }
 
@@ -341,7 +355,10 @@ class BaseController extends Controller
 
         if ($processor === PbxExtensionsProcessor::class) {
             $requestMessage['module'] = $moduleName;
-            $requestMessage['input'] = file_get_contents('php://input');
+            // #1161: the WAF does not scan GET/HEAD bodies, so modules must not receive them
+            $requestMessage['input'] = in_array($this->request->getMethod(), ['GET', 'HEAD'], true)
+                ? ''
+                : file_get_contents('php://input');
             $requestMessage['REQUEST_METHOD'] = $_SERVER['REQUEST_METHOD'];
         }
 

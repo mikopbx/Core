@@ -305,9 +305,11 @@ const updatePBX = {
      * and then start status check worker
      */
     cbAfterStartDownloadFirmware(response) {
-        if (response.filename !== undefined) {
-            upgradeStatusLoopWorker.initialize(response.filename);
+        // v3 envelope: payload lives in response.data, success flag is `result`
+        if (response && response.result && response.data && response.data.filename) {
+            upgradeStatusLoopWorker.initialize(response.data.filename);
         } else {
+            UserMessage.showMultiString((response && response.messages) || globalTranslate.upd_DownloadUpgradeError);
             updatePBX.upgradeInProgress = false;
             $('i.loading.redo').removeClass('loading');
         }

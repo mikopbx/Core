@@ -78,16 +78,18 @@ const PingLicenseServerWorker = {
      */
     worker() {
         const isConnected = sessionStorage.getItem(PingLicenseServerWorker.cacheKey);
-        if (isConnected === 'false') {
+        // No status yet in this browser session, or the last ping failed
+        if (isConnected !== 'true') {
             LicenseAPI.ping(PingLicenseServerWorker.cbAfterResponse);
         }
     },
 
     /**
      * Callback function after receiving a response from the server.
-     * @param isConnected - connection result.
+     * @param {object} response - API response (unused).
+     * @param {boolean} isConnected - true when the license server answered.
      */
-    cbAfterResponse(isConnected) {
+    cbAfterResponse(response, isConnected) {
         if (isConnected === true) {
             // The internet is available
             sessionStorage.setItem(PingLicenseServerWorker.cacheKey, 'true');
@@ -96,6 +98,8 @@ const PingLicenseServerWorker = {
             sessionStorage.setItem(PingLicenseServerWorker.cacheKey, 'false');
         }
         PingLicenseServerWorker.changeTabsAvailability();
+        // A network error may invoke this callback twice; keep a single retry timer
+        window.clearTimeout(PingLicenseServerWorker.timeoutHandle);
         PingLicenseServerWorker.timeoutHandle = window.setTimeout(
             PingLicenseServerWorker.worker,
             PingLicenseServerWorker.timeOut,

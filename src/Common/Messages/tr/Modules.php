@@ -110,6 +110,7 @@ return [
     'ext_Version' => 'versiyon',
     'ext_WrongGetModuleLink' => 'Depodan modül dosyası alınırken hata oluştu',
     'ext_MissingModuleUniqueID' => '%filePath% arşivindeki module.json dosyasında gerekli olan moduleUniqueID alanı eksik.',
+    'ext_InvalidModuleUniqueID' => '%filePath% arşivindeki module.json dosyasında moduleUniqueID alanı geçersiz: yalnızca Latin harfleri, rakamlar, "_" ve "-" kullanılabilir, en fazla 128 karakter.',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => '%module% modülü, MikoPBX\'in mevcut sürümüyle uyumlu değil.',
     'ext_InvalidModuleJson' => 'Arşivdeki %filePath% klasöründeki module.json dosyası geçersiz JSON içeriyor: %error%',

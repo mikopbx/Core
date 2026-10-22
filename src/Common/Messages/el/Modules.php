@@ -110,6 +110,7 @@ return [
     'ext_Version' => 'Εκδοχή',
     'ext_WrongGetModuleLink' => 'Σφάλμα κατά τη λήψη του αρχείου μονάδας από το χώρο αποθήκευσης',
     'ext_MissingModuleUniqueID' => 'Λείπει το απαιτούμενο πεδίο moduleUniqueID από το αρχείο module.json στο αρχείο %filePath%.',
+    'ext_InvalidModuleUniqueID' => 'Το πεδίο moduleUniqueID στο αρχείο module.json στο αρχείο %filePath% δεν είναι έγκυρο: επιτρέπονται μόνο λατινικά γράμματα, ψηφία, "_" και "-", έως 128 χαρακτήρες.',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'Η ενότητα %module% δεν είναι συμβατή με την τρέχουσα έκδοση του MikoPBX',
     'ext_InvalidModuleJson' => 'Το αρχείο module.json στο αρχείο %filePath% περιέχει μη έγκυρο JSON: %error%',

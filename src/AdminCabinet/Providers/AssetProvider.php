@@ -622,6 +622,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                 ->addJs('js/vendor/inputmask/init.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-entitlement.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-keycheck.js', true);
 
             $this->semanticCollectionCSS

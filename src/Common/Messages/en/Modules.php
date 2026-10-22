@@ -143,6 +143,7 @@ return [
     'ext_ModuleJsonNotFound' => 'File module.json not found in module archive %filePath%',
     'ext_InvalidModuleJson' => 'File module.json in archive %filePath% contains invalid JSON: %error%',
     'ext_MissingModuleUniqueID' => 'Required field moduleUniqueID is missing in module.json file of archive %filePath%',
+    'ext_InvalidModuleUniqueID' => 'The moduleUniqueID field in module.json of the archive %filePath% is invalid: only Latin letters, digits, "_" and "-" are allowed, up to 128 characters',
 
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'Module %module% is incompatible with current MikoPBX version',

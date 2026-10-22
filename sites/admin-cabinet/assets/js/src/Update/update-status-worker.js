@@ -56,15 +56,17 @@ const upgradeStatusLoopWorker = {
         upgradeStatusLoopWorker.iterations += 1;
         upgradeStatusLoopWorker.timeoutHandle =
             window.setTimeout(upgradeStatusLoopWorker.worker, upgradeStatusLoopWorker.timeOut);
-        if (response.length === 0 || response === false) return;
-        if (response.d_status === 'DOWNLOAD_IN_PROGRESS') {
-            $('i.loading.redo').closest('a').find('.percent').text(`${response.d_status_progress}%`);
-        } else if (response.d_status === 'DOWNLOAD_COMPLETE') {
+        if (!response || !response.data) return;
+        const status = response.data;
+        if (status.d_status === 'DOWNLOAD_IN_PROGRESS') {
+            $('i.loading.redo').closest('a').find('.percent').text(`${status.d_status_progress}%`);
+        } else if (status.d_status === 'DOWNLOAD_COMPLETE') {
             window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-            $('i.loading.redo').closest('a').find('.percent').text(`${response.d_status_progress}%`);
+            $('i.loading.redo').closest('a').find('.percent').text(`${status.d_status_progress}%`);
             $('i.loading.redo').addClass('sync').removeClass('redo');
-            SystemAPI.upgrade({filename: response.filePath}, updatePBX.cbAfterStartUpdate);
-        } else if (response.d_status === 'DOWNLOAD_ERROR') {
+            // SystemManagementProcessor reads the image path from `temp_filename`
+            SystemAPI.upgrade({temp_filename: status.filePath}, updatePBX.cbAfterStartUpdate);
+        } else if (status.d_status === 'DOWNLOAD_ERROR') {
             window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
             UserMessage.showMultiString(globalTranslate.upd_DownloadUpgradeError);
             $('i.loading.redo').addClass('redo').removeClass('loading');

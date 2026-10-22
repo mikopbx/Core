@@ -37,6 +37,21 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 {
     use SearchIndexTrait;
 
+    public const string UNIQID_SCHEMA_PATTERN = '^[A-Za-z0-9_\-]{1,128}$';
+
+    public const string UNIQID_PATTERN = '/' . self::UNIQID_SCHEMA_PATTERN . '/D';
+
+    /**
+     * Checks that a module unique id is safe to use as a directory name.
+     *
+     * @param mixed $id Value to check, e.g. moduleUniqueID read from module.json.
+     * @return bool
+     */
+    public static function isValidUniqid(mixed $id): bool
+    {
+        return is_string($id) && preg_match(self::UNIQID_PATTERN, $id) === 1;
+    }
+
     /**
      * Create data array from PbxExtensionModules model
      *
@@ -80,36 +95,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Create data array for available module from repository
-     *
-     * @param array<string, mixed> $moduleData Module data from repository
-     * @return array<string, mixed> Complete data structure
-     */
-    public static function createFromRepositoryData(array $moduleData): array
-    {
-        $data = [
-            'id' => $moduleData['uniqid'] ?? '',
-            'name' => $moduleData['name'] ?? '',
-            'version' => $moduleData['version'] ?? '',
-            'developer' => $moduleData['developer'] ?? '',
-            'description' => $moduleData['description'] ?? '',
-            'installed' => false,
-            'commercial' => $moduleData['commercial'] ?? false,
-            'module_type' => $moduleData['module_type'] ?? 'general',
-            'min_pbx_version' => $moduleData['min_pbx_version'] ?? '',
-            'max_pbx_version' => $moduleData['max_pbx_version'] ?? '',
-            'release_id' => $moduleData['release_id'] ?? 0,
-            'download_url' => $moduleData['download_url'] ?? '',
-            'md5' => $moduleData['md5'] ?? '',
-        ];
-
-        // Apply OpenAPI schema formatting
-        $data = self::formatBySchema($data, 'list');
-
-        return $data;
-    }
-
-    /**
      * Get OpenAPI schema for modules
      *
      * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
@@ -133,7 +118,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 
         if ($type === 'detail') {
             // ✨ Add detail-specific fields from response section
-            $detailFields = ['path', 'min_pbx_version', 'max_pbx_version'];
+            $detailFields = ['path', 'min_pbx_version'];
             foreach ($detailFields as $field) {
                 if (isset($responseFields[$field])) {
                     $properties[$field] = $responseFields[$field];
@@ -231,14 +216,16 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'id' => [
                 'type' => 'string',
                 'description' => 'rest_schema_module_id',
-                'maxLength' => 100,
+                'maxLength' => 128,
+                'pattern' => self::UNIQID_SCHEMA_PATTERN,
                 'sanitize' => 'string',
                 'example' => 'ModuleTemplate'
             ],
             'uniqid' => [
                 'type' => 'string',
                 'description' => 'rest_schema_module_uniqid',
-                'maxLength' => 100,
+                'maxLength' => 128,
+                'pattern' => self::UNIQID_SCHEMA_PATTERN,
                 'sanitize' => 'string',
                 'example' => 'ModuleTemplate'
             ],
@@ -346,12 +333,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'description' => 'rest_schema_module_min_pbx_version',
                 'readOnly' => true,
                 'example' => '2024.1.0'
-            ],
-            'max_pbx_version' => [
-                'type' => 'string',
-                'description' => 'rest_schema_module_max_pbx_version',
-                'readOnly' => true,
-                'example' => '2025.12.31'
             ],
             'installed' => [
                 'type' => 'boolean',

@@ -27,6 +27,7 @@ use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
+use Phalcon\Tag;
 
 /**
  * The VoltProvider class is responsible for registering the Volt template engine service.
@@ -62,6 +63,9 @@ class VoltProvider implements ServiceProviderInterface
                 $compiler->addFunction('is_a', 'is_a');
                 $compiler->addFunction('count', function ($key) {
                     return "count($key)";
+                });
+                $compiler->addFunction('link_to', function ($resolvedArgs) {
+                    return '\\' . self::class . '::linkTo([' . $resolvedArgs . '])';
                 });
 
                 if ($appConfig->debugMode === true) {
@@ -120,5 +124,18 @@ class VoltProvider implements ServiceProviderInterface
                 return $volt;
             }
         );
+    }
+
+    /**
+     * Tag::linkTo with the link text left raw, as before Phalcon 5.23:
+     * templates put icon markup into it.
+     */
+    public static function linkTo(array $params): string
+    {
+        $placeholder = '__MIKO_LINK_TEXT__';
+        $key = array_key_exists(1, $params) ? 1 : 'text';
+        $text = (string)($params[$key] ?? '');
+        $params[$key] = $placeholder;
+        return str_replace($placeholder, $text, Tag::linkTo($params));
     }
 }

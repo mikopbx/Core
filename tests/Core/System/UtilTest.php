@@ -73,4 +73,51 @@ class UtilTest extends AbstractUnitTest
         $this->assertFileExists($path);
     }
 
+    /**
+     * Issue #1193: a single 'set_var' under [endpoint] must still come back as
+     * an array so pjsip.conf rendering treats it as repeatable, not a scalar.
+     */
+    public function testParseIniSettingsSingleSetVarIsArray(): void
+    {
+        $result = Util::parseIniSettings("[endpoint]\nset_var=MIKO_CALLERID_NUM=1001");
+
+        $this->assertSame(['set_var' => ['MIKO_CALLERID_NUM=1001']], $result['endpoint']);
+    }
+
+    public function testParseIniSettingsMultipleSetVarAreCollected(): void
+    {
+        $result = Util::parseIniSettings(
+            "[endpoint]\nset_var=MIKO_CALLERID_NUM=1001\nset_var=MIKO_TEST_VAR=hello"
+        );
+
+        $this->assertSame(
+            ['set_var' => ['MIKO_CALLERID_NUM=1001', 'MIKO_TEST_VAR=hello']],
+            $result['endpoint']
+        );
+    }
+
+    /**
+     * PJSIP only understands 'set_var'; the legacy chan_sip 'setvar' spelling
+     * (no underscore) must be normalized to it, not written through verbatim.
+     */
+    public function testParseIniSettingsSetvarSpellingIsNormalizedToSetVar(): void
+    {
+        $result = Util::parseIniSettings("[endpoint]\nsetvar=MIKO_CALLERID_NUM=1001");
+
+        $this->assertArrayNotHasKey('setvar', $result['endpoint']);
+        $this->assertSame(['set_var' => ['MIKO_CALLERID_NUM=1001']], $result['endpoint']);
+    }
+
+    public function testParseIniSettingsMixedSetVarSpellingsAreMerged(): void
+    {
+        $result = Util::parseIniSettings(
+            "[endpoint]\nset_var=MIKO_CALLERID_NUM=1001\nsetvar=MIKO_TEST_VAR=hello"
+        );
+
+        $this->assertSame(
+            ['set_var' => ['MIKO_CALLERID_NUM=1001', 'MIKO_TEST_VAR=hello']],
+            $result['endpoint']
+        );
+    }
+
 }

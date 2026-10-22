@@ -870,7 +870,7 @@ const extension = {
         });
 
         extension.initializeDtmfModeDropdown();
-        extension.initializeTransportDropdown();
+        extension.initializeTransportDropdown(data);
     },
     
     /**
@@ -972,10 +972,25 @@ const extension = {
         
     /**
      * Initialize transport protocol dropdown with standard Fomantic UI (PHP-rendered)
+     *
+     * The deprecated "tls" option stays only for employees that already have it saved,
+     * accompanied by a warning suggesting the "<number>-TLS" username instead.
+     * @param {Object} data - Employee data from REST API
      */
-    initializeTransportDropdown() {
+    initializeTransportDropdown(data) {
         const $dropdown = $('#sip_transport-dropdown');
         if ($dropdown.length === 0) return;
+
+        $('#sip-transport-tls-warning').remove();
+        if (data.sip_transport === 'tls') {
+            const message = globalTranslate.ex_SipTransportTlsDeprecated
+                .replace(/%number%/g, $('<div>').text(data.number || '').html());
+            $dropdown.closest('.field').after(
+                `<div id="sip-transport-tls-warning" class="ui warning message visible">${message}</div>`
+            );
+        } else {
+            $dropdown.find('.menu .item[data-value="tls"]').remove();
+        }
 
         // Initialize with standard Fomantic UI - it's already rendered by PHP
         $dropdown.dropdown({

@@ -177,7 +177,10 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,ExecIf($["${dstatus}x" == "x"]?Set(dstatus=FW))' . "\n\t";
 
         // Set forwarding status and handle forwarding if set.
-        $conf .= 'same => n,Set(fw=${DB(${dstatus}/${EXTEN})})' . "\n\t";
+        // Forwarding targets are baked into the dialplan [globals] section
+        // (FW_/FW_BUSY_/FW_UNAV_/FW_TIME_ prefixes) by ExtensionsConf, so no
+        // astdb lookup is needed. Nested expansion resolves ${FW_UNAV_60} etc.
+        $conf .= 'same => n,Set(fw=${${dstatus}_${EXTEN}})' . "\n\t";
         $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Set(__pt1c_UNIQUEID=${UNDEFINED})' . "\n\t";
         // Store the forwarding source extension for modules to use (e.g., for CallerID selection)
         $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Set(__FW_SOURCE_PEER=${EXTEN}))' . "\n\t";
@@ -422,10 +425,10 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,GotoIf($["${IS_BUSY}" == "1" && "${QUEUE_SRC_CHAN}x" == "x"]?fw_start)' . " \n\t";
 
         // Determine call length and handle custom dialplan execution
-        $conf .= 'same => n,Set(ringlength=${DB(FW_TIME/${EXTEN})})' . " \n\t";
+        $conf .= 'same => n,Set(ringlength=${FW_TIME_${EXTEN}})' . " \n\t";
         $conf .= 'same => n,ExecIf($["${ringlength}x" == "x"]?Set(ringlength=600))' . " \n\t";
         // If no forwarding destination is configured, don't apply ring timeout — let the phone ring indefinitely
-        $conf .= 'same => n,ExecIf($["${DB(FW/${EXTEN})}x" == "x"]?Set(ringlength=600))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${FW_${EXTEN}}x" == "x"]?Set(ringlength=600))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${QUEUE_SRC_CHAN}x" != "x" && "${ISTRANSFER}x" == "x"]?Set(ringlength=600))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${QUEUE_SRC_CHAN}x" != "x"]?Set(DIAL_QUEUE_OPTIONS=i))' . " \n\t";
 

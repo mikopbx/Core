@@ -91,6 +91,13 @@ class PbxExtensionModulesController extends BaseController
         // Get new license key form
         $this->view->setVar('getKeyForm', new LicensingGetKeyForm());
 
+        // #1148: with the entitlement document the Licensing tab works offline; the view drops
+        // disable-if-no-internet from what the file exchange needs and renders the document block.
+        $this->view->setVar(
+            'licenseV2Enabled',
+            PbxSettings::getValueByKey(PbxSettings::LICENSE_V2_ENABLED) === '1'
+        );
+
         $this->view->setVar('submitMode', null);
     }
 

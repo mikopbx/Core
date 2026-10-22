@@ -110,6 +110,7 @@ return [
     'ext_Version' => 'ვერსია',
     'ext_WrongGetModuleLink' => 'შეცდომა მოდულის ფაილის საცავიდან მიღებისას',
     'ext_MissingModuleUniqueID' => '%filePath% არქივში არსებულ module.json ფაილს აკლია აუცილებელი moduleUniqueID ველი.',
+    'ext_InvalidModuleUniqueID' => '%filePath% არქივში არსებული module.json ფაილის moduleUniqueID ველი არასწორია: დაშვებულია მხოლოდ ლათინური ასოები, ციფრები, "_" და "-", მაქსიმუმ 128 სიმბოლო.',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => 'მოდული %module% არ არის თავსებადი MikoPBX-ის მიმდინარე ვერსიასთან',
     'ext_InvalidModuleJson' => '%filePath% არქივში არსებული module.json ფაილი შეიცავს არასწორ JSON-ს: %error%',

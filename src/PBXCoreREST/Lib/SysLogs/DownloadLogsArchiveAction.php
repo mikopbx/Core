@@ -19,10 +19,11 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
+use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\Directories;
+use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
 use MikoPBX\PBXCoreREST\Lib\Files\RestAPIFilesUtils;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
-use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Di\Injectable;
 
 /**
@@ -68,17 +69,48 @@ class DownloadLogsArchiveAction extends Injectable
             return $res;
         }
 
+        // PrepareLogAction generates these names; validate before touching the progress sidecar.
+        $tempDir = rtrim(Directories::getDir(Directories::CORE_TEMP_DIR), '/');
+        $realTempDir = realpath($tempDir);
+        if ($realTempDir === false || dirname($filename) !== $tempDir
+            || preg_match('/\Alog-(?:sys|tcpdump)-[0-9]+\.zip\z/', basename($filename)) !== 1) {
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_syslog_invalid_path');
+            $res->httpCode = 400;
+            return $res;
+        }
+
         $progress_file = "$filename.progress";
         if (!file_exists($progress_file)) {
             $res->messages[] = TranslationProvider::translate('rest_err_syslog_archive_not_found');
-        } elseif (file_exists($progress_file) && file_get_contents($progress_file) === '100') {
+            return $res;
+        }
+
+        $realProgressFile = realpath($progress_file);
+        $realFilename = realpath($filename);
+        if ($realProgressFile === false || dirname($realProgressFile) !== $realTempDir
+            || !is_file($realProgressFile) || is_link($progress_file) || is_link($filename)
+            || ($realFilename !== false
+                && (dirname($realFilename) !== $realTempDir || !is_file($realFilename)))) {
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_syslog_invalid_path');
+            $res->httpCode = 400;
+            return $res;
+        }
+
+        // Polling can race with archive cleanup.
+        $progress = @file_get_contents($realProgressFile);
+        if ($progress === false || ($progress === '100' && $realFilename === false)) {
+            $res->messages[] = TranslationProvider::translate('rest_err_syslog_archive_not_found');
+            return $res;
+        }
+
+        if ($progress === '100') {
             $res->data['status'] = "READY";
-            $res->data['filename'] = RestAPIFilesUtils::makeFileLinkForDownload($filename, 'MikoPBXLogs_');
+            $res->data['filename'] = RestAPIFilesUtils::makeFileLinkForDownload($realFilename, 'MikoPBXLogs_');
             $res->success          = true;
         } else {
             $res->success = true;
             $res->data['status'] = "PREPARING";
-            $res->data['progress'] = file_get_contents($progress_file);
+            $res->data['progress'] = $progress;
         }
 
         return $res;

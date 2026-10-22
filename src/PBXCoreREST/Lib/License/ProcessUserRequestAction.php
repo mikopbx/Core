@@ -23,6 +23,7 @@ namespace MikoPBX\PBXCoreREST\Lib\License;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\LicenseV2\LicenseV2;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use MikoPBX\Common\Library\Text;
@@ -36,6 +37,8 @@ use Phalcon\Di\Injectable;
  */
 class ProcessUserRequestAction extends Injectable
 {
+    private const string KEY_PATTERN = '/^MIKO-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$/';
+
     /**
      * Check and update a license key on a database.
      *
@@ -52,27 +55,60 @@ class ProcessUserRequestAction extends Injectable
         $res->httpCode = 200;
         $di = Di::getDefault();
         $translation = $di->get(TranslationProvider::SERVICE_NAME);
+        $error = self::requestError($data);
+        if ($error !== null) {
+            $res->messages['license'][] = $translation->_($error);
+            $res->success = false;
+            return $res;
+        }
         $license = $di->get(MarketPlaceProvider::SERVICE_NAME);
-        if (strlen($data['licKey']) === 28 && Text::startsWith($data['licKey'], 'MIKO-')) {
+        $licKey = trim((string)($data['licKey'] ?? ''));
+        if ($licKey !== '') {
             PbxSettings::clearCache(PbxSettings::class);
             $oldLicKey =  PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
 
             // Check if key has changed or if we need to validate existing key
-            if ($oldLicKey === $data['licKey']) {
+            if ($oldLicKey === $licKey) {
                 // Key hasn't changed - return success without re-validation
-                $res->data[PbxSettings::PBX_LICENSE] = $data['licKey'];
+                $res->data[PbxSettings::PBX_LICENSE] = $licKey;
                 $res->messages['info'][] = $translation->_('lic_SuccessfulActivation');
                 $res->success = true;
             } else {
                 // Key has changed - validate it
-                $licenseInfo = $license->getLicenseInfo($data['licKey']);
+                $licenseInfo = $license->getLicenseInfo($licKey);
                 if ($licenseInfo['success'] && $licenseInfo['result'] instanceof SimpleXMLElement) {
-                    PbxSettings::setValueByKey(PbxSettings::PBX_LICENSE, $data['licKey']);
-                    $license->changeLicenseKey($data['licKey']);
+                    PbxSettings::setValueByKey(PbxSettings::PBX_LICENSE, $licKey);
+                    $license->changeLicenseKey($licKey);
                     $license->addTrial('11'); // MikoPBX forever license
-                    $res->data[PbxSettings::PBX_LICENSE] = $data['licKey'];
+                    $res->data[PbxSettings::PBX_LICENSE] = $licKey;
                     $res->messages['info'][] = $translation->_('lic_SuccessfulActivation');
                     $res->success = true;
+                } elseif ($license instanceof LicenseV2 && self::v1Unreachable($licenseInfo)) {
+                    // #1148: closed contour. The cabinet checks the key through the request file, so the key is
+                    // stored unchecked — unless the current key still holds a valid document: a typo made offline
+                    // must not switch the modules off, and the key reset is the explicit way out.
+                    // Offline nobody checks the key but this PBX: only the exact format may be stored
+                    // (it lands in every page's JS).
+                    if (preg_match(self::KEY_PATTERN, $licKey) !== 1) {
+                        $res->messages['license'][] = $translation->_('lic_WrongLicenseKeyOrEmpty');
+                        $res->success = false;
+                        return $res;
+                    }
+                    $store = $license->store();
+                    if ($store->effectiveExpiry($oldLicKey) > $store->now()) {
+                        $res->messages['license'][] = $translation->_('lic_KeyChangeNeedsConnection');
+                        $res->success = false;
+                        // Offline as well: a coupon would only cost another timeout.
+                        return $res;
+                    } else {
+                        PbxSettings::setValueByKey(PbxSettings::PBX_LICENSE, $licKey);
+                        $license->changeLicenseKeyOffline($licKey);
+                        $res->data[PbxSettings::PBX_LICENSE] = $licKey;
+                        $res->messages['info'][] = $translation->_('lic_KeySavedWithoutCheck');
+                        $res->success = true;
+                        // A coupon can not be activated offline, and its forced round would only cost another timeout.
+                        return $res;
+                    }
                 } elseif (!$licenseInfo['success'] && !empty($licenseInfo['error'])) {
                     $translatedError = $license->translateLicenseErrorMessage($licenseInfo['error']);
                     $res->messages['license'][] = $translatedError;
@@ -94,7 +130,8 @@ class ProcessUserRequestAction extends Injectable
                 }
             }
         } else {
-            $trialResult = $license->getTrialLicense($data);
+            // The trial form of the admin UI always sends the optional fields; a direct REST call may omit them.
+            $trialResult = $license->getTrialLicense($data + ['inn' => '', 'telefone' => '']);
             if (!empty($trialResult['success'])) {
                 $newLicenseKey = (string)($trialResult['result'] ?? '');
                 if (
@@ -117,5 +154,44 @@ class ProcessUserRequestAction extends Injectable
             }
         }
         return $res;
+    }
+
+    /**
+     * #1200: what is wrong with the request before anything is asked of the licensing server. A key decides the
+     * branch: any key must have the shape of one (the server checks the rest), only an empty key asks for a trial,
+     * and the trial form needs its three mandatory fields. The UI enforces the same; direct REST calls did not.
+     *
+     * @param array<string, mixed> $data The request.
+     * @return string|null Translation key of the error, null when the request may go on.
+     */
+    private static function requestError(array $data): ?string
+    {
+        $licKey = trim((string)($data['licKey'] ?? ''));
+        if ($licKey !== '') {
+            return strlen($licKey) === 28 && Text::startsWith($licKey, 'MIKO-') ? null : 'lic_WrongLicenseKeyOrEmpty';
+        }
+        $mandatory = [
+            'companyname' => 'lic_ValidateCompanyNameEmpty',
+            'email' => 'lic_ValidateContactEmail',
+            'contact' => 'lic_ValidateContactName',
+        ];
+        foreach ($mandatory as $field => $error) {
+            if (trim((string)($data[$field] ?? '')) === '') {
+                return $error;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The compiled class answers a dead link and a wrong key with the same error text (measured on lv2e2e,
+     * #1148); only `code` tells them apart: 0 when no server answered, the HTTP status when one refused; an answer
+     * without `code` is not read as unreachable.
+     *
+     * @param array<string, mixed> $licenseInfo What getLicenseInfo() answered.
+     */
+    private static function v1Unreachable(array $licenseInfo): bool
+    {
+        return empty($licenseInfo['success']) && isset($licenseInfo['code']) && (int)$licenseInfo['code'] === 0;
     }
 }

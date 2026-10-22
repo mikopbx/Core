@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\License;
 
 use MikoPBX\Common\Providers\MarketPlaceProvider;
+use MikoPBX\Core\System\LicenseV2\LicenseV2;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -57,8 +58,12 @@ class CaptureFeatureForProductIdAction extends Injectable
             // 1.Try to capture feature
             $result = $license->captureFeature($licFeatureId);
             if ($result['success'] === false) {
-                // Add trial
-                $license->addTrial($licProductId);
+                // #1210: on the key without a seat here → the demand goes to the server in a forced round; not on the key → trial
+                if ($license instanceof LicenseV2 && $license->noteDemand((string)$licFeatureId)) {
+                    $license->refresh(true, false); // #1220: no backoff from an installer's click, 25 s budget
+                } else {
+                    $license->addTrial($licProductId);
+                }
                 // 2.Try to capture feature
                 $result = $license->captureFeature($licFeatureId);
                 if ($result['success'] === false) {

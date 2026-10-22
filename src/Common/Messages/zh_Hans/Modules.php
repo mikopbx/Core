@@ -110,6 +110,7 @@ return [
     'ext_Version' => '版本号',
     'ext_WrongGetModuleLink' => '从存储库获取模块文件时出错',
     'ext_MissingModuleUniqueID' => '%filePath% 归档文件中的 module.json 文件缺少必需的 moduleUniqueID 字段。',
+    'ext_InvalidModuleUniqueID' => '%filePath% 归档文件中 module.json 的 moduleUniqueID 字段无效：仅允许使用拉丁字母、数字、"_" 和 "-"，最长 128 个字符。',
     // Module compatibility validation
     'ext_ModuleIncompatibleWithVersion' => '模块 %module% 与当前版本的 MikoPBX 不兼容。',
     'ext_InvalidModuleJson' => '归档文件 %filePath% 中的 module.json 文件包含无效的 JSON：%error%',

@@ -116,6 +116,12 @@ class ActionHangupChan
                 // talking to the transferee. Its own hangup must close this row.
                 continue;
             }
+            if (PickupTransferLegPolicy::keepOpen($row, $data['agi_channel'], $data['verbose_call_id'] ?? '')) {
+                // A *8 pickup stole this still-ringing transfer leg. Keep the row
+                // out of the transfer bookkeeping so the pickup's transfer_dial_answer
+                // can claim it by transfer_UNIQUEID.
+                continue;
+            }
             if ($row->transfer === '1' && !empty($row->dst_chan)) {
                 // Make sure the destination channel is not empty.
                 // Otherwise, it's not a transfer.
@@ -144,6 +150,14 @@ class ActionHangupChan
                 // after answer, but the external caller keeps talking to the operator.
                 // Leave this answered row open so the real hangup closes it and its
                 // billsec reflects the whole conversation instead of ~0.2s.
+                continue;
+            }
+            if (PickupTransferLegPolicy::keepOpen($row, $data['agi_channel'], $data['verbose_call_id'] ?? '')) {
+                // A *8 pickup stole this still-ringing transfer leg; do not close it.
+                // Keep transfer=1 so once the pickup's transfer_dial_answer stamps the
+                // answer, the answered leg survives the transferer's own hangup through
+                // AnsweredTransferLegPolicy and LINKEDID_END closes it with the true
+                // endtime, making billsec reflect the whole conversation.
                 continue;
             }
             if ($row->dialstatus === 'ORIGINATE') {

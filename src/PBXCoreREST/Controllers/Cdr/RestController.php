@@ -284,4 +284,19 @@ class RestController extends BaseRestController
     {
         // Implementation handled by BaseRestController
     }
+
+    public function handleCustomRequest(?string $idOrMethod = null, ?string $customMethod = null): void
+    {
+        $method = $customMethod ?? $idOrMethod;
+        if (
+            in_array($method, ['playback', 'download'], true)
+            && !empty($this->request->getData()['view'])
+            && !in_array($this->request->getServer('REMOTE_ADDR'), ['127.0.0.1', '::1'], true)
+        ) {
+            $this->sendErrorResponse('Direct recording paths are only available from localhost', 403);
+            return;
+        }
+
+        parent::handleCustomRequest($idOrMethod, $customMethod);
+    }
 }

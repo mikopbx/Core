@@ -79,7 +79,7 @@ class CheckSIPPasswords extends Injectable
             ],
             'conditions' => 'Extensions.is_general_user_number = "1" AND Sip.weakSecret="2"',
             'columns' => [
-                'id' => 'Extensions.id',
+                'userid' => 'Extensions.userid',
                 'username' => 'Extensions.callerid',
                 'number' => 'Extensions.number',
                 'secret' => 'Sip.secret',
@@ -109,7 +109,7 @@ class CheckSIPPasswords extends Injectable
                     'messageTpl' => 'adv_SipPasswordWeak',
                     'messageParams' => [
                         'record' => $key,
-                        'url' => $this->url->get('extensions/modify/' . $user->id),
+                        'url' => $this->url->get('extensions/modify/' . $user->userid),
                     ]
                 ];
         }
