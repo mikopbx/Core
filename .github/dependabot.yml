@@ -1,0 +1,16 @@
+# The image is built from composer.lock (#1275); refresh it on purpose,
+# through a PR that runs the regular test chain.
+version: 2
+updates:
+  - package-ecosystem: composer
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+    groups:
+      composer:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
