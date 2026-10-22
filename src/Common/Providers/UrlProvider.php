@@ -48,6 +48,9 @@ class UrlProvider implements ServiceProviderInterface
             function () use ($baseUri) {
                 $url = new Url();
                 $url->setBaseUri($baseUri);
+                // Phalcon 5.23 Assets\Manager passes local assets through getStatic(),
+                // while AssetManager already prefixes them with /admin-cabinet/assets/.
+                $url->setStaticBaseUri('/');
 
                 return $url;
             }
