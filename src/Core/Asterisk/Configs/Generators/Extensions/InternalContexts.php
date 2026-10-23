@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
-
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
@@ -94,16 +94,16 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= "same => n,Playback(pbx-invalid,noanswer) \n\n";
 
         // Set answer state.
-        $conf .= "[set-answer-state]".PHP_EOL;
-        $conf .= 'exten => _.!,1,ExecIf($["${CHANNEL_EXISTS(${FROM_CHAN})}" == "0"]?return)'.PHP_EOL."\t";
-        $conf .= 'same => n,Set(EXPORT(${FROM_CHAN},MASTER_CHANNEL(M_DIALSTATUS))=ANSWER)'.PHP_EOL."\t";
-        $conf .= 'same => n,Set(EXPORT(${FROM_CHAN},M_DIALSTATUS)=ANSWER)'.PHP_EOL."\t";
-        $conf .= 'same => n,return'.PHP_EOL;
-        $conf .= 'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
+        $conf .= "[set-answer-state]" . PHP_EOL;
+        $conf .= 'exten => _.!,1,ExecIf($["${CHANNEL_EXISTS(${FROM_CHAN})}" == "0"]?return)' . PHP_EOL . "\t";
+        $conf .= 'same => n,Set(EXPORT(${FROM_CHAN},MASTER_CHANNEL(M_DIALSTATUS))=ANSWER)' . PHP_EOL . "\t";
+        $conf .= 'same => n,Set(EXPORT(${FROM_CHAN},M_DIALSTATUS)=ANSWER)' . PHP_EOL . "\t";
+        $conf .= 'same => n,return' . PHP_EOL;
+        $conf .= 'exten => _[hit],1,Hangup()' . PHP_EOL . PHP_EOL;
 
         // Set dial contacts.
-        $conf .= '[set-dial-contacts]'.PHP_EOL.
-                 'exten => _X!,1,NoOp()'.PHP_EOL."\t";
+        $conf .= '[set-dial-contacts]' . PHP_EOL .
+                 'exten => _X!,1,NoOp()' . PHP_EOL . "\t";
 
         // Resolve dial contacts for every transport variant of the extension.
         // PJSIP_DIAL_CONTACTS returns empty string when the endpoint has no registered
@@ -115,14 +115,14 @@ class InternalContexts extends AsteriskConfigClass
         // The safe pattern is: ${VAR_A}${IF(both_nonempty?&)}${VAR_B} — VAR_A/VAR_B
         // outside the IF, only the neutral '&' inside.
         $hasCerts = SIPConf::hasCertificates();
-        $conf .= 'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})'.PHP_EOL."\t";
+        $conf .= 'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})' . PHP_EOL . "\t";
         if ($hasCerts) {
-            $conf .= 'same => n,Set(WS_CONTACTS=${PJSIP_DIAL_CONTACTS(${EXTEN}-WS)})'.PHP_EOL."\t".
-                     'same => n,Set(DST_CONTACT=${DST_CONTACT}${IF($["${DST_CONTACT}x" != "x" && "${WS_CONTACTS}x" != "x"]?&)}${WS_CONTACTS})'.PHP_EOL."\t".
-                     'same => n,Set(TLS_CONTACTS=${PJSIP_DIAL_CONTACTS(${EXTEN}-TLS)})'.PHP_EOL."\t".
-                     'same => n,Set(DST_CONTACT=${DST_CONTACT}${IF($["${DST_CONTACT}x" != "x" && "${TLS_CONTACTS}x" != "x"]?&)}${TLS_CONTACTS})'.PHP_EOL."\t";
+            $conf .= 'same => n,Set(WS_CONTACTS=${PJSIP_DIAL_CONTACTS(${EXTEN}-WS)})' . PHP_EOL . "\t" .
+                     'same => n,Set(DST_CONTACT=${DST_CONTACT}${IF($["${DST_CONTACT}x" != "x" && "${WS_CONTACTS}x" != "x"]?&)}${WS_CONTACTS})' . PHP_EOL . "\t" .
+                     'same => n,Set(TLS_CONTACTS=${PJSIP_DIAL_CONTACTS(${EXTEN}-TLS)})' . PHP_EOL . "\t" .
+                     'same => n,Set(DST_CONTACT=${DST_CONTACT}${IF($["${DST_CONTACT}x" != "x" && "${TLS_CONTACTS}x" != "x"]?&)}${TLS_CONTACTS})' . PHP_EOL . "\t";
         }
-        $conf .= 'same => n,return'.PHP_EOL.PHP_EOL;
+        $conf .= 'same => n,return' . PHP_EOL . PHP_EOL;
 
         // Generate further dialplan sections.
         $conf .= $this->generateInternalFW();
@@ -259,14 +259,19 @@ class InternalContexts extends AsteriskConfigClass
 
         // Handle pickup extension if it exists.
         $pickupExtension = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_PICKUP_EXTEN);
-        if(!empty($pickupExtension)){
+        if (!empty($pickupExtension)) {
             $conf .= 'exten => _' . $pickupExtension . $this->extensionPattern . ',1,Set(PICKUPEER=' . $this->technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
             // For PJSIP channels: append X-CHAN-ID SIP header to PICKUPEER if present
             // This allows picking up a specific channel when multiple calls ring the same extension
             $conf .= 'same => n,Set(X_CHAN_ID=${FILTER(A-Za-z0-9,${PJSIP_HEADER(read,X-CHAN-ID)})})' . "\n\t";
             $conf .= 'same => n,ExecIf($["${X_CHAN_ID}x" != "x"]?Set(PICKUPEER=${PICKUPEER}-${X_CHAN_ID}))' . "\n\t";
             $conf .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";
+            // On success PickupChan swaps hangup handlers with the picked-up channel: the
+            // surviving (answered) channel gets this one, so its hangup reaches the CDR worker.
+            $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
             $conf .= 'same => n,PickupChan(${PICKUPEER})' . "\n\t";
+            // Reached only when nothing was picked up: drop the handler, there is no call to log.
+            $conf .= 'same => n,Set(CHANNEL(hangup_handler_pop)=)' . "\n\t";
             $conf .= 'same => n,Hangup()' . "\n\n";
         }
 
@@ -293,27 +298,27 @@ class InternalContexts extends AsteriskConfigClass
         // Generate additional modules internal context
         $conf .= $this->generateAdditionalModulesInternalContext();
         // Handle invalid numbers
-        $conf .= 'exten => i,1,NoOp(-- INVALID NUMBER --)' . PHP_EOL."\t";
-        $conf .= 'same => n,Set(DIALSTATUS=INVALID_NUMBER)' . PHP_EOL."\t";
-        $conf .= 'same => n,Playback(privacy-incorrect,noanswer)' . PHP_EOL."\t";
+        $conf .= 'exten => i,1,NoOp(-- INVALID NUMBER --)' . PHP_EOL . "\t";
+        $conf .= 'same => n,Set(DIALSTATUS=INVALID_NUMBER)' . PHP_EOL . "\t";
+        $conf .= 'same => n,Playback(privacy-incorrect,noanswer)' . PHP_EOL . "\t";
         $conf .= 'same => n,Hangup()' . PHP_EOL;
 
         // Handle hangup conditions during transfer
         $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . PHP_EOL . PHP_EOL;
 
         // Handle hangup, busy signals and direct inward dialing to user
-        $conf .= 'exten => hangup,1,Set(MASTER_CHANNEL(M_DIALSTATUS)=ANSWER)'.PHP_EOL."\t";
-        $conf .= 'same => n,Hangup()'.PHP_EOL;
-        $conf .= 'exten => busy,1,Set(MASTER_CHANNEL(M_DIALSTATUS)=BUSY)'.PHP_EOL."\t";
-        $conf .= 'same => n,Busy(2)'.PHP_EOL;
-        $conf .= 'exten => did2user,1,ExecIf($["${FROM_DID}x" != "x" && ${DIALPLAN_EXISTS(internal,${FROM_DID},1)} ]?Goto(internal,${FROM_DID},1))'.PHP_EOL."\t";
-        $conf .= 'same => n,Hangup()'.PHP_EOL.PHP_EOL;
+        $conf .= 'exten => hangup,1,Set(MASTER_CHANNEL(M_DIALSTATUS)=ANSWER)' . PHP_EOL . "\t";
+        $conf .= 'same => n,Hangup()' . PHP_EOL;
+        $conf .= 'exten => busy,1,Set(MASTER_CHANNEL(M_DIALSTATUS)=BUSY)' . PHP_EOL . "\t";
+        $conf .= 'same => n,Busy(2)' . PHP_EOL;
+        $conf .= 'exten => did2user,1,ExecIf($["${FROM_DID}x" != "x" && ${DIALPLAN_EXISTS(internal,${FROM_DID},1)} ]?Goto(internal,${FROM_DID},1))' . PHP_EOL . "\t";
+        $conf .= 'same => n,Hangup()' . PHP_EOL . PHP_EOL;
 
         // Define internal incoming call context
-        $conf .= "[internal-incoming]".PHP_EOL;
-        $conf .= 'exten => ' . ExtensionsConf::ALL_EXTENSION. ',1,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . PHP_EOL."\t";
-        $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${CHANNEL})' . PHP_EOL."\t";
-        $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT)=${EMPTY_VAR})' . PHP_EOL."\t";
+        $conf .= "[internal-incoming]" . PHP_EOL;
+        $conf .= 'exten => ' . ExtensionsConf::ALL_EXTENSION . ',1,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . PHP_EOL . "\t";
+        $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${CHANNEL})' . PHP_EOL . "\t";
+        $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT)=${EMPTY_VAR})' . PHP_EOL . "\t";
         $conf .= 'same => n,Goto(internal,${EXTEN},1)' . PHP_EOL;
         $conf .= 'exten => _[hit],1,Hangup()' . PHP_EOL . PHP_EOL;
 
@@ -349,7 +354,7 @@ class InternalContexts extends AsteriskConfigClass
      *
      * @return string The generated configuration string.
      */
-    private function generateAdditionalModulesInternalUsersContext():string
+    private function generateAdditionalModulesInternalUsersContext(): string
     {
         return $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GEN_INTERNAL_USERS_PRE_DIAL);
     }
@@ -363,7 +368,7 @@ class InternalContexts extends AsteriskConfigClass
      *
      * @return string The generated configuration string.
      */
-    private function generateAdditionalModulesAllPeersContext():string
+    private function generateAdditionalModulesAllPeersContext(): string
     {
         return $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GEN_ALL_PEERS_CONTEXT);
     }
@@ -459,5 +464,4 @@ class InternalContexts extends AsteriskConfigClass
         // Return the generated configuration string
         return $conf;
     }
-
 }
