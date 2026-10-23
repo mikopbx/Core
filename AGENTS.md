@@ -22,6 +22,24 @@ for the subtree you touch. Keep this file repo-wide only.
 - Reuse existing helpers and naming; no dead code, no stubbed "simplified" implementations,
   no mock services in tests.
 
+## Branches and releases
+- `develop` is the only development branch; every PR, including cloud-session PRs, targets
+  it (hotfix cherry-pick PRs into `release/*` are the one exception). `master` is being
+  retired (INFRA-141): do not branch from it or merge into it.
+- A release is a tag `YYYY.M.N` (M = feature line, N = build counter), not a branch merge.
+  The owner makes it by running the TeamCity chain on `develop` with the *Release build*
+  flag; the chain builds without the `-dev` suffix, runs the REST tests, publishes Docker
+  images and a GitHub pre-release and tags the built revision in Core and in the build
+  repositories. Nightly green chains publish `YYYY.M.N-dev` pre-releases and move the `:dev`
+  Docker tag.
+- A hotfix is fixed on `develop` first, then cherry-picked onto `release/YYYY.M.N` (cut from
+  tag `YYYY.M.N` in each repository that needs it, usually only Core) and released by the
+  same chain on that branch under the next free version number. The branch is deleted after
+  the release. Not yet exercised (INFRA-141): the T2 toolchain always comes from the latest
+  `develop` full build, so verify on a throwaway tag first.
+- Releases, tags, release branches and their deletion are owner actions: agents do not
+  trigger TeamCity, tag, promote or delete branches unless explicitly asked.
+
 ## Testing
 - Unit: `vendor/bin/phpunit -c tests/Unit/phpunit.xml <path>` — the XML defines no
   testsuites, so a path is mandatory. Run inside the PHP container so `vendor/` and
