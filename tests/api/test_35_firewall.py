@@ -25,12 +25,15 @@ def _list_rules(api_client) -> list:
     return [rule for rule in items if rule.get('id')]
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='session', autouse=True)
 def keep_stand_reachable(api_client):
     """#1272: on a stand without rules the firewall accepts everything; the first
     rule turns it into a whitelist ending in DROP, which locks the runner out.
-    Keep a 0.0.0.0/0 rule while the module runs and remove every rule it created
-    afterwards, the catch-all last, so the stand stays reachable even on failure."""
+    Keep a 0.0.0.0/0 rule from the first firewall test to the end of the session and
+    remove every rule created meanwhile, the catch-all last, so the stand stays
+    reachable even on failure. Session scope (#1287): pytest-order runs a
+    test_34_network_filters_initial test right after test_02, and a module-scoped
+    fixture was torn down there, deleting the rule the following tests read."""
     initial = _list_rules(api_client)
     initial_ids = {str(rule['id']) for rule in initial}
     catch_all_id = None
@@ -48,8 +51,14 @@ def keep_stand_reachable(api_client):
 
     yield
 
-    leftovers = [str(rule['id']) for rule in _list_rules(api_client)
-                 if str(rule['id']) not in initial_ids and str(rule['id']) != catch_all_id]
+    try:
+        current_ids = [str(rule['id']) for rule in _list_rules(api_client)]
+    except Exception as e:
+        # Runs after test_99_system_delete_all, which tolerates a stand that has not come back.
+        print(f"⚠ Firewall cleanup skipped, cannot list rules: {str(e)[:80]}")
+        return
+    leftovers = [rule_id for rule_id in current_ids
+                 if rule_id not in initial_ids and rule_id != catch_all_id]
     failed = False
     for rule_id in leftovers:
         try:
@@ -60,7 +69,8 @@ def keep_stand_reachable(api_client):
     if catch_all_id and failed:
         # Removing it now would leave a whitelist without the runner.
         print(f"⚠ Keeping 0.0.0.0/0 rule {catch_all_id}: other test rules remain")
-    elif catch_all_id:
+    elif catch_all_id in current_ids:
+        # A later test (e.g. test_99_system_delete_all) may have removed it already.
         api_client.delete(f'firewall/{catch_all_id}')
 
 
