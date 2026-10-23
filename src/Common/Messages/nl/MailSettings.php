@@ -450,6 +450,8 @@ return [
     'ms_EmailNotification_SMTPTest_Configured' => 'Geconfigureerd',
     'ms_EmailNotification_SMTPTest_Working' => 'Werkend',
     'ms_EmailNotification_SMTPTest_Passed' => 'Voltooid',
+    'ms_EmailNotification_SMTPTest_SMTPConnection' => 'SMTP-verbinding',
+    'ms_EmailNotification_SMTPTest_EmailDelivery' => 'E-mailbezorging',
     'ms_EmailNotification_SMTPTest_HelpText' => 'Als u deze e-mail hebt ontvangen, betekent dit dat uw e-mailconfiguratie correct is ingesteld en klaar is om meldingen te verzenden.',
     'ms_SendMissedCallNotifications' => 'Meldingen voor gemiste oproepen verzenden',
     'ms_SendVoicemailNotifications' => 'Stuur spraakberichtmeldingen',
