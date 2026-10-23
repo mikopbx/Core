@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "96577e638e6a476726d7b415fbda3afa",
+    "content-hash": "90edad97a7c4815cc1263293014d0a0f",
     "packages": [
         {
             "name": "aego/oauth2-yandex",
@@ -487,29 +487,29 @@
         },
         {
             "name": "geoip2/geoip2",
-            "version": "v3.2.0",
+            "version": "v3.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/maxmind/GeoIP2-php.git",
-                "reference": "b7aa58760a6bf89a608dd92ee2d9436b52557ce2"
+                "reference": "257a350e5e0cae57ac95417f32bb0aba285b2c0d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/maxmind/GeoIP2-php/zipball/b7aa58760a6bf89a608dd92ee2d9436b52557ce2",
-                "reference": "b7aa58760a6bf89a608dd92ee2d9436b52557ce2",
+                "url": "https://api.github.com/repos/maxmind/GeoIP2-php/zipball/257a350e5e0cae57ac95417f32bb0aba285b2c0d",
+                "reference": "257a350e5e0cae57ac95417f32bb0aba285b2c0d",
                 "shasum": ""
             },
             "require": {
                 "ext-json": "*",
-                "maxmind-db/reader": "^1.12.1",
-                "maxmind/web-service-common": "~0.10",
+                "maxmind-db/reader": "^1.13.0",
+                "maxmind/web-service-common": "~0.11",
                 "php": ">=8.1"
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "3.*",
                 "phpstan/phpstan": "*",
                 "phpunit/phpunit": "^10.0",
-                "squizlabs/php_codesniffer": "3.*"
+                "squizlabs/php_codesniffer": "4.*"
             },
             "type": "library",
             "autoload": {
@@ -525,10 +525,10 @@
                 {
                     "name": "Gregory J. Oschwald",
                     "email": "goschwald@maxmind.com",
-                    "homepage": "https://www.maxmind.com/"
+                    "homepage": "https://www.maxmind.com/en/home"
                 }
             ],
-            "description": "MaxMind GeoIP2 PHP API",
+            "description": "MaxMind GeoIP PHP API",
             "homepage": "https://github.com/maxmind/GeoIP2-php",
             "keywords": [
                 "IP",
@@ -539,9 +539,9 @@
             ],
             "support": {
                 "issues": "https://github.com/maxmind/GeoIP2-php/issues",
-                "source": "https://github.com/maxmind/GeoIP2-php/tree/v3.2.0"
+                "source": "https://github.com/maxmind/GeoIP2-php/tree/v3.4.0"
             },
-            "time": "2025-05-05T21:18:27+00:00"
+            "time": "2026-07-16T22:11:20+00:00"
         },
         {
             "name": "guzzlehttp/guzzle",
@@ -2043,25 +2043,26 @@
         },
         {
             "name": "repejota/nats",
-            "version": "0.8.4",
+            "version": "0.8.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/repejota/phpnats.git",
-                "reference": "e1031b58114cbc009c5dabd894f12bcbd39cf6f8"
+                "reference": "68e6d24232e8b5aaf134697e47de2652b3ebff6f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/repejota/phpnats/zipball/e1031b58114cbc009c5dabd894f12bcbd39cf6f8",
-                "reference": "e1031b58114cbc009c5dabd894f12bcbd39cf6f8",
+                "url": "https://api.github.com/repos/repejota/phpnats/zipball/68e6d24232e8b5aaf134697e47de2652b3ebff6f",
+                "reference": "68e6d24232e8b5aaf134697e47de2652b3ebff6f",
                 "shasum": ""
             },
             "require": {
                 "ircmaxell/random-lib": "^1.2"
             },
             "require-dev": {
+                "leanphp/phpspec-code-coverage": "^3.2@dev",
                 "phpspec/phpspec": "^3.0",
                 "phpunit/phpunit": "5.*",
-                "satooshi/php-coveralls": "dev-master"
+                "satooshi/php-coveralls": "2.0.x-dev"
             },
             "type": "library",
             "autoload": {
@@ -2104,7 +2105,7 @@
                 "issues": "https://github.com/repejota/phpnats/issues",
                 "source": "https://github.com/repejota/phpnats/tree/master"
             },
-            "time": "2017-04-25T11:59:54+00:00"
+            "time": "2018-06-09T15:32:07+00:00"
         },
         {
             "name": "sentry/sdk",
