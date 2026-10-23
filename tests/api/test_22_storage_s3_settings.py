@@ -296,18 +296,13 @@ class TestStorageS3SettingsValidation:
             'PBXRecordS3LocalDays': '30',  # Equal to total (invalid)
         }
 
-        try:
-            response = api_client.put('s3-storage', payload)
-            # If we get here, validation didn't work as expected
-            print(f"\n⚠ Warning: Backend accepted invalid retention constraint")
-            print(f"  TODO: Add validation for PBX_RECORD_S3_LOCAL_DAYS < PBX_RECORD_SAVE_PERIOD")
-        except Exception as e:
-            # Validation correctly rejected
-            print(f"\n✓ Validation correctly rejected: local >= total retention")
-            error_msg = str(e)
-            assert 'local' in error_msg.lower() or 'retention' in error_msg.lower(), \
-                   "Error message should mention retention constraint"
-            print(f"  Error message: {error_msg}")
+        response = api_client.put('s3-storage', payload, allow_404=True)
+        assert response['result'] is False, "local >= total retention should be rejected"
+        # Messages are translated; check the substituted day counts, not the wording.
+        error_msg = ' '.join(response.get('messages', {}).get('error', []))
+        assert '30' in error_msg, f"Error should name the retention periods: {error_msg}"
+        print(f"\n✓ Validation correctly rejected: local >= total retention")
+        print(f"  Error message: {error_msg}")
 
     def test_02_validate_retention_ranges(self, api_client):
         """Test validation: Retention period value ranges"""
@@ -399,16 +394,13 @@ class TestStorageS3SettingsValidation:
             's3_endpoint': '',  # Empty endpoint (should fail)
         }
 
-        try:
-            response = api_client.put('s3-storage', payload)
-            # If we get here without error, backend accepted invalid config
-            print(f"\n⚠ Warning: Backend accepted S3 enabled without required fields")
-        except Exception as e:
-            # Validation correctly rejected
-            print(f"\n✓ Validation correctly rejected: missing required fields")
-            error_msg = str(e)
-            assert 'required' in error_msg.lower(), "Error should mention required fields"
-            print(f"  Error message: {error_msg}")
+        response = api_client.put('s3-storage', payload, allow_404=True)
+        assert response['result'] is False, "S3 enabled without required fields should be rejected"
+        # Messages are translated; check the substituted field names, not the wording.
+        error_msg = ' '.join(response.get('messages', {}).get('error', []))
+        assert 's3_endpoint' in error_msg, f"Error should list the missing fields: {error_msg}"
+        print(f"\n✓ Validation correctly rejected: missing required fields")
+        print(f"  Error message: {error_msg}")
 
     def test_05_empty_patch_handling(self, api_client):
         """Test PATCH with empty body - should return current settings"""
