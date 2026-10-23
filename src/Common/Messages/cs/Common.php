@@ -259,6 +259,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => 'Pozornost! Heslo SSH bylo změněno bez přihlášení do rozhraní MikoPBX!',
     'adv_SecurityPatchAvailable' => 'K dispozici je bezpečnostní aktualizace: modul <a href="%url%" class="advices-module-update">%module%</a> %ver%. Doporučujeme nainstalovat.',
     'adv_SipPasswordWeak' => 'Jednoduché heslo SIP na <a href=\'%url%\'>%record%</a>',
+    'adv_SipTransportTlsDeprecated' => 'U <a href=\'%url%\'>%record%</a> je zvolen zastaralý transport TLS, v budoucí verzi nebude dostupný. Pro připojení přes TLS použijte uživatelské jméno %number%-TLS',
     'adv_SshPasswordWeak' => 'Jednoduché heslo účtu SSH <a href=\'%url%\'>změnit</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Na disku pro ukládání dochází volné místo (%free% Mb) </a>',
     'adv_StorageDiskUnMounted' => 'Nepřipojený disk pro ukládání nastavení a dat!',

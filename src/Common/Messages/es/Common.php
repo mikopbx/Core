@@ -255,6 +255,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => '¡Atención! ¡La contraseña SSH se ha cambiado sin iniciar sesión en la interfaz MikoPBX!',
     'adv_SecurityPatchAvailable' => 'Actualización de seguridad disponible: módulo <a href="%url%" class="advices-module-update">%module%</a> %ver%. Se recomienda instalar.',
     'adv_SipPasswordWeak' => 'Contraseña SIP simple en <a href=\'%url%\'>%record%</a>',
+    'adv_SipTransportTlsDeprecated' => 'En <a href=\'%url%\'>%record%</a> está seleccionado el transporte TLS obsoleto, que dejará de estar disponible en una versión futura. Para conectarse por TLS, use el nombre de usuario %number%-TLS',
     'adv_SshPasswordWeak' => 'Contraseña de cuenta SSH simple <a href=\'%url%\'>cambiar</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'El disco de almacenamiento se está quedando sin espacio libre (%free% Mb) </a>',
     'adv_StorageDiskUnMounted' => '¡Unidad no conectada para almacenar configuraciones y datos!',

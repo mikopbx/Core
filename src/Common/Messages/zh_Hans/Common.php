@@ -259,6 +259,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => '注意力！未登录MikoPBX界面已更改SSH密码！',
     'adv_SecurityPatchAvailable' => '有可用的安全更新：模块 <a href="%url%" class="advices-module-update">%module%</a> %ver%。建议安装。',
     'adv_SipPasswordWeak' => '<a href=\'%url%\'>%record%</a> 的简单 SIP 密码',
+    'adv_SipTransportTlsDeprecated' => '<a href=\'%url%\'>%record%</a> 选择了已弃用的 TLS 传输方式，将在未来版本中不可用。如需通过 TLS 连接，请使用用户名 %number%-TLS',
     'adv_SshPasswordWeak' => '简单SSH账户密码<a href=\'%url%\'>更改</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => '可用磁盘空间在存储驱动器上用完（%free%Mb）</a>',
     'adv_StorageDiskUnMounted' => '未连接驱动器以存储设置和数据！',

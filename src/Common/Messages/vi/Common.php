@@ -259,6 +259,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => 'Chú ý! Mật khẩu SSH đã được thay đổi mà không cần đăng nhập vào giao diện MikoPBX!',
     'adv_SecurityPatchAvailable' => 'Có bản cập nhật bảo mật: mô-đun <a href="%url%" class="advices-module-update">%module%</a> %ver%. Nên cài đặt.',
     'adv_SipPasswordWeak' => 'Mật khẩu SIP đơn giản tại <a href=\'%url%\'>%record%</a>',
+    'adv_SipTransportTlsDeprecated' => '<a href=\'%url%\'>%record%</a> đang chọn giao thức truyền tải TLS đã lỗi thời, giao thức này sẽ không còn khả dụng trong bản phát hành tương lai. Để kết nối qua TLS, hãy dùng tên người dùng %number%-TLS',
     'adv_SshPasswordWeak' => 'Mật khẩu tài khoản SSH đơn giản <a href=\'%url%\'>thay đổi</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Dung lượng đĩa trống hết trên ổ lưu trữ (%free% Mb) </a>',
     'adv_StorageDiskUnMounted' => 'Không kết nối ổ đĩa để lưu trữ cài đặt và dữ liệu!',

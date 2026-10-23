@@ -468,6 +468,9 @@ return [
     // MO - Models validation
     'mo_IaxUsernameInvalidCharacters' => 'El nombre de usuario IAX para el registro entrante solo puede contener letras, números y símbolos latinos: _ - .',
     'mo_SipUsernameInvalidCharacters' => 'El nombre de usuario SIP para el registro entrante solo puede contener letras, números y símbolos latinos: _ - . + *',
+    'mo_SipInboundUsernameMustBeUnique' => 'El nombre de usuario del proveedor entrante debe ser único: dos proveedores con registro entrante no pueden tener el mismo nombre de usuario',
+    'mo_SipInboundUsernameClashesExtension' => 'El nombre de usuario del proveedor entrante no debe coincidir con un número de extensión interna: provoca un conflicto en la configuración de Asterisk',
+    'mo_SipExtensionClashesInboundUsername' => 'El número de extensión interna no debe coincidir con el nombre de usuario de un proveedor entrante: provoca un conflicto en la configuración de Asterisk',
     'pr_ValidationProviderLogin' => 'Introduce tus datos de acceso para iniciar sesión en tu proveedor.',
     'pr_Disabled' => 'apagado',
     'pr_CheckingStatus' => 'Comprobando estado...',

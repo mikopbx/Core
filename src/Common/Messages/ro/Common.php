@@ -259,6 +259,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => 'Atenţie! Parola SSH a fost schimbată fără a se conecta la interfața MikoPBX!',
     'adv_SecurityPatchAvailable' => 'Actualizare de securitate disponibilă: modul <a href="%url%" class="advices-module-update">%module%</a> %ver%. Se recomandă instalarea.',
     'adv_SipPasswordWeak' => 'Parola SIP simplă la <a href=\'%url%\'>%record%</a>',
+    'adv_SipTransportTlsDeprecated' => 'Pentru <a href=\'%url%\'>%record%</a> este selectat transportul TLS învechit, care nu va mai fi disponibil într-o versiune viitoare. Pentru conectarea prin TLS folosiți numele de utilizator %number%-TLS',
     'adv_SshPasswordWeak' => 'Parola simplă a contului SSH <a href=\'%url%\'>schimbați</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Discul pentru stocare rămâne fără spațiu liber (%free% Mb)</a>',
     'adv_StorageDiskUnMounted' => 'Unitatea nu este conectată pentru a stoca setări și date!',

@@ -259,6 +259,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => '注意！ MikoPBX インターフェイスにログインせずに SSH パスワードが変更されました!',
     'adv_SecurityPatchAvailable' => 'セキュリティアップデートが利用可能です: モジュール <a href="%url%" class="advices-module-update">%module%</a> %ver%。インストールを推奨します。',
     'adv_SipPasswordWeak' => '<a href=\'%url%\'>%record%</a> の簡易 SIP パスワード',
+    'adv_SipTransportTlsDeprecated' => '<a href=\'%url%\'>%record%</a> で非推奨の TLS トランスポートが選択されています。今後のリリースでは使用できなくなります。TLS で接続するには、ユーザー名 %number%-TLS を使用してください',
     'adv_SshPasswordWeak' => 'シンプルな SSH アカウントのパスワード <a href=\'%url%\'>変更</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'ストレージドライブの空きディスク容量が不足しています（%free%Mb）</a>',
     'adv_StorageDiskUnMounted' => '設定とデータを保存するためにドライブが接続されていません！',

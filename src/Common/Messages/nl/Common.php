@@ -259,6 +259,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => 'Aandacht! Het SSH-wachtwoord is gewijzigd zonder in te loggen op de MikoPBX-interface!',
     'adv_SecurityPatchAvailable' => 'Beveiligingsupdate beschikbaar: module <a href="%url%" class="advices-module-update">%module%</a> %ver%. Installatie aanbevolen.',
     'adv_SipPasswordWeak' => 'Eenvoudig SIP-wachtwoord op <a href=\'%url%\'>%record%</a>',
+    'adv_SipTransportTlsDeprecated' => 'Voor <a href=\'%url%\'>%record%</a> is het verouderde TLS-transport geselecteerd; dit is in een toekomstige release niet meer beschikbaar. Gebruik voor een verbinding via TLS de gebruikersnaam %number%-TLS',
     'adv_SshPasswordWeak' => 'Eenvoudig SSH-accountwachtwoord <a href=\'%url%\'> wijzigen </a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'De opslagschijf heeft bijna geen vrije ruimte meer (%free% Mb)</a>',
     'adv_StorageDiskUnMounted' => 'De schijf voor het opslaan van instellingen en gegevens is niet aangesloten!',

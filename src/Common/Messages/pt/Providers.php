@@ -468,6 +468,9 @@ return [
     'pr_StateChangedFromTo' => 'O status mudou de %previousState% para %newState%',
     'pr_CheckingStatus' => 'Verificando o status...',
     'mo_SipUsernameInvalidCharacters' => 'O nome de usuário SIP para registro de entrada só pode conter letras latinas, números e símbolos: _ - . + *',
+    'mo_SipInboundUsernameMustBeUnique' => 'O nome de utilizador do fornecedor de entrada tem de ser único: dois fornecedores com registo de entrada não podem ter o mesmo nome de utilizador',
+    'mo_SipInboundUsernameClashesExtension' => 'O nome de utilizador do fornecedor de entrada não pode coincidir com um número de extensão interna: isso provoca um conflito na configuração do Asterisk',
+    'mo_SipExtensionClashesInboundUsername' => 'O número de extensão interna não pode coincidir com o nome de utilizador de um fornecedor de entrada: isso provoca um conflito na configuração do Asterisk',
     'pr_Disabled' => 'desligado',
     // MO - Models validation
     'mo_IaxUsernameInvalidCharacters' => 'O nome de usuário IAX para registro de entrada só pode conter letras latinas, números e símbolos: _ - .',

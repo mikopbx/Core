@@ -471,4 +471,7 @@ return [
     // MO - Models validation
     'mo_IaxUsernameInvalidCharacters' => 'Saapuvan rekisteröitymisen IAX-käyttäjätunnus voi sisältää vain latinalaisia kirjaimia, numeroita ja symboleja: _ - .',
     'mo_SipUsernameInvalidCharacters' => 'Saapuvan rekisteröitymisen SIP-käyttäjätunnus voi sisältää vain latinalaisia kirjaimia, numeroita ja symboleja: _ - . + *',
+    'mo_SipInboundUsernameMustBeUnique' => 'Saapuvan palveluntarjoajan käyttäjätunnuksen on oltava yksilöllinen: kahdella saapuvan rekisteröinnin palveluntarjoajalla ei voi olla samaa käyttäjätunnusta',
+    'mo_SipInboundUsernameClashesExtension' => 'Saapuvan palveluntarjoajan käyttäjätunnus ei saa olla sama kuin sisäinen alanumero: se aiheuttaa ristiriidan Asteriskin asetuksissa',
+    'mo_SipExtensionClashesInboundUsername' => 'Sisäinen alanumero ei saa olla sama kuin saapuvan palveluntarjoajan käyttäjätunnus: se aiheuttaa ristiriidan Asteriskin asetuksissa',
 ];

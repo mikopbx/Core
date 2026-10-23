@@ -219,6 +219,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => 'Uppmärksamhet! SSH-lösenordet har ändrats utan att logga in på MikoPBX-gränssnittet!',
     'adv_SecurityPatchAvailable' => 'Säkerhetsuppdatering tillgänglig: modul <a href="%url%" class="advices-module-update">%module%</a> %ver%. Installation rekommenderas.',
     'adv_SipPasswordWeak' => 'Enkelt SIP-lösenord på <a href=\'%url%\'>%record%</a>',
+    'adv_SipTransportTlsDeprecated' => 'För <a href=\'%url%\'>%record%</a> är den föråldrade TLS-transporten vald, den kommer inte att vara tillgänglig i en framtida version. Använd användarnamnet %number%-TLS för att ansluta via TLS',
     'adv_SshPasswordWeak' => 'Enkelt lösenord för SSH-konto <a href=\'%url%\'>ändra</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Disken för lagring har slut på ledigt utrymme (%free% Mb) </a>',
     'adv_StorageDiskUnMounted' => 'Inte ansluten enhet för att lagra inställningar och data!',

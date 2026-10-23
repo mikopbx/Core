@@ -259,6 +259,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => 'Opmærksomhed! SSH-adgangskoden er blevet ændret uden at logge ind på MikoPBX-grænsefladen!',
     'adv_SecurityPatchAvailable' => 'Sikkerhedsopdatering tilgængelig: modul <a href="%url%" class="advices-module-update">%module%</a> %ver%. Installation anbefales.',
     'adv_SipPasswordWeak' => 'Enkel SIP-adgangskode på <a href=\'%url%\'>%record%</a>',
+    'adv_SipTransportTlsDeprecated' => 'Den forældede TLS-transport er valgt for <a href=\'%url%\'>%record%</a>, den vil ikke være tilgængelig i en fremtidig udgivelse. Brug brugernavnet %number%-TLS for at forbinde via TLS',
     'adv_SshPasswordWeak' => 'Enkel SSH-kontoadgangskode <a href=\'%url%\'>skift</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Disken til lagring løber tør for ledig plads (%free% Mb) </a>',
     'adv_StorageDiskUnMounted' => 'Ikke tilsluttet drev til at gemme indstillinger og data!',

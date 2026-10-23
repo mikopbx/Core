@@ -259,6 +259,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => 'Diqqət! SSH parolu MikoPBX interfeysinə daxil olmadan dəyişdirildi!',
     'adv_SecurityPatchAvailable' => 'Təhlükəsizlik yeniləməsi mövcuddur: modul <a href="%url%" class="advices-module-update">%module%</a> %ver%. Quraşdırılması tövsiyə olunur.',
     'adv_SipPasswordWeak' => 'Sadə SIP Parol <a href=\'%url%\'>%record%</a>',
+    'adv_SipTransportTlsDeprecated' => '<a href=\'%url%\'>%record%</a> üçün köhnəlmiş TLS nəqliyyatı seçilib, gələcək buraxılışda o əlçatan olmayacaq. TLS ilə qoşulmaq üçün %number%-TLS istifadəçi adından istifadə edin',
     'adv_SshPasswordWeak' => 'Sadə SSH hesabı parolu <a href=\'%url%\'>dəyişiklik</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Yaddaş sürücüsündə boş yer tükənir (%free% Mb)</a>',
     'adv_StorageDiskUnMounted' => 'Parametrləri və məlumatı saxlamaq üçün sürücü qoşulmayıb!',

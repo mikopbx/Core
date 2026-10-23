@@ -259,6 +259,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => 'Dikkat! MikoPBX arayüzüne giriş yapılmadan SSH şifresi değiştirilmiştir!',
     'adv_SecurityPatchAvailable' => 'Güvenlik güncellemesi mevcut: modül <a href="%url%" class="advices-module-update">%module%</a> %ver%. Kurulum önerilir.',
     'adv_SipPasswordWeak' => '<a href=\'%url%\'>%record%</a>\'te Basit SIP Şifresi',
+    'adv_SipTransportTlsDeprecated' => '<a href=\'%url%\'>%record%</a> için kullanımdan kaldırılmış TLS taşıması seçili; gelecekteki bir sürümde kullanılamayacak. TLS üzerinden bağlanmak için %number%-TLS kullanıcı adını kullanın',
     'adv_SshPasswordWeak' => 'Basit SSH hesabı şifresi <a href=\'%url%\'>değiştir</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Depolama diskinde boş alan azalıyor (%free% Mb) </a>',
     'adv_StorageDiskUnMounted' => 'Ayarları ve verileri saklamak için bağlı olmayan sürücü!',

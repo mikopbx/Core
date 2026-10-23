@@ -259,6 +259,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => 'Pažnja! SSH lozinka je promijenjena bez prijave na MikoPBX sučelje!',
     'adv_SecurityPatchAvailable' => 'Dostupno sigurnosno ažuriranje: modul <a href="%url%" class="advices-module-update">%module%</a> %ver%. Preporučuje se instalacija.',
     'adv_SipPasswordWeak' => 'Jednostavna SIP lozinka za <a href=\'%url%\'>%record%</a>',
+    'adv_SipTransportTlsDeprecated' => 'Za <a href=\'%url%\'>%record%</a> odabran je zastarjeli TLS prijenos, koji u budućem izdanju neće biti dostupan. Za povezivanje putem TLS-a koristite korisničko ime %number%-TLS',
     'adv_SshPasswordWeak' => 'Jednostavna lozinka za SSH račun <a href=\'%url%\'>promjena</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Na disku za pohranu ponestaje slobodnog prostora (%free% Mb)</a>',
     'adv_StorageDiskUnMounted' => 'Disk za pohranu postavki i podataka nije spojen!',

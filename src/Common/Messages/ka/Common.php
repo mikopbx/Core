@@ -259,6 +259,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => 'ყურადღება! SSH პაროლი შეიცვალა MikoPBX ინტერფეისში შესვლის გარეშე!',
     'adv_SecurityPatchAvailable' => 'უსაფრთხოების განახლება ხელმისაწვდომია: მოდული <a href="%url%" class="advices-module-update">%module%</a> %ver%. რეკომენდებულია დაყენება.',
     'adv_SipPasswordWeak' => 'მარტივი SIP პაროლი <a href=\'%url%\'>%record%</a>',
+    'adv_SipTransportTlsDeprecated' => '<a href=\'%url%\'>%record%</a>-ისთვის არჩეულია მოძველებული TLS ტრანსპორტი, რომელიც მომავალ გამოშვებაში მიუწვდომელი იქნება. TLS-ით დასაკავშირებლად გამოიყენეთ მომხმარებლის სახელი %number%-TLS',
     'adv_SshPasswordWeak' => 'მარტივი SSH ანგარიშის პაროლი <a href=\'%url%\'>შეცვლა</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'შენახვის დისკს თავისუფალი ადგილი ეწურება (%free% მბ) </a>',
     'adv_StorageDiskUnMounted' => 'დისკი არ არის დაკავშირებული პარამეტრებისა და მონაცემების შესანახად!',

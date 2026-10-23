@@ -259,6 +259,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => 'Figyelem! Az SSH jelszó a MikoPBX felületre való bejelentkezés nélkül megváltozott!',
     'adv_SecurityPatchAvailable' => 'Biztonsági frissítés elérhető: modul <a href="%url%" class="advices-module-update">%module%</a> %ver%. Telepítés ajánlott.',
     'adv_SipPasswordWeak' => 'Egyszerű SIP jelszó: <a href=\'%url%\'>%record%</a>',
+    'adv_SipTransportTlsDeprecated' => 'A(z) <a href=\'%url%\'>%record%</a> esetében az elavult TLS átvitel van kiválasztva, egy későbbi kiadásban nem lesz elérhető. TLS-kapcsolathoz használja a %number%-TLS felhasználónevet',
     'adv_SshPasswordWeak' => 'Egyszerű SSH-fiók jelszava <a href=\'%url%\'>módosítás</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'A tárolólemezen kifogy a szabad hely (%free% Mb)</a>',
     'adv_StorageDiskUnMounted' => 'Az adatok tárolására szolgáló tárhely nincs csatlakoztatva!',

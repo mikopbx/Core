@@ -469,6 +469,9 @@ return [
     // MO - Models validation
     'mo_IaxUsernameInvalidCharacters' => 'De IAX-gebruikersnaam voor inkomende registratie mag alleen Latijnse letters, cijfers en symbolen bevatten: _ - .',
     'mo_SipUsernameInvalidCharacters' => 'De SIP-gebruikersnaam voor inkomende registratie mag alleen Latijnse letters, cijfers en symbolen bevatten: _ - . + *',
+    'mo_SipInboundUsernameMustBeUnique' => 'De login van de inkomende provider moet uniek zijn: twee providers met inkomende registratie kunnen niet dezelfde login hebben',
+    'mo_SipInboundUsernameClashesExtension' => 'De login van de inkomende provider mag niet overeenkomen met een intern toestelnummer: dit veroorzaakt een conflict in de Asterisk-configuratie',
+    'mo_SipExtensionClashesInboundUsername' => 'Het interne toestelnummer mag niet overeenkomen met de login van een inkomende provider: dit veroorzaakt een conflict in de Asterisk-configuratie',
     'pr_Disabled' => 'uit',
     'pr_CheckingStatus' => 'Status controleren...',
 ];

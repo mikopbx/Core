@@ -259,6 +259,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => 'Увага! Пароль SSH змінено без входу в інтерфейс MikoPBX!',
     'adv_SecurityPatchAvailable' => 'Доступне оновлення безпеки: модуль <a href="%url%" class="advices-module-update">%module%</a> %ver%. Рекомендується встановити.',
     'adv_SipPasswordWeak' => 'Простий пароль SIP у <a href=\'%url%\'>%record%</a>',
+    'adv_SipTransportTlsDeprecated' => 'У <a href=\'%url%\'>%record%</a> вибрано застарілий транспорт TLS, у майбутньому релізі він буде недоступний. Для підключення через TLS використовуйте ім\'я користувача %number%-TLS',
     'adv_SshPasswordWeak' => 'Простий пароль облікового запису SSH <a href=\'%url%\'>змінити</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'На диску для зберігання закінчується вільне місце (%free% Mb)</a>',
     'adv_StorageDiskUnMounted' => 'Не подключено диск для зберігання налаштувань та даних!',

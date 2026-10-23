@@ -254,6 +254,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => 'Προσοχή! Ο κωδικός πρόσβασης SSH έχει αλλάξει χωρίς να συνδεθείτε στη διεπαφή MikoPBX!',
     'adv_SecurityPatchAvailable' => 'Διαθέσιμη ενημέρωση ασφαλείας: άρθρωμα <a href="%url%" class="advices-module-update">%module%</a> %ver%. Συνιστάται εγκατάσταση.',
     'adv_SipPasswordWeak' => 'Απλός κωδικός πρόσβασης SIP στο <a href=\'%url%\'>%record%</a>',
+    'adv_SipTransportTlsDeprecated' => 'Για το <a href=\'%url%\'>%record%</a> έχει επιλεγεί η παρωχημένη μεταφορά TLS, η οποία δεν θα είναι διαθέσιμη σε μελλοντική έκδοση. Για σύνδεση μέσω TLS χρησιμοποιήστε το όνομα χρήστη %number%-TLS',
     'adv_SshPasswordWeak' => 'Απλός κωδικός πρόσβασης λογαριασμού SSH <a href=\'%url%\'>αλλαγή</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Ο ελεύθερος χώρος της μονάδας αποθήκευσης εξαντλείται (%free% Mb)</a>',
     'adv_StorageDiskUnMounted' => 'Η μονάδα αποθήκευσης ρυθμίσεων και δεδομένων δεν είναι συνδεδεμένη!',

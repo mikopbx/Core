@@ -259,6 +259,7 @@ return [
     'adv_SSHPasswordWasCompromisedSubject' => 'Huomio! SSH-salasana vaihdettiin ilman kirjautumista MikoPBX-liittymään!',
     'adv_SecurityPatchAvailable' => 'Tietoturvapäivitys saatavilla: moduuli <a href="%url%" class="advices-module-update">%module%</a> %ver%. Asennus suositellaan.',
     'adv_SipPasswordWeak' => 'Yksinkertainen SIP-salasana: <a href=\'%url%\'>%record%</a>',
+    'adv_SipTransportTlsDeprecated' => 'Kohteelle <a href=\'%url%\'>%record%</a> on valittu vanhentunut TLS-siirto, joka ei ole käytettävissä tulevassa julkaisussa. Käytä TLS-yhteyteen käyttäjätunnusta %number%-TLS',
     'adv_SshPasswordWeak' => 'Yksinkertainen SSH-tilin salasana <a href=\'%url%\'>muutos</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Tallennuslevyltä on loppumassa vapaa tila (%free% Mt)</a>',
     'adv_StorageDiskUnMounted' => 'Asetusten ja tietojen tallennuslevyä ei ole kytketty!',
