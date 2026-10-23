@@ -655,6 +655,12 @@ function event_interception_bridge_result()
 
     -- Get the dial status of the call
     data['dialstatus']   = get_variable("M_DIALSTATUS");
+    if(data['dialstatus'] == '') then
+        -- When the Local;1 leg itself is bridged to the caller (e.g. the operator answered
+        -- via *8 pickup), set-answer-state exports M_DIALSTATUS to the caller only; this
+        -- leg still knows the result of its own Dial().
+        data['dialstatus'] = get_variable("DIALSTATUS");
+    end
 
     if(data['dialstatus'] == 'ANSWER') then
         data['dialstatus']   = 'ANSWERED';
@@ -2009,7 +2015,10 @@ extensions.set_from_peer["_.!"]             = function() set_from_peer() end
 extensions.voicemail_start["_.!"]           = function() if not skip_special_exten() then event_voicemail_start() end end
 
 extensions.interception_start["_.!"]           = function() if not skip_special_exten() then event_interception_start() end end
-extensions.interception_bridge_result["_.!"]   = function() if not skip_special_exten() then event_interception_bridge_result() end end
+-- interception_bridge_result is reached only from `exten => _[hit]` of [internal-originate],
+-- i.e. EXTEN is always h/t/i here. Gating it with skip_special_exten() silenced originate_end
+-- entirely, so interception attempts stayed open until LINKEDID_END.
+extensions.interception_bridge_result["_.!"]   = function() event_interception_bridge_result() end
 extensions.dial_end["_.!"]                     = function() if not skip_special_exten() then event_dial_end() end end
 extensions.hangup_chan_meetme["_.!"]            = function() event_hangup_chan_meetme() end
 extensions.unpark_call_timeout["_.!"]          = function() event_unpark_call_timeout() end
