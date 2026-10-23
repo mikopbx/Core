@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'Systemadministratorens e-mail',
     'ms_SystemEmailForMissed' => 'Samlet e-mail til notifikationer om mistede opkald',
     'ms_VoicemailCommonEmail' => 'Samlet e-mail til telefonsvarerbeskeder',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'Test af mailindstillinger',
     'ms_TestConnection' => 'Tjek forbindelsen',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'Opret personlige e-mailadresser, så medarbejdere kan modtage personlige notifikationer.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Sørg venligst for at denne postkasse tjekkes regelmæssigt.',
     'ms_SystemEmailForMissedTooltip_note' => 'Hvis dette felt ikke er angivet, sendes der ikke meddelelser om ubesvarede eksterne opkald til medarbejdere uden en personlig e-mailadresse.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'E-mail til telefonsvarerbesked',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'En enkelt e-mailadresse til centraliseret afsendelse af alle talebeskeder.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'Brevet indeholder oplysninger om den, der ringer op, og tidspunktet for opkaldet.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'Beskedens varighed vises i e-mailens brødtekst.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Det anbefales at oprette personlige e-mailadresser til medarbejdere til personlig levering af talebeskeder.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'Brug af TLS-kryptering',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Opsætning af en sikker forbindelse til mailserveren',

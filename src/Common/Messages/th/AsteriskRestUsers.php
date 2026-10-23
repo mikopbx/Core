@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => 'การยืนยันตัวตน',
     'ari_ConnectionInfoTooltip_auth_desc' => 'ใช้ชื่อผู้ใช้และรหัสผ่านจากแบบฟอร์มนี้สำหรับการยืนยันตัวตนขั้นพื้นฐาน',
     'ari_ConnectionInfoTooltip_examples_header' => 'ตัวอย่างการเชื่อมต่อ',
-    'ari_ConnectionInfoTooltip_examples' => 'curl -u username:password http://server:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# WebSocket พร้อมการยืนยันตัวตน|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# คำขอ REST API|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => 'แทนที่ [application] ด้วยชื่อแอปพลิเคชัน Stasis ของคุณ',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'เซิร์ฟเวอร์ของคุณ',
     // Other tooltips

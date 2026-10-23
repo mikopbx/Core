@@ -98,7 +98,7 @@ return [
     'gs_Password' => '管理员密码',
     'gs_PasswordDescription' => '用于管理员访问Web界面的密码。使用强密码。',
     'gs_PasswordNotEmpty' => '密码不能为空',
-    'gs_PasswordTooShort' => '密码必须至少5个字符',
+    'gs_PasswordTooShort' => '密码必须至少%min%个字符',
     'gs_PasswordsMustMatch' => '密码必须匹配',
     'gs_PasswordRepeat' => '确认密码',
     'gs_PasswordRepeatDescription' => '再次输入相同密码进行确认。',

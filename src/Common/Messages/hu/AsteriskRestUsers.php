@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => 'Hitelesítés',
     'ari_ConnectionInfoTooltip_auth_desc' => 'Használja az űrlapon található felhasználónevet és jelszót az alapvető hitelesítéshez',
     'ari_ConnectionInfoTooltip_examples_header' => 'Csatlakozási példa',
-    'ari_ConnectionInfoTooltip_examples' => '# WebSocket hitelesítéssel|curl -u felhasználónév:jelszó http://szerver:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# WebSocket hitelesítéssel|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# REST API kérés|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => 'Cseréld le az [application] részt a Stasis alkalmazásod nevére.',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'a kiszolgálód',
     // Other tooltips

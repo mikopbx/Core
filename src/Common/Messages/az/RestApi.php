@@ -2178,7 +2178,7 @@ return [
     'rest_schema_provider_id' => 'Unikal provayder identifikatoru',
     'rest_schema_s3_endpoint' => 'S3 ilə uyğun son nöqtənin URL-i (AWS S3, MinIO, Wasabi və s.)',
     'rest_param_s3_secret_key' => 'Doğrulama üçün S3 gizli giriş açarı (şifrələnəcək)',
-    'rest_S3LocalRetentionMustBeLess' => 'Yerli saxlama müddəti (%yerli% günlər) ümumi saxlama müddətindən (%cəmi% günlər) az olmalıdır.',
+    'rest_S3LocalRetentionMustBeLess' => 'Yerli saxlama müddəti (%local% günlər) ümumi saxlama müddətindən (%total% günlər) az olmalıdır.',
     'rest_err_s3_connection_failed' => 'S3 bağlantısı uğursuz oldu. Diaqnostika təfərrüatlarında etimadnamələri və parametrləri yoxlayın.',
     'rest_err_s3_required_fields' => 'S3 aktivləşdirildikdə aşağıdakı sahələr məcburidir: %fields%',
     'rest_err_s3_bucket_consecutive_dots' => 'S3 bucket adı ardıcıl nöqtələr (..) ehtiva etməməlidir',

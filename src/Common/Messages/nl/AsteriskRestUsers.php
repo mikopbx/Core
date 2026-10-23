@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => 'Authenticatie',
     'ari_ConnectionInfoTooltip_auth_desc' => 'Gebruik de gebruikersnaam en het wachtwoord van dit formulier voor basisverificatie',
     'ari_ConnectionInfoTooltip_examples_header' => 'Verbindingsvoorbeeld',
-    'ari_ConnectionInfoTooltip_examples' => '# WebSocket met authenticatie|curl -u gebruikersnaam:wachtwoord http://server:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# WebSocket met authenticatie|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# REST API-verzoek|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => 'Vervang [application] door de naam van uw Stasis-applicatie.',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'jouw-server',
     // Other tooltips

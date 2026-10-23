@@ -616,7 +616,7 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'mo_SystemExten_did2user' => 'Direkt zum Mitarbeiter (Match by DID)',
     'mo_SystemExten_hangup' => 'Anruf beenden',
     'mo_SystemExten_voicemail' => 'Voicemail',
-    'mo_ThisNumberNotUniqueForExtensionsModels' => 'Die angegebene Nebenstellennummer wird bereits verwendet',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'Die angegebene Nummer wird bereits verwendet für - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Das System hat bereits eine Schnisttelle mit der gleichen VLAN ID',
     // MSG
     'msg_ErrorHeader' => 'Error',
@@ -722,7 +722,7 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'st_S3StatusEmpty' => 'Es sind keine Datensätze zum Synchronisieren vorhanden.',
     'bt_ToolTipCopyRoute' => 'Route kopieren',
     'adv_SecurityLogCriticalGrowth' => 'Kritisches Wachstum des Asterisk-Sicherheitsprotokolls: %growth% MB in %interval% Minuten. Gesamtgröße: %totalSize% MB. Möglicher Angriff auf das System! <a href=\'%url%\'>Protokoll prüfen</a>',
-    'adv_SecurityLogSuspiciousGrowth' => 'Das Asterisk-Sicherheitsprotokoll ist verdächtig stark angewachsen: %growth% MB in %interval% Minuten. Es wird empfohlen, Ihre Sicherheitseinstellungen zu überprüfen.',
+    'adv_SecurityLogSuspiciousGrowth' => 'Das Asterisk-Sicherheitsprotokoll ist verdächtig stark angewachsen: %growth% MB in %interval% Minuten. Gesamtgröße: %totalSize% MB. Es wird empfohlen, Ihre Sicherheitseinstellungen zu überprüfen.',
     'adv_AsteriskLogCriticalGrowth' => 'Kritisches Wachstum des Asterisk-Protokolls (%logFile%): %growth% MB in %interval% Minuten. Gesamtgröße: %totalSize% MB. Mögliche Fehlkonfiguration oder Angriff.',
     'adv_AsteriskLogSuspiciousGrowth' => 'Verdächtiges Wachstum des Asterisk-Protokolls (%logFile%): %growth% MB in %interval% Minuten. Gesamtgröße: %totalSize% MB.',
     'am_EventFilterTooltip_examples_header' => 'Beispiele',

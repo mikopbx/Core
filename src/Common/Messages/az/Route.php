@@ -511,9 +511,9 @@ return [
     'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => '<b>%restnumbers%</b> rəqəmlərindən ədədlər → əlavə et <b>%prepend%</b> → via %provider%',
     'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => '<b>%restnumbers%</b> rəqəmlərindən rəqəmlər → trim <b>%trim%</b> → via %provider%',
     'or_RuleDescriptionBeginMatchWithProviderAndModify' => '<b>%numberbeginswith%</b> → trim <b>%trim%</b> olan rəqəmlər, <b>%prepend%</b> əlavə edin → %provider% vasitəsilə',
-    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => '<b>%nömrə%</b> ilə başlayan rəqəmlər → əlavə et <b>%əvvəlcədən%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => '<b>%numberbeginswith%</b> ilə başlayan rəqəmlər → əlavə et <b>%prepend%</b> → via %provider%',
     'or_RuleDescriptionBeginMatchWithProviderAndTrim' => '<b>%numberbeginswith%</b> → trim <b>%trim%</b> → via %provider% olan rəqəmlər',
-    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Yalnız <b>%nömrə%</b> ilə başlayır → <b>%trim%</b> kəsin, <b>%əvvəlcədən%</b> əlavə edin → %provayder% vasitəsilə',
-    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Yalnız <b>%nömrə%</b> ilə başlayır → <b>%əvvəlcədən%</b> əlavə et → %provayder% vasitəsilə',
-    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Yalnız <b>%nömrə%</b> ilə başlayır → kəsmək <b>%kəsmək%</b> → %provayder% vasitəsilə',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Yalnız <b>%numberbeginswith%</b> ilə başlayır → <b>%trim%</b> kəsin, <b>%prepend%</b> əlavə edin → %provider% vasitəsilə',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Yalnız <b>%numberbeginswith%</b> ilə başlayır → <b>%prepend%</b> əlavə et → %provider% vasitəsilə',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Yalnız <b>%numberbeginswith%</b> ilə başlayır → kəsmək <b>%trim%</b> → %provider% vasitəsilə',
 ];

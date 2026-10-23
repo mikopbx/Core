@@ -513,7 +513,7 @@ return [
     'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Números com <b>%numberbeginswith%</b> → remover <b>%trim%</b>, adicionar <b>%prepend%</b> → via %provider%',
     'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Números com <b>%numberbeginswith%</b> → adicionar <b>%prepend%</b> → via %provider%',
     'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Números com <b>%numberbeginswith%</b> → remover <b>%trim%</b> → via %provider%',
-    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Somente <b>%númerocomeçacom%</b> → remover <b>%remover%</b>, adicionar <b>%prepend%</b> → via %provedor%',
-    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Somente <b>%númerocomeçacom%</b> → adicione <b>%prepend%</b> → via %provedor%',
-    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Somente <b>%númerocomeçacom%</b> → aparar <b>%aparar%</b> → via %provedor%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Somente <b>%numberbeginswith%</b> → remover <b>%trim%</b>, adicionar <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Somente <b>%numberbeginswith%</b> → adicione <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Somente <b>%numberbeginswith%</b> → aparar <b>%trim%</b> → via %provider%',
 ];

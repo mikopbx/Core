@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => 'Todennus',
     'ari_ConnectionInfoTooltip_auth_desc' => 'Käytä perustunnistukseen tällä lomakkeella olevaa käyttäjätunnusta ja salasanaa',
     'ari_ConnectionInfoTooltip_examples_header' => 'Yhteysesimerkki',
-    'ari_ConnectionInfoTooltip_examples' => '# WebSocket todennuksella|curl -u käyttäjätunnus:salasana http://palvelin:8088/ari/kanavat',
+    'ari_ConnectionInfoTooltip_examples' => '# WebSocket todennuksella|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# REST API -pyyntö|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => 'Korvaa [sovellus] Stasis-sovelluksesi nimellä.',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'palvelimesi',
     // Other tooltips

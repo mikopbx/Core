@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => 'Autentifikasiya',
     'ari_ConnectionInfoTooltip_auth_desc' => 'Əsas Doğrulama üçün bu formadan istifadəçi adı və şifrədən istifadə edin',
     'ari_ConnectionInfoTooltip_examples_header' => 'Bağlantı nümunəsi',
-    'ari_ConnectionInfoTooltip_examples' => '# Doğrulama ilə WebSocket|curl -u istifadəçi adı:parol http://server:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# Autentifikasiya ilə WebSocket|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# REST API sorğusu|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => '[application] sözünü Stasis tətbiqinizin adı ilə əvəz edin.',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'sizin serveriniz',
     // Other tooltips

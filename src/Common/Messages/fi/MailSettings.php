@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'Järjestelmänvalvojan sähköpostiosoite',
     'ms_SystemEmailForMissed' => 'Yhtenäinen sähköposti vastaamattomien puheluiden ilmoituksille',
     'ms_VoicemailCommonEmail' => 'Yhtenäinen sähköposti vastaajaviesteille',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'Sähköpostiasetusten testaaminen',
     'ms_TestConnection' => 'Tarkista yhteys',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'Määritä työntekijöille henkilökohtaiset sähköpostiosoitteet, jotta he saavat henkilökohtaisia ilmoituksia.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Varmistathan, että tätä postilaatikkoa tarkistetaan säännöllisesti.',
     'ms_SystemEmailForMissedTooltip_note' => 'Jos tämä kenttä jätetään tyhjäksi, ilmoituksia vastaamattomista ulkoisista puheluista ei lähetetä työntekijöille, joilla ei ole henkilökohtaista sähköpostiosoitetta.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'Sähköposti vastaajaa varten',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'Yksi sähköpostiosoite kaikkien ääniviestien keskitettyyn lähettämiseen.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'Kirje sisältää tietoja soittajasta ja puhelun ajankohdasta.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'Viestin kesto näkyy sähköpostin tekstissä.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'On suositeltavaa määrittää työntekijöille henkilökohtaiset sähköpostiosoitteet henkilökohtaisten ääniviestien toimitusta varten.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'TLS-salauksen käyttäminen',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Suojatun yhteyden muodostaminen sähköpostipalvelimeen',

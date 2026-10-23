@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'E-mailadres van systeembeheerder',
     'ms_SystemEmailForMissed' => 'Geünificeerde e-mail voor meldingen van gemiste oproepen',
     'ms_VoicemailCommonEmail' => 'Unified Email voor voicemailberichten',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'E-mailinstellingen testen',
     'ms_TestConnection' => 'Controleer de verbinding',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'Stel gepersonaliseerde e-mailadressen in voor medewerkers, zodat ze gepersonaliseerde meldingen ontvangen.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Zorg ervoor dat u deze mailbox regelmatig controleert.',
     'ms_SystemEmailForMissedTooltip_note' => 'Als dit veld leeg blijft, worden er geen meldingen over gemiste externe oproepen verzonden naar medewerkers zonder persoonlijk e-mailadres.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'E-mail voor voicemail',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'Eén e-mailadres voor het centraal versturen van alle spraakberichten.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'De brief bevat informatie over de beller en het tijdstip van het gesprek.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'De berichtduur wordt weergegeven in de hoofdtekst van de e-mail.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Het is aan te raden om persoonlijke e-mailadressen voor medewerkers in te stellen, zodat u gepersonaliseerde spraakberichten kunt ontvangen.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'TLS-encryptie gebruiken',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Een beveiligde verbinding met de mailserver instellen',

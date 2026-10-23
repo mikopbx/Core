@@ -29,7 +29,7 @@ return [
     'cm_InstallOrRecover' => 'Quraşdırma və ya bərpa',
     // Password reset
     'cm_ResetAdminPassword' => 'Administrator parolunu sıfırlayın',
-    'cm_PasswordSuccessfullyReset' => 'Şifrə uğurla sıfırlandı. Yeni giriş: %login%. Yeni parol: %parol%.',
+    'cm_PasswordSuccessfullyReset' => 'Şifrə uğurla sıfırlandı. Yeni giriş: %login%. Yeni parol: %password%.',
     'cm_SystemIntegrityBroken' => 'Sistemin bütövlüyü pozulur',
     'cm_WebInterfaceUrl' => 'Veb interfeysi',
     // Common validation
@@ -56,7 +56,7 @@ return [
     'cm_SetInternetInterface' => 'İnternet interfeysini quraşdırın',
     'cm_SetupLanIpAddress' => 'LAN IP ünvanını konfiqurasiya edin',
     // Network configuration prompts
-    'cm_EnterInterfaceName' => 'İnterfeys adını daxil edin... %interfeyslər%: ',
+    'cm_EnterInterfaceName' => 'İnterfeys adını daxil edin... %interfaces%: ',
     'cm_EnterNewLanIpAddress' => 'Yeni LAN IP ünvanını daxil edin: ',
     'cm_EnterLanGatewayIp' => 'LAN şlüzünün IP ünvanını daxil edin: ',
     'cm_EnterLanDnsIp' => 'DNS LAN IP ünvanını daxil edin: ',

@@ -520,7 +520,7 @@ return [
     'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Tal med <b>%numberbeginswith%</b> → trim <b>%trim%</b>, tilføj <b>%prepend%</b> → via %provider%',
     'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Tal med <b>%numberbeginswith%</b> → læg <b>%prepend%</b> til → via %provider%',
     'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Tal med <b>%numberbeginswith%</b> → trim <b>%trim%</b> → via %provider%',
-    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Kun <b>%numberbegynder med%</b> → trim <b>%trim%</b>, tilføj <b>%prepend%</b> → via %provider%',
-    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Kun <b>%numberbegynder med%</b> → tilføj <b>%prepend%</b> → via %provider%',
-    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Kun <b>%numberbegynder med%</b> → trim <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Kun <b>%numberbeginswith%</b> → trim <b>%trim%</b>, tilføj <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Kun <b>%numberbeginswith%</b> → tilføj <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Kun <b>%numberbeginswith%</b> → trim <b>%trim%</b> → via %provider%',
 ];

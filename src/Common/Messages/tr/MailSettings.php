@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'Sistem yöneticisinin e-postası',
     'ms_SystemEmailForMissed' => 'Cevapsız Çağrı Bildirimleri için Birleşik E-posta',
     'ms_VoicemailCommonEmail' => 'Sesli mesajlar için birleşik e-posta',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'E-posta ayarlarını test etme',
     'ms_TestConnection' => 'Bağlantıyı kontrol edin',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'Çalışanların kişiselleştirilmiş bildirimler alabilmeleri için kişiselleştirilmiş e-posta adresleri oluşturun.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Lütfen bu posta kutusunu düzenli olarak kontrol ettiğinizden emin olun.',
     'ms_SystemEmailForMissedTooltip_note' => 'Bu alan boş bırakılırsa, kişisel e-posta adresi olmayan çalışanlara cevapsız dış aramalarla ilgili bildirim gönderilmeyecektir.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'Sesli mesaj için e-posta',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'Tüm sesli mesajların merkezi olarak gönderilmesi için tek bir e-posta adresi.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'Mektup, arayan kişi ve aramanın zamanı hakkında bilgi içeriyor.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'Mesajın süresi e-postanın gövdesinde görüntülenir.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Çalışanlara kişiselleştirilmiş sesli mesaj gönderimi için kişisel e-posta adresleri oluşturulması önerilir.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'TLS şifrelemesi kullanılıyor',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Posta sunucusuna güvenli bir bağlantı kurma',

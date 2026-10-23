@@ -197,7 +197,7 @@ return [
     'ex_BatchSizeExceeded' => 'La taille du lot dépasse la limite maximale de %maxSize% enregistrements. Fournie par : %providedSize%',
     'ex_BatchRecordValidationFailed' => 'Enregistrement %index% : erreur de validation',
     'ex_BatchRecordCreateFailed' => 'Erreur de création de l\'enregistrement %index%',
-    'ex_BatchRecordError' => 'Enregistrement de %index%: %erreur%',
+    'ex_BatchRecordError' => 'Enregistrement de %index%: %error%',
     'ex_BatchCreatedSuccess' => '%count% employés ont créé avec succès',
     'ex_BatchFailedWarning' => 'Échec du traitement de %count% enregistrements',
     // Import/Export CSV translations
@@ -260,7 +260,7 @@ return [
     // Import error message templates - cleaner format
     'ex_ImportErrorEmployee' => 'Ligne %line%: %name% (numéro %number%)',
     'ex_ImportErrorEmployeeWithMobile' => 'Ligne %line%: %name% (numéro %number%, mobile %mobile%)',
-    'ex_ImportErrorBasic' => 'Ligne %ligne%: nombre %nombre%',
+    'ex_ImportErrorBasic' => 'Ligne %line%: nombre %number%',
     // Specific error messages without number duplication
     'ex_MobileNumberAlreadyUsed' => 'Le numéro de téléphone portable est déjà utilisé.',
     'ex_SipManualattributesTooltip_list_force_rport' => 'force_rport',

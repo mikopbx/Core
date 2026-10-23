@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'Email quản trị viên hệ thống',
     'ms_SystemEmailForMissed' => 'Email thống nhất cho thông báo cuộc gọi nhỡ',
     'ms_VoicemailCommonEmail' => 'Email hợp nhất cho tin nhắn thoại',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'Kiểm tra cài đặt thư',
     'ms_TestConnection' => 'Kiểm tra kết nối',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'Thiết lập địa chỉ email cá nhân cho nhân viên để họ nhận được thông báo riêng.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Vui lòng kiểm tra hộp thư này thường xuyên.',
     'ms_SystemEmailForMissedTooltip_note' => 'Nếu để trống mục này, thông báo về các cuộc gọi nhỡ từ bên ngoài sẽ không được gửi đến những nhân viên không có địa chỉ email cá nhân.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'Email cho hộp thư thoại',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'Một địa chỉ email duy nhất để tập trung gửi tất cả tin nhắn thoại.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'Bức thư chứa thông tin về người gọi và thời gian gọi.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'Thời lượng tin nhắn được hiển thị trong nội dung email.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Nên thiết lập địa chỉ email cá nhân cho nhân viên để gửi tin nhắn thoại cá nhân hóa.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'Sử dụng mã hóa TLS',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Thiết lập kết nối an toàn với máy chủ thư điện tử',

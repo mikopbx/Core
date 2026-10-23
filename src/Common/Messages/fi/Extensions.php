@@ -222,7 +222,7 @@ return [
     'ex_BulkUploadProcessing' => 'Käsitellään merkkijonoa %current% taulukosta %total%',
     'ex_BulkUploadComplete' => 'Luotu: %created%, Ohitettu: %skipped%, Virheet: %errors%',
     'ex_BulkUploadUserCreated' => 'Luotu käyttäjä: %fio% (numero %extension%)',
-    'ex_BulkUploadUserSkipped' => 'Puuttuva kaksoiskappale: %fio% (numero %laajennus%)',
+    'ex_BulkUploadUserSkipped' => 'Puuttuva kaksoiskappale: %fio% (numero %extension%)',
     'ex_BulkUploadFileEmpty' => 'CSV-tiedosto on tyhjä tai vioittunut.',
     'ex_BulkUploadFileTooBig' => 'Tiedosto liian suuri. Enimmäismäärä tietueita %max%.',
     'ex_BulkUploadMissingHeaders' => 'Puuttuvat pakolliset otsikot: %headers%',

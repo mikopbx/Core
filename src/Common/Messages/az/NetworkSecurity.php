@@ -183,10 +183,10 @@ return [
 
     // Backend Validation Messages
     'fw_ValidationInvalidIPFormat' => 'Yanlış IP ünvan formatı: %network%',
-    'fw_ValidationIPv4SubnetRange' => 'IPv4 şəbəkə prefiksi 0 ilə 32 arasında olmalıdır, qəbul edildi: %alt şəbəkə%',
+    'fw_ValidationIPv4SubnetRange' => 'IPv4 şəbəkə prefiksi 0 ilə 32 arasında olmalıdır, qəbul edildi: %subnet%',
     'fw_ValidationIPv4InvalidOctetCount' => 'Yanlış IPv4 ünvan formatı: %network% (4 oktet olmalıdır)',
-    'fw_ValidationIPv4InvalidOctet' => 'Yanlış IPv4 okteti #%index%: %oktet% (0 ilə 255 arasında olmalıdır)',
-    'fw_ValidationIPv6PrefixRange' => 'IPv6 prefiksinin uzunluğu 0 ilə 128 arasında olmalıdır, alındı: %alt şəbəkə%',
+    'fw_ValidationIPv4InvalidOctet' => 'Yanlış IPv4 okteti #%index%: %octet% (0 ilə 255 arasında olmalıdır)',
+    'fw_ValidationIPv6PrefixRange' => 'IPv6 prefiksinin uzunluğu 0 ilə 128 arasında olmalıdır, alındı: %subnet%',
     'fw_ValidationIPv6ZoneIdNotAllowed' => 'IPv6 Zona ID-lərinə (məsələn, %%eth0) firewall qaydalarında icazə verilmir: %network%',
     'fw_ValidationIPv6InvalidFormat' => 'Yanlış IPv6 ünvan formatı: %network%',
     'fw_ValidationInvalidCIDRFormat' => 'Yanlış CIDR notasiya formatı: %cidr%',

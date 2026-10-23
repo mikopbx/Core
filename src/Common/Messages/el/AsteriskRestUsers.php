@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => 'Ταυτοποίηση',
     'ari_ConnectionInfoTooltip_auth_desc' => 'Χρησιμοποιήστε το όνομα χρήστη και τον κωδικό πρόσβασης από αυτήν τη φόρμα για τον βασικό έλεγχο ταυτότητας',
     'ari_ConnectionInfoTooltip_examples_header' => 'Παράδειγμα σύνδεσης',
-    'ari_ConnectionInfoTooltip_examples' => '# WebSocket με έλεγχο ταυτότητας|curl -u όνομα χρήστη: κωδικός πρόσβασης http://server:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# WebSocket με έλεγχο ταυτότητας|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# Αίτημα REST API|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => 'Αντικαταστήστε το [application] με το όνομα της εφαρμογής Stasis.',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'ο-διακομιστής-σας',
     // Other tooltips

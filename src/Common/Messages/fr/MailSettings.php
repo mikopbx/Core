@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'Courriel de l\'administrateur système',
     'ms_SystemEmailForMissed' => 'Courriel unifié pour les notifications d\'appels manqués',
     'ms_VoicemailCommonEmail' => 'Courriel unifié pour les messages vocaux',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'Paramètres de messagerie de test',
     'ms_TestConnection' => 'Vérifiez la connexion',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'Configurez des adresses e-mail personnalisées pour que les employés reçoivent des notifications personnalisées.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Veuillez vous assurer que cette boîte aux lettres est vérifiée régulièrement.',
     'ms_SystemEmailForMissedTooltip_note' => 'Si ce champ est laissé vide, les notifications concernant les appels externes manqués ne seront pas envoyées aux employés ne disposant pas d\'une adresse électronique personnelle.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'Courriel pour la messagerie vocale',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'Une seule adresse e-mail pour l\'envoi centralisé de tous les messages vocaux.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'La lettre contient des informations sur l\'appelant et l\'heure de l\'appel.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'La durée du message est affichée dans le corps du courriel.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Il est recommandé de configurer des adresses électroniques personnelles pour les employés afin de permettre la diffusion de messages vocaux personnalisés.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'Utilisation du chiffrement TLS',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Établir une connexion sécurisée au serveur de messagerie',

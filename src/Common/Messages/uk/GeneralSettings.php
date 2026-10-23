@@ -98,7 +98,7 @@ return [
     'gs_Password' => 'Пароль адміністратора',
     'gs_PasswordDescription' => 'Пароль для адміністративного доступу до веб-інтерфейсу. Використовуйте міцний пароль.',
     'gs_PasswordNotEmpty' => 'Пароль не може бути порожнім',
-    'gs_PasswordTooShort' => 'Пароль повинен бути не менше 5 символів',
+    'gs_PasswordTooShort' => 'Пароль повинен бути не менше %min% символів',
     'gs_PasswordsMustMatch' => 'Паролі повинні збігатися',
     'gs_PasswordRepeat' => 'Підтвердити пароль',
     'gs_PasswordRepeatDescription' => 'Введіть той же пароль знову для підтвердження.',

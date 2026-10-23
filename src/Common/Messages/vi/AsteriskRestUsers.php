@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => 'Xác thực',
     'ari_ConnectionInfoTooltip_auth_desc' => 'Sử dụng tên người dùng và mật khẩu từ biểu mẫu này để xác thực cơ bản.',
     'ari_ConnectionInfoTooltip_examples_header' => 'Ví dụ về kết nối',
-    'ari_ConnectionInfoTooltip_examples' => 'curl -u username:password http://server:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# WebSocket có xác thực|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# Yêu cầu REST API|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => 'Thay thế [application] bằng tên ứng dụng Stasis của bạn.',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'máy chủ của bạn',
     // Other tooltips

@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => 'Autentizace',
     'ari_ConnectionInfoTooltip_auth_desc' => 'Pro základní ověření použijte uživatelské jméno a heslo z tohoto formuláře.',
     'ari_ConnectionInfoTooltip_examples_header' => 'Příklad připojení',
-    'ari_ConnectionInfoTooltip_examples' => '# WebSocket s ověřováním||curl -u uživatelské_jméno:heslo http://server:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# WebSocket s ověřením|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# Požadavek REST API|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => 'Nahraďte [aplikace] názvem vaší aplikace Stasis.',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'váš-server',
     // Other tooltips

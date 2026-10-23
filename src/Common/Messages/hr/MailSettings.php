@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'E-pošta administratora sustava',
     'ms_SystemEmailForMissed' => 'Ujedinjena e-pošta za obavijesti o propuštenim pozivima',
     'ms_VoicemailCommonEmail' => 'Ujedinjena e-pošta za poruke govorne pošte',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'Testiranje postavki pošte',
     'ms_TestConnection' => 'Provjerite vezu',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'Postavite personalizirane adrese e-pošte za zaposlenike kako biste primali personalizirane obavijesti.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Molimo Vas da redovito provjeravate ovaj poštanski sandučić.',
     'ms_SystemEmailForMissedTooltip_note' => 'Ako se ovo polje ostavi prazno, obavijesti o propuštenim vanjskim pozivima neće se slati zaposlenicima bez osobne adrese e-pošte.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'E-pošta za govornu poštu',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'Jedna adresa e-pošte za centralizirano slanje svih glasovnih poruka.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'Pismo sadrži podatke o pozivatelju i vremenu poziva.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'Trajanje poruke prikazuje se u tijelu e-pošte.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Preporučuje se postavljanje osobnih e-mail adresa za zaposlenike za personaliziranu dostavu glasovnih poruka.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'Korištenje TLS enkripcije',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Postavljanje sigurne veze s poslužiteljem pošte',

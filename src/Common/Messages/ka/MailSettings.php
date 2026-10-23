@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'სისტემის ადმინისტრატორის ელ. ფოსტა',
     'ms_SystemEmailForMissed' => 'გამოტოვებული ზარების შეტყობინებების გაერთიანებული ელ.ფოსტა',
     'ms_VoicemailCommonEmail' => 'ხმოვანი ფოსტის შეტყობინებებისთვის გაერთიანებული ელ.ფოსტა',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'ფოსტის პარამეტრების ტესტირება',
     'ms_TestConnection' => 'შეამოწმეთ კავშირი',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'პერსონალიზებული შეტყობინებების მისაღებად თანამშრომლებისთვის პერსონალიზებული ელექტრონული ფოსტის მისამართების დაყენება.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'გთხოვთ, დარწმუნდეთ, რომ ეს საფოსტო ყუთი რეგულარულად მოწმდება.',
     'ms_SystemEmailForMissedTooltip_note' => 'თუ ეს ველი ცარიელი დარჩება, გამოტოვებული გარე ზარების შესახებ შეტყობინებები პირადი ელექტრონული ფოსტის მისამართის არმქონე თანამშრომლებს არ გაეგზავნებათ.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'ელ.ფოსტა ხმოვანი ფოსტისთვის',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'ერთი ელექტრონული ფოსტის მისამართი ყველა ხმოვანი შეტყობინების ცენტრალიზებული გაგზავნისთვის.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'წერილში მითითებულია ინფორმაცია აბონენტის და ზარის დროის შესახებ.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'შეტყობინების ხანგრძლივობა ნაჩვენებია ელფოსტის ტექსტში.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'პერსონალიზებული ხმოვანი შეტყობინებების მიწოდებისთვის რეკომენდებულია თანამშრომლებისთვის პირადი ელექტრონული ფოსტის მისამართების დაყენება.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'TLS დაშიფვრის გამოყენება',
     'ms_MailSMTPUseTLSTooltip_desc' => 'ფოსტის სერვერთან უსაფრთხო კავშირის დაყენება',

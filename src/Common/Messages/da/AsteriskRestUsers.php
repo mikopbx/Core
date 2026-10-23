@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => 'Godkendelse',
     'ari_ConnectionInfoTooltip_auth_desc' => 'Brug brugernavnet og adgangskoden fra denne formular til grundlæggende godkendelse',
     'ari_ConnectionInfoTooltip_examples_header' => 'Eksempel på forbindelse',
-    'ari_ConnectionInfoTooltip_examples' => '# WebSocket med godkendelse|curl -u brugernavn:adgangskode http://server:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# WebSocket med godkendelse|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# REST API-forespørgsel|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => 'Erstat [ansøgning] med navnet på din Stasis-ansøgning.',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'din-server',
     // Other tooltips

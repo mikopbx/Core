@@ -2378,7 +2378,7 @@ return [
     'rest_ext_Patch' => 'Частково оновити додатковий',
     'rest_ak_GetRecord' => 'Отримати API ключ за ID',
     'rest_syslog_DownloadArchive' => 'Завантажити архів логів',
-    'rest_S3LocalRetentionMustBeLess' => 'Період локального зберігання (% local % днів) повинен бути меншим від загального терміну зберігання (% total % днів)',
+    'rest_S3LocalRetentionMustBeLess' => 'Період локального зберігання (%local% днів) повинен бути меншим від загального терміну зберігання (%total% днів)',
     'rest_err_s3_connection_failed' => 'Не вдалося підключитися до S3. Перевірте облікові дані та налаштування в деталях діагностики.',
     'rest_err_s3_required_fields' => 'Коли S3 увімкнено, такі поля є обов\'язковими: %fields%',
     'rest_err_s3_bucket_consecutive_dots' => 'Ім\'я bucket S3 не повинно містити послідовні крапки (..)',

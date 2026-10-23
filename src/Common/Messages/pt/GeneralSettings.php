@@ -613,7 +613,7 @@ return [
     'cert_InvalidCertificateFormat' => 'Formato de certificado inválido: %error%',
     'cert_FailedToParseCertificate' => 'Falha ao analisar o certificado',
     'cert_CertificateExpired' => 'O certificado expirou em %date%.',
-    'cert_CertificateExpiresSoon' => 'O certificado expira em % dias% dias',
+    'cert_CertificateExpiresSoon' => 'O certificado expira em %days% dias',
     'cert_CertificateNotYetValid' => 'O certificado só será válido a partir de %date%.',
     'cert_PrivateKeyIsEmpty' => 'A chave privada está vazia.',
     'cert_InvalidPrivateKeyFormat' => 'Formato de chave privada inválido: %error%',

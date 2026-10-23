@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'Email системного адміністратора',
     'ms_SystemEmailForMissed' => 'Єдиний Email для повідомлень про пропущені дзвінки',
     'ms_VoicemailCommonEmail' => 'Єдиний Email для повідомлень голосової пошти',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'Тестування налаштувань пошти',
     'ms_TestConnection' => 'Перевірити підключення',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'Налаштуйте особисті email співробітників для персоналізованих повідомлень',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Забезпечте регулярну перевірку цієї поштової скриньки',
     'ms_SystemEmailForMissedTooltip_note' => 'Якщо поле залишено порожнім, повідомлення про пропущені зовнішні дзвінки не надсилатимуться співробітникам без особистого email',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'Email для голосової пошти',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'Єдина адреса електронної пошти для централізованого надсилання всіх голосових повідомлень.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'У листі вказується інформація про дзвінок і час дзвінка',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'Тривалість повідомлення відображається у тексті листа',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Рекомендується налаштувати особисті email співробітників для персоналізованої доставки голосових повідомлень',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'Використання TLS шифрування',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Налаштування захищеного з\'єднання з поштовим сервером',

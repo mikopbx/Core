@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'E-mail správce systému',
     'ms_SystemEmailForMissed' => 'Sjednocený e-mail pro oznámení o zmeškaných hovorech',
     'ms_VoicemailCommonEmail' => 'Sjednocený e-mail pro hlasové zprávy',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'Testování nastavení pošty',
     'ms_TestConnection' => 'Zkontrolujte připojení',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'Nastavte si personalizované e-mailové adresy pro zaměstnance, aby dostávali personalizovaná oznámení.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Prosím, ujistěte se, že tuto poštovní schránku pravidelně kontrolujete.',
     'ms_SystemEmailForMissedTooltip_note' => 'Pokud toto pole ponecháte prázdné, nebudou zaměstnancům bez osobní e-mailové adresy zasílána oznámení o zmeškaných externích hovorech.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'E-mail pro hlasovou schránku',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'Jedna e-mailová adresa pro centralizované odesílání všech hlasových zpráv.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'Dopis obsahuje informace o volajícím a čase hovoru.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'Délka trvání zprávy se zobrazí v těle e-mailu.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Doporučuje se nastavit zaměstnancům osobní e-mailové adresy pro doručování personalizovaných hlasových zpráv.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'Používání šifrování TLS',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Nastavení zabezpečeného připojení k poštovnímu serveru',

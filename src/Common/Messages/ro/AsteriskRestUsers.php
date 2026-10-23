@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => 'Autentificare',
     'ari_ConnectionInfoTooltip_auth_desc' => 'Folosește numele de utilizator și parola din acest formular pentru autentificarea de bază',
     'ari_ConnectionInfoTooltip_examples_header' => 'Exemplu de conexiune',
-    'ari_ConnectionInfoTooltip_examples' => '# WebSocket cu autentificare||curl -u nume utilizator:parolă http://server:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# WebSocket cu autentificare|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# Cerere REST API|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => 'Înlocuiți [aplicație] cu numele aplicației dvs. Stasis.',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'serverul-tau',
     // Other tooltips

@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => 'Kimlik Doğrulama',
     'ari_ConnectionInfoTooltip_auth_desc' => 'Temel Kimlik Doğrulama için bu formdaki kullanıcı adı ve şifreyi kullanın.',
     'ari_ConnectionInfoTooltip_examples_header' => 'Bağlantı örneği',
-    'ari_ConnectionInfoTooltip_examples' => '# Kimlik doğrulamalı WebSocket|curl -u username:password http://server:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# Kimlik doğrulamalı WebSocket|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# REST API isteği|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => '[Uygulama] kısmını Stasis uygulamanızın adıyla değiştirin.',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'sunucunuz',
     // Other tooltips

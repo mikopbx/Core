@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'システム管理者のメール',
     'ms_SystemEmailForMissed' => '不在着信通知用の統合メール',
     'ms_VoicemailCommonEmail' => 'ボイスメールメッセージ用の統合メール',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'メール設定のテスト',
     'ms_TestConnection' => '接続を確認してください',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => '従業員が個別の通知を受信できるように、個別の電子メール アドレスを設定します。',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'このメールボックスを定期的にチェックするようにしてください。',
     'ms_SystemEmailForMissedTooltip_note' => 'このフィールドを空白のままにすると、不在着信した外部通話に関する通知は、個人の電子メール アドレスを持たない従業員に送信されません。',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'ボイスメール用のメールアドレス',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'すべての音声メッセージを集中的に送信するための単一の電子メール アドレス。',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => '手紙には発信者と通話時間に関する情報が記載されています。',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'メッセージの継続時間はメール本文に表示されます。',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'パーソナライズされた音声メッセージを配信するために、従業員に個人の電子メール アドレスを設定することをお勧めします。',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'TLS暗号化の使用',
     'ms_MailSMTPUseTLSTooltip_desc' => 'メールサーバーへの安全な接続の設定',

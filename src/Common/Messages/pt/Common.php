@@ -802,7 +802,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     // Units of measurement
     'ms_MB' => 'MB',
     'st_tooltip_s3_secret_key_desc' => 'Chave privada para autenticação de API',
-    'adv_SecurityLogCriticalGrowth' => 'O log de segurança do Asterisk cresceu criticamente: %growth% MB em %interval% minutos. O sistema está sob ataque! <a href=\'%url%\'>Verificar log</a>',
+    'adv_SecurityLogCriticalGrowth' => 'O log de segurança do Asterisk cresceu criticamente: %growth% MB em %interval% minutos. Tamanho total: %totalSize% MB. O sistema está sob ataque! <a href=\'%url%\'>Verificar log</a>',
     'am_EventFilterTooltip_examples_header' => 'Exemplos',
     'am_EventFilterTooltip_common_params' => 'Eventos frequentemente utilizados',
     'am_EventFilterTooltip_list_allow' => 'Evento: NomeDoEvento',
@@ -926,7 +926,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'mo_S3BucketRequired' => 'O nome do bucket S3 é obrigatório se o armazenamento S3 estiver ativado.',
     'mo_S3AccessKeyRequired' => 'É necessária uma chave de acesso ao S3 quando o armazenamento S3 está ativado.',
     'mo_S3SecretKeyRequired' => 'A chave secreta do S3 é necessária quando o armazenamento S3 está ativado.',
-    'adv_SecurityLogSuspiciousGrowth' => 'O registro de segurança do Asterisk cresceu de forma suspeita: %growth% MB em %interval% minutos. Recomenda-se revisar suas configurações de segurança.',
+    'adv_SecurityLogSuspiciousGrowth' => 'O registro de segurança do Asterisk cresceu de forma suspeita: %growth% MB em %interval% minutos. Tamanho total: %totalSize% MB. Recomenda-se revisar suas configurações de segurança.',
     'adv_AsteriskLogCriticalGrowth' => 'Crescimento crítico do log do Asterisk (%logFile%): %growth% MB em %interval% minutos. Tamanho total: %totalSize% MB. Possível erro de configuração ou ataque.',
     'adv_AsteriskLogSuspiciousGrowth' => 'Crescimento suspeito do log do Asterisk (%logFile%): %growth% MB em %interval% minutos. Tamanho total: %totalSize% MB.',
     'am_EventFilterTooltip_list_deny_desc' => 'excluir evento (lista negra)',

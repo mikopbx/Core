@@ -98,7 +98,7 @@ return [
     'gs_Password' => 'Administratörslösenord',
     'gs_PasswordDescription' => 'Lösenord för administratörsåtkomst till webbgränssnittet. Använd ett starkt lösenord.',
     'gs_PasswordNotEmpty' => 'Lösenordet får inte vara tomt',
-    'gs_PasswordTooShort' => 'Lösenordet måste vara minst 5 tecken långt',
+    'gs_PasswordTooShort' => 'Lösenordet måste vara minst %min% tecken långt',
     'gs_PasswordsMustMatch' => 'Lösenorden måste matcha',
     'gs_PasswordRepeat' => 'Bekräfta lösenord',
     'gs_PasswordRepeatDescription' => 'Ange samma lösenord igen för bekräftelse.',

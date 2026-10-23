@@ -2232,7 +2232,7 @@ return [
     'rest_schema_owt_actionDisplay' => 'Dargestellte Abbildung der Aktion',
     'rest_schema_provider_cid_parser_start' => 'Startzeichen für die Anrufer-ID-Extraktion',
     'rest_schema_provider_port' => 'Verbindungsport zum Anbieter',
-    'rest_S3LocalRetentionMustBeLess' => 'Die lokale Aufbewahrungsfrist (%lokal% Tage) muss kürzer sein als die gesamte Aufbewahrungsfrist (%gesamt% Tage).',
+    'rest_S3LocalRetentionMustBeLess' => 'Die lokale Aufbewahrungsfrist (%local% Tage) muss kürzer sein als die gesamte Aufbewahrungsfrist (%total% Tage).',
     'rest_err_s3_connection_failed' => 'S3-Verbindung fehlgeschlagen. Überprüfen Sie Anmeldedaten und Einstellungen in den Diagnosedetails.',
     'rest_err_s3_required_fields' => 'Bei aktiviertem S3 sind folgende Felder erforderlich: %fields%',
     'rest_err_s3_bucket_consecutive_dots' => 'Der S3-Bucket-Name darf keine aufeinanderfolgenden Punkte (..) enthalten',

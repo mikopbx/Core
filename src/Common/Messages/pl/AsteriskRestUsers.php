@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => 'Uwierzytelnianie',
     'ari_ConnectionInfoTooltip_auth_desc' => 'Użyj nazwy użytkownika i hasła z tego formularza do uwierzytelniania podstawowego',
     'ari_ConnectionInfoTooltip_examples_header' => 'Przykład połączenia',
-    'ari_ConnectionInfoTooltip_examples' => '# WebSocket z uwierzytelnianiem||curl -u nazwa użytkownika:hasło http://serwer:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# WebSocket z uwierzytelnianiem|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# Żądanie REST API|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => 'Zastąp [aplikacja] nazwą swojej aplikacji Stasis.',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'twój-serwer',
     // Other tooltips

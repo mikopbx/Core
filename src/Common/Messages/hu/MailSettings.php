@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'Rendszergazda e-mail címe',
     'ms_SystemEmailForMissed' => 'Egységes e-mail a nem fogadott hívások értesítéseihez',
     'ms_VoicemailCommonEmail' => 'Egységes e-mail a hangpostaüzenetekhez',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'Levelezési beállítások tesztelése',
     'ms_TestConnection' => 'Ellenőrizze a csatlakozást',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'Állítson be személyre szabott e-mail címeket az alkalmazottaknak, hogy személyre szabott értesítéseket kapjanak.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Kérjük, gondoskodjon róla, hogy ezt a postafiókot rendszeresen ellenőrizzék.',
     'ms_SystemEmailForMissedTooltip_note' => 'Ha ezt a mezőt üresen hagyja, a nem fogadott külső hívásokról szóló értesítések nem kerülnek kiküldésre a személyes e-mail címmel nem rendelkező alkalmazottaknak.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'E-mail a hangpostához',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'Egyetlen e-mail cím az összes hangüzenet központi küldéséhez.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'A levél tartalmazza a hívó fél adatait és a hívás időpontját.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'Az üzenet időtartama az e-mail törzsében jelenik meg.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Ajánlott személyes e-mail címeket beállítani az alkalmazottak számára a személyre szabott hangüzenetek kézbesítéséhez.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'TLS titkosítás használata',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Biztonságos kapcsolat beállítása a levelezőszerverrel',

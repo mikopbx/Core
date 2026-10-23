@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'Ηλεκτρονικό ταχυδρομείο διαχειριστή συστήματος',
     'ms_SystemEmailForMissed' => 'Ενοποιημένο email για ειδοποιήσεις αναπάντητων κλήσεων',
     'ms_VoicemailCommonEmail' => 'Ενοποιημένο ηλεκτρονικό ταχυδρομείο για μηνύματα φωνητικού ταχυδρομείου',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'Δοκιμή ρυθμίσεων αλληλογραφίας',
     'ms_TestConnection' => 'Ελέγξτε τη σύνδεση',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'Ρυθμίστε εξατομικευμένες διευθύνσεις email για να λαμβάνουν οι εργαζόμενοι εξατομικευμένες ειδοποιήσεις.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Βεβαιωθείτε ότι αυτό το γραμματοκιβώτιο ελέγχεται τακτικά.',
     'ms_SystemEmailForMissedTooltip_note' => 'Εάν αυτό το πεδίο παραμείνει κενό, οι ειδοποιήσεις σχετικά με αναπάντητες εξωτερικές κλήσεις δεν θα αποστέλλονται σε υπαλλήλους χωρίς προσωπική διεύθυνση email.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'Ηλεκτρονικό ταχυδρομείο για φωνητικά μηνύματα',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'Μία ενιαία διεύθυνση email για κεντρική αποστολή όλων των φωνητικών μηνυμάτων.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'Η επιστολή περιέχει πληροφορίες σχετικά με τον καλούντα και την ώρα της κλήσης.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'Η διάρκεια του μηνύματος εμφανίζεται στο σώμα του email.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Συνιστάται η δημιουργία προσωπικών διευθύνσεων ηλεκτρονικού ταχυδρομείου για τους υπαλλήλους για την εξατομικευμένη παράδοση φωνητικών μηνυμάτων.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'Χρήση κρυπτογράφησης TLS',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Ρύθμιση ασφαλούς σύνδεσης με τον διακομιστή αλληλογραφίας',

@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => '身份验证',
     'ari_ConnectionInfoTooltip_auth_desc' => '请使用此表单中的用户名和密码进行基本身份验证。',
     'ari_ConnectionInfoTooltip_examples_header' => '连接示例',
-    'ari_ConnectionInfoTooltip_examples' => 'curl -u 用户名:密码 http://server:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# 带身份验证的 WebSocket|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# REST API 请求|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => '将 [application] 替换为您的 Stasis 应用程序的名称。',
     'ari_ConnectionInfoTooltip_server_placeholder' => '你的服务器',
     // Other tooltips

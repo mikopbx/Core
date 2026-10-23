@@ -605,7 +605,7 @@ return [
     'gs_SystemManagedPrivateKey' => 'Sistemin gizli açarı (sertifikatla birlikdə avtomatik olaraq yaradılır)',
     'cert_FailedToParseCertificate' => 'Sertifikatı təhlil etmək alınmadı',
     'cert_CertificateExpired' => 'Sertifikatın müddəti %date% tarixində bitib',
-    'cert_CertificateExpiresSoon' => 'Sertifikatın müddəti %gün%gün ərzində bitir',
+    'cert_CertificateExpiresSoon' => 'Sertifikatın müddəti %days%gün ərzində bitir',
     'cert_CertificateNotYetValid' => 'Sertifikat hələ %date% tarixinə qədər etibarlı deyil',
     'cert_InvalidPrivateKeyFormat' => 'Yanlış gizli açar formatı: %error%',
     'cert_FailedToGetPrivateKeyDetails' => 'Şəxsi açar məlumatlarını əldə etmək alınmadı',

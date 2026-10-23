@@ -1203,7 +1203,7 @@ return [
     'rest_schema_banned_ip_jail' => 'Bu IP adresini engelleyen Fail2ban adlı hapishanenin adı.',
     'rest_schema_ts_ntp_server' => 'Zaman senkronizasyonu için NTP sunucu adresi',
     'rest_file_Delete' => 'Dosyayı sil',
-    'rest_S3LocalRetentionMustBeLess' => 'Yerel saklama süresi (%yerel% gün), toplam saklama süresinden (%toplam% gün) daha kısa olmalıdır.',
+    'rest_S3LocalRetentionMustBeLess' => 'Yerel saklama süresi (%local% gün), toplam saklama süresinden (%total% gün) daha kısa olmalıdır.',
     'rest_err_s3_connection_failed' => 'S3 bağlantısı başarısız oldu. Kimlik bilgilerini ve ayarları tanı ayrıntılarında kontrol edin.',
     'rest_err_s3_required_fields' => 'S3 etkinleştirildiğinde şu alanlar zorunludur: %fields%',
     'rest_err_s3_bucket_consecutive_dots' => 'S3 bucket adı ardışık nokta (..) içermemelidir',

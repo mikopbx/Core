@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => 'Autenticazione',
     'ari_ConnectionInfoTooltip_auth_desc' => 'Utilizzare il nome utente e la password da questo modulo per l\'autenticazione di base',
     'ari_ConnectionInfoTooltip_examples_header' => 'Esempio di connessione',
-    'ari_ConnectionInfoTooltip_examples' => '# WebSocket con autenticazione||curl -u nome utente:password http://server:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# WebSocket con autenticazione|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# Richiesta REST API|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => 'Sostituisci [applicazione] con il nome della tua applicazione Stasis.',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'il tuo server',
     // Other tooltips

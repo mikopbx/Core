@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => '認証',
     'ari_ConnectionInfoTooltip_auth_desc' => 'このフォームのユーザー名とパスワードを基本認証に使用してください',
     'ari_ConnectionInfoTooltip_examples_header' => '接続例',
-    'ari_ConnectionInfoTooltip_examples' => 'curl -u ユーザー名:パスワード http://server:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# 認証付き WebSocket|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# REST API リクエスト|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => '[application] を Stasis アプリケーションの名前に置き換えます。',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'あなたのサーバー',
     // Other tooltips

@@ -217,7 +217,7 @@ return [
     'ex_BulkUploadInvalidMobile' => 'รูปแบบมือถือไม่ถูกต้อง: %mobile%',
     'ex_BulkUploadProcessing' => 'กำลังประมวลผลสตริง %current% จาก %total%',
     'ex_BulkUploadComplete' => 'สร้างแล้ว: %created%, ข้าม: %skipped%, ข้อผิดพลาด: %errors%',
-    'ex_BulkUploadUserCreated' => 'ผู้ใช้ที่สร้าง: %fio% (หมายเลข %นามสกุล%)',
+    'ex_BulkUploadUserCreated' => 'ผู้ใช้ที่สร้าง: %fio% (หมายเลข %extension%)',
     'ex_BulkUploadUserSkipped' => 'ไม่พบข้อมูลซ้ำ: %fio% (หมายเลข %extension%)',
     'ex_BulkUploadFileEmpty' => 'ไฟล์ CSV ว่างเปล่าหรือเสียหาย',
     'ex_BulkUploadFileTooBig' => 'ไฟล์มีขนาดใหญ่เกินไป จำกัดจำนวนระเบียนสูงสุด %max%',

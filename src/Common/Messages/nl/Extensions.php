@@ -252,7 +252,7 @@ return [
     'ex_BatchEmployeesArrayRequired' => 'U moet de werknemersarray invullen.',
     'ex_BatchInvalidMode' => 'Ongeldige modus. Geldige waarden zijn valideren of aanmaken.',
     'ex_BatchSizeExceeded' => 'De batchgrootte overschrijdt het maximum aantal records van %maxSize%. Aangeboden door: %providedSize%',
-    'ex_BatchRecordError' => 'Opname %index%: %err%',
+    'ex_BatchRecordError' => 'Opname %index%: %error%',
     'ex_BatchCreatedSuccess' => '%count% medewerkers succesvol aangemaakt',
     'ex_BatchFailedWarning' => 'Verwerken van %count% records is mislukt',
     // Import/Export CSV translations

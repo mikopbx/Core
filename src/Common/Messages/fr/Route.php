@@ -513,7 +513,7 @@ return [
     'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Nombres commençant par <b>%numberbeginswith%</b> → suppression des espaces <b>%trim%</b>, ajout de préfixe <b>%prepend%</b> → via %provider%',
     'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Les nombres commençant par <b>%numberbeginswith%</b> → ajouter <b>%prepend%</b> → via %provider%',
     'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Nombres commençant par <b>%numberbeginswith%</b> → suppression des espaces <b>%trim%</b> → via %provider%',
-    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Seuls les nombres commençant par <b>%numberbeginswith%</b> → supprimer <b>%trimer%</b>, ajouter <b>%préfixer%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Seuls les nombres commençant par <b>%numberbeginswith%</b> → supprimer <b>%trim%</b>, ajouter <b>%prepend%</b> → via %provider%',
     'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Seuls <b>%numberbeginswith%</b> → ajouter <b>%prepend%</b> → via %provider%',
-    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Seuls <b>%numberbeginswith%</b> → supprimer <b>%trimer%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Seuls <b>%numberbeginswith%</b> → supprimer <b>%trim%</b> → via %provider%',
 ];

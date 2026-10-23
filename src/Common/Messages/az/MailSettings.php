@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'Sistem administratorunun e-poçtu',
     'ms_SystemEmailForMissed' => 'Buraxılmış Zəng Bildirişləri üçün Vahid E-poçt',
     'ms_VoicemailCommonEmail' => 'Səsli poçt mesajları üçün vahid e-poçt',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'Poçt parametrlərini sınaqdan keçirir',
     'ms_TestConnection' => 'Bağlantını yoxlayın',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'İşçilərin fərdiləşdirilmiş bildirişlər alması üçün fərdiləşdirilmiş e-poçt ünvanları təyin edin.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Zəhmət olmasa, bu poçt qutusunun müntəzəm olaraq yoxlanıldığından əmin olun.',
     'ms_SystemEmailForMissedTooltip_note' => 'Bu sahə boş buraxılarsa, şəxsi elektron poçt ünvanı olmadan işçilərə buraxılmış xarici zənglər barədə bildirişlər göndərilməyəcək.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'Səsli poçt üçün e-poçt',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'Bütün səsli mesajların mərkəzləşdirilmiş şəkildə göndərilməsi üçün vahid elektron poçt ünvanı.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'Məktubda zəng edən şəxs və zəngin vaxtı haqqında məlumat var.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'Mesajın müddəti e-poçtun əsas hissəsində göstərilir.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Fərdiləşdirilmiş səsli mesaj çatdırılması üçün işçilər üçün şəxsi elektron poçt ünvanları təyin etmək tövsiyə olunur.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'TLS şifrələməsindən istifadə',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Poçt serverinə təhlükəsiz bir əlaqə qurulması',

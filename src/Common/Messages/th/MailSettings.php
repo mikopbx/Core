@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'อีเมลผู้ดูแลระบบ',
     'ms_SystemEmailForMissed' => 'อีเมลรวมสำหรับการแจ้งเตือนสายที่ไม่ได้รับ',
     'ms_VoicemailCommonEmail' => 'อีเมลรวมสำหรับข้อความเสียง',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'กำลังทดสอบการตั้งค่าอีเมล',
     'ms_TestConnection' => 'ตรวจสอบการเชื่อมต่อ',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'ตั้งค่าอีเมลส่วนตัวสำหรับพนักงานเพื่อให้ได้รับการแจ้งเตือนแบบเฉพาะบุคคล',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'โปรดตรวจสอบกล่องจดหมายนี้เป็นประจำ',
     'ms_SystemEmailForMissedTooltip_note' => 'หากปล่อยช่องนี้ว่างไว้ ระบบจะไม่ส่งการแจ้งเตือนเกี่ยวกับสายเรียกเข้าที่ไม่ได้รับจากภายนอกไปยังพนักงานที่ไม่มีที่อยู่อีเมลส่วนตัว',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'อีเมลสำหรับข้อความเสียง',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'อีเมลแอดเดรสเดียวสำหรับการส่งข้อความเสียงทั้งหมดจากส่วนกลาง',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'จดหมายฉบับนี้มีข้อมูลเกี่ยวกับผู้โทรและเวลาที่โทรเข้ามา',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'ระยะเวลาของข้อความจะแสดงอยู่ในเนื้อหาของอีเมล',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'แนะนำให้ตั้งค่าอีเมลส่วนตัวสำหรับพนักงานแต่ละคน เพื่อให้สามารถส่งข้อความเสียงแบบเฉพาะบุคคลได้',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'โดยใช้การเข้ารหัส TLS',
     'ms_MailSMTPUseTLSTooltip_desc' => 'การตั้งค่าการเชื่อมต่อที่ปลอดภัยไปยังเซิร์ฟเวอร์อีเมล',

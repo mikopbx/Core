@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'Adresă de e-mail a administratorului de sistem',
     'ms_SystemEmailForMissed' => 'E-mail unificat pentru notificările de apeluri pierdute',
     'ms_VoicemailCommonEmail' => 'E-mail unificat pentru mesajele vocale',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'Testarea setărilor de e-mail',
     'ms_TestConnection' => 'Verificați conexiunea',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'Configurați adrese de e-mail personalizate pentru ca angajații să primească notificări personalizate.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Vă rugăm să vă asigurați că această cutie poștală este verificată periodic.',
     'ms_SystemEmailForMissedTooltip_note' => 'Dacă acest câmp este lăsat necompletat, notificările despre apelurile externe pierdute nu vor fi trimise angajaților fără o adresă de e-mail personală.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'E-mail pentru mesageria vocală',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'O singură adresă de e-mail pentru trimiterea centralizată a tuturor mesajelor vocale.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'Scrisoarea conține informații despre apelant și ora apelului.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'Durata mesajului este afișată în corpul e-mailului.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Se recomandă configurarea unor adrese de e-mail personale pentru angajați, pentru livrarea personalizată a mesajelor vocale.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'Utilizarea criptării TLS',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Configurarea unei conexiuni securizate la serverul de mail',

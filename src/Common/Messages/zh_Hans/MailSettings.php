@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => '系统管理员邮箱',
     'ms_SystemEmailForMissed' => '统一发送电子邮件以接收未接来电通知',
     'ms_VoicemailCommonEmail' => '统一电子邮件用于语音邮件消息',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => '测试邮件设置',
     'ms_TestConnection' => '检查连接',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => '为员工设置个性化电子邮件地址，以便接收个性化通知。',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => '请确保定期查看此邮箱。',
     'ms_SystemEmailForMissedTooltip_note' => '如果此字段留空，则不会向没有个人电子邮件地址的员工发送未接来电通知。',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => '语音信箱的电子邮件',
     'ms_VoicemailNotificationsEmailTooltip_desc' => '使用同一个电子邮件地址集中发送所有语音留言。',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => '信中包含来电者的信息和来电时间。',
     'ms_VoicemailNotificationsEmailTooltip_duration' => '邮件正文中会显示邮件的持续时间。',
     'ms_VoicemailNotificationsEmailTooltip_note' => '建议为员工设置个人电子邮件地址，以便接收个性化的语音留言。',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => '使用 TLS 加密',
     'ms_MailSMTPUseTLSTooltip_desc' => '建立与邮件服务器的安全连接',

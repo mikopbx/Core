@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'Systemadministratörens e-postadress',
     'ms_SystemEmailForMissed' => 'Enhetlig e-post för aviseringar om missade samtal',
     'ms_VoicemailCommonEmail' => 'Enhetlig e-post för röstmeddelanden',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'Testa e-postinställningar',
     'ms_TestConnection' => 'Kontrollera anslutningen',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'Konfigurera personliga e-postadresser så att anställda kan ta emot personliga aviseringar.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Se till att denna brevlåda kontrolleras regelbundet.',
     'ms_SystemEmailForMissedTooltip_note' => 'Om det här fältet lämnas tomt skickas inte meddelanden om missade externa samtal till anställda utan en personlig e-postadress.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'E-post för röstbrevlåda',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'En enda e-postadress för centraliserad överföring av alla röstmeddelanden.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'Brevet innehåller information om den som ringer och tidpunkten för samtalet.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'Meddelandets längd visas i e-postmeddelandets brödtext.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Det rekommenderas att skapa personliga e-postadresser för anställda för personligt anpassad röstmeddelandeleverans.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'Använda TLS-kryptering',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Konfigurera en säker anslutning till e-postservern',

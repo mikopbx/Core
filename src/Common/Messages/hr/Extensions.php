@@ -216,8 +216,8 @@ return [
     'ex_BulkUploadInvalidMobile' => 'Nevažeći mobilni format: %mobile%',
     'ex_BulkUploadProcessing' => 'Obrada niza %current% iz %total%',
     'ex_BulkUploadComplete' => 'Kreirano: %created%, Preskočeno: %skipped%, Greške: %errors%',
-    'ex_BulkUploadUserCreated' => 'Kreirani korisnik: %fio% (broj %ekstenzije%)',
-    'ex_BulkUploadUserSkipped' => 'Nedostaje duplikat: %fio% (broj %proširenja%)',
+    'ex_BulkUploadUserCreated' => 'Kreirani korisnik: %fio% (broj %extension%)',
+    'ex_BulkUploadUserSkipped' => 'Nedostaje duplikat: %fio% (broj %extension%)',
     'ex_BulkUploadFileEmpty' => 'CSV datoteka je prazna ili oštećena.',
     'ex_BulkUploadFileTooBig' => 'Datoteka je prevelika. Maksimalan broj zapisa je %max% (maksimalno).',
     'ex_BulkUploadInvalidCsvFormat' => 'Nevažeći format CSV datoteke',
@@ -264,9 +264,9 @@ return [
     // Import progress translations
     'ex_Records' => 'zapisi',
     // Import error message templates - cleaner format
-    'ex_ImportErrorEmployee' => 'Redak %redak%: %ime% (broj %broj%)',
+    'ex_ImportErrorEmployee' => 'Redak %line%: %name% (broj %number%)',
     'ex_ImportErrorEmployeeWithMobile' => 'Redak %line%: %name% (broj %number%, mobitel %mobile%)',
-    'ex_ImportErrorBasic' => 'Redak %redak%: broj %broj%',
+    'ex_ImportErrorBasic' => 'Redak %line%: broj %number%',
     // Specific error messages without number duplication
     'ex_MobileNumberAlreadyUsed' => 'broj mobitela je već u upotrebi',
     'ex_SipManualattributesTooltip_list_direct_media_desc' => 'Izravan prijenos medija između uređaja (da/ne)',

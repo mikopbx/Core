@@ -86,19 +86,6 @@ return [
     'ms_MailSysadminEmail' => 'Email dell\'amministratore di sistema',
     'ms_SystemEmailForMissed' => 'Email unificata per le notifiche delle chiamate perse',
     'ms_VoicemailCommonEmail' => 'Email unificata per i messaggi di posta vocale',
-    // Templates
-    'ms_NotificationTemplatesMissed' => '',
-    'ms_NotificationTemplatesVoicemail' => '',
-    // Missed Calls
-    'ms_MissedCalls' => '',
-    'ms_MissedCallSubject' => '',
-    'ms_MissedCallBody' => '',
-    'ms_MissedCallFooter' => '',
-    // Voicemail
-    'ms_Voicemail' => '',
-    'ms_VoicemailSubject' => '',
-    'ms_VoicemailBody' => '',
-    'ms_VoicemailFooter' => '',
     // Testing
     'ms_TestMailSettings' => 'Test delle impostazioni di posta',
     'ms_TestConnection' => 'Controllare la connessione',
@@ -243,18 +230,6 @@ return [
     'ms_SystemEmailForMissedTooltip_configure_personal' => 'Imposta indirizzi email personalizzati per consentire ai dipendenti di ricevere notifiche personalizzate.',
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Si prega di controllare regolarmente questa casella di posta.',
     'ms_SystemEmailForMissedTooltip_note' => 'Se questo campo viene lasciato vuoto, le notifiche sulle chiamate esterne perse non verranno inviate ai dipendenti privi di un indirizzo e-mail personale.',
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => '',
-    'ms_MissedCallMacros_description' => '',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => '',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => '',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => '',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => '',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => '',
-    'ms_MissedCallMacros_usage_example' => '',
-    'ms_MissedCallMacros_example_text' => '',
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'E-mail per la segreteria telefonica',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'Un unico indirizzo email per l\'invio centralizzato di tutti i messaggi vocali.',
@@ -272,17 +247,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_caller_info' => 'La lettera contiene informazioni sul chiamante e l\'ora della chiamata.',
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'La durata del messaggio viene visualizzata nel corpo dell\'e-mail.',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Si consiglia di impostare indirizzi e-mail personali per i dipendenti, in modo da poter ricevere messaggi vocali personalizzati.',
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => '',
-    'ms_VoicemailMacros_description' => '',
-    'ms_VoicemailMacro_VM_NAME' => '',
-    'ms_VoicemailMacro_VM_DUR' => '',
-    'ms_VoicemailMacro_VM_MSGNUM' => '',
-    'ms_VoicemailMacro_VM_MAILBOX' => '',
-    'ms_VoicemailMacro_VM_CALLERID' => '',
-    'ms_VoicemailMacro_VM_DATE' => '',
-    'ms_VoicemailMacros_usage_example' => '',
-    'ms_VoicemailMacros_example_text' => '',
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'Utilizzo della crittografia TLS',
     'ms_MailSMTPUseTLSTooltip_desc' => 'Impostazione di una connessione sicura al server di posta',

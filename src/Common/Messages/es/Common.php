@@ -683,7 +683,7 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'bt_ToolTipDeleteCert' => 'Eliminar certificado',
     'mo_InvalidHostname' => 'Nombre de host no válido',
     'st_tooltip_s3_secret_key_header' => 'Clave de acceso secreta',
-    'adv_SecurityLogCriticalGrowth' => 'El registro de seguridad de Asterisk ha crecido de forma crítica: %growth% MB en %interval% minutos. ¡El sistema está bajo ataque! <a href=\'%url%\'> Consultar registro</a>',
+    'adv_SecurityLogCriticalGrowth' => 'El registro de seguridad de Asterisk ha crecido de forma crítica: %growth% MB en %interval% minutos. Tamaño total: %totalSize% MB. ¡El sistema está bajo ataque! <a href=\'%url%\'> Consultar registro</a>',
     'am_tooltip_command_read' => 'Visualización de los resultados de los comandos CLI',
     'am_tooltip_command_write' => 'Ejecución de comandos CLI de Asterisk',
     'bt_ToolTipShowPassword' => 'Mostrar/ocultar contraseña',
@@ -864,7 +864,7 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'sf_ArchiveCategory' => 'Archivo',
     // Units of measurement
     'ms_MB' => 'MEGABYTE',
-    'adv_SecurityLogSuspiciousGrowth' => 'El registro de seguridad de Asterisk ha aumentado sospechosamente: %growth% MB en %interval% minutos. Se recomienda revisar la configuración de seguridad.',
+    'adv_SecurityLogSuspiciousGrowth' => 'El registro de seguridad de Asterisk ha aumentado sospechosamente: %growth% MB en %interval% minutos. Tamaño total: %totalSize% MB. Se recomienda revisar la configuración de seguridad.',
     'adv_AsteriskLogCriticalGrowth' => 'Crecimiento crítico del registro de Asterisk (%logFile%): %growth% MB en %interval% minutos. Tamaño total: %totalSize% MB. Posible error de configuración o ataque.',
     'adv_AsteriskLogSuspiciousGrowth' => 'Crecimiento sospechoso del registro de Asterisk (%logFile%): %growth% MB en %interval% minutos. Tamaño total: %totalSize% MB.',
     'sf_ConvertErrorDetails' => 'No se pudo convertir el archivo. Es posible que esté dañado o en un formato no compatible.',

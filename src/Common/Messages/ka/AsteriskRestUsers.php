@@ -92,7 +92,7 @@ return [
     'ari_ConnectionInfoTooltip_auth_header' => 'ავთენტიფიკაცია',
     'ari_ConnectionInfoTooltip_auth_desc' => 'გამოიყენეთ ამ ფორმიდან მოცემული მომხმარებლის სახელი და პაროლი ძირითადი ავტორიზაციისთვის',
     'ari_ConnectionInfoTooltip_examples_header' => 'კავშირის მაგალითი',
-    'ari_ConnectionInfoTooltip_examples' => '# WebSocket ავთენტიფიკაციით|curl -u მომხმარებლის სახელი: პაროლი http://server:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_examples' => '# WebSocket ავთენტიფიკაციით|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# REST API მოთხოვნა|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => 'შეცვალეთ [application] თქვენი Stasis აპლიკაციის სახელით.',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'თქვენი სერვერი',
     // Other tooltips

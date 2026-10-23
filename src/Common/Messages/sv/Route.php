@@ -506,7 +506,7 @@ return [
     'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Tal med <b>%numberbeginswith%</b> → trimma <b>%trim%</b>, lägg till <b>%prepend%</b> → via %provider%',
     'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Tal med <b>%numberbeginswith%</b> → lägg till <b>%prepend%</b> → via %provider%',
     'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Nummer med <b>%numberbeginswith%</b> → trimma <b>%trim%</b> → via %provider%',
-    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Endast <b>%numberbörjar med%</b> → trimma <b>%trim%</b>, lägg till <b>%prepend%</b> → via %provider%',
-    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Endast <b>%numberbörjar med%</b> → lägg till <b>%prepend%</b> → via %provider%',
-    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Endast <b>%numberbörjar med%</b> → trimma <b>%trimma%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Endast <b>%numberbeginswith%</b> → trimma <b>%trim%</b>, lägg till <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Endast <b>%numberbeginswith%</b> → lägg till <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Endast <b>%numberbeginswith%</b> → trimma <b>%trim%</b> → via %provider%',
 ];

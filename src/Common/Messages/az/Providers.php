@@ -467,7 +467,7 @@ return [
     'mo_SipInboundUsernameMustBeUnique' => 'Daxil olan provayderin istifadəçi adı unikal olmalıdır: daxil olan qeydiyyatlı iki provayderin eyni istifadəçi adı ola bilməz',
     'mo_SipInboundUsernameClashesExtension' => 'Daxil olan provayderin istifadəçi adı daxili abunəçi nömrəsi ilə üst-üstə düşməməlidir: bu, Asterisk parametrlərində ziddiyyətə səbəb olur',
     'mo_SipExtensionClashesInboundUsername' => 'Daxili abunəçi nömrəsi daxil olan provayderin istifadəçi adı ilə üst-üstə düşməməlidir: bu, Asterisk parametrlərində ziddiyyətə səbəb olur',
-    'pr_StateChangedFromTo' => 'Status %əvvəlkiState%-dən %newState%-ə dəyişib',
+    'pr_StateChangedFromTo' => 'Status %previousState%-dən %newState%-ə dəyişib',
     'pr_CheckingStatus' => 'Status yoxlanılır...',
     'pr_ValidationProviderLogin' => 'Provayderinizə daxil olmaq üçün giriş məlumatlarınızı daxil edin.',
     'pr_RegisteredFrom' => 'Qeydiyyatdan keçmiş',
