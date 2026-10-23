@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "96577e638e6a476726d7b415fbda3afa",
+    "content-hash": "173da14b7f9b4c7ca86b66c531bd9a97",
     "packages": [
         {
             "name": "aego/oauth2-yandex",
@@ -1458,21 +1458,21 @@
         },
         {
             "name": "php-mime-mail-parser/php-mime-mail-parser",
-            "version": "9.0.1",
+            "version": "10.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-mime-mail-parser/php-mime-mail-parser.git",
-                "reference": "e26eb593f689a59fd3bf13983f0bf2c700419672"
+                "reference": "c5bd139a18a8643ff2ba408fdab2093b7fb7544e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-mime-mail-parser/php-mime-mail-parser/zipball/e26eb593f689a59fd3bf13983f0bf2c700419672",
-                "reference": "e26eb593f689a59fd3bf13983f0bf2c700419672",
+                "url": "https://api.github.com/repos/php-mime-mail-parser/php-mime-mail-parser/zipball/c5bd139a18a8643ff2ba408fdab2093b7fb7544e",
+                "reference": "c5bd139a18a8643ff2ba408fdab2093b7fb7544e",
                 "shasum": ""
             },
             "require": {
                 "ext-mailparse": "*",
-                "php": "^8.0"
+                "php": "^8.2"
             },
             "replace": {
                 "exorus/php-mime-mail-parser": "*",
@@ -1480,7 +1480,7 @@
             },
             "require-dev": {
                 "php-coveralls/php-coveralls": "^2.2",
-                "phpunit/phpunit": "^9.6.22",
+                "phpunit/phpunit": "^10.0",
                 "squizlabs/php_codesniffer": "^3.5"
             },
             "type": "library",
@@ -1525,7 +1525,7 @@
                     "role": "Developer"
                 }
             ],
-            "description": "A fully tested email parser for PHP 8.0+ (mailparse extension wrapper).",
+            "description": "A fully tested email parser for PHP 8.2+ (mailparse extension wrapper).",
             "homepage": "https://github.com/php-mime-mail-parser/php-mime-mail-parser",
             "keywords": [
                 "MimeMailParser",
@@ -1537,9 +1537,9 @@
             ],
             "support": {
                 "issues": "https://github.com/php-mime-mail-parser/php-mime-mail-parser/issues",
-                "source": "https://github.com/php-mime-mail-parser/php-mime-mail-parser/tree/9.0.1"
+                "source": "https://github.com/php-mime-mail-parser/php-mime-mail-parser/tree/10.0.0"
             },
-            "time": "2024-12-07T23:47:47+00:00"
+            "time": "2026-04-22T13:23:50+00:00"
         },
         {
             "name": "php-school/cli-menu",
