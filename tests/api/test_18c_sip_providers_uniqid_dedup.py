@@ -14,7 +14,7 @@ config regeneration and verifies that:
 
   1. The generated pjsip.conf contains the colliding `(provider-aor-base)`
      section only once.
-  2. system messages log contains a "Duplicate SIP provider uniqid" warning
+  2. system messages log contains a "Duplicate SIP provider pjsip section" warning
      identifying the offending m_Sip.id.
   3. The system stays usable — the surviving provider's auth section is
      still present (regression smoke).
@@ -184,7 +184,8 @@ class TestSIPProvidersUniqidDedup:
             api_client,
             'tail -n 1000 /storage/usbdisk1/mikopbx/log/system/messages 2>/dev/null || true',
         )
-        needle = f'Duplicate SIP provider uniqid "{cls.provider_a_id}"'
+        # Outbound provider: the pjsip section name is its uniqid (SIPConf::shouldSkipDuplicateSection).
+        needle = f'Duplicate SIP provider pjsip section "{cls.provider_a_id}"'
         assert needle in log, (
             f'Expected log warning {needle!r} in /storage/.../system/messages, '
             f'tail did not contain it. Log (truncated):\n{log[-2000:]}'

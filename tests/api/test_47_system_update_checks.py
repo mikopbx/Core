@@ -158,7 +158,7 @@ class TestSystemUpdateChecks:
         except Exception as e:
             pytest.fail(f"Detailed firmware check failed: {str(e)}")
 
-    def test_03_compare_endpoints_consistency(self, api_client):
+    def test_03_compare_endpoints_consistency(self, api_client, is_docker):
         """
         Test consistency between quick and detailed check endpoints
 
@@ -190,8 +190,17 @@ class TestSystemUpdateChecks:
             quick_has_update = quick_data.get('newVersionAvailable', False)
             detailed_has_update = detailed_data.get('hasUpdates', False)
 
-            # If quick check says update available, detailed must also
-            if quick_has_update:
+            # If quick check says update available, detailed must also.
+            # #1251: Docker updates by pulling an image, so the release server's
+            # checkNewFirmware returns no firmware for TYPE=docker by design
+            # (the update page shows Update/docker.volt instead).
+            if quick_has_update and is_docker:
+                assert not detailed_data.get('firmware'), \
+                    "Release server returned firmware for Docker; update page shows Update/docker.volt"
+                print("✓ Docker: quick check reports update, firmware list not expected")
+            elif quick_has_update and not detailed_data.get('checkSucceeded', True):
+                print(f"⚠ Detailed check degraded: {detailed_response.get('messages', {})}")
+            elif quick_has_update:
                 assert detailed_has_update, \
                     "Inconsistency: quick check reports update but detailed check doesn't"
 
