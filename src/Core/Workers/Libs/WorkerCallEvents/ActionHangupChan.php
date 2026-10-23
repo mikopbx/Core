@@ -56,6 +56,8 @@ class ActionHangupChan
             $channels = [];
             $transfer_calls = [];
 
+            self::closeUncreatedLocalLeg($data);
+
             // Hangup channel for end calls.
             self::hangupChanEndCalls($worker, $data, $transfer_calls, $channels);
 
@@ -75,6 +77,43 @@ class ActionHangupChan
         }
         if (isset($worker->mixMonitorChannels[$data['agi_channel']])) {
             unset($worker->mixMonitorChannels[$data['agi_channel']]);
+        }
+    }
+
+    /**
+     * Closes the dial attempt whose Local leg ended before any endpoint channel was created.
+     *
+     * Such a row (e.g. a queue member that could not be reached on a retry round) has an
+     * empty dst_chan, so no endpoint hangup ever matches it and it used to stay open until
+     * LINKEDID_END, showing a NOANSWER lasting the whole call. The Local leg's hangup carries
+     * the attempt's UNIQUEID, which pins the exact row.
+     *
+     * @param array $data The data containing call details.
+     *
+     * @return void
+     */
+    private static function closeUncreatedLocalLeg(array $data): void
+    {
+        $uniqueId = (string)($data['UNIQUEID'] ?? '');
+        if ($uniqueId === '' || stripos((string)($data['agi_channel'] ?? ''), 'local/') !== 0) {
+            return;
+        }
+        $rows = CallDetailRecordsTmp::find([
+            'linkedid=:linkedid: AND UNIQUEID=:id: AND endtime="" AND answer="" AND dst_chan="" AND transfer<>"1"',
+            'bind' => [
+                'linkedid' => $data['linkedid'],
+                'id' => $uniqueId,
+            ],
+        ]);
+        foreach ($rows as $row) {
+            if (str_starts_with((string)$row->dialstatus, 'ORIGINATE')) {
+                // Originate attempts are finalized by their own originate_end/answer events.
+                continue;
+            }
+            $row->writeAttribute('endtime', $data['end']);
+            if (!$row->update()) {
+                SystemMessages::sysLogMsg('Action_hangup_chan', implode(' ', $row->getMessages()), LOG_DEBUG);
+            }
         }
     }
 
@@ -101,6 +140,7 @@ class ActionHangupChan
         $m_data = CallDetailRecordsTmp::find($filter);
         $countRows = 0;
         $transferCdrAnswered = true;
+        $answeredLegs = [];
         foreach ($m_data as $row) {
             if ($row->dst_chan !== $data['agi_channel'] && $data['agi_channel'] !== $row->src_chan) {
                 continue;
@@ -113,7 +153,9 @@ class ActionHangupChan
             }
             if (AnsweredTransferLegPolicy::keepOpen($row, $data['agi_channel'])) {
                 // The transferer has left the bridge, but the destination keeps
-                // talking to the transferee. Its own hangup must close this row.
+                // talking to the transferee. Its own hangup must close this row,
+                // unless the transfer pair below is unambiguous.
+                $answeredLegs[] = $row->toArray();
                 continue;
             }
             if (PickupTransferLegPolicy::keepOpen($row, $data['agi_channel'], $data['verbose_call_id'] ?? '')) {
@@ -129,6 +171,17 @@ class ActionHangupChan
                 $transferCdrAnswered = min($transferCdrAnswered, empty($row->answer));
             }
         }
+        // A completed attended transfer: close the transferer's conversation and the
+        // consultation leg, and let CreateRowTransfer bill transferee<->destination.
+        $completedPair = $answeredLegs === []
+            ? null
+            : AnsweredTransferLegPolicy::completedTransferPair(
+                array_merge($transfer_calls, $answeredLegs),
+                $data['agi_channel']
+            );
+        if ($completedPair !== null) {
+            $transfer_calls = $completedPair;
+        }
         foreach ($m_data as $row) {
             if ($row->dst_chan !== $data['agi_channel'] && $data['agi_channel'] !== $row->src_chan) {
                 continue;
@@ -138,7 +191,7 @@ class ActionHangupChan
                 // This call will be ended by the voicemail_end event.
                 continue;
             }
-            if (AnsweredTransferLegPolicy::keepOpen($row, $data['agi_channel'])) {
+            if ($completedPair === null && AnsweredTransferLegPolicy::keepOpen($row, $data['agi_channel'])) {
                 $row->writeAttribute('transfer', 0);
                 if (!$row->update()) {
                     SystemMessages::sysLogMsg('Action_hangup_chan', implode(' ', $row->getMessages()), LOG_DEBUG);

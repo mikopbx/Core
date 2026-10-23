@@ -21,6 +21,7 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
 /**
@@ -51,6 +52,15 @@ class ActionTransferCheck
         /** @var CallDetailRecordsTmp $row */
         $m_data = CallDetailRecordsTmp::find($filter);
         foreach ($m_data as $row) {
+            if (InterceptionBridgeLegPolicy::endsOnTransfereeRedial($row, (string)$data['src_chan'])) {
+                // The intercepted caller is being sent on (blind transfer, queue, IVR):
+                // the operator's conversation is over. Its real channel never reports a
+                // hangup, so close the row here instead of turning it into a transfer leg.
+                $row->writeAttribute('endtime', $data['start'] ?? Util::getNowDate());
+                $row->save();
+                continue;
+            }
+
             // Attempt to stop the call recording.
             $worker->StopMixMonitor($row->dst_chan, 'ActionTransferCheck_' . $row->verbose_call_id);
             $worker->StopMixMonitor($row->src_chan, 'ActionTransferCheck_' . $row->verbose_call_id);

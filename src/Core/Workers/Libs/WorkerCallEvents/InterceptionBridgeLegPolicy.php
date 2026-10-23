@@ -34,4 +34,21 @@ final class InterceptionBridgeLegPolicy
             && $srcChan !== ''
             && $srcChan !== $hangupChannel;
     }
+
+    /**
+     * Whether the answered interception leg ends because its caller is dialled onwards.
+     *
+     * The operator who answered an interception talks on a channel without a hangup
+     * handler, so neither its hangup nor a blind transfer it makes is reported. The only
+     * trace is the caller itself entering a new transfer_dial/queue: at that moment the
+     * row kept open by keepOpen() is over.
+     */
+    public static function endsOnTransfereeRedial(object $row, string $transfereeChannel): bool
+    {
+        return $transfereeChannel !== ''
+            && (string)($row->src_chan ?? '') === $transfereeChannel
+            && (string)($row->answer ?? '') !== ''
+            && (string)($row->endtime ?? '') === ''
+            && str_contains((string)($row->dst_chan ?? ''), '@internal-originate');
+    }
 }
