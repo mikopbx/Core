@@ -75,14 +75,18 @@ class ModulesManagementProcessor extends Injectable
         $res->processor = __METHOD__;
             switch ($action) {
                 case 'startDownload':
-                    $module = $request['data']['uniqid'];
-                    $url = $request['data']['url'];
-                    $md5 = $request['data']['md5'];
-                    $res = StartDownloadAction::main($module, $url, $md5);
+                    // REST v3 carries the module in the path as id; uniqid is the legacy field (#1250).
+                    // Both actions reject a bad or empty id with 400 before touching the filesystem.
+                    $res = StartDownloadAction::main(
+                        self::stringParam($data, 'uniqid') ?: self::stringParam($data, 'id'),
+                        self::stringParam($data, 'url'),
+                        self::stringParam($data, 'md5')
+                    );
                     break;
                 case 'getDownloadStatus':
-                    $module = $request['data']['uniqid'];
-                    $res = DownloadStatusAction::main($module);
+                    $res = DownloadStatusAction::main(
+                        self::stringParam($data, 'uniqid') ?: self::stringParam($data, 'id')
+                    );
                     break;
                 case 'installFromPackage':
                     $filePath = $data['filePath'];
@@ -339,6 +343,15 @@ class ModulesManagementProcessor extends Injectable
         // LOG_WARNING, not LOG_NOTICE: the logger threshold is core.logsLevel
         // (4 by default), and anything less severe never reaches system/messages.
         SystemMessages::sysLogMsg(__CLASS__, 'Module operation started: ' . $encoded, LOG_WARNING);
+    }
+
+    /**
+     * A request field as a string; missing or non-string values (e.g. uniqid[]=x) become ''.
+     */
+    private static function stringParam(array $data, string $key): string
+    {
+        $value = $data[$key] ?? '';
+        return is_string($value) ? $value : '';
     }
 
     /**

@@ -73,19 +73,37 @@ class TestModules:
         """GET /modules/{id}:getDownloadStatus must reject a uniqid that is not a safe directory name.
 
         WHY: the uniqid is used to build the download directory path under the upload dir.
-        The id goes in a JSON body: the nginx WAF answers 403 to ".." in the query string
-        before PHP runs, but it does not scan GET bodies, and the API reads them.
+        GET bodies are ignored since #1161 and the WAF answers 403 to ".." in the query
+        string, so the reachable vector is a query uniqid that is not a plain name.
         """
         # Sent raw so that a non-2xx answer does not raise
         raw = api_client.session.get(
             f"{api_client.base_url}/modules/ModuleTemplate:getDownloadStatus",
-            json={'uniqid': '../../evil'},
+            params={'uniqid': 'evil/name'},
             headers=api_client._get_headers(),
             timeout=30
         )
         assert raw.status_code == 400, \
             f"Expected HTTP 400 for unsafe uniqid, got {raw.status_code}: {raw.text}"
         assert raw.json().get('result') is False, f"Expected result=false, got: {raw.text}"
+
+    def test_05_get_download_status_uses_path_id(self, api_client):
+        """GET /modules/{id}:getDownloadStatus must read the module from the path (#1250).
+
+        Without a download in progress the action reports NOT_FOUND; before the fix the
+        processor ignored the path id and failed with 422 "Undefined array key", and a
+        non-string uniqid (uniqid[]=x) failed with a TypeError. Such a uniqid is ignored.
+        """
+        for params in ({}, {'uniqid[]': 'ModuleTemplate'}):
+            raw = api_client.session.get(
+                f"{api_client.base_url}/modules/ModuleTemplate:getDownloadStatus",
+                params=params,
+                headers=api_client._get_headers(),
+                timeout=30
+            )
+            data = raw.json().get('data') or {}
+            assert data.get('d_status') == 'NOT_FOUND', \
+                f"Expected d_status=NOT_FOUND for {params or 'path id only'}, got {raw.status_code}: {raw.text}"
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s'])
