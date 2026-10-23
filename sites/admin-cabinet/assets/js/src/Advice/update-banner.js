@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global $, i18n, localStorage, EventBus, AdviceAPI, globalTranslate */
+/* global $, i18n, localStorage, EventBus, AdviceAPI, globalTranslate, SecurityUtils */
 
 /**
  * GitLab-style update notification banner shown at the top of every page.
@@ -127,6 +127,8 @@ const updateBanner = {
      */
     draw(severity, entry) {
         const params = entry.messageParams || {};
+        // HTML-escaped copy for template substitution and the button href.
+        const safeParams = SecurityUtils.escapeTemplateParams(params);
         const ver = params.ver ? $('<div>').text(params.ver).html() : '';
         const moduleName = params.module ? $('<div>').text(params.module).html() : '';
 
@@ -142,7 +144,7 @@ const updateBanner = {
                     ? globalTranslate.banner_SecurityUpdateCritical
                     : globalTranslate.banner_UpdateAvailable;
                 message = updateBanner.interpolate(tpl, { ver });
-                actionUrl = params.url || '';
+                actionUrl = safeParams.url || '';
                 break;
             }
             case 'adv_SecurityPatchAvailable':
@@ -150,16 +152,16 @@ const updateBanner = {
                     globalTranslate.banner_SecurityPatchAvailable,
                     { module: moduleName, ver },
                 );
-                actionUrl = params.url || '';
+                actionUrl = safeParams.url || '';
                 break;
             case 'adv_AvailableNewVersionModule':
                 // Reuse existing translated template for in-banner copy.
-                message = i18n(entry.messageTpl, entry.messageParams);
-                actionUrl = params.url || '';
+                message = i18n(entry.messageTpl, safeParams);
+                actionUrl = safeParams.url || '';
                 break;
             default:
-                message = i18n(entry.messageTpl, entry.messageParams);
-                actionUrl = params.url || '';
+                message = i18n(entry.messageTpl, safeParams);
+                actionUrl = safeParams.url || '';
         }
 
         const installLabel = $('<div>').text(globalTranslate.banner_InstallNow).html();

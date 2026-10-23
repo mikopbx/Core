@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalWebAdminLanguage, sessionStorage, $, i18n, AdviceAPI */
+/* global globalRootUrl, globalWebAdminLanguage, sessionStorage, $, i18n, AdviceAPI, SecurityUtils */
 
 /**
  * Advice Worker module.
@@ -87,7 +87,9 @@ const adviceWorker = {
      * @returns {string} - Translated message
      */
     translateMessage(messageData) {
-        return i18n(messageData.messageTpl, messageData.messageParams);
+        // Params carry user-controlled data (employee names, logins) and the result is
+        // rendered as HTML, so escape them before substitution into the template.
+        return i18n(messageData.messageTpl, SecurityUtils.escapeTemplateParams(messageData.messageParams));
     },
 
     /**

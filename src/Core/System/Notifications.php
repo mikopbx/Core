@@ -106,7 +106,9 @@ class Notifications
         $text = '';
         foreach ($messages as $message) {
             if (is_array($message)) {
-                $text .= '<br>' . Util::translate($message['messageTpl'], false, $message['messageParams'] ?? []);
+                // Params carry user-controlled data (employee names, logins) and the body is HTML.
+                $params = self::escapeHtmlParams($message['messageParams'] ?? []);
+                $text .= '<br>' . Util::translate($message['messageTpl'], false, $params);
             } else {
                 $text .= '<br>' . Util::translate($message, false);
             }
@@ -119,7 +121,7 @@ class Notifications
         $plainText = PbxSettings::getValueByKey(PbxSettings::MAIL_PLAIN_TEXT) === '1';
         if ($plainText) {
             $text = preg_replace('/<br\s*\/?>/i', "\n", $text);
-            $text = trim(strip_tags($text));
+            $text = trim(html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
         }
 
         // Get the admin email address from PbxSettings.
@@ -131,6 +133,23 @@ class Notifications
         if ($result) {
             $managedCache->set($cacheKey, true, $cacheTime);
         }
+    }
+
+    /**
+     * HTML-escapes the string values of translation placeholders.
+     *
+     * @param array $params Placeholder values.
+     *
+     * @return array
+     */
+    private static function escapeHtmlParams(array $params): array
+    {
+        foreach ($params as $key => $value) {
+            if (is_string($value)) {
+                $params[$key] = htmlspecialchars($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            }
+        }
+        return $params;
     }
 
     /**
@@ -385,7 +404,7 @@ class Notifications
         // Capture debug output for better error analysis
         $debugOutput = '';
         $mail->SMTPDebug = \PHPMailer\PHPMailer\SMTP::DEBUG_CONNECTION;
-        $mail->Debugoutput = function($str, $level) use (&$debugOutput) {
+        $mail->Debugoutput = function ($str, $level) use (&$debugOutput) {
             $debugOutput .= $str;
         };
 
@@ -406,11 +425,13 @@ class Notifications
                     foreach ($debugLines as $line) {
                         $line = trim($line);
                         // Look for specific error patterns
-                        if (strpos($line, 'SMTP ERROR:') !== false ||
+                        if (
+                            strpos($line, 'SMTP ERROR:') !== false ||
                             strpos($line, 'getaddrinfo') !== false ||
                             strpos($line, 'Connection refused') !== false ||
                             strpos($line, '535') !== false ||
-                            strpos($line, 'certificate') !== false) {
+                            strpos($line, 'certificate') !== false
+                        ) {
                             $errors[] = $line;
                         }
                     }

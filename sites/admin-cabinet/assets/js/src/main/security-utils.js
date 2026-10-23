@@ -322,7 +322,37 @@ window.SecurityUtils = {
         if (!text) return '';
         return this._escapeHtmlContent(text);
     },
-    
+
+    /**
+     * Escape every string value of a placeholder map before it is substituted into an
+     * HTML translation template, e.g. i18n(messageTpl, messageParams) for advice messages.
+     * Quotes are escaped as well because placeholders such as %url% sit inside attributes.
+     *
+     * @param {Object|null} params - Placeholder values
+     * @returns {Object|null} Copy of params with HTML-escaped string values
+     *
+     * @example
+     * SecurityUtils.escapeTemplateParams({record: '<img src=x onerror=alert(1)> <201>'})
+     * // Returns: {record: '&lt;img src=x onerror=alert(1)&gt; &lt;201&gt;'}
+     */
+    escapeTemplateParams(params) {
+        if (params === null || typeof params !== 'object') {
+            return params;
+        }
+        const escaped = {};
+        Object.keys(params).forEach((key) => {
+            const value = params[key];
+            escaped[key] = typeof value === 'string'
+                ? value.replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;')
+                : value;
+        });
+        return escaped;
+    },
+
     /**
      * Sanitize text for display with configurable strictness
      * 
