@@ -30,8 +30,9 @@ for the subtree you touch. Keep this file repo-wide only.
   The owner makes it by running the TeamCity chain on `develop` with the *Release build*
   flag; the chain builds without the `-dev` suffix, runs the REST tests, publishes Docker
   images and a GitHub pre-release and tags the built revision in Core and in the build
-  repositories. Nightly green chains publish `YYYY.M.N-dev` pre-releases and move the `:dev`
-  Docker tag.
+  repositories. Nightly green chains build `YYYY.M.N-dev`, replace the single rolling `dev`
+  pre-release on GitHub (git tag `dev` in Core, recreated each night; no per-night tags) and
+  move the `:dev` Docker tag.
 - A hotfix is fixed on `develop` first, then cherry-picked onto `release/YYYY.M.N` (cut from
   tag `YYYY.M.N` in each repository that needs it, usually only Core) and released by the
   same chain on that branch under the next free version number. The branch is deleted after
