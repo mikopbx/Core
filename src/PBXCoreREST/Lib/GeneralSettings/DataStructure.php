@@ -369,6 +369,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'string',
                 'description' => 'rest_schema_gs_ssh_login',
                 'maxLength' => 50,
+                // GHSA-33rq-g2cr-74ww: Unix username only; keeps the value out of shells.
+                'pattern' => \MikoPBX\Core\System\Configs\SSHConf::SSH_LOGIN_PATTERN,
                 'sanitize' => 'string',
                 'default' => self::getDefaultValue(PbxSettings::SSH_LOGIN),
                 'example' => self::getDefaultValue(PbxSettings::SSH_LOGIN)

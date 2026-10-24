@@ -39,6 +39,14 @@ class SSHConf extends SystemConfigClass
 {
     public const string PROC_NAME = 'dropbear';
 
+    // GHSA-33rq-g2cr-74ww: allowed SSH login = Unix username, metacharacter-free in
+    // every shell / sed / /etc/passwd context. Shared with the REST DataStructure, so
+    // the anchor stays $ (valid in the exported OpenAPI/ECMA schema, unlike \z); the
+    // sink adds the PCRE D modifier to also reject a trailing newline. Charset is broad
+    // (mixed case, leading digit) and length 50 matches the prior limit so pre-existing
+    // logins are not rejected on upgrade; a leading '-' is excluded (option injection).
+    public const string SSH_LOGIN_PATTERN = '^[a-zA-Z0-9_][a-zA-Z0-9_-]{0,49}$';
+
     // Dropbear pidfile, shared by the Monit config and the restart verification
     private const string PID_FILE = '/var/run/dropbear.pid';
 
@@ -288,7 +296,7 @@ class SSHConf extends SystemConfigClass
         $addgroup = Util::which('addgroup');
         $adduser = Util::which('adduser');
 
-        $sshLogin = PbxSettings::getValueByKey(PbxSettings::SSH_LOGIN);
+        $sshLogin = self::sanitizeSshLogin(PbxSettings::getValueByKey(PbxSettings::SSH_LOGIN));
         $homeDir = $this->getUserHomeDir($sshLogin);
         $mainUsers = ['root', 'www']; // System users that should not be modified
 
@@ -313,6 +321,24 @@ class SSHConf extends SystemConfigClass
             shell_exec("$chown -R $sshLogin:$sshLogin $homeDir");
         }
         return $sshLogin;
+    }
+
+    /**
+     * GHSA-33rq-g2cr-74ww: whitelist the SSH login before it reaches any shell,
+     * sed or /etc/passwd edit. An invalid value (injection, poisoned DB, cloud
+     * provisioning) falls back to 'root'. Valid Unix name = metacharacter-free.
+     *
+     * @param string|null $sshLogin
+     * @return string
+     */
+    private static function sanitizeSshLogin(?string $sshLogin): string
+    {
+        // D modifier: $ matches the absolute end only, rejecting a trailing newline.
+        if (is_string($sshLogin) && preg_match('/' . self::SSH_LOGIN_PATTERN . '/D', $sshLogin) === 1) {
+            return $sshLogin;
+        }
+        SystemMessages::sysLogMsg(self::class, "Invalid SSH login rejected, falling back to 'root'", LOG_WARNING);
+        return 'root';
     }
 
     /**
