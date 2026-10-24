@@ -71,6 +71,15 @@ class DownloadLogFileAction extends Injectable
             return $res;
         }
 
+        // GHSA-wpmh-4cxv-hwc5 (defense-in-depth): reject shell/path metacharacters
+        // in the requested log name before it reaches the download-symlink sink.
+        if (preg_match('#^[A-Za-z0-9._/-]+\z#', $filename) !== 1 || str_contains($filename, '..')) {
+            $res->success = false;
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_syslog_invalid_path');
+            $res->httpCode = 400;
+            return $res;
+        }
+
         $filename = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
 
         // Security: path traversal protection

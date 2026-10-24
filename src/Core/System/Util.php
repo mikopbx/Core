@@ -583,7 +583,8 @@ class Util
             // If needed, remove the old symlink.
             if ($need_create_link) {
                 $cpPath = self::which('cp');
-                Processes::mwExec("$cpPath $old_target/* $target");
+                // GHSA-wpmh-4cxv-hwc5: escape paths; keep the glob outside the quotes.
+                Processes::mwExec("$cpPath " . escapeshellarg($old_target) . '/* ' . escapeshellarg($target));
                 unlink($link);
             }
         } elseif (is_dir($link)) {
@@ -601,7 +602,8 @@ class Util
 
         if ($need_create_link) {
             $lnPath = self::which('ln');
-            Processes::mwExec("$lnPath -s $target $link");
+            // GHSA-wpmh-4cxv-hwc5: escape attacker-influenceable path args.
+            Processes::mwExec("$lnPath -s " . escapeshellarg($target) . ' ' . escapeshellarg($link));
         }
 
         return $need_create_link;
@@ -657,11 +659,14 @@ class Util
             $chmod = self::which('chmod');
             $xargs = self::which('xargs');
             $prune = $skip === '' ? '' : '-path ' . escapeshellarg($skip) . ' -prune -o ';
-            
+            // GHSA-wpmh-4cxv-hwc5: escape the folder path reaching find.
+            $findBase = "$find " . escapeshellarg((string)$folder) . " $prune";
+            $xargsChmod = "$xargs -0 -r -P 4 -n 50 $chmod";
+
             // Optimized: only chmod/chown files that need it (avoids redundant syscalls on thousands of files)
-            Processes::mwExec("$find $folder $prune-type d -not -perm 755 -print0 2>/dev/null | $xargs -0 -r -P 4 -n 50 $chmod 755");
-            Processes::mwExec("$find $folder $prune-type f -not -perm 644 -print0 2>/dev/null | $xargs -0 -r -P 4 -n 50 $chmod 644");
-            Processes::mwExec("$find $folder $prune-not -user www -exec $chown www:www {} +");
+            Processes::mwExec("$findBase-type d -not -perm 755 -print0 2>/dev/null | $xargsChmod 755");
+            Processes::mwExec("$findBase-type f -not -perm 644 -print0 2>/dev/null | $xargsChmod 644");
+            Processes::mwExec("$findBase-not -user www -exec $chown www:www {} +");
         }
     }
 
