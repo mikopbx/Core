@@ -251,7 +251,12 @@ class TokenValidationService
      */
     private function checkPathPermissions(array $keyData, $request): bool
     {
-        $requestPath = $request->getURI();
+        // GHSA-343m-2899-5qh3: authorize the normalized routed path, not raw getURI(). Fail closed.
+        $requestPath = $request->getRoutedPath(true);
+        if ($requestPath === null) {
+            SystemMessages::sysLogMsg(__CLASS__, 'Access denied: no trusted routed path', LOG_WARNING);
+            return false;
+        }
 
         // Check excluded endpoints first (always denied)
         if ($this->isExcludedEndpoint($requestPath)) {

@@ -45,7 +45,43 @@ class Request extends PhRequest
      * @var array<string, mixed>|null
      */
     private ?array $jwtPayload = null;
-    
+
+    /**
+     * Server-trusted routed path, set in index.php from the nginx-supplied _url.
+     * Security decisions use this instead of getURI() (GHSA-343m-2899-5qh3).
+     *
+     * @var string|null
+     */
+    private ?string $routedPath = null;
+
+    /**
+     * Store the server-trusted routed path.
+     *
+     * @param string $path Absolute path beginning with /pbxcore
+     */
+    public function setRoutedPath(string $path): void
+    {
+        $this->routedPath = $path;
+    }
+
+    /**
+     * Return the server-trusted routed path, or null if never set.
+     * Security callers must fail closed on null, never fall back to getURI().
+     *
+     * @param bool $onlyPath When true, strip the query string if any is present.
+     * @return string|null
+     */
+    public function getRoutedPath(bool $onlyPath = false): ?string
+    {
+        if ($this->routedPath === null) {
+            return null;
+        }
+        if ($onlyPath) {
+            return strtok($this->routedPath, '?');
+        }
+        return $this->routedPath;
+    }
+
     /**
      * Check the header of a request to understand if it needs async response or not
      * @return bool
@@ -246,7 +282,7 @@ class Request extends PhRequest
     {
         $this->tokenInfo = $info;
     }
-    
+
     /**
      * Get Bearer token info
      *
@@ -286,7 +322,11 @@ class Request extends PhRequest
      */
     public function thisIsModuleNoAuthRequest(Micro $api): bool
     {
-        $pattern  = $api->request->getURI(true);
+        // GHSA-343m-2899-5qh3: match against the routed path, not raw getURI(). Fail closed.
+        $pattern = $this->getRoutedPath(true);
+        if ($pattern === null) {
+            return false;
+        }
         $additionalRoutes = PBXConfModulesProvider::hookModulesMethod(RestAPIConfigInterface::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
         foreach ($additionalRoutes as $additionalRoutesFromModule) {
             foreach ($additionalRoutesFromModule as $additionalRoute) {

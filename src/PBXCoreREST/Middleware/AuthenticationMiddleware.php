@@ -220,7 +220,12 @@ class AuthenticationMiddleware implements MiddlewareInterface
     {
         /** @var Request $request */
         $request = $application->getService(RequestProvider::SERVICE_NAME);
-        $uri = $request->getURI();
+
+        // GHSA-343m-2899-5qh3: decide on the routed path, not raw getURI(). Fail closed.
+        $uri = $request->getRoutedPath(true);
+        if ($uri === null) {
+            return false;
+        }
 
         return $this->isPublicEndpointByAttributes($application, $uri);
     }
@@ -317,6 +322,11 @@ class AuthenticationMiddleware implements MiddlewareInterface
      */
     private function checkAclPermission(Request $request, Micro $application): string
     {
+        // GHSA-343m-2899-5qh3: no trusted routed path => deny (fail closed).
+        if ($request->getRoutedPath(true) === null) {
+            return self::ACL_DENIED;
+        }
+
         // Extract role from JWT payload
         $jwtPayload = $request->getJwtPayload();
         $role = $jwtPayload['role'] ?? AclProvider::ROLE_GUESTS;
@@ -485,11 +495,13 @@ class AuthenticationMiddleware implements MiddlewareInterface
      */
     private function parseRequestToAcl(Request $request): array
     {
-        $uri = $request->getURI();
+        // GHSA-343m-2899-5qh3: parse the routed path, not raw getURI(). Null is already
+        // denied by checkAclPermission; [null,null] here means "not a REST route".
+        $uri = $request->getRoutedPath(true);
+        if ($uri === null) {
+            return [null, null];
+        }
         $httpMethod = $request->getMethod();
-
-        // Remove query string if present
-        $uri = strtok($uri, '?');
 
         // Match REST API pattern: /pbxcore/api/{version}/{resource}...
         // Supports any version (v1, v2, v3, v4, v5, etc.)

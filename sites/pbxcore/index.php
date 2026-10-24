@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,6 +22,7 @@ namespace MikoPBX\PbxCore;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\PBXCoreREST\Config\RegisterDIServices;
+use MikoPBX\PBXCoreREST\Http\TrustedRouteResolver;
 use Phalcon\Di\FactoryDefault;
 use Phalcon\Mvc\Micro;
 use Throwable;
@@ -43,8 +45,28 @@ class RestAPI extends Micro
 
         // Start application
         try {
-            $requestUri = sprintf('/pbxcore%s', $_REQUEST['_url']);
-            $application->handle($requestUri);
+            // GHSA-343m-2899-5qh3: route on the nginx-injected _url, not client input.
+            $routedPath = TrustedRouteResolver::resolve($_SERVER['QUERY_STRING'] ?? '', $_POST);
+            if ($routedPath === null) {
+                // Clean 400, no stack trace or paths; log for forensics.
+                if (!headers_sent()) {
+                    http_response_code(400);
+                    header('Content-Type: application/json');
+                }
+                error_log('PBXCoreREST: rejected request with client-supplied or missing _url route');
+                echo '{"result":false,"messages":{"error":["Bad request"]}}';
+                return;
+            }
+
+            // Expose the trusted route to the auth middleware / ACL layer.
+            if ($di->has('request')) {
+                $request = $di->getShared('request');
+                if ($request instanceof \MikoPBX\PBXCoreREST\Http\Request) {
+                    $request->setRoutedPath($routedPath);
+                }
+            }
+
+            $application->handle($routedPath);
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleException($e);
         }

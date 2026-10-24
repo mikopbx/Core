@@ -40,35 +40,51 @@ use MikoPBX\PBXCoreREST\Attributes\{HttpMapping, ResourceSecurity, SecurityType}
  */
 class PublicEndpointsRegistry
 {
+    /** Match only the exact path (method-level PUBLIC, e.g. '/pbxcore/api/v3/auth:login'). */
+    public const string MATCH_EXACT = 'exact';
+
+    /** Match the path or anything under it (class-level PUBLIC covers CRUD/ids/custom methods). */
+    public const string MATCH_PREFIX = 'prefix';
+
     /**
-     * Map of resource path patterns to public status
-     * Format: ['/pbxcore/api/v3/auth' => true, ...]
+     * Map of resource path patterns to match mode (MATCH_EXACT | MATCH_PREFIX).
+     * Format: ['/pbxcore/api/v3/auth:login' => 'exact', '/pbxcore/api/v3/cdr' => 'prefix', ...]
      *
-     * @var array<string, bool>
+     * @var array<string, string>
      */
     private array $publicEndpoints = [];
 
     /**
-     * Register a public endpoint
+     * Register a public endpoint.
      *
-     * @param string $resourcePath Full resource path (e.g., '/pbxcore/api/v3/auth')
+     * @param string $resourcePath Full resource path (e.g., '/pbxcore/api/v3/auth:login')
+     * @param string $matchMode    MATCH_EXACT (default, safest) or MATCH_PREFIX
      */
-    public function registerPublicEndpoint(string $resourcePath): void
+    public function registerPublicEndpoint(string $resourcePath, string $matchMode = self::MATCH_EXACT): void
     {
-        $this->publicEndpoints[$resourcePath] = true;
+        $this->publicEndpoints[$resourcePath] = $matchMode;
     }
 
     /**
-     * Check if endpoint is public by resource path
+     * Check if endpoint is public by resource path.
      *
-     * @param string $uri Request URI
+     * GHSA-343m-2899-5qh3: exact or bounded match, never a bare str_starts_with
+     * (which let 'auth:loginX' pass). MATCH_EXACT = exact route only; MATCH_PREFIX
+     * = base path plus '<base>/...' and '<base>:...' beneath it.
+     *
+     * @param string $uri Request URI (server-trusted routed path, query stripped)
      * @return bool True if endpoint is public
      */
     public function isPublicEndpoint(string $uri): bool
     {
-        // Direct match
-        foreach ($this->publicEndpoints as $path => $isPublic) {
-            if ($isPublic && str_starts_with($uri, $path)) {
+        foreach ($this->publicEndpoints as $path => $matchMode) {
+            if ($uri === $path) {
+                return true;
+            }
+            if ($matchMode !== self::MATCH_PREFIX) {
+                continue;
+            }
+            if (str_starts_with($uri, $path . '/') || str_starts_with($uri, $path . ':')) {
                 return true;
             }
         }
@@ -101,9 +117,9 @@ class PublicEndpointsRegistry
                 /** @var ResourceSecurity $resourceSecurity */
                 $resourceSecurity = $classAttributes[0]->newInstance();
 
-                // If entire resource is PUBLIC, register base path and return
+                // Whole resource PUBLIC: register base path as a prefix match.
                 if (in_array(SecurityType::PUBLIC, $resourceSecurity->requirements, true)) {
-                    $this->registerPublicEndpoint($resourcePath);
+                    $this->registerPublicEndpoint($resourcePath, self::MATCH_PREFIX);
                     return;
                 }
             }
@@ -158,10 +174,10 @@ class PublicEndpointsRegistry
             // Method has PUBLIC security - construct and register the route
             $methodName = $method->getName();
 
-            // Custom methods use :methodName suffix
+            // Custom methods (:methodName) are registered as exact matches.
             if (in_array($methodName, $customMethods, true)) {
                 $methodRoute = $resourcePath . ':' . $methodName;
-                $this->registerPublicEndpoint($methodRoute);
+                $this->registerPublicEndpoint($methodRoute, self::MATCH_EXACT);
             }
             // Standard CRUD methods (getList, getRecord, create, update, patch, delete)
             // These use the base resource path which is already checked at class level
