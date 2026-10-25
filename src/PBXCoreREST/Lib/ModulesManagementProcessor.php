@@ -176,9 +176,11 @@ class ModulesManagementProcessor extends Injectable
                     );
                     break;
                 case 'uninstall':
-                    $asyncChannelId = $request['asyncChannelId'];
+                    // Both parameters are optional in the API (#1265): no channel means
+                    // no browser notifications, no keepSettings means drop the settings.
+                    $asyncChannelId = $request['asyncChannelId'] ?? 'internal-request';
                     $moduleUniqueID = $data['uniqid'] ?? $data['id'];
-                    $keepSettings = $data['keepSettings'] === 'true';
+                    $keepSettings = self::boolParam($data, 'keepSettings');
                     if (self::useLegacyInstallPipeline()) {
                         $uninstaller = new UninstallModuleAction( $asyncChannelId, $moduleUniqueID, $keepSettings);
                         $uninstaller->start();
@@ -352,6 +354,15 @@ class ModulesManagementProcessor extends Injectable
     {
         $value = $data[$key] ?? '';
         return is_string($value) ? $value : '';
+    }
+
+    /**
+     * Optional boolean request field: a missing key is false; 'true'/'1'/true
+     * (form data or JSON) are true.
+     */
+    private static function boolParam(array $data, string $key): bool
+    {
+        return filter_var($data[$key] ?? false, FILTER_VALIDATE_BOOLEAN);
     }
 
     /**
