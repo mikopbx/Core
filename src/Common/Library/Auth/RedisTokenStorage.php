@@ -217,25 +217,16 @@ class RedisTokenStorage
      */
     public function deleteAllForUser(string $userId): int
     {
-        $pattern = self::KEY_PREFIX . '*';
         $deleted = 0;
 
-        $iterator = null;
-        while (true) {
-            $keys = $this->redis->scan($iterator, $pattern, 100);
-            if (!is_array($keys) || count($keys) === 0) {
-                break;
-            }
-
-            foreach ($keys as $key) {
-                $json = $this->redis->get($key);
-                if ($json !== false && is_string($json)) {
-                    $data = json_decode($json, true);
-                    if (is_array($data) && ($data['userId'] ?? '') === $userId) {
-                        $delResult = $this->redis->del($key);
-                        if (is_int($delResult) && $delResult > 0) {
-                            $deleted++;
-                        }
+        foreach ($this->scanKeys() as $key) {
+            $json = $this->redis->get($key);
+            if ($json !== false && is_string($json)) {
+                $data = json_decode($json, true);
+                if (is_array($data) && ($data['userId'] ?? '') === $userId) {
+                    $delResult = $this->redis->del($key);
+                    if (is_int($delResult) && $delResult > 0) {
+                        $deleted++;
                     }
                 }
             }
@@ -313,16 +304,10 @@ class RedisTokenStorage
      */
     public function count(): int
     {
-        $pattern = self::KEY_PREFIX . '*';
         $count = 0;
 
-        $iterator = null;
-        while (true) {
-            $keys = $this->redis->scan($iterator, $pattern, 100);
-            if (!is_array($keys) || count($keys) === 0) {
-                break;
-            }
-            $count += count($keys);
+        foreach ($this->scanKeys() as $key) {
+            $count++;
         }
 
         return $count;
@@ -338,30 +323,41 @@ class RedisTokenStorage
      */
     public function getAllForUser(string $userId): array
     {
-        $pattern = self::KEY_PREFIX . '*';
         $tokens = [];
 
-        $iterator = null;
-        while (true) {
-            $keys = $this->redis->scan($iterator, $pattern, 100);
-            if (!is_array($keys) || count($keys) === 0) {
-                break;
-            }
-
-            foreach ($keys as $key) {
-                $json = $this->redis->get($key);
-                if ($json !== false && is_string($json)) {
-                    $data = json_decode($json, true);
-                    if (is_array($data) && ($data['userId'] ?? '') === $userId) {
-                        // Add TTL info
-                        $ttl = $this->redis->ttl($key);
-                        $data['ttl'] = is_int($ttl) ? $ttl : -1;
-                        $tokens[] = $data;
-                    }
+        foreach ($this->scanKeys() as $key) {
+            $json = $this->redis->get($key);
+            if ($json !== false && is_string($json)) {
+                $data = json_decode($json, true);
+                if (is_array($data) && ($data['userId'] ?? '') === $userId) {
+                    // Add TTL info
+                    $ttl = $this->redis->ttl($key);
+                    $data['ttl'] = is_int($ttl) ? $ttl : -1;
+                    $tokens[] = $data;
                 }
             }
         }
 
         return $tokens;
+    }
+
+    /**
+     * Iterate over all refresh token keys
+     *
+     * SCAN may return an empty batch before the cursor wraps to 0, so the
+     * loop ends on the cursor, not on the batch size (#1228).
+     *
+     * @return \Generator<int, string>
+     */
+    private function scanKeys(): \Generator
+    {
+        $pattern = self::KEY_PREFIX . '*';
+        $iterator = null;
+        do {
+            $keys = $this->redis->scan($iterator, $pattern, 100);
+            if (is_array($keys)) {
+                yield from $keys;
+            }
+        } while ($iterator > 0);
     }
 }
