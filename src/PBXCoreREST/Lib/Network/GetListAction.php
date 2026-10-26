@@ -80,11 +80,17 @@ class GetListAction
             // Build conditions string
             $conditionsString = implode(' AND ', $conditions);
 
+            // SECURITY (GHSA-mhhq-c73g-ffm8): the ORDER BY clause cannot be bound as a
+            // parameter, so a raw $data['order'] was an SQL-injection sink. Resolve the
+            // request against a whitelist of sortable columns and a validated direction;
+            // anything unrecognised falls back to the default order.
+            $order = self::resolveOrder($data['order'] ?? null);
+
             // Get interfaces
             $interfaces = LanInterfaces::find([
                 $conditionsString,
                 'bind' => $parameters,
-                'order' => $data['order'] ?? 'interface ASC, vlanid ASC'
+                'order' => $order
             ]);
 
             // Convert to array
@@ -126,5 +132,48 @@ class GetListAction
         }
 
         return $res;
+    }
+
+    /**
+     * Sortable columns for the interface list. Only these may appear in ORDER BY.
+     */
+    private const array ALLOWED_ORDER_FIELDS = [
+        'id', 'name', 'interface', 'vlanid', 'subnet', 'ipaddr', 'topology', 'dhcp', 'disabled',
+    ];
+
+    private const string DEFAULT_ORDER = 'interface ASC, vlanid ASC';
+
+    /**
+     * Resolve a client-supplied ORDER BY request against a column/direction whitelist.
+     *
+     * The ORDER BY clause cannot be a bound parameter, so the raw value is never passed
+     * to PHQL. Each comma-separated term must be a whitelisted column with an optional
+     * ASC/DESC direction; any deviation discards the whole request and uses the default
+     * order (GHSA-mhhq-c73g-ffm8).
+     *
+     * @param string|null $requested
+     * @return string
+     */
+    private static function resolveOrder(?string $requested): string
+    {
+        if ($requested === null || trim($requested) === '') {
+            return self::DEFAULT_ORDER;
+        }
+
+        $terms = [];
+        foreach (explode(',', $requested) as $term) {
+            $parts = preg_split('/\s+/', trim($term));
+            $field = $parts[0] ?? '';
+            if (!in_array($field, self::ALLOWED_ORDER_FIELDS, true)) {
+                return self::DEFAULT_ORDER;
+            }
+            $direction = strtoupper($parts[1] ?? 'ASC');
+            if (isset($parts[2]) || !in_array($direction, ['ASC', 'DESC'], true)) {
+                return self::DEFAULT_ORDER;
+            }
+            $terms[] = "{$field} {$direction}";
+        }
+
+        return $terms === [] ? self::DEFAULT_ORDER : implode(', ', $terms);
     }
 }
