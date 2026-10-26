@@ -33,7 +33,7 @@ use Throwable;
  * 1. Scans for JSON task files created by WorkerCDR in conversion-tasks directory
  * 2. Processes conversions using ffmpeg directly (no shell scripts)
  * 3. Implements retry logic with attempt counter (max 3 attempts)
- * 4. Deletes task file on success, renames to .failed.json after max attempts
+ * 4. Deletes task file on success, renames to .failed.json after max attempts or when it cannot be parsed
  *
  * Optimized for ASR with adaptive bitrate selection:
  * - Stereo output preserves speaker separation (left=external, right=internal)
@@ -308,24 +308,28 @@ class WorkerWav2Webm extends WorkerBase
             try {
                 $taskData = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
             } catch (\JsonException $e) {
-                SystemMessages::sysLogMsg(
-                    __CLASS__,
-                    sprintf('Invalid JSON in task file %s: %s', basename($taskFile), $e->getMessage()),
-                    LOG_ERR
-                );
+                // The writer publishes task files atomically, so this is not a partial write:
+                // move the file aside instead of re-reading it on every scan (#1189)
                 flock($fp, LOCK_UN);
                 fclose($fp);
+                $this->moveToFailed($taskFile, []);
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf('Invalid JSON in task file %s, moved aside: %s', basename($taskFile), $e->getMessage()),
+                    LOG_ERR
+                );
                 return;
             }
 
             if (!is_array($taskData)) {
-                SystemMessages::sysLogMsg(
-                    __CLASS__,
-                    sprintf('Invalid JSON structure in task file: %s', basename($taskFile)),
-                    LOG_ERR
-                );
                 flock($fp, LOCK_UN);
                 fclose($fp);
+                $this->moveToFailed($taskFile, []);
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    sprintf('Invalid JSON structure in task file, moved aside: %s', basename($taskFile)),
+                    LOG_ERR
+                );
                 return;
             }
 
@@ -960,35 +964,7 @@ class WorkerWav2Webm extends WorkerBase
             flock($fp, LOCK_UN);
             fclose($fp);
 
-            // Safely build failed filename - replace only the final .json extension
-            // This prevents creating .failed.failed.json if file is already .failed.json
-            $failedFile = preg_replace('/\.json$/', '.failed.json', $taskFile);
-
-            // Check if filename would be too long (most filesystems limit to 255 bytes)
-            $basename = basename($failedFile);
-            if (strlen($basename) > 255) {
-                // Filename too long - use truncated linkedid-based name instead
-                $linkedid = $taskData['linkedid'] ?? uniqid('task-');
-                $dirName = dirname($taskFile);
-                $failedFile = $dirName . '/' . substr($linkedid, 0, 200) . '.failed.json';
-
-                SystemMessages::sysLogMsg(
-                    __CLASS__,
-                    sprintf('Filename too long, using truncated name: %s', basename($failedFile)),
-                    LOG_WARNING
-                );
-            }
-
-            // Perform rename with error handling
-            if (!@rename($taskFile, $failedFile)) {
-                // If rename fails, try to delete the corrupted task file
-                SystemMessages::sysLogMsg(
-                    __CLASS__,
-                    sprintf('Failed to rename task file, deleting: %s', basename($taskFile)),
-                    LOG_ERR
-                );
-                @unlink($taskFile);
-            } else {
+            if ($this->moveToFailed($taskFile, $taskData)) {
                 SystemMessages::sysLogMsg(
                     __CLASS__,
                     sprintf(
@@ -1024,6 +1000,48 @@ class WorkerWav2Webm extends WorkerBase
                 LOG_WARNING
             );
         }
+    }
+
+    /**
+     * Rename a task file to .failed.json so the scan skips it; delete it if the rename fails
+     *
+     * @param string $taskFile Path to task file
+     * @param array<string, mixed> $taskData Task data, used for a shorter name when the original is too long
+     * @return bool True if the file was renamed
+     */
+    private function moveToFailed(string $taskFile, array $taskData): bool
+    {
+        // Safely build failed filename - replace only the final .json extension
+        // This prevents creating .failed.failed.json if file is already .failed.json
+        $failedFile = preg_replace('/\.json$/', '.failed.json', $taskFile);
+
+        // Check if filename would be too long (most filesystems limit to 255 bytes)
+        $basename = basename($failedFile);
+        if (strlen($basename) > 255) {
+            // Filename too long - use truncated linkedid-based name instead
+            $linkedid = $taskData['linkedid'] ?? uniqid('task-');
+            $dirName = dirname($taskFile);
+            $failedFile = $dirName . '/' . substr($linkedid, 0, 200) . '.failed.json';
+
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                sprintf('Filename too long, using truncated name: %s', basename($failedFile)),
+                LOG_WARNING
+            );
+        }
+
+        // Perform rename with error handling
+        if (!@rename($taskFile, $failedFile)) {
+            // If rename fails, try to delete the corrupted task file
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                sprintf('Failed to rename task file, deleting: %s', basename($taskFile)),
+                LOG_ERR
+            );
+            @unlink($taskFile);
+            return false;
+        }
+        return true;
     }
 
     /**
