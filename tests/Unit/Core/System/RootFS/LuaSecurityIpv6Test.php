@@ -34,7 +34,26 @@ class LuaSecurityIpv6Test extends TestCase
     /**
      * Path to the unified-security.lua file
      */
-    private const LUA_SCRIPT_PATH = '/Users/nb/PhpstormProjects/mikopbx/project-ipv6-support/src/Core/System/RootFS/etc/nginx/mikopbx/lua/unified-security.lua';
+    private const LUA_SCRIPT_PATH = __DIR__ . '/../../../../../src/Core/System/RootFS/etc/nginx/mikopbx/lua/unified-security.lua';
+
+    /**
+     * Interpreters to try, production nginx runs LuaJIT
+     */
+    private const LUA_INTERPRETERS = ['luajit', 'lua'];
+
+    /**
+     * Returns the first available Lua interpreter, skipping the test when there is none
+     */
+    private function findInterpreter(): string
+    {
+        foreach (self::LUA_INTERPRETERS as $interpreter) {
+            $path = trim((string) shell_exec('command -v ' . escapeshellarg($interpreter) . ' 2>/dev/null'));
+            if ($path !== '') {
+                return $path;
+            }
+        }
+        $this->markTestSkipped('Neither luajit nor lua is installed');
+    }
 
     /**
      * Execute Lua code and return output
@@ -47,10 +66,12 @@ class LuaSecurityIpv6Test extends TestCase
         // Read the Lua script file
         $scriptContent = file_get_contents(self::LUA_SCRIPT_PATH);
 
-        // Extract only the IPv6-related functions (before Redis connection)
-        // Stop at "-- Function to connect to Redis" line
-        $parts = explode('-- Function to connect to Redis', $scriptContent);
-        $functionsOnly = $parts[0];
+        // Extract only the IP matching functions: the script header needs nginx and resty.redis
+        $start = strpos($scriptContent, 'local cidr_cache = {}');
+        $end = strpos($scriptContent, '-- Function to connect to Redis');
+        $this->assertNotFalse($start, 'IP matching block not found in unified-security.lua');
+        $this->assertNotFalse($end, 'Redis block not found in unified-security.lua');
+        $functionsOnly = substr($scriptContent, $start, $end - $start);
 
         // Create complete Lua test script
         $fullScript = $functionsOnly . "\n" . $luaCode;
@@ -59,8 +80,7 @@ class LuaSecurityIpv6Test extends TestCase
         $tempFile = tempnam(sys_get_temp_dir(), 'lua_test_');
         file_put_contents($tempFile, $fullScript);
 
-        // Execute with lua
-        $command = sprintf('lua %s 2>&1', escapeshellarg($tempFile));
+        $command = sprintf('%s %s 2>&1', escapeshellarg($this->findInterpreter()), escapeshellarg($tempFile));
         exec($command, $output, $returnCode);
 
         // Clean up
