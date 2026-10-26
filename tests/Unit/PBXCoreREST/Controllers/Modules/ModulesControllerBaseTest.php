@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace MikoPBX\Tests\Unit\PBXCoreREST\Controllers\Modules;
 
+use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Controllers\Modules\ModulesControllerBase;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Providers\ResponseProvider;
+use Phalcon\Config\Config;
 use Phalcon\Di\Di;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
@@ -29,6 +31,10 @@ use stdClass;
  *
  * The HTTP status `BaseController` set (422/409 for a failed result, 503 for an overloaded queue)
  * must survive the module pass: the default branch used to reset it to 200 (issue #1166).
+ *
+ * A flat `fpassthru` path is only streamed and deleted when it resolves into a temp directory or
+ * the module's own directory; otherwise, or when the file cannot be opened, the answer is 404
+ * without the path (issue #1264).
  */
 class ModulesControllerBaseTest extends TestCase
 {
@@ -41,6 +47,8 @@ class ModulesControllerBaseTest extends TestCase
         $response = new Response();
         $di = new Di();
         $di->setShared(ResponseProvider::SERVICE_NAME, $response);
+        // Directories::getDir() reads the allowed directories from config; empty config = defaults
+        $di->setShared(ConfigProvider::SERVICE_NAME, new Config([]));
         $controller = new ModulesControllerBase();
         $controller->setDI($di);
 
@@ -128,6 +136,66 @@ class ModulesControllerBaseTest extends TestCase
         ]));
 
         $this->assertFileDoesNotExist($file);
+    }
+
+    /**
+     * @testWith [""]
+     *           ["traversal"]
+     */
+    public function testFileOutsideAllowedDirsIsNeitherStreamedNorDeleted(string $via): void
+    {
+        $file = __DIR__ . '/mod1264-outside.txt';
+        file_put_contents($file, 'secret');
+        try {
+            $this->expectOutputString('');
+            $response = $this->passThroughModule(json_encode([
+                'result' => true,
+                'data' => ['fpassthru' => true, 'filename' => $via === '' ? $file : sys_get_temp_dir() . '/..' . $file, 'need_delete' => true],
+                'messages' => [],
+            ]));
+
+            $this->assertFileExists($file);
+            $this->assertSame(404, $response->getStatusCode());
+            $this->assertStringNotContainsString('mod1264', (string) $response->getContent());
+        } finally {
+            @unlink($file);
+        }
+    }
+
+    public function testNeedDeleteRemovesTheLinkNotItsTarget(): void
+    {
+        $target = (string) tempnam(sys_get_temp_dir(), 'mod1264-target');
+        file_put_contents($target, 'module data');
+        $link = sys_get_temp_dir() . '/mod1264-link-' . uniqid();
+        symlink($target, $link);
+        try {
+            $this->expectOutputString('module data');
+            $this->passThroughModule(json_encode([
+                'result' => true,
+                'data' => ['fpassthru' => true, 'filename' => $link, 'need_delete' => true],
+                'messages' => [],
+            ]));
+
+            $this->assertFalse(is_link($link));
+            $this->assertFileExists($target);
+        } finally {
+            @unlink($link);
+            @unlink($target);
+        }
+    }
+
+    public function testMissingFileAnswersErrorWithoutPath(): void
+    {
+        $file = sys_get_temp_dir() . '/mod1264-missing-' . uniqid();
+        $response = $this->passThroughModule(json_encode([
+            'result' => true,
+            'data' => ['fpassthru' => true, 'filename' => $file],
+            'messages' => [],
+        ]));
+
+        $this->assertSame(404, $response->getStatusCode());
+        $this->assertFalse(json_decode((string) $response->getContent())->result);
+        $this->assertStringNotContainsString('mod1264', (string) $response->getContent());
     }
 
     public function testStreamedCoreFormatFileIsNotRoutedAgain(): void
