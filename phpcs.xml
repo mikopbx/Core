@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<ruleset name="MikoPBX">
+    <description>PSR-12 for MikoPBX Core.</description>
+
+    <rule ref="PSR12"/>
+
+    <!-- Translation strings are single long literals maintained by the translations tooling (#1284). -->
+    <rule ref="Generic.Files.LineLength">
+        <exclude-pattern>src/Common/Messages/*</exclude-pattern>
+    </rule>
+</ruleset>
