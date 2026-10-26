@@ -362,8 +362,7 @@ iptables rules in the container" is not "the product ships without a firewall".
   verification code in `src/Core/System/LicenseV2/` is still in scope.
 - The self-signed TLS certificate, and the `301` from plain HTTP to HTTPS for non-local
   requests.
-- `composer install` needing `--ignore-platform-req=ext-xdebug`: a manifest defect we already
-  track. Note also that `composer.lock` is not versioned, so this image's `vendor/` is freshly
+- `composer.lock` is not versioned, so this image's `vendor/` is freshly
   resolved and may not match what a released image ships — check dependency-behaviour
   findings against the shipped versions before rating them.
 - Logging in as `admin` / `admin` works in this image, so "I could log in with the default

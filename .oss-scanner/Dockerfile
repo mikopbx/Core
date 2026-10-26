@@ -44,14 +44,11 @@ RUN curl -fsSL https://getcomposer.org/download/latest-stable/composer.phar -o /
     && chmod +x /usr/local/bin/composer \
     && composer --version
 #
-# Two properties of the repository shape this step:
-#   - composer.json lists ext-xdebug under `require`, but the appliance deliberately ships without xdebug
-#     (the rootfs carries etc/php.d/15-xdebug.ini.disabled), so the platform requirement has to be ignored;
+# One property of the repository shapes this step:
 #   - composer.lock is gitignored, so this resolves dependencies to latest rather than installing a lock,
 #     and the resulting vendor/ can differ from the one a released image ships.
 RUN COMPOSER_ALLOW_SUPERUSER=1 COMPOSER_NO_INTERACTION=1 \
-      composer install --no-progress --prefer-dist --working-dir=/src \
-        --ignore-platform-req=ext-xdebug
+      composer install --no-progress --prefer-dist --working-dir=/src
 
 # Serve the checkout instead of the code baked into the image.
 RUN for d in src sites tests vendor; do \
