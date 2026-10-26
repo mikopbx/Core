@@ -25,6 +25,7 @@ namespace MikoPBX\Common\Providers;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Throwable;
+use Whoops\Handler\HandlerInterface;
 use Whoops\Handler\JsonResponseHandler;
 use Whoops\Handler\PlainTextHandler;
 use Whoops\Handler\PrettyPageHandler;
@@ -48,9 +49,11 @@ class WhoopsErrorHandlerProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
+        // Phalcon binds the closure to the container, so the provider travels in use().
+        $provider = $this;
         $di->set(
             self::SERVICE_NAME,
-            function () {
+            function () use ($provider) {
                 $whoops = new Run();
                 $whoops->pushHandler(function ($exception) {
                     return WhoopsErrorHandlerProvider::handleModuleException($exception);
@@ -58,20 +61,29 @@ class WhoopsErrorHandlerProvider implements ServiceProviderInterface
                 $whoops->pushHandler(function ($exception) {
                     return WhoopsErrorHandlerProvider::handleAndLogTheException($exception);
                 });
-                if (Whoops\Util\Misc::isAjaxRequest()) {
-                    $handler = new JsonResponseHandler();
-                } elseif (Whoops\Util\Misc::isCommandLine()) {
-                    $handler = new PlainTextHandler();
-                } else {
-                    $handler = new PrettyPageHandler();
-                }
-                $whoops->appendHandler($handler);
+                $whoops->appendHandler($provider->createOutputHandler());
                 // Deprecation notices must never break production flow.
                 error_reporting(error_reporting() & ~E_DEPRECATED & ~E_USER_DEPRECATED);
                 $whoops->register();
                 return $whoops;
             }
         );
+    }
+
+    /**
+     * Creates the handler that renders the exception to the client.
+     *
+     * @return HandlerInterface The last handler in the Whoops stack.
+     */
+    public function createOutputHandler(): HandlerInterface
+    {
+        if (Whoops\Util\Misc::isAjaxRequest()) {
+            return new JsonResponseHandler();
+        }
+        if (Whoops\Util\Misc::isCommandLine()) {
+            return new PlainTextHandler();
+        }
+        return new PrettyPageHandler();
     }
 
     /**

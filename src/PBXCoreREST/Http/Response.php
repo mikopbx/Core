@@ -123,7 +123,7 @@ class Response extends PhResponse
      * @param array<int, string> $errorMessages Array of error messages
      * @return array<string, mixed> Error payload structure
      */
-    private function buildErrorPayload(array $errorMessages): array
+    public static function buildErrorPayload(array $errorMessages): array
     {
         return [
             'result' => false,
@@ -144,7 +144,7 @@ class Response extends PhResponse
      */
     public function setPayloadError(string $detail = '', int $httpCode = 400): Response
     {
-        $this->setJsonContent($this->buildErrorPayload([$detail]));
+        $this->setJsonContent(self::buildErrorPayload([$detail]));
         $this->setStatusCode($httpCode);
 
         return $this;
@@ -164,7 +164,7 @@ class Response extends PhResponse
             $errorMessages[] = $error->getMessage();
         }
 
-        $this->setJsonContent($this->buildErrorPayload($errorMessages));
+        $this->setJsonContent(self::buildErrorPayload($errorMessages));
         $this->setStatusCode($httpCode);
 
         return $this;
