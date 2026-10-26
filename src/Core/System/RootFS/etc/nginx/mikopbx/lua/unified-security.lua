@@ -176,6 +176,22 @@ local function is_ipv6(ip)
     return string.find(ip, ":") ~= nil
 end
 
+-- Split colon-separated hex groups; nil if any group is not 1-4 hex digits
+-- (an empty group means a stray ':' such as in "2001:db8:::")
+local function parse_ipv6_groups(str)
+    local groups = {}
+    if str == "" then
+        return groups
+    end
+    for part in string.gmatch(str .. ":", "([^:]*):") do
+        if not string.match(part, "^%x%x?%x?%x?$") then
+            return nil
+        end
+        table.insert(groups, tonumber(part, 16))
+    end
+    return groups
+end
+
 -- Convert IPv6 address string to 16-byte table representation
 -- Handles compressed notation (::), full notation, and IPv4-mapped IPv6
 -- Returns: table of 16 bytes {b1, b2, ..., b16} or nil on error
@@ -205,22 +221,18 @@ local function ipv6_to_bytes(ipv6_str)
         local left = string.sub(ipv6_str, 1, double_colon_pos - 1)
         local right = string.sub(ipv6_str, double_colon_pos + 2)
 
-        -- Parse left side
-        if left ~= "" then
-            for part in string.gmatch(left, "([^:]+)") do
-                table.insert(parts, tonumber(part, 16) or 0)
-            end
+        -- Parse both sides; only one "::" is allowed
+        parts = parse_ipv6_groups(left)
+        local right_parts = parse_ipv6_groups(right)
+        if not parts or not right_parts then
+            return nil
         end
 
-        -- Calculate number of zero groups
-        local right_parts = {}
-        if right ~= "" then
-            for part in string.gmatch(right, "([^:]+)") do
-                table.insert(right_parts, tonumber(part, 16) or 0)
-            end
-        end
-
+        -- Calculate number of zero groups, "::" stands for at least one
         local zeros_needed = 8 - #parts - #right_parts
+        if zeros_needed < 1 then
+            return nil
+        end
         for i = 1, zeros_needed do
             table.insert(parts, 0)
         end
@@ -231,13 +243,11 @@ local function ipv6_to_bytes(ipv6_str)
         end
     else
         -- No compression, parse all 8 groups
-        for part in string.gmatch(ipv6_str, "([^:]+)") do
-            table.insert(parts, tonumber(part, 16) or 0)
-        end
+        parts = parse_ipv6_groups(ipv6_str)
     end
 
     -- Convert 8 x 16-bit words to 16 x 8-bit bytes
-    if #parts ~= 8 then
+    if not parts or #parts ~= 8 then
         return nil
     end
 
