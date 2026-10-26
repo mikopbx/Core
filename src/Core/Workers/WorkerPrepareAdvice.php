@@ -61,6 +61,7 @@ class WorkerPrepareAdvice extends WorkerRedisBase
 
     /**
      * Array of advice types with their cache times.
+     * Optional `cacheTimeWarning` replaces `cacheTime` when the result holds a warning (#1290).
      *
      * @var array
      */
@@ -79,9 +80,9 @@ class WorkerPrepareAdvice extends WorkerRedisBase
         ['type' => CheckStorageUsage::class, 'cacheTime' => 1800, 'priority' => 3],
         ['type' => CheckS3Connection::class, 'cacheTime' => 300, 'priority' => 4],
         ['type' => CheckSecurityLog::class, 'cacheTime' => 600, 'priority' => 1],
-        ['type' => CheckUpdates::class, 'cacheTime' => 86400, 'priority' => 5],
+        ['type' => CheckUpdates::class, 'cacheTime' => 3600, 'cacheTimeWarning' => 86400, 'priority' => 5],
         ['type' => CheckSSHConfig::class, 'cacheTime' => 3600, 'priority' => 1],
-        ['type' => CheckModulesUpdates::class, 'cacheTime' => 86400, 'priority' => 5],
+        ['type' => CheckModulesUpdates::class, 'cacheTime' => 3600, 'cacheTimeWarning' => 86400, 'priority' => 5],
     ];
 
     // Array of generated advice
@@ -184,7 +185,7 @@ class WorkerPrepareAdvice extends WorkerRedisBase
                 });
             }
             $newAdvice = $checkObj->process();
-            $managedCache->set($cacheKey, $newAdvice, $adviceType['cacheTime']);
+            $managedCache->set($cacheKey, $newAdvice, AdviceTaskBatchProcessor::cacheTimeFor($adviceType, $newAdvice));
             $processed = true;
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);

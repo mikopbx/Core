@@ -228,4 +228,30 @@ final class WorkerPrepareAdviceTest extends TestCase
         self::assertSame(0, $count);
         self::assertSame(0, $publishCalls);
     }
+
+    /**
+     * #1290: an empty, failed or info-only update check is cached briefly, a found warning for long.
+     */
+    public function testCacheTimeIsShortUntilWarningFound(): void
+    {
+        $this->makeProcessor();
+        $adviceType = ['type' => 'updates', 'cacheTime' => 3600, 'cacheTimeWarning' => 86400, 'priority' => 5];
+        $warning = ['warning' => [['messageTpl' => 'adv_AvailableNewVersionPBX']]];
+        $info = ['info' => [['messageTpl' => 'adv_AvailableNewVersionPBX']]];
+
+        self::assertSame(3600, AdviceTaskBatchProcessor::cacheTimeFor($adviceType, []));
+        self::assertSame(3600, AdviceTaskBatchProcessor::cacheTimeFor($adviceType, $info));
+        self::assertSame(3600, AdviceTaskBatchProcessor::cacheTimeFor($adviceType, ['warning' => []]));
+        self::assertSame(86400, AdviceTaskBatchProcessor::cacheTimeFor($adviceType, $warning));
+        self::assertSame(86400, AdviceTaskBatchProcessor::cacheTimeFor($adviceType, $warning + $info));
+    }
+
+    public function testCacheTimeWithoutWarningOverrideIsFixed(): void
+    {
+        $this->makeProcessor();
+        $adviceType = ['type' => 'storage', 'cacheTime' => 300, 'priority' => 2];
+
+        self::assertSame(300, AdviceTaskBatchProcessor::cacheTimeFor($adviceType, []));
+        self::assertSame(300, AdviceTaskBatchProcessor::cacheTimeFor($adviceType, ['warning' => [['x']]]));
+    }
 }
