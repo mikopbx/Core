@@ -10,7 +10,7 @@ use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\PBXCoreREST\Http\Request;
 use MikoPBX\PBXCoreREST\Services\TokenValidationService;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
-use Phalcon\Cache\Adapter\Memory;
+use Phalcon\Cache\Adapter\Stream;
 use Phalcon\Di\Di;
 use Phalcon\Storage\SerializerFactory;
 
@@ -33,7 +33,8 @@ class TokenValidationServiceLastUsedTest extends AbstractUnitTest
     private string $token;
     private const int KEY_ID = 7;
 
-    private Memory $cache;
+    private Stream $cache;
+    private string $cacheDir;
 
     public function setUp(): void
     {
@@ -42,7 +43,11 @@ class TokenValidationServiceLastUsedTest extends AbstractUnitTest
         $this->token = bin2hex(random_bytes(32));
 
         $di = Di::getDefault();
-        $this->cache = new Memory(new SerializerFactory());
+        // Stream, not Memory: Memory::get() of a missing key raises a notice in Phalcon 5.9,
+        // which PHPUnit turns into an exception the service swallows before writing the marker
+        $this->cacheDir = sys_get_temp_dir() . '/token-cache-' . bin2hex(random_bytes(4)) . '/';
+        mkdir($this->cacheDir);
+        $this->cache = new Stream(new SerializerFactory(), ['storageDir' => $this->cacheDir]);
         $di->setShared(ManagedCacheProvider::SERVICE_NAME, $this->cache);
         // Nothing listens on port 1: rpush() throws RedisException "went away"
         $di->setShared(
@@ -72,14 +77,32 @@ class TokenValidationServiceLastUsedTest extends AbstractUnitTest
             $_SERVER['REQUEST_URI'],
             $_SERVER['REMOTE_ADDR']
         );
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($this->cacheDir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($files as $file) {
+            $file->isDir() ? rmdir($file->getPathname()) : unlink($file->getPathname());
+        }
+        rmdir($this->cacheDir);
         parent::tearDown();
+    }
+
+    /**
+     * Request carrying the routed path index.php sets; permission checks deny without it
+     */
+    private function routedRequest(): Request
+    {
+        $request = new Request();
+        $request->setRoutedPath($_SERVER['REQUEST_URI']);
+        return $request;
     }
 
     public function testFailedLastUsedSyncDoesNotBreakAuthentication(): void
     {
         $service = new TokenValidationService(Di::getDefault());
 
-        $result = $service->validate(new Request());
+        $result = $service->validate($this->routedRequest());
 
         $this->assertTrue($result->isValid(), 'last_used_at is informational: its sync must never fail authentication');
         $this->assertNull($result->getError());
@@ -93,7 +116,7 @@ class TokenValidationServiceLastUsedTest extends AbstractUnitTest
         $this->assertFalse($this->cache->has($syncKey));
 
         $before = time();
-        $service->validate(new Request());
+        $service->validate($this->routedRequest());
 
         $this->assertTrue($this->cache->has($syncKey), 'throttle marker must be written before the sync attempt, or a failing sync is retried on every request');
         $this->assertGreaterThanOrEqual($before, $this->cache->get($syncKey));
@@ -118,7 +141,7 @@ class TokenValidationServiceLastUsedTest extends AbstractUnitTest
         $service = $this->serviceWithUnavailableMetadataCache();
 
         // Token lookup has already succeeded; only the optional metadata cache is unavailable.
-        $result = $this->invokeMethod($service, 'validatePermissions', [$keyData, new Request()]);
+        $result = $this->invokeMethod($service, 'validatePermissions', [$keyData, $this->routedRequest()]);
 
         $this->assertTrue($result->isValid());
         $this->assertSame(self::KEY_ID, $result->getTokenInfo()['id']);
@@ -131,7 +154,7 @@ class TokenValidationServiceLastUsedTest extends AbstractUnitTest
         $keyData['allowed_paths'] = '{"/api/v3/extensions":"read"}';
         $service = $this->serviceWithUnavailableMetadataCache();
 
-        $result = $this->invokeMethod($service, 'validatePermissions', [$keyData, new Request()]);
+        $result = $this->invokeMethod($service, 'validatePermissions', [$keyData, $this->routedRequest()]);
 
         $this->assertFalse($result->isValid());
         $this->assertSame('Access denied: insufficient permissions for this endpoint', $result->getError());
@@ -152,7 +175,7 @@ class TokenValidationServiceLastUsedTest extends AbstractUnitTest
         $service = $this->serviceWithUnavailableMetadataCache();
 
         $this->expectException(\Phalcon\Storage\Exception::class);
-        $service->validate(new Request());
+        $service->validate($this->routedRequest());
     }
 
 }

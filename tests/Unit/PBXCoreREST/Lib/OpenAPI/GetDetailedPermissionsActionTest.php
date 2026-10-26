@@ -51,7 +51,7 @@ final class GetDetailedPermissionsActionTest extends TestCase
         $di = new Di();
         $di->setShared(
             PBXConfModulesProvider::SERVICE_NAME,
-            static fn (): array => [$inherited, $overridden, $inheritedOverride]
+            fn (): array => [$inherited, $overridden, $inheritedOverride]
         );
         Di::setDefault($di);
 

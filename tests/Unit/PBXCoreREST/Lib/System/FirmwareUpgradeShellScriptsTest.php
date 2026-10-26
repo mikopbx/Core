@@ -214,10 +214,10 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         $this->assertStringContainsString('*unknown*) continue ;;', $script);
         $this->assertStringContainsString('[ -e "/sys/class/tty/${_DEV#/dev/}/device" ] || continue', $script);
         $this->assertStringContainsString('{ echo "  - MikoPBX firmware upgrade" > /dev/console; } 2>/dev/null', $script);
-        $this->assertStringContainsString('echo "$@" 2>/dev/null || true', $script);
-        $this->assertStringContainsString('{ printf "%s\n" "$*" > "$_SERIAL"; } 2>/dev/null || true', $script);
+        $this->assertStringContainsString('echo "$_msg" 2>/dev/null || true', $script);
+        $this->assertStringContainsString('{ printf "%s\n" "$_msg" > "$_SERIAL"; } 2>/dev/null || true', $script);
         $this->assertSame(0, preg_match('/[<>]{1,2}\s*"\$_DEV"/', $script));
         $this->assertStringNotContainsString('echo -n "" > "$_DEV" 2>/dev/null', $script);
-        $this->assertStringNotContainsString('printf "%s\n" "$*" > "$_SERIAL" 2>/dev/null', $script);
+        $this->assertStringNotContainsString('printf "%s\n" "$_msg" > "$_SERIAL" 2>/dev/null', $script);
     }
 }

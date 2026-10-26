@@ -562,7 +562,8 @@ class ProvisioningConfig
 
         if ($constantsMap === null) {
             $reflection = new ReflectionClass(PbxSettings::class);
-            $constantsMap = $reflection->getConstants();
+            // Only string constants name settings; PbxSettings also holds arrays and numbers
+            $constantsMap = array_filter($reflection->getConstants(), 'is_string');
             $reverseMap = array_flip($constantsMap);
         }
 
