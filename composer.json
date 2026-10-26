@@ -17,7 +17,6 @@
         "ext-simplexml": "*",
         "ext-sockets": "*",
         "ext-sqlite3": "*",
-        "ext-xdebug": "*",
         "ext-zip": "*",
         "aego/oauth2-yandex": "^0.2",
         "aws/aws-sdk-php": "^3.359",
@@ -104,8 +103,7 @@
             "php": "8.4.27",
             "ext-phalcon": "5.23.0",
             "ext-redis": "6.3.0",
-            "ext-mailparse": "3.2.0",
-            "ext-xdebug": "3.4.7"
+            "ext-mailparse": "3.2.0"
         },
         "allow-plugins": {
             "php-http/discovery": true

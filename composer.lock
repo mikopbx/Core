@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "79cd01a8d922bdf9e0c75778119820c0",
+    "content-hash": "9b7856888ddd241fcb76b34d4ed28ea1",
     "packages": [
         {
             "name": "aego/oauth2-yandex",
@@ -6230,7 +6230,6 @@
         "ext-simplexml": "*",
         "ext-sockets": "*",
         "ext-sqlite3": "*",
-        "ext-xdebug": "*",
         "ext-zip": "*"
     },
     "platform-dev": {},
@@ -6238,8 +6237,7 @@
         "php": "8.4.27",
         "ext-phalcon": "5.23.0",
         "ext-redis": "6.3.0",
-        "ext-mailparse": "3.2.0",
-        "ext-xdebug": "3.4.7"
+        "ext-mailparse": "3.2.0"
     },
     "plugin-api-version": "2.6.0"
 }
