@@ -79,8 +79,14 @@ class GetFileContentAction extends Injectable
             $res->success = true;
             $res->data['content'] = mb_convert_encoding('' . file_get_contents($filename), 'UTF-8', 'UTF-8');
         } else {
-            // File is not in CustomFiles - check if it's allowed to be read
-            if (self::isFileInAllowedDirectory($filename)) {
+            // File is not in CustomFiles - check if it's allowed to be read.
+            // SECURITY (GHSA-6pqh-9vhp-2qrc): an unregistered file must NOT be readable
+            // from /etc/. CustomFiles::ALLOWED_DIRECTORIES lists /etc/ so that files
+            // *registered* as CustomFiles (above) can be served, but allowing the same
+            // prefix here turned this endpoint into an arbitrary local-file read
+            // (/etc/passwd, /etc/inc/mikopbx-settings.json, ...). Unregistered reads are
+            // confined to the data directories only.
+            if (self::isFileInUnregisteredReadDirectory($filename)) {
                 $res->success = true;
                 $res->data['content'] = mb_convert_encoding('' . file_get_contents($filename), 'UTF-8', 'UTF-8');
             } else {
@@ -101,6 +107,32 @@ class GetFileContentAction extends Injectable
     private static function isFileInAllowedDirectory(string $filepath): bool
     {
         foreach (CustomFiles::ALLOWED_DIRECTORIES as $allowedDir) {
+            if (str_starts_with($filepath, $allowedDir)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Directories an UNREGISTERED file (not present in CustomFiles) may be read from.
+     * Deliberately excludes /etc/: configuration under /etc/ is readable only when the
+     * exact path is registered as a CustomFiles record (GHSA-6pqh-9vhp-2qrc).
+     */
+    private const array UNREGISTERED_READ_DIRECTORIES = [
+        '/storage/usbdisk1/mikopbx/',
+        '/tmp/',
+    ];
+
+    /**
+     * Check if an unregistered file path is in a directory allowed for direct read.
+     *
+     * @param string $filepath
+     * @return bool
+     */
+    private static function isFileInUnregisteredReadDirectory(string $filepath): bool
+    {
+        foreach (self::UNREGISTERED_READ_DIRECTORIES as $allowedDir) {
             if (str_starts_with($filepath, $allowedDir)) {
                 return true;
             }
