@@ -9,20 +9,20 @@ return [
     'ari_BreadcrumbAsteriskRestUsers' => 'ARI korisnici',
     'ari_BreadcrumbCreate' => 'Stvori',
     'ari_BreadcrumbModify' => 'Uredi',
-    
+
     // Page titles and descriptions
     'ari_Title' => 'Upravljanje ARI korisnicima',
     'ari_Description' => 'Asterisk REST Interface (ARI) omogućuje upravljanje Asteriskom putem WebSocketa i REST API-ja',
     'ari_UserSettingsDescription' => 'Postavke korisnika za pristup Asterisk REST Interfaceu',
     'ari_NewUser' => 'Novi ARI korisnik',
     'ari_EditUser' => 'Uređivanje ARI korisnika',
-    
+
     // Buttons
     'ari_AddNewUser' => 'Dodaj korisnika',
     'ari_CreateFirstUser' => 'Stvori prvog korisnika',
     'ari_SaveUser' => 'Spremi korisnika',
     'ari_DeleteUser' => 'Izbriši korisnika',
-    
+
     // Table columns
     'ari_Username' => 'Korisničko ime',
     'ari_Password' => 'Lozinka',
@@ -31,23 +31,23 @@ return [
     'ari_Enabled' => 'Uključen',
     'ari_Disabled' => 'Isključen',
     'ari_EnableUser' => 'Uključi korisnika',
-    
+
     // Form fields and placeholders
     'ari_UsernamePlaceholder' => 'na primjer, ari_user',
     'ari_PasswordPlaceholder' => 'Unesite lozinku ili generirajte novu',
     'ari_DescriptionPlaceholder' => 'Opis korisnika (nije obavezno)',
     'ari_ApplicationsPlaceholder' => 'Sve aplikacije (ako nije navedeno)',
     'ari_EnabledTooltip' => 'Uključi ili isključi pristup za ovog korisnika',
-    
+
     // Applications help
     'ari_ApplicationsHelp' => 'Navedite nazive Stasis aplikacija kojima korisnik ima pristup. Ostavite prazno za pristup svim aplikacijama.',
-    
+
     // Connection info
     'ari_ConnectionInfo' => 'Podaci za povezivanje',
     'ari_WebSocketURL' => 'WebSocket URL',
     'ari_RESTURL' => 'REST API URL',
     'ari_SecureWebSocketURL' => 'Zaštićeni WebSocket URL (TLS)',
-    
+
     // Messages
     'ari_NoUsersFound' => 'ARI korisnici nisu pronađeni',
     'ari_PasswordGenerated' => 'Generirana je nova lozinka',
@@ -60,26 +60,26 @@ return [
     'ari_EmptyTableTitle' => 'ARI korisnici još nisu stvoreni',
     'ari_EmptyTableDescription' => 'Stvorite prvog korisnika za pristup Asterisk REST Interfaceu',
     'ari_ErrorThisUsernameInNotAvailable' => 'Ovo korisničko ime je već zauzeto',
-    
+
     // Validation messages
     'ari_ValidateUsernameEmpty' => 'Korisničko ime ne može biti prazno',
     'ari_ValidateUsernameFormat' => 'Korisničko ime može sadržavati samo latinična slova, brojeve i podvlaku',
     'ari_ValidatePasswordEmpty' => 'Lozinka ne može biti prazna',
-    
+
     // Info messages
     'ari_InfoSystemUser' => 'Ovo je sistemski korisnik i ne može se izbrisati',
     'ari_InfoWebSocketConnection' => 'Koristite ove URL-ove za povezivanje s ARI putem WebSocketa ili REST API-ja',
     'ari_InfoApplicationsAccess' => 'Korisnik ima pristup samo navedenim Stasis aplikacijama',
     'ari_InfoFullAccess' => 'Korisnik ima pristup svim Stasis aplikacijama',
-    
+
     // Settings
     'ari_SettingsEnabled' => 'ARI uključen',
     'ari_SettingsAllowedOrigins' => 'Dopušteni CORS izvori',
     'ari_SettingsAllowedOriginsHelp' => 'Popis domena za CORS (odvojenih zarezom). Koristite * za dopuštanje svih izvora.',
-    
+
     // Connection info summary
     'ari_ConnectionInfoSummary' => 'Koristite korisničke vjerodajnice za povezivanje s ARI putem WebSocketa ili REST API-ja',
-    
+
     // Tooltips for Applications field
     'ari_ApplicationsTooltip_header' => 'Stasis aplikacije',
     'ari_ApplicationsTooltip_desc' => 'Navedite nazive Stasis aplikacija kojima korisnik ima pristup',
@@ -93,7 +93,7 @@ return [
     'ari_ApplicationsTooltip_common_channel_spy' => 'Prisluškivanje kanala',
     'ari_ApplicationsTooltip_warning_header' => 'Pažnja',
     'ari_ApplicationsTooltip_warning' => 'Ograničavanje pristupa aplikacijama utječe na funkcionalnost ARI klijenta',
-    
+
     // Tooltips for Connection Info
     'ari_ConnectionInfoTooltip_header' => 'Parametri povezivanja',
     'ari_ConnectionInfoTooltip_desc' => 'Koristite ove parametre za postavljanje povezivanja s Asterisk REST Interfaceom',
@@ -109,7 +109,7 @@ return [
     'ari_ConnectionInfoTooltip_examples' => '# WebSocket s autentifikacijom|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# REST API zahtjev|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => 'Zamijenite [application] nazivom vaše Stasis aplikacije',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'vaš-poslužitelj',
-    
+
     // Other tooltips
     'ari_SystemUserReadOnly' => 'Sistemski korisnik dostupan je samo za čitanje',
     'ari_ErrorLoadingUser' => 'Pogreška pri učitavanju podataka korisnika',

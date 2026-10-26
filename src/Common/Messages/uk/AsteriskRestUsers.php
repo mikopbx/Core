@@ -9,20 +9,20 @@ return [
     'ari_BreadcrumbAsteriskRestUsers' => 'Користувачі ARI',
     'ari_BreadcrumbCreate' => 'Створити',
     'ari_BreadcrumbModify' => 'Редагувати',
-    
+
     // Page titles and descriptions
     'ari_Title' => 'Керування користувачами ARI',
     'ari_Description' => 'Asterisk REST Interface (ARI) дозволяє керувати Asterisk через WebSocket і REST API',
     'ari_UserSettingsDescription' => 'Налаштування користувача для доступу до Asterisk REST Interface',
     'ari_NewUser' => 'Новий користувач ARI',
     'ari_EditUser' => 'Редагування користувача ARI',
-    
+
     // Buttons
     'ari_AddNewUser' => 'Додати користувача',
     'ari_CreateFirstUser' => 'Створити першого користувача',
     'ari_SaveUser' => 'Зберегти користувача',
     'ari_DeleteUser' => 'Видалити користувача',
-    
+
     // Table columns
     'ari_Username' => 'Ім\'я користувача',
     'ari_Password' => 'Пароль',
@@ -31,23 +31,23 @@ return [
     'ari_Enabled' => 'Увімкнено',
     'ari_Disabled' => 'Вимкнено',
     'ari_EnableUser' => 'Увімкнути користувача',
-    
+
     // Form fields and placeholders
     'ari_UsernamePlaceholder' => 'наприклад, ari_user',
     'ari_PasswordPlaceholder' => 'Введіть пароль або згенеруйте новий',
     'ari_DescriptionPlaceholder' => 'Опис користувача (необов\'язково)',
     'ari_ApplicationsPlaceholder' => 'Усі застосунки (якщо не вказано)',
     'ari_EnabledTooltip' => 'Увімкнути або вимкнути доступ для цього користувача',
-    
+
     // Applications help
     'ari_ApplicationsHelp' => 'Вкажіть імена Stasis-застосунків, до яких має доступ користувач. Залиште порожнім для доступу до всіх застосунків.',
-    
+
     // Connection info
     'ari_ConnectionInfo' => 'Інформація для підключення',
     'ari_WebSocketURL' => 'WebSocket URL',
     'ari_RESTURL' => 'REST API URL',
     'ari_SecureWebSocketURL' => 'Захищений WebSocket URL (TLS)',
-    
+
     // Messages
     'ari_NoUsersFound' => 'Користувачів ARI не знайдено',
     'ari_PasswordGenerated' => 'Новий пароль згенеровано',
@@ -60,26 +60,26 @@ return [
     'ari_EmptyTableTitle' => 'Користувачів ARI ще не створено',
     'ari_EmptyTableDescription' => 'Створіть першого користувача для доступу до Asterisk REST Interface',
     'ari_ErrorThisUsernameInNotAvailable' => 'Це ім\'я користувача вже зайняте',
-    
+
     // Validation messages
     'ari_ValidateUsernameEmpty' => 'Ім\'я користувача не може бути порожнім',
     'ari_ValidateUsernameFormat' => 'Ім\'я користувача може містити лише латинські літери, цифри та символ підкреслення',
     'ari_ValidatePasswordEmpty' => 'Пароль не може бути порожнім',
-    
+
     // Info messages
     'ari_InfoSystemUser' => 'Це системний користувач, його не можна видалити',
     'ari_InfoWebSocketConnection' => 'Використовуйте ці URL для підключення до ARI через WebSocket або REST API',
     'ari_InfoApplicationsAccess' => 'Користувач має доступ лише до вказаних Stasis-застосунків',
     'ari_InfoFullAccess' => 'Користувач має доступ до всіх Stasis-застосунків',
-    
+
     // Settings
     'ari_SettingsEnabled' => 'ARI увімкнено',
     'ari_SettingsAllowedOrigins' => 'Дозволені джерела CORS',
     'ari_SettingsAllowedOriginsHelp' => 'Список доменів для CORS (через кому). Використовуйте * для дозволу всіх джерел.',
-    
+
     // Connection info summary
     'ari_ConnectionInfoSummary' => 'Використовуйте облікові дані користувача для підключення до ARI через WebSocket або REST API',
-    
+
     // Tooltips for Applications field
     'ari_ApplicationsTooltip_header' => 'Stasis-застосунки',
     'ari_ApplicationsTooltip_desc' => 'Вкажіть імена Stasis-застосунків, до яких має доступ користувач',
@@ -93,7 +93,7 @@ return [
     'ari_ApplicationsTooltip_common_channel_spy' => 'Прослуховування каналів',
     'ari_ApplicationsTooltip_warning_header' => 'Увага',
     'ari_ApplicationsTooltip_warning' => 'Обмеження доступу до застосунків впливає на функціональність ARI-клієнта',
-    
+
     // Tooltips for Connection Info
     'ari_ConnectionInfoTooltip_header' => 'Параметри підключення',
     'ari_ConnectionInfoTooltip_desc' => 'Використовуйте ці параметри для налаштування підключення до Asterisk REST Interface',
@@ -109,7 +109,7 @@ return [
     'ari_ConnectionInfoTooltip_examples' => '# WebSocket з автентифікацією|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# Запит REST API|curl -u username:password http://server:8088/ari/channels',
     'ari_ConnectionInfoTooltip_note' => 'Замініть [application] на ім\'я вашого Stasis-застосунку',
     'ari_ConnectionInfoTooltip_server_placeholder' => 'ваш-сервер',
-    
+
     // Other tooltips
     'ari_SystemUserReadOnly' => 'Системний користувач доступний лише для читання',
     'ari_ErrorLoadingUser' => 'Помилка під час завантаження даних користувача',

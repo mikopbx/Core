@@ -118,9 +118,13 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,Set(DST_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})' . PHP_EOL . "\t";
         if ($hasCerts) {
             $conf .= 'same => n,Set(WS_CONTACTS=${PJSIP_DIAL_CONTACTS(${EXTEN}-WS)})' . PHP_EOL . "\t" .
-                     'same => n,Set(DST_CONTACT=${DST_CONTACT}${IF($["${DST_CONTACT}x" != "x" && "${WS_CONTACTS}x" != "x"]?&)}${WS_CONTACTS})' . PHP_EOL . "\t" .
+                     'same => n,Set(DST_CONTACT=${DST_CONTACT}' .
+                     '${IF($["${DST_CONTACT}x" != "x" && "${WS_CONTACTS}x" != "x"]?&)}' .
+                     '${WS_CONTACTS})' . PHP_EOL . "\t" .
                      'same => n,Set(TLS_CONTACTS=${PJSIP_DIAL_CONTACTS(${EXTEN}-TLS)})' . PHP_EOL . "\t" .
-                     'same => n,Set(DST_CONTACT=${DST_CONTACT}${IF($["${DST_CONTACT}x" != "x" && "${TLS_CONTACTS}x" != "x"]?&)}${TLS_CONTACTS})' . PHP_EOL . "\t";
+                     'same => n,Set(DST_CONTACT=${DST_CONTACT}' .
+                     '${IF($["${DST_CONTACT}x" != "x" && "${TLS_CONTACTS}x" != "x"]?&)}' .
+                     '${TLS_CONTACTS})' . PHP_EOL . "\t";
         }
         $conf .= 'same => n,return' . PHP_EOL . PHP_EOL;
 
@@ -311,12 +315,14 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,Hangup()' . PHP_EOL;
         $conf .= 'exten => busy,1,Set(MASTER_CHANNEL(M_DIALSTATUS)=BUSY)' . PHP_EOL . "\t";
         $conf .= 'same => n,Busy(2)' . PHP_EOL;
-        $conf .= 'exten => did2user,1,ExecIf($["${FROM_DID}x" != "x" && ${DIALPLAN_EXISTS(internal,${FROM_DID},1)} ]?Goto(internal,${FROM_DID},1))' . PHP_EOL . "\t";
+        $conf .= 'exten => did2user,1,ExecIf($["${FROM_DID}x" != "x" && ${DIALPLAN_EXISTS(internal,${FROM_DID},1)} ]?' .
+            'Goto(internal,${FROM_DID},1))' . PHP_EOL . "\t";
         $conf .= 'same => n,Hangup()' . PHP_EOL . PHP_EOL;
 
         // Define internal incoming call context
         $conf .= "[internal-incoming]" . PHP_EOL;
-        $conf .= 'exten => ' . ExtensionsConf::ALL_EXTENSION . ',1,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . PHP_EOL . "\t";
+        $conf .= 'exten => ' . ExtensionsConf::ALL_EXTENSION . ',1,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?' .
+            'Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . PHP_EOL . "\t";
         $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${CHANNEL})' . PHP_EOL . "\t";
         $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT)=${EMPTY_VAR})' . PHP_EOL . "\t";
         $conf .= 'same => n,Goto(internal,${EXTEN},1)' . PHP_EOL;
