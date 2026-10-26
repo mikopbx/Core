@@ -2,6 +2,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Modules;
 
+use MikoPBX\Core\System\Directories;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use Pheanstalk\Contract\PheanstalkPublisherInterface;
@@ -57,16 +58,17 @@ class ModulesControllerBase extends BaseController
         $this->sendRequestToBackendWorker(PbxExtensionsProcessor::class, $actionName, $payload, $moduleName, $maxTimeout, $priority);
 
         $response = json_decode($this->response->getContent(), true);
-        $this->handleResponse($response);
+        $this->handleResponse($response, $moduleName);
     }
 
     /**
      * Handles the response from the backend worker.
      *
      * @param mixed $response The response content decoded as an associative array.
+     * @param string $moduleName The module that answered, its own directory may be streamed.
      * @return void
      */
-    private function handleResponse(mixed $response): void
+    private function handleResponse(mixed $response, string $moduleName = ''): void
     {
         // BaseController may have answered already: a core-format file is streamed with the
         // content left empty, a raw body may not be a JSON object. Nothing to route then (#1167).
@@ -74,7 +76,7 @@ class ModulesControllerBase extends BaseController
             return;
         }
         if (isset($response['data']['fpassthru'])) {
-            $this->handleFilePassThrough($response['data']);
+            $this->handleFilePassThrough($response['data'], $moduleName);
         } else {
             // Rebuild the payload without the assoc flag: nested empty objects ({}) and objects with
             // numeric keys must not be re-encoded as JSON arrays (#1162). The HTTP status stays the
@@ -118,58 +120,92 @@ class ModulesControllerBase extends BaseController
      * used by ModuleAutoprovision since 2026-05) never reaches this method: BaseController streams
      * it itself (handleFileStreaming()).
      *
+     * Only files under the temp directories or the module's own directory are streamed or
+     * deleted (#1264); anything else, or a file that cannot be opened, answers 404 without the path.
+     *
      * @param array $data Response data from module
+     * @param string $moduleName The module that answered
      * @return void
      */
-    private function handleFilePassThrough(array $data): void
+    private function handleFilePassThrough(array $data, string $moduleName = ''): void
     {
-        // WHY: Extract server file path
-        $filename = $data['filename'] ?? '';
-
-        // WHY: Open file for binary reading
-        $fp = fopen($filename, "rb");
-        if ($fp !== false) {
-            // WHY: Get file size for Content-Length header
-            $size = filesize($filename);
-
-            // WHY BACKWARD COMPATIBLE: Use download_name if provided, fallback to basename()
-            // Old modules don't set download_name
-            // New modules can specify custom filename
-            $name = $data['download_name'] ?? basename($filename);
-
-            // WHY BACKWARD COMPATIBLE: Use content_type if provided, fallback to text/plain
-            // Old modules don't set content_type
-            // New modules can specify proper MIME type (application/x-gzip, application/zip, etc.)
-            $contentType = $data['content_type'] ?? 'text/plain';
-
-            // WHY: Set standard download headers
-            $this->response->setHeader('Content-Description', "config file");
-            $safeName = self::sanitizeContentDispositionName($name);
-            $this->response->setHeader('Content-Disposition', "attachment; filename=\"$safeName\"");
-            $this->response->setHeader('Content-Type', $contentType);
-            $this->response->setHeader('Content-Transfer-Encoding', "binary");
-            $this->response->setContentLength($size);
-
-            // WHY BACKWARD COMPATIBLE: Apply additional headers if provided
-            // Old modules don't use additional_headers
-            // New modules can add custom headers (X-Generated-By, Cache-Control, etc.)
-            if (!empty($data['additional_headers']) && is_array($data['additional_headers'])) {
-                foreach ($data['additional_headers'] as $headerName => $headerValue) {
-                    $this->response->setHeader($headerName, $headerValue);
-                }
-            }
-
-            // WHY: Send headers before streaming
-            $this->response->sendHeaders();
-
-            // WHY: Stream file directly to output (memory efficient)
-            fpassthru($fp);
-            fclose($fp);
+        // WHY: Resolve symlinks and "..", then check the real path against the allowed directories
+        $filename = self::resolveAllowedFile((string)($data['filename'] ?? ''), $moduleName);
+        $fp = $filename !== null ? @fopen($filename, 'rb') : false;
+        if ($fp === false) {
+            $this->response->setPayloadError('File not found', 404);
+            return;
         }
+        // WHY: Get file size for Content-Length header
+        $size = filesize($filename);
+
+        // WHY BACKWARD COMPATIBLE: Use download_name if provided, fallback to basename()
+        // Old modules don't set download_name
+        // New modules can specify custom filename
+        $name = $data['download_name'] ?? basename($filename);
+
+        // WHY BACKWARD COMPATIBLE: Use content_type if provided, fallback to text/plain
+        // Old modules don't set content_type
+        // New modules can specify proper MIME type (application/x-gzip, application/zip, etc.)
+        $contentType = $data['content_type'] ?? 'text/plain';
+
+        // WHY: Set standard download headers
+        $this->response->setHeader('Content-Description', "config file");
+        $safeName = self::sanitizeContentDispositionName($name);
+        $this->response->setHeader('Content-Disposition', "attachment; filename=\"$safeName\"");
+        $this->response->setHeader('Content-Type', $contentType);
+        $this->response->setHeader('Content-Transfer-Encoding', "binary");
+        $this->response->setContentLength($size);
+
+        // WHY BACKWARD COMPATIBLE: Apply additional headers if provided
+        // Old modules don't use additional_headers
+        // New modules can add custom headers (X-Generated-By, Cache-Control, etc.)
+        if (!empty($data['additional_headers']) && is_array($data['additional_headers'])) {
+            foreach ($data['additional_headers'] as $headerName => $headerValue) {
+                $this->response->setHeader($headerName, $headerValue);
+            }
+        }
+
+        // WHY: Send headers before streaming
+        $this->response->sendHeaders();
+
+        // WHY: Stream file directly to output (memory efficient)
+        fpassthru($fp);
+        fclose($fp);
 
         // WHY: Clean up temporary files after sending
         if (!empty($data['need_delete'])) {
             unlink($filename);
         }
+    }
+
+    /**
+     * Returns the real path of a module-supplied file if it lies under an allowed directory.
+     *
+     * @param string $filename Path returned by the module
+     * @param string $moduleName The module that answered
+     * @return string|null Real path, or null when the file is missing or outside the allowed directories
+     */
+    private static function resolveAllowedFile(string $filename, string $moduleName): ?string
+    {
+        $realPath = $filename !== '' ? realpath($filename) : false;
+        if ($realPath === false || !is_file($realPath)) {
+            return null;
+        }
+        $allowedDirs = [
+            Directories::getDir(Directories::CORE_TEMP_DIR),
+            Directories::getDir(Directories::WWW_DOWNLOAD_CACHE_DIR),
+            sys_get_temp_dir(),
+        ];
+        if ($moduleName !== '' && basename($moduleName) === $moduleName) {
+            $allowedDirs[] = Directories::getDir(Directories::CORE_MODULES_DIR) . '/' . $moduleName;
+        }
+        foreach ($allowedDirs as $dir) {
+            $realDir = realpath($dir);
+            if ($realDir !== false && str_starts_with($realPath, rtrim($realDir, '/') . '/')) {
+                return $realPath;
+            }
+        }
+        return null;
     }
 }
