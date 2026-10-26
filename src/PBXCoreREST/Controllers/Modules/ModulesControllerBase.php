@@ -130,7 +130,8 @@ class ModulesControllerBase extends BaseController
     private function handleFilePassThrough(array $data, string $moduleName = ''): void
     {
         // WHY: Resolve symlinks and "..", then check the real path against the allowed directories
-        $filename = self::resolveAllowedFile((string)($data['filename'] ?? ''), $moduleName);
+        $moduleFile = (string)($data['filename'] ?? '');
+        $filename = self::resolveAllowedFile($moduleFile, $moduleName);
         $fp = $filename !== null ? @fopen($filename, 'rb') : false;
         if ($fp === false) {
             $this->response->setPayloadError('File not found', 404);
@@ -173,9 +174,9 @@ class ModulesControllerBase extends BaseController
         fpassthru($fp);
         fclose($fp);
 
-        // WHY: Clean up temporary files after sending
+        // WHY: Clean up temporary files after sending; a symlink is removed itself, not its target
         if (!empty($data['need_delete'])) {
-            unlink($filename);
+            unlink($moduleFile);
         }
     }
 

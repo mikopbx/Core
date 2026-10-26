@@ -162,6 +162,28 @@ class ModulesControllerBaseTest extends TestCase
         }
     }
 
+    public function testNeedDeleteRemovesTheLinkNotItsTarget(): void
+    {
+        $target = (string) tempnam(sys_get_temp_dir(), 'mod1264-target');
+        file_put_contents($target, 'module data');
+        $link = sys_get_temp_dir() . '/mod1264-link-' . uniqid();
+        symlink($target, $link);
+        try {
+            $this->expectOutputString('module data');
+            $this->passThroughModule(json_encode([
+                'result' => true,
+                'data' => ['fpassthru' => true, 'filename' => $link, 'need_delete' => true],
+                'messages' => [],
+            ]));
+
+            $this->assertFalse(is_link($link));
+            $this->assertFileExists($target);
+        } finally {
+            @unlink($link);
+            @unlink($target);
+        }
+    }
+
     public function testMissingFileAnswersErrorWithoutPath(): void
     {
         $file = sys_get_temp_dir() . '/mod1264-missing-' . uniqid();
