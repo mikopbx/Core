@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\PBXCoreREST\Lib\Extensions;
 
 use MikoPBX\PBXCoreREST\Lib\Extensions\ModuleExtensionOwnerResolver;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class ModuleExtensionOwnerResolverTest extends TestCase
@@ -23,7 +22,9 @@ final class ModuleExtensionOwnerResolverTest extends TestCase
         );
     }
 
-    #[DataProvider('invalidRelationsProvider')]
+    /**
+     * @dataProvider invalidRelationsProvider
+     */
     public function testIgnoresRelationsThatDoNotIdentifyAModule(array $relatedModelClasses): void
     {
         self::assertNull(ModuleExtensionOwnerResolver::resolve($relatedModelClasses));

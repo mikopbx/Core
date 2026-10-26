@@ -286,7 +286,7 @@ class ProvisioningConfigTest extends TestCase
 
         $this->assertNotNull($config);
         $this->assertSame('en-en', $config->pbxSettings['PBXLanguage'] ?? null);
-        $this->assertSame(5060, $config->pbxSettings['SIPPort'] ?? null);
+        $this->assertSame('5060', $config->pbxSettings['SIPPort'] ?? null);
     }
 
     public function testFromJsonNetworkSettings(): void
@@ -533,8 +533,8 @@ YAML;
 
         // Arrays should be merged, with override taking precedence
         $this->assertSame('en-en', $base->pbxSettings['PBXLanguage'] ?? null);
-        $this->assertSame(5061, $base->pbxSettings['SIPPort'] ?? null);
-        $this->assertSame(4569, $base->pbxSettings['IAXPort'] ?? null);
+        $this->assertSame('5061', $base->pbxSettings['SIPPort'] ?? null);
+        $this->assertSame('4569', $base->pbxSettings['IAXPort'] ?? null);
     }
 
     public function testMergeChaining(): void
