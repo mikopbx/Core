@@ -96,7 +96,10 @@ class CopyRecordAction extends AbstractCopyRecordAction
     {
         return function ($sourceCondition, $newCondition) {
             // Find source routing rules
-            $sourceRoutes = OutWorkTimesRouts::find("timeConditionId='{$sourceCondition->id}'");
+            $sourceRoutes = OutWorkTimesRouts::find([
+                'conditions' => 'timeConditionId = :id:',
+                'bind' => ['id' => $sourceCondition->id],
+            ]);
 
             // Convert to array format for DataStructure
             $routesArray = [];

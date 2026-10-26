@@ -55,7 +55,10 @@ class PatchRecordAction extends AbstractSaveRecordAction
             }
 
             // v3 API: ID is the uniqid value
-            $app = DialplanApplications::findFirst("uniqid='{$data['id']}'");
+            $app = DialplanApplications::findFirst([
+                'conditions' => 'uniqid = :id:',
+                'bind' => ['id' => $data['id']],
+            ]);
 
             if (!$app) {
                 $res->messages['error'][] = "Dialplan application not found: {$data['id']}";

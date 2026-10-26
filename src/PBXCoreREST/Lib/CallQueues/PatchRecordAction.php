@@ -53,7 +53,10 @@ class PatchRecordAction extends AbstractSaveRecordAction
             }
 
             // v3 API: ID is the uniqid value
-            $queue = CallQueues::findFirst("uniqid='{$data['id']}'");
+            $queue = CallQueues::findFirst([
+                'conditions' => 'uniqid = :id:',
+                'bind' => ['id' => $data['id']],
+            ]);
 
             if (!$queue) {
                 $res->messages['error'][] = "Call queue not found: {$data['id']}";
@@ -65,7 +68,10 @@ class PatchRecordAction extends AbstractSaveRecordAction
             $existingMembers = [];
             if (!isset($data['members'])) {
                 /** @var \Phalcon\Mvc\Model\Resultset\Simple $members */
-                $members = CallQueueMembers::find("queue='{$queue->uniqid}'");
+                $members = CallQueueMembers::find([
+                    'conditions' => 'queue = :queue:',
+                    'bind' => ['queue' => $queue->uniqid],
+                ]);
                 /** @var CallQueueMembers $member */
                 foreach ($members as $member) {
                     $existingMembers[] = [

@@ -49,7 +49,10 @@ class UpdateRecordAction extends AbstractSaveRecordAction
             }
             
             // v3 API: ID is the uniqid value
-            $queue = CallQueues::findFirst("uniqid='{$data['id']}'");
+            $queue = CallQueues::findFirst([
+                'conditions' => 'uniqid = :id:',
+                'bind' => ['id' => $data['id']],
+            ]);
             
             if (!$queue) {
                 $res->messages['error'][] = "Call queue not found: {$data['id']}";
