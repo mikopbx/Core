@@ -58,6 +58,11 @@ class UpdateDatabase extends Injectable
     private float $operationStartTime = 0.0;
 
     /**
+     * Savepoint taken when a table is migrated inside the caller's transaction
+     */
+    private const string MIGRATION_SAVEPOINT = 'update_db_table';
+
+    /**
      * Flush Redis DB 2 (model metadata cache) to prevent stale schema data
      * from surviving Docker/LXC upgrades with persistent volumes.
      *
@@ -414,101 +419,228 @@ class UpdateDatabase extends Injectable
             'indexes' => $indexes,
         ];
 
-        // Let's describe the directory for storing temporary tables and data
-        $tempDir = $this->di->getShared('config')->path('core.tempDir');
-        $sqliteTempStore = $connectionService->fetchColumn('PRAGMA temp_store');
-        $sqliteTempDir   = $connectionService->fetchColumn('PRAGMA temp_store_directory');
-        $connectionService->execute('PRAGMA temp_store = FILE;');
-        $connectionService->execute("PRAGMA temp_store_directory = '$tempDir';");
+        // A transaction already open on this connection belongs to the caller: SQLite rejects
+        // temp_store changes inside it, and a savepoint undoes only our statements (#1231)
+        $outerTransaction = $connectionService->getTransactionLevel() > 0 || $connectionService->isUnderTransaction();
+        $pragmas = $outerTransaction ? null : $this->switchTempStore($connectionService, $tableName);
 
-        // Starting the transaction
-        $connectionService->begin();
-        if (! $connectionService->tableExists($tableName)) {
-            
-            $msg = '   |- Create table: ' . $tableName;
-            $msg = $this->publishMessage($msg);
-            $result = $connectionService->createTable($tableName, '', $columnsNew);
-            $this->publishResult($msg);
-        } else {
-            // Table exists, we have to check/upgrade its structure
-            $currentColumnsArr = $connectionService->describeColumns($tableName, '');
+        $changed = false;
+        try {
+            // Starting the transaction
+            $this->beginChanges($connectionService, $outerTransaction);
+            if (! $connectionService->tableExists($tableName)) {
 
-            if ($this->isTableStructureNotEqual($currentColumnsArr, $columns)) {
+                $msg = '   |- Create table: ' . $tableName;
+                $msg = $this->publishMessage($msg);
+                $changed = true;
+                $result = $connectionService->createTable($tableName, '', $columnsNew);
+                $this->publishStepResult($msg, $result);
+            } else {
+                // Table exists, we have to check/upgrade its structure
+                $currentColumnsArr = $connectionService->describeColumns($tableName, '');
 
-                // Fast path: if only new columns were added, use ALTER TABLE ADD COLUMN (instant, no data copy)
-                $addableColumns = $this->getAddableColumns($currentColumnsArr, $columns, $preserveExtraColumns);
-                if ($addableColumns !== null) {
-                    if (!empty($addableColumns)) {
-                        $msg = '   |- Add columns to: ' . $tableName;
-                        $msg = $this->publishMessage($msg);
-                        foreach ($addableColumns as $newColumn) {
-                            $result = $result && $connectionService->addColumn($tableName, '', $newColumn);
-                        }
-                        $this->publishResult($msg);
-                    }
-                    // Empty array = all model columns exist, extra DB columns preserved → skip
-                } else {
-                    // Slow path: full table copy required (column properties changed)
-                    $msg = '   |- Upgrade table: ' . $tableName;
-                    $msg = $this->publishMessage($msg);
-                    $oldColNames = [];
-                    foreach ($currentColumnsArr as $col) {
-                        $oldColNames[] = $col->getName();
-                    }
+                if ($this->isTableStructureNotEqual($currentColumnsArr, $columns)) {
 
-                    // When preserving extra columns (module migrations), include DB columns
-                    // not in the model so module-added columns survive the full copy
-                    if ($preserveExtraColumns) {
-                        $modelColNames = array_map(fn($c) => $c->getName(), $columns);
-                        foreach ($currentColumnsArr as $oldCol) {
-                            if (!in_array($oldCol->getName(), $modelColNames, true)) {
-                                $columns[] = $oldCol;
-                                $newColNames[] = $oldCol->getName();
+                    // Fast path: if only new columns were added, use ALTER TABLE ADD COLUMN (instant, no data copy)
+                    $addableColumns = $this->getAddableColumns($currentColumnsArr, $columns, $preserveExtraColumns);
+                    if ($addableColumns !== null) {
+                        if (!empty($addableColumns)) {
+                            $msg = '   |- Add columns to: ' . $tableName;
+                            $msg = $this->publishMessage($msg);
+                            $changed = true;
+                            foreach ($addableColumns as $newColumn) {
+                                $result = $result && $connectionService->addColumn($tableName, '', $newColumn);
                             }
+                            $this->publishStepResult($msg, $result);
                         }
-                        $columnsNew['columns'] = $columns;
-                    }
+                        // Empty array = all model columns exist, extra DB columns preserved → skip
+                    } else {
+                        // Slow path: full table copy required (column properties changed)
+                        $msg = '   |- Upgrade table: ' . $tableName;
+                        $msg = $this->publishMessage($msg);
+                        $changed = true;
+                        $oldColNames = [];
+                        foreach ($currentColumnsArr as $col) {
+                            $oldColNames[] = $col->getName();
+                        }
 
-                    // Create temporary clone with all current columns and data
-                    $gluedColumns = implode(',', $oldColNames);
-                    $query        = "CREATE TEMPORARY TABLE {$tableName}_backup($gluedColumns);
+                        // When preserving extra columns (module migrations), include DB columns
+                        // not in the model so module-added columns survive the full copy
+                        if ($preserveExtraColumns) {
+                            $modelColNames = array_map(fn($c) => $c->getName(), $columns);
+                            foreach ($currentColumnsArr as $oldCol) {
+                                if (!in_array($oldCol->getName(), $modelColNames, true)) {
+                                    $columns[] = $oldCol;
+                                    $newColNames[] = $oldCol->getName();
+                                }
+                            }
+                            $columnsNew['columns'] = $columns;
+                        }
+
+                        // Create temporary clone with all current columns and data
+                        $gluedColumns = implode(',', $oldColNames);
+                        $query        = "CREATE TEMPORARY TABLE {$tableName}_backup($gluedColumns);
 INSERT INTO {$tableName}_backup SELECT $gluedColumns FROM $tableName;
 DROP TABLE  $tableName";
-                    $result       = $result && $connectionService->execute($query);
+                        $result       = $result && $connectionService->execute($query);
 
-                    // Create new table with updated columns structure
-                    $result = $result && $connectionService->createTable($tableName, '', $columnsNew);
+                        // Create new table with updated columns structure
+                        $result = $result && $connectionService->createTable($tableName, '', $columnsNew);
 
-                    // Copy data from temporary table to newly created
-                    $newColumnNames  = array_intersect($newColNames, $oldColNames);
-                    $gluedNewColumns = implode(',', $newColumnNames);
-                    $result          = $result && $connectionService->execute(
-                        "INSERT INTO $tableName ( $gluedNewColumns) SELECT $gluedNewColumns  FROM {$tableName}_backup;"
-                    );
+                        // Copy data from temporary table to newly created
+                        $newColumnNames  = array_intersect($newColNames, $oldColNames);
+                        $gluedNewColumns = implode(',', $newColumnNames);
+                        $result          = $result && $connectionService->execute(
+                            "INSERT INTO $tableName ( $gluedNewColumns) SELECT $gluedNewColumns  FROM {$tableName}_backup;"
+                        );
 
-                    // Drop temporary table
-                    $result = $result && $connectionService->execute("DROP TABLE {$tableName}_backup;");
-                    $this->publishResult($msg);
+                        // Drop temporary table
+                        $result = $result && $connectionService->execute("DROP TABLE {$tableName}_backup;");
+                        $this->publishStepResult($msg, $result);
+                    }
                 }
+            }
+
+            if ($result) {
+                $result = $this->updateIndexes($tableName, $connectionService, $indexes);
+            }
+
+            if ($result) {
+                $result = $this->commitChanges($connectionService, $outerTransaction);
+            } else {
+                SystemMessages::sysLogMsg('createUpdateDbTableByAnnotations', "Error: Failed on create/update table {$tableName}", LOG_ERR);
+                $this->rollbackChanges($connectionService, $outerTransaction);
+            }
+        } catch (Throwable $exception) {
+            $result = false;
+            // Close the step message the exception interrupted
+            if ($this->operationStartTime > 0 && isset($msg)) {
+                $this->publishResult($msg, SystemMessages::RESULT_FAILED);
+            }
+            SystemMessages::sysLogMsg(
+                'createUpdateDbTableByAnnotations',
+                "Error: Failed on create/update table {$tableName}: " . $exception->getMessage(),
+                LOG_ERR
+            );
+            $this->rollbackChanges($connectionService, $outerTransaction);
+        } finally {
+            if ($pragmas !== null) {
+                $this->restoreTempStore($connectionService, $pragmas);
             }
         }
 
-
-        if ($result) {
-            $result = $this->updateIndexes($tableName, $connectionService, $indexes);
+        // The step messages above report each statement; this one reports whether it was kept
+        if ($changed) {
+            $msg = $this->publishMessage('   |- Commit changes: ' . $tableName);
+            $this->publishStepResult($msg, $result);
         }
-
-        if ($result) {
-            $result = $connectionService->commit();
-        } else {
-            SystemMessages::sysLogMsg('createUpdateDbTableByAnnotations', "Error: Failed on create/update table {$tableName}", LOG_ERR);
-            $connectionService->rollback();
-        }
-
-        // Restoring PRAGMA values
-        $connectionService->execute("PRAGMA temp_store = $sqliteTempStore;");
-        $connectionService->execute("PRAGMA temp_store_directory = '$sqliteTempDir';");
         return $result;
+    }
+
+    /**
+     * Points SQLite temporary storage to core.tempDir for the table copy
+     *
+     * An unusable directory only costs the setting: the migration goes on with the
+     * connection's own temp storage.
+     *
+     * @param mixed  $connectionService Database connection
+     * @param string $tableName         Table being migrated, for the log
+     * @return array{store: mixed, dir: mixed}|null Previous values, or null if nothing was changed
+     */
+    private function switchTempStore(mixed $connectionService, string $tableName): ?array
+    {
+        $tempDir = $this->di->getShared('config')->path('core.tempDir');
+        try {
+            $pragmas = [
+                'store' => $connectionService->fetchColumn('PRAGMA temp_store'),
+                'dir'   => $connectionService->fetchColumn('PRAGMA temp_store_directory'),
+            ];
+            $connectionService->execute("PRAGMA temp_store_directory = '$tempDir';");
+            $connectionService->execute('PRAGMA temp_store = FILE;');
+            return $pragmas;
+        } catch (Throwable $exception) {
+            SystemMessages::sysLogMsg(
+                'createUpdateDbTableByAnnotations',
+                "Warning: default temp storage for {$tableName}, cannot use {$tempDir}: " . $exception->getMessage(),
+                LOG_WARNING
+            );
+            return null;
+        }
+    }
+
+    /**
+     * Restores the temp storage values saved by switchTempStore()
+     *
+     * @param mixed                          $connectionService Database connection
+     * @param array{store: mixed, dir: mixed} $pragmas          Previous values
+     * @return void
+     */
+    private function restoreTempStore(mixed $connectionService, array $pragmas): void
+    {
+        try {
+            $connectionService->execute("PRAGMA temp_store = {$pragmas['store']};");
+            $connectionService->execute("PRAGMA temp_store_directory = '{$pragmas['dir']}';");
+        } catch (Throwable $exception) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                'Failed to restore temp storage: ' . $exception->getMessage(),
+                LOG_WARNING
+            );
+        }
+    }
+
+    /**
+     * Opens our own transaction, or a savepoint inside the caller's one
+     *
+     * @param mixed $connectionService Database connection
+     * @param bool  $outerTransaction  Whether the caller already holds a transaction
+     * @return void
+     */
+    private function beginChanges(mixed $connectionService, bool $outerTransaction): void
+    {
+        if ($outerTransaction) {
+            $connectionService->execute('SAVEPOINT ' . self::MIGRATION_SAVEPOINT);
+        } else {
+            $connectionService->begin();
+        }
+    }
+
+    /**
+     * Commits our own transaction, or releases the savepoint into the caller's one
+     *
+     * @param mixed $connectionService Database connection
+     * @param bool  $outerTransaction  Whether the caller already holds a transaction
+     * @return bool
+     */
+    private function commitChanges(mixed $connectionService, bool $outerTransaction): bool
+    {
+        if ($outerTransaction) {
+            return $connectionService->execute('RELEASE ' . self::MIGRATION_SAVEPOINT);
+        }
+        return $connectionService->commit();
+    }
+
+    /**
+     * Undoes our statements and leaves the connection as beginChanges() found it
+     *
+     * Never throws: the next model on this connection must not inherit an open transaction.
+     *
+     * @param mixed $connectionService Database connection
+     * @param bool  $outerTransaction  Whether the caller already holds a transaction
+     * @return void
+     */
+    private function rollbackChanges(mixed $connectionService, bool $outerTransaction): void
+    {
+        try {
+            if ($outerTransaction) {
+                $connectionService->execute('ROLLBACK TO ' . self::MIGRATION_SAVEPOINT);
+                $connectionService->execute('RELEASE ' . self::MIGRATION_SAVEPOINT);
+            } elseif ($connectionService->getTransactionLevel() > 0) {
+                $connectionService->rollback();
+            }
+        } catch (Throwable $exception) {
+            SystemMessages::sysLogMsg(__METHOD__, 'Rollback failed: ' . $exception->getMessage(), LOG_ERR);
+        }
     }
 
     /**
@@ -749,5 +881,16 @@ DROP TABLE  $tableName";
         }
         SystemMessages::echoResultMsgWithTime($msg, $result, $elapsedTime);
         $this->operationStartTime = 0.0;
+    }
+
+    /**
+     * Publish DONE or FAILED for a migration step
+     *
+     * @param string $msg
+     * @param bool   $succeeded
+     */
+    private function publishStepResult(string $msg, bool $succeeded): void
+    {
+        $this->publishResult($msg, $succeeded ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
     }
 }
