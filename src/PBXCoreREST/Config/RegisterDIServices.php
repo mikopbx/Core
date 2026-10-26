@@ -43,7 +43,6 @@ use MikoPBX\Common\Providers\{AclProvider,
     LanguageProvider,
     TranslationProvider,
     WafProvider,
-    WhoopsErrorHandlerProvider,
     MutexProvider
 };
 use MikoPBX\PBXCoreREST\Providers\{
@@ -51,6 +50,7 @@ use MikoPBX\PBXCoreREST\Providers\{
     PublicEndpointsRegistryProvider,
     RequestProvider,
     ResponseProvider,
+    RestWhoopsErrorHandlerProvider,
     RouterProvider
 };
 use Phalcon\Di\DiInterface;
@@ -71,7 +71,7 @@ class RegisterDIServices
 
             // Inject errors handlers
             SentryErrorHandlerProvider::class,
-            WhoopsErrorHandlerProvider::class,
+            RestWhoopsErrorHandlerProvider::class,
 
             // Inject Logger
             LoggerAuthProvider::class,
