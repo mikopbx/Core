@@ -26,16 +26,18 @@ use RuntimeException;
 
 /**
  * Drains pending advice tasks in priority order under per-task mutexes.
+ *
+ * @phpstan-type AdviceType array{type: class-string|string, cacheTime: int, cacheTimeWarning?: int, priority: int}
  */
 final class AdviceTaskBatchProcessor
 {
     private const int LOCK_TTL_SECONDS = 600;
 
     /**
-     * @param array<int, array{type: class-string|string, cacheTime: int, priority: int}> $adviceTypes
+     * @param array<int, AdviceType> $adviceTypes
      * @param callable(string): bool $isCached
      * @param callable(string, callable, int, int): mixed $synchronized
-     * @param callable(array{type: class-string|string, cacheTime: int, priority: int}): bool $process
+     * @param callable(AdviceType): bool $process
      * @param callable(): bool $isStopping
      * @param callable(): void $afterBatch
      */
@@ -101,5 +103,23 @@ final class AdviceTaskBatchProcessor
         }
 
         return $processedCount;
+    }
+
+    /**
+     * TTL for a freshly computed advice: `cacheTimeWarning` once it holds a warning, else `cacheTime`.
+     *
+     * #1290: an empty, info-only or failed update check is kept short, so a critical
+     * release published right after the check shows up without waiting a day.
+     *
+     * @param AdviceType $adviceType
+     * @param array<string, array<int, mixed>> $advice Result of the check, keyed by bucket.
+     */
+    public static function cacheTimeFor(array $adviceType, array $advice): int
+    {
+        if (!empty($advice['warning']) && isset($adviceType['cacheTimeWarning'])) {
+            return $adviceType['cacheTimeWarning'];
+        }
+
+        return $adviceType['cacheTime'];
     }
 }
