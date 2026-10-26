@@ -3,6 +3,18 @@ name: Code Quality
 on:
   push:
     branches: [develop]
+  pull_request:
+    branches: [develop]
+  workflow_dispatch:
+    inputs:
+      base:
+        description: 'Analyse src/**/*.php changed since this commit (default: last successful run on develop)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  actions: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -38,10 +50,35 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
 
+      # #1284: on develop the base is the last successful run, not the previous push, so
+      # pushes whose run failed or was cancelled are analysed again by the next run.
       - name: Detect changed PHP files
         id: changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_BASE: ${{ inputs.base }}
+          PUSH_BEFORE: ${{ github.event.before }}
         run: |
-          BASE=${{ github.event.before }}
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # The checkout is the test merge commit; its first parent is the develop it merged into.
+            BASE=$(git rev-parse HEAD^1)
+          elif [ -n "$INPUT_BASE" ]; then
+            BASE="$INPUT_BASE"
+          else
+            BASE=$(gh api \
+              "repos/${{ github.repository }}/actions/workflows/code-quality.yml/runs?branch=develop&status=success&per_page=1" \
+              --jq '.workflow_runs[0].head_sha // empty' || true)
+            if [ -z "$BASE" ] || ! git merge-base --is-ancestor "$BASE" "${{ github.sha }}"; then
+              echo "No usable last successful run, falling back to the previous push"
+              BASE="$PUSH_BEFORE"
+            fi
+          fi
+          if [ -z "$BASE" ]; then
+            echo "::error::No base commit to diff against; pass the base input"
+            exit 1
+          fi
+          echo "Base: $BASE"
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
 
           FILES=$(git diff --name-only --diff-filter=d "$BASE" "${{ github.sha }}" \
             -- 'src/**/*.php' | head -500)
@@ -64,14 +101,19 @@ jobs:
             --memory-limit=512M \
             --no-progress
 
+      # Whole files are checked, but only violations on lines changed since the base fail the
+      # step; the rest is legacy debt and is only counted in the log (#1284).
       - name: phpcs
         if: steps.changed.outputs.count != '0'
-        run: >-
-          vendor/bin/phpcs
-          --standard=PSR12
-          --report=checkstyle
-          --file-list=/tmp/changed-php-files.txt
-          -q | cs2pr
+        shell: bash
+        run: |
+          # Exit codes below 16 only report violations; 16 and above mean phpcs itself failed.
+          vendor/bin/phpcs \
+            --standard=phpcs.xml \
+            --report=json \
+            --file-list=/tmp/changed-php-files.txt \
+            -q > /tmp/phpcs.json || [ $? -lt 16 ]
+          php .github/scripts/phpcs-changed-lines.php "${{ steps.changed.outputs.base }}" /tmp/phpcs.json | cs2pr
 
       - name: Composer audit
         run: composer audit --format=plain
