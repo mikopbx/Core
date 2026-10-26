@@ -41,13 +41,25 @@ end
 
 -- Fallback: check for legacy token file (for backwards compatibility with modules)
 -- Some modules still use file-based token authentication via /var/etc/auth/{token}
--- This mechanism is kept for compatibility until all modules migrate to JWT
-local file_path = "/var/etc/auth/" .. token
-local file = io.open(file_path, "rb")
-if file then
-    ngx.log(ngx.NOTICE, "[access-nchan] Legacy file-based token used - module compatibility mode")
-    file:close()
-    return
+-- This mechanism is kept for compatibility until all modules migrate to JWT.
+--
+-- SECURITY: the token is concatenated into a filesystem path, so it must be a bare
+-- file name and must not be able to escape /var/etc/auth/ (GHSA-jjqg-6c4f-69gj).
+-- Reject any path separator, NUL byte or parent-directory sequence before io.open ever
+-- sees it; otherwise accept the token verbatim so legacy module tokens in any format
+-- (hex, base64url with -/_/=, UUIDs with dashes, etc.) keep working. Length is bounded
+-- only to avoid a pathologically long open() argument.
+if #token > 0 and #token <= 256
+    and not string.find(token, "/", 1, true)
+    and not string.find(token, "\0", 1, true)
+    and not string.find(token, "..", 1, true) then
+    local file_path = "/var/etc/auth/" .. token
+    local file = io.open(file_path, "rb")
+    if file then
+        ngx.log(ngx.NOTICE, "[access-nchan] Legacy file-based token used - module compatibility mode")
+        file:close()
+        return
+    end
 end
 
 -- Token is neither valid JWT nor valid file - deny access
