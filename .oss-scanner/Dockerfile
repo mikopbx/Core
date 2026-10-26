@@ -44,9 +44,7 @@ RUN curl -fsSL https://getcomposer.org/download/latest-stable/composer.phar -o /
     && chmod +x /usr/local/bin/composer \
     && composer --version
 #
-# One property of the repository shapes this step:
-#   - composer.lock is gitignored, so this resolves dependencies to latest rather than installing a lock,
-#     and the resulting vendor/ can differ from the one a released image ships.
+# composer.lock is versioned, so vendor/ gets the same package versions as a build of this commit.
 RUN COMPOSER_ALLOW_SUPERUSER=1 COMPOSER_NO_INTERACTION=1 \
       composer install --no-progress --prefer-dist --working-dir=/src
 
