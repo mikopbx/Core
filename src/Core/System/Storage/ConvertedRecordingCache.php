@@ -380,7 +380,8 @@ class ConvertedRecordingCache
             // the limiter catches overlapping speech (level=disabled keeps its headroom instead of
             // normalising back to 0 dBFS). 16 kHz covers wideband telephony;
             // compression_level 7 is a faster LAME psychoacoustic pass (#1190: 3x faster).
-            'mp3' => '-af ' . escapeshellarg('pan=mono|c0=c0+c1,alimiter=limit=0.95:level=disabled')
+            // aformat first: pan on an s16 source (WAV) would clip the sum before the limiter.
+            'mp3' => '-af ' . escapeshellarg('aformat=sample_fmts=fltp,pan=mono|c0=c0+c1,alimiter=limit=0.95:level=disabled')
                 . ' -ar 16000 -codec:a libmp3lame -b:a 32k -compression_level 7',
 
             // WAV: 16-bit PCM, uncompressed

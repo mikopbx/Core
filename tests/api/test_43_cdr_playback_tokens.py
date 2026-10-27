@@ -343,6 +343,16 @@ class TestCDRPlaybackTokens:
                 assert response.status_code == 400, \
                     f"cdr:{method}?timeout={value} returned {response.status_code}"
 
+            # An unknown token is refused by the controller, it never waits for a worker
+            response = requests.get(
+                f'{api_client.base_url}/cdr:{method}',
+                params={'token': 'a' * 32, 'timeout': '300'},
+                verify=False,
+                timeout=10,
+            )
+            assert response.status_code == 403, f"cdr:{method} fake token returned {response.status_code}"
+            assert response.elapsed.total_seconds() < 2, f"cdr:{method} fake token took {response.elapsed}"
+
 
 class TestCDRPlaybackTokensSecurity:
     """Security tests for token-based playback"""

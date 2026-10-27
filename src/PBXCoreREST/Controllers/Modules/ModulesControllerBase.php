@@ -4,6 +4,7 @@ namespace MikoPBX\PBXCoreREST\Controllers\Modules;
 
 use MikoPBX\Core\System\Directories;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use Pheanstalk\Contract\PheanstalkPublisherInterface;
 
@@ -50,7 +51,7 @@ class ModulesControllerBase extends BaseController
     public function callActionForModule(string $moduleName, string $actionName): void
     {
         // 30: the floor BaseController used to apply to every request (#1267 removed it there)
-        $maxTimeout = max(30, $this->request->getRequestTimeout());
+        $maxTimeout = min(WorkerApiCommands::MAX_WAIT_TIMEOUT, max(30, $this->request->getRequestTimeout()));
         $priority = max(PheanstalkPublisherInterface::DEFAULT_PRIORITY, $this->request->getRequestPriority());
         // Old style modules, we can remove it after 2025
         $payload =$this->request->getData();

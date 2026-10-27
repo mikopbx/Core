@@ -68,6 +68,9 @@ class WorkerApiCommands extends WorkerRedisBase
     /**
      * System configuration
      */
+    /** Longest controller wait a job may claim (module install/update use 600 s), #1267 */
+    public const int MAX_WAIT_TIMEOUT = 600;
+
     private const int REDIS_RESPONSE_TTL = 120; // 2 minutes (sync requests timeout in 30s, this is cleanup safety net)
     private const int MAX_RESPONSE_SIZE = 1048576; // 1MB
     private const int PROCESS_CHECK_INTERVAL = 100000; // 100ms
@@ -802,7 +805,7 @@ class WorkerApiCommands extends WorkerRedisBase
         // #1267: API_REQUEST_TTL is a floor; a longer controller wait (cdr timeout, modules) extends it
         $requestTtl = max(
             (int)PbxSettings::getValueByKey(PbxSettings::API_REQUEST_TTL),
-            (int)($request['wait_timeout'] ?? 0)
+            min((int)($request['wait_timeout'] ?? 0), self::MAX_WAIT_TIMEOUT)
         );
         $age = microtime(true) - (float)$request['created_at'];
 

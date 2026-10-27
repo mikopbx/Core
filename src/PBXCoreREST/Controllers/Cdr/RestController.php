@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Cdr;
 
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\CdrManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\Cdr\DataStructure;
@@ -318,6 +319,18 @@ class RestController extends BaseRestController
                 return;
             }
             $this->workerTimeout = $value;
+        }
+
+        // #1267: public endpoints - an unknown token must not hold a PHP-FPM child for the whole
+        // worker wait; the action re-validates it and extends its TTL.
+        $token = $this->request->getData()['token'] ?? '';
+        if (
+            in_array($method, ['playback', 'download'], true)
+            && is_string($token) && $token !== ''
+            && !$this->di->get(RedisClientProvider::SERVICE_NAME)->exists("cdr_playback_token:{$token}")
+        ) {
+            $this->sendErrorResponse('Invalid or expired playback token', 403);
+            return;
         }
 
         parent::handleCustomRequest($idOrMethod, $customMethod);
