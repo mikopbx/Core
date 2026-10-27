@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global SystemAPI, PbxStatusAPI, globalTranslate, ExtensionsAPI */
+/* global SystemAPI, PbxStatusAPI, globalTranslate, ExtensionsAPI, SecurityUtils */
 
 /**
  * Object responsible for handling system restart and shutdown.
@@ -103,9 +103,11 @@ const restart = {
 
         $.each(activeCalls, (index, call) => {
             callsList += '<tr>';
-            callsList += `<td>${call.start}</td>`;
-            callsList += `<td class="need-update">${call.src_num}</td>`;
-            callsList += `<td class="need-update">${call.dst_num}</td>`;
+            // SECURITY (GHSA-r823-fj9f-rqwh): src_num/dst_num originate from the SIP From
+            // header (CDR src/dst) and are rendered via .html(), so they must be escaped.
+            callsList += `<td>${SecurityUtils.escapeHtml(call.start)}</td>`;
+            callsList += `<td class="need-update">${SecurityUtils.escapeHtml(call.src_num)}</td>`;
+            callsList += `<td class="need-update">${SecurityUtils.escapeHtml(call.dst_num)}</td>`;
             callsList += '</tr>';
         });
 

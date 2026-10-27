@@ -158,7 +158,10 @@ abstract class AbstractPatchAction extends AbstractSaveRecordAction
             
             // Find record by appropriate field
             if ($hasUniqid) {
-                $record = $modelClass::findFirst("uniqid='{$data['id']}'");
+                $record = $modelClass::findFirst([
+                    'conditions' => 'uniqid = :id:',
+                    'bind' => ['id' => $data['id']],
+                ]);
             } else {
                 $record = $modelClass::findFirstById($data['id']);
             }

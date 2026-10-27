@@ -60,7 +60,10 @@ class CopyRecordAction
 
         try {
             // Find source incoming route
-            $sourceRoute = IncomingRoutingTable::findFirst("id='{$sourceId}'");
+            $sourceRoute = IncomingRoutingTable::findFirst([
+                'conditions' => 'id = :id:',
+                'bind' => ['id' => $sourceId],
+            ]);
 
             if (!$sourceRoute) {
                 $res->messages['error'][] = "Source incoming route not found: {$sourceId}";

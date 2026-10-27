@@ -110,7 +110,7 @@
         }
     },
     "scripts": {
-        "phpcs": "phpcs --standard=PSR12",
+        "phpcs": "phpcs --standard=phpcs.xml",
         "generate-extensions-tests": "php tests/AdminCabinet/Scripts/GenerateExtensionTests.php",
         "generate-ivrmenu-tests": "php tests/AdminCabinet/Scripts/GenerateIVRMenuTests.php",
         "generate-sip-providers-tests": "php tests/AdminCabinet/Scripts/GenerateSIPProviderTests.php",

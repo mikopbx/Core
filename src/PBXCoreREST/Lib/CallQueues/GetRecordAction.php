@@ -74,7 +74,10 @@ class GetRecordAction extends AbstractGetRecordAction
         } else {
             // Find existing record
             // v3 API: ID is the uniqid value
-            $queue = CallQueues::findFirst("uniqid='{$id}'");
+            $queue = CallQueues::findFirst([
+                'conditions' => 'uniqid = :id:',
+                'bind' => ['id' => $id],
+            ]);
 
             if ($queue) {
                 // Get queue members with their representations

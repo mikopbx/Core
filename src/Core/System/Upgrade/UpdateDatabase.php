@@ -429,7 +429,6 @@ class UpdateDatabase extends Injectable
             // Starting the transaction
             $this->beginChanges($connectionService, $outerTransaction);
             if (! $connectionService->tableExists($tableName)) {
-
                 $msg = '   |- Create table: ' . $tableName;
                 $msg = $this->publishMessage($msg);
                 $changed = true;
@@ -440,7 +439,6 @@ class UpdateDatabase extends Injectable
                 $currentColumnsArr = $connectionService->describeColumns($tableName, '');
 
                 if ($this->isTableStructureNotEqual($currentColumnsArr, $columns)) {
-
                     // Fast path: if only new columns were added, use ALTER TABLE ADD COLUMN (instant, no data copy)
                     $addableColumns = $this->getAddableColumns($currentColumnsArr, $columns, $preserveExtraColumns);
                     if ($addableColumns !== null) {
@@ -491,7 +489,8 @@ DROP TABLE  $tableName";
                         $newColumnNames  = array_intersect($newColNames, $oldColNames);
                         $gluedNewColumns = implode(',', $newColumnNames);
                         $result          = $result && $connectionService->execute(
-                            "INSERT INTO $tableName ( $gluedNewColumns) SELECT $gluedNewColumns  FROM {$tableName}_backup;"
+                            "INSERT INTO $tableName ( $gluedNewColumns) " .
+                            "SELECT $gluedNewColumns  FROM {$tableName}_backup;"
                         );
 
                         // Drop temporary table
@@ -508,7 +507,11 @@ DROP TABLE  $tableName";
             if ($result) {
                 $result = $this->commitChanges($connectionService, $outerTransaction);
             } else {
-                SystemMessages::sysLogMsg('createUpdateDbTableByAnnotations', "Error: Failed on create/update table {$tableName}", LOG_ERR);
+                SystemMessages::sysLogMsg(
+                    'createUpdateDbTableByAnnotations',
+                    "Error: Failed on create/update table {$tableName}",
+                    LOG_ERR
+                );
                 $this->rollbackChanges($connectionService, $outerTransaction);
             }
         } catch (Throwable $exception) {

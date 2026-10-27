@@ -211,7 +211,10 @@ class DropdownsAction extends Injectable
      */
     private static function findModuleByExtensionNumber(string $number): mixed
     {
-        $extension = Extensions::findFirst("number ='$number'");
+        $extension = Extensions::findFirst([
+            'conditions' => 'number = :number:',
+            'bind' => ['number' => $number],
+        ]);
         if ($extension === null) {
             return null;
         }

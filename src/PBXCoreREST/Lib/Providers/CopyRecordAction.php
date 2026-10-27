@@ -68,7 +68,10 @@ class CopyRecordAction
 
         try {
             // Find source provider
-            $sourceProvider = Providers::findFirst("uniqid='{$sourceId}'");
+            $sourceProvider = Providers::findFirst([
+                'conditions' => 'uniqid = :id:',
+                'bind' => ['id' => $sourceId],
+            ]);
 
             if (!$sourceProvider) {
                 $res->messages['error'][] = "Source provider not found: {$sourceId}";
@@ -128,7 +131,10 @@ class CopyRecordAction
 
         // Copy type-specific configuration
         if ($sourceProvider->type === 'SIP') {
-            $sourceSip = Sip::findFirst("uniqid='{$sourceProvider->uniqid}'");
+            $sourceSip = Sip::findFirst([
+                'conditions' => 'uniqid = :id:',
+                'bind' => ['id' => $sourceProvider->uniqid],
+            ]);
             if ($sourceSip) {
                 $newSip = new Sip();
 
@@ -173,7 +179,10 @@ class CopyRecordAction
                 $newProvider->Sip = $newSip;
             }
         } elseif ($sourceProvider->type === 'IAX') {
-            $sourceIax = Iax::findFirst("uniqid='{$sourceProvider->uniqid}'");
+            $sourceIax = Iax::findFirst([
+                'conditions' => 'uniqid = :id:',
+                'bind' => ['id' => $sourceProvider->uniqid],
+            ]);
             if ($sourceIax) {
                 $newIax = new Iax();
 

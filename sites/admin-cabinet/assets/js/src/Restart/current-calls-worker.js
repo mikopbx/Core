@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxStatusAPI, globalTranslate, ExtensionsAPI */
+/* global PbxStatusAPI, globalTranslate, ExtensionsAPI, SecurityUtils */
 
 /**
  * Object responsible for handling current calls information.
@@ -99,9 +99,11 @@ const currentCallsWorker = {
         $.each(respObject, (index, value) => {
             resultUl += '<tr>';
             resultUl += '<td><i class="spinner loading icon"></i></td>';
-            resultUl += `<td>${value.start}</td>`;
-            resultUl += `<td class="need-update">${value.src_num}</td>`;
-            resultUl += `<td class="need-update">${value.dst_num}</td>`;
+            // SECURITY (GHSA-r823-fj9f-rqwh): src_num/dst_num originate from the SIP From
+            // header (CDR src/dst) and are rendered via .html(), so they must be escaped.
+            resultUl += `<td>${SecurityUtils.escapeHtml(value.start)}</td>`;
+            resultUl += `<td class="need-update">${SecurityUtils.escapeHtml(value.src_num)}</td>`;
+            resultUl += `<td class="need-update">${SecurityUtils.escapeHtml(value.dst_num)}</td>`;
             resultUl += '</tr>';
         });
         resultUl += '</tbody></table>';

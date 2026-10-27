@@ -283,6 +283,30 @@ class FilesManagementProcessor extends Injectable
                 return $res;
             }
 
+            // SECURITY (GHSA-x63j-p73m-9prg): the write whitelist above still covers
+            // custom_modules/ (module PHP executed by the module nginx servers and by the
+            // module workers) and media/avatars/ (served to browsers). A raw content write
+            // of a script or markup file there is RCE / stored XSS. Module code must only
+            // arrive through the module-install workflow, never this generic endpoint, and
+            // no executable/markup type may be dropped into the data tree.
+            if (str_contains($filename . '/', '/custom_modules/')) {
+                $res->messages['error'][] = TranslationProvider::translate('rest_err_file_write_not_permitted');
+                return $res;
+            }
+            $forbiddenExtensions = [
+                'php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phps', 'phar', 'phtml', 'pht',
+                'cgi', 'pl', 'py', 'sh', 'lua', 'js', 'mjs',
+                'html', 'htm', 'xhtml', 'shtml', 'svg', 'xml', 'xsl', 'xslt', 'mht', 'mhtml',
+                'htaccess', 'htpasswd',
+            ];
+            // Strip trailing dots/spaces so "x.php." (empty pathinfo extension, but a .php
+            // file on filesystems that drop the trailing dot) cannot bypass the blocklist.
+            $extension = strtolower(pathinfo(rtrim($filename, '. '), PATHINFO_EXTENSION));
+            if (in_array($extension, $forbiddenExtensions, true)) {
+                $res->messages['error'][] = TranslationProvider::translate('rest_err_file_write_not_permitted');
+                return $res;
+            }
+
             // Write file content
             $bytesWritten = file_put_contents($filename, $content);
 
