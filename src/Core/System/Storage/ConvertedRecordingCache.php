@@ -103,7 +103,9 @@ class ConvertedRecordingCache
             return null;
         }
 
-        $key = sha1(implode('|', [$sourceFile, $stat['size'], $stat['mtime'], $format]));
+        // Codec parameters in the key: a hit refreshes mtime, so without them a popular entry
+        // made with old settings would never expire after the parameters change.
+        $key = sha1(implode('|', [$sourceFile, $stat['size'], $stat['mtime'], $format, self::getCodecParameters($format)]));
         $shardDir = $this->getConvertedDir() . '/' . substr($key, 0, 2);
         if (!is_dir($shardDir) && !mkdir($shardDir, 0755, true) && !is_dir($shardDir)) {
             SystemMessages::sysLogMsg(__METHOD__, "Failed to create cache directory: {$shardDir}", LOG_ERR);
@@ -373,8 +375,13 @@ class ConvertedRecordingCache
     private static function getCodecParameters(string $format): string
     {
         return match ($format) {
-            // MP3: VBR quality 2 (~190kbps, good quality)
-            'mp3' => '-codec:a libmp3lame -qscale:a 2',
+            // MP3: quick download to listen or forward, so speech grade. The two channels are
+            // the two call legs: sum them (an average would make each voice 6 dB quieter),
+            // the limiter catches overlapping speech (level=disabled keeps its headroom instead of
+            // normalising back to 0 dBFS). 16 kHz covers wideband telephony;
+            // compression_level 7 is a faster LAME psychoacoustic pass (#1190: 3x faster).
+            'mp3' => '-af ' . escapeshellarg('pan=mono|c0=c0+c1,alimiter=limit=0.95:level=disabled')
+                . ' -ar 16000 -codec:a libmp3lame -b:a 32k -compression_level 7',
 
             // WAV: 16-bit PCM, uncompressed
             'wav' => '-codec:a pcm_s16le',
