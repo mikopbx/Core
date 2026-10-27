@@ -27,12 +27,17 @@ class UpdateController extends BaseController
     /**
      * Display the update station page.
      *
+     * Docker and LXC get an informational view instead of the IMG and online updater (#1295).
      */
     public function indexAction(): void
     {
         $this->view->setVars(
             [
                 'isDocker' => System::isDocker(),
+                'isLxc' => System::isLxc(),
+                'lxcGuideUrl' => $this->language === 'ru'
+                    ? 'https://docs.mikopbx.ru/mikopbx/manual/maintenance/update/lxc'
+                    : 'https://docs.mikopbx.com/mikopbx/english/manual/maintenance/update/lxc',
                 'submitMode' => null,
             ]
         );
