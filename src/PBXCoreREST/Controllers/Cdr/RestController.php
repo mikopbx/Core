@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Cdr;
 
 use MikoPBX\Common\Providers\RedisClientProvider;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\CdrManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\Cdr\DataStructure;
@@ -321,16 +322,24 @@ class RestController extends BaseRestController
             $this->workerTimeout = $value;
         }
 
-        // #1267: public endpoints - an unknown token must not hold a PHP-FPM child for the whole
-        // worker wait; the action re-validates it and extends its TTL.
-        $token = $this->request->getData()['token'] ?? '';
-        if (
-            in_array($method, ['playback', 'download'], true)
-            && is_string($token) && $token !== ''
-            && !$this->di->get(RedisClientProvider::SERVICE_NAME)->exists("cdr_playback_token:{$token}")
-        ) {
-            $this->sendErrorResponse('Invalid or expired playback token', 403);
-            return;
+        // #1267: public endpoints - without `view` (localhost only, checked above) a request needs a
+        // known token before it may hold a PHP-FPM child for the worker wait; a missing, empty or
+        // array token is refused too. The action re-validates the token and extends its TTL.
+        $data = $this->request->getData();
+        if (in_array($method, ['playback', 'download'], true) && empty($data['view'])) {
+            $token = $data['token'] ?? '';
+            try {
+                $known = is_string($token) && $token !== ''
+                    && $this->di->get(RedisClientProvider::SERVICE_NAME)->exists("cdr_playback_token:{$token}");
+            } catch (\Throwable $e) {
+                SystemMessages::sysLogMsg(static::class, 'Playback token check failed: ' . $e->getMessage(), LOG_ERR);
+                $this->sendErrorResponse('Service temporarily unavailable, please retry later', 503);
+                return;
+            }
+            if (!$known) {
+                $this->sendErrorResponse('Invalid or expired playback token', 403);
+                return;
+            }
         }
 
         parent::handleCustomRequest($idOrMethod, $customMethod);

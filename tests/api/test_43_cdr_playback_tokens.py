@@ -343,15 +343,24 @@ class TestCDRPlaybackTokens:
                 assert response.status_code == 400, \
                     f"cdr:{method}?timeout={value} returned {response.status_code}"
 
-            # An unknown token is refused by the controller, it never waits for a worker
-            response = requests.get(
-                f'{api_client.base_url}/cdr:{method}',
-                params={'token': 'a' * 32, 'timeout': '300'},
-                verify=False,
-                timeout=10,
-            )
-            assert response.status_code == 403, f"cdr:{method} fake token returned {response.status_code}"
-            assert response.elapsed.total_seconds() < 2, f"cdr:{method} fake token took {response.elapsed}"
+            # Unknown, missing, empty or array token is refused by the controller before the worker wait
+            for params in (
+                {'token': 'a' * 32, 'timeout': '300'},
+                {'timeout': '300'},
+                {'token': '', 'timeout': '300'},
+                {'token[]': 'x', 'timeout': '300'},
+            ):
+                for http in (requests.get, requests.head) if method == 'playback' else (requests.get,):
+                    response = http(
+                        f'{api_client.base_url}/cdr:{method}',
+                        params=params,
+                        verify=False,
+                        timeout=10,
+                    )
+                    assert response.status_code == 403, \
+                        f"{http.__name__.upper()} cdr:{method} {params} returned {response.status_code}"
+                    assert response.elapsed.total_seconds() < 2, \
+                        f"{http.__name__.upper()} cdr:{method} {params} took {response.elapsed}"
 
 
 class TestCDRPlaybackTokensSecurity:
