@@ -1405,15 +1405,16 @@ class Storage extends Injectable
         $www_dirs[] = appPath('/');
 
         // Add read rights to the directories; the seat ledger of the licensing stays root-only (SeatLedger)
+        // Pass the list as an array: each path is escaped separately (#1318)
         Util::addRegularWWWRights(
-            implode(' ', $www_dirs),
+            $www_dirs,
             Directories::getDir(Directories::CORE_TEMP_DIR) . '/license-v2'
         );
 
         // Add executable rights to the directories
         $exec_dirs[] = appPath('src/Core/Asterisk/agi-bin');
         $exec_dirs[] = appPath('src/Core/Rc');
-        Util::addExecutableRights(implode(' ', $exec_dirs));
+        Util::addExecutableRights($exec_dirs);
         $busyBoxPath = Util::which('busybox');
         Processes::mwExec("$busyBoxPath mount -o remount,ro /offload 2> /dev/null");
     }

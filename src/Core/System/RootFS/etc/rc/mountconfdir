@@ -64,10 +64,8 @@ if (file_exists('/etc/fstab')) {
 }
 
 if (file_exists('/offload/livecd')) {
-    $d_path_info = pathinfo($dbFile);
     // Copy the configuration database file.
     copy('/offload/conf/mikopbx.db', $dbFile);
-    Util::addRegularWWWRights($d_path_info);
     Util::addRegularWWWRights($dbFile);
     return; // No further processing required.
 }

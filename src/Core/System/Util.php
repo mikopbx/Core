@@ -648,45 +648,144 @@ class Util
     /**
      * Apply regular rights for folders and files
      *
-     * @param $folder
+     * @param string|array<string> $folder One path or a list of paths.
      * @param string $skip A path under $folder left as it is (keeps its own owner and rights).
      */
-    public static function addRegularWWWRights($folder, string $skip = ''): void
+    public static function addRegularWWWRights(mixed $folder, string $skip = ''): void
     {
         if (posix_getuid() === 0) {
-            $find = self::which('find');
-            $chown = self::which('chown');
-            $chmod = self::which('chmod');
-            $xargs = self::which('xargs');
-            $prune = $skip === '' ? '' : '-path ' . escapeshellarg($skip) . ' -prune -o ';
-            // GHSA-wpmh-4cxv-hwc5: escape the folder path reaching find.
-            $findBase = "$find " . escapeshellarg((string)$folder) . " $prune";
-            $xargsChmod = "$xargs -0 -r -P 4 -n 50 $chmod";
-
-            // Optimized: only chmod/chown files that need it (avoids redundant syscalls on thousands of files)
-            Processes::mwExec("$findBase-type d -not -perm 755 -print0 2>/dev/null | $xargsChmod 755");
-            Processes::mwExec("$findBase-type f -not -perm 644 -print0 2>/dev/null | $xargsChmod 644");
-            Processes::mwExec("$findBase-not -user www -exec $chown www:www {} +");
+            self::warnAboutInvalidPaths($folder, __METHOD__);
+            $commands = self::buildRegularWWWRightsCommands(
+                $folder,
+                $skip,
+                self::which('find'),
+                self::which('chown'),
+                self::which('chmod'),
+                self::which('xargs')
+            );
+            foreach ($commands as $command) {
+                Processes::mwExec($command);
+            }
         }
+    }
+
+    /**
+     * Builds the shell commands that apply regular WWW rights.
+     *
+     * Every path is escaped on its own and passed to find as a separate starting point
+     * (GHSA-wpmh-4cxv-hwc5). A space-joined list must not be passed as one string: it
+     * becomes a single non-existent path and no rights are applied (#1318).
+     *
+     * @param string|array<string> $folder One path or a list of paths.
+     * @param string $skip A path under $folder left as it is.
+     * @return array<string> Commands to run; empty when there is no path.
+     */
+    private static function buildRegularWWWRightsCommands(
+        mixed $folder,
+        string $skip,
+        string $find,
+        string $chown,
+        string $chmod,
+        string $xargs
+    ): array {
+        $escapedPaths = self::escapePathList($folder);
+        if ($escapedPaths === '') {
+            return [];
+        }
+        $prune = $skip === '' ? '' : '-path ' . escapeshellarg($skip) . ' -prune -o ';
+        $findBase = "$find $escapedPaths $prune";
+        $xargsChmod = "$xargs -0 -r -P 4 -n 50 $chmod";
+
+        // Optimized: only chmod/chown files that need it (avoids redundant syscalls on thousands of files)
+        return [
+            "$findBase-type d -not -perm 755 -print0 2>/dev/null | $xargsChmod 755",
+            "$findBase-type f -not -perm 644 -print0 2>/dev/null | $xargsChmod 644",
+            "$findBase-not -user www -exec $chown www:www {} +",
+        ];
+    }
+
+    /**
+     * Logs path values that are neither a string nor an integer: they are skipped, so a
+     * wrong argument would otherwise end in a silent no-op.
+     *
+     * @param mixed $folder One path or a list of paths.
+     * @param string $caller Method name for the log record.
+     */
+    private static function warnAboutInvalidPaths(mixed $folder, string $caller): void
+    {
+        foreach (is_array($folder) ? $folder : [$folder] as $path) {
+            if ($path !== null && !is_string($path) && !is_int($path)) {
+                SystemMessages::sysLogMsg(
+                    $caller,
+                    'Skipped a non-string path: ' . get_debug_type($path),
+                    LOG_WARNING
+                );
+            }
+        }
+    }
+
+    /**
+     * Escapes one path or a list of paths as separate shell arguments for find.
+     *
+     * Empty values and anything that is not a string or an integer are skipped
+     * (the public callers log the latter, see warnAboutInvalidPaths()).
+     *
+     * @param mixed $folder One path or a list of paths.
+     * @return string Space-separated escaped paths; empty when there is no path.
+     */
+    private static function escapePathList(mixed $folder): string
+    {
+        $escaped = [];
+        foreach (is_array($folder) ? $folder : [$folder] as $path) {
+            if ((is_string($path) || is_int($path)) && (string)$path !== '') {
+                $escaped[] = escapeshellarg((string)$path);
+            }
+        }
+        return implode(' ', $escaped);
     }
 
     /**
      * Adds executable rights to files in a folder.
      *
-     * @param string $folder The folder path.
+     * @param string|array<string> $folder One path or a list of paths.
      *
      * @return void
      */
-    public static function addExecutableRights(string $folder): void
+    public static function addExecutableRights(string|array $folder): void
     {
         // Check if the script is running with root privileges
         if (posix_getuid() === 0) {
-            $find = self::which('find');
-            $chmod = self::which('chmod');
-            $xargs = self::which('xargs');
-            // Optimized version using xargs for parallel execution
-            Processes::mwExec("$find $folder -type f -print0 2>/dev/null | $xargs -0 -P 4 -n 50 $chmod 755");
+            self::warnAboutInvalidPaths($folder, __METHOD__);
+            $command = self::buildExecutableRightsCommand(
+                $folder,
+                self::which('find'),
+                self::which('chmod'),
+                self::which('xargs')
+            );
+            if ($command !== '') {
+                Processes::mwExec($command);
+            }
         }
+    }
+
+    /**
+     * Builds the shell command that adds executable rights; every path is escaped separately.
+     *
+     * @param string|array<string> $folder One path or a list of paths.
+     * @return string Command to run; empty when there is no path.
+     */
+    private static function buildExecutableRightsCommand(
+        string|array $folder,
+        string $find,
+        string $chmod,
+        string $xargs
+    ): string {
+        $escapedPaths = self::escapePathList($folder);
+        if ($escapedPaths === '') {
+            return '';
+        }
+        // Optimized version using xargs for parallel execution
+        return "$find $escapedPaths -type f -print0 2>/dev/null | $xargs -0 -P 4 -n 50 $chmod 755";
     }
 
     /**
