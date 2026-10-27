@@ -49,7 +49,8 @@ class ModulesControllerBase extends BaseController
      */
     public function callActionForModule(string $moduleName, string $actionName): void
     {
-        $maxTimeout = max(10, $this->request->getRequestTimeout());
+        // 30: the floor BaseController used to apply to every request (#1267 removed it there)
+        $maxTimeout = max(30, $this->request->getRequestTimeout());
         $priority = max(PheanstalkPublisherInterface::DEFAULT_PRIORITY, $this->request->getRequestPriority());
         // Old style modules, we can remove it after 2025
         $payload =$this->request->getData();

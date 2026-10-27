@@ -763,6 +763,7 @@ return [
     'rest_response_404_not_found' => 'Запис не знайдено',
     'rest_response_404_notfound' => 'Запис не знайдено',
     'rest_response_416_range_not_satisfiable' => 'Запитаний діапазон недоступний',
+    'rest_response_504_gateway_timeout' => 'Обробник не відповів за відведений час',
     'rest_response_429_too_many_requests' => 'Забагато запитів. Спробуйте пізніше',
     'rest_response_409_conflict' => 'Конфлікт із існуючим ресурсом',
     'rest_response_409_extension_conflict' => 'Конфлікт номера додаткового',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'Функція вимкнена на цій АТС',
 
     'rest_param_cdr_format' => 'Формат експорту CDR: csv, json або xml',
+    'rest_param_cdr_timeout' => 'Максимальне очікування результату обробника в секундах (1–300, типово 30), включно з чергою. Передавання файлу клієнту не входить',
 
 ];

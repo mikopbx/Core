@@ -1503,6 +1503,7 @@ return [
     'rest_schema_file_resumable_name' => 'Navn på den fil, der downloades',
     'rest_param_fw_deny' => 'Ikke-tilladte IP-adresser og undernet (CIDR-notation)',
     'rest_response_416_range_not_satisfiable' => 'Det ønskede interval er ikke tilgængeligt.',
+    'rest_response_504_gateway_timeout' => 'Behandleren svarede ikke i tide',
     'rest_schema_gs_ssh_authorized_keys' => 'Autoriserede SSH-nøgler til adgang uden adgangskode',
     'rest_ir_CreateDesc' => 'Opret en ny indgående rute med de givne ruteparametre og prioritet',
     // TimeSettings specific parameters
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'Funktionen er deaktiveret på denne omstillingsanlæg',
 
     'rest_param_cdr_format' => 'CDR-eksportformat: csv, json eller xml',
+    'rest_param_cdr_timeout' => 'Maksimal ventetid på behandlerens resultat i sekunder (1–300, standard 30), inklusive køen. Overførsel af filen til klienten er ikke medregnet',
 
 ];

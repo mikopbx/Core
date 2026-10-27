@@ -780,7 +780,7 @@ class WorkerApiCommands extends WorkerRedisBase
     }
 
     /**
-     * Check if request is stale (older than API_REQUEST_TTL).
+     * Check if request is stale (older than API_REQUEST_TTL or the controller's wait_timeout, whichever is longer).
      * Debug requests and legacy requests without created_at are never stale.
      *
      * @param array $request Decoded request data
@@ -799,7 +799,11 @@ class WorkerApiCommands extends WorkerRedisBase
             return false;
         }
 
-        $requestTtl = (int)PbxSettings::getValueByKey(PbxSettings::API_REQUEST_TTL);
+        // #1267: API_REQUEST_TTL is a floor; a longer controller wait (cdr timeout, modules) extends it
+        $requestTtl = max(
+            (int)PbxSettings::getValueByKey(PbxSettings::API_REQUEST_TTL),
+            (int)($request['wait_timeout'] ?? 0)
+        );
         $age = microtime(true) - (float)$request['created_at'];
 
         if ($age > $requestTtl) {

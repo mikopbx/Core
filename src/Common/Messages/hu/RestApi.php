@@ -1003,6 +1003,7 @@ return [
     'rest_response_404_not_found' => 'A rekord nem található',
     'rest_response_404_notfound' => 'A rekord nem található',
     'rest_response_416_range_not_satisfiable' => 'A kért tartomány nem elérhető.',
+    'rest_response_504_gateway_timeout' => 'A feldolgozó nem válaszolt időben',
     'rest_response_429_too_many_requests' => 'Túl sok kérés. Próbáld újra később.',
     'rest_response_409_extension_conflict' => 'Mellékszám ütközés',
     'rest_response_409_active_calls' => 'Nem sikerült törölni egy aktív hívásokkal rendelkező sort.',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'A funkció le van tiltva ezen a telefonközponton',
 
     'rest_param_cdr_format' => 'CDR exportálási formátum: csv, json vagy xml',
+    'rest_param_cdr_timeout' => 'A feldolgozó eredményére való várakozás felső határa másodpercben (1–300, alapértelmezés 30), a sorral együtt. A fájl ügyfélnek történő átvitele nem számít bele',
 
 ];

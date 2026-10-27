@@ -792,6 +792,7 @@ return [
     'rest_response_404_not_found' => 'Înregistrare negăsită',
     'rest_response_404_notfound' => 'Înregistrare negăsită',
     'rest_response_416_range_not_satisfiable' => 'Intervalul solicitat nu este disponibil.',
+    'rest_response_504_gateway_timeout' => 'Procesorul nu a răspuns la timp',
     'rest_response_429_too_many_requests' => 'Prea multe solicitări. Încercați din nou mai târziu.',
     'rest_response_409_conflict' => 'Conflict cu o resursă existentă',
     'rest_response_409_extension_conflict' => 'Conflictul numărului de extensie',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'Funcția este dezactivată pe această centrală',
 
     'rest_param_cdr_format' => 'Format export CDR: csv, json sau xml',
+    'rest_param_cdr_timeout' => 'Așteptarea maximă a rezultatului procesorului în secunde (1–300, implicit 30), inclusiv coada. Transferul fișierului către client nu este inclus',
 
 ];

@@ -371,6 +371,16 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'example' => 'mp3',
                 'nullable' => true
             ],
+            'timeout' => [
+                'type' => 'integer',
+                'description' => 'rest_param_cdr_timeout',
+                'minimum' => 1,
+                'maximum' => 300,
+                'default' => 30,
+                'sanitize' => 'int',
+                'in' => 'query',
+                'example' => 60
+            ],
 
             // ========== DELETE PARAMETERS ==========
             'deleteRecording' => [

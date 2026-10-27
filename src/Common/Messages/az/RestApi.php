@@ -344,6 +344,7 @@ return [
     'rest_response_200_enabled' => 'Firewall aktivdir',
     'rest_response_404_notfound' => 'Qeyd tapılmadı',
     'rest_response_416_range_not_satisfiable' => 'Tələb olunan diapazon mövcud deyil.',
+    'rest_response_504_gateway_timeout' => 'İşləyici vaxtında cavab vermədi',
     'rest_response_429_too_many_requests' => 'Həddindən artıq çox sorğu var. Daha sonra yenidən cəhd edin.',
     'rest_resource_timesettings' => 'Vaxt parametrləri',
     'rest_resource_iaxprovider' => 'IAX provayderi',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'Funksiya bu ATS-də deaktiv edilib',
 
     'rest_param_cdr_format' => 'CDR ixrac formatı: csv, json və ya xml',
+    'rest_param_cdr_timeout' => 'İşləyicinin nəticəsi üçün maksimum gözləmə saniyə ilə (1–300, standart 30), növbə daxil olmaqla. Faylın müştəriyə ötürülməsi daxil deyil',
 
 ];

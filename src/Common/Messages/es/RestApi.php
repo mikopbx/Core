@@ -982,6 +982,7 @@ return [
     'rest_response_404_not_found' => 'Registro no encontrado',
     'rest_response_404_notfound' => 'Registro no encontrado',
     'rest_response_416_range_not_satisfiable' => 'El rango solicitado no está disponible.',
+    'rest_response_504_gateway_timeout' => 'El procesador no respondió a tiempo',
     'rest_response_429_too_many_requests' => 'Demasiadas solicitudes. Inténtalo de nuevo más tarde.',
     'rest_response_409_conflict' => 'Conflicto con un recurso existente',
     'rest_response_409_extension_conflict' => 'Conflicto de número de extensión',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'La función está deshabilitada en esta centralita',
 
     'rest_param_cdr_format' => 'Formato de exportación de CDR: csv, json o xml',
+    'rest_param_cdr_timeout' => 'Espera máxima del resultado del procesador en segundos (1–300, por defecto 30), incluida la cola. No incluye la transferencia del archivo al cliente',
 
 ];

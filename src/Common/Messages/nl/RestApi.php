@@ -898,6 +898,7 @@ return [
     'rest_response_404_not_found' => 'Record niet gevonden',
     'rest_response_404_notfound' => 'Record niet gevonden',
     'rest_response_416_range_not_satisfiable' => 'Het gevraagde bereik is niet beschikbaar.',
+    'rest_response_504_gateway_timeout' => 'De verwerker reageerde niet op tijd',
     'rest_response_429_too_many_requests' => 'Te veel verzoeken. Probeer het later opnieuw.',
     'rest_response_409_conflict' => 'Conflict met een bestaande bron',
     'rest_response_409_extension_conflict' => 'Conflict met toestelnummer',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'De functie is uitgeschakeld op deze telefooncentrale',
 
     'rest_param_cdr_format' => 'CDR-exportformaat: csv, json of xml',
+    'rest_param_cdr_timeout' => 'Maximale wachttijd op het resultaat van de verwerker in seconden (1–300, standaard 30), inclusief de wachtrij. Overdracht van het bestand naar de client valt hier niet onder',
 
 ];

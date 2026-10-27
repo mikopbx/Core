@@ -23,7 +23,8 @@ code does not say out loud.
   by `BaseController::prepareRequestMessage()`, but each `*ManagementProcessor` must pass
   them to the action explicitly or the action sees nothing.
 - Queue backpressure: over-long queue -> immediate 503 (controller side); requests older
-  than `API_REQUEST_TTL` are dropped by the worker; debug/async requests and envelopes
+  than `max(API_REQUEST_TTL, wait_timeout)` are dropped by the worker (`wait_timeout` is the
+  controller's own wait, put in the envelope; no 30 s floor any more); debug/async requests and envelopes
   without `created_at` are never dropped. Thresholds are `PbxSettings` keys.
 
 ## SaveRecordAction ordering (the part that breaks silently)

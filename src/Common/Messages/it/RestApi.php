@@ -973,6 +973,7 @@ return [
     'rest_response_400_bad_request' => 'Richiesta errata',
     'rest_response_400_invalid_request' => 'Dati di richiesta errati',
     'rest_response_416_range_not_satisfiable' => 'L\'intervallo richiesto non è disponibile.',
+    'rest_response_504_gateway_timeout' => 'Il processo non ha risposto in tempo',
     'rest_response_429_too_many_requests' => 'Troppe richieste. Riprova più tardi.',
     'rest_response_409_conflict' => 'Conflitto con una risorsa esistente',
     'rest_response_409_extension_conflict' => 'Conflitto di numero di interno',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'La funzione è disabilitata su questo centralino',
 
     'rest_param_cdr_format' => 'Formato di esportazione CDR: csv, json o xml',
+    'rest_param_cdr_timeout' => 'Attesa massima del risultato del processo in secondi (1–300, predefinito 30), coda inclusa. Il trasferimento del file al client non è incluso',
 
 ];

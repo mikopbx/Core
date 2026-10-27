@@ -64,9 +64,6 @@ class BaseController extends Controller
 
         if ($debug) {
             $maxTimeout = 9999;
-        } else {
-            // Ensure minimum timeout for testing
-            $maxTimeout = max($maxTimeout, 30);
         }
 
         $queued = false;
@@ -77,6 +74,8 @@ class BaseController extends Controller
             // Generate unique request ID and timestamp for staleness check
             $requestMessage['request_id'] = uniqid("req_{$actionName}_", true);
             $requestMessage['created_at'] = microtime(true);
+            // #1267: the worker must not drop a job the controller is still waiting for
+            $requestMessage['wait_timeout'] = $maxTimeout;
 
             // Fast-fail: reject request immediately if queue is overloaded
             // Cached to avoid Redis round-trip on every HTTP request

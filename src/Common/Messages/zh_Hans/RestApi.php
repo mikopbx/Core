@@ -1866,6 +1866,7 @@ return [
     'rest_response_404_not_found' => '未找到记录',
     'rest_response_404_notfound' => '未找到记录',
     'rest_response_416_range_not_satisfiable' => '请求的范围不可用。',
+    'rest_response_504_gateway_timeout' => '处理程序未在规定时间内响应',
     'rest_response_429_too_many_requests' => '请求次数过多，请稍后再试。',
     'rest_response_409_conflict' => '与现有资源冲突',
     'rest_response_409_extension_conflict' => '分机号码冲突',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => '该功能在此话机系统上已禁用',
 
     'rest_param_cdr_format' => 'CDR 导出格式：csv、json 或 xml',
+    'rest_param_cdr_timeout' => '等待处理程序结果的最长时间（秒，1–300，默认 30），包括排队时间。不包括向客户端传输文件的时间',
 
 ];

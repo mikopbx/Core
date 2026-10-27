@@ -928,6 +928,7 @@ return [
     'rest_response_404_not_found' => 'Posten hittades inte',
     'rest_response_404_notfound' => 'Posten hittades inte',
     'rest_response_416_range_not_satisfiable' => 'Det begärda intervallet är inte tillgängligt.',
+    'rest_response_504_gateway_timeout' => 'Hanteraren svarade inte i tid',
     'rest_response_429_too_many_requests' => 'För många förfrågningar. Försök igen senare.',
     'rest_response_409_conflict' => 'Konflikt med en befintlig resurs',
     'rest_response_409_extension_conflict' => 'Konflikt med anknytningsnummer',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'Funktionen är inaktiverad på denna växel',
 
     'rest_param_cdr_format' => 'CDR-exportformat: csv, json eller xml',
+    'rest_param_cdr_timeout' => 'Maximal väntetid på hanterarens resultat i sekunder (1–300, standard 30), inklusive kön. Överföring av filen till klienten ingår inte',
 
 ];

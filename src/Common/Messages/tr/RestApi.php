@@ -2121,6 +2121,7 @@ return [
     'rest_response_200_stats' => 'İstatistikler başarıyla alındı.',
     'rest_response_200_metadata' => 'Meta veriler başarıyla alındı.',
     'rest_response_416_range_not_satisfiable' => 'İstenen ürün yelpazesi mevcut değil.',
+    'rest_response_504_gateway_timeout' => 'İşleyici zamanında yanıt vermedi',
     'rest_resource_ivrmenu' => 'IVR menüsü',
     'rest_resource_file' => 'Dosya',
     'rest_resource_cdr' => 'CDR kaydı',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'Özellik bu santralde devre dışı',
 
     'rest_param_cdr_format' => 'CDR dışa aktarma biçimi: csv, json veya xml',
+    'rest_param_cdr_timeout' => 'İşleyici sonucunun saniye cinsinden en uzun bekleme süresi (1–300, varsayılan 30), kuyruk dahil. Dosyanın istemciye aktarımı dahil değildir',
 
 ];

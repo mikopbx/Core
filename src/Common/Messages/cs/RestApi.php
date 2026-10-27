@@ -259,6 +259,7 @@ return [
     'rest_response_404_not_found' => 'Záznam nenalezen',
     'rest_response_404_notfound' => 'Záznam nenalezen',
     'rest_response_416_range_not_satisfiable' => 'Požadovaný rozsah není k dispozici.',
+    'rest_response_504_gateway_timeout' => 'Zpracovatel neodpověděl včas',
     'rest_response_429_too_many_requests' => 'Příliš mnoho požadavků. Zkuste to znovu později.',
     'rest_response_409_conflict' => 'Konflikt s existujícím zdrojem',
     'rest_response_409_active_calls' => 'Nelze smazat frontu s aktivními hovory',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'Funkce je na této ústředně vypnuta',
 
     'rest_param_cdr_format' => 'Formát exportu CDR: csv, json nebo xml',
+    'rest_param_cdr_timeout' => 'Maximální čekání na výsledek zpracovatele v sekundách (1–300, výchozí 30), včetně fronty. Přenos souboru klientovi není zahrnut',
 
 ];
