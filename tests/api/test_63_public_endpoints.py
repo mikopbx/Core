@@ -460,15 +460,14 @@ class TestPublicEndpointsEdgeCases:
 
         client = MikoPBXClient(API_URL)
 
-        # Try without record_id parameter (should fail validation, not auth)
+        # "Public" = no Bearer auth; the playback token itself is still required.
+        # #1267: without a known token the controller refuses with 403 before the worker wait.
         response = client.get_raw('cdr:playback')
 
-        # Should be public (not 401/403), but fail validation (400/422)
-        assert response.status_code not in [HTTP_UNAUTHORIZED, HTTP_FORBIDDEN], \
-            f"cdr:playback should be public, got {response.status_code}"
+        assert response.status_code == HTTP_FORBIDDEN, \
+            f"cdr:playback without a playback token should be 403, got {response.status_code}"
 
-        print(f"✓ Edge case: cdr:playback is public (uses token-based security)")
-        print(f"  Status: {response.status_code} (validation error, not auth error)")
+        print(f"✓ Edge case: cdr:playback needs no Bearer auth but refuses a request without a playback token")
 
 
 if __name__ == '__main__':
