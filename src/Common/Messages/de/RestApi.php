@@ -894,6 +894,7 @@ return [
     'rest_response_404_not_found' => 'Datensatz nicht gefunden',
     'rest_response_404_notfound' => 'Datensatz nicht gefunden',
     'rest_response_416_range_not_satisfiable' => 'Der gewünschte Bereich ist nicht verfügbar.',
+    'rest_response_504_gateway_timeout' => 'Der Worker hat nicht rechtzeitig geantwortet',
     'rest_response_429_too_many_requests' => 'Zu viele Anfragen. Bitte versuchen Sie es später erneut.',
     'rest_response_409_conflict' => 'Konflikt mit einer bestehenden Ressource',
     'rest_response_409_extension_conflict' => 'Konflikt mit der Nebenstellennummer',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'Die Funktion ist auf dieser Telefonanlage deaktiviert',
 
     'rest_param_cdr_format' => 'CDR-Exportformat: csv, json oder xml',
+    'rest_param_cdr_timeout' => 'Maximale Wartezeit auf das Ergebnis des Workers in Sekunden (1–300, Standard 30), einschließlich Warteschlange. Die Dateiübertragung zum Client ist nicht enthalten',
 
 ];

@@ -365,6 +365,7 @@ return [
     'rest_response_404_not_found' => 'Zapis nije pronađen',
     'rest_response_404_notfound' => 'Zapis nije pronađen',
     'rest_response_416_range_not_satisfiable' => 'Traženi raspon nije dostupan.',
+    'rest_response_504_gateway_timeout' => 'Obrađivač nije odgovorio na vrijeme',
     'rest_response_429_too_many_requests' => 'Previše zahtjeva. Pokušajte ponovno kasnije.',
     'rest_response_409_conflict' => 'Sukob s postojećim resursom',
     'rest_response_409_extension_conflict' => 'Sukob internih brojeva',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'Funkcija je onemogućena na ovoj centrali',
 
     'rest_param_cdr_format' => 'Format izvoza CDR: csv, json ili xml',
+    'rest_param_cdr_timeout' => 'Najdulje čekanje rezultata obrađivača u sekundama (1–300, zadano 30), uključujući red čekanja. Prijenos datoteke klijentu nije uključen',
 
 ];

@@ -1961,6 +1961,7 @@ return [
     'rest_response_404_not_found' => 'Запись не найдена',
     'rest_response_404_notfound' => 'Запись не найдена',
     'rest_response_416_range_not_satisfiable' => 'Запрошенный диапазон недоступен',
+    'rest_response_504_gateway_timeout' => 'Обработчик не ответил за отведённое время',
     'rest_response_429_too_many_requests' => 'Слишком много запросов. Попробуйте позже',
     'rest_response_409_conflict' => 'Конфликт с существующим ресурсом',
     'rest_response_409_extension_conflict' => 'Конфликт номера добавочного',
@@ -2619,4 +2620,5 @@ return [
     // RESOURCE_PARAM
     // ============================================================================
     'rest_param_cdr_format' => 'Формат экспорта CDR: csv, json или xml',
+    'rest_param_cdr_timeout' => 'Максимальное ожидание результата обработчика в секундах (1–300, по умолчанию 30), включая очередь. Передача файла клиенту не входит',
 ];

@@ -1884,6 +1884,7 @@ return [
     'rest_response_200_page_untracked' => 'Sivulta poistuminen tallennettiin onnistuneesti.',
     'rest_response_400_invalid_request' => 'Virheelliset pyyntötiedot',
     'rest_response_416_range_not_satisfiable' => 'Pyydetty alue ei ole käytettävissä.',
+    'rest_response_504_gateway_timeout' => 'Käsittelijä ei vastannut ajoissa',
     'rest_response_429_too_many_requests' => 'Liikaa pyyntöjä. Yritä myöhemmin uudelleen.',
     'rest_response_409_conflict' => 'Ristiriita olemassa olevan resurssin kanssa',
     'rest_response_409_extension_conflict' => 'Alanumeroristiriita',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'Ominaisuus on pois käytöstä tässä puhelinkeskuksessa',
 
     'rest_param_cdr_format' => 'CDR-vientimuoto: csv, json tai xml',
+    'rest_param_cdr_timeout' => 'Käsittelijän tuloksen enimmäisodotus sekunteina (1–300, oletus 30), jono mukaan lukien. Tiedoston siirto asiakkaalle ei sisälly',
 
 ];

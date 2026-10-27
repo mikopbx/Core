@@ -82,6 +82,9 @@ class RestController extends BaseRestController
      */
     protected string $processorClass = CdrManagementProcessor::class;
 
+    /** Worker wait in seconds from the playback/download `timeout` parameter, null = default (#1267) */
+    private ?int $workerTimeout = null;
+
 
     /**
      * Get list of CDR records with filtering and pagination
@@ -243,12 +246,14 @@ class RestController extends BaseRestController
     #[ApiParameterRef('token', required: true)]
     #[ApiParameterRef('view')]
     #[ApiParameterRef('format')]
+    #[ApiParameterRef('timeout')]
     #[ApiResponse(200, 'rest_response_200_stream')]
     #[ApiResponse(206, 'rest_response_206_partial_content')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
     #[ApiResponse(416, 'rest_response_416_range_not_satisfiable', 'PBXApiResult')]
+    #[ApiResponse(504, 'rest_response_504_gateway_timeout', 'PBXApiResult')]
     public function playback(): void
     {
         // Implementation handled by BaseRestController
@@ -276,10 +281,12 @@ class RestController extends BaseRestController
     #[ApiParameterRef('view')]
     #[ApiParameterRef('filename')]
     #[ApiParameterRef('format')]
+    #[ApiParameterRef('timeout')]
     #[ApiResponse(200, 'rest_response_200_stream')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(504, 'rest_response_504_gateway_timeout', 'PBXApiResult')]
     public function download(): void
     {
         // Implementation handled by BaseRestController
@@ -297,6 +304,40 @@ class RestController extends BaseRestController
             return;
         }
 
+        // #1267: checked here, not in the action - a bad value must fail before the worker wait
+        $timeout = $this->request->getData()['timeout'] ?? '';
+        if (in_array($method, ['playback', 'download'], true) && $timeout !== '') {
+            $range = DataStructure::getParameterDefinitions()['request']['timeout'];
+            $value = filter_var($timeout, FILTER_VALIDATE_INT, [
+                'options' => ['min_range' => $range['minimum'], 'max_range' => $range['maximum']],
+            ]);
+            if ($value === false) {
+                $this->sendErrorResponse(
+                    sprintf('timeout must be an integer from %d to %d seconds', $range['minimum'], $range['maximum'])
+                );
+                return;
+            }
+            $this->workerTimeout = $value;
+        }
+
         parent::handleCustomRequest($idOrMethod, $customMethod);
+    }
+
+    public function sendRequestToBackendWorker(
+        string $processor,
+        string $actionName,
+        mixed $payload = null,
+        string $moduleName = '',
+        int $maxTimeout = 30,
+        int $priority = 0
+    ): void {
+        parent::sendRequestToBackendWorker(
+            $processor,
+            $actionName,
+            $payload,
+            $moduleName,
+            $this->workerTimeout ?? $maxTimeout,
+            $priority
+        );
     }
 }

@@ -330,6 +330,19 @@ class TestCDRPlaybackTokens:
                 f"but only {records_with_urls} do"
             print(f"  ✓ All records with files have valid URLs")
 
+    def test_09_invalid_worker_timeout_rejected(self, api_client):
+        """#1267: a bad `timeout` fails with 400 before the request reaches the worker."""
+        for method in ('playback', 'download'):
+            for value in ('0', '301', 'abc'):
+                response = requests.get(
+                    f'{api_client.base_url}/cdr:{method}',
+                    params={'token': 'a' * 32, 'timeout': value},
+                    verify=False,
+                    timeout=10,
+                )
+                assert response.status_code == 400, \
+                    f"cdr:{method}?timeout={value} returned {response.status_code}"
+
 
 class TestCDRPlaybackTokensSecurity:
     """Security tests for token-based playback"""

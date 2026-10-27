@@ -1048,6 +1048,7 @@ return [
     'rest_response_404_not_found' => 'Enregistrement introuvable',
     'rest_response_404_notfound' => 'Enregistrement introuvable',
     'rest_response_416_range_not_satisfiable' => 'La plage de fréquences demandée n\'est pas disponible.',
+    'rest_response_504_gateway_timeout' => 'Le processus n’a pas répondu à temps',
     'rest_response_429_too_many_requests' => 'Trop de requêtes. Veuillez réessayer plus tard.',
     'rest_response_409_conflict' => 'Conflit avec une ressource existante',
     'rest_response_409_extension_conflict' => 'Conflit de numéro de poste',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'La fonctionnalité est désactivée sur ce PBX',
 
     'rest_param_cdr_format' => 'Format d\'export CDR : csv, json ou xml',
+    'rest_param_cdr_timeout' => 'Attente maximale du résultat du processus en secondes (1–300, 30 par défaut), file d’attente comprise. Le transfert du fichier au client n’est pas inclus',
 
 ];

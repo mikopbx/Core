@@ -1625,6 +1625,7 @@ return [
     'rest_response_404_not_found' => 'Record not found',
     'rest_response_404_notfound' => 'Record not found',
     'rest_response_416_range_not_satisfiable' => 'Requested range not available',
+    'rest_response_504_gateway_timeout' => 'The worker did not respond in time',
     'rest_response_429_too_many_requests' => 'Too many requests. Please try again later',
     'rest_response_409_conflict' => 'Conflict with existing resource',
     'rest_response_409_extension_conflict' => 'Extension number conflict',
@@ -2188,5 +2189,6 @@ return [
     'rest_response_501_not_implemented' => 'Feature is disabled on this PBX',
 
     'rest_param_cdr_format' => 'CDR export format: csv, json or xml',
+    'rest_param_cdr_timeout' => 'Maximum wait for the worker result in seconds (1–300, default 30), including the queue. File transfer to the client is not included',
 
 ];

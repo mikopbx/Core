@@ -341,6 +341,7 @@ return [
     'rest_response_404_not_found' => 'Registro não encontrado',
     'rest_response_404_notfound' => 'Registro não encontrado',
     'rest_response_416_range_not_satisfiable' => 'O intervalo solicitado não está disponível.',
+    'rest_response_504_gateway_timeout' => 'O processador não respondeu a tempo',
     'rest_response_429_too_many_requests' => 'Muitas solicitações. Tente novamente mais tarde.',
     'rest_response_409_extension_conflict' => 'Conflito de número de ramal',
     'rest_response_422_validation' => 'Erro de validação de dados',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'A funcionalidade está desativada nesta central telefónica',
 
     'rest_param_cdr_format' => 'Formato de exportação CDR: csv, json ou xml',
+    'rest_param_cdr_timeout' => 'Espera máxima pelo resultado do processador em segundos (1–300, predefinição 30), incluindo a fila. A transferência do ficheiro para o cliente não está incluída',
 
 ];

@@ -916,6 +916,7 @@ return [
     'rest_response_401_invalid_credentials' => 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
     'rest_response_401_invalid_refresh_token' => 'โทเค็นรีเฟรชไม่ถูกต้องหรือหมดอายุแล้ว',
     'rest_response_416_range_not_satisfiable' => 'ช่วงราคาที่ร้องขอไม่พร้อมให้บริการ',
+    'rest_response_504_gateway_timeout' => 'ตัวประมวลผลไม่ตอบกลับภายในเวลาที่กำหนด',
     'rest_response_429_too_many_requests' => 'มีการร้องขอมากเกินไป โปรดลองใหม่อีกครั้งในภายหลัง',
     'rest_resource_customfile' => 'ไฟล์ผู้ใช้',
     'rest_resource_dialplanapplication' => 'แอป Dialplan',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'ฟีเจอร์นี้ถูกปิดใช้งานบนตู้สาขานี้',
 
     'rest_param_cdr_format' => 'รูปแบบการส่งออก CDR: csv, json หรือ xml',
+    'rest_param_cdr_timeout' => 'เวลารอผลลัพธ์จากตัวประมวลผลสูงสุดเป็นวินาที (1–300 ค่าเริ่มต้น 30) รวมเวลาในคิว ไม่รวมการส่งไฟล์ไปยังไคลเอนต์',
 
 ];

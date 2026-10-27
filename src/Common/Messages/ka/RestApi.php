@@ -751,6 +751,7 @@ return [
     'rest_response_404_not_found' => 'ჩანაწერი ვერ მოიძებნა',
     'rest_response_404_notfound' => 'ჩანაწერი ვერ მოიძებნა',
     'rest_response_416_range_not_satisfiable' => 'მოთხოვნილი დიაპაზონი მიუწვდომელია.',
+    'rest_response_504_gateway_timeout' => 'დამმუშავებელმა დროულად არ უპასუხა',
     'rest_response_409_extension_conflict' => 'გაფართოებული ნომრის კონფლიქტი',
     'rest_response_409_active_calls' => 'აქტიური ზარების მქონე რიგის წაშლა შეუძლებელია',
     'rest_response_500_error' => 'შიდა სერვერის შეცდომა',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'ფუნქცია გამორთულია ამ ATS-ზე',
 
     'rest_param_cdr_format' => 'CDR ექსპორტის ფორმატი: csv, json ან xml',
+    'rest_param_cdr_timeout' => 'დამმუშავებლის შედეგის მაქსიმალური ლოდინი წამებში (1–300, ნაგულისხმევად 30), რიგის ჩათვლით. ფაილის კლიენტისთვის გადაცემა არ შედის',
 
 ];

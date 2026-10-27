@@ -907,6 +907,7 @@ return [
     'rest_response_404_not_found' => 'Không tìm thấy bản ghi',
     'rest_response_404_notfound' => 'Không tìm thấy bản ghi',
     'rest_response_416_range_not_satisfiable' => 'Phạm vi sản phẩm yêu cầu hiện không khả dụng.',
+    'rest_response_504_gateway_timeout' => 'Bộ xử lý không phản hồi kịp thời',
     'rest_response_429_too_many_requests' => 'Quá nhiều yêu cầu. Vui lòng thử lại sau.',
     'rest_response_409_conflict' => 'Xung đột với nguồn lực hiện có',
     'rest_response_409_extension_conflict' => 'Xung đột số máy nhánh',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'Tính năng bị vô hiệu hóa trên tổng đài này',
 
     'rest_param_cdr_format' => 'Định dạng xuất CDR: csv, json hoặc xml',
+    'rest_param_cdr_timeout' => 'Thời gian chờ tối đa kết quả của bộ xử lý tính bằng giây (1–300, mặc định 30), bao gồm hàng đợi. Không bao gồm việc truyền tệp đến máy khách',
 
 ];

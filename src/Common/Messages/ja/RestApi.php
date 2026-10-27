@@ -2335,6 +2335,7 @@ return [
     'rest_response_404_not_found' => 'レコードが見つかりません',
     'rest_response_404_notfound' => 'レコードが見つかりません',
     'rest_response_416_range_not_satisfiable' => '要求された範囲は利用できません。',
+    'rest_response_504_gateway_timeout' => 'ワーカーが時間内に応答しませんでした',
     'rest_resource_cdr' => 'CDRレコード',
     'rest_resource_customfile' => 'ユーザーファイル',
     'rest_resource_dialplanapplication' => 'ダイヤルプランアプリ',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'この電話交換機ではこの機能は無効です',
 
     'rest_param_cdr_format' => 'CDR エクスポート形式: csv、json または xml',
+    'rest_param_cdr_timeout' => 'ワーカーの結果を待つ最大時間（秒、1～300、既定値 30）。キューでの待ち時間を含みます。クライアントへのファイル転送は含みません',
 
 ];

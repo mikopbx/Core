@@ -310,6 +310,7 @@ return [
     'rest_response_400_bad_request' => 'Nieprawidłowe żądanie',
     'rest_response_400_invalid_request' => 'Nieprawidłowe dane żądania',
     'rest_response_416_range_not_satisfiable' => 'Żądany zakres jest niedostępny.',
+    'rest_response_504_gateway_timeout' => 'Proces obsługi nie odpowiedział na czas',
     'rest_response_429_too_many_requests' => 'Zbyt wiele żądań. Spróbuj ponownie później.',
     'rest_response_422_validation' => 'Błąd walidacji danych',
     'rest_resource_conferenceroom' => 'Sala konferencyjna',
@@ -2452,5 +2453,6 @@ return [
     'rest_response_501_not_implemented' => 'Funkcja jest wyłączona na tej centrali',
 
     'rest_param_cdr_format' => 'Format eksportu CDR: csv, json lub xml',
+    'rest_param_cdr_timeout' => 'Maksymalny czas oczekiwania na wynik procesu obsługi w sekundach (1–300, domyślnie 30), łącznie z kolejką. Przesyłanie pliku do klienta nie jest wliczane',
 
 ];
