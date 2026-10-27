@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
+use MikoPBX\Common\Handlers\GenericErrorResponseHandler;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Throwable;
@@ -31,6 +32,7 @@ use Whoops\Handler\PlainTextHandler;
 use Whoops\Handler\PrettyPageHandler;
 use Whoops\Run;
 use Whoops;
+use Phalcon\Di\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 /**
@@ -73,17 +75,52 @@ class WhoopsErrorHandlerProvider implements ServiceProviderInterface
     /**
      * Creates the handler that renders the exception to the client.
      *
+     * Web requests get a generic error without exception details; the detailed Whoops
+     * output is kept only behind adminApplication.debugMode in mikopbx-settings.json.
+     *
      * @return HandlerInterface The last handler in the Whoops stack.
      */
     public function createOutputHandler(): HandlerInterface
     {
-        if (Whoops\Util\Misc::isAjaxRequest()) {
-            return new JsonResponseHandler();
-        }
         if (Whoops\Util\Misc::isCommandLine()) {
             return new PlainTextHandler();
         }
-        return new PrettyPageHandler();
+        return self::createWebOutputHandler(Whoops\Util\Misc::isAjaxRequest(), self::isDebugMode());
+    }
+
+    /**
+     * Picks the output handler for a web request.
+     *
+     * @param bool $isAjax Whether the request is AJAX.
+     * @param bool $debugMode Whether detailed error output is allowed.
+     * @return HandlerInterface
+     */
+    public static function createWebOutputHandler(bool $isAjax, bool $debugMode): HandlerInterface
+    {
+        if ($debugMode) {
+            return $isAjax ? new JsonResponseHandler() : new PrettyPageHandler();
+        }
+        return new GenericErrorResponseHandler($isAjax);
+    }
+
+    /**
+     * Checks the developer setting that allows detailed error pages.
+     *
+     * Reads the file config only: the handler must work while Redis or the DB is stuck.
+     *
+     * @return bool True if adminApplication.debugMode is enabled.
+     */
+    public static function isDebugMode(): bool
+    {
+        try {
+            $di = Di::getDefault();
+            if ($di === null || !$di->has(ConfigProvider::SERVICE_NAME)) {
+                return false;
+            }
+            return $di->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.debugMode') === true;
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     /**
