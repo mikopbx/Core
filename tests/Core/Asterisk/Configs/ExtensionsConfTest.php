@@ -95,8 +95,8 @@ class ExtensionsConfTest extends AbstractUnitTest
      * A call forwarded by the phone (SIP 302) lands in [internal-redirect]. A plain call drops the
      * inherited CDR id, as [internal-fw] does, so the forwarded leg gets its own row, and continues in
      * [all_peers], where the forward used to land. A transfer keeps the id and continues in
-     * [internal-transfer] (one transfer_dial, one row) with the transferer passed by [internal-users],
-     * falling back to [all_peers] for numbers not there.
+     * [internal-transfer] (one transfer_dial, one row) with the transferer passed by [internal-users];
+     * an external number continues in [all_peers] without its transfer_dial (the [outgoing] route runs it).
      *
      * @backupGlobals disabled
      */
@@ -118,8 +118,19 @@ class ExtensionsConfTest extends AbstractUnitTest
             . '?Set(TRANSFERERNAME=${REDIRECT_TRANSFERERNAME}))' . "\n\t"
             . 'same => n,GotoIf(${DIALPLAN_EXISTS(internal-transfer,${EXTEN},1)}'
             . '?internal-transfer,${EXTEN},1)' . "\n\t"
+            . 'same => n,ExecIf($[!${DIALPLAN_EXISTS(applications,${EXTEN},1)}'
+            . ' && !${DIALPLAN_EXISTS(internal,${EXTEN},1)}]?Set(REDIRECT_SKIP_TRANSFER_DIAL=1))' . "\n\t"
             . 'same => n,Goto(' . $allPeers . ',${EXTEN},1)' . "\n\n",
             $conf
+        );
+
+        $contexts = new InternalContexts();
+        $contexts->getSettings();
+        $method = new ReflectionMethod(InternalContexts::class, 'generateAllPeers');
+        $method->setAccessible(true);
+        $this->assertStringContainsString(
+            'same => n,GosubIf($["${REDIRECT_SKIP_TRANSFER_DIAL}" != "1"]?${ISTRANSFER}dial,${EXTEN},1)',
+            $method->invoke($contexts)
         );
     }
 

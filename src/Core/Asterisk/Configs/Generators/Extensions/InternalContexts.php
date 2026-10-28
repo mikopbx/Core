@@ -212,8 +212,10 @@ class InternalContexts extends AsteriskConfigClass
      *   forwarded call (answer, duration, recording) never gets its own CDR row. Clear it, as
      *   [internal-fw] does for PBX forwarding, and continue in [all_peers], where the forward used to land;
      * - a transfer: [all_peers] and [internal-users] would both run transfer_dial and open two rows, one
-     *   of them never answered. Continue in [internal-transfer] like any transfer. A number that is not
-     *   there (an external one) still goes to [all_peers] and on to [outgoing], as before this context. TRANSFERERNAME is not inherited, so
+     *   of them never answered. Continue in [internal-transfer] like any transfer. An external number
+     *   is not there and continues in [all_peers], whose transfer_dial is skipped by
+     *   REDIRECT_SKIP_TRANSFER_DIAL: the route in [outgoing] runs its own. Numbers of [applications]
+     *   (dial_app, no transfer_dial) and [internal] keep it. TRANSFERERNAME is not inherited, so
      *   [internal-users] passes it as REDIRECT_TRANSFERERNAME: without it transfer_dial takes the Local
      *   channel as the source and the completed attended transfer gets no row.
      *
@@ -232,6 +234,8 @@ class InternalContexts extends AsteriskConfigClass
             . '?Set(TRANSFERERNAME=${REDIRECT_TRANSFERERNAME}))' . "\n\t";
         $conf .= 'same => n,GotoIf(${DIALPLAN_EXISTS(internal-transfer,${EXTEN},1)}'
             . '?internal-transfer,${EXTEN},1)' . "\n\t";
+        $conf .= 'same => n,ExecIf($[!${DIALPLAN_EXISTS(applications,${EXTEN},1)}'
+            . ' && !${DIALPLAN_EXISTS(internal,${EXTEN},1)}]?Set(REDIRECT_SKIP_TRANSFER_DIAL=1))' . "\n\t";
         $conf .= 'same => n,Goto(' . $allPeers . ',${EXTEN},1)' . "\n\n";
 
         return $conf;
@@ -283,8 +287,8 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local" && "${FROM_PEER}x" == "x"]?Set(__FROM_PEER=${CALLERID(num)}))' . "\n\t";
         $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
 
-        // Set hangup handler and go to ISTRANSFER dial extension.
-        $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
+        // Set hangup handler and go to ISTRANSFER dial extension (see generatePhoneRedirect() for the skip).
+        $conf .= 'same => n,GosubIf($["${REDIRECT_SKIP_TRANSFER_DIAL}" != "1"]?${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
 
         // Go to custom context if it exists, else go to existing contexts if they exist.
         $conf          .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . "\n\t";
