@@ -130,6 +130,7 @@ class InternalContexts extends AsteriskConfigClass
 
         // Generate further dialplan sections.
         $conf .= $this->generateInternalFW();
+        $conf .= $this->generatePhoneRedirect();
         $conf .= $this->generateAllPeers();
         $conf .= $this->generateInternal();
         $conf .= $this->generateInternalUsers();
@@ -202,6 +203,41 @@ class InternalContexts extends AsteriskConfigClass
     }
 
     /**
+     * Generates the context for calls forwarded by the phone itself. [internal-redirect]
+     *
+     * A phone with its own call forwarding answers 302 Moved; app_dial then dials the target as
+     * Local/<target>@FORWARD_CONTEXT, set in [dial_create_chan]. The new channel inherits the variables of
+     * the dialing channel in [internal-users], not of the forwarding phone:
+     * - a plain call: __pt1c_UNIQUEID makes event_dial treat the forward as already counted, so the
+     *   forwarded call (answer, duration, recording) never gets its own CDR row. Clear it, as
+     *   [internal-fw] does for PBX forwarding, and continue in [all_peers], where the forward used to land;
+     * - a transfer: [all_peers] and [internal-users] would both run transfer_dial and open two rows, one
+     *   of them never answered. Continue in [internal-transfer] like any transfer. A number that is not
+     *   there (an external one) still goes to [all_peers] and on to [outgoing], as before this context. TRANSFERERNAME is not inherited, so
+     *   [internal-users] passes it as REDIRECT_TRANSFERERNAME: without it transfer_dial takes the Local
+     *   channel as the source and the completed attended transfer gets no row.
+     *
+     * @return string The dialplan context.
+     */
+    private function generatePhoneRedirect(): string
+    {
+        $allPeers = ExtensionsConf::ALL_PEERS_CONTEXT;
+        $conf = '[' . ExtensionsConf::PHONE_REDIRECT_CONTEXT . "]\n";
+        $conf .= 'exten => ' . ExtensionsConf::ALL_EXTENSION
+            . ',1,NoOp(--- Forwarded by the phone to ${EXTEN} ---)' . "\n\t";
+        $conf .= 'same => n,GotoIf($["${ISTRANSFER}x" != "x"]?transfer)' . "\n\t";
+        $conf .= 'same => n,Set(__pt1c_UNIQUEID=${UNDEFINED})' . "\n\t";
+        $conf .= 'same => n,Goto(' . $allPeers . ',${EXTEN},1)' . "\n\t";
+        $conf .= 'same => n(transfer),ExecIf($["${TRANSFERERNAME}x" == "x"]'
+            . '?Set(TRANSFERERNAME=${REDIRECT_TRANSFERERNAME}))' . "\n\t";
+        $conf .= 'same => n,GotoIf(${DIALPLAN_EXISTS(internal-transfer,${EXTEN},1)}'
+            . '?internal-transfer,${EXTEN},1)' . "\n\t";
+        $conf .= 'same => n,Goto(' . $allPeers . ',${EXTEN},1)' . "\n\n";
+
+        return $conf;
+    }
+
+    /**
      * Generates the dialplan configuration for all peers.
      *
      * [all_peers]
@@ -215,7 +251,7 @@ class InternalContexts extends AsteriskConfigClass
     {
         // Start the all peers context.
 
-        $conf = "[all_peers]\n";
+        $conf = '[' . ExtensionsConf::ALL_PEERS_CONTEXT . "]\n";
 
         // Include internal hints and handle failed extensions.
         $conf .= 'include => internal-hints' . "\n";
@@ -450,7 +486,14 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${TRANSFER_OPTIONS}x" == "x" || "${ISTRANSFER}x" != "x"]?Set(TRANSFER_OPTIONS=Tt))' . " \n\t";
         $conf .= 'same => n,Set(__CALLER_AUDIOFORMAT=${CHANNEL(audioreadformat)})' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},${TRANSFER_OPTIONS}${DIAL_QUEUE_OPTIONS}ekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
+        // One level down, for the Local channel of a 302 forward during a transfer, see generatePhoneRedirect().
+        $conf .= 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Set(_REDIRECT_TRANSFERERNAME=${TRANSFERERNAME}))'
+            . " \n\t";
+        // b(): the phone's own forwarding (302) continues in PHONE_REDIRECT_CONTEXT, see generatePhoneRedirect().
+        $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},'
+            . '${TRANSFER_OPTIONS}${DIAL_QUEUE_OPTIONS}ekKHhU(${ISTRANSFER}dial_answer)'
+            . 'b(dial_create_chan,s,1(' . ExtensionsConf::PHONE_REDIRECT_CONTEXT . '))):Set(DIALSTATUS=CHANUNAVAIL))'
+            . " \n\t";
         $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" == "x"]?Gosub(dial_end,${EXTEN},1))' . " \n\t";
         $conf .= 'same => n(fw_start),NoOp()' . " \n\t";
         // Redirection can be disabled for internal with the FW_DISABLE_ATRANSFER / FW_DISABLE_INTERNAL option

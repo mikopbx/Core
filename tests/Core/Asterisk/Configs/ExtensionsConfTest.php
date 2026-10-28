@@ -21,6 +21,7 @@ namespace MikoPBX\Tests\Core\Asterisk\Configs;
 
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
+use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\InternalContexts;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 use ReflectionMethod;
 
@@ -37,8 +38,9 @@ class ExtensionsConfTest extends AbstractUnitTest
 
     /**
      * A custom Gosub that hangs the transfer leg up runs the subroutine's h-extension,
-     * so [hangup_handler] must emit transfer_dial_hangup for the Local transfer leg
-     * (once, before hangup_chan) or the operator's recording is never resumed.
+     * so [hangup_handler] must emit transfer_dial_hangup for the Local transfer leg, also when the
+     * phone forwarded it to [internal-redirect] (once, before hangup_chan), or the operator's
+     * recording is never resumed.
      *
      * @backupGlobals disabled
      */
@@ -49,7 +51,8 @@ class ExtensionsConfTest extends AbstractUnitTest
         $this->assertStringStartsWith('[hangup_handler]', $conf);
         $fallback = 'same => n,ExecIf($["${ISTRANSFER}x" != "x" && "${TRANSFER_DIAL_HANGUP_SENT}x" == "x"'
             . ' && "${CUT(CHANNEL,\;,2)}" == "2"'
-            . ' && "${STRREPLACE(CHANNEL,@internal-transfer-)}" != "${CHANNEL}"]'
+            . ' && ("${STRREPLACE(CHANNEL,@internal-transfer-)}" != "${CHANNEL}"'
+            . ' || "${STRREPLACE(CHANNEL,@' . ExtensionsConf::PHONE_REDIRECT_CONTEXT . '-)}" != "${CHANNEL}")]'
             . '?Gosub(transfer_dial_hangup,${EXTEN},1(return)))';
         $this->assertStringContainsString($fallback, $conf);
         $this->assertLessThan(
@@ -86,5 +89,85 @@ class ExtensionsConfTest extends AbstractUnitTest
             'empty'              => ['', ''],
             'null'               => [null, ''],
         ];
+    }
+
+    /**
+     * A call forwarded by the phone (SIP 302) lands in [internal-redirect]. A plain call drops the
+     * inherited CDR id, as [internal-fw] does, so the forwarded leg gets its own row, and continues in
+     * [all_peers], where the forward used to land. A transfer keeps the id and continues in
+     * [internal-transfer] (one transfer_dial, one row) with the transferer passed by [internal-users],
+     * falling back to [all_peers] for numbers not there.
+     *
+     * @backupGlobals disabled
+     */
+    public function testPhoneRedirectContextSplitsPlainCallsAndTransfers(): void
+    {
+        $method = new ReflectionMethod(InternalContexts::class, 'generatePhoneRedirect');
+        $method->setAccessible(true);
+        $conf = $method->invoke(new InternalContexts());
+
+        $allPeers = ExtensionsConf::ALL_PEERS_CONTEXT;
+        $this->assertSame(
+            '[' . ExtensionsConf::PHONE_REDIRECT_CONTEXT . "]\n"
+            . 'exten => ' . ExtensionsConf::ALL_EXTENSION
+            . ',1,NoOp(--- Forwarded by the phone to ${EXTEN} ---)' . "\n\t"
+            . 'same => n,GotoIf($["${ISTRANSFER}x" != "x"]?transfer)' . "\n\t"
+            . 'same => n,Set(__pt1c_UNIQUEID=${UNDEFINED})' . "\n\t"
+            . 'same => n,Goto(' . $allPeers . ',${EXTEN},1)' . "\n\t"
+            . 'same => n(transfer),ExecIf($["${TRANSFERERNAME}x" == "x"]'
+            . '?Set(TRANSFERERNAME=${REDIRECT_TRANSFERERNAME}))' . "\n\t"
+            . 'same => n,GotoIf(${DIALPLAN_EXISTS(internal-transfer,${EXTEN},1)}'
+            . '?internal-transfer,${EXTEN},1)' . "\n\t"
+            . 'same => n,Goto(' . $allPeers . ',${EXTEN},1)' . "\n\n",
+            $conf
+        );
+    }
+
+    /**
+     * [dial_create_chan] is shared with trunk dials, so it sets FORWARD_CONTEXT only from the Gosub
+     * argument, before the -custom hook so a customization can still override it.
+     *
+     * @backupGlobals disabled
+     */
+    public function testDialCreateChanSetsForwardContextFromArgument(): void
+    {
+        $method = new ReflectionMethod(ExtensionsConf::class, 'generateOtherExten');
+        $method->setAccessible(true);
+        $conf = '';
+        $method->invokeArgs(new ExtensionsConf(), [&$conf]);
+
+        $start = strpos($conf, '[dial_create_chan]');
+        $this->assertNotFalse($start);
+        $section = substr($conf, $start, strpos($conf, 'same => n,return', $start) - $start);
+
+        $set = 'same => n,ExecIf($["${ARG1}x" != "x"]?Set(FORWARD_CONTEXT=${ARG1}))';
+        $custom = 'same => n,ExecIf($[${DIALPLAN_EXISTS(${CONTEXT}-custom,s,1)}]?Gosub(${CONTEXT}-custom,s,1))';
+        $this->assertStringContainsString($set, $section);
+        $this->assertStringContainsString($custom, $section);
+        $this->assertLessThan(strpos($section, $custom), strpos($section, $set));
+        $this->assertStringNotContainsString('PJSIP_ENDPOINT', $section);
+    }
+
+    /**
+     * [internal-users] passes the redirect context to [dial_create_chan] when it dials the phone, and
+     * the transferer one level down, before the Dial, for a forward during a transfer.
+     *
+     * @backupGlobals disabled
+     */
+    public function testInternalUsersDialPassesPhoneRedirectContext(): void
+    {
+        $contexts = new InternalContexts();
+        $contexts->getSettings();
+        $method = new ReflectionMethod(InternalContexts::class, 'generateInternalUsers');
+        $method->setAccessible(true);
+        $conf = $method->invoke($contexts);
+
+        $this->assertStringContainsString(
+            'U(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1(' . ExtensionsConf::PHONE_REDIRECT_CONTEXT . ')))',
+            $conf
+        );
+        $pass = 'same => n,ExecIf($["${ISTRANSFER}x" != "x"]?Set(_REDIRECT_TRANSFERERNAME=${TRANSFERERNAME}))';
+        $this->assertStringContainsString($pass, $conf);
+        $this->assertLessThan(strpos($conf, 'b(dial_create_chan,s,1('), strpos($conf, $pass));
     }
 }

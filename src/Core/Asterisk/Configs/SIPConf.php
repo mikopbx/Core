@@ -1484,7 +1484,7 @@ class SIPConf extends AsteriskConfigClass
         // Base endpoint template
         $conf .= "[endpoint-base](!)\n" .
             "type = endpoint\n" .
-            "context = all_peers\n" .
+            'context = ' . ExtensionsConf::ALL_PEERS_CONTEXT . "\n" .
             "disallow = all\n" .
             $templateParams['codecConf'] .
             "rtp_symmetric = yes\n" .
@@ -3376,7 +3376,7 @@ class SIPConf extends AsteriskConfigClass
         // Get full options for module override detection
         $fullOptions = array_merge([
             'type'                 => 'endpoint',
-            'context'              => 'all_peers',
+            'context'              => ExtensionsConf::ALL_PEERS_CONTEXT,
             'disallow'             => 'all',
             'allow'                => $peer['codecs'],
             'rtp_symmetric'        => 'yes',

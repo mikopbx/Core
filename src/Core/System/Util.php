@@ -29,6 +29,7 @@ use MikoPBX\Common\Providers\AmiConnectionListener;
 use MikoPBX\Common\Providers\LanguageProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
+use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use Phalcon\Di\Di;
 use ReflectionClass;
 use ReflectionException;
@@ -98,7 +99,7 @@ class Util
     {
         $am = self::getAstManager('off');
         $channel = 'Local/' . $peer_number . '@internal-originate';
-        $context = 'all_peers';
+        $context = ExtensionsConf::ALL_PEERS_CONTEXT;
         $variable = "pt1c_cid=$dest_number,__peer_mobile=$peer_mobile";
 
         return $am->Originate(

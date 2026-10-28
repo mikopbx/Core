@@ -39,6 +39,17 @@ class ExtensionsConf extends AsteriskConfigClass
     public const string ALL_EXTENSION = '_[0-9*#+a-zA-Z]!';
     public const string DIGIT_NUMBER_EXTENSION = '_X!';
 
+    /**
+     * Context of extension endpoints, where calls from the phones start.
+     */
+    public const string ALL_PEERS_CONTEXT = 'all_peers';
+
+    /**
+     * Context that receives calls forwarded by the phone itself (SIP 302 Moved).
+     * [internal-users] passes it to [dial_create_chan], which sets it as FORWARD_CONTEXT of the dialed channel.
+     */
+    public const string PHONE_REDIRECT_CONTEXT = 'internal-redirect';
+
     protected string $description = 'extensions.conf';
 
     /**
@@ -171,7 +182,8 @@ class ExtensionsConf extends AsteriskConfigClass
      * Asterisk runs the h-extension of the subroutine context instead, so the event is
      * lost and the operator's recording is never resumed after the failed transfer.
      * Hangup handlers always run (after the h-extension), so the transfer leg
-     * (Local/...@internal-transfer-...;2) emits the event here unless it was already sent.
+     * (Local/...@internal-transfer-...;2, or Local/...@internal-redirect-...;2 when the phone forwarded it)
+     * emits the event here unless it was already sent.
      *
      * @return string
      */
@@ -181,7 +193,8 @@ class ExtensionsConf extends AsteriskConfigClass
             'exten => s,1,NoOp(--- hangup - ${CHANNEL} ---)' . "\n\t" .
             'same => n,ExecIf($["${ISTRANSFER}x" != "x" && "${TRANSFER_DIAL_HANGUP_SENT}x" == "x"'
             . ' && "${CUT(CHANNEL,\;,2)}" == "2"'
-            . ' && "${STRREPLACE(CHANNEL,@internal-transfer-)}" != "${CHANNEL}"]'
+            . ' && ("${STRREPLACE(CHANNEL,@internal-transfer-)}" != "${CHANNEL}"'
+            . ' || "${STRREPLACE(CHANNEL,@' . self::PHONE_REDIRECT_CONTEXT . '-)}" != "${CHANNEL}")]'
             . '?Gosub(transfer_dial_hangup,${EXTEN},1(return)))' . "\n\t" .
             'same => n,Gosub(hangup_chan,${EXTEN},1)' . "\n\t" .
             'same => n,return' . "\n\n";
@@ -265,6 +278,9 @@ class ExtensionsConf extends AsteriskConfigClass
         $conf .= 'same => n,ExecIf($["${PT1C_SIP_HEADER}x" != "x"]?Set(PJSIP_HEADER(add,${CUT(PT1C_SIP_HEADER,:,1)})=${CUT(PT1C_SIP_HEADER,:,2)}))' . " \n\t";
         $conf .= 'same => n,Set(__PT1C_SIP_HEADER=${UNDEFINED})' . " \n\t";
         $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . " \n\t";
+        // ARG1 is the context for a 302 Moved of the dialed channel (app_dial reads FORWARD_CONTEXT of the
+        // forwarding channel). Only [internal-users] passes it; trunk dials keep their own context.
+        $conf .= 'same => n,ExecIf($["${ARG1}x" != "x"]?Set(FORWARD_CONTEXT=${ARG1}))' . " \n\t";
         $conf .= 'same => n,ExecIf($[${DIALPLAN_EXISTS(${CONTEXT}-custom,s,1)}]?Gosub(${CONTEXT}-custom,s,1))' . " \n\t";
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSIONS_GEN_CREATE_CHANNEL_DIALPLAN);
         $conf .= 'same => n,return' . PHP_EOL.PHP_EOL;
