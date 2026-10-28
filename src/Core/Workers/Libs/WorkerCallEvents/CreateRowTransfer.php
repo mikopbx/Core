@@ -229,28 +229,27 @@ class CreateRowTransfer
             ],
             'order' => 'is_app',
         ];
-        /** @var CallDetailRecordsTmp $not_ended_cdr */
         $cdrData = CallDetailRecordsTmp::find($filter);
         /** @var CallDetailRecordsTmp $row */
-        $not_ended_cdr = null;
+        $hasTransferRow = false;
         $transferNotComplete = false;
         foreach ($cdrData as $row) {
             if ($row->transfer === '1' && ($row->src_chan === $chan || $row->dst_chan === $chan)) {
-                $not_ended_cdr = $row;
+                $hasTransferRow = true;
             }
             if ($row->answer === '' && $row->endtime === ''
                 && ($row->src_chan === $chan || $row->dst_chan === $chan)) {
                 $transferNotComplete = true;
             }
         }
-        if ($not_ended_cdr !== null && !$transferNotComplete) {
-            $worker->StopMixMonitor($not_ended_cdr->src_chan, 'fillFailRedirectCdrData');
-            // Check if recording file is not empty and enable monitor for the call.
-            if (!empty($not_ended_cdr->recordingfile) && $worker->enableMonitor($not_ended_cdr->src_num, $not_ended_cdr->dst_num)) {
-                $worker->MixMonitor($not_ended_cdr->dst_chan, '', '', $not_ended_cdr->recordingfile, 'fillFailRedirectCdrData');
-                $recSrcCh = $worker->getRecSrcChannel($not_ended_cdr->dst_chan, $not_ended_cdr->src_chan, $not_ended_cdr->dst_chan);
-                $not_ended_cdr->writeAttribute('rec_src_channel', $recSrcCh);
-                $not_ended_cdr->save();
+        if ($hasTransferRow && !$transferNotComplete) {
+            // The hung-up leg does not have to end the consultation: a phone that forwards by
+            // itself (302) hangs up while the operator keeps consulting the forward target.
+            // Resume only once the operator is bridged back to the caller, as after a failed
+            // attended transfer, otherwise the consultation is recorded into the conversation.
+            $linkedId = (string)$data['linkedid'];
+            if (ActionTransferDialHangup::resumeOperatorRecording($worker, $linkedId, (string)$chan)) {
+                $worker->scheduleFailedTransferResume((string)$chan, $linkedId);
             }
         }
     }
