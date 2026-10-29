@@ -6,6 +6,7 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\LanguageProvider;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\{Processes, SystemMessages};
@@ -94,6 +95,11 @@ class WorkerApiCommands extends WorkerRedisBase
      * Default to 3 concurrent worker processes instead of 1
      */
     public int $maxProc = 3;
+
+    /**
+     * Language the translation services are switched to; null is WEB_ADMIN_LANGUAGE
+     */
+    private ?string $jobLanguage = null;
 
     /**
      * Get check interval for worker monitoring
@@ -764,6 +770,7 @@ class WorkerApiCommands extends WorkerRedisBase
         $this->logJobStart($jobId, $request);
 
         $this->resetOrmStateBeforeJob();
+        $this->applyJobLanguage($request);
 
         // Initialize performance metrics
         $metrics = new PerformanceMetrics($jobId, $request);
@@ -841,7 +848,6 @@ class WorkerApiCommands extends WorkerRedisBase
     private function resetOrmStateBeforeJob(): void
     {
         try {
-            /** @phpstan-ignore-next-line inherited from Phalcon Injectable */
             $di = $this->di;
             if ($di === null) {
                 return;
@@ -881,6 +887,32 @@ class WorkerApiCommands extends WorkerRedisBase
                 LOG_WARNING
             );
         }
+    }
+
+    /**
+     * Translate the job in the caller's JWT language (#1207)
+     *
+     * Requests without one (API key, localhost) go back to WEB_ADMIN_LANGUAGE, so a
+     * language never carries over to the next job. Services are rebuilt only on change.
+     *
+     * @param array $request Request data
+     */
+    private function applyJobLanguage(array $request): void
+    {
+        $language = $request['sessionContext']['language'] ?? null;
+        if (!is_string($language)) {
+            $language = null;
+        }
+        if ($language === $this->jobLanguage) {
+            return;
+        }
+
+        $di = $this->di;
+        if ($di === null) {
+            return;
+        }
+        LanguageProvider::useRequestLanguage($di, $language);
+        $this->jobLanguage = $language;
     }
 
     /**

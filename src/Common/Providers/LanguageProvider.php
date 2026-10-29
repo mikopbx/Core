@@ -38,6 +38,9 @@ class LanguageProvider implements ServiceProviderInterface
     public const string SERVICE_NAME = 'language';
     public const string PREFERRED_LANG_WEB = 'PREFERRED_LANG_WEB';
 
+    /** Per-request language override, set by {@see useRequestLanguage()}. */
+    public const string REQUEST_LANGUAGE = 'REQUEST_LANGUAGE';
+
     /**
      * Available languages with metadata
      * Single source of truth for all web admin languages
@@ -94,6 +97,28 @@ class LanguageProvider implements ServiceProviderInterface
     }
 
     /**
+     * Switch the language, messages and translation services to one request's language.
+     *
+     * A long-running worker resolves these shared services once; WorkerApiCommands calls
+     * this before each job so actions translate in the language of the caller's JWT (#1207).
+     * Null returns to the process default (WEB_ADMIN_LANGUAGE for the API worker).
+     *
+     * @param DiInterface $di Dependency Injection container.
+     * @param string|null $language Language code, or null for the process default.
+     */
+    public static function useRequestLanguage(DiInterface $di, ?string $language): void
+    {
+        $di->remove(self::REQUEST_LANGUAGE);
+        if ($language !== null) {
+            $di->set(self::REQUEST_LANGUAGE, fn(): string => $language);
+        }
+        foreach ([self::class, MessagesProvider::class, TranslationProvider::class] as $providerClass) {
+            $di->remove($providerClass::SERVICE_NAME);
+            (new $providerClass())->register($di);
+        }
+    }
+
+    /**
      * Determines the language setting based on the execution environment and specific conditions.
      *
      * @param DiInterface $di Dependency Injection container.
@@ -101,6 +126,10 @@ class LanguageProvider implements ServiceProviderInterface
      */
     private function determineLanguage(DiInterface $di): string
     {
+        if ($di->has(self::REQUEST_LANGUAGE)) {
+            return $this->normalizeWebLanguage($di->get(self::REQUEST_LANGUAGE));
+        }
+
         if ($this->isCliEnvironment()) {
             return $this->getLanguageForCli($di);
         }

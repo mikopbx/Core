@@ -398,6 +398,10 @@ class BaseController extends Controller
                 // Each user can have one active challenge at a time
                 // JWT tokens don't have 'jti' field, so we use userId instead
                 $sessionContext['session_id'] = $userId;
+                // #1207: the worker translates in the language the page is rendered in
+                if (isset($jwtPayload['language']) && is_string($jwtPayload['language'])) {
+                    $sessionContext['language'] = $jwtPayload['language'];
+                }
             }
 
             $requestMessage['sessionContext'] = $sessionContext;
