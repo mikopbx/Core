@@ -152,6 +152,9 @@ class QueueConf extends AsteriskConfigClass
             }
             // Redirect the call to the queue.
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${CHANNEL})' . "\n\t";
+            // The channel waiting in the queue, unlike QUEUE_SRC_CHAN which set_orign_chan
+            // replaces with the dialing party: lets an agent leg find the transferee (#1100).
+            $queue_ext_conf .= 'same => n,Set(__QUEUE_CALLER_CHAN=${CHANNEL})' . "\n\t";
             $queue_ext_conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
             $queue_ext_conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
             $options = '${MQ_OPTIONS}';

@@ -1252,6 +1252,21 @@ function event_transfer_dial()
 
     set_variable("__transfer_UNIQUEID", id);
     local chanExists = get_variable('CHANNEL_EXISTS('..data['src_chan']..')');
+    if(chanExists ~= '1' and is_queue == '1')then
+        -- The transferer left the queue it consulted between two rounds: the transferee now
+        -- waits in that queue, so this round dials the agent for the transferee (#1100).
+        local transferee = getQueueTransferee();
+        if(transferee ~= '')then
+            data['agi_channel'] = transferee;
+            data['src_chan']    = transferee;
+            data['transfer']    = '0';
+            data['src_num']     = get_variable('IMPORT('..transferee..',CALLERID(num))');
+            local src_name      = get_variable('IMPORT('..transferee..',CALLERID(name))');
+            data['src_name']    = (src_name == data['src_num']) and '' or src_name;
+            data['src_call_id'] = get_variable('IMPORT('..transferee..',CHANNEL(pjsip,call-id))');
+            chanExists = '1';
+        end
+    end
     if(chanExists ~= '1')then
         app["NoOp"]('The channel '..data['src_chan']..' no longer exists ('..chanExists..'). We are completing the call.');
         app["Hangup"]();
@@ -1261,6 +1276,28 @@ function event_transfer_dial()
     userevent_return(data)
 
     return data;
+end
+
+--[[
+    getQueueTransferee()
+
+    Returns the party waiting in the queue that dials this agent leg. The queue caller
+    (QUEUE_CALLER_CHAN, inherited from the queue context) is the ;2 half of the Local channel
+    the transferer dialed, and the transferee is bridged with its ;1 half once the attended
+    transfer has completed. Returns '' when the chain does not end at a live channel.
+]]
+function getQueueTransferee()
+    local peer = get_variable("QUEUE_CALLER_CHAN");
+    if(string.lower(peer):find("local/") ~= nil)then
+        peer = get_variable('IMPORT('..peer:gsub(";2$", ";1")..',BRIDGEPEER)');
+    end
+    if(peer == '' or string.lower(peer):find("local/") ~= nil)then
+        return '';
+    end
+    if(get_variable('CHANNEL_EXISTS('..peer..')') ~= '1')then
+        return '';
+    end
+    return peer;
 end
 
 --[[
