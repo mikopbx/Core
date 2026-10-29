@@ -129,6 +129,9 @@ class S3Client
     /**
      * Download file from S3 bucket
      *
+     * The object is written to a per-pid .part file next to $localPath and renamed into
+     * place only after a complete download, so readers never see a truncated file (#1319).
+     *
      * @param string $s3Key S3 object key (path in bucket)
      * @param string $localPath Destination local path
      * @return bool True on success, false on failure
@@ -142,12 +145,23 @@ class S3Client
             return false;
         }
 
+        // WHY pid in the name: parallel requests for the same key must not write into one file
+        $partPath = $localPath . '.' . getmypid() . '.part';
         try {
             $this->client->getObject([
                 'Bucket' => $this->bucket,
                 'Key' => $s3Key,
-                'SaveAs' => $localPath,
+                'SaveAs' => $partPath,
             ]);
+
+            if (!rename($partPath, $localPath)) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    "S3 download failed for $s3Key: cannot move into $localPath",
+                    LOG_ERR
+                );
+                return false;
+            }
 
             SystemMessages::sysLogMsg(__CLASS__, "Downloaded from S3: $s3Key", LOG_INFO);
             return true;
@@ -155,6 +169,10 @@ class S3Client
         } catch (AwsException $e) {
             SystemMessages::sysLogMsg(__CLASS__, "S3 download failed for $s3Key: " . $e->getMessage(), LOG_ERR);
             return false;
+        } finally {
+            if (is_file($partPath)) {
+                @unlink($partPath);
+            }
         }
     }
 
