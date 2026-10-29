@@ -321,8 +321,11 @@ class ContainerEntrypoint extends Injectable
         if ($out !== null && trim(implode('', $out)) === '') {
             Util::mwMkdir(dirname(self::PATH_DB));
             Processes::mwExec("$rm -rf " . self::PATH_DB . "; $cp /conf.default/mikopbx.db " . self::PATH_DB);
-            Util::addRegularWWWRights(self::PATH_DB);
         }
+        // #1227: a database kept from an older version may still be root-owned, while php-fpm (www)
+        // writes it. Run on every boot, but only on the DB directory, not all of /cf as Storage does:
+        // on Docker /cf can be a host bind mount. The licensing keys stay root-only.
+        Util::addRegularWWWRights(dirname(self::PATH_DB), dirname(self::PATH_DB) . '/license-v2');
         $this->echoResultMsg();
         return [];
     }
