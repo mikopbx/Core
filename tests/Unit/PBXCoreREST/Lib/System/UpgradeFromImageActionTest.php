@@ -72,4 +72,23 @@ final class UpgradeFromImageActionTest extends TestCase
             'sda vs sdaa lookalike'         => ['sdaa', 'sda', false],
         ];
     }
+
+    /**
+     * #1295: on LXC the IMG upgrade is refused before the image path is checked or a script is written.
+     */
+    public function testRefusesUpgradeInLxcContainer(): void
+    {
+        putenv('container=lxc');
+        try {
+            $res = UpgradeFromImageAction::main('/nonexistent/mikopbx.img');
+        } finally {
+            putenv('container');
+        }
+
+        $this->assertFalse($res->success);
+        $this->assertCount(1, $res->messages);
+        $this->assertStringContainsString('lxc', strtolower((string)$res->messages[0]));
+        $this->assertNotContains('Invalid image file location', $res->messages);
+        $this->assertArrayNotHasKey('imageFileLocation', $res->data);
+    }
 }

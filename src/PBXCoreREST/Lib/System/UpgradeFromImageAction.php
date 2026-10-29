@@ -54,6 +54,13 @@ class UpgradeFromImageAction extends Injectable
         $res->success = true;
         $res->data['message'] = 'In progress...';
 
+        // #1295: an LXC container is updated by recreating it from lxc.tar.gz; refuse before any preparation.
+        if (System::isLxc()) {
+            $res->success = false;
+            $res->messages[] = TranslationProvider::translate('rest_System_UpgradeNotSupportedInLxc');
+            return $res;
+        }
+
         // Confine the uploaded image path to the configured upload directory
         // so a crafted API payload cannot point at arbitrary files or smuggle
         // shell meta-characters through $imageFileLocation.
