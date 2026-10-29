@@ -117,6 +117,9 @@ class ContainerEntrypoint extends Injectable
         // Start the system log.
         Processes::mwExecBg($syslogd . ' -S -C512');
 
+        // Let php-fpm workers (www) detect LXC; they cannot read the container environment.
+        System::refreshLxcMarker();
+
         // Update WWW user id and group id.
         $this->changeWwwUserID();
 

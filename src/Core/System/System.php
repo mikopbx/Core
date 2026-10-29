@@ -48,6 +48,11 @@ class System extends Injectable
     private const string LXC_CONTAINER_ENV_VALUE = 'lxc';
 
     /**
+     * Marker written by root at container boot, readable by php-fpm workers (www)
+     */
+    private const string LXC_MARKER_FILE = '/etc/.pbx_lxc';
+
+    /**
      * Returns the directory where logs are stored.
      * @deprecated use Directories::getDir(Directories::CORE_LOGS_DIR);
      *
@@ -501,12 +506,36 @@ class System extends Injectable
      * Unlike Docker, LXC containers can manage their own networking and firewall.
      *
      * Detection methods:
-     * 1. Primary: Check 'container' environment variable (set by LXC runtime)
-     * 2. Fallback: Read /proc/1/environ for container=lxc (when env not inherited)
+     * 1. Marker file written at boot by {@see refreshLxcMarker()}. php-fpm workers run as www
+     *    with clear_env, so they see neither of the other two sources (#1295)
+     * 2. 'container' environment variable (set by LXC runtime)
+     * 3. Fallback: Read /proc/1/environ for container=lxc (root only, mode 0400)
      *
      * @return bool True if running in LXC, false otherwise
      */
     public static function isLxc(): bool
+    {
+        return file_exists(self::LXC_MARKER_FILE) || self::isLxcByEnvironment();
+    }
+
+    /**
+     * Write or remove the LXC marker file so that unprivileged processes can detect LXC.
+     *
+     * Called by ContainerEntrypoint as root on every container boot, before php-fpm starts.
+     */
+    public static function refreshLxcMarker(): void
+    {
+        if (self::isLxcByEnvironment()) {
+            file_put_contents(self::LXC_MARKER_FILE, self::LXC_CONTAINER_ENV_VALUE . PHP_EOL);
+        } elseif (file_exists(self::LXC_MARKER_FILE)) {
+            unlink(self::LXC_MARKER_FILE);
+        }
+    }
+
+    /**
+     * Detect LXC from the process environment: works for root, not for php-fpm workers.
+     */
+    private static function isLxcByEnvironment(): bool
     {
         // Check container environment variable (set by LXC runtime)
         if (getenv('container') === self::LXC_CONTAINER_ENV_VALUE) {

@@ -20,7 +20,9 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Files;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Workers\WorkerDownloader;
@@ -49,6 +51,13 @@ class DownloadNewFirmwareAction extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
+
+        // #1295: the downloaded IMG could not be applied on LXC, so do not fetch it
+        if (System::isLxc()) {
+            $res->success = false;
+            $res->messages['error'][] = TranslationProvider::translate('rest_System_UpgradeNotSupportedInLxc');
+            return $res;
+        }
 
         $url = is_string($data['url'] ?? null) ? trim($data['url']) : '';
         $md5 = is_string($data['md5'] ?? null) ? trim($data['md5']) : '';

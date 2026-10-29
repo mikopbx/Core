@@ -3,7 +3,7 @@
     <div class="content">
         <div class="ui header">{{ t._('upd_UpdateLxcHeader')}}</div>
         <p>{{ t._('upd_UpdateLxcText')}}</p>
-        <a href="{{ lxcGuideUrl }}" target="_blank" class="ui basic button">
+        <a href="{{ lxcGuideUrl }}" target="_blank" rel="noopener" class="ui basic button">
             <i class="book icon"></i>{{ t._('upd_UpdateLxcGuide')}}
         </a>
     </div>
