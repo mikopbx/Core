@@ -38,6 +38,16 @@ class AriConf extends AsteriskConfigClass
     public int $priority = 1000;
 
     protected string $description = 'ari.conf';
+
+    /**
+     * Loaded with ARI for ExternalMedia (UnicastRTP, #1262) but usable without it
+     * (MulticastRTP paging), so disabling ARI leaves them loaded.
+     */
+    private const array SHARED_RTP_MODULES = [
+        // chan_rtp needs res_rtp_multicast
+        'res_rtp_multicast.so',
+        'chan_rtp.so',
+    ];
     
     /**
      * Get list of ARI and Stasis modules in dependency order.
@@ -70,10 +80,19 @@ class AriConf extends AsteriskConfigClass
             'res_ari_playbacks.so',
             'res_ari_recordings.so',
             'res_ari_sounds.so',
-            // ExternalMedia creates UnicastRTP channels; chan_rtp needs res_rtp_multicast (#1262)
-            'res_rtp_multicast.so',
-            'chan_rtp.so',
+            // ExternalMedia creates UnicastRTP channels (#1262)
+            ...self::SHARED_RTP_MODULES,
         ];
+    }
+
+    /**
+     * ARI modules to unload when ARI is disabled, in reverse dependency order.
+     *
+     * @return array List of module names
+     */
+    public static function getAriModulesToUnload(): array
+    {
+        return array_values(array_diff(array_reverse(self::getAriModules()), self::SHARED_RTP_MODULES));
     }
 
     /**
@@ -184,11 +203,7 @@ class AriConf extends AsteriskConfigClass
             Processes::mwExec("$asterisk -rx 'module reload res_http_websocket'", $arr_out);
         } else {
             // ARI is disabled - unload ARI modules
-            // Get modules in reverse order for proper dependency handling
-            $ariModules = array_reverse(self::getAriModules());
-
-            // Unload each module
-            foreach ($ariModules as $module) {
+            foreach (self::getAriModulesToUnload() as $module) {
                 Processes::mwExec("$asterisk -rx 'module unload $module'", $arr_out);
             }
 
