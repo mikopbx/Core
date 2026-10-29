@@ -217,7 +217,9 @@ class InternalContexts extends AsteriskConfigClass
      *   REDIRECT_SKIP_TRANSFER_DIAL: the route in [outgoing] runs its own. Numbers of [applications]
      *   (dial_app, no transfer_dial) and [internal] keep it. TRANSFERERNAME is not inherited, so
      *   [internal-users] passes it as REDIRECT_TRANSFERERNAME: without it transfer_dial takes the Local
-     *   channel as the source and the completed attended transfer gets no row.
+     *   channel as the source and the completed attended transfer gets no row. A blind transfer has no
+     *   transferer: REDIRECT_TRANSFER_LEG lets transfer_dial (extensions.lua) take the transferee
+     *   behind the Local channel, which is optimized away once the forward target answers.
      *
      * @return string The dialplan context.
      */
@@ -230,7 +232,8 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,GotoIf($["${ISTRANSFER}x" != "x"]?transfer)' . "\n\t";
         $conf .= 'same => n,Set(__pt1c_UNIQUEID=${UNDEFINED})' . "\n\t";
         $conf .= 'same => n,Goto(' . $allPeers . ',${EXTEN},1)' . "\n\t";
-        $conf .= 'same => n(transfer),ExecIf($["${TRANSFERERNAME}x" == "x"]'
+        $conf .= 'same => n(transfer),Set(REDIRECT_TRANSFER_LEG=1)' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${TRANSFERERNAME}x" == "x"]'
             . '?Set(TRANSFERERNAME=${REDIRECT_TRANSFERERNAME}))' . "\n\t";
         $conf .= 'same => n,GotoIf(${DIALPLAN_EXISTS(internal-transfer,${EXTEN},1)}'
             . '?internal-transfer,${EXTEN},1)' . "\n\t";

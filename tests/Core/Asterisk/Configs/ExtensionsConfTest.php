@@ -114,7 +114,8 @@ class ExtensionsConfTest extends AbstractUnitTest
             . 'same => n,GotoIf($["${ISTRANSFER}x" != "x"]?transfer)' . "\n\t"
             . 'same => n,Set(__pt1c_UNIQUEID=${UNDEFINED})' . "\n\t"
             . 'same => n,Goto(' . $allPeers . ',${EXTEN},1)' . "\n\t"
-            . 'same => n(transfer),ExecIf($["${TRANSFERERNAME}x" == "x"]'
+            . 'same => n(transfer),Set(REDIRECT_TRANSFER_LEG=1)' . "\n\t"
+            . 'same => n,ExecIf($["${TRANSFERERNAME}x" == "x"]'
             . '?Set(TRANSFERERNAME=${REDIRECT_TRANSFERERNAME}))' . "\n\t"
             . 'same => n,GotoIf(${DIALPLAN_EXISTS(internal-transfer,${EXTEN},1)}'
             . '?internal-transfer,${EXTEN},1)' . "\n\t"

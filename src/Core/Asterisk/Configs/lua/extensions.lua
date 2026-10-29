@@ -1209,6 +1209,15 @@ function event_transfer_dial()
         channel = QUEUE_SRC_CHAN;
     elseif ( TRANSFERERNAME == '' ) then
         channel = get_variable("CHANNEL");
+        -- The Local leg of a phone's own 302 forward during a blind transfer (marked in [internal-redirect])
+        -- is optimized away once answered and would close the row unanswered: use the live channel
+        -- behind it, as event_dial does.
+        local orign_chan = get_variable("orign_chan");
+        if (get_variable("REDIRECT_TRANSFER_LEG") == '1' and orign_chan ~= ''
+                and string.lower(orign_chan):find("local/") == nil
+                and get_variable('CHANNEL_EXISTS('..orign_chan..')') == '1') then
+            channel = orign_chan;
+        end
     else
         channel = TRANSFERERNAME;
     end
