@@ -234,7 +234,11 @@ class ContainerEntrypoint extends Injectable
     private function readRootOwnedFile(string $path): string|false
     {
         clearstatcache(true, $path);
+        if (!file_exists($path) && !is_link($path)) {
+            return false;
+        }
         if (is_link($path) || !is_file($path) || fileowner($path) !== 0) {
+            SystemMessages::sysLogMsg(static::class, "Ignored $path: not a regular root-owned file", LOG_WARNING);
             return false;
         }
         $content = file_get_contents($path);
@@ -390,6 +394,7 @@ class ContainerEntrypoint extends Injectable
         if (is_link($dir) || !lchown($dir, 'root') || !lchgrp($dir, 'www') || !chmod($dir, 01775)) {
             SystemMessages::sysLogMsg(static::class, "Cannot prepare $dir for www", LOG_WARNING);
         }
+        $this->keepLicenseDirRootOwned($dir . '/license-v2');
         foreach ([self::PATH_DB, self::PATH_DB . '-wal', self::PATH_DB . '-shm'] as $path) {
             if (!file_exists($path) && !is_link($path)) {
                 continue;
@@ -397,6 +402,34 @@ class ContainerEntrypoint extends Injectable
             if (!lchown($path, 'www') || !lchgrp($path, 'www')) {
                 SystemMessages::sysLogMsg(static::class, "Cannot give $path to www", LOG_WARNING);
             }
+        }
+    }
+
+    /**
+     * Makes sure the LicenseV2 directory exists and is root's before www starts (#1227).
+     *
+     * /cf/conf is group-writable for www, so a missing license-v2 could be pre-created by www with
+     * its own key pair, which InstallationIdentity would then adopt. Anything at that name that is
+     * not a root-owned directory closed to others is moved aside (kept for inspection), and a fresh
+     * one is created.
+     */
+    private function keepLicenseDirRootOwned(string $licenseDir): void
+    {
+        clearstatcache(true, $licenseDir);
+        $exists = file_exists($licenseDir) || is_link($licenseDir);
+        $trusted = !is_link($licenseDir) && is_dir($licenseDir)
+            && fileowner($licenseDir) === 0 && (fileperms($licenseDir) & 0022) === 0;
+        if ($exists && !$trusted) {
+            $aside = $licenseDir . '.untrusted-' . time();
+            if (!rename($licenseDir, $aside)) {
+                SystemMessages::sysLogMsg(static::class, "Cannot move aside untrusted $licenseDir", LOG_ERR);
+                return;
+            }
+            SystemMessages::sysLogMsg(static::class, "Moved untrusted $licenseDir to $aside", LOG_WARNING);
+            $exists = false;
+        }
+        if (!$exists && !mkdir($licenseDir, 0755) && !is_dir($licenseDir)) {
+            SystemMessages::sysLogMsg(static::class, "Cannot create $licenseDir", LOG_ERR);
         }
     }
 
