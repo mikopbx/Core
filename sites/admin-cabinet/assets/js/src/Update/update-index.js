@@ -17,7 +17,8 @@
  */
 
 /* global PbxApi, globalPBXVersion, globalTranslate,
-globalWebAdminLanguage, showdown, UserMessage, upgradeStatusLoopWorker, SystemAPI, FilesAPI, FileUploadEventHandler */
+globalWebAdminLanguage, showdown, UserMessage, upgradeStatusLoopWorker, SystemAPI, FilesAPI, FileUploadEventHandler,
+SecurityUtils */
 
 /**
  * Object for managing PBX firmware updates.
@@ -329,30 +330,70 @@ const updatePBX = {
         markdownText = markdownText.replace(/<br >/g, '\r');
         markdownText = markdownText.replace(/\* \*/g, '*');
         markdownText = markdownText.replace(/\*\*/g, '*');
-        const html = updatePBX.converter.makeHtml(markdownText)
-            .replace(/<table>/g, '<table class="ui very basic compact celled table">');
+        const html = updatePBX.sanitizeReleaseNotes(updatePBX.converter.makeHtml(markdownText));
+        const safe = SecurityUtils.escapeTemplateParams({
+            version: String(obj.version || ''),
+            href: /^https?:\/\//i.test(String(obj.href || '')) ? String(obj.href) : '#',
+            md5: String(obj.md5 || ''),
+            size: String(obj.size || ''),
+        });
         const dymanicRow = `
 			<tr class="update-row">
-			<td class="center aligned">${obj.version}</td>
+			<td class="center aligned">${safe.version}</td>
 			<td>${html}</td>
 			<td class="right aligned collapsing">
     		<div class="ui small basic icon buttons action-buttons">
-    			<a href="${obj.href}" class="ui button redo popuped" 
+    			<a href="${safe.href}" class="ui button redo popuped" 
     				data-content = "${globalTranslate.bt_ToolTipUpgradeOnline}"
-					data-md5 ="${obj.md5}" data-size ="${obj.size}"
-					data-version = "${obj.version}" >
+					data-md5 ="${safe.md5}" data-size ="${safe.size}"
+					data-version = "${safe.version}" >
 					<i class="icon redo blue"></i>
 					<span class="percent"></span>
 				</a>
-				<a href="${obj.href}" class="ui button download popuped" 
+				<a href="${safe.href}" class="ui button download popuped" 
 					data-content = "${globalTranslate.bt_ToolTipDownload}"
-					data-md5 ="${obj.md5}" data-size ="${obj.size}">
+					data-md5 ="${safe.md5}" data-size ="${safe.size}">
 					<i class="icon download blue"></i>
 				</a>
     		</div>   
 	</tr>`;
         $('#updates-table tbody').append(dymanicRow);
         $('a.popuped').popup();
+    },
+
+    /**
+     * Keeps only the markup that release notes use (#1336): showdown passes raw HTML and
+     * javascript: links through, and the notes come from the releases feed, not from the admin.
+     * @param {string} html - Output of the markdown converter
+     * @returns {string} HTML with allowed tags, http(s)/mailto links and no other attributes
+     */
+    sanitizeReleaseNotes(html) {
+        const allowedTags = ['A', 'P', 'BR', 'UL', 'OL', 'LI', 'STRONG', 'EM', 'B', 'I', 'CODE', 'PRE',
+            'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HR', 'TABLE', 'THEAD', 'TBODY', 'TR', 'TH', 'TD'];
+        const template = document.createElement('template');
+        template.innerHTML = html;
+        Array.from(template.content.querySelectorAll('*')).forEach((node) => {
+            if (!allowedTags.includes(node.tagName)) {
+                // Unknown wrappers are unwrapped (their children come later in the list and are
+                // sanitized too); script-like elements go away with their content
+                if (['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'TEMPLATE'].includes(node.tagName)) {
+                    node.remove();
+                } else {
+                    node.replaceWith(...node.childNodes);
+                }
+                return;
+            }
+            const href = node.getAttribute('href') || '';
+            Array.from(node.attributes).forEach((attr) => node.removeAttribute(attr.name));
+            if (node.tagName === 'A' && /^(https?:|mailto:)/i.test(href.trim())) {
+                node.setAttribute('href', href.trim());
+                node.setAttribute('target', '_blank');
+                node.setAttribute('rel', 'noopener noreferrer');
+            } else if (node.tagName === 'TABLE') {
+                node.className = 'ui very basic compact celled table';
+            }
+        });
+        return template.innerHTML;
     },
 };
 
