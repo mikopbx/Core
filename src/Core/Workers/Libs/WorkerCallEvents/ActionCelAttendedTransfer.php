@@ -98,6 +98,7 @@ class ActionCelAttendedTransfer
                     }
                 }
             }
+            $eventTime = self::eventTime($data);
             $m_data = CallDetailRecordsTmp::find($filter);
             foreach ($m_data as $row) {
                 // Set new linked ID.
@@ -106,15 +107,15 @@ class ActionCelAttendedTransfer
                 }
                 if(empty($row->endtime)){
                     if(in_array($row->src_chan, [$extra['channel2_name'], $data['Channel']], true)) {
-                        $row->writeAttribute('endtime', date('Y-m-d H:i:s'));
+                        $row->writeAttribute('endtime', self::endTimeFor($eventTime, (string)$row->answer));
                     }elseif(in_array($row->dst_chan, [$extra['channel2_name'], $data['Channel']], true)){
-                        $row->writeAttribute('endtime', date('Y-m-d H:i:s'));
+                        $row->writeAttribute('endtime', self::endTimeFor($eventTime, (string)$row->answer));
                     }
                 }
                 $row->save();
             }
-            $n_data['start']    = date('Y-m-d H:i:s');
-            $n_data['answer']   = date('Y-m-d H:i:s');
+            $n_data['start']    = $eventTime;
+            $n_data['answer']   = $eventTime;
             $n_data['linkedid'] = $chanId2;
             $n_data['UNIQUEID'] = $chanId2 . Util::generateRandomString();
             $n_data['transfer'] = '0';
@@ -178,10 +179,7 @@ class ActionCelAttendedTransfer
         }
 
         $selectedUniqueIds = array_fill_keys($participants['selected_uniqueids'], true);
-        $eventTime = trim((string)($data['EventTime'] ?? ''));
-        if ($eventTime === '') {
-            $eventTime = date('Y-m-d H:i:s.v');
-        }
+        $eventTime = self::eventTime($data);
 
         $worker->StopMixMonitor(
             $participants['src_chan'],
@@ -198,7 +196,7 @@ class ActionCelAttendedTransfer
             }
 
             if (empty($row->endtime)) {
-                $row->writeAttribute('endtime', $eventTime);
+                $row->writeAttribute('endtime', self::endTimeFor($eventTime, (string)$row->answer));
             }
             $row->writeAttribute('transfer', 0);
             $row->save();
@@ -231,5 +229,37 @@ class ActionCelAttendedTransfer
             'CdrConnector',
             ['AgiData' => AsteriskManager::encodeCdrData($participants)]
         );
+    }
+
+    /**
+     * The time to stamp the transfer with. CEL reports EventTime to the second (cel.conf
+     * dateformat %F %T), while answers carry milliseconds. When the event is handled within a
+     * second of it, the current time is the precise one; a late event (a backlog of the worker)
+     * keeps its own time, and endTimeFor() keeps the rows it closes from ending before their
+     * answer.
+     */
+    private static function eventTime(array $data): string
+    {
+        $now = (string)Util::getNowDate();
+        $eventTime = trim((string)($data['EventTime'] ?? ''));
+        if ($eventTime === '') {
+            return $now;
+        }
+        if (str_contains($eventTime, '.')) {
+            return $eventTime;
+        }
+        $lag = time() - (int)strtotime($eventTime);
+
+        return ($lag >= 0 && $lag <= 1) ? $now : $eventTime;
+    }
+
+    /**
+     * The end of a row closed by the transfer: never before its answer. A leg answered and
+     * transferred within the second CEL truncates the transfer time to would otherwise end
+     * before its answer and be billed as NOANSWER.
+     */
+    public static function endTimeFor(string $eventTime, string $answer): string
+    {
+        return ($answer !== '' && $answer > $eventTime) ? $answer : $eventTime;
     }
 }

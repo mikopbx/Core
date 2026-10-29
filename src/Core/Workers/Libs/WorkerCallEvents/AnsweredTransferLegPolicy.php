@@ -7,13 +7,74 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 /** Determines whether an answered destination leg must outlive its transferer. */
 final class AnsweredTransferLegPolicy
 {
-    public static function keepOpen(object $row, string $hangupChannel): bool
+    /**
+     * @param string[] $notConsultation Destinations whose rows are not consultation legs, see
+     *     notConsultationLegs(): the hangup of the transferer ends them.
+     */
+    public static function keepOpen(object $row, string $hangupChannel, array $notConsultation = []): bool
     {
+        $dstChan = (string)($row->dst_chan ?? '');
+
         return (string)($row->transfer ?? '') === '1'
             && (string)($row->src_chan ?? '') === $hangupChannel
-            && (string)($row->dst_chan ?? '') !== ''
+            && $dstChan !== ''
+            && !in_array($dstChan, $notConsultation, true)
             && (string)($row->answer ?? '') !== ''
             && (string)($row->endtime ?? '') === '';
+    }
+
+    /**
+     * Destinations of the hanging-up channel's rows that keepOpen() must not take for
+     * consultation legs although that channel is their src_chan:
+     * - a channel dialing a transfer leg of its own (onwardTransferers()): the conversation with
+     *   a party being transferred on, e.g. B dialing C after A's blind transfer (**), which gets
+     *   its transfer flag from that dial;
+     * - the party of its own conversation when it placed the call itself, e.g. B called A and
+     *   then consulted: its earliest answered row, with a later dial (open or already ended).
+     *
+     * @param iterable<object> $openRows Open rows of the linkedid.
+     * @param iterable<object> $ownRows All rows of the linkedid with the hanging-up channel as src_chan.
+     * @return string[]
+     */
+    public static function notConsultationLegs(iterable $openRows, iterable $ownRows, string $hangupChannel): array
+    {
+        $channels = array_fill_keys(self::onwardTransferers($openRows), true);
+        $conversation = null;
+        $latestStart = '';
+        foreach ($ownRows as $row) {
+            if ((string)($row->src_chan ?? '') !== $hangupChannel) {
+                continue;
+            }
+            $latestStart = max($latestStart, (string)($row->start ?? ''));
+            $answer = (string)($row->answer ?? '');
+            if ($answer !== '' && ($conversation === null || $answer < (string)$conversation->answer)) {
+                $conversation = $row;
+            }
+        }
+        if ($conversation !== null && $latestStart > (string)$conversation->answer) {
+            $channels[(string)$conversation->dst_chan] = true;
+        }
+
+        return array_keys($channels);
+    }
+
+    /**
+     * Channels dialing a transfer leg of their own among the open rows of a linkedid.
+     *
+     * @param iterable<object> $rows
+     * @return string[]
+     */
+    public static function onwardTransferers(iterable $rows): array
+    {
+        $channels = [];
+        foreach ($rows as $row) {
+            $srcChan = (string)($row->src_chan ?? '');
+            if ((string)($row->transfer ?? '') === '1' && (string)($row->endtime ?? '') === '' && $srcChan !== '') {
+                $channels[$srcChan] = true;
+            }
+        }
+
+        return array_keys($channels);
     }
 
     /**
@@ -26,9 +87,10 @@ final class AnsweredTransferLegPolicy
      * consultation leg is kept open by keepOpen() instead (#1100).
      *
      * @param array<int, array<string, mixed>> $rows Open transfer=1 rows of the linkedid.
+     * @param string[] $notConsultation See keepOpen().
      * @return array<int, array<string, mixed>>|null
      */
-    public static function completedTransferPair(array $rows, string $transferer): ?array
+    public static function completedTransferPair(array $rows, string $transferer, array $notConsultation = []): ?array
     {
         $answered = [];
         $consultationLegs = 0;
@@ -44,7 +106,7 @@ final class AnsweredTransferLegPolicy
             if ($dstChan === '' || self::isPseudoChannel($srcChan) || self::isPseudoChannel($dstChan)) {
                 return null;
             }
-            if (self::keepOpen((object)$row, $transferer)) {
+            if (self::keepOpen((object)$row, $transferer, $notConsultation)) {
                 ++$consultationLegs;
             }
             $answered[] = $row;

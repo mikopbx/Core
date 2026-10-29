@@ -110,6 +110,8 @@ class WorkerCallEvents extends WorkerBase
 
     public array $mixMonitorChannels = [];
     public array $checkChanHangupTransfer = [];
+    /** @var array<string, string> CEL ANSWER time of a live channel, by channel name. */
+    public array $channelAnswerTimes = [];
     protected bool $record_calls = true;
     protected bool $split_audio_thread = false;
     private array $activeChannels = [];

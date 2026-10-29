@@ -52,6 +52,12 @@ class CreateRowTransfer
         }
         $worker->checkChanHangupTransfer[$data['agi_channel']] = $action;
         self::initCallsData($data, $calls_data);
+        if ($action === 'hangup_chan' && self::isUnansweredTransferLeg($calls_data)) {
+            // The transferer hung up while the destination still rings: Asterisk connects the
+            // transferee to the ringing leg, but nobody talks yet. The conversation is billed
+            // from the real answer (TransferLegAnsweredAfterTransfererLeft), or not at all.
+            return;
+        }
         if (count($calls_data) === 2) {
             // Normal transfer.
             self::fillRedirectCdrData($worker, $action, $data, $calls_data);
@@ -121,9 +127,6 @@ class CreateRowTransfer
             }
         }
 
-        // Fill missing names from other CDR records in the same linkedid.
-        self::fillMissingNames($insert_data, $data['linkedid']);
-
         // Запись разговора.
         $worker->StopMixMonitor($insert_data['src_chan'], 'fillRedirectCdrData');
         $worker->StopMixMonitor($insert_data['dst_chan'], 'fillRedirectCdrData');
@@ -148,7 +151,18 @@ class CreateRowTransfer
         $insert_data['did'] = $data['did'];
         $insert_data['transfer'] = '0';
 
-        // Send UserEvent
+        self::insertTransferRow($insert_data);
+    }
+
+    /**
+     * Stores the transferee<->destination row of a completed transfer and announces it to the
+     * CdrConnector listeners. Names missing from the legs are taken from other rows of the call.
+     *
+     * @param array $insert_data The row; linkedid is required.
+     */
+    public static function insertTransferRow(array $insert_data): void
+    {
+        self::fillMissingNames($insert_data, $insert_data['linkedid']);
         $insert_data['action'] = 'transfer_dial_create_cdr';
 
         $am = Util::getAstManager('off');
@@ -196,6 +210,25 @@ class CreateRowTransfer
                 break;
             }
         }
+    }
+
+    /**
+     * Whether the transferer's two rows are its conversation and a destination leg that has
+     * not answered (the conversation itself is always answered).
+     *
+     * @param array $calls_data The call data.
+     */
+    private static function isUnansweredTransferLeg(array $calls_data): bool
+    {
+        if (count($calls_data) !== 2) {
+            return false;
+        }
+        foreach ($calls_data as $row_data) {
+            if (empty($row_data['answer'])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

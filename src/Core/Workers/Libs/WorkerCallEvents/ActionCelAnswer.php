@@ -44,6 +44,10 @@ class ActionCelAnswer
     {
         $channel = $data['Channel'] ?? '';
         $worker->addActiveChan($channel, $data['LinkedID']);
+        if ($channel !== '' && stripos($channel, 'local') !== 0) {
+            // Answers some legs never report to the CDR (see TransferLegAnsweredAfterTransfererLeft).
+            $worker->channelAnswerTimes[$channel] = (string)($data['EventTime'] ?? '');
+        }
 
         // If no channel data, or if the channel is local, or if the channel is already active, return immediately
         if (empty($channel) || stripos($channel, 'local') === 0 || $worker->existsActiveChan($channel)) {

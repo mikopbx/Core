@@ -64,6 +64,9 @@ class ActionHangupChan
             // Check if it's a regular transfer.
             CreateRowTransfer::execute($worker, 'hangup_chan', $data, $transfer_calls);
 
+            // A transfer leg answered after its transferer left without reporting it (#1100).
+            TransferLegAnsweredAfterTransfererLeft::onChannelHangup($worker, $data);
+
             // Check if it's a SIP transfer.
             self::hangupChanCheckSipTrtansfer($worker, $data, $channels);
         } catch (Throwable $e) {
@@ -78,6 +81,7 @@ class ActionHangupChan
         if (isset($worker->mixMonitorChannels[$data['agi_channel']])) {
             unset($worker->mixMonitorChannels[$data['agi_channel']]);
         }
+        unset($worker->channelAnswerTimes[$data['agi_channel']]);
     }
 
     /**
@@ -138,6 +142,11 @@ class ActionHangupChan
         /** @var CallDetailRecordsTmp $m_data */
         /** @var CallDetailRecordsTmp $row */
         $m_data = CallDetailRecordsTmp::find($filter);
+        $ownRows = CallDetailRecordsTmp::find([
+            'linkedid=:linkedid: AND src_chan=:chan:',
+            'bind' => ['linkedid' => $data['linkedid'], 'chan' => $data['agi_channel']],
+        ]);
+        $notConsultation = AnsweredTransferLegPolicy::notConsultationLegs($m_data, $ownRows, $data['agi_channel']);
         $countRows = 0;
         $transferCdrAnswered = true;
         $answeredLegs = [];
@@ -151,7 +160,7 @@ class ActionHangupChan
                 // This call will be ended by the voicemail_end event.
                 continue;
             }
-            if (AnsweredTransferLegPolicy::keepOpen($row, $data['agi_channel'])) {
+            if (AnsweredTransferLegPolicy::keepOpen($row, $data['agi_channel'], $notConsultation)) {
                 // The transferer has left the bridge, but the destination keeps
                 // talking to the transferee. Its own hangup must close this row,
                 // unless the transfer pair below is unambiguous.
@@ -177,7 +186,8 @@ class ActionHangupChan
             ? null
             : AnsweredTransferLegPolicy::completedTransferPair(
                 array_merge($transfer_calls, $answeredLegs),
-                $data['agi_channel']
+                $data['agi_channel'],
+                $notConsultation
             );
         if ($completedPair !== null) {
             $transfer_calls = $completedPair;
@@ -191,7 +201,10 @@ class ActionHangupChan
                 // This call will be ended by the voicemail_end event.
                 continue;
             }
-            if ($completedPair === null && AnsweredTransferLegPolicy::keepOpen($row, $data['agi_channel'])) {
+            if (
+                $completedPair === null
+                && AnsweredTransferLegPolicy::keepOpen($row, $data['agi_channel'], $notConsultation)
+            ) {
                 $row->writeAttribute('transfer', 0);
                 if (!$row->update()) {
                     SystemMessages::sysLogMsg('Action_hangup_chan', implode(' ', $row->getMessages()), LOG_DEBUG);

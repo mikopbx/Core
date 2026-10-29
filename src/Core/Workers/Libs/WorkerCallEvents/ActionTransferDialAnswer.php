@@ -52,6 +52,11 @@ class ActionTransferDialAnswer
         /** @var CallDetailRecordsTmp $m_data */
         /** @var CallDetailRecordsTmp $row */
         $m_data = CallDetailRecordsTmp::find($filter);
+        if (count($m_data) === 0) {
+            // The transferer may have hung up while this leg rang (#1100).
+            TransferLegAnsweredAfterTransfererLeft::execute($worker, $data);
+            return;
+        }
 
         // A *8 pickup answers on a brand-new channel that is not one of the dialed
         // transfer legs (those were torn down by the pickup), so no matched row carries
