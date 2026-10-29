@@ -70,6 +70,9 @@ class AriConf extends AsteriskConfigClass
             'res_ari_playbacks.so',
             'res_ari_recordings.so',
             'res_ari_sounds.so',
+            // ExternalMedia creates UnicastRTP channels; chan_rtp needs res_rtp_multicast (#1262)
+            'res_rtp_multicast.so',
+            'chan_rtp.so',
         ];
     }
 
