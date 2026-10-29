@@ -848,7 +848,6 @@ class WorkerApiCommands extends WorkerRedisBase
     private function resetOrmStateBeforeJob(): void
     {
         try {
-            /** @phpstan-ignore-next-line inherited from Phalcon Injectable */
             $di = $this->di;
             if ($di === null) {
                 return;
@@ -908,7 +907,6 @@ class WorkerApiCommands extends WorkerRedisBase
             return;
         }
 
-        /** @phpstan-ignore-next-line inherited from Phalcon Injectable */
         $di = $this->di;
         if ($di === null) {
             return;
