@@ -146,13 +146,13 @@ class ContainerEntrypoint extends Injectable
         $pidIdPath = '/cf/conf/user.id';
         $pidGrPath = '/cf/conf/group.id';
 
-        if (empty($newUserId) && file_exists($pidIdPath)) {
-            $newUserId = file_get_contents($pidIdPath);
+        if (empty($newUserId)) {
+            $newUserId = $this->readRootOwnedFile($pidIdPath);
         }
-        if (empty($newGroupId) && file_exists($pidGrPath)) {
-            $newGroupId = file_get_contents($pidGrPath);
+        if (empty($newGroupId)) {
+            $newGroupId = $this->readRootOwnedFile($pidGrPath);
         }
-        // The values end up in sed and find commands run as root: accept numeric ids only
+        // The values end up in sed and find commands run as root: accept non-zero numeric ids only
         $newUserId = $this->numericIdOrEmpty($newUserId, 'ID_WWW_USER');
         $newGroupId = $this->numericIdOrEmpty($newGroupId, 'ID_WWW_GROUP');
 
@@ -176,26 +176,18 @@ class ContainerEntrypoint extends Injectable
             // Collect all updates first
             if ($needUserUpdate) {
                 $commands[] = "$sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/shadow*";
-                $id = '';
-                if (file_exists($pidIdPath)) {
-                    $id = file_get_contents($pidIdPath);
-                }
-                if ($id !== $newUserId) {
+                if ($this->readRootOwnedFile($pidIdPath) !== $newUserId) {
                     $commands[] = "$find / -not -path '/proc/*' -not -path '/sys/*' -user $currentUserId -exec $chown -h $userID {} +";
-                    file_put_contents($pidIdPath, $newUserId);
+                    $this->writeRootOwnedFile($pidIdPath, $newUserId);
                 }
             }
 
             if ($needGroupUpdate) {
                 $commands[] = "$sed -i 's/$userID:x:$currentGroupId:/$userID:x:$newGroupId:/g' /etc/group";
                 $commands[] = "$sed -i 's/:$currentGroupId:Web/:$newGroupId:Web/g' /etc/shadow";
-                $id = '';
-                if (file_exists($pidGrPath)) {
-                    $id = file_get_contents($pidGrPath);
-                }
-                if ($id !== $newGroupId) {
+                if ($this->readRootOwnedFile($pidGrPath) !== $newGroupId) {
                     $commands[] = "$find / -not -path '/proc/*' -not -path '/sys/*' -group $currentGroupId -exec $chgrp -h $newGroupId {} +";
-                    file_put_contents($pidGrPath, $newGroupId);
+                    $this->writeRootOwnedFile($pidGrPath, $newGroupId);
                 }
             }
 
@@ -215,7 +207,9 @@ class ContainerEntrypoint extends Injectable
     }
 
     /**
-     * Returns the id if it is a non-negative integer, an empty string otherwise.
+     * Returns the id if it is a positive integer, an empty string otherwise.
+     *
+     * Zero in any spelling ('0', '00') is refused: it would give www the root uid or gid.
      *
      * @param string|false $value Value from the environment or from user.id / group.id.
      * @param string $name Name for the warning.
@@ -223,11 +217,47 @@ class ContainerEntrypoint extends Injectable
     private function numericIdOrEmpty(string|false $value, string $name): string
     {
         $value = trim((string)$value);
-        if ($value === '' || ctype_digit($value)) {
+        if ($value === '' || (ctype_digit($value) && (int)$value > 0)) {
             return $value;
         }
-        SystemMessages::sysLogMsg(static::class, "Ignored non-numeric $name value", LOG_WARNING);
+        SystemMessages::sysLogMsg(static::class, "Ignored $name value: not a positive integer", LOG_WARNING);
         return '';
+    }
+
+    /**
+     * Reads a file only if it is a regular file owned by root, not a link.
+     *
+     * user.id / group.id sit in /cf/conf, where www may create entries (#1227).
+     *
+     * @return string|false Trimmed content, or false when the file is missing or not trusted.
+     */
+    private function readRootOwnedFile(string $path): string|false
+    {
+        clearstatcache(true, $path);
+        if (is_link($path) || !is_file($path) || fileowner($path) !== 0) {
+            return false;
+        }
+        $content = file_get_contents($path);
+        return $content === false ? false : trim($content);
+    }
+
+    /**
+     * Writes a root-owned file without following an entry www may have planted in its place.
+     *
+     * tempnam() creates a fresh file exclusively; rename() replaces whatever sits at $path,
+     * a link included, instead of writing through it.
+     */
+    private function writeRootOwnedFile(string $path, string $content): void
+    {
+        $tmp = tempnam(dirname($path), basename($path) . '.');
+        if ($tmp === false) {
+            SystemMessages::sysLogMsg(static::class, "Cannot write $path", LOG_WARNING);
+            return;
+        }
+        if (file_put_contents($tmp, $content) === false || !chmod($tmp, 0644) || !rename($tmp, $path)) {
+            @unlink($tmp);
+            SystemMessages::sysLogMsg(static::class, "Cannot write $path", LOG_WARNING);
+        }
     }
 
     /**
@@ -347,16 +377,20 @@ class ContainerEntrypoint extends Injectable
     }
 
     /**
-     * Gives php-fpm (www) the main database, its WAL files and their directory (#1227).
+     * Gives php-fpm (www) the main database and its WAL files, and lets it create files next to them (#1227).
      *
-     * A database kept from an older version may still be root-owned. Only these paths: the rest of
-     * /cf/conf (user.id, group.id, license-v2) is read by root at boot and must stay out of www's hands.
-     * lchown/lchgrp never follow a link that www could have planted in its directory.
+     * A database kept from an older version may still be root-owned. The rest of /cf/conf (user.id,
+     * group.id, license-v2) is read by root at boot and must stay out of www's hands, so the directory
+     * stays root-owned with group www and mode 1775: www can create -wal / -shm, but the sticky bit
+     * stops it from removing or renaming root's entries. lchown/lchgrp never follow a planted link.
      */
     private function giveDatabaseToWww(): void
     {
-        $paths = [dirname(self::PATH_DB), self::PATH_DB, self::PATH_DB . '-wal', self::PATH_DB . '-shm'];
-        foreach ($paths as $path) {
+        $dir = dirname(self::PATH_DB);
+        if (is_link($dir) || !lchown($dir, 'root') || !lchgrp($dir, 'www') || !chmod($dir, 01775)) {
+            SystemMessages::sysLogMsg(static::class, "Cannot prepare $dir for www", LOG_WARNING);
+        }
+        foreach ([self::PATH_DB, self::PATH_DB . '-wal', self::PATH_DB . '-shm'] as $path) {
             if (!file_exists($path) && !is_link($path)) {
                 continue;
             }
