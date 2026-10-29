@@ -83,7 +83,7 @@ final class UtilRegularWWWRightsTest extends TestCase
 
         self::assertStringStartsWith("find '/cf' -type d -not -perm 755 -print0 ", $commands[0]);
         self::assertStringEndsWith('chmod 755', $commands[0]);
-        self::assertSame("find '/cf' -not -user www -exec chown www:www {} +", $commands[2]);
+        self::assertSame("find '/cf' -not -user www -exec chown -h www:www {} +", $commands[2]);
     }
 
     public function testSkipIsPrunedAndEscaped(): void

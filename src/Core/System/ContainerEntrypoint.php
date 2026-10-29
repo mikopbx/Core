@@ -152,6 +152,9 @@ class ContainerEntrypoint extends Injectable
         if (empty($newGroupId) && file_exists($pidGrPath)) {
             $newGroupId = file_get_contents($pidGrPath);
         }
+        // The values end up in sed and find commands run as root: accept numeric ids only
+        $newUserId = $this->numericIdOrEmpty($newUserId, 'ID_WWW_USER');
+        $newGroupId = $this->numericIdOrEmpty($newGroupId, 'ID_WWW_GROUP');
 
         $commands = [];
         $userID = 'www';
@@ -209,6 +212,22 @@ class ContainerEntrypoint extends Injectable
                 $this->echoMessage("   Updated group ID: $currentGroupId → $newGroupId");
             }
         }
+    }
+
+    /**
+     * Returns the id if it is a non-negative integer, an empty string otherwise.
+     *
+     * @param string|false $value Value from the environment or from user.id / group.id.
+     * @param string $name Name for the warning.
+     */
+    private function numericIdOrEmpty(string|false $value, string $name): string
+    {
+        $value = trim((string)$value);
+        if ($value === '' || ctype_digit($value)) {
+            return $value;
+        }
+        SystemMessages::sysLogMsg(static::class, "Ignored non-numeric $name value", LOG_WARNING);
+        return '';
     }
 
     /**
@@ -322,12 +341,29 @@ class ContainerEntrypoint extends Injectable
             Util::mwMkdir(dirname(self::PATH_DB));
             Processes::mwExec("$rm -rf " . self::PATH_DB . "; $cp /conf.default/mikopbx.db " . self::PATH_DB);
         }
-        // #1227: a database kept from an older version may still be root-owned, while php-fpm (www)
-        // writes it. Run on every boot, but only on the DB directory, not all of /cf as Storage does:
-        // on Docker /cf can be a host bind mount. The licensing keys stay root-only.
-        Util::addRegularWWWRights(dirname(self::PATH_DB), dirname(self::PATH_DB) . '/license-v2');
+        $this->giveDatabaseToWww();
         $this->echoResultMsg();
         return [];
+    }
+
+    /**
+     * Gives php-fpm (www) the main database, its WAL files and their directory (#1227).
+     *
+     * A database kept from an older version may still be root-owned. Only these paths: the rest of
+     * /cf/conf (user.id, group.id, license-v2) is read by root at boot and must stay out of www's hands.
+     * lchown/lchgrp never follow a link that www could have planted in its directory.
+     */
+    private function giveDatabaseToWww(): void
+    {
+        $paths = [dirname(self::PATH_DB), self::PATH_DB, self::PATH_DB . '-wal', self::PATH_DB . '-shm'];
+        foreach ($paths as $path) {
+            if (!file_exists($path) && !is_link($path)) {
+                continue;
+            }
+            if (!lchown($path, 'www') || !lchgrp($path, 'www')) {
+                SystemMessages::sysLogMsg(static::class, "Cannot give $path to www", LOG_WARNING);
+            }
+        }
     }
 
     /**
