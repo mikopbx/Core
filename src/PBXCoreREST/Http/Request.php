@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Http;
 
+use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
@@ -106,6 +107,11 @@ class Request extends PhRequest
      * This method inspects the presence of the 'X-Debug-The-Request' header
      * to determine if the request is for debugging purposes.
      *
+     * A debug request makes the controller wait up to 9999 s and is never
+     * dropped as stale by the worker, so the header is honoured only from
+     * localhost or an admin JWT session; anyone else is ignored (#1324).
+     * Call it after AuthenticationMiddleware has stored the JWT payload.
+     *
      * @examples
      * curl -X POST \
      *      -H 'Content-Type: application/json' \
@@ -126,8 +132,15 @@ class Request extends PhRequest
      */
     public function isDebugRequest(): bool
     {
-        return !empty($this->getHeader('X-Debug-The-Request'));
+        if (empty($this->getHeader('X-Debug-The-Request'))) {
+            return false;
+        }
+        if ($this->isLocalHostRequest()) {
+            return true;
+        }
+        return ($this->jwtPayload['role'] ?? null) === AclProvider::ROLE_ADMINS;
     }
+
     /**
      * Check if the request is coming from localhost.
      * Supports both IPv4 (127.0.0.1) and IPv6 (::1) localhost addresses.
