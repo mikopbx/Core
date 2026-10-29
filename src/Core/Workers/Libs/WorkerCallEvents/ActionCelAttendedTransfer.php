@@ -232,25 +232,16 @@ class ActionCelAttendedTransfer
     }
 
     /**
-     * The time to stamp the transfer with. CEL reports EventTime to the second (cel.conf
-     * dateformat %F %T), while answers carry milliseconds. When the event is handled within a
-     * second of it, the current time is the precise one; a late event (a backlog of the worker)
-     * keeps its own time, and endTimeFor() keeps the rows it closes from ending before their
-     * answer.
+     * The time to stamp the transfer with: the CEL event time. It is reported to the second
+     * (cel.conf dateformat %F %T), so it is never later than the transfer itself, whatever the
+     * worker's backlog: the row the transfer opens cannot start after its own hangup, and
+     * endTimeFor() keeps the rows it closes from ending before their answer.
      */
     private static function eventTime(array $data): string
     {
-        $now = (string)Util::getNowDate();
         $eventTime = trim((string)($data['EventTime'] ?? ''));
-        if ($eventTime === '') {
-            return $now;
-        }
-        if (str_contains($eventTime, '.')) {
-            return $eventTime;
-        }
-        $lag = time() - (int)strtotime($eventTime);
 
-        return ($lag >= 0 && $lag <= 1) ? $now : $eventTime;
+        return $eventTime !== '' ? $eventTime : (string)Util::getNowDate();
     }
 
     /**
