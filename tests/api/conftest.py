@@ -699,6 +699,74 @@ def disable_rate_limiting(api_client):
         pass  # Best effort — system may already be shutting down
 
 
+# Runner IP that this session added to the fail2ban whitelist (#1252); None when nothing was added
+_fail2ban_session_state: Dict[str, Optional[str]] = {'runner_ip': None}
+
+
+def whitelist_runner_ip_in_fail2ban(client: 'MikoPBXClient') -> None:
+    """
+    Add the runner's IP, as the station sees it, to the fail2ban whitelist (#1252).
+
+    Only when the station sees the runner's own address (verdict 'ip_visible'):
+    behind a proxy or a Docker bridge remote_addr is shared by every client, and
+    whitelisting it would switch fail2ban off for all of them. The added IP is
+    kept in the session state so that teardown removes only that entry.
+    """
+    try:
+        visibility = client.get('system:checkClientIpVisibility').get('data') or {}
+        runner_ip = visibility.get('remote_addr', '')
+        if not runner_ip or runner_ip in ('127.0.0.1', '::1'):
+            return
+        if visibility.get('verdict') != 'ip_visible':
+            print(f"\n⚠️  fail2ban whitelist not changed: the station does not see the runner IP "
+                  f"(verdict {visibility.get('verdict')}, remote_addr {runner_ip})")
+            return
+        whitelist = (client.get('fail2ban').get('data') or {}).get('whitelist', '') or ''
+        if runner_ip in whitelist.split():
+            return
+        response = client.patch('fail2ban', {'whitelist': f'{whitelist} {runner_ip}'.strip()})
+        if not response.get('result'):
+            print(f"\n⚠️  Could not whitelist runner IP {runner_ip}: {response.get('messages', {})}")
+            return
+        _fail2ban_session_state['runner_ip'] = runner_ip
+        print(f"\n✓ Runner IP {runner_ip} added to the fail2ban whitelist for the test session")
+        # fail2ban is restarted by WorkerModelsEvents in the background
+        time.sleep(5)
+    except Exception as e:
+        print(f"\n⚠️  Failed to whitelist the runner IP in fail2ban: {e}")
+
+
+@pytest.fixture(scope='session', autouse=True)
+def keep_runner_out_of_fail2ban(api_client):
+    """
+    Keep the runner's IP out of fail2ban bans for the test session (#1252).
+
+    The traversal tests send '..%2F' in the query string. The
+    mikopbx-exploit-scanner jail bans an address after three such requests
+    for 12 hours, and every later test then gets 403. The whitelist goes into
+    ignoreip of the [DEFAULT] section, so it covers that jail too. A runner on
+    localhost is already ignored. At the end only the IP added here is removed.
+    """
+    whitelist_runner_ip_in_fail2ban(api_client)
+
+    yield
+
+    runner_ip = _fail2ban_session_state['runner_ip']
+    if runner_ip is None:
+        return
+    try:
+        whitelist = (api_client.get('fail2ban').get('data') or {}).get('whitelist', '') or ''
+        remaining = ' '.join(entry for entry in whitelist.split() if entry != runner_ip)
+        response = api_client.patch('fail2ban', {'whitelist': remaining})
+        if response.get('result'):
+            print(f"\n✓ Runner IP {runner_ip} removed from the fail2ban whitelist")
+        else:
+            print(f"\n⚠️  Could not remove runner IP {runner_ip} from the fail2ban whitelist: "
+                  f"{response.get('messages', {})}")
+    except Exception as e:
+        print(f"\n⚠️  Could not remove runner IP {runner_ip} from the fail2ban whitelist: {e}")
+
+
 @pytest.fixture(scope='session')
 def is_docker(api_client) -> bool:
     """
@@ -1328,29 +1396,28 @@ def pytest_runtest_makereport(item, call):
     if call.when == 'call' and call.excinfo is None:
         # Check if this is the system reset test
         if 'test_00_setup_clean_system' in item.nodeid and 'test_03_execute_system_restore_default' in item.nodeid:
-            # Get the api_client fixture from the session
-            if hasattr(item.session, '_fixture_cache'):
-                for key, value in item.session._fixture_cache.items():
-                    if 'api_client' in str(key):
-                        client = value
-                        if isinstance(client, MikoPBXClient):
-                            print("\n⚠️  System reset detected - re-authenticating api_client...")
-                            try:
-                                client.authenticate()
-                                print("✓ api_client re-authenticated successfully")
-                                # Re-disable rate limiting after system reset
-                                try:
-                                    client.patch(
-                                        'general-settings',
-                                        {'settings': {'PBXRateLimitEnabled': '0'}}
-                                    )
-                                    print("✓ Rate limiting re-disabled after system reset")
-                                    import time as _time; _time.sleep(3)
-                                except Exception as rl_err:
-                                    print(f"⚠️  Could not re-disable rate limiting: {rl_err}")
-                            except Exception as e:
-                                print(f"✗ Failed to re-authenticate: {e}")
-                        break
+            # The reset test requests api_client, so the session client is among its arguments
+            # (pytest's Session has no _fixture_cache, the old lookup never matched)
+            client = getattr(item, 'funcargs', {}).get('api_client')
+            if isinstance(client, MikoPBXClient):
+                print("\n⚠️  System reset detected - re-authenticating api_client...")
+                try:
+                    client.authenticate()
+                    print("✓ api_client re-authenticated successfully")
+                    # Re-disable rate limiting after system reset
+                    try:
+                        client.patch(
+                            'general-settings',
+                            {'settings': {'PBXRateLimitEnabled': '0'}}
+                        )
+                        print("✓ Rate limiting re-disabled after system reset")
+                        import time as _time; _time.sleep(3)
+                    except Exception as rl_err:
+                        print(f"⚠️  Could not re-disable rate limiting: {rl_err}")
+                    # The reset also cleared the fail2ban whitelist
+                    whitelist_runner_ip_in_fail2ban(client)
+                except Exception as e:
+                    print(f"✗ Failed to re-authenticate: {e}")
 
 
 # ============================================================================
