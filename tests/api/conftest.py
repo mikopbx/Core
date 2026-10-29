@@ -699,6 +699,59 @@ def disable_rate_limiting(api_client):
         pass  # Best effort — system may already be shutting down
 
 
+def whitelist_runner_ip_in_fail2ban(client: 'MikoPBXClient') -> Optional[str]:
+    """
+    Add the runner's IP, as the station sees it, to the fail2ban whitelist (#1252).
+
+    Returns the whitelist as it was before the change, or None when nothing was
+    changed (localhost runner, IP already listed, or the request failed).
+    """
+    try:
+        visibility = client.get('system:checkClientIpVisibility')
+        runner_ip = (visibility.get('data') or {}).get('remote_addr', '')
+        if not runner_ip or runner_ip in ('127.0.0.1', '::1'):
+            return None
+        settings = client.get('fail2ban').get('data') or {}
+        whitelist = settings.get('whitelist', '') or ''
+        if runner_ip in whitelist.split():
+            return None
+        response = client.patch('fail2ban', {'whitelist': f'{whitelist} {runner_ip}'.strip()})
+        if not response.get('result'):
+            print(f"\n⚠️  Could not whitelist runner IP {runner_ip}: {response.get('messages', {})}")
+            return None
+        print(f"\n✓ Runner IP {runner_ip} added to the fail2ban whitelist for the test session")
+        # fail2ban is restarted by WorkerModelsEvents in the background
+        time.sleep(5)
+        return whitelist
+    except Exception as e:
+        print(f"\n⚠️  Failed to whitelist the runner IP in fail2ban: {e}")
+        return None
+
+
+@pytest.fixture(scope='session', autouse=True)
+def keep_runner_out_of_fail2ban(api_client):
+    """
+    Keep the runner's IP out of fail2ban bans for the test session (#1252).
+
+    The traversal tests send '..%2F' in the query string. The
+    mikopbx-exploit-scanner jail bans an address after three such requests
+    for 12 hours, and every later test then gets 403. The whitelist goes into
+    ignoreip of the [DEFAULT] section, so it covers that jail too. A runner on
+    localhost is already ignored; the original whitelist is restored at the end.
+    """
+    original_whitelist = whitelist_runner_ip_in_fail2ban(api_client)
+
+    yield
+
+    if original_whitelist is None:
+        return
+    try:
+        api_client.patch('fail2ban', {'whitelist': original_whitelist})
+        print("\n✓ fail2ban whitelist restored after test session")
+    except Exception:
+        pass  # Best effort — system may already be shutting down
+
+
 @pytest.fixture(scope='session')
 def is_docker(api_client) -> bool:
     """
@@ -1348,6 +1401,8 @@ def pytest_runtest_makereport(item, call):
                                     import time as _time; _time.sleep(3)
                                 except Exception as rl_err:
                                     print(f"⚠️  Could not re-disable rate limiting: {rl_err}")
+                                # The reset also cleared the fail2ban whitelist
+                                whitelist_runner_ip_in_fail2ban(client)
                             except Exception as e:
                                 print(f"✗ Failed to re-authenticate: {e}")
                         break
