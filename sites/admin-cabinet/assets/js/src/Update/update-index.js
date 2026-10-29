@@ -82,9 +82,13 @@ const updatePBX = {
 
     /**
      * Helps to convert markdown into html.
+     * Release notes carry a GFM table of download links (#1218), which showdown skips by default.
      * @type {Converter}
      */
-    converter: new showdown.Converter(),
+    converter: new showdown.Converter({
+        tables: true,
+        openLinksInNewWindow: true,
+    }),
 
     /**
      * Initializes the update PBX firmware functionality.
@@ -325,7 +329,8 @@ const updatePBX = {
         markdownText = markdownText.replace(/<br >/g, '\r');
         markdownText = markdownText.replace(/\* \*/g, '*');
         markdownText = markdownText.replace(/\*\*/g, '*');
-        const html = updatePBX.converter.makeHtml(markdownText);
+        const html = updatePBX.converter.makeHtml(markdownText)
+            .replace(/<table>/g, '<table class="ui very basic compact celled table">');
         const dymanicRow = `
 			<tr class="update-row">
 			<td class="center aligned">${obj.version}</td>
