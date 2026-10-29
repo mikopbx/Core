@@ -225,6 +225,8 @@ class TestFail2BanEdgeCases:
         """Test whitelist accepts various IP formats"""
         current = api_client.get('fail2ban')
         assert_api_success(current, "Failed to get current settings")
+        # Restored below: it may hold the runner IP added by conftest (#1252)
+        original_whitelist = current['data'].get('whitelist', '') or ''
 
         # Test various whitelist formats
         test_whitelists = [
@@ -233,19 +235,23 @@ class TestFail2BanEdgeCases:
             '127.0.0.1,192.168.1.0/24,10.0.0.1'
         ]
 
-        for whitelist in test_whitelists:
-            patch_data = {'whitelist': whitelist}
-            try:
-                response = api_client.patch('fail2ban', patch_data)
-                if response['result']:
-                    print(f"✓ Whitelist format accepted: {whitelist[:30]}...")
-                else:
-                    print(f"⚠ Whitelist format rejected: {whitelist[:30]}...")
-            except Exception as e:
-                if '422' in str(e):
-                    print(f"⚠ Whitelist format rejected: {whitelist[:30]}...")
-                else:
-                    print(f"⚠ Unexpected error for {whitelist[:20]}: {str(e)[:30]}")
+        try:
+            for whitelist in test_whitelists:
+                patch_data = {'whitelist': whitelist}
+                try:
+                    response = api_client.patch('fail2ban', patch_data)
+                    if response['result']:
+                        print(f"✓ Whitelist format accepted: {whitelist[:30]}...")
+                    else:
+                        print(f"⚠ Whitelist format rejected: {whitelist[:30]}...")
+                except Exception as e:
+                    if '422' in str(e):
+                        print(f"⚠ Whitelist format rejected: {whitelist[:30]}...")
+                    else:
+                        print(f"⚠ Unexpected error for {whitelist[:20]}: {str(e)[:30]}")
+        finally:
+            restored = api_client.patch('fail2ban', {'whitelist': original_whitelist})
+            assert_api_success(restored, "Failed to restore the fail2ban whitelist")
 
 
 if __name__ == '__main__':
