@@ -701,7 +701,8 @@ class Util
         return [
             "$findBase-type d -not -perm 755 -print0 2>/dev/null | $xargsChmod 755",
             "$findBase-type f -not -perm 644 -print0 2>/dev/null | $xargsChmod 644",
-            "$findBase-not -user www -exec $chown www:www {} +",
+            // -h: a symlink planted by www must not hand its target to www
+            "$findBase-not -user www -exec $chown -h www:www {} +",
         ];
     }
 

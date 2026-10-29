@@ -149,12 +149,15 @@ class ContainerEntrypoint extends Injectable
         $pidIdPath = '/cf/conf/user.id';
         $pidGrPath = '/cf/conf/group.id';
 
-        if (empty($newUserId) && file_exists($pidIdPath)) {
-            $newUserId = file_get_contents($pidIdPath);
+        if (empty($newUserId)) {
+            $newUserId = $this->readRootOwnedFile($pidIdPath);
         }
-        if (empty($newGroupId) && file_exists($pidGrPath)) {
-            $newGroupId = file_get_contents($pidGrPath);
+        if (empty($newGroupId)) {
+            $newGroupId = $this->readRootOwnedFile($pidGrPath);
         }
+        // The values end up in sed and find commands run as root: accept non-zero numeric ids only
+        $newUserId = $this->numericIdOrEmpty($newUserId, 'ID_WWW_USER');
+        $newGroupId = $this->numericIdOrEmpty($newGroupId, 'ID_WWW_GROUP');
 
         $commands = [];
         $userID = 'www';
@@ -176,26 +179,18 @@ class ContainerEntrypoint extends Injectable
             // Collect all updates first
             if ($needUserUpdate) {
                 $commands[] = "$sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/shadow*";
-                $id = '';
-                if (file_exists($pidIdPath)) {
-                    $id = file_get_contents($pidIdPath);
-                }
-                if ($id !== $newUserId) {
+                if ($this->readRootOwnedFile($pidIdPath) !== $newUserId) {
                     $commands[] = "$find / -not -path '/proc/*' -not -path '/sys/*' -user $currentUserId -exec $chown -h $userID {} +";
-                    file_put_contents($pidIdPath, $newUserId);
+                    $this->writeRootOwnedFile($pidIdPath, $newUserId);
                 }
             }
 
             if ($needGroupUpdate) {
                 $commands[] = "$sed -i 's/$userID:x:$currentGroupId:/$userID:x:$newGroupId:/g' /etc/group";
                 $commands[] = "$sed -i 's/:$currentGroupId:Web/:$newGroupId:Web/g' /etc/shadow";
-                $id = '';
-                if (file_exists($pidGrPath)) {
-                    $id = file_get_contents($pidGrPath);
-                }
-                if ($id !== $newGroupId) {
+                if ($this->readRootOwnedFile($pidGrPath) !== $newGroupId) {
                     $commands[] = "$find / -not -path '/proc/*' -not -path '/sys/*' -group $currentGroupId -exec $chgrp -h $newGroupId {} +";
-                    file_put_contents($pidGrPath, $newGroupId);
+                    $this->writeRootOwnedFile($pidGrPath, $newGroupId);
                 }
             }
 
@@ -211,6 +206,64 @@ class ContainerEntrypoint extends Injectable
             if ($needGroupUpdate) {
                 $this->echoMessage("   Updated group ID: $currentGroupId → $newGroupId");
             }
+        }
+    }
+
+    /**
+     * Returns the id if it is a positive integer, an empty string otherwise.
+     *
+     * Zero in any spelling ('0', '00') is refused: it would give www the root uid or gid.
+     *
+     * @param string|false $value Value from the environment or from user.id / group.id.
+     * @param string $name Name for the warning.
+     */
+    private function numericIdOrEmpty(string|false $value, string $name): string
+    {
+        $value = trim((string)$value);
+        if ($value === '' || (ctype_digit($value) && (int)$value > 0)) {
+            return $value;
+        }
+        SystemMessages::sysLogMsg(static::class, "Ignored $name value: not a positive integer", LOG_WARNING);
+        return '';
+    }
+
+    /**
+     * Reads a file only if it is a regular file owned by root, not a link.
+     *
+     * user.id / group.id sit in /cf/conf, where www may create entries (#1227).
+     *
+     * @return string|false Trimmed content, or false when the file is missing or not trusted.
+     */
+    private function readRootOwnedFile(string $path): string|false
+    {
+        clearstatcache(true, $path);
+        if (!file_exists($path) && !is_link($path)) {
+            return false;
+        }
+        if (is_link($path) || !is_file($path) || fileowner($path) !== 0) {
+            SystemMessages::sysLogMsg(static::class, "Ignored $path: not a regular root-owned file", LOG_WARNING);
+            return false;
+        }
+        $content = file_get_contents($path);
+        return $content === false ? false : trim($content);
+    }
+
+    /**
+     * Writes a root-owned file without following an entry www may have planted in its place.
+     *
+     * tempnam() creates a fresh file exclusively; rename() replaces whatever sits at $path,
+     * a link included, instead of writing through it.
+     */
+    private function writeRootOwnedFile(string $path, string $content): void
+    {
+        $tmp = tempnam(dirname($path), basename($path) . '.');
+        if ($tmp === false) {
+            SystemMessages::sysLogMsg(static::class, "Cannot write $path", LOG_WARNING);
+            return;
+        }
+        if (file_put_contents($tmp, $content) === false || !chmod($tmp, 0644) || !rename($tmp, $path)) {
+            @unlink($tmp);
+            SystemMessages::sysLogMsg(static::class, "Cannot write $path", LOG_WARNING);
         }
     }
 
@@ -324,10 +377,63 @@ class ContainerEntrypoint extends Injectable
         if ($out !== null && trim(implode('', $out)) === '') {
             Util::mwMkdir(dirname(self::PATH_DB));
             Processes::mwExec("$rm -rf " . self::PATH_DB . "; $cp /conf.default/mikopbx.db " . self::PATH_DB);
-            Util::addRegularWWWRights(self::PATH_DB);
         }
+        $this->giveDatabaseToWww();
         $this->echoResultMsg();
         return [];
+    }
+
+    /**
+     * Gives php-fpm (www) the main database and its WAL files, and lets it create files next to them (#1227).
+     *
+     * A database kept from an older version may still be root-owned. The rest of /cf/conf (user.id,
+     * group.id, license-v2) is read by root at boot and must stay out of www's hands, so the directory
+     * stays root-owned with group www and mode 1775: www can create -wal / -shm, but the sticky bit
+     * stops it from removing or renaming root's entries. lchown/lchgrp never follow a planted link.
+     */
+    private function giveDatabaseToWww(): void
+    {
+        $dir = dirname(self::PATH_DB);
+        if (is_link($dir) || !lchown($dir, 'root') || !lchgrp($dir, 'www') || !chmod($dir, 01775)) {
+            SystemMessages::sysLogMsg(static::class, "Cannot prepare $dir for www", LOG_WARNING);
+        }
+        $this->keepLicenseDirRootOwned($dir . '/license-v2');
+        foreach ([self::PATH_DB, self::PATH_DB . '-wal', self::PATH_DB . '-shm'] as $path) {
+            if (!file_exists($path) && !is_link($path)) {
+                continue;
+            }
+            if (!lchown($path, 'www') || !lchgrp($path, 'www')) {
+                SystemMessages::sysLogMsg(static::class, "Cannot give $path to www", LOG_WARNING);
+            }
+        }
+    }
+
+    /**
+     * Makes sure the LicenseV2 directory exists and is root's before www starts (#1227).
+     *
+     * /cf/conf is group-writable for www, so a missing license-v2 could be pre-created by www with
+     * its own key pair, which InstallationIdentity would then adopt. Anything at that name that is
+     * not a root-owned directory closed to others is moved aside (kept for inspection), and a fresh
+     * one is created.
+     */
+    private function keepLicenseDirRootOwned(string $licenseDir): void
+    {
+        clearstatcache(true, $licenseDir);
+        $exists = file_exists($licenseDir) || is_link($licenseDir);
+        $trusted = !is_link($licenseDir) && is_dir($licenseDir)
+            && fileowner($licenseDir) === 0 && (fileperms($licenseDir) & 0022) === 0;
+        if ($exists && !$trusted) {
+            $aside = $licenseDir . '.untrusted-' . time();
+            if (!rename($licenseDir, $aside)) {
+                SystemMessages::sysLogMsg(static::class, "Cannot move aside untrusted $licenseDir", LOG_ERR);
+                return;
+            }
+            SystemMessages::sysLogMsg(static::class, "Moved untrusted $licenseDir to $aside", LOG_WARNING);
+            $exists = false;
+        }
+        if (!$exists && !mkdir($licenseDir, 0755) && !is_dir($licenseDir)) {
+            SystemMessages::sysLogMsg(static::class, "Cannot create $licenseDir", LOG_ERR);
+        }
     }
 
     /**
