@@ -20,7 +20,9 @@ use MikoPBX\Tests\Calls\Scripts\TestCallsBase;
 require_once __DIR__.'/../TestCallsBase.php';
 
 $sampleCDR = [];
-$sampleCDR[] = ['src_num'=>'aNum', 'dst_num'=>'bNum', 'duration'=>'8', 'billsec'=>'7',  'fileDuration' => '6'];
+// The A<->B recording ends at the transfer: Asterisk may drop its last ~1.3 s (the transfer prompt),
+// so its length is 4-6 s, see README.
+$sampleCDR[] = ['src_num'=>'aNum', 'dst_num'=>'bNum', 'duration'=>'8', 'billsec'=>'7',  'fileDuration' => ['4', '6']];
 $sampleCDR[] = ['src_num'=>'aNum', 'dst_num'=>'cNum', 'duration'=>'12','billsec'=>'10', 'fileDuration' => '9'];
 
 TestCallsBase::executeTest($sampleCDR);

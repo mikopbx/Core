@@ -20,7 +20,10 @@
 namespace MikoPBX\Tests\Calls\Scripts;
 use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Common\Models\CallQueueMembers;
+use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\ExtensionForwardingRights;
+use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\Directories;
@@ -39,6 +42,9 @@ class TestCallsBase {
     private string $aNum;
     private string $bNum;
     private string $cNum;
+    private string $dNum;
+    // Ring-all queue with agents C and D, created in the test DB by db/updateDb.php.
+    private string $queueNum = '2200';
     private string $offNum;
 
     private array  $sampleCDR;
@@ -48,6 +54,7 @@ class TestCallsBase {
     private AsteriskManager $am;
     private int $countFiles;
     private bool $assertNoRecordingSources = false;
+    private array $hungPhonePipes = [];
 
     public function __construct(){
         $db_data = self::getIdlePeers();
@@ -59,6 +66,8 @@ class TestCallsBase {
         $this->aNum = $db_data[0];
         $this->bNum = $db_data[1];
         $this->cNum = $db_data[2];
+        // A fourth peer is optional: only tests that reference 'dNum' need it.
+        $this->dNum = $db_data[3] ?? '';
 
         $offPeers = self::getOffPeers();
         $this->offNum = $offPeers[0]??'';
@@ -177,7 +186,6 @@ class TestCallsBase {
         while (count($this->am->GetChannels(false))>0){
             sleep(1);
         }
-        sleep(5);
     }
 
     /**
@@ -197,6 +205,8 @@ class TestCallsBase {
             "Setvar: __A_NUM=$this->aNum".PHP_EOL.
             "Setvar: __B_NUM=$this->bNum".PHP_EOL.
             "Setvar: __C_NUM={$this->cNum}".PHP_EOL.
+            "Setvar: __D_NUM={$this->dNum}".PHP_EOL.
+            "Setvar: __QUEUE_NUM={$this->queueNum}".PHP_EOL.
             "Setvar: __OFF_NUM={$this->offNum}".PHP_EOL;
         $tmpFile     = tempnam('/tmp', 'call');
         file_put_contents($tmpFile,$conf);
@@ -271,7 +281,15 @@ class TestCallsBase {
     ): bool{
 
         self::printHeader('Start test '. $testName .' ...');
-        self::printInfo("aNum: $this->aNum, bNum: $this->bNum, cNum: $this->cNum, offNum: $this->offNum");
+        self::printInfo(
+            "aNum: $this->aNum, bNum: $this->bNum, cNum: $this->cNum, dNum: $this->dNum, offNum: $this->offNum"
+        );
+        if ($this->refersTo('dNum', $sampleCDR, $rules ?? []) && !$this->checkDNum()) {
+            return false;
+        }
+        if ($this->refersTo('queueNum', $sampleCDR, $rules ?? []) && !$this->checkQueue()) {
+            return false;
+        }
         $this->testDirName = $testName;
         $this->sampleCDR   = $sampleCDR;
         $this->countFiles  = $countFiles;
@@ -281,12 +299,32 @@ class TestCallsBase {
         $this->cleanCdr();
 
         $this->initSampleCdr();
-        if(empty($rules)){
-            $this->originateWait();
-        }else{
-            $this->invokeRules($rules);
+        $hungPhone = null;
+        if ($this->refersTo('offNum', $sampleCDR, $rules ?? [])) {
+            $hungPhone = $this->startHungPhone($this->offNum);
+            if ($hungPhone === null) {
+                return false;
+            }
         }
+        $started = microtime(true);
+        try {
+            if(empty($rules)){
+                $this->originateWait();
+            }else{
+                $this->invokeRules($rules);
+            }
+        } finally {
+            if ($hungPhone !== null) {
+                $this->stopHungPhone($hungPhone);
+            }
+        }
+        $callsDone = microtime(true);
         $success = $this->checkCdr();
+        self::printInfo(sprintf(
+            'Timing: calls %.1fs, CDR and recordings %.1fs',
+            $callsDone - $started,
+            microtime(true) - $callsDone
+        ));
         $this->sampleCDR            = [];
         $this->nonStrictComparison  = [];
 
@@ -296,6 +334,122 @@ class TestCallsBase {
             self::printError("End test - FAILED\n");
         }
         return $success;
+    }
+
+    /**
+     * Registers offNum as a phone that no longer answers (hung-phone.php), the way an endpoint
+     * that lost its network looks to the PBX until its registration expires: a reachable contact
+     * that never responds to INVITE. Without a contact the PBX would not dial it at all, and the
+     * attempt would end at once instead of when the caller gives up.
+     *
+     * @return resource|null The hung phone process, null when it could not register.
+     */
+    private function startHungPhone(string $extension)
+    {
+        $secret = (string)(Sip::findFirst(['extension = :ext:', 'bind' => ['ext' => $extension]])->secret ?? '');
+        $process = proc_open(
+            ['php', __DIR__ . '/hung-phone.php', $extension, $secret],
+            [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes
+        );
+        if (!is_resource($process)) {
+            self::printError("Could not register $extension as a hung phone: proc_open failed");
+            return null;
+        }
+        $this->hungPhonePipes = $pipes;
+        if (trim((string)fgets($pipes[1])) !== 'READY') {
+            $error = trim((string)stream_get_contents($pipes[2]));
+            self::printError("Could not register $extension as a hung phone: $error");
+            $this->stopHungPhone($process);
+            return null;
+        }
+        // Wait until the PBX shows the contact (state OK = it has a contact URI).
+        for ($waited = 0; $waited < 10; $waited++) {
+            if (($this->am->getPjSipPeer($extension)['state'] ?? '') === 'OK') {
+                break;
+            }
+            sleep(1);
+        }
+        self::printInfo("$extension registered as a hung phone (answers OPTIONS, ignores INVITE)");
+        return $process;
+    }
+
+    /**
+     * Unregisters the hung phone: closing its stdin makes it send REGISTER with Expires: 0.
+     *
+     * @param resource $process
+     */
+    private function stopHungPhone($process): void
+    {
+        foreach ($this->hungPhonePipes as $pipe) {
+            fclose($pipe);
+        }
+        $this->hungPhonePipes = [];
+        proc_close($process);
+    }
+
+    /**
+     * Whether the sample or the rules refer to a placeholder (dNum, queueNum).
+     */
+    private function refersTo(string $placeholder, array $sampleCDR, array $rules): bool
+    {
+        foreach (array_merge($sampleCDR, $rules) as $row) {
+            if (in_array($placeholder, $row, true)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The tests with dNum forward by a phone's own 302 from C to D: a PBX forwarding of C or D would
+     * add calls to their mobile numbers (db/updateDb.php clears it for the test DB peers).
+     */
+    private function checkDNum(): bool
+    {
+        if ($this->dNum === '') {
+            self::printError('Need 4 SIP accounts (endpoint) for dNum.');
+            return false;
+        }
+        foreach ([$this->cNum, $this->dNum] as $extension) {
+            $row = ExtensionForwardingRights::findFirst([
+                'extension = :ext:',
+                'bind' => ['ext' => $extension],
+            ]);
+            if ($row !== null
+                && (!empty($row->forwarding) || !empty($row->forwardingonbusy) || !empty($row->forwardingonunavailable))
+            ) {
+                self::printError("Extension $extension must have no PBX forwarding for this test.");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * The queue tests expect C and D to be the only agents of the test queue.
+     */
+    private function checkQueue(): bool
+    {
+        if (!$this->checkDNum()) {
+            return false;
+        }
+        $queue = CallQueues::findFirst(['extension = :ext:', 'bind' => ['ext' => $this->queueNum]]);
+        $agents = [];
+        if ($queue !== null) {
+            foreach (CallQueueMembers::find(['queue = :q:', 'bind' => ['q' => $queue->uniqid]]) as $member) {
+                $agents[] = $member->extension;
+            }
+        }
+        sort($agents);
+        $expected = [$this->cNum, $this->dNum];
+        sort($expected);
+        if ($agents !== $expected) {
+            self::printError("Queue {$this->queueNum} must have agents ".implode(',', $expected)
+                .', got: '.implode(',', $agents));
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -371,7 +525,7 @@ class TestCallsBase {
         self::printInfo("Init sample cdr table...");
         foreach ($this->sampleCDR as $index => $row) {
             foreach ($row as $key => $value){
-                if(property_exists(self::class, $value)){
+                if(is_string($value) && property_exists(self::class, $value)){
                     $this->sampleCDR[$index][$key] = $this->$value;
                 }
             }
@@ -407,6 +561,7 @@ class TestCallsBase {
         $success = true;
         if(count($rows) !== $expectedCount){
             self::printError('Call history compromised. Count:'.count($rows).", need: ".$expectedCount);
+            self::printCdrRows($rows);
             return false;
         }
         self::printInfo('Create CDR successfully');
@@ -416,7 +571,7 @@ class TestCallsBase {
         for ($waited = 0; $waited < $maxFileWait; $waited++) {
             $allFilesReady = true;
             foreach ($rows as $row) {
-                if ($row['billsec'] > 0 && !empty($row['recordingfile']) && !file_exists($row['recordingfile'])) {
+                if ($row['billsec'] > 0 && !empty($row['recordingfile']) && !self::isRecordingReady($row['recordingfile'])) {
                     $allFilesReady = false;
                     break;
                 }
@@ -446,20 +601,25 @@ class TestCallsBase {
                 $row['fileDuration'] = (string)$seconds;
                 self::printInfo('Rec. file:'.basename($row['recordingfile']).", ffprobe duration: ".implode($out)."s, rounded: ".$row['fileDuration']);
             }
-            $ok = true;
+            // A row passes only when a sample not taken by another row matches all its fields.
+            $matched = false;
             foreach ($this->sampleCDR as $index => $cdrS){
-                $ok = true;
                 if(in_array($index, $checkedIndexes, true)){
                     continue;
                 }
+                $ok = true;
                 foreach ($cdrS as $key => $data){
                     if(in_array($key, $this->nonStrictComparison, true)){
                         $valRow     = (int) $row[$key];
-                        $valSample  = (int) $data;
-                        $values = [$valSample, ($valSample-1), ($valSample+1)];
                         if($key === 'fileDuration' && $this->countFiles > 0){
                             $ok = true;
+                        }elseif(is_array($data)){
+                            // An explicit [min, max] range, e.g. for a recording that ends at a transfer.
+                            [$min, $max] = $data;
+                            $ok = min($ok, $valRow >= (int)$min && $valRow <= (int)$max);
                         }else{
+                            $valSample  = (int) $data;
+                            $values = [$valSample, ($valSample-1), ($valSample+1)];
                             $ok = min($ok, in_array($valRow, $values));
                         }
                     }elseif($row[$key] === $data){
@@ -473,15 +633,19 @@ class TestCallsBase {
                 }
                 if($ok){
                     $checkedIndexes[] = $index;
+                    $matched = true;
                     break;
                 }
             }
-            if(!$ok){
+            if(!$matched){
                 self::printError("CDR mismatch: ".json_encode($row));
+                self::printCdrRows($rows);
                 return false;
             }
 
         }
+        // Always shown, so a passed test can be checked against its sample by eye as well.
+        self::printCdrRows($rows);
         if($this->countFiles > 0 && count($rcFiles) !== $this->countFiles){
             self::printError("Recording file count mismatch: got ".count($rcFiles).", expected ".$this->countFiles);
             return false;
@@ -490,6 +654,55 @@ class TestCallsBase {
             return false;
         }
         return $success;
+    }
+
+    /**
+     * Prints the call history in the order of the sample fields, to compare a test with its sample.
+     */
+    private static function printCdrRows(array $rows): void
+    {
+        foreach ($rows as $row) {
+            $fileDuration = '-';
+            if (!empty($row['recordingfile']) && file_exists($row['recordingfile'])) {
+                $out = [];
+                $file = escapeshellarg($row['recordingfile']);
+                Processes::mwExec("ffprobe -v error -show_entries format=duration -of csv=p=0 $file", $out);
+                $fileDuration = (string)(int)round((float)implode($out));
+            }
+            self::printInfo(sprintf(
+                'CDR: %s -> %s %s duration=%s billsec=%s fileDuration=%s src_chan=%s dst_chan=%s rec=%s',
+                $row['src_num'] ?? '',
+                $row['dst_num'] ?? '',
+                $row['disposition'] ?? '',
+                $row['duration'] ?? '',
+                $row['billsec'] ?? '',
+                $fileDuration,
+                $row['src_chan'] ?? '',
+                $row['dst_chan'] ?? '',
+                basename((string)($row['recordingfile'] ?? ''))
+            ));
+        }
+    }
+
+    /**
+     * Whether WorkerWav2Webm has finished the recording. ffmpeg writes straight into the target
+     * file, so it exists (empty, unreadable for ffprobe) while the conversion still runs; the
+     * sources are deleted only after the output has been validated.
+     */
+    private static function isRecordingReady(string $recordingFile): bool
+    {
+        if (!file_exists($recordingFile)) {
+            return false;
+        }
+        $base = Util::trimExtensionForFile($recordingFile);
+        foreach (['', '_in', '_out'] as $suffix) {
+            foreach (['wav', 'wav16', 'wav48'] as $ext) {
+                if (file_exists("$base$suffix.$ext")) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**

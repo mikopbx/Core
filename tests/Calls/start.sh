@@ -27,6 +27,41 @@ debugParams="$XDEBUG_CONFIG";
 didSwapDb="false";
 testsFailed=0;
 
+# Stops everything that holds mikopbx.db open before it is replaced. A process that keeps the
+# replaced file open goes on reading it: PHP workers would regenerate pjsip.conf/extensions.conf
+# from the old DB (`services restart-all` does not restart them), so they are killed here and
+# respawned by WorkerSafeScriptsCore with the new file.
+function release_db() {
+    echo_info "Stopping services holding the DB...";
+    # Stop only the services that hold mikopbx.db open. NEVER call `monit stop all`:
+    # it brings down dropbear/sshd and locks the host out of remote access.
+    monit stop asterisk > /dev/null 2>&1 || true;
+    monit stop php-fpm  > /dev/null 2>&1 || true;
+
+    # Wait up to ~30s for processes to release the DB (and its WAL/SHM, mapped separately).
+    local dbFiles="$confFile ${confFile}-wal ${confFile}-shm";
+    local i;
+    for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+        # shellcheck disable=SC2086
+        if [ -z "$(lsof $dbFiles 2>/dev/null | awk 'NR>1')" ]; then
+            break;
+        fi
+        sleep 2;
+    done
+
+    # Force-kill any stragglers (PHP workers outside monit). Never touches the SSH session.
+    local stragglers;
+    # shellcheck disable=SC2086
+    stragglers=$(lsof $dbFiles 2>/dev/null | awk 'NR>1 {print $2}' | sort -u);
+    if [ -n "$stragglers" ]; then
+        echo "$stragglers" | xargs -r kill -TERM 2>/dev/null || true;
+        sleep 2;
+        # shellcheck disable=SC2086
+        stragglers=$(lsof $dbFiles 2>/dev/null | awk 'NR>1 {print $2}' | sort -u);
+        [ -n "$stragglers" ] && echo "$stragglers" | xargs -r kill -KILL 2>/dev/null || true;
+    fi
+}
+
 function cleanup() {
     echo_header "Cleaning up...";
 
@@ -38,30 +73,7 @@ function cleanup() {
 
     # Восстанавливаем production базу данных
     if [ "$didSwapDb" = "true" ] && [ -f "$dumpConfFile" ]; then
-        echo_info "Stopping services holding the DB...";
-        # Stop only the services that hold mikopbx.db open. NEVER call `monit stop all`:
-        # it brings down dropbear/sshd and locks the host out of remote access.
-        monit stop asterisk > /dev/null 2>&1 || true;
-        monit stop php-fpm  > /dev/null 2>&1 || true;
-
-        # Wait up to ~30s for processes to release the DB.
-        local i;
-        for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-            if [ -z "$(lsof "$confFile" 2>/dev/null | awk 'NR>1')" ]; then
-                break;
-            fi
-            sleep 2;
-        done
-
-        # Force-kill any stragglers (PHP workers outside monit). Never touches the SSH session.
-        local stragglers;
-        stragglers=$(lsof "$confFile" 2>/dev/null | awk 'NR>1 {print $2}' | sort -u);
-        if [ -n "$stragglers" ]; then
-            echo "$stragglers" | xargs -r kill -TERM 2>/dev/null || true;
-            sleep 2;
-            stragglers=$(lsof "$confFile" 2>/dev/null | awk 'NR>1 {print $2}' | sort -u);
-            [ -n "$stragglers" ] && echo "$stragglers" | xargs -r kill -KILL 2>/dev/null || true;
-        fi
+        release_db;
 
         echo_info "Restoring production database...";
         # Remove stale WAL/SHM from the test DB BEFORE cp.
@@ -97,7 +109,9 @@ if [ "${debugParams}x" != "x" ]; then
   export XDEBUG_CONFIG="${EMPTY}";
 fi;
 
-if [ "${1}x" = 'x' ]; then
+# A full run always uses the test DB; a filtered run (start.sh 12) keeps the current one unless
+# SWAP_DB=1 is set, e.g. `SWAP_DB=1 bash start.sh 1[2-9]` on a PBX that is not set up for the tests.
+if [ "${1}x" = 'x' ] || [ "$SWAP_DB" = '1' ]; then
   echo_info "Copy tests config...";
   # Copy m_LanInterfaces from production to test DB using only columns present in test DB.
   # This handles schema differences when production has newer columns (e.g. IPv6 fields).
@@ -109,6 +123,7 @@ if [ "${1}x" = 'x' ]; then
     INSERT INTO main.m_LanInterfaces(${testCols}) SELECT ${testCols} FROM prod.m_LanInterfaces;
     DETACH DATABASE prod;
   "
+  release_db;
   rm -rf "$confFile"*;
   cp "$testConfFile" "$confFile";
   # Disable firewall and fail2ban in test DB — they block SIP registration and SSH access
@@ -121,6 +136,9 @@ if [ "${1}x" = 'x' ]; then
   /usr/bin/redis-cli FLUSHALL > /dev/null 2> /dev/null;
   echo_info 'Restart services and update test db...';
   php -f "$dirName/db/updateDb.php";
+  # Bring services back via monit, named (not `start all`) — see release_db().
+  monit start php-fpm  > /dev/null 2>&1 || true;
+  monit start asterisk > /dev/null 2>&1 || true;
   # Flush firewall rules — test DB may have restrictive iptables that block SIP/SSH
   iptables -F 2>/dev/null; iptables -X 2>/dev/null;
   sleep 5;
@@ -161,8 +179,10 @@ fi
 
 tests="$initTests $tests"
 for file in $tests; do
+  testStart=$(date +%s);
   /usr/bin/timeout 300 /usr/bin/php -f "${file}";
   exitCode=$?;
+  echo_info "$(basename "$(dirname "$file")") took $(( $(date +%s) - testStart ))s";
   if [ $exitCode -ne 0 ]; then
     echo_error "Test FAILED (exit code $exitCode): $file";
     testsFailed=$((testsFailed + 1));

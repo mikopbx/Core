@@ -69,8 +69,15 @@ Processes::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'pjsip send register *all'")
 $duration = 120;
 $start = time();
 TestCallsBase::printInfo("Waiting for registration of peers. Wait max {$duration} s...");
+$nextRegister = $start + 10;
 do{
     sleep(1);
+    // A REGISTER sent before the PBX has loaded the test endpoints gets 403, which PJSIP
+    // treats as fatal and retries only after forbidden_retry_interval (300 s).
+    if (time() >= $nextRegister) {
+        Processes::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'pjsip send register *all'");
+        $nextRegister = time() + 10;
+    }
     $idlePeers = TestCallsBase::getIdlePeers();
     if ((time() - $start) >= $duration){
         break;
