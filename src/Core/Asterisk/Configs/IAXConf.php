@@ -46,6 +46,25 @@ class IAXConf extends AsteriskConfigClass
     protected string $description = 'iax.conf';
 
     /**
+     * Returns the provider ID used for the peer name and the incoming context.
+     *
+     * Inbound providers use the username to match the peer name of the registration,
+     * the rest (and inbound ones without a username) use the uniqid.
+     * The legacy noregister fallback never yields inbound, so the stored registration_type is enough.
+     *
+     * @param array $provider Iax record: registration_type, username, uniqid.
+     *
+     * @return string The provider ID.
+     */
+    public static function getProviderId(array $provider): string
+    {
+        return (($provider['registration_type'] ?? '') === Iax::REGISTRATION_TYPE_INBOUND
+            && !empty($provider['username']))
+            ? (string)$provider['username']
+            : (string)($provider['uniqid'] ?? '');
+    }
+
+    /**
      * Generates the contexts for extensions.
      *
      * @return string The generated contexts.
@@ -55,11 +74,7 @@ class IAXConf extends AsteriskConfigClass
         $conf      = '';
         $providers = $this->getProviders();
         foreach ($providers as $provider) {
-            // For inbound IAX providers, use username as provider ID to match peer name
-            // Fallback to uniqid if username is empty
-            $providerId = ($provider['registration_type'] === Iax::REGISTRATION_TYPE_INBOUND && !empty($provider['username']))
-                ? $provider['username']
-                : $provider['uniqid'];
+            $providerId = self::getProviderId($provider);
             $conf .= IncomingContexts::generate($providerId, $provider['username'], $provider['uniqid']);
         }
 
@@ -133,11 +148,7 @@ class IAXConf extends AsteriskConfigClass
             }
             
             // Base options for all types
-            // For inbound providers, use username for context to match peer name
-            // Fallback to uniqid if username is empty
-            $contextId = ($registrationType === Iax::REGISTRATION_TYPE_INBOUND && !empty($provider['username']))
-                ? $provider['username']
-                : $provider['uniqid'];
+            $contextId = self::getProviderId($provider);
 
             $options = [
                 'type' => 'friend',
@@ -227,11 +238,7 @@ class IAXConf extends AsteriskConfigClass
             }
             
             // Generate provider configuration
-            // For inbound providers, use username as peer name to match the registration
-            // Fallback to uniqid if username is empty
-            $peerName = ($registrationType === Iax::REGISTRATION_TYPE_INBOUND && !empty($provider['username']))
-                ? $provider['username']
-                : $provider['uniqid'];
+            $peerName = self::getProviderId($provider);
 
             $prov_config .= "; Provider: {$provider['description']}" . PHP_EOL;
             $prov_config .= "[{$peerName}];" . PHP_EOL;

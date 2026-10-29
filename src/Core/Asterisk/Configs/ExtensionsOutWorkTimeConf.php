@@ -104,10 +104,33 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         $configs = '';
         $dbData = Sip::find("type = 'friend' AND ( disabled <> '1')");
         foreach ($dbData as $sipPeer) {
-            $context_id = SIPConf::getIncomingContextId($sipPeer->host, $sipPeer->port);
+            $context_id = self::getProviderContextId($sipPeer->toArray(), false);
             $configs .= "CONTEXT_ID_$sipPeer->uniqid=$context_id" . PHP_EOL;
         }
         return $configs;
+    }
+
+    /**
+     * Returns the contextID the incoming call of a provider carries into the off-work time check.
+     *
+     * Must match what the call sets at runtime: CONTEXT_ID_<uniqid> from extensionGlobals() for SIP,
+     * setvar=contextID from IAXConf for IAX. The restriction contexts of getRoutesData() are named
+     * after the same value, so a mismatch silently skips route-restricted rules (issue #1343).
+     *
+     * @param array $peer Sip or Iax record: uniqid, registration_type, username, host, port.
+     * @param bool $isIax True for an Iax record.
+     *
+     * @return string The context ID, e.g. "SIP-TRUNK-1234-incoming" or "1921681015060-incoming".
+     */
+    public static function getProviderContextId(array $peer, bool $isIax): string
+    {
+        if ($isIax) {
+            return IAXConf::getProviderId($peer) . '-incoming';
+        }
+        if (($peer['registration_type'] ?? '') === Sip::REG_TYPE_INBOUND) {
+            return ($peer['uniqid'] ?? '') . '-incoming';
+        }
+        return SIPConf::getIncomingContextId((string)($peer['host'] ?? ''), (string)($peer['port'] ?? ''));
     }
 
     /**
@@ -214,15 +237,12 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         foreach ($rules as $inRoute) {
             $provider = $inRoute->Providers;
             if ($provider) {
-                $modelType = ucfirst($provider->type);
-                $provByType = $provider->$modelType;
-                if (get_class($provider->$modelType) === Iax::class) {
-                    $context_id = "$provider->uniqid-incoming";
-                } elseif ($provByType->registration_type === Sip::REG_TYPE_INBOUND) {
-                    $context_id = "$provider->uniqid-incoming";
-                } else {
-                    $context_id = SIPConf::getIncomingContextId($provByType->host, $provByType->port);
+                $provByType = $provider->{ucfirst($provider->type)};
+                if (!$provByType) {
+                    // Orphaned provider without Sip/Iax record: no calls can carry its contextID.
+                    continue;
                 }
+                $context_id = self::getProviderContextId($provByType->toArray(), $provByType instanceof Iax);
             } else {
                 $context_id = 'none-incoming';
             }
