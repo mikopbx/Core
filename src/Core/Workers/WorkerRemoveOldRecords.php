@@ -25,6 +25,7 @@ require_once 'Globals.php';
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\{Directories, Processes, RecordingDeletionLogger, Storage, SystemMessages, Util};
 use MikoPBX\Core\System\Storage\ConvertedRecordingCache;
+use MikoPBX\Core\System\Storage\RotatedLogsCleaner;
 use Throwable;
 
 /**
@@ -123,6 +124,13 @@ class WorkerRemoveOldRecords extends WorkerBase
             return;
         }
 
+        // Logs share the partition with recordings: a runaway log must go before any recording
+        $this->cleanRotatedLogs($mount_point);
+        $free_space = Storage::getFreeSpace($mount_point);
+        if ($free_space > self::MIN_SPACE_MB) {
+            return;
+        }
+
         $monitor_dir = Directories::getDir(Directories::AST_MONITOR_DIR);
         $out = [];
         $head = Util::which('head');
@@ -160,6 +168,45 @@ class WorkerRemoveOldRecords extends WorkerBase
             }
             Processes::mwExec("$rm -rf $dir_info");
         }
+    }
+
+    /**
+     * Removes old rotated log files, the largest rotation chain first, until free space is restored.
+     *
+     * @param string $mountPoint Storage mount point
+     * @return void
+     */
+    private function cleanRotatedLogs(string $mountPoint): void
+    {
+        try {
+            $stats = (new RotatedLogsCleaner())->cleanup(
+                static fn(): int => (int)(self::MIN_SPACE_MB + 1 - Storage::getFreeSpace($mountPoint)) * 1024 * 1024
+            );
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(__CLASS__, 'Rotated logs cleanup failed: ' . $e->getMessage(), LOG_WARNING);
+            return;
+        }
+        if ($stats['files'] === 0 && $stats['failed'] === 0) {
+            return;
+        }
+
+        $chains = [];
+        foreach (array_slice($stats['chains'], 0, 3, true) as $chain => $bytes) {
+            $chains[] = sprintf('%s (%.2f MB)', $chain, $bytes / (1024 * 1024));
+        }
+        SystemMessages::sysLogMsg(
+            'STORAGE',
+            sprintf(
+                'Low disk space: removed %d rotated log files (%.2f MB, %d of them reserved newest), '
+                . 'failed to remove %d, largest: %s',
+                $stats['files'],
+                $stats['bytes'] / (1024 * 1024),
+                $stats['reserved'],
+                $stats['failed'],
+                $chains === [] ? 'none' : implode(', ', $chains)
+            ),
+            LOG_WARNING
+        );
     }
 
     /**
