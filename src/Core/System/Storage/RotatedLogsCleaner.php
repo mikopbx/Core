@@ -35,12 +35,13 @@ use Throwable;
  *
  * Rotated files are those named {base}.{N} or {base}.{N}.{gz|bz2|xz|zst} with N of at most
  * MAX_INDEX_DIGITS digits, both the Core logrotate scheme and the one of module daemons;
- * the limit keeps logs named after a PID out. Files of one rotation chain share the
- * directory and {base}.
+ * the limit keeps logs named after a PID of 4+ digits out. Files of one rotation chain share
+ * the directory and {base}.
  *
  * Files modified within MIN_AGE_SECONDS are never deleted: a file still written to is an
  * active log (or one a daemon writes after renaming), and unlinking a file a process keeps
- * open would not free space anyway.
+ * open would not free space anyway. A file is re-checked right before deletion and skipped
+ * if a rotation replaced it after the scan.
  *
  * Deletion goes in two passes, each one from the chain with the largest volume (the anomaly)
  * to the smallest and from the oldest file to the newest within a chain:
@@ -115,6 +116,9 @@ class RotatedLogsCleaner
             foreach ($this->orderLargestFirst($queue) as $chain => $files) {
                 // Oldest first
                 foreach (array_reverse($files) as $file) {
+                    if (!$this->isUnchanged($file)) {
+                        continue;
+                    }
                     if (!@unlink($file['path'])) {
                         $stats['failed']++;
                         continue;
@@ -145,8 +149,8 @@ class RotatedLogsCleaner
     /**
      * Drop empty chains and sort the rest by their total size, largest first.
      *
-     * @param array<string, array<int, array{path: string, name: string, size: int, mtime: int}>> $queue
-     * @return array<string, array<int, array{path: string, name: string, size: int, mtime: int}>>
+     * @param array<string, array<int, array{path: string, name: string, size: int, mtime: int, inode: int}>> $queue
+     * @return array<string, array<int, array{path: string, name: string, size: int, mtime: int, inode: int}>>
      */
     private function orderLargestFirst(array $queue): array
     {
@@ -166,12 +170,30 @@ class RotatedLogsCleaner
     }
 
     /**
+     * Whether the path still holds the file seen during the scan.
+     *
+     * WHY: a daemon may rotate between the scan and the deletion, so name.1 can then be the
+     * log it has just closed (or still writes), which the age check never saw.
+     *
+     * @param array{path: string, name: string, size: int, mtime: int, inode: int} $file
+     */
+    private function isUnchanged(array $file): bool
+    {
+        clearstatcache(true, $file['path']);
+        $stat = @lstat($file['path']);
+        return $stat !== false
+            && ($stat['mode'] & 0170000) === 0100000
+            && (int)$stat['ino'] === $file['inode']
+            && (int)$stat['mtime'] === $file['mtime'];
+    }
+
+    /**
      * Group rotated log files below the logs root into rotation chains.
      *
      * Symlinks are neither followed nor returned; every file must resolve inside the root.
      *
      * @param string $realLogsDir Resolved logs root
-     * @return array<string, array<int, array{path: string, name: string, size: int, mtime: int}>>
+     * @return array<string, array<int, array{path: string, name: string, size: int, mtime: int, inode: int}>>
      */
     private function collectChains(string $realLogsDir): array
     {
@@ -196,6 +218,7 @@ class RotatedLogsCleaner
                     'name' => $name,
                     'size' => (int)$fileInfo->getSize(),
                     'mtime' => (int)$fileInfo->getMTime(),
+                    'inode' => (int)$fileInfo->getInode(),
                 ];
             }
         } catch (Throwable) {

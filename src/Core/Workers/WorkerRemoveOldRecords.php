@@ -178,6 +178,13 @@ class WorkerRemoveOldRecords extends WorkerBase
      */
     private function cleanRotatedLogs(string $mountPoint): void
     {
+        // Free space is measured on the storage: logs on another device would be deleted for nothing
+        $logsStat = @stat(Directories::getDir(Directories::CORE_LOGS_DIR));
+        $storageStat = @stat($mountPoint);
+        if ($logsStat === false || $storageStat === false || $logsStat['dev'] !== $storageStat['dev']) {
+            return;
+        }
+
         try {
             $stats = (new RotatedLogsCleaner())->cleanup(
                 static fn(): int => (int)(self::MIN_SPACE_MB + 1 - Storage::getFreeSpace($mountPoint)) * 1024 * 1024

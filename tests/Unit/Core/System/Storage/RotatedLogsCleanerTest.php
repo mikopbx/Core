@@ -116,6 +116,30 @@ final class RotatedLogsCleanerTest extends TestCase
         }
     }
 
+    public function testFileReplacedByRotationAfterScanIsKept(): void
+    {
+        $chain = $this->createChain('ModuleX/big.log', 8, 100);
+        $replacement = $this->sandbox . '/just-rotated';
+
+        $calls = 0;
+        $stats = (new RotatedLogsCleaner($this->logsDir))->cleanup(
+            function () use (&$calls, $chain, $replacement): int {
+                $calls++;
+                if ($calls === 2) {
+                    // A rotation between the scan and the deletion of .7
+                    $this->createFile($replacement, null, 100);
+                    self::assertTrue(rename($replacement, $chain['rotated'][7]));
+                }
+                return $calls === 1 ? 100 : PHP_INT_MAX;
+            }
+        );
+
+        self::assertFileExists($chain['rotated'][7]);
+        self::assertFileDoesNotExist($chain['rotated'][8]);
+        self::assertFileDoesNotExist($chain['rotated'][6]);
+        self::assertSame(7, $stats['files']);
+    }
+
     public function testNothingIsDeletedWhenSpaceIsEnough(): void
     {
         $chain = $this->createChain('ModuleX/big.log', 20, 100);
