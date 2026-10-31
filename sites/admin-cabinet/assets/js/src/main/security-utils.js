@@ -101,6 +101,21 @@ window.SecurityUtils = {
     },
 
     /**
+     * Build the pattern for nested icon structures like <i class="icons">...</i>
+     *
+     * Matches an outer <i class="...icons..."> wrapping one or more empty inner
+     * <i class="..."></i> tags. Inner tags are matched explicitly, so the first
+     * inner </i> does not terminate the outer match.
+     * Group 1 - outer class name, group 2 - inner icons markup.
+     *
+     * @private
+     * @returns {RegExp} New global, case-insensitive pattern
+     */
+    _getNestedIconPattern() {
+        return /<i\s+class="([^"<>]*icons[^"<>]*)">((?:\s*<i\s+class="[^"<>]*">\s*<\/i>)+)\s*<\/i>/gi;
+    },
+
+    /**
      * Extract nested icon structures like <i class="icons">...</i>
      * 
      * @private
@@ -110,26 +125,22 @@ window.SecurityUtils = {
      * @returns {string} Text with nested icons replaced by placeholders
      */
     _extractNestedIcons(text, icons, startIndex) {
-        // Pattern to match nested icon structures: <i class="icons">...</i>
-        const nestedIconPattern = /<i\s+class="([^"<>]*icons[^"<>]*)">([\s\S]*?)<\/i>/gi;
+        const nestedIconPattern = this._getNestedIconPattern();
         let iconIndex = startIndex;
-        
+
         return text.replace(nestedIconPattern, (match, outerClassName, innerContent) => {
-            // Validate outer class is safe
-            if (!this._isClassNameSafe(outerClassName)) {
-                return this._escapeHtmlContent(match);
-            }
-            
-            // Extract and validate inner icons
-            const safeInnerContent = this._processInnerIcons(innerContent);
+            // Validate outer class name and all inner icons
+            const safeInnerContent = this._isClassNameSafe(outerClassName)
+                ? this._processInnerIcons(innerContent)
+                : null;
             if (safeInnerContent === null) {
-                // If any inner icon is unsafe, escape the whole structure
-                return this._escapeHtmlContent(match);
+                // Rejected fragment: keep it out of later passes and escape it exactly once
+                icons[iconIndex] = this._escapeHtmlContent(match);
+                return `__SAFE_ICON_${iconIndex++}__`;
             }
-            
+
             // Reconstruct safe nested icon
-            const safeNestedIcon = `<i class="${outerClassName}">${safeInnerContent}</i>`;
-            icons[iconIndex] = safeNestedIcon;
+            icons[iconIndex] = `<i class="${outerClassName}">${safeInnerContent}</i>`;
             return `__SAFE_ICON_${iconIndex++}__`;
         });
     },
@@ -154,8 +165,10 @@ window.SecurityUtils = {
                 icons[iconIndex] = match;
                 return `__SAFE_ICON_${iconIndex++}__`;
             }
-            // If class is not safe, escape the whole tag
-            return this._escapeHtmlContent(match);
+            // Rejected fragment: escape it exactly once via placeholder,
+            // the surrounding text is escaped later by _processWithSafeIcons()
+            icons[iconIndex] = this._escapeHtmlContent(match);
+            return `__SAFE_ICON_${iconIndex++}__`;
         });
     },
 
@@ -577,7 +590,7 @@ window.SecurityUtils = {
      */
     _removeSafeIcons(text) {
         // First remove nested icons
-        let cleanText = text.replace(/<i\s+class="([^"<>]*icons[^"<>]*)">([\s\S]*?)<\/i>/gi, (match, outerClassName, innerContent) => {
+        let cleanText = text.replace(this._getNestedIconPattern(), (match, outerClassName, innerContent) => {
             if (this._isClassNameSafe(outerClassName) && this._processInnerIcons(innerContent) !== null) {
                 return ''; // Remove safe nested icon
             }
@@ -623,8 +636,7 @@ window.SecurityUtils = {
         }).length;
         
         // Count safe nested icons
-        const nestedIconPattern = /<i\s+class="([^"<>]*icons[^"<>]*)">([\s\S]*?)<\/i>/gi;
-        const nestedMatches = [...text.matchAll(nestedIconPattern)];
+        const nestedMatches = [...text.matchAll(this._getNestedIconPattern())];
         const safeNestedIcons = nestedMatches.filter(match => {
             const outerClassName = match[1];
             const innerContent = match[2];
