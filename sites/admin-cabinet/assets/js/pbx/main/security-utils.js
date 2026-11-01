@@ -236,13 +236,16 @@ window.SecurityUtils = {
 
   /**
    * Escape HTML content using jQuery's safe method
-   * 
+   *
+   * Text node serialization escapes only &, < and >, so quotes are escaped as well
+   * to keep the result safe inside quoted attributes.
+   *
    * @private
    * @param {string} text - Text to escape
    * @returns {string} Escaped HTML
    */
   _escapeHtmlContent: function _escapeHtmlContent(text) {
-    return $('<div>').text(text).html();
+    return $('<div>').text(text).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   },
 
   /**
