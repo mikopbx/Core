@@ -367,7 +367,8 @@ class TestAsteriskManagers:
         1. Create a copy of existing manager
         2. Return new ID different from source
         3. Copy all settings (permissions, description)
-        4. Modify username to avoid conflicts (e.g., add "Copy of")
+        4. Suggest a free username ({source}_copy, {source}_copyN), so the
+           template can be saved as is (issue #1354)
         """
         import time
         if not self.created_ids:
@@ -416,11 +417,18 @@ class TestAsteriskManagers:
                 assert 'Copy of' in copy_description or 'copy' in copy_description.lower(), \
                     f"Copy description should indicate it's a copy, got: {copy_description}"
 
-            # Verify username and id are cleared (must be set before POST)
+            # Verify id is cleared and a free username is suggested
             assert copy_data.get('id') == '', \
                 "Template id should be empty (will be generated on POST)"
-            assert copy_data.get('username') == '', \
-                "Template username should be empty (must be set before POST)"
+            suggested_username = copy_data.get('username', '')
+            source_username = source.get('username', '')
+            assert suggested_username, "Template should suggest a username"
+            assert suggested_username != source_username, \
+                "Suggested username must differ from the source one"
+            assert '_copy' in suggested_username, \
+                f"Suggested username should be marked as a copy, got: {suggested_username}"
+            assert len(suggested_username) <= 50, \
+                f"Suggested username exceeds 50 characters: {suggested_username}"
 
             # Verify permissions were copied (if present in source)
             if 'call' in source:
@@ -428,11 +436,7 @@ class TestAsteriskManagers:
                 print(f"  Source call: {source.get('call', 'N/A')}")
                 print(f"  Copy call: {copy_data.get('call', 'N/A')}")
 
-            # Set username for the new manager (required field)
-            copy_data['username'] = f"copied_ami_{int(time.time())}"
-            print(f"\nSet username: {copy_data['username']}")
-
-            # Save the copy template to create actual record
+            # Save the copy template as is: the suggested username must be accepted
             print(f"\nSaving copy template as new manager...")
             create_response = api_client.post('asterisk-managers', copy_data)
             assert_api_success(create_response, "Failed to save copy template")
@@ -447,6 +451,19 @@ class TestAsteriskManagers:
             assert saved_id, "Saved copy should have an ID"
             assert str(saved_id) != str(source_id), \
                 f"Copy ID ({saved_id}) should differ from source ID ({source_id})"
+            assert saved_username == suggested_username, \
+                f"Saved username ({saved_username}) should be the suggested one ({suggested_username})"
+
+            # Add to created_ids for cleanup
+            self.created_ids.append(saved_id)
+
+            # The next copy of the same source must get another free username
+            next_copy = api_client.get(f'asterisk-managers/{source_id}:copy')
+            assert_api_success(next_copy, "Failed to get second copy template")
+            next_username = next_copy['data'].get('username', '')
+            assert next_username and next_username != saved_username, \
+                f"Second copy should suggest a new username, got: {next_username}"
+            print(f"✅ Second copy suggests: {next_username}")
 
             # Wait for Asterisk config regeneration
             print(f"\nWaiting for Asterisk config regeneration...")
@@ -464,16 +481,13 @@ class TestAsteriskManagers:
                     "Permissions should be preserved in copy"
                 print(f"✅ Permissions preserved correctly")
 
-            # Add to created_ids for cleanup
-            self.created_ids.append(saved_id)
-
             print(f"\n{'='*70}")
             print(f"COPY OPERATION COMPLETE")
             print(f"{'='*70}")
             print(f"✅ Source manager: {source_id}")
             print(f"✅ Copy template returned by :copy")
             print(f"✅ Template saved as new manager: {saved_id}")
-            print(f"✅ Username modified to avoid conflict")
+            print(f"✅ Free username suggested and accepted: {saved_username}")
 
         except Exception as e:
             if '404' in str(e) or '501' in str(e):

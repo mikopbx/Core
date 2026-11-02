@@ -183,7 +183,7 @@ const manager = {
                 return;
             }
 
-            // The copy endpoint already returns data with cleared ID, username, generated secret, and updated description
+            // The copy endpoint already returns data with cleared ID, a free username, generated secret, and updated description
             const data = response.data;
             manager.managerData = data;
 
@@ -207,8 +207,11 @@ const manager = {
                 $headerText.text(globalTranslate.am_CopyRecord);
             }
 
-            // Focus on username field
-            manager.$username.focus();
+            // The copy endpoint suggests a free username: select it so it can be replaced by typing
+            manager.$username.focus().select();
+
+            // A copy is a new unsaved record even if nothing is edited: enable the save button
+            Form.dataChanged();
         });
     },
 
@@ -664,13 +667,19 @@ const manager = {
         }
 
         // Use the new API to check all managers
-        AsteriskManagersAPI.getList((managers) => {
-            if (managers === false) {
+        AsteriskManagersAPI.getList((response) => {
+            // No verdict without the list: the server checks uniqueness on save anyway
+            if (!response || !response.result || !Array.isArray(response.data)) {
                 return;
             }
 
-            const exists = managers.some(m => 
-                m.username === newName && m.id !== managerId
+            // The username was changed again while the request was running
+            if (manager.$username.val() !== newName) {
+                return;
+            }
+
+            const exists = response.data.some(m =>
+                m.username === newName && String(m.id) !== String(managerId)
             );
 
             if (exists) {

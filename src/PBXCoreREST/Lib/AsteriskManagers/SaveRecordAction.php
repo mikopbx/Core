@@ -167,7 +167,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 // Use current manager ID (0 for new records) in uniqueness check
                 $currentManagerId = $isNewRecord ? 0 : (int)$manager->id;
 
-                if (!self::checkUsernameUniqueness($sanitizedData['username'], $currentManagerId)) {
+                if (AsteriskManagerUsers::isUsernameTaken($sanitizedData['username'], $currentManagerId)) {
                     $res->messages['error'][] = "Manager with username '{$sanitizedData['username']}' already exists";
                     $res->httpCode = 409; // Conflict
                     return $res;
@@ -280,26 +280,6 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         return $res;
-    }
-
-    /**
-     * Check username uniqueness
-     *
-     * @param string $username Username to check
-     * @param int|null $currentId Current manager ID (for updates)
-     * @return bool True if username is unique
-     */
-    private static function checkUsernameUniqueness(string $username, ?int $currentId = null): bool
-    {
-        $existingManager = AsteriskManagerUsers::findFirst([
-            'conditions' => 'username = :username: AND id != :id:',
-            'bind' => [
-                'username' => $username,
-                'id' => $currentId ?? 0,
-            ],
-        ]);
-
-        return $existingManager === null;
     }
 
     /**

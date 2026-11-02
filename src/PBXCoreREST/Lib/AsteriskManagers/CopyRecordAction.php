@@ -31,6 +31,8 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  */
 class CopyRecordAction
 {
+    private const int MAX_COPY_ATTEMPTS = 100;
+
     /**
      * Get copy data for an Asterisk manager
      *
@@ -56,9 +58,10 @@ class CopyRecordAction
         // Create a structured data from the source manager using DataStructure
         $copyData = DataStructure::createFromModel($sourceManager);
 
-        // Clear fields that should be unique for new record
+        // Fields that must be unique for the new record: a free username is offered
+        // right away, so the copy can be saved without editing it (issue #1354)
         $copyData['id'] = '';
-        $copyData['username'] = '';
+        $copyData['username'] = self::makeCopyUsername((string)$sourceManager->username);
 
         // Generate new secure password
         $copyData['secret'] = AsteriskManagerUsers::generateAMIPassword();
@@ -75,5 +78,24 @@ class CopyRecordAction
         $res->success = true;
 
         return $res;
+    }
+
+    /**
+     * Returns a free username for a copy: {source}_copy, {source}_copy2, ...
+     *
+     * @param string $sourceUsername Username of the source AMI user
+     * @return string Free username, or empty string if none of the candidates is free
+     */
+    private static function makeCopyUsername(string $sourceUsername): string
+    {
+        $maxLength = (int)DataStructure::getParameterDefinitions()['request']['username']['maxLength'];
+        for ($attempt = 1; $attempt <= self::MAX_COPY_ATTEMPTS; $attempt++) {
+            $suffix = $attempt === 1 ? '_copy' : '_copy' . $attempt;
+            $candidate = mb_substr($sourceUsername, 0, $maxLength - strlen($suffix)) . $suffix;
+            if (!AsteriskManagerUsers::isUsernameTaken($candidate)) {
+                return $candidate;
+            }
+        }
+        return '';
     }
 }

@@ -219,6 +219,24 @@ class AsteriskManagerUsers extends ModelsBase
     }
 
     /**
+     * Checks whether another AMI user already has this username.
+     *
+     * @param string $username Username to check
+     * @param int $exceptId ID of the user being edited (0 for a new one)
+     * @return bool True if the username is taken
+     */
+    public static function isUsernameTaken(string $username, int $exceptId = 0): bool
+    {
+        return self::findFirst([
+            'conditions' => 'username = :username: AND id != :id:',
+            'bind' => [
+                'username' => $username,
+                'id' => $exceptId,
+            ],
+        ]) !== null;
+    }
+
+    /**
      * Generates a random AMI password.
      *
      * @return string The generated AMI password.
