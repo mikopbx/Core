@@ -110,29 +110,32 @@ class PbxApiClient {
      */
     static callApi(settings, attempt = 0) {
         const originalOnError = settings.onError;
+        const originalOnFailure = settings.onFailure;
+        const willRetry = (xhr) => xhr && xhr.status === 503 && attempt < PbxApiClient.MAX_503_RETRIES;
 
+        // Semantic UI calls onError (HTTP errors only) and then onFailure for the same failed request;
+        // while a 503 is retried neither reaches the caller, it gets the result of the retry
         const wrappedSettings = {
             ...settings,
             onError(errorMessage, element, xhr) {
-                const status = xhr ? xhr.status : 0;
-
-                // Retry on 503 with exponential backoff
-                if (status === 503 && attempt < PbxApiClient.MAX_503_RETRIES) {
-                    const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
-                    console.warn(`API 503: retry ${attempt + 1}/${PbxApiClient.MAX_503_RETRIES} in ${delay}ms`);
-                    setTimeout(() => {
-                        PbxApiClient.callApi(
-                            {...settings, onError: originalOnError},
-                            attempt + 1
-                        );
-                    }, delay);
+                if (!willRetry(xhr) && originalOnError) {
+                    originalOnError(errorMessage, element, xhr);
+                }
+            },
+            onFailure(response, element, xhr) {
+                if (!willRetry(xhr)) {
+                    if (originalOnFailure) {
+                        originalOnFailure(response, element, xhr);
+                    }
                     return;
                 }
 
-                // Exhausted retries or non-503 error — delegate to original handler
-                if (originalOnError) {
-                    originalOnError(errorMessage, element, xhr);
-                }
+                // Retry on 503 with exponential backoff
+                const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+                console.warn(`API 503: retry ${attempt + 1}/${PbxApiClient.MAX_503_RETRIES} in ${delay}ms`);
+                setTimeout(() => {
+                    PbxApiClient.callApi(settings, attempt + 1);
+                }, delay);
             }
         };
 
@@ -193,7 +196,7 @@ class PbxApiClient {
      * This standardizes error handling across all API calls
      *
      * @param {function} successCallback - Called on successful response (2xx + result=true)
-     * @param {function} failureCallback - Called on business errors (4xx or result=false)
+     * @param {function} failureCallback - Called on any failure with the API envelope (result=false, messages)
      * @returns {object} - API settings object for $.api()
      */
     getBaseApiSettings(successCallback, failureCallback) {
@@ -206,36 +209,56 @@ class PbxApiClient {
             onSuccess(response) {
                 successCallback(response, true);
             },
-            onFailure(response, xhr) {
+            // Semantic UI calls onFailure for every failed request except an aborted one:
+            // business errors, HTTP 4xx/5xx, network errors, timeouts and bodies that are not JSON
+            // (for HTTP errors it calls onError first, so onError is not used here)
+            onFailure(response, element, xhr) {
                 // Check for authorization errors and redirect to login if needed
                 const status = xhr ? xhr.status : 0;
                 if (PbxApiClient.handleAuthError(status)) {
                     return; // Don't call callback if redirecting
                 }
 
-                failureCallback(response, false);
-            },
-            onError(errorMessage, element, xhr) {
-                // Only handle real network errors (5xx, timeout, connection refused)
-                // For 4xx errors, Semantic UI already called onFailure, so skip
-                const status = xhr ? xhr.status : 0;
-
-                // Check for authorization errors and redirect to login if needed
-                if (PbxApiClient.handleAuthError(status)) {
-                    return; // Don't call callback if redirecting
-                }
-
-                // Skip if this is a business error (4xx) - already handled by onFailure
-                if (status >= 400 && status < 500) {
-                    return;
-                }
-
-                // Real network/server error - show generic message
-                failureCallback({
-                    result: false,
-                    messages: {error: ['Network error occurred']}
-                }, false);
+                failureCallback(PbxApiClient.normalizeFailureResponse(response, xhr), false);
             }
+        };
+    }
+
+    /**
+     * Bring a failed response to the API envelope.
+     * Semantic UI passes the raw body when it is not JSON: a plain-text nginx
+     * limiter reply (429 "Too many requests"), an HTML error page or false.
+     * A JSON body without messages (not built by PBXApiResult) gets a status message.
+     *
+     * @param {*} response - Response passed by Semantic UI to onFailure
+     * @param {XMLHttpRequest} [xhr] - XMLHttpRequest object
+     * @returns {object} - Response object with result and messages fields
+     */
+    static normalizeFailureResponse(response, xhr) {
+        const {messages} = $.isPlainObject(response) ? response : {};
+        if (messages && typeof messages === 'object' && Object.keys(messages).length > 0) {
+            return response;
+        }
+
+        const text = typeof response === 'string' ? response.trim() : '';
+        const status = xhr ? xhr.status : 0;
+        let message;
+        if (text !== '' && text.length <= 200 && !text.startsWith('<')) {
+            // The message is rendered as HTML, the body comes from outside PBXApiResult
+            message = SecurityUtils.escapeHtml(text);
+        } else if (status >= 200 && status < 300) {
+            message = `Invalid server response (HTTP ${status})`;
+        } else if (status > 0) {
+            const statusText = xhr.statusText ? ` ${SecurityUtils.escapeHtml(xhr.statusText)}` : '';
+            message = `HTTP ${status}${statusText}`;
+        } else {
+            message = 'Network error occurred';
+        }
+
+        return {
+            ...($.isPlainObject(response) ? response : {}),
+            result: false,
+            messages: {error: [message]}
         };
     }
     
@@ -308,7 +331,7 @@ class PbxApiClient {
             (response) => actualCallback(response, true),
             (response) => {
                 // Ensure we return a structure with result and data fields
-                if (response && !response.hasOwnProperty('data')) {
+                if (!Object.prototype.hasOwnProperty.call(response, 'data')) {
                     response.data = [];
                 }
                 actualCallback(response, false);
@@ -349,11 +372,16 @@ class PbxApiClient {
         const method = isNew ? 'POST' : 'PUT';
         const url = isNew ? this.apiUrl : `${this.apiUrl}/${recordId}`;
 
+        const apiSettings = this.getBaseApiSettings(
+            (response) => callback(response, true),
+            callback
+        );
+
         PbxApiClient.callApi({
             url: url,
             method: method,
             data: cleanData,
-            on: 'now',
+            ...apiSettings,
             beforeSend(settings) {
                 // Check if we need to send as JSON (for complex structures)
                 if (PbxApiClient.hasComplexData(cleanData)) {
@@ -361,18 +389,6 @@ class PbxApiClient {
                     settings.data = JSON.stringify(cleanData);
                 }
                 return settings;
-            },
-            onSuccess(response) {
-                callback(response, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback({
-                    result: false,
-                    messages: {error: ['Network error occurred']}
-                }, false);
             }
         });
     }
