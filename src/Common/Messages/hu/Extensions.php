@@ -122,6 +122,7 @@ return [
     'ex_SipSettings' => 'SIP beállítások',
     'ex_Status' => 'Állapot',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'A megadott cím már regisztrálva van',
+    'ex_EmailAvailabilityCheckFailed' => 'Nem sikerült ellenőrizni, hogy a cím szabad-e',
     'ex_ThisNumberIsNotFree' => 'A szám már benne van az adatbázisban',
     'ex_ThisNumberNotExistInSipModel' => 'Ez a szám nem rendelkezik a megfelelő SIP-beállításokkal',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Kereszteződés számos parkolószámmal',

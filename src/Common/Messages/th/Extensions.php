@@ -122,6 +122,7 @@ return [
     'ex_SipTransportTooltip_udp_tcp_desc' => 'การเลือกอัตโนมัติระหว่าง UDP และ TCP (แนะนำ)',
     'ex_Status' => 'สถานะ',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'ที่อยู่ที่ป้อนได้ถูกลงทะเบียนไว้แล้วสำหรับ',
+    'ex_EmailAvailabilityCheckFailed' => 'ไม่สามารถตรวจสอบได้ว่าที่อยู่นี้ว่างหรือไม่',
     'ex_ThisNumberIsNotFree' => 'หมายเลขนี้มีอยู่ในฐานข้อมูลแล้ว',
     'ex_ThisNumberNotExistInSipModel' => 'หมายเลขนี้ไม่มีการตั้งค่า SIP ที่เกี่ยวข้อง',
     'ex_ThisNumberOverlapWithParkingSlots' => 'ทับซ้อนกับช่วงหมายเลขพาร์กกิง',

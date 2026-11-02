@@ -122,6 +122,7 @@ return [
     'ex_SipTransportTooltip_udp_tcp_desc' => 'automatische Auswahl zwischen UDP und TCP (empfohlen)',
     'ex_Status' => 'Status',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Die eingegebene Adresse ist bereits registriert',
+    'ex_EmailAvailabilityCheckFailed' => 'Es konnte nicht geprüft werden, ob die Adresse frei ist',
     'ex_ThisNumberIsNotFree' => 'Die Nummer ist bereits in der Datenbank',
     'ex_ThisNumberNotExistInSipModel' => 'Diese Nummer hat keine zugehörige SIP-Einstellung',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Kreuzung mit verschiedenen Parknummern',

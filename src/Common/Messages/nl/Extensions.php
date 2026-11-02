@@ -122,6 +122,7 @@ return [
     'ex_SipTransportTooltip_udp_tcp_desc' => 'automatische selectie tussen UDP en TCP (aanbevolen)',
     'ex_Status' => 'Toestand',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Het ingevoerde adres is al geregistreerd',
+    'ex_EmailAvailabilityCheckFailed' => 'Kon niet controleren of het adres beschikbaar is',
     'ex_ThisNumberIsNotFree' => 'Het nummer staat al in de database',
     'ex_ThisNumberNotExistInSipModel' => 'Dit nummer heeft geen bijbehorende SIP-instelling',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Kruispunt met diverse parkeernummers',

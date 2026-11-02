@@ -122,6 +122,7 @@ return [
     'ex_SipTransportTooltip_udp_tcp_desc' => 'UDP和TCP之间自动选择（推荐）',
     'ex_Status' => '状态',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => '输入的地址已注册给',
+    'ex_EmailAvailabilityCheckFailed' => '无法检查该地址是否可用',
     'ex_ThisNumberIsNotFree' => '号码已存在于数据库中',
     'ex_ThisNumberNotExistInSipModel' => '此号码没有对应的SIP设置',
     'ex_ThisNumberOverlapWithParkingSlots' => '与停车号码范围重叠',

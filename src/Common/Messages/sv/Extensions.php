@@ -122,6 +122,7 @@ return [
     'ex_SipTransportTooltip_udp_tcp_desc' => 'automatiskt val mellan UDP och TCP (rekommenderas)',
     'ex_Status' => 'Status',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Den angivna adressen är redan registrerad för',
+    'ex_EmailAvailabilityCheckFailed' => 'Det gick inte att kontrollera om adressen är ledig',
     'ex_ThisNumberIsNotFree' => 'Numret finns redan i databasen',
     'ex_ThisNumberNotExistInSipModel' => 'Detta nummer har inte en motsvarande SIP-inställning',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Korsning med en rad parkeringsnummer',

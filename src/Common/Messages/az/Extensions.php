@@ -122,6 +122,7 @@ return [
     'ex_SipTransportTooltip_udp_tcp_desc' => 'UDP və TCP arasında avtomatik seçim (tövsiyə olunur)',
     'ex_Status' => 'Status',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Daxil edilən ünvan artıq qeydiyyatdan keçib',
+    'ex_EmailAvailabilityCheckFailed' => 'Ünvanın boş olub-olmadığını yoxlamaq mümkün olmadı',
     'ex_ThisNumberIsNotFree' => 'Nömrə artıq verilənlər bazasındadır',
     'ex_ThisNumberNotExistInSipModel' => 'Bu nömrənin müvafiq SIP parametri yoxdur',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Dayanacaq nömrələri diapazonu ilə üst-üstə düşmə',

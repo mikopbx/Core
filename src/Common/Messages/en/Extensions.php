@@ -87,6 +87,7 @@ return [
     'ex_SipSettings' => 'SIP settings',
     'ex_MonitoringTab' => 'Monitoring',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'The entered address is already registered for',
+    'ex_EmailAvailabilityCheckFailed' => 'Could not check whether the address is available',
     'ex_ThisNumberIsNotFree' => 'The number is already in the database',
     'ex_ThisNumberNotExistInSipModel' => 'This number does not have a corresponding SIP setting',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Overlap with parking slots range',

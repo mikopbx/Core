@@ -48,23 +48,31 @@ Object.assign(UsersAPI, {
             return;
         }
 
+        const $field = $(`.ui.input.${cssClassName}`).parent();
+        const $error = $(`#${cssClassName}-error`);
+
         // Use new API approach with callCustomMethod
         this.callCustomMethod('checkAvailability', { email: newEmail }, (response) => {
-            if (response.result && response.data['available'] === true) {
-                $(`.ui.input.${cssClassName}`).parent().removeClass('error');
-                $(`#${cssClassName}-error`).addClass('hidden');
-            } else if (userId.length > 0 && response.data['userId'] === userId) {
-                $(`.ui.input.${cssClassName}`).parent().removeClass('error');
-                $(`#${cssClassName}-error`).addClass('hidden');
+            // No verdict without data (network error, 4xx/5xx): drop the verdict left from a previous value
+            // and say the check failed instead of reporting the address as free or taken
+            if (!response || response.result !== true || !response.data) {
+                $field.removeClass('error');
+                $error.removeClass('hidden').html(globalTranslate.ex_EmailAvailabilityCheckFailed);
+                return;
+            }
+            const isOwnEmail = userId.length > 0 && response.data['userId'] === userId;
+            if (response.data['available'] === true || isOwnEmail) {
+                $field.removeClass('error');
+                $error.addClass('hidden');
             } else {
-                $(`.ui.input.${cssClassName}`).parent().addClass('error');
+                $field.addClass('error');
                 let message = `${globalTranslate.ex_ThisEmailAlreadyRegisteredForOtherUser}:&nbsp`;
                 if (globalTranslate[response.data['represent']] !== undefined) {
                     message = globalTranslate[response.data['represent']];
                 } else {
                     message += response.data['represent'];
                 }
-                $(`#${cssClassName}-error`).removeClass('hidden').html(message);
+                $error.removeClass('hidden').html(message);
             }
         });
     }

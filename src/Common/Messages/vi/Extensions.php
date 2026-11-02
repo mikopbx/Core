@@ -122,6 +122,7 @@ return [
     'ex_SipTransportTooltip_udp_tcp_desc' => 'chọn tự động giữa UDP và TCP (khuyến nghị)',
     'ex_Status' => 'Trạng thái',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Địa chỉ đã nhập đã được đăng ký cho',
+    'ex_EmailAvailabilityCheckFailed' => 'Không thể kiểm tra địa chỉ có còn trống hay không',
     'ex_ThisNumberIsNotFree' => 'Số đã tồn tại trong cơ sở dữ liệu',
     'ex_ThisNumberNotExistInSipModel' => 'Số này không có cài đặt SIP tương ứng',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Trùng với dải số đỗ xe',

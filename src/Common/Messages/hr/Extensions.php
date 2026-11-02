@@ -122,6 +122,7 @@ return [
     'ex_SipSettings' => 'SIP postavke',
     'ex_Status' => 'Status',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Unesena adresa je već registrirana za',
+    'ex_EmailAvailabilityCheckFailed' => 'Nije moguće provjeriti je li adresa slobodna',
     'ex_ThisNumberIsNotFree' => 'Broj je već u bazi podataka',
     'ex_ThisNumberNotExistInSipModel' => 'Ovaj broj nema odgovarajuće SIP postavke',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Raskrižje s nizom parkirnih brojeva',

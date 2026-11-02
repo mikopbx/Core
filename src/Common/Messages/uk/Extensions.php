@@ -122,6 +122,7 @@ return [
     'ex_SipTransportTooltip_udp_tcp_desc' => 'автоматичний вибір між UDP та TCP (рекомендується)',
     'ex_Status' => 'Статус',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Введена адреса вже зареєстрована для',
+    'ex_EmailAvailabilityCheckFailed' => 'Не вдалося перевірити, чи вільна адреса',
     'ex_ThisNumberIsNotFree' => 'Номер вже є в базі даних',
     'ex_ThisNumberNotExistInSipModel' => 'У цього номера немає відповідного SIP налаштування',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Перетин з діапазоном номерів паркування',

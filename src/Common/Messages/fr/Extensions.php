@@ -122,6 +122,7 @@ return [
     'ex_SipSettings' => 'Paramètres SIP',
     'ex_Status' => 'Statut',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'L\'adresse saisie est déjà enregistrée pour',
+    'ex_EmailAvailabilityCheckFailed' => 'Impossible de vérifier si l\'adresse est disponible',
     'ex_ThisNumberIsNotFree' => 'Le numéro est déjà dans la base de données',
     'ex_ThisNumberNotExistInSipModel' => 'Ce numéro n\'a pas de paramètre SIP correspondant',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Intersection avec une série de numéros de stationnement',

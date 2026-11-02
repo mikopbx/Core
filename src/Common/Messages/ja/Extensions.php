@@ -122,6 +122,7 @@ return [
     'ex_SipTransportTooltip_udp_tcp_desc' => 'UDPとTCP間の自動選択（推奨）',
     'ex_Status' => '状況',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => '入力されたアドレスは既に登録されています',
+    'ex_EmailAvailabilityCheckFailed' => 'アドレスが使用可能かどうかを確認できませんでした',
     'ex_ThisNumberIsNotFree' => '番号はすでにデータベースにあります',
     'ex_ThisNumberNotExistInSipModel' => 'この番号には対応するSIP設定がありません',
     'ex_ThisNumberOverlapWithParkingSlots' => 'さまざまな駐車番号がある交差点',

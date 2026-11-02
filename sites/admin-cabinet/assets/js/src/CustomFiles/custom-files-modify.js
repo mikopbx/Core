@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, ace, Form, FilesAPI, customFilesAPI, PbxApiClient */
+/* global globalRootUrl,globalTranslate, ace, Form, FilesAPI, customFilesAPI, PbxApiClient, UserMessage */
 
 
 /**
@@ -511,13 +511,7 @@ const customFile = {
      * It will update the 'viewerOriginal' with the file's content and adjust the code display.
      */
     cbGetOriginalFileContentFromServer(response) {
-        if (response.data.content !== undefined) {
-            const aceViewer = customFile.viewerOriginal;
-            const scrollTop = aceViewer.session.getScrollTop();
-            aceViewer.session.setValue(response.data.content);
-            aceViewer.session.setScrollTop(scrollTop);
-        }
-        $('.tab[data-tab="original"]').removeClass('loading');
+        customFile.showFileContentInViewer(response, customFile.viewerOriginal, 'original');
     },
 
     /**
@@ -525,13 +519,31 @@ const customFile = {
      * It will update the 'viewerResult' with the file's content and adjust the code display.
      */
     cbGetResultFileContentFromServer(response) {
-        if (response.data.content !== undefined) {
-            const aceViewer = customFile.viewerResult;
+        customFile.showFileContentInViewer(response, customFile.viewerResult, 'result');
+    },
+
+    /**
+     * Puts the file content from the server response into a read-only viewer.
+     * Failed requests (network errors, 4xx/5xx) may come without the data field:
+     * the loading state is cleared anyway, the previously loaded content is dropped so it is not
+     * taken for the current one, and the error is shown to the user.
+     *
+     * @param {object} response - The response object from the API.
+     * @param {object} aceViewer - The ACE viewer to update.
+     * @param {string} tabName - The data-tab name of the viewer's tab.
+     */
+    showFileContentInViewer(response, aceViewer, tabName) {
+        $(`.tab[data-tab="${tabName}"]`).removeClass('loading');
+        if (response && response.result && response.data && typeof response.data.content === 'string') {
             const scrollTop = aceViewer.session.getScrollTop();
             aceViewer.session.setValue(response.data.content);
             aceViewer.session.setScrollTop(scrollTop);
+        } else {
+            aceViewer.session.setValue('');
+            if (response && response.messages) {
+                UserMessage.showMultiString(response.messages);
+            }
         }
-        $('.tab[data-tab="result"]').removeClass('loading');
     },
 
     /**

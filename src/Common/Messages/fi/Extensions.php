@@ -122,6 +122,7 @@ return [
     'ex_SipSettings' => 'SIP-asetukset',
     'ex_Status' => 'Status',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Annettu osoite on jo rekisteröity',
+    'ex_EmailAvailabilityCheckFailed' => 'Osoitteen saatavuutta ei voitu tarkistaa',
     'ex_ThisNumberIsNotFree' => 'Numero on jo tietokannassa',
     'ex_ThisNumberNotExistInSipModel' => 'Tällä numerolla ei ole vastaavia SIP-asetuksia',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Risteys, jossa on useita pysäköintinumeroita',

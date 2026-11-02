@@ -122,6 +122,7 @@ return [
     'ex_SipTransportTooltip_udp_tcp_desc' => 'ავტომატური შერჩევა UDP-სა და TCP-ს შორის (რეკომენდებული)',
     'ex_Status' => 'სტატუსი',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'შეყვანილი მისამართი უკვე რეგისტრირებულია',
+    'ex_EmailAvailabilityCheckFailed' => 'ვერ მოხერხდა შემოწმება, თავისუფალია თუ არა მისამართი',
     'ex_ThisNumberIsNotFree' => 'ნომერი უკვე მონაცემთა ბაზაშია',
     'ex_ThisNumberNotExistInSipModel' => 'ამ ნომერს არ აქვს შესაბამისი SIP პარამეტრი',
     'ex_ThisNumberOverlapWithParkingSlots' => 'კვეთა პარკინგის ნომრების სპექტრით',

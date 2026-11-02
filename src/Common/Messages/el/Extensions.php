@@ -122,6 +122,7 @@ return [
     'ex_SipSettings' => 'Ρυθμίσεις SIP',
     'ex_Status' => 'Κατάσταση',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Η διεύθυνση που καταχωρίσατε είναι ήδη εγγεγραμμένη',
+    'ex_EmailAvailabilityCheckFailed' => 'Δεν ήταν δυνατός ο έλεγχος αν η διεύθυνση είναι διαθέσιμη',
     'ex_ThisNumberIsNotFree' => 'Ο αριθμός βρίσκεται ήδη στη βάση δεδομένων',
     'ex_ThisNumberNotExistInSipModel' => 'Αυτός ο αριθμός δεν έχει αντίστοιχη ρύθμιση SIP',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Διασταύρωση με μια σειρά από αριθμούς στάθμευσης',

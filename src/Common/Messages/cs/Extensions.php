@@ -122,6 +122,7 @@ return [
     'ex_SipTransportTooltip_udp_tcp_desc' => 'automatický výběr mezi UDP a TCP (doporučeno)',
     'ex_Status' => 'Stav',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Zadaná adresa je již registrována pro',
+    'ex_EmailAvailabilityCheckFailed' => 'Nepodařilo se ověřit, zda je adresa volná',
     'ex_ThisNumberIsNotFree' => 'Číslo je již v databázi',
     'ex_ThisNumberNotExistInSipModel' => 'Toto číslo nemá odpovídající nastavení SIP',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Překrytí s rozsahem parkovacích čísel',

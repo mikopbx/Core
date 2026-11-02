@@ -122,6 +122,7 @@ return [
     'ex_SipTransportTooltip_udp_tcp_desc' => 'selecție automată între UDP și TCP (recomandat)',
     'ex_Status' => 'stare',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Adresa introdusă este deja înregistrată pentru',
+    'ex_EmailAvailabilityCheckFailed' => 'Nu s-a putut verifica dacă adresa este disponibilă',
     'ex_ThisNumberIsNotFree' => 'Numărul este deja în baza de date',
     'ex_ThisNumberNotExistInSipModel' => 'Acest număr nu are o setare SIP corespunzătoare',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Intersecție cu o serie de numere de parcare',
