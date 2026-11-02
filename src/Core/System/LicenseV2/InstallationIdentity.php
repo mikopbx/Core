@@ -87,8 +87,8 @@ class InstallationIdentity
     /**
      * Takes the directory back for root: the private key must stay root-only, and only root workers may
      * write the state. The web side keeps reading the public key, the token and the state.
-     * Storage::saveFstab() skips this directory when it gives /cf to the web server user; this repairs
-     * stations whose directory was handed over before that, or by any other wholesale rights change.
+     * The directory lives in /cf/private, out of the web server user's reach (Storage::preparePrivateDir());
+     * this repairs directories handed over by older builds, or by any other wholesale rights change.
      *
      * ponytail: a directory handed over stays readable and replaceable by the web server user until
      * a root process builds the identity.
@@ -125,7 +125,7 @@ class InstallationIdentity
     {
         // Asked beforehand instead of "@": the web server user gets here first on a fresh PBX
         // and must fail quietly, the key pair is created by the next root worker.
-        // Writable is not enough: the T2SDE boot hands /cf/conf to the web server user.
+        // Writable is not enough: a key pair made by the web server user would not be root's.
         if (posix_getuid() !== 0 || !is_writable(is_dir($this->dir) ? $this->dir : dirname($this->dir))) {
             throw new KeyPairNotReadyException(
                 "Installation key pair is not created yet and $this->dir is not writable"

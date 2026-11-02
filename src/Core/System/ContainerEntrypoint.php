@@ -120,6 +120,9 @@ class ContainerEntrypoint extends Injectable
         // Let php-fpm workers (www) detect LXC; they cannot read the container environment.
         System::refreshLxcMarker();
 
+        // user.id / group.id live in /cf/private (#1367)
+        Storage::preparePrivateDir();
+
         // Update WWW user id and group id.
         $this->changeWwwUserID();
 
@@ -146,14 +149,16 @@ class ContainerEntrypoint extends Injectable
         $newGroupId = getenv('ID_WWW_GROUP');
         // Output message only if we need to change permissions
         $showMessage = false;
-        $pidIdPath = '/cf/conf/user.id';
-        $pidGrPath = '/cf/conf/group.id';
+        // Root-owned directory that www can not write: see Storage::preparePrivateDir()
+        $privateDir = Directories::getDir(Directories::CORE_PRIVATE_DIR);
+        $pidIdPath = "$privateDir/user.id";
+        $pidGrPath = "$privateDir/group.id";
 
         if (empty($newUserId)) {
-            $newUserId = $this->readRootOwnedFile($pidIdPath);
+            $newUserId = $this->readIdFile($pidIdPath);
         }
         if (empty($newGroupId)) {
-            $newGroupId = $this->readRootOwnedFile($pidGrPath);
+            $newGroupId = $this->readIdFile($pidGrPath);
         }
         // The values end up in sed and find commands run as root: accept non-zero numeric ids only
         $newUserId = $this->numericIdOrEmpty($newUserId, 'ID_WWW_USER');
@@ -179,18 +184,18 @@ class ContainerEntrypoint extends Injectable
             // Collect all updates first
             if ($needUserUpdate) {
                 $commands[] = "$sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/shadow*";
-                if ($this->readRootOwnedFile($pidIdPath) !== $newUserId) {
+                if ($this->readIdFile($pidIdPath) !== $newUserId) {
                     $commands[] = "$find / -not -path '/proc/*' -not -path '/sys/*' -user $currentUserId -exec $chown -h $userID {} +";
-                    $this->writeRootOwnedFile($pidIdPath, $newUserId);
+                    $this->writeIdFile($pidIdPath, $newUserId);
                 }
             }
 
             if ($needGroupUpdate) {
                 $commands[] = "$sed -i 's/$userID:x:$currentGroupId:/$userID:x:$newGroupId:/g' /etc/group";
                 $commands[] = "$sed -i 's/:$currentGroupId:Web/:$newGroupId:Web/g' /etc/shadow";
-                if ($this->readRootOwnedFile($pidGrPath) !== $newGroupId) {
+                if ($this->readIdFile($pidGrPath) !== $newGroupId) {
                     $commands[] = "$find / -not -path '/proc/*' -not -path '/sys/*' -group $currentGroupId -exec $chgrp -h $newGroupId {} +";
-                    $this->writeRootOwnedFile($pidGrPath, $newGroupId);
+                    $this->writeIdFile($pidGrPath, $newGroupId);
                 }
             }
 
@@ -228,41 +233,20 @@ class ContainerEntrypoint extends Injectable
     }
 
     /**
-     * Reads a file only if it is a regular file owned by root, not a link.
-     *
-     * user.id / group.id sit in /cf/conf, where www may create entries (#1227).
-     *
-     * @return string|false Trimmed content, or false when the file is missing or not trusted.
+     * @return string|false Trimmed content of user.id / group.id, or false when the file is missing.
      */
-    private function readRootOwnedFile(string $path): string|false
+    private function readIdFile(string $path): string|false
     {
-        clearstatcache(true, $path);
-        if (!file_exists($path) && !is_link($path)) {
-            return false;
-        }
-        if (is_link($path) || !is_file($path) || fileowner($path) !== 0) {
-            SystemMessages::sysLogMsg(static::class, "Ignored $path: not a regular root-owned file", LOG_WARNING);
-            return false;
-        }
-        $content = file_get_contents($path);
+        $content = is_file($path) ? file_get_contents($path) : false;
         return $content === false ? false : trim($content);
     }
 
     /**
-     * Writes a root-owned file without following an entry www may have planted in its place.
-     *
-     * tempnam() creates a fresh file exclusively; rename() replaces whatever sits at $path,
-     * a link included, instead of writing through it.
+     * Without the file the whole-filesystem chown above would repeat on every boot: say so.
      */
-    private function writeRootOwnedFile(string $path, string $content): void
+    private function writeIdFile(string $path, string $id): void
     {
-        $tmp = tempnam(dirname($path), basename($path) . '.');
-        if ($tmp === false) {
-            SystemMessages::sysLogMsg(static::class, "Cannot write $path", LOG_WARNING);
-            return;
-        }
-        if (file_put_contents($tmp, $content) === false || !chmod($tmp, 0644) || !rename($tmp, $path)) {
-            @unlink($tmp);
+        if (file_put_contents($path, $id) === false) {
             SystemMessages::sysLogMsg(static::class, "Cannot write $path", LOG_WARNING);
         }
     }
@@ -373,67 +357,34 @@ class ContainerEntrypoint extends Injectable
         $rm = Util::which('rm');
         $cp = Util::which('cp');
         $out = [];
+        // Before the root probe: a sticky /cf/conf left by #1227 builds would make it fail under
+        // fs.protected_regular=2, and an empty answer below resets the configuration (#1367).
+        $this->giveDatabaseToWww();
         Processes::mwExec("$sqlite3 " . self::PATH_DB . ' .tables', $out);
         if ($out !== null && trim(implode('', $out)) === '') {
             Util::mwMkdir(dirname(self::PATH_DB));
             Processes::mwExec("$rm -rf " . self::PATH_DB . "; $cp /conf.default/mikopbx.db " . self::PATH_DB);
         }
+        // Again: the probe or the copy above may have created root-owned files
         $this->giveDatabaseToWww();
         $this->echoResultMsg();
         return [];
     }
 
     /**
-     * Gives php-fpm (www) the main database and its WAL files, and lets it create files next to them (#1227).
+     * Gives php-fpm (www) the database directory, as Storage::saveFstab() does on the regular image (#1227).
      *
-     * A database kept from an older version may still be root-owned. The rest of /cf/conf (user.id,
-     * group.id, license-v2) is read by root at boot and must stay out of www's hands, so the directory
-     * stays root-owned with group www and mode 1775: www can create -wal / -shm, but the sticky bit
-     * stops it from removing or renaming root's entries. lchown/lchgrp never follow a planted link.
+     * A database kept from an older version may still be root-owned. Root's own files are in
+     * /cf/private, so /cf/conf needs no sticky bit: with it, fs.protected_regular=2 (Ubuntu and Debian
+     * hosts) stops root from opening www's database and the container does not boot (#1367).
+     * /cf itself is left as it is: on Docker it can be a host bind mount.
      */
     private function giveDatabaseToWww(): void
     {
+        // chmod 755 also clears the sticky bit set by builds from #1227. A license-v2 left behind by
+        // Storage::preparePrivateDir() keeps root and its 0600 key.
         $dir = dirname(self::PATH_DB);
-        if (is_link($dir) || !lchown($dir, 'root') || !lchgrp($dir, 'www') || !chmod($dir, 01775)) {
-            SystemMessages::sysLogMsg(static::class, "Cannot prepare $dir for www", LOG_WARNING);
-        }
-        $this->keepLicenseDirRootOwned($dir . '/license-v2');
-        foreach ([self::PATH_DB, self::PATH_DB . '-wal', self::PATH_DB . '-shm'] as $path) {
-            if (!file_exists($path) && !is_link($path)) {
-                continue;
-            }
-            if (!lchown($path, 'www') || !lchgrp($path, 'www')) {
-                SystemMessages::sysLogMsg(static::class, "Cannot give $path to www", LOG_WARNING);
-            }
-        }
-    }
-
-    /**
-     * Makes sure the LicenseV2 directory exists and is root's before www starts (#1227).
-     *
-     * /cf/conf is group-writable for www, so a missing license-v2 could be pre-created by www with
-     * its own key pair, which InstallationIdentity would then adopt. Anything at that name that is
-     * not a root-owned directory closed to others is moved aside (kept for inspection), and a fresh
-     * one is created.
-     */
-    private function keepLicenseDirRootOwned(string $licenseDir): void
-    {
-        clearstatcache(true, $licenseDir);
-        $exists = file_exists($licenseDir) || is_link($licenseDir);
-        $trusted = !is_link($licenseDir) && is_dir($licenseDir)
-            && fileowner($licenseDir) === 0 && (fileperms($licenseDir) & 0022) === 0;
-        if ($exists && !$trusted) {
-            $aside = $licenseDir . '.untrusted-' . time();
-            if (!rename($licenseDir, $aside)) {
-                SystemMessages::sysLogMsg(static::class, "Cannot move aside untrusted $licenseDir", LOG_ERR);
-                return;
-            }
-            SystemMessages::sysLogMsg(static::class, "Moved untrusted $licenseDir to $aside", LOG_WARNING);
-            $exists = false;
-        }
-        if (!$exists && !mkdir($licenseDir, 0755) && !is_dir($licenseDir)) {
-            SystemMessages::sysLogMsg(static::class, "Cannot create $licenseDir", LOG_ERR);
-        }
+        Util::addRegularWWWRights($dir, "$dir/license-v2");
     }
 
     /**

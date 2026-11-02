@@ -251,6 +251,11 @@ else
   # Copy the configuration to the tmp (RAM) directory
   echo_info "Backup the system settings to temporary directory...";
   /bin/busybox cp -Rv /cf/conf/* /tmp/configbak | /bin/busybox awk '{print "\t" $0}'
+  # Root-only files (LicenseV2 keys) live next to /cf/conf (#1367); -p keeps root ownership and 0600 keys
+  rm -rf /tmp/privatebak;
+  if [ -d /cf/private ]; then
+    /bin/busybox cp -Rpv /cf/private /tmp/privatebak | /bin/busybox awk '{print "\t" $0}'
+  fi
 
   # Match the exact Storage mountpoint (not any line containing "storage") so a
   # stray mount can't produce a multi-line value and break the single-disk test.
@@ -540,6 +545,9 @@ else
   mkdir -p /cf/conf
   echo_info "Restoring the MikoPBX configuration settings...";
   /bin/busybox cp -Rv /tmp/configbak/* /cf/conf/ | /bin/busybox awk '{print "\t" $0}'
+  if [ -d /tmp/privatebak ]; then
+    /bin/busybox cp -Rpv /tmp/privatebak /cf/private | /bin/busybox awk '{print "\t" $0}'
+  fi
 
   echo_info "Deleting firmware image...";
   rm -rf "${img_file}";

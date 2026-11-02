@@ -26,6 +26,7 @@ use Phalcon\Di\Injectable;
 class Directories extends Injectable
 {
     public const string CORE_CF_DIR = 'core.cfDir';
+    public const string CORE_PRIVATE_DIR = 'core.privateDir';
     public const string CORE_VAR_ETC_DIR = 'core.varEtcDir';
     public const string CORE_MODULES_DIR = 'core.modulesDir';
     public const string CORE_TEMP_DIR = 'core.tempDir';
@@ -56,6 +57,8 @@ class Directories extends Injectable
 
     public const array DEFAULT_DIRS = [
         self::CORE_CF_DIR => '/cf',
+        // Root-only files next to /cf/conf, which belongs to www (#1367): see Storage::preparePrivateDir()
+        self::CORE_PRIVATE_DIR => '/cf/private',
         self::CORE_VAR_ETC_DIR => '/var/etc',
         self::CORE_MODULES_DIR => '/mountpoint/mikopbx/custom_modules',
         self::CORE_TEMP_DIR => '/mountpoint/mikopbx/tmp',

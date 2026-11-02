@@ -112,7 +112,7 @@ class LicenseV2
         ?Closure $serverUrls = null,
         ?Closure $moduleDemand = null
     ) {
-        $cfDir = Directories::getDir(Directories::CORE_CF_DIR) . '/conf/license-v2';
+        $cfDir = Directories::getDir(Directories::CORE_PRIVATE_DIR) . '/license-v2';
         $this->store = $store
             ?? new EntitlementStore($cfDir, new InstallationIdentity($cfDir), self::TRUSTED_KEYS);
         // Leases are rewritten on every keepalive: they live on the storage disk, not on the /cf settings partition.

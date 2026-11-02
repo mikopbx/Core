@@ -274,6 +274,9 @@ class SystemLoader extends Injectable
         System::setupLocales();
         $this->echoResultMsg();
 
+        // Before saveFstab() hands /cf/conf to www: root's files move out of it first (#1367)
+        Storage::preparePrivateDir();
+
         // Mount the storage disk
         $storage = new Storage();
         if ($itIsT2SDELinux) {

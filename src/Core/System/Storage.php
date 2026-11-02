@@ -1193,8 +1193,65 @@ class Storage extends Injectable
         if ($resultOfMount !== 0) {
             SystemMessages::echoToTeletype(" - Error mount " . implode(' ', $out));
         }
-        // Add regular www rights to /cf directory; the licensing keys stay root-only (InstallationIdentity)
-        Util::addRegularWWWRights('/cf', '/cf/conf/license-v2');
+        // php-fpm (www) writes the database in /cf/conf. /cf itself stays root's, so www can not rename
+        // /cf/private, where root keeps its own files (#1367).
+        $cfDir = Directories::getDir(Directories::CORE_CF_DIR);
+        if (!is_link($cfDir) && (!lchown($cfDir, 'root') || !lchgrp($cfDir, 'root') || !chmod($cfDir, 0755))) {
+            SystemMessages::sysLogMsg(__METHOD__, "Cannot give $cfDir to root", LOG_WARNING);
+        }
+        // A license-v2 left behind by preparePrivateDir() keeps root and its 0600 key
+        Util::addRegularWWWRights("$cfDir/conf", "$cfDir/conf/license-v2");
+    }
+
+    /**
+     * Prepares the root-only directory next to /cf/conf, before www starts (#1367).
+     *
+     * /cf/conf belongs to www, because php-fpm writes the database there. What root reads at boot
+     * (user.id, group.id in containers) and the LicenseV2 keys live in /cf/private instead: root-owned
+     * and not writable by others; 0755, because php-fpm reads the public key and the token.
+     * Anything at that name that is not such a directory is moved aside and a fresh one is created.
+     * Older builds kept these files in /cf/conf: they move here once, and only if root owns them,
+     * so an entry planted by www is never adopted.
+     */
+    public static function preparePrivateDir(): void
+    {
+        if (posix_getuid() !== 0) {
+            return;
+        }
+        $dir = Directories::getDir(Directories::CORE_PRIVATE_DIR);
+        clearstatcache();
+        $exists = file_exists($dir) || is_link($dir);
+        if ($exists && (is_link($dir) || !is_dir($dir) || fileowner($dir) !== 0 || (fileperms($dir) & 0022) !== 0)) {
+            // Unique: www could pre-create a name made of the time alone and make the rename fail
+            $aside = "$dir.untrusted-" . uniqid('', true);
+            if (!rename($dir, $aside)) {
+                SystemMessages::sysLogMsg(__METHOD__, "Cannot move aside untrusted $dir", LOG_ERR);
+                return;
+            }
+            SystemMessages::sysLogMsg(__METHOD__, "Moved untrusted $dir to $aside", LOG_WARNING);
+            $exists = false;
+        }
+        if (!$exists && !mkdir($dir, 0755) && !is_dir($dir)) {
+            SystemMessages::sysLogMsg(__METHOD__, "Cannot create $dir", LOG_ERR);
+            return;
+        }
+        // Exactly 0755: a trusted 0700 would keep php-fpm from the public key and the token
+        chmod($dir, 0755);
+        $confDir = Directories::getDir(Directories::CORE_CF_DIR) . '/conf';
+        foreach (['license-v2', 'user.id', 'group.id'] as $name) {
+            $old = "$confDir/$name";
+            $new = "$dir/$name";
+            if (is_link($old) || !file_exists($old) || file_exists($new) || is_link($new)) {
+                continue;
+            }
+            if (fileowner($old) !== 0) {
+                SystemMessages::sysLogMsg(__METHOD__, "Left $old in place: not owned by root", LOG_WARNING);
+                continue;
+            }
+            if (!rename($old, $new)) {
+                SystemMessages::sysLogMsg(__METHOD__, "Cannot move $old to $new", LOG_ERR);
+            }
+        }
     }
 
     /**
