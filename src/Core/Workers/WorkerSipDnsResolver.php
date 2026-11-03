@@ -83,7 +83,7 @@ class WorkerSipDnsResolver extends WorkerBase
 
     /**
      * Circuit-breaker threshold. When this many hostnames in a row fail to
-     * produce any IPs from DNS (every stage of resolveSrvWithFallback timed
+     * produce any IPs from DNS (every stage of resolveIdentifyIps timed
      * out with empty result), we conclude the resolver is wedged and bail
      * out of the tick with a single LOG_WARNING.
      *
@@ -210,7 +210,7 @@ class WorkerSipDnsResolver extends WorkerBase
             // Circuit breaker: tally consecutive DNS-empty results. resolveHost
             // returns 'resolved' = true whenever DNS produced at least one IP
             // (regardless of whether it differed from cache); 'resolved' = false
-            // only when every stage of resolveSrvWithFallback timed out empty.
+            // only when every stage of resolveIdentifyIps timed out empty.
             // Five in a row across unrelated hostnames means the resolver, not
             // the providers, is the problem — abort the tick now and let the
             // throttle key (CHECK_INTERVAL_SECONDS) coalesce the next attempt.
@@ -290,7 +290,7 @@ class WorkerSipDnsResolver extends WorkerBase
      *   - 'resolved'         (bool) — DNS produced at least one IP (regardless
      *                        of whether it differed from cache). False ONLY
      *                        when the last-known-good guard kicked in because
-     *                        every stage of resolveSrvWithFallback came back
+     *                        every stage of resolveIdentifyIps came back
      *                        empty. Drives the circuit breaker in resolveAll.
      *
      * @param \Redis $cache raw phpredis client from RedisClientProvider
@@ -301,7 +301,7 @@ class WorkerSipDnsResolver extends WorkerBase
         $unresolved = ['changed' => false, 'canonicalChanged' => false, 'resolved' => false];
 
         try {
-            $resolved = $this->resolveSrvWithFallback($hostKey);
+            $resolved = $this->resolveIdentifyIps($hostKey);
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(
                 __METHOD__,
@@ -392,31 +392,35 @@ class WorkerSipDnsResolver extends WorkerBase
     }
 
     /**
-     * SRV lookup against the three standard SIP service prefixes; falls back
-     * to a bare A/AAAA on the hostname when SRV yields nothing. Returns:
-     *   ['ips' => string[], 'src' => 'SRV'|'A']
+     * Union of the SRV target addresses and the bare A/AAAA of the hostname.
+     * Returns:
+     *   ['ips' => string[], 'src' => 'SRV'|'A'|'SRV+A']
+     *
+     * Both sets go to identify match= (#1379). Asterisk's own srv_lookups=yes
+     * would use the bare A/AAAA only when SRV is empty, srv_lookups=no only
+     * the bare A/AAAA. Some ITSPs (sip.novofon.ru) send INVITEs from the
+     * bare-A address, which is not among the SRV targets, so the union covers
+     * both cases without a per-provider switch.
      *
      * Two-stage batch:
      *   stage 1 — 3 SRV queries (_sip._udp/_tcp/_sips._tcp) run concurrently;
-     *   stage 2 — A + AAAA for every collected target run concurrently;
-     *   stage 3 — bare A + AAAA on the host itself, concurrent (only when
-     *             stages 1+2 produced no IPs).
+     *   stage 2 — A + AAAA for every collected target and for the host itself
+     *             run concurrently.
      *
-     * Wall-clock per host on the HAPPY PATH is ~2 × DNS_TIMEOUT_SEC (one
-     * concurrent SRV stage + one concurrent address stage), independent of
-     * the number of SRV targets — this is the DoS hardening that motivated
-     * the rewrite.
+     * Wall-clock per host is ~2 × DNS_TIMEOUT_SEC (one concurrent SRV stage +
+     * one concurrent address stage), independent of the number of SRV
+     * targets — this is the DoS hardening that motivated the rewrite.
      *
-     * WORST CASE is ~3 × DNS_TIMEOUT_SEC (= 9s with DNS_TIMEOUT_SEC=3) when
+     * WORST CASE is ~2 × DNS_TIMEOUT_SEC (= 6s with DNS_TIMEOUT_SEC=3) when
      * every stage hits its deadline. With MAX_HOSTS_PER_TICK=50 that is a
-     * theoretical 7.5-minute tick. The circuit breaker
+     * theoretical 5-minute tick. The circuit breaker
      * (MAX_CONSECUTIVE_FAILURES=5) aborts the tick once it becomes clear
      * the resolver is wedged, and the throttle key (written BEFORE work
      * in start(), see Warning-5 fix) prevents respawn for
      * CHECK_INTERVAL_SECONDS=300s. Hosts not visited in an aborted tick
      * are picked up on the next 5-minute cycle.
      */
-    private function resolveSrvWithFallback(string $hostKey): array
+    private function resolveIdentifyIps(string $hostKey): array
     {
         // Stage 1: concurrent SRV across the three SIP service prefixes.
         $srvQueries = [
@@ -436,35 +440,38 @@ class WorkerSipDnsResolver extends WorkerBase
             }
         }
 
-        if (!empty($targets)) {
-            // Stage 2a: concurrent A + AAAA across every collected target.
-            $addrQueries = [];
-            foreach (array_keys($targets) as $target) {
-                $addrQueries["{$target}__A"]    = ['type' => 'A',    'name' => $target];
-                $addrQueries["{$target}__AAAA"] = ['type' => 'AAAA', 'name' => $target];
+        // Stage 2: concurrent A + AAAA for every SRV target and for the host
+        // itself. Keys of the bare queries are prefixed with a character that
+        // cannot appear in a DNS name, so they never collide with a target.
+        $addrQueries = [
+            '#bare__A'    => ['type' => 'A',    'name' => $hostKey],
+            '#bare__AAAA' => ['type' => 'AAAA', 'name' => $hostKey],
+        ];
+        foreach (array_keys($targets) as $target) {
+            $addrQueries["{$target}__A"]    = ['type' => 'A',    'name' => $target];
+            $addrQueries["{$target}__AAAA"] = ['type' => 'AAAA', 'name' => $target];
+        }
+        $addrResults = DnsResolver::resolveBatch($addrQueries, self::DNS_TIMEOUT_SEC);
+
+        $srvIps = [];
+        $bareIps = [];
+        foreach ($addrResults as $key => $list) {
+            if (str_starts_with((string)$key, '#bare__')) {
+                $bareIps = array_merge($bareIps, $list);
+            } else {
+                $srvIps = array_merge($srvIps, $list);
             }
-            $addrResults = DnsResolver::resolveBatch($addrQueries, self::DNS_TIMEOUT_SEC);
-            $ips = [];
-            foreach ($addrResults as $list) {
-                $ips = array_merge($ips, $list);
-            }
-            if (!empty($ips)) {
-                return ['ips' => $this->uniqueValidIps($ips), 'src' => 'SRV'];
-            }
-            // SRV produced targets but none resolved — fall through to bare A/AAAA
-            // (rare in practice; happens on partial DNS outages mid-stage).
+        }
+        $srvIps = $this->uniqueValidIps($srvIps);
+        $bareIps = $this->uniqueValidIps($bareIps);
+
+        if ($srvIps !== [] && $bareIps !== []) {
+            $src = 'SRV+A';
+        } else {
+            $src = $srvIps !== [] ? 'SRV' : 'A';
         }
 
-        // Stage 2b: bare A/AAAA on the hostname itself, also concurrent.
-        $bareResults = DnsResolver::resolveBatch(
-            [
-                'A'    => ['type' => 'A',    'name' => $hostKey],
-                'AAAA' => ['type' => 'AAAA', 'name' => $hostKey],
-            ],
-            self::DNS_TIMEOUT_SEC
-        );
-        $ips = array_merge($bareResults['A'] ?? [], $bareResults['AAAA'] ?? []);
-        return ['ips' => $this->uniqueValidIps($ips), 'src' => 'A'];
+        return ['ips' => array_values(array_unique(array_merge($srvIps, $bareIps))), 'src' => $src];
     }
 
     /**

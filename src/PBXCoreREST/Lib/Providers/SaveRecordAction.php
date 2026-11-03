@@ -1350,62 +1350,55 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 }
             }
 
-            // Stage 2a: single concurrent batch covering A/AAAA for every
-            // SRV target across every host.
+            // Stage 2: single concurrent batch covering A/AAAA for every SRV
+            // target AND for every hostname itself. Both sets go to identify
+            // match= (#1379): some ITSPs send INVITEs from the bare-A address,
+            // which is not among the SRV targets. Mirrors
+            // WorkerSipDnsResolver::resolveIdentifyIps().
             $ipsPerHost = array_fill_keys($hostKeysToResolve, []);
-            if (!empty($targetsPerHost) && !$budgetExhausted()) {
+            $sourcesPerHost = array_fill_keys($hostKeysToResolve, []);
+            if (!$budgetExhausted()) {
                 $addrQueries = [];
+                foreach ($hostKeysToResolve as $hostKey) {
+                    foreach (['A', 'AAAA'] as $type) {
+                        $addrQueries[self::buildBatchKey($hostKey, 'A', $type)] = ['type' => $type, 'name' => $hostKey];
+                    }
+                }
                 foreach ($targetsPerHost as $host => $targets) {
                     foreach (array_keys($targets) as $target) {
-                        $addrQueries[self::buildBatchKey($host, $target, 'A')]    = ['type' => 'A',    'name' => $target];
-                        $addrQueries[self::buildBatchKey($host, $target, 'AAAA')] = ['type' => 'AAAA', 'name' => $target];
-                    }
-                }
-                if (!empty($addrQueries)) {
-                    $addrResults = DnsResolver::resolveBatch($addrQueries, $remainingTimeout());
-                    foreach ($addrResults as $key => $list) {
-                        $host = self::demuxBatchKey($key);
-                        if ($host !== '' && isset($ipsPerHost[$host])) {
-                            $ipsPerHost[$host] = array_merge($ipsPerHost[$host], $list);
+                        foreach (['A', 'AAAA'] as $type) {
+                            $addrQueries[self::buildBatchKey($host, 'SRV', $target, $type)] = [
+                                'type' => $type,
+                                'name' => $target,
+                            ];
                         }
                     }
                 }
-            }
-
-            // Hosts whose SRV+A pass produced no PUBLIC IPs fall back to bare
-            // A/AAAA on the hostname itself. Gating on "no public IPs" (not
-            // "no IPs at all" — see code-review finding #13) covers the
-            // misconfigured-split-horizon-DNS case where SRV resolves only to
-            // RFC1918 targets while bare A would return a public address.
-            $bareCandidates = [];
-            foreach ($hostKeysToResolve as $hostKey) {
-                $hasPublic = false;
-                foreach ($ipsPerHost[$hostKey] ?? [] as $ip) {
-                    if (IpAddressHelper::isPublicIp((string)$ip)) {
-                        $hasPublic = true;
-                        break;
-                    }
-                }
-                if (!$hasPublic) {
-                    $bareCandidates[] = $hostKey;
-                }
-            }
-            $srcPerHost = array_fill_keys($hostKeysToResolve, 'SRV');
-            if (!empty($bareCandidates) && !$budgetExhausted()) {
-                $bareQueries = [];
-                foreach ($bareCandidates as $hostKey) {
-                    $bareQueries[self::buildBatchKey($hostKey, 'A')]    = ['type' => 'A',    'name' => $hostKey];
-                    $bareQueries[self::buildBatchKey($hostKey, 'AAAA')] = ['type' => 'AAAA', 'name' => $hostKey];
-                }
-                $bareResults = DnsResolver::resolveBatch($bareQueries, $remainingTimeout());
-                foreach ($bareResults as $key => $list) {
+                $addrResults = DnsResolver::resolveBatch($addrQueries, $remainingTimeout());
+                foreach ($addrResults as $key => $list) {
                     $host = self::demuxBatchKey($key);
-                    if ($host !== '' && isset($ipsPerHost[$host])) {
-                        $ipsPerHost[$host] = array_merge($ipsPerHost[$host], $list);
-                        if (!empty($list)) {
-                            $srcPerHost[$host] = 'A';
-                        }
+                    if ($host === '' || !isset($ipsPerHost[$host])) {
+                        continue;
                     }
+                    $public = array_filter(
+                        $list,
+                        static fn($ip): bool => IpAddressHelper::isPublicIp((string)$ip)
+                    );
+                    if ($public === []) {
+                        continue;
+                    }
+                    $ipsPerHost[$host] = array_merge($ipsPerHost[$host], $public);
+                    // Second key segment is the source tag: host␟A␟type or host␟SRV␟target␟type
+                    $source = explode(self::WARMUP_BATCH_KEY_SEPARATOR, (string)$key)[1] ?? '';
+                    $sourcesPerHost[$host][$source] = true;
+                }
+            }
+            $srcPerHost = [];
+            foreach ($sourcesPerHost as $host => $sources) {
+                if (isset($sources['SRV'], $sources['A'])) {
+                    $srcPerHost[$host] = 'SRV+A';
+                } else {
+                    $srcPerHost[$host] = isset($sources['SRV']) ? 'SRV' : 'A';
                 }
             }
 

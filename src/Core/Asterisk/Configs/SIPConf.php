@@ -152,7 +152,8 @@ class SIPConf extends AsteriskConfigClass
     /**
      * Cache key prefix for the resolved-IP record of a single hostname.
      * Full key: CACHE_KEY_RESOLVED_PREFIX . normalizeHostnameKey($hostname).
-     * Value: ['ips' => [...], 'at' => <unix-ts>, 'src' => 'A'|'SRV'].
+     * Value: ['ips' => [...], 'at' => <unix-ts>, 'src' => 'A'|'SRV'|'SRV+A'].
+     * ips is the union of the SRV target addresses and the bare A/AAAA (#1379).
      * Lives on RedisClientProvider (DB1).
      */
     public const string CACHE_KEY_RESOLVED_PREFIX = 'pjsip:identify:resolved:';
