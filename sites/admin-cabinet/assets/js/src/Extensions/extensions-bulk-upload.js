@@ -98,12 +98,9 @@ const extensionsBulkUpload = {
         extensionsBulkUpload.$numberFrom = $('#number-from');
         extensionsBulkUpload.$numberTo = $('#number-to');
 
-        console.log('🎯 [BulkUpload] Module initialization started');
-
         // Initialize tabs with event handler to clear messages
         $('#bulk-tabs .item').tab({
             onVisible: function() {
-                console.log('👁️ [BulkUpload] Tab visible event');
                 // Clear any existing error messages when switching tabs
                 $('.ui.message.ajax').remove();
             }
@@ -141,22 +138,19 @@ const extensionsBulkUpload = {
         EventBus.subscribe('import_progress', extensionsBulkUpload.onImportProgress);
         EventBus.subscribe('import_complete', extensionsBulkUpload.onImportComplete);
 
-        // Check URL hash to activate correct tab
+        // Check URL hash to activate correct tab; compare the attribute, the hash is not selector syntax
         if (window.location.hash) {
             const hash = window.location.hash.substring(1);
-            console.log('🔗 [BulkUpload] Activating tab from hash', { hash });
-            $(`#bulk-tabs .item[data-tab="${hash}"]`).click();
+            $('#bulk-tabs .item')
+                .filter((index, item) => item.getAttribute('data-tab') === hash)
+                .click();
         }
-
-        console.log('✅ [BulkUpload] Module initialization completed successfully');
     },
 
     /**
      * Initialize file upload using FilesAPI.attachToBtn for consistent behavior
      */
     initializeFileUpload() {
-        console.log('🔧 [BulkUpload] Initializing file upload functionality');
-
         // Check if elements exist before initializing
         if (!extensionsBulkUpload.$uploadButton.length || !extensionsBulkUpload.$uploadSegment.length) {
             console.error('❌ [BulkUpload] Upload elements not found', {
@@ -167,16 +161,9 @@ const extensionsBulkUpload = {
             return;
         }
 
-        console.log('✅ [BulkUpload] Upload elements found', {
-            uploadButton: extensionsBulkUpload.$uploadButton.length,
-            uploadSegment: extensionsBulkUpload.$uploadSegment.length
-        });
-
         // Use FilesAPI.attachToBtn for unified file upload handling
         // This attaches directly to the button and handles file selection internally
         FilesAPI.attachToBtn('upload-button', ['csv'], extensionsBulkUpload.cbUploadResumable, null, 'csv');
-
-        console.log('✅ [BulkUpload] File upload attached to button "upload-button" with CSV filter');
     },
 
     /**
@@ -185,45 +172,16 @@ const extensionsBulkUpload = {
      * @param {Object} params - Additional parameters related to the upload.
      */
     cbUploadResumable(action, params) {
-        console.log('📥 [BulkUpload] Upload callback triggered', {
-            action: action,
-            params: params
-        });
-
         switch (action) {
-            case 'fileAdded':
-                console.log('📁 [BulkUpload] File added event', {
-                    fileName: params.file?.fileName || params.file?.name,
-                    fileSize: params.file?.size,
-                    fileType: params.file?.file?.type
-                });
-                break;
             case 'uploadStart':
-                console.log('🚀 [BulkUpload] Upload started');
                 extensionsBulkUpload.$uploadSegment.addClass('loading');
                 break;
-            case 'fileProgress':
-                const progress = params.file ? Math.round(params.file.progress() * 100) : 0;
-                console.log('📈 [BulkUpload] Upload progress', {
-                    progress: progress + '%'
-                });
-                break;
-            case 'fileSuccess':
-                console.log('✅ [BulkUpload] Upload success', {
-                    response: params.response
-                });
-
+            case 'fileSuccess': {
                 const result = PbxApi.tryParseJSON(params.response);
-                console.log('📋 [BulkUpload] Parsed response', { result });
 
                 if (result !== false && result.data && result.data.upload_id) {
                     extensionsBulkUpload.uploadedFileId = result.data.upload_id;
                     extensionsBulkUpload.uploadedFilePath = result.data.filename;
-
-                    console.log('💾 [BulkUpload] File data saved', {
-                        uploadId: extensionsBulkUpload.uploadedFileId,
-                        filePath: extensionsBulkUpload.uploadedFilePath
-                    });
 
                     extensionsBulkUpload.checkStatusFileMerging(params.response);
                 } else {
@@ -254,6 +212,7 @@ const extensionsBulkUpload = {
                     UserMessage.showMultiString(errorMessage);
                 }
                 break;
+            }
             case 'fileError':
                 console.error('❌ [BulkUpload] File error', {
                     fileName: params.file?.fileName || params.file?.name,
@@ -270,11 +229,9 @@ const extensionsBulkUpload = {
                 extensionsBulkUpload.$uploadSegment.removeClass('loading');
                 UserMessage.showMultiString(params, globalTranslate.ex_FileUploadError);
                 break;
-            case 'complete':
-                console.log('🏁 [BulkUpload] Upload complete');
-                break;
             default:
-                console.log(`ℹ️ [BulkUpload] Unhandled action: ${action}`, { params });
+                // fileAdded, fileProgress, complete: nothing to do
+                break;
         }
     },
 
@@ -400,15 +357,24 @@ const extensionsBulkUpload = {
                         break;
                 }
 
-                const $row = $(`
-                    <tr class="${statusClass}" data-row="${row.row}" data-number="${row.number}">
-                        <td>${row.number || ''}</td>
-                        <td>${row.user_username || ''}</td>
-                        <td>${row.mobile_number || ''}</td>
-                        <td>${row.user_email || ''}</td>
-                        <td class="status-cell"><i class="${statusIcon} icon"></i> <span class="status-text">${statusText}</span></td>
-                    </tr>
-                `);
+                // CSV values are data, not markup: set them as text and attributes (issue #1349)
+                const $row = $('<tr>')
+                    .addClass(statusClass)
+                    .attr('data-row', row.row)
+                    .attr('data-number', row.number || '');
+                [row.number, row.user_username, row.mobile_number, row.user_email].forEach((value) => {
+                    $('<td>').text(value || '').appendTo($row);
+                });
+                const $statusCell = $('<td>')
+                    .addClass('status-cell')
+                    .append($('<i>').addClass(`${statusIcon} icon`), ' ', $('<span>').addClass('status-text').text(statusText))
+                    .appendTo($row);
+                // Show why the row is rejected (missing fields, a row the delimiter did not split)
+                if (row.status === 'error' && row.message) {
+                    $statusCell
+                        .attr('title', row.message)
+                        .append(' ', $('<span>').addClass('status-detail').text(`— ${row.message}`));
+                }
                 $tbody.append($row);
             });
         }
@@ -542,14 +508,10 @@ const extensionsBulkUpload = {
      * @param {string} channelId - Import progress channel ID
      */
     subscribeToImportProgress(channelId) {
-        console.log(`🔔 [BulkUpload] Subscribing to EventBus channel: ${channelId}`);
-
-        // Store callback function reference for later unsubscription
+        // Store callback function reference for later unsubscription.
+        // Messages carry CSV values: never log them, the console ends up in error reports.
         extensionsBulkUpload.importProgressCallback = (message) => {
-            console.log(`📨 [BulkUpload] EventBus message received:`, message);
-
             if (message && message.type) {
-                console.log(`🔄 [BulkUpload] Processing message type: ${message.type}`);
                 switch (message.type) {
                     case 'import_started':
                         extensionsBulkUpload.handleImportStarted(message.data);
@@ -564,12 +526,11 @@ const extensionsBulkUpload = {
                         console.warn(`⚠️ [BulkUpload] Unknown message type: ${message.type}`);
                 }
             } else {
-                console.warn(`⚠️ [BulkUpload] Invalid message format:`, message);
+                console.warn('⚠️ [BulkUpload] Import progress message without a type');
             }
         };
 
         EventBus.subscribe(channelId, extensionsBulkUpload.importProgressCallback);
-        console.log(`✅ [BulkUpload] EventBus subscription completed for channel: ${channelId}`);
     },
 
     /**
@@ -585,8 +546,6 @@ const extensionsBulkUpload = {
      * @param {object} data - Import progress data
      */
     handleImportProgress(data) {
-        console.log('🔄 [BulkUpload] handleImportProgress called with data:', data);
-
         const percent = Math.round((data.processed / data.total) * 100);
         extensionsBulkUpload.$importProgress.progress({
             percent: percent
@@ -594,7 +553,6 @@ const extensionsBulkUpload = {
 
         // Update individual row status if provided
         if (data.currentRecord) {
-            console.log('🔄 [BulkUpload] Updating row status for:', data.currentRecord);
             extensionsBulkUpload.updateRowStatus(
                 data.currentRecord.number,
                 data.currentRecord.status,
@@ -787,7 +745,7 @@ const extensionsBulkUpload = {
                 <i class="${messageIcon} icon"></i>
                 <div class="content">
                     <div class="header">${data.success ? globalTranslate.ex_ImportComplete : globalTranslate.ex_ImportFailed}</div>
-                    <p>${messageText}</p>
+                    <p>${SecurityUtils.escapeHtml(messageText)}</p>
                 </div>
             </div>
         `);
@@ -936,19 +894,14 @@ const extensionsBulkUpload = {
      * Reset table rows to processing status (only for valid records that will be processed)
      */
     resetTableToProcessing() {
-        console.log('🔄 [BulkUpload] resetTableToProcessing called');
-
         extensionsBulkUpload.$previewTable.find('tbody tr').each(function() {
             const $row = $(this);
             const $statusCell = $row.find('.status-cell');
             const statusText = $statusCell.find('.status-text').text().trim();
 
-            console.log(`🔍 [BulkUpload] Row status check - hasClass positive: ${$row.hasClass('positive')}, statusText: '${statusText}', expectedValid: '${globalTranslate.ex_ImportStatusValid}'`);
-
             // Only reset rows that have 'valid' status from preview
             // Leave duplicates, exists, and error rows as they are
             if ($row.hasClass('positive') && statusText === globalTranslate.ex_ImportStatusValid) {
-                console.log(`✅ [BulkUpload] Resetting row to processing status`);
                 // Update to processing status only for valid records
                 $row.removeClass('positive negative warning').addClass('active');
                 $statusCell.html('<i class="spinner loading icon"></i> <span class="status-text">' + globalTranslate.ex_ImportStatusProcessing + '</span>');
@@ -960,8 +913,6 @@ const extensionsBulkUpload = {
      * Sort table by status column after import completion
      */
     sortTableByStatus() {
-        console.log('🔄 [BulkUpload] Sorting table by status after import completion');
-
         const $statusHeader = extensionsBulkUpload.$previewTable.find('th').eq(4); // Status column (index 4)
         const $allTh = extensionsBulkUpload.$previewTable.find('th');
         const $tbody = extensionsBulkUpload.$previewTable.find('tbody');
@@ -998,8 +949,6 @@ const extensionsBulkUpload = {
 
         // Update table with sorted rows
         $tbody.empty().append(sortedRows);
-
-        console.log('✅ [BulkUpload] Table sorted by status - processed records shown first');
     },
 
     /**
@@ -1009,11 +958,13 @@ const extensionsBulkUpload = {
      * @param {string} message - Status message
      */
     updateRowStatus(number, status, message) {
-        console.log(`🔄 [BulkUpload] updateRowStatus called for number: ${number}, status: ${status}, message: ${message}`);
-
-        const $row = extensionsBulkUpload.$previewTable.find(`tbody tr[data-number="${number}"]`);
+        // The number comes from the CSV: compare the attribute instead of building a selector from it,
+        // a quote or a bracket in the value made jQuery throw (issue #1349)
+        const wanted = String(number ?? '');
+        const $row = extensionsBulkUpload.$previewTable
+            .find('tbody tr')
+            .filter((index, tr) => tr.getAttribute('data-number') === wanted);
         if ($row.length === 0) {
-            console.warn(`⚠️ [BulkUpload] No row found for number: ${number}`);
             return;
         }
 
@@ -1063,14 +1014,11 @@ const extensionsBulkUpload = {
         }
         $statusCell.html(`<i class="${statusIcon} icon"></i> <span class="status-text">${statusText}</span>${detailHtml}`);
 
-        console.log(`✅ [BulkUpload] Updated row ${number} to status: ${statusText}, class: ${statusClass}`);
-
         // Note: Removed automatic scrolling to prevent page jumping during processing
     }
 };
 
 // Initialize when document is ready
 $(document).ready(() => {
-    console.log('🚀 [BulkUpload] Document ready, starting module initialization');
     extensionsBulkUpload.initialize();
 });

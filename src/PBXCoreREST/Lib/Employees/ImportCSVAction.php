@@ -345,6 +345,10 @@ class ImportCSVAction
 
             $rowCount = count($row);
 
+            // The header delimiter did not split the row (e.g. "201;Ivan;..." under a comma header):
+            // the whole line would become the number, report the row instead (issue #1349)
+            $invalidRow = $rowCount === 1 && $headerCount > 1;
+
             // Handle field count mismatch leniently
             if ($rowCount < $headerCount) {
                 // Pad short rows with empty strings for missing fields
@@ -364,6 +368,9 @@ class ImportCSVAction
 
             // Add line number for error reporting
             $record['_line'] = $lineNumber;
+            if ($invalidRow) {
+                $record['_invalid_row'] = true;
+            }
 
             $records[] = $record;
             $lineNumber++;
@@ -445,13 +452,14 @@ class ImportCSVAction
         foreach ($records as $index => $record) {
             $line = $record['_line'] ?? $index + 2;
             $number = $record['number'] ?? '';
-            
-            // Validate required fields
-            if (empty($number) || empty($record['user_username'])) {
+
+            // A row the delimiter did not split into columns (see parseCSV)
+            if (!empty($record['_invalid_row'])) {
+                $message = TranslationProvider::translate('ex_ImportInvalidRow', ['line' => $line]);
                 $result['errors'][] = [
                     'line' => $line,
-                    'type' => 'MISSING_REQUIRED',
-                    'message' => TranslationProvider::translate('ex_ImportMissingRequiredFields')
+                    'type' => 'INVALID_ROW',
+                    'message' => $message
                 ];
                 $result['preview'][] = [
                     'row' => $line,
@@ -460,7 +468,27 @@ class ImportCSVAction
                     'user_email' => $record['user_email'] ?? '',
                     'mobile_number' => $record['mobile_number'] ?? '',
                     'status' => 'error',
-                    'message' => 'Отсутствуют обязательные поля'
+                    'message' => $message
+                ];
+                continue;
+            }
+
+            // Validate required fields
+            if (empty($number) || empty($record['user_username'])) {
+                $message = TranslationProvider::translate('ex_ImportMissingRequiredFields');
+                $result['errors'][] = [
+                    'line' => $line,
+                    'type' => 'MISSING_REQUIRED',
+                    'message' => $message
+                ];
+                $result['preview'][] = [
+                    'row' => $line,
+                    'number' => $number,
+                    'user_username' => $record['user_username'] ?? '',
+                    'user_email' => $record['user_email'] ?? '',
+                    'mobile_number' => $record['mobile_number'] ?? '',
+                    'status' => 'error',
+                    'message' => $message
                 ];
                 continue;
             }

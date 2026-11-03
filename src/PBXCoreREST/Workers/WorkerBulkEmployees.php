@@ -569,7 +569,7 @@ class WorkerBulkEmployees extends WorkerBase
     {
         // Prepare single employee data
         $employeeData = $employee;
-        unset($employeeData['_line']);
+        unset($employeeData['_line'], $employeeData['_invalid_row']);
 
         // Check for existing employee by internal number
         $existingExtension = \MikoPBX\Common\Models\Extensions::findFirst([
