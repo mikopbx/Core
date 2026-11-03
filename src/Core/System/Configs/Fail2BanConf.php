@@ -28,6 +28,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\DockerNetworkFilterService;
+use MikoPBX\Core\System\LogRotate;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\System;
@@ -257,14 +258,7 @@ class Fail2BanConf extends SystemConfigClass
         $varEtcDir  = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
         $path_conf   = $varEtcDir . '/fail2ban_logrotate.conf';
         file_put_contents($path_conf, $text_config);
-        $mb10 = $max_size * 1024 * 1024;
-
-        $options = '';
-        if (Util::mFileSize("{$log_dir}fail2ban.log") > $mb10) {
-            $options = '-f';
-        }
-        $logrotatePath = Util::which('logrotate');
-        Processes::mwExecBg("$logrotatePath $options '$path_conf' > /dev/null 2> /dev/null");
+        LogRotate::runInBackground($path_conf);
     }
 
     /**

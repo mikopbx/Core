@@ -28,6 +28,7 @@ use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\DockerNetworkFilterService;
+use MikoPBX\Core\System\LogRotate;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SslCertificateService;
@@ -727,8 +728,8 @@ class NginxConf extends SystemConfigClass
      */
     public static function logRotate(): void
     {
-        $logrotate = Util::which('logrotate');
         $nginxPath = Util::which('nginx');
+        $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
 
         $max_size    = 10;
         foreach (self::getLogFiles() as $f_name) {
@@ -746,15 +747,9 @@ class NginxConf extends SystemConfigClass
             $nginxPath -s reopen > /dev/null 2>&1 || true
         endscript
     }";
-            $path_conf   = '/var/etc/nginx_logrotate_' . basename($f_name) . '.conf';
+            $path_conf   = $varEtcDir . '/nginx_logrotate_' . basename($f_name) . '.conf';
             file_put_contents($path_conf, $text_config);
-            $mb10 = $max_size * 1024 * 1024;
-
-            $options = '';
-            if (Util::mFileSize($f_name) > $mb10) {
-                $options = '-f';
-            }
-            Processes::mwExecBg("$logrotate $options '$path_conf' > /dev/null 2> /dev/null");
+            LogRotate::runInBackground($path_conf);
         }
     }
 }

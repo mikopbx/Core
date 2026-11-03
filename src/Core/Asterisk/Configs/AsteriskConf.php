@@ -23,6 +23,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Configs\PbxConf;
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\LogRotate;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Di;
@@ -114,7 +115,6 @@ class AsteriskConf extends AsteriskConfigClass
      */
     public static function logRotate(): void
     {
-        $logRotatePath = Util::which('logrotate');
         $max_size    = 1;
         $f_name      = self::getLogFile();
         $text_config = $f_name . " {
@@ -138,12 +138,7 @@ class AsteriskConf extends AsteriskConfigClass
         }
         $path_conf   = $varEtcDir . '/asterisk_cli_logrotate_' . basename($f_name) . '.conf';
         file_put_contents($path_conf, $text_config);
-        $mb10 = $max_size * 1024 * 1024;
-        $options = '';
-        if (Util::mFileSize($f_name) > $mb10) {
-            $options = '-f';
-        }
-        Processes::mwExecBg("$logRotatePath $options '$path_conf' > /dev/null 2> /dev/null");
+        LogRotate::runInBackground($path_conf);
     }
 
     /**

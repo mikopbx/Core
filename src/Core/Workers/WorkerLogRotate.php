@@ -28,9 +28,9 @@ use MikoPBX\Core\Asterisk\Configs\AsteriskConf;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\LogRotate;
 use MikoPBX\Core\System\PBX;
-use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 
 /**
  * WorkerLogRotate is a worker class responsible for log rotation.
@@ -85,42 +85,35 @@ class WorkerLogRotate extends WorkerBase
         }
 
         // Find all *.log and *.out files recursively
-        $logFiles = $this->findLogFilesRecursively($logPath);
-        
-        if (empty($logFiles)) {
+        $logFiles = [];
+        foreach ($this->findLogFilesRecursively($logPath) as $file) {
+            if (LogRotate::isSafePath($file)) {
+                $logFiles[] = $file;
+                continue;
+            }
+            // logrotate would expand the name as a glob or fail to parse the whole section
+            SystemMessages::sysLogMsg(
+                LogRotate::SYSLOG_TAG,
+                "Skipped rotation of $file: the name contains characters logrotate does not read literally",
+                LOG_WARNING
+            );
+        }
+
+        $textConfig = LogRotate::buildModuleConfig($logFiles);
+        if ($textConfig === '') {
             return;
         }
 
-        // Create single config for all log files
-        $textConfig = '';
-        foreach ($logFiles as $file) {
-            $textConfig .= $file . PHP_EOL;
+        // A state file of its own, so module rotation does not wait for the lock of the Core ones
+        $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
+        $pathConf = $varEtcDir . '/logrotate_module_' . $moduleUniqid . '.conf';
+        if (file_put_contents($pathConf, $textConfig) === false) {
+            SystemMessages::sysLogMsg(LogRotate::SYSLOG_TAG, "Failed to write $pathConf", LOG_WARNING);
+            return;
         }
-        
-        $textConfig .= '{
-    start 0
-    rotate 9
-    size 10M
-    maxsize 10M
-    daily
-    missingok
-    notifempty
-    copytruncate
-    compress
-    delaycompress
-    compresscmd /bin/gzip
-    compressext .gz
-}' . PHP_EOL;
-
-        $pathConf = '/tmp/logrotate_' . $moduleUniqid . '.conf';
-        file_put_contents($pathConf, $textConfig);
-        
-        $logrotate = Util::which('logrotate');
-        Processes::mwExec("$logrotate '$pathConf' > /dev/null 2> /dev/null");
-        
-        if (file_exists($pathConf)) {
-            unlink($pathConf);
-        }
+        LogRotate::run($pathConf);
+        // The config is rebuilt every run; the state file next to it stays for the next one
+        unlink($pathConf);
     }
 
     /**
@@ -139,7 +132,8 @@ class WorkerLogRotate extends WorkerBase
         );
         
         foreach ($iterator as $file) {
-            if ($file->isFile()) {
+            // logrotate refuses to rotate a symlink and would report it on every run
+            if ($file->isFile() && !$file->isLink()) {
                 $extension = strtolower($file->getExtension());
                 if ($extension === 'log' || $extension === 'out') {
                     $logFiles[] = $file->getPathname();

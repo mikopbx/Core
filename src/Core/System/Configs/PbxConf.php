@@ -41,6 +41,7 @@ use MikoPBX\Core\Asterisk\Configs\{
     SIPConf,
     VoiceMailConf};
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\LogRotate;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\RecordingDeletionLogger;
 use MikoPBX\Core\System\System;
@@ -212,6 +213,9 @@ class PbxConf extends SystemConfigClass
         }
         $max_size    = 10;
         $log_dir     = Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/';
+        // Without the reload Asterisk keeps writing to the rotated file (nocreate)
+        $reloadFailed = Util::which('logger') . ' -t ' . LogRotate::SYSLOG_TAG . ' '
+            . escapeshellarg("asterisk logger reload failed after rotating $log_dir$fileName");
         $text_config = "$log_dir$fileName {
     nocreate
     nocopytruncate
@@ -223,20 +227,13 @@ class PbxConf extends SystemConfigClass
     missingok
     noolddir
     postrotate
-        $asterisk -rx 'logger reload' > /dev/null 2> /dev/null
+        $asterisk -rx 'logger reload' > /dev/null 2> /dev/null || $reloadFailed
     endscript
 }";
         $varEtcDir  = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
         $path_conf   = $varEtcDir . '/asterisk_logrotate_' . $fileName . '.conf';
         file_put_contents($path_conf, $text_config);
-        $mb10 = $max_size * 1024 * 1024;
-
-        $options = '';
-        if (Util::mFileSize("$log_dir$fileName") > $mb10) {
-            $options = '-f';
-        }
-        $logrotate = Util::which('logrotate');
-        Processes::mwExecBg("$logrotate $options '$path_conf' > /dev/null 2> /dev/null");
+        LogRotate::runInBackground($path_conf);
     }
 
     /**
@@ -264,14 +261,7 @@ class PbxConf extends SystemConfigClass
 }";
         $pathConf = $varEtcDir . '/logrotate_recording_deletions.conf';
         file_put_contents($pathConf, $textConfig);
-        $mb10 = $maxSize * 1024 * 1024;
-
-        $options = '';
-        if (Util::mFileSize($logFile) > $mb10) {
-            $options = '-f';
-        }
-        $logrotate = Util::which('logrotate');
-        Processes::mwExecBg("$logrotate $options '$pathConf' > /dev/null 2> /dev/null");
+        LogRotate::runInBackground($pathConf);
     }
 
     /**
