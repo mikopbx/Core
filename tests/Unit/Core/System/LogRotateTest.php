@@ -84,4 +84,60 @@ final class LogRotateTest extends TestCase
         self::assertStringContainsString('size 10M', $config);
         self::assertStringContainsString('copytruncate', $config);
     }
+
+    public function testModuleLogFilesOfMissingDirectoryAreEmpty(): void
+    {
+        self::assertSame([], LogRotate::findModuleLogFiles(sys_get_temp_dir() . '/no-such-dir-' . uniqid('', true)));
+    }
+
+    /**
+     * Live logs are rotated; copies rotated by logrotate and backups rotated by their writer
+     * are not: rotating a backup truncated it and left a .0 copy nobody cleaned (#1374).
+     */
+    public function testModuleLogFilesSkipAlreadyRotatedFiles(): void
+    {
+        $dir = sys_get_temp_dir() . '/logrotate-test-' . uniqid('', true);
+        mkdir($dir . '/monitord', 0777, true);
+        mkdir($dir . '/crmd', 0777, true);
+
+        $files = [
+            'module.log',
+            'Worker.OUT',
+            'monitord/crmd.out',
+            'monitord/crmd-2026-11-02T21-29-02.260.out',
+            'monitord/authd-2026-07-24T03-00-00.out',
+            'monitord/crmd-2026-11-02T21-29-02.260.out.0',
+            'crmd/crmd.log',
+            'crmd/crmd-2026-11-02T21-29-02.260.LOG',
+            'crmd/crmd.log.0',
+            'crmd/crmd.log.3.gz',
+            'crmd/access-2026-11-02.log',
+            'crmd/notes.txt',
+        ];
+        foreach ($files as $file) {
+            touch($dir . '/' . $file);
+        }
+        symlink($dir . '/module.log', $dir . '/link.log');
+
+        try {
+            self::assertSame(
+                [
+                    $dir . '/Worker.OUT',
+                    $dir . '/crmd/access-2026-11-02.log',
+                    $dir . '/crmd/crmd.log',
+                    $dir . '/module.log',
+                    $dir . '/monitord/crmd.out',
+                ],
+                LogRotate::findModuleLogFiles($dir)
+            );
+        } finally {
+            unlink($dir . '/link.log');
+            foreach ($files as $file) {
+                unlink($dir . '/' . $file);
+            }
+            rmdir($dir . '/monitord');
+            rmdir($dir . '/crmd');
+            rmdir($dir);
+        }
+    }
 }

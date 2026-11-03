@@ -80,26 +80,7 @@ class WorkerLogRotate extends WorkerBase
     public function logRotate(string $moduleUniqid): void
     {
         $logPath = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $moduleUniqid . '/';
-        if (!file_exists($logPath)) {
-            return;
-        }
-
-        // Find all *.log and *.out files recursively
-        $logFiles = [];
-        foreach ($this->findLogFilesRecursively($logPath) as $file) {
-            if (LogRotate::isSafePath($file)) {
-                $logFiles[] = $file;
-                continue;
-            }
-            // logrotate would expand the name as a glob or fail to parse the whole section
-            SystemMessages::sysLogMsg(
-                LogRotate::SYSLOG_TAG,
-                "Skipped rotation of $file: the name contains characters logrotate does not read literally",
-                LOG_WARNING
-            );
-        }
-
-        $textConfig = LogRotate::buildModuleConfig($logFiles);
+        $textConfig = LogRotate::buildModuleConfig(LogRotate::findModuleLogFiles($logPath));
         if ($textConfig === '') {
             return;
         }
@@ -114,34 +95,6 @@ class WorkerLogRotate extends WorkerBase
         LogRotate::run($pathConf);
         // The config is rebuilt every run; the state file next to it stays for the next one
         unlink($pathConf);
-    }
-
-    /**
-     * Recursively finds all *.log and *.out files in the given directory.
-     *
-     * @param string $directory The directory to search in.
-     * @return array Array of full file paths.
-     */
-    private function findLogFilesRecursively(string $directory): array
-    {
-        $logFiles = [];
-        
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::LEAVES_ONLY
-        );
-        
-        foreach ($iterator as $file) {
-            // logrotate refuses to rotate a symlink and would report it on every run
-            if ($file->isFile() && !$file->isLink()) {
-                $extension = strtolower($file->getExtension());
-                if ($extension === 'log' || $extension === 'out') {
-                    $logFiles[] = $file->getPathname();
-                }
-            }
-        }
-        
-        return $logFiles;
     }
 }
 

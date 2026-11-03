@@ -48,6 +48,13 @@ class LogRotate
     private const string UNSAFE_PATH_REGEX = '#[*?\[\]{}"\\\\\x00-\x1F\x7F]#';
 
     /**
+     * Name of a backup its writer has already rotated: a timestamp before the extension,
+     * name-2026-11-02T21-29-02.260.out (lumberjack and alike). Such a file is never written
+     * again; rotating it would truncate it and leave a .0 copy nobody rotates or cleans (#1374).
+     */
+    private const string WRITER_ROTATED_REGEX = '/-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}(?:\.\d{1,9})?\.(?:log|out)$/i';
+
+    /**
      * Returns the state file of a config: the config path with .status instead of .conf.
      *
      * @param string $confPath Path to the logrotate config
@@ -123,6 +130,57 @@ class LogRotate
     public static function isSafePath(string $path): bool
     {
         return $path !== '' && preg_match(self::UNSAFE_PATH_REGEX, $path) === 0;
+    }
+
+    /**
+     * Finds the live *.log and *.out files of a module log directory, recursively.
+     *
+     * Skipped: symlinks (logrotate refuses them and would report it every run), rotated copies
+     * (*.log.N, *.out.N.gz: their extension is not log/out), backups their writer has already
+     * rotated (see WRITER_ROTATED_REGEX) and names logrotate does not read literally (logged).
+     *
+     * @param string $directory Module log directory
+     * @return array<string> Paths of the files to rotate
+     */
+    public static function findModuleLogFiles(string $directory): array
+    {
+        if (!is_dir($directory)) {
+            return [];
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::LEAVES_ONLY,
+            // A subdirectory removed during the scan (module being uninstalled) is skipped, not thrown
+            \RecursiveIteratorIterator::CATCH_GET_CHILD
+        );
+
+        $logFiles = [];
+        foreach ($iterator as $file) {
+            if (!$file->isFile() || $file->isLink()) {
+                continue;
+            }
+            $extension = strtolower($file->getExtension());
+            if ($extension !== 'log' && $extension !== 'out') {
+                continue;
+            }
+            $path = $file->getPathname();
+            if (preg_match(self::WRITER_ROTATED_REGEX, $file->getFilename()) === 1) {
+                continue;
+            }
+            if (!self::isSafePath($path)) {
+                SystemMessages::sysLogMsg(
+                    self::SYSLOG_TAG,
+                    "Skipped rotation of $path: the name contains characters logrotate does not read literally",
+                    LOG_WARNING
+                );
+                continue;
+            }
+            $logFiles[] = $path;
+        }
+        sort($logFiles);
+
+        return $logFiles;
     }
 
     /**
