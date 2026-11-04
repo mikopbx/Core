@@ -871,13 +871,7 @@ class SIPConf extends AsteriskConfigClass
             }
             $this->contexts_data[$context_id][$sip_peer->uniqid] = $sip_peer->username;
             $arr_data['context_id'] = $context_id;
-            if (empty($arr_data['registration_type'])) {
-                if ($sip_peer->noregister === '0') {
-                    $arr_data['registration_type'] = Sip::REG_TYPE_OUTBOUND;
-                } else {
-                    $arr_data['registration_type'] = Sip::REG_TYPE_NONE;
-                }
-            }
+            $arr_data['registration_type'] = $sip_peer->getEffectiveRegistrationType();
             // Preserve empty/zero port as marker for SRV-based discovery (RFC 3263).
             // Trim whitespace; do NOT substitute default — generators below build URI without :port.
             $arr_data['port'] = trim((string)($arr_data['port'] ?? ''));

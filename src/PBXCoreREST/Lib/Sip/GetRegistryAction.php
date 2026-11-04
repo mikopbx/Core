@@ -55,10 +55,12 @@ class GetRegistryAction extends Injectable
                     ];
                     continue;
                 }
-                if ($provider->registration_type === Sip::REG_TYPE_INBOUND || $provider->registration_type === Sip::REG_TYPE_NONE) {
+                $registrationType = $provider->getEffectiveRegistrationType();
+                if ($registrationType === Sip::REG_TYPE_INBOUND || $registrationType === Sip::REG_TYPE_NONE) {
                     $peers_status = $am->getPjSipPeer($provider->uniqid);
+                    $isInboundOk = $peers_status['state'] === 'OK' && $registrationType === Sip::REG_TYPE_INBOUND;
                     $peers[] = [
-                        'state' => ($peers_status['state'] === 'OK' && $provider->registration_type === Sip::REG_TYPE_INBOUND) ? 'REGISTERED' : $peers_status['state'],
+                        'state' => $isInboundOk ? 'REGISTERED' : $peers_status['state'],
                         'id' => $provider->uniqid,
                         'username' => $provider->username,
                         'host' => $provider->host,

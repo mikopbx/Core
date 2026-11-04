@@ -78,12 +78,11 @@ class DeleteRecordAction extends AbstractDeleteAction
             // Capture the outbound SIP registration identity before deletion so we can cancel
             // it upstream once the delete commits (a disabled trunk has no live binding to cancel).
             $sipToUnregister = null;
-            if ($provider->Sip
-                && $provider->Sip->registration_type === Sip::REG_TYPE_OUTBOUND
-                && $provider->Sip->disabled !== '1') {
+            $sipRegType = $provider->Sip ? $provider->Sip->getEffectiveRegistrationType() : null;
+            if ($sipRegType === Sip::REG_TYPE_OUTBOUND && $provider->Sip->disabled !== '1') {
                 $sipToUnregister = [
                     'uniqid' => $provider->Sip->uniqid,
-                    'registration_type' => $provider->Sip->registration_type,
+                    'registration_type' => $sipRegType,
                     'description' => $provider->Sip->description ?: $provider->note,
                 ];
             }

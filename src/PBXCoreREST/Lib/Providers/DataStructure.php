@@ -44,6 +44,26 @@ use MikoPBX\PBXCoreREST\Lib\Common\SearchIndexTrait;
 class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     use SearchIndexTrait;
+
+    /**
+     * Placeholder returned instead of the stored secret of an outbound provider.
+     * Sending it back on update keeps the stored password.
+     */
+    public const string MASKED_SECRET = 'XXXXXXXX';
+
+    /**
+     * Whether GET returns the mask instead of the stored secret: only a non-empty secret
+     * of an outbound registration is hidden. SaveRecordAction and CopyRecordAction rely
+     * on the same rule to recognize the mask coming back.
+     *
+     * @param Sip|Iax $config SIP/IAX configuration
+     */
+    public static function isSecretMasked(Sip|Iax $config): bool
+    {
+        [$outbound] = Providers::getRegistrationTypes($config instanceof Iax ? 'IAX' : 'SIP');
+        return !empty($config->secret) && $config->getEffectiveRegistrationType() === $outbound;
+    }
+
     /**
      * Create complete data array from Provider model
      *
@@ -127,7 +147,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             $data['represent'] = $config->getRepresent();
             $data['username'] = $config->username ?? '';
             $data['host'] = $config->host ?? '';
-            $data['registration_type'] = $config->registration_type ?? 'none';
+            $data['registration_type'] = $config->getEffectiveRegistrationType();
 
             // Type-specific fields
             if ($provider->type === 'SIP') {
@@ -182,11 +202,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     private static function getSipData(Sip $sip): array
     {
-        // Mask password only for outbound registration
-        $secret = $sip->secret ?? '';
-        if (!empty($secret) && $sip->registration_type === 'outbound') {
-            $secret = 'XXXXXXXX';
-        }
+        // Resolved type: a legacy record keeps it empty and relies on noregister
+        $regType = $sip->getEffectiveRegistrationType();
+        $secret = self::isSecretMasked($sip) ? self::MASKED_SECRET : ($sip->secret ?? '');
         
         // Get network filter representation using unified helper
         $networkfilterRepresent = self::getNetworkFilterRepresentation($sip->networkfilterid);
@@ -201,7 +219,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'transport' => $sip->transport ?? Sip::TRANSPORT_AUTO,
             'qualify' => $sip->qualify === '1',
             'qualifyfreq' => (int)($sip->qualifyfreq ?? 60),
-            'registration_type' => $sip->registration_type ?? 'none',
+            'registration_type' => $regType,
             'description' => $sip->description ?? '',
             'networkfilterid' => (!empty($sip->networkfilterid) ? $sip->networkfilterid : 'none'),
             'networkfilter_represent' => $networkfilterRepresent,
@@ -234,11 +252,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     private static function getIaxData(Iax $iax): array
     {
-        // Mask password only for outbound registration
-        $secret = $iax->secret ?? '';
-        if (!empty($secret) && $iax->registration_type === 'outbound') {
-            $secret = 'XXXXXXXX';
-        }
+        // Resolved type: a legacy record keeps it empty and relies on noregister
+        $regType = $iax->getEffectiveRegistrationType();
+        $secret = self::isSecretMasked($iax) ? self::MASKED_SECRET : ($iax->secret ?? '');
         
         // Get network filter representation using unified helper
         $networkfilterRepresent = self::getNetworkFilterRepresentation($iax->networkfilterid);
@@ -249,7 +265,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'secret' => $secret,
             'host' => $iax->host ?? '',
             'port' => (int)($iax->port ?? 4569),
-            'registration_type' => $iax->registration_type ?? 'none',
+            'registration_type' => $regType,
             'description' => $iax->description ?? '',
             'manualattributes' => $iax->getManualAttributes(),
             'networkfilterid' => (!empty($iax->networkfilterid) ? $iax->networkfilterid : 'none'),

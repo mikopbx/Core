@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\Providers;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
@@ -141,11 +142,11 @@ class IAXConf extends AsteriskConfigClass
             $manual_attributes = Util::parseIniSettings($provider['manualattributes']);
             
             // Set registration type from DB or use legacy noregister field
-            $registrationType = $provider['registration_type'] ?? '';
-            if (empty($registrationType)) {
-                // Legacy support: if registration_type is not set, use noregister field
-                $registrationType = ($provider['noregister'] === '0') ? Iax::REGISTRATION_TYPE_OUTBOUND : Iax::REGISTRATION_TYPE_NONE;
-            }
+            $registrationType = Providers::resolveRegistrationType(
+                $provider['registration_type'] ?? null,
+                $provider['noregister'] ?? null,
+                'IAX'
+            );
             
             // Base options for all types
             $contextId = self::getProviderId($provider);

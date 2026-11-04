@@ -164,7 +164,7 @@ abstract class AbstractProviderStatusAction extends Injectable
                     'host' => $provider->host,
                     'disabled' => $provider->disabled === '1',
                     'description' => $provider->description ?? '',
-                    'registration_type' => $provider->registration_type ?? 'outbound'
+                    'registration_type' => $provider->getEffectiveRegistrationType()
                 ];
 
                 // Check if disabled
@@ -342,7 +342,8 @@ abstract class AbstractProviderStatusAction extends Injectable
                     'username' => trim($provider->username),
                     'host' => trim($provider->host),
                     'disabled' => $provider->disabled === '1',
-                    'noregister' => $provider->noregister === '1',
+                    // true = no outbound registration (peer status is polled instead)
+                    'noregister' => $provider->getEffectiveRegistrationType() !== Iax::REGISTRATION_TYPE_OUTBOUND,
                     'description' => $provider->description ?? ''
                 ];
                 
@@ -505,7 +506,7 @@ abstract class AbstractProviderStatusAction extends Injectable
                 'host' => $iaxProvider->host,
                 'username' => $iaxProvider->username,
                 'disabled' => $iaxProvider->disabled === '1',
-                'noregister' => $iaxProvider->noregister === '1'
+                'noregister' => $iaxProvider->getEffectiveRegistrationType() !== Iax::REGISTRATION_TYPE_OUTBOUND
             ];
         }
         

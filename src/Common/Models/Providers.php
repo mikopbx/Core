@@ -191,4 +191,41 @@ class Providers extends ModelsBase
 
         return parent::generateUniqueID($prefix);
     }
+
+    /**
+     * Resolves the effective registration type of a SIP/IAX provider record.
+     *
+     * Records created before registration_type existed keep it empty; for them the legacy
+     * noregister flag decides: '0' means outbound registration, anything else means none.
+     *
+     * @param string|null $registrationType Stored registration_type value.
+     * @param string|null $noregister Stored legacy noregister value.
+     * @param string $type Provider type, 'SIP' or 'IAX'.
+     * @return string One of 'outbound', 'inbound', 'none'.
+     */
+    public static function resolveRegistrationType(
+        ?string $registrationType,
+        ?string $noregister,
+        string $type
+    ): string {
+        if (!empty($registrationType)) {
+            return $registrationType;
+        }
+
+        [$outbound, , $none] = self::getRegistrationTypes($type);
+        return $noregister === '0' ? $outbound : $none;
+    }
+
+    /**
+     * Registration type values of the given provider type.
+     *
+     * @param string $type Provider type, 'SIP' or 'IAX'.
+     * @return array{0: string, 1: string, 2: string} [outbound, inbound, none]
+     */
+    public static function getRegistrationTypes(string $type): array
+    {
+        return $type === 'IAX'
+            ? [Iax::REGISTRATION_TYPE_OUTBOUND, Iax::REGISTRATION_TYPE_INBOUND, Iax::REGISTRATION_TYPE_NONE]
+            : [Sip::REG_TYPE_OUTBOUND, Sip::REG_TYPE_INBOUND, Sip::REG_TYPE_NONE];
+    }
 }

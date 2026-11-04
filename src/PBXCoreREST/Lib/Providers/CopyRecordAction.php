@@ -97,7 +97,14 @@ class CopyRecordAction
             // Clear the ID field for new provider creation
             // The frontend should treat this as a new provider
             $res->data['id'] = '';
-            
+
+            // The copy is saved as a new record, where the mask is a literal value, not
+            // "keep the stored password": make the user enter the outbound password again.
+            $sourceConfig = $sourceProvider->type === 'IAX' ? $sourceProvider->Iax : $sourceProvider->Sip;
+            if ($sourceConfig && DataStructure::isSecretMasked($sourceConfig)) {
+                $res->data['secret'] = '';
+            }
+
             $res->success = true;
 
         } catch (\Exception $e) {

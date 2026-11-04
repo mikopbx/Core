@@ -213,6 +213,20 @@ class SaveRecordAction extends AbstractSaveRecordAction
                                 Providers::generateUniqueID($sanitizedData['type']);
         }
 
+        // Registration type stored before this request (null on create). Captured before
+        // the transaction mutates the SIP/IAX model: the masked-secret check, the business
+        // rules of a partial update and the upstream de-registration depend on it.
+        $storedConfig = $isNewRecord ? null : self::getStoredConfig($provider, $sanitizedData['type']);
+        $storedRegType = $storedConfig === null
+            ? null
+            : $storedConfig->getEffectiveRegistrationType();
+
+        // The mask returned by GET means "keep the stored password": drop it here, so that
+        // validation and save see the same request as one that omits the secret.
+        if (self::isMaskedSecret($sanitizedData, $storedConfig)) {
+            unset($sanitizedData['secret']);
+        }
+
         // ============================================================
         // PHASE 4: APPLY DEFAULTS (CREATE ONLY!)
         // Add missing field defaults from schema
@@ -260,7 +274,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         // Business rules validation (depends on registration_type)
-        $businessErrors = self::validateBusinessRules($sanitizedData, $isNewRecord, $provider);
+        $businessErrors = self::validateBusinessRules($sanitizedData, $storedConfig, $storedRegType);
         if (!empty($businessErrors)) {
             $res->messages['error'] = $businessErrors;
             $res->httpCode = 422;
@@ -277,20 +291,29 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // upstream registration if this update disables the provider or leaves outbound mode.
         // Must be read BEFORE the transaction, which mutates $provider->Sip in place.
         $oldSipRegState = null;
-        if (!$isNewRecord && ($sanitizedData['type'] ?? '') === 'SIP' && $provider->Sip) {
+        if ($storedConfig instanceof Sip) {
             $oldSipRegState = [
-                'uniqid' => $provider->Sip->uniqid,
-                'disabled' => $provider->Sip->disabled,
-                'registration_type' => $provider->Sip->registration_type,
-                'description' => $provider->Sip->description ?: $provider->note,
+                'uniqid' => $storedConfig->uniqid,
+                'disabled' => $storedConfig->disabled,
+                'registration_type' => $storedRegType,
+                'description' => $storedConfig->description ?: $provider->note,
             ];
         }
 
         try {
-            $savedProvider = self::executeInTransaction(function() use ($provider, $sanitizedData, $isNewRecord) {
+            $savedProvider = self::executeInTransaction(function () use (
+                $provider,
+                $sanitizedData,
+                $isNewRecord,
+                $isPatch
+            ) {
 
-                // Update Providers model
-                $provider->note = $sanitizedData['note'] ?? '';
+                // Update Providers model: only PATCH keeps the stored note when it is omitted
+                if (isset($sanitizedData['note'])) {
+                    $provider->note = $sanitizedData['note'];
+                } elseif (!$isPatch) {
+                    $provider->note = '';
+                }
 
                 if (!$provider->save()) {
                     throw new \Exception('Failed to save provider: ' . implode(', ', $provider->getMessages()));
@@ -394,78 +417,100 @@ class SaveRecordAction extends AbstractSaveRecordAction
      * - inbound: requires username, password (remote server registers to us)
      * - none: requires host only (direct calls without registration, username/password optional)
      *
-     * @param array $data Sanitized data
-     * @param bool $isNewRecord True if creating new provider
-     * @param Providers|null $provider Existing provider for updates
+     * Validates the resulting record, not just the request: a field the request omits keeps
+     * its stored value (PATCH, isset()-based save), so it is checked as stored. Otherwise a
+     * partial update could leave an outbound provider without a password or host.
+     * On update only the rules of the submitted fields apply, unless registration_type is
+     * submitted (then every rule of the resulting type applies): stored data that already
+     * breaks a rule does not block unrelated changes (note, codecs, another rule field...).
+     *
+     * @param array $data Sanitized data (a masked secret is already removed)
+     * @param Sip|Iax|null $storedConfig Stored SIP/IAX configuration, null on create
+     * @param string|null $storedRegType Effective stored registration type, null on create
      * @return array Error messages
      */
-    private static function validateBusinessRules(array $data, bool $isNewRecord, ?Providers $provider): array
-    {
+    private static function validateBusinessRules(
+        array $data,
+        Sip|Iax|null $storedConfig,
+        ?string $storedRegType
+    ): array {
         $errors = [];
-        $regType = $data['registration_type'] ?? '';
+        $regType = $data['registration_type'] ?? $storedRegType ?? '';
+        [$outbound, $inbound, $none] = Providers::getRegistrationTypes($data['type'] ?? '');
+        $checkAll = $storedConfig === null || array_key_exists('registration_type', $data);
 
-        // ============================================================
-        // OUTBOUND REGISTRATION: Requires host, username, password
-        // WHY: We register to remote server with credentials
-        // ============================================================
-        if ($regType === 'outbound') {
-            // Host is required
-            if (empty($data['host']) || trim($data['host']) === '') {
+        // True when the rule for $field applies and the resulting value is empty
+        $isEmpty = static function (string $field) use ($data, $storedConfig, $checkAll): bool {
+            if (!$checkAll && !array_key_exists($field, $data)) {
+                return false;
+            }
+            $value = isset($data[$field]) ? $data[$field] : ($storedConfig?->$field ?? '');
+            return trim((string)$value) === '';
+        };
+
+        $hostEmpty = $isEmpty('host');
+        $usernameEmpty = $isEmpty('username');
+        $secretEmpty = $isEmpty('secret');
+
+        // OUTBOUND: we register to the remote server, host and credentials are required
+        if ($regType === $outbound) {
+            if ($hostEmpty) {
                 $errors[] = TranslationProvider::translate('pr_ValidationProviderHostIsEmpty');
             }
-
-            // Username is required
-            if (empty($data['username']) || trim($data['username']) === '') {
+            if ($usernameEmpty) {
                 $errors[] = TranslationProvider::translate('pr_ValidationProviderLogin');
             }
-
-            // Password is required (except when updating with masked value)
-            $passwordRequired = true;
-            if (!$isNewRecord && isset($data['secret']) && $data['secret'] === 'XXXXXXXX') {
-                $passwordRequired = false; // Keep existing password
-            }
-
-            if ($passwordRequired && (empty($data['secret']) || trim($data['secret']) === '')) {
+            if ($secretEmpty) {
                 $errors[] = TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
             }
         }
 
-        // ============================================================
-        // INBOUND REGISTRATION: Requires username, password
-        // WHY: Remote server registers to us with credentials
-        // ============================================================
-        if ($regType === 'inbound') {
-            // Username is required
-            if (empty($data['username']) || trim($data['username']) === '') {
+        // INBOUND: the remote server registers to us, credentials are required
+        if ($regType === $inbound) {
+            if ($usernameEmpty) {
                 $errors[] = TranslationProvider::translate('pr_ValidationProviderLogin');
             }
-
-            // Password is required (except when updating with masked value)
-            $passwordRequired = true;
-            if (!$isNewRecord && isset($data['secret']) && $data['secret'] === 'XXXXXXXX') {
-                $passwordRequired = false; // Keep existing password
-            }
-
-            if ($passwordRequired && (empty($data['secret']) || trim($data['secret']) === '')) {
+            if ($secretEmpty) {
                 $errors[] = TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
             }
         }
 
-        // ============================================================
-        // NO REGISTRATION: Requires host only
-        // WHY: Direct calls to IP/hostname, no authentication needed
-        // Username/password are OPTIONAL for this mode
-        // ============================================================
-        if ($regType === 'none') {
-            // Host is required (where to send calls)
-            if (empty($data['host']) || trim($data['host']) === '') {
-                $errors[] = TranslationProvider::translate('pr_ValidationProviderHostIsEmpty');
-            }
-            // Username and password are OPTIONAL for 'none' registration type
-            // No validation required
+        // NONE: direct calls to host, credentials are optional
+        if ($regType === $none && $hostEmpty) {
+            $errors[] = TranslationProvider::translate('pr_ValidationProviderHostIsEmpty');
         }
 
         return $errors;
+    }
+
+    /**
+     * Returns the stored SIP/IAX configuration of an existing provider.
+     *
+     * @param Providers|null $provider Existing provider
+     * @param string $type Provider type (SIP or IAX)
+     * @return Sip|Iax|null
+     */
+    private static function getStoredConfig(?Providers $provider, string $type): Sip|Iax|null
+    {
+        $config = $type === 'IAX' ? $provider?->Iax : $provider?->Sip;
+        return ($config instanceof Sip || $config instanceof Iax) ? $config : null;
+    }
+
+    /**
+     * Whether the submitted secret is the mask returned by GET and must keep the stored password.
+     *
+     * The mask can only come back for a provider whose stored secret GET actually masked
+     * (DataStructure::isSecretMasked) — even when the same request switches it to
+     * inbound/none. For any other provider the value is a real password.
+     *
+     * @param array $data Sanitized data
+     * @param Sip|Iax|null $storedConfig Stored SIP/IAX configuration, null on create
+     */
+    private static function isMaskedSecret(array $data, Sip|Iax|null $storedConfig): bool
+    {
+        return $storedConfig !== null
+            && ($data['secret'] ?? null) === DataStructure::MASKED_SECRET
+            && DataStructure::isSecretMasked($storedConfig);
     }
 
     /**
@@ -497,13 +542,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $sip->username = $data['username'];
         }
 
-        // Handle password update (never overwrite with masked value)
+        // Password (a masked secret was already removed in main())
         if (isset($data['secret'])) {
-            if ($data['registration_type'] === 'outbound' && $data['secret'] === 'XXXXXXXX') {
-                // Keep existing password - do nothing
-            } else {
-                $sip->secret = $data['secret'];
-            }
+            $sip->secret = $data['secret'];
         } elseif ($isNewRecord) {
             $sip->secret = '';
         }
@@ -607,6 +648,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $sip->registration_type = $data['registration_type'];
         } elseif ($isNewRecord) {
             $sip->registration_type = 'none';
+        } elseif (empty($sip->registration_type)) {
+            // Legacy record: persist the type resolved from noregister, which is forced to '0' below
+            $sip->registration_type = $sip->getEffectiveRegistrationType();
         }
 
         if (isset($data['description'])) {
@@ -818,13 +862,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $iax->username = $data['username'];
         }
 
-        // Handle password update (never overwrite with masked value)
+        // Password (a masked secret was already removed in main())
         if (isset($data['secret'])) {
-            if ($data['registration_type'] === 'outbound' && $data['secret'] === 'XXXXXXXX') {
-                // Keep existing password - do nothing
-            } else {
-                $iax->secret = $data['secret'];
-            }
+            $iax->secret = $data['secret'];
         } elseif ($isNewRecord) {
             $iax->secret = '';
         }
@@ -843,6 +883,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $iax->registration_type = $data['registration_type'];
         } elseif ($isNewRecord) {
             $iax->registration_type = 'none';
+        } elseif (empty($iax->registration_type)) {
+            // Legacy record: persist the type resolved from noregister, which is forced to '0' below
+            $iax->registration_type = $iax->getEffectiveRegistrationType();
         }
 
         if (isset($data['description'])) {
@@ -1542,7 +1585,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             if ($providerType === 'SIP' && $disabled && !$wasDisabled) {
                 ProviderRegistrationHelper::sendUnregister(
                     $config->uniqid,
-                    $config->registration_type,
+                    $config->getEffectiveRegistrationType(),
                     $config->description ?: $provider->note
                 );
             }

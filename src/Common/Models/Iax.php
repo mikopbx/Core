@@ -230,4 +230,15 @@ class Iax extends ModelsBase
 
         return $this->validate($validation);
     }
+
+    /**
+     * Effective registration type: the stored value, or for legacy records with an empty
+     * registration_type the one derived from noregister.
+     *
+     * @return string One of the REG* type constants ('outbound', 'inbound', 'none').
+     */
+    public function getEffectiveRegistrationType(): string
+    {
+        return Providers::resolveRegistrationType($this->registration_type, $this->noregister, 'IAX');
+    }
 }

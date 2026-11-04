@@ -138,16 +138,18 @@ class UpdateStatusAction
             ]
         ]);
 
-        if (!$provider
-            || !$provider->Sip
-            || $provider->Sip->registration_type !== Sip::REG_TYPE_OUTBOUND
-            || $provider->Sip->disabled === '1') {
+        if (!$provider || !$provider->Sip || $provider->Sip->disabled === '1') {
+            return null;
+        }
+
+        $registrationType = $provider->Sip->getEffectiveRegistrationType();
+        if ($registrationType !== Sip::REG_TYPE_OUTBOUND) {
             return null;
         }
 
         return [
             'uniqid' => $provider->Sip->uniqid,
-            'registration_type' => $provider->Sip->registration_type,
+            'registration_type' => $registrationType,
             'description' => $provider->Sip->description ?: $provider->note,
         ];
     }

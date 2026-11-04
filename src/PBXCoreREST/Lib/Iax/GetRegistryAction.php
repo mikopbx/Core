@@ -53,7 +53,10 @@ class GetRegistryAction extends Injectable
                     'id' => $provider->uniqid,
                     'username' => trim($provider->username),
                     'host' => trim($provider->host),
-                    'noregister' => $provider->noregister,
+                    // '1' = no outbound registration (peer status is polled instead)
+                    'noregister' => $provider->getEffectiveRegistrationType() === Iax::REGISTRATION_TYPE_OUTBOUND
+                        ? '0'
+                        : '1',
                 ];
             }
 
