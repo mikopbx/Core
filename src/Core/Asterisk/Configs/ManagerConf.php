@@ -66,7 +66,7 @@ class ManagerConf extends AsteriskConfigClass
             'CDR(dst)',
             'CDR(recordingfile)',
         ];
-        $amiPort = PbxSettings::getValueByKey(PbxSettings::AMI_PORT);
+        $amiPort = PbxSettings::getPortByKey(PbxSettings::AMI_PORT);
 
         // Generate the configuration content
         $conf = "[general]\n" .

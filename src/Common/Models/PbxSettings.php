@@ -25,6 +25,7 @@ use MikoPBX\Common\Models\PBXSettings\PbxSettingsConstantsTrait;
 use MikoPBX\Common\Models\PBXSettings\PbxSettingsDefaultValuesTrait;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\SystemMessages;
 use Phalcon\Di\Di;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
@@ -44,6 +45,28 @@ class PbxSettings extends ModelsBase
     private const string CACHE_KEY = 'PbxSettings';
 
     /**
+     * Settings that hold a TCP/UDP port number.
+     *
+     * @var array<string>
+     */
+    public const array PORT_KEYS = [
+        self::WEB_PORT,
+        self::WEB_HTTPS_PORT,
+        self::SSH_PORT,
+        self::SIP_PORT,
+        self::TLS_PORT,
+        self::EXTERNAL_SIP_PORT,
+        self::EXTERNAL_TLS_PORT,
+        self::IAX_PORT,
+        self::AMI_PORT,
+        self::AJAM_PORT,
+        self::AJAM_PORT_TLS,
+        self::RTP_PORT_FROM,
+        self::RTP_PORT_TO,
+        self::MAIL_SMTP_PORT,
+    ];
+
+    /**
      * Values saved while the main DB transaction is still open.
      *
      * Model afterSave events fire before the outer transaction commit, so
@@ -54,6 +77,13 @@ class PbxSettings extends ModelsBase
      * @var array<string, string>
      */
     private static array $pendingCacheUpdates = [];
+
+    /**
+     * Port keys whose invalid stored value has already been reported to syslog.
+     *
+     * @var array<string, bool>
+     */
+    private static array $reportedInvalidPorts = [];
 
     /**
      * Returns Redis adapter with guaranteed correct database selection.
@@ -394,38 +424,76 @@ class PbxSettings extends ModelsBase
             )
         );
 
-        // Validate port values (must be in range 1-65535)
-        $portKeys = [
-            self::WEB_PORT,
-            self::WEB_HTTPS_PORT,
-            self::SSH_PORT,
-            self::SIP_PORT,
-            self::TLS_PORT,
-            self::EXTERNAL_SIP_PORT,
-            self::EXTERNAL_TLS_PORT,
-            self::IAX_PORT,
-            self::AMI_PORT,
-            self::AJAM_PORT,
-            self::AJAM_PORT_TLS,
-            self::RTP_PORT_FROM,
-            self::RTP_PORT_TO,
-            self::MAIL_SMTP_PORT,
-        ];
-
-        if (in_array($this->key, $portKeys, true)) {
-            $port = (int)$this->value;
-            if ($port < 1 || $port > 65535) {
-                $this->appendMessage(
-                    new \Phalcon\Messages\Message(
-                        "Port value must be between 1 and 65535, got: {$this->value}",
-                        'value',
-                        'PortRange'
-                    )
-                );
-                return false;
-            }
+        // Port values end up in shell commands (iptables, fail2ban, dropbear) and in
+        // service configs, so only a plain decimal number in range is accepted.
+        if (in_array($this->key, self::PORT_KEYS, true) && !self::isValidPort($this->value)) {
+            $this->appendMessage(
+                new \Phalcon\Messages\Message(
+                    'Port value must be an integer between 1 and 65535',
+                    'value',
+                    'PortRange'
+                )
+            );
+            return false;
         }
 
         return $this->validate($validation);
+    }
+
+    /**
+     * Checks that the value is a decimal port number in the range 1-65535.
+     *
+     * Strings are accepted only when they consist of digits, so values like
+     * "5060; cmd" or "5060\n..." (which (int) would turn into 5060) are rejected.
+     *
+     * @param mixed $value Value to check
+     * @return bool
+     */
+    public static function isValidPort(mixed $value): bool
+    {
+        if (is_int($value)) {
+            $port = $value;
+        } elseif (is_string($value) && preg_match('/^[0-9]{1,5}$/D', $value) === 1) {
+            $port = (int)$value;
+        } else {
+            return false;
+        }
+
+        return $port >= 1 && $port <= 65535;
+    }
+
+    /**
+     * Returns a port setting as an integer that is safe to put into commands and configs.
+     *
+     * A stored value that is not a valid port (e.g. restored from a backup or written
+     * by a pre-fix release) is replaced with the default value and reported to syslog.
+     *
+     * @param string $key One of PbxSettings::PORT_KEYS
+     * @return int
+     */
+    public static function getPortByKey(string $key): int
+    {
+        // Surrounding whitespace was accepted by older releases ((int) cast) and is
+        // harmless here because only the parsed integer is returned.
+        $value = self::getValueByKey($key);
+        if (is_string($value)) {
+            $value = trim($value);
+        }
+        if (self::isValidPort($value)) {
+            return (int)$value;
+        }
+
+        $default = (int)(self::getDefaultArrayValues()[$key] ?? 0);
+        // Config generation reads the same keys many times; report each key once per process.
+        if (!isset(self::$reportedInvalidPorts[$key])) {
+            self::$reportedInvalidPorts[$key] = true;
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "Invalid stored value of $key, the default port $default is used instead",
+                LOG_WARNING
+            );
+        }
+
+        return $default;
     }
 }

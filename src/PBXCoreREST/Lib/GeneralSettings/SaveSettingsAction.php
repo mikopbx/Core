@@ -199,6 +199,16 @@ class SaveSettingsAction extends AbstractSaveRecordAction
 
             // Validate range constraints for integers/numbers (ports, timeouts, etc.)
             if ($type === 'integer' || $type === 'number') {
+                // A non-integer value must not skip the range check below: ports and
+                // timeouts are interpolated into shell commands and configs. An empty
+                // string or null is left to the model validation.
+                $isIntegerLike = is_int($value) || $value === null
+                    || (is_string($value) && ($value === '' || preg_match('/^-?[0-9]+$/D', $value) === 1));
+                if (!$isIntegerLike) {
+                    $errors[] = "Field '{$fieldName}' must be an integer";
+                    continue;
+                }
+
                 $numericValue = is_numeric($value) ? (int)$value : null;
 
                 if ($numericValue !== null) {

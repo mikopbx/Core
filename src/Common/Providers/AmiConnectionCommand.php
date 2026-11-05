@@ -45,7 +45,7 @@ class AmiConnectionCommand implements ServiceProviderInterface{
         $di->setShared(
             self::SERVICE_NAME,
             function () {
-                $port   = PbxSettings::getValueByKey(PbxSettings::AMI_PORT);
+                $port   = PbxSettings::getPortByKey(PbxSettings::AMI_PORT);
                 $am     = new AsteriskManager();
                 $am->connect("127.0.0.1:{$port}", null, null, 'off');
                 return $am;

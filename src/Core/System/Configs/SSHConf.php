@@ -82,7 +82,7 @@ class SSHConf extends SystemConfigClass
     public function generateMonitConf(): bool
     {
         $this->setStartCommand();
-        $port = PbxSettings::getValueByKey(PbxSettings::SSH_PORT);
+        $port = PbxSettings::getPortByKey(PbxSettings::SSH_PORT);
         $busyboxPath = Util::which('busybox');
         $confPath = $this->getMainMonitConfFile();
         $conf = 'check process '.self::PROC_NAME.' with pidfile '.self::PID_FILE.PHP_EOL.
@@ -196,14 +196,14 @@ class SSHConf extends SystemConfigClass
      */
     private function setStartCommand()
     {
-        $sshPort  = escapeshellcmd(PbxSettings::getValueByKey(PbxSettings::SSH_PORT));
+        $sshPort  = PbxSettings::getPortByKey(PbxSettings::SSH_PORT);
         $sshPasswordDisabled = PbxSettings::getValueByKey(PbxSettings::SSH_DISABLE_SSH_PASSWORD) === '1';
         $options = $sshPasswordDisabled ? '-s' : '';
         $dropBear = Util::which(self::PROC_NAME);
 
         // Adding keep-alive and idle timeout options to Dropbear configuration
         $this->startCommand = sprintf(
-            "%s -p '%s' %s -K %d -I %d -c /etc/rc/hello",
+            "%s -p %d %s -K %d -I %d -c /etc/rc/hello",
             $dropBear,
             $sshPort,
             $options,

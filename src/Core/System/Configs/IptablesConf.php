@@ -68,10 +68,11 @@ class IptablesConf extends Injectable
         // Check if the firewall is enabled.
         $this->firewall_enable  =  intval(PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED)) === 1;
         // Get the SIP, TLS, and RTP port settings.
-        $this->sipPort          = PbxSettings::getValueByKey(PbxSettings::SIP_PORT);
-        $this->tlsPort          = PbxSettings::getValueByKey(PbxSettings::TLS_PORT);
-        $defaultRTPFrom         = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_FROM);
-        $defaultRTPTo           = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO);
+        // Ports go straight into iptables shell commands: read them as integers only.
+        $this->sipPort          = (string)PbxSettings::getPortByKey(PbxSettings::SIP_PORT);
+        $this->tlsPort          = (string)PbxSettings::getPortByKey(PbxSettings::TLS_PORT);
+        $defaultRTPFrom         = PbxSettings::getPortByKey(PbxSettings::RTP_PORT_FROM);
+        $defaultRTPTo           = PbxSettings::getPortByKey(PbxSettings::RTP_PORT_TO);
         $this->maxReqSec        = intval(PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_MAX_REQ));
         $this->rtpPorts         = "$defaultRTPFrom:$defaultRTPTo";
     }
@@ -487,7 +488,20 @@ class IptablesConf extends Injectable
         $result = FirewallRules::find('action="allow"');
         /** @var FirewallRules $rule */
         foreach ($result as $rule) {
-            if ($rule->portfrom !== $rule->portto && trim($rule->portto) !== '') {
+            // Rule ports are copied from PbxSettings or written by modules; they are
+            // interpolated into a shell command, so anything but a valid port is skipped.
+            // ICMP rules store port 0 and their ports are never used in the command.
+            // An empty or zero portto means a single port, not a range.
+            $hasPortTo = !in_array(trim((string)$rule->portto), ['', '0'], true);
+            if ($rule->protocol !== 'icmp'
+                && (!PbxSettings::isValidPort($rule->portfrom)
+                    || ($hasPortTo && !PbxSettings::isValidPort($rule->portto)))
+            ) {
+                $msg = "Skip firewall rule $rule->id with invalid ports";
+                SystemMessages::sysLogMsg('Firewall', $msg, LOG_WARNING);
+                continue;
+            }
+            if ($rule->portfrom !== $rule->portto && $hasPortTo) {
                 $port = "$rule->portfrom:$rule->portto";
             } else {
                 $port = $rule->portfrom;

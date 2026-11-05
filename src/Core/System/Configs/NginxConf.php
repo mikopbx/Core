@@ -156,7 +156,7 @@ class NginxConf extends SystemConfigClass
      */
     public function monitWaitStart(int $timeout = 20): bool
     {
-        $webPort = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
+        $webPort = PbxSettings::getPortByKey(PbxSettings::WEB_PORT);
 
         $waitResult = false;
         // Wait for Nginx to start completely
@@ -256,8 +256,8 @@ class NginxConf extends SystemConfigClass
         }
 
         // HTTP
-        $WEBPort      = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
-        $WEBHTTPSPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT);
+        $WEBPort      = PbxSettings::getPortByKey(PbxSettings::WEB_PORT);
+        $WEBHTTPSPort = PbxSettings::getPortByKey(PbxSettings::WEB_HTTPS_PORT);
 
         $config = file_get_contents(self::CONF_PATH . ".original");
         if ($config === false) {

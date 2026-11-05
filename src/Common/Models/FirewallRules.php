@@ -272,7 +272,7 @@ class FirewallRules extends ModelsBase
         ];
         $result = [];
         foreach ($portSet as $portName) {
-            $result[$portName] = PbxSettings::getValueByKey($portName);
+            $result[$portName] = (string)PbxSettings::getPortByKey($portName);
         }
 
         return $result;

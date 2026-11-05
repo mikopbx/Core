@@ -51,8 +51,11 @@ class HttpConf extends AsteriskConfigClass
         $ariEnabled = intval(PbxSettings::getValueByKey(PbxSettings::ARI_ENABLED)) === 1;
         $isEnable = $ajamEnabled || $ariEnabled;
         
-        $port = PbxSettings::getValueByKey(PbxSettings::AJAM_PORT);
-        $tlsPort = PbxSettings::getValueByKey(PbxSettings::AJAM_PORT_TLS);
+        $port = PbxSettings::getPortByKey(PbxSettings::AJAM_PORT);
+        // An empty TLS port disables the TLS listener, so keep it empty instead of the default.
+        $tlsPort = PbxSettings::getValueByKey(PbxSettings::AJAM_PORT_TLS) === ''
+            ? ''
+            : PbxSettings::getPortByKey(PbxSettings::AJAM_PORT_TLS);
         $enabled = ($isEnable) ? 'yes' : 'no';
         $conf    = "[general]".PHP_EOL .
             "enabled=$enabled".PHP_EOL .

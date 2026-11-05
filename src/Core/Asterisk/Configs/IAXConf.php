@@ -103,7 +103,7 @@ class IAXConf extends AsteriskConfigClass
      */
     private function generateGeneral(): string
     {
-        $iax_port = PbxSettings::getValueByKey(PbxSettings::IAX_PORT);
+        $iax_port = PbxSettings::getPortByKey(PbxSettings::IAX_PORT);
         $conf     = '[general]' . PHP_EOL;
         $conf .= "bindport=$iax_port" . PHP_EOL;
         $conf .= "bindaddr=0.0.0.0" . PHP_EOL;

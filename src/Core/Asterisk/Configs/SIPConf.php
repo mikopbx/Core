@@ -290,10 +290,10 @@ class SIPConf extends AsteriskConfigClass
     public function needAsteriskRestart(): bool
     {
         [$topology, $extIpAddress, $externalHostName, $subnets] = $this->getTopologyData();
-        $externalSipPort    = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_PORT);
-        $externalTlsPort    = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_TLS_PORT);
-        $sipPort            = PbxSettings::getValueByKey(PbxSettings::SIP_PORT);
-        $tlsPort            = PbxSettings::getValueByKey(PbxSettings::TLS_PORT);
+        $externalSipPort    = (string)PbxSettings::getPortByKey(PbxSettings::EXTERNAL_SIP_PORT);
+        $externalTlsPort    = (string)PbxSettings::getPortByKey(PbxSettings::EXTERNAL_TLS_PORT);
+        $sipPort            = (string)PbxSettings::getPortByKey(PbxSettings::SIP_PORT);
+        $tlsPort            = (string)PbxSettings::getPortByKey(PbxSettings::TLS_PORT);
         $timeZone           = PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE);
 
         $now_hash           = md5($timeZone.$topology . $externalHostName . $extIpAddress . $sipPort . $externalSipPort . $tlsPort . $externalTlsPort . implode('', $subnets));
@@ -1236,12 +1236,12 @@ class SIPConf extends AsteriskConfigClass
         $asteriskLang = self::convertToAsteriskLanguageFormat($langCode);  // Asterisk format: ru-ru
 
         $pbxVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
-        $sipPort = PbxSettings::getValueByKey(PbxSettings::SIP_PORT);
-        $tlsPort = PbxSettings::getValueByKey(PbxSettings::TLS_PORT);
-        $externalSipPort = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_PORT);
-        $externalTlsPort = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_TLS_PORT);
+        $sipPort = (string)PbxSettings::getPortByKey(PbxSettings::SIP_PORT);
+        $tlsPort = (string)PbxSettings::getPortByKey(PbxSettings::TLS_PORT);
+        $externalSipPort = (string)PbxSettings::getPortByKey(PbxSettings::EXTERNAL_SIP_PORT);
+        $externalTlsPort = (string)PbxSettings::getPortByKey(PbxSettings::EXTERNAL_TLS_PORT);
         $timeZone = PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE);
-        $wssPort = PbxSettings::getValueByKey(PbxSettings::AJAM_PORT_TLS);
+        $wssPort = (string)PbxSettings::getPortByKey(PbxSettings::AJAM_PORT_TLS);
 
         // Get topology and NAT configuration
         [$topology, $extIpAddress, $externalHostName, $subnets] = $this->getTopologyData();

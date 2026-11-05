@@ -51,8 +51,8 @@ class RtpConf extends AsteriskConfigClass
             $stunConfig = "stunaddr=$stun".PHP_EOL;
         }
 
-        $rtpStart = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_FROM);
-        $rtpEnd = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO);
+        $rtpStart = PbxSettings::getPortByKey(PbxSettings::RTP_PORT_FROM);
+        $rtpEnd = PbxSettings::getPortByKey(PbxSettings::RTP_PORT_TO);
 
         $conf = "[general]\n" .
             $stunConfig.

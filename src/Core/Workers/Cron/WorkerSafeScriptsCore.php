@@ -367,7 +367,7 @@ class WorkerSafeScriptsCore extends WorkerBase
         if ($this->amiPing !== null && $this->amiPing->isConnected()) {
             return $this->amiPing;
         }
-        $port = PbxSettings::getValueByKey(PbxSettings::AMI_PORT);
+        $port = PbxSettings::getPortByKey(PbxSettings::AMI_PORT);
         $this->amiPing = new AsteriskManager();
         $this->amiPing->connect("127.0.0.1:{$port}", null, null, 'user');
         return $this->amiPing;

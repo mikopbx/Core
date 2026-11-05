@@ -319,22 +319,22 @@ class Fail2BanConf extends SystemConfigClass
 
         // Define ports for different services
         $httpPorts = [
-            PbxSettings::getValueByKey(PbxSettings::WEB_PORT),
-            PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT)
+            PbxSettings::getPortByKey(PbxSettings::WEB_PORT),
+            PbxSettings::getPortByKey(PbxSettings::WEB_HTTPS_PORT)
         ];
         $sshPort = [
-            PbxSettings::getValueByKey(PbxSettings::SSH_PORT),
+            PbxSettings::getPortByKey(PbxSettings::SSH_PORT),
         ];
         $asteriskPorts = [
-            PbxSettings::getValueByKey(PbxSettings::SIP_PORT),
-            PbxSettings::getValueByKey(PbxSettings::TLS_PORT),
-            PbxSettings::getValueByKey(PbxSettings::IAX_PORT),
-            PbxSettings::getValueByKey(PbxSettings::RTP_PORT_FROM) . ':' . PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO),
-            PbxSettings::getValueByKey(PbxSettings::AJAM_PORT_TLS)
+            PbxSettings::getPortByKey(PbxSettings::SIP_PORT),
+            PbxSettings::getPortByKey(PbxSettings::TLS_PORT),
+            PbxSettings::getPortByKey(PbxSettings::IAX_PORT),
+            PbxSettings::getPortByKey(PbxSettings::RTP_PORT_FROM) . ':' . PbxSettings::getPortByKey(PbxSettings::RTP_PORT_TO),
+            PbxSettings::getPortByKey(PbxSettings::AJAM_PORT_TLS)
         ];
         $asteriskAMI = [
-            PbxSettings::getValueByKey(PbxSettings::AMI_PORT),
-            PbxSettings::getValueByKey(PbxSettings::AJAM_PORT),
+            PbxSettings::getPortByKey(PbxSettings::AMI_PORT),
+            PbxSettings::getPortByKey(PbxSettings::AJAM_PORT),
         ];
 
         // Define jails and their corresponding actions
@@ -398,7 +398,7 @@ class Fail2BanConf extends SystemConfigClass
             'asterisk_error'        => ['error', '_ERROR', $asteriskPorts],
             'asterisk_public'       => ['messages', '_PUBLIC', $asteriskPorts],
             'asterisk_ami'          => ['messages', '_AMI', $asteriskAMI],
-            'asterisk_iax'          => ['messages', '_IAX', [PbxSettings::getValueByKey(PbxSettings::IAX_PORT)]],
+            'asterisk_iax'          => ['messages', '_IAX', [PbxSettings::getPortByKey(PbxSettings::IAX_PORT)]],
         ];
         foreach ($jails as $jail => [$logPrefix, $actionNamePrefix, $ports]) {
             // Use specific filter for IAX jail
