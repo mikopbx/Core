@@ -576,7 +576,9 @@ class Fail2BanConf extends SystemConfigClass
         // Construct the exploit scanner detection filter (nginx access.log)
         // Catches path traversal (..), .env/.git probing, php-cgi, setup.cgi,
         // SDK/webLanguage, goform, Docker API, Spring actuator, HNAP1 attacks
-        $exploitPatterns = '(?:\.\.|\.env|\.git|/etc/passwd'
+        // access.log keeps the raw request line: "(?:\.|%2e){2}" also catches the
+        // URL-encoded ".." ("%" is doubled for fail2ban's config interpolation).
+        $exploitPatterns = '(?:(?:\.|%%2[eE]){2}|\.env|\.git|/etc/passwd'
             . '|php-cgi|setup\.cgi|/SDK/|/goform/'
             . '|/containers/json|/actuator/|HNAP1'
             . '|playback\?view=.*\.(?:db|sqlite|conf|gz|zip|tar|key|pem|crt))';

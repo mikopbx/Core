@@ -623,16 +623,21 @@ local function find_sql(str)
 end
 
 -- Notes on security_mode interaction with module-declared exemptions:
---   - In `relaxed`, check_basic_security() is skipped wholesale (see the
---     "MAIN SECURITY LOGIC" section), so exemptions are moot.
+--   - In `relaxed`, check_basic_security() and the body scan are skipped
+--     wholesale (see the "MAIN SECURITY LOGIC" section).
+--   - check_path_traversal() runs in every mode, `relaxed` included: no client
+--     sends "..", so it is an attack, not a false positive to relax away.
+--     A `request-line` exemption turns it off in every mode.
 --   - In `balanced` / `strict` / `paranoid`, exemptions apply uniformly to
 --     the `request-line` and `body-scan` scopes below.
-local function check_basic_security()
+
+-- Path traversal in the request line. The 403 response is logged in access.log,
+-- where the mikopbx-exploit-scanner fail2ban jail bans the client.
+local function check_path_traversal()
     local uri = get_request_path()
     local raw_args = ngx.var.args
     -- Decode query args so %2e%2e%2f is caught as ../
     local args = raw_args and ngx.unescape_uri(raw_args) or nil
-    local user_agent = ngx.var.http_user_agent or ""
 
     -- Check for double-encoded traversal anywhere in the raw request URI
     -- (path + query). `%252e%252e` = double-encoded "..". This has to run
@@ -648,7 +653,27 @@ local function check_basic_security()
         end
     end
 
-    -- WAF scope `request-line` — covers SQL / traversal / null-byte checks
+    -- Note: "//" is not checked — it false-positives on /files/{absolute_path}
+    -- where the file path starts with "/" (e.g. /files//tmp/foo). Real traversal
+    -- is caught by the ".." check; "//" alone has no traversal value.
+    -- The exemption lookup runs only on a match: an explicit
+    -- #[WafExempt(scopes: ['request-line'])] still turns the ".." check off.
+    if (string.match(uri, "%.%.") or (args and string.match(args, "%.%.")))
+        and not is_scope_exempt(uri, 'request-line') then
+        ngx.log(ngx.WARN, "Path traversal attempt from: ", client_ip)
+        return false
+    end
+
+    return true
+end
+
+local function check_basic_security()
+    local uri = get_request_path()
+    local raw_args = ngx.var.args
+    local args = raw_args and ngx.unescape_uri(raw_args) or nil
+    local user_agent = ngx.var.http_user_agent or ""
+
+    -- WAF scope `request-line` — covers SQL / null-byte checks
     -- against URI, query args and User-Agent. Skipped when the URI declares
     -- it via #[WafExempt(scopes: ['request-line'])].
     if not is_scope_exempt(uri, 'request-line') then
@@ -663,15 +688,6 @@ local function check_basic_security()
                 ngx.log(ngx.WARN, "SQL injection attempt from: ", client_ip, " pattern: ", pattern)
                 return false
             end
-        end
-
-        -- Check for path traversal in URL path and decoded query string
-        -- Note: "//" check removed — it false-positives on /files/{absolute_path}
-        -- where the file path starts with "/" (e.g. /files//tmp/foo). Real traversal
-        -- is caught by the ".." check; "//" alone has no traversal value.
-        if string.match(uri, "%.%.") or (args and string.match(args, "%.%.")) then
-            ngx.log(ngx.WARN, "Path traversal attempt from: ", client_ip)
-            return false
         end
 
         -- Check for null bytes
@@ -1082,6 +1098,9 @@ local function deny(status, text)
 end
 
 -- 1. Basic security checks on the request line
+if not check_path_traversal() then
+    return deny(ngx.HTTP_FORBIDDEN, "Security violation detected")
+end
 if security_mode ~= "relaxed" and not check_basic_security() then
     return deny(ngx.HTTP_FORBIDDEN, "Security violation detected")
 end
