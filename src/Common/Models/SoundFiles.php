@@ -34,6 +34,14 @@ class SoundFiles extends ModelsBase
     public const string CATEGORY_CUSTOM = 'custom';
 
     /**
+     * Every audio format SoundFilesConf::convertAudioFile() can produce under one basename.
+     * Adding a new format there requires extending this list, otherwise its files leak on delete.
+     */
+    public const array MANAGED_AUDIO_EXTENSIONS = [
+        'wav', 'wav16', 'wav48', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln', 'opus', 'webm',
+    ];
+
+    /**
      * @Primary
      * @Identity
      * @Column(type="integer", nullable=false)
@@ -199,9 +207,12 @@ class SoundFiles extends ModelsBase
             return;
         }
 
+        // Unlink the checked canonical path, not the original one: re-resolving the
+        // original would let a directory swapped for a symlink after the check redirect it.
         $deleteFile = function (string $candidate): void {
-            if ($this->isManagedDeletionCandidate($candidate)) {
-                @unlink($candidate);
+            $realCandidate = $this->resolveManagedDeletionCandidate($candidate);
+            if ($realCandidate !== null) {
+                @unlink($realCandidate);
             }
         };
 
@@ -211,11 +222,8 @@ class SoundFiles extends ModelsBase
         $pathinfo = pathinfo($this->path);
         $baseFilename = $pathinfo['dirname'] . '/' . $pathinfo['filename'];
 
-        // Delete all related converted files. Must stay in sync with the formats produced by
-        // SoundFilesConf::convertAudioFile() — adding a new format there requires extending
-        // this list, otherwise orphaned files leak on delete.
-        $extensions = ['wav', 'wav16', 'wav48', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln', 'opus', 'webm'];
-        foreach ($extensions as $ext) {
+        // Delete all related converted files.
+        foreach (self::MANAGED_AUDIO_EXTENSIONS as $ext) {
             $convertedFile = "$baseFilename.$ext";
             if ($convertedFile !== $this->path) {
                 $deleteFile($convertedFile);
@@ -252,6 +260,12 @@ class SoundFiles extends ModelsBase
     /** @return array{custom:string,moh:string,media:string} */
     protected function getManagedSoundRoots(): array
     {
+        return self::getDefaultManagedSoundRoots();
+    }
+
+    /** @return array{custom:string,moh:string,media:string} */
+    public static function getDefaultManagedSoundRoots(): array
+    {
         return [
             'custom' => Directories::getDir(Directories::AST_CUSTOM_SOUND_DIR),
             'moh' => Directories::getDir(Directories::AST_MOH_DIR),
@@ -259,34 +273,66 @@ class SoundFiles extends ModelsBase
         ];
     }
 
-    protected function isManagedDeletionCandidate(string $candidate): bool
+    protected function resolveManagedDeletionCandidate(string $candidate): ?string
+    {
+        $category = $this->category ?? self::CATEGORY_CUSTOM;
+        return self::resolveManagedSoundFile($candidate, [$category], $this->getManagedSoundRoots());
+    }
+
+    /**
+     * Canonical path of an existing regular file (not a symlink) that resolves inside the
+     * sound roots of the given categories, the only place user sound files may be deleted
+     * from; null otherwise. Callers must act on the returned path, not on $candidate.
+     *
+     * @param string[] $categories subset of CATEGORY_CUSTOM / CATEGORY_MOH; others never match
+     * @param array{custom:string,moh:string,media:string} $roots
+     */
+    public static function resolveManagedSoundFile(string $candidate, array $categories, array $roots): ?string
     {
         if ($candidate === '' || is_link($candidate) || !is_file($candidate)) {
-            return false;
+            return null;
         }
         $realCandidate = realpath($candidate);
-        if ($realCandidate === false) {
-            return false;
+        if ($realCandidate === false || !self::isWithinManagedSoundRoots($realCandidate, $categories, $roots)) {
+            return null;
         }
-        $category = $this->category ?? self::CATEGORY_CUSTOM;
-        if (!in_array($category, [self::CATEGORY_CUSTOM, self::CATEGORY_MOH], true)) {
-            return false;
+        return $realCandidate;
+    }
+
+    /**
+     * Pure location check of an already resolved (realpath'ed) path against the sound roots.
+     *
+     * @param string[] $categories subset of CATEGORY_CUSTOM / CATEGORY_MOH; others never match
+     * @param array{custom:string,moh:string,media:string} $roots
+     */
+    public static function isWithinManagedSoundRoots(string $realPath, array $categories, array $roots): bool
+    {
+        $categoryRoots = [
+            self::CATEGORY_CUSTOM => $roots['custom'],
+            self::CATEGORY_MOH => $roots['moh'],
+        ];
+        $matched = false;
+        foreach ($categories as $category) {
+            if (!isset($categoryRoots[$category])) {
+                continue;
+            }
+            $matched = true;
+            $realCategoryRoot = realpath($categoryRoots[$category]);
+            if ($realCategoryRoot === false) {
+                continue;
+            }
+            if (str_starts_with($realPath, rtrim($realCategoryRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) {
+                return true;
+            }
         }
-        $roots = $this->getManagedSoundRoots();
-        $categoryRoot = $category === self::CATEGORY_MOH
-            ? $roots['moh']
-            : $roots['custom'];
-        $realCategoryRoot = realpath($categoryRoot);
-        if ($realCategoryRoot !== false
-            && str_starts_with($realCandidate, rtrim($realCategoryRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) {
-            return true;
+        if (!$matched) {
+            return false;
         }
 
         // Compatibility with legacy installations that stored sounds directly in media/.
         $realMediaRoot = realpath($roots['media']);
-        $legacyAudioExtensions = ['wav', 'wav16', 'wav48', 'mp3', 'g722', 'gsm', 'ulaw', 'alaw', 'sln', 'opus', 'webm'];
         return $realMediaRoot !== false
-            && dirname($realCandidate) === rtrim($realMediaRoot, DIRECTORY_SEPARATOR)
-            && in_array(strtolower(pathinfo($realCandidate, PATHINFO_EXTENSION)), $legacyAudioExtensions, true);
+            && dirname($realPath) === rtrim($realMediaRoot, DIRECTORY_SEPARATOR)
+            && in_array(strtolower(pathinfo($realPath, PATHINFO_EXTENSION)), self::MANAGED_AUDIO_EXTENSIONS, true);
     }
 }

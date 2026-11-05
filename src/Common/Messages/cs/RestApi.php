@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Zápis do této cesty není povolen',
+    'rest_err_file_delete_not_permitted' => 'Smazání souboru v této cestě není povoleno',
     'rest_err_file_invalid_target_dir' => 'Neplatný cílový adresář',
     'rest_err_file_filename_required' => 'Název souboru je povinný',
     'rest_err_file_content_required' => 'Obsah souboru je povinný',

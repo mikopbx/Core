@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Pisanje na ovu putanju nije dopušteno',
+    'rest_err_file_delete_not_permitted' => 'Brisanje datoteke na ovoj putanji nije dopušteno',
     'rest_err_file_invalid_target_dir' => 'Nevažeći ciljni direktorij',
     'rest_err_file_filename_required' => 'Naziv datoteke je obavezan',
     'rest_err_file_content_required' => 'Sadržaj datoteke je obavezan',

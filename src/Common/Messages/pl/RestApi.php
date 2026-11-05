@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Zapis do tej ścieżki jest niedozwolony',
+    'rest_err_file_delete_not_permitted' => 'Usunięcie pliku w tej ścieżce jest niedozwolone',
     'rest_err_file_invalid_target_dir' => 'Nieprawidłowy katalog docelowy',
     'rest_err_file_filename_required' => 'Nazwa pliku jest wymagana',
     'rest_err_file_content_required' => 'Zawartość pliku jest wymagana',

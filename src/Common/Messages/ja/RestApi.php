@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'このパスへの書き込みは許可されていません',
+    'rest_err_file_delete_not_permitted' => 'このパスのファイルの削除は許可されていません',
     'rest_err_file_invalid_target_dir' => '無効なターゲットディレクトリです',
     'rest_err_file_filename_required' => 'ファイル名は必須です',
     'rest_err_file_content_required' => 'ファイルの内容は必須です',

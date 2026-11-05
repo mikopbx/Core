@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Skrivning till denna sökväg är inte tillåten',
+    'rest_err_file_delete_not_permitted' => 'Det är inte tillåtet att ta bort en fil i denna sökväg',
     'rest_err_file_invalid_target_dir' => 'Ogiltig målkatalog',
     'rest_err_file_filename_required' => 'Filnamn krävs',
     'rest_err_file_content_required' => 'Filinnehåll krävs',

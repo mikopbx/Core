@@ -2145,6 +2145,7 @@ return [
 
     // Security: file operation error messages
     'rest_err_file_write_not_permitted' => 'Write not permitted to this path',
+    'rest_err_file_delete_not_permitted' => 'Deleting a file at this path is not permitted',
     'rest_err_file_invalid_target_dir' => 'Invalid target directory',
     'rest_err_file_filename_required' => 'Filename is required',
     'rest_err_file_content_required' => 'File content is required',

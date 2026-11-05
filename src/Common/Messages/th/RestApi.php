@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'ไม่อนุญาตให้เขียนไปยังเส้นทางนี้',
+    'rest_err_file_delete_not_permitted' => 'ไม่อนุญาตให้ลบไฟล์ในเส้นทางนี้',
     'rest_err_file_invalid_target_dir' => 'ไดเรกทอรีปลายทางไม่ถูกต้อง',
     'rest_err_file_filename_required' => 'จำเป็นต้องระบุชื่อไฟล์',
     'rest_err_file_content_required' => 'จำเป็นต้องระบุเนื้อหาไฟล์',

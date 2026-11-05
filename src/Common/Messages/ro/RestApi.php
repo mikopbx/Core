@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Scrierea în această cale nu este permisă',
+    'rest_err_file_delete_not_permitted' => 'Ștergerea unui fișier din această cale nu este permisă',
     'rest_err_file_invalid_target_dir' => 'Director de destinație invalid',
     'rest_err_file_filename_required' => 'Numele fișierului este obligatoriu',
     'rest_err_file_content_required' => 'Conținutul fișierului este obligatoriu',

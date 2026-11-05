@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Kirjoittaminen tähän polkuun ei ole sallittu',
+    'rest_err_file_delete_not_permitted' => 'Tiedoston poistaminen tästä polusta ei ole sallittu',
     'rest_err_file_invalid_target_dir' => 'Virheellinen kohdehakemisto',
     'rest_err_file_filename_required' => 'Tiedostonimi on pakollinen',
     'rest_err_file_content_required' => 'Tiedoston sisältö on pakollinen',

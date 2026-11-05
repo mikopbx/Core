@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Không được phép ghi vào đường dẫn này',
+    'rest_err_file_delete_not_permitted' => 'Không được phép xóa tệp tại đường dẫn này',
     'rest_err_file_invalid_target_dir' => 'Thư mục đích không hợp lệ',
     'rest_err_file_filename_required' => 'Tên tệp là bắt buộc',
     'rest_err_file_content_required' => 'Nội dung tệp là bắt buộc',

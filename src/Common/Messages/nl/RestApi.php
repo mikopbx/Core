@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Schrijven naar dit pad is niet toegestaan',
+    'rest_err_file_delete_not_permitted' => 'Het verwijderen van een bestand op dit pad is niet toegestaan',
     'rest_err_file_invalid_target_dir' => 'Ongeldige doelmap',
     'rest_err_file_filename_required' => 'Bestandsnaam is verplicht',
     'rest_err_file_content_required' => 'Bestandsinhoud is verplicht',

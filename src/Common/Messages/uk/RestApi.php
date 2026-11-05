@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Запис за цим шляхом заборонено',
+    'rest_err_file_delete_not_permitted' => 'Видалення файлу за цим шляхом заборонено',
     'rest_err_file_invalid_target_dir' => 'Недійсний цільовий каталог',
     'rest_err_file_filename_required' => 'Ім\'я файлу є обов\'язковим',
     'rest_err_file_content_required' => 'Вміст файлу є обов\'язковим',

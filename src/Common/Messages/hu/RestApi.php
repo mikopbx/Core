@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Írás erre az elérési útra nem engedélyezett',
+    'rest_err_file_delete_not_permitted' => 'Fájl törlése ezen az elérési úton nem engedélyezett',
     'rest_err_file_invalid_target_dir' => 'Érvénytelen célkönyvtár',
     'rest_err_file_filename_required' => 'A fájlnév megadása kötelező',
     'rest_err_file_content_required' => 'A fájl tartalmának megadása kötelező',

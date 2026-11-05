@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'L\'écriture vers ce chemin n\'est pas autorisée',
+    'rest_err_file_delete_not_permitted' => 'La suppression d\'un fichier dans ce chemin n\'est pas autorisée',
     'rest_err_file_invalid_target_dir' => 'Répertoire cible invalide',
     'rest_err_file_filename_required' => 'Le nom de fichier est obligatoire',
     'rest_err_file_content_required' => 'Le contenu du fichier est obligatoire',

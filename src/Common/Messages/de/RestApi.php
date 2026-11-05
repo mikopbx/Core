@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Schreiben in diesen Pfad ist nicht erlaubt',
+    'rest_err_file_delete_not_permitted' => 'Das Löschen einer Datei in diesem Pfad ist nicht erlaubt',
     'rest_err_file_invalid_target_dir' => 'Ungültiges Zielverzeichnis',
     'rest_err_file_filename_required' => 'Dateiname ist erforderlich',
     'rest_err_file_content_required' => 'Dateiinhalt ist erforderlich',

@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => '不允许写入此路径',
+    'rest_err_file_delete_not_permitted' => '不允许删除此路径中的文件',
     'rest_err_file_invalid_target_dir' => '无效的目标目录',
     'rest_err_file_filename_required' => '文件名为必填项',
     'rest_err_file_content_required' => '文件内容为必填项',

@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Skrivning til denne sti er ikke tilladt',
+    'rest_err_file_delete_not_permitted' => 'Sletning af en fil på denne sti er ikke tilladt',
     'rest_err_file_invalid_target_dir' => 'Ugyldig målmappe',
     'rest_err_file_filename_required' => 'Filnavn er påkrævet',
     'rest_err_file_content_required' => 'Filindhold er påkrævet',

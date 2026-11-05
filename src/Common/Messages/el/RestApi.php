@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Η εγγραφή σε αυτή τη διαδρομή δεν επιτρέπεται',
+    'rest_err_file_delete_not_permitted' => 'Η διαγραφή αρχείου σε αυτή τη διαδρομή δεν επιτρέπεται',
     'rest_err_file_invalid_target_dir' => 'Μη έγκυρος κατάλογος προορισμού',
     'rest_err_file_filename_required' => 'Το όνομα αρχείου είναι υποχρεωτικό',
     'rest_err_file_content_required' => 'Το περιεχόμενο αρχείου είναι υποχρεωτικό',

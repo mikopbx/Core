@@ -2412,6 +2412,7 @@ return [
 
     // Security: file operation and path validation errors
     'rest_err_file_write_not_permitted' => 'Bu yola yazma icazəsi yoxdur',
+    'rest_err_file_delete_not_permitted' => 'Bu yoldakı faylın silinməsinə icazə verilmir',
     'rest_err_file_invalid_target_dir' => 'Yanlış hədəf qovluğu',
     'rest_err_file_filename_required' => 'Fayl adı tələb olunur',
     'rest_err_file_content_required' => 'Fayl məzmunu tələb olunur',

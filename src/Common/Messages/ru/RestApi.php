@@ -2572,6 +2572,7 @@ return [
 
     // Security: file operation error messages
     'rest_err_file_write_not_permitted' => 'Запись в указанный путь запрещена',
+    'rest_err_file_delete_not_permitted' => 'Удаление файла по указанному пути запрещено',
     'rest_err_file_invalid_target_dir' => 'Недопустимая целевая директория',
     'rest_err_file_filename_required' => 'Необходимо указать имя файла',
     'rest_err_file_content_required' => 'Необходимо указать содержимое файла',
