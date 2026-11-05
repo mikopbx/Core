@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
@@ -84,55 +85,42 @@ class PlaybackAction
             return $res;
         }
 
-        // Validate file path - must be in allowed directories.
-        //
-        // AST_MEDIA_DIR is included to keep playback working for SoundFiles rows
-        // migrated from MikoPBX ≤ 2022.x. Back then convertAudioFile saved user
-        // uploads directly under /storage/.../media/<file>.{mp3,wav}, not under
-        // /media/custom/. After upgrading, the row's path field still points at
-        // the legacy flat layout — without this entry the UI returns 403 even
-        // though the file is physically present and the IVR plays it fine. The
-        // entry only widens reach within /media/<audio-extension> files because
-        // of the MIME_TYPES allowlist gate above.
-        $allowedDirs = [
-            Directories::getDir(Directories::AST_CUSTOM_SOUND_DIR) . '/',
-            Directories::getDir(Directories::AST_MOH_DIR) . '/',
-            Directories::getDir(Directories::AST_MEDIA_DIR) . '/',
-            Directories::getDir(Directories::AST_VAR_LIB_DIR) . '/sounds/',
-            Directories::getDir(Directories::CORE_TEMP_DIR) . '/',
-            '/tmp/' // Keep /tmp as fallback for temporary files
-        ];
-
-        // Normalize path to handle different mount points
-        $normalizedPath = realpath($filePath);
-        if ($normalizedPath === false) {
-            // If realpath fails, use original path
-            $normalizedPath = $filePath;
-        }
-
-        $isAllowed = false;
-        foreach ($allowedDirs as $dir) {
-            // Check both original and normalized paths
-            if (strpos($filePath, $dir) === 0 || strpos($normalizedPath, $dir) === 0) {
-                $isAllowed = true;
-                break;
-            }
-        }
-
-        if (!$isAllowed) {
-            $res->messages['error'][] = 'Access to this file location is not allowed';
-            return $res;
-        }
-
         // File missing on disk: return 410 Gone (not the default 422 "validation failed").
         // The DB record still exists, the file does not — usually the result of a previous
         // botched conversion or manual deletion. The UI uses 410 to render a "missing file"
         // badge and prompt the user to re-upload, instead of showing an opaque 422.
-        if (!file_exists($filePath) || filesize($filePath) === 0) {
+        //
+        // SECURITY (GHSA-p35v-9m9h-7w63): confine and read the RESOLVED path only.
+        // A prefix check on the raw path let "/tmp/../etc/x.wav" through while the
+        // OS resolved ".." at read time. A missing file is resolved through its
+        // parent directory, so 410 vs 403 does not reveal files outside the
+        // sound directories. A symlink inside an allowed directory must not reach
+        // a non-audio file either, so the extension is checked again.
+        $realPath = realpath($filePath);
+        if ($realPath === false) {
+            $realDir = realpath(dirname($filePath));
+            $isMissingAllowedFile = $realDir !== false
+                && self::isInAllowedDirectory($realDir . '/' . basename($filePath));
+            $res->messages['error'][] = $isMissingAllowedFile
+                ? 'File not found or empty on disk'
+                : 'Access to this file location is not allowed';
+            $res->httpCode = $isMissingAllowedFile ? 410 : 403;
+            return $res;
+        }
+        $extension = strtolower(Util::getExtensionOfFile($realPath));
+        if (!isset(self::MIME_TYPES[$extension]) || !self::isInAllowedDirectory($realPath)) {
+            $res->messages['error'][] = 'Access to this file location is not allowed';
+            $res->httpCode = 403;
+            return $res;
+        }
+        if (!is_file($realPath) || filesize($realPath) === 0) {
             $res->messages['error'][] = 'File not found or empty on disk';
             $res->httpCode = 410;
             return $res;
         }
+        // Default download name stays the requested one, not a symlink target's
+        $requestedName = basename($filePath);
+        $filePath = $realPath;
 
         // Determine content type based on file extension. $extension was already
         // validated against MIME_TYPES above, so the lookup never falls back here.
@@ -165,11 +153,44 @@ class PlaybackAction
 
         // Handle download mode
         if (!empty($data['download'])) {
-            $downloadName = $data['filename'] ?? basename($filePath);
+            $downloadName = $data['filename'] ?? $requestedName;
             $res->data['fpassthru']['download_name'] = $downloadName;
         }
 
         return $res;
+    }
+
+    /**
+     * Check that a resolved path lies inside one of the sound directories.
+     *
+     * The directories are resolved too: Directories returns /mountpoint/... paths
+     * that are symlinks to the storage disk.
+     *
+     * AST_MEDIA_DIR is included to keep playback working for SoundFiles rows
+     * migrated from MikoPBX ≤ 2022.x. Back then convertAudioFile saved user
+     * uploads directly under /storage/.../media/<file>.{mp3,wav}, not under
+     * /media/custom/. After upgrading, the row's path field still points at
+     * the legacy flat layout. The entry only widens reach within
+     * /media/<audio-extension> files because of the MIME_TYPES allowlist.
+     *
+     * @param string $realPath Path already resolved by realpath()
+     * @return bool
+     */
+    private static function isInAllowedDirectory(string $realPath): bool
+    {
+        $allowedDirs = [
+            Directories::getDir(Directories::AST_CUSTOM_SOUND_DIR),
+            Directories::getDir(Directories::AST_MOH_DIR),
+            Directories::getDir(Directories::AST_MEDIA_DIR),
+            Directories::getDir(Directories::AST_VAR_LIB_DIR) . '/sounds',
+        ];
+        foreach ($allowedDirs as $dir) {
+            $realDir = realpath($dir);
+            if ($realDir !== false && str_starts_with($realPath, $realDir . '/')) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -185,7 +206,8 @@ class PlaybackAction
             return 0.0;
         }
 
-        $cmd = "{$ffprobe} -v quiet -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . escapeshellarg($filePath) . " 2>/dev/null";
+        $cmd = "{$ffprobe} -v quiet -show_entries format=duration "
+            . "-of default=noprint_wrappers=1:nokey=1 " . escapeshellarg($filePath) . " 2>/dev/null";
         $output = [];
         $returnCode = 0;
 
