@@ -50,18 +50,3 @@ final class OutgoingContextAfterDialTest extends TestCase
         return $conf;
     }
 }
-
-/**
- * Skips the DI-backed constructor and module hooks; the context body is built from $rout only.
- */
-final class OutgoingContextTestFixture extends OutgoingContext
-{
-    public function __construct()
-    {
-    }
-
-    public function hookModulesMethod(string $methodName, array $arguments = []): string
-    {
-        return '';
-    }
-}
