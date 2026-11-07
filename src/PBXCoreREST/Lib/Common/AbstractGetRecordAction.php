@@ -258,6 +258,7 @@ abstract class AbstractGetRecordAction
                     $res->success = true;
                 } else {
                     $res->messages['error'][] = $notFoundMessage . " (ID: {$id})";
+                    $res->httpCode = 404; // Not Found
                 }
             }
             
