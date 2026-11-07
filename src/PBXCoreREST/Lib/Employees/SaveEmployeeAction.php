@@ -99,14 +99,15 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
      */
     public static function prepareData(array $data): array
     {
-        // Define sanitization rules
+        // Define sanitization rules. 'max:' truncates silently, so each limit must be at least
+        // the maxLength of the field in DataStructure::getParameterDefinitions().
         $sanitizationRules = [
             'id' => 'int',
-            'user_username' => 'string|sanitize|max:32',
-            'user_email' => 'string|sanitize|max:32',
+            'user_username' => 'string|sanitize|max:100',
+            'user_email' => 'string|sanitize|max:255',
             'user_avatar' => 'string|sanitize',
             'number' => 'string|max:64',
-            'sip_secret' => 'string|max:64',
+            'sip_secret' => 'string|max:100',
             'sip_networkfilterid' => 'string|max:64|empty_to_null',
             'sip_enableRecording' => 'bool',
             'sip_acceptMultipleCalls' => 'bool',

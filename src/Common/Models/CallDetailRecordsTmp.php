@@ -137,13 +137,11 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
             $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
 
             $rowData = $this->toArray();
-            $newKey = self::CACHE_KEY . ':' . $rowData['UNIQUEID'];
-            $idsList = $managedCache->getKeys(self::CACHE_KEY);
-            if ($isSave && !in_array($newKey, $idsList, true)) {
-                $idsList[$rowData['UNIQUEID']] = true;
-                $managedCache->set('Workers:Cdr:' . $rowData['UNIQUEID'], $rowData, 19200);
+            $cacheKey = self::CACHE_KEY . ':' . $rowData['UNIQUEID'];
+            if ($isSave) {
+                $managedCache->set($cacheKey, $rowData, 19200);
             } else {
-                $managedCache->delete('Workers:Cdr:' . $rowData['UNIQUEID']);
+                $managedCache->delete($cacheKey);
             }
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
