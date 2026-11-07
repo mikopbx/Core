@@ -61,7 +61,7 @@ class RecordingStorage extends ModelsBase
      *
      * @Column(type="string", nullable=false)
      */
-    public string $recordingfile;
+    public string $recordingfile = '';
 
     /**
      * Current storage location
