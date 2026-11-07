@@ -1576,7 +1576,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $config->disabled = $disabled ? '1' : '0';
 
             if (!$config->save()) {
-                $res->messages['error'] = $config->getMessages();
+                $res->messages['error'][] = implode(', ', $config->getMessages());
                 return $res;
             }
 
