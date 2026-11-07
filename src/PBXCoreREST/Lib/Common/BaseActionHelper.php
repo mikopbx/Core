@@ -288,13 +288,13 @@ class BaseActionHelper
                         break;
                     case 'min_length':
                         $minLength = $rule['value'] ?? 0;
-                        if (!empty($value) && strlen($value) < $minLength) {
+                        if (!empty($value) && mb_strlen((string)$value, 'UTF-8') < $minLength) {
                             $errors[$field] = $message;
                         }
                         break;
                     case 'max_length':
                         $maxLength = $rule['value'] ?? 0;
-                        if (!empty($value) && strlen($value) > $maxLength) {
+                        if (!empty($value) && mb_strlen((string)$value, 'UTF-8') > $maxLength) {
                             $errors[$field] = $message;
                         }
                         break;
