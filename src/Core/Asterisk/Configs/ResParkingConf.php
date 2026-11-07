@@ -138,11 +138,13 @@ class ResParkingConf extends AsteriskConfigClass
         $ParkeeChannel = null;
         $am            = Util::getAstManager('off');
         $res           = $am->ParkedCalls('default');
-        if (count($res['data']) === 0) {
+        // An unreachable AMI returns an empty response without the 'data' key
+        $parkedCalls   = $res['data']['ParkedCall'] ?? [];
+        if (count($parkedCalls) === 0) {
             return null;
         }
 
-        foreach ($res['data']['ParkedCall'] as $park_row) {
+        foreach ($parkedCalls as $park_row) {
             if ($park_row['ParkingSpace'] === $extension || $extension === null) {
                 $var_data                = $am->GetVar($park_row['ParkeeChannel'], 'pt1c_is_dst');
                 $park_row['pt1c_is_dst'] = ($var_data["Value"] === '1');

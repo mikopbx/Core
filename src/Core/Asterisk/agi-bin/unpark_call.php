@@ -45,7 +45,8 @@ function Event_unpark_call(AGI $agi): array
     $park_row = ResParkingConf::getParkSlotData($exten);
 
     $agi->set_variable("__pt1c_IS_PARK", "1");
-    $agi->set_variable("pt1c_PARK_CHAN", $park_row['ParkeeChannel']);
+    // getParkSlotData() returns null when the slot is empty or AMI is unreachable
+    $agi->set_variable("pt1c_PARK_CHAN", $park_row['ParkeeChannel'] ?? '');
 
     // Collecting data for generating CDR.
     $id      = $agi->request['agi_uniqueid'] . '_' . Util::generateRandomString();
@@ -56,7 +57,7 @@ function Event_unpark_call(AGI $agi): array
     $data['UNIQUEID']     = $id;
     $data['linkedid_old'] = $agi->get_variable("CHANNEL(linkedid)", true);
     $data['agi_channel']  = $channel;
-    $data['linkedid']     = $park_row['ParkeeLinkedid'];
+    $data['linkedid']     = $park_row['ParkeeLinkedid'] ?? $data['linkedid_old'];
     $data['start']        = $now;
     $data['transfer']     = '0';
     $data['did']          = $agi->get_variable("FROM_DID", true);
@@ -93,7 +94,7 @@ function Event_unpark_call(AGI $agi): array
         }
     }
 
-    if (trim($park_row['ParkingDuration']) !== '') {
+    if (null !== $park_row && trim($park_row['ParkingDuration'] ?? '') !== '') {
         $time_start           = date("Y-m-d H:i:s", time() - 1 * ($park_row['ParkingDuration']));
         $data_parking         = [
             'UNIQUEID' => $id . '_' . Util::generateRandomString(3),

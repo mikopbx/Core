@@ -1180,7 +1180,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/PbxAPI/asterisk-rest-users-api.js', true)
                 ->addJs('js/pbx/PbxAPI/network-filters-api.js', true)
-                ->addJs('js/src/AsteriskRestUsers/asterisk-rest-user-tooltip-manager.js', true)
+                ->addJs('js/pbx/AsteriskRestUsers/asterisk-rest-user-tooltip-manager.js', true)
                 ->addJs('js/pbx/AsteriskRestUsers/asterisk-rest-user-modify.js', true);
         }
     }
