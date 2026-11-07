@@ -86,7 +86,9 @@ class EraseFileAction extends Injectable
 
         if (!file_exists($filename)) {
             $res->success = false;
-            $res->messages[] = TranslationProvider::translate('rest_err_syslog_file_not_found') . ': ' . basename($filename);
+            $res->messages['error'][] = TranslationProvider::translate('rest_err_syslog_file_not_found')
+                . ': ' . basename($filename);
+            $res->httpCode = 404;
         } else {
             $echoPath = Util::which('echo');
             Processes::mwExec("$echoPath ' ' > " . escapeshellarg($filename));
