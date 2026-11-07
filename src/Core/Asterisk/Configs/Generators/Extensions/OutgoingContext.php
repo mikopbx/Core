@@ -299,7 +299,7 @@ class OutgoingContext extends AsteriskConfigClass
         }
 
         // Customize provider-specific outgoing context after Dial command
-        $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN}),1}" == "1"]?' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN},1)' . "\n\t";
+        $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN},1)}" == "1"]?' . $rout['providerid'] . '-outgoing-after-dial-custom,${EXTEN},1)' . "\n\t";
 
         // Perform transfer_dial_hangup if ISTRANSFER is set.
         // ARG1=return: see comment on the matching Gosub call in [outgoing]:_X. above.
