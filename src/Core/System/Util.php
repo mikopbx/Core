@@ -432,17 +432,24 @@ class Util
     public static function getBusyBoxCommands(): array
     {
         $filename = '/etc/busybox-commands';
-        if (!file_exists($filename)) {
-            // Get the list of BusyBox commands by executing busybox --list
-            Processes::mwExec('busybox --list', $output);
-            // Save the output to a file
-            file_put_contents($filename, implode("\n", $output));
-            return $output;
-        } else {
-            // Read the list from the file
-            $commands = file($filename, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $commands = file_exists($filename) ? file($filename, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : false;
+        if (is_array($commands) && $commands !== []) {
             return $commands;
         }
+
+        // Get the list of BusyBox commands by executing busybox --list
+        $output = [];
+        if (Processes::mwExec('busybox --list', $output) !== 0 || $output === []) {
+            // Do not cache an error message as a list of commands
+            return [];
+        }
+
+        // Write to a per-process temporary file and rename it, so a concurrent reader never sees a partial list
+        $tmpFile = $filename . '.' . getmypid();
+        if (file_put_contents($tmpFile, implode("\n", $output)) !== false && !rename($tmpFile, $filename)) {
+            unlink($tmpFile);
+        }
+        return $output;
     }
 
     /**
@@ -493,6 +500,9 @@ class Util
     {
         if (is_dir($dir)) {
             $objects = scandir($dir);
+            if ($objects === false) {
+                return;
+            }
 
             // Recursively delete files and subdirectories
             foreach ($objects as $object) {
@@ -505,10 +515,6 @@ class Util
                 }
             }
 
-            // Reset the array pointer and remove the directory
-            if ($objects !== false) {
-                reset($objects);
-            }
             rmdir($dir);
         }
     }
