@@ -25,6 +25,7 @@ require_once 'Globals.php';
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\{CustomFiles, PbxSettings};
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
@@ -161,7 +162,7 @@ class WorkerModelsEvents extends WorkerBase
 
             $workerKey = self::REDIS_PREFIX . self::class . ':' . getmypid();
             $this->withRedisRetry(
-                fn() => $this->managedCache->set($workerKey, $state, self::REDIS_TTL)
+                fn() => $this->redis->set($workerKey, $state, self::REDIS_TTL)
             );
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
@@ -174,10 +175,15 @@ class WorkerModelsEvents extends WorkerBase
     private function restoreStateFromRedis(): void
     {
         try {
-            // Try to find any previous state from this worker class (regardless of PID)
-            $keyPattern = self::REDIS_PREFIX . self::class . ':*';
-            $keys = $this->managedCache->getAdapter()->keys($keyPattern);
-            
+            // Try to find any previous state from this worker class (regardless of PID).
+            // getKeys() filters by plain prefix: a KEYS glob would treat the backslashes of
+            // the class name as escapes and match nothing. It returns the keys with the
+            // cache prefix, which get()/delete() add again, so strip it here.
+            $keys = array_map(
+                static fn(string $key) => str_replace(ManagedCacheProvider::CACHE_PREFIX, '', $key),
+                $this->redis->getKeys(self::REDIS_PREFIX . self::class . ':')
+            );
+
             if (empty($keys)) {
                 return;
             }
@@ -187,14 +193,14 @@ class WorkerModelsEvents extends WorkerBase
             $latestTime = 0;
             
             foreach ($keys as $key) {
-                $state = $this->managedCache->get($key);
+                $state = $this->redis->get($key);
                 if ($state && isset($state['timestamp']) && $state['timestamp'] > $latestTime) {
                     $latestKey = $key;
                     $latestTime = $state['timestamp'];
                 }
             }
             
-            $state = $this->managedCache->get($latestKey);
+            $state = $this->redis->get($latestKey);
             
             if ($state) {
                 $this->plannedReloadActions = $state['plannedReloadActions'] ?? [];
@@ -207,7 +213,7 @@ class WorkerModelsEvents extends WorkerBase
                 // fresh (usually empty) state on the next graceful shutdown.
                 foreach ($keys as $key) {
                     if ($key !== $latestKey) {
-                        $this->managedCache->delete($key);
+                        $this->redis->delete($key);
                     }
                 }
             }
@@ -266,6 +272,10 @@ class WorkerModelsEvents extends WorkerBase
     private function initializeWorker(): void
     {
         $this->beanstalkClient = $this->getBeanstalkClient();
+
+        // Resolved once here: the shutdown signal handler must not resolve DI services,
+        // and closeRedis() releases this connection on exit.
+        $this->redis = $this->di->getShared(ManagedCacheProvider::SERVICE_NAME);
 
         $this->last_change = time() - $this->timeout;
 
@@ -406,19 +416,22 @@ class WorkerModelsEvents extends WorkerBase
     }
     
     /**
-     * Signal handler to save state before shutdown
+     * Signal handler: persist the pending reload backlog and exit.
+     *
+     * Reload actions are not run here: they load classes and can take long, which is
+     * unsafe in an async signal context (WorkerBase, issue #1052). The next instance
+     * replays the backlog from Redis in restoreStateFromRedis().
      */
     public function handleShutdownSignal(int $signo): void
     {
-        SystemMessages::sysLogMsg(__METHOD__, "Received signal $signo. Saving state and exiting...", LOG_NOTICE);
-
-        // Process any pending reload actions before exit
-        $this->startReload();
-
-        // Save state to Redis
-        $this->saveStateToRedis();
-
-        // Exit gracefully
+        try {
+            SystemMessages::sysLogMsg(__METHOD__, "Received signal $signo. Saving state and exiting...", LOG_NOTICE);
+            $this->saveStateToRedis();
+        } catch (Throwable) {
+            // Shutdown must not be blocked by logging or Redis errors
+        } finally {
+            $this->closeRedis();
+        }
         exit(0);
     }
 
@@ -442,11 +455,14 @@ class WorkerModelsEvents extends WorkerBase
             $this->startReload();
         }
 
-        // Save state before exit
+        // Save state before exit, so a crash inside the actions below loses nothing
         $this->saveStateToRedis();
 
         // Execute all collected changes before exit
         $this->timeoutHandler();
+
+        // Persist what is left (normally nothing), so the next instance does not replay executed actions
+        $this->saveStateToRedis();
     }
 
     /**
