@@ -767,7 +767,7 @@ class WorkerCallEvents extends WorkerBase
         }
 
         // Construct the function name based on the action in the data array
-        $funcName = "Action_" . $data['action'] ?? '';
+        $funcName = "Action_" . ($data['action'] ?? '');
 
         // Check if the function exists in the current class and call it
         if (method_exists($this, $funcName)) {

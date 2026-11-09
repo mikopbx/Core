@@ -88,7 +88,7 @@ abstract class PbxExtensionBase extends Injectable
                 $this->moduleDir =  $modulesDir . '/' . $this->moduleUniqueId;
             }
         } else {
-            $this->moduleDir  = "$modulesDir$this->moduleUniqueId";
+            $this->moduleDir  = $modulesDir . '/' . $this->moduleUniqueId;
         }
 
         $className        = basename(str_replace('\\', '/', static::class));
