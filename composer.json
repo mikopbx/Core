@@ -22,7 +22,7 @@
         "aws/aws-sdk-php": "^3.359",
         "filp/whoops": "^2.15.2",
         "geoip2/geoip2": "v3.4.0",
-        "guzzlehttp/guzzle": "^7.5.3",
+        "guzzlehttp/guzzle": "^8.3.1",
         "lbuchs/webauthn": "^2.0",
         "league/oauth2-client": "^2.7",
         "league/oauth2-google": "^5.0",
