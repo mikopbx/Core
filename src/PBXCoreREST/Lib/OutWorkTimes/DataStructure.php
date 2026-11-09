@@ -352,9 +352,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         $lines = explode("\n", $description);
         $firstLine = trim($lines[0]);
 
-        // If line is too long, take first 50 characters
-        if (strlen($firstLine) > 50) {
-            return substr($firstLine, 0, 47) . '...';
+        // If line is too long, take first 50 characters (multibyte-safe: a byte cut breaks UTF-8 and JSON encoding)
+        if (mb_strlen($firstLine) > 50) {
+            return mb_substr($firstLine, 0, 47) . '...';
         }
 
         return $firstLine;
