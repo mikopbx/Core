@@ -31,7 +31,6 @@ use MikoPBX\Core\System\PasswordService;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\GeneralSettings\DataStructure;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di\Di;
 
 /**
  * SaveSettingsAction - saves general settings with validation
@@ -415,13 +414,9 @@ class SaveSettingsAction extends AbstractSaveRecordAction
     {
         $messages = ['error' => []];
         $defaultPbxSettings = PbxSettings::getDefaultArrayValues();
-        $di = Di::getDefault();
 
         // Reset update counter and field list
         self::$actualUpdatesCount = 0;
-
-        // Get security service for password hashing
-        $security = $di->getShared('security');
 
         // Get list of read-only settings
         $readOnlySettings = DataStructure::getReadOnlySettings();
@@ -529,7 +524,7 @@ class SaveSettingsAction extends AbstractSaveRecordAction
         }
 
         // Handle password synchronization for PATCH requests where only one password field is present
-        self::handlePasswordSynchronization($data, $defaultPbxSettings, $security, $messages['error']);
+        self::handlePasswordSynchronization($data, $defaultPbxSettings, $messages['error']);
 
         // Reset cloud provision flag only if something was actually updated
         if (self::$actualUpdatesCount > 0) {
@@ -548,12 +543,14 @@ class SaveSettingsAction extends AbstractSaveRecordAction
      *
      * @param array $data Request data containing passwords
      * @param array $defaultPbxSettings Default PBX settings values
-     * @param object $security Security service for password hashing
      * @param array $errorMessages Reference to error messages array
      * @return void
      */
-    private static function handlePasswordSynchronization(array $data, array $defaultPbxSettings, $security, array &$errorMessages): void
-    {
+    private static function handlePasswordSynchronization(
+        array $data,
+        array $defaultPbxSettings,
+        array &$errorMessages
+    ): void {
         $currentSSHPassword = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
         $currentWEBPassword = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
 
