@@ -222,21 +222,27 @@ const extensionsIndex = {
                     orderable: false,  // This column is not orderable
                     searchable: false  // This column is not searchable,
                 },
+                // render.text(): DataTables writes cell data as HTML before createdRow replaces it,
+                // so user-controlled values must be escaped here too (GHSA-qhh5-4p3h-6jwx)
                 {
                     name: 'username',
                     data: 'user_username',
+                    render: $.fn.dataTable.render.text(),
                 },
                 {
                     name: 'number',
                     data: 'number',
+                    render: $.fn.dataTable.render.text(),
                 },
                 {
                     name: 'mobile',
                     data: 'mobile',
+                    render: $.fn.dataTable.render.text(),
                 },
                 {
                     name: 'email',
                     data: 'user_email',
+                    render: $.fn.dataTable.render.text(),
                 },
                 {
                     name: 'buttons',
@@ -331,7 +337,8 @@ const extensionsIndex = {
                     $(this).off('error');
                     $(this).attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
                 });
-                $avatar.after(data.user_username);
+                // Text node, not HTML: the name is user-controlled (GHSA-qhh5-4p3h-6jwx)
+                $avatar.after(document.createTextNode(data.user_username || ''));
                 $templateRow.find('.number').text(data.number);
                 $templateRow.find('.mobile input').attr('value', data.mobile);
                 $templateRow.find('.email').text(data.user_email);
