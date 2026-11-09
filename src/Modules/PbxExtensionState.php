@@ -153,6 +153,11 @@ class PbxExtensionState extends Injectable
      */
     private function doEnableModule(): bool
     {
+        // The constructor leaves lic_feature_id unset when module.json is missing or
+        // broken; its message is already in $this->messages
+        if ($this->lic_feature_id === null) {
+            return false;
+        }
         if ($this->lic_feature_id > 0) {
             // Try to capture the feature if it is set
             $result = $this->license->featureAvailable($this->lic_feature_id);
@@ -263,7 +268,10 @@ class PbxExtensionState extends Injectable
             $previousRuleSettings = PbxSettings::findFirstByKey("{$this->moduleUniqueID}FirewallSettings");
             $previousRules        = [];
             if ($previousRuleSettings !== null) {
-                $previousRules = json_decode($previousRuleSettings->value, true);
+                $previousRules = json_decode((string)$previousRuleSettings->value, true);
+                if (!is_array($previousRules)) {
+                    $previousRules = [];
+                }
                 $previousRuleSettings->delete();
             }
             $errors   = [];
@@ -399,6 +407,10 @@ class PbxExtensionState extends Injectable
                 $workersToKill = call_user_func([$this->configClass, SystemConfigInterface::GET_MODULE_WORKERS]);
                 if (is_array($workersToKill)) {
                     foreach ($workersToKill as $moduleWorker) {
+                        // killByName() throws on an empty name and would abort the rest of the disable
+                        if (!is_array($moduleWorker) || empty($moduleWorker['worker'])) {
+                            continue;
+                        }
                         Processes::killByName($moduleWorker['worker']);
                     }
                 }
