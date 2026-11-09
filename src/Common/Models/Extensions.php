@@ -250,24 +250,46 @@ class Extensions extends ModelsBase
      */
     public static function getNextInternalNumber(): string
     {
-        $parameters = [
-            'column' => 'number',
+        $userNumbers = Extensions::find([
+            'columns' => 'number',
             'conditions' => 'type="' . Extensions::TYPE_SIP . '" and userid is not null'
-        ];
-        $started = Extensions::minimum($parameters);
-        if ($started === null) {
-            // If there are no existing internal numbers, start from 200
-            $started = 200;
-        }
+        ])->toArray();
 
-        $extensionsLength = PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH);
+        $extensionsLength = (int)PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH);
         $maxExtension = (10 ** $extensionsLength) - 1;
 
         $occupied = Extensions::find(['columns' => 'number'])->toArray();
-        $occupied = array_column($occupied, 'number');
 
+        return self::findFreeInternalNumber(
+            array_column($userNumbers, 'number'),
+            array_column($occupied, 'number'),
+            $maxExtension
+        );
+    }
+
+    /**
+     * Returns the first free number starting from the smallest existing internal number.
+     *
+     * The number column is TEXT, so the smallest number is computed numerically here:
+     * an SQL MIN() would compare strings and pick '1000' over '200'.
+     *
+     * @param array $userNumbers Numbers of existing internal (SIP user) extensions.
+     * @param array $occupied All numbers already in use.
+     * @param int $maxExtension Largest number allowed by the extension length setting.
+     * @return string The free number, or an empty string if none is available.
+     */
+    private static function findFreeInternalNumber(array $userNumbers, array $occupied, int $maxExtension): string
+    {
+        $numeric = array_map('intval', array_filter(
+            $userNumbers,
+            static fn($number) => is_string($number) && ctype_digit($number)
+        ));
+        // If there are no existing internal numbers, start from 200
+        $started = $numeric === [] ? 200 : min($numeric);
+
+        $occupied = array_flip(array_map('strval', $occupied));
         for ($i = $started; $i <= $maxExtension; $i++) {
-            if (!in_array((string)$i, $occupied)) {
+            if (!isset($occupied[(string)$i])) {
                 return (string)$i;
             }
         }

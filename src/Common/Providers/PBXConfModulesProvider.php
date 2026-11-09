@@ -50,25 +50,28 @@ class PBXConfModulesProvider implements ServiceProviderInterface
     {
         $di->setShared(
             self::SERVICE_NAME,
-            function (string $methodName=''){
+            function () {
                 $additionalModules = [];
                 $modules = PbxExtensionModules::getEnabledModulesArray();
                 foreach ($modules as $value) {
                     $className      = str_replace('Module', '', $value['uniqid']);
                     $fullClassName = "Modules\\{$value['uniqid']}\\Lib\\{$className}Conf";
-                    if (class_exists($fullClassName)) {
-                        $object = new $fullClassName();
-                        if ($object instanceof ConfigClass){
-                            $additionalModules[] = $object;
+                    try {
+                        if (class_exists($fullClassName)) {
+                            $object = new $fullClassName();
+                            if ($object instanceof ConfigClass) {
+                                $additionalModules[] = $object;
+                            }
                         }
+                    } catch (\Throwable $e) {
+                        // One broken module must not take the hooks of every other module down with it
+                        CriticalErrorsHandler::handleExceptionWithSyslog($e);
                     }
                 }
 
-                // Sort the array based on the priority value for $methodName
-                usort($additionalModules, function($a, $b) use ($methodName) {
-                    return $a->getMethodPriority($methodName) - $b->getMethodPriority($methodName);
-                });
-                return  $additionalModules;
+                // Default order; hookModulesMethod() re-sorts by the priority of each hook
+                self::sortByMethodPriority($additionalModules, '');
+                return $additionalModules;
             }
         );
     }
@@ -95,7 +98,9 @@ class PBXConfModulesProvider implements ServiceProviderInterface
     {
         $result            = [];
         $di = Di::getDefault();
-        $additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME, ['methodName'=>$methodName]);
+        $additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME);
+        // The shared list is built once per process, so the per-hook priority is applied here
+        self::sortByMethodPriority($additionalModules, $methodName);
 
         foreach ($additionalModules as $configClassObj) {
             try {
@@ -117,6 +122,19 @@ class PBXConfModulesProvider implements ServiceProviderInterface
         }
 
         return $result;
+    }
+
+    /**
+     * Sorts module config objects by their priority for the given hook (lower runs first).
+     *
+     * @param array  $modules    Module config objects.
+     * @param string $methodName Hook name passed to getMethodPriority().
+     */
+    private static function sortByMethodPriority(array &$modules, string $methodName): void
+    {
+        usort($modules, static function ($a, $b) use ($methodName) {
+            return $a->getMethodPriority($methodName) - $b->getMethodPriority($methodName);
+        });
     }
 
     /**
