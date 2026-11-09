@@ -447,13 +447,39 @@ class SystemConfiguration extends Injectable
         if ($di === null) {
             return false;
         }
-        $confFile    = $this->configDBPath;
-        $defaultConfFile =  self::DEFAULT_CONFIG_DB;
         $sqlite3 = Util::which('sqlite3');
-        $md5sum = Util::which('md5sum');
-        $cut = Util::which('cut');
-        $md5_1 = shell_exec("$sqlite3 $confFile .dump | $md5sum | $cut -f 1 -d ' '");
-        $md5_2 = shell_exec("$sqlite3 $defaultConfFile .dump | $md5sum | $cut -f 1 -d ' '");
-        return $md5_1 === $md5_2;
+        $currentDump = self::getDatabaseDumpHash($sqlite3, $this->configDBPath);
+        $defaultDump = self::getDatabaseDumpHash($sqlite3, self::DEFAULT_CONFIG_DB);
+        if ($currentDump === null || $defaultDump === null) {
+            // Without both dumps the answer is unknown. Report "not default" so a boot
+            // never overwrites the live configuration with a backup on a tooling failure.
+            SystemMessages::sysLogMsg(
+                'SystemConfiguration',
+                'isDefaultConf: could not dump the configuration databases, assuming a non-default configuration',
+                LOG_WARNING
+            );
+            return false;
+        }
+        return $currentDump === $defaultDump;
+    }
+
+    /**
+     * Returns the md5 of an SQLite database dump, or null when sqlite3 fails or prints nothing.
+     *
+     * @param string $sqlite3 Path to the sqlite3 binary.
+     * @param string $dbFile Database file to dump.
+     * @return string|null
+     */
+    private static function getDatabaseDumpHash(string $sqlite3, string $dbFile): ?string
+    {
+        $output = [];
+        $exitCode = Processes::mwExec(
+            escapeshellarg($sqlite3) . ' ' . escapeshellarg($dbFile) . ' .dump',
+            $output
+        );
+        if ($exitCode !== 0 || $output === []) {
+            return null;
+        }
+        return md5(implode("\n", $output));
     }
 }

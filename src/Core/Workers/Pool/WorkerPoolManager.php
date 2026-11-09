@@ -47,7 +47,7 @@ class WorkerPoolManager extends Injectable
             'peak_memory' => memory_get_peak_usage(true)
         ];
         
-        // Store worker data with TTL
+        // Store worker data; stale entries are dropped by getActiveWorkers() via isWorkerAlive()
         $this->redis->hSet(
             self::REDIS_PREFIX . $workerClass,
             $workerKey,
@@ -56,9 +56,6 @@ class WorkerPoolManager extends Injectable
         
         // Add to global registry
         $this->redis->sAdd(self::REDIS_REGISTRY, $workerClass);
-        
-        // Set expiration for the worker entry
-        $this->redis->expire(self::REDIS_PREFIX . $workerClass . ':' . $workerKey, self::WORKER_TTL);
         
         SystemMessages::sysLogMsg(
             __CLASS__,
@@ -95,9 +92,6 @@ class WorkerPoolManager extends Injectable
             $workerKey,
             json_encode($workerData)
         );
-        
-        // Refresh TTL
-        $this->redis->expire(self::REDIS_PREFIX . $workerClass . ':' . $workerKey, self::WORKER_TTL);
         
         return true;
     }
