@@ -1004,23 +1004,22 @@ const extension = {
      * @param {string} extensionNumber - Extension number (optional)
      */
     updatePageHeader(employeeName, extensionNumber) {
-        let headerText;
+        const $header = $('h1 .content');
 
         if (employeeName && employeeName.trim() !== '') {
-            // Existing employee with name
-            headerText = '<i class="user outline icon"></i> ' + employeeName;
+            // Existing employee with name: user-controlled values go in as text (GHSA-qhh5-4p3h-6jwx)
+            let headerText = employeeName;
 
             // Add extension number if available
             if (extensionNumber && extensionNumber.trim() !== '') {
-                headerText += ' &lt;' + extensionNumber + '&gt;';
+                headerText += ` <${extensionNumber}>`;
             }
+
+            $header.empty().append($('<i>').addClass('user outline icon'), ' ', document.createTextNode(headerText));
         } else {
             // New employee or no name yet
-            headerText = globalTranslate.ex_CreateNewExtension;
+            $header.html(globalTranslate.ex_CreateNewExtension);
         }
-
-        // Update main header content
-        $('h1 .content').html(headerText);
     }
 };
 
