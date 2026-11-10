@@ -183,11 +183,21 @@ class PbxSettings extends ModelsBase
             foreach (PbxSettings::find()->toArray() as $record) {
                 $fresh[$record['key']] = (string)$record['value'];
             }
+            // MULTI: readers see the old or the new hash, never an empty or partial one.
+            $redis->multi();
             $redis->del(self::CACHE_KEY);
             if ($fresh !== []) {
                 $redis->hMSet(self::CACHE_KEY, $fresh);
             }
+            $redis->exec();
         } catch (\Throwable $e) {
+            // Never leave the shared connection in MULTI mode.
+            try {
+                if (isset($redis) && $redis->getMode() === \Redis::MULTI) {
+                    $redis->discard();
+                }
+            } catch (\Throwable) {
+            }
             CriticalErrorsHandler::handleException($e);
         }
     }
@@ -232,7 +242,14 @@ class PbxSettings extends ModelsBase
                 $keyExistsInRedis = $redis->hexists(self::CACHE_KEY, $key);
                 
                 if ($keyExistsInRedis) {
-                    $value = $redis->hget(self::CACHE_KEY, $key);
+                    $cached = $redis->hget(self::CACHE_KEY, $key);
+                    if (is_string($cached)) {
+                        $value = $cached;
+                    } else {
+                        // The field vanished between hexists() and hget(): hget() returned false,
+                        // which must not be cached as "". Treat it as a cache miss.
+                        $keyExistsInRedis = false;
+                    }
                 }
             }
             
