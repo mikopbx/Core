@@ -22,8 +22,10 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Middleware;
 
+use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\LoggerAuthProvider;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\PBXCoreREST\Http\Request;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\Auth\JWTHelper;
@@ -362,10 +364,14 @@ class AuthenticationMiddleware implements MiddlewareInterface
         // Parse request URI into controller and action
         [$controller, $action] = $this->parseRequestToAcl($request);
 
-        // If we couldn't parse the request, allow by default (let controller handle it)
-        // WHY: Some routes may not follow standard REST patterns
+        // GHSA-22j3-qrgc-8hgv: fail closed. A registered route whose path cannot be mapped
+        // to an ACL component (legacy /pbxcore/api/modules/*, module Pattern-2 custom
+        // prefixes, unknown module) must NOT fall through to "allowed" — that let a
+        // restricted ModuleUsersUI role reach every module callback (e.g. ModuleBackup ->
+        // mikopbx.db -> JWTSecret -> root). admins / fullAccess / localhost are already
+        // short-circuited above, so this only denies non-admin roles on unmapped routes.
         if ($controller === null || $action === null) {
-            return self::ACL_ALLOWED;
+            return self::ACL_DENIED;
         }
 
         // Check if role is allowed to access controller/action
@@ -503,6 +509,15 @@ class AuthenticationMiddleware implements MiddlewareInterface
         }
         $httpMethod = $request->getMethod();
 
+        // GHSA-22j3-qrgc-8hgv: legacy module routes /pbxcore/api/modules/{Module}/{action}
+        // are not versioned, so the v\d+ matcher below misses them. Map them to the ACL
+        // component ModuleUsersUI registers for the module (/pbxcore/api/modules/<kebab>)
+        // so the ACL is actually evaluated instead of falling through to "allowed".
+        $legacy = $this->parseLegacyModuleRoute($uri);
+        if ($legacy !== null) {
+            return $legacy;
+        }
+
         // Match REST API pattern: /pbxcore/api/{version}/{resource}...
         // Supports any version (v1, v2, v3, v4, v5, etc.)
         if (!preg_match('#^(/pbxcore/api/v\d+/)(.+)$#', $uri, $matches)) {
@@ -545,6 +560,78 @@ class AuthenticationMiddleware implements MiddlewareInterface
         };
 
         return [$controller, $action];
+    }
+
+    /**
+     * Map a legacy module route to its ACL component and action.
+     *
+     * Legacy third-party modules are reachable under the unversioned path
+     * /pbxcore/api/modules/{Module}/{action}[/...] (see RouterProvider::LEGACY_ROUTES and
+     * each module's getPBXCoreRESTAdditionalRoutes()). These never match the versioned
+     * REST matcher, so before GHSA-22j3-qrgc-8hgv they slipped past the ACL entirely.
+     *
+     * The component name mirrors what ModuleUsersUI registers for the module
+     * (GetDetailedPermissionsAction + ModuleUsersUI\Lib\UsersUIACL):
+     *   /pbxcore/api/modules/<uncamelize(moduleUniqueId, '-')>
+     * granted with the '*' action. The first path segment after the module name is used as
+     * the ACL action, which the '*' grant covers.
+     *
+     * The module name from the URL is resolved against the installed-modules list
+     * case-insensitively (matching PbxExtensionsProcessor::callBack, which dispatches with
+     * strcasecmp), so a non-canonical spelling cannot evade the ACL by producing a
+     * different component name. An unresolved module returns null → the caller fails closed.
+     *
+     * @param string $uri Trusted routed path
+     * @return array{0: string, 1: string}|null [component, action], or null when the path is
+     *                                           not a legacy module route or the module is unknown
+     */
+    private function parseLegacyModuleRoute(string $uri): ?array
+    {
+        if (!preg_match('#^/pbxcore/api/modules/([^/]+)/([^/?]+)#', $uri, $m)) {
+            return null;
+        }
+
+        $canonical = $this->resolveModuleUniqueId($m[1]);
+        if ($canonical === null) {
+            // Unknown module: fail closed (deny) rather than guess a component name.
+            return null;
+        }
+
+        $component = '/pbxcore/api/modules/' . Text::uncamelize($canonical, '-');
+        $action    = $m[2];
+
+        return [$component, $action];
+    }
+
+    /**
+     * Resolve a URL module name to the canonical installed moduleUniqueId.
+     *
+     * Case-insensitive, mirroring PbxExtensionsProcessor dispatch. Returns null when no
+     * enabled module matches or the module registry is unavailable (fail closed).
+     *
+     * @param string $moduleName Module name as it appears in the URL
+     * @return string|null Canonical moduleUniqueId or null
+     */
+    private function resolveModuleUniqueId(string $moduleName): ?string
+    {
+        try {
+            $configObjects = $this->getDI()->getShared(PBXConfModulesProvider::SERVICE_NAME);
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        if (empty($configObjects) || !is_iterable($configObjects)) {
+            return null;
+        }
+
+        foreach ($configObjects as $configObject) {
+            $uniqueId = $configObject->moduleUniqueId ?? '';
+            if ($uniqueId !== '' && strcasecmp($uniqueId, $moduleName) === 0) {
+                return $uniqueId;
+            }
+        }
+
+        return null;
     }
 
     /**
