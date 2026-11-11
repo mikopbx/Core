@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Core\System\Configs\DnsConf;
+use MikoPBX\Core\Utilities\IpAddressHelper;
 
 /**
  * Class Udhcpc
@@ -201,7 +202,7 @@ class Udhcpc extends Network
 
         // Set MTU (skip when skipNetworkCommands is true)
         if (!$skipNetworkCommands) {
-            Processes::mwExec("/etc/rc/networking_set_mtu '{$env_vars['interface']}'");
+            Processes::mwExec('/etc/rc/networking_set_mtu ' . escapeshellarg($env_vars['interface']));
         }
     }
 
@@ -296,7 +297,7 @@ class Udhcpc extends Network
             }
 
             // Add custom static routes if any are provided.
-            $this->addStaticRoutes($env_vars['staticroutes'], $env_vars['interface']);
+            $this->addStaticRoutes($env_vars['staticroutes'], $env_vars['interface'], $is_inet === 1);
 
             // Add custom routes.
             $this->addCustomStaticRoutes($env_vars['interface']);
@@ -355,7 +356,7 @@ class Udhcpc extends Network
 
         // Set MTU (skip when skipNetworkCommands is true)
         if (!$skipNetworkCommands) {
-            Processes::mwExec("/etc/rc/networking_set_mtu '{$env_vars['interface']}'");
+            Processes::mwExec('/etc/rc/networking_set_mtu ' . escapeshellarg($env_vars['interface']));
         }
     }
 
@@ -365,31 +366,112 @@ class Udhcpc extends Network
      *
      * @param string $staticRoutes The static routes string from DHCP, format: "destination gateway"
      * @param string $interface The network interface to add routes to, e.g., eth0
+     * @param bool $isInternet Whether the interface is the internet interface; only then a default route is allowed
      * @return void
      */
-    private function addStaticRoutes(string $staticRoutes, string $interface): void
+    private function addStaticRoutes(string $staticRoutes, string $interface, bool $isInternet): void
     {
-        if (empty($staticRoutes)) {
-            return;
+        $rejected = [];
+        $routes = self::parseStaticRoutes($staticRoutes, $isInternet, $rejected);
+        foreach ($rejected as $item) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                'Ignoring DHCP static route: ' . addcslashes($item, "\0..\37\177"),
+                LOG_WARNING
+            );
         }
-
-        // Split the static routes string into individual routes.
-        $routes = explode(' ', $staticRoutes);
-        $processedRoutes = []; // To keep track of processed routes and avoid duplicates.
 
         $ip = Util::which('ip');
+        foreach ($routes as [$destination, $gateway]) {
+            Processes::mwExec(self::buildStaticRouteCommand($ip, $destination, $gateway, $interface));
+        }
+    }
 
-        // Iterate through the routes, adding each to the system.
-        $countRoutes = count($routes);
-        for ($i = 0; $i < $countRoutes; $i += 2) {
-            $destination = $routes[$i];
-            $gateway = $routes[$i + 1] ?? '';
+    /**
+     * Parse the DHCP `staticroutes` option into validated route pairs.
+     *
+     * The value comes from the DHCP server and is untrusted. Only IPv4 destinations
+     * (optionally with a /0-32 prefix) and IPv4 gateways are accepted; anything else is
+     * skipped and reported in $rejected. A /0 destination is a default route and, like the
+     * `router` option, is accepted only for the internet interface. Duplicate destinations
+     * keep the first gateway.
+     *
+     * @param string $staticRoutes Space-separated "destination gateway" pairs.
+     * @param bool $allowDefaultRoute Whether a /0 destination may be installed.
+     * @param array<int, string> $rejected Receives the skipped pairs or the unpaired trailing item, with a reason.
+     * @return array<int, array{0: string, 1: string}> List of [destination, gateway].
+     */
+    private static function parseStaticRoutes(
+        string $staticRoutes,
+        bool $allowDefaultRoute,
+        array &$rejected = []
+    ): array {
+        $rejected = [];
+        $items = preg_split('/\s+/', trim($staticRoutes), -1, PREG_SPLIT_NO_EMPTY);
+        if (empty($items)) {
+            return [];
+        }
 
-            // Check if the route has already been processed to prevent duplicates.
-            if (!empty($destination) && !empty($gateway) && !in_array($destination, $processedRoutes)) {
-                Processes::mwExec("$ip route add $destination via $gateway dev $interface");
-                $processedRoutes[] = $destination; // Mark this route as processed.
+        $routes = [];
+        $countItems = count($items);
+        for ($i = 0; $i + 1 < $countItems; $i += 2) {
+            $destination = self::normalizeRouteDestination($items[$i]);
+            $gateway = $items[$i + 1];
+
+            if ($destination === null || !IpAddressHelper::isIpv4($gateway)) {
+                $rejected[] = "{$items[$i]} $gateway (invalid address)";
+                continue;
+            }
+            if (!$allowDefaultRoute && str_ends_with($destination, '/0')) {
+                $rejected[] = "$destination $gateway (default route on non-internet interface)";
+                continue;
+            }
+            if (!array_key_exists($destination, $routes)) {
+                $routes[$destination] = [$destination, $gateway];
             }
         }
+        if ($countItems % 2 !== 0) {
+            $rejected[] = $items[$countItems - 1] . ' (unpaired item)';
+        }
+
+        return array_values($routes);
+    }
+
+    /**
+     * Normalize a route destination: an IPv4 address or IPv4 CIDR with a /0-32 prefix.
+     *
+     * @param string $destination Destination as received from DHCP.
+     * @return string|null "address/prefix", the bare address, or null when invalid.
+     */
+    private static function normalizeRouteDestination(string $destination): ?string
+    {
+        if (!str_contains($destination, '/')) {
+            return IpAddressHelper::isIpv4($destination) ? $destination : null;
+        }
+        $cidr = IpAddressHelper::normalizeCidr($destination);
+        if ($cidr === false || $cidr['version'] !== IpAddressHelper::IP_VERSION_4) {
+            return null;
+        }
+        return "{$cidr['ip']}/{$cidr['prefix']}";
+    }
+
+    /**
+     * Build the shell command that adds one static route.
+     *
+     * @param string $ip Path to the ip binary.
+     * @param string $destination Validated destination.
+     * @param string $gateway Validated gateway.
+     * @param string $interface Network interface name.
+     * @return string
+     */
+    private static function buildStaticRouteCommand(
+        string $ip,
+        string $destination,
+        string $gateway,
+        string $interface
+    ): string {
+        return "$ip route add " . escapeshellarg($destination)
+            . ' via ' . escapeshellarg($gateway)
+            . ' dev ' . escapeshellarg($interface);
     }
 }
