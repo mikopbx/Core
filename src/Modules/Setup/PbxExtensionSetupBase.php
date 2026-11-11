@@ -564,7 +564,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      */
     public function addToSidebar(): bool
     {
-        $menuSettingsKey           = "AdditionalMenuItem$this->moduleUniqueID";
+        $menuSettingsKey           = PbxExtensionModules::getMenuSettingsKey($this->moduleUniqueID);
         $menuSettings              = PbxSettings::findFirstByKey($menuSettingsKey);
         if ($menuSettings === null) {
             $menuSettings      = new PbxSettings();

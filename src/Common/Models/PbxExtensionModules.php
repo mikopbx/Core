@@ -129,6 +129,17 @@ class PbxExtensionModules extends ModelsBase
     public ?string $disableReasonText = '';
 
     /**
+     * Returns the PbxSettings key that stores the sidebar menu settings of a module.
+     *
+     * @param string $uniqid Module unique id
+     * @return string
+     */
+    public static function getMenuSettingsKey(string $uniqid): string
+    {
+        return "AdditionalMenuItem$uniqid";
+    }
+
+    /**
      * Prepares an array of enabled modules params for reading
      * @return array
      */

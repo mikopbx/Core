@@ -1,7 +1,5 @@
 {{ form(['action' : 'pbx-extension-modules/save', 'method': 'post', 'role': 'form', 'class': 'ui large form','id':'pbx-extension-modify-form']) }}
 <div class="ui header">{{ title }}</div>
-{{ form.render('key') }}
-{{ form.render('href') }}
 {{ form.render('iconClass') }}
 {{ form.render('uniqid') }}
 

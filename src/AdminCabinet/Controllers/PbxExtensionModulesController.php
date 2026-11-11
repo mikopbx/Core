@@ -24,10 +24,12 @@ use MikoPBX\AdminCabinet\Forms\LicensingActivateCouponForm;
 use MikoPBX\AdminCabinet\Forms\LicensingChangeLicenseKeyForm;
 use MikoPBX\AdminCabinet\Forms\LicensingGetKeyForm;
 use MikoPBX\AdminCabinet\Forms\PbxExtensionModuleSettingsForm;
+use MikoPBX\AdminCabinet\Providers\ElementsProvider;
 use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Modules\PbxExtensionState;
+use MikoPBX\PBXCoreREST\Lib\Modules\DataStructure as ModulesDataStructure;
 
 class PbxExtensionModulesController extends BaseController
 {
@@ -108,8 +110,11 @@ class PbxExtensionModulesController extends BaseController
      */
     public function modifyAction(string $uniqid): void
     {
-        $menuSettings = "AdditionalMenuItem$uniqid";
-        $unCamelizedControllerName = Text::uncamelize($uniqid, '-');
+        if (!$this->isInstalledModule($uniqid)) {
+            $this->forward('errors/show404');
+            return;
+        }
+        $menuSettings = PbxExtensionModules::getMenuSettingsKey($uniqid);
         $previousMenuSettings = PbxSettings::findFirstByKey($menuSettings);
         $this->view->showAtMainMenu = $previousMenuSettings !== false;
         if ($previousMenuSettings === null) {
@@ -117,7 +122,6 @@ class PbxExtensionModulesController extends BaseController
             $previousMenuSettings->key = $menuSettings;
             $value = [
                 'uniqid' => $uniqid,
-                'href' => $this->url->get($unCamelizedControllerName),
                 'group' => 'modules',
                 'iconClass' => 'puzzle piece',
                 'caption' => "Breadcrumb$uniqid",
@@ -147,18 +151,41 @@ class PbxExtensionModulesController extends BaseController
         }
         $data = $this->request->getPost();
 
-        $record = PbxSettings::findFirstByKey($data['key']);
+        // The settings key is derived from an installed module id, never taken from the request,
+        // otherwise any PbxSettings key (admin password, ports) could be overwritten.
+        $uniqid = $data['uniqid'] ?? '';
+        if (!$this->isInstalledModule($uniqid)) {
+            $this->flash->error($this->translation->_('cm_ModuleNotFound'));
+            $this->view->success = false;
+
+            return;
+        }
+        $caption = is_string($data['caption'] ?? null) ? trim($data['caption']) : '';
+        if ($caption === '') {
+            $this->flash->error($this->translation->_('ext_ValidateCaptionEmpty'));
+            $this->view->success = false;
+
+            return;
+        }
+        $group = is_string($data['menu-group'] ?? null) ? $data['menu-group'] : '';
+        $menuGroups = $this->di->get(ElementsProvider::SERVICE_NAME)->getMenuGroups();
+        if (!array_key_exists($group, $menuGroups)) {
+            $group = 'modules';
+        }
+
+        $menuSettingsKey = PbxExtensionModules::getMenuSettingsKey($uniqid);
+        $record = PbxSettings::findFirstByKey($menuSettingsKey);
         if ($record === null) {
             $record = new PbxSettings();
-            $record->key = $data['key'];
+            $record->key = $menuSettingsKey;
         }
+        $iconClass = $data['iconClass'] ?? '';
         $value = [
-            'uniqid' => $data['uniqid'],
-            'href' => $data['href'],
-            'group' => $data['menu-group'],
-            'iconClass' => preg_replace('/[^a-zA-Z0-9\s\-_]/', '', $data['iconClass'] ?? ''),
-            'caption' => $data['caption'],
-            'showAtSidebar' => $data['show-at-sidebar'] === 'on',
+            'uniqid' => $uniqid,
+            'group' => $group,
+            'iconClass' => is_string($iconClass) ? preg_replace('/[^a-zA-Z0-9\s\-_]/', '', $iconClass) : '',
+            'caption' => $caption,
+            'showAtSidebar' => ($data['show-at-sidebar'] ?? '') === 'on',
         ];
         $record->value = json_encode($value);
         if ($record->save() === false) {
@@ -170,5 +197,17 @@ class PbxExtensionModulesController extends BaseController
         }
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
         $this->view->success = true;
+    }
+
+    /**
+     * Checks that the value is a well-formed id of an installed module.
+     *
+     * @param mixed $uniqid Module unique id from the request
+     * @return bool
+     */
+    private function isInstalledModule(mixed $uniqid): bool
+    {
+        return ModulesDataStructure::isValidUniqid($uniqid)
+            && PbxExtensionModules::findFirstByUniqid($uniqid) !== null;
     }
 }

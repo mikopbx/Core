@@ -338,12 +338,13 @@ class Elements extends Injectable
                     $escapedIconClass = htmlspecialchars($groupparams['iconclass'], ENT_QUOTES, 'UTF-8');
                     $groupHtml .= "<i class='{$escapedIconClass} icon'></i>";
                 }
-                $groupHtml .= $this->translation->_($groupparams['caption']) . '</div>';
-                $groupHtml .= "<div class='menu' data-group='$group'>";
+                $groupHtml .= $this->getEscapedCaption($groupparams['caption']) . '</div>';
+                $escapedGroup = htmlspecialchars((string)$group, ENT_QUOTES, 'UTF-8');
+                $groupHtml .= "<div class='menu' data-group='$escapedGroup'>";
                 foreach ($groupparams['submenu'] as $controller => $option) {
                     if ($this->ifItPossibleToShowThisElement($controller, $option['action'])) {
                         $link = $this->getLinkToControllerAction($controller, $option['action'], $option['param']);
-                        $caption = $this->translation->_($option['caption']);
+                        $caption = $this->getEscapedCaption($option['caption']);
                         $groupHtml .= "<a class='item {$option['style']}' href='$link'";
                         if (isset($option['data-value'])) {
                             $groupHtml .= " data-value='{$option['data-value']}'";
@@ -360,7 +361,7 @@ class Elements extends Injectable
                 $groupHtml .= '</div>';
             } elseif ($this->ifItPossibleToShowThisElement($group, $groupparams['action'] ?? 'index')) {
                     $link = $this->getLinkToControllerAction($group, $groupparams['action'], $groupparams['param']);
-                    $caption = $this->translation->_($groupparams['caption']);
+                    $caption = $this->getEscapedCaption($groupparams['caption']);
                     $escapedIconClass = htmlspecialchars($groupparams['iconclass'], ENT_QUOTES, 'UTF-8');
                     $groupHtml .= "<a class='item {$groupparams['style']}' href='$link'>
                     	    <i class='{$escapedIconClass} icon'></i>{$caption}
@@ -372,6 +373,24 @@ class Elements extends Injectable
             }
         }
         echo $resultHtml;
+    }
+
+    /**
+     * Translates a menu caption and escapes it for HTML output.
+     *
+     * Module captions are free text saved from the module settings form,
+     * so they must never reach the page as markup.
+     *
+     * @param mixed $caption Translation key or plain caption; non-strings render as empty
+     * @return string
+     */
+    private function getEscapedCaption(mixed $caption): string
+    {
+        if (!is_string($caption)) {
+            return '';
+        }
+
+        return htmlspecialchars($this->translation->_($caption), ENT_QUOTES, 'UTF-8');
     }
 
     /**
@@ -447,7 +466,7 @@ class Elements extends Injectable
             if (!class_exists($moduleMainController) || !method_exists($moduleMainController, 'indexAction')) {
                 continue;
             }
-            $menuSettingsKey = "AdditionalMenuItem$moduleUniqId";
+            $menuSettingsKey = PbxExtensionModules::getMenuSettingsKey($moduleUniqId);
             $menuSettings = PbxSettings::findFirstByKey($menuSettingsKey);
             if ($menuSettings !== null) {
                 $menuItem = json_decode($menuSettings->value, true);

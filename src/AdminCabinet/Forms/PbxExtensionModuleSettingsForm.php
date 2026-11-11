@@ -39,12 +39,6 @@ class PbxExtensionModuleSettingsForm extends BaseForm
         // ModuleUniqId
         $this->add(new Hidden('uniqid', ['value' => $options['uniqid']]));
 
-        // Key
-        $this->add(new Hidden('key', ['value' => $entity->key]));
-
-        // Href
-        $this->add(new Hidden('href', ['value' => $options['href']]));
-
         // IconClass
         $this->add(new Hidden('iconClass', ['value' => $options['iconClass']]));
 
