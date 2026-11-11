@@ -45,6 +45,11 @@ class PbxSettings extends ModelsBase
     private const string CACHE_KEY = 'PbxSettings';
 
     /**
+     * Value getValueByKey() returns for a key that is neither stored nor listed in the defaults.
+     */
+    public const string UNKNOWN_KEY_VALUE = 'UNKNOWN KEY ADD IT TO DEFAULT VALUES';
+
+    /**
      * Settings that hold a TCP/UDP port number.
      *
      * @var array<string>
@@ -232,7 +237,7 @@ class PbxSettings extends ModelsBase
      */
     public static function getValueByKey(string $key, bool $useCache = true): string
     {
-        $value = 'UNKNOWN KEY ADD IT TO DEFAULT VALUES';
+        $value = self::UNKNOWN_KEY_VALUE;
         $keyExistsInRedis = false;
         $keyExistsInDB = false;
         

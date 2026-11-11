@@ -126,7 +126,7 @@ class GetSettingsAction extends AbstractGetRecordAction
         $value = PbxSettings::getValueByKey($key);
         
         // Check if this is an unknown key
-        if ($value === 'UNKNOWN KEY ADD IT TO DEFAULT VALUES') {
+        if ($value === PbxSettings::UNKNOWN_KEY_VALUE) {
             $res->messages['error'][] = "Unknown setting key: {$key}";
             return $res;
         }
@@ -178,7 +178,7 @@ class GetSettingsAction extends AbstractGetRecordAction
             $value = PbxSettings::getValueByKey($key);
             
             // Track unknown keys but don't fail the entire request
-            if ($value === 'UNKNOWN KEY ADD IT TO DEFAULT VALUES') {
+            if ($value === PbxSettings::UNKNOWN_KEY_VALUE) {
                 $unknownKeys[] = $key;
                 continue;
             }
