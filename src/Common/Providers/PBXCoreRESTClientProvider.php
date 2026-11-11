@@ -23,7 +23,7 @@ namespace MikoPBX\Common\Providers;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Psr7\Message;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxSettings;
@@ -176,8 +176,10 @@ class PBXCoreRESTClientProvider implements ServiceProviderInterface
             $res->data = $result['data'] ?? [];
             $res->messages = $result['messages'] ?? ['error' => 'Unable to parse response from core rest api'];
             $res->success = $result['result'] ?? false;
-        } catch (ConnectException $e) {
-            // Handle connection errors (empty reply, connection refused, etc.)
+        } catch (NetworkException $e) {
+            // No-response failures: connection refused, empty reply, timeouts.
+            // Guzzle 8 raises NetworkTimeoutException/NetworkException for these,
+            // which do not extend ConnectException.
             // These are expected during startup/restart and should not generate critical errors
             $message = "REST API connection error: " . $e->getMessage() . " for URL: " . $url;
             SystemMessages::sysLogMsg(__METHOD__, $message, LOG_WARNING);
