@@ -75,10 +75,9 @@ class ModuleDownloadService
 
         $curl = new GuzzleHttp\Handler\CurlMultiHandler();
         $handler = GuzzleHttp\HandlerStack::create($curl);
-        $client = new GuzzleHttp\Client();
+        $client = new GuzzleHttp\Client(['handler' => $handler]);
         $lastCallbackAt = 0;
         $promise = $client->getAsync($url, [
-            'handler' => $handler,
             'sink' => $targetFile,
             'connect_timeout' => 5,
             'on_headers' => function (ResponseInterface $response): void {
@@ -98,7 +97,9 @@ class ModuleDownloadService
                 }
             },
         ]);
-        $promise->then(
+        // Wait on the then() promise: with guzzlehttp/promises 3 the source
+        // promise turns fulfilled before its then() callbacks have run
+        $promise = $promise->then(
             function (ResponseInterface $res): void {
                 $this->httpCode = $res->getStatusCode();
             },
