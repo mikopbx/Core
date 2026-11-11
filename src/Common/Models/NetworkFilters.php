@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Core\System\SystemMessages;
 use Phalcon\Di\Di;
 use Phalcon\Mvc\Model\Relation;
 use Phalcon\Mvc\Model\ResultsetInterface;
@@ -30,6 +31,8 @@ use Phalcon\Mvc\Model\ResultsetInterface;
  * @property Sip $Sip
  * @property FirewallRules $FirewallRules
  * @property AsteriskManagerUsers $AsteriskManagerUsers
+ * @property Iax $Iax
+ * @property ApiKeys $ApiKeys
  */
 class NetworkFilters extends ModelsBase
 {
@@ -85,6 +88,50 @@ class NetworkFilters extends ModelsBase
     public ?string $priority = '0';
 
     /**
+     * networkfilterid value of AMI users and API keys restricted to local connections
+     */
+    public const string LOCALHOST_FILTER_ID = 'localhost';
+
+    /**
+     * Networks of both address families, in the comma-separated form Asterisk ACLs accept
+     */
+    public const string ACL_LOCALHOST = '127.0.0.1/32,::1/128';
+    public const string ACL_ANY = '0.0.0.0/0,::/0';
+
+    /**
+     * Resolves permit/deny networks of the filter a record is bound to
+     *
+     * An empty id ('', '0', 'none') means no restriction, 'localhost' allows local connections only.
+     * A reference to a deleted filter must not silently drop the restriction, so it resolves to the
+     * localhost-only ACL as well.
+     *
+     * @param string|null $filterId Value of the record's networkfilterid
+     * @param string $owner Record description for the log, e.g. "SIP peer 201"
+     *
+     * @return array{permit: string, deny: string}
+     */
+    public static function getAclByFilterId(?string $filterId, string $owner): array
+    {
+        if (empty($filterId) || $filterId === 'none') {
+            return ['permit' => '', 'deny' => ''];
+        }
+        $localhostOnly = ['permit' => self::ACL_LOCALHOST, 'deny' => self::ACL_ANY];
+        if ($filterId === self::LOCALHOST_FILTER_ID) {
+            return $localhostOnly;
+        }
+        $filter = self::findFirstById($filterId);
+        if ($filter === null) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "$owner references missing network filter $filterId, access is limited to localhost",
+                LOG_WARNING
+            );
+            return $localhostOnly;
+        }
+        return ['permit' => (string)$filter->permit, 'deny' => (string)$filter->deny];
+    }
+
+    /**
      * Returns allowed networks for provided list of traffic categories
      *
      * @param array<string> $arrTrafficCategory
@@ -126,6 +173,7 @@ class NetworkFilters extends ModelsBase
     {
         $this->setSource('m_NetworkFilters');
         parent::initialize();
+        // A record restricted by a filter must not silently lose the restriction when the filter is deleted
         $this->hasMany(
             'id',
             Sip::class,
@@ -134,7 +182,7 @@ class NetworkFilters extends ModelsBase
                 'alias' => 'Sip',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action' => Relation::NO_ACTION,
+                    'action' => Relation::ACTION_RESTRICT,
                 ],
             ]
         );
@@ -158,7 +206,31 @@ class NetworkFilters extends ModelsBase
                 'alias' => 'AsteriskManagerUsers',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action' => Relation::NO_ACTION,
+                    'action' => Relation::ACTION_RESTRICT,
+                ],
+            ]
+        );
+        $this->hasMany(
+            'id',
+            Iax::class,
+            'networkfilterid',
+            [
+                'alias' => 'Iax',
+                'foreignKey' => [
+                    'allowNulls' => true,
+                    'action' => Relation::ACTION_RESTRICT,
+                ],
+            ]
+        );
+        $this->hasMany(
+            'id',
+            ApiKeys::class,
+            'networkfilterid',
+            [
+                'alias' => 'ApiKeys',
+                'foreignKey' => [
+                    'allowNulls' => true,
+                    'action' => Relation::ACTION_RESTRICT,
                 ],
             ]
         );

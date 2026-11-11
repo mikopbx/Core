@@ -685,15 +685,14 @@ class SIPConf extends AsteriskConfigClass
                 continue;
             }
 
-            $network_filter = null;
-            // Retrieve associated network filter if available.
-            if (!empty($arr_data['networkfilterid'])) {
-                $network_filter = NetworkFilters::findFirst($arr_data['networkfilterid']);
-            }
-            // Assign permit and deny values based on network filter.
-            $arr_data['permit'] = ($network_filter === null)?'': $network_filter->permit;
-            $arr_data['deny']   = ($network_filter === null)?'': $network_filter->deny;
-            
+            // permit/deny only decide whether the endpoint references its acl_<extension> from acl.conf
+            $acl = NetworkFilters::getAclByFilterId(
+                $arr_data['networkfilterid'] ?? '',
+                'SIP peer ' . ($arr_data['extension'] ?? '')
+            );
+            $arr_data['permit'] = $acl['permit'];
+            $arr_data['deny']   = $acl['deny'];
+
             $arr_data['transport'] = trim($arr_data['transport'] ?? Sip::TRANSPORT_AUTO);
 
             // Retrieve used codecs.

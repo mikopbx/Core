@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\PBXCoreREST\Lib\ApiKeysManagementProcessor;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di\DiInterface;
@@ -322,122 +323,54 @@ class TokenValidationService
         }
         
         $clientIp = $request->getClientAddress();
-        
-        // Special case: localhost-only restriction
-        if ($keyData['networkfilterid'] === 'localhost') {
-            // Allow only localhost connections
-            return in_array($clientIp, ['127.0.0.1', '::1']);
+
+        // 'localhost' and a deleted filter both resolve to the localhost-only ACL
+        $acl = NetworkFilters::getAclByFilterId(
+            (string)$keyData['networkfilterid'],
+            'API key ' . ($keyData['id'] ?? '?')
+        );
+
+        return $this->isIpAllowedByFilter($clientIp, $acl['permit'], $acl['deny']);
+    }
+
+    /**
+     * Apply NetworkFilters permit/deny lists to an IP
+     *
+     * A non-empty permit list is an allowlist: only its networks pass, whatever deny holds
+     * (deny is stored as 0.0.0.0/0 even for IPv6 filters, so it cannot be relied on to reject).
+     * Without permit, everything outside the deny list passes.
+     *
+     * @param string $ip Client IP address
+     * @param string $permit Comma-separated permitted networks in CIDR notation
+     * @param string $deny Comma-separated denied networks in CIDR notation
+     * @return bool
+     */
+    private function isIpAllowedByFilter(string $ip, string $permit, string $deny): bool
+    {
+        if (trim($permit) !== '') {
+            return $this->ipInNetworkList($ip, $permit);
         }
-        
-        // Use existing NetworkFilter validation logic
-        $filter = NetworkFilters::findFirst($keyData['networkfilterid']);
-        if (!$filter) {
-            return true; // Filter not found, allow
-        }
-        
-        // Check if IP is allowed by the filter
-        // NetworkFilters has permit/deny fields with comma-separated networks
-        $permitNetworks = explode(',', $filter->permit ?? '');
-        $denyNetworks = explode(',', $filter->deny ?? '');
-        
-        // Check deny list first
-        foreach ($denyNetworks as $network) {
-            if (!empty($network) && $this->ipInNetwork($clientIp, trim($network))) {
-                return false;
-            }
-        }
-        
-        // If permit list is empty, allow all (except denied)
-        if (empty($filter->permit) || $filter->permit === '0.0.0.0/0') {
-            return true;
-        }
-        
-        // Check permit list
-        foreach ($permitNetworks as $network) {
-            if (!empty($network) && $this->ipInNetwork($clientIp, trim($network))) {
+        return !$this->ipInNetworkList($ip, $deny);
+    }
+
+    /**
+     * Check if IP belongs to any network of a comma-separated list
+     *
+     * An IP of the other address family never matches.
+     *
+     * @param string $ip IP address to check
+     * @param string $networks Comma-separated networks in CIDR notation
+     * @return bool
+     */
+    private function ipInNetworkList(string $ip, string $networks): bool
+    {
+        foreach (explode(',', $networks) as $network) {
+            $network = trim($network);
+            if ($network !== '' && IpAddressHelper::ipInNetwork($ip, $network)) {
                 return true;
             }
         }
-        
         return false;
-    }
-    
-    /**
-     * Check if IP is in network range (supports both IPv4 and IPv6)
-     *
-     * @param string $ip IP address to check
-     * @param string $network Network in CIDR notation (e.g., 192.168.1.0/24 or 2001:db8::/32) or single IP
-     * @return bool
-     */
-    private function ipInNetwork(string $ip, string $network): bool
-    {
-        if (strpos($network, '/') === false) {
-            // Single IP - direct comparison works for both IPv4 and IPv6
-            return $ip === $network;
-        }
-
-        list($subnet, $mask) = explode('/', $network);
-
-        // Detect IPv6
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) &&
-            filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-            return $this->ipv6InNetwork($ip, $subnet, (int)$mask);
-        }
-
-        // IPv4 handling (original logic)
-        $subnetLong = ip2long($subnet);
-        $ipLong = ip2long($ip);
-
-        // Validate that both IPs were successfully converted
-        if ($subnetLong === false || $ipLong === false) {
-            return false;
-        }
-
-        $maskLong = -1 << (32 - (int)$mask);
-        $subnetLong &= $maskLong;
-
-        return ($ipLong & $maskLong) == $subnetLong;
-    }
-
-    /**
-     * Check if IPv6 address is in network range
-     *
-     * @param string $ip IPv6 address
-     * @param string $subnet IPv6 subnet
-     * @param int $mask Prefix length (0-128)
-     * @return bool
-     */
-    private function ipv6InNetwork(string $ip, string $subnet, int $mask): bool
-    {
-        // Convert IPv6 addresses to binary representation
-        $binIp = inet_pton($ip);
-        $binSubnet = inet_pton($subnet);
-
-        if ($binIp === false || $binSubnet === false) {
-            return false;
-        }
-
-        // Calculate full bytes and remaining bits
-        $fullBytes = (int)floor($mask / 8);
-        $remainingBits = $mask % 8;
-
-        // Compare full bytes
-        if ($fullBytes > 0 && substr($binIp, 0, $fullBytes) !== substr($binSubnet, 0, $fullBytes)) {
-            return false;
-        }
-
-        // Compare remaining bits if any
-        if ($remainingBits > 0 && $fullBytes < 16) {
-            $ipByte = ord($binIp[$fullBytes]);
-            $subnetByte = ord($binSubnet[$fullBytes]);
-            $bitmask = 0xFF << (8 - $remainingBits);
-
-            if (($ipByte & $bitmask) !== ($subnetByte & $bitmask)) {
-                return false;
-            }
-        }
-
-        return true;
     }
     
     /**

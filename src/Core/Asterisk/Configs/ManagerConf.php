@@ -91,18 +91,9 @@ class ManagerConf extends AsteriskConfigClass
             foreach ($managers as $user) {
                 $arr_data = $user->toArray();
 
-                // Handle special case for localhost-only access
-                if ($user->networkfilterid === 'localhost') {
-                    // Restrict to localhost only
-                    $arr_data['permit'] = '127.0.0.1/255.255.255.255';
-                    $arr_data['deny']   = '0.0.0.0/0.0.0.0';
-                } else {
-                    // Fetch the associated network filter
-                    /** @var NetworkFilters $network_filter */
-                    $network_filter     = NetworkFilters::findFirst($user->networkfilterid);
-                    $arr_data['permit'] = $network_filter === null ? '' : $network_filter->permit;
-                    $arr_data['deny']   = $network_filter === null ? '' : $network_filter->deny;
-                }
+                $acl = NetworkFilters::getAclByFilterId($user->networkfilterid, "AMI user $user->username");
+                $arr_data['permit'] = $acl['permit'];
+                $arr_data['deny']   = $acl['deny'];
                 $result[]           = $arr_data;
             }
 

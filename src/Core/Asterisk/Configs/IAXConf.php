@@ -222,20 +222,17 @@ class IAXConf extends AsteriskConfigClass
             }
             
             // Add network filter permits to options
-            if (!empty($provider['networkfilterid'])) {
-                $networkFilter = NetworkFilters::findFirstById($provider['networkfilterid']);
-                if ($networkFilter) {
-                    $permit = trim($networkFilter->permit);
-                    if (!empty($permit)) {
-                        $permits = array_map('trim', explode(',', $permit));
-                        // Add deny all first, then specific permits
-                        $options['deny'] = '0.0.0.0/0.0.0.0';
-                        $options['permit'] = implode('&', $permits);
-                    }
-                    
-                    // In Docker environment, NetworkFilters deny rules are handled globally
-                    // via included ACL files, so we don't need to add deny rules here
-                }
+            // In Docker environment, NetworkFilters deny rules are handled globally
+            // via included ACL files, so we don't need to add deny rules here
+            $acl = NetworkFilters::getAclByFilterId(
+                $provider['networkfilterid'] ?? '',
+                'IAX provider ' . ($provider['uniqid'] ?? '')
+            );
+            $permit = trim($acl['permit']);
+            if ($permit !== '') {
+                // Add deny all first, then specific permits (Asterisk takes a comma-separated list)
+                $options['deny'] = NetworkFilters::ACL_ANY;
+                $options['permit'] = $permit;
             }
             
             // Generate provider configuration
