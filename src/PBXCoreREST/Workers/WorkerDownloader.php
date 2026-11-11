@@ -85,19 +85,20 @@ class WorkerDownloader extends WorkerBase
         file_put_contents($this->progress_file, 0);
         $curl = new GuzzleHttp\Handler\CurlMultiHandler();
         $handler = GuzzleHttp\HandlerStack::create($curl);
-        $client = new GuzzleHttp\Client();
+        $client = new GuzzleHttp\Client(['handler' => $handler]);
         $promise = $client->getAsync($this->settings['url'], [
-            'handler' => $handler,
             'sink'     => $this->settings['res_file'],
             'progress' =>  [$this, 'progress'],
             'connect_timeout' => 5,
             'on_headers' => [$this, 'getHeaders']
         ]);
-        $promise->then(
+        // Wait on the then() promise: with guzzlehttp/promises 3 the source
+        // promise turns fulfilled before its then() callbacks have run
+        $promise = $promise->then(
             function (ResponseInterface $res) {
                 $this->httpCode = $res->getStatusCode();
             },
-            function (GuzzleHttp\Exception\RequestException $e) {
+            function (\Throwable $e) {
                 file_put_contents($this->error_file, $e->getMessage(), FILE_APPEND);
                 $this->httpCode = -1;
             }
