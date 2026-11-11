@@ -38,6 +38,20 @@ class ModulesConf extends AsteriskConfigClass
     // The module hook applying priority
     public int $priority = 1000;
 
+    /**
+     * Modules written as `preload =>` instead of `load =>`.
+     *
+     * format_mp3 has the default load priority (128) while format_wav/format_sln load at
+     * AST_MODPRI_APP_DEPEND (80); file formats are registered at the head of the list and
+     * Asterisk opens the first registered format matching the channel write format. Loaded
+     * normally, mp3 wins every slin playback where a .wav/.sln sibling exists (MOH tracks,
+     * custom sounds), forcing an MP3 decode. Preloading registers it first, so it ends up
+     * last and is used only when no other slin file exists.
+     */
+    private const array PRELOAD_MODULES = [
+        'format_mp3.so',
+    ];
+
     protected string $description = 'modules.conf';
 
     /**
@@ -231,7 +245,8 @@ class ModulesConf extends AsteriskConfigClass
         $modules[] = 'res_resolver_unbound.so';
 
         foreach ($modules as $value) {
-            $conf .= "load => $value\n";
+            $directive = in_array($value, self::PRELOAD_MODULES, true) ? 'preload' : 'load';
+            $conf .= "$directive => $value\n";
         }
         
         // Load ARI modules if ARI is enabled
