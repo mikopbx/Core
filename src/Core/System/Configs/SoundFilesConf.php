@@ -54,8 +54,11 @@ class SoundFilesConf extends SystemConfigClass
      * Asterisk has no `astsoundsdir` directive — it always reads sounds from
      * `${astdatadir}/sounds/`, which on MikoPBX is `/offload/asterisk/sounds/`.
      * The symlink redirects that to writable storage.
+     *
+     * Read directly by MusicOnHoldConf for the shipped default MOH tracks: the
+     * writable copy is filled by WorkerSoundFilesInit only after boot.
      */
-    private const string SOURCE_SOUNDS_DIR = '/offload/asterisk/sounds-base';
+    public const string SOURCE_SOUNDS_DIR = '/offload/asterisk/sounds-base';
 
     /**
      * Redis key prefix for sound conversion cache
@@ -103,16 +106,12 @@ class SoundFilesConf extends SystemConfigClass
         // Create target directory if it doesn't exist
         Util::mwMkdir($targetSoundsDir);
 
-        // Always ensure supplementary content (moh/, other/, blacklist.txt,
-        // filter.sh) is present in the writable target. Runs on every boot
-        // before the language-init early-return so upgrade scenarios (where
-        // languages are already populated by older code that never copied
-        // moh/other) still get supplementary files dropped in.
-        // Idempotent: cp -Rn preserves user customisations (replaced MOH
-        // tracks, custom files in other/).
-        // Without this, MusicOnHoldConf::checkMohFiles() restore-from-defaults
-        // path (/offload/asterisk/sounds/moh/* via symlink) finds an empty
-        // directory and leaves MOH silent on fresh installs.
+        // Always ensure supplementary content (other/, blacklist.txt, filter.sh)
+        // is present in the writable target. Runs on every boot before the
+        // language-init early-return so upgrade scenarios (where languages are
+        // already populated by older code that never copied other/) still get
+        // supplementary files dropped in.
+        // Idempotent: cp -Rn preserves user customisations (custom files in other/).
         $this->copySupplementaryFiles($targetSoundsDir);
 
         // Check if sounds directory is already initialized
@@ -226,7 +225,7 @@ class SoundFilesConf extends SystemConfigClass
     }
 
     /**
-     * Copy non-language entries (moh/, other/, blacklist.txt, filter.sh)
+     * Copy non-language entries (other/, blacklist.txt, filter.sh)
      * from source to target sounds directory.
      *
      * Language-country directories (xx-xx pattern) are handled by
@@ -234,12 +233,13 @@ class SoundFilesConf extends SystemConfigClass
      * shipped in the rootfs sounds-base directory so that the writable
      * sounds tree (exposed to Asterisk through the runtime symlink in
      * Storage::createWorkDirs()) contains all content the rest of the
-     * system expects to find at /offload/asterisk/sounds/{moh,other,...}.
+     * system expects to find at /offload/asterisk/sounds/{other,...}.
+     * moh/ is skipped: MusicOnHoldConf installs the default tracks from
+     * sounds-base into AST_MOH_DIR itself, nothing reads sounds/moh.
      *
      * Uses `cp -Rn` (recursive, no-clobber) so existing user
-     * customisations in the target (replaced MOH tracks, custom
-     * sounds in other/) are never overwritten. Safe to call on every
-     * boot.
+     * customisations in the target (custom sounds in other/) are never
+     * overwritten. Safe to call on every boot.
      *
      * @param string $targetSoundsDir Target sounds directory
      */
@@ -260,7 +260,8 @@ class SoundFilesConf extends SystemConfigClass
         foreach ($entries as $entry) {
             $name = basename($entry);
             // Skip language-country directories (handled by language init flow)
-            if (preg_match('/^[a-z]{2}-[a-z]{2}$/i', $name)) {
+            // and moh/ (installed by MusicOnHoldConf)
+            if ($name === 'moh' || preg_match('/^[a-z]{2}-[a-z]{2}$/i', $name)) {
                 continue;
             }
             $srcEscaped = escapeshellarg($entry);

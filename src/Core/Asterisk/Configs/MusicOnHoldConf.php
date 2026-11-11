@@ -41,14 +41,47 @@ class MusicOnHoldConf extends AsteriskConfigClass
     protected string $description = 'musiconhold.conf';
 
     /**
+     * Marker in AST_MOH_DIR: the shipped default tracks were installed once.
+     * While it exists an empty MOH directory is the administrator's choice and
+     * defaults are not copied back (the [default] class then plays the read-only
+     * shipped tracks, see getDefaultClassDirectory()). It lives next to the tracks (not in
+     * PbxSettings) so a replaced or recreated storage gets the defaults again.
+     * Asterisk skips dot-files when scanning the files-mode directory.
+     */
+    public const string DEFAULTS_MARKER = '.defaults-installed';
+
+    /**
+     * Glob of the MOH tracks registered in SoundFiles (relative to the MOH directory).
+     * mp3 for the shipped defaults and legacy uploads, webm for current uploads.
+     */
+    private const string TRACK_MASK = '/*.{mp3,webm}';
+
+    /**
+     * Formats every MOH track is converted to. ulaw/alaw/g722 match the call codec and are
+     * streamed without transcoding; wav/sln cover slin channels.
+     */
+    private const array TRACK_FORMATS = ['wav', 'ulaw', 'alaw', 'gsm', 'g722', 'sln'];
+
+    /**
+     * Subdirectory of AST_MOH_DIR with the shipped tracks converted for the [default] class
+     * fallback. A dot-name keeps it out of the files-mode scan of AST_MOH_DIR, out of
+     * TRACK_MASK and out of restoreDefaultMoh()'s cleanup; it is not shown in the UI.
+     */
+    public const string FALLBACK_DIR = '.defaults';
+
+    /**
      * Generates the configuration for musiconhold.conf.
      */
     protected function generateConfigProtected(): void
     {
-        $mohPath = Directories::getDir(Directories::AST_MOH_DIR);
+        // Sync the DB with the disk before building the playlist classes,
+        // otherwise freshly installed defaults appear only on the next regeneration.
+        $this->checkMohFiles();
+
+        $defaultClassDir = $this->getDefaultClassDirectory($this->getMohDir());
         $conf    = "[default]\n" .
             "mode=files\n" .
-            "directory=$mohPath\n\n";
+            "directory=$defaultClassDir\n\n";
 
         $mohSounds = SoundFiles::find(["category='".SoundFiles::CATEGORY_MOH."'", 'columns' => 'id,name,path']);
         foreach ($mohSounds as $moh){
@@ -64,24 +97,24 @@ class MusicOnHoldConf extends AsteriskConfigClass
         // Write the configuration content to the file
         $directory = Directories::getDir(Directories::AST_ETC_DIR);
         Util::fileWriteContent($directory . '/musiconhold.conf', $conf);
-        $this->checkMohFiles();
     }
 
     /**
      * Checks the MOH files in the specified path and adds them to the database if they exist.
      * Removes orphaned DB records where the file no longer exists on disk.
+     * Installs the shipped default tracks once, when the directory is empty and
+     * DEFAULTS_MARKER is absent.
      */
     protected function checkMohFiles(): void
     {
-        $path  = Directories::getDir(Directories::AST_MOH_DIR);
+        $path  = $this->getMohDir();
+        $marker = "$path/" . self::DEFAULTS_MARKER;
         // Discovery glob includes webm because ConvertAudioFileAction now produces a WebM/Opus
         // preview file as the canonical SoundFiles.path value (mp3 was dropped from the upload
         // pipeline). Both extensions need to be re-discoverable after a DB restore/reset, or
         // user-uploaded MOH tracks would silently disappear from the UI on rescan.
-        // The shipped default MOH files (under /offload/.../moh/) remain mp3 — the same brace
-        // pattern just falls through to mp3 there.
-        $userMask = '/*.{mp3,webm}';
-        $defaultMask = '/*.mp3';
+        // The shipped default MOH files (under sounds-base/moh/) remain mp3.
+        $userMask = self::TRACK_MASK;
 
         // Remove orphaned MOH records where the underlying file no longer exists on disk
         $this->cleanOrphanedMohRecords();
@@ -113,13 +146,160 @@ class MusicOnHoldConf extends AsteriskConfigClass
                 $this->checkAddFileToDB($resultFile);
             }
 
+            // Installs that already have tracks (upgrade, own uploads) count as initialised.
+            $this->markDefaultsInstalled($marker);
             return;
         }
 
-        // If nothing found, fall back to shipped defaults (mp3-only) and convert them.
+        // Empty directory after defaults were installed once: the administrator removed them.
+        if (file_exists($marker)) {
+            return;
+        }
+
+        $this->installDefaultMohFiles($path);
+        if (!empty(glob("$path$userMask", GLOB_BRACE))) {
+            $this->markDefaultsInstalled($marker);
+        }
+    }
+
+    /**
+     * Returns the directory for the [default] class.
+     *
+     * Asterisk drops a files-mode class whose directory holds no playable files. Without
+     * a "default" class MusicOnHold() fails and hangs up the channel, while queues, hold and
+     * classes that fall back to "default" (deleted moh-N) leave the caller in silence. When
+     * the administrator removed every track, play the shipped tracks converted into
+     * FALLBACK_DIR; the read-only mp3 originals are the last resort if conversion failed.
+     *
+     * @param string $mohPath MOH directory (AST_MOH_DIR).
+     */
+    protected function getDefaultClassDirectory(string $mohPath): string
+    {
+        if (!empty(glob($mohPath . self::TRACK_MASK, GLOB_BRACE))) {
+            return $mohPath;
+        }
+        $fallbackDir = "$mohPath/" . self::FALLBACK_DIR;
+        if ($this->buildFallbackTracks($fallbackDir)) {
+            return $fallbackDir;
+        }
+        return SoundFilesConf::SOURCE_SOUNDS_DIR . '/moh';
+    }
+
+    /**
+     * Converts the shipped default tracks into $fallbackDir (no mp3 copy, so Asterisk always
+     * streams a raw codec file) and drops files of tracks no longer shipped. Conversion is
+     * cached by .sound-meta, so only the first call after the tracks were removed converts.
+     *
+     * @param string $fallbackDir Target directory.
+     * @return bool True when every shipped track is available as wav.
+     */
+    protected function buildFallbackTracks(string $fallbackDir): bool
+    {
+        $sources = glob(SoundFilesConf::SOURCE_SOUNDS_DIR . '/moh/*.mp3') ?: [];
+        if (empty($sources) || !Util::mwMkdir($fallbackDir)) {
+            return false;
+        }
+
+        $shipped = array_map(
+            static fn(string $source): string => Util::trimExtensionForFile(basename($source)),
+            $sources
+        );
+        foreach (glob("$fallbackDir/{,.}*", GLOB_BRACE) ?: [] as $file) {
+            $name = basename($file);
+            if (!is_file($file)) {
+                continue;
+            }
+            $baseName = str_ends_with($name, '.sound-meta')
+                ? substr($name, 1, -strlen('.sound-meta'))
+                : pathinfo($name, PATHINFO_FILENAME);
+            if (!in_array($baseName, $shipped, true)) {
+                unlink($file);
+            }
+        }
+
+        $complete = true;
+        foreach ($sources as $source) {
+            $baseName = Util::trimExtensionForFile(basename($source));
+            $this->convertTrack($source, $fallbackDir, $baseName);
+            $complete = $complete && file_exists("$fallbackDir/$baseName.wav");
+        }
+        return $complete;
+    }
+
+    /**
+     * Converts one MOH track to TRACK_FORMATS.
+     *
+     * @param string $source Source audio file.
+     * @param string $outputDir Directory for the converted files.
+     * @param string $baseName Output filename without extension.
+     */
+    protected function convertTrack(string $source, string $outputDir, string $baseName): void
+    {
+        $result = SoundFilesConf::convertAudioFile(
+            $source,
+            self::TRACK_FORMATS,
+            [
+                'normalize' => false,
+                'use_cache' => true,
+                'force' => false,
+                'output_dir' => $outputDir,
+                'base_name' => $baseName,
+            ]
+        );
+
+        if (!$result['success']) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                "Failed to convert MOH file $source: " . ($result['error'] ?? 'Unknown error')
+            );
+        } elseif (!file_exists("$outputDir/$baseName.wav")) {
+            SystemMessages::sysLogMsg(static::class, "Failed to create WAV file $outputDir/$baseName.wav");
+        }
+    }
+
+    /**
+     * Returns the MOH directory that holds the [default] class tracks.
+     */
+    protected function getMohDir(): string
+    {
+        return Directories::getDir(Directories::AST_MOH_DIR);
+    }
+
+    /**
+     * Creates DEFAULTS_MARKER so that an emptied MOH directory stays empty.
+     *
+     * @param string $marker Full path of the marker file.
+     */
+    protected function markDefaultsInstalled(string $marker): void
+    {
+        if (file_exists($marker)) {
+            return;
+        }
+        if (file_put_contents($marker, date('Y-m-d H:i:s') . PHP_EOL) === false) {
+            SystemMessages::sysLogMsg(static::class, "Failed to create MOH marker $marker");
+        }
+    }
+
+    /**
+     * Copies the shipped default tracks (mp3) from the read-only sounds-base,
+     * converts them to the Asterisk formats and registers them in the DB.
+     * Reads sounds-base directly: the writable sounds tree behind
+     * /offload/asterisk/sounds is filled by WorkerSoundFilesInit only after boot.
+     *
+     * @param string $path MOH directory (AST_MOH_DIR).
+     */
+    protected function installDefaultMohFiles(string $path): void
+    {
         SystemMessages::sysLogMsg(static::class, 'Attempt to restore MOH from default...');
 
-        $filesList = glob("/offload/asterisk/sounds/moh$defaultMask");
+        $filesList = glob(SoundFilesConf::SOURCE_SOUNDS_DIR . '/moh/*.mp3') ?: [];
+        if (empty($filesList)) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                'No default MOH files found in ' . SoundFilesConf::SOURCE_SOUNDS_DIR . '/moh'
+            );
+            return;
+        }
         $cp    = Util::which('cp');
         foreach ($filesList as $srcFile) {
             $resultMp3 = "$path/" . basename($srcFile);
@@ -138,30 +318,7 @@ class MusicOnHoldConf extends AsteriskConfigClass
             }
 
             // Convert the MP3 file to all Asterisk formats
-            $result = SoundFilesConf::convertAudioFile(
-                $resultMp3,
-                ['wav', 'ulaw', 'alaw', 'gsm', 'g722', 'sln'],
-                [
-                    'normalize' => false,
-                    'use_cache' => true,
-                    'force' => false,
-                    'output_dir' => $path,
-                    'base_name' => $baseName,
-                ]
-            );
-
-            if (!$result['success']) {
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "Failed to convert MOH file $resultMp3: " . ($result['error'] ?? 'Unknown error')
-                );
-            } else {
-                // Check if at least WAV was created
-                $resultWav = "$path/$baseName.wav";
-                if (!file_exists($resultWav)) {
-                    SystemMessages::sysLogMsg(static::class, "Failed to create WAV file $resultWav");
-                }
-            }
+            $this->convertTrack($resultMp3, $path, $baseName);
 
             // Add the MP3 file to the database
             $this->checkAddFileToDB($resultMp3);
@@ -225,7 +382,13 @@ class MusicOnHoldConf extends AsteriskConfigClass
         $rm = Util::which('rm');
         Processes::mwExec("$rm -rf " . escapeshellarg($mohPath) . "/*");
 
-        // Restore defaults from /offload/asterisk/sounds/moh/
+        // The glob above skips dot-files: drop the marker so defaults are installed again
+        $marker = "$mohPath/" . self::DEFAULTS_MARKER;
+        if (file_exists($marker)) {
+            unlink($marker);
+        }
+
+        // Restore defaults from sounds-base/moh/
         $conf = new self();
         $conf->checkMohFiles();
     }
