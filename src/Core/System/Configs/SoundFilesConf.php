@@ -944,8 +944,12 @@ class SoundFilesConf extends SystemConfigClass
             return 0;
         }
         $repaired = 0;
+        // CATCH_GET_CHILD: an unreadable or vanished subdirectory is skipped instead of
+        // aborting the scan (and with it the sound conversion that runs after it).
         $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS)
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::LEAVES_ONLY,
+            \RecursiveIteratorIterator::CATCH_GET_CHILD
         );
         /** @var \SplFileInfo $file */
         foreach ($iterator as $file) {
@@ -1003,8 +1007,11 @@ class SoundFilesConf extends SystemConfigClass
             return false;
         }
 
-        $tmpPath = "$path.converting";
-        $out = @fopen($tmpPath, 'wb');
+        // Unpredictable name + exclusive create ('x' = O_CREAT|O_EXCL, fails on an existing
+        // file or symlink): the repair runs as root in directories other users may write to.
+        // The .converting suffix lets SoundFiles::afterDelete() sweep an orphaned tempfile.
+        $tmpPath = "$path." . bin2hex(random_bytes(8)) . '.converting';
+        $out = @fopen($tmpPath, 'xb');
         if ($out === false) {
             fclose($in);
             return false;
@@ -1019,7 +1026,10 @@ class SoundFilesConf extends SystemConfigClass
             SystemMessages::sysLogMsg(__METHOD__, "Failed to rewrite $path", LOG_WARNING);
             return false;
         }
+        // The repair runs as root; keep the original owner so php-fpm (www) can still manage the file.
         @chmod($tmpPath, fileperms($path) & 0777);
+        @chown($tmpPath, (int)fileowner($path));
+        @chgrp($tmpPath, (int)filegroup($path));
         if (!@rename($tmpPath, $path)) {
             @unlink($tmpPath);
             return false;

@@ -204,14 +204,16 @@ class MusicOnHoldConf extends AsteriskConfigClass
             static fn(string $source): string => Util::trimExtensionForFile(basename($source)),
             $sources
         );
+        // Drop converted files of tracks no longer shipped. Only TRACK_FORMATS files and their
+        // .sound-meta are matched; tempfiles of a concurrent conversion (.converting,
+        // .tmp.wav, .normalized.wav, .source-snapshot.*) are left alone.
+        $formats = implode('|', self::TRACK_FORMATS);
+        $pattern = "/^(?:\.(.+)\.sound-meta|(?!.*\.(?:tmp|normalized)\.wav$)(.+)\.(?:$formats))$/";
         foreach (glob("$fallbackDir/{,.}*", GLOB_BRACE) ?: [] as $file) {
-            $name = basename($file);
-            if (!is_file($file)) {
+            if (!is_file($file) || !preg_match($pattern, basename($file), $matches)) {
                 continue;
             }
-            $baseName = str_ends_with($name, '.sound-meta')
-                ? substr($name, 1, -strlen('.sound-meta'))
-                : pathinfo($name, PATHINFO_FILENAME);
+            $baseName = $matches[1] !== '' ? $matches[1] : $matches[2];
             if (!in_array($baseName, $shipped, true)) {
                 unlink($file);
             }
@@ -306,7 +308,7 @@ class MusicOnHoldConf extends AsteriskConfigClass
             $baseName = Util::trimExtensionForFile(basename($resultMp3));
 
             // Copy the file to the specified path
-            Processes::mwExec("$cp $srcFile $resultMp3");
+            Processes::mwExec("$cp " . escapeshellarg($srcFile) . ' ' . escapeshellarg($resultMp3));
 
             // Verify copy succeeded before proceeding
             if (!file_exists($resultMp3)) {
