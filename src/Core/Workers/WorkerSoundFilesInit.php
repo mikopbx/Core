@@ -87,6 +87,9 @@ class WorkerSoundFilesInit extends WorkerBase
             $soundFilesConf = new SoundFilesConf();
             $result = $soundFilesConf->start();
 
+            // After start(): it copies module sound packs, which may ship headered raw files.
+            $this->repairRawCodecFiles();
+
             if ($result) {
                 SystemMessages::sysLogMsg(static::class, 'Sound files initialization completed successfully', LOG_INFO);
 
@@ -115,6 +118,31 @@ class WorkerSoundFilesInit extends WorkerBase
 
         // Exit immediately to prevent WorkerBase from keeping process alive
         exit(0);
+    }
+
+    /**
+     * Strips WAV headers from ulaw/alaw/g722/sln files written before #1217 in the system,
+     * custom (IVR) and MOH sound directories. The conversion cache keeps existing targets,
+     * so without this pass already converted files would keep clicking.
+     */
+    private function repairRawCodecFiles(): void
+    {
+        $dirs = [
+            Directories::getDir(Directories::AST_SOUNDS_DIR),
+            Directories::getDir(Directories::AST_CUSTOM_SOUND_DIR),
+            Directories::getDir(Directories::AST_MOH_DIR),
+        ];
+        $repaired = 0;
+        foreach ($dirs as $dir) {
+            $repaired += SoundFilesConf::stripWavHeadersFromRawFiles($dir);
+        }
+        if ($repaired > 0) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                "Removed WAV headers from $repaired raw codec sound files",
+                LOG_NOTICE
+            );
+        }
     }
 
     /**

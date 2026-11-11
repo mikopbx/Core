@@ -64,6 +64,11 @@ class SoundFilesConf extends SystemConfigClass
     public const string REDIS_SOUND_CONVERSION_PREFIX = 'sound_conversion:';
 
     /**
+     * Extensions Asterisk streams as headerless codec data (format_pcm, format_g722, format_sln).
+     */
+    public const array RAW_CODEC_EXTENSIONS = ['ulaw', 'alaw', 'g722', 'sln'];
+
+    /**
      * Adaptive Opus bitrates for WebM preview (mirrors WorkerWav2Webm but mono since
      * sound files are single-source — no speaker diarization needed).
      *  - 8 kHz source (G.711, GSM, narrowband recordings) → 24k mono
@@ -695,7 +700,10 @@ class SoundFilesConf extends SystemConfigClass
             $needsConversion = true;
         }
 
-        // Define format conversion parameters
+        // Define format conversion parameters.
+        // ulaw/alaw/g722/sln must be headerless: Asterisk's format_pcm/format_g722/format_sln
+        // stream these extensions as raw codec data, so a WAV header is played as ~5-12 ms of
+        // full-scale noise — the click before every prompt (#1217). Only .wav carries a header.
         $formatSpecs = [
             'wav' => [
                 'options' => "-ar $sampleRate -ac 1 -acodec pcm_s16le -f wav",
@@ -706,24 +714,24 @@ class SoundFilesConf extends SystemConfigClass
                 'container' => 'mp3',
             ],
             'ulaw' => [
-                'options' => '-ar 8000 -ac 1 -acodec pcm_mulaw -f wav',
-                'container' => 'wav',
+                'options' => '-ar 8000 -ac 1 -acodec pcm_mulaw -f mulaw',
+                'container' => 'raw',
             ],
             'alaw' => [
-                'options' => '-ar 8000 -ac 1 -acodec pcm_alaw -f wav',
-                'container' => 'wav',
+                'options' => '-ar 8000 -ac 1 -acodec pcm_alaw -f alaw',
+                'container' => 'raw',
             ],
             'gsm' => [
                 'options' => '-ar 8000 -ac 1 -acodec libgsm -f gsm',
                 'container' => 'gsm',
             ],
             'g722' => [
-                'options' => '-ar 16000 -ac 1 -acodec adpcm_g722 -f wav',
-                'container' => 'wav',
+                'options' => '-ar 16000 -ac 1 -acodec adpcm_g722 -f g722',
+                'container' => 'raw',
             ],
             'sln' => [
-                'options' => '-ar 8000 -ac 1 -acodec pcm_s16le -f wav',
-                'container' => 'wav',
+                'options' => '-ar 8000 -ac 1 -acodec pcm_s16le -f s16le',
+                'container' => 'raw',
             ],
             'opus' => [
                 'options' => '-ar 48000 -ac 1 -acodec libopus -b:a 48k -vbr on -compression_level 10 -application voip -f ogg',
@@ -919,6 +927,106 @@ class SoundFilesConf extends SystemConfigClass
     }
 
     /**
+     * Removes the WAV header from headerless codec files (ulaw/alaw/g722/sln) under $dir.
+     *
+     * Before #1217 convertAudioFile() wrapped these formats in a WAV container; Asterisk
+     * streams them raw and plays the header as a click. The data chunk already holds the
+     * exact codec payload, so the repair is lossless and needs no source file. Files that
+     * do not start with a RIFF/WAVE header are left untouched, so repeated runs are no-ops.
+     *
+     * @param string $dir Directory scanned recursively (symlinked directories are not followed).
+     * @return int Number of repaired files.
+     */
+    public static function stripWavHeadersFromRawFiles(string $dir): int
+    {
+        if (!is_dir($dir)) {
+            return 0;
+        }
+        $repaired = 0;
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS)
+        );
+        /** @var \SplFileInfo $file */
+        foreach ($iterator as $file) {
+            $extension = strtolower($file->getExtension());
+            if (!$file->isFile() || $file->isLink() || !in_array($extension, self::RAW_CODEC_EXTENSIONS, true)) {
+                continue;
+            }
+            if (self::stripWavHeader($file->getPathname())) {
+                $repaired++;
+            }
+        }
+        return $repaired;
+    }
+
+    /**
+     * Rewrites one file with only its WAV data chunk payload (atomic tempfile + rename).
+     *
+     * @param string $path File to repair.
+     * @return bool True when a header was found and removed.
+     */
+    private static function stripWavHeader(string $path): bool
+    {
+        $in = @fopen($path, 'rb');
+        if ($in === false) {
+            return false;
+        }
+        $riff = (string)fread($in, 12);
+        if (strlen($riff) < 12 || !str_starts_with($riff, 'RIFF') || substr($riff, 8, 4) !== 'WAVE') {
+            fclose($in);
+            return false;
+        }
+
+        // Walk the RIFF chunks (fmt, fact, LIST, ...) up to the data chunk.
+        $fileSize = (int)filesize($path);
+        $dataOffset = null;
+        $dataSize = 0;
+        $position = 12;
+        while ($position + 8 <= $fileSize && $position < 65536) {
+            fseek($in, $position);
+            $header = fread($in, 8);
+            if ($header === false || strlen($header) < 8) {
+                break;
+            }
+            $chunkSize = unpack('V', substr($header, 4, 4))[1];
+            if (substr($header, 0, 4) === 'data') {
+                $dataOffset = $position + 8;
+                $dataSize = min($chunkSize, $fileSize - $dataOffset);
+                break;
+            }
+            $position += 8 + $chunkSize + ($chunkSize & 1);
+        }
+        if ($dataOffset === null || $dataSize <= 0) {
+            fclose($in);
+            SystemMessages::sysLogMsg(__METHOD__, "WAV data chunk not found in $path", LOG_WARNING);
+            return false;
+        }
+
+        $tmpPath = "$path.converting";
+        $out = @fopen($tmpPath, 'wb');
+        if ($out === false) {
+            fclose($in);
+            return false;
+        }
+        fseek($in, $dataOffset);
+        $copied = stream_copy_to_stream($in, $out, $dataSize);
+        fclose($in);
+        fclose($out);
+
+        if ($copied !== $dataSize) {
+            @unlink($tmpPath);
+            SystemMessages::sysLogMsg(__METHOD__, "Failed to rewrite $path", LOG_WARNING);
+            return false;
+        }
+        @chmod($tmpPath, fileperms($path) & 0777);
+        if (!@rename($tmpPath, $path)) {
+            @unlink($tmpPath);
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Pick optimal Opus bitrate from source sample rate. Mono variant of
      * WorkerWav2Webm::selectOptimalBitrate() — sound files have a single source,
      * no L/R speaker split, so half the per-channel bitrate is enough.
@@ -958,7 +1066,9 @@ class SoundFilesConf extends SystemConfigClass
             return;
         }
 
-        $convertibleFormats = '{wav,wav16,wav48,mp3,gsm,ulaw,alaw,g722,sln,opus}';
+        // Headerless codec files (ulaw/alaw/g722/sln) are conversion outputs, never sources:
+        // ffprobe cannot identify them without an explicit input format.
+        $convertibleFormats = '{wav,wav16,wav48,mp3,gsm,opus}';
         $stats = ['converted' => 0, 'skipped' => 0, 'failed' => 0];
 
         // Process all language directories
@@ -1042,16 +1152,16 @@ class SoundFilesConf extends SystemConfigClass
      * Convert sound file to multiple formats using ffmpeg with smart caching
      *
      * Creates the following formats from source file:
-     * - ulaw (G.711 μ-law in WAV container)
-     * - alaw (G.711 A-law in WAV container)
+     * - ulaw (raw G.711 μ-law)
+     * - alaw (raw G.711 A-law)
      * - gsm (GSM 06.10 in raw GSM container)
-     * - g722 (G.722 wideband in WAV container)
-     * - sln (signed linear PCM in WAV container)
+     * - g722 (raw G.722 wideband)
+     * - sln (raw signed linear PCM)
      *
      * Uses metadata files to track source file hash and skip conversion if file unchanged.
      * This allows efficient updates when sound files are replaced in new releases.
      *
-     * @param string $sourceFile Source sound file path (wav, mp3, gsm, ulaw, alaw, g722, sln)
+     * @param string $sourceFile Source sound file path (wav, mp3, gsm, opus)
      * @param bool $forceReconvert Force reconversion even if metadata matches (default: false)
      * @param array|null $stats Output statistics: ['converted' => int, 'skipped' => int]
      * @return bool|string True if converted, 'skipped' if cached, false if failed
@@ -1066,7 +1176,7 @@ class SoundFilesConf extends SystemConfigClass
         // Skip conversion if source is not a convertible format
         $pathInfo = pathinfo($sourceFile);
         $sourceExtension = strtolower($pathInfo['extension'] ?? '');
-        $convertibleFormats = ['wav', 'wav16', 'wav48', 'mp3', 'ulaw', 'alaw', 'gsm', 'g722', 'sln', 'opus'];
+        $convertibleFormats = ['wav', 'wav16', 'wav48', 'mp3', 'gsm', 'opus'];
         if (!in_array($sourceExtension, $convertibleFormats, true)) {
             return 'skipped';
         }
