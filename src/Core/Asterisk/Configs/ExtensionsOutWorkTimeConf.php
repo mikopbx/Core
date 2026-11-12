@@ -62,11 +62,12 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
             if ($rule->calType !== OutWorkTimes::CAL_TYPE_CALDAV) {
                 continue;
             }
+            // A line break in a stored value would start a new option or [section] in calendar.conf
             $config .= "[calendar-$rule->id]" . PHP_EOL .
                 'type=' . $rule->calType . PHP_EOL .
-                'url=' . $rule->calUrl . PHP_EOL .
-                'user=' . $rule->calUser . PHP_EOL .
-                'secret=' . $rule->calSecret . PHP_EOL .
+                'url=' . self::firstLine((string)$rule->calUrl) . PHP_EOL .
+                'user=' . self::firstLine((string)$rule->calUser) . PHP_EOL .
+                'secret=' . self::firstLine((string)$rule->calSecret) . PHP_EOL .
                 'refresh=1' . PHP_EOL .
                 'timeframe=60' . PHP_EOL .
                 'channel = Local/s@calendar-event' . PHP_EOL .

@@ -618,6 +618,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             ],
             'calUrl' => [
                 'type' => 'string',
+                // Written into a line-based Asterisk config file
+                'x-single-line' => true,
                 'description' => 'rest_schema_owt_calUrl',
                 'format' => 'uri',
                 'maxLength' => 512,
@@ -626,6 +628,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             ],
             'calUser' => [
                 'type' => 'string',
+                // Written into a line-based Asterisk config file
+                'x-single-line' => true,
                 'description' => 'rest_schema_owt_calUser',
                 'maxLength' => 255,
                 'sanitize' => 'text',
@@ -633,6 +637,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             ],
             'calSecret' => [
                 'type' => 'string',
+                // Written into a line-based Asterisk config file
+                'x-single-line' => true,
                 'description' => 'rest_schema_owt_calSecret',
                 'maxLength' => 255,
                 'sanitize' => 'string',
