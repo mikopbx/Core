@@ -169,23 +169,33 @@ class OutgoingContext extends AsteriskConfigClass
         $provider   = Providers::findFirstByUniqid($uniqueID);
         if ($provider !== null) {
             if ($provider->type === 'SIP') {
-                $account    = Sip::findFirst('disabled="0" AND uniqid = "' . $uniqueID . '"');
+                $account    = Sip::findFirst([
+                    'conditions' => 'disabled = "0" AND uniqid = :uniqid:',
+                    'bind'       => ['uniqid' => $uniqueID],
+                ]);
                 if ($account !== null) {
                     $technology = SIPConf::getTechnology();
                     // For inbound providers, we need to use username as endpoint name
                     // Only set endpoint_name if username is not empty
-                    if ($account->registration_type === Sip::REG_TYPE_INBOUND && !empty($account->username)) {
-                        $rout_data['endpoint_name'] = $account->username;
+                    // Same single-line name as the endpoint/peer section written into the config
+                    $username = AsteriskConfigClass::firstLine((string)$account->username);
+                    if ($account->registration_type === Sip::REG_TYPE_INBOUND && $username !== '') {
+                        $rout_data['endpoint_name'] = $username;
                     }
                 }
             } elseif ($provider->type === 'IAX') {
-                $account    = Iax::findFirst('disabled="0" AND uniqid = "' . $uniqueID . '"');
+                $account    = Iax::findFirst([
+                    'conditions' => 'disabled = "0" AND uniqid = :uniqid:',
+                    'bind'       => ['uniqid' => $uniqueID],
+                ]);
                 if ($account !== null) {
                     $technology = 'IAX2';
                     // For inbound IAX providers, we need to use username as endpoint name
                     // Only set endpoint_name if username is not empty
-                    if ($account->registration_type === Iax::REGISTRATION_TYPE_INBOUND && !empty($account->username)) {
-                        $rout_data['endpoint_name'] = $account->username;
+                    // Same single-line name as the endpoint/peer section written into the config
+                    $username = AsteriskConfigClass::firstLine((string)$account->username);
+                    if ($account->registration_type === Iax::REGISTRATION_TYPE_INBOUND && $username !== '') {
+                        $rout_data['endpoint_name'] = $username;
                     }
                 } else {
                     $technology = '';

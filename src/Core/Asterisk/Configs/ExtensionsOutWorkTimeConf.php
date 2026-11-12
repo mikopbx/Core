@@ -104,8 +104,10 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         $configs = '';
         $dbData = Sip::find("type = 'friend' AND ( disabled <> '1')");
         foreach ($dbData as $sipPeer) {
-            $context_id = self::getProviderContextId($sipPeer->toArray(), false);
-            $configs .= "CONTEXT_ID_$sipPeer->uniqid=$context_id" . PHP_EOL;
+            // Same single-line values as the rows SIPConf writes into pjsip.conf/extensions.conf
+            $peer = self::firstLines($sipPeer->toArray(), self::CONFIG_EXEMPT_FIELDS);
+            $context_id = self::getProviderContextId($peer, false);
+            $configs .= "CONTEXT_ID_{$peer['uniqid']}=$context_id" . PHP_EOL;
         }
         return $configs;
     }
@@ -242,7 +244,10 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
                     // Orphaned provider without Sip/Iax record: no calls can carry its contextID.
                     continue;
                 }
-                $context_id = self::getProviderContextId($provByType->toArray(), $provByType instanceof Iax);
+                $context_id = self::getProviderContextId(
+                    self::firstLines($provByType->toArray(), self::CONFIG_EXEMPT_FIELDS),
+                    $provByType instanceof Iax
+                );
             } else {
                 $context_id = 'none-incoming';
             }

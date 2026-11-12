@@ -209,7 +209,7 @@ class IAXConf extends AsteriskConfigClass
                     if (filter_var($host, FILTER_VALIDATE_IP)) {
                         $resolveOk = true; // IP address, no DNS check needed
                     } else {
-                        $resolveOk = Processes::mwExec("timeout 1 getent hosts '$host'") === 0;
+                        $resolveOk = Processes::mwExec('timeout 1 getent hosts ' . escapeshellarg($host)) === 0;
                         if (!$resolveOk) {
                             SystemMessages::sysLogMsg('IAX2', "WARNING: DNS $host not resolved, registration skipped for provider {$provider['description']} ({$provider['uniqid']})");
                         }
@@ -267,7 +267,8 @@ class IAXConf extends AsteriskConfigClass
         $arrIaxProviders = Iax::find("disabled IS NULL OR disabled = '0'");
         foreach ($arrIaxProviders as $peer) {
             /** @var Iax $peer */
-            $arr_data = $peer->toArray();
+            // Stored values must not break iax.conf/extensions.conf lines (GUI/REST/import/restore)
+            $arr_data = self::firstLines($peer->toArray(), self::CONFIG_EXEMPT_FIELDS);
 
             // Add related network filter data if exists
             if (!empty($peer->networkfilterid) && $peer->NetworkFilters) {

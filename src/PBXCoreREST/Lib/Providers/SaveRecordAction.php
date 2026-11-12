@@ -205,6 +205,21 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // Initialize model if needed
         // ============================================================
 
+        // A custom id (migrations/imports) becomes the uniqid, which is written into Asterisk configs
+        // as section/context names and application arguments: accept only the generated format.
+        // D: '$' must not accept a trailing "\n" (the id is not trimmed). Do not echo the value back.
+        if (
+            $isNewRecord
+            && !empty($sanitizedData['id'])
+            && (!is_string($sanitizedData['id'])
+                || preg_match('/' . DataStructure::ID_PATTERN . '/D', $sanitizedData['id']) !== 1
+                || !str_starts_with($sanitizedData['id'], $sanitizedData['type'] . '-'))
+        ) {
+            $res->messages['error'][] = 'Provider id has an invalid format';
+            $res->httpCode = 422;
+            return $res;
+        }
+
         if ($isNewRecord) {
             // CREATE: Initialize new provider
             $provider = new Providers();

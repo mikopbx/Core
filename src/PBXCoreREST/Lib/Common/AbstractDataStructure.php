@@ -923,7 +923,9 @@ abstract class AbstractDataStructure
      * This method validates input data against constraints defined in getParameterDefinitions()['request']:
      * - enum: Value must be one of allowed values
      * - minimum/maximum: Integer/number must be within range
-     * - pattern: String must match regex (already validated in SaveRecordAction)
+     * - maxLength: String must not be longer
+     * - x-single-line: String must not contain CR, LF or NUL (values written into config files)
+     * - pattern: not checked here; getSanitizationRules() applies it during sanitization
      *
      * Usage in SaveRecordAction (after applyDefaults, before saving):
      * ```php
@@ -998,6 +1000,11 @@ abstract class AbstractDataStructure
                 if ($length > $fieldDef['maxLength']) {
                     $errors[] = "Field '{$fieldName}' must be at most {$fieldDef['maxLength']} characters (got {$length})";
                 }
+            }
+
+            // Values written into line-based config files (Asterisk) must stay on one line
+            if (!empty($fieldDef['x-single-line']) && is_string($value) && strpbrk($value, "\r\n\0") !== false) {
+                $errors[] = "Field '{$fieldName}' must not contain line breaks";
             }
         }
 

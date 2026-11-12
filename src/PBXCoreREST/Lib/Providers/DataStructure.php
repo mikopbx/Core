@@ -52,6 +52,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     public const string MASKED_SECRET = 'XXXXXXXX';
 
     /**
+     * Provider id (uniqid) format. A custom id on create must match it: the id is written into
+     * pjsip.conf/iax.conf section names and extensions.conf contexts and application arguments.
+     */
+    public const string ID_PATTERN = '^(SIP|IAX)-(PROVIDER-|TRUNK-)?[A-Z0-9]{8,32}$';
+
+    /**
      * Whether GET returns the mask instead of the stored secret: only a non-empty secret
      * of an outbound registration is hidden. SaveRecordAction and CopyRecordAction rely
      * on the same rule to recognize the mask coming back.
@@ -432,7 +438,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'id' => [
                 'type' => 'string',
                 'description' => 'rest_schema_provider_id',
-                'pattern' => '^(SIP|IAX)-(PROVIDER-|TRUNK-)?[A-Z0-9]{8,32}$',
+                'pattern' => self::ID_PATTERN,
                 'readOnly' => true,
                 'example' => 'SIP-TRUNK-12345ABC'
             ],
@@ -498,6 +504,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             ],
             'secret' => [
                 'type' => 'string',
+                // Written into a line-based Asterisk config file
+                'x-single-line' => true,
                 'description' => 'rest_schema_provider_secret',
                 'maxLength' => 100,
                 'sanitize' => 'string',
@@ -602,6 +610,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             ],
             'fromuser' => [
                 'type' => 'string',
+                // Written into a line-based Asterisk config file
+                'x-single-line' => true,
                 'description' => 'rest_schema_provider_fromuser',
                 'maxLength' => 100,
                 'sanitize' => 'string',
@@ -610,6 +620,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             ],
             'fromdomain' => [
                 'type' => 'string',
+                // Written into a line-based Asterisk config file
+                'x-single-line' => true,
                 'description' => 'rest_schema_provider_fromdomain',
                 'maxLength' => 255,
                 'sanitize' => 'string',
@@ -618,6 +630,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             ],
             'outbound_proxy' => [
                 'type' => 'string',
+                // Written into a line-based Asterisk config file
+                'x-single-line' => true,
                 'description' => 'rest_schema_provider_outbound_proxy',
                 'maxLength' => 255,
                 'sanitize' => 'string',

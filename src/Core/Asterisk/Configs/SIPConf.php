@@ -669,6 +669,8 @@ class SIPConf extends AsteriskConfigClass
         }
         // Process each SIP peer.
         foreach ($db_data as $arr_data) {
+            // Stored values (secret, extension...) must not break pjsip.conf lines; cut before the dedup
+            $arr_data = self::firstLines($arr_data, self::CONFIG_EXEMPT_FIELDS);
             // Issue #1045 / #1204: same dedup as for providers — two m_Sip rows of
             // type='peer' with the same extension emit duplicate [{extension}](aor)
             // and [{extension}](endpoint) sections (see generatePeerAor/Endpoint),
@@ -714,6 +716,7 @@ class SIPConf extends AsteriskConfigClass
                 $user                     = Users::findFirst($extension->userid);
                 $arr_data['user_id'] = ($user !== null) ? $user->id : 0;
             }
+            $arr_data['calleridname'] = self::firstLine((string)$arr_data['calleridname']);
             $data[] = $arr_data;
         }
 
@@ -843,10 +846,13 @@ class SIPConf extends AsteriskConfigClass
         // the username (Login), otherwise the uniqid — dedup on the effective name.
         $seenSections = [];
         foreach ($db_data as $sip_peer) {
+            // Stored values must not break pjsip.conf/extensions.conf lines (GUI/REST/import/restore).
+            // Cut before the dedup so that it checks the section name that is actually written.
+            $arr_data    = self::firstLines($sip_peer->toArray(), self::CONFIG_EXEMPT_FIELDS);
             $sectionName = $this->getProviderSectionName(
-                (string)$sip_peer->registration_type,
-                (string)$sip_peer->username,
-                (string)$sip_peer->uniqid
+                (string)$arr_data['registration_type'],
+                (string)$arr_data['username'],
+                (string)$arr_data['uniqid']
             );
             if ($this->shouldSkipDuplicateSection(
                 $sectionName,
@@ -857,18 +863,17 @@ class SIPConf extends AsteriskConfigClass
                 continue;
             }
 
-            $arr_data                               = $sip_peer->toArray();
             $network_filter                         = NetworkFilters::findFirst($sip_peer->networkfilterid);
             $arr_data['permit']                     = ($network_filter === null) ? '' : $network_filter->permit;
             $arr_data['deny']                       = ($network_filter === null) ? '' : $network_filter->deny;
 
             $arr_data['transport'] = trim($arr_data['transport'] ?? '');
             $arr_data['codecs'] = $codecs;
-            $context_id = self::getIncomingContextId($sip_peer->host, $sip_peer->port);
+            $context_id = self::getIncomingContextId((string)$arr_data['host'], (string)$arr_data['port']);
             if (! isset($this->contexts_data[$context_id])) {
                 $this->contexts_data[$context_id] = [];
             }
-            $this->contexts_data[$context_id][$sip_peer->uniqid] = $sip_peer->username;
+            $this->contexts_data[$context_id][$sip_peer->uniqid] = $arr_data['username'];
             $arr_data['context_id'] = $context_id;
             $arr_data['registration_type'] = $sip_peer->getEffectiveRegistrationType();
             // Preserve empty/zero port as marker for SRV-based discovery (RFC 3263).
@@ -1649,7 +1654,7 @@ class SIPConf extends AsteriskConfigClass
             }
 
             // Verify hostname resolves (both A and AAAA records should exist)
-            $resolveOk = Processes::mwExec("timeout 1 getent hosts '$externalHostName'") === 0;
+            $resolveOk = Processes::mwExec('timeout 1 getent hosts ' . escapeshellarg($externalHostName)) === 0;
             if (!$resolveOk) {
                 SystemMessages::sysLogMsg(__METHOD__, "ERROR: Dual-stack mode enabled but hostname '$externalHostName' does not resolve. Check DNS configuration.");
                 return ['natConf' => $natConf, 'tlsNatConf' => $tlsNatConf];
@@ -1668,7 +1673,7 @@ class SIPConf extends AsteriskConfigClass
         }
 
         // Non-dual-stack mode: Use existing priority logic (hostname > IP)
-        $resolveOk = Processes::mwExec("timeout 1 getent hosts '$externalHostName'") === 0;
+        $resolveOk = Processes::mwExec('timeout 1 getent hosts ' . escapeshellarg($externalHostName)) === 0;
 
         if (!empty($externalHostName) && !$resolveOk) {
             SystemMessages::sysLogMsg('DNS', "ERROR: DNS $externalHostName not resolved, It will not be used in SIP signaling.");

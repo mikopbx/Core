@@ -43,6 +43,12 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     // The module hook applying priority
     protected int $priority = 1000;
 
+    /**
+     * Provider/peer row fields that firstLines() keeps whole: manualattributes is parsed line by line
+     * (Util::parseIniSettings), the CID/DID regexes reach the dialplan only base64-encoded.
+     */
+    public const array CONFIG_EXEMPT_FIELDS = ['manualattributes', 'cid_parser_regex', 'did_parser_regex'];
+
     // Config file name i.e. extensions.conf
     protected string $description;
     private string $stageMessage = '';
@@ -575,5 +581,37 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     {
         $directory = Directories::getDir(Directories::AST_ETC_DIR);
         Util::fileWriteContent($directory . '/' . $filename, $config);
+    }
+
+    /**
+     * Cuts a value that goes into an Asterisk config file down to its first line.
+     *
+     * Asterisk config files are line based: a line break inside a value starts a new option
+     * or a new [section], so a stored value must never carry one into the file.
+     *
+     * @param string $value Stored value.
+     * @return string The value up to the first CR, LF or NUL character.
+     */
+    public static function firstLine(string $value): string
+    {
+        return substr($value, 0, strcspn($value, "\r\n\0"));
+    }
+
+    /**
+     * Applies firstLine() to every string field of a database row.
+     *
+     * @param array<string, mixed> $row Database row.
+     * @param array<string> $exemptFields Fields kept whole: parsed line by line or base64-encoded
+     *                                    before use (see CONFIG_EXEMPT_FIELDS).
+     * @return array<string, mixed> The row with single-line string fields.
+     */
+    public static function firstLines(array $row, array $exemptFields = []): array
+    {
+        foreach ($row as $field => $value) {
+            if (is_string($value) && !in_array($field, $exemptFields, true)) {
+                $row[$field] = self::firstLine($value);
+            }
+        }
+        return $row;
     }
 }
