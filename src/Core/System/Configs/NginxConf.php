@@ -377,7 +377,7 @@ class NginxConf extends SystemConfigClass
     }
 
     /**
-     * Handle fail2ban actions for Nginx in Docker environments
+     * Handle fail2ban actions for Nginx when iptables is unavailable (Docker, LXC without CAP_NET_ADMIN)
      *
      * @param string $action The action to perform (ban/unban)
      * @param string $ip The IP address to ban/unban
@@ -385,8 +385,8 @@ class NginxConf extends SystemConfigClass
      */
     public static function fail2banNginxAction(string $action, string $ip): void
     {
-        // Skip in non-Docker environments - they use regular iptables
-        if (!System::isDocker()) {
+        // Systems that manage their own firewall ban through iptables instead
+        if (System::canManageFirewall()) {
             return;
         }
 
@@ -395,15 +395,18 @@ class NginxConf extends SystemConfigClass
                 // Get ban time from fail2ban settings
                 $banTime = Fail2BanConf::getBanTime();
 
-                // Add IP to Redis blocked list for HTTP category
-                DockerNetworkFilterService::addBlockedIp($ip, 'http', $banTime);
-                SystemMessages::sysLogMsg('fail2ban-nginx', "Banned IP: $ip for $banTime seconds", LOG_WARNING);
+                // Add IP to Redis blocked list for HTTP category; on failure
+                // (whitelisted IP, Redis error) addBlockedIp() logs the reason itself
+                if (DockerNetworkFilterService::addBlockedIp($ip, 'http', $banTime)) {
+                    SystemMessages::sysLogMsg('fail2ban-nginx', "Banned IP: $ip for $banTime seconds", LOG_WARNING);
+                }
                 break;
 
             case 'unban':
                 // Remove IP from Redis blocked list for HTTP category
-                DockerNetworkFilterService::removeBlockedIp($ip, 'http');
-                SystemMessages::sysLogMsg('fail2ban-nginx', "Unbanned IP: $ip", LOG_INFO);
+                if (DockerNetworkFilterService::removeBlockedIp($ip, 'http')) {
+                    SystemMessages::sysLogMsg('fail2ban-nginx', "Unbanned IP: $ip", LOG_INFO);
+                }
                 break;
 
             default:

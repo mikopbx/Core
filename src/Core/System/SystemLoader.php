@@ -555,8 +555,8 @@ class SystemLoader extends Injectable
         $nginx = new NginxConf();
         $this->echoResultMsg($nginx->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
-        // Update Docker network filters configurations
-        if ($this->isDocker) {
+        // Sync network filters to Redis/ACL files when iptables is unavailable (Docker, LXC without CAP_NET_ADMIN)
+        if (!System::canManageFirewall()) {
             $this->echoStartMsg(' - Updating Docker network filters configurations...');
             DockerNetworkFilterService::updateAllConfigurations();
             $this->echoResultMsg();
