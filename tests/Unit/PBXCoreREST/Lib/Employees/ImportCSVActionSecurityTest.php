@@ -58,10 +58,6 @@ final class ImportCSVActionSecurityTest extends TestCase
 
     public function testImportModeRejectsTraversalBeforeReadingTemporaryJson(): void
     {
-        $importDir = '/tmp/employee_import';
-        if (!is_dir($importDir)) {
-            mkdir($importDir, 0700, true);
-        }
         $outsideName = 'employees-import-' . bin2hex(random_bytes(8));
         $outsideFile = '/tmp/' . $outsideName . '.json';
         file_put_contents($outsideFile, '{invalid-json');

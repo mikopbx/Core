@@ -161,9 +161,6 @@ class EmployeesManagementProcessor extends Injectable
             'strategy' => $strategy
         ];
         
-        // Use special internal path to signal we're confirming a preview
-        $importData['filepath'] = "/tmp/employee_import/{$uploadId}.json";
-        
         return ImportCSVAction::main($importData);
     }
     

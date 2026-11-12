@@ -40,6 +40,10 @@ class ImportCSVAction
     private const int MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
     private const string UPLOAD_ID_PATTERN = '/\A(?!\.{1,2}\z)(?!.*\.\.)[A-Za-z0-9._-]{1,255}\z/D';
     private const string IMPORT_ID_PATTERN = '/\A[a-f0-9]{32}\z/D';
+    // Root-only RAM directory: the saved records keep the SIP secrets from the CSV, /tmp has no sticky bit
+    private const string IMPORT_DIR = '/var/run/employee_import';
+    private const int IMPORT_TTL = 3600;
+    public const string WORKER_PARAMS_PREFIX = 'worker_';
     
     // Supported CSV columns
     private const array SUPPORTED_COLUMNS = [
@@ -95,8 +99,8 @@ class ImportCSVAction
             }
 
             // Load saved preview data
-            $dataFile = "/tmp/employee_import/{$uploadId}.json";
-            if (!file_exists($dataFile)) {
+            $dataFile = self::getImportDataFile($uploadId);
+            if ($dataFile === null || !file_exists($dataFile)) {
                 $res->messages['error'][] = TranslationProvider::translate('ex_ImportFileNotFound');
                 return $res;
             }
@@ -184,6 +188,17 @@ class ImportCSVAction
         // Validate records
         $validationResult = self::validateRecords($records, $strategy);
         
+        if ($mode !== 'preview' && $validationResult['valid'] === 0) {
+            $res->messages['error'][] = TranslationProvider::translate('ex_ImportNoValidRecords');
+            return $res;
+        }
+
+        $savedId = self::saveTemporaryData($records, $validationResult);
+        if ($savedId === null) {
+            $res->messages['error'][] = TranslationProvider::translate('ex_ImportWorkerFailed');
+            return $res;
+        }
+
         if ($mode === 'preview') {
             // Return preview data
             $res->data = [
@@ -194,19 +209,12 @@ class ImportCSVAction
                 'warnings' => count($validationResult['warnings']),
                 'headers' => $headers,
                 'preview' => $validationResult['preview'], // Show all records for real-time updates
-                'uploadId' => self::saveTemporaryData($records, $validationResult)
+                'uploadId' => $savedId
             ];
             $res->success = true;
         } else {
             // Import mode - delegate to worker
-            if ($validationResult['valid'] === 0) {
-                $res->messages['error'][] = TranslationProvider::translate('ex_ImportNoValidRecords');
-                return $res;
-            }
-            
-            // Start import worker
-            $uploadId = self::saveTemporaryData($records, $validationResult);
-            $jobId = self::startImportWorker($uploadId, $strategy);
+            $jobId = self::startImportWorker($savedId, $strategy);
             
             if ($jobId) {
                 $res->data = [
@@ -614,21 +622,55 @@ class ImportCSVAction
     }
     
     /**
+     * Return the private import directory, creating it on first use.
+     *
+     * @return string|null Null when the directory cannot be trusted
+     */
+    public static function getImportDir(): ?string
+    {
+        $dir = self::IMPORT_DIR;
+        clearstatcache();
+        if (!Util::mwMkdir($dir) || is_link($dir) || !is_dir($dir) || fileowner($dir) !== posix_geteuid()) {
+            return null;
+        }
+        if (!chmod($dir, 0700)) {
+            return null;
+        }
+        // Canonical path: /var/run may be a symlink to /run, the worker compares realpath() results
+        return realpath($dir) ?: null;
+    }
+
+    /**
+     * Resolve the saved preview file for an upload ID.
+     *
+     * @param mixed $uploadId Upload ID returned by the preview
+     * @return string|null Null for a malformed ID or an untrusted directory
+     */
+    public static function getImportDataFile(mixed $uploadId): ?string
+    {
+        if (!is_string($uploadId) || preg_match(self::IMPORT_ID_PATTERN, $uploadId) !== 1) {
+            return null;
+        }
+        $dir = self::getImportDir();
+        return $dir === null ? null : "$dir/$uploadId.json";
+    }
+
+    /**
      * Save temporary data for import
-     * 
+     *
      * @param array $records Validated records
      * @param array $validationResult Validation results
-     * @return string Upload ID
+     * @return string|null Upload ID
      */
-    private static function saveTemporaryData(array $records, array $validationResult): string
+    private static function saveTemporaryData(array $records, array $validationResult): ?string
     {
-        $uploadId = md5(uniqid('import_', true));
-        $tempDir = '/tmp/employee_import';
-        
-        if (!is_dir($tempDir)) {
-            mkdir($tempDir, 0777, true);
+        $tempDir = self::getImportDir();
+        if ($tempDir === null) {
+            return null;
         }
-        
+        self::removeExpiredFiles($tempDir);
+
+        $uploadId = md5(uniqid('import_', true));
         $dataFile = "$tempDir/$uploadId.json";
         $data = [
             'uploadId' => $uploadId,
@@ -636,12 +678,33 @@ class ImportCSVAction
             'records' => $records,
             'validation' => $validationResult
         ];
-        
-        file_put_contents($dataFile, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-        
+
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        if ($json === false || file_put_contents($dataFile, $json) === false) {
+            return null;
+        }
+        chmod($dataFile, 0600);
+
         return $uploadId;
     }
-    
+
+    /**
+     * Remove previews that were never confirmed and worker parameters left by a failed start.
+     *
+     * @param string $dir Private import directory
+     */
+    private static function removeExpiredFiles(string $dir): void
+    {
+        $expireBefore = time() - self::IMPORT_TTL;
+        foreach (glob("$dir/*.json") ?: [] as $file) {
+            $mtime = filemtime($file);
+            if ($mtime !== false && $mtime < $expireBefore) {
+                // A concurrent sweep or the worker may have removed it already
+                @unlink($file);
+            }
+        }
+    }
+
     /**
      * Start import worker
      * 
@@ -666,10 +729,17 @@ class ImportCSVAction
             return null;
         }
         
+        $tempDir = self::getImportDir();
+        if ($tempDir === null) {
+            return null;
+        }
         $php = Util::which('php');
-        $paramsFile = "/tmp/import_worker_$jobId.json";
-        
-        file_put_contents($paramsFile, json_encode($workerParams, JSON_UNESCAPED_UNICODE));
+        $paramsFile = $tempDir . '/' . self::WORKER_PARAMS_PREFIX . $jobId . '.json';
+
+        if (file_put_contents($paramsFile, json_encode($workerParams, JSON_UNESCAPED_UNICODE)) === false) {
+            return null;
+        }
+        chmod($paramsFile, 0600);
         
         // Use Processes::mwExecBg for reliable background execution
         $command = "$php -f $workerFile start '$paramsFile'";
@@ -677,9 +747,7 @@ class ImportCSVAction
         
         // Give worker a moment to start
         usleep(100000); // 100ms
-        
-        // Check if params file still exists (worker deletes it after reading)
-        // If it's gone, worker started successfully
+
         return $jobId;
     }
 }

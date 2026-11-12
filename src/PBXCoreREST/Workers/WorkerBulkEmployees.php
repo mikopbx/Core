@@ -26,6 +26,7 @@ use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\Employees\DependencyResolver;
+use MikoPBX\PBXCoreREST\Lib\Employees\ImportCSVAction;
 use MikoPBX\PBXCoreREST\Lib\Employees\PatchRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Employees\SaveEmployeeAction;
 
@@ -59,13 +60,21 @@ class WorkerBulkEmployees extends WorkerBase
     public function start(array $argv): void
     {
         $paramsFile = $argv[2] ?? '';
+        $importDir = ImportCSVAction::getImportDir();
+        $realParams = realpath($paramsFile);
 
-        if (!file_exists($paramsFile)) {
+        if (
+            $importDir === null
+            || $realParams === false
+            || dirname($realParams) !== $importDir
+            || !str_starts_with(basename($realParams), ImportCSVAction::WORKER_PARAMS_PREFIX)
+        ) {
             SystemMessages::sysLogMsg(__CLASS__, 'Parameters file not found: ' . $paramsFile, LOG_ERR);
             return;
         }
 
-        $params = json_decode(file_get_contents($paramsFile), true);
+        $params = json_decode(file_get_contents($realParams), true);
+        unlink($realParams);
         if (!$params) {
             SystemMessages::sysLogMsg(__CLASS__, 'Invalid parameters file: ' . $paramsFile, LOG_ERR);
             return;
@@ -91,8 +100,8 @@ class WorkerBulkEmployees extends WorkerBase
         ];
         
         // Load import data
-        $dataFile = "/tmp/employee_import/{$uploadId}.json";
-        if (!file_exists($dataFile)) {
+        $dataFile = ImportCSVAction::getImportDataFile($uploadId);
+        if ($dataFile === null || !file_exists($dataFile)) {
             $this->sendError('Import data file not found');
             return;
         }
@@ -111,9 +120,6 @@ class WorkerBulkEmployees extends WorkerBase
 
         // Process import
         $this->processImport($records, $validation, $strategy);
-        
-        // Clean up parameters file
-        unlink($paramsFile);
     }
     
     /**
