@@ -237,14 +237,15 @@ class Storage extends Injectable
 
         // If the disk is mounted, terminate processes using the disk and unmount it
         if (self::isStorageDiskMounted($dir)) {
-            Processes::mwExec("/sbin/shell_functions.sh 'killprocesses' '$dir' -TERM 0");
-            Processes::mwExec("$umount $dir");
+            $escapedDir = escapeshellarg($dir);
+            Processes::mwExec("/sbin/shell_functions.sh 'killprocesses' $escapedDir -TERM 0");
+            Processes::mwExec("$umount $escapedDir");
         }
         $result = !self::isStorageDiskMounted($dir);
 
         // If the disk is successfully unmounted and the directory exists, remove the directory
         if ($result && file_exists($dir)) {
-            Processes::mwExec("$rm -rf '$dir'");
+            Processes::mwExec("$rm -rf " . escapeshellarg($dir));
         }
 
         return $result;
@@ -263,11 +264,12 @@ class Storage extends Injectable
 
         // First, remove existing partitions and then create a new msdos partition table and ext4 partition
         // This command deletes all existing partitions and creates a new primary partition using the full disk
-        $command = "$parted --script --align optimal '$device' 'mklabel gpt'";
+        $escapedDevice = escapeshellarg($device);
+        $command = "$parted --script --align optimal $escapedDevice 'mklabel gpt'";
         Processes::mwExec($command);  // Apply the command to clear the partition table
 
         // Now create a new partition that spans the entire disk
-        $createPartCommand = "$parted --script --align optimal '$device' 'mkpart primary ext4 0% 100%'";
+        $createPartCommand = "$parted --script --align optimal $escapedDevice 'mkpart primary ext4 0% 100%'";
         $retVal = Processes::mwExec($createPartCommand);
 
         // Log the result of the create partition command
@@ -308,7 +310,7 @@ class Storage extends Injectable
     public function formatPartition(string $partition, bool $bg = false): bool
     {
         $mkfs = Util::which("mkfs.ext4");
-        $cmd = "$mkfs $partition";
+        $cmd = "$mkfs " . escapeshellarg($partition);
         if ($bg === false) {
             // Execute the mkfs command and check the return value
             $retVal = Processes::mwExec("$cmd 2>&1");
@@ -344,7 +346,8 @@ class Storage extends Injectable
         $grepPath = Util::which('grep');
 
         // Execute the command to check the status of mkfs process
-        Processes::mwExec("$psPath -A -f | $grepPath $dev | $grepPath mkfs | $grepPath -v grep", $out);
+        $escapedDev = escapeshellarg($dev);
+        Processes::mwExec("$psPath -A -f | $grepPath -F -- $escapedDev | $grepPath mkfs | $grepPath -v grep", $out);
         $mount_dir = trim(implode('', $out));
 
         return empty($mount_dir) ? 'ended' : 'inprogress';
@@ -475,10 +478,16 @@ class Storage extends Injectable
             }
         } elseif ($part === '4' && $forceFormatStorage) {
             echo PHP_EOL . Util::translate('Formatting storage partition 4 on disk') . ': ' . $dev_disk . '...' . PHP_EOL;
-            passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four create $dev_disk");
+            passthru(
+                'exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four create '
+                . escapeshellarg($dev_disk)
+            );
         } elseif ($part === '4') {
             echo PHP_EOL . Util::translate('Update storage partition 4 on disk') . ': ' . $dev_disk . '...' . PHP_EOL;
-            passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four update $dev_disk");
+            passthru(
+                'exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four update '
+                . escapeshellarg($dev_disk)
+            );
         }
 
         // Retry partition detection — kernel may need time to update device nodes after formatting
@@ -593,33 +602,78 @@ class Storage extends Injectable
      */
     public static function getDevPartName(string $dev, string $part, bool $verbose = false): string
     {
-        $lsBlkPath = Util::which('lsblk');
-        $cutPath   = Util::which('cut');
-        $grepPath  = Util::which('grep');
-        $sortPath  = Util::which('sort');
+        $diskName = basename(trim($dev));
+        $blockDevices = self::getBlockDevices();
 
-        $basenameDisk = basename($dev);
-        $pathToDisk = trim(shell_exec("$lsBlkPath -n -p -a -r -o NAME,TYPE | $grepPath disk | $grepPath '$basenameDisk' | $cutPath -d ' ' -f 1")??'');
+        // Exact match by kernel name: a substring match turned 'sda' into 'sdaa' and '' into every disk.
+        $pathToDisk = '';
+        foreach ($blockDevices as $device) {
+            if ($device['type'] === 'disk' && basename($device['name']) === $diskName) {
+                $pathToDisk = $device['name'];
+                break;
+            }
+        }
         if ($verbose) {
             echo "Get dev full path..." . PHP_EOL;
             echo "Source dev: $dev, result full path: $pathToDisk" . PHP_EOL;
         }
-            // Touch the disk to update disk tables
-        $partProbePath = Util::which('partprobe');
-        shell_exec($partProbePath . " '$pathToDisk'");
 
-        // Touch the disk to update disk tables
-        $command = "$lsBlkPath -r -p | $grepPath ' part' | $sortPath -u | $cutPath -d ' ' -f 1 | $grepPath '" . $pathToDisk . "' | $grepPath \"$part\$\"";
-        $devName = trim(shell_exec($command??'')??'');
-        if (empty($devName) && $verbose) {
-            $verboseMsg = trim(shell_exec("$lsBlkPath -r -p")??'');
-            echo "---   filtered command   ---" . PHP_EOL;
-            echo $command . PHP_EOL;
-            echo "---   result 'lsblk -r -p'   ---" . PHP_EOL;
-            echo $verboseMsg . PHP_EOL;
+        // The partition number comes from the kernel, so partition 1 does not match partitions 11 or 21.
+        $devName = '';
+        if ($pathToDisk !== '') {
+            foreach ($blockDevices as $device) {
+                if ($device['type'] !== 'part' || $device['pkname'] !== $pathToDisk) {
+                    continue;
+                }
+                $partitionFile = '/sys/class/block/' . basename($device['name']) . '/partition';
+                if (file_exists($partitionFile) && trim((string)file_get_contents($partitionFile)) === $part) {
+                    $devName = $device['name'];
+                    break;
+                }
+            }
+        }
+        if ($devName === '' && $verbose) {
+            echo "---   partition $part of '$pathToDisk' not found, 'lsblk -r -p -o NAME,TYPE,PKNAME'   ---" . PHP_EOL;
+            foreach ($blockDevices as $device) {
+                echo "{$device['name']} {$device['type']} {$device['pkname']}" . PHP_EOL;
+            }
             echo "---   ---   ---" . PHP_EOL;
         }
         return $devName;
+    }
+
+    /**
+     * Lists block devices with their full paths, types, parent devices and filesystem UUIDs.
+     *
+     * The partition table is not re-read here: callers that changed it run syncAndRereadPartitions().
+     *
+     * @return array<int, array{name: string, type: string, pkname: string, uuid: string}>
+     */
+    private static function getBlockDevices(): array
+    {
+        $lsBlkPath = Util::which('lsblk');
+        $out = [];
+        if (Processes::mwExec("$lsBlkPath -n -p -a -r -o NAME,TYPE,PKNAME,UUID", $out) !== 0) {
+            return [];
+        }
+        $devices = [];
+        foreach ($out as $line) {
+            // Raw mode escapes spaces inside values, so the columns are separated by single spaces.
+            // exec() strips trailing whitespace, so empty trailing columns (no parent, no UUID) are missing.
+            // mwExec() merges stderr into the output: a warning line has no '/dev/' path in the first column.
+            $columns = explode(' ', trim($line, "\r\n"));
+            if (count($columns) < 2 || count($columns) > 4 || !str_starts_with($columns[0], '/dev/')) {
+                continue;
+            }
+            $columns = array_pad($columns, 4, '');
+            $devices[] = [
+                'name' => $columns[0],
+                'type' => $columns[1],
+                'pkname' => $columns[2],
+                'uuid' => $columns[3],
+            ];
+        }
+        return $devices;
     }
 
     /**
@@ -635,8 +689,6 @@ class Storage extends Injectable
             return false;
         }
         $result = false;
-        $tmp_dir = '/tmp/mnt_' . time();
-        Util::mwMkdir($tmp_dir);
         $out = [];
 
         $uid_part = 'UUID=' . self::getUuid($device);
@@ -647,12 +699,15 @@ class Storage extends Injectable
             echo("For Disk $device ($uid_part), FS_TYPE empty...") . PHP_EOL;
             return false;
         }
+        $tmp_dir = '/tmp/mnt_' . time();
+        Util::mwMkdir($tmp_dir);
         echo("For Disk $device get $uid_part, FS_TYPE=$format...") . PHP_EOL;
         $mount  = Util::which('mount');
         $umount = Util::which('umount');
         $rm     = Util::which('rm');
 
-        Processes::mwExec("$mount -t $format $uid_part $tmp_dir", $out);
+        $mountArgs = '-t ' . escapeshellarg($format) . ' ' . escapeshellarg($uid_part) . ' ' . escapeshellarg($tmp_dir);
+        Processes::mwExec("$mount $mountArgs", $out);
         if (is_dir("$tmp_dir/mikopbx") && trim(implode('', $out)) === '') {
             $result = true;
             echo("Disk $device is storage...") . PHP_EOL;
@@ -660,12 +715,12 @@ class Storage extends Injectable
 
         // Check if the storage disk is mounted, and unmount if necessary
         if (self::isStorageDiskMounted($device)) {
-            Processes::mwExec("$umount $device");
+            Processes::mwExec("$umount " . escapeshellarg($device));
         }
 
         // Check if the storage disk is unmounted, and remove the temporary directory
         if (!self::isStorageDiskMounted($device)) {
-            Processes::mwExec("$rm -rf '$tmp_dir'");
+            Processes::mwExec("$rm -rf " . escapeshellarg($tmp_dir));
         }
 
         return $result;
@@ -684,7 +739,10 @@ class Storage extends Injectable
         if (count($disk_data) === 0) {
             $storage_settings = new StorageModel();
         } else {
-            $storage_settings = StorageModel::findFirst("id = '$id'");
+            $storage_settings = StorageModel::findFirst([
+                'conditions' => 'id = :id:',
+                'bind' => ['id' => $id],
+            ]);
         }
         foreach ($data as $key => $value) {
             $storage_settings->writeAttribute($key, $value);
@@ -708,7 +766,10 @@ class Storage extends Injectable
             $data = StorageModel::find()->toArray();
         } else {
             // Return disk settings for the specified ID.
-            $pbxSettings = StorageModel::findFirst("id='$id'");
+            $pbxSettings = StorageModel::findFirst([
+                'conditions' => 'id = :id:',
+                'bind' => ['id' => $id],
+            ]);
             if ($pbxSettings !== null) {
                 $data = $pbxSettings->toArray();
             }
@@ -780,13 +841,15 @@ class Storage extends Injectable
             SystemMessages::sysLogMsg(__METHOD__, "Create mount point: $conf");
 
             $mountPath = Util::which('mount');
-            $resultMountCode = Processes::mwExec("$mountPath -t $formatFs $str_uid $mount_point", $out);
+            $mountCmd = "$mountPath -t " . escapeshellarg($formatFs) . ' ' . escapeshellarg($str_uid)
+                . ' ' . escapeshellarg($mount_point);
+            $resultMountCode = Processes::mwExec($mountCmd, $out);
             if($resultMountCode !== 0){
                 echo("Fail mount $dev whith $str_uid, FS_TYPE - $formatFs...") . PHP_EOL;
                 echo("Trying check device $dev ...") . PHP_EOL;
-                passthru("/sbin/fsck.$formatFs -y '$dev'");
+                passthru(escapeshellarg("/sbin/fsck.$formatFs") . ' -y ' . escapeshellarg($dev));
                 echo("Trying mount device $dev ...") . PHP_EOL;
-                $resultMountCode = Processes::mwExec("$mountPath -t $formatFs $str_uid $mount_point", $out);
+                $resultMountCode = Processes::mwExec($mountCmd, $out);
                 echo("Result mount code $resultMountCode ...") . PHP_EOL;
             }
 
@@ -1014,12 +1077,8 @@ class Storage extends Injectable
         $legacyUniqid = self::isLegacyUniqid($disk['uniqid']);
         if (!$legacyUniqid) {
             // Find the partition name by UID.
-            $lsblk = Util::which('lsblk');
-            $grep = Util::which('grep');
-            $cut = Util::which('cut');
-            $cmd = "$lsblk -r -o NAME,UUID | $grep {$disk['uniqid']} | $cut -d ' ' -f 1";
-            $dev = '/dev/' . trim(shell_exec($cmd) ?? '');
-            if ($this->hddExists($dev)) {
+            $dev = self::findPartitionByUuid((string)$disk['uniqid']);
+            if ($dev !== '' && $this->hddExists($dev)) {
                 // Disk exists.
                 return $dev;
             }
@@ -1071,6 +1130,25 @@ class Storage extends Injectable
     public static function isLegacyUniqid(?string $uniqid): bool
     {
         return empty($uniqid) || str_contains($uniqid, 'STORAGE-DISK');
+    }
+
+    /**
+     * Finds the device that holds a filesystem with the given UUID.
+     *
+     * @param string $uuid The filesystem UUID.
+     * @return string The device path, e.g. "/dev/sdb1" or "/dev/mapper/vg-data", or '' if there is none.
+     */
+    private static function findPartitionByUuid(string $uuid): string
+    {
+        if ($uuid === '') {
+            return '';
+        }
+        foreach (self::getBlockDevices() as $device) {
+            if ($device['uuid'] === $uuid) {
+                return $device['name'];
+            }
+        }
+        return '';
     }
 
     /**
@@ -2131,20 +2209,22 @@ class Storage extends Injectable
     public static function diskIsMounted(string $disk, string $filter = '/dev/'): bool|string
     {
         $out = [];
-        $grep = Util::which('grep');
         $mount = Util::which('mount');
-        $head = Util::which('head');
+        Processes::mwExec($mount, $out);
 
-        // Execute mount command and grep the output for the disk name
-        Processes::mwExec("$mount | $grep '{$filter}{$disk}' | $head -n 1", $out);
-        if (count($out) > 0) {
-            $res_out = end($out);
-        } else {
-            $res_out = implode('', $out);
+        // The device itself or one of its partitions: 'sda' matches 'sda1' but not 'sdaa1',
+        // 'nvme0n1' matches 'nvme0n1p1' but not 'nvme0n10'.
+        $device = $filter . $disk;
+        $partitionSuffix = preg_match('/\d$/', $device) === 1 ? '(p\d+)?' : '(\d+)?';
+        $pattern = '#^' . preg_quote($device, '#') . $partitionSuffix . ' #';
+        foreach ($out as $line) {
+            if (preg_match($pattern, $line) === 1) {
+                $data = explode(' ', trim($line));
+                return (count($data) > 2) ? $data[2] : false;
+            }
         }
-        $data = explode(' ', trim($res_out));
 
-        return (count($data) > 2) ? $data[2] : false;
+        return false;
     }
 
     /**
@@ -2297,7 +2377,8 @@ class Storage extends Injectable
                 $mountPath = Util::which('mount');
 
                 // Get the file system type and used space of the mounted device
-                Processes::mwExec("$mountPath | $grepPath '/dev/$dev' | $awkPath '{print $5}'", $out);
+                $escapedDev = escapeshellarg("/dev/$dev ");
+                Processes::mwExec("$mountPath | $grepPath -F -- $escapedDev | $awkPath '{print $5}'", $out);
                 $fs = trim(implode("", $out));
                 $fs = ($fs === 'fuseblk') ? 'ntfs' : $fs;
                 // Use getUsedSpace to get accurate used space from df (accounts for reserved blocks)
@@ -2348,7 +2429,7 @@ class Storage extends Injectable
         $lsBlkPath = Util::which('lsblk');
 
         // Execute lsblk command to get disk partition information in JSON format
-        Processes::mwExec("$lsBlkPath -J -b -o NAME,TYPE $diskName", $out);
+        Processes::mwExec("$lsBlkPath -J -b -o NAME,TYPE -- " . escapeshellarg($diskName), $out);
 
         try {
             $data = json_decode(implode(PHP_EOL, $out), true, 512, JSON_THROW_ON_ERROR);
@@ -2384,12 +2465,17 @@ class Storage extends Injectable
         $awk = Util::which('awk');
 
         // Remove '/dev/' from the device path
-        $device = str_replace('/dev/', '', $device);
+        $device = str_replace('/dev/', '', trim($device));
+        if ($device === '') {
+            return '';
+        }
+        $escapedDevice = escapeshellarg("/dev/$device");
         $out = [];
 
         // Execute the command to retrieve the file system type of the device
         Processes::mwExec(
-            "$blkid -ofull /dev/$device | $sed -r 's/[[:alnum:]]+=/\\n&/g' | $grep \"^TYPE=\" | $awk -F \"\\\"\" '{print $2}'",
+            "$blkid -ofull $escapedDevice | $sed -r 's/[[:alnum:]]+=/\\n&/g'"
+            . " | $grep \"^TYPE=\" | $awk -F \"\\\"\" '{print $2}'",
             $out
         );
         $format = implode('', $out);
@@ -2416,6 +2502,10 @@ class Storage extends Injectable
         if (self::isStorageDiskMounted("/dev/$dev ")) {
             return true;
         }
+        // No filesystem detected: there is nothing to mount.
+        if ($format === '') {
+            return false;
+        }
 
         // Create the directory if it doesn't exist
         Util::mwMkdir($dir);
@@ -2433,12 +2523,13 @@ class Storage extends Injectable
         if ('ntfs' === $format) {
             // Mount NTFS disk using 'mount.ntfs-3g' command
             $mountNtfs3gPath = Util::which('mount.ntfs-3g');
-            Processes::mwExec("$mountNtfs3gPath /dev/$dev $dir", $out);
+            Processes::mwExec("$mountNtfs3gPath " . escapeshellarg("/dev/$dev") . ' ' . escapeshellarg($dir), $out);
         } else {
             // Mount disk using specified file system format and UUID
             $uid_part = 'UUID=' . self::getUuid("/dev/$dev");
             $mountPath = Util::which('mount');
-            Processes::mwExec("$mountPath -t $format $uid_part $dir", $out);
+            $mountArgs = '-t ' . escapeshellarg($format) . ' ' . escapeshellarg($uid_part) . ' ' . escapeshellarg($dir);
+            Processes::mwExec("$mountPath $mountArgs", $out);
         }
 
         // Check if the disk is now mounted
@@ -2460,12 +2551,12 @@ class Storage extends Injectable
 
         $blockdev = Util::which('blockdev');
         if (!empty($blockdev)) {
-            Processes::mwExec("$blockdev --rereadpt $device 2>/dev/null");
+            Processes::mwExec("$blockdev --rereadpt " . escapeshellarg($device) . ' 2>/dev/null');
         }
 
         $partprobe = Util::which('partprobe');
         if (!empty($partprobe)) {
-            Processes::mwExec("$partprobe $device 2>/dev/null");
+            Processes::mwExec("$partprobe " . escapeshellarg($device) . ' 2>/dev/null');
         }
 
         // Give the kernel time to update device nodes
@@ -2512,18 +2603,24 @@ class Storage extends Injectable
      */
     public static function getUuid(string $device): string
     {
-        if (empty($device)) {
+        $device = trim($device);
+        if ($device === '') {
             return '';
         }
+        if (!str_starts_with($device, '/')) {
+            $device = "/dev/$device";
+        }
         $lsblk = Util::which('lsblk');
-        $grep = Util::which('grep');
-        $cut = Util::which('cut');
 
-        // Build the command to retrieve the UUID of the device
-        $cmd = "$lsblk -r -o NAME,UUID | $grep " . basename($device) . " | $cut -d ' ' -f 2";
-        $res = Processes::mwExec($cmd, $output);
+        // Ask for this one device: grepping the full list matched 'sda1' against 'sda10' too.
+        $output = [];
+        $res = Processes::mwExec("$lsblk -d -n -r -o UUID -- " . escapeshellarg($device), $output);
         if ($res === 0 && !empty($output)) {
-            $result = $output[0];
+            // mwExec() merges stderr into the output, so a warning line must not be taken for a UUID.
+            $result = trim($output[0]);
+            if (preg_match('/^[\w-]+$/', $result) !== 1) {
+                $result = '';
+            }
         } else {
             $result = '';
         }
