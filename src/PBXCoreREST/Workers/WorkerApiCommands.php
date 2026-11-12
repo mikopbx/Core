@@ -11,6 +11,7 @@ use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\{Processes, SystemMessages};
 use MikoPBX\Core\Workers\WorkerRedisBase;
+use MikoPBX\PBXCoreREST\Http\RestErrorResponseHandler;
 use MikoPBX\PBXCoreREST\Lib\Modules\ModuleInstallationBase;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
@@ -406,12 +407,17 @@ class WorkerApiCommands extends WorkerRedisBase
     /**
      * Handle processing errors and update result object
      *
+     * The full description (trace, paths, source) goes to Sentry and syslog only;
+     * the client gets the same generic message as the web-side REST handler (#1260).
+     *
      * @param Throwable $exception Exception that occurred
      * @param PBXApiResult $res Result object to update
      */
     private function handleProcessingError(Throwable $exception, PBXApiResult $res): void
     {
-        $res->messages['error'][] = CriticalErrorsHandler::handleExceptionWithSyslog($exception);
+        CriticalErrorsHandler::handleExceptionWithSyslog($exception);
+        $res->messages['error'][] = RestErrorResponseHandler::MESSAGE;
+        $res->httpCode = 500;
         $res->success = false;
     }
 
