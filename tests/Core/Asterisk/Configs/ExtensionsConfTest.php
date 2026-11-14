@@ -62,9 +62,9 @@ class ExtensionsConfTest extends AbstractUnitTest
     }
 
     /**
-     * Forwarding targets are baked into the dialplan [globals] section, so the
-     * value must be reduced to the characters Asterisk accepts for a dialled
-     * number: digits and * # +. Everything else has to be stripped.
+     * Forwarding targets are baked into the dialplan [globals] section. A system
+     * extension name is kept only on an exact match; anything else is reduced to
+     * digits and * # +, so stray letters cannot name a special extension (h, i ...).
      *
      * @dataProvider forwardingNumberProvider
      * @backupGlobals disabled
@@ -73,7 +73,8 @@ class ExtensionsConfTest extends AbstractUnitTest
     {
         $method = new ReflectionMethod(ExtensionsConf::class, 'sanitizeForwardingNumber');
         $method->setAccessible(true);
-        $this->assertSame($expected, $method->invoke(null, $raw));
+        $systemTargets = ['hangup', 'busy', 'did2user', 'voicemail'];
+        $this->assertSame($expected, $method->invoke(null, $raw, $systemTargets));
     }
 
     /**
@@ -86,9 +87,32 @@ class ExtensionsConfTest extends AbstractUnitTest
             'with spaces/dashes' => ['+7 999 000-11-22', '+79990001122'],
             'letters stripped'   => ['abc123def', '123'],
             'dial symbols kept'  => ['*21#+100', '*21#+100'],
+            'voicemail target'   => ['voicemail', 'voicemail'],
+            'hangup target'      => ['hangup', 'hangup'],
+            'busy target'        => ['busy', 'busy'],
+            'did2user target'    => [' did2user ', 'did2user'],
+            'special extension'  => ['h', ''],
+            'case mismatch'      => ['VoiceMail', ''],
+            'config injection'   => ["voicemail\nFW_100=200;x", '100200'],
             'empty'              => ['', ''],
             'null'               => [null, ''],
         ];
+    }
+
+    /**
+     * The forwarding generator takes the allowed named targets from the system
+     * extensions the employee form offers, so all four must be found (#1381).
+     *
+     * @backupGlobals disabled
+     */
+    public function testSystemForwardingTargetsComeFromSystemExtensions(): void
+    {
+        $method = new ReflectionMethod(ExtensionsConf::class, 'getSystemForwardingTargets');
+        $method->setAccessible(true);
+        $targets = $method->invoke(null);
+        foreach (['hangup', 'busy', 'did2user', 'voicemail'] as $name) {
+            $this->assertContains($name, $targets);
+        }
     }
 
     /**

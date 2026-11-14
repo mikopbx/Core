@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\ExtensionForwardingRights;
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\{IncomingContexts, InternalContexts, OutgoingContext};
@@ -143,6 +144,7 @@ class ExtensionsConf extends AsteriskConfigClass
     private function generateForwardingGlobals(): string
     {
         $conf = '';
+        $systemTargets = self::getSystemForwardingTargets();
         /** @var ExtensionForwardingRights $row */
         foreach (ExtensionForwardingRights::find() as $row) {
             // The suffix becomes a dialplan variable name and must match the
@@ -152,9 +154,10 @@ class ExtensionsConf extends AsteriskConfigClass
                 continue;
             }
             $ring = (int)$row->ringlength;
-            $conf .= "FW_$ext=" . self::sanitizeForwardingNumber($row->forwarding) . PHP_EOL;
-            $conf .= "FW_BUSY_$ext=" . self::sanitizeForwardingNumber($row->forwardingonbusy) . PHP_EOL;
-            $conf .= "FW_UNAV_$ext=" . self::sanitizeForwardingNumber($row->forwardingonunavailable) . PHP_EOL;
+            $conf .= "FW_$ext=" . self::sanitizeForwardingNumber($row->forwarding, $systemTargets) . PHP_EOL;
+            $conf .= "FW_BUSY_$ext=" . self::sanitizeForwardingNumber($row->forwardingonbusy, $systemTargets) . PHP_EOL;
+            $conf .= "FW_UNAV_$ext="
+                . self::sanitizeForwardingNumber($row->forwardingonunavailable, $systemTargets) . PHP_EOL;
             $conf .= "FW_TIME_$ext=" . ($ring > 0 ? (string)$ring : '') . PHP_EOL;
         }
 
@@ -162,15 +165,42 @@ class ExtensionsConf extends AsteriskConfigClass
     }
 
     /**
-     * Strips a forwarding target down to the characters the dialplan accepts:
-     * digits and the dial symbols * # + (everything else is removed).
+     * Returns the numbers of the system extensions (voicemail, hangup, busy,
+     * did2user): named targets in [internal] that the employee form offers
+     * for call forwarding.
+     *
+     * @return string[] The system extension numbers.
+     */
+    private static function getSystemForwardingTargets(): array
+    {
+        $numbers = Extensions::find([
+            'conditions' => 'type = :type:',
+            'bind' => ['type' => Extensions::TYPE_SYSTEM],
+            'columns' => 'number',
+        ])->toArray();
+
+        return array_map('strval', array_column($numbers, 'number'));
+    }
+
+    /**
+     * Reduces a forwarding target to a value that is safe in the [globals] line
+     * and in Goto(internal,${fw},1) of [internal-fw]. A system extension name
+     * (voicemail, hangup, busy, did2user) is kept only on an exact match; any
+     * other value is stripped down to digits and the dial symbols * # +, so
+     * letters can never form Asterisk's special extensions (h, i, s, t ...).
      *
      * @param string|null $value The raw forwarding target.
+     * @param string[] $systemTargets The allowed system extension names.
      * @return string The sanitized forwarding target.
      */
-    private static function sanitizeForwardingNumber(?string $value): string
+    private static function sanitizeForwardingNumber(?string $value, array $systemTargets): string
     {
-        return preg_replace('/[^0-9*#+]/', '', trim((string)$value));
+        $value = trim((string)$value);
+        if (in_array($value, $systemTargets, true)) {
+            return $value;
+        }
+
+        return preg_replace('/[^0-9*#+]/', '', $value);
     }
 
     /**
