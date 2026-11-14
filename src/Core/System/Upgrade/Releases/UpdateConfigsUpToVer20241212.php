@@ -91,7 +91,7 @@ class UpdateConfigsUpToVer20241212 extends Injectable implements UpgradeSystemCo
                 $extension->type = Extensions::TYPE_SYSTEM;
                 $extension->callerid = $name . ' System Extension';
                 $extension->public_access = '0';
-                $extension->show_in_phonebook = '0';
+                $extension->show_in_phonebook = '1';
                 $extension->save();
                 
                 echo "Created system extension: $number\n";
