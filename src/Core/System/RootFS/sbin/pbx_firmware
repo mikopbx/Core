@@ -504,13 +504,13 @@ if [ -r "${img_file}" ]; then
     echo_info "Check if it necessary to $part4Action 4-th storage partition. The result is ${part4Result}...";
   fi
 
-  # Single-disk preserve-mode failure (exit 7/8/9/10 from initial_storage_part_four):
+  # Single-disk preserve-mode failure (exit 7-12 from initial_storage_part_four):
   # the Storage filesystem was NOT verified/re-adopted. Do not let the box silently
   # reboot into the boot-time provisioner (Storage::selectAndConfigureStorageDisk),
   # which would take the legacy path and reformat partition 4. Alert loudly and give
   # the operator a recovery shell while the 1 MiB superblock backup is still in RAM.
   case "$part4Result" in
-    7|8|9|10)
+    7|8|9|10|11|12)
       echo_error "STORAGE PRESERVATION FAILED (code $part4Result) on single-disk update."
       echo_error "Partition 4 was NOT verified as the original Storage; a normal reboot may reformat it."
       echo_error "The superblock backup (if retained) is in the initramfs working dir: fs-backup-part4.img"

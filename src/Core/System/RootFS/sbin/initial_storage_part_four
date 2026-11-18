@@ -106,6 +106,15 @@ if [ "$PART4_PRESERVE" = "1" ] && [ -n "$PART4_START" ]; then
         exit 10;
     fi
 
+    # Grow the GPT to the whole disk BEFORE touching part4 (GitHub #1417). sgdisk -e
+    # in pbx_firmware relocates the backup header but leaves the last usable LBA
+    # 1 MiB short of the disk end, so "100%" would stop there and truncate any
+    # Storage that originally reached the last MiB. After the fix the last usable
+    # LBA is the disk end, which no partition of a previous GPT on this disk can
+    # pass; an msdos Storage is shrunk for the GPT backup by pbx_firmware
+    # (shrink_msdos_part4_for_gpt_backup). The ext4 size check below catches the rest.
+    echo_info "Preserve: grow partition table to disk size";
+    echo "fix" | /sbin/parted "$dev" print free ---pretend-input-tty >> "$logFile" 2>&1;
     if [ -n "$partitionFour" ]; then
         echo_info "Preserve: remove image-provided part4...";
         /sbin/parted --script "${dev}" rm 4 2>/dev/null;
@@ -113,6 +122,15 @@ if [ "$PART4_PRESERVE" = "1" ] && [ -n "$PART4_START" ]; then
     echo_info "Preserve: create part4 at ${PART4_START}s...";
     /sbin/parted --script --align none "${dev}" "mkpart primary ext4 ${PART4_START}s 100%";
     resultParted=$?;
+    # A failed mkpart must not end with status 0: pbx_firmware would then reboot
+    # into the boot-time provisioner, which reformats partition 4. Stop before the
+    # superblock restore and the MBR rollback, which only apply to a created part4.
+    if [ "$resultParted" != "0" ]; then
+        rm -f "$mbrBackupFile";
+        echo_error "Preserve mode: could not recreate partition 4 at ${PART4_START}s (parted exit ${resultParted}).";
+        echo_error "Refusing to continue — Storage data left intact for manual recovery. Aborting.";
+        exit 12;
+    fi
     # Re-adopt the ext4 superblock captured by pbx_firmware. The image's trailing
     # MiB clobbered the on-disk superblock, so this restore is LOAD-BEARING. Wait
     # for the recreated partition node to publish BEFORE writing, and keep the only
@@ -139,8 +157,6 @@ if [ "$PART4_PRESERVE" = "1" ] && [ -n "$PART4_START" ]; then
         echo_error "Preserve mode: partition 4 node did not appear after mkpart; superblock NOT restored, keeping $FS_BACKUP_PART4.";
       fi
     fi;
-    echo_info "Preserve: grow partition table to disk size";
-    echo "fix" | /sbin/parted "$dev" print free ---pretend-input-tty >> "$logFile" 2>&1;
 elif [ -n "$partitionFour" ]; then
     # The fourth partition already exists, format it and resize
     echo_info "Formatting and resizing the existing fourth partition ${partitionFour}..."
@@ -243,6 +259,26 @@ if [ "$resultParted" = "0" ];then
             exit 9;
         fi
         [ -n "$actualUuid" ] && echo_info "Preserve: Storage UUID verified.";
+        # The recreated partition must hold every block the ext4 superblock claims
+        # (GitHub #1417). A shorter partition makes fsck fail and the mount abort
+        # with a misleading error; report the exact shortfall instead.
+        fsBytes=$(/sbin/dumpe2fs -h "$partitionFour" 2>/dev/null | /bin/busybox awk -F: '
+            /^Block count:/ {gsub(/ /, "", $2); count = $2}
+            /^Block size:/  {gsub(/ /, "", $2); size = $2}
+            END {if (count != "" && size != "") printf "%.0f\n", count * size}');
+        partBytes=$(/bin/busybox blockdev --getsize64 "$partitionFour" 2>/dev/null);
+        case "${fsBytes:-x}:${partBytes:-x}" in
+          *[!0-9:]*)
+            echo_info "Preserve: could not compare ext4 size with partition size, continuing.";
+            ;;
+          *)
+            if [ "$partBytes" -lt "$fsBytes" ]; then
+                echo_error "Preserve mode: partition 4 is $partBytes bytes, ext4 needs $fsBytes bytes ($((fsBytes - partBytes)) bytes short).";
+                echo_error "Refusing to mount a truncated Storage. Grow partition 4 or shrink the filesystem manually.";
+                exit 11;
+            fi
+            ;;
+        esac
         echo_info "Preserve: ext4 on $partitionFour, skip mkfs.";
     elif [ "$action" = "create" ] || { [ "$fsType" != "ext2" ] && [ "$fsType" != "ext4" ]; }; then
         echo_info "start mkfs.ext4 $partitionFour...";

@@ -72,6 +72,52 @@ final class FirmwareUpgradeShellScriptsTest extends TestCase
         );
     }
 
+    /**
+     * GitHub #1417: sgdisk -e leaves the last usable LBA 1 MiB short of the disk end,
+     * so the GPT must be grown before part4 is recreated with "100%", and a partition
+     * still shorter than the ext4 superblock claims must abort before fsck/mount.
+     */
+    public function testPreservedPart4IsRecreatedAfterGptGrowAndCheckedAgainstExt4Size(): void
+    {
+        $part4 = file_get_contents(self::ROOTFS_SBIN . '/initial_storage_part_four');
+        $firmware = file_get_contents(self::ROOTFS_SBIN . '/pbx_firmware');
+
+        $this->assertIsString($part4);
+        $this->assertIsString($firmware);
+
+        $grow = strpos(
+            $part4,
+            'echo "fix" | /sbin/parted "$dev" print free ---pretend-input-tty >> "$logFile" 2>&1;'
+        );
+        $mkpart = strpos($part4, '"mkpart primary ext4 ${PART4_START}s 100%"');
+        $restore = strpos($part4, 'dd if="$FS_BACKUP_PART4" of="$partitionFour" bs=1M count=1');
+        $this->assertIsInt($grow);
+        $this->assertIsInt($mkpart);
+        $this->assertIsInt($restore);
+        $this->assertLessThan($mkpart, $grow);
+        $removeImagePart4 = strpos($part4, '/sbin/parted --script "${dev}" rm 4 2>/dev/null;');
+        $this->assertIsInt($removeImagePart4);
+        $this->assertLessThan($removeImagePart4, $grow);
+        $this->assertLessThan($restore, $mkpart);
+        $this->assertSame(1, substr_count($part4, 'Preserve: grow partition table to disk size'));
+
+        $mkpartFailed = strpos($part4, 'Preserve mode: could not recreate partition 4 at ${PART4_START}s');
+        $sizeCheck = strpos($part4, 'if [ "$partBytes" -lt "$fsBytes" ]; then');
+        $mount = strpos($part4, 'mount -t "$type" "${partitionFour}" "$tmp_dir"');
+        $this->assertIsInt($mkpartFailed);
+        $this->assertIsInt($sizeCheck);
+        $this->assertIsInt($mount);
+        $this->assertLessThan($sizeCheck, $restore);
+        $this->assertLessThan($mkpartFailed, $mkpart);
+        $this->assertLessThan($restore, $mkpartFailed);
+        $this->assertStringContainsString("case \"\${fsBytes:-x}:\${partBytes:-x}\" in", $part4);
+        $this->assertLessThan($mount, $sizeCheck);
+        $this->assertStringContainsString('/sbin/dumpe2fs -h "$partitionFour"', $part4);
+        $this->assertStringContainsString('exit 11;', $part4);
+        $this->assertStringContainsString('exit 12;', $part4);
+        $this->assertStringContainsString('    7|8|9|10|11|12)', $firmware);
+    }
+
     public function testFirmwareUpgradeSkipsSystemDiskPart4SetupForSeparateStorageDisk(): void
     {
         $script = file_get_contents(self::ROOTFS_SBIN . '/pbx_firmware');
